@@ -10,4 +10,6 @@ const int yv2 = 4;
 // Currently unparses as: struct point ptarray[10] = {[2UL] = ({.y = (2)}), [2UL] = ({.x = (20)}), [0UL] = ({.x = (0)})};
 // struct point ptarray[10] = { [2].y = yv2, [2].x = xv2, [0].x = xv0 };
 
+// Original code:
+// struct point ptarray[10] = { [2].y = yv2 };
 struct point ptarray[10] = { [2].y = yv2 };

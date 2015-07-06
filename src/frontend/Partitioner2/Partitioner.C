@@ -13,8 +13,8 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
-#include <sawyer/ProgressBar.h>
-#include <sawyer/Stack.h>
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/Stack.h>
 
 using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 using namespace rose::Diagnostics;
@@ -171,7 +171,7 @@ Partitioner::placeholderExists(rose_addr_t startVa) const {
 }
 
 BasicBlock::Ptr
-Partitioner::erasePlaceholder(const ControlFlowGraph::VertexIterator &placeholder) {
+Partitioner::erasePlaceholder(const ControlFlowGraph::ConstVertexIterator &placeholder) {
     BasicBlock::Ptr bblock;
     if (placeholder!=cfg_.vertices().end() && placeholder->value().type()==V_BASIC_BLOCK) {
         rose_addr_t startVa = placeholder->value().address();
@@ -237,9 +237,11 @@ Partitioner::newDispatcher(const BaseSemantics::RiscOperatorsPtr &ops) const {
 }
 
 BasicBlock::Ptr
-Partitioner::detachBasicBlock(const ControlFlowGraph::VertexIterator &placeholder) {
+Partitioner::detachBasicBlock(const ControlFlowGraph::ConstVertexIterator &constPlaceholder) {
     BasicBlock::Ptr bblock;
-    if (placeholder != cfg_.vertices().end() && placeholder->value().type()==V_BASIC_BLOCK) {
+    if (constPlaceholder != cfg_.vertices().end() && constPlaceholder->value().type()==V_BASIC_BLOCK) {
+        ASSERT_require(cfg_.isValidVertex(constPlaceholder));
+        ControlFlowGraph::VertexIterator placeholder = cfg_.findVertex(constPlaceholder->id());
         bblock = placeholder->value().bblock();
         placeholder->value().nullify();
         adjustPlaceholderEdges(placeholder);
@@ -388,7 +390,7 @@ done:
 }
 
 ControlFlowGraph::VertexIterator
-Partitioner::truncateBasicBlock(const ControlFlowGraph::VertexIterator &placeholder, SgAsmInstruction *insn) {
+Partitioner::truncateBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder, SgAsmInstruction *insn) {
     ASSERT_require(placeholder != cfg_.vertices().end());
     ASSERT_not_null(insn);
     BasicBlock::Ptr bblock = placeholder->value().bblock();
@@ -440,10 +442,11 @@ Partitioner::attachBasicBlock(const BasicBlock::Ptr &bblock) {
 }
 
 void
-Partitioner::attachBasicBlock(const ControlFlowGraph::VertexIterator &placeholder, const BasicBlock::Ptr &bblock) {
-    ASSERT_require(placeholder != cfg_.vertices().end());
-    ASSERT_require(placeholder->value().type() == V_BASIC_BLOCK);
+Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &constPlaceholder, const BasicBlock::Ptr &bblock) {
+    ASSERT_require(cfg_.isValidVertex(constPlaceholder));
+    ASSERT_require(constPlaceholder->value().type() == V_BASIC_BLOCK);
     ASSERT_not_null(bblock);
+    ControlFlowGraph::VertexIterator placeholder = cfg_.findVertex(constPlaceholder->id());
 
     if (placeholder->value().address() != bblock->address()) {
         throw PlaceholderError(placeholder->value().address(),
@@ -1673,6 +1676,34 @@ Partitioner::attachFunction(const Function::Ptr &function) {
     return nNewBlocks;
 }
 
+void
+Partitioner::fixInterFunctionEdges() {
+    BOOST_FOREACH (ControlFlowGraph::Edge &edge, cfg_.edges())
+        fixInterFunctionEdge(cfg_.findEdge(edge.id()));
+}
+
+void
+Partitioner::fixInterFunctionEdge(const ControlFlowGraph::ConstEdgeIterator &constEdge) {
+    ASSERT_require(cfg_.isValidEdge(constEdge));
+    ControlFlowGraph::EdgeIterator edge = cfg_.findEdge(constEdge->id());
+    if (edge->value().type() != E_NORMAL)
+        return;
+
+    Function::Ptr caller, callee;
+    if (edge->source()->value().type() == V_BASIC_BLOCK)
+        caller = edge->source()->value().function();
+    if (edge->target()->value().type() == V_BASIC_BLOCK)
+        callee = edge->target()->value().function();
+
+    if (caller && callee && caller!=callee) {
+        if (functionIsThunk(caller)) {
+            edge->value() = ControlFlowGraph::EdgeValue(E_FUNCTION_XFER);
+        } else if (basicBlockIsFunctionCall(edge->source()->value().bblock())) {
+            edge->value() = ControlFlowGraph::EdgeValue(E_FUNCTION_CALL);
+        }
+    }
+}
+
 Function::Ptr
 Partitioner::attachOrMergeFunction(const Function::Ptr &function) {
     ASSERT_not_null(function);
@@ -2067,13 +2098,14 @@ Partitioner::functionGhostSuccessors(const Function::Ptr &function) const {
 FunctionCallGraph
 Partitioner::functionCallGraph(bool allowParallelEdges) const {
     FunctionCallGraph cg;
+    size_t edgeCount = allowParallelEdges ? 0 : 1;
     BOOST_FOREACH (const ControlFlowGraph::Edge &edge, cfg_.edges()) {
         if (edge.source()->value().type()==V_BASIC_BLOCK && edge.target()->value().type()==V_BASIC_BLOCK) {
             Function::Ptr source = edge.source()->value().function();
             Function::Ptr target = edge.target()->value().function();
             if (source!=NULL && target!=NULL &&
                 (source!=target || edge.value().type()==E_FUNCTION_CALL || edge.value().type()==E_FUNCTION_XFER))
-                cg.insertCall(source, target, edge.value().type(), allowParallelEdges);
+                cg.insertCall(source, target, edge.value().type(), edgeCount);
         }
     }
     return cg;

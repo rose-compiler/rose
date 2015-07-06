@@ -9,10 +9,10 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Message.h>
-#include <sawyer/ProgressBar.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Message.h>
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/Stopwatch.h>
 
 #include <dlib/matrix.h>
 #include <dlib/optimization.h>
@@ -45,24 +45,33 @@ metricName(EditDistanceMetric m) {
 
 struct Settings {
     EditDistanceMetric metric;
-    std::string isaName;
     size_t nThreads;
     bool listPairings;
     Settings(): metric(METRIC_INSN), nThreads(sysconf(_SC_NPROCESSORS_ONLN)), listPairings(true) {}
 };
 
 // Parse command-line and apply to settings.
-static Sawyer::CommandLine::ParserResult
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
     using namespace Sawyer::CommandLine;
-    SwitchGroup generic = CommandlineProcessing::genericSwitches();
-    SwitchGroup tool("Switches for this tool");
 
-    tool.insert(Switch("isa")
-                .argument("architecture", anyParser(settings.isaName))
-                .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs. An ISA must be "
-                     "specified if either of the specimens is a raw file, otherwise the ISA will be determined from "
-                     "the binary container."));
+    std::string purpose = "finds similar functions";
+    std::string description =
+         "This tool attempts to correlate functions in one binary specimen with related functions in the other specimen. "
+         "It does so by parsing, loading, disassembling, and partitioning each specimen to obtain a list of functions. "
+         "Then it computes a syntactic distance between all pairs of functions using a specified distance metric "
+         "(see @s{metric}) to create an edge-weighted, bipartite graph.  Finally, a minimum weight perfect matching is "
+         "found using the Kuhn-Munkres algorithm.  The answer is output as a list of function correlations and their "
+         "distance from each other.  The specimens need not have the same number of functions, in which case one of "
+         "the specimens will have null functions inserted to make them the same size.  The distance between a null "
+         "function and some other function is always zero regardless of metric.";
+
+    Parser parser = engine.commandLineParser(purpose, description);
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [--] @v{specimen1} @v{specimen2}");
+    parser.doc("Limitations",
+               "Note: only two specimen names can be supplied: one for the first specimen and one for the second.");
+
+    SwitchGroup tool("Switches for this tool");
 
     tool.insert(Switch("metric")
                 .argument("name", enumParser(settings.metric)
@@ -114,24 +123,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                 .intrinsicValue(false, settings.listPairings)
                 .hidden(true));
 
-    Parser parser;
-    parser
-        .purpose("finds similar functions")
-        .doc("synopsis",
-             "@prop{programName} [@v{switches}] [--] @v{specimen1} @v{specimen2}")
-        .doc("description",
-             "This tool attempts to correlate functions in one binary specimen with related functions in the other specimen. "
-             "It does so by parsing, loading, disassembling, and partitioning each specimen to obtain a list of functions. "
-             "Then it computes a syntactic distance between all pairs of functions using a specified distance metric "
-             "(see @s{metric}) to create an edge-weighted, bipartite graph.  Finally, a minimum weight perfect matching is "
-             "found using the Kuhn-Munkres algorithm.  The answer is output as a list of function correlations and their "
-             "distance from each other.  The specimens need not have the same number of functions, in which case one of "
-             "the specimens will have null functions inserted to make them the same size.  The distance between a null "
-             "function and some other function is always zero regardless of metric.")
-        .doc("Specimens", P2::Engine::specimenNameDocumentation() + "\n\n"
-             "Note: only two names can be supplied: one for the first specimen and one for the second.");
 
-    return parser.with(generic).with(tool).parse(argc, argv).apply();
+    return parser.with(tool).parse(argc, argv).apply().unreachedArgs();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -407,12 +400,13 @@ munkresCost(const dlib::matrix<double> &src, T scale, dlib::matrix<T> &dst /*out
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static std::vector<SgAsmFunction*>
-loadFunctions(const std::string &fileName, Disassembler *disassembler) {
-    mlog[INFO] <<"parsing \"" <<fileName <<"\"...\n";
-    P2::Engine engine;                                  // an engine drives the partitioning
-    engine.postPartitionAnalyses(false);                // not needed for this tool
-    engine.obtainDisassembler(disassembler);            // use our hint or obtain a new one
-    SgAsmBlock *gblock = engine.buildAst(fileName);     // parse, load, link, disassemble, partition, build AST
+loadFunctions(const std::string &fileName, P2::Engine &engine) {
+    // Reset engine
+    engine.disassembler(NULL);
+    engine.interpretation(NULL);
+    engine.memoryMap().clear();
+    engine.doingPostAnalysis(false);                           // not needed for this tool
+    SgAsmBlock *gblock = engine.buildAst(fileName);            // parse, load, link, disassemble, partition, build AST
     return SageInterface::querySubTree<SgAsmFunction>(gblock); // return just the functions
 }
 
@@ -430,20 +424,17 @@ main(int argc, char *argv[]) {
     rose::Diagnostics::initialize();
     mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
     Diagnostics::mfacilities.insertAndAdjust(mlog);
+    Stream info(mlog[INFO]);
 
     // Parse command-line
+    P2::Engine engine;
     Settings settings;
-    std::vector<std::string> positionalArgs = parseCommandLine(argc, argv, settings).unreachedArgs();
-    Disassembler *disassembler = NULL;
-    if (!settings.isaName.empty())
-        disassembler = Disassembler::lookup(settings.isaName);
-    disassembler->set_progress_reporting(-1.0);         // turn it off
+    std::vector<std::string> positionalArgs = parseCommandLine(argc, argv, engine, settings);
     ASSERT_always_require2(positionalArgs.size()==2, "see --help");
-    Stream info(mlog[INFO]);
     
     // Parse the ELF/PE containers for the two specimens
-    std::vector<SgAsmFunction*> functions1 = loadFunctions(positionalArgs[0], disassembler);
-    std::vector<SgAsmFunction*> functions2 = loadFunctions(positionalArgs[1], disassembler);
+    std::vector<SgAsmFunction*> functions1 = loadFunctions(positionalArgs[0], engine);
+    std::vector<SgAsmFunction*> functions2 = loadFunctions(positionalArgs[1], engine);
     info <<"specimen1 has " <<plural(functions1.size(), "functions") <<" containing " <<treeSize(functions1) <<" AST nodes.\n";
     info <<"specimen2 has " <<plural(functions2.size(), "functions")<<" containing " <<treeSize(functions2) <<" AST nodes.\n";
     if (functions1.empty() || functions2.empty())

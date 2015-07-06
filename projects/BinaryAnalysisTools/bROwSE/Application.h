@@ -4,7 +4,7 @@
 #include <bROwSE/bROwSE.h>
 
 #include <Partitioner2/Partitioner.h>
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 #include <Wt/WApplication>
 #include <Wt/WEnvironment>
 
@@ -97,6 +97,7 @@ private:
     void changeBasicBlock(const P2::BasicBlock::Ptr&);
 
     void updateStringCrossReferences(size_t stringIdx);
+    void updateAddressCrossReferences(rose_addr_t va);
 
     void gotoReference(const P2::Reference&);
 };

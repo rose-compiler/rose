@@ -383,9 +383,9 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                       <<StringUtility::addrToString(section->get_offset()) <<" + "
                       <<StringUtility::addrToString(section->get_size()) <<" bytes = "
                       <<StringUtility::addrToString(section->get_offset()+section->get_size()) <<"\n";
-                trace <<"    Specified alignment: memory=[" <<section->get_mapped_alignment() <<","
-                      <<section->get_mapped_alignment() <<"], file=["
-                      <<section->get_file_alignment() <<"," <<section->get_file_alignment() <<"]\n";
+                trace <<"    Specified alignment: memory="
+                      <<StringUtility::addrToString(section->get_mapped_alignment()) <<", file="
+                      <<StringUtility::addrToString(section->get_file_alignment()) <<"\n";
             }
 
             /* Figure out alignment, etc. */
@@ -406,7 +406,10 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                     trace <<"    Does not contribute to map\n";
                 } else {
                     trace <<"    Adjusted alignment:  memory=["
-                          <<malign_lo <<"," <<malign_hi <<"], file=[" <<falign_lo <<"," <<falign_hi <<"]\n";
+                          <<StringUtility::addrToString(malign_lo) <<".."
+                          <<StringUtility::addrToString(malign_hi) <<"], file=["
+                          <<StringUtility::addrToString(falign_lo) <<".."
+                          <<StringUtility::addrToString(falign_hi) <<"]\n";
                     trace <<"    Aligned VA:          "
                           <<StringUtility::addrToString(va) <<" + "
                           <<StringUtility::addrToString(mem_size) <<" bytes = "
@@ -656,6 +659,8 @@ BinaryLoader::gcd(int64_t a, int64_t b, int64_t *xout/*=NULL*/, int64_t *yout/*=
 rose_addr_t
 BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, rose_addr_t align2)
 {
+    using namespace StringUtility;
+
     if (0==val1 % align1 && 0==val2 % align2)
         return 0;
     Stream trace(mlog[TRACE]);
@@ -669,14 +674,15 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
         std::swap(Ma, Mb);
     }
 
-    trace <<"    Aligning " <<val1 <<" to " <<align1 <<" and " <<val2 <<" to " <<align2 <<"\n";
-    trace <<"      Misalignment: Ma=" <<Ma <<", Mb=" <<Mb <<"\n";
+    SAWYER_MESG(trace) <<"    Aligning " <<addrToString(val1) <<" to " <<addrToString(align1)
+                       <<" and " <<addrToString(val2) <<" to " <<addrToString(align2) <<"\n"
+                       <<"      Misalignment: Ma=" <<addrToString(Ma) <<", Mb=" <<addrToString(Mb) <<"\n";
 
     /* Alignment constraints that must both be satisfied. */
     int64_t a = align1;
     int64_t b = align2;
     int64_t c = Mb - Ma;
-    trace <<"      Constraints:  a=" <<a <<", b=" <<b <<", c=" <<c <<"\n";
+    SAWYER_MESG(trace) <<"      Constraints:  a=" <<addrToString(a) <<", b=" <<addrToString(b) <<", c=" <<addrToString(c) <<"\n";
 
     /* Alignment is satsfied when:
      *
@@ -689,7 +695,8 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
      * This has solutions if and only if c is a multiple of the greatest common divisor of a and b. */
     int64_t t, u;
     int64_t g = gcd(a, b, &t, &u);
-    trace <<"      Bezout coef:  t=" <<t <<", u=" <<u <<", gcd(a,b)=" <<g <<"\n";
+    SAWYER_MESG(trace) <<"      Bezout coef:  t=" <<addrToString(t) <<", u=" <<addrToString(u)
+                       <<", gcd(a,b)=" <<addrToString(g) <<"\n";
     if (c % g) {
         trace <<"      No solutions (Mb-Ma not a multiple of gcd(a,b))\n";
         throw Exception("no solutions to alignment constraints");
@@ -722,7 +729,7 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
     /* Calculate adjustment */
     int64_t Aa = m * t * a + Ma;
     int64_t Ab = m * u * b + Mb;
-    trace <<"      Adjustment:   " <<Aa <<"\n";
+    SAWYER_MESG(trace) <<"      Adjustment:   " <<addrToString(Aa) <<"\n";
     ASSERT_always_require(Aa==Ab);
     ASSERT_always_require2(Aa>0, "FIXME[Robb Matzke 2010-09-07]: add multiples of lcm(a,b) to make this positive");
     return (rose_addr_t)Aa;

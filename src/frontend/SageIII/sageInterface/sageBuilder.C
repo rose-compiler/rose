@@ -486,7 +486,9 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
   //      void SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledForm, SgName & name )
   // It is less clear how to refactor this code.
 
-#if 0
+#define DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST 0
+
+#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
      printf ("In SageBuilder::appendTemplateArgumentsToName(): CRITICAL FUNCTION TO BE REFACTORED (name = %s) \n",name.str());
 #endif
 
@@ -506,7 +508,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      SgTemplateArgumentPtrList::const_iterator i = templateArgumentsList.begin();
      while (i != templateArgumentsList.end())
         {
-#if 0
+#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (top of loop) templateArgumentsList element *i = %p = %s returnName = %s \n",*i,(*i)->class_name().c_str(),returnName.str());
 #endif
 #if 0
@@ -519,7 +521,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
        // returnName += (*i)->unparseToString();
           returnName += (*i)->unparseToString(info);
 
-#if 0
+#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (after appending template name) *i = %p returnName = %s \n",*i,returnName.str());
 #endif
           i++;
@@ -534,7 +536,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
                returnName += " , ";
              }
 
-#if 0
+#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (bottom of loop) returnName = %s \n",returnName.str());
 #endif
         }
@@ -544,7 +546,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      if (emptyArgumentList == false)
           returnName += " > ";
 
-#if 0
+#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
      printf ("Leaving SageBuilder::appendTemplateArgumentsToName(): returnName = %s \n",returnName.str());
 #endif
 
@@ -1249,6 +1251,14 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 
   setSourcePositionAtRootAndAllChildren(varDecl);
   //ROSE_ASSERT (isSgVariableDefinition(initName->get_declptr())->get_startOfConstruct()!=NULL);
+
+
+  // DQ (4/16/2015): This is replaced with a better implementation.
+  // DQ (4/15/2015): We should reset the isModified flags as part of the transforamtion 
+  // because we have added statements explicitly marked as transformations.
+  // checkIsModifiedFlag(varDecl);
+     unsetNodesMarkedAsModified(varDecl);
+
   return varDecl;
 }
 
@@ -1386,6 +1396,13 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
         }
 
   // ROSE_ASSERT (varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
+
+  // DQ (4/16/2015): This is replaced with a better implementation.
+  // DQ (4/15/2015): We should reset the isModified flags as part of the transforamtion 
+  // because we have added statements explicitly marked as transformations.
+  // checkIsModifiedFlag(varDecl);
+     unsetNodesMarkedAsModified(varDecl);
+
      return varDecl;
    }
 
@@ -3595,6 +3612,10 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
   // This fails for everything.... not sure why...
   // ROSE_ASSERT(func->get_symbol_from_symbol_table() != NULL);
 
+  // DQ (4/16/2015): This is replaced with a better implementation.
+  // Make sure the isModified boolean is clear for all newly-parsed nodes.
+     unsetNodesMarkedAsModified(func);
+
      return func;  
    }
 
@@ -4907,6 +4928,12 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
         {
           defining_func->get_declarationModifier().get_typeModifier().setRestrict();
         }
+
+  // DQ (4/16/2015): This is replaced with a better implementation.
+  // DQ (4/15/2015): We should reset the isModified flags as part of the transforamtion 
+  // because we have added statements explicitly marked as transformations.
+  // checkIsModifiedFlag(defining_func);
+     unsetNodesMarkedAsModified(defining_func);
 
      return defining_func;
    }

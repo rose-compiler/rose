@@ -43,6 +43,7 @@ std::string stringifyAstUnparseAttributeRelativePositionType(int n, const char *
 std::string stringifyBaseGraphBiDirNodesIterator_dirType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisAsmUnparserOrganization(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisBinaryDebuggerDetachMode(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyBinaryAnalysisBinaryDebuggerRegPageStatus(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisDisassemblerSearchHeuristic(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisDisassemblerMipsMips32Architecture(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisDisassemblerX86MMPrefix(int n, const char *strip=NULL, bool canonic=false);
@@ -62,6 +63,7 @@ std::string stringifyBinaryAnalysisPartitioner2Confidence(int n, const char *str
 std::string stringifyBinaryAnalysisPartitioner2DataFlowDfCfgVertexType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisPartitioner2EdgeType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisPartitioner2FunctionOwnership(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyBinaryAnalysisPartitioner2InlinerHowInline(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisPartitioner2PartitionerMayReturnVertexInfoState(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisPartitioner2ReferenceGranularity(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisPartitioner2VertexType(int n, const char *strip=NULL, bool canonic=false);
@@ -69,8 +71,7 @@ std::string stringifyBinaryAnalysisPartitionerRegionStatsAnalysisEnum(int n, con
 std::string stringifyBinaryAnalysisPointerAnalysisPointerType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisSMTSolverSatisfiable(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisSRecordType(int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyBinaryAnalysisStringFinderCharacterEncoding(int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyBinaryAnalysisStringFinderLengthEncoding(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyBinaryAnalysisStringsState(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisTaintedFlowApproximation(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisTaintedFlowTaintedness(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisYicesSolverLinkMode(int n, const char *strip=NULL, bool canonic=false);
@@ -223,6 +224,7 @@ std::string stringifyE_SgAsmPESection(int n, const char *strip=NULL, bool canoni
 std::string stringifyE_SgAsmPEStringSection(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgAsmPowerpcInstruction(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgAsmRegisterNames(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgAsmRiscOperation(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgAsmStmt(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgAsmUnaryArmSpecialRegisterList(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgAsmUnaryExpression(int n, const char *strip=NULL, bool canonic=false);
@@ -390,6 +392,7 @@ std::string stringifyE_SgNaryBooleanOp(int n, const char *strip=NULL, bool canon
 std::string stringifyE_SgNaryComparisonOp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgNaryOp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgNewExp(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgNoexceptOp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgNonMembershipOp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgNotEqualOp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgNotOp(int n, const char *strip=NULL, bool canonic=false);
@@ -517,6 +520,7 @@ std::string stringifyE_SgTypeLong(int n, const char *strip=NULL, bool canonic=fa
 std::string stringifyE_SgTypeLongDouble(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeLongLong(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeNullptr(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgTypeOfType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeShort(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeSigned128bitInteger(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeSignedChar(int n, const char *strip=NULL, bool canonic=false);
@@ -587,6 +591,7 @@ std::string stringifyE_SgXorAssignOp(int n, const char *strip=NULL, bool canonic
 std::string stringifyE_SgYieldExpression(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyEditDistanceTreeEditDistanceEditType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyFailSafe_fail_safe_enum(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyFailedAssertionBehaviorAdjusterBehavior(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyFormat_Opt(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyFunctionCallInfoInsertionMode(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyGenRepresentationTypeOfPrint(int n, const char *strip=NULL, bool canonic=false);
@@ -614,6 +619,7 @@ std::string stringifyMipsFcsrMinors(int n, const char *strip=NULL, bool canonic=
 std::string stringifyMipsInstructionKind(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyMipsRegisterClass(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyMipsSpecialPurposeRegister(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyMode(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyNFAAssertion(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyNFAType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyNameQueryTypeOfQueryTypeOneParameter(int n, const char *strip=NULL, bool canonic=false);
@@ -700,7 +706,6 @@ std::string stringifySawyerMarkupTextMode(int n, const char *strip=NULL, bool ca
 std::string stringifySawyerMessageAnsiColor(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifySawyerMessageImportance(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifySawyerMessageWhen(int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyScopeType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifySgAccessModifier_access_modifier_enum(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifySgAsmBlockReason(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifySgAsmElfDynamicEntryEntryType(int n, const char *strip=NULL, bool canonic=false);
@@ -743,6 +748,7 @@ std::string stringifySgAsmPEFileHeaderHeaderFlags(int n, const char *strip=NULL,
 std::string stringifySgAsmPEFileHeaderPairPurpose(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifySgAsmPEFileHeaderSubsystem(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifySgAsmPESectionTableEntryPESectionFlags(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifySgAsmRiscOperationRiscOperator(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifySgAttributeSpecificationStatement_attribute_spec_enum(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifySgBaseClassModifier_baseclass_modifier_enum(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifySgCastExp_cast_type_enum(int n, const char *strip=NULL, bool canonic=false);
@@ -810,10 +816,13 @@ std::string stringifyTerminalTypeEvaluation(int n, const char *strip=NULL, bool 
 std::string stringifyTerminal_includeExcludeMechanism(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyTerminal_locationInTree(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyTransformationSupport_operatorCodeType(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyUnparseLanguageIndependentConstructs_token_sequence_position_enum_type(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyUnparseLanguageIndependentConstructs_unparsed_as_enum_type(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyVariantT(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyVirtualBinCFG_EdgeConditionKind(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyVirtualCFG_EdgeConditionKind(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyX86BranchPrediction(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyX86Exception(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyX86Flag(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyX86Flags(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyX86GeneralPurposeRegister(int n, const char *strip=NULL, bool canonic=false);

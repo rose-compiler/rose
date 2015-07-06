@@ -2,7 +2,7 @@
 #include <BinaryLoader.h>
 #include <Partitioner2/Engine.h>
 #include <EditDistance/TreeEditDistance.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/Stopwatch.h>
 
 #include "commandLine.h"
 
@@ -17,24 +17,21 @@ using namespace rose;
 using namespace rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 
-Sawyer::CommandLine::ParserResult
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Partitioner2::Engine &engine, Settings &settings) {
     using namespace Sawyer::CommandLine;
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
+
+    std::string purpose = "demonstrates tree edit distance";
+    std::string description =
+        "This tool performs tree edit distance between two binary files a couple different ways in order to compare "
+        "the old, local implementation and the new librose implementation. See @s{use-old} for more details.  The "
+        "output of the old implementation and the new implementation are not usually identical because there are "
+        "usually multiple edit paths with the same total cost.";
+
+    Parser parser = engine.commandLineParser(purpose, description);
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen1} @v{specimen2}");
     SwitchGroup tool = toolCommandLineSwitches(settings);
-
-    Parser parser;
-    parser
-        .purpose("demonstrates tree edit distance")
-        .doc("synopsis",
-             "@prop{programName} [@v{switches}] @v{specimen1} @v{specimen2}")
-        .doc("description",
-             "This tool performs tree edit distance between two binary files a couple different ways in order to compare "
-             "the old, local implementation and the new librose implementation. See @s{use-old} for more details.  The "
-             "output of the old implementation and the new implementation are not usually identical because there are "
-             "usually multiple edit paths with the same total cost.");
-
-    return parser.with(gen).with(tool).parse(argc, argv).apply();
+    return parser.with(tool).parse(argc, argv).apply().unreachedArgs();
 }
 
 template<typename Instruction>
@@ -75,29 +72,15 @@ main(int argc, char *argv[]) {
     Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     // Parse command-line (see --help for usage)
+    Partitioner2::Engine engine;
     Settings settings;
-    std::vector<std::string> positionalArgs = parseCommandLine(argc, argv, settings).unreachedArgs();
+    std::vector<std::string> positionalArgs = parseCommandLine(argc, argv, engine, settings);
     ASSERT_always_require2(positionalArgs.size()==2, "see --help");
 
-    // Parse the ELF/PE containers for the two specimens
-    mlog[INFO] <<"parsing and loading specimens...\n";
-    Sawyer::Stopwatch loadTime;
-    SgBinaryComposite *file1 = SageBuilderAsm::buildBinaryComposite(positionalArgs[0]); // also creates the SgProject
-    SgBinaryComposite *file2 = SageBuilderAsm::buildBinaryComposite(positionalArgs[1]); // re-uses existing SgProject
-    ASSERT_not_null(file1);
-    ASSERT_not_null(file2);
-    SgAsmInterpretation *interp1 = file1->get_interpretations()->get_interpretations().back(); // Best interp is usually the
-    SgAsmInterpretation *interp2 = file2->get_interpretations()->get_interpretations().back(); // last one (PE is after DOS)
-    ASSERT_not_null(interp1);
-    ASSERT_not_null(interp2);
-    mlog[INFO] <<"parsed and loaded in " <<loadTime <<" seconds\n";
-
     // Disassemble and partition code into functions.
-    mlog[INFO] <<"disassembling and partitioning specimens...\n";
-    Sawyer::Stopwatch partitionTime;
-    SgAsmBlock *gblock1 = Partitioner2::Engine().buildAst(interp1);
-    SgAsmBlock *gblock2 = Partitioner2::Engine().buildAst(interp2);
-    mlog[INFO] <<"disassembled and partitioned in " <<partitionTime <<" seconds\n";
+    SgAsmBlock *gblock1 = engine.buildAst(positionalArgs[0]);
+    engine.reset();
+    SgAsmBlock *gblock2 = engine.buildAst(positionalArgs[1]);
 
     // Some stats before we start.
     NodeCounter nNodes1, nNodes2;

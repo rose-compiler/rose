@@ -14,12 +14,12 @@
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Reference.h>
 
-#include <sawyer/Callbacks.h>
-#include <sawyer/IntervalSet.h>
-#include <sawyer/Map.h>
-#include <sawyer/Message.h>
-#include <sawyer/Optional.h>
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/Callbacks.h>
+#include <Sawyer/IntervalSet.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/Message.h>
+#include <Sawyer/Optional.h>
+#include <Sawyer/SharedPointer.h>
 
 #include <ostream>
 #include <set>
@@ -653,7 +653,7 @@ public:
      *  returned.
      *
      *  @{ */
-    BasicBlock::Ptr erasePlaceholder(const ControlFlowGraph::VertexIterator &placeholder) /*final*/;
+    BasicBlock::Ptr erasePlaceholder(const ControlFlowGraph::ConstVertexIterator &placeholder) /*final*/;
     BasicBlock::Ptr erasePlaceholder(rose_addr_t startVa) /*final*/;
     /** @} */
 
@@ -810,7 +810,7 @@ public:
      *  @{ */
     BasicBlock::Ptr detachBasicBlock(rose_addr_t startVa) /*final*/;
     BasicBlock::Ptr detachBasicBlock(const BasicBlock::Ptr &basicBlock) /*final*/;
-    BasicBlock::Ptr detachBasicBlock(const ControlFlowGraph::VertexIterator &placeholder) /*final*/;
+    BasicBlock::Ptr detachBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder) /*final*/;
     /** @} */
 
     /** Truncate an attached basic-block.
@@ -823,7 +823,7 @@ public:
      *  first instruction of the block.
      *
      *  The return value is the vertex for the new placeholder. */
-    ControlFlowGraph::VertexIterator truncateBasicBlock(const ControlFlowGraph::VertexIterator &basicBlock,
+    ControlFlowGraph::VertexIterator truncateBasicBlock(const ControlFlowGraph::ConstVertexIterator &basicBlock,
                                                         SgAsmInstruction *insn) /*final*/;
 
     /** Attach a basic block to the CFG/AUM.
@@ -855,7 +855,7 @@ public:
      *
      *  @{ */
     void attachBasicBlock(const BasicBlock::Ptr&) /*final*/;
-    void attachBasicBlock(const ControlFlowGraph::VertexIterator &placeholder, const BasicBlock::Ptr&) /*final*/;
+    void attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder, const BasicBlock::Ptr&) /*final*/;
     /** @} */
 
     /** Discover instructions for a detached basic block.
@@ -1506,6 +1506,16 @@ public:
 
     /** May-return analysis for all functions. */
     void allFunctionMayReturn() const /*final*/;
+
+    /** Adjust inter-function edge types.
+     *
+     *  For any CFG edge whose source and destination are two different functions but whose type is @ref E_NORMAL, replace the
+     *  edge with either a @ref E_FUNCTION_CALL or @ref E_FUNCTION_XFER edge as appropriate.
+     *
+     * @{ */
+    void fixInterFunctionEdges();
+    void fixInterFunctionEdge(const ControlFlowGraph::ConstEdgeIterator&);
+    /** @} */
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

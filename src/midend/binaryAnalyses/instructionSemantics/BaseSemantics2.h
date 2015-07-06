@@ -9,10 +9,10 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/optional.hpp>
-#include <sawyer/Assert.h>
-#include <sawyer/IntervalMap.h>
-#include <sawyer/Map.h>
-#include <sawyer/Optional.h>
+#include <Sawyer/Assert.h>
+#include <Sawyer/IntervalMap.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/Optional.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -1411,18 +1411,18 @@ class MemoryCellList: public MemoryState {
 public:
     typedef std::list<MemoryCellPtr> CellList;
 protected:
-    MemoryCellPtr protocell;                    // prototypical memory cell used for its virtual constructors
-    CellList cells;                             // list of cells in reverse chronological order
-    bool byte_restricted;                       // are cell values all exactly one byte wide?
-    MemoryCellPtr latest_written_cell;          // the cell whose value was most recently written to, if any
+    MemoryCellPtr protocell;                            // prototypical memory cell used for its virtual constructors
+    CellList cells;                                     // list of cells in reverse chronological order
+    bool byte_restricted;                               // are cell values all exactly one byte wide?
+    MemoryCellPtr latest_written_cell;                  // the cell whose value was most recently written to, if any
+    bool occlusionsErased_;                             // prune away old cells that are occluded by newer ones.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit MemoryCellList(const MemoryCellPtr &protocell)
         : MemoryState(protocell->get_address(), protocell->get_value()),
-          protocell(protocell),
-          byte_restricted(true) {
+          protocell(protocell), byte_restricted(true), occlusionsErased_(false) {
         ASSERT_not_null(protocell);
         ASSERT_not_null(protocell->get_address());
         ASSERT_not_null(protocell->get_value());
@@ -1431,11 +1431,12 @@ protected:
     MemoryCellList(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
         : MemoryState(addrProtoval, valProtoval),
           protocell(MemoryCell::instance(addrProtoval, valProtoval)),
-          byte_restricted(true) {}
+          byte_restricted(true), occlusionsErased_(false) {}
 
     // deep-copy cell list so that modifying this new state does not modify the existing state
     MemoryCellList(const MemoryCellList &other)
-        : MemoryState(other), protocell(other.protocell), byte_restricted(other.byte_restricted) {
+        : MemoryState(other), protocell(other.protocell), byte_restricted(other.byte_restricted),
+          occlusionsErased_(other.occlusionsErased_) {
         for (CellList::const_iterator ci=other.cells.begin(); ci!=other.cells.end(); ++ci)
             cells.push_back((*ci)->clone());
     }
@@ -1531,6 +1532,21 @@ public:
     virtual bool get_byte_restricted() const { return byte_restricted; }
     virtual void set_byte_restricted(bool b) { byte_restricted = b; }
     /** @} */
+
+    /** Property: erase occluded cells.
+     *
+     *  If this property is true, then writing a new cell to memory will also erase all older cells that must alias the new
+     *  cell.  Erasing occlusions can adversely affect performance for some semantic domains.
+     *
+     * @{ */
+    bool occlusionsErased() const { return occlusionsErased_; }
+    void occlusionsErased(bool b) { occlusionsErased_ = b; }
+    /** @} */
+
+    /** Remove memory cells that were read but never written.
+     *
+     *  The determination of whether a cell was read but never written is based on whether the cell has a latest writer. */
+    virtual void clearNonWritten();
 
     /** Scans the cell list and returns entries that may alias the given address and value size. The scanning starts at the
      *  beginning of the list (which is normally stored in reverse chronological order) and continues until it reaches either
@@ -2343,7 +2359,6 @@ public:
      *  instruction itself is only used for the duration of this call. */
     virtual void iproc_replace(SgAsmInstruction *insn, InsnProcessor *iproc);    
 
-protected:
     /** Given an instruction, return the InsnProcessor key that can be used as an index into the iproc_table. */
     virtual int iproc_key(SgAsmInstruction*) const = 0;
 

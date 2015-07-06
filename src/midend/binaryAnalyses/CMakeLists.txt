@@ -1,4 +1,18 @@
 add_library(midend_binary OBJECT
+  AbstractLocation.C
+  binary_analysis.C
+  BinaryCallingConvention.C
+  BinaryControlFlow.C
+  BinaryDataFlow.C
+  BinaryDominance.C
+  BinaryFunctionCall.C
+  BinaryMagic.C
+  BinaryNoOperation.C
+  BinaryReturnValueUsed.C
+  BinaryString.C
+  BinaryTaintedFlow.C
+  DwarfLineMapper.C
+  GraphAlgorithms.C
   RoseBin_CallGraphAnalysis.cpp
   RoseBin_FlowAnalysis.cpp
   RoseBin_DataFlowAnalysis.cpp
@@ -27,6 +41,7 @@ add_library(midend_binary OBJECT
   instructionSemantics/PartialSymbolicSemantics.C
   instructionSemantics/PartialSymbolicSemantics2.C
   instructionSemantics/SMTSolver.C
+  instructionSemantics/StaticSemantics2.C
   instructionSemantics/SymbolicMemory2.C
   instructionSemantics/SymbolicSemantics.C
   instructionSemantics/SymbolicSemantics2.C
@@ -47,6 +62,7 @@ install(
     BinaryDominance.h
     BinaryFunctionCall.h
     BinaryMagic.h
+    BinaryNoOperation.h
     BinaryPointerDetection.h
     BinaryString.h
     BinaryTaintedFlow.h
@@ -79,6 +95,7 @@ install(
     instructionSemantics/PartialSymbolicSemantics.h
     instructionSemantics/ReadWriteRegisterFragment.h
     instructionSemantics/SMTSolver.h
+    instructionSemantics/StaticSemantics2.h
     instructionSemantics/SymbolicMemory2.h
     instructionSemantics/SymbolicSemantics2.h
     instructionSemantics/SymbolicSemantics.h

@@ -4104,6 +4104,8 @@ SageInterface::generateFileList()
 
 // #ifndef USE_ROSE
 
+// DQ (4/17/2015): I think this function should be removed since it interferes 
+// with the concept of having more than one SgProject node.
 // This function uses a memory pool traversal specific to the SgProject IR nodes
 SgProject*
 SageInterface::getProject()
@@ -7942,9 +7944,9 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
   return ROSE::getNextStatement(currentStmt);
 }
 
-  SgStatement* SageInterface::getPreviousStatement(SgStatement * currentStmt)
+  SgStatement* SageInterface::getPreviousStatement(SgStatement * currentStmt, bool climbOutScope /*= true*/)
 {
-  return ROSE::getPreviousStatement(currentStmt);
+  return ROSE::getPreviousStatement(currentStmt, climbOutScope);
 }
 
 bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
@@ -8573,7 +8575,7 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
    attachComment(fringe_decl, "iter_count = (ub-lb+1)%step ==0?(ub-lb+1)/step: (ub-lb+1)/step+1;");
    attachComment(fringe_decl, "fringe = iter_count%unroll_factor==0 ? 0:unroll_factor*step");
 
-  // compile-time evaluate to see if initor is a constant of value 0
+  // compile-time evaluate to see if index is a constant of value 0
   // if so, the iteration count can be divided even by the unrolling factor
   // and no fringe loop is needed
   // WE have to fold on its parent node to get a possible constant since
@@ -10495,13 +10497,18 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
      ROSE_ASSERT(targetStmt != NULL);
      AttachedPreprocessingInfoType* comments = targetStmt->getAttachedPreprocessingInfo();
 
+#if 0
+     printf ("In SageInterface::insertStatement(): after checking for associated comments \n");
+     reportNodesMarkedAsModified(scope);
+#endif
+
   // TODO refactor this portion of code into a separate function
   // DQ (9/17/2010): Trying to eliminate failing case in OpenMP projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/lu.c
   // I think that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
   // if (comments != NULL && newStmt->getAttachedPreprocessingInfo() == NULL)
   // if (comments != NULL)
-   if (autoMovePreprocessingInfo) // Do this only if automatically handling of preprocessing information is request by users
-    {
+     if (autoMovePreprocessingInfo) // Do this only if automatically handling of preprocessing information is request by users
+     {
      if (comments != NULL && isSgBasicBlock(newStmt) == NULL)
         {
           vector<int> captureList;
@@ -10604,11 +10611,19 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
      } // end if autoMovePreprocessingInfo
 
 
+#if 0
+     printf ("In SageInterface::insertStatement(): after processing associated comments \n");
+     reportNodesMarkedAsModified(scope);
+#endif
+
      if (isSgIfStmt(parent))
         {
           if (isSgIfStmt(parent)->get_conditional()==targetStmt)
+             {
                insertStatement(isSgStatement(parent),newStmt,insertBefore);
+             }
             else
+             {
                if (isSgIfStmt(parent)->get_true_body()==targetStmt)
                   {
                     // Liao 3/2/2012
@@ -10628,89 +10643,112 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                     insertStatement(targetStmt, newStmt,insertBefore);
                   }
                  else
+                  {
                     if (isSgIfStmt(parent)->get_false_body()==targetStmt)
-                    {
-
+                       {
                       // ensureBasicBlockAsParent(targetStmt);
-                      SgBasicBlock* newparent = buildBasicBlock (targetStmt);
-                      isSgIfStmt(parent)->set_false_body(newparent);
-                      newparent->set_parent(parent);
-                      insertStatement(targetStmt, newStmt,insertBefore);
-                      //insertStatement(isSgStatement(parent),newStmt,insertBefore);
-                    }
+                         SgBasicBlock* newparent = buildBasicBlock (targetStmt);
+                         isSgIfStmt(parent)->set_false_body(newparent);
+                         newparent->set_parent(parent);
+                         insertStatement(targetStmt, newStmt,insertBefore);
+                      // insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                       }
+                  }
+             }
         }
        else
+        {
           if (isSgWhileStmt(parent))
              {
                if (isSgWhileStmt(parent)->get_condition()==targetStmt)
+                  {
                     insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                  }
                  else
+                  {
                     if (isSgWhileStmt(parent)->get_body()==targetStmt)
-                    {
-                      SgBasicBlock* newparent = buildBasicBlock (targetStmt);
-                      isSgWhileStmt(parent)->set_body(newparent);
-                      newparent->set_parent(parent);
-                      insertStatement(targetStmt, newStmt,insertBefore);
+                       {
+                         SgBasicBlock* newparent = buildBasicBlock (targetStmt);
+                         isSgWhileStmt(parent)->set_body(newparent);
+                         newparent->set_parent(parent);
+                         insertStatement(targetStmt, newStmt,insertBefore);
                       // ensureBasicBlockAsParent(targetStmt);
-                     // insertStatement(isSgStatement(parent),newStmt,insertBefore);
-                    }
+                      // insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                       }
+                  }
              }
             else
+             {
                if (isSgDoWhileStmt(parent))
                   {
                     if (isSgDoWhileStmt(parent)->get_condition()==targetStmt)
+                       {
                          insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                       }
                       else
+                       {
                          if (isSgDoWhileStmt(parent)->get_body()==targetStmt)
-                         {
-
-                           SgBasicBlock* newparent = buildBasicBlock (targetStmt);
-                           isSgDoWhileStmt(parent)->set_body(newparent);
-                           newparent->set_parent(parent);
-                           insertStatement(targetStmt, newStmt,insertBefore);
+                            {
+                              SgBasicBlock* newparent = buildBasicBlock (targetStmt);
+                              isSgDoWhileStmt(parent)->set_body(newparent);
+                              newparent->set_parent(parent);
+                              insertStatement(targetStmt, newStmt,insertBefore);
                            // ensureBasicBlockAsParent(targetStmt);
-                           //   insertStatement(isSgStatement(parent),newStmt,insertBefore);
-                         }
+                           // insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                            }
+                       }
                   }
                  else
+                  {
                     if (isSgForStatement(parent))
                        {
                          if (isSgForStatement(parent)->get_loop_body()==targetStmt)
-                         {
-                           SgBasicBlock* newparent = buildBasicBlock (targetStmt);
-                           isSgForStatement(parent)->set_loop_body(newparent);
-                           newparent->set_parent(parent);
-                           insertStatement(targetStmt, newStmt,insertBefore);
+                            {
+                              SgBasicBlock* newparent = buildBasicBlock (targetStmt);
+                              isSgForStatement(parent)->set_loop_body(newparent);
+                              newparent->set_parent(parent);
+                              insertStatement(targetStmt, newStmt,insertBefore);
                            // ensureBasicBlockAsParent(targetStmt);
-                           //   insertStatement(isSgStatement(parent),newStmt,insertBefore);
-                         }
+                           // insertStatement(isSgStatement(parent),newStmt,insertBefore);
+                            }
                            else
+                            {
                               if (isSgForStatement(parent)->get_test()==targetStmt)
                                  {
                                    insertStatement(isSgStatement(parent),newStmt,insertBefore);
                                  }
+                            }
                        }
                       else // \pp (2/24/2011) added support for UpcForAll
-                        if (SgUpcForAllStatement* p = isSgUpcForAllStatement(parent))
-                        {
-                          const bool stmt_present = (  p->get_loop_body() == targetStmt
-                                                    || p->get_test() == targetStmt
-                                                    );
+                       {
+                         if (SgUpcForAllStatement* p = isSgUpcForAllStatement(parent))
+                            {
+                              const bool stmt_present = (p->get_loop_body() == targetStmt || p->get_test() == targetStmt);
 
                           // \pp \todo what if !stmt_present
-                          ROSE_ASSERT(stmt_present);
-                          insertStatement(p, newStmt, insertBefore);
-                        }
-                       else if (SgOmpBodyStatement * p = isSgOmpBodyStatement (parent))
-                       {
-                         SgBasicBlock* newparent = buildBasicBlock (targetStmt);
-                         p->set_body(newparent);
-                         newparent->set_parent(parent);
-                         insertStatement(targetStmt, newStmt,insertBefore);
+                              ROSE_ASSERT(stmt_present);
+                              insertStatement(p, newStmt, insertBefore);
+                            }
+                           else
+                            {
+                              if (SgOmpBodyStatement * p = isSgOmpBodyStatement (parent))
+                                 {
+                                   SgBasicBlock* newparent = buildBasicBlock (targetStmt);
+                                   p->set_body(newparent);
+                                   newparent->set_parent(parent);
+                                   insertStatement(targetStmt, newStmt,insertBefore);
+                                }
+                               else
+                                 {
+                                // It appears that all of the recursive calls are untimately calling this location.
+                                   isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
+                                 }
+                            }
                        }
-                        else
-                           isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
-
+                  }
+             }
+        }
+     
   // DQ (11/19/2012): If we are building the AST within the front-end then don't do this expensive 
   // fixup (we already set it properly in the AST construction within the frontend so we don't need 
   // this).  Also since this is only operating within a single scope it is likely too specific to C 
@@ -10723,33 +10761,44 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
         {
           updateDefiningNondefiningLinks(isSgFunctionDeclaration(newStmt),scope);
         }
+
+#if 0
+     printf ("In SageInterface::insertStatement(): at BASE of function \n");
+     reportNodesMarkedAsModified(scope);
+#endif
    }
 
 
-  void SageInterface::insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore) {
-    if (insertBefore) {
-      for (size_t i = 0; i < newStmts.size(); ++i) {
-        insertStatementBefore(targetStmt, newStmts[i]);
-      }
-    } else {
-      for (size_t i = newStmts.size(); i > 0; --i) {
-        insertStatementAfter(targetStmt, newStmts[i - 1]);
-      }
-    }
-  }
+void SageInterface::insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore) 
+   {
+     if (insertBefore) 
+        {
+          for (size_t i = 0; i < newStmts.size(); ++i) 
+             {
+               insertStatementBefore(targetStmt, newStmts[i]);
+             }
+        }
+       else
+        {
+          for (size_t i = newStmts.size(); i > 0; --i) 
+             {
+               insertStatementAfter(targetStmt, newStmts[i - 1]);
+             }
+        }
+   }
 
-  void SageInterface::insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo /*= true*/)
+void SageInterface::insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo /*= true*/)
   {
     insertStatement(targetStmt,newStmt,false, autoMovePreprocessingInfo);
   }
 
-  void SageInterface::insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts)
+void SageInterface::insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts)
   {
     insertStatementList(targetStmt,newStmts,false);
   }
 
-  //! Insert a statement after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
-  void SageInterface::insertStatementAfterLastDeclaration(SgStatement* stmt, SgScopeStatement* scope)
+//! Insert a statement after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
+void SageInterface::insertStatementAfterLastDeclaration(SgStatement* stmt, SgScopeStatement* scope)
   {
     ROSE_ASSERT (stmt != NULL);
     ROSE_ASSERT (scope != NULL);
@@ -10761,8 +10810,8 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
       prependStatement(stmt, scope);
   }
 
-  //! Insert a list of statements after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
-  void SageInterface::insertStatementAfterLastDeclaration(std::vector<SgStatement*> stmt_list, SgScopeStatement* scope)
+//! Insert a list of statements after the last declaration within a scope. The statement will be prepended to the scope if there is no declaration statement found
+void SageInterface::insertStatementAfterLastDeclaration(std::vector<SgStatement*> stmt_list, SgScopeStatement* scope)
   {
     ROSE_ASSERT (scope != NULL);
     vector <SgStatement* >::iterator iter;
@@ -10782,8 +10831,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
     }
   }
 
-void SageInterface::insertStatementBeforeFirstNonDeclaration(SgStatement *newStmt, SgScopeStatement *scope,
-                                                             bool movePreprocessingInfo)
+void SageInterface::insertStatementBeforeFirstNonDeclaration(SgStatement *newStmt, SgScopeStatement *scope, bool movePreprocessingInfo)
 {
     ROSE_ASSERT(newStmt!=NULL);
     ROSE_ASSERT(scope!=NULL);
@@ -10796,8 +10844,7 @@ void SageInterface::insertStatementBeforeFirstNonDeclaration(SgStatement *newStm
     appendStatement(newStmt, scope);
 }
 
-void SageInterface::insertStatementListBeforeFirstNonDeclaration(const std::vector<SgStatement*> &newStmts,
-                                                                 SgScopeStatement *scope)
+void SageInterface::insertStatementListBeforeFirstNonDeclaration(const std::vector<SgStatement*> &newStmts,SgScopeStatement *scope)
 {
     ROSE_ASSERT(scope!=NULL);
     BOOST_FOREACH (SgStatement *targetStmt, scope->generateStatementList()) {
@@ -10809,12 +10856,12 @@ void SageInterface::insertStatementListBeforeFirstNonDeclaration(const std::vect
     appendStatementList(newStmts, scope);
 }
 
-  void SageInterface::insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo /*= true */)
+void SageInterface::insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt, bool autoMovePreprocessingInfo /*= true */)
   {
     insertStatement(targetStmt,newStmt,true, autoMovePreprocessingInfo);
   }
 
-  void SageInterface::insertStatementListBefore(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts)
+void SageInterface::insertStatementListBefore(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts)
   {
     insertStatementList(targetStmt,newStmts,true);
   }
@@ -10822,7 +10869,7 @@ void SageInterface::insertStatementListBeforeFirstNonDeclaration(const std::vect
   //a wrapper for set_expression(), set_operand(), set_operand_exp() etc
   // special concern for lvalue, parent,
   // todo: warning overwritting existing operands
-  void SageInterface::setOperand(SgExpression* target, SgExpression* operand)
+void SageInterface::setOperand(SgExpression* target, SgExpression* operand)
   {
     ROSE_ASSERT(target);
     ROSE_ASSERT(operand);
@@ -10861,7 +10908,7 @@ void SageInterface::insertStatementListBeforeFirstNonDeclaration(const std::vect
   }
 
   // binary and SgVarArgCopyOp, SgVarArgStartOp
-  void SageInterface::setLhsOperand(SgExpression* target, SgExpression* lhs)
+void SageInterface::setLhsOperand(SgExpression* target, SgExpression* lhs)
   {
     ROSE_ASSERT(target);
     ROSE_ASSERT(lhs);
@@ -19065,4 +19112,102 @@ int getFunctionTypeCount() {
 TypeEquivalenceChecker tec(false, false);
 return tec.typesAreEqual(typeA, typeB);
 }
+
+
+std::set<SgStatement*>
+SageInterface::collectTransformedStatements( SgNode* node )
+   {
+  // DQ (6/11/2015): This reports the statements that are marked as transformed.
+  // It is useful for debugging the token-based unparsing.
+
+     class StatementTraversal : public AstSimpleProcessing
+        {
+          public:
+               StatementTraversal() : count (0) {}
+               void visit (SgNode* node)
+                  {
+                    SgStatement* statement = isSgStatement(node);
+                 // if (statement != NULL && statement->get_file_info()->isTransformation() == true)
+                    if (statement != NULL && statement->isTransformation() == true)
+                       {
+                         returnset.insert(statement);
+                         count++;
+                       }
+                  }
+
+               int count; // running total of statements found marked as transformations in the input AST
+               std::set<SgStatement*> returnset;
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the function definition.
+     StatementTraversal traversal;
+     traversal.traverse(node, preorder);
+
+     return traversal.returnset;
+   }
+
+std::set<SgStatement*>
+SageInterface::collectModifiedStatements( SgNode* node )
+   {
+  // DQ (6/11/2015): This reports the statements that are marked as modified (isModified flag).
+  // It is useful for debugging the token-based unparsing.
+
+     class StatementTraversal : public AstSimpleProcessing
+        {
+          public:
+               StatementTraversal() : count (0) {}
+               void visit (SgNode* node)
+                  {
+                    SgStatement* statement = isSgStatement(node);
+                    if (statement != NULL && statement->get_isModified() == true)
+                       {
+                         returnset.insert(statement);
+                         count++;
+                       }
+                  }
+
+               int count; // running total of statements found marked as transformations in the input AST
+               std::set<SgStatement*> returnset;
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the function definition.
+     StatementTraversal traversal;
+     traversal.traverse(node, preorder);
+
+     return traversal.returnset;
+   }
+
+std::set<SgLocatedNode*>
+SageInterface::collectModifiedLocatedNodes( SgNode* node )
+   {
+  // DQ (6/11/2015): This reports the statements that are marked as modified (isModified flag).
+  // It is useful for debugging the token-based unparsing.
+
+     class LocatedNodeTraversal : public AstSimpleProcessing
+        {
+          public:
+               LocatedNodeTraversal() : count (0) {}
+               void visit (SgNode* node)
+                  {
+                    SgLocatedNode* locatedNode = isSgLocatedNode(node);
+                    if (locatedNode != NULL && locatedNode->get_isModified() == true)
+                       {
+#if 0
+                         printf ("In collectModifiedLocatedNodes(): isModified() == true: locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+#endif
+                         returnset.insert(locatedNode);
+                         count++;
+                       }
+                  }
+
+               int count; // running total of statements found marked as transformations in the input AST
+               std::set<SgLocatedNode*> returnset;
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the function definition.
+     LocatedNodeTraversal traversal;
+     traversal.traverse(node, preorder);
+
+     return traversal.returnset;
+   }
 

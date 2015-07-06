@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 
 #include "AsmFunctionIndex.h"
 #include "AsmUnparser.h"

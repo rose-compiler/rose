@@ -7,8 +7,8 @@
 #include "NullSemantics2.h"
 
 #include <boost/foreach.hpp>
-#include <sawyer/Assert.h>
-#include <sawyer/Graph.h>
+#include <Sawyer/Assert.h>
+#include <Sawyer/Graph.h>
 
 namespace rose {
 namespace BinaryAnalysis {

@@ -25,10 +25,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_253.C \
    test2013_255.C \
    test2013_256.C \
-   test2013_257.C \
    test2013_258.C \
    test2013_259.C \
-   test2013_260.C \
    test2013_261.C \
    test2013_271.C \
    test2013_272.C \
@@ -282,6 +280,13 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    lulesh.C \
    luleshTALC.C
 
+# DQ (5/28/2015): Removed this file because it is used by the makefile rule: 
+# test_unparse_includes_option_with_link.passed and CMake's ctest will cause
+# it to be run in parallel with the list of test codes above.  This is not
+# and issue for autoconf which does not find as much parallelism.
+#  test2013_257.C 
+#  test2013_260.C 
+
 # DQ (12/30/2014): This large file fails:
 # unparseCxx_types.C:418: virtual void Unparse_Type::unparseType(SgType*, SgUnparse_Info&): Assertion `info.SkipClassDefinition() == info.SkipEnumDefinition()' failed.
 # test2014_237.C
@@ -358,13 +363,29 @@ TESTS_NOT_PASSING = \
    test2014_101.C \
    test2014_102.C \
    test2014_103.C \
+   test2014_104.C \
+   test2014_105.C \
+   test2014_106.C \
    test2014_112.h \
    test2014_113.C \
    test2014_118.C \
    test2014_119.C \
    test2014_120.C \
    test2014_121.C \
-   test2014_164.C 
+   test2014_138.C \
+   test2014_158.C \
+   test2014_164.C \
+   test2014_173.C \
+   test2014_180.C \
+   test2014_181.C \
+   test2014_213.C \
+   test2014_214.C \
+   test2014_227.C \
+   test2014_228.C \
+   test2014_229.C \
+   test2014_237.C \
+   test2015_24.C \
+   test2015_25.C 
 
 # DQ (7/10/2014): Remaining bugs in new application.
 #  test2014_113.C 
@@ -1086,7 +1107,8 @@ test_unparse_includes_option.passed: $(TEST_TRANSLATOR)
 # is that va_start() and va_end() must be unparsed to be __builtin_va_start() and __builtin_va_end() (at least for GNU).
 test_unparse_includes_option_with_link.passed: $(TEST_TRANSLATOR)
 #	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers" $(top_srcdir)/scripts/test_exit_status $@
+#	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/17/2013): Added autoconf style link test.
 test_common_configure_test_with_link_part_1.passed: $(TEST_TRANSLATOR)
@@ -1145,7 +1167,7 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      test2007_101.h test2007_136.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
      test2008_11.h test2014_66.h test2014_112.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h test2012_268.h test2013_09.C \
      test2013_235.C test2013_236.C conftest.C conftest_2.C test2006_112.C test2010_25.C test2003_24.C \
-     test2004_82.C 
+     test2004_82.C test2015_08.h
 
 # DQ (6/18/2008): All of these should be present...
 # confdefs.h     test2001_11.h   test2001_18B.h  test2003_12.h  test2003_25.h   test2005_154.h  test2005_159.h  test2005_26.h  test2005_88.h    test2006_187b.h  test2006_42.h   test2007_113.h  test2007_137.h   test2007_167.h  test2007_42.h  test2007_97.h

@@ -652,12 +652,23 @@ StatementReplace (SgStatement *parent, Elemtype *& cur, SgStatement *target, SgS
 #endif
 
           cur = static_cast<Elemtype *>(newstmt);
-          parent->set_isModified(true);
+#if 0
+          if (SgProject::get_verbose() >= 1)
+             {
+               printf ("In StatementReplace: test 1: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+             }
+#endif
+       // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+       // parent->set_isModified(true);
+
           return true;
         }
      return false;
    }
 #else
+
+#error "DEAD CODE!"
+
 // DQ (12/30/2009): This is an attempt to build a more portable function to support new smaller ROSETTA generated files.
 // If we want to build this as a non-template function then we will have to reference "SgLocatedNode *& cur" as 
 // "SgLocatedNode ** cur" (or perhaps using SgStatement), else the types prevent the function from working.
@@ -679,6 +690,9 @@ StatementReplace (SgStatement *parent, SgStatement *& cur, SgStatement *target, 
         }
      return false;
    }
+
+#error "DEAD CODE!"
+
 #endif
 
 #if 0
@@ -1087,8 +1101,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                   {
                  // DQ (9/27/2007): Reported as an error by STL debugging mode, fixed as part of move from std::list to std::vector uniformly in ROSE.
                     l.erase(l.begin() + p);
-
-                    parent->set_isModified(true);
+#if 0
+                    if (SgProject::get_verbose() >= 1)
+                       {
+                         printf ("In StatementListInsertChild: test 1: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                       }
+#endif
+                 // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                 // parent->set_isModified(true);
                   }
 
                if (!inFront)
@@ -1190,7 +1210,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                       // n->set_scope(parentScope);
 
                          l.insert(l.begin() + p, static_cast<Elemtype*>(n));
-                         parent->set_isModified(true);
+#if 0
+                         if (SgProject::get_verbose() >= 1)
+                            {
+                              printf ("In StatementListInsertChild: test 2: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                            }
+#endif
+                      // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                      // parent->set_isModified(true);
 
                       // DQ (4/3/2012): Added test to make sure that the pointers are unique.
                       // testAstForUniqueNodes(parentScope);
@@ -1222,7 +1249,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                       // n->set_scope(parentScope);
 
                          l.insert(l.begin() + p, static_cast<Elemtype*>(stmt));
-                         parent->set_isModified(true);
+#if 0
+                         if (SgProject::get_verbose() >= 1)
+                            {
+                              printf ("In StatementListInsertChild: test 3: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                            }
+#endif
+                      // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                      // parent->set_isModified(true);
 
                       // DQ (4/3/2012): Added test to make sure that the pointers are unique.
                       // testAstForUniqueNodes(parentScope);
@@ -1473,6 +1507,34 @@ HEADER_LIST_DECLARATIONS
 
        // DQ (12/22/2014): Adding support for EDG normalized template member and non-member functions.
           bool isNormalizedTemplateFunction() const;
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length_for_return_type() const;
+          void set_name_qualification_length_for_return_type(int name_qualification_length_for_return_type);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required_for_return_type() const;
+          void set_type_elaboration_required_for_return_type(bool type_elaboration_required_for_return_type);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required_for_return_type() const;
+          void set_global_qualification_required_for_return_type(bool global_qualification_required_for_return_type);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_requiresNameQualificationOnReturnType () const;
+          void set_requiresNameQualificationOnReturnType ( bool requiresNameQualificationOnReturnType );
 
 HEADER_FUNCTION_DECLARATION_STATEMENT_END
 
@@ -1852,6 +1914,22 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
           void unsetVolatileAttribute();
 #endif
 
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_requiresGlobalNameQualificationOnType () const;
+          void set_requiresGlobalNameQualificationOnType ( bool requiresGlobalNameQualificationOnType );
+
   // DQ (12/21/2011): Modified to support SgTemplateVariableDeclaration to use this function.
   // private:
      protected:
@@ -1930,6 +2008,18 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
 
      protected:
        // GB (09/26/2007): Added this function as part of the move to index-based traversals.
@@ -2585,6 +2675,22 @@ HEADER_TYPEDEF_DECLARATION_STATEMENT_START
       //! This function generates the qualified name prefix to be used with the base type of the typedef declaration.
           SgName get_qualified_name_prefix_for_base_type() const;
 
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_requiresGlobalNameQualificationOnType() const;
+          void set_requiresGlobalNameQualificationOnType(bool requiresGlobalNameQualificationOnType);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length_for_base_type() const;
+          void set_name_qualification_length_for_base_type(int name_qualification_length_for_base_type);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required_for_base_type() const;
+          void set_type_elaboration_required_for_base_type(bool type_elaboration_required_for_base_type);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required_for_base_type() const;
+          void set_global_qualification_required_for_base_type(bool global_qualification_required_for_base_type);
+
      private:
        // GB (09/25/2007): Added this function as part of the traversal island fix.
       //! Internal support for the traversal mechanism.
@@ -3008,6 +3114,18 @@ HEADER_NAMESPACE_ALIAS_DECLARATION_STATEMENT_START
        // DQ (8/30/2009): Added namespace alias support.
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
+
 HEADER_NAMESPACE_ALIAS_DECLARATION_STATEMENT_END
 
 HEADER_USING_DIRECTIVE_STATEMENT_START
@@ -3020,6 +3138,18 @@ HEADER_USING_DIRECTIVE_STATEMENT_START
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
           virtual SgName get_mangled_name(void) const;
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
 
 HEADER_USING_DIRECTIVE_STATEMENT_END
 
@@ -3036,6 +3166,18 @@ HEADER_USING_DECLARATION_STATEMENT_START
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
           virtual SgName get_mangled_name(void) const;
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
 
 HEADER_USING_DECLARATION_STATEMENT_END
 
@@ -4035,13 +4177,23 @@ SgStatement::get_scope(void) const
                  // expression (test case is tests/CompileTests/Cxx_tests/test2006_148.C), so we need to skip over non-statements
                     SgNode* stmtTemp = stmt;
                     do {
-                      // printf ("In SgStatement::get_scope(): (do-while loop) stmtTemp = %p = %s \n",stmtTemp,stmtTemp->class_name().c_str());
+#if 0
+                         printf ("In SgStatement::get_scope(): (do-while loop) stmtTemp = %p = %s \n",stmtTemp,stmtTemp->class_name().c_str());
+#endif
                          stmtTemp = stmtTemp->get_parent();
                        }
                  // while (stmtTemp && !isSgStatement(stmtTemp));
                  // while ((stmtTemp != NULL) && !isSgStatement(stmtTemp));
-                    while ((stmtTemp != NULL) && (isSgStatement(stmtTemp) == NULL) && (isSgArrayType(stmtTemp) == NULL));
+                 // while ((stmtTemp != NULL) && (isSgStatement(stmtTemp) == NULL) && (isSgArrayType(stmtTemp) == NULL));
+                    while ((stmtTemp != NULL) && (isSgStatement(stmtTemp) == NULL) && (isSgArrayType(stmtTemp) == NULL) && (isSgTypeOfType(stmtTemp) == NULL) );
 
+                 // DQ (5/13/2015): Added debugging support.
+                    if (stmtTemp == NULL)
+                       {
+                          printf ("Error: stmtTemp == NULL: in loop over parents from stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                          ROSE_ASSERT(stmt->get_file_info() != NULL);
+                          stmt->get_file_info()->display("Error: SgStatement has NULL parent");
+                       }
                     ROSE_ASSERT (stmtTemp != NULL);
                     stmt = isSgStatement(stmtTemp);
 
@@ -4064,9 +4216,12 @@ SgStatement::get_scope(void) const
                        }
                       else
                        {
+                      // DQ (5/16/2015): This can also be the SgTypeOf operator.
                       // DQ (2/17/2014): This must be the case of an SgArrayType (not clear what to do here, return NULL).
                          SgArrayType* arrayType = isSgArrayType(stmtTemp);
-                         ROSE_ASSERT(arrayType != NULL);
+                         SgTypeOfType* typeOfType = isSgTypeOfType(stmtTemp);
+                      // ROSE_ASSERT(arrayType != NULL);
+                         ROSE_ASSERT(arrayType != NULL || typeOfType != NULL);
 #if 0
                          printf ("In get_scope(): identified input node to be part of SgArrayType: returning NULL \n");
 #endif
@@ -4348,6 +4503,13 @@ void
 SgScopeStatement::set_type_elaboration_list ( const std::set<SgSymbol*> & type_elaboration_list )
    {
      assert (this != NULL);
+
+#if 1
+  // DQ (6/12/2015): Need to evluate if this is used, if it is part of the API that must not set the isModified, etc.
+     printf ("Inside of SgScopeStatement::set_type_elaboration_list(): we need to know if this is called! \n");
+     ROSE_ASSERT(false);
+#endif
+
      set_isModified(true);
      p_type_elaboration_list = type_elaboration_list;
    }
@@ -4364,6 +4526,13 @@ void
 SgScopeStatement::set_hidden_type_list ( const std::set<SgSymbol*> & hidden_type_list )
    {
      assert (this != NULL);
+
+#if 1
+  // DQ (6/12/2015): Need to evluate if this is used, if it is part of the API that must not set the isModified, etc.
+     printf ("Inside of SgScopeStatement::set_type_elaboration_list(): we need to know if this is called! \n");
+     ROSE_ASSERT(false);
+#endif
+
      set_isModified(true);
      p_hidden_type_list = hidden_type_list;
    }
@@ -4380,6 +4549,13 @@ void
 SgScopeStatement::set_hidden_declaration_list ( const std::set<SgSymbol*> & hidden_declaration_list )
    {
      assert (this != NULL);
+
+#if 1
+  // DQ (6/12/2015): Need to evluate if this is used, if it is part of the API that must not set the isModified, etc.
+     printf ("Inside of SgScopeStatement::set_type_elaboration_list(): we need to know if this is called! \n");
+     ROSE_ASSERT(false);
+#endif
+
      set_isModified(true);
      p_hidden_declaration_list = hidden_declaration_list;
    }
@@ -10904,6 +11080,130 @@ SgFunctionDeclaration::isNormalizedTemplateFunction() const
      return string_represents_function_body;
    }
 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgFunctionDeclaration::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgFunctionDeclaration::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+bool 
+SgFunctionDeclaration::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgFunctionDeclaration::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgFunctionDeclaration::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgFunctionDeclaration::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
+bool 
+SgFunctionDeclaration::get_requiresNameQualificationOnReturnType () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_requiresNameQualificationOnReturnType;
+   }
+
+void
+SgFunctionDeclaration::set_requiresNameQualificationOnReturnType ( bool requiresNameQualificationOnReturnType )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_requiresNameQualificationOnReturnType = requiresNameQualificationOnReturnType;
+   }
+
+
+int
+SgFunctionDeclaration::get_name_qualification_length_for_return_type() const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length_for_return_type;
+   }
+
+void
+SgFunctionDeclaration::set_name_qualification_length_for_return_type(int name_qualification_length_for_return_type)
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length_for_return_type = name_qualification_length_for_return_type;
+   }
+
+bool
+SgFunctionDeclaration::get_type_elaboration_required_for_return_type() const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required_for_return_type;
+   }
+
+void
+SgFunctionDeclaration::set_type_elaboration_required_for_return_type(bool type_elaboration_required_for_return_type)
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required_for_return_type = type_elaboration_required_for_return_type;
+   }
+
+bool
+SgFunctionDeclaration::get_global_qualification_required_for_return_type() const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required_for_return_type;
+   }
+
+void
+SgFunctionDeclaration::set_global_qualification_required_for_return_type(bool global_qualification_required_for_return_type)
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required_for_return_type = global_qualification_required_for_return_type;
+   }
+
 
 SOURCE_FUNCTION_DECLARATION_STATEMENT_END
 
@@ -12591,6 +12891,77 @@ SgVariableDeclaration::set_baseTypeDefiningDeclaration(SgDeclarationStatement* d
         }
    }
 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgVariableDeclaration::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgVariableDeclaration::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+bool 
+SgVariableDeclaration::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgVariableDeclaration::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgVariableDeclaration::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgVariableDeclaration::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
+bool 
+SgVariableDeclaration::get_requiresGlobalNameQualificationOnType () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_requiresGlobalNameQualificationOnType;
+   }
+
+void
+SgVariableDeclaration::set_requiresGlobalNameQualificationOnType ( bool requiresGlobalNameQualificationOnType )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+     
+     p_requiresGlobalNameQualificationOnType = requiresGlobalNameQualificationOnType;
+   }
 
 SOURCE_VARIABLE_DECLARATION_STATEMENT_END
 
@@ -13009,6 +13380,61 @@ SgClassDeclaration::compute_classDefinition() const
         {
           return p_definition;
         }
+   }
+
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgClassDeclaration::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgClassDeclaration::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+bool 
+SgClassDeclaration::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgClassDeclaration::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgClassDeclaration::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgClassDeclaration::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
    }
 
 SOURCE_CLASS_DECLARATION_STATEMENT_END
@@ -15302,6 +15728,74 @@ SgTypedefDeclaration::get_baseTypeDefiningDeclaration() const
      return compute_baseTypeDefiningDeclaration();
    }
 
+bool 
+SgTypedefDeclaration::get_requiresGlobalNameQualificationOnType () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_requiresGlobalNameQualificationOnType;
+   }
+
+void
+SgTypedefDeclaration::set_requiresGlobalNameQualificationOnType ( bool requiresGlobalNameQualificationOnType )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+     
+     p_requiresGlobalNameQualificationOnType = requiresGlobalNameQualificationOnType;
+   }
+
+int 
+SgTypedefDeclaration::get_name_qualification_length_for_base_type () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length_for_base_type;
+   }
+
+void
+SgTypedefDeclaration::set_name_qualification_length_for_base_type ( int name_qualification_length_for_base_type )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+     
+     p_name_qualification_length_for_base_type = name_qualification_length_for_base_type;
+   }
+
+bool 
+SgTypedefDeclaration::get_type_elaboration_required_for_base_type () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required_for_base_type;
+   }
+
+void
+SgTypedefDeclaration::set_type_elaboration_required_for_base_type ( bool type_elaboration_required_for_base_type )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+     
+     p_type_elaboration_required_for_base_type = type_elaboration_required_for_base_type;
+   }
+
+bool 
+SgTypedefDeclaration::get_global_qualification_required_for_base_type () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required_for_base_type;
+   }
+
+void
+SgTypedefDeclaration::set_global_qualification_required_for_base_type ( bool global_qualification_required_for_base_type )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required_for_base_type = global_qualification_required_for_base_type;
+   }
+
 SOURCE_TYPEDEF_DECLARATION_STATEMENT_END
 
 
@@ -16102,6 +16596,61 @@ SgNamespaceAliasDeclarationStatement::get_symbol_from_symbol_table() const
      return get_scope()->find_symbol_from_declaration(this);
    }
 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgNamespaceAliasDeclarationStatement::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgNamespaceAliasDeclarationStatement::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+bool 
+SgNamespaceAliasDeclarationStatement::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgNamespaceAliasDeclarationStatement::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgNamespaceAliasDeclarationStatement::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgNamespaceAliasDeclarationStatement::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
 SOURCE_NAMESPACE_ALIAS_DECLARATION_STATEMENT_END
 
 SOURCE_NAMESPACE_DEFINITION_STATEMENT_START
@@ -16292,6 +16841,61 @@ SgUsingDirectiveStatement::get_mangled_name(void) const
      return returnName;
    }
 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgUsingDirectiveStatement::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgUsingDirectiveStatement::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+bool 
+SgUsingDirectiveStatement::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgUsingDirectiveStatement::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgUsingDirectiveStatement::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgUsingDirectiveStatement::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
 SOURCE_USING_DIRECTIVE_STATEMENT_END
 
 SOURCE_USING_DECLARATION_STATEMENT_START
@@ -16323,7 +16927,63 @@ SgUsingDeclarationStatement::get_mangled_name(void) const
      return returnName;
    }
 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgUsingDeclarationStatement::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgUsingDeclarationStatement::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+bool 
+SgUsingDeclarationStatement::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgUsingDeclarationStatement::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgUsingDeclarationStatement::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgUsingDeclarationStatement::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
 SOURCE_USING_DECLARATION_STATEMENT_END
+
 
 SOURCE_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT_START
 

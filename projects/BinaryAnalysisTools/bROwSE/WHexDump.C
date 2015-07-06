@@ -1,12 +1,20 @@
 #include <bROwSE/WHexDump.h>
 
 #include <bROwSE/FunctionUtil.h>
+
+#include <boost/algorithm/string/erase.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <Diagnostics.h>
 #include <rose_strtoull.h>
+#include <Sawyer/Stopwatch.h>
 #include <Wt/WHBoxLayout>
 #include <Wt/WLineEdit>
+#include <Wt/WPushButton>
 #include <Wt/WTableView>
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
+
+using namespace rose::Diagnostics;
 
 namespace bROwSE {
 
@@ -98,6 +106,20 @@ HexDumpModel::rowAddress(size_t row) const {
     if (memoryMap_.at(segmentVa).findNode() != memoryMap_.at(rowVa).findNode())
         return Sawyer::Nothing();
     return rowVa;
+}
+
+Sawyer::Optional<rose_addr_t>
+HexDumpModel::cellAddress(const Wt::WModelIndex &idx) const {
+    if (!idx.isValid())
+        return Sawyer::Nothing();
+    size_t column = idx.column();
+    size_t row = idx.row();
+
+    if (column >= bytesColumn && column < bytesColumn + bytesPerRow)
+        return cellAddress(row, column - bytesColumn);
+    if (column >= asciiColumn && column < asciiColumn + bytesPerRow)
+        return cellAddress(row, column - asciiColumn);
+    return Sawyer::Nothing();
 }
 
 Sawyer::Optional<rose_addr_t>
@@ -291,6 +313,15 @@ WHexDump::init() {
         new Wt::WText("Goto: ", actionsBox);
         wAddressEdit_ = new Wt::WLineEdit(actionsBox);
         wAddressEdit_->enterPressed().connect(this, &WHexDump::handleGoto);
+
+        new Wt::WBreak(actionsBox);
+        new Wt::WText("Search: ", actionsBox);
+        wSearchEdit_ = new Wt::WLineEdit(actionsBox);
+        wSearchEdit_->keyPressed().connect(this, &WHexDump::resetSearch);
+        wSearchNext_ = new Wt::WPushButton("Find", actionsBox);
+        wSearchNext_->clicked().connect(this, &WHexDump::handleSearch);
+        wSearchResults_ = new Wt::WText("Enter a big-endian hexadecimal value", actionsBox);
+        
     }
 
     Wt::WContainerWidget *tableContainer = new Wt::WContainerWidget;
@@ -317,6 +348,7 @@ WHexDump::init() {
         tableView_->setColumnWidth(bytesColumn + i, Wt::WLength(2+extra, Wt::WLength::FontEm));
         tableView_->setColumnWidth(asciiColumn + i, Wt::WLength(2+extra, Wt::WLength::FontEm));
     }
+    tableView_->clicked().connect(boost::bind(&WHexDump::handleClick, this, _1));
     hbox->addWidget(tableView_);
 }
 
@@ -331,10 +363,120 @@ WHexDump::makeVisible(rose_addr_t va) {
 }
 
 void
+WHexDump::handleClick(const Wt::WModelIndex &idx) {
+    rose_addr_t va = 0;
+    if (model_->cellAddress(idx).assignTo(va))
+        byteClicked_.emit(va);
+}
+    
+void
 WHexDump::handleGoto() {
     std::string str = wAddressEdit_->valueText().narrow();
     rose_addr_t va = rose_strtoull(str.c_str(), NULL, 0);
     makeVisible(va);
+}
+
+void
+WHexDump::resetSearch() {
+    wSearchNext_->setText("Find");
+    wSearchResults_->setText("Enter a big-endian hexadecimal value");
+    searchRegion_ = AddressInterval();
+}
+
+void
+WHexDump::handleSearch() {
+    // Convert the search string to a vector of bytes, ignoring white space
+    std::string str = wSearchEdit_->valueText().narrow();
+    boost::erase_all(str, " ");
+    if (boost::starts_with(str, "0x"))
+        str = str.substr(2);
+    if (str.empty()) {
+        resetSearch();
+        return;
+    }
+    if (str.empty() || str.size() % 2 != 0) {
+        wSearchResults_->setText("Not byte aligned");
+        return;
+    }
+    std::vector<uint8_t> bytes;
+    for (const char *ch = str.c_str(); *ch; ch+=2) {
+        uint8_t byte = 0;
+        for (int i=0; i<2; ++i) {
+            if (isdigit(ch[i])) {
+                byte = (byte << 4) | (ch[i]-'0');
+            } else if (ch[i]>='a' && ch[i]<='f') {
+                byte = (byte << 4) | (ch[i]-'a'+10);
+            } else if (ch[i]>='A' && ch[i]<='F') {
+                byte = (byte << 4) | (ch[i]-'A'+10);
+            } else {
+                wSearchResults_->setText("Invalid hexadecimal character");
+                return;
+            }
+        }
+        bytes.push_back(byte);
+    }
+
+    // If the search region is empty then start from the beginning again.
+    if (!searchRegion_)
+        searchRegion_ = model_->memoryMap().hull();
+
+    // Find the vector
+    Sawyer::Message::Stream info(mlog[INFO] <<"searching for " <<str);
+    Sawyer::Stopwatch timer;
+    bool found = false;
+    rose_addr_t startVa = 0;
+#if 0 // [Robb P. Matzke 2015-05-04]
+    std::vector<uint8_t> leadBytes(1, bytes[0]);
+    while (!found && searchRegion_) {
+        if (model_->memoryMap().findAny(searchRegion_, leadBytes, 0, 0).assignTo(startVa) &&
+            startVa <= searchRegion_.greatest()) {
+            
+            searchRegion_ = AddressInterval::hull(startVa, searchRegion_.greatest());
+            std::vector<uint8_t> readBytes(bytes.size());
+            if (model_->memoryMap().at(startVa).read(readBytes).size() == bytes.size() &&
+                std::equal(bytes.begin(), bytes.end(), readBytes.begin())) {
+                found = true;
+            }
+        }
+        if (searchRegion_.isSingleton()) {
+            searchRegion_ = AddressInterval();
+        } else {
+            searchRegion_ = AddressInterval::hull(searchRegion_.least()+1, searchRegion_.greatest());
+        }
+    }
+#else
+    if (model_->memoryMap().findSequence(searchRegion_, bytes).assignTo(startVa)) {
+        found = true;
+        searchRegion_ = startVa==searchRegion_.greatest() ?
+                        AddressInterval() :
+                        AddressInterval::hull(startVa+1, searchRegion_.greatest());
+    }
+#endif
+
+    // Report results
+    if (found) {
+        info <<"; found at " <<StringUtility::addrToString(startVa) <<"; took " <<timer <<" seconds\n";
+        wSearchNext_->setText("Next");
+        wSearchResults_->setText("Found at " + StringUtility::addrToString(startVa));
+        makeVisible(startVa);
+    } else {
+        info <<"; not found; took " <<timer <<" seconds\n";
+        wSearchNext_->setText("Find");
+        wSearchResults_->setText("Not found");
+    }
+}
+
+void
+WHexDump::partitioner(const P2::Partitioner &p) {
+    memoryMap(p.memoryMap());
+
+    AddressIntervalSet allAddresses = p.memoryMap().intervals();
+    xrefs_ = p.instructionCrossReferences(allAddresses);
+}
+
+const P2::ReferenceSet&
+WHexDump::crossReferences(rose_addr_t va) const {
+    return xrefs_.getOrDefault(P2::Reference(va));
 }
 
 } // namespace

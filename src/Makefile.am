@@ -46,7 +46,11 @@ endif
 
 # DQ (8/15/2011): Revert back to what we had before to fix Hudson java only test.
 # DQ (8/14/2011): Need this change to match Makefile changes in ECJ_ROSE_Connection/Makefile.am
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
+else
+libroseJavaParserlibraries = 
+endif
 
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
    librosePHPlibraries = frontend/PHPFrontend/librosePHPFrontend.la
@@ -243,6 +247,15 @@ REQUIRED_LIBS = librose.la
 # DQ (3/14/2009): In this file we have to overwrite existing values in LDFLAGS (to build librose.so).
 # DQ (3/14/2009): We have to clear the LDFLAGS variable...  This is not so great.
 LDFLAGS =
+if OS_MACOSX
+if HAS_LIBRARY_GCRYPT
+PORT_PATH = $(shell which port)
+PORT_HOME = $(shell dirname $(PORT_PATH))/..
+LDFLAGS += -L$(PORT_HOME)/lib -lgcrypt -lgcc_eh
+else
+LDFLAGS += -lgcc_eh
+endif
+endif
 
 testSharedRoseLib_SOURCES = testRoseLib.C
 testSharedRoseLib_DEPENDENCIES = $(REQUIRED_LIBS)
@@ -260,11 +273,62 @@ testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS += rose-config
 rose_config_SOURCES = rose-config.C
 rose_config_DEPENDENCIES = $(REQUIRED_LIBS)
-rose_config_CPPFLAGS =					\
-	-DCXX='"$(subst ",\",$(CXX))"'			\
-	-DCPPFLAGS='"$(subst ",\",$(ROSE_INCLUDES))"'	\
-	-DCFLAGS='"$(subst ",\",$(CFLAGS))"'		\
-	-DLDFLAGS='"$(subst ",\",$(LIBS_WITH_RPATH) $(ROSE_LIBS))"'
+
+rose_config_installed_cppflags =		\
+	-I@includedir@/rose			\
+	$(ROSE_QT_INCLUDE)			\
+	$(ROSE_SQLITE_DATABASE_INCLUDE)		\
+	$(ROSE_PHP_INCLUDES)			\
+	$(ROSE_YICES_INCLUDES)			\
+	$(ROSE_YAML_INCLUDES)			\
+	$(ROSE_LIBMAGIC_INCLUDES)		\
+	$(ROSE_DWARF_INCLUDES)			\
+	$(ROSE_WINE_INCLUDES)			\
+	$(ROSE_PCH_INCLUDE)			\
+	$(INTEL_PIN_INCLUDE_PATHS)		\
+	$(ROSE_ETHER_INCLUDE)			\
+	$(ROSE_ATERM_INCLUDE)			\
+	$(BOOST_CPPFLAGS)
+rose_config_build_cppflags = $(ROSE_INCLUDES)
+
+rose_config_installed_ldflags =			\
+	-L@libdir@ -lrose			\
+	$(BOOST_LDFLAGS)			\
+	$(BOOST_DATE_TIME_LIB)			\
+	$(BOOST_THREAD_LIB)			\
+	$(BOOST_FILESYSTEM_LIB)			\
+	$(BOOST_PROGRAM_OPTIONS_LIB)		\
+	$(BOOST_REGEX_LIB)			\
+	$(BOOST_SYSTEM_LIB)			\
+	$(BOOST_SERIALIZATION_LIB)		\
+	$(BOOST_WAVE_LIB)			\
+	$(BOOST_IOSTREAMS_LIB)			\
+	$(JAVA_JVM_LINK)			\
+	$(SQLITE_DATABASE_LIBS)			\
+	$(RT_LIBS)				\
+	$(ROSE_YICES_LIBS_WITH_PATH)		\
+	$(ROSE_PHP_LIBS_WITH_PATH)		\
+	$(ROSE_DWARF_LIBS_WITH_PATH)		\
+	$(ROSE_QT_LIBS_WITH_PATH)		\
+	$(ROSE_SSL_LIBS)			\
+	$(ROSE_ETHER_LIBS)			\
+	$(ROSE_INTEL_COMPILER_MATH_LIBS)	\
+	$(ROSE_ATERM_LIBS)			\
+	$(ROSE_YAML_LIBS_WITH_PATH)		\
+	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
+	-lm
+rose_config_build_ldflags =			\
+	$(LIBS_WITH_RPATH)			\
+	$(ROSE_LIBS)
+
+rose_config_CPPFLAGS =									\
+	-DCXX='"$(subst ",\",$(CXX))"'							\
+	-DINSTALLED_CPPFLAGS='"$(subst ",\",$(rose_config_installed_cppflags))"'	\
+	-DBUILD_CPPFLAGS='"$(subst ",\",$(rose_config_build_cppflags))"'		\
+	-DCFLAGS='"$(subst ",\",$(CFLAGS))"'						\
+	-DINSTALLED_LDFLAGS='"$(subst ",\",$(rose_config_installed_ldflags))"'		\
+	-DBUILD_LDFLAGS='"$(subst ",\",$(rose_config_build_ldflags))"'
+
 rose_config_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 print:

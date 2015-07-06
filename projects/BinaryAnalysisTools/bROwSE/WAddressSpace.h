@@ -4,8 +4,8 @@
 #include <rose.h>
 #include <Color.h>
 #include <bROwSE/bROwSE.h>
-#include <sawyer/IndexedList.h>
-#include <sawyer/Optional.h>
+#include <Sawyer/IndexedList.h>
+#include <Sawyer/Optional.h>
 #include <Wt/WContainerWidget>
 #include <Wt/WPen>
 

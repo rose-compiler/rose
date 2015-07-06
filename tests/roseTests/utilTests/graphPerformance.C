@@ -5,10 +5,10 @@
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/lexical_cast.hpp>
-#include <sawyer/CommandLine.h>
-#include <sawyer/GraphBoost.h>
-#include <sawyer/PoolAllocator.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/GraphBoost.h>
+#include <Sawyer/PoolAllocator.h>
+#include <Sawyer/Stopwatch.h>
 #include <signal.h>
 #include <time.h>
 #include <unistd.h>

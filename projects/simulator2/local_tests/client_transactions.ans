@@ -1,0 +1,40 @@
+./client_transactions: running natively; expect transactions to fail
+  iteration 0
+    transaction was not canceled
+    value[0] = 0
+  iteration 1
+    transaction was not canceled
+    value[1] = 1
+  iteration 2
+    transaction was not canceled
+    value[2] = 2
+  iteration 3
+    transaction was not canceled
+    value[3] = 3
+  iteration 4
+    transaction was not canceled
+    value[4] = 4
+  final results:
+    value[0] = 0
+    value[1] = 1
+    value[2] = 2
+    value[3] = 3
+    value[4] = 4
+./client_transactions: running under the ROSE simulator (RSIM).
+  iteration 0
+    value[0] = -1
+  iteration 1
+    value[1] = -1
+  iteration 2
+    value[2] = -1
+  iteration 3
+    value[3] = -1
+  iteration 4
+    transaction was not canceled
+    value[4] = 0
+  final results:
+    value[0] = -1
+    value[1] = -1
+    value[2] = -1
+    value[3] = -1
+    value[4] = 0

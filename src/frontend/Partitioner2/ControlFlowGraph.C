@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include <Partitioner2/ControlFlowGraph.h>
-#include <sawyer/GraphTraversal.h>
+#include <Sawyer/GraphTraversal.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -80,6 +80,65 @@ findFunctionReturns(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVe
     }
     return endVertices;
 }
+
+void
+eraseEdges(ControlFlowGraph &graph, const CfgConstEdgeSet &toErase) {
+    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, toErase) {
+        ASSERT_require(graph.isValidEdge(edge));
+        graph.eraseEdge(edge);
+    }
+}
+
+CfgConstVertexSet
+findIncidentVertices(const CfgConstEdgeSet &edges) {
+    CfgConstVertexSet retval;
+    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, edges) {
+        retval.insert(edge->source());
+        retval.insert(edge->target());
+    }
+    return retval;
+}
+
+CfgConstVertexSet
+findDetachedVertices(const ControlFlowGraph &graph) {
+    CfgConstVertexSet retval;
+    for (ControlFlowGraph::ConstVertexIterator vertex=graph.vertices().begin(); vertex!=graph.vertices().end(); ++vertex) {
+        if (0 == vertex->degree())
+            retval.insert(vertex);
+    }
+    return retval;
+}
+
+CfgConstVertexSet
+findDetachedVertices(const CfgConstVertexSet &vertices) {
+    CfgConstVertexSet retval;
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
+        if (0 == vertex->degree())
+            retval.insert(vertex);
+    }
+    return retval;
+}
+
+CfgConstVertexSet
+forwardMapped(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap) {
+    CfgConstVertexSet retval;
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
+        if (vmap.forward().exists(vertex))
+            retval.insert(vmap.forward()[vertex]);
+    }
+    return retval;
+}
+
+CfgConstVertexSet
+reverseMapped(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap) {
+    CfgConstVertexSet retval;
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
+        if (vmap.reverse().exists(vertex))
+            retval.insert(vmap.reverse()[vertex]);
+    }
+    return retval;
+}
+
 
 } // namespace
 } // namespace
