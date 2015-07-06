@@ -115,9 +115,9 @@ void Fortran_to_C::translateImplicitFunctionCallExp(SgFunctionCallExp* funcCallE
         }
         else if (isSgArrayType(varRefExp->get_symbol()->get_type()))
         {
-           SgType* calledType = (*j)->get_type();
 
 // This works only when the called function is translated.
+//           SgType* calledType = (*j)->get_type();
 // cout << "in ArrayType type:" << calledType->class_name() << endl;
 //           if(isSgPointerType(calledType))
 //           {
@@ -136,9 +136,9 @@ void Fortran_to_C::translateImplicitFunctionCallExp(SgFunctionCallExp* funcCallE
           // Passing the address of array element
           SgPntrArrRefExp* pntrArrRefExp = isSgPntrArrRefExp(*i);
           SgAddressOfOp* addrOfExp = buildAddressOfOp(deepCopy(pntrArrRefExp));
-          SgType* calledType = (*j)->get_type();
 
 // This works only when the called function is translated.
+//          SgType* calledType = (*j)->get_type();
 // cout << "in PntrArr type:" << calledType->class_name() << endl;
 //          if(isSgPointerType(calledType))
 //          {
