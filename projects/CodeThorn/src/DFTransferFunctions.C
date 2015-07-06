@@ -70,14 +70,27 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       ROSE_ASSERT(0);
     }
   }
+  if(_labeler->isEmptyStmtLabel(lab)||_labeler->isBlockBeginLabel(lab)) {
+    SgStatement* stmt=isSgStatement(node);
+    ROSE_ASSERT(stmt);
+    transferEmptyStmt(lab,stmt,element);
+    return;
+  }
   
-  if(isSgExprStatement(node))
+  if(isSgExprStatement(node)) {
     node=SgNodeHelper::getExprStmtChild(node);
+  }
   
   // desugar SgExprStatement
   if(isSgReturnStmt(node)) {
     node=SgNodeHelper::getFirstChild(node);
   }
+
+  // default identity functions
+  if(isSgBreakStmt(node) || isSgContinueStmt(node)) {
+    return;
+  }
+
   if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(node)) {
     SgStatement* blockStmt=isSgBasicBlock(caseStmt->get_parent());
     ROSE_ASSERT(blockStmt);
@@ -88,20 +101,46 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     transferSwitchCase(lab,condStmt, caseStmt,element);
     return;
   }
-  if(SgExpression* expr=isSgExpression(node)) {
-    transferExpression(lab,expr,element);
+  if(SgDefaultOptionStmt* defaultStmt=isSgDefaultOptionStmt(node)) {
+    SgStatement* blockStmt=isSgBasicBlock(defaultStmt->get_parent());
+    ROSE_ASSERT(blockStmt);
+    SgSwitchStatement* switchStmt=isSgSwitchStatement(blockStmt->get_parent());
+    ROSE_ASSERT(switchStmt);
+    SgStatement* condStmt=isSgStatement(SgNodeHelper::getCond(switchStmt));
+    ROSE_ASSERT(condStmt);
+    transferSwitchDefault(lab,condStmt, defaultStmt,element);
     return;
   }
   if(SgVariableDeclaration* vardecl=isSgVariableDeclaration(node)) {
     transferDeclaration(lab,vardecl,element);
     return;
   }
+  if(SgExpression* expr=isSgExpression(node)) {
+    transferExpression(lab,expr,element);
+    return;
+  }
+
+  if(isSgSwitchStatement(node)) {
+    cout<<"WARNING: transfer at SgSwitchStatement node."<<endl;
+    return;
+  }
+
+#if 1
+  /*
+     ensure there is no fall through as this would mean that not the correct transferfunction is invoked.
+  */
+  cerr<<"Error: unknown language construct in transfer function."<<endl;
+  cerr<<"  NodeType: "<<node->class_name()<<endl;
+  cerr<<"  Source Code: "<<node->unparseToString()<<endl;
+  exit(1);
+#else
+  /* fall trough for all other stmts */
   return;
+#endif
 }
 
 
 void DFTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element) {
-  cout<<"DEFAULT: transferExp."<<endl;
   // default identity function
 }
   
@@ -110,7 +149,15 @@ void DFTransferFunctions::transferDeclaration(Label label, SgVariableDeclaration
   // default identity function
 }
 
+void DFTransferFunctions::transferEmptyStmt(Label label, SgStatement* stmt, Lattice& element) {
+  // default identity function
+}
+
 void DFTransferFunctions::transferSwitchCase(Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate) {
+  // default identity function
+}
+
+void DFTransferFunctions::transferSwitchDefault(Label lab,SgStatement* condStmt, SgDefaultOptionStmt* caseStmt,Lattice& pstate) {
   // default identity function
 }
 

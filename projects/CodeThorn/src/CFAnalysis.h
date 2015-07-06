@@ -65,6 +65,8 @@ class CFAnalysis {
    */
   int inlineTrivialFunctions(Flow& flow);
   size_t deleteFunctionCallLocalEdges(Flow& flow);
+  static SgStatement* getFirstStmtInBlock(SgBasicBlock* block);
+  static SgStatement* getLastStmtInBlock(SgBasicBlock* block);
  private:
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);

@@ -146,6 +146,28 @@ Labeler* CFAnalysis::getLabeler() {
   return labeler;
 }
 
+// returns 0 if no statement (other than SgBasicBlock) exists in block.
+SgStatement* CFAnalysis::getFirstStmtInBlock(SgBasicBlock* block) {
+  ROSE_ASSERT(block);
+  const SgStatementPtrList& stmtList=block->get_statements();
+  if(stmtList.size()>=1) {
+    return stmtList.front();
+  } else {
+    return 0;
+  }
+}
+
+// returns 0 if no statement (other than SgBasicBlock) exists in block.
+SgStatement* CFAnalysis::getLastStmtInBlock(SgBasicBlock* block) {
+  ROSE_ASSERT(block);
+  const SgStatementPtrList& stmtList=block->get_statements();
+  if(stmtList.size()>=1) {
+    return stmtList.back();
+  } else {
+    return 0;
+  }
+}
+
 Label CFAnalysis::initialLabel(SgNode* node) {
   assert(node);
 
@@ -833,8 +855,9 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgBasicBlock: {
     size_t len=node->get_numberOfTraversalSuccessors();
     if(len==0) {
-      Edge edge=Edge(labeler->blockBeginLabel(node),EDGE_FORWARD,labeler->blockEndLabel(node));
-      edgeSet.insert(edge);
+      // do not generate edge to blockEndLabel
+      //Edge edge=Edge(labeler->blockBeginLabel(node),EDGE_FORWARD,labeler->blockEndLabel(node));
+      //edgeSet.insert(edge);
       return edgeSet;
     } else {
       if(len==1) {
@@ -854,6 +877,8 @@ Flow CFAnalysis::flow(SgNode* node) {
     Edge edge1=Edge(labeler->blockBeginLabel(node),EDGE_FORWARD,initialLabel(firstStmt));
     edgeSet.insert(edge1);
     ROSE_ASSERT(len>=1);
+    // do not generate edges to blockEndLabel
+#if 0
     SgNode* lastStmt=node->get_traversalSuccessorByIndex(len-1);
     ROSE_ASSERT(isSgStatement(lastStmt));
     LabelSet lastStmtFinalLabels=finalLabels(lastStmt);
@@ -861,6 +886,7 @@ Flow CFAnalysis::flow(SgNode* node) {
       Edge edge2=Edge(*i,EDGE_FORWARD,labeler->blockEndLabel(node));
       edgeSet.insert(edge2);
     }
+#endif
     return edgeSet;
   }
 
