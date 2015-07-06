@@ -8,7 +8,7 @@
 #include "KLT/Core/loop-tiler.hpp"
 
 #include "DLX/TileK/language.hpp"
-#include "DLX/klt-annotations.hpp"
+#include "DLX/KLT/annotations.hpp"
 
 #include "MFB/Sage/driver.hpp"
 

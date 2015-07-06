@@ -3,6 +3,7 @@
 
 #include "DLX/Core/parser.hpp"
 #include "DLX/Core/compiler.hpp"
+#include "DLX/KLT/loop-trees.hpp"
 
 #include "DLX/TileK/language.hpp"
 
@@ -37,114 +38,6 @@ typedef ::DLX::KLT_Annotation< ::DLX::TileK::language_t> Annotation;
 typedef ::KLT::LoopTrees<Annotation> LoopTrees;
 typedef ::KLT::Kernel<Annotation, Language, Runtime> Kernel;
 
-void extractLoopTrees(
-  const std::vector<DLX::Directives::directive_t<DLX::TileK::language_t> *> & directives,
-  std::map<DLX::Directives::directive_t<DLX::TileK::language_t> *, LoopTrees *> & loop_trees,
-  std::map<SgForStatement *, LoopTrees::loop_t *> & loop_map
-) {
-  std::vector<DLX::Directives::directive_t<DLX::TileK::language_t> *>::const_iterator it_directive;
-  for (it_directive = directives.begin(); it_directive != directives.end(); it_directive++) {
-
-    DLX::Directives::directive_t<DLX::TileK::language_t> * directive = *it_directive;
-    if (directive->construct->kind != DLX::TileK::language_t::e_construct_kernel) continue; // (language dependant)
-
-    DLX::Directives::construct_t<DLX::TileK::language_t, DLX::TileK::language_t::e_construct_kernel> * construct =
-                 (DLX::Directives::construct_t<DLX::TileK::language_t, DLX::TileK::language_t::e_construct_kernel> *)(directive->construct);
-
-    // Create empty loop-tree (generic)
-    LoopTrees * loop_tree = new LoopTrees();
-    loop_trees.insert(std::pair<DLX::Directives::directive_t<DLX::TileK::language_t> *, LoopTrees *>(directive, loop_tree));
-
-    // Add data to loop-tree (language dependant)
-    std::vector<DLX::Directives::generic_clause_t<DLX::TileK::language_t> *>::const_iterator it_clause;
-    for (it_clause = directive->clause_list.begin(); it_clause != directive->clause_list.end(); it_clause++) {
-      DLX::Directives::generic_clause_t<DLX::TileK::language_t> * clause = *it_clause;
-      if (clause->kind != DLX::TileK::language_t::e_clause_data) continue;
-      DLX::Directives::clause_t<DLX::TileK::language_t, DLX::TileK::language_t::e_clause_data> * data_clause = 
-                   (DLX::Directives::clause_t<DLX::TileK::language_t, DLX::TileK::language_t::e_clause_data> *)clause;
-
-      std::vector<DLX::Frontend::data_sections_t>::const_iterator it_data_sections;
-      for (it_data_sections = data_clause->parameters.data_sections.begin(); it_data_sections != data_clause->parameters.data_sections.end(); it_data_sections++) {
-        SgVariableSymbol * data_sym = it_data_sections->first;
-
-        SgType * base_type = data_sym->get_type();
-        std::vector<DLX::Frontend::section_t>::const_iterator it_section;
-        for (it_section = it_data_sections->second.begin(); it_section != it_data_sections->second.end(); it_section++) {
-          SgPointerType * ptr_type = isSgPointerType(base_type);
-          SgArrayType * arr_type = isSgArrayType(base_type);
-          if (ptr_type != NULL)
-            base_type = ptr_type->get_base_type();
-          else if (arr_type != NULL)
-            base_type = arr_type->get_base_type();
-          else assert(false);
-          assert(base_type != NULL);
-        }
-        KLT::Data<Annotation> * data = new KLT::Data<Annotation>(data_sym, base_type);
-        for (it_section = it_data_sections->second.begin(); it_section != it_data_sections->second.end(); it_section++) {
-          KLT::Data<Annotation>::section_t section;
-            section.lower_bound = it_section->lower_bound;
-            section.size = it_section->size;
-            section.stride = it_section->stride;
-          data->addSection(section);
-        }
-        loop_tree->addData(data);
-      }
-    }
-
-    std::vector<SgVariableSymbol *> iterators, locals, others;
-
-    // Parse the loop nest (generic)
-    SgStatement * region_base = construct->assoc_nodes.kernel_region;
-    SgBasicBlock * region_bb = isSgBasicBlock(region_base);
-    size_t loop_cnt = 0;
-    if (region_bb != NULL) {
-      std::vector<SgStatement *>::const_iterator it_stmt;
-      for (it_stmt = region_bb->get_statements().begin(); it_stmt != region_bb->get_statements().end(); it_stmt++)
-        if (!isSgPragmaDeclaration(*it_stmt)) {
-          loop_tree->addTree(LoopTrees::build(*it_stmt, loop_tree, iterators, locals, others, loop_map, loop_cnt));
-        }
-    }
-    else {
-      loop_tree->addTree(LoopTrees::build(region_base, loop_tree, iterators, locals, others, loop_map, loop_cnt));
-    }
-
-    // Detect scalar used in loop-tree
-    const std::vector<SgVariableSymbol *> & params = loop_tree->getParameters();
-    const std::vector<KLT::Data<Annotation> *> & datas_ = loop_tree->getDatas();
-    std::vector<SgVariableSymbol *> datas;
-    std::vector<KLT::Data<Annotation> *>::const_iterator it_data;
-    for (it_data = datas_.begin(); it_data != datas_.end(); it_data++)
-      datas.push_back((*it_data)->getVariableSymbol());
-    std::vector<SgVariableSymbol *>::const_iterator it_other;
-    for (it_other = others.begin(); it_other != others.end(); it_other++)
-      if (std::find(params.begin(), params.end(), *it_other) == params.end() && std::find(datas.begin(), datas.end(), *it_other) == datas.end())
-        loop_tree->addScalar(*it_other); // Neither iterators or parameters or data
-  }
-
-  // Apply loop construct to loops in loop-tree
-  for (it_directive = directives.begin(); it_directive != directives.end(); it_directive++) {
-    DLX::Directives::directive_t<DLX::TileK::language_t> * directive = *it_directive;
-
-    if (directive->construct->kind != DLX::TileK::language_t::e_construct_loop) continue;
-
-    DLX::Directives::construct_t<DLX::TileK::language_t, DLX::TileK::language_t::e_construct_loop> * construct =
-                 (DLX::Directives::construct_t<DLX::TileK::language_t, DLX::TileK::language_t::e_construct_loop> *)(directive->construct);
-    assert(construct->assoc_nodes.for_loop != NULL);
-
-    std::map<SgForStatement *, LoopTrees::loop_t *>::const_iterator it_loop = loop_map.find(construct->assoc_nodes.for_loop);
-    assert(it_loop != loop_map.end());
-
-    LoopTrees::loop_t * loop = it_loop->second;
-
-    const std::vector<DLX::Directives::generic_clause_t<DLX::TileK::language_t> *> & clauses = directive->clause_list;
-    std::vector<DLX::Directives::generic_clause_t<DLX::TileK::language_t> *>::const_iterator it_clause;
-    for (it_clause = clauses.begin(); it_clause != clauses.end(); it_clause++) {
-      loop->annotations.push_back(DLX::KLT_Annotation<DLX::TileK::language_t>(*it_clause));
-    }
-  }
-}
-  
-
 int main(int argc, char ** argv) {
   SgProject * project = new SgProject::SgProject(argc, argv);
 
@@ -167,7 +60,7 @@ int main(int argc, char ** argv) {
   // Extract LoopTree
   std::map<DLX::Directives::directive_t<DLX::TileK::language_t> *, LoopTrees *> loop_trees;
   std::map<SgForStatement *, LoopTrees::loop_t *> loop_map;
-  extractLoopTrees(frontend.directives, loop_trees, loop_map);
+  DLX::extractLoopTrees(frontend.directives, loop_trees, loop_map);
 
   MFB::KLT_Driver driver(project);
   MDCG::ModelBuilder model_builder(driver);
