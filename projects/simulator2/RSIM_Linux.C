@@ -7,6 +7,7 @@
 #include "BinaryLoaderElf.h"
 
 #include <sys/mman.h>
+#include <sys/syscall.h>                                // SYS_xxx definitions
 #include <sys/user.h>
 #include <sys/types.h>
 
@@ -103,7 +104,7 @@ public:
         vdso_mapped_va = std::max(vdso_mapped_va, (rose_addr_t)0x40000000); /* value used on hudson-rose-07 */
 
         unsigned vdso_access = MemoryMap::READABLE | MemoryMap::EXECUTABLE;
-        MemoryMap::Segment vdso_segment = MemoryMap::Segment::fileInstance(vdso_name, vdso_access, "[vdso]");
+        MemoryMap::Segment vdso_segment = MemoryMap::Segment::fileInstance(vdso_name, vdso_access, "[vdso] "+vdso_name);
         assert((ssize_t)vdso_segment.buffer()->size()==sb.st_size);
         map->insert(AddressInterval::baseSize(vdso_mapped_va, vdso_segment.buffer()->size()), vdso_segment);
 
@@ -160,19 +161,22 @@ RSIM_Linux::loadSpecimenArch(RSIM_Process *process, SgAsmInterpretation *interpr
 
     /* Load and map the virtual dynamic shared library. */
     bool vdso_loaded = false;
-    for (size_t i=0; i<settings().vdsoPaths.size() && !vdso_loaded; i++) {
-        for (int j=0; j<2 && !vdso_loaded; j++) {
-            std::string vdsoName = settings().vdsoPaths[i] + (j ? "" : "/" + vdsoName_);
-            if (trace)
-                fprintf(trace, "looking for vdso: %s\n", vdsoName.c_str());
-            if ((vdso_loaded = loader->map_vdso(vdsoName, interpretation, &process->get_memory()))) {
+    std::vector<std::string> paths = settings().vdsoPaths;
+    if (paths.empty()) {
+        paths.push_back(".");
+        paths.push_back(ROSE_AUTOMAKE_TOP_BUILDDIR + "/projects/simulator2");
+        paths.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/projects/simulator2");
+        paths.push_back(ROSE_AUTOMAKE_DATADIR + "/projects/simulator2");
+    }
+    for (size_t i=0; i<paths.size() && !vdso_loaded; ++i) {
+        FileSystem::Path path = paths[i];
+        for (int j=0; j<2 && !vdso_loaded; ++j) {
+            FileSystem::Path name = j ? path / vdsoName_ : path;
+            if (FileSystem::isFile(name) &&
+                (vdso_loaded = loader->map_vdso(FileSystem::toString(name), interpretation, &process->get_memory()))) {
                 vdsoMappedVa_ = loader->vdso_mapped_va;
                 vdsoEntryVa_ = loader->vdso_entry_va;
                 headers.push_back(loader->vdso);
-                if (trace) {
-                    fprintf(trace, "mapped %s at 0x%08"PRIx64" with entry va 0x%08"PRIx64"\n",
-                            vdsoName.c_str(), vdsoMappedVa_, vdsoEntryVa_);
-                }
             }
         }
     }
@@ -212,6 +216,9 @@ RSIM_Linux::initializeSimulatedOs(RSIM_Process *process, SgAsmGenericHeader *mai
     process->allocateFileDescriptors(0, 0);
     process->allocateFileDescriptors(1, 1);
     process->allocateFileDescriptors(2, 2);
+
+    // Load the virtual system call page
+    loadVsyscalls(process);
 }
 
 template<typename Word>
@@ -407,6 +414,96 @@ RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr) 
     const RegisterDescriptor &REG_SP = thread->dispatcher()->stackPointerRegister();
     thread->operators()->writeRegister(REG_SP, thread->operators()->number_(REG_SP.get_nbits(), sp));
 }
+
+template<class src_dirent_t, class dst_dirent_t>
+void
+copy_dirent_type(const src_dirent_t *src, dst_dirent_t *dst) {
+    ((uint8_t*)dst)[dst->d_reclen-1] = ((const uint8_t*)src)[src->d_reclen-1];
+}
+
+template<>
+void
+copy_dirent_type<dirent_64, dirent64_32>(const dirent_64 *src, dirent64_32 *dst) {
+    dst->d_type = ((const uint8_t*)src)[src->d_reclen-1];
+}
+
+template<class src_dirent_t, class dst_dirent_t>
+struct ExtraDirentPadding {
+    enum { value = 0 };
+};
+
+template<>
+struct ExtraDirentPadding<dirent_32, dirent64_32> {
+    enum { value = 2 };
+};
+
+template<class guest_dirent_t,                          // dirent_32, dirent64_32, or dirent_64
+         class host_dirent_t>                           // dirent64_32 or dirent_64
+int
+RSIM_Linux::getdents_syscall(RSIM_Thread *thread, int syscallNumber, int fd, rose_addr_t dirent_va, size_t sz)
+{
+    size_t at = 0; /* position when filling specimen's buffer */
+    uint8_t guest_buf[sz];
+    uint8_t host_buf[sz];
+
+    /* Read dentries from host kernel and copy to specimen's buffer. We must do this one dentry at a time because we don't want
+     * to over read (there's no easy way to back up).  In other words, we read a dentry (but not more than what would fit in
+     * the specimen) and if successful we copy to the specimen, translating from 64- to 32-bit.  The one-at-a-time requirement
+     * is due to the return buffer value being run-length encoded. */
+    long status = -EINVAL; /* buffer too small */
+    while (at+sizeof(guest_dirent_t)<sz) {
+
+        /* Read one dentry from host if possible */
+        host_dirent_t *host_dirent = (host_dirent_t*)host_buf;
+        size_t limit = sizeof(*host_dirent);
+        status = -EINVAL; /* buffer too small */
+        while (limit<=sz-at && -EINVAL==status) {
+            status = syscall(syscallNumber, fd, host_buf, limit++);
+            if (-1==status)
+                status = -errno;
+        }
+
+        /* Convert and copy the host dentry into the specimen memory. */
+        if (status>0) {
+            ROSE_ASSERT(status>(long)sizeof(*host_dirent));
+            guest_dirent_t *guest_dirent = (guest_dirent_t*)(guest_buf+at);
+
+            /* name */
+            ROSE_ASSERT(host_dirent->d_reclen > sizeof(*host_dirent));
+            char *name_src = (char*)host_dirent + sizeof(*host_dirent);
+            char *name_dst = (char*)guest_dirent + sizeof(*guest_dirent);
+            size_t name_sz = host_dirent->d_reclen - sizeof(*host_dirent);
+            memcpy(name_dst, name_src, name_sz);
+
+            /* inode */
+            guest_dirent->d_ino = host_dirent->d_ino;
+
+            /* record length */
+            guest_dirent->d_reclen = host_dirent->d_reclen - sizeof(*host_dirent) + sizeof(*guest_dirent);
+            guest_dirent->d_reclen += ExtraDirentPadding<host_dirent_t, guest_dirent_t>::value;
+
+            /* type */
+            copy_dirent_type(host_dirent, guest_dirent);
+
+            /* offset to next dentry */
+            at += guest_dirent->d_reclen;
+            guest_dirent->d_off = at;
+        }
+
+        /* Termination conditions */
+        if (status<=0) break;
+    }
+
+    if ((size_t)at != thread->get_process()->mem_write(guest_buf, dirent_va, at))
+        return -EFAULT;
+
+    return at>0 ? at : status;
+}
+
+template int RSIM_Linux::getdents_syscall<dirent_64, dirent_64>(RSIM_Thread*, int, int, rose_addr_t, size_t);
+template int RSIM_Linux::getdents_syscall<dirent_32, dirent_64>(RSIM_Thread*, int, int, rose_addr_t, size_t);
+template int RSIM_Linux::getdents_syscall<dirent64_32, dirent_64>(RSIM_Thread*, int, int, rose_addr_t, size_t);
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      System calls
@@ -867,11 +964,11 @@ RSIM_Linux::syscall_exit_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux::syscall_exit_body(RSIM_Thread *t, int callno)
 {
-    if (t->clear_child_tid) {
+    if (t->clearChildTidVa()) {
         uint32_t zero = 0;                              // FIXME[Robb P. Matzke 2015-06-24]: is this right for 64-bit?
-        size_t n = t->get_process()->mem_write(&zero, t->clear_child_tid, sizeof zero);
+        size_t n = t->get_process()->mem_write(&zero, t->clearChildTidVa(), sizeof zero);
         ROSE_ASSERT(n==sizeof zero);
-        int nwoke = t->futex_wake(t->clear_child_tid, INT_MAX);
+        int nwoke = t->futex_wake(t->clearChildTidVa(), INT_MAX);
         ROSE_ASSERT(nwoke>=0);
     }
 
@@ -899,15 +996,15 @@ RSIM_Linux::syscall_exit_group_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux::syscall_exit_group_body(RSIM_Thread *t, int callno)
 {
-    if (t->clear_child_tid) {
+    if (t->clearChildTidVa()) {
         // From the set_tid_address(2) man page:
         //   When clear_child_tid is set, and the process exits, and the process was sharing memory with other processes or
         //   threads, then 0 is written at this address, and a futex(child_tidptr, FUTEX_WAKE, 1, NULL, NULL, 0) call is
         //   done. (That is, wake a single process waiting on this futex.) Errors are ignored.
         uint32_t zero = 0;                              // FIXME[Robb P. Matzke 2015-06-24]: is this right for 64-bit?
-        size_t n = t->get_process()->mem_write(&zero, t->clear_child_tid, sizeof zero);
+        size_t n = t->get_process()->mem_write(&zero, t->clearChildTidVa(), sizeof zero);
         ROSE_ASSERT(n==sizeof zero);
-        int nwoke = t->futex_wake(t->clear_child_tid, INT_MAX);
+        int nwoke = t->futex_wake(t->clearChildTidVa(), INT_MAX);
         ROSE_ASSERT(nwoke>=0);
     }
 
@@ -2047,7 +2144,7 @@ RSIM_Linux::syscall_rt_sigaction_body(RSIM_Thread *t, int callno)
                 return;
             }
         } else {
-            ASSERT_require(t->get_process()->wordSize() == 32);
+            ASSERT_require(t->get_process()->wordSize() == 64);
             sigaction_64 oldActionGuest = oldActionHost.get_sigaction_64();
             if (sizeof(oldActionGuest) != t->get_process()->mem_write(&oldActionGuest, oldActionVa, sizeof oldActionGuest)) {
                 t->syscall_return(-EFAULT);
@@ -2232,6 +2329,70 @@ RSIM_Linux::syscall_setsockopt_helper(RSIM_Thread *t, int guestFd, int level, in
     }
     
     t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_set_robust_list_enter(RSIM_Thread *t, int callno)
+{
+    if (t->get_process()->wordSize() == 32) {
+        t->syscall_enter("set_robust_list").P(sizeof(robust_list_head_32), print_robust_list_head_32).d();
+    } else {
+        t->syscall_enter("set_robust_list").P(sizeof(robust_list_head_64), print_robust_list_head_64).d();
+    }
+}
+
+void
+RSIM_Linux::syscall_set_robust_list_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t head_va = t->syscall_arg(0);
+    size_t len = t->syscall_arg(1);
+
+    if (t->get_process()->wordSize() == 32) {
+        if (len!=sizeof(robust_list_head_32)) {
+            t->syscall_return(-EINVAL);
+            return;
+        }
+        robust_list_head_32 guest_head;
+        if (sizeof(guest_head)!=t->get_process()->mem_read(&guest_head, head_va, sizeof(guest_head))) {
+            t->syscall_return(-EFAULT);
+            return;
+        }
+    } else {
+        ASSERT_require(t->get_process()->wordSize() == 64);
+        if (len!=sizeof(robust_list_head_64)) {
+            t->syscall_return(-EINVAL);
+            return;
+        }
+        robust_list_head_64 guest_head;
+        if (sizeof(guest_head)!=t->get_process()->mem_read(&guest_head, head_va, sizeof(guest_head))) {
+            t->syscall_return(-EFAULT);
+            return;
+        }
+    }
+
+    /* The robust list is maintained in user space and accessed by the kernel only when we a thread dies. Since the
+     * simulator handles thread death, we don't need to tell the kernel about the specimen's list until later. In
+     * fact, we can't tell the kernel because that would cause our own list (set by libc) to be removed from the
+     * kernel. */
+    t->robustListHeadVa(head_va);
+    t->syscall_return(0);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_set_tid_address_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("set_tid_address").p();
+}
+
+void
+RSIM_Linux::syscall_set_tid_address_body(RSIM_Thread *t, int callno)
+{
+    t->clearChildTidVa(t->syscall_arg(0));
+    t->syscall_return(getpid());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

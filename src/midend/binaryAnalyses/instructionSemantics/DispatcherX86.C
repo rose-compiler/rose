@@ -1352,6 +1352,60 @@ struct IP_movlpd: P {
     }
 };
 
+// Move scalar double-precision floating-point values
+//   This is the floating point MOVSD instruction, not the string MOVSD instruction.
+//   I.e., this is for x86_movsd_sse, not x86_movsd.
+struct IP_movsd: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = ops->unsignedExtend(d->read(args[1]), 64);
+            if (isSgAsmDirectRegisterExpression(args[1])) {
+                // register->memory or register->register. High order 64 bits are unchanged.
+                if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
+                    RegisterDescriptor reg = rre->get_descriptor();
+                    ASSERT_require(reg.get_offset() == 0 && reg.get_nbits() == 128);
+                    reg.set_nbits(64);
+                    d->writeRegister(reg, src);
+                } else {
+                    d->write(args[0], src);
+                }
+            } else {
+                // memory->register. High order 64 bits are zeroed.
+                d->write(args[0], ops->unsignedExtend(src, 128));
+            }
+        }
+    }
+};
+
+// Move scalar single-precision floating-point values
+struct IP_movss: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = ops->unsignedExtend(d->read(args[1]), 32);
+            if (isSgAsmDirectRegisterExpression(args[1])) {
+                // register->memory or register->register. High order 96 bits are unchanged.
+                if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
+                    RegisterDescriptor reg = rre->get_descriptor();
+                    ASSERT_require(reg.get_offset() == 0 && reg.get_nbits() == 128);
+                    reg.set_nbits(32);
+                    d->writeRegister(reg, src);
+                } else {
+                    d->write(args[0], src);
+                }
+            } else {
+                // memory->register. High order 96 bits are zeroed.
+                d->write(args[0], ops->unsignedExtend(src, 128));
+            }
+        }
+    }
+};
+
 // Move source to destination with truncation or zero extend
 // Used for MOVD and MOVQ
 struct IP_move_zero_extend: P {
@@ -1400,6 +1454,7 @@ struct IP_move_same: P {
 
 // Move data from string to string
 // The disassembler produces MOVSB, MOVSW, MOVSD, or MOVSQ without any arguments (never MOVS with an arg)
+// The floating-point version of MOVSD is called x86_movsd_sse
 struct IP_movestring: P {
     const X86RepeatPrefix repeat;
     const size_t nbits;
@@ -3851,6 +3906,9 @@ struct IP_xchg: P {
 };
 
 // Bitwise XOR
+//      XOR
+//      XORPD
+//      XORPS
 struct IP_xor: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -3858,10 +3916,10 @@ struct IP_xor: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             BaseSemantics::SValuePtr result;
-            
-            if (isSgAsmRegisterReferenceExpression(args[0]) && isSgAsmRegisterReferenceExpression(args[1]) &&
-                   (isSgAsmRegisterReferenceExpression(args[0])->get_descriptor() ==
-                    isSgAsmRegisterReferenceExpression(args[1])->get_descriptor())) {
+
+            if (isSgAsmDirectRegisterExpression(args[0]) && isSgAsmDirectRegisterExpression(args[1]) &&
+                (isSgAsmRegisterReferenceExpression(args[0])->get_descriptor() ==
+                 isSgAsmRegisterReferenceExpression(args[1])->get_descriptor())) {
                 // XOR of a register with itself is an x86 idiom for setting the register to zero, so treat it as such
                 size_t nbits = asm_type_width(args[0]->get_type());
                 result = ops->number_(nbits, 0);
@@ -3992,6 +4050,8 @@ DispatcherX86::iproc_init()
     iproc_set(x86_maskmovq,     new X86::IP_maskmov);
     iproc_set(x86_mfence,       new X86::IP_nop);
     iproc_set(x86_mov,          new X86::IP_mov);
+    iproc_set(x86_movapd,       new X86::IP_move_same);
+    iproc_set(x86_movaps,       new X86::IP_move_same);
     iproc_set(x86_movbe,        new X86::IP_movbe);
     iproc_set(x86_movd,         new X86::IP_move_zero_extend);
     iproc_set(x86_movdqa,       new X86::IP_move_same);
@@ -4007,8 +4067,12 @@ DispatcherX86::iproc_init()
     iproc_set(x86_movsw,        new X86::IP_movestring(x86_repeat_none, 16));
     iproc_set(x86_movsd,        new X86::IP_movestring(x86_repeat_none, 32));
     iproc_set(x86_movsq,        new X86::IP_movestring(x86_repeat_none, 64));
+    iproc_set(x86_movsd_sse,    new X86::IP_movsd);
+    iproc_set(x86_movss,        new X86::IP_movss);
     iproc_set(x86_movsx,        new X86::IP_move_sign_extend);
     iproc_set(x86_movsxd,       new X86::IP_move_sign_extend);
+    iproc_set(x86_movupd,       new X86::IP_move_same);
+    iproc_set(x86_movups,       new X86::IP_move_same);
     iproc_set(x86_movzx,        new X86::IP_move_zero_extend);
     iproc_set(x86_mul,          new X86::IP_mul);
     iproc_set(x86_neg,          new X86::IP_neg);
@@ -4224,6 +4288,8 @@ DispatcherX86::iproc_init()
     iproc_set(x86_xadd,         new X86::IP_xadd);
     iproc_set(x86_xchg,         new X86::IP_xchg);
     iproc_set(x86_xor,          new X86::IP_xor);
+    iproc_set(x86_xorpd,        new X86::IP_xor);
+    iproc_set(x86_xorps,        new X86::IP_xor);
 }
 
 void

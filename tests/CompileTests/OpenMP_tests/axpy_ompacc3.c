@@ -13,7 +13,7 @@
 
 #define REAL double
 #define VEC_LEN 1024000 //use a fixed number for now
-#define MAX_GPU_COUNT 4 // maximum GPU numbers in computation
+//#define MAX_GPU_COUNT 4 // maximum GPU numbers in computation
 
 /* zero out the entire vector */
 void zero(REAL *A, int n)
@@ -73,22 +73,29 @@ int main(int argc, char *argv[])
   init(y_ref, n);
   memcpy(y_ompacc, y_ref, n*sizeof(REAL));
 
-  int GPU_N = 0;
+//  int GPU_N = 0;
+// Transformation point: obtain the number of devices to be used by default 
+  int GPU_N = xomp_get_num_devices();
+#if 0
   cudaGetDeviceCount(&GPU_N);
   if (GPU_N > MAX_GPU_COUNT)
   {
     GPU_N = MAX_GPU_COUNT;
   }
+#endif
   printf("CUDA-capable device count: %i\n", GPU_N);
 
   // preparation for multiple GPUs
-
+// Transformation point: set first level thread count to be GPU count used
   omp_set_num_threads(GPU_N); 
 #pragma omp parallel shared (GPU_N,x , y_ompacc, n) private(i)
   {
     int tid = omp_get_thread_num();
-    cudaSetDevice(tid);
+//    cudaSetDevice(tid);
+    xomp_set_default_device (tid);
 
+    long size, offset;
+#if 0    
     int size = n / GPU_N;
     int offset = size * tid;
     if(tid < n%GPU_N)
@@ -99,7 +106,8 @@ int main(int argc, char *argv[])
       offset += n%GPU_N;
     else
       offset += tid;
-
+#endif
+    XOMP_static_even_divide (0, n, GPU_N, tid, &offset, &size);
     printf("thread %d working on GPU devices %d with size %d copying data from y_ompacc with offset %d\n",tid, tid, size,offset);
     int j;
 #pragma omp target device (tid) map(tofrom: y_ompacc[offset:size]) map(to: x[offset:size],a,size, offset)
