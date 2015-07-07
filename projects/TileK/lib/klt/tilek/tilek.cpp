@@ -50,7 +50,6 @@ SgFunctionParameterList * createParameterList<
   const std::list<SgVariableSymbol *> & params = kernel->getArguments().parameters;
   const std::list<SgVariableSymbol *> & scalars = kernel->getArguments().scalars;
   const std::list<Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *> & datas = kernel->getArguments().datas;
-  unsigned long data_type_modifer_ = SgTypeModifier::e_ocl_global__;
 
   std::list<SgVariableSymbol *>::const_iterator it_var_sym;
   std::list<Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *>::const_iterator it_data;
@@ -72,72 +71,46 @@ namespace Runtime {
 
 TileK::kernel_api_t TileK::kernel_api;
 
+// Build: 'expr'->'array'['idx'].'field'
+SgExpression * buildPtrArrElemField(SgExpression * expr, SgVariableSymbol * array, SgExpression * idx, SgVariableSymbol * field) {
+  return SageBuilder::buildDotExp(SageBuilder::buildPntrArrRefExp(SageBuilder::buildArrowExp(expr, SageBuilder::buildVarRefExp(array)), idx), SageBuilder::buildVarRefExp(field));
+}
+
+// Build: 'ctx'->loops['loop_id'].lower
 SgExpression * TileK::kernel_api_t::buildLoopLower(size_t loop_id, SgVariableSymbol * ctx) const {
-  return SageBuilder::buildDotExp(
-           SageBuilder::buildPntrArrRefExp(
-             SageBuilder::buildArrowExp(
-               SageBuilder::buildVarRefExp(ctx),
-               SageBuilder::buildVarRefExp(context_loop_field)
-             ),
-             SageBuilder::buildIntVal(loop_id)
-           ),
-           SageBuilder::buildVarRefExp(context_loop_lower_field)
-         ); // 'ctx'->loops['loop_id'].lower
+  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_loop_field, SageBuilder::buildIntVal(loop_id), context_loop_lower_field);
 }
 
+// Build: 'ctx'->loops['loop_id'].upper
 SgExpression * TileK::kernel_api_t::buildLoopUpper(size_t loop_id, SgVariableSymbol * ctx) const {
-  return SageBuilder::buildDotExp(
-           SageBuilder::buildPntrArrRefExp(
-             SageBuilder::buildArrowExp(
-               SageBuilder::buildVarRefExp(ctx),
-               SageBuilder::buildVarRefExp(context_loop_field)
-             ),
-             SageBuilder::buildIntVal(loop_id)
-           ),
-           SageBuilder::buildVarRefExp(context_loop_upper_field)
-         ); // 'ctx'->loops['loop_id'].upper
+  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_loop_field, SageBuilder::buildIntVal(loop_id), context_loop_upper_field);
 }
 
+// Build: 'ctx'->loops['loop_id'].stride
 SgExpression * TileK::kernel_api_t::buildLoopStride(size_t loop_id, SgVariableSymbol * ctx) const {
-  return SageBuilder::buildDotExp(
-           SageBuilder::buildPntrArrRefExp(
-             SageBuilder::buildArrowExp(
-               SageBuilder::buildVarRefExp(ctx),
-               SageBuilder::buildVarRefExp(context_loop_field)
-             ),
-             SageBuilder::buildIntVal(loop_id)
-           ),
-           SageBuilder::buildVarRefExp(context_loop_stride_field)
-         ); // 'ctx'->loops['loop_id'].stride
+  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_loop_field, SageBuilder::buildIntVal(loop_id), context_loop_stride_field);
 }
 
+// Build: 'ctx'->tiles['tile_id'].length
 SgExpression * TileK::kernel_api_t::buildTileLength(size_t tile_id, SgVariableSymbol * ctx) const {
-  return SageBuilder::buildDotExp(
-           SageBuilder::buildPntrArrRefExp(
-             SageBuilder::buildArrowExp(
-               SageBuilder::buildVarRefExp(ctx),
-               SageBuilder::buildVarRefExp(context_tile_field)
-             ),
-             SageBuilder::buildIntVal(tile_id)
-           ),
-           SageBuilder::buildVarRefExp(context_tile_length_field)
-         ); // 'ctx'->tile['tile_id'].length
+  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_tile_field, SageBuilder::buildIntVal(tile_id), context_tile_length_field);
 }
 
+// Build: 'ctx'->tiles['tile_id'].stride
 SgExpression * TileK::kernel_api_t::buildTileStride(size_t tile_id, SgVariableSymbol * ctx) const {
-  return SageBuilder::buildDotExp(
-           SageBuilder::buildPntrArrRefExp(
-             SageBuilder::buildArrowExp(
-               SageBuilder::buildVarRefExp(ctx),
-               SageBuilder::buildVarRefExp(context_tile_field)
-             ),
-             SageBuilder::buildIntVal(tile_id)
-           ),
-           SageBuilder::buildVarRefExp(context_tile_stride_field)
-         ); // 'ctx'->tile['tile_id'].stride
+  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_tile_field, SageBuilder::buildIntVal(tile_id), context_tile_stride_field);
 }
 
 TileK::host_api_t TileK::host_api;
+
+unsigned TileK::loadAPI(MDCG::ModelBuilder & model_builder, const std::string & headers_path) {
+  unsigned tilek_model = model_builder.create();
+    model_builder.add(tilek_model, "tile",   headers_path, "h");
+    model_builder.add(tilek_model, "loop",   headers_path, "h");
+    model_builder.add(tilek_model, "kernel", headers_path, "h");
+  loadAPI(model_builder.get(tilek_model));
+  return tilek_model;
+}
 
 void TileK::loadAPI(const MDCG::Model::model_t & model) {
 
@@ -216,7 +189,7 @@ void get_exec_config<
   const Kernel<DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK> * kernel
 ) {}
 
-}
+} // namespace KLT::Runtime
 
 template <>
 LoopTiler<DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK>::loop_tiling_t::loop_tiling_t(
@@ -315,9 +288,9 @@ namespace Language {
 
 void None::applyKernelModifiers(SgFunctionDeclaration * kernel_decl) {}
 
-}
+} // namespace KLT::Language
 
-}
+} // namespace KLT
 
 namespace DLX {
 
