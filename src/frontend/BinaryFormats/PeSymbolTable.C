@@ -170,12 +170,13 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
                    get_value()==0 && NULL!=fhdr->get_file()->get_section_by_name(p_st_name)) {
             /* COMDAT section */
             /*FIXME: not implemented yet*/
-            fprintf(stderr, "COFF aux comdat %s: (FIXME) not implemented yet\n", escapeString(p_st_name).c_str());
+            mlog[ERROR] <<"COFF aux comdat " <<escapeString(p_st_name) <<": (FIXME) not implemented yet\n";
             hexdump(stderr, (rose_addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
 
         } else {
-            fprintf(stderr, "COFF aux unknown %s: (FIXME) st_storage_class=%u, st_type=0x%02x, st_section_num=%d\n", 
-                    escapeString(p_st_name).c_str(), p_st_storage_class, p_st_type, p_st_section_num);
+            mlog[ERROR] <<"COFF aux unknown " <<escapeString(p_st_name)
+                        <<": (FIXME) st_storage_class=" <<p_st_storage_class
+                        <<", st_type=" <<p_st_type <<", st_section_num=" <<p_st_section_num <<"\n";
             hexdump(stderr, symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
         }
     }
@@ -357,12 +358,11 @@ SgAsmCoffSymbolTable::parse()
             i += symbol->get_st_num_aux_entries();
             p_symbols->get_symbols().push_back(symbol);
         } catch (const ShortRead &e) {
-            fprintf(stderr, "SgAsmCoffSymbolTable::parse: warning: read past end of section \"%s\" [%d]\n"
-                    "    symbol #%" PRIuPTR " at file offset 0x%08"PRIx64"\n"
-                    "    skipping %" PRIuPTR " symbols (including this one)\n",
-                    get_name()->get_string(true).c_str(), get_id(),
-                    i, e.offset,
-                    fhdr->get_e_coff_nsyms()-i);
+            mlog[WARN] <<"SgAsmCoffSymbolTable::parse: read past end of section \"" <<get_name()->get_string(true) <<"\""
+                       <<"[" <<get_id() <<"]\n"
+                       <<"    symbol #" <<i <<" at file offset " <<StringUtility::addrToString(e.offset) <<"\n"
+                       <<"    skipping " <<StringUtility::plural(fhdr->get_e_coff_nsyms()-i, "symbols")
+                       <<" (including this one)\n";
             break;
         }
     }
