@@ -163,7 +163,13 @@ string LabelProperty::labelTypeToString(LabelType lt) {
   }
 }
 
-SgNode* LabelProperty::getNode() { if(!_isValid) cout<<"ERROR:"<<toString()<<endl; assert(_isValid); return _node;}
+SgNode* LabelProperty::getNode() {
+  if(!_isValid) {
+    cout<<"ERROR:"<<toString()<<endl;
+  }
+  assert(_isValid);
+  return _node;
+}
 
 bool LabelProperty::isFunctionCallLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONCALL; }
 bool LabelProperty::isFunctionCallReturnLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONCALLRETURN; }
@@ -279,7 +285,7 @@ void Labeler::createLabels(SgNode* root) {
         }
       }
     }
-       if(isSgExprStatement(*i)||isSgReturnStmt(*i)||isSgVariableDeclaration(*i))
+    if(isSgExprStatement(*i)||isSgReturnStmt(*i)||isSgVariableDeclaration(*i))
       i.skipChildrenOnForward();
   }
   std::cout << "STATUS: Assigned "<<mappingLabelToLabelProperty.size()<< " labels."<<std::endl;
