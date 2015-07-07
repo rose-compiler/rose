@@ -14,6 +14,7 @@ DFTransferFunctions::DFTransferFunctions():_labeler(0),_variableIdMapping(0){}
 
 void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   ROSE_ASSERT(_labeler);
+  //cout<<"transfer @label:"<<lab<<endl;
   SgNode* node=_labeler->getNode(lab);
   //cout<<"Analyzing:"<<node->class_name()<<endl;
   //cout<<"DEBUG: transfer: @"<<lab<<": "<<node->class_name()<<":"<<node->unparseToString()<<endl;
@@ -87,7 +88,10 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   }
 
   // default identity functions
-  if(isSgBreakStmt(node) || isSgContinueStmt(node)) {
+  if(isSgBreakStmt(node) 
+     || isSgContinueStmt(node)
+     || isSgLabelStatement(node)
+     || isSgGotoStatement(node)) {
     return;
   }
 
@@ -130,6 +134,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
      ensure there is no fall through as this would mean that not the correct transferfunction is invoked.
   */
   cerr<<"Error: unknown language construct in transfer function."<<endl;
+  cerr<<"  Label: "<<lab<<endl;
   cerr<<"  NodeType: "<<node->class_name()<<endl;
   cerr<<"  Source Code: "<<node->unparseToString()<<endl;
   exit(1);

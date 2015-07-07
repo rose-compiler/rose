@@ -68,6 +68,7 @@ void DFAnalysisBase::computeAllPreInfo() {
 void DFAnalysisBase::computeAllPostInfo() {
   if(!_postInfoIsValid) {
     computeAllPreInfo();
+    // compute set of used labels in ICFG.
     for(Labeler::iterator i=_labeler->begin();i!=_labeler->end();++i) {
       Label lab=*i;
       Lattice* info=_initialElementFactory->create();
