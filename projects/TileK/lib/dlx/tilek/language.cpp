@@ -33,6 +33,30 @@ void language_t::init() {
   s_directives_relation_labels.insert(std::pair<directives_relation_e, std::string>(e_parent_scope, "parent-scope"));
 }
 
+language_t::kernel_construct_t * language_t::isKernelConstruct(construct_t * construct) {
+  return construct->kind == language_t::e_construct_kernel ? (language_t::kernel_construct_t *)construct : NULL;
+}
+
+SgStatement * language_t::getKernelRegion(kernel_construct_t * kernel_construct) {
+  return kernel_construct->assoc_nodes.kernel_region;
+}
+
+language_t::loop_construct_t * language_t::isLoopConstruct(construct_t * construct) {
+  return construct->kind == language_t::e_construct_loop ? (language_t::loop_construct_t *)construct : NULL;
+}
+
+SgForStatement * language_t::getLoopStatement(loop_construct_t * loop_construct) {
+  return loop_construct->assoc_nodes.for_loop;
+}
+
+language_t::data_clause_t * language_t::isDataClause(clause_t * clause) {
+  return clause->kind == language_t::e_clause_data ? (language_t::data_clause_t *)clause : NULL;
+}
+
+const std::vector<DLX::Frontend::data_sections_t> & language_t::getDataSections(data_clause_t * data_clause) {
+  return data_clause->parameters.data_sections;
+}
+
 }
 
 }
