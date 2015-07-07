@@ -167,9 +167,11 @@ SgAsmPEExportSection::parse()
         /* Function name RVA (nameptr)*/
         ExportNamePtr_disk nameptr_disk = 0;
         rose_addr_t nameptr_va = p_export_dir->get_nameptr_rva().get_va() + i*sizeof(nameptr_disk);
+        bool badFunctionNameVa = false;
         try {
             read_content(fhdr->get_loader_map(), nameptr_va, &nameptr_disk, sizeof nameptr_disk);
         } catch (const MemoryMap::NotMapped &e) {
+            badFunctionNameVa = true;
             if (mlog[ERROR]) {
                 mlog[ERROR] <<"SgAsmPEExportSection::parse: export name #" <<i
                             <<" at va " <<StringUtility::addrToString(nameptr_va)
@@ -204,9 +206,11 @@ SgAsmPEExportSection::parse()
         /* Ordinal (sort of an index into the Export Address Table) */
         ExportOrdinal_disk ordinal_disk = 0;
         rose_addr_t ordinal_va = p_export_dir->get_ordinals_rva().get_va() + i*sizeof(ordinal_disk);
+        bool badOrdinalVa = false;
         try {
             read_content(fhdr->get_loader_map(), ordinal_va, &ordinal_disk, sizeof ordinal_disk);
         } catch (const MemoryMap::NotMapped &e) {
+            badOrdinalVa = true;
             if (mlog[ERROR]) {
                 mlog[ERROR] <<"SgAsmPEExportSection::parse: ordinal #" <<i
                             <<" at va " <<StringUtility::addrToString(ordinal_va)
@@ -219,6 +223,13 @@ SgAsmPEExportSection::parse()
             ordinal_disk = 0;
         }
         unsigned ordinal = ByteOrder::le_to_host(ordinal_disk);
+
+        /* If the function name pointer and ordinal pointer are both in unmapped memory then give up. */
+        if (badFunctionNameVa && badOrdinalVa) {
+            if (mlog[ERROR])
+                mlog[ERROR] <<"SgAsmPEExportSection::parse: giving up after trying to read entry #" <<i <<"\n";
+            break;
+        }
 
         /* Export address. Convert the symbol's Ordinal into an index into the Export Address Table. The spec says to subtract
          * the ord_base from the Ordinal to get the index, but testing has shown this to be off by one (e.g., Windows-XP file
