@@ -4,7 +4,8 @@
 //   2) Build a single data structure to represent the call graph and associated data:
 //         Source position of function declaration, function definition, and function calls
 
-#include "rose.h"
+// #include "rose.h"
+#include "sage3basic.h"
 
 #include "newCallGraph.h"
 
