@@ -44,7 +44,9 @@ TESTCODES_REQUIRED_TO_PASS = \
 							   doubleValue.F \
 							   function1.F \
 							   functionCall1.F \
-							   functionCall2.F
+							   functionCall2.F \
+							   implicitNone.F \
+							   sentinel.F
 
 
 ALL_TESTCODES = \

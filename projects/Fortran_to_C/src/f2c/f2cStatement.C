@@ -6,7 +6,7 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace Fortran_to_C;
 
-extern bool isLinearlizeArray;
+extern bool isLinearizeArray;
 extern map<SgVariableSymbol*,SgExpression*> parameterSymbolList;
 extern vector<SgStatement*> statementList;
 extern vector<SgNode*> removeList;

@@ -21,7 +21,8 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace Fortran_to_C;
 
-bool isLinearlizeArray = false;
+bool isLinearizeArray = false;
+bool isConvertSentinel = false;
 vector<SgArrayType*> arrayTypeList;
 vector<SgVarRefExp*> parameterRefList;
 vector<SgForStatement*> forStmtList;
@@ -152,6 +153,15 @@ void f2cTraversal::visit(SgNode* n)
         removeList.push_back(procedureHeaderStatement);
         break;
       }
+    case V_SgImplicitStatement:
+      {
+        SgImplicitStatement* implicitStatement = isSgImplicitStatement(n);
+        ROSE_ASSERT(implicitStatement);
+        // Just delete this statement
+        statementList.push_back(implicitStatement);
+        removeList.push_back(implicitStatement);
+        break;
+      }
     case V_SgFortranDo:
       {
         SgFortranDo* fortranDo = isSgFortranDo(n);
@@ -233,7 +243,11 @@ int main( int argc, char * argv[] )
   vector<string> argList = localCopy_argv;
   if (CommandlineProcessing::isOption(argList,"-f2c:","linearize",true) == true)
   {
-    isLinearlizeArray = true;
+    isLinearizeArray = true;
+  }
+  if (CommandlineProcessing::isOption(argList,"-f2c:","sentinel",true) == true)
+  {
+    isConvertSentinel = true;
   }
   CommandlineProcessing::generateArgcArgvFromList(argList,newArgc, newArgv);
 // Build the AST used by ROSE
@@ -246,15 +260,76 @@ int main( int argc, char * argv[] )
   {
     AttachedPreprocessingInfoType* comments = (*i)->getAttachedPreprocessingInfo();
     AttachedPreprocessingInfoType newComment;
+    std::vector<SgPragmaDeclaration*> newPragmaVec;
           if (comments != NULL)
              {
                AttachedPreprocessingInfoType::iterator j;
+               bool mergeNextWithPrevPragma = false;
                for (j = comments->begin(); j != comments->end(); j++)
                   {
                     if((*j)->getTypeOfDirective() == PreprocessingInfo::FortranStyleComment)
                     {
-                        PreprocessingInfo* cmt = new PreprocessingInfo(PreprocessingInfo::C_StyleComment,"/* "+(*j)->getString()+" */", "transformation-generated", 0, 0, 0, (*j)->getRelativePosition());
-                        newComment.push_back(cmt);
+                      if (isConvertSentinel &&
+                          isSgStatement(*i) &&  // Else leave as comment since I'm not
+                                                // sure what it means to be a pragma
+                                                // without a following statement
+                          ((*j)->getString().size() >= 3) &&
+                          ((*j)->getString().substr(0, 1).find_first_of("!c*") == 0) &&
+                          ((*j)->getString()[1] == '$') &&
+                          (!iswspace((*j)->getString()[2])))
+                        {
+
+//--Convert this comment into a pragma
+
+                          bool mergeThisWithPrevPragma = mergeNextWithPrevPragma;
+                          mergeNextWithPrevPragma = false;
+                          std::string pragmaStr =
+                            (*j)->getString().substr(2, std::string::npos);
+                          const int lastCharPos = pragmaStr.find_last_not_of(" \t");
+                          if (pragmaStr[lastCharPos] == '&')  // Continuation
+                            {
+                              mergeNextWithPrevPragma = true; // For next line
+                              pragmaStr.erase(lastCharPos);
+                            }
+                          // Finding comments in the pragma string would be *really* hard
+                          // without formally parsing the pragma (and we don't know how
+                          // to formally parse it).  E.g., The last '!' my be part of the
+                          // pragma statement.
+                          if (mergeThisWithPrevPragma)
+                            {
+                              // This erases the sentinal declaration.  Okay if
+                              // find_first_of returns std::string::npos
+                              pragmaStr.erase(0, pragmaStr.find_first_of(" \t")+1);
+                              if (pragmaStr.find_first_not_of(" \t") == std::string::npos)
+                                {
+                                  continue;  // Loop over comments
+                                }
+                              ROSE_ASSERT(newPragmaVec.size() > 0);
+                              // Grab the pragma string from the previous entry and merge
+                              // with that.  Doesn't seem like we can modify the string
+                              // directly so create a whole new SgPragma.
+                              SgPragmaDeclaration* pragmaDecl = newPragmaVec.back();
+                              std::string oldPragmaStr =
+                                pragmaDecl->get_pragma()->get_pragma();
+                              newPragmaVec.back() = buildPragmaDeclaration(
+                                oldPragmaStr + " \\\n " + pragmaStr);
+                              deleteAST(pragmaDecl);
+                            }
+                          else
+                            {
+                              SgPragmaDeclaration* pragmaDecl =
+                                buildPragmaDeclaration(pragmaStr);
+                              newPragmaVec.push_back(pragmaDecl);
+                            }
+                        }
+                      else
+                        {
+
+//--Keep as C-style comment
+
+                          PreprocessingInfo* cmt = new PreprocessingInfo(PreprocessingInfo::C_StyleComment,"/* "+(*j)->getString()+" */", "transformation-generated", 0, 0, 0, (*j)->getRelativePosition());
+                          newComment.push_back(cmt);
+                        }
                     }
                   }
                comments->clear();
@@ -262,6 +337,16 @@ int main( int argc, char * argv[] )
                   {
      		    (*i)->addToAttachedPreprocessingInfo(*j);
                   }
+               // Now add any pragmas before the node (note: would not have made pragma if
+               // locatedNode != SgStatement).  We end up with
+               //  Comments
+               //  Pragmas
+               //  SgLocatedNode
+               for (std::vector<SgPragmaDeclaration*>::iterator k = newPragmaVec.begin();
+                    k != newPragmaVec.end(); ++k)
+                 {
+                   insertStatement(isSgStatement(*i), *k, true, true);
+                 }
              }
   }
   // Traversal with Memory Pool to search for variableDeclaration
@@ -367,7 +452,7 @@ int main( int argc, char * argv[] )
   traverseMemoryPoolVisitorPattern(translateArrayType);
   for(vector<SgArrayType*>::iterator i=arrayTypeList.begin(); i!=arrayTypeList.end(); ++i)
   {
-    if(isLinearlizeArray)
+    if(isLinearizeArray)
     {
       linearizeArrayDeclaration(*i);
     }
@@ -382,7 +467,7 @@ int main( int argc, char * argv[] )
   traverseMemoryPoolVisitorPattern(translatePntrArrRefExp);
   for(vector<SgPntrArrRefExp*>::iterator i=pntrArrRefList.begin(); i!=pntrArrRefList.end(); ++i)
   {
-    if(isLinearlizeArray)
+    if(isLinearizeArray)
     {
       linearizeArraySubscript(*i);
     }
