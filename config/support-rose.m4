@@ -1728,6 +1728,7 @@ src/frontend/DLX/docs/doxygen/doxy.conf
 src/frontend/DLX/include/Makefile
 src/frontend/DLX/include/DLX/Makefile
 src/frontend/DLX/include/DLX/Core/Makefile
+src/frontend/DLX/include/DLX/KLT/Makefile
 src/frontend/DLX/lib/Makefile
 src/frontend/DLX/lib/core/Makefile
 src/frontend/Partitioner2/Makefile
