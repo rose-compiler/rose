@@ -99,7 +99,7 @@ struct Formatter {
     };
     Formatter()
         : show_comments(CMT_INSTEAD), do_rename(false), add_renames(true), use_hexadecimal(true),
-          max_depth(0), cur_depth(0), show_width(true) {}
+          max_depth(0), cur_depth(0), show_width(true), show_flags(true) {}
     ShowComments show_comments;                 /**< Show node comments when printing? */
     bool do_rename;                             /**< Use the @p renames map to rename variables to shorter names? */
     bool add_renames;                           /**< Add additional entries to the @p renames as variables are encountered? */
@@ -108,6 +108,7 @@ struct Formatter {
     size_t cur_depth;                           /**< Depth in expression. */
     RenameMap renames;                          /**< Map for renaming variables to use smaller integers. */
     bool show_width;                            /**< Show width in bits inside square brackets. */
+    bool show_flags;                            /**< Show user-defined flags inside square brackets. */
 };
 
 /** Return type for visitors. */
@@ -141,16 +142,26 @@ public:
  *  lattice and not a graph with cycles), tree nodes are always referenced through shared-ownership pointers
  *  (<code>Sawyer::SharedPointer<const T></code> where @t T is one of the tree node types: TreeNode, InternalNode, or LeafNode.
  *  For convenience, we define TreeNodePtr, InternalNodePtr, and LeafNodePtr typedefs.  The pointers themselves collectively
- *  own the pointer to the tree node and thus the tree node pointer should never be deleted explicitly. */
+ *  own the pointer to the tree node and thus the tree node pointer should never be deleted explicitly.
+ *
+ *  Each node has a bit flags property, the bits of which are defined by the user.  New nodes are created having all bits
+ *  cleared unless the user specifies a value in the constructor.  Bits are significant for hashing. Simplifiers produce
+ *  result expressions whose bits are set in a predictable manner.
+ *
+ *  @todo Document the manner in which simplifiers set the user-defined bit flags. [Robb P. Matzke 2015-07-07]. */
 class TreeNode: public Sawyer::SharedObject, public Sawyer::SharedFromThis<TreeNode>, public Sawyer::SmallObject {
 protected:
     size_t nbits;                /**< Number of significant bits. Constant over the life of the node. */
     size_t domainWidth_;         /**< Width of domain for unary functions. E.g., memory. */
+    unsigned flags_;             /**< Bit flags. Meaning of flags is up to the user. */
     mutable std::string comment; /**< Optional comment. Only for debugging; not significant for any calculation. */
     mutable uint64_t hashval;    /**< Optional hash used as a quick way to indicate that two expressions are different. */
 
 protected:
-    TreeNode(std::string comment=""): nbits(0), domainWidth_(0), comment(comment), hashval(0) {}
+    TreeNode()
+        : nbits(0), domainWidth_(0), flags_(0), hashval(0) {}
+    explicit TreeNode(std::string comment, unsigned flags=0)
+        : nbits(0), domainWidth_(0), flags_(flags), comment(comment), hashval(0) {}
 
 public:
     /** Returns true if two expressions must be equal (cannot be unequal).  If an SMT solver is specified then that solver is
@@ -195,6 +206,9 @@ public:
     /** Returns the number of significant bits.  An expression with a known value is guaranteed to have all higher-order bits
      *  cleared. */
     size_t get_nbits() const { return nbits; }
+
+    /** Returns the user-defined bit flags. */
+    unsigned get_flags() const { return flags_; }
 
     /** Returns address width for memory expressions.
      *
@@ -370,6 +384,9 @@ struct UextendSimplifier: Simplifier {
 struct SextendSimplifier: Simplifier {
     virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
+struct EqSimplifier: Simplifier {
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+};
 struct SgeSimplifier: Simplifier {
     virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
@@ -445,6 +462,7 @@ private:
         : TreeNode(comment), op(op), nnodes_(1) {
         add_child(a);
         adjustWidth();
+        adjustBitFlags();
         ASSERT_require(get_nbits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, std::string comment="")
@@ -452,6 +470,7 @@ private:
         add_child(a);
         add_child(b);
         adjustWidth();
+        adjustBitFlags();
         ASSERT_require(get_nbits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, const TreeNodePtr &c,
@@ -461,6 +480,7 @@ private:
         add_child(b);
         add_child(c);
         adjustWidth();
+        adjustBitFlags();
         ASSERT_require(get_nbits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodes &children, std::string comment="")
@@ -468,6 +488,7 @@ private:
         for (size_t i=0; i<children.size(); ++i)
             add_child(children[i]);
         adjustWidth();
+        adjustBitFlags();
         ASSERT_require(get_nbits() == nbits);
     }
 
@@ -567,8 +588,11 @@ protected:
      *  yet. If you add a new child, then you probably need to call adjustWidth after the last one is added. */
     void add_child(const TreeNodePtr &child);
 
-    /** Adjust width based on operands. */
+    /** Adjust width based on operands. This should only be called from constructors. */
     void adjustWidth();
+
+    /** Adjust user-defined bit flags. This should only be called from constructors. */
+    void adjustBitFlags();
 };
 
 /** Leaf node of an expression tree for instruction semantics.
@@ -584,29 +608,29 @@ private:
     // Private to help prevent creating pointers to leaf nodes.  See create_* methods instead.
     LeafNode()
         : TreeNode(""), leaf_type(CONSTANT), name(0) {}
-    explicit LeafNode(const std::string &comment)
-        : TreeNode(comment), leaf_type(CONSTANT), name(0) {}
+    explicit LeafNode(const std::string &comment, unsigned flags=0)
+        : TreeNode(comment, flags), leaf_type(CONSTANT), name(0) {}
 
     static uint64_t name_counter;
 
 public:
     /** Construct a new free variable with a specified number of significant bits. */
-    static LeafNodePtr create_variable(size_t nbits, std::string comment="");
+    static LeafNodePtr create_variable(size_t nbits, std::string comment="", unsigned flags=0);
 
     /** Construct a new integer with the specified number of significant bits. Any high-order bits beyond the specified size
      *  will be zeroed. */
-    static LeafNodePtr create_integer(size_t nbits, uint64_t n, std::string comment="");
+    static LeafNodePtr create_integer(size_t nbits, uint64_t n, std::string comment="", unsigned flags=0);
 
     /** Construct a new known value with the specified bits. */
-    static LeafNodePtr create_constant(const Sawyer::Container::BitVector &bits, std::string comment="");
+    static LeafNodePtr create_constant(const Sawyer::Container::BitVector &bits, std::string comment="", unsigned flags=0);
 
     /** Create a new Boolean, a single-bit integer. */
-    static LeafNodePtr create_boolean(bool b, std::string comment="") {
-        return create_integer(1, (uint64_t)(b?1:0), comment);
+    static LeafNodePtr create_boolean(bool b, std::string comment="", unsigned flags=0) {
+        return create_integer(1, (uint64_t)(b?1:0), comment, flags);
     }
 
     /** Construct a new memory state.  A memory state is a function that maps addresses to values. */
-    static LeafNodePtr create_memory(size_t addressWidth, size_t valueWidth, std::string comment="");
+    static LeafNodePtr create_memory(size_t addressWidth, size_t valueWidth, std::string comment="", unsigned flags=0);
 
     /* see superclass, where these are pure virtual */
     virtual bool is_known() const;
