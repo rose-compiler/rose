@@ -897,6 +897,16 @@ public:
     //                                  Settings and properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Property: All settings.
+     *
+     *  Returns a reference to the engine settings structures.  Alternatively, each setting also has a corresponding engine
+     *  member function to query or adjust the setting directly.
+     *
+     * @{ */
+    const Settings& settings() const /*final*/;
+    Settings& settings() /*final*/;
+    /** @} */
+
     /** Property: interpretation
      *
      *  The interpretation which is being analyzed. The interpretation is chosen when an ELF or PE container is parsed, and the
@@ -926,6 +936,17 @@ public:
      * @{ */
     size_t deExecuteZeros() const /*final*/ { return settings_.loader.deExecuteZeros; }
     virtual void deExecuteZeros(size_t n) { settings_.loader.deExecuteZeros = n; }
+    /** @} */
+
+    /** Property: Whether to remove write permission from all of memory.
+     *
+     *  If this property is set, then the engine will remove write permission from the entire memory map. This causes the
+     *  partitioner to assume that memory is constant, so things like indirect jumps will have a known successor in the control
+     *  flow graph.
+     *
+     * @{ */
+    bool constMemory() const /*final*/ { return settings_.loader.constMem; }
+    virtual void constMemory(bool b) { settings_.loader.constMem = b; }
     /** @} */
 
     /** Property: Disassembler.
@@ -1086,8 +1107,8 @@ public:
      *  considered true or false.
      *
      * @{ */
-    FunctionReturnAnalysis functionReturnAnalysis() const { return settings_.partitioner.functionReturnAnalysis; }
-    void functionReturnAnalysis(FunctionReturnAnalysis x) { settings_.partitioner.functionReturnAnalysis = x; }
+    FunctionReturnAnalysis functionReturnAnalysis() const /*final*/ { return settings_.partitioner.functionReturnAnalysis; }
+    virtual void functionReturnAnalysis(FunctionReturnAnalysis x) { settings_.partitioner.functionReturnAnalysis = x; }
     /** @} */
 
     /** Property: Whether to search static data for function pointers.
