@@ -607,8 +607,8 @@ SgBasicBlock * intantiateOnHost(::KLT::Kernel<Annotation, Language, Runtime> * k
     std::list<SgVariableSymbol *>::const_iterator it_scalar;
     size_t scalar_cnt = 0;
     for (it_scalar = arguments.scalars.begin(); it_scalar != arguments.scalars.end(); it_scalar++) {
-      // Append: 'kernel'->scalars['param_cnt'] = '*it_param'
-      SageInterface::appendStatement(Runtime::host_api.buildScalarAssign(kernel_sym, scalar_cnt++, SageBuilder::buildVarRefExp(*it_scalar)), bb);
+      // Append: 'kernel'->scalars['param_cnt'] = &'*it_scalar'
+      SageInterface::appendStatement(Runtime::host_api.buildScalarAssign(kernel_sym, scalar_cnt++, SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(*it_scalar))), bb);
     }
     // Set kernel's data
     typename std::list<KLT::Data<Annotation> *>::const_iterator it_data;

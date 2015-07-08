@@ -142,6 +142,36 @@ SgBasicBlock * createLocalDeclarations<
     arg_cnt++;
   }
 
+  // * Lookup scalar symbols *
+
+  SgVariableSymbol * arg_scalar_sym = kernel_defn->lookup_variable_symbol("scalar");
+  assert(arg_scalar_sym != NULL);
+
+  arg_cnt = 0;
+  for (it_var_sym = arguments.scalars.begin(); it_var_sym != arguments.scalars.end(); it_var_sym++) {
+    SgVariableSymbol * scalar_sym = *it_var_sym;
+    std::string scalar_name = scalar_sym->get_name().getString();
+    SgType * scalar_type = scalar_sym->get_type();
+
+    SgExpression * init = SageBuilder::buildPointerDerefExp(SageBuilder::buildCastExp(
+                            SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_scalar_sym), SageBuilder::buildIntVal(arg_cnt)),
+                            SageBuilder::buildPointerType(scalar_type)
+                          ));
+
+    SageInterface::prependStatement(
+      SageBuilder::buildVariableDeclaration(
+        scalar_name, scalar_type,
+        SageBuilder::buildAssignInitializer(init),
+        kernel_body
+      ), kernel_body
+    );
+    SgVariableSymbol * new_sym = kernel_body->lookup_variable_symbol(scalar_name);
+    assert(new_sym != NULL);
+
+    local_symbol_maps.scalars.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(scalar_sym, new_sym));
+    arg_cnt++;
+  }
+
   // * Create iterator *
 
   for (it_loop_tiling = loop_tiling.begin(); it_loop_tiling != loop_tiling.end(); it_loop_tiling++) {

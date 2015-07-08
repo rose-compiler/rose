@@ -23,6 +23,6 @@ struct loop_desc_t loop_desc[2] = {
 };
 
 struct kernel_desc_t kernel_desc[1] = {
-  { 2, 2, 0, 2, 4, loop_desc, &kernel_0 }
+  { 1, 2, 1, 2, 4, loop_desc, &kernel_0 }
 };
 

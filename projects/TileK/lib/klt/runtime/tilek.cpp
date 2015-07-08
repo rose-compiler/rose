@@ -175,29 +175,19 @@ void TileK::useSymbolsKernel(
   MFB::Driver<MFB::Sage> & driver,
   unsigned long file_id
 ) {
-  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::kernel_api.context_tile_class, file_id);
-  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::kernel_api.context_loop_class, file_id);
-  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::kernel_api.context_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(kernel_api.context_tile_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(kernel_api.context_loop_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(kernel_api.context_class, file_id);
 }
 
 void TileK::useSymbolsHost(
   MFB::Driver<MFB::Sage> & driver,
   unsigned long file_id
 ) {
-  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::host_api.kernel_class, file_id);
-  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::kernel_api.context_tile_class, file_id);
-  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::kernel_api.context_loop_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(host_api.kernel_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(kernel_api.context_tile_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(kernel_api.context_loop_class, file_id);
 }
-
-template <>
-void get_exec_config<
-  DLX::KLT::Annotation<DLX::TileK::language_t>,
-  Language::None,
-  Runtime::TileK
-> (
-  TileK::exec_config_t & exec_config,
-  const Kernel<DLX::KLT::Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK> * kernel
-) {}
 
 } // namespace KLT::Runtime
 

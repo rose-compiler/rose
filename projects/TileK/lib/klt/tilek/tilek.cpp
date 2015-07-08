@@ -38,8 +38,9 @@ SgFunctionParameterList * createParameterList<
 
   SgFunctionParameterList * result = SageBuilder::buildFunctionParameterList();
 
-  result->append_arg(SageBuilder::buildInitializedName("param", SageBuilder::buildPointerType(SageBuilder::buildIntType()), NULL));	
-  result->append_arg(SageBuilder::buildInitializedName("data",  SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL));
+  result->append_arg(SageBuilder::buildInitializedName("param",  SageBuilder::buildPointerType(SageBuilder::buildIntType()), NULL));
+  result->append_arg(SageBuilder::buildInitializedName("data",   SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL));
+  result->append_arg(SageBuilder::buildInitializedName("scalar", SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL));
 
   assert(Runtime::TileK::kernel_api.context_class != NULL);
   result->append_arg(SageBuilder::buildInitializedName(

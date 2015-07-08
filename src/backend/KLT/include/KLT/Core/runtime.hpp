@@ -10,7 +10,7 @@ class Kernel;
 namespace Runtime {
 
 template <class Annotation, class Language, class RT>
-void get_exec_config(typename RT::exec_config_t & exec_config, const Kernel<Annotation, Language, RT> * kernel);
+void get_exec_config(typename RT::exec_config_t & exec_config, const Kernel<Annotation, Language, RT> * kernel) {}
 
 template <class RT>
 bool is_exec_mode(const typename RT::exec_mode_t & modes, size_t mode) {

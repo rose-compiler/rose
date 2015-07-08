@@ -155,6 +155,6 @@ void execute_kernel(struct kernel_t * kernel) {
 //printf("\n");
 
   struct context_t context = { kernel->loops, kernel->tiles };
-  (*desc->kernel_ptr)(kernel->param, kernel->data, &context);
+  (*desc->kernel_ptr)(kernel->param, kernel->data, kernel->scalar, &context);
 }
 
