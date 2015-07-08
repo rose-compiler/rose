@@ -44,7 +44,7 @@ Engine::reset() {
     binaryLoader_ = NULL;
     disassembler_ = NULL;
     map_.clear();
-    basicBlockWorkList_ = BasicBlockWorkList::instance();
+    basicBlockWorkList_ = BasicBlockWorkList::instance(this);
 }
 
 // Returns true if the specified vertex has at least one E_CALL_RETURN edge
@@ -314,10 +314,22 @@ Engine::partitionerSwitches() {
               .hidden(true));
 
     sg.insert(Switch("functions-return")
-              .argument("boolean", booleanParser(settings_.partitioner.functionReturnsAssumed))
-              .doc("If the may-return analysis is inconclusive then either assume that such functions may "
-                   "return to their caller or never return.  The default is that they " +
-                   std::string(settings_.partitioner.functionReturnsAssumed?"may":"never") + " return."));
+              .argument("how", enumParser<FunctionReturnAnalysis>(settings_.partitioner.functionReturnAnalysis)
+                        ->with("always", MAYRETURN_ALWAYS_YES)
+                        ->with("never", MAYRETURN_ALWAYS_NO)
+                        ->with("yes", MAYRETURN_DEFAULT_YES)
+                        ->with("no", MAYRETURN_DEFAULT_NO))
+              .doc("Determines how function may-return analysis is performed. This analysis returns true if a call to the "
+                   "function has a possibility of returning, false if the call has no possibility of returning, or "
+                   "indeterminate if the analysis cannot decide.  The partitioner will attempt to disassemble instructions "
+                   "at the fall-through address of a call if the call has a possibility of returning, otherwise that address "
+                   "will be disassembled only if it can be reached by some other mechanism.\n\n"
+
+                   "This switch accepts one of these four words:"
+                   "@named{always}{Assume that all function calls may return without ever running the may-return analysis.}"
+                   "@named{never}{Assume that all functions cannot return to the caller and never run the may-return analysis.}"
+                   "@named{yes}{Assume a function returns if the may-return analysis cannot decide. This is the default.}"
+                   "@named{no}{Assume a function does not return if the may-return analysis cannot decide.}"));
 
     return sg;
 }
@@ -630,9 +642,21 @@ Engine::createBarePartitioner() {
     ASSERT_not_null(basicBlockWorkList_);
     p.cfgAdjustmentCallbacks().prepend(basicBlockWorkList_);
 
+    // If the may-return analysis is run and cannot decide whether a function may return, should we assume that it may or
+    // cannot return?  The engine decides whether to actually invoke the analysis -- this just sets what to do if it's
+    // invoked.
+    switch (settings_.partitioner.functionReturnAnalysis) {
+        case MAYRETURN_ALWAYS_YES:
+        case MAYRETURN_DEFAULT_YES:
+            p.assumeFunctionsReturn(true);
+            break;
+        case MAYRETURN_ALWAYS_NO:
+        case MAYRETURN_DEFAULT_NO:
+            p.assumeFunctionsReturn(false);
+    }
+
     // Miscellaneous settings
     p.enableSymbolicSemantics(settings_.partitioner.usingSemantics);
-    p.assumeFunctionsReturn(settings_.partitioner.functionReturnsAssumed);
     if (settings_.partitioner.followingGhostEdges)
         p.basicBlockCallbacks().append(Modules::AddGhostSuccessors::instance());
     if (!settings_.partitioner.discontiguousBlocks)
@@ -1330,10 +1354,24 @@ Engine::BasicBlockWorkList::operator()(bool chain, const AttachedBasicBlock &arg
         } else if (p->basicBlockIsFunctionCall(args.bblock)) {
             // If a new function call is inserted and it has no E_CALL_RETURN edge and at least one of its callees has an
             // indeterminate value for its may-return analysis, then add this block to the list of blocks for which we may need
-            // to later add a call-return edge.
+            // to later add a call-return edge. The engine can be configured to also just assume that all function calls may
+            // return (or never return).
             ControlFlowGraph::ConstVertexIterator placeholder = p->findPlaceholder(args.startVa);
-            ASSERT_require(placeholder != p->cfg().vertices().end());
-            boost::logic::tribool mayReturn = hasAnyCalleeReturn(*p, placeholder);
+            boost::logic::tribool mayReturn;
+            switch (engine_->functionReturnAnalysis()) {
+                case MAYRETURN_ALWAYS_YES:
+                    mayReturn = true;
+                    break;
+                case MAYRETURN_ALWAYS_NO:
+                    mayReturn = false;
+                    break;
+                case MAYRETURN_DEFAULT_YES:
+                case MAYRETURN_DEFAULT_NO: {
+                    ASSERT_require(placeholder != p->cfg().vertices().end());
+                    mayReturn = hasAnyCalleeReturn(*p, placeholder);
+                    break;
+                }
+            }
             if (!hasCallReturnEdges(placeholder) && (mayReturn || boost::logic::indeterminate(mayReturn)))
                 pendingCallReturn_.pushBack(args.startVa);
         }
@@ -1429,11 +1467,25 @@ Engine::makeNextCallReturnEdge(Partitioner &partitioner, boost::logic::tribool a
 
         // If the new vertex lacks a call-return edge (tested above) and its callee has positive or indeterminate may-return
         // then we may need to add a call-return edge depending on whether assumeCallReturns is true.
+        boost::logic::tribool mayReturn;
         Confidence confidence = PROVED;
-        boost::logic::tribool mayReturn = hasAnyCalleeReturn(partitioner, caller);
-        if (boost::logic::indeterminate(mayReturn)) {
-            mayReturn = assumeReturns;
-            confidence = ASSUMED;
+        switch (settings_.partitioner.functionReturnAnalysis) {
+            case MAYRETURN_ALWAYS_NO:
+                mayReturn = false;
+                confidence = ASSUMED;
+                break;
+            case MAYRETURN_ALWAYS_YES:
+                mayReturn = true;
+                confidence = ASSUMED;
+                break;
+            case MAYRETURN_DEFAULT_YES:
+            case MAYRETURN_DEFAULT_NO:
+                mayReturn = hasAnyCalleeReturn(partitioner, caller);
+                if (boost::logic::indeterminate(mayReturn)) {
+                    mayReturn = assumeReturns;
+                    confidence = ASSUMED;
+                }
+                break;
         }
 
         if (mayReturn) {

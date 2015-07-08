@@ -132,6 +132,18 @@ public:
                                                          *   binary container(s) such as ELF or PE. */
     };
 
+    /** Controls whether the function may-return analysis runs. */
+    enum FunctionReturnAnalysis {
+        MAYRETURN_DEFAULT_YES,                          /**< Assume a function returns if the may-return analysis cannot
+                                                         *   decide whether it may return. */
+        MAYRETURN_DEFAULT_NO,                           /**< Assume a function cannot return if the may-return analysis cannot
+                                                         *   decide whether it may return. */
+        MAYRETURN_ALWAYS_YES,                           /**< Assume that all functions return without ever running the
+                                                         *   may-return analysis. */
+        MAYRETURN_ALWAYS_NO,                            /**< Assume that a function cannot return without ever running the
+                                                         *   may-return analysis. */
+    };
+
     /** Settings that control creation of the partitioner.
      *
      *  The runtime descriptions and command-line parser for these switches can be obtained from @ref partitionerSwitches. */
@@ -161,7 +173,7 @@ public:
         bool findingIntraFunctionData;                  /**< Suck up unused addresses as intra-function data. */
         AddressInterval interruptVector;                /**< Table of interrupt handling functions. */
         bool doingPostAnalysis;                         /**< Perform post-partitioning analysis phase? */
-        bool functionReturnsAssumed;                    /**< Assume functions return if cannot prove otherwise? */
+        FunctionReturnAnalysis functionReturnAnalysis;  /**< How to run the function may-return analysis. */
         bool findingDataFunctionPointers;               /**< Look for function pointers in static data. */
         bool findingThunks;                             /**< Look for common thunk patterns in undiscovered areas. */
         bool splittingThunks;                           /**< Split thunks into their own separate functions. */
@@ -169,8 +181,8 @@ public:
         PartitionerSettings()
             : usingSemantics(false), followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
               findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
-              doingPostAnalysis(true), functionReturnsAssumed(true), findingDataFunctionPointers(false), findingThunks(true),
-              splittingThunks(false) {}
+              doingPostAnalysis(true), functionReturnAnalysis(MAYRETURN_DEFAULT_YES), findingDataFunctionPointers(false),
+              findingThunks(true), splittingThunks(false) {}
     };
 
     /** Settings for controling the engine behavior.
@@ -203,9 +215,12 @@ private:
         Sawyer::Container::DistinctList<rose_addr_t> processedCallReturn_; // call sites whose may-return was indeterminate
         Sawyer::Container::DistinctList<rose_addr_t> finalCallReturn_;     // indeterminated call sites awaiting final analysis
         Sawyer::Container::DistinctList<rose_addr_t> undiscovered_;        // undiscovered basic block list (last-in-first-out)
+        Engine *engine_;                                                   // engine to which this callback belongs
+    protected:
+        explicit BasicBlockWorkList(Engine *engine): engine_(engine) {}
     public:
         typedef Sawyer::SharedPointer<BasicBlockWorkList> Ptr;
-        static Ptr instance() { return Ptr(new BasicBlockWorkList); }
+        static Ptr instance(Engine *engine) { return Ptr(new BasicBlockWorkList(engine)); }
         virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
         virtual bool operator()(bool chain, const DetachedBasicBlock &args) ROSE_OVERRIDE;
         Sawyer::Container::DistinctList<rose_addr_t>& pendingCallReturn() { return pendingCallReturn_; }
@@ -232,7 +247,7 @@ private:
 public:
     /** Default constructor. */
     Engine()
-        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance()) {
+        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this)) {
         init();
     }
 
@@ -1065,16 +1080,14 @@ public:
     virtual void doingPostAnalysis(bool b) { settings_.partitioner.doingPostAnalysis = b; }
     /** @} */
 
-    /** Property: Whether to assume that functions return.
+    /** Property: Whether to run the function may-return analysis.
      *
-     *  If the partitioner's may-return analysis fails to reach a conclusion about a function, then either assume that the
-     *  function may return (the usual case) or that it doesn't.  If a function cannot return (e.g., GCC @c noreturn attribute,
-     *  such as for the @c abort function in the C library) then the partitioner will not attempt to discover instructions
-     *  after its call sites.
+     *  The caller can decide whether may-return analysis runs, or if it runs whether an indeterminate result should be
+     *  considered true or false.
      *
      * @{ */
-    bool functionReturnsAssumed() const /*final*/ { return settings_.partitioner.functionReturnsAssumed; }
-    virtual void functionReturnsAssumed(bool b) { settings_.partitioner.functionReturnsAssumed = b; }
+    FunctionReturnAnalysis functionReturnAnalysis() const { return settings_.partitioner.functionReturnAnalysis; }
+    void functionReturnAnalysis(FunctionReturnAnalysis x) { settings_.partitioner.functionReturnAnalysis = x; }
     /** @} */
 
     /** Property: Whether to search static data for function pointers.
