@@ -146,9 +146,27 @@ public:
  *
  *  Each node has a bit flags property, the bits of which are defined by the user.  New nodes are created having all bits
  *  cleared unless the user specifies a value in the constructor.  Bits are significant for hashing. Simplifiers produce
- *  result expressions whose bits are set in a predictable manner.
+ *  result expressions whose bits are set in a predictable manner with the following rules:
  *
- *  @todo Document the manner in which simplifiers set the user-defined bit flags. [Robb P. Matzke 2015-07-07]. */
+ *  @li Internal Node Rule: The flags for an internal node are the union of the flags of its subtrees.
+ *
+ *  @li Simplification Discard Rule: If a simplification discards a subtree then that subtree does not contribute flags to the
+ *      result.  E.g., cancellation of terms in an @c add operation.
+ *
+ *  @li Simplification Create Rule: If a simplification creates a new leaf node that doesn't depend on the input expression
+ *      that new leaf node will have zero flags.  E.g., XOR of an expression with itself; an add operation where all the terms
+ *      cancel each other resulting in zero.
+ *
+ *  @li Simplification Folding Rule: If a simplification creates a new expression from some combination of incoming expressions
+ *      then the flags of the new expression are the union of the flags from the expressions on which it depends. E.g.,
+ *      constant folding, which is therefore consistent with the Internal Node Rule.
+ *
+ *  @li Hashing Rule: User-defined flags are significant for hashing.  E.g., structural equivalence will return false if the
+ *      two expressions have different flags since structural equivalence uses hashes.
+ *
+ *  @li Relational Operator Rule:  Simplification of relational operators to produce a Boolean constant will act as if they are
+ *      performing constant folding even if the simplification is on variables.  E.g., <code>(ule v1 v1)</code> results in true
+ *      with flags the same as @c v1. */
 class TreeNode: public Sawyer::SharedObject, public Sawyer::SharedFromThis<TreeNode>, public Sawyer::SmallObject {
 protected:
     size_t nbits;                /**< Number of significant bits. Constant over the life of the node. */
