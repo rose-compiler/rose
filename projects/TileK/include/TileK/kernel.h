@@ -12,11 +12,12 @@ struct context_t {
   struct tile_t * tiles;
 };
 
-typedef void (*kernel_func_ptr)(int *, void **,  struct context_t *);
+typedef void (*kernel_func_ptr)(int *, void **, void **,  struct context_t *);
 
 struct kernel_desc_t {
   int num_data;
   int num_param;
+  int num_scalar;
   int num_loops;
   int num_tiles;
   struct loop_desc_t * loop_desc;
@@ -29,6 +30,7 @@ struct kernel_t {
   struct kernel_desc_t * desc;
   void ** data;
   int   * param;
+  void ** scalar;
   struct loop_t * loops;
   struct tile_t * tiles; // filled by runtime
 };
