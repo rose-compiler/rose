@@ -1,6 +1,9 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
 
 #include "sage3basic.h"
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
 
 // Added to support RTI support in ROSE (not implemented)
 std::ostream & operator<< (std::ostream & os, const SgAsmNERelocEntry::iref_type & x)
@@ -898,7 +901,7 @@ SgAsmNEEntryTable::populate_entries()
         if (0 == entry.get_section_idx()) {
             /* Unused entry */
         } else if (NULL == (section = get_file()->get_section_by_id(entry.get_section_idx()))) {
-            fprintf(stderr, "Ignoring bad entry section_idx (FIXME)\n");
+            mlog[WARN] <<"ignoring bad entry section_idx\n"; // FIXME[Robb P. Matzke 2015-07-07]
             entry.dump(stderr, "      ", i);
         } else {
             ROSE_ASSERT(section->is_mapped());

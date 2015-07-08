@@ -1,0 +1,145 @@
+// Demonstrates and tests user-defined flag bits for symbolic expressions.
+//
+// Note: We always provide a comment for variables so that the test output is stable.  Internally, variables are always named
+// with a letter ("v" or "m") followed by an automatically generated unique number. If a new variable is created in the middle
+// of the test then all subsequent variables will have a different number and it would be more difficult to verify that the
+// remaining output is correct.  The default expression printer will print a non-empty comment in lieu of the variable name.
+
+#include <rose.h>
+#include <InsnSemanticsExpr.h>
+
+using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
+
+// Bit flags
+static const unsigned UNDEFINED = 0x00000001;
+static const unsigned INVALID   = 0x00000002;
+
+// Make sure that the bits can be set and stick.
+static void
+testSetting() {
+    std::cout <<"test setting of flags:\n";
+
+    // The default is that no flags are set
+    TreeNodePtr e1 = LeafNode::create_variable(32, "e1");
+    ASSERT_always_require(e1->get_flags() == 0);
+
+    // Flags are always specified after a comment string
+    TreeNodePtr e2 = LeafNode::create_variable(32, "e2", UNDEFINED);
+    ASSERT_always_require(e2->get_flags() == UNDEFINED);
+
+    // Flags can be specified for things other than variables
+    TreeNodePtr e3 = LeafNode::create_integer(32, 0, "e3", INVALID);
+    ASSERT_always_require(e3->get_flags() == INVALID);
+    TreeNodePtr e4 = LeafNode::create_constant(Sawyer::Container::BitVector(128), "e4", UNDEFINED|INVALID);
+    ASSERT_always_require(e4->get_flags() == (UNDEFINED|INVALID));
+    TreeNodePtr e5 = LeafNode::create_boolean(true, "e5", UNDEFINED);
+    ASSERT_always_require(e5->get_flags() == UNDEFINED);
+    TreeNodePtr e6 = LeafNode::create_memory(32, 32, "e6", INVALID);
+    ASSERT_always_require(e6->get_flags() == INVALID);
+}
+
+// Flags for internal nodes are the union of flags of subtrees
+static void
+testInternal() {
+    std::cout <<"test internal internal nodes:\n";
+    TreeNodePtr e1 = LeafNode::create_variable(32, "e1", UNDEFINED);
+    TreeNodePtr e2 = LeafNode::create_variable(32, "e2", INVALID);
+    TreeNodePtr e3 = InternalNode::create(32, OP_ADD, e1, e2);
+    ASSERT_always_require(e3->get_flags() == (UNDEFINED|INVALID));
+}
+
+// Make sure we can print flags
+static void
+testPrinting() {
+    std::cout <<"test printing flags:\n";
+    TreeNodePtr e1 = InternalNode::create(32, OP_ADD,
+                                          LeafNode::create_variable(32, "a", UNDEFINED),
+                                          LeafNode::create_variable(32, "b", INVALID));
+    std::cout <<"  e1 = " <<*e1 <<"\n";
+}
+
+// When simplifying, if subtrees are discarded (e.g., cancellation) then they don't contribute their flags to the result.
+static void
+testDiscardRule() {
+    std::cout <<"test simplification discard rule:\n";
+    TreeNodePtr e1 = LeafNode::create_variable(32, "e1", UNDEFINED);
+    TreeNodePtr e2 = InternalNode::create(32, OP_NEGATE, e1);
+    TreeNodePtr e3 = LeafNode::create_variable(32, "e3", INVALID);
+    TreeNodePtr e4 = InternalNode::create(32, OP_ADD, e1, e2, e3);
+    std::cout <<"  e4 = " <<*e4 <<"\n";
+    ASSERT_always_require(e4->get_flags() == INVALID);
+
+}
+
+// Any new tree created by the simplifier will have zero flags if that new tree doesn't depend on any original trees.
+static void
+testNewExprRule() {
+    std::cout <<"test simplification new expression rule:\n";
+    TreeNodePtr e1 = LeafNode::create_variable(32, "e1", UNDEFINED);
+    TreeNodePtr e2 = InternalNode::create(32, OP_ADD, e1, InternalNode::create(32, OP_NEGATE, e1));
+    std::cout <<"  e2 = " <<*e2 <<"\n";
+    ASSERT_always_require(e2->get_flags() == 0);
+
+    TreeNodePtr e3 = InternalNode::create(32, OP_ADD, e1, InternalNode::create(32, OP_INVERT, e1));
+    std::cout <<"  e3 = " <<*e3 <<"\n";
+    ASSERT_always_require(e3->get_flags() == 0);
+
+    TreeNodePtr e4 = InternalNode::create(32, OP_BV_XOR, e1, e1);
+    std::cout <<"  e4 = " <<*e4 <<"\n";
+    ASSERT_always_require(e4->get_flags() == 0);
+}
+
+// Any new subtree created by a simplification somehow combining input subtrees will have flags that are the union of the flags
+// forom the input subtrees on which it depends.
+static void
+testFoldingRule() {
+    std::cout <<"test simplification folding rule:\n";
+    TreeNodePtr e1 = LeafNode::create_integer(32, 7, "e1", UNDEFINED);
+    TreeNodePtr e2 = LeafNode::create_integer(32, 8, "e2", INVALID);
+    TreeNodePtr e3 = InternalNode::create(32, OP_ADD, e1, e2);
+    std::cout <<"  e3 = " <<*e3 <<"\n";
+    ASSERT_always_require(e3->get_flags() == (UNDEFINED|INVALID));
+}
+
+// User-defined flags are significant for hashing.
+static void
+testHashing() {
+    std::cout <<"test hashing:\n";
+    TreeNodePtr e1 = LeafNode::create_integer(32, 7, "", 0);
+    TreeNodePtr e2 = LeafNode::create_integer(32, 7, "", UNDEFINED);
+    ASSERT_always_require(e1->hash() != e2->hash());
+}
+
+// Simplification of relational operators is treated like folding. I.e., the flags of the result are the union of the flags of
+// the operands on which the result depends.
+static void
+testRelationalFolding() {
+    std::cout <<"test relational folding:\n";
+    TreeNodePtr e1 = LeafNode::create_integer(32, 7, "e1", UNDEFINED);
+    TreeNodePtr e2 = LeafNode::create_integer(32, 8, "e2", INVALID);
+
+    TreeNodePtr e3 = InternalNode::create(1, OP_ULT, e1, e2);
+    std::cout <<"  e3 = " <<*e3 <<"\n";
+    ASSERT_always_require(e3->get_flags() == (UNDEFINED|INVALID));
+
+    TreeNodePtr e4 = InternalNode::create(1, OP_ULT, e2, e1);
+    std::cout <<"  e4 = " <<*e4 <<"\n";
+    ASSERT_always_require(e4->get_flags() == (UNDEFINED|INVALID));
+
+    TreeNodePtr e5 = LeafNode::create_variable(32, "e5", UNDEFINED);
+    TreeNodePtr e6 = InternalNode::create(1, OP_EQ, e5, e5);
+    std::cout <<"  e6 = " <<*e6 <<"\n";
+    ASSERT_always_require(e6->get_flags() == UNDEFINED);
+}
+
+int
+main() {
+    testSetting();
+    testInternal();
+    testPrinting();
+    testDiscardRule();
+    testNewExprRule();
+    testFoldingRule();
+    testHashing();
+    testRelationalFolding();
+}

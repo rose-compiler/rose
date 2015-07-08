@@ -462,6 +462,18 @@ testSymbolicSimplification.passed: $(TEST_WITH_ANSWER) testSymbolicSimplificatio
 		ANS="$(srcdir)/testSymbolicSimplification.ans"	\
 		$< $@
 
+# Symbolic expression user-defined flags
+noinst_PROGRAMS += testSymbolicFlags
+testSymbolicFlags_SOURCES = testSymbolicFlags.C
+testSymbolicFlags_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testSymbolicFlags.passed
+testSymbolicFlags.passed: $(TEST_WITH_ANSWER) testSymbolicFlags testSymbolicFlags.ans
+	@$(RTH_RUN)					\
+		TITLE="test symbolic flags [$@]"	\
+		CMD="./testSymbolicFlags"		\
+		ANS="$(srcdir)/testSymbolicFlags.ans"	\
+		$< $@
+
 # Instruction semantics verification
 noinst_PROGRAMS += verifySemantics
 verifySemantics_SOURCES = verifySemantics.C

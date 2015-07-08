@@ -17,7 +17,8 @@ template <class language_tpl> struct generic_clause_t;
  * @{
 */
 
-template <class Lang> class KLT_Annotation {
+template <class Lang>
+class KLT_Annotation {
   private:
     void createClause() {
       assert(Lang::s_clause_labels.size() > 0);
