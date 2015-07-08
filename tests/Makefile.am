@@ -43,7 +43,8 @@ bin_PROGRAMS = \
    parallelASTMerge \
    testGraphGeneration \
    testTokenGeneration \
-   KeepGoingTranslator 
+   KeepGoingTranslator \
+   testTemplates
 
 if ROSE_WITH_ATERM
    bin_PROGRAMS += testAtermGraphGeneration
@@ -119,6 +120,9 @@ endif
 
 # Ignores internal ROSE failures, see `rose --help` for info on `-rose:keep_going`
 KeepGoingTranslator_SOURCES = KeepGoingTranslator.cpp
+
+# DQ (7/2/2015): Added test that marks templates to be output with instantiations.
+testTemplates_SOURCES = testTemplates.C
 
 # DQ (7/3/2013): Added support to output some pre-defined macro values.
 # Program to output predefined relevant macros.
@@ -330,13 +334,16 @@ test_testGraphGeneration: testGraphGeneration
 # Rule to run all the example translator tests
 # test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testGraphGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator
 else
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testGraphGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator
 endif
 
 testKeepGoingTranslator: KeepGoingTranslator
 	./KeepGoingTranslator $(__minimal_input_code)
+
+# DQ (7/2/2015): template test code that marks all template instantiations for output (as a test).
+test_testTemplates: testTemplates
 
 # This appears to be a bug, in that the executable is not build (ROSE assumes an implicit -c for compile only mode).
 #predefinedMacros: testTranslator
