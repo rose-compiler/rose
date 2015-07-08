@@ -50,7 +50,6 @@ SgFunctionParameterList * createParameterList<
   const std::list<SgVariableSymbol *> & params = kernel->getArguments().parameters;
   const std::list<SgVariableSymbol *> & scalars = kernel->getArguments().scalars;
   const std::list<Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *> & datas = kernel->getArguments().datas;
-  unsigned long data_type_modifer_ = SgTypeModifier::e_ocl_global__;
 
   std::list<SgVariableSymbol *>::const_iterator it_var_sym;
   std::list<Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *>::const_iterator it_data;
@@ -60,430 +59,124 @@ SgFunctionParameterList * createParameterList<
   result->append_arg(SageBuilder::buildInitializedName("param", SageBuilder::buildPointerType(SageBuilder::buildIntType()), NULL));	
   result->append_arg(SageBuilder::buildInitializedName("data",  SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL));
 
-  assert(Runtime::TileK::tilek_kernel_api.context_class != NULL);
+  assert(Runtime::TileK::kernel_api.context_class != NULL);
   result->append_arg(SageBuilder::buildInitializedName(
-    "context", SageBuilder::buildModifierType(SageBuilder::buildPointerType(Runtime::TileK::tilek_kernel_api.context_class->get_declaration()->get_type())), NULL
+    "context", SageBuilder::buildModifierType(SageBuilder::buildPointerType(Runtime::TileK::kernel_api.context_class->get_declaration()->get_type())), NULL
   ));
 
   return result;
 }
 
-template <>
-SgStatement * generateStatement<
-  DLX::KLT_Annotation<DLX::TileK::language_t>,
-  Language::None,
-  Runtime::TileK
-> (
-  LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::stmt_t * stmt,
-  const Kernel<
-    DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK
-  >::local_symbol_maps_t & local_symbol_maps
-) {
-  SgStatement * result = SageInterface::copyStatement(stmt->statement);
-
-  std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local;
-  std::map<Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *, SgVariableSymbol *>::const_iterator it_data_to_local;
-
-  std::map<SgVariableSymbol *, SgVariableSymbol *> data_sym_to_local;
-  std::map<SgVariableSymbol *, Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *> data_sym_to_data;
-
-  for (it_data_to_local = local_symbol_maps.datas.begin(); it_data_to_local != local_symbol_maps.datas.end(); it_data_to_local++) {
-    Data<DLX::KLT_Annotation<DLX::TileK::language_t> > * data = it_data_to_local->first;
-    SgVariableSymbol * data_sym = it_data_to_local->first->getVariableSymbol();
-    SgVariableSymbol * local_sym = it_data_to_local->second;
-
-    data_sym_to_local.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(data_sym, local_sym));
-    data_sym_to_data.insert(std::pair<SgVariableSymbol *, Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *>(data_sym, data));
-  }
-
-  std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(result);
-  std::vector<SgVarRefExp *>::const_iterator it_var_ref;
-
-  for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
-    SgVarRefExp * var_ref = *it_var_ref;
-    SgVariableSymbol * var_sym = var_ref->get_symbol();
-
-    std::map<SgVariableSymbol *, Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *>::const_iterator it_data_sym_to_data = data_sym_to_data.find(var_sym);
-    if (it_data_sym_to_data == data_sym_to_data.end()) continue; // Not a variable reference to a Data
-
-    Data<DLX::KLT_Annotation<DLX::TileK::language_t> > * data = it_data_sym_to_data->second;
-
-    SgPntrArrRefExp * arr_ref = isSgPntrArrRefExp(var_ref->get_parent());
-    SgPntrArrRefExp * top_arr_ref = NULL;
-    std::vector<SgExpression *> subscripts;
-    while (arr_ref != NULL) {
-      top_arr_ref = arr_ref;
-      subscripts.push_back(arr_ref->get_rhs_operand_i());
-      arr_ref = isSgPntrArrRefExp(arr_ref->get_parent());
-    }
-    assert(subscripts.size() == data->getSections().size());
-
-    if (data->getSections().size() > 1) {
-      assert(top_arr_ref != NULL);
-      std::vector<SgExpression *>::const_iterator it_subscript = subscripts.begin();
-      SgExpression * subscript = SageInterface::copyExpression(*it_subscript);
-      it_subscript++;
-      size_t cnt = 1;
-      while (it_subscript != subscripts.end()) {
-        SgExpression * dim_size = SageInterface::copyExpression(data->getSections()[cnt].size);
-        subscript = SageBuilder::buildMultiplyOp(subscript, dim_size);
-        subscript = SageBuilder::buildAddOp(subscript, SageInterface::copyExpression(*it_subscript));
-        cnt++; it_subscript++;
-      }
-      SageInterface::replaceExpression(top_arr_ref, SageBuilder::buildPntrArrRefExp(SageInterface::copyExpression(var_ref), subscript), true);
-    }
-  }
-
-  var_refs = SageInterface::querySubTree<SgVarRefExp>(result);
-  for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
-    SgVarRefExp * var_ref = *it_var_ref;
-    SgVariableSymbol * var_sym = var_ref->get_symbol();
-
-    SgVariableSymbol * local_sym = NULL;
-    it_sym_to_local = local_symbol_maps.parameters.find(var_sym);
-    if (it_sym_to_local != local_symbol_maps.parameters.end())
-      local_sym = it_sym_to_local->second;
-
-    it_sym_to_local = local_symbol_maps.scalars.find(var_sym);
-    if (it_sym_to_local != local_symbol_maps.scalars.end()) {
-      assert(local_sym == NULL);
-
-      local_sym = it_sym_to_local->second;
-    }
-
-    it_sym_to_local = data_sym_to_local.find(var_sym);
-    if (it_sym_to_local != data_sym_to_local.end()) {
-      assert(local_sym == NULL);
-
-      local_sym = it_sym_to_local->second;
-    }
-
-    it_sym_to_local = local_symbol_maps.iterators.find(var_sym);
-    if (it_sym_to_local != local_symbol_maps.iterators.end()) {
-      assert(local_sym == NULL);
-
-      local_sym = it_sym_to_local->second;
-    }
-
-    if (local_sym != NULL)
-      SageInterface::replaceExpression(var_ref, SageBuilder::buildVarRefExp(local_sym), true);
-    else {
-      /// \todo valid if sym can be found in local scope
-    }
-  }
-
-  assert(result != NULL);
-
-  return result;
-}
-
-SgExpression * translateConstExpression(
-  SgExpression * expr,
-  const std::map<SgVariableSymbol *, SgVariableSymbol *> & param_to_local,
-  const std::map<SgVariableSymbol *, SgVariableSymbol *> & iter_to_local
-) {
-  SgExpression * result = SageInterface::copyExpression(expr);
-
-  std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local;
-
-  if (isSgVarRefExp(result)) {
-    // Catch an issue when reading looptree from file. In this case, 'expr' may not have a valid parent.
-    // If 'expr' is a SgVarRefExp, it causes an assertion to fail in SageInterface::replaceExpression
-
-    SgVarRefExp * var_ref = (SgVarRefExp *)result;
-
-    SgVariableSymbol * var_sym = var_ref->get_symbol();
-
-    SgVariableSymbol * local_sym = NULL;
-
-    it_sym_to_local = param_to_local.find(var_sym);
-    if (it_sym_to_local != param_to_local.end())
-      local_sym = it_sym_to_local->second;
-
-    it_sym_to_local = iter_to_local.find(var_sym);
-    if (it_sym_to_local != iter_to_local.end()) {
-      assert(local_sym == NULL); // implies VarRef to a variable symbol which is both parameter and iterator... It does not make sense!
-
-      local_sym = it_sym_to_local->second;
-    }
-
-    assert(local_sym != NULL); // implies VarRef to an unknown variable symbol (neither parameter or iterator)
-
-    return SageBuilder::buildVarRefExp(local_sym);
-  }
-  
-  std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(result);
-  std::vector<SgVarRefExp *>::const_iterator it_var_ref;
-  for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
-    SgVarRefExp * var_ref = *it_var_ref;
-    SgVariableSymbol * var_sym = var_ref->get_symbol();
-
-    SgVariableSymbol * local_sym = NULL;
-
-    it_sym_to_local = param_to_local.find(var_sym);
-    if (it_sym_to_local != param_to_local.end())
-      local_sym = it_sym_to_local->second;
-
-    it_sym_to_local = iter_to_local.find(var_sym);
-    if (it_sym_to_local != iter_to_local.end()) {
-      assert(local_sym == NULL); // implies VarRef to a variable symbol which is both parameter and iterator... It does not make sense!
-
-      local_sym = it_sym_to_local->second;
-    }
-
-    assert(local_sym != NULL); // implies VarRef to an unknown variable symbol (neither parameter or iterator)
-
-    SageInterface::replaceExpression(var_ref, SageBuilder::buildVarRefExp(local_sym), true);
-  }
-
-  return result;
-}
-
-template <>
-std::pair<SgStatement *, SgScopeStatement *> generateLoops<
-  DLX::KLT_Annotation<DLX::TileK::language_t>,
-  Language::None,
-  Runtime::TileK
-> (
-  LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t * loop,
-  const Kernel<
-    DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK
-  >::local_symbol_maps_t & local_symbol_maps
-) {
-  std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local = local_symbol_maps.iterators.find(loop->iterator);
-  assert(it_sym_to_local != local_symbol_maps.iterators.end());
-
-  SgExprStatement * init_stmt = SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(
-                                  SageBuilder::buildVarRefExp(it_sym_to_local->second),
-                                  translateConstExpression(loop->lower_bound, local_symbol_maps.iterators, local_symbol_maps.parameters)
-                                ));
-  SgExprStatement * test_stmt  = SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(
-                                   SageBuilder::buildVarRefExp(it_sym_to_local->second),
-                                   translateConstExpression(loop->upper_bound, local_symbol_maps.iterators, local_symbol_maps.parameters))
-                                 );
-  SgExpression * inc_expr = SageBuilder::buildPlusAssignOp(
-                              SageBuilder::buildVarRefExp(it_sym_to_local->second),
-                              translateConstExpression(loop->stride, local_symbol_maps.iterators, local_symbol_maps.parameters)
-                            );
-  SgBasicBlock * for_body = SageBuilder::buildBasicBlock();
-  SgForStatement * for_stmt = SageBuilder::buildForStatement(init_stmt, test_stmt, inc_expr, for_body);
-
-  return std::pair<SgStatement *, SgScopeStatement *>(for_stmt, for_body);
-}
-
-template <>
-tile_generation_t<DLX::KLT_Annotation<DLX::TileK::language_t> > generateTiles<
-  DLX::KLT_Annotation<DLX::TileK::language_t>,
-  Language::None,
-  Runtime::TileK
-> (
-  LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::tile_t * tile,
-  const Kernel<
-    DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK
-  >::local_symbol_maps_t & local_symbol_maps
-) {
-  std::map<LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t *, SgVariableSymbol *> loop_iterator_map;
-  SgForStatement * first_for_stmt = NULL;
-  SgForStatement * last_for_stmt = NULL;
-  LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::block_t * block = NULL;
-  while (tile != NULL) {
-    LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t * loop = tile->loop;
-    assert(loop != NULL);
-
-    SgVariableSymbol * tile_iterator = tile->iterator_sym;
-    assert(tile_iterator != NULL);
-
-    std::map<LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t *, SgVariableSymbol *>::iterator it_loop_iterator = loop_iterator_map.find(loop);
-    SgVariableSymbol * previous_iterator = NULL;
-    if (it_loop_iterator != loop_iterator_map.end()) {
-      previous_iterator = it_loop_iterator->second;
-      it_loop_iterator->second = tile_iterator;
-    }
-    else {
-      loop_iterator_map.insert(std::pair<LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t *, SgVariableSymbol *>(loop, tile_iterator));
-    }
-
-    SgExpression * lower_bound = NULL;
-    SgExpression * upper_bound = NULL;
-    if (previous_iterator == NULL) {
-      lower_bound = translateConstExpression(loop->lower_bound, local_symbol_maps.iterators, local_symbol_maps.parameters);
-      upper_bound = translateConstExpression(loop->upper_bound, local_symbol_maps.iterators, local_symbol_maps.parameters);
-    }
-    else {
-      lower_bound = SageBuilder::buildVarRefExp(previous_iterator);
-      upper_bound = SageBuilder::buildAddOp(
-                      SageBuilder::buildVarRefExp(previous_iterator),
-                      SageBuilder::buildDotExp(
-                        SageBuilder::buildPntrArrRefExp(
-                          SageBuilder::buildArrowExp(
-                            SageBuilder::buildVarRefExp(local_symbol_maps.context),
-                            SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_tile_field)
-                          ),
-                          SageBuilder::buildIntVal(tile->id)
-                        ),
-                        SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_tile_length_field)
-                      )
-                    ); // 'tile_iterator' + 'ctx'->tile['tile_id'].length
-    }
-
-    SgExprStatement * init_stmt = SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildVarRefExp(tile_iterator), lower_bound));
-    SgExprStatement * test_stmt = SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(SageBuilder::buildVarRefExp(tile_iterator), upper_bound));
-    SgExpression * inc_expr = SageBuilder::buildPlusAssignOp(
-                                SageBuilder::buildVarRefExp(tile_iterator),
-                                SageBuilder::buildDotExp(
-                                  SageBuilder::buildPntrArrRefExp(
-                                    SageBuilder::buildArrowExp(
-                                      SageBuilder::buildVarRefExp(local_symbol_maps.context),
-                                      SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_tile_field)
-                                    ),
-                                    SageBuilder::buildIntVal(tile->id)
-                                  ),
-                                  SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_tile_stride_field)
-                                )
-                              ); // 'tile_iterator' += 'ctx'->tile['tile_id'].stride
-
-    SgForStatement * for_stmt = SageBuilder::buildForStatement(init_stmt, test_stmt, inc_expr, NULL);
-
-    if (last_for_stmt != NULL) {
-      SageInterface::setLoopBody(last_for_stmt, for_stmt);
-    }
-    else
-      first_for_stmt = for_stmt;
-    last_for_stmt = for_stmt;
-
-    block = tile->block;
-    tile = tile->tile;
-  }
-  assert(block != NULL);
-
-  SgBasicBlock * body = SageBuilder::buildBasicBlock();
-  SageInterface::setLoopBody(last_for_stmt, body);
-
-  std::map<LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t *, SgVariableSymbol *>::const_iterator it_loop_iterator;
-  for (it_loop_iterator = loop_iterator_map.begin(); it_loop_iterator != loop_iterator_map.end(); it_loop_iterator++) {
-    std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local = local_symbol_maps.iterators.find(it_loop_iterator->first->iterator);
-    assert(it_sym_to_local != local_symbol_maps.iterators.end());
-    SageInterface::appendStatement(SageBuilder::buildAssignStatement(
-      SageBuilder::buildVarRefExp(it_sym_to_local->second), SageBuilder::buildVarRefExp(it_loop_iterator->second)
-    ), body);
-  }
-
-  return tile_generation_t<DLX::KLT_Annotation<DLX::TileK::language_t> >(first_for_stmt, body, block);
-}
-
-template <>
-Runtime::TileK::exec_mode_t changeExecutionMode<
-  DLX::KLT_Annotation<DLX::TileK::language_t>,
-  Language::None,
-  Runtime::TileK
-> (
-  const Runtime::TileK::exec_mode_t & exec_mode,
-  const Runtime::TileK::exec_config_t & exec_cfg
-) {
-  return exec_mode;
-}
-
-template <>
-void generateSynchronizations<
-  DLX::KLT_Annotation<DLX::TileK::language_t>,
-  Language::None,
-  Runtime::TileK
-> (
-  Runtime::TileK::exec_mode_t prev_exec_mode,
-  Runtime::TileK::exec_mode_t next_exec_mode,
-  const Runtime::TileK::exec_config_t & exec_cfg,
-  SgScopeStatement * scope,
-  const Kernel<
-    DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK
-  >::local_symbol_maps_t & local_symbol_maps
-) {}
-
-template <>
-SgScopeStatement * generateExecModeGuards<
-  DLX::KLT_Annotation<DLX::TileK::language_t>,
-  Language::None,
-  Runtime::TileK
-> (
-  Runtime::TileK::exec_mode_t exec_mode,
-  const Runtime::TileK::exec_config_t & exec_cfg,
-  SgScopeStatement * scope,
-  const Kernel<
-    DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK
-  >::local_symbol_maps_t & local_symbol_maps
-) {
-  return scope;
-}
-
 namespace Runtime {
 
-TileK::tilek_kernel_api_t TileK::tilek_kernel_api;
-TileK::tilek_host_api_t TileK::tilek_host_api;
+TileK::kernel_api_t TileK::kernel_api;
+
+// Build: 'expr'->'array'['idx'].'field'
+SgExpression * buildPtrArrElemField(SgExpression * expr, SgVariableSymbol * array, SgExpression * idx, SgVariableSymbol * field) {
+  return SageBuilder::buildDotExp(SageBuilder::buildPntrArrRefExp(SageBuilder::buildArrowExp(expr, SageBuilder::buildVarRefExp(array)), idx), SageBuilder::buildVarRefExp(field));
+}
+
+// Build: 'ctx'->loops['loop_id'].lower
+SgExpression * TileK::kernel_api_t::buildLoopLower(size_t loop_id, SgVariableSymbol * ctx) const {
+  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_loop_field, SageBuilder::buildIntVal(loop_id), context_loop_lower_field);
+}
+
+// Build: 'ctx'->loops['loop_id'].upper
+SgExpression * TileK::kernel_api_t::buildLoopUpper(size_t loop_id, SgVariableSymbol * ctx) const {
+  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_loop_field, SageBuilder::buildIntVal(loop_id), context_loop_upper_field);
+}
+
+// Build: 'ctx'->loops['loop_id'].stride
+SgExpression * TileK::kernel_api_t::buildLoopStride(size_t loop_id, SgVariableSymbol * ctx) const {
+  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_loop_field, SageBuilder::buildIntVal(loop_id), context_loop_stride_field);
+}
+
+// Build: 'ctx'->tiles['tile_id'].length
+SgExpression * TileK::kernel_api_t::buildTileLength(size_t tile_id, SgVariableSymbol * ctx) const {
+  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_tile_field, SageBuilder::buildIntVal(tile_id), context_tile_length_field);
+}
+
+// Build: 'ctx'->tiles['tile_id'].stride
+SgExpression * TileK::kernel_api_t::buildTileStride(size_t tile_id, SgVariableSymbol * ctx) const {
+  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_tile_field, SageBuilder::buildIntVal(tile_id), context_tile_stride_field);
+}
+
+TileK::host_api_t TileK::host_api;
+
+unsigned TileK::loadAPI(MDCG::ModelBuilder & model_builder, const std::string & headers_path) {
+  unsigned tilek_model = model_builder.create();
+    model_builder.add(tilek_model, "tile",   headers_path, "h");
+    model_builder.add(tilek_model, "loop",   headers_path, "h");
+    model_builder.add(tilek_model, "kernel", headers_path, "h");
+  loadAPI(model_builder.get(tilek_model));
+  return tilek_model;
+}
 
 void TileK::loadAPI(const MDCG::Model::model_t & model) {
 
   MDCG::Model::class_t context_class = model.lookup<MDCG::Model::class_t>("context_t");
-  tilek_kernel_api.context_class = context_class->node->symbol;
-  assert(tilek_kernel_api.context_class != NULL);
+  kernel_api.context_class = context_class->node->symbol;
+  assert(kernel_api.context_class != NULL);
 
-    tilek_kernel_api.context_loop_field = context_class->scope->field_children[0]->node->symbol;
-    tilek_kernel_api.context_tile_field = context_class->scope->field_children[1]->node->symbol;
+    kernel_api.context_loop_field = context_class->scope->field_children[0]->node->symbol;
+    kernel_api.context_tile_field = context_class->scope->field_children[1]->node->symbol;
 
   MDCG::Model::class_t kernel_class = model.lookup<MDCG::Model::class_t>("kernel_t");
-  tilek_host_api.kernel_class = kernel_class->node->symbol;
-  assert(tilek_host_api.kernel_class != NULL);
+  host_api.kernel_class = kernel_class->node->symbol;
+  assert(host_api.kernel_class != NULL);
 
-    tilek_host_api.kernel_data_field  = kernel_class->scope->field_children[1]->node->symbol;
-    tilek_host_api.kernel_param_field = kernel_class->scope->field_children[2]->node->symbol;
-    tilek_host_api.kernel_loop_field  = kernel_class->scope->field_children[3]->node->symbol;
+    host_api.kernel_data_field  = kernel_class->scope->field_children[1]->node->symbol;
+    host_api.kernel_param_field = kernel_class->scope->field_children[2]->node->symbol;
+    host_api.kernel_loop_field  = kernel_class->scope->field_children[3]->node->symbol;
 
   MDCG::Model::class_t loop_class = model.lookup<MDCG::Model::class_t>("loop_t");
-  tilek_kernel_api.context_loop_class = loop_class->node->symbol;
-  assert(tilek_kernel_api.context_loop_class != NULL);
+  kernel_api.context_loop_class = loop_class->node->symbol;
+  assert(kernel_api.context_loop_class != NULL);
 
-    tilek_kernel_api.context_loop_lower_field  = loop_class->scope->field_children[0]->node->symbol;
-    tilek_kernel_api.context_loop_upper_field  = loop_class->scope->field_children[1]->node->symbol;
-    tilek_kernel_api.context_loop_stride_field = loop_class->scope->field_children[2]->node->symbol;
+    kernel_api.context_loop_lower_field  = loop_class->scope->field_children[0]->node->symbol;
+    kernel_api.context_loop_upper_field  = loop_class->scope->field_children[1]->node->symbol;
+    kernel_api.context_loop_stride_field = loop_class->scope->field_children[2]->node->symbol;
 
-    tilek_host_api.loop_lower_field  = loop_class->scope->field_children[0]->node->symbol;
-    tilek_host_api.loop_upper_field  = loop_class->scope->field_children[1]->node->symbol;
-    tilek_host_api.loop_stride_field = loop_class->scope->field_children[2]->node->symbol;
+    host_api.loop_lower_field  = loop_class->scope->field_children[0]->node->symbol;
+    host_api.loop_upper_field  = loop_class->scope->field_children[1]->node->symbol;
+    host_api.loop_stride_field = loop_class->scope->field_children[2]->node->symbol;
 
   MDCG::Model::class_t tile_class = model.lookup<MDCG::Model::class_t>("tile_t");
-  tilek_kernel_api.context_tile_class = tile_class->node->symbol;
-  assert(tilek_kernel_api.context_tile_class != NULL);
+  kernel_api.context_tile_class = tile_class->node->symbol;
+  assert(kernel_api.context_tile_class != NULL);
 
-    tilek_kernel_api.context_tile_length_field = tile_class->scope->field_children[0]->node->symbol;
-    tilek_kernel_api.context_tile_stride_field = tile_class->scope->field_children[1]->node->symbol;
+    kernel_api.context_tile_length_field = tile_class->scope->field_children[0]->node->symbol;
+    kernel_api.context_tile_stride_field = tile_class->scope->field_children[1]->node->symbol;
 
   MDCG::Model::function_t build_kernel_func = model.lookup<MDCG::Model::function_t>("build_kernel");
-  tilek_host_api.build_kernel_func = build_kernel_func->node->symbol;
-  assert(tilek_host_api.build_kernel_func != NULL);
+  host_api.build_kernel_func = build_kernel_func->node->symbol;
+  assert(host_api.build_kernel_func != NULL);
 
-  MDCG::Model::function_t execute_kernel_func = model.lookup<MDCG::Model::function_t>("build_kernel");
-  tilek_host_api.execute_kernel_func = execute_kernel_func->node->symbol;
-  assert(tilek_host_api.execute_kernel_func != NULL);
+  MDCG::Model::function_t execute_kernel_func = model.lookup<MDCG::Model::function_t>("execute_kernel");
+  host_api.execute_kernel_func = execute_kernel_func->node->symbol;
+  assert(host_api.execute_kernel_func != NULL);
 
   MDCG::Model::type_t kernel_func_ptr_type = model.lookup<MDCG::Model::type_t>("kernel_func_ptr");
-  tilek_host_api.kernel_func_ptr_type = kernel_func_ptr_type->node->type;
-  assert(tilek_host_api.kernel_func_ptr_type != NULL);
+  host_api.kernel_func_ptr_type = kernel_func_ptr_type->node->type;
+  assert(host_api.kernel_func_ptr_type != NULL);
 }
 
 void TileK::useSymbolsKernel(
   MFB::Driver<MFB::Sage> & driver,
   unsigned long file_id
 ) {
-  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::tilek_kernel_api.context_tile_class, file_id);
-  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::tilek_kernel_api.context_loop_class, file_id);
-  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::tilek_kernel_api.context_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::kernel_api.context_tile_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::kernel_api.context_loop_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::kernel_api.context_class, file_id);
 }
 
 void TileK::useSymbolsHost(
   MFB::Driver<MFB::Sage> & driver,
   unsigned long file_id
 ) {
-  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::tilek_host_api.kernel_class, file_id);
-  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::tilek_kernel_api.context_tile_class, file_id);
-  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::tilek_kernel_api.context_loop_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::host_api.kernel_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::kernel_api.context_tile_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::kernel_api.context_loop_class, file_id);
 }
 
 template <>
@@ -496,7 +189,7 @@ void get_exec_config<
   const Kernel<DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK> * kernel
 ) {}
 
-}
+} // namespace KLT::Runtime
 
 template <>
 LoopTiler<DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK>::loop_tiling_t::loop_tiling_t(
@@ -595,9 +288,9 @@ namespace Language {
 
 void None::applyKernelModifiers(SgFunctionDeclaration * kernel_decl) {}
 
-}
+} // namespace KLT::Language
 
-}
+} // namespace KLT
 
 namespace DLX {
 
@@ -648,11 +341,12 @@ KLT<tilek_kernel_t>::object_desc_t::object_desc_t(
 SgVariableSymbol * getExistingSymbolOrBuildDecl(
   const std::string & name,
   SgType * type,
-  SgScopeStatement * scope
+  SgScopeStatement * scope,
+  SgInitializer * init = NULL
 ) {
   SgVariableSymbol * sym = scope->lookup_variable_symbol(name);
   if (sym == NULL) {
-    SgVariableDeclaration * decl = SageBuilder::buildVariableDeclaration(name, type, NULL, scope);
+    SgVariableDeclaration * decl = SageBuilder::buildVariableDeclaration(name, type, init, scope);
     SageInterface::appendStatement(decl, scope);
     sym = scope->lookup_variable_symbol(name);
   }
@@ -737,22 +431,23 @@ SgBasicBlock * createLocalDeclarations<
     SgVariableSymbol * data_sym = data->getVariableSymbol();
     std::string data_name = data_sym->get_name().getString();
 
-    SgExpression * init;
+    SgExpression * init = SageBuilder::buildCastExp(
+      SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_data_sym), SageBuilder::buildIntVal(arg_cnt)),
+      SageBuilder::buildPointerType(data->getBaseType())
+    );
+
+    SgType * data_type;
     if (data->getSections().size() > 0)
-      init = SageBuilder::buildCastExp(
-        SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_data_sym), SageBuilder::buildIntVal(arg_cnt)),
-        data_sym->get_type()
-      );
-    else
-      init = SageBuilder::buildPointerDerefExp(SageBuilder::buildCastExp(
-        SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_data_sym), SageBuilder::buildIntVal(arg_cnt)),
-        SageBuilder::buildPointerType(data_sym->get_type())
-      ));
+      data_type = SageBuilder::buildPointerType(data->getBaseType());
+    else {
+      data_type = data->getBaseType();
+      init = SageBuilder::buildPointerDerefExp(init);
+    }
 
     SageInterface::prependStatement(
       SageBuilder::buildVariableDeclaration(
         data_name,
-        data_sym->get_type(),
+        data_type,
         SageBuilder::buildAssignInitializer(init),
         kernel_body
       ),
@@ -761,7 +456,7 @@ SgBasicBlock * createLocalDeclarations<
     SgVariableSymbol * new_sym = kernel_body->lookup_variable_symbol(data_name);
     assert(new_sym != NULL);
 
-    local_symbol_maps.parameters.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(data_sym, new_sym));
+    local_symbol_maps.datas.insert(std::pair< ::KLT::Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *, SgVariableSymbol *>(data, new_sym));
     arg_cnt++;
   }
 

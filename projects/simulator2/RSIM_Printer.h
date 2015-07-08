@@ -57,13 +57,19 @@ class Printer {
     int argNum_;                                        // -1 means return value
     size_t nPrinted_;                                   // number of values printed (not counting eret() and str())
     bool hadRetError_;                                  // true if eret() displayed an error
+    std::string onDestruction_;                         // what to print when destroyed
 public:
-    Printer(Sawyer::Message::Stream &out, RSIM_Thread *thread)
-        : thread_(thread), out_(out), args32_(NULL), args64_(NULL), argNum_(0), nPrinted_(0), hadRetError_(false) {};
-    Printer(Sawyer::Message::Stream &out, RSIM_Thread *thread, const uint32_t *args)
-        : thread_(thread), out_(out), args32_(args), args64_(NULL), argNum_(0), nPrinted_(0), hadRetError_(false) {};
-    Printer(Sawyer::Message::Stream &out, RSIM_Thread *thread, const uint64_t *args)
-        : thread_(thread), out_(out), args32_(NULL), args64_(args), argNum_(0), nPrinted_(0), hadRetError_(false) {};
+    Printer(Sawyer::Message::Stream &out, RSIM_Thread *thread, const std::string &onDestruction)
+        : thread_(thread), out_(out), args32_(NULL), args64_(NULL), argNum_(0), nPrinted_(0), hadRetError_(false),
+          onDestruction_(onDestruction) {};
+    Printer(Sawyer::Message::Stream &out, RSIM_Thread *thread, const uint32_t *args, const std::string &onDestruction)
+        : thread_(thread), out_(out), args32_(args), args64_(NULL), argNum_(0), nPrinted_(0), hadRetError_(false),
+          onDestruction_(onDestruction) {};
+    Printer(Sawyer::Message::Stream &out, RSIM_Thread *thread, const uint64_t *args, const std::string &onDestruction)
+        : thread_(thread), out_(out), args32_(NULL), args64_(args), argNum_(0), nPrinted_(0), hadRetError_(false),
+          onDestruction_(onDestruction) {};
+
+    ~Printer();
 
     static std::string flags_to_str(const Translate *tlist, uint32_t value);
 

@@ -5,9 +5,13 @@
 
 #include "integerOps.h"
 #include "Diagnostics.h"
+#include <arpa/inet.h>
+#include <sys/vfs.h>
 #include <sys/wait.h>
+#include <sys/socket.h>
 
 using namespace rose::Diagnostics;
+using namespace StringUtility;
 
 unsigned
 tracingFacilityBit(TracingFacility tf)
@@ -64,17 +68,17 @@ print_hex_64(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
     size_t nelmts = sz/8;
 
     if (1==nelmts) {
-        m <<StringUtility::toHex2(v[0], 64);
+        m <<toHex2(v[0], 64);
     } else {
         m <<"[";
         for (size_t i=0; i<nelmts; i++)
-            m <<(i?",":"") <<StringUtility::toHex2(v[i], 64);
+            m <<(i?",":"") <<toHex2(v[i], 64);
         m <<"]";
     }
 }
 
 void
-print_rlimit(Sawyer::Message::Stream &m, const uint8_t *ptr, size_t sz)
+print_rlimit_32(Sawyer::Message::Stream &m, const uint8_t *ptr, size_t sz)
 {
     assert(8==sz); /* two 32-bit unsigned integers */
     if (0==~((const uint32_t*)ptr)[0]) {
@@ -86,6 +90,22 @@ print_rlimit(Sawyer::Message::Stream &m, const uint8_t *ptr, size_t sz)
         m <<", rlim_max=unlimited";
     } else {
         mfprintf(m)(", rlim_max=%"PRIu32, ((const uint32_t*)ptr)[1]);
+    }
+}
+
+void
+print_rlimit_64(Sawyer::Message::Stream &m, const uint8_t *ptr, size_t sz)
+{
+    assert(16==sz); /* two 64-bit unsigned integers */
+    if (0==~((const uint64_t*)ptr)[0]) {
+        m <<"rlim_cur=unlimited";
+    } else {
+        m <<"rlim_cur=" <<((const uint64_t*)ptr)[0];
+    }
+    if (0==~((const uint64_t*)ptr)[1]) {
+        m <<", rlim_max=unlimited";
+    } else {
+        m <<", rlim_max=" <<((const uint64_t*)ptr)[1];
     }
 }
 
@@ -137,7 +157,15 @@ print_timeval_32(Sawyer::Message::Stream &m, const uint8_t *_tv, size_t sz)
 {
     assert(sz==sizeof(timeval_32));
     const timeval_32 *tv = (const timeval_32*)_tv;
-    mfprintf(m)("sec=%"PRIu32", usec=%"PRIu32, tv->tv_sec, tv->tv_usec);
+    m <<"sec=" <<tv->tv_sec <<", usec=" <<tv->tv_usec;
+}
+
+void
+print_timeval(Sawyer::Message::Stream &m, const uint8_t *_tv, size_t sz)
+{
+    assert(sz==sizeof(timeval));
+    const timeval *tv = (const timeval*)_tv;
+    m <<"sec=" <<tv->tv_sec <<", usec=" <<tv->tv_usec;
 }
 
 void
@@ -145,10 +173,10 @@ print_sigaction_32(Sawyer::Message::Stream &m, const uint8_t *_sa, size_t sz)
 {
     assert(sz==sizeof(sigaction_32));
     const sigaction_32 *sa = (const sigaction_32*)_sa;
-    m <<"handler=" <<StringUtility::addrToString(sa->handler_va) <<", flags=";
+    m <<"handler=" <<addrToString(sa->handler_va) <<", flags=";
     Printer::print_flags(m, signal_flags, sa->flags);
-    m <<", restorer=" <<StringUtility::addrToString(sa->restorer_va);
-    m <<", mask=" <<StringUtility::addrToString(sa->mask);
+    m <<", restorer=" <<addrToString(sa->restorer_va);
+    m <<", mask=" <<addrToString(sa->mask);
 }
 
 void
@@ -156,59 +184,60 @@ print_sigaction_64(Sawyer::Message::Stream &m, const uint8_t *_sa, size_t sz)
 {
     assert(sz==sizeof(sigaction_64));
     const sigaction_64 *sa = (const sigaction_64*)_sa;
-    m <<"handler=" <<StringUtility::addrToString(sa->handler_va) <<", flags=";
+    m <<"handler=" <<addrToString(sa->handler_va) <<", flags=";
     Printer::print_flags(m, signal_flags, sa->flags);
-    m <<", restorer=" <<StringUtility::addrToString(sa->restorer_va);
-    m <<", mask=" <<StringUtility::addrToString(sa->mask);
-}
-
-void
-print_dentries_helper(Sawyer::Message::Stream &m, const uint8_t *_sa, size_t sz, size_t wordsize)
-{
-    if (0==sz) {
-        m <<"empty";
-    } else {
-        m <<"\n";
-        size_t offset = 0;
-        for (size_t i=0; offset<sz; i++) {
-            uint64_t d_ino, d_off;
-            int d_reclen, d_type;
-            const char *d_name;
-            if (4==wordsize) {
-                const dirent32_t *sa = (const dirent32_t*)(_sa+offset);
-                d_ino = sa->d_ino;
-                d_off = sa->d_off;
-                d_reclen = sa->d_reclen;
-                d_type = _sa[offset+sa->d_reclen-1];
-                d_name = (const char*)_sa + offset + sizeof(*sa);
-            } else {
-                assert(8==wordsize);
-                const dirent64_t *sa = (const dirent64_t*)(_sa+offset);
-                d_ino = sa->d_ino;
-                d_off = sa->d_off;
-                d_reclen = sa->d_reclen;
-                d_type = sa->d_type;
-                d_name = (const char*)_sa + offset + sizeof(*sa);
-            }
-            mfprintf(m)("        dentry[%3zu]: ino=%-8"PRIu64" next_offset=%-8"PRIu64" reclen=%-3d"
-                        " type=%-3d name=\"%s\"\n", i, d_ino, d_off, d_reclen, d_type, d_name);
-            offset = d_off;
-            if (0==offset) break;
-        }
-        m <<" ";
-    }
+    m <<", restorer=" <<addrToString(sa->restorer_va);
+    m <<", mask=" <<addrToString(sa->mask);
 }
 
 void
 print_dentries_32(Sawyer::Message::Stream &m, const uint8_t *sa, size_t sz)
 {
-    print_dentries_helper(m, sa, sz, 4);
+    if (0 == sz) {
+        m <<"empty";
+    } else {
+        m <<"\n";
+        for (size_t i=0; (i+1)*sizeof(dirent_32) <= sz; ++i) {
+            const dirent_32 *d = (const dirent_32*)(sa + i*sizeof(dirent_32));
+            int type = ((const uint8_t*)d)[d->d_reclen - 1];
+            const char *name = (const char*)d + d->d_reclen;
+            m <<"        dentry[" <<i <<"]: ino=" <<d->d_ino <<", off=" <<d->d_off
+              <<", reclen=" <<d->d_reclen <<", type=" <<type <<", name=\"" <<StringUtility::cEscape(name) <<"\"\n";
+        }
+    }
 }
 
 void
 print_dentries_64(Sawyer::Message::Stream &m, const uint8_t *sa, size_t sz)
 {
-    print_dentries_helper(m, sa, sz, 8);
+    if (0 == sz) {
+        m <<"empty";
+    } else {
+        m <<"\n";
+        for (size_t i=0; (i+1)*sizeof(dirent_64) <= sz; ++i) {
+            const dirent_64 *d = (const dirent_64*)(sa + i*sizeof(dirent_64));
+            int type = ((const uint8_t*)d)[d->d_reclen - 1];
+            const char *name = (const char*)d + d->d_reclen;
+            m <<"        dentry[" <<i <<"]: ino=" <<d->d_ino <<", off=" <<d->d_off
+              <<", reclen=" <<d->d_reclen <<", type=" <<type <<", name=\"" <<StringUtility::cEscape(name) <<"\"\n";
+        }
+    }
+}
+
+void
+print_dentries64_32(Sawyer::Message::Stream &m, const uint8_t *sa, size_t sz)
+{
+    if (0 == sz) {
+        m <<"empty";
+    } else {
+        m <<"\n";
+        for (size_t i=0; (i+1)*sizeof(dirent64_32) <= sz; ++i) {
+            const dirent64_32 *d = (const dirent64_32*)(sa + i*sizeof(dirent64_32));
+            const char *name = (const char*)d + d->d_reclen;
+            m <<"        dentry[" <<i <<"]: ino=" <<d->d_ino <<", off=" <<d->d_off
+              <<", reclen=" <<d->d_reclen <<", type=" <<d->d_type <<", name=\"" <<StringUtility::cEscape(name) <<"\"\n";
+        }
+    }
 }
 
 void
@@ -300,6 +329,24 @@ print_statfs_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 }
 
 void
+print_statfs_64(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz) {
+    assert(sizeof(statfs_64)==sz);
+    const statfs_64 *v = (const statfs_64*)_v;
+    m <<"type=" <<v->f_type
+      <<", bsize=" <<v->f_bsize
+      <<", blocks=" <<v->f_blocks
+      <<", bfree=" <<v->f_bfree
+      <<", bavail=" <<v->f_bavail
+      <<", files=" <<v->f_files
+      <<", ffree=" <<v->f_ffree
+      <<", fsid=[" <<v->f_fsid[0] <<", " <<v->f_fsid[1] <<"]"
+      <<", namelen=" <<v->f_namelen
+      <<", frsize=" <<v->f_frsize
+      <<", flags=" <<v->f_flags
+      <<", spare=[" <<v->f_spare[0] <<", " <<v->f_spare[1] <<", " <<v->f_spare[2] <<", " <<v->f_spare[3] <<"]";
+}
+
+void
 print_statfs64_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(statfs64_32)==sz);
@@ -313,12 +360,41 @@ print_statfs64_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 }
 
 void
+print_statfs(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz) {
+    assert(sizeof(struct statfs)==sz);
+    const struct statfs *v = (const struct statfs*)_v;
+    m <<"type=" <<v->f_type
+      <<", bsize=" <<v->f_bsize
+      <<", blocks=" <<v->f_blocks
+      <<", bfree=" <<v->f_bfree
+      <<", bavail=" <<v->f_bavail
+      <<", files=" <<v->f_files
+      <<", ffree=" <<v->f_ffree
+      <<", fsid=[" <<v->f_fsid.__val[0] <<", " <<v->f_fsid.__val[1] <<"]"
+      <<", namelen=" <<v->f_namelen
+      <<", frsize=" <<v->f_frsize
+      <<", flags=" <<v->f_flags
+      <<", spare=[" <<v->f_spare[0] <<", " <<v->f_spare[1] <<", " <<v->f_spare[2] <<", " <<v->f_spare[3] <<"]";
+}
+
+void
 print_robust_list_head_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(robust_list_head_32)==sz);
     const robust_list_head_32 *v = (const robust_list_head_32*)_v;
-    mfprintf(m)("next_va=0x%08"PRIx32", futex_offset=%"PRId32", pending_va=0x%08"PRIx32,
-                v->next_va, v->futex_offset, v->pending_va);
+    m <<"next_va=" <<addrToString(v->next_va)
+      <<", futex_offset=" <<toHex(v->futex_offset)
+      <<", pending_va=" <<addrToString(v->pending_va);
+}
+
+void
+print_robust_list_head_64(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(robust_list_head_32)==sz);
+    const robust_list_head_64 *v = (const robust_list_head_64*)_v;
+    m <<"next_va=" <<addrToString(v->next_va)
+      <<", futex_offset=" <<toHex(v->futex_offset)
+      <<", pending_va=" <<addrToString(v->pending_va);
 }
 
 void
@@ -485,22 +561,22 @@ print_SigInfo(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
         case SIGSEGV:
             m <<", code=";
             Printer::print_enum(m, siginfo_sigsegv_codes, info->si_code);
-            m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
+            m <<", addr=" <<addrToString(info->sigfault.addr);
             break;
         case SIGBUS:
             m <<", code=";
             Printer::print_enum(m, siginfo_sigbus_codes, info->si_code);
-            m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
+            m <<", addr=" <<addrToString(info->sigfault.addr);
             break;
         case SIGILL:
             m <<", code=";
             Printer::print_enum(m, siginfo_sigill_codes, info->si_code);
-            m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
+            m <<", addr=" <<addrToString(info->sigfault.addr);
             break;
         case SIGFPE:
             m <<", code=";
             Printer::print_enum(m, siginfo_sigfpe_codes, info->si_code);
-            m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
+            m <<", addr=" <<addrToString(info->sigfault.addr);
             break;
         case SIGTRAP:
             m <<", code=";
@@ -523,7 +599,7 @@ print_SigInfo(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
             switch (info->si_code) {
                 case SI_TKILL:
                     m <<", pid=" <<info->rt.pid <<", uid=" <<info->rt.uid
-                      <<", sigval=" <<StringUtility::addrToString(info->rt.sigval);
+                      <<", sigval=" <<addrToString(info->rt.sigval);
                     break;
                 case SI_USER:
                     m <<", pid=" <<info->kill.pid <<", uid=" <<info->kill.uid;
@@ -561,6 +637,25 @@ print_new_utsname_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(new_utsname_32)==sz);
     const new_utsname_32 *v = (const new_utsname_32*)_v;
+    m <<"sysname=";
+    Printer::print_string(m, v->sysname);
+    m <<", nodename=";
+    Printer::print_string(m, v->nodename);
+    m <<", release=";
+    Printer::print_string(m, v->release);
+    m <<", version=";
+    Printer::print_string(m, v->version);
+    m <<", machine=";
+    Printer::print_string(m, v->machine);
+    m <<", domainname=";
+    Printer::print_string(m, v->domainname);
+}
+
+void
+print_new_utsname_64(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(new_utsname_64)==sz);
+    const new_utsname_64 *v = (const new_utsname_64*)_v;
     m <<"sysname=";
     Printer::print_string(m, v->sysname);
     m <<", nodename=";
@@ -674,6 +769,64 @@ convert(statfs64_32 *g, const statfs_native *h)
     g->f_spare[2] = h->f_spare[2];
     g->f_spare[3] = h->f_spare[3];
 }
+
+void
+print_sockaddr(Sawyer::Message::Stream &m, const uint8_t *addr, size_t addrlen) {
+    if (addrlen<2) {
+        m <<"too short";
+    } else {
+        uint16_t family = *(uint16_t*)addr;
+        if (family != AF_INET && family != AF_INET6) {
+            m <<"family=" <<family;
+        } else if (addrlen < 8) {
+            m <<"too short";
+        } else {
+            int port = ntohs(*(uint16_t*)(addr+2));
+            char s[INET_ADDRSTRLEN];
+            if (inet_ntop(family, addr+4, s, sizeof s))
+                m <<s <<":" <<port;
+        }
+    }
+}
+
+void
+print_sysinfo_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz) {
+    ASSERT_require(sizeof(sysinfo_32)==sz);
+    const sysinfo_32 *v = (const sysinfo_32*)_v;
+    m <<"uptime=" <<v->uptime
+      <<", loads=[" <<v->loads[0] <<", " <<v->loads[1] <<", " <<v->loads[2] <<"]"
+      <<", totalram=" <<v->totalram
+      <<", freeram=" <<v->freeram
+      <<", sharedram=" <<v->sharedram
+      <<", bufferram=" <<v->bufferram
+      <<", totalswap=" <<v->totalswap
+      <<", freeswap=" <<v->freeswap
+      <<", procs=" <<v->procs
+      <<", totalhigh=" <<v->totalhigh
+      <<", freehigh=" <<v->freehigh
+      <<", mem_unit=" <<v->mem_unit;
+}
+
+void
+print_sysinfo_64(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz) {
+    ASSERT_require(sizeof(sysinfo_64)==sz);
+    const sysinfo_64 *v = (const sysinfo_64*)_v;
+    m <<"uptime=" <<v->uptime
+      <<", loads=[" <<v->loads[0] <<", " <<v->loads[1] <<", " <<v->loads[2] <<"]"
+      <<", totalram=" <<v->totalram
+      <<", freeram=" <<v->freeram
+      <<", sharedram=" <<v->sharedram
+      <<", bufferram=" <<v->bufferram
+      <<", totalswap=" <<v->totalswap
+      <<", freeswap=" <<v->freeswap
+      <<", procs=" <<v->procs
+      <<", totalhigh=" <<v->totalhigh
+      <<", freehigh=" <<v->freehigh
+      <<", mem_unit=" <<v->mem_unit;
+}
+
+
+
 
 #endif /* ROSE_ENABLE_SIMULATOR */
 

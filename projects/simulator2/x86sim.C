@@ -37,8 +37,10 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
         .purpose("concrete simulation of an executable")
         .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
         .chapter(1, "ROSE Command-line Tools")
-        .doc("Synopsis", "@prop{programName} [@v{switches}] [--] @v{specimen} [@v{specimen_args}...]")
-        .doc("Description",
+        .doc("Synopsis",
+             "@prop{programName} [@v{switches}] [--] @v{specimen} [@v{specimen_args}...]\n\n"
+             "@prop{programName} [@v{switches}] [--] @v{pid}\n\n")
+        .doc("Description", "a",
              "This tool simulates concrete execution of an executable specimen in an unsafe manner. Any system calls made by "
              "the specimen are passed along by the underlying operating system after possible translation by this tool. The "
              "tool emulates various services typically provided by the operating system, such as memory management, signal "
@@ -60,6 +62,20 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
              "user-written tools to easily customize execution within the debugger. This can be combined with the previous "
              "bullet to analyze the program both dynamically and staticlly is and is significantly faster than "
              "simulating each instruction.}")
+        .doc("Specimen", "x",
+             "The specimen can be specified by name or process ID.  If a name is given then the simulator can either "
+             "emulate the Linux \"exec\" system call to load the specimen into a simulated process; or it can use Linux "
+             "directly to load the specimen into a temporary native process, initialize the simulator from that process, "
+             "and then kill that process. The @s{native-load} switch causes the latter behavior.\n\n"
+
+             "If the specimen is specified with a process ID then the simulator attaches to that process, initializes its "
+             "memory and registers from that process, and then detaches.  One should note that only memory and registers "
+             "are initialized and not the simulated Linux kernel state. In particular, file descriptors open in the process "
+             "will not be present in the simulator; parent/child relationships will be broken since the simulator is not "
+             "related to the process; the simulated process will have only one thread; any process ID stored in the "
+             "simulated memory will be incorrect; pending signals and signal masks will not be initialized from the process; "
+             "process real and effective uid and gid may be different; etc.  This method is best used only with a process "
+             "that has been just created and then stopped.")
         .doc("Caveats", "z",
              "Speed of simulation is not a primary goal of this tool. ROSE is mostly a static analysis library "
              "whose capabilities happen to include the ability to write a concrete simulation tool.\n\n"
@@ -70,10 +86,17 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
              "specimens sometimes do with their memory maps.\n\n"
 
              "The specimen process and threads are simulated inside this tool's process and threads. Certain operations that "
-             "modify process and thread properties will end up modifying the tools process and threads. For instance, reading "
+             "modify process and thread properties will end up modifying the tool's process and threads. For instance, reading "
              "from the Linux \"/proc/@v{n}\" filesystem will return information about the simulator tool rather than "
              "the specimen being simulated. Sending a signal to a process or thread will cause the tool to forward the "
-             "signal to the simulated process or thread only if this behavior is enabled at runtime.");
+             "signal to the simulated process or thread only if this behavior is enabled at runtime.\n\n"
+
+             "Emulating the fork (clone) system call is not practically possible because the simulator is multi-threaded "
+             "even when simulating a single-threaded guest, and the simulator needs to do more than call only async-signal "
+             "safe functions after the fork returns in the child. A guest that forks cannot be simulated past the fork. This "
+             "includes guests that call C library functions like @man{system}{3} and @man{popen}{3}.\n\n"
+
+             "See the README file in the simulator source code directory for more caveats.");
 
     SwitchGroup sg("Tool-specific switches");
 
@@ -92,7 +115,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                    "@s{no-signals} switch disables this feature, in which case signals sent to this tool "
                    "will cause the default action to occur (e.g., pressing Control-C will likely terminate "
                    "the tool directly, whereas when signal handling is emulated it will cause a simulated SIGINT "
-                   "to be sent to the specimen possibly causing the an emulated termination. Signals raised by "
+                   "to be sent to the specimen possibly causing the an emulated termination). Signals raised by "
                    "the specimen to be delivered to itself are always emulated; signals raised by the specimen to "
                    "be delivered to some other process are handled by system call emulation.  The default is that "
                    "signals generated by some other process and delivered to the simulator process will " +
@@ -124,8 +147,18 @@ simulate(const Settings &settings, const std::vector<std::string> &args, char *e
         RSIM_Debugger::attach(sim);
 
     sim.configure(settings.simSettings, envp);
-    if (sim.loadSpecimen(args) < 0)
-        return;
+
+    pid_t existingPid = -1;
+    char *rest = NULL;
+    errno = 0;
+    if (args.size()==1 && (existingPid=strtoul(args.front().c_str(), &rest, 0))>=0 && !errno && !*rest) {
+        if (sim.loadSpecimen(existingPid) < 0)
+            return;
+    } else {
+        if (sim.loadSpecimen(args) < 0)
+            return;
+    }
+
     if (settings.catchingSignals)
         sim.activate();
     sim.main_loop();

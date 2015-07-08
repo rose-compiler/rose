@@ -7,6 +7,10 @@
 
 using namespace rose::Diagnostics;
 
+Printer::~Printer() {
+    out_ <<onDestruction_;
+}
+
 std::string
 Printer::flags_to_str(const Translate *tlist, uint32_t value) {
     std::string s;
@@ -124,7 +128,7 @@ void
 Printer::print_buffer(Sawyer::Message::Stream &m, rose_addr_t va, const uint8_t *buf, size_t actualSize, size_t printSize) {
     if (m) {
         size_t nchars = 0;
-        m <<StringUtility::addrToString(va) <<" [";
+        m <<StringUtility::addrToString(va) <<" \"";
         for (size_t i=0; i<actualSize && nchars<printSize; i++) {
             switch (buf[i]) {
                 case '"' : m <<"\\\""; nchars+=2; break;
@@ -146,7 +150,7 @@ Printer::print_buffer(Sawyer::Message::Stream &m, rose_addr_t va, const uint8_t 
                     break;
             }
         }
-        m <<"]";
+        m <<"\"";
         if (printSize < actualSize)
             m <<"...";
     }

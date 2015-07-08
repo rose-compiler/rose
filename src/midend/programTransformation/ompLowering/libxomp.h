@@ -111,6 +111,13 @@ extern bool XOMP_loop_ordered_dynamic_next (long *, long *);
 extern bool XOMP_loop_ordered_guided_next (long *, long *);
 extern bool XOMP_loop_ordered_runtime_next (long *, long *);
 
+// simplest static even divide a range start:size into several chunks of offset:size pair
+// This can be used to divide up loop or data (array range).
+// original range is start_offset:orig_size
+// chunk_id starts from 0
+// output is the offset and size for the current chunk id
+extern void XOMP_static_even_divide (long start, long orig_size, int chunk_count, int chunk_id, long * chunk_offset, long * chunk_size);
+
 //--------------end of  loop functions 
 
 extern void XOMP_barrier (void);
@@ -137,6 +144,9 @@ extern void XOMP_ordered_end (void);
 
 //--------------------- extensions to support OpenMP accelerator model experimental implementation------
 // We only include 
+
+// Set the device id to be used by the current task
+extern void xomp_set_default_device (int devID);
 //--------------------- kernel launch ------------------
 
 // the max number of threads per thread block of the first available device
@@ -325,6 +335,12 @@ typedef struct DDE_data {
  // link to its child node
  struct  DDE_data* child;
 } DDE;
+
+// Internal control variables for target devices
+extern int xomp_get_num_devices();
+extern int xomp_get_max_devices(void);
+extern int xomp_num_devices; 
+extern int xomp_max_num_devices; 
 
 // The head of the list of DDE data nodes
 extern DDE** DDE_head; //TODO. We don't really need this head pointer, it is like a stack, access the end is enough

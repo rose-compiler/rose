@@ -732,19 +732,25 @@ public:
      *  Once the executable file is located, the ROSE frontend() is invoked to parse the container (ELF, PE, etc) but
      *  instructions are not disassembled yet.  A particular interpretation (SgAsmInterpretation) is chosen if more than one is
      *  available, and this becomes the node returned by get_interpretation().  The file header associated with this
-     *  interpretation becomes the return value of this method. The process' memory map is adjusted by loading any necessary
-     *  segments from the executable.
+     *  interpretation becomes the return value of this method.
      *
-     *  Any necessary dynamic linkers are added to the AST by using the interpreter defined in the executable (ELF ".interp"
-     *  section) or a user-specified interpreter (see set_interpname()).  The process' memory map is adjusted by loading the
-     *  interpreter.
+     *  Then one of three things happens:
      *
-     *  If a virtual dynamic shared object is desired then it is parsed and loaded into the process' memory map.
+     *  @li If @p pid is not -1 then it must be the process ID for some existing process which will be used to initialize the
+     *      simulator's memory and registers (operating system state is not initialized from the existing process because there
+     *      is no way to do that).  The simulated process will have only one thread.
+     *
+     *  @li If native loading is enabled, then a native process is created under a debugger but not allowed to execute. The
+     *      simulator's memory and registers are initialized from the native process, and the native process is then killed.
+     *
+     *  @li Otherwise, the simulator's memory map and registers are initialized by emulating the exec actions of the Linux
+     *      kernel. Namely, loading the specified executable into simulated memory, loading the ELF interpreter (dynamic
+     *      linker) if necessary, and loading any user-supplied VDSO such as a copy of linux-gate.so or linux-vdso.so.
      *
      *  A disassembler is chosen based on the interpretation. The disassembler can be obtained by calling get_disassembler().
      *
      *  Operating system simulation data is initialized (brk, mmap, etc). */
-    SgAsmGenericHeader *load();
+    SgAsmGenericHeader *load(int pid = -1);
 
     /** Returns the list of projects loaded for this process.  The list is initialized by the load() method.  The first item in
      *  the list is the main executable file; additional items are for dynamic libraries, etc.

@@ -12,7 +12,8 @@ public:
     }
 
     virtual bool isSupportedArch(SgAsmGenericHeader*) ROSE_OVERRIDE;
-    virtual void loadSpecimenNative(RSIM_Process*, rose::BinaryAnalysis::Disassembler*) ROSE_OVERRIDE;
+    virtual void loadVsyscalls(RSIM_Process*) ROSE_OVERRIDE;
+    virtual void loadSpecimenNative(RSIM_Process*, rose::BinaryAnalysis::Disassembler*, int existingPid=-1) ROSE_OVERRIDE;
     virtual void initializeSimulatedOs(RSIM_Process*, SgAsmGenericHeader*) ROSE_OVERRIDE;
     virtual PtRegs initialRegistersArch() ROSE_OVERRIDE;
     virtual rose_addr_t pushAuxVector(RSIM_Process*, rose_addr_t sp, rose_addr_t execfn_va, SgAsmElfFileHeader*,
@@ -113,13 +114,9 @@ protected:
     static void syscall_select_leave(RSIM_Thread *t, int callno);
     static void syscall_setgroups32_body(RSIM_Thread *t, int callno);
     static void syscall_setgroups32_enter(RSIM_Thread *t, int callno);
-    static void syscall_set_robust_list_body(RSIM_Thread *t, int callno);
-    static void syscall_set_robust_list_enter(RSIM_Thread *t, int callno);
     static void syscall_set_thread_area_body(RSIM_Thread *t, int callno);
     static void syscall_set_thread_area_enter(RSIM_Thread *t, int callno);
     static void syscall_set_thread_area_leave(RSIM_Thread *t, int callno);
-    static void syscall_set_tid_address_body(RSIM_Thread *t, int callno);
-    static void syscall_set_tid_address_enter(RSIM_Thread *t, int callno);
     static void syscall_setrlimit_body(RSIM_Thread *t, int callno);
     static void syscall_setrlimit_enter(RSIM_Thread *t, int callno);
     static void syscall_sigaltstack_body(RSIM_Thread *t, int callno);
@@ -142,6 +139,7 @@ protected:
     static void syscall_statfs64_leave(RSIM_Thread *t, int callno);
     static void syscall_sysinfo_body(RSIM_Thread *t, int callno);
     static void syscall_sysinfo_enter(RSIM_Thread *t, int callno);
+    static void syscall_sysinfo_leave(RSIM_Thread *t, int callno);
     static void syscall_time_body(RSIM_Thread *t, int callno);
     static void syscall_time_enter(RSIM_Thread *t, int callno);
     static void syscall_time_leave(RSIM_Thread *t, int callno);
