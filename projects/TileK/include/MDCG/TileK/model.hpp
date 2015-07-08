@@ -7,7 +7,7 @@
 
 typedef ::KLT::Language::None Language;
 typedef ::KLT::Runtime::TileK Runtime;
-typedef ::DLX::KLT_Annotation< ::DLX::TileK::language_t> Annotation;
+typedef ::DLX::KLT::Annotation< ::DLX::TileK::language_t> Annotation;
 typedef ::KLT::LoopTrees<Annotation> LoopTrees;
 typedef ::KLT::Kernel<Annotation, Language, Runtime> Kernel;
 

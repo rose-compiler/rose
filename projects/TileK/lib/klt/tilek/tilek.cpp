@@ -26,7 +26,7 @@ namespace KLT {
 
 template <>
 unsigned long Generator<
-  DLX::KLT_Annotation<DLX::TileK::language_t>,
+  DLX::KLT::Annotation<DLX::TileK::language_t>,
   Language::None,
   Runtime::TileK,
   MFB::KLT_Driver
@@ -37,22 +37,22 @@ unsigned long Generator<
 
 template <>
 SgFunctionParameterList * createParameterList<
-  DLX::KLT_Annotation<DLX::TileK::language_t>,
+  DLX::KLT::Annotation<DLX::TileK::language_t>,
   Language::None,
   Runtime::TileK
 >(
   Kernel<
-    DLX::KLT_Annotation<DLX::TileK::language_t>,
+    DLX::KLT::Annotation<DLX::TileK::language_t>,
     Language::None,
     Runtime::TileK
   > * kernel
 ) {
   const std::list<SgVariableSymbol *> & params = kernel->getArguments().parameters;
   const std::list<SgVariableSymbol *> & scalars = kernel->getArguments().scalars;
-  const std::list<Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *> & datas = kernel->getArguments().datas;
+  const std::list<Data<DLX::KLT::Annotation<DLX::TileK::language_t> > *> & datas = kernel->getArguments().datas;
 
   std::list<SgVariableSymbol *>::const_iterator it_var_sym;
-  std::list<Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *>::const_iterator it_data;
+  std::list<Data<DLX::KLT::Annotation<DLX::TileK::language_t> > *>::const_iterator it_data;
 
   SgFunctionParameterList * result = SageBuilder::buildFunctionParameterList();
 
@@ -71,9 +71,11 @@ namespace Runtime {
 
 TileK::kernel_api_t TileK::kernel_api;
 
-// Build: 'expr'->'array'['idx'].'field'
-SgExpression * buildPtrArrElemField(SgExpression * expr, SgVariableSymbol * array, SgExpression * idx, SgVariableSymbol * field) {
-  return SageBuilder::buildDotExp(SageBuilder::buildPntrArrRefExp(SageBuilder::buildArrowExp(expr, SageBuilder::buildVarRefExp(array)), idx), SageBuilder::buildVarRefExp(field));
+// Build: 'expr'->'array'['idx'] or 'expr'->'array'['idx'].'field'
+SgExpression * buildPtrArrElemField(SgExpression * expr, SgVariableSymbol * array, SgExpression * idx, SgVariableSymbol * field = NULL) {
+  SgExpression * result = SageBuilder::buildPntrArrRefExp(SageBuilder::buildArrowExp(expr, SageBuilder::buildVarRefExp(array)), idx);
+  if (field != NULL) result = SageBuilder::buildDotExp(result, SageBuilder::buildVarRefExp(field));
+  return result;
 }
 
 // Build: 'ctx'->loops['loop_id'].lower
@@ -103,6 +105,61 @@ SgExpression * TileK::kernel_api_t::buildTileStride(size_t tile_id, SgVariableSy
 
 TileK::host_api_t TileK::host_api;
 
+// Insert: "struct kernel_t * kernel = build_kernel('kernel->id');"
+SgVariableSymbol * TileK::host_api_t::insertKernelInstance(const std::string & name, size_t kernel_id, SgScopeStatement * scope) const {
+  SgInitializer * init = SageBuilder::buildAssignInitializer(SageBuilder::buildFunctionCallExp(
+                           build_kernel_func, SageBuilder::buildExprListExp(SageBuilder::buildIntVal(kernel_id))
+                         ));
+  SgVariableDeclaration * kernel_decl = SageBuilder::buildVariableDeclaration("kernel", SageBuilder::buildPointerType(kernel_class->get_type()), init, scope);
+  SageInterface::appendStatement(kernel_decl, scope);
+
+  SgVariableSymbol * kernel_sym = SageInterface::getFirstVarSym(kernel_decl);
+  assert(kernel_sym != NULL);
+
+  return kernel_sym;
+}
+
+// Insert: "execute_kernel(kernel);"
+void TileK::host_api_t::insertKernelExecute(SgVariableSymbol * kernel_sym, SgScopeStatement * scope) const {
+  SageInterface::appendStatement(
+    SageBuilder::buildFunctionCallStmt(
+      SageBuilder::buildFunctionRefExp(execute_kernel_func),
+      SageBuilder::buildExprListExp(SageBuilder::buildVarRefExp(kernel_sym))
+    ), scope
+  );
+}
+
+// Build: 'kernel'->params['idx'] = 'rhs'
+SgStatement * TileK::host_api_t::buildParamAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_param_field, SageBuilder::buildIntVal(idx), NULL), rhs));
+}
+
+// Build: 'kernel'->datas['idx'] = 'rhs'
+SgStatement * TileK::host_api_t::buildDataAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_data_field, SageBuilder::buildIntVal(idx), NULL), rhs));
+}
+
+// Build: 'kernel'->scalars['idx'] = 'rhs'
+SgStatement * TileK::host_api_t::buildScalarAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_scalar_field, SageBuilder::buildIntVal(idx), NULL), rhs));
+}
+
+// Build: 'kernel'->loops['idx'].lower = 'rhs'
+SgStatement * TileK::host_api_t::buildLoopLowerAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loop_field, SageBuilder::buildIntVal(idx), loop_lower_field), rhs));
+}
+
+// Build: 'kernel'->loops['idx'].upper = 'rhs'
+SgStatement * TileK::host_api_t::buildLoopUpperAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loop_field, SageBuilder::buildIntVal(idx), loop_upper_field), rhs));
+}
+
+// Build: 'kernel'->loops['idx'].stride = 'rhs'
+SgStatement * TileK::host_api_t::buildLoopStrideAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loop_field, SageBuilder::buildIntVal(idx), loop_stride_field), rhs));
+}
+
+
 unsigned TileK::loadAPI(MDCG::ModelBuilder & model_builder, const std::string & headers_path) {
   unsigned tilek_model = model_builder.create();
     model_builder.add(tilek_model, "tile",   headers_path, "h");
@@ -127,7 +184,8 @@ void TileK::loadAPI(const MDCG::Model::model_t & model) {
 
     host_api.kernel_data_field  = kernel_class->scope->field_children[1]->node->symbol;
     host_api.kernel_param_field = kernel_class->scope->field_children[2]->node->symbol;
-    host_api.kernel_loop_field  = kernel_class->scope->field_children[3]->node->symbol;
+    host_api.kernel_scalar_field = kernel_class->scope->field_children[3]->node->symbol;
+    host_api.kernel_loop_field  = kernel_class->scope->field_children[4]->node->symbol;
 
   MDCG::Model::class_t loop_class = model.lookup<MDCG::Model::class_t>("loop_t");
   kernel_api.context_loop_class = loop_class->node->symbol;
@@ -181,24 +239,24 @@ void TileK::useSymbolsHost(
 
 template <>
 void get_exec_config<
-  DLX::KLT_Annotation<DLX::TileK::language_t>,
+  DLX::KLT::Annotation<DLX::TileK::language_t>,
   Language::None,
   Runtime::TileK
 > (
   TileK::exec_config_t & exec_config,
-  const Kernel<DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK> * kernel
+  const Kernel<DLX::KLT::Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK> * kernel
 ) {}
 
 } // namespace KLT::Runtime
 
 template <>
-LoopTiler<DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK>::loop_tiling_t::loop_tiling_t(
-  LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t * loop_
+LoopTiler<DLX::KLT::Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK>::loop_tiling_t::loop_tiling_t(
+  LoopTrees<DLX::KLT::Annotation<DLX::TileK::language_t> >::loop_t * loop_
 ) :
   loop(loop_),
   tiles()
 {
-  std::vector<DLX::KLT_Annotation<DLX::TileK::language_t> >::const_iterator it_annotation;
+  std::vector<DLX::KLT::Annotation<DLX::TileK::language_t> >::const_iterator it_annotation;
   for (it_annotation = loop->annotations.begin(); it_annotation != loop->annotations.end(); it_annotation++) {
     if (
       it_annotation->clause->kind == DLX::TileK::language_t::e_clause_tile
@@ -228,27 +286,27 @@ LoopTiler<DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::
 }
 
 template <>
-size_t LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::id_cnt = 0;
+size_t LoopTrees<DLX::KLT::Annotation<DLX::TileK::language_t> >::id_cnt = 0;
 
 template <>
-bool LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t::isDistributed() const {
+bool LoopTrees<DLX::KLT::Annotation<DLX::TileK::language_t> >::loop_t::isDistributed() const {
   return false;
 }
 
 template <>
-bool LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t::isSplitted() const {
+bool LoopTrees<DLX::KLT::Annotation<DLX::TileK::language_t> >::loop_t::isSplitted() const {
   return false;
 }
 
 template <>
-void printAnnotations<DLX::KLT_Annotation<DLX::TileK::language_t> >(
-  const std::vector<DLX::KLT_Annotation<DLX::TileK::language_t> > & annotations,
+void printAnnotations<DLX::KLT::Annotation<DLX::TileK::language_t> >(
+  const std::vector<DLX::KLT::Annotation<DLX::TileK::language_t> > & annotations,
   std::ostream & out,
   std::string indent
 ) {
   out << DLX::TileK::language_t::language_label << "(";
   if (!annotations.empty()) { 
-    std::vector<DLX::KLT_Annotation<DLX::TileK::language_t> >::const_iterator it_annotation = annotations.begin();
+    std::vector<DLX::KLT::Annotation<DLX::TileK::language_t> >::const_iterator it_annotation = annotations.begin();
     out << it_annotation->clause->kind;
     it_annotation++;
     for (; it_annotation != annotations.end(); it_annotation++) {
@@ -260,24 +318,24 @@ void printAnnotations<DLX::KLT_Annotation<DLX::TileK::language_t> >(
 }
 
 template <>
-unsigned long Kernel<DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK>::id_cnt = 0;
+unsigned long Kernel<DLX::KLT::Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK>::id_cnt = 0;
 
 template <>
-unsigned long Kernel<DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK>::kernel_desc_t::id_cnt = 0;
+unsigned long Kernel<DLX::KLT::Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK>::kernel_desc_t::id_cnt = 0;
 
 template <>
-bool Data<DLX::KLT_Annotation<DLX::TileK::language_t> >::isFlowIn() const {
+bool Data<DLX::KLT::Annotation<DLX::TileK::language_t> >::isFlowIn() const {
   return true;
 }
 
 template <>
-bool Data<DLX::KLT_Annotation<DLX::TileK::language_t> >::isFlowOut() const {
+bool Data<DLX::KLT::Annotation<DLX::TileK::language_t> >::isFlowOut() const {
   return true;
 }
 
 template <>
 void DataFlow<
-  DLX::KLT_Annotation<DLX::TileK::language_t>,
+  DLX::KLT::Annotation<DLX::TileK::language_t>,
   Language::None,
   Runtime::TileK
 >::markSplittedData(
@@ -291,28 +349,30 @@ void None::applyKernelModifiers(SgFunctionDeclaration * kernel_decl) {}
 } // namespace KLT::Language
 
 } // namespace KLT
-
+/*
 namespace DLX {
 
+namespace KLT {
+
 template <>
-void KLT_Annotation<TileK::language_t>::parseRegion(std::vector<DLX::KLT_Annotation<TileK::language_t> > & container) {
+void Annotation<TileK::language_t>::parseRegion(std::vector<DLX::KLT::Annotation<TileK::language_t> > & container) {
   parseClause(container);
 
-  DLX::KLT_Annotation<TileK::language_t> & annotation = container.back();
+  DLX::KLT::Annotation<TileK::language_t> & annotation = container.back();
 }
 
 template <>
-void KLT_Annotation<TileK::language_t>::parseData(std::vector<DLX::KLT_Annotation<TileK::language_t> > & container) {
+void Annotation<TileK::language_t>::parseData(std::vector<DLX::KLT::Annotation<TileK::language_t> > & container) {
   parseClause(container);
 
-  DLX::KLT_Annotation<TileK::language_t> & annotation = container.back();
+  DLX::KLT::Annotation<TileK::language_t> & annotation = container.back();
 }
 
 template <>
-void KLT_Annotation<TileK::language_t>::parseLoop(std::vector<DLX::KLT_Annotation<TileK::language_t> > & container) {
+void Annotation<TileK::language_t>::parseLoop(std::vector<DLX::KLT::Annotation<TileK::language_t> > & container) {
   parseClause(container);
 
-  DLX::KLT_Annotation<TileK::language_t> & annotation = container.back();
+  DLX::KLT::Annotation<TileK::language_t> & annotation = container.back();
 
   switch (annotation.clause->kind) {
     case TileK::language_t::e_clause_tile:
@@ -323,8 +383,10 @@ void KLT_Annotation<TileK::language_t>::parseLoop(std::vector<DLX::KLT_Annotatio
   }
 }
 
-}
+} // namespace DLX::KLT
 
+} // namespace DLX
+*/
 namespace MFB {
 
 KLT<tilek_kernel_t>::object_desc_t::object_desc_t(
@@ -356,37 +418,37 @@ SgVariableSymbol * getExistingSymbolOrBuildDecl(
 
 template <>
 SgBasicBlock * createLocalDeclarations<
-  DLX::KLT_Annotation<DLX::TileK::language_t>,
+  DLX::KLT::Annotation<DLX::TileK::language_t>,
   ::KLT::Language::None,
   ::KLT::Runtime::TileK
 >(
   Driver<Sage> & driver,
   SgFunctionDefinition * kernel_defn,
   ::KLT::Kernel<
-    DLX::KLT_Annotation<DLX::TileK::language_t>,
+    DLX::KLT::Annotation<DLX::TileK::language_t>,
     ::KLT::Language::None,
     ::KLT::Runtime::TileK
   >::local_symbol_maps_t & local_symbol_maps,
   const ::KLT::Kernel<
-    DLX::KLT_Annotation<DLX::TileK::language_t>,
+    DLX::KLT::Annotation<DLX::TileK::language_t>,
     ::KLT::Language::None,
     ::KLT::Runtime::TileK
   >::arguments_t & arguments,
   const std::map<
-    ::KLT::LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t *,
-    ::KLT::LoopTiler<DLX::KLT_Annotation<DLX::TileK::language_t>, ::KLT::Language::None, ::KLT::Runtime::TileK>::loop_tiling_t *
+    ::KLT::LoopTrees<DLX::KLT::Annotation<DLX::TileK::language_t> >::loop_t *,
+    ::KLT::LoopTiler<DLX::KLT::Annotation<DLX::TileK::language_t>, ::KLT::Language::None, ::KLT::Runtime::TileK>::loop_tiling_t *
   > & loop_tiling
 ) {
   std::list<SgVariableSymbol *>::const_iterator it_var_sym;
-  std::list< ::KLT::Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *>::const_iterator it_data;
+  std::list< ::KLT::Data<DLX::KLT::Annotation<DLX::TileK::language_t> > *>::const_iterator it_data;
 
   std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator   it_param_to_field;
   std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator   it_scalar_to_field;
-  std::map< ::KLT::Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *, SgVariableSymbol *>::const_iterator it_data_to_field;
+  std::map< ::KLT::Data<DLX::KLT::Annotation<DLX::TileK::language_t> > *, SgVariableSymbol *>::const_iterator it_data_to_field;
 
   std::map<
-    ::KLT::LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t *,
-    ::KLT::LoopTiler<DLX::KLT_Annotation<DLX::TileK::language_t>, ::KLT::Language::None, ::KLT::Runtime::TileK>::loop_tiling_t *
+    ::KLT::LoopTrees<DLX::KLT::Annotation<DLX::TileK::language_t> >::loop_t *,
+    ::KLT::LoopTiler<DLX::KLT::Annotation<DLX::TileK::language_t>, ::KLT::Language::None, ::KLT::Runtime::TileK>::loop_tiling_t *
   >::const_iterator it_loop_tiling;
   
   // * Definition *
@@ -427,7 +489,7 @@ SgBasicBlock * createLocalDeclarations<
 
   arg_cnt = 0;
   for (it_data = arguments.datas.begin(); it_data != arguments.datas.end(); it_data++) {
-    ::KLT::Data<DLX::KLT_Annotation<DLX::TileK::language_t> > * data = *it_data;
+    ::KLT::Data<DLX::KLT::Annotation<DLX::TileK::language_t> > * data = *it_data;
     SgVariableSymbol * data_sym = data->getVariableSymbol();
     std::string data_name = data_sym->get_name().getString();
 
@@ -456,15 +518,15 @@ SgBasicBlock * createLocalDeclarations<
     SgVariableSymbol * new_sym = kernel_body->lookup_variable_symbol(data_name);
     assert(new_sym != NULL);
 
-    local_symbol_maps.datas.insert(std::pair< ::KLT::Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *, SgVariableSymbol *>(data, new_sym));
+    local_symbol_maps.datas.insert(std::pair< ::KLT::Data<DLX::KLT::Annotation<DLX::TileK::language_t> > *, SgVariableSymbol *>(data, new_sym));
     arg_cnt++;
   }
 
   // * Create iterator *
 
   for (it_loop_tiling = loop_tiling.begin(); it_loop_tiling != loop_tiling.end(); it_loop_tiling++) {
-    ::KLT::LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t * loop = it_loop_tiling->first;
-    ::KLT::LoopTiler<DLX::KLT_Annotation<DLX::TileK::language_t>, ::KLT::Language::None, ::KLT::Runtime::TileK>::loop_tiling_t * tiling = it_loop_tiling->second;
+    ::KLT::LoopTrees<DLX::KLT::Annotation<DLX::TileK::language_t> >::loop_t * loop = it_loop_tiling->first;
+    ::KLT::LoopTiler<DLX::KLT::Annotation<DLX::TileK::language_t>, ::KLT::Language::None, ::KLT::Runtime::TileK>::loop_tiling_t * tiling = it_loop_tiling->second;
 
     SgVariableSymbol * iter_sym = loop->iterator;
     std::string iter_name = iter_sym->get_name().getString();

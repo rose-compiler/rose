@@ -101,14 +101,18 @@ SgExpression * KernelDesc::createFieldInitializer(
       return SageBuilder::buildIntVal(input->getArguments().parameters.size());
     }
     case 2:
+    { // int num_scalar;
+      return SageBuilder::buildIntVal(input->getArguments().scalars.size());
+    }
+    case 3:
     { // int num_loops;
       return SageBuilder::buildIntVal(kernel->loops.size());
     }
-    case 3:
+    case 4:
     { // int num_tiles;
       return SageBuilder::buildIntVal(kernel->tiles.size());
     }
-    case 4:
+    case 5:
     { // struct loop_desc_t * loop_desc;
       std::ostringstream decl_name;
         decl_name << "loop_" << kernel;
@@ -125,7 +129,7 @@ SgExpression * KernelDesc::createFieldInitializer(
                decl_name.str()
              );
     }
-    case 5:
+    case 6:
     { // kernel_func_ptr kernel_ptr;
       MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(kernel->kernel_name, Runtime::host_api.kernel_func_ptr_type, NULL, NULL, file_id, false, true);
       MFB::Sage<SgVariableDeclaration>::build_result_t var_decl_res = static_initializer.getDriver().build<SgVariableDeclaration>(var_decl_desc);
