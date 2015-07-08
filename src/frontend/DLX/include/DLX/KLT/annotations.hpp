@@ -4,18 +4,16 @@
 
 #include <vector>
 
+#include "DLX/Core/clauses.hpp"
+
 namespace DLX {
-
-namespace Directives {
-
-template <class language_tpl> struct generic_clause_t;
-
-}
 
 namespace KLT {
 
 template <class Lang>
 class Annotation {
+  public:
+    typedef Lang Language;
   private:
     void createClause() {
       assert(Lang::s_clause_labels.size() > 0);
@@ -26,7 +24,7 @@ class Annotation {
         typename Lang::label_set_t::const_iterator it_label;
         for (it_label = labels.begin(); it_label != labels.end(); it_label++) {
           if (AstFromString::afs_match_substr(it_label->c_str()))
-            clause = Directives::buildClause<Lang>(it_clause->first);
+            clause = ::DLX::Directives::buildClause<Lang>(it_clause->first);
         }
       }
 

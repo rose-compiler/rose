@@ -1,6 +1,6 @@
 
-#ifndef __KLT_TILEK_HPP__
-#define __KLT_TILEK_HPP__
+#ifndef __KLT_TILEK_RUNTIME_HPP__
+#define __KLT_TILEK_RUNTIME_HPP__
 
 #include "KLT/Core/mfb-klt.hpp"
 #include "KLT/Core/kernel.hpp"
@@ -22,39 +22,6 @@ class SgClassSymbol;
 class SgFunctionDeclaration;
 
 namespace MDCG { namespace Model { class model_t; } }
-/*
-namespace DLX {
-
-namespace KLT {
-
-template <>
-void Annotation<DLX::TileK::language_t>::parseRegion(
-  std::vector<DLX::KLT::Annotation<DLX::TileK::language_t> > & container
-);
-
-template <>
-void Annotation<DLX::TileK::language_t>::parseData(
-  std::vector<DLX::KLT::Annotation<DLX::TileK::language_t> > & container
-);
-
-template <>
-void Annotation<DLX::TileK::language_t>::parseLoop(
-  std::vector<DLX::KLT::Annotation<DLX::TileK::language_t> > & container
-);
-
-} // namespace DLX::KLT
-
-} // namespace DLX
-*/
-namespace KLT {
-
-namespace Language {
-
-struct None {
-  static void applyKernelModifiers(SgFunctionDeclaration * kernel_decl);
-};
-
-} // namespace KLT::Language
 
 namespace Runtime {
 
@@ -155,42 +122,7 @@ class TileK {
 
 } // namespace KLT::Runtime
 
-template <>
-LoopTiler<DLX::KLT::Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK>::loop_tiling_t::loop_tiling_t(LoopTrees<DLX::KLT::Annotation<DLX::TileK::language_t> >::loop_t * loop_);
-
 } // namespace KLT
 
-namespace MFB {
-
-typedef ::KLT::Kernel< ::DLX::KLT::Annotation< ::DLX::TileK::language_t>, ::KLT::Language::None, ::KLT::Runtime::TileK> tilek_kernel_t;
-
-template <>
-class KLT<tilek_kernel_t> {
-  public:
-    typedef ::DLX::KLT::Annotation< ::DLX::TileK::language_t> Annotation;
-    typedef ::KLT::Language::None Language;
-    typedef ::KLT::Runtime::TileK Runtime;
-
-    typedef ::KLT::LoopTrees< ::DLX::KLT::Annotation< ::DLX::TileK::language_t> > LoopTrees;
-    typedef ::KLT::LoopTiler<DLX::KLT::Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK> LoopTiler;
-
-    struct object_desc_t {
-      unsigned id;
-      tilek_kernel_t * kernel;
-      unsigned long file_id;
-      std::map<LoopTrees::loop_t *, LoopTiler::loop_tiling_t *> tiling;
-
-      object_desc_t(
-        unsigned id_,
-        tilek_kernel_t * kernel_,
-        unsigned long file_id_
-      );
-    };
-
-    typedef tilek_kernel_t::kernel_desc_t * build_result_t;
-};
-
-} // namespace MFB
-
-#endif /* __KLT_TILEK_HPP__ */
+#endif /* __KLT_TILEK_RUNTIME_HPP__ */
 

@@ -53,6 +53,10 @@ language_t::data_clause_t * language_t::isDataClause(clause_t * clause) {
   return clause->kind == language_t::e_clause_data ? (language_t::data_clause_t *)clause : NULL;
 }
 
+language_t::tile_clause_t * language_t::isTileClause(clause_t * clause) {
+  return clause->kind == language_t::e_clause_tile ? (language_t::tile_clause_t *)clause : NULL;
+}
+
 const std::vector<DLX::Frontend::data_sections_t> & language_t::getDataSections(data_clause_t * data_clause) {
   return data_clause->parameters.data_sections;
 }
