@@ -23,7 +23,7 @@ class Unparse_MOD_SAGE
           Unparser* unp;
 
      public:
-          Unparse_MOD_SAGE(Unparser* unp):unp(unp){};
+   Unparse_MOD_SAGE(Unparser* unp):unp(unp),experimentalMode(false){};
           virtual ~Unparse_MOD_SAGE() {};
 
           int cur_get_linewrap ();
@@ -112,6 +112,12 @@ class Unparse_MOD_SAGE
        // DQ (4/3/2004): Added to output modifiers (e.g. register) in formal function arguments
        // void printFunctionFormalArgumentSpecifier ( SgType* type, SgUnparse_Info& info );
 
+
+          // experimental mode
+          void setExperimentalMode(bool val) { experimentalMode=val; }
+   private:
+          void outputTemplateSpecializationSpecifier2 ( SgDeclarationStatement* decl_stmt );
+          bool experimentalMode;
 
    };
 

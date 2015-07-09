@@ -1273,6 +1273,12 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
 void
 Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement* decl_stmt )
    {
+     if(experimentalMode)
+       {
+         outputTemplateSpecializationSpecifier2 ( decl_stmt );
+         return;
+       }
+
 #if 0
      if ( (isSgTemplateInstantiationDecl(decl_stmt) != NULL) ||
           (isSgTemplateInstantiationFunctionDecl(decl_stmt) != NULL) ||
@@ -1328,7 +1334,6 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
         }
 #endif
    }
-
 
 void
 Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
@@ -2639,3 +2644,27 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
         }
 #endif
    }
+
+void Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier2 ( SgDeclarationStatement* decl_stmt ) {
+  if ( (isSgTemplateInstantiationDecl(decl_stmt)               != NULL) ||
+       (isSgTemplateInstantiationFunctionDecl(decl_stmt)       != NULL) ||
+       (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) != NULL) ) {
+    if ( isSgTemplateInstantiationDirectiveStatement(decl_stmt->get_parent()) != NULL) {
+      // Template instantiation directives use "template" instead of "template<>"
+      curprint( "template ");
+    } else {
+      // Normal case for output of template instantiations (which ROSE puts out as specializations)
+      // curprint( "template<> ");
+      // DQ (5/2/2012): If this is a function template instantiation in a class template instantiation then 
+      // we don't want the "template<>" (error in g++, at least).  See test2012_59.C.
+      SgTemplateInstantiationDefn* templateClassInstatiationDefn = isSgTemplateInstantiationDefn(decl_stmt->get_parent());
+      if (templateClassInstatiationDefn != NULL) {
+        // DQ (4/6/2014): This happens when a member function template in embedded in a class
+        // template and thus there is not an associated template for the member function separate
+        // from the class declaration.  It is not rare for many system template libraries (e.g. iostream).
+      } else {
+        curprint("template<> ");
+      }
+    }
+  }
+}
