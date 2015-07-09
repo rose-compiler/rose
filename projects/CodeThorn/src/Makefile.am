@@ -648,8 +648,9 @@ CODETHORN_TESTS= \
     tests/gototest1.C \
     tests/gototest2.C \
     tests/gototest3.C \
-    tests/switchtest1.C
-
+    tests/switchtest1.C \
+    tests/switchtest2.C \
+    tests/switchtest3.C
 
 # MS: does not exist
 #    tests/test.ltl \
