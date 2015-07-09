@@ -1301,7 +1301,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
             // Normal case for output of template instantiations (which ROSE puts out as specializations)
             // curprint( "template<> ");
 #if 0
-               curprint( "\n/* In outputTemplateSpecializationSpecifier(): Normal case for output of template instantiations */ ");
+               curprint( "\n/* In outputTemplateSpecializationSpecifier(): Normal case for output of template instantiations: " +  decl_stmt->class_name() + " */ ");
 #endif
             // DQ (5/2/2012): If this is a function template instantiation in a class template instantiation then 
             // we don't want the "template<>" (error in g++, at least).  See test2012_59.C.
@@ -1322,10 +1322,91 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                   }
                  else
                   {
-                    curprint("template<> ");
+                 // DQ (7/6/2015): template member function instantiations defined outside of the template class shoudl not be output with the "template<>" syntax.
+                 // curprint("template<> ");
+                    if (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) != NULL)
+                       {
+                      // Check for additional rule in the output of "template<>" for member function instantiations.
+                         SgTemplateInstantiationDefn* templateClassInstatiationDefn = isSgTemplateInstantiationDefn(decl_stmt->get_scope());
+                         if (templateClassInstatiationDefn != NULL)
+                            {
+                           // Supress output of "template<>" syntax for template member function instantiations.
+                              SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt);
+#if 0
+                              printf ("templateInstantiationMemberFunctionDecl = %p \n",templateInstantiationMemberFunctionDecl);
+                              printf ("templateInstantiationMemberFunctionDecl->get_templateName() = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
+                              printf ("templateInstantiationMemberFunctionDecl->get_templateDeclaration() = %p \n",templateInstantiationMemberFunctionDecl->get_templateDeclaration());
+                              printf ("templateInstantiationMemberFunctionDecl->get_templateArguments().size() = %zu \n",templateInstantiationMemberFunctionDecl->get_templateArguments().size());
+                              printf ("templateInstantiationMemberFunctionDecl->get_nameResetFromMangledForm() = %s \n",templateInstantiationMemberFunctionDecl->get_nameResetFromMangledForm() ? "true" : "false");
+#endif
+                           // DQ (7/6/2015): Check if these is a prototype that was output via the associated class being output as a template instantiation.
+                           // If the class containing the member function was output (e.g. when the testTemplates translator is run on test2015_35.C) 
+                           // then we don't want the "template<>" syntax on the member function instantiation, else if it was not output (e.g. when 
+                           // testTranslator is run on test2015_35.C) then we require the "template<>" syntax.
+                              SgTemplateInstantiationMemberFunctionDecl* nondefiningTemplateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt->get_firstNondefiningDeclaration());
+                              ROSE_ASSERT(nondefiningTemplateInstantiationMemberFunctionDecl != NULL);
+                              SgTemplateInstantiationDefn* nondefiningTemplateClassInstatiationDefn = isSgTemplateInstantiationDefn(nondefiningTemplateInstantiationMemberFunctionDecl->get_parent());
+                              ROSE_ASSERT(nondefiningTemplateClassInstatiationDefn != NULL);
+                              SgTemplateInstantiationDecl* templateClassInstantiation = isSgTemplateInstantiationDecl(nondefiningTemplateClassInstatiationDefn->get_parent());
+                              ROSE_ASSERT(templateClassInstantiation != NULL);
+                              bool isOutput = false;
+#if 0
+                              printf ("templateClassInstantiation->get_file_info()->isCompilerGenerated()      = %s \n",templateClassInstantiation->get_file_info()->isCompilerGenerated() ? "true" : "false");
+                              printf ("templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() = %s \n",templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() ? "true" : "false");
+#endif
+                              isOutput = (templateClassInstantiation->get_file_info()->isCompilerGenerated() && templateClassInstantiation->get_file_info()->isOutputInCodeGeneration());
+                              if (isOutput == true)
+                                 {
+#if 0
+                                   curprint("/* Member function's class instantation WAS output, so we need to supress the output of template<> syntax */ ");
+#endif
+                                 }
+                                else
+                                 {
+#if 0
+                                   curprint("/* Member function's class instantation was NOT output, so we need to output of template<> syntax */ ");
+#endif
+                                   curprint("template<> ");
+                                 }
+#if 0
+                           // DQ (7/7/2015): I now don't think this is an effective test.
+                              if (templateInstantiationMemberFunctionDecl->get_templateArguments().size() == 0)
+                                 {
+                                // This case is to support test2004_67.C
+#if 0
+                                   curprint("/* Member function without template arguments from template class instantiatons requires the output of template<> syntax */ ");
+#endif
+                                // curprint("template<> ");
+                                 }
+                                else
+                                 {
+#if 0
+                                   curprint("/* Supress output of template<> syntax for template member function instantiations */ ");
+#endif
+                                 }
+#endif
+                            }
+                           else
+                            {
+#if 0
+                              curprint("/* Member function instantiatons in non-template clases still output template<> syntax */ ");
+#endif
+                              curprint("template<> ");
+                            }
+                       }
+                      else
+                       {
+#if 0
+                         curprint("/* This requires the output of the template<> syntax */ ");
+#endif
+                         curprint("template<> ");
+                       }
                   }
              }
         }
+#if 0
+     curprint( "\n/* Leaving outputTemplateSpecializationSpecifier() */ ");
+#endif
 #endif
    }
 
