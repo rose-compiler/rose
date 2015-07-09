@@ -31,6 +31,12 @@ virtualFctsTester_SOURCES = VirtualFctsTester.cpp
 virtualFctsTester_CPPFLAGS = $(ROSE_INCLUDES)
 virtualFctsTester_LDADD = $(ROSE_LIBS)
 
+# This is compiled, but never used
+noinst_PROGRAMS += testNewCallGraph
+testNewCallGraph_SOURCES = testNewCallGraph.C
+testNewCallGraph_CPPFLAGS = $(ROSE_INCLUDES)
+testNewCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
 #########################################################################################################################
 ## Tests
 #########################################################################################################################
@@ -92,6 +98,19 @@ TEST_TARGETS += $(Test04Targets)
 test04: $(Test04Targets)
 $(Test04Targets): t4_%.passed: $(Test04SpecimenDir)/% $(Test04AnswerDir)/%.cg.dmp testCG test04.conf
 	@$(RTH_RUN) INPUT=$(notdir $<) OUTPUT=$$(basename $< .C).o ANSWERS=$(Test04AnswerDir) $(srcdir)/test04.conf $@
+
+
+testNewCG_1: testNewCallGraph $(srcdir)/newCallGraph_input_01.c
+	./testNewCallGraph -c $(srcdir)/newCallGraph_input_01.c
+
+testNewCG_2: testNewCallGraph $(srcdir)/newCallGraph_input_02.c
+	./testNewCallGraph -c $(srcdir)/newCallGraph_input_02.c
+
+testNewCG_3: testNewCallGraph $(srcdir)/newCallGraph_input_03.C
+	./testNewCallGraph -c $(srcdir)/newCallGraph_input_03.C
+
+
+
 
 EXTRA_DIST += test04.conf $(Test04AnswerDir)
 MOSTLYCLEANFILES += $(patsubst %.C, %.o.cg.dmp, $(Test04Specimens))

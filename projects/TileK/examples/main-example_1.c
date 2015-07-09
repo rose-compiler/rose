@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 
-void foo(int n, int m, float ** a, float b);
+void kernel(int n, int m, float ** a, float b);
 
 int main(int argc, char ** argv) {
 
@@ -18,7 +18,7 @@ int main(int argc, char ** argv) {
     }
   }
 
-  foo(n, m, a, 3.5);
+  kernel(n, m, a, 3.5);
 
   int nb = n < 10 ? n : 6;
   int mb = m < 10 ? m : 6;

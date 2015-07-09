@@ -8,7 +8,6 @@
 #include "RSIM_Futex.h"
 #include "RSIM_Process.h"
 #include "RSIM_Thread.h"
-#include "RSIM_Templates.h"
 #include "RSIM_Tools.h"
 
 #include <BinaryLoader.h>
@@ -181,6 +180,7 @@ public:
         std::vector<CoreStyle> coreStyles;
         std::string interpreterName;
         std::vector<std::string> vdsoPaths;
+        std::vector<std::string> vsyscallPaths;
         std::string semaphoreName;
         bool showAuxv;
         std::string binaryTraceName;
@@ -257,8 +257,17 @@ public:
      *  RSIM_Process with an and an initial RSIM_Thread. The return value is zero for success, or a negative error number on
      *  failure.
      *
-     *  Thread safety: This method is thread safe provided it is not invoked on the same object concurrently. */
-    int loadSpecimen(const std::vector<std::string> &args);
+     *  The version that takes an existing process ID will initialize the simulator by attaching to the process, initializing
+     *  the simulator, and then detaching.  One should note that the operating system state associated with the process is not
+     *  copied (e.g., open file descriptors in the process are not open in the simulator, etc.)--only memory and registers are
+     *  initialized in the simulator.
+     *
+     *  Thread safety: This method is thread safe provided it is not invoked on the same object concurrently.
+     *
+     * @{ */
+    int loadSpecimen(const std::vector<std::string> &args, pid_t existingPid=-1);
+    int loadSpecimen(pid_t existingPid);
+    /** @} */
 
     /** Property: executable name.
      *
@@ -727,7 +736,7 @@ public:
     virtual PtRegs initialRegistersArch() = 0;
 
     /** Architecture specific loading and initialization using native method. */
-    virtual void loadSpecimenNative(RSIM_Process*, rose::BinaryAnalysis::Disassembler*) = 0;
+    virtual void loadSpecimenNative(RSIM_Process*, rose::BinaryAnalysis::Disassembler*, int existingPid=-1) = 0;
 
     /** Architecture specific loading. */
     virtual void loadSpecimenArch(RSIM_Process*, SgAsmInterpretation*, const std::string &interpName) = 0;
