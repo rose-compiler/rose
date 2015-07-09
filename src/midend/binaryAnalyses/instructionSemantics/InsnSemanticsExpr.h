@@ -171,9 +171,13 @@ class TreeNode: public Sawyer::SharedObject, public Sawyer::SharedFromThis<TreeN
 protected:
     size_t nbits;                /**< Number of significant bits. Constant over the life of the node. */
     size_t domainWidth_;         /**< Width of domain for unary functions. E.g., memory. */
-    unsigned flags_;             /**< Bit flags. Meaning of flags is up to the user. */
+    unsigned flags_;             /**< Bit flags. Meaning of flags is up to the user. Low-order 16 bits are reserved. */
     mutable std::string comment; /**< Optional comment. Only for debugging; not significant for any calculation. */
     mutable uint64_t hashval;    /**< Optional hash used as a quick way to indicate that two expressions are different. */
+
+public:
+    static const unsigned RESERVED_FLAGS = 0x0000ffff;  /**< These flags are reserved for use within ROSE. */
+    static const unsigned INDETERMINATE  = 0x00000001;  /**< Value is somehow indeterminate. E.g., read from writable memory. */
 
 protected:
     TreeNode()
