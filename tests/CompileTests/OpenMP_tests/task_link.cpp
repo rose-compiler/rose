@@ -16,7 +16,7 @@ class node
 public:  
   int data;
   node *next;
-  node(int i):data(i){}
+  node(int i):data(i){ next = NULL; }
   void setNext(node* n){next = n;}
 };
 

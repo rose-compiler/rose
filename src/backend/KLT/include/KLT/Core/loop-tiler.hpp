@@ -15,7 +15,17 @@ template <class Annotation, class Language, class Runtime>
 class LoopTiler {
   public:
     struct loop_tiling_t {
-      loop_tiling_t(typename LoopTrees<Annotation>::loop_t * loop_);
+      loop_tiling_t(typename LoopTrees<Annotation>::loop_t * loop_) :
+        loop(loop_),
+        tiles()
+      {
+        typename std::vector<Annotation>::const_iterator it_annotation;
+        for (it_annotation = loop->annotations.begin(); it_annotation != loop->annotations.end(); it_annotation++) {
+          typename Annotation::Language::tile_clause_t * tile_clause = Annotation::Language::isTileClause(it_annotation->clause);
+          if (tile_clause == NULL) continue;
+          tiles.push_back(typename Runtime::tile_desc_t(tile_clause));
+        }
+      }
 
       typename LoopTrees<Annotation>::loop_t * loop;
       std::vector<typename Runtime::tile_desc_t> tiles;
@@ -50,7 +60,7 @@ class LoopTiler {
           )
         ).first->second;
 
-        extendTiles(loop, new loop_tiling_t(loop), tiling);
+        tiling.push_back(new loop_tiling_t(loop));
 
         determineTiles(kernel, loop->block, tiling_map);
       }

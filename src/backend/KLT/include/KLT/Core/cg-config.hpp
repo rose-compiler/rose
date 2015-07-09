@@ -37,9 +37,9 @@ class CG_Config {
 
 template <class Annotation, class Language, class Runtime>
 CG_Config<Annotation, Language, Runtime>::CG_Config(
-  LoopMapper<Annotation, Language, Runtime> * loop_mapper,
-  LoopTiler<Annotation, Language, Runtime> * loop_tiler,
-  DataFlow<Annotation, Language, Runtime> * data_flow
+  LoopMapper<Annotation, Language, Runtime> * loop_mapper = new LoopMapper<Annotation, Language, Runtime>(),
+  LoopTiler<Annotation, Language, Runtime> * loop_tiler = new LoopTiler<Annotation, Language, Runtime>(),
+  DataFlow<Annotation, Language, Runtime> * data_flow = new DataFlow<Annotation, Language, Runtime>()
 ) :
   p_loop_mapper(loop_mapper),
   p_loop_tiler(loop_tiler),

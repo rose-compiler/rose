@@ -1,6 +1,7 @@
 #ifndef Rose_YicesSolver_H
 #define Rose_YicesSolver_H
 
+#include "rosePublicConfig.h"
 #include "SMTSolver.h"
 #include <Sawyer/Map.h>
 

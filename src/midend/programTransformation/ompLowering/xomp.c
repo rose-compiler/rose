@@ -255,6 +255,7 @@ void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseVa
     numThread = 1;
   else
     numThread = numThreadsSpecified;
+
   GOMP_parallel_start (func, data, numThread);
   func(data);
 #else   
@@ -1624,6 +1625,30 @@ bool XOMP_loop_ordered_runtime_next (long *a, long *b)
 #endif    
 }
 #endif
+extern void XOMP_static_even_divide (long start, long orig_size, int chunk_count, int chunk_id, long * chunk_offset, long * chunk_size) 
+{
+//  long n = end - start + 1; // inclusive end bound, 0 to 9
+  assert (orig_size>0);
+  assert (chunk_count>0);
+  assert (chunk_id>=0);
+  long size = orig_size / chunk_count;
+  long offset = start + size * chunk_id;
+  long remainder = orig_size % chunk_count;
+  if(chunk_id < remainder)
+  {
+    size++;
+  }
+
+  if(chunk_id >= remainder)
+    offset += remainder;  // all extra elements on top of base line offset size*tid
+  else
+    offset += chunk_id;   // only partial extra elements   
+
+  *chunk_offset = offset;
+//  *n_upper = offset +size -1;
+  *chunk_size = size; 
+}
+
 //---------------  others---------------------------------------
 void xomp_loop_end(void);
 #pragma weak xomp_loop_end_=xomp_loop_end
@@ -1796,10 +1821,3 @@ void XOMP_ordered_end (void)
 #endif
 
 }
-
-/*Initial values for the DDE node list */
-struct DDE_data* DDE_head = NULL;
-struct DDE_data* DDE_tail = NULL;
-// implementation of DDE functions have to be put into .cu files, to avoid undefined references to CUDA function calls!
-
-
