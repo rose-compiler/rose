@@ -579,6 +579,70 @@ void generateKernelBody(
 
 /** @} */
 
+template <class Annotation, class Language, class Runtime>
+SgBasicBlock * intantiateOnHost(::KLT::Kernel<Annotation, Language, Runtime> * kernels) {
+
+  // Expects only one version of the kernel
+  assert(kernels->getKernels().size() == 1);
+
+  typename Kernel<Annotation, Language, Runtime>::kernel_desc_t * kernel = kernels->getKernels()[0];
+  assert(kernel != NULL);
+
+  // Replace kernel region by empty basic block
+  SgBasicBlock * bb = SageBuilder::buildBasicBlock();
+  // Insert: "struct kernel_t * kernel = build_kernel('kernel->id');"
+  SgVariableSymbol * kernel_sym = Runtime::host_api.insertKernelInstance("kernel", kernel->id, bb);
+
+  // Arguments
+
+    const typename Kernel<Annotation, Language, Runtime>::arguments_t & arguments = kernels->getArguments();
+    // Set kernel's parameters
+    std::list<SgVariableSymbol *>::const_iterator it_param;
+    size_t param_cnt = 0;
+    for (it_param = arguments.parameters.begin(); it_param != arguments.parameters.end(); it_param++) {
+      // Append: 'kernel'->params['param_cnt'] = '*it_param'
+      SageInterface::appendStatement(Runtime::host_api.buildParamAssign(kernel_sym, param_cnt++, SageBuilder::buildVarRefExp(*it_param)), bb);
+    }
+    // Set kernel's scalars
+    std::list<SgVariableSymbol *>::const_iterator it_scalar;
+    size_t scalar_cnt = 0;
+    for (it_scalar = arguments.scalars.begin(); it_scalar != arguments.scalars.end(); it_scalar++) {
+      // Append: 'kernel'->scalars['param_cnt'] = &'*it_scalar'
+      SageInterface::appendStatement(Runtime::host_api.buildScalarAssign(kernel_sym, scalar_cnt++, SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(*it_scalar))), bb);
+    }
+    // Set kernel's data
+    typename std::list<KLT::Data<Annotation> *>::const_iterator it_data;
+    size_t data_cnt = 0;
+    for (it_data = arguments.datas.begin(); it_data != arguments.datas.end(); it_data++) {
+      // 'data_first_elem' = 'symbol'
+      SgExpression * data_first_elem = SageBuilder::buildVarRefExp((*it_data)->getVariableSymbol());
+      for (size_t i = 0; i < (*it_data)->getSections().size(); i++)
+        // 'data_first_elem' = 'data_first_elem'[0]
+        data_first_elem = SageBuilder::buildPntrArrRefExp(data_first_elem, SageBuilder::buildIntVal(0));
+      // Append: 'kernel'->datas['data_cnt'] = &'data_first_elem'
+      SageInterface::appendStatement(Runtime::host_api.buildDataAssign(kernel_sym, data_cnt++, SageBuilder::buildAddressOfOp(data_first_elem)), bb);
+    }
+
+  // Set kernel's loop's bounds
+  typename std::vector<typename Runtime::loop_desc_t *>::const_iterator it_loop;
+  size_t loop_cnt = 0;
+  for (it_loop = kernel->loops.begin(); it_loop != kernel->loops.end(); it_loop++) {
+    // Append: 'kernel'->loops['loop_cnt'].lower = '(*it_loop)->lb'
+    SageInterface::appendStatement(Runtime::host_api.buildLoopLowerAssign(kernel_sym, loop_cnt, SageInterface::copyExpression((*it_loop)->lb)), bb);
+    // Append: 'kernel'->loops['loop_cnt'].upper = '(*it_loop)->ub'
+    SageInterface::appendStatement(Runtime::host_api.buildLoopUpperAssign(kernel_sym, loop_cnt, SageInterface::copyExpression((*it_loop)->ub)), bb);
+    // Append: 'kernel'->loops['loop_cnt'].stride = '(*it_loop)->stride'
+    SageInterface::appendStatement(Runtime::host_api.buildLoopStrideAssign(kernel_sym, loop_cnt, SageInterface::copyExpression((*it_loop)->stride)), bb);
+
+    loop_cnt++;
+  }
+
+  // Insert: "execute_kernel(kernel);"
+  Runtime::host_api.insertKernelExecute(kernel_sym, bb);
+
+  return bb;
+}
+
 }
 
 #endif /* __KLT_KERNEL_HPP__ */

@@ -81,8 +81,10 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
   assert(parser.consume(']'));
   assert(parser.consume('('));
   parser.skip_whitespace();
-  if (parser.consume("dynamic"))
+  if (parser.consume("dynamic")) {
     clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_dynamic_tile;
+    clause->parameters.nbr_it = 0;
+  }
   else if (parser.consume("static")) {
     clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_static_tile;
     parser.skip_whitespace();

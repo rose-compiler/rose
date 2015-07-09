@@ -86,6 +86,11 @@ struct language_t {
       static loop_construct_t * isLoopConstruct(construct_t * construct);
       static SgForStatement * getLoopStatement(loop_construct_t * loop_construct);
 
+    // Tile support
+
+      typedef Directives::clause_t<language_t, e_clause_tile> tile_clause_t;
+      static tile_clause_t * isTileClause(clause_t * clause);
+
     // Data support
 
       typedef Directives::clause_t<language_t, e_clause_data> data_clause_t;

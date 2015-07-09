@@ -2061,7 +2061,10 @@ projects/TileK/Makefile
 projects/TileK/lib/Makefile
 projects/TileK/lib/dlx/tilek/Makefile
 projects/TileK/lib/klt/tilek/Makefile
+projects/TileK/lib/klt/language/Makefile
+projects/TileK/lib/klt/runtime/Makefile
 projects/TileK/lib/mdcg/tilek/Makefile
+projects/TileK/lib/mfb/klt/Makefile
 projects/TileK/lib/tilek/Makefile
 projects/TileK/src/Makefile
 projects/TileK/examples/Makefile

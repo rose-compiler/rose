@@ -91,8 +91,8 @@ class LoopTrees {
       {}
       virtual ~loop_t() {}
 
-      bool isDistributed() const;
-      bool isSplitted() const;
+      bool isDistributed() const { return false; } // only influence wether or not the variables used to compute the loop's bounds are parameter ('false' is safe)
+      bool isSplitted() const { return false; }
     };
 
     struct tile_t : public node_t {

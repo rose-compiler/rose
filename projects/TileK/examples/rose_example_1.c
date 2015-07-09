@@ -8,7 +8,8 @@ void kernel(int n, int m, float ** A, float b) {
   struct kernel_t * kernel = build_kernel(0);
 
   kernel->data[0] = &(A[0][0]);
-  kernel->data[1] = &(b);
+
+  kernel->scalar[0] = &(b);
 
   kernel->param[0] = n;
   kernel->param[1] = m;
