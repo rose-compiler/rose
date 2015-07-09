@@ -334,7 +334,7 @@ public:
      *  This method is only defined when the map key type is appropriate for the Interval class template (such as when the keys
      *  are an integer type). */
     Interval<Key> hull() const {
-        return isEmpty() ? Interval<Key>() : Interval<Key>(least(), greatest());
+        return isEmpty() ? Interval<Key>() : Interval<Key>::hull(least(), greatest());
     }
 
     

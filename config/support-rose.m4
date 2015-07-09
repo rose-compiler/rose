@@ -1728,6 +1728,7 @@ src/frontend/DLX/docs/doxygen/doxy.conf
 src/frontend/DLX/include/Makefile
 src/frontend/DLX/include/DLX/Makefile
 src/frontend/DLX/include/DLX/Core/Makefile
+src/frontend/DLX/include/DLX/KLT/Makefile
 src/frontend/DLX/lib/Makefile
 src/frontend/DLX/lib/core/Makefile
 src/frontend/Partitioner2/Makefile
@@ -2056,6 +2057,18 @@ projects/Viz/lib/Makefile
 projects/Viz/src/Makefile
 projects/Viz/tools/Makefile
 projects/Viz/examples/Makefile
+projects/TileK/Makefile
+projects/TileK/lib/Makefile
+projects/TileK/lib/dlx/tilek/Makefile
+projects/TileK/lib/klt/tilek/Makefile
+projects/TileK/lib/klt/language/Makefile
+projects/TileK/lib/klt/runtime/Makefile
+projects/TileK/lib/mdcg/tilek/Makefile
+projects/TileK/lib/mfb/klt/Makefile
+projects/TileK/lib/tilek/Makefile
+projects/TileK/src/Makefile
+projects/TileK/examples/Makefile
+projects/TileK/tests/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
