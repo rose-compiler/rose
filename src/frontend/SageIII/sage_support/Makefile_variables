@@ -16,7 +16,7 @@ fSageSupport_includeHeaders=\
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 #
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-$(fSageSupportPath)/sage_support.cpp: extract_rose_required_ofp_source_files
+$(srcdir)/$(fSageSupportPath)/sage_support.cpp: extract_rose_required_ofp_source_files
 endif
 
 # DQ (10/9/2010): We are now trying to properly represent the dependences so avoid redundant
