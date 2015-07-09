@@ -822,8 +822,13 @@ Engine::runPartitionerRecursive(Partitioner &partitioner) {
 
 void
 Engine::runPartitionerFinal(Partitioner &partitioner) {
-    if (settings_.partitioner.splittingThunks)
+    if (settings_.partitioner.splittingThunks) {
+        // Splitting thunks off the front of a basic block causes the rest of the basic block to be discarded and then
+        // rediscovered. This might also create additional blocks due to the fact that opaque predicate analysis runs only on
+        // single blocks at a time -- splitting the block may have broken the opaque predicate.
         ModulesX86::splitThunkFunctions(partitioner);
+        discoverBasicBlocks(partitioner);
+    }
     if (interp_)
         ModulesPe::nameImportThunks(partitioner, interp_);
     Modules::nameConstants(partitioner);
@@ -1520,8 +1525,8 @@ Engine::makeNextBasicBlockFromPlaceholder(Partitioner &partitioner) {
         }
         ASSERT_require(placeholder->value().type() == V_BASIC_BLOCK);
         if (placeholder->value().bblock()) {
-            mlog[WARN] <<"makeNextBasicBlockFromPlacholder: block " <<StringUtility::addrToString(va)
-                       <<" was on the undiscovered worklist but is already discovered\n";
+            SAWYER_MESG(mlog[DEBUG]) <<"makeNextBasicBlockFromPlacholder: block " <<StringUtility::addrToString(va)
+                                     <<" was on the undiscovered worklist but is already discovered\n";
             continue;
         }
         BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
