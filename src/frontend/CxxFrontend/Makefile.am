@@ -140,7 +140,7 @@ EDG.tar.gz:  edg-generate-sig.output
 	    exit 1; \
 	fi
 	@if [ ! -f $@ ]; then \
-	echo "$@ not found, checking "$(EDGBIN_BEST_NAME).tar.gz" "; \
+	echo "$@ not found, checking if "$(EDGBIN_BEST_NAME).tar.gz" is available"; \
 		if [ ! -f "$(EDGBIN_BEST_NAME).tar.gz" ]; then \
 		echo ""$(EDGBIN_BEST_NAME).tar.gz" not found, download it!";\
 			wget -q --spider -t 3 --wait=5 $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz ; \
