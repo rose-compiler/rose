@@ -101,31 +101,60 @@ EDGBIN_BEST_NAME = $(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(EDGBIN_SIGNATUR
 # This one must be named "EDGBIN_NTRIES" because it's mentioned in an error message from the edg-generate-sig script.
 # Users are directed to override this variable with a higher value (caveat emptor) if an EDG version cannot be found.
 EDGBIN_NTRIES = 1
-
 all-am: EDG/libroseEDG.la
+
+network_checking:
+	wget -q --spider -t 3 --wait=5 http://www.rosecompiler.or ; \ 
+	if [ $$? -eq 0 ]; then \
+	echo "ROSE WebServer is Reachable"; \
+	else \
+	echo "ROSE WebServer is NOT Reachable"; \
+	fi
+
 
 # Run the edg-generate-sig script to find an appropriate version number.  We cannot use make's $(shell...) function because
 # it sometimes discards standard error and doesn't cause make to fail if the command fails.  If edg-generate-sig fails then
 # remove the edg-generate-sig.output file so that re-running make will fail the same way next time.
-edg-generate-sig.output:
-	@if ! $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig --find --progress --ntries=$(EDGBIN_NTRIES) >$@; then \
+edg-generate-sig.output: 
+	@wget -q --spider -t 3 --wait=5 http://www.rosecompiler.or ; \ 
+	if [ $$? -eq 0 ]; then \
+	if ! $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig --find --progress --ntries=$(EDGBIN_NTRIES) >$@; then \
 	    rm -f $@ ; \
 	    exit 1; \
+	fi; \ 
+	else \
+	if ! $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig --no-fetch --progress --ntries=$(EDGBIN_NTRIES) >$@; then \
+	    rm -f $@ ; \
+	    exit 1; \
+	fi; \
 	fi
 
 # Try to get the EDG binary tarball if we don't have it.  Team members might be able to get it from a local directory,
 # but others will need to go to a Web server.  We use wget rather than curl because curl was sometimes placing error
 # messages inside the tarball.  Note, we can't have two make targets with the same name even if they are in separate parts
 # of an automake 'if' statement; so we add a 'download-' prefix to this one.
-EDG.tar.gz: edg-generate-sig.output
+EDG.tar.gz:  edg-generate-sig.output
 	@if [ "$(EDGBIN_SIGNATURE)" = "" ]; then \
 	    echo "Invalid EDG binary compatibility signature "$(EDGBIN_SIGNATURE)" in filename '$(EDGBIN_BEST_NAME)'." >&2; \
 	    echo "Please contact rose-public@nersc.gov to troubleshoot this error message." >&2; \
 	    exit 1; \
 	fi
-	wget -O "$(EDGBIN_BEST_NAME).tar.gz" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz"
-	touch $(EDGBIN_BEST_NAME).tar.gz
-	ln -sf $(EDGBIN_BEST_NAME).tar.gz $@
+	@if [ ! -f $@ ]; then \
+	echo "$@ not found, checking "$(EDGBIN_BEST_NAME).tar.gz" "; \
+		if [ ! -f "$(EDGBIN_BEST_NAME).tar.gz" ]; then \
+		echo ""$(EDGBIN_BEST_NAME).tar.gz" not found, download it!";\
+			wget -q --spider -t 3 --wait=5 $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz ; \
+			if [ $$? -eq 0 ]; then \
+				wget -O "$(EDGBIN_BEST_NAME).tar.gz" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz"; \
+			else \
+				echo "Destination not reachable: download EDG binary from the following link when the network is available:"; \
+				echo "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz";\
+			fi; \
+		fi; \
+		touch $(EDGBIN_BEST_NAME).tar.gz; \
+		echo "Symbolic link "$(EDGBIN_BEST_NAME).tar.gz" to $@!";\
+		ln -sf $(EDGBIN_BEST_NAME).tar.gz $@; \
+	fi
 
 # This target can be used to explicitly download the EDG tarball without needing to know its name.
 .PHONY: download-edg
