@@ -18,11 +18,6 @@
 namespace rose {
 namespace BinaryAnalysis {
 
-/** Cache hash values in nodes.  If this is defined, then the @p hashval data member member is used to store a hash for the
- *  node and its children.  The hash can be used to prove that two expressions are not structurally equivalent, thus avoiding a
- *  more expensive traversal of an expression tree. */
-#define InsnSemanticsExpr_USE_HASHES
-
 class SMTSolver;
 
 /** Namespace supplying types and functions for symbolic expressions. These are used by certain instruction semantics policies
@@ -176,8 +171,19 @@ protected:
     mutable uint64_t hashval;    /**< Optional hash used as a quick way to indicate that two expressions are different. */
 
 public:
-    static const unsigned RESERVED_FLAGS = 0x0000ffff;  /**< These flags are reserved for use within ROSE. */
-    static const unsigned INDETERMINATE  = 0x00000001;  /**< Value is somehow indeterminate. E.g., read from writable memory. */
+    // Bit flags
+
+    /** These flags are reserved for use within ROSE. */
+    static const unsigned RESERVED_FLAGS = 0x0000ffff;
+
+    /** Value is somehow indeterminate. E.g., read from writable memory. */
+    static const unsigned INDETERMINATE  = 0x00000001;
+
+    /** Value is somehow unspecified. A value that is intantiated as part of processing a machine instruction where the ISA
+     * documentation is incomplete or says that some result is unspecified or undefined. Intel documentation for the x86 shift
+     * and rotate instructions, for example, states that certain status bits have "undefined" values after the instruction
+     * executes. */
+    static const unsigned UNSPECIFIED    = 0x00000002;
 
 protected:
     TreeNode()
@@ -329,6 +335,9 @@ public:
      *  expression and adding expressions to the return vector whenever a subtree is encountered a second time. Therefore the
      *  if a common subexpression A contains another common subexpression B then B will appear earlier in the list than A. */
     std::vector<TreeNodePtr> findCommonSubexpressions() const;
+
+protected:
+    void printFlags(std::ostream &o, unsigned flags, char &bracket) const;
 };
 
 /** Operator-specific simplification methods. */
