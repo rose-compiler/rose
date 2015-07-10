@@ -41,6 +41,7 @@ typedef InsnSemanticsExpr::LeafNode LeafNode;
 typedef InsnSemanticsExpr::LeafNodePtr LeafNodePtr;
 typedef InsnSemanticsExpr::InternalNode InternalNode;
 typedef InsnSemanticsExpr::InternalNodePtr InternalNodePtr;
+typedef InsnSemanticsExpr::TreeNode TreeNode;
 typedef InsnSemanticsExpr::TreeNodePtr TreeNodePtr;
 typedef std::set<SgAsmInstruction*> InsnSet;
 
@@ -144,28 +145,31 @@ protected:
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
         expr = LeafNode::create_integer(nbits, number);
     }
+    SValue(TreeNodePtr expr): BaseSemantics::SValue(expr->get_nbits()) {
+        this->expr = expr;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
-        return SValuePtr(new SValue(1));
+        return SValuePtr(new SValue(LeafNode::create_variable(1)));
     }
 
     /** Instantiate a new undefined value of specified width. */
     static SValuePtr instance_undefined(size_t nbits) {
-        return SValuePtr(new SValue(nbits));
+        return SValuePtr(new SValue(LeafNode::create_variable(nbits)));
     }
 
     /** Instantiate a new unspecified value of specified width. */
     static SValuePtr instance_unspecified(size_t nbits) {
-        return SValuePtr(new SValue(nbits));
+        return SValuePtr(new SValue(LeafNode::create_variable(nbits, "", TreeNode::UNSPECIFIED)));
     }
 
     /** Instantiate a new concrete value. */
     static SValuePtr instance_integer(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(nbits, value));
+        return SValuePtr(new SValue(LeafNode::create_integer(nbits, value)));
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
