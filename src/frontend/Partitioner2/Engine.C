@@ -790,7 +790,7 @@ Engine::createPartitionerFromAst(SgAsmInterpretation *interp) {
             bblock->insertSuccessor(ival->get_absoluteValue(), ival->get_significantBits());
         if (!blockAst->get_successors_complete()) {
             size_t nbits = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
-            bblock->insertSuccessor(Semantics::SValue::instance(nbits));
+            bblock->insertSuccessor(Semantics::SValue::instance_undefined(nbits));
         }
 
         partitioner.attachBasicBlock(bblock);

@@ -478,9 +478,21 @@ public:
     // constructors (usually named "instance")--it's because this is an abstract class.
 public:
     /** Create a new undefined semantic value.  The new semantic value will have the same dynamic type as the value
-     *  on which this virtual method is called.  This is the most common way that a new value is created. */
+     *  on which this virtual method is called.  This is the most common way that a new value is created. The @ref unspecified_
+     *  method is closely related.
+     *
+     *  @sa unspecified_ */
     virtual SValuePtr undefined_(size_t nbits) const = 0; // hot
-    virtual SValuePtr unspecified_(size_t nbits) const = 0; // hot
+
+    /** Create a new unspecified semantic value. The new semantic value will have the same dynamic type as the value on which
+     *  this virtual method is called.  Undefined (@ref undefined_) and unspecified are closely related.  Unspecified values
+     *  are the same as undefined values except they're instantiated as the result of some machine instruction where the ISA
+     *  documentation indicates that the value is unspecified (e.g., status flags for x86 shift and rotate instructions).
+     *
+     *  Most semantic domains make no distinction between undefined and unspecified.
+     *
+     *  @sa undefined_ */
+    virtual SValuePtr unspecified_(size_t nbits) const = 0;
 
     /** Create a new concrete semantic value. The new value will represent the specified concrete value and have the same
      *  dynamic type as the value on which this virtual method is called. This is the most common way that a new constant is

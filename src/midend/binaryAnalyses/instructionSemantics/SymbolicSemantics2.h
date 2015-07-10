@@ -154,12 +154,17 @@ public:
     }
 
     /** Instantiate a new undefined value of specified width. */
-    static SValuePtr instance(size_t nbits) {
+    static SValuePtr instance_undefined(size_t nbits) {
+        return SValuePtr(new SValue(nbits));
+    }
+
+    /** Instantiate a new unspecified value of specified width. */
+    static SValuePtr instance_unspecified(size_t nbits) {
         return SValuePtr(new SValue(nbits));
     }
 
     /** Instantiate a new concrete value. */
-    static SValuePtr instance(size_t nbits, uint64_t value) {
+    static SValuePtr instance_integer(size_t nbits, uint64_t value) {
         return SValuePtr(new SValue(nbits, value));
     }
     
@@ -167,16 +172,16 @@ public:
     // Virtual allocating constructors
 public:
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
-        return instance(nbits);
+        return instance_undefined(nbits);
     }
     virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const ROSE_OVERRIDE {
-        return instance(nbits);
+        return instance_unspecified(nbits);
     }
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const ROSE_OVERRIDE {
-        return instance(nbits, value);
+        return instance_integer(nbits, value);
     }
     virtual BaseSemantics::SValuePtr boolean_(bool value) const ROSE_OVERRIDE {
-        return number_(1, value?1:0);
+        return instance_integer(1, value?1:0);
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
@@ -603,6 +608,10 @@ protected:
 
     SValuePtr svalue_undefined(size_t nbits) {
         return SValue::promote(undefined_(nbits));
+    }
+
+    SValuePtr svalue_unspecified(size_t nbits) {
+        return SValue::promote(unspecified_(nbits));
     }
 
     SValuePtr svalue_number(size_t nbits, uint64_t value) {

@@ -225,6 +225,7 @@ HEADER_RISC_OPERATION_START
                 enum RiscOperator {
                         OP_NONE,
 			OP_undefined,
+			OP_unspecified,
                         OP_filterCallTarget,
                         OP_filterReturnTarget,
                         OP_filterIndirectJumpTarget,

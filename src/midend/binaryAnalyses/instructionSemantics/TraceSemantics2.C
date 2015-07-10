@@ -326,6 +326,21 @@ RiscOperators::undefined_(size_t nbits)
 }
 
 BaseSemantics::SValuePtr
+RiscOperators::unspecified_(size_t nbits)
+{
+    before("unspecified_", nbits);
+    try {
+        return check_width(after(subdomain_->unspecified_(nbits)), nbits);
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
 RiscOperators::number_(size_t nbits, uint64_t value)
 {
     before("number_", nbits, value);

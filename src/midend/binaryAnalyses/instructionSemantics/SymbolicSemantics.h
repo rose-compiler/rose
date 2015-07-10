@@ -671,13 +671,13 @@ protected:
                                          *   read so that subsequent reads from the same address will return the
                                          *   same value. */
     bool p_discard_popped_memory;       /**< Property that determines how the stack behaves.  When set, any time
-                                         * the stack pointer is adjusted, memory below the stack pointer and having
-                                         * the same address name as the stack pointer is removed (the memory
-                                         * location becomes undefined). The default is false, that is, no special
-                                         * treatment for the stack. */
+                                         *   the stack pointer is adjusted, memory below the stack pointer and having
+                                         *   the same address name as the stack pointer is removed (the memory
+                                         *   location becomes undefined). The default is false, that is, no special
+                                         *   treatment for the stack. */
     size_t ninsns;                      /**< Total number of instructions processed. This is incremented by
-                                         * startInstruction(), which is the first thing called by
-                                         * X86InstructionSemantics::processInstruction(). */
+                                         *   startInstruction(), which is the first thing called by
+                                         *   X86InstructionSemantics::processInstruction(). */
     SMTSolver *solver;                  /**< The solver to use for Satisfiability Modulo Theory, or NULL. */
 
 public:
