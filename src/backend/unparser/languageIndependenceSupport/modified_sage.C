@@ -20,6 +20,13 @@ using namespace std;
 
 #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
 
+// MS: temporary flag for experiments with uparsing of template instantiations
+bool Unparse_MOD_SAGE::experimentalMode=false;
+int Unparse_MOD_SAGE::experimentalModeVerbose=0;
+
+Unparse_MOD_SAGE::Unparse_MOD_SAGE(Unparser* unp):unp(unp) {
+}
+
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isOperator
 //
@@ -1273,6 +1280,12 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
 void
 Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement* decl_stmt )
    {
+     if(experimentalMode)
+       {
+         outputTemplateSpecializationSpecifier2 ( decl_stmt );
+         return;
+       }
+
 #if 0
      if ( (isSgTemplateInstantiationDecl(decl_stmt) != NULL) ||
           (isSgTemplateInstantiationFunctionDecl(decl_stmt) != NULL) ||
@@ -1409,7 +1422,6 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
 #endif
 #endif
    }
-
 
 void
 Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
@@ -2739,3 +2751,25 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
         }
 #endif
    }
+
+// MS: to activate this function set Unparse_MOD_SAGE::experimentalMode=true
+void Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier2 ( SgDeclarationStatement* decl_stmt ) {
+  if (isSgTemplateInstantiationDecl(decl_stmt)
+      || isSgTemplateInstantiationFunctionDecl(decl_stmt)
+      || isSgTemplateInstantiationMemberFunctionDecl(decl_stmt)) {
+    if (isSgTemplateInstantiationDirectiveStatement(decl_stmt->get_parent())) {
+      if(experimentalModeVerbose==1) curprint("/*0*/");
+      curprint("template ");
+    } else if (isSgTemplateInstantiationDecl(decl_stmt)) {
+      if(experimentalModeVerbose==1) curprint("/*1*/");
+      curprint("template<> ");
+    } else if (isSgTemplateInstantiationDefn(decl_stmt->get_parent())) {
+      if(experimentalModeVerbose==1) curprint("/*2*/");
+    } else if (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt)) {
+      if(experimentalModeVerbose==1) curprint("/*3*/");
+    } else {
+      cerr<<"Unknown template construct."<<endl;
+      ROSE_ASSERT(0);
+    }
+  }
+}
