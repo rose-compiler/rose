@@ -74,6 +74,12 @@ bool cmpDataName(const Data<Annotation> * data_lhs, const Data<Annotation> * dat
 }
 
 template <class Annotation, class Language, class Runtime, class Driver>
+unsigned long Generator<Annotation, Language, Runtime, Driver>::createFile() {
+  unsigned long file_id = p_sage_driver.create(boost::filesystem::path(p_file_name));
+  return file_id;
+}
+
+template <class Annotation, class Language, class Runtime, class Driver>
 void Generator<Annotation, Language, Runtime, Driver>::buildArgumentLists(
   const LoopTrees<Annotation> & loop_trees,
   Kernel<Annotation, Language, Runtime> * kernel

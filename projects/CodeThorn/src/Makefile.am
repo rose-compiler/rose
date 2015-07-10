@@ -422,8 +422,8 @@ check-local:
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
 	rm -f *.consistent
-	$(srcdir)/scripts/run_tests_cegpra $(srcdir) . #run CEGPRA tests
 	$(srcdir)/scripts/runLtlRegressionTests $(srcdir) . #run RERS examples in several versions and compare to previous results
+	$(srcdir)/scripts/run_tests_cegpra $(srcdir) . #run CEGPRA tests
 
 checkdemos: 
 	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
@@ -648,8 +648,9 @@ CODETHORN_TESTS= \
     tests/gototest1.C \
     tests/gototest2.C \
     tests/gototest3.C \
-    tests/switchtest1.C
-
+    tests/switchtest1.C \
+    tests/switchtest2.C \
+    tests/switchtest3.C
 
 # MS: does not exist
 #    tests/test.ltl \

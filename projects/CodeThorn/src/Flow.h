@@ -14,6 +14,7 @@ namespace SPRAY {
 
   class Edge;
   typedef std::set<Edge> EdgeSet;
+  typedef std::set<EdgeType> EdgeTypeSet;
 
   /*! 
    * \author Markus Schordan
@@ -24,7 +25,7 @@ namespace SPRAY {
     Edge();
     Edge(Label source0,Label target0);
     Edge(Label source0,EdgeType type0,Label target0);
-    Edge(Label source0,std::set<EdgeType> type0,Label target0);
+    Edge(Label source0,EdgeTypeSet type0,Label target0);
     std::string toString() const;
     std::string toStringNoType() const;
     std::string toDotColored() const;
@@ -37,14 +38,14 @@ namespace SPRAY {
     void addType(EdgeType et);
     void addTypes(std::set<EdgeType> ets);
     void removeType(EdgeType et);
-    std::set<EdgeType> types() const;
+    EdgeTypeSet types() const;
     long typesCode() const;
     std::string color() const;
     std::string dotEdgeStyle() const;
     long hash() const;
-    std::set<EdgeType> getTypes() const { return _types; }
+    EdgeTypeSet getTypes() const { return _types; }
   private:
-    std::set<EdgeType> _types;
+    EdgeTypeSet _types;
   };
   
   bool operator==(const Edge& e1, const Edge& e2);
