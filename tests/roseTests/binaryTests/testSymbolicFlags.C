@@ -10,9 +10,9 @@
 
 using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
 
-// Bit flags
-static const unsigned UNDEFINED = 0x00000001;
-static const unsigned INVALID   = 0x00000002;
+// Bit flags (low-order 16 bits are reserved for ROSE, so don't use them)
+static const unsigned UNDEFINED = 0x00010000;
+static const unsigned INVALID   = 0x00020000;
 
 // Make sure that the bits can be set and stick.
 static void

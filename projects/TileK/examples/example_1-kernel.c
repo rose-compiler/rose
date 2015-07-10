@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-void kernel_0(int * param, void ** data, struct context_t * ctx) {
+void kernel_0(int * param, void ** data, void ** scalar, struct context_t * ctx) {
 /*  
   printf("param = {%d , %d}\n", param[0], param[1]);
 
@@ -25,7 +25,7 @@ void kernel_0(int * param, void ** data, struct context_t * ctx) {
         for (it_1_3 = it_1_2; it_1_3 < it_1_2 + ctx->tiles[3].length; it_1_3 += ctx->tiles[3].stride) {
 //        printf("  (%d , %d)\n", it_0_1, it_1_3);
 //        *get_data_A(data, param, it_0_1, it_1_3) += get_data_b(data, param);
-          ((float *)data[0])[it_0_1 * param[1] + it_1_3] += *((float *)data[1]);
+          ((float *)data[0])[it_0_1 * param[1] + it_1_3] += *((float *)scalar[0]);
         }
       }
     }

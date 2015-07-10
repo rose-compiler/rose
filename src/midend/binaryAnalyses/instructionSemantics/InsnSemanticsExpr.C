@@ -107,6 +107,24 @@ TreeNode::findCommonSubexpressions() const {
     return InsnSemanticsExpr::findCommonSubexpressions(std::vector<TreeNodePtr>(1, sharedFromThis()));
 }
 
+void
+TreeNode::printFlags(std::ostream &o, unsigned flags, char &bracket) const {
+    if ((flags & INDETERMINATE) != 0) {
+        o <<bracket <<"indet";
+        bracket = ',';
+        flags &= ~INDETERMINATE;
+    }
+    if ((flags & UNSPECIFIED) != 0) {
+        o <<bracket <<"unspec";
+        bracket = ',';
+        flags &= ~UNSPECIFIED;
+    }
+    if (flags != 0) {
+        o <<bracket <<"f=" <<std::hex <<flags <<std::dec;
+        bracket = ',';
+    }
+}
+
 /*******************************************************************************************************************************
  *                                      InternalNode methods
  *******************************************************************************************************************************/
@@ -305,10 +323,8 @@ InternalNode::print(std::ostream &o, Formatter &fmt) const
         o <<bracket <<nbits;
         bracket = ',';
     }
-    if (fmt.show_flags && get_flags() != 0) {
-        o <<bracket <<"f=" <<std::hex <<get_flags() <<std::dec;
-        bracket = ',';
-    }
+    if (fmt.show_flags)
+        printFlags(o, get_flags(), bracket /*in,out*/);
     if (fmt.show_comments!=Formatter::CMT_SILENT && !comment.empty()) {
         o <<bracket <<comment;
         bracket = ',';
@@ -2052,10 +2068,8 @@ LeafNode::print_as_signed(std::ostream &o, Formatter &formatter, bool as_signed)
         o <<bracket <<nbits;
         bracket = ',';
     }
-    if (formatter.show_flags && get_flags()!=0) {
-        o <<bracket <<"f=" <<std::hex <<get_flags() <<std::dec;
-        bracket = ',';
-    }    
+    if (formatter.show_flags)
+        printFlags(o, get_flags(), bracket);
     if (!showed_comment && formatter.show_comments!=Formatter::CMT_SILENT && !comment.empty()) {
         o <<bracket <<comment;
         bracket = ',';

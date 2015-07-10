@@ -4,21 +4,16 @@
 
 #include <vector>
 
+#include "DLX/Core/clauses.hpp"
+
 namespace DLX {
 
-namespace Directives {
-
-template <class language_tpl> struct generic_clause_t;
-
-}
-
-/*!
- * \addtogroup grp_dlx_klt_annotations
- * @{
-*/
+namespace KLT {
 
 template <class Lang>
-class KLT_Annotation {
+class Annotation {
+  public:
+    typedef Lang Language;
   private:
     void createClause() {
       assert(Lang::s_clause_labels.size() > 0);
@@ -29,20 +24,20 @@ class KLT_Annotation {
         typename Lang::label_set_t::const_iterator it_label;
         for (it_label = labels.begin(); it_label != labels.end(); it_label++) {
           if (AstFromString::afs_match_substr(it_label->c_str()))
-            clause = Directives::buildClause<Lang>(it_clause->first);
+            clause = ::DLX::Directives::buildClause<Lang>(it_clause->first);
         }
       }
 
       assert(clause != NULL);
     }
 
-    static void parseClause(std::vector<KLT_Annotation<Lang> > & container) {
-      container.push_back(KLT_Annotation<Lang>());
+    static void parseClause(std::vector<Annotation<Lang> > & container) {
+      container.push_back(Annotation<Lang>());
       container.back().createClause();
     }
 
   public:
-    KLT_Annotation(Directives::generic_clause_t<Lang> * clause_ = NULL):
+    Annotation(Directives::generic_clause_t<Lang> * clause_ = NULL):
       clause(clause_)
     {}
 
@@ -53,14 +48,14 @@ class KLT_Annotation {
       return AstFromString::afs_match_substr(Lang::language_label.c_str());
     }
 
-    static void parseData   (std::vector<KLT_Annotation<Lang> > & container);
+    static void parseData   (std::vector<Annotation<Lang> > & container);
 
-    static void parseRegion (std::vector<KLT_Annotation<Lang> > & container);
+    static void parseRegion (std::vector<Annotation<Lang> > & container);
 
-    static void parseLoop   (std::vector<KLT_Annotation<Lang> > & container);
+    static void parseLoop   (std::vector<Annotation<Lang> > & container);
 };
 
-/** @} */
+}
 
 }
 

@@ -101,7 +101,17 @@ private:
         mayReturn_.clear();
     }
 
-
+public:
+    void copyCache(const BasicBlock::Ptr other) {
+        successors_ = other->successors_;
+        ghostSuccessors_ = other->ghostSuccessors_;
+        isFunctionCall_ = other->isFunctionCall_;
+        isFunctionReturn_ = other->isFunctionReturn_;
+        stackDeltaIn_ = other->stackDeltaIn_;
+        stackDeltaOut_ = other->stackDeltaOut_;
+        mayReturn_ = other->mayReturn_;
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

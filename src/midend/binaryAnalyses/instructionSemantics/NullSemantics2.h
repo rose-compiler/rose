@@ -59,6 +59,9 @@ public:
     virtual BaseSemantics::SValuePtr undefined_(size_t nBits) const ROSE_OVERRIDE {
         return instance(nBits);
     }
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nBits) const ROSE_OVERRIDE {
+        return instance(nBits);
+    }
     virtual BaseSemantics::SValuePtr number_(size_t nBits, uint64_t number) const ROSE_OVERRIDE {
         return instance(nBits, number);
     }

@@ -83,8 +83,8 @@ class Data {
       return *p_data_distribution;
     }
 
-    bool isFlowIn() const;
-    bool isFlowOut() const;
+    bool isFlowIn() const { return true; }
+    bool isFlowOut() const { return true; }
 
     void toText(std::ostream & out) const;
     std::string sectionsToString() const;
