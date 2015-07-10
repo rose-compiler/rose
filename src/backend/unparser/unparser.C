@@ -336,6 +336,18 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      file->display("file: Unparser::unparseFile");
 #endif
 
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgStatement*> transformedStatementSet_1 = SageInterface::collectTransformedStatements(file);
+     printf ("In Unparser::unparseFile(): part 1: transformedStatementSet_1.size() = %zu \n",transformedStatementSet_1.size());
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgLocatedNode*> modifiedLocatedNodesSet_1 = SageInterface::collectModifiedLocatedNodes(file);
+     printf ("In Unparser::unparseFile(): part 1: modifiedLocatedNodesSet_1.size() = %zu \n",modifiedLocatedNodesSet_1.size());
+#endif
+
   // DQ (6/30/2013): Added support to time the unparsing of the file (name qualification will be nested in this time).
      TimingPerformance timer ("Unparse File:");
 
@@ -367,6 +379,12 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
         // Build the local set to use to record when declaration that might required qualified references have been seen.
           std::set<SgNode*> referencedNameSet;
 
+       // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+          std::set<SgLocatedNode*> modifiedLocatedNodesSet_1 = SageInterface::collectModifiedLocatedNodes(file);
+          size_t numberOfModifiedNodesBeforeNameQualification = modifiedLocatedNodesSet_1.size();
+#if 0
+          printf ("In Unparser::unparseFile(): generateNameQualificationSupport(): part 1: modifiedLocatedNodesSet_1.size() = %zu \n",modifiedLocatedNodesSet_1.size());
+#endif
        // printf ("Developing a new implementation of the name qualification support. \n");
           generateNameQualificationSupport(file,referencedNameSet);
        // printf ("DONE: new name qualification support built. \n*************************\n\n");
@@ -375,11 +393,40 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
        // DQ (6/5/2007): We actually need this now since the hidden lists are not pushed to lower scopes where they are required.
        // DQ (5/22/2007): Added support for passing hidden list information about types, declarations and elaborated types to child scopes.
           propagateHiddenListData(file);
+
+       // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+          std::set<SgLocatedNode*> modifiedLocatedNodesSet_2 = SageInterface::collectModifiedLocatedNodes(file);
+          size_t numberOfModifiedNodesAfterNameQualification = modifiedLocatedNodesSet_2.size();
+#if 0
+          printf ("In Unparser::unparseFile(): generateNameQualificationSupport(): part 2: modifiedLocatedNodesSet_2.size() = %zu \n",modifiedLocatedNodesSet_2.size());
+#endif
+
+       // DQ (6/11/2015): Introduce error checking on the AST if we are using the token-based unparsing.
+          if ( (file->get_unparse_tokens() == true) && (numberOfModifiedNodesAfterNameQualification != numberOfModifiedNodesBeforeNameQualification) )
+             {
+               printf ("In Unparser::unparseFile(): numberOfModifiedNodesBeforeNameQualification = %zu numberOfModifiedNodesAfterNameQualification = %zu \n",
+                    numberOfModifiedNodesBeforeNameQualification,numberOfModifiedNodesAfterNameQualification);
+               printf ("ERROR: namequalification step has introduced modified IR nodes in the AST (a problem for the token-based unparsing) \n");
+               ROSE_ASSERT(false);
+             }
+
         }
 
 #if 0
      printf ("In Unparser::unparseFile(): SageInterface::is_C_language() = %s \n",SageInterface::is_C_language() ? "true" : "false");
      printf ("In Unparser::unparseFile(): file->get_unparse_tokens()      = %s \n",file->get_unparse_tokens() ? "true" : "false");
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgStatement*> transformedStatementSet_2 = SageInterface::collectTransformedStatements(file);
+     printf ("In Unparser::unparseFile(): part 2: transformedStatementSet_2.size() = %zu \n",transformedStatementSet_2.size());
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgLocatedNode*> modifiedLocatedNodesSet_2 = SageInterface::collectModifiedLocatedNodes(file);
+     printf ("In Unparser::unparseFile(): part 2: modifiedLocatedNodesSet_2.size() = %zu \n",modifiedLocatedNodesSet_2.size());
 #endif
 
 #if 0
@@ -431,7 +478,11 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #endif
         }
      
-
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgStatement*> transformedStatementSet_3 = SageInterface::collectTransformedStatements(file);
+     printf ("In Unparser::unparseFile(): part 3: transformedStatementSet_3.size() = %zu \n",transformedStatementSet_3.size());
+#endif
 
   // Turn ON the error checking which triggers an if the default SgUnparse_Info constructor is called
      SgUnparse_Info::set_forceDefaultConstructorToTriggerError(true);
@@ -2019,14 +2070,19 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                          const SgTemplateArgument* templateArgument = isSgTemplateArgument(astNode);
 #if 0
                       // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
-                         printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s \n",returnString.c_str());
+                         printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
+                      // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s \n",returnString.c_str());
 #endif
                       // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
                          ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
                          roseUnparser.u_exprStmt->unparseTemplateArgument(const_cast<SgTemplateArgument*>(templateArgument),inheritedAttributeInfo);
 #if 0
                       // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
-                         printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s \n",returnString.c_str());
+                      // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
+                      // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s \n",returnString.c_str());
+
+                         string local_returnString = outputString.str();
+                         printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): local_returnString = %s \n",local_returnString.c_str());
 #endif
                          break;
                        }

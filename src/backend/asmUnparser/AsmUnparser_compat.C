@@ -54,9 +54,13 @@ std::string unparseMnemonic(SgAsmInstruction *insn) {
 
 /* FIXME: This should be an SgAsmExpression class method */
 std::string unparseExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers) {
-    /* Find the instruction with which this expression is associated. */
+    // Find the instruction with which this expression is associated. If we go through the instruction's p_semantics member to
+    // get there then don't unparse this (it's static semantics, not instruction arguments).
     SgAsmInstruction *insn = NULL;
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {
+        if (node->get_parent()!=NULL && isSgAsmInstruction(node->get_parent()) &&
+            node == isSgAsmInstruction(node->get_parent())->get_semantics())
+            return "";
         insn = isSgAsmInstruction(node);
     }
 

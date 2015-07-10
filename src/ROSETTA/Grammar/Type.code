@@ -4970,6 +4970,13 @@ SgArrayType::get_qualified_name(void) const {
     return SgName(name);
 }
 
+// DQ (6/13/2015): Added forward declaration of namespace function for constant folding.
+namespace ConstantFolding 
+   {
+  // ROSE_DLL_API void constantFoldingOptimization(SgNode* n, bool internalTestingAgainstFrontend = false);
+     ROSE_DLL_API SgValueExp* returnConstantFoldedValueExpression(SgNode* n, bool internalTestingAgainstFrontend = false);
+   }
+
 // RV (1/31/2006): Changed the form of the mangled name to include begin/end tags.
 SgName
 SgArrayType::get_mangled(void) const
@@ -4980,22 +4987,32 @@ SgArrayType::get_mangled(void) const
      ROSE_ASSERT (base_type != NULL);
      SgName base_name = base_type->get_mangled();
 
-  // printf ("In SgArrayType::get_mangled(): mangled base type name = %s \n",base_name.str());
+#define DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING 0
+
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+     printf ("In SgArrayType::get_mangled(): mangled base type name = %s \n",base_name.str());
+#endif
 
      const SgExpression* index_exp = get_index();
      SgName index_name;
      if (index_exp != NULL)
         {
        // DQ (2/12/2011): Now that we support saving the original expression in an array type's size argument 
-       // we want to generate the name from the cconstant folded expression instead of the original expression.
+       // we want to generate the name from the constant folded expression instead of the original expression.
        // index_name = index_exp->unparseToString();
        // printf ("In SgArrayType::get_mangled(): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
        // SgUnsignedLongVal* value = isSgUnsignedLongVal(index_exp);
+
+       // DQ (6/13/2015): Changed from SgUnsignedLongVal to SgValueExp.  Or maybe we need to test for more general case where we handle the contant folding case below.
+       // const SgValueExp* value = isSgUnsignedLongVal(index_exp);
+       // const SgValueExp* value = isSgValueExp(index_exp);
           const SgValueExp* value = isSgUnsignedLongVal(index_exp);
 
        // DQ (2/12/2011): I wonder if we can enforce this...No!
        // ROSE_ASSERT(value != NULL);
-
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+          printf ("In SgArrayType::get_mangled() index_exp = %p = %s value = %p \n",index_exp,index_exp->class_name().c_str(),value);
+#endif
           if (value != NULL)
              {
             // index_name = StringUtility::numberToString(value->get_value());
@@ -5012,6 +5029,9 @@ SgArrayType::get_mangled(void) const
             // might be a more complex array index expressions that could have the same name.
             // index_name = index_exp->unparseToString();
                const SgVarRefExp* varRefExp = isSgVarRefExp(index_exp);
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+               printf ("In SgArrayType::get_mangled() varRefExp = %p \n",varRefExp);
+#endif
                if (varRefExp != NULL)
                   {
                  // index_name = index_exp->unparseToString();
@@ -5048,9 +5068,109 @@ SgArrayType::get_mangled(void) const
                   }
                  else
                   {
-                    index_name = index_exp->unparseToString();
-                  }
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                    printf ("In SgArrayType::get_mangled() index_exp = %p = %s \n",index_exp,index_exp->class_name().c_str());
+#endif
 #if 0
+                 // DQ (6/13/2015): Original code causing expressions to be mixed into the mangled names.
+                    index_name = index_exp->unparseToString();
+#else
+                 // DQ (6/13/2015): bugfix to permit constant valued expressions to be evaluated to constants and the constants used in the mangled names.
+                    SgExpression* original_constant_index_exp = get_index();
+                    ROSE_ASSERT(original_constant_index_exp != NULL);
+
+                 // To narrow this further we could constrain the lhs and rhs to be SgInitVal nodes.
+
+#define TEST_CONSTANT_FOLDING_IN_NAME_MANGLING_OF_TYPES 0
+
+#if TEST_CONSTANT_FOLDING_IN_NAME_MANGLING_OF_TYPES
+                 // DQ (6/14/2015): This is test code to evaluate if we want to use the constant folding in the name mangling.
+                 // This appears to cause test2011_117.C to fail (C++ template issue) (also similar test code in test2014_143.C).
+
+                 // if (isSgAddOp(original_constant_index_exp) != NULL && true)
+                    if (true)
+#else
+                 // DQ (6/14/2015): This predicate will turn off this support for constant folding in the name mangling.
+                    if (isSgAddOp(original_constant_index_exp) != NULL && false)
+#endif
+                       {
+                      // This is a narrow case where this should work, but we need more general support.
+
+                      // Build a shadow copy of the expression so that we can do the constant folding without sideffects on the array index expression.
+                      // SgExpression* shadow_expr = SageInterface::deepCopy<SgExpression>(original_constant_index_exp);
+                         SgExpression* shadow_expr = original_constant_index_exp;
+                         ROSE_ASSERT(shadow_expr != NULL);
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                         printf ("   --- BEFORE: shadow_expr = %p = %s \n",shadow_expr,shadow_expr->class_name().c_str());
+                         printf ("   --- BEFORE: shadow_expr->get_parent() = %p \n",shadow_expr->get_parent());
+#endif
+                      // ConstantFolding::constantFoldingOptimization(const_cast<SgExpression*>(index_exp),false);
+                      // ConstantFolding::constantFoldingOptimization(original_constant_index_exp,false);
+                      // ConstantFolding::constantFoldingOptimization(shadow_expr,false);
+
+                      // DQ (6/13/2015): Added support to return the SgValueExp holding the constant folded value.
+                      // Note that constant folding will have to be extended to support more generality before this will work well.
+                         SgExpression* shadow_constant_value_exp = ConstantFolding::returnConstantFoldedValueExpression(shadow_expr,false);
+                      // index_name = "unknown_constant_valued_index";
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                         if (shadow_constant_value_exp != NULL)
+                            {
+                              printf ("   --- AFTER: shadow_constant_value_exp->get_parent() = %p \n",shadow_constant_value_exp->get_parent());
+                            }
+#endif
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                         printf ("   --- AFTER: shadow_expr = %p = %s \n",shadow_expr,shadow_expr->class_name().c_str());
+                         printf ("   --- AFTER: shadow_constant_value_exp = %p = %s \n",shadow_constant_value_exp,shadow_constant_value_exp != NULL ? shadow_constant_value_exp->class_name().c_str() : "null");
+#endif
+                      // SgExpression* shadow_constant_value_exp = shadow_expr;
+                         SgValueExp* shadow_constant_value = isSgValueExp(shadow_constant_value_exp);
+                      // ROSE_ASSERT(shadow_constant_value != NULL);
+                      // index_name = shadow_constant_value->get_constant_folded_value_as_string().c_str();
+                         if (shadow_constant_value != NULL)
+                            {
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                              printf ("Generate string from shadow_constant_value->get_constant_folded_value_as_string() \n");
+#endif
+                              index_name = shadow_constant_value->get_constant_folded_value_as_string().c_str();
+                            }
+                           else
+                            {
+                           // This may be the case where ConstantFolding::returnConstantFoldedValueExpression() returned a NULL pointer.
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                              printf ("Using backup plan #1: index_exp->unparseToString() \n");
+#endif
+                              index_name = index_exp->unparseToString();
+                            }
+
+                      // Remove node used to hold the constant value expression.
+                         delete shadow_constant_value_exp;
+                         shadow_constant_value_exp = NULL;
+                         shadow_constant_value = NULL;
+
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                         SgExpression* constant_value_index_exp = get_index();
+                         printf ("constant_value_index_exp = %p = %s \n",constant_value_index_exp,constant_value_index_exp->class_name().c_str());
+#endif
+                      // SgValueExp* constant_value = isSgValueExp(constant_value_index_exp);
+                      // Now this should not be a constant value (since we now support in remaining the original expression).
+                      // ROSE_ASSERT(constant_value != NULL);
+                      // ROSE_ASSERT(constant_value == NULL);
+                      // index_name = constant_value->get_constant_folded_value_as_string().c_str();
+#endif
+                       }
+                      else
+                       {
+                      // DQ (6/13/2015): Original code causing expressions to be mixed into the mangled names.
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                         printf ("Using backup plan #2: index_exp->unparseToString() \n");
+#endif
+                         index_name = index_exp->unparseToString();
+                       }
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                    printf ("In SgArrayType::get_mangled(): after constant folding: index_name = %s \n",index_name.str());
+#endif
+                  }
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
                printf ("In SgArrayType::get_mangled(): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
 #endif
              }
