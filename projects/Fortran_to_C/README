@@ -25,6 +25,11 @@ Fortran_to_C source.F -rose:C_output_language
 Be sure to add -rose:C_output_language.  This will force ROSE to use C as output language.
 The output file has prefix name "rose_f2c_".
 
+Options:
+  -f2c:linearize  Linearize multidimensional arrays
+  -f2c:sentinel   Convert sentinel comments (starting in column 1 with !$ or c$ or *$)
+                  into pragmas.  E.g., !$omp parallel --> #pragma omp parallel
+
 
 ------------------------------------------------------------------------------------------
 Feasible capabilities:

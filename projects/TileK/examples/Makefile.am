@@ -3,50 +3,50 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 #########################################
 
-all-local: foo foo-tilek
-
-check-local: check-foo check-foo-tilek
-
-clean-local:
-	rm -rf foo foo-tilek *.o
-
 TILEK_INC=$(srcdir)/../include
 TILEK_LIB=$(builddir)/../lib/tilek
+
+all-local: example_1 example_1-tilek
+
+check-local: check-example_1 check-example_1-tilek
+
+clean-local:
+	rm -rf example_1 example_1-tilek *.o
 
 #########################################
 
 # Main
 
-main-foo.o: $(srcdir)/main-foo.c
-	gcc -g -O0 -c $(srcdir)/main-foo.c -o main-foo.o
+main-example_1.o: $(srcdir)/main-example_1.c
+	gcc -g -O0 -c $(srcdir)/main-example_1.c -o main-example_1.o
 
 # Original
 
-foo.o: $(srcdir)/foo.c
-	gcc -g -O0 -I$(TILEK_INC) -c $(srcdir)/foo.c -o foo.o
+example_1.o: $(srcdir)/example_1.c
+	gcc -g -O0 -I$(TILEK_INC) -c $(srcdir)/example_1.c -o example_1.o
 
-foo: foo.o main-foo.o
-	gcc foo.o main-foo.o -o foo
+example_1: example_1.o main-example_1.o
+	gcc example_1.o main-example_1.o -o example_1
 
-check-foo: foo
-	./foo
+check-example_1: example_1
+	./example_1
 
 # TileK
 
-foo-tilek.o: $(srcdir)/rose_foo.c
-	gcc -g -O0 -I$(TILEK_INC) -c $(srcdir)/rose_foo.c -o foo-tilek.o
+example_1-tilek.o: $(srcdir)/rose_example_1.c
+	gcc -g -O0 -I$(TILEK_INC) -c $(srcdir)/rose_example_1.c -o example_1-tilek.o
 
-foo-data.o: $(srcdir)/foo-data.c
-	gcc -g -O0 -I$(TILEK_INC) -c $(srcdir)/foo-data.c -o foo-data.o
+example_1-data.o: $(srcdir)/example_1-data.c
+	gcc -g -O0 -I$(TILEK_INC) -c $(srcdir)/example_1-data.c -o example_1-data.o
 
-foo-kernel.o: $(srcdir)/foo-kernel.c
-	gcc -g -O0 -I$(TILEK_INC) -c $(srcdir)/foo-kernel.c -o foo-kernel.o
+example_1-kernel.o: $(srcdir)/example_1-kernel.c
+	gcc -g -O0 -I$(TILEK_INC) -c $(srcdir)/example_1-kernel.c -o example_1-kernel.o
 
-foo-tilek: foo-tilek.o foo-data.o foo-kernel.o $(TILEK_LIB)/libTileK.la main-foo.o
-	libtool --mode=link gcc foo-tilek.o foo-data.o foo-kernel.o $(TILEK_LIB)/libTileK.la main-foo.o -o foo-tilek
+example_1-tilek: example_1-tilek.o example_1-data.o example_1-kernel.o $(TILEK_LIB)/libTileK.la main-example_1.o
+	libtool --mode=link gcc main-example_1.o example_1-tilek.o example_1-data.o example_1-kernel.o $(TILEK_LIB)/libTileK.la -o example_1-tilek
 
-check-foo-tilek: foo-tilek
-	./foo-tilek
+check-example_1-tilek: example_1-tilek
+	./example_1-tilek
 
 # Libraries
 

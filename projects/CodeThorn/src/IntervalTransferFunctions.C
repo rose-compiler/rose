@@ -40,7 +40,6 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
   IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&pstate);
   ROSE_ASSERT(ips);
   //ROSE_ASSERT(_variableIdMapping); TODO
-  // TODO: update pstate with interval from comparision
   // temporary: handle only special case of var and constant
   if(isSgExprStatement(condStmt)) {
     // TODO
@@ -62,6 +61,7 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
         num.setLow(val);
         num.setHigh(val);
 #endif
+        // TODO: check whether case value is in the allowed range, otherwise filter.
         ips->setVariable(varId,num);
       }
       //cout<<"DONE."<<endl;

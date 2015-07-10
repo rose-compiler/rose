@@ -53,7 +53,7 @@ class DataFlow {
 
     void markSplittedData(
       const context_t & context
-    ) const;
+    ) const {}
 
     void generateFlowSets(
       const std::list<Kernel<Annotation, Language, Runtime> *> & kernels,

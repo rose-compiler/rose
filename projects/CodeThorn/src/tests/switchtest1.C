@@ -16,5 +16,5 @@ int main() {
   case 0xB0:
     r=5;
   }
-  return 0;
+  return !(r==r);
 }

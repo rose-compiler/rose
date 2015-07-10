@@ -3,13 +3,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 #########################################
 
-check-local: rose_foo.c rose_bar.c rose_test_1.c
-
-clean-local:
-	rm -f rose_*.c *-kernel.c *.o compiler
-
-#########################################
-
 bin_PROGRAMS=tilek
 
 tilek_SOURCES= \
@@ -33,19 +26,11 @@ tilek_LDADD= \
   -lDLX-core -lMFB-sage -lMDCG -lKLT -lKLT-core \
   $(builddir)/../lib/dlx/tilek/libDLX-TileK.la \
   $(builddir)/../lib/klt/tilek/libKLT-TileK.la \
+  $(builddir)/../lib/klt/runtime/libKLT-runtime-TileK.la \
+  $(builddir)/../lib/klt/language/libKLT-language-none.la \
+  $(builddir)/../lib/mfb/klt/libMFB-KLT-TileK.la \
   $(builddir)/../lib/mdcg/tilek/libMDCG-TileK.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-
-#########################################
-
-rose_foo.c: $(srcdir)/../examples/foo.c $(builddir)/tilek
-	./tilek -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(srcdir)/../include -c $(srcdir)/../examples/foo.c
-
-rose_bar.c: $(srcdir)/../examples/bar.c $(builddir)/tilek
-	./tilek -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(srcdir)/../include -c $(srcdir)/../examples/bar.c
-
-rose_test_1.c: $(srcdir)/../examples/test_1.c $(builddir)/tilek
-	./tilek -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(srcdir)/../include -c $(srcdir)/../examples/test_1.c
 
 #########################################
 
@@ -54,6 +39,15 @@ $(builddir)/../lib/dlx/tilek/libDLX-TileK.la:
 
 $(builddir)/../lib/klt/tilek/libKLT-TileK.la:
 	make -C $(builddir)/../lib/klt/tilek libKLT-TileK.la
+
+$(builddir)/../lib/klt/runtime/libKLT-runtime-TileK.la:
+	make -C $(builddir)/../lib/klt/runtime libKLT-runtime-TileK.la
+
+$(builddir)/../lib/klt/language/libKLT-language-none.la:
+	make -C $(builddir)/../lib/klt/language libKLT-language-none.la
+
+$(builddir)/../lib/mfb/klt/libMFB-KLT-TileK.la:
+	make -C $(builddir)/../lib/mfb/klt libMFB-KLT-TileK.la
 
 #########################################
 
