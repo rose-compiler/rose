@@ -1512,6 +1512,9 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         }
       }
       return estateList;
+    } else if(isSgCompoundAssignOp(nextNodeToAnalyze2)) {
+      cerr<<"Error: compound assignment operators not supported yet."<<endl;
+      exit(1);
     }
   }
   // nothing to analyze, just create new estate (from same State) with target label of edge
