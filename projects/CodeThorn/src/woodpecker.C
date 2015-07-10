@@ -269,6 +269,7 @@ int main(int argc, char* argv[]) {
 
   if(csvConstResultFileName) {
     VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&variableIdMapping);
+    cout<<"INFO: number of used vars inside functions: "<<setOfUsedVars.size()<<endl;
     fiConstAnalysis.filterVariables(setOfUsedVars);
     fiConstAnalysis.writeCvsConstResult(variableIdMapping, string(csvConstResultFileName));
   }
