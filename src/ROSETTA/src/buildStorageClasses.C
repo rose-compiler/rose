@@ -892,6 +892,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmElfSectionTableEntry::SectionFlags") ||
                  ( varTypeString == "SgOpenclAccessModeModifier::access_mode_modifier_enum") ||
                  ( varTypeString == "SgAsmFunction::MayReturn") ||
+                 ( varTypeString == "SgAsmRiscOperation::RiscOperator") ||
               // DQ (11/26/2013): Added to support use of enums from SgToken class.
                  ( varTypeString == "SgToken::ROSE_Fortran_Operators" ) ||
                  ( varTypeString == "SgToken::ROSE_Fortran_Keywords" ) ||

@@ -1131,6 +1131,18 @@ test_common_configure_test_with_link_part_3.passed: $(TEST_TRANSLATOR)
 testOption:
 	$(TEST_TRANSLATOR) -rose:verbose 0 -nostdinc -c $(srcdir)/test2015_08.C
 
+TEST_TEMPLATE_TRANSLATOR = ../../testTemplates
+
+
+# This test translator will work for test2015_32.C - test2015_36.C
+# I will make this in the a better organized set of tests later.
+testTemplateExample: $(TEST_TEMPLATE_TRANSLATOR)
+	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_32.C
+	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_33.C
+	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_34.C
+	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_35.C
+	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_36.C
+
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
 
@@ -1139,6 +1151,9 @@ $(TEST_TRANSLATOR):
 
 ../../testTranslatorUnfoldedConstants:
 	cd ../..; $(MAKE) testTranslatorUnfoldedConstants
+
+$(TEST_TEMPLATE_TRANSLATOR):
+	cd ../..; $(MAKE) testTemplates
 
 
 CURRENT_DIRECTORY = `pwd`
@@ -1230,6 +1245,7 @@ check-local: $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
 	@$(MAKE) test_common_configure_test_with_link_part_2.passed
 #	DQ (9/22/2013): I think this failes on later versions of GNU (e.g. gnu 4.4.5).
 #	@$(MAKE) test_common_configure_test_with_link_part_3
+	@$(MAKE) testTemplateExample
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"

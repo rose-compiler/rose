@@ -2,7 +2,6 @@
 #define _FORTRANTOC_H
 
 #include "rose.h"
-#include <map>
 #include "sageBuilder.h"
 
 /*
@@ -60,7 +59,7 @@ namespace Fortran_to_C
     void updateVariableDeclarationList(SgVariableDeclaration*);
     void translateAttributeSpecificationStatement(SgAttributeSpecificationStatement*);
     void translateCommonBlock(SgCommonBlock*);
-    void translateFunctionParameterList(SgFunctionParameterList*, SgFunctionParameterList*, SgFunctionDefinition*);
+    void translateFunctionParameterList(SgFunctionParameterList*, SgFunctionParameterList*, SgFunctionDefinition*, std::vector<SgInitializedName*> &scalarList);
     void translateEquivalenceStatement(SgEquivalenceStatement*);
     void translateFortranDoLoop(SgFortranDo*);
     void fixFortranSymbolTable(SgNode*, bool);
@@ -76,12 +75,16 @@ namespace Fortran_to_C
     void translateDoubleVal(SgFloatVal*);
     void insertSystemHeader(const std::string&,SgScopeStatement*);
     bool convertMathFunctionName(SgName, SgName*, SgType*);
+    bool convertConvertFunctionName(SgName, SgName*, SgType*);
     bool isMaxMinFunctionName(SgName, SgType*);
     void removeFortranMaxMinFunction(SgGlobal*);
+    bool isFuncArg(SgFunctionParameterList* argList, SgVariableDeclaration* varDecl);
+    void replaceScalarArgs(std::vector<SgInitializedName*> & list, SgNode* root);
 
     SgType* translateType(SgType*);
 
     SgExpression* getFortranDimensionSize(SgExpression*);
+    SgExpression* foldBinaryOp(SgExpression*);
     SgExpression* get0basedIndex(SgExpression*, SgExpression*);
 }
 
