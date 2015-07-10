@@ -1099,6 +1099,14 @@ depending on whether the loop is to be taken again, or not.\n");
         return retval;
     }
 
+    /** See NullSemantics::Policy::unspecified_() */
+    template <size_t Len>
+    ValueType<Len> unspecified_() const {
+        ValueType<Len> retval;
+        retval.defined_by(cur_insn);
+        return retval;
+    }
+
     /** See NullSemantics::Policy::number() */
     template <size_t Len>
     ValueType<Len> number(uint64_t n) const {

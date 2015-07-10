@@ -118,6 +118,9 @@ public:
      *  for each subdomain value in "this".  If you want a multidomain value that has no valid subvalues, then use
      *  the create_empty() method instead. */
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const ROSE_OVERRIDE {
+      undefined_(nbits);
+    }
 
     /** Create a MultiSemantics value holding a concrete value.  The returned value is constructed by calling the virtual
      *  number_() method for each subdomain value in "this". */

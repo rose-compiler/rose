@@ -580,6 +580,12 @@ namespace PartialSymbolicSemantics {
             return ValueType<Len>();
         }
 
+        /** See NullSemantics::Policy::unspecified_() */
+        template <size_t Len>
+        ValueType<Len> unspecified_() const {
+            return ValueType<Len>();
+        }
+
         /** See NullSemantics::Policy::number() */
         template <size_t Len>
         ValueType<Len> number(uint64_t n) const {
@@ -705,7 +711,7 @@ namespace PartialSymbolicSemantics {
         /** See NullSemantics::Policy::equalToZero() */
         template <size_t Len>
         ValueType<1> equalToZero(const ValueType<Len> &a) const {
-            if (a.name) return undefined_<1>();
+            if (a.name) return unspecified_<1>();
             return a.offset ? false_() : true_();
         }
 
