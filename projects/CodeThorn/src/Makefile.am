@@ -19,9 +19,6 @@ MYDATE = $(shell date +%Y_%m_%d)
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_builddir) -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include
 
-# in V1.2 there are no KNOBS
-KNOBS = 
-
 # this line create speparately named object files
 codethorn_CXXFLAGS = $(KNOBS) -fopenmp -Wall -O3 -march=native -ftree-vectorize
 
@@ -650,9 +647,6 @@ CODETHORN_TESTS= \
     tests/gototest3.C \
     tests/switchtest1.C \
     tests/switchtest2.C \
-    tests/switchtest3.C
-
-# MS: does not exist
-#    tests/test.ltl \
-# xxtest.C # MS: intentionally here as comment
+    tests/switchtest3.C \
+    examples/example-invocations.sh 
 

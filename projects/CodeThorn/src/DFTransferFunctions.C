@@ -129,7 +129,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     return;
   }
 
-#if 1
+#if 0
   /*
      ensure there is no fall through as this would mean that not the correct transferfunction is invoked.
   */

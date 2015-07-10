@@ -56,8 +56,52 @@ void RewriteSystem::resetStatistics() {
   dump1_stats.reset();
 }
 
-void RewriteSystem::rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapping) {
+void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapping* variableIdMapping) {
+  RoseAst ast(root);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(*i)) {
+      SgExpression* newRoot=isSgExpression(buildRewriteCompoundAssignment(*i,variableIdMapping));
+      ROSE_ASSERT(newRoot);
+      SgNodeHelper::replaceExpression(compoundAssignOp,newRoot);
+    }
+  }
+}
 
+SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMapping* variableIdMapping) {
+  // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
+  if(isSgCompoundAssignOp(root)) {
+    dump1_stats.numElimAssignOperator++;
+    SgExpression* lhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
+    SgExpression* lhsCopy2=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
+    SgExpression* rhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getRhs(root)));
+    SgExpression* newExp;
+    //TODO: check whether build functions set parent pointers
+    switch(root->variantT()) {
+    case V_SgPlusAssignOp:
+      newExp=SageBuilder::buildAddOp(lhsCopy,rhsCopy);
+      return SageBuilder::buildAssignOp(lhsCopy2,newExp);
+    case V_SgDivAssignOp:
+      newExp=SageBuilder::buildDivideOp(lhsCopy,rhsCopy);
+      return SageBuilder::buildAssignOp(lhsCopy2,newExp);
+    case V_SgMinusAssignOp:
+      newExp=SageBuilder::buildSubtractOp(lhsCopy,rhsCopy);
+      return SageBuilder::buildAssignOp(lhsCopy2,newExp);
+    case V_SgMultAssignOp:
+      newExp=SageBuilder::buildMultiplyOp(lhsCopy,rhsCopy);
+      return SageBuilder::buildAssignOp(lhsCopy2,newExp);
+    default: /* ignore all other cases - all other expr remain unmodified */
+      return 0;
+    }
+  }
+  return 0;
+}
+
+void RewriteSystem::rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapping) {
+#if 0
+  SgNode* root2=*(&root);
+  root=buildRewriteCompoundAssignment(root2,variableIdMapping);
+  return;
+#else
   // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
   if(isSgCompoundAssignOp(root)) {
     dump1_stats.numElimAssignOperator++;
@@ -87,6 +131,9 @@ void RewriteSystem::rewriteCompoundAssignments(SgNode*& root, VariableIdMapping*
       ;
     }
   }
+  //  if(n>0)
+  //  cout<<"REWRITE:"<<root->unparseToString()<<endl;
+#endif
 }
 
  

@@ -1503,17 +1503,18 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               exit(1);
             }
           } else {
-            cerr << "Warning: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
+            cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
             cerr << "expr: "<< lhs->unparseToString()<<endl;
             cerr << "type: "<<lhs->class_name()<<endl;
-            cerr << "performing no update of state!"<<endl;
-            //exit(1);
+            //cerr << "performing no update of state!"<<endl;
+            exit(1);
           }
         }
       }
       return estateList;
     } else if(isSgCompoundAssignOp(nextNodeToAnalyze2)) {
-      cerr<<"Error: compound assignment operators not supported yet."<<endl;
+      cerr<<"Error: compound assignment operators not supported. Use normalization to eliminate these operators."<<endl;
+      cerr<<"expr: "<<nextNodeToAnalyze2->unparseToString()<<endl;
       exit(1);
     }
   }
