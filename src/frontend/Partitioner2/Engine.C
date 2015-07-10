@@ -851,8 +851,8 @@ Engine::runPartitionerRecursive(Partitioner &partitioner) {
     if (settings_.partitioner.findingIntraFunctionData)
         attachSurroundedDataToFunctions(partitioner);
 
-    // Perform a final pass over all functions and issue reports about strange CFG
-    attachBlocksToFunctions(partitioner, true /*report*/);
+    // Another pass to attach blocks to functions
+    attachBlocksToFunctions(partitioner);
 }
 
 void
@@ -864,11 +864,15 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
         ModulesX86::splitThunkFunctions(partitioner);
         discoverBasicBlocks(partitioner);
     }
+
+    // Perform a final pass over all functions and issue reports about strange CFG
+    attachBlocksToFunctions(partitioner, true /*report*/);
+
     if (interp_)
         ModulesPe::nameImportThunks(partitioner, interp_);
     Modules::nameConstants(partitioner);
     Modules::nameStrings(partitioner);
-    //partitioner.fixInterFunctionEdges();
+
 }
 
 void
