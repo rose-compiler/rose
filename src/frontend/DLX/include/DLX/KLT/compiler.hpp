@@ -41,13 +41,13 @@ void compile(SgProject * project, const std::string & include_path, const std::s
 
     ::DLX::Frontend::Frontend<Language_in> frontend;
 
-    ::MFB::KLT_Driver driver(project);
+    ::MFB::Driver< ::MFB::KLT> driver(project);
 
     ::MDCG::ModelBuilder model_builder(driver);
 
     unsigned model = Runtime::loadAPI(model_builder, include_path);
 
-    ::KLT::Generator<Annotation, Language_out, Runtime, MFB::KLT_Driver> generator(driver, kernel_file);
+    ::KLT::Generator<Annotation, Language_out, Runtime, ::MFB::Driver< ::MFB::KLT> > generator(driver, kernel_file);
     ::KLT::CG_Config<Annotation, Language_out, Runtime> cg_config;
 
   // Initialize language description

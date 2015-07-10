@@ -1,4 +1,6 @@
 
+#include <stdlib.h>
+
 float ** create_array(int n, int m) {
   float ** a = malloc(n * sizeof(float *));
   float * a_ = malloc(n * m * sizeof(float));

@@ -592,6 +592,10 @@ typename LoopTrees<Annotation>::node_t * LoopTrees<Annotation>::build(
       std::vector<SgVarRefExp *>::const_iterator it_var_ref;
       for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
         SgVariableSymbol * sym = (*it_var_ref)->get_symbol();
+        assert(sym->get_declaration() != NULL);
+        assert(sym->get_declaration()->get_parent() != NULL);
+        assert(sym->get_declaration()->get_parent()->get_parent() != NULL);
+        if (isSgClassDefinition(sym->get_declaration()->get_parent()->get_parent())) continue;
         if (std::find(iterators.begin(), iterators.end(), sym) == iterators.end() && std::find(locals.begin(), locals.end(), sym) == locals.end())
           others.push_back(sym); 
       }
@@ -613,6 +617,10 @@ typename LoopTrees<Annotation>::node_t * LoopTrees<Annotation>::build(
       std::vector<SgVarRefExp *>::const_iterator it_var_ref;
       for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
         SgVariableSymbol * sym = (*it_var_ref)->get_symbol();
+        assert(sym->get_declaration() != NULL);
+        assert(sym->get_declaration()->get_parent() != NULL);
+        assert(sym->get_declaration()->get_parent()->get_parent() != NULL);
+        if (isSgClassDefinition(sym->get_declaration()->get_parent()->get_parent())) continue;
         if (std::find(iterators.begin(), iterators.end(), sym) == iterators.end() && std::find(locals.begin(), locals.end(), sym) == locals.end())
           others.push_back(sym); 
       }
@@ -637,6 +645,10 @@ typename LoopTrees<Annotation>::node_t * LoopTrees<Annotation>::build(
       std::vector<SgVarRefExp *>::const_iterator it_var_ref;
       for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
         SgVariableSymbol * sym = (*it_var_ref)->get_symbol();
+        assert(sym->get_declaration() != NULL);
+        assert(sym->get_declaration()->get_parent() != NULL);
+        assert(sym->get_declaration()->get_parent()->get_parent() != NULL);
+        if (isSgClassDefinition(sym->get_declaration()->get_parent()->get_parent())) continue;
         if (std::find(iterators.begin(), iterators.end(), sym) == iterators.end() && std::find(locals.begin(), locals.end(), sym) == locals.end())
           others.push_back(sym); 
       }
