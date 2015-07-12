@@ -18,6 +18,12 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   SgNode* node=_labeler->getNode(lab);
   //cout<<"Analyzing:"<<node->class_name()<<endl;
   //cout<<"DEBUG: transfer: @"<<lab<<": "<<node->class_name()<<":"<<node->unparseToString()<<endl;
+
+  if(element.isBot()) {
+    // transfer function applied to the bottom element is the bottom element (non-reachable state)
+    // the extremal value must be different to the bottom element. 
+    return;
+  }
   if(_labeler->isFunctionCallLabel(lab)) {
     if(isSgExprStatement(node)) {
       node=SgNodeHelper::getExprStmtChild(node);

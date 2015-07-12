@@ -60,8 +60,13 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
         int val=sgIntVal->get_value();
         num.setLow(val);
         num.setHigh(val);
+        NumberIntervalLattice knownValueIntervalOfSwitchVar=ips->getVariable(varId);
+	if(!NumberIntervalLattice::haveOverlap(knownValueIntervalOfSwitchVar,num)) {
+	  //cout<<"INFO: state detected non-reachable."<<endl;
+	  ips->setBot();
+	  return;
+	}
 #endif
-        // TODO: check whether case value is in the allowed range, otherwise filter.
         ips->setVariable(varId,num);
       }
       //cout<<"DONE."<<endl;
