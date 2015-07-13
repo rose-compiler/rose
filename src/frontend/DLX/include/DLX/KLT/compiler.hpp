@@ -12,7 +12,6 @@
 #include "KLT/Core/loop-tiler.hpp"
 #include "KLT/Core/loop-mapper.hpp"
 #include "KLT/Core/data-flow.hpp"
-#include "KLT/Core/cg-config.hpp"
 #include "KLT/Core/generator.hpp"
 #include "KLT/Core/kernel.hpp"
 #include "KLT/Core/mfb-klt.hpp"
@@ -47,9 +46,6 @@ void compile(SgProject * project, const std::string & include_path, const std::s
 
     unsigned model = Runtime::loadAPI(model_builder, include_path);
 
-    ::KLT::Generator<Annotation, Language_out, Runtime, ::MFB::Driver< ::MFB::KLT> > generator(driver, kernel_file);
-    ::KLT::CG_Config<Annotation, Language_out, Runtime> cg_config;
-
   // Initialize language description
 
     Language_in::init();
@@ -69,6 +65,11 @@ void compile(SgProject * project, const std::string & include_path, const std::s
 
   // Generate Kernels
 
+    ::KLT::Generator<Annotation, Language_out, Runtime, ::MFB::Driver< ::MFB::KLT> > generator(driver, kernel_file);
+    ::KLT::LoopMapper<Annotation, Language_out, Runtime> loop_mapper;
+    ::KLT::LoopTiler<Annotation, Language_out, Runtime> loop_tiler;
+    ::KLT::DataFlow<Annotation, Language_out, Runtime> data_flow;
+
     std::vector<Kernel *> all_kernels;
     std::map<directive_t *, Kernel *> kernel_map;
 
@@ -76,7 +77,7 @@ void compile(SgProject * project, const std::string & include_path, const std::s
     for (it_loop_tree = loop_trees.begin(); it_loop_tree != loop_trees.end(); it_loop_tree++) {
       // Generate Kernels
       std::set<std::list<Kernel *> > kernel_lists;
-      generator.generate(*(it_loop_tree->second), kernel_lists, cg_config);
+      generator.generate(*(it_loop_tree->second), kernel_lists, loop_mapper, loop_tiler, data_flow);
 
       // Assume only one implementation of the kernel made of one kernel
       assert(kernel_lists.size() == 1);

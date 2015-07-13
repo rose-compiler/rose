@@ -74,20 +74,12 @@ class LoopTrees {
       block_t * block;
 
       loop_t(
-        size_t id_,
-        SgVariableSymbol * it = NULL,
-        SgExpression * lb = NULL,
-        SgExpression * ub = NULL,
-        SgExpression * stride_ = NULL
+        size_t id_, SgVariableSymbol * it = NULL,
+        SgExpression * lb = NULL, SgExpression * ub = NULL, SgExpression * stride_ = NULL
       ) :
-        node_t(),
-        id(id_),
-        iterator(it),
-        lower_bound(lb),
-        upper_bound(ub),
-        stride(stride_),
-        annotations(),
-        block(NULL)
+        node_t(), id(id_), iterator(it),
+        lower_bound(lb), upper_bound(ub), stride(stride_),
+        annotations(), block(NULL)
       {}
       virtual ~loop_t() {}
 
@@ -108,7 +100,7 @@ class LoopTrees {
       tile_t(
         size_t id_, size_t order_, SgVariableSymbol * iterator_sym_, loop_t * loop_
       ) :
-        id(id_), order(order_), node_t(), loop(loop_),
+        node_t(), id(id_), order(order_), loop(loop_),
         tile(NULL), block(NULL), iterator_sym(iterator_sym_)
       {}
 

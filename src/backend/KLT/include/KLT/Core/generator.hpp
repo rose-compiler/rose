@@ -30,8 +30,6 @@ template <class Annotation, class Language, class Runtime> class DataFlow;
 
 template <class Annotation, class Language, class Runtime> class IterationMap;
 
-template <class Annotation, class Language, class Runtime> class CG_Config;
-
 /*!
  * \addtogroup grp_klt_codegen
  * @{
@@ -61,7 +59,9 @@ class Generator {
     void generate(
       const LoopTrees<Annotation> & loop_trees,
       std::set<std::list<Kernel<Annotation, Language, Runtime> *> > & kernel_lists,
-      const CG_Config<Annotation, Language, Runtime> & cg_config
+      LoopMapper<Annotation, Language, Runtime> & loop_mapper,
+      LoopTiler<Annotation, Language, Runtime> & loop_tiler,
+      DataFlow<Annotation, Language, Runtime> & data_flow
     );
 };
 
@@ -201,7 +201,9 @@ template <class Annotation, class Language, class Runtime, class Driver>
 void Generator<Annotation, Language, Runtime, Driver>::generate(
   const LoopTrees<Annotation> & loop_trees,
   std::set<std::list<Kernel<Annotation, Language, Runtime> *> > & kernel_lists,
-  const CG_Config<Annotation, Language, Runtime> & cg_config
+  LoopMapper<Annotation, Language, Runtime> & loop_mapper,
+  LoopTiler<Annotation, Language, Runtime> & loop_tiler,
+  DataFlow<Annotation, Language, Runtime> & data_flow
 ) {
   typedef typename LoopTrees<Annotation>::loop_t loop_t;
   typedef typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t loop_tiling_t;
@@ -215,17 +217,17 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
 
   // 0 - init data flow
 
-  cg_config.getDataFlow().createContextFromLoopTree(loop_trees, df_ctx);
-  cg_config.getDataFlow().markSplittedData(df_ctx);
+  data_flow.createContextFromLoopTree(loop_trees, df_ctx);
+  data_flow.markSplittedData(df_ctx);
 
   // 1 - Loop Selection : Generate multiple list of kernel that implement the given LoopTree
 
-  cg_config.getLoopMapper().createKernels(loop_trees, kernel_lists);
+  loop_mapper.createKernels(loop_trees, kernel_lists);
 
   // 2 - Data Flow : performs data-flow analysis for each list of kernel
 
   for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++)
-    cg_config.getDataFlow().generateFlowSets(*it_kernel_list, df_ctx);
+    data_flow.generateFlowSets(*it_kernel_list, df_ctx);
 
   // 3 - Arguments : determines the list of arguments needed by each kernel
 
@@ -241,7 +243,7 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
 
       std::map<loop_t *, std::vector<loop_tiling_t *> > tiling_map;
 
-      cg_config.getLoopTiler().determineTiles(*it_kernel, tiling_map);
+      loop_tiler.determineTiles(*it_kernel, tiling_map);
 
       std::set<std::map<loop_t *, loop_tiling_t *> > loop_tiling_set;
       buildAllTileConfigs<Annotation, Language, Runtime>(
