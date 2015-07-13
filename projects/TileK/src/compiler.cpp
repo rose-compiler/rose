@@ -13,7 +13,7 @@
 #include <cassert>
 
 int main(int argc, char ** argv) {
-  SgProject * project = new SgProject::SgProject(argc, argv);
+  SgProject * project = new SgProject(argc, argv);
   assert(project->numberOfFiles() == 1);
 
   SgSourceFile * source_file = isSgSourceFile(project->get_fileList()[0]);
