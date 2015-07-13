@@ -26,12 +26,9 @@ SgExpression * TileDesc::createFieldInitializer(
     case 1:
     { // enum tile_kind_e { e_tile_static, e_tile_dynamic } kind;
       switch (input->kind) {
-        case Runtime::e_static_tile:
-          return SageBuilder::buildIntVal(0);
-        case Runtime::e_dynamic_tile:
-          return SageBuilder::buildIntVal(1);
-        default:
-          assert(false);
+        case Runtime::e_static_tile:  return SageBuilder::buildIntVal(0);
+        case Runtime::e_dynamic_tile: return SageBuilder::buildIntVal(1);
+        default: assert(false);
       }
     }
     case 2:
@@ -58,22 +55,10 @@ SgExpression * LoopDesc::createFieldInitializer(
       /// size_t num_tiles;
       return SageBuilder::buildIntVal(input->tiles.size());
     case 2:
-    {
-      /// struct acc_tile_desc_t_ * tiles;
-      std::ostringstream decl_name;
-        decl_name << "tile_" << &input;
-      MDCG::Model::type_t type = element->node->type;
-      assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
-      type = type->node->base_type;
-      assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
-      return static_initializer.createArrayPointer<TileDesc>(
-               type->node->base_class,
-               input->tiles.size(),
-               input->tiles.begin(),
-               input->tiles.end(),
-               file_id,
-               decl_name.str()
-             );
+    { /// struct tile_desc_t * tile_desc;
+      std::ostringstream decl_name; decl_name << "tile_" << &input;
+      MDCG::Model::class_t field_class = StaticInitializer::getBaseClassForPointerOnClass(element, "tile_desc", "tile_desc_t");
+      return static_initializer.createArrayPointer<TileDesc>(field_class, input->tiles.size(), input->tiles.begin(), input->tiles.end(), file_id, decl_name.str());
     }
     default:
       assert(false);
@@ -114,34 +99,18 @@ SgExpression * KernelDesc::createFieldInitializer(
     }
     case 5:
     { // struct loop_desc_t * loop_desc;
-      std::ostringstream decl_name;
-        decl_name << "loop_" << kernel;
-      MDCG::Model::type_t type = element->node->type;
-      assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_pointer_type);
-      type = type->node->base_type;
-      assert(type != NULL && type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
-      return static_initializer.createArrayPointer<LoopDesc>(
-               type->node->base_class,
-               kernel->loops.size(),
-               kernel->loops.begin(),
-               kernel->loops.end(),
-               file_id,
-               decl_name.str()
-             );
+      std::ostringstream decl_name; decl_name << "loop_" << kernel;
+      MDCG::Model::class_t field_class = StaticInitializer::getBaseClassForPointerOnClass(element, "loop_desc", "loop_desc_t");
+      return static_initializer.createArrayPointer<LoopDesc>(field_class, kernel->loops.size(), kernel->loops.begin(), kernel->loops.end(), file_id, decl_name.str());
     }
     case 6:
     { // kernel_func_ptr kernel_ptr;
       MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(kernel->kernel_name, Runtime::host_api.kernel_func_ptr_type, NULL, NULL, file_id, false, true);
       MFB::Sage<SgVariableDeclaration>::build_result_t var_decl_res = static_initializer.getDriver().build<SgVariableDeclaration>(var_decl_desc);
-      assert(var_decl_res.symbol != NULL);
-
-      assert(var_decl_res.symbol->get_declaration() != NULL);
-//    var_decl_res.symbol->get_declaration()->get_storageModifier().setExtern();
-      assert(var_decl_res.symbol->get_declaration()->get_parent() != NULL);
 
       SgDeclarationStatement * decl_stmt = isSgDeclarationStatement(var_decl_res.symbol->get_declaration()->get_parent());
-      decl_stmt->get_declarationModifier().unsetDefault();
-      decl_stmt->get_declarationModifier().get_storageModifier().setExtern();
+        decl_stmt->get_declarationModifier().unsetDefault();
+        decl_stmt->get_declarationModifier().get_storageModifier().setExtern();
 
       return SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(var_decl_res.symbol));
     }

@@ -18,7 +18,7 @@ class KLT<tilek_kernel_t> {
     typedef ::KLT::Runtime::TileK Runtime;
 
     typedef ::KLT::LoopTrees< ::DLX::KLT::Annotation< ::DLX::TileK::language_t> > LoopTrees;
-    typedef ::KLT::LoopTiler<DLX::KLT::Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK> LoopTiler;
+    typedef ::KLT::LoopTiler<DLX::KLT::Annotation<DLX::TileK::language_t>, Language, Runtime> LoopTiler;
 
     struct object_desc_t {
       unsigned id;

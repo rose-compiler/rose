@@ -1,3 +1,3 @@
 
-SUBDIRS = docs include lib
+SUBDIRS = include lib
 
