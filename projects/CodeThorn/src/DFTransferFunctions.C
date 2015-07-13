@@ -191,4 +191,33 @@ void DFTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* 
   // default identity function
 }
 
+void DFTransferFunctions::addParameterPassingVariables() {
+  std::stringstream ss;
+  std::string nameprefix="$parameterVar";
+  parameter0VariableId=_variableIdMapping->createUniqueTemporaryVariableId(nameprefix+"0");
+  for(int i=1;i<20;i++) {
+    ss<<nameprefix<<i;
+    string varName=ss.str();
+    _variableIdMapping->createUniqueTemporaryVariableId(varName);
+
+  }
+  resultVariableId=_variableIdMapping->createUniqueTemporaryVariableId("$resultVar");
+}
+
+VariableId DFTransferFunctions::getParameterVariableId(int paramNr) {
+  if(paramNr>=20) {
+    cerr<<"Error: only 20 formal parameters are supported."<<endl;
+    exit(1);
+  }
+  int idCode = parameter0VariableId.getIdCode();
+  int elemIdCode = idCode + paramNr;
+  VariableId elemVarId;
+  elemVarId.setIdCode(elemIdCode);
+  return elemVarId;
+}
+
+VariableId DFTransferFunctions::getResultVariableId() {
+  return resultVariableId;
+}
+
 #endif

@@ -151,6 +151,7 @@ DFAnalysisBase::normalizeProgram(SgProject* root) {
   fn.visit(root);
 }
 
+
 void
 DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/* = false*/) {
   cout << "INIT: Creating VariableIdMapping." << endl;
@@ -210,6 +211,7 @@ void DFAnalysisBase::initializeTransferFunctions() {
     _transferFunctions->setPointerAnalysis(_pointerAnalysisEmptyImplementation);
   else
     _transferFunctions->setPointerAnalysis(_pointerAnalysisInterface);
+  _transferFunctions->addParameterPassingVariables();
 }
 
 void DFAnalysisBase::setPointerAnalysis(PointerAnalysisInterface* pa) {

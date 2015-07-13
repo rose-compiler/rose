@@ -114,8 +114,13 @@ void SPRAY::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariable
  */
 void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element) {
   // uses and defs in argument-expressions
+  int paramNr=0;
+  IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
   for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
+    // TODO: add one variable $paramX for each parameter to the state and bind it to the value of the argument
     transferExpression(lab,*i,element);
+    VariableId paramId=getParameterVariableId(paramNr);
+    ips->addVariable(paramId);
   }
 }
 /*! 
@@ -144,6 +149,8 @@ void SPRAY::IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFuncti
     VariableId formalParameterVarId=_variableIdMapping->variableId(formalParameterName);
     IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
     ips->addVariable(formalParameterVarId);
+
+    // TODO: assign value of paramter variable to formal parameter and remove parameter var from state.
   }
 }
 

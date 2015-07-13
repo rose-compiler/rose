@@ -38,6 +38,14 @@ public:
   SPRAY::VariableIdMapping* _variableIdMapping;
   //Domain* _domain;
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
+
+ public:
+  virtual void addParameterPassingVariables();
+  VariableId getParameterVariableId(int paramNr);
+  VariableId getResultVariableId();
+ private:
+  VariableId parameter0VariableId;
+  VariableId resultVariableId;
 };
 
 }
