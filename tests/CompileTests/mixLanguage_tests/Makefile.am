@@ -33,7 +33,7 @@ else
 endif
 
 clean-local:
-	rm -f *.o rose_* test_*
+	rm -f *.o rose_* $(TESTCODES_Objects)
 
 EXTRA_DIST= $(TESTCODES)
 
