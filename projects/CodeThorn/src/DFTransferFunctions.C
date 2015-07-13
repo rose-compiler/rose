@@ -18,6 +18,12 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   SgNode* node=_labeler->getNode(lab);
   //cout<<"Analyzing:"<<node->class_name()<<endl;
   //cout<<"DEBUG: transfer: @"<<lab<<": "<<node->class_name()<<":"<<node->unparseToString()<<endl;
+
+  if(element.isBot()) {
+    // transfer function applied to the bottom element is the bottom element (non-reachable state)
+    // the extremal value must be different to the bottom element. 
+    return;
+  }
   if(_labeler->isFunctionCallLabel(lab)) {
     if(isSgExprStatement(node)) {
       node=SgNodeHelper::getExprStmtChild(node);
@@ -183,6 +189,35 @@ void DFTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition*
 
 void DFTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element) {
   // default identity function
+}
+
+void DFTransferFunctions::addParameterPassingVariables() {
+  std::stringstream ss;
+  std::string nameprefix="$parameterVar";
+  parameter0VariableId=_variableIdMapping->createUniqueTemporaryVariableId(nameprefix+"0");
+  for(int i=1;i<20;i++) {
+    ss<<nameprefix<<i;
+    string varName=ss.str();
+    _variableIdMapping->createUniqueTemporaryVariableId(varName);
+
+  }
+  resultVariableId=_variableIdMapping->createUniqueTemporaryVariableId("$resultVar");
+}
+
+VariableId DFTransferFunctions::getParameterVariableId(int paramNr) {
+  if(paramNr>=20) {
+    cerr<<"Error: only 20 formal parameters are supported."<<endl;
+    exit(1);
+  }
+  int idCode = parameter0VariableId.getIdCode();
+  int elemIdCode = idCode + paramNr;
+  VariableId elemVarId;
+  elemVarId.setIdCode(elemIdCode);
+  return elemVarId;
+}
+
+VariableId DFTransferFunctions::getResultVariableId() {
+  return resultVariableId;
 }
 
 #endif
