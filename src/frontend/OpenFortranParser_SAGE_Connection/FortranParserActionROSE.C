@@ -176,6 +176,7 @@ void c_action_specification_part(int numUseStmts, int numImportStmts, int numDec
         SgInitializedName* resultName = new SgInitializedName(funcDecl->get_name(), funcDecl->get_type()->get_return_type(), NULL,
                 NULL, NULL);
         funcDecl->set_result_name(resultName);
+        resultName->set_parent(funcDecl);
         resultName->set_scope(astScopeStack.front());
         setSourcePosition(resultName);
         SgVariableSymbol* variableSymbol = new SgVariableSymbol(resultName);
