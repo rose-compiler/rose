@@ -19,15 +19,15 @@ test2_f.f
 TESTCODES_Objects = ${LIST}
 
 $(TESTCODES_Objects): ../../testTranslator
-	../../testTranslator $(srcdir)/$@_c.cpp $(srcdir)/$@_f.f -o $@
+	../../testTranslator -lstdc++ $(srcdir)/$@_c.cpp $(srcdir)/$@_f.f -o $@
 
 check-local:
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	@echo "Tests mix language support with C++ and Fortran"
 	@$(MAKE) $(TESTCODES_Objects)
-	@echo "***********************************************************************************************"
+	@echo "*******************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/mixLanguage_tests: make check rule complete (terminated normally) ******"
-	@echo "***********************************************************************************************"
+	@echo "*******************************************************************************************************"
 else
 	@echo "Rose is configured without Fortran support"
 endif
