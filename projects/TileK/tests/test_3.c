@@ -1,4 +1,6 @@
 
+#include <stdlib.h>
+
 void kernel_0(int n, int m, int t, float *** A, float *** B, float alpha, float beta) {
   int i, j, k;
   #pragma tilek kernel data(A[0:n][0:m][0:t], B[0:n][0:m][0:t])

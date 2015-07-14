@@ -19,22 +19,16 @@ template <class Object>
 class KLT {};
 
 template <>
-class Driver<KLT> {
+class Driver<KLT> : public Driver<Sage> {
   protected:
     bool guard_kernel_decl;
 
   public:
-    Driver(bool guard_kernel_decl_);
+    Driver(SgProject * project_, bool guard_kernel_decl_ = false);
     virtual ~Driver();
 
     template <class Object>
     typename KLT<Object>::build_result_t build(typename KLT<Object>::object_desc_t const & object);
-};
-
-class KLT_Driver : public Driver<Sage>, public Driver<KLT> {
-  public:
-    KLT_Driver(SgProject * project_ = NULL, bool guard_kernel_decl = false);
-    virtual ~KLT_Driver();
 };
 
 template <class Annotation, class Language, class Runtime>
@@ -53,21 +47,6 @@ template <class Annotation>
 bool compareTiles(typename ::KLT::LoopTrees<Annotation>::tile_t * t1, typename ::KLT::LoopTrees<Annotation>::tile_t * t2) {
   return t1->order < t2->order;
 }
-
-/*
-collapseLoopsAndTiles(
-  KLT::LoopTrees<DLX::KLT_Annotation<DLX::FakeACC::language_t> >::node_t* const&,
-  const std::map<
-    KLT::LoopTrees<DLX::KLT_Annotation<DLX::FakeACC::language_t> >::loop_t*,
-    KLT::LoopTiler<
-      DLX::KLT_Annotation<DLX::FakeACC::language_t>,
-      KLT::Language::None, KLT::Runtime::FakeACC
-    >::loop_tiling_t *
-  > &,
-  std::vector<KLT::Runtime::FakeACC::loop_desc_t*> &,
-  std::vector<KLT::Runtime::FakeACC::tile_desc_t*> &
-)
-*/
 
 template <class Annotation, class Language, class Runtime>
 typename ::KLT::LoopTrees<Annotation>::node_t * collapseLoopsAndTiles(
@@ -214,7 +193,8 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
     object.file_id
   );
 
-  Driver<Sage> * sage_driver = dynamic_cast<Driver<Sage> *>(this);
+//Driver<Sage> * sage_driver = dynamic_cast<Driver<Sage> *>(this);
+  Driver<Sage> * sage_driver = (Driver<Sage> *)this;
   assert(sage_driver != NULL);
 
   MFB::Sage<SgFunctionDeclaration>::build_result_t kernel_result = 

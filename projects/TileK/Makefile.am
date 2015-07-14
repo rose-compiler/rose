@@ -1,3 +1,3 @@
 
-SUBDIRS=lib src examples tests
+SUBDIRS=lib src examples tests docs
 

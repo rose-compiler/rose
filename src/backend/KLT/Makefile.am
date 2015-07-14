@@ -1,3 +1,3 @@
 
-SUBDIRS=include lib docs
+SUBDIRS=include lib
 

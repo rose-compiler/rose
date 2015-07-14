@@ -85,16 +85,12 @@ SgBasicBlock * createLocalDeclarations<
   for (it_var_sym = arguments.parameters.begin(); it_var_sym != arguments.parameters.end(); it_var_sym++) {
     SgVariableSymbol * param_sym = *it_var_sym;
     std::string param_name = param_sym->get_name().getString();
+    SgType * param_type = param_sym->get_type();
 
-    SageInterface::prependStatement(
-      SageBuilder::buildVariableDeclaration(
-        param_name,
-        param_sym->get_type(),
-        SageBuilder::buildAssignInitializer(SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_param_sym), SageBuilder::buildIntVal(arg_cnt))),
-        kernel_body
-      ),
-      kernel_body
-    );
+    driver.useType(param_type, kernel_body);
+
+    SgInitializer * init = SageBuilder::buildAssignInitializer(SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_param_sym), SageBuilder::buildIntVal(arg_cnt)));
+    SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(param_name, param_type, init, kernel_body), kernel_body);
     SgVariableSymbol * new_sym = kernel_body->lookup_variable_symbol(param_name);
     assert(new_sym != NULL);
 
@@ -112,17 +108,18 @@ SgBasicBlock * createLocalDeclarations<
     ::KLT::Data<DLX::KLT::Annotation<DLX::TileK::language_t> > * data = *it_data;
     SgVariableSymbol * data_sym = data->getVariableSymbol();
     std::string data_name = data_sym->get_name().getString();
+    SgType * data_type = data->getBaseType();
+
+    driver.useType(data_type, kernel_body);
 
     SgExpression * init = SageBuilder::buildCastExp(
       SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_data_sym), SageBuilder::buildIntVal(arg_cnt)),
-      SageBuilder::buildPointerType(data->getBaseType())
+      SageBuilder::buildPointerType(data_type)
     );
 
-    SgType * data_type;
     if (data->getSections().size() > 0)
-      data_type = SageBuilder::buildPointerType(data->getBaseType());
+      data_type = SageBuilder::buildPointerType(data_type);
     else {
-      data_type = data->getBaseType();
       init = SageBuilder::buildPointerDerefExp(init);
     }
 
@@ -152,6 +149,8 @@ SgBasicBlock * createLocalDeclarations<
     SgVariableSymbol * scalar_sym = *it_var_sym;
     std::string scalar_name = scalar_sym->get_name().getString();
     SgType * scalar_type = scalar_sym->get_type();
+
+    driver.useType(scalar_type, kernel_body);
 
     SgExpression * init = SageBuilder::buildPointerDerefExp(SageBuilder::buildCastExp(
                             SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_scalar_sym), SageBuilder::buildIntVal(arg_cnt)),

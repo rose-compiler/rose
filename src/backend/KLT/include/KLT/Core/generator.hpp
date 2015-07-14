@@ -30,20 +30,15 @@ template <class Annotation, class Language, class Runtime> class DataFlow;
 
 template <class Annotation, class Language, class Runtime> class IterationMap;
 
-template <class Annotation, class Language, class Runtime> class CG_Config;
-
 /*!
  * \addtogroup grp_klt_codegen
  * @{
 */
 
-template <class Annotation, class Language, class Runtime, class Driver = ::MFB::KLT_Driver>
+template <class Annotation, class Language, class Runtime, class Driver>
 class Generator {
   protected:
     Driver & p_driver;
-
-    ::MFB::Driver< ::MFB::KLT  > & p_klt_driver;
-    ::MFB::Driver< ::MFB::Sage > & p_sage_driver;
 
     std::string p_file_name;
     unsigned long p_file_id;
@@ -64,7 +59,9 @@ class Generator {
     void generate(
       const LoopTrees<Annotation> & loop_trees,
       std::set<std::list<Kernel<Annotation, Language, Runtime> *> > & kernel_lists,
-      const CG_Config<Annotation, Language, Runtime> & cg_config
+      LoopMapper<Annotation, Language, Runtime> & loop_mapper,
+      LoopTiler<Annotation, Language, Runtime> & loop_tiler,
+      DataFlow<Annotation, Language, Runtime> & data_flow
     );
 };
 
@@ -75,7 +72,8 @@ bool cmpDataName(const Data<Annotation> * data_lhs, const Data<Annotation> * dat
 
 template <class Annotation, class Language, class Runtime, class Driver>
 unsigned long Generator<Annotation, Language, Runtime, Driver>::createFile() {
-  unsigned long file_id = p_sage_driver.create(boost::filesystem::path(p_file_name));
+//unsigned long file_id = p_sage_driver.create(boost::filesystem::path(p_file_name));
+  unsigned long file_id = p_driver.create(boost::filesystem::path(p_file_name));
   return file_id;
 }
 
@@ -157,12 +155,10 @@ Generator<Annotation, Language, Runtime, Driver>::Generator(
   const std::string & file_name
 ) :
   p_driver(driver),
-  p_klt_driver(p_driver),
-  p_sage_driver(p_driver),
   p_file_name(file_name),
   p_file_id(createFile())
 {
-  Runtime::useSymbolsKernel(p_sage_driver, p_file_id);
+  Runtime::useSymbolsKernel(p_driver, p_file_id);
 }
 
 template <class Annotation, class Language, class Runtime, class Driver>
@@ -205,30 +201,33 @@ template <class Annotation, class Language, class Runtime, class Driver>
 void Generator<Annotation, Language, Runtime, Driver>::generate(
   const LoopTrees<Annotation> & loop_trees,
   std::set<std::list<Kernel<Annotation, Language, Runtime> *> > & kernel_lists,
-  const CG_Config<Annotation, Language, Runtime> & cg_config
+  LoopMapper<Annotation, Language, Runtime> & loop_mapper,
+  LoopTiler<Annotation, Language, Runtime> & loop_tiler,
+  DataFlow<Annotation, Language, Runtime> & data_flow
 ) {
   typedef typename LoopTrees<Annotation>::loop_t loop_t;
   typedef typename LoopTiler<Annotation, Language, Runtime>::loop_tiling_t loop_tiling_t;
+  typedef Kernel<Annotation, Language, Runtime> Kernel;
 
-  typename std::set<std::list<Kernel<Annotation, Language, Runtime> *> >::const_iterator it_kernel_list;
-  typename std::list<Kernel<Annotation, Language, Runtime> *>::const_iterator it_kernel;
+  typename std::set<std::list<Kernel *> >::const_iterator it_kernel_list;
+  typename std::list<Kernel *>::const_iterator it_kernel;
   typename std::set<IterationMap<Annotation, Language, Runtime> *>::const_iterator it_iteration_map;
 
   typename DataFlow<Annotation, Language, Runtime>::context_t df_ctx;
 
   // 0 - init data flow
 
-  cg_config.getDataFlow().createContextFromLoopTree(loop_trees, df_ctx);
-  cg_config.getDataFlow().markSplittedData(df_ctx);
+  data_flow.createContextFromLoopTree(loop_trees, df_ctx);
+  data_flow.markSplittedData(df_ctx);
 
   // 1 - Loop Selection : Generate multiple list of kernel that implement the given LoopTree
 
-  cg_config.getLoopMapper().createKernels(loop_trees, kernel_lists);
+  loop_mapper.createKernels(loop_trees, kernel_lists);
 
   // 2 - Data Flow : performs data-flow analysis for each list of kernel
 
   for (it_kernel_list = kernel_lists.begin(); it_kernel_list != kernel_lists.end(); it_kernel_list++)
-    cg_config.getDataFlow().generateFlowSets(*it_kernel_list, df_ctx);
+    data_flow.generateFlowSets(*it_kernel_list, df_ctx);
 
   // 3 - Arguments : determines the list of arguments needed by each kernel
 
@@ -244,7 +243,7 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
 
       std::map<loop_t *, std::vector<loop_tiling_t *> > tiling_map;
 
-      cg_config.getLoopTiler().determineTiles(*it_kernel, tiling_map);
+      loop_tiler.determineTiles(*it_kernel, tiling_map);
 
       std::set<std::map<loop_t *, loop_tiling_t *> > loop_tiling_set;
       buildAllTileConfigs<Annotation, Language, Runtime>(
@@ -259,11 +258,11 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
       unsigned cnt = 0;
       typename std::set<std::map<loop_t *, loop_tiling_t *> >::iterator it_loop_tiling_map;
       for (it_loop_tiling_map = loop_tiling_set.begin(); it_loop_tiling_map != loop_tiling_set.end(); it_loop_tiling_map++) {
-        typename ::MFB::KLT<Kernel<Annotation, Language, Runtime> >::object_desc_t kernel_desc(cnt++, *it_kernel, p_file_id);
+        typename ::MFB::KLT<Kernel>::object_desc_t kernel_desc(cnt++, *it_kernel, p_file_id);
 
         kernel_desc.tiling.insert(it_loop_tiling_map->begin(), it_loop_tiling_map->end());
 
-        typename Kernel<Annotation, Language, Runtime>::kernel_desc_t * kernel = p_klt_driver.build<Kernel<Annotation, Language, Runtime> >(kernel_desc);
+        typename Kernel::kernel_desc_t * kernel = p_driver.template build<Kernel>(kernel_desc);
 
         (*it_kernel)->addKernel(kernel);
       }
