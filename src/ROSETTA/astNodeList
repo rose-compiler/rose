@@ -340,6 +340,10 @@ SgDotExp
 SgDotStarOp
 SgDoubleVal
 SgElaboratedTypeModifier
+SgElementwiseOp
+SgElementwiseLeftDivideOp
+SgElementwiseMultiplyOp
+SgElementwisePowerOp
 SgElseDirectiveStatement
 SgElseWhereStatement
 SgElseifDirectiveStatement
@@ -454,6 +458,8 @@ SgLongIntVal
 SgLongLongIntVal
 SgLshiftAssignOp
 SgLshiftOp
+SgMatrixExp
+SgMatlabForStatement
 SgMemberFunctionDeclaration
 SgMemberFunctionRefExp
 SgMemberFunctionSymbol
@@ -564,6 +570,7 @@ SgPythonGlobalStmt
 SgPythonPrintStmt
 SgQualifiedName
 SgQualifiedNameType
+SgRangeExp
 SgReadStatement
 SgRealPartOp
 SgRefExp
@@ -662,6 +669,7 @@ SgTypeLong
 SgTypeLongDouble
 SgTypeLongLong
 SgTypeModifier
+SgTypeMatrix
 SgTypeNullptr
 SgTypeOfType
 SgTypeShort

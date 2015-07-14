@@ -3,6 +3,7 @@
 #include "ROSETTA_macros.h"
 #include "terminal.h"
 
+#define USE_MATLAB_IR_NODES 1
 // What should be the behavior of the default constructor for Grammar
 
 void
@@ -36,6 +37,10 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeLongDouble      , "TypeLongDouble",       "T_LONG_DOUBLE" );
      NEW_TERMINAL_MACRO ( TypeString          , "TypeString",           "T_STRING" );
      NEW_TERMINAL_MACRO ( TypeBool            , "TypeBool",             "T_BOOL" );
+
+     #if USE_MATLAB_IR_NODES == 1
+     NEW_TERMINAL_MACRO ( TypeMatrix            , "TypeMatrix",             "T_MATRIX" );
+     #endif     
 
   // DQ (7/29/2014): Added nullptr type (I think we require this for C++11 support).
      NEW_TERMINAL_MACRO ( TypeNullptr         , "TypeNullptr",          "T_NULLPTR" );
@@ -182,7 +187,13 @@ Grammar::setUpTypes ()
           ArrayType            | TypeEllipse             | TemplateType              | QualifiedNameType    |
           TypeComplex          | TypeImaginary           | TypeDefault               | TypeCAFTeam          |
           TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  | 
-          TypeNullptr          | DeclType                | TypeOfType , "Type","TypeTag", false);
+
+          TypeNullptr          | DeclType                | TypeOfType
+	  #if USE_MATLAB_IR_NODES == 1
+	  | TypeMatrix
+	  #endif		    
+	  , "Type","TypeTag", false);
+
 
 #if 1
   // ***********************************************************************
@@ -456,6 +467,10 @@ Grammar::setUpTypes ()
   // DQ (7/29/2014): Added nullptr type (I think we require this for C++11 support).
      TypeNullptr.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+#if USE_MATLAB_IR_NODES == 1
+     TypeMatrix.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+#endif
+     
      TypeDefault.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // PointerType.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // ReferenceType.setDataPrototype        ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -609,6 +624,11 @@ Grammar::setUpTypes ()
      TypeInt.setDataPrototype           ("int","field_size","= 0",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     #if USE_MATLAB_IR_NODES == 1
+     TypeMatrix.setDataPrototype           ("SgType*","base_type","= NULL",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     #endif
+     
   // DQ (4/23/2014): I think this has to be defined as NO_TRAVERSAL || TYPE_TRAVERSAL so that we can traverse the nested type.
   // This is required to support type transformations fo the shared memory DSL work. Likely also required for ReferenceType
   // and any other type with a base_type.
@@ -1031,6 +1051,10 @@ Grammar::setUpTypes ()
   // DQ (7/29/2014): Added nullptr type (I think we require this for C++11 support).
      TypeNullptr.editSubstitute( "MANGLED_ID_STRING", "nullptr_t" );
 
+     #if USE_MATLAB_IR_NODES == 1
+       TypeMatrix.editSubstitute( "MANGLED_ID_STRING", "matrix_t" );
+     #endif
+     
      TypeComplex.editSubstitute( "MANGLED_ID_STRING", "Complex" );
      TypeImaginary.editSubstitute( "MANGLED_ID_STRING", "Imaginary" );
   // TypeDefault.editSubstitute( "MANGLED_ID_STRING", "u" );

@@ -1394,6 +1394,19 @@ HEADER_FORALL_STATEMENT_START
 HEADER_FORALL_STATEMENT_END
 
 
+
+HEADER_MATLAB_FOR_STATEMENT_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual bool cfgIsIndexInteresting(unsigned int) const;
+          virtual unsigned int cfgFindChildIndex(SgNode* n);
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+HEADER_MATLAB_FOR_STATEMENT_END
+
+
 HEADER_CATCH_STATEMENT_SEQ_START
 HEADER_LIST_DECLARATIONS
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -10001,6 +10014,11 @@ SgForAllStatement::post_construction_initialization()
    }
 
 SOURCE_FORALL_STATEMENT_END
+
+
+SOURCE_MATLAB_FOR_STATEMENT_START
+SOURCE_MATLAB_FOR_STATEMENT_END
+
 
 SOURCE_UPC_FORALL_STATEMENT_START
 

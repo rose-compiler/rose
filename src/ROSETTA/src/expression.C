@@ -5,6 +5,8 @@
 
 // What should be the behavior of the default constructor for Grammar
 
+#define USE_MATLAB_IR_NODES 1
+
 void
 Grammar::setUpExpressions ()
    {
@@ -159,7 +161,6 @@ Grammar::setUpExpressions ()
   // driscoll6 (7/20/11): Support for n-ary operators in python
      NEW_TERMINAL_MACRO (NaryComparisonOp,       "NaryComparisonOp",       "NARY_COMPARISON_OP");
      NEW_TERMINAL_MACRO (NaryBooleanOp,          "NaryBooleanOp",          "NARY_BOOLEAN_OP");
-
      NEW_TERMINAL_MACRO (BoolValExp,             "BoolValExp",             "BOOL_VAL" );
      NEW_TERMINAL_MACRO (StringVal,              "StringVal",              "STRING_VAL" );
      NEW_TERMINAL_MACRO (ShortVal,               "ShortVal",               "SHORT_VAL" );
@@ -305,6 +306,30 @@ Grammar::setUpExpressions ()
   // SgAggregateInitializer
      NEW_TERMINAL_MACRO (DesignatedInitializer, "DesignatedInitializer", "DESIGNATED_INITIALIZER" );
 
+     #if USE_MATLAB_IR_NODES
+     //SK (06/23/2015) SgMatrixExp for Matlab Matrix
+     NEW_TERMINAL_MACRO (MatrixExp, "MatrixExp", "MATRIX_EXP");
+
+     //SK (06/25/2015) SgRangeExp for representing a range like 1:5 or 1:2:5 in Matlab
+     NEW_TERMINAL_MACRO (RangeExp, "RangeExp", "RANGE_EXP");
+
+     //SK (06/25/2015) Elementwise operators in Matlab
+     NEW_TERMINAL_MACRO (ElementwiseMultiplyOp, "ElementwiseMultiplyOp", "ELEMENT_MULT_OP");
+
+     NEW_TERMINAL_MACRO (ElementwisePowerOp, "ElementwisePowerOp", "ELEMENT_POWER_OP");
+
+     NEW_TERMINAL_MACRO (ElementwiseLeftDivideOp, "ElementwiseLeftDivideOp", "ELEMENT_LEFT_DIVIDE_OP");
+
+     // NEW_TERMINAL_MACRO (TransposeOp, "TransposeOp", "TRANSPOSE_OP");
+
+     // NEW_TERMINAL_MACRO (ConjugateTransposeOp, "ConjugateTransposeOp", "CONJUGATE_TRANSPOSE_OP");
+     
+     NEW_NONTERMINAL_MACRO (ElementwiseOp,
+			    ElementwiseMultiplyOp    |  ElementwisePowerOp    | ElementwiseLeftDivideOp,
+			    "ElementwiseOp", "ELEMENT_WISE_OP", false);
+     #endif
+     
+    
      NEW_NONTERMINAL_MACRO (Initializer,
                             AggregateInitializer | CompoundInitializer | ConstructorInitializer | AssignInitializer | DesignatedInitializer,
                             "Initializer","EXPR_INIT", false);
@@ -317,8 +342,14 @@ Grammar::setUpExpressions ()
      NEW_NONTERMINAL_MACRO (UnaryOp,
                             ExpressionRoot | MinusOp            | UnaryAddOp | NotOp           | PointerDerefExp | 
                             AddressOfOp    | MinusMinusOp       | PlusPlusOp | BitComplementOp | CastExp         |
-                            ThrowOp        | RealPartOp         | ImagPartOp | ConjugateOp     | UserDefinedUnaryOp,
-                            "UnaryOp","UNARY_EXPRESSION", false);
+                            ThrowOp        | RealPartOp         | ImagPartOp | ConjugateOp     | UserDefinedUnaryOp
+			    /*			    #if USE_MATLAB_IR_NODES == 1
+			    //SK (06/25/2015) TransposeOp = .' and ConjugateTransposeOp = '
+			    
+			    | TransposeOp  | ConjugateTransposeOp
+			    #endif*/
+                            ,"UnaryOp","UNARY_EXPRESSION", false);
+
 
      NEW_NONTERMINAL_MACRO (CompoundAssignOp,
                             PlusAssignOp   | MinusAssignOp    | AndAssignOp  | IorAssignOp    | MultAssignOp     |
@@ -334,8 +365,13 @@ Grammar::setUpExpressions ()
           BitXorOp       | BitAndOp         | BitOrOp             | CommaOpExp       | LshiftOp             | RshiftOp       |
           PntrArrRefExp  | ScopeOp          | AssignOp            | ExponentiationOp | JavaUnsignedRshiftOp |
           ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
-          NonMembershipOp | IsOp            | IsNotOp          /* | DotDotExp*/,
-          "BinaryOp","BINARY_EXPRESSION", false);
+
+          NonMembershipOp | IsOp            | IsNotOp          /* | DotDotExp*/
+#if USE_MATLAB_IR_NODES == 1
+			    | ElementwiseOp /*| LeftDivideOp*/
+#endif
+	  ,"BinaryOp","BINARY_EXPRESSION", false);
+
 
      NEW_NONTERMINAL_MACRO (NaryOp,
           NaryBooleanOp  | NaryComparisonOp,
@@ -349,9 +385,17 @@ Grammar::setUpExpressions ()
           TemplateParameterVal | NullptrValExp,
           "ValueExp","ValueExpTag", false);
 
+
+     #if USE_MATLAB_IR_NODES == 1
      NEW_NONTERMINAL_MACRO (ExprListExp,
-          ListExp  | TupleExp,
+          ListExp  | TupleExp | MatrixExp,
           "ExprListExp","EXPR_LIST", /* can have instances = */ true);
+     #else
+     NEW_NONTERMINAL_MACRO (ExprListExp,
+	  ListExp  | TupleExp,
+          "ExprListExp","EXPR_LIST", /* can have instances = */ true);
+     #endif
+     
 
      // TV (06/06/13) : CudaKernelCall are now considered to be a FunctionCall
      NEW_NONTERMINAL_MACRO (FunctionCallExp,
@@ -383,6 +427,9 @@ Grammar::setUpExpressions ()
           LambdaRefExp        | DictionaryExp           | KeyDatumPair             |
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
+       #if USE_MATLAB_IR_NODES == 1
+	  RangeExp            |
+       #endif
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
           ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | NoexceptOp, "Expression", "ExpressionTag", false);
        // ClassExp | FunctionParameterRefExp            | HereExp, "Expression", "ExpressionTag", false);
@@ -800,6 +847,15 @@ Grammar::setUpExpressions ()
      UserDefinedUnaryOp.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      UserDefinedBinaryOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
+     #if USE_MATLAB_IR_NODES == 1
+     MatrixExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     RangeExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     ElementwiseOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     ElementwisePowerOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     ElementwiseMultiplyOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     ElementwiseLeftDivideOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     #endif
+     
   // DQ (2/27/2005): We want to post_construction_initialization to call set_type so we don't want 
   // and empty function here plus I have added a set_type function for DotStarOp.
   // Bugfix (2/27/2001) Generate this empty function instead of one with a call to an empty setType() function
@@ -1107,6 +1163,23 @@ Grammar::setUpExpressions ()
   // ExprListExp.editSubstitute       ( "LIST_DATA_TYPE", "Expression" );
      ExprListExp.editSubstitute       ( "LIST_NAME", "expression" );
 
+
+     #if USE_MATLAB_IR_NODES == 1
+     MatrixExp.setFunctionPrototype ( "HEADER_MATRIX_EXP", "../Grammar/Expression.code" );
+     RangeExp.setFunctionPrototype ( "HEADER_RANGE_EXP", "../Grammar/Expression.code" );
+
+     RangeExp.setDataPrototype("SgExpression*", "start", "= NULL",
+			       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     RangeExp.setDataPrototype("SgExpression*", "end", "= NULL",
+			       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     RangeExp.setDataPrototype("SgExpression*", "stride", "= NULL",
+			       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     ElementwiseOp.excludeFunctionPrototype ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
+     ElementwiseOp.setFunctionPrototype ( "HEADER_ELEMENT_WISE_OP", "../Grammar/Expression.code" );
+     
+     #endif
+     
   // Note that excludeDataPrototype() function does not exist in ROSETTA.
   // DQ (2/7/2011): Exclude support for originalExpressionTree (violates ROSETTA rules for compiling lists and data members).
   // ExprListExp.excludeDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -3023,4 +3096,14 @@ Grammar::setUpExpressions ()
      StringConversion.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
      StringConversion.setFunctionSource     ( "SOURCE_STRING_CONVERSION","../Grammar/Expression.code" );
      YieldExpression.setFunctionSource      ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+
+
+     #if USE_MATLAB_IR_NODES == 1
+     MatrixExp.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+     MatrixExp.setFunctionSource    ( "SOURCE_MATRIX_EXP", "../Grammar/Expression.code" );
+
+     RangeExp.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
+     RangeExp.setFunctionSource    ( "SOURCE_RANGE_EXP", "../Grammar/Expression.code" );
+     #endif
+
    }
