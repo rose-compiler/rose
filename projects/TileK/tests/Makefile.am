@@ -7,7 +7,7 @@ TILEK_INC=$(srcdir)/../include
 TILEK_LIB=$(builddir)/../lib/tilek
 TILEK_BIN=$(builddir)/../src
 
-check-local: check-test_1 check-test_2 check-test_3
+check-local: check-test_1 check-test_2 check-test_3 check-test_4
 
 clean-local:
 	rm -f rose_*.c *-kernel.c *-data.c *.o
@@ -77,6 +77,28 @@ test_3: rose_test_3.o test_3-kernel.o test_3-data.o $(TILEK_LIB)/libTileK.la
 
 check-test_3: test_3
 	./test_3
+
+#########################################
+
+test_4-kernel.c: rose_test_4.c
+test_4-data.c: rose_test_4.c
+rose_test_4.c: $(srcdir)/test_4.c $(TILEK_BIN)/tilek
+	$(TILEK_BIN)/tilek -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(srcdir)/../include -c $(srcdir)/test_4.c
+
+rose_test_4.o: rose_test_4.c
+	gcc -O0 -g -I$(TILEK_INC) -c rose_test_4.c -o rose_test_4.o
+
+test_4-kernel.o: test_4-kernel.c
+	gcc -O0 -g -I$(TILEK_INC) -c test_4-kernel.c -o test_4-kernel.o
+
+test_4-data.o: test_4-data.c
+	gcc -O0 -g -I$(TILEK_INC) -c test_4-data.c -o test_4-data.o
+
+test_4: rose_test_4.o test_4-kernel.o test_4-data.o $(TILEK_LIB)/libTileK.la
+	libtool --mode=link gcc rose_test_4.o test_4-kernel.o test_4-data.o $(TILEK_LIB)/libTileK.la -o test_4
+
+check-test_4: test_4
+	./test_4
 
 #########################################
 

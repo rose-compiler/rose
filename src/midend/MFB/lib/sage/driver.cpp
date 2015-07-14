@@ -76,7 +76,8 @@ Driver<Sage>::Driver(SgProject * project_) :
   p_function_symbols(),
   p_class_symbols(),
   p_variable_symbols(),
-  p_member_function_symbols()
+  p_member_function_symbols(),
+  p_type_scope_map()
 { 
   assert(project != NULL);
 
@@ -389,6 +390,97 @@ api_t * Driver<Sage>::getAPI() const {
     api->member_function_symbols.insert(*it_member_function_symbol);
 
   return api;
+}
+
+void Driver<Sage>::useType(SgType * type, SgScopeStatement * scope) {
+  SgNamedType    * named_type = isSgNamedType(type);
+  SgModifierType * mod_type   = isSgModifierType(type);
+  SgPointerType  * ptr_type   = isSgPointerType(type);
+  SgArrayType    * arr_type   = isSgArrayType(type);
+  if (named_type != NULL) {
+    SgClassType   * class_type = isSgClassType(named_type);
+    SgEnumType    * enum_type  = isSgEnumType(named_type);
+    SgTypedefType * tdf_type   = isSgTypedefType(named_type);
+
+    assert(class_type != NULL || enum_type != NULL || tdf_type != NULL);
+
+    SgGlobal * global_scope = SageInterface::getGlobalScope(scope);
+    std::map<SgScopeStatement *, std::set<SgType *> >::iterator it_type_scope = p_type_scope_map.find(global_scope);
+    if (it_type_scope == p_type_scope_map.end())
+      it_type_scope = p_type_scope_map.insert(std::pair<SgScopeStatement *, std::set<SgType *> >(global_scope, std::set<SgType *>())).first;
+    std::set<SgType *>::iterator it_type = it_type_scope->second.find(type);
+    if (it_type == it_type_scope->second.end()) {
+      it_type_scope->second.insert(type);
+
+      SgDeclarationStatement * decl_stmt = named_type->get_declaration();
+      assert(decl_stmt != NULL);
+      decl_stmt = decl_stmt->get_definingDeclaration();
+      assert(decl_stmt != NULL);
+
+      if (class_type != NULL) {
+        SgClassDeclaration * class_decl = isSgClassDeclaration(decl_stmt);
+        assert(class_decl != NULL);
+
+        SgName name = class_decl->get_name();
+
+        SgClassDeclaration * decl_copy = isSgClassDeclaration(SageInterface::copyStatement(decl_stmt));
+        assert(decl_copy != NULL);
+        SgClassDeclaration * nondef_decl = SageBuilder::buildNondefiningClassDeclaration_nfi(name, decl_copy->get_class_type(), global_scope, false, NULL);
+
+        decl_copy->set_parent(global_scope);
+        decl_copy->set_scope(global_scope);
+        decl_copy->set_firstNondefiningDeclaration(nondef_decl);
+        decl_copy->set_definingDeclaration(decl_copy);
+
+        nondef_decl->set_parent(global_scope);
+        nondef_decl->set_scope(global_scope);
+        nondef_decl->set_firstNondefiningDeclaration(nondef_decl);
+        nondef_decl->set_definingDeclaration(decl_copy);
+
+        nondef_decl->set_type(decl_copy->get_type());
+
+//      global_scope->insert_symbol(name, new SgClassSymbol(decl_copy));
+        SageInterface::prependStatement(decl_copy, global_scope);
+      }
+      else if (enum_type != NULL) {
+        SgEnumDeclaration * enum_decl = isSgEnumDeclaration(decl_stmt);
+        assert(enum_decl != NULL);
+
+        SgName name = enum_decl->get_name();
+        SgSymbol * enum_sym = scope->lookup_enum_symbol(name);
+        if (enum_sym != NULL) return;
+
+        SgEnumDeclaration * decl_copy = isSgEnumDeclaration(SageInterface::copyStatement(decl_stmt));
+        assert(decl_copy != NULL);
+
+        decl_copy->set_parent(global_scope);
+        decl_copy->set_scope(global_scope);
+//      global_scope->insert_symbol(name, new SgEnumSymbol(decl_copy));
+        SageInterface::prependStatement(decl_copy, global_scope);
+      }
+      else if (tdf_type != NULL) {
+        SgTypedefDeclaration * tdf_decl = isSgTypedefDeclaration(decl_stmt);
+        assert(tdf_decl != NULL);
+
+        SgName name = tdf_decl->get_name();
+        SgSymbol * tdf_sym = scope->lookup_typedef_symbol(name);
+        if (tdf_sym != NULL) return;
+
+        useType(tdf_type->get_base_type(), scope);
+
+        SgTypedefDeclaration * decl_copy = isSgTypedefDeclaration(SageInterface::copyStatement(decl_stmt));
+        assert(decl_copy != NULL);
+
+        decl_copy->set_parent(global_scope);
+        decl_copy->set_scope(global_scope);
+//      global_scope->insert_symbol(name, new SgTypedefSymbol(decl_copy));
+        SageInterface::prependStatement(decl_copy, global_scope);
+      }
+    }
+  }
+  else if (mod_type != NULL) useType(mod_type->get_base_type(), scope);
+  else if (ptr_type != NULL) useType(ptr_type->get_base_type(), scope);
+  else if (arr_type != NULL) useType(arr_type->get_base_type(), scope);
 }
 
 /** @} */

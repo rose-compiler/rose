@@ -44,6 +44,8 @@ void execute_kernel(struct kernel_t * kernel) {
 //    printf("[0] ((( tile[%d] = {%d, %d} )))\n", tile_it, kernel->tiles[tile_it].length, kernel->tiles[tile_it].stride);
 //  }
 
+    if (desc->loop_desc[loop_it].num_tiles == 0) continue;
+
     const int loop_idx = desc->loop_desc[loop_it].idx;
 
     // Length of the loop

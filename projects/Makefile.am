@@ -188,7 +188,8 @@ SUBDIRS += PolyhedralModel
 # SUBDIRS += demos-dlx-mdcg
 # SUBDIRS += rose-tooling
 # TOO1 (07/08/2015): Disabled until Tristan fixes the failing release test.
-# SUBDIRS += TileK
+# TV (07/13/2015): should be working
+SUBDIRS += TileK
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
 #     StaticDynamicAnalysis/DynamicCPU

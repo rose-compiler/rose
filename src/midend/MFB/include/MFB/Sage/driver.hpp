@@ -17,6 +17,8 @@
 
 class SgType;
 
+class SgGlobal;
+
 class SgFunctionDeclaration;
 class SgFunctionParameterList;
 class SgFunctionSymbol;
@@ -85,6 +87,10 @@ class Driver<Sage> {
     std::set<SgVariableSymbol *>       p_variable_symbols;
     std::set<SgMemberFunctionSymbol *> p_member_function_symbols;
 
+  // Type management
+    
+    std::map<SgScopeStatement *, std::set<SgType *> > p_type_scope_map;
+
   private:
     template <typename Object>
     void loadSymbols(file_id_t file_id, SgSourceFile * file);
@@ -152,6 +158,8 @@ class Driver<Sage> {
     /// Build an object and add associated symbol to driver
     template <typename Object>
     typename Sage<Object>::build_result_t build(const typename Sage<Object>::object_desc_t & desc);
+
+    void useType(SgType * type, SgScopeStatement * scope);
 
     /// Import external header for a given file
     void addExternalHeader(file_id_t file_id, std::string header_name, bool is_system_header = true);
