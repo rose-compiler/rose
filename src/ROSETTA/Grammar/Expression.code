@@ -280,6 +280,14 @@ HEADER_LIST_DECLARATIONS
 HEADER_EXPRESSION_LIST_EXPRESSION_END
 
 
+HEADER_MATRIX_EXP_START
+HEADER_MATRIX_EXP_END
+
+HEADER_RANGE_EXP_START
+//Append an expression to the range
+SgRangeExp* append(SgExpression *exp);
+HEADER_RANGE_EXP_END
+
 HEADER_VAR_REF_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
@@ -1290,6 +1298,16 @@ HEADER_COMPOUND_ASSIGNMENT_OPERATOR_START
           virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_COMPOUND_ASSIGNMENT_OPERATOR_END
+
+
+HEADER_ELEMENT_WISE_OP_START
+
+
+          // virtual bool isLValue() const;
+          // virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
+
+HEADER_ELEMENT_WISE_OP_END
+
 
 
 HEADER_POINTER_ASSIGNMENT_OPERATOR_START
@@ -6405,6 +6423,48 @@ SOURCE_TUPLE_EXP_END
 
 SOURCE_LIST_EXP_START
 SOURCE_LIST_EXP_END
+
+
+SOURCE_MATRIX_EXP_START
+SOURCE_MATRIX_EXP_END
+
+SOURCE_RANGE_EXP_START
+
+SgRangeExp* SgRangeExp::append(SgExpression *exp)
+{
+  //start:end
+  //or start:increment:end
+
+  if(p_start == NULL)
+    {
+      p_start == exp;
+    }
+  else
+    {
+      if(p_end == NULL)
+	{
+	  p_end = exp;
+	}
+      else
+	{
+	  if(p_stride == NULL)
+	    {
+	      //Swap stride with end. 1:2 then 1:2:3 comes, 2 was end. now 2 becomes stride
+	      p_stride = p_end;
+	      p_end = exp;	      
+	    }
+	  else
+	    {
+	      //cannot do more appends. Max 3 items allowed. Raise an error
+	      return NULL;
+	    }
+	}
+    }
+
+  return this;
+}
+
+SOURCE_RANGE_EXP_END
 
 SOURCE_COMPREHENSION_START
 SOURCE_COMPREHENSION_END
