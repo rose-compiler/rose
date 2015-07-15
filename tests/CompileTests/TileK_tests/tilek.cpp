@@ -38,11 +38,3 @@ int main(int argc, char ** argv) {
   return 0;
 }
 
-// Static fields of templated classes
-
-template <> unsigned long KLT::Kernel<Annotation, Runtime>::id_cnt = 0;
-template <> unsigned long KLT::Kernel<Annotation, Runtime>::kernel_desc_t::id_cnt = 0;
-template <> size_t KLT::LoopTrees<Annotation>::id_cnt = 0;
-//template <> MDCG::KLT::API::host_t  <Hlang> MDCG::KLT::Runtime<Hlang, Klang>::host_api = MDCG::KLT::API::host_t<Hlang>();
-//template <> MDCG::KLT::API::kernel_t<Klang> MDCG::KLT::Runtime<Hlang, Klang>::kernel_api = MDCG::KLT::API::kernel_t<Klang>();
-

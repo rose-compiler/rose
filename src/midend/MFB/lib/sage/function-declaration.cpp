@@ -49,7 +49,7 @@ bool Driver<Sage>::resolveValidParent<SgFunctionSymbol>(SgFunctionSymbol * symbo
 }
 
 template <>
-void  Driver<Sage>::loadSymbols<SgFunctionDeclaration>(unsigned file_id, SgSourceFile * file) {
+void  Driver<Sage>::loadSymbols<SgFunctionDeclaration>(size_t file_id, SgSourceFile * file) {
   std::vector<SgFunctionDeclaration *> function_decl = SageInterface::querySubTree<SgFunctionDeclaration>(file);
 
   std::set<SgFunctionSymbol *> function_symbols;
@@ -73,7 +73,7 @@ void  Driver<Sage>::loadSymbols<SgFunctionDeclaration>(unsigned file_id, SgSourc
   std::set<SgFunctionSymbol *>::iterator it;
   for (it = function_symbols.begin(); it != function_symbols.end(); it++)
     if (resolveValidParent<SgFunctionSymbol>(*it)) {
-      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned>(*it, file_id));
+      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, size_t>(*it, file_id));
 //    std::cout << " Function Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
     }
 }
@@ -83,8 +83,8 @@ Sage<SgFunctionDeclaration>::object_desc_t::object_desc_t(
   SgType * return_type_,
   SgFunctionParameterList * params_,
   SgNamespaceSymbol * parent_namespace_,
-  unsigned decl_file_id_,
-  unsigned defn_file_id_,
+  size_t decl_file_id_,
+  size_t defn_file_id_,
   bool is_static_, 
   bool create_definition_
 ) :
@@ -128,7 +128,7 @@ Sage<SgFunctionDeclaration>::build_result_t Driver<Sage>::build<SgFunctionDeclar
     result.symbol = decl_scope->lookup_function_symbol(desc.name);
     assert(result.symbol != NULL);
 
-    p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned long>(result.symbol, desc.decl_file_id));
+    p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, size_t>(result.symbol, desc.decl_file_id));
     p_valid_symbols.insert(result.symbol);
     p_parent_map.insert(std::pair<SgSymbol *, SgSymbol *>(result.symbol, desc.parent));
     p_function_symbols.insert(result.symbol);
@@ -151,7 +151,7 @@ template <>
 Sage<SgFunctionDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgFunctionDeclaration>(const Sage<SgFunctionDeclaration>::object_desc_t & desc) {
   Sage<SgFunctionDeclaration>::build_scopes_t result;
 
-  std::map<unsigned, SgSourceFile *>::iterator it_decl_file = id_to_file_map.find(desc.decl_file_id);
+  std::map<size_t, SgSourceFile *>::iterator it_decl_file = id_to_file_map.find(desc.decl_file_id);
   assert(it_decl_file != id_to_file_map.end());
   SgSourceFile * decl_file = it_decl_file->second;
   assert(decl_file != NULL);
@@ -166,7 +166,7 @@ Sage<SgFunctionDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgFunct
   if (desc.create_definition) {
     assert(desc.defn_file_id != 0);
 
-    std::map<unsigned, SgSourceFile *>::iterator it_defn_file = id_to_file_map.find(desc.defn_file_id);
+    std::map<size_t, SgSourceFile *>::iterator it_defn_file = id_to_file_map.find(desc.defn_file_id);
     assert(it_defn_file != id_to_file_map.end());
     SgSourceFile * defn_file = it_defn_file->second;
     assert(defn_file != NULL);
@@ -183,8 +183,8 @@ Sage<SgFunctionDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgFunct
 }
 
 template <>
-void Driver<Sage>::createForwardDeclaration<SgFunctionDeclaration>(Sage<SgFunctionDeclaration>::symbol_t symbol, unsigned target_file_id) {
-  std::map<unsigned, SgSourceFile *>::iterator it_target_file = id_to_file_map.find(target_file_id);
+void Driver<Sage>::createForwardDeclaration<SgFunctionDeclaration>(Sage<SgFunctionDeclaration>::symbol_t symbol, size_t target_file_id) {
+  std::map<size_t, SgSourceFile *>::iterator it_target_file = id_to_file_map.find(target_file_id);
   assert(it_target_file != id_to_file_map.end());
   SgSourceFile * target_file = it_target_file->second;
   assert(target_file != NULL);

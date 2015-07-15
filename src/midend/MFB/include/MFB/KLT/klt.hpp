@@ -38,12 +38,12 @@ template <>
 class KLT<Kernel> {
   public:
     struct object_desc_t {
-      unsigned id;
+      size_t id;
       Kernel * kernel;
-      unsigned long file_id;
+      size_t file_id;
       std::map<LoopTrees::loop_t *, LoopTiler::loop_tiling_t *> tiling;
 
-      object_desc_t(unsigned id_, Kernel * kernel_, unsigned long file_id_);
+      object_desc_t(size_t id_, Kernel * kernel_, size_t file_id_);
     };
 
     typedef Kernel::kernel_desc_t * build_result_t;

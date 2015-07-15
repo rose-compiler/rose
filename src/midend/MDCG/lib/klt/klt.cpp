@@ -188,7 +188,7 @@ template <> Runtime<Hlang, Klang>::kernel_api_t Runtime<Hlang, Klang>::kernel_ap
 template <> 
 void Runtime<Hlang, Klang>::useSymbolsKernel(
   MFB::Driver<MFB::Sage> & driver,
-  unsigned long file_id
+  size_t file_id
 ) {
   driver.useSymbol<SgClassDeclaration>(kernel_api.getTileClass(),    file_id);
   driver.useSymbol<SgClassDeclaration>(kernel_api.getLoopClass(),    file_id);
@@ -198,7 +198,7 @@ void Runtime<Hlang, Klang>::useSymbolsKernel(
 template <>
 void Runtime<Hlang, Klang>::useSymbolsHost(
   MFB::Driver<MFB::Sage> & driver,
-  unsigned long file_id
+  size_t file_id
 ) {
   driver.useSymbol<SgClassDeclaration>(host_api.getTileClass(),   file_id);
   driver.useSymbol<SgClassDeclaration>(host_api.getLoopClass(),   file_id);
@@ -206,8 +206,8 @@ void Runtime<Hlang, Klang>::useSymbolsHost(
 }
 
 template <>
-unsigned Runtime<Hlang, Klang>::loadAPI(MDCG::ModelBuilder & model_builder, const std::string & KLT_RTL, const std::string & USER_RTL) {
-  unsigned tilek_model = model_builder.create();
+size_t Runtime<Hlang, Klang>::loadAPI(MDCG::ModelBuilder & model_builder, const std::string & KLT_RTL, const std::string & USER_RTL) {
+  size_t tilek_model = model_builder.create();
 
   model_builder.add(tilek_model, "tile",   KLT_RTL, "h");
   model_builder.add(tilek_model, "loop",   KLT_RTL, "h");

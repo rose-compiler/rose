@@ -31,7 +31,7 @@ namespace MDCG {
 
 class ModelBuilder {
   public:
-    typedef unsigned model_id_t;
+    typedef size_t model_id_t;
 
   private:
     MFB::Driver<MFB::Sage> & p_mfb_driver;
@@ -57,10 +57,10 @@ class ModelBuilder {
   public:
     ModelBuilder(MFB::Driver<MFB::Sage> & mfb_driver);
 
-    unsigned create();
+    size_t create();
 
     void add(
-      unsigned model_id_t,
+      size_t model_id_t,
       const std::string & name,
       const std::string & path,
       std::string suffix

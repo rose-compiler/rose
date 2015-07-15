@@ -35,9 +35,9 @@ struct TileDesc {
   static SgExpression * createFieldInitializer(
     const MDCG::StaticInitializer & static_initializer,
     MDCG::Model::field_t element,
-    unsigned field_id,
+    size_t field_id,
     const input_t & input,
-    unsigned file_id
+    size_t file_id
   );
 };
 
@@ -48,9 +48,9 @@ struct LoopDesc {
   static SgExpression * createFieldInitializer(
     const MDCG::StaticInitializer & static_initializer,
     MDCG::Model::field_t element,
-    unsigned field_id,
+    size_t field_id,
     const input_t & input,
-    unsigned file_id
+    size_t file_id
   );
 };
 
@@ -61,9 +61,9 @@ struct KernelDesc {
   static SgExpression * createFieldInitializer(
     const MDCG::StaticInitializer & static_initializer,
     MDCG::Model::field_t element,
-    unsigned field_id,
+    size_t field_id,
     const input_t & input,
-    unsigned file_id
+    size_t file_id
   );
 };
 
@@ -71,9 +71,9 @@ template <>
 SgExpression * TileDesc<Hlang>::createFieldInitializer(
   const MDCG::StaticInitializer & static_initializer,
   MDCG::Model::field_t element,
-  unsigned field_id,
+  size_t field_id,
   const input_t & input,
-  unsigned file_id
+  size_t file_id
 ) {
   switch (field_id) {
     case 0:
@@ -101,9 +101,9 @@ template <>
 SgExpression * LoopDesc<Hlang>::createFieldInitializer(
   const MDCG::StaticInitializer & static_initializer,
   MDCG::Model::field_t element,
-  unsigned field_id,
+  size_t field_id,
   const input_t & input,
-  unsigned file_id
+  size_t file_id
 ) {
   switch (field_id) {
     case 0:
@@ -127,9 +127,9 @@ template <>
 SgExpression * KernelDesc<Hlang, Klang>::createFieldInitializer(
   const MDCG::StaticInitializer & static_initializer,
   MDCG::Model::field_t element,
-  unsigned field_id,
+  size_t field_id,
   const input_t & input,
-  unsigned file_id
+  size_t file_id
 ) {
   assert(input->getKernels().size() == 1);
   Kernel::kernel_desc_t * kernel = input->getKernels()[0];

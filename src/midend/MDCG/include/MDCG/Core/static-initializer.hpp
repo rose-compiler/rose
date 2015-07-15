@@ -26,11 +26,11 @@ namespace MDCG {
 
 class StaticInitializer {
   private:
-    static unsigned s_var_gen_cnt;
+    static size_t s_var_gen_cnt;
   
     MFB::Driver<MFB::Sage> & p_mfb_driver;
 
-    SgVariableSymbol * instantiateDeclaration(std::string decl_name, unsigned file_id, SgType * type, SgInitializer * init) const;
+    SgVariableSymbol * instantiateDeclaration(std::string decl_name, size_t file_id, SgType * type, SgInitializer * init) const;
 
   public:
     StaticInitializer(MFB::Driver<MFB::Sage> & mfb_driver);
@@ -70,7 +70,7 @@ class StaticInitializer {
     template <class ModelTraversal, class Iterator>
     SgExpression * createArrayPointer(
       Model::class_t element,
-      unsigned num_element, Iterator input_begin, Iterator input_end,
+      size_t num_element, Iterator input_begin, Iterator input_end,
       MFB::Driver<MFB::Sage>::file_id_t file_id,
       const std::string & decl_name
     ) const;
@@ -78,7 +78,7 @@ class StaticInitializer {
     template <class ModelTraversal, class Iterator>
     SgExpression * createPointerArrayPointer(
       Model::class_t element,
-      unsigned num_element, Iterator input_begin, Iterator input_end,
+      size_t num_element, Iterator input_begin, Iterator input_end,
       MFB::Driver<MFB::Sage>::file_id_t file_id,
       const std::string & decl_name,
       const std::string & sub_decl_prefix
@@ -125,7 +125,7 @@ SgInitializer * StaticInitializer::createInitializer(
   if (expr == NULL) return NULL;
   expr_list->append_expression(expr);
   it_field++;
-  unsigned field_id = 1;
+  size_t field_id = 1;
   for (; it_field != element->scope->field_children.end(); it_field++) {
     expr = ModelTraversal::createFieldInitializer(*this, *it_field, field_id++, input, file_id);
     assert(expr != NULL);
@@ -185,7 +185,7 @@ SgAggregateInitializer * StaticInitializer::createPointerArray(
 ) const {
   SgExprListExp * expr_list = SageBuilder::buildExprListExp();
 
-  unsigned cnt = 0;
+  size_t cnt = 0;
 
   Iterator it;
   for (it = input_begin; it != input_end; it++) {
@@ -202,7 +202,7 @@ SgAggregateInitializer * StaticInitializer::createPointerArray(
 template <class ModelTraversal, class Iterator>
 SgExpression * StaticInitializer::createArrayPointer(
   Model::class_t element,
-  unsigned num_element,
+  size_t num_element,
   Iterator input_begin,
   Iterator input_end,
   MFB::Driver<MFB::Sage>::file_id_t file_id,
@@ -226,7 +226,7 @@ SgExpression * StaticInitializer::createArrayPointer(
 template <class ModelTraversal, class Iterator>
 SgExpression * StaticInitializer::createPointerArrayPointer(
   Model::class_t element,
-  unsigned num_element,
+  size_t num_element,
   Iterator input_begin,
   Iterator input_end,
   MFB::Driver<MFB::Sage>::file_id_t file_id,

@@ -46,10 +46,10 @@ class Generator {
     Driver & p_driver;
 
     std::string p_file_name;
-    unsigned long p_file_id;
+    size_t p_file_id;
 
   protected:
-    unsigned long createFile();
+    size_t createFile();
 
     void buildArgumentLists(const LoopTrees_ & loop_trees, Kernel_ * kernel);
 
@@ -71,9 +71,8 @@ bool cmpDataName(const Data<Annotation> * data_lhs, const Data<Annotation> * dat
 }
 
 template <class Annotation, class Runtime, class Driver>
-unsigned long Generator<Annotation, Runtime, Driver>::createFile() {
-  unsigned long file_id = p_driver.create(boost::filesystem::path(p_file_name));
-  return file_id;
+size_t Generator<Annotation, Runtime, Driver>::createFile() {
+  return p_driver.create(boost::filesystem::path(p_file_name));
 }
 
 template <class Annotation, class Runtime, class Driver>
@@ -90,7 +89,7 @@ void Generator<Annotation, Runtime, Driver>::buildArgumentLists(
   const std::vector<Data<Annotation> *> & privates = loop_trees.getPrivates();
 
   std::set<SgVariableSymbol *> sym_var_refs;
-    collectReferencedSymbols(kernel, sym_var_refs);
+  kernel->collectReferencedSymbols(sym_var_refs);
 
   // Parameter
 
@@ -241,7 +240,7 @@ void Generator<Annotation, Runtime, Driver>::generate(
 
       // 5 - Code Generation
 
-      unsigned cnt = 0;
+      size_t cnt = 0;
       typename std::set<std::map<loop_t *, loop_tiling_t *> >::iterator it_loop_tiling_map;
       for (it_loop_tiling_map = loop_tiling_set.begin(); it_loop_tiling_map != loop_tiling_set.end(); it_loop_tiling_map++) {
         typename ::MFB::KLT<Kernel>::object_desc_t kernel_desc(cnt++, *it_kernel, p_file_id);

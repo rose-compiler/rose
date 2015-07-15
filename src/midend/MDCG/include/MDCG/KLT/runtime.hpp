@@ -133,15 +133,15 @@ struct Runtime {
 
   // APIs
 
-    static unsigned loadAPI(MDCG::ModelBuilder & model_builder, const std::string & KLT_RTL, const std::string & USER_RTL);
+    static size_t loadAPI(MDCG::ModelBuilder & model_builder, const std::string & KLT_RTL, const std::string & USER_RTL);
 
     typedef API::kernel_t<Klang> kernel_api_t;
     static kernel_api_t kernel_api;
-    static void useSymbolsKernel(MFB::Driver<MFB::Sage> & driver, unsigned long file_id);
+    static void useSymbolsKernel(MFB::Driver<MFB::Sage> & driver, size_t file_id);
 
     typedef API::host_t<Hlang> host_api_t;
     static host_api_t host_api;
-    static void useSymbolsHost(MFB::Driver<MFB::Sage> & driver, unsigned long file_id);
+    static void useSymbolsHost(MFB::Driver<MFB::Sage> & driver, size_t file_id);
 
   // Execution Modes
 

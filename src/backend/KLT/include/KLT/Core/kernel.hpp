@@ -4,6 +4,7 @@
 
 #include "KLT/Core/loop-trees.hpp"
 #include "KLT/Core/loop-tiler.hpp"
+#include "KLT/Core/data.hpp"
 
 #include "MFB/utils.hpp"
 
@@ -33,7 +34,7 @@ class Kernel {
     typedef typename LoopTrees<Annotation>::cond_t cond_t;
     typedef typename LoopTrees<Annotation>::stmt_t stmt_t;
 
-    const unsigned long id;
+    const size_t id;
 
   public:
     struct dataflow_t {
@@ -153,8 +154,10 @@ class Kernel {
 
     SgFunctionParameterList * createParameterList() const;
 
+    void collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols) const;
+
   private:
-    static unsigned long id_cnt;
+    static size_t id_cnt;
 };
 
 template <class Annotation, class Runtime>
@@ -187,15 +190,13 @@ void Kernel<Annotation, Runtime>::registerLoopsAndNodes(node_t * node) {
 }
 
 template <class Annotation, class Runtime>
-void collectReferencedSymbols(Kernel<Annotation, Runtime> * kernel, std::set<SgVariableSymbol *> & symbols) {
-  typedef typename LoopTrees<Annotation>::node_t node_t;
-  const std::list<node_t *> & roots = kernel->getRoots();
+void Kernel<Annotation, Runtime>::collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols) const {
   typename std::list<node_t *>::const_iterator it_root;
-  for (it_root = roots.begin(); it_root != roots.end(); it_root++)
-    collectReferencedSymbols<Annotation>(*it_root, symbols);
+  for (it_root = p_looptree_roots.begin(); it_root != p_looptree_roots.end(); it_root++)
+    (*it_root)->collectReferencedSymbols(symbols, true);
 
-  if (!kernel->getDataflow().datas.empty())
-    collectReferencedSymbols<Annotation>(kernel->getDataflow().datas, symbols);
+  if (!p_data_flow.datas.empty())
+    ::KLT::collectReferencedSymbols<Annotation>(p_data_flow.datas, symbols);
 }
 
 template <class Annotation, class Runtime>

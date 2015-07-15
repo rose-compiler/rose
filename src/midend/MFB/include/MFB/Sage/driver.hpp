@@ -55,7 +55,7 @@ class api_t;
 template <>
 class Driver<Sage> {
   public:
-    typedef unsigned file_id_t;
+    typedef size_t file_id_t;
 
     SgProject * project;
 
@@ -214,7 +214,7 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
 }
 
 template <typename Object>
-void Driver<Sage>::createForwardDeclaration(typename Sage<Object>::symbol_t symbol, unsigned target_file_id) {
+void Driver<Sage>::createForwardDeclaration(typename Sage<Object>::symbol_t symbol, size_t target_file_id) {
   assert(false);
 }
 

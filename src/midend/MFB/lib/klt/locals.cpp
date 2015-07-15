@@ -12,9 +12,9 @@
 namespace MFB {
 
 KLT<Kernel>::object_desc_t::object_desc_t(
-  unsigned id_,
+  size_t id_,
   Kernel * kernel_,
-  unsigned long file_id_
+  size_t file_id_
 ) :
   id(id_),
   kernel(kernel_),

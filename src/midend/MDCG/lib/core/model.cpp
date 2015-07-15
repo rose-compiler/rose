@@ -337,7 +337,7 @@ void toDotNode<Model::e_model_function>(std::ostream & out, Model::function_t el
   toDotLabelNode<Model::e_model_function>(out, element, described_nodes);
 
   std::vector<Model::type_t>::const_iterator it;
-  unsigned cnt = 0;
+  size_t cnt = 0;
   for (it = element->node->args_types.begin(); it != element->node->args_types.end(); it++) {
     toDotNode<Model::e_model_type>(out, *it, processed_nodes, described_nodes);
     out << "element_" << element << " -> element_" << *it << " [label=\"type argument[" << cnt++ << "]\", color=\"blue\"]" << std::endl;
@@ -370,7 +370,7 @@ void toDotNode<Model::e_model_method>(std::ostream & out, Model::method_t elemen
   }
 
   std::vector<Model::type_t>::const_iterator it;
-  unsigned cnt = 0;
+  size_t cnt = 0;
   for (it = element->node->args_types.begin(); it != element->node->args_types.end(); it++) {
     toDotNode<Model::e_model_type>(out, *it, processed_nodes, described_nodes);
     out << "element_" << element << " -> element_" << *it << " [label=\"type argument[" << cnt++ << "]\", color=\"blue\"]" << std::endl;
@@ -504,7 +504,7 @@ void toDotNode<Model::e_model_class>(std::ostream & out, Model::class_t element,
 
   toDotLabelNode<Model::e_model_class>(out, element, described_nodes);
 
-  unsigned cnt = 0;
+  size_t cnt = 0;
   std::vector<Model::type_t>::const_iterator it_type;
   for (it_type = element->scope->type_children.begin(); it_type != element->scope->type_children.end(); it_type++) {
     toDotNode<Model::e_model_type>(out, *it_type, processed_nodes, described_nodes);

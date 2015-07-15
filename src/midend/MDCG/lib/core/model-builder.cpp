@@ -127,20 +127,20 @@ ModelBuilder::ModelBuilder(MFB::Driver<MFB::Sage> & mfb_driver) :
   p_models()
 {}
  
-unsigned ModelBuilder::create() {
-  unsigned model = p_models.size();
+size_t ModelBuilder::create() {
+  size_t model = p_models.size();
   p_models.push_back(Model::model_t());
   return model;
 }
 
 void ModelBuilder::add(
-  unsigned model_id,
+  size_t model_id,
   const std::string & name,
   const std::string & path,
   std::string suffix
 ) {
   boost::filesystem::path file_path = path + "/" + name + "." + suffix;
-  unsigned file_id = p_mfb_driver.add(file_path);
+  size_t file_id = p_mfb_driver.add(file_path);
 
   MFB::api_t * api = p_mfb_driver.getAPI(file_id);
 
@@ -412,11 +412,11 @@ void ModelBuilder::add(Model::model_t & model, SgType * sg_type) {
   model.types.push_back(element);
 }
  
-const Model::model_t & ModelBuilder::get(const unsigned model_id) const {
+const Model::model_t & ModelBuilder::get(const size_t model_id) const {
   return p_models[model_id];
 }
 
-void ModelBuilder::print(std::ostream & out, unsigned model) const {
+void ModelBuilder::print(std::ostream & out, size_t model) const {
   assert(false); /// \todo
 }
 

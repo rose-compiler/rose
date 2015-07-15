@@ -11,8 +11,8 @@
 
 #include "DLX/Core/constructs.hpp"
 #include "DLX/Core/clauses.hpp"
-#include "DLX/Core/frontend.hpp"
 #include "DLX/Core/parser.hpp"
+#include "DLX/Core/frontend.hpp"
 #include "DLX/Core/compiler.hpp"
 
 #include <vector>

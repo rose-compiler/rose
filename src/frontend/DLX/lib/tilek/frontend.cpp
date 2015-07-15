@@ -7,11 +7,10 @@
 #include "DLX/Core/clauses.hpp"
 #include "DLX/TileK/language.hpp"
 
+#include <queue>
 #include <iostream>
 
 #include <cassert>
-
-#include "rose.h"
 
 namespace DLX {
 

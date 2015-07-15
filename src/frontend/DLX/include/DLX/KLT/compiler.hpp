@@ -49,7 +49,7 @@ void compile(SgProject * project, const std::string & KLT_RTL, const std::string
 
     ::MDCG::ModelBuilder model_builder(driver);
 
-    unsigned model = Runtime::loadAPI(model_builder, KLT_RTL, USER_RTL);
+    size_t model = Runtime::loadAPI(model_builder, KLT_RTL, USER_RTL);
 
   // Initialize language description
 
@@ -106,7 +106,7 @@ void compile(SgProject * project, const std::string & KLT_RTL, const std::string
 
   // Stores static description of the generated kernels
 
-    unsigned host_data_file_id = driver.create(boost::filesystem::path(static_file));
+    size_t host_data_file_id = driver.create(boost::filesystem::path(static_file));
       driver.setUnparsedFile(host_data_file_id);
       driver.setCompiledFile(host_data_file_id);
     Runtime::useSymbolsHost(driver, host_data_file_id);

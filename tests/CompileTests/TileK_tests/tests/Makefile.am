@@ -18,6 +18,11 @@ clean-local:
 
 #########################################
 
+$(builddir)/../tilek:
+	make -C $(builddir)/.. tilek
+
+#########################################
+
 test_1-kernel.c: rose_test_1.c
 test_1-data.c: rose_test_1.c
 rose_test_1.c: $(srcdir)/../tests/test_1.c $(TILEK)

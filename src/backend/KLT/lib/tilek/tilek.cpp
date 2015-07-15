@@ -18,14 +18,9 @@ typedef ::MDCG::KLT::Runtime<Hlang, Klang> Runtime; // Runtime Description
 
 namespace KLT {
 
-template <>
-size_t ::KLT::LoopTrees<Annotation>::id_cnt = 0;
-
-template <>
-unsigned long ::KLT::Kernel<Annotation, Runtime>::id_cnt = 0;
-
-template <>
-unsigned long ::KLT::Kernel<Annotation, Runtime>::kernel_desc_t::id_cnt = 0;
+template <> size_t ::KLT::LoopTrees<Annotation>::id_cnt = 0;
+template <> size_t ::KLT::Kernel<Annotation, Runtime>::id_cnt = 0;
+template <> size_t ::KLT::Kernel<Annotation, Runtime>::kernel_desc_t::id_cnt = 0;
 
 template <>
 SgFunctionParameterList * Kernel<Annotation, Runtime>::createParameterList() const {
