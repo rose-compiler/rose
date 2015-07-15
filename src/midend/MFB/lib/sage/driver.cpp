@@ -114,8 +114,10 @@ unsigned Driver<Sage>::add(SgSourceFile * file) {
 }
 
 unsigned Driver<Sage>::add(const boost::filesystem::path & path) {
-  assert(boost::filesystem::exists(path));
-  assert(boost::filesystem::is_regular_file(path));
+  if (!boost::filesystem::exists(path) || !boost::filesystem::is_regular_file(path)) {
+    std::cerr << "[Driver<Sage>] Cannot find: " << path << std::endl;
+    assert(false);
+  }
 
   std::map<boost::filesystem::path, unsigned>::const_iterator it_file_id = path_to_id_map.find(path);
   if (it_file_id != path_to_id_map.end())
