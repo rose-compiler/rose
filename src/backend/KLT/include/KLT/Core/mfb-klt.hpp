@@ -3,7 +3,6 @@
 #define __KLT_MFB_KLT_HPP__
 
 #include "KLT/Core/kernel.hpp"
-#include "KLT/Core/runtime.hpp"
 
 #include "MFB/Sage/driver.hpp"
 #include "MFB/Sage/function-declaration.hpp"
@@ -31,15 +30,15 @@ class Driver<KLT> : public Driver<Sage> {
     typename KLT<Object>::build_result_t build(typename KLT<Object>::object_desc_t const & object);
 };
 
-template <class Annotation, class Language, class Runtime>
+template <class Annotation, class Runtime>
 SgBasicBlock * createLocalDeclarations(
   Driver<Sage> & driver,
   SgFunctionDefinition * kernel_defn,
-  typename ::KLT::Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps,
-  const typename ::KLT::Kernel<Annotation, Language, Runtime>::arguments_t & arguments,
+  typename ::KLT::Kernel<Annotation, Runtime>::local_symbol_maps_t & local_symbol_maps,
+  const typename ::KLT::Kernel<Annotation, Runtime>::arguments_t & arguments,
   const std::map<
     typename ::KLT::LoopTrees<Annotation>::loop_t *,
-    typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *
+    typename ::KLT::LoopTiler<Annotation, Runtime>::loop_tiling_t *
   > & loop_tiling
 );
 
@@ -48,10 +47,10 @@ bool compareTiles(typename ::KLT::LoopTrees<Annotation>::tile_t * t1, typename :
   return t1->order < t2->order;
 }
 
-template <class Annotation, class Language, class Runtime>
+template <class Annotation, class Runtime>
 typename ::KLT::LoopTrees<Annotation>::node_t * collapseLoopsAndTiles(
   typename ::KLT::LoopTrees<Annotation>::node_t * node,
-  const std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *> & loop_tiling,
+  const std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename ::KLT::LoopTiler<Annotation, Runtime>::loop_tiling_t *> & loop_tiling,
   std::vector<typename Runtime::loop_desc_t *> & loops,
   std::vector<typename Runtime::tile_desc_t *> & tiles
 ) {
@@ -62,7 +61,7 @@ typename ::KLT::LoopTrees<Annotation>::node_t * collapseLoopsAndTiles(
   typedef typename ::KLT::LoopTrees<Annotation>::block_t block_t;
   typedef typename ::KLT::LoopTrees<Annotation>::stmt_t  stmt_t;
 
-  typedef typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t loop_tiling_t;
+  typedef typename ::KLT::LoopTiler<Annotation, Runtime>::loop_tiling_t loop_tiling_t;
 
   loop_t  * loop  = dynamic_cast<loop_t  *>(node);
   tile_t  * tile  = dynamic_cast<tile_t  *>(node);
@@ -77,7 +76,6 @@ typename ::KLT::LoopTrees<Annotation>::node_t * collapseLoopsAndTiles(
       std::vector<std::pair<loop_t *, loop_tiling_t *> > collapsable_loops;
       block_t * next_block = NULL;
       while (loop != NULL && it_tiling != loop_tiling.end() && it_tiling->second != NULL && it_tiling->second->tiles.size() > 0) {
-//      std::cerr << "# A >> Loop " << loop->id << std::endl;
         typename Runtime::loop_desc_t * loop_desc = new typename Runtime::loop_desc_t(loop->id, loop->lower_bound, loop->upper_bound, loop->stride);
         loops.push_back(loop_desc);
         loop_map.insert(std::pair<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::loop_desc_t *>(loop, loop_desc));
@@ -108,7 +106,6 @@ typename ::KLT::LoopTrees<Annotation>::node_t * collapseLoopsAndTiles(
           tile_t * tile = new tile_t(it_tile->id, it_tile->order, it_tile->iterator_sym, it_collapsable->first);
           collapsed_tiles.push_back(tile);
 
-//        std::cerr << "# B >> Tile " << it_tile->id << std::endl;
           typename Runtime::tile_desc_t * tile_desc = new typename Runtime::tile_desc_t(*it_tile);
           tiles.push_back(tile_desc);
           typename std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::loop_desc_t *>::const_iterator it_loop_map = loop_map.find(it_collapsable->first);
@@ -122,17 +119,16 @@ typename ::KLT::LoopTrees<Annotation>::node_t * collapseLoopsAndTiles(
       typename std::vector<tile_t *>::const_iterator it_collapsed;
       for (it_collapsed = collapsed_tiles.begin(); it_collapsed != collapsed_tiles.end() - 1; it_collapsed++)
         (*it_collapsed)->tile = *(it_collapsed + 1);
-      collapsed_tiles.back()->block = (block_t *)collapseLoopsAndTiles<Annotation, Language, Runtime>(next_block, loop_tiling, loops, tiles);
+      collapsed_tiles.back()->block = (block_t *)collapseLoopsAndTiles<Annotation, Runtime>(next_block, loop_tiling, loops, tiles);
 
       return collapsed_tiles.front();
     }
     else {
-//    std::cerr << "# A >> Loop " << loop->id << std::endl;
       loops.push_back(new typename Runtime::loop_desc_t(loop->id, loop->lower_bound, loop->upper_bound, loop->stride));
 
       loop_t * new_loop = new loop_t(loop->id, loop->iterator, loop->lower_bound, loop->upper_bound, loop->stride);
         new_loop->annotations = loop->annotations;
-        new_loop->block = (block_t *)collapseLoopsAndTiles<Annotation, Language, Runtime>(loop->block, loop_tiling, loops, tiles);
+        new_loop->block = (block_t *)collapseLoopsAndTiles<Annotation, Runtime>(loop->block, loop_tiling, loops, tiles);
       return new_loop;
     }
   }
@@ -141,15 +137,15 @@ typename ::KLT::LoopTrees<Annotation>::node_t * collapseLoopsAndTiles(
   }
   else if (cond != NULL) {
     cond_t * new_cond = new cond_t(cond->condition);
-      new_cond->block_true  = (block_t *)collapseLoopsAndTiles<Annotation, Language, Runtime>(cond->block_true , loop_tiling, loops, tiles);
-      new_cond->block_false = (block_t *)collapseLoopsAndTiles<Annotation, Language, Runtime>(cond->block_false, loop_tiling, loops, tiles);
+      new_cond->block_true  = (block_t *)collapseLoopsAndTiles<Annotation, Runtime>(cond->block_true , loop_tiling, loops, tiles);
+      new_cond->block_false = (block_t *)collapseLoopsAndTiles<Annotation, Runtime>(cond->block_false, loop_tiling, loops, tiles);
     return new_cond;
   }
   else if (block != NULL) {
     typename std::vector<node_t *>::const_iterator it_child;
     block_t * new_block = new block_t();
     for (it_child = block->children.begin(); it_child != block->children.end(); it_child++)
-      new_block->children.push_back(collapseLoopsAndTiles<Annotation, Language, Runtime>(*it_child, loop_tiling, loops, tiles));
+      new_block->children.push_back(collapseLoopsAndTiles<Annotation, Runtime>(*it_child, loop_tiling, loops, tiles));
     return new_block;
   }
   else if (stmt != NULL) {
@@ -160,16 +156,15 @@ typename ::KLT::LoopTrees<Annotation>::node_t * collapseLoopsAndTiles(
 
 template <class Object>
 typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::object_desc_t const & object) {
-  typedef typename KLT<Object>::Annotation Annotation;
-  typedef typename KLT<Object>::Language Language;
-  typedef typename KLT<Object>::Runtime Runtime;
+  typedef typename Object::Annotation_ Annotation;
+  typedef typename Object::Runtime_ Runtime;
 
   typedef typename ::KLT::LoopTrees<Annotation>::node_t node_t;
   typedef typename ::KLT::LoopTrees<Annotation>::loop_t loop_t;
 
   std::ostringstream kernel_function_name;
   kernel_function_name << "kernel_" << object.kernel << "_" << object.id;
-  typename KLT<Object>::build_result_t result = new typename ::KLT::Kernel<Annotation, Language, Runtime>::kernel_desc_t(kernel_function_name.str());
+  typename KLT<Object>::build_result_t result = new typename ::KLT::Kernel<Annotation, Runtime>::kernel_desc_t(kernel_function_name.str());
 
   std::map<SgVariableSymbol *, SgVariableSymbol *> param_to_field_map;
   std::map<SgVariableSymbol *, SgVariableSymbol *> coef_to_field_map;
@@ -180,20 +175,12 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
 
   // * Function Declaration *
 
-  SgFunctionParameterList * kernel_function_params = ::KLT::createParameterList<Annotation, Language, Runtime>(object.kernel);
+  SgFunctionParameterList * kernel_function_params = object.kernel->createParameterList();
 
-  ::KLT::Runtime::get_exec_config<Annotation, Language, Runtime>(result->config, object.kernel);
+  Runtime::template set_exec_config<Annotation>(result->config, object.kernel);
 
-  MFB::Sage<SgFunctionDeclaration>::object_desc_t kernel_function_desc(
-    result->kernel_name,
-    SageBuilder::buildVoidType(),
-    kernel_function_params,
-    NULL,
-    object.file_id,
-    object.file_id
-  );
+  MFB::Sage<SgFunctionDeclaration>::object_desc_t kernel_function_desc(result->kernel_name, SageBuilder::buildVoidType(), kernel_function_params, NULL, object.file_id, object.file_id);
 
-//Driver<Sage> * sage_driver = dynamic_cast<Driver<Sage> *>(this);
   Driver<Sage> * sage_driver = (Driver<Sage> *)this;
   assert(sage_driver != NULL);
 
@@ -206,11 +193,11 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
 
     SgFunctionDeclaration * first_kernel_decl = isSgFunctionDeclaration(kernel_decl->get_firstNondefiningDeclaration());
     assert(first_kernel_decl != NULL);
-    KLT<Object>::Language::applyKernelModifiers(first_kernel_decl);
+    Runtime::applyKernelModifiers(first_kernel_decl);
 
     SgFunctionDeclaration * defn_kernel_decl = isSgFunctionDeclaration(kernel_decl->get_definingDeclaration());
     assert(defn_kernel_decl != NULL);
-    KLT<Object>::Language::applyKernelModifiers(defn_kernel_decl);
+    Runtime::applyKernelModifiers(defn_kernel_decl);
 
     if (guard_kernel_decl)
       SageInterface::guardNode(defn_kernel_decl, std::string("defined(ENABLE_") + result->kernel_name + ")");
@@ -218,9 +205,9 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
 
   // * Local Declarations *
 
-  typename ::KLT::Kernel<Annotation, Language, Runtime>::local_symbol_maps_t local_symbol_maps;
+  typename ::KLT::Kernel<Annotation, Runtime>::local_symbol_maps_t local_symbol_maps;
 
-  SgBasicBlock * body = createLocalDeclarations<Annotation, Language, Runtime> (
+  SgBasicBlock * body = createLocalDeclarations<Annotation, Runtime> (
     *(Driver<Sage> *)this,
     kernel_result.definition,
     local_symbol_maps,
@@ -232,27 +219,9 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
   typename std::list<node_t *>::const_iterator it_root;
   for (it_root = kernel_roots.begin(); it_root != kernel_roots.end(); it_root++) {
     node_t * root = *it_root;
-
-//  ::KLT::LoopTrees<Annotation>::toText(root, std::cerr, "# 1 >> "); std::cerr << std::endl;
-
-    root = collapseLoopsAndTiles<typename KLT<Object>::Annotation, typename KLT<Object>::Language, typename KLT<Object>::Runtime>(*it_root, object.tiling, result->loops, result->tiles);
-
-//  ::KLT::LoopTrees<Annotation>::toText(root, std::cerr, "# 2 >> "); std::cerr << std::endl;
-
-    ::KLT::generateKernelBody<Annotation, Language, Runtime>(root, (typename Runtime::exec_mode_t)0, result->config, local_symbol_maps, body);
+    root = collapseLoopsAndTiles<Annotation, Runtime>(root, object.tiling, result->loops, result->tiles);
+    ::KLT::generateKernelBody<Annotation, Runtime>(root, (typename Runtime::exec_mode_t)0, result->config, local_symbol_maps, body);
   }
-
-//std::cerr << "# >> Kernel " << result->kernel_name << " (" << result->id << ")" << std::endl;
-
-//typename std::vector<typename Runtime::loop_desc_t *>::const_iterator it_loop;
-//for (it_loop = result->loops.begin(); it_loop != result->loops.end(); it_loop++) {
-//  std::cerr << "# >> Loop " << (*it_loop)->id << std::endl;
-//}
-
-//typename std::vector<typename Runtime::tile_desc_t *>::const_iterator it_tile;
-//for (it_tile = result->tiles.begin(); it_tile != result->tiles.end(); it_tile++) {
-//  std::cerr << "# >> Tile " << (*it_tile)->id << std::endl;
-//}
 
   SageInterface::setSourcePositionForTransformation(body);
 
@@ -264,3 +233,4 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
 }
 
 #endif /* __KLT__MFB_KLT_HPP__ */
+

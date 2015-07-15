@@ -285,12 +285,6 @@ void printAnnotations(
 
 //////////////////////////////////////////////////////////////////////////////////////
 
-SgExpression * translateConstExpression(
-  SgExpression * expr, 
-  const std::map<SgVariableSymbol *, SgVariableSymbol *> & param_to_local,
-  const std::map<SgVariableSymbol *, SgVariableSymbol *> & iter_to_local
-);
-
 template <class Annotation>
 void collectLeaves(typename LoopTrees<Annotation>::node_t * tree, std::set<SgStatement *> & leaves);
 
