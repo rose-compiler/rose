@@ -48,6 +48,8 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 # DQ (7/14/2013): Temporarily commented out this test to evaluate progress on tests/CompileTests directory.
 #  SUBDIRS += Fortran_tests CAF2_tests
    SUBDIRS += Fortran_tests
+#Pei-Hung (7/13/2015): Adding mixlanguage tests (patches from Stephen Guzik)
+   SUBDIRS += mixLanguage_tests
 endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -87,6 +89,8 @@ SUBDIRS += frontend_integration
 
 # DQ (2/15/2014): Adding systemc tests (part of general C++ robustness tests)
 SUBDIRS += systemc_tests
+
+SUBDIRS += TileK_tests
 
 # end of ROSE_USE_CLANG_FRONTEND
 # endif

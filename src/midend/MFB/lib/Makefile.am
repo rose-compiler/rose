@@ -1,3 +1,3 @@
 
-SUBDIRS = sage
+SUBDIRS=sage klt utils
 

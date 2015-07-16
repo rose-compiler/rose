@@ -40,14 +40,22 @@ class LoopTrees {
       node_t * parent;
 
       node_t() : parent(NULL) {}
-      virtual ~node_t() {}
+
+      virtual void collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) = 0;
     };
 
     struct block_t : public node_t {
       std::vector<node_t *> children;
 
       block_t() : node_t(), children() {}
-      virtual ~block_t() {}
+
+      virtual void collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) {
+        if (go_down_children) {
+          typename std::vector<typename LoopTrees<Annotation>::node_t *>::const_iterator it;
+          for (it = children.begin(); it != children.end(); it++)
+            (*it)->collectReferencedSymbols(symbols, true);
+        }
+      }
     };
 
     struct cond_t : public node_t {
@@ -57,7 +65,18 @@ class LoopTrees {
       block_t * block_false;
 
       cond_t(SgExpression * cond = NULL) : node_t(), condition(cond), block_true(NULL), block_false(NULL) {};
-      virtual ~cond_t() {}
+
+      virtual void collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) {
+        std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(condition);
+        std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+        for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+          symbols.insert((*it_var_ref)->get_symbol());
+
+        if (go_down_children) {
+          block_true->collectReferencedSymbols(symbols, true);
+          block_false->collectReferencedSymbols(symbols, true);
+        }
+      }
     };
 
     struct loop_t : public node_t {
@@ -74,22 +93,33 @@ class LoopTrees {
       block_t * block;
 
       loop_t(
-        size_t id_,
-        SgVariableSymbol * it = NULL,
-        SgExpression * lb = NULL,
-        SgExpression * ub = NULL,
-        SgExpression * stride_ = NULL
+        size_t id_, SgVariableSymbol * it = NULL,
+        SgExpression * lb = NULL, SgExpression * ub = NULL, SgExpression * stride_ = NULL
       ) :
-        node_t(),
-        id(id_),
-        iterator(it),
-        lower_bound(lb),
-        upper_bound(ub),
-        stride(stride_),
-        annotations(),
-        block(NULL)
+        node_t(), id(id_), iterator(it),
+        lower_bound(lb), upper_bound(ub), stride(stride_),
+        annotations(), block(NULL)
       {}
-      virtual ~loop_t() {}
+
+      virtual void collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) {
+        std::vector<SgVarRefExp *> var_refs;
+        std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+        if (isDistributed()) {
+          var_refs = SageInterface::querySubTree<SgVarRefExp>(lower_bound);
+          for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+            symbols.insert((*it_var_ref)->get_symbol());
+
+          var_refs = SageInterface::querySubTree<SgVarRefExp>(upper_bound);
+          for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+            symbols.insert((*it_var_ref)->get_symbol());
+
+          var_refs = SageInterface::querySubTree<SgVarRefExp>(stride);
+          for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+            symbols.insert((*it_var_ref)->get_symbol());
+        }
+
+        if (go_down_children) block->collectReferencedSymbols(symbols, true);
+      }
 
       bool isDistributed() const { return false; } // only influence wether or not the variables used to compute the loop's bounds are parameter ('false' is safe)
       bool isSplitted() const { return false; }
@@ -108,18 +138,31 @@ class LoopTrees {
       tile_t(
         size_t id_, size_t order_, SgVariableSymbol * iterator_sym_, loop_t * loop_
       ) :
-        id(id_), order(order_), node_t(), loop(loop_),
+        node_t(), id(id_), order(order_), loop(loop_),
         tile(NULL), block(NULL), iterator_sym(iterator_sym_)
       {}
 
-      virtual ~tile_t() {}
+      virtual void collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) {
+        assert(false);
+//      loop->collectReferencedSymbols(symbols, true);
+//      if (go_down_children) {
+//        if (tile != NULL)  tile->collectReferencedSymbols(symbols, true);
+//        if (block != NULL) block->collectReferencedSymbols(symbols, true);
+//      }
+      }
     };
 
     struct stmt_t : public node_t {
       SgStatement * statement;
 
       stmt_t(SgStatement * stmt = NULL) : node_t(), statement(stmt) {}
-      virtual ~stmt_t() {}
+
+      virtual void collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) {
+        std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(statement);
+        std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+        for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+          symbols.insert((*it_var_ref)->get_symbol());
+      }
     };
 
   protected:
@@ -292,12 +335,6 @@ void printAnnotations(
 );
 
 //////////////////////////////////////////////////////////////////////////////////////
-
-SgExpression * translateConstExpression(
-  SgExpression * expr, 
-  const std::map<SgVariableSymbol *, SgVariableSymbol *> & param_to_local,
-  const std::map<SgVariableSymbol *, SgVariableSymbol *> & iter_to_local
-);
 
 template <class Annotation>
 void collectLeaves(typename LoopTrees<Annotation>::node_t * tree, std::set<SgStatement *> & leaves);
@@ -592,6 +629,10 @@ typename LoopTrees<Annotation>::node_t * LoopTrees<Annotation>::build(
       std::vector<SgVarRefExp *>::const_iterator it_var_ref;
       for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
         SgVariableSymbol * sym = (*it_var_ref)->get_symbol();
+        assert(sym->get_declaration() != NULL);
+        assert(sym->get_declaration()->get_parent() != NULL);
+        assert(sym->get_declaration()->get_parent()->get_parent() != NULL);
+        if (isSgClassDefinition(sym->get_declaration()->get_parent()->get_parent())) continue;
         if (std::find(iterators.begin(), iterators.end(), sym) == iterators.end() && std::find(locals.begin(), locals.end(), sym) == locals.end())
           others.push_back(sym); 
       }
@@ -613,6 +654,10 @@ typename LoopTrees<Annotation>::node_t * LoopTrees<Annotation>::build(
       std::vector<SgVarRefExp *>::const_iterator it_var_ref;
       for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
         SgVariableSymbol * sym = (*it_var_ref)->get_symbol();
+        assert(sym->get_declaration() != NULL);
+        assert(sym->get_declaration()->get_parent() != NULL);
+        assert(sym->get_declaration()->get_parent()->get_parent() != NULL);
+        if (isSgClassDefinition(sym->get_declaration()->get_parent()->get_parent())) continue;
         if (std::find(iterators.begin(), iterators.end(), sym) == iterators.end() && std::find(locals.begin(), locals.end(), sym) == locals.end())
           others.push_back(sym); 
       }
@@ -637,6 +682,10 @@ typename LoopTrees<Annotation>::node_t * LoopTrees<Annotation>::build(
       std::vector<SgVarRefExp *>::const_iterator it_var_ref;
       for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
         SgVariableSymbol * sym = (*it_var_ref)->get_symbol();
+        assert(sym->get_declaration() != NULL);
+        assert(sym->get_declaration()->get_parent() != NULL);
+        assert(sym->get_declaration()->get_parent()->get_parent() != NULL);
+        if (isSgClassDefinition(sym->get_declaration()->get_parent()->get_parent())) continue;
         if (std::find(iterators.begin(), iterators.end(), sym) == iterators.end() && std::find(locals.begin(), locals.end(), sym) == locals.end())
           others.push_back(sym); 
       }
@@ -995,60 +1044,6 @@ void collectLeaves(typename LoopTrees<Annotation>::node_t * tree, std::set<SgSta
   }
   else if (stmt != NULL) {
     leaves.insert(stmt->statement);
-  }
-  else assert(false);
-}
-
-template <class Annotation>
-void collectReferencedSymbols(typename LoopTrees<Annotation>::node_t * tree, std::set<SgVariableSymbol *> & symbols, bool go_down_children) {
-  if (tree == NULL) return;
-
-  typename LoopTrees<Annotation>::loop_t  * loop  = dynamic_cast<typename LoopTrees<Annotation>::loop_t  *>(tree);
-  typename LoopTrees<Annotation>::cond_t  * cond  = dynamic_cast<typename LoopTrees<Annotation>::cond_t  *>(tree);
-  typename LoopTrees<Annotation>::block_t * block = dynamic_cast<typename LoopTrees<Annotation>::block_t *>(tree);
-  typename LoopTrees<Annotation>::stmt_t  * stmt  = dynamic_cast<typename LoopTrees<Annotation>::stmt_t  *>(tree);
-
-  std::vector<SgVarRefExp *> var_refs;
-  std::vector<SgVarRefExp *>::const_iterator it_var_ref;
-
-  if (loop != NULL) {
-    // If a loop is distributed, bounds are computed by the host.
-    if (!loop->isDistributed()) {
-      var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->lower_bound);
-      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
-        symbols.insert((*it_var_ref)->get_symbol());
-
-      var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->upper_bound);
-      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
-        symbols.insert((*it_var_ref)->get_symbol());
-
-      var_refs = SageInterface::querySubTree<SgVarRefExp>(loop->stride);
-      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
-        symbols.insert((*it_var_ref)->get_symbol());
-    }
-
-    if (go_down_children)
-      collectReferencedSymbols<Annotation>(loop->block, symbols);
-  }
-  else if (cond != NULL) {
-    var_refs = SageInterface::querySubTree<SgVarRefExp>(cond->condition);
-    for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
-      symbols.insert((*it_var_ref)->get_symbol());
-
-    if (go_down_children) {
-      collectReferencedSymbols<Annotation>(cond->block_true, symbols);
-      collectReferencedSymbols<Annotation>(cond->block_false, symbols);
-    }
-  }
-  else if (block != NULL) {
-    typename std::vector<typename LoopTrees<Annotation>::node_t *>::const_iterator it;
-    for (it = block->children.begin(); it != block->children.end(); it++)
-      collectReferencedSymbols<Annotation>(*it, symbols);
-  }
-  else if (stmt != NULL) {
-    var_refs = SageInterface::querySubTree<SgVarRefExp>(stmt->statement);
-    for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
-      symbols.insert((*it_var_ref)->get_symbol());
   }
   else assert(false);
 }
