@@ -1,3 +1,3 @@
 
-SUBDIRS = core tilek
+SUBDIRS = core
 

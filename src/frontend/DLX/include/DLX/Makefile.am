@@ -1,3 +1,3 @@
 
-SUBDIRS = Core KLT TileK
+SUBDIRS = Core KLT
 

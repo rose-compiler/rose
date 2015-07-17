@@ -17,7 +17,7 @@ typedef ::MDCG::KLT::Runtime<Hlang, Klang> Runtime; // Runtime Description
 #include "MDCG/KLT/model.hpp"
 typedef ::MDCG::KLT::KernelDesc<Hlang, Klang> KernelDesc; // Model for Static Initializer
 
-#include "DLX/KLT/compiler.hpp"
+#include "DLX/KLT/compiler.hpp" // Needs Annotation and Runtime to be defined
 
 #include <cassert>
 

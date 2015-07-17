@@ -1,26 +1,36 @@
 
 #include "sage3basic.h"
 
-#include "KLT/Core/data.hpp"
+#include "DLX/TileK/language.hpp"
+typedef ::DLX::TileK::language_t Dlang; // Directives Language
 
 #include "DLX/KLT/annotations.hpp"
+typedef ::DLX::KLT::Annotation<Dlang> Annotation;
 
-#include "MFB/KLT/klt.hpp"
+#include "KLT/Language/c-family.hpp"
+typedef ::KLT::Language::C Hlang; // Host Language
+typedef ::KLT::Language::C Klang; // Kernel Language
+
+#include "MDCG/KLT/runtime.hpp"
+typedef ::MDCG::KLT::Runtime<Hlang, Klang> Runtime; // Runtime Description
+
+#include "KLT/Core/data.hpp"
+typedef ::KLT::Data<Annotation> Data;
+
+#include "KLT/Core/loop-trees.hpp"
+typedef ::KLT::LoopTrees<Annotation> LoopTrees;
+
+#include "KLT/Core/kernel.hpp"
+typedef ::KLT::Kernel<Annotation, Runtime> Kernel;
+
+#include "KLT/Core/loop-tiler.hpp"
+typedef ::KLT::LoopTiler<Annotation, Runtime> LoopTiler;
+
+#include "KLT/Core/mfb-klt.hpp"
 
 #include "MFB/utils.hpp"
 
 namespace MFB {
-
-KLT<Kernel>::object_desc_t::object_desc_t(
-  size_t id_,
-  Kernel * kernel_,
-  size_t file_id_
-) :
-  id(id_),
-  kernel(kernel_),
-  file_id(file_id_),
-  tiling()
-{}
 
 template <>
 SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
