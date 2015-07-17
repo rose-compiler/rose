@@ -1,6 +1,8 @@
 #ifndef ROSE_SAGE_BUILDER_INTERFACE
 #define ROSE_SAGE_BUILDER_INTERFACE
 
+#define USE_MATLAB_IR_NODES 1
+
 #include <string>
 
 /*!
@@ -285,6 +287,10 @@ ROSE_DLL_API SgTypeImaginary* buildImaginaryType(SgType *base_type = NULL);
 
 //! Build a const/volatile type qualifier
 ROSE_DLL_API SgConstVolatileModifier * buildConstVolatileModifier (SgConstVolatileModifier::cv_modifier_enum mtype=SgConstVolatileModifier::e_unknown);
+
+//! Build a Matrix Type for Matlab
+// ROSE_DLL_API SgTypeMatrix* buildMatrixType(SgType *base_type = NULL);
+  ROSE_DLL_API SgTypeMatrix* buildMatrixType();
 //@}
 
 //--------------------------------------------------------------
@@ -438,6 +444,10 @@ BUILD_UNARY_PROTO(ConjugateOp)
 BUILD_UNARY_PROTO(VarArgStartOneOperandOp)
 BUILD_UNARY_PROTO(VarArgEndOp)
 
+#if USE_MATLAB_IR_NODES == 1
+  BUILD_UNARY_PROTO(MatrixTransposeOp)
+#endif  
+  
 //! Build a type casting expression
 ROSE_DLL_API SgCastExp * buildCastExp(SgExpression *  operand_i = NULL,
                 SgType * expression_type = NULL,
@@ -545,6 +555,17 @@ BUILD_BINARY_PROTO(XorAssignOp)
 BUILD_BINARY_PROTO(VarArgCopyOp)
 BUILD_BINARY_PROTO(VarArgStartOp)
 
+#if USE_MATLAB_IR_NODES == 1
+  BUILD_BINARY_PROTO(PowerOp);
+  BUILD_BINARY_PROTO(ElementwisePowerOp);
+  BUILD_BINARY_PROTO(ElementwiseMultiplyOp);
+  BUILD_BINARY_PROTO(ElementwiseDivideOp);
+  BUILD_BINARY_PROTO(LeftDivideOp);
+  BUILD_BINARY_PROTO(ElementwiseLeftDivideOp);
+  BUILD_BINARY_PROTO(ElementwiseAddOp);
+  BUILD_BINARY_PROTO(ElementwiseSubtractOp);
+#endif  
+  
 #undef BUILD_BINARY_PROTO
 
 //! Build a conditional expression ?:
@@ -741,8 +762,20 @@ ROSE_DLL_API SgLambdaCapture* buildLambdaCapture_nfi(SgExpression* capture_varia
 ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList    ();
 ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList_nfi();
 
+ 
 //@}
 
+//----------------------
+//@{
+/*! @name Builders for Matlab nodes
+ */
+ 
+ ROSE_DLL_API SgRangeExp* buildRangeExp(SgExpression *start);
+ ROSE_DLL_API SgMatrixExp* buildMatrixExp(SgExprListExp *firstRow);
+ ROSE_DLL_API SgMagicColonExp* buildMagicColonExp();
+//@}
+
+ 
 //--------------------------------------------------------------
 //@{
 /*! @name Builders for support nodes

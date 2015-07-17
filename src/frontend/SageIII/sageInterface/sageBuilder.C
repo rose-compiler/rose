@@ -5985,6 +5985,10 @@ BUILD_UNARY_DEF(ConjugateOp)
 BUILD_UNARY_DEF(VarArgStartOneOperandOp)
 BUILD_UNARY_DEF(VarArgEndOp)
 
+#if USE_MATLAB_IR_NODES == 1
+  BUILD_UNARY_DEF(MatrixTransposeOp)
+#endif 
+
 #undef BUILD_UNARY_DEF
 
 SgCastExp * SageBuilder::buildCastExp(SgExpression *  operand_i,
@@ -6193,6 +6197,17 @@ BUILD_BINARY_DEF(XorAssignOp)
 
 BUILD_BINARY_DEF(VarArgCopyOp)
 BUILD_BINARY_DEF(VarArgStartOp)
+
+#if USE_MATLAB_IR_NODES == 1
+  BUILD_BINARY_DEF(PowerOp);
+  BUILD_BINARY_DEF(ElementwisePowerOp);
+  BUILD_BINARY_DEF(ElementwiseMultiplyOp);
+  BUILD_BINARY_DEF(ElementwiseDivideOp);
+  BUILD_BINARY_DEF(LeftDivideOp);
+  BUILD_BINARY_DEF(ElementwiseLeftDivideOp);
+  BUILD_BINARY_DEF(ElementwiseAddOp);
+  BUILD_BINARY_DEF(ElementwiseSubtractOp);
+#endif  
 
 #undef BUILD_BINARY_DEF
 
@@ -9911,6 +9926,45 @@ SgTypeImaginary* SageBuilder::buildImaginaryType(SgType* base_type /*=NULL*/)
    ROSE_ASSERT(result!=NULL);
    return result;
  }
+
+//! Build a Matrix Type for Matlab
+SgTypeMatrix* SageBuilder::buildMatrixType()
+{
+  SgTypeMatrix *result = new SgTypeMatrix();
+  ROSE_ASSERT(result != NULL);
+  return result;
+}
+
+SgRangeExp* SageBuilder::buildRangeExp(SgExpression *start)
+{
+  SgRangeExp *result = new SgRangeExp();
+  SageInterface::setOneSourcePositionForTransformation(result);
+  ROSE_ASSERT(result != NULL);
+  
+  result->append(start);
+  return result;
+}
+
+SgMatrixExp* SageBuilder::buildMatrixExp(SgExprListExp *firstRow)
+{
+  SgMatrixExp *result = new SgMatrixExp();
+  SageInterface::setOneSourcePositionForTransformation(result);
+  
+  result->append_expression(firstRow);
+  ROSE_ASSERT(result != NULL);
+  
+  return result;
+}
+
+SgMagicColonExp* SageBuilder::buildMagicColonExp()
+{
+  SgMagicColonExp *result = new SgMagicColonExp();
+  SageInterface::setOneSourcePositionForTransformation(result);
+
+  ROSE_ASSERT(result != NULL);
+
+  return result;
+}
 
 //! Build a const/volatile type qualifier
 SgConstVolatileModifier * SageBuilder::buildConstVolatileModifier (SgConstVolatileModifier::cv_modifier_enum mtype/*=SgConstVolatileModifier::e_unknown*/)
