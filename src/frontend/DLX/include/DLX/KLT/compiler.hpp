@@ -12,7 +12,7 @@
 #include "KLT/Core/loop-tiler.hpp"
 #include "KLT/Core/loop-mapper.hpp"
 #include "KLT/Core/data-flow.hpp"
-#include "KLT/Core/generator.hpp"
+#include "KLT/Core/generator.hpp" // Needs Annotation and Runtime to be defined
 #include "KLT/Core/kernel.hpp"
 #include "KLT/Core/mfb-klt.hpp"
 

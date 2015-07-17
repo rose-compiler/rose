@@ -1727,10 +1727,8 @@ src/frontend/DLX/include/Makefile
 src/frontend/DLX/include/DLX/Makefile
 src/frontend/DLX/include/DLX/Core/Makefile
 src/frontend/DLX/include/DLX/KLT/Makefile
-src/frontend/DLX/include/DLX/TileK/Makefile
 src/frontend/DLX/lib/Makefile
 src/frontend/DLX/lib/core/Makefile
-src/frontend/DLX/lib/tilek/Makefile
 src/frontend/Partitioner2/Makefile
 src/midend/Makefile
 src/midend/binaryAnalyses/Makefile
@@ -1748,7 +1746,6 @@ src/midend/MFB/include/MFB/Sage/Makefile
 src/midend/MFB/include/MFB/KLT/Makefile
 src/midend/MFB/lib/Makefile
 src/midend/MFB/lib/sage/Makefile
-src/midend/MFB/lib/klt/Makefile
 src/midend/MFB/lib/utils/Makefile
 src/midend/MDCG/Makefile
 src/midend/MDCG/include/Makefile
@@ -1767,7 +1764,6 @@ src/backend/KLT/include/KLT/RTL/Makefile
 src/backend/KLT/lib/Makefile
 src/backend/KLT/lib/core/Makefile
 src/backend/KLT/lib/rtl/Makefile
-src/backend/KLT/lib/tilek/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
 src/roseExtensions/sqlite3x/Makefile
@@ -2137,9 +2133,12 @@ tests/CompileTests/frontend_integration/Makefile
 tests/CompileTests/x10_tests/Makefile
 tests/CompileTests/systemc_tests/Makefile
 tests/CompileTests/mixLanguage_tests/Makefile
-tests/CompileTests/TileK_tests/Makefile
-tests/CompileTests/TileK_tests/RTL/Makefile
-tests/CompileTests/TileK_tests/tests/Makefile
+tests/CompileTests/TileK/Makefile
+tests/CompileTests/TileK/include/DLX/TileK/Makefile
+tests/CompileTests/TileK/include/RTL/Makefile
+tests/CompileTests/TileK/lib/Makefile
+tests/CompileTests/TileK/src/Makefile
+tests/CompileTests/TileK/tests/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile

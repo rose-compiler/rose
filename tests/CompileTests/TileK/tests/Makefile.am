@@ -5,9 +5,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 TILEK_INC=$(top_srcdir)/src/backend/KLT/include
 
-TILEK=$(builddir)/../tilek
+TILEK=$(builddir)/../src/tilek
 
-TILEK_RTL=$(builddir)/../RTL/libTileK-RTL.la
+TILEK_RTL=$(builddir)/../lib/libTileK-RTL.la
 
 KLT_RTL=$(top_builddir)/src/backend/KLT/lib/rtl/libKLT-RTL.la
 
@@ -25,8 +25,8 @@ $(builddir)/../tilek:
 
 test_1-kernel.c: rose_test_1.c
 test_1-data.c: rose_test_1.c
-rose_test_1.c: $(srcdir)/../tests/test_1.c $(TILEK)
-	$(TILEK) -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(TILEK_INC) -c $(srcdir)/../tests/test_1.c
+rose_test_1.c: $(srcdir)/test_1.c $(TILEK)
+	$(TILEK) -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(TILEK_INC) -c $(srcdir)/test_1.c
 
 rose_test_1.o: rose_test_1.c
 	gcc -O0 -g -I$(TILEK_INC) -c rose_test_1.c -o rose_test_1.o
@@ -47,8 +47,8 @@ check-test_1: test_1
 
 test_2-kernel.c: rose_test_2.c
 test_2-data.c: rose_test_2.c
-rose_test_2.c: $(srcdir)/../tests/test_2.c $(TILEK)
-	$(TILEK) -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(TILEK_INC) -c $(srcdir)/../tests/test_2.c
+rose_test_2.c: $(srcdir)/test_2.c $(TILEK)
+	$(TILEK) -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(TILEK_INC) -c $(srcdir)/test_2.c
 
 rose_test_2.o: rose_test_2.c
 	gcc -O0 -g -I$(TILEK_INC) -c rose_test_2.c -o rose_test_2.o
@@ -69,8 +69,8 @@ check-test_2: test_2
 
 test_3-kernel.c: rose_test_3.c
 test_3-data.c: rose_test_3.c
-rose_test_3.c: $(srcdir)/../tests/test_3.c $(TILEK)
-	$(TILEK) -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(TILEK_INC) -c $(srcdir)/../tests/test_3.c
+rose_test_3.c: $(srcdir)/test_3.c $(TILEK)
+	$(TILEK) -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(TILEK_INC) -c $(srcdir)/test_3.c
 
 rose_test_3.o: rose_test_3.c
 	gcc -O0 -g -I$(TILEK_INC) -c rose_test_3.c -o rose_test_3.o
@@ -91,8 +91,8 @@ check-test_3: test_3
 
 test_4-kernel.c: rose_test_4.c
 test_4-data.c: rose_test_4.c
-rose_test_4.c: $(srcdir)/../tests/test_4.c $(TILEK)
-	$(TILEK) -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(TILEK_INC) -c $(srcdir)/../tests/test_4.c
+rose_test_4.c: $(srcdir)/test_4.c $(TILEK)
+	$(TILEK) -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(TILEK_INC) -c $(srcdir)/test_4.c
 
 rose_test_4.o: rose_test_4.c
 	gcc -O0 -g -I$(TILEK_INC) -c rose_test_4.c -o rose_test_4.o

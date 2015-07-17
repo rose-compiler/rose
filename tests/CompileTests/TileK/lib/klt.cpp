@@ -24,10 +24,6 @@ template <> size_t ::KLT::Kernel<Annotation, Runtime>::kernel_desc_t::id_cnt = 0
 
 template <>
 SgFunctionParameterList * Kernel<Annotation, Runtime>::createParameterList() const {
-  const std::list<SgVariableSymbol *> & params = getArguments().parameters;
-  const std::list<SgVariableSymbol *> & scalars = getArguments().scalars;
-  const std::list<Data<DLX::KLT::Annotation<DLX::TileK::language_t> > *> & datas = getArguments().datas;
-
   std::list<SgVariableSymbol *>::const_iterator it_var_sym;
   std::list<Data<DLX::KLT::Annotation<DLX::TileK::language_t> > *>::const_iterator it_data;
 

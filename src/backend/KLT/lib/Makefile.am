@@ -1,3 +1,3 @@
 
-SUBDIRS=core rtl tilek
+SUBDIRS=core rtl
 

@@ -9,7 +9,8 @@
 #include <iostream>
 
 #include "KLT/Core/mfb-klt.hpp"
-#include "MFB/KLT/klt.hpp"
+
+#include "MFB/KLT/klt.hpp" // Needs Annotation and Runtime to be defined
 
 #ifndef VERBOSE
 #define VERBOSE 0
