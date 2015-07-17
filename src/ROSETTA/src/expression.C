@@ -313,19 +313,28 @@ Grammar::setUpExpressions ()
      //SK (06/25/2015) SgRangeExp for representing a range like 1:5 or 1:2:5 in Matlab
      NEW_TERMINAL_MACRO (RangeExp, "RangeExp", "RANGE_EXP");
 
+     //Sk (07/16/2015) This Expression represents a : in Matlab also called magic colon
+     NEW_TERMINAL_MACRO (MagicColonExp, "MagicColonExp", "MAGIC_COLON_EXP");
+     
      //SK (06/25/2015) Elementwise operators in Matlab
      NEW_TERMINAL_MACRO (ElementwiseMultiplyOp, "ElementwiseMultiplyOp", "ELEMENT_MULT_OP");
 
+     NEW_TERMINAL_MACRO (PowerOp, "PowerOp", "POWER_OP");
      NEW_TERMINAL_MACRO (ElementwisePowerOp, "ElementwisePowerOp", "ELEMENT_POWER_OP");
+     
+     NEW_TERMINAL_MACRO (ElementwiseDivideOp, "ElementwiseDivideOp", "ELEMENT_DIVIDE_OP");
 
+     NEW_TERMINAL_MACRO (LeftDivideOp, "LeftDivideOp", "LEFT_DIVIDE_OP");
      NEW_TERMINAL_MACRO (ElementwiseLeftDivideOp, "ElementwiseLeftDivideOp", "ELEMENT_LEFT_DIVIDE_OP");
 
-     // NEW_TERMINAL_MACRO (TransposeOp, "TransposeOp", "TRANSPOSE_OP");
-
-     // NEW_TERMINAL_MACRO (ConjugateTransposeOp, "ConjugateTransposeOp", "CONJUGATE_TRANSPOSE_OP");
+     NEW_TERMINAL_MACRO (ElementwiseAddOp, "ElementwiseAddOp", "ELEMENT_ADD_OP");
+     NEW_TERMINAL_MACRO (ElementwiseSubtractOp, "ElementwiseSubtractOp", "ELEMENT_SUBTRACT_OP");
+     
+     NEW_TERMINAL_MACRO (MatrixTransposeOp, "MatrixTransposeOp", "MATRIX_TRANSPOSE_OP");
      
      NEW_NONTERMINAL_MACRO (ElementwiseOp,
-			    ElementwiseMultiplyOp    |  ElementwisePowerOp    | ElementwiseLeftDivideOp,
+			    ElementwiseMultiplyOp    |  ElementwisePowerOp    | ElementwiseLeftDivideOp |
+			    ElementwiseDivideOp      |  ElementwiseAddOp      | ElementwiseSubtractOp ,
 			    "ElementwiseOp", "ELEMENT_WISE_OP", false);
      #endif
      
@@ -343,11 +352,9 @@ Grammar::setUpExpressions ()
                             ExpressionRoot | MinusOp            | UnaryAddOp | NotOp           | PointerDerefExp | 
                             AddressOfOp    | MinusMinusOp       | PlusPlusOp | BitComplementOp | CastExp         |
                             ThrowOp        | RealPartOp         | ImagPartOp | ConjugateOp     | UserDefinedUnaryOp
-			    /*			    #if USE_MATLAB_IR_NODES == 1
-			    //SK (06/25/2015) TransposeOp = .' and ConjugateTransposeOp = '
-			    
-			    | TransposeOp  | ConjugateTransposeOp
-			    #endif*/
+			    #if USE_MATLAB_IR_NODES == 1
+			    | MatrixTransposeOp
+			    #endif
                             ,"UnaryOp","UNARY_EXPRESSION", false);
 
 
@@ -368,7 +375,7 @@ Grammar::setUpExpressions ()
 
           NonMembershipOp | IsOp            | IsNotOp          /* | DotDotExp*/
 #if USE_MATLAB_IR_NODES == 1
-			    | ElementwiseOp /*| LeftDivideOp*/
+			    | ElementwiseOp | PowerOp | LeftDivideOp
 #endif
 	  ,"BinaryOp","BINARY_EXPRESSION", false);
 
@@ -428,7 +435,7 @@ Grammar::setUpExpressions ()
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
        #if USE_MATLAB_IR_NODES == 1
-	  RangeExp            |
+	  RangeExp            | MagicColonExp           |
        #endif
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
           ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | NoexceptOp, "Expression", "ExpressionTag", false);
@@ -850,8 +857,18 @@ Grammar::setUpExpressions ()
      #if USE_MATLAB_IR_NODES == 1
      MatrixExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      RangeExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     MagicColonExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     MatrixTransposeOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
      ElementwiseOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     PowerOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ElementwisePowerOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
+     ElementwiseDivideOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     LeftDivideOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     ElementwiseAddOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     ElementwiseSubtractOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     
      ElementwiseMultiplyOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ElementwiseLeftDivideOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      #endif
@@ -921,7 +938,6 @@ Grammar::setUpExpressions ()
 
   // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
      TypeExpression.editSubstitute         ( "PRECEDENCE_VALUE", "16" );
-
   // DQ (2/12/2011): Added support for UPC specific sizeof operators.
      UpcLocalsizeofExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
      UpcBlocksizeofExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
@@ -956,6 +972,19 @@ Grammar::setUpExpressions ()
      BitOrOp.editSubstitute         ( "PRECEDENCE_VALUE", " 6" );
      CommaOpExp.editSubstitute      ( "PRECEDENCE_VALUE", " 1" ); // lowest precedence
 
+     #if USE_MATLAB_IR_NODES == 1
+     PowerOp.editSubstitute ( "PRECEDENCE_VALUE", "14" );
+     ElementwisePowerOp.editSubstitute ( "PRECEDENCE_VALUE", "14" );
+     ElementwiseMultiplyOp.editSubstitute ( "PRECEDENCE_VALUE", "13" );
+     ElementwiseDivideOp.editSubstitute ( "PRECEDENCE_VALUE", "13" );
+     LeftDivideOp.editSubstitute ( "PRECEDENCE_VALUE", "13" );
+     ElementwiseLeftDivideOp.editSubstitute ( "PRECEDENCE_VALUE", "13" );
+
+     ElementwiseAddOp.editSubstitute ( "PRECEDENCE_VALUE", "12" );
+     ElementwiseSubtractOp.editSubstitute ( "PRECEDENCE_VALUE", "12" );
+     MatrixTransposeOp.editSubstitute ( "PRECEDENCE_VALUE", "15" );
+     #endif
+     
   // DQ (1/26/2013): I think this is wrong, "<<" and ">>" have value 7 (lower than "==") (see test2013_42.C).
   // I think this value of 7 is incorrect since it is from a table that lists values in reverse order from how 
   // we list then here.  Here we are following the apendix of the C++ language book.
@@ -966,6 +995,7 @@ Grammar::setUpExpressions ()
 
      JavaUnsignedRshiftOp.editSubstitute        ( "PRECEDENCE_VALUE", "11" );
      MinusOp.editSubstitute         ( "PRECEDENCE_VALUE", "15" );
+
      UnaryAddOp.editSubstitute      ( "PRECEDENCE_VALUE", "15" );
      NotOp.editSubstitute           ( "PRECEDENCE_VALUE", "15" );
      PointerDerefExp.editSubstitute ( "PRECEDENCE_VALUE", "15" );
@@ -1177,6 +1207,10 @@ Grammar::setUpExpressions ()
 
      ElementwiseOp.excludeFunctionPrototype ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
      ElementwiseOp.setFunctionPrototype ( "HEADER_ELEMENT_WISE_OP", "../Grammar/Expression.code" );
+
+     MatrixTransposeOp.setDataPrototype("bool", "is_conjugate", "= false",
+				NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+				     
      
      #endif
      
@@ -2768,6 +2802,7 @@ Grammar::setUpExpressions ()
      NaryBooleanOp.setFunctionSource ( "SOURCE_NARY_BOOLEAN_OP","../Grammar/Expression.code" );
 
      MinusOp.setFunctionSource ( "SOURCE_MINUS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     
      UnaryAddOp.setFunctionSource ( "SOURCE_UNARY_ADD_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      MembershipOp.editSubstitute  ( "SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "SOURCE_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
      NonMembershipOp.editSubstitute  ( "SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "SOURCE_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
@@ -3101,6 +3136,8 @@ Grammar::setUpExpressions ()
      #if USE_MATLAB_IR_NODES == 1
      MatrixExp.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
      MatrixExp.setFunctionSource    ( "SOURCE_MATRIX_EXP", "../Grammar/Expression.code" );
+
+     MagicColonExp.setFunctionSource ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
 
      RangeExp.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
      RangeExp.setFunctionSource    ( "SOURCE_RANGE_EXP", "../Grammar/Expression.code" );

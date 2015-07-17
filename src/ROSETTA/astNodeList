@@ -341,9 +341,12 @@ SgDotStarOp
 SgDoubleVal
 SgElaboratedTypeModifier
 SgElementwiseOp
+SgElementwiseAddOp
+SgElementwiseDivideOp
 SgElementwiseLeftDivideOp
 SgElementwiseMultiplyOp
 SgElementwisePowerOp
+SgElementwiseSubtractOp
 SgElseDirectiveStatement
 SgElseWhereStatement
 SgElseifDirectiveStatement
@@ -444,6 +447,7 @@ SgLambdaCapture
 SgLambdaCaptureList
 SgLambdaExp
 SgLambdaRefExp
+SgLeftDivideOp
 SgLessOrEqualOp
 SgLessThanOp
 SgLineDirectiveStatement
@@ -458,7 +462,9 @@ SgLongIntVal
 SgLongLongIntVal
 SgLshiftAssignOp
 SgLshiftOp
+SgMagicColonExp
 SgMatrixExp
+SgMatrixTransposeOp
 SgMatlabForStatement
 SgMemberFunctionDeclaration
 SgMemberFunctionRefExp
@@ -559,6 +565,7 @@ SgPointerAssignOp
 SgPointerDerefExp
 SgPointerMemberType
 SgPointerType
+SgPowerOp
 SgPragma
 SgPragmaDeclaration
 SgPrintStatement
