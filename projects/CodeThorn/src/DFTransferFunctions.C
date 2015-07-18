@@ -25,9 +25,20 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     return;
   }
   if(_labeler->isFunctionCallLabel(lab)) {
+    // 1) f(x), 2) y=f(x) 3) y+=f(x)
     if(isSgExprStatement(node)) {
       node=SgNodeHelper::getExprStmtChild(node);
     }
+    if(isSgAssignOp(node)||isSgCompoundAssignOp(node)) {
+      SgNode* rhs=SgNodeHelper::getRhs(node);
+      if(isSgFunctionCallExp(rhs)) {
+	node=rhs;
+      } else {
+	cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "<<node->class_name()<<endl;
+	exit(1);
+      }
+    }
+
     if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
       transferFunctionCall(lab, funCall, arguments, element);
@@ -88,9 +99,13 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     node=SgNodeHelper::getExprStmtChild(node);
   }
   
-  // desugar SgExprStatement
+  // detect SgReturn statement expressions
   if(isSgReturnStmt(node)) {
     node=SgNodeHelper::getFirstChild(node);
+    SgExpression* expr=isSgExpression(node);
+    ROSE_ASSERT(expr);
+    transferReturnStmtExpr(lab,expr,element);
+    return;
   }
 
   // default identity functions
@@ -150,10 +165,14 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
 #endif
 }
 
-
 void DFTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element) {
   // default identity function
 }
+
+void DFTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* expr, Lattice& element) {
+  transferExpression(lab,expr,element);
+}
+
   
 
 void DFTransferFunctions::transferDeclaration(Label label, SgVariableDeclaration* decl, Lattice& element) {
@@ -193,7 +212,7 @@ void DFTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* 
 
 void DFTransferFunctions::addParameterPassingVariables() {
   std::stringstream ss;
-  std::string nameprefix="$parameterVar";
+  std::string nameprefix="$p";
   parameter0VariableId=_variableIdMapping->createUniqueTemporaryVariableId(nameprefix+"0");
   for(int i=1;i<20;i++) {
     ss<<nameprefix<<i;
@@ -201,7 +220,7 @@ void DFTransferFunctions::addParameterPassingVariables() {
     _variableIdMapping->createUniqueTemporaryVariableId(varName);
 
   }
-  resultVariableId=_variableIdMapping->createUniqueTemporaryVariableId("$resultVar");
+  resultVariableId=_variableIdMapping->createUniqueTemporaryVariableId("$r");
 }
 
 VariableId DFTransferFunctions::getParameterVariableId(int paramNr) {

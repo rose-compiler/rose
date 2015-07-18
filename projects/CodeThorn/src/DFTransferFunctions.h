@@ -25,6 +25,7 @@ public:
   virtual void transferExpression(SPRAY::Label label, SgExpression* expr, Lattice& element);
   virtual void transferEmptyStmt(SPRAY::Label label, SgStatement* stmt, Lattice& element);
   virtual void transferDeclaration(SPRAY::Label label, SgVariableDeclaration* decl, Lattice& element);
+  virtual void transferReturnStmtExpr(SPRAY::Label label, SgExpression* expr, Lattice& element);
   virtual void transferSwitchCase(SPRAY::Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate);
   virtual void transferSwitchDefault(SPRAY::Label lab,SgStatement* condStmt, SgDefaultOptionStmt* defaultStmt,Lattice& pstate);
   virtual void transferFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
