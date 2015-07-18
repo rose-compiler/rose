@@ -156,6 +156,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgV
   }
   VariableId resVarId=getResultVariableId();
   if(lhsVar) {
+    cout<<"DEBUG: updated var=f(...)."<<endl;
     VariableId varId=_variableIdMapping->variableId(lhsVar);  
     ips->setVariable(varId,ips->getVariable(resVarId));
   }

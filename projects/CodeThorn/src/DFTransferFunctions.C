@@ -25,13 +25,16 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     return;
   }
   if(_labeler->isFunctionCallLabel(lab)) {
+    cout<<"DEBUG: fcall-lab:"<<lab<<_labeler->getNode(lab)->unparseToString()<<endl;
     // 1) f(x), 2) y=f(x) 3) y+=f(x)
     if(isSgExprStatement(node)) {
       node=SgNodeHelper::getExprStmtChild(node);
     }
     if(isSgAssignOp(node)||isSgCompoundAssignOp(node)) {
+      cout<<"DEBUG: found assign op: "<<node->unparseToString()<<endl;
       SgNode* rhs=SgNodeHelper::getRhs(node);
       if(isSgFunctionCallExp(rhs)) {
+	cout<<"DEBUG: detected function call exp: "<<rhs->unparseToString()<<endl;
 	node=rhs;
       } else {
 	cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "<<node->class_name()<<endl;
@@ -40,23 +43,47 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     }
 
     if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
+      cout<<"DEBUG: handling function call args: "<<node->unparseToString()<<endl;
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
       transferFunctionCall(lab, funCall, arguments, element);
       return;
     }
   }
+
   if(_labeler->isFunctionCallReturnLabel(lab)) {
-    if(SgFunctionCallExp* funCall=isSgFunctionCallExp(getLabeler()->getNode(lab))) {
-      SgVarRefExp* lhsVar=0;
-      if(SgAssignOp* assignOp=isSgAssignOp(funCall->get_parent())) {
-        if(SgVarRefExp* lhs=isSgVarRefExp(SgNodeHelper::getLhs(assignOp))) {
-          lhsVar=lhs;
-        }
+    if(isSgExprStatement(node)) {
+      node=SgNodeHelper::getExprStmtChild(node);
+    }
+    SgVarRefExp* lhsVar=0;
+    // case x=f(y);
+    if(isSgAssignOp(node)||isSgCompoundAssignOp(node)) {
+      if(SgVarRefExp* lhs=isSgVarRefExp(SgNodeHelper::getLhs(node))) {
+	lhsVar=lhs;
+      } else {
+	cerr<<"Transfer: unknown lhs of function call result assignment."<<endl;
+	cerr<<node->unparseToString()<<endl;
+	exit(1);
+      }
+      SgNode* rhs=SgNodeHelper::getRhs(node);
+      SgFunctionCallExp* funCall=isSgFunctionCallExp(rhs);
+      if(!funCall) {
+	cerr<<"Transfer: no function call of rhs of assignment."<<endl;
+	cerr<<node->unparseToString()<<endl;
+	exit(1);
       }
       transferFunctionCallReturn(lab, lhsVar, funCall, element);
       return;
     }
+    if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
+      SgVarRefExp* lhsVar=0;
+      transferFunctionCallReturn(lab, lhsVar, funCall, element);
+      return;
+    }
+    cerr<<"Error: function-call-return unhandled function call."<<endl;
+    cerr<<node->unparseToString()<<endl;
+    exit(1);
   }
+
   if(_labeler->isFunctionEntryLabel(lab)) {
     if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(lab))) {
       // 1) obtain formal parameters
