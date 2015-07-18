@@ -73,11 +73,13 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
   Directives::clause_t<TileK::language_t, TileK::language_t::e_clause_tile> * clause
 ) {
   DLX::Frontend::Parser parser(directive_str, directive_node);
-  assert(parser.consume('['));
-  parser.skip_whitespace();
-  parser.parse<size_t>(clause->parameters.order);
-  parser.skip_whitespace();
-  assert(parser.consume(']'));
+  if (parser.consume('[')) {
+    parser.skip_whitespace();
+    parser.parse<size_t>(clause->parameters.order);
+    parser.skip_whitespace();
+    assert(parser.consume(']'));
+  }
+  else clause->parameters.order = -1;
   assert(parser.consume('('));
   parser.skip_whitespace();
   if (parser.consume("dynamic")) {
@@ -91,12 +93,35 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
     parser.skip_whitespace();
     parser.parse<size_t>(clause->parameters.nbr_it);
   }
+#ifdef TILEK_THREADS
+  else if (parser.consume("thread")) {
+    clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_thread_tile;
+    clause->parameters.nbr_it = 0;
+  }
+#endif
   else assert(false);
   parser.skip_whitespace();
   assert(parser.consume(')'));
   directive_str = parser.getDirectiveString();
   return true;
 }
+
+#ifdef TILEK_THREADS
+template <>
+template <>
+bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_clause_num_threads>(
+  std::string & directive_str,
+  SgLocatedNode * directive_node,
+  Directives::clause_t<TileK::language_t, TileK::language_t::e_clause_num_threads> * clause
+) {
+  DLX::Frontend::Parser parser(directive_str, directive_node);
+  assert(parser.consume('('));
+  bool res = parser.parse<size_t>(clause->parameters.num_threads);
+  assert(parser.consume(')'));
+  if (res) directive_str = parser.getDirectiveString();
+  return res;
+}
+#endif
 
 void lookup_region_successors(
   SgStatement * region,

@@ -28,6 +28,9 @@ void language_t::init() {
 
   Directives::addClauseLabel<language_t>(e_clause_data, "data");
   Directives::addClauseLabel<language_t>(e_clause_tile, "tile");
+#ifdef TILEK_THREADS
+  Directives::addClauseLabel<language_t>(e_clause_num_threads, "num_threads");
+#endif
 
   s_directives_relation_labels.insert(std::pair<directives_relation_e, std::string>(e_child_scope, "child-scope"));
   s_directives_relation_labels.insert(std::pair<directives_relation_e, std::string>(e_parent_scope, "parent-scope"));
@@ -60,6 +63,12 @@ language_t::tile_clause_t * language_t::isTileClause(clause_t * clause) {
 const std::vector<DLX::Frontend::data_sections_t> & language_t::getDataSections(data_clause_t * data_clause) {
   return data_clause->parameters.data_sections;
 }
+
+#ifdef TILEK_THREADS
+language_t::num_threads_clause_t * language_t::isNumThreadsClause(clause_t * clause) {
+  return clause->kind == language_t::e_clause_num_threads ? (language_t::num_threads_clause_t *)clause : NULL;
+}
+#endif
 
 }
 

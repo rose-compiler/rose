@@ -11,74 +11,67 @@ typedef ::MDCG::KLT::Runtime<Hlang, Klang> Runtime; // Runtime Description
 #include "MFB/Sage/driver.hpp"
 #include "MFB/Sage/class-declaration.hpp"
 
+#include "MFB/utils.hpp"
+
 namespace MDCG {
 
 namespace KLT {
 
 namespace API {
 
-// Build: 'expr'->'array'['idx'] or 'expr'->'array'['idx'].'field'
-SgExpression * buildPtrArrElemField(SgExpression * expr, SgVariableSymbol * array, SgExpression * idx, SgVariableSymbol * field = NULL) {
-  SgExpression * result = SageBuilder::buildPntrArrRefExp(SageBuilder::buildArrowExp(expr, SageBuilder::buildVarRefExp(array)), idx);
-  if (field != NULL) result = SageBuilder::buildDotExp(result, SageBuilder::buildVarRefExp(field));
-  return result;
+SgExpression * buildLoopContextAccessor(size_t idx, SgVariableSymbol * ctx, SgFunctionSymbol * accessor) {
+  return SageBuilder::buildFunctionCallExp(accessor, SageBuilder::buildExprListExp(SageBuilder::buildVarRefExp(ctx), SageBuilder::buildIntVal(idx)));
 }
 
 template <>
 SgInitializedName * kernel_t<Klang>::createContext() const {
-  return SageBuilder::buildInitializedName(
-    "context", SageBuilder::buildModifierType(SageBuilder::buildPointerType(::Runtime::kernel_api.context_class->get_declaration()->get_type())), NULL
-  );
+  return SageBuilder::buildInitializedName("context", SageBuilder::buildModifierType(SageBuilder::buildPointerType(klt_loop_context_class->get_declaration()->get_type())), NULL);
 }
 
 template <>
 SgExpression * kernel_t<Klang>::buildLoopLower(size_t loop_id, SgVariableSymbol * ctx) const {
-  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_loop_field, SageBuilder::buildIntVal(loop_id), loop_lower_field);
+  return buildLoopContextAccessor(loop_id, ctx, get_loop_lower_fnct);
 }
 
 template <>
 SgExpression * kernel_t<Klang>::buildLoopUpper(size_t loop_id, SgVariableSymbol * ctx) const {
-  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_loop_field, SageBuilder::buildIntVal(loop_id), loop_upper_field);
+  return buildLoopContextAccessor(loop_id, ctx, get_loop_upper_fnct);
 }
 
 template <>
 SgExpression * kernel_t<Klang>::buildLoopStride(size_t loop_id, SgVariableSymbol * ctx) const {
-  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_loop_field, SageBuilder::buildIntVal(loop_id), loop_stride_field);
+  return buildLoopContextAccessor(loop_id, ctx, get_loop_stride_fnct);
 }
 
 template <>
 SgExpression * kernel_t<Klang>::buildTileLength(size_t tile_id, SgVariableSymbol * ctx) const {
-  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_tile_field, SageBuilder::buildIntVal(tile_id), tile_length_field);
+  return buildLoopContextAccessor(tile_id, ctx, get_tile_length_fnct);
 }
 
 template <>
 SgExpression * kernel_t<Klang>::buildTileStride(size_t tile_id, SgVariableSymbol * ctx) const {
-  return buildPtrArrElemField(SageBuilder::buildVarRefExp(ctx), context_tile_field, SageBuilder::buildIntVal(tile_id), tile_stride_field);
+  return buildLoopContextAccessor(tile_id, ctx, get_tile_stride_fnct);
 }
 
 template <>
 void kernel_t<Klang>::load(const MDCG::Model::model_t & model) {
-  MDCG::Model::class_t context_class_ = model.lookup<MDCG::Model::class_t>("context_t");
-  context_class = context_class_->node->symbol;
-  assert(context_class != NULL);
+  klt_loop_context_class = model.lookup<MDCG::Model::class_t>("klt_loop_context_t")->node->symbol;
+  assert(klt_loop_context_class != NULL);
 
-    context_loop_field = context_class_->scope->field_children[0]->node->symbol;
-    context_tile_field = context_class_->scope->field_children[1]->node->symbol;
+  get_loop_lower_fnct = model.lookup<MDCG::Model::function_t>("klt_get_loop_lower")->node->symbol;
+  assert(get_loop_lower_fnct != NULL);
 
-  MDCG::Model::class_t loop_class_ = model.lookup<MDCG::Model::class_t>("loop_t");
-  loop_class = loop_class_->node->symbol;
-  assert(loop_class != NULL);
+  get_loop_upper_fnct = model.lookup<MDCG::Model::function_t>("klt_get_loop_upper")->node->symbol;
+  assert(get_loop_upper_fnct != NULL);
 
-    loop_lower_field  = loop_class_->scope->field_children[0]->node->symbol;
-    loop_upper_field  = loop_class_->scope->field_children[1]->node->symbol;
-    loop_stride_field = loop_class_->scope->field_children[2]->node->symbol;
+  get_loop_stride_fnct = model.lookup<MDCG::Model::function_t>("klt_get_loop_stride")->node->symbol;
+  assert(get_loop_stride_fnct != NULL);
 
-  MDCG::Model::class_t tile_class_ = model.lookup<MDCG::Model::class_t>("tile_t");
-  tile_class = tile_class_->node->symbol;
-  assert(tile_class != NULL);
+  get_tile_length_fnct = model.lookup<MDCG::Model::function_t>("klt_get_tile_length")->node->symbol;
+  assert(get_tile_length_fnct != NULL);
 
-    tile_length_field = tile_class_->scope->field_children[0]->node->symbol;
-    tile_stride_field = tile_class_->scope->field_children[1]->node->symbol;
+  get_tile_stride_fnct = model.lookup<MDCG::Model::function_t>("klt_get_tile_stride")->node->symbol;
+  assert(get_tile_stride_fnct != NULL);
 }
 
 template <>
@@ -107,32 +100,32 @@ void host_t<Hlang>::insertKernelExecute(SgVariableSymbol * kernel_sym, SgScopeSt
 
 template <>
 SgStatement * host_t<Hlang>::buildParamAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
-  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_param_field, SageBuilder::buildIntVal(idx), NULL), rhs));
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_param_field, SageBuilder::buildIntVal(idx), NULL), rhs));
 }
 
 template <>
 SgStatement * host_t<Hlang>::buildScalarAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
-  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_scalar_field, SageBuilder::buildIntVal(idx), NULL), rhs));
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_scalar_field, SageBuilder::buildIntVal(idx), NULL), rhs));
 }
 
 template <>
 SgStatement * host_t<Hlang>::buildDataAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
-  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_data_field, SageBuilder::buildIntVal(idx), NULL), rhs));
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_data_field, SageBuilder::buildIntVal(idx), NULL), rhs));
 }
 
 template <>
 SgStatement * host_t<Hlang>::buildLoopLowerAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
-  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loop_field, SageBuilder::buildIntVal(idx), loop_lower_field), rhs));
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loop_field, SageBuilder::buildIntVal(idx), loop_lower_field), rhs));
 }
 
 template <>
 SgStatement * host_t<Hlang>::buildLoopUpperAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
-  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loop_field, SageBuilder::buildIntVal(idx), loop_upper_field), rhs));
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loop_field, SageBuilder::buildIntVal(idx), loop_upper_field), rhs));
 }
 
 template <>
 SgStatement * host_t<Hlang>::buildLoopStrideAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
-  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loop_field, SageBuilder::buildIntVal(idx), loop_stride_field), rhs));
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loop_field, SageBuilder::buildIntVal(idx), loop_stride_field), rhs));
 }
 
 template <>
@@ -146,7 +139,7 @@ void host_t<Hlang>::load(const MDCG::Model::model_t & model) {
     kernel_scalar_field = kernel_class_->scope->field_children[3]->node->symbol;
     kernel_loop_field   = kernel_class_->scope->field_children[4]->node->symbol;
 
-  MDCG::Model::class_t loop_class_ = model.lookup<MDCG::Model::class_t>("loop_t");
+  MDCG::Model::class_t loop_class_ = model.lookup<MDCG::Model::class_t>("klt_loop_t");
   loop_class = loop_class_->node->symbol;
   assert(loop_class != NULL);
 
@@ -154,7 +147,7 @@ void host_t<Hlang>::load(const MDCG::Model::model_t & model) {
     loop_upper_field  = loop_class_->scope->field_children[1]->node->symbol;
     loop_stride_field = loop_class_->scope->field_children[2]->node->symbol;
 
-  MDCG::Model::class_t tile_class_ = model.lookup<MDCG::Model::class_t>("tile_t");
+  MDCG::Model::class_t tile_class_ = model.lookup<MDCG::Model::class_t>("klt_tile_t");
   tile_class = tile_class_->node->symbol;
   assert(tile_class != NULL);
 
@@ -169,6 +162,8 @@ void host_t<Hlang>::load(const MDCG::Model::model_t & model) {
   MDCG::Model::type_t kernel_func_ptr_type_ = model.lookup<MDCG::Model::type_t>("kernel_func_ptr");
   kernel_func_ptr_type = kernel_func_ptr_type_->node->type;
   assert(kernel_func_ptr_type != NULL);
+
+  load_user(model);
 }
 
 } // namespace MDCG::KLT::API
@@ -190,9 +185,7 @@ void Runtime<Hlang, Klang>::useSymbolsKernel(
   MFB::Driver<MFB::Sage> & driver,
   size_t file_id
 ) {
-  driver.useSymbol<SgClassDeclaration>(kernel_api.getTileClass(),    file_id);
-  driver.useSymbol<SgClassDeclaration>(kernel_api.getLoopClass(),    file_id);
-  driver.useSymbol<SgClassDeclaration>(kernel_api.getContextClass(), file_id);
+  driver.useSymbol<SgClassDeclaration>(kernel_api.getLoopContextClass(), file_id);
 }
 
 template <>
@@ -209,8 +202,9 @@ template <>
 size_t Runtime<Hlang, Klang>::loadAPI(MDCG::ModelBuilder & model_builder, const std::string & KLT_RTL, const std::string & USER_RTL) {
   size_t tilek_model = model_builder.create();
 
-  model_builder.add(tilek_model, "tile",   KLT_RTL, "h");
-  model_builder.add(tilek_model, "loop",   KLT_RTL, "h");
+  model_builder.add(tilek_model, "tile",    KLT_RTL, "h");
+  model_builder.add(tilek_model, "loop",    KLT_RTL, "h");
+  model_builder.add(tilek_model, "context", KLT_RTL, "h");
 
   model_builder.add(tilek_model, "kernel", USER_RTL, "h");
 

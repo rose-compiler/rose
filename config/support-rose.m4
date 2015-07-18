@@ -2139,6 +2139,8 @@ tests/CompileTests/TileK/include/RTL/Makefile
 tests/CompileTests/TileK/lib/Makefile
 tests/CompileTests/TileK/src/Makefile
 tests/CompileTests/TileK/tests/Makefile
+tests/CompileTests/TileK/tests/basic/Makefile
+tests/CompileTests/TileK/tests/threads/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile

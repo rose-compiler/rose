@@ -129,7 +129,8 @@ typename Frontend<language_tpl>::directive_t * Frontend<language_tpl>::parse(std
   generic_clause_t * clause = NULL;
   while ((clause = parseClause(directive_str)) != NULL) {
 //  std::cerr << "(2) (a) directive_str = " << directive_str << std::endl;
-    assert(Directives::parseClauseParameters(directive_str, directive_node, clause));
+    bool res = Directives::parseClauseParameters(directive_str, directive_node, clause);
+    assert(res);
 //  std::cerr << "(2) (b) directive_str = " << directive_str << std::endl;
     directive->clause_list.push_back(clause);
   }
@@ -176,7 +177,8 @@ bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
 
   typename std::map<SgLocatedNode *, directive_t *>::const_iterator it;
   for (it = translation_map.begin(); it != translation_map.end(); it++) {
-    assert(Directives::findAssociatedNodes(it->first, it->second->construct, translation_map));
+    bool res = Directives::findAssociatedNodes(it->first, it->second->construct, translation_map);
+    assert(res);
     directives.push_back(it->second);
   }
 

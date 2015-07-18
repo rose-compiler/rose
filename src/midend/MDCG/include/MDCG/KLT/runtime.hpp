@@ -18,17 +18,14 @@ namespace API {
 template <class Klang>
 struct kernel_t {
   private:
-    SgClassSymbol * context_class;
-    SgClassSymbol * loop_class;
-    SgClassSymbol * tile_class;
+    SgClassSymbol * klt_loop_context_class;
 
-    SgVariableSymbol * context_loop_field;
-    SgVariableSymbol * loop_lower_field;
-    SgVariableSymbol * loop_upper_field;
-    SgVariableSymbol * loop_stride_field;
-    SgVariableSymbol * context_tile_field;
-    SgVariableSymbol * tile_length_field;
-    SgVariableSymbol * tile_stride_field;
+    SgFunctionSymbol * get_loop_lower_fnct;
+    SgFunctionSymbol * get_loop_upper_fnct;
+    SgFunctionSymbol * get_loop_stride_fnct;
+
+    SgFunctionSymbol * get_tile_length_fnct;
+    SgFunctionSymbol * get_tile_stride_fnct;
 
   public:
     SgInitializedName * createContext() const;
@@ -42,13 +39,16 @@ struct kernel_t {
 
     void load(const MDCG::Model::model_t & model);
 
-    SgClassSymbol * getContextClass() const { return context_class; }
-    SgClassSymbol * getLoopClass() const { return loop_class; }
-    SgClassSymbol * getTileClass() const { return tile_class; }
+    SgClassSymbol * getLoopContextClass() const { return klt_loop_context_class; }
 };
 
 template <class Hlang>
 struct host_t {
+  public:
+    struct user_t;
+    user_t * user;
+    void load_user(const MDCG::Model::model_t & model);
+
   private:
     SgClassSymbol * kernel_class;
     SgClassSymbol * loop_class;
@@ -68,6 +68,15 @@ struct host_t {
     SgType * kernel_func_ptr_type;
 
   public:
+    host_t() :
+      user(NULL), kernel_class(NULL), loop_class(NULL), tile_class(NULL),
+      kernel_data_field(NULL), kernel_param_field(NULL), kernel_scalar_field(NULL),
+      kernel_loop_field(NULL), loop_lower_field(NULL), loop_upper_field(NULL), loop_stride_field(NULL),
+      build_kernel_func(NULL), execute_kernel_func(NULL), kernel_func_ptr_type(NULL)
+    {}
+
+    ~host_t() { delete user; }
+
     SgVariableSymbol * insertKernelInstance(const std::string & name, size_t kernel_id, SgScopeStatement * scope) const;
     void insertKernelExecute(SgVariableSymbol * kernel_sym, SgScopeStatement * scope) const;
 
@@ -146,13 +155,6 @@ struct Runtime {
   // Execution Modes
 
     enum exec_mode_t { e_default };
-
-  // Execution Configuration
-
-    typedef struct {} exec_config_t;
-
-    template <class Annotation>
-    static void set_exec_config(exec_config_t & exec_config, ::KLT::Kernel<Annotation, Runtime> * kernel) {}
 
   // Extra
 

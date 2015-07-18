@@ -20,6 +20,10 @@ generic_clause_t<TileK::language_t> * buildClause<TileK::language_t>(TileK::lang
       return new clause_t<TileK::language_t, TileK::language_t::e_clause_data>();
     case TileK::language_t::e_clause_tile:
       return new clause_t<TileK::language_t, TileK::language_t::e_clause_tile>();
+#ifdef TILEK_THREADS
+    case TileK::language_t::e_clause_num_threads:
+      return new clause_t<TileK::language_t, TileK::language_t::e_clause_num_threads>();
+#endif
     case TileK::language_t::e_clause_last:
       assert(false);
     default:
@@ -42,6 +46,12 @@ bool parseClauseParameters<TileK::language_t>(
       return Frontend::Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_clause_tile>(
         directive_str, directive_node, (clause_t<TileK::language_t, TileK::language_t::e_clause_tile> *)clause
       );
+#ifdef TILEK_THREADS
+    case TileK::language_t::e_clause_num_threads:
+      return Frontend::Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_clause_num_threads>(
+        directive_str, directive_node, (clause_t<TileK::language_t, TileK::language_t::e_clause_num_threads> *)clause
+      );
+#endif
     case TileK::language_t::e_clause_last:
       assert(false);
     default:
