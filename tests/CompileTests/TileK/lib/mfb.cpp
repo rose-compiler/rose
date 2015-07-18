@@ -137,6 +137,11 @@ SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
 
   // * Create iterator *
 
+#ifdef TILEK_THREADS
+  SgVariableSymbol * arg_tid_sym = kernel_defn->lookup_variable_symbol("tid");
+  assert(arg_tid_sym != NULL);
+#endif
+
   for (it_loop_tiling = loop_tiling.begin(); it_loop_tiling != loop_tiling.end(); it_loop_tiling++) {
     LoopTrees::loop_t * loop = it_loop_tiling->first;
     LoopTiler::loop_tiling_t * tiling = it_loop_tiling->second;
@@ -155,7 +160,15 @@ SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
     for (it_tile = tiling->tiles.begin(); it_tile != tiling->tiles.end(); it_tile++) {
       std::ostringstream oss_tile;
       oss_tile << "it_" << loop->id << "_" << tile_cnt++;
-      it_tile->iterator_sym = Utils::getExistingSymbolOrBuildDecl(oss_tile.str(), iter_type, kernel_body);
+      SgInitializer * init = NULL;
+      if (it_tile->kind > 1) {
+#ifdef TILEK_THREADS
+        init = SageBuilder::buildAssignInitializer(SageBuilder::buildVarRefExp(arg_tid_sym));
+#else
+        assert(false);
+#endif
+      }
+      it_tile->iterator_sym = Utils::getExistingSymbolOrBuildDecl(oss_tile.str(), iter_type, kernel_body, init);
     }
   }
 

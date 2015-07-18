@@ -2,7 +2,7 @@
 #ifndef __KLT_RTL_TILE_H__
 #define __KLT_RTL_TILE_H__
 
-struct tile_desc_t {
+struct klt_tile_desc_t {
   int idx;
   enum tile_kind_e {
     e_tile_static = 0,
@@ -11,7 +11,7 @@ struct tile_desc_t {
   int param;
 };
 
-struct tile_t {
+struct klt_tile_t {
   int length;
   int stride;
 //int remain;

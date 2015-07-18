@@ -14,6 +14,9 @@ SgExpression * translateConstExpression(
   const std::map<SgVariableSymbol *, SgVariableSymbol *> & iter_to_local
 );
 
+// Build: 'expr'->'array'['idx'] or 'expr'->'array'['idx'].'field'
+SgExpression * buildPtrArrElemField(SgExpression * expr, SgVariableSymbol * array, SgExpression * idx, SgVariableSymbol * field = NULL);
+
 }
 
 }

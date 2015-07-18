@@ -41,6 +41,9 @@ struct language_t {
     enum clause_kinds_e {
       e_clause_data,
       e_clause_tile,
+#ifdef TILEK_THREADS
+      e_clause_num_threads,
+#endif
       e_clause_last
     };
 
@@ -96,6 +99,13 @@ struct language_t {
       typedef Directives::clause_t<language_t, e_clause_data> data_clause_t;
       static data_clause_t * isDataClause(clause_t * clause);
       static const std::vector<DLX::Frontend::data_sections_t> & getDataSections(data_clause_t * data_clause);
+
+#ifdef TILEK_THREADS
+    // Thread support
+
+      typedef Directives::clause_t<language_t, e_clause_num_threads> num_threads_clause_t;
+      static num_threads_clause_t * isNumThreadsClause(clause_t * clause);
+#endif
 };
 
 }
@@ -146,9 +156,20 @@ struct generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_cl
   enum kind_e {
     e_static_tile,
     e_dynamic_tile,
+#ifdef TILEK_THREADS
+    e_thread_tile,
+#endif
   } kind;
   size_t nbr_it;
 };
+
+#ifdef TILEK_THREADS
+template <>
+template <>
+struct generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_num_threads> {
+  size_t num_threads;
+};
+#endif
 
 
 }

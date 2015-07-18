@@ -128,6 +128,7 @@ class LoopTrees {
     struct tile_t : public node_t {
       size_t id;
       size_t order;
+      unsigned long kind;
 
       loop_t * loop;
       tile_t * tile;
@@ -136,9 +137,9 @@ class LoopTrees {
       SgVariableSymbol * iterator_sym;
 
       tile_t(
-        size_t id_, size_t order_, SgVariableSymbol * iterator_sym_, loop_t * loop_
+        size_t id_, size_t order_, unsigned long kind_, SgVariableSymbol * iterator_sym_, loop_t * loop_
       ) :
-        node_t(), id(id_), order(order_), loop(loop_),
+        node_t(), id(id_), order(order_), kind(kind_), loop(loop_),
         tile(NULL), block(NULL), iterator_sym(iterator_sym_)
       {}
 

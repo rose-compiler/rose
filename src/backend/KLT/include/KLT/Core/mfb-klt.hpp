@@ -103,7 +103,7 @@ typename ::KLT::LoopTrees<Annotation>::node_t * collapseLoopsAndTiles(
         typename std::vector<typename Runtime::tile_desc_t>::iterator it_tile;
         for (it_tile = it_collapsable->second->tiles.begin(); it_tile != it_collapsable->second->tiles.end(); it_tile++) {
           it_tile->id = tiles.size();
-          tile_t * tile = new tile_t(it_tile->id, it_tile->order, it_tile->iterator_sym, it_collapsable->first);
+          tile_t * tile = new tile_t(it_tile->id, it_tile->order, it_tile->kind, it_tile->iterator_sym, it_collapsable->first);
           collapsed_tiles.push_back(tile);
 
           typename Runtime::tile_desc_t * tile_desc = new typename Runtime::tile_desc_t(*it_tile);
@@ -177,8 +177,6 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
 
   SgFunctionParameterList * kernel_function_params = object.kernel->createParameterList();
 
-  Runtime::template set_exec_config<Annotation>(result->config, object.kernel);
-
   MFB::Sage<SgFunctionDeclaration>::object_desc_t kernel_function_desc(result->kernel_name, SageBuilder::buildVoidType(), kernel_function_params, NULL, object.file_id, object.file_id);
 
   Driver<Sage> * sage_driver = (Driver<Sage> *)this;
@@ -220,7 +218,7 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
   for (it_root = kernel_roots.begin(); it_root != kernel_roots.end(); it_root++) {
     node_t * root = *it_root;
     root = collapseLoopsAndTiles<Annotation, Runtime>(root, object.tiling, result->loops, result->tiles);
-    ::KLT::generateKernelBody<Annotation, Runtime>(root, (typename Runtime::exec_mode_t)0, result->config, local_symbol_maps, body);
+    ::KLT::generateKernelBody<Annotation, Runtime>(root, (typename Runtime::exec_mode_t)0, local_symbol_maps, body);
   }
 
   SageInterface::setSourcePositionForTransformation(body);

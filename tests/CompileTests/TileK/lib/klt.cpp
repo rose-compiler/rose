@@ -11,7 +11,7 @@ typedef ::DLX::KLT::Annotation<Dlang> Annotation;
 typedef ::KLT::Language::C Hlang; // Host Language
 typedef ::KLT::Language::C Klang; // Kernel Language
 
-#include "MDCG/KLT/runtime.hpp"
+#include "MDCG/TileK/runtime.hpp"
 typedef ::MDCG::KLT::Runtime<Hlang, Klang> Runtime; // Runtime Description
 
 #include "KLT/Core/kernel.hpp"
@@ -24,33 +24,43 @@ template <> size_t ::KLT::Kernel<Annotation, Runtime>::kernel_desc_t::id_cnt = 0
 
 template <>
 SgFunctionParameterList * Kernel<Annotation, Runtime>::createParameterList() const {
-  std::list<SgVariableSymbol *>::const_iterator it_var_sym;
-  std::list<Data<DLX::KLT::Annotation<DLX::TileK::language_t> > *>::const_iterator it_data;
-
-  SgFunctionParameterList * result = SageBuilder::buildFunctionParameterList();
-
-  result->append_arg(SageBuilder::buildInitializedName("param",  SageBuilder::buildPointerType(SageBuilder::buildIntType()), NULL));
-  result->append_arg(SageBuilder::buildInitializedName("data",   SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL));
-  result->append_arg(SageBuilder::buildInitializedName("scalar", SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL));
-
-  result->append_arg(Runtime::kernel_api.createContext());
-
-  return result;
+  return SageBuilder::buildFunctionParameterList(
+#ifdef TILEK_THREADS
+    SageBuilder::buildInitializedName("tid",  SageBuilder::buildIntType(), NULL),
+#endif
+    SageBuilder::buildInitializedName("param",  SageBuilder::buildPointerType(SageBuilder::buildIntType()), NULL),
+    SageBuilder::buildInitializedName("data",   SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL),
+    SageBuilder::buildInitializedName("scalar", SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL),
+    Runtime::kernel_api.createContext()
+  );
 }
-/*
+
 template <>
-void printAnnotations<Annotation>(const std::vector<Annotation> & annotations, std::ostream & out, std::string indent) {
-  out << Dlang::language_label << "(";
-  if (!annotations.empty()) { 
-    std::vector<Annotation>::const_iterator it_annotation = annotations.begin();
-    out << "[" << it_annotation->clause->kind;
-    it_annotation++;
-    for (; it_annotation != annotations.end(); it_annotation++)
-      out << "], [" << it_annotation->clause->kind;
-    out << "]";
+void Kernel<Annotation, Runtime>::setRuntimeSpecificKernelField(SgVariableSymbol * kernel_sym, SgBasicBlock * bb) const {
+#ifdef TILEK_THREADS
+  std::vector<Annotation>::const_iterator it;
+  ::DLX::TileK::language_t::num_threads_clause_t * num_threads_clause = NULL;
+  for (it = p_loop_tree.annotations.begin(); it != p_loop_tree.annotations.end(); it++) {
+    num_threads_clause = ::DLX::TileK::language_t::isNumThreadsClause(it->clause);
+    if (num_threads_clause != NULL) break;
   }
-  out << "), " << std::endl;
+  assert(num_threads_clause != NULL);
+  assert(kernel_sym != NULL);
+  assert(kernel_sym->get_declaration() != NULL);
+  assert(Runtime::host_api.user->kernel_num_threads_field != NULL);
+  assert(Runtime::host_api.user->kernel_num_threads_field->get_declaration() != NULL);
+
+  SageInterface::appendStatement(SageBuilder::buildExprStatement(
+    SageBuilder::buildAssignOp(
+      SageBuilder::buildArrowExp(
+        SageBuilder::buildVarRefExp(kernel_sym),
+        SageBuilder::buildVarRefExp(Runtime::host_api.user->kernel_num_threads_field)
+      ),
+      SageBuilder::buildIntVal(num_threads_clause->parameters.num_threads)
+    )
+  ), bb);
+#endif
 }
-*/
+
 } // namespace KLT
 
