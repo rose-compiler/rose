@@ -25,25 +25,21 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     return;
   }
   if(_labeler->isFunctionCallLabel(lab)) {
-    cout<<"DEBUG: fcall-lab:"<<lab<<_labeler->getNode(lab)->unparseToString()<<endl;
     // 1) f(x), 2) y=f(x) 3) y+=f(x)
     if(isSgExprStatement(node)) {
       node=SgNodeHelper::getExprStmtChild(node);
     }
     if(isSgAssignOp(node)||isSgCompoundAssignOp(node)) {
-      cout<<"DEBUG: found assign op: "<<node->unparseToString()<<endl;
       SgNode* rhs=SgNodeHelper::getRhs(node);
       if(isSgFunctionCallExp(rhs)) {
-	cout<<"DEBUG: detected function call exp: "<<rhs->unparseToString()<<endl;
-	node=rhs;
+        node=rhs;
       } else {
-	cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "<<node->class_name()<<endl;
-	exit(1);
+        cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "<<node->class_name()<<endl;
+        exit(1);
       }
     }
 
     if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
-      cout<<"DEBUG: handling function call args: "<<node->unparseToString()<<endl;
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
       transferFunctionCall(lab, funCall, arguments, element);
       return;
@@ -58,18 +54,18 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     // case x=f(y);
     if(isSgAssignOp(node)||isSgCompoundAssignOp(node)) {
       if(SgVarRefExp* lhs=isSgVarRefExp(SgNodeHelper::getLhs(node))) {
-	lhsVar=lhs;
+        lhsVar=lhs;
       } else {
-	cerr<<"Transfer: unknown lhs of function call result assignment."<<endl;
-	cerr<<node->unparseToString()<<endl;
-	exit(1);
+        cerr<<"Transfer: unknown lhs of function call result assignment."<<endl;
+        cerr<<node->unparseToString()<<endl;
+        exit(1);
       }
       SgNode* rhs=SgNodeHelper::getRhs(node);
       SgFunctionCallExp* funCall=isSgFunctionCallExp(rhs);
       if(!funCall) {
-	cerr<<"Transfer: no function call of rhs of assignment."<<endl;
-	cerr<<node->unparseToString()<<endl;
-	exit(1);
+        cerr<<"Transfer: no function call of rhs of assignment."<<endl;
+        cerr<<node->unparseToString()<<endl;
+        exit(1);
       }
       transferFunctionCallReturn(lab, lhsVar, funCall, element);
       return;
@@ -81,8 +77,8 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       // special case of return f(...);
       node=SgNodeHelper::getFirstChild(node);
       if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
-	transferFunctionCallReturn(lab, 0, funCall, element);
-	return;
+        transferFunctionCallReturn(lab, 0, funCall, element);
+        return;
       }
     } else {
       cerr<<"Error: function-call-return unhandled function call."<<endl;

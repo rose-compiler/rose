@@ -128,7 +128,7 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
       ROSE_ASSERT(_transferFunctions);
       _transferFunctions->transfer(_labeler->getLabel(*i),*elem);
     } else {
-      cout<<"INFO: filtered from initial state: "<<(*i)->unparseToString()<<endl;
+      //cout<<"INFO: filtered from initial state: "<<(*i)->unparseToString()<<endl;
     }
   }
   cout << "INIT: initial element: ";
