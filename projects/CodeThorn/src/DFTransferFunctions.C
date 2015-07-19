@@ -73,15 +73,22 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       }
       transferFunctionCallReturn(lab, lhsVar, funCall, element);
       return;
-    }
-    if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
+    } else if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
       SgVarRefExp* lhsVar=0;
       transferFunctionCallReturn(lab, lhsVar, funCall, element);
       return;
+    } else if(SgReturnStmt* retStmt=isSgReturnStmt(node)) {
+      // special case of return f(...);
+      node=SgNodeHelper::getFirstChild(node);
+      if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
+	transferFunctionCallReturn(lab, 0, funCall, element);
+	return;
+      }
+    } else {
+      cerr<<"Error: function-call-return unhandled function call."<<endl;
+      cerr<<node->unparseToString()<<endl;
+      exit(1);
     }
-    cerr<<"Error: function-call-return unhandled function call."<<endl;
-    cerr<<node->unparseToString()<<endl;
-    exit(1);
   }
 
   if(_labeler->isFunctionEntryLabel(lab)) {

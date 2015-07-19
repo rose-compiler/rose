@@ -3,8 +3,10 @@ int f2() {
 }
 
 int f1() {
-  int f1_x=1;
-  return f2();
+  int f1_x=2;
+  int f1_r;
+  f1_r=f2();
+  return f1_r;
 }
 
 int f3() {
