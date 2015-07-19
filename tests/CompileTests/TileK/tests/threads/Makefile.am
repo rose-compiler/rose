@@ -1,13 +1,15 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+TILEK_REL_PATH=../..
+
 #########################################
 
 TILEK_INC=$(top_srcdir)/src/backend/KLT/include
 
-TILEK=$(builddir)/../../src/tilek-threads
+TILEK=$(builddir)/$(TILEK_REL_PATH)/src/tilek-threads
 
-TILEK_RTL=$(builddir)/../../lib/libTileK-RTL-threads.la
+TILEK_RTL=$(builddir)/$(TILEK_REL_PATH)/lib/libTileK-RTL-threads.la
 
 KLT_RTL=$(top_builddir)/src/backend/KLT/lib/rtl/libKLT-RTL.la
 
@@ -18,8 +20,8 @@ clean-local:
 
 #########################################
 
-$(builddir)/../../tilek-threads:
-	make -C $(builddir)/../.. tilek-threads
+$(builddir)/$(TILEK_REL_PATH)/tilek-threads:
+	make -C $(builddir)/$(TILEK_REL_PATH) tilek-threads
 
 #########################################
 

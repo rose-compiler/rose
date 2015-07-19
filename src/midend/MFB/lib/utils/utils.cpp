@@ -81,9 +81,14 @@ SgExpression * translateConstExpression(
 }
 
 SgExpression * buildPtrArrElemField(SgExpression * expr, SgVariableSymbol * array, SgExpression * idx, SgVariableSymbol * field) {
-  SgExpression * result = SageBuilder::buildPntrArrRefExp(SageBuilder::buildArrowExp(expr, SageBuilder::buildVarRefExp(array)), idx);
+  SgExpression * result = SageBuilder::buildArrowExp(expr, SageBuilder::buildVarRefExp(array));
+  if (idx != NULL) result = SageBuilder::buildPntrArrRefExp(result, idx);
   if (field != NULL) result = SageBuilder::buildDotExp(result, SageBuilder::buildVarRefExp(field));
   return result;
+}
+
+SgExpression * buildCallVarIdx(size_t idx, SgVariableSymbol * var, SgFunctionSymbol * accessor) {
+  return SageBuilder::buildFunctionCallExp(accessor, SageBuilder::buildExprListExp(SageBuilder::buildVarRefExp(var), SageBuilder::buildIntVal(idx)));
 }
 
 }

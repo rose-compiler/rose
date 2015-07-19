@@ -31,6 +31,10 @@ void language_t::init() {
 #ifdef TILEK_THREADS
   Directives::addClauseLabel<language_t>(e_clause_num_threads, "num_threads");
 #endif
+#ifdef TILEK_ACCELERATOR
+  Directives::addClauseLabel<language_t>(e_clause_num_gangs, "num_gangs");
+  Directives::addClauseLabel<language_t>(e_clause_num_workers, "num_workers");
+#endif
 
   s_directives_relation_labels.insert(std::pair<directives_relation_e, std::string>(e_child_scope, "child-scope"));
   s_directives_relation_labels.insert(std::pair<directives_relation_e, std::string>(e_parent_scope, "parent-scope"));
@@ -67,6 +71,22 @@ const std::vector<DLX::Frontend::data_sections_t> & language_t::getDataSections(
 #ifdef TILEK_THREADS
 language_t::num_threads_clause_t * language_t::isNumThreadsClause(clause_t * clause) {
   return clause->kind == language_t::e_clause_num_threads ? (language_t::num_threads_clause_t *)clause : NULL;
+}
+#endif
+
+#ifdef TILEK_ACCELERATOR
+language_t::num_gangs_clause_t * language_t::isNumGangsClause(clause_t * clause) {
+  return clause->kind == language_t::e_clause_num_gangs ? (language_t::num_gangs_clause_t *)clause : NULL;
+}
+size_t language_t::getGangID(num_gangs_clause_t * num_gangs_clause) {
+  return num_gangs_clause->parameters.gang_id;
+}
+
+language_t::num_workers_clause_t * language_t::isNumWorkersClause(clause_t * clause) {
+  return clause->kind == language_t::e_clause_num_workers ? (language_t::num_workers_clause_t *)clause : NULL;
+}
+size_t language_t::getWorkerID(num_workers_clause_t * num_workers_clause) {
+  return num_workers_clause->parameters.worker_id;
 }
 #endif
 

@@ -1,3 +1,3 @@
 
-SUBDIRS=basic threads
+SUBDIRS=basic threads accelerator
 

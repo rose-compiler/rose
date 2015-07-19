@@ -24,6 +24,12 @@ generic_clause_t<TileK::language_t> * buildClause<TileK::language_t>(TileK::lang
     case TileK::language_t::e_clause_num_threads:
       return new clause_t<TileK::language_t, TileK::language_t::e_clause_num_threads>();
 #endif
+#ifdef TILEK_ACCELERATOR
+    case TileK::language_t::e_clause_num_gangs:
+      return new clause_t<TileK::language_t, TileK::language_t::e_clause_num_gangs>();
+    case TileK::language_t::e_clause_num_workers:
+      return new clause_t<TileK::language_t, TileK::language_t::e_clause_num_workers>();
+#endif
     case TileK::language_t::e_clause_last:
       assert(false);
     default:
@@ -50,6 +56,16 @@ bool parseClauseParameters<TileK::language_t>(
     case TileK::language_t::e_clause_num_threads:
       return Frontend::Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_clause_num_threads>(
         directive_str, directive_node, (clause_t<TileK::language_t, TileK::language_t::e_clause_num_threads> *)clause
+      );
+#endif
+#ifdef TILEK_ACCELERATOR
+    case TileK::language_t::e_clause_num_gangs:
+      return Frontend::Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_clause_num_gangs>(
+        directive_str, directive_node, (clause_t<TileK::language_t, TileK::language_t::e_clause_num_gangs> *)clause
+      );
+    case TileK::language_t::e_clause_num_workers:
+      return Frontend::Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_clause_num_workers>(
+        directive_str, directive_node, (clause_t<TileK::language_t, TileK::language_t::e_clause_num_workers> *)clause
       );
 #endif
     case TileK::language_t::e_clause_last:

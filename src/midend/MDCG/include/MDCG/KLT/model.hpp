@@ -54,11 +54,6 @@ SgExpression * TileDesc<Hlang>::createFieldInitializer(
     case 1:
     { // enum tile_kind_e { e_tile_static, e_tile_dynamic } kind;
       return SageBuilder::buildIntVal(input->kind);
-//    switch (input->kind) {
-//      case MDCG::KLT::Descriptor::e_static_tile:  return SageBuilder::buildIntVal(0);
-//      case MDCG::KLT::Descriptor::e_dynamic_tile: return SageBuilder::buildIntVal(1);
-//      default: assert(false);
-//    }
     }
     case 2:
     { // int param;

@@ -2141,6 +2141,9 @@ tests/CompileTests/TileK/src/Makefile
 tests/CompileTests/TileK/tests/Makefile
 tests/CompileTests/TileK/tests/basic/Makefile
 tests/CompileTests/TileK/tests/threads/Makefile
+tests/CompileTests/TileK/tests/accelerator/Makefile
+tests/CompileTests/TileK/tests/accelerator/OpenCL/Makefile
+tests/CompileTests/TileK/tests/accelerator/CUDA/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile

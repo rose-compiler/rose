@@ -10,7 +10,7 @@
 #include <string.h>
 #include <assert.h>
 
-#ifdef TILEK_THREADS
+#if defined(TILEK_THREADS)
 #include <pthread.h>
 
 struct tilek_worker_args_t {
@@ -29,6 +29,12 @@ void * tilek_worker(void * args) {
 
   pthread_exit(NULL);
 }
+#elif defined(TILEK_ACCELERATOR)
+#  if defined(TILEK_TARGET_OPENCL)
+// TODO
+#  elif defined(TILEK_TARGET_CUDA)
+// TODO
+#  endif
 #endif
 
 struct kernel_t * build_kernel(int idx) {
@@ -57,7 +63,7 @@ struct kernel_t * build_kernel(int idx) {
 void execute_kernel(struct kernel_t * kernel) {
   struct klt_loop_context_t * context = klt_build_loop_context(kernel->desc->num_loops, kernel->desc->num_tiles, kernel->desc->loop_desc, kernel->loops, kernel);
 
-#if TILEK_THREADS
+#if defined(TILEK_THREADS)
   void * status;
   int rc;
 
@@ -88,16 +94,44 @@ void execute_kernel(struct kernel_t * kernel) {
     rc = pthread_join(threads[tid], &status);
     assert(!rc);
   }
+#elif defined(TILEK_ACCELERATOR)
+#  if defined(TILEK_TARGET_OPENCL)
+  assert(0); // TODO
+#  elif defined(TILEK_TARGET_CUDA)
+  assert(0); // TODO
+#  endif
 #else
   (*kernel->desc->kernel_ptr)(kernel->param, kernel->data, kernel->scalar, context);
 #endif
 }
 
 int get_length_tile(struct kernel_t * kernel, unsigned long kind) {
-#ifdef TILEK_THREADS
+#if defined(TILEK_THREADS)
   assert(kind == 2);
   assert(kernel->num_threads > 0);
   return kernel->num_threads;
+#elif defined(TILEK_ACCELERATOR)
+  switch (kind) {
+    case 2:
+      assert(kernel->num_gangs[0] > 0);
+      return kernel->num_gangs[0];
+    case 3:
+      assert(kernel->num_gangs[1] > 0);
+      return kernel->num_gangs[1];
+    case 4:
+      assert(kernel->num_gangs[2] > 0);
+      return kernel->num_gangs[2];
+    case 5:
+      assert(kernel->num_workers[0] > 0);
+      return kernel->num_workers[0];
+    case 6:
+      assert(kernel->num_workers[1] > 0);
+      return kernel->num_workers[1];
+    case 7:
+      assert(kernel->num_workers[2] > 0);
+      return kernel->num_workers[2];
+    default: assert(0);
+  }
 #else
   assert(0);
 #endif

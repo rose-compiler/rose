@@ -20,10 +20,10 @@ LIB_PATHS= \
 
 #########################################
 
-bin_PROGRAMS=tilek tilek-threads
+bin_PROGRAMS=tilek tilek-threads tilek-acc-ocl tilek-acc-cuda
 
 tilek_SOURCES=tilek.cpp
-tilek_CXXFLAGS=-g -O0 $(INC_PATHS) \
+tilek_CXXFLAGS=-g -O0 $(INC_PATHS) -DTILEK_BASIC \
   -DKLT_RTL_INC_PATH=\"$(abs_top_srcdir)/src/backend/KLT/include/KLT/RTL\" \
   -DTILEK_RTL_INC_PATH=\"$(abs_srcdir)/../include/RTL\"
 tilek_LDADD= $(LIB_PATHS) \
@@ -37,6 +37,22 @@ tilek_threads_CXXFLAGS=-g -O0 $(INC_PATHS) -DTILEK_THREADS \
 tilek_threads_LDADD= $(LIB_PATHS) \
   -lDLX-Core -lMFB-Sage -lMFB-Utils -lMDCG-Core -lMDCG-KLT -lKLT-Core \
   -lDLX-TileK-threads -lMFB-TileK-threads -lMDCG-TileK-threads -lKLT-TileK-threads $(ROSE_LIBS)
+
+tilek_acc_ocl_SOURCES=tilek.cpp
+tilek_acc_ocl_CXXFLAGS=-g -O0 $(INC_PATHS) -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL \
+  -DKLT_RTL_INC_PATH=\"$(abs_top_srcdir)/src/backend/KLT/include/KLT/RTL\" \
+  -DTILEK_RTL_INC_PATH=\"$(abs_srcdir)/../include/RTL\"
+tilek_acc_ocl_LDADD= $(LIB_PATHS) \
+  -lDLX-Core -lMFB-Sage -lMFB-Utils -lMDCG-Core -lMDCG-KLT -lKLT-Core \
+  -lDLX-TileK-acc -lMFB-TileK-acc-ocl -lMDCG-TileK-acc-ocl -lKLT-TileK-acc-ocl $(ROSE_LIBS)
+
+tilek_acc_cuda_SOURCES=tilek.cpp
+tilek_acc_cuda_CXXFLAGS=-g -O0 $(INC_PATHS) -DTILEK_ACCELERATOR -DTILEK_TARGET_CUDA \
+  -DKLT_RTL_INC_PATH=\"$(abs_top_srcdir)/src/backend/KLT/include/KLT/RTL\" \
+  -DTILEK_RTL_INC_PATH=\"$(abs_srcdir)/../include/RTL\"
+tilek_acc_cuda_LDADD= $(LIB_PATHS) \
+  -lDLX-Core -lMFB-Sage -lMFB-Utils -lMDCG-Core -lMDCG-KLT -lKLT-Core \
+  -lDLX-TileK-acc -lMFB-TileK-acc-cuda -lMDCG-TileK-acc-cuda -lKLT-TileK-acc-cuda $(ROSE_LIBS)
 
 #########################################
 

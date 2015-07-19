@@ -17,6 +17,9 @@ SgExpression * translateConstExpression(
 // Build: 'expr'->'array'['idx'] or 'expr'->'array'['idx'].'field'
 SgExpression * buildPtrArrElemField(SgExpression * expr, SgVariableSymbol * array, SgExpression * idx, SgVariableSymbol * field = NULL);
 
+// Build: 'func'('var', 'idx')
+SgExpression * buildCallVarIdx(size_t idx, SgVariableSymbol * var, SgFunctionSymbol * func);
+
 }
 
 }

@@ -9,7 +9,15 @@ typedef ::DLX::KLT::Annotation<Dlang> Annotation;
 
 #include "KLT/Language/c-family.hpp"
 typedef ::KLT::Language::C Hlang; // Host Language
+#if defined(TILEK_ACCELERATOR)
+#  if defined(TILEK_TARGET_OPENCL)
+typedef ::KLT::Language::OpenCL Klang; // Kernel Language
+#  elif defined(TILEK_TARGET_CUDA)
+typedef ::KLT::Language::CUDA Klang; // Kernel Language
+#  endif
+#else
 typedef ::KLT::Language::C Klang; // Kernel Language
+#endif
 
 #include "MDCG/KLT/runtime.hpp"
 typedef ::MDCG::KLT::Runtime<Hlang, Klang> Runtime; // Runtime Description
@@ -29,6 +37,8 @@ typedef ::KLT::LoopTiler<Annotation, Runtime> LoopTiler;
 #include "KLT/Core/mfb-klt.hpp"
 
 #include "MFB/utils.hpp"
+
+#include <cassert>
 
 namespace MFB {
 
@@ -137,7 +147,7 @@ SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
 
   // * Create iterator *
 
-#ifdef TILEK_THREADS
+#if defined(TILEK_THREADS)
   SgVariableSymbol * arg_tid_sym = kernel_defn->lookup_variable_symbol("tid");
   assert(arg_tid_sym != NULL);
 #endif
@@ -162,8 +172,32 @@ SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
       oss_tile << "it_" << loop->id << "_" << tile_cnt++;
       SgInitializer * init = NULL;
       if (it_tile->kind > 1) {
-#ifdef TILEK_THREADS
+#if defined(TILEK_THREADS)
+        std::cerr << it_tile->kind << std::endl;
+        assert(it_tile->kind == 2);
         init = SageBuilder::buildAssignInitializer(SageBuilder::buildVarRefExp(arg_tid_sym));
+#elif defined(TILEK_ACCELERATOR)
+        switch (it_tile->kind) {
+          case 2:
+            assert(false); // TODO get gang 0
+            break;
+          case 3:
+            assert(false); // TODO get gang 1
+            break;
+          case 4:
+            assert(false); // TODO get gang 2
+            break;
+          case 5:
+            assert(false); // TODO get worker 0
+            break;
+          case 6:
+            assert(false); // TODO get worker 1
+            break;
+          case 7:
+            assert(false); // TODO get worker 2
+            break;
+          default: assert(false);
+        }
 #else
         assert(false);
 #endif

@@ -4,7 +4,7 @@
 
 struct klt_loop_context_t;
 
-#ifdef TILEK_THREADS
+#if defined(TILEK_THREADS)
 typedef void (*kernel_func_ptr)(int, int *, void **, void **, struct klt_loop_context_t *);
 #else
 typedef void (*kernel_func_ptr)(int *, void **, void **, struct klt_loop_context_t *);
@@ -28,8 +28,11 @@ struct kernel_t {
   int   * param;
   void ** scalar;
   struct klt_loop_t * loops;
-#ifdef TILEK_THREADS
+#if defined(TILEK_THREADS)
   int num_threads;
+#elif defined(TILEK_ACCELERATOR)
+  int num_gangs[3];
+  int num_workers[3];
 #endif
 };
 

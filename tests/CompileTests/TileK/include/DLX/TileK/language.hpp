@@ -44,6 +44,10 @@ struct language_t {
 #ifdef TILEK_THREADS
       e_clause_num_threads,
 #endif
+#ifdef TILEK_ACCELERATOR
+      e_clause_num_gangs,
+      e_clause_num_workers,
+#endif
       e_clause_last
     };
 
@@ -106,6 +110,19 @@ struct language_t {
       typedef Directives::clause_t<language_t, e_clause_num_threads> num_threads_clause_t;
       static num_threads_clause_t * isNumThreadsClause(clause_t * clause);
 #endif
+
+#ifdef TILEK_ACCELERATOR
+    // Accelerator support
+
+      typedef Directives::clause_t<language_t, e_clause_num_gangs> num_gangs_clause_t;
+      static num_gangs_clause_t * isNumGangsClause(clause_t * clause);
+      static size_t getGangID(num_gangs_clause_t * num_gangs_clause);
+
+
+      typedef Directives::clause_t<language_t, e_clause_num_workers> num_workers_clause_t;
+      static num_workers_clause_t * isNumWorkersClause(clause_t * clause);
+      static size_t getWorkerID(num_workers_clause_t * num_workers_clause);
+#endif
 };
 
 }
@@ -159,8 +176,16 @@ struct generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_cl
 #ifdef TILEK_THREADS
     e_thread_tile,
 #endif
+#ifdef TILEK_ACCELERATOR
+    e_gang_0_tile,
+    e_gang_1_tile,
+    e_gang_2_tile,
+    e_worker_0_tile,
+    e_worker_1_tile,
+    e_worker_2_tile,
+#endif
   } kind;
-  size_t nbr_it;
+  size_t nbr_it; // Change name to param
 };
 
 #ifdef TILEK_THREADS
@@ -168,6 +193,22 @@ template <>
 template <>
 struct generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_num_threads> {
   size_t num_threads;
+};
+#endif
+
+#ifdef TILEK_ACCELERATOR
+template <>
+template <>
+struct generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_num_gangs> {
+  size_t gang_id;
+  size_t num_gangs;
+};
+
+template <>
+template <>
+struct generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_num_workers> {
+  size_t worker_id;
+  size_t num_workers;
 };
 #endif
 
