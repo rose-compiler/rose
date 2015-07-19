@@ -24,7 +24,7 @@ void kernel_0(int n, float * v, float b) {
 
 int main() {
 
-  const int n = 16;
+  int n = 1024*1024;
 
   float * v;
 
