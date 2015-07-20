@@ -769,10 +769,12 @@ ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList_nfi();
 //@{
 /*! @name Builders for Matlab nodes
  */
- 
+#if USE_MATLAB_IR_NODES == 1 
  ROSE_DLL_API SgRangeExp* buildRangeExp(SgExpression *start);
  ROSE_DLL_API SgMatrixExp* buildMatrixExp(SgExprListExp *firstRow);
  ROSE_DLL_API SgMagicColonExp* buildMagicColonExp();
+ ROSE_DLL_API SgMatlabForStatement* buildMatlabForStatement(SgExpression* loop_index, SgExpression* loop_range, SgStatement* loop_body);
+#endif
 //@}
 
  
@@ -1085,7 +1087,7 @@ inline SgDoWhileStmt * buildDoWhileStmt(SgStatement* body, SgExpression *  condi
   return buildDoWhileStmt(body, buildExprStatement(condition));
 }
 SgDoWhileStmt * buildDoWhileStmt_nfi(SgStatement *  body, SgStatement *condition);
-
+ 
 //! Build pragma declaration, handle SgPragma and defining/nondefining pointers internally
 ROSE_DLL_API SgPragmaDeclaration * buildPragmaDeclaration(const std::string & name, SgScopeStatement* scope=NULL);
 SgPragmaDeclaration * buildPragmaDeclaration_nfi(const std::string & name, SgScopeStatement* scope);
