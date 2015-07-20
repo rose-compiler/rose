@@ -2136,6 +2136,10 @@ tests/CompileTests/mixLanguage_tests/Makefile
 tests/CompileTests/TileK/Makefile
 tests/CompileTests/TileK/include/DLX/TileK/Makefile
 tests/CompileTests/TileK/include/RTL/Makefile
+tests/CompileTests/TileK/include/RTL/Host/Makefile
+tests/CompileTests/TileK/include/RTL/Kernel/Makefile
+tests/CompileTests/TileK/include/RTL/Kernel/OpenCL/Makefile
+tests/CompileTests/TileK/include/RTL/Kernel/CUDA/Makefile
 tests/CompileTests/TileK/lib/Makefile
 tests/CompileTests/TileK/src/Makefile
 tests/CompileTests/TileK/tests/Makefile
