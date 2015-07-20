@@ -1,5 +1,5 @@
 
-#include "RTL/kernel.h"
+#include "RTL/Host/kernel.h"
 #include "KLT/RTL/loop.h"
 #include "KLT/RTL/tile.h"
 #include "KLT/RTL/context.h"

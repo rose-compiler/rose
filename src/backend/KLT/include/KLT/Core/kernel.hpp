@@ -372,7 +372,7 @@ tile_generation_t<Annotation> generateTiles(
     if (tile->kind == 0 || tile->kind == 1) {
       typename std::map<loop_t *, SgVariableSymbol *>::iterator it_loop_iterator = loop_iterator_map.find(loop);
       SgVariableSymbol * previous_iterator = NULL;
-        if (it_loop_iterator != loop_iterator_map.end()) {
+      if (it_loop_iterator != loop_iterator_map.end()) {
         previous_iterator = it_loop_iterator->second;
         it_loop_iterator->second = tile_iterator;
       }
@@ -389,7 +389,7 @@ tile_generation_t<Annotation> generateTiles(
             std::pair<loop_t *, SgExpression *>(
               loop,
               SageBuilder::buildAddOp(
-                Runtime::kernel_api.buildLoopLower(loop->id, local_symbol_maps.context),
+                Runtime::kernel_api.buildGetLoopLower(loop->id, local_symbol_maps.context),
                 SageBuilder::buildVarRefExp(tile_iterator)
               )
             )
@@ -400,18 +400,18 @@ tile_generation_t<Annotation> generateTiles(
       SgExpression * upper_bound = NULL;
       if (disordered_tiles) {
         lower_bound = SageBuilder::buildIntVal(0);
-        upper_bound = Runtime::kernel_api.buildTileLength(tile->id, local_symbol_maps.context);
+        upper_bound = Runtime::kernel_api.buildGetTileLength(tile->id, local_symbol_maps.context);
       }
       else {
         if (previous_iterator == NULL) {
-          lower_bound = Runtime::kernel_api.buildLoopLower(loop->id, local_symbol_maps.context);
-          upper_bound = Runtime::kernel_api.buildLoopUpper(loop->id, local_symbol_maps.context);
+          lower_bound = Runtime::kernel_api.buildGetLoopLower(loop->id, local_symbol_maps.context);
+          upper_bound = Runtime::kernel_api.buildGetLoopUpper(loop->id, local_symbol_maps.context);
         }
         else {
           lower_bound = SageBuilder::buildVarRefExp(previous_iterator);
           upper_bound = SageBuilder::buildAddOp(
                           SageBuilder::buildVarRefExp(previous_iterator),
-                          Runtime::kernel_api.buildTileLength(tile->id, local_symbol_maps.context)
+                          Runtime::kernel_api.buildGetTileLength(tile->id, local_symbol_maps.context)
                         ); // 'tile_iterator' + 'ctx'->tile['tile_id'].length
         }
       }
@@ -426,7 +426,7 @@ tile_generation_t<Annotation> generateTiles(
       }
       SgExpression * inc_expr = SageBuilder::buildPlusAssignOp(
                                   SageBuilder::buildVarRefExp(tile_iterator),
-                                  Runtime::kernel_api.buildTileStride(tile->id, local_symbol_maps.context)
+                                  Runtime::kernel_api.buildGetTileStride(tile->id, local_symbol_maps.context)
                                 ); // 'tile_iterator' += 'ctx'->tile['tile_id'].stride
 
       SgForStatement * for_stmt = SageBuilder::buildForStatement(init_stmt, test_stmt, inc_expr, NULL);

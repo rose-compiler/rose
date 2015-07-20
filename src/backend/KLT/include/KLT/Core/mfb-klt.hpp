@@ -102,7 +102,6 @@ typename ::KLT::LoopTrees<Annotation>::node_t * collapseLoopsAndTiles(
 
         typename std::vector<typename Runtime::tile_desc_t>::iterator it_tile;
         for (it_tile = it_collapsable->second->tiles.begin(); it_tile != it_collapsable->second->tiles.end(); it_tile++) {
-          it_tile->id = tiles.size();
           tile_t * tile = new tile_t(it_tile->id, it_tile->order, it_tile->kind, it_tile->iterator_sym, it_collapsable->first);
           collapsed_tiles.push_back(tile);
 

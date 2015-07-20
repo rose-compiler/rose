@@ -50,20 +50,20 @@ struct kernel_t {
       return SageBuilder::buildInitializedName("context", SageBuilder::buildModifierType(SageBuilder::buildPointerType(klt_loop_context_class->get_declaration()->get_type())), NULL);
     }
 
-    SgExpression * buildLoopLower (size_t loop_id, SgVariableSymbol * ctx) const {
+    SgExpression * buildGetLoopLower (size_t loop_id, SgVariableSymbol * ctx) const {
       return ::MFB::Utils::buildCallVarIdx(loop_id, ctx, get_loop_lower_fnct);
     }
-    SgExpression * buildLoopUpper (size_t loop_id, SgVariableSymbol * ctx) const {
+    SgExpression * buildGetLoopUpper (size_t loop_id, SgVariableSymbol * ctx) const {
       return ::MFB::Utils::buildCallVarIdx(loop_id, ctx, get_loop_upper_fnct);
     }
-    SgExpression * buildLoopStride(size_t loop_id, SgVariableSymbol * ctx) const {
+    SgExpression * buildGetLoopStride(size_t loop_id, SgVariableSymbol * ctx) const {
       return ::MFB::Utils::buildCallVarIdx(loop_id, ctx, get_loop_stride_fnct);
     }
 
-    SgExpression * buildTileLength(size_t tile_id, SgVariableSymbol * ctx) const {
+    SgExpression * buildGetTileLength(size_t tile_id, SgVariableSymbol * ctx) const {
       return ::MFB::Utils::buildCallVarIdx(tile_id, ctx, get_tile_length_fnct);
     }
-    SgExpression * buildTileStride(size_t tile_id, SgVariableSymbol * ctx) const {
+    SgExpression * buildGetTileStride(size_t tile_id, SgVariableSymbol * ctx) const {
       return ::MFB::Utils::buildCallVarIdx(tile_id, ctx, get_tile_stride_fnct);
     }
 
@@ -257,6 +257,8 @@ struct Runtime {
 
   // APIs
 
+    static void loadUserAPI(MDCG::ModelBuilder & model_builder, size_t tilek_model, const std::string & USER_RTL);
+
     static size_t loadAPI(MDCG::ModelBuilder & model_builder, const std::string & KLT_RTL, const std::string & USER_RTL) {
       size_t tilek_model = model_builder.create();
 
@@ -264,7 +266,7 @@ struct Runtime {
       model_builder.add(tilek_model, "loop",    KLT_RTL, "h");
       model_builder.add(tilek_model, "context", KLT_RTL, "h");
 
-      model_builder.add(tilek_model, "kernel", USER_RTL, "h");
+      loadUserAPI(model_builder, tilek_model, USER_RTL);
 
       host_api.load(model_builder.get(tilek_model));
       kernel_api.load(model_builder.get(tilek_model));

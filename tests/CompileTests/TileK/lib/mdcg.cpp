@@ -7,6 +7,28 @@
 
 namespace MDCG {
 namespace KLT {
+
+#if defined(TILEK_ACCELERATOR)
+#  if defined(TILEK_TARGET_OPENCL)
+template <>
+void Runtime< ::KLT::Language::C, ::KLT::Language::OpenCL>::loadUserAPI(MDCG::ModelBuilder & model_builder, size_t tilek_model, const std::string & USER_RTL) {
+  model_builder.add(tilek_model, "kernel", USER_RTL + "/Host/", "h");
+  model_builder.add(tilek_model, "kernel", USER_RTL + "/Kernel/OpenCL/", "cl");
+}
+#  elif defined(TILEK_TARGET_CUDA)
+template <>
+void Runtime< ::KLT::Language::C, ::KLT::Language::CUDA>::loadUserAPI(MDCG::ModelBuilder & model_builder, size_t tilek_model, const std::string & USER_RTL) {
+  model_builder.add(tilek_model, "kernel", USER_RTL + "/Host/", "h");
+  model_builder.add(tilek_model, "kernel", USER_RTL + "/Kernel/CUDA/", "cu");
+}
+#  endif
+#else
+template <>
+void Runtime< ::KLT::Language::C, ::KLT::Language::C>::loadUserAPI(MDCG::ModelBuilder & model_builder, size_t tilek_model, const std::string & USER_RTL) {
+  model_builder.add(tilek_model, "kernel", USER_RTL + "/Host/", "h");
+}
+#endif
+
 namespace API {
 
 template <>

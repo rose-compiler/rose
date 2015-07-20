@@ -19,7 +19,7 @@ typedef ::KLT::Language::CUDA Klang; // Kernel Language
 typedef ::KLT::Language::C Klang; // Kernel Language
 #endif
 
-#include "MDCG/KLT/runtime.hpp"
+#include "MDCG/TileK/runtime.hpp"
 typedef ::MDCG::KLT::Runtime<Hlang, Klang> Runtime; // Runtime Description
 
 #include "KLT/Core/data.hpp"
@@ -147,11 +147,15 @@ SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
 
   // * Create iterator *
 
+  local_symbol_maps.context = kernel_defn->lookup_variable_symbol("context");
+  assert(local_symbol_maps.context != NULL);
+
 #if defined(TILEK_THREADS)
   SgVariableSymbol * arg_tid_sym = kernel_defn->lookup_variable_symbol("tid");
   assert(arg_tid_sym != NULL);
 #endif
 
+  size_t cnt = 0;
   for (it_loop_tiling = loop_tiling.begin(); it_loop_tiling != loop_tiling.end(); it_loop_tiling++) {
     LoopTrees::loop_t * loop = it_loop_tiling->first;
     LoopTiler::loop_tiling_t * tiling = it_loop_tiling->second;
@@ -165,49 +169,42 @@ SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
     SgVariableSymbol * local_sym = Utils::getExistingSymbolOrBuildDecl(oss_loop.str(), iter_type, kernel_body);
     local_symbol_maps.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(iter_sym, local_sym));
 
-    size_t tile_cnt = 0;
     std::vector<Runtime::tile_desc_t>::iterator it_tile;
     for (it_tile = tiling->tiles.begin(); it_tile != tiling->tiles.end(); it_tile++) {
       std::ostringstream oss_tile;
-      oss_tile << "it_" << loop->id << "_" << tile_cnt++;
+      it_tile->id = cnt++;
+      oss_tile << "it_" << loop->id << "_" << it_tile->id;
       SgInitializer * init = NULL;
-      if (it_tile->kind > 1) {
+      SgExpression * tile_it = NULL;
+
 #if defined(TILEK_THREADS)
-        std::cerr << it_tile->kind << std::endl;
-        assert(it_tile->kind == 2);
-        init = SageBuilder::buildAssignInitializer(SageBuilder::buildVarRefExp(arg_tid_sym));
+      if (it_tile->kind == 2)
+        tile_it = SageBuilder::buildVarRefExp(arg_tid_sym);
+      else
+        assert(it_tile->kind == 0 || it_tile->kind == 1);
 #elif defined(TILEK_ACCELERATOR)
+      if (it_tile->kind > 1 && it_tile->kind < 8)
         switch (it_tile->kind) {
-          case 2:
-            assert(false); // TODO get gang 0
-            break;
-          case 3:
-            assert(false); // TODO get gang 1
-            break;
-          case 4:
-            assert(false); // TODO get gang 2
-            break;
-          case 5:
-            assert(false); // TODO get worker 0
-            break;
-          case 6:
-            assert(false); // TODO get worker 1
-            break;
-          case 7:
-            assert(false); // TODO get worker 2
-            break;
-          default: assert(false);
+          case 2: tile_it = Runtime::kernel_api.user->buildGetGangID  (0, local_symbol_maps.context); break;
+          case 3: tile_it = Runtime::kernel_api.user->buildGetGangID  (1, local_symbol_maps.context); break;
+          case 4: tile_it = Runtime::kernel_api.user->buildGetGangID  (2, local_symbol_maps.context); break;
+          case 5: tile_it = Runtime::kernel_api.user->buildGetWorkerID(0, local_symbol_maps.context); break;
+          case 6: tile_it = Runtime::kernel_api.user->buildGetWorkerID(1, local_symbol_maps.context); break;
+          case 7: tile_it = Runtime::kernel_api.user->buildGetWorkerID(2, local_symbol_maps.context); break;
         }
+      else
+        assert(it_tile->kind == 0 || it_tile->kind == 1);
 #else
-        assert(false);
+      assert(it_tile->kind == 0 || it_tile->kind == 1);
 #endif
+      if (tile_it != NULL) {
+        SgExpression * tile_stride = Runtime::kernel_api.buildGetTileStride(it_tile->id, local_symbol_maps.context); 
+        assert(tile_stride != NULL);
+        init = SageBuilder::buildAssignInitializer(SageBuilder::buildMultiplyOp(tile_it, tile_stride));
       }
       it_tile->iterator_sym = Utils::getExistingSymbolOrBuildDecl(oss_tile.str(), iter_type, kernel_body, init);
     }
   }
-
-  local_symbol_maps.context = kernel_defn->lookup_variable_symbol("context");
-  assert(local_symbol_maps.context != NULL);
 
   return kernel_body;
 

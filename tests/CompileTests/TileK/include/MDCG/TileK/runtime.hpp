@@ -7,6 +7,17 @@
 
 namespace MDCG {
 namespace KLT {
+
+#if defined(TILEK_ACCELERATOR)
+#  if defined(TILEK_TARGET_OPENCL)
+template <> void Runtime< ::KLT::Language::C, ::KLT::Language::OpenCL>::loadUserAPI(MDCG::ModelBuilder & model_builder, size_t tilek_model, const std::string & USER_RTL);
+#  elif defined(TILEK_TARGET_CUDA)
+template <> void Runtime< ::KLT::Language::C, ::KLT::Language::CUDA>::loadUserAPI(MDCG::ModelBuilder & model_builder, size_t tilek_model, const std::string & USER_RTL);
+#  endif
+#else
+template <> void Runtime< ::KLT::Language::C, ::KLT::Language::C>::loadUserAPI(MDCG::ModelBuilder & model_builder, size_t tilek_model, const std::string & USER_RTL);
+#endif
+
 namespace API {
 
 template <>
@@ -26,7 +37,8 @@ void host_t< ::KLT::Language::C>::load_user(const MDCG::Model::model_t & model);
 #  if defined(TILEK_TARGET_OPENCL)
 template <>
 struct kernel_t< ::KLT::Language::OpenCL>::user_t {
-  // TODO
+  SgExpression * buildGetGangID(size_t id, SgVariableSymbol * ctx) const;
+  SgExpression * buildGetWorkerID(size_t id, SgVariableSymbol * ctx) const;
 };
 
 template <>
@@ -34,7 +46,8 @@ void kernel_t< ::KLT::Language::OpenCL>::load_user(const MDCG::Model::model_t & 
 #  elif defined(TILEK_TARGET_CUDA)
 template <>
 struct kernel_t< ::KLT::Language::CUDA>::user_t {
-  // TODO
+  SgExpression * buildGetGangID(size_t id, SgVariableSymbol * ctx) const;
+  SgExpression * buildGetWorkerID(size_t id, SgVariableSymbol * ctx) const;
 };
 
 template <>
