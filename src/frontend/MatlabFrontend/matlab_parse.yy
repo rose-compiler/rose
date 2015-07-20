@@ -1152,7 +1152,8 @@ loop_command    : WHILE stash_comment expression opt_sep opt_list END
                  }*/
                 | FOR stash_comment assign_lhs '=' expression opt_sep opt_list END
                  {
-                  $$ = buildForStatement(buildExprStatement($3), NULL, $5, $7->getBasicBlock());
+		   //$$ = buildForStatement(buildExprStatement($3), NULL, $5, $7->getBasicBlock());
+		   $$ = SageBuilder::buildMatlabForStatement($3, $5, $7->getBasicBlock());
                  }
                  /*{
                     if (! ($$ = make_for_command ($1, $3, $5, $7, $8, $2)))
@@ -1160,7 +1161,8 @@ loop_command    : WHILE stash_comment expression opt_sep opt_list END
                  }*/
                 | FOR stash_comment '(' assign_lhs '=' expression ')' opt_sep opt_list END
                  {
-                  $$ = buildForStatement(buildExprStatement($4),NULL, $6, $9->getBasicBlock());
+		   //$$ = buildForStatement(buildExprStatement($4),NULL, $6, $9->getBasicBlock());
+		   $$ = SageBuilder::buildMatlabForStatement($4, $6, $9->getBasicBlock());
                  }
                  /*{
                     if (! ($$ = make_for_command ($1, $4, $6, $9, $10, $2)))

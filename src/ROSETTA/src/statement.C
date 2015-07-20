@@ -3131,9 +3131,11 @@ Grammar::setUpStatements ()
 
 #if USE_MATLAB_IR_NODES == 1
      MatlabForStatement.setFunctionPrototype ("HEADER_MATLAB_FOR_STATEMENT", "../Grammar/Statement.code" );
-     MatlabForStatement.setDataPrototype ( "SgExpression*", "for_range", "= NULL",
+     MatlabForStatement.setDataPrototype ( "SgExpression*", "loop_index", "= NULL",
+		  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     MatlabForStatement.setDataPrototype ( "SgExpression*", "loop_range", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
-     MatlabForStatement.setDataPrototype ( "SgExpression*", "body", "= NULL",
+     MatlabForStatement.setDataPrototype ( "SgStatement*", "loop_body", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
 #endif
      
