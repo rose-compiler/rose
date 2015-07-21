@@ -92,6 +92,9 @@ class StaticInitializer {
       std::string decl_name
     ) const;
 
+  /// match 'struct class_name field_name;'
+  static Model::class_t getBaseClass(Model::field_t field, std::string field_name = std::string(), std::string class_name = std::string());
+
   /// match 'struct class_name * field_name;'
   static Model::class_t getBaseClassForPointerOnClass(Model::field_t field, std::string field_name = std::string(), std::string class_name = std::string());
 

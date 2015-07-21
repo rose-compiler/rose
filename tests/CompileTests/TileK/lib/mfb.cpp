@@ -85,9 +85,12 @@ SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
                             SageBuilder::buildPointerType(param_type)
                           ));
     SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(param_name, param_type, SageBuilder::buildAssignInitializer(init), kernel_body), kernel_body);
+    SgScopeStatement * search_scope = kernel_body;
+#else
+    SgScopeStatement * search_scope = kernel_defn;
 #endif
 
-    SgVariableSymbol * new_sym = kernel_body->lookup_variable_symbol(param_name);
+    SgVariableSymbol * new_sym = search_scope->lookup_variable_symbol(param_name);
     assert(new_sym != NULL);
 
     local_symbol_maps.parameters.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(param_sym, new_sym));
@@ -114,9 +117,12 @@ SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
                             SageBuilder::buildPointerType(scalar_type)
                           ));
     SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(scalar_name, scalar_type, SageBuilder::buildAssignInitializer(init), kernel_body), kernel_body);
+    SgScopeStatement * search_scope = kernel_body;
+#else
+    SgScopeStatement * search_scope = kernel_defn;
 #endif
 
-    SgVariableSymbol * new_sym = kernel_body->lookup_variable_symbol(scalar_name);
+    SgVariableSymbol * new_sym = search_scope->lookup_variable_symbol(scalar_name);
     assert(new_sym != NULL);
 
     local_symbol_maps.scalars.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(scalar_sym, new_sym));
@@ -148,9 +154,12 @@ SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
     else
       init = SageBuilder::buildPointerDerefExp(init);
     SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(data_name, data_type, SageBuilder::buildAssignInitializer(init), kernel_body), kernel_body);
+    SgScopeStatement * search_scope = kernel_body;
+#else
+    SgScopeStatement * search_scope = kernel_defn;
 #endif
 
-    SgVariableSymbol * new_sym = kernel_body->lookup_variable_symbol(data_name);
+    SgVariableSymbol * new_sym = search_scope->lookup_variable_symbol(data_name);
     assert(new_sym != NULL);
 
     local_symbol_maps.datas.insert(std::pair<Data *, SgVariableSymbol *>(data, new_sym));
@@ -182,9 +191,12 @@ SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
     else
       init = SageBuilder::buildPointerDerefExp(init);
     SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(priv_name, priv_type, SageBuilder::buildAssignInitializer(init), kernel_body), kernel_body);
+    SgScopeStatement * search_scope = kernel_body;
+#else
+    SgScopeStatement * search_scope = kernel_defn;
 #endif
 
-    SgVariableSymbol * new_sym = kernel_body->lookup_variable_symbol(priv_name);
+    SgVariableSymbol * new_sym = search_scope->lookup_variable_symbol(priv_name);
     assert(new_sym != NULL);
 
     local_symbol_maps.privates.insert(std::pair<Data *, SgVariableSymbol *>(priv, new_sym));

@@ -252,8 +252,11 @@ struct loop_t {
 
 } // namespace MDCG::KLT::Descriptor
 
-template <class Hlang, class Klang>
+template <class Hlang_, class Klang_>
 struct Runtime {
+
+    typedef Hlang_ Hlang;
+    typedef Klang_ Klang;
 
   // Tile and Loop Descriptions
 

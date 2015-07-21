@@ -42,7 +42,7 @@ typedef ::KLT::Language::C Klang; // Kernel Language
 typedef ::MDCG::KLT::Runtime<Hlang, Klang> Runtime; // Runtime Description
 
 #include "MDCG/TileK/model.hpp"
-typedef ::MDCG::TileK::KernelDesc<Hlang, Klang> KernelDesc; // Model for Static Initializer
+typedef ::MDCG::TileK::KernelDesc<Annotation, Runtime> KernelDesc; // Model for Static Initializer
 
 #include "MDCG/TileK/runtime.hpp"
 

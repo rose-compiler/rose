@@ -37,6 +37,12 @@ SgVariableSymbol * StaticInitializer::instantiateDeclaration(std::string decl_na
   return var_decl_res.symbol;
 }
 
+Model::class_t StaticInitializer::getBaseClass(Model::field_t field, std::string field_name, std::string class_name) {
+  assert(field_name.empty() || field->node->symbol->get_name().getString() == field_name);
+  assert(field->node->type != NULL && field->node->type->node->kind == MDCG::Model::node_t<MDCG::Model::e_model_type>::e_class_type);
+  assert(class_name.empty() || field->node->type->node->base_class->node->symbol->get_name().getString() == class_name);
+  return field->node->type->node->base_class;
+}
 
 Model::class_t StaticInitializer::getBaseClassForPointerOnClass(Model::field_t field, std::string field_name, std::string class_name) {
   /// match 'struct class_name * field_name;'

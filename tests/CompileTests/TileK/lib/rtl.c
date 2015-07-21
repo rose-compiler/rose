@@ -75,11 +75,11 @@ struct kernel_t * build_kernel(int idx) {
   struct kernel_desc_t * desc = &(kernel_desc[idx]);
 
   int size = sizeof(struct kernel_t)
-           + desc->num_param  * sizeof(void *)
-           + desc->num_scalar * sizeof(void *)
-           + desc->num_data   * sizeof(void *)
-           + desc->num_priv   * sizeof(void *)
-           + desc->num_loops  * sizeof(struct klt_loop_t);
+           + desc->data.num_param  * sizeof(void *)
+           + desc->data.num_scalar * sizeof(void *)
+           + desc->data.num_data   * sizeof(void *)
+           + desc->data.num_priv   * sizeof(void *)
+           + desc->loop.num_loops  * sizeof(struct klt_loop_t);
 
   void * alloc = malloc(size);
 
@@ -88,16 +88,16 @@ struct kernel_t * build_kernel(int idx) {
   struct kernel_t * res = (struct kernel_t *)alloc;
       res->desc   = desc;
       res->param  =             (void **)(alloc += sizeof(struct kernel_t));
-      res->scalar =             (void **)(alloc += desc->num_param  * sizeof(void *));
-      res->data   =             (void **)(alloc += desc->num_scalar * sizeof(void *));
-      res->priv   =             (void **)(alloc += desc->num_data   * sizeof(void *));
-      res->loops  = (struct klt_loop_t *)(alloc += desc->num_priv   * sizeof(void *));
+      res->scalar =             (void **)(alloc += desc->data.num_param  * sizeof(void *));
+      res->data   =             (void **)(alloc += desc->data.num_scalar * sizeof(void *));
+      res->priv   =             (void **)(alloc += desc->data.num_data   * sizeof(void *));
+      res->loops  = (struct klt_loop_t *)(alloc += desc->data.num_priv   * sizeof(void *));
 
   return res;
 }
 
 void execute_kernel(struct kernel_t * kernel) {
-  struct klt_loop_context_t * context = klt_build_loop_context(kernel->desc->num_loops, kernel->desc->num_tiles, kernel->desc->loop_desc, kernel->loops, kernel);
+  struct klt_loop_context_t * context = klt_build_loop_context(&(kernel->desc->loop), kernel->loops, kernel);
 
 #if defined(TILEK_THREADS)
   launch_threads(kernel, context);

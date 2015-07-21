@@ -394,6 +394,11 @@ api_t * Driver<Sage>::getAPI() const {
   return api;
 }
 
+SgGlobal * Driver<Sage>::getGlobalScope(file_id_t id) const {
+  std::map<file_id_t, SgSourceFile *>::const_iterator it = id_to_file_map.find(id);
+  return it != id_to_file_map.end() ? (it->second != NULL ? it->second->get_globalScope() : NULL) : NULL;  
+}
+
 void Driver<Sage>::useType(SgType * type, SgScopeStatement * scope) {
   SgNamedType    * named_type = isSgNamedType(type);
   SgModifierType * mod_type   = isSgModifierType(type);

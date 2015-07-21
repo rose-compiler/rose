@@ -123,6 +123,7 @@ class Driver<Sage> {
     file_id_t getFileID(const boost::filesystem::path & path) const;
     file_id_t getFileID(SgSourceFile * source_file) const;
     file_id_t getFileID(SgScopeStatement * scope) const;
+    SgGlobal * getGlobalScope(file_id_t id) const;
 
     /// Set a file to be unparsed with the project (by default file added to the driver are *NOT* unparsed)
     void setUnparsedFile(file_id_t file_id) const;
