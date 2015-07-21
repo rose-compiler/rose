@@ -57,13 +57,13 @@ void host_t< ::KLT::Language::C>::load_user(const MDCG::Model::model_t & model) 
   user = new user_t();
 #if defined(TILEK_THREADS)
   MDCG::Model::class_t kernel_class = model.lookup<MDCG::Model::class_t>("kernel_t");
-  assert(kernel_class->scope->field_children.size() == 6);
-  user->kernel_num_threads_field = kernel_class->scope->field_children[5]->node->symbol;
+  assert(kernel_class->scope->field_children.size() == 7);
+  user->kernel_num_threads_field = kernel_class->scope->field_children[6]->node->symbol;
 #elif defined(TILEK_ACCELERATOR)
   MDCG::Model::class_t kernel_class = model.lookup<MDCG::Model::class_t>("kernel_t");
-  assert(kernel_class->scope->field_children.size() == 7);
-  user->kernel_num_gangs_field   = kernel_class->scope->field_children[5]->node->symbol;
-  user->kernel_num_workers_field = kernel_class->scope->field_children[6]->node->symbol;
+  assert(kernel_class->scope->field_children.size() == 8);
+  user->kernel_num_gangs_field   = kernel_class->scope->field_children[6]->node->symbol;
+  user->kernel_num_workers_field = kernel_class->scope->field_children[7]->node->symbol;
 #endif
 }
 

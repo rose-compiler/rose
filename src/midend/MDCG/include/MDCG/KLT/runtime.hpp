@@ -104,9 +104,10 @@ struct host_t {
     SgClassSymbol * loop_class;
     SgClassSymbol * tile_class;
 
-    SgVariableSymbol * kernel_data_field;
     SgVariableSymbol * kernel_param_field;
     SgVariableSymbol * kernel_scalar_field;
+    SgVariableSymbol * kernel_data_field;
+    SgVariableSymbol * kernel_priv_field;
     SgVariableSymbol * kernel_loop_field;
     SgVariableSymbol * loop_lower_field;
     SgVariableSymbol * loop_upper_field;
@@ -157,6 +158,9 @@ struct host_t {
     SgStatement * buildDataAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
       return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_data_field, SageBuilder::buildIntVal(idx), NULL), rhs));
     }
+    SgStatement * buildPrivateAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
+      return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_priv_field, SageBuilder::buildIntVal(idx), NULL), rhs));
+    }
 
     SgStatement * buildLoopLowerAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
       return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loop_field, SageBuilder::buildIntVal(idx), loop_lower_field), rhs));
@@ -179,18 +183,19 @@ struct host_t {
       kernel_class = kernel_class_->node->symbol;
       assert(kernel_class != NULL);
 
-        kernel_data_field   = kernel_class_->scope->field_children[1]->node->symbol;
-        kernel_param_field  = kernel_class_->scope->field_children[2]->node->symbol;
-        kernel_scalar_field = kernel_class_->scope->field_children[3]->node->symbol;
-        kernel_loop_field   = kernel_class_->scope->field_children[4]->node->symbol;
+        kernel_param_field  = kernel_class_->scope->getField("param" )->node->symbol;
+        kernel_scalar_field = kernel_class_->scope->getField("scalar")->node->symbol;
+        kernel_data_field   = kernel_class_->scope->getField("data"  )->node->symbol;
+        kernel_priv_field   = kernel_class_->scope->getField("priv"  )->node->symbol;
+        kernel_loop_field   = kernel_class_->scope->getField("loops" )->node->symbol;
 
       MDCG::Model::class_t loop_class_ = model.lookup<MDCG::Model::class_t>("klt_loop_t");
       loop_class = loop_class_->node->symbol;
       assert(loop_class != NULL);
 
-        loop_lower_field  = loop_class_->scope->field_children[0]->node->symbol;
-        loop_upper_field  = loop_class_->scope->field_children[1]->node->symbol;
-        loop_stride_field = loop_class_->scope->field_children[2]->node->symbol;
+        loop_lower_field  = loop_class_->scope->getField("lower" )->node->symbol;
+        loop_upper_field  = loop_class_->scope->getField("upper" )->node->symbol;
+        loop_stride_field = loop_class_->scope->getField("stride")->node->symbol;
 
       MDCG::Model::class_t tile_class_ = model.lookup<MDCG::Model::class_t>("klt_tile_t");
       tile_class = tile_class_->node->symbol;

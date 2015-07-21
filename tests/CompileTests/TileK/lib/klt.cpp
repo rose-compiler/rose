@@ -32,19 +32,56 @@ template <> size_t ::KLT::Kernel<Annotation, Runtime>::kernel_desc_t::id_cnt = 0
 
 template <>
 SgFunctionParameterList * Kernel<Annotation, Runtime>::createParameterList() const {
-#if defined(ACCELERATOR)
-  assert(false); // TODO
+  SgInitializedName * klt_loop_context = Runtime::kernel_api.createContext();
+  SgFunctionParameterList * param_list = NULL;
+#if defined(TILEK_ACCELERATOR)
+  param_list = SageBuilder::buildFunctionParameterList();
+  std::list<SgVariableSymbol *>::const_iterator it_vsym;
+  std::list<Data<Annotation> *>::const_iterator it_data;
+  for (it_vsym = p_arguments.parameters.begin(); it_vsym != p_arguments.parameters.end(); it_vsym++) {
+    param_list->append_arg(SageBuilder::buildInitializedName((*it_vsym)->get_name().getString(),  (*it_vsym)->get_type(), NULL));
+  }
+  for (it_vsym = p_arguments.scalars.begin(); it_vsym != p_arguments.scalars.end(); it_vsym++) {
+    param_list->append_arg(SageBuilder::buildInitializedName((*it_vsym)->get_name().getString(),  (*it_vsym)->get_type(), NULL));
+  }
+  for (it_data = p_arguments.datas.begin(); it_data != p_arguments.datas.end(); it_data++) {
+    std::string name((*it_data)->getVariableSymbol()->get_name().getString());
+    SgType * type = SageBuilder::buildPointerType((*it_data)->getBaseType());
+#if defined(TILEK_TARGET_OPENCL)
+    SgModifierType * mod_type = SageBuilder::buildModifierType(type);
+    mod_type->get_typeModifier().setOpenclGlobal();
+    type = mod_type;
+#elif defined(TILEK_TARGET_CUDA)
+    assert(false);
+#endif
+    param_list->append_arg(SageBuilder::buildInitializedName(name,  type, NULL));
+  }
+  for (it_data = p_arguments.privates.begin(); it_data != p_arguments.privates.end(); it_data++) {
+    std::string name((*it_data)->getVariableSymbol()->get_name().getString());
+    SgType * type = SageBuilder::buildPointerType((*it_data)->getBaseType());
+#if defined(TILEK_TARGET_OPENCL)
+    SgModifierType * mod_type = SageBuilder::buildModifierType(type);
+    mod_type->get_typeModifier().setOpenclLocal();
+    type = mod_type;
+#elif defined(TILEK_TARGET_CUDA)
+    assert(false);
+#endif
+    param_list->append_arg(SageBuilder::buildInitializedName(name,  type, NULL));
+  }
+  param_list->append_arg(klt_loop_context);
 #else
-  return SageBuilder::buildFunctionParameterList(
+  param_list = SageBuilder::buildFunctionParameterList(
 #if defined(TILEK_THREADS)
     SageBuilder::buildInitializedName("tid",  SageBuilder::buildIntType(), NULL),
 #endif
-    SageBuilder::buildInitializedName("param",  SageBuilder::buildPointerType(SageBuilder::buildIntType()), NULL),
-    SageBuilder::buildInitializedName("data",   SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL),
+    SageBuilder::buildInitializedName("param",  SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL),
     SageBuilder::buildInitializedName("scalar", SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL),
-    Runtime::kernel_api.createContext()
+    SageBuilder::buildInitializedName("data",   SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL),
+    SageBuilder::buildInitializedName("priv",   SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL),
+    klt_loop_context
   );
 #endif
+  return param_list;
 }
 
 template <>

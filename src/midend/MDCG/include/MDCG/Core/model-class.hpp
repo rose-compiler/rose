@@ -10,6 +10,8 @@
 
 #include "MDCG/Core/model-base.hpp"
 
+#include <string>
+
 namespace MDCG {
 
 namespace Model {
@@ -54,6 +56,8 @@ struct scope_t<e_model_class> {
   std::vector<class_t>     class_children;
   std::vector<field_t>     field_children;
   std::vector<method_t>    method_children;
+
+  field_t getField(const std::string & name) const;
 };
 
 /** @} */

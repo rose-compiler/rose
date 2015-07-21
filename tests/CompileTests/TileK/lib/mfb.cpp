@@ -66,10 +66,12 @@ SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
 
   // * Lookup parameter symbols *
 
+#if !defined(TILEK_ACCELERATOR)
   SgVariableSymbol * arg_param_sym = kernel_defn->lookup_variable_symbol("param");
   assert(arg_param_sym != NULL);
-
   int arg_cnt = 0;
+#endif
+
   for (it_var_sym = arguments.parameters.begin(); it_var_sym != arguments.parameters.end(); it_var_sym++) {
     SgVariableSymbol * param_sym = *it_var_sym;
     std::string param_name = param_sym->get_name().getString();
@@ -77,21 +79,57 @@ SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
 
     driver.useType(param_type, kernel_body);
 
-    SgInitializer * init = SageBuilder::buildAssignInitializer(SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_param_sym), SageBuilder::buildIntVal(arg_cnt)));
-    SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(param_name, param_type, init, kernel_body), kernel_body);
+#if !defined(TILEK_ACCELERATOR)
+    SgExpression * init = SageBuilder::buildPointerDerefExp(SageBuilder::buildCastExp(
+                            SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_param_sym), SageBuilder::buildIntVal(arg_cnt++)),
+                            SageBuilder::buildPointerType(param_type)
+                          ));
+    SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(param_name, param_type, SageBuilder::buildAssignInitializer(init), kernel_body), kernel_body);
+#endif
+
     SgVariableSymbol * new_sym = kernel_body->lookup_variable_symbol(param_name);
     assert(new_sym != NULL);
 
     local_symbol_maps.parameters.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(param_sym, new_sym));
-    arg_cnt++;
+  }
+
+  // * Lookup scalar symbols *
+
+#if !defined(TILEK_ACCELERATOR)
+  SgVariableSymbol * arg_scalar_sym = kernel_defn->lookup_variable_symbol("scalar");
+  assert(arg_scalar_sym != NULL);
+  arg_cnt = 0;
+#endif
+
+  for (it_var_sym = arguments.scalars.begin(); it_var_sym != arguments.scalars.end(); it_var_sym++) {
+    SgVariableSymbol * scalar_sym = *it_var_sym;
+    std::string scalar_name = scalar_sym->get_name().getString();
+    SgType * scalar_type = scalar_sym->get_type();
+
+    driver.useType(scalar_type, kernel_body);
+
+#if !defined(TILEK_ACCELERATOR)
+    SgExpression * init = SageBuilder::buildPointerDerefExp(SageBuilder::buildCastExp(
+                            SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_scalar_sym), SageBuilder::buildIntVal(arg_cnt++)),
+                            SageBuilder::buildPointerType(scalar_type)
+                          ));
+    SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(scalar_name, scalar_type, SageBuilder::buildAssignInitializer(init), kernel_body), kernel_body);
+#endif
+
+    SgVariableSymbol * new_sym = kernel_body->lookup_variable_symbol(scalar_name);
+    assert(new_sym != NULL);
+
+    local_symbol_maps.scalars.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(scalar_sym, new_sym));
   }
 
   // * Lookup data symbols *
 
+#if !defined(TILEK_ACCELERATOR)
   SgVariableSymbol * arg_data_sym = kernel_defn->lookup_variable_symbol("data");
   assert(arg_data_sym != NULL);
-
   arg_cnt = 0;
+#endif
+
   for (it_data = arguments.datas.begin(); it_data != arguments.datas.end(); it_data++) {
     Data * data = *it_data;
     SgVariableSymbol * data_sym = data->getVariableSymbol();
@@ -100,49 +138,56 @@ SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
 
     driver.useType(data_type, kernel_body);
 
+#if !defined(TILEK_ACCELERATOR)
     SgExpression * init = SageBuilder::buildCastExp(
-      SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_data_sym), SageBuilder::buildIntVal(arg_cnt)),
+      SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_data_sym), SageBuilder::buildIntVal(arg_cnt++)),
       SageBuilder::buildPointerType(data_type)
     );
-
     if (data->getSections().size() > 0)
       data_type = SageBuilder::buildPointerType(data_type);
-    else {
+    else
       init = SageBuilder::buildPointerDerefExp(init);
-    }
-
     SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(data_name, data_type, SageBuilder::buildAssignInitializer(init), kernel_body), kernel_body);
+#endif
+
     SgVariableSymbol * new_sym = kernel_body->lookup_variable_symbol(data_name);
     assert(new_sym != NULL);
 
     local_symbol_maps.datas.insert(std::pair<Data *, SgVariableSymbol *>(data, new_sym));
-    arg_cnt++;
   }
 
-  // * Lookup scalar symbols *
+  // * Lookup private symbols *
 
-  SgVariableSymbol * arg_scalar_sym = kernel_defn->lookup_variable_symbol("scalar");
-  assert(arg_scalar_sym != NULL);
-
+#if !defined(TILEK_ACCELERATOR)
+  SgVariableSymbol * arg_priv_sym = kernel_defn->lookup_variable_symbol("data");
+  assert(arg_priv_sym != NULL);
   arg_cnt = 0;
-  for (it_var_sym = arguments.scalars.begin(); it_var_sym != arguments.scalars.end(); it_var_sym++) {
-    SgVariableSymbol * scalar_sym = *it_var_sym;
-    std::string scalar_name = scalar_sym->get_name().getString();
-    SgType * scalar_type = scalar_sym->get_type();
+#endif
 
-    driver.useType(scalar_type, kernel_body);
+  for (it_data = arguments.privates.begin(); it_data != arguments.privates.end(); it_data++) {
+    Data * priv = *it_data;
+    SgVariableSymbol * priv_sym = priv->getVariableSymbol();
+    std::string priv_name = priv_sym->get_name().getString();
+    SgType * priv_type = priv->getBaseType();
 
-    SgExpression * init = SageBuilder::buildPointerDerefExp(SageBuilder::buildCastExp(
-                            SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_scalar_sym), SageBuilder::buildIntVal(arg_cnt)),
-                            SageBuilder::buildPointerType(scalar_type)
-                          ));
+    driver.useType(priv_type, kernel_body);
 
-    SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(scalar_name, scalar_type, SageBuilder::buildAssignInitializer(init), kernel_body), kernel_body);
-    SgVariableSymbol * new_sym = kernel_body->lookup_variable_symbol(scalar_name);
+#if !defined(TILEK_ACCELERATOR)
+    SgExpression * init = SageBuilder::buildCastExp(
+      SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_priv_sym), SageBuilder::buildIntVal(arg_cnt++)),
+      SageBuilder::buildPointerType(priv_type)
+    );
+    if (priv->getSections().size() > 0)
+      priv_type = SageBuilder::buildPointerType(priv_type);
+    else
+      init = SageBuilder::buildPointerDerefExp(init);
+    SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(priv_name, priv_type, SageBuilder::buildAssignInitializer(init), kernel_body), kernel_body);
+#endif
+
+    SgVariableSymbol * new_sym = kernel_body->lookup_variable_symbol(priv_name);
     assert(new_sym != NULL);
 
-    local_symbol_maps.scalars.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(scalar_sym, new_sym));
-    arg_cnt++;
+    local_symbol_maps.privates.insert(std::pair<Data *, SgVariableSymbol *>(priv, new_sym));
   }
 
   // * Create iterator *

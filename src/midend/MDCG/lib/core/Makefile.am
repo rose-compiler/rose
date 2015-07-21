@@ -7,6 +7,7 @@ libMDCG_Core_la_SOURCES= \
   model.cpp \
   model-builder.cpp \
   model-element.cpp \
+  model-class.cpp \
   static-initializer.cpp
 libMDCG_Core_la_CXXFLAGS= \
   -g \

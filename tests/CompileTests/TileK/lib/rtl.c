@@ -15,55 +15,22 @@
 
 struct tilek_worker_args_t {
   int tid;
-  kernel_func_ptr kernel_ptr;
-  int   * param;
-  void ** data;
-  void ** scalar;
+  struct kernel_t * kernel;
   struct klt_loop_context_t * context;
 };
 
 void * tilek_worker(void * args) {
   struct tilek_worker_args_t * tilek_worker_args = (struct tilek_worker_args_t *)args;
+  struct kernel_t * kernel = tilek_worker_args->kernel;
 
-  (*tilek_worker_args->kernel_ptr)(tilek_worker_args->tid, tilek_worker_args->param, tilek_worker_args->data, tilek_worker_args->scalar, tilek_worker_args->context);
+  void ** local_private = NULL; // TODO
+
+  (*kernel->desc->kernel_ptr)(tilek_worker_args->tid, kernel->param, kernel->scalar, kernel->data, local_private, tilek_worker_args->context);
 
   pthread_exit(NULL);
 }
-#elif defined(TILEK_ACCELERATOR)
-#  if defined(TILEK_TARGET_OPENCL)
-// TODO
-#  elif defined(TILEK_TARGET_CUDA)
-// TODO
-#  endif
-#endif
 
-struct kernel_t * build_kernel(int idx) {
-  struct kernel_desc_t * desc = &(kernel_desc[idx]);
-
-  int size = sizeof(struct kernel_t)
-           + desc->num_data   * sizeof(void *)
-           + desc->num_param  * sizeof(int)
-           + desc->num_scalar * sizeof(void *)
-           + desc->num_loops  * sizeof(struct klt_loop_t);
-
-  void * alloc = malloc(size);
-
-  memset(alloc, 0, size);
-
-  struct kernel_t * res = (struct kernel_t *)alloc;
-      res->desc   = desc;
-      res->data   =             (void **)(alloc += sizeof(struct kernel_t));
-      res->param  =               (int *)(alloc += desc->num_data   * sizeof(void *));
-      res->scalar =             (void **)(alloc += desc->num_param  * sizeof(int));
-      res->loops  = (struct klt_loop_t *)(alloc += desc->num_scalar * sizeof(void *));
-
-  return res;
-}
-
-void execute_kernel(struct kernel_t * kernel) {
-  struct klt_loop_context_t * context = klt_build_loop_context(kernel->desc->num_loops, kernel->desc->num_tiles, kernel->desc->loop_desc, kernel->loops, kernel);
-
-#if defined(TILEK_THREADS)
+void launch_threads(struct kernel_t * kernel, struct klt_loop_context_t * context) {
   void * status;
   int rc;
 
@@ -77,12 +44,9 @@ void execute_kernel(struct kernel_t * kernel) {
   pthread_attr_setdetachstate(&threads_attr, PTHREAD_CREATE_JOINABLE);
 
   for (tid = 0; tid < kernel->num_threads; tid++) {
-    threads_args[tid].tid        = tid;
-    threads_args[tid].kernel_ptr = kernel->desc->kernel_ptr;
-    threads_args[tid].param      = kernel->param;
-    threads_args[tid].data       = kernel->data;
-    threads_args[tid].scalar     = kernel->scalar;
-    threads_args[tid].context    = context;
+    threads_args[tid].tid     = tid;
+    threads_args[tid].kernel  = kernel;
+    threads_args[tid].context = context;
     
     rc = pthread_create(&threads[tid], &threads_attr, tilek_worker, &threads_args[tid]);
     assert(!rc);
@@ -94,14 +58,54 @@ void execute_kernel(struct kernel_t * kernel) {
     rc = pthread_join(threads[tid], &status);
     assert(!rc);
   }
+}
 #elif defined(TILEK_ACCELERATOR)
 #  if defined(TILEK_TARGET_OPENCL)
+void launch_accelerator(struct kernel_t * kernel, struct klt_loop_context_t * context) {
   assert(0); // TODO
+}
 #  elif defined(TILEK_TARGET_CUDA)
+void launch_accelerator(struct kernel_t * kernel, struct klt_loop_context_t * context) {
   assert(0); // TODO
+}
 #  endif
+#endif
+
+struct kernel_t * build_kernel(int idx) {
+  struct kernel_desc_t * desc = &(kernel_desc[idx]);
+
+  int size = sizeof(struct kernel_t)
+           + desc->num_param  * sizeof(void *)
+           + desc->num_scalar * sizeof(void *)
+           + desc->num_data   * sizeof(void *)
+           + desc->num_priv   * sizeof(void *)
+           + desc->num_loops  * sizeof(struct klt_loop_t);
+
+  void * alloc = malloc(size);
+
+  memset(alloc, 0, size);
+
+  struct kernel_t * res = (struct kernel_t *)alloc;
+      res->desc   = desc;
+      res->param  =             (void **)(alloc += sizeof(struct kernel_t));
+      res->scalar =             (void **)(alloc += desc->num_param  * sizeof(void *));
+      res->data   =             (void **)(alloc += desc->num_scalar * sizeof(void *));
+      res->priv   =             (void **)(alloc += desc->num_data   * sizeof(void *));
+      res->loops  = (struct klt_loop_t *)(alloc += desc->num_priv   * sizeof(void *));
+
+  return res;
+}
+
+void execute_kernel(struct kernel_t * kernel) {
+  struct klt_loop_context_t * context = klt_build_loop_context(kernel->desc->num_loops, kernel->desc->num_tiles, kernel->desc->loop_desc, kernel->loops, kernel);
+
+#if defined(TILEK_THREADS)
+  launch_threads(kernel, context);
+#elif defined(TILEK_ACCELERATOR)
+  launch_accelerator(kernel, context);
 #else
-  (*kernel->desc->kernel_ptr)(kernel->param, kernel->data, kernel->scalar, context);
+  void ** local_private = NULL; // TODO
+  (*kernel->desc->kernel_ptr)(kernel->param, kernel->scalar, kernel->data, local_private, context);
 #endif
 }
 

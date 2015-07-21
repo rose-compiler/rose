@@ -64,7 +64,7 @@ class Kernel {
       /// Private Datas : reference order for call argument
       std::list<Data<Annotation> *> privates;
       /// Context : used to communicate information (loop shape, ...) from the host to the device
-      SgVariableSymbol * context;
+      /// SgVariableSymbol * context;
     };
 
     struct local_symbol_maps_t {
@@ -586,14 +586,14 @@ SgBasicBlock * intantiateOnHost(Kernel<Annotation, Runtime> * kernels) {
   std::list<SgVariableSymbol *>::const_iterator it_param;
   size_t param_cnt = 0;
   for (it_param = arguments.parameters.begin(); it_param != arguments.parameters.end(); it_param++) {
-    // Append: 'kernel'->params['param_cnt'] = '*it_param'
-    SageInterface::appendStatement(Runtime::host_api.buildParamAssign(kernel_sym, param_cnt++, SageBuilder::buildVarRefExp(*it_param)), bb);
+    // Append: 'kernel'->param['param_cnt'] = &'*it_param'
+    SageInterface::appendStatement(Runtime::host_api.buildParamAssign(kernel_sym, param_cnt++, SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(*it_param))), bb);
   }
   // Set kernel's scalars
   std::list<SgVariableSymbol *>::const_iterator it_scalar;
   size_t scalar_cnt = 0;
   for (it_scalar = arguments.scalars.begin(); it_scalar != arguments.scalars.end(); it_scalar++) {
-    // Append: 'kernel'->scalars['param_cnt'] = &'*it_scalar'
+    // Append: 'kernel'->scalar['param_cnt'] = &'*it_scalar'
     SageInterface::appendStatement(Runtime::host_api.buildScalarAssign(kernel_sym, scalar_cnt++, SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(*it_scalar))), bb);
   }
   // Set kernel's data
@@ -605,8 +605,19 @@ SgBasicBlock * intantiateOnHost(Kernel<Annotation, Runtime> * kernels) {
     for (size_t i = 0; i < (*it_data)->getSections().size(); i++)
       // 'data_first_elem' = 'data_first_elem'[0]
       data_first_elem = SageBuilder::buildPntrArrRefExp(data_first_elem, SageBuilder::buildIntVal(0));
-    // Append: 'kernel'->datas['data_cnt'] = &'data_first_elem'
+    // Append: 'kernel'->data['data_cnt'] = &'data_first_elem'
     SageInterface::appendStatement(Runtime::host_api.buildDataAssign(kernel_sym, data_cnt++, SageBuilder::buildAddressOfOp(data_first_elem)), bb);
+  }
+  // Set kernel's private
+  size_t priv_cnt = 0;
+  for (it_data = arguments.privates.begin(); it_data != arguments.privates.end(); it_data++) {
+    // 'priv_first_elem' = 'symbol'
+    SgExpression * priv_first_elem = SageBuilder::buildVarRefExp((*it_data)->getVariableSymbol());
+    for (size_t i = 0; i < (*it_data)->getSections().size(); i++)
+      // 'priv_first_elem' = 'priv_first_elem'[0]
+      priv_first_elem = SageBuilder::buildPntrArrRefExp(priv_first_elem, SageBuilder::buildIntVal(0));
+    // Append: 'kernel'->priv['priv_cnt'] = &'priv_first_elem'
+    SageInterface::appendStatement(Runtime::host_api.buildPrivateAssign(kernel_sym, priv_cnt++, SageBuilder::buildAddressOfOp(priv_first_elem)), bb);
   }
 
   // Set kernel's loop's bounds
