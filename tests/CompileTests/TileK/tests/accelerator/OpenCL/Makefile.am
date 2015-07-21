@@ -37,7 +37,7 @@ test_1-data.o: test_1-data.c
 	gcc -O0 -g -I$(TILEK_INC) -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL -c test_1-data.c -o test_1-data.o
 
 test_1: rose_test_1.o test_1-data.o $(TILEK_RTL) $(KLT_RTL)
-	libtool --mode=link gcc rose_test_1.o test_1-data.o $(TILEK_RTL) $(KLT_RTL) -o test_1
+	libtool --mode=link gcc rose_test_1.o test_1-data.o -lOpenCL $(TILEK_RTL) $(KLT_RTL) -o test_1
 
 check-test_1: test_1
 	./test_1

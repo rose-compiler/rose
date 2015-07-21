@@ -170,28 +170,28 @@ libKLT_TileK_acc_cuda_la_CXXFLAGS= \
 
 # Runtime
 
-libTileK_RTL_la_SOURCES=rtl.c
+libTileK_RTL_la_SOURCES=rtl.c rtl-basic.c
 libTileK_RTL_la_CFLAGS= \
   -g \
   -I$(top_srcdir)/src/backend/KLT/include \
   -I$(srcdir)/../include \
   $(ROSE_INCLUDES)
 
-libTileK_RTL_threads_la_SOURCES=rtl.c
+libTileK_RTL_threads_la_SOURCES=rtl.c rtl-threads.c
 libTileK_RTL_threads_la_CFLAGS= \
   -g -DTILEK_THREADS \
   -I$(top_srcdir)/src/backend/KLT/include \
   -I$(srcdir)/../include \
   $(ROSE_INCLUDES)
 
-libTileK_RTL_acc_ocl_la_SOURCES=rtl.c
+libTileK_RTL_acc_ocl_la_SOURCES=rtl.c rtl-accelerator.c rtl-acc-ocl.c
 libTileK_RTL_acc_ocl_la_CFLAGS= \
   -g -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL \
   -I$(top_srcdir)/src/backend/KLT/include \
   -I$(srcdir)/../include \
   $(ROSE_INCLUDES)
 
-libTileK_RTL_acc_cuda_la_SOURCES=rtl.c
+libTileK_RTL_acc_cuda_la_SOURCES=rtl.c rtl-accelerator.c rtl-acc-cuda.c
 libTileK_RTL_acc_cuda_la_CFLAGS= \
   -g -DTILEK_ACCELERATOR -DTILEK_TARGET_CUDA \
   -I$(top_srcdir)/src/backend/KLT/include \
