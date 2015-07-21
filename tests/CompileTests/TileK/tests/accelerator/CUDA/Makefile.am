@@ -31,13 +31,13 @@ rose_test_1.c: $(srcdir)/../test_1.c $(TILEK)
 	$(TILEK) -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(TILEK_INC) -c $(srcdir)/../test_1.c
 
 rose_test_1.o: rose_test_1.c
-	gcc -O0 -g -I$(TILEK_INC) -DTILEK_THREADS -c rose_test_1.c -o rose_test_1.o
+	gcc -O0 -g -I$(TILEK_INC) -DTILEK_ACCELERATOR -DTILEK_TARGET_CUDA -c rose_test_1.c -o rose_test_1.o
 
 test_1-kernel.o: test_1-kernel.c
-	gcc -O0 -g -I$(TILEK_INC) -DTILEK_THREADS -c test_1-kernel.c -o test_1-kernel.o
+	gcc -O0 -g -I$(TILEK_INC) -DTILEK_ACCELERATOR -DTILEK_TARGET_CUDA -c test_1-kernel.c -o test_1-kernel.o
 
 test_1-data.o: test_1-data.c
-	gcc -O0 -g -I$(TILEK_INC) -DTILEK_THREADS -c test_1-data.c -o test_1-data.o
+	gcc -O0 -g -I$(TILEK_INC) -DTILEK_ACCELERATOR -DTILEK_TARGET_CUDA -c test_1-data.c -o test_1-data.o
 
 test_1: rose_test_1.o test_1-kernel.o test_1-data.o $(TILEK_RTL) $(KLT_RTL)
 	libtool --mode=link gcc rose_test_1.o test_1-kernel.o test_1-data.o $(TILEK_RTL) $(KLT_RTL) -o test_1

@@ -294,7 +294,9 @@ struct Runtime {
 
   // Extra
 
-    static void applyKernelModifiers(SgFunctionDeclaration * kernel_decl) {};
+    static void applyKernelModifiers(SgFunctionDeclaration * kernel_decl) {}
+
+    static void addRuntimeStaticData(MFB::Driver<MFB::Sage> & driver, const std::string & kernel_file_name, const std::string & static_file_name, size_t static_file_id) {}
 };
 
 } // namespace MDCG::KLT

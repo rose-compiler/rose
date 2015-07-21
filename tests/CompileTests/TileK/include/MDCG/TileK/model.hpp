@@ -63,6 +63,7 @@ SgExpression * KernelDesc<Hlang, Klang>::createFieldInitializer(
       MDCG::Model::class_t field_class = StaticInitializer::getBaseClassForPointerOnClass(element, "loop_desc", "klt_loop_desc_t");
       return static_initializer.createArrayPointer< ::MDCG::KLT::LoopDesc<Hlang> >(field_class, kernel->loops.size(), kernel->loops.begin(), kernel->loops.end(), file_id, decl_name.str());
     }
+#if !defined(TILEK_ACCELERATOR) || !defined(TILEK_TARGET_OPENCL)
     case 6:
     { // kernel_func_ptr kernel_ptr;
       MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(kernel->kernel_name, Runtime::host_api.getKernelFnctPtrType(), NULL, NULL, file_id, false, true);
@@ -74,6 +75,12 @@ SgExpression * KernelDesc<Hlang, Klang>::createFieldInitializer(
 
       return SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(var_decl_res.symbol));
     }
+#else
+    case 6:
+    { // char * kernel_name;
+      return SageBuilder::buildStringVal(kernel->kernel_name);
+    }
+#endif
     default:
       assert(false);
   }

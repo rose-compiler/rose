@@ -1,6 +1,9 @@
 
 #include "sage3basic.h"
 
+#include "MFB/Sage/driver.hpp"
+#include "MFB/Sage/variable-declaration.hpp"
+
 #include "MDCG/TileK/runtime.hpp"
 
 #include <cassert>
@@ -13,13 +16,30 @@ namespace KLT {
 template <>
 void Runtime< ::KLT::Language::C, ::KLT::Language::OpenCL>::loadUserAPI(MDCG::ModelBuilder & model_builder, size_t tilek_model, const std::string & USER_RTL) {
   model_builder.add(tilek_model, "kernel", USER_RTL + "/Host/", "h");
-  model_builder.add(tilek_model, "kernel", USER_RTL + "/Kernel/OpenCL/", "cl");
+  model_builder.add(tilek_model, "kernel", USER_RTL + "/Kernel/OpenCL", "cl"); // Empty, used to get OpenCL's built-in
+}
+template <>
+void Runtime< ::KLT::Language::C, ::KLT::Language::OpenCL>::applyKernelModifiers(SgFunctionDeclaration * kernel_decl) {
+  // TODO
+}
+template <>
+void Runtime< ::KLT::Language::C, ::KLT::Language::OpenCL>::addRuntimeStaticData(
+  MFB::Driver<MFB::Sage> & driver, const std::string & kernel_file_name, const std::string & static_file_name, size_t static_file_id
+) {
+  driver.build<SgVariableDeclaration>(
+    MFB::Sage<SgVariableDeclaration>::object_desc_t(
+      "opencl_kernel_file",
+      SageBuilder::buildPointerType(SageBuilder::buildCharType()),
+      SageBuilder::buildAssignInitializer(SageBuilder::buildStringVal(kernel_file_name)),
+      NULL, static_file_id, false, true
+    )
+  );
 }
 #  elif defined(TILEK_TARGET_CUDA)
 template <>
 void Runtime< ::KLT::Language::C, ::KLT::Language::CUDA>::loadUserAPI(MDCG::ModelBuilder & model_builder, size_t tilek_model, const std::string & USER_RTL) {
   model_builder.add(tilek_model, "kernel", USER_RTL + "/Host/", "h");
-  model_builder.add(tilek_model, "kernel", USER_RTL + "/Kernel/CUDA/", "cu");
+  model_builder.add(tilek_model, "kernel", USER_RTL + "/Kernel/CUDA", "cu"); // Empty, used to get CUDA's built-in
 }
 #  endif
 #else
@@ -51,12 +71,37 @@ void host_t< ::KLT::Language::C>::load_user(const MDCG::Model::model_t & model) 
 #  if defined(TILEK_TARGET_OPENCL)
 template <>
 void kernel_t< ::KLT::Language::OpenCL>::load_user(const MDCG::Model::model_t & model) {
-  assert(false); // TODO
+  assert(user == NULL);
+  user = new user_t();
+
+  user->opencl_get_group_id_func = model.lookup<MDCG::Model::function_t>("get_group_id")->node->symbol;
+  assert(user->opencl_get_group_id_func != NULL);
+
+  user->opencl_get_local_id_func = model.lookup<MDCG::Model::function_t>("get_local_id")->node->symbol;
+  assert(user->opencl_get_local_id_func != NULL);
+}
+
+SgExpression * kernel_t< ::KLT::Language::OpenCL>::user_t::buildGetGangID(size_t lvl) const {
+  return SageBuilder::buildFunctionCallExp(opencl_get_group_id_func, SageBuilder::buildExprListExp(SageBuilder::buildIntVal(lvl)));
+}
+
+SgExpression * kernel_t< ::KLT::Language::OpenCL>::user_t::buildGetWorkerID(size_t lvl) const {
+  return SageBuilder::buildFunctionCallExp(opencl_get_local_id_func, SageBuilder::buildExprListExp(SageBuilder::buildIntVal(lvl)));
 }
 #  elif defined(TILEK_TARGET_CUDA)
 template <>
 void kernel_t< ::KLT::Language::CUDA>::load_user(const MDCG::Model::model_t & model) {
   assert(false); // TODO
+}
+
+SgExpression * kernel_t< ::KLT::Language::CUDA>::user_t::buildGetGangID(size_t lvl) const {
+  assert(false); // TODO
+//return SageBuilder::buildFunctionCallExp(opencl_get_group_id_func, SageBuilder::buildExprListExp(SageBuilder::buildIntVal(lvl)));
+}
+
+SgExpression * kernel_t< ::KLT::Language::CUDA>::user_t::buildGetWorkerID(size_t lvl) const {
+  assert(false); // TODO
+//return SageBuilder::buildFunctionCallExp(opencl_get_local_id_func, SageBuilder::buildExprListExp(SageBuilder::buildIntVal(lvl)));
 }
 #  endif
 #else

@@ -122,6 +122,8 @@ void compile(SgProject * project, const std::string & KLT_RTL, const std::string
 
     static_initializer.createArrayPointer<KernelDesc>(*(classes.begin()), all_kernels.size(), all_kernels.begin(), all_kernels.end(), host_data_file_id, decl_name.str());
 
+    Runtime::addRuntimeStaticData(driver, kernel_file, static_file, host_data_file_id);
+
   // Removes all pragma
 
     std::vector<SgPragmaDeclaration * > pragma_decls = SageInterface::querySubTree<SgPragmaDeclaration>(project);

@@ -60,9 +60,10 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
   Directives::clause_t<TileK::language_t, TileK::language_t::e_clause_data> * clause
 ) {
   DLX::Frontend::Parser parser(directive_str, directive_node);
-  bool res = parser.parse_list(clause->parameters.data_sections, '(', ')', ',');
-  if (res) directive_str = parser.getDirectiveString();
-  return res;
+
+  if (!parser.parse_list(clause->parameters.data_sections, '(', ')', ',')) return false;
+
+  directive_str = parser.getDirectiveString(); return true;
 }
 
 template <>
@@ -75,12 +76,13 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
   DLX::Frontend::Parser parser(directive_str, directive_node);
   if (parser.consume('[')) {
     parser.skip_whitespace();
-    parser.parse<size_t>(clause->parameters.order);
+    if (!parser.parse<size_t>(clause->parameters.order)) return false;
     parser.skip_whitespace();
-    assert(parser.consume(']'));
+    if (!parser.consume(']')) return false;
   }
   else clause->parameters.order = -1;
-  assert(parser.consume('('));
+
+  if (!parser.consume('(')) return false;
   parser.skip_whitespace();
   if (parser.consume("dynamic")) {
     clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_dynamic_tile;
@@ -89,9 +91,9 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
   else if (parser.consume("static")) {
     clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_static_tile;
     parser.skip_whitespace();
-    assert(parser.consume(','));
+    if (!parser.consume(',')) return false;
     parser.skip_whitespace();
-    parser.parse<size_t>(clause->parameters.nbr_it);
+    if (!parser.parse<size_t>(clause->parameters.nbr_it)) return false;
   }
 #ifdef TILEK_THREADS
   else if (parser.consume("thread")) {
@@ -101,39 +103,40 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
 #endif
 #ifdef TILEK_ACCELERATOR
   else if (parser.consume("gang")) {
-    parser.skip_whitespace();
-    assert(parser.consume(','));
-    parser.skip_whitespace();
     size_t gang_id;
-    parser.parse<size_t>(gang_id);
+    parser.skip_whitespace();
+    if (!parser.consume(',')) return false;
+    parser.skip_whitespace();
+    if (!parser.parse<size_t>(gang_id)) return false;
     switch (gang_id) {
-      case 0: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_gang_0_tile;
-      case 1: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_gang_1_tile;
-      case 2: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_gang_2_tile;
+      case 0: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_gang_0_tile; break;
+      case 1: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_gang_1_tile; break;
+      case 2: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_gang_2_tile; break;
       default: assert(false);
     }
     clause->parameters.nbr_it = 0;
   }
   else if (parser.consume("worker")) {
-    parser.skip_whitespace();
-    assert(parser.consume(','));
-    parser.skip_whitespace();
     size_t worker_id;
-    parser.parse<size_t>(worker_id);
+    parser.skip_whitespace();
+    if (!parser.consume(',')) return false;
+    parser.skip_whitespace();
+    if (!parser.parse<size_t>(worker_id)) return false;
     switch (worker_id) {
-      case 0: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_worker_0_tile;
-      case 1: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_worker_1_tile;
-      case 2: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_worker_2_tile;
+      case 0: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_worker_0_tile; break;
+      case 1: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_worker_1_tile; break;
+      case 2: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_worker_2_tile; break;
       default: assert(false);
     }
     clause->parameters.nbr_it = 0;
   }
 #endif
-  else assert(false);
+  else return false;
+
   parser.skip_whitespace();
-  assert(parser.consume(')'));
-  directive_str = parser.getDirectiveString();
-  return true;
+  if (!parser.consume(')')) return false;
+
+  directive_str = parser.getDirectiveString(); return true;
 }
 
 #ifdef TILEK_THREADS
@@ -145,11 +148,12 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
   Directives::clause_t<TileK::language_t, TileK::language_t::e_clause_num_threads> * clause
 ) {
   DLX::Frontend::Parser parser(directive_str, directive_node);
-  assert(parser.consume('('));
-  bool res = parser.parse<size_t>(clause->parameters.num_threads);
-  assert(parser.consume(')'));
-  if (res) directive_str = parser.getDirectiveString();
-  return res;
+
+  if (!parser.consume('('))                                  return false;
+  if (!parser.parse<size_t>(clause->parameters.num_threads)) return false;
+  if (!parser.consume(')'))                                  return false;
+
+  directive_str = parser.getDirectiveString(); return true;
 }
 #endif
 
@@ -162,18 +166,20 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
   Directives::clause_t<TileK::language_t, TileK::language_t::e_clause_num_gangs> * clause
 ) {
   DLX::Frontend::Parser parser(directive_str, directive_node);
+
   if (parser.consume('[')) {
     parser.skip_whitespace();
-    parser.parse<size_t>(clause->parameters.gang_id);
+    if (!parser.parse<size_t>(clause->parameters.gang_id)) return false;
     parser.skip_whitespace();
-    assert(parser.consume(']'));
+    if (!parser.consume(']')) return false;
   }
   else clause->parameters.gang_id = 1;
-  assert(parser.consume('('));
-  bool res = parser.parse<size_t>(clause->parameters.num_gangs);
-  assert(parser.consume(')'));
-  if (res) directive_str = parser.getDirectiveString();
-  return res;
+
+  if (!parser.consume('('))                                return false;
+  if (!parser.parse<size_t>(clause->parameters.num_gangs)) return false;
+  if (!parser.consume(')'))                                return false;
+
+  directive_str = parser.getDirectiveString(); return true;
 }
 
 template <>
@@ -184,18 +190,20 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
   Directives::clause_t<TileK::language_t, TileK::language_t::e_clause_num_workers> * clause
 ) {
   DLX::Frontend::Parser parser(directive_str, directive_node);
+
   if (parser.consume('[')) {
     parser.skip_whitespace();
-    parser.parse<size_t>(clause->parameters.worker_id);
+    if (!parser.parse<size_t>(clause->parameters.worker_id)) return false;
     parser.skip_whitespace();
-    assert(parser.consume(']'));
+    if (!parser.consume(']')) return false;
   }
   else clause->parameters.worker_id = 1;
-  assert(parser.consume('('));
-  bool res = parser.parse<size_t>(clause->parameters.num_workers);
-  assert(parser.consume(')'));
-  if (res) directive_str = parser.getDirectiveString();
-  return res;
+
+  if (!parser.consume('('))                                  return false;
+  if (!parser.parse<size_t>(clause->parameters.num_workers)) return false;
+  if (!parser.consume(')'))                                  return false;
+
+  directive_str = parser.getDirectiveString(); return true;
 }
 #endif
 

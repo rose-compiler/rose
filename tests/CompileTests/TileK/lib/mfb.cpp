@@ -183,15 +183,18 @@ SgBasicBlock * createLocalDeclarations<Annotation, Runtime>(
       else
         assert(it_tile->kind == 0 || it_tile->kind == 1);
 #elif defined(TILEK_ACCELERATOR)
-      if (it_tile->kind > 1 && it_tile->kind < 8)
-        switch (it_tile->kind) {
-          case 2: tile_it = Runtime::kernel_api.user->buildGetGangID  (0, local_symbol_maps.context); break;
-          case 3: tile_it = Runtime::kernel_api.user->buildGetGangID  (1, local_symbol_maps.context); break;
-          case 4: tile_it = Runtime::kernel_api.user->buildGetGangID  (2, local_symbol_maps.context); break;
-          case 5: tile_it = Runtime::kernel_api.user->buildGetWorkerID(0, local_symbol_maps.context); break;
-          case 6: tile_it = Runtime::kernel_api.user->buildGetWorkerID(1, local_symbol_maps.context); break;
-          case 7: tile_it = Runtime::kernel_api.user->buildGetWorkerID(2, local_symbol_maps.context); break;
+      Runtime::kernel_api_t::user_t * user_kernel_api = Runtime::kernel_api.user;
+      if (it_tile->kind > 1 && it_tile->kind < 8) {
+        switch ((int)it_tile->kind) {
+          case 2: tile_it = user_kernel_api->buildGetGangID(0); break;
+          case 3: tile_it = user_kernel_api->buildGetGangID(1); break;
+          case 4: tile_it = user_kernel_api->buildGetGangID(2); break;
+          case 5: tile_it = user_kernel_api->buildGetWorkerID(0); break;
+          case 6: tile_it = user_kernel_api->buildGetWorkerID(1); break;
+          case 7: tile_it = user_kernel_api->buildGetWorkerID(2); break;
+          default: assert(false);
         }
+      }
       else
         assert(it_tile->kind == 0 || it_tile->kind == 1);
 #else
