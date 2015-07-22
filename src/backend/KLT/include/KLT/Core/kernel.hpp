@@ -252,7 +252,7 @@ SgStatement * generateStatement(
       it_subscript++;
       size_t cnt = 1;
       while (it_subscript != subscripts.end()) {
-        SgExpression * dim_size = SageInterface::copyExpression(data->getSections()[cnt].size);
+        SgExpression * dim_size = SageInterface::copyExpression(data->getSections()[cnt].length);
         subscript = SageBuilder::buildMultiplyOp(subscript, dim_size);
         subscript = SageBuilder::buildAddOp(subscript, SageInterface::copyExpression(*it_subscript));
         cnt++; it_subscript++;
@@ -602,22 +602,33 @@ SgBasicBlock * intantiateOnHost(Kernel<Annotation, Runtime> * kernels) {
   for (it_data = arguments.datas.begin(); it_data != arguments.datas.end(); it_data++) {
     // 'data_first_elem' = 'symbol'
     SgExpression * data_first_elem = SageBuilder::buildVarRefExp((*it_data)->getVariableSymbol());
-    for (size_t i = 0; i < (*it_data)->getSections().size(); i++)
+    for (size_t i = 0; i < (*it_data)->getSections().size(); i++) {
       // 'data_first_elem' = 'data_first_elem'[0]
       data_first_elem = SageBuilder::buildPntrArrRefExp(data_first_elem, SageBuilder::buildIntVal(0));
-    // Append: 'kernel'->data['data_cnt'] = &'data_first_elem'
-    SageInterface::appendStatement(Runtime::host_api.buildDataAssign(kernel_sym, data_cnt++, SageBuilder::buildAddressOfOp(data_first_elem)), bb);
+      // Append: 'kernel'->data['data_cnt'].sections['i'].offset = '(*it_data)->getSections()[i].offset'
+      SageInterface::appendStatement(Runtime::host_api.buildDataSectionOffsetAssign(kernel_sym, data_cnt, i, SageInterface::copyExpression((*it_data)->getSections()[i].offset)), bb);
+      // Append: 'kernel'->data['data_cnt'].sections['i'].length = '(*it_data)->getSections()[i].length'
+      SageInterface::appendStatement(Runtime::host_api.buildDataSectionLengthAssign(kernel_sym, data_cnt, i, SageInterface::copyExpression((*it_data)->getSections()[i].length)), bb);
+    }
+    // Append: 'kernel'->data['data_cnt'].ptr = &'data_first_elem'
+    SageInterface::appendStatement(Runtime::host_api.buildDataPtrAssign(kernel_sym, data_cnt, SageBuilder::buildAddressOfOp(data_first_elem)), bb);
+    data_cnt++;
   }
   // Set kernel's private
   size_t priv_cnt = 0;
   for (it_data = arguments.privates.begin(); it_data != arguments.privates.end(); it_data++) {
     // 'priv_first_elem' = 'symbol'
     SgExpression * priv_first_elem = SageBuilder::buildVarRefExp((*it_data)->getVariableSymbol());
-    for (size_t i = 0; i < (*it_data)->getSections().size(); i++)
+    for (size_t i = 0; i < (*it_data)->getSections().size(); i++) {
       // 'priv_first_elem' = 'priv_first_elem'[0]
       priv_first_elem = SageBuilder::buildPntrArrRefExp(priv_first_elem, SageBuilder::buildIntVal(0));
-    // Append: 'kernel'->priv['priv_cnt'] = &'priv_first_elem'
-    SageInterface::appendStatement(Runtime::host_api.buildPrivateAssign(kernel_sym, priv_cnt++, SageBuilder::buildAddressOfOp(priv_first_elem)), bb);
+      // Append: 'kernel'->priv['data_cnt'].sections['i'].offset = '(*it_data)->getSections()[i].offset'
+      SageInterface::appendStatement(Runtime::host_api.buildPrivateSectionOffsetAssign(kernel_sym, data_cnt, i, SageInterface::copyExpression((*it_data)->getSections()[i].offset)), bb);
+      // Append: 'kernel'->priv['data_cnt'].sections['i'].length = '(*it_data)->getSections()[i].length'
+      SageInterface::appendStatement(Runtime::host_api.buildPrivateSectionLengthAssign(kernel_sym, data_cnt, i, SageInterface::copyExpression((*it_data)->getSections()[i].length)), bb);
+    }
+    // Append: 'kernel'->priv['priv_cnt'].ptr = &'priv_first_elem'
+    SageInterface::appendStatement(Runtime::host_api.buildPrivatePtrAssign(kernel_sym, priv_cnt++, SageBuilder::buildAddressOfOp(priv_first_elem)), bb);
   }
 
   // Set kernel's loop's bounds

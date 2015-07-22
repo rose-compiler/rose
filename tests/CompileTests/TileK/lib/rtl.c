@@ -15,24 +15,23 @@ extern void launch(struct kernel_t * kernel, struct klt_loop_context_t * klt_loo
 struct kernel_t * build_kernel(int idx) {
   struct kernel_desc_t * desc = &(kernel_desc[idx]);
 
-  int size = sizeof(struct kernel_t)
-           + desc->data.num_param  * sizeof(void *)
-           + desc->data.num_scalar * sizeof(void *)
-           + desc->data.num_data   * sizeof(void *)
-           + desc->data.num_priv   * sizeof(void *)
-           + desc->loop.num_loops  * sizeof(struct klt_loop_t);
+  struct kernel_t * res = (struct kernel_t *)malloc(sizeof(struct kernel_t));
 
-  void * alloc = malloc(size);
+  res->desc   = desc;
 
-  memset(alloc, 0, size);
+  res->param  = (void **)malloc(desc->data.num_param  * sizeof(void *));
+  res->scalar = (void **)malloc(desc->data.num_scalar * sizeof(void *));
 
-  struct kernel_t * res = (struct kernel_t *)alloc;
-      res->desc   = desc;
-      res->param  =             (void **)(alloc += sizeof(struct kernel_t));
-      res->scalar =             (void **)(alloc += desc->data.num_param  * sizeof(void *));
-      res->data   =             (void **)(alloc += desc->data.num_scalar * sizeof(void *));
-      res->priv   =             (void **)(alloc += desc->data.num_data   * sizeof(void *));
-      res->loops  = (struct klt_loop_t *)(alloc += desc->data.num_priv   * sizeof(void *));
+  res->data   = (struct klt_data_t *)malloc(desc->data.num_data * sizeof(struct klt_data_t));
+  res->priv   = (struct klt_data_t *)malloc(desc->data.num_priv * sizeof(struct klt_data_t));
+
+  res->loops  = (struct klt_loop_t *)malloc(desc->loop.num_loops * sizeof(struct klt_loop_t));
+
+  int i;
+  for (i = 0; i < desc->data.num_data; i++)
+    res->data[i].sections = (struct klt_data_section_t *)malloc(desc->data.ndims_data[i] * sizeof(struct klt_data_section_t));
+  for (i = 0; i < desc->data.num_priv; i++)
+    res->priv[i].sections = (struct klt_data_section_t *)malloc(desc->data.ndims_priv[i] * sizeof(struct klt_data_section_t));
 
   return res;
 }

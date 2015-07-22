@@ -109,9 +109,13 @@ void klt_solve_loop_context(int num_loops, struct klt_loop_desc_t * loop_desc, s
 struct klt_loop_context_t * klt_build_loop_context(struct klt_loop_container_t * loop_container, struct klt_loop_t * loops, struct kernel_t * kernel) {
   int size = sizeof(struct klt_loop_context_t) + loop_container->num_loops * sizeof(struct klt_loop_t) + loop_container->num_tiles * sizeof(struct klt_tile_t);
   struct klt_loop_context_t * loop_ctx = malloc(size);
-    loop_ctx->num_loops = loop_container->num_loops;
-    loop_ctx->num_tiles = loop_container->num_tiles;
-    memcpy(loop_ctx->data, loops, loop_container->num_loops * sizeof(struct klt_loop_t));
+
+  memset(loop_ctx, 0, size);
+
+  loop_ctx->num_loops = loop_container->num_loops;
+  loop_ctx->num_tiles = loop_container->num_tiles;
+  memcpy(loop_ctx->data, loops, loop_container->num_loops * sizeof(struct klt_loop_t));
+    
 
   klt_solve_loop_context(loop_container->num_loops, loop_container->loop_desc, loop_ctx, kernel);
 

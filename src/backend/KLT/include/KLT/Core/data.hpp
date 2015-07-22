@@ -26,9 +26,9 @@ template <class Annotation>
 class Data {
   public:
     typedef struct section_t {
-      SgExpression * lower_bound;
-      SgExpression * size;
-      SgExpression * stride;
+      SgExpression * offset;
+      SgExpression * length;
+//    SgExpression * stride;
     } section_t;
 
     typedef struct data_distribution_t {
@@ -310,21 +310,21 @@ void collectReferencedSymbols(const std::set<Data<Annotation> *> & datas, std::s
     const std::vector<typename Data<Annotation>::section_t> & sections = (*it_data)->getSections();
     typename std::vector<typename Data<Annotation>::section_t>::const_iterator it_section;
     for (it_section = sections.begin(); it_section != sections.end(); it_section++) {
-      if (it_section->lower_bound != NULL) {
-        var_refs = SageInterface::querySubTree<SgVarRefExp>(it_section->lower_bound);
+      if (it_section->offset != NULL) {
+        var_refs = SageInterface::querySubTree<SgVarRefExp>(it_section->offset);
         for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
           symbols.insert((*it_var_ref)->get_symbol());
       }
-      if (it_section->size != NULL) {
-        var_refs = SageInterface::querySubTree<SgVarRefExp>(it_section->size);
+      if (it_section->length != NULL) {
+        var_refs = SageInterface::querySubTree<SgVarRefExp>(it_section->length);
         for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
           symbols.insert((*it_var_ref)->get_symbol());
       }
-      if (it_section->stride != NULL) {
-        var_refs = SageInterface::querySubTree<SgVarRefExp>(it_section->stride);
-        for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
-          symbols.insert((*it_var_ref)->get_symbol());
-      }
+//    if (it_section->stride != NULL) {
+//      var_refs = SageInterface::querySubTree<SgVarRefExp>(it_section->stride);
+//      for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
+//        symbols.insert((*it_var_ref)->get_symbol());
+//    }
     }
   }
 }

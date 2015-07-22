@@ -103,11 +103,17 @@ struct host_t {
     SgClassSymbol * kernel_class;
     SgClassSymbol * loop_class;
     SgClassSymbol * tile_class;
+    SgClassSymbol * data_class;
 
     SgVariableSymbol * kernel_param_field;
     SgVariableSymbol * kernel_scalar_field;
     SgVariableSymbol * kernel_data_field;
     SgVariableSymbol * kernel_priv_field;
+    SgVariableSymbol * data_ptr_field;
+    SgVariableSymbol * data_section_field;
+    SgVariableSymbol * section_offset_field;
+    SgVariableSymbol * section_length_field;
+
     SgVariableSymbol * kernel_loop_field;
     SgVariableSymbol * loop_lower_field;
     SgVariableSymbol * loop_upper_field;
@@ -155,11 +161,33 @@ struct host_t {
     SgStatement * buildScalarAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
       return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_scalar_field, SageBuilder::buildIntVal(idx), NULL), rhs));
     }
-    SgStatement * buildDataAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
-      return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_data_field, SageBuilder::buildIntVal(idx), NULL), rhs));
+
+    SgStatement * buildDataPtrAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
+      return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_data_field, SageBuilder::buildIntVal(idx), data_ptr_field), rhs));
     }
-    SgStatement * buildPrivateAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
-      return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_priv_field, SageBuilder::buildIntVal(idx), NULL), rhs));
+    SgStatement * buildDataSectionOffsetAssign(SgVariableSymbol * kernel_sym, size_t idx, size_t dim, SgExpression * rhs) const {
+      return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildDotExp(SageBuilder::buildPntrArrRefExp(
+               MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_data_field, SageBuilder::buildIntVal(idx), data_section_field), SageBuilder::buildIntVal(dim)
+             ), SageBuilder::buildVarRefExp(section_offset_field)), rhs));
+    }
+    SgStatement * buildDataSectionLengthAssign(SgVariableSymbol * kernel_sym, size_t idx, size_t dim, SgExpression * rhs) const {
+      return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildDotExp(SageBuilder::buildPntrArrRefExp(
+               MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_data_field, SageBuilder::buildIntVal(idx), data_section_field), SageBuilder::buildIntVal(dim)
+             ), SageBuilder::buildVarRefExp(section_length_field)), rhs));
+    }
+
+    SgStatement * buildPrivatePtrAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
+      return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_priv_field, SageBuilder::buildIntVal(idx), data_ptr_field), rhs));
+    }
+    SgStatement * buildPrivateSectionOffsetAssign(SgVariableSymbol * kernel_sym, size_t idx, size_t dim, SgExpression * rhs) const {
+      return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildDotExp(SageBuilder::buildPntrArrRefExp(
+               MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_priv_field, SageBuilder::buildIntVal(idx), data_section_field), SageBuilder::buildIntVal(dim)
+             ), SageBuilder::buildVarRefExp(section_offset_field)), rhs));
+    }
+    SgStatement * buildPrivateSectionLengthAssign(SgVariableSymbol * kernel_sym, size_t idx, size_t dim, SgExpression * rhs) const {
+      return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildDotExp(SageBuilder::buildPntrArrRefExp(
+               MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_priv_field, SageBuilder::buildIntVal(idx), data_section_field), SageBuilder::buildIntVal(dim)
+             ), SageBuilder::buildVarRefExp(section_length_field)), rhs));
     }
 
     SgStatement * buildLoopLowerAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
@@ -177,6 +205,7 @@ struct host_t {
     SgClassSymbol * getKernelClass() const { return kernel_class; }
     SgClassSymbol * getLoopClass() const { return loop_class; }
     SgClassSymbol * getTileClass() const { return tile_class; }
+    SgClassSymbol * getDataClass() const { return data_class; }
 
     void load(const MDCG::Model::model_t & model) {
       MDCG::Model::class_t kernel_class_ = model.lookup<MDCG::Model::class_t>("kernel_t");
@@ -188,6 +217,18 @@ struct host_t {
         kernel_data_field   = kernel_class_->scope->getField("data"  )->node->symbol;
         kernel_priv_field   = kernel_class_->scope->getField("priv"  )->node->symbol;
         kernel_loop_field   = kernel_class_->scope->getField("loops" )->node->symbol;
+
+      MDCG::Model::class_t data_class_ = model.lookup<MDCG::Model::class_t>("klt_data_t");
+      data_class = data_class_->node->symbol;
+      assert(data_class != NULL);
+
+        data_ptr_field     = data_class_->scope->getField("ptr"     )->node->symbol;
+        data_section_field = data_class_->scope->getField("sections")->node->symbol;
+
+      MDCG::Model::class_t data_section_class = model.lookup<MDCG::Model::class_t>("klt_data_section_t");
+
+        section_offset_field = data_section_class->scope->getField("offset")->node->symbol;
+        section_length_field = data_section_class->scope->getField("length")->node->symbol;
 
       MDCG::Model::class_t loop_class_ = model.lookup<MDCG::Model::class_t>("klt_loop_t");
       loop_class = loop_class_->node->symbol;
@@ -270,6 +311,7 @@ struct Runtime {
     static size_t loadAPI(MDCG::ModelBuilder & model_builder, const std::string & KLT_RTL, const std::string & USER_RTL) {
       size_t tilek_model = model_builder.create();
 
+      model_builder.add(tilek_model, "data",    KLT_RTL, "h");
       model_builder.add(tilek_model, "tile",    KLT_RTL, "h");
       model_builder.add(tilek_model, "loop",    KLT_RTL, "h");
       model_builder.add(tilek_model, "context", KLT_RTL, "h");
@@ -291,6 +333,7 @@ struct Runtime {
     typedef API::host_t<Hlang> host_api_t;
     static host_api_t host_api;
     static void useSymbolsHost(MFB::Driver<MFB::Sage> & driver, size_t file_id) {
+      driver.useSymbol<SgClassDeclaration>(host_api.getDataClass(),   file_id);
       driver.useSymbol<SgClassDeclaration>(host_api.getTileClass(),   file_id);
       driver.useSymbol<SgClassDeclaration>(host_api.getLoopClass(),   file_id);
       driver.useSymbol<SgClassDeclaration>(host_api.getKernelClass(), file_id);

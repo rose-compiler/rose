@@ -186,10 +186,24 @@ struct DataContainer {
         return SageBuilder::buildVarRefExp(var_decl_res.symbol);
       }
       case 6:
+      { // int * ndims_data;
+        std::ostringstream decl_name; decl_name << "ndims_data_" << input;
+        SgExprListExp * expr_list = SageBuilder::buildExprListExp();
+        SgInitializer * init = SageBuilder::buildAggregateInitializer(expr_list);
+        typename std::list<Data *>::const_iterator it;
+        for (it = input->getArguments().datas.begin(); it != input->getArguments().datas.end(); it++) {
+          expr_list->append_expression(SageBuilder::buildIntVal((*it)->getSections().size()));
+        }
+        SgType * type = SageBuilder::buildArrayType(SageBuilder::buildIntType(), SageBuilder::buildIntVal(input->getArguments().datas.size()));
+        MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(decl_name.str(), type, init, NULL, file_id, false, true);
+        MFB::Sage<SgVariableDeclaration>::build_result_t var_decl_res = static_initializer.getDriver().build<SgVariableDeclaration>(var_decl_desc);
+        return SageBuilder::buildVarRefExp(var_decl_res.symbol);
+      }
+      case 7:
       { // int num_priv;
         return SageBuilder::buildIntVal(input->getArguments().privates.size());
       }
-      case 7:
+      case 8:
       { // int * sizeof_priv;
         SgGlobal * global_scope = static_initializer.getDriver().getGlobalScope(file_id);
         std::ostringstream decl_name; decl_name << "sizeof_priv_" << input;
@@ -201,6 +215,20 @@ struct DataContainer {
           expr_list->append_expression(SageBuilder::buildSizeOfOp((*it)->getBaseType()));
         }
         SgType * type = SageBuilder::buildArrayType(SageBuilder::buildIntType(), SageBuilder::buildIntVal(input->getArguments().privates.size()));
+        MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(decl_name.str(), type, init, NULL, file_id, false, true);
+        MFB::Sage<SgVariableDeclaration>::build_result_t var_decl_res = static_initializer.getDriver().build<SgVariableDeclaration>(var_decl_desc);
+        return SageBuilder::buildVarRefExp(var_decl_res.symbol);
+      }
+      case 9:
+      { // int * ndims_priv;
+        std::ostringstream decl_name; decl_name << "ndims_priv_" << input;
+        SgExprListExp * expr_list = SageBuilder::buildExprListExp();
+        SgInitializer * init = SageBuilder::buildAggregateInitializer(expr_list);
+        typename std::list<Data *>::const_iterator it;
+        for (it = input->getArguments().privates.begin(); it != input->getArguments().privates.end(); it++) {
+          expr_list->append_expression(SageBuilder::buildIntVal((*it)->getSections().size()));
+        }
+        SgType * type = SageBuilder::buildArrayType(SageBuilder::buildIntType(), SageBuilder::buildIntVal(input->getArguments().datas.size()));
         MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(decl_name.str(), type, init, NULL, file_id, false, true);
         MFB::Sage<SgVariableDeclaration>::build_result_t var_decl_res = static_initializer.getDriver().build<SgVariableDeclaration>(var_decl_desc);
         return SageBuilder::buildVarRefExp(var_decl_res.symbol);

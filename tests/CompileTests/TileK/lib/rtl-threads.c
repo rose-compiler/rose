@@ -21,9 +21,14 @@ void * tilek_worker(void * args) {
   struct tilek_worker_args_t * tilek_worker_args = (struct tilek_worker_args_t *)args;
   struct kernel_t * kernel = tilek_worker_args->kernel;
 
+  int i;
+  void ** local_data = (void **)malloc(kernel->desc->loop.num_loops * sizeof(void *));
+  for (i = 0; i < kernel->desc->loop.num_loops; i++)
+    local_data[i] = kernel->data[i].ptr;
+
   void ** local_private = NULL; // TODO
 
-  (*kernel->desc->kernel_ptr)(tilek_worker_args->tid, kernel->param, kernel->scalar, kernel->data, local_private, tilek_worker_args->context);
+  (*kernel->desc->kernel_ptr)(tilek_worker_args->tid, kernel->param, kernel->scalar, local_data, local_private, tilek_worker_args->context);
 
   pthread_exit(NULL);
 }

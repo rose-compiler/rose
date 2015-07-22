@@ -34,8 +34,8 @@ struct kernel_t {
 
   void ** param;
   void ** scalar;
-  void ** data;
-  void ** priv;
+  struct klt_data_t * data;
+  struct klt_data_t * priv;
 
   struct klt_loop_t * loops;
 

@@ -27,9 +27,10 @@ template <class Language>
   Data * data = new Data(data_sym, base_type);
   for (it_section = data_section.second.begin(); it_section != data_section.second.end(); it_section++) {
     typename Data::section_t section;
-      section.lower_bound = it_section->lower_bound;
-      section.size = it_section->size;
-      section.stride = it_section->stride;
+      section.offset = it_section->lower_bound;
+      section.length = it_section->size;
+//    section.stride = it_section->stride;
+      assert(it_section->stride == NULL);
     data->addSection(section);
   }
   data->annotations.push_back(Annotation(data_clause));
