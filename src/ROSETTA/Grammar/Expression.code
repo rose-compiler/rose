@@ -6428,6 +6428,13 @@ SOURCE_LIST_EXP_END
 
 
 SOURCE_MATRIX_EXP_START
+
+SgType*
+SgMatrixExp::get_type() const
+   {
+     return SageBuilder::buildMatrixType();
+   }
+
 SOURCE_MATRIX_EXP_END
 
 SOURCE_RANGE_EXP_START
