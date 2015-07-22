@@ -10,7 +10,7 @@ class MatlabParserInterface
 {
  public:
 
-  static SgProject* Parse(std::string file);
+  static SgProject* Parse(int argc, char* argv[]);
 };
 
 #endif

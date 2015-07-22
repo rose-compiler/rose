@@ -78,7 +78,7 @@ make_indirect_ref (SgExpression*, SgExpression*);
 static void
 recover_from_parsing_function ();
 
-int beginParse(SgProject* &p);
+int beginParse(SgProject* &p, int argc, char* argv[]);
 SgIfStmt* getLastIfClause(SgIfStmt* topIfClause);
 
 // void addVariableDeclarations();
@@ -2040,19 +2040,22 @@ append_statement_list (SgStatementList* list, SgStatement* stmt)
   return list;
 }*/
 
-int beginParse(SgProject* &p)
+int beginParse(SgProject* &p, int argc, char* argv[])
 { 
   parsingScriptFile = true;
   current_function_depth = 0;
 
  if(project == NULL)
  {
-
    std::cout << "                          Initializing project: \n" << std::flush;
-   int argc = 2;
-   char** argv = new char*[2];
-   argv[0] = strdup("lt-octexe");
-   argv[1] = strdup("test.c");
+
+   std::string workingFile(argv[1]);
+   workingFile += ".cc";
+
+   std::ofstream workingFileStream(workingFile.c_str());
+   workingFileStream.close();
+   
+   argv[1] = strdup(workingFile.c_str());
 
    p = frontend(argc, argv);
 

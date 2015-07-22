@@ -8,15 +8,16 @@
  }
 
 extern int yy_flex_debug;
-extern int beginParse(SgProject* &);
+extern int beginParse(SgProject* &, int argc, char* argv[]);
 extern "C" FILE *yyin;
 
 extern int yydebug;
 extern void prep_lexer_for_script_file ();
 
-SgProject* MatlabParserInterface::Parse(std::string file)
+SgProject* MatlabParserInterface::Parse(int argc, char* argv[])
   {
-    FILE *matlabFile = fopen(file.c_str(), "r");
+    std::string fileName = std::string(argv[1]);
+    FILE *matlabFile = fopen(fileName.c_str(), "r");
 
     if (!matlabFile)
       {
@@ -34,7 +35,7 @@ SgProject* MatlabParserInterface::Parse(std::string file)
     std::cout << "Going to read file\n" << std::flush;
 
     SgProject* project = NULL;
-    beginParse(project);
+    beginParse(project, argc, argv);
 
     fclose(matlabFile);
    
