@@ -264,6 +264,8 @@ VariableId VariableIdMapping::variableId(SgSymbol* sym) {
   * \date 2012.
  */
 SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
+  ROSE_ASSERT(varid.isValid());
+  ROSE_ASSERT(varid._id<mappingVarIdToSym.size());
   return mappingVarIdToSym[varid._id];
 }
 //SgSymbol* VariableIdMapping::getSymbol(VariableId varId) {
@@ -481,7 +483,7 @@ VariableId VariableIdMapping::idForArrayRef(SgPntrArrRefExp* ref)
   * \date 2012.
  */
 bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
-  return dynamic_cast<UniqueTemporaryVariableSymbol*>(getSymbol(varId));
+  return dynamic_cast<UniqueTemporaryVariableSymbol*>(getSymbol(varId))!=0;
 }
 
 /*! 
