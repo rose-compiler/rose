@@ -1048,12 +1048,13 @@ AC_SUBST(ROSE_USE_CANDL)
 AC_SUBST(CANDL_PATH)
 
 # *****************************************************************
-#            Accelerator Support (CUDA, OpenCL, OpenACC)
+#            Accelerator Support (CUDA, OpenCL)
 # *****************************************************************
 
+# Check: --with-cuda-inc, --with-cuda-lib, and  --with-cuda-bin
 ROSE_CHECK_CUDA
+# Check: --with-opencl-inc, --with-opencl-lib
 ROSE_CHECK_OPENCL
-ROSE_CHECK_OPENACC
 
 # *****************************************************************
 #            Option to define DOXYGEN SUPPORT
