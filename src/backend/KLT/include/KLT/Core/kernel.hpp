@@ -369,32 +369,33 @@ tile_generation_t<Annotation> generateTiles(
     SgVariableSymbol * tile_iterator = tile->iterator_sym;
     assert(tile_iterator != NULL);
 
-    if (tile->kind == 0 || tile->kind == 1) {
-      typename std::map<loop_t *, SgVariableSymbol *>::iterator it_loop_iterator = loop_iterator_map.find(loop);
-      SgVariableSymbol * previous_iterator = NULL;
-      if (it_loop_iterator != loop_iterator_map.end()) {
-        previous_iterator = it_loop_iterator->second;
-        it_loop_iterator->second = tile_iterator;
-      }
-      else {
-        loop_iterator_map.insert(std::pair<loop_t *, SgVariableSymbol *>(loop, tile_iterator));
-      }
+    typename std::map<loop_t *, SgVariableSymbol *>::iterator it_loop_iterator = loop_iterator_map.find(loop);
+    SgVariableSymbol * previous_iterator = NULL;
+    if (it_loop_iterator != loop_iterator_map.end()) {
+      previous_iterator = it_loop_iterator->second;
+      it_loop_iterator->second = tile_iterator;
+    }
+    else {
+      loop_iterator_map.insert(std::pair<loop_t *, SgVariableSymbol *>(loop, tile_iterator));
+    }
 
-      if (disordered_tiles) {
-        typename std::map<loop_t *, SgExpression *>::iterator it_loop_iterator_expression = loop_iterator_expression_map.find(loop);
-        if (it_loop_iterator_expression != loop_iterator_expression_map.end())
-          it_loop_iterator_expression->second = SageBuilder::buildAddOp(it_loop_iterator_expression->second, SageBuilder::buildVarRefExp(tile_iterator));
-        else
-          loop_iterator_expression_map.insert(
-            std::pair<loop_t *, SgExpression *>(
-              loop,
-              SageBuilder::buildAddOp(
-                Runtime::kernel_api.buildGetLoopLower(loop->id, local_symbol_maps.context),
-                SageBuilder::buildVarRefExp(tile_iterator)
-              )
+    if (disordered_tiles) {
+      typename std::map<loop_t *, SgExpression *>::iterator it_loop_iterator_expression = loop_iterator_expression_map.find(loop);
+      if (it_loop_iterator_expression != loop_iterator_expression_map.end())
+        it_loop_iterator_expression->second = SageBuilder::buildAddOp(it_loop_iterator_expression->second, SageBuilder::buildVarRefExp(tile_iterator));
+      else
+        loop_iterator_expression_map.insert(
+          std::pair<loop_t *, SgExpression *>(
+            loop,
+            SageBuilder::buildAddOp(
+              Runtime::kernel_api.buildGetLoopLower(loop->id, local_symbol_maps.context),
+              SageBuilder::buildVarRefExp(tile_iterator)
             )
-          );
-      }
+          )
+        );
+    }
+
+    if (tile->kind == 0 || tile->kind == 1) {
 
       SgExpression * lower_bound = NULL;
       SgExpression * upper_bound = NULL;

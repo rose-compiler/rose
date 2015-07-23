@@ -12,7 +12,7 @@ namespace KLT {
 #  if defined(TILEK_TARGET_OPENCL)
 template <> void Runtime< ::KLT::Language::C, ::KLT::Language::OpenCL>::loadUserAPI(MDCG::ModelBuilder & model_builder, size_t tilek_model, const std::string & USER_RTL);
 template <> void Runtime< ::KLT::Language::C, ::KLT::Language::OpenCL>::applyKernelModifiers(SgFunctionDeclaration * kernel_decl);
-template <> void Runtime< ::KLT::Language::C, ::KLT::Language::OpenCL>::addRuntimeStaticData(MFB::Driver<MFB::Sage> & driver, const std::string & kernel_file_name, const std::string & static_file_name, size_t static_file_id);
+template <> void Runtime< ::KLT::Language::C, ::KLT::Language::OpenCL>::addRuntimeStaticData(MFB::Driver<MFB::Sage> & driver, const std::string & KLT_RTL, const std::string & USER_RTL, const std::string & kernel_file_name, const std::string & static_file_name, size_t static_file_id);
 #  elif defined(TILEK_TARGET_CUDA)
 template <> void Runtime< ::KLT::Language::C, ::KLT::Language::CUDA>::loadUserAPI(MDCG::ModelBuilder & model_builder, size_t tilek_model, const std::string & USER_RTL);
 #  endif
@@ -64,6 +64,8 @@ struct kernel_t< ::KLT::Language::C>::user_t {};
 
 template <>
 void kernel_t< ::KLT::Language::C>::load_user(const MDCG::Model::model_t & model);
+template <>
+SgType * kernel_t< ::KLT::Language::OpenCL>::addContextTypeModifier(SgType * type) const;
 #endif
 
 } // namespace MDCG::KLT::API

@@ -1,3 +1,3 @@
 
-SUBDIRS=OpenCL CUDA
+SUBDIRS=OpenCL # CUDA
 

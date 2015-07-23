@@ -46,8 +46,10 @@ struct kernel_t {
 
     ~kernel_t() { delete user; }
 
+    SgType * addContextTypeModifier(SgType * type) const { return type; }
+
     SgInitializedName * createContext() const {
-      return SageBuilder::buildInitializedName("context", SageBuilder::buildModifierType(SageBuilder::buildPointerType(klt_loop_context_class->get_declaration()->get_type())), NULL);
+      return SageBuilder::buildInitializedName("context", addContextTypeModifier(SageBuilder::buildPointerType(klt_loop_context_class->get_declaration()->get_type())), NULL);
     }
 
     SgExpression * buildGetLoopLower (size_t loop_id, SgVariableSymbol * ctx) const {
@@ -311,10 +313,10 @@ struct Runtime {
     static size_t loadAPI(MDCG::ModelBuilder & model_builder, const std::string & KLT_RTL, const std::string & USER_RTL) {
       size_t tilek_model = model_builder.create();
 
-      model_builder.add(tilek_model, "data",    KLT_RTL, "h");
-      model_builder.add(tilek_model, "tile",    KLT_RTL, "h");
-      model_builder.add(tilek_model, "loop",    KLT_RTL, "h");
-      model_builder.add(tilek_model, "context", KLT_RTL, "h");
+      model_builder.add(tilek_model, "data",    KLT_RTL + "/include/KLT/RTL", "h");
+      model_builder.add(tilek_model, "tile",    KLT_RTL + "/include/KLT/RTL", "h");
+      model_builder.add(tilek_model, "loop",    KLT_RTL + "/include/KLT/RTL", "h");
+      model_builder.add(tilek_model, "context", KLT_RTL + "/include/KLT/RTL", "h");
 
       loadUserAPI(model_builder, tilek_model, USER_RTL);
 
@@ -347,7 +349,7 @@ struct Runtime {
 
     static void applyKernelModifiers(SgFunctionDeclaration * kernel_decl) {}
 
-    static void addRuntimeStaticData(MFB::Driver<MFB::Sage> & driver, const std::string & kernel_file_name, const std::string & static_file_name, size_t static_file_id) {}
+    static void addRuntimeStaticData(MFB::Driver<MFB::Sage> & driver, const std::string & KLT_RTL, const std::string & USER_RTL, const std::string & kernel_file_name, const std::string & static_file_name, size_t static_file_id) {}
 };
 
 } // namespace MDCG::KLT

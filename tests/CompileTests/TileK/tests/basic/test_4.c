@@ -1,100 +1,136 @@
 
 #include <stdlib.h>
 
-struct point_t {
-  double x[3];
-  double v;
-};
-
-struct operator_t {
-  double m[3][3];
-  double v[3];
-};
-
-struct point_t * create_points(int n) {
-  struct point_t * res = malloc(n * sizeof(struct point_t));
-
-  // TODO
-
-  return res;
+void kernel_0(int n, int m, int t, float *** A, float *** B, float alpha, float beta) {
+  int i, j, k;
+  #pragma tilek kernel data(A[0:n][0:m][0:t], B[0:n][0:m][0:t])
+  {
+  #pragma tilek loop tile[0](dynamic)
+  for (i = 0; i < n; i++)
+    #pragma tilek loop tile[1](dynamic)
+    for (j = 0; j < m; j++)
+      #pragma tilek loop tile[2](dynamic)
+      for (k = 0; k < t; k++)
+        B[i][j][k] = alpha * A[i][j][k] + beta * (A[i-1][j][k] + A[i+1][j][k] + A[i][j-1][k] + A[i][j+1][k] + A[i][j][k-1] + A[i][j][k+1]);
+  }
 }
 
-struct operator_t * create_operators(int n) {
-  struct operator_t * res = malloc(n * sizeof(struct operator_t));
-
-  // TODO
-
-  return res;
+void kernel_1(int n, int m, int t, float *** A, float *** B, float alpha, float beta) {
+  int i, j, k;
+  #pragma tilek kernel data(A[0:n][0:m][0:t], B[0:n][0:m][0:t])
+  {
+  #pragma tilek loop tile[2](dynamic)
+  for (i = 0; i < n; i++)
+    #pragma tilek loop tile[0](dynamic)
+    for (j = 0; j < m; j++)
+      #pragma tilek loop tile[1](dynamic)
+      for (k = 0; k < t; k++)
+        B[i][j][k] = alpha * A[i][j][k] + beta * (A[i-1][j][k] + A[i+1][j][k] + A[i][j-1][k] + A[i][j+1][k] + A[i][j][k-1] + A[i][j][k+1]);
+  }
 }
 
-void free_array(float ** a) {
+void kernel_2(int n, int m, int t, float *** A, float *** B, float alpha, float beta) {
+  int i, j, k;
+  #pragma tilek kernel data(A[0:n][0:m][0:t], B[0:n][0:m][0:t])
+  {
+  #pragma tilek loop tile[1](dynamic)
+  for (i = 0; i < n; i++)
+    #pragma tilek loop tile[2](dynamic)
+    for (j = 0; j < m; j++)
+      #pragma tilek loop tile[1](dynamic)
+      for (k = 0; k < t; k++)
+        B[i][j][k] = alpha * A[i][j][k] + beta * (A[i-1][j][k] + A[i+1][j][k] + A[i][j-1][k] + A[i][j+1][k] + A[i][j][k-1] + A[i][j][k+1]);
+  }
+}
+
+void kernel_3(int n, int m, int t, float *** A, float *** B, float alpha, float beta) {
+  int i, j, k;
+  #pragma tilek kernel data(A[0:n][0:m][0:t], B[0:n][0:m][0:t])
+  {
+  #pragma tilek loop tile[0](dynamic)
+  for (i = 0; i < n; i++)
+    for (j = 0; j < m; j++)
+      #pragma tilek loop tile[2](dynamic)
+      for (k = 0; k < t; k++)
+        B[i][j][k] = alpha * A[i][j][k] + beta * (A[i-1][j][k] + A[i+1][j][k] + A[i][j-1][k] + A[i][j+1][k] + A[i][j][k-1] + A[i][j][k+1]);
+  }
+}
+
+float *** create_array(int n, int m, int p) {
+  float *** a = malloc(n * sizeof(float *));
+  float ** a_ = malloc(n * m * sizeof(float *));
+  float * a__ = malloc(n * m * p * sizeof(float));
+
+  int i, j, k;
+
+  for (i = 0; i < n; i++) {
+    a[i] = a_ + i * m;
+    for (j = 0; j < m; j++) {
+      a[i][j] = a__ + i * m + j * p;
+      for (k = 0; k < m; k++) {
+        a[i][j][k] = i + j + k;
+      }
+    }
+  }
+
+  return a;
+}
+
+void free_array(float *** a) {
+  free(a[0][0]);
   free(a[0]);
   free(a);
 }
 
-void kernel_0(int n, struct point_t * points, const struct operator_t op) {
-  int p;
-  #pragma tilek kernel data(points[0:n])
-  {
-    #pragma tilek loop tile[0](dynamic)
-    for (p = 0; p < n; p++) {
-      double y[3];
-      y[0] = op.m[0][0] * points[p].x[0] + op.m[0][1] * points[p].x[1] + op.m[0][2] * points[p].x[2] + op.v[0];
-      y[1] = op.m[1][0] * points[p].x[0] + op.m[1][1] * points[p].x[1] + op.m[1][2] * points[p].x[2] + op.v[1];
-      y[2] = op.m[2][0] * points[p].x[0] + op.m[2][1] * points[p].x[1] + op.m[2][2] * points[p].x[2] + op.v[2];
-      points[p].x[0] = y[0];
-      points[p].x[1] = y[1];
-      points[p].x[2] = y[2];
-    }
-  }
-}
-
-void kernel_1(int n, int m, struct point_t * points, const struct operator_t * operators) {
-  int p, q;
-  #pragma tilek kernel data(points[0:n], operators[0:m])
-  {
-    #pragma tilek loop tile[0](dynamic)
-    for (p = 0; p < n; p++) {
-      #pragma tilek loop tile[1](dynamic)
-      for (q = 0; q < m; q++) {
-        double y[3];
-        y[0] = operators[q].m[0][0] * points[p].x[0] + operators[q].m[0][1] * points[p].x[1] + operators[q].m[0][2] * points[p].x[2] + operators[q].v[0];
-        y[1] = operators[q].m[1][0] * points[p].x[0] + operators[q].m[1][1] * points[p].x[1] + operators[q].m[1][2] * points[p].x[2] + operators[q].v[1];
-        y[2] = operators[q].m[2][0] * points[p].x[0] + operators[q].m[2][1] * points[p].x[1] + operators[q].m[2][2] * points[p].x[2] + operators[q].v[2];
-        points[p].x[0] = y[0];
-        points[p].x[1] = y[1];
-        points[p].x[2] = y[2];
-      }
-    }
-  }
-}
-
 int main() {
+  int n = 16;
+  int m = 16;
+  int t = 16;
 
-  const int n = 16;
-  const int m = 4;
+  float alpha = 1.0;
+  float beta = 2.548;
 
-  struct point_t * points;
-  struct operator_t * operators;
+  float *** A;
+  float *** B;
 
   {
-    points = create_points(n);
-    operators = create_operators(1);
+    A = create_array(n, m, t);
+    B = create_array(n, m, t);
 
-    kernel_0(n, points, operators[0]);
+    kernel_0(n, m, t, A, B, alpha, beta);
 
-    free(points);
-    free(operators);
+    free_array(A);
+    free_array(B);
   }
 
   {
-    points = create_points(n);
-    operators = create_operators(m);
+    A = create_array(n, m, t);
+    B = create_array(n, m, t);
 
-    kernel_1(n, m, points, operators);
+    kernel_1(n, m, t, A, B, alpha, beta);
 
-    free(points);
-    free(operators);
+    free_array(A);
+    free_array(B);
+  }
+
+  {
+    A = create_array(n, m, t);
+    B = create_array(n, m, t);
+
+    kernel_2(n, m, t, A, B, alpha, beta);
+
+    free_array(A);
+    free_array(B);
+  }
+
+  {
+    A = create_array(n, m, t);
+    B = create_array(n, m, t);
+
+    kernel_3(n, m, t, A, B, alpha, beta);
+
+    free_array(A);
+    free_array(B);
   }
 
   return 0;

@@ -186,7 +186,7 @@ libTileK_RTL_threads_la_CFLAGS= \
 
 libTileK_RTL_acc_ocl_la_SOURCES=rtl.c rtl-accelerator.c rtl-acc-ocl.c
 libTileK_RTL_acc_ocl_la_CFLAGS= \
-  -g -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL \
+  -g -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL -DCOMPILE_OPENCL_KERNEL_WITH_DEBUG=1 \
   -I$(top_srcdir)/src/backend/KLT/include \
   -I$(srcdir)/../include \
   $(ROSE_INCLUDES)

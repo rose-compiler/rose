@@ -13,7 +13,7 @@ TILEK_RTL=$(builddir)/$(TILEK_REL_PATH)/lib/libTileK-RTL-acc-ocl.la
 
 KLT_RTL=$(top_builddir)/src/backend/KLT/lib/rtl/libKLT-RTL.la
 
-check-local: check-test_1
+check-local: check-test_1 check-test_2
 
 clean-local:
 	rm -f rose_*.c *-kernel.c *-data.c *.o
@@ -41,6 +41,25 @@ test_1: rose_test_1.o test_1-data.o $(TILEK_RTL) $(KLT_RTL)
 
 check-test_1: test_1
 	./test_1
+
+#########################################
+
+test_2-kernel.c: rose_test_2.c
+test_2-data.c: rose_test_2.c
+rose_test_2.c: $(srcdir)/../test_2.c $(TILEK)
+	$(TILEK) -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(TILEK_INC) -c $(srcdir)/../test_2.c
+
+rose_test_2.o: rose_test_2.c
+	gcc -O0 -g -I$(TILEK_INC) -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL -c rose_test_2.c -o rose_test_2.o
+
+test_2-data.o: test_2-data.c
+	gcc -O0 -g -I$(TILEK_INC) -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL -c test_2-data.c -o test_2-data.o
+
+test_2: rose_test_2.o test_2-data.o $(TILEK_RTL) $(KLT_RTL)
+	libtool --mode=link gcc rose_test_2.o test_2-data.o -lOpenCL -lrt $(TILEK_RTL) $(KLT_RTL) -o test_2
+
+check-test_2: test_2
+	./test_2
 
 #########################################
 

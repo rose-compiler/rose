@@ -1,4 +1,5 @@
 
+#include <stdio.h>
 #include <stdlib.h>
 
 float * create_vector(int n) {
@@ -10,6 +11,14 @@ float * create_vector(int n) {
     v[i] = i;
 
   return v;
+}
+
+void print_vector(int n_0, int n_1, float * v) {
+  int i;
+  for (i = n_0; i < n_1; i++) {
+    printf(" | %f", v[i]);
+  }
+  printf(" |\n\n");
 }
 
 void kernel_0(int n, float * v, float b) {
@@ -24,14 +33,18 @@ void kernel_0(int n, float * v, float b) {
 
 int main() {
 
-  int n = 1024*1024;
+  int n = 16;
 
   float * v;
 
   {
     v = create_vector(n);
 
+    print_vector(0, 10, v);
+
     kernel_0(n, v, 3.5);
+
+    print_vector(0, 10, v);
 
     free(v);
   }
