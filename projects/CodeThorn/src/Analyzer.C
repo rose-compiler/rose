@@ -180,7 +180,8 @@ Analyzer::Analyzer():
   _approximated_iterations(0),
   _curr_iteration_cnt(0),
   _next_iteration_cnt(0)
- {
+{
+  variableIdMapping.setModeVariableIdForEachArrayElement(true);
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
   }

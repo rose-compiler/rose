@@ -82,7 +82,7 @@ ForStmtToOmpPragmaMap createOmpPragmaForStmtMap(SgNode* root) {
         if(SgForStatement* forStmt=isSgForStatement(*j)) {
           map[forStmt]=pragmaDecl;
         } else {
-          cout<<"DEBUG: NOT a forstmt: "<<(*i)->unparseToString()<<endl;
+          cout<<"DEBUG: NOT a for-stmt: "<<(*i)->unparseToString()<<endl;
         }
       }
     }
@@ -863,11 +863,11 @@ int main( int argc, char * argv[] ) {
     }
     cout<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
     int numInit=0;
-    cout<<"DEBUG: var init spec: "<<endl;
+    //cout<<"DEBUG: var init spec: "<<endl;
     for(size_t i=0;i<option_specialize_fun_varinit_list.size();i++) {
       string varInit=option_specialize_fun_varinit_list[i];
       int varInitConstInt=option_specialize_fun_varinit_const_list[i];
-      cout<<"DEBUG: checking for varInitName nr "<<i<<" var:"<<varInit<<" Const:"<<varInitConstInt<<endl;
+      //cout<<"DEBUG: checking for varInitName nr "<<i<<" var:"<<varInit<<" Const:"<<varInitConstInt<<endl;
       numInit+=speci.specializeFunction(sageProject,funNameToFind, -1, 0, varInit, varInitConstInt,analyzer.getVariableIdMapping());
     }
     cout<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
@@ -970,7 +970,6 @@ int main( int argc, char * argv[] ) {
 
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
   cout << "=============================================================="<<endl;
-
   double extractAssertionTracesTime= 0;
   int maxOfShortestAssertInput = -1;
   if ( boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) {
@@ -995,6 +994,7 @@ int main( int argc, char * argv[] ) {
   cout << "=============================================================="<<endl;
   bool withCe = boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"];
   analyzer.reachabilityResults.printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_", withCe);
+
   if (args.count("csv-assert")) {
     string filename=args["csv-assert"].as<string>().c_str();
     analyzer.reachabilityResults.writeFile(filename.c_str(), false, 0, withCe);
@@ -1041,13 +1041,12 @@ int main( int argc, char * argv[] ) {
   long constraintSetsBytes=analyzer.getConstraintSetMaintainer()->memorySize();
   long constraintSetsMaxCollisions=analyzer.getConstraintSetMaintainer()->maxCollisions();
   double constraintSetsLoadFactor=analyzer.getConstraintSetMaintainer()->loadFactor();
-
   long numOfStdinEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
   long numOfStdoutVarEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
   long numOfStdoutConstEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
   long numOfStderrEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
   long numOfFailedAssertEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
-  long numOfConstEStates=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
+  long numOfConstEStates=0;//(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
   long numOfStdoutEStates=numOfStdoutVarEStates+numOfStdoutConstEStates;
 
   long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
@@ -1154,6 +1153,7 @@ int main( int argc, char * argv[] ) {
     if(boolOptions["with-counterexamples"] || boolOptions["with-ltl-counterexamples"]) {  //output a counter-example input sequence for falsified formulae
       withCounterexample = true;
     }
+
     timer.start();
     std::set<int> ltlInAlphabet = analyzer.getInputVarValues();
     //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
@@ -1199,6 +1199,7 @@ int main( int argc, char * argv[] ) {
         ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
       }
     }
+
     if (boolOptions["check-ltl-counterexamples"]) {
       cout << "STATUS: checking for spurious counterexamples..."<<endl;
       CounterexampleAnalyzer ceAnalyzer(&analyzer);
@@ -1310,7 +1311,7 @@ int main( int argc, char * argv[] ) {
       SgNode* root=analyzer.startFunRoot;
       VariableId parallelIterationVar;
       LoopInfoSet loopInfoSet=determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
-      cout<<"DEBUG: number of iteration vars: "<<loopInfoSet.size()<<endl;
+      cout<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
       Specialization::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
       timer.start();
       verifyUpdateSequenceRaceConditionsResult=speci.verifyUpdateSequenceRaceConditions(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
