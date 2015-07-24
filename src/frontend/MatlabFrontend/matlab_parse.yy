@@ -486,7 +486,7 @@ identifier      : NAME
                  //  currentScope->get_symbol_table()->insert($1->text(), new SgVariableSymbol(buildInitializedName($1->text(), buildUnknownType())));
                  // }
 
-      					 $$ = buildVarRefExp($1->text());                                  
+					  $$ = buildVarRefExp($1->text(), currentScope);                                  
       					}
                   /*{
                     symbol_table::symbol_record *sr = $1->sym_rec ();
@@ -1315,7 +1315,8 @@ param_list1     : // empty
 
 param_list2     : decl2
                  {
-                  SgName parameterName = ((SgVarRefExp*)$1)->get_symbol()->get_name(); 
+		   
+		   //SgName parameterName = ((SgVarRefExp*)$1)->get_symbol()->get_name(); 
                   
                   //SgType* annotatedType = SageBuilder::buildOpaqueType(lexer_flags.getType(parameterName.getString()),
 		  // SageBuilder::topScopeStack());
@@ -1323,13 +1324,15 @@ param_list2     : decl2
                   // SgInitializedName *initializedName = SageBuilder::buildInitializedName(parameterName, 
                   //                                                                    annotatedType);
 
-                  SgInitializedName *initializedName = SageBuilder::buildInitializedName(parameterName,
-								       SageBuilder::buildUnknownType());
-                  $$ = SageBuilder::buildFunctionParameterList(initializedName);
+                  //SgInitializedName *initializedName = SageBuilder::buildInitializedName(parameterName,
+		   //						       SageBuilder::buildUnknownType());
+		   
+		   SgInitializedName *initializedName = ((SgVarRefExp*)$1)->get_symbol()->get_declaration();
+		   $$ = SageBuilder::buildFunctionParameterList(initializedName);
                  }
                 | param_list2 ',' decl2
                   {
-                    SgName parameterName = ((SgVarRefExp*)$3)->get_symbol()->get_name(); 
+                    //SgName parameterName = ((SgVarRefExp*)$3)->get_symbol()->get_name(); 
 
                     // SgType* annotatedType = SageBuilder::buildOpaqueType(lexer_flags.getType(parameterName.getString()),
                     //                                                    SageBuilder::topScopeStack());
@@ -1337,8 +1340,10 @@ param_list2     : decl2
                     // SgInitializedName *initializedName = SageBuilder::buildInitializedName(parameterName, 
                     //                                                                 annotatedType);
                     
-		    SgInitializedName *initializedName = SageBuilder::buildInitializedName(parameterName,
-								       SageBuilder::buildUnknownType());
+		    //SgInitializedName *initializedName = SageBuilder::buildInitializedName(parameterName,
+		    //SageBuilder::buildUnknownType());
+
+		    SgInitializedName *initializedName = ((SgVarRefExp*)$3)->get_symbol()->get_declaration();
 		    SageInterface::appendArg($1, initializedName);
                     $$ = $1;
                   }
@@ -1491,18 +1496,14 @@ fcn_name        : identifier
 
 function1       : fcn_name function2
                   {
-                    $2->set_name(((SgVarRefExp*)$1)->get_symbol()->get_name());
-                    //$2->set_name(SageInterface::get_name($1));
+		    std::string name = extractVarName($1);
+                    $2->set_name(name);
+
+		    SgFunctionDeclaration *declaration = isSgFunctionDeclaration($2->get_firstNondefiningDeclaration());
+		    declaration->set_name(name);                                                                             
+
                     $$ = $2;
                   }
-                 /*{
-                    std::string fname = $1->name ();
-
-                    delete $1;
-
-                    if (! ($$ = frob_function (fname, $2)))
-                      ABORT_PARSE;
-                 }*/
                 ;
 
 function2       : param_list opt_sep opt_list function_end
