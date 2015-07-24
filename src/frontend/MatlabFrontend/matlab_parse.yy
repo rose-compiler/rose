@@ -479,19 +479,26 @@ word_list       : string
 // ===========
 
 identifier      : NAME
-      					{
-                 // if(!currentScope->symbol_exists($1->text()))
-                 // {
-                 //  std::cout << $1->text() << " added to symtable\n" << std::flush;
-                 //  currentScope->get_symbol_table()->insert($1->text(), new SgVariableSymbol(buildInitializedName($1->text(), buildUnknownType())));
-                 // }
+      		 {
+		   std::string varName = $1->text();
 
-					  $$ = buildVarRefExp($1->text(), currentScope);                                  
-      					}
-                  /*{
-                    symbol_table::symbol_record *sr = $1->sym_rec ();
-                    $$ = new tree_identifier (*sr, $1->line (), $1->column ());
-                 }*/
+		  if(currentScope->symbol_exists(varName) == false)
+                 {
+		   SgVarRefExp *varRef = SageBuilder::buildVarRefExp(varName, currentScope);
+
+		   /*If there is no explicit variable declaration, we have to manually insert the symbol to the symbol table*/
+                   currentScope->get_symbol_table()->insert(varName, varRef->get_symbol());
+
+		   std::cout << "Symbol " << varName << " inserted" << std::endl << std::flush;
+		   
+		   $$ = varRef;
+                 }
+		 else
+		   {
+		     /*The symbol already exists. The varref will point to the existing symbol.*/
+		     $$ = SageBuilder::buildVarRefExp(varName, currentScope);
+		   }
+      		 }
                 ;
 
 superclass_identifier
@@ -1303,54 +1310,19 @@ param_list1     : // empty
                 {         
                   $$ = $1;                  
                 }
-
-                 /*{
-                    $1->mark_as_formal_parameters ();
-                    if ($1->validate (tree_parameter_list::in))
-                      $$ = $1;
-                    else
-                      ABORT_PARSE;
-                 }*/
                 ;
 
 param_list2     : decl2
                  {
-		   
-		   //SgName parameterName = ((SgVarRefExp*)$1)->get_symbol()->get_name(); 
-                  
-                  //SgType* annotatedType = SageBuilder::buildOpaqueType(lexer_flags.getType(parameterName.getString()),
-		  // SageBuilder::topScopeStack());
-
-                  // SgInitializedName *initializedName = SageBuilder::buildInitializedName(parameterName, 
-                  //                                                                    annotatedType);
-
-                  //SgInitializedName *initializedName = SageBuilder::buildInitializedName(parameterName,
-		   //						       SageBuilder::buildUnknownType());
-		   
 		   SgInitializedName *initializedName = ((SgVarRefExp*)$1)->get_symbol()->get_declaration();
 		   $$ = SageBuilder::buildFunctionParameterList(initializedName);
                  }
                 | param_list2 ',' decl2
                   {
-                    //SgName parameterName = ((SgVarRefExp*)$3)->get_symbol()->get_name(); 
-
-                    // SgType* annotatedType = SageBuilder::buildOpaqueType(lexer_flags.getType(parameterName.getString()),
-                    //                                                    SageBuilder::topScopeStack());
-
-                    // SgInitializedName *initializedName = SageBuilder::buildInitializedName(parameterName, 
-                    //                                                                 annotatedType);
-                    
-		    //SgInitializedName *initializedName = SageBuilder::buildInitializedName(parameterName,
-		    //SageBuilder::buildUnknownType());
-
 		    SgInitializedName *initializedName = ((SgVarRefExp*)$3)->get_symbol()->get_declaration();
 		    SageInterface::appendArg($1, initializedName);
                     $$ = $1;
                   }
-                 /*{
-                    $1->append ($3);
-                    $$ = $1;
-                 }*/
                 ;
 
 // ===================================
