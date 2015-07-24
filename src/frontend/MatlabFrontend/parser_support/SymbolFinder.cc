@@ -2,7 +2,7 @@
 
 bool SymbolFinder::symbol_exists(std::string symbolName, SgScopeStatement* scope)
   {
-    SgScopeStatement* currentScope = scope;
+    /*    SgScopeStatement* currentScope = scope;
 
     SgScopeStatement* globalScope = SageInterface::getGlobalScope(scope);
 
@@ -16,7 +16,12 @@ bool SymbolFinder::symbol_exists(std::string symbolName, SgScopeStatement* scope
 	  return false;
 
 	currentScope = SageInterface::getEnclosingScope(currentScope);
-    }
+	}*/
 
-    return false;
+    SgVariableSymbol *symbol = SageInterface::lookupVariableSymbolInParentScopes(symbolName, scope);
+
+    if(symbol != NULL)
+      return true;
+    else
+      return false;
   }

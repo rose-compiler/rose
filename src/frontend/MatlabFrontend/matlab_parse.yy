@@ -83,15 +83,15 @@ SgIfStmt* getLastIfClause(SgIfStmt* topIfClause);
 
 // void addVariableDeclarations();
 // void manageReturnStatement(SgExprListExp*, SgFunctionDeclaration*);
-std::string extractVarName(SgExpression*);
+ SgName extractVarName(SgExpression*);
 
 class token;
 
 bool parsingScriptFile;
 SgProject* project;
-SgScopeStatement* currentScope; //the current block on scope
+SgScopeStatement* currentScope; //the current scope on the top of scope stack
 int current_function_depth;
-SgFunctionDeclaration* defaultFunction;
+//SgFunctionDeclaration* defaultFunction;
 
 #define ABORT_PARSE \
   do \
@@ -114,7 +114,7 @@ SgFunctionDeclaration* defaultFunction;
 %union
 {
   // The type of the basic tokens returned by the lexer.
-
+  std::string *Name_type;
   PreprocessingInfo *Comment_type;
   char sep_type;
   SgMatrixExp* Matrix_type;
@@ -223,7 +223,8 @@ SgFunctionDeclaration* defaultFunction;
 %type <Expression_type> cell assign_lhs
 %type <Expression_type> primary_expr postfix_expr prefix_expr binary_expr
 %type <Expression_type> simple_expr colon_expr assign_expr expression
-%type <VarRefExp_type> identifier fcn_name
+%type <VarRefExp_type> identifier// fcn_name
+%type <Name_type> fcn_name
 %type <Function_type> function1 function2
 %type <Statement_type> word_list_cmd
 %type <Colon_Expression_type> colon_expr1
@@ -342,6 +343,15 @@ input           : input1
 
                     SageBuilder::popScopeStack(); //pop out the default function
 
+		       //Create a default "run" function
+		    SgFunctionDeclaration *defaultFunction = SageBuilder::buildDefiningFunctionDeclaration("run", 
+                      SageBuilder::buildVoidType(), SageBuilder::buildFunctionParameterList(), 
+                      SageInterface::getFirstGlobalScope(project));
+
+		    SageInterface::removeStatement(defaultFunction->get_definition()->get_body());
+		    
+		    defaultFunction->get_definition()->set_body(isSgBasicBlock(currentScope));
+		    
                     //Add the default function to global scope
                     SageInterface::appendStatement(defaultFunction);
                   }
@@ -1237,10 +1247,13 @@ push_fcn_symtab : // empty
 
                     if(current_function_depth == 1)
                     {
-                      currentScope = getFirstGlobalScope(project);
-                      
-                      //Pop out the default function used for script files
+		      //Pop out the default function used for script files
                       SageBuilder::popScopeStack();
+		      
+		      SageInterface::removeStatement(currentScope);
+
+		      //Set the scope to be the global scope since we need to add functions
+                      currentScope = getFirstGlobalScope(project);
                       
                       parsingScriptFile = false;
                     }
@@ -1452,28 +1465,36 @@ fcn_name        : identifier
                     lexer_flags.parsed_function_name.top () = true;
                     lexer_flags.maybe_classdef_get_set_method = false;
 
-                    $$ = $1;
+		    $$ = new std::string(extractVarName($1).getString());
+
+		    /*
+		      This identifier did not turn out to be a variable symbol.
+		      It will be added later on as a function symbol.
+		     */
+		    currentScope->remove_symbol($1->get_symbol());
                  }
                 | GET '.' identifier
                  {
                     lexer_flags.maybe_classdef_get_set_method = false;
-                    $$ = $3;
+                    $$ = new std::string(extractVarName($3).getString());
+
+		    currentScope->remove_symbol($3->get_symbol());
                  }
                 | SET '.' identifier
                  {
                     lexer_flags.maybe_classdef_get_set_method = false;
-                    $$ = $3;
+                    $$ = new std::string(extractVarName($3).getString());
+		    currentScope->remove_symbol($3->get_symbol());
                  }
                 ;
 
 function1       : fcn_name function2
                   {
-		    std::string name = extractVarName($1);
-                    $2->set_name(name);
+                    $2->set_name(*$1);
 
 		    SgFunctionDeclaration *declaration = isSgFunctionDeclaration($2->get_firstNondefiningDeclaration());
-		    declaration->set_name(name);                                                                             
-
+		    declaration->set_name(*$1);                                                                             
+		    
                     $$ = $2;
                   }
                 ;
@@ -2032,14 +2053,14 @@ int beginParse(SgProject* &p, int argc, char* argv[])
 
    p = frontend(argc, argv);
 
+      //Create a default "run" function
+   // defaultFunction = SageBuilder::buildDefiningFunctionDeclaration("run", 
+   //                    SageBuilder::buildVoidType(), SageBuilder::buildFunctionParameterList(), 
+   //                    SageInterface::getFirstGlobalScope(p));
+   //currentScope = defaultFunction->get_definition()->get_body();
 
-   //Create a default "run" function
-   defaultFunction = SageBuilder::buildDefiningFunctionDeclaration("run", 
-                      SageBuilder::buildVoidType(), SageBuilder::buildFunctionParameterList(), 
-                      SageInterface::getFirstGlobalScope(p));
-
-   currentScope = defaultFunction->get_definition()->get_body();
-
+   currentScope = SageBuilder::buildBasicBlock();
+   
    //p->set_verbose(1);
 
    // SgFunctionDeclaration* mainFunc = findMain(p);                               
@@ -2159,7 +2180,7 @@ SgIfStmt* getLastIfClause(SgIfStmt* topIfClause)
   SageInterface::appendStatement(SageBuilder::buildReturnStmt(returnExp));
 }
 */
-std::string extractVarName(SgExpression* varRefExp)
+SgName extractVarName(SgExpression* varRefExp)
 {
-  return ((SgVarRefExp*)varRefExp)->get_symbol()->get_name().getString(); 
+  return ((SgVarRefExp*)varRefExp)->get_symbol()->get_name();
 }
