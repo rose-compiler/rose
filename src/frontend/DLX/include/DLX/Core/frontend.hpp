@@ -170,8 +170,10 @@ bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
     if (it_directive == translation_map.end()) {
       std::string directive_string = pragma_decl->get_pragma()->get_pragma();
       directive_t * directive = parse(directive_string, pragma_decl);
-      translation_map.insert(std::pair<SgLocatedNode *, directive_t *>(pragma_decl, directive));
-      rtranslation_map.insert(std::pair<directive_t *, SgLocatedNode *>(directive, pragma_decl));
+      if (directive != NULL) {
+        translation_map.insert(std::pair<SgLocatedNode *, directive_t *>(pragma_decl, directive));
+        rtranslation_map.insert(std::pair<directive_t *, SgLocatedNode *>(directive, pragma_decl));
+      }
     }
   }
 

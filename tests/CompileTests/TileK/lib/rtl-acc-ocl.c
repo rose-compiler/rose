@@ -83,6 +83,8 @@ void launch(struct kernel_t * kernel, struct klt_loop_context_t * klt_loop_conte
 
   // Allocation
 
+  assert(kernel->desc->data.num_priv == 0); // TODO handling of private
+
   cl_mem * cl_data = (cl_mem *)malloc(kernel->desc->data.num_data * sizeof(cl_mem));
   size_t * size_data = (cl_mem *)malloc(kernel->desc->data.num_data * sizeof(size_t));
   for (i = 0; i < kernel->desc->data.num_data; i++) {
@@ -93,7 +95,7 @@ void launch(struct kernel_t * kernel, struct klt_loop_context_t * klt_loop_conte
     }
     cl_data[i] = clCreateBuffer(cl_context, CL_MEM_READ_WRITE, size_data[i], NULL, NULL);
   }
-  cl_mem * cl_priv = (cl_mem *)malloc(kernel->desc->data.num_priv * sizeof(cl_mem));
+/*cl_mem * cl_priv = (cl_mem *)malloc(kernel->desc->data.num_priv * sizeof(cl_mem));
   size_t * size_priv = (cl_mem *)malloc(kernel->desc->data.num_priv * sizeof(size_t));
   for (i = 0; i < kernel->desc->data.num_priv; i++) {
     size_priv[i] = kernel->desc->data.sizeof_priv[i];
@@ -102,7 +104,7 @@ void launch(struct kernel_t * kernel, struct klt_loop_context_t * klt_loop_conte
       size_priv[i] *= kernel->priv[i].sections[j].length;
     }
     cl_priv[i] = clCreateBuffer(cl_context, CL_MEM_READ_WRITE, size_priv[i], NULL, NULL);
-  }
+  }*/
   size_t size_ctx = sizeof(struct klt_loop_context_t) + 3 * klt_loop_context->num_loops * sizeof(int) + 2 * klt_loop_context->num_tiles * sizeof(int);
   cl_mem context = clCreateBuffer(cl_context, CL_MEM_READ_ONLY, size_ctx, NULL, NULL);
 
@@ -112,10 +114,10 @@ void launch(struct kernel_t * kernel, struct klt_loop_context_t * klt_loop_conte
     err = clEnqueueWriteBuffer(cl_queue, cl_data[i], CL_FALSE, 0, size_data[i], kernel->data[i].ptr, 0, NULL, NULL);
     assert(err == CL_SUCCESS);
   }
-  for (i = 0; i < kernel->desc->data.num_priv; i++) {
+/*for (i = 0; i < kernel->desc->data.num_priv; i++) {
     err = clEnqueueWriteBuffer(cl_queue, cl_priv[i], CL_FALSE, 0, size_priv[i], kernel->priv[i].ptr, 0, NULL, NULL);
     assert(err == CL_SUCCESS);
-  }
+  }*/
   err = clEnqueueWriteBuffer(cl_queue, context, CL_FALSE, 0, size_ctx, klt_loop_context, 0, NULL, NULL);
   assert(err == CL_SUCCESS);
 
@@ -136,10 +138,10 @@ void launch(struct kernel_t * kernel, struct klt_loop_context_t * klt_loop_conte
     err = clSetKernelArg(cl_kernel, arg_cnt++, sizeof(cl_mem), &cl_data[i]);
     assert(err == CL_SUCCESS);
   }
-  for (i = 0; i < kernel->desc->data.num_priv; i++) {
+/*for (i = 0; i < kernel->desc->data.num_priv; i++) {
     err = clSetKernelArg(cl_kernel, arg_cnt++, sizeof(cl_mem), &cl_priv[i]);
     assert(err == CL_SUCCESS);
-  }
+  }*/
   err = clSetKernelArg(cl_kernel, arg_cnt++, sizeof(cl_mem), &context);
   assert(err == CL_SUCCESS);
 

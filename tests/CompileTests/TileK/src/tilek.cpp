@@ -38,13 +38,11 @@ typedef ::KLT::Language::CUDA Klang; // Kernel Language
 typedef ::KLT::Language::C Klang; // Kernel Language
 #endif
 
-#include "MDCG/KLT/runtime.hpp"
+#include "MDCG/TileK/runtime.hpp"
 typedef ::MDCG::KLT::Runtime<Hlang, Klang> Runtime; // Runtime Description
 
 #include "MDCG/TileK/model.hpp"
 typedef ::MDCG::TileK::KernelDesc<Annotation, Runtime> KernelDesc; // Model for Static Initializer
-
-#include "MDCG/TileK/runtime.hpp"
 
 #include "DLX/KLT/compiler.hpp" // Needs Annotation and Runtime to be defined
 
@@ -53,7 +51,9 @@ typedef ::MDCG::TileK::KernelDesc<Annotation, Runtime> KernelDesc; // Model for 
 int main(int argc, char ** argv) {
   std::vector<std::string> args(argv, argv + argc);
 
-#if defined(TILEK_THREADS)
+#if defined(TILEK_BASIC)
+  args.push_back("-DTILEK_BASIC");
+#elif defined(TILEK_THREADS)
   args.push_back("-DTILEK_THREADS");
 #elif defined(TILEK_ACCELERATOR)
   args.push_back("-DTILEK_ACCELERATOR");

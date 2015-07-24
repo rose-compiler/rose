@@ -52,7 +52,7 @@ SgFunctionParameterList * Kernel<Annotation, Runtime>::createParameterList() con
     mod_type->get_typeModifier().setOpenclGlobal();
     type = mod_type;
 #elif defined(TILEK_TARGET_CUDA)
-    assert(false);
+    // no modifier
 #endif
     param_list->append_arg(SageBuilder::buildInitializedName(name,  type, NULL));
   }
@@ -64,7 +64,7 @@ SgFunctionParameterList * Kernel<Annotation, Runtime>::createParameterList() con
     mod_type->get_typeModifier().setOpenclLocal();
     type = mod_type;
 #elif defined(TILEK_TARGET_CUDA)
-    assert(false);
+    assert(false); // TODO
 #endif
     param_list->append_arg(SageBuilder::buildInitializedName(name,  type, NULL));
   }

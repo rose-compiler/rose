@@ -15,17 +15,17 @@ KLT_RTL=$(top_builddir)/src/backend/KLT/lib/rtl/libKLT-RTL.la
 
 #########################################
 
-ROSE_FLAGS=-DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(TILEK_INC)
-C_FLAGS=-O0 -g -I$(TILEK_INC)
+ROSE_FLAGS=-DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(TILEK_INC) -DTILEK_BASIC
+C_FLAGS=-O0 -g -I$(TILEK_INC) -DTILEK_BASIC
 LD_FLAGS=-lrt $(TILEK_RTL) $(KLT_RTL)
 
 CHECK_TARGET=check-test_1 check-test_2 check-test_3 check-test_4 check-test_5
-C_FLAGS+=-DTILEK_BASIC
 
 check-local: $(CHECK_TARGET) 
 
 clean-local:
 	rm -f rose_*.c *-kernel.c *-data.c *.o
+	rm -f test_1 test_2 test_3 test_4 test_5
 
 #########################################
 

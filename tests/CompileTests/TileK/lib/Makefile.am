@@ -180,7 +180,7 @@ libKLT_TileK_acc_cuda_la_CXXFLAGS= \
 
 libTileK_RTL_la_SOURCES=rtl.c rtl-basic.c
 libTileK_RTL_la_CFLAGS= \
-  -g \
+  -g -DTILEK_BASIC \
   -I$(top_srcdir)/src/backend/KLT/include \
   -I$(srcdir)/../include \
   $(ROSE_INCLUDES)

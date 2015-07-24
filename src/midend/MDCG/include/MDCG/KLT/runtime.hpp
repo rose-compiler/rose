@@ -124,14 +124,12 @@ struct host_t {
     SgFunctionSymbol * build_kernel_func;
     SgFunctionSymbol * execute_kernel_func;
 
-    SgType * kernel_func_ptr_type;
-
   public:
     host_t() :
       user(NULL), kernel_class(NULL), loop_class(NULL), tile_class(NULL),
       kernel_data_field(NULL), kernel_param_field(NULL), kernel_scalar_field(NULL),
       kernel_loop_field(NULL), loop_lower_field(NULL), loop_upper_field(NULL), loop_stride_field(NULL),
-      build_kernel_func(NULL), execute_kernel_func(NULL), kernel_func_ptr_type(NULL)
+      build_kernel_func(NULL), execute_kernel_func(NULL)
     {}
 
     ~host_t() { delete user; }
@@ -202,8 +200,6 @@ struct host_t {
       return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loop_field, SageBuilder::buildIntVal(idx), loop_stride_field), rhs));
     }
 
-    SgType * getKernelFnctPtrType() const { return kernel_func_ptr_type; }
-
     SgClassSymbol * getKernelClass() const { return kernel_class; }
     SgClassSymbol * getLoopClass() const { return loop_class; }
     SgClassSymbol * getTileClass() const { return tile_class; }
@@ -251,10 +247,6 @@ struct host_t {
       MDCG::Model::function_t execute_kernel_func_ = model.lookup<MDCG::Model::function_t>("execute_kernel");
       execute_kernel_func = execute_kernel_func_->node->symbol;
       assert(execute_kernel_func != NULL);
-
-      MDCG::Model::type_t kernel_func_ptr_type_ = model.lookup<MDCG::Model::type_t>("kernel_func_ptr");
-      kernel_func_ptr_type = kernel_func_ptr_type_->node->type;
-      assert(kernel_func_ptr_type != NULL);
 
       load_user(model);
     }
@@ -347,9 +339,8 @@ struct Runtime {
 
   // Extra
 
-    static void applyKernelModifiers(SgFunctionDeclaration * kernel_decl) {}
-
-    static void addRuntimeStaticData(MFB::Driver<MFB::Sage> & driver, const std::string & KLT_RTL, const std::string & USER_RTL, const std::string & kernel_file_name, const std::string & static_file_name, size_t static_file_id) {}
+    static void applyKernelModifiers(SgFunctionDeclaration * kernel_decl);
+    static void addRuntimeStaticData(MFB::Driver<MFB::Sage> & driver, const std::string & KLT_RTL, const std::string & USER_RTL, const std::string & kernel_file_name, const std::string & static_file_name, size_t static_file_id);
 };
 
 } // namespace MDCG::KLT
