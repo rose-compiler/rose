@@ -59,7 +59,7 @@ bool Driver<Sage>::resolveValidParent<SgClassSymbol>(SgClassSymbol * symbol) {
 }
 
 template <>
-void  Driver<Sage>::loadSymbols<SgClassDeclaration>(unsigned file_id, SgSourceFile * file) {
+void  Driver<Sage>::loadSymbols<SgClassDeclaration>(size_t file_id, SgSourceFile * file) {
   std::vector<SgClassDeclaration *> class_decl = SageInterface::querySubTree<SgClassDeclaration>(file);
 
   std::set<SgClassSymbol *> class_symbols;
@@ -79,16 +79,16 @@ void  Driver<Sage>::loadSymbols<SgClassDeclaration>(unsigned file_id, SgSourceFi
   std::set<SgClassSymbol *>::iterator it;
   for (it = class_symbols.begin(); it != class_symbols.end(); it++)
     if (resolveValidParent<SgClassSymbol>(*it)) {
-      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned>(*it, file_id));
+      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, size_t>(*it, file_id));
 //    std::cout << "    Class Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
     }
 }
 
 Sage<SgClassDeclaration>::object_desc_t::object_desc_t(
   std::string name_,
-  unsigned long kind_,
+  size_t kind_,
   SgSymbol * parent_,
-  unsigned file_id_,
+  size_t file_id_,
   bool create_definition_
 ) :
   name(name_),
@@ -116,7 +116,7 @@ Sage<SgClassDeclaration>::build_result_t Driver<Sage>::build<SgClassDeclaration>
     result.symbol = decl_scope->lookup_class_symbol(desc.name);
     assert(result.symbol != NULL);
 
-    p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned>(result.symbol, desc.file_id));
+    p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, size_t>(result.symbol, desc.file_id));
     p_valid_symbols.insert(result.symbol);
     p_parent_map.insert(std::pair<SgSymbol *, SgSymbol *>(result.symbol, desc.parent));
     p_class_symbols.insert(result.symbol);
@@ -169,7 +169,7 @@ Sage<SgClassDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgClassDec
   else {
     assert(desc.file_id != 0);
 
-    std::map<unsigned, SgSourceFile *>::iterator it_file = id_to_file_map.find(desc.file_id);
+    std::map<size_t, SgSourceFile *>::iterator it_file = id_to_file_map.find(desc.file_id);
     assert(it_file != id_to_file_map.end());
     SgSourceFile * decl_file = it_file->second;
     assert(decl_file != NULL);
@@ -185,8 +185,8 @@ Sage<SgClassDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgClassDec
 }
 
 template <>
-void Driver<Sage>::createForwardDeclaration<SgClassDeclaration>(Sage<SgClassDeclaration>::symbol_t symbol, unsigned target_file_id) {
-  std::map<unsigned, SgSourceFile *>::iterator it_target_file = id_to_file_map.find(target_file_id);
+void Driver<Sage>::createForwardDeclaration<SgClassDeclaration>(Sage<SgClassDeclaration>::symbol_t symbol, size_t target_file_id) {
+  std::map<size_t, SgSourceFile *>::iterator it_target_file = id_to_file_map.find(target_file_id);
   assert(it_target_file != id_to_file_map.end());
   SgSourceFile * target_file = it_target_file->second;
   assert(target_file != NULL);

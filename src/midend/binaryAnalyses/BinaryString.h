@@ -2,8 +2,8 @@
 #define ROSE_BinaryAnalysis_String_H
 
 #include <MemoryMap.h>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Optional.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Optional.h>
 
 namespace rose {
 namespace BinaryAnalysis {

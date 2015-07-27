@@ -48,6 +48,22 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Latt
     defVarIds+=modVarIds;
   }
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
+    // If an unknown array element is referenced, we consider
+    // all its elements modified in the same statement.
+    // Here *var* is an array element if its symbol is equal to at
+    // least one of those corresponding to VariableIds with next or previous ids.
+    for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
+      VariableId var = *i;
+      VariableId prev_var_id;
+      VariableId next_var_id;
+      prev_var_id.setIdCode(var.getIdCode() - 1);
+      next_var_id.setIdCode(var.getIdCode() + 1);
+      SgSymbol *var_smb = _variableIdMapping->getSymbol(var);
+      SgSymbol *prev_var_smb = _variableIdMapping->getSymbol(prev_var_id);
+      SgSymbol *next_var_smb = _variableIdMapping->getSymbol(next_var_id);
+      if((var_smb == prev_var_smb) || (var_smb == next_var_smb))
+        element.removeAllPairsWithVariableId(var);
+    }
     // since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
     for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
       element.insertPair(lab,*i);
@@ -75,11 +91,33 @@ void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* 
   // same as in transferExpression ... needs to be refined
   VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*_variableIdMapping);  
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
+    // If an array is defined, we add all its elements to def set.
+    // Remove pairs corresponding to array elements as in transferExpression()
+    // but now assert that only elements of one array were modified.
+    unsigned elements = 0;
+    SgSymbol *array_smb = _variableIdMapping->getSymbol(*(defVarIds.begin()));
+    for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
+      VariableId var = *i;
+      VariableId prev_var_id;
+      VariableId next_var_id;
+      prev_var_id.setIdCode(var.getIdCode() - 1);
+      next_var_id.setIdCode(var.getIdCode() + 1);
+      SgSymbol *var_smb = _variableIdMapping->getSymbol(var);
+      SgSymbol *prev_var_smb = _variableIdMapping->getSymbol(prev_var_id);
+      SgSymbol *next_var_smb = _variableIdMapping->getSymbol(next_var_id);
+      if((var_smb == prev_var_smb) || (var_smb == next_var_smb)) {
+        element.removeAllPairsWithVariableId(var);
+        elements++;
+      }
+      if(var_smb != array_smb)
+        assert(0); // more than one array is modified
+    }
     // since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
     for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
       element.insertPair(lab,*i);
     }
-    assert(0);
+    if(elements != defVarIds.size())
+      assert(0);
   } else if(defVarIds.size()==1) {
     // one unique memory location (variable). We can remove all pairs with this variable
     VariableId var=*defVarIds.begin();

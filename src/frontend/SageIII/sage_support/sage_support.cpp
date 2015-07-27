@@ -986,6 +986,12 @@ cout.flush();
              }
             else
              {
+               // SG (7/9/2015) When processing multiple files, we need to reset
+               // case_insensitive_semantics.  But this only sets it to the last
+               // file created.  During AST construction, it will need to be
+               // reset for each language.
+               SageBuilder::symbol_table_case_insensitive_semantics = false;
+
                if (CommandlineProcessing::isPHPFileNameSuffix(filenameExtension) == true)
                   {
                  // file = new SgSourceFile ( argv,  project );
@@ -3089,6 +3095,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      // FMZ(7/27/2010): check command line options for Rice CAF syntax
      //  -rose:CoArrayFortran, -rose:CAF, -rose:caf
 
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // insensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = true;
+
      bool using_rice_caf = false;
      vector<string> ArgTmp = get_project()->get_originalCommandLineArgumentList();
      int sizeArgs = ArgTmp.size();
@@ -4229,6 +4239,10 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
         return 0;
      }
 
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
+
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
      ROSE_ASSERT(get_requires_C_preprocessor() == false);
 
@@ -4495,6 +4509,10 @@ SgSourceFile::build_X10_AST(const vector<string>& p_argv)
         return 0;
     }
 
+    // SG (7/9/2015) In case of a mixed language project, force case
+    // sensitivity here.
+    SageBuilder::symbol_table_case_insensitive_semantics = false;
+
     ROSE_ASSERT(get_requires_C_preprocessor() == false);
 
     vector<string> frontEndCommandLine;
@@ -4716,6 +4734,10 @@ SgSourceFile::processCppLinemarkers()
 int
 SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputCommandLine )
    {
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
+
      std::string frontEndCommandLineString;
      frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
 
@@ -4770,6 +4792,9 @@ SgSourceFile::build_PHP_AST()
          int frontendErrorLevel = -1;
 #else
 #ifdef ROSE_BUILD_PHP_LANGUAGE_SUPPORT
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
      int frontendErrorLevel = php_main(phpFileName, this);
 #else
      int frontendErrorLevel = 99;
@@ -4785,6 +4810,9 @@ SgSourceFile::build_Python_AST()
    {
      string pythonFileName = this->get_sourceFileNameWithPath();
 #ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
      int frontendErrorLevel = python_main(pythonFileName, this);
 #else
      int frontendErrorLevel = 99;
@@ -6183,7 +6211,7 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
         }
 
   // This is a better implementation since it will include any additional command line options that target the linker
-     Rose_STL_Container<string> linkingCommand ;
+     Rose_STL_Container<string> linkingCommand;
 
      linkingCommand.push_back (linkerName);
      // find all object files generated at file level compilation
@@ -6196,9 +6224,19 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
        // linkingCommand.push_back(get_file(i).generateOutputFileName());
           if (get_file(i).get_skipfinalCompileStep() == false)
              {
-                 linkingCommand.push_back(get_file(i).generateOutputFileName());
+               linkingCommand.push_back(get_file(i).generateOutputFileName());
              }
         }
+
+#if 0
+  // DQ (5/27/2015): There appear to be extra command line options here that we might want to exclude (e.g. -DNDEBUG).
+  // Note that we should leave these in place until we better understand where the limits are of what we should remove.
+     printf ("In SgProject::link(): Output argv list: \n");
+     for (size_t i = 0; i < argv.size(); i++)
+        {
+          printf ("   --- argv = %s \n",argv[i].c_str());
+        }
+#endif
 
   // Add any options specified in the original command line (after preprocessing)
      linkingCommand.insert(linkingCommand.end(), argv.begin(), argv.end());
@@ -6207,10 +6245,10 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
 
   // Additional libraries to be linked with
   // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
-//     if ((numberOfFiles() !=0) && (get_file(0).get_openmp_lowering())
-//     Liao 6/29/2012. sometimes rose translator is used as a wrapper for linking
-//     There will be no SgFile at all in this case but we still want to append relevant linking options for OpenMP
-     if( SageInterface::getProject()->get_openmp_linking())
+  // if ((numberOfFiles() !=0) && (get_file(0).get_openmp_lowering())
+  // Liao 6/29/2012. sometimes rose translator is used as a wrapper for linking
+  // There will be no SgFile at all in this case but we still want to append relevant linking options for OpenMP
+     if (SageInterface::getProject()->get_openmp_linking())
         {
 // Sara Royuela 12/10/2012:  Add GCC version check
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY

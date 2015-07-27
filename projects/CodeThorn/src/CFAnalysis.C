@@ -146,6 +146,28 @@ Labeler* CFAnalysis::getLabeler() {
   return labeler;
 }
 
+// returns 0 if no statement (other than SgBasicBlock) exists in block.
+SgStatement* CFAnalysis::getFirstStmtInBlock(SgBasicBlock* block) {
+  ROSE_ASSERT(block);
+  const SgStatementPtrList& stmtList=block->get_statements();
+  if(stmtList.size()>=1) {
+    return stmtList.front();
+  } else {
+    return 0;
+  }
+}
+
+// returns 0 if no statement (other than SgBasicBlock) exists in block.
+SgStatement* CFAnalysis::getLastStmtInBlock(SgBasicBlock* block) {
+  ROSE_ASSERT(block);
+  const SgStatementPtrList& stmtList=block->get_statements();
+  if(stmtList.size()>=1) {
+    return stmtList.back();
+  } else {
+    return 0;
+  }
+}
+
 Label CFAnalysis::initialLabel(SgNode* node) {
   assert(node);
 
@@ -163,6 +185,8 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   assert(labeler->isLabelRelevantNode(node));
   switch (node->variantT()) {
   case V_SgFunctionDeclaration:
+    cerr<<"Error: icfg construction: function declarations are not associated with a label."<<endl;
+    exit(1);
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
   case V_SgLabelStatement:
@@ -186,7 +210,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     node=SgNodeHelper::getLoopBody(node);
     return labeler->getLabel(node);
   case V_SgBasicBlock:
-   return labeler->getLabel(node);
+   return labeler->blockBeginLabel(node);
    // TODO: for(emptyInitList;S;S) {}
   case V_SgForStatement: {
     SgStatementPtrList& stmtPtrList=SgNodeHelper::getForInitList(node);
@@ -200,11 +224,34 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     node=*stmtPtrList.begin();
     return labeler->getLabel(node);
   }
+  case V_SgGotoStatement: {
+    return labeler->getLabel(node);
+  }
+  case V_SgSwitchStatement: {
+    node=SgNodeHelper::getCond(node);
+    ROSE_ASSERT(node);
+    return labeler->getLabel(node);
+  }
   default:
-    cerr << "Error: Unknown node in CodeThorn::CFAnalysis::initialLabel: "<<node->sage_class_name()<<endl; exit(1);
+    cerr << "Error: Unknown node in CodeThorn::CFAnalysis::initialLabel: "<<node->sage_class_name()<<endl;
+    exit(1);
   }
 }
- 
+
+SgStatement* CFAnalysis::getCaseOrDefaultBodyStmt(SgNode* node) {
+  SgStatement* body=0;
+  if(SgCaseOptionStmt* stmt=isSgCaseOptionStmt(node)) {
+    body=stmt->get_body();
+  } else if(SgDefaultOptionStmt* stmt=isSgDefaultOptionStmt(node)) {
+    body=stmt->get_body(); 
+  } else {
+    cerr<<"Error: requesting body of switch case or default, but node is not a default or option stmt."<<endl;
+    exit(1);
+  }
+  ROSE_ASSERT(body);
+  return body;
+} 
+
 LabelSet CFAnalysis::finalLabels(SgNode* node) {
   assert(node);
   assert(labeler->isLabelRelevantNode(node));
@@ -229,8 +276,10 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   switch (node->variantT()) {
   // function declarations inside basic block
   case V_SgFunctionDeclaration:
-      finalSet.insert(labeler->getLabel(node));
-      return finalSet;
+    cerr<<"Error: icfg construction: function declarations are not associated with a label."<<endl;
+    exit(1);
+    //finalSet.insert(labeler->getLabel(node));
+    //return finalSet;
   case V_SgFunctionDefinition: {
     SgBasicBlock* body=isSgFunctionDefinition(node)->get_body();
     return finalLabels(body);
@@ -244,13 +293,14 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   case V_SgLabelStatement:
   case V_SgInitializedName:
   case V_SgVariableDeclaration:
-      finalSet.insert(labeler->getLabel(node));
-      return finalSet;
+  case V_SgDefaultOptionStmt:
+  case V_SgCaseOptionStmt:
+    finalSet.insert(labeler->getLabel(node));
+    return finalSet;
   case V_SgExprStatement: {
     finalSet.insert(labeler->getLabel(node));
     return finalSet;
   }
-
   case V_SgIfStmt: {
     SgNode* nodeTB=SgNodeHelper::getTrueBranch(node);
     LabelSet finalSetTB=finalLabels(nodeTB);
@@ -277,6 +327,10 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
   case V_SgBasicBlock: {
+#if 0
+    finalSet.insert(labeler->blockEndLabel(node));
+    return finalSet;
+#else
     if(SgNodeHelper::numChildren(node)>0) {
       SgNode* lastNode=SgNodeHelper::getLastOfBlock(node);
       LabelSet s=finalLabels(lastNode);
@@ -286,14 +340,48 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
       finalSet.insert(initialLabel(node));
     }
     return finalSet;
+#endif
   }
   case V_SgFunctionCallExp:
     finalSet.insert(labeler->functionCallReturnLabel(node));
     return finalSet;
-
+  case V_SgGotoStatement: {
+    // for the goto statement (as special case) the final set is empty. This allows all other functions
+    // operate correctly even in the presence of gotos. The edge for 'goto label' is created as part
+    // of the semantics of goto (and does not *require* the final labels).
+    return finalSet;
+  }
+  case V_SgSwitchStatement: {
+    // 1) add all break statements, 2) add final label of last stmt (emulating a break)
+    set<SgNode*> breakNodes=SgNodeHelper::LoopRelevantBreakStmtNodes(node);
+    LabelSet lset=labeler->getLabelSet(breakNodes);
+    finalSet+=lset;
+    //cout << finalSet.toString() << endl;
+    // very last case in switch (not necessarily default), if it does not contain a break has still a final label.
+    // if it is a break it will still be the last label. If it is a goto it will not have a final label (which is correct).
+    SgSwitchStatement* switchStmt=isSgSwitchStatement(node);
+    SgStatement* body=switchStmt->get_body();
+    SgBasicBlock* block=isSgBasicBlock(body);
+    if(!block) {
+      cerr<<"Error: CFAnalysis::finalLabels: body of switch is not a basic block. Unknown structure."<<endl;
+      exit(1);
+    }
+    const SgStatementPtrList& stmtList=block->get_statements();
+    // TODO: revisit this case: this should work for all stmts in the body, when break has its own label as final label.
+    if(stmtList.size()>0) {
+      SgNode* lastStmt=stmtList.back();
+      SgStatement* lastStmt2=getCaseOrDefaultBodyStmt(lastStmt);
+      LabelSet lsetLastStmt=finalLabels(lastStmt2);
+      finalSet+=lsetLastStmt;
+    } else {
+      cerr<<"Error: CFAnalysis::finalLabels: body of switch is empty."<<endl;
+      exit(1);
+    }
+    return finalSet;
+  }
   default:
-    cerr << "Error: Unknown node in CodeThorn::CFAnalysis::finalLabels: "<<node->sage_class_name()<<endl; exit(1);
-   }
+    cerr << "Error: Unknown node in CFAnalysis::finalLabels: "<<node->sage_class_name()<<endl; exit(1);
+  }
 }
 
 
@@ -372,6 +460,29 @@ int CFAnalysis::reduceEmptyConditionNodes(Flow& flow) {
 int CFAnalysis::reduceNode(Flow& flow, Label lab) {
   Flow inFlow=flow.inEdges(lab);
   Flow outFlow=flow.outEdges(lab);
+  EdgeTypeSet unionEdgeTypeSets;
+  for(Flow::iterator i=inFlow.begin();i!=inFlow.end();++i) {
+    EdgeTypeSet edgeTypeSet=(*i).types();
+    unionEdgeTypeSets.insert(edgeTypeSet.begin(),edgeTypeSet.end());
+  }
+  for(Flow::iterator i=outFlow.begin();i!=outFlow.end();++i) {
+    EdgeTypeSet edgeTypeSet=(*i).types();
+    unionEdgeTypeSets.insert(edgeTypeSet.begin(),edgeTypeSet.end());
+  }
+  // edge type cleanup
+  // if true and false edge exist, remove both (merging true and false branches to a single branch)
+  // if forward and backward exist, remove backward (we are removing a cycle)
+  if(unionEdgeTypeSets.find(EDGE_TRUE)!=unionEdgeTypeSets.end()
+     && unionEdgeTypeSets.find(EDGE_FALSE)!=unionEdgeTypeSets.end()) {
+    unionEdgeTypeSets.erase(EDGE_TRUE);
+    unionEdgeTypeSets.erase(EDGE_FALSE);
+  }
+  if(unionEdgeTypeSets.find(EDGE_FORWARD)!=unionEdgeTypeSets.end()
+     && unionEdgeTypeSets.find(EDGE_BACKWARD)!=unionEdgeTypeSets.end()) {
+    unionEdgeTypeSets.erase(EDGE_FORWARD);
+    unionEdgeTypeSets.erase(EDGE_BACKWARD);
+  }
+  
   /* description of essential operations:
    *   inedges: (n_i,b)
    *   outedge: (b,n2) 
@@ -379,60 +490,68 @@ int CFAnalysis::reduceNode(Flow& flow, Label lab) {
    *   remove(b,n2)
    *   insert(n1,n2)
    */
-  if(inFlow.size()==0 && outFlow.size()==0)
+  if(inFlow.size()==0 && outFlow.size()==0) {
     return 0;
-
-  if(inFlow.size()==0 || outFlow.size()==0) {
-    Flow edges=inFlow+outFlow;
-    flow.deleteEdges(edges);
+  } else if(inFlow.size()>0 && outFlow.size()>0) {
+    for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
+      for(Flow::iterator outiter=outFlow.begin();outiter!=outFlow.end();++outiter) {
+        Edge e1=*initer;
+        Edge e2=*outiter;
+        // preserve edge annotations of ingoing and outgoing edges
+        Edge newEdge=Edge(e1.source,unionEdgeTypeSets,e2.target);
+        flow.erase(e1);
+        flow.erase(e2);
+        flow.insert(newEdge);
+      }
+      return 1;
+    }
+  } else if(inFlow.size()>0) {
+    for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
+      Edge e1=*initer;
+      flow.erase(e1);
+    }
+    return 1;
+  } else if(outFlow.size()>0) {
+    for(Flow::iterator outiter=outFlow.begin();outiter!=outFlow.end();++outiter) {
+      Edge e2=*outiter;
+      flow.erase(e2);
+    }
     return 1;
   }
+  return 0;
+}
 
-  for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
-    for(Flow::iterator outiter=outFlow.begin();outiter!=outFlow.end();++outiter) {
-      Edge e1=*initer;
-      Edge e2=*outiter;
-      Edge newEdge=Edge(e1.source,e1.types(),e2.target);
-      flow.erase(e1);
-      flow.erase(e2);
-      flow.insert(newEdge);
-    }
-  }
-  return 1;
+int CFAnalysis::optimizeFlow(Flow& flow) {
+  int n=0;
+  // TODO: reduce: SgBreakStmt, SgContinueStmt, SgLabelStatement, SgGotoStatement
+  n+=reduceBlockBeginEndNodes(flow);
+  n+=reduceEmptyConditionNodes(flow);
+  return n;
+}
+
+int CFAnalysis::reduceBlockBeginEndNodes(Flow& flow) {
+  int cnt=0;
+  cnt+=reduceBlockBeginNodes(flow);
+  cnt+=reduceBlockEndNodes(flow);
+  return cnt;
 }
 
 int CFAnalysis::reduceBlockBeginNodes(Flow& flow) {
   LabelSet labs=flow.nodeLabels();
   int cnt=0;
   for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
-    //cout<<"Checking label: "<<(*i)<<" node: "<<getNode(*i)<<" code:"<<getNode(*i)->unparseToString()<<endl;
-    if(isSgBasicBlock(getNode(*i))) {
-#if 1
+    if(labeler->isBlockBeginLabel(*i)||labeler->isBlockEndLabel(*i)) {
       cnt+=reduceNode(flow,*i);
-#else
-      cnt++;
-      Flow inFlow=flow.inEdges(*i);
-      Flow outFlow=flow.outEdges(*i);
-
-      // multiple out-edges not supported yet
-      assert(outFlow.size()<=1); 
-
-      /* description of essential operations:
-       *   inedges: (n_i,b)
-       *   outedge: (b,n2) 
-       *   remove(n_i,b)
-       *   remove(b,n2)
-       *   insert(n1,n2)
-       */
-      for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
-        Edge e1=*initer;
-        Edge e2=*outFlow.begin();
-        Edge newEdge=Edge(e1.source,e1.types(),e2.target);
-        flow.erase(e1);
-        flow.erase(e2);
-        flow.insert(newEdge);
-      }
-#endif
+    }
+  }
+  return cnt;
+}
+int CFAnalysis::reduceBlockEndNodes(Flow& flow) {
+  LabelSet labs=flow.nodeLabels();
+  int cnt=0;
+  for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
+    if(labeler->isBlockEndLabel(*i)) {
+      cnt+=reduceNode(flow,*i);
     }
   }
   return cnt;
@@ -617,7 +736,11 @@ Flow CFAnalysis::flow(SgNode* node) {
        this edge is identical if we have some other branches. Because we maintain the edges as an edge-set
        this operation is always OK.
      */
+#if 0
     LabelSet funFinalLabels=finalLabels(node);
+#else
+    LabelSet funFinalLabels=finalLabels(body);
+#endif
     for(LabelSet::iterator i=funFinalLabels.begin();i!=funFinalLabels.end();++i) {
       Edge explicitEdge=Edge(*i,EDGE_FORWARD,labeler->functionExitLabel(node));
       if(SgNodeHelper::isLoopCond(labeler->getNode(*i))) {
@@ -651,6 +774,8 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgPragmaDeclaration:
   case V_SgLabelStatement:
   case V_SgExprStatement:
+  case V_SgDefaultOptionStmt:
+  case V_SgCaseOptionStmt:
     return edgeSet;
   case V_SgIfStmt: {
     SgNode* nodeC=SgNodeHelper::getCond(node);
@@ -670,6 +795,61 @@ Flow CFAnalysis::flow(SgNode* node) {
     }
     return edgeSet;
   }
+  case V_SgGotoStatement: {
+    SgGotoStatement* gotoStmt=isSgGotoStatement(node);
+    SgLabelStatement* targetSgLabelStmt=gotoStmt->get_label();
+    ROSE_ASSERT(targetSgLabelStmt);
+    // note that the target label is not an element of the finalLabels set.
+    Label targetLabel=labeler->getLabel(targetSgLabelStmt);
+    edgeSet.insert(Edge(initialLabel(node),EDGE_FORWARD,targetLabel));
+    return edgeSet;
+  }
+  case V_SgSwitchStatement: {
+    SgNode* nodeC=SgNodeHelper::getCond(node);
+    Label condLabel=getLabel(nodeC);
+    SgSwitchStatement* switchStmt=isSgSwitchStatement(node);
+    SgStatement* body=switchStmt->get_body();
+    SgBasicBlock* block=isSgBasicBlock(body);
+    if(!block) {
+      cerr<<"Error: CFAnalysis::flow: body of switch is not a basic block. Unknown structure."<<endl;
+      exit(1);
+    }
+    SgStatementPtrList& stmtList=block->get_statements();
+    ROSE_ASSERT(stmtList.size()>0);
+    SgStatement* prevCaseStmtBody=0;
+    for(SgStatementPtrList::iterator i=stmtList.begin();
+        i!=stmtList.end();
+        ++i) {
+      // TODO: revisit this case: this should work for all stmts in the body, when break has its own label as final label.
+      //SgDefaultOptionStmt
+      if(isSgCaseOptionStmt(*i)||isSgDefaultOptionStmt(*i)) {
+        Label caseStmtLab=labeler->getLabel(*i);
+        SgStatement* caseBody=getCaseOrDefaultBodyStmt(*i);
+        ROSE_ASSERT(caseBody);
+        Label caseBodyLab=labeler->getLabel(caseBody);
+        edgeSet.insert(Edge(condLabel,EDGE_FORWARD,caseStmtLab));
+        edgeSet.insert(Edge(caseStmtLab,EDGE_FORWARD,initialLabel(caseBody)));
+        Flow flowStmt=flow(caseBody);
+        edgeSet+=flowStmt;
+        {
+          // create edges from other case stmts to the next case that have no break at the end.
+          if(prevCaseStmtBody) {
+            LabelSet finalBodyLabels=finalLabels(prevCaseStmtBody);
+            for(LabelSet::iterator i=finalBodyLabels.begin();i!=finalBodyLabels.end();++i) {
+              if(!isSgBreakStmt(labeler->getNode(*i))) {
+                edgeSet.insert(Edge(*i,EDGE_FORWARD,caseBodyLab));
+              }
+            }
+          }
+        }
+        prevCaseStmtBody=caseBody;
+      } else {
+        cerr<<"Error: control flow: stmt in switch is not a case or default stmt. Not supported yet."<<endl;
+        exit(1);
+      }
+    }
+    return edgeSet;
+  }
   case V_SgWhileStmt: 
     return WhileAndDoWhileLoopFlow(node,edgeSet,EDGE_FORWARD,EDGE_BACKWARD);
   case V_SgDoWhileStmt: 
@@ -677,6 +857,9 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgBasicBlock: {
     size_t len=node->get_numberOfTraversalSuccessors();
     if(len==0) {
+      // do not generate edge to blockEndLabel
+      //Edge edge=Edge(labeler->blockBeginLabel(node),EDGE_FORWARD,labeler->blockEndLabel(node));
+      //edgeSet.insert(edge);
       return edgeSet;
     } else {
       if(len==1) {
@@ -693,8 +876,19 @@ Flow CFAnalysis::flow(SgNode* node) {
       }
     }
     SgNode* firstStmt=node->get_traversalSuccessorByIndex(0);
-    Edge edge=Edge(getLabel(node),EDGE_FORWARD,initialLabel(firstStmt));
-    edgeSet.insert(edge);
+    Edge edge1=Edge(labeler->blockBeginLabel(node),EDGE_FORWARD,initialLabel(firstStmt));
+    edgeSet.insert(edge1);
+    ROSE_ASSERT(len>=1);
+    // do not generate edges to blockEndLabel
+#if 0
+    SgNode* lastStmt=node->get_traversalSuccessorByIndex(len-1);
+    ROSE_ASSERT(isSgStatement(lastStmt));
+    LabelSet lastStmtFinalLabels=finalLabels(lastStmt);
+    for(LabelSet::iterator i=lastStmtFinalLabels.begin();i!=lastStmtFinalLabels.end();++i) {
+      Edge edge2=Edge(*i,EDGE_FORWARD,labeler->blockEndLabel(node));
+      edgeSet.insert(edge2);
+    }
+#endif
     return edgeSet;
   }
 
@@ -768,6 +962,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     }
     return edgeSet;
   }
+
   default:
     cerr << "Error: Unknown node in CFAnalysis::flow: "<<node->sage_class_name()<<endl; 
     cerr << "Problemnode: "<<node->unparseToString()<<endl;

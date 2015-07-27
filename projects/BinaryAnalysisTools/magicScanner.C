@@ -3,8 +3,8 @@
 #include <BinaryMagic.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/Utility.h>
-#include <sawyer/CommandLine.h>
-#include <sawyer/ProgressBar.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/ProgressBar.h>
 
 using namespace rose;
 using namespace rose::Diagnostics;

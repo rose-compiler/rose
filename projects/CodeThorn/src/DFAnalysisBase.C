@@ -68,6 +68,7 @@ void DFAnalysisBase::computeAllPreInfo() {
 void DFAnalysisBase::computeAllPostInfo() {
   if(!_postInfoIsValid) {
     computeAllPreInfo();
+    // compute set of used labels in ICFG.
     for(Labeler::iterator i=_labeler->begin();i!=_labeler->end();++i) {
       Label lab=*i;
       Lattice* info=_initialElementFactory->create();
@@ -151,8 +152,10 @@ DFAnalysisBase::normalizeProgram(SgProject* root) {
 }
 
 void
-DFAnalysisBase::initialize(SgProject* root) {
-  cout << "INIT: Creating VariableIdMapping."<<endl;
+DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/* = false*/) {
+  cout << "INIT: Creating VariableIdMapping." << endl;
+  if (variableIdForEachArrayElement)
+    _variableIdMapping.setModeVariableIdForEachArrayElement(true);
   _variableIdMapping.computeVariableSymbolMapping(root);
   _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(&_variableIdMapping);
   _pointerAnalysisEmptyImplementation->initialize();
@@ -175,7 +178,7 @@ DFAnalysisBase::initialize(SgProject* root) {
   cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
   {
     size_t numDeletedEdges=_cfanalyzer->deleteFunctionCallLocalEdges(_flow);
-    int numReducedNodes=_cfanalyzer->reduceBlockBeginNodes(_flow);
+    int numReducedNodes=0; //_cfanalyzer->reduceBlockBeginNodes(_flow);
     cout << "INIT: Optimization finished (educed nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
   }
 

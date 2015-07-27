@@ -7,7 +7,7 @@
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
-#include <sawyer/DistinctList.h>
+#include <Sawyer/DistinctList.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -114,9 +114,13 @@ public:
                                                          *   this data member is non-zero, then the memory map will be adjusted
                                                          *   by removing execute permission from any region of memory that has
                                                          *   at least this many consecutive zero bytes. */
+        bool constMem;                                  /**< Should write permission be removed from all memory segments?
+                                                         *   Removing write permission causes the instruction semantics to
+                                                         *   assume that memory is constant and therefore things like indirect
+                                                         *   jumps will have known successors. */
 
         LoaderSettings()
-            : deExecuteZeros(0) {}
+            : deExecuteZeros(0), constMem(false) {}
     };
 
     /** Settings that control the disassembler.
@@ -159,11 +163,14 @@ public:
         bool doingPostAnalysis;                         /**< Perform post-partitioning analysis phase? */
         bool functionReturnsAssumed;                    /**< Assume functions return if cannot prove otherwise? */
         bool findingDataFunctionPointers;               /**< Look for function pointers in static data. */
+        bool findingThunks;                             /**< Look for common thunk patterns in undiscovered areas. */
+        bool splittingThunks;                           /**< Split thunks into their own separate functions. */
 
         PartitionerSettings()
             : usingSemantics(false), followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
               findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
-              doingPostAnalysis(true), functionReturnsAssumed(true), findingDataFunctionPointers(false) {}
+              doingPostAnalysis(true), functionReturnsAssumed(true), findingDataFunctionPointers(false), findingThunks(true),
+              splittingThunks(false) {}
     };
 
     /** Settings for controling the engine behavior.
@@ -961,7 +968,8 @@ public:
     /** Property: Whether to allow discontiguous basic blocks.
      *
      *  ROSE's definition of a basic block allows two consecutive instructions, A and B, to be arranged in memory such that B
-     *  does not immediately follow A.  Setting this property prevents this and would force A and B to belong to separate basic blocks.
+     *  does not immediately follow A.  Setting this property prevents this and would force A and B to belong to separate basic
+     *  blocks.
      *
      * @{ */
     bool discontiguousBlocks() const /*final*/ { return settings_.partitioner.discontiguousBlocks; }
@@ -976,6 +984,26 @@ public:
      * @{ */
     bool findingFunctionPadding() const /*final*/ { return settings_.partitioner.findingFunctionPadding; }
     virtual void findingFunctionPadding(bool b) { settings_.partitioner.findingFunctionPadding = b; }
+    /** @} */
+
+    /** Property: Whether to find thunk patterns.
+     *
+     *  If set, then the partitioner expands the list of function prologue patterns to include common thunk patterns.  This
+     *  setting does not control whether thunk instructions are split into their own functions (see @ref splittingThunks).
+     *
+     * @{ */
+    bool findingThunks() const /*final*/ { return settings_.partitioner.findingThunks; }
+    virtual void findingThunks(bool b) { settings_.partitioner.findingThunks = b; }
+    /** @} */
+
+    /** Property: Whether to split thunk instructions into mini functions.
+     *
+     *  If set, then functions whose entry instructions match a thunk pattern are split so that those thunk instructions are in
+     *  their own function.
+     *
+     * @{ */
+    bool splittingThunks() const /*final*/ { return settings_.partitioner.splittingThunks; }
+    virtual void splittingThunks(bool b) { settings_.partitioner.splittingThunks = b; }
     /** @} */
 
     /** Property: Whether to find dead code.

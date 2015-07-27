@@ -2,7 +2,7 @@
 
 #include <ConcreteSemantics2.h>
 #include <Partitioner2/Engine.h>
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 #include <TraceSemantics2.h>
 
 using namespace rose;

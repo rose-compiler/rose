@@ -7,8 +7,8 @@
 #include <Partitioner2/Modules.h>                       // ROSE
 #include <Partitioner2/ModulesPe.h>                     // ROSE
 #include <rose_strtoull.h>
-#include <sawyer/Message.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/Message.h>
+#include <Sawyer/Stopwatch.h>
 #include <Wt/WBreak>
 #include <Wt/WBorder>
 #include <Wt/WCheckBox>
@@ -162,6 +162,22 @@ WPartitioner::init() {
         wFindDeadCode_ = new Wt::WCheckBox("Find disconnected dead code?", c);
         wFindDeadCode_->setToolTip(tip);
         wFindDeadCode_->setCheckState(Wt::Checked);
+
+        tip = "Whether to search for instruction patterns that are indicative of thunks. When this is not checked, a thunk "
+              "will be found only if it is the target of some function call.  This effectively expands the list of patterns "
+              "that indicate the start of a function and does not control whether a thunk's instructions are split into "
+              "a distinct function or attached to the target function.";
+        new Wt::WBreak(c);
+        wFindThunks_ = new Wt::WCheckBox("Find thunk patterns?", c);
+        wFindThunks_->setToolTip(tip);
+        wFindThunks_->setCheckState(Wt::Checked);
+
+        tip = "Whether a post-processing pass should find thunks at the beginning of functions and split those thunk "
+              "instructions into their own mini function.";
+        new Wt::WBreak(c);
+        wSplitThunks_ = new Wt::WCheckBox("Split thunks into their own functions?", c);
+        wSplitThunks_->setToolTip(tip);
+        wSplitThunks_->setCheckState(Wt::Unchecked);
 
         tip = "PEScrambler is \"a tool to obfuscate win32 binaries automatically. It can relocate portions of code and protect "
               "them with anti-disassembly code. It also defeats static program flow analysis by re-routing all function calls "
@@ -342,6 +358,17 @@ bool
 WPartitioner::loadSpecimen() {
     Sawyer::Stopwatch timer;
     Sawyer::Message::Stream info(mlog[INFO] <<"load specimen");
+
+    // This tool doesn't support certain load resources because they require using BinaryDebugger, but the Wt web server does
+    // funny things with certain signals (like assuming any SIGCHLD should cause the server to restart!)  I don't have time to
+    // debug this right now, so we just check for these things explicitly and fail.  Besides, there are other ways around
+    // this. You can use the projects/BinaryAnalysis/dumpMemory tool to take a snapshot of the process and store it in a bunch
+    // of raw binary files, then load those files in the bROwSE tool. [Robb P. Matzke 2015-06-01]
+    BOOST_FOREACH (const std::string &name, ctx_.specimenNames) {
+        if (boost::starts_with(name, "proc:") || boost::starts_with(name, "run:"))
+            ASSERT_not_implemented("bROwSE does not support this resource type: \"" + StringUtility::cEscape(name) + "\"");
+    }
+
     ctx_.engine.loadSpecimens(ctx_.specimenNames);
     info <<"; took " <<timer <<" seconds\n";
     specimenLoaded_.emit(true);
@@ -455,6 +482,8 @@ WPartitioner::partitionSpecimen() {
     ctx_.engine.functionReturnsAssumed(assumeFunctionsReturn());
     ctx_.engine.followingGhostEdges(followGhostEdges());
     ctx_.engine.discontiguousBlocks(allowDiscontiguousBlocks());
+    ctx_.engine.findingThunks(findingThunks());
+    ctx_.engine.splittingThunks(splittingThunks());
     if (defeatPeScrambler())
         ctx_.engine.peScramblerDispatcherVa(peScramblerDispatcherVa());
     ctx_.engine.doingPostAnalysis(false);               // we'll do it explicitly to get progress reports
@@ -535,6 +564,16 @@ WPartitioner::allowDiscontiguousBlocks() const {
 bool
 WPartitioner::findDeadCode() const {
     return wFindDeadCode_->checkState() == Wt::Checked;
+}
+
+bool
+WPartitioner::findingThunks() const {
+    return wFindThunks_->checkState() == Wt::Checked;
+}
+
+bool
+WPartitioner::splittingThunks() const {
+    return wSplitThunks_->checkState() == Wt::Checked;
 }
 
 bool

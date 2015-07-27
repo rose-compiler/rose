@@ -11,10 +11,10 @@
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/GraphViz.h>
 #include <rose_strtoull.h>
-#include <sawyer/BiMap.h>
-#include <sawyer/GraphTraversal.h>
-#include <sawyer/ProgressBar.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/BiMap.h>
+#include <Sawyer/GraphTraversal.h>
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/Stopwatch.h>
 #include <SymbolicMemory2.h>
 #include <SymbolicSemantics2.h>
 #include <YicesSolver.h>

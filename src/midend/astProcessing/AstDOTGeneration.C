@@ -9,6 +9,7 @@
 #include "sage3basic.h"
 #include "AstDOTGeneration.h"
 #include "transformationTracking.h"
+#include "stringify.h"                                  // automatic enum-to-string functions
 
 // DQ (10/21/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
@@ -24,8 +25,8 @@
    #include "AsmUnparser_compat.h"
 #endif
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
+using namespace std;                                    // DQ (12/31/2005): This is OK if not declared in a header file
+using namespace rose;                                   // until this file is all moved into the rose namespace
 
 void
 AstDOTGeneration::generate(SgNode* node, string filename, traversalType tt, string filenamePostfix)
@@ -540,13 +541,19 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
         {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           string name = unparseExpression(genericExpression, NULL, NULL);
-          ROSE_ASSERT(name.empty() == false);
-          nodelabel += string("\\n") + name;
+          if (!name.empty())
+              nodelabel += string("\\n") + name;
 #else
           printf ("Warning: In AstDOTGeneration.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
 #endif
         }
 
+     if (SgAsmRiscOperation *riscOp = isSgAsmRiscOperation(node)) {
+         string name = stringifySgAsmRiscOperationRiscOperator(riscOp->get_riscOperator(), "OP_");
+         if (!name.empty())
+             nodelabel += "\\n" + name;
+     }
+     
   // DQ (10/29/2008): Added some support for additional output of internal names for specific IR nodes.
   // In generall there are long list of these IR nodes in the binary and this helps make some sense of 
   // the lists (sections, symbols, etc.).
@@ -889,6 +896,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                               printf ("Output the DOT graph from the SgFile IR node (SgProject was not traversed) \n");
 
                          dotrep.writeToFileAsGraph(filename);
+                         dotrep.clear();
                        }
                       else
                        {

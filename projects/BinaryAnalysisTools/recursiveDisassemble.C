@@ -15,10 +15,10 @@
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Utility.h>
 #include <rose_strtoull.h>
-#include <sawyer/Assert.h>
-#include <sawyer/CommandLine.h>
-#include <sawyer/ProgressBar.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/Assert.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/Stopwatch.h>
 #include <stringify.h>
 
 
@@ -650,7 +650,7 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("no specimen specified; see --help");
 
     // Load the specimen as raw data or an ELF or PE container.
-    MemoryMap map = engine.loadSpecimens(specimenNames);
+    engine.loadSpecimens(specimenNames);
     SgAsmInterpretation *interp = engine.interpretation();
 
     // Some analyses need to know what part of the address space is being disassembled.

@@ -35,7 +35,7 @@ class DFAnalysisBase {
   DFAnalysisBase();
   virtual ~DFAnalysisBase();
   void setExtremalLabels(set<Label> extremalLabels);
-  void initialize(SgProject*);
+  void initialize(SgProject* root, bool variableIdForEachArrayElement = false);
   void setForwardAnalysis();
   void setBackwardAnalysis();
   bool isForwardAnalysis();

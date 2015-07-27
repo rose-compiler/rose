@@ -1,13 +1,13 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-lib_LTLIBRARIES=libDLX-core.la
+lib_LTLIBRARIES=libDLX-Core.la
 
-libDLX_core_la_SOURCES= \
+libDLX_Core_la_SOURCES= \
   parser.cpp
-libDLX_core_la_CXXFLAGS= \
+libDLX_Core_la_CXXFLAGS= \
   -g \
-  -I$(srcdir)/../../include \
+  -I$(top_srcdir)/src/frontend/DLX/include \
   $(ROSE_INCLUDES)
 
 

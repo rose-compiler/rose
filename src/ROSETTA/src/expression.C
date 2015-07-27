@@ -1132,17 +1132,26 @@ Grammar::setUpExpressions ()
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/11/2011): Added support for name qualification.
+  // VarRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      VarRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/11/2011): Added information required for new name qualification support.
+  // VarRefExp.setDataPrototype("bool","type_elaboration_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      VarRefExp.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/11/2011): Added information required for new name qualification support.
+  // VarRefExp.setDataPrototype("bool","global_qualification_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      VarRefExp.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      LabelRefExp.setFunctionPrototype ( "HEADER_LABEL_REF_EXPRESSION", "../Grammar/Expression.code" );
      LabelRefExp.setDataPrototype ( "SgLabelSymbol*", "symbol", "= NULL",
@@ -1181,17 +1190,26 @@ Grammar::setUpExpressions ()
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added support for name qualification.
+  // FunctionRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
+  // FunctionRefExp.setDataPrototype("bool","type_elaboration_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionRefExp.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
+  // FunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      MemberFunctionRefExp.setFunctionPrototype ( "HEADER_MEMBER_FUNCTION_REF_EXPRESSION", "../Grammar/Expression.code" );
      MemberFunctionRefExp.setDataPrototype ( "SgMemberFunctionSymbol*", "symbol_i", "= NULL",
@@ -1212,17 +1230,26 @@ Grammar::setUpExpressions ()
      MemberFunctionRefExp.setDataPrototype ( "int", "need_qualifier", "= true",
                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added support for name qualification.
+  // MemberFunctionRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      MemberFunctionRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
+  // MemberFunctionRefExp.setDataPrototype("bool","type_elaboration_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      MemberFunctionRefExp.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
+  // MemberFunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      MemberFunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // *****************************************************************************
   // DQ (12/15/2011) Added template declaration support and so we need support for 
@@ -1245,17 +1272,26 @@ Grammar::setUpExpressions ()
   // TemplateFunctionRefExp.setDataPrototype ( "SgFunctionType*"  , "function_type", "= NULL",
   //        CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added support for name qualification.
+  // TemplateFunctionRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateFunctionRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
+  // TemplateFunctionRefExp.setDataPrototype("bool","type_elaboration_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateFunctionRefExp.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
+  // TemplateFunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateFunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TemplateMemberFunctionRefExp.setFunctionPrototype ( "HEADER_TEMPLATE_MEMBER_FUNCTION_REF_EXPRESSION", "../Grammar/Expression.code" );
   // TemplateMemberFunctionRefExp.setDataPrototype ( "SgTemplateSymbol*", "symbol_i", "= NULL",
@@ -1278,17 +1314,26 @@ Grammar::setUpExpressions ()
      TemplateMemberFunctionRefExp.setDataPrototype ( "int", "need_qualifier", "= true",
                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added support for name qualification.
+  // TemplateMemberFunctionRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateMemberFunctionRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
+  // TemplateMemberFunctionRefExp.setDataPrototype("bool","type_elaboration_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateMemberFunctionRefExp.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
+  // TemplateMemberFunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateMemberFunctionRefExp.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // *****************************************************************************
 
@@ -1458,17 +1503,26 @@ Grammar::setUpExpressions ()
      EnumVal.setDataPrototype("bool", "requiresNameQualification", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/11/2011): Added support for name qualification.
+  // EnumVal.setDataPrototype ( "int", "name_qualification_length", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      EnumVal.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/11/2011): Added information required for new name qualification support.
+  // EnumVal.setDataPrototype("bool","type_elaboration_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      EnumVal.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/11/2011): Added information required for new name qualification support.
+  // EnumVal.setDataPrototype("bool","global_qualification_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      EnumVal.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UnsignedIntVal.setFunctionPrototype ( "HEADER_UNSIGNED_INT_VALUE_EXPRESSION", "../Grammar/Expression.code" );
      UnsignedIntVal.setDataPrototype ( "unsigned int", "value", "= 0",
@@ -1670,17 +1724,26 @@ Grammar::setUpExpressions ()
      SizeOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added support for name qualification.
+  // SizeOfOp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      SizeOfOp.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added information required for new name qualification support.
+  // SizeOfOp.setDataPrototype("bool","type_elaboration_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      SizeOfOp.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added information required for new name qualification support.
+  // SizeOfOp.setDataPrototype("bool","global_qualification_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      SizeOfOp.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/17/2012): Added information to trigger output of the defining declaration of the type (see test2012_57.c).
   // We need to control the output of the defining declaration in some interesting places where it can be specified.
@@ -1698,17 +1761,26 @@ Grammar::setUpExpressions ()
      AlignOfOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added support for name qualification.
+  // AlignOfOp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AlignOfOp.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added information required for new name qualification support.
+  // AlignOfOp.setDataPrototype("bool","type_elaboration_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AlignOfOp.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added information required for new name qualification support.
+  // AlignOfOp.setDataPrototype("bool","global_qualification_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AlignOfOp.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/17/2012): Added information to trigger output of the defining declaration of the type (see test2012_57.c).
   // We need to control the output of the defining declaration in some interesting places where it can be specified.
@@ -1774,17 +1846,26 @@ Grammar::setUpExpressions ()
   // TypeIdOp.setDataPrototype ( "SgType*"      , "expression_type", "= NULL",
   //        CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added support for name qualification.
+  // TypeIdOp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TypeIdOp.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added information required for new name qualification support.
+  // TypeIdOp.setDataPrototype("bool","type_elaboration_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TypeIdOp.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added information required for new name qualification support.
+  // TypeIdOp.setDataPrototype("bool","global_qualification_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TypeIdOp.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/5/2004): Adding vararg support for SAGE AST
      VarArgStartOp.setFunctionPrototype ( "HEADER_VARARG_START_OPERATOR", "../Grammar/Expression.code" );
@@ -1896,17 +1977,26 @@ Grammar::setUpExpressions ()
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added support for name qualification.
+  // CastExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      CastExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added information required for new name qualification support.
+  // CastExp.setDataPrototype("bool","type_elaboration_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      CastExp.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added information required for new name qualification support.
+  // CastExp.setDataPrototype("bool","global_qualification_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      CastExp.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/17/2012): Added information to trigger output of the defining declaration of the type (see test2012_46.c).
   // We need to control the output of the defining declaration in some interesting places where it can be specified.
@@ -1943,17 +2033,27 @@ Grammar::setUpExpressions ()
   // This is NULL if the new operator is compiler generated (not explicitly declared).
      NewExp.setDataPrototype     ( "SgFunctionDeclaration*", "newOperatorDeclaration", "= NULL",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added support for name qualification.
+  // NewExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      NewExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added information required for new name qualification support.
+  // NewExp.setDataPrototype("bool","type_elaboration_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      NewExp.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/2/2011): Added information required for new name qualification support.
+  // NewExp.setDataPrototype("bool","global_qualification_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      NewExp.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      DeleteExp.setFunctionPrototype ( "HEADER_DELETE_OPERATOR_EXPRESSION", "../Grammar/Expression.code" );
      DeleteExp.setDataPrototype     ( "SgExpression*", "variable", "= NULL",
@@ -2066,21 +2166,33 @@ Grammar::setUpExpressions ()
      AggregateInitializer.setDataPrototype     ( "bool", "uses_compound_literal", "= false",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
+  // AggregateInitializer.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AggregateInitializer.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
+  // AggregateInitializer.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AggregateInitializer.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
+  // AggregateInitializer.setDataPrototype("bool","type_elaboration_required_for_type","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AggregateInitializer.setDataPrototype("bool","type_elaboration_required_for_type","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
+  // AggregateInitializer.setDataPrototype("bool","global_qualification_required_for_type","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AggregateInitializer.setDataPrototype("bool","global_qualification_required_for_type","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/1/2014): Added to support C++11 constexpr constructors that can generate an originalExpressionTree in ROSE.
      AggregateInitializer.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
@@ -2144,17 +2256,26 @@ Grammar::setUpExpressions ()
      ConstructorInitializer.setDataPrototype     ( "bool", "associated_class_unknown", "= false",
                                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (6/1/2011): Added support for name qualification.
+  // ConstructorInitializer.setDataPrototype ( "int", "name_qualification_length", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ConstructorInitializer.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
+  // ConstructorInitializer.setDataPrototype("bool","type_elaboration_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ConstructorInitializer.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
+  // ConstructorInitializer.setDataPrototype("bool","global_qualification_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ConstructorInitializer.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      AssignInitializer.setFunctionPrototype ( "HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );

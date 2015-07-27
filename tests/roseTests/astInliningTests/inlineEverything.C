@@ -46,11 +46,21 @@ main (int argc, char* argv[]) {
     }
     std::cout <<"Test inlined " <<StringUtility::plural(nInlined, "function calls") <<"\n";
 
-    // Post-inline AST normalizations
-    renameVariables(sageProject);
-    flattenBlocks(sageProject);
+ // Post-inline AST normalizations
+
+ // DQ (6/12/2015): These functions first renames all variable (a bit heavy handed for my tastes)
+ // and then (second) removes the blocks that are otherwise added to support the inlining.  The removal
+ // of the blocks is the motivation for renaming the variables, but the variable renaming is 
+ // done evarywhere instead of just where the functions are inlined.  I think the addition of
+ // the blocks is a better solution than the overly agressive renaming of variables in the whole
+ // program.  So the best solution is to comment out both of these functions.  All test codes
+ // pass (including the token-based unparsing tests).
+ // renameVariables(sageProject);
+ // flattenBlocks(sageProject);
+
     cleanupInlinedCode(sageProject);
     changeAllMembersToPublic(sageProject);
+
     AstTests::runAllTests(sageProject);
 
     return backend(sageProject);

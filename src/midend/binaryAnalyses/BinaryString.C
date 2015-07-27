@@ -2,7 +2,7 @@
 
 #include <Diagnostics.h>
 #include <BinaryString.h>
-#include <sawyer/ProgressBar.h>
+#include <Sawyer/ProgressBar.h>
 
 using namespace rose::Diagnostics;
 

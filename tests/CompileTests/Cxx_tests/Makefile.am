@@ -25,10 +25,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_253.C \
    test2013_255.C \
    test2013_256.C \
-   test2013_257.C \
    test2013_258.C \
    test2013_259.C \
-   test2013_260.C \
    test2013_261.C \
    test2013_271.C \
    test2013_272.C \
@@ -281,6 +279,13 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_22.C \
    lulesh.C \
    luleshTALC.C
+
+# DQ (5/28/2015): Removed this file because it is used by the makefile rule: 
+# test_unparse_includes_option_with_link.passed and CMake's ctest will cause
+# it to be run in parallel with the list of test codes above.  This is not
+# and issue for autoconf which does not find as much parallelism.
+#  test2013_257.C 
+#  test2013_260.C 
 
 # DQ (12/30/2014): This large file fails:
 # unparseCxx_types.C:418: virtual void Unparse_Type::unparseType(SgType*, SgUnparse_Info&): Assertion `info.SkipClassDefinition() == info.SkipEnumDefinition()' failed.
@@ -1102,7 +1107,8 @@ test_unparse_includes_option.passed: $(TEST_TRANSLATOR)
 # is that va_start() and va_end() must be unparsed to be __builtin_va_start() and __builtin_va_end() (at least for GNU).
 test_unparse_includes_option_with_link.passed: $(TEST_TRANSLATOR)
 #	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers" $(top_srcdir)/scripts/test_exit_status $@
+#	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/17/2013): Added autoconf style link test.
 test_common_configure_test_with_link_part_1.passed: $(TEST_TRANSLATOR)
@@ -1125,6 +1131,18 @@ test_common_configure_test_with_link_part_3.passed: $(TEST_TRANSLATOR)
 testOption:
 	$(TEST_TRANSLATOR) -rose:verbose 0 -nostdinc -c $(srcdir)/test2015_08.C
 
+TEST_TEMPLATE_TRANSLATOR = ../../testTemplates
+
+
+# This test translator will work for test2015_32.C - test2015_36.C
+# I will make this in the a better organized set of tests later.
+testTemplateExample: $(TEST_TEMPLATE_TRANSLATOR)
+	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_32.C
+	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_33.C
+	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_34.C
+	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_35.C
+	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_36.C
+
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
 
@@ -1133,6 +1151,9 @@ $(TEST_TRANSLATOR):
 
 ../../testTranslatorUnfoldedConstants:
 	cd ../..; $(MAKE) testTranslatorUnfoldedConstants
+
+$(TEST_TEMPLATE_TRANSLATOR):
+	cd ../..; $(MAKE) testTemplates
 
 
 CURRENT_DIRECTORY = `pwd`
@@ -1224,6 +1245,7 @@ check-local: $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
 	@$(MAKE) test_common_configure_test_with_link_part_2.passed
 #	DQ (9/22/2013): I think this failes on later versions of GNU (e.g. gnu 4.4.5).
 #	@$(MAKE) test_common_configure_test_with_link_part_3
+	@$(MAKE) testTemplateExample
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"

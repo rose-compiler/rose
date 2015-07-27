@@ -152,8 +152,8 @@ namespace StringUtility
            ROSE_UTIL_API std::string numberToString ( double x );
 
        //! Convert an address to a string, preferring a hexadecimal representation with at least 8 digits.  The second argument
-       //  indicates the number of significant bits.
-           ROSE_UTIL_API std::string addrToString(uint64_t x, size_t nbits=32);
+       //  indicates the number of significant bits; if it's zero then the function chooses 32 or 64 depending on @p x.
+           ROSE_UTIL_API std::string addrToString(uint64_t x, size_t nbits=0);
 
        //! Formatting support for generated code strings
            ROSE_UTIL_API std::string indentMultilineString ( const std::string& inputString, int statementColumnNumber );

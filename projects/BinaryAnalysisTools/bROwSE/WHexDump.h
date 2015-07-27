@@ -2,7 +2,7 @@
 #define bROwSE_HexDump_H
 
 #include <bROwSE/bROwSE.h>
-#include <sawyer/Map.h>
+#include <Sawyer/Map.h>
 #include <Wt/WAbstractTableModel>
 #include <Wt/WContainerWidget>
 #include <Wt/WModelIndex>

@@ -219,6 +219,25 @@ faketarget:
 	tests/mailinglist2.C
 	tests/mailinglist3.C
 	tests/arraytest2.C
+	addressTakenAnalysis.h
+	addressTakenAnalysis_obsolete/addressTakenAnalysis.h
+	addressTakenAnalysis_obsolete/defUseQuery.h
+	defUseQuery.h
+	Lattice.h
+	rtests/ross-event/runtime.h
+	runtime/runtime.h
+	rtests/ross-event/runtime_macros.h
+	runtime/runtime_macros.h
+	Timer.h
+	VariableIdUtils.h
+	addressTakenAnalysis_obsolete/VariableIdUtils.h
+	CPDomain.hpp
+	LTL.h
+	rtests/vector1/RevStack.h 
+	tests/rers/Problem1401_opt.c
+	tests/rers/Problem1402_opt.c
+	tests/rers/Problem1403_opt.c
+	tests/varid-test1.C
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
@@ -404,6 +423,7 @@ check-local:
 	@echo ================================================================
 	rm -f *.consistent
 	$(srcdir)/scripts/runLtlRegressionTests $(srcdir) . #run RERS examples in several versions and compare to previous results
+	$(srcdir)/scripts/run_tests_cegpra $(srcdir) . #run CEGPRA tests
 
 checkdemos: 
 	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
@@ -624,7 +644,13 @@ CODETHORN_TESTS= \
     tests/rers/Problem28_opt.C \
     tests/rers/Problem901-solutions.csv \
     tests/rers/Problem901-solutions.ltl.csv \
-    tests/rers/Problem901.c
+    tests/rers/Problem901.c \
+    tests/gototest1.C \
+    tests/gototest2.C \
+    tests/gototest3.C \
+    tests/switchtest1.C \
+    tests/switchtest2.C \
+    tests/switchtest3.C
 
 # MS: does not exist
 #    tests/test.ltl \

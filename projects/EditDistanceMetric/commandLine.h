@@ -1,4 +1,4 @@
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 
 // Settings that control behavior of this tool.
 struct Settings {

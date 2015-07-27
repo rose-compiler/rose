@@ -123,6 +123,8 @@ if !ROSE_USING_ROSE_ANALYSIS
    SUBDIRS += RTED simulator
 endif
 
+SUBDIRS += simulator2
+
 # DQ (2/12/2010): compass appears to be a problem for the code generation support
 # in ROSE, so lets' move on and return to compass later for this level of support.
 #    compass

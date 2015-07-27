@@ -2,7 +2,7 @@
 #include <rose.h>
 #include <BinaryNoOperation.h>
 #include <Partitioner2/Engine.h>
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;
