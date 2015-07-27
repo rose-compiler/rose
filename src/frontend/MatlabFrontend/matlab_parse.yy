@@ -492,12 +492,14 @@ identifier      : NAME
       		 {
 		   std::string varName = $1->text();
 
-		  if(currentScope->symbol_exists(varName) == false)
+		   SgScopeStatement *activeScope = SageBuilder::topScopeStack();
+		   
+		  if(activeScope->symbol_exists(varName) == false)
                  {
-		   SgVarRefExp *varRef = SageBuilder::buildVarRefExp(varName, currentScope);
+		   SgVarRefExp *varRef = SageBuilder::buildVarRefExp(varName, activeScope);
 
 		   /*If there is no explicit variable declaration, we have to manually insert the symbol to the symbol table*/
-                   currentScope->get_symbol_table()->insert(varName, varRef->get_symbol());
+                   activeScope->get_symbol_table()->insert(varName, varRef->get_symbol());
 
 		   std::cout << "Symbol " << varName << " inserted" << std::endl << std::flush;
 		   
@@ -506,7 +508,7 @@ identifier      : NAME
 		 else
 		   {
 		     /*The symbol already exists. The varref will point to the existing symbol.*/
-		     $$ = SageBuilder::buildVarRefExp(varName, currentScope);
+		     $$ = SageBuilder::buildVarRefExp(varName, activeScope);
 		   }
       		 }
                 ;
@@ -1471,20 +1473,20 @@ fcn_name        : identifier
 		      This identifier did not turn out to be a variable symbol.
 		      It will be added later on as a function symbol.
 		     */
-		    currentScope->remove_symbol($1->get_symbol());
+		    SageBuilder::topScopeStack()->remove_symbol($1->get_symbol());
                  }
                 | GET '.' identifier
                  {
                     lexer_flags.maybe_classdef_get_set_method = false;
                     $$ = new std::string(extractVarName($3).getString());
 
-		    currentScope->remove_symbol($3->get_symbol());
+		    SageBuilder::topScopeStack()->remove_symbol($3->get_symbol());
                  }
                 | SET '.' identifier
                  {
                     lexer_flags.maybe_classdef_get_set_method = false;
                     $$ = new std::string(extractVarName($3).getString());
-		    currentScope->remove_symbol($3->get_symbol());
+		    SageBuilder::topScopeStack()->remove_symbol($3->get_symbol());
                  }
                 ;
 
@@ -2053,26 +2055,9 @@ int beginParse(SgProject* &p, int argc, char* argv[])
 
    p = frontend(argc, argv);
 
-      //Create a default "run" function
-   // defaultFunction = SageBuilder::buildDefiningFunctionDeclaration("run", 
-   //                    SageBuilder::buildVoidType(), SageBuilder::buildFunctionParameterList(), 
-   //                    SageInterface::getFirstGlobalScope(p));
-   //currentScope = defaultFunction->get_definition()->get_body();
-
-   currentScope = SageBuilder::buildBasicBlock();
-   
-   //p->set_verbose(1);
-
-   // SgFunctionDeclaration* mainFunc = findMain(p);                               
-    
-
-   // currentScope =  mainFunc->get_definition()->get_body();
-
-
    pushScopeStack(SageInterface::getFirstGlobalScope(p));
+   currentScope = SageBuilder::buildBasicBlock();
    pushScopeStack(currentScope);
-
-   //currentScope = getFirstGlobalScope(p);
  }
   project = p; 
 
