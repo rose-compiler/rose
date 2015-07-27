@@ -165,7 +165,7 @@ echo "JAVA=${JAVA}"
       fi
     fi
     JAVA_JVM_LINK="-L${JAVA_JVM_PATH} -ljvm"
-    JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/linux"
+    AM_COND_IF([OS_MACOSX],[JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/darwin"],[JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/linux"])
   fi
   AC_MSG_RESULT([$JAVA_JVM_INCLUDE and $JAVA_JVM_LINK])
 

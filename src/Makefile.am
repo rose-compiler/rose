@@ -46,7 +46,11 @@ endif
 
 # DQ (8/15/2011): Revert back to what we had before to fix Hudson java only test.
 # DQ (8/14/2011): Need this change to match Makefile changes in ECJ_ROSE_Connection/Makefile.am
+if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
+else
+libroseJavaParserlibraries = 
+endif
 
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
    librosePHPlibraries = frontend/PHPFrontend/librosePHPFrontend.la
@@ -243,6 +247,15 @@ REQUIRED_LIBS = librose.la
 # DQ (3/14/2009): In this file we have to overwrite existing values in LDFLAGS (to build librose.so).
 # DQ (3/14/2009): We have to clear the LDFLAGS variable...  This is not so great.
 LDFLAGS =
+if OS_MACOSX
+if HAS_LIBRARY_GCRYPT
+PORT_PATH = $(shell which port)
+PORT_HOME = $(shell dirname $(PORT_PATH))/..
+LDFLAGS += -L$(PORT_HOME)/lib -lgcrypt -lgcc_eh
+else
+LDFLAGS += -lgcc_eh
+endif
+endif
 
 testSharedRoseLib_SOURCES = testRoseLib.C
 testSharedRoseLib_DEPENDENCIES = $(REQUIRED_LIBS)
