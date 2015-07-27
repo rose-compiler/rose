@@ -896,6 +896,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                               printf ("Output the DOT graph from the SgFile IR node (SgProject was not traversed) \n");
 
                          dotrep.writeToFileAsGraph(filename);
+                         dotrep.clear();
                        }
                       else
                        {
