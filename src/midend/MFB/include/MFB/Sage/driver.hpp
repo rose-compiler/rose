@@ -17,6 +17,8 @@
 
 class SgType;
 
+class SgGlobal;
+
 class SgFunctionDeclaration;
 class SgFunctionParameterList;
 class SgFunctionSymbol;
@@ -53,7 +55,7 @@ class api_t;
 template <>
 class Driver<Sage> {
   public:
-    typedef unsigned file_id_t;
+    typedef size_t file_id_t;
 
     SgProject * project;
 
@@ -84,6 +86,10 @@ class Driver<Sage> {
     std::set<SgClassSymbol *>          p_class_symbols;
     std::set<SgVariableSymbol *>       p_variable_symbols;
     std::set<SgMemberFunctionSymbol *> p_member_function_symbols;
+
+  // Type management
+    
+    std::map<SgScopeStatement *, std::set<SgType *> > p_type_scope_map;
 
   private:
     template <typename Object>
@@ -117,6 +123,7 @@ class Driver<Sage> {
     file_id_t getFileID(const boost::filesystem::path & path) const;
     file_id_t getFileID(SgSourceFile * source_file) const;
     file_id_t getFileID(SgScopeStatement * scope) const;
+    SgGlobal * getGlobalScope(file_id_t id) const;
 
     /// Set a file to be unparsed with the project (by default file added to the driver are *NOT* unparsed)
     void setUnparsedFile(file_id_t file_id) const;
@@ -152,6 +159,8 @@ class Driver<Sage> {
     /// Build an object and add associated symbol to driver
     template <typename Object>
     typename Sage<Object>::build_result_t build(const typename Sage<Object>::object_desc_t & desc);
+
+    void useType(SgType * type, SgScopeStatement * scope);
 
     /// Import external header for a given file
     void addExternalHeader(file_id_t file_id, std::string header_name, bool is_system_header = true);
@@ -206,7 +215,7 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
 }
 
 template <typename Object>
-void Driver<Sage>::createForwardDeclaration(typename Sage<Object>::symbol_t symbol, unsigned target_file_id) {
+void Driver<Sage>::createForwardDeclaration(typename Sage<Object>::symbol_t symbol, size_t target_file_id) {
   assert(false);
 }
 

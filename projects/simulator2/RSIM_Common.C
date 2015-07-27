@@ -10,6 +10,10 @@
 #include <sys/wait.h>
 #include <sys/socket.h>
 
+#if defined(__linux__)
+#include <linux/version.h>
+#endif
+
 using namespace rose::Diagnostics;
 using namespace StringUtility;
 
@@ -373,7 +377,14 @@ print_statfs(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz) {
       <<", fsid=[" <<v->f_fsid.__val[0] <<", " <<v->f_fsid.__val[1] <<"]"
       <<", namelen=" <<v->f_namelen
       <<", frsize=" <<v->f_frsize
+      // TOO1 (2015/07/14): See STATFS(2) manpage:
+      //
+      //     __fsword_t f_flags;   /* Mount flags of filesystem
+      //                              (since Linux 2.6.36) */
+      //
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,36)
       <<", flags=" <<v->f_flags
+#endif
       <<", spare=[" <<v->f_spare[0] <<", " <<v->f_spare[1] <<", " <<v->f_spare[2] <<", " <<v->f_spare[3] <<"]";
 }
 

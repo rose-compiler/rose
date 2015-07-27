@@ -41,9 +41,9 @@ struct ModelA {
   static SgExpression * createFieldInitializer(
     const MDCG::StaticInitializer & static_initializer,
     MDCG::Model::field_t field,
-    unsigned field_id,
+    size_t field_id,
     const input_t & input,
-    unsigned file_id
+    size_t file_id
   ) {
     switch (field_id) {
       case 0:
@@ -67,9 +67,9 @@ struct ModelB {
   static SgExpression * createFieldInitializer(
     const MDCG::StaticInitializer & static_initializer,
     MDCG::Model::field_t field,
-    unsigned field_id,
+    size_t field_id,
     const input_t & input,
-    unsigned file_id
+    size_t file_id
   ) {
     switch (field_id) {
       case 0:
@@ -113,7 +113,7 @@ int main() {
   MDCG::ModelBuilder model_builder(mfb_driver);
   MDCG::StaticInitializer static_initializer(driver);
 
-  unsigned model_id = model_builder.create();
+  size_t model_id = model_builder.create();
     model_builder.add(model_id, "input", ".", "h"); // load "input.h" from "." directory
     // can add as many files as needed
 

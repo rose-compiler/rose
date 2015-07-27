@@ -467,6 +467,23 @@ bool SageBuilder::inSwitchScope()
      return returnVar;
    }
 
+void SageBuilder::setCaseInsensitive()
+   {
+     symbol_table_case_insensitive_semantics = true;
+   }
+
+void SageBuilder::setCaseSensitive()
+   {
+     symbol_table_case_insensitive_semantics = false;
+   }
+
+void SageBuilder::setCaseFromScope(SgScopeStatement* scope)
+   {
+     ROSE_ASSERT(scope != NULL);
+
+     symbol_table_case_insensitive_semantics = scope->isCaseInsensitive();
+   }
+
 
 // *******************************************************************************
 // *******************************  Build Functions  *****************************
