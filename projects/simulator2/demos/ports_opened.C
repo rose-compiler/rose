@@ -162,12 +162,15 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
 // Architecture-independent part of socket handling
 class BaseSocketSyscallHandler: public RSIM_Callbacks::SyscallCallback {
+protected:
+    Sawyer::Container::Map<int /*fd*/, std::string /*address*/> sockets;
+
 public:
     // Keep it simple--don't worry about multiple threads.
     virtual BaseSocketSyscallHandler* clone() ROSE_OVERRIDE { return this; }
     
     // Assume addr_va points to a struct sockaddr and decode and return the IP port number.
-    std::string decode_ip_addr(RSIM_Process *proc, uint32_t addr_va, uint32_t addrlen) {
+    std::string decode_ip_addr(RSIM_Process *proc, rose_addr_t addr_va, size_t addrlen) {
         std::string retval = "addr_va=" + addrToString(addr_va) + " addrlen=" + numberToString(addrlen);
         uint8_t addr[4096];
         if (0==addr_va || addrlen<2 || addrlen>sizeof addr)
@@ -184,6 +187,51 @@ public:
             return std::string(s) + ":" + numberToString(port);
         return retval + " port=" + numberToString(port);
     }
+
+    void handle_bind(const Args &args, int fd, rose_addr_t addrVa, size_t addrLen) {
+        std::string addrStr = decode_ip_addr(args.thread->get_process(), addrVa, addrLen);
+        sockets.insert(fd, addrStr);
+        mlog[INFO] <<"bind socket=" <<fd <<" " <<addrStr <<"\n";
+    }
+
+    void handle_connect(const Args &args, int fd, rose_addr_t addrVa, size_t addrLen) {
+        std::string addrStr = decode_ip_addr(args.thread->get_process(), addrVa, addrLen);
+        sockets.insert(fd, addrStr);
+        mlog[INFO] <<"connect socket=" <<fd <<" " <<addrStr <<"\n";
+    }
+
+    void handle_accept(const Args &args, int oldFd, int newFd, rose_addr_t addrVa, size_t addrLen) {
+        std::string addrStr = decode_ip_addr(args.thread->get_process(), addrVa, addrLen);
+        sockets.insert(newFd, addrStr);
+        mlog[INFO] <<"accept socket=" <<newFd <<" " <<addrStr <<" (from socket " <<oldFd <<")\n";
+    }
+
+    void handle_write(const Args &args, int fd, rose_addr_t bufVa, size_t bufSize) {
+        if (sockets.exists(fd)) {
+            mlog[INFO] <<"write socket=" <<fd <<" " <<sockets[fd]
+                       <<" buffer=" <<addrToString(bufVa) <<", size=" <<bufSize <<"\n";
+            unsigned char *buf = new unsigned char[bufSize];
+            size_t nread = args.thread->get_process()->mem_read(buf, bufVa, bufSize);
+            if (bufSize != nread) {
+                mlog[ERROR] <<"SocketSyscallHandler: short read from specimen memory\n";
+            } else {
+                HexdumpFormat fmt;
+                fmt.prefix = "  ";
+                mlog[INFO] <<fmt.prefix;
+                SgAsmExecutableFileFormat::hexdump(mlog[INFO], bufVa, buf, nread, fmt);
+                mlog[INFO] <<"\n";
+            }
+            delete buf;
+        }
+    }
+
+    void handle_close(const Args &args, int fd) {
+        std::string addrStr;
+        if (sockets.getOptional(fd).assignTo(addrStr)) {
+            mlog[INFO] <<"close socket=" <<fd <<" " <<addrStr <<"\n";
+            sockets.erase(fd);
+        }
+    }
 };
 
 // Generic
@@ -193,7 +241,6 @@ class SocketSyscallHandler: public BaseSocketSyscallHandler {};
 // Specialization for linux-x86
 template<>
 class SocketSyscallHandler<RSIM_Linux32>: public BaseSocketSyscallHandler {
-    Sawyer::Container::Map<int /*fd*/, std::string /*address*/> sockets;
 
     bool operator()(bool enabled, const Args &args) ROSE_OVERRIDE {
         if (!enabled)
@@ -220,9 +267,7 @@ class SocketSyscallHandler<RSIM_Linux32>: public BaseSocketSyscallHandler {
                         int fd = a[0];
                         uint32_t addr_va = a[1];
                         uint32_t addrlen = a[2];
-                        std::string addrStr = decode_ip_addr(args.thread->get_process(), addr_va, addrlen);
-                        sockets.insert(fd, addrStr);
-                        mlog[INFO] <<"bind socket=" <<fd <<" " <<addrStr <<"\n";
+                        handle_bind(args, fd, addr_va, addrlen);
                     }
                     break;
                 case 3:                                 // SYS_CONNECT
@@ -232,9 +277,7 @@ class SocketSyscallHandler<RSIM_Linux32>: public BaseSocketSyscallHandler {
                         int fd = a[0];
                         uint32_t addr_va = a[1];
                         uint32_t addrlen = a[2];
-                        std::string addrStr = decode_ip_addr(args.thread->get_process(), addr_va, addrlen);
-                        sockets.insert(fd, addrStr);
-                        mlog[INFO] <<"connect socket=" <<fd <<" " <<addrStr <<"\n";
+                        handle_connect(args, fd, addr_va, addrlen);
                     }
                     break;
                 case 5:                                 // SYS_ACCEPT
@@ -248,40 +291,19 @@ class SocketSyscallHandler<RSIM_Linux32>: public BaseSocketSyscallHandler {
                         uint32_t addrlen;
                         if (4 != args.thread->get_process()->mem_read(&addrlen, addrlen_va, 4))
                             addrlen = addr_va = 0;
-                        std::string addrStr = decode_ip_addr(args.thread->get_process(), addr_va, addrlen);
-                        sockets.insert(newfd, addrStr);
-                        mlog[INFO] <<"accept socket=" <<newfd <<" " <<addrStr <<" (from socket " <<oldfd <<")\n";
+                        handle_accept(args, oldfd, newfd, addr_va, addrlen);
                     }
                     break;
             }
         } else if (args.callno == 4 /*SYS_write*/) {
             // We should also be watching for writev, send, sendto, sendmsg, etc.  Similarly if you want to monitor reads.
             int fd = args.thread->syscall_arg(0);
-            if (!sockets.exists(fd))
-                return true;                            // something other than a socket, perhaps a file or other device
             uint32_t buf_va = args.thread->syscall_arg(1);
             uint32_t buf_sz = args.thread->syscall_arg(2);
-            mlog[INFO] <<"write socket=" <<fd <<" " <<sockets[fd]
-                       <<" buffer=" <<addrToString(buf_va) <<", size=" <<buf_sz <<"\n";
-            unsigned char *buf = new unsigned char[buf_sz];
-            size_t nread = args.thread->get_process()->mem_read(buf, buf_va, buf_sz);
-            if (buf_sz != nread) {
-                mlog[ERROR] <<"SocketSyscallHandler: short read from specimen memory\n";
-            } else {
-                HexdumpFormat fmt;
-                fmt.prefix = "  ";
-                mlog[INFO] <<fmt.prefix;
-                SgAsmExecutableFileFormat::hexdump(mlog[INFO], buf_va, buf, nread, fmt);
-                mlog[INFO] <<"\n";
-            }
-            delete buf;
+            handle_write(args, fd, buf_va, buf_sz);
         } else if (args.callno == 6 /*SYS_close*/) {
             int fd = args.thread->syscall_arg(0);
-            std::string addrStr;
-            if (sockets.getOptional(fd).assignTo(addrStr)) {
-                mlog[INFO] <<"close socket=" <<fd <<" " <<addrStr <<"\n";
-                sockets.erase(fd);
-            }
+            handle_close(args, fd);
         }
         
         return true;
@@ -293,7 +315,54 @@ template<>
 class SocketSyscallHandler<RSIM_Linux64>: public BaseSocketSyscallHandler {
 public:
     bool operator()(bool enabled, const Args &args) ROSE_OVERRIDE {
-        TODO("linux-amd64 support [Robb P. Matzke 2015-07-28]");
+        if (!enabled)
+            return false;
+
+        // We're expecting to be called after the system call returns
+        int64_t sysresult = args.thread->get_regs().ax;
+        if (sysresult < 0)
+            return true;
+
+        switch (args.callno) {
+            case 49: {                                  // bind
+                int fd = args.thread->syscall_arg(0);
+                rose_addr_t addrVa = args.thread->syscall_arg(1);
+                size_t addrLen = args.thread->syscall_arg(2);
+                handle_bind(args, fd, addrVa, addrLen);
+                break;
+            }
+            case 42: {                                  // connect
+                int fd = args.thread->syscall_arg(0);
+                rose_addr_t addrVa = args.thread->syscall_arg(1);
+                size_t addrLen = args.thread->syscall_arg(2);
+                handle_connect(args, fd, addrVa, addrLen);
+                break;
+            }
+            case 43: {                                  // accept
+                int oldFd = args.thread->syscall_arg(0);
+                int newFd = sysresult;
+                rose_addr_t addrVa = args.thread->syscall_arg(1);
+                rose_addr_t addrLenVa = args.thread->syscall_arg(2);
+                uint32_t addrLen;
+                if (4 != args.thread->get_process()->mem_read(&addrLen, addrLenVa, 4))
+                    addrLen = addrVa = 0;
+                handle_accept(args, oldFd, newFd, addrVa, addrLen);
+                break;
+            }
+            case 1: {                                   // write
+                int fd = args.thread->syscall_arg(0);
+                rose_addr_t bufVa = args.thread->syscall_arg(1);
+                rose_addr_t bufSize = args.thread->syscall_arg(2);
+                handle_write(args, fd, bufVa, bufSize);
+                break;
+            }
+            case 3: {                                   // close
+                int fd = args.thread->syscall_arg(0);
+                handle_close(args, fd);
+                break;
+            }
+        }
+        return true;
     }
 };
 
@@ -308,6 +377,19 @@ public:
     Files files;
 
     BaseFilesystemSyscallHandler* clone() ROSE_OVERRIDE { return this; }
+
+    void emitWarning() {
+        static int ncalls = 0;
+        if (1==++ncalls) {
+            mlog[INFO] <<"NOTE: Operations on file descriptors will be reported as both a file descriptor and\n"
+                       <<"      a file name.  The file name should be taken with a grain of salt since it is\n"
+                       <<"      possible (even common) for a file to be opened and then unlinked from the fs.\n"
+                       <<"      In fact, after unlinking, a new file can be created having the same name and will\n"
+                       <<"      not be the file accessed by the original file descriptor.  Also, the names reported\n"
+                       <<"      here are the names supplied by the specimen and are not canonical.\n";
+        }
+    }
+
 };
 
 // Generic
@@ -320,15 +402,7 @@ class FilesystemSyscallHandler<RSIM_Linux32>: public BaseFilesystemSyscallHandle
     bool operator()(bool enabled, const Args &args) ROSE_OVERRIDE {
         if (!enabled)
             return false;
-        static int ncalls = 0;
-        if (1==++ncalls) {
-            mlog[INFO] <<"NOTE: Operations on file descriptors will be reported as both a file descriptor and\n"
-                       <<"      a file name.  The file name should be taken with a grain of salt since it is\n"
-                       <<"      possible (even common) for a file to be opened and then unlinked from the fs.\n"
-                       <<"      In fact, after unlinking, a new file can be created having the same name and will\n"
-                       <<"      not be the file accessed by the original file descriptor.  Also, the names reported\n"
-                       <<"      here are the names supplied by the specimen and are not canonical.\n";
-        }
+        emitWarning();
 
         // We're expecting to be called after the system call returns.
         int32_t sysresult = args.thread->get_regs().ax;
@@ -473,10 +547,135 @@ class FilesystemSyscallHandler<RSIM_Linux32>: public BaseFilesystemSyscallHandle
 template<>
 class FilesystemSyscallHandler<RSIM_Linux64>: public BaseFilesystemSyscallHandler {
     bool operator()(bool enabled, const Args &args) ROSE_OVERRIDE {
-        TODO("linux-amd64 support [Robb P. Matzke 2015-07-28]");
+        if (!enabled)
+            return false;
+        emitWarning();
+
+        // We're expecting to be called after the system call returns.
+        int sysresult = args.thread->get_regs().ax;
+        if (sysresult < 0)
+            return true;                                // dont' worry about syscalls which failed
+
+        // These are the syscalls that can modify the filesystem (there might be some others too).
+        std::string filename;
+        int fd = -1;
+        switch (args.callno) {
+            case 1: {                                   // write
+                fd = args.thread->syscall_arg(0);
+                if (files.getOptional(fd).assignTo(filename))
+                    mlog[INFO] <<"write fd=" <<fd <<" \"" <<cEscape(filename) <<"\"\n";
+                break;
+            }
+            case 2: {                                   // open
+                fd = sysresult;
+                filename = args.thread->get_process()->read_string(args.thread->syscall_arg(0));
+                files.insert(fd, filename);
+                unsigned flags = args.thread->syscall_arg(1);
+                mlog[INFO] <<"open fd=" <<fd <<" \"" <<cEscape(filename) <<"\""
+                           <<((flags & (O_CREAT|O_TRUNC)) ? " O_CREAT and/or O_TRUNC" : "") <<"\n";
+                break;
+            }
+            case 3: {                                   // close
+                fd = args.thread->syscall_arg(0);
+                if (files.getOptional(fd).assignTo(filename))
+                    mlog[INFO] <<"close fd=" <<fd <<" \"" <<cEscape(filename) <<"\"\n";
+                files.erase(fd);
+                break;
+            }
+            case 85: {                                  // creat
+                fd = sysresult;
+                filename = args.thread->get_process()->read_string(args.thread->syscall_arg(0));
+                files.insert(fd, filename);
+                mlog[INFO] <<"creat fd=" <<fd <<" \"" <<cEscape(filename) <<"\"\n";
+                break;
+            }
+            case 86: {                                  // link
+                std::string oldpath = args.thread->get_process()->read_string(args.thread->syscall_arg(0));
+                std::string newpath = args.thread->get_process()->read_string(args.thread->syscall_arg(1));
+                mlog[INFO] <<"link \"" <<cEscape(oldpath) <<"\" to \"" <<cEscape(newpath) <<"\"\n";
+                break;
+            }
+            case 87: {                                  // unlink
+                filename = args.thread->get_process()->read_string(args.thread->syscall_arg(0));
+                mlog[INFO] <<"unlink \"" <<cEscape(filename) <<"\"\n";
+                break;
+            }
+            case 133: {                                 // mknod
+                fd = sysresult;
+                filename = args.thread->get_process()->read_string(args.thread->syscall_arg(0));
+                files.insert(fd, filename);
+                mlog[INFO] <<"mknod fd=" <<fd <<" \"" <<cEscape(filename) <<"\"\n";
+                break;
+            }
+            case 82: {                                  // rename
+                std::string oldpath = args.thread->get_process()->read_string(args.thread->syscall_arg(0));
+                std::string newpath = args.thread->get_process()->read_string(args.thread->syscall_arg(1));
+                mlog[INFO] <<"rename \"" <<cEscape(oldpath) <<"\" to \"" <<cEscape(newpath) <<"\"\n";
+                break;
+            }
+            case 83: {                                  // mkdir
+                filename = args.thread->get_process()->read_string(args.thread->syscall_arg(0));
+                mlog[INFO] <<"mkdir \"" <<cEscape(filename) <<"\"\n";
+                break;
+            }
+            case 84: {                                  // rmdir
+                filename = args.thread->get_process()->read_string(args.thread->syscall_arg(0));
+                mlog[INFO] <<"rmdir \"" <<cEscape(filename) <<"\"\n";
+                break;
+            }
+            case 88: {                                  // symlink
+                std::string oldpath = args.thread->get_process()->read_string(args.thread->syscall_arg(0));
+                std::string newpath = args.thread->get_process()->read_string(args.thread->syscall_arg(1));
+                mlog[INFO] <<"symlink \"" <<cEscape(oldpath) <<"\" to \"" <<cEscape(newpath) <<"\"\n";
+                break;
+            }
+            case 77: {                                  // ftruncate
+                fd = args.thread->syscall_arg(0);
+                if (files.getOptional(fd).assignTo(filename))
+                    mlog[INFO] <<"ftruncate fd=" <<fd <<" \"" <<cEscape(filename) <<"\"\n";
+                break;
+            }
+            case 91: {                                  // fchmod
+                fd = args.thread->syscall_arg(0);
+                if (files.getOptional(fd).assignTo(filename))
+                    mlog[INFO] <<"fchmod fd=" <<fd <<" \"" <<cEscape(filename) <<"\"\n";
+                break;
+            }
+            case 93: {                                  // fchown
+                fd = args.thread->syscall_arg(0);
+                if (files.getOptional(fd).assignTo(filename))
+                    mlog[INFO] <<"fchown fd=" <<fd <<" \"" <<cEscape(filename) <<"\"\n";
+                break;
+            }
+            case 20: {                                  // writev
+                fd = args.thread->syscall_arg(0);
+                if (files.getOptional(fd).assignTo(filename))
+                    mlog[INFO] <<"writev fd=" <<fd <<" \"" <<cEscape(filename) <<"\"\n";
+                break;
+            }
+            case 9: {                                   // mmap
+                fd = args.thread->syscall_arg(4);
+                unsigned flags = args.thread->syscall_arg(3);
+                // Report mapping regardless of protection since protection can be changed later.  However, we don't need to
+                // report private or anonymous mapping since the underlying file can't be changed.
+                if (0 == (flags & (MAP_PRIVATE|MAP_ANONYMOUS)) && files.getOptional(fd).assignTo(filename))
+                    mlog[INFO] <<"mmap fd=" <<fd <<" \"" <<cEscape(filename) <<"\"\n";
+                break;
+            }
+            case 92: {                                  // chown
+                filename = args.thread->get_process()->read_string(args.thread->syscall_arg(0));
+                mlog[INFO] <<"chown \"" <<cEscape(filename) <<"\"\n";
+                break;
+            }
+            case 268: {                                 // fchmodat
+                filename = args.thread->get_process()->read_string(args.thread->syscall_arg(1));
+                mlog[INFO] <<"fchmodat \"" <<cEscape(filename) <<"\"\n";
+                break;
+            }
+        }
+        return true;
     }
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The rest of this is mostly cut-n-pasted from x86sim.C except where the callbacks are registered which are specific to this
