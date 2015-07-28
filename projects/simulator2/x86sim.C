@@ -1,22 +1,24 @@
-/* Emulates an executable. */
-#include <rose.h>
-#include <RSIM_Private.h>
+// Simulates execution and necessary operating system services.  See "--help" for details.
 
+#include <rose.h>
+
+// These two lines are typically not needed in user projects. They're here so that this demo is conditionally compiled when
+// distributed as part of the ROSE source tree, which must compile on a wide variety of platforms.
+#include <RSIM_Private.h>
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
 
-#include <RSIM_Debugger.h>
-#include <RSIM_Linux32.h>
-#include <RSIM_Linux64.h>
-#include <RSIM_Tools.h>
-#include <Diagnostics.h>
-#include <Sawyer/CommandLine.h>
-#include <Sawyer/Message.h>
+#include <RSIM_Debugger.h>                              // Interactive debugger for the simulator
+#include <RSIM_Linux32.h>                               // Operating system simulation for Linux-x86
+#include <RSIM_Linux64.h>                               // Operating system simulation for Linux-amd64
+#include <RSIM_Tools.h>                                 // Various simulation tools
+#include <Diagnostics.h>                                // ROSE diagnostics
+#include <Sawyer/CommandLine.h>                         // Command-line parsing. Sawyer is distributed with ROSE sources.
 
 using namespace rose;
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis;
 
-Sawyer::Message::Facility mlog;
+Sawyer::Message::Facility mlog;                         // This tool's diagnostic streams
 
 enum GuestOs { GUEST_OS_NONE, GUEST_OS_LINUX_x86, GUEST_OS_LINUX_amd64 };
 
@@ -37,9 +39,11 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
         .purpose("concrete simulation of an executable")
         .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
         .chapter(1, "ROSE Command-line Tools")
+
         .doc("Synopsis",
              "@prop{programName} [@v{switches}] [--] @v{specimen} [@v{specimen_args}...]\n\n"
              "@prop{programName} [@v{switches}] [--] @v{pid}\n\n")
+
         .doc("Description", "a",
              "This tool simulates concrete execution of an executable specimen in an unsafe manner. Any system calls made by "
              "the specimen are passed along by the underlying operating system after possible translation by this tool. The "
@@ -62,6 +66,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
              "user-written tools to easily customize execution within the debugger. This can be combined with the previous "
              "bullet to analyze the program both dynamically and staticlly is and is significantly faster than "
              "simulating each instruction.}")
+
         .doc("Specimen", "x",
              "The specimen can be specified by name or process ID.  If a name is given then the simulator can either "
              "emulate the Linux \"exec\" system call to load the specimen into a simulated process; or it can use Linux "
@@ -76,6 +81,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
              "simulated memory will be incorrect; pending signals and signal masks will not be initialized from the process; "
              "process real and effective uid and gid may be different; etc.  This method is best used only with a process "
              "that has been just created and then stopped.")
+
         .doc("Caveats", "z",
              "Speed of simulation is not a primary goal of this tool. ROSE is mostly a static analysis library "
              "whose capabilities happen to include the ability to write a concrete simulation tool.\n\n"
@@ -132,6 +138,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                    "intended for end users yet."));
 
     return parser
+        .errorStream(::mlog[FATAL])
         .with(CommandlineProcessing::genericSwitches())
         .with(sg)                                       // tool-specific
         .with(RSIM_Simulator::commandLineSwitches(settings.simSettings))
@@ -141,13 +148,13 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 template<class Simulator>
 static void
 simulate(const Settings &settings, const std::vector<std::string> &args, char *envp[]) {
+    // Create and configure simulator
     Simulator sim;
-
     if (settings.usingDebugger)
         RSIM_Debugger::attach(sim);
-
     sim.configure(settings.simSettings, envp);
 
+    // Load specimen directly or via debugger
     pid_t existingPid = -1;
     char *rest = NULL;
     errno = 0;
@@ -159,6 +166,7 @@ simulate(const Settings &settings, const std::vector<std::string> &args, char *e
             return;
     }
 
+    // Run the simulation
     if (settings.catchingSignals)
         sim.activate();
     sim.main_loop();
