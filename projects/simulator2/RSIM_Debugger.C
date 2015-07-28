@@ -287,6 +287,8 @@ public:
             r.readline_buf = readline(prompt.c_str());
 #else
             size_t nAlloc = 0;
+            if (isatty(0))
+                std::cout <<prompt;
             if (0==rose_getline(&r.readline_buf, &nAlloc, stdin))
                 r.readline_buf = NULL;
 #endif
