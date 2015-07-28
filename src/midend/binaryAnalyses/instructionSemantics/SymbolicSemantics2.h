@@ -41,6 +41,7 @@ typedef InsnSemanticsExpr::LeafNode LeafNode;
 typedef InsnSemanticsExpr::LeafNodePtr LeafNodePtr;
 typedef InsnSemanticsExpr::InternalNode InternalNode;
 typedef InsnSemanticsExpr::InternalNodePtr InternalNodePtr;
+typedef InsnSemanticsExpr::TreeNode TreeNode;
 typedef InsnSemanticsExpr::TreeNodePtr TreeNodePtr;
 typedef std::set<SgAsmInstruction*> InsnSet;
 
@@ -144,36 +145,47 @@ protected:
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
         expr = LeafNode::create_integer(nbits, number);
     }
+    SValue(TreeNodePtr expr): BaseSemantics::SValue(expr->get_nbits()) {
+        this->expr = expr;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
-        return SValuePtr(new SValue(1));
+        return SValuePtr(new SValue(LeafNode::create_variable(1)));
     }
 
     /** Instantiate a new undefined value of specified width. */
-    static SValuePtr instance(size_t nbits) {
-        return SValuePtr(new SValue(nbits));
+    static SValuePtr instance_undefined(size_t nbits) {
+        return SValuePtr(new SValue(LeafNode::create_variable(nbits)));
+    }
+
+    /** Instantiate a new unspecified value of specified width. */
+    static SValuePtr instance_unspecified(size_t nbits) {
+        return SValuePtr(new SValue(LeafNode::create_variable(nbits, "", TreeNode::UNSPECIFIED)));
     }
 
     /** Instantiate a new concrete value. */
-    static SValuePtr instance(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(nbits, value));
+    static SValuePtr instance_integer(size_t nbits, uint64_t value) {
+        return SValuePtr(new SValue(LeafNode::create_integer(nbits, value)));
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
 public:
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
-        return instance(nbits);
+        return instance_undefined(nbits);
+    }
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const ROSE_OVERRIDE {
+        return instance_unspecified(nbits);
     }
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const ROSE_OVERRIDE {
-        return instance(nbits, value);
+        return instance_integer(nbits, value);
     }
     virtual BaseSemantics::SValuePtr boolean_(bool value) const ROSE_OVERRIDE {
-        return number_(1, value?1:0);
+        return instance_integer(1, value?1:0);
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
@@ -600,6 +612,10 @@ protected:
 
     SValuePtr svalue_undefined(size_t nbits) {
         return SValue::promote(undefined_(nbits));
+    }
+
+    SValuePtr svalue_unspecified(size_t nbits) {
+        return SValue::promote(unspecified_(nbits));
     }
 
     SValuePtr svalue_number(size_t nbits, uint64_t value) {

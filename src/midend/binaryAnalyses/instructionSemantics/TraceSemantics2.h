@@ -261,6 +261,7 @@ public:
     virtual void finishInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
     
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr boolean_(bool value) ROSE_OVERRIDE;
 

@@ -91,6 +91,12 @@ public:
         return ValueType<nBits>();
     }
 
+    /** Returns an undefined single-bit value. The value is undefined, unknown, and/or unconstrained. */
+    template<size_t nBits>
+    ValueType<nBits> unspecified_() {
+        return ValueType<nBits>();
+    }
+
     /** Returns a number of the specified bit width.  This method converts an unsigned integer to a value in the
      *  semantic domain. */
     template<size_t nBits>

@@ -385,6 +385,12 @@ public:
         return ValueType<nBits>();
     }
 
+    /** See NullSemantics::Policy::unspecified_() */
+    template<size_t nBits>
+    ValueType<nBits> unspecified_() const {
+        return ValueType<nBits>();
+    }
+
     template<size_t nBits>
     /** See NullSemantics::Policy::number() */
     ValueType<nBits> number(uint64_t n) const {

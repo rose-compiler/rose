@@ -102,10 +102,10 @@ struct IP_aaa: P {
                                              ops->concat(ops->number_(4, 0),
                                                          ops->add(ops->ite(incAh, ops->number_(8, 1), ops->number_(8, 0)),
                                                                   d->readRegister(d->REG_AH)))));
-                d->writeRegister(d->REG_OF, ops->undefined_(1));
-                d->writeRegister(d->REG_SF, ops->undefined_(1));
-                d->writeRegister(d->REG_ZF, ops->undefined_(1));
-                d->writeRegister(d->REG_PF, ops->undefined_(1));
+                d->writeRegister(d->REG_OF, ops->unspecified_(1));
+                d->writeRegister(d->REG_SF, ops->unspecified_(1));
+                d->writeRegister(d->REG_ZF, ops->unspecified_(1));
+                d->writeRegister(d->REG_PF, ops->unspecified_(1));
                 d->writeRegister(d->REG_AF, incAh);
                 d->writeRegister(d->REG_CF, incAh);
             }
@@ -131,9 +131,9 @@ struct IP_aad: P {
                 BaseSemantics::SValuePtr divisor = d->read(args[0], 8);
                 BaseSemantics::SValuePtr newAl = ops->add(al, ops->extract(ops->unsignedMultiply(ah, divisor), 0, 8));
                 d->writeRegister(d->REG_AX, ops->concat(newAl, ops->number_(8, 0)));
-                d->writeRegister(d->REG_OF, ops->undefined_(1));
-                d->writeRegister(d->REG_AF, ops->undefined_(1));
-                d->writeRegister(d->REG_CF, ops->undefined_(1));
+                d->writeRegister(d->REG_OF, ops->unspecified_(1));
+                d->writeRegister(d->REG_AF, ops->unspecified_(1));
+                d->writeRegister(d->REG_CF, ops->unspecified_(1));
                 d->setFlagsForResult(newAl);
             }
         } else {
@@ -162,9 +162,9 @@ struct IP_aam: P {
                 BaseSemantics::SValuePtr newAh = ops->unsignedDivide(al, divisor);
                 BaseSemantics::SValuePtr newAl = ops->unsignedModulo(al, divisor);
                 d->writeRegister(d->REG_AX, ops->concat(newAl, newAh));
-                d->writeRegister(d->REG_OF, ops->undefined_(1));
-                d->writeRegister(d->REG_AF, ops->undefined_(1));
-                d->writeRegister(d->REG_CF, ops->undefined_(1));
+                d->writeRegister(d->REG_OF, ops->unspecified_(1));
+                d->writeRegister(d->REG_AF, ops->unspecified_(1));
+                d->writeRegister(d->REG_CF, ops->unspecified_(1));
                 d->setFlagsForResult(newAl);
             }
         } else {
@@ -192,10 +192,10 @@ struct IP_aas: P {
                                              ops->concat(ops->number_(4, 0),
                                                          ops->add(ops->ite(decAh, ops->number_(8, -1), ops->number_(8, 0)),
                                                                   d->readRegister(d->REG_AH)))));
-                d->writeRegister(d->REG_OF, ops->undefined_(1));
-                d->writeRegister(d->REG_SF, ops->undefined_(1));
-                d->writeRegister(d->REG_ZF, ops->undefined_(1));
-                d->writeRegister(d->REG_PF, ops->undefined_(1));
+                d->writeRegister(d->REG_OF, ops->unspecified_(1));
+                d->writeRegister(d->REG_SF, ops->unspecified_(1));
+                d->writeRegister(d->REG_ZF, ops->unspecified_(1));
+                d->writeRegister(d->REG_PF, ops->unspecified_(1));
                 d->writeRegister(d->REG_AF, decAh);
                 d->writeRegister(d->REG_CF, decAh);
             }
@@ -248,7 +248,7 @@ struct IP_and: P {
             d->setFlagsForResult(result);
             d->write(args[0], result);
             d->writeRegister(d->REG_OF, ops->boolean_(false));
-            d->writeRegister(d->REG_AF, ops->undefined_(1));
+            d->writeRegister(d->REG_AF, ops->unspecified_(1));
             d->writeRegister(d->REG_CF, ops->boolean_(false));
         }
     }
@@ -265,11 +265,11 @@ struct IP_bitscan: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            d->writeRegister(d->REG_OF, ops->undefined_(1));
-            d->writeRegister(d->REG_SF, ops->undefined_(1));
-            d->writeRegister(d->REG_AF, ops->undefined_(1));
-            d->writeRegister(d->REG_PF, ops->undefined_(1));
-            d->writeRegister(d->REG_CF, ops->undefined_(1));
+            d->writeRegister(d->REG_OF, ops->unspecified_(1));
+            d->writeRegister(d->REG_SF, ops->unspecified_(1));
+            d->writeRegister(d->REG_AF, ops->unspecified_(1));
+            d->writeRegister(d->REG_PF, ops->unspecified_(1));
+            d->writeRegister(d->REG_CF, ops->unspecified_(1));
             size_t nbits = asm_type_width(args[0]->get_type());
             BaseSemantics::SValuePtr src = d->read(args[1], nbits);
             BaseSemantics::SValuePtr isZero = ops->equalToZero(src);
@@ -281,7 +281,7 @@ struct IP_bitscan: P {
                 case x86_bsr: bitno = ops->mostSignificantSetBit(src); break;
                 default: ASSERT_not_reachable("instruction kind not handled");
             }
-            BaseSemantics::SValuePtr result = ops->ite(isZero, ops->undefined_(nbits), bitno);
+            BaseSemantics::SValuePtr result = ops->ite(isZero, ops->unspecified_(nbits), bitno);
             d->write(args[0], result);
         }
     }
@@ -337,11 +337,11 @@ struct IP_bittest: P {
                     ASSERT_not_reachable("instruction kind not handled");
             }
             d->writeRegister(d->REG_CF, bit);
-            d->writeRegister(d->REG_OF, ops->undefined_(1));
-            d->writeRegister(d->REG_SF, ops->undefined_(1));
-            d->writeRegister(d->REG_ZF, ops->undefined_(1));
-            d->writeRegister(d->REG_AF, ops->undefined_(1));
-            d->writeRegister(d->REG_PF, ops->undefined_(1));
+            d->writeRegister(d->REG_OF, ops->unspecified_(1));
+            d->writeRegister(d->REG_SF, ops->unspecified_(1));
+            d->writeRegister(d->REG_ZF, ops->unspecified_(1));
+            d->writeRegister(d->REG_AF, ops->unspecified_(1));
+            d->writeRegister(d->REG_PF, ops->unspecified_(1));
         } else {
             BaseSemantics::SValuePtr bits = d->read(args[0]);
             BaseSemantics::SValuePtr bitOffset = d->read(args[1]);
@@ -374,11 +374,11 @@ struct IP_bittest: P {
                     ASSERT_not_reachable("instruction kind not handled");
             }
             d->writeRegister(d->REG_CF, bit);
-            d->writeRegister(d->REG_OF, ops->undefined_(1));
-            d->writeRegister(d->REG_SF, ops->undefined_(1));
-            d->writeRegister(d->REG_ZF, ops->undefined_(1));
-            d->writeRegister(d->REG_AF, ops->undefined_(1));
-            d->writeRegister(d->REG_PF, ops->undefined_(1));
+            d->writeRegister(d->REG_OF, ops->unspecified_(1));
+            d->writeRegister(d->REG_SF, ops->unspecified_(1));
+            d->writeRegister(d->REG_ZF, ops->unspecified_(1));
+            d->writeRegister(d->REG_AF, ops->unspecified_(1));
+            d->writeRegister(d->REG_PF, ops->unspecified_(1));
         }
     }
 };
@@ -393,7 +393,7 @@ struct IP_bswap: P {
         } else if (16 == nbits) {
             // Intel ref manual says "When the BSWAP instruction references a 16-bit register, the result is
             // undefined".
-            d->write(args[0], ops->undefined_(16));
+            d->write(args[0], ops->unspecified_(16));
         } else {
             BaseSemantics::SValuePtr op0 = d->read(args[0], nbits);
             BaseSemantics::SValuePtr result = ops->extract(op0, 0, 8);
@@ -790,12 +790,12 @@ struct IP_divide: P {
                 d->writeRegister(regA, ops->extract(divResult, 0, nbits));
                 d->writeRegister(regD, modResult);
             }
-            d->writeRegister(d->REG_SF, ops->undefined_(1));
-            d->writeRegister(d->REG_ZF, ops->undefined_(1));
-            d->writeRegister(d->REG_AF, ops->undefined_(1));
-            d->writeRegister(d->REG_PF, ops->undefined_(1));
-            d->writeRegister(d->REG_CF, ops->undefined_(1));
-            d->writeRegister(d->REG_OF, ops->undefined_(1));
+            d->writeRegister(d->REG_SF, ops->unspecified_(1));
+            d->writeRegister(d->REG_ZF, ops->unspecified_(1));
+            d->writeRegister(d->REG_AF, ops->unspecified_(1));
+            d->writeRegister(d->REG_PF, ops->unspecified_(1));
+            d->writeRegister(d->REG_CF, ops->unspecified_(1));
+            d->writeRegister(d->REG_OF, ops->unspecified_(1));
         }
     }
 };
@@ -963,10 +963,10 @@ struct IP_imul: P {
             // Update status flags
             d->writeRegister(d->REG_CF, carry);
             d->writeRegister(d->REG_OF, carry);
-            d->writeRegister(d->REG_SF, ops->undefined_(1));
-            d->writeRegister(d->REG_ZF, ops->undefined_(1));
-            d->writeRegister(d->REG_AF, ops->undefined_(1));
-            d->writeRegister(d->REG_PF, ops->undefined_(1));
+            d->writeRegister(d->REG_SF, ops->unspecified_(1));
+            d->writeRegister(d->REG_ZF, ops->unspecified_(1));
+            d->writeRegister(d->REG_AF, ops->unspecified_(1));
+            d->writeRegister(d->REG_PF, ops->unspecified_(1));
         }
     }
 };
@@ -1577,10 +1577,10 @@ struct IP_mul: P {
                                                                                        2 * factor1->get_width())));
             d->writeRegister(d->REG_CF, carry);
             d->writeRegister(d->REG_OF, carry);
-            d->writeRegister(d->REG_SF, ops->undefined_(1));
-            d->writeRegister(d->REG_ZF, ops->undefined_(1));
-            d->writeRegister(d->REG_AF, ops->undefined_(1));
-            d->writeRegister(d->REG_PF, ops->undefined_(1));
+            d->writeRegister(d->REG_SF, ops->unspecified_(1));
+            d->writeRegister(d->REG_ZF, ops->unspecified_(1));
+            d->writeRegister(d->REG_AF, ops->unspecified_(1));
+            d->writeRegister(d->REG_PF, ops->unspecified_(1));
         }
     }
 };
@@ -1637,7 +1637,7 @@ struct IP_or: P {
             d->setFlagsForResult(result);
             d->write(args[0], result);
             d->writeRegister(d->REG_OF, ops->boolean_(false));
-            d->writeRegister(d->REG_AF, ops->undefined_(1));
+            d->writeRegister(d->REG_AF, ops->unspecified_(1));
             d->writeRegister(d->REG_CF, ops->boolean_(false));
         }
     }
@@ -3649,7 +3649,7 @@ struct IP_shift_1: P {
         } else {
             size_t nbits = asm_type_width(args[0]->get_type());
             size_t shiftSignificantBits = nbits <= 32 ? 5 : 6;
-            BaseSemantics::SValuePtr result = d->doShiftOperation(kind, d->read(args[0]), ops->undefined_(nbits),
+            BaseSemantics::SValuePtr result = d->doShiftOperation(kind, d->read(args[0]), ops->unspecified_(nbits),
                                                                   d->read(args[1], 8), shiftSignificantBits);
             d->write(args[0], result);
         }
@@ -3854,7 +3854,7 @@ struct IP_test: P {
             BaseSemantics::SValuePtr result = ops->and_(a, b);
             d->setFlagsForResult(result);
             d->writeRegister(d->REG_OF, ops->boolean_(false));
-            d->writeRegister(d->REG_AF, ops->undefined_(1));
+            d->writeRegister(d->REG_AF, ops->unspecified_(1));
             d->writeRegister(d->REG_CF, ops->boolean_(false));
         }
     }
@@ -3936,7 +3936,7 @@ struct IP_xor: P {
             d->setFlagsForResult(result);
             d->write(args[0], result);
             d->writeRegister(d->REG_OF, ops->boolean_(false));
-            d->writeRegister(d->REG_AF, ops->undefined_(1));
+            d->writeRegister(d->REG_AF, ops->unspecified_(1));
             d->writeRegister(d->REG_CF, ops->boolean_(false));
         }
     }
@@ -4768,7 +4768,7 @@ DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::S
     writeRegister(REG_CF, new_cf);
     writeRegister(REG_OF, operators->ite(isZeroRotateCount,
                                          readRegister(REG_OF),
-                                         operators->ite(isOneBitRotate, new_of, undefined_(1))));
+                                         operators->ite(isOneBitRotate, new_of, unspecified_(1))));
 
     return result;
 }
@@ -4811,7 +4811,7 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
             break;
         case x86_shrd:
             result = operators->ite(isLargeShift,
-                                    undefined_(operand->get_width()),
+                                    unspecified_(operand->get_width()),
                                     operators->or_(operators->shiftRight(operand, maskedShiftCount),
                                                    operators->ite(isZeroShiftCount,
                                                                   number_(operand->get_width(), 0),
@@ -4820,7 +4820,7 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
             break;
         case x86_shld:
             result = operators->ite(isLargeShift,
-                                    undefined_(operand->get_width()),
+                                    unspecified_(operand->get_width()),
                                     operators->or_(operators->shiftLeft(operand, maskedShiftCount),
                                                    operators->ite(isZeroShiftCount,
                                                                   number_(operand->get_width(), 0),
@@ -4840,7 +4840,7 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
     writeRegister(REG_AF,
                   operators->ite(isZeroShiftCount,
                                  readRegister(REG_AF),
-                                 undefined_(1)));
+                                 unspecified_(1)));
 
     // What is the last bit shifted off the operand?  If we're right shifting by N bits, then the original operand N-1 bit
     // is what should make it into the final CF; if we're left shifting by N bits then we need bit operand->get_width()-N.
@@ -4861,7 +4861,7 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
     BaseSemantics::SValuePtr newCF = operators->ite(isZeroShiftCount,
                                                     readRegister(REG_CF),
                                                     operators->ite(isLargeShift,
-                                                                   (x86_sar==kind ? originalSign : undefined_(1)),
+                                                                   (x86_sar==kind ? originalSign : unspecified_(1)),
                                                                    shifted_off));
     writeRegister(REG_CF, newCF);
 
@@ -4880,14 +4880,14 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
                                    originalSign,
                                    operators->ite(isZeroShiftCount, 
                                                   readRegister(REG_OF),
-                                                  undefined_(1)));
+                                                  unspecified_(1)));
             break;
         case x86_sar:
             newOF = operators->ite(isOneBitShift,
                                    operators->boolean_(false),
                                    operators->ite(isZeroShiftCount,
                                                   readRegister(REG_OF),
-                                                  undefined_(1)));
+                                                  unspecified_(1)));
             break;
         case x86_shl:
         case x86_shld:
@@ -4896,7 +4896,7 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
                                    operators->xor_(originalSign, resultSign),
                                    operators->ite(isZeroShiftCount,
                                                   readRegister(REG_OF),
-                                                  undefined_(1)));
+                                                  unspecified_(1)));
             break;
         default:
             ASSERT_not_reachable("instruction not handled");
