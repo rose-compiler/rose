@@ -19,7 +19,7 @@ ROSE_FLAGS=-DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(TILEK_INC) -DTILEK_BASIC
 C_FLAGS=-O0 -g -I$(TILEK_INC) -DTILEK_BASIC
 LD_FLAGS=-lrt $(TILEK_RTL) $(KLT_RTL)
 
-CHECK_TARGET=check-test_1 check-test_2 check-test_3 check-test_4 check-test_5
+CHECK_TARGET=check-test_1 check-test_2 check-test_3 check-test_4 check-test_5 check-test-new-klt_1
 
 check-local: $(CHECK_TARGET) 
 
@@ -143,4 +143,7 @@ check-test_5: test_5
 	./test_5
 
 #########################################
+
+check-test-new-klt_1: $(srcdir)/test_1.c $(builddir)/$(TILEK_REL_PATH)/src/test-new-klt
+	$(builddir)/$(TILEK_REL_PATH)/src/test-new-klt $(ROSE_FLAGS) -c $(srcdir)/test_1.c
 

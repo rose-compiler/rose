@@ -1747,6 +1747,7 @@ src/midend/MFB/include/MFB/Sage/Makefile
 src/midend/MFB/include/MFB/KLT/Makefile
 src/midend/MFB/lib/Makefile
 src/midend/MFB/lib/sage/Makefile
+src/midend/MFB/lib/klt/Makefile
 src/midend/MFB/lib/utils/Makefile
 src/midend/MDCG/Makefile
 src/midend/MDCG/include/Makefile

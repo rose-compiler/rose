@@ -41,14 +41,14 @@ class StaticInitializer {
     SgInitializer * createInitializer(
       Model::class_t element,
       const typename ModelTraversal::input_t & input,
-      MFB::Driver<MFB::Sage>::file_id_t file_id
+      MFB::file_id_t file_id
     ) const;
 
     template <class ModelTraversal>
     SgExpression * createPointer(
       Model::class_t element,
       const typename ModelTraversal::input_t & input,
-      MFB::Driver<MFB::Sage>::file_id_t file_id,
+      MFB::file_id_t file_id,
       const std::string & decl_name
     ) const;
 
@@ -56,14 +56,14 @@ class StaticInitializer {
     SgAggregateInitializer * createArray(
       Model::class_t element,
       Iterator input_begin, Iterator input_end,
-      MFB::Driver<MFB::Sage>::file_id_t file_id
+      MFB::file_id_t file_id
     ) const;
 
     template <class ModelTraversal, class Iterator>
     SgAggregateInitializer * createPointerArray(
       Model::class_t element,
       Iterator input_begin, Iterator input_end,
-      MFB::Driver<MFB::Sage>::file_id_t file_id,
+      MFB::file_id_t file_id,
       const std::string & decl_prefix
     ) const;
 
@@ -71,7 +71,7 @@ class StaticInitializer {
     SgExpression * createArrayPointer(
       Model::class_t element,
       size_t num_element, Iterator input_begin, Iterator input_end,
-      MFB::Driver<MFB::Sage>::file_id_t file_id,
+      MFB::file_id_t file_id,
       const std::string & decl_name
     ) const;
 
@@ -79,7 +79,7 @@ class StaticInitializer {
     SgExpression * createPointerArrayPointer(
       Model::class_t element,
       size_t num_element, Iterator input_begin, Iterator input_end,
-      MFB::Driver<MFB::Sage>::file_id_t file_id,
+      MFB::file_id_t file_id,
       const std::string & decl_name,
       const std::string & sub_decl_prefix
     ) const;
@@ -88,7 +88,7 @@ class StaticInitializer {
     SgVariableSymbol * addDeclaration(
       Model::class_t element,
       typename ModelTraversal::input_t & input,
-      MFB::Driver<MFB::Sage>::file_id_t file_id,
+      MFB::file_id_t file_id,
       std::string decl_name
     ) const;
 
@@ -117,7 +117,7 @@ template <class ModelTraversal>
 SgInitializer * StaticInitializer::createInitializer(
   Model::class_t element,
   const typename ModelTraversal::input_t & input,
-  MFB::Driver<MFB::Sage>::file_id_t file_id
+  MFB::file_id_t file_id
 ) const {
   SgExprListExp * expr_list = SageBuilder::buildExprListExp();
 
@@ -142,7 +142,7 @@ template <class ModelTraversal>
 SgExpression * StaticInitializer::createPointer(
   Model::class_t element,
   const typename ModelTraversal::input_t & input,
-  MFB::Driver<MFB::Sage>::file_id_t file_id,
+  MFB::file_id_t file_id,
   const std::string & decl_name
 ) const {
   SgInitializer * initializer = createInitializer<ModelTraversal>(element, input, file_id);
@@ -164,7 +164,7 @@ SgAggregateInitializer * StaticInitializer::createArray(
   Model::class_t element,
   Iterator input_begin,
   Iterator input_end,
-  MFB::Driver<MFB::Sage>::file_id_t file_id
+  MFB::file_id_t file_id
 ) const {
   SgExprListExp * expr_list = SageBuilder::buildExprListExp();
 
@@ -183,7 +183,7 @@ SgAggregateInitializer * StaticInitializer::createPointerArray(
   Model::class_t element,
   Iterator input_begin,
   Iterator input_end,
-  MFB::Driver<MFB::Sage>::file_id_t file_id,
+  MFB::file_id_t file_id,
   const std::string & decl_prefix
 ) const {
   SgExprListExp * expr_list = SageBuilder::buildExprListExp();
@@ -208,7 +208,7 @@ SgExpression * StaticInitializer::createArrayPointer(
   size_t num_element,
   Iterator input_begin,
   Iterator input_end,
-  MFB::Driver<MFB::Sage>::file_id_t file_id,
+  MFB::file_id_t file_id,
   const std::string & decl_name
 ) const {
   SgAggregateInitializer * aggr_init = createArray<ModelTraversal, Iterator>(element, input_begin, input_end, file_id);
@@ -232,7 +232,7 @@ SgExpression * StaticInitializer::createPointerArrayPointer(
   size_t num_element,
   Iterator input_begin,
   Iterator input_end,
-  MFB::Driver<MFB::Sage>::file_id_t file_id,
+  MFB::file_id_t file_id,
   const std::string & decl_name,
   const std::string & sub_decl_prefix
 ) const {
@@ -257,7 +257,7 @@ template <class ModelTraversal>
 SgVariableSymbol * StaticInitializer::addDeclaration(
   Model::class_t element,
   typename ModelTraversal::input_t & input,
-  MFB::Driver<MFB::Sage>::file_id_t file_id,
+  MFB::file_id_t file_id,
   std::string decl_name
 ) const {
   SgInitializer * initializer = createInitializer<ModelTraversal>(element, input, file_id);

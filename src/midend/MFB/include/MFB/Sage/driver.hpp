@@ -42,6 +42,8 @@ class SgInitializedName;
 
 namespace MFB {
 
+typedef size_t file_id_t;
+
 /*!
  * \addtogroup grp_mfb_sage_driver
  * @{
@@ -55,8 +57,6 @@ class api_t;
 template <>
 class Driver<Sage> {
   public:
-    typedef size_t file_id_t;
-
     SgProject * project;
 
   private:
@@ -184,7 +184,7 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
   std::map<file_id_t, SgSourceFile *>::iterator it_file = id_to_file_map.find(file_id);
   assert(it_file != id_to_file_map.end());
 
-  std::map<SgSymbol *, file_id_t>::iterator it_sym_decl_file_id = p_symbol_to_file_id_map.find(symbol);
+  std::map<SgSymbol *, file_id_t>::const_iterator it_sym_decl_file_id = p_symbol_to_file_id_map.find((SgSymbol *)symbol);
   assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
 
   file_id_t sym_decl_file_id = it_sym_decl_file_id->second;
@@ -204,7 +204,7 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
       accessible_file_ids.insert(sym_decl_file_id);
     }
 
-    addPointerToTopParentDeclaration(symbol, file_id);
+    addPointerToTopParentDeclaration((SgSymbol *)symbol, file_id);
   }
   else {
     createForwardDeclaration<Object>(symbol, file_id);

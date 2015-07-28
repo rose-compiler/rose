@@ -27,7 +27,7 @@ KLT_LIBS=-lDLX-Core -lMFB-Sage -lMFB-Utils -lMDCG-Core -lMDCG-KLT -lKLT-Core
 
 #########################################
 
-bin_PROGRAMS=tilek tilek-threads tilek-acc-ocl tilek-acc-cuda
+bin_PROGRAMS=tilek tilek-threads tilek-acc-ocl tilek-acc-cuda test-new-klt
 
 tilek_SOURCES=tilek.cpp
 tilek_CXXFLAGS=-g -O0 $(INC_PATHS) -DTILEK_BASIC $(KLT_INC_PATH)
@@ -48,6 +48,22 @@ tilek_acc_cuda_SOURCES=tilek.cpp
 tilek_acc_cuda_CXXFLAGS=-g -O0 $(INC_PATHS) -DTILEK_ACCELERATOR -DTILEK_TARGET_CUDA $(KLT_INC_PATH)
 tilek_acc_cuda_LDADD= $(LIB_PATHS) $(KLT_LIBS) \
   -lDLX-TileK-acc -lMFB-TileK-acc-cuda -lMDCG-TileK-acc-cuda -lKLT-TileK-acc-cuda $(ROSE_LIBS)
+
+#########################################
+
+test_new_klt_SOURCES=test-new-klt.cpp
+test_new_klt_CXXFLAGS=-g -O0 $(INC_PATHS) $(KLT_INC_PATH)
+test_new_klt_LDADD= \
+  -L$(top_builddir)/src/frontend/DLX/lib/core \
+  -L$(top_builddir)/src/midend/MFB/lib/sage   \
+  -L$(top_builddir)/src/midend/MFB/lib/klt    \
+  -L$(top_builddir)/src/midend/MFB/lib/utils  \
+  -L$(top_builddir)/src/midend/MDCG/lib/core  \
+  -L$(top_builddir)/src/backend/KLT/lib/      \
+  -L$(builddir)/../lib/ $(LIBS_WITH_RPATH) \
+  -lDLX-Core -lMFB-Sage -lMFB-KLT -lMFB-Utils -lMDCG-Core -lKLT \
+  -lDLX-TileK-acc \
+  $(ROSE_LIBS)
 
 #########################################
 
