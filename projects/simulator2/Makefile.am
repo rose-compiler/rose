@@ -7,8 +7,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 MOSTLYCLEANFILES=
 EXTRA_DIST=
 include_HEADERS=
+noinst_HEADERS=
+bin_PROGRAMS=
 noinst_PROGRAMS=
-lib_LIBRARIES=
 TEST_TARGETS = 
 
 ###############################################################################################################################
@@ -22,7 +23,7 @@ EXTRA_DIST += README test_status.txt internal_tests.conf syscall_tests.conf pthr
 #  SIMULATOR LIBRARY
 ###############################################################################################################################
 
-noinst_LTLIBRARIES = libRSIM.la
+lib_LTLIBRARIES = libRSIM.la
 libRSIM_la_CPPFLAGS = $(ROSE_INCLUDES)
 libRSIM_la_SOURCES =				\
 	RSIM_Adapter.C				\
@@ -68,7 +69,7 @@ $(libRSIM_la_SOURCES:.C=.lo): %.lo: %.h
 EXTRA_DIST += RSIM_Private.h
 
 # The simulator, which uses ROSE interfaces where possible.
-noinst_PROGRAMS += x86sim
+bin_PROGRAMS += x86sim
 x86sim_SOURCES = x86sim.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES)
 x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
@@ -666,7 +667,7 @@ $(SYS_TEST_SUPPORT_OBJ): %.o: $(srcdir)/syscall_tests/%.c
 MOSTLYCLEANFILES += libtestsupport.a
 
 # The ipc support library
-include_HEADERS += $(srcdir)/syscall_tests/ipcmsg.h  $(srcdir)/syscall_tests/ipcsem.h  $(srcdir)/syscall_tests/ipcshm.h
+noinst_HEADERS += $(srcdir)/syscall_tests/ipcmsg.h  $(srcdir)/syscall_tests/ipcsem.h  $(srcdir)/syscall_tests/ipcshm.h
 IPC_SUPPORT_SRC = $(srcdir)/syscall_tests/libipc.c
 IPC_SUPPORT_OBJ = $(patsubst %.c, %.o, $(notdir $(IPC_SUPPORT_SRC)))
 EXTRA_DIST += $(IPC_SUPPORT_SRC)

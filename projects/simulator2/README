@@ -429,4 +429,6 @@ corresponding futex_wake from another thread.
 
 == Writing programs that use a simulator ==
 
-See x86sim.C and doxygen.
+The best example is x86sim.C, but the "demos" directory contains more
+examples, including a sample makefile.
+
