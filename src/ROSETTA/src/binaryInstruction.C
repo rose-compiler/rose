@@ -2590,6 +2590,8 @@ Grammar::setUpBinaryInstructions()
                           AsmElfEHFrameEntryFDList | AsmDwarfInformation | AsmPEImportItem | AsmPEImportItemList,
                           "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false);
     AsmExecutableFileFormat.setFunctionPrototype("HEADER_EXECUTABLE_FILE_FORMAT", "../Grammar/BinaryInstruction.code");
+    AsmExecutableFileFormat.setPredeclarationString("HEADER_EXECUTABLE_FILE_FORMAT_PREDECLARATION",
+                                               "../Grammar/BinaryInstruction.code");
 
 
 
