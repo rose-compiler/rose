@@ -81,7 +81,7 @@ cond_t::cond_t(SgExpression * cond) :
 
 cond_t::~cond_t() {}
 
-loop_t::loop_t(size_t id_, SgVariableSymbol * it, SgExpression * lb, SgExpression * ub, SgExpression * stride_ ) :
+loop_t::loop_t(size_t id_, SgVariableSymbol * it, SgExpression * lb, SgExpression * ub, SgExpression * stride_) :
   node_t(e_loop), id(id_), iterator(it), lower_bound(lb), upper_bound(ub), stride(stride_), body(NULL) {}
 
 loop_t::~loop_t() {}
@@ -217,58 +217,6 @@ stmt_t * stmt_t::extract(SgStatement * stmt, extraction_context_t & ctx) {
   else assert(false);
 }
 
-// Ref Sym Collection
-/*
-void block_t::collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) const {
-  if (go_down_children) {
-    std::vector<node_t *>::const_iterator it;
-    for (it = children.begin(); it != children.end(); it++)
-      (*it)->collectReferencedSymbols(symbols, true);
-  }
-}
-
-void cond_t::collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) {
-  std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(condition);
-  std::vector<SgVarRefExp *>::const_iterator it_var_ref;
-  for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
-    symbols.insert((*it_var_ref)->get_symbol());
-
-  if (go_down_children) {
-    block_true->collectReferencedSymbols(symbols, true);
-    block_false->collectReferencedSymbols(symbols, true);
-  }
-}
-
-void loop_t::collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) {
-  std::vector<SgVarRefExp *> var_refs;
-  std::vector<SgVarRefExp *>::const_iterator it_var_ref;
-//if (isDistributed()) {
-  var_refs = SageInterface::querySubTree<SgVarRefExp>(lower_bound);
-  for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
-    symbols.insert((*it_var_ref)->get_symbol());
-
-  var_refs = SageInterface::querySubTree<SgVarRefExp>(upper_bound);
-  for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
-    symbols.insert((*it_var_ref)->get_symbol());
-
-  var_refs = SageInterface::querySubTree<SgVarRefExp>(stride);
-  for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
-    symbols.insert((*it_var_ref)->get_symbol());
-//}
-  if (go_down_children) block->collectReferencedSymbols(symbols, true);
-}
-
-void stmt_t::collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) {
-  std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(statement);
-  std::vector<SgVarRefExp *>::const_iterator it_var_ref;
-  for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++)
-    symbols.insert((*it_var_ref)->get_symbol());
-}
-
-void tile_t::collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) {
-  assert(false);
-}
-*/
 }
 
 }

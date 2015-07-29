@@ -9,6 +9,7 @@
 
 class SgExpression;
 class SgVariableSymbol;
+class SgType;
 
 namespace KLT {
 
@@ -39,15 +40,35 @@ struct loop_t {
   SgExpression * ub;
   SgExpression * stride;
   std::vector<tile_t *> tiles;
+  SgVariableSymbol * iterator;
 
-  loop_t(size_t id_, SgExpression * lb_, SgExpression * ub_, SgExpression * stride_);
+  loop_t(size_t id_, SgExpression * lb_, SgExpression * ub_, SgExpression * stride_, SgVariableSymbol * iterator_);
+};
+
+struct section_t {
+  SgExpression * offset;
+  SgExpression * length;
+
+  section_t(SgExpression * offset_, SgExpression * length_);
+};
+
+struct data_t {
+  SgVariableSymbol * symbol;
+  SgType * base_type;
+  std::vector<section_t *> sections;
+
+  data_t(SgVariableSymbol * symbol_, SgType * base_type_);
 };
 
 struct kernel_t {
   size_t id;
   std::string kernel_name;
-  std::vector<loop_t *> loops;
-  std::vector<tile_t *> tiles;
+
+  std::vector<loop_t> loops;
+  std::vector<tile_t> tiles;
+
+  std::vector<SgVariableSymbol *> parameters;
+  std::vector<data_t *> data;
 
   kernel_t(size_t id_, std::string kernel_name_);
 };

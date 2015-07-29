@@ -69,9 +69,6 @@ struct node_t {
   node_t(kind_e kind_);
   virtual ~node_t();
 
-//virtual void collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) const = 0;
-//virtual void toGraphViz(std::ostream & out) const = 0;
-
   static node_t * extract(SgStatement * stmt, extraction_context_t & ctx);
 };
 
@@ -80,8 +77,6 @@ struct block_t : public node_t {
 
   block_t();
   virtual ~block_t();
-
-//virtual void collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) const;
 
   static block_t * extract(SgStatement * stmt, extraction_context_t & ctx);
 };
@@ -95,16 +90,14 @@ struct cond_t : public node_t {
   cond_t(SgExpression * cond = NULL);
   virtual ~cond_t();
 
-//virtual void collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) const;
-
   static cond_t * extract(SgStatement * stmt, extraction_context_t & ctx);
 };
 
 struct loop_t : public node_t {
   size_t id;
 
+  // for ('iterator' = 'lower_bound'; 'iterator' <= 'upper_bound'; 'iterator' += 'stride')
   SgVariableSymbol * iterator;
-
   SgExpression * lower_bound;
   SgExpression * upper_bound;
   SgExpression * stride;
@@ -117,12 +110,7 @@ struct loop_t : public node_t {
   );
   virtual ~loop_t();
 
-//virtual void collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) const;
-
   static loop_t * extract(SgStatement * stmt, extraction_context_t & ctx);
-
-//bool isDistributed() const;
-//bool isSplitted() const;
 };
 
 struct stmt_t : public node_t {
@@ -130,8 +118,6 @@ struct stmt_t : public node_t {
 
   stmt_t(SgStatement * stmt = NULL);
   virtual ~stmt_t();
-
-//virtual void collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) const;
 
   static stmt_t * extract(SgStatement * stmt, extraction_context_t & ctx);
 };
@@ -149,8 +135,6 @@ struct tile_t : public node_t {
 
   tile_t(size_t id_, size_t order_, unsigned long kind_, SgVariableSymbol * iterator_sym_, loop_t * loop_);
   virtual ~tile_t();
-
-//virtual void collectReferencedSymbols(std::set<SgVariableSymbol *> & symbols, bool go_down_children) const;
 };
 
 }

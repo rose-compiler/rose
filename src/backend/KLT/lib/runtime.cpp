@@ -1,4 +1,6 @@
 
+#include "sage3basic.h"
+
 #include "MFB/Sage/class-declaration.hpp"
 #include "MFB/Sage/driver.hpp"
 
@@ -57,17 +59,6 @@ void Runtime::useHostSymbols(MFB::Driver<MFB::Sage> & driver, size_t file_id) co
   driver.useSymbol<SgClassDeclaration>(host_api->getKernelClass(), file_id);
   useUserHostSymbols(driver, file_id);
 }
-
-// Virtual method that can be overloaded
-
-void Runtime::loadUserModel() {}
-
-void Runtime::useUserKernelSymbols(MFB::Driver<MFB::Sage> & driver, size_t file_id) const {}
-void Runtime::useUserHostSymbols(MFB::Driver<MFB::Sage> & driver, size_t file_id) const {}
-
-void Runtime::applyKernelModifiers(SgFunctionDeclaration * kernel_decl) const {}
-
-void Runtime::addRuntimeStaticData(MFB::Driver<MFB::Sage> & driver, const std::string & kernel_file_name, const std::string & static_file_name, size_t static_file_id) const {}
 
 } // namespace KLT
 

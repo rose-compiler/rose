@@ -9,7 +9,7 @@ class SgVariableSymbol;
 class SgForStatement;
 class SgStatement;
 namespace KLT {
-  namespace Data {
+  namespace Descriptor {
     struct data_t;
   }
   namespace LoopTree {
@@ -21,7 +21,7 @@ namespace Kernel {
 
 class kernel_t {
   public:
-    typedef ::KLT::Data::data_t data_t;
+    typedef ::KLT::Descriptor::data_t data_t;
     typedef ::KLT::LoopTree::node_t node_t;
     typedef ::KLT::LoopTree::loop_t loop_t;
     typedef SgVariableSymbol vsym_t;

@@ -2,117 +2,297 @@
 #include "sage3basic.h"
 
 #include "MFB/KLT/driver.hpp"
+
 #include "KLT/descriptor.hpp"
+#include "KLT/looptree.hpp"
+#include "KLT/runtime.hpp"
+#include "KLT/utils.hpp"
 
 namespace MFB {
 
 Driver< ::MFB::KLT::KLT>::Driver(SgProject * project_) : ::MFB::Driver<Sage>(project_) {}
 Driver< ::MFB::KLT::KLT>::~Driver() {}
 
-Driver< ::MFB::KLT::KLT>::kernel_desc_t::kernel_desc_t(node_t * roots_, const vsym_list_t & parameters_, const data_list_t & data_, ::KLT::Runtime * runtime_, ::MFB::file_id_t file_id_) :
-  roots(roots_), parameters(parameters_), data(data_), runtime(runtime_), file_id(file_id_) {}
+Driver< ::MFB::KLT::KLT>::kernel_desc_t::kernel_desc_t(node_t * root_, const vsym_list_t & parameters_, const data_list_t & data_, ::KLT::Runtime * runtime_, ::MFB::file_id_t file_id_) :
+  root(root_), parameters(parameters_), data(data_), runtime(runtime_), file_id(file_id_) {}
+
+Driver< ::MFB::KLT::KLT>::looptree_desc_t::looptree_desc_t(node_t * node_, const ::KLT::Utils::symbol_map_t & symbol_map_) :
+  symbol_map(symbol_map_), node(node_) {}
 
 namespace KLT {
+
+typedef std::vector<node_t *> node_list_t;
+typedef node_list_t::const_iterator node_list_citer_t;
+
+typedef std::vector< ::KLT::Descriptor::loop_t> loop_vect_t;
+typedef std::vector< ::KLT::Descriptor::tile_t> tile_vect_t;
+
+typedef ::MFB::Sage<SgFunctionDeclaration>::object_desc_t sage_func_desc_t;
+typedef ::MFB::Sage<SgFunctionDeclaration>::build_result_t sage_func_res_t;
+
+typedef ::MFB::Driver< ::MFB::KLT::KLT>::looptree_desc_t looptree_desc_t;
 
 /////////////////////////////////////////////////////////////////////////////
 ///// kernel_t
 
-KLT<kernel_t>::build_result_t KLT<kernel_t>::build(const KLT<kernel_t>::object_desc_t & object) {
-  size_t id = 0; // TODO
-  std::string kernel_name = ""; // TODO
+size_t KLT<kernel_t>::kernel_cnt = 0;
 
-  ::KLT::Descriptor::kernel_t res(id, kernel_name);
+::KLT::Descriptor::kernel_t KLT<kernel_t>::buildKernelDesc(const std::string & kernel_prefix) {
+  std::ostringstream oss; oss << kernel_prefix << "_" << kernel_cnt;
+  return ::KLT::Descriptor::kernel_t(kernel_cnt, oss.str());
+}
 
-  // TODO std::vector<loop_t *> res.loops;
-  // TODO std::vector<tile_t *> res.tiles;
+void insert(loop_t * loop, loop_vect_t & loops) {
+  // TODO
+}
+
+void insert(tile_t * tile, tile_vect_t & tiles) {
+  // TODO
+}
+
+void collectLoopsAndTiles(node_t * node, loop_vect_t & loops, tile_vect_t & tiles) {
+  if (node == NULL) return;
+
+  assert(dynamic_cast<node_t *>(node) != NULL);
+
+  switch (node->kind) {
+    case ::KLT::LoopTree::e_block:
+    {
+      const node_list_t & children = ((block_t*)node)->children;
+      for (node_list_citer_t it = children.begin(); it != children.end(); it++)
+        collectLoopsAndTiles(*it, loops, tiles);
+      break;
+    }
+    case ::KLT::LoopTree::e_cond:
+      collectLoopsAndTiles(((cond_t*)node)->branch_true , loops, tiles);
+      collectLoopsAndTiles(((cond_t*)node)->branch_false, loops, tiles);
+      break;
+    case ::KLT::LoopTree::e_loop:
+    {
+      insert((loop_t *)node, loops);
+      collectLoopsAndTiles(((loop_t*)node)->body, loops, tiles);
+      break;
+    }
+    case ::KLT::LoopTree::e_tile:
+    {
+      tile_t * tile = (tile_t*)node;
+      insert(tile, tiles);
+      insert(tile->loop, loops);
+      collectLoopsAndTiles(tile->tile , loops, tiles);
+      collectLoopsAndTiles(tile->block, loops, tiles);
+      break;
+    }
+    case ::KLT::LoopTree::e_stmt:
+      break;
+    case ::KLT::LoopTree::e_ignored:
+    case ::KLT::LoopTree::e_unknown:
+    default:
+      assert(false);
+  }
+}
+
+SgFunctionParameterList * KLT<kernel_t>::buildKernelParamList(::KLT::Descriptor::kernel_t & kernel, ::KLT::Runtime * runtime) {
+  SgFunctionParameterList * res = SageBuilder::buildFunctionParameterList();
+
+  runtime->addKernelArgsForParameter(res, kernel.parameters);
+  runtime->addKernelArgsForData     (res, kernel.data);
+  runtime->addKernelArgsForContext  (res);
+
+  return res;
+}
+
+sage_func_res_t KLT<kernel_t>::buildKernelDecl(::MFB::Driver< ::MFB::Sage> & driver, ::KLT::Descriptor::kernel_t & res, ::KLT::Runtime * runtime, ::MFB::file_id_t file_id) {
+  SgFunctionParameterList * kernel_param_list = buildKernelParamList(res, runtime);
+  SgType * kernel_ret_type = runtime->buildKernelReturnType(res);
+
+  sage_func_desc_t sage_func_desc(res.kernel_name, kernel_ret_type, kernel_param_list, NULL, file_id, file_id);
+
+  sage_func_res_t sage_func_res = driver.build<SgFunctionDeclaration>(sage_func_desc);
+
+  {
+    SgFunctionDeclaration * kernel_decl = sage_func_res.symbol->get_declaration();
+    assert(kernel_decl != NULL);
+
+    SgFunctionDeclaration * first_kernel_decl = isSgFunctionDeclaration(kernel_decl->get_firstNondefiningDeclaration());
+    assert(first_kernel_decl != NULL);
+    runtime->applyKernelModifiers(first_kernel_decl);
+
+    SgFunctionDeclaration * defn_kernel_decl = isSgFunctionDeclaration(kernel_decl->get_definingDeclaration());
+    assert(defn_kernel_decl != NULL);
+    runtime->applyKernelModifiers(defn_kernel_decl);
+
+//  if (guard_kernel_decl) SageInterface::guardNode(defn_kernel_decl, std::string("defined(ENABLE_") + result->kernel_name + ")");
+  }
+  return sage_func_res;
+}
+
+SgBasicBlock * KLT<kernel_t>::addLocalDeclaration(::KLT::Descriptor::kernel_t & kernel, ::KLT::Utils::symbol_map_t & symbol_map, ::KLT::Runtime * runtime) {
+  SgBasicBlock * bb = SageBuilder::buildBasicBlock();
+
+  std::vector<SgVariableSymbol *>::const_iterator it_parameter;
+  for (it_parameter = kernel.parameters.begin(); it_parameter != kernel.parameters.end(); it_parameter++) {
+    SgVariableSymbol * old_symbol = *it_parameter;
+    SgVariableSymbol * new_symbol = runtime->getSymbolForParameter(*it_parameter, bb);
+    symbol_map.parameters.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(old_symbol, new_symbol));
+  }
+
+  std::vector<data_desc_t *>::const_iterator it_data;
+  for (it_data = kernel.data.begin(); it_data != kernel.data.end(); it_data++) {
+    SgVariableSymbol * old_symbol = (*it_data)->symbol;
+    SgVariableSymbol * new_symbol = runtime->getSymbolForData(*it_data, bb);
+    symbol_map.data.insert(std::pair<data_desc_t *, SgVariableSymbol *>(*it_data, new_symbol));
+  }
+
+  std::vector<loop_desc_t>::const_iterator it_loop;
+  for (it_loop = kernel.loops.begin(); it_loop != kernel.loops.end(); it_loop++) {
+    SgVariableSymbol * old_symbol = it_loop->iterator;
+    SgVariableSymbol * new_symbol = runtime->createLoopIterator(*it_loop, bb);
+    symbol_map.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(old_symbol, new_symbol));
+  }
+
+  std::vector<tile_desc_t>::const_iterator it_tile;
+  for (it_tile = kernel.tiles.begin(); it_tile != kernel.tiles.end(); it_tile++) {
+    SgVariableSymbol * new_symbol = runtime->createTileIterator(*it_tile, bb);
+  }
+
+  return bb;
+}
+
+KLT<kernel_t>::build_result_t KLT<kernel_t>::build(::MFB::Driver< ::MFB::KLT::KLT> & driver, const KLT<kernel_t>::object_desc_t & object) {
+  std::string kernel_prefix = "klt_kernel";
+  ::KLT::Descriptor::kernel_t res = KLT<kernel_t>::buildKernelDesc(kernel_prefix);
+
+  collectLoopsAndTiles(object.root, res.loops, res.tiles);
+
+  res.parameters = object.parameters;
+  res.data = object.data;
+
+  sage_func_res_t sage_func_res = buildKernelDecl(driver, res, object.runtime, object.file_id);
+
+  ::KLT::Utils::symbol_map_t symbol_map;
+
+  SgBasicBlock * body = KLT<kernel_t>::addLocalDeclaration(res, symbol_map, object.runtime);
+  sage_func_res.definition->set_body(body);
+
+  SgStatement * stmt = driver.build<node_t>(looptree_desc_t(object.root, symbol_map));
+  SageInterface::appendStatement(stmt, body);
+
+  SageInterface::setSourcePositionForTransformation(body);
 
   return res;
 }
 
 /////////////////////////////////////////////////////////////////////////////
+///// LoopTree::node_t
+
+KLT<node_t>::build_result_t KLT<node_t>::build(::MFB::Driver< ::MFB::KLT::KLT> & driver, const KLT<node_t>::object_desc_t & object) {
+  assert(object.node != NULL);
+  assert(dynamic_cast<node_t *>(object.node) != NULL);
+
+  SgStatement * result = NULL;
+
+  switch (object.node->kind) {
+    case ::KLT::LoopTree::e_block: result = driver.build<block_t>(object); break;
+    case ::KLT::LoopTree::e_cond:  result = driver.build<cond_t >(object); break;
+    case ::KLT::LoopTree::e_loop:  result = driver.build<loop_t >(object); break;
+    case ::KLT::LoopTree::e_tile:  result = driver.build<tile_t >(object); break;
+    case ::KLT::LoopTree::e_stmt:  result = driver.build<stmt_t >(object); break;
+    case ::KLT::LoopTree::e_ignored:
+    case ::KLT::LoopTree::e_unknown:
+    default:
+      assert(false);
+  }
+
+  return result;
+}
+
+/////////////////////////////////////////////////////////////////////////////
 ///// LoopTree::block_t
 
-KLT<block_t>::build_result_t KLT<block_t>::build(const KLT<block_t>::object_desc_t & object) {
-// const vsym_translation_t & object.iterators;
-// const vsym_translation_t & object.parameters;
-// const data_translation_t & object.datas;
-// const vsym_t * object.loop_context;
-// const vsym_t * object.data_context;
-// node_t * object.node;
+KLT<block_t>::build_result_t KLT<block_t>::build(::MFB::Driver< ::MFB::KLT::KLT> & driver, const KLT<block_t>::object_desc_t & object) {
+  assert(object.node != NULL);
+  assert(object.node->kind == ::KLT::LoopTree::e_block);
+  assert(dynamic_cast<block_t *>(object.node) != NULL);
 
-  SgForStatement * for_stmt = NULL;
+  block_t * block = (block_t *)object.node;
 
-  // TODO
+  if (block->children.size() == 0)
+    return NULL;
+  if (block->children.size() == 1)
+    return driver.build<node_t>(looptree_desc_t(block->children[0], object.symbol_map));
 
-  return for_stmt;
+  SgBasicBlock * bb = SageBuilder::buildBasicBlock();
+  for (node_list_t::const_iterator it = block->children.begin(); it != block->children.end(); it++) {
+    SgStatement * stmt = driver.build<node_t>(looptree_desc_t(*it, object.symbol_map));
+    if (stmt != NULL)
+      SageInterface::appendStatement(stmt, bb);
+  }
+  return bb;
 }
 
 ///// LoopTree::cond_t
 
-KLT<cond_t>::build_result_t KLT<cond_t>::build(const KLT<cond_t>::object_desc_t & object) {
-// const vsym_translation_t & object.iterators;
-// const vsym_translation_t & object.parameters;
-// const data_translation_t & object.datas;
-// const vsym_t * object.loop_context;
-// const vsym_t * object.data_context;
-// node_t * object.node;
+KLT<cond_t>::build_result_t KLT<cond_t>::build(::MFB::Driver< ::MFB::KLT::KLT> & driver, const KLT<cond_t>::object_desc_t & object) {
+  assert(object.node != NULL);
+  assert(object.node->kind == ::KLT::LoopTree::e_cond);
+  assert(dynamic_cast<cond_t *>(object.node) != NULL);
 
-  SgForStatement * for_stmt = NULL;
+  cond_t * cond = (cond_t *)object.node;
 
-  // TODO
+  SgExpression * condition = ::KLT::Utils::translateExpression(cond->condition, object.symbol_map);
 
-  return for_stmt;
+  SgStatement * true_body  = driver.build<node_t>(looptree_desc_t(cond->branch_true, object.symbol_map));
+  SgStatement * false_body = driver.build<node_t>(looptree_desc_t(cond->branch_false, object.symbol_map));
+
+  return SageBuilder::buildIfStmt(SageBuilder::buildExprStatement(condition), true_body, false_body);
 }
 
 ///// LoopTree::loop_t
 
-KLT<loop_t>::build_result_t KLT<loop_t>::build(const KLT<loop_t>::object_desc_t & object) {
-// const vsym_translation_t & object.iterators;
-// const vsym_translation_t & object.parameters;
-// const data_translation_t & object.datas;
-// const vsym_t * object.loop_context;
-// const vsym_t * object.data_context;
-// node_t * object.node;
+KLT<loop_t>::build_result_t KLT<loop_t>::build(::MFB::Driver< ::MFB::KLT::KLT> & driver, const KLT<loop_t>::object_desc_t & object) {
+  assert(object.node != NULL);
+  assert(object.node->kind == ::KLT::LoopTree::e_loop);
+  assert(dynamic_cast<loop_t *>(object.node) != NULL);
 
-  SgForStatement * for_stmt = NULL;
+  loop_t * loop = (loop_t *)object.node;
 
-  // TODO
+  SgVariableSymbol * iterator = loop->iterator;
+  SgExpression * lower_bound = ::KLT::Utils::translateExpression(loop->lower_bound, object.symbol_map);
+  SgExpression * upper_bound = ::KLT::Utils::translateExpression(loop->upper_bound, object.symbol_map);
+  SgExpression * stride      = ::KLT::Utils::translateExpression(loop->stride     , object.symbol_map);
 
-  return for_stmt;
+  return SageBuilder::buildForStatement(
+    SageBuilder::buildForInitStatement(SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildVarRefExp(iterator), lower_bound))),
+    SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(SageBuilder::buildVarRefExp(iterator), upper_bound)),
+    SageBuilder::buildPlusAssignOp(SageBuilder::buildVarRefExp(iterator), stride),
+    driver.build<node_t>(looptree_desc_t(loop->body, object.symbol_map))
+  );
 }
 
 ///// LoopTree::tile_t
 
-KLT<tile_t>::build_result_t KLT<tile_t>::build(const KLT<tile_t>::object_desc_t & object) {
-// const vsym_translation_t & object.iterators;
-// const vsym_translation_t & object.parameters;
-// const data_translation_t & object.datas;
-// const vsym_t * object.loop_context;
-// const vsym_t * object.data_context;
-// node_t * object.node;
+KLT<tile_t>::build_result_t KLT<tile_t>::build(::MFB::Driver< ::MFB::KLT::KLT> & driver, const KLT<tile_t>::object_desc_t & object) {
+  assert(object.node != NULL);
+  assert(object.node->kind == ::KLT::LoopTree::e_tile);
+  assert(dynamic_cast<tile_t *>(object.node) != NULL);
 
-  SgForStatement * for_stmt = NULL;
+  tile_t * tile = (tile_t *)object.node;
 
-  // TODO
+  SgStatement * stmt = NULL;
 
-  return for_stmt;
+  assert(false); // TODO
+
+  return stmt;
 }
 
 ///// LoopTree::stmt_t
 
-KLT<stmt_t>::build_result_t KLT<stmt_t>::build(const KLT<stmt_t>::object_desc_t & object) {
-// const vsym_translation_t & object.iterators;
-// const vsym_translation_t & object.parameters;
-// const data_translation_t & object.datas;
-// const vsym_t * object.loop_context;
-// const vsym_t * object.data_context;
-// node_t * object.node;
+KLT<stmt_t>::build_result_t KLT<stmt_t>::build(::MFB::Driver< ::MFB::KLT::KLT> & driver, const KLT<stmt_t>::object_desc_t & object) {
+  assert(object.node != NULL);
+  assert(object.node->kind == ::KLT::LoopTree::e_stmt);
+  assert(dynamic_cast<stmt_t *>(object.node) != NULL);
 
-  SgStatement * stmt = NULL;
-
-  // TODO
-
-  return stmt;
+  return ::KLT::Utils::translateStatement(((stmt_t *)object.node)->statement, object.symbol_map);
 }
 
 } // namespace MFB::KLT

@@ -20,8 +20,8 @@ typedef language_t::clause_t clause_t;
 typedef language_t::kernel_construct_t kernel_construct_t;
 typedef language_t::data_clause_t data_clause_t;
 
-typedef ::KLT::Data::data_t data_t;
-typedef ::KLT::Data::section_t section_t;
+typedef ::KLT::Descriptor::data_t data_t;
+typedef ::KLT::Descriptor::section_t section_t;
 typedef ::KLT::Kernel::kernel_t kernel_t;
 typedef ::KLT::LoopTree::node_t node_t;
 typedef ::KLT::LoopTree::loop_t loop_t;
@@ -50,7 +50,7 @@ data_t * convertData(data_clause_t * data_clause, const DLX::Frontend::data_sect
   }
   data_t * data = new data_t(data_sym, base_type);
   for (it_section = data_section.second.begin(); it_section != data_section.second.end(); it_section++)
-    data->sections.push_back(section_t(it_section->lower_bound, it_section->size));
+    data->sections.push_back(new section_t(it_section->lower_bound, it_section->size));
   return data;
 }
 
@@ -67,10 +67,65 @@ class Runtime : public ::KLT::Runtime {
     ) :
       ::KLT::Runtime(model_builder, klt_rtl_inc_dir, klt_rtl_lib_dir, usr_rtl_inc_dir, usr_rtl_lib_dir, kernel_api, host_api)
     {}
-      
-  private:
-    virtual void loadUserModel() {
-      model_builder.add(tilek_model, "kernel", usr_rtl_inc_dir + "/RTL/Host", "h");
+
+  protected:
+    virtual void loadUserModel() { model_builder.add(tilek_model, "kernel", usr_rtl_inc_dir + "/RTL/Host", "h"); }
+    virtual void useUserKernelSymbols(MFB::Driver<MFB::Sage> & driver, size_t file_id) const {}
+    virtual void useUserHostSymbols(MFB::Driver<MFB::Sage> & driver, size_t file_id) const {}
+
+  public:
+    virtual void applyKernelModifiers(SgFunctionDeclaration * kernel_decl) const {}
+    virtual void addRuntimeStaticData(MFB::Driver<MFB::Sage> & driver, const std::string & kernel_file_name, const std::string & static_file_name, size_t static_file_id) const {}
+    virtual SgType * buildKernelReturnType(::KLT::Descriptor::kernel_t & kernel) const { return SageBuilder::buildVoidType(); }
+
+    virtual void addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const {
+      std::vector<SgVariableSymbol *>::const_iterator it;
+      for (it = parameters.begin(); it != parameters.end(); it++) {
+        // TODO
+      }
+    }
+
+    virtual void addKernelArgsForData(SgFunctionParameterList * param_list, const std::vector<data_desc_t *> & data) const {
+      std::vector<data_desc_t *>::const_iterator it;
+      for (it = data.begin(); it != data.end(); it++) {
+        // TODO
+      }
+    }
+
+    virtual void addKernelArgsForContext(SgFunctionParameterList * param_list) const {
+      // TODO
+    }
+
+    virtual SgVariableSymbol * getSymbolForParameter(SgVariableSymbol * parameter, SgBasicBlock * bb) const {
+      SgVariableSymbol * symbol = NULL;
+
+      // TODO
+
+      return symbol;
+    }
+
+    virtual SgVariableSymbol * getSymbolForData(data_desc_t * data, SgBasicBlock * bb) const {
+      SgVariableSymbol * symbol = NULL;
+
+      // TODO
+
+      return symbol;
+    }
+
+    virtual SgVariableSymbol * createLoopIterator(const loop_desc_t & loop, SgBasicBlock * bb) const {
+      SgVariableSymbol * symbol = NULL;
+
+      // TODO
+
+      return symbol;
+    }
+
+    virtual SgVariableSymbol * createTileIterator(const tile_desc_t & tile, SgBasicBlock * bb) const {
+      SgVariableSymbol * symbol = NULL;
+
+      // TODO
+
+      return symbol;
     }
 };
 

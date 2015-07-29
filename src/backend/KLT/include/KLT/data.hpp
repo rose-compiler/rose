@@ -10,24 +10,16 @@ class SgVariableSymbol;
 
 namespace KLT {
 
+namespace Descriptor {
+  struct section_t;
+  struct data_t;
+}
+
 namespace Data {
 
-struct section_t {
-  SgExpression * offset;
-  SgExpression * length;
+typedef ::KLT::Descriptor::section_t section_t;
 
-  section_t(SgExpression * offset_ = NULL, SgExpression * length_ = NULL);
-};
-
-struct data_t {
-  typedef SgVariableSymbol vsym;
-
-  vsym * symbol;
-  SgType * base_type;
-  std::vector<section_t> sections;
-
-  data_t(vsym * symbol_, SgType * base_type_);
-};
+typedef ::KLT::Descriptor::data_t data_t;
 
 }
 

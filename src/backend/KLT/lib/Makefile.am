@@ -11,7 +11,7 @@ libKLT_la_SOURCES= \
   kernel.cpp \
   descriptor.cpp \
   api.cpp \
-  data.cpp
+  utils.cpp
 libKLT_la_CXXFLAGS= \
   -g -O2 \
   -I$(top_srcdir)/src/midend/MFB/include \

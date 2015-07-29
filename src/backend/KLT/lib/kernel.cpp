@@ -1,7 +1,7 @@
 
 #include "KLT/kernel.hpp"
 #include "KLT/looptree.hpp"
-#include "KLT/data.hpp"
+#include "KLT/descriptor.hpp"
 
 #include <set>
 
