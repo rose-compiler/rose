@@ -2006,10 +2006,10 @@ struct IP_movem: P {
         // Get the memory address.  The register-to-memory mode might use a pre-decrementing register, and the
         // memory-to-register mode might use a post-incrementing register.  In either case we need to control when the
         // decrement or increment happens and how often.
-        SValuePtr addr;                                 // first memory address accessed
+        SValuePtr firstAddr;                                 // first memory address accessed
         RegisterDescriptor autoAdjust;                  // register that needs to be adjusted
         if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(mre->get_address())) {
-            addr = ops->readRegister(rre->get_descriptor());
+            firstAddr = ops->readRegister(rre->get_descriptor());
             if (rre->get_adjustment() < 0) {
                 ASSERT_require2(isRegToMem, "auto decrement is only valud for register-to-memory transfers");
                 autoAdjust = rre->get_descriptor();
@@ -2018,32 +2018,57 @@ struct IP_movem: P {
                 autoAdjust = rre->get_descriptor();
             }
         }
-        if (addr==NULL)
-            addr = d->effectiveAddress(mre, 32);
+        if (firstAddr==NULL)
+            firstAddr = d->effectiveAddress(mre, 32);
 
-        // Amount by which address needs to be adjusted at (before or after) each transfer
-        SValuePtr adj = ops->number_(32, isRegToMem ? -bytesPerTransfer : bytesPerTransfer);
-
-        // Transfer data between registers and memory
-        if (isRegToMem) {
-            // For M68020, M68030, M68040, and CPU32 the address register is decremented before writing to memory
-            if (autoAdjust.is_valid())
-                ops->writeRegister(autoAdjust, ops->add(addr, ops->number_(32, -nTransfers*bytesPerTransfer)));
-            BOOST_FOREACH (SgAsmRegisterReferenceExpression *rre, isSgAsmRegisterNames(regList)->get_registers()) {
-                SValuePtr value = ops->unsignedExtend(d->read(rre, 32), nBits); // truncate to memory size
-                addr = ops->add(addr, adj);             // pre-decrement address
-                ops->writeMemory(RegisterDescriptor(), addr, value, ops->boolean_(true));
+        if (isRegToMem) {                               // registers-to-memory operation
+            if (autoAdjust.is_valid()) {
+                // Copying registers to memory and decrementing the address each time. Registers are copied from A7-A0, D7-D0
+                // so that D0 is at the lowest (ending) address.  For M68020, M68030, M68040, and CPU32 the address register is
+                // decremented before writing it to memory.
+                ops->writeRegister(autoAdjust, ops->subtract(firstAddr, ops->number_(32, nTransfers*bytesPerTransfer)));
+                const SgAsmRegisterReferenceExpressionPtrList &regs = isSgAsmRegisterNames(regList)->get_registers();
+                for (size_t i=0; i<regs.size(); ++i) {
+                    SValuePtr value = ops->unsignedExtend(d->read(regs[regs.size()-(i+1)], 32), nBits);
+                    SValuePtr addr = ops->subtract(firstAddr, ops->number_(32, (i+1)*bytesPerTransfer));
+                    ops->writeMemory(RegisterDescriptor(), addr, value, ops->boolean_(true));
+                }
+            } else {
+                // Copying registers to memory at increasing addresses without incrementing the address register. Registers are
+                // copied from D0-D7, A0-A7 so that D0 is at the lowest (starting) address.
+                const SgAsmRegisterReferenceExpressionPtrList &regs = isSgAsmRegisterNames(regList)->get_registers();
+                for (size_t i=0; i<regs.size(); ++i) {
+                    SValuePtr value = ops->unsignedExtend(d->read(regs[i], 32), nBits);
+                    SValuePtr addr = ops->add(firstAddr, ops->number_(32, i*bytesPerTransfer));
+                    ops->writeMemory(RegisterDescriptor(), addr, value, ops->boolean_(true));
+                }
             }
-        } else {
-            BOOST_FOREACH (SgAsmRegisterReferenceExpression *rre, isSgAsmRegisterNames(args[1])->get_registers()) {
-                SValuePtr dflt = ops->undefined_(32);
-                SValuePtr value = ops->signExtend(ops->readMemory(RegisterDescriptor(), addr, dflt, ops->boolean_(true)), 32);
-                d->write(rre, value);
-                addr = ops->add(addr, adj);             // post-increment address
+        } else {                                        // memory-to-registers operation
+            if (autoAdjust.is_valid()) {
+                // Copying memory to registers and incrementing the address each time.  Registers are copied from D0-D7, A0-A7
+                // since D0 was stored at the lowest (starting) address.  The auto-adjusted register is clobbered after being
+                // read from memory.
+                const SgAsmRegisterReferenceExpressionPtrList &regs = isSgAsmRegisterNames(regList)->get_registers();
+                for (size_t i=0; i<regs.size(); ++i) {
+                    SValuePtr addr = ops->add(firstAddr, ops->number_(32, i*bytesPerTransfer));
+                    SValuePtr value = ops->signExtend(ops->readMemory(RegisterDescriptor(), addr, ops->undefined_(32),
+                                                                      ops->boolean_(true)),
+                                                      32);
+                    d->write(regs[i], value);
+                }
+                ops->writeRegister(autoAdjust, ops->add(firstAddr, ops->number_(32, nTransfers*bytesPerTransfer)));
+            } else {
+                // Copying memory to registers in increasing addresses from D0-D7, A0-A7 since D0 was stored at the lowest
+                // (starting) address. The address register is not auto-incremented.
+                const SgAsmRegisterReferenceExpressionPtrList &regs = isSgAsmRegisterNames(regList)->get_registers();
+                for (size_t i=0; i<regs.size(); ++i) {
+                    SValuePtr addr = ops->add(firstAddr, ops->number_(32, i*bytesPerTransfer));
+                    SValuePtr value = ops->signExtend(ops->readMemory(RegisterDescriptor(), addr, ops->undefined_(32),
+                                                                      ops->boolean_(true)),
+                                                      32);
+                    d->write(regs[i], value);
+                }
             }
-            // auto-adjusted register is clobbered after reading from memory
-            if (autoAdjust.is_valid())
-                ops->writeRegister(autoAdjust, addr);
         }
     }
 };
