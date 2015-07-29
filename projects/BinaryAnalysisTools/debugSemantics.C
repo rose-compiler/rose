@@ -2,6 +2,7 @@
 
 #include <rose.h>
 
+#include <BinaryNoOperation.h>
 #include <ConcreteSemantics2.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
@@ -517,6 +518,10 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
         }
         if (settings.showStates)
             std::cout <<(*ops+formatter) <<"\n";
+
+        NoOperation nopAnalyzer(dispatcher);
+        if (nopAnalyzer.isNoop(insn))
+            std::cerr <<"Instruction has no effect (other than changing the instruction pointer register)\n";
     }
 }
 
