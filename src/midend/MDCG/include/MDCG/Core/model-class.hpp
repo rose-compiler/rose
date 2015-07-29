@@ -58,6 +58,7 @@ struct scope_t<e_model_class> {
   std::vector<method_t>    method_children;
 
   field_t getField(const std::string & name) const;
+  method_t getMethod(const std::string & name) const;
 };
 
 /** @} */

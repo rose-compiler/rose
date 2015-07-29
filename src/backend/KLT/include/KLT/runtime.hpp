@@ -19,7 +19,6 @@ namespace MDCG {
   class ModelBuilder;
 }
 namespace KLT {
-  struct symbol_map_t;
   namespace Descriptor {
     struct kernel_t;
     struct loop_t;
@@ -29,6 +28,7 @@ namespace KLT {
   namespace API {
     struct kernel_t;
     struct host_t;
+    struct call_interface_t;
   }
   namespace Utils {
     struct symbol_map_t;
@@ -36,13 +36,6 @@ namespace KLT {
 
 class Runtime {
   public:
-    typedef Descriptor::kernel_t kernel_desc_t;
-    typedef Descriptor::loop_t   loop_desc_t;
-    typedef Descriptor::tile_t   tile_desc_t;
-    typedef Descriptor::data_t   data_desc_t;
-
-    typedef API::kernel_t kernel_api_t;
-    typedef API::host_t   host_api_t;
 
     typedef ::MFB::Driver< ::MFB::Sage> Driver;
 
@@ -56,8 +49,9 @@ class Runtime {
     const std::string & usr_rtl_inc_dir;
     const std::string & usr_rtl_lib_dir;
 
-    kernel_api_t * kernel_api;
-    host_api_t   * host_api;
+    API::host_t * host_api;
+    API::kernel_t * kernel_api;
+    API::call_interface_t * call_interface;
 
     size_t tilek_model;
 
@@ -66,35 +60,25 @@ class Runtime {
       MDCG::ModelBuilder & model_builder_,
       const std::string & klt_rtl_inc_dir_, const std::string & klt_rtl_lib_dir_,
       const std::string & usr_rtl_inc_dir_, const std::string & usr_rtl_lib_dir_,
-      kernel_api_t * kernel_api_ = NULL, host_api_t * host_api_ = NULL
+      API::host_t * host_api_ = NULL, API::kernel_t * kernel_api_ = NULL,
+      API::call_interface_t * call_interface_ = NULL
     );
-    ~Runtime();
 
+  public:
     void loadModel();
 
   protected:
-    virtual void loadUserModel() = 0;
-    virtual void useUserKernelSymbols(Driver & driver, size_t file_id) const = 0;
-    virtual void useUserHostSymbols(Driver & driver, size_t file_id) const = 0;
+    virtual void loadExtraModel() = 0;
 
   public:
-    void useKernelSymbols(Driver & driver, size_t file_id) const;
-    void useHostSymbols(Driver & driver, size_t file_id) const;
+    API::kernel_t & getKernelAPI();
+    const API::kernel_t & getKernelAPI() const;
+    API::host_t & getHostAPI();
+    const API::host_t & getHostAPI() const;
+    API::call_interface_t & getCallInterface();
+    const API::call_interface_t & getCallInterface() const;
 
-    virtual void addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const = 0;
-    virtual void addKernelArgsForData     (SgFunctionParameterList * param_list, const std::vector<data_desc_t *> & data) const = 0;
-    virtual void addKernelArgsForContext  (SgFunctionParameterList * param_list) const = 0;
-
-    virtual SgVariableSymbol * getSymbolForParameter(SgVariableSymbol * parameter, SgBasicBlock * bb) const = 0;
-    virtual SgVariableSymbol * getSymbolForData     (data_desc_t      * data     , SgBasicBlock * bb) const = 0;
-
-    virtual SgVariableSymbol * createLoopIterator(const loop_desc_t & loop, SgBasicBlock * bb) const = 0;
-    virtual SgVariableSymbol * createTileIterator(const tile_desc_t & tile, SgBasicBlock * bb) const = 0;
-
-    virtual void applyKernelModifiers(SgFunctionDeclaration * kernel_decl) const = 0;
     virtual void addRuntimeStaticData(MFB::Driver<MFB::Sage> & driver, const std::string & kernel_file_name, const std::string & static_file_name, size_t static_file_id) const = 0;
-
-    virtual SgType * buildKernelReturnType(::KLT::Descriptor::kernel_t & kernel) const = 0;
 };
 
 } // namespace KLT

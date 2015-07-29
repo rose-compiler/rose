@@ -7,6 +7,7 @@ libMFB_KLT_la_SOURCES= \
   driver.cpp
 libMFB_KLT_la_CXXFLAGS= \
   -g -I$(top_srcdir)/src/midend/MFB/include \
+  -g -I$(top_srcdir)/src/midend/MDCG/include \
   -g -I$(top_srcdir)/src/backend/KLT/include \
   $(ROSE_INCLUDES)
 

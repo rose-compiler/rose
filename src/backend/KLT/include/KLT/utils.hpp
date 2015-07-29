@@ -38,10 +38,14 @@ namespace Utils {
 struct symbol_map_t {
   typedef SgVariableSymbol vsym_t;
   typedef ::KLT::Descriptor::data_t data_t;
+
+  typedef std::map<size_t  , vsym_t *> iter_translation_t;
   typedef std::map<vsym_t *, vsym_t *> vsym_translation_t;
   typedef std::map<data_t *, vsym_t *> data_translation_t;
 
-  vsym_translation_t iterators;
+  iter_translation_t iter_loops;
+  iter_translation_t iter_tiles;
+
   vsym_translation_t parameters;
   data_translation_t data;
 

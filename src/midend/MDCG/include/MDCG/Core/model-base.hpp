@@ -33,6 +33,7 @@ namespace Model {
 
 /// Different kind of elements in the model
 enum model_elements_e {
+  e_model_blank,
   e_model_variable,
   e_model_function,
   e_model_field,
@@ -53,7 +54,7 @@ struct scope_t;
 /// Actual representation of an element
 template <model_elements_e kind_>
 struct element_t {
-  enum { kind = kind_ };
+  enum kind_e { kind = kind_ } inst_kind;  
 
   node_t<kind_>  * node;  ///< Node  part of the element: store the symbol and some extra-information
   scope_t<kind_> * scope; ///< Scope part of the element: Information on the scoping of the elements
@@ -67,8 +68,9 @@ struct element_t {
 template <model_elements_e kind>
 element_t<kind> * build() {
   element_t<kind> * element = new element_t<kind>();
-  element->node = new node_t<kind>();
-  element->scope = new scope_t<kind>();
+    element->inst_kind = (typename element_t<kind>::kind_e)kind;
+    element->node = new node_t<kind>();
+    element->scope = new scope_t<kind>();
   return element;
 }
 
@@ -94,6 +96,11 @@ element_t<kind> * copy(element_t<kind> * orig, std::map<void*, void*> & copies_m
   else return (element_t<kind> *)it->second;
 }
 
+/// Blank element (used for cast)
+template <> struct node_t<e_model_blank> {};
+template <> struct scope_t<e_model_blank> {};
+typedef element_t<e_model_blank> * blank_element_t;
+
 /// A variable: part of a namespace. interact_with(type)
 typedef element_t<e_model_variable> * variable_t;
 
@@ -117,18 +124,17 @@ typedef element_t<e_model_namespace> * namespace_t;
 
 /// [*_]symbol_t represents any symbol
 
-typedef SgSymbol symbol_t;
-typedef SgVariableSymbol variable_symbol_t;
-typedef SgFunctionSymbol function_symbol_t;
-/// \todo SgTypeSymbol? for SgEnumSymbol, SgTypedefSymbol, maybe SgClassType, and native type (see type_node_t for current work arround)
-typedef SgSymbol type_symbol_t;
-typedef SgClassSymbol class_symbol_t;
-/// \todo no specific SgSymbol in ROSE for field_symbol_t, use SgVariableSymbol
-typedef SgVariableSymbol field_symbol_t;
+typedef               SgSymbol symbol_t;
+typedef      SgNamespaceSymbol namespace_symbol_t;
+typedef       SgFunctionSymbol function_symbol_t;
+typedef       SgVariableSymbol variable_symbol_t;
+typedef          SgClassSymbol class_symbol_t;
 typedef SgMemberFunctionSymbol method_symbol_t;
-typedef SgNamespaceSymbol namespace_symbol_t;
-typedef SgTypedefSymbol typedef_symbol_t;
-typedef SgEnumSymbol enum_symbol_t;
+typedef      variable_symbol_t field_symbol_t; // FIXME no specific SgSymbol in ROSE for field_symbol_t, use SgVariableSymbol
+typedef               symbol_t type_symbol_t;  // FIXME SgTypeSymbol? for SgEnumSymbol, SgTypedefSymbol, maybe SgClassType, and native type (see type_node_t for current work arround)
+
+typedef        SgTypedefSymbol typedef_symbol_t;
+typedef           SgEnumSymbol enum_symbol_t;
 
 /** @} */
 

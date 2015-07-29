@@ -2,6 +2,8 @@
 #ifndef __KLT_API_HPP__
 #define __KLT_API_HPP__
 
+#include "MDCG/Core/api.hpp"
+
 class SgVariableSymbol;
 class SgFunctionSymbol;
 class SgClassSymbol;
@@ -10,18 +12,28 @@ class SgInitializedName;
 class SgExpression;
 class SgStatement;
 class SgScopeStatement;
-namespace MDCG {
-  namespace Model {
-    struct model_t;
-  }
-}
+class SgFunctionParameterList;
+class SgBasicBlock;
 
+namespace MFB {
+  template <template <class Object> class Model>  class Driver;
+  template <class Object> class Sage;
+}
 namespace KLT {
+  namespace Descriptor {
+    struct kernel_t;
+    struct loop_t;
+    struct tile_t;
+    struct data_t;
+  }
+  namespace Utils {
+    struct symbol_map_t;
+  }
 
 namespace API {
 
-struct kernel_t {
-  private:
+struct kernel_t : public ::MDCG::API::api_t {
+  protected:
     SgClassSymbol * klt_loop_context_class;
 
     SgFunctionSymbol * get_loop_lower_fnct;
@@ -31,15 +43,15 @@ struct kernel_t {
     SgFunctionSymbol * get_tile_length_fnct;
     SgFunctionSymbol * get_tile_stride_fnct;
 
-    virtual void load_user(const MDCG::Model::model_t & model);
+    SgClassSymbol * klt_data_context_class;
 
   public:
-    kernel_t();
-    ~kernel_t();
+    virtual void load(const MDCG::Model::model_t & model);
 
-    SgType * addContextTypeModifier(SgType * type) const;
+  public:
+    // Loop Context and Getters
 
-    SgInitializedName * createContext() const;
+    SgType * getLoopContextPtrType() const;
 
     SgExpression * buildGetLoopLower (size_t loop_id, SgVariableSymbol * ctx) const;
     SgExpression * buildGetLoopUpper (size_t loop_id, SgVariableSymbol * ctx) const;
@@ -48,39 +60,43 @@ struct kernel_t {
     SgExpression * buildGetTileLength(size_t tile_id, SgVariableSymbol * ctx) const;
     SgExpression * buildGetTileStride(size_t tile_id, SgVariableSymbol * ctx) const;
 
-    SgClassSymbol * getLoopContextClass() const;
+    // Data Context and Getters (NIY)
 
-    void load(const MDCG::Model::model_t & model);
+    SgType * getDataContextPtrType() const;
 };
 
-struct host_t {
-  private:
+struct host_t : public ::MDCG::API::api_t {
+  protected:
     SgClassSymbol * kernel_class;
+      SgVariableSymbol * kernel_param_field;
+      SgVariableSymbol * kernel_data_field;
+      SgVariableSymbol * kernel_loops_field;
+//    SgVariableSymbol * kernel_tiles_field;
+
     SgClassSymbol * loop_class;
-    SgClassSymbol * tile_class;
+      SgVariableSymbol * loop_lower_field;
+      SgVariableSymbol * loop_upper_field;
+      SgVariableSymbol * loop_stride_field;
+
+//  SgClassSymbol * tile_class;
+//    SgVariableSymbol * tile_length_field;
+//    SgVariableSymbol * tile_stride_field;
+
     SgClassSymbol * data_class;
+      SgVariableSymbol * data_ptr_field;
+      SgVariableSymbol * data_sections_field;
 
-    SgVariableSymbol * kernel_param_field;
-    SgVariableSymbol * kernel_data_field;
-    SgVariableSymbol * data_ptr_field;
-    SgVariableSymbol * data_section_field;
-    SgVariableSymbol * section_offset_field;
-    SgVariableSymbol * section_length_field;
-
-    SgVariableSymbol * kernel_loop_field;
-    SgVariableSymbol * loop_lower_field;
-    SgVariableSymbol * loop_upper_field;
-    SgVariableSymbol * loop_stride_field;
+    SgClassSymbol * section_class;
+      SgVariableSymbol * section_offset_field;
+      SgVariableSymbol * section_length_field;
 
     SgFunctionSymbol * build_kernel_func;
     SgFunctionSymbol * execute_kernel_func;
 
-    virtual void load_user(const MDCG::Model::model_t & model);
+  public:
+    virtual void load(const MDCG::Model::model_t & model);
 
   public:
-    host_t();
-    ~host_t();
-
     SgVariableSymbol * insertKernelInstance(const std::string & name, size_t kernel_id, SgScopeStatement * scope) const;
     void insertKernelExecute(SgVariableSymbol * kernel_sym, SgScopeStatement * scope) const;
 
@@ -93,13 +109,63 @@ struct host_t {
     SgStatement * buildLoopLowerAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const;
     SgStatement * buildLoopUpperAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const;
     SgStatement * buildLoopStrideAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const;
+};
 
-    SgClassSymbol * getKernelClass() const;
-    SgClassSymbol * getLoopClass() const;
-    SgClassSymbol * getTileClass() const;
-    SgClassSymbol * getDataClass() const;
+struct call_interface_t {
+  protected:
+    ::MFB::Driver< ::MFB::Sage> & driver;
+    kernel_t * kernel_api;
 
-    void load(const MDCG::Model::model_t & model);
+  public:
+    call_interface_t(::MFB::Driver< ::MFB::Sage> & driver_, kernel_t * kernel_api_);
+
+    SgFunctionParameterList * buildKernelParamList(Descriptor::kernel_t & kernel) const;
+    SgBasicBlock * generateKernelBody(Descriptor::kernel_t & kernel, SgFunctionDefinition * kernel_defn, Utils::symbol_map_t & symbol_map) const;
+
+    // default: none
+    virtual void applyKernelModifiers(SgFunctionDeclaration * kernel_decl) const;
+
+    // default: void
+    virtual SgType * buildKernelReturnType(Descriptor::kernel_t & kernel) const;
+
+  protected:
+    // default: klt_loop_context_t & loop_ctx (TODO klt_data_context_t & data_ctx)
+    virtual void addKernelArgsForContext(SgFunctionParameterList * param_list) const;
+    virtual void getContextSymbol(SgFunctionDefinition * func_defn, Utils::symbol_map_t & symbol_map) const;
+
+    // default: "loop_it_'loop.id'"
+    virtual void createLoopIterator(const std::vector<Descriptor::loop_t> & loops, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
+
+    // default: "tile_it_'tile.id'"
+    virtual void createTileIterator(const std::vector<Descriptor::tile_t> & tiles, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
+
+    virtual void addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const = 0;
+    virtual void addKernelArgsForData(SgFunctionParameterList * param_list, const std::vector<Descriptor::data_t *> & data) const = 0;
+
+    virtual void getSymbolForParameter(SgFunctionDefinition * kernel_defn, const std::vector<SgVariableSymbol *> & parameters, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const = 0;
+    virtual void getSymbolForData(SgFunctionDefinition * kernel_defn, const std::vector<Descriptor::data_t *> & data, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const = 0;
+};
+
+struct array_args_interface_t : public call_interface_t {
+  public:
+    array_args_interface_t(::MFB::Driver< ::MFB::Sage> & driver, kernel_t * kernel_api);
+
+    virtual void addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const;
+    virtual void addKernelArgsForData(SgFunctionParameterList * param_list, const std::vector<Descriptor::data_t *> & data) const;
+
+    virtual void getSymbolForParameter(SgFunctionDefinition * kernel_defn, const std::vector<SgVariableSymbol *> & parameters, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
+    virtual void getSymbolForData(SgFunctionDefinition * kernel_defn, const std::vector<Descriptor::data_t *> & data, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
+};
+
+struct individual_args_interface_t : public call_interface_t {
+  public:
+    individual_args_interface_t(::MFB::Driver< ::MFB::Sage> & driver, kernel_t * kernel_api);
+
+    virtual void addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const;
+    virtual void addKernelArgsForData(SgFunctionParameterList * param_list, const std::vector<Descriptor::data_t *> & data) const;
+
+    virtual void getSymbolForParameter(SgFunctionDefinition * kernel_defn, const std::vector<SgVariableSymbol *> & parameters, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
+    virtual void getSymbolForData(SgFunctionDefinition * kernel_defn, const std::vector<Descriptor::data_t *> & data, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
 };
 
 } // namespace KLT::API

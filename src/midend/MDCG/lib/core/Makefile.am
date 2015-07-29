@@ -8,7 +8,8 @@ libMDCG_Core_la_SOURCES= \
   model-builder.cpp \
   model-element.cpp \
   model-class.cpp \
-  static-initializer.cpp
+  static-initializer.cpp \
+  api.cpp
 libMDCG_Core_la_CXXFLAGS= \
   -g \
   -I$(top_srcdir)/src/midend/MDCG/include \

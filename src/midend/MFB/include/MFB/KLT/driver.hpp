@@ -84,16 +84,12 @@ namespace KLT {
 
 template <>
 struct KLT<kernel_t> {
-  typedef ::KLT::Descriptor::kernel_t build_result_t;
+  typedef ::KLT::Descriptor::kernel_t * build_result_t;
   typedef Driver< ::MFB::KLT::KLT>::kernel_desc_t object_desc_t;
   static build_result_t build(::MFB::Driver< ::MFB::KLT::KLT> & driver, const object_desc_t & object);
 private:
   static size_t kernel_cnt;
-  static ::KLT::Descriptor::kernel_t buildKernelDesc(const std::string & kernel_prefix);
-
-  static SgFunctionParameterList * buildKernelParamList(::KLT::Descriptor::kernel_t & kernel, ::KLT::Runtime * runtime);
-  static SgBasicBlock * addLocalDeclaration(::KLT::Descriptor::kernel_t & kernel, ::KLT::Utils::symbol_map_t & symbol_map, ::KLT::Runtime * runtime);
-
+  static ::KLT::Descriptor::kernel_t * buildKernelDesc(const std::string & kernel_prefix);
   static ::MFB::Sage<SgFunctionDeclaration>::build_result_t buildKernelDecl(::MFB::Driver< ::MFB::Sage> & driver, ::KLT::Descriptor::kernel_t & res, ::KLT::Runtime * runtime, ::MFB::file_id_t file_id);
 };
 

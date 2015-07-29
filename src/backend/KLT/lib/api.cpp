@@ -8,24 +8,33 @@
 #include "MDCG/Core/model-class.hpp"
 
 #include "KLT/api.hpp"
+#include "KLT/descriptor.hpp"
+#include "KLT/utils.hpp"
 
 namespace KLT {
 
 namespace API {
 
-kernel_t::kernel_t() :
-  klt_loop_context_class(NULL),
-  get_loop_lower_fnct(NULL), get_loop_upper_fnct(NULL), get_loop_stride_fnct(NULL),
-  get_tile_length_fnct(NULL), get_tile_stride_fnct(NULL)
-{}
+////// KLT::API::kernel_t
 
-kernel_t::~kernel_t() {}
+void kernel_t::load(const MDCG::Model::model_t & model) {
+  bool res = true;
 
-SgType * kernel_t::addContextTypeModifier(SgType * type) const { return type; }
+  MDCG::Model::class_t class_;
+  res = api_t::load(class_, klt_loop_context_class, model, "klt_loop_context_t", NULL); assert(res == true);
+  res = api_t::load(class_, klt_data_context_class, model, "klt_data_context_t", NULL); assert(res == true);
 
-SgInitializedName * kernel_t::createContext() const {
-  return SageBuilder::buildInitializedName("context", addContextTypeModifier(SageBuilder::buildPointerType(klt_loop_context_class->get_declaration()->get_type())), NULL);
+  MDCG::Model::function_t function_;
+  res = api_t::load(function_,  get_loop_lower_fnct, model, "klt_get_loop_lower" , NULL); assert(res == true);
+  res = api_t::load(function_,  get_loop_upper_fnct, model, "klt_get_loop_upper" , NULL); assert(res == true);
+  res = api_t::load(function_, get_loop_stride_fnct, model, "klt_get_loop_stride", NULL); assert(res == true);
+  res = api_t::load(function_, get_tile_length_fnct, model, "klt_get_tile_length", NULL); assert(res == true);
+  res = api_t::load(function_, get_tile_stride_fnct, model, "klt_get_tile_stride", NULL); assert(res == true);
 }
+
+//////
+
+SgType * kernel_t::getLoopContextPtrType() const { return SageBuilder::buildPointerType(klt_loop_context_class->get_declaration()->get_type()); }
 
 SgExpression * kernel_t::buildGetLoopLower (size_t loop_id, SgVariableSymbol * ctx) const {
   return ::MFB::Utils::buildCallVarIdx(loop_id, ctx, get_loop_lower_fnct);
@@ -44,40 +53,46 @@ SgExpression * kernel_t::buildGetTileStride(size_t tile_id, SgVariableSymbol * c
   return ::MFB::Utils::buildCallVarIdx(tile_id, ctx, get_tile_stride_fnct);
 }
 
-SgClassSymbol * kernel_t::getLoopContextClass() const { return klt_loop_context_class; }
+SgType * kernel_t::getDataContextPtrType() const { return SageBuilder::buildPointerType(klt_data_context_class->get_declaration()->get_type()); }
 
-void kernel_t::load(const MDCG::Model::model_t & model) {
-  klt_loop_context_class = model.lookup<MDCG::Model::class_t>("klt_loop_context_t")->node->symbol;
-  assert(klt_loop_context_class != NULL);
+////// KLT::API::host_t
 
-  get_loop_lower_fnct = model.lookup<MDCG::Model::function_t>("klt_get_loop_lower")->node->symbol;
-  assert(get_loop_lower_fnct != NULL);
+void host_t::load(const MDCG::Model::model_t & model) {
+  bool res = true;
 
-  get_loop_upper_fnct = model.lookup<MDCG::Model::function_t>("klt_get_loop_upper")->node->symbol;
-  assert(get_loop_upper_fnct != NULL);
+  MDCG::Model::class_t class_;
+  MDCG::Model::field_t field_;
+  MDCG::Model::function_t function_;
 
-  get_loop_stride_fnct = model.lookup<MDCG::Model::function_t>("klt_get_loop_stride")->node->symbol;
-  assert(get_loop_stride_fnct != NULL);
+    res = api_t::load(class_   , kernel_class        , model, "kernel_t"          , NULL);   assert(res == true);
+      res = api_t::load(field_ , kernel_param_field  , model,   "param"           , class_); assert(res == true);
+      res = api_t::load(field_ , kernel_data_field   , model,   "data"            , class_); assert(res == true);
+      res = api_t::load(field_ , kernel_loops_field  , model,   "loops"           , class_); assert(res == true);
+//    res = api_t::load(field_ , kernel_tiles_field  , model,   "tiles"           , class_); assert(res == true);
 
-  get_tile_length_fnct = model.lookup<MDCG::Model::function_t>("klt_get_tile_length")->node->symbol;
-  assert(get_tile_length_fnct != NULL);
+    res = api_t::load(class_   , loop_class          , model, "klt_loop_t"        , NULL);   assert(res == true);
+      res = api_t::load(field_ , loop_lower_field    , model,   "lower"           , class_); assert(res == true);
+      res = api_t::load(field_ , loop_upper_field    , model,   "upper"           , class_); assert(res == true);
+      res = api_t::load(field_ , loop_stride_field   , model,   "stride"          , class_); assert(res == true);
 
-  get_tile_stride_fnct = model.lookup<MDCG::Model::function_t>("klt_get_tile_stride")->node->symbol;
-  assert(get_tile_stride_fnct != NULL);
+//  res = api_t::load(class_   , tile_class          , model, "klt_tile_t"        , NULL);   assert(res == true);
+//    res = api_t::load(field_ , tile_length_field   , model,   "length"          , class_); assert(res == true);
+//    res = api_t::load(field_ , tile_stride_field   , model,   "stride"          , class_); assert(res == true);
 
-  load_user(model);
+    res = api_t::load(class_   , data_class          , model, "klt_data_t"        , NULL);   assert(res == true);
+      res = api_t::load(field_ , data_ptr_field      , model,   "ptr"             , class_); assert(res == true);
+      res = api_t::load(field_ , data_sections_field , model,   "sections"        , class_); assert(res == true);
+
+    res = api_t::load(class_   , section_class       , model, "klt_data_section_t", NULL);   assert(res == true);
+      res = api_t::load(field_ , section_offset_field, model,   "offset"          , class_); assert(res == true);
+      res = api_t::load(field_ , section_length_field, model,   "length"          , class_); assert(res == true);
+
+    res = api_t::load(function_, build_kernel_func   , model, "build_kernel"      , NULL);   assert(res == true);
+
+    res = api_t::load(function_, execute_kernel_func , model, "execute_kernel"    , NULL);   assert(res == true);
 }
 
-void kernel_t::load_user(const MDCG::Model::model_t & model) {}
-
-host_t::host_t() :
-  kernel_class(NULL), loop_class(NULL), tile_class(NULL),
-  kernel_param_field(NULL), kernel_data_field(NULL),
-  kernel_loop_field(NULL), loop_lower_field(NULL), loop_upper_field(NULL), loop_stride_field(NULL),
-  build_kernel_func(NULL), execute_kernel_func(NULL)
-{}
-
-host_t::~host_t() {}
+//////
 
 SgVariableSymbol * host_t::insertKernelInstance(const std::string & name, size_t kernel_id, SgScopeStatement * scope) const {
   SgInitializer * init = SageBuilder::buildAssignInitializer(SageBuilder::buildFunctionCallExp(
@@ -111,78 +126,173 @@ SgStatement * host_t::buildDataPtrAssign(SgVariableSymbol * kernel_sym, size_t i
 
 SgStatement * host_t::buildDataSectionOffsetAssign(SgVariableSymbol * kernel_sym, size_t idx, size_t dim, SgExpression * rhs) const {
   return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildDotExp(SageBuilder::buildPntrArrRefExp(
-           MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_data_field, SageBuilder::buildIntVal(idx), data_section_field), SageBuilder::buildIntVal(dim)
+           MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_data_field, SageBuilder::buildIntVal(idx), data_sections_field), SageBuilder::buildIntVal(dim)
          ), SageBuilder::buildVarRefExp(section_offset_field)), rhs));
 }
 
 SgStatement * host_t::buildDataSectionLengthAssign(SgVariableSymbol * kernel_sym, size_t idx, size_t dim, SgExpression * rhs) const {
   return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildDotExp(SageBuilder::buildPntrArrRefExp(
-           MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_data_field, SageBuilder::buildIntVal(idx), data_section_field), SageBuilder::buildIntVal(dim)
+           MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_data_field, SageBuilder::buildIntVal(idx), data_sections_field), SageBuilder::buildIntVal(dim)
          ), SageBuilder::buildVarRefExp(section_length_field)), rhs));
 }
 
 SgStatement * host_t::buildLoopLowerAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
-  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loop_field, SageBuilder::buildIntVal(idx), loop_lower_field), rhs));
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loops_field, SageBuilder::buildIntVal(idx), loop_lower_field), rhs));
 }
 
 SgStatement * host_t::buildLoopUpperAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
-  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loop_field, SageBuilder::buildIntVal(idx), loop_upper_field), rhs));
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loops_field, SageBuilder::buildIntVal(idx), loop_upper_field), rhs));
 }
 
 SgStatement * host_t::buildLoopStrideAssign(SgVariableSymbol * kernel_sym, size_t idx, SgExpression * rhs) const {
-  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loop_field, SageBuilder::buildIntVal(idx), loop_stride_field), rhs));
+  return SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(MFB::Utils::buildPtrArrElemField(SageBuilder::buildVarRefExp(kernel_sym), kernel_loops_field, SageBuilder::buildIntVal(idx), loop_stride_field), rhs));
 }
 
-SgClassSymbol * host_t::getKernelClass() const { return kernel_class; }
-SgClassSymbol * host_t::getLoopClass() const { return loop_class; }
-SgClassSymbol * host_t::getTileClass() const { return tile_class; }
-SgClassSymbol * host_t::getDataClass() const { return data_class; }
+////// KLT::API::call_interface_t
 
-void host_t::load(const MDCG::Model::model_t & model) {
-  MDCG::Model::class_t kernel_class_ = model.lookup<MDCG::Model::class_t>("kernel_t");
-  kernel_class = kernel_class_->node->symbol;
-  assert(kernel_class != NULL);
+call_interface_t::call_interface_t(::MFB::Driver< ::MFB::Sage> & driver_, kernel_t * kernel_api_) : driver(driver_), kernel_api(kernel_api_) {}
 
-    kernel_param_field  = kernel_class_->scope->getField("param" )->node->symbol;
-    kernel_data_field   = kernel_class_->scope->getField("data"  )->node->symbol;
-    kernel_loop_field   = kernel_class_->scope->getField("loops" )->node->symbol;
-
-  MDCG::Model::class_t data_class_ = model.lookup<MDCG::Model::class_t>("klt_data_t");
-  data_class = data_class_->node->symbol;
-  assert(data_class != NULL);
-
-    data_ptr_field     = data_class_->scope->getField("ptr"     )->node->symbol;
-    data_section_field = data_class_->scope->getField("sections")->node->symbol;
-
-  MDCG::Model::class_t data_section_class = model.lookup<MDCG::Model::class_t>("klt_data_section_t");
-
-    section_offset_field = data_section_class->scope->getField("offset")->node->symbol;
-    section_length_field = data_section_class->scope->getField("length")->node->symbol;
-
-  MDCG::Model::class_t loop_class_ = model.lookup<MDCG::Model::class_t>("klt_loop_t");
-  loop_class = loop_class_->node->symbol;
-  assert(loop_class != NULL);
-
-    loop_lower_field  = loop_class_->scope->getField("lower" )->node->symbol;
-    loop_upper_field  = loop_class_->scope->getField("upper" )->node->symbol;
-    loop_stride_field = loop_class_->scope->getField("stride")->node->symbol;
-
-  MDCG::Model::class_t tile_class_ = model.lookup<MDCG::Model::class_t>("klt_tile_t");
-  tile_class = tile_class_->node->symbol;
-  assert(tile_class != NULL);
-
-  MDCG::Model::function_t build_kernel_func_ = model.lookup<MDCG::Model::function_t>("build_kernel");
-  build_kernel_func = build_kernel_func_->node->symbol;
-  assert(build_kernel_func != NULL);
-
-  MDCG::Model::function_t execute_kernel_func_ = model.lookup<MDCG::Model::function_t>("execute_kernel");
-  execute_kernel_func = execute_kernel_func_->node->symbol;
-  assert(execute_kernel_func != NULL);
-
-  load_user(model);
+void call_interface_t::addKernelArgsForContext(SgFunctionParameterList * param_list) const {
+  param_list->append_arg(SageBuilder::buildInitializedName("loop_ctx", kernel_api->getLoopContextPtrType(), NULL));
+  param_list->append_arg(SageBuilder::buildInitializedName("data_ctx", kernel_api->getDataContextPtrType(), NULL));
 }
 
-void host_t::load_user(const MDCG::Model::model_t & model) {}
+SgFunctionParameterList * call_interface_t::buildKernelParamList(Descriptor::kernel_t & kernel) const {
+  SgFunctionParameterList * res = SageBuilder::buildFunctionParameterList();
+
+  addKernelArgsForParameter(res, kernel.parameters);
+  addKernelArgsForData     (res, kernel.data);
+  addKernelArgsForContext  (res);
+
+  return res;
+}
+
+void call_interface_t::getContextSymbol(SgFunctionDefinition * func_defn, Utils::symbol_map_t & symbol_map) const {
+  symbol_map.loop_context = func_defn->lookup_variable_symbol("loop_ctx"); assert(symbol_map.loop_context != NULL);
+  symbol_map.data_context = func_defn->lookup_variable_symbol("data_ctx"); assert(symbol_map.data_context != NULL);
+}
+
+void call_interface_t::createLoopIterator(const std::vector<Descriptor::loop_t> & loops, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
+  std::vector<Descriptor::loop_t>::const_iterator it;
+  for (it = loops.begin(); it != loops.end(); it++) {
+    std::ostringstream oss; oss << "l_" << it->id;
+    symbol_map.iter_loops.insert(std::pair<size_t, SgVariableSymbol *>(it->id, MFB::Utils::getExistingSymbolOrBuildDecl(oss.str(), it->iterator->get_type(), bb)));
+  }
+}
+
+void call_interface_t::createTileIterator(const std::vector<Descriptor::tile_t> & tiles, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
+  std::vector<Descriptor::tile_t>::const_iterator it;
+  for (it = tiles.begin(); it != tiles.end(); it++) {
+    std::ostringstream oss; oss << "t_" << it->id;
+    symbol_map.iter_tiles.insert(std::pair<size_t, SgVariableSymbol *>(it->id, MFB::Utils::getExistingSymbolOrBuildDecl(oss.str(), SageBuilder::buildIntType(), bb)));
+  }
+}
+
+SgBasicBlock * call_interface_t::generateKernelBody(Descriptor::kernel_t & kernel, SgFunctionDefinition * kernel_defn, Utils::symbol_map_t & symbol_map) const {
+  SgBasicBlock * bb = SageBuilder::buildBasicBlock();
+  kernel_defn->set_body(bb);
+
+  getContextSymbol(kernel_defn, symbol_map);
+
+  getSymbolForParameter(kernel_defn, kernel.parameters, symbol_map, bb);
+
+  getSymbolForData(kernel_defn, kernel.data, symbol_map, bb);
+
+  createLoopIterator(kernel.loops, symbol_map, bb);
+
+  createTileIterator(kernel.tiles, symbol_map, bb);
+
+  return bb;
+}
+
+void call_interface_t::applyKernelModifiers(SgFunctionDeclaration * kernel_decl) const {}
+
+SgType * call_interface_t::buildKernelReturnType(Descriptor::kernel_t & kernel) const { return SageBuilder::buildVoidType(); }
+
+///////
+
+array_args_interface_t::array_args_interface_t(::MFB::Driver< ::MFB::Sage> & driver, kernel_t * kernel_api) : call_interface_t(driver, kernel_api) {}
+
+void array_args_interface_t::addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const {
+  param_list->append_arg(SageBuilder::buildInitializedName("param", SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL));
+}
+
+void array_args_interface_t::addKernelArgsForData(SgFunctionParameterList * param_list, const std::vector<Descriptor::data_t *> & data) const {
+  param_list->append_arg(SageBuilder::buildInitializedName("data", SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL));
+}
+
+void array_args_interface_t::getSymbolForParameter(SgFunctionDefinition * kernel_defn, const std::vector<SgVariableSymbol *> & parameters, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
+  SgVariableSymbol * arg_param_sym = kernel_defn->lookup_variable_symbol("param");
+  assert(arg_param_sym != NULL);
+  int cnt = 0;
+
+  std::vector<SgVariableSymbol *>::const_iterator it;
+  for (it = parameters.begin(); it != parameters.end(); it++) {
+    SgVariableSymbol * param_sym = *it;
+    std::string param_name = param_sym->get_name().getString();
+    SgType * param_type = param_sym->get_type();
+
+    driver.useType(param_type, kernel_defn);
+
+    SgExpression * init = SageBuilder::buildPointerDerefExp(SageBuilder::buildCastExp(
+                            SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_param_sym), SageBuilder::buildIntVal(cnt++)),
+                            SageBuilder::buildPointerType(param_type)
+                          ));
+    SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(param_name, param_type, SageBuilder::buildAssignInitializer(init), bb), bb);
+
+    SgVariableSymbol * new_sym = bb->lookup_variable_symbol(param_name);
+    assert(new_sym != NULL);
+
+    symbol_map.parameters.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(param_sym, new_sym));
+  }
+}
+
+void array_args_interface_t::getSymbolForData(SgFunctionDefinition * kernel_defn, const std::vector<Descriptor::data_t *> & data, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
+  SgVariableSymbol * arg_data_sym = kernel_defn->lookup_variable_symbol("data");
+  assert(arg_data_sym != NULL);
+  int cnt = 0;
+
+  std::vector<Descriptor::data_t *>::const_iterator it;
+  for (it = data.begin(); it != data.end(); it++) {
+    SgVariableSymbol * data_sym = (*it)->symbol;
+    std::string data_name = data_sym->get_name().getString();
+    SgType * data_type = (*it)->base_type;
+
+    driver.useType(data_type, kernel_defn);
+
+    data_type = SageBuilder::buildPointerType(data_type);
+
+    SgExpression * init = SageBuilder::buildPointerDerefExp(SageBuilder::buildCastExp(
+                            SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_data_sym), SageBuilder::buildIntVal(cnt++)), data_type
+                          ));
+    SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(data_name, data_type, SageBuilder::buildAssignInitializer(init), bb), bb);
+
+    SgVariableSymbol * new_sym = bb->lookup_variable_symbol(data_name);
+    assert(new_sym != NULL);
+
+    symbol_map.data.insert(std::pair<Descriptor::data_t *, SgVariableSymbol *>(*it, new_sym));
+  }
+}
+
+//////
+
+individual_args_interface_t::individual_args_interface_t(::MFB::Driver< ::MFB::Sage> & driver, kernel_t * kernel_api) : call_interface_t(driver, kernel_api) {}
+
+void individual_args_interface_t::addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const {
+  // TODO
+}
+
+void individual_args_interface_t::addKernelArgsForData(SgFunctionParameterList * param_list, const std::vector<Descriptor::data_t *> & data) const {
+  // TODO
+}
+
+void individual_args_interface_t::getSymbolForParameter(SgFunctionDefinition * kernel_defn, const std::vector<SgVariableSymbol *> & parameters, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
+  // TODO
+}
+
+void individual_args_interface_t::getSymbolForData(SgFunctionDefinition * kernel_defn, const std::vector<Descriptor::data_t *> & data, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
+  // TODO
+}
 
 } // namespace KLT::API
 

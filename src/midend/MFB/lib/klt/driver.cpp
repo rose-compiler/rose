@@ -6,6 +6,7 @@
 #include "KLT/descriptor.hpp"
 #include "KLT/looptree.hpp"
 #include "KLT/runtime.hpp"
+#include "KLT/api.hpp"
 #include "KLT/utils.hpp"
 
 namespace MFB {
@@ -37,9 +38,9 @@ typedef ::MFB::Driver< ::MFB::KLT::KLT>::looptree_desc_t looptree_desc_t;
 
 size_t KLT<kernel_t>::kernel_cnt = 0;
 
-::KLT::Descriptor::kernel_t KLT<kernel_t>::buildKernelDesc(const std::string & kernel_prefix) {
+::KLT::Descriptor::kernel_t * KLT<kernel_t>::buildKernelDesc(const std::string & kernel_prefix) {
   std::ostringstream oss; oss << kernel_prefix << "_" << kernel_cnt;
-  return ::KLT::Descriptor::kernel_t(kernel_cnt, oss.str());
+  return new ::KLT::Descriptor::kernel_t(kernel_cnt, oss.str());
 }
 
 void insert(loop_t * loop, loop_vect_t & loops) {
@@ -91,19 +92,9 @@ void collectLoopsAndTiles(node_t * node, loop_vect_t & loops, tile_vect_t & tile
   }
 }
 
-SgFunctionParameterList * KLT<kernel_t>::buildKernelParamList(::KLT::Descriptor::kernel_t & kernel, ::KLT::Runtime * runtime) {
-  SgFunctionParameterList * res = SageBuilder::buildFunctionParameterList();
-
-  runtime->addKernelArgsForParameter(res, kernel.parameters);
-  runtime->addKernelArgsForData     (res, kernel.data);
-  runtime->addKernelArgsForContext  (res);
-
-  return res;
-}
-
 sage_func_res_t KLT<kernel_t>::buildKernelDecl(::MFB::Driver< ::MFB::Sage> & driver, ::KLT::Descriptor::kernel_t & res, ::KLT::Runtime * runtime, ::MFB::file_id_t file_id) {
-  SgFunctionParameterList * kernel_param_list = buildKernelParamList(res, runtime);
-  SgType * kernel_ret_type = runtime->buildKernelReturnType(res);
+  SgFunctionParameterList * kernel_param_list = runtime->getCallInterface().buildKernelParamList(res);
+  SgType * kernel_ret_type = runtime->getCallInterface().buildKernelReturnType(res);
 
   sage_func_desc_t sage_func_desc(res.kernel_name, kernel_ret_type, kernel_param_list, NULL, file_id, file_id);
 
@@ -115,64 +106,31 @@ sage_func_res_t KLT<kernel_t>::buildKernelDecl(::MFB::Driver< ::MFB::Sage> & dri
 
     SgFunctionDeclaration * first_kernel_decl = isSgFunctionDeclaration(kernel_decl->get_firstNondefiningDeclaration());
     assert(first_kernel_decl != NULL);
-    runtime->applyKernelModifiers(first_kernel_decl);
+    runtime->getCallInterface().applyKernelModifiers(first_kernel_decl);
 
     SgFunctionDeclaration * defn_kernel_decl = isSgFunctionDeclaration(kernel_decl->get_definingDeclaration());
     assert(defn_kernel_decl != NULL);
-    runtime->applyKernelModifiers(defn_kernel_decl);
+    runtime->getCallInterface().applyKernelModifiers(defn_kernel_decl);
 
 //  if (guard_kernel_decl) SageInterface::guardNode(defn_kernel_decl, std::string("defined(ENABLE_") + result->kernel_name + ")");
   }
   return sage_func_res;
 }
 
-SgBasicBlock * KLT<kernel_t>::addLocalDeclaration(::KLT::Descriptor::kernel_t & kernel, ::KLT::Utils::symbol_map_t & symbol_map, ::KLT::Runtime * runtime) {
-  SgBasicBlock * bb = SageBuilder::buildBasicBlock();
-
-  std::vector<SgVariableSymbol *>::const_iterator it_parameter;
-  for (it_parameter = kernel.parameters.begin(); it_parameter != kernel.parameters.end(); it_parameter++) {
-    SgVariableSymbol * old_symbol = *it_parameter;
-    SgVariableSymbol * new_symbol = runtime->getSymbolForParameter(*it_parameter, bb);
-    symbol_map.parameters.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(old_symbol, new_symbol));
-  }
-
-  std::vector<data_desc_t *>::const_iterator it_data;
-  for (it_data = kernel.data.begin(); it_data != kernel.data.end(); it_data++) {
-    SgVariableSymbol * old_symbol = (*it_data)->symbol;
-    SgVariableSymbol * new_symbol = runtime->getSymbolForData(*it_data, bb);
-    symbol_map.data.insert(std::pair<data_desc_t *, SgVariableSymbol *>(*it_data, new_symbol));
-  }
-
-  std::vector<loop_desc_t>::const_iterator it_loop;
-  for (it_loop = kernel.loops.begin(); it_loop != kernel.loops.end(); it_loop++) {
-    SgVariableSymbol * old_symbol = it_loop->iterator;
-    SgVariableSymbol * new_symbol = runtime->createLoopIterator(*it_loop, bb);
-    symbol_map.iterators.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(old_symbol, new_symbol));
-  }
-
-  std::vector<tile_desc_t>::const_iterator it_tile;
-  for (it_tile = kernel.tiles.begin(); it_tile != kernel.tiles.end(); it_tile++) {
-    SgVariableSymbol * new_symbol = runtime->createTileIterator(*it_tile, bb);
-  }
-
-  return bb;
-}
-
 KLT<kernel_t>::build_result_t KLT<kernel_t>::build(::MFB::Driver< ::MFB::KLT::KLT> & driver, const KLT<kernel_t>::object_desc_t & object) {
   std::string kernel_prefix = "klt_kernel";
-  ::KLT::Descriptor::kernel_t res = KLT<kernel_t>::buildKernelDesc(kernel_prefix);
+  ::KLT::Descriptor::kernel_t * res = buildKernelDesc(kernel_prefix);
 
-  collectLoopsAndTiles(object.root, res.loops, res.tiles);
+  collectLoopsAndTiles(object.root, res->loops, res->tiles);
 
-  res.parameters = object.parameters;
-  res.data = object.data;
+  res->parameters = object.parameters;
+  res->data = object.data;
 
-  sage_func_res_t sage_func_res = buildKernelDecl(driver, res, object.runtime, object.file_id);
+  sage_func_res_t sage_func_res = buildKernelDecl(driver, *res, object.runtime, object.file_id);
 
   ::KLT::Utils::symbol_map_t symbol_map;
 
-  SgBasicBlock * body = KLT<kernel_t>::addLocalDeclaration(res, symbol_map, object.runtime);
-  sage_func_res.definition->set_body(body);
+  SgBasicBlock * body = object.runtime->getCallInterface().generateKernelBody(*res, sage_func_res.definition, symbol_map);
 
   SgStatement * stmt = driver.build<node_t>(looptree_desc_t(object.root, symbol_map));
   SageInterface::appendStatement(stmt, body);

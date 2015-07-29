@@ -37,7 +37,8 @@ typedef std::vector<vsym_t *> vsym_list_t;
 typedef std::vector<data_t *> data_list_t;
 typedef std::map<SgForStatement *, loop_t *> loop_map_t;
 
-data_t * convertData(data_clause_t * data_clause, const DLX::Frontend::data_sections_t & data_section) {
+// TODO template <class Language = language_t>
+KLT::Descriptor::data_t * convertData(language_t::data_clause_t * data_clause, const DLX::Frontend::data_sections_t & data_section) {
   SgVariableSymbol * data_sym = data_section.first;
 
   SgType * base_type = data_sym->get_type();
@@ -54,8 +55,20 @@ data_t * convertData(data_clause_t * data_clause, const DLX::Frontend::data_sect
   return data;
 }
 
-typedef ::KLT::API::host_t host_api_t;
-typedef ::KLT::API::kernel_t kernel_api_t;
+
+void convertDataList(const clause_list_t & clauses, data_list_t & data) {
+  clause_list_t::const_iterator it_clause;
+  for (it_clause = clauses.begin(); it_clause != clauses.end(); it_clause++) {
+    data_clause_t * data_clause = language_t::isDataClause(*it_clause);
+    if (data_clause != NULL) {
+      const std::vector<DLX::Frontend::data_sections_t> & data_sections = language_t::getDataSections(data_clause);
+      std::vector<DLX::Frontend::data_sections_t>::const_iterator it_data_sections;
+      for (it_data_sections = data_sections.begin(); it_data_sections != data_sections.end(); it_data_sections++)
+        data.push_back(convertData(data_clause, *it_data_sections));
+    }
+    else assert(false);
+  }
+}
 
 class Runtime : public ::KLT::Runtime {
   public:
@@ -63,71 +76,51 @@ class Runtime : public ::KLT::Runtime {
       MDCG::ModelBuilder & model_builder,
       const std::string & klt_rtl_inc_dir, const std::string & klt_rtl_lib_dir,
       const std::string & usr_rtl_inc_dir, const std::string & usr_rtl_lib_dir,
-      kernel_api_t * kernel_api, host_api_t * host_api
+      KLT::API::host_t * host_api, KLT::API::kernel_t * kernel_api, KLT::API::call_interface_t * call_interface
     ) :
-      ::KLT::Runtime(model_builder, klt_rtl_inc_dir, klt_rtl_lib_dir, usr_rtl_inc_dir, usr_rtl_lib_dir, kernel_api, host_api)
+      ::KLT::Runtime(model_builder, klt_rtl_inc_dir, klt_rtl_lib_dir, usr_rtl_inc_dir, usr_rtl_lib_dir, host_api, kernel_api, call_interface)
     {}
 
   protected:
-    virtual void loadUserModel() { model_builder.add(tilek_model, "kernel", usr_rtl_inc_dir + "/RTL/Host", "h"); }
-    virtual void useUserKernelSymbols(MFB::Driver<MFB::Sage> & driver, size_t file_id) const {}
-    virtual void useUserHostSymbols(MFB::Driver<MFB::Sage> & driver, size_t file_id) const {}
+    virtual void loadExtraModel() { model_builder.add(tilek_model, "kernel", usr_rtl_inc_dir + "/RTL/Host", "h"); }
 
   public:
-    virtual void applyKernelModifiers(SgFunctionDeclaration * kernel_decl) const {}
     virtual void addRuntimeStaticData(MFB::Driver<MFB::Sage> & driver, const std::string & kernel_file_name, const std::string & static_file_name, size_t static_file_id) const {}
-    virtual SgType * buildKernelReturnType(::KLT::Descriptor::kernel_t & kernel) const { return SageBuilder::buildVoidType(); }
-
-    virtual void addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const {
-      std::vector<SgVariableSymbol *>::const_iterator it;
-      for (it = parameters.begin(); it != parameters.end(); it++) {
-        // TODO
-      }
-    }
-
-    virtual void addKernelArgsForData(SgFunctionParameterList * param_list, const std::vector<data_desc_t *> & data) const {
-      std::vector<data_desc_t *>::const_iterator it;
-      for (it = data.begin(); it != data.end(); it++) {
-        // TODO
-      }
-    }
-
-    virtual void addKernelArgsForContext(SgFunctionParameterList * param_list) const {
-      // TODO
-    }
-
-    virtual SgVariableSymbol * getSymbolForParameter(SgVariableSymbol * parameter, SgBasicBlock * bb) const {
-      SgVariableSymbol * symbol = NULL;
-
-      // TODO
-
-      return symbol;
-    }
-
-    virtual SgVariableSymbol * getSymbolForData(data_desc_t * data, SgBasicBlock * bb) const {
-      SgVariableSymbol * symbol = NULL;
-
-      // TODO
-
-      return symbol;
-    }
-
-    virtual SgVariableSymbol * createLoopIterator(const loop_desc_t & loop, SgBasicBlock * bb) const {
-      SgVariableSymbol * symbol = NULL;
-
-      // TODO
-
-      return symbol;
-    }
-
-    virtual SgVariableSymbol * createTileIterator(const tile_desc_t & tile, SgBasicBlock * bb) const {
-      SgVariableSymbol * symbol = NULL;
-
-      // TODO
-
-      return symbol;
-    }
 };
+
+Runtime * initRuntime(
+  MFB::Driver<MFB::Sage> & driver,
+  MDCG::ModelBuilder model_builder,
+  const std::string & KLT_RTL, const std::string & USER_RTL,
+  const std::string & kernel_file, const std::string & static_file,
+  file_id_t & kernel_file_id, file_id_t & static_file_id
+) {
+
+  KLT::API::host_t           * host_api       = new KLT::API::host_t();
+  KLT::API::kernel_t         * kernel_api     = new KLT::API::kernel_t();
+  KLT::API::call_interface_t * call_interface = new KLT::API::array_args_interface_t(driver, kernel_api);
+//KLT::API::call_interface_t * call_interface = new KLT::API::individual_args_interface_t(driver, kernel_api);
+
+  std::string klt_rtl_inc_dir( KLT_RTL + "/include");
+  std::string klt_rtl_lib_dir( KLT_RTL + "/lib");
+  std::string usr_rtl_inc_dir(USER_RTL + "/include");
+  std::string usr_rtl_lib_dir(USER_RTL + "/lib");
+
+  Runtime * runtime = new Runtime(model_builder, klt_rtl_inc_dir, klt_rtl_lib_dir, usr_rtl_inc_dir, usr_rtl_lib_dir, host_api, kernel_api, call_interface);
+  runtime->loadModel();
+
+  kernel_file_id = driver.create(boost::filesystem::path(kernel_file));
+      driver.setUnparsedFile(kernel_file_id);
+      driver.setCompiledFile(kernel_file_id);
+  runtime->getKernelAPI().use(driver, kernel_file_id);
+
+  static_file_id = driver.create(boost::filesystem::path(static_file));
+      driver.setUnparsedFile(static_file_id);
+      driver.setCompiledFile(static_file_id);
+  runtime->getHostAPI().use(driver, static_file_id);
+
+  return runtime;
+}
 
 void compile(SgProject * project, const std::string & KLT_RTL, const std::string & USER_RTL, const std::string & kernel_file, const std::string & static_file) {
   ::DLX::Frontend::Frontend<language_t> frontend;
@@ -136,63 +129,37 @@ void compile(SgProject * project, const std::string & KLT_RTL, const std::string
 
   language_t::init();
 
-  kernel_api_t * kernel_api = NULL;
-  host_api_t   * host_api = NULL;
-
-  std::string klt_rtl_inc_dir( KLT_RTL + "/include");
-  std::string klt_rtl_lib_dir( KLT_RTL + "/lib");
-  std::string usr_rtl_inc_dir(USER_RTL + "/include");
-  std::string usr_rtl_lib_dir(USER_RTL + "/lib");
-
-  Runtime * runtime = new Runtime(model_builder, klt_rtl_inc_dir, klt_rtl_lib_dir, usr_rtl_inc_dir, usr_rtl_lib_dir, kernel_api, host_api);
-    runtime->loadModel();
-
-  file_id_t kernel_file_id = driver.create(boost::filesystem::path(kernel_file));
-      driver.setUnparsedFile(kernel_file_id);
-      driver.setCompiledFile(kernel_file_id);
-  runtime->useKernelSymbols(driver, kernel_file_id);
-
-  file_id_t static_file_id = driver.create(boost::filesystem::path(static_file));
-      driver.setUnparsedFile(static_file_id);
-      driver.setCompiledFile(static_file_id);
-  runtime->useHostSymbols(driver, static_file_id);
+  file_id_t kernel_file_id, static_file_id;
+  Runtime * runtime = initRuntime(driver, model_builder, KLT_RTL, USER_RTL, kernel_file, static_file, kernel_file_id, static_file_id);
 
   if (!frontend.parseDirectives(project)) {
     std::cerr << "Error in FrontEnd !!!" << std::endl;
     exit(1);
   }
 
+  std::vector<KLT::Descriptor::kernel_t *> generated_kernel;
+
   std::vector<directive_t *>::const_iterator it_directive;
   for (it_directive = frontend.directives.begin(); it_directive != frontend.directives.end(); it_directive++) {
     directive_t * directive = *it_directive;
 
+    // If it is a kernel contruct
     kernel_construct_t * kernel_construct = language_t::isKernelConstruct(directive->construct);
     if (kernel_construct == NULL) continue;
 
+    // Associated code region.
     SgStatement * region_base = language_t::getKernelRegion(kernel_construct);
+    // Associated data
+    data_list_t data; convertDataList(directive->clause_list, data);
 
-    data_list_t data;
-    clause_list_t::const_iterator it_clause;
-    for (it_clause = directive->clause_list.begin(); it_clause != directive->clause_list.end(); it_clause++) {
-      data_clause_t * data_clause = language_t::isDataClause(*it_clause);
-      if (data_clause != NULL) {
-        const std::vector<DLX::Frontend::data_sections_t> & data_sections = language_t::getDataSections(data_clause);
-        std::vector<DLX::Frontend::data_sections_t>::const_iterator it_data_sections;
-        for (it_data_sections = data_sections.begin(); it_data_sections != data_sections.end(); it_data_sections++)
-          data.push_back(convertData(data_clause, *it_data_sections));
-      }
-      else assert(false);
-    }
-
+    // Build kernel (extract looptree)
     kernel_t kernel(region_base, data);
 
-    node_t * root = kernel.root;
-
     // TODO Apply loop construct to transform 'root' using 'std::map<SgForStatement *, loop_t *> kernel_t::loop_map'
-
-    kernel_desc_t kernel_desc(root, kernel.parameters, kernel.data, runtime, kernel_file_id);
-    
-    ::KLT::Descriptor::kernel_t kernel_out = driver.build<kernel_t>(kernel_desc);
+    {
+      MFB::Driver<MFB::KLT::KLT>::kernel_desc_t kernel_desc(kernel.root, kernel.parameters, kernel.data, runtime, kernel_file_id);
+      generated_kernel.push_back(driver.build<kernel_t>(kernel_desc));
+    }
   }
 
 

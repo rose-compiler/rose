@@ -29,5 +29,9 @@ void klt_set_tile_length(STORAGE_MODIFIER struct klt_loop_context_t * ctx, int i
  int klt_get_tile_stride(STORAGE_MODIFIER struct klt_loop_context_t * ctx, int idx);
 void klt_set_tile_stride(STORAGE_MODIFIER struct klt_loop_context_t * ctx, int idx, int val);
 
+struct klt_data_context_t {
+  int num_datas;
+};
+
 #endif /* __KLT_RTL_CONTEXT_H__ */
 
