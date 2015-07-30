@@ -336,6 +336,37 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      file->display("file: Unparser::unparseFile");
 #endif
 
+     // What kind of language are we unparsing.  These are more robust tests
+     // for multiple files of multiple languages than using SageInterface.  This
+     // is also how the language-dependent parser is called.
+     bool isFortranFile = false;
+     if ( ( (file->get_Fortran_only() == true) &&
+            (file->get_outputLanguage() ==
+             SgFile::e_default_output_language) ) ||
+          (file->get_outputLanguage() == SgFile::e_Fortran_output_language) )
+       {
+         isFortranFile = true;
+       }
+     bool isCfile = false;
+     if ( ( (file->get_C_only() == true) &&
+            (file->get_outputLanguage() ==
+             SgFile::e_default_output_language) ) ||
+          (file->get_outputLanguage() == SgFile::e_C_output_language) )
+       {
+         isCfile = true;
+       }
+     bool isCxxFile = false;
+     if ( ( (file->get_Cxx_only() == true) &&
+            (file->get_outputLanguage() ==
+             SgFile::e_default_output_language) ) ||
+          (file->get_outputLanguage() == SgFile::e_Cxx_output_language) )
+       {
+         isCxxFile = true;
+       }
+     // What about all the others?  X10, Java, ...?
+     // Can only be parsing to one language!
+     ROSE_ASSERT(((int)isFortranFile + (int)isCfile + (int)isCxxFile) <= 1);
+
 #if 0
   // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
      std::set<SgStatement*> transformedStatementSet_1 = SageInterface::collectTransformedStatements(file);
@@ -362,7 +393,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // transformations.  This also make simple analysis much cheaper since the hidel list computation is
   // expensive (in this implementation).
   // DQ (8/6/2007): Only compute the hidden lists if working with C++ code!
-     if (SageInterface::is_Cxx_language() == true)
+     if (isCxxFile)
         {
        // DQ (5/22/2007): Moved from SgProject::parse() function to here so that propagateHiddenListData() could be called afterward.
        // DQ (5/8/2007): Now build the hidden lists for types and declarations (Robert Preissl's work)
@@ -437,7 +468,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
   // if (SageInterface::is_C_language() == true)
   // if (SageInterface::is_C_language() == true && file->get_unparse_tokens() == true)
-     if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
+     if ( (isCfile || isCxxFile) && file->get_unparse_tokens() == true)
         {
        // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
 #if 0
@@ -462,7 +493,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #endif
 
   // DQ (12/6/2014): this is the part of the token stream support that is required after transformations have been done in the AST.
-     if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
+     if ( (isCfile || isCxxFile) && file->get_unparse_tokens() == true)
         {
        // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
 #if 0
