@@ -217,6 +217,21 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
                break;
              }
 
+	case V_SgTypeMatrix:
+	  {
+	    SgTypeMatrix *matrixType = isSgTypeMatrix(type);
+	    ROSE_ASSERT(matrixType != NULL);
+
+	    if(matrixType->get_base_type() != NULL)
+	      {
+		nodeList.insert(matrixType->get_base_type());
+                addAssociatedNodes(matrixType->get_base_type(),nodeList,markMemberNodesDefinedToBeDeleted);
+	      }
+	    
+	    ROSE_ASSERT(nodeList.find(NULL) == nodeList.end());
+	    break;
+	  }
+	    
        // DQ (9/5/2011): Added support for SgJavaParameterizedType.
           case V_SgJavaParameterizedType:
              {
