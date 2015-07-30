@@ -17,8 +17,8 @@ Driver< ::MFB::KLT::KLT>::~Driver() {}
 Driver< ::MFB::KLT::KLT>::kernel_desc_t::kernel_desc_t(node_t * root_, const vsym_list_t & parameters_, const data_list_t & data_, ::KLT::Runtime * runtime_, ::MFB::file_id_t file_id_) :
   root(root_), parameters(parameters_), data(data_), runtime(runtime_), file_id(file_id_) {}
 
-Driver< ::MFB::KLT::KLT>::looptree_desc_t::looptree_desc_t(node_t * node_, const ::KLT::Utils::symbol_map_t & symbol_map_) :
-  symbol_map(symbol_map_), node(node_) {}
+Driver< ::MFB::KLT::KLT>::looptree_desc_t::looptree_desc_t(node_t * node_, ::KLT::Runtime * runtime_, const ::KLT::Utils::symbol_map_t & symbol_map_) :
+  symbol_map(symbol_map_), runtime(runtime_), node(node_) {}
 
 namespace KLT {
 
@@ -44,11 +44,13 @@ size_t KLT<kernel_t>::kernel_cnt = 0;
 }
 
 void insert(loop_t * loop, loop_vect_t & loops) {
-  // TODO
+  loops.resize(loop->id + 1);
+  loops[loop->id] = ::KLT::Descriptor::loop_t(loop->id, loop->lower_bound, loop->upper_bound, loop->stride, loop->iterator);
 }
 
 void insert(tile_t * tile, tile_vect_t & tiles) {
-  // TODO
+  tiles.resize(tile->id + 1);
+  tiles[tile->id] = ::KLT::Descriptor::tile_t(tile->id, (::KLT::Descriptor::tile_kind_e)tile->kind, tile->order, tile->param);
 }
 
 void collectLoopsAndTiles(node_t * node, loop_vect_t & loops, tile_vect_t & tiles) {
@@ -132,7 +134,7 @@ KLT<kernel_t>::build_result_t KLT<kernel_t>::build(::MFB::Driver< ::MFB::KLT::KL
 
   SgBasicBlock * body = object.runtime->getCallInterface().generateKernelBody(*res, sage_func_res.definition, symbol_map);
 
-  SgStatement * stmt = driver.build<node_t>(looptree_desc_t(object.root, symbol_map));
+  SgStatement * stmt = driver.build<node_t>(looptree_desc_t(object.root, object.runtime, symbol_map));
   SageInterface::appendStatement(stmt, body);
 
   SageInterface::setSourcePositionForTransformation(body);
@@ -177,11 +179,11 @@ KLT<block_t>::build_result_t KLT<block_t>::build(::MFB::Driver< ::MFB::KLT::KLT>
   if (block->children.size() == 0)
     return NULL;
   if (block->children.size() == 1)
-    return driver.build<node_t>(looptree_desc_t(block->children[0], object.symbol_map));
+    return driver.build<node_t>(looptree_desc_t(block->children[0], object.runtime, object.symbol_map));
 
   SgBasicBlock * bb = SageBuilder::buildBasicBlock();
   for (node_list_t::const_iterator it = block->children.begin(); it != block->children.end(); it++) {
-    SgStatement * stmt = driver.build<node_t>(looptree_desc_t(*it, object.symbol_map));
+    SgStatement * stmt = driver.build<node_t>(looptree_desc_t(*it, object.runtime, object.symbol_map));
     if (stmt != NULL)
       SageInterface::appendStatement(stmt, bb);
   }
@@ -199,8 +201,8 @@ KLT<cond_t>::build_result_t KLT<cond_t>::build(::MFB::Driver< ::MFB::KLT::KLT> &
 
   SgExpression * condition = ::KLT::Utils::translateExpression(cond->condition, object.symbol_map);
 
-  SgStatement * true_body  = driver.build<node_t>(looptree_desc_t(cond->branch_true, object.symbol_map));
-  SgStatement * false_body = driver.build<node_t>(looptree_desc_t(cond->branch_false, object.symbol_map));
+  SgStatement * true_body  = driver.build<node_t>(looptree_desc_t(cond->branch_true, object.runtime, object.symbol_map));
+  SgStatement * false_body = driver.build<node_t>(looptree_desc_t(cond->branch_false, object.runtime, object.symbol_map));
 
   return SageBuilder::buildIfStmt(SageBuilder::buildExprStatement(condition), true_body, false_body);
 }
@@ -214,16 +216,22 @@ KLT<loop_t>::build_result_t KLT<loop_t>::build(::MFB::Driver< ::MFB::KLT::KLT> &
 
   loop_t * loop = (loop_t *)object.node;
 
-  SgVariableSymbol * iterator = loop->iterator;
-  SgExpression * lower_bound = ::KLT::Utils::translateExpression(loop->lower_bound, object.symbol_map);
-  SgExpression * upper_bound = ::KLT::Utils::translateExpression(loop->upper_bound, object.symbol_map);
-  SgExpression * stride      = ::KLT::Utils::translateExpression(loop->stride     , object.symbol_map);
+  std::map<size_t, SgVariableSymbol *>::const_iterator it = object.symbol_map.iter_loops.find(loop->id);
+  assert(it != object.symbol_map.iter_loops.end());
+
+  SgVariableSymbol * iterator = it->second;
+  SgExpression * lower_bound = object.runtime->getKernelAPI().buildGetLoopLower (loop->id, object.symbol_map.loop_context);
+  SgExpression * upper_bound = object.runtime->getKernelAPI().buildGetLoopUpper (loop->id, object.symbol_map.loop_context);
+  SgExpression * stride      = object.runtime->getKernelAPI().buildGetLoopStride(loop->id, object.symbol_map.loop_context);
+//SgExpression * lower_bound = ::KLT::Utils::translateExpression(loop->lower_bound, object.symbol_map);
+//SgExpression * upper_bound = ::KLT::Utils::translateExpression(loop->upper_bound, object.symbol_map);
+//SgExpression * stride      = ::KLT::Utils::translateExpression(loop->stride     , object.symbol_map);
 
   return SageBuilder::buildForStatement(
     SageBuilder::buildForInitStatement(SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildVarRefExp(iterator), lower_bound))),
     SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(SageBuilder::buildVarRefExp(iterator), upper_bound)),
     SageBuilder::buildPlusAssignOp(SageBuilder::buildVarRefExp(iterator), stride),
-    driver.build<node_t>(looptree_desc_t(loop->body, object.symbol_map))
+    driver.build<node_t>(looptree_desc_t(loop->body, object.runtime, object.symbol_map))
   );
 }
 

@@ -5,8 +5,10 @@ namespace KLT {
 
 namespace Descriptor {
 
-tile_t::tile_t() : id(0), kind((tile_kind_e)0), nbr_it(0), order(0), iterator_sym(NULL) {}
+tile_t::tile_t() : id(0), kind(e_not_tile), order(0), param(NULL) {}
+tile_t::tile_t(size_t id_, tile_kind_e kind_, size_t order_, SgExpression * param_) : id(id_), kind(kind_), order(order_), param(param_) {}
 
+loop_t::loop_t() : id(0), lb(NULL), ub(NULL), stride(NULL), tiles(), iterator(NULL) {}
 loop_t::loop_t(size_t id_, SgExpression * lb_, SgExpression * ub_, SgExpression * stride_, SgVariableSymbol * iterator_) :
   id(id_), lb(lb_), ub(ub_), stride(stride_), tiles(), iterator(iterator_) {}
 

@@ -15,23 +15,21 @@ namespace KLT {
 
 namespace Descriptor {
 
-enum tile_kind_e { e_static_tile = 0, e_dynamic_tile = 1 };
+enum tile_kind_e {
+  e_not_tile = -1,
+  e_static_tile = 0,
+  e_dynamic_tile = 1,
+  e_last_klt_tile = e_dynamic_tile
+};
 
 struct tile_t {
   size_t id;
-  enum tile_kind_e kind;
-  size_t nbr_it;
+  tile_kind_e kind;
   size_t order;
-  SgVariableSymbol * iterator_sym;
+  SgExpression * param;
 
   tile_t();
-
-  template <class tile_clause_tpl>
-  void init(tile_clause_tpl * tile_clause) {
-    kind = (tile_kind_e)tile_clause->parameters.kind;
-    nbr_it = tile_clause->parameters.nbr_it;
-    order = tile_clause->parameters.order;
-  }
+  tile_t(size_t id_, tile_kind_e kind_, size_t order_, SgExpression * param_);
 };
 
 struct loop_t {
@@ -42,6 +40,7 @@ struct loop_t {
   std::vector<tile_t *> tiles;
   SgVariableSymbol * iterator;
 
+  loop_t();
   loop_t(size_t id_, SgExpression * lb_, SgExpression * ub_, SgExpression * stride_, SgVariableSymbol * iterator_);
 };
 

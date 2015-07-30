@@ -70,10 +70,10 @@ class Driver< ::MFB::KLT::KLT> : public Driver< ::MFB::Sage> {
 
     struct looptree_desc_t {
       const ::KLT::Utils::symbol_map_t & symbol_map;
-
+      ::KLT::Runtime * runtime;
       node_t * node;
 
-      looptree_desc_t(node_t * node_, const ::KLT::Utils::symbol_map_t & symbol_map_);
+      looptree_desc_t(node_t * node_, ::KLT::Runtime * runtime_, const ::KLT::Utils::symbol_map_t & symbol_map_);
     };
 
     template <class Object>
