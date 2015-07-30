@@ -1,26 +1,33 @@
-/* This file contains Linux-64system call emulation.  Most of these functions are callbacks and have names like:
+/* This file contains Linux-amd64 system call emulation.  Most of these functions are callbacks and have names like:
  *
  *    RSIM_Linux64::syscall_FOO_enter           -- prints syscall tracing info when the call is entered
  *    RSIM_Linux64::syscall_FOO                 -- implements the system call
  *    RSIM_Linux64::syscall_FOO_leave           -- prints syscall tracing info when the call returns
  */
-#include "rose.h"
+#include <rose.h>
 #include "RSIM_Private.h"
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "RSIM_Linux64.h"
-#include "BinaryDebugger.h"
-#include "Diagnostics.h"
+#include <BinaryDebugger.h>                             // rose
+#include <Diagnostics.h>                                // rose
+#include <FileSystem.h>                                 // rose
 
 #include <asm/prctl.h>                                  // for the arch_prctl syscall
 #include <sys/prctl.h>                                  // for the arch_prctl syscall
+#include <sys/syscall.h>                                // SYS_xxx definitions
+#include <sys/vfs.h>                                    // for the statfs syscalls
+#include <sys/wait.h>                                   // for the wait4 syscall
 
+using namespace rose;
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis;
 
 void
 RSIM_Linux64::init() {
+    vdsoName("linux-vdso.so");
+
     if (interpreterBaseVa() == 0) {
         // Linux seems to ignore the alignment constraints (0x200000) in the ld-linux-x86-64.so interpreter and uses 0x1000
         // instead. Unfortunately ROSE's BinaryLoader can't do that (2015-06-02) so we use a different load address instead.
@@ -70,16 +77,19 @@ RSIM_Linux64::init() {
     SC_REG(39,  getpid,                         default);
     SC_REG(41,  socket,                         default);
     SC_REG(42,  connect,                        default);
-    SC_REG(43,  accept,                         default);
+    SC_REG(43,  accept,                         accept);
     SC_REG(49,  bind,                           default);
     SC_REG(50,  listen,                         default);
     SC_REG(54,  setsockopt,                     default);
     SC_REG(59,  execve,                         default);
     SC_REG(60,  exit,                           exit);
+    SC_REG(61,  wait4,                          wait4);
     SC_REG(62,  kill,                           default);
+    SC_REG(63,  uname,                          uname);
     SC_REG(72,  fcntl,                          fcntl);
     SC_REG(74,  fsync,                          default);
     SC_REG(77,  ftruncate,                      default);
+    SC_REG(78,  getdents,                       getdents);
     SC_REG(79,  getcwd,                         getcwd);
     SC_REG(80,  chdir,                          default);
     SC_REG(81,  fchdir,                         default);
@@ -96,6 +106,9 @@ RSIM_Linux64::init() {
     SC_REG(92,  chown,                          default);
     SC_REG(93,  fchown,                         default);
     SC_REG(95,  umask,                          default);
+    SC_REG(96,  gettimeofday,                   gettimeofday);
+    SC_REG(97,  getrlimit,                      getrlimit);
+    SC_REG(99,  sysinfo,                        sysinfo);
     SC_REG(102, getuid,                         default);
     SC_REG(104, getgid,                         default);
     SC_REG(107, geteuid,                        default);
@@ -104,15 +117,20 @@ RSIM_Linux64::init() {
     SC_REG(110, getppid,                        default);
     SC_REG(111, getpgrp,                        default);
     SC_REG(133, mknod,                          default);
+    SC_REG(138, fstatfs,                        fstatfs);
     SC_REG(145, sched_getscheduler,             sched_getscheduler);
     SC_REG(145, sched_get_priority_max,         default);
     SC_REG(147, sched_get_priority_min,         default);
     SC_REG(158, arch_prctl,                     arch_prctl);
     SC_REG(162, sync,                           default);
     SC_REG(186, gettid,                         default);
+    SC_REG(201, time,                           time);
+    SC_REG(202, futex,                          futex);
+    SC_REG(218, set_tid_address,                default);
     SC_REG(231, exit_group,                     exit_group);
     SC_REG(234, tgkill,                         default);
     SC_REG(268, fchmodat,                       default);
+    SC_REG(273, set_robust_list,                default);
     SC_REG(293, pipe2,                          pipe2);
 
 #   undef SC_REG
@@ -132,9 +150,48 @@ RSIM_Linux64::isSupportedArch(SgAsmGenericHeader *fhdr) {
 }
 
 void
-RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembler) {
+RSIM_Linux64::loadVsyscalls(RSIM_Process *process) {
+    if (process->wordSize() != 64)
+        return;
+    
+    std::vector<std::string> paths = settings().vsyscallPaths;
+    if (paths.empty()) {
+        paths.push_back(".");
+        paths.push_back(ROSE_AUTOMAKE_TOP_BUILDDIR + "/projects/simulator2");
+        paths.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/projects/simulator2");
+        paths.push_back(ROSE_AUTOMAKE_DATADIR + "/projects/simulator2");
+    }
+    AddressInterval loaded;
+    std::string found;
+    BOOST_FOREACH (const std::string &vsyscallPath, paths) {
+        FileSystem::Path path = vsyscallPath;
+        FileSystem::Path name = path / "vsyscall-amd64";
+        if (FileSystem::isFile(name)) {
+            found = FileSystem::toString(name);
+            loaded = process->get_memory().insertFile(":0xffffffffff600000+0x1000=rx::" + found);
+            break;
+        } else if (FileSystem::isFile(path)) {
+            found = FileSystem::toString(name);
+            loaded = process->get_memory().insertFile(":0xffffffffff600000+0x1000=rx::" + found);
+            break;
+        }
+    }
+
+    // Change the name from just a file name to "[vsyscall] ..."
+    BOOST_FOREACH (MemoryMap::Segment &segment, process->get_memory().within(loaded).segments())
+        segment.name("[vsyscall] " + found);
+}
+
+void
+RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembler, int existingPid/*=-1*/) {
     process->mem_transaction_start("specimen main memory");
-    BinaryDebugger debugger(exeArgs());
+    BinaryDebugger debugger;
+    if (existingPid != -1) {
+        debugger.attach(existingPid);
+    } else {
+        debugger.attach(exeArgs());
+    }
+
     process->get_memory().insertProcess(":noattach:" + StringUtility::numberToString(debugger.isAttached()));
 
     const RegisterDictionary *regs = disassembler->get_registers();
@@ -160,7 +217,11 @@ RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembl
     initialRegs_.r14 = debugger.readRegister(*regs->lookup("r14")).toInteger();
     initialRegs_.r15 = debugger.readRegister(*regs->lookup("r15")).toInteger();
 
-    debugger.terminate();
+    if (existingPid != -1) {
+        debugger.detach();
+    } else {
+        debugger.terminate();
+    }
     return;
 }
     
@@ -308,6 +369,35 @@ RSIM_Linux64::pushAuxVector(RSIM_Process *process, rose_addr_t sp, rose_addr_t e
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
+RSIM_Linux64::syscall_accept_enter(RSIM_Thread *t, int callno) {
+    ASSERT_require(sizeof(socklen_t)==4);
+    t->syscall_enter("accept").d().p().P(4, print_int_32).d();
+}
+
+void
+RSIM_Linux64::syscall_accept_body(RSIM_Thread *t, int callno) {
+    int guestFd = t->syscall_arg(0);
+    rose_addr_t addrVa = t->syscall_arg(1);
+    rose_addr_t addrLenVa = t->syscall_arg(2);
+    unsigned flags = t->syscall_arg(3);
+    syscall_accept_helper(t, guestFd, addrVa, addrLenVa, flags);
+}
+
+void
+RSIM_Linux64::syscall_accept_leave(RSIM_Thread *t, int callno) {
+    rose_addr_t addrlenVa = t->syscall_arg(2);
+    ASSERT_require(sizeof(socklen_t)==4);
+    socklen_t addrlen = 0;
+    if (sizeof(addrlen) == t->get_process()->mem_read(&addrlen, addrlenVa, sizeof(addrlen))) {
+        t->syscall_leave().ret().arg(1).P(addrlen, print_sockaddr);
+    } else {
+        t->syscall_leave().ret();
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
 RSIM_Linux64::syscall_arch_prctl_enter(RSIM_Thread *t, int callno) {
     static const Translate code[] = { TE(ARCH_SET_FS), TE(ARCH_GET_FS), TE(ARCH_SET_GS), TE(ARCH_GET_GS), T_END };
     switch (t->syscall_arg(0)) {
@@ -368,12 +458,278 @@ RSIM_Linux64::syscall_arch_prctl_leave(RSIM_Thread *t, int callno) {
     switch (t->syscall_arg(0)) {
         case ARCH_GET_FS:
         case ARCH_GET_GS:
-            t->syscall_leave().ret().arg(1).P(8, print_hex_64).str("\n");
+            t->syscall_leave().ret().arg(1).P(8, print_hex_64);
             break;
         default:
-            t->syscall_leave().ret().str("\n");
+            t->syscall_leave().ret();
             break;
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_bind_enter(RSIM_Thread *t, int callno) {
+    socklen_t addrlen = t->syscall_arg(2);
+    t->syscall_enter("bind").d().P(addrlen, print_sockaddr).d();
+}
+
+void
+RSIM_Linux64::syscall_bind_body(RSIM_Thread *t, int callno) {
+    int guestFd = t->syscall_arg(0);
+    rose_addr_t addrVa = t->syscall_arg(1);
+    size_t addrSize = t->syscall_arg(2);
+    syscall_bind_helper(t, guestFd, addrVa, addrSize);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_connect_enter(RSIM_Thread *t, int callno) {
+    socklen_t addrlen = t->syscall_arg(2);
+    t->syscall_enter("connect").d().P(addrlen, print_sockaddr).d();
+}
+
+void
+RSIM_Linux64::syscall_connect_body(RSIM_Thread *t, int callno) {
+    int guestFd = t->syscall_arg(0);
+    rose_addr_t addrVa = t->syscall_arg(1);
+    size_t addrSize = t->syscall_arg(2);
+    syscall_connect_helper(t, guestFd, addrVa, addrSize);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_fstatfs_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("fstatfs").d().d().p();
+}
+
+void
+RSIM_Linux64::syscall_fstatfs_body(RSIM_Thread *t, int callno)
+{
+    int guestFd      = t->syscall_arg(0);
+    rose_addr_t sbVa = t->syscall_arg(1);
+
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+
+    struct statfs_64 host_statfs;
+    int result = syscall(SYS_fstatfs, hostFd, &host_statfs);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+    if (sizeof(host_statfs) != t->get_process()->mem_write(&host_statfs, sbVa, sizeof host_statfs)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_fstatfs_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().arg(1).P(sizeof(struct statfs_64), print_statfs_64);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_futex_enter(RSIM_Thread *t, int callno)
+{
+    /* We cannot include <linux/futex.h> portably across a variety of Linux machines. */
+    static const Translate opflags[] = {
+        TF3(0xff, 0x80, FUTEX_PRIVATE_FLAG|FUTEX_WAIT),
+        TF3(0x80, 0x80, FUTEX_PRIVATE_FLAG),
+        TF3(0x100, 0x100, FUTEX_CLOCK_REALTIME),
+        TF3(0x7f, 0, FUTEX_WAIT),
+        TF3(0x7f, 1, FUTEX_WAKE),
+        TF3(0x7f, 2, FUTEX_FD),
+        TF3(0x7f, 3, FUTEX_REQUEUE),
+        TF3(0x7f, 4, FUTEX_CMP_REQUEUE),
+        TF3(0x7f, 5, FUTEX_WAKE_OP),
+        TF3(0x7f, 6, FUTEX_LOCK_PI),
+        TF3(0x7f, 7, FUTEX_UNLOCK_PI),
+        TF3(0x7f, 8, FUTEX_TRYLOCK_PI),
+        TF3(0x7f, 9, FUTEX_WAIT_BITSET),
+        TF3(0x7f, 10, FUTEX_WAKE_BITSET),
+        T_END
+    };
+
+    unsigned op = t->syscall_arg(1);
+    switch (op & 0x7f) {
+        case 0: /*FUTEX_WAIT*/
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().P(sizeof(timespec_32), print_timespec_32);
+            break;
+        case 1: /*FUTEX_WAKE*/
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d();
+            break;
+        case 2: /*FUTEX_FD*/
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d();
+            break;
+        case 3: /*FUTEX_REQUEUE*/
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().unused().P(4, print_int_32);
+            break;
+        case 4: /*FUTEX_CMP_REQUEUE*/
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().unused().P(4, print_int_32).d();
+            break;
+        case 9: /*FUTEX_WAIT_BITSET*/
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().P(sizeof(timespec_32), print_timespec_32).unused().x();
+            break;
+        default:
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().P(sizeof(timespec_32), print_timespec_32)
+                .P(4, print_int_32).d();
+            break;
+    }
+}
+
+void
+RSIM_Linux64::syscall_futex_body(RSIM_Thread *t, int callno)
+{
+    /* Variable arguments */
+    rose_addr_t futex1_va = t->syscall_arg(0);
+    int op = t->syscall_arg(1);
+    int val1 = t->syscall_arg(2);
+    uint32_t timeout_va = 0;                    /* arg 3 when present */
+    uint32_t futex2_va = 0;                     /* arg 4 when present */
+    uint32_t val3 = 0;                          /* arg 5 when present */
+
+    int result = -ENOSYS;
+    switch (op & 0x7f) {
+        case 0: /*FUTEX_WAIT*/
+            timeout_va = t->syscall_arg(3);
+            assert(0==timeout_va); // NOT HANDLED YET
+            result = t->futex_wait(futex1_va, val1);
+            break;
+        case 1: /*FUTEX_WAKE*/
+            result = t->futex_wake(futex1_va, val1);
+            break;
+        case 2: /*FUTEX_FD*/
+            assert(0); // NOT HANDLED YET
+            break;
+        case 3: /*FUTEX_REQUEUE*/
+            futex2_va = t->syscall_arg(4);
+            assert(0); // NOT HANDLED YET
+            break;
+        case 4: /*FUTEX_CMP_REQUEUE*/
+            futex2_va = t->syscall_arg(4);
+            val3 = t->syscall_arg(5);
+            assert(0); // NOT HANDLED YET
+            break;
+        case 9: /*FUTEX_WAIT_BITSET*/
+            timeout_va = t->syscall_arg(3);
+            assert(0==timeout_va); // NOT HANDLED YET
+            val3 = t->syscall_arg(5);
+            result = t->futex_wait(futex1_va, val1, val3/*bitset*/);
+            break;
+        default:
+            timeout_va =t->syscall_arg(3);
+            futex2_va = t->syscall_arg(4);
+            val3 = t->syscall_arg(5);
+            assert(0); // NOT HANDLED YET
+            break;
+    }
+
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_futex_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().P(4, print_int_32);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_getdents_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("getdents").d().p().d();
+}
+
+void
+RSIM_Linux64::syscall_getdents_body(RSIM_Thread *t, int callno)
+{
+    int guestFd = t->syscall_arg(0), sz = t->syscall_arg(2);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    rose_addr_t dirent_va = t->syscall_arg(1);
+    int status = getdents_syscall<dirent_64, dirent_64>(t, SYS_getdents, hostFd, dirent_va, sz);
+    t->syscall_return(status);
+}
+
+void
+RSIM_Linux64::syscall_getdents_leave(RSIM_Thread *t, int callno)
+{
+    int status = t->syscall_arg(-1);
+    t->syscall_leave().ret().arg(1).P(status>0?status:0, print_dentries_64);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_getrlimit_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("getrlimit").f(rlimit_resources).p();
+}
+
+void
+RSIM_Linux64::syscall_getrlimit_body(RSIM_Thread *t, int callno)
+{
+    int resource = t->syscall_arg(0);
+    rose_addr_t rlimit_va = t->syscall_arg(1);
+    struct rlimit rlimit_native;
+    ASSERT_require(sizeof(rlimit_native)==16);
+    int result = getrlimit(resource, &rlimit_native);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    if (sizeof(rlimit_native) != t->get_process()->mem_write(&rlimit_native, rlimit_va, sizeof(rlimit_native))) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_getrlimit_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().arg(1).P(16, print_rlimit_64);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_gettimeofday_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("gettimeofday").p();
+}
+
+void
+RSIM_Linux64::syscall_gettimeofday_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t tp = t->syscall_arg(0);
+    ASSERT_require(8 == sizeof(long));
+    struct timeval host_time;
+
+    int result = gettimeofday(&host_time, NULL);
+    if (result == -1) {
+        result = -errno;
+    } else if (sizeof(host_time) != t->get_process()->mem_write(&host_time, tp, sizeof host_time)) {
+        result = -EFAULT;
+    }
+
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_gettimeofday_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().P(sizeof(timeval), print_timeval);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -386,6 +742,20 @@ RSIM_Linux64::syscall_ioctl_enter(RSIM_Thread *t, int callno) {
 void
 RSIM_Linux64::syscall_ioctl_body(RSIM_Thread *t, int callno) {
     t->syscall_return(-ENOTTY);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_listen_enter(RSIM_Thread *t, int callno) {
+    t->syscall_enter("listen").d().d();
+}
+
+void
+RSIM_Linux64::syscall_listen_body(RSIM_Thread *t, int callno) {
+    int guestFd = t->syscall_arg(0);
+    int backlog = t->syscall_arg(1);
+    syscall_listen_helper(t, guestFd, backlog);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -419,8 +789,43 @@ RSIM_Linux64::syscall_mmap_body(RSIM_Thread *t, int callno) {
 
 void
 RSIM_Linux64::syscall_mmap_leave(RSIM_Thread *t, int callno) {
-    t->syscall_leave().eret().p().str("\n");
+    t->syscall_leave().eret().p();
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap syscall:\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_setsockopt_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("setsockopt").d().d().d().p().d();
+}
+
+void
+RSIM_Linux64::syscall_setsockopt_body(RSIM_Thread *t, int callno) {
+    int guestFd          = t->syscall_arg(0);
+    int level            = t->syscall_arg(1);
+    int optName          = t->syscall_arg(2);
+    rose_addr_t optvalVa = t->syscall_arg(3);
+    size_t optSize       = t->syscall_arg(4);
+    syscall_setsockopt_helper(t, guestFd, level, optName, optvalVa, optSize);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_socket_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("socket").f(protocol_families).f(socket_types).f(socket_protocols);
+}
+
+void
+RSIM_Linux64::syscall_socket_body(RSIM_Thread *t, int callno)
+{
+    int family = t->syscall_arg(0);
+    int type = t->syscall_arg(1);
+    int proto = t->syscall_arg(2);
+    syscall_socket_helper(t, family, type, proto);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -513,7 +918,147 @@ RSIM_Linux64::syscall_stat_body(RSIM_Thread *t, int callno)
 
 void
 RSIM_Linux64::syscall_stat_leave(RSIM_Thread *t, int callno) {
-    t->syscall_leave().ret().arg(1).P(sizeof(kernel_stat_64), print_kernel_stat_64).str("\n");
+    t->syscall_leave().ret().arg(1).P(sizeof(kernel_stat_64), print_kernel_stat_64);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_sysinfo_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sysinfo").p();
+}
+
+void
+RSIM_Linux64::syscall_sysinfo_body(RSIM_Thread *t, int callno)
+{
+    sysinfo_native hostBuf;
+    int result  = syscall(SYS_sysinfo, &hostBuf);
+
+    if (-1==result) {
+        t->syscall_return(-errno);
+    } else {
+        sysinfo_64 guestBuf(hostBuf);
+        if (sizeof guestBuf != t->get_process()->mem_write(&guestBuf, t->syscall_arg(0), sizeof guestBuf)) {
+            t->syscall_return(-EFAULT);
+        } else {
+            t->syscall_return(result);
+        }
+    }
+}
+
+void
+RSIM_Linux64::syscall_sysinfo_leave(RSIM_Thread *t, int callno) {
+    t->syscall_leave().ret().P(sizeof(sysinfo_64), print_sysinfo_64);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_time_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("time").p();
+}
+
+void
+RSIM_Linux64::syscall_time_body(RSIM_Thread *t, int callno)
+{
+    time_t result = time(NULL);
+    if (t->syscall_arg(0)) {
+        ASSERT_require(8 == sizeof(result));
+        if (8 != t->get_process()->mem_write(&result, t->syscall_arg(0), 8))
+            result = -EFAULT;
+    }
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_time_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().t();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_uname_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("uname").p();
+}
+
+void
+RSIM_Linux64::syscall_uname_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t dest_va = t->syscall_arg(0);
+    new_utsname_64 buf;
+    memset(&buf, ' ', sizeof buf);
+    if (-1 == syscall(SYS_uname, &buf)) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    if (sizeof(buf) != t->get_process()->mem_write(&buf, dest_va, sizeof buf)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(0);
+}
+
+void
+RSIM_Linux64::syscall_uname_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().P(sizeof(new_utsname_64), print_new_utsname_64);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_wait4_enter(RSIM_Thread *t, int callno)
+{
+    static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
+    t->syscall_enter("wait4").d().p().f(wflags).p();
+}
+
+void
+RSIM_Linux64::syscall_wait4_body(RSIM_Thread *t, int callno)
+{
+    pid_t pid = t->syscall_arg(0);
+    rose_addr_t status_va = t->syscall_arg(1), rusage_va = t->syscall_arg(3);
+    int options = t->syscall_arg(2);
+    int status;
+    struct rusage rusage;
+
+    // check that we can write to status_va and rusage before we wait for anything
+    if (status_va && 4 != t->get_process()->mem_write(&status, status_va, 4)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    if (rusage_va && sizeof(rusage) != t->get_process()->mem_write(&rusage, rusage_va, sizeof rusage)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    
+    // Now do the wait
+    int result = wait4(pid, &status, options, &rusage);
+    if( result == -1) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    // Write results to specimen memory
+    if (status_va != 0)
+        t->get_process()->mem_write(&status, status_va, 4);
+    if (rusage_va != 0)
+        t->get_process()->mem_write(&rusage, rusage_va, sizeof rusage);
+
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_wait4_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().arg(1).P(4, print_exit_status_32);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

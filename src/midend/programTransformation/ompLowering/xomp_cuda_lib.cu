@@ -13,11 +13,94 @@ Liao 4/11/2012
 DDE** DDE_head;
 DDE** DDE_tail;
 
+int xomp_num_devices = -1; 
+int xomp_max_num_devices =  -1; // -1 means un-initialized
+
 void** xomp_cuda_prop; 
 bool xomp_verbose = false;
 
+/* Set the device id to be used by the current task */
+void xomp_set_default_device (int devID)
+{
+  cudaError_t err;
+  assert (devID>=0 && devID< xomp_get_max_devices());
+  err = cudaSetDevice(devID); 
+  if(err != cudaSuccess)
+  {
+    fprintf(stderr,"XOMP acc_init: %s %s %d\n", cudaGetErrorString(err), __FILE__, __LINE__);
+    exit(err);
+  }
+
+}
+
+/* Obtain the max number of devices supported by the hardware*/
+int xomp_get_max_devices(void)
+{
+  int rt; 
+  cudaError_t err;
+  if (xomp_max_num_devices != -1)
+    return xomp_max_num_devices;
+
+  err = cudaGetDeviceCount(&rt);
+  if(err != cudaSuccess)
+  {
+      fprintf(stderr,"XOMP acc_init: %s %s %d\n", cudaGetErrorString(err), __FILE__, __LINE__);
+      exit(err);
+  }
+  xomp_max_num_devices = rt;  
+  assert (rt != -1);
+  return xomp_max_num_devices; 
+}
+
+/* The default number of devices to be used */
+int xomp_get_num_devices (void)
+{
+  char * env_var_str;
+  int  env_var_val;
+
+  //If already initialized, return the value directly
+  if (xomp_num_devices!= -1)
+  {
+//    printf ("DEBUG: xomp_get_num_devices() returns the existing value %d\n", xomp_num_devices);
+    return xomp_num_devices;
+  }
+
+  // otherwise, obtain it based on max device count and env variable
+  if (xomp_max_num_devices == -1)
+    xomp_max_num_devices = xomp_get_max_devices();
+
+  env_var_str = getenv("OMP_NUM_DEVICES");
+  if (env_var_str != NULL)
+  {
+    sscanf(env_var_str, "%d", &env_var_val);
+    if (env_var_val <= 0) 
+    {
+       printf ("OMP_NUM_DEVICES should > 0\n");
+       exit(1);
+    }
+    // cap the value
+    if (env_var_val > xomp_max_num_devices)
+    {
+      printf ("OMP_NUM_DEVICES %d is too big, set to max number of devices %d instead\n", env_var_val, xomp_max_num_devices );
+      env_var_val = xomp_max_num_devices ;
+    }
+    xomp_num_devices = env_var_val; 
+  }
+  else
+    xomp_num_devices = xomp_max_num_devices;
+
+//  printf ("DEBUG: xomp_get_num_devices() returns a fresh value %d\n", xomp_num_devices);
+  return xomp_num_devices;
+}
+
+void omp_set_num_devices (int count)
+{
+  assert (count>0);
+  xomp_num_devices = count; 
+}
 void xomp_acc_init(void)
 {
+#if 0  
   cudaError_t err;
   int maxDevice = 0;
   err = cudaGetDeviceCount(&maxDevice);
@@ -26,9 +109,12 @@ void xomp_acc_init(void)
       fprintf(stderr,"XOMP acc_init: %s %s %d\n", cudaGetErrorString(err), __FILE__, __LINE__);
       exit(err);
   }
-  DDE_head = (DDE**)malloc(sizeof(DDE*)*maxDevice);
-  DDE_tail = (DDE**)malloc(sizeof(DDE*)*maxDevice);
-  xomp_cuda_prop = (void**)malloc(sizeof(void*)*maxDevice);
+#endif 
+  xomp_max_num_devices = xomp_get_max_devices();
+
+  DDE_head = (DDE**)malloc(sizeof(DDE*)*xomp_max_num_devices);
+  DDE_tail = (DDE**)malloc(sizeof(DDE*)*xomp_max_num_devices);
+  xomp_cuda_prop = (void**)malloc(sizeof(void*)*xomp_max_num_devices);
 } 
 
 // this can be called multiple times. But the xomp_cuda_prop variable will only be set once
@@ -587,11 +673,13 @@ XOMP_BEYOND_BLOCK_REDUCTION_DEF(double)
 #undef XOMP_BEYOND_BLOCK_REDUCTION_DEF 
 
 /* some of the ompacc runtime API */
+#if 0
 int omp_get_num_devices() {
   int deviceCount = 0;
   cudaGetDeviceCount(&deviceCount);
   return deviceCount;
 }
+#endif
 
 //! A helper function to copy a mapped variable from src to desc
 void copy_mapped_variable (struct XOMP_mapped_variable* desc, struct XOMP_mapped_variable* src)

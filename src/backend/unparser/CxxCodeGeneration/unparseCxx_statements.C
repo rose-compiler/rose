@@ -9354,7 +9354,13 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
             // This is likely a SgTemplateClassDeclaration
                if (isSgTemplateClassDeclaration(stmt) == NULL)
                   {
-                    printf ("Error: In unparseTemplateDeclarationStatment_support(): What is this if not a template function or template member function stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                    printf ("Note: In unparseTemplateDeclarationStatment_support(): What is this if not a template function or template member function stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+
+                 // DQ (7/6/2015): Markus suggested that this might be an unhandled case, but it is not clear it needs to be processed, for now let's detect it.
+                    if (isSgTemplateVariableDeclaration(stmt) != NULL)
+                       {
+                         printf ("Note: In unparseTemplateDeclarationStatment_support(): Found a SgTemplateVariableDeclaration = %p = %s \n",stmt,stmt->class_name().c_str());
+                       }
                   }
              }
         }

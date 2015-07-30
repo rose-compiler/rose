@@ -30,8 +30,8 @@ void skip_whitespace(std::string & directive_str) {
 
 void skip_parenthesis(std::string & directive_str) {
   assert(directive_str[0] == '(');
-  unsigned count = 1;
-  unsigned depth = 1;
+  size_t count = 1;
+  size_t depth = 1;
   while (depth > 0) {
     if (directive_str[count] == '(') depth++;
     else if (directive_str[count] == ')') depth--;

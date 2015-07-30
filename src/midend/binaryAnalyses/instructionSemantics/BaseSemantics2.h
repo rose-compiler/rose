@@ -478,8 +478,21 @@ public:
     // constructors (usually named "instance")--it's because this is an abstract class.
 public:
     /** Create a new undefined semantic value.  The new semantic value will have the same dynamic type as the value
-     *  on which this virtual method is called.  This is the most common way that a new value is created. */
+     *  on which this virtual method is called.  This is the most common way that a new value is created. The @ref unspecified_
+     *  method is closely related.
+     *
+     *  @sa unspecified_ */
     virtual SValuePtr undefined_(size_t nbits) const = 0; // hot
+
+    /** Create a new unspecified semantic value. The new semantic value will have the same dynamic type as the value on which
+     *  this virtual method is called.  Undefined (@ref undefined_) and unspecified are closely related.  Unspecified values
+     *  are the same as undefined values except they're instantiated as the result of some machine instruction where the ISA
+     *  documentation indicates that the value is unspecified (e.g., status flags for x86 shift and rotate instructions).
+     *
+     *  Most semantic domains make no distinction between undefined and unspecified.
+     *
+     *  @sa undefined_ */
+    virtual SValuePtr unspecified_(size_t nbits) const = 0;
 
     /** Create a new concrete semantic value. The new value will represent the specified concrete value and have the same
      *  dynamic type as the value on which this virtual method is called. This is the most common way that a new constant is
@@ -1957,6 +1970,9 @@ public:
     virtual SValuePtr undefined_(size_t nbits) {
         return protoval->undefined_(nbits);
     }
+    virtual SValuePtr unspecified_(size_t nbits) {
+        return protoval->unspecified_(nbits);
+    }
 
     /** Returns a number of the specified bit width.  Uses the prototypical value to virtually construct a new value. */
     virtual SValuePtr number_(size_t nbits, uint64_t value) {
@@ -2000,7 +2016,7 @@ public:
     virtual void cpuid() {}
 
     /** Invoked for the x86 RDTSC instruction. FIXME: x86-specific stuff should be in the dispatcher. */
-    virtual SValuePtr rdtsc() { return undefined_(64); }
+    virtual SValuePtr rdtsc() { return unspecified_(64); }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2391,6 +2407,10 @@ public:
     virtual SValuePtr undefined_(size_t nbits) const {
         ASSERT_not_null(operators);
         return operators->undefined_(nbits);
+    }
+    virtual SValuePtr unspecified_(size_t nbits) const {
+        ASSERT_not_null(operators);
+        return operators->unspecified_(nbits);
     }
 
     /** Return a semantic value representing a number. */

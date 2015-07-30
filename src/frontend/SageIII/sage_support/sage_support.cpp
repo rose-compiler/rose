@@ -986,6 +986,12 @@ cout.flush();
              }
             else
              {
+               // SG (7/9/2015) When processing multiple files, we need to reset
+               // case_insensitive_semantics.  But this only sets it to the last
+               // file created.  During AST construction, it will need to be
+               // reset for each language.
+               SageBuilder::symbol_table_case_insensitive_semantics = false;
+
                if (CommandlineProcessing::isPHPFileNameSuffix(filenameExtension) == true)
                   {
                  // file = new SgSourceFile ( argv,  project );
@@ -3089,6 +3095,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      // FMZ(7/27/2010): check command line options for Rice CAF syntax
      //  -rose:CoArrayFortran, -rose:CAF, -rose:caf
 
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // insensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = true;
+
      bool using_rice_caf = false;
      vector<string> ArgTmp = get_project()->get_originalCommandLineArgumentList();
      int sizeArgs = ArgTmp.size();
@@ -4229,6 +4239,10 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
         return 0;
      }
 
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
+
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
      ROSE_ASSERT(get_requires_C_preprocessor() == false);
 
@@ -4495,6 +4509,10 @@ SgSourceFile::build_X10_AST(const vector<string>& p_argv)
         return 0;
     }
 
+    // SG (7/9/2015) In case of a mixed language project, force case
+    // sensitivity here.
+    SageBuilder::symbol_table_case_insensitive_semantics = false;
+
     ROSE_ASSERT(get_requires_C_preprocessor() == false);
 
     vector<string> frontEndCommandLine;
@@ -4716,6 +4734,10 @@ SgSourceFile::processCppLinemarkers()
 int
 SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputCommandLine )
    {
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
+
      std::string frontEndCommandLineString;
      frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
 
@@ -4770,6 +4792,9 @@ SgSourceFile::build_PHP_AST()
          int frontendErrorLevel = -1;
 #else
 #ifdef ROSE_BUILD_PHP_LANGUAGE_SUPPORT
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
      int frontendErrorLevel = php_main(phpFileName, this);
 #else
      int frontendErrorLevel = 99;
@@ -4785,6 +4810,9 @@ SgSourceFile::build_Python_AST()
    {
      string pythonFileName = this->get_sourceFileNameWithPath();
 #ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
      int frontendErrorLevel = python_main(pythonFileName, this);
 #else
      int frontendErrorLevel = 99;

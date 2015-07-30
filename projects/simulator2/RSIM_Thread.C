@@ -126,68 +126,68 @@ RSIM_Thread::current_insn()
 }
 
 Printer
-RSIM_Thread::print(Sawyer::Message::Stream &m) {
-    return Printer(m, this);
+RSIM_Thread::print(Sawyer::Message::Stream &m, const std::string &atEnd) {
+    return Printer(m, this, atEnd);
 }
 
 Printer
-RSIM_Thread::print(Sawyer::Message::Stream &m, const uint32_t *args) {
-    return Printer(m, this, args);
+RSIM_Thread::print(Sawyer::Message::Stream &m, const uint32_t *args, const std::string &atEnd) {
+    return Printer(m, this, args, atEnd);
 }
 
 Printer
-RSIM_Thread::print(Sawyer::Message::Stream &m, const uint64_t *args) {
-    return Printer(m, this, args);
+RSIM_Thread::print(Sawyer::Message::Stream &m, const uint64_t *args, const std::string &atEnd) {
+    return Printer(m, this, args, atEnd);
 }
 
 Printer
-RSIM_Thread::print(TracingFacility tf) {
-    return print(tracing(tf));
+RSIM_Thread::print(TracingFacility tf, const std::string &atEnd) {
+    return print(tracing(tf), atEnd);
 }
 
 Printer
 RSIM_Thread::syscall_enter(const std::string &name) {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
     SAWYER_MESG(m) <<name <<"[" <<syscall_arg(-1) <<"](";
-    return print(m);
+    return print(m, ")");
 }
 
 Printer
 RSIM_Thread::syscall_enter(const uint32_t *args, const std::string &name) {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
     SAWYER_MESG(m) <<name <<"[" <<syscall_arg(-1) <<"](";
-    return print(m, args);
+    return print(m, args, ")");
 }
 
 Printer
 RSIM_Thread::syscall_enter(const uint64_t *args, const std::string &name) {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
     SAWYER_MESG(m) <<name <<"[" <<syscall_arg(-1) <<"](";
-    return print(m, args);
+    return print(m, args, ")");
 }
 
 Printer
 RSIM_Thread::syscall_leave() {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
-    if (m)
-        m <<") = ";
-    return print(m).arg(-1);
+    Printer p = print(m, "\n");
+    p.str(" = ").arg(-1);
+    return p;
 }
 
 Printer
 RSIM_Thread::syscall_leave(const uint32_t *args) {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
-    if (m)
-        m <<") = ";
-    return print(m, args).arg(-1);
+    Printer p = print(m, args, "\n");
+    p.str(" = ").arg(-1);
+    return p;
 }
 
 Printer
 RSIM_Thread::syscall_leave(const uint64_t *args) {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
-    if (m)
-        m <<") = ";
-    return print(m, args).arg(-1);
+    Printer p = print(m, args, "\n");
+    p.str(" = ").arg(-1);
+    return p;
 }
 
 uint64_t
@@ -1045,37 +1045,59 @@ RSIM_Thread::exit_robust_list()
 {
     int retval = 0;
 
-    if (0==robust_list_head_va)
+    if (0==robustListHeadVa_)
         return 0;
 
     Sawyer::Message::Stream trace(tracing(TRACE_THREAD));
     trace <<"exit_robust_list()...";
 
-    robust_list_head_32 head;
-    if (sizeof(head)!=get_process()->mem_read(&head, robust_list_head_va, sizeof head)) {
-        mfprintf(trace)(" <failed to read robust list head at 0x%08"PRIx32">", robust_list_head_va);
-        retval = -EFAULT;
+    robust_list_head_64 head64;
+    if (get_process()->wordSize() == 32) {
+        robust_list_head_32 head32;
+        if (sizeof(head32) != get_process()->mem_read(&head32, robustListHeadVa_, sizeof head32)) {
+            trace <<" <failed to read robust list head at " <<StringUtility::addrToString(robustListHeadVa_) <<">";
+            retval = -EFAULT;
+        }
+        head64 = robust_list_head_64(head32);
     } else {
+        ASSERT_require(get_process()->wordSize() == 64);
+        if (sizeof(head64) != get_process()->mem_read(&head64, robustListHeadVa_, sizeof head64)) {
+            trace <<" <failed to read robust list head at " <<StringUtility::addrToString(robustListHeadVa_) <<">";
+            retval = -EFAULT;
+        }
+    }
+
+    if (0 == retval) {
         static const size_t max_locks = 1000000;
         size_t nlocks = 0;
-        uint32_t lock_entry_va = head.next_va;
-        while (lock_entry_va != robust_list_head_va && nlocks++ < max_locks) {
+        rose_addr_t lock_entry_va = head64.next_va;
+        while (lock_entry_va != robustListHeadVa_ && nlocks++ < max_locks) {
             /* Don't process futex if it's pending; we'll catch it at the end instead. */
-            if (lock_entry_va != head.pending_va) {
-                uint32_t futex_va = lock_entry_va + head.futex_offset;
+            if (lock_entry_va != head64.pending_va) {
+                rose_addr_t futex_va = lock_entry_va + head64.futex_offset;
                 if ((retval = handle_futex_death(futex_va, trace))<0)
                     break;
             }
         
             /* Advance lock_entry_va to next item in the list. */
-            if (4!=get_process()->mem_read(&lock_entry_va, lock_entry_va, 4)) {
-                mfprintf(trace)(" <list pointer read failed at 0x%08"PRIx32">", lock_entry_va);
-                retval = -EFAULT;
-                break;
+            if (get_process()->wordSize() == 32) {
+                lock_entry_va = 0;
+                if (4!=get_process()->mem_read(&lock_entry_va, lock_entry_va, 4)) {
+                    trace <<" <list pointer read failed at " <<StringUtility::addrToString(lock_entry_va) <<">";
+                    retval = -EFAULT;
+                    break;
+                }
+            } else {
+                lock_entry_va = 0;
+                if (8!=get_process()->mem_read(&lock_entry_va, lock_entry_va, 8)) {
+                    trace <<" <list pointer read failed at " <<StringUtility::addrToString(lock_entry_va) <<">";
+                    retval = -EFAULT;
+                    break;
+                }
             }
         }
-        if (head.pending_va)
-            retval = handle_futex_death(head.pending_va, trace);
+        if (head64.pending_va)
+            retval = handle_futex_death(head64.pending_va, trace);
     }
 
     trace <<" done.\n";
@@ -1085,17 +1107,19 @@ RSIM_Thread::exit_robust_list()
 void
 RSIM_Thread::do_clear_child_tid()
 {
-    if (clear_child_tid) {
+    if (clearChildTidVa_) {
         tracing(TRACE_SYSCALL) <<"clearing child tid...\n";
         uint32_t zero = 0;
-        size_t n = get_process()->mem_write(&zero, clear_child_tid, sizeof zero);
+        size_t n = get_process()->mem_write(&zero, clearChildTidVa_, sizeof zero);
         if (n!=sizeof zero) {
-            mfprintf(tracing(TRACE_SYSCALL))("cannot write clear_child_tid address 0x%08"PRIx32"\n", clear_child_tid);
+            tracing(TRACE_SYSCALL) <<"cannot write clear_child_tid address "
+                                   <<StringUtility::addrToString(clearChildTidVa_) <<"\n";
         } else {
-            mfprintf(tracing(TRACE_SYSCALL))("waking futex 0x%08"PRIx32"\n", clear_child_tid);
-            int nwoke = futex_wake(clear_child_tid, INT_MAX);
+            tracing(TRACE_SYSCALL) <<"waking futex " <<StringUtility::addrToString(clearChildTidVa_) <<"\n";
+            int nwoke = futex_wake(clearChildTidVa_, INT_MAX);
             if (nwoke<0)
-                mfprintf(tracing(TRACE_SYSCALL))("wake futex 0x%08"PRIx32" failed with %d\n", clear_child_tid, nwoke);
+                tracing(TRACE_SYSCALL) <<"wake futex " <<StringUtility::addrToString(clearChildTidVa_)
+                                       <<" failed with " <<nwoke <<"\n";
         }
     }
 }

@@ -125,7 +125,7 @@ string Edge::typeToString(EdgeType et) {
     cerr<<"Error: Edge-type is not of 'enum EdgeType'.";
     exit(1);
   }
-  return ""; // dead code. just to provide some return value to avoid false positive compiler warnings
+  return ""; // dead code.
 }
 
 string Edge::color() const {
@@ -341,15 +341,23 @@ string Flow::toDot(Labeler* labeler) {
     }
     if(_dotOptionDisplayStmt) {
       SgNode* node=labeler->getNode(*i);
-      if(labeler->isFunctionEntryLabel(*i))
+      if(labeler->isBlockBeginLabel(*i)) {
+        ss<<"{";
+      } else if(labeler->isBlockEndLabel(*i)) {
+        ss<<"}";
+      } else if(labeler->isFunctionEntryLabel(*i)) {
         ss<<"Entry:";
-      if(labeler->isFunctionExitLabel(*i))
+        ss<<SgNodeHelper::nodeToString(node);
+      } else if(labeler->isFunctionExitLabel(*i)) {
         ss<<"Exit:";
-      if(labeler->isFunctionCallLabel(*i))
+      } else if(labeler->isFunctionCallLabel(*i)) {
         ss<<"Call:";
-      if(labeler->isFunctionCallReturnLabel(*i))
+        ss<<SgNodeHelper::nodeToString(node);
+      } else if(labeler->isFunctionCallReturnLabel(*i)) {
         ss<<"CallReturn:";
-      ss<<SgNodeHelper::nodeToString(node);
+      } else {
+        ss<<SgNodeHelper::nodeToString(node);
+      }
     }
     if(_dotOptionDisplayLabel||_dotOptionDisplayStmt)
       ss << "\"";
