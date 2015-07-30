@@ -51,7 +51,7 @@ void initialize() {
         mfacilities.impset(DEBUG, false);
         mfacilities.impset(TRACE, false);
         mfacilities.impset(WHERE, false);
-        mfacilities.impset(MARCH, false);
+        mfacilities.impset(MARCH, true);
         mfacilities.impset(INFO,  true);
         mfacilities.impset(WARN,  true);
         mfacilities.impset(ERROR, true);
