@@ -61,9 +61,8 @@ class Driver< ::MFB::KLT::KLT> : public Driver< ::MFB::Sage> {
       const data_list_t & data;
 
       ::KLT::Runtime * runtime;
-      ::MFB::file_id_t file_id;
 
-      kernel_desc_t(node_t * root, const vsym_list_t & parameters, const data_list_t & data, ::KLT::Runtime * runtime, ::MFB::file_id_t file_id);
+      kernel_desc_t(node_t * root, const vsym_list_t & parameters, const data_list_t & data, ::KLT::Runtime * runtime);
     };
 
     typedef SgStatement * sg_stmt_ptr;
@@ -90,7 +89,7 @@ struct KLT<kernel_t> {
 private:
   static size_t kernel_cnt;
   static ::KLT::Descriptor::kernel_t * buildKernelDesc(const std::string & kernel_prefix);
-  static ::MFB::Sage<SgFunctionDeclaration>::build_result_t buildKernelDecl(::MFB::Driver< ::MFB::Sage> & driver, ::KLT::Descriptor::kernel_t & res, ::KLT::Runtime * runtime, ::MFB::file_id_t file_id);
+  static ::MFB::Sage<SgFunctionDeclaration>::build_result_t buildKernelDecl(::KLT::Descriptor::kernel_t & res, ::KLT::Runtime * runtime);
 };
 
 template <>

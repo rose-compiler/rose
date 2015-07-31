@@ -14,8 +14,8 @@ namespace MFB {
 Driver< ::MFB::KLT::KLT>::Driver(SgProject * project_) : ::MFB::Driver<Sage>(project_) {}
 Driver< ::MFB::KLT::KLT>::~Driver() {}
 
-Driver< ::MFB::KLT::KLT>::kernel_desc_t::kernel_desc_t(node_t * root_, const vsym_list_t & parameters_, const data_list_t & data_, ::KLT::Runtime * runtime_, ::MFB::file_id_t file_id_) :
-  root(root_), parameters(parameters_), data(data_), runtime(runtime_), file_id(file_id_) {}
+Driver< ::MFB::KLT::KLT>::kernel_desc_t::kernel_desc_t(node_t * root_, const vsym_list_t & parameters_, const data_list_t & data_, ::KLT::Runtime * runtime_) :
+  root(root_), parameters(parameters_), data(data_), runtime(runtime_) {}
 
 Driver< ::MFB::KLT::KLT>::looptree_desc_t::looptree_desc_t(node_t * node_, ::KLT::Runtime * runtime_, const ::KLT::Utils::symbol_map_t & symbol_map_) :
   symbol_map(symbol_map_), runtime(runtime_), node(node_) {}
@@ -94,11 +94,12 @@ void collectLoopsAndTiles(node_t * node, loop_vect_t & loops, tile_vect_t & tile
   }
 }
 
-sage_func_res_t KLT<kernel_t>::buildKernelDecl(::MFB::Driver< ::MFB::Sage> & driver, ::KLT::Descriptor::kernel_t & res, ::KLT::Runtime * runtime, ::MFB::file_id_t file_id) {
+sage_func_res_t KLT<kernel_t>::buildKernelDecl(::KLT::Descriptor::kernel_t & res, ::KLT::Runtime * runtime) {
+  ::MFB::Driver< ::MFB::Sage> & driver = runtime->getModelBuilder().getDriver();
   SgFunctionParameterList * kernel_param_list = runtime->getCallInterface().buildKernelParamList(res);
   SgType * kernel_ret_type = runtime->getCallInterface().buildKernelReturnType(res);
 
-  sage_func_desc_t sage_func_desc(res.kernel_name, kernel_ret_type, kernel_param_list, NULL, file_id, file_id);
+  sage_func_desc_t sage_func_desc(res.kernel_name, kernel_ret_type, kernel_param_list, NULL, runtime->getKernelFileID(), runtime->getKernelFileID());
 
   sage_func_res_t sage_func_res = driver.build<SgFunctionDeclaration>(sage_func_desc);
 
@@ -128,13 +129,14 @@ KLT<kernel_t>::build_result_t KLT<kernel_t>::build(::MFB::Driver< ::MFB::KLT::KL
   res->parameters = object.parameters;
   res->data = object.data;
 
-  sage_func_res_t sage_func_res = buildKernelDecl(driver, *res, object.runtime, object.file_id);
+  sage_func_res_t sage_func_res = buildKernelDecl(*res, object.runtime);
 
   ::KLT::Utils::symbol_map_t symbol_map;
 
   SgBasicBlock * body = object.runtime->getCallInterface().generateKernelBody(*res, sage_func_res.definition, symbol_map);
 
-  SgStatement * stmt = driver.build<node_t>(looptree_desc_t(object.root, object.runtime, symbol_map));
+  looptree_desc_t looptree_desc(object.root, object.runtime, symbol_map);
+  SgStatement * stmt = driver.build<node_t>(looptree_desc);
   SageInterface::appendStatement(stmt, body);
 
   SageInterface::setSourcePositionForTransformation(body);

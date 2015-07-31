@@ -14,31 +14,22 @@
 #include "KLT/api.hpp"
 #include "KLT/data.hpp"
 
-typedef ::DLX::TileK::language_t language_t; // Directives Language
-typedef language_t::directive_t directive_t;
-typedef language_t::clause_t clause_t;
-typedef language_t::kernel_construct_t kernel_construct_t;
-typedef language_t::data_clause_t data_clause_t;
+////////////////////////////////////////////////// Utils
 
-typedef ::KLT::Descriptor::data_t data_t;
-typedef ::KLT::Descriptor::section_t section_t;
-typedef ::KLT::Kernel::kernel_t kernel_t;
-typedef ::KLT::LoopTree::node_t node_t;
-typedef ::KLT::LoopTree::loop_t loop_t;
-typedef SgVariableSymbol vsym_t;
+template <class A, class B, class C>
+void maps_composition(const std::map<A, B> & map_A_B, const std::map<B, C> & map_B_C, std::map<A, C> & map_A_C) {
+  typename std::map<A, B>::const_iterator it_A_B;
+  for (it_A_B = map_A_B.begin(); it_A_B != map_A_B.end(); it_A_B++) {
+    typename std::map<B, C>::const_iterator it_B_C = map_B_C.find(it_A_B->second);
+    if (it_B_C != map_B_C.end())
+      map_A_C.insert(std::pair<A, C>(it_A_B->first, it_B_C->second));
+  }
+}
 
-typedef ::MFB::file_id_t file_id_t;
+////////////////////////////////////////////////// Extract Data
 
-typedef ::MFB::Driver< ::MFB::KLT::KLT> Driver;
-typedef Driver::kernel_desc_t kernel_desc_t;
-
-typedef std::vector<clause_t *> clause_list_t;
-typedef std::vector<vsym_t *> vsym_list_t;
-typedef std::vector<data_t *> data_list_t;
-typedef std::map<SgForStatement *, loop_t *> loop_map_t;
-
-// TODO template <class Language = language_t>
-KLT::Descriptor::data_t * convertData(language_t::data_clause_t * data_clause, const DLX::Frontend::data_sections_t & data_section) {
+template <class language_tpl>
+KLT::Descriptor::data_t * convertData(typename language_tpl::data_clause_t * data_clause, const DLX::Frontend::data_sections_t & data_section) {
   SgVariableSymbol * data_sym = data_section.first;
 
   SgType * base_type = data_sym->get_type();
@@ -49,122 +40,185 @@ KLT::Descriptor::data_t * convertData(language_t::data_clause_t * data_clause, c
     else assert(false);
     assert(base_type != NULL);
   }
-  data_t * data = new data_t(data_sym, base_type);
+  KLT::Descriptor::data_t * data = new KLT::Descriptor::data_t(data_sym, base_type);
   for (it_section = data_section.second.begin(); it_section != data_section.second.end(); it_section++)
-    data->sections.push_back(new section_t(it_section->lower_bound, it_section->size));
+    data->sections.push_back(new KLT::Descriptor::section_t(it_section->lower_bound, it_section->size));
   return data;
 }
 
-
-void convertDataList(const clause_list_t & clauses, data_list_t & data) {
-  clause_list_t::const_iterator it_clause;
+template <class language_tpl>
+void convertDataList(const std::vector<typename language_tpl::clause_t *> & clauses, std::vector<KLT::Descriptor::data_t *> & data) {
+  typename std::vector<typename language_tpl::clause_t *>::const_iterator it_clause;
   for (it_clause = clauses.begin(); it_clause != clauses.end(); it_clause++) {
-    data_clause_t * data_clause = language_t::isDataClause(*it_clause);
+    typename language_tpl::data_clause_t * data_clause = language_tpl::isDataClause(*it_clause);
     if (data_clause != NULL) {
-      const std::vector<DLX::Frontend::data_sections_t> & data_sections = language_t::getDataSections(data_clause);
+      const std::vector<DLX::Frontend::data_sections_t> & data_sections = language_tpl::getDataSections(data_clause);
       std::vector<DLX::Frontend::data_sections_t>::const_iterator it_data_sections;
       for (it_data_sections = data_sections.begin(); it_data_sections != data_sections.end(); it_data_sections++)
-        data.push_back(convertData(data_clause, *it_data_sections));
+        data.push_back(convertData<language_tpl>(data_clause, *it_data_sections));
     }
     else assert(false);
   }
 }
 
-class Runtime : public ::KLT::Runtime {
-  public:
-    Runtime(
-      MDCG::ModelBuilder & model_builder,
-      const std::string & klt_rtl_inc_dir, const std::string & klt_rtl_lib_dir,
-      const std::string & usr_rtl_inc_dir, const std::string & usr_rtl_lib_dir,
-      KLT::API::host_t * host_api, KLT::API::kernel_t * kernel_api, KLT::API::call_interface_t * call_interface
-    ) :
-      ::KLT::Runtime(model_builder, klt_rtl_inc_dir, klt_rtl_lib_dir, usr_rtl_inc_dir, usr_rtl_lib_dir, host_api, kernel_api, call_interface)
-    {}
+////////////////////////////////////////////////// Extract Kernels & Loops
 
-  protected:
-    virtual void loadExtraModel() { model_builder.add(tilek_model, "kernel", usr_rtl_inc_dir + "/RTL/Host", "h"); }
+typedef std::map<SgForStatement *, size_t> loop_id_map_t;
+typedef std::pair< ::KLT::Kernel::kernel_t *, loop_id_map_t> extracted_kernel_t;
 
-  public:
-    virtual void addRuntimeStaticData(MFB::Driver<MFB::Sage> & driver, const std::string & kernel_file_name, const std::string & static_file_name, size_t static_file_id) const {}
-};
-
-Runtime * initRuntime(
-  MFB::Driver<MFB::Sage> & driver,
-  MDCG::ModelBuilder model_builder,
-  const std::string & KLT_RTL, const std::string & USER_RTL,
-  const std::string & kernel_file, const std::string & static_file,
-  file_id_t & kernel_file_id, file_id_t & static_file_id
+template <class language_tpl>
+void extractLoopsAndKernels(
+  const std::vector<typename language_tpl::directive_t *> & directives,
+  std::map<typename language_tpl::directive_t *, SgForStatement *> & loop_directive_map,
+  std::map<typename language_tpl::directive_t *, extracted_kernel_t> & kernel_directives_map
 ) {
+  typedef typename language_tpl::directive_t directive_t;
 
-  KLT::API::host_t           * host_api       = new KLT::API::host_t();
-  KLT::API::kernel_t         * kernel_api     = new KLT::API::kernel_t();
-  KLT::API::call_interface_t * call_interface = new KLT::API::array_args_interface_t(driver, kernel_api);
-//KLT::API::call_interface_t * call_interface = new KLT::API::individual_args_interface_t(driver, kernel_api);
+  typename std::vector<directive_t *>::const_iterator it_directive;
+  for (it_directive = directives.begin(); it_directive != directives.end(); it_directive++) {
+    directive_t * directive = *it_directive;
 
-  std::string klt_rtl_inc_dir( KLT_RTL + "/include");
-  std::string klt_rtl_lib_dir( KLT_RTL + "/lib");
-  std::string usr_rtl_inc_dir(USER_RTL + "/include");
-  std::string usr_rtl_lib_dir(USER_RTL + "/lib");
+    typename language_tpl::kernel_construct_t * kernel_construct = language_tpl::isKernelConstruct(directive->construct);
+    typename language_tpl::loop_construct_t * loop_construct = language_tpl::isLoopConstruct(directive->construct);
 
-  Runtime * runtime = new Runtime(model_builder, klt_rtl_inc_dir, klt_rtl_lib_dir, usr_rtl_inc_dir, usr_rtl_lib_dir, host_api, kernel_api, call_interface);
-  runtime->loadModel();
-
-  kernel_file_id = driver.create(boost::filesystem::path(kernel_file));
-      driver.setUnparsedFile(kernel_file_id);
-      driver.setCompiledFile(kernel_file_id);
-  runtime->getKernelAPI().use(driver, kernel_file_id);
-
-  static_file_id = driver.create(boost::filesystem::path(static_file));
-      driver.setUnparsedFile(static_file_id);
-      driver.setCompiledFile(static_file_id);
-  runtime->getHostAPI().use(driver, static_file_id);
-
-  return runtime;
+    if (kernel_construct != NULL) {
+      // Where to store the result
+      extracted_kernel_t & kernel_directive = kernel_directives_map[directive];
+      // Associated code region.
+      SgStatement * region_base = language_tpl::getKernelRegion(kernel_construct);
+      // Associated data
+      std::vector<KLT::Descriptor::data_t *> data;
+      convertDataList<language_tpl>(directive->clause_list, data);
+      // Extract kernel
+      kernel_directive.first = KLT::Kernel::kernel_t::extract(region_base, data, kernel_directive.second);
+    }
+    else if (loop_construct != NULL) {
+      loop_directive_map.insert(std::pair<directive_t *, SgForStatement *>(directive, language_tpl::getLoopStatement(loop_construct)));
+    }
+    else assert(false);
+  }
 }
 
-void compile(SgProject * project, const std::string & KLT_RTL, const std::string & USER_RTL, const std::string & kernel_file, const std::string & static_file) {
-  ::DLX::Frontend::Frontend<language_t> frontend;
+////////////////////////////////////////////////// Generate Kernels
+
+typedef std::map<KLT::Descriptor::kernel_t *, std::vector<KLT::Descriptor::kernel_t *> > kernel_deps_map_t;
+
+template <class language_tpl>
+void generateAllKernels(
+  const std::map<typename language_tpl::directive_t *, SgForStatement *> & loop_directive_map,
+  const std::map<typename language_tpl::directive_t *, extracted_kernel_t> & kernel_directives_map,
+  std::map<typename language_tpl::directive_t *, std::pair<KLT::Kernel::kernel_t *, std::map<KLT::Runtime::tiling_info_t<language_tpl> *, kernel_deps_map_t> > > & kernel_directive_translation_map,
+  KLT::Runtime * runtime
+) {
+  typedef typename language_tpl::directive_t directive_t;
+  typedef KLT::Runtime::tiling_info_t<language_tpl> tiling_info_t;
+
+  typename std::map<directive_t *, extracted_kernel_t>::const_iterator it_kernel_directive;
+  for (it_kernel_directive = kernel_directives_map.begin(); it_kernel_directive != kernel_directives_map.end(); it_kernel_directive++) {
+    directive_t * directive = it_kernel_directive->first;
+    assert(language_tpl::isKernelConstruct(directive->construct));
+
+    KLT::Kernel::kernel_t * kernel = it_kernel_directive->second.first;
+    std::map<directive_t *, size_t> directive_loop_id_map;
+    maps_composition(loop_directive_map, it_kernel_directive->second.second, directive_loop_id_map);
+
+    kernel_directive_translation_map[directive].first = kernel;
+    std::map<tiling_info_t *, kernel_deps_map_t> & tiled_generated_kernels = kernel_directive_translation_map[directive].second;
+
+    // Apply tiling
+    std::map<tiling_info_t *, std::vector<KLT::Kernel::kernel_t *> > tiled_kernels;
+    runtime->applyLoopTiling<language_tpl>(kernel, directive_loop_id_map, tiled_kernels);
+
+    typename std::map<tiling_info_t *, std::vector<KLT::Kernel::kernel_t *> >::const_iterator it_tiled_kernel;
+    for (it_tiled_kernel = tiled_kernels.begin(); it_tiled_kernel != tiled_kernels.end(); it_tiled_kernel++) {
+      std::map<KLT::Kernel::kernel_t *, KLT::Descriptor::kernel_t *> translation_map;
+      std::map<KLT::Descriptor::kernel_t *, KLT::Kernel::kernel_t *> rtranslation_map;
+
+      kernel_deps_map_t & kernels = tiled_generated_kernels[it_tiled_kernel->first];
+
+      std::vector<KLT::Kernel::kernel_t *>::const_iterator it_kernel;
+      for (it_kernel = it_tiled_kernel->second.begin(); it_kernel != it_tiled_kernel->second.end(); it_kernel++) {
+//      assert(dynamic_cast<KLT::LoopTree::node_t *>((*it_kernel)->root) != NULL);
+        // Descriptor for kernel builder
+        MFB::Driver<MFB::KLT::KLT>::kernel_desc_t kernel_desc((*it_kernel)->root, (*it_kernel)->parameters, (*it_kernel)->data, runtime);
+        // Call builder
+        KLT::Descriptor::kernel_t * result = runtime->getDriver().build<KLT::Kernel::kernel_t>(kernel_desc);
+        // Insert result in containers
+        kernels.insert(std::pair<KLT::Descriptor::kernel_t *, std::vector<KLT::Descriptor::kernel_t *> >(result, std::vector<KLT::Descriptor::kernel_t *>()));
+        translation_map.insert(std::pair<KLT::Kernel::kernel_t *, KLT::Descriptor::kernel_t *>(*it_kernel, result));
+        rtranslation_map.insert(std::pair<KLT::Descriptor::kernel_t *, KLT::Kernel::kernel_t *>(result, *it_kernel));
+      }
+      // Figures out the dependencies between sub-kernels
+      runtime->solveDataFlow(kernel, it_tiled_kernel->first, it_tiled_kernel->second, kernels, translation_map, rtranslation_map);
+    }
+  }
+}
+
+////////////////////////////////////// 
+
+template <class language_tpl, class runtime_tpl, class host_api_tpl, class kernel_api_tpl, class call_interface_tpl>
+void compile(SgProject * project, const std::string & KLT_RTL, const std::string & USER_RTL, const std::string & basefilename) {
+  typedef typename language_tpl::directive_t directive_t;
+  typedef typename runtime_tpl::template tiling_info_t<language_tpl> tiling_info_t;
+  typedef std::map<tiling_info_t *, kernel_deps_map_t> tiling_choice_map_t;
+  typedef std::map<directive_t *, std::pair<KLT::Kernel::kernel_t *, tiling_choice_map_t> > kernel_directive_translation_map_t;
+
+  ::DLX::Frontend::Frontend<language_tpl> frontend;
   ::MFB::Driver< ::MFB::KLT::KLT> driver(project);
   ::MDCG::ModelBuilder model_builder(driver);
 
-  language_t::init();
+  language_tpl::init();
 
-  file_id_t kernel_file_id, static_file_id;
-  Runtime * runtime = initRuntime(driver, model_builder, KLT_RTL, USER_RTL, kernel_file, static_file, kernel_file_id, static_file_id);
+  std::string klt_inc_dir( KLT_RTL + "/include");
+  std::string usr_inc_dir(USER_RTL + "/include");
+
+  runtime_tpl * runtime = KLT::Runtime::build<runtime_tpl, host_api_tpl, kernel_api_tpl, call_interface_tpl>(driver, model_builder, klt_inc_dir, usr_inc_dir, basefilename);
 
   if (!frontend.parseDirectives(project)) {
     std::cerr << "Error in FrontEnd !!!" << std::endl;
     exit(1);
   }
 
-  std::vector<KLT::Descriptor::kernel_t *> generated_kernel;
+  std::map<directive_t *, SgForStatement *> loop_directive_map;
+  std::map<directive_t *, extracted_kernel_t> kernel_directives_map;
 
-  std::vector<directive_t *>::const_iterator it_directive;
-  for (it_directive = frontend.directives.begin(); it_directive != frontend.directives.end(); it_directive++) {
-    directive_t * directive = *it_directive;
+  extractLoopsAndKernels<language_tpl>(frontend.directives, loop_directive_map, kernel_directives_map);
 
-    // If it is a kernel contruct
-    kernel_construct_t * kernel_construct = language_t::isKernelConstruct(directive->construct);
-    if (kernel_construct == NULL) continue;
+  kernel_directive_translation_map_t kernel_directive_translation_map;
 
-    // Associated code region.
-    SgStatement * region_base = language_t::getKernelRegion(kernel_construct);
-    // Associated data
-    data_list_t data; convertDataList(directive->clause_list, data);
-
-    // Build kernel (extract looptree)
-    kernel_t kernel(region_base, data);
-
-    // TODO Apply loop construct to transform 'root' using 'std::map<SgForStatement *, loop_t *> kernel_t::loop_map'
-    {
-      MFB::Driver<MFB::KLT::KLT>::kernel_desc_t kernel_desc(kernel.root, kernel.parameters, kernel.data, runtime, kernel_file_id);
-      generated_kernel.push_back(driver.build<kernel_t>(kernel_desc));
-    }
-  }
-
+  generateAllKernels<language_tpl>(loop_directive_map, kernel_directives_map, kernel_directive_translation_map, runtime);
 
   // TODO
 }
+
+//////////////////////////////////////////////////
+
+namespace TileK {
+
+typedef KLT::API::host_t   host_t;
+typedef KLT::API::kernel_t kernel_t;
+
+#if 1
+typedef KLT::API::array_args_interface_t call_interface_t;
+#else
+typedef KLT::API::individual_args_interface_t call_interface_t;
+#endif
+
+class Runtime : public KLT::Runtime {
+  friend class KLT::Runtime;
+  protected:
+    Runtime(MFB::Driver<MFB::KLT::KLT> & driver, MDCG::ModelBuilder & model_builder) :
+      KLT::Runtime(driver, model_builder)
+    {}
+
+    virtual void loadExtraModel(const std::string & usr_inc_dir) {
+      model_builder.add(tilek_model, "kernel", usr_inc_dir + "/RTL/Host", "h");
+    }
+};
+
+}
+
+//////////////////////////////////////
 
 int main(int argc, char ** argv) {
   std::vector<std::string> args(argv, argv + argc);
@@ -178,10 +232,7 @@ int main(int argc, char ** argv) {
   std::string filename = source_file->get_sourceFileNameWithoutPath();
   std::string basename = filename.substr(0, filename.find_last_of('.'));
 
-  std::string kernel_filename(basename + "-kernel.c");
-  std::string static_filename(basename + "-data.c");
-
-  compile(project, std::string(KLT_RTL_INC_PATH), std::string(TILEK_RTL_INC_PATH), kernel_filename, static_filename);
+  compile<DLX::TileK::language_t, TileK::Runtime, TileK::host_t, TileK::kernel_t, TileK::call_interface_t>(project, KLT_PATH, TILEK_PATH, basename);
 
   project->unparse();
 

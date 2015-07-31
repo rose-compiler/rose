@@ -122,10 +122,13 @@ void ModelBuilder::setParentFromScope(Model::model_t & model, Model::element_t<k
   }
 }
 
-ModelBuilder::ModelBuilder(MFB::Driver<MFB::Sage> & mfb_driver) :
-  p_mfb_driver(mfb_driver),
+ModelBuilder::ModelBuilder(MFB::Driver<MFB::Sage> & driver) :
+  p_driver(driver),
   p_models()
 {}
+
+MFB::Driver<MFB::Sage> & ModelBuilder::getDriver() { return p_driver; }
+const MFB::Driver<MFB::Sage> & ModelBuilder::getDriver() const { return p_driver; }
  
 size_t ModelBuilder::create() {
   size_t model = p_models.size();
@@ -140,9 +143,9 @@ void ModelBuilder::add(
   std::string suffix
 ) {
   boost::filesystem::path file_path = path + "/" + name + "." + suffix;
-  size_t file_id = p_mfb_driver.add(file_path);
+  size_t file_id = p_driver.add(file_path);
 
-  MFB::api_t * api = p_mfb_driver.getAPI(file_id);
+  MFB::api_t * api = p_driver.getAPI(file_id);
 
   add(p_models[model_id], api);
 }

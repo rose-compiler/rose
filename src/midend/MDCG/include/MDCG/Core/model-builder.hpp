@@ -34,7 +34,7 @@ class ModelBuilder {
     typedef size_t model_id_t;
 
   private:
-    MFB::Driver<MFB::Sage> & p_mfb_driver;
+    MFB::Driver<MFB::Sage> & p_driver;
     std::vector<Model::model_t> p_models;
 
   private:
@@ -55,7 +55,10 @@ class ModelBuilder {
     void add(Model::model_t & model, SgType * type);
 
   public:
-    ModelBuilder(MFB::Driver<MFB::Sage> & mfb_driver);
+    ModelBuilder(MFB::Driver<MFB::Sage> & driver);
+
+    MFB::Driver<MFB::Sage> & getDriver();
+    const MFB::Driver<MFB::Sage> & getDriver() const;
 
     size_t create();
 

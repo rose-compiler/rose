@@ -23,6 +23,10 @@ KLT_INC_PATH= \
   -DKLT_RTL_INC_PATH=\"$(abs_top_srcdir)/src/backend/KLT\" \
   -DTILEK_RTL_INC_PATH=\"$(abs_top_srcdir)/tests/CompileTests/TileK\"
 
+PATHS= \
+  -DKLT_PATH=\"$(abs_top_srcdir)/src/backend/KLT\" \
+  -DTILEK_PATH=\"$(abs_top_srcdir)/tests/CompileTests/TileK\"
+
 KLT_LIBS=-lDLX-Core -lMFB-Sage -lMFB-Utils -lMDCG-Core -lMDCG-KLT -lKLT-Core
 
 #########################################
@@ -52,7 +56,7 @@ tilek_acc_cuda_LDADD= $(LIB_PATHS) $(KLT_LIBS) \
 #########################################
 
 test_new_klt_SOURCES=test-new-klt.cpp
-test_new_klt_CXXFLAGS=-g -O0 $(INC_PATHS) $(KLT_INC_PATH)
+test_new_klt_CXXFLAGS=-g -O0 $(INC_PATHS) $(PATHS)
 test_new_klt_LDADD= \
   -L$(top_builddir)/src/frontend/DLX/lib/core \
   -L$(top_builddir)/src/midend/MFB/lib/sage   \
@@ -62,7 +66,7 @@ test_new_klt_LDADD= \
   -L$(top_builddir)/src/backend/KLT/lib/      \
   -L$(builddir)/../lib/ $(LIBS_WITH_RPATH) \
   -lDLX-Core -lMFB-Sage -lMFB-KLT -lMFB-Utils -lMDCG-Core -lKLT \
-  -lDLX-TileK-acc \
+  -lDLX-TileK \
   $(ROSE_LIBS)
 
 #########################################

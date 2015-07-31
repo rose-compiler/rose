@@ -45,7 +45,7 @@ size_t extraction_context_t::nextLoopID() {
 }
 
 void extraction_context_t::registerLoop(SgForStatement * for_stmt, loop_t * loop) {
-  loop_map.insert(std::pair<SgForStatement *, loop_t *>(for_stmt, loop));
+  loop_map.insert(std::pair<SgForStatement *, size_t>(for_stmt, loop->id));
 }
 
 const extraction_context_t::vsym_set_t & extraction_context_t::getParameters() const {

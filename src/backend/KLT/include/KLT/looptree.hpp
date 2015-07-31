@@ -35,7 +35,7 @@ class extraction_context_t {
     typedef SgVariableSymbol vsym_t;
     typedef std::vector<vsym_t *> vsym_list_t;
     typedef std::set<vsym_t *> vsym_set_t;
-    typedef std::map<SgForStatement *, loop_t *> loop_map_t;
+    typedef std::map<SgForStatement *, size_t> loop_map_t;
 
   private:
     loop_map_t & loop_map;

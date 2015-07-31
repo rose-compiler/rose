@@ -28,7 +28,6 @@ class kernel_t {
 
     typedef std::vector<vsym_t *> vsym_list_t;
     typedef std::vector<data_t *> data_list_t;
-    typedef std::map<SgForStatement *, loop_t *> loop_map_t;
 
   public:
     node_t * root;
@@ -36,10 +35,11 @@ class kernel_t {
     vsym_list_t parameters;
     data_list_t data;
 
-    loop_map_t loop_map;
+  protected:
+    kernel_t();
 
   public:
-    kernel_t(SgStatement * stmt, const data_list_t & data_);
+    static kernel_t * extract(SgStatement * stmt, const data_list_t & data, std::map<SgForStatement *, size_t> & loop_map);
 };
 
 }
