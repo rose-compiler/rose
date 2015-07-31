@@ -420,19 +420,20 @@ public:
         return p_search;
     }
 
-    /** Specifies the word size for the SEARCH_WORDS heuristic. The default is based on the word size of the file header used
-     *  when the disassembler is constructed.
+    /** Property: Machine word size in bits.
+     *
+     *  Natural word size for the machine. This is usually the size of most registers. The default is based on the word size of
+     *  the file header used when the disassembler is constructed.
      *
      *  Thread safety: It is not safe to change the instruction search word size while another thread is using this same
-     *  Disassembler object. */
-    void set_wordsize(size_t);
-
-    /** Returns the word size used by the SEARCH_WORDS heuristic.
+     *  Disassembler object.
      *
-     *  Thread safety: This method is thread safe. */
+     * @{ */
+    void set_wordsize(size_t);
     size_t get_wordsize() const {
         return p_wordsize;
     }
+    /** @} */
 
     /** Specifies the alignment for the SEARCH_WORDS heuristic. The value must be a natural, postive power of two. The default
      *  is determined by the subclass (e.g., x86 would probably set this to one since instructions are not aligned, while ARM
@@ -449,20 +450,21 @@ public:
         return p_alignment;
     }
 
-    /** Specifies the byte order for the SEARCH_WORDS heuristic. The default is based on the byte order of the file header
-     *  used when the disassembler is constructed.
+    /** Property: Memory byte order.
      *
-     *  Thread safety: It is not safe to change the byte sex while another thread is using this same Disassembler object. */
+     *  The byte order for memory. The default is based on the byte order of the file header used when the disassembler is
+     *  constructed.
+     *
+     *  Thread safety: It is not safe to change the byte sex while another thread is using this same Disassembler object.
+     *
+     * @{ */
     void set_sex(ByteOrder::Endianness sex) {
         p_sex = sex;
     }
-
-    /** Returns the byte order used by the SEARCH_WORDS heuristic.
-     *
-     *  Thread safety: This method is thread safe. */
     ByteOrder::Endianness get_sex() const {
         return p_sex;
     }
+    /** @} */
 
     /** Returns the number of instructions successfully disassembled. The counter is updated by disassembleBlock(), which is
      *  generally called by all disassembly methods except for disassembleOne().

@@ -679,8 +679,11 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
             retval = byte_value;
         } else if (ByteOrder::ORDER_MSB==mem->get_byteOrder()) {
             retval = SValue::promote(concat(byte_value, retval));
-        } else {
+        } else if (ByteOrder::ORDER_LSB==mem->get_byteOrder()) {
             retval = SValue::promote(concat(retval, byte_value));
+        } else {
+            // See BaseSemantics::MemoryState::set_byteOrder
+            throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", get_insn());
         }
         if (compute_usedef) {
             const InsnSet &definers = byte_value->get_defining_instructions();
@@ -709,7 +712,18 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
     size_t nbytes = nbits/8;
     BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbytes; ++bytenum) {
-        size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
+        size_t byteOffset = 0;
+        if (1 == nbytes) {
+            // void
+        } else if (ByteOrder::ORDER_MSB == mem->get_byteOrder()) {
+            byteOffset = nbytes - (bytenum+1);
+        } else if (ByteOrder::ORDER_LSB == mem->get_byteOrder()) {
+            byteOffset = bytenum;
+        } else {
+            // See BaseSemantics::MemoryState::set_byteOrder
+            throw BaseSemantics::Exception("multi-byte write with memory having unspecified byte order", get_insn());
+        }
+
         BaseSemantics::SValuePtr byte_value = extract(value, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
         state->writeMemory(byte_addr, byte_value, this, this);

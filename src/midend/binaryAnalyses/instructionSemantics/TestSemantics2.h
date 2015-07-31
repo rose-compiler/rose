@@ -104,7 +104,12 @@ public:
 
     // Run-time checks
     void test(const BaseSemantics::RiscOperatorsPtr &ops) {
+        ByteOrder::Endianness savedByteOrder = ops->get_state()->get_memory_state()->get_byteOrder();
+        ops->get_state()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_LSB);
         test(ops->get_protoval(), ops->get_state(), ops);
+        ops->get_state()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_MSB);
+        test(ops->get_protoval(), ops->get_state(), ops);
+        ops->get_state()->get_memory_state()->set_byteOrder(savedByteOrder);
     }
     
     void test(const BaseSemantics::SValuePtr &protoval,

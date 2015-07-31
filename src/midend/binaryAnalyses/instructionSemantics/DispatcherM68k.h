@@ -19,6 +19,7 @@ protected:
         ASSERT_require(32==addrWidth);
         regcache_init();
         iproc_init();
+        memory_init();
     }
 
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
@@ -27,6 +28,9 @@ protected:
     /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
     void regcache_init();
 
+    /** Make sure memory is set up correctly. For instance, byte order should be big endian. */
+    void memory_init();
+
 public:
     /** Cached register.
      *
@@ -34,7 +38,7 @@ public:
      *  dictionary via set_register_dictionary() invalidates all entries of the cache.
      *
      * @{ */
-    RegisterDescriptor REG_D[8], REG_A[8], REG_FP[8], REG_PC, REG_CCR_C, REG_CCR_V, REG_CCR_Z, REG_CCR_N, REG_CCR_X;
+    RegisterDescriptor REG_D[8], REG_A[8], REG_FP[8], REG_PC, REG_CCR, REG_CCR_C, REG_CCR_V, REG_CCR_Z, REG_CCR_N, REG_CCR_X;
     RegisterDescriptor REG_MACSR_SU, REG_MACSR_FI, REG_MACSR_N, REG_MACSR_Z, REG_MACSR_V, REG_MACSR_C, REG_MAC_MASK;
     RegisterDescriptor REG_MACEXT0, REG_MACEXT1, REG_MACEXT2, REG_MACEXT3, REG_SSP, REG_SR_S, REG_SR, REG_VBR;
     /** @} */

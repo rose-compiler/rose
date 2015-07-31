@@ -1,9 +1,12 @@
 #include "sage3basic.h"
 #include "BaseSemantics2.h"
+#include "Diagnostics.h"
 #include "DispatcherX86.h"
 #include "integerOps.h"
 
 #undef si_value                                         // name pollution from siginfo.h
+
+using namespace rose::Diagnostics;
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -4395,6 +4398,24 @@ DispatcherX86::regcache_init()
         REG_anyBP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bp, maxWidth);
 
         REG_anyFLAGS = regdict->findLargestRegister(x86_regclass_flags, x86_flags_status, maxWidth);
+    }
+}
+
+void
+DispatcherX86::memory_init() {
+    if (BaseSemantics::StatePtr state = get_state()) {
+        if (BaseSemantics::MemoryStatePtr memory = state->get_memory_state()) {
+            switch (memory->get_byteOrder()) {
+                case ByteOrder::ORDER_LSB:
+                    break;
+                case ByteOrder::ORDER_MSB:
+                    mlog[WARN] <<"x86 memory state is using big-endian byte order\n";
+                    break;
+                case ByteOrder::ORDER_UNSPECIFIED:
+                    memory->set_byteOrder(ByteOrder::ORDER_LSB);
+                    break;
+            }
+        }
     }
 }
 

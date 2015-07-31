@@ -1,11 +1,13 @@
 #include "sage3basic.h"
 #include "BaseSemantics2.h"
+#include "Diagnostics.h"
 #include "DispatcherM68k.h"
 #include "stringify.h"
 #include <boost/foreach.hpp>
 
 
 using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+using namespace rose::Diagnostics;
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -3305,6 +3307,7 @@ DispatcherM68k::regcache_init() {
             ASSERT_require2(REG_FP[i].get_nbits()==64 || REG_FP[i].get_nbits()==80, "invalid floating point register size");
         }
         REG_PC = findRegister("pc", 32);
+        REG_CCR   = findRegister("ccr", 8);
         REG_CCR_C = findRegister("ccr_c", 1);
         REG_CCR_V = findRegister("ccr_v", 1);
         REG_CCR_Z = findRegister("ccr_z", 1);
@@ -3330,6 +3333,24 @@ DispatcherM68k::regcache_init() {
         REG_MACEXT1  = findRegister("accext1", 16, IS_OPTIONAL);
         REG_MACEXT2  = findRegister("accext2", 16, IS_OPTIONAL);
         REG_MACEXT3  = findRegister("accext3", 16, IS_OPTIONAL);
+    }
+}
+
+void
+DispatcherM68k::memory_init() {
+    if (BaseSemantics::StatePtr state = get_state()) {
+        if (BaseSemantics::MemoryStatePtr memory = state->get_memory_state()) {
+            switch (memory->get_byteOrder()) {
+                case ByteOrder::ORDER_LSB:
+                    mlog[WARN] <<"m68k memory state is using little-endian byte order\n";
+                    break;
+                case ByteOrder::ORDER_MSB:
+                    break;
+                case ByteOrder::ORDER_UNSPECIFIED:
+                    memory->set_byteOrder(ByteOrder::ORDER_MSB);
+                    break;
+            }
+        }
     }
 }
 
