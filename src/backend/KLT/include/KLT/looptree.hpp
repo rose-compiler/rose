@@ -124,16 +124,18 @@ struct stmt_t : public node_t {
 
 struct tile_t : public node_t {
   size_t id;
+
   unsigned long kind;
   size_t order;
   SgExpression * param;
 
   loop_t * loop;
+  size_t seqid; // ID in the loop
 
   tile_t * tile;
   block_t * block;
 
-  tile_t(size_t id_, unsigned long kind_, size_t order_, SgExpression * param_, loop_t * loop_);
+  tile_t(size_t id_, unsigned long kind_, size_t order_, SgExpression * param_, loop_t * loop_, size_t seqid_);
   virtual ~tile_t();
 };
 

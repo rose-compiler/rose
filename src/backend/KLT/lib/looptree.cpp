@@ -91,8 +91,8 @@ stmt_t::stmt_t(SgStatement * stmt) :
 
 stmt_t::~stmt_t() {}
 
-tile_t::tile_t(size_t id_, unsigned long kind_, size_t order_, SgExpression * param_, loop_t * loop_) :
-  node_t(e_tile), id(id_), kind(kind_), order(order_), param(param_), loop(loop_), tile(NULL), block(NULL) {}
+tile_t::tile_t(size_t id_, unsigned long kind_, size_t order_, SgExpression * param_, loop_t * loop_, size_t seqid_) :
+  node_t(e_tile), id(id_), kind(kind_), order(order_), param(param_), loop(loop_), seqid(seqid_), tile(NULL), block(NULL) {}
 
 tile_t::~tile_t() {}
 

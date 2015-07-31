@@ -77,11 +77,15 @@ struct language_t {
 
   // KLT Interface
 
+//  typedef std::true_type has_klt_support;
+
     typedef Directives::directive_t<language_t> directive_t;
     typedef Directives::generic_construct_t<language_t> construct_t;
     typedef Directives::generic_clause_t<language_t> clause_t;
 
     // Kernel support
+
+//    typedef std::true_type has_klt_kernel;
 
       typedef Directives::construct_t<language_t, e_construct_kernel> kernel_construct_t;
       static kernel_construct_t * isKernelConstruct(construct_t * construct);
@@ -89,23 +93,35 @@ struct language_t {
 
     // Loop support
 
+//    typedef std::true_type has_klt_loop;
+
       typedef Directives::construct_t<language_t, e_construct_loop> loop_construct_t;
       static loop_construct_t * isLoopConstruct(construct_t * construct);
       static SgForStatement * getLoopStatement(loop_construct_t * loop_construct);
 
     // Tile support
 
+//    typedef std::true_type has_klt_tile;
+
       typedef Directives::clause_t<language_t, e_clause_tile> tile_clause_t;
       static tile_clause_t * isTileClause(clause_t * clause);
+      typedef clause_t::parameters_t<e_clause_tile> tile_parameter_t;
+//    static tile_parameter_t * getTileParameter(tile_clause_t * clause);
 
     // Data support
+
+//    typedef std::true_type has_klt_data;
 
       typedef Directives::clause_t<language_t, e_clause_data> data_clause_t;
       static data_clause_t * isDataClause(clause_t * clause);
       static const std::vector<DLX::Frontend::data_sections_t> & getDataSections(data_clause_t * data_clause);
 
+  // TileK Interface
+
 #ifdef TILEK_THREADS
     // Thread support
+
+//    typedef std::true_type has_tilek_thread;
 
       typedef Directives::clause_t<language_t, e_clause_num_threads> num_threads_clause_t;
       static num_threads_clause_t * isNumThreadsClause(clause_t * clause);
@@ -113,6 +129,8 @@ struct language_t {
 
 #ifdef TILEK_ACCELERATOR
     // Accelerator support
+
+//    typedef std::true_type has_tilek_acc;
 
       typedef Directives::clause_t<language_t, e_clause_num_gangs> num_gangs_clause_t;
       static num_gangs_clause_t * isNumGangsClause(clause_t * clause);
@@ -177,15 +195,11 @@ struct generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_cl
     e_thread_tile,
 #endif
 #ifdef TILEK_ACCELERATOR
-    e_gang_0_tile,
-    e_gang_1_tile,
-    e_gang_2_tile,
-    e_worker_0_tile,
-    e_worker_1_tile,
-    e_worker_2_tile,
+    e_gang_tile,
+    e_worker_tile,
 #endif
   } kind;
-  size_t nbr_it; // Change name to param
+  SgExpression * param;
 };
 
 #ifdef TILEK_THREADS

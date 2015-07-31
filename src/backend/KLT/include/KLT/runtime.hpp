@@ -90,14 +90,14 @@ class Generator {
 
   public:
     template <class language_tpl>
-    struct tiling_info_t {};
+    struct tiling_info_t;
 
     template <class language_tpl>
     void applyLoopTiling(
       Kernel::kernel_t * kernel,
       const std::map<typename language_tpl::directive_t *, size_t> & directive_loop_id_map,
       std::map<tiling_info_t<language_tpl> *, std::vector<Kernel::kernel_t *> > & tiled_kernels
-    );
+    ) const;
 
     template <class language_tpl>
     void solveDataFlow(
@@ -107,7 +107,7 @@ class Generator {
       std::map<Descriptor::kernel_t *, std::vector<Descriptor::kernel_t *> > & kernel_deps_map,
       const std::map<Kernel::kernel_t *, Descriptor::kernel_t *> & translation_map,
       const std::map<Descriptor::kernel_t *, Kernel::kernel_t *> & rtranslation_map
-    );
+    ) const;
 };
 
 template <class generator_tpl>
@@ -134,15 +134,15 @@ generator_tpl * Generator::build(MFB::Driver<MFB::KLT::KLT> & driver, MDCG::Mode
   return generator;
 }
 
-template <class language_tpl>
+/*template <class language_tpl>
 void Generator::applyLoopTiling(
   Kernel::kernel_t * kernel,
   const std::map<typename language_tpl::directive_t *, size_t> & directive_loop_id_map,
   std::map<tiling_info_t<language_tpl> *, std::vector<Kernel::kernel_t *> > & tiled_kernels
-) {
+) const {
   tiling_info_t<language_tpl> * tiling_info = new tiling_info_t<language_tpl>();
   tiled_kernels[tiling_info].push_back(kernel);
-}
+}*/
 
 template <class language_tpl>
 void Generator::solveDataFlow(
@@ -152,7 +152,7 @@ void Generator::solveDataFlow(
   std::map<Descriptor::kernel_t *, std::vector<Descriptor::kernel_t *> > & kernel_deps_map,
   const std::map<Kernel::kernel_t *, Descriptor::kernel_t *> & translation_map,
   const std::map<Descriptor::kernel_t *, Kernel::kernel_t *> & rtranslation_map
-) {
+) const {
   // Simplest implementation I can think of: enforce text order...
 
   Descriptor::kernel_t * previous = NULL;

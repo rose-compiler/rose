@@ -26,45 +26,12 @@ void maps_composition(const std::map<A, B> & map_A_B, const std::map<B, C> & map
   }
 }
 
-/*TODO namespace DLX {
 namespace KLT {
-
-template <class language_tpl>
-class Compiler {
-  public:
-    typedef std::map<SgForStatement *, size_t> loop_id_map_t;
-    typedef std::pair< ::KLT::Kernel::kernel_t *, loop_id_map_t> extracted_kernel_t;
-    typedef std::map< ::KLT::Descriptor::kernel_t *, std::vector< ::KLT::Descriptor::kernel_t *> > kernel_deps_map_t;
-
-    typedef typename language_tpl::directive_t directive_t;
-
-  protected:
-    static KLT::Descriptor::data_t * convertData(typename language_tpl::data_clause_t * data_clause, const DLX::Frontend::data_sections_t & data_section);
-
-    static void convertDataList(const std::vector<typename language_tpl::clause_t *> & clauses, std::vector<KLT::Descriptor::data_t *> & data)
-
-    static void extractLoopsAndKernels(
-      const std::vector<directive_t *> & directives,
-      std::map<directive_t *, SgForStatement *> & loop_directive_map,
-      std::map<directive_t *, extracted_kernel_t> & kernel_directives_map
-    );
-
-    static void generateAllKernels(
-      const std::map<directive_t *, SgForStatement *> & loop_directive_map,
-      const std::map<directive_t *, extracted_kernel_t> & kernel_directives_map,
-      std::map<directive_t *, std::pair<KLT::Kernel::kernel_t *, std::map<KLT::Generator::tiling_info_t<language_tpl> *, kernel_deps_map_t> > > & kernel_directive_translation_map,
-      KLT::Generator * generator
-    );
-
-  public:
-    template <class generator_tpl>
-    void compile(SgProject * project, const std::string & KLT_RTL, const std::string & USER_RTL, const std::string & basefilename)
-};
-
-}}*/
 
 ////////////////////////////////////////////////// Extract Data
 
+// Requires:
+//   * language_tpl::has_klt_data
 template <class language_tpl>
 KLT::Descriptor::data_t * convertData(typename language_tpl::data_clause_t * data_clause, const DLX::Frontend::data_sections_t & data_section) {
   SgVariableSymbol * data_sym = data_section.first;
@@ -83,6 +50,8 @@ KLT::Descriptor::data_t * convertData(typename language_tpl::data_clause_t * dat
   return data;
 }
 
+// Requires:
+//   * language_tpl::has_klt_data
 template <class language_tpl>
 void convertDataList(const std::vector<typename language_tpl::clause_t *> & clauses, std::vector<KLT::Descriptor::data_t *> & data) {
   typename std::vector<typename language_tpl::clause_t *>::const_iterator it_clause;
@@ -103,6 +72,10 @@ void convertDataList(const std::vector<typename language_tpl::clause_t *> & clau
 typedef std::map<SgForStatement *, size_t> loop_id_map_t;
 typedef std::pair< ::KLT::Kernel::kernel_t *, loop_id_map_t> extracted_kernel_t;
 
+// Requires:
+//   * language_tpl::has_klt_kernel
+//   * language_tpl::has_klt_loop
+//   * language_tpl::has_klt_data
 template <class language_tpl>
 void extractLoopsAndKernels(
   const std::vector<typename language_tpl::directive_t *> & directives,
@@ -140,6 +113,10 @@ void extractLoopsAndKernels(
 
 typedef std::map<KLT::Descriptor::kernel_t *, std::vector<KLT::Descriptor::kernel_t *> > kernel_deps_map_t;
 
+// Requires:
+//   * language_tpl::has_klt_kernel
+//   * language_tpl::has_klt_loop
+//   * language_tpl::has_klt_tile
 template <class language_tpl>
 void generateAllKernels(
   const std::map<typename language_tpl::directive_t *, SgForStatement *> & loop_directive_map,
@@ -171,28 +148,145 @@ void generateAllKernels(
       std::map<KLT::Kernel::kernel_t *, KLT::Descriptor::kernel_t *> translation_map;
       std::map<KLT::Descriptor::kernel_t *, KLT::Kernel::kernel_t *> rtranslation_map;
 
-      kernel_deps_map_t & kernels = tiled_generated_kernels[it_tiled_kernel->first];
+      tiling_info_t * tiling_info = it_tiled_kernel->first;
+      const std::vector<KLT::Kernel::kernel_t *> & subkernels = it_tiled_kernel->second;
 
+      kernel_deps_map_t & kernels = tiled_generated_kernels[tiling_info];
+
+      // Build all the sub-kernels for one tiling_info
       std::vector<KLT::Kernel::kernel_t *>::const_iterator it_kernel;
-      for (it_kernel = it_tiled_kernel->second.begin(); it_kernel != it_tiled_kernel->second.end(); it_kernel++) {
-//      assert(dynamic_cast<KLT::LoopTree::node_t *>((*it_kernel)->root) != NULL);
+      for (it_kernel = subkernels.begin(); it_kernel != subkernels.end(); it_kernel++) {
+        KLT::Kernel::kernel_t * subkernel = *it_kernel;
+
+        assert(subkernel != NULL);
+        assert(subkernel->root != NULL);
+        assert(dynamic_cast<KLT::LoopTree::node_t *>(subkernel->root) != NULL);
+
         // Descriptor for kernel builder
-        MFB::Driver<MFB::KLT::KLT>::kernel_desc_t kernel_desc((*it_kernel)->root, (*it_kernel)->parameters, (*it_kernel)->data, generator);
+        MFB::Driver<MFB::KLT::KLT>::kernel_desc_t kernel_desc(subkernel->root, subkernel->parameters, subkernel->data, generator);
+
         // Call builder
         KLT::Descriptor::kernel_t * result = generator->getDriver().build<KLT::Kernel::kernel_t>(kernel_desc);
+
         // Insert result in containers
         kernels.insert(std::pair<KLT::Descriptor::kernel_t *, std::vector<KLT::Descriptor::kernel_t *> >(result, std::vector<KLT::Descriptor::kernel_t *>()));
-        translation_map.insert(std::pair<KLT::Kernel::kernel_t *, KLT::Descriptor::kernel_t *>(*it_kernel, result));
-        rtranslation_map.insert(std::pair<KLT::Descriptor::kernel_t *, KLT::Kernel::kernel_t *>(result, *it_kernel));
+        translation_map.insert(std::pair<KLT::Kernel::kernel_t *, KLT::Descriptor::kernel_t *>(subkernel, result));
+        rtranslation_map.insert(std::pair<KLT::Descriptor::kernel_t *, KLT::Kernel::kernel_t *>(result, subkernel));
       }
       // Figures out the dependencies between sub-kernels
-      generator->solveDataFlow(kernel, it_tiled_kernel->first, it_tiled_kernel->second, kernels, translation_map, rtranslation_map);
+      generator->solveDataFlow(kernel, tiling_info, subkernels, kernels, translation_map, rtranslation_map);
     }
   }
 }
 
+//////////////////////////////////////
+
+
+// Requires:
+//   * language_tpl::has_klt_loop
+//   * language_tpl::has_klt_tile
+template <class language_tpl>
+struct Generator::tiling_info_t {
+  typedef typename ::DLX::Directives::generic_clause_t<language_tpl>::template parameters_t<language_tpl::e_clause_tile> tile_parameter_t;
+  std::map<size_t, std::map<size_t, tile_parameter_t *> > tiling_map;
+};
+
+typedef std::vector<LoopTree::node_t *> node_list_t;
+typedef node_list_t::const_iterator node_list_citer_t;
+
+template <class language_tpl>
+LoopTree::node_t * applyTiling(LoopTree::node_t * node, const Generator::tiling_info_t<language_tpl> & tiling_info) {
+  switch (node->kind) {
+    case LoopTree::e_block:
+    {
+      LoopTree::block_t * block = new LoopTree::block_t();
+      const node_list_t & children = ((LoopTree::block_t*)node)->children;
+      for (node_list_citer_t it = children.begin(); it != children.end(); it++)
+        block->children.push_back(applyTiling<language_tpl>(*it, tiling_info));
+      break;
+    }
+    case LoopTree::e_cond:
+    {
+      LoopTree::cond_t * cond = new LoopTree::cond_t(*(LoopTree::cond_t *)node);
+      cond->branch_true = applyTiling<language_tpl>(((LoopTree::cond_t *)node)->branch_true, tiling_info);
+      cond->branch_false = applyTiling<language_tpl>(((LoopTree::cond_t *)node)->branch_false, tiling_info);
+      return cond;
+    }
+    case LoopTree::e_loop:
+    {
+      typedef typename Generator::tiling_info_t<language_tpl>::tile_parameter_t tile_parameter_t;
+      typename std::map<size_t, std::map<size_t, tile_parameter_t *> >::const_iterator it = tiling_info.tiling_map.find(((LoopTree::loop_t *)node)->id);
+      if (it != tiling_info.tiling_map.end()) {
+        assert(false); // TODO
+      }
+      else {
+        LoopTree::loop_t * loop = new LoopTree::loop_t(*(LoopTree::loop_t *)node);
+        loop->body = applyTiling<language_tpl>(((LoopTree::loop_t *)node)->body, tiling_info);
+        return loop;
+      }
+      assert(false);
+    }
+    case LoopTree::e_stmt:
+      return new LoopTree::stmt_t(*(LoopTree::stmt_t *)node);
+    case LoopTree::e_tile:
+    case LoopTree::e_ignored:
+    case LoopTree::e_unknown:
+    default:
+      assert(false);
+  }
+  assert(false);
+}
+
+template <class language_tpl>
+void splitKernelRoot(Kernel::kernel_t * kernel, const Generator::tiling_info_t<language_tpl> & tiling_info, std::vector<Kernel::kernel_t *> & kernels) {
+  kernels.push_back(new Kernel::kernel_t(applyTiling<language_tpl>(kernel->root, tiling_info), kernel->parameters, kernel->data));
+}
+
+// Requires:
+//   * language_tpl::has_klt_loop
+//   * language_tpl::has_klt_tile
+template <class language_tpl>
+void Generator::applyLoopTiling(
+  Kernel::kernel_t * kernel,
+  const std::map<typename language_tpl::directive_t *, size_t> & directive_loop_id_map,
+  std::map<tiling_info_t<language_tpl> *, std::vector<Kernel::kernel_t *> > & tiled_kernels
+) const {
+  typedef typename language_tpl::directive_t directive_t;
+  typedef typename language_tpl::loop_construct_t loop_construct_t;
+  typedef typename language_tpl::clause_t clause_t;
+  typedef typename language_tpl::tile_clause_t tile_clause_t;
+  typedef typename tiling_info_t<language_tpl>::tile_parameter_t tile_parameter_t;
+
+  tiling_info_t<language_tpl> * tiling_info = new tiling_info_t<language_tpl>();
+
+  typename std::map<directive_t *, size_t>::const_iterator it_loop;
+  for (it_loop = directive_loop_id_map.begin(); it_loop != directive_loop_id_map.end(); it_loop++) {
+    directive_t * directive = it_loop->first;
+    size_t loop_id = it_loop->second;
+
+    loop_construct_t * loop_construct = language_tpl::isLoopConstruct(directive->construct);
+    assert(loop_construct != NULL);
+
+    typename std::vector<clause_t *>::const_iterator it_clause;
+    size_t tile_cnt = 0;
+    for (it_clause = directive->clause_list.begin(); it_clause != directive->clause_list.end(); it_clause++) {
+      tile_clause_t * tile_clause = language_tpl::isTileClause(*it_clause);
+      if (tile_clause != NULL) {
+        tiling_info->tiling_map[loop_id][tile_cnt++] = new tile_parameter_t(tile_clause->parameters);
+      }
+    }
+  }
+
+  splitKernelRoot<language_tpl>(kernel, *tiling_info, tiled_kernels[tiling_info]);
+}
+
 ////////////////////////////////////// 
 
+// Requires:
+//   * language_tpl::has_klt_kernel
+//   * language_tpl::has_klt_loop
+//   * language_tpl::has_klt_tile
+//   * language_tpl::has_klt_data
 template <class language_tpl, class generator_tpl>
 void compile(SgProject * project, const std::string & KLT_RTL, const std::string & USER_RTL, const std::string & basefilename) {
   typedef typename language_tpl::directive_t directive_t;
@@ -228,6 +322,41 @@ void compile(SgProject * project, const std::string & KLT_RTL, const std::string
   // TODO
 }
 
+/* TODO
+template <class language_tpl>
+class Compiler {
+  public:
+    typedef std::map<SgForStatement *, size_t> loop_id_map_t;
+    typedef std::pair< ::KLT::Kernel::kernel_t *, loop_id_map_t> extracted_kernel_t;
+    typedef std::map< ::KLT::Descriptor::kernel_t *, std::vector< ::KLT::Descriptor::kernel_t *> > kernel_deps_map_t;
+
+    typedef typename language_tpl::directive_t directive_t;
+
+  protected:
+    static KLT::Descriptor::data_t * convertData(typename language_tpl::data_clause_t * data_clause, const DLX::Frontend::data_sections_t & data_section);
+
+    static void convertDataList(const std::vector<typename language_tpl::clause_t *> & clauses, std::vector<KLT::Descriptor::data_t *> & data)
+
+    static void extractLoopsAndKernels(
+      const std::vector<directive_t *> & directives,
+      std::map<directive_t *, SgForStatement *> & loop_directive_map,
+      std::map<directive_t *, extracted_kernel_t> & kernel_directives_map
+    );
+
+    static void generateAllKernels(
+      const std::map<directive_t *, SgForStatement *> & loop_directive_map,
+      const std::map<directive_t *, extracted_kernel_t> & kernel_directives_map,
+      std::map<directive_t *, std::pair<KLT::Kernel::kernel_t *, std::map<KLT::Generator::tiling_info_t<language_tpl> *, kernel_deps_map_t> > > & kernel_directive_translation_map,
+      KLT::Generator * generator
+    );
+
+  public:
+    template <class generator_tpl>
+    void compile(SgProject * project, const std::string & KLT_RTL, const std::string & USER_RTL, const std::string & basefilename)
+};
+
+*/
+
 //////////////////////////////////////////////////
 
 namespace TileK {
@@ -254,9 +383,11 @@ class Generator : public KLT::Generator {
     }
 };
 
-}
+} // namespace KLT::TileK
 
 //////////////////////////////////////
+
+} // namespace KLT
 
 int main(int argc, char ** argv) {
   std::vector<std::string> args(argv, argv + argc);
@@ -270,7 +401,7 @@ int main(int argc, char ** argv) {
   std::string filename = source_file->get_sourceFileNameWithoutPath();
   std::string basename = filename.substr(0, filename.find_last_of('.'));
 
-  compile<DLX::TileK::language_t, TileK::Generator>(project, KLT_PATH, TILEK_PATH, basename);
+  KLT::compile<DLX::TileK::language_t, KLT::TileK::Generator>(project, KLT_PATH, TILEK_PATH, basename);
 
   project->unparse();
 

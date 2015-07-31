@@ -39,6 +39,7 @@ class kernel_t {
     kernel_t();
 
   public:
+    kernel_t(node_t * root_, const vsym_list_t & parameters_, const data_list_t & data_);
     static kernel_t * extract(SgStatement * stmt, const data_list_t & data, std::map<SgForStatement *, size_t> & loop_map);
 };
 
