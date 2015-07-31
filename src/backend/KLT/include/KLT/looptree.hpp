@@ -5,6 +5,8 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <iostream>
+#include <string>
 
 class SgNode;
 class SgProject;
@@ -14,6 +16,11 @@ class SgForStatement;
 class SgVariableSymbol;
 
 namespace KLT {
+
+namespace Descriptor {
+  struct loop_t;
+  struct tile_t;
+}
 
 namespace LoopTree {
 
@@ -62,6 +69,9 @@ class extraction_context_t {
     const vsym_set_t & getParameters() const;
 };
 
+struct loop_t;
+struct tile_t;
+
 struct node_t {
   kind_e kind;
   node_t * parent;
@@ -70,6 +80,14 @@ struct node_t {
   virtual ~node_t();
 
   static node_t * extract(SgStatement * stmt, extraction_context_t & ctx);
+
+  virtual node_t * finalize() = 0;
+
+  std::string getGraphVizLabel() const;
+  virtual void toGraphViz(std::ostream & out, std::string indent) const = 0;
+
+  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops) const = 0;
+  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles) const = 0;
 };
 
 struct block_t : public node_t {
@@ -79,6 +97,13 @@ struct block_t : public node_t {
   virtual ~block_t();
 
   static block_t * extract(SgStatement * stmt, extraction_context_t & ctx);
+
+  virtual node_t * finalize();
+
+  virtual void toGraphViz(std::ostream & out, std::string indent) const;
+
+  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops) const;
+  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles) const;
 };
 
 struct cond_t : public node_t {
@@ -91,6 +116,13 @@ struct cond_t : public node_t {
   virtual ~cond_t();
 
   static cond_t * extract(SgStatement * stmt, extraction_context_t & ctx);
+
+  virtual node_t * finalize();
+
+  virtual void toGraphViz(std::ostream & out, std::string indent) const;
+
+  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops) const;
+  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles) const;
 };
 
 struct loop_t : public node_t {
@@ -111,6 +143,13 @@ struct loop_t : public node_t {
   virtual ~loop_t();
 
   static loop_t * extract(SgStatement * stmt, extraction_context_t & ctx);
+
+  virtual node_t * finalize();
+
+  virtual void toGraphViz(std::ostream & out, std::string indent) const;
+
+  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops) const;
+  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles) const;
 };
 
 struct stmt_t : public node_t {
@@ -120,6 +159,13 @@ struct stmt_t : public node_t {
   virtual ~stmt_t();
 
   static stmt_t * extract(SgStatement * stmt, extraction_context_t & ctx);
+
+  virtual node_t * finalize();
+
+  virtual void toGraphViz(std::ostream & out, std::string indent) const;
+
+  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops) const;
+  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles) const;
 };
 
 struct tile_t : public node_t {
@@ -129,14 +175,21 @@ struct tile_t : public node_t {
   size_t order;
   SgExpression * param;
 
-  loop_t * loop;
-  size_t seqid; // ID in the loop
+  size_t loop_id;
+  size_t tile_id; // ID in the loop
 
-  tile_t * tile;
-  block_t * block;
+  tile_t * next_tile;
+  node_t * next_node;
 
-  tile_t(size_t id_, unsigned long kind_, size_t order_, SgExpression * param_, loop_t * loop_, size_t seqid_);
+  tile_t(size_t id_, unsigned long kind_, size_t order_, SgExpression * param_, size_t loop_id_, size_t tile_id_);
   virtual ~tile_t();
+
+  virtual node_t * finalize();
+
+  virtual void toGraphViz(std::ostream & out, std::string indent) const;
+
+  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops) const;
+  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles) const;
 };
 
 }

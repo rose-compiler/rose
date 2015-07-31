@@ -2,6 +2,7 @@
 #include "sage3basic.h"
 
 #include "KLT/looptree.hpp"
+#include "KLT/descriptor.hpp"
 
 #include <iostream>
 
@@ -91,8 +92,8 @@ stmt_t::stmt_t(SgStatement * stmt) :
 
 stmt_t::~stmt_t() {}
 
-tile_t::tile_t(size_t id_, unsigned long kind_, size_t order_, SgExpression * param_, loop_t * loop_, size_t seqid_) :
-  node_t(e_tile), id(id_), kind(kind_), order(order_), param(param_), loop(loop_), seqid(seqid_), tile(NULL), block(NULL) {}
+tile_t::tile_t(size_t id_, unsigned long kind_, size_t order_, SgExpression * param_, size_t loop_id_, size_t tile_id_) :
+  node_t(e_tile), id(id_), kind(kind_), order(order_), param(param_), loop_id(loop_id_), tile_id(tile_id_), next_tile(NULL), next_node(NULL) {}
 
 tile_t::~tile_t() {}
 
@@ -216,6 +217,201 @@ stmt_t * stmt_t::extract(SgStatement * stmt, extraction_context_t & ctx) {
   }
   else assert(false);
 }
+
+std::string node_t::getGraphVizLabel() const {
+  std::ostringstream oss; oss << "node_" << this;
+  return oss.str();
+}
+
+void block_t::toGraphViz(std::ostream & out, std::string indent) const {
+  out << indent << getGraphVizLabel() << " [label=\"block\"]" << std::endl;
+  std::vector<node_t *>::const_iterator it;
+  for (it = children.begin(); it != children.end(); it++) {
+    (*it)->toGraphViz(out, indent + "  ");
+    out << indent + "  " << getGraphVizLabel() << " -> " << (*it)->getGraphVizLabel() << std::endl;
+  }
+
+  if (parent != NULL) {
+    out << indent + "  " << parent->getGraphVizLabel() << " -> " << getGraphVizLabel() << " [label=\"P\", contraint=false]" << std::endl;
+  }
+  else {
+    out << indent + "  " << parent->getGraphVizLabel() << " -> " << "node_null" << " [label=\"P\", contraint=false, color=red]" << std::endl;
+  }
+}
+
+void cond_t::toGraphViz(std::ostream & out, std::string indent) const {
+  out << indent << getGraphVizLabel() << " [label=\"If (" << condition->unparseToString() << ")\"]" << std::endl;
+  branch_true->toGraphViz(out, indent + "  ");
+  out << indent + "  " << getGraphVizLabel() << " -> " << branch_true->getGraphVizLabel() << " [label=\"T\"]" << std::endl;
+  branch_false->toGraphViz(out, indent + "  ");
+  out << indent + "  " << getGraphVizLabel() << " -> " << branch_false->getGraphVizLabel() << " [label=\"F\"]" << std::endl;
+
+  if (parent != NULL) {
+    out << indent + "  " << parent->getGraphVizLabel() << " -> " << getGraphVizLabel() << " [label=\"P\", contraint=false]" << std::endl;
+  }
+  else {
+    out << indent + "  " << parent->getGraphVizLabel() << " -> " << "node_null" << " [label=\"P\", contraint=false, color=red]" << std::endl;
+  }
+}
+
+void loop_t::toGraphViz(std::ostream & out, std::string indent) const {
+  out << indent << getGraphVizLabel() << " [label=\"Loop#" << id << "\\niterator=" << iterator->get_name().getString() << "\\nlower=" << lower_bound->unparseToString() << "\\nupper=" << upper_bound->unparseToString() << "\\nstride=" << stride->unparseToString() << "\\n\"]" << std::endl;
+  body->toGraphViz(out, indent + "  ");
+  out << indent + "  " << getGraphVizLabel() << " -> " << body->getGraphVizLabel() << std::endl;
+
+  if (parent != NULL) {
+    out << indent + "  " << parent->getGraphVizLabel() << " -> " << getGraphVizLabel() << " [label=\"P\", contraint=false]" << std::endl;
+  }
+  else {
+    out << indent + "  " << parent->getGraphVizLabel() << " -> " << "node_null" << " [label=\"P\", contraint=false, color=red]" << std::endl;
+  }
+}
+
+void tile_t::toGraphViz(std::ostream & out, std::string indent) const {
+  out << indent << getGraphVizLabel() << " [label=\"Tile #" << id << "\\nkind=" << kind << "\\norder=" << order << "\\nloop_id=" << loop_id << "\\ntile_id=" << tile_id << "\\n";
+  if (param != NULL) out << "param=" << param->unparseToString() << "\\n";
+  out << "\"]" << std::endl;
+
+  if (next_tile != NULL) {
+    next_tile->toGraphViz(out, indent + "  ");
+    out << indent + "  " << getGraphVizLabel() << " -> " << next_tile->getGraphVizLabel() << std::endl;
+  }
+  if (next_node != NULL) {
+    next_node->toGraphViz(out, indent + "  ");
+    out << indent + "  " << getGraphVizLabel() << " -> " << next_node->getGraphVizLabel() << std::endl;
+  }
+
+  if (parent != NULL) {
+    out << indent + "  " << parent->getGraphVizLabel() << " -> " << getGraphVizLabel() << " [label=\"P\", contraint=false]" << std::endl;
+  }
+  else {
+    out << indent + "  " << parent->getGraphVizLabel() << " -> " << "node_null" << " [label=\"P\", contraint=false, color=red]" << std::endl;
+  }
+}
+
+void stmt_t::toGraphViz(std::ostream & out, std::string indent) const {
+  out << indent << getGraphVizLabel() << " [label=\"" << statement->unparseToString() << "\"]" << std::endl;
+
+  if (parent != NULL) {
+    out << indent + "  " << parent->getGraphVizLabel() << " -> " << getGraphVizLabel() << " [label=\"P\", contraint=false]" << std::endl;
+  }
+  else {
+    out << indent + "  " << parent->getGraphVizLabel() << " -> " << "node_null" << " [label=\"P\", contraint=false, color=red]" << std::endl;
+  }
+}
+
+void block_t::collectLoops(std::vector<Descriptor::loop_t *> & loops) const {
+  std::vector<node_t *>::const_iterator it;
+  for (it = children.begin(); it != children.end(); it++)
+    (*it)->collectLoops(loops);
+}
+
+void block_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles) const {
+  std::vector<node_t *>::const_iterator it;
+  for (it = children.begin(); it != children.end(); it++)
+    (*it)->collectTiles(tiles);
+}
+
+void cond_t::collectLoops(std::vector<Descriptor::loop_t *> & loops) const {
+  branch_true->collectLoops(loops);
+  branch_false->collectLoops(loops);
+}
+
+void cond_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles) const {
+  branch_true->collectTiles(tiles);
+  branch_false->collectTiles(tiles);
+}
+
+template <class T>
+bool cmp_id(size_t val, T * elem) {
+  return val < elem->id;
+}
+
+void loop_t::collectLoops(std::vector<Descriptor::loop_t *> & loops) const {
+  loops.insert(
+    std::upper_bound(loops.begin(), loops.end(), id, cmp_id<Descriptor::loop_t>),
+    new Descriptor::loop_t(id, lower_bound, upper_bound, stride, iterator)
+  );
+
+  body->collectLoops(loops);
+}
+
+void loop_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles) const {
+  body->collectTiles(tiles);
+}
+
+void tile_t::collectLoops(std::vector<Descriptor::loop_t *> & loops) const {
+  if (next_tile != NULL) next_tile->collectLoops(loops);
+  if (next_node != NULL) next_node->collectLoops(loops);
+}
+
+void tile_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles) const {
+  tiles.insert(
+    std::upper_bound(tiles.begin(), tiles.end(), id, cmp_id<Descriptor::tile_t>),
+    new Descriptor::tile_t(id, (Descriptor::tile_kind_e)kind, order, param)
+  );
+
+  if (next_tile != NULL) next_tile->collectTiles(tiles);
+  if (next_node != NULL) next_node->collectTiles(tiles);
+}
+
+void stmt_t::collectLoops(std::vector<Descriptor::loop_t *> & loops) const {}
+void stmt_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles) const {}
+
+node_t * block_t::finalize() {
+  if (children.size() == 1) {
+    node_t * res = children[0];
+    res->parent = parent;
+    delete this;
+    return res;
+  }
+  else {
+    std::vector<node_t *>::iterator it;
+    for (it = children.begin(); it != children.end(); it++)
+      *it = (*it)->finalize();
+    return this;
+  }
+}
+
+node_t * cond_t::finalize() {
+  branch_true  = branch_true->finalize();
+  branch_false = branch_false->finalize();
+  return this;
+}
+
+node_t * loop_t::finalize() {
+  body = body->finalize();
+  return this;
+}
+
+node_t * tile_t::finalize() {
+  if (next_node != NULL) {
+    assert(next_tile == NULL);
+    node_t * node = next_node->finalize();
+    if (node->kind == e_tile) {
+      next_tile = (tile_t *)node;
+      next_node = NULL;
+    }
+    else {
+      next_tile = NULL;
+      next_node = node;
+    }
+  }
+  if (next_tile != NULL) {
+    assert(next_node == NULL);
+    node_t * node = next_tile->finalize();
+    assert(node->kind == e_tile);
+    next_tile = (tile_t *)node;
+
+    // TODO We can order the tiles here:
+    //    At this point 'next_tile' should be the first of a **ordered-linked-list** of tile_t
+    //    Move 'this' to the correct position in the **ordered-linked-list** of tile_t
+  }
+
+  return this;
+}
+
+node_t * stmt_t::finalize() { return this; }
 
 }
 

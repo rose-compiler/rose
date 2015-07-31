@@ -42,7 +42,7 @@ size_t KLT<kernel_t>::kernel_cnt = 0;
   std::ostringstream oss; oss << kernel_prefix << "_" << kernel_cnt;
   return new ::KLT::Descriptor::kernel_t(kernel_cnt, oss.str());
 }
-
+/*
 void insert(loop_t * loop, loop_vect_t & loops) { // FIXME
   loops.resize(loop->id + 1);
   loops[loop->id] = new ::KLT::Descriptor::loop_t(loop->id, loop->lower_bound, loop->upper_bound, loop->stride, loop->iterator);
@@ -92,7 +92,7 @@ void collectLoopsAndTiles(node_t * node, loop_vect_t & loops, tile_vect_t & tile
     default:
       assert(false);
   }
-}
+}*/
 
 sage_func_res_t KLT<kernel_t>::buildKernelDecl(::KLT::Descriptor::kernel_t & res, ::KLT::Generator * generator) {
   ::MFB::Driver< ::MFB::Sage> & driver = generator->getModelBuilder().getDriver();
@@ -124,7 +124,8 @@ KLT<kernel_t>::build_result_t KLT<kernel_t>::build(::MFB::Driver< ::MFB::KLT::KL
   std::string kernel_prefix = "klt_kernel";
   ::KLT::Descriptor::kernel_t * res = buildKernelDesc(kernel_prefix);
 
-  collectLoopsAndTiles(object.root, res->loops, res->tiles);
+  object.root->collectLoops(res->loops);
+  object.root->collectTiles(res->tiles);
 
   res->parameters = object.parameters;
   res->data = object.data;
@@ -225,9 +226,6 @@ KLT<loop_t>::build_result_t KLT<loop_t>::build(::MFB::Driver< ::MFB::KLT::KLT> &
   SgExpression * lower_bound = object.generator->getKernelAPI().buildGetLoopLower (loop->id, object.symbol_map.loop_context);
   SgExpression * upper_bound = object.generator->getKernelAPI().buildGetLoopUpper (loop->id, object.symbol_map.loop_context);
   SgExpression * stride      = object.generator->getKernelAPI().buildGetLoopStride(loop->id, object.symbol_map.loop_context);
-//SgExpression * lower_bound = ::KLT::Utils::translateExpression(loop->lower_bound, object.symbol_map);
-//SgExpression * upper_bound = ::KLT::Utils::translateExpression(loop->upper_bound, object.symbol_map);
-//SgExpression * stride      = ::KLT::Utils::translateExpression(loop->stride     , object.symbol_map);
 
   return SageBuilder::buildForStatement(
     SageBuilder::buildForInitStatement(SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildVarRefExp(iterator), lower_bound))),
@@ -239,6 +237,30 @@ KLT<loop_t>::build_result_t KLT<loop_t>::build(::MFB::Driver< ::MFB::KLT::KLT> &
 
 ///// LoopTree::tile_t
 
+std::pair<SgVariableSymbol *, SgForStatement *> buildTile(::MFB::Driver< ::MFB::KLT::KLT> & driver, tile_t * tile, ::KLT::Generator * generator, const ::KLT::Utils::symbol_map_t & symbol_map) {
+  std::pair<SgVariableSymbol *, SgForStatement *> res;
+
+  std::map<size_t, SgVariableSymbol *>::const_iterator it = symbol_map.iter_tiles.find(tile->id);
+  assert(it != symbol_map.iter_tiles.end());
+  res.first = it->second;
+  res.second = NULL;
+
+  // Only static (0) and dynamic (1) tiles are unparsed as loops other tiles are distributed (hence their iterators are constant for each instance of the kernel)
+  if (tile->kind == 0 || tile->kind == 1) {
+    SgExpression * lower_bound = SageBuilder::buildIntVal(0);
+    SgExpression * upper_bound = generator->getKernelAPI().buildGetTileLength(tile->id, symbol_map.loop_context);
+    SgExpression * stride      = generator->getKernelAPI().buildGetTileStride(tile->id, symbol_map.loop_context);
+
+    res.second = SageBuilder::buildForStatement(
+      SageBuilder::buildForInitStatement(SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildVarRefExp(res.first), lower_bound))),
+      SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(SageBuilder::buildVarRefExp(res.first), upper_bound)),
+      SageBuilder::buildPlusAssignOp(SageBuilder::buildVarRefExp(res.first), stride), NULL
+    );
+  }
+
+  return res;
+}
+
 KLT<tile_t>::build_result_t KLT<tile_t>::build(::MFB::Driver< ::MFB::KLT::KLT> & driver, const KLT<tile_t>::object_desc_t & object) {
   assert(object.node != NULL);
   assert(object.node->kind == ::KLT::LoopTree::e_tile);
@@ -246,9 +268,37 @@ KLT<tile_t>::build_result_t KLT<tile_t>::build(::MFB::Driver< ::MFB::KLT::KLT> &
 
   tile_t * tile = (tile_t *)object.node;
 
-  SgStatement * stmt = NULL;
+  std::vector<tile_t *> tile_chain;
+  std::map<size_t, SgExpression *> loop_iter_map;
+  while (tile->next_tile != NULL) {
+    tile_chain.push_back(tile);
+    loop_iter_map[tile->loop_id] = NULL;
+    tile = tile->next_tile;
+  };
+  tile_chain.push_back(tile);
+  loop_iter_map[tile->loop_id] = NULL;
 
-  assert(false); // TODO
+  // TODO reorder tiles if needed
+
+  std::map<size_t, SgExpression *>::iterator it_loop_iter;
+  for (it_loop_iter = loop_iter_map.begin(); it_loop_iter != loop_iter_map.end(); it_loop_iter++)
+    it_loop_iter->second = object.generator->getKernelAPI().buildGetLoopLower(it_loop_iter->first, object.symbol_map.loop_context);
+
+  SgBasicBlock * bb = SageBuilder::buildBasicBlock();
+
+  SgStatement * stmt = bb;
+  std::vector<tile_t *>::const_reverse_iterator it = tile_chain.rbegin();
+  while (it != tile_chain.rend()) {
+    std::pair<SgVariableSymbol *, SgForStatement *> res = buildTile(driver, *it, object.generator, object.symbol_map);
+    loop_iter_map[(*it)->loop_id] = SageBuilder::buildAddOp(loop_iter_map[(*it)->loop_id], SageBuilder::buildVarRefExp(res.first));
+    if (res.second != NULL) {
+      res.second->set_loop_body(stmt);
+      stmt = res.second;
+    }
+    it++;
+  }
+
+  SageInterface::appendStatement(driver.build<node_t>(looptree_desc_t(tile->next_node, object.generator, object.symbol_map)), bb);
 
   return stmt;
 }

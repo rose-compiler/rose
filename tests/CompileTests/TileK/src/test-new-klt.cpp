@@ -111,7 +111,18 @@ void extractLoopsAndKernels(
 
 ////////////////////////////////////////////////// Generate Kernels
 
-typedef std::map<KLT::Descriptor::kernel_t *, std::vector<KLT::Descriptor::kernel_t *> > kernel_deps_map_t;
+typedef std::map<Descriptor::kernel_t *, std::vector<Descriptor::kernel_t *> > kernel_deps_map_t;
+
+template <class language_tpl>
+struct tiling_result_t {
+  typedef Generator::tiling_info_t<language_tpl> tiling_info_t;
+
+  Kernel::kernel_t * original;
+
+  std::vector<Descriptor::loop_t *> loops;
+
+  std::map<tiling_info_t *, kernel_deps_map_t> tilled;
+};
 
 // Requires:
 //   * language_tpl::has_klt_kernel
@@ -121,8 +132,8 @@ template <class language_tpl>
 void generateAllKernels(
   const std::map<typename language_tpl::directive_t *, SgForStatement *> & loop_directive_map,
   const std::map<typename language_tpl::directive_t *, extracted_kernel_t> & kernel_directives_map,
-  std::map<typename language_tpl::directive_t *, std::pair<KLT::Kernel::kernel_t *, std::map<KLT::Generator::tiling_info_t<language_tpl> *, kernel_deps_map_t> > > & kernel_directive_translation_map,
-  KLT::Generator * generator
+  std::map<typename language_tpl::directive_t *, tiling_result_t<language_tpl> > & kernel_directive_translation_map,
+  Generator * generator
 ) {
   typedef typename language_tpl::directive_t directive_t;
   typedef KLT::Generator::tiling_info_t<language_tpl> tiling_info_t;
@@ -133,16 +144,40 @@ void generateAllKernels(
     assert(language_tpl::isKernelConstruct(directive->construct));
 
     KLT::Kernel::kernel_t * kernel = it_kernel_directive->second.first;
+    assert(kernel != NULL);
+
+    // Link directives to loop-ID through SgForStatement
     std::map<directive_t *, size_t> directive_loop_id_map;
     maps_composition(loop_directive_map, it_kernel_directive->second.second, directive_loop_id_map);
 
-    kernel_directive_translation_map[directive].first = kernel;
-    std::map<tiling_info_t *, kernel_deps_map_t> & tiled_generated_kernels = kernel_directive_translation_map[directive].second;
+    // Associated the kernel, its loops, and the map to store tilled kernels to the directive.
+    kernel_directive_translation_map[directive].original = kernel;
+    kernel->root->collectLoops(kernel_directive_translation_map[directive].loops);
+    std::map<tiling_info_t *, kernel_deps_map_t> & tiled_generated_kernels = kernel_directive_translation_map[directive].tilled;
 
-    // Apply tiling
+    // 'loops' should be sorted by ID and IDs should range from 0 to |loops|-1
+    assert(kernel_directive_translation_map[directive].loops.front()->id == 0);    
+    assert(kernel_directive_translation_map[directive].loops.back()->id == kernel_directive_translation_map[directive].loops.size() - 1);
+
+    // Should not find any tile at this point
+    { std::vector<Descriptor::tile_t *> tiles; kernel->root->collectTiles(tiles); assert(tiles.size() == 0); }
+
+#define OUTPUT_LOOPTREE_GRAPHVIZ
+
+#if defined(OUTPUT_LOOPTREE_GRAPHVIZ)
+    std::ofstream graphviz_stream("looptree.dot", std::ofstream::out);
+    graphviz_stream << "digraph looptree {" << std::endl;
+    graphviz_stream << "  subgraph cluster_original {" << std::endl;
+    kernel->root->toGraphViz(graphviz_stream, "    ");
+    graphviz_stream << "  }" << std::endl;
+    size_t tiled_kernel_cnt = 0;
+#endif
+
+    // Generate 'tiling_info' and associated sub-kernels
     std::map<tiling_info_t *, std::vector<KLT::Kernel::kernel_t *> > tiled_kernels;
     generator->applyLoopTiling<language_tpl>(kernel, directive_loop_id_map, tiled_kernels);
 
+    // For each 'tiling_info'
     typename std::map<tiling_info_t *, std::vector<KLT::Kernel::kernel_t *> >::const_iterator it_tiled_kernel;
     for (it_tiled_kernel = tiled_kernels.begin(); it_tiled_kernel != tiled_kernels.end(); it_tiled_kernel++) {
       std::map<KLT::Kernel::kernel_t *, KLT::Descriptor::kernel_t *> translation_map;
@@ -151,12 +186,24 @@ void generateAllKernels(
       tiling_info_t * tiling_info = it_tiled_kernel->first;
       const std::vector<KLT::Kernel::kernel_t *> & subkernels = it_tiled_kernel->second;
 
+      // To store the generated sub-kernels and their dependencies
       kernel_deps_map_t & kernels = tiled_generated_kernels[tiling_info];
+
+#if defined(OUTPUT_LOOPTREE_GRAPHVIZ)
+      graphviz_stream << "  subgraph cluster_v_" << tiled_kernel_cnt++ << " {" << std::endl;
+      size_t subkernel_cnt = 0;
+#endif
 
       // Build all the sub-kernels for one tiling_info
       std::vector<KLT::Kernel::kernel_t *>::const_iterator it_kernel;
       for (it_kernel = subkernels.begin(); it_kernel != subkernels.end(); it_kernel++) {
         KLT::Kernel::kernel_t * subkernel = *it_kernel;
+
+#if defined(OUTPUT_LOOPTREE_GRAPHVIZ)
+        graphviz_stream << "    subgraph cluster_v_" << subkernel_cnt++ << " {" << std::endl;
+        subkernel->root->toGraphViz(graphviz_stream, "      ");
+        graphviz_stream << "    }" << std::endl;
+#endif
 
         assert(subkernel != NULL);
         assert(subkernel->root != NULL);
@@ -173,9 +220,18 @@ void generateAllKernels(
         translation_map.insert(std::pair<KLT::Kernel::kernel_t *, KLT::Descriptor::kernel_t *>(subkernel, result));
         rtranslation_map.insert(std::pair<KLT::Descriptor::kernel_t *, KLT::Kernel::kernel_t *>(result, subkernel));
       }
+
+#if defined(OUTPUT_LOOPTREE_GRAPHVIZ)
+      graphviz_stream << "  }" << std::endl;
+#endif
+
       // Figures out the dependencies between sub-kernels
       generator->solveDataFlow(kernel, tiling_info, subkernels, kernels, translation_map, rtranslation_map);
     }
+#if defined(OUTPUT_LOOPTREE_GRAPHVIZ)
+    graphviz_stream << "}" << std::endl;
+    graphviz_stream.close();
+#endif
   }
 }
 
@@ -195,39 +251,73 @@ typedef std::vector<LoopTree::node_t *> node_list_t;
 typedef node_list_t::const_iterator node_list_citer_t;
 
 template <class language_tpl>
-LoopTree::node_t * applyTiling(LoopTree::node_t * node, const Generator::tiling_info_t<language_tpl> & tiling_info) {
+LoopTree::node_t * applyTiling(LoopTree::node_t * node, const Generator::tiling_info_t<language_tpl> & tiling_info, LoopTree::node_t * parent, size_t & tile_cnt) {
   switch (node->kind) {
     case LoopTree::e_block:
     {
+      const node_list_t & children = ((LoopTree::block_t *)node)->children;
       LoopTree::block_t * block = new LoopTree::block_t();
-      const node_list_t & children = ((LoopTree::block_t*)node)->children;
+        block->parent = parent;
       for (node_list_citer_t it = children.begin(); it != children.end(); it++)
-        block->children.push_back(applyTiling<language_tpl>(*it, tiling_info));
-      break;
+        block->children.push_back(applyTiling<language_tpl>(*it, tiling_info, block, tile_cnt));
+      return block;
     }
     case LoopTree::e_cond:
     {
       LoopTree::cond_t * cond = new LoopTree::cond_t(*(LoopTree::cond_t *)node);
-      cond->branch_true = applyTiling<language_tpl>(((LoopTree::cond_t *)node)->branch_true, tiling_info);
-      cond->branch_false = applyTiling<language_tpl>(((LoopTree::cond_t *)node)->branch_false, tiling_info);
+        cond->parent = parent;
+      cond->branch_true = applyTiling<language_tpl>(((LoopTree::cond_t *)node)->branch_true, tiling_info, cond, tile_cnt);
+      cond->branch_false = applyTiling<language_tpl>(((LoopTree::cond_t *)node)->branch_false, tiling_info, cond, tile_cnt);
       return cond;
     }
     case LoopTree::e_loop:
     {
+      LoopTree::loop_t * loop = (LoopTree::loop_t *)node;
       typedef typename Generator::tiling_info_t<language_tpl>::tile_parameter_t tile_parameter_t;
-      typename std::map<size_t, std::map<size_t, tile_parameter_t *> >::const_iterator it = tiling_info.tiling_map.find(((LoopTree::loop_t *)node)->id);
+      typename std::map<size_t, std::map<size_t, tile_parameter_t *> >::const_iterator it = tiling_info.tiling_map.find(loop->id);
       if (it != tiling_info.tiling_map.end()) {
-        assert(false); // TODO
+        const std::map<size_t, tile_parameter_t *> & tiling = it->second;
+
+        LoopTree::tile_t * first = NULL;
+        LoopTree::tile_t * last = NULL;
+
+        typename std::map<size_t, tile_parameter_t *>::const_iterator it_tile;
+        for (it_tile = tiling.begin(); it_tile != tiling.end(); it_tile++) {
+          LoopTree::tile_t * current = new LoopTree::tile_t(tile_cnt++, it_tile->second->kind, it_tile->second->order, it_tile->second->param, loop->id, it_tile->first);
+            current->parent = last;
+
+          if (last != NULL) {
+            last->next_tile = current;
+            last->next_node = NULL;
+          }
+          else first = current;
+
+          last = current;
+        }
+
+        assert(first != NULL);
+        first->parent = parent;
+
+        assert(last != NULL);
+        last->next_tile = NULL;
+        last->next_node = applyTiling<language_tpl>(loop->body, tiling_info, first, tile_cnt);
+
+        return first;
       }
       else {
         LoopTree::loop_t * loop = new LoopTree::loop_t(*(LoopTree::loop_t *)node);
-        loop->body = applyTiling<language_tpl>(((LoopTree::loop_t *)node)->body, tiling_info);
+          loop->parent = parent;
+        loop->body = applyTiling<language_tpl>(((LoopTree::loop_t *)node)->body, tiling_info, loop, tile_cnt);
         return loop;
       }
       assert(false);
     }
     case LoopTree::e_stmt:
-      return new LoopTree::stmt_t(*(LoopTree::stmt_t *)node);
+    {
+      LoopTree::stmt_t * stmt = new LoopTree::stmt_t(*(LoopTree::stmt_t *)node);
+        stmt->parent = parent;
+      return stmt;
+    }
     case LoopTree::e_tile:
     case LoopTree::e_ignored:
     case LoopTree::e_unknown:
@@ -239,7 +329,10 @@ LoopTree::node_t * applyTiling(LoopTree::node_t * node, const Generator::tiling_
 
 template <class language_tpl>
 void splitKernelRoot(Kernel::kernel_t * kernel, const Generator::tiling_info_t<language_tpl> & tiling_info, std::vector<Kernel::kernel_t *> & kernels) {
-  kernels.push_back(new Kernel::kernel_t(applyTiling<language_tpl>(kernel->root, tiling_info), kernel->parameters, kernel->data));
+  size_t tile_cnt = 0;
+  LoopTree::node_t * root = applyTiling<language_tpl>(kernel->root, tiling_info, NULL, tile_cnt);
+  root = root->finalize();
+  kernels.push_back(new Kernel::kernel_t(root, kernel->parameters, kernel->data));
 }
 
 // Requires:
@@ -292,7 +385,7 @@ void compile(SgProject * project, const std::string & KLT_RTL, const std::string
   typedef typename language_tpl::directive_t directive_t;
   typedef typename generator_tpl::template tiling_info_t<language_tpl> tiling_info_t;
   typedef std::map<tiling_info_t *, kernel_deps_map_t> tiling_choice_map_t;
-  typedef std::map<directive_t *, std::pair<KLT::Kernel::kernel_t *, tiling_choice_map_t> > kernel_directive_translation_map_t;
+  typedef std::map<directive_t *, tiling_result_t<language_tpl> > kernel_directive_translation_map_t;
 
   ::DLX::Frontend::Frontend<language_tpl> frontend;
   ::MFB::Driver< ::MFB::KLT::KLT> driver(project);
