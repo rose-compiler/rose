@@ -63,8 +63,8 @@ struct kernel_t {
   size_t id;
   std::string kernel_name;
 
-  std::vector<loop_t> loops;
-  std::vector<tile_t> tiles;
+  std::vector<loop_t *> loops;
+  std::vector<tile_t *> tiles;
 
   std::vector<SgVariableSymbol *> parameters;
   std::vector<data_t *> data;

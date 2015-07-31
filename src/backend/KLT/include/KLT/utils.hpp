@@ -10,7 +10,7 @@ class SgExpression;
 class SgStatement;
 class SgVariableSymbol;
 namespace KLT {
-  class Runtime;
+  class Generator;
   namespace Descriptor {
     struct loop_t;
     struct tile_t;

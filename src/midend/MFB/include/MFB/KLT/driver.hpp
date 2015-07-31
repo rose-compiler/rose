@@ -60,19 +60,19 @@ class Driver< ::MFB::KLT::KLT> : public Driver< ::MFB::Sage> {
       const vsym_list_t & parameters;
       const data_list_t & data;
 
-      ::KLT::Runtime * runtime;
+      ::KLT::Generator * generator;
 
-      kernel_desc_t(node_t * root, const vsym_list_t & parameters, const data_list_t & data, ::KLT::Runtime * runtime);
+      kernel_desc_t(node_t * root, const vsym_list_t & parameters, const data_list_t & data, ::KLT::Generator * generator);
     };
 
     typedef SgStatement * sg_stmt_ptr;
 
     struct looptree_desc_t {
       const ::KLT::Utils::symbol_map_t & symbol_map;
-      ::KLT::Runtime * runtime;
+      ::KLT::Generator * generator;
       node_t * node;
 
-      looptree_desc_t(node_t * node_, ::KLT::Runtime * runtime_, const ::KLT::Utils::symbol_map_t & symbol_map_);
+      looptree_desc_t(node_t * node_, ::KLT::Generator * generator_, const ::KLT::Utils::symbol_map_t & symbol_map_);
     };
 
     template <class Object>
@@ -89,7 +89,7 @@ struct KLT<kernel_t> {
 private:
   static size_t kernel_cnt;
   static ::KLT::Descriptor::kernel_t * buildKernelDesc(const std::string & kernel_prefix);
-  static ::MFB::Sage<SgFunctionDeclaration>::build_result_t buildKernelDecl(::KLT::Descriptor::kernel_t & res, ::KLT::Runtime * runtime);
+  static ::MFB::Sage<SgFunctionDeclaration>::build_result_t buildKernelDecl(::KLT::Descriptor::kernel_t & res, ::KLT::Generator * generator);
 };
 
 template <>

@@ -134,10 +134,10 @@ struct call_interface_t {
     virtual void getContextSymbol(SgFunctionDefinition * func_defn, Utils::symbol_map_t & symbol_map) const;
 
     // default: "loop_it_'loop.id'"
-    virtual void createLoopIterator(const std::vector<Descriptor::loop_t> & loops, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
+    virtual void createLoopIterator(const std::vector<Descriptor::loop_t *> & loops, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
 
     // default: "tile_it_'tile.id'"
-    virtual void createTileIterator(const std::vector<Descriptor::tile_t> & tiles, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
+    virtual void createTileIterator(const std::vector<Descriptor::tile_t *> & tiles, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
 
     virtual void addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const = 0;
     virtual void addKernelArgsForData(SgFunctionParameterList * param_list, const std::vector<Descriptor::data_t *> & data) const = 0;

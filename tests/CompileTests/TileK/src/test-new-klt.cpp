@@ -26,6 +26,43 @@ void maps_composition(const std::map<A, B> & map_A_B, const std::map<B, C> & map
   }
 }
 
+/*TODO namespace DLX {
+namespace KLT {
+
+template <class language_tpl>
+class Compiler {
+  public:
+    typedef std::map<SgForStatement *, size_t> loop_id_map_t;
+    typedef std::pair< ::KLT::Kernel::kernel_t *, loop_id_map_t> extracted_kernel_t;
+    typedef std::map< ::KLT::Descriptor::kernel_t *, std::vector< ::KLT::Descriptor::kernel_t *> > kernel_deps_map_t;
+
+    typedef typename language_tpl::directive_t directive_t;
+
+  protected:
+    static KLT::Descriptor::data_t * convertData(typename language_tpl::data_clause_t * data_clause, const DLX::Frontend::data_sections_t & data_section);
+
+    static void convertDataList(const std::vector<typename language_tpl::clause_t *> & clauses, std::vector<KLT::Descriptor::data_t *> & data)
+
+    static void extractLoopsAndKernels(
+      const std::vector<directive_t *> & directives,
+      std::map<directive_t *, SgForStatement *> & loop_directive_map,
+      std::map<directive_t *, extracted_kernel_t> & kernel_directives_map
+    );
+
+    static void generateAllKernels(
+      const std::map<directive_t *, SgForStatement *> & loop_directive_map,
+      const std::map<directive_t *, extracted_kernel_t> & kernel_directives_map,
+      std::map<directive_t *, std::pair<KLT::Kernel::kernel_t *, std::map<KLT::Generator::tiling_info_t<language_tpl> *, kernel_deps_map_t> > > & kernel_directive_translation_map,
+      KLT::Generator * generator
+    );
+
+  public:
+    template <class generator_tpl>
+    void compile(SgProject * project, const std::string & KLT_RTL, const std::string & USER_RTL, const std::string & basefilename)
+};
+
+}}*/
+
 ////////////////////////////////////////////////// Extract Data
 
 template <class language_tpl>
@@ -107,11 +144,11 @@ template <class language_tpl>
 void generateAllKernels(
   const std::map<typename language_tpl::directive_t *, SgForStatement *> & loop_directive_map,
   const std::map<typename language_tpl::directive_t *, extracted_kernel_t> & kernel_directives_map,
-  std::map<typename language_tpl::directive_t *, std::pair<KLT::Kernel::kernel_t *, std::map<KLT::Runtime::tiling_info_t<language_tpl> *, kernel_deps_map_t> > > & kernel_directive_translation_map,
-  KLT::Runtime * runtime
+  std::map<typename language_tpl::directive_t *, std::pair<KLT::Kernel::kernel_t *, std::map<KLT::Generator::tiling_info_t<language_tpl> *, kernel_deps_map_t> > > & kernel_directive_translation_map,
+  KLT::Generator * generator
 ) {
   typedef typename language_tpl::directive_t directive_t;
-  typedef KLT::Runtime::tiling_info_t<language_tpl> tiling_info_t;
+  typedef KLT::Generator::tiling_info_t<language_tpl> tiling_info_t;
 
   typename std::map<directive_t *, extracted_kernel_t>::const_iterator it_kernel_directive;
   for (it_kernel_directive = kernel_directives_map.begin(); it_kernel_directive != kernel_directives_map.end(); it_kernel_directive++) {
@@ -127,7 +164,7 @@ void generateAllKernels(
 
     // Apply tiling
     std::map<tiling_info_t *, std::vector<KLT::Kernel::kernel_t *> > tiled_kernels;
-    runtime->applyLoopTiling<language_tpl>(kernel, directive_loop_id_map, tiled_kernels);
+    generator->applyLoopTiling<language_tpl>(kernel, directive_loop_id_map, tiled_kernels);
 
     typename std::map<tiling_info_t *, std::vector<KLT::Kernel::kernel_t *> >::const_iterator it_tiled_kernel;
     for (it_tiled_kernel = tiled_kernels.begin(); it_tiled_kernel != tiled_kernels.end(); it_tiled_kernel++) {
@@ -140,26 +177,26 @@ void generateAllKernels(
       for (it_kernel = it_tiled_kernel->second.begin(); it_kernel != it_tiled_kernel->second.end(); it_kernel++) {
 //      assert(dynamic_cast<KLT::LoopTree::node_t *>((*it_kernel)->root) != NULL);
         // Descriptor for kernel builder
-        MFB::Driver<MFB::KLT::KLT>::kernel_desc_t kernel_desc((*it_kernel)->root, (*it_kernel)->parameters, (*it_kernel)->data, runtime);
+        MFB::Driver<MFB::KLT::KLT>::kernel_desc_t kernel_desc((*it_kernel)->root, (*it_kernel)->parameters, (*it_kernel)->data, generator);
         // Call builder
-        KLT::Descriptor::kernel_t * result = runtime->getDriver().build<KLT::Kernel::kernel_t>(kernel_desc);
+        KLT::Descriptor::kernel_t * result = generator->getDriver().build<KLT::Kernel::kernel_t>(kernel_desc);
         // Insert result in containers
         kernels.insert(std::pair<KLT::Descriptor::kernel_t *, std::vector<KLT::Descriptor::kernel_t *> >(result, std::vector<KLT::Descriptor::kernel_t *>()));
         translation_map.insert(std::pair<KLT::Kernel::kernel_t *, KLT::Descriptor::kernel_t *>(*it_kernel, result));
         rtranslation_map.insert(std::pair<KLT::Descriptor::kernel_t *, KLT::Kernel::kernel_t *>(result, *it_kernel));
       }
       // Figures out the dependencies between sub-kernels
-      runtime->solveDataFlow(kernel, it_tiled_kernel->first, it_tiled_kernel->second, kernels, translation_map, rtranslation_map);
+      generator->solveDataFlow(kernel, it_tiled_kernel->first, it_tiled_kernel->second, kernels, translation_map, rtranslation_map);
     }
   }
 }
 
 ////////////////////////////////////// 
 
-template <class language_tpl, class runtime_tpl, class host_api_tpl, class kernel_api_tpl, class call_interface_tpl>
+template <class language_tpl, class generator_tpl>
 void compile(SgProject * project, const std::string & KLT_RTL, const std::string & USER_RTL, const std::string & basefilename) {
   typedef typename language_tpl::directive_t directive_t;
-  typedef typename runtime_tpl::template tiling_info_t<language_tpl> tiling_info_t;
+  typedef typename generator_tpl::template tiling_info_t<language_tpl> tiling_info_t;
   typedef std::map<tiling_info_t *, kernel_deps_map_t> tiling_choice_map_t;
   typedef std::map<directive_t *, std::pair<KLT::Kernel::kernel_t *, tiling_choice_map_t> > kernel_directive_translation_map_t;
 
@@ -172,7 +209,7 @@ void compile(SgProject * project, const std::string & KLT_RTL, const std::string
   std::string klt_inc_dir( KLT_RTL + "/include");
   std::string usr_inc_dir(USER_RTL + "/include");
 
-  runtime_tpl * runtime = KLT::Runtime::build<runtime_tpl, host_api_tpl, kernel_api_tpl, call_interface_tpl>(driver, model_builder, klt_inc_dir, usr_inc_dir, basefilename);
+  generator_tpl * generator = KLT::Generator::build<generator_tpl>(driver, model_builder, klt_inc_dir, usr_inc_dir, basefilename);
 
   if (!frontend.parseDirectives(project)) {
     std::cerr << "Error in FrontEnd !!!" << std::endl;
@@ -186,7 +223,7 @@ void compile(SgProject * project, const std::string & KLT_RTL, const std::string
 
   kernel_directive_translation_map_t kernel_directive_translation_map;
 
-  generateAllKernels<language_tpl>(loop_directive_map, kernel_directives_map, kernel_directive_translation_map, runtime);
+  generateAllKernels<language_tpl>(loop_directive_map, kernel_directives_map, kernel_directive_translation_map, generator);
 
   // TODO
 }
@@ -195,20 +232,21 @@ void compile(SgProject * project, const std::string & KLT_RTL, const std::string
 
 namespace TileK {
 
-typedef KLT::API::host_t   host_t;
-typedef KLT::API::kernel_t kernel_t;
+class Generator : public KLT::Generator {
+  friend class KLT::Generator;
 
+  public:
+    typedef KLT::API::host_t   host_t;
+    typedef KLT::API::kernel_t kernel_t;
 #if 1
-typedef KLT::API::array_args_interface_t call_interface_t;
+    typedef KLT::API::array_args_interface_t call_interface_t;
 #else
-typedef KLT::API::individual_args_interface_t call_interface_t;
+    typedef KLT::API::individual_args_interface_t call_interface_t;
 #endif
 
-class Runtime : public KLT::Runtime {
-  friend class KLT::Runtime;
   protected:
-    Runtime(MFB::Driver<MFB::KLT::KLT> & driver, MDCG::ModelBuilder & model_builder) :
-      KLT::Runtime(driver, model_builder)
+    Generator(MFB::Driver<MFB::KLT::KLT> & driver, MDCG::ModelBuilder & model_builder) :
+      KLT::Generator(driver, model_builder)
     {}
 
     virtual void loadExtraModel(const std::string & usr_inc_dir) {
@@ -232,7 +270,7 @@ int main(int argc, char ** argv) {
   std::string filename = source_file->get_sourceFileNameWithoutPath();
   std::string basename = filename.substr(0, filename.find_last_of('.'));
 
-  compile<DLX::TileK::language_t, TileK::Runtime, TileK::host_t, TileK::kernel_t, TileK::call_interface_t>(project, KLT_PATH, TILEK_PATH, basename);
+  compile<DLX::TileK::language_t, TileK::Generator>(project, KLT_PATH, TILEK_PATH, basename);
 
   project->unparse();
 

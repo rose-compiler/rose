@@ -172,19 +172,19 @@ void call_interface_t::getContextSymbol(SgFunctionDefinition * func_defn, Utils:
   symbol_map.data_context = func_defn->lookup_variable_symbol("data_ctx"); assert(symbol_map.data_context != NULL);
 }
 
-void call_interface_t::createLoopIterator(const std::vector<Descriptor::loop_t> & loops, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
-  std::vector<Descriptor::loop_t>::const_iterator it;
+void call_interface_t::createLoopIterator(const std::vector<Descriptor::loop_t *> & loops, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
+  std::vector<Descriptor::loop_t *>::const_iterator it;
   for (it = loops.begin(); it != loops.end(); it++) {
-    std::ostringstream oss; oss << "l_" << it->id;
-    symbol_map.iter_loops.insert(std::pair<size_t, SgVariableSymbol *>(it->id, MFB::Utils::getExistingSymbolOrBuildDecl(oss.str(), it->iterator->get_type(), bb)));
+    std::ostringstream oss; oss << "l_" << (*it)->id;
+    symbol_map.iter_loops.insert(std::pair<size_t, SgVariableSymbol *>((*it)->id, MFB::Utils::getExistingSymbolOrBuildDecl(oss.str(), (*it)->iterator->get_type(), bb)));
   }
 }
 
-void call_interface_t::createTileIterator(const std::vector<Descriptor::tile_t> & tiles, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
-  std::vector<Descriptor::tile_t>::const_iterator it;
+void call_interface_t::createTileIterator(const std::vector<Descriptor::tile_t *> & tiles, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
+  std::vector<Descriptor::tile_t *>::const_iterator it;
   for (it = tiles.begin(); it != tiles.end(); it++) {
-    std::ostringstream oss; oss << "t_" << it->id;
-    symbol_map.iter_tiles.insert(std::pair<size_t, SgVariableSymbol *>(it->id, MFB::Utils::getExistingSymbolOrBuildDecl(oss.str(), SageBuilder::buildIntType(), bb)));
+    std::ostringstream oss; oss << "t_" << (*it)->id;
+    symbol_map.iter_tiles.insert(std::pair<size_t, SgVariableSymbol *>((*it)->id, MFB::Utils::getExistingSymbolOrBuildDecl(oss.str(), SageBuilder::buildIntType(), bb)));
   }
 }
 
