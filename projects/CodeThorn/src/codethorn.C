@@ -848,6 +848,25 @@ int main( int argc, char * argv[] ) {
   //VariableIdMapping variableIdMapping;
   //variableIdMapping.computeVariableSymbolMapping(sageProject);
 
+  //TODO1: make optional
+  SgNodeHelper::PragmaList pragmaList=SgNodeHelper::collectPragmaLines("provesa",root);
+  if(size_t numPragmas=pragmaList.size()>0) {
+    cout<<"STATUS: found "<<numPragmas<<" provesa pragmas."<<endl;
+    ROSE_ASSERT(numPragmas==1);
+    SgNodeHelper::PragmaList::iterator i=pragmaList.begin();
+    std::pair<std::string, SgNode*> p=*i;
+    option_specialize_fun_name="kernel_jacobi_2d_imper";
+    option_specialize_fun_param_list.push_back(0);
+    option_specialize_fun_const_list.push_back(2);
+    option_specialize_fun_param_list.push_back(1);
+    option_specialize_fun_const_list.push_back(16);
+    analyzer.setSkipSelectedFunctionCalls(true);
+    analyzer.setSkipArrayAccesses(true);
+    boolOptions.registerOption("verify-update-sequence-race-conditions",true);
+  }
+
+
+  //TODO1: refactor into separate function
   int numSubst=0;
   if(option_specialize_fun_name!="")
   {
