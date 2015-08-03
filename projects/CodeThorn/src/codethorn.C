@@ -30,6 +30,7 @@
 #include "ArrayElementAccessData.h"
 #include "Specialization.h"
 #include <map>
+#include "PragmaHandler.h"
 
 // test
 #include "Evaluator.h"
@@ -848,8 +849,8 @@ int main( int argc, char * argv[] ) {
   //VariableIdMapping variableIdMapping;
   //variableIdMapping.computeVariableSymbolMapping(sageProject);
 
-  //TODO1: make optional
-  SgNodeHelper::PragmaList pragmaList=SgNodeHelper::collectPragmaLines("provesa",root);
+#if 0
+  SgNodeHelper::PragmaList pragmaList=SgNodeHelper::collectPragmaLines("verify",root);
   if(size_t numPragmas=pragmaList.size()>0) {
     cout<<"STATUS: found "<<numPragmas<<" provesa pragmas."<<endl;
     ROSE_ASSERT(numPragmas==1);
@@ -863,39 +864,45 @@ int main( int argc, char * argv[] ) {
     analyzer.setSkipSelectedFunctionCalls(true);
     analyzer.setSkipArrayAccesses(true);
     boolOptions.registerOption("verify-update-sequence-race-conditions",true);
-  }
 
+    //TODO1: refactor into separate function
+    int numSubst=0;
+    if(option_specialize_fun_name!="") {
+      Specialization speci;
+      cout<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
 
-  //TODO1: refactor into separate function
-  int numSubst=0;
-  if(option_specialize_fun_name!="")
-  {
-    Specialization speci;
-    cout<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
-
-    string funNameToFind=option_specialize_fun_name;
-
-    for(size_t i=0;i<option_specialize_fun_param_list.size();i++) {
-      int param=option_specialize_fun_param_list[i];
-      int constInt=option_specialize_fun_const_list[i];
-      numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, analyzer.getVariableIdMapping());
+      string funNameToFind=option_specialize_fun_name;
+      
+      for(size_t i=0;i<option_specialize_fun_param_list.size();i++) {
+        int param=option_specialize_fun_param_list[i];
+        int constInt=option_specialize_fun_const_list[i];
+        numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, analyzer.getVariableIdMapping());
     }
-    cout<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
-    int numInit=0;
-    //cout<<"DEBUG: var init spec: "<<endl;
-    for(size_t i=0;i<option_specialize_fun_varinit_list.size();i++) {
+      cout<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
+      int numInit=0;
+      //cout<<"DEBUG: var init spec: "<<endl;
+      for(size_t i=0;i<option_specialize_fun_varinit_list.size();i++) {
       string varInit=option_specialize_fun_varinit_list[i];
       int varInitConstInt=option_specialize_fun_varinit_const_list[i];
       //cout<<"DEBUG: checking for varInitName nr "<<i<<" var:"<<varInit<<" Const:"<<varInitConstInt<<endl;
       numInit+=speci.specializeFunction(sageProject,funNameToFind, -1, 0, varInit, varInitConstInt,analyzer.getVariableIdMapping());
     }
-    cout<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
-
-    //root=speci.getSpecializedFunctionRootNode();
-    sageProject->unparse(0,0);
-    //exit(0);
+      cout<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
+      
+      //root=speci.getSpecializedFunctionRootNode();
+      sageProject->unparse(0,0);
+      //exit(0);
+    }
   }
-
+#else
+  PragmaHandler pragmaHandler;
+  pragmaHandler.handlePragmas(sageProject,&analyzer);
+  // TODO: requires more refactoring
+  option_specialize_fun_name=pragmaHandler.option_specialize_fun_name;
+  boolOptions.registerOption("verify-update-sequence-race-conditions",true);
+  // unparse specialized code
+  sageProject->unparse(0,0);
+#endif
 
   if(args.count("rewrite")) {
     rewriteSystem.resetStatistics();

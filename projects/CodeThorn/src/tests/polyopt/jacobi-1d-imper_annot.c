@@ -54,7 +54,7 @@ void print_array(int n,
 
 /* Main computational kernel. The whole function will be timed,
    including the call and return. */
-#pragma provesa dataracefree:tsteps==2,n==16;
+#pragma verify dataracefree tsteps==2 n==16
 static
 void kernel_jacobi_1d_imper(int tsteps,
 			    int n,

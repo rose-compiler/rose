@@ -45,7 +45,7 @@ static void print_array(int n,double A[16 + 0][16 + 0])
 /* Main computational kernel. The whole function will be timed,
    including the call and return. */
 
-#pragma provesa dataracefree:tsteps==2, n==16
+#pragma verify dataracefree tsteps==2 n==16
 static void kernel_jacobi_2d_imper(int tsteps,int n,double A[16 + 0][16 + 0],double B[16 + 0][16 + 0])
 {
   int t;

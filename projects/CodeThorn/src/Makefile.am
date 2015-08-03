@@ -77,6 +77,8 @@ codethorn_SOURCES = \
   ArrayElementAccessData.C \
   Specialization.h \
   Specialization.C \
+  PragmaHandler.h \
+  PragmaHandler.C \
   codethorn.h \
   codethorn.C
 
