@@ -150,10 +150,14 @@ struct array_args_interface_t : public call_interface_t {
   public:
     array_args_interface_t(::MFB::Driver< ::MFB::Sage> & driver, kernel_t * kernel_api);
 
+    // adds one arguments: 'void ** parameters' (array of pointers to the parameters) 
     virtual void addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const;
+    // adds one arguments: 'void ** data' (array of pointers to the data)
     virtual void addKernelArgsForData(SgFunctionParameterList * param_list, const std::vector<Descriptor::data_t *> & data) const;
 
+    // for each parameter create a local declaration using the array 'parameters'
     virtual void getSymbolForParameter(SgFunctionDefinition * kernel_defn, const std::vector<SgVariableSymbol *> & parameters, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
+    // for each data create a local declaration using the array 'data'
     virtual void getSymbolForData(SgFunctionDefinition * kernel_defn, const std::vector<Descriptor::data_t *> & data, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
 };
 
@@ -161,10 +165,14 @@ struct individual_args_interface_t : public call_interface_t {
   public:
     individual_args_interface_t(::MFB::Driver< ::MFB::Sage> & driver, kernel_t * kernel_api);
 
+    // adds one arguments for each parameter
     virtual void addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const;
+    // adds one arguments for each data
     virtual void addKernelArgsForData(SgFunctionParameterList * param_list, const std::vector<Descriptor::data_t *> & data) const;
 
+    // get parameters argument's symbol
     virtual void getSymbolForParameter(SgFunctionDefinition * kernel_defn, const std::vector<SgVariableSymbol *> & parameters, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
+    // get data argument's symbol
     virtual void getSymbolForData(SgFunctionDefinition * kernel_defn, const std::vector<Descriptor::data_t *> & data, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
 };
 

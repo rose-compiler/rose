@@ -144,6 +144,9 @@ check-test_5: test_5
 
 #########################################
 
-check-test-new-klt_1: $(srcdir)/test_1.c $(builddir)/$(TILEK_REL_PATH)/src/test-new-klt
-	$(builddir)/$(TILEK_REL_PATH)/src/test-new-klt $(ROSE_FLAGS) -c $(srcdir)/test_1.c
+check-test-new-klt_%: $(srcdir)/test_%.c $(builddir)/$(TILEK_REL_PATH)/src/test-new-klt
+	$(builddir)/$(TILEK_REL_PATH)/src/test-new-klt $(ROSE_FLAGS) -c $<
+
+#check-test-new-klt_1: $(srcdir)/test_1.c $(builddir)/$(TILEK_REL_PATH)/src/test-new-klt
+#	$(builddir)/$(TILEK_REL_PATH)/src/test-new-klt $(ROSE_FLAGS) -c $(srcdir)/test_1.c
 

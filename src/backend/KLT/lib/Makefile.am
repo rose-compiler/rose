@@ -1,7 +1,7 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS=core rtl
+SUBDIRS=#core rtl
 
 lib_LTLIBRARIES=libKLT.la
 

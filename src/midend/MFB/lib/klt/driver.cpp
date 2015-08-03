@@ -40,59 +40,8 @@ size_t KLT<kernel_t>::kernel_cnt = 0;
 
 ::KLT::Descriptor::kernel_t * KLT<kernel_t>::buildKernelDesc(const std::string & kernel_prefix) {
   std::ostringstream oss; oss << kernel_prefix << "_" << kernel_cnt;
-  return new ::KLT::Descriptor::kernel_t(kernel_cnt, oss.str());
+  return new ::KLT::Descriptor::kernel_t(kernel_cnt++, oss.str());
 }
-/*
-void insert(loop_t * loop, loop_vect_t & loops) { // FIXME
-  loops.resize(loop->id + 1);
-  loops[loop->id] = new ::KLT::Descriptor::loop_t(loop->id, loop->lower_bound, loop->upper_bound, loop->stride, loop->iterator);
-}
-
-void insert(tile_t * tile, tile_vect_t & tiles) { // FIXME
-  tiles.resize(tile->id + 1);
-  tiles[tile->id] = new ::KLT::Descriptor::tile_t(tile->id, (::KLT::Descriptor::tile_kind_e)tile->kind, tile->order, tile->param);
-}
-
-void collectLoopsAndTiles(node_t * node, loop_vect_t & loops, tile_vect_t & tiles) {
-  if (node == NULL) return;
-
-  assert(dynamic_cast<node_t *>(node) != NULL);
-
-  switch (node->kind) {
-    case ::KLT::LoopTree::e_block:
-    {
-      const node_list_t & children = ((block_t*)node)->children;
-      for (node_list_citer_t it = children.begin(); it != children.end(); it++)
-        collectLoopsAndTiles(*it, loops, tiles);
-      break;
-    }
-    case ::KLT::LoopTree::e_cond:
-      collectLoopsAndTiles(((cond_t*)node)->branch_true , loops, tiles);
-      collectLoopsAndTiles(((cond_t*)node)->branch_false, loops, tiles);
-      break;
-    case ::KLT::LoopTree::e_loop:
-    {
-      insert((loop_t *)node, loops);
-      collectLoopsAndTiles(((loop_t*)node)->body, loops, tiles);
-      break;
-    }
-    case ::KLT::LoopTree::e_tile:
-    {
-      tile_t * tile = (tile_t*)node;
-      insert(tile, tiles);
-      insert(tile->loop, loops);
-      collectLoopsAndTiles(tile->tile , loops, tiles);
-      collectLoopsAndTiles(tile->block, loops, tiles);
-      break;
-    }
-    case ::KLT::LoopTree::e_stmt:
-      break;
-    case ::KLT::LoopTree::e_ignored:
-    case ::KLT::LoopTree::e_unknown:
-    default:
-      assert(false);
-  }
-}*/
 
 sage_func_res_t KLT<kernel_t>::buildKernelDecl(::KLT::Descriptor::kernel_t & res, ::KLT::Generator * generator) {
   ::MFB::Driver< ::MFB::Sage> & driver = generator->getModelBuilder().getDriver();
@@ -100,6 +49,8 @@ sage_func_res_t KLT<kernel_t>::buildKernelDecl(::KLT::Descriptor::kernel_t & res
   SgType * kernel_ret_type = generator->getCallInterface().buildKernelReturnType(res);
 
   sage_func_desc_t sage_func_desc(res.kernel_name, kernel_ret_type, kernel_param_list, NULL, generator->getKernelFileID(), generator->getKernelFileID());
+
+  std::cerr << "[Info] (MFB::KLT::KLT<kernel_t>) Calling Driver<Sage>::build<SgFunctionDeclaration> to create " << res.kernel_name << " in file #" << generator->getKernelFileID() << "." << std::endl;
 
   sage_func_res_t sage_func_res = driver.build<SgFunctionDeclaration>(sage_func_desc);
 

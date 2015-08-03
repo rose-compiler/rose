@@ -109,17 +109,17 @@ node_t * node_t::extract(SgStatement * stmt, extraction_context_t & ctx) {
     case e_stmt:  res = stmt_t::extract (stmt, ctx); break;
 
     case e_ignored:
-      std::cerr << "[KLT][LoopTrees][Warning] Ignored statement " << stmt << " (type: " << stmt->class_name() << ")." << std::endl;
+      std::cerr << "[Warning] (KLT::LoopTrees::node_t::extract) Ignored statement " << stmt << " (type: " << stmt->class_name() << ")." << std::endl;
       break;
 
     case e_unknown:
     default: 
-      std::cerr << "[KLT][LoopTrees][Error] Uknown statement " << stmt << " (type: " << stmt->class_name() << ")." << std::endl;
+      std::cerr << "[Error] (KLT::LoopTrees::node_t::extract) Uknown statement " << stmt << " (type: " << stmt->class_name() << ")." << std::endl;
       assert(false);
   }
 
   if (res == NULL) {
-    std::cerr << "[KLT][LoopTrees][Warning] Statement " << stmt << " (type: " << stmt->class_name() << ") cannot be translated." << std::endl;
+    std::cerr << "[Warning] (KLT::LoopTrees::node_t::extract) Statement " << stmt << " (type: " << stmt->class_name() << ") cannot be translated." << std::endl;
   }
 
   return res;
@@ -359,8 +359,9 @@ void stmt_t::collectLoops(std::vector<Descriptor::loop_t *> & loops) const {}
 void stmt_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles) const {}
 
 node_t * block_t::finalize() {
+  std::cerr << "[Info] (KLT::LoopTree::block_t::finalize)" << std::endl;
   if (children.size() == 1) {
-    node_t * res = children[0];
+    node_t * res = children[0]->finalize();
     res->parent = parent;
     delete this;
     return res;
@@ -374,21 +375,27 @@ node_t * block_t::finalize() {
 }
 
 node_t * cond_t::finalize() {
+  std::cerr << "[Info] (KLT::LoopTree::cond_t::finalize)" << std::endl;
   branch_true  = branch_true->finalize();
   branch_false = branch_false->finalize();
   return this;
 }
 
 node_t * loop_t::finalize() {
+  std::cerr << "[Info] (KLT::LoopTree::loop_t::finalize) Loop #" << id << std::endl;
   body = body->finalize();
   return this;
 }
 
 node_t * tile_t::finalize() {
-  if (next_node != NULL) {
+  std::cerr << "[Info] (KLT::LoopTree::tile_t::finalize) Loop #" << loop_id << ", Tile #" << tile_id << std::endl;
+
+  if (next_node != NULL) { // it is the last tile in a chain
     assert(next_tile == NULL);
-    node_t * node = next_node->finalize();
-    if (node->kind == e_tile) {
+
+    node_t * node = next_node->finalize();  // recursive call on the next node
+
+    if (node->kind == e_tile) { // 'next_node' was a block with only one children which is a tile
       next_tile = (tile_t *)node;
       next_node = NULL;
     }
@@ -397,15 +404,60 @@ node_t * tile_t::finalize() {
       next_node = node;
     }
   }
-  if (next_tile != NULL) {
+  else if (next_tile != NULL) { // in a chain of tiles
     assert(next_node == NULL);
     node_t * node = next_tile->finalize();
     assert(node->kind == e_tile);
     next_tile = (tile_t *)node;
+  }
+  else assert(false);
 
-    // TODO We can order the tiles here:
-    //    At this point 'next_tile' should be the first of a **ordered-linked-list** of tile_t
-    //    Move 'this' to the correct position in the **ordered-linked-list** of tile_t
+  if (next_tile != NULL) { // in a chain of tiles and 'next_tile' should be the first of a **ordered-linked-list** of tile_t
+    tile_t * curr = this;
+    tile_t * prev = NULL;
+    do {
+      prev = curr; curr = prev->next_tile;
+      if (curr == NULL) break;
+
+      if (curr->order == order) {
+        std::cerr << "[Warning] (KLT::LoopTree::tile_t::finalize) Tile #" << tile_id << " of loop #" << loop_id << " and tile #" << curr->tile_id << " of loop #" << curr->loop_id << " have the same ordering index = " << order << "." << std::endl;
+        std::cerr << "[Warning] (KLT::LoopTree::tile_t::finalize) Resulting tile order is undefined." << std::endl; // should be increasing order of the pair loop ID and tile ID. See sort
+      }
+    } while (order > curr->order);
+    if (curr == next_tile) {
+      // insert first (nothing to do)
+    }
+    else if (curr != NULL) {
+      // insert between 'prev' and 'curr'
+
+      tile_t * res = next_tile;
+        res->parent = parent;
+
+      prev->next_tile = this;
+      parent = prev;
+      next_tile = curr;
+      curr->parent = this;
+
+      return res;
+    }
+    else {
+      // insert last (after 'prev')
+
+      tile_t * res = next_tile;
+        res->parent = parent;
+
+      next_tile = NULL;
+      next_node = prev->next_node;
+      parent = prev;
+      
+      prev->next_tile = this;
+      prev->next_node = NULL;
+
+      next_node->parent = this;
+      
+      return res;
+    }
+    
   }
 
   return this;
