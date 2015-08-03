@@ -207,7 +207,7 @@ RSIM_Linux32::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembl
 }
 
 PtRegs
-RSIM_Linux32::initialRegistersArch() {
+RSIM_Linux32::initialRegistersArch(RSIM_Process*) {
     PtRegs regs;
     memset(&regs, 0, sizeof regs);
     regs.sp = 0xc0000000ul;                             // high end of stack, exclusive

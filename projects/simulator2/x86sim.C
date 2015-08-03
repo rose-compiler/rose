@@ -7,6 +7,7 @@
 #include <RSIM_Debugger.h>
 #include <RSIM_Linux32.h>
 #include <RSIM_Linux64.h>
+#include <RSIM_ColdFire.h>
 #include <RSIM_Tools.h>
 #include <Diagnostics.h>
 #include <Sawyer/CommandLine.h>
@@ -18,7 +19,12 @@ using namespace rose::BinaryAnalysis;
 
 Sawyer::Message::Facility mlog;
 
-enum GuestOs { GUEST_OS_NONE, GUEST_OS_LINUX_x86, GUEST_OS_LINUX_amd64 };
+enum GuestOs {
+    GUEST_OS_NONE,                                      // No guest operating system specified
+    GUEST_OS_LINUX_x86,                                 // Linux on 32-bit Intel x86 processor ("x86" is the kernel's name)
+    GUEST_OS_LINUX_amd64,                               // Linux on 64-bit Intel x86 processor ("amd64" is the kernel's name)
+    GUEST_OS_ColdFire,                                  // Raw FreeScale ColdFire hardware
+};
 
 struct Settings {
     GuestOs guestOs;
@@ -103,10 +109,12 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     sg.insert(Switch("arch")
               .argument("architecture", enumParser<GuestOs>(settings.guestOs)
                         ->with("linux-x86", GUEST_OS_LINUX_x86)
-                        ->with("linux-amd64", GUEST_OS_LINUX_amd64))
+                        ->with("linux-amd64", GUEST_OS_LINUX_amd64)
+                        ->with("coldfire", GUEST_OS_ColdFire))
               .doc("Simulated host architecture.  The supported architectures are:"
                    "@named{linux-x86}{Linux operating system running on 32-bit x86-compatible hardware.}"
-                   "@named{linux-amd64}{Linux operating system running on 64-bit amd64-compatible hardware.}"));
+                   "@named{linux-amd64}{Linux operating system running on 64-bit amd64-compatible hardware.}"
+                   "@named{coldfire}{Naked FreeScale ColdFire hardware with no operating system.}"));
 
     sg.insert(Switch("signals")
               .intrinsicValue(true, settings.catchingSignals)
@@ -186,6 +194,9 @@ main(int argc, char *argv[], char *envp[]) {
             break;
         case GUEST_OS_LINUX_amd64:
             simulate<RSIM_Linux64>(settings, specimen, envp);
+            break;
+        case GUEST_OS_ColdFire:
+            simulate<RSIM_ColdFire>(settings, specimen, envp);
             break;
         case GUEST_OS_NONE:
             ::mlog[FATAL] <<"no architecture specified (\"--arch\"); see \"--help\"\n";

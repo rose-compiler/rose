@@ -330,7 +330,7 @@ public:
                  * address of a CALL instruction in executable memory.  This only handles CALLs encoded in two or five
                  * bytes. */
                 bool bp_not_pushed = false;
-                const RegisterDescriptor &REG_SP = args.thread->dispatcher()->REG_anySP;
+                const RegisterDescriptor &REG_SP = args.thread->get_process()->disassembler()->stackPointerRegister();
                 uint64_t sp = args.thread->operators()->readRegister(REG_SP)->get_number();
                 uint64_t top = 0;
                 bool isTopValid = false;

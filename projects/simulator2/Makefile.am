@@ -27,6 +27,7 @@ libRSIM_la_CPPFLAGS = $(ROSE_INCLUDES)
 libRSIM_la_SOURCES =				\
 	RSIM_Adapter.C				\
 	RSIM_Callbacks.C			\
+	RSIM_ColdFire.C				\
 	RSIM_Common.C				\
 	RSIM_Debugger.C				\
 	RSIM_Futex.C				\
@@ -43,6 +44,7 @@ libRSIM_la_SOURCES =				\
 include_HEADERS +=				\
 	RSIM_Adapter.h				\
 	RSIM_Callbacks.h			\
+	RSIM_ColdFire.h				\
 	RSIM_Common.h				\
 	RSIM_Debugger.h				\
 	RSIM_Futex.h				\

@@ -8,7 +8,7 @@
 #include "RSIM_Adapter.h"
 #include <boost/foreach.hpp>
 
-/* Simulate RDTSC instruction by prividing values obtained from debugging. */
+/* Simulate RDTSC instruction by providing values obtained from debugging. */
 class Rdtsc: public RSIM_Callbacks::InsnCallback {
 public:
     virtual Rdtsc *clone() { return this; }

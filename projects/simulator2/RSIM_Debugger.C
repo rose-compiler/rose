@@ -35,7 +35,7 @@ class Debugger {
     bool detached_;                                     // don't ask for commands
     size_t singleStep_;                                 // stop when this hits zero
     AddressIntervalSet breakPointVas_;                  // instruction addresses to stop at
-    std::set<X86InstructionKind> breakPointKinds_;      // instruction kinds to stop at
+    std::set<unsigned> breakPointKinds_;                // instruction kinds to stop at
     AddressIntervalSet breakPointSyscalls_;             // syscalls numbers (not addresses) at which to break
     AddressIntervalSet breakPointFds_;                  // file descriptors on which to stop
 
@@ -51,8 +51,7 @@ public:
                 break;
             if (breakPointVas_.exists(args.insn->get_address()))
                 break;
-            if (isSgAsmX86Instruction(args.insn) &&
-                breakPointKinds_.find(isSgAsmX86Instruction(args.insn)->get_kind()) != breakPointKinds_.end())
+            if (breakPointKinds_.find(args.insn->get_anyKind()) != breakPointKinds_.end())
                 break;
             return false;
         } while (0);
@@ -348,7 +347,7 @@ public:
                 regname=="fioff" || regname=="foseg" || regname=="fooff" || regname=="fop"   ||
                 regname=="mxcsr")
                 continue;                               // don't compare some registers
-            const RegisterDescriptor *reg = thread->get_process()->get_disassembler()->get_registers()->lookup(regname);
+            const RegisterDescriptor *reg = thread->get_process()->disassembler()->get_registers()->lookup(regname);
             if (!reg)
                 throw std::runtime_error("unknown register \"" + StringUtility::cEscape(regname) + "\"");
             rose_addr_t gdbRegValue = parseInteger(words[1]);
@@ -378,7 +377,7 @@ public:
             cmd.erase(cmd.begin());
             registerCheckGdbCommand(thread, cmd);
         } else {
-            const RegisterDescriptor *reg = thread->get_process()->get_disassembler()->get_registers()->lookup(cmd[0]);
+            const RegisterDescriptor *reg = thread->get_process()->disassembler()->get_registers()->lookup(cmd[0]);
             if (!reg) {
                 out_ <<"no such register \"" <<StringUtility::cEscape(cmd[0]) <<"\"\n";
                 return;
@@ -680,8 +679,10 @@ public:
             }
             if (!breakPointKinds_.empty()) {
                 out_ <<"instruction types:\n";
-                BOOST_FOREACH (X86InstructionKind kind, breakPointKinds_)
+                BOOST_FOREACH (unsigned kind, breakPointKinds_) {
+                    // FIXME[Robb P. Matzke 2015-07-31]: handle other than x86 instructions
                     out_ <<"  " <<stringifyX86InstructionKind(kind, "x86_") <<"\n";
+                }
             }
             if (!breakPointSyscalls_.isEmpty()) {
                 out_ <<"system calls:\n";
