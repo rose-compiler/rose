@@ -1,9 +1,9 @@
 
 ###################################################################################################
 
-check: check-test_1
+check: check-test_1 check-test_2
 
-clean: clean-test_1
+clean: clean-test_1 clean-test_2
 
 ###################################################################################################
 
@@ -22,14 +22,16 @@ LD_FLAGS=-lrt $(TILEK_RTL) $(KLT_RTL)
 
 ###################################################################################################
 
-test_1.o: $(srcdir)/test_1.c
-	gcc $(C_FLAGS) -c $(srcdir)/test_1.c -o test_1.o
+test_%.o: $(srcdir)/test_%.c
+	gcc $(C_FLAGS) -c $< -o $@
 
-kernel_1.o: $(srcdir)/kernel_1.c
-	gcc $(C_FLAGS) -c $(srcdir)/kernel_1.c -o kernel_1.o
+kernel_%.o: $(srcdir)/kernel_%.c
+	gcc $(C_FLAGS) -c $< -o $@
 
-static_1.o: $(srcdir)/static_1.c
-	gcc $(C_FLAGS) -c $(srcdir)/static_1.c -o static_1.o
+static_%.o: $(srcdir)/static_%.c
+	gcc $(C_FLAGS) -c $< -o $@
+
+###################################################################################################
 
 test_1: test_1.o kernel_1.o static_1.o $(TILEK_RTL) $(KLT_RTL)
 	libtool --mode=link gcc test_1.o kernel_1.o static_1.o $(LD_FLAGS) -o test_1
@@ -39,6 +41,17 @@ check-test_1: test_1
 
 clean-test_1:
 	rm -f test_1.o kernel_1.o static_1.o test_1
+
+###################################################################################################
+
+test_2: test_2.o kernel_2.o static_2.o $(TILEK_RTL) $(KLT_RTL)
+	libtool --mode=link gcc test_2.o kernel_2.o static_2.o $(LD_FLAGS) -o test_2
+
+check-test_2: test_2
+	./test_2
+
+clean-test_2:
+	rm -f test_2.o kernel_2.o static_2.o test_2
 
 ###################################################################################################
 
