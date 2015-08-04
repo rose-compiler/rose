@@ -100,7 +100,7 @@ public:
     void accumulateFpExceptions();
 
     /** Set floating point condition codes according to result. */
-    void adjustFpConditionCodes(const BaseSemantics::SValuePtr &result, const FloatingPointFormat&);
+    void adjustFpConditionCodes(const BaseSemantics::SValuePtr &result, SgAsmFloatType*);
 };
 
 } // namespace
