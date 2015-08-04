@@ -2,6 +2,7 @@
 #include "BaseSemantics2.h"
 #include "Diagnostics.h"
 #include "DispatcherM68k.h"
+#include "integerOps.h"
 #include "stringify.h"
 #include <boost/foreach.hpp>
 
@@ -1493,7 +1494,35 @@ struct IP_fsmove: P {
 struct IP_fdmove: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(isSgAsmDirectRegisterExpression(args[1]));
+        const FloatingPointFormat &dstFormat = FloatingPointFormat::IEEE754_double();
+        SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
+        SValuePtr result;
+        if (rre && rre->get_descriptor().get_major() == m68k_regclass_fpr) {
+            // FDMOVE.D FDx, FDy
+            // FDMOVE.S FDx, FDy
+            size_t nBits = args[0]->get_nBits();
+            const FloatingPointFormat &srcFormat = 64 == nBits ?
+                                                   FloatingPointFormat::IEEE754_double() :
+                                                   FloatingPointFormat::IEEE754_single();
+            result = ops->fpConvert(d->read(args[0], nBits), srcFormat, dstFormat);
+        } else {
+            // FDMOVE.B ea, FDy
+            // FDMOVE.W ea, FDy
+            // FDMOVE.L ea, FDy
+            size_t nBits = args[0]->get_nBits();
+            result = ops->fpFromInteger(d->read(args[0], nBits), dstFormat);
+        }
+        d->write(args[1], result);
+        ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(result, dstFormat));
+        ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(result, dstFormat));
+        ops->writeRegister(d->REG_EXC_OPERR, ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_OVFL,  ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_UNFL,  ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-03]
+        d->accumulateFpExceptions();
     }
 };
 
@@ -1521,7 +1550,45 @@ struct IP_fsmul: P {
 struct IP_fdmul: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(isSgAsmDirectRegisterExpression(args[1]));
+        const FloatingPointFormat &dstFormat = FloatingPointFormat::IEEE754_double();
+        SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
+        SValuePtr a, b;
+        if (rre && rre->get_descriptor().get_major() == m68k_regclass_fpr) {
+            // FDMUL.D FDx, FDy
+            ASSERT_require(args[0]->get_nBits() == 64);
+            a = d->read(args[0], dstFormat.width());
+            b = d->read(args[1], dstFormat.width());
+        } else {
+            // FDMUL.B ea, FDy
+            // FDMUL.W ea, FDy
+            // FDMUL.D ea, FDy
+            size_t nBits = args[0]->get_nBits();
+            a = ops->fpFromInteger(d->read(args[0], nBits), dstFormat);
+            b = d->read(args[1], dstFormat.width());
+        }
+        SValuePtr result = ops->fpMultiply(a, b, dstFormat);
+        d->write(args[1], result);
+        d->adjustFpConditionCodes(result, dstFormat);
+
+        // Temporary exponent (without bias) wide enough to prevent overflow
+        ASSERT_require(dstFormat.exponentBits().size() < 64); // leave room for a sign bit
+        SValuePtr maxExponent = ops->number_(64, IntegerOps::genMask<uint64_t>(dstFormat.exponentBits().size()-1));
+        SValuePtr minExponent = ops->invert(maxExponent); //  -(2^exponentSize)
+        SValuePtr wideExponent = ops->add(ops->signExtend(ops->fpEffectiveExponent(a, dstFormat), 64),
+                                          ops->signExtend(ops->fpEffectiveExponent(b, dstFormat), 64));
+
+        ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(result, dstFormat));
+        ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(result, dstFormat));
+        ops->writeRegister(d->REG_EXC_OPERR,
+                           ops->or_(ops->and_(ops->fpIsZero(a, dstFormat), ops->fpIsInfinity(b, dstFormat)),
+                                    ops->and_(ops->fpIsInfinity(a, dstFormat), ops->fpIsZero(b, dstFormat))));
+        ops->writeRegister(d->REG_EXC_OVFL,  ops->isSignedGreaterThanOrEqual(wideExponent, maxExponent));
+        ops->writeRegister(d->REG_EXC_UNFL,  ops->isSignedLessThanOrEqual(wideExponent, minExponent));
+        ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-03]
+        d->accumulateFpExceptions();
     }
 };
 
@@ -3333,6 +3400,29 @@ DispatcherM68k::regcache_init() {
         REG_MACEXT1  = findRegister("accext1", 16, IS_OPTIONAL);
         REG_MACEXT2  = findRegister("accext2", 16, IS_OPTIONAL);
         REG_MACEXT3  = findRegister("accext3", 16, IS_OPTIONAL);
+
+        // Floating-point condition code bits
+        REG_FPCC_NAN = findRegister("fpcc_nan", 1);     // result is not a number
+        REG_FPCC_I   = findRegister("fpcc_i",   1);     // result is +/- infinity
+        REG_FPCC_Z   = findRegister("fpcc_z",   1);     // result is +/- zero
+        REG_FPCC_N   = findRegister("fpcc_n",   1);     // result is negative
+
+        // Floating-point status register exception bits
+        REG_EXC_BSUN  = findRegister("exc_bsun",  1);   // branch/set on unordered
+        REG_EXC_OPERR = findRegister("exc_operr", 1);   // operand error
+        REG_EXC_OVFL  = findRegister("exc_ovfl",  1);   // overflow
+        REG_EXC_UNFL  = findRegister("exc_unfl",  1);   // underflow
+        REG_EXC_DZ    = findRegister("exc_dz",    1);   // divide by zero
+        REG_EXC_INAN  = findRegister("exc_snan",  1);   // is not-a-number
+        REG_EXC_IDE   = findRegister("exc_inex1", 1);   // input is denormalized
+        REG_EXC_INEX  = findRegister("exc_inex2", 1);   // inexact result
+
+        // Floating-point status register accrued exception bits
+        REG_AEXC_IOP  = findRegister("aexc_iop",  1);
+        REG_AEXC_OVFL = findRegister("aexc_ovfl", 1);
+        REG_AEXC_UNFL = findRegister("aexc_unfl", 1);
+        REG_AEXC_DZ   = findRegister("aexc_dz",   1);
+        REG_AEXC_INEX = findRegister("aexc_inex", 1);
     }
 }
 
@@ -3459,6 +3549,36 @@ DispatcherM68k::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*
         }
     }
     return Dispatcher::read(e, value_nbits, addr_nbits);
+}
+
+void
+DispatcherM68k::accumulateFpExceptions() {
+    operators->writeRegister(REG_AEXC_OVFL,
+                             operators->or_(operators->readRegister(REG_AEXC_OVFL),
+                                            operators->readRegister(REG_EXC_OVFL)));
+    operators->writeRegister(REG_AEXC_DZ,
+                             operators->or_(operators->readRegister(REG_AEXC_DZ),
+                                            operators->readRegister(REG_EXC_DZ)));
+    operators->writeRegister(REG_AEXC_INEX,
+                             operators->or_(operators->readRegister(REG_AEXC_INEX),
+                                            operators->readRegister(REG_EXC_INEX)));
+    operators->writeRegister(REG_AEXC_IOP,
+                             operators->or_(operators->readRegister(REG_AEXC_IOP),
+                                            operators->or_(operators->readRegister(REG_EXC_BSUN),
+                                                           operators->or_(operators->readRegister(REG_EXC_INAN),
+                                                                          operators->readRegister(REG_EXC_OPERR)))));
+    operators->writeRegister(REG_AEXC_UNFL,
+                             operators->or_(operators->readRegister(REG_AEXC_UNFL),
+                                            operators->or_(operators->readRegister(REG_EXC_UNFL),
+                                                           operators->readRegister(REG_EXC_INEX))));
+}
+
+void
+DispatcherM68k::adjustFpConditionCodes(const SValuePtr &result, const FloatingPointFormat &fpFormat) {
+    operators->writeRegister(REG_FPCC_NAN, operators->fpIsNan(result, fpFormat));
+    operators->writeRegister(REG_FPCC_I, operators->fpIsInfinity(result, fpFormat));
+    operators->writeRegister(REG_FPCC_Z, operators->fpIsZero(result, fpFormat));
+    operators->writeRegister(REG_FPCC_N, operators->fpSign(result, fpFormat));
 }
 
 } // namespace

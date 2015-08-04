@@ -41,6 +41,13 @@ public:
     RegisterDescriptor REG_D[8], REG_A[8], REG_FP[8], REG_PC, REG_CCR, REG_CCR_C, REG_CCR_V, REG_CCR_Z, REG_CCR_N, REG_CCR_X;
     RegisterDescriptor REG_MACSR_SU, REG_MACSR_FI, REG_MACSR_N, REG_MACSR_Z, REG_MACSR_V, REG_MACSR_C, REG_MAC_MASK;
     RegisterDescriptor REG_MACEXT0, REG_MACEXT1, REG_MACEXT2, REG_MACEXT3, REG_SSP, REG_SR_S, REG_SR, REG_VBR;
+    // Floating-point condition code bits
+    RegisterDescriptor REG_FPCC_NAN, REG_FPCC_I, REG_FPCC_Z, REG_FPCC_N;
+    // Floating-point status register exception bits
+    RegisterDescriptor REG_EXC_BSUN, REG_EXC_OPERR, REG_EXC_OVFL, REG_EXC_UNFL, REG_EXC_DZ, REG_EXC_INAN;
+    RegisterDescriptor REG_EXC_IDE, REG_EXC_INEX;
+    // Floating-point status register accrued exception bits
+    RegisterDescriptor REG_AEXC_IOP, REG_AEXC_OVFL, REG_AEXC_UNFL, REG_AEXC_DZ, REG_AEXC_INEX;
     /** @} */
 
     /** Construct a prototypical dispatcher.  The only thing this dispatcher can be used for is to create another dispatcher
@@ -88,6 +95,12 @@ public:
 
     /** Determines if an instruction should branch. */
     BaseSemantics::SValuePtr condition(M68kInstructionKind, BaseSemantics::RiscOperators*);
+
+    /** Update accrued floating-point exceptions. */
+    void accumulateFpExceptions();
+
+    /** Set floating point condition codes according to result. */
+    void adjustFpConditionCodes(const BaseSemantics::SValuePtr &result, const FloatingPointFormat&);
 };
 
 } // namespace

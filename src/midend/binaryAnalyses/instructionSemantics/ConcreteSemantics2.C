@@ -569,6 +569,68 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
     }
 }
 
+double
+RiscOperators::exprToDouble(const BaseSemantics::SValuePtr &a, const FloatingPointFormat &fpFormat) {
+    ASSERT_require(a->is_number());
+    if (fpFormat == FloatingPointFormat::IEEE754_double()) {
+        ASSERT_require(sizeof(double) == sizeof(int64_t));
+        union {
+            double fp;
+            int64_t i;
+        } u;
+        u.i = a->get_number();
+        return u.fp;
+    } else if (fpFormat == FloatingPointFormat::IEEE754_single()) {
+        ASSERT_require(sizeof(float) == sizeof(int32_t));
+        union {
+            float fp;
+            int32_t i;
+        } u;
+        u.i = a->get_number();
+        return u.fp;
+    } else {
+        throw BaseSemantics::NotImplemented("exprToDouble format not supported", get_insn());
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::doubleToExpr(double d, const FloatingPointFormat &fpFormat) {
+    if (fpFormat == FloatingPointFormat::IEEE754_double()) {
+        ASSERT_require(sizeof(double) == sizeof(int64_t));
+        union {
+            double fp;
+            int64_t i;
+        } u;
+        u.fp = d;
+        return svalue_number(64, u.i);
+    } else if (fpFormat == FloatingPointFormat::IEEE754_single()) {
+        ASSERT_require(sizeof(float) == sizeof(int32_t));
+        union {
+            float fp;
+            int32_t i;
+        } u;
+        u.fp = d;
+        return svalue_number(32, u.i);
+    } else {
+        throw BaseSemantics::NotImplemented("doubleToExpr format not supported", get_insn());
+    }
+}
+    
+BaseSemantics::SValuePtr
+RiscOperators::fpFromInteger(const BaseSemantics::SValuePtr &intValue, const FloatingPointFormat &fpFormat) {
+    ASSERT_require(intValue->is_number());
+    return doubleToExpr((double)intValue->get_number(), fpFormat);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+                          const FloatingPointFormat &fpFormat) {
+    double ad = exprToDouble(a, fpFormat);
+    double bd = exprToDouble(b, fpFormat);
+    double result = ad * bd;
+    return doubleToExpr(result, fpFormat);
+}
+
 } // namespace
 } // namespace
 } // namespace

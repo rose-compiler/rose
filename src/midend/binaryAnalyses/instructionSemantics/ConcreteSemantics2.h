@@ -438,6 +438,11 @@ public:
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
 
+    virtual BaseSemantics::SValuePtr fpFromInteger(const BaseSemantics::SValuePtr &intValue,
+                                                   const FloatingPointFormat &fpFormat) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+                                                const FloatingPointFormat &fpFormat);
+
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
@@ -446,6 +451,13 @@ public:
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+
+protected:
+    // Convert expression to double
+    double exprToDouble(const BaseSemantics::SValuePtr &expr, const FloatingPointFormat &exprFormat);
+
+    // Convert double to expression
+    BaseSemantics::SValuePtr doubleToExpr(double d, const FloatingPointFormat &exprFormat);
 };
 
 } // namespace

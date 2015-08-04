@@ -3,6 +3,7 @@
 
 #include "Diagnostics.h"
 #include "Registers.h"
+#include "FloatingPointFormat.h"
 #include "FormatRestorer.h"
 #include "SMTSolver.h"
 
@@ -416,6 +417,12 @@ public:
     SgAsmInstruction *insn;
     Exception(const std::string &mesg, SgAsmInstruction *insn): std::runtime_error(mesg), insn(insn) {}
     void print(std::ostream&) const;
+};
+
+class NotImplemented: public Exception {
+public:
+    NotImplemented(const std::string &mesg, SgAsmInstruction *insn)
+        : Exception(mesg, insn) {}
 };
 
 /*******************************************************************************************************************************
@@ -2207,6 +2214,82 @@ public:
     virtual void interrupt(int majr, int minr) {}
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Floating-point operations
+    //
+    // For now these all have default implementations that throw NotImplemented, but we might change them to pure virtual
+    // sometime in the future so they're consistent with most other RISC operators. [Robb P. Matzke 2015-08-03]
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** Construct a floating-point value from an integer value. */
+    virtual SValuePtr fpFromInteger(const SValuePtr &intValue, const FloatingPointFormat&);
+
+    /** Construct an integer value from a floating-point value.
+     *
+     *  The bits of @p fpValue are interpreted according to the @ref fpFormat and converted to the closest signed integer value
+     *  that fits in @p integerWidth bits.  If @p fpValue is not a number then @p dflt is returned. */
+    virtual SValuePtr fpToInteger(const SValuePtr &fpValue, const FloatingPointFormat &fpFormat, size_t integerWidth,
+                                  const SValuePtr &dflt);
+
+    /** Convert one format to another.
+     *
+     *  Converts the floating-point value @p a having format @p aFormat to the return value having @p retFormat. */
+    virtual SValuePtr fpConvert(const SValuePtr &a, const FloatingPointFormat &aFormat, const FloatingPointFormat &retFormat);
+
+    /** Whether a floating-point value is a special not-a-number bit pattern. */
+    virtual SValuePtr fpIsNan(const SValuePtr &fpValue, const FloatingPointFormat &fpFormat);
+
+    /** Whether a floating-point value is denormalized. */
+    virtual SValuePtr fpIsDenormalized(const SValuePtr &fpValue, const FloatingPointFormat &fpFormat);
+
+    /** Whether a floating-point value is equal to zero. */
+    virtual SValuePtr fpIsZero(const SValuePtr &fpValue, const FloatingPointFormat &fpFormat);
+
+    /** Whether a floating-point value is infinity.
+     *
+     *  Returns true if the floating point value is plus or minus infinity.  Querying the sign bit will return the sign of the
+     *  infinity. */
+    virtual SValuePtr fpIsInfinity(const SValuePtr &fpValue, const FloatingPointFormat &fpFormat);
+
+    /** Sign of floating-point value.
+     *
+     *  Returns the value of the floating-point sign bit. */
+    virtual SValuePtr fpSign(const SValuePtr &fpValue, const FloatingPointFormat &fpFormat);
+
+    /** Exponent of floating-point value.
+     *
+     *  Returns the exponent of the floating point value. For normalized values this returns the stored exponent minus the
+     *  exponent bias.  For denormalized numbers this returns the stored exponent minus the exponent bias minus an additional
+     *  amount to normalize the significand. */
+    virtual SValuePtr fpEffectiveExponent(const SValuePtr &fpValue, const FloatingPointFormat &fpFormat);
+
+    /** Add two floating-point values.
+     *
+     *  Adds two floating-point values that have the same format and returns the sum in the same format. */
+    virtual SValuePtr fpAdd(const SValuePtr &a, const SValuePtr &b, const FloatingPointFormat &fpFormat);
+
+    /** Subtract one floating-point value from another.
+     *
+     *  Subtracts @p b from @p a and returns the difference. All three floating-point values have the same format.  The default
+     *  implementation is in terms of negate and add. */
+    virtual SValuePtr fpSubtract(const SValuePtr &a, const SValuePtr &b, const FloatingPointFormat &fpFormat);
+
+    /** Multiply two floating-point values.
+     *
+     *  Multiplies two floating-point values and returns the product. All three values have the same format. */
+    virtual SValuePtr fpMultiply(const SValuePtr &a, const SValuePtr &b, const FloatingPointFormat &fpFormat);
+
+    /** Divide one floating-point value by another.
+     *
+     *  Computes @p a divided by @p b and returns the result. All three floating-point values have the same format. */
+    virtual SValuePtr fpDivide(const SValuePtr &a, const SValuePtr &b, const FloatingPointFormat &fpFormat);
+
+    /** Square root.
+     *
+     *  Computes and returns the square root of the specified floating-point value.  Both values have the same format. */
+    virtual SValuePtr fpSquareRoot(const SValuePtr &a, const FloatingPointFormat &fpFormat);
+
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  State Accessing Operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

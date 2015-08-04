@@ -1037,8 +1037,8 @@ RegisterDictionary::dictionary_m68000()
         regs->insert("aexc_ovfl",  m68k_regclass_spr, m68k_spr_fpsr,  6,  1);   // overflow
         regs->insert("aexc_iop",   m68k_regclass_spr, m68k_spr_fpsr,  7,  1);   // invalid operation
         regs->insert("fpsr_exc",   m68k_regclass_spr, m68k_spr_fpsr,  8,  8);   // exception status
-        regs->insert("exc_inex1",  m68k_regclass_spr, m68k_spr_fpsr,  8,  1);   // inexact decimal input
-        regs->insert("exc_inex2",  m68k_regclass_spr, m68k_spr_fpsr,  9,  1);   // inexact operation
+        regs->insert("exc_inex1",  m68k_regclass_spr, m68k_spr_fpsr,  8,  1);   // inexact decimal input (input is denormalized)
+        regs->insert("exc_inex2",  m68k_regclass_spr, m68k_spr_fpsr,  9,  1);   // inexact operation (inexact result)
         regs->insert("exc_dz",     m68k_regclass_spr, m68k_spr_fpsr, 10,  1);   // divide by zero
         regs->insert("exc_unfl",   m68k_regclass_spr, m68k_spr_fpsr, 11,  1);   // underflow
         regs->insert("exc_ovfl",   m68k_regclass_spr, m68k_spr_fpsr, 12,  1);   // overflow
