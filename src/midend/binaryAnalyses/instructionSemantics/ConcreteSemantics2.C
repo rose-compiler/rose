@@ -570,9 +570,9 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
 }
 
 double
-RiscOperators::exprToDouble(const BaseSemantics::SValuePtr &a, const FloatingPointFormat &fpFormat) {
+RiscOperators::exprToDouble(const BaseSemantics::SValuePtr &a, SgAsmFloatType *aType) {
     ASSERT_require(a->is_number());
-    if (fpFormat == FloatingPointFormat::IEEE754_double()) {
+    if (aType == SageBuilderAsm::buildIeee754Binary64()) {
         ASSERT_require(sizeof(double) == sizeof(int64_t));
         union {
             double fp;
@@ -580,7 +580,7 @@ RiscOperators::exprToDouble(const BaseSemantics::SValuePtr &a, const FloatingPoi
         } u;
         u.i = a->get_number();
         return u.fp;
-    } else if (fpFormat == FloatingPointFormat::IEEE754_single()) {
+    } else if (aType == SageBuilderAsm::buildIeee754Binary32()) {
         ASSERT_require(sizeof(float) == sizeof(int32_t));
         union {
             float fp;
@@ -589,13 +589,13 @@ RiscOperators::exprToDouble(const BaseSemantics::SValuePtr &a, const FloatingPoi
         u.i = a->get_number();
         return u.fp;
     } else {
-        throw BaseSemantics::NotImplemented("exprToDouble format not supported", get_insn());
+        throw BaseSemantics::NotImplemented("exprToDouble type not supported", get_insn());
     }
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::doubleToExpr(double d, const FloatingPointFormat &fpFormat) {
-    if (fpFormat == FloatingPointFormat::IEEE754_double()) {
+RiscOperators::doubleToExpr(double d, SgAsmFloatType *retType) {
+    if (retType == SageBuilderAsm::buildIeee754Binary64()) {
         ASSERT_require(sizeof(double) == sizeof(int64_t));
         union {
             double fp;
@@ -603,7 +603,7 @@ RiscOperators::doubleToExpr(double d, const FloatingPointFormat &fpFormat) {
         } u;
         u.fp = d;
         return svalue_number(64, u.i);
-    } else if (fpFormat == FloatingPointFormat::IEEE754_single()) {
+    } else if (retType == SageBuilderAsm::buildIeee754Binary32()) {
         ASSERT_require(sizeof(float) == sizeof(int32_t));
         union {
             float fp;
@@ -612,23 +612,38 @@ RiscOperators::doubleToExpr(double d, const FloatingPointFormat &fpFormat) {
         u.fp = d;
         return svalue_number(32, u.i);
     } else {
-        throw BaseSemantics::NotImplemented("doubleToExpr format not supported", get_insn());
+        throw BaseSemantics::NotImplemented("doubleToExpr type not supported", get_insn());
     }
 }
     
 BaseSemantics::SValuePtr
-RiscOperators::fpFromInteger(const BaseSemantics::SValuePtr &intValue, const FloatingPointFormat &fpFormat) {
+RiscOperators::fpFromInteger(const BaseSemantics::SValuePtr &intValue, SgAsmFloatType *retType) {
     ASSERT_require(intValue->is_number());
-    return doubleToExpr((double)intValue->get_number(), fpFormat);
+    return doubleToExpr((double)intValue->get_number(), retType);
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::fpMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
-                          const FloatingPointFormat &fpFormat) {
-    double ad = exprToDouble(a, fpFormat);
-    double bd = exprToDouble(b, fpFormat);
+RiscOperators::fpAdd(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *fpType) {
+    double ad = exprToDouble(a, fpType);
+    double bd = exprToDouble(b, fpType);
+    double result = ad + bd;
+    return doubleToExpr(result, fpType);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpSubtract(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *fpType) {
+    double ad = exprToDouble(a, fpType);
+    double bd = exprToDouble(b, fpType);
+    double result = ad - bd;
+    return doubleToExpr(result, fpType);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *fpType) {
+    double ad = exprToDouble(a, fpType);
+    double bd = exprToDouble(b, fpType);
     double result = ad * bd;
-    return doubleToExpr(result, fpFormat);
+    return doubleToExpr(result, fpType);
 }
 
 } // namespace

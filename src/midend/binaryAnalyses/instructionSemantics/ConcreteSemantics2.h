@@ -438,10 +438,13 @@ public:
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
 
-    virtual BaseSemantics::SValuePtr fpFromInteger(const BaseSemantics::SValuePtr &intValue,
-                                                   const FloatingPointFormat &fpFormat) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpFromInteger(const BaseSemantics::SValuePtr &intValue, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpAdd(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+                                           SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpSubtract(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+                                                SgAsmFloatType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr fpMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
-                                                const FloatingPointFormat &fpFormat);
+                                                SgAsmFloatType*) ROSE_OVERRIDE;
 
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,
@@ -454,10 +457,10 @@ public:
 
 protected:
     // Convert expression to double
-    double exprToDouble(const BaseSemantics::SValuePtr &expr, const FloatingPointFormat &exprFormat);
+    double exprToDouble(const BaseSemantics::SValuePtr &expr, SgAsmFloatType*);
 
     // Convert double to expression
-    BaseSemantics::SValuePtr doubleToExpr(double d, const FloatingPointFormat &exprFormat);
+    BaseSemantics::SValuePtr doubleToExpr(double d, SgAsmFloatType*);
 };
 
 } // namespace

@@ -1245,67 +1245,84 @@ RiscOperators::isSignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b
 }
 
 SValuePtr
-RiscOperators::fpFromInteger(const SValuePtr &intValue, const FloatingPointFormat &fpFormat) {
+RiscOperators::fpFromInteger(const SValuePtr &intValue, SgAsmFloatType *fpType) {
+    ASSERT_not_null(fpType);
     throw NotImplemented("fpFromInteger is not implemented", get_insn());
 }
 
 SValuePtr
-RiscOperators::fpToInteger(const SValuePtr &fpValue, const FloatingPointFormat &fpFormat, size_t integerWidth,
+RiscOperators::fpToInteger(const SValuePtr &fpValue, SgAsmFloatType *fpType, size_t integerWidth,
                            const SValuePtr &dflt) {
+    ASSERT_not_null(fpType);
     throw NotImplemented("fpToInteger is not implemented", get_insn());
 }
 
 SValuePtr
-RiscOperators::fpConvert(const SValuePtr &a, const FloatingPointFormat &aFormat, const FloatingPointFormat &retFormat) {
-    if (aFormat == retFormat)
+RiscOperators::fpConvert(const SValuePtr &a, SgAsmFloatType *aType, SgAsmFloatType *retType) {
+    ASSERT_not_null(a);
+    ASSERT_not_null(aType);
+    ASSERT_not_null(retType);
+    if (aType == retType)
         return a->copy();
     throw NotImplemented("fpConvert is not implemented", get_insn());
 }
 
 SValuePtr
-RiscOperators::fpIsNan(const SValuePtr &a, const FloatingPointFormat &fpFormat) {
+RiscOperators::fpIsNan(const SValuePtr &a, SgAsmFloatType *aType) {
     // Value is NAN iff exponent bits are all set and significand is not zero.
-    SValuePtr exponent = extract(a, fpFormat.exponentBits().least(), fpFormat.exponentBits().greatest()+1);
-    SValuePtr significand = extract(a, fpFormat.significandBits().least(), fpFormat.significandBits().greatest()+1);
+    ASSERT_not_null(a);
+    ASSERT_not_null(aType);
+    SValuePtr exponent = extract(a, aType->exponentBits().least(), aType->exponentBits().greatest()+1);
+    SValuePtr significand = extract(a, aType->significandBits().least(), aType->significandBits().greatest()+1);
     return and_(equalToZero(invert(exponent)), invert(equalToZero(significand)));
 }
 
 SValuePtr
-RiscOperators::fpIsDenormalized(const SValuePtr &a, const FloatingPointFormat &fpFormat) {
+RiscOperators::fpIsDenormalized(const SValuePtr &a, SgAsmFloatType *aType) {
     // Value is denormalized iff exponent is zero and significand is not zero.
-    if (!fpFormat.gradualUnderflow())
+    ASSERT_not_null(a);
+    ASSERT_not_null(aType);
+    if (!aType->gradualUnderflow())
         return boolean_(false);
-    SValuePtr exponent = extract(a, fpFormat.exponentBits().least(), fpFormat.exponentBits().greatest()+1);
-    SValuePtr significand = extract(a, fpFormat.significandBits().least(), fpFormat.significandBits().greatest()+1);
+    SValuePtr exponent = extract(a, aType->exponentBits().least(), aType->exponentBits().greatest()+1);
+    SValuePtr significand = extract(a, aType->significandBits().least(), aType->significandBits().greatest()+1);
     return and_(equalToZero(exponent), invert(equalToZero(significand)));
 }
 
 SValuePtr
-RiscOperators::fpIsZero(const SValuePtr &a, const FloatingPointFormat &fpFormat) {
+RiscOperators::fpIsZero(const SValuePtr &a, SgAsmFloatType *aType) {
     // Value is zero iff exponent and significand are both zero.
-    SValuePtr exponent = extract(a, fpFormat.exponentBits().least(), fpFormat.exponentBits().greatest()+1);
-    SValuePtr significand = extract(a, fpFormat.significandBits().least(), fpFormat.significandBits().greatest()+1);
+    ASSERT_not_null(a);
+    ASSERT_not_null(aType);
+    SValuePtr exponent = extract(a, aType->exponentBits().least(), aType->exponentBits().greatest()+1);
+    SValuePtr significand = extract(a, aType->significandBits().least(), aType->significandBits().greatest()+1);
     return and_(equalToZero(exponent), equalToZero(significand));
 }
 
 SValuePtr
-RiscOperators::fpIsInfinity(const SValuePtr &a, const FloatingPointFormat &fpFormat) {
+RiscOperators::fpIsInfinity(const SValuePtr &a, SgAsmFloatType *aType) {
     // Value is infinity iff exponent bits are all set and significand is zero.
-    SValuePtr exponent = extract(a, fpFormat.exponentBits().least(), fpFormat.exponentBits().greatest()+1);
-    SValuePtr significand = extract(a, fpFormat.significandBits().least(), fpFormat.significandBits().greatest()+1);
+    ASSERT_not_null(a);
+    ASSERT_not_null(aType);
+    SValuePtr exponent = extract(a, aType->exponentBits().least(), aType->exponentBits().greatest()+1);
+    SValuePtr significand = extract(a, aType->significandBits().least(), aType->significandBits().greatest()+1);
     return and_(equalToZero(invert(exponent)), equalToZero(significand));
 }
 
 SValuePtr
-RiscOperators::fpSign(const SValuePtr &a, const FloatingPointFormat &fpFormat) {
-    return extract(a, fpFormat.signBit(), fpFormat.signBit()+1);
+RiscOperators::fpSign(const SValuePtr &a, SgAsmFloatType *aType) {
+    ASSERT_not_null(a);
+    ASSERT_not_null(aType);
+    return extract(a, aType->signBit(), aType->signBit()+1);
 }
 
 SValuePtr
-RiscOperators::fpEffectiveExponent(const SValuePtr &a, const FloatingPointFormat &fpFormat) {
-    size_t expWidth = fpFormat.exponentBits().size() + 1; // add a sign bit to the beginning
-    SValuePtr storedExponent = extract(a, fpFormat.exponentBits().least(), fpFormat.exponentBits().greatest()+1);
-    SValuePtr significand = extract(a, fpFormat.significandBits().least(), fpFormat.significandBits().greatest()+1);
+RiscOperators::fpEffectiveExponent(const SValuePtr &a, SgAsmFloatType *aType) {
+    ASSERT_not_null(a);
+    ASSERT_not_null(aType);
+    size_t expWidth = aType->exponentBits().size() + 1; // add a sign bit to the beginning
+    SValuePtr storedExponent = extract(a, aType->exponentBits().least(), aType->exponentBits().greatest()+1);
+    SValuePtr significand = extract(a, aType->significandBits().least(), aType->significandBits().greatest()+1);
     SValuePtr retval = ite(equalToZero(storedExponent),
                            ite(equalToZero(significand),
                                // Stored exponent and significand are both zero, therefore value is zero
@@ -1313,38 +1330,38 @@ RiscOperators::fpEffectiveExponent(const SValuePtr &a, const FloatingPointFormat
 
                                // Stored exponent is zero but significand is not, therefore denormalized number.
                                // effective exponent is 1 - bias - (significandWidth - mssb(significand))
-                               add(number_(expWidth, 1 - fpFormat.exponentBias() - fpFormat.significandBits().size()),
+                               add(number_(expWidth, 1 - aType->exponentBias() - aType->significandBits().size()),
                                    unsignedExtend(mostSignificantSetBit(significand), expWidth))),
 
                            // Stored exponent is non-zero so significand is normalized. Effective exponent is the stored
                            // exponent minus the bias.
                            subtract(unsignedExtend(storedExponent, expWidth),
-                                    number_(expWidth, fpFormat.exponentBias())));
+                                    number_(expWidth, aType->exponentBias())));
     return retval;
 }
 
 SValuePtr
-RiscOperators::fpAdd(const SValuePtr &a, const SValuePtr &b, const FloatingPointFormat &fpFormat) {
+RiscOperators::fpAdd(const SValuePtr &a, const SValuePtr &b, SgAsmFloatType *fpType) {
     throw NotImplemented("fpAdd is not implemented", get_insn());
 }
 
 SValuePtr
-RiscOperators::fpSubtract(const SValuePtr &a, const SValuePtr &b, const FloatingPointFormat &fpFormat) {
+RiscOperators::fpSubtract(const SValuePtr &a, const SValuePtr &b, SgAsmFloatType *fpType) {
     throw NotImplemented("fpSubtract is not implemented", get_insn());
 }
 
 SValuePtr
-RiscOperators::fpMultiply(const SValuePtr &a, const SValuePtr &b, const FloatingPointFormat &fpFormat) {
+RiscOperators::fpMultiply(const SValuePtr &a, const SValuePtr &b, SgAsmFloatType *fpType) {
     throw NotImplemented("fpMultiply is not implemented", get_insn());
 }
 
 SValuePtr
-RiscOperators::fpDivide(const SValuePtr &a, const SValuePtr &b, const FloatingPointFormat &fpFormat) {
+RiscOperators::fpDivide(const SValuePtr &a, const SValuePtr &b, SgAsmFloatType *fpType) {
     throw NotImplemented("fpDivide is not implemented", get_insn());
 }
 
 SValuePtr
-RiscOperators::fpSquareRoot(const SValuePtr &a, const FloatingPointFormat &fpFormat) {
+RiscOperators::fpSquareRoot(const SValuePtr &a, SgAsmFloatType *aType) {
     throw NotImplemented("fpSquareRoot is not implemented", get_insn());
 }
 
