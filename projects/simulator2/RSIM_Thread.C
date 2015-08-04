@@ -634,11 +634,20 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
     }
 
     DispatcherX86 *x86 = dynamic_cast<DispatcherX86*>(dispatcher().get());
-    ASSERT_not_null(x86);
+    DispatcherM68k *m68k = dynamic_cast<DispatcherM68k*>(dispatcher().get());
 
-    size_t wordWidth = x86->REG_anyIP.get_nbits();
-    rose_addr_t bp = operators()->readRegister(x86->REG_anyBP)->get_number();
-    rose_addr_t ip = operators()->readRegister(x86->REG_anyIP)->get_number();
+    const RegisterDescriptor IP = get_process()->disassembler()->instructionPointerRegister();
+    const RegisterDescriptor SP = get_process()->disassembler()->stackPointerRegister();
+    RegisterDescriptor BP;
+    if (x86) {
+        BP = x86->REG_anyBP;
+    } else if (m68k) {
+        BP = m68k->REG_A[6];
+    }
+
+    size_t wordWidth = IP.get_nbits();
+    rose_addr_t bp = operators()->readRegister(BP)->get_number();
+    rose_addr_t ip = operators()->readRegister(IP)->get_number();
 
     static const int maxStackFrames = 32;               // arbitrary
     for (int i=0; i<maxStackFrames; i++) {
@@ -662,7 +671,7 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
             /* Presumably being called after a CALL but before EBP is saved on the stack.  In this case, the return address
              * of the inner-most function should be at ss:[esp], and containing functions have set up their stack
              * frames. */
-            rose_addr_t sp = operators()->readRegister(x86->REG_anySP)->get_number();
+            rose_addr_t sp = operators()->readRegister(SP)->get_number();
             if (32 == wordWidth) {
                 uint32_t tmp;
                 if (4!=process->mem_read(&tmp, sp, 4))
