@@ -55,6 +55,8 @@ along with Octave; see the file COPYING.  If not, see
 #include "ourtoken.h"
 
 #include "StatementList.h"
+#include "MatlabFunctionBuilder.h"
+
 #include "sage3basic.h"
 using namespace SageBuilder;
 using namespace SageInterface;
@@ -133,7 +135,7 @@ int current_function_depth;
   //SgMatlabDeclarationStatement* DeclarationStatement_type;
   SgStatement* Statement_type;
   SgStatement* Block_type;
-  //MatlabFunctionBuilder* FunctionBuilder_type;
+  MatlabFunctionBuilder* FunctionBuilder_type;
   StatementList* StatementList_type;
   token* tok_val;
 /*
@@ -225,7 +227,7 @@ int current_function_depth;
 %type <Expression_type> simple_expr colon_expr assign_expr expression
 %type <VarRefExp_type> identifier// fcn_name
 %type <Name_type> fcn_name
-%type <Function_type> function1 function2
+%type <FunctionBuilder_type> function1 function2
 %type <Statement_type> word_list_cmd
 %type <Colon_Expression_type> colon_expr1
 %type <ExprListExp_type> arg_list word_list //assign_lhs
@@ -1432,33 +1434,23 @@ function_beg    : push_fcn_symtab FCN stash_comment
 
 function        : function_beg function1
                  {                    
-                    //$$ = finish_function (0, $2, $1);
-                    recover_from_parsing_function ();
-
-                    //TMP: create variable declarations from the annotated types
-                    //addVariableDeclarations();
+		   $$ = $2->build_function();
+		   recover_from_parsing_function ();
 
                     SageBuilder::popScopeStack();
                     lexer_flags.variableTypes.clear();
-
-                    $$ = $2;
                  }
                 | function_beg return_list '=' function1
                  {                                        
-                  
-                    recover_from_parsing_function ();
+		   $4->set_return_list($2);
 
-                    //SageInterface::appendStatement(SageBuilder::buildReturnStmt($2));
-
-                    //TMP: create variable declarations from the annotated types
-		    // addVariableDeclarations();
-
-                    //manageReturnStatement($2, $4);
-                    
+		   $$ = $4->build_function();
+		   
+                   recover_from_parsing_function ();
+                 
                     SageBuilder::popScopeStack();
                     lexer_flags.variableTypes.clear();
 
-                    $$ = $4;
                  }
                 ;
 
@@ -1473,7 +1465,8 @@ fcn_name        : identifier
 		      This identifier did not turn out to be a variable symbol.
 		      It will be added later on as a function symbol.
 		     */
-		    SageBuilder::topScopeStack()->remove_symbol($1->get_symbol());
+		    SgVariableSymbol *symbol = $1->get_symbol();
+		    SageBuilder::topScopeStack()->remove_symbol(symbol);
                  }
                 | GET '.' identifier
                  {
@@ -1492,43 +1485,25 @@ fcn_name        : identifier
 
 function1       : fcn_name function2
                   {
-                    $2->set_name(*$1);
+                    $2->set_function_name(*$1);
 
-		    SgFunctionDeclaration *declaration = isSgFunctionDeclaration($2->get_firstNondefiningDeclaration());
-		    declaration->set_name(*$1);                                                                             
-		    
                     $$ = $2;
                   }
                 ;
 
 function2       : param_list opt_sep opt_list function_end
                   {
-                    SgFunctionDeclaration *fcn = SageBuilder::buildDefiningFunctionDeclaration("unnamed", 
-                      SageBuilder::buildVoidType(), $1,
-                       SageInterface::getFirstGlobalScope(project));                                                          
-                    
-                    //SageBuilder::pushScopeStack(fcn->get_definition()->get_body());
-                    fcn->get_definition()->set_body(isSgBasicBlock(SageBuilder::topScopeStack()));
 
-                    $3->appendAll(); //Add all statements in opt_list to current scope                    
+		   MatlabFunctionBuilder *functionBuilder = new MatlabFunctionBuilder($1, $3, SageInterface::getFirstGlobalScope(project));
+                    $$ = functionBuilder;
 
-                    $$ = fcn;
                   }                 
                 | opt_sep opt_list function_end
                   {
-                    SgFunctionDeclaration *fcn = SageBuilder::buildDefiningFunctionDeclaration("unnamed", 
-                      SageBuilder::buildVoidType(), SageBuilder::buildFunctionParameterList(), 
-                      SageInterface::getFirstGlobalScope(project));
-                    
-                    //SageBuilder::pushScopeStack(fcn->get_definition()->get_body());
-                    
-                    fcn->get_definition()->set_body(isSgBasicBlock(SageBuilder::topScopeStack()));
-
-                    $2->appendAll();  //Add all statements in opt_list to current scope
-
-                    $$ = fcn;
+		   MatlabFunctionBuilder *functionBuilder = new MatlabFunctionBuilder($2, SageInterface::getFirstGlobalScope(project));
+                    $$ = functionBuilder;
+											       
                   }
-                 /*{$$ = start_function (0, $2, $3);}*/                  
                 ;
 
 function_end    : END

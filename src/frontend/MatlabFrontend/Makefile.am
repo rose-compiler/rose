@@ -37,7 +37,8 @@ libroseMatlabFrontend_la_SOURCES = \
 	parser_support/input.cc \
 	parser_support/ourtoken.cc \
 	parser_support/StatementList.cc \
-	parser_support/SymbolFinder.cc
+	parser_support/SymbolFinder.cc \
+	parser_support/MatlabFunctionBuilder.cc
 
 pkginclude_HEADERS = MatlabParserInterface.h
 # DQ (9/29/2009): Renamed preproc.ll to preproc-c.ll in SVN.
