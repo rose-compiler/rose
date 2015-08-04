@@ -176,7 +176,9 @@ void call_interface_t::createLoopIterator(const std::vector<Descriptor::loop_t *
   std::vector<Descriptor::loop_t *>::const_iterator it;
   for (it = loops.begin(); it != loops.end(); it++) {
     std::ostringstream oss; oss << "l_" << (*it)->id;
-    symbol_map.iter_loops.insert(std::pair<size_t, SgVariableSymbol *>((*it)->id, MFB::Utils::getExistingSymbolOrBuildDecl(oss.str(), (*it)->iterator->get_type(), bb)));
+    SgVariableSymbol * symbol = MFB::Utils::getExistingSymbolOrBuildDecl(oss.str(), (*it)->iterator->get_type(), bb);
+    symbol_map.iter_loops.insert(std::pair<size_t, SgVariableSymbol *>((*it)->id, symbol));
+    symbol_map.orig_loops.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>((*it)->iterator, symbol));
   }
 }
 
@@ -201,6 +203,8 @@ SgBasicBlock * call_interface_t::generateKernelBody(Descriptor::kernel_t & kerne
   createLoopIterator(kernel.loops, symbol_map, bb);
 
   createTileIterator(kernel.tiles, symbol_map, bb);
+
+  std::cerr << "[Info] (KLT::call_interface_t::generateKernelBody) Found " << kernel.loops.size() << " loops and " << kernel.tiles.size() << " tiles." << std::endl;
 
   return bb;
 }
@@ -262,15 +266,17 @@ void array_args_interface_t::getSymbolForData(SgFunctionDefinition * kernel_defn
 
     data_type = SageBuilder::buildPointerType(data_type);
 
-    SgExpression * init = SageBuilder::buildPointerDerefExp(SageBuilder::buildCastExp(
+    SgExpression * init = SageBuilder::buildCastExp(
                             SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_data_sym), SageBuilder::buildIntVal(cnt++)), data_type
-                          ));
+                          );
     SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(data_name, data_type, SageBuilder::buildAssignInitializer(init), bb), bb);
 
     SgVariableSymbol * new_sym = bb->lookup_variable_symbol(data_name);
     assert(new_sym != NULL);
 
-    symbol_map.data.insert(std::pair<Descriptor::data_t *, SgVariableSymbol *>(*it, new_sym));
+    symbol_map.data.insert(std::pair<SgVariableSymbol *, Descriptor::data_t *>(data_sym, *it));
+    symbol_map.data_trans.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(data_sym, new_sym));
+    symbol_map.data_rtrans.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(new_sym, data_sym));
   }
 }
 

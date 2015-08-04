@@ -174,7 +174,7 @@ bool Generator::createTiles(
 ) {
   typename std::map<size_t, typename language_tpl::tile_parameter_t *>::const_iterator it_tile;
   for (it_tile = tiling.begin(); it_tile != tiling.end(); it_tile++) {
-    LoopTree::tile_t * current = new LoopTree::tile_t(tile_cnt++, it_tile->second->kind, it_tile->second->order, it_tile->second->param, loop->id, it_tile->first);
+    LoopTree::tile_t * current = new LoopTree::tile_t(tile_cnt++, it_tile->second->kind, it_tile->second->order, it_tile->second->param, loop, it_tile->first);
       current->parent = last;
 
     if (last != NULL) {

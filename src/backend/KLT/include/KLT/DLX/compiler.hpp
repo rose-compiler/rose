@@ -403,7 +403,7 @@ void Compiler<language_tpl, generator_tpl>::compile(SgNode * node) {
   typename kernel_directive_translation_map_t::const_iterator it_directive;
 #if OUTPUT_SUBKERNELS_GRAPHVIZ
   for (it_directive = kernel_directive_translation_map.begin(); it_directive != kernel_directive_translation_map.end(); it_directive++) {
-    std::ostringstream oss; oss << "subkernels_" << it_directive->first << std::endl;
+    std::ostringstream oss; oss << "subkernels_" << it_directive->first << ".dot";
     std::ofstream out(oss.str().c_str(), std::ofstream::out);
     it_directive->second.toGraphViz(out);
     out.close();

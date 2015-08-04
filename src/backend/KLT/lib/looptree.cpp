@@ -92,8 +92,8 @@ stmt_t::stmt_t(SgStatement * stmt) :
 
 stmt_t::~stmt_t() {}
 
-tile_t::tile_t(size_t id_, unsigned long kind_, size_t order_, SgExpression * param_, size_t loop_id_, size_t tile_id_) :
-  node_t(e_tile), id(id_), kind(kind_), order(order_), param(param_), loop_id(loop_id_), tile_id(tile_id_), next_tile(NULL), next_node(NULL) {}
+tile_t::tile_t(size_t id_, unsigned long kind_, size_t order_, SgExpression * param_, loop_t * loop_, size_t tile_id_) :
+  node_t(e_tile), id(id_), kind(kind_), order(order_), param(param_), loop(loop_), tile_id(tile_id_), next_tile(NULL), next_node(NULL) {}
 
 tile_t::~tile_t() {}
 
@@ -268,7 +268,7 @@ void loop_t::toGraphViz(std::ostream & out, std::string indent) const {
 }
 
 void tile_t::toGraphViz(std::ostream & out, std::string indent) const {
-  out << indent << getGraphVizLabel() << " [label=\"Tile #" << id << "\\nkind=" << kind << "\\norder=" << order << "\\nloop_id=" << loop_id << "\\ntile_id=" << tile_id << "\\n";
+  out << indent << getGraphVizLabel() << " [label=\"Tile #" << id << "\\nkind=" << kind << "\\norder=" << order << "\\nloop_id=" << loop->id << "\\ntile_id=" << tile_id << "\\n";
   if (param != NULL) out << "param=" << param->unparseToString() << "\\n";
   out << "\"]" << std::endl;
 
@@ -327,6 +327,13 @@ bool cmp_id(size_t val, T * elem) {
   return val < elem->id;
 }
 
+template <class T>
+void insert(T * t, std::vector<T *> & Ts) {
+  typename std::vector<T *>::iterator it = Ts.begin();
+  while (it != Ts.end() && t->id < (*it)->id) it++;
+  Ts.insert(it, t);
+}
+
 void loop_t::collectLoops(std::vector<Descriptor::loop_t *> & loops) const {
   loops.insert(
     std::upper_bound(loops.begin(), loops.end(), id, cmp_id<Descriptor::loop_t>),
@@ -341,6 +348,10 @@ void loop_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles) const {
 }
 
 void tile_t::collectLoops(std::vector<Descriptor::loop_t *> & loops) const {
+  std::vector<Descriptor::loop_t *>::iterator pos = std::upper_bound(loops.begin(), loops.end(), loop->id, cmp_id<Descriptor::loop_t>);
+  if (pos == loops.end() || (*pos)->id != loop->id)
+    loops.insert(pos, new Descriptor::loop_t(loop->id, loop->lower_bound, loop->upper_bound, loop->stride, loop->iterator));
+
   if (next_tile != NULL) next_tile->collectLoops(loops);
   if (next_node != NULL) next_node->collectLoops(loops);
 }
@@ -388,7 +399,7 @@ node_t * loop_t::finalize() {
 }
 
 node_t * tile_t::finalize() {
-  std::cerr << "[Info] (KLT::LoopTree::tile_t::finalize) Loop #" << loop_id << ", Tile #" << tile_id << std::endl;
+  std::cerr << "[Info] (KLT::LoopTree::tile_t::finalize) Loop #" << loop->id << ", Tile #" << tile_id << std::endl;
 
   if (next_node != NULL) { // it is the last tile in a chain
     assert(next_tile == NULL);
@@ -420,7 +431,7 @@ node_t * tile_t::finalize() {
       if (curr == NULL) break;
 
       if (curr->order == order) {
-        std::cerr << "[Warning] (KLT::LoopTree::tile_t::finalize) Tile #" << tile_id << " of loop #" << loop_id << " and tile #" << curr->tile_id << " of loop #" << curr->loop_id << " have the same ordering index = " << order << "." << std::endl;
+        std::cerr << "[Warning] (KLT::LoopTree::tile_t::finalize) Tile #" << tile_id << " of loop #" << loop->id << " and tile #" << curr->tile_id << " of loop #" << curr->loop->id << " have the same ordering index = " << order << "." << std::endl;
         std::cerr << "[Warning] (KLT::LoopTree::tile_t::finalize) Resulting tile order is undefined." << std::endl; // should be increasing order of the pair loop ID and tile ID. See sort
       }
     } while (order > curr->order);

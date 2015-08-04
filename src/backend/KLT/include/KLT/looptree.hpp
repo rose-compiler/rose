@@ -175,13 +175,13 @@ struct tile_t : public node_t {
   size_t order;
   SgExpression * param;
 
-  size_t loop_id;
+  loop_t * loop;
   size_t tile_id; // ID in the loop
 
   tile_t * next_tile;
   node_t * next_node;
 
-  tile_t(size_t id_, unsigned long kind_, size_t order_, SgExpression * param_, size_t loop_id_, size_t tile_id_);
+  tile_t(size_t id_, unsigned long kind_, size_t order_, SgExpression * param_, loop_t * loop_, size_t tile_id_);
   virtual ~tile_t();
 
   virtual node_t * finalize();

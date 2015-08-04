@@ -50,7 +50,7 @@ sage_func_res_t KLT<kernel_t>::buildKernelDecl(::KLT::Descriptor::kernel_t & res
 
   sage_func_desc_t sage_func_desc(res.kernel_name, kernel_ret_type, kernel_param_list, NULL, generator->getKernelFileID(), generator->getKernelFileID());
 
-  std::cerr << "[Info] (MFB::KLT::KLT<kernel_t>) Calling Driver<Sage>::build<SgFunctionDeclaration> to create " << res.kernel_name << " in file #" << generator->getKernelFileID() << "." << std::endl;
+  std::cerr << "[Info] (MFB::KLT::KLT<kernel_t>::buildKernelDecl) Calling Driver<Sage>::build<SgFunctionDeclaration> to create " << res.kernel_name << " in file #" << generator->getKernelFileID() << "." << std::endl;
 
   sage_func_res_t sage_func_res = driver.build<SgFunctionDeclaration>(sage_func_desc);
 
@@ -75,8 +75,12 @@ KLT<kernel_t>::build_result_t KLT<kernel_t>::build(::MFB::Driver< ::MFB::KLT::KL
   std::string kernel_prefix = "klt_kernel";
   ::KLT::Descriptor::kernel_t * res = buildKernelDesc(kernel_prefix);
 
+  std::cerr << "[Info] (MFB::KLT::KLT<kernel_t>::build) Before " << res->loops.size() << " loops and " << res->tiles.size() << " tiles." << std::endl;
+
   object.root->collectLoops(res->loops);
   object.root->collectTiles(res->tiles);
+
+  std::cerr << "[Info] (MFB::KLT::KLT<kernel_t>::build) After  " << res->loops.size() << " loops and " << res->tiles.size() << " tiles." << std::endl;
 
   res->parameters = object.parameters;
   res->data = object.data;
@@ -153,7 +157,7 @@ KLT<cond_t>::build_result_t KLT<cond_t>::build(::MFB::Driver< ::MFB::KLT::KLT> &
 
   cond_t * cond = (cond_t *)object.node;
 
-  SgExpression * condition = ::KLT::Utils::translateExpression(cond->condition, object.symbol_map);
+  SgExpression * condition = object.symbol_map.translate(cond->condition);
 
   SgStatement * true_body  = driver.build<node_t>(looptree_desc_t(cond->branch_true, object.generator, object.symbol_map));
   SgStatement * false_body = driver.build<node_t>(looptree_desc_t(cond->branch_false, object.generator, object.symbol_map));
@@ -223,11 +227,11 @@ KLT<tile_t>::build_result_t KLT<tile_t>::build(::MFB::Driver< ::MFB::KLT::KLT> &
   std::map<size_t, SgExpression *> loop_iter_map;
   while (tile->next_tile != NULL) {
     tile_chain.push_back(tile);
-    loop_iter_map[tile->loop_id] = NULL;
+    loop_iter_map[tile->loop->id] = NULL;
     tile = tile->next_tile;
   };
   tile_chain.push_back(tile);
-  loop_iter_map[tile->loop_id] = NULL;
+  loop_iter_map[tile->loop->id] = NULL;
 
   // TODO reorder tiles if needed
 
@@ -241,12 +245,18 @@ KLT<tile_t>::build_result_t KLT<tile_t>::build(::MFB::Driver< ::MFB::KLT::KLT> &
   std::vector<tile_t *>::const_reverse_iterator it = tile_chain.rbegin();
   while (it != tile_chain.rend()) {
     std::pair<SgVariableSymbol *, SgForStatement *> res = buildTile(driver, *it, object.generator, object.symbol_map);
-    loop_iter_map[(*it)->loop_id] = SageBuilder::buildAddOp(loop_iter_map[(*it)->loop_id], SageBuilder::buildVarRefExp(res.first));
+    loop_iter_map[(*it)->loop->id] = SageBuilder::buildAddOp(loop_iter_map[(*it)->loop->id], SageBuilder::buildVarRefExp(res.first));
     if (res.second != NULL) {
       res.second->set_loop_body(stmt);
       stmt = res.second;
     }
     it++;
+  }
+
+  for (it_loop_iter = loop_iter_map.begin(); it_loop_iter != loop_iter_map.end(); it_loop_iter++) {
+    std::map<size_t, SgVariableSymbol *>::const_iterator it = object.symbol_map.iter_loops.find(it_loop_iter->first);
+    assert(it != object.symbol_map.iter_loops.end());
+    SageInterface::appendStatement(SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildVarRefExp(it->second), it_loop_iter->second)), bb);
   }
 
   SageInterface::appendStatement(driver.build<node_t>(looptree_desc_t(tile->next_node, object.generator, object.symbol_map)), bb);
@@ -261,7 +271,7 @@ KLT<stmt_t>::build_result_t KLT<stmt_t>::build(::MFB::Driver< ::MFB::KLT::KLT> &
   assert(object.node->kind == ::KLT::LoopTree::e_stmt);
   assert(dynamic_cast<stmt_t *>(object.node) != NULL);
 
-  return ::KLT::Utils::translateStatement(((stmt_t *)object.node)->statement, object.symbol_map);
+  return object.symbol_map.translate(((stmt_t *)object.node)->statement);
 }
 
 } // namespace MFB::KLT
