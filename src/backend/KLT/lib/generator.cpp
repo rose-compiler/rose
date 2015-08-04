@@ -8,7 +8,7 @@
 #include "MDCG/Core/model.hpp"
 #include "MDCG/Core/model-builder.hpp"
 
-#include "KLT/runtime.hpp"
+#include "KLT/generator.hpp"
 #include "KLT/descriptor.hpp"
 #include "KLT/api.hpp"
 
@@ -48,6 +48,38 @@ API::call_interface_t & Generator::getCallInterface() { return *call_interface; 
 const API::call_interface_t & Generator::getCallInterface() const { return *call_interface; }
 MFB::file_id_t Generator::getKernelFileID() const { return kernel_file_id; }
 MFB::file_id_t Generator::getStaticFileID() const { return static_file_id; }
+
+void Generator::solveDataFlow(
+  Kernel::kernel_t * kernel,
+  const std::vector<Kernel::kernel_t *> & subkernels,
+  std::map<Descriptor::kernel_t *, std::vector<Descriptor::kernel_t *> > & kernel_deps_map,
+  const std::map<Kernel::kernel_t *, Descriptor::kernel_t *> & translation_map,
+  const std::map<Descriptor::kernel_t *, Kernel::kernel_t *> & rtranslation_map
+) const {
+  // Simplest implementation I can think of: enforce text order...
+
+  Descriptor::kernel_t * previous = NULL;
+  Descriptor::kernel_t * current = NULL;
+
+  std::map<Descriptor::kernel_t *, std::vector<Descriptor::kernel_t *> >::iterator it_kernel_deps;
+  std::map<Kernel::kernel_t *, Descriptor::kernel_t *>::const_iterator it_trans;
+
+  std::vector<Kernel::kernel_t *>::const_iterator it;
+  for (it = subkernels.begin(); it != subkernels.end(); it++) {
+    it_trans = translation_map.find(*it);
+    assert(it_trans != translation_map.end());
+    current = it_trans->second;
+
+    it_kernel_deps = kernel_deps_map.find(current);
+    assert(it_kernel_deps != kernel_deps_map.end());
+    std::vector<Descriptor::kernel_t *> & deps = it_kernel_deps->second;
+
+    if (previous != NULL)
+      deps.push_back(previous);
+
+    previous = current;
+  }
+}
 
 } // namespace KLT
 

@@ -5,7 +5,7 @@
 
 #include "KLT/descriptor.hpp"
 #include "KLT/looptree.hpp"
-#include "KLT/runtime.hpp"
+#include "KLT/generator.hpp"
 #include "KLT/api.hpp"
 #include "KLT/utils.hpp"
 

@@ -20,11 +20,6 @@ namespace DLX {
 
 namespace Frontend {
 
-/*!
- * \addtogroup grp_dlx_core_frontend
- * @{
- */
-
 template <class language_tpl>
 class Frontend {
   public:
@@ -52,11 +47,6 @@ class Frontend {
     static generic_clause_t    * parseClause(std::string & directive_str);
     static directive_t         * parse(std::string & directive_str, SgLocatedNode * directive_node);
 
-/*!
- * \addtogroup grp_dlx_core_specific
- * @{
- */
-
     template <typename language_t::construct_kinds_e kind>
     static bool findAssociatedNodes(
       SgLocatedNode * directive_node,
@@ -73,12 +63,10 @@ class Frontend {
 
     bool build_graph(const std::map<SgLocatedNode *, directive_t *> & translation_map);
 
-/*! @} */
-
   public:
     bool parseDirectives(SgNode *);
 
-    void toDot(std::ostream & out) const;
+    void toGraphViz(std::ostream & out) const;
 
   friend bool Directives::findAssociatedNodes<language_t>(SgLocatedNode *, Directives::generic_construct_t<language_t> *, const std::map<SgLocatedNode *, directive_t *> & translation_map); 
   friend bool Directives::parseClauseParameters<language_t>(std::string &, SgLocatedNode *, Directives::generic_clause_t<language_t> *); 
@@ -190,8 +178,8 @@ bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
 }
 
 template <class language_tpl>
-void Frontend<language_tpl>::toDot(std::ostream & out) const {
-  out << "digraph {" << std::endl;
+void Frontend<language_tpl>::toGraphViz(std::ostream & out) const {
+  out << "digraph directives {" << std::endl;
   typename std::vector<directive_t *>::const_iterator it_directive;
   for (it_directive = directives.begin(); it_directive != directives.end(); it_directive++) {
     typename std::map<typename language_tpl::construct_kinds_e, std::string>::const_iterator it_construct_label = language_tpl::s_construct_labels.find((*it_directive)->construct->kind);
@@ -207,8 +195,6 @@ void Frontend<language_tpl>::toDot(std::ostream & out) const {
   }
   out << "}" << std::endl;
 }
-
-/** @} */
 
 }
 

@@ -6,7 +6,7 @@ SUBDIRS=#core rtl
 lib_LTLIBRARIES=libKLT.la
 
 libKLT_la_SOURCES= \
-  runtime.cpp \
+  generator.cpp \
   looptree.cpp \
   kernel.cpp \
   descriptor.cpp \

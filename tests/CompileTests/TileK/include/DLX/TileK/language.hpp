@@ -9,6 +9,7 @@
 #ifndef __DLX_TILEK_LANGUAGE_HPP__
 #define __DLX_TILEK_LANGUAGE_HPP__
 
+#include "DLX/Core/directives.hpp"
 #include "DLX/Core/constructs.hpp"
 #include "DLX/Core/clauses.hpp"
 #include "DLX/Core/parser.hpp"
