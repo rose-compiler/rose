@@ -459,6 +459,8 @@ public:
             finished_->emit(true);
             ctx_->busy->popWork();
         }
+
+        info <<"; done\n";
     }
 };
 
