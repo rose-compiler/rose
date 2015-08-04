@@ -6,7 +6,8 @@ lib_LTLIBRARIES=libKLT-RTL.la
 CFLAGS=
 
 libKLT_RTL_la_SOURCES= \
-  build-loop-context.c \
+  kernel.c \
+  build-context.c \
   context.c
 libKLT_RTL_la_CFLAGS= -g -O0 \
   -I$(top_srcdir)/src/midend/MFB/include \

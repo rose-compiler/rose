@@ -178,14 +178,14 @@ libKLT_TileK_acc_cuda_la_CXXFLAGS= \
 
 # Runtime
 
-libTileK_RTL_la_SOURCES=rtl.c rtl-basic.c
+libTileK_RTL_la_SOURCES=klt-user-basic.c
 libTileK_RTL_la_CFLAGS= \
   -g -DTILEK_BASIC \
   -I$(top_srcdir)/src/backend/KLT/include \
   -I$(srcdir)/../include \
   $(ROSE_INCLUDES)
 
-libTileK_RTL_threads_la_SOURCES=rtl.c rtl-threads.c
+libTileK_RTL_threads_la_SOURCES=rtl-threads.c
 libTileK_RTL_threads_la_CFLAGS= \
   -g -DTILEK_THREADS \
   -I$(top_srcdir)/src/backend/KLT/include \
@@ -193,7 +193,7 @@ libTileK_RTL_threads_la_CFLAGS= \
   $(ROSE_INCLUDES)
 
 if ROSE_HAVE_OPENCL_INC
-libTileK_RTL_acc_ocl_la_SOURCES=rtl.c rtl-accelerator.c rtl-acc-ocl.c
+libTileK_RTL_acc_ocl_la_SOURCES=rtl-accelerator.c rtl-acc-ocl.c
 libTileK_RTL_acc_ocl_la_CFLAGS= \
   -g -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL -DCOMPILE_OPENCL_KERNEL_WITH_DEBUG=1 \
   -I@OPENCL_INC_DIR@ \
@@ -203,7 +203,7 @@ libTileK_RTL_acc_ocl_la_CFLAGS= \
 endif
 
 if ROSE_HAVE_CUDA_INC
-libTileK_RTL_acc_cuda_la_SOURCES=rtl.c rtl-accelerator.c rtl-acc-cuda.c
+libTileK_RTL_acc_cuda_la_SOURCES=rtl-accelerator.c rtl-acc-cuda.c
 libTileK_RTL_acc_cuda_la_CFLAGS= \
   -g -DTILEK_ACCELERATOR -DTILEK_TARGET_CUDA \
   -I@CUDA_INC_DIR@ \

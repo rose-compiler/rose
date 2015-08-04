@@ -2145,6 +2145,7 @@ tests/CompileTests/TileK/include/RTL/Kernel/CUDA/Makefile
 tests/CompileTests/TileK/lib/Makefile
 tests/CompileTests/TileK/src/Makefile
 tests/CompileTests/TileK/tests/Makefile
+tests/CompileTests/TileK/tests/rtl/Makefile
 tests/CompileTests/TileK/tests/basic/Makefile
 tests/CompileTests/TileK/tests/threads/Makefile
 tests/CompileTests/TileK/tests/accelerator/Makefile

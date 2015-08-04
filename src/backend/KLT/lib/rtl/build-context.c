@@ -1,19 +1,19 @@
 
-struct kernel_t;
-
 #include "KLT/RTL/context.h"
 #include "KLT/RTL/loop.h"
 #include "KLT/RTL/tile.h"
-#include "KLT/RTL/build-loop-context.h"
+#include "KLT/RTL/build-context.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 #include <assert.h>
 
-extern int get_length_tile(struct kernel_t * kernel, unsigned long kind);
+struct klt_kernel_t;
 
-void klt_solve_loop_context(int num_loops, struct klt_loop_desc_t * loop_desc, struct klt_loop_context_t * loop_ctx, struct kernel_t * kernel) {
+extern int get_length_tile(struct klt_kernel_t * kernel, unsigned long kind);
+
+void klt_solve_loop_context(int num_loops, struct klt_loop_desc_t * loop_desc, struct klt_loop_context_t * loop_ctx, struct klt_kernel_t * kernel) {
   int loop_it, tile_it;
 
   for (loop_it = 0; loop_it < num_loops; loop_it++) {
@@ -106,7 +106,12 @@ void klt_solve_loop_context(int num_loops, struct klt_loop_desc_t * loop_desc, s
   }
 }
 
-struct klt_loop_context_t * klt_build_loop_context(struct klt_loop_container_t * loop_container, struct klt_loop_t * loops, struct kernel_t * kernel) {
+struct klt_loop_context_t * klt_build_loop_context(struct klt_loop_container_t * loop_container, struct klt_loop_t * loops_, struct klt_kernel_t * kernel) {
+  struct klt_loop_t * loops = malloc(loop_container->num_loops * sizeof(struct klt_loop_t));
+  int i;
+  for (i = 0; i < loop_container->num_loops; i++)
+    loops[i] = loops_[loop_container->loop_desc[i].idx];
+
   int size = sizeof(struct klt_loop_context_t) + loop_container->num_loops * sizeof(struct klt_loop_t) + loop_container->num_tiles * sizeof(struct klt_tile_t);
   struct klt_loop_context_t * loop_ctx = malloc(size);
 
@@ -115,10 +120,13 @@ struct klt_loop_context_t * klt_build_loop_context(struct klt_loop_container_t *
   loop_ctx->num_loops = loop_container->num_loops;
   loop_ctx->num_tiles = loop_container->num_tiles;
   memcpy(loop_ctx->data, loops, loop_container->num_loops * sizeof(struct klt_loop_t));
-    
 
   klt_solve_loop_context(loop_container->num_loops, loop_container->loop_desc, loop_ctx, kernel);
 
   return loop_ctx;
+}
+
+struct klt_data_context_t * klt_build_data_context() {
+  return malloc(sizeof(struct klt_data_context_t));
 }
 
