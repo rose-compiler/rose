@@ -1752,11 +1752,11 @@ src/midend/MFB/lib/utils/Makefile
 src/midend/MDCG/Makefile
 src/midend/MDCG/include/Makefile
 src/midend/MDCG/include/MDCG/Makefile
-src/midend/MDCG/include/MDCG/Core/Makefile
-src/midend/MDCG/include/MDCG/KLT/Makefile
+src/midend/MDCG/include/MDCG/Model/Makefile
+src/midend/MDCG/include/MDCG/Tools/Makefile
 src/midend/MDCG/lib/Makefile
-src/midend/MDCG/lib/core/Makefile
-src/midend/MDCG/lib/klt/Makefile
+src/midend/MDCG/lib/model/Makefile
+src/midend/MDCG/lib/tools/Makefile
 src/backend/Makefile
 src/backend/KLT/Makefile
 src/backend/KLT/include/Makefile
