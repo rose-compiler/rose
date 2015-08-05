@@ -1,3 +1,3 @@
 
-SUBDIRS=core # klt
+SUBDIRS=model tools
 

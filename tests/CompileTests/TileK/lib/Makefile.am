@@ -1,18 +1,18 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-lib_LTLIBRARIES= \
-  libDLX-TileK.la         libMFB-TileK.la          libMDCG-TileK.la          libKLT-TileK.la          libTileK-RTL.la \
-  libDLX-TileK-threads.la libMFB-TileK-threads.la  libMDCG-TileK-threads.la  libKLT-TileK-threads.la  libTileK-RTL-threads.la \
-  libDLX-TileK-acc.la     libMFB-TileK-acc-ocl.la  libMDCG-TileK-acc-ocl.la  libKLT-TileK-acc-ocl.la                          \
-                          libMFB-TileK-acc-cuda.la libMDCG-TileK-acc-cuda.la libKLT-TileK-acc-cuda.la
+lib_LTLIBRARIES= libDLX-TileK.la libTileK-RTL.la
+#  libDLX-TileK.la         libMFB-TileK.la          libMDCG-TileK.la          libKLT-TileK.la          libTileK-RTL.la \
+#  libDLX-TileK-threads.la libMFB-TileK-threads.la  libMDCG-TileK-threads.la  libKLT-TileK-threads.la  libTileK-RTL-threads.la \
+#  libDLX-TileK-acc.la     libMFB-TileK-acc-ocl.la  libMDCG-TileK-acc-ocl.la  libKLT-TileK-acc-ocl.la                          \
+#                          libMFB-TileK-acc-cuda.la libMDCG-TileK-acc-cuda.la libKLT-TileK-acc-cuda.la
 
 if ROSE_HAVE_OPENCL_INC
-lib_LTLIBRARIES+=libTileK-RTL-acc-ocl.la
+#lib_LTLIBRARIES+=libTileK-RTL-acc-ocl.la
 endif
 
 if ROSE_HAVE_CUDA_INC
-lib_LTLIBRARIES+=libTileK-RTL-acc-cuda.la
+#lib_LTLIBRARIES+=libTileK-RTL-acc-cuda.la
 endif
 
 # DLX (frontend)

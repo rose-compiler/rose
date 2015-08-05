@@ -1,17 +1,17 @@
 
-#ifndef __MDCG_CORE_API_HPP__
-#define __MDCG_CORE_API_HPP__
+#ifndef __MDCG_TOOLS_API_HPP__
+#define __MDCG_TOOLS_API_HPP__
 
 #include "MFB/Sage/driver.hpp"
 
-#include "MDCG/Core/model.hpp"
-#include "MDCG/Core/model-namespace.hpp"
-#include "MDCG/Core/model-function.hpp"
-#include "MDCG/Core/model-variable.hpp"
-#include "MDCG/Core/model-class.hpp"
-#include "MDCG/Core/model-method.hpp"
-#include "MDCG/Core/model-field.hpp"
-#include "MDCG/Core/model-type.hpp"
+#include "MDCG/Model/model.hpp"
+#include "MDCG/Model/namespace.hpp"
+#include "MDCG/Model/function.hpp"
+#include "MDCG/Model/variable.hpp"
+#include "MDCG/Model/class.hpp"
+#include "MDCG/Model/method.hpp"
+#include "MDCG/Model/field.hpp"
+#include "MDCG/Model/type.hpp"
 
 #include <set>
 
@@ -24,7 +24,7 @@ class SgMemberFunctionSymbol;
 
 namespace MDCG {
 
-namespace API {
+namespace Tools {
 
 typedef SgSymbol symbol_t;
 typedef SgSymbol * symbol_ptr;
@@ -91,9 +91,9 @@ struct api_t {
     virtual void load(const MDCG::Model::model_t & model) = 0;
 };
 
-} // namespace MDCG::API
+} // namespace MDCG::Tools
 
 } // namespace MDCG
 
-#endif /* __MDCG_CORE_API_HPP__ */
+#endif /* __MDCG_TOOLS_API_HPP__ */
 

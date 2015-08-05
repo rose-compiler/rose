@@ -1,25 +1,14 @@
-/** 
- * \file MDCG/include/MDCG/model-type.hpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #ifndef __MDCG_MODEL_TYPE_HPP__
 #define __MDCG_MODEL_TYPE_HPP__
 
-#include "MDCG/Core/model-base.hpp"
+#include "MDCG/Model/base.hpp"
 
 class SgType;
 
 namespace MDCG {
 
 namespace Model {
-
-/*!
- * \addtogroup grp_mdcg_model
- * @{
-*/
 
 template <>
 struct node_t<e_model_type> {
@@ -55,8 +44,6 @@ struct scope_t<e_model_type> {
     class_t a_class;
   } parent;
 };
-
-/** @} */
 
 }
 

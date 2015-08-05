@@ -5,19 +5,21 @@
  *
  */
 
-#ifndef __MDCG_CODE_GENERATOR_HPP__
-#define __MDCG_CODE_GENERATOR_HPP__
+#ifndef __MDCG_TOOLS_STATIC_INITIALIZER_HPP__
+#define __MDCG_TOOLS_STATIC_INITIALIZER_HPP__
 
 #include "MFB/Sage/driver.hpp"
 #include "MFB/Sage/class-declaration.hpp"
 
-#include "MDCG/Core/model.hpp"
+#include "MDCG/Model/model.hpp"
 
 #include <string>
 #include <sstream>
 #include <iterator>
 
 namespace MDCG {
+
+namespace Tools {
 
 /*!
  * \addtogroup grp_mdcg_static_initializer
@@ -272,5 +274,7 @@ SgVariableSymbol * StaticInitializer::addDeclaration(
 
 }
 
-#endif /* __MDCG_CODE_GENERATOR_HPP__ */
+}
+
+#endif /* __MDCG_TOOLS_STATIC_INITIALIZER_HPP__ */
 

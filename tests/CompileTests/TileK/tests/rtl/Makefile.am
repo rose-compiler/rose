@@ -55,3 +55,11 @@ clean-test_2:
 
 ###################################################################################################
 
+$(top_builddir)/$(KLT_REL_PATH)/lib/rtl/libKLT-RTL.la:
+	make -C $(top_builddir)/$(KLT_REL_PATH)/lib/rtl libKLT-RTL.la
+
+$(builddir)/$(TILEK_REL_PATH)/lib/libTileK-RTL.la:
+	make -C $(builddir)/$(TILEK_REL_PATH)/lib libTileK-RTL.la
+
+###################################################################################################
+

@@ -7,17 +7,14 @@
 
 #include "sage3basic.h"
 
-#include "MDCG/Core/static-initializer.hpp"
+#include "MDCG/Tools/static-initializer.hpp"
 #include "MFB/Sage/variable-declaration.hpp"
 
 #include <cassert>
 
 namespace MDCG {
 
-/*!
- * \addtogroup grp_mdcg_static_initializer
- * @{
-*/
+namespace Tools {
 
 StaticInitializer::StaticInitializer(MFB::Driver<MFB::Sage> & driver) :
   p_driver(driver)
@@ -138,6 +135,6 @@ Model::class_t StaticInitializer::getBaseClassForArrayOnTypedefOnPointerOnClass(
   return res;
 }
 
-/** @} */
+}
 
 }

@@ -5,10 +5,10 @@
  *
  */
 
-#ifndef __MDCG_MODEL_BUILDER_HPP__
-#define __MDCG_MODEL_BUILDER_HPP__
+#ifndef __MDCG_TOOLS_MODEL_BUILDER_HPP__
+#define __MDCG_TOOLS_MODEL_BUILDER_HPP__
 
-#include "MDCG/Core/model.hpp"
+#include "MDCG/Model/model.hpp"
 
 #include <map>
 #include <vector>
@@ -24,10 +24,7 @@ namespace MFB {
 
 namespace MDCG {
 
-/*!
- * \addtogroup grp_mdcg_model
- * @{
-*/
+namespace Tools {
 
 class ModelBuilder {
   public:
@@ -74,9 +71,9 @@ class ModelBuilder {
     void print(std::ostream & out, model_id_t model) const;
 };
 
-/** @} */
+}
 
 }
 
-#endif /* __MDCG_MODEL_BUILDER_HPP__ */
+#endif /* __MDCG_TOOLS_MODEL_BUILDER_HPP__ */
 

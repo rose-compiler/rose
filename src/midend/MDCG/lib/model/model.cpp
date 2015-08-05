@@ -1,21 +1,15 @@
-/** 
- * \file MDCG/lib/model.hpp
- *
- * \author Tristan Vanderbruggen
- *
- */
-
-#include "MDCG/Core/model.hpp"
-#include "MDCG/Core/model-base.hpp"
-#include "MDCG/Core/model-namespace.hpp"
-#include "MDCG/Core/model-variable.hpp"
-#include "MDCG/Core/model-function.hpp"
-#include "MDCG/Core/model-type.hpp"
-#include "MDCG/Core/model-class.hpp"
-#include "MDCG/Core/model-field.hpp"
-#include "MDCG/Core/model-method.hpp"
 
 #include "sage3basic.h"
+
+#include "MDCG/Model/model.hpp"
+#include "MDCG/Model/base.hpp"
+#include "MDCG/Model/namespace.hpp"
+#include "MDCG/Model/variable.hpp"
+#include "MDCG/Model/function.hpp"
+#include "MDCG/Model/type.hpp"
+#include "MDCG/Model/class.hpp"
+#include "MDCG/Model/field.hpp"
+#include "MDCG/Model/method.hpp"
 
 #include <cassert>
 

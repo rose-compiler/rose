@@ -2,7 +2,7 @@
 #ifndef __KLT_API_HPP__
 #define __KLT_API_HPP__
 
-#include "MDCG/Core/api.hpp"
+#include "MDCG/Tools/api.hpp"
 
 class SgVariableSymbol;
 class SgFunctionSymbol;
@@ -32,7 +32,7 @@ namespace KLT {
 
 namespace API {
 
-struct kernel_t : public ::MDCG::API::api_t {
+struct kernel_t : public ::MDCG::Tools::api_t {
   protected:
     SgClassSymbol * klt_loop_context_class;
 
@@ -65,7 +65,7 @@ struct kernel_t : public ::MDCG::API::api_t {
     SgType * getDataContextPtrType() const;
 };
 
-struct host_t : public ::MDCG::API::api_t {
+struct host_t : public ::MDCG::Tools::api_t {
   protected:
     SgClassSymbol * kernel_class;
       SgVariableSymbol * kernel_param_field;

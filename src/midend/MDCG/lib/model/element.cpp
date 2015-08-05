@@ -1,11 +1,11 @@
 
-#include "MDCG/Core/model-namespace.hpp"
-#include "MDCG/Core/model-variable.hpp"
-#include "MDCG/Core/model-function.hpp"
-#include "MDCG/Core/model-class.hpp"
-#include "MDCG/Core/model-field.hpp"
-#include "MDCG/Core/model-method.hpp"
-#include "MDCG/Core/model-type.hpp"
+#include "MDCG/Model/namespace.hpp"
+#include "MDCG/Model/variable.hpp"
+#include "MDCG/Model/function.hpp"
+#include "MDCG/Model/class.hpp"
+#include "MDCG/Model/field.hpp"
+#include "MDCG/Model/method.hpp"
+#include "MDCG/Model/type.hpp"
 
 #include <cassert>
 

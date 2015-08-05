@@ -1,9 +1,9 @@
 
 #include "sage3basic.h"
 
-#include "MDCG/Core/model-class.hpp"
-#include "MDCG/Core/model-field.hpp"
-#include "MDCG/Core/model-method.hpp"
+#include "MDCG/Model/class.hpp"
+#include "MDCG/Model/field.hpp"
+#include "MDCG/Model/method.hpp"
 
 #include <cassert>
 

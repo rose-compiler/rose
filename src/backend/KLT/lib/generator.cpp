@@ -5,8 +5,8 @@
 #include "MFB/Sage/driver.hpp"
 #include "MFB/KLT/driver.hpp"
 
-#include "MDCG/Core/model.hpp"
-#include "MDCG/Core/model-builder.hpp"
+#include "MDCG/Model/model.hpp"
+#include "MDCG/Tools/model-builder.hpp"
 
 #include "KLT/generator.hpp"
 #include "KLT/descriptor.hpp"
@@ -14,7 +14,7 @@
 
 namespace KLT {
 
-Generator::Generator(MFB::Driver<MFB::KLT::KLT> & driver_, ::MDCG::ModelBuilder & model_builder_) :
+Generator::Generator(MFB::Driver<MFB::KLT::KLT> & driver_, ::MDCG::Tools::ModelBuilder & model_builder_) :
   driver(driver_), model_builder(model_builder_), static_initializer(driver),
   tilek_model(model_builder.create()),
   kernel_file_id(0), static_file_id(0),
@@ -40,8 +40,8 @@ void Generator::loadModel(const std::string & klt_inc_dir, const std::string & u
 
 MFB::Driver<MFB::KLT::KLT> & Generator::getDriver() { return driver; }
 const MFB::Driver<MFB::KLT::KLT> & Generator::getDriver() const { return driver; }
-::MDCG::ModelBuilder & Generator::getModelBuilder() { return model_builder; }
-const ::MDCG::ModelBuilder & Generator::getModelBuilder() const { return model_builder; }
+::MDCG::Tools::ModelBuilder & Generator::getModelBuilder() { return model_builder; }
+const ::MDCG::Tools::ModelBuilder & Generator::getModelBuilder() const { return model_builder; }
 API::host_t & Generator::getHostAPI() { return *host_api; }
 const API::host_t & Generator::getHostAPI() const { return *host_api; }
 API::kernel_t & Generator::getKernelAPI() { return *kernel_api; }

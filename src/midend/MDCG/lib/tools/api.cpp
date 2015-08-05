@@ -2,11 +2,11 @@
 #include "MFB/Sage/class-declaration.hpp"
 #include "MFB/Sage/function-declaration.hpp"
 
-#include "MDCG/Core/api.hpp"
+#include "MDCG/Tools/api.hpp"
 
 namespace MDCG {
 
-namespace API {
+namespace Tools {
 
 bool api_t::load(namespace_t & element, namespace_symbol_ptr & symbol, const MDCG::Model::model_t & model, const std::string & name, const namespace_t parent) {
   assert(parent == NULL); // TODO can be: NULL, or a namespace
@@ -87,7 +87,7 @@ void api_t::use(::MFB::Driver< ::MFB::Sage> & driver, SgSourceFile * file) const
   use(driver, driver.getFileID(file));
 }
 
-} // namespace MDCG::API
+} // namespace MDCG::Tools
 
 } // namespace MDCG
 

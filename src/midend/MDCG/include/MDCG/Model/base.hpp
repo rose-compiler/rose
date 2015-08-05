@@ -1,9 +1,3 @@
-/** 
- * \file MDCG/include/MDCG/model-base.hpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #ifndef __MDCG_MODEL_BASE_HPP__
 #define __MDCG_MODEL_BASE_HPP__
@@ -25,11 +19,6 @@ class SgEnumSymbol;
 namespace MDCG {
 
 namespace Model {
-
-/*!
- * \addtogroup grp_mdcg_model
- * @{
-*/
 
 /// Different kind of elements in the model
 enum model_elements_e {
@@ -135,8 +124,6 @@ typedef               symbol_t type_symbol_t;  // FIXME SgTypeSymbol? for SgEnum
 
 typedef        SgTypedefSymbol typedef_symbol_t;
 typedef           SgEnumSymbol enum_symbol_t;
-
-/** @} */
 
 }
 

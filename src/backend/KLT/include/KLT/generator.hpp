@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "MDCG/Core/model-builder.hpp"
+#include "MDCG/Tools/model-builder.hpp"
 
 #include "KLT/looptree.hpp"
 #include "KLT/kernel.hpp"
@@ -27,7 +27,10 @@ namespace MFB {
   }
 }
 namespace MDCG {
-  class ModelBuilder;
+  namespace Tools {
+    class ModelBuilder;
+    class StaticInitializer;
+  }
 }
 namespace KLT {
   namespace Descriptor {
@@ -53,8 +56,8 @@ namespace KLT {
 class Generator {
   protected:
     MFB::Driver<MFB::KLT::KLT> & driver;
-    ::MDCG::ModelBuilder & model_builder;
-    ::MDCG::StaticInitializer static_initializer;
+    ::MDCG::Tools::ModelBuilder & model_builder;
+    ::MDCG::Tools::StaticInitializer static_initializer;
 
     size_t tilek_model;
 
@@ -68,7 +71,7 @@ class Generator {
     std::map<Kernel::kernel_t *, size_t> kernel_map;
 
   protected:
-    Generator(MFB::Driver<MFB::KLT::KLT> & driver_, ::MDCG::ModelBuilder & model_builder_);
+    Generator(MFB::Driver<MFB::KLT::KLT> & driver_, ::MDCG::Tools::ModelBuilder & model_builder_);
 
     void loadModel(const std::string & klt_inc_dir, const std::string & usr_inc_dir);
 
@@ -77,7 +80,7 @@ class Generator {
   public:
     template <class generator_tpl>
     static generator_tpl * build(
-        MFB::Driver<MFB::KLT::KLT> & driver, ::MDCG::ModelBuilder & model_builder,
+        MFB::Driver<MFB::KLT::KLT> & driver, ::MDCG::Tools::ModelBuilder & model_builder,
         const std::string & klt_inc_dir, const std::string & usr_inc_dir, const std::string & basename
     );
 
@@ -85,8 +88,8 @@ class Generator {
     MFB::Driver<MFB::KLT::KLT> & getDriver();
     const MFB::Driver<MFB::KLT::KLT> & getDriver() const;
 
-    ::MDCG::ModelBuilder & getModelBuilder();
-    const ::MDCG::ModelBuilder & getModelBuilder() const;
+    ::MDCG::Tools::ModelBuilder & getModelBuilder();
+    const ::MDCG::Tools::ModelBuilder & getModelBuilder() const;
 
     API::host_t & getHostAPI();
     const API::host_t & getHostAPI() const;
@@ -127,7 +130,7 @@ class Generator {
 
 template <class generator_tpl>
 generator_tpl * Generator::build(
-  MFB::Driver<MFB::KLT::KLT> & driver, ::MDCG::ModelBuilder & model_builder,
+  MFB::Driver<MFB::KLT::KLT> & driver, ::MDCG::Tools::ModelBuilder & model_builder,
   const std::string & klt_inc_dir, const std::string & usr_inc_dir, const std::string & basename
 ) {
   generator_tpl * generator = new generator_tpl(driver, model_builder);

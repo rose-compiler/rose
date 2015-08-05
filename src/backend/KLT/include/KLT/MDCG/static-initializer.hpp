@@ -1,5 +1,5 @@
 
-#include "MDCG/Core/static-initializer.hpp"
+#include "MDCG/Tools/static-initializer.hpp"
 #include "KLT/utils.hpp"
 
 namespace KLT {
@@ -11,7 +11,7 @@ struct KernelContainer {
   typedef std::map<typename language_tpl::directive_t *, Utils::subkernel_result_t<language_tpl> > input_t;
 
   static SgExpression * createFieldInitializer(
-    const ::MDCG::StaticInitializer & static_initializer,
+    const ::MDCG::Tools::StaticInitializer & static_initializer,
     ::MDCG::Model::field_t element,
     size_t field_id,
     const input_t & input,

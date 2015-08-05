@@ -1,23 +1,12 @@
-/** 
- * \file MDCG/include/MDCG/model-method.hpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #ifndef __MDCG_MODEL_METHOD_HPP__
 #define __MDCG_MODEL_METHOD_HPP__
 
-#include "MDCG/Core/model-base.hpp"
+#include "MDCG/Model/base.hpp"
 
 namespace MDCG {
 
 namespace Model {
-
-/*!
- * \addtogroup grp_mdcg_model
- * @{
-*/
 
 template <>
 struct node_t<e_model_method> {
@@ -31,8 +20,6 @@ template <>
 struct scope_t<e_model_method> {
   class_t parent;
 };
-
-/** @} */
 
 }
 

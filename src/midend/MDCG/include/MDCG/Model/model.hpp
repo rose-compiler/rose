@@ -1,20 +1,16 @@
-/** 
- * \file MDCG/include/MDCG/model.hpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
-#ifndef __MDCG_MODEL_HPP__
-#define __MDCG_MODEL_HPP__
+#ifndef __MDCG_MODEL_MODEL_HPP__
+#define __MDCG_MODEL_MODEL_HPP__
 
-#include "MDCG/Core/model-variable.hpp"
-#include "MDCG/Core/model-function.hpp"
-#include "MDCG/Core/model-type.hpp"
-#include "MDCG/Core/model-class.hpp"
-#include "MDCG/Core/model-field.hpp"
-#include "MDCG/Core/model-method.hpp"
-#include "MDCG/Core/model-namespace.hpp"
+#include "MDCG/Model/base.hpp"
+
+#include "MDCG/Model/variable.hpp"
+#include "MDCG/Model/function.hpp"
+#include "MDCG/Model/type.hpp"
+#include "MDCG/Model/class.hpp"
+#include "MDCG/Model/field.hpp"
+#include "MDCG/Model/method.hpp"
+#include "MDCG/Model/namespace.hpp"
 
 #include <vector>
 #include <set>
@@ -27,11 +23,6 @@
 namespace MDCG {
 
 namespace Model {
-
-/*!
- * \addtogroup grp_mdcg_model
- * @{
-*/
 
 struct model_t {
   model_t();
@@ -149,11 +140,9 @@ void model_t::lookup<Model::namespace_t>(const std::string & name, std::set<Mode
 template <>
 void model_t::lookup<Model::type_t>(const std::string & name, std::set<Model::type_t> & result) const;
 
-/** @} */
-
 }
 
 }
 
-#endif /* __MDCG_MODEL_HPP__ */
+#endif /* __MDCG_MODEL_MODEL_HPP__ */
 

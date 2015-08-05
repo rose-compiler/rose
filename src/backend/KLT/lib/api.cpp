@@ -3,9 +3,9 @@
 
 #include "MFB/utils.hpp"
 
-#include "MDCG/Core/model.hpp"
-#include "MDCG/Core/model-function.hpp"
-#include "MDCG/Core/model-class.hpp"
+#include "MDCG/Model/model.hpp"
+#include "MDCG/Model/function.hpp"
+#include "MDCG/Model/class.hpp"
 
 #include "KLT/api.hpp"
 #include "KLT/descriptor.hpp"

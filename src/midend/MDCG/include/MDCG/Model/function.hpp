@@ -1,23 +1,12 @@
-/** 
- * \file MDCG/include/MDCG/model-function.hpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #ifndef __MDCG_MODEL_FUNCTION_HPP__
 #define __MDCG_MODEL_FUNCTION_HPP__
 
-#include "MDCG/Core/model-base.hpp"
+#include "MDCG/Model/base.hpp"
 
 namespace MDCG {
 
 namespace Model {
-
-/*!
- * \addtogroup grp_mdcg_model
- * @{
-*/
 
 template <>
 struct node_t<e_model_function> {
@@ -31,8 +20,6 @@ template <>
 struct scope_t<e_model_function> {
   namespace_t parent;
 };
-
-/** @} */
 
 }
 

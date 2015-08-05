@@ -13,7 +13,7 @@
 
 // MDCG
 
-#include "MDCG/Core/model-builder.hpp"
+#include "MDCG/Tools/model-builder.hpp"
 
 // KLT
 
@@ -68,7 +68,7 @@ class Compiler : public ::DLX::Compiler<language_tpl> {
 
   protected:
     MFB::Driver<MFB::KLT::KLT> driver;
-    ::MDCG::ModelBuilder model_builder;
+    ::MDCG::Tools::ModelBuilder model_builder;
 
     generator_tpl * generator;
 

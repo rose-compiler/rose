@@ -1,24 +1,15 @@
-/** 
- * \file MDCG/lib/model-builder.cpp
- *
- * \author Tristan Vanderbruggen
- *
- */
-
-#include "MDCG/Core/model-builder.hpp"
-#include "MFB/Sage/api.hpp"
-#include "MFB/Sage/driver.hpp"
 
 #include "sage3basic.h"
+
+#include "MDCG/Tools/model-builder.hpp"
+#include "MFB/Sage/api.hpp"
+#include "MFB/Sage/driver.hpp"
 
 #include <cassert>
 
 namespace MDCG {
 
-/*!
- * \addtogroup grp_mdcg_model
- * @{
-*/
+namespace Tools {
 
 template <Model::model_elements_e kind>
 void ModelBuilder::setParentFromScope(Model::model_t & model, Model::element_t<kind> * element, SgSymbol * symbol) {
@@ -423,7 +414,7 @@ void ModelBuilder::print(std::ostream & out, size_t model) const {
   assert(false); /// \todo
 }
 
-/** @} */
+}
 
 }
 

@@ -1,23 +1,12 @@
-/** 
- * \file MDCG/include/MDCG/model-namespace.hpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #ifndef __MDCG_MODEL_NAMESPACE_HPP__
 #define __MDCG_MODEL_NAMESPACE_HPP__
 
-#include "MDCG/Core/model-base.hpp"
+#include "MDCG/Model/base.hpp"
 
 namespace MDCG {
 
 namespace Model {
-
-/*!
- * \addtogroup grp_mdcg_model
- * @{
-*/
 
 template <>
 struct node_t<e_model_namespace> {
@@ -34,8 +23,6 @@ struct scope_t<e_model_namespace> {
   std::vector<class_t>     class_children;
   std::vector<namespace_t> namespace_children;
 };
-
-/** @} */
 
 }
 

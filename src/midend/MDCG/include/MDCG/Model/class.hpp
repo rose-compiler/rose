@@ -1,25 +1,14 @@
-/** 
- * \file MDCG/include/MDCG/model-class.hpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #ifndef __MDCG_MODEL_CLASS_HPP__
 #define __MDCG_MODEL_CLASS_HPP__
 
-#include "MDCG/Core/model-base.hpp"
+#include "MDCG/Model/base.hpp"
 
 #include <string>
 
 namespace MDCG {
 
 namespace Model {
-
-/*!
- * \addtogroup grp_mdcg_model
- * @{
-*/
 
 /*! 
  * 
@@ -60,8 +49,6 @@ struct scope_t<e_model_class> {
   field_t getField(const std::string & name) const;
   method_t getMethod(const std::string & name) const;
 };
-
-/** @} */
 
 }
 
