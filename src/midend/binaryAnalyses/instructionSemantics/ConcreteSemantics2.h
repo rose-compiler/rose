@@ -445,6 +445,7 @@ public:
                                                 SgAsmFloatType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr fpMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
                                                 SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatType*) ROSE_OVERRIDE;
 
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,

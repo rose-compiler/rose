@@ -1365,6 +1365,11 @@ RiscOperators::fpSquareRoot(const SValuePtr &a, SgAsmFloatType *aType) {
     throw NotImplemented("fpSquareRoot is not implemented", get_insn());
 }
 
+SValuePtr
+RiscOperators::fpRoundTowardZero(const SValuePtr &a, SgAsmFloatType *aType) {
+    throw NotImplemented("fpRoundTowardZero is not implemented", get_insn());
+}
+
 
 /*******************************************************************************************************************************
  *                                      Dispatcher

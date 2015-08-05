@@ -646,6 +646,13 @@ RiscOperators::fpMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics
     return doubleToExpr(result, fpType);
 }
 
+BaseSemantics::SValuePtr
+RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatType *fpType) {
+    double ad = exprToDouble(a, fpType);
+    double result = trunc(ad);
+    return doubleToExpr(result, fpType);
+}
+
 } // namespace
 } // namespace
 } // namespace
