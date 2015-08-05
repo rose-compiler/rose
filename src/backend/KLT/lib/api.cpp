@@ -64,7 +64,7 @@ void host_t::load(const MDCG::Model::model_t & model) {
   MDCG::Model::field_t field_;
   MDCG::Model::function_t function_;
 
-    res = api_t::load(class_   , kernel_class        , model, "kernel_t"          , NULL);   assert(res == true);
+    res = api_t::load(class_   , kernel_class        , model, "klt_kernel_t"      , NULL);   assert(res == true);
       res = api_t::load(field_ , kernel_param_field  , model,   "param"           , class_); assert(res == true);
       res = api_t::load(field_ , kernel_data_field   , model,   "data"            , class_); assert(res == true);
       res = api_t::load(field_ , kernel_loops_field  , model,   "loops"           , class_); assert(res == true);
@@ -87,9 +87,9 @@ void host_t::load(const MDCG::Model::model_t & model) {
       res = api_t::load(field_ , section_offset_field, model,   "offset"          , class_); assert(res == true);
       res = api_t::load(field_ , section_length_field, model,   "length"          , class_); assert(res == true);
 
-    res = api_t::load(function_, build_kernel_func   , model, "build_kernel"      , NULL);   assert(res == true);
+    res = api_t::load(function_, build_kernel_func   , model, "klt_build_kernel"  , NULL);   assert(res == true);
 
-    res = api_t::load(function_, execute_kernel_func , model, "execute_kernel"    , NULL);   assert(res == true);
+    res = api_t::load(function_, execute_kernel_func , model, "klt_execute_kernel", NULL);   assert(res == true);
 }
 
 //////

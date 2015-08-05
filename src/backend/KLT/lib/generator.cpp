@@ -18,13 +18,15 @@ Generator::Generator(MFB::Driver<MFB::KLT::KLT> & driver_, MDCG::ModelBuilder & 
   driver(driver_), model_builder(model_builder_),
   tilek_model(model_builder.create()),
   kernel_file_id(0), static_file_id(0),
-  host_api(NULL), kernel_api(NULL), call_interface(NULL)
+  host_api(NULL), kernel_api(NULL), call_interface(NULL),
+  kernel_map()
 {}
 
 void Generator::loadModel(const std::string & klt_inc_dir, const std::string & usr_inc_dir) {
   model_builder.add(tilek_model, "data",    klt_inc_dir + "/KLT/RTL", "h");
   model_builder.add(tilek_model, "tile",    klt_inc_dir + "/KLT/RTL", "h");
   model_builder.add(tilek_model, "loop",    klt_inc_dir + "/KLT/RTL", "h");
+  model_builder.add(tilek_model, "kernel",  klt_inc_dir + "/KLT/RTL", "h");
   model_builder.add(tilek_model, "context", klt_inc_dir + "/KLT/RTL", "h");
 
   loadExtraModel(usr_inc_dir);
@@ -48,6 +50,22 @@ API::call_interface_t & Generator::getCallInterface() { return *call_interface; 
 const API::call_interface_t & Generator::getCallInterface() const { return *call_interface; }
 MFB::file_id_t Generator::getKernelFileID() const { return kernel_file_id; }
 MFB::file_id_t Generator::getStaticFileID() const { return static_file_id; }
+
+size_t Generator::getKernelID(Kernel::kernel_t * kernel) {
+  std::map<Kernel::kernel_t *, size_t>::const_iterator it = kernel_map.find(kernel);
+  if (it == kernel_map.end()) {
+    size_t id = kernel_map.size();
+    kernel_map.insert(std::pair<Kernel::kernel_t *, size_t>(kernel, id));
+    return id;
+  }
+  else return it->second;
+}
+
+size_t Generator::getKernelID(Kernel::kernel_t * kernel) const {
+  std::map<Kernel::kernel_t *, size_t>::const_iterator it = kernel_map.find(kernel);
+  assert(it != kernel_map.end());
+  return it->second;
+}
 
 void Generator::solveDataFlow(
   Kernel::kernel_t * kernel,

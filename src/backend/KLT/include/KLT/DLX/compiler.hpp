@@ -413,18 +413,22 @@ void Compiler<language_tpl, generator_tpl>::compile(SgNode * node) {
     const directive_t * directive = it_directive->first;
     const subkernel_result_t & subkernel_result = it_directive->second;
 
-//  typedef std::map<Descriptor::kernel_t *, std::vector<Descriptor::kernel_t *> > kernel_deps_map_t;
-//
-//  Kernel::kernel_t * subkernel_result.original;
-//  std::vector<Descriptor::loop_t *> subkernel_result.loops;
-//  std::map<tiling_info_t *, kernel_deps_map_t> subkernel_result.tilled;
+    kernel_construct_t * kernel_construct = language_tpl::isKernelConstruct(directive->construct);
+    assert(kernel_construct != NULL);
+    SgStatement * region_base = language_tpl::getKernelRegion(kernel_construct);
+
+    generator->getKernelID(subkernel_result.original);
 
     // Replace directive by generated host code: create kernel, configure, launch
-    SgStatement * stmt = generator_tpl::template instanciateOnHost<language_tpl>(subkernel_result.original, subkernel_result.loops);
-    // TODO replace 'directive' by 'stmt'
+    SgBasicBlock * bb = generator->template instanciateOnHost<language_tpl>(subkernel_result.original, subkernel_result.loops);
+    assert(bb != NULL);
+
+    SageInterface::replaceStatement(region_base, bb);
+
+    generator->getHostAPI().use(driver, driver.getFileID(bb));
 
     // Add the description of this kernel to the static data (all subkernels of all versions)
-    generator_tpl::template addToStaticData<language_tpl>(subkernel_result);
+    generator->template addToStaticData<language_tpl>(subkernel_result);
   }
 }
 

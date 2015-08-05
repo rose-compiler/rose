@@ -33,7 +33,7 @@ class Generator : public KLT::Generator {
     {}
 
     virtual void loadExtraModel(const std::string & usr_inc_dir) {
-      model_builder.add(tilek_model, "kernel", usr_inc_dir + "/RTL/Host", "h");
+      model_builder.add(tilek_model, "klt-user", usr_inc_dir + "/RTL/Host", "h");
     }
 };
 

@@ -63,6 +63,8 @@ class Generator {
     API::kernel_t * kernel_api;
     API::call_interface_t * call_interface;
 
+    std::map<Kernel::kernel_t *, size_t> kernel_map;
+
   protected:
     Generator(MFB::Driver<MFB::KLT::KLT> & driver_, MDCG::ModelBuilder & model_builder_);
 
@@ -72,7 +74,10 @@ class Generator {
 
   public:
     template <class generator_tpl>
-    static generator_tpl * build(MFB::Driver<MFB::KLT::KLT> & driver, MDCG::ModelBuilder & model_builder, const std::string & klt_inc_dir, const std::string & usr_inc_dir, const std::string & basename);
+    static generator_tpl * build(
+        MFB::Driver<MFB::KLT::KLT> & driver, MDCG::ModelBuilder & model_builder,
+        const std::string & klt_inc_dir, const std::string & usr_inc_dir, const std::string & basename
+    );
 
   public:
     MFB::Driver<MFB::KLT::KLT> & getDriver();
@@ -94,8 +99,11 @@ class Generator {
     MFB::file_id_t getStaticFileID() const;
 
   public:
+    size_t getKernelID(Kernel::kernel_t * kernel);
+    size_t getKernelID(Kernel::kernel_t * kernel) const;
+
     template <class language_tpl>
-    static SgStatement * instanciateOnHost(const Kernel::kernel_t * original, const std::vector<Descriptor::loop_t *> & loops);
+    SgBasicBlock * instanciateOnHost(Kernel::kernel_t * original, const std::vector<Descriptor::loop_t *> & loops) const;
 
   public:
     template <class language_tpl>
@@ -117,7 +125,7 @@ class Generator {
     };
 
     template <class language_tpl>
-    static void addToStaticData(const subkernel_result_t<language_tpl> & subkernel_result);
+    void addToStaticData(const subkernel_result_t<language_tpl> & subkernel_result) const;
 
   public:
     template <class language_tpl>
@@ -134,7 +142,10 @@ class Generator {
 };
 
 template <class generator_tpl>
-generator_tpl * Generator::build(MFB::Driver<MFB::KLT::KLT> & driver, MDCG::ModelBuilder & model_builder, const std::string & klt_inc_dir, const std::string & usr_inc_dir, const std::string & basename) {
+generator_tpl * Generator::build(
+  MFB::Driver<MFB::KLT::KLT> & driver, MDCG::ModelBuilder & model_builder,
+  const std::string & klt_inc_dir, const std::string & usr_inc_dir, const std::string & basename
+) {
   generator_tpl * generator = new generator_tpl(driver, model_builder);
     generator->host_api       = new typename generator_tpl::host_t();
     generator->kernel_api     = new typename generator_tpl::kernel_t();
@@ -159,12 +170,54 @@ generator_tpl * Generator::build(MFB::Driver<MFB::KLT::KLT> & driver, MDCG::Mode
 
 
 template <class language_tpl>
-SgStatement * Generator::instanciateOnHost(const Kernel::kernel_t * original, const std::vector<Descriptor::loop_t *> & loops) {
-  return NULL; // TODO
+SgBasicBlock * Generator::instanciateOnHost(Kernel::kernel_t * original, const std::vector<Descriptor::loop_t *> & loops) const {
+  SgBasicBlock * bb = SageBuilder::buildBasicBlock();
+
+  SgVariableSymbol * kernel_sym = host_api->insertKernelInstance("kernel", getKernelID(original), bb);
+
+  size_t param_cnt = 0;
+  std::vector<SgVariableSymbol *>::const_iterator it_param;
+  for (it_param = original->parameters.begin(); it_param != original->parameters.end(); it_param++) {
+    SgExpression * ref = SageBuilder::buildVarRefExp(*it_param);
+    SageInterface::appendStatement(host_api->buildParamAssign(kernel_sym, param_cnt++, SageBuilder::buildAddressOfOp(ref)), bb);
+  }
+
+  size_t data_cnt = 0;
+  std::vector<Descriptor::data_t *>::const_iterator it_data;
+  for (it_data = original->data.begin(); it_data != original->data.end(); it_data++) {
+    SgExpression * ref = SageBuilder::buildVarRefExp((*it_data)->symbol);
+    size_t dim_cnt = 0;
+    while (dim_cnt < (*it_data)->sections.size()) {
+      ref = SageBuilder::buildPntrArrRefExp(ref, SageBuilder::buildIntVal(0));
+      dim_cnt++;
+    }
+    SageInterface::appendStatement(host_api->buildDataPtrAssign(kernel_sym, data_cnt, SageBuilder::buildAddressOfOp(ref)), bb);
+    dim_cnt = 0;
+    std::vector<Descriptor::section_t *>::const_iterator it_section;
+    for (it_section = (*it_data)->sections.begin(); it_section != (*it_data)->sections.end(); it_section++) {
+      SageInterface::appendStatement(host_api->buildDataSectionOffsetAssign(kernel_sym, data_cnt, dim_cnt, (*it_section)->offset), bb);
+      SageInterface::appendStatement(host_api->buildDataSectionLengthAssign(kernel_sym, data_cnt, dim_cnt, (*it_section)->length), bb);
+      dim_cnt++;
+    }
+    data_cnt++;
+  }
+
+  size_t loop_cnt = 0;
+  std::vector<Descriptor::loop_t *>::const_iterator it_loop;
+  for (it_loop = loops.begin(); it_loop != loops.end(); it_loop++) {
+    SageInterface::appendStatement(host_api->buildLoopLowerAssign(kernel_sym, loop_cnt, (*it_loop)->lb), bb);
+    SageInterface::appendStatement(host_api->buildLoopLowerAssign(kernel_sym, loop_cnt, (*it_loop)->ub), bb);
+    SageInterface::appendStatement(host_api->buildLoopLowerAssign(kernel_sym, loop_cnt, (*it_loop)->stride), bb);
+    loop_cnt++;
+  }
+
+  host_api->insertKernelExecute(kernel_sym, bb);
+
+  return bb;
 }
 
 template <class language_tpl>
-void Generator::addToStaticData(const subkernel_result_t<language_tpl> & subkernel_result) {
+void Generator::addToStaticData(const subkernel_result_t<language_tpl> & subkernel_result) const {
   // TODO
 }
 
