@@ -44,7 +44,7 @@ language_t::kernel_construct_t * language_t::isKernelConstruct(construct_t * con
   return construct->kind == language_t::e_construct_kernel ? (language_t::kernel_construct_t *)construct : NULL;
 }
 
-SgStatement * language_t::getKernelRegion(kernel_construct_t * kernel_construct) {
+SgScopeStatement * language_t::getKernelRegion(kernel_construct_t * kernel_construct) {
   return kernel_construct->assoc_nodes.kernel_region;
 }
 

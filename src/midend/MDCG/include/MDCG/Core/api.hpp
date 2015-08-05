@@ -85,6 +85,8 @@ struct api_t {
 
   public:
     void use(::MFB::Driver< ::MFB::Sage> & driver, ::MFB::file_id_t file_id) const;
+    void use(::MFB::Driver< ::MFB::Sage> & driver, SgScopeStatement * scope) const;
+    void use(::MFB::Driver< ::MFB::Sage> & driver, SgSourceFile * file) const;
 
     virtual void load(const MDCG::Model::model_t & model) = 0;
 };

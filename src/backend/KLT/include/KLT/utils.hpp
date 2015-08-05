@@ -63,6 +63,24 @@ struct symbol_map_t {
   SgStatement  * translate(SgStatement  * stmt) const;
 };
 
+template <class language_tpl>
+struct tiling_info_t {
+  std::map<size_t, std::map<size_t, typename language_tpl::tile_parameter_t *> > tiling_map;
+
+  void toGraphViz(std::ostream & out) const;
+};
+
+typedef std::map<Descriptor::kernel_t *, std::vector<Descriptor::kernel_t *> > kernel_deps_map_t;
+
+template <class language_tpl>
+struct subkernel_result_t {
+  Kernel::kernel_t * original;
+  std::vector<Descriptor::loop_t *> loops;
+  std::map<tiling_info_t<language_tpl> *, kernel_deps_map_t> tiled;
+
+  void toGraphViz(std::ostream & out) const;
+};
+
 } // namespace KLT::Utils
 
 void initAstFromString(std::ifstream & in_file);

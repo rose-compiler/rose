@@ -28,7 +28,7 @@ bool Frontend<TileK::language_t>::findAssociatedNodes<TileK::language_t::e_const
 
   construct->assoc_nodes.parent_scope = isSgScopeStatement(pragma_decl->get_parent());
   assert(construct->assoc_nodes.parent_scope != NULL);
-  construct->assoc_nodes.kernel_region = SageInterface::getNextStatement(pragma_decl);
+  construct->assoc_nodes.kernel_region = isSgScopeStatement(SageInterface::getNextStatement(pragma_decl));
   assert(construct->assoc_nodes.kernel_region != NULL);
 
   return true;

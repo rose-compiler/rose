@@ -1762,6 +1762,7 @@ src/backend/KLT/Makefile
 src/backend/KLT/include/Makefile
 src/backend/KLT/include/KLT/Makefile
 src/backend/KLT/include/KLT/Core/Makefile
+src/backend/KLT/include/KLT/MDCG/Makefile
 src/backend/KLT/include/KLT/RTL/Makefile
 src/backend/KLT/lib/Makefile
 src/backend/KLT/lib/core/Makefile

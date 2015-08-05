@@ -14,8 +14,8 @@
 
 namespace KLT {
 
-Generator::Generator(MFB::Driver<MFB::KLT::KLT> & driver_, MDCG::ModelBuilder & model_builder_) :
-  driver(driver_), model_builder(model_builder_),
+Generator::Generator(MFB::Driver<MFB::KLT::KLT> & driver_, ::MDCG::ModelBuilder & model_builder_) :
+  driver(driver_), model_builder(model_builder_), static_initializer(driver),
   tilek_model(model_builder.create()),
   kernel_file_id(0), static_file_id(0),
   host_api(NULL), kernel_api(NULL), call_interface(NULL),
@@ -40,8 +40,8 @@ void Generator::loadModel(const std::string & klt_inc_dir, const std::string & u
 
 MFB::Driver<MFB::KLT::KLT> & Generator::getDriver() { return driver; }
 const MFB::Driver<MFB::KLT::KLT> & Generator::getDriver() const { return driver; }
-MDCG::ModelBuilder & Generator::getModelBuilder() { return model_builder; }
-const MDCG::ModelBuilder & Generator::getModelBuilder() const { return model_builder; }
+::MDCG::ModelBuilder & Generator::getModelBuilder() { return model_builder; }
+const ::MDCG::ModelBuilder & Generator::getModelBuilder() const { return model_builder; }
 API::host_t & Generator::getHostAPI() { return *host_api; }
 const API::host_t & Generator::getHostAPI() const { return *host_api; }
 API::kernel_t & Generator::getKernelAPI() { return *kernel_api; }
@@ -70,7 +70,7 @@ size_t Generator::getKernelID(Kernel::kernel_t * kernel) const {
 void Generator::solveDataFlow(
   Kernel::kernel_t * kernel,
   const std::vector<Kernel::kernel_t *> & subkernels,
-  std::map<Descriptor::kernel_t *, std::vector<Descriptor::kernel_t *> > & kernel_deps_map,
+  Utils::kernel_deps_map_t & kernel_deps_map,
   const std::map<Kernel::kernel_t *, Descriptor::kernel_t *> & translation_map,
   const std::map<Descriptor::kernel_t *, Kernel::kernel_t *> & rtranslation_map
 ) const {
@@ -79,7 +79,7 @@ void Generator::solveDataFlow(
   Descriptor::kernel_t * previous = NULL;
   Descriptor::kernel_t * current = NULL;
 
-  std::map<Descriptor::kernel_t *, std::vector<Descriptor::kernel_t *> >::iterator it_kernel_deps;
+  Utils::kernel_deps_map_t::iterator it_kernel_deps;
   std::map<Kernel::kernel_t *, Descriptor::kernel_t *>::const_iterator it_trans;
 
   std::vector<Kernel::kernel_t *>::const_iterator it;

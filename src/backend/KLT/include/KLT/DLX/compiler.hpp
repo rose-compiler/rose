@@ -68,7 +68,7 @@ class Compiler : public ::DLX::Compiler<language_tpl> {
 
   protected:
     MFB::Driver<MFB::KLT::KLT> driver;
-    MDCG::ModelBuilder model_builder;
+    ::MDCG::ModelBuilder model_builder;
 
     generator_tpl * generator;
 
@@ -99,7 +99,7 @@ class Compiler : public ::DLX::Compiler<language_tpl> {
     //
     typedef typename language_tpl::tile_parameter_t tile_parameter_t;
     //
-    typedef typename generator_tpl::template tiling_info_t<language_tpl> tiling_info_t;
+    typedef Utils::tiling_info_t<language_tpl> tiling_info_t;
   public:
     //
     LoopTree::node_t * applyTiling(LoopTree::node_t * node, const tiling_info_t & tiling_info, LoopTree::node_t * parent, size_t & tile_cnt) const;
@@ -108,7 +108,7 @@ class Compiler : public ::DLX::Compiler<language_tpl> {
     // 
     typedef std::map<Descriptor::kernel_t *, std::vector<Descriptor::kernel_t *> > kernel_deps_map_t;
     //
-    typedef typename generator_tpl::template subkernel_result_t<language_tpl> subkernel_result_t;
+    typedef Utils::subkernel_result_t<language_tpl> subkernel_result_t;
     //
     typedef std::map<directive_t *, subkernel_result_t> kernel_directive_translation_map_t;
   protected:
@@ -187,12 +187,12 @@ void Compiler<language_tpl, generator_tpl>::extractLoopsAndKernels(
       // Where to store the result
       extracted_kernel_t & kernel_directive = kernel_directives_map[directive];
       // Associated code region.
-      SgStatement * region_base = language_tpl::getKernelRegion(kernel_construct);
+      SgScopeStatement * region = language_tpl::getKernelRegion(kernel_construct);
       // Associated data
       std::vector<Descriptor::data_t *> data;
       convertDataList(directive->clause_list, data);
       // Extract kernel
-      kernel_directive.first = KLT::Kernel::kernel_t::extract(region_base, data, kernel_directive.second);
+      kernel_directive.first = KLT::Kernel::kernel_t::extract(region, data, kernel_directive.second);
     }
     else if (loop_construct != NULL) {
       loop_directive_map.insert(std::pair<directive_t *, SgForStatement *>(directive, language_tpl::getLoopStatement(loop_construct)));
@@ -415,21 +415,30 @@ void Compiler<language_tpl, generator_tpl>::compile(SgNode * node) {
 
     kernel_construct_t * kernel_construct = language_tpl::isKernelConstruct(directive->construct);
     assert(kernel_construct != NULL);
-    SgStatement * region_base = language_tpl::getKernelRegion(kernel_construct);
+    SgScopeStatement * region = language_tpl::getKernelRegion(kernel_construct);
 
-    generator->getKernelID(subkernel_result.original);
+    generator->getHostAPI().use(driver, region); // Add to the file containing 'region' 
+    generator->getKernelID(subkernel_result.original); // enable to use 'KLT::Generator::getKernelID() const' when inside 'KLT::Generator::instanciateOnHost<language_tpl>(..) const'
 
     // Replace directive by generated host code: create kernel, configure, launch
     SgBasicBlock * bb = generator->template instanciateOnHost<language_tpl>(subkernel_result.original, subkernel_result.loops);
     assert(bb != NULL);
 
-    SageInterface::replaceStatement(region_base, bb);
-
-    generator->getHostAPI().use(driver, driver.getFileID(bb));
-
-    // Add the description of this kernel to the static data (all subkernels of all versions)
-    generator->template addToStaticData<language_tpl>(subkernel_result);
+    SageInterface::replaceStatement(region, bb);
   }
+
+  // Add the description of this kernel to the static data (all subkernels of all versions)
+  generator->template addToStaticData<language_tpl>(kernel_directive_translation_map);
+
+  // Removes all pragma from language_tpl
+
+    std::vector<SgPragmaDeclaration * > pragma_decls = SageInterface::querySubTree<SgPragmaDeclaration>(node);
+    std::vector<SgPragmaDeclaration * >::iterator it_pragma_decl;
+    for (it_pragma_decl = pragma_decls.begin(); it_pragma_decl != pragma_decls.end(); it_pragma_decl++) {
+      std::string directive_string = (*it_pragma_decl)->get_pragma()->get_pragma();
+      if (::DLX::Frontend::consume_label(directive_string, language_tpl::language_label))
+        SageInterface::removeStatement(*it_pragma_decl);
+    }
 }
 
 } // namespace KLT::DLX

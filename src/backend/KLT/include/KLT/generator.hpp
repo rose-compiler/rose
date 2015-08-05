@@ -12,6 +12,7 @@
 #include "KLT/kernel.hpp"
 #include "KLT/descriptor.hpp"
 #include "KLT/api.hpp"
+#include "KLT/MDCG/static-initializer.hpp"
 
 class SgFunctionDeclaration;
 class SgFunctionParameterList;
@@ -52,7 +53,8 @@ namespace KLT {
 class Generator {
   protected:
     MFB::Driver<MFB::KLT::KLT> & driver;
-    MDCG::ModelBuilder & model_builder;
+    ::MDCG::ModelBuilder & model_builder;
+    ::MDCG::StaticInitializer static_initializer;
 
     size_t tilek_model;
 
@@ -66,7 +68,7 @@ class Generator {
     std::map<Kernel::kernel_t *, size_t> kernel_map;
 
   protected:
-    Generator(MFB::Driver<MFB::KLT::KLT> & driver_, MDCG::ModelBuilder & model_builder_);
+    Generator(MFB::Driver<MFB::KLT::KLT> & driver_, ::MDCG::ModelBuilder & model_builder_);
 
     void loadModel(const std::string & klt_inc_dir, const std::string & usr_inc_dir);
 
@@ -75,7 +77,7 @@ class Generator {
   public:
     template <class generator_tpl>
     static generator_tpl * build(
-        MFB::Driver<MFB::KLT::KLT> & driver, MDCG::ModelBuilder & model_builder,
+        MFB::Driver<MFB::KLT::KLT> & driver, ::MDCG::ModelBuilder & model_builder,
         const std::string & klt_inc_dir, const std::string & usr_inc_dir, const std::string & basename
     );
 
@@ -83,8 +85,8 @@ class Generator {
     MFB::Driver<MFB::KLT::KLT> & getDriver();
     const MFB::Driver<MFB::KLT::KLT> & getDriver() const;
 
-    MDCG::ModelBuilder & getModelBuilder();
-    const MDCG::ModelBuilder & getModelBuilder() const;
+    ::MDCG::ModelBuilder & getModelBuilder();
+    const ::MDCG::ModelBuilder & getModelBuilder() const;
 
     API::host_t & getHostAPI();
     const API::host_t & getHostAPI() const;
@@ -107,25 +109,7 @@ class Generator {
 
   public:
     template <class language_tpl>
-    struct tiling_info_t {
-      std::map<size_t, std::map<size_t, typename language_tpl::tile_parameter_t *> > tiling_map;
-
-      void toGraphViz(std::ostream & out) const;
-    };
-
-    typedef std::map<Descriptor::kernel_t *, std::vector<Descriptor::kernel_t *> > kernel_deps_map_t;
-
-    template <class language_tpl>
-    struct subkernel_result_t {
-      Kernel::kernel_t * original;
-      std::vector<Descriptor::loop_t *> loops;
-      std::map<tiling_info_t<language_tpl> *, kernel_deps_map_t> tiled;
-
-      void toGraphViz(std::ostream & out) const;
-    };
-
-    template <class language_tpl>
-    void addToStaticData(const subkernel_result_t<language_tpl> & subkernel_result) const;
+    void addToStaticData(const std::map<typename language_tpl::directive_t *, Utils::subkernel_result_t<language_tpl> > & kernel_directive_translation_map) const;
 
   public:
     template <class language_tpl>
@@ -135,7 +119,7 @@ class Generator {
     virtual void solveDataFlow(
       Kernel::kernel_t * kernel,
       const std::vector<Kernel::kernel_t *> & subkernels,
-      kernel_deps_map_t & kernel_deps_map,
+      Utils::kernel_deps_map_t & kernel_deps_map,
       const std::map<Kernel::kernel_t *, Descriptor::kernel_t *> & translation_map,
       const std::map<Descriptor::kernel_t *, Kernel::kernel_t *> & rtranslation_map
     ) const;
@@ -143,7 +127,7 @@ class Generator {
 
 template <class generator_tpl>
 generator_tpl * Generator::build(
-  MFB::Driver<MFB::KLT::KLT> & driver, MDCG::ModelBuilder & model_builder,
+  MFB::Driver<MFB::KLT::KLT> & driver, ::MDCG::ModelBuilder & model_builder,
   const std::string & klt_inc_dir, const std::string & usr_inc_dir, const std::string & basename
 ) {
   generator_tpl * generator = new generator_tpl(driver, model_builder);
@@ -217,8 +201,9 @@ SgBasicBlock * Generator::instanciateOnHost(Kernel::kernel_t * original, const s
 }
 
 template <class language_tpl>
-void Generator::addToStaticData(const subkernel_result_t<language_tpl> & subkernel_result) const {
-  // TODO
+void Generator::addToStaticData(const std::map<typename language_tpl::directive_t *, Utils::subkernel_result_t<language_tpl> > & kernel_directive_translation_map) const {
+  ::MDCG::Model::class_t kernel_desc_class = model_builder.get(tilek_model).lookup< ::MDCG::Model::class_t>("klt_kernel_desc_t");
+  static_initializer.addDeclaration< ::KLT::MDCG::KernelContainer<language_tpl> >(kernel_desc_class, kernel_directive_translation_map, static_file_id, std::string("kernel_desc"));
 }
 
 template <class language_tpl>
@@ -241,13 +226,15 @@ bool Generator::createTiles(
   return true;
 }
 
+namespace Utils {
+
 template <class language_tpl>
-void Generator::tiling_info_t<language_tpl>::toGraphViz(std::ostream & out) const {
+void tiling_info_t<language_tpl>::toGraphViz(std::ostream & out) const {
   // NOP ?
 }
 
 template <class language_tpl>
-void Generator::subkernel_result_t<language_tpl>::toGraphViz(std::ostream & out) const {
+void subkernel_result_t<language_tpl>::toGraphViz(std::ostream & out) const {
   out << "digraph looptree {" << std::endl;
   out << "  subgraph cluster_original {" << std::endl;
   original->root->toGraphViz(out, "    ");
@@ -278,6 +265,8 @@ void Generator::subkernel_result_t<language_tpl>::toGraphViz(std::ostream & out)
 */
   }
 }
+
+} // namespace KLT::Utils
 
 } // namespace KLT
 

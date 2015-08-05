@@ -28,7 +28,7 @@ class Generator : public KLT::Generator {
 #endif
 
   protected:
-    Generator(MFB::Driver<MFB::KLT::KLT> & driver, MDCG::ModelBuilder & model_builder) :
+    Generator(MFB::Driver<MFB::KLT::KLT> & driver, ::MDCG::ModelBuilder & model_builder) :
       KLT::Generator(driver, model_builder)
     {}
 

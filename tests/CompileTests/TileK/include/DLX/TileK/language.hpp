@@ -90,7 +90,7 @@ struct language_t {
 
       typedef Directives::construct_t<language_t, e_construct_kernel> kernel_construct_t;
       static kernel_construct_t * isKernelConstruct(construct_t * construct);
-      static SgStatement * getKernelRegion(kernel_construct_t * kernel_construct);
+      static SgScopeStatement * getKernelRegion(kernel_construct_t * kernel_construct);
 
     // Loop support
 
@@ -167,7 +167,7 @@ template <>
 template <>
 struct generic_construct_t<TileK::language_t>::assoc_nodes_t<TileK::language_t::e_construct_kernel> {
   SgScopeStatement * parent_scope;
-  SgStatement * kernel_region;
+  SgScopeStatement * kernel_region;
 };
 
 template <>

@@ -79,6 +79,14 @@ void api_t::use(::MFB::Driver< ::MFB::Sage> & driver, ::MFB::file_id_t file_id) 
     driver.useSymbol<SgFunctionDeclaration>(*it, file_id);
 }
 
+void api_t::use(::MFB::Driver< ::MFB::Sage> & driver, SgScopeStatement * scope) const {
+  use(driver, driver.getFileID(scope));
+}
+
+void api_t::use(::MFB::Driver< ::MFB::Sage> & driver, SgSourceFile * file) const {
+  use(driver, driver.getFileID(file));
+}
+
 } // namespace MDCG::API
 
 } // namespace MDCG
