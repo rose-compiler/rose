@@ -495,8 +495,10 @@ identifier      : NAME
 		   std::string varName = $1->text();
 
 		   SgScopeStatement *activeScope = SageBuilder::topScopeStack();
-		   
-		  if(activeScope->symbol_exists(varName) == false)
+
+		   SgVariableSymbol *varSymbol = SageInterface::lookupVariableSymbolInParentScopes(varName, activeScope);
+		   // if(activeScope->symbol_exists(varName) == false)
+		   if(varSymbol == NULL)
                  {
 		   SgVarRefExp *varRef = SageBuilder::buildVarRefExp(varName, activeScope);
 
