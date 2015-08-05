@@ -263,6 +263,19 @@ functionNCallers(P2::Partitioner &partitioner, const P2::Function::Ptr &function
     return nCallers;
 }
 
+// Calculate the number of calls which this function makes and cache it in this function.
+size_t
+functionNCallees(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+    size_t nCallees = 0;
+    if (function && !function->attr<size_t>(ATTR_NCallees).assignTo(nCallees)) {
+        P2::FunctionCallGraph *cg = functionCallGraph(partitioner);
+        ASSERT_not_null(cg);
+        nCallees = cg->nCallsOut(function);
+        function->attr(ATTR_NCallees, nCallees);
+    }
+    return nCallees;
+}
+
 // Calculates the number of function return edges and caches it in the function
 size_t
 functionNReturns(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {

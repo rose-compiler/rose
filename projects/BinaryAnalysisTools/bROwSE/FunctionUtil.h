@@ -35,6 +35,7 @@ boost::filesystem::path functionCfgImage(const P2::Partitioner&, const P2::Funct
 CfgVertexCoords functionCfgVertexCoords(const P2::Partitioner&, const P2::Function::Ptr&);
 P2::FunctionCallGraph* functionCallGraph(P2::Partitioner&);
 size_t functionNCallers(P2::Partitioner&, const P2::Function::Ptr&);
+size_t functionNCallees(P2::Partitioner&, const P2::Function::Ptr&);
 size_t functionNReturns(P2::Partitioner&, const P2::Function::Ptr&);
 MayReturn functionMayReturn(P2::Partitioner&, const P2::Function::Ptr&);
 int64_t functionStackDelta(P2::Partitioner&, const P2::Function::Ptr&);
@@ -414,6 +415,36 @@ public:
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNCallers(p, f);
+    }
+};
+
+/** Number of calls made by this function. This is the total number of calls, not the number of distinct functions that are
+ *  called. */
+class FunctionNCallees: public FunctionAnalyzer {
+public:
+    static Ptr instance() {
+        return Ptr(new FunctionNCallees);
+    }
+    Wt::WString header() const ROSE_OVERRIDE {
+        return "NCallees";
+    }
+    Wt::WString name() const ROSE_OVERRIDE {
+        return "Number of called functions";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return "Number of functions called by this function.";
+    }
+    boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
+        return functionNCallees(p, f);
+    }
+    Wt::WString toString(const boost::any &data) const ROSE_OVERRIDE {
+        return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
+    }
+    bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
+        return a->attr<size_t>(ATTR_NCallees).orElse(0) < b->attr<size_t>(ATTR_NCallees).orElse(0);
+    }
+    double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
+        return functionNCallees(p, f);
     }
 };
 
