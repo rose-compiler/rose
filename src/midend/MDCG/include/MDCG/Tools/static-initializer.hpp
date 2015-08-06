@@ -27,16 +27,24 @@ namespace Tools {
 */
 
 class StaticInitializer {
-  private:
+  public:
     static SgVariableSymbol * instantiateDeclaration(MFB::Driver<MFB::Sage> & driver, std::string decl_name, size_t file_id, SgType * type, SgInitializer * init);
 
-  public:
     template <class ModelTraversal>
     static SgInitializer * createInitializer(
       MFB::Driver<MFB::Sage> & driver,
       Model::class_t element,
       const typename ModelTraversal::input_t & input,
       MFB::file_id_t file_id
+    );
+
+    template <class ModelTraversal>
+    static SgVariableSymbol * addDeclaration(
+      MFB::Driver<MFB::Sage> & driver,
+      Model::class_t element,
+      const typename ModelTraversal::input_t & input,
+      MFB::file_id_t file_id,
+      std::string decl_name
     );
 
     template <class ModelTraversal>
@@ -48,6 +56,8 @@ class StaticInitializer {
       const std::string & decl_name
     );
 
+
+
     template <class ModelTraversal, class Iterator>
     static SgAggregateInitializer * createArray(
       MFB::Driver<MFB::Sage> & driver,
@@ -57,12 +67,14 @@ class StaticInitializer {
     );
 
     template <class ModelTraversal, class Iterator>
-    static SgAggregateInitializer * createPointerArray(
+    static SgVariableSymbol * addArrayDeclaration(
       MFB::Driver<MFB::Sage> & driver,
       Model::class_t element,
-      Iterator input_begin, Iterator input_end,
+      size_t num_element,
+      Iterator input_begin,
+      Iterator input_end,
       MFB::file_id_t file_id,
-      const std::string & decl_prefix
+      std::string decl_name
     );
 
     template <class ModelTraversal, class Iterator>
@@ -74,6 +86,29 @@ class StaticInitializer {
       const std::string & decl_name
     );
 
+
+
+    template <class ModelTraversal, class Iterator>
+    static SgAggregateInitializer * createPointerArray(
+      MFB::Driver<MFB::Sage> & driver,
+      Model::class_t element,
+      Iterator input_begin, Iterator input_end,
+      MFB::file_id_t file_id,
+      const std::string & decl_prefix
+    );
+
+    template <class ModelTraversal, class Iterator>
+    static SgVariableSymbol * addPointerArrayDeclaration(
+      MFB::Driver<MFB::Sage> & driver,
+      Model::class_t element,
+      size_t num_element,
+      Iterator input_begin,
+      Iterator input_end,
+      MFB::file_id_t file_id,
+      std::string decl_name,
+      const std::string & sub_decl_prefix
+    );
+
     template <class ModelTraversal, class Iterator>
     static SgExpression * createPointerArrayPointer(
       MFB::Driver<MFB::Sage> & driver,
@@ -82,15 +117,6 @@ class StaticInitializer {
       MFB::file_id_t file_id,
       const std::string & decl_name,
       const std::string & sub_decl_prefix
-    );
-
-    template <class ModelTraversal>
-    static SgVariableSymbol * addDeclaration(
-      MFB::Driver<MFB::Sage> & driver,
-      Model::class_t element,
-      const typename ModelTraversal::input_t & input,
-      MFB::file_id_t file_id,
-      std::string decl_name
     );
 };
 
@@ -123,6 +149,26 @@ SgInitializer * StaticInitializer::createInitializer(
 }
 
 template <class ModelTraversal>
+SgVariableSymbol * StaticInitializer::addDeclaration(
+  MFB::Driver<MFB::Sage> & driver,
+  Model::class_t element,
+  const typename ModelTraversal::input_t & input,
+  MFB::file_id_t file_id,
+  std::string decl_name
+) {
+  SgInitializer * initializer = createInitializer<ModelTraversal>(driver, element, input, file_id);
+  assert(initializer != NULL);
+
+  SgType * type = element->node->symbol->get_type();
+  assert(type != NULL);
+
+  SgVariableSymbol * symbol = instantiateDeclaration(driver, decl_name, file_id, type, initializer);
+  assert(symbol != NULL);
+      
+  return symbol;
+}
+
+template <class ModelTraversal>
 SgExpression * StaticInitializer::createPointer(
   MFB::Driver<MFB::Sage> & driver,
   Model::class_t element,
@@ -130,18 +176,7 @@ SgExpression * StaticInitializer::createPointer(
   MFB::file_id_t file_id,
   const std::string & decl_name
 ) {
-  SgInitializer * initializer = createInitializer<ModelTraversal>(driver, element, input, file_id);
-  assert(initializer != NULL);
-
-  driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id, false);
-
-  SgType * type = element->node->symbol->get_type();
-  assert(type != NULL);
-
-  SgVariableSymbol * symbol = instantiateDeclaration(driver, decl_name, file_id, type, initializer);
-  assert(symbol != NULL);
-
-  return SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(symbol));
+  return SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(addDeclaration<ModelTraversal>(driver, element, input, file_id, decl_name)));
 }
 
 template <class ModelTraversal, class Iterator>
@@ -162,6 +197,43 @@ SgAggregateInitializer * StaticInitializer::createArray(
   }
 
   return SageBuilder::buildAggregateInitializer(expr_list);
+}
+
+template <class ModelTraversal, class Iterator>
+SgVariableSymbol * StaticInitializer::addArrayDeclaration(
+  MFB::Driver<MFB::Sage> & driver,
+  Model::class_t element,
+  size_t num_element,
+  Iterator input_begin,
+  Iterator input_end,
+  MFB::file_id_t file_id,
+  std::string decl_name
+) {
+  SgInitializer * initializer = createArray<ModelTraversal, Iterator>(driver, element, input_begin, input_end, file_id);
+  assert(initializer != NULL);
+
+  SgType * type = element->node->symbol->get_type();
+  assert(type != NULL);
+  type = SageBuilder::buildArrayType(type, SageBuilder::buildUnsignedLongVal(num_element));
+  assert(type != NULL);
+
+  SgVariableSymbol * symbol = instantiateDeclaration(driver, decl_name, file_id, type, initializer);
+  assert(symbol != NULL);
+      
+  return symbol;
+}
+
+template <class ModelTraversal, class Iterator>
+SgExpression * StaticInitializer::createArrayPointer(
+  MFB::Driver<MFB::Sage> & driver,
+  Model::class_t element,
+  size_t num_element,
+  Iterator input_begin,
+  Iterator input_end,
+  MFB::file_id_t file_id,
+  const std::string & decl_name
+) {
+  return SageBuilder::buildVarRefExp(addArrayDeclaration<ModelTraversal, Iterator>(driver, element, num_element, input_begin, input_end, file_id, decl_name));
 }
 
 template <class ModelTraversal, class Iterator>
@@ -190,28 +262,28 @@ SgAggregateInitializer * StaticInitializer::createPointerArray(
 }
 
 template <class ModelTraversal, class Iterator>
-SgExpression * StaticInitializer::createArrayPointer(
+SgVariableSymbol * StaticInitializer::addPointerArrayDeclaration(
   MFB::Driver<MFB::Sage> & driver,
   Model::class_t element,
   size_t num_element,
   Iterator input_begin,
   Iterator input_end,
   MFB::file_id_t file_id,
-  const std::string & decl_name
+  std::string decl_name,
+  const std::string & sub_decl_prefix
 ) {
-  SgAggregateInitializer * aggr_init = createArray<ModelTraversal, Iterator>(driver, element, input_begin, input_end, file_id);
-
-  driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
+  SgInitializer * initializer = createPointerArray<ModelTraversal, Iterator>(driver, element, input_begin, input_end, file_id, sub_decl_prefix);
+  assert(initializer != NULL);
 
   SgType * type = element->node->symbol->get_type();
   assert(type != NULL);
   type = SageBuilder::buildArrayType(type, SageBuilder::buildUnsignedLongVal(num_element));
   assert(type != NULL);
 
-  SgVariableSymbol * symbol = instantiateDeclaration(driver, decl_name, file_id, type, aggr_init);
+  SgVariableSymbol * symbol = instantiateDeclaration(driver, decl_name, file_id, type, initializer);
   assert(symbol != NULL);
-
-  return SageBuilder::buildVarRefExp(symbol);
+      
+  return symbol;
 }
 
 template <class ModelTraversal, class Iterator>
@@ -225,41 +297,7 @@ SgExpression * StaticInitializer::createPointerArrayPointer(
   const std::string & decl_name,
   const std::string & sub_decl_prefix
 ) {
-  SgAggregateInitializer * aggr_init = createPointerArray<ModelTraversal, Iterator>(driver, element, input_begin, input_end, file_id, sub_decl_prefix);
-
-  driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
-
-  SgType * type = element->node->symbol->get_type();
-  assert(type != NULL);
-  type = SageBuilder::buildPointerType(type);
-  assert(type != NULL);
-  type = SageBuilder::buildArrayType(type, SageBuilder::buildUnsignedLongVal(num_element));
-  assert(type != NULL);
-
-  SgVariableSymbol * symbol = instantiateDeclaration(driver, decl_name, file_id, type, aggr_init);
-  assert(symbol != NULL);
-
-  return SageBuilder::buildVarRefExp(symbol);
-}
-
-template <class ModelTraversal>
-SgVariableSymbol * StaticInitializer::addDeclaration(
-  MFB::Driver<MFB::Sage> & driver,
-  Model::class_t element,
-  const typename ModelTraversal::input_t & input,
-  MFB::file_id_t file_id,
-  std::string decl_name
-) {
-  SgInitializer * initializer = createInitializer<ModelTraversal>(driver, element, input, file_id);
-  assert(initializer != NULL);
-
-  SgType * type = element->node->symbol->get_type();
-  assert(type != NULL);
-
-  SgVariableSymbol * symbol = instantiateDeclaration(driver, decl_name, file_id, type, initializer);
-  assert(symbol != NULL);
-      
-  return symbol;
+  return SageBuilder::buildVarRefExp(addPointerArrayDeclaration<ModelTraversal, Iterator>(driver, element, num_element, input_begin, input_end, file_id, decl_name, sub_decl_prefix));
 }
 
 }

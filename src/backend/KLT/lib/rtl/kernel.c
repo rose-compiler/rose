@@ -15,7 +15,7 @@ extern struct klt_user_config_t * klt_user_build_config(struct klt_kernel_desc_t
 extern struct klt_version_desc_t * klt_user_select_kernel_version(struct klt_kernel_t * kernel);
 
 extern void klt_user_schedule(
-  struct klt_kernel_t * kernel, struct klt_subkernel_desc_t * subkernel, struct klt_deps_desc_t * deps,
+  struct klt_kernel_t * kernel, struct klt_subkernel_desc_t * subkernel,
   struct klt_loop_context_t * klt_loop_context, struct klt_data_context_t * klt_data_context
 );
 
@@ -50,7 +50,7 @@ void klt_execute_kernel(struct klt_kernel_t * kernel) {
   for (i = 0; i < version->num_subkernels; i++) {
     struct klt_loop_context_t * klt_loop_context = klt_build_loop_context(&(version->subkernels[i].loop), kernel->loops, kernel);
     struct klt_data_context_t * klt_data_context = klt_build_data_context();
-    klt_user_schedule(kernel, &(version->subkernels[i]), &(version->deps[i]), klt_loop_context, klt_data_context);
+    klt_user_schedule(kernel, &(version->subkernels[i]), klt_loop_context, klt_data_context);
   }
 
   klt_user_wait(kernel);

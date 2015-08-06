@@ -17,18 +17,14 @@ struct klt_subkernel_desc_t {
   int * data_ids;
   int num_loops;
   int * loop_ids;
+  int num_deps;
+  int * deps_ids;
   struct klt_subkernel_config_t * config;
-};
-
-struct klt_deps_desc_t {
-  int num;
-  int * id;
 };
 
 struct klt_version_desc_t {
   int num_subkernels;
   struct klt_subkernel_desc_t * subkernels;
-  struct klt_deps_desc_t * deps;
   struct klt_version_selector_t * version_selector;
 };
 

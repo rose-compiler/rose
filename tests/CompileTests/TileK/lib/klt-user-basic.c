@@ -22,7 +22,7 @@ struct klt_version_desc_t * klt_user_select_kernel_version(struct klt_kernel_t *
 }
 
 void klt_user_schedule(
-  struct klt_kernel_t * kernel, struct klt_subkernel_desc_t * subkernel, struct klt_deps_desc_t * deps,
+  struct klt_kernel_t * kernel, struct klt_subkernel_desc_t * subkernel,
   struct klt_loop_context_t * klt_loop_context, struct klt_data_context_t * klt_data_context
 ) {
   int i;
