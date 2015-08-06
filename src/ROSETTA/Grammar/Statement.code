@@ -5934,6 +5934,8 @@ SgScopeStatement::containsOnlyDeclarations() const
        // DQ (11/27/2011): Adding more support for template declarations in the AST.
           case V_SgTemplateFunctionDefinition:
 
+      // SK (08/06/2015): Adding SgMatlabForStatement
+          case V_SgMatlabForStatement:	    
           case V_SgIfStmt:
           case V_SgSwitchStatement:
           case V_SgWhileStmt:
@@ -6513,6 +6515,16 @@ SgScopeStatement::getStatementList ()
                break;
              }
 
+	     //SK(08/06/2015): Adding support for MatlabForStatement:
+	case V_SgMatlabForStatement:
+	    {
+	      SgMatlabForStatement *matlabForStatement = isSgMatlabForStatement(currentScope);
+	      ROSE_ASSERT(matlabForStatement != NULL);
+	      ROSE_ASSERT (matlabForStatement->get_body() != NULL);
+
+	      currentStatementList = &(matlabForStatement->get_body()->getStatementList());
+	      break;
+	    }
           default:
                printf ("ERROR: default reached in switch (getStatementList()) currentScope = %s \n",currentScope->sage_class_name());
                printf ("Note: this function is not defined for all IR nodes derived from SgScopeStatement (use SgScopeStatement::containsOnlyDeclarations() to check)\n");
@@ -6714,6 +6726,16 @@ SgScopeStatement::getStatementList () const
                break;
              }
 
+	case V_SgMatlabForStatement:
+	    {
+	      const SgMatlabForStatement *matlabForStatement = isSgMatlabForStatement(currentScope);
+	      ROSE_ASSERT(matlabForStatement != NULL);
+	      ROSE_ASSERT(matlabForStatement->get_body() != NULL);
+
+	      return matlabForStatement->get_body()->getStatementList();
+	      break;
+	    }
+	     
           case V_SgForAllStatement:
              { 
                const SgForAllStatement* forAllScope = isSgForAllStatement(currentScope);
