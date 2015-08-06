@@ -2114,6 +2114,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgDoWhileStmt:
           case V_SgSwitchStatement:
           case V_SgWhileStmt:
+          case V_SgMatlabForStatement:
              {
             // printf ("addAssociatedNodes(): ignoring this case of node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
                nodeList.insert(node);

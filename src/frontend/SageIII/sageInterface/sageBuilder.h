@@ -773,7 +773,7 @@ ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList_nfi();
  ROSE_DLL_API SgRangeExp* buildRangeExp(SgExpression *start);
  ROSE_DLL_API SgMatrixExp* buildMatrixExp(SgExprListExp *firstRow);
  ROSE_DLL_API SgMagicColonExp* buildMagicColonExp();
- ROSE_DLL_API SgMatlabForStatement* buildMatlabForStatement(SgExpression* loop_index, SgExpression* loop_range, SgStatement* loop_body);
+ ROSE_DLL_API SgMatlabForStatement* buildMatlabForStatement(SgExpression* loop_index, SgExpression* loop_range, SgBasicBlock* loop_body);
 #endif
 //@}
 

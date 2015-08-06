@@ -8126,12 +8126,16 @@ SgDoWhileStmt * SageBuilder::buildDoWhileStmt_nfi(SgStatement *  body, SgStateme
 }
 
 #if USE_MATLAB_IR_NODES == 1
-SgMatlabForStatement* SageBuilder::buildMatlabForStatement(SgExpression* loop_index, SgExpression* loop_range, SgStatement* loop_body)
+SgMatlabForStatement* SageBuilder::buildMatlabForStatement(SgExpression* loop_index, SgExpression* loop_range, SgBasicBlock* loop_body)
 {
   SgMatlabForStatement* result = new SgMatlabForStatement(loop_index, loop_range, loop_body);
   SageInterface::setOneSourcePositionForTransformation(result);
 
   ROSE_ASSERT(result != NULL);
+
+  loop_index->set_parent(result);
+  loop_range->set_parent(result);
+  loop_body->set_parent(result);
   return result;
 }
 

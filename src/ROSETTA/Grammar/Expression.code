@@ -6444,6 +6444,8 @@ SgRangeExp* SgRangeExp::append(SgExpression *exp)
   //start:end
   //or start:increment:end
 
+  ROSE_ASSERT(exp != NULL);
+  
   if(p_start == NULL)
     {
       p_start = exp;
@@ -6470,6 +6472,7 @@ SgRangeExp* SgRangeExp::append(SgExpression *exp)
 	}
     }
 
+  exp->set_parent(this);
   return this;
 }
 
