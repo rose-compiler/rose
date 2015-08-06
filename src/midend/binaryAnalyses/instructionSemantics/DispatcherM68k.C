@@ -1692,17 +1692,10 @@ struct IP_fintrz: P {
     }
 };
 
-struct IP_fmove: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
-    }
-};
-
 struct IP_fp_move: P {
     M68kInstructionKind kind;
     IP_fp_move(M68kInstructionKind kind): kind(kind) {
-        ASSERT_require(m68k_fdmove == kind || m68k_fsmove == kind);
+        ASSERT_require(m68k_fmove == kind || m68k_fdmove == kind || m68k_fsmove == kind);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -1710,30 +1703,57 @@ struct IP_fp_move: P {
         SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type());
         size_t srcNBits = args[0]->get_nBits();         // null if src is not a floating-point value
         SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
-        ASSERT_not_null(dstType);
         SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
-        SValuePtr result;
+        SValuePtr result, src;
         if (rre && rre->get_descriptor().get_major() == m68k_regclass_fpr) {
-            // F{D,S}MOVE.{D,S} FPx, FPy
-            result = ops->fpConvert(d->read(args[0], srcNBits), srcType, dstType);
-        } else {
-            // F{D,S}MOVE.{B,W,L,D,S} ea, FPy
-            if (srcType) {
-                result = ops->fpConvert(d->read(args[0], srcNBits), srcType, dstType);
+            if (dstType) {
+                // F{D,S}MOVE.{D,S} FPx, FPy
+                // FMOVE.{D,S} FPx, ea
+                src = d->read(args[0], srcNBits);
+                result = ops->fpConvert(src, srcType, dstType);
             } else {
+                // FMOVE.{B,W,L} FPx, ea
+                ASSERT_not_null(srcType);
+                SValuePtr dflt = ops->undefined_(args[1]->get_nBits());
+                result = ops->fpToInteger(d->read(args[0], srcNBits), srcType, dflt);
+            }
+        } else {
+            if (!dstType)
+                dstType = SageBuilderAsm::buildIeee754Binary64();
+            if (srcType) {
+                // F{D,S}MOVE.{D,S} ea, FPy
+                // FMOVE.{D,S} ea, FPy
+                src = d->read(args[0], srcNBits);
+                result = ops->fpConvert(src, srcType, dstType);
+            } else {
+                // F{D,S}MOVE.{B,W,L} ea, FPy
+                // FMOVE.{B,W,L} ea, FPy
                 result = ops->fpFromInteger(d->read(args[0], srcNBits), dstType);
             }
         }
 
         d->write(args[1], result);
-        ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(result, dstType));
-        ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(result, dstType));
-        ops->writeRegister(d->REG_EXC_OPERR, ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_OVFL,  ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_UNFL,  ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-03]
+
+        if (dstType) {                                  // destination is D or S
+            ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(result, dstType));
+            ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(result, dstType));
+            ops->writeRegister(d->REG_EXC_OPERR, ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_OVFL,  ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_UNFL,  ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1)); // FIXME[Robb P. Matzke 2015-08-03]
+        } else if (src) {                                             // destination is B, W, or L
+            ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(src, dstType));
+            ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(src, dstType));
+            ops->writeRegister(d->REG_EXC_OPERR, ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_OVFL,  ops->undefined_(1)); // FIXME[Robb P. Matzke 2015-08-05]
+            ops->writeRegister(d->REG_EXC_UNFL,  ops->undefined_(1)); // FIXME[Robb P. Matzke 2015-08-05]
+            ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1)); // FIXME[Robb P. Matzke 2015-08-03]
+        }
+
         d->accumulateFpExceptions();
     }
 };
@@ -1881,7 +1901,7 @@ struct IP_fp_sub: P {
             }
         }
         SValuePtr b = d->read(args[1], args[1]->get_nBits());
-        SValuePtr result = ops->fpSubtract(a, b, dstType);
+        SValuePtr result = ops->fpSubtract(b, a, dstType);
         if (kind != m68k_fcmp)
             d->write(args[1], result);
         d->adjustFpConditionCodes(result, dstType);
@@ -3493,7 +3513,7 @@ DispatcherM68k::iproc_init() {
     iproc_set(m68k_fddiv,       new M68k::IP_fddiv);
     iproc_set(m68k_fint,        new M68k::IP_fint);
     iproc_set(m68k_fintrz,      new M68k::IP_fintrz);
-    iproc_set(m68k_fmove,       new M68k::IP_fmove);
+    iproc_set(m68k_fmove,       new M68k::IP_fp_move(m68k_fmove));
     iproc_set(m68k_fsmove,      new M68k::IP_fp_move(m68k_fsmove));
     iproc_set(m68k_fdmove,      new M68k::IP_fp_move(m68k_fdmove));
     iproc_set(m68k_fmovem,      new M68k::IP_fmovem);

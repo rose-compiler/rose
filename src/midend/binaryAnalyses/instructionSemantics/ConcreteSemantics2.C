@@ -623,6 +623,18 @@ RiscOperators::fpFromInteger(const BaseSemantics::SValuePtr &intValue, SgAsmFloa
 }
 
 BaseSemantics::SValuePtr
+RiscOperators::fpToInteger(const BaseSemantics::SValuePtr &a, SgAsmFloatType *aType, const BaseSemantics::SValuePtr &dflt) {
+    double ad = exprToDouble(a, aType);
+    size_t nBits = dflt->get_width();
+    double minInt = -pow(2.0, nBits-1);
+    double maxInt = pow(2.0, nBits-1);
+    if (isnan(ad) || ad < minInt || ad >= maxInt)
+        return dflt;
+    int64_t ai = ad;
+    return number_(nBits, ai);
+}
+
+BaseSemantics::SValuePtr
 RiscOperators::fpAdd(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *fpType) {
     double ad = exprToDouble(a, fpType);
     double bd = exprToDouble(b, fpType);

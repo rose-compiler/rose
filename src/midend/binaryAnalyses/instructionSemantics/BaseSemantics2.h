@@ -2228,8 +2228,7 @@ public:
      *  The bits of @p fpValue are interpreted according to the @ref fpType and converted to a signed integer value
      *  that fits in @p integerWidth bits. This is done by truncating the fractional part of the floating point number, thus
      *  rounding toward zero. If @p fpValue is not a number then @p dflt is returned. */
-    virtual SValuePtr fpToInteger(const SValuePtr &fpValue, SgAsmFloatType *fpType, size_t integerWidth,
-                                  const SValuePtr &dflt);
+    virtual SValuePtr fpToInteger(const SValuePtr &fpValue, SgAsmFloatType *fpType, const SValuePtr &dflt);
 
     /** Convert from one floating-point type to another.
      *

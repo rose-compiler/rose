@@ -1251,8 +1251,7 @@ RiscOperators::fpFromInteger(const SValuePtr &intValue, SgAsmFloatType *fpType) 
 }
 
 SValuePtr
-RiscOperators::fpToInteger(const SValuePtr &fpValue, SgAsmFloatType *fpType, size_t integerWidth,
-                           const SValuePtr &dflt) {
+RiscOperators::fpToInteger(const SValuePtr &fpValue, SgAsmFloatType *fpType, const SValuePtr &dflt) {
     ASSERT_not_null(fpType);
     throw NotImplemented("fpToInteger is not implemented", get_insn());
 }

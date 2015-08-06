@@ -439,6 +439,8 @@ public:
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
 
     virtual BaseSemantics::SValuePtr fpFromInteger(const BaseSemantics::SValuePtr &intValue, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpToInteger(const BaseSemantics::SValuePtr &fpValue, SgAsmFloatType *fpType,
+                                                 const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr fpAdd(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
                                            SgAsmFloatType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr fpSubtract(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
