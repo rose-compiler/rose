@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
+#include <BinaryNoOperation.h>
 #include <BinaryString.h>
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Partitioner.h>
@@ -889,6 +890,46 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
         }
     } fixerUpper(indexer.insnIndex, indexer.bblockIndex, indexer.funcIndex, mappedSections);
     fixerUpper.traverse(ast, preorder);
+}
+
+std::vector<Function::Ptr>
+findNoopFunctions(const Partitioner &partitioner) {
+    std::vector<Function::Ptr> functions;
+    NoOperation analyzer(partitioner.newDispatcher(partitioner.newOperators()));
+    analyzer.initialStackPointer(0xdddd0001); // optional; odd prevents false positives for stack aligning instructions
+    BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
+        bool funcIsNoOp = true;                         // assume function is no-op and prove otherwise
+        BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
+            if (BasicBlock::Ptr bb = partitioner.basicBlockExists(bbVa)) {
+                // Get the instructions for this block, excluding the final instruction if this is a function return.
+                std::vector<SgAsmInstruction*> insns = bb->instructions();
+                if (partitioner.basicBlockIsFunctionReturn(bb))
+                    insns.pop_back();                   // assume last insn is the return
+                
+                // Is this block significant (not a no-op). If so then the function is not a no-op.
+                if (!analyzer.isNoop(insns))
+                    funcIsNoOp = false;
+            } else {
+                funcIsNoOp = false;                     // one of its basic blocks is missing
+            }
+            if (!funcIsNoOp)
+                break;
+        }
+        if (funcIsNoOp)
+            functions.push_back(function);
+    }
+    ASSERT_require(isSorted(functions, sortFunctionsByAddress));
+    return functions;
+}
+
+void
+nameNoopFunctions(const Partitioner &partitioner) {
+    BOOST_FOREACH (const Function::Ptr &function, findNoopFunctions(partitioner)) {
+        if (function->name().empty()) {
+            std::string newName = "noop_" + StringUtility::addrToString(function->address()).substr(2) + "() -> void";
+            function->name(newName);
+        }
+    }
 }
 
 } // namespace

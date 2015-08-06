@@ -337,6 +337,19 @@ size_t findSymbolFunctions(const Partitioner&, SgAsmGenericHeader*, std::vector<
  *  expression happens to be an address that has a name. */
 void nameConstants(const Partitioner&);
 
+/** Find functions that are no-ops.
+ *
+ *  Finds functions that are no-ops and returns them in ascending order of entry addresses. */
+std::vector<Function::Ptr> findNoopFunctions(const Partitioner&);
+
+/** Give names to functions that are no-ops.
+ *
+ *  Scans the list of attached functions to find those whose only action is to return to the caller (via @ref
+ *  findNoopFunctions) and gives names to those that don't have names.  The names are of the form "noop_ADDR() -> void" where
+ *  ADDR is the hexadecimal entry address. The C++ trailing return type syntax is used so that functions can be easily sorted
+ *  according to their names. */
+void nameNoopFunctions(const Partitioner&);
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  Partitioner conversion to AST
