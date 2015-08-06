@@ -175,3 +175,13 @@ check-new-klt_%: $(srcdir)/test_%.c $(builddir)/$(TILEK_REL_PATH)/src/test-new-k
 #check-test-new-klt_1: $(srcdir)/test_1.c $(builddir)/$(TILEK_REL_PATH)/src/test-new-klt
 #	$(builddir)/$(TILEK_REL_PATH)/src/test-new-klt $(ROSE_FLAGS) -c $(srcdir)/test_1.c
 
+#########################################
+
+$(builddir)/$(TILEK_REL_PATH)/lib/libTileK-RTL.la:
+	make -C $(builddir)/$(TILEK_REL_PATH)/lib libTileK-RTL.la
+
+$(top_builddir)/src/backend/KLT/lib/rtl/libKLT-RTL.la:
+	make -C $(top_builddir)/src/backend/KLT/lib/rtl libKLT-RTL.la
+
+#########################################
+

@@ -1766,6 +1766,7 @@ src/backend/KLT/include/KLT/MDCG/Makefile
 src/backend/KLT/include/KLT/RTL/Makefile
 src/backend/KLT/lib/Makefile
 src/backend/KLT/lib/core/Makefile
+src/backend/KLT/lib/mdcg/Makefile
 src/backend/KLT/lib/rtl/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile

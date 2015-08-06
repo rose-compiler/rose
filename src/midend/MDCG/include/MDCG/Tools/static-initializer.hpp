@@ -131,6 +131,8 @@ SgInitializer * StaticInitializer::createInitializer(
 ) {
   SgExprListExp * expr_list = SageBuilder::buildExprListExp();
 
+  std::cerr << "[Info] (MDCG::Tools::StaticInitializer::createInitializer) Calls driver.useSymbol<SgClassDeclaration> for symbol: " << element->node->symbol->get_name().getString() << std::endl;
+
   driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
 
   std::vector<Model::field_t>::const_iterator it_field = element->scope->field_children.begin();
@@ -189,6 +191,10 @@ SgAggregateInitializer * StaticInitializer::createArray(
 ) {
   SgExprListExp * expr_list = SageBuilder::buildExprListExp();
 
+  std::cerr << "[Info] (MDCG::Tools::StaticInitializer::createArray) Calls driver.useSymbol<SgClassDeclaration> for symbol: " << element->node->symbol->get_name().getString() << std::endl;
+
+  driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
+
   Iterator it;
   for (it = input_begin; it != input_end; it++) {
     SgExpression * expr = createInitializer<ModelTraversal>(driver, element, *it, file_id);
@@ -246,6 +252,10 @@ SgAggregateInitializer * StaticInitializer::createPointerArray(
   const std::string & decl_prefix
 ) {
   SgExprListExp * expr_list = SageBuilder::buildExprListExp();
+
+  std::cerr << "[Info] (MDCG::Tools::StaticInitializer::createPointerArray) Calls driver.useSymbol<SgClassDeclaration> for symbol: " << element->node->symbol->get_name().getString() << std::endl;
+
+  driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
 
   size_t cnt = 0;
 

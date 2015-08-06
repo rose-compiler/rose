@@ -75,7 +75,7 @@ SgPntrArrRefExp * symbol_map_t::translate(SgPntrArrRefExp * arr_ref) const {
 
   data_map_t::const_iterator it_data = data.find(data_symbol);
   if (it_data == data.end()) {
-    std::cerr << "[Warning] (KLT::Utils::symbol_map_t::translate, SgPntrArrRefExp) A variable is accessed as array but not a data. Assuming local declaration." << std::endl;
+    std::cerr << "[Warning] (KLT::Utils::symbol_map_t::translate, SgPntrArrRefExp) Variable \"" << data_symbol->get_name().getString() << "\" accessed as array but not a data. Assuming local declaration." << std::endl;
     return NULL;
   }
   std::vector<Descriptor::section_t *>::const_iterator it_section = it_data->second->sections.begin();

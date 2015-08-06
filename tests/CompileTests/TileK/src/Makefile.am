@@ -16,7 +16,9 @@ LIB_PATHS= \
   -L$(top_builddir)/src/midend/MFB/lib/utils  \
   -L$(top_builddir)/src/midend/MDCG/lib/core  \
   -L$(top_builddir)/src/midend/MDCG/lib/klt   \
+  -L$(top_builddir)/src/backend/KLT/lib/      \
   -L$(top_builddir)/src/backend/KLT/lib/core  \
+  -L$(top_builddir)/src/backend/KLT/lib/mdcg  \
   -L$(builddir)/../lib/ $(LIBS_WITH_RPATH)
 
 KLT_INC_PATH= \
@@ -66,8 +68,9 @@ test_new_klt_LDADD= \
   -L$(top_builddir)/src/midend/MDCG/lib/model  \
   -L$(top_builddir)/src/midend/MDCG/lib/tools  \
   -L$(top_builddir)/src/backend/KLT/lib/      \
+  -L$(top_builddir)/src/backend/KLT/lib/mdcg \
   -L$(builddir)/../lib/ $(LIBS_WITH_RPATH) \
-  -lDLX-Core -lMFB-Sage -lMFB-KLT -lMFB-Utils -lMDCG-Model -lMDCG-Tools -lKLT \
+  -lDLX-Core -lMFB-Sage -lMFB-KLT -lMFB-Utils -lMDCG-Model -lMDCG-Tools -lKLT -lKLT-MDCG \
   -lDLX-TileK \
   $(ROSE_LIBS)
 
