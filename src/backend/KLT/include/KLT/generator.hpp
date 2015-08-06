@@ -57,7 +57,6 @@ class Generator {
   protected:
     MFB::Driver<MFB::KLT::KLT> & driver;
     ::MDCG::Tools::ModelBuilder & model_builder;
-    ::MDCG::Tools::StaticInitializer static_initializer;
 
     size_t tilek_model;
 
@@ -206,7 +205,7 @@ SgBasicBlock * Generator::instanciateOnHost(Kernel::kernel_t * original, const s
 template <class language_tpl>
 void Generator::addToStaticData(const std::map<typename language_tpl::directive_t *, Utils::subkernel_result_t<language_tpl> > & kernel_directive_translation_map) const {
   ::MDCG::Model::class_t kernel_desc_class = model_builder.get(tilek_model).lookup< ::MDCG::Model::class_t>("klt_kernel_desc_t");
-  static_initializer.addDeclaration< ::KLT::MDCG::KernelContainer<language_tpl> >(kernel_desc_class, kernel_directive_translation_map, static_file_id, std::string("kernel_desc"));
+  ::MDCG::Tools::StaticInitializer::addDeclaration< ::KLT::MDCG::KernelContainer<language_tpl> >(driver, kernel_desc_class, kernel_directive_translation_map, static_file_id, std::string("kernel_desc"));
 }
 
 template <class language_tpl>

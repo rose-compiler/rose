@@ -15,7 +15,7 @@
 namespace KLT {
 
 Generator::Generator(MFB::Driver<MFB::KLT::KLT> & driver_, ::MDCG::Tools::ModelBuilder & model_builder_) :
-  driver(driver_), model_builder(model_builder_), static_initializer(driver),
+  driver(driver_), model_builder(model_builder_),
   tilek_model(model_builder.create()),
   kernel_file_id(0), static_file_id(0),
   host_api(NULL), kernel_api(NULL), call_interface(NULL),

@@ -11,7 +11,7 @@ struct KernelContainer {
   typedef std::map<typename language_tpl::directive_t *, Utils::subkernel_result_t<language_tpl> > input_t;
 
   static SgExpression * createFieldInitializer(
-    const ::MDCG::Tools::StaticInitializer & static_initializer,
+    MFB::Driver<MFB::Sage> & driver,
     ::MDCG::Model::field_t element,
     size_t field_id,
     const input_t & input,
