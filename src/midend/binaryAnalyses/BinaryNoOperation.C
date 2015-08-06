@@ -164,15 +164,19 @@ NoOperation::initialState(SgAsmInstruction *insn) const {
 
 bool
 NoOperation::isNoop(SgAsmInstruction *insn) const {
-    if (!cpu_ || !insn)
+    if (!cpu_)
         return false;                                   // assume instruction has an effect if we can't prove otherwise.
+    if (!insn)
+        return true;
     return isNoop(std::vector<SgAsmInstruction*>(1, insn));
 }
 
 bool
 NoOperation::isNoop(const std::vector<SgAsmInstruction*> &insns) const {
-    if (!cpu_ || insns.empty())
+    if (!cpu_)
         return false;                                   // assume sequence has effect if we can't prove otherwise
+    if (insns.empty())
+        return true;
 
     cpu_->get_operators()->set_state(initialState(insns.front()));
     std::string startState = normalizeState(cpu_->get_state());
