@@ -7,7 +7,7 @@
 class MatlabUnparser
 {
  public:
-  void backend(SgProject *project);
+  static void backend(SgProject *project);
 };
 
 #endif
