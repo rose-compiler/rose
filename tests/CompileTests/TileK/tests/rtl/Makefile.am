@@ -13,7 +13,7 @@ KLT_RTL=$(top_builddir)/$(KLT_REL_PATH)/lib/rtl/libKLT-RTL.la
 
 TILEK_REL_PATH=../..
 TILEK_INC=$(srcdir)/$(TILEK_REL_PATH)/include
-TILEK_RTL=$(builddir)/$(TILEK_REL_PATH)/lib/libTileK-RTL.la
+TILEK_RTL=$(builddir)/$(TILEK_REL_PATH)/lib/libTileK-RTL-basic.la
 
 ###################################################################################################
 

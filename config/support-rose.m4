@@ -1727,7 +1727,6 @@ src/frontend/DLX/Makefile
 src/frontend/DLX/include/Makefile
 src/frontend/DLX/include/DLX/Makefile
 src/frontend/DLX/include/DLX/Core/Makefile
-src/frontend/DLX/include/DLX/KLT/Makefile
 src/frontend/DLX/lib/Makefile
 src/frontend/DLX/lib/core/Makefile
 src/frontend/Partitioner2/Makefile
@@ -1761,11 +1760,10 @@ src/backend/Makefile
 src/backend/KLT/Makefile
 src/backend/KLT/include/Makefile
 src/backend/KLT/include/KLT/Makefile
-src/backend/KLT/include/KLT/Core/Makefile
 src/backend/KLT/include/KLT/MDCG/Makefile
+src/backend/KLT/include/KLT/DLX/Makefile
 src/backend/KLT/include/KLT/RTL/Makefile
 src/backend/KLT/lib/Makefile
-src/backend/KLT/lib/core/Makefile
 src/backend/KLT/lib/mdcg/Makefile
 src/backend/KLT/lib/rtl/Makefile
 src/roseSupport/Makefile

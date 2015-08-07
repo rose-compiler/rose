@@ -3,7 +3,7 @@
 #define ORIGINAL 0
 #endif
 #if ORIGINAL == 0
-#  include "RTL/Host/klt-user.h"
+#  include "RTL/Host/tilek-rtl.h"
 #  include "KLT/RTL/kernel.h"
 #  include "KLT/RTL/loop.h"
 #  include "KLT/RTL/tile.h"
