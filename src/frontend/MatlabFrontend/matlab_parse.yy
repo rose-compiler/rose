@@ -1075,6 +1075,7 @@ if_cmd_list     : if_cmd_list1
                   SgIfStmt* lastIfClause = getLastIfClause($1);
 
                   lastIfClause->set_false_body($2);
+		  $2->set_parent(lastIfClause);
                   $$ = $1;                    
                  }
                 ;
@@ -1088,6 +1089,7 @@ if_cmd_list1    : expression opt_sep opt_list
                   SgIfStmt* lastIfClause = getLastIfClause($1);
 
                   lastIfClause->set_false_body($2);
+		  $2->set_parent(lastIfClause);
                   $$ = $1;
                 }                 
                 ;
