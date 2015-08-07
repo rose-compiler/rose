@@ -1,4 +1,4 @@
-#include "MatlabParserInterface.h"
+#include "MatlabParser.h"
 #include <cstdio>
 #include <iostream>
 #include "lex.h"
@@ -14,7 +14,7 @@ extern "C" FILE *yyin;
 extern int yydebug;
 extern void prep_lexer_for_script_file ();
 
-SgProject* MatlabParserInterface::Parse(int argc, char* argv[])
+SgProject* MatlabParser::frontend(int argc, char* argv[])
   {
     std::string fileName = std::string(argv[1]);
     FILE *matlabFile = fopen(fileName.c_str(), "r");
@@ -25,7 +25,7 @@ SgProject* MatlabParserInterface::Parse(int argc, char* argv[])
 	return NULL;
       }
 
-    yydebug = 1;
+    yydebug = 0;
 
     prep_lexer_for_script_file ();
     

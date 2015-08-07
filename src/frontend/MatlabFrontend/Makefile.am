@@ -29,7 +29,7 @@ INCLUDES = $(ROSE_INCLUDES)
 #librosematlabFrontend_la_CXXFLAGS = -I$(srcdir)/parser_support -I$(srcdir)
 libroseMatlabFrontend_la_DEPENDENCIES =
 libroseMatlabFrontend_la_SOURCES = \
-	MatlabParserInterface.C \
+	MatlabParser.cc \
 	matlab_parse.yy \
 	matlab_lex.ll \
 	parser_support/comment-list.cc \
@@ -40,7 +40,7 @@ libroseMatlabFrontend_la_SOURCES = \
 	parser_support/SymbolFinder.cc \
 	parser_support/MatlabFunctionBuilder.cc
 
-pkginclude_HEADERS = MatlabParserInterface.h
+pkginclude_HEADERS = MatlabParser.h
 # DQ (9/29/2009): Renamed preproc.ll to preproc-c.ll in SVN.
 # This will hopefull avoid a linking problem where multiple files
 # are called preproc.o (from here and from EDG).
