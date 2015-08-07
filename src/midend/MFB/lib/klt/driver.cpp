@@ -75,12 +75,12 @@ KLT<kernel_t>::build_result_t KLT<kernel_t>::build(::MFB::Driver< ::MFB::KLT::KL
   std::string kernel_prefix = "klt_kernel";
   ::KLT::Descriptor::kernel_t * res = buildKernelDesc(kernel_prefix);
 
-  std::cerr << "[Info] (MFB::KLT::KLT<kernel_t>::build) Before " << res->loops.size() << " loops and " << res->tiles.size() << " tiles." << std::endl;
+  std::map<const ::KLT::LoopTree::loop_t *, ::KLT::Descriptor::loop_t *> loop_translation_map;
 
-  object.root->collectLoops(res->loops);
-  object.root->collectTiles(res->tiles);
+  object.root->collectLoops(res->loops, loop_translation_map);
+  object.root->collectTiles(res->tiles, loop_translation_map);
 
-  std::cerr << "[Info] (MFB::KLT::KLT<kernel_t>::build) After  " << res->loops.size() << " loops and " << res->tiles.size() << " tiles." << std::endl;
+  std::cerr << "[Info] (MFB::KLT::KLT<kernel_t>::build) " << res->loops.size() << " loops and " << res->tiles.size() << " tiles." << std::endl;
 
   res->parameters = object.parameters;
   res->data = object.data;
@@ -208,7 +208,7 @@ std::pair<SgVariableSymbol *, SgForStatement *> buildTile(::MFB::Driver< ::MFB::
 
     res.second = SageBuilder::buildForStatement(
       SageBuilder::buildForInitStatement(SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildVarRefExp(res.first), lower_bound))),
-      SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(SageBuilder::buildVarRefExp(res.first), upper_bound)),
+      SageBuilder::buildExprStatement(SageBuilder::buildLessThanOp(SageBuilder::buildVarRefExp(res.first), upper_bound)),
       SageBuilder::buildPlusAssignOp(SageBuilder::buildVarRefExp(res.first), stride), NULL
     );
   }
@@ -232,8 +232,6 @@ KLT<tile_t>::build_result_t KLT<tile_t>::build(::MFB::Driver< ::MFB::KLT::KLT> &
   };
   tile_chain.push_back(tile);
   loop_iter_map[tile->loop->id] = NULL;
-
-  // TODO reorder tiles if needed
 
   std::map<size_t, SgExpression *>::iterator it_loop_iter;
   for (it_loop_iter = loop_iter_map.begin(); it_loop_iter != loop_iter_map.end(); it_loop_iter++)

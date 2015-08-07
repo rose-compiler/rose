@@ -135,9 +135,9 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
 ) {
   DLX::Frontend::Parser parser(directive_str, directive_node);
 
-  if (!parser.consume('('))                                  return false;
-  if (!parser.parse<size_t>(clause->parameters.num_threads)) return false;
-  if (!parser.consume(')'))                                  return false;
+  if (!parser.consume('('))                                          return false;
+  if (!parser.parse<SgExpression *>(clause->parameters.num_threads)) return false;
+  if (!parser.consume(')'))                                          return false;
 
   directive_str = parser.getDirectiveString(); return true;
 }

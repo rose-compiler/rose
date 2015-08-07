@@ -30,7 +30,11 @@ void kernel_t::load(const MDCG::Model::model_t & model) {
   res = api_t::load(function_, get_loop_stride_fnct, model, "klt_get_loop_stride", NULL); assert(res == true);
   res = api_t::load(function_, get_tile_length_fnct, model, "klt_get_tile_length", NULL); assert(res == true);
   res = api_t::load(function_, get_tile_stride_fnct, model, "klt_get_tile_stride", NULL); assert(res == true);
+
+  loadUser(model);
 }
+
+void kernel_t::loadUser(const MDCG::Model::model_t & model) {}
 
 //////
 
@@ -68,6 +72,7 @@ void host_t::load(const MDCG::Model::model_t & model) {
       res = api_t::load(field_ , kernel_param_field  , model,   "param"           , class_); assert(res == true);
       res = api_t::load(field_ , kernel_data_field   , model,   "data"            , class_); assert(res == true);
       res = api_t::load(field_ , kernel_loops_field  , model,   "loops"           , class_); assert(res == true);
+      res = api_t::load(field_ , kernel_config_field , model,   "config"          , class_); assert(res == true);
 //    res = api_t::load(field_ , kernel_tiles_field  , model,   "tiles"           , class_); assert(res == true);
 
     res = api_t::load(class_   , loop_class          , model, "klt_loop_t"        , NULL);   assert(res == true);
@@ -90,7 +95,11 @@ void host_t::load(const MDCG::Model::model_t & model) {
     res = api_t::load(function_, build_kernel_func   , model, "klt_build_kernel"  , NULL);   assert(res == true);
 
     res = api_t::load(function_, execute_kernel_func , model, "klt_execute_kernel", NULL);   assert(res == true);
+
+  loadUser(model);
 }
+
+void host_t::loadUser(const MDCG::Model::model_t & model) {}
 
 //////
 
@@ -160,6 +169,7 @@ void call_interface_t::addKernelArgsForContext(SgFunctionParameterList * param_l
 SgFunctionParameterList * call_interface_t::buildKernelParamList(Descriptor::kernel_t & kernel) const {
   SgFunctionParameterList * res = SageBuilder::buildFunctionParameterList();
 
+  prependUserArguments(res);
   addKernelArgsForParameter(res, kernel.parameters);
   addKernelArgsForData     (res, kernel.data);
   addKernelArgsForContext  (res);
@@ -182,17 +192,34 @@ void call_interface_t::createLoopIterator(const std::vector<Descriptor::loop_t *
   }
 }
 
+SgExpression * call_interface_t::getTileIdx(const Descriptor::tile_t & tile) const {
+  assert(false);
+  return NULL;
+}
+
 void call_interface_t::createTileIterator(const std::vector<Descriptor::tile_t *> & tiles, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
   std::vector<Descriptor::tile_t *>::const_iterator it;
   for (it = tiles.begin(); it != tiles.end(); it++) {
     std::ostringstream oss; oss << "t_" << (*it)->id;
-    symbol_map.iter_tiles.insert(std::pair<size_t, SgVariableSymbol *>((*it)->id, MFB::Utils::getExistingSymbolOrBuildDecl(oss.str(), SageBuilder::buildIntType(), bb)));
+    SgVariableSymbol * iter_sym = MFB::Utils::getExistingSymbolOrBuildDecl(oss.str(), SageBuilder::buildIntType(), bb);
+    symbol_map.iter_tiles.insert(std::pair<size_t, SgVariableSymbol *>((*it)->id, iter_sym));
+    if ((*it)->kind > 1) {
+      SageInterface::appendStatement(SageBuilder::buildAssignStatement(
+        SageBuilder::buildVarRefExp(iter_sym),
+        SageBuilder::buildMultiplyOp(
+          getTileIdx(**it),
+          kernel_api->buildGetTileStride((*it)->id, symbol_map.loop_context)
+        )
+      ), bb);
+    }
   }
 }
 
-SgBasicBlock * call_interface_t::generateKernelBody(Descriptor::kernel_t & kernel, SgFunctionDefinition * kernel_defn, Utils::symbol_map_t & symbol_map) const {
+SgBasicBlock * call_interface_t::generateKernelBody(Descriptor::kernel_t & kernel, SgFunctionDefinition * kernel_defn, Utils::symbol_map_t & symbol_map) {
   SgBasicBlock * bb = SageBuilder::buildBasicBlock();
   kernel_defn->set_body(bb);
+
+  getSymbolForUserArguments(kernel_defn, symbol_map, bb);
 
   getContextSymbol(kernel_defn, symbol_map);
 
@@ -213,92 +240,9 @@ void call_interface_t::applyKernelModifiers(SgFunctionDeclaration * kernel_decl)
 
 SgType * call_interface_t::buildKernelReturnType(Descriptor::kernel_t & kernel) const { return SageBuilder::buildVoidType(); }
 
-///////
+void call_interface_t::prependUserArguments(SgFunctionParameterList * param_list) const {}
 
-array_args_interface_t::array_args_interface_t(::MFB::Driver< ::MFB::Sage> & driver, kernel_t * kernel_api) : call_interface_t(driver, kernel_api) {}
-
-void array_args_interface_t::addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const {
-  param_list->append_arg(SageBuilder::buildInitializedName("param", SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL));
-}
-
-void array_args_interface_t::addKernelArgsForData(SgFunctionParameterList * param_list, const std::vector<Descriptor::data_t *> & data) const {
-  param_list->append_arg(SageBuilder::buildInitializedName("data", SageBuilder::buildPointerType(SageBuilder::buildPointerType(SageBuilder::buildVoidType())), NULL));
-}
-
-void array_args_interface_t::getSymbolForParameter(SgFunctionDefinition * kernel_defn, const std::vector<SgVariableSymbol *> & parameters, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
-  SgVariableSymbol * arg_param_sym = kernel_defn->lookup_variable_symbol("param");
-  assert(arg_param_sym != NULL);
-  int cnt = 0;
-
-  std::vector<SgVariableSymbol *>::const_iterator it;
-  for (it = parameters.begin(); it != parameters.end(); it++) {
-    SgVariableSymbol * param_sym = *it;
-    std::string param_name = param_sym->get_name().getString();
-    SgType * param_type = param_sym->get_type();
-
-    driver.useType(param_type, kernel_defn);
-
-    SgExpression * init = SageBuilder::buildPointerDerefExp(SageBuilder::buildCastExp(
-                            SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_param_sym), SageBuilder::buildIntVal(cnt++)),
-                            SageBuilder::buildPointerType(param_type)
-                          ));
-    SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(param_name, param_type, SageBuilder::buildAssignInitializer(init), bb), bb);
-
-    SgVariableSymbol * new_sym = bb->lookup_variable_symbol(param_name);
-    assert(new_sym != NULL);
-
-    symbol_map.parameters.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(param_sym, new_sym));
-  }
-}
-
-void array_args_interface_t::getSymbolForData(SgFunctionDefinition * kernel_defn, const std::vector<Descriptor::data_t *> & data, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
-  SgVariableSymbol * arg_data_sym = kernel_defn->lookup_variable_symbol("data");
-  assert(arg_data_sym != NULL);
-  int cnt = 0;
-
-  std::vector<Descriptor::data_t *>::const_iterator it;
-  for (it = data.begin(); it != data.end(); it++) {
-    SgVariableSymbol * data_sym = (*it)->symbol;
-    std::string data_name = data_sym->get_name().getString();
-    SgType * data_type = (*it)->base_type;
-
-    driver.useType(data_type, kernel_defn);
-
-    data_type = SageBuilder::buildPointerType(data_type);
-
-    SgExpression * init = SageBuilder::buildCastExp(
-                            SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_data_sym), SageBuilder::buildIntVal(cnt++)), data_type
-                          );
-    SageInterface::prependStatement(SageBuilder::buildVariableDeclaration(data_name, data_type, SageBuilder::buildAssignInitializer(init), bb), bb);
-
-    SgVariableSymbol * new_sym = bb->lookup_variable_symbol(data_name);
-    assert(new_sym != NULL);
-
-    symbol_map.data.insert(std::pair<SgVariableSymbol *, Descriptor::data_t *>(data_sym, *it));
-    symbol_map.data_trans.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(data_sym, new_sym));
-    symbol_map.data_rtrans.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(new_sym, data_sym));
-  }
-}
-
-//////
-
-individual_args_interface_t::individual_args_interface_t(::MFB::Driver< ::MFB::Sage> & driver, kernel_t * kernel_api) : call_interface_t(driver, kernel_api) {}
-
-void individual_args_interface_t::addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const {
-  // TODO
-}
-
-void individual_args_interface_t::addKernelArgsForData(SgFunctionParameterList * param_list, const std::vector<Descriptor::data_t *> & data) const {
-  // TODO
-}
-
-void individual_args_interface_t::getSymbolForParameter(SgFunctionDefinition * kernel_defn, const std::vector<SgVariableSymbol *> & parameters, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
-  // TODO
-}
-
-void individual_args_interface_t::getSymbolForData(SgFunctionDefinition * kernel_defn, const std::vector<Descriptor::data_t *> & data, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const {
-  // TODO
-}
+void call_interface_t::getSymbolForUserArguments(SgFunctionDefinition * kernel_defn, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) {}
 
 } // namespace KLT::API
 

@@ -33,6 +33,8 @@
 #include <sstream>
 #endif
 
+#include <map>
+
 template <class A, class B, class C>
 void maps_composition(const std::map<A, B> & map_A_B, const std::map<B, C> & map_B_C, std::map<A, C> & map_A_C) {
   typename std::map<A, B>::const_iterator it_A_B;
@@ -70,7 +72,7 @@ class Compiler : public ::DLX::Compiler<language_tpl> {
     MFB::Driver<MFB::KLT::KLT> driver;
     ::MDCG::Tools::ModelBuilder model_builder;
 
-    generator_tpl * generator;
+    generator_t * generator;
 
   public:
     Compiler(SgProject * project, const std::string & klt_rtl_path, const std::string & user_rtl_path, const std::string & basename) :
@@ -79,6 +81,10 @@ class Compiler : public ::DLX::Compiler<language_tpl> {
       model_builder(driver),
       generator(KLT::Generator::build<generator_tpl>(driver, model_builder, klt_rtl_path + "/include", user_rtl_path + "/include", basename))
     {}
+
+    
+    MFB::Driver<MFB::KLT::KLT> & getDriver() { return driver; }
+    const MFB::Driver<MFB::KLT::KLT> & getDriver() const { return driver; }
 
   protected: // Extract Data
     // It requires language_tpl to have KLT's data extension ('language_tpl::has_klt_data')
@@ -164,7 +170,6 @@ void Compiler<language_tpl, generator_tpl>::convertDataList(const std::vector<cl
       for (it_data_sections = data_sections.begin(); it_data_sections != data_sections.end(); it_data_sections++)
         data.push_back(convertData(data_clause, *it_data_sections));
     }
-    else assert(false);
   }
 }
 
@@ -330,8 +335,9 @@ void Compiler<language_tpl, generator_tpl>::generateAllKernels(
     maps_composition(loop_directive_map, it_kernel_directive->second.second, directive_loop_id_map);
 
     // Associated the kernel, its loops, and the map to store tilled kernels to the directive.
+    std::map<const LoopTree::loop_t *, Descriptor::loop_t *> loop_translation_map;
     kernel_directive_translation_map[directive].original = kernel;
-    kernel->root->collectLoops(kernel_directive_translation_map[directive].loops);
+    kernel->root->collectLoops(kernel_directive_translation_map[directive].loops, loop_translation_map);
     std::map<tiling_info_t *, kernel_deps_map_t> & tiled_generated_kernels = kernel_directive_translation_map[directive].tiled;
 
     // 'loops' should be sorted by ID and IDs should range from 0 to |loops|-1
@@ -339,7 +345,7 @@ void Compiler<language_tpl, generator_tpl>::generateAllKernels(
     assert(kernel_directive_translation_map[directive].loops.back()->id == kernel_directive_translation_map[directive].loops.size() - 1);
 
     // Should not find any tile at this point
-    { std::vector<Descriptor::tile_t *> tiles; kernel->root->collectTiles(tiles); assert(tiles.size() == 0); }
+    { std::vector<Descriptor::tile_t *> tiles; kernel->root->collectTiles(tiles, loop_translation_map); assert(tiles.size() == 0); }
 
     // Generate 'tiling_info' and associated sub-kernels
     std::map<tiling_info_t *, std::vector<KLT::Kernel::kernel_t *> > tiled_kernels;
@@ -410,7 +416,7 @@ void Compiler<language_tpl, generator_tpl>::compile(SgNode * node) {
   }
 #endif
   for (it_directive = kernel_directive_translation_map.begin(); it_directive != kernel_directive_translation_map.end(); it_directive++) {
-    const directive_t * directive = it_directive->first;
+    directive_t * directive = it_directive->first;
     const subkernel_result_t & subkernel_result = it_directive->second;
 
     kernel_construct_t * kernel_construct = language_tpl::isKernelConstruct(directive->construct);
@@ -421,14 +427,14 @@ void Compiler<language_tpl, generator_tpl>::compile(SgNode * node) {
     generator->getKernelID(subkernel_result.original); // enable to use 'KLT::Generator::getKernelID() const' when inside 'KLT::Generator::instanciateOnHost<language_tpl>(..) const'
 
     // Replace directive by generated host code: create kernel, configure, launch
-    SgBasicBlock * bb = generator->template instanciateOnHost<language_tpl>(subkernel_result.original, subkernel_result.loops);
+    SgBasicBlock * bb = generator->template instanciateOnHost<language_tpl, generator_tpl>(directive, subkernel_result.original, subkernel_result.loops);
     assert(bb != NULL);
 
     SageInterface::replaceStatement(region, bb);
   }
 
   // Add the description of this kernel to the static data (all subkernels of all versions)
-  generator->template addToStaticData<language_tpl>(kernel_directive_translation_map);
+  generator->template addToStaticData<language_tpl, generator_tpl>(kernel_directive_translation_map);
 
   // Removes all pragma from language_tpl
 

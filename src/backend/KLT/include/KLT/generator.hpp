@@ -106,11 +106,11 @@ class Generator {
     size_t getKernelID(Kernel::kernel_t * kernel);
     size_t getKernelID(Kernel::kernel_t * kernel) const;
 
-    template <class language_tpl>
-    SgBasicBlock * instanciateOnHost(Kernel::kernel_t * original, const std::vector<Descriptor::loop_t *> & loops) const;
+    template <class language_tpl, class generator_tpl>
+    SgBasicBlock * instanciateOnHost(typename language_tpl::directive_t * directive, Kernel::kernel_t * original, const std::vector<Descriptor::loop_t *> & loops) const;
 
   public:
-    template <class language_tpl>
+    template <class language_tpl, class generator_tpl>
     void addToStaticData(const std::map<typename language_tpl::directive_t *, Utils::subkernel_result_t<language_tpl> > & kernel_directive_translation_map) const;
 
   public:
@@ -155,8 +155,8 @@ generator_tpl * Generator::build(
 }
 
 
-template <class language_tpl>
-SgBasicBlock * Generator::instanciateOnHost(Kernel::kernel_t * original, const std::vector<Descriptor::loop_t *> & loops) const {
+template <class language_tpl, class generator_tpl>
+SgBasicBlock * Generator::instanciateOnHost(typename language_tpl::directive_t * directive, Kernel::kernel_t * original, const std::vector<Descriptor::loop_t *> & loops) const {
   SgBasicBlock * bb = SageBuilder::buildBasicBlock();
 
   SgVariableSymbol * kernel_sym = host_api->insertKernelInstance("kernel", getKernelID(original), bb);
@@ -192,20 +192,26 @@ SgBasicBlock * Generator::instanciateOnHost(Kernel::kernel_t * original, const s
   std::vector<Descriptor::loop_t *>::const_iterator it_loop;
   for (it_loop = loops.begin(); it_loop != loops.end(); it_loop++) {
     SageInterface::appendStatement(host_api->buildLoopLowerAssign(kernel_sym, loop_cnt, (*it_loop)->lb), bb);
-    SageInterface::appendStatement(host_api->buildLoopLowerAssign(kernel_sym, loop_cnt, (*it_loop)->ub), bb);
-    SageInterface::appendStatement(host_api->buildLoopLowerAssign(kernel_sym, loop_cnt, (*it_loop)->stride), bb);
+    SageInterface::appendStatement(host_api->buildLoopUpperAssign(kernel_sym, loop_cnt, (*it_loop)->ub), bb);
+    SageInterface::appendStatement(host_api->buildLoopStrideAssign(kernel_sym, loop_cnt, (*it_loop)->stride), bb);
     loop_cnt++;
   }
+
+  generator_tpl::insertUserConfig(directive, kernel_sym, host_api, bb);
 
   host_api->insertKernelExecute(kernel_sym, bb);
 
   return bb;
 }
 
-template <class language_tpl>
+template <class language_tpl, class generator_tpl>
 void Generator::addToStaticData(const std::map<typename language_tpl::directive_t *, Utils::subkernel_result_t<language_tpl> > & kernel_directive_translation_map) const {
   ::MDCG::Model::class_t kernel_desc_class = model_builder.get(tilek_model).lookup< ::MDCG::Model::class_t>("klt_kernel_desc_t");
-  ::MDCG::Tools::StaticInitializer::addArrayDeclaration< ::KLT::MDCG::KernelContainer<language_tpl> >(driver, kernel_desc_class, kernel_directive_translation_map.size(), kernel_directive_translation_map.begin(), kernel_directive_translation_map.end(), static_file_id, std::string("kernel_desc"));
+  ::MDCG::Tools::StaticInitializer::addArrayDeclaration< ::KLT::MDCG::KernelContainer<language_tpl, generator_tpl> >(
+      driver, kernel_desc_class, kernel_directive_translation_map.size(),
+      kernel_directive_translation_map.begin(), kernel_directive_translation_map.end(),
+      static_file_id, std::string("klt_kernel_desc")
+  );
 }
 
 template <class language_tpl>

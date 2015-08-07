@@ -86,8 +86,8 @@ struct node_t {
   std::string getGraphVizLabel() const;
   virtual void toGraphViz(std::ostream & out, std::string indent) const = 0;
 
-  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops) const = 0;
-  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles) const = 0;
+  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const = 0;
+  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const = 0;
 };
 
 struct block_t : public node_t {
@@ -102,8 +102,8 @@ struct block_t : public node_t {
 
   virtual void toGraphViz(std::ostream & out, std::string indent) const;
 
-  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops) const;
-  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles) const;
+  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const;
+  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const;
 };
 
 struct cond_t : public node_t {
@@ -121,8 +121,8 @@ struct cond_t : public node_t {
 
   virtual void toGraphViz(std::ostream & out, std::string indent) const;
 
-  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops) const;
-  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles) const;
+  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const;
+  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const;
 };
 
 struct loop_t : public node_t {
@@ -148,8 +148,8 @@ struct loop_t : public node_t {
 
   virtual void toGraphViz(std::ostream & out, std::string indent) const;
 
-  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops) const;
-  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles) const;
+  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const;
+  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const;
 };
 
 struct stmt_t : public node_t {
@@ -164,8 +164,8 @@ struct stmt_t : public node_t {
 
   virtual void toGraphViz(std::ostream & out, std::string indent) const;
 
-  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops) const;
-  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles) const;
+  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const;
+  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const;
 };
 
 struct tile_t : public node_t {
@@ -188,8 +188,8 @@ struct tile_t : public node_t {
 
   virtual void toGraphViz(std::ostream & out, std::string indent) const;
 
-  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops) const;
-  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles) const;
+  virtual void collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const;
+  virtual void collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const;
 };
 
 }

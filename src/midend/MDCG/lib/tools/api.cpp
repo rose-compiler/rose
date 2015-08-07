@@ -1,4 +1,6 @@
 
+#include "sage3basic.h"
+
 #include "MFB/Sage/class-declaration.hpp"
 #include "MFB/Sage/function-declaration.hpp"
 

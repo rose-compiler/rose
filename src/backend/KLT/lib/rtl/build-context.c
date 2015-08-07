@@ -5,6 +5,7 @@
 #include "KLT/RTL/build-context.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <assert.h>
@@ -106,11 +107,21 @@ void klt_solve_loop_context(int num_loops, struct klt_loop_desc_t * loop_desc, s
   }
 }
 
+void dump_loop_ctx(struct klt_loop_context_t * loop_ctx) {
+  int i;
+  int * ptr = loop_ctx->data;
+  for (i = 0; i < loop_ctx->num_loops; i++)
+    printf("Loop #%d : %d to %d by %d\n", i, *(ptr++), *(ptr++), *(ptr++));
+  for (i = 0; i < loop_ctx->num_tiles; i++)
+    printf("Tile #%d : %d by %d\n", i, *(ptr++), *(ptr++));
+}
+
 struct klt_loop_context_t * klt_build_loop_context(struct klt_loop_container_t * loop_container, struct klt_loop_t * loops_, struct klt_kernel_t * kernel) {
   struct klt_loop_t * loops = malloc(loop_container->num_loops * sizeof(struct klt_loop_t));
   int i;
   for (i = 0; i < loop_container->num_loops; i++)
-    loops[i] = loops_[loop_container->loop_desc[i].idx];
+    memcpy(&(loops[i]), &(loops_[loop_container->loop_desc[i].idx]), sizeof(struct klt_loop_t));
+//  loops[i] = loops_[loop_container->loop_desc[i].idx];
 
   int size = sizeof(struct klt_loop_context_t) + loop_container->num_loops * sizeof(struct klt_loop_t) + loop_container->num_tiles * sizeof(struct klt_tile_t);
   struct klt_loop_context_t * loop_ctx = malloc(size);
@@ -121,7 +132,11 @@ struct klt_loop_context_t * klt_build_loop_context(struct klt_loop_container_t *
   loop_ctx->num_tiles = loop_container->num_tiles;
   memcpy(loop_ctx->data, loops, loop_container->num_loops * sizeof(struct klt_loop_t));
 
+//dump_loop_ctx(loop_ctx);
+
   klt_solve_loop_context(loop_container->num_loops, loop_container->loop_desc, loop_ctx, kernel);
+
+//dump_loop_ctx(loop_ctx);
 
   return loop_ctx;
 }

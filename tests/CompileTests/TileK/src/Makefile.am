@@ -32,35 +32,36 @@ PATHS= \
 KLT_LIBS=-lDLX-Core -lMFB-Sage -lMFB-Utils -lMDCG-Core -lMDCG-KLT -lKLT-Core
 
 #########################################
-
+#
 #bin_PROGRAMS=tilek tilek-threads tilek-acc-ocl tilek-acc-cuda
-bin_PROGRAMS=test-new-klt
-
-tilek_SOURCES=tilek.cpp
-tilek_CXXFLAGS=-g -O0 $(INC_PATHS) -DTILEK_BASIC $(KLT_INC_PATH)
-tilek_LDADD= $(LIB_PATHS) $(KLT_LIBS) \
-  -lDLX-TileK -lMFB-TileK -lMDCG-TileK -lKLT-TileK $(ROSE_LIBS)
-
-tilek_threads_SOURCES=tilek.cpp
-tilek_threads_CXXFLAGS=-g -O0 $(INC_PATHS) -DTILEK_THREADS $(KLT_INC_PATH)
-tilek_threads_LDADD= $(LIB_PATHS) $(KLT_LIBS) \
-  -lDLX-TileK-threads -lMFB-TileK-threads -lMDCG-TileK-threads -lKLT-TileK-threads $(ROSE_LIBS)
-
-tilek_acc_ocl_SOURCES=tilek.cpp
-tilek_acc_ocl_CXXFLAGS=-g -O0 $(INC_PATHS) -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL $(KLT_INC_PATH)
-tilek_acc_ocl_LDADD= $(LIB_PATHS) $(KLT_LIBS) \
-  -lDLX-TileK-acc -lMFB-TileK-acc-ocl -lMDCG-TileK-acc-ocl -lKLT-TileK-acc-ocl $(ROSE_LIBS)
-
-tilek_acc_cuda_SOURCES=tilek.cpp
-tilek_acc_cuda_CXXFLAGS=-g -O0 $(INC_PATHS) -DTILEK_ACCELERATOR -DTILEK_TARGET_CUDA $(KLT_INC_PATH)
-tilek_acc_cuda_LDADD= $(LIB_PATHS) $(KLT_LIBS) \
-  -lDLX-TileK-acc -lMFB-TileK-acc-cuda -lMDCG-TileK-acc-cuda -lKLT-TileK-acc-cuda $(ROSE_LIBS)
-
+#
+#tilek_SOURCES=tilek.cpp
+#tilek_CXXFLAGS=-g -O0 $(INC_PATHS) -DTILEK_BASIC $(KLT_INC_PATH)
+#tilek_LDADD= $(LIB_PATHS) $(KLT_LIBS) \
+#  -lDLX-TileK -lMFB-TileK -lMDCG-TileK -lKLT-TileK $(ROSE_LIBS)
+#
+#tilek_threads_SOURCES=tilek.cpp
+#tilek_threads_CXXFLAGS=-g -O0 $(INC_PATHS) -DTILEK_THREADS $(KLT_INC_PATH)
+#tilek_threads_LDADD= $(LIB_PATHS) $(KLT_LIBS) \
+#  -lDLX-TileK-threads -lMFB-TileK-threads -lMDCG-TileK-threads -lKLT-TileK-threads $(ROSE_LIBS)
+#
+#tilek_acc_ocl_SOURCES=tilek.cpp
+#tilek_acc_ocl_CXXFLAGS=-g -O0 $(INC_PATHS) -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL $(KLT_INC_PATH)
+#tilek_acc_ocl_LDADD= $(LIB_PATHS) $(KLT_LIBS) \
+#  -lDLX-TileK-acc -lMFB-TileK-acc-ocl -lMDCG-TileK-acc-ocl -lKLT-TileK-acc-ocl $(ROSE_LIBS)
+#
+#tilek_acc_cuda_SOURCES=tilek.cpp
+#tilek_acc_cuda_CXXFLAGS=-g -O0 $(INC_PATHS) -DTILEK_ACCELERATOR -DTILEK_TARGET_CUDA $(KLT_INC_PATH)
+#tilek_acc_cuda_LDADD= $(LIB_PATHS) $(KLT_LIBS) \
+#  -lDLX-TileK-acc -lMFB-TileK-acc-cuda -lMDCG-TileK-acc-cuda -lKLT-TileK-acc-cuda $(ROSE_LIBS)
+#
 #########################################
 
-test_new_klt_SOURCES=test-new-klt.cpp
-test_new_klt_CXXFLAGS=-g -O0 $(INC_PATHS) $(PATHS)
-test_new_klt_LDADD= \
+bin_PROGRAMS=tilek-basic tilek-threads
+
+tilek_basic_SOURCES=tilek.cpp
+tilek_basic_CXXFLAGS=-g -O0 $(INC_PATHS) $(PATHS) -DTILEK_BASIC
+tilek_basic_LDADD= \
   -L$(top_builddir)/src/frontend/DLX/lib/core \
   -L$(top_builddir)/src/midend/MFB/lib/sage   \
   -L$(top_builddir)/src/midend/MFB/lib/klt    \
@@ -71,7 +72,23 @@ test_new_klt_LDADD= \
   -L$(top_builddir)/src/backend/KLT/lib/mdcg \
   -L$(builddir)/../lib/ $(LIBS_WITH_RPATH) \
   -lDLX-Core -lMFB-Sage -lMFB-KLT -lMFB-Utils -lMDCG-Model -lMDCG-Tools -lKLT -lKLT-MDCG \
-  -lDLX-TileK \
+  -lDLX-TileK-basic \
+  $(ROSE_LIBS)
+
+tilek_threads_SOURCES=tilek.cpp
+tilek_threads_CXXFLAGS=-g -O0 $(INC_PATHS) $(PATHS) -DTILEK_THREADS
+tilek_threads_LDADD= \
+  -L$(top_builddir)/src/frontend/DLX/lib/core \
+  -L$(top_builddir)/src/midend/MFB/lib/sage   \
+  -L$(top_builddir)/src/midend/MFB/lib/klt    \
+  -L$(top_builddir)/src/midend/MFB/lib/utils  \
+  -L$(top_builddir)/src/midend/MDCG/lib/model  \
+  -L$(top_builddir)/src/midend/MDCG/lib/tools  \
+  -L$(top_builddir)/src/backend/KLT/lib/      \
+  -L$(top_builddir)/src/backend/KLT/lib/mdcg \
+  -L$(builddir)/../lib/ $(LIBS_WITH_RPATH) \
+  -lDLX-Core -lMFB-Sage -lMFB-KLT -lMFB-Utils -lMDCG-Model -lMDCG-Tools -lKLT -lKLT-MDCG \
+  -lDLX-TileK-threads \
   $(ROSE_LIBS)
 
 #########################################

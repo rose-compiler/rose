@@ -12,6 +12,7 @@
 
 #include <string>
 #include <utility>
+#include <iostream>
 
 #include <boost/filesystem.hpp>
 
@@ -36,9 +37,11 @@ class SgNamespaceSymbol;
 class SgNamespaceDefinitionStatement;
 
 class SgVariableDeclaration;
-class  SgVariableSymbol;
+class SgVariableSymbol;
 class SgInitializer;
 class SgInitializedName;
+
+class SgTypedefSymbol;
 
 namespace MFB {
 
@@ -86,6 +89,8 @@ class Driver<Sage> {
     std::set<SgClassSymbol *>          p_class_symbols;
     std::set<SgVariableSymbol *>       p_variable_symbols;
     std::set<SgMemberFunctionSymbol *> p_member_function_symbols;
+
+    std::set<SgTypedefSymbol *> p_typedef_symbols;
 
   // Type management
     
@@ -161,6 +166,7 @@ class Driver<Sage> {
     typename Sage<Object>::build_result_t build(const typename Sage<Object>::object_desc_t & desc);
 
     void useType(SgType * type, SgScopeStatement * scope);
+    void useType(SgType * type, file_id_t file_id);
 
     /// Import external header for a given file
     void addExternalHeader(file_id_t file_id, std::string header_name, bool is_system_header = true);
@@ -185,13 +191,15 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
   assert(it_file != id_to_file_map.end());
 
   std::map<SgSymbol *, file_id_t>::const_iterator it_sym_decl_file_id = p_symbol_to_file_id_map.find((SgSymbol *)symbol);
+  if (it_sym_decl_file_id == p_symbol_to_file_id_map.end())
+    std::cerr << "[Error] (MFB::Driver<Sage>::useSymbol) Cannot find a file for " << symbol->get_name().getString() << std::endl;
   assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
 
   file_id_t sym_decl_file_id = it_sym_decl_file_id->second;
 
-  bool need_include_directive = !need_forward_only;
+  std::cerr << "[Info] (MFB::Driver<Sage>::useSymbol) Symbol for " << symbol->get_name().getString() << " found in file #" << sym_decl_file_id << std::endl;
 
-  // TODO find out wether we need a include directive or if we can do with a forward declaration
+  bool need_include_directive = !need_forward_only; // TODO find out wether we need a include directive or if we can do with a forward declaration
 
   if (need_include_directive) {
     std::map<file_id_t, std::set<file_id_t> >::iterator it_accessible_file_ids = file_id_to_accessible_file_id_map.find(file_id);
@@ -204,7 +212,7 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
       accessible_file_ids.insert(sym_decl_file_id);
     }
 
-    addPointerToTopParentDeclaration((SgSymbol *)symbol, file_id);
+//  addPointerToTopParentDeclaration((SgSymbol *)symbol, file_id);
   }
   else {
     createForwardDeclaration<Object>(symbol, file_id);

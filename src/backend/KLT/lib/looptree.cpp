@@ -300,26 +300,26 @@ void stmt_t::toGraphViz(std::ostream & out, std::string indent) const {
   }
 }
 
-void block_t::collectLoops(std::vector<Descriptor::loop_t *> & loops) const {
+void block_t::collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const {
   std::vector<node_t *>::const_iterator it;
   for (it = children.begin(); it != children.end(); it++)
-    (*it)->collectLoops(loops);
+    (*it)->collectLoops(loops, loop_translation_map);
 }
 
-void block_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles) const {
+void block_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const {
   std::vector<node_t *>::const_iterator it;
   for (it = children.begin(); it != children.end(); it++)
-    (*it)->collectTiles(tiles);
+    (*it)->collectTiles(tiles, loop_translation_map);
 }
 
-void cond_t::collectLoops(std::vector<Descriptor::loop_t *> & loops) const {
-  branch_true->collectLoops(loops);
-  branch_false->collectLoops(loops);
+void cond_t::collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const {
+  branch_true->collectLoops(loops, loop_translation_map);
+  branch_false->collectLoops(loops, loop_translation_map);
 }
 
-void cond_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles) const {
-  branch_true->collectTiles(tiles);
-  branch_false->collectTiles(tiles);
+void cond_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const {
+  branch_true->collectTiles(tiles, loop_translation_map);
+  branch_false->collectTiles(tiles, loop_translation_map);
 }
 
 template <class T>
@@ -334,40 +334,54 @@ void insert(T * t, std::vector<T *> & Ts) {
   Ts.insert(it, t);
 }
 
-void loop_t::collectLoops(std::vector<Descriptor::loop_t *> & loops) const {
-  loops.insert(
-    std::upper_bound(loops.begin(), loops.end(), id, cmp_id<Descriptor::loop_t>),
-    new Descriptor::loop_t(id, lower_bound, upper_bound, stride, iterator)
-  );
+void loop_t::collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const {
+  Descriptor::loop_t * loop_desc = new Descriptor::loop_t(id, lower_bound, upper_bound, stride, iterator);
 
-  body->collectLoops(loops);
+  loop_translation_map.insert(std::pair<const loop_t *, Descriptor::loop_t *>(this, loop_desc));
+
+  std::vector<Descriptor::loop_t *>::iterator pos = std::upper_bound(loops.begin(), loops.end(), id, cmp_id<Descriptor::loop_t>);
+  assert(pos == loops.end() || (*pos)->id != id);
+  loops.insert(pos, loop_desc);
+
+  body->collectLoops(loops, loop_translation_map);
 }
 
-void loop_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles) const {
-  body->collectTiles(tiles);
+void loop_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const {
+  body->collectTiles(tiles, loop_translation_map);
 }
 
-void tile_t::collectLoops(std::vector<Descriptor::loop_t *> & loops) const {
+void tile_t::collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const {
+  Descriptor::loop_t * loop_desc = new Descriptor::loop_t(loop->id, loop->lower_bound, loop->upper_bound, loop->stride, loop->iterator);
+
+  loop_translation_map.insert(std::pair<const loop_t *, Descriptor::loop_t *>(loop, loop_desc));
+
   std::vector<Descriptor::loop_t *>::iterator pos = std::upper_bound(loops.begin(), loops.end(), loop->id, cmp_id<Descriptor::loop_t>);
   if (pos == loops.end() || (*pos)->id != loop->id)
-    loops.insert(pos, new Descriptor::loop_t(loop->id, loop->lower_bound, loop->upper_bound, loop->stride, loop->iterator));
+    loops.insert(pos, loop_desc);
 
-  if (next_tile != NULL) next_tile->collectLoops(loops);
-  if (next_node != NULL) next_node->collectLoops(loops);
+  if (next_tile != NULL) next_tile->collectLoops(loops, loop_translation_map);
+  if (next_node != NULL) next_node->collectLoops(loops, loop_translation_map);
 }
 
-void tile_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles) const {
-  tiles.insert(
-    std::upper_bound(tiles.begin(), tiles.end(), id, cmp_id<Descriptor::tile_t>),
-    new Descriptor::tile_t(id, (Descriptor::tile_kind_e)kind, order, param)
-  );
+void tile_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const {
+  Descriptor::tile_t * tile_desc = new Descriptor::tile_t(id, (Descriptor::tile_kind_e)kind, order, param);
+  {
+    std::vector<Descriptor::tile_t *>::iterator pos = std::upper_bound(tiles.begin(), tiles.end(), id, cmp_id<Descriptor::tile_t>);
+    tiles.insert(pos, tile_desc);
+  }
+  std::map<const loop_t *, Descriptor::loop_t *>::const_iterator it = loop_translation_map.find(loop);
+  assert(it != loop_translation_map.end());
+  {
+    std::vector<Descriptor::tile_t *>::iterator pos = std::upper_bound(it->second->tiles.begin(), it->second->tiles.end(), id, cmp_id<Descriptor::tile_t>);
+    it->second->tiles.insert(pos, tile_desc);
+  }
 
-  if (next_tile != NULL) next_tile->collectTiles(tiles);
-  if (next_node != NULL) next_node->collectTiles(tiles);
+  if (next_tile != NULL) next_tile->collectTiles(tiles, loop_translation_map);
+  if (next_node != NULL) next_node->collectTiles(tiles, loop_translation_map);
 }
 
-void stmt_t::collectLoops(std::vector<Descriptor::loop_t *> & loops) const {}
-void stmt_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles) const {}
+void stmt_t::collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const {}
+void stmt_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const {}
 
 node_t * block_t::finalize() {
   std::cerr << "[Info] (KLT::LoopTree::block_t::finalize)" << std::endl;

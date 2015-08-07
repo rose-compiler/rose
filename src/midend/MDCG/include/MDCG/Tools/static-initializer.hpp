@@ -135,16 +135,18 @@ SgInitializer * StaticInitializer::createInitializer(
 
   driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
 
-  std::vector<Model::field_t>::const_iterator it_field = element->scope->field_children.begin();
-  SgExpression * expr = ModelTraversal::createFieldInitializer(driver, *it_field, 0, input, file_id);
-  if (expr == NULL) return NULL;
-  expr_list->append_expression(expr);
-  it_field++;
-  size_t field_id = 1;
-  for (; it_field != element->scope->field_children.end(); it_field++) {
-    expr = ModelTraversal::createFieldInitializer(driver, *it_field, field_id++, input, file_id);
-    assert(expr != NULL);
+  if (element->scope->field_children.size() > 0) {
+    std::vector<Model::field_t>::const_iterator it_field = element->scope->field_children.begin();
+    SgExpression * expr = ModelTraversal::createFieldInitializer(driver, *it_field, 0, input, file_id);
+    if (expr == NULL) return NULL;
     expr_list->append_expression(expr);
+    it_field++;
+    size_t field_id = 1;
+    for (; it_field != element->scope->field_children.end(); it_field++) {
+      expr = ModelTraversal::createFieldInitializer(driver, *it_field, field_id++, input, file_id);
+      assert(expr != NULL);
+      expr_list->append_expression(expr);
+    }
   }
 
   return SageBuilder::buildAggregateInitializer(expr_list);

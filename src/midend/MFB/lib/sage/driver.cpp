@@ -1,14 +1,8 @@
-/** 
- * \file lib/sage/driver.cpp
- *
- * \author Tristan Vanderbruggen
- *
- */
+
+#include "sage3basic.h"
 
 #include "MFB/Sage/driver.hpp"
 #include "MFB/Sage/api.hpp"
-
-#include "sage3basic.h"
 
 #include <boost/filesystem.hpp>
 
@@ -31,6 +25,59 @@ bool ignore(SgScopeStatement * scope) {
   return isSgBasicBlock(scope);
 }
 
+/*template <>
+bool Driver<Sage>::resolveValidParent<SgTypedefSymbol>(SgTypedefSymbol * symbol) {
+  SgSymbol * parent = NULL;
+  
+  if (p_valid_symbols.find(symbol) != p_valid_symbols.end()) return true;
+
+  SgNamespaceDefinitionStatement * namespace_scope = isSgNamespaceDefinitionStatement(symbol->get_scope());
+  SgClassDefinition              * class_scope     = isSgClassDefinition             (symbol->get_scope());
+  if (namespace_scope != NULL) {
+    SgNamespaceDeclarationStatement * parent_decl = namespace_scope->get_namespaceDeclaration();
+    assert(parent_decl != NULL);
+    parent = SageInterface::lookupNamespaceSymbolInParentScopes(parent_decl->get_name(), parent_decl->get_scope());
+    assert(parent != NULL);
+
+    if (!resolveValidParent<SgNamespaceSymbol>((SgNamespaceSymbol *)parent)) return false;
+    assert(p_valid_symbols.find(parent) != p_valid_symbols.end());
+  }
+  else if (class_scope != NULL) {
+    SgClassDeclaration * parent_decl = class_scope->get_declaration();
+    assert(parent_decl != NULL);
+    parent = SageInterface::lookupClassSymbolInParentScopes(parent_decl->get_name(), parent_decl->get_scope());
+    assert(parent != NULL);
+
+    if (!resolveValidParent<SgClassSymbol>((SgClassSymbol *)parent)) return false;
+    assert(p_valid_symbols.find(parent) != p_valid_symbols.end());
+  }
+
+  p_valid_symbols.insert(symbol);
+  p_parent_map.insert(std::pair<SgSymbol *, SgSymbol *>(symbol, parent));
+  p_typedef_symbols.insert(symbol);
+
+  return true;
+}
+
+template <>
+void  Driver<Sage>::loadSymbols<SgTypedefDeclaration>(size_t file_id, SgSourceFile * file) {
+  std::vector<SgTypedefDeclaration *> typedef_decl = SageInterface::querySubTree<SgTypedefDeclaration>(file);
+
+  std::vector<SgTypedefDeclaration *>::const_iterator it_typedef_decl;
+  for (it_typedef_decl = typedef_decl.begin(); it_typedef_decl != typedef_decl.end(); it_typedef_decl++) {
+    SgTypedefDeclaration * typedef_decl = *it_typedef_decl;
+
+    if (ignore(typedef_decl->get_scope())) continue;
+    if (ignore(typedef_decl->get_name().getString())) continue;
+
+    SgTypedefSymbol * typedef_sym = SageInterface::lookupTypedefSymbolInParentScopes(typedef_decl->get_name(), typedef_decl->get_scope());
+    assert(typedef_sym != NULL);
+
+    if (resolveValidParent<SgTypedefSymbol>(typedef_sym))
+      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, size_t>(typedef_sym, file_id));
+  }
+}*/
+
 template <>
 void Driver<Sage>::loadSymbols<SgDeclarationStatement>(size_t file_id, SgSourceFile * file) {
   loadSymbols<SgNamespaceDeclarationStatement>(file_id, file);
@@ -38,6 +85,8 @@ void Driver<Sage>::loadSymbols<SgDeclarationStatement>(size_t file_id, SgSourceF
   loadSymbols<SgClassDeclaration>(file_id, file);
   loadSymbols<SgVariableDeclaration>(file_id, file);
   loadSymbols<SgMemberFunctionDeclaration>(file_id, file);
+
+//loadSymbols<SgTypedefDeclaration>(file_id, file);
 }
 
 size_t Driver<Sage>::getFileID(const boost::filesystem::path & path) const {
@@ -77,6 +126,7 @@ Driver<Sage>::Driver(SgProject * project_) :
   p_class_symbols(),
   p_variable_symbols(),
   p_member_function_symbols(),
+  p_typedef_symbols(),
   p_type_scope_map()
 { 
   assert(project != NULL);
@@ -92,8 +142,7 @@ Driver<Sage>::Driver(SgProject * project_) :
   std::vector<SgFile *>::const_iterator it_file;
   for (it_file = files.begin(); it_file != files.end(); it_file++) {
     SgSourceFile * src_file = isSgSourceFile(*it_file);
-    if (src_file != NULL)
-      add(src_file);
+    if (src_file != NULL) add(src_file);
   }
 }
 
@@ -101,6 +150,8 @@ Driver<Sage>::~Driver() {}
 
 size_t Driver<Sage>::add(SgSourceFile * file) {
   size_t id = file_id_counter++;
+
+  std::cerr << "[Info] (MFB::Driver<Sage>::Driver<Sage>) Add file: " << file->get_sourceFileNameWithoutPath() << " as File #" << id << std::endl;
 
   id_to_file_map.insert(std::pair<size_t, SgSourceFile *>(id, file));
   file_to_id_map.insert(std::pair<SgSourceFile *, size_t>(file, id));
@@ -279,7 +330,7 @@ void Driver<Sage>::addPointerToTopParentDeclaration(SgSymbol * symbol, size_t fi
     SgInitializedName * init_name = isSgInitializedName(var_sym->get_symbol_basis());
     assert(init_name != NULL);
 
-    // TODO
+    assert(false); // TODO
   }
   else
     decl_to_add = isSgDeclarationStatement(parent->get_symbol_basis());
@@ -320,9 +371,9 @@ api_t * Driver<Sage>::getAPI(size_t file_id) const {
   std::set<SgClassSymbol *>::const_iterator it_class_symbol;
   for (it_class_symbol = p_class_symbols.begin(); it_class_symbol != p_class_symbols.end(); it_class_symbol++) {
     it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_class_symbol);
-    assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
+//  assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
 
-    if (it_sym_decl_file_id->second == file_id)
+    if (it_sym_decl_file_id != p_symbol_to_file_id_map.end() && it_sym_decl_file_id->second == file_id)
       api->class_symbols.insert(*it_class_symbol);
   }
 
@@ -399,6 +450,10 @@ SgGlobal * Driver<Sage>::getGlobalScope(file_id_t id) const {
   return it != id_to_file_map.end() ? (it->second != NULL ? it->second->get_globalScope() : NULL) : NULL;  
 }
 
+void Driver<Sage>::useType(SgType * type, file_id_t file_id) {
+  useType(type, getGlobalScope(file_id));
+}
+
 void Driver<Sage>::useType(SgType * type, SgScopeStatement * scope) {
   SgNamedType    * named_type = isSgNamedType(type);
   SgModifierType * mod_type   = isSgModifierType(type);
@@ -421,10 +476,11 @@ void Driver<Sage>::useType(SgType * type, SgScopeStatement * scope) {
 
       SgDeclarationStatement * decl_stmt = named_type->get_declaration();
       assert(decl_stmt != NULL);
-      decl_stmt = decl_stmt->get_definingDeclaration();
-      assert(decl_stmt != NULL);
 
       if (class_type != NULL) {
+        decl_stmt = decl_stmt->get_definingDeclaration();
+        assert(decl_stmt != NULL);
+
         SgClassDeclaration * class_decl = isSgClassDeclaration(decl_stmt);
         assert(class_decl != NULL);
 
@@ -450,6 +506,9 @@ void Driver<Sage>::useType(SgType * type, SgScopeStatement * scope) {
         SageInterface::prependStatement(decl_copy, global_scope);
       }
       else if (enum_type != NULL) {
+        decl_stmt = decl_stmt->get_definingDeclaration();
+        assert(decl_stmt != NULL);
+
         SgEnumDeclaration * enum_decl = isSgEnumDeclaration(decl_stmt);
         assert(enum_decl != NULL);
 

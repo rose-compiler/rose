@@ -207,7 +207,7 @@ struct generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_cl
 template <>
 template <>
 struct generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_num_threads> {
-  size_t num_threads;
+  SgExpression * num_threads;
 };
 #endif
 

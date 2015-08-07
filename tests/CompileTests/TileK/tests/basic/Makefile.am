@@ -7,10 +7,9 @@ TILEK_REL_PATH=../..
 
 TILEK_INC=$(top_srcdir)/src/backend/KLT/include
 
-#TILEK=$(builddir)/$(TILEK_REL_PATH)/src/tilek
-TILEK=$(builddir)/$(TILEK_REL_PATH)/src/test-new-klt
+TILEK=$(builddir)/$(TILEK_REL_PATH)/src/tilek-basic
 
-TILEK_RTL=$(builddir)/$(TILEK_REL_PATH)/lib/libTileK-RTL.la
+TILEK_RTL=$(builddir)/$(TILEK_REL_PATH)/lib/libTileK-RTL-basic.la
 
 KLT_RTL=$(top_builddir)/src/backend/KLT/lib/rtl/libKLT-RTL.la
 
@@ -30,33 +29,6 @@ clean-local:
 	rm -f rose_*.c *-kernel.c *-static.c *.o test_*
 	rm -f directives_*.dot subkernels_*.dot
 
-#########################################
-
-$(builddir)/$(TILEK_REL_PATH)/tilek:
-	make -C $(builddir)/$(TILEK_REL_PATH) tilek
-
-#########################################
-#
-#test_%-kernel.c: rose_test_%.c
-#test_%-static.c: rose_test_%.c
-#rose_test_%.c: $(srcdir)/test_%.c $(TILEK)
-#	$(TILEK) $(ROSE_FLAGS) -c $(srcdir)/test_%.c
-#
-#rose_test_%.o: rose_test_%.c
-#	gcc $(C_FLAGS) -c rose_test_%.c -o rose_test_%.o
-#
-#test_%-kernel.o: test_%-kernel.c
-#	gcc $(C_FLAGS) -c test_%-kernel.c -o test_%-kernel.o
-#
-#test_%-static.o: test_%-static.c
-#	gcc $(C_FLAGS) -c test_%-static.c -o test_%-static.o
-#
-#test_%: rose_test_%.o test_%-kernel.o test_%-static.o $(TILEK_RTL) $(KLT_RTL)
-#	libtool --mode=link gcc rose_test_%.o test_%-kernel.o test_%-static.o $(LD_FLAGS) -o test_%
-#
-#check-test_%: test_%
-#	./test_%
-#
 #########################################
 
 test_1-kernel.c: rose_test_1.c
@@ -168,20 +140,39 @@ check-test_5: test_5
 	./test_5
 
 #########################################
-
-check-new-klt_%: $(srcdir)/test_%.c $(builddir)/$(TILEK_REL_PATH)/src/test-new-klt
-	$(builddir)/$(TILEK_REL_PATH)/src/test-new-klt $(ROSE_FLAGS) -c $<
-
-#check-test-new-klt_1: $(srcdir)/test_1.c $(builddir)/$(TILEK_REL_PATH)/src/test-new-klt
-#	$(builddir)/$(TILEK_REL_PATH)/src/test-new-klt $(ROSE_FLAGS) -c $(srcdir)/test_1.c
-
+#
+#test_%-kernel.c: rose_test_%.c
+#test_%-static.c: rose_test_%.c
+#rose_test_%.c: $(srcdir)/test_%.c $(TILEK)
+#	$(TILEK) $(ROSE_FLAGS) -c $(srcdir)/test_%.c
+#
+#rose_test_%.o: rose_test_%.c
+#	gcc $(C_FLAGS) -c rose_test_%.c -o rose_test_%.o
+#
+#test_%-kernel.o: test_%-kernel.c
+#	gcc $(C_FLAGS) -c test_%-kernel.c -o test_%-kernel.o
+#
+#test_%-static.o: test_%-static.c
+#	gcc $(C_FLAGS) -c test_%-static.c -o test_%-static.o
+#
+#test_%: rose_test_%.o test_%-kernel.o test_%-static.o $(TILEK_RTL) $(KLT_RTL)
+#	libtool --mode=link gcc rose_test_%.o test_%-kernel.o test_%-static.o $(LD_FLAGS) -o test_%
+#
+#check-test_%: test_%
+#	./test_%
+#
 #########################################
 
-$(builddir)/$(TILEK_REL_PATH)/lib/libTileK-RTL.la:
-	make -C $(builddir)/$(TILEK_REL_PATH)/lib libTileK-RTL.la
+$(builddir)/$(TILEK_REL_PATH)/lib/libTileK-RTL-basic.la:
+	make -C $(builddir)/$(TILEK_REL_PATH)/lib libTileK-RTL-basic.la
 
 $(top_builddir)/src/backend/KLT/lib/rtl/libKLT-RTL.la:
 	make -C $(top_builddir)/src/backend/KLT/lib/rtl libKLT-RTL.la
+
+#########################################
+
+$(builddir)/$(TILEK_REL_PATH)/src/tilek-basic:
+	make -C $(builddir)/$(TILEK_REL_PATH)/src tilek-basic
 
 #########################################
 

@@ -46,7 +46,8 @@ struct kernel_t : public ::MDCG::Tools::api_t {
     SgClassSymbol * klt_data_context_class;
 
   public:
-    virtual void load(const MDCG::Model::model_t & model);
+    void load(const MDCG::Model::model_t & model);
+    virtual void loadUser(const MDCG::Model::model_t & model);
 
   public:
     // Loop Context and Getters
@@ -71,6 +72,7 @@ struct host_t : public ::MDCG::Tools::api_t {
       SgVariableSymbol * kernel_param_field;
       SgVariableSymbol * kernel_data_field;
       SgVariableSymbol * kernel_loops_field;
+      SgVariableSymbol * kernel_config_field;
 //    SgVariableSymbol * kernel_tiles_field;
 
     SgClassSymbol * loop_class;
@@ -94,7 +96,8 @@ struct host_t : public ::MDCG::Tools::api_t {
     SgFunctionSymbol * execute_kernel_func;
 
   public:
-    virtual void load(const MDCG::Model::model_t & model);
+    void load(const MDCG::Model::model_t & model);
+    virtual void loadUser(const MDCG::Model::model_t & model);
 
   public:
     SgVariableSymbol * insertKernelInstance(const std::string & name, size_t kernel_id, SgScopeStatement * scope) const;
@@ -120,7 +123,7 @@ struct call_interface_t {
     call_interface_t(::MFB::Driver< ::MFB::Sage> & driver_, kernel_t * kernel_api_);
 
     SgFunctionParameterList * buildKernelParamList(Descriptor::kernel_t & kernel) const;
-    SgBasicBlock * generateKernelBody(Descriptor::kernel_t & kernel, SgFunctionDefinition * kernel_defn, Utils::symbol_map_t & symbol_map) const;
+    SgBasicBlock * generateKernelBody(Descriptor::kernel_t & kernel, SgFunctionDefinition * kernel_defn, Utils::symbol_map_t & symbol_map);
 
     // default: none
     virtual void applyKernelModifiers(SgFunctionDeclaration * kernel_decl) const;
@@ -129,12 +132,21 @@ struct call_interface_t {
     virtual SgType * buildKernelReturnType(Descriptor::kernel_t & kernel) const;
 
   protected:
+    // default: NOP
+    virtual void prependUserArguments(SgFunctionParameterList * param_list) const;
+
+    // default: NOP
+    virtual void getSymbolForUserArguments(SgFunctionDefinition * kernel_defn, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb);
+
     // default: klt_loop_context_t & loop_ctx (TODO klt_data_context_t & data_ctx)
     virtual void addKernelArgsForContext(SgFunctionParameterList * param_list) const;
     virtual void getContextSymbol(SgFunctionDefinition * func_defn, Utils::symbol_map_t & symbol_map) const;
 
     // default: "loop_it_'loop.id'"
     virtual void createLoopIterator(const std::vector<Descriptor::loop_t *> & loops, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
+
+    // default: Should not be called => ASSERT
+    virtual SgExpression * getTileIdx(const Descriptor::tile_t & tile) const;
 
     // default: "tile_it_'tile.id'"
     virtual void createTileIterator(const std::vector<Descriptor::tile_t *> & tiles, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
@@ -144,36 +156,6 @@ struct call_interface_t {
 
     virtual void getSymbolForParameter(SgFunctionDefinition * kernel_defn, const std::vector<SgVariableSymbol *> & parameters, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const = 0;
     virtual void getSymbolForData(SgFunctionDefinition * kernel_defn, const std::vector<Descriptor::data_t *> & data, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const = 0;
-};
-
-struct array_args_interface_t : public call_interface_t {
-  public:
-    array_args_interface_t(::MFB::Driver< ::MFB::Sage> & driver, kernel_t * kernel_api);
-
-    // adds one arguments: 'void ** parameters' (array of pointers to the parameters) 
-    virtual void addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const;
-    // adds one arguments: 'void ** data' (array of pointers to the data)
-    virtual void addKernelArgsForData(SgFunctionParameterList * param_list, const std::vector<Descriptor::data_t *> & data) const;
-
-    // for each parameter create a local declaration using the array 'parameters'
-    virtual void getSymbolForParameter(SgFunctionDefinition * kernel_defn, const std::vector<SgVariableSymbol *> & parameters, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
-    // for each data create a local declaration using the array 'data'
-    virtual void getSymbolForData(SgFunctionDefinition * kernel_defn, const std::vector<Descriptor::data_t *> & data, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
-};
-
-struct individual_args_interface_t : public call_interface_t {
-  public:
-    individual_args_interface_t(::MFB::Driver< ::MFB::Sage> & driver, kernel_t * kernel_api);
-
-    // adds one arguments for each parameter
-    virtual void addKernelArgsForParameter(SgFunctionParameterList * param_list, const std::vector<SgVariableSymbol *> & parameters) const;
-    // adds one arguments for each data
-    virtual void addKernelArgsForData(SgFunctionParameterList * param_list, const std::vector<Descriptor::data_t *> & data) const;
-
-    // get parameters argument's symbol
-    virtual void getSymbolForParameter(SgFunctionDefinition * kernel_defn, const std::vector<SgVariableSymbol *> & parameters, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
-    // get data argument's symbol
-    virtual void getSymbolForData(SgFunctionDefinition * kernel_defn, const std::vector<Descriptor::data_t *> & data, Utils::symbol_map_t & symbol_map, SgBasicBlock * bb) const;
 };
 
 } // namespace KLT::API
