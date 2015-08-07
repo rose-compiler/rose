@@ -20,7 +20,7 @@ include $(srcdir)/unparser/PythonCodeGeneration/Makefile_variables
 include $(srcdir)/asmUnparser/Makefile_variables
 include $(srcdir)/unparser/JavaCodeGeneration/Makefile_variables
 include $(srcdir)/unparser/X10CodeGeneration/Makefile_variables
-
+include $(srcdir)/unparser/MatlabCodeGeneration/Makefile_variables
 
 unparserPath=$(srcdir)/unparser#
 cxxCodeGenerationPath=$(srcdir)/unparser/CxxCodeGeneration#
@@ -32,7 +32,7 @@ pythonCodeGenerationPath=$(srcdir)/unparser/PythonCodeGeneration#
 asmUnparserPath=$(srcdir)/asmUnparser#
 javaCodeGenerationPath=$(srcdir)/unparser/JavaCodeGeneration#
 x10CodeGenerationPath=$(srcdir)/unparser/X10CodeGeneration#
-
+matlabCodeGenerationPath=$(srcdir)/unparser/MatlabCodeGeneration#
 
 ###############################################################################
 
