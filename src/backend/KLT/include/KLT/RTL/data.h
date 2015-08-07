@@ -23,5 +23,11 @@ struct klt_data_t {
   struct klt_data_section_t * sections;
 };
 
+struct klt_data_environment_t {
+  struct klt_data_environment_t * parent;
+
+  // TODO
+};
+
 #endif /* __KLT_RTL_DATA_H__ */
 

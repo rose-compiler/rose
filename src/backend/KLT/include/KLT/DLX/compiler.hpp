@@ -72,16 +72,16 @@ class Compiler : public ::DLX::Compiler<language_tpl> {
     MFB::Driver<MFB::KLT::KLT> driver;
     ::MDCG::Tools::ModelBuilder model_builder;
 
+    std::string klt_rtl_path;
+    std::string user_rtl_path;
+
     generator_t * generator;
 
   public:
-    Compiler(SgProject * project, const std::string & klt_rtl_path, const std::string & user_rtl_path, const std::string & basename) :
-      ::DLX::Compiler<language_tpl>(),
-      driver(project),
-      model_builder(driver),
+    Compiler(SgProject * project, const std::string & klt_rtl_path_, const std::string & user_rtl_path_, const std::string & basename) :
+      ::DLX::Compiler<language_tpl>(), driver(project), model_builder(driver), klt_rtl_path(klt_rtl_path_), user_rtl_path(user_rtl_path_),
       generator(KLT::Generator::build<generator_tpl>(driver, model_builder, klt_rtl_path + "/include", user_rtl_path + "/include", basename))
     {}
-
     
     MFB::Driver<MFB::KLT::KLT> & getDriver() { return driver; }
     const MFB::Driver<MFB::KLT::KLT> & getDriver() const { return driver; }
@@ -436,15 +436,19 @@ void Compiler<language_tpl, generator_tpl>::compile(SgNode * node) {
   // Add the description of this kernel to the static data (all subkernels of all versions)
   generator->template addToStaticData<language_tpl, generator_tpl>(kernel_directive_translation_map);
 
+  generator_tpl::addUserStaticData( driver, klt_rtl_path, user_rtl_path,
+                                    generator->getStaticFileName(), generator->getStaticFileID(),
+                                    generator->getKernelFileName(), generator->getKernelFileID() );
+
   // Removes all pragma from language_tpl
 
-    std::vector<SgPragmaDeclaration * > pragma_decls = SageInterface::querySubTree<SgPragmaDeclaration>(node);
-    std::vector<SgPragmaDeclaration * >::iterator it_pragma_decl;
-    for (it_pragma_decl = pragma_decls.begin(); it_pragma_decl != pragma_decls.end(); it_pragma_decl++) {
-      std::string directive_string = (*it_pragma_decl)->get_pragma()->get_pragma();
-      if (::DLX::Frontend::consume_label(directive_string, language_tpl::language_label))
-        SageInterface::removeStatement(*it_pragma_decl);
-    }
+  std::vector<SgPragmaDeclaration * > pragma_decls = SageInterface::querySubTree<SgPragmaDeclaration>(node);
+  std::vector<SgPragmaDeclaration * >::iterator it_pragma_decl;
+  for (it_pragma_decl = pragma_decls.begin(); it_pragma_decl != pragma_decls.end(); it_pragma_decl++) {
+    std::string directive = (*it_pragma_decl)->get_pragma()->get_pragma();
+    if (::DLX::Frontend::consume_label(directive, language_tpl::language_label))
+      SageInterface::removeStatement(*it_pragma_decl);
+  }
 }
 
 } // namespace KLT::DLX

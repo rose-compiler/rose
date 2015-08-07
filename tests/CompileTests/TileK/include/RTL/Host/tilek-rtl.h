@@ -48,7 +48,7 @@ void klt_user_schedule(
 
 void klt_user_wait(struct klt_kernel_t * kernel);
 
-int get_length_tile(struct klt_kernel_t * kernel, unsigned long kind);
+int klt_user_get_tile_length(struct klt_kernel_t * kernel, unsigned long kind, unsigned long param);
 
 #endif /* __TILEK_RTL_KERNEL_H__ */
 

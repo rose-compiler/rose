@@ -37,7 +37,7 @@ extern struct klt_user_config_t * klt_user_build_config(struct klt_kernel_desc_t
 extern void klt_user_wait(struct klt_kernel_t * kernel);
 extern void klt_user_schedule(struct klt_kernel_t * kernel, struct klt_version_desc_t * version, struct klt_loop_context_t * klt_loop_context, struct klt_data_context_t * klt_data_context);
 extern struct klt_version_desc_t * klt_user_select_kernel_version(struct klt_kernel_t * kernel);
-extern int get_length_tile(struct klt_kernel_t * kernel, unsigned long kind);
+extern int klt_user_get_tile_length(struct klt_kernel_t * kernel, unsigned long kind, unsigned long param);
 
 // Compiler generated
 extern struct klt_kernel_desc_t klt_kernel_desc[];

@@ -16,11 +16,6 @@ struct klt_user_config_t * klt_user_build_config(struct klt_kernel_desc_t * desc
   return malloc(sizeof(struct klt_user_config_t));
 }
 
-struct klt_version_desc_t * klt_user_select_kernel_version(struct klt_kernel_t * kernel) {
-  assert(kernel->desc->num_versions == 1);
-  return &(kernel->desc->versions[0]);
-}
-
 void klt_user_schedule(
   struct klt_kernel_t * kernel, struct klt_subkernel_desc_t * subkernel,
   struct klt_loop_context_t * klt_loop_context, struct klt_data_context_t * klt_data_context
@@ -42,7 +37,7 @@ void klt_user_schedule(
 
 void klt_user_wait(struct klt_kernel_t * kernel) { /* NOP */ }
 
-int get_length_tile(struct klt_kernel_t * kernel, unsigned long kind) {
+int klt_user_get_tile_length(struct klt_kernel_t * kernel, unsigned long kind, unsigned long param) {
   assert(0);
 }
 

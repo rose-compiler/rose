@@ -46,7 +46,7 @@ size_t KLT<kernel_t>::kernel_cnt = 0;
 sage_func_res_t KLT<kernel_t>::buildKernelDecl(::KLT::Descriptor::kernel_t & res, ::KLT::Generator * generator) {
   ::MFB::Driver< ::MFB::Sage> & driver = generator->getModelBuilder().getDriver();
   SgFunctionParameterList * kernel_param_list = generator->getCallInterface().buildKernelParamList(res);
-  SgType * kernel_ret_type = generator->getCallInterface().buildKernelReturnType(res);
+  SgType * kernel_ret_type = generator->getKernelAPI().buildKernelReturnType(res);
 
   sage_func_desc_t sage_func_desc(res.kernel_name, kernel_ret_type, kernel_param_list, NULL, generator->getKernelFileID(), generator->getKernelFileID());
 
@@ -60,11 +60,11 @@ sage_func_res_t KLT<kernel_t>::buildKernelDecl(::KLT::Descriptor::kernel_t & res
 
     SgFunctionDeclaration * first_kernel_decl = isSgFunctionDeclaration(kernel_decl->get_firstNondefiningDeclaration());
     assert(first_kernel_decl != NULL);
-    generator->getCallInterface().applyKernelModifiers(first_kernel_decl);
+    generator->getKernelAPI().applyKernelModifiers(first_kernel_decl);
 
     SgFunctionDeclaration * defn_kernel_decl = isSgFunctionDeclaration(kernel_decl->get_definingDeclaration());
     assert(defn_kernel_decl != NULL);
-    generator->getCallInterface().applyKernelModifiers(defn_kernel_decl);
+    generator->getKernelAPI().applyKernelModifiers(defn_kernel_decl);
 
 //  if (guard_kernel_decl) SageInterface::guardNode(defn_kernel_decl, std::string("defined(ENABLE_") + result->kernel_name + ")");
   }

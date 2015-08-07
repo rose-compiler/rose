@@ -36,9 +36,16 @@ void kernel_t::load(const MDCG::Model::model_t & model) {
 
 void kernel_t::loadUser(const MDCG::Model::model_t & model) {}
 
+SgType * kernel_t::buildSharedDataType(SgType * type) const { return type; }
+SgType * kernel_t::buildLocalDataType(SgType * type) const { return type; }
+
+void kernel_t::applyKernelModifiers(SgFunctionDeclaration * kernel_decl) const {}
+
+SgType * kernel_t::buildKernelReturnType(Descriptor::kernel_t & kernel) const { return SageBuilder::buildVoidType(); }
+
 //////
 
-SgType * kernel_t::getLoopContextPtrType() const { return SageBuilder::buildPointerType(klt_loop_context_class->get_declaration()->get_type()); }
+SgType * kernel_t::getLoopContextPtrType() const { return buildSharedDataType(SageBuilder::buildPointerType(klt_loop_context_class->get_declaration()->get_type())); }
 
 SgExpression * kernel_t::buildGetLoopLower (size_t loop_id, SgVariableSymbol * ctx) const {
   return ::MFB::Utils::buildCallVarIdx(loop_id, ctx, get_loop_lower_fnct);
@@ -57,7 +64,7 @@ SgExpression * kernel_t::buildGetTileStride(size_t tile_id, SgVariableSymbol * c
   return ::MFB::Utils::buildCallVarIdx(tile_id, ctx, get_tile_stride_fnct);
 }
 
-SgType * kernel_t::getDataContextPtrType() const { return SageBuilder::buildPointerType(klt_data_context_class->get_declaration()->get_type()); }
+SgType * kernel_t::getDataContextPtrType() const { return buildSharedDataType(SageBuilder::buildPointerType(klt_data_context_class->get_declaration()->get_type())); }
 
 ////// KLT::API::host_t
 
@@ -235,10 +242,6 @@ SgBasicBlock * call_interface_t::generateKernelBody(Descriptor::kernel_t & kerne
 
   return bb;
 }
-
-void call_interface_t::applyKernelModifiers(SgFunctionDeclaration * kernel_decl) const {}
-
-SgType * call_interface_t::buildKernelReturnType(Descriptor::kernel_t & kernel) const { return SageBuilder::buildVoidType(); }
 
 void call_interface_t::prependUserArguments(SgFunctionParameterList * param_list) const {}
 

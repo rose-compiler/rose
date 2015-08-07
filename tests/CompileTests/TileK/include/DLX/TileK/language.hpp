@@ -1,10 +1,3 @@
-/*!
- * 
- * \file DLX/TileK/language.hpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #ifndef __DLX_TILEK_LANGUAGE_HPP__
 #define __DLX_TILEK_LANGUAGE_HPP__
@@ -216,14 +209,14 @@ template <>
 template <>
 struct generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_num_gangs> {
   size_t gang_id;
-  size_t num_gangs;
+  SgExpression * num_gangs;
 };
 
 template <>
 template <>
 struct generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_num_workers> {
   size_t worker_id;
-  size_t num_workers;
+  SgExpression * num_workers;
 };
 #endif
 

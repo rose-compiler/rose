@@ -12,7 +12,7 @@
 
 struct klt_kernel_t;
 
-extern int get_length_tile(struct klt_kernel_t * kernel, unsigned long kind);
+extern int klt_user_get_tile_length(struct klt_kernel_t * kernel, unsigned long kind, unsigned long param);
 
 void klt_solve_loop_context(int num_loops, struct klt_loop_desc_t * loop_desc, struct klt_loop_context_t * loop_ctx, struct klt_kernel_t * kernel) {
   int loop_it, tile_it;
@@ -38,7 +38,7 @@ void klt_solve_loop_context(int num_loops, struct klt_loop_desc_t * loop_desc, s
         case e_tile_dynamic:
           break;
         default:
-          param = get_length_tile(kernel, loop_desc[loop_it].tile_desc[tile_it].kind);
+          param = klt_user_get_tile_length(kernel, loop_desc[loop_it].tile_desc[tile_it].kind, loop_desc[loop_it].tile_desc[tile_it].param);
           assert(param > 0);
       }
 
@@ -73,7 +73,7 @@ void klt_solve_loop_context(int num_loops, struct klt_loop_desc_t * loop_desc, s
             assert(0);
             break;
           default:
-            param = get_length_tile(kernel, loop_desc[loop_it].tile_desc[tile_it].kind);
+            param = klt_user_get_tile_length(kernel, loop_desc[loop_it].tile_desc[tile_it].kind, loop_desc[loop_it].tile_desc[tile_it].param);
             assert(param > 0);
         }
 

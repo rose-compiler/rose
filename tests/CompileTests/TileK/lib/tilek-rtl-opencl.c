@@ -1,7 +1,10 @@
 
-#include "RTL/Host/kernel.h"
+#include "RTL/Host/tilek-rtl.h"
+
+#include "KLT/RTL/kernel.h"
 #include "KLT/RTL/loop.h"
 #include "KLT/RTL/tile.h"
+#include "KLT/RTL/data.h"
 #include "KLT/RTL/context.h"
 
 #include <CL/opencl.h>
@@ -18,14 +21,18 @@
 
 extern char * opencl_kernel_file;
 extern char * opencl_kernel_options;
-extern char * opencl_tilek_runtime_lib;
+extern char * opencl_klt_runtime_lib;
 
 char * read_file(const char * filename);
 void dbg_get_ocl_build_log(cl_device_id device, cl_program program);
 const char * ocl_status_to_char(cl_int status);
 
-void launch(struct kernel_t * kernel, struct klt_loop_context_t * klt_loop_context) {
-  int i, j;
+cl_context tilek_cl_context;
+cl_command_queue tilek_cl_queue;
+cl_program tilek_cl_program;
+
+// TODO '__attribute__ ((constructor))' for it to be called before main
+void tilek_opencl_init() {
   cl_int err;
 
   // Platform & Device
@@ -40,16 +47,16 @@ void launch(struct kernel_t * kernel, struct klt_loop_context_t * klt_loop_conte
 
   // Context & Queue
 
-  cl_context cl_context = clCreateContext(0, 1, &device, NULL, NULL, &err);
+  tilek_cl_context = clCreateContext(0, 1, &device, NULL, NULL, &err);
   assert(err == CL_SUCCESS);
 
-  cl_command_queue cl_queue = clCreateCommandQueue(cl_context, device, 0, &err);
+  tilek_cl_queue = clCreateCommandQueue(tilek_cl_context, device, 0, &err);
   assert(err == CL_SUCCESS);
 
   // Kernel
 
-  char * cl_sources[2] = { read_file(opencl_kernel_file) , read_file(opencl_tilek_runtime_lib) };
-  cl_program cl_program = clCreateProgramWithSource(cl_context, 2, cl_sources, NULL, &err);
+  char * cl_sources[2] = { read_file(opencl_kernel_file) , read_file(opencl_klt_runtime_lib) };
+  tilek_cl_program = clCreateProgramWithSource(tilek_cl_context, 2, cl_sources, NULL, &err);
   assert(err == CL_SUCCESS);
 
   size_t opts_length = strlen(opencl_kernel_options) + 1;
@@ -71,118 +78,114 @@ void launch(struct kernel_t * kernel, struct klt_loop_context_t * klt_loop_conte
   strcat(options, debug_flags);
 #endif
 
-//printf("options = \"%s\"\n", options);
-
-  err = clBuildProgram(cl_program, 1, &device, options, NULL, NULL);
+  err = clBuildProgram(tilek_cl_program, 1, &device, options, NULL, NULL);
   if (err == CL_BUILD_PROGRAM_FAILURE)
-    dbg_get_ocl_build_log(device, cl_program);
+    dbg_get_ocl_build_log(device, tilek_cl_program);
   assert(err == CL_SUCCESS);
+}
 
-  cl_kernel cl_kernel = clCreateKernel(cl_program, kernel->desc->kernel_name, &err);
+void klt_user_schedule(
+  struct klt_kernel_t * kernel, struct klt_subkernel_desc_t * subkernel,
+  struct klt_loop_context_t * klt_loop_context, struct klt_data_context_t * klt_data_context
+) {
+  tilek_opencl_init();
+
+  int i, j;
+  cl_int err;
+
+  cl_kernel cl_kernel = clCreateKernel(tilek_cl_program, subkernel->config->kernel_name, &err);
   assert(err == CL_SUCCESS);
 
   // Allocation
 
-  assert(kernel->desc->data.num_priv == 0); // TODO handling of private
-
-  cl_mem * cl_data = (cl_mem *)malloc(kernel->desc->data.num_data * sizeof(cl_mem));
-  size_t * size_data = (cl_mem *)malloc(kernel->desc->data.num_data * sizeof(size_t));
-  for (i = 0; i < kernel->desc->data.num_data; i++) {
-    size_data[i] = kernel->desc->data.sizeof_data[i];
-    for (j = 0; j < kernel->desc->data.ndims_data[i]; j++) {
-      assert(kernel->data[i].sections[j].offset == 0);
-      size_data[i] *= kernel->data[i].sections[j].length;
+  cl_mem * tilek_cl_data = (cl_mem *)malloc(subkernel->num_data * sizeof(cl_mem));
+  size_t * tilek_size_data = (size_t *)malloc(subkernel->num_data * sizeof(size_t));
+  for (i = 0; i < subkernel->num_data; i++) {
+    size_t data_id = subkernel->data_ids[i];
+    tilek_size_data[i] = kernel->desc->data.sizeof_data[data_id];
+    for (j = 0; j < kernel->desc->data.ndims_data[data_id]; j++) {
+      assert(kernel->data[data_id].sections[j].offset == 0);
+      tilek_size_data[i] *= kernel->data[data_id].sections[j].length;
     }
-    cl_data[i] = clCreateBuffer(cl_context, CL_MEM_READ_WRITE, size_data[i], NULL, NULL);
+    tilek_cl_data[i] = clCreateBuffer(tilek_cl_context, CL_MEM_READ_WRITE, tilek_size_data[i], NULL, NULL);
   }
-/*cl_mem * cl_priv = (cl_mem *)malloc(kernel->desc->data.num_priv * sizeof(cl_mem));
-  size_t * size_priv = (cl_mem *)malloc(kernel->desc->data.num_priv * sizeof(size_t));
-  for (i = 0; i < kernel->desc->data.num_priv; i++) {
-    size_priv[i] = kernel->desc->data.sizeof_priv[i];
-    for (j = 0; j < kernel->desc->data.ndims_priv[i]; j++) {
-      assert(kernel->priv[i].sections[j].offset == 0);
-      size_priv[i] *= kernel->priv[i].sections[j].length;
-    }
-    cl_priv[i] = clCreateBuffer(cl_context, CL_MEM_READ_WRITE, size_priv[i], NULL, NULL);
-  }*/
-  size_t size_ctx = sizeof(struct klt_loop_context_t) + 3 * klt_loop_context->num_loops * sizeof(int) + 2 * klt_loop_context->num_tiles * sizeof(int);
-  cl_mem context = clCreateBuffer(cl_context, CL_MEM_READ_ONLY, size_ctx, NULL, NULL);
+
+  size_t size_loop_ctx = sizeof(struct klt_loop_context_t) + 3 * klt_loop_context->num_loops * sizeof(int) + 2 * klt_loop_context->num_tiles * sizeof(int);
+  cl_mem loop_context = clCreateBuffer(tilek_cl_context, CL_MEM_READ_ONLY, size_loop_ctx, NULL, NULL);
+
+  size_t size_data_ctx = sizeof(struct klt_data_context_t);
+  cl_mem data_context = clCreateBuffer(tilek_cl_context, CL_MEM_READ_ONLY, size_data_ctx, NULL, NULL);
 
   // Move data to device (+ ctx)
 
-  for (i = 0; i < kernel->desc->data.num_data; i++) {
-    err = clEnqueueWriteBuffer(cl_queue, cl_data[i], CL_FALSE, 0, size_data[i], kernel->data[i].ptr, 0, NULL, NULL);
+  for (i = 0; i < subkernel->num_data; i++) {
+    err = clEnqueueWriteBuffer(tilek_cl_queue, tilek_cl_data[i], CL_FALSE, 0, tilek_size_data[i], kernel->data[subkernel->data_ids[i]].ptr, 0, NULL, NULL);
     assert(err == CL_SUCCESS);
   }
-/*for (i = 0; i < kernel->desc->data.num_priv; i++) {
-    err = clEnqueueWriteBuffer(cl_queue, cl_priv[i], CL_FALSE, 0, size_priv[i], kernel->priv[i].ptr, 0, NULL, NULL);
-    assert(err == CL_SUCCESS);
-  }*/
-  err = clEnqueueWriteBuffer(cl_queue, context, CL_FALSE, 0, size_ctx, klt_loop_context, 0, NULL, NULL);
+
+  err = clEnqueueWriteBuffer(tilek_cl_queue, loop_context, CL_FALSE, 0, size_loop_ctx, klt_loop_context, 0, NULL, NULL);
   assert(err == CL_SUCCESS);
 
-  clFinish(cl_queue);
+  err = clEnqueueWriteBuffer(tilek_cl_queue, data_context, CL_FALSE, 0, size_data_ctx, klt_data_context, 0, NULL, NULL);
+  assert(err == CL_SUCCESS);
+
+  clFinish(tilek_cl_queue);
 
   // Set kernel arguments
 
   size_t arg_cnt = 0;
-  for (i = 0; i < kernel->desc->data.num_param; i++) {
-    err = clSetKernelArg(cl_kernel, arg_cnt++, kernel->desc->data.sizeof_param[i], kernel->param[i]);
+  for (i = 0; i < subkernel->num_params; i++) {
+    err = clSetKernelArg(cl_kernel, arg_cnt++, kernel->desc->data.sizeof_param[subkernel->param_ids[i]], kernel->param[subkernel->param_ids[i]]);
     assert(err == CL_SUCCESS);
   }
-  for (i = 0; i < kernel->desc->data.num_scalar; i++) {
-    err = clSetKernelArg(cl_kernel, arg_cnt++, kernel->desc->data.sizeof_scalar[i], kernel->scalar[i]);
+
+  for (i = 0; i < subkernel->num_data; i++) {
+    err = clSetKernelArg(cl_kernel, arg_cnt++, sizeof(cl_mem), &tilek_cl_data[i]);
     assert(err == CL_SUCCESS);
   }
-  for (i = 0; i < kernel->desc->data.num_data; i++) {
-    err = clSetKernelArg(cl_kernel, arg_cnt++, sizeof(cl_mem), &cl_data[i]);
-    assert(err == CL_SUCCESS);
-  }
-/*for (i = 0; i < kernel->desc->data.num_priv; i++) {
-    err = clSetKernelArg(cl_kernel, arg_cnt++, sizeof(cl_mem), &cl_priv[i]);
-    assert(err == CL_SUCCESS);
-  }*/
-  err = clSetKernelArg(cl_kernel, arg_cnt++, sizeof(cl_mem), &context);
+
+  err = clSetKernelArg(cl_kernel, arg_cnt++, sizeof(cl_mem), &loop_context);
+  assert(err == CL_SUCCESS);
+
+  err = clSetKernelArg(cl_kernel, arg_cnt++, sizeof(cl_mem), &data_context);
   assert(err == CL_SUCCESS);
 
   // Launch kernel
 
   size_t global_work_size[3] = {
-                                 kernel->num_gangs[0] * kernel->num_workers[0],
-                                 kernel->num_gangs[1] * kernel->num_workers[1],
-                                 kernel->num_gangs[2] * kernel->num_workers[2]
+                                 kernel->config->num_gangs[0] * kernel->config->num_workers[0],
+                                 kernel->config->num_gangs[1] * kernel->config->num_workers[1],
+                                 kernel->config->num_gangs[2] * kernel->config->num_workers[2]
                                };
   size_t local_work_size[3] =  {
-                                 kernel->num_workers[0],
-                                 kernel->num_workers[1],
-                                 kernel->num_workers[2]
+                                 kernel->config->num_workers[0],
+                                 kernel->config->num_workers[1],
+                                 kernel->config->num_workers[2]
                                };
 
 //printf("global_work_size = { %d , %d , %d }\n", global_work_size[0], global_work_size[1], global_work_size[2]);
 //printf("local_work_size  = { %d , %d , %d }\n", local_work_size [0], local_work_size [1], local_work_size [2]);
 
-  err = clEnqueueNDRangeKernel(cl_queue, cl_kernel, 3, NULL, global_work_size, local_work_size, 0, NULL, NULL);
+  err = clEnqueueNDRangeKernel(tilek_cl_queue, cl_kernel, 3, NULL, global_work_size, local_work_size, 0, NULL, NULL);
   if (err != CL_SUCCESS) {
     const char * str = ocl_status_to_char(err);
     printf("clEnqueueNDRangeKernel error: %s\n", str);
   }
   assert(err == CL_SUCCESS);
 
-  clFinish(cl_queue);
+  clFinish(tilek_cl_queue); // FIXME Needed as we dont have ways to sync subkernels
 
   // Move data from device
 
-  for (i = 0; i < kernel->desc->data.num_data; i++) {
-    err = clEnqueueReadBuffer(cl_queue, cl_data[i], CL_FALSE, 0, size_data[i], kernel->data[i].ptr, 0, NULL, NULL);
+  for (i = 0; i < subkernel->num_data; i++) {
+    err = clEnqueueReadBuffer(tilek_cl_queue, tilek_cl_data[i], CL_FALSE, 0, tilek_size_data[i], kernel->data[subkernel->data_ids[i]].ptr, 0, NULL, NULL);
     assert(err == CL_SUCCESS);
   }
 
-  clFinish(cl_queue);
-
-  // Free
-
-  // TODO
+  clFinish(tilek_cl_queue);
 }
+
+void klt_user_wait(struct klt_kernel_t * kernel) { }
 
 char * read_file(const char * filename) {
 

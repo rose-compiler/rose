@@ -17,6 +17,7 @@ namespace KLT {
 Generator::Generator(MFB::Driver<MFB::KLT::KLT> & driver_, ::MDCG::Tools::ModelBuilder & model_builder_) :
   driver(driver_), model_builder(model_builder_),
   tilek_model(model_builder.create()),
+  kernel_filename(), static_filename(),
   kernel_file_id(0), static_file_id(0),
   host_api(NULL), kernel_api(NULL), call_interface(NULL),
   kernel_map()
@@ -48,6 +49,8 @@ API::kernel_t & Generator::getKernelAPI() { return *kernel_api; }
 const API::kernel_t & Generator::getKernelAPI() const { return *kernel_api; }
 API::call_interface_t & Generator::getCallInterface() { return *call_interface; }
 const API::call_interface_t & Generator::getCallInterface() const { return *call_interface; }
+const std::string & Generator::getKernelFileName() const { return kernel_filename; }
+const std::string & Generator::getStaticFileName() const { return static_filename; }
 MFB::file_id_t Generator::getKernelFileID() const { return kernel_file_id; }
 MFB::file_id_t Generator::getStaticFileID() const { return static_file_id; }
 

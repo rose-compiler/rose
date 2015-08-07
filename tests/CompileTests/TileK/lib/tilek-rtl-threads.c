@@ -20,11 +20,6 @@ struct klt_user_config_t * klt_user_build_config(struct klt_kernel_desc_t * desc
   return config;
 }
 
-struct klt_version_desc_t * klt_user_select_kernel_version(struct klt_kernel_t * kernel) {
-  assert(kernel->desc->num_versions == 1);
-  return &(kernel->desc->versions[0]);
-}
-
 struct tilek_worker_args_t {
   int tid;
   struct klt_kernel_t * kernel;
@@ -93,12 +88,6 @@ void klt_user_schedule(
   }
 
   pthread_attr_destroy(&threads_attr);
-}
-
-void klt_user_wait(struct klt_kernel_t * kernel) {
-  void * status;
-  int rc;
-  int tid;
 
   for (tid = 0; tid < num_threads; tid++) {    
     rc = pthread_join(threads[tid], &status);
@@ -110,7 +99,10 @@ void klt_user_wait(struct klt_kernel_t * kernel) {
   num_threads = 0;
 }
 
-int get_length_tile(struct klt_kernel_t * kernel, unsigned long kind) {
+void klt_user_wait(struct klt_kernel_t * kernel) { }
+
+int klt_user_get_tile_length(struct klt_kernel_t * kernel, unsigned long kind, unsigned long param) {
+  assert(kind == 2);
   return kernel->config->num_threads;
 }
 

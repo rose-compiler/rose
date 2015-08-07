@@ -59,7 +59,8 @@ class Generator {
     ::MDCG::Tools::ModelBuilder & model_builder;
 
     size_t tilek_model;
-
+    std::string kernel_filename;
+    std::string static_filename;
     MFB::file_id_t kernel_file_id;
     MFB::file_id_t static_file_id;
 
@@ -99,6 +100,8 @@ class Generator {
     API::call_interface_t & getCallInterface();
     const API::call_interface_t & getCallInterface() const;
 
+    const std::string & getKernelFileName() const;
+    const std::string & getStaticFileName() const;
     MFB::file_id_t getKernelFileID() const;
     MFB::file_id_t getStaticFileID() const;
 
@@ -139,14 +142,14 @@ generator_tpl * Generator::build(
   generator->loadModel(klt_inc_dir, usr_inc_dir);
 
   // TODO virtual boost::filesystem::path MFB::API::api_t::createFilePath(const std::string & name) const { return boost::filesystem::path(name + ".c"); }
-  std::string static_filename(basename + "-static.c");
-  generator->static_file_id = driver.create(boost::filesystem::path(static_filename));
+  generator->static_filename = basename + "-" + generator_tpl::static_file_tag + "." + generator_tpl::static_file_ext;
+  generator->static_file_id = driver.create(boost::filesystem::path(generator->static_filename));
     driver.setUnparsedFile(generator->static_file_id);
     driver.setCompiledFile(generator->static_file_id);
   generator->getHostAPI().use(driver, generator->static_file_id);
 
-  std::string kernel_filename(basename + "-kernel.c");
-  generator->kernel_file_id = driver.create(boost::filesystem::path(kernel_filename));
+  generator->kernel_filename = basename + "-" + generator_tpl::kernel_file_tag + "." + generator_tpl::kernel_file_ext;
+  generator->kernel_file_id = driver.create(boost::filesystem::path(generator->kernel_filename));
     driver.setUnparsedFile(generator->kernel_file_id);
     driver.setCompiledFile(generator->kernel_file_id);
   generator->getKernelAPI().use(driver, generator->kernel_file_id);

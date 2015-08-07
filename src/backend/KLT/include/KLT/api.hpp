@@ -50,6 +50,19 @@ struct kernel_t : public ::MDCG::Tools::api_t {
     virtual void loadUser(const MDCG::Model::model_t & model);
 
   public:
+    // default: identity
+    virtual SgType * buildSharedDataType(SgType * type) const;
+
+    // default: identity
+    virtual SgType * buildLocalDataType(SgType * type) const;
+
+    // default: none
+    virtual void applyKernelModifiers(SgFunctionDeclaration * kernel_decl) const;
+
+    // default: void
+    virtual SgType * buildKernelReturnType(Descriptor::kernel_t & kernel) const;
+
+  public:
     // Loop Context and Getters
 
     SgType * getLoopContextPtrType() const;
@@ -124,12 +137,6 @@ struct call_interface_t {
 
     SgFunctionParameterList * buildKernelParamList(Descriptor::kernel_t & kernel) const;
     SgBasicBlock * generateKernelBody(Descriptor::kernel_t & kernel, SgFunctionDefinition * kernel_defn, Utils::symbol_map_t & symbol_map);
-
-    // default: none
-    virtual void applyKernelModifiers(SgFunctionDeclaration * kernel_decl) const;
-
-    // default: void
-    virtual SgType * buildKernelReturnType(Descriptor::kernel_t & kernel) const;
 
   protected:
     // default: NOP

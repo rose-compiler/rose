@@ -162,7 +162,7 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
   else clause->parameters.gang_id = 1;
 
   if (!parser.consume('('))                                return false;
-  if (!parser.parse<size_t>(clause->parameters.num_gangs)) return false;
+  if (!parser.parse<SgExpression *>(clause->parameters.num_gangs)) return false;
   if (!parser.consume(')'))                                return false;
 
   directive_str = parser.getDirectiveString(); return true;
@@ -186,7 +186,7 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
   else clause->parameters.worker_id = 1;
 
   if (!parser.consume('('))                                  return false;
-  if (!parser.parse<size_t>(clause->parameters.num_workers)) return false;
+  if (!parser.parse<SgExpression *>(clause->parameters.num_workers)) return false;
   if (!parser.consume(')'))                                  return false;
 
   directive_str = parser.getDirectiveString(); return true;
