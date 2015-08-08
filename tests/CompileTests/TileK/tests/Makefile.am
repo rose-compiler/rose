@@ -1,3 +1,3 @@
 
-SUBDIRS=basic threads accelerator
+SUBDIRS=rtl basic threads accelerator
 

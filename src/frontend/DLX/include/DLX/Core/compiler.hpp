@@ -9,59 +9,44 @@
 #ifndef __DLX_CORE_COMPILER_HPP__
 #define __DLX_CORE_COMPILER_HPP__
 
-#include "DLX/Core/directives.hpp"
+#include "DLX/Core/frontend.hpp"
 
-/*!
- * \addtogroup grp_rose
- * @{
- */
+#ifndef OUTPUT_DIRECTIVES_GRAPHVIZ
+#define OUTPUT_DIRECTIVES_GRAPHVIZ 1
+#endif
+#if OUTPUT_DIRECTIVES_GRAPHVIZ
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#endif
 
 class SgNode;
-class SgSymbol;
-
-typedef SgNode * ast_fragment_t;
-
-/** @} */
 
 namespace DLX {
 
-namespace Compiler {
-
-/*!
- * \addtogroup grp_dlx_core_compiler
- * @{
- */
-
-template <class language_tpl, class compiler_modules_t>
+template <class language_tpl>
 class Compiler {
-  public:
-    typedef language_tpl language_t;
-
-    typedef Directives::directive_t<language_t> directive_t;
-    typedef std::vector<directive_t *> directives_ptr_set_t;
-
-    compiler_modules_t & compiler_modules;
+  protected:
+    Frontend::Frontend<language_tpl> frontend;
 
   public:
-    Compiler(compiler_modules_t & compiler_modules_) :
-      compiler_modules(compiler_modules_)
-    {}
+    Compiler() : frontend() {
+      language_tpl::init();
+    }
 
-    /*!
-     * \brief It applies the transformation associated with the directives.
-     * \param directives the set of all the directive found
-     * \param graph_entry the set of directives without predecessor (or parent)
-     * \param graph_final the set of directives without successor (or children)
-     * return true if the compilation is successful
-     */
-    bool compile(const directives_ptr_set_t & directives, const directives_ptr_set_t & graph_entry, const directives_ptr_set_t & graph_final);
+    bool parse(SgNode * node) {
+      bool res = frontend.parseDirectives(node);
+#if OUTPUT_DIRECTIVES_GRAPHVIZ
+      std::ostringstream oss; oss << "directives_" << node << ".dot";
+      std::ofstream out(oss.str().c_str(), std::ofstream::out);
+      frontend.toGraphViz(out);
+      out.close();
+#endif
+      return res;
+    }
 };
 
-/** @} */
-
 }
 
-}
-
-#endif /* __DLX_COMPILER_CORE_HPP__ */
+#endif /* __DLX_CORE_COMPILER_HPP__ */
 
