@@ -7,7 +7,7 @@ string ConversionFunctionsGenerator::generateCodeForGlobalVarAdressMaps(set<stri
 
   code+="void mapGlobalVarInsert(string name, int* addr) {\n \
          mapGlobalVarAddress.insert(name,addr);\n \
-         mapAddressGlobalVar.insert(add,name);\n \
+         mapAddressGlobalVar.insert(addr,name);\n \
          }\n";
   code+="void createGlobalVarAddressMaps() {\n";
   for(set<string>::iterator i=vars.begin();i!=vars.end();++i) {
