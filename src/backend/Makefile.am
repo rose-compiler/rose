@@ -71,5 +71,3 @@ clean-local:
 # will be installed by "make install", even with language only options are used.
 #SUBDIRS = unparser asmUnparser
 
-SUBDIRS=KLT
-
