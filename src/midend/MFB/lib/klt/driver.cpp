@@ -3,11 +3,11 @@
 
 #include "MFB/KLT/driver.hpp"
 
-#include "KLT/descriptor.hpp"
-#include "KLT/looptree.hpp"
-#include "KLT/generator.hpp"
-#include "KLT/api.hpp"
-#include "KLT/utils.hpp"
+#include "KLT/Core/descriptor.hpp"
+#include "KLT/Core/looptree.hpp"
+#include "KLT/Core/generator.hpp"
+#include "KLT/Core/api.hpp"
+#include "KLT/Core/utils.hpp"
 
 namespace MFB {
 

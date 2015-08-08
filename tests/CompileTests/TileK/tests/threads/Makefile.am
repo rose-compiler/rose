@@ -5,13 +5,13 @@ TILEK_REL_PATH=../..
 
 #########################################
 
-TILEK_INC=$(top_srcdir)/src/backend/KLT/include
+TILEK_INC=$(top_srcdir)/src/midend/KLT/include
 
 TILEK=$(builddir)/$(TILEK_REL_PATH)/src/tilek-threads
 
 TILEK_RTL=$(builddir)/$(TILEK_REL_PATH)/lib/libTileK-RTL-threads.la
 
-KLT_RTL=$(top_builddir)/src/backend/KLT/lib/rtl/libKLT-RTL.la
+KLT_RTL=$(top_builddir)/src/midend/KLT/lib/rtl/libKLT-RTL.la
 
 #########################################
 
@@ -77,7 +77,7 @@ $(builddir)/$(TILEK_REL_PATH)/lib/libTileK-RTL-threads.la:
 	make -C $(builddir)/$(TILEK_REL_PATH)/lib libTileK-RTL-threads.la
 
 $(top_builddir)/src/backend/KLT/lib/rtl/libKLT-RTL.la:
-	make -C $(top_builddir)/src/backend/KLT/lib/rtl libKLT-RTL.la
+	make -C $(top_builddir)/src/midend/KLT/lib/rtl libKLT-RTL.la
 
 #########################################
 

@@ -17,12 +17,12 @@
 
 // KLT
 
-#include "KLT/generator.hpp"
-#include "KLT/looptree.hpp"
-#include "KLT/kernel.hpp"
-#include "KLT/descriptor.hpp"
-#include "KLT/api.hpp"
-#include "KLT/data.hpp"
+#include "KLT/Core/generator.hpp"
+#include "KLT/Core/looptree.hpp"
+#include "KLT/Core/kernel.hpp"
+#include "KLT/Core/descriptor.hpp"
+#include "KLT/Core/api.hpp"
+#include "KLT/Core/data.hpp"
 
 #ifndef OUTPUT_SUBKERNELS_GRAPHVIZ
 #define OUTPUT_SUBKERNELS_GRAPHVIZ 1

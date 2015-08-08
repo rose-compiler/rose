@@ -3,7 +3,7 @@
 #define __MDCG_TILEK_RUNTIME_HPP__
 
 #include "MDCG/KLT/runtime.hpp"
-#include "KLT/Language/c-family.hpp"
+#include "KLT/Core/Language/c-family.hpp"
 
 namespace MDCG {
 namespace KLT {

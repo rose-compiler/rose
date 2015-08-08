@@ -1,5 +1,5 @@
 
-#include "KLT/descriptor.hpp"
+#include "KLT/Core/descriptor.hpp"
 
 namespace KLT {
 

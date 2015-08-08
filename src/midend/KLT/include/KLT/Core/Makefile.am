@@ -1,6 +1,4 @@
 
-SUBDIRS=RTL MDCG DLX
-
 KLT_includedir=$(prefix)/include/KLT
 KLT_include_HEADERS= \
   looptree.hpp \
@@ -10,3 +8,4 @@ KLT_include_HEADERS= \
   data.hpp \
   api.hpp \
   utils.hpp
+

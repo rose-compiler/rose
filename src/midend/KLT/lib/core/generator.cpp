@@ -8,9 +8,9 @@
 #include "MDCG/Model/model.hpp"
 #include "MDCG/Tools/model-builder.hpp"
 
-#include "KLT/generator.hpp"
-#include "KLT/descriptor.hpp"
-#include "KLT/api.hpp"
+#include "KLT/Core/generator.hpp"
+#include "KLT/Core/descriptor.hpp"
+#include "KLT/Core/api.hpp"
 
 namespace KLT {
 

@@ -11,8 +11,8 @@
 
 // KLT
 
+#include "KLT/Core/api.hpp"
 #include "KLT/DLX/compiler.hpp"
-#include "KLT/api.hpp"
 
 // TileK
 

@@ -1,7 +1,8 @@
 
 #include "sage3basic.h"
-#include "KLT/utils.hpp"
-#include "KLT/descriptor.hpp"
+
+#include "KLT/Core/descriptor.hpp"
+#include "KLT/Core/utils.hpp"
 
 namespace KLT {
 

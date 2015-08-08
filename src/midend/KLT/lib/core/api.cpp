@@ -7,9 +7,9 @@
 #include "MDCG/Model/function.hpp"
 #include "MDCG/Model/class.hpp"
 
-#include "KLT/api.hpp"
-#include "KLT/descriptor.hpp"
-#include "KLT/utils.hpp"
+#include "KLT/Core/api.hpp"
+#include "KLT/Core/descriptor.hpp"
+#include "KLT/Core/utils.hpp"
 
 namespace KLT {
 

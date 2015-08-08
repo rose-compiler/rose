@@ -9,7 +9,7 @@ libKLT_MDCG_la_CXXFLAGS= \
   -g -O2 \
   -I$(top_srcdir)/src/midend/MFB/include \
   -I$(top_srcdir)/src/midend/MDCG/include \
-  -I$(top_srcdir)/src/backend/KLT/include \
+  -I$(top_srcdir)/src/midend/KLT/include \
   $(ROSE_INCLUDES)
 
 

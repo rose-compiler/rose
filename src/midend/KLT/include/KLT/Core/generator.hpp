@@ -8,10 +8,10 @@
 
 #include "MDCG/Tools/model-builder.hpp"
 
-#include "KLT/looptree.hpp"
-#include "KLT/kernel.hpp"
-#include "KLT/descriptor.hpp"
-#include "KLT/api.hpp"
+#include "KLT/Core/looptree.hpp"
+#include "KLT/Core/kernel.hpp"
+#include "KLT/Core/descriptor.hpp"
+#include "KLT/Core/api.hpp"
 #include "KLT/MDCG/static-initializer.hpp"
 
 class SgFunctionDeclaration;
@@ -252,6 +252,7 @@ void subkernel_result_t<language_tpl>::toGraphViz(std::ostream & out) const {
   out << "  }" << std::endl;
   size_t tiled_kernel_cnt = 0;
 
+/*
   typename std::map<tiling_info_t<language_tpl> *, kernel_deps_map_t>::const_iterator it_tiled_kernel;
   for (it_tiled_kernel = tiled.begin(); it_tiled_kernel != tiled.end(); it_tiled_kernel++) {
     std::map<KLT::Kernel::kernel_t *, KLT::Descriptor::kernel_t *> translation_map;
@@ -259,7 +260,7 @@ void subkernel_result_t<language_tpl>::toGraphViz(std::ostream & out) const {
 
     tiling_info_t<language_tpl> * tiling_info = it_tiled_kernel->first;
     const kernel_deps_map_t & subkernels = it_tiled_kernel->second;
-/*
+
     out << "  subgraph cluster_k_" << tiled_kernel_cnt++ << " {" << std::endl;
 
     tiling_info->toGraphViz(out);
@@ -273,8 +274,8 @@ void subkernel_result_t<language_tpl>::toGraphViz(std::ostream & out) const {
       out << "  }" << std::endl;
     }
     out << "}" << std::endl;
-*/
   }
+*/
 }
 
 } // namespace KLT::Utils

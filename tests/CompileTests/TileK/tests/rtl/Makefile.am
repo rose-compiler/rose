@@ -7,7 +7,7 @@ clean: clean-test_1 clean-test_2
 
 ###################################################################################################
 
-KLT_REL_PATH=src/backend/KLT
+KLT_REL_PATH=src/midend/KLT
 KLT_INC=$(top_srcdir)/$(KLT_REL_PATH)/include
 KLT_RTL=$(top_builddir)/$(KLT_REL_PATH)/lib/rtl/libKLT-RTL.la
 

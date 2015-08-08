@@ -1,10 +1,9 @@
 
 #include "MDCG/Tools/static-initializer.hpp"
 
-#include "KLT/kernel.hpp"
-#include "KLT/descriptor.hpp"
-
-#include "KLT/utils.hpp"
+#include "KLT/Core/kernel.hpp"
+#include "KLT/Core/descriptor.hpp"
+#include "KLT/Core/utils.hpp"
 
 namespace KLT {
 

@@ -3,101 +3,52 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 #########################################
 
-INC_PATHS= \
-  -I$(top_srcdir)/src/frontend/DLX/include \
-  -I$(top_srcdir)/src/midend/MFB/include   \
-  -I$(top_srcdir)/src/midend/MDCG/include  \
-  -I$(top_srcdir)/src/backend/KLT/include  \
-  -I$(srcdir)/../include $(ROSE_INCLUDES)
+DLX_REL_PATH=src/frontend/DLX
+MFB_REL_PATH=src/midend/MFB
+MDCG_REL_PATH=src/midend/MDCG
+KLT_REL_PATH=src/midend/KLT
+TILEK_REL_PATH=tests/CompileTests/TileK
 
-LIB_PATHS= \
-  -L$(top_builddir)/src/frontend/DLX/lib/core \
-  -L$(top_builddir)/src/midend/MFB/lib/sage   \
-  -L$(top_builddir)/src/midend/MFB/lib/utils  \
-  -L$(top_builddir)/src/midend/MDCG/lib/core  \
-  -L$(top_builddir)/src/midend/MDCG/lib/klt   \
-  -L$(top_builddir)/src/backend/KLT/lib/      \
-  -L$(top_builddir)/src/backend/KLT/lib/core  \
-  -L$(top_builddir)/src/backend/KLT/lib/mdcg  \
-  -L$(builddir)/../lib/ $(LIBS_WITH_RPATH)
+KLT_INC_PATHS= \
+  -I$(top_srcdir)/$(DLX_REL_PATH)/include  \
+  -I$(top_srcdir)/$(MFB_REL_PATH)/include  \
+  -I$(top_srcdir)/$(MDCG_REL_PATH)/include \
+  -I$(top_srcdir)/$(KLT_REL_PATH)/include
+  
 
-KLT_INC_PATH= \
-  -DKLT_RTL_INC_PATH=\"$(abs_top_srcdir)/src/backend/KLT\" \
-  -DTILEK_RTL_INC_PATH=\"$(abs_top_srcdir)/tests/CompileTests/TileK\"
+INC_PATHS= $(KLT_INC_PATHS) -I$(srcdir)/../include $(ROSE_INCLUDES)
 
-PATHS= \
-  -DKLT_PATH=\"$(abs_top_srcdir)/src/backend/KLT\" \
-  -DTILEK_PATH=\"$(abs_top_srcdir)/tests/CompileTests/TileK\"
+KLT_LIB_PATHS= \
+  -L$(top_builddir)/$(DLX_REL_PATH)/lib/core \
+  -L$(top_builddir)/$(MFB_REL_PATH)/lib/sage -L$(top_builddir)/$(MFB_REL_PATH)/lib/klt -L$(top_builddir)/$(MFB_REL_PATH)/lib/utils \
+  -L$(top_builddir)/$(MDCG_REL_PATH)/lib/model -L$(top_builddir)/$(MDCG_REL_PATH)/lib/tools \
+  -L$(top_builddir)/$(KLT_REL_PATH)/lib/core   -L$(top_builddir)/$(KLT_REL_PATH)/lib/mdcg
 
-KLT_LIBS=-lDLX-Core -lMFB-Sage -lMFB-Utils -lMDCG-Core -lMDCG-KLT -lKLT-Core
+LIB_PATHS=$(KLT_LIB_PATHS) -L$(builddir)/../lib/ $(LIBS_WITH_RPATH)
+
+RTL_INC_PATHS=-DKLT_PATH=\"$(abs_top_srcdir)/$(KLT_REL_PATH)\" -DTILEK_PATH=\"$(abs_top_srcdir)/$(TILEK_REL_PATH)\"
+
+KLT_LIBS=-lDLX-Core -lMFB-Sage -lMFB-KLT -lMFB-Utils -lMDCG-Model -lMDCG-Tools -lKLT-Core -lKLT-MDCG
 
 #########################################
 
 bin_PROGRAMS=tilek-basic tilek-threads tilek-opencl #tilek-cuda
 
 tilek_basic_SOURCES=tilek.cpp
-tilek_basic_CXXFLAGS=-g -O0 $(INC_PATHS) $(PATHS) -DTILEK_BASIC
-tilek_basic_LDADD= \
-  -L$(top_builddir)/src/frontend/DLX/lib/core \
-  -L$(top_builddir)/src/midend/MFB/lib/sage   \
-  -L$(top_builddir)/src/midend/MFB/lib/klt    \
-  -L$(top_builddir)/src/midend/MFB/lib/utils  \
-  -L$(top_builddir)/src/midend/MDCG/lib/model  \
-  -L$(top_builddir)/src/midend/MDCG/lib/tools  \
-  -L$(top_builddir)/src/backend/KLT/lib/      \
-  -L$(top_builddir)/src/backend/KLT/lib/mdcg \
-  -L$(builddir)/../lib/ $(LIBS_WITH_RPATH) \
-  -lDLX-Core -lMFB-Sage -lMFB-KLT -lMFB-Utils -lMDCG-Model -lMDCG-Tools -lKLT -lKLT-MDCG \
-  -lDLX-TileK-basic \
-  $(ROSE_LIBS)
+tilek_basic_CXXFLAGS=-g -O0 $(INC_PATHS) $(RTL_INC_PATHS) -DTILEK_BASIC
+tilek_basic_LDADD=$(LIB_PATHS) $(KLT_LIBS) $(ROSE_LIBS) -lDLX-TileK-basic
 
 tilek_threads_SOURCES=tilek.cpp
-tilek_threads_CXXFLAGS=-g -O0 $(INC_PATHS) $(PATHS) -DTILEK_THREADS
-tilek_threads_LDADD= \
-  -L$(top_builddir)/src/frontend/DLX/lib/core \
-  -L$(top_builddir)/src/midend/MFB/lib/sage   \
-  -L$(top_builddir)/src/midend/MFB/lib/klt    \
-  -L$(top_builddir)/src/midend/MFB/lib/utils  \
-  -L$(top_builddir)/src/midend/MDCG/lib/model  \
-  -L$(top_builddir)/src/midend/MDCG/lib/tools  \
-  -L$(top_builddir)/src/backend/KLT/lib/      \
-  -L$(top_builddir)/src/backend/KLT/lib/mdcg \
-  -L$(builddir)/../lib/ $(LIBS_WITH_RPATH) \
-  -lDLX-Core -lMFB-Sage -lMFB-KLT -lMFB-Utils -lMDCG-Model -lMDCG-Tools -lKLT -lKLT-MDCG \
-  -lDLX-TileK-threads \
-  $(ROSE_LIBS)
+tilek_threads_CXXFLAGS=-g -O0 $(INC_PATHS) $(RTL_INC_PATHS) -DTILEK_THREADS
+tilek_threads_LDADD= $(LIB_PATHS) $(KLT_LIBS) $(ROSE_LIBS) -lDLX-TileK-threads
 
 tilek_opencl_SOURCES=tilek.cpp
-tilek_opencl_CXXFLAGS=-g -O0 $(INC_PATHS) $(PATHS) -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL
-tilek_opencl_LDADD= \
-  -L$(top_builddir)/src/frontend/DLX/lib/core \
-  -L$(top_builddir)/src/midend/MFB/lib/sage   \
-  -L$(top_builddir)/src/midend/MFB/lib/klt    \
-  -L$(top_builddir)/src/midend/MFB/lib/utils  \
-  -L$(top_builddir)/src/midend/MDCG/lib/model  \
-  -L$(top_builddir)/src/midend/MDCG/lib/tools  \
-  -L$(top_builddir)/src/backend/KLT/lib/      \
-  -L$(top_builddir)/src/backend/KLT/lib/mdcg \
-  -L$(builddir)/../lib/ $(LIBS_WITH_RPATH) \
-  -lDLX-Core -lMFB-Sage -lMFB-KLT -lMFB-Utils -lMDCG-Model -lMDCG-Tools -lKLT -lKLT-MDCG \
-  -lDLX-TileK-accelerator \
-  $(ROSE_LIBS)
+tilek_opencl_CXXFLAGS=-g -O0 $(INC_PATHS) $(RTL_INC_PATHS) -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL
+tilek_opencl_LDADD=$(LIB_PATHS) $(KLT_LIBS) $(ROSE_LIBS) -lDLX-TileK-accelerator
 
-tilek_cuda_SOURCES=tilek.cpp
-tilek_cuda_CXXFLAGS=-g -O0 $(INC_PATHS) $(PATHS) -DTILEK_ACCELERATOR -DTILEK_TARGET_CUDA
-tilek_cuda_LDADD= \
-  -L$(top_builddir)/src/frontend/DLX/lib/core \
-  -L$(top_builddir)/src/midend/MFB/lib/sage   \
-  -L$(top_builddir)/src/midend/MFB/lib/klt    \
-  -L$(top_builddir)/src/midend/MFB/lib/utils  \
-  -L$(top_builddir)/src/midend/MDCG/lib/model  \
-  -L$(top_builddir)/src/midend/MDCG/lib/tools  \
-  -L$(top_builddir)/src/backend/KLT/lib/      \
-  -L$(top_builddir)/src/backend/KLT/lib/mdcg \
-  -L$(builddir)/../lib/ $(LIBS_WITH_RPATH) \
-  -lDLX-Core -lMFB-Sage -lMFB-KLT -lMFB-Utils -lMDCG-Model -lMDCG-Tools -lKLT -lKLT-MDCG \
-  -lDLX-TileK-accelerator \
-  $(ROSE_LIBS)
+#tilek_cuda_SOURCES=tilek.cpp
+#tilek_cuda_CXXFLAGS=-g -O0 $(INC_PATHS) $(RTL_INC_PATHS) -DTILEK_ACCELERATOR -DTILEK_TARGET_CUDA
+#tilek_cuda_LDADD=$(LIB_PATHS) $(KLT_LIBS) $(ROSE_LIBS) $(KLT_LIBS) -lDLX-TileK-accelerator
 
 #########################################
 

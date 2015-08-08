@@ -8,6 +8,6 @@ libMFB_KLT_la_SOURCES= \
 libMFB_KLT_la_CXXFLAGS= \
   -g -I$(top_srcdir)/src/midend/MFB/include \
   -g -I$(top_srcdir)/src/midend/MDCG/include \
-  -g -I$(top_srcdir)/src/backend/KLT/include \
+  -g -I$(top_srcdir)/src/midend/KLT/include \
   $(ROSE_INCLUDES)
 

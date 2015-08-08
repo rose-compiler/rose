@@ -1,8 +1,8 @@
 
 #include "sage3basic.h"
 
-#include "KLT/looptree.hpp"
-#include "KLT/descriptor.hpp"
+#include "KLT/Core/looptree.hpp"
+#include "KLT/Core/descriptor.hpp"
 
 #include <iostream>
 
