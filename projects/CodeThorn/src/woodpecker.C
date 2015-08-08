@@ -34,6 +34,8 @@ using namespace AType;
 #include "DeadCodeElimination.h"
 #include "ReachabilityAnalysis.h"
 
+#include "ConversionFunctionsGenerator.h"
+
 //static  VariableIdSet variablesOfInterest;
 static bool detailedOutput=0;
 const char* csvAssertFileName=0;
@@ -143,6 +145,7 @@ int main(int argc, char* argv[]) {
     ("csv-const-result",po::value< string >(), "generate csv-file [arg] with const-analysis data.")
     ("generate-transformed-code",po::value< string >(), "generate transformed code with prefix rose_ ([yes]|no).")
     ("verbose",po::value< string >(), "print detailed output during analysis and transformation (yes|[no]).")
+    ("generate-conversion-functions","generate code for conversion functions between variable names and variable addresses.")
     ("csv-assert",po::value< string >(), "name of csv file with reachability assert results'")
     ("enable-multi-const-analysis",po::value< string >(), "enable multi-const analysis.")
     ;
@@ -272,6 +275,27 @@ int main(int argc, char* argv[]) {
     cout<<"INFO: number of used vars inside functions: "<<setOfUsedVars.size()<<endl;
     fiConstAnalysis.filterVariables(setOfUsedVars);
     fiConstAnalysis.writeCvsConstResult(variableIdMapping, string(csvConstResultFileName));
+  }
+
+  if(args.count("generate-conversion-functions")) {
+    string conversionFunctionsFileName="conversionFunctions.C";
+    ConversionFunctionsGenerator gen;
+    set<string> varNameSet;
+    std::list<SgVariableDeclaration*> globalVarDeclList=SgNodeHelper::listOfGlobalVars(root);
+    for(std::list<SgVariableDeclaration*>::iterator i=globalVarDeclList.begin();i!=globalVarDeclList.end();++i) {
+      SgInitializedNamePtrList& initNamePtrList=(*i)->get_variables();
+      for(SgInitializedNamePtrList::iterator j=initNamePtrList.begin();j!=initNamePtrList.end();++j) {
+	SgInitializedName* initName=*j;
+	SgName varName=initName->get_name();
+	string varNameString=varName; // implicit conversion
+	varNameSet.insert(varNameString);
+      }
+    }
+    string code=gen.generateCodeForGlobalVarAdressMaps(varNameSet);
+    ofstream myfile;
+    myfile.open(conversionFunctionsFileName.c_str());
+    myfile<<code;
+    myfile.close();
   }
 
   VariableConstInfo vci=*(fiConstAnalysis.getVariableConstInfo());

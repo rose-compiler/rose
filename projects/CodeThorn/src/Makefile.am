@@ -297,6 +297,8 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   DeadCodeElimination.h                \
   ReachabilityAnalysis.C \
   ReachabilityAnalysis.h \
+  ConversionFunctionsGenerator.h \
+  ConversionFunctionsGenerator.C \
   woodpecker.C
 
 
