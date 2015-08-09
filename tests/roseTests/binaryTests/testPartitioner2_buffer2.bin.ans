@@ -70,8 +70,9 @@
 0x08048290: ================================== Function (import, graph) <DYNAMIC_LINKER_TRAMPOLINE>
 
 0x08048290: Basic block reasons: entry point, CFG head
-0x08048290: ff 35 a0 95 04 08       |.5....  |          push   dword ds:[0x080495a0<.got.plt+4>]
-0x08048296: ff 25 a4 95 04 08       |.%....  |          jmp    dword ds:[0x080495a4<.got.plt+8>]
+0x08048290: ff 35 a0 95 04 08       |.5....  |<sp+0 >   push   dword ds:[0x080495a0<.got.plt+4>]
+0x08048296: ff 25 a4 95 04 08       |.%....  |<sp-4 >   jmp    dword ds:[0x080495a4<.got.plt+8>]
+0x08048296: Outgoing stack delta: -4
 0x08048296: Successor blocks: unknown
 
 0x080482a0: ================================== Function (function call, import, graph) <malloc@plt>

@@ -1579,7 +1579,8 @@
 0x01001996: ================================== Function (thunk, graph) unknown name
 
 0x01001996: Basic block reasons: entry point, CFG head
-0x01001996: ff 25 68 41 00 01       |.%hA..  |          jmp    dword ds:[0x01004168<IAT+0x5c>]
+0x01001996: ff 25 68 41 00 01       |.%hA..  |<sp+0 >   jmp    dword ds:[0x01004168<IAT+0x5c>]
+0x01001996: Outgoing stack delta: +0
 0x01001996: Successor blocks: unknown
 
 0x010019a2: ================================== Function (function call, graph) unknown name
