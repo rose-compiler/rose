@@ -318,6 +318,9 @@ State::mergeSValues(BaseSemantics::SValuePtr &dstValue /*in,out*/, const BaseSem
 bool
 State::mergeRegisterStates(const BaseSemantics::RegisterStateGenericPtr &dstState,
                            const BaseSemantics::RegisterStateGenericPtr &srcState) const {
+
+    // FIXME[Robb P. Matzke 2015-08-07]: we should be merging on overlapping parts between the source and destination rather
+    // than using the src to drive the merge without regard to how registers are stored in the destination.
     bool changed = false;
     BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &reg_val, srcState->get_stored_registers()) {
         const RegisterDescriptor &reg = reg_val.desc;
@@ -325,17 +328,15 @@ State::mergeRegisterStates(const BaseSemantics::RegisterStateGenericPtr &dstStat
         if (!dstState->is_partly_stored(reg)) {
             changed = true;
             dstState->writeRegister(reg, ops_->undefined_(reg.get_nbits()), ops_.get());
+            dstState->setWriters(reg, srcState->getWritersUnion(reg));
         } else {
             BaseSemantics::SValuePtr dstValue = dstState->readRegister(reg, ops_.get());
             if (mergeSValues(dstValue /*in,out*/, srcValue)) {
                 dstState->writeRegister(reg, dstValue, ops_.get());
+                dstState->setWriters(reg, dstState->getWritersUnion(reg) | srcState->getWritersUnion(reg));
                 changed = true;
             }
         }
-        // We should adjust latestWriter also, but unfortunately we can only store one writer per bit of the register's value,
-        // and it's hard to get information about the individual bits.  So we'll just clear all the writer info all the time so
-        // users don't depend on it.
-        dstState->clear_latest_writer(reg);
     }
     return changed;
 }

@@ -119,7 +119,7 @@ void
 RegisterStateGeneric::clear()
 {
     registers.clear();
-    clear_latest_writers();
+    eraseWriters();
 }
 
 void
@@ -416,38 +416,92 @@ RegisterStateGeneric::stored_parts(const RegisterDescriptor &desc) const
 }
 
 void
-RegisterStateGeneric::set_latest_writer(const RegisterDescriptor &desc, rose_addr_t writer_va)
-{
-    WrittenParts &parts = writers[desc];
-    parts.insert(Extent(desc.get_offset(), desc.get_nbits()), writer_va);
+RegisterStateGeneric::insertWriter(const RegisterDescriptor &desc, rose_addr_t writerVa) {
+    WrittenParts &parts = writers.insertMaybe(desc, WrittenParts());
+    BitRange where = BitRange::baseSize(desc.get_offset(), desc.get_nbits());
+    parts.insert(where, writerVa);
 }
 
+void
+RegisterStateGeneric::eraseWriter(const RegisterDescriptor &desc, rose_addr_t writerVa) {
+    if (!writers.exists(desc))
+        return;
+    WrittenParts &parts = writers[desc];
+    BitRange where = BitRange::baseSize(desc.get_offset(), desc.get_nbits());
+    parts.erase(where, writerVa);
+    if (parts.isEmpty())
+        writers.erase(desc);
+}
+
+void
+RegisterStateGeneric::setWriters(const RegisterDescriptor &desc, rose_addr_t writerVa) {
+    AddressSet writersSet;
+    writersSet.insert(writerVa);
+    setWriters(desc, writersSet);
+}
+
+void
+RegisterStateGeneric::setWriters(const RegisterDescriptor &desc, const AddressSet &writerVas) {
+    WrittenParts &parts = writers.insertMaybe(desc, WrittenParts());
+    BitRange where = BitRange::baseSize(desc.get_offset(), desc.get_nbits());
+    parts.replace(where, writerVas);
+}
+
+// [Robb P. Matzke 2015-08-07]: deprecated
+void
+RegisterStateGeneric::set_latest_writer(const RegisterDescriptor &desc, rose_addr_t writer_va)
+{
+    setWriters(desc, writer_va);
+}
+
+void
+RegisterStateGeneric::eraseWriters(const RegisterDescriptor &desc) {
+    writers.erase(desc);
+}
+
+// [Robb P. Matzke 2015-08-07]: deprecated
 void
 RegisterStateGeneric::clear_latest_writer(const RegisterDescriptor &desc)
 {
-    WritersMap::iterator wi = writers.find(desc);
-    if (wi!=writers.end())
-        wi->second.clear();
+    eraseWriters(desc);
 }
 
 void
-RegisterStateGeneric::clear_latest_writers()
-{
+RegisterStateGeneric::eraseWriters() {
     writers.clear();
 }
 
+// [Robb P. Matzke 2015-08-07]: deprecated
+void
+RegisterStateGeneric::clear_latest_writers()
+{
+    eraseWriters();
+}
+
+RegisterStateGeneric::AddressSet
+RegisterStateGeneric::getWritersUnion(const RegisterDescriptor &desc) const {
+    if (!writers.exists(desc))
+        return AddressSet();
+    const WrittenParts &parts = writers[desc];
+    BitRange where = BitRange::baseSize(desc.get_offset(), desc.get_nbits());
+    return parts.getUnion(where);
+}
+
+RegisterStateGeneric::AddressSet
+RegisterStateGeneric::getWritersIntersection(const RegisterDescriptor &desc) const {
+    if (!writers.exists(desc))
+        return AddressSet();
+    const WrittenParts &parts = writers[desc];
+    BitRange where = BitRange::baseSize(desc.get_offset(), desc.get_nbits());
+    return parts.getIntersection(where);
+}
+
+// [Robb P. Matzke 2015-08-07]: deprecated, use getWritersUnion instead
 std::set<rose_addr_t>
 RegisterStateGeneric::get_latest_writers(const RegisterDescriptor &desc) const
 {
-    std::set<rose_addr_t> retval;
-    WritersMap::const_iterator wi = writers.find(desc);
-    if (wi!=writers.end()) {
-        Extent desc_extent(desc.get_offset(), desc.get_nbits());
-        for (WrittenParts::const_iterator pi=wi->second.begin(); pi!=wi->second.end(); ++pi) {
-            if (pi->first.overlaps(desc_extent))
-                retval.insert(pi->second.get());
-        }
-    }
+    AddressSet writerVas = getWritersUnion(desc);
+    std::set<rose_addr_t> retval(writerVas.values().begin(), writerVas.values().end());
     return retval;
 }
 
@@ -481,13 +535,15 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
                         stream <<fmt.get_line_prefix() <<std::setw(maxlen) <<std::left <<regname;
                         oflags.restore();
                         if (fmt.get_show_latest_writers()) {
-                            std::set<rose_addr_t> writers = get_latest_writers(rvi->desc);
+                            Sawyer::Container::Set<rose_addr_t> writers = getWritersUnion(rvi->desc);
                             if (writers.size()==1) {
-                                stream <<" [writer=" <<StringUtility::addrToString(*writers.begin()) <<"]";
-                            } else if (!writers.empty()) {
+                                stream <<" [writer=" <<StringUtility::addrToString(*writers.values().begin()) <<"]";
+                            } else if (!writers.isEmpty()) {
                                 stream <<" [writers={";
-                                for (std::set<rose_addr_t>::iterator wi=writers.begin(); wi!=writers.end(); ++wi)
-                                    stream <<(wi==writers.begin()?"":", ") <<StringUtility::addrToString(*wi);
+                                for (Sawyer::Container::Set<rose_addr_t>::ConstIterator wi=writers.values().begin();
+                                     wi!=writers.values().end(); ++wi) {
+                                    stream <<(wi==writers.values().begin()?"":", ") <<StringUtility::addrToString(*wi);
+                                }
                                 stream <<"}]";
                             }
                         }

@@ -363,7 +363,7 @@ public:
         /** Run data flow until it reaches a fixed point.
          *
          *  Run data flow starting at the specified control flow vertex with the specified initial state until the state
-         *  converges to a fixed point no matter how long that takes. */
+         *  converges to a fixed point or the maximum number of iterations is reached (in which case an exception is thrown). */
         void runToFixedPoint(size_t startVertexId, const StatePtr &initialState) {
             reset(startVertexId, initialState);
             while (runOneIteration()) /*void*/;

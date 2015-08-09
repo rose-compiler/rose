@@ -521,14 +521,14 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver), compute_usedef(false), omit_cur_insn(false),
-          compute_memwriters(true) {
+          compute_memwriters(true), compute_regwriters(TRACK_LATEST_WRITER) {
         set_name("Symbolic");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver), compute_usedef(false), omit_cur_insn(false),
-          compute_memwriters(true) {
+          compute_memwriters(true), compute_regwriters(TRACK_LATEST_WRITER) {
         set_name("Symbolic");
         (void) SValue::promote(state->get_protoval()); // values must have SymbolicSemantics::SValue dynamic type
     }
@@ -628,10 +628,19 @@ protected:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Configuration properties
+public:
+    enum WritersMode {
+        TRACK_NO_WRITERS,                               // do not track writers
+        TRACK_LATEST_WRITER,                            // save only the latest writer
+        TRACK_ALL_WRITERS,                              // save all writers
+    };
+
 protected:
     bool compute_usedef;                                // if true, add use-def info to each value
     bool omit_cur_insn;                                 // if true, do not include cur_insn as a definer
     bool compute_memwriters;                            // if true, add latest writer to each memory cell
+    WritersMode compute_regwriters;                     // whether to track writers (instruction VAs) to registers.
+    
 
 public:
     /** Accessor for the compute_usedef property.  If compute_usedef is set, then RISC operators will update the set of
@@ -646,12 +655,37 @@ public:
     /** Property: track latest writer to each memory location.
      *
      *  If true, then each @ref writeMemory operation will update the affected memory cells with latest-writer information if
-     *  possible (depending on the type of memory state being used.
+     *  possible (depending on the type of memory state being used).
      *
      * @{ */
     void set_compute_memwriters(bool b = true) { compute_memwriters = b; }
     void clear_compute_memwriters() { compute_memwriters = false; }
     bool get_compute_memwriters() const { return compute_memwriters; }
+    /** @} */
+
+    /** Property: track latest writer to each register.
+     *
+     *  Controls whether each @ref writeRegister operation updates the list of writers.  The following values are allowed for
+     *  this property:
+     *
+     *  @li @c TRACK_NO_WRITERS: Does not update the register state's writers information. Using this setting will make that
+     *      data structure available for other purposes. The data structure can store a set of addresses independently for each
+     *      bit of each register.
+     *
+     *  @li @c TRACK_LATEST_WRITER:  Each write operation clobbers all previous write information for the affected
+     *      register. This information is stored per bit so that if instruction 1 writes to EAX and then instruction 2 writes
+     *      to AX then the high-order 16 bits of EAX will have {1} as the writer set while the low order bits will have {2} as
+     *      its writer set.
+     *
+     *  @li @c TRACK_ALL_WRITERS: Each write operation inserts the instruction address into the set of addresses stored for the
+     *      affected register (or register part) without removing any addresses that are alread associated with that
+     *      register. While this works well for analysis over a small region of code (like a single function), it might cause
+     *      the writer sets to become very large when the same register state is used over large regions (like a whole
+     *      program).
+     *
+     * @{ */
+    void set_compute_regwriters(WritersMode m) { compute_regwriters = m; }
+    WritersMode get_compute_regwriters() const { return compute_regwriters; }
     /** @} */
 
     // Used internally to control whether cur_insn should be omitted from the list of definers.

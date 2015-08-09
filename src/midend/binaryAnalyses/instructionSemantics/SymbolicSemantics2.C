@@ -646,8 +646,18 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
     // Update latest writer info when appropriate and able to do so.
     if (SgAsmInstruction *insn = get_insn()) {
         RegisterStatePtr regs = boost::dynamic_pointer_cast<RegisterState>(get_state()->get_register_state());
-        if (regs!=NULL)
-            regs->set_latest_writer(reg, insn->get_address());
+        if (regs!=NULL) {
+            switch (compute_regwriters) {
+                case TRACK_NO_WRITERS:
+                    break;
+                case TRACK_LATEST_WRITER:
+                    regs->setWriters(reg, insn->get_address());
+                    break;
+                case TRACK_ALL_WRITERS:
+                    regs->insertWriter(reg, insn->get_address());
+                    break;
+            }
+        }
     }
 }
 

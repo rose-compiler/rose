@@ -11,8 +11,10 @@
 #include <boost/optional.hpp>
 #include <Sawyer/Assert.h>
 #include <Sawyer/IntervalMap.h>
+#include <Sawyer/IntervalSetMap.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
+#include <Sawyer/Set.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -735,9 +737,13 @@ typedef boost::shared_ptr<class RegisterStateGeneric> RegisterStateGenericPtr;
  *  the 32-bit pieces are concatenated back to 64-bit values. This splitting and concatenation occurs on a per-register basis
  *  at the time the register is read or written.
  *
- *  The register state also maintains optional information about the most recent writer of each register. The most recent
- *  writer is represented by a virtual address (rose_addr_t) and the addresses are stored at bit resolution--each bit of the
- *  register may have its own writer information. */
+ *  The register state also stores optional information about writers for each register. Writer information (addresses of
+ *  instructions that wrote to the register) are stored as sets defined at each bit of the register. This allows a wide
+ *  register, like x86 RAX, to be written to in parts by different instructions, like x86 AL.  The register state itself
+ *  doesn't update this information automatically--it only provides the API by which a higher software layer can manipulate the
+ *  information.  This design allows the writer data structure to alternatively be used for things other than addresses of
+ *  writing instructions.  For instance, the @ref SymbolicSemantics::RiscOperators has a setting that enables tracking
+ *  writers. */
 class RegisterStateGeneric: public RegisterState {
 public:
     // Like a RegisterDescriptor, but only the major and minor numbers.  This state maintains lists of registers, one list per
@@ -754,6 +760,7 @@ public:
             return majr<other.majr || (majr==other.majr && minr<other.minr);
         }
     };
+
     struct RegPair {
         RegisterDescriptor desc;
         SValuePtr value;
@@ -763,11 +770,15 @@ public:
     typedef std::vector<RegPair> RegPairs;
     typedef Map<RegStore, RegPairs> Registers;
 
-    // A mapping from the bits of a register (e.g., 'al' of 'rax') to the virtual address of the instruction that last wrote
+    // A mapping from the bits of a register (e.g., 'al' of 'rax') to the virtual addresses of the instruction that last wrote
     // a value to those bits.
-    typedef RangeMap<Extent, RangeMapNumeric<Extent, rose_addr_t> > WrittenParts;
-    typedef Map<RegStore, WrittenParts> WritersMap;
-    WritersMap writers;
+public:
+    typedef Sawyer::Container::Interval<size_t> BitRange;
+    typedef Sawyer::Container::Set<rose_addr_t> AddressSet;
+    typedef Sawyer::Container::IntervalSetMap<BitRange/*bits of register*/, AddressSet/*writers*/> WrittenParts;
+    typedef Sawyer::Container::Map<RegStore, WrittenParts> WritersMap;
+protected:
+    WritersMap writers;                         /**< Information about which instructions wrote to parts of a register. */
 
 protected:
     Registers registers;                        /**< Values for registers that have been accessed. */
@@ -782,7 +793,7 @@ protected:
     }
 
     RegisterStateGeneric(const RegisterStateGeneric &other)
-        : RegisterState(other), registers(other.registers), coalesceOnRead(true) {
+        : RegisterState(other), writers(other.writers), registers(other.registers), coalesceOnRead(true) {
         deep_copy_values();
     }
 
@@ -939,26 +950,76 @@ public:
      */
     virtual void traverse(Visitor&);
 
+    /** Get writer information.
+     *
+     *  Returns all instruction addresses that have written to at least part of the specified register.  For instance, if
+     *  instruction 0x1234 and 0x4321 wrote to AL and instruction 0x5678 wrote to AH then this method would return the set
+     *  {0x1234, 0x4321, 0x5678} as the writers of AX. */
+    virtual AddressSet getWritersUnion(const RegisterDescriptor&) const;
+
+    /** Get writer information.
+     *
+     *  Returns the set of instruction addresses that have written to the entire specified register.  For instance, if
+     *  instruction 0x1234 and 0x4321 wrote to AL and instructions 0x1234 and 0x5678 wrote to AH then this method will return
+     *  the set {0x1234} as the writers of AX. */
+    virtual AddressSet getWritersIntersection(const RegisterDescriptor&) const;
+
+    /** Insert writer information.
+     *
+     *  Adds the specified instruction address as a writer of the specified register.  Any previously existing writer addresses
+     *  are not affected. */
+    virtual void insertWriter(const RegisterDescriptor&, rose_addr_t writerVa);
+
+    /** Erase specified writer.
+     *
+     *  Removes the specified address from the set of writers for the register without affecting other addresses that might
+     *  also be present. */
+    virtual void eraseWriter(const RegisterDescriptor&, rose_addr_t writerVa);
+
+    /** Set writer information.
+     *
+     *  Changes the writer information to be exactly the specified address or set of addresses.
+     *
+     * @{ */
+    virtual void setWriters(const RegisterDescriptor&, rose_addr_t writerVa);
+    virtual void setWriters(const RegisterDescriptor&, const AddressSet &writers);
+    /** @} */
+
+    /** Erase all writers.
+     *
+     *  If a register descriptor is provided then all writers are removed for that register only.  Otherwise all writers are
+     *  removed for all registers.
+     *
+     * @{ */
+    virtual void eraseWriters(const RegisterDescriptor&);
+    virtual void eraseWriters();
+    /** @} */
+
+    //------------------------------------------
+    // The following writers API is deprecated.
+    //------------------------------------------
+
     /** Set the writer for the specified register. Each register (major-minor pair) is able to store a virtual address for each
      *  bit of the register.  By convention, this data member stores the virtual address of the instruction that most recently
      *  wrote a value to those bits. */
-    virtual void set_latest_writer(const RegisterDescriptor&, rose_addr_t writer_va);
+    virtual void set_latest_writer(const RegisterDescriptor&, rose_addr_t writer_va) ROSE_DEPRECATED("use setWriters instead");
 
     /** Clear the writer for the specified register.  Information about the virtual address of the instruction that most
      *  recently wrote a value to the specified register is removed from the register.  The value of the register is not
      *  affected by this call, but the last-writer information is adjusted so it looks like no instruction wrote the bits to
      *  the specified register. See also, set_latest_writer(). */
-    virtual void clear_latest_writer(const RegisterDescriptor&);
+    virtual void clear_latest_writer(const RegisterDescriptor&) ROSE_DEPRECATED("use eraseWriters instead");
 
     /** Clear all information about latest writers for all registers. */
-    virtual void clear_latest_writers();
+    virtual void clear_latest_writers() ROSE_DEPRECATED("use eraseWriters instead");
 
     /** Obtain the set of virtual addresses stored as the latest writers for a register.  A register may have more than one
      *  writer if the register's value was written in parts (such as when requesting the writers for x86 AX when separate
      *  instructions wrote to AL and AH. A register may have no writers if the writer information has been cleared (via
      *  clear_latest_writer()), or no data has ever been written to the register, or data has been written but no writer was
      *  specified. */
-    virtual std::set<rose_addr_t> get_latest_writers(const RegisterDescriptor&) const;
+    virtual std::set<rose_addr_t> get_latest_writers(const RegisterDescriptor&) const
+        ROSE_DEPRECATED("use getWritersUnion instead");
 
     /** Whether reading modifies representation.  When the @ref readRegister method is called to obtain a value for a desired
      *  register that overlaps with some (parts of) registers that already exist in this register state we can proceed in two
