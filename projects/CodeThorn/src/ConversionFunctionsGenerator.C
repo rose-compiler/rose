@@ -2,12 +2,15 @@
 
 string ConversionFunctionsGenerator::generateCodeForGlobalVarAdressMaps(set<string> vars) {
   string code;
-  code+="map <string,int*> mapGlobalVarAddress;\n";
-  code+="map <int*,string> mapAddressGloablVar;\n";
+  code+="#include <string>\n";
+  code+="#include <map>\n";
 
-  code+="void mapGlobalVarInsert(string name, int* addr) {\n \
-         mapGlobalVarAddress.insert(name,addr);\n \
-         mapAddressGlobalVar.insert(addr,name);\n \
+  code+="std::map <std::string,int*> mapGlobalVarAddress;\n";
+  code+="std::map <int*,std::string> mapAddressGlobalVar;\n";
+
+  code+="void mapGlobalVarInsert(std::string name, int* addr) {\n \
+         mapGlobalVarAddress[name]=addr;\n \
+         mapAddressGlobalVar[addr]=name;\n \
          }\n";
   code+="void createGlobalVarAddressMaps() {\n";
   for(set<string>::iterator i=vars.begin();i!=vars.end();++i) {
