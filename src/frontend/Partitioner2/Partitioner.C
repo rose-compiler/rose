@@ -2099,6 +2099,12 @@ FunctionCallGraph
 Partitioner::functionCallGraph(bool allowParallelEdges) const {
     FunctionCallGraph cg;
     size_t edgeCount = allowParallelEdges ? 0 : 1;
+
+    // Create a vertex for every function.  This is optional -- if commented out then only functions that have incoming or
+    // outgoing edges will be present.
+    BOOST_FOREACH (const Function::Ptr &function, functions())
+        cg.insertFunction(function);
+
     BOOST_FOREACH (const ControlFlowGraph::Edge &edge, cfg_.edges()) {
         if (edge.source()->value().type()==V_BASIC_BLOCK && edge.target()->value().type()==V_BASIC_BLOCK) {
             Function::Ptr source = edge.source()->value().function();
