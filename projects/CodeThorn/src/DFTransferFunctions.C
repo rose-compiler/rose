@@ -73,7 +73,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       SgVarRefExp* lhsVar=0;
       transferFunctionCallReturn(lab, lhsVar, funCall, element);
       return;
-    } else if(SgReturnStmt* retStmt=isSgReturnStmt(node)) {
+    } else if(isSgReturnStmt(node)) {
       // special case of return f(...);
       node=SgNodeHelper::getFirstChild(node);
       if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
