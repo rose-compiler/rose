@@ -1346,13 +1346,13 @@ SgNodeHelper::collectPragmaLines(string pragmaName,SgNode* root) {
     if(i!=ast.end()) {
       for(std::list<SgPragmaDeclaration*>::iterator p=pragmaNodes.begin();p!=pragmaNodes.end();++p) {
         string str=SgNodeHelper::getPragmaDeclarationString(*p);
-	SgNodeHelper::replaceString(str,"#pragma ","");
+        SgNodeHelper::replaceString(str,"#pragma ","");
         if(SgNodeHelper::isPrefix(pragmaName,str)) {
           SgPragmaDeclaration* lastPragmaDecl=pragmaNodes.back();
           // ensure we did not collect pragmas at the end of a block
           if(!(isLastChildOf(lastPragmaDecl,lastPragmaDecl->get_parent()))) {
             if(SgStatement* assocStmt=isSgStatement(*i)) {
-	      SgNodeHelper::replaceString(str,pragmaName+" ","");
+              SgNodeHelper::replaceString(str,pragmaName+" ","");
               //cout<<"PRAGMA REVERSE: "<<str<<" : "<<(assocStmt)->unparseToString()<<endl;
               l.push_back(make_pair(str,assocStmt));
             } else {
