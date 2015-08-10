@@ -138,7 +138,12 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .intrinsicValue(true, settings.doListFunctions)
                .doc("Produce a table of contents showing all the functions that were detected.  The @s{no-list-functions} "
                     "switch disables this.  The default is to " + std::string(settings.doListFunctions?"":"not ") +
-                    "show this information. See @s{select-functions}."));
+                    "show this information."
+                    "\n\n"
+                    "The may-return column of the results is the output from the true may-return analysis. However, the "
+                    "partitioning engine might assume a different value depending on the @s{functions-return} switch."
+                    "\n\n"
+                    "See also @s{select-functions}."));
     out.insert(Switch("no-list-functions")
                .key("list-functions")
                .intrinsicValue(false, settings.doListFunctions)

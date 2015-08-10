@@ -27,9 +27,10 @@ template <class Language>
   Data * data = new Data(data_sym, base_type);
   for (it_section = data_section.second.begin(); it_section != data_section.second.end(); it_section++) {
     typename Data::section_t section;
-      section.lower_bound = it_section->lower_bound;
-      section.size = it_section->size;
-      section.stride = it_section->stride;
+      section.offset = it_section->lower_bound;
+      section.length = it_section->size;
+//    section.stride = it_section->stride;
+      assert(it_section->stride == NULL);
     data->addSection(section);
   }
   data->annotations.push_back(Annotation(data_clause));
@@ -43,12 +44,13 @@ void extractData(const std::vector<DLX::Directives::generic_clause_t<Language> *
   typename std::vector<typename Language::clause_t *>::const_iterator it_clause;
   for (it_clause = clauses.begin(); it_clause != clauses.end(); it_clause++) {
     typename Language::data_clause_t * data_clause = Language::isDataClause(*it_clause);
-    if (data_clause == NULL) continue;
-
-    const std::vector<DLX::Frontend::data_sections_t> & data_sections = Language::getDataSections(data_clause);
-    std::vector<DLX::Frontend::data_sections_t>::const_iterator it_data_sections;
-    for (it_data_sections = data_sections.begin(); it_data_sections != data_sections.end(); it_data_sections++)
-      loop_tree->addData(convertData<Language>(data_clause, *it_data_sections));
+    if (data_clause != NULL) {
+      const std::vector<DLX::Frontend::data_sections_t> & data_sections = Language::getDataSections(data_clause);
+      std::vector<DLX::Frontend::data_sections_t>::const_iterator it_data_sections;
+      for (it_data_sections = data_sections.begin(); it_data_sections != data_sections.end(); it_data_sections++)
+        loop_tree->addData(convertData<Language>(data_clause, *it_data_sections));
+    }
+    else loop_tree->annotations.push_back(Annotation(*it_clause));
   }
 }
 

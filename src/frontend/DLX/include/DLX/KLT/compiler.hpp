@@ -12,8 +12,7 @@
 #include "KLT/Core/loop-tiler.hpp"
 #include "KLT/Core/loop-mapper.hpp"
 #include "KLT/Core/data-flow.hpp"
-#include "KLT/Core/cg-config.hpp"
-#include "KLT/Core/generator.hpp"
+#include "KLT/Core/generator.hpp" // Needs Annotation and Runtime to be defined
 #include "KLT/Core/kernel.hpp"
 #include "KLT/Core/mfb-klt.hpp"
 
@@ -21,38 +20,40 @@
 #include "MFB/Sage/class-declaration.hpp"
 #include "MFB/Sage/variable-declaration.hpp"
 
-#include "MDCG/model-builder.hpp"
-#include "MDCG/static-initializer.hpp"
+#include "MDCG/Core/model-builder.hpp"
+#include "MDCG/Core/static-initializer.hpp"
 
 namespace DLX {
 
 namespace KLT {
 
-template <class Language_in, class Language_out, class Runtime, class KernelDesc>
-void compile(SgProject * project, const std::string & include_path, const std::string & kernel_file, const std::string & static_file) {
+template <
+  class Dlang,
+  class Hlang/* = ::KLT::Language::C*/,
+  class Klang/* = ::KLT::Language::C*/,
+  class Runtime/* = ::MDCG::KLT::Runtime<Hlang, Klang>*/,
+  class KernelDesc/* = ::MDCG::KLT::KernelDesc<Hlang, Klang>*/
+>
+void compile(SgProject * project, const std::string & KLT_RTL, const std::string & USER_RTL, const std::string & kernel_file, const std::string & static_file) {
+  typedef ::DLX::Directives::directive_t<Dlang> directive_t;
 
-  typedef ::DLX::Directives::directive_t<Language_in> directive_t;
-
-  typedef ::DLX::KLT::Annotation<Language_in> Annotation;
+  typedef ::DLX::KLT::Annotation<Dlang> Annotation;
   typedef ::KLT::LoopTrees<Annotation> LoopTrees;
-  typedef ::KLT::Kernel<Annotation, Language_out, Runtime> Kernel;
+  typedef ::KLT::Kernel<Annotation, Runtime> Kernel;
 
   // Declarations
 
-    ::DLX::Frontend::Frontend<Language_in> frontend;
+    ::DLX::Frontend::Frontend<Dlang> frontend;
 
-    ::MFB::KLT_Driver driver(project);
+    ::MFB::Driver< ::MFB::KLT> driver(project);
 
     ::MDCG::ModelBuilder model_builder(driver);
 
-    unsigned model = Runtime::loadAPI(model_builder, include_path);
-
-    ::KLT::Generator<Annotation, Language_out, Runtime, MFB::KLT_Driver> generator(driver, kernel_file);
-    ::KLT::CG_Config<Annotation, Language_out, Runtime> cg_config;
+    size_t model = Runtime::loadAPI(model_builder, KLT_RTL, USER_RTL);
 
   // Initialize language description
 
-    Language_in::init();
+    Dlang::init();
 
   // Run DLX frontend
 
@@ -69,6 +70,11 @@ void compile(SgProject * project, const std::string & include_path, const std::s
 
   // Generate Kernels
 
+    ::KLT::Generator<Annotation, Runtime, ::MFB::Driver< ::MFB::KLT> > generator(driver, kernel_file);
+    ::KLT::LoopMapper<Annotation, Runtime> loop_mapper;
+    ::KLT::LoopTiler<Annotation, Runtime> loop_tiler;
+    ::KLT::DataFlow<Annotation, Runtime> data_flow;
+
     std::vector<Kernel *> all_kernels;
     std::map<directive_t *, Kernel *> kernel_map;
 
@@ -76,7 +82,7 @@ void compile(SgProject * project, const std::string & include_path, const std::s
     for (it_loop_tree = loop_trees.begin(); it_loop_tree != loop_trees.end(); it_loop_tree++) {
       // Generate Kernels
       std::set<std::list<Kernel *> > kernel_lists;
-      generator.generate(*(it_loop_tree->second), kernel_lists, cg_config);
+      generator.generate(*(it_loop_tree->second), kernel_lists, loop_mapper, loop_tiler, data_flow);
 
       // Assume only one implementation of the kernel made of one kernel
       assert(kernel_lists.size() == 1);
@@ -92,15 +98,15 @@ void compile(SgProject * project, const std::string & include_path, const std::s
 
   typename std::map<directive_t *, Kernel *>::const_iterator it_kernel;
   for (it_kernel = kernel_map.begin(); it_kernel != kernel_map.end(); it_kernel++) {
-    typename Language_in::kernel_construct_t * kernel_construct = Language_in::isKernelConstruct(it_kernel->first->construct);
+    typename Dlang::kernel_construct_t * kernel_construct = Dlang::isKernelConstruct(it_kernel->first->construct);
     assert(kernel_construct != NULL);
     Runtime::useSymbolsHost(driver, driver.getFileID(kernel_construct->assoc_nodes.kernel_region->get_scope()));
-    SageInterface::replaceStatement(kernel_construct->assoc_nodes.kernel_region, ::KLT::intantiateOnHost<Annotation, Language_out, Runtime>(it_kernel->second));
+    SageInterface::replaceStatement(kernel_construct->assoc_nodes.kernel_region, ::KLT::intantiateOnHost<Annotation, Runtime>(it_kernel->second));
   }
 
   // Stores static description of the generated kernels
 
-    unsigned host_data_file_id = driver.create(boost::filesystem::path(static_file));
+    size_t host_data_file_id = driver.create(boost::filesystem::path(static_file));
       driver.setUnparsedFile(host_data_file_id);
       driver.setCompiledFile(host_data_file_id);
     Runtime::useSymbolsHost(driver, host_data_file_id);
@@ -114,14 +120,9 @@ void compile(SgProject * project, const std::string & include_path, const std::s
     model_builder.get(model).lookup< ::MDCG::Model::class_t>("kernel_desc_t", classes);
     assert(classes.size() == 1);
 
-    static_initializer.createArrayPointer<KernelDesc>(
-      *(classes.begin()),
-      all_kernels.size(),
-      all_kernels.begin(),
-      all_kernels.end(),
-      host_data_file_id,
-      decl_name.str()
-    );
+    static_initializer.createArrayPointer<KernelDesc>(*(classes.begin()), all_kernels.size(), all_kernels.begin(), all_kernels.end(), host_data_file_id, decl_name.str());
+
+    Runtime::addRuntimeStaticData(driver, KLT_RTL, USER_RTL, kernel_file, static_file, host_data_file_id);
 
   // Removes all pragma
 
@@ -129,7 +130,7 @@ void compile(SgProject * project, const std::string & include_path, const std::s
     std::vector<SgPragmaDeclaration * >::iterator it_pragma_decl;
     for (it_pragma_decl = pragma_decls.begin(); it_pragma_decl != pragma_decls.end(); it_pragma_decl++) {
       std::string directive_string = (*it_pragma_decl)->get_pragma()->get_pragma();
-      if (::DLX::Frontend::consume_label(directive_string, Language_in::language_label))
+      if (::DLX::Frontend::consume_label(directive_string, Dlang::language_label))
         SageInterface::removeStatement(*it_pragma_decl);
     }
 }

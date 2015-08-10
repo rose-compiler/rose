@@ -94,6 +94,23 @@ bool inSwitchScope();
 std::string stringFromScopeStack();
 
    
+//@}
+
+//----------------------------------------------------------
+//@{
+/*! @name Case sensitivity interfaces
+    \brief  Allows for setting case sensitivity for constructed scopes.
+
+Nodes constructed for a Fortran file should be constructed with case insensitive.  All other should be case sensitive.  This interface supports multiple languages within the project.  The default is based on the type of file last parsed in the project.
+*/
+
+//! Set to insensitive case (Fortran files)
+ROSE_DLL_API void setCaseInsensitive();
+//! Set to sensitive case (all other languages)
+ROSE_DLL_API void setCaseSensitive();
+//! Set to that of an exsiting scope statement
+ROSE_DLL_API void setCaseFromScope(SgScopeStatement* scope);
+
 //@} 
 
 // *************************************************************************************************************
