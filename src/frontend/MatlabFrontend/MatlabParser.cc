@@ -22,6 +22,7 @@ SgProject* MatlabParser::frontend(int argc, char* argv[])
     if (!matlabFile)
       {
 	std::cout << "File Cannot be opened" << std::endl;
+	ROSE_ASSERT(false);
 	return NULL;
       }
 
@@ -31,8 +32,6 @@ SgProject* MatlabParser::frontend(int argc, char* argv[])
     
     // set flex to read from it instead of defaulting to STDIN:
     yyin = matlabFile;
-
-    std::cout << "Going to read file\n" << std::flush;
 
     SgProject* project = NULL;
     beginParse(project, argc, argv);

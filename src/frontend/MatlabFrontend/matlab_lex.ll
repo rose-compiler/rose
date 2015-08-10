@@ -46,17 +46,10 @@ along with Octave; see the file COPYING.  If not, see
 
 #include <sys/types.h>
 #include <unistd.h>
-
-  /*#include "rose.h"
-#include "ast/SgColonExpression.h"
-#include "ast/SgMagicColonExpression.h"
-#include "ast/SgStatementList.h"
-#include "ast/MatlabFunctionBuilder.h"
-#include "ast/SgMatlabDeclarationStatement.h"*/
 #include "SymbolFinder.h"
-  //#include "ast/SgMatrix.h"
 
   class StatementList;
+  class MatlabFunctionBuilder;
   
 #include "comment-list.h"
 #include "error.h"
@@ -65,30 +58,6 @@ along with Octave; see the file COPYING.  If not, see
 #include "ourtoken.h"
 #include "matlab_parse.h"
 #include "octave.gperf.h"
-
-/*
-#include "cmd-edit.h"
-#include "quit.h"
-#include "lo-mappers.h"
-
-#include "Cell.h"
-#include "comment-list.h"
-#include "defun.h"
-#include "error.h"
-#include "gripes.h"
-#include "input.h"
-#include "lex.h"
-#include "ov.h"
-#include "parse.h"
-#include "pt-all.h"
-#include "symtab.h"
-#include "ourtoken.h"
-#include "toplev.h"
-#include "utils.h"
-#include "variables.h"
-#include <oct-parse.h>
-*/
-
 
 // These would be alphabetical, but y.tab.h must be included before
 // oct-gperf.h and y.tab.h must be included after token.h and the tree
@@ -752,8 +721,7 @@ NUMBER  (({D}+\.?{D}*{EXPON}?)|(\.{D}+{EXPON}?)|(0[xX][0-9a-fA-F]+))
 %}
 
 <TYPE_BEGIN>[a-zA-Z\<\>0-9]+{S}*({IDENT}{S}*)*{IDENT}{S}*{NL} {
-    //std::cout << "HELLO TYPE = " << yytext << std::endl <<std::flush;
-    
+  
     lexer_flags.addAnnotatedType(strdup(yytext));
 
     BEGIN(INITIAL);

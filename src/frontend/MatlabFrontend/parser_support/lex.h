@@ -177,74 +177,18 @@ public:
   {
     std::size_t posOfSpace = annotation.find(" ");
     std::string type = annotation.substr(0, posOfSpace);
-
-    std::cout << "Splitted type = " << type << std::endl << std::flush;
-
-    std::cout << "Length = " << type.length() << std::endl << std::flush;
-
     std::string variables = annotation.substr(posOfSpace);
-
-    std::cout << "variables = " << variables << std::endl << std::flush;   
 
     // addVariables(type, variables); 
   }
    
-  /*
-   * For the current scope, returns the type of the variable
-   */
-   /*   std::string getType(std::string variable)
-  {
-    for(auto annotation : this->variableTypes)
-    {
-      auto& vars = annotation.second;
-      if(std::find(vars.begin(), vars.end(), variable) != vars.end())
-      {
-        return annotation.first;
-      }
-    }
-
-    return "None";
-    }*/
-
+ 
 private:
 
   lexical_feedback (const lexical_feedback&);
 
   lexical_feedback& operator = (const lexical_feedback&);
 
-
-  /*
-   * Add the given type and a vector of variables to the dictionary
-   * Tokenize the variables string to get a list of variables
-   */
-  /* void addVariables(std::string type, std::string variables) */
-  /* { */
-  /*    typedef boost::tokenizer<boost::char_separator<char> > tokenizer; */
-  /*    boost::char_separator<char> sep (" "); */
-  /*    tokenizer tok(variables); */
-
-
-  /*    std::vector<std::string> variableList; */
-
-  /*    for(tokenizer::iterator it = tok.begin(); it != tok.end(); ++it) */
-  /*    {         */
-  /*       std::string var = std::string(boost::algorithm::trim_copy(*it)); */
-
-  /*       std::cout << "Variable = " << var << std::endl << std::flush; */
-  /*       std::cout << "Length = " << var.length() << std::endl << std::flush; */
-
-  /*       variableList.push_back(var);     */
-  /*    } */
-
-  /*    variableTypes[type] = variableList; */
-
-  /*    // std::vector<std::string> out = variableTypes["int"]; */
-
-  /*    // for(int i = 0; i < 3; i++) */
-  /*    // { */
-  /*    //    std::cout << "Out = " << out[i] << std::endl << std::flush; */
-  /*    // } */
-  /* } */
 };
 
 class

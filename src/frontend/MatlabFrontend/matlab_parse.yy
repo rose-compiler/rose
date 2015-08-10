@@ -33,10 +33,6 @@ along with Octave; see the file COPYING.  If not, see
 %{
 #define YYDEBUG 1
 
-/*#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif*/
-
 #include <cassert>
 #include <cstdio>
 #include <cstring>
@@ -81,8 +77,6 @@ recover_from_parsing_function ();
 int beginParse(SgProject* &p, int argc, char* argv[]);
 SgIfStmt* getLastIfClause(SgIfStmt* topIfClause);
 
-// void addVariableDeclarations();
-// void manageReturnStatement(SgExprListExp*, SgFunctionDeclaration*);
  SgName extractVarName(SgExpression*);
 
 class token;
@@ -333,14 +327,10 @@ int current_function_depth;
 
 input           : input1
 	   	  {                                           
-                  std::cout << "END OF current input" << std::endl << std::flush;                                                                                       
-
                   $1->appendAll();
 
                   if(parsingScriptFile)
                   {
-                    //addVariableDeclarations(); 
-
                     SageBuilder::popScopeStack(); //pop out the default function
 
 		       //Create a default "run" function
@@ -374,7 +364,6 @@ input1          : '\n'
                  {$$ = 0;}
                 | END_OF_INPUT
                  {
-                    std::cout << "END OF FILE" << std::endl << std::flush;
                     parser_end_of_input = 1;
                     $$ = 0;
                  }
@@ -388,52 +377,37 @@ input1          : '\n'
 
 simple_list     : simple_list1 opt_sep_no_nl
                   { $$ = $1;}
-                  /*{ $$ = set_stmt_print_flag ($1, $2, false);}*/
                 ;
 
 simple_list1    : statement
-                  //{$$ = buildBasicBlock($1);}                  
                   { 
                     $$ = dynamic_cast<StatementList*>($1); 
 
                     assert($$ != NULL);
-
-                    //ROSE_ASSERT($$ != NULL);
                   }
                 | simple_list1 sep_no_nl statement
                   { 
                     ROSE_ASSERT(false);
-                    /*SgBasicBlock *block;
-                    if(!(block = dynamic_cast<SgBasicBlock*>($1)))
-                    {
-                       block = buildBasicBlock($1);
-                    }
-
-                    block->append_statement($3);
-                    $$ = block;assert($$ != NULL);*/
                   }                  
                 ;
 
 opt_list        : // empty
                   { $$ = new StatementList();}
-                  /*{ $$ = new tree_statement_list ();}*/
                 | list
                   { 
                     $$ = $1;
-                    //SageInterface::appendStatement($1);
                   }
                 ;
 
 list            : list1 opt_sep
                   { $$ = $1;}
-                  /*{ $$ = set_stmt_print_flag ($1, $2, true);}*/
                 ;
 
 list1           : statement
                   {
-            		    ROSE_ASSERT($1 != NULL);
-            		    $$ = new StatementList($1);                    
-            		  }                  
+            	    ROSE_ASSERT($1 != NULL);
+            	    $$ = new StatementList($1);                    
+            	   }                  
                 | list1 sep statement
                   { 
                     $1->appendStatement($3);
@@ -449,8 +423,8 @@ statement       : expression
                   {$$ = $1;}                  
                 | word_list_cmd
                   {
-            		    $$ = $1;
-            		    ROSE_ASSERT($$ != NULL);
+            	    $$ = $1;
+            	    ROSE_ASSERT($$ != NULL);
                   }
                 ;
 
@@ -463,22 +437,15 @@ statement       : expression
 // WHILE, etc.
 
 word_list_cmd   : identifier word_list
-                  { 
-                    std::cout << "Making word_list_cmd" << std::endl << std::flush;                    
-		    
+                  { 		    
 		    //$$ = SageMatlabBuilder::buildWordListStatement($1->get_symbol()->get_name(), $2);
-
-		                ROSE_ASSERT($$ != NULL);
                   }
-                  /*{ $$ = make_index_expression ($1, $2, '(');}*/
                 ;
 
 word_list       : string
                   { $$ = SageBuilder::buildExprListExp($1);}                  
                 | word_list string
                   {
-		                ROSE_ASSERT(false);
-                    std::cout << "Appending " <<   $2 << std::endl << std::flush;                  
                     SageInterface::appendExpression($1, $2);
                     $$ = $1;
                   }                  
@@ -495,15 +462,13 @@ identifier      : NAME
 		   SgScopeStatement *activeScope = SageBuilder::topScopeStack();
 
 		   SgVariableSymbol *varSymbol = SageInterface::lookupVariableSymbolInParentScopes(varName, activeScope);
-		   // if(activeScope->symbol_exists(varName) == false)
+
 		   if(varSymbol == NULL)
                  {
 		   SgVarRefExp *varRef = SageBuilder::buildVarRefExp(varName, activeScope);
 
 		   /*If there is no explicit variable declaration, we have to manually insert the symbol to the symbol table*/
                    activeScope->get_symbol_table()->insert(varName, varRef->get_symbol());
-
-		   std::cout << "Symbol " << varName << " inserted" << std::endl << std::flush;
 		   
 		   $$ = varRef;
                  }
@@ -526,44 +491,36 @@ meta_identifier : METAQUERY
 
 string          : DQ_STRING
                   { $$ = SageBuilder::buildStringVal($1->text());}
-                  /*{ $$ = make_constant (DQ_STRING, $1);}*/
                 | SQ_STRING
                   { $$ = SageBuilder::buildStringVal($1->text());}
-                  /*{ $$ = make_constant (SQ_STRING, $1);}*/
                 ;
 
 constant        : NUM
                  { $$ = SageBuilder::buildDoubleVal($1->number());}
-                  /*{ $$ = make_constant (NUM, $1);}*/
                 | IMAG_NUM
 		{ $$ = SageBuilder::buildImaginaryVal ($1->number()); }
-                  /*{ $$ = make_constant (IMAG_NUM, $1);}*/                
                 | string
                   { $$ = $1;}
                 ;
 
 matrix          : '[' ']'
                   {
-                    //$$ = new tree_constant (octave_null_matrix::instance);
                     lexer_flags.looking_at_matrix_or_assign_lhs = false;
                     lexer_flags.pending_local_variables.clear ();
                  }
                 | '[' ';' ']'
                   {
-                    //$$ = new tree_constant (octave_null_matrix::instance);
                     lexer_flags.looking_at_matrix_or_assign_lhs = false;
                     lexer_flags.pending_local_variables.clear ();
                  }
                 | '[' ',' ']'
                   {
-                    //$$ = new tree_constant (octave_null_matrix::instance);
                     lexer_flags.looking_at_matrix_or_assign_lhs = false;
                     lexer_flags.pending_local_variables.clear ();
                  }
                 | '[' matrix_rows ']'
                   {
-                    $$ = $2;//SageBuilder::buildMatrix($2);//buildAggregateInitializer($2);assert($$ != NULL);
-                    //$$ = finish_matrix ($2);
+                    $$ = $2;
                     lexer_flags.looking_at_matrix_or_assign_lhs = false;
                     lexer_flags.pending_local_variables.clear ();
                  }
@@ -577,23 +534,14 @@ matrix_rows     : matrix_rows1
 
 matrix_rows1    : cell_or_matrix_row
                   {
-                    //$$ = SageMatlabBuilder::buildMatrix($1);
 		    $$ = SageBuilder::buildMatrixExp($1);
-                    //$$ = buildExprListExp($1);assert($$ != NULL);
                   }
-                  /*{ $$ = new tree_matrix ($1);}*/
                 | matrix_rows1 ';' cell_or_matrix_row
                   {
                     $1->append_expression($3);
-                    //SageInterface::appendExpression($1, $3);
-                    //$1->append_expression($3);
                     $$ = $1;
 		    assert($$ != NULL);
                   }
-                  /*{
-                    $1->append ($3);
-                    $$ = $1;
-                 }*/
                 ;
 
 cell            : '{' '}'
@@ -602,9 +550,8 @@ cell            : '{' '}'
                   /*{ $$ = new tree_constant (octave_value (Cell ()));}*/
                 | '{' cell_rows '}'
                    {
-		                  $$ = SageBuilder::buildAggregateInitializer($2);
+		      $$ = SageBuilder::buildAggregateInitializer($2);
                    }
-		  /*{$$ = finish_cell ($2);}*/
                 ;
 
 cell_rows       : cell_rows1
@@ -617,16 +564,11 @@ cell_rows1      : cell_or_matrix_row
                   {
 		    $$ = SageBuilder::buildExprListExp($1);
                   }
-            		  /*{$$ = new tree_cell ($1);}*/
                   | cell_rows1 ';' cell_or_matrix_row
-            		  {
-            		    SageInterface::appendExpression($1, $3);
-            		    $$ = $1;
-            		  }
-		  /*{
-                    $1->append ($3);
-                    $$ = $1;
-                 }*/
+         	  {
+            	    SageInterface::appendExpression($1, $3);
+            	    $$ = $1;
+            	  }
                 ;
 
 cell_or_matrix_row
@@ -634,12 +576,10 @@ cell_or_matrix_row
                 {
                   $$ = $1;
                 }
-                 //{$$ = buildAggregateInitializer($1);assert($$ != NULL);}                
                 | arg_list ','  // Ignore trailing comma.
                  {
                    $$ = $1;
                  }
-                 //{$$ = buildAggregateInitializer($1);assert($$ != NULL);}                 
                 ;
 
 fcn_handle      : '@' FCN_HANDLE
@@ -681,13 +621,7 @@ primary_expr    : identifier
 magic_colon     : ':'
                   {
 		    $$ = SageBuilder::buildMagicColonExp();
-                    // $$ = new SgMagicColonExpression();
-                    // SageMatlabBuilder::setOneSourcePositionForTransformation($$);
                   }
-                 /*{
-                    octave_value tmp (octave_value::magic_colon_t);
-                    $$ = new tree_constant (tmp);
-                 }*/
                 ;
 
 magic_tilde     : EXPR_NOT
@@ -698,11 +632,9 @@ magic_tilde     : EXPR_NOT
 
 arg_list        : expression
                   {$$ = SageBuilder::buildExprListExp($1);}
-                 /*{$$ = new tree_argument_list ($1);}*/
                 | magic_colon
 		{$$ = SageBuilder::buildExprListExp ($1);}
                 | magic_tilde
-                 /*{$$ = new tree_argument_list ($1);}*/
                 | arg_list ',' magic_colon
                  {
                     $1->append_expression ($3);
@@ -728,25 +660,19 @@ postfix_expr    : primary_expr
                  {$$ = $1;}
                 | postfix_expr '(' ')'
                   { $$ = SageBuilder::buildFunctionCallExp($1);}
-                 /*{$$ = make_index_expression ($1, 0, '(');}*/                  
                 | postfix_expr '(' arg_list ')'
                   { 
                     //Treat every indexed operation as a function call
                     $$ = SageBuilder::buildFunctionCallExp($1, $3);
                   } 
-                 /*{$$ = make_index_expression ($1, $3, '(');}*/
                 | postfix_expr '{' '}'
 		  { $$ = SageBuilder::buildFunctionCallExp($1);}
-                 /*{$$ = make_index_expression ($1, 0, '{');}*/
                 | postfix_expr '{' arg_list '}'
 		  { $$ = SageBuilder::buildFunctionCallExp($1, $3); }
-		  /*{$$ = make_index_expression ($1, $3, '{');}*/
                 | postfix_expr PLUS_PLUS
                   {$$ = SageBuilder::buildPlusPlusOp($1, SgUnaryOp::postfix);}
-                 /*{$$ = make_postfix_op (PLUS_PLUS, $1, $2);}*/                  
                 | postfix_expr MINUS_MINUS
                   {$$ = SageBuilder::buildMinusMinusOp($1, SgUnaryOp::postfix);}
-                 /*{$$ = make_postfix_op (MINUS_MINUS, $1, $2);}*/
                 | postfix_expr QUOTE
                   {
 		    SgMatrixTransposeOp *transposeOp = SageBuilder::buildMatrixTransposeOp($1);
@@ -776,17 +702,13 @@ prefix_expr     : postfix_expr
                 | MINUS_MINUS prefix_expr %prec UNARY
                 {
                   $$ = SageBuilder::buildMinusMinusOp($2, SgUnaryOp::prefix);
-                 /*{$$ = make_prefix_op (MINUS_MINUS, $2, $1);}*/
                 }
                 | EXPR_NOT prefix_expr %prec UNARY
                 { $$ = SageBuilder::buildNotOp($2);}
-                 /*{$$ = make_prefix_op (EXPR_NOT, $2, $1);}*/                
                 | '+' prefix_expr %prec UNARY
                 { $$ = $2;}
-                 /*{$$ = make_prefix_op ('+', $2, $1);}*/                
                 | '-' prefix_expr %prec UNARY
                 { $$ = SageBuilder::buildMinusOp($2, SgUnaryOp::prefix);}
-                 /*{$$ = make_prefix_op ('-', $2, $1);}*/                
                 ;
 
 binary_expr     : prefix_expr POW prefix_expr
@@ -823,18 +745,11 @@ colon_expr      : prefix_expr
                   {
                     $$ = $1;
                   }
-                 /*{$$ = finish_colon_expression ($1);}*/
                 ;
 
 colon_expr1     : prefix_expr					       
                  {
 		   $$ = SageBuilder::buildRangeExp($1);
-                   /* SgColonExpression* colonexp = new SgColonExpression ($1);
-		    SageMatlabBuilder::setOneSourcePositionForTransformation(colonexp);
-
-                    $$ = colonexp;
-
-                    std::cout << "setOneSourcePositionForTransformation" << std::endl << std::flush;*/
                  }
                 | colon_expr1 ':' prefix_expr                 
                  {
@@ -853,67 +768,55 @@ simple_expr     : colon_expr
                 {
                   $$ = SageBuilder::buildRshiftOp($1, $3);
                 }
-                 /*{$$ = make_binary_op (RSHIFT, $1, $2, $3);}*/              
                 | simple_expr EXPR_LT simple_expr
                 {
                   $$ = SageBuilder::buildLessThanOp($1, $3);
                 }
-                 /*{$$ = make_binary_op (EXPR_LT, $1, $2, $3);}*/
                 | simple_expr EXPR_LE simple_expr
                 {
                   $$ = SageBuilder::buildLessOrEqualOp($1, $3);
                 }
-                 /*{$$ = make_binary_op (EXPR_LE, $1, $2, $3);}*/
                 | simple_expr EXPR_EQ simple_expr
                  {
                   $$ = SageBuilder::buildEqualityOp($1, $3);
                  }
-                 /*{$$ = make_binary_op (EXPR_EQ, $1, $2, $3);}*/
-                 
                 | simple_expr EXPR_GE simple_expr
                 {
                   $$ = SageBuilder::buildGreaterOrEqualOp($1, $3);
                  }
-                 /*{$$ = make_binary_op (EXPR_GE, $1, $2, $3);}*/
                 | simple_expr EXPR_GT simple_expr
                 {
                   $$ = SageBuilder::buildGreaterThanOp($1, $3);
                  }
-                 /*{$$ = make_binary_op (EXPR_GT, $1, $2, $3);}*/
                 | simple_expr EXPR_NE simple_expr
                 {
                   $$ = SageBuilder::buildNotEqualOp($1, $3);
                  }
-                 /*{$$ = make_binary_op (EXPR_NE, $1, $2, $3);}*/
                 | simple_expr EXPR_AND simple_expr
                 {
                   $$ = SageBuilder::buildBitAndOp($1, $3);
                  }
-                 /*{$$ = make_binary_op (EXPR_AND, $1, $2, $3);}*/
                 | simple_expr EXPR_OR simple_expr
                  {
                   $$ = SageBuilder::buildBitOrOp($1, $3);
                  }
-                 /*{$$ = make_binary_op (EXPR_OR, $1, $2, $3);}*/
                 | simple_expr EXPR_AND_AND simple_expr
                  {
                   $$ = SageBuilder::buildAndOp($1, $3);
                  }
-                 /*{$$ = make_boolean_op (EXPR_AND_AND, $1, $2, $3);}*/
                 | simple_expr EXPR_OR_OR simple_expr
                 {
                   $$ = SageBuilder::buildOrOp($1, $3);
                  }
-                 /*{$$ = make_boolean_op (EXPR_OR_OR, $1, $2, $3);}*/
                 ;
 
 // Arrange for the lexer to return CLOSE_BRACE for `]' by looking ahead
 // one token for an assignment op.
 
 assign_lhs      : simple_expr
-				        {					         
+		 {					         
                    $$ = $1;                          
-				        }
+		 }
                  /*{
                     $$ = new tree_argument_list ($1);
                     $$->mark_as_simple_assign_lhs ();
@@ -936,7 +839,6 @@ assign_expr     : assign_lhs '=' expression
                  {                   
                    $$ = SageBuilder::buildAssignOp($1, $3);                     
                  }
-                 /*{$$ = make_assign_op ('=', $1, $2, $3);}*/
                 | assign_lhs ADD_EQ expression
                  /*{$$ = make_assign_op (ADD_EQ, $1, $2, $3);}*/
                 | assign_lhs SUB_EQ expression
@@ -980,7 +882,7 @@ expression      : simple_expr
 // ================================================
 
 command         :// declaration
-// {$$ = $1;}
+                 // {$$ = $1;}
                  // |
 		select_command
                  /*{$$ = $1;}*/
@@ -1024,7 +926,6 @@ decl1           : decl2
                   {
 		    $$ = SageBuilder::buildExprListExp($1);
                   }
-                 /*{$$ = new tree_decl_init_list ($1);}*/
                 | decl1 decl2
             	  {
             	    SageInterface::appendExpression($1, $2);
@@ -1225,8 +1126,6 @@ except_command  : UNWIND stash_comment opt_sep opt_list CLEANUP
 
 push_fcn_symtab : // empty
                   {
-                    std::cout << "FUNCTION SYMTAB" << std::endl << std::flush;                    
-
                     //The file contains at least one function means it will contain
                     //only functions. Switch scope to global scope instead of main method scope
                     
@@ -1334,7 +1233,6 @@ return_list     : '[' ']'
                  {
                     lexer_flags.looking_at_return_list = false;
                     $$ = SageBuilder::buildExprListExp();
-                    //$$ = new tree_parameter_list ();
                  }
                 | return_list1
                  {
@@ -1351,11 +1249,6 @@ return_list     : '[' ']'
                     lexer_flags.looking_at_return_list = false;
                     
                     $$ = $2;
-
-                    /*if ($2->validate (tree_parameter_list::out))
-                      $$ = $2;
-                    else
-                      ABORT_PARSE;*/
                  }
                 ;
 
@@ -1716,226 +1609,6 @@ opt_sep         : // empty
 
 %%
 
-// Generic error messages.
-
-/*void
-yyerror (const char *s)
-{
-  int err_col = current_input_column - 1;
-
-  std::ostringstream output_buf;
-
-  if (reading_fcn_file || reading_script_file || reading_classdef_file)
-    output_buf << "parse error near line " << input_line_number
-               << " of file " << curr_fcn_file_full_name;
-  else
-    output_buf << "parse error:";
-
-  if (s && strcmp (s, "parse error") != 0)
-    output_buf << "\n\n  " << s;
-
-  output_buf << "\n\n";
-
-  if (! current_input_line.empty ())
-   {
-      size_t len = current_input_line.length ();
-
-      if (current_input_line[len-1] == '\n')
-        current_input_line.resize (len-1);
-
-      // Print the line, maybe with a pointer near the error token.
-
-      output_buf << ">>> " << current_input_line << "\n";
-
-      if (err_col == 0)
-        err_col = len;
-
-      for (int i = 0; i < err_col + 3; i++)
-        output_buf << " ";
-
-      output_buf << "^";
-   }
-
-  output_buf << "\n";
-
-  //std::string msg = output_buf.str ();
-
-  parse_error ("%s", msg.c_str ());
-}*/
-
-// Error mesages for mismatched end tokens.
-/*
-static voidstatic tree_index_expression *
-make_indirect_ref (tree_expression *expr, const std::string& elt)
-{
-  tree_index_expression *retval = 0;
-
-  int l = expr->line ();
-  int c = expr->column ();
-
-  if (expr->is_index_expression ())
-    {
-      tree_index_expression *tmp = static_cast<tree_index_expression *> (expr);
-
-      tmp->append (elt);
-
-      retval = tmp;
-    }
-  else
-    retval = new tree_index_expression (expr, elt, l, c);
-
-  lexer_flags.looking_at_indirect_ref = false;
-
-  return retval;
-}
-end_error (const char *type, token::end_tok_type ettype, int l, int c)
-{
-  static const char *fmt
-    = "`%s' command matched by `%s' near line %d column %d";
-
-  switch (ettype)
-   {
-    case token::simple_end:
-      error (fmt, type, "end", l, c);
-      break;
-
-    case token::for_end:
-      error (fmt, type, "endfor", l, c);
-      break;
-
-    case token::function_end:
-      error (fmt, type, "endfunction", l, c);
-      break;
-
-    case token::classdef_end:
-      error (fmt, type, "endclassdef", l, c);
-      break;
-
-    case token::if_end:
-      error (fmt, type, "endif", l, c);
-      break;
-
-    case token::switch_end:
-      error (fmt, type, "endswitch", l, c);
-      break;
-
-    case token::while_end:
-      error (fmt, type, "endwhile", l, c);
-      break;
-
-    case token::try_catch_end:
-      error (fmt, type, "end_try_catch", l, c);
-      break;
-
-    case token::unwind_protect_end:
-      error (fmt, type, "end_unwind_protect", l, c);
-      break;
-
-    default:
-      panic_impossible ();
-      break;
-   }
-}
-
-// Check to see that end tokens are properly matched.
-
-static bool
-end_token_ok (token *tok, token::end_tok_type expected)
-{
-  bool retval = true;
-
-  token::end_tok_type ettype = tok->ettype ();
-
-  if (ettype != expected && ettype != token::simple_end)
-   {
-      retval = false;
-
-      yyerror ("parse error");
-
-      int l = tok->line ();
-      int c = tok->column ();
-
-      switch (expected)
-       {
-        case token::classdef_end:
-          end_error ("classdef", ettype, l, c);
-          break;
-
-        case token::for_end:
-          end_error ("for", ettype, l, c);
-          break;
-
-        case token::function_end:
-          end_error ("function", ettype, l, c);
-          break;
-
-        case token::if_end:
-          end_error ("if", ettype, l, c);
-          break;
-
-        case token::try_catch_end:
-          end_error ("try", ettype, l, c);
-          break;
-
-        case token::switch_end:
-          end_error ("switch", ettype, l, c);
-          break;
-
-        case token::unwind_protect_end:
-          end_error ("unwind_protect", ettype, l, c);
-          break;
-
-        case token::while_end:
-          end_error ("while", ettype, l, c);
-          break;
-
-        default:
-          panic_impossible ();
-          break;
-       }
-   }
-
-  return retval;
-}
-
-// Maybe print a warning if an assignment expression is used as the
-// test in a logical expression.
-
-static void
-maybe_warn_assign_as_truth_value (tree_expression *expr)
-{
-  if (expr->is_assignment_expression ()
-      && expr->paren_count () < 2)
-   {
-      if (curr_fcn_file_full_name.empty ())
-        warning_with_id
-          ("Octave:assign-as-truth-value",
-           "suggest parenthesis around assignment used as truth value");
-      else
-        warning_with_id
-          ("Octave:assign-as-truth-value",
-           "suggest parenthesis around assignment used as truth value near line %d, column %d in file `%s'",
-           expr->line (), expr->column (), curr_fcn_file_full_name.c_str ());
-   }
-}
-
-// Maybe print a warning about switch labels that aren't constants.
-
-static void
-maybe_warn_variable_switch_label (tree_expression *expr)
-{
-  if (! expr->is_constant ())
-   {
-      if (curr_fcn_file_full_name.empty ())
-        warning_with_id ("Octave:variable-switch-label",
-                         "variable switch label");
-      else
-        warning_with_id
-          ("Octave:variable-switch-label",
-           "variable switch label near line %d, column %d in file `%s'",
-           expr->line (), expr->column (), curr_fcn_file_full_name.c_str ());
-   }
-}*/
 
 static SgExpression*
 make_indirect_ref (SgExpression *className, SgExpression *member)
@@ -1998,8 +1671,6 @@ int beginParse(SgProject* &p, int argc, char* argv[])
 
  if(project == NULL)
  {
-   std::cout << "                          Initializing project: \n" << std::flush;
-
    std::string workingFile(argv[1]);
    workingFile += ".cc";
 
@@ -2032,94 +1703,6 @@ SgIfStmt* getLastIfClause(SgIfStmt* topIfClause)
   return currentIf;
 }
 
-/*void addVariableDeclarations()
-{
-
-  std::cout << "Variable declarations" << std::endl << std::flush;
-  //std::cout << "GETTYPE: " << lexer_flags.getType("c") << std::endl << std::flush;
-
-  for(const auto &declarations : lexer_flags.variableTypes)
-  {
-    std::string typeString = declarations.first;
-
-    std::cout << declarations.first << std::endl << std::flush;
-
-    SgType *type = SageBuilder::buildOpaqueType(typeString, SageBuilder::topScopeStack());
-
-    // if(typeString == "int")
-    // {
-    //   type = SageBuilder::buildIntType();
-    // }
-    // else if(typeString == "double")
-    // {
-    //   type = SageBuilder::buildDoubleType();
-    // }
-
-    for(std::string var : declarations.second)
-    {
-      SgVariableDeclaration* variableDeclaration = SageBuilder::buildVariableDeclaration(var, type);
-      SageInterface::prependStatement(variableDeclaration);
-
-      std::cout << var << "\t" << std::flush;      
-    }
-
-    std::cout << std::endl << std::flush;
-  }  
-}*/
-
-/*
-*Creates a return std::make_tuple statement for multiple return items
-*For a single return item, a return var statement is created
-*/
-/*void manageReturnStatement(SgExprListExp* returnList, SgFunctionDeclaration* fcn)
-{
-  std::cout << "RETURN" << std::endl << std::flush;
-  //std::cout << "size" << returnList->get_expressions().size() << std::endl << std::flush;
-
-  int returnParamsCount = returnList->get_expressions().size();
-
-  std::string returnTypeString;
-  SgType* returnType;
-
-  SgExpression *returnExp;
-
-  if(returnParamsCount == 1)
-  {
-    SgExpression* retvar = returnList->get_expressions()[0];
-
-    std::string retvarName = extractVarName(retvar);
-
-    returnTypeString = lexer_flags.getType(retvarName);
-
-    returnExp = retvar;
-  }
-  else if(returnParamsCount > 1)
-  {
-    //Create a return tuple statement
-    std::vector<std::string> returnListString;    
-
-    for(auto currentRetVar : returnList->get_expressions())
-    {
-      std::string retvarName = extractVarName(currentRetVar);
-
-      returnListString.push_back(lexer_flags.getType(retvarName));      
-    }
-
-    returnTypeString = "std::tuple<" + boost::algorithm::join(returnListString, ", ") + ">";
-
-    returnExp = SageBuilder::buildFunctionCallExp(SageBuilder::buildVarRefExp("std::make_tuple"), returnList);
-  }
-
-  returnType = SageBuilder::buildOpaqueType(returnTypeString, SageBuilder::topScopeStack());
-
-  SgFunctionType *updatedFunctionType = SageBuilder::buildFunctionType(returnType, fcn->get_parameterList());
-  fcn->set_type(updatedFunctionType);
-
-  
-
-  SageInterface::appendStatement(SageBuilder::buildReturnStmt(returnExp));
-}
-*/
 SgName extractVarName(SgExpression* varRefExp)
 {
   return ((SgVarRefExp*)varRefExp)->get_symbol()->get_name();

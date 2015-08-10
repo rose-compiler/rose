@@ -24,12 +24,6 @@ along with Octave; see the file COPYING.  If not, see
 #include <cassert>
 #include "ourtoken.h"
 #include <iostream>
-/*
-#include "error.h"
-#include "oct-obj.h"
-#include "symtab.h"
-#include "ourtoken.h"
-#include "utils.h"*/
 
 token::token (int l, int c)
 {
@@ -40,7 +34,6 @@ token::token (int l, int c)
 
 token::token (const std::string& s, int l, int c)
 {
-  std::cout << "String Token " << s << std::endl << std::flush;
   line_num = l;
   column_num = c;
   type_tag = string_token;
@@ -49,7 +42,6 @@ token::token (const std::string& s, int l, int c)
 
 token::token (double d, const std::string& s, int l, int c)
 {
-  std::cout << "double Token " << d << " id: " << s << std::endl << std::flush;
   line_num = l;
   column_num = c;
   type_tag = double_token;
@@ -59,9 +51,7 @@ token::token (double d, const std::string& s, int l, int c)
 
 token::token (end_tok_type t, int l, int c)
 {
-    std::cout << "Other token " << t << std::endl << std::flush;
-
-  line_num = l;
+   line_num = l;
   column_num = c;
   type_tag = ettype_token;
   et = t;
