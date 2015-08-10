@@ -20,7 +20,11 @@ include $(srcdir)/unparser/PythonCodeGeneration/Makefile_variables
 include $(srcdir)/asmUnparser/Makefile_variables
 include $(srcdir)/unparser/JavaCodeGeneration/Makefile_variables
 include $(srcdir)/unparser/X10CodeGeneration/Makefile_variables
+
+if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
 include $(srcdir)/unparser/MatlabCodeGeneration/Makefile_variables
+matlabCodeGenerationPath=$(srcdir)/unparser/MatlabCodeGeneration#
+endif
 
 unparserPath=$(srcdir)/unparser#
 cxxCodeGenerationPath=$(srcdir)/unparser/CxxCodeGeneration#
@@ -32,13 +36,12 @@ pythonCodeGenerationPath=$(srcdir)/unparser/PythonCodeGeneration#
 asmUnparserPath=$(srcdir)/asmUnparser#
 javaCodeGenerationPath=$(srcdir)/unparser/JavaCodeGeneration#
 x10CodeGenerationPath=$(srcdir)/unparser/X10CodeGeneration#
-matlabCodeGenerationPath=$(srcdir)/unparser/MatlabCodeGeneration#
+
 
 ###############################################################################
 
 INCLUDES=\
 	$(ROSE_INCLUDES)
-
 
 noinst_LTLIBRARIES = libbackend.la
 
