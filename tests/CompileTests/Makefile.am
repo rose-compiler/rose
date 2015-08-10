@@ -82,6 +82,7 @@ if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += Python_tests
 endif
 
+SUBDIRS += Matlab_tests
 SUBDIRS += CudaTests
 
 # Used to check all C and C++ test codes: not really specific to EDG 4.x
