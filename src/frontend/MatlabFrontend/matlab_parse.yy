@@ -1664,8 +1664,6 @@ int beginParse(SgProject* &p, int argc, char* argv[])
    
    std::string workingFile = workingFilePath.filename().string();
    workingFile += ".cc";
-
-   printf(("Parser working file" + workingFile).c_str());
       
    //Create an empty working file
    std::ofstream workingFileStream(workingFile.c_str());
