@@ -12,8 +12,6 @@ SUBDIRS = \
   SageIII \
   X10_ROSE_Connection
 
-SUBDIRS += MatlabFrontend
-
 # Note that CXX and C are either both defined or both undefined.
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += CxxFrontend
@@ -44,6 +42,10 @@ endif
 
 if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += PythonFrontend
+endif
+
+if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
+   SUBDIRS += MatlabFrontend
 endif
 
 SUBDIRS += DLX

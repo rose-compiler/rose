@@ -60,7 +60,7 @@ ROSE_SUPPORT_X10_FRONTEND()
 #  especially if they are conflicting.
 if test "x$USER_GAVE_ENABLE_ONLY_LANGUAGE_CONFIG_OPTION" = "xno" ; then
 AC_ARG_ENABLE([languages],
-               AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,binaries,c,c++,cuda,fortran,java,x10,opencl,php,python (default=all)]),,
+               AS_HELP_STRING([--enable-languages=LIST],[Build specific languages: all,none,binaries,c,c++,cuda,fortran,java,x10,opencl,php,matlab,python (default=all)]),,
                [enableval=all])
 
 	       # Default support for all languages
@@ -297,6 +297,27 @@ AC_ARG_ENABLE([php],
                  	;;
                 esac
                ,)
+AC_ARG_ENABLE([matlab],
+               AS_HELP_STRING([--enable-matlab],[Enable MATLAB language support in ROSE (default=no)]),
+                echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "matlab"
+                if test $? = 0 ; then 
+                  list_has_matlab=yes
+                fi
+                case "$enableval" in
+                  [yes)]
+                  	if test "x$list_has_matlab" != "xyes" ; then
+                  	  LANGUAGES_TO_SUPPORT+=" matlab"
+                        fi
+                  	;;
+                  [no)]
+                        # remove 'MATLAB' from support languages list
+                  	LANGUAGES_TO_SUPPORT="`echo $LANGUAGES_TO_SUPPORT | sed 's/matlab//g'`"
+                  	;;
+                  [*)]
+                  	[AC_MSG_FAILURE([--enable-matlab='$enableval' is not supported. Use 'yes' or 'no'])]
+                 	;;
+                esac
+               ,)	       
 AC_ARG_ENABLE([python],
                AS_HELP_STRING([--enable-python],[Enable Python language support in ROSE (default=no)]),
                 echo "$LANGUAGES_TO_SUPPORT" | grep --quiet "python"
@@ -403,6 +424,7 @@ none|no)
 	support_java_frontend=no
 	support_x10_frontend=no
 	support_php_frontend=no
+	support_matlab_frontend=no
 	support_python_frontend=no
 	support_opencl_frontend=no
         with_haskell=no
@@ -461,6 +483,10 @@ php)
 	support_php_frontend=yes
 	AC_DEFINE([ROSE_BUILD_PHP_LANGUAGE_SUPPORT], [], [Build ROSE to support the PHP langauge])
 	;;
+matlab)
+	support_matlab_frontend=yes
+	AC_DEFINE([ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT], [], [Build ROSE to support the MATLAB langauge])
+	;;
 python)
 	support_python_frontend=yes
 	AC_DEFINE([ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT], [], [Build ROSE to support the Python langauge])
@@ -515,6 +541,7 @@ elif test $count_of_languages_to_support = 1 ; then
 
     with_haskell=no
     with_php=no
+    with_matlab=no
     enable_python=no
     enable_binary_analysis_tests=no
 
@@ -550,6 +577,7 @@ elif test $count_of_languages_to_support = 1 ; then
     # So these should be expressed in terms of the "with" and "enable" versions of each option's macro.
     # without_php=yes
     with_php=no
+    with_matlab=no
     enable_python=no
 
     # disable_binary_analysis_tests=yes
@@ -593,6 +621,15 @@ elif test $count_of_languages_to_support = 1 ; then
     enable_tutorial_directory=no
   fi
 
+  #
+  #Only Matlab
+  #
+  if test "x$support_matlab_frontend" = "xyes" ; then
+    with_haskell=no
+    enable_binary_analysis_tests=no
+    enable_projects_directory=no
+    enable_tutorial_directory=no
+  fi  
   #
   # Only Python
   #
@@ -667,6 +704,15 @@ elif test $count_of_languages_to_support = 1 ; then
   fi
 
   #
+  # Matlab
+  #
+  if test "x$with_matlab" = "xyes" ; then
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] with Matlab"
+  elif test "x$with_matlab" = "xno" ; then
+    echo "[[$LANGUAGES_TO_SUPPORT-only support]] without Matlab"
+  fi
+  
+  #
   # Python
   #
   if test "x$enable_python" = "xyes" ; then
@@ -730,6 +776,7 @@ AM_CONDITIONAL(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT, [test "x$support_fortran_fro
 AM_CONDITIONAL(ROSE_BUILD_JAVA_LANGUAGE_SUPPORT, [test "x$support_java_frontend" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_X10_LANGUAGE_SUPPORT, [test "x$support_x10_frontend" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_PHP_LANGUAGE_SUPPORT, [test "x$support_php_frontend" = xyes])
+AM_CONDITIONAL(ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT, [test "x$support_matlab_frontend" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT, [test "x$support_python_frontend" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT, [test "x$support_binaries_frontend" = xyes])
 AM_CONDITIONAL(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT, [test "x$support_cuda_frontend" = xyes])
@@ -786,6 +833,13 @@ fi
 
 AC_MSG_CHECKING([if the PHP frontend is enabled])
 if test "x$support_php_frontend" = "xyes"; then
+  AC_MSG_RESULT([yes])
+else
+  AC_MSG_RESULT([no])
+fi
+
+AC_MSG_CHECKING([if the Matlab frontend is enabled])
+if test "x$support_matlab_frontend" = "xyes"; then
   AC_MSG_RESULT([yes])
 else
   AC_MSG_RESULT([no])
