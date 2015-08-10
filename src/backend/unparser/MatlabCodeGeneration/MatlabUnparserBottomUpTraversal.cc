@@ -292,7 +292,10 @@ std::string MatlabUnparserBottomUpTraversal::handleSourceFile(SgNode *node, Synt
   SgSourceFile *sourceFile = isSgSourceFile(node);
 
   boost::filesystem::path sourceFilePath(sourceFile->getFileName());
+  printf(("UNPARSER: source file: " + sourceFilePath.string()).c_str());
   std::string unparsedFileName = "rose_" + sourceFilePath.stem().string();
+
+  printf(("UNPARSER: output file = " + unparsedFileName).c_str());
   
   std::ofstream unparsedFile(unparsedFileName.c_str());
 

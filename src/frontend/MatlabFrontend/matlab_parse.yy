@@ -34,17 +34,9 @@ along with Octave; see the file COPYING.  If not, see
 #define YYDEBUG 1
 
 #include <cassert>
-#include <cstdio>
-#include <cstring>
 #include <cstdlib>
-#include <typeinfo>
-
 #include <iostream>
-#include <map>
-#include <sstream>
-#include <stack>
-#include <boost/algorithm/string/join.hpp>
-#include <vector>
+#include <boost/filesystem.hpp>
 
 #include "input.h"
 #include "lex.h"
@@ -1656,14 +1648,6 @@ recover_from_parsing_function ()
   lexer_flags.looking_at_parameter_list = false;
 }
 
-/*static SgStatementList*
-append_statement_list (SgStatementList* list, SgStatement* stmt)
-{  
-  list->Append (stmt);
-
-  return list;
-}*/
-
 int beginParse(SgProject* &p, int argc, char* argv[])
 { 
   parsingScriptFile = true;
@@ -1671,9 +1655,19 @@ int beginParse(SgProject* &p, int argc, char* argv[])
 
  if(project == NULL)
  {
-   std::string workingFile(argv[1]);
+   //Even if the input file is matlab, we use .cc file as our background file
+   //rose_fileName.m is produced as a backend for Matlab's unparser
+   //whereas rose_fileName.cc is produced as a backend for Matlab's C++ unparser
+
+   //The file is always created on the current directory
+   boost::filesystem::path workingFilePath(argv[1]);
+   
+   std::string workingFile = workingFilePath.filename().string();
    workingFile += ".cc";
 
+   printf(("Parser working file" + workingFile).c_str());
+      
+   //Create an empty working file
    std::ofstream workingFileStream(workingFile.c_str());
    workingFileStream.close();
    

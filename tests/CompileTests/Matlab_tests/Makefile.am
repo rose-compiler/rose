@@ -37,6 +37,6 @@ check-local:
 	@echo "***********************************************************************************************"
 
 clean-local:
-	rm -f rose_*.m truncated_*
+	rm -f rose_*.m truncated_* *.m.cc
 
 EXTRA_DIST = $(ALL_MATLAB_TESTCODES)
