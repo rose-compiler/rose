@@ -128,7 +128,7 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
       ROSE_ASSERT(_transferFunctions);
       _transferFunctions->transfer(_labeler->getLabel(*i),*elem);
     } else {
-      cout<<"INFO: filtered from initial state: "<<(*i)->unparseToString()<<endl;
+      //cout<<"INFO: filtered from initial state: "<<(*i)->unparseToString()<<endl;
     }
   }
   cout << "INIT: initial element: ";
@@ -150,6 +150,7 @@ DFAnalysisBase::normalizeProgram(SgProject* root) {
   cout<<"STATUS: Normalizing function calls in expressions."<<endl;
   fn.visit(root);
 }
+
 
 void
 DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/* = false*/) {
@@ -210,6 +211,7 @@ void DFAnalysisBase::initializeTransferFunctions() {
     _transferFunctions->setPointerAnalysis(_pointerAnalysisEmptyImplementation);
   else
     _transferFunctions->setPointerAnalysis(_pointerAnalysisInterface);
+  _transferFunctions->addParameterPassingVariables();
 }
 
 void DFAnalysisBase::setPointerAnalysis(PointerAnalysisInterface* pa) {
