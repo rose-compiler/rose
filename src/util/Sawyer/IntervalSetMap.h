@@ -171,7 +171,19 @@ public:
      *
      *  Erases the specified @p value from all sets over the specified @p interval of keys. Any sets that become empty are
      *  removed from the map as if @c erase had been called on that sub-interval. */
-    void erase(const Interval &interval, const typename Set::Value &value) {
+    bool erase(const Interval &interval, const typename Set::Value &value) {
+        Set set;
+        set.insert(value);
+        return erase(interval, set);
+    }
+
+    /** Erase specified values from the sets of an interval.
+     *
+     *  Erases the specified values from all sets over the specified @p interval of keys. Any sets that become empty are
+     *  removed from the map as if single-argument @c erase hd been called on that sub-interval.  Returns true if any values
+     *  were erased, false if none of the values were members of the affected sets. */
+    bool erase(const Interval &interval, const Set &values) {
+        bool isErased = false;
         Interval worklist = interval;
         while (!worklist.isEmpty()) {
             typename Super::ConstNodeIterator iter = this->findFirstOverlap(worklist);
@@ -182,19 +194,34 @@ public:
             } else {
                 Interval work = worklist.intersection(iter->key());
                 Set set = this->get(work.least());
-                if (set.erase(value))
+                if (set.erase(values)) {
                     replace(work, set);
+                    isErased = true;
+                }
                 if (work == worklist)
                     break;
                 worklist = Interval::hull(work.greatest()+1, worklist.greatest());
             }
         }
+        return isErased;
     }
 
     /** Insert one value to the sets of an interval.
      *
-     *  Inserts the specified @p value to all sets in the @p interval of keys. */
-    void insert(const Interval &interval, const typename Set::Value &value) {
+     *  Inserts the specified @p value to all sets in the @p interval of keys. Returns true if the value was inserted anywhere,
+     *  false if the value already existed everywhere. */
+    bool insert(const Interval &interval, const typename Set::Value &value) {
+        Set set;
+        set.insert(value);
+        return insert(interval, set);
+    }
+
+    /** Insert a set of values into the sets of an interval.
+     *
+     *  Inserts the specified values into all sets in the @p interval of keys.  Returns true if any value was inserted
+     *  anywhere, false if all values already existed in the sets of all specified keys. */
+    bool insert(const Interval &interval, const Set &values) {
+        bool isInserted = false;
         Interval worklist = interval;
         while (!worklist.isEmpty()) {
             typename Super::ConstNodeIterator iter = this->findFirstOverlap(worklist);
@@ -208,14 +235,17 @@ public:
                 work = worklist.intersection(iter->key());
                 set = this->get(work.least());
             }
-            if (set.insert(value))
+            if (set.insert(values)) {
                 Super::insert(work, set);
+                isInserted = true;
+            }
             if (work == worklist)
                 break;
             worklist = Interval::hull(work.greatest()+1, worklist.greatest());
         }
+        return isInserted;
     }
-
+    
     /** Replace sets with a new set.
      *
      *  Replaces sets for keys in the specified @p interval with the specified @p set. */
