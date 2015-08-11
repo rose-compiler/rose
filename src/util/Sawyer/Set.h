@@ -180,6 +180,19 @@ public:
         return set_.insert(value).second;
     }
 
+    /** Insert multiple values.
+     *
+     *  Inserts all specified values into this set. Returns true if any value was inserted, false if all the values were
+     *  already members of this set. */
+    bool insert(const Set &values) {
+        bool isInserted = false;
+        BOOST_FOREACH (const Value &value, values.values()) {
+            if (set_.insert(value).second)
+                isInserted = true;
+        }
+        return isInserted;
+    }
+
     /** Erase a value.
      *
      *  Erases @p value from the set. Returns true if the value was erased, false if the value was not a member. */
@@ -187,6 +200,19 @@ public:
         return 1 == set_.erase(value);
     }
 
+    /** Erase multiple values.
+     *
+     *  Erases all specified values from this set. Returns true if any value was erased, false if none of the specified values
+     *  were members of this set. */
+    bool erase(const Set &values) {
+        bool isErased = false;
+        BOOST_FOREACH (const Value &value, values.values()) {
+            if (1 == set_.erase(value))
+                isErased = true;
+        }
+        return isErased;
+    }
+    
     /** Erase all values.
      *
      *  Erases all values from the set so that the set becomes empty. */
