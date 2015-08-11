@@ -212,12 +212,6 @@ public:
     
 public:
     bool merge(const Ptr &other);                       // merge other into this, returning true iff changed
-    bool mergeDefiners(BaseSemantics::SValuePtr &dstValue /*in,out*/, const BaseSemantics::SValuePtr &srcValue) const;
-    bool mergeSValues(BaseSemantics::SValuePtr &dstValue /*in,out*/, const BaseSemantics::SValuePtr &srcValue) const;
-    bool mergeRegisterStates(const BaseSemantics::RegisterStateGenericPtr &dstState,
-                             const BaseSemantics::RegisterStateGenericPtr &srcState) const;
-    bool mergeMemoryStates(const BaseSemantics::MemoryCellListPtr &dstState,
-                           const BaseSemantics::MemoryCellListPtr &srcState) const;
 
 private:
     void init();

@@ -15,6 +15,12 @@ namespace ConcreteSemantics {
 //                                      SValue
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+BaseSemantics::SValuePtr
+SValue::merge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
+    // There's no official way to represent BOTTOM
+    throw BaseSemantics::NotImplemented("SValue merging for ConcreteSemantics is not supported", NULL);
+}
+
 void
 SValue::bits(const Sawyer::Container::BitVector &newBits) {
     ASSERT_require(newBits.size() == bits_.size());
@@ -130,6 +136,12 @@ MemoryState::writeMemory(const BaseSemantics::SValuePtr &addr_, const BaseSemant
     if (!map_.at(addr).exists())
         allocatePage(addr);
     map_.at(addr).limit(1).write(&value);
+}
+
+bool
+MemoryState::merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
+                   BaseSemantics::RiscOperators *valOps) {
+    throw BaseSemantics::NotImplemented("MemoryState merging for ConcreteSemantics is not supported", NULL);
 }
 
 void

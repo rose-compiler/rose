@@ -138,6 +138,8 @@ public:
             retval->set_width(new_width);
         return retval;
     }
+
+    virtual BaseSemantics::SValuePtr merge(const BaseSemantics::SValuePtr &other, SMTSolver*) const ROSE_OVERRIDE;
     
     /** Virtual allocating constructor. Creates a new semantic value with full control over all aspects of the value. */
     virtual BaseSemantics::SValuePtr create(size_t nbits, uint64_t name, uint64_t offset, bool negate) const {

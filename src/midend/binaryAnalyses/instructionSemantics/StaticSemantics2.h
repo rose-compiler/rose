@@ -140,6 +140,9 @@ public:
             retval->set_width(new_width);
         return retval;
     }
+    virtual BaseSemantics::SValuePtr merge(const BaseSemantics::SValuePtr&, SMTSolver*) const ROSE_OVERRIDE {
+        throw BaseSemantics::NotImplemented("StaticSemantics is not suitable for dataflow analysis", NULL);
+    }
 
 public:
     /** Promote a base value to a static semantics value. */

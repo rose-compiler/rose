@@ -23,6 +23,12 @@ Formatter::rename(uint64_t orig_name)
  *                                      SValue
  *******************************************************************************************************************************/
 
+BaseSemantics::SValuePtr
+SValue::merge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
+    // There's no official way to represent BOTTOM
+    throw BaseSemantics::NotImplemented("SValue merging for PartialSymbolicSemantics is not supported", NULL);
+}
+
 bool
 SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const 
 {

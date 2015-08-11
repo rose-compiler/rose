@@ -71,6 +71,9 @@ public:
             retval->set_width(new_width);
         return retval;
     }
+    virtual BaseSemantics::SValuePtr merge(const BaseSemantics::SValuePtr &other, SMTSolver*) const ROSE_OVERRIDE {
+        return SValuePtr();
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casting
@@ -139,6 +142,10 @@ public:
         return retval;
     }
 
+    virtual bool merge(const BaseSemantics::RegisterStatePtr &other_, BaseSemantics::RiscOperators*) {
+        return false;
+    }
+
     virtual void clear() ROSE_OVERRIDE {}
     virtual void zero() ROSE_OVERRIDE {}
 
@@ -202,6 +209,8 @@ public:
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {}
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE {}
+    virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
+                       BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE { return false; }
 };
 
 

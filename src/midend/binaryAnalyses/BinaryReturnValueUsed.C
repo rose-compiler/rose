@@ -109,6 +109,9 @@ public:
     virtual BaseSemantics::RegisterStatePtr clone() const ROSE_OVERRIDE {
         return RegisterStatePtr(new RegisterState(*this));
     }
+    virtual bool merge(const BaseSemantics::RegisterStatePtr &other, BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
+        throw BaseSemantics::NotImplemented("ReturnValueUsed semantics is not suitable for dataflow", NULL);
+    }
     virtual void clear()ROSE_OVERRIDE {
         wroteValue_ = readUninitialized_ = false;
     }
@@ -137,6 +140,7 @@ public:
     bool readUninitialized() {
         return readUninitialized_;
     }
+
 };
     
 // The actual analysis for a function call starting at a function call return point and terminating each path whenever we reach

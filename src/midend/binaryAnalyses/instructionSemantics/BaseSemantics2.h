@@ -517,6 +517,13 @@ public:
      *  most significant side of the value. */
     virtual SValuePtr copy(size_t new_width=0) const = 0;
 
+    /** Create a new value by merging two existing values.
+     *
+     *  This constructor is used by dataflow analysis.  If @p other and @p this are "equal" in some sense for dataflow
+     *  depending on the subclass' implementation, then a null pointer is returned since no merge is required. Dataflow engines
+     *  will assume that a merge was performed if and only if the return value is non-null. */
+    virtual SValuePtr merge(const SValuePtr &other, SMTSolver*) const = 0;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts. No-ops since this is the base class
 public:
@@ -679,6 +686,11 @@ public:
 
     /** Set all registers to the zero. */
     virtual void zero() = 0;
+
+    /** Merge register states for data flow analysis.
+     *
+     *  Merges the @p other state into this state, returning true if this state changed. */
+    virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) = 0;
 
     /** Read a value from a register. The register descriptor, @p reg, not only describes which register, but also which bits
      * of that register (e.g., "al", "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to
@@ -845,6 +857,7 @@ public:
     virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
+    virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first defined at this level of the class hierarchy
@@ -901,6 +914,12 @@ public:
      * that are stored in the state. This does not return the value of any parts of stored registers--one gets that with
      * readRegister(). The return value does not contain any bits that are not part of the specified register. */
     virtual ExtentMap stored_parts(const RegisterDescriptor&) const;
+
+    /** Find stored registers overlapping with specified register.
+     *
+     *  Returns all stored registers that overlap with the specified register.  The registers in the returned vector will never
+     *  overlap with each other, but they will all overlap with the specified register. */
+    virtual RegPairs overlappingRegisters(const RegisterDescriptor&) const;
 
     /** Cause a register to not be stored.  Erases all record of the specified register. The RiscOperators pointer is used for
      *  its extract operation if the specified register is not exactly stored in the state, such as if the state
@@ -966,22 +985,30 @@ public:
 
     /** Insert writer information.
      *
-     *  Adds the specified instruction address as a writer of the specified register.  Any previously existing writer addresses
-     *  are not affected. */
-    virtual void insertWriter(const RegisterDescriptor&, rose_addr_t writerVa);
-
-    /** Erase specified writer.
+     *  Adds the specified instruction addresses as writers of the specified register.  Any previously existing writer
+     *  addresses are not affected. Returns true if any addresses were inserted, false if they all already existed.
      *
-     *  Removes the specified address from the set of writers for the register without affecting other addresses that might
-     *  also be present. */
-    virtual void eraseWriter(const RegisterDescriptor&, rose_addr_t writerVa);
+     * @{ */
+    bool insertWriter(const RegisterDescriptor&, rose_addr_t writerVa) ROSE_FINAL;
+    virtual bool insertWriters(const RegisterDescriptor&, const AddressSet &writerVas);
+    /** @} */
+
+    /** Erase specified writers.
+     *
+     *  Removes the specified addresses from the set of writers for the register without affecting other addresses that might
+     *  also be present. Returns true if none of the writer addresses existed, false if any were removed.
+     *
+     * @{ */
+    void eraseWriter(const RegisterDescriptor&, rose_addr_t writerVa) ROSE_FINAL;
+    virtual void eraseWriters(const RegisterDescriptor&, const AddressSet &writerVas);
+    /** @} */
 
     /** Set writer information.
      *
      *  Changes the writer information to be exactly the specified address or set of addresses.
      *
      * @{ */
-    virtual void setWriters(const RegisterDescriptor&, rose_addr_t writerVa);
+    void setWriter(const RegisterDescriptor&, rose_addr_t writerVa) ROSE_FINAL;
     virtual void setWriters(const RegisterDescriptor&, const AddressSet &writers);
     /** @} */
 
@@ -999,25 +1026,9 @@ public:
     // The following writers API is deprecated.
     //------------------------------------------
 
-    /** Set the writer for the specified register. Each register (major-minor pair) is able to store a virtual address for each
-     *  bit of the register.  By convention, this data member stores the virtual address of the instruction that most recently
-     *  wrote a value to those bits. */
     virtual void set_latest_writer(const RegisterDescriptor&, rose_addr_t writer_va) ROSE_DEPRECATED("use setWriters instead");
-
-    /** Clear the writer for the specified register.  Information about the virtual address of the instruction that most
-     *  recently wrote a value to the specified register is removed from the register.  The value of the register is not
-     *  affected by this call, but the last-writer information is adjusted so it looks like no instruction wrote the bits to
-     *  the specified register. See also, set_latest_writer(). */
     virtual void clear_latest_writer(const RegisterDescriptor&) ROSE_DEPRECATED("use eraseWriters instead");
-
-    /** Clear all information about latest writers for all registers. */
     virtual void clear_latest_writers() ROSE_DEPRECATED("use eraseWriters instead");
-
-    /** Obtain the set of virtual addresses stored as the latest writers for a register.  A register may have more than one
-     *  writer if the register's value was written in parts (such as when requesting the writers for x86 AX when separate
-     *  instructions wrote to AL and AH. A register may have no writers if the writer information has been cleared (via
-     *  clear_latest_writer()), or no data has ever been written to the register, or data has been written but no writer was
-     *  specified. */
     virtual std::set<rose_addr_t> get_latest_writers(const RegisterDescriptor&) const
         ROSE_DEPRECATED("use getWritersUnion instead");
 
@@ -1150,6 +1161,7 @@ public:
     virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
+    virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
@@ -1252,6 +1264,11 @@ public:
     void set_byteOrder(ByteOrder::Endianness bo) { byteOrder_ = bo; }
     /** @} */
 
+    /** Merge memory states for data flow analysis.
+     *
+     *  Merges the @p other state into this state, returning true if this state changed. */
+    virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) = 0;
+
     /** Read a value from memory.
      *
      *  Consults the memory represented by this MemoryState object and returns a semantic value. Depending on the semantic
@@ -1326,12 +1343,19 @@ typedef boost::shared_ptr<class MemoryCell> MemoryCellPtr;
 
 /** Represents one location in memory.
  *
- *  Each memory cell has an address and a value. MemoryCell objects are used by the MemoryCellList to represent a memory
- *  state. */
+ *  MemoryCell objects are used by the MemoryCellList to represent a memory state. Each memory cell has an address and a
+ *  value. A cell also has an optional list of instruction addresses that wrote to that cell, and this list is manipulated by
+ *  the @ref RiscOperators separately from updating cell addresses and values and according to settings in the
+ *  RiscOperators. Cells written to by RiscOperators typically contain one writer address since each write operation creates a
+ *  new cell; however, the result of a dataflow merge operation might produce cells that have multiple writers. */
 class MemoryCell: public boost::enable_shared_from_this<MemoryCell> {
+public:
+    typedef Sawyer::Container::Set<rose_addr_t> AddressSet; /**< A set of concrete virtual addresses. */
+
+private:
     SValuePtr address_;                                 // Address of memory cell.
     SValuePtr value_;                                   // Value stored at that address.
-    Sawyer::Optional<rose_addr_t> latestWriter_;        // Optional address for most recent writer of this cell's value.
+    AddressSet writers_;                                // Instructions that wrote to this cell
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -1346,7 +1370,7 @@ protected:
     MemoryCell(const MemoryCell &other) {
         address_ = other.address_->copy();
         value_ = other.value_->copy();
-        latestWriter_ = other.latestWriter_;
+        writers_ = other.writers_;
     }
 
 public:
@@ -1407,24 +1431,82 @@ public:
     }
     /** @}*/
 
-    /** Accessor for the last writer for a memory location.  Each memory cell is able to store an optional virtual address to
-     *  describe the most recent instruction that wrote to this memory location.
-     * @{ */
-    virtual boost::optional<rose_addr_t> get_latest_writer() const ROSE_DEPRECATED("use latestWriter instead") {
-        return latestWriter_ ? boost::optional<rose_addr_t>(*latestWriter_) : boost::optional<rose_addr_t>();
-    }
-    virtual void set_latest_writer(rose_addr_t writer_va) ROSE_DEPRECATED("use latestWriter instead") {
-        latestWriter_ = writer_va;
-    }
-    virtual void clear_latest_writer() ROSE_DEPRECATED("use clearLatestWriter instead") {
-        latestWriter_ = Sawyer::Nothing();
+    /** Get writer information.
+     *
+     *  Returns all instruction addresses that have written to the specified memory address. */
+    virtual AddressSet getWriters() const {
+        return writers_;
     }
 
-    virtual Sawyer::Optional<rose_addr_t> latestWriter() const { return latestWriter_; }
-    virtual void latestWriter(rose_addr_t writerVa) { latestWriter_ = writerVa; }
-    virtual void latestWriter(const Sawyer::Optional<rose_addr_t> w) { latestWriter_ = w; }
-    virtual void clearLatestWriter() { latestWriter_ = Sawyer::Nothing(); }
+    /** Insert writer information.
+     *
+     *  Insert the specified instruction addresses as writers for this memory cell. Returns true if any address was inserted,
+     *  false if they were all already members.
+     *
+     * @{ */
+    bool insertWriter(rose_addr_t writerVa) ROSE_FINAL { return writers_.insert(writerVa); }
+    virtual bool insertWriters(const AddressSet &writerVas) { return writers_.insert(writerVas); }
     /** @} */
+
+    /** Erase specified writers.
+     *
+     *  Removes the specified addresses from the set of writers for this memory cell. Returns true if none of the writer
+     *  addresses existed, false if any were removed.
+     *
+     * @{ */
+    bool eraseWriter(rose_addr_t writerVa) ROSE_FINAL { return writers_.erase(writerVa); }
+    virtual bool eraseWriters(const AddressSet &writerVas) { return writers_.erase(writerVas); }
+    /** @} */
+
+    /** Sets writer information.
+     *
+     *  Changes writer information to be excactly the specified address or set of addresses.
+     *
+     * @{ */
+    void setWriter(rose_addr_t writerVa) ROSE_FINAL;
+    virtual void setWriters(const AddressSet &writerVas) { writers_.insert(writerVas); }
+    /** @} */
+
+    /** Erase all writers.
+     *
+     *  Erases all writer information for this memory cell. */
+    virtual void eraseWriters() { writers_.clear(); }
+
+    //----------------------------------------------------------------------
+    // The following writers API is deprecated. [Robb P. Matzke 2015-08-10]
+    //----------------------------------------------------------------------
+
+    virtual boost::optional<rose_addr_t> get_latest_writer() const ROSE_DEPRECATED("use getWriters instead") {
+        AddressSet vas = getWriters();
+        if (vas.isEmpty())
+            return boost::optional<rose_addr_t>();
+        return *vas.values().begin();                   // return an arbitrary writer
+    }
+    virtual void set_latest_writer(rose_addr_t writer_va) ROSE_DEPRECATED("use setWriter instead") {
+        setWriter(writer_va);
+    }
+    virtual void clear_latest_writer() ROSE_DEPRECATED("use clearWriters instead") {
+        eraseWriters();
+    }
+    virtual Sawyer::Optional<rose_addr_t> latestWriter() const ROSE_DEPRECATED("use getWriters instead") {
+        AddressSet vas = getWriters();
+        if (vas.isEmpty())
+            return Sawyer::Nothing();
+        return *vas.values().begin();                   // return an arbitrary writer
+    }
+    virtual void latestWriter(rose_addr_t writerVa) ROSE_DEPRECATED("use setWriter instead") {
+        setWriter(writerVa);
+    }
+    virtual void latestWriter(const Sawyer::Optional<rose_addr_t> w) ROSE_DEPRECATED("use setWriter instead") {
+        if (w) {
+            setWriter(*w);
+        } else {
+            eraseWriters();
+        }
+    }
+    virtual void clearLatestWriter() ROSE_DEPRECATED("use eraseWrites instead") {
+        eraseWriters();
+    }
 
     /** Determines whether two memory cells can alias one another.  Two cells may alias one another if it is possible that
      *  their addresses cause them to overlap.  For cells containing one-byte values, aliasing may occur if their two addresses
@@ -1489,7 +1571,8 @@ typedef boost::shared_ptr<class MemoryCellList> MemoryCellListPtr;
  *  beginning of the list.  Subclasses, of course, are free to reorder the list however they want. */
 class MemoryCellList: public MemoryState {
 public:
-    typedef std::list<MemoryCellPtr> CellList;
+    typedef std::list<MemoryCellPtr> CellList;          /**< List of memory cells. */
+    typedef Sawyer::Container::Set<rose_addr_t> AddressSet; /**< Set of concrete virtual addresses. */
 protected:
     MemoryCellPtr protocell;                            // prototypical memory cell used for its virtual constructors
     CellList cells;                                     // list of cells in reverse chronological order
@@ -1577,6 +1660,8 @@ public:
         latest_written_cell.reset();
     }
 
+    virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+
     /** Read a value from memory.
      *
      *  See BaseSemantics::MemoryState() for requirements.  This implementation scans the reverse chronological cell list until
@@ -1654,9 +1739,22 @@ public:
     /** Returns the cell most recently written. */
     virtual MemoryCellPtr get_latest_written_cell() const { return latest_written_cell; }
 
-    /** Returns the union of writer virtual addresses for cells that may alias the given address. */
+    /** Writers for an address.
+     *
+     *  Returns the set of all writers that wrote to the specified address or any address that might alias the specified
+     *  address. */
+    virtual AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps);
+
+    /** Writers for an address.
+     *
+     *  Returns the set of all writers that wrote to the specified address and any address that might alias the specified
+     *  address. */
+    virtual AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                              RiscOperators *valOps);
+    
     virtual std::set<rose_addr_t> get_latest_writers(const SValuePtr &addr, size_t nbits,
-                                                     RiscOperators *addrOps, RiscOperators *valOps);
+                                                     RiscOperators *addrOps, RiscOperators *valOps)
+        ROSE_DEPRECATED("use getWritersUnion instead");
 };
 
 /******************************************************************************************************************
@@ -1861,6 +1959,13 @@ public:
     WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
     WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
     /** @} */
+
+    /** Merge operation for data flow analysis.
+     *
+     *  Merges the @p other state into this state. Returns true if this state changed, false otherwise.  This method usually
+     *  isn't overridden in subclasses since all the base implementation does is invoke the merge operation on the memory state
+     *  and register state. */
+    virtual bool merge(const StatePtr &other, RiscOperators *ops);
 };
 
 /******************************************************************************************************************

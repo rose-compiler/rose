@@ -415,11 +415,37 @@ RegisterStateGeneric::stored_parts(const RegisterDescriptor &desc) const
     return retval;
 }
 
-void
+RegisterStateGeneric::RegPairs
+RegisterStateGeneric::overlappingRegisters(const RegisterDescriptor &needle) const {
+    ASSERT_require(needle.is_valid());
+    RegPairs retval;
+    BitRange want = BitRange::baseSize(needle.get_offset(), needle.get_nbits());
+    Registers::const_iterator ri = registers.find(needle);
+    if (ri != registers.end()) {
+        BOOST_FOREACH (const RegPair &regValuePair, ri->second) {
+            const RegisterDescriptor haystack = regValuePair.desc;
+            BitRange have = BitRange::baseSize(haystack.get_offset(), haystack.get_nbits());
+            if (have.isOverlapping(want))
+                retval.push_back(regValuePair);
+        }
+    }
+    return retval;
+}
+
+bool
 RegisterStateGeneric::insertWriter(const RegisterDescriptor &desc, rose_addr_t writerVa) {
     WrittenParts &parts = writers.insertMaybe(desc, WrittenParts());
     BitRange where = BitRange::baseSize(desc.get_offset(), desc.get_nbits());
-    parts.insert(where, writerVa);
+    return parts.insert(where, writerVa);
+}
+
+bool
+RegisterStateGeneric::insertWriters(const RegisterDescriptor &desc, const AddressSet &writerVas) {
+    if (writerVas.isEmpty())
+        return false;
+    WrittenParts &parts = writers.insertMaybe(desc, WrittenParts());
+    BitRange where = BitRange::baseSize(desc.get_offset(), desc.get_nbits());
+    return parts.insert(where, writerVas);
 }
 
 void
@@ -434,7 +460,18 @@ RegisterStateGeneric::eraseWriter(const RegisterDescriptor &desc, rose_addr_t wr
 }
 
 void
-RegisterStateGeneric::setWriters(const RegisterDescriptor &desc, rose_addr_t writerVa) {
+RegisterStateGeneric::eraseWriters(const RegisterDescriptor &desc, const AddressSet &writerVas) {
+    if (writerVas.isEmpty() || !writers.exists(desc))
+        return;
+    WrittenParts &parts = writers[desc];
+    BitRange where = BitRange::baseSize(desc.get_offset(), desc.get_nbits());
+    parts.erase(where, writerVas);
+    if (parts.isEmpty())
+        writers.erase(desc);
+}
+
+void
+RegisterStateGeneric::setWriter(const RegisterDescriptor &desc, rose_addr_t writerVa) {
     AddressSet writersSet;
     writersSet.insert(writerVa);
     setWriters(desc, writersSet);
@@ -451,7 +488,7 @@ RegisterStateGeneric::setWriters(const RegisterDescriptor &desc, const AddressSe
 void
 RegisterStateGeneric::set_latest_writer(const RegisterDescriptor &desc, rose_addr_t writer_va)
 {
-    setWriters(desc, writer_va);
+    setWriter(desc, writer_va);
 }
 
 void
@@ -503,6 +540,43 @@ RegisterStateGeneric::get_latest_writers(const RegisterDescriptor &desc) const
     AddressSet writerVas = getWritersUnion(desc);
     std::set<rose_addr_t> retval(writerVas.values().begin(), writerVas.values().end());
     return retval;
+}
+
+bool
+RegisterStateGeneric::merge(const BaseSemantics::RegisterStatePtr &other_, RiscOperators *ops) {
+    ASSERT_not_null(ops);
+    RegisterStateGenericPtr other = boost::dynamic_pointer_cast<RegisterStateGeneric>(other_);
+    ASSERT_not_null(other);
+    bool changed = false;
+
+    // Merge values stored in registers.
+    BOOST_FOREACH (const RegPair &otherRegVal, other->get_stored_registers()) {
+        const RegisterDescriptor &otherReg = otherRegVal.desc;
+        const BaseSemantics::SValuePtr &otherValue = otherRegVal.value;
+        if (is_partly_stored(otherReg)) {
+            BaseSemantics::SValuePtr thisValue = readRegister(otherReg, ops);
+            if (BaseSemantics::SValuePtr mergedValue = thisValue->merge(otherValue, ops->get_solver())) {
+                writeRegister(otherReg, mergedValue, ops);
+                changed = true;
+            }
+        } else {
+            writeRegister(otherReg, otherValue, ops);
+            changed = true;
+        }
+    }
+
+    // Merge writer sets.
+    BOOST_FOREACH (const WritersMap::Node &wmNode, other->writers.nodes()) {
+        const WrittenParts &otherWriters = wmNode.value();
+        WrittenParts &thisWriters = writers.insertMaybeDefault(wmNode.key());
+        BOOST_FOREACH (const WrittenParts::Node &otherWritten, otherWriters.nodes()) {
+            bool inserted = thisWriters.insert(otherWritten.key(), otherWritten.value());
+            if (inserted)
+                changed = true;
+        }
+    }
+
+    return changed;
 }
 
 static bool
@@ -907,6 +981,61 @@ RegisterStateX86::writeRegisterFpStatus(const RegisterDescriptor &reg, const SVa
     fpstatus = towrite;
 }
 
+bool
+RegisterStateX86::merge(const BaseSemantics::RegisterStatePtr &other_, RiscOperators *ops) {
+    RegisterStateX86Ptr other = boost::dynamic_pointer_cast<RegisterStateX86>(other_);
+    ASSERT_not_null(other);
+    bool changed = false;
+    SValuePtr merged;
+
+    if ((merged = ip->merge(other->ip, ops->get_solver()))) {
+        ip = merged;
+        changed = true;
+    }
+
+    for (size_t i=0; i<n_gprs; ++i) {
+        if ((merged = gpr[i]->merge(other->gpr[i], ops->get_solver()))) {
+            gpr[i] = merged;
+            changed = true;
+        }
+    }
+
+    for (size_t i=0; i<n_segregs; ++i) {
+        if ((merged = segreg[i]->merge(other->segreg[i], ops->get_solver()))) {
+            segreg[i] = merged;
+            changed = true;
+        }
+    }
+
+    for (size_t i=0; i<n_flags; ++i) {
+        if ((merged = flag[i]->merge(other->flag[i], ops->get_solver()))) {
+            flag[i] = merged;
+            changed = true;
+        }
+    }
+
+    for (size_t i=0; i<n_st; ++i) {
+        if ((merged = st[i]->merge(other->st[i], ops->get_solver()))) {
+            st[i] = merged;
+            changed = true;
+        }
+    }
+
+    if ((merged = fpstatus->merge(other->fpstatus, ops->get_solver()))) {
+        fpstatus = merged;
+        changed = true;
+    }
+
+    for (size_t i=0; i<n_xmm; ++i) {
+        if ((merged = xmm[i]->merge(other->xmm[i], ops->get_solver()))) {
+            xmm[i] = merged;
+            changed = true;
+        }
+    }
+
+    return changed;
+}
+
 void
 RegisterStateX86::print(std::ostream &stream, Formatter &fmt) const 
 {
@@ -1094,15 +1223,34 @@ void
 MemoryCell::print(std::ostream &stream, Formatter &fmt) const
 {
     stream <<"addr=" <<(*address_+fmt);
-    if (fmt.get_show_latest_writers() && latestWriter_)
-        stream <<" writer=" <<StringUtility::addrToString(*latestWriter_);
+    if (fmt.get_show_latest_writers()) {
+        const AddressSet &writers = getWriters();
+        if (writers.isEmpty()) {
+            // nothing to show
+        } else if (writers.size() == 1) {
+            stream <<" writer=" <<StringUtility::addrToString(*writers.values().begin());
+        } else {
+            stream <<" writers=[";
+            for (AddressSet::ConstIterator iter=writers.values().begin(); iter!=writers.values().end(); ++iter) {
+                stream <<(iter==writers.values().begin() ? "" : ", ")
+                       <<StringUtility::addrToString(*iter);
+            }
+            stream <<"]";
+        }
+    }
     stream <<" value=" <<(*value_+fmt);
+}
+
+void
+MemoryCell::setWriter(rose_addr_t writerVa) {
+    eraseWriters();
+    writers_.insert(writerVa);
 }
 
 void
 MemoryCellList::clearNonWritten() {
     for (CellList::iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
-        if (!(*ci)->latestWriter())
+        if ((*ci)->getWriters().isEmpty())
             *ci = MemoryCellPtr();
     }
     cells.erase(std::remove(cells.begin(), cells.end(), MemoryCellPtr()), cells.end());
@@ -1133,18 +1281,71 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOpe
     return retval;
 }
 
-std::set<rose_addr_t>
-MemoryCellList::get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOperators *addrOps, RiscOperators *valOps)
-{
-    ASSERT_not_null(addr);
-    std::set<rose_addr_t> retval;
-    bool short_circuited;
-    CellList found = scan(addr, nbits, addrOps, valOps, short_circuited/*out*/);
-    for (CellList::iterator fi=found.begin(); fi!=found.end(); ++fi) {
-        MemoryCellPtr cell = *fi;
-        if (cell->latestWriter())
-            retval.insert(cell->latestWriter().get());
+bool
+MemoryCellList::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
+    MemoryCellListPtr other = boost::dynamic_pointer_cast<MemoryCellList>(other_);
+    ASSERT_not_null(other);
+    bool changed = false;
+
+    BOOST_REVERSE_FOREACH (const MemoryCellPtr &otherCell, other->get_cells()) {
+        SValuePtr otherValue = other->readMemory(otherCell->get_address(), valOps->undefined_(8), addrOps, valOps);
+
+        // Merge cell values
+        bool shortCircuited = false;
+        if (scan(otherCell->get_address(), 8, addrOps, valOps, shortCircuited /*out*/).empty()) {
+            writeMemory(otherCell->get_address(), otherValue, addrOps, valOps);
+            changed = true;
+        } else {
+            SValuePtr thisValue = readMemory(otherCell->get_address(), valOps->undefined_(8), addrOps, valOps);
+            if (SValuePtr mergedValue = thisValue->merge(otherValue, valOps->get_solver())) {
+                writeMemory(otherCell->get_address(), mergedValue, addrOps, valOps);
+                changed = true;
+            }
+        }
+
+        // Merge writer information
+        AddressSet otherWriters = other->getWritersUnion(otherCell->get_address(), 8, addrOps, valOps);
+        BOOST_FOREACH (const MemoryCellPtr &cell, scan(otherCell->get_address(), 8, addrOps, valOps, shortCircuited)) {
+            if (cell->insertWriters(otherWriters))
+                changed = true;
+        }
     }
+    return changed;
+}
+
+MemoryCellList::AddressSet
+MemoryCellList::getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
+    AddressSet retval;
+    bool shortCircuited;
+    BOOST_FOREACH (const MemoryCellPtr &cell, scan(addr, nBits, addrOps, valOps, shortCircuited /*out*/))
+        retval |= cell->getWriters();
+    return retval;
+}
+
+MemoryCellList::AddressSet
+MemoryCellList::getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
+    AddressSet retval;
+    bool shortCircuited;
+    size_t nCells = 0;
+    BOOST_FOREACH (const MemoryCellPtr &cell, scan(addr, nBits, addrOps, valOps, shortCircuited /*out*/)) {
+        if (1 == ++nCells) {
+            retval = cell->getWriters();
+        } else {
+            retval &= cell->getWriters();
+        }
+        if (retval.isEmpty())
+            break;
+    }
+    return retval;
+}
+
+// [Robb P. Matzke 2015-08-10]: deprecated; use getWritersUnion instead.
+std::set<rose_addr_t>
+MemoryCellList::get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOperators *addrOps, RiscOperators *valOps) {
+    AddressSet writers = getWritersUnion(addr, nbits, addrOps, valOps);
+    std::set<rose_addr_t> retval;
+    BOOST_FOREACH (rose_addr_t va, writers.values())
+        retval.insert(va);
     return retval;
 }
 
@@ -1207,6 +1408,13 @@ MemoryCellList::traverse(Visitor &visitor)
 /*******************************************************************************************************************************
  *                                      State
  *******************************************************************************************************************************/
+
+bool
+State::merge(const StatePtr &other, RiscOperators *ops) {
+    bool memoryChanged = get_memory_state()->merge(other->get_memory_state(), ops, ops);
+    bool registersChanged = get_register_state()->merge(other->get_register_state(), ops);
+    return memoryChanged || registersChanged;
+}
 
 void
 State::print(std::ostream &stream, Formatter &fmt) const

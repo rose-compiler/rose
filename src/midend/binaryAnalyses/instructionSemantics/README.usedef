@@ -37,7 +37,7 @@ instance, the following is permitted (pseudo code):
 
    setWriters("ah", insn1)
    setWriters("al", insn2)
-   labels = get_latest_writer("ax") // returns {insn1, insn2}
+   labels = getWriterUnion("ax") // returns {insn1, insn2}
 
 Register use-def is stored separately from register values -- it is
 permissible to store use-def info for registers that have no value,
@@ -59,13 +59,13 @@ writer is an optional instruction label.  The following methods are
 used to support memory-based use-def:
 
 In MemoryCell:
-  + label = get_latest_writer()
+  + label = getWritersUnion()
   + setWriters(INSN_LABEL)
   + eraseWriters()
 
 In MemoryCellList:
   + memory_cell = get_latest_written_cell()
-  + labels = get_latest_writers(ADDR, SIZE, OPS)
+  + labels = getWritersUnion(ADDR, SIZE, OPS)
 
 where INSN_LABEL is an instruction label (instruction virtual
 address), ADDR is an SValue to indicate the address for cells being

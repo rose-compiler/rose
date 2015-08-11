@@ -60,6 +60,13 @@ SymbolicMemory::writeMemory(const SValuePtr &address_, const SValuePtr &value_, 
     mem_ = InternalNode::create(mem_->get_nbits(), OP_WRITE, mem_, address->get_expression(), value->get_expression());
 }
 
+bool
+SymbolicMemory::merge(const BaseSemantics::MemoryStatePtr &other_, BaseSemantics::RiscOperators *addrOps,
+                      BaseSemantics::RiscOperators *valOps) {
+    SymbolicMemoryPtr other = SymbolicMemory::promote(other_);
+    TODO("[Robb P. Matzke 2015-08-10]");
+}
+
 void
 SymbolicMemory::print(std::ostream &out, Formatter &formatter_) const {
     SymbolicSemantics::Formatter *formatter = dynamic_cast<SymbolicSemantics::Formatter*>(&formatter_);
