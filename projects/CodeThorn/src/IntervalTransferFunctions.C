@@ -34,49 +34,57 @@ SPRAY::IntervalTransferFunctions::~IntervalTransferFunctions() {
 
 /*! 
   * \author Markus Schordan
-  * \date 2014.
+  * \date 2015.
  */
 void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate) {
   IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&pstate);
   ROSE_ASSERT(ips);
-  //ROSE_ASSERT(_variableIdMapping); TODO
-  // temporary: handle only special case of var and constant
   if(isSgExprStatement(condStmt)) {
-    // TODO
-    SgNode* cond=SgNodeHelper::getExprStmtChild(condStmt);
+    SgExpression* cond=isSgExpression(SgNodeHelper::getExprStmtChild(condStmt));
+    ROSE_ASSERT(cond);
+    NumberIntervalLattice knownValueIntervalOfSwitchVar;
+    VariableId varId;
     if(SgVarRefExp* varRefExp=isSgVarRefExp(cond)) {
-      VariableId varId=_variableIdMapping->variableId(varRefExp);
+      varId=_variableIdMapping->variableId(varRefExp);
       ROSE_ASSERT(varId.isValid());
-      SgExpression* caseExpr=caseStmt->get_key();
-      ROSE_ASSERT(caseExpr);
-      //cout<<"INFO: transferSwitchCase: VAR"<<varRefExp->unparseToString()<<"=="<<caseExpr->unparseToString()<<endl;
-      if(SgIntVal* sgIntVal=isSgIntVal(caseExpr)) {
-        ROSE_ASSERT(_cppExprEvaluator);
-        NumberIntervalLattice num;
-#if 0
-        // not stable yet
-        num=_cppExprEvaluator->evaluate(caseExpr);
-#else
-        int val=sgIntVal->get_value();
-        num.setLow(val);
-        num.setHigh(val);
-        NumberIntervalLattice knownValueIntervalOfSwitchVar=ips->getVariable(varId);
-	if(!NumberIntervalLattice::haveOverlap(knownValueIntervalOfSwitchVar,num)) {
-	  //cout<<"INFO: state detected non-reachable."<<endl;
-	  ips->setBot();
-	  return;
-	}
-#endif
-        ips->setVariable(varId,num);
-      }
-      //cout<<"DONE."<<endl;
+      knownValueIntervalOfSwitchVar=ips->getVariable(varId);
+    } else {
+      knownValueIntervalOfSwitchVar=evalExpression(lab, cond, pstate);
+      //cerr<<"Error: switch condition not a variable. Unsupported program structure. Program needs to be normalized."<<endl;
+      //exit(1);
     }
+    // handle case NUM:
+    SgExpression* caseExpr=caseStmt->get_key();
+    ROSE_ASSERT(caseExpr);
+    //cout<<"INFO: transferSwitchCase: VAR"<<varRefExp->unparseToString()<<"=="<<caseExpr->unparseToString()<<endl;
+    if(SgIntVal* sgIntVal=isSgIntVal(caseExpr)) {
+      NumberIntervalLattice num;
+#if 1
+      // might need to use the label of caseExpr here
+      num=evalExpression(lab, caseExpr, pstate);
+#else
+      int val=sgIntVal->get_value();
+      num.setLow(val);
+      num.setHigh(val);
+#endif
+      if(!NumberIntervalLattice::haveOverlap(knownValueIntervalOfSwitchVar,num)) {
+	//cout<<"INFO: state detected non-reachable."<<endl;
+	ips->setBot();
+	return;
+      }
+      if(varId.isValid()) {
+	ips->setVariable(varId,num);
+      }
+    }
+  } else {
+    cerr<<"Error: switch condition not a SgExprStmt. Unsupported program structure."<<endl;
+    exit(1);
   }
 }
 
 /*! 
   * \author Markus Schordan
-  * \date 2014.
+  * \date 2015.
  */
 void SPRAY::IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& pstate) {
   evalExpression(lab,node,pstate); // ignore return value
@@ -92,7 +100,7 @@ void SPRAY::IntervalTransferFunctions::transferReturnStmtExpr(Label lab, SgExpre
 
 /*! 
   * \author Markus Schordan
-  * \date 2014.
+  * \date 2015.
  */
 SPRAY::NumberIntervalLattice SPRAY::IntervalTransferFunctions::evalExpression(Label lab, SgExpression* node, Lattice& pstate) {
   //ROSE_ASSERT(_variableIdMapping); TODO
@@ -106,7 +114,7 @@ SPRAY::NumberIntervalLattice SPRAY::IntervalTransferFunctions::evalExpression(La
 
 /*! 
   * \author Markus Schordan
-  * \date 2014.
+  * \date 2015.
  */
 void SPRAY::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element) {
   ROSE_ASSERT(this!=0);
@@ -140,7 +148,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctio
 }
 /*! 
   * \author Markus Schordan
-  * \date 2014.
+  * \date 2015.
  */
 void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element) {
   IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
@@ -162,7 +170,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgV
 
 /*! 
   * \author Markus Schordan
-  * \date 2014.
+  * \date 2015.
  */
 void SPRAY::IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element) {
   // generate Intervals for each parameter variable
@@ -185,7 +193,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFuncti
 
 /*! 
   * \author Markus Schordan
-  * \date 2014.
+  * \date 2015.
  */
 void SPRAY::IntervalTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element) {
   // remove all declared variables at function exit (including function parameter variables)
