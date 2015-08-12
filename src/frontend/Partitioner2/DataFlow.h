@@ -14,7 +14,6 @@ namespace Partitioner2 {
 /** Dataflow utilities. */
 namespace DataFlow {
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Control Flow Graph
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,13 +125,47 @@ void dumpDfCfg(std::ostream&, const DfCfg&);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Dataflow State
+//                                      Transfer function
 //
-// Any state can be used in the calls to the generic BinaryAnalysis::DataFlow stuff, but we define a state here based on
-// symbolic semantics because that's what's commonly wanted.  Users are free to create their own states either from scratch or
-// by inheriting from the one defined here.
+// The transfer function is reponsible for taking a CFG vertex and an initial state and producing the next state, the final
+// state for that vertex.  Users can use whatever transfer function they want; this one is based on the DfCfg and an
+// instruction semantics state.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Dataflow transfer functor. */
+class TransferFunction {
+    BaseSemantics::DispatcherPtr cpu_;
+    BaseSemantics::SValuePtr callRetAdjustment_;
+    const RegisterDescriptor STACK_POINTER_REG;
+public:
+    TransferFunction(const BaseSemantics::DispatcherPtr &cpu, const RegisterDescriptor &stackPointerRegister)
+        : cpu_(cpu), STACK_POINTER_REG(stackPointerRegister) {
+        size_t adjustment = STACK_POINTER_REG.get_nbits() / 8; // sizeof return address on top of stack
+        callRetAdjustment_ = cpu->number_(STACK_POINTER_REG.get_nbits(), adjustment);
+    }
+
+    BaseSemantics::StatePtr initialState() const;
+
+    // Required by dataflow engine: should return a deep copy of the state
+    BaseSemantics::StatePtr operator()(const BaseSemantics::StatePtr &incomingState) const {
+        return incomingState ? incomingState->clone() : BaseSemantics::StatePtr();
+    }
+
+    // Required by dataflow engine: compute new output state given a vertex and input state.
+    BaseSemantics::StatePtr operator()(const DfCfg&, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const;
+};
+
+/** Dataflow engine. */
+typedef rose::BinaryAnalysis::DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, TransferFunction> Engine;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Merge function
+//
+// Computes the meet of two states, merging the source state into the destination state and returning true iff the destination
+// state changed.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef rose::BinaryAnalysis::DataFlow::SemanticsMerge MergeFunction;
 
 /** A multi-byte variable that appears on the stack. */
 struct StackVariable {
@@ -149,114 +182,41 @@ struct StackVariable {
 /** Multiple stack variables. */
 typedef std::vector<StackVariable> StackVariables;
 
-/** State for dataflow. Mostly the same as a semantic state. */
-class State: public Sawyer::SharedObject {
-public:
-    typedef Sawyer::SharedPointer<State> Ptr;
+/** Returns the list of all known stack variables.
+ *
+ *  A stack variable is any memory location whose address is a constant offset from an initial stack pointer.  That is, the
+ *  address has the form (add SP0 CONSTANT) where SP0 is a variable supplied as an argument to this function.  When CONSTANT is
+ *  zero the expression is simplified to SP0, so that also is accepted. Although memory is byte addressable and values are
+ *  stored as individual bytes in memory, this function attempts to sew related addresses back together again to produce
+ *  variables that are multiple bytes.  There are many ways to do this, all of which are heuristic.
+ *
+ *  The @p ops provides the operators for comparing stack pointers, and also provides the state which is examined to find the
+ *  stack variables.  The underlying memory state should be of type @ref InstructionSemantics2::BaseSemantics::MemoryCellList
+ *  "MemoryCellList" or a subclass, or else no stack variables will be found. */
+StackVariables findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops,
+                                  const BaseSemantics::SValuePtr &initialStackPointer);
 
-private:
-    BaseSemantics::RiscOperatorsPtr ops_;
-    BaseSemantics::StatePtr semanticState_;
+/** Returns the list of all known local variables.
+ *
+ *  A local variable is any stack variable whose starting address is less than the specified stack pointer.  For the definition
+ *  of stack variable, see @ref findStackVariables. */
+StackVariables findLocalVariables(const BaseSemantics::RiscOperatorsPtr &ops,
+                                  const BaseSemantics::SValuePtr &initialStackPointer);
 
-protected:
-    explicit State(const BaseSemantics::RiscOperatorsPtr &ops)
-        : ops_(ops) {
-        init();
-    }
+/** Returns the list of all known function arguments.
+ *
+ *  A function argument is any stack variable whose starting address is greater than or equal to the specified stack pointer.
+ *  For the definition of stack variable, see @ref findStackVariables.  On architectures that pass a return address on the top
+ *  of the stack, that return address is considered to be the first argument of the function. */
+StackVariables findFunctionArguments(const BaseSemantics::RiscOperatorsPtr &ops,
+                                     const BaseSemantics::SValuePtr &initialStackPointer);
 
-    // Deep copy
-    State(const State &other): ops_(other.ops_) {
-        semanticState_ = other.semanticState_->clone();
-    }
+/** Returns a list of global variables.
+ *
+ *  The returned abstract locations all point to memory. The @p wordNBytes is the maximum size for any returned variable;
+ *  larger units of memory written to by the same instruction will be broken into smaller variables. */
+std::vector<AbstractLocation> findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNBytes);
 
-
-public:
-    // Allocating constructor
-    static Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
-        return Ptr(new State(ops));
-    }
-
-    // Copy + allocate constructor
-    Ptr clone() const {
-        return Ptr(new State(*this));
-    }
-
-    void clear() {
-        semanticState_->clear();
-    }
-
-    BaseSemantics::StatePtr semanticState() const { return semanticState_; }
-    
-    /** Returns the list of all known stack variables.  A stack variable is any memory location whose address is a constant
-     *  offset from an initial stack pointer.  That is, the address has the form (add SP0 CONSTANT) where SP0 is a variable
-     *  supplied as an argument to this function.  When CONSTANT is zero the expression is simplified to SP0, so that also is
-     *  accepted. Although memory is byte addressable and values are stored as individual bytes in memory, this function
-     *  attempts to sew related addresses back together again to produce variables that are multiple bytes.  There are many
-     *  ways to do this, all of which are heuristic. */
-    StackVariables findStackVariables(const BaseSemantics::SValuePtr &initialStackPointer) const;
-
-    /** Returns the list of all known local variables.  A local variable is any stack variable whose starting address is less
-     *  than the specified stack pointer.  For the definition of stack variable, see @ref findStackVariables. */
-    StackVariables findLocalVariables(const BaseSemantics::SValuePtr &initialStackPointer) const;
-
-    /** Returns the list of all known function arguments.  A function argument is any stack variable whose starting address is
-     *  greater than or equal to the specified stack pointer.  For the definition of stack variable, see @ref
-     *  findStackVariables.   On architectures that pass a return address on the top of the stack, that return address is
-     *  considered to be the first argument of the function. */
-    StackVariables findFunctionArguments(const BaseSemantics::SValuePtr &initialStackPointer) const;
-
-    /** Returns a list of global variables.  The returned abstract locations all point to memory. The @p wordNBytes is the
-     *  maximum size for any returned variable; larger units of memory written to by the same instruction will be broken into
-     *  smaller variables. */
-    std::vector<AbstractLocation> findGlobalVariables(size_t wordNBytes) const;
-    
-public:
-    bool merge(const Ptr &other);                       // merge other into this, returning true iff changed
-
-private:
-    void init();
-};
-
-std::ostream& operator<<(std::ostream&, const State &x);
-
-/** List of states, one per dataflow vertex. */
-typedef std::vector<State::Ptr> States;
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Transfer function
-//
-// The transfer function is reponsible for taking a CFG vertex and an initial state and producing the next state, the final
-// state for that vertex.  Users can use whatever transfer function they want; this one is based on the DfCfg and State types
-// defined above.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Dataflow transfer functor. */
-class TransferFunction {
-    BaseSemantics::DispatcherPtr cpu_;
-    BaseSemantics::SValuePtr callRetAdjustment_;
-    const RegisterDescriptor STACK_POINTER_REG;
-public:
-    explicit TransferFunction(const BaseSemantics::DispatcherPtr &cpu, const RegisterDescriptor &stackPointerRegister)
-        : cpu_(cpu), STACK_POINTER_REG(stackPointerRegister) {
-        size_t adjustment = STACK_POINTER_REG.get_nbits() / 8; // sizeof return address on top of stack
-        callRetAdjustment_ = cpu->number_(STACK_POINTER_REG.get_nbits(), adjustment);
-    }
-
-    State::Ptr initialState() const;
-
-    // Required by dataflow engine: should return a deep copy of the state
-    State::Ptr operator()(const State::Ptr &incomingState) const {
-        return incomingState ? incomingState->clone() : State::Ptr();
-    }
-
-    // Required by dataflow engine: compute new output state given a vertex and input state.
-    State::Ptr operator()(const DfCfg&, size_t vertexId, const State::Ptr &incomingState) const;
-};
-
-/** Dataflow engine. */
-typedef rose::BinaryAnalysis::DataFlow::Engine<DfCfg, State::Ptr, TransferFunction> Engine;
 
 
 } // namespace

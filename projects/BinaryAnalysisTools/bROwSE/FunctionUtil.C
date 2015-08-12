@@ -364,8 +364,10 @@ functionDataFlow(P2::Partitioner &partitioner, const P2::Function::Ptr &function
 
             // Dataflow
             P2::DataFlow::TransferFunction xfer(cpu, partitioner.instructionProvider().stackPointerRegister());
-            typedef DataFlow::Engine<P2::DataFlow::DfCfg, P2::DataFlow::State::Ptr, P2::DataFlow::TransferFunction> Engine;
-            Engine engine(dfCfg, xfer);
+            P2::DataFlow::MergeFunction merge(cpu);
+            typedef DataFlow::Engine<P2::DataFlow::DfCfg, BaseSemantics::StatePtr,
+                                     P2::DataFlow::TransferFunction, P2::DataFlow::MergeFunction> Engine;
+            Engine engine(dfCfg, xfer, merge);
             engine.maxIterations(10*dfCfg.nVertices()); // arbitrary
             try {
                 engine.runToFixedPoint(0 /*startVertex*/, xfer.initialState());

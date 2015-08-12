@@ -136,6 +136,11 @@ TreeNode::printFlags(std::ostream &o, unsigned flags, char &bracket) const {
         bracket = ',';
         flags &= ~UNSPECIFIED;
     }
+    if ((flags & BOTTOM) != 0) {
+        o <<bracket <<"bottom";
+        bracket = ',';
+        flags &= ~BOTTOM;
+    }
     if (flags != 0) {
         o <<bracket <<"f=" <<std::hex <<flags <<std::dec;
         bracket = ',';

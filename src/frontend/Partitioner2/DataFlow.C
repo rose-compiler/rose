@@ -240,26 +240,6 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
     out <<"}\n";
 }
 
-void
-State::init() {
-    // clone+clear might be slower than creating a new state from scratch, but its simpler and it makes sure that any other
-    // state configuration that might be present (like pointers to memory maps) will be initialized properly regardless of the
-    // state subtype.
-    semanticState_ = ops_->get_state()->clone();
-    semanticState_->clear();
-}
-
-std::ostream&
-operator<<(std::ostream &out, const State &state) {
-    out <<*state.semanticState();
-    return out;
-}
-
-bool
-State::merge(const Ptr &other) {
-    return semanticState_->merge(other->semanticState_, ops_.get());
-}
-
 // If the expression is an offset from the initial stack register then return the offset, else nothing.
 static Sawyer::Optional<int64_t>
 isStackAddress(const rose::BinaryAnalysis::InsnSemanticsExpr::TreeNodePtr &expr,
@@ -298,10 +278,13 @@ isStackAddress(const rose::BinaryAnalysis::InsnSemanticsExpr::TreeNodePtr &expr,
 }
 
 StackVariables
-State::findStackVariables(const BaseSemantics::SValuePtr &initialStackPointer) const {
+findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &initialStackPointer) {
     using namespace rose::BinaryAnalysis::InstructionSemantics2;
+    ASSERT_not_null(ops);
     ASSERT_not_null(initialStackPointer);
-    SMTSolver *solver = ops_->get_solver();             // might be null
+    BaseSemantics::StatePtr state = ops->get_state();
+    ASSERT_not_null(state);
+    SMTSolver *solver = ops->get_solver();             // might be null
 
     // What is the word size for this architecture?  We'll assume the word size is the same as the width of the stack pointer,
     // whose value we have in initialStackPointer.
@@ -316,15 +299,16 @@ State::findStackVariables(const BaseSemantics::SValuePtr &initialStackPointer) c
     StackWriters stackWriters;
     typedef Sawyer::Container::Map<int64_t, BaseSemantics::SValuePtr> OffsetAddress;
     OffsetAddress offsetAddress;                        // symbolic address for every byte found
-    BaseSemantics::MemoryCellListPtr memState = BaseSemantics::MemoryCellList::promote(semanticState_->get_memory_state());
-    BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, memState->get_cells()) {
-        SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(cell->get_address());
-        ASSERT_require2(0 == cell->get_value()->get_width() % 8, "memory must be byte addressable");
-        size_t nBytes = cell->get_value()->get_width() / 8;
-        ASSERT_require(nBytes > 0);
-        if (Sawyer::Optional<int64_t> stackOffset = isStackAddress(addr->get_expression(), initialStackPointer, solver)) {
-            stackWriters.insert(OffsetInterval::baseSize(*stackOffset, nBytes), cell->latestWriter().orElse(0));
-            offsetAddress.insert(*stackOffset, addr);
+    if (BaseSemantics::MemoryCellListPtr memState = BaseSemantics::MemoryCellList::promote(state->get_memory_state())) {
+        BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, memState->get_cells()) {
+            SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(cell->get_address());
+            ASSERT_require2(0 == cell->get_value()->get_width() % 8, "memory must be byte addressable");
+            size_t nBytes = cell->get_value()->get_width() / 8;
+            ASSERT_require(nBytes > 0);
+            if (Sawyer::Optional<int64_t> stackOffset = isStackAddress(addr->get_expression(), initialStackPointer, solver)) {
+                stackWriters.insert(OffsetInterval::baseSize(*stackOffset, nBytes), cell->latestWriter().orElse(0));
+                offsetAddress.insert(*stackOffset, addr);
+            }
         }
     }
 
@@ -354,8 +338,8 @@ State::findStackVariables(const BaseSemantics::SValuePtr &initialStackPointer) c
 }
 
 StackVariables
-State::findLocalVariables(const BaseSemantics::SValuePtr &initialStackPointer) const {
-    StackVariables vars = findStackVariables(initialStackPointer);
+findLocalVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &initialStackPointer) {
+    StackVariables vars = findStackVariables(ops, initialStackPointer);
     StackVariables retval;
     BOOST_FOREACH (const StackVariable &var, vars) {
         if (var.offset < 0)
@@ -365,8 +349,8 @@ State::findLocalVariables(const BaseSemantics::SValuePtr &initialStackPointer) c
 }
 
 StackVariables
-State::findFunctionArguments(const BaseSemantics::SValuePtr &initialStackPointer) const {
-    StackVariables vars = findStackVariables(initialStackPointer);
+findFunctionArguments(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &initialStackPointer) {
+    StackVariables vars = findStackVariables(ops, initialStackPointer);
     StackVariables retval;
     BOOST_FOREACH (const StackVariable &var, vars) {
         if (var.offset >= 0)
@@ -376,10 +360,12 @@ State::findFunctionArguments(const BaseSemantics::SValuePtr &initialStackPointer
 }
 
 std::vector<AbstractLocation>
-State::findGlobalVariables(size_t wordNBytes) const {
-    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNBytes) {
+    ASSERT_not_null(ops);
+    BaseSemantics::StatePtr state = ops->get_state();
+    ASSERT_not_null(state);
     ASSERT_require(wordNBytes>0);
-    BaseSemantics::MemoryCellListPtr memState = BaseSemantics::MemoryCellList::promote(semanticState_->get_memory_state());
+
 
     // Find groups of consecutive addresses that were written to by the same instruction.  This is how we coalesce adjacent
     // bytes into larger variables.
@@ -387,14 +373,16 @@ State::findGlobalVariables(size_t wordNBytes) const {
     typedef Sawyer::Container::Map<rose_addr_t, BaseSemantics::SValuePtr> SymbolicAddresses;
     StackWriters stackWriters;
     SymbolicAddresses symbolicAddrs;
-    BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, memState->get_cells()) {
-        ASSERT_require2(0 == cell->get_value()->get_width() % 8, "memory must be byte addressable");
-        size_t nBytes = cell->get_value()->get_width() / 8;
-        ASSERT_require(nBytes > 0);
-        if (cell->get_address()->is_number() && cell->get_address()->get_width()<=64) {
-            rose_addr_t va = cell->get_address()->get_number();
-            stackWriters.insert(AddressInterval::baseSize(va, nBytes), cell->latestWriter().orElse(0));
-            symbolicAddrs.insert(va, cell->get_address());
+    if (BaseSemantics::MemoryCellListPtr memState = BaseSemantics::MemoryCellList::promote(state->get_memory_state())) {
+        BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, memState->get_cells()) {
+            ASSERT_require2(0 == cell->get_value()->get_width() % 8, "memory must be byte addressable");
+            size_t nBytes = cell->get_value()->get_width() / 8;
+            ASSERT_require(nBytes > 0);
+            if (cell->get_address()->is_number() && cell->get_address()->get_width()<=64) {
+                rose_addr_t va = cell->get_address()->get_number();
+                stackWriters.insert(AddressInterval::baseSize(va, nBytes), cell->latestWriter().orElse(0));
+                symbolicAddrs.insert(va, cell->get_address());
+            }
         }
     }
 
@@ -416,14 +404,16 @@ State::findGlobalVariables(size_t wordNBytes) const {
 }
 
 // Construct a new state from scratch
-State::Ptr
+BaseSemantics::StatePtr
 TransferFunction::initialState() const {
-    namespace BS = rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-    BS::RiscOperatorsPtr ops = cpu_->get_operators();
-    State::Ptr state = State::instance(ops);
-    BS::RegisterStateGenericPtr regState = BS::RegisterStateGeneric::promote(state->semanticState()->get_register_state());
+    BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
+    BaseSemantics::StatePtr newState = ops->get_state()->clone();
+    newState->clear();
 
-    // Any register for which we need its initial state must be initialized rather than just sprining into existence. We could
+    BaseSemantics::RegisterStateGenericPtr regState =
+        BaseSemantics::RegisterStateGeneric::promote(newState->get_register_state());
+
+    // Any register for which we need its initial state must be initialized rather than just springing into existence. We could
     // initialize all registers, but that makes output a bit verbose--users usually don't want to see values for registers that
     // weren't accessed by the dataflow, and omitting their initialization is one easy way to hide them.
 #if 0 // [Robb Matzke 2015-01-14]
@@ -431,15 +421,15 @@ TransferFunction::initialState() const {
 #else
     regState->writeRegister(STACK_POINTER_REG, ops->undefined_(STACK_POINTER_REG.get_nbits()), ops.get());
 #endif
-    return state;
+    return newState;
 }
 
 // Required by dataflow engine: compute new output state given a vertex and input state.
-State::Ptr
-TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const State::Ptr &incomingState) const {
+BaseSemantics::StatePtr
+TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const {
     BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
-    State::Ptr retval = incomingState->clone();
-    ops->set_state(retval->semanticState());
+    BaseSemantics::StatePtr retval = incomingState->clone();
+    ops->set_state(retval);
 
     DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);
     ASSERT_require(vertex != dfCfg.vertices().end());
