@@ -127,14 +127,12 @@ void SPRAY::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariable
 
 /*! 
   * \author Markus Schordan
-  * \date 2014.
+  * \date 2015.
  */
 void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element) {
-  // uses and defs in argument-expressions
   int paramNr=0;
   IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
   for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
-    // TODO: add one variable $paramX for each parameter to the state and bind it to the value of the argument
     VariableId paramId=getParameterVariableId(paramNr);
     ips->addVariable(paramId);
     ips->setVariable(paramId,evalExpression(lab,*i,element));
@@ -146,20 +144,19 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctio
  */
 void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element) {
   IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
-  //NumberIntervalLattice number;
-  //number=evalExpression(lab,callExp,element);
-
-  //TODO: also need to handle compound assignment op
   if(isSgCompoundAssignOp(callExp->get_parent())) {
-    cerr<<"Error: transferFunctionCallReturn: compound assignment of function call results not supported yet."<<endl;
+    cerr<<"Error: transferFunctionCallReturn: compound assignment of function call results not supported. Normalization required."<<endl;
     exit(1);
   }
+  // determine variable-id of dedivated variable for holding the return value
   VariableId resVarId=getResultVariableId();
-  if(lhsVar) {
+  if(lhsVar!=0) {
     cout<<"DEBUG: updated var=f(...)."<<endl;
     VariableId varId=_variableIdMapping->variableId(lhsVar);  
+    // set lhs-var to the return-value
     ips->setVariable(varId,ips->getVariable(resVarId));
   }
+  // remove the return-variable from the state (the return-variable is temporary)
   ips->removeVariable(resVarId);
 }
 
