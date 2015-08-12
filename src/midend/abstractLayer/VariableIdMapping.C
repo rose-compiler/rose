@@ -530,7 +530,7 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
     if(getModeVariableIdForEachArrayElement()) {
       // assign one var-id for each array element
       for(int i=0;i<arraySize;i++) {
-	mappingVarIdToSym.push_back(sym);
+        mappingVarIdToSym.push_back(sym);
       }
     } else {
       // assign one vari-id for entire array

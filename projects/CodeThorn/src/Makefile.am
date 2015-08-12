@@ -237,6 +237,16 @@ faketarget:
 	tests/rers/Problem1402_opt.c
 	tests/rers/Problem1403_opt.c
 	tests/varid-test1.C
+	tests/arraytest3.C
+	tests/basicblocks1.C
+	tests/blocks1.C
+	tests/interval-test1.C
+	tests/interval-test2.C
+	tests/polyopt/jacobi-1d-imper.h
+	tests/polyopt/jacobi-1d-imper_annot.c
+	tests/polyopt/jacobi-2d-imper.h
+	tests/polyopt/jacobi-2d-imper_orig_tileonly_size16_tile_8_2_1.c
+	tests/polyopt/polybench.h
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
