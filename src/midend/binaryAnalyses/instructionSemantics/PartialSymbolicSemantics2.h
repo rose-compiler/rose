@@ -20,6 +20,7 @@
 #include "BaseSemantics2.h"
 #include "MemoryMap.h"
 #include "FormatRestorer.h"
+#include "RegisterStateGeneric.h"
 
 namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere

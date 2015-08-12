@@ -10,6 +10,7 @@
 #include "BaseSemantics2.h"
 #include "integerOps.h"
 #include "rangemap.h"
+#include "RegisterStateGeneric.h"
 
 namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere

@@ -697,10 +697,10 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
                 case TRACK_NO_WRITERS:
                     break;
                 case TRACK_LATEST_WRITER:
-                    regs->setWriter(reg, insn->get_address());
+                    regs->setWriters(reg, insn->get_address());
                     break;
                 case TRACK_ALL_WRITERS:
-                    regs->insertWriter(reg, insn->get_address());
+                    regs->insertWriters(reg, insn->get_address());
                     break;
             }
         }

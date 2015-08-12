@@ -9,6 +9,7 @@
 #include "BaseSemantics2.h"
 #include "SMTSolver.h"
 #include "InsnSemanticsExpr.h"
+#include "RegisterStateGeneric.h"
 
 #include <map>
 #include <vector>

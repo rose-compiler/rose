@@ -8,6 +8,7 @@
 
 #include "integerOps.h"
 #include "BaseSemantics2.h"
+#include "RegisterStateGeneric.h"
 #include <Sawyer/BitVector.h>
 
 namespace rose {

@@ -2,6 +2,7 @@
 #include "BaseSemantics2.h"
 #include "Diagnostics.h"
 #include "DispatcherX86.h"
+#include "RegisterStateGeneric.h"
 #include "integerOps.h"
 
 #undef si_value                                         // name pollution from siginfo.h

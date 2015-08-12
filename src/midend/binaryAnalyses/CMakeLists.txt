@@ -40,6 +40,7 @@ add_library(midend_binary OBJECT
   instructionSemantics/MultiSemantics2.C
   instructionSemantics/PartialSymbolicSemantics.C
   instructionSemantics/PartialSymbolicSemantics2.C
+  instructionSemantics/RegisterStateGeneric.C
   instructionSemantics/SMTSolver.C
   instructionSemantics/StaticSemantics2.C
   instructionSemantics/SymbolicMemory2.C
@@ -94,6 +95,7 @@ install(
     instructionSemantics/PartialSymbolicSemantics2.h
     instructionSemantics/PartialSymbolicSemantics.h
     instructionSemantics/ReadWriteRegisterFragment.h
+    instructionSemantics/RegisterStateGeneric.h
     instructionSemantics/SMTSolver.h
     instructionSemantics/StaticSemantics2.h
     instructionSemantics/SymbolicMemory2.h
