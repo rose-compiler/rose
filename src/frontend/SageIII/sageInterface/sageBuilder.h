@@ -1,8 +1,6 @@
 #ifndef ROSE_SAGE_BUILDER_INTERFACE
 #define ROSE_SAGE_BUILDER_INTERFACE
 
-#define USE_MATLAB_IR_NODES 1
-
 #include <string>
 
 /*!
@@ -289,8 +287,11 @@ ROSE_DLL_API SgTypeImaginary* buildImaginaryType(SgType *base_type = NULL);
 ROSE_DLL_API SgConstVolatileModifier * buildConstVolatileModifier (SgConstVolatileModifier::cv_modifier_enum mtype=SgConstVolatileModifier::e_unknown);
 
 //! Build a Matrix Type for Matlab
-// ROSE_DLL_API SgTypeMatrix* buildMatrixType(SgType *base_type = NULL);
-  ROSE_DLL_API SgTypeMatrix* buildMatrixType();
+
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
+ ROSE_DLL_API SgTypeMatrix* buildMatrixType();
+#endif
+ 
 //@}
 
 //--------------------------------------------------------------
@@ -444,7 +445,7 @@ BUILD_UNARY_PROTO(ConjugateOp)
 BUILD_UNARY_PROTO(VarArgStartOneOperandOp)
 BUILD_UNARY_PROTO(VarArgEndOp)
 
-#if USE_MATLAB_IR_NODES == 1
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
   BUILD_UNARY_PROTO(MatrixTransposeOp)
 #endif  
   
@@ -555,7 +556,7 @@ BUILD_BINARY_PROTO(XorAssignOp)
 BUILD_BINARY_PROTO(VarArgCopyOp)
 BUILD_BINARY_PROTO(VarArgStartOp)
 
-#if USE_MATLAB_IR_NODES == 1
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
   BUILD_BINARY_PROTO(PowerOp);
   BUILD_BINARY_PROTO(ElementwisePowerOp);
   BUILD_BINARY_PROTO(ElementwiseMultiplyOp);
@@ -769,7 +770,7 @@ ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList_nfi();
 //@{
 /*! @name Builders for Matlab nodes
  */
-#if USE_MATLAB_IR_NODES == 1 
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT 
  ROSE_DLL_API SgRangeExp* buildRangeExp(SgExpression *start);
  ROSE_DLL_API SgMatrixExp* buildMatrixExp(SgExprListExp *firstRow);
  ROSE_DLL_API SgMagicColonExp* buildMagicColonExp();

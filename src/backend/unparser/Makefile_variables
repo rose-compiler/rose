@@ -66,4 +66,4 @@ unparser_cleanLocal=\
 	$(unparsePHPCodeGeneration_cleanLocal); \
 	$(unparsePythonCodeGeneration_cleanLocal); \
 	$(unparseX10CodeGeneration_cleanLocal); \
-	$(unparseMatlabCodeGeneration_cleanLocal);
+	$(unparseMatlabCodeGeneration_cleanLocal)

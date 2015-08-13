@@ -5,8 +5,6 @@
 
 // What should be the behavior of the default constructor for Grammar
 
-#define USE_MATLAB_IR_NODES 1
-
 void
 Grammar::setUpExpressions ()
    {

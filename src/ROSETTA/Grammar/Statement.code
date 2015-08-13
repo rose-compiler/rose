@@ -5934,8 +5934,10 @@ SgScopeStatement::containsOnlyDeclarations() const
        // DQ (11/27/2011): Adding more support for template declarations in the AST.
           case V_SgTemplateFunctionDefinition:
 
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
       // SK (08/06/2015): Adding SgMatlabForStatement
-          case V_SgMatlabForStatement:	    
+          case V_SgMatlabForStatement:
+#endif	  
           case V_SgIfStmt:
           case V_SgSwitchStatement:
           case V_SgWhileStmt:
@@ -6515,6 +6517,7 @@ SgScopeStatement::getStatementList ()
                break;
              }
 
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
 	     //SK(08/06/2015): Adding support for MatlabForStatement:
 	case V_SgMatlabForStatement:
 	    {
@@ -6525,6 +6528,8 @@ SgScopeStatement::getStatementList ()
 	      currentStatementList = &(matlabForStatement->get_body()->getStatementList());
 	      break;
 	    }
+#endif
+
           default:
                printf ("ERROR: default reached in switch (getStatementList()) currentScope = %s \n",currentScope->sage_class_name());
                printf ("Note: this function is not defined for all IR nodes derived from SgScopeStatement (use SgScopeStatement::containsOnlyDeclarations() to check)\n");
@@ -6725,7 +6730,7 @@ SgScopeStatement::getStatementList () const
                return doStatement->get_body()->getStatementList();
                break;
              }
-
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
 	case V_SgMatlabForStatement:
 	    {
 	      const SgMatlabForStatement *matlabForStatement = isSgMatlabForStatement(currentScope);
@@ -6735,7 +6740,8 @@ SgScopeStatement::getStatementList () const
 	      return matlabForStatement->get_body()->getStatementList();
 	      break;
 	    }
-	     
+#endif
+
           case V_SgForAllStatement:
              { 
                const SgForAllStatement* forAllScope = isSgForAllStatement(currentScope);

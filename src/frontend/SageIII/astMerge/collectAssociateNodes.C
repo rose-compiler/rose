@@ -216,7 +216,8 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
                ROSE_ASSERT(nodeList.find(NULL) == nodeList.end());
                break;
              }
-
+	     
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
 	case V_SgTypeMatrix:
 	  {
 	    SgTypeMatrix *matrixType = isSgTypeMatrix(type);
@@ -231,7 +232,8 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
 	    ROSE_ASSERT(nodeList.find(NULL) == nodeList.end());
 	    break;
 	  }
-	    
+#endif
+	  
        // DQ (9/5/2011): Added support for SgJavaParameterizedType.
           case V_SgJavaParameterizedType:
              {
@@ -2114,13 +2116,14 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgDoWhileStmt:
           case V_SgSwitchStatement:
           case V_SgWhileStmt:
-          case V_SgMatlabForStatement:
+
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT	    
+	case V_SgMatlabForStatement:
              {
-            // printf ("addAssociatedNodes(): ignoring this case of node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
                nodeList.insert(node);
                break;
              }
-
+#endif
        // DQ (9/8/2012): Added missing case for SgTemplateFunctionDefinition.
           case V_SgTemplateFunctionDefinition:
           case V_SgFunctionDefinition:
