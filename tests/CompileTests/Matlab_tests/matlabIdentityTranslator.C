@@ -9,6 +9,10 @@ int main(int argc, char *argv[])
   AstTests::runAllTests(project);
 
   MatlabUnparser::backend(project);
+
+  generateAstGraph(project, 2000);
+
+  generateDOT(*project);
   
   return 0;
 }

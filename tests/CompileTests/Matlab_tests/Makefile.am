@@ -22,7 +22,7 @@ TEST_Objects = ${ALL_MATLAB_TESTCODES:.m=.test}
 #Compare the unparsed code and original code
 #Remove new lines, comma, semicolon and spaces for easier diff
 $(TEST_Objects): matlabIdentityTranslator
-	./matlabIdentityTranslator  $(srcdir)/$(@:.test=.m)
+	./matlabIdentityTranslator  $(srcdir)/$(@:.test=.m) -DSKIP_ROSE_BUILTIN_DECLARATIONS
 	tr '\n' ' ' < $(srcdir)/$(@:.test=.m) > truncated_$(@:.test=.m)
 	tr '\n' ' ' < rose_$(@:.test=.m) > truncated_rose_$(@:.test=.m)
 	sed -i -e 's/ //g;s/;//g;s/,//g;' truncated_$(@:.test=.m)
@@ -37,6 +37,6 @@ check-local:
 	@echo "***********************************************************************************************"
 
 clean-local:
-	rm -f rose_*.m truncated_* *.m.cc
+	rm -f rose_*.m truncated_* *.m.cc *.dot
 
 EXTRA_DIST = $(ALL_MATLAB_TESTCODES)
