@@ -12,10 +12,6 @@
 #endif
 
 
-//SK (05/25/2015) Matlab specific Nodes
-#define USE_MATLAB_IR_NODES 1
-
-
 /*
   DQ (3/2/2004): After March 1st meeting with Bjarne, it seems clear we should 
                  support a few more IR nodes specific to templates.

@@ -5985,7 +5985,7 @@ BUILD_UNARY_DEF(ConjugateOp)
 BUILD_UNARY_DEF(VarArgStartOneOperandOp)
 BUILD_UNARY_DEF(VarArgEndOp)
 
-#if USE_MATLAB_IR_NODES == 1
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
   BUILD_UNARY_DEF(MatrixTransposeOp)
 #endif 
 
@@ -6198,7 +6198,7 @@ BUILD_BINARY_DEF(XorAssignOp)
 BUILD_BINARY_DEF(VarArgCopyOp)
 BUILD_BINARY_DEF(VarArgStartOp)
 
-#if USE_MATLAB_IR_NODES == 1
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
   BUILD_BINARY_DEF(PowerOp);
   BUILD_BINARY_DEF(ElementwisePowerOp);
   BUILD_BINARY_DEF(ElementwiseMultiplyOp);
@@ -8125,7 +8125,7 @@ SgDoWhileStmt * SageBuilder::buildDoWhileStmt_nfi(SgStatement *  body, SgStateme
   return result;
 }
 
-#if USE_MATLAB_IR_NODES == 1
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
 SgMatlabForStatement* SageBuilder::buildMatlabForStatement(SgExpression* loop_index, SgExpression* loop_range, SgBasicBlock* loop_body)
 {
   SgMatlabForStatement* result = new SgMatlabForStatement(loop_index, loop_range, loop_body);
@@ -9943,6 +9943,7 @@ SgTypeImaginary* SageBuilder::buildImaginaryType(SgType* base_type /*=NULL*/)
    return result;
  }
 
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
 //! Build a Matrix Type for Matlab
 SgTypeMatrix* SageBuilder::buildMatrixType()
 {
@@ -9981,6 +9982,7 @@ SgMagicColonExp* SageBuilder::buildMagicColonExp()
 
   return result;
 }
+#endif
 
 //! Build a const/volatile type qualifier
 SgConstVolatileModifier * SageBuilder::buildConstVolatileModifier (SgConstVolatileModifier::cv_modifier_enum mtype/*=SgConstVolatileModifier::e_unknown*/)

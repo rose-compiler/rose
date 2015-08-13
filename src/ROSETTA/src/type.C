@@ -3,7 +3,6 @@
 #include "ROSETTA_macros.h"
 #include "terminal.h"
 
-#define USE_MATLAB_IR_NODES 1
 // What should be the behavior of the default constructor for Grammar
 
 void

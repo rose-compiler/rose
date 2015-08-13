@@ -56,6 +56,10 @@
 // MH (6/11/2014): Added X10 specific IR nodes.
 #define USE_X10_IR_NODES 1
 
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
+#define USE_MATLAB_IR_NODES 1
+#endif
+
 #include <vector>
 
 // DQ (12/29/2011): These are now defined automatically in the configuration when EDG 4.3 is used.
