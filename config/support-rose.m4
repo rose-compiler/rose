@@ -1822,6 +1822,8 @@ src/roseExtensions/roseHPCToolkit/docs/Makefile
 src/roseExtensions/failSafe/Makefile
 src/roseIndependentSupport/Makefile
 src/roseIndependentSupport/dot2gml/Makefile
+projects/ArithemeticMeasureTool/Makefile
+projects/ArithemeticMeasureTool/src/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
 projects/AtermTranslation/Makefile
