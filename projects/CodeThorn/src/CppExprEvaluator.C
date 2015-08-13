@@ -102,7 +102,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       }
     }
     default: // generates top element
-      if(_showWarnings) cout<<"Warning: unknown unary operator: "<<node->sage_class_name()<<" ... setting alll variables to unbounded interval and using unbounded result interval."<<endl;
+      if(_showWarnings) cout<<"Warning: unknown unary operator: "<<node->sage_class_name()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
       ips->topifyAllVariables();
       return NumberIntervalLattice::top();
     }

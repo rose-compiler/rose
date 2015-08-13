@@ -16,17 +16,6 @@ SPRAY::IntervalTransferFunctions::IntervalTransferFunctions():
 {
 }
 
-#if 0
-SPRAY::IntervalTransferFunctions::IntervalTransferFunctions(
-                                                     NumberIntervalLattice* domain, 
-                                                     PropertyState* p, 
-                                                     Labeler* l, 
-                                                     VariableIdMapping* vid)
-  :_domain(domain),_labeler(l),_variableIdMapping(vid) {
-  _cppExprEvaluator=new SPRAY::CppExprEvaluator(domain,p,vid);
-}
-#endif
-
 SPRAY::IntervalTransferFunctions::~IntervalTransferFunctions() {
   if(_cppExprEvaluator)
     delete _cppExprEvaluator;
@@ -43,38 +32,42 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
     SgExpression* cond=isSgExpression(SgNodeHelper::getExprStmtChild(condStmt));
     ROSE_ASSERT(cond);
     NumberIntervalLattice knownValueIntervalOfSwitchVar;
+    /* this varId is only used if the switch-cond is a variable and we can bound the interval of the case numbers to this variable. 
+       this varId will only be removed at the end of the function (it only gives better precision if conditionals depend on this variable
+       inside the switch-stmt (a rather rare case)
+    */
     VariableId varId;
     if(SgVarRefExp* varRefExp=isSgVarRefExp(cond)) {
+      // if the switch-cond is a variable set the interval to the case label (this function is called for each case label)
       varId=_variableIdMapping->variableId(varRefExp);
       ROSE_ASSERT(varId.isValid());
       knownValueIntervalOfSwitchVar=ips->getVariable(varId);
     } else {
+      // the switch-cond is not a variable. We evaluate the expression but do not maintain its interval in a program variable
       knownValueIntervalOfSwitchVar=evalExpression(lab, cond, pstate);
-      //cerr<<"Error: switch condition not a variable. Unsupported program structure. Program needs to be normalized."<<endl;
-      //exit(1);
     }
     // handle case NUM:
     SgExpression* caseExpr=caseStmt->get_key();
     ROSE_ASSERT(caseExpr);
     //cout<<"INFO: transferSwitchCase: VAR"<<varRefExp->unparseToString()<<"=="<<caseExpr->unparseToString()<<endl;
-    if(SgIntVal* sgIntVal=isSgIntVal(caseExpr)) {
-      NumberIntervalLattice num;
+    NumberIntervalLattice num;
 #if 1
-      // might need to use the label of caseExpr here
-      num=evalExpression(lab, caseExpr, pstate);
+    // might need to use the label of caseExpr here
+    num=evalExpression(lab, caseExpr, pstate);
 #else
+    if(SgIntVal* sgIntVal=isSgIntVal(caseExpr)) {
       int val=sgIntVal->get_value();
       num.setLow(val);
       num.setHigh(val);
+    }
 #endif
-      if(!NumberIntervalLattice::haveOverlap(knownValueIntervalOfSwitchVar,num)) {
-	//cout<<"INFO: state detected non-reachable."<<endl;
-	ips->setBot();
-	return;
-      }
-      if(varId.isValid()) {
-	ips->setVariable(varId,num);
-      }
+    if(!NumberIntervalLattice::haveOverlap(knownValueIntervalOfSwitchVar,num)) {
+      //cout<<"INFO: state detected non-reachable."<<endl;
+      ips->setBot();
+      return;
+    }
+    if(varId.isValid()) {
+      ips->setVariable(varId,num);
     }
   } else {
     cerr<<"Error: switch condition not a SgExprStmt. Unsupported program structure."<<endl;
@@ -126,7 +119,8 @@ void SPRAY::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariable
   ips->addVariable(varId);
   SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(declnode);
   if(initExp) {
-    NumberIntervalLattice res=_cppExprEvaluator->evaluate(initExp,ips);
+    //NumberIntervalLattice res=_cppExprEvaluator->evaluate(initExp,ips);
+    NumberIntervalLattice res=evalExpression(lab,initExp,*ips);
     ROSE_ASSERT(!res.isBot());
     ips->setVariable(varId,res);
   }
@@ -159,7 +153,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgV
   // determine variable-id of dedivated variable for holding the return value
   VariableId resVarId=getResultVariableId();
   if(lhsVar!=0) {
-    cout<<"DEBUG: updated var=f(...)."<<endl;
+    //cout<<"DEBUG: updated var=f(...)."<<endl;
     VariableId varId=_variableIdMapping->variableId(lhsVar);  
     // set lhs-var to the return-value
     ips->setVariable(varId,ips->getVariable(resVarId));
