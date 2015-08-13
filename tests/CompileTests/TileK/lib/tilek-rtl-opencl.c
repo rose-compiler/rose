@@ -61,8 +61,8 @@ void tilek_opencl_init() {
 
   size_t opts_length = strlen(opencl_kernel_options) + 1;
 
-  char * defn_storage_modifier = " -DSTORAGE_MODIFIER=__global";
-  opts_length += strlen(defn_storage_modifier);
+  char * context_storage_modifier = " -DCOMPILE_FOR_KERNEL=1 -DSTORAGE_MODIFIER=__constant";
+  opts_length += strlen(context_storage_modifier);
 
 #if COMPILE_OPENCL_KERNEL_WITH_DEBUG == 1
   char * debug_flags = " -g";
@@ -73,7 +73,7 @@ void tilek_opencl_init() {
   memset(options, 0, opts_length * sizeof(char));
 
   strcat(options, opencl_kernel_options);
-  strcat(options, defn_storage_modifier);
+  strcat(options, context_storage_modifier);
 #if COMPILE_OPENCL_KERNEL_WITH_DEBUG == 1
   strcat(options, debug_flags);
 #endif

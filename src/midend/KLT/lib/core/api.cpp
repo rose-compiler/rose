@@ -36,8 +36,9 @@ void kernel_t::load(const MDCG::Model::model_t & model) {
 
 void kernel_t::loadUser(const MDCG::Model::model_t & model) {}
 
-SgType * kernel_t::buildSharedDataType(SgType * type) const { return type; }
-SgType * kernel_t::buildLocalDataType(SgType * type) const { return type; }
+SgInitializedName * kernel_t::buildConstantVariable(const std::string & name, SgType * type, SgInitializer * init) const { return SageBuilder::buildInitializedName(name, type, init); }
+SgInitializedName * kernel_t::buildGlobalVariable(const std::string & name, SgType * type, SgInitializer * init) const { return SageBuilder::buildInitializedName(name, type, init); }
+SgInitializedName * kernel_t::buildLocalVariable(const std::string & name, SgType * type, SgInitializer * init) const { return SageBuilder::buildInitializedName(name, type, init); }
 
 void kernel_t::applyKernelModifiers(SgFunctionDeclaration * kernel_decl) const {}
 
@@ -45,7 +46,7 @@ SgType * kernel_t::buildKernelReturnType(Descriptor::kernel_t & kernel) const { 
 
 //////
 
-SgType * kernel_t::getLoopContextPtrType() const { return buildSharedDataType(SageBuilder::buildPointerType(klt_loop_context_class->get_declaration()->get_type())); }
+SgType * kernel_t::getLoopContextPtrType() const { return SageBuilder::buildPointerType(klt_loop_context_class->get_declaration()->get_type()); }
 
 SgExpression * kernel_t::buildGetLoopLower (size_t loop_id, SgVariableSymbol * ctx) const {
   return ::MFB::Utils::buildCallVarIdx(loop_id, ctx, get_loop_lower_fnct);
@@ -64,7 +65,7 @@ SgExpression * kernel_t::buildGetTileStride(size_t tile_id, SgVariableSymbol * c
   return ::MFB::Utils::buildCallVarIdx(tile_id, ctx, get_tile_stride_fnct);
 }
 
-SgType * kernel_t::getDataContextPtrType() const { return buildSharedDataType(SageBuilder::buildPointerType(klt_data_context_class->get_declaration()->get_type())); }
+SgType * kernel_t::getDataContextPtrType() const { return SageBuilder::buildPointerType(klt_data_context_class->get_declaration()->get_type()); }
 
 ////// KLT::API::host_t
 
@@ -169,8 +170,8 @@ SgStatement * host_t::buildLoopStrideAssign(SgVariableSymbol * kernel_sym, size_
 call_interface_t::call_interface_t(::MFB::Driver< ::MFB::Sage> & driver_, kernel_t * kernel_api_) : driver(driver_), kernel_api(kernel_api_) {}
 
 void call_interface_t::addKernelArgsForContext(SgFunctionParameterList * param_list) const {
-  param_list->append_arg(SageBuilder::buildInitializedName("loop_ctx", kernel_api->getLoopContextPtrType(), NULL));
-  param_list->append_arg(SageBuilder::buildInitializedName("data_ctx", kernel_api->getDataContextPtrType(), NULL));
+  param_list->append_arg(kernel_api->buildConstantVariable("loop_ctx", kernel_api->getLoopContextPtrType(), NULL));
+  param_list->append_arg(kernel_api->buildConstantVariable("data_ctx", kernel_api->getDataContextPtrType(), NULL));
 }
 
 SgFunctionParameterList * call_interface_t::buildKernelParamList(Descriptor::kernel_t & kernel) const {
@@ -225,6 +226,7 @@ void call_interface_t::createTileIterator(const std::vector<Descriptor::tile_t *
 SgBasicBlock * call_interface_t::generateKernelBody(Descriptor::kernel_t & kernel, SgFunctionDefinition * kernel_defn, Utils::symbol_map_t & symbol_map) {
   SgBasicBlock * bb = SageBuilder::buildBasicBlock();
   kernel_defn->set_body(bb);
+  bb->set_parent(kernel_defn);
 
   getSymbolForUserArguments(kernel_defn, symbol_map, bb);
 

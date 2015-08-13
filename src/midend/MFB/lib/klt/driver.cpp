@@ -90,6 +90,7 @@ KLT<kernel_t>::build_result_t KLT<kernel_t>::build(::MFB::Driver< ::MFB::KLT::KL
   ::KLT::Utils::symbol_map_t symbol_map;
 
   SgBasicBlock * body = object.generator->getCallInterface().generateKernelBody(*res, sage_func_res.definition, symbol_map);
+  assert(body->get_parent() != NULL);
 
   looptree_desc_t looptree_desc(object.root, object.generator, symbol_map);
   SgStatement * stmt = driver.build<node_t>(looptree_desc);
@@ -246,6 +247,7 @@ KLT<tile_t>::build_result_t KLT<tile_t>::build(::MFB::Driver< ::MFB::KLT::KLT> &
     loop_iter_map[(*it)->loop->id] = SageBuilder::buildAddOp(loop_iter_map[(*it)->loop->id], SageBuilder::buildVarRefExp(res.first));
     if (res.second != NULL) {
       res.second->set_loop_body(stmt);
+      stmt->set_parent(res.second);
       stmt = res.second;
     }
     it++;

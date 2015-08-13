@@ -7,7 +7,7 @@ TILEK_REL_PATH=../../..
 
 TILEK_INC=$(top_srcdir)/src/midend/KLT/include
 
-TILEK=$(builddir)/$(TILEK_REL_PATH)/src/tilek-acc-cuda
+TILEK=$(builddir)/$(TILEK_REL_PATH)/src/tilek-cuda
 
 TILEK_RTL=$(builddir)/$(TILEK_REL_PATH)/lib/libTileK-RTL-acc-cuda.la
 
@@ -23,10 +23,13 @@ CHECK_TARGET=
 if ROSE_HAVE_CUDA_INC
 if ROSE_HAVE_CUDA_LIB
 CHECK_TARGET+=check-test_1 check-test_2
-ROSE_FLAGS+=-I@CUDA_INC_DIR@
 C_FLAGS+=-I@CUDA_INC_DIR@
 LD_FLAGS+=-L@CUDA_LIB_DIR@
+else
+CHECK_TARGET+=rose_test_1.c rose_test_2.c
 endif
+else
+CHECK_TARGET+=rose_test_1.c rose_test_2.c
 endif
 
 check-local: $(CHECK_TARGET)
@@ -37,8 +40,8 @@ clean-local:
 
 #########################################
 
-$(builddir)/$(TILEK_REL_PATH)/tilek-acc-cuda:
-	make -C $(builddir)/$(TILEK_REL_PATH) tilek-acc-cuda
+$(builddir)/$(TILEK_REL_PATH)/tilek-cuda:
+	make -C $(builddir)/$(TILEK_REL_PATH) tilek-cuda
 
 #########################################
 
@@ -61,5 +64,27 @@ test_1: rose_test_1.o test_1-data.o $(TILEK_RTL) $(KLT_RTL)
 
 check-test_1: test_1
 	./test_1
+
+#########################################
+
+test_2-kernel.cu: rose_test_2.c
+test_2-data.c: rose_test_2.c
+rose_test_2.c: $(srcdir)/../test_2.c $(TILEK)
+	$(TILEK) $(ROSE_FLAGS) -c $(srcdir)/../test_2.c
+
+rose_test_2.o: rose_test_2.c
+	gcc $(C_FLAGS) -c rose_test_2.c -o rose_test_2.o
+
+test_2-kernel.ptx: test_2-kernel.cu
+#	gcc $(C_FLAGS) -c test_2-kernel.c -o test_2-kernel.o
+
+test_2-data.o: test_2-data.c
+	gcc $(C_FLAGS) -c test_2-data.c -o test_2-data.o
+
+test_2: rose_test_2.o test_2-data.o $(TILEK_RTL) $(KLT_RTL)
+	libtool --mode=link gcc rose_test_2.o test_2-data.o $(TILEK_RTL) $(KLT_RTL) -o test_2
+
+check-test_2: test_2
+	./test_2
 
 #########################################

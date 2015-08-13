@@ -2,16 +2,17 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 lib_LTLIBRARIES= \
-  libDLX-TileK-basic.la       libTileK-RTL-basic.la   \
-  libDLX-TileK-threads.la     libTileK-RTL-threads.la \
-  libDLX-TileK-accelerator.la
+  libDLX-TileK-basic.la       libKLT-TileK-basic.la   libTileK-RTL-basic.la   \
+  libDLX-TileK-threads.la     libKLT-TileK-threads.la libTileK-RTL-threads.la \
+  libDLX-TileK-accelerator.la libKLT-TileK-opencl.la  \
+                              libKLT-TileK-cuda.la
 
 if ROSE_HAVE_OPENCL_INC
 lib_LTLIBRARIES+=libTileK-RTL-opencl.la
 endif
 
 if ROSE_HAVE_CUDA_INC
-#lib_LTLIBRARIES+=libTileK-RTL-cuda.la
+lib_LTLIBRARIES+=libTileK-RTL-cuda.la
 endif
 
 # DLX (frontend)
@@ -46,6 +47,51 @@ libDLX_TileK_accelerator_la_SOURCES= \
 libDLX_TileK_accelerator_la_CXXFLAGS= \
   -g -DTILEK_ACCELERATOR \
   -I$(top_srcdir)/src/frontend/DLX/include \
+  -I$(srcdir)/../include \
+  $(ROSE_INCLUDES)
+
+# KLT (backend)
+
+libKLT_TileK_basic_la_SOURCES= \
+  klt-tilek-api-basic.cpp
+libKLT_TileK_basic_la_CXXFLAGS= \
+  -g -DTILEK_BASICS \
+  -I$(top_srcdir)/src/midend/MFB/include \
+  -I$(top_srcdir)/src/midend/MDCG/include \
+  -I$(top_srcdir)/src/midend/KLT/include \
+  -I$(srcdir)/../include \
+  $(ROSE_INCLUDES)
+
+libKLT_TileK_threads_la_SOURCES= \
+  klt-tilek-api-basic.cpp \
+  klt-tilek-api-threads.cpp
+libKLT_TileK_threads_la_CXXFLAGS= \
+  -g -DTILEK_THREADS \
+  -I$(top_srcdir)/src/midend/MFB/include \
+  -I$(top_srcdir)/src/midend/MDCG/include \
+  -I$(top_srcdir)/src/midend/KLT/include \
+  -I$(srcdir)/../include \
+  $(ROSE_INCLUDES)
+
+libKLT_TileK_opencl_la_SOURCES= \
+  klt-tilek-api-accelerator.cpp \
+  klt-tilek-api-opencl.cpp
+libKLT_TileK_opencl_la_CXXFLAGS= \
+  -g -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL \
+  -I$(top_srcdir)/src/midend/MFB/include \
+  -I$(top_srcdir)/src/midend/MDCG/include \
+  -I$(top_srcdir)/src/midend/KLT/include \
+  -I$(srcdir)/../include \
+  $(ROSE_INCLUDES)
+
+libKLT_TileK_cuda_la_SOURCES= \
+  klt-tilek-api-accelerator.cpp \
+  klt-tilek-api-cuda.cpp
+libKLT_TileK_cuda_la_CXXFLAGS= \
+  -g -DTILEK_ACCELERATOR -DTILEK_TARGET_CUDA \
+  -I$(top_srcdir)/src/midend/MFB/include \
+  -I$(top_srcdir)/src/midend/MDCG/include \
+  -I$(top_srcdir)/src/midend/KLT/include \
   -I$(srcdir)/../include \
   $(ROSE_INCLUDES)
 

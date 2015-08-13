@@ -16,6 +16,8 @@ void ModelBuilder::setParentFromScope(Model::model_t & model, Model::element_t<k
   SgScopeStatement * scope = symbol->get_scope();
   assert(scope != NULL);
 
+//std::cerr << "[Info] (MDCG::Tools::ModelBuilder::setParentFromScope<" << kind << ">) symbol: " << symbol->get_name() << " (" << symbol->class_name() << ")." << std::endl;
+
   SgNamespaceDefinitionStatement * nsp_defn     = isSgNamespaceDefinitionStatement(scope);
   SgClassDefinition              * class_defn   = isSgClassDefinition(scope);
   SgGlobal                       * global_scope = isSgGlobal(scope);
@@ -63,8 +65,13 @@ void ModelBuilder::setParentFromScope(Model::model_t & model, Model::element_t<k
     }
   }
   else if (class_defn != NULL) {
+
+//  std::cerr << "[Info] (MDCG::Tools::ModelBuilder::setParentFromScope<" << kind << ">) Scope is Class Defn. Decl: " << class_defn->get_declaration() << ", name: " << class_defn->get_declaration()->get_name().getString() << std::endl;
+
     // namespace, function, and variable cannot have class for scope
-    assert(kind != Model::e_model_namespace && kind != Model::e_model_function && kind != Model::e_model_variable);
+    assert(kind != Model::e_model_namespace);
+    assert(kind != Model::e_model_function);
+    assert(kind != Model::e_model_variable);
     
     SgClassDeclaration * class_decl = class_defn->get_declaration();
     assert(class_decl != NULL);
@@ -224,6 +231,8 @@ void ModelBuilder::add(Model::model_t & model, SgVariableSymbol * variable_symbo
 }
 
 void ModelBuilder::add(Model::model_t & model, SgFunctionSymbol * function_symbol) {
+//std::cerr << "[Info] (MDCG::Tools::ModelBuilder::add, SgFunctionSymbol) function_symbol: " << function_symbol->get_name() << " (" << function_symbol->class_name() << ")." << std::endl;
+
   Model::function_t element = Model::build<Model::e_model_function>();
 
   element->node->symbol = function_symbol;
@@ -272,6 +281,8 @@ void ModelBuilder::add(Model::model_t & model, SgClassSymbol * class_symbol) {
 }
 
 void ModelBuilder::add(Model::model_t & model, SgMemberFunctionSymbol * member_function_symbol) {
+//std::cerr << "[Info] (MDCG::Tools::ModelBuilder::add, SgMemberFunctionSymbol) member_function_symbol: " << member_function_symbol->get_name() << " (" << member_function_symbol->class_name() << ")." << std::endl;
+
   Model::method_t element = Model::build<Model::e_model_method>();
 
   element->node->symbol = member_function_symbol;

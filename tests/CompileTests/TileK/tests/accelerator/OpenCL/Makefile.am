@@ -23,10 +23,13 @@ CHECK_TARGET=
 if ROSE_HAVE_OPENCL_INC
 if ROSE_HAVE_OPENCL_LIB
 CHECK_TARGET+=check-test_1 check-test_2
-ROSE_FLAGS+=-I@OPENCL_INC_DIR@
 C_FLAGS+=-I@OPENCL_INC_DIR@
 LD_FLAGS+=-L@OPENCL_LIB_DIR@
+else
+CHECK_TARGET+=rose_test_1.c rose_test_2.c
 endif
+else
+CHECK_TARGET+=rose_test_1.c rose_test_2.c
 endif
 
 check-local: $(CHECK_TARGET)

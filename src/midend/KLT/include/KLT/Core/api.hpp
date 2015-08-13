@@ -50,11 +50,9 @@ struct kernel_t : public ::MDCG::Tools::api_t {
     virtual void loadUser(const MDCG::Model::model_t & model);
 
   public:
-    // default: identity
-    virtual SgType * buildSharedDataType(SgType * type) const;
-
-    // default: identity
-    virtual SgType * buildLocalDataType(SgType * type) const;
+    virtual SgInitializedName * buildConstantVariable(const std::string & name, SgType * type, SgInitializer * init) const;
+    virtual SgInitializedName * buildGlobalVariable(const std::string & name, SgType * type, SgInitializer * init) const;
+    virtual SgInitializedName * buildLocalVariable(const std::string & name, SgType * type, SgInitializer * init) const;
 
     // default: none
     virtual void applyKernelModifiers(SgFunctionDeclaration * kernel_decl) const;

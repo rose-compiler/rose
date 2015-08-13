@@ -57,6 +57,8 @@ void  Driver<Sage>::loadSymbols<SgFunctionDeclaration>(size_t file_id, SgSourceF
   for (it_function_decl = function_decl.begin(); it_function_decl != function_decl.end(); it_function_decl++) {
     SgFunctionDeclaration * function_decl = *it_function_decl;
 
+    if (isSgMemberFunctionDeclaration(function_decl)) continue;
+
     if (function_decl->get_startOfConstruct()->get_raw_filename() != file->get_sourceFileNameWithPath()) continue;
 
     if (ignore(function_decl->get_scope())) continue;
