@@ -2151,6 +2151,7 @@ tests/CompileTests/TileK/tests/accelerator/Makefile
 tests/CompileTests/TileK/tests/accelerator/OpenCL/Makefile
 tests/CompileTests/TileK/tests/accelerator/CUDA/Makefile
 tests/CompileTests/TileK/doc/Makefile
+tests/CompileTests/TileK/doc/index.html
 tests/CompileTests/TileK/doc/dlx.doxy
 tests/CompileTests/TileK/doc/mfb.doxy
 tests/CompileTests/TileK/doc/mdcg.doxy
