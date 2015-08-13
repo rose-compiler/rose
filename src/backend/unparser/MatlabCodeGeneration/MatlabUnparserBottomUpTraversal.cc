@@ -1,7 +1,6 @@
 #include "MatlabUnparser.h"
 
 #include <boost/format.hpp>
-#include <boost/filesystem.hpp>
 #include <sstream>
 
 std::string MatlabUnparserBottomUpTraversal::handleDoubleVal(SgNode *node, SynthesizedAttributesList childAttributes)
@@ -290,9 +289,10 @@ std::string MatlabUnparserBottomUpTraversal::handleSourceFile(SgNode *node, Synt
   std::string scriptString = childAttributes[SgSourceFile_globalScope];
 
   SgSourceFile *sourceFile = isSgSourceFile(node);
-
-  boost::filesystem::path sourceFilePath(sourceFile->getFileName());
-  std::string unparsedFileName = "rose_" + sourceFilePath.stem().string();
+  
+  std::string sourceFileName = StringUtility::stripPathFromFileName(sourceFile->getFileName());
+  
+  std::string unparsedFileName = "rose_" + StringUtility::stripFileSuffixFromFileName(sourceFileName);
   
   std::ofstream unparsedFile(unparsedFileName.c_str());
 

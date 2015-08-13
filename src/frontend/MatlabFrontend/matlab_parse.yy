@@ -36,7 +36,6 @@ along with Octave; see the file COPYING.  If not, see
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
-#include <boost/filesystem.hpp>
 
 #include "input.h"
 #include "lex.h"
@@ -1660,9 +1659,7 @@ int beginParse(SgProject* &p, int argc, char* argv[])
    //whereas rose_fileName.cc is produced as a backend for Matlab's C++ unparser
 
    //The file is always created on the current directory
-   boost::filesystem::path workingFilePath(argv[1]);
-   
-   std::string workingFile = workingFilePath.filename().string();
+   std::string workingFile = StringUtility::stripPathFromFileName(argv[1]);
    workingFile += ".cc";
       
    //Create an empty working file
