@@ -69,6 +69,9 @@ class DFAnalysisBase {
   void attachInfoToAst(string attributeName,bool inInfo);
   void setSolverTrace(bool trace) { _solver->setTrace(trace); }
 
+  // optional: allows to set a pointer analysis (if not set the default behavior is used (everything is modified through any pointer)).
+  void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pa);
+
  protected:
 
   enum AnalysisType {FORWARD_ANALYSIS, BACKWARD_ANALYSIS};
@@ -92,8 +95,6 @@ class DFAnalysisBase {
   iterator end();
   size_t size();
 #endif
-  // optional: allows to set a pointer analysis (if not set the default behavior is used (everything is modified through any pointer)).
-  void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pa);
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice*);
   void computeAllPreInfo();

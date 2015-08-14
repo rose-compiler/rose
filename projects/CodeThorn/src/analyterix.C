@@ -133,6 +133,12 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     SPRAY::IntervalAnalysis* intervalAnalyzer=new SPRAY::IntervalAnalysis();
     cout << "STATUS: initializing interval analyzer."<<endl;
     intervalAnalyzer->initialize(root);
+    cout << "STATUS: running pointer analysis."<<endl;
+    ROSE_ASSERT(intervalAnalyzer->getVariableIdMapping());
+    SPRAY::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(),root);
+    fipa->initialize();
+    fipa->run();
+    intervalAnalyzer->setPointerAnalysis(fipa);
     cout << "STATUS: initializing interval transfer functions."<<endl;
     intervalAnalyzer->initializeTransferFunctions();
     cout << "STATUS: initializing interval global variables."<<endl;
@@ -154,7 +160,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     AnalysisAstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
     ara.annotateAnalysisPrePostInfoAsComments(root,"iv-analysis",intervalAnalyzer);
 #endif
-
+    delete fipa;
   }
 
   if(option_lv_analysis) {

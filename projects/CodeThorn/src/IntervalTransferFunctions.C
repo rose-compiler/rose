@@ -138,6 +138,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctio
     VariableId paramId=getParameterVariableId(paramNr);
     ips->addVariable(paramId);
     ips->setVariable(paramId,evalExpression(lab,*i,element));
+    paramNr++;
   }
 }
 /*! 

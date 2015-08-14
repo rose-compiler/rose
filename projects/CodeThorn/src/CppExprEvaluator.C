@@ -19,7 +19,6 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node, Pro
 }
   
 SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
-  
   ROSE_ASSERT(domain);
   ROSE_ASSERT(propertyState);
   ROSE_ASSERT(variableIdMapping);
@@ -47,23 +46,29 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         ips->setVariable(varId,rhsResult);
         return rhsResult;
       } else {
+        // TODO: handle *var and update modByPointer() ...
         if(_showWarnings)
-          cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<" ... setting alll variables to unbounded interval and using unbounded result interval."<<endl;
+          cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
         ips->topifyAllVariables();
         return NumberIntervalLattice::top();
       }
     }
     default:
-      if(_showWarnings) cout<<"Warning: unknown binary operator: "<<node->sage_class_name()<<" ... setting alll variables to unbounded interval and using unbounded result interval."<<endl;
+      if(_showWarnings) cout<<"Warning: unknown binary operator: "<<node->sage_class_name()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
       ips->topifyAllVariables();
       return NumberIntervalLattice::top();
     }
   }
   if(isSgUnaryOp(node)) {
+    SgNode* operand=SgNodeHelper::getFirstChild(node);
     switch(node->variantT()) {
     case V_SgMinusOp: {
-      return domain->arithSub(NumberIntervalLattice(Number(0)),evaluate(SgNodeHelper::getFirstChild(node)));
+      return domain->arithSub(NumberIntervalLattice(Number(0)),evaluate(operand));
     }
+    case V_SgAddressOfOp:
+      // discard result as do not model pointer value intervals, but evaluate to ensure all side-effects are represented in the state
+      evaluate(operand);
+      return NumberIntervalLattice::top();
     case V_SgMinusMinusOp:
     case V_SgPlusPlusOp: {
       int incdecVal=0;
@@ -133,7 +138,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     if(_showWarnings) cout<<"Warning: unknown leaf node: "<<node->sage_class_name()<<" ... using unbounded result interval."<<endl;
     return NumberIntervalLattice::top();
   }
-  if(_showWarnings) cout<<"Warning: Unknown operator."<<node->sage_class_name()<<" ... setting alll variables to unbounded interval and using unbounded result interval."<<endl;
+  if(_showWarnings) cout<<"Warning: Unknown operator."<<node->sage_class_name()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
   // an unknown operator may have an arbitrary effect, to err on the safe side we topify all variables
   ips->topifyAllVariables();
   return NumberIntervalLattice::top();

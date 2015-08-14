@@ -9,12 +9,12 @@ void foo1() {
   foo2(x,&z);
 }
 
-int foo2(int x, int* xp) {
+int foo2(int x2, int* xp) {
   int y;
   int c=1;
-  y=(x-c)*12;
-  int a[100];
-  *xp=a[y];
+  y=(x2-c)*12;
+  int array[100];
+  *xp=array[y];
   return 0;
 }
 
