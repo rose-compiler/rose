@@ -10,7 +10,17 @@
 
 using namespace std;
 
-SPRAY::CppExprEvaluator::CppExprEvaluator(SPRAY::NumberIntervalLattice* d, SPRAY::VariableIdMapping* vim):domain(d),variableIdMapping(vim),propertyState(0),_showWarnings(false){
+SPRAY::CppExprEvaluator::CppExprEvaluator(SPRAY::NumberIntervalLattice* d, SPRAY::VariableIdMapping* vim) :
+  domain(d),
+  variableIdMapping(vim),
+  propertyState(0),
+  _showWarnings(false),
+  _pointerAnalysisInterface(0)
+{
+}
+
+void SPRAY::CppExprEvaluator::setPointerAnalysis(SPRAY::PointerAnalysisInterface* pointerAnalysisInterface) {
+  _pointerAnalysisInterface=pointerAnalysisInterface;
 }
 
 SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node, PropertyState* pstate) {
@@ -32,12 +42,23 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     SgNode* lhs=SgNodeHelper::getLhs(node);
     SgNode* rhs=SgNodeHelper::getRhs(node);
     switch(node->variantT()) {
+    case V_SgEqualityOp:
+      return domain->isEqualInterval(evaluate(lhs),evaluate(rhs));
     case V_SgAddOp:  return domain->arithAdd(evaluate(lhs),evaluate(rhs));
     case V_SgSubtractOp: return domain->arithSub(evaluate(lhs),evaluate(rhs));
     case V_SgMultiplyOp: return domain->arithMul(evaluate(lhs),evaluate(rhs));
     case V_SgDivideOp: return domain->arithDiv(evaluate(lhs),evaluate(rhs));
     case V_SgModOp: return domain->arithMod(evaluate(lhs),evaluate(rhs));
+    case V_SgPntrArrRefExp:
+      return NumberIntervalLattice::top();
     case V_SgAssignOp: {
+      if(isSgPointerDerefExp(lhs)) {
+        VariableIdSet varIdSet=_pointerAnalysisInterface->getModByPointer();
+        NumberIntervalLattice rhsResult=evaluate(rhs);
+        // TODO: more precise: merge each interval of the lhs memloc-variable(s) with the interval of rhsResult
+        ips->topifyVariableSet(varIdSet);
+        return rhsResult;
+      }
       if(SgVarRefExp* lhsVar=isSgVarRefExp(lhs)) {
         ROSE_ASSERT(variableIdMapping);
         //variableIdMapping->toStream(cout);
@@ -66,7 +87,8 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       return domain->arithSub(NumberIntervalLattice(Number(0)),evaluate(operand));
     }
     case V_SgAddressOfOp:
-      // discard result as do not model pointer value intervals, but evaluate to ensure all side-effects are represented in the state
+    case V_SgPointerDerefExp:
+      // discard result as pointer value intervals are not represented in this domain, but evaluate to ensure all side-effects are represented in the state
       evaluate(operand);
       return NumberIntervalLattice::top();
     case V_SgMinusMinusOp:

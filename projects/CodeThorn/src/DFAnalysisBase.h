@@ -73,6 +73,7 @@ class DFAnalysisBase {
   void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pa);
 
  protected:
+  SPRAY::PointerAnalysisInterface* getPointerAnalysis();
 
   enum AnalysisType {FORWARD_ANALYSIS, BACKWARD_ANALYSIS};
   virtual void solve();

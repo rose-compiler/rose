@@ -13,6 +13,7 @@
 #include "CollectionOperators.h"
 #include "CommandLineOptions.h"
 #include "Miscellaneous.h"
+#include "Miscellaneous2.h"
 
 #include "boost/regex.hpp"
 
@@ -145,7 +146,7 @@ void PState::fromStream(istream& is) {
   int __varIdCode=-1; 
   VariableId __varId; 
   AValue __varAValue; 
-  if(!CodeThorn::Parse::checkWord("{",is)) throw "Error: Syntax error PState. Expected '{'.";
+  if(!SPRAY::Parse::checkWord("{",is)) throw "Error: Syntax error PState. Expected '{'.";
   is>>c;
   // read pairs (varname,varvalue)
   while(c!='}') {

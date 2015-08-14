@@ -11,6 +11,7 @@
 #include <iostream>
 #include <climits>
 #include "Miscellaneous.h"
+#include "Miscellaneous2.h"
 
 using namespace std;
 
@@ -396,13 +397,13 @@ string AType::ConstIntLattice::toString() const {
 }
 
 void AType::ConstIntLattice::fromStream(istream& is) {
-  if(CodeThorn::Parse::checkWord("top",is)) {
+  if(SPRAY::Parse::checkWord("top",is)) {
     valueType=TOP;
     intValue=0;
-  } else if(CodeThorn::Parse::checkWord("bot",is)) {
+  } else if(SPRAY::Parse::checkWord("bot",is)) {
     valueType=BOT;
     intValue=0;
-  } else if(CodeThorn::Parse::integer(is,intValue)) {
+  } else if(SPRAY::Parse::integer(is,intValue)) {
     valueType=CONSTINT;
   } else {
     throw "Error: ConstIntLattic::fromStream failed.";

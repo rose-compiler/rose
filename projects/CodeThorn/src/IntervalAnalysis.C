@@ -41,5 +41,6 @@ void SPRAY::IntervalAnalysis::initializeTransferFunctions() {
   ROSE_ASSERT(intervalTransferFunctions->getCppExprEvaluator()==0);
   SPRAY::CppExprEvaluator* cppExprEvaluator=new SPRAY::CppExprEvaluator(_numberIntervalLattice,&_variableIdMapping);
   cppExprEvaluator->setShowWarnings(true);
+  cppExprEvaluator->setPointerAnalysis(getPointerAnalysis());
   intervalTransferFunctions->setCppExprEvaluator(cppExprEvaluator);
  }

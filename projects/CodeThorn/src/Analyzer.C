@@ -11,6 +11,7 @@
 #include <fstream>
 #include <unistd.h>
 #include "Miscellaneous.h"
+#include "Miscellaneous2.h"
 #include "AnalysisAbstractionLayer.h"
 
 #include <boost/bind.hpp>
@@ -1269,7 +1270,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           if(boolOptions["abstract-interpreter"]) {
             cout<<"CodeThorn-abstract-interpreter(stdin)> ";
             AValue aval;
-            CodeThorn::Parse::whitespaces(cin);
+            SPRAY::Parse::whitespaces(cin);
             cin >> aval;
             newCSet.removeAllConstraintsOfVar(varId);
             newPState[varId]=aval;

@@ -103,6 +103,11 @@ VariableIdSet SPRAY::IntervalPropertyState::allVariableIds() {
   return set;
 }
 
+void SPRAY::IntervalPropertyState::topifyVariableSet(VariableIdSet varIdSet) {
+  for(VariableIdSet::iterator i=varIdSet.begin();i!=varIdSet.end();++i) {
+    intervals[*i]=SPRAY::NumberIntervalLattice::top();
+  }
+}
 void SPRAY::IntervalPropertyState::topifyAllVariables() {
   for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
     intervals[(*i).first]=SPRAY::NumberIntervalLattice::top();

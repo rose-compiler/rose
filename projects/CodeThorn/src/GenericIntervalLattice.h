@@ -405,6 +405,18 @@ class GenericIntervalLattice {
       return BoolLatticeType(BoolLatticeType(false));
     }
   }
+  static GenericIntervalLattice isEqualInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    BoolLatticeType res=isEqual(l1,l2);
+    if(res.isTop()) { GenericIntervalLattice el; el.setTop(); return el; }
+    else if(res.isTrue()) return GenericIntervalLattice(1);
+    else if(res.isFalse()) return GenericIntervalLattice(0);
+    else if(res.isBot()) { GenericIntervalLattice el; el.setBot(); return el; }
+    else {
+      std::cerr<<"GenericIntervalLattice: equalOp: internal error."<<std::endl;
+      exit(1);
+    }
+  }
+
   static BoolLatticeType isSmaller(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     // 0. handle special case when both intervals are of length 1
     // 1. check for overlap (if yes, we do not know)

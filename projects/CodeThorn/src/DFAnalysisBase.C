@@ -218,6 +218,10 @@ void DFAnalysisBase::setPointerAnalysis(PointerAnalysisInterface* pa) {
   _pointerAnalysisInterface=pa;
 }
 
+SPRAY::PointerAnalysisInterface* DFAnalysisBase::getPointerAnalysis() {
+  return _pointerAnalysisInterface;
+}
+
 void
 DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot=0) {
   if(startFunRoot) {

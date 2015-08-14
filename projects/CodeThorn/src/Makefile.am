@@ -25,8 +25,6 @@ codethorn_CXXFLAGS = $(KNOBS) -fopenmp -Wall -O3 -march=native -ftree-vectorize
 codethorn_DEPENDENCIES=libspray.la
 codethorn_LDADD = -lrose -lspot -lbdd -lspray
 codethorn_SOURCES = \
-  AType.C                          \
-  AType.h                          \
   Analyzer.C                       \
   Analyzer.h                       \
   CollectionOperators.h            \
@@ -289,8 +287,6 @@ woodpecker_LDADD = -lrose -lspray
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
   DataDependenceVisualizer.h DataDependenceVisualizer.C \
-  AType.h                          \
-  AType.C                          \
   CPAstAttribute.h CPAstAttribute.C \
   UDAstAttribute.h                 \
   UDAstAttribute.C                 \
@@ -318,8 +314,6 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
 analyterix_DEPENDENCIES=libspray.la
 analyterix_LDADD = -lrose -lspray
 analyterix_SOURCES = \
-  AType.C \
-  AType.h \
   CPAstAttribute.h CPAstAttribute.C \
   CommandLineOptions.h \
   CommandLineOptions.C \
@@ -371,6 +365,7 @@ libspray_la_SOURCES=\
  AnalysisAbstractionLayer.h \
  AnalysisAstAnnotator.h \
  AstTerm.h \
+ AType.h \
  CFAnalysis.h \
  DFAnalysisBase.h \
  DFTransferFunctions.h \
@@ -386,6 +381,7 @@ libspray_la_SOURCES=\
  LVLattice.h \
  LVTransferFunctions.h \
  LanguageRestrictor.h \
+ Miscellaneous2.h \
  NumberIntervalLattice.h \
  PASolver1.h \
  PointerAnalysisInterface.h \
@@ -396,6 +392,7 @@ libspray_la_SOURCES=\
  AnalysisAstAnnotator.C \
  AliasAnalysis.C \
  AstTerm.C \
+ AType.C \
  CFAnalysis.C \
  CppExprEvaluator.C \
  DFAnalysisBase.C \
@@ -414,6 +411,7 @@ libspray_la_SOURCES=\
  LVAstAttributeInterface.C \
  LVLattice.C \
  LVTransferFunctions.C \
+ Miscellaneous2.C \
  NumberIntervalLattice.C \
  PASolver1.C \
  PointerAnalysisInterface.C \
