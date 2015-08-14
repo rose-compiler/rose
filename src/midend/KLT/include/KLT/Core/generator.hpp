@@ -6,12 +6,15 @@
 #include <string>
 #include <vector>
 
-#include "MDCG/Tools/model-builder.hpp"
-
 #include "KLT/Core/looptree.hpp"
 #include "KLT/Core/kernel.hpp"
 #include "KLT/Core/descriptor.hpp"
 #include "KLT/Core/api.hpp"
+
+#include "MFB/KLT/driver.hpp"
+
+#include "MDCG/Tools/model-builder.hpp"
+
 #include "KLT/MDCG/static-initializer.hpp"
 
 class SgFunctionDeclaration;
@@ -20,8 +23,6 @@ class SgBasicBlock;
 class SgVariableSymbol;
 
 namespace MFB {
-  template <template <class Object> class Model>  class Driver;
-  template <class Object> class Sage;
   namespace KLT {
     template <class Object> class KLT;
   }

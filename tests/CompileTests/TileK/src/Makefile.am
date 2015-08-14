@@ -30,7 +30,7 @@ RTL_INC_PATHS=-DKLT_PATH=\"$(abs_top_srcdir)/$(KLT_REL_PATH)\" -DTILEK_PATH=\"$(
 
 KLT_LIBS=-lDLX-Core -lMFB-Sage -lMFB-KLT -lMFB-Utils -lMDCG-Model -lMDCG-Tools -lKLT-Core -lKLT-MDCG
 
-TILEK_CXXFLAGS=-g -O0 $(INC_PATHS) $(RTL_INC_PATHS) -DROSE_INCLUDE_DIR=\"$(abs_top_builddir)/include-staging\"
+TILEK_CXXFLAGS=-g -O0 $(INC_PATHS) $(RTL_INC_PATHS)
 TILEK_LDADD=$(LIB_PATHS) $(KLT_LIBS) $(ROSE_LIBS)
 
 #########################################

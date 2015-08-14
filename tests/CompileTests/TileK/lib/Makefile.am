@@ -52,48 +52,37 @@ libDLX_TileK_accelerator_la_CXXFLAGS= \
 
 # KLT (backend)
 
-libKLT_TileK_basic_la_SOURCES= \
-  klt-tilek-api-basic.cpp
-libKLT_TileK_basic_la_CXXFLAGS= \
-  -g -DTILEK_BASICS \
+KLT_TILEK_CXXFLAGS= \
+  -g \
+  -I$(top_srcdir)/src/frontend/DLX/include \
   -I$(top_srcdir)/src/midend/MFB/include \
   -I$(top_srcdir)/src/midend/MDCG/include \
   -I$(top_srcdir)/src/midend/KLT/include \
   -I$(srcdir)/../include \
   $(ROSE_INCLUDES)
+
+libKLT_TileK_basic_la_SOURCES= \
+  klt-tilek-api-basic.cpp \
+  klt-tilek-generator-basic.cpp
+libKLT_TileK_basic_la_CXXFLAGS=$(KLT_TILEK_CXXFLAGS) -DTILEK_BASICS
 
 libKLT_TileK_threads_la_SOURCES= \
   klt-tilek-api-basic.cpp \
-  klt-tilek-api-threads.cpp
-libKLT_TileK_threads_la_CXXFLAGS= \
-  -g -DTILEK_THREADS \
-  -I$(top_srcdir)/src/midend/MFB/include \
-  -I$(top_srcdir)/src/midend/MDCG/include \
-  -I$(top_srcdir)/src/midend/KLT/include \
-  -I$(srcdir)/../include \
-  $(ROSE_INCLUDES)
+  klt-tilek-api-threads.cpp \
+  klt-tilek-generator-threads.cpp
+libKLT_TileK_threads_la_CXXFLAGS= $(KLT_TILEK_CXXFLAGS) -DTILEK_THREADS
 
 libKLT_TileK_opencl_la_SOURCES= \
   klt-tilek-api-accelerator.cpp \
-  klt-tilek-api-opencl.cpp
-libKLT_TileK_opencl_la_CXXFLAGS= \
-  -g -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL \
-  -I$(top_srcdir)/src/midend/MFB/include \
-  -I$(top_srcdir)/src/midend/MDCG/include \
-  -I$(top_srcdir)/src/midend/KLT/include \
-  -I$(srcdir)/../include \
-  $(ROSE_INCLUDES)
+  klt-tilek-api-opencl.cpp \
+  klt-tilek-generator-opencl.cpp
+libKLT_TileK_opencl_la_CXXFLAGS= $(KLT_TILEK_CXXFLAGS) -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL -DROSE_INCLUDE_DIR=\"$(abs_top_builddir)/include-staging\"
 
 libKLT_TileK_cuda_la_SOURCES= \
   klt-tilek-api-accelerator.cpp \
-  klt-tilek-api-cuda.cpp
-libKLT_TileK_cuda_la_CXXFLAGS= \
-  -g -DTILEK_ACCELERATOR -DTILEK_TARGET_CUDA \
-  -I$(top_srcdir)/src/midend/MFB/include \
-  -I$(top_srcdir)/src/midend/MDCG/include \
-  -I$(top_srcdir)/src/midend/KLT/include \
-  -I$(srcdir)/../include \
-  $(ROSE_INCLUDES)
+  klt-tilek-api-cuda.cpp \
+  klt-tilek-generator-cuda.cpp
+libKLT_TileK_cuda_la_CXXFLAGS= $(KLT_TILEK_CXXFLAGS) -DTILEK_ACCELERATOR -DTILEK_TARGET_CUDA -DROSE_INCLUDE_DIR=\"$(abs_top_builddir)/include-staging\"
 
 # Runtime
 
