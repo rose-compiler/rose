@@ -6,6 +6,8 @@
 
 #include "KLT/TileK/api-threads.hpp"
 
+#include <cstddef>
+
 namespace KLT {
 
 namespace TileK {

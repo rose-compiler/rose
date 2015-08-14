@@ -6,6 +6,8 @@
 #include "KLT/Core/descriptor.hpp"
 #include "KLT/Core/utils.hpp"
 
+#include <cstddef>
+
 namespace KLT {
 
 namespace TileK {

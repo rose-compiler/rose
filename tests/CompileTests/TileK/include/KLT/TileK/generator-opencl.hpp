@@ -6,6 +6,8 @@
 
 #include "KLT/TileK/api-opencl.hpp"
 
+#include <cstddef>
+
 namespace KLT {
 
 namespace TileK {

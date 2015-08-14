@@ -6,6 +6,8 @@
 
 #include "KLT/TileK/api-basic.hpp"
 
+#include <cstddef>
+
 namespace KLT {
 
 namespace TileK {

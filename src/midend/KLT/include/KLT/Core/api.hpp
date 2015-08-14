@@ -2,6 +2,7 @@
 #ifndef __KLT_API_HPP__
 #define __KLT_API_HPP__
 
+#include <cstddef>
 #include "MDCG/Tools/api.hpp"
 
 class SgVariableSymbol;

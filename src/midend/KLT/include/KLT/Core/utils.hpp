@@ -2,6 +2,7 @@
 #ifndef __KLT_UTILS_HPP__
 #define __KLT_UTILS_HPP__
 
+#include <cstddef>
 #include <iostream>
 #include <fstream>
 #include <map>

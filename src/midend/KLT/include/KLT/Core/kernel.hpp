@@ -2,6 +2,7 @@
 #ifndef __KLT_KERNEL_HPP__
 #define __KLT_KERNEL_HPP__
 
+#include <cstddef>
 #include <vector>
 #include <map>
 

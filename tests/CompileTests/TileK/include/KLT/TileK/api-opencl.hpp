@@ -4,6 +4,8 @@
 
 #include "KLT/TileK/api-accelerator.hpp"
 
+#include <cstddef>
+
 namespace KLT {
 
 namespace TileK {

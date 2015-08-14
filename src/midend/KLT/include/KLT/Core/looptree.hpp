@@ -2,6 +2,7 @@
 #ifndef __KLT_LOOPTREE_HPP__
 #define __KLT_LOOPTREE_HPP__
 
+#include <cstddef>
 #include <vector>
 #include <map>
 #include <set>

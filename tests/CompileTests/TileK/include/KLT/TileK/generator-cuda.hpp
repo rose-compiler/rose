@@ -6,6 +6,8 @@
 
 #include "KLT/TileK/api-cuda.hpp"
 
+#include <cstddef>
+
 namespace KLT {
 
 namespace TileK {
