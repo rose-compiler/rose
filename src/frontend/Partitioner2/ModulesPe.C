@@ -248,9 +248,11 @@ buildMayReturnLists(Partitioner &partitioner) {
     //      because I haven't been able to find a good list anywhere.
     Configuration &c = partitioner.configuration();
     c.insertMaybeFunction("TerminateThread@KERNEL32.dll").mayReturn(false);
-    c.insertMaybeFunction("RaiseException@KERNEL32.dll").mayReturn(false);
-    c.insertMaybeFunction("TerminateProcess@KERNEL32.dll").mayReturn(false);
     c.insertMaybeFunction("ExitProcess@KERNEL32.dll").mayReturn(false);
+
+    // These may return to the caller.
+    c.insertMaybeFunction("RaiseException@KERNEL32.dll").mayReturn(true);
+    c.insertMaybeFunction("TerminateProcess@KERNEL32.dll").mayReturn(true);
 }
 
 void

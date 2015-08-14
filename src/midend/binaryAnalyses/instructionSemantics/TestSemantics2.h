@@ -135,6 +135,11 @@ public:
         check_sval_type(v1, "SValue::undefined_()");
         require(v1->get_width()==8, "SValue::undefined_() width");
 
+        // Virtual constructor: unspecified_()
+        BaseSemantics::SValuePtr v1b = protoval->unspecified_(8);
+        check_sval_type(v1b, "SValue::unspecified_()");
+        require(v1b->get_width()==8, "SValue::unspecified() width");
+
         // Virtual constructor: number_().  Note that we can't check that the number is actually concrete and has a value
         // because BaseSemantics defines only the API for is_number() and get_number() and not the semantics of those
         // methods. In fact, the NullSemantics domain doesn't make any distinction between concrete and abstract values--it

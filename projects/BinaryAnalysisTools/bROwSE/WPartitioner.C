@@ -479,7 +479,8 @@ WPartitioner::partitionSpecimen() {
     ctx_.engine.findingDeadCode(findDeadCode());
     ctx_.engine.findingIntraFunctionCode(followGhostEdges()==FOLLOW_LATER);
     ctx_.engine.usingSemantics(useSemantics());
-    ctx_.engine.functionReturnsAssumed(assumeFunctionsReturn());
+    ctx_.engine.functionReturnAnalysis(assumeFunctionsReturn() ?
+                                       P2::Engine::MAYRETURN_DEFAULT_YES : P2::Engine::MAYRETURN_DEFAULT_NO);
     ctx_.engine.followingGhostEdges(followGhostEdges());
     ctx_.engine.discontiguousBlocks(allowDiscontiguousBlocks());
     ctx_.engine.findingThunks(findingThunks());

@@ -34,7 +34,7 @@ class Sage<SgMemberFunctionDeclaration> {
       SgFunctionParameterList * params;
 
       SgClassSymbol * parent;
-      unsigned file_id; // only used for definition scope (declaration scope depends on parent)
+      size_t file_id; // only used for definition scope (declaration scope depends on parent)
 
       bool is_static;
       bool is_virtual;
@@ -48,7 +48,7 @@ class Sage<SgMemberFunctionDeclaration> {
         SgType * return_type_,
         SgFunctionParameterList * params_,
         SgClassSymbol * parent_class_,
-        unsigned file_id_ = 0,
+        size_t file_id_ = 0,
         bool is_static_ = false,
         bool is_virtual_ = false,
         bool is_constructor_ = false,

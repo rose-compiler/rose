@@ -79,6 +79,10 @@ protected:
     static void syscall_stat_body(RSIM_Thread*, int);
     static void syscall_stat_leave(RSIM_Thread*, int);
 
+    static void syscall_statfs_enter(RSIM_Thread *t, int callno);
+    static void syscall_statfs_body(RSIM_Thread *t, int callno);
+    static void syscall_statfs_leave(RSIM_Thread *t, int callno);
+
     static void syscall_sysinfo_enter(RSIM_Thread *t, int callno);
     static void syscall_sysinfo_body(RSIM_Thread *t, int callno);
     static void syscall_sysinfo_leave(RSIM_Thread *t, int callno);
