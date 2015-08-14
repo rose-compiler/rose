@@ -81,6 +81,11 @@ class VariableIdMapping {
   std::string uniqueLongVariableName(VariableId varId);
   std::string uniqueShortVariableName(VariableId varId);
 
+  // set the size of a data structure represented by this variable-id. Currently only arrays are supported.
+  void setSize(VariableId variableId, size_t size);
+  // get the size of a data structure represented by this variable-id. Currently only arrays are supported.
+  size_t getSize(VariableId variableId);
+
   void registerNewSymbol(SgSymbol* sym);
   void registerNewArraySymbol(SgSymbol* sym, int arraySize);
   void toStream(std::ostream& os);
@@ -113,6 +118,7 @@ class VariableIdMapping {
   VariableId addNewSymbol(SgSymbol* sym);
   // used for mapping in both directions
   std::vector<SgSymbol*> mappingVarIdToSym;
+  std::map<size_t,size_t> mappingVarIdToSize;
   std::map<SgSymbol*,size_t> mappingSymToVarId;
   bool modeVariableIdForEachArrayElement;
 }; // end of class VariableIdMapping
