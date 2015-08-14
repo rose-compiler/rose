@@ -188,10 +188,10 @@ Grammar::setUpTypes ()
           TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  | 
 
           TypeNullptr          | DeclType                | TypeOfType
-	  #if USE_MATLAB_IR_NODES == 1
-	  | TypeMatrix
-	  #endif		    
-	  , "Type","TypeTag", false);
+          #if USE_MATLAB_IR_NODES == 1
+          | TypeMatrix
+          #endif                    
+          , "Type","TypeTag", false);
 
 
 #if 1

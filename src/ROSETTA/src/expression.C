@@ -331,9 +331,9 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (MatrixTransposeOp, "MatrixTransposeOp", "MATRIX_TRANSPOSE_OP");
      
      NEW_NONTERMINAL_MACRO (ElementwiseOp,
-			    ElementwiseMultiplyOp    |  ElementwisePowerOp    | ElementwiseLeftDivideOp |
-			    ElementwiseDivideOp      |  ElementwiseAddOp      | ElementwiseSubtractOp ,
-			    "ElementwiseOp", "ELEMENT_WISE_OP", false);
+                            ElementwiseMultiplyOp    |  ElementwisePowerOp    | ElementwiseLeftDivideOp |
+                            ElementwiseDivideOp      |  ElementwiseAddOp      | ElementwiseSubtractOp ,
+                            "ElementwiseOp", "ELEMENT_WISE_OP", false);
      #endif
      
     
@@ -350,9 +350,9 @@ Grammar::setUpExpressions ()
                             ExpressionRoot | MinusOp            | UnaryAddOp | NotOp           | PointerDerefExp | 
                             AddressOfOp    | MinusMinusOp       | PlusPlusOp | BitComplementOp | CastExp         |
                             ThrowOp        | RealPartOp         | ImagPartOp | ConjugateOp     | UserDefinedUnaryOp
-			    #if USE_MATLAB_IR_NODES == 1
-			    | MatrixTransposeOp
-			    #endif
+                            #if USE_MATLAB_IR_NODES == 1
+                            | MatrixTransposeOp
+                            #endif
                             ,"UnaryOp","UNARY_EXPRESSION", false);
 
 
@@ -373,9 +373,9 @@ Grammar::setUpExpressions ()
 
           NonMembershipOp | IsOp            | IsNotOp          /* | DotDotExp*/
 #if USE_MATLAB_IR_NODES == 1
-			    | ElementwiseOp | PowerOp | LeftDivideOp
+                            | ElementwiseOp | PowerOp | LeftDivideOp
 #endif
-	  ,"BinaryOp","BINARY_EXPRESSION", false);
+          ,"BinaryOp","BINARY_EXPRESSION", false);
 
 
      NEW_NONTERMINAL_MACRO (NaryOp,
@@ -397,7 +397,7 @@ Grammar::setUpExpressions ()
           "ExprListExp","EXPR_LIST", /* can have instances = */ true);
      #else
      NEW_NONTERMINAL_MACRO (ExprListExp,
-	  ListExp  | TupleExp,
+          ListExp  | TupleExp,
           "ExprListExp","EXPR_LIST", /* can have instances = */ true);
      #endif
      
@@ -433,7 +433,7 @@ Grammar::setUpExpressions ()
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
        #if USE_MATLAB_IR_NODES == 1
-	  RangeExp            | MagicColonExp           |
+          RangeExp            | MagicColonExp           |
        #endif
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
           ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | NoexceptOp, "Expression", "ExpressionTag", false);
@@ -1197,18 +1197,18 @@ Grammar::setUpExpressions ()
      RangeExp.setFunctionPrototype ( "HEADER_RANGE_EXP", "../Grammar/Expression.code" );
 
      RangeExp.setDataPrototype("SgExpression*", "start", "= NULL",
-			       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      RangeExp.setDataPrototype("SgExpression*", "end", "= NULL",
-			       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      RangeExp.setDataPrototype("SgExpression*", "stride", "= NULL",
-			       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      ElementwiseOp.excludeFunctionPrototype ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
      ElementwiseOp.setFunctionPrototype ( "HEADER_ELEMENT_WISE_OP", "../Grammar/Expression.code" );
 
      MatrixTransposeOp.setDataPrototype("bool", "is_conjugate", "= false",
-				NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-				     
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                     
      
      #endif
      

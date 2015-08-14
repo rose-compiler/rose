@@ -51,13 +51,13 @@ private:
     static ReturnStmtAttribute* get_attribute(SgNode *node)
     {
       if(node->attributeExists("RETURN_STRING"))
-	{
-	  return  (ReturnStmtAttribute*)(node->getAttribute("RETURN_STRING"));
-	}
+        {
+          return  (ReturnStmtAttribute*)(node->getAttribute("RETURN_STRING"));
+        }
       else
-	{
-	  return NULL;
-	}
+        {
+          return NULL;
+        }
     }
   };
 };

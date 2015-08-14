@@ -216,24 +216,24 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
                ROSE_ASSERT(nodeList.find(NULL) == nodeList.end());
                break;
              }
-	     
+             
 #ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
-	case V_SgTypeMatrix:
-	  {
-	    SgTypeMatrix *matrixType = isSgTypeMatrix(type);
-	    ROSE_ASSERT(matrixType != NULL);
+        case V_SgTypeMatrix:
+          {
+            SgTypeMatrix *matrixType = isSgTypeMatrix(type);
+            ROSE_ASSERT(matrixType != NULL);
 
-	    if(matrixType->get_base_type() != NULL)
-	      {
-		nodeList.insert(matrixType->get_base_type());
+            if(matrixType->get_base_type() != NULL)
+              {
+                nodeList.insert(matrixType->get_base_type());
                 addAssociatedNodes(matrixType->get_base_type(),nodeList,markMemberNodesDefinedToBeDeleted);
-	      }
-	    
-	    ROSE_ASSERT(nodeList.find(NULL) == nodeList.end());
-	    break;
-	  }
+              }
+            
+            ROSE_ASSERT(nodeList.find(NULL) == nodeList.end());
+            break;
+          }
 #endif
-	  
+          
        // DQ (9/5/2011): Added support for SgJavaParameterizedType.
           case V_SgJavaParameterizedType:
              {
@@ -2117,8 +2117,8 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgSwitchStatement:
           case V_SgWhileStmt:
 
-#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT	    
-	case V_SgMatlabForStatement:
+#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT           
+        case V_SgMatlabForStatement:
              {
                nodeList.insert(node);
                break;

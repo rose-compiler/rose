@@ -1582,9 +1582,9 @@ SageInterface::get_name ( const SgScopeStatement* scope )
        // DQ (11/30/2007): Added more fortran support.
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
-	    
+            
 #ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
-	  case V_SgMatlabForStatement:
+          case V_SgMatlabForStatement:
 #endif
           case V_SgBasicBlock:
           case V_SgCatchOptionStmt:

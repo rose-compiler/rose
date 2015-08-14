@@ -20,7 +20,7 @@ along with Octave; see the file COPYING.  If not, see
 */
 
 
-/*%option prefix = "matlab"	*/
+/*%option prefix = "matlab"     */
 
 %top {
 

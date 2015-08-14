@@ -317,22 +317,22 @@ int current_function_depth;
 // ==============================
 
 input           : input1
-	   	  {                                           
+                  {                                           
                   $1->appendAll();
 
                   if(parsingScriptFile)
                   {
                     SageBuilder::popScopeStack(); //pop out the default function
 
-		       //Create a default "run" function
-		    SgFunctionDeclaration *defaultFunction = SageBuilder::buildDefiningFunctionDeclaration("run", 
+                       //Create a default "run" function
+                    SgFunctionDeclaration *defaultFunction = SageBuilder::buildDefiningFunctionDeclaration("run", 
                       SageBuilder::buildVoidType(), SageBuilder::buildFunctionParameterList(), 
                       SageInterface::getFirstGlobalScope(project));
 
-		    SageInterface::removeStatement(defaultFunction->get_definition()->get_body());
-		    
-		    defaultFunction->get_definition()->set_body(isSgBasicBlock(currentScope));
-		    
+                    SageInterface::removeStatement(defaultFunction->get_definition()->get_body());
+                    
+                    defaultFunction->get_definition()->set_body(isSgBasicBlock(currentScope));
+                    
                     //Add the default function to global scope
                     SageInterface::appendStatement(defaultFunction);
                   }
@@ -340,9 +340,9 @@ input           : input1
                   //Pop the global stack
                   SageBuilder::popScopeStack();
 
-		  YYACCEPT;
-		  globalCommand = true;
-		 }                 
+                  YYACCEPT;
+                  globalCommand = true;
+                 }                 
                 | function_file
                  {YYACCEPT;}
                 | simple_list parse_error
@@ -396,9 +396,9 @@ list            : list1 opt_sep
 
 list1           : statement
                   {
-            	    ROSE_ASSERT($1 != NULL);
-            	    $$ = new StatementList($1);                    
-            	   }                  
+                    ROSE_ASSERT($1 != NULL);
+                    $$ = new StatementList($1);                    
+                   }                  
                 | list1 sep statement
                   { 
                     $1->appendStatement($3);
@@ -414,8 +414,8 @@ statement       : expression
                   {$$ = $1;}                  
                 | word_list_cmd
                   {
-            	    $$ = $1;
-            	    ROSE_ASSERT($$ != NULL);
+                    $$ = $1;
+                    ROSE_ASSERT($$ != NULL);
                   }
                 ;
 
@@ -428,8 +428,8 @@ statement       : expression
 // WHILE, etc.
 
 word_list_cmd   : identifier word_list
-                  { 		    
-		    //$$ = SageMatlabBuilder::buildWordListStatement($1->get_symbol()->get_name(), $2);
+                  {                 
+                    //$$ = SageMatlabBuilder::buildWordListStatement($1->get_symbol()->get_name(), $2);
                   }
                 ;
 
@@ -447,28 +447,28 @@ word_list       : string
 // ===========
 
 identifier      : NAME
-      		 {
-		   std::string varName = $1->text();
-
-		   SgScopeStatement *activeScope = SageBuilder::topScopeStack();
-
-		   SgVariableSymbol *varSymbol = SageInterface::lookupVariableSymbolInParentScopes(varName, activeScope);
-
-		   if(varSymbol == NULL)
                  {
-		   SgVarRefExp *varRef = SageBuilder::buildVarRefExp(varName, activeScope);
+                   std::string varName = $1->text();
 
-		   /*If there is no explicit variable declaration, we have to manually insert the symbol to the symbol table*/
+                   SgScopeStatement *activeScope = SageBuilder::topScopeStack();
+
+                   SgVariableSymbol *varSymbol = SageInterface::lookupVariableSymbolInParentScopes(varName, activeScope);
+
+                   if(varSymbol == NULL)
+                 {
+                   SgVarRefExp *varRef = SageBuilder::buildVarRefExp(varName, activeScope);
+
+                   /*If there is no explicit variable declaration, we have to manually insert the symbol to the symbol table*/
                    activeScope->get_symbol_table()->insert(varName, varRef->get_symbol());
-		   
-		   $$ = varRef;
+                   
+                   $$ = varRef;
                  }
-		 else
-		   {
-		     /*The symbol already exists. The varref will point to the existing symbol.*/
-		     $$ = SageBuilder::buildVarRefExp(varName, activeScope);
-		   }
-      		 }
+                 else
+                   {
+                     /*The symbol already exists. The varref will point to the existing symbol.*/
+                     $$ = SageBuilder::buildVarRefExp(varName, activeScope);
+                   }
+                 }
                 ;
 
 superclass_identifier
@@ -489,7 +489,7 @@ string          : DQ_STRING
 constant        : NUM
                  { $$ = SageBuilder::buildDoubleVal($1->number());}
                 | IMAG_NUM
-		{ $$ = SageBuilder::buildImaginaryVal ($1->number()); }
+                { $$ = SageBuilder::buildImaginaryVal ($1->number()); }
                 | string
                   { $$ = $1;}
                 ;
@@ -525,13 +525,13 @@ matrix_rows     : matrix_rows1
 
 matrix_rows1    : cell_or_matrix_row
                   {
-		    $$ = SageBuilder::buildMatrixExp($1);
+                    $$ = SageBuilder::buildMatrixExp($1);
                   }
                 | matrix_rows1 ';' cell_or_matrix_row
                   {
                     $1->append_expression($3);
                     $$ = $1;
-		    assert($$ != NULL);
+                    assert($$ != NULL);
                   }
                 ;
 
@@ -541,7 +541,7 @@ cell            : '{' '}'
                   /*{ $$ = new tree_constant (octave_value (Cell ()));}*/
                 | '{' cell_rows '}'
                    {
-		      $$ = SageBuilder::buildAggregateInitializer($2);
+                      $$ = SageBuilder::buildAggregateInitializer($2);
                    }
                 ;
 
@@ -553,13 +553,13 @@ cell_rows       : cell_rows1
 
 cell_rows1      : cell_or_matrix_row
                   {
-		    $$ = SageBuilder::buildExprListExp($1);
+                    $$ = SageBuilder::buildExprListExp($1);
                   }
                   | cell_rows1 ';' cell_or_matrix_row
-         	  {
-            	    SageInterface::appendExpression($1, $3);
-            	    $$ = $1;
-            	  }
+                  {
+                    SageInterface::appendExpression($1, $3);
+                    $$ = $1;
+                  }
                 ;
 
 cell_or_matrix_row
@@ -575,13 +575,13 @@ cell_or_matrix_row
 
 fcn_handle      : '@' FCN_HANDLE
                  {
-            	  SgName fcnName($2->text());
-            		   
-            	  SgFunctionDeclaration* fcnDeclaration = SageBuilder::buildNondefiningFunctionDeclaration(fcnName, SageBuilder::buildUnknownType(), SageBuilder::buildFunctionParameterList(), currentScope);
-            		   
-            	   SgFunctionSymbol* fcnSymbol = new SgFunctionSymbol(fcnDeclaration);
+                  SgName fcnName($2->text());
+                           
+                  SgFunctionDeclaration* fcnDeclaration = SageBuilder::buildNondefiningFunctionDeclaration(fcnName, SageBuilder::buildUnknownType(), SageBuilder::buildFunctionParameterList(), currentScope);
+                           
+                   SgFunctionSymbol* fcnSymbol = new SgFunctionSymbol(fcnDeclaration);
                    $$ = SageBuilder::buildFunctionRefExp(fcnSymbol); 
-		
+                
                     lexer_flags.looking_at_function_handle--;
                  }
                 ;
@@ -611,7 +611,7 @@ primary_expr    : identifier
 
 magic_colon     : ':'
                   {
-		    $$ = SageBuilder::buildMagicColonExp();
+                    $$ = SageBuilder::buildMagicColonExp();
                   }
                 ;
 
@@ -624,7 +624,7 @@ magic_tilde     : EXPR_NOT
 arg_list        : expression
                   {$$ = SageBuilder::buildExprListExp($1);}
                 | magic_colon
-		{$$ = SageBuilder::buildExprListExp ($1);}
+                {$$ = SageBuilder::buildExprListExp ($1);}
                 | magic_tilde
                 | arg_list ',' magic_colon
                  {
@@ -657,24 +657,24 @@ postfix_expr    : primary_expr
                     $$ = SageBuilder::buildFunctionCallExp($1, $3);
                   } 
                 | postfix_expr '{' '}'
-		  { $$ = SageBuilder::buildFunctionCallExp($1);}
+                  { $$ = SageBuilder::buildFunctionCallExp($1);}
                 | postfix_expr '{' arg_list '}'
-		  { $$ = SageBuilder::buildFunctionCallExp($1, $3); }
+                  { $$ = SageBuilder::buildFunctionCallExp($1, $3); }
                 | postfix_expr PLUS_PLUS
                   {$$ = SageBuilder::buildPlusPlusOp($1, SgUnaryOp::postfix);}
                 | postfix_expr MINUS_MINUS
                   {$$ = SageBuilder::buildMinusMinusOp($1, SgUnaryOp::postfix);}
                 | postfix_expr QUOTE
                   {
-		    SgMatrixTransposeOp *transposeOp = SageBuilder::buildMatrixTransposeOp($1);
-		    transposeOp->set_is_conjugate(true);
+                    SgMatrixTransposeOp *transposeOp = SageBuilder::buildMatrixTransposeOp($1);
+                    transposeOp->set_is_conjugate(true);
 
-		    $$ = transposeOp;
-		  } 
+                    $$ = transposeOp;
+                  } 
                 | postfix_expr TRANSPOSE
-		{
-		  $$ = SageBuilder::buildMatrixTransposeOp($1);
-		}
+                {
+                  $$ = SageBuilder::buildMatrixTransposeOp($1);
+                }
                 | postfix_expr indirect_ref_op STRUCT_ELT                                                
                  {$$ = make_indirect_ref ($1, SageBuilder::buildVarRefExp($3->text()));}
                 | postfix_expr indirect_ref_op '(' expression ')'
@@ -732,15 +732,15 @@ colon_expr      : prefix_expr
                   {
                     $$ = $1;
                   }
-                  | colon_expr1					       
+                  | colon_expr1                                        
                   {
                     $$ = $1;
                   }
                 ;
 
-colon_expr1     : prefix_expr					       
+colon_expr1     : prefix_expr                                          
                  {
-		   $$ = SageBuilder::buildRangeExp($1);
+                   $$ = SageBuilder::buildRangeExp($1);
                  }
                 | colon_expr1 ':' prefix_expr                 
                  {
@@ -805,9 +805,9 @@ simple_expr     : colon_expr
 // one token for an assignment op.
 
 assign_lhs      : simple_expr
-		 {					         
+                 {                                               
                    $$ = $1;                          
-		 }
+                 }
                  /*{
                     $$ = new tree_argument_list ($1);
                     $$->mark_as_simple_assign_lhs ();
@@ -875,7 +875,7 @@ expression      : simple_expr
 command         :// declaration
                  // {$$ = $1;}
                  // |
-		select_command
+                select_command
                  /*{$$ = $1;}*/
                 | loop_command
                  /*{$$ = $1;}*/
@@ -902,12 +902,12 @@ parsing_decl_list
 declaration     : GLOBAL parsing_decl_list decl1
                  {
                    //$$ = SageMatlabBuilder::buildGlobalDeclarationStatement($3); 
-		   //$$ = make_decl_command (GLOBAL, $1, $3);
+                   //$$ = make_decl_command (GLOBAL, $1, $3);
                     lexer_flags.looking_at_decl_list = false;
                  }
                 | STATIC parsing_decl_list decl1
                  {
-		   //$$ = SageMatlabBuilder::buildStaticDeclarationStatement($3);
+                   //$$ = SageMatlabBuilder::buildStaticDeclarationStatement($3);
                     //$$ = make_decl_command (STATIC, $1, $3);
                     lexer_flags.looking_at_decl_list = false;
                  }
@@ -915,12 +915,12 @@ declaration     : GLOBAL parsing_decl_list decl1
 
 decl1           : decl2
                   {
-		    $$ = SageBuilder::buildExprListExp($1);
+                    $$ = SageBuilder::buildExprListExp($1);
                   }
                 | decl1 decl2
-            	  {
-            	    SageInterface::appendExpression($1, $2);
-            	  }
+                  {
+                    SageInterface::appendExpression($1, $2);
+                  }
                 ;
 
 decl_param_init : // empty
@@ -967,28 +967,28 @@ if_cmd_list     : if_cmd_list1
                   SgIfStmt* lastIfClause = getLastIfClause($1);
 
                   lastIfClause->set_false_body($2);
-		  $2->set_parent(lastIfClause);
+                  $2->set_parent(lastIfClause);
                   $$ = $1;                    
                  }
                 ;
 
 if_cmd_list1    : expression opt_sep opt_list
                  {
-		   $$ = SageBuilder::buildIfStmt($1, $3->getBasicBlock(), NULL);                    
+                   $$ = SageBuilder::buildIfStmt($1, $3->getBasicBlock(), NULL);                    
                  }                 
                 | if_cmd_list1 elseif_clause
                 {                         
                   SgIfStmt* lastIfClause = getLastIfClause($1);
 
                   lastIfClause->set_false_body($2);
-		  $2->set_parent(lastIfClause);
+                  $2->set_parent(lastIfClause);
                   $$ = $1;
                 }                 
                 ;
 
 elseif_clause   : ELSEIF stash_comment opt_sep expression opt_sep opt_list
                  {                  
-		   $$ = SageBuilder::buildIfStmt($4, $6->getBasicBlock(), NULL);
+                   $$ = SageBuilder::buildIfStmt($4, $6->getBasicBlock(), NULL);
                  }                 
                 ;
 
@@ -1059,11 +1059,11 @@ loop_command    : WHILE stash_comment expression opt_sep opt_list END
                  }*/
                 | FOR stash_comment assign_lhs '=' expression opt_sep opt_list END
                  {
-		   $$ = SageBuilder::buildMatlabForStatement($3, $5, $7->getBasicBlock());
+                   $$ = SageBuilder::buildMatlabForStatement($3, $5, $7->getBasicBlock());
                  }
                 | FOR stash_comment '(' assign_lhs '=' expression ')' opt_sep opt_list END
                  {
-		   $$ = SageBuilder::buildMatlabForStatement($4, $6, $9->getBasicBlock());
+                   $$ = SageBuilder::buildMatlabForStatement($4, $6, $9->getBasicBlock());
                  }
                 ;
 
@@ -1125,12 +1125,12 @@ push_fcn_symtab : // empty
 
                     if(current_function_depth == 1)
                     {
-		      //Pop out the default function used for script files
+                      //Pop out the default function used for script files
                       SageBuilder::popScopeStack();
-		      
-		      SageInterface::removeStatement(currentScope);
+                      
+                      SageInterface::removeStatement(currentScope);
 
-		      //Set the scope to be the global scope since we need to add functions
+                      //Set the scope to be the global scope since we need to add functions
                       currentScope = SageInterface::getFirstGlobalScope(project);
                       
                       parsingScriptFile = false;
@@ -1205,13 +1205,13 @@ param_list1     : // empty
 
 param_list2     : decl2
                  {
-		   SgInitializedName *initializedName = ((SgVarRefExp*)$1)->get_symbol()->get_declaration();
-		   $$ = SageBuilder::buildFunctionParameterList(initializedName);
+                   SgInitializedName *initializedName = ((SgVarRefExp*)$1)->get_symbol()->get_declaration();
+                   $$ = SageBuilder::buildFunctionParameterList(initializedName);
                  }
                 | param_list2 ',' decl2
                   {
-		    SgInitializedName *initializedName = ((SgVarRefExp*)$3)->get_symbol()->get_declaration();
-		    SageInterface::appendArg($1, initializedName);
+                    SgInitializedName *initializedName = ((SgVarRefExp*)$3)->get_symbol()->get_declaration();
+                    SageInterface::appendArg($1, initializedName);
                     $$ = $1;
                   }
                 ;
@@ -1298,18 +1298,18 @@ function_beg    : push_fcn_symtab FCN stash_comment
 
 function        : function_beg function1
                  {                    
-		   $$ = $2->build_function();
-		   recover_from_parsing_function ();
+                   $$ = $2->build_function();
+                   recover_from_parsing_function ();
 
                     SageBuilder::popScopeStack();
                     lexer_flags.variableTypes.clear();
                  }
                 | function_beg return_list '=' function1
                  {                                        
-		   $4->set_return_list($2);
+                   $4->set_return_list($2);
 
-		   $$ = $4->build_function();
-		   
+                   $$ = $4->build_function();
+                   
                    recover_from_parsing_function ();
                  
                     SageBuilder::popScopeStack();
@@ -1323,27 +1323,27 @@ fcn_name        : identifier
                     lexer_flags.parsed_function_name.top () = true;
                     lexer_flags.maybe_classdef_get_set_method = false;
 
-		    $$ = new std::string(extractVarName($1).getString());
+                    $$ = new std::string(extractVarName($1).getString());
 
-		    /*
-		      This identifier did not turn out to be a variable symbol.
-		      It will be added later on as a function symbol.
-		     */
-		    SgVariableSymbol *symbol = $1->get_symbol();
-		    SageBuilder::topScopeStack()->remove_symbol(symbol);
+                    /*
+                      This identifier did not turn out to be a variable symbol.
+                      It will be added later on as a function symbol.
+                     */
+                    SgVariableSymbol *symbol = $1->get_symbol();
+                    SageBuilder::topScopeStack()->remove_symbol(symbol);
                  }
                 | GET '.' identifier
                  {
                     lexer_flags.maybe_classdef_get_set_method = false;
                     $$ = new std::string(extractVarName($3).getString());
 
-		    SageBuilder::topScopeStack()->remove_symbol($3->get_symbol());
+                    SageBuilder::topScopeStack()->remove_symbol($3->get_symbol());
                  }
                 | SET '.' identifier
                  {
                     lexer_flags.maybe_classdef_get_set_method = false;
                     $$ = new std::string(extractVarName($3).getString());
-		    SageBuilder::topScopeStack()->remove_symbol($3->get_symbol());
+                    SageBuilder::topScopeStack()->remove_symbol($3->get_symbol());
                  }
                 ;
 
@@ -1358,15 +1358,15 @@ function1       : fcn_name function2
 function2       : param_list opt_sep opt_list function_end
                   {
 
-		   MatlabFunctionBuilder *functionBuilder = new MatlabFunctionBuilder($1, $3, SageInterface::getFirstGlobalScope(project));
+                   MatlabFunctionBuilder *functionBuilder = new MatlabFunctionBuilder($1, $3, SageInterface::getFirstGlobalScope(project));
                     $$ = functionBuilder;
 
                   }                 
                 | opt_sep opt_list function_end
                   {
-		   MatlabFunctionBuilder *functionBuilder = new MatlabFunctionBuilder($2, SageInterface::getFirstGlobalScope(project));
+                   MatlabFunctionBuilder *functionBuilder = new MatlabFunctionBuilder($2, SageInterface::getFirstGlobalScope(project));
                     $$ = functionBuilder;
-											       
+                                                                                               
                   }
                 ;
 

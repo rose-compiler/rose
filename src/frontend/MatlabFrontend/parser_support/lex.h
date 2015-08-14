@@ -210,12 +210,6 @@ grab_comment_block (stream_reader& reader, bool at_bol, bool& eof);
 // TRUE means that we have encountered EOF on the input stream.
 extern bool parser_end_of_input;
 
-/*is set to true on
- * input           : input1
-				  {
-				  	YYACCEPT;
-				  }
- */
 extern bool globalCommand;
 
 // Flags that need to be shared between the lexer and parser.
