@@ -1,6 +1,9 @@
+#include "sage3basic.h"
+
 #include "MatlabParser.h"
 #include <cstdio>
 #include <iostream>
+#include <string>
 #include "lex.h"
 
  void yyerror (char const *s) {

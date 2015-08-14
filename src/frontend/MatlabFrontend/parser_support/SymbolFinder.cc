@@ -1,3 +1,4 @@
+#include "sage3basic.h" 
 #include "SymbolFinder.h"
 
 bool SymbolFinder::symbol_exists(std::string symbolName, SgScopeStatement* scope)

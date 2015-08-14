@@ -28,12 +28,7 @@ along with Octave; see the file COPYING.  If not, see
 #include <string>
 #include <set>
 #include <map>
-#include <iostream>
-
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string.hpp>
-
-#include "rose.h"
+#include <vector>
 
 // FIXME -- these input buffer things should be members of a
 // parser input stream class.

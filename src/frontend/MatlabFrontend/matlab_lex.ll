@@ -46,10 +46,12 @@ along with Octave; see the file COPYING.  If not, see
 
 #include <sys/types.h>
 #include <unistd.h>
+
+#include "sage3basic.h"
 #include "SymbolFinder.h"
 
-  class StatementList;
-  class MatlabFunctionBuilder;
+class StatementList;
+class MatlabFunctionBuilder;
   
 #include "comment-list.h"
 #include "error.h"

@@ -1,7 +1,6 @@
 #ifndef MATLAB_FUNCTION_BUILDER_H
 #define MATLAB_FUNCTION_BUILDER_H
 
-#include "sage3basic.h"
 #include <string>
 
 class MatlabFunctionBuilder

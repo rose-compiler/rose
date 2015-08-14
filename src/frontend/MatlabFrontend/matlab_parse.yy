@@ -33,6 +33,8 @@ along with Octave; see the file COPYING.  If not, see
 %{
 #define YYDEBUG 1
 
+#include "sage3basic.h"
+
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
@@ -43,8 +45,6 @@ along with Octave; see the file COPYING.  If not, see
 
 #include "StatementList.h"
 #include "MatlabFunctionBuilder.h"
-
-#include "sage3basic.h"
 
 #if defined (GNULIB_NAMESPACE)
 // Calls to the following functions appear in the generated output from

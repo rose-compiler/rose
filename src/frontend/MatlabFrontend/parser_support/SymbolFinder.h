@@ -1,7 +1,6 @@
 #ifndef SYMBOL_FINDER_H
 #define SYMBOL_FINDER_H
 
-#include "sage3basic.h"
 #include <string>
 
 class SymbolFinder
