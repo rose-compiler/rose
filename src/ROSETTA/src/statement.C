@@ -406,7 +406,7 @@ Grammar::setUpStatements ()
           UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement | JavaLabelStatement
 
 #if USE_MATLAB_IR_NODES == 1
-	  | MatlabForStatement
+          | MatlabForStatement
 #endif
 
        /* | TemplateInstantiationDefn */,
@@ -3128,7 +3128,7 @@ Grammar::setUpStatements ()
 #if USE_MATLAB_IR_NODES == 1
      MatlabForStatement.setFunctionPrototype ("HEADER_MATLAB_FOR_STATEMENT", "../Grammar/Statement.code" );
      MatlabForStatement.setDataPrototype ( "SgExpression*", "index", "= NULL",
-		  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
      MatlabForStatement.setDataPrototype ( "SgExpression*", "range", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
      MatlabForStatement.setDataPrototype ( "SgBasicBlock*", "body", "= NULL",
