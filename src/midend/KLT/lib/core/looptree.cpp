@@ -322,26 +322,34 @@ void cond_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::
   branch_false->collectTiles(tiles, loop_translation_map);
 }
 
-template <class T>
+/*template <class T>
 bool cmp_id(size_t val, T * elem) {
   return val < elem->id;
-}
+}*/
 
 template <class T>
-void insert(T * t, std::vector<T *> & Ts) {
-  typename std::vector<T *>::iterator it = Ts.begin();
-  while (it != Ts.end() && t->id < (*it)->id) it++;
-  Ts.insert(it, t);
-}
+struct CompID {
+  bool operator() (T * i   , size_t j) { return (i->id < j    );}
+  bool operator() (size_t i, T * j   ) { return (    i < j->id);}
+  bool operator() (T * i   , T * j   ) { return (i->id < j->id);}
+};
+
+CompID<Descriptor::tile_t> cmp_id_tile;
+CompID<Descriptor::loop_t> cmp_id_loop;
 
 void loop_t::collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const {
   Descriptor::loop_t * loop_desc = new Descriptor::loop_t(id, lower_bound, upper_bound, stride, iterator);
 
   loop_translation_map.insert(std::pair<const loop_t *, Descriptor::loop_t *>(this, loop_desc));
 
-  std::vector<Descriptor::loop_t *>::iterator pos = std::upper_bound(loops.begin(), loops.end(), id, cmp_id<Descriptor::loop_t>);
-  assert(pos == loops.end() || (*pos)->id != id);
-  loops.insert(pos, loop_desc);
+  std::cerr << "[Info] (KLT::LoopTree::loop_t::collectLoops) Loop #" << id << std::endl;
+
+  assert(!std::binary_search(loops.begin(), loops.end(), id, cmp_id_loop));
+
+  loops.insert(
+    std::upper_bound(loops.begin(), loops.end(), id, cmp_id_loop),
+    loop_desc
+  );
 
   body->collectLoops(loops, loop_translation_map);
 }
@@ -355,24 +363,29 @@ void tile_t::collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<co
 
   loop_translation_map.insert(std::pair<const loop_t *, Descriptor::loop_t *>(loop, loop_desc));
 
-  std::vector<Descriptor::loop_t *>::iterator pos = std::upper_bound(loops.begin(), loops.end(), loop->id, cmp_id<Descriptor::loop_t>);
-  if (pos == loops.end() || (*pos)->id != loop->id)
-    loops.insert(pos, loop_desc);
+  std::cerr << "[Info] (KLT::LoopTree::tile_t::collectLoops) Loop #" << loop->id << std::endl;
+
+  if (!std::binary_search(loops.begin(), loops.end(), loop->id, cmp_id_loop))
+    loops.insert(
+      std::upper_bound(loops.begin(), loops.end(), loop->id, cmp_id_loop),
+      loop_desc
+    );
 
   if (next_tile != NULL) next_tile->collectLoops(loops, loop_translation_map);
   if (next_node != NULL) next_node->collectLoops(loops, loop_translation_map);
 }
 
 void tile_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const {
+
   Descriptor::tile_t * tile_desc = new Descriptor::tile_t(id, (Descriptor::tile_kind_e)kind, order, param);
   {
-    std::vector<Descriptor::tile_t *>::iterator pos = std::upper_bound(tiles.begin(), tiles.end(), id, cmp_id<Descriptor::tile_t>);
+    std::vector<Descriptor::tile_t *>::iterator pos = std::upper_bound(tiles.begin(), tiles.end(), id, cmp_id_tile);
     tiles.insert(pos, tile_desc);
   }
   std::map<const loop_t *, Descriptor::loop_t *>::const_iterator it = loop_translation_map.find(loop);
   assert(it != loop_translation_map.end());
   {
-    std::vector<Descriptor::tile_t *>::iterator pos = std::upper_bound(it->second->tiles.begin(), it->second->tiles.end(), id, cmp_id<Descriptor::tile_t>);
+    std::vector<Descriptor::tile_t *>::iterator pos = std::upper_bound(it->second->tiles.begin(), it->second->tiles.end(), id, cmp_id_tile);
     it->second->tiles.insert(pos, tile_desc);
   }
 
