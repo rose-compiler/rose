@@ -10,12 +10,17 @@
 
 using namespace std;
 
+void SPRAY::CppExprEvaluator::setSoundness(bool s) {
+  _sound=s;
+}
+
 SPRAY::CppExprEvaluator::CppExprEvaluator(SPRAY::NumberIntervalLattice* d, SPRAY::VariableIdMapping* vim) :
   domain(d),
   variableIdMapping(vim),
   propertyState(0),
   _showWarnings(false),
-  _pointerAnalysisInterface(0)
+  _pointerAnalysisInterface(0),
+  _sound(true)
 {
 }
 
@@ -70,13 +75,17 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         // TODO: handle *var and update modByPointer() ...
         if(_showWarnings)
           cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
-        ips->topifyAllVariables();
+        if(_sound) {
+          ips->topifyAllVariables();
+        }
         return NumberIntervalLattice::top();
       }
     }
     default:
       if(_showWarnings) cout<<"Warning: unknown binary operator: "<<node->sage_class_name()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
-      ips->topifyAllVariables();
+      if(_sound) {
+        ips->topifyAllVariables();
+      }
       return NumberIntervalLattice::top();
     }
   }
@@ -130,7 +139,9 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     }
     default: // generates top element
       if(_showWarnings) cout<<"Warning: unknown unary operator: "<<node->sage_class_name()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
-      ips->topifyAllVariables();
+      if(_sound) {
+        ips->topifyAllVariables();
+      }
       return NumberIntervalLattice::top();
     }
   }
@@ -162,7 +173,9 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
   }
   if(_showWarnings) cout<<"Warning: Unknown operator."<<node->sage_class_name()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
   // an unknown operator may have an arbitrary effect, to err on the safe side we topify all variables
-  ips->topifyAllVariables();
+  if(_sound) {
+    ips->topifyAllVariables();
+  }
   return NumberIntervalLattice::top();
 }
 

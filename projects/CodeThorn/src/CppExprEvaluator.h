@@ -18,6 +18,7 @@ class CppExprEvaluator {
   bool isValid();
   void setShowWarnings(bool warnings);
   void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pointerAnalysisInterface);
+  void setSoundness(bool s);
  private:
   bool isExprRootNode(SgNode* node);
   SgNode* findExprRootNode(SgNode* node);
@@ -26,6 +27,7 @@ class CppExprEvaluator {
   PropertyState* propertyState;
   bool _showWarnings;
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
+  bool _sound;
 };
 }
 #endif
