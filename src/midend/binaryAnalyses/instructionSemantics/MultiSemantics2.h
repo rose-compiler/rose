@@ -410,6 +410,7 @@ public:
     virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr boolean_(bool) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr filterCallTarget(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr filterReturnTarget(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr filterIndirectJumpTarget(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
@@ -453,6 +454,26 @@ public:
                                                     const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a,
                                                       const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpFromInteger(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpToInteger(const BaseSemantics::SValuePtr&, SgAsmFloatType*,
+                                                 const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpConvert(const BaseSemantics::SValuePtr&, SgAsmFloatType*, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpIsNan(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpIsDenormalized(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpIsZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpIsInfinity(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpSign(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpEffectiveExponent(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpAdd(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
+                                           SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpSubtract(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
+                                                SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpMultiply(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
+                                                SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpDivide(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
+                                              SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpSquareRoot(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpRoundTowardZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
