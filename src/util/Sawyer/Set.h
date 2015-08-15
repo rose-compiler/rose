@@ -59,6 +59,13 @@ public:
     explicit Set(const Comparator &comparator = Comparator(), const Allocator &allocator = Allocator())
         : set_(comparator, allocator) {}
 
+    /** Singleton constructor.
+     *
+     *  Constructs a singleton set having only the specified value. */
+    Set(const Value &value) /*implicit*/ {
+        set_.insert(value);
+    }
+
     /** Iterative constructor.
      *
      *  Constructs a new set and copies values into the set.  For instance, this can be used to initialize a set from a vector:
@@ -119,6 +126,28 @@ public:
         return 1 == set_.count(value);
     }
 
+    /** Whether any value exists.
+     *
+     *  Returns true if any of the specified values exist in this set. */
+    bool existsAny(const Set &other) const {
+        BOOST_FOREACH (const Value &otherValue, other.values()) {
+            if (exists(otherValue))
+                return true;
+        }
+        return false;
+    }
+
+    /** Whether all values exist.
+     *
+     *  Returns true if all specified values exist in this set. */
+    bool existsAll(const Set &other) const {
+        BOOST_FOREACH (const Value &otherValue, other.values()) {
+            if (!exists(otherValue))
+                return false;
+        }
+        return true;
+    }
+    
     /** Size of the set.
      *
      *  Returns the number of values that are members of this set. */

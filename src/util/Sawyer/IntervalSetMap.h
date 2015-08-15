@@ -123,7 +123,7 @@ public:
     /** Determines if values are stored for an interval.
      *
      *  Returns true if <code>get(interval)</code> would return a non-empty set. */
-    bool contains(const Interval &interval) {
+    bool exists(const Interval &interval) const {
         return Super::contains(interval);
     }
 
@@ -132,7 +132,7 @@ public:
      *  Returns true if <code>getUnion(interval)</code> would return a set containing @p value as a member. In particular, this
      *  returns false if the @p interval is empty. This is more efficient than calling <code>getUnion(interval)</code> and
      *  checking whether it contains @p value. */
-    bool containsAnywhere(const Interval &interval, const typename Set::Value &value) {
+    bool existsAnywhere(const Interval &interval, const typename Set::Value &value) const {
         BOOST_FOREACH (const typename Super::Node &node, this->findAll(interval)) {
             if (node.value().exists(value))
                 return true;
@@ -145,7 +145,7 @@ public:
      *  Returns true if <code>getIntersection(interval)</code> would return a set containing @p value as a member. In
      *  particular, this returns false if the @p interval is empty. This is more efficient than calling
      *  <code>getIntersection(interval)</code> and checking whether it contains @p value. */
-    bool containsEverywhere(const Interval &interval, const typename Set::Value &value) {
+    bool existsEverywhere(const Interval &interval, const typename Set::Value &value) const {
         if (interval.isEmpty())
             return false;
         BOOST_FOREACH (const typename Super::Node &node, this->findAll(interval)) {
