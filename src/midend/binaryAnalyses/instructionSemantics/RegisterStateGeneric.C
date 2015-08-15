@@ -180,6 +180,29 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
 }
 
 void
+RegisterStateGeneric::updateWriteProperties(const RegisterDescriptor &reg, RegisterProperty prop) {
+    insertProperties(reg, prop);
+    if (prop == WRITTEN)
+        eraseProperties(reg, READ_AFTER_WRITE);
+}
+
+void
+RegisterStateGeneric::updateReadProperties(const RegisterDescriptor &reg) {
+    insertProperties(reg, READ);
+    BitProperties &props = properties_.insertMaybeDefault(reg);
+    BitRange where = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
+    BOOST_FOREACH (BitProperties::Node &node, props.findAll(where)) {
+        if (!node.value().exists(WRITTEN)) {
+            node.value().insert(READ_BEFORE_WRITE);
+            if (!node.value().exists(INITIALIZED))
+                node.value().insert(READ_UNINITIALIZED);
+        } else {
+            node.value().insert(READ_AFTER_WRITE);
+        }
+    }
+}
+
+void
 RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
 {
     ASSERT_not_null(value);
@@ -519,6 +542,26 @@ RegisterStateGeneric::eraseProperties() {
     properties_.clear();
 }
 
+std::vector<RegisterDescriptor>
+RegisterStateGeneric::findProperties(const PropertySet &required, const PropertySet &prohibited) const {
+    std::vector<RegisterDescriptor> retval;
+    typedef Sawyer::Container::IntervalSet<BitRange> Bits;
+    BOOST_FOREACH (const RegisterProperties::Node &regNode, properties_.nodes()) {
+        unsigned majr = regNode.key().majr;
+        unsigned minr = regNode.key().minr;
+        Bits bits;
+        BOOST_FOREACH (const BitProperties::Node &bitNode, regNode.value().nodes()) {
+            if (bitNode.value().existsAll(required) && !bitNode.value().existsAny(prohibited))
+                bits.insert(bitNode.key());
+        }
+        BOOST_FOREACH (const BitRange &bitRange, bits.intervals()) {
+            RegisterDescriptor reg(majr, minr, bitRange.least(), bitRange.size());
+            retval.push_back(reg);
+        }
+    }
+    return retval;
+}
+
 bool
 RegisterStateGeneric::merge(const BaseSemantics::RegisterStatePtr &other_, RiscOperators *ops) {
     ASSERT_not_null(ops);
@@ -597,7 +640,9 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
                         stream <<fmt.get_line_prefix() <<std::setw(maxlen) <<std::left <<regname;
                         oflags.restore();
                         if (fmt.get_show_latest_writers()) {
-                            Sawyer::Container::Set<rose_addr_t> writers = getWritersUnion(rvi->desc);
+                            // FIXME[Robb P. Matzke 2015-08-12]: This doesn't take into account that different writer sets can
+                            // exist for different parts of the register.
+                            AddressSet writers = getWritersUnion(rvi->desc);
                             if (writers.size()==1) {
                                 stream <<" [writer=" <<StringUtility::addrToString(*writers.values().begin()) <<"]";
                             } else if (!writers.isEmpty()) {
@@ -609,6 +654,23 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
                                 stream <<"}]";
                             }
                         }
+
+                        // FIXME[Robb P. Matzke 2015-08-12]: This doesn't take into account that different property sets can
+                        // exist for different parts of the register.  It also doesn't take into account all combinations f
+                        // properties -- just a few of the more common ones.
+                        if (fmt.get_show_properties()) {
+                            PropertySet props = getPropertiesUnion(rvi->desc);
+                            if (props.exists(READ_BEFORE_WRITE)) {
+                                stream <<" read-before-write";
+                            } else if (props.exists(WRITTEN) && props.exists(READ)) {
+                                // nothing
+                            } else if (props.exists(READ)) {
+                                stream <<" read-only";
+                            } else if (props.exists(WRITTEN)) {
+                                stream <<" write-only";
+                            }
+                        }
+
                         stream <<" = ";
                         rvi->value->print(stream, fmt);
                         stream <<"\n";

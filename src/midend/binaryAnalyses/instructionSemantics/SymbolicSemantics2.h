@@ -158,6 +158,11 @@ public:
         return SValuePtr(new SValue(LeafNode::create_variable(1)));
     }
 
+    /** Instantiate a new data-flow bottom value of specified width. */
+    static SValuePtr instance_bottom(size_t nbits) {
+        return SValuePtr(new SValue(LeafNode::create_variable(nbits, "", TreeNode::BOTTOM)));
+    }
+
     /** Instantiate a new undefined value of specified width. */
     static SValuePtr instance_undefined(size_t nbits) {
         return SValuePtr(new SValue(LeafNode::create_variable(nbits)));
@@ -176,6 +181,9 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance_bottom(nbits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
         return instance_undefined(nbits);
     }
@@ -217,6 +225,8 @@ public:
     virtual void set_width(size_t nbits) ROSE_OVERRIDE {
         ASSERT_require(nbits==get_width());
     }
+
+    virtual bool isBottom() const ROSE_OVERRIDE;
 
     virtual bool is_number() const ROSE_OVERRIDE {
         return expr->is_known();
@@ -614,6 +624,10 @@ protected:
 
     SValuePtr svalue_undefined(size_t nbits) {
         return SValue::promote(undefined_(nbits));
+    }
+
+    SValuePtr svalue_bottom(size_t nbits) {
+        return SValue::promote(bottom_(nbits));
     }
 
     SValuePtr svalue_unspecified(size_t nbits) {

@@ -228,6 +228,7 @@ HEADER_RISC_OPERATION_START
                 // are usually implemented in terms of more basic operations like add_, invert, and equalToZero.
                 enum RiscOperator {
                         OP_NONE,
+			OP_bottom,
 			OP_undefined,
 			OP_unspecified,
                         OP_filterCallTarget,

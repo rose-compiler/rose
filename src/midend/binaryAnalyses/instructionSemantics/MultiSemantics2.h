@@ -114,6 +114,8 @@ public:
     // Virtual allocating constructors
 public:
 
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE;
+
     /** Create a new undefined MultiSemantics value.  The returned value is constructed by calling the virtual undefined_()
      *  for each subdomain value in "this".  If you want a multidomain value that has no valid subvalues, then use
      *  the create_empty() method instead. */
@@ -153,6 +155,8 @@ public:
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
 
     virtual void set_width(size_t nbits) ROSE_OVERRIDE;
+
+    virtual bool isBottom() const ROSE_OVERRIDE;
 
     /** Determines if the value is a concrete number.  In the MultiSemantics domain, a value is a concrete number if and only
      *  if it has at least one valid subdomain value and all valid subdomain values are concrete numbers, and all are the same

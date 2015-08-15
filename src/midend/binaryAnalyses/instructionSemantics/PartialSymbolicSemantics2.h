@@ -122,6 +122,9 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance(nbits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
         return instance(nbits);
     }
@@ -170,6 +173,10 @@ public:
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
 
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
+
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
     
     virtual bool is_number() const ROSE_OVERRIDE {
         return 0==name;

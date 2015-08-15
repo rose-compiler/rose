@@ -1,11 +1,12 @@
 #include "sage3basic.h"
+
+#include "AsmUnparser_compat.h"
 #include "BaseSemantics2.h"
 #include "Diagnostics.h"
 #include "DispatcherM68k.h"
 #include "integerOps.h"
 #include "stringify.h"
 #include <boost/foreach.hpp>
-
 
 using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 using namespace rose::Diagnostics;
@@ -1699,7 +1700,6 @@ struct IP_fp_move: P {
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        ASSERT_require(isSgAsmDirectRegisterExpression(args[1]));
         SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type());
         size_t srcNBits = args[0]->get_nBits();         // null if src is not a floating-point value
         SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
@@ -1718,6 +1718,7 @@ struct IP_fp_move: P {
                 result = ops->fpToInteger(d->read(args[0], srcNBits), srcType, dflt);
             }
         } else {
+            ASSERT_require2(isSgAsmDirectRegisterExpression(args[1]), unparseInstructionWithAddress(insn));
             if (!dstType)
                 dstType = SageBuilderAsm::buildIeee754Binary64();
             if (srcType) {

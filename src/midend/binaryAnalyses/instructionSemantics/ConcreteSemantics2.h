@@ -82,6 +82,9 @@ public:
     virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const ROSE_OVERRIDE {
         return instance(nbits);
     }
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance(nbits);
+    }
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const ROSE_OVERRIDE {
         return instance(nbits, value);
     }
@@ -113,6 +116,10 @@ public:
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
 
     virtual void set_width(size_t nbits);
+
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
 
     virtual bool is_number() const ROSE_OVERRIDE {
         return true;

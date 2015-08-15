@@ -98,6 +98,11 @@ public:
         return SValuePtr(new SValue(1, SgAsmRiscOperation::OP_undefined));
     }
 
+    /** Instantiate a data-flow bottom value. */
+    static SValuePtr instance_bottom(size_t nbits) {
+        return SValuePtr(new SValue(nbits, SgAsmRiscOperation::OP_bottom));
+    }
+
     /** Instantiate an undefined value.
      *
      *  Undefined values end up being a SgAsmRiscOperation of type OP_undefined which has a single child which is an integer
@@ -122,6 +127,9 @@ public:
     }
 
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance_bottom(nbits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
         return instance_undefined(nbits);
     }
@@ -162,11 +170,14 @@ public:
         ASSERT_not_reachable("no implementation necessary");
     }
     
-
     virtual void set_width(size_t nbits) {
         ASSERT_not_reachable("no implementation necessary");
     }
 
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
+    
     virtual bool is_number() const ROSE_OVERRIDE {
         return false;
     }

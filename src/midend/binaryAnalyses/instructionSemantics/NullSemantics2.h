@@ -56,6 +56,9 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nBits) const ROSE_OVERRIDE {
+        return instance(nBits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nBits) const ROSE_OVERRIDE {
         return instance(nBits);
     }
@@ -88,8 +91,19 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Implementations of functions inherited
 public:
-    virtual bool is_number() const { return false; }
-    virtual uint64_t get_number() const { ASSERT_not_reachable("not a number"); uint64_t retval; return retval;}
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
+
+    virtual bool is_number() const ROSE_OVERRIDE {
+        return false;
+    }
+
+    virtual uint64_t get_number() const ROSE_OVERRIDE {
+        ASSERT_not_reachable("not a number");
+        uint64_t retval;
+        return retval;
+    }
 
     virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE {
         return true;

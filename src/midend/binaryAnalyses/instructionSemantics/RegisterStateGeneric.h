@@ -85,6 +85,7 @@ public:
         INITIALIZED,                                    /**< The register was written without an instruction. This
                                                          *   typically happens during state initialization. */
         READ_BEFORE_WRITE,                              /**< The register was read without having the WRITTEN property. */
+        READ_AFTER_WRITE,                               /**< The register was read after being written. */
         READ_UNINITIALIZED,                             /**< The register was read without having the WRITTEN or INITIALIZED
                                                          *   property. */
     };
@@ -491,6 +492,24 @@ public:
     virtual void eraseProperties();
     /** @} */
 
+    /** Get registers having certain properties.
+     *
+     *  Return a list of registers that have the @p required properties and lack the @p prohibited properties.  The returned
+     *  list contains the largest registers that satisfy the conditions. */
+    virtual std::vector<RegisterDescriptor> findProperties(const PropertySet &required,
+                                                           const PropertySet &prohibited = PropertySet()) const;
+
+    /** Update write properties.
+     *
+     *  Adds the specified property to all bits of the register.  The property can be anything, but is normally either WRITTEN
+     *  or INITIALIZED depending on whether the writeRegister operation was on behalf of an instruction or not. */
+    virtual void updateWriteProperties(const RegisterDescriptor&, RegisterProperty);
+
+    /** Update read properties.
+     *
+     *  Adds the READ property to all bits of the register. Also adds READ_BEFORE_WRITE and/or READ_UNINITIALIZED as
+     *  appropriate depending on writer properties. */
+    virtual void updateReadProperties(const RegisterDescriptor&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Deprecated APIs

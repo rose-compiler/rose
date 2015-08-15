@@ -20,6 +20,15 @@ SValue::init(const SValue &other)
 }
 
 BaseSemantics::SValuePtr
+SValue::bottom_(size_t nbits) const {
+    SValuePtr retval = create_empty(nbits);
+    ASSERT_require(retval->subvalues.empty());
+    for (size_t i=0; i<subvalues.size(); ++i)
+        retval->subvalues.push_back(subvalues[i]!=NULL ? subvalues[i]->bottom_(nbits) : BaseSemantics::SValuePtr());
+    return retval;
+}
+
+BaseSemantics::SValuePtr
 SValue::undefined_(size_t nbits) const
 {
     SValuePtr retval = create_empty(nbits);
@@ -108,6 +117,15 @@ SValue::set_width(size_t nbits)
         if (is_valid(i))
             subvalues[i]->set_width(nbits);
     }
+}
+
+bool
+SValue::isBottom() const {
+    for (size_t i=0; i<subvalues.size(); ++i) {
+        if (is_valid(i) && !subvalues[i]->isBottom())
+            return false;
+    }
+    return true;
 }
 
 bool

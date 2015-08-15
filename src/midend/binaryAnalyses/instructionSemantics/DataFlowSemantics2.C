@@ -43,6 +43,9 @@ public:
 
     // Virtual allocating constructors
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance(nbits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
         return instance(nbits);
     }
@@ -79,6 +82,10 @@ public:
     }
 
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+        return false;
+    }
+
+    virtual bool isBottom() const ROSE_OVERRIDE {
         return false;
     }
 

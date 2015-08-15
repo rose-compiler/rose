@@ -1,4 +1,4 @@
-#ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_H
+#ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_H 
 #define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_H
 
 #include "Diagnostics.h"
@@ -347,7 +347,8 @@ class RiscOperators;
  *  methods for semantic objects. */
 class Formatter {
 public:
-    Formatter(): regdict(NULL), suppress_initial_values(false), indentation_suffix("  "), show_latest_writers(true) {}
+    Formatter(): regdict(NULL), suppress_initial_values(false), indentation_suffix("  "), show_latest_writers(true),
+                 show_properties(true) {}
     virtual ~Formatter() {}
 
     /** The register dictionary which is used for printing register names.
@@ -383,12 +384,20 @@ public:
     void clear_show_latest_writers() { show_latest_writers = false; }
     /** @} */
 
+    /** Whether to show register properties.
+     * @{ */
+    bool get_show_properties() const { return show_properties; }
+    void set_show_properties(bool b=true) { show_properties = b; }
+    void clear_show_properties() { show_properties = false; }
+    /** @} */
+
 protected:
     RegisterDictionary *regdict;
     bool suppress_initial_values;
     std::string line_prefix;
     std::string indentation_suffix;
     bool show_latest_writers;
+    bool show_properties;
 };
 
 /** Adjusts a Formatter for one additional level of indentation.  The formatter's line prefix is adjusted by appending the
@@ -502,6 +511,13 @@ public:
      *  @sa undefined_ */
     virtual SValuePtr unspecified_(size_t nbits) const = 0;
 
+    /** Data-flow bottom value.
+     *
+     *  Returns a new value that represents bottom in a data-flow analysis. If a semantic domain can represent a bottom value
+     *  then the @ref isBottom predicate is true when invoked on this method's return value. If a semantic domain cannot
+     *  support a bottom value, then it may return some other value. */
+    virtual SValuePtr bottom_(size_t nBits) const = 0;
+
     /** Create a new concrete semantic value. The new value will represent the specified concrete value and have the same
      *  dynamic type as the value on which this virtual method is called. This is the most common way that a new constant is
      *  created.  The @p number is truncated to contain @p nbits bits (higher order bits are cleared). */
@@ -535,6 +551,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // The rest of the API...
 public:
+    /** Determines whether a value is a data-flow bottom.
+     *
+     *  Returns true if this value represents a bottom value for data-flow analysis.  Any RiscOperation performed on an operand
+     *  whose isBottom predicate returns true will itself return a bottom value.  This includes operations like "xor x x" which
+     *  would normally return zero. */
+    virtual bool isBottom() const = 0;
+
     /** Determines if the value is a concrete number. Concrete numbers can be created with the number_(), boolean_()
      *  virtual constructors, or by other means. */
     virtual bool is_number() const = 0;
@@ -1825,7 +1848,12 @@ public:
         return protoval->boolean_(value);
     }
 
+    /** Returns a data-flow bottom value. Uses the prototypical value to virtually construct a new value. */
+    virtual SValuePtr bottom_(size_t nbits) {
+        return protoval->bottom_(nbits);
+    }
 
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  x86-specific Operations (FIXME)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
