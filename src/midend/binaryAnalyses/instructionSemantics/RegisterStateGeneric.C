@@ -510,9 +510,10 @@ RegisterStateGeneric::eraseProperties(const RegisterDescriptor &reg, const Prope
         return false;
     BitProperties &bitProps = properties_[reg];
     BitRange where = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
-    bitProps.erase(where, props);
+    bool changed = bitProps.erase(where, props);
     if (bitProps.isEmpty())
         properties_.erase(reg);
+    return changed;
 }
 
 void
