@@ -161,6 +161,7 @@ private:
     ParameterLocation thisParameter_;                   // Object pointer for calling conventions that are object methods
     std::set<RegisterDescriptor> calleeSavedRegisters_; // Register that the callee must restore before returning
 
+public:
     /** Initialize diagnostics.
      *
      *  This is normally called as part of ROSE's diagnostics initialization, but it doesn't hurt to call it often. */
