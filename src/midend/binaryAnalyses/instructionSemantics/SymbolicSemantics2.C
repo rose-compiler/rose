@@ -167,7 +167,7 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
             if (insn!=NULL)
                 stream <<(ndefs>0?",":"") <<StringUtility::addrToString(insn->get_address());
         }
-        stream <<"}, ";
+        stream <<"}, expr=";
         closing = "}";
     }
 
