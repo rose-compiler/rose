@@ -1,0 +1,6 @@
+CodeThorn:
+array initializers: int c[5]={7,8,9} is represented as c[0],c[1],c[2]
+  (c[3],c[4] are missing in the initialization of EState(PState).
+they should be created as c[3]=0, c[4]=0.
+
+

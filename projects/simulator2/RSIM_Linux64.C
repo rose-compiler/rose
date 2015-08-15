@@ -117,6 +117,7 @@ RSIM_Linux64::init() {
     SC_REG(110, getppid,                        default);
     SC_REG(111, getpgrp,                        default);
     SC_REG(133, mknod,                          default);
+    SC_REG(137, statfs,                         statfs);
     SC_REG(138, fstatfs,                        fstatfs);
     SC_REG(145, sched_getscheduler,             sched_getscheduler);
     SC_REG(145, sched_get_priority_max,         default);
@@ -503,7 +504,7 @@ RSIM_Linux64::syscall_connect_body(RSIM_Thread *t, int callno) {
 void
 RSIM_Linux64::syscall_fstatfs_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("fstatfs").d().d().p();
+    t->syscall_enter("fstatfs").d().p();
 }
 
 void
@@ -919,6 +920,45 @@ RSIM_Linux64::syscall_stat_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux64::syscall_stat_leave(RSIM_Thread *t, int callno) {
     t->syscall_leave().ret().arg(1).P(sizeof(kernel_stat_64), print_kernel_stat_64);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_statfs_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("statfs").d().p();
+}
+
+void
+RSIM_Linux64::syscall_statfs_body(RSIM_Thread *t, int callno)
+{
+    bool error;
+    std::string name = t->get_process()->read_string(t->syscall_arg(0), 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    rose_addr_t sbVa = t->syscall_arg(1);
+
+    struct statfs_64 host_statfs;
+    int result = syscall(SYS_statfs, name.c_str(), &host_statfs);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+    if (sizeof(host_statfs) != t->get_process()->mem_write(&host_statfs, sbVa, sizeof host_statfs)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_statfs_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().arg(1).P(sizeof(struct statfs_64), print_statfs_64);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

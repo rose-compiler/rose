@@ -1,3 +1,3 @@
 
-SUBDIRS=sage utils
+SUBDIRS=sage klt utils
 

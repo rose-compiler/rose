@@ -322,7 +322,7 @@ int main(int argc, char* argv[]) {
       ("interval-analysis", "perform interval analysis.")
       ("trace", "show operations as performed by selected solver.")
       ("print-varid-mapping", "prints variableIdMapping")
-      ("print-varid-array-mapping", "prints variableIdMapping with array element varids.")
+      ("print-varid-mapping-array", "prints variableIdMapping with array element varids.")
       ("print-label-mapping", "prints mapping of labels to statements")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
       ;
@@ -424,7 +424,7 @@ int main(int argc, char* argv[]) {
   //cout<<"IOLabelling:\n"<<iolabeler->toString()<<endl;
 #endif
 
-  if (args.count("print-varid-mapping")||args.count("print-varid-array-mapping")) {
+  if (args.count("print-varid-mapping")||args.count("print-varid-mapping-array")) {
     variableIdMapping.toStream(cout);
     return 0;
   }

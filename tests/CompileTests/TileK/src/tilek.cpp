@@ -1,66 +1,80 @@
 
-#if defined(TILEK_BASIC)
-#  if defined(TILEK_ACCELERATOR) || defined(TILEK_THREADS)
-#    error "TileK can only be configured for one of Basic, Threads, or Accelerator."
-#  endif
-#elif defined(TILEK_THREADS)
-#  if defined(TILEK_BASIC) || defined(TILEK_ACCELERATOR)
-#    error "TileK can only be configured for one of Basic, Threads, or Accelerator."
-#  endif
-#elif defined(TILEK_ACCELERATOR)
-#  if defined(TILEK_BASIC) || defined(TILEK_THREADS)
-#    error "TileK can only be configured for one of Basic, Threads, or Accelerator."
-#  endif
-#  if !(defined(TILEK_TARGET_OPENCL) xor defined(TILEK_TARGET_CUDA))
-#    error "Tilek for Accelerator needs one of OpenCL or CUDA target to be defined!"
-#  endif
-#else
-#  error "TileK need to be configured for one of Basic, Threads, or Accelerator."
-#endif
-
 #include "sage3basic.h"
 
 #include "DLX/TileK/language.hpp"
-typedef ::DLX::TileK::language_t Dlang; // Directives Language
 
-#include "DLX/KLT/annotations.hpp"
-typedef ::DLX::KLT::Annotation<Dlang> Annotation;
-
-#include "KLT/Language/c-family.hpp"
-typedef ::KLT::Language::C Hlang; // Host Language
-#if defined(TILEK_ACCELERATOR)
-#  if defined(TILEK_TARGET_OPENCL)
-typedef ::KLT::Language::OpenCL Klang; // Kernel Language
-#  elif defined(TILEK_TARGET_CUDA)
-typedef ::KLT::Language::CUDA Klang; // Kernel Language
-#  endif
+#if defined(TILEK_BASIC)
+#  include "KLT/TileK/generator-basic.hpp"
+#elif defined(TILEK_THREADS)
+#  include "KLT/TileK/generator-threads.hpp"
+#elif defined(TILEK_ACCELERATOR) && defined(TILEK_TARGET_OPENCL)
+#  include "KLT/TileK/generator-opencl.hpp"
+#elif defined(TILEK_ACCELERATOR) && defined(TILEK_TARGET_CUDA)
+#  include "KLT/TileK/generator-cuda.hpp"
+#elif defined(TILEK_ACCELERATOR)
+#  error "Asked for TileK::Accelerator but target language not defined (OpenCL or CUDA)."
 #else
-typedef ::KLT::Language::C Klang; // Kernel Language
+#  error "Need to choose between TileK::Basic, TileK::Threads, and TileK::Accelerator."
 #endif
 
-#include "MDCG/KLT/runtime.hpp"
-typedef ::MDCG::KLT::Runtime<Hlang, Klang> Runtime; // Runtime Description
+#include "KLT/DLX/compiler.hpp"
 
-#include "MDCG/TileK/model.hpp"
-typedef ::MDCG::TileK::KernelDesc<Annotation, Runtime> KernelDesc; // Model for Static Initializer
+#include "MFB/Sage/driver.hpp"
+#include "MFB/Sage/variable-declaration.hpp"
 
-#include "MDCG/TileK/runtime.hpp"
+namespace KLT {
 
-#include "DLX/KLT/compiler.hpp" // Needs Annotation and Runtime to be defined
+namespace MDCG {
 
-#include <cassert>
+template <>
+SgExpression * VersionSelector< ::DLX::TileK::language_t, ::KLT::TileK::Generator>::createFieldInitializer(
+    MFB::Driver<MFB::Sage> & driver,
+    ::MDCG::Model::field_t element,
+    size_t field_id,
+    const input_t & input,
+    size_t file_id
+) {
+  assert(false); // TileK does not support version selection so 'klt_version_selector_t' is an empty structure => this should not be called
+  return NULL;
+}
+
+template <>
+SgExpression * SubkernelConfig< ::KLT::TileK::Generator>::createFieldInitializer(
+    MFB::Driver<MFB::Sage> & driver,
+    ::MDCG::Model::field_t element,
+    size_t field_id,
+    const input_t & input,
+    size_t file_id
+) {
+  assert(field_id == 0); // TileK's 'klt_subkernel_config_t' has one field: function pointer or kernel name
+#if defined(TILEK_BASIC) || defined(TILEK_THREADS)
+  ::MDCG::Model::type_t type = element->node->type;
+
+  assert(type->node->kind == ::MDCG::Model::node_t< ::MDCG::Model::e_model_type>::e_typedef_type);
+
+  MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(input.kernel_name, type->node->type, NULL, NULL, file_id, false, true);
+  MFB::Sage<SgVariableDeclaration>::build_result_t var_decl_res = driver.build<SgVariableDeclaration>(var_decl_desc);
+
+  SgDeclarationStatement * decl_stmt = isSgDeclarationStatement(var_decl_res.symbol->get_declaration()->get_parent());
+    decl_stmt->get_declarationModifier().unsetDefault();
+    decl_stmt->get_declarationModifier().get_storageModifier().setExtern();
+
+  return SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(var_decl_res.symbol));
+#elif defined(TILEK_ACCELERATOR)
+  return SageBuilder::buildStringVal(input.kernel_name);
+#endif
+}
+
+} // namespace KLT::MDCG
+
+} // namespace KLT
 
 int main(int argc, char ** argv) {
   std::vector<std::string> args(argv, argv + argc);
 
-#if defined(TILEK_THREADS)
-  args.push_back("-DTILEK_THREADS");
-#elif defined(TILEK_ACCELERATOR)
-  args.push_back("-DTILEK_ACCELERATOR");
+#if defined(TILEK_ACCELERATOR)
 #  if defined(TILEK_TARGET_OPENCL)
-  args.push_back("-DTILEK_TARGET_OPENCL");
-#  elif defined(TILEK_TARGET_CUDA)
-  args.push_back("-DTILEK_TARGET_CUDA");
+  args.push_back("-DSKIP_OPENCL_SPECIFIC_DEFINITION");
 #  endif
 #endif
 
@@ -73,17 +87,12 @@ int main(int argc, char ** argv) {
   std::string filename = source_file->get_sourceFileNameWithoutPath();
   std::string basename = filename.substr(0, filename.find_last_of('.'));
 
-#if defined(TILEK_ACCELERATOR)
-#  if defined(TILEK_TARGET_OPENCL)
-  std::string kernel_filename(basename + "-kernel.cl");
-#  elif defined(TILEK_TARGET_CUDA)
-  std::string kernel_filename(basename + "-kernel.cu");
-#  endif
-#else
-  std::string kernel_filename(basename + "-kernel.c");
-#endif
+  KLT::DLX::Compiler< ::DLX::TileK::language_t, ::KLT::TileK::Generator> compiler(project, KLT_PATH, TILEK_PATH, basename);
 
-  DLX::KLT::compile<Dlang, Hlang, Klang, Runtime, KernelDesc>(project, std::string(KLT_RTL_INC_PATH), std::string(TILEK_RTL_INC_PATH), kernel_filename, basename + "-data.c");
+//  MFB::api_t * api = compiler.getDriver().getAPI();
+//  dump_api(api);
+
+  compiler.compile(project);
 
   project->unparse();
 

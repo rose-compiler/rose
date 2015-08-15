@@ -2768,8 +2768,8 @@ void Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier2 ( SgDeclarationSta
     } else if (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt)) {
       if(experimentalModeVerbose==1) curprint("/*3*/");
     } else {
-      cerr<<"Unknown template construct."<<endl;
-      ROSE_ASSERT(0);
+      cerr<<"WARNING: Unknown template construct: "<<decl_stmt->class_name()<<endl;
+      //ROSE_ASSERT(0);
     }
   }
 }

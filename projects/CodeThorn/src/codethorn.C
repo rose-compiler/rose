@@ -30,6 +30,7 @@
 #include "ArrayElementAccessData.h"
 #include "Specialization.h"
 #include <map>
+#include "PragmaHandler.h"
 
 // test
 #include "Evaluator.h"
@@ -82,7 +83,7 @@ ForStmtToOmpPragmaMap createOmpPragmaForStmtMap(SgNode* root) {
         if(SgForStatement* forStmt=isSgForStatement(*j)) {
           map[forStmt]=pragmaDecl;
         } else {
-          cout<<"DEBUG: NOT a forstmt: "<<(*i)->unparseToString()<<endl;
+          cout<<"DEBUG: NOT a for-stmt: "<<(*i)->unparseToString()<<endl;
         }
       }
     }
@@ -413,6 +414,7 @@ int main( int argc, char * argv[] ) {
     ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
     ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ("rewrite","rewrite AST applying all rewrite system rules.")
+    ("normalize",po::value< string >(),"normalize AST before analysis.")
     ("specialize-fun-name", po::value< string >(), "function of name [arg] to be specialized")
     ("specialize-fun-param", po::value< vector<int> >(), "function parameter number to be specialized (starting at 1)")
     ("specialize-fun-const", po::value< vector<int> >(), "constant [arg], the param is to be specialized to.")
@@ -534,6 +536,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("verify-update-sequence-race-conditions",true);
 
   boolOptions.registerOption("minimize-states",false);
+  boolOptions.registerOption("normalize",true);
 
   boolOptions.processOptions();
 
@@ -846,35 +849,60 @@ int main( int argc, char * argv[] ) {
   //VariableIdMapping variableIdMapping;
   //variableIdMapping.computeVariableSymbolMapping(sageProject);
 
-  int numSubst=0;
-  if(option_specialize_fun_name!="")
-  {
-    Specialization speci;
-    cout<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
+#if 0
+  SgNodeHelper::PragmaList pragmaList=SgNodeHelper::collectPragmaLines("verify",root);
+  if(size_t numPragmas=pragmaList.size()>0) {
+    cout<<"STATUS: found "<<numPragmas<<" provesa pragmas."<<endl;
+    ROSE_ASSERT(numPragmas==1);
+    SgNodeHelper::PragmaList::iterator i=pragmaList.begin();
+    std::pair<std::string, SgNode*> p=*i;
+    option_specialize_fun_name="kernel_jacobi_2d_imper";
+    option_specialize_fun_param_list.push_back(0);
+    option_specialize_fun_const_list.push_back(2);
+    option_specialize_fun_param_list.push_back(1);
+    option_specialize_fun_const_list.push_back(16);
+    analyzer.setSkipSelectedFunctionCalls(true);
+    analyzer.setSkipArrayAccesses(true);
+    boolOptions.registerOption("verify-update-sequence-race-conditions",true);
 
-    string funNameToFind=option_specialize_fun_name;
+    //TODO1: refactor into separate function
+    int numSubst=0;
+    if(option_specialize_fun_name!="") {
+      Specialization speci;
+      cout<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
 
-    for(size_t i=0;i<option_specialize_fun_param_list.size();i++) {
-      int param=option_specialize_fun_param_list[i];
-      int constInt=option_specialize_fun_const_list[i];
-      numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, analyzer.getVariableIdMapping());
+      string funNameToFind=option_specialize_fun_name;
+      
+      for(size_t i=0;i<option_specialize_fun_param_list.size();i++) {
+        int param=option_specialize_fun_param_list[i];
+        int constInt=option_specialize_fun_const_list[i];
+        numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, analyzer.getVariableIdMapping());
     }
-    cout<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
-    int numInit=0;
-    cout<<"DEBUG: var init spec: "<<endl;
-    for(size_t i=0;i<option_specialize_fun_varinit_list.size();i++) {
+      cout<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
+      int numInit=0;
+      //cout<<"DEBUG: var init spec: "<<endl;
+      for(size_t i=0;i<option_specialize_fun_varinit_list.size();i++) {
       string varInit=option_specialize_fun_varinit_list[i];
       int varInitConstInt=option_specialize_fun_varinit_const_list[i];
-      cout<<"DEBUG: checking for varInitName nr "<<i<<" var:"<<varInit<<" Const:"<<varInitConstInt<<endl;
+      //cout<<"DEBUG: checking for varInitName nr "<<i<<" var:"<<varInit<<" Const:"<<varInitConstInt<<endl;
       numInit+=speci.specializeFunction(sageProject,funNameToFind, -1, 0, varInit, varInitConstInt,analyzer.getVariableIdMapping());
     }
-    cout<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
-
-    //root=speci.getSpecializedFunctionRootNode();
-    sageProject->unparse(0,0);
-    //exit(0);
+      cout<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
+      
+      //root=speci.getSpecializedFunctionRootNode();
+      sageProject->unparse(0,0);
+      //exit(0);
+    }
   }
-
+#else
+  PragmaHandler pragmaHandler;
+  pragmaHandler.handlePragmas(sageProject,&analyzer);
+  // TODO: requires more refactoring
+  option_specialize_fun_name=pragmaHandler.option_specialize_fun_name;
+  boolOptions.registerOption("verify-update-sequence-race-conditions",true);
+  // unparse specialized code
+  sageProject->unparse(0,0);
+#endif
 
   if(args.count("rewrite")) {
     rewriteSystem.resetStatistics();
@@ -885,6 +913,11 @@ int main( int argc, char * argv[] ) {
     exit(0);
   }
 
+  if(boolOptions["normalize"]) {
+    rewriteSystem.resetStatistics();
+    rewriteSystem.rewriteCompoundAssignmentsInAst(root,analyzer.getVariableIdMapping());
+    cout <<"STATUS: Normalization finished."<<endl;
+  }
   cout << "INIT: Checking input program."<<endl;
   CodeThornLanguageRestrictor lr;
   lr.checkProgram(root);
@@ -963,7 +996,6 @@ int main( int argc, char * argv[] ) {
 
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
   cout << "=============================================================="<<endl;
-
   double extractAssertionTracesTime= 0;
   int maxOfShortestAssertInput = -1;
   if ( boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) {
@@ -988,6 +1020,7 @@ int main( int argc, char * argv[] ) {
   cout << "=============================================================="<<endl;
   bool withCe = boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"];
   analyzer.reachabilityResults.printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_", withCe);
+
   if (args.count("csv-assert")) {
     string filename=args["csv-assert"].as<string>().c_str();
     analyzer.reachabilityResults.writeFile(filename.c_str(), false, 0, withCe);
@@ -1034,13 +1067,12 @@ int main( int argc, char * argv[] ) {
   long constraintSetsBytes=analyzer.getConstraintSetMaintainer()->memorySize();
   long constraintSetsMaxCollisions=analyzer.getConstraintSetMaintainer()->maxCollisions();
   double constraintSetsLoadFactor=analyzer.getConstraintSetMaintainer()->loadFactor();
-
   long numOfStdinEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
   long numOfStdoutVarEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
   long numOfStdoutConstEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
   long numOfStderrEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
   long numOfFailedAssertEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
-  long numOfConstEStates=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
+  long numOfConstEStates=0;//(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
   long numOfStdoutEStates=numOfStdoutVarEStates+numOfStdoutConstEStates;
 
   long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
@@ -1147,6 +1179,7 @@ int main( int argc, char * argv[] ) {
     if(boolOptions["with-counterexamples"] || boolOptions["with-ltl-counterexamples"]) {  //output a counter-example input sequence for falsified formulae
       withCounterexample = true;
     }
+
     timer.start();
     std::set<int> ltlInAlphabet = analyzer.getInputVarValues();
     //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
@@ -1192,6 +1225,7 @@ int main( int argc, char * argv[] ) {
         ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
       }
     }
+
     if (boolOptions["check-ltl-counterexamples"]) {
       cout << "STATUS: checking for spurious counterexamples..."<<endl;
       CounterexampleAnalyzer ceAnalyzer(&analyzer);
@@ -1303,7 +1337,7 @@ int main( int argc, char * argv[] ) {
       SgNode* root=analyzer.startFunRoot;
       VariableId parallelIterationVar;
       LoopInfoSet loopInfoSet=determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
-      cout<<"DEBUG: number of iteration vars: "<<loopInfoSet.size()<<endl;
+      cout<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
       Specialization::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
       timer.start();
       verifyUpdateSequenceRaceConditionsResult=speci.verifyUpdateSequenceRaceConditions(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());

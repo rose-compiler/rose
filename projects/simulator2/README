@@ -36,6 +36,24 @@ all running in a 64-bit version of ROSE. The 32-bit host is not well
 tested at this time, and running a 64-bit guest in a 32-bit host has
 not been tested at all yet [2015-06-29].
 
+== Quick start ==
+
+To simulate a 32-bit specimen: As of 2015-07-28, the supplied VDSO
+causes a segmentation fault (reported as the simulator not being able
+to disassemble an instruction at a certain address in libc), so use
+"--vdso=/dev/null" to disable fast system calls.  Also, native loading
+is not implemented for x86.
+
+$ i386 -R ./x86sim --arch=linux-x86 --vdso=/dev/null /bin/x86/grep root /etc/passwd
+
+To simulate a 64-bit specimen: be sure that linux-vdso.so and
+vsyscall-amd64 have been copied to the current working directory (or
+use the "--vdso" and "--vsyscall" switches), and/or use the
+"--trace=mmap" to verify that they're present in the simulated memory
+maps (the vdso need not be present when "--native-load" is used).
+
+$ x86_64 -R ./x86sim --arch=linux-amd64 /bin/amd64/grep root /etc/passwd
+
 == Initial program load ==
 
 x86sim can completely emulate the Linux loader, or it can initialize
@@ -411,4 +429,6 @@ corresponding futex_wake from another thread.
 
 == Writing programs that use a simulator ==
 
-See x86sim.C and doxygen.
+The best example is x86sim.C, but the "demos" directory contains more
+examples, including a sample makefile.
+
