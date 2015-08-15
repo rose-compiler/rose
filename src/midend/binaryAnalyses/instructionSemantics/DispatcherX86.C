@@ -2353,7 +2353,7 @@ struct IP_pmaxs: P {
             BaseSemantics::SValuePtr result;
             for (size_t i=0; i<nOps; ++i) {
                 BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
                 BaseSemantics::SValuePtr maxVal = ops->ite(ops->isSignedLessThan(partA, partB), partB, partA);
                 result = result ? ops->concat(result, maxVal) : maxVal;
             }
@@ -2381,7 +2381,7 @@ struct IP_pmaxu: P {
             BaseSemantics::SValuePtr result;
             for (size_t i=0; i<nOps; ++i) {
                 BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
                 BaseSemantics::SValuePtr maxVal = ops->ite(ops->isUnsignedLessThan(partA, partB), partB, partA);
                 result = result ? ops->concat(result, maxVal) : maxVal;
             }
@@ -2409,7 +2409,7 @@ struct IP_pmins: P {
             BaseSemantics::SValuePtr result;
             for (size_t i=0; i<nOps; ++i) {
                 BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
                 BaseSemantics::SValuePtr minVal = ops->ite(ops->isSignedLessThan(partA, partB), partA, partB);
                 result = result ? ops->concat(result, minVal) : minVal;
             }
@@ -2437,7 +2437,7 @@ struct IP_pminu: P {
             BaseSemantics::SValuePtr result;
             for (size_t i=0; i<nOps; ++i) {
                 BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
                 BaseSemantics::SValuePtr minVal = ops->ite(ops->isUnsignedLessThan(partA, partB), partA, partB);
                 result = result ? ops->concat(result, minVal) : minVal;
             }
