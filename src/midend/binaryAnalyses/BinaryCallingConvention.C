@@ -1,177 +1,317 @@
-#include "sage3basic.h"
-#include "threadSupport.h"  // for __attribute__ on Visual Studio
-#include "BinaryCallingConvention.h"
-#include "BinaryControlFlow.h"
-#include "FindRegisterDefs.h"
+#include <sage3basic.h>
+#include <BinaryCallingConvention.h>
 
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics;
+#include <BinaryDataFlow.h>                             // Dataflow engine
+#include <boost/foreach.hpp>
+#include <Partitioner2/DataFlow.h>                      // Dataflow components that we can re-use
+#include <Partitioner2/Partitioner.h>                   // Fast binary analysis data structures
+#include <Partitioner2/Function.h>                      // Fast function data structures
 
-typedef ControlFlow::Graph CFG;
-typedef boost::graph_traits<CFG>::vertex_descriptor CFGVertex;
-typedef FindRegisterDefs::Policy Policy;
-typedef X86InstructionSemantics<Policy, FindRegisterDefs::ValueType> Semantics;
+namespace rose {
+namespace BinaryAnalysis {
 
-/** Determines which registers are defined.  Evaluates a basic block to determine which registers have values assigned to them
- *  in that block. */
-static void
-evaluate_bblock(SgAsmBlock *bblock, Policy &policy)
-{
-    Semantics semantics(policy);
-    const SgAsmStatementPtrList &insns = bblock->get_statementList();
-    for (size_t i=0; i<insns.size(); ++i) {
-        SgAsmX86Instruction *insn = isSgAsmX86Instruction(insns[i]);
-        if (insn) {
-            try {
-                semantics.processInstruction(insn);
-            } catch (const Semantics::Exception &e) {
-                std::cerr <<e <<" (instruction skipped)\n";
-            }
-        }
+using namespace rose::Diagnostics;
+using namespace rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = rose::BinaryAnalysis::Partitioner2;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      CallingConvention
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Sawyer::Message::Facility CallingConvention::mlog;
+
+void
+CallingConvention::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::CallingConvention", Diagnostics::destination);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
 
-static void
-solve_flow_equation_iteratively(SgAsmFunction *func)
-{
-#if 1
-    std::cerr <<"ROBB: solving flow equations for function " <<StringUtility::addrToString(func->get_entry_va()) <<"\n";
+void
+CallingConvention::appendInputParameter(const ParameterLocation &newLocation) {
+#ifndef NDEBUG
+    BOOST_FOREACH (const ParameterLocation &existingLocation, inputParameters_)
+        ASSERT_forbid(newLocation == existingLocation);
 #endif
-    rose::BinaryAnalysis::ControlFlow cfg_analyzer;
-    CFG cfg = cfg_analyzer.build_block_cfg_from_ast<CFG>(func);
+    inputParameters_.push_back(newLocation);
+}
 
-    CFGVertex entry_vertex = 0;
-    assert(get(boost::vertex_name, cfg, entry_vertex)==func->get_entry_block());
-    std::vector<CFGVertex> flowlist = cfg_analyzer.flow_order(cfg, entry_vertex);
-    size_t nvertices = num_vertices(cfg); // flowlist might be smaller if CFG is not fully connected by forward edges
-#if 0
-    if (flowlist.size()!=num_vertices(cfg)) {
-        std::cerr <<"flowlist.size() = " <<flowlist.size() <<"; nvertices = " <<num_vertices(cfg) <<"\n";
-        std::cerr <<"flowlist vertices = {";
-        for (size_t i=0; i<flowlist.size(); ++i) {
-            std::cerr <<" " <<flowlist[i] <<"->{";
-            boost::graph_traits<CFG>::out_edge_iterator ei, ei_end;
-            for (boost::tie(ei, ei_end)=out_edges(flowlist[i], cfg); ei!=ei_end; ++ei) {
-                CFGVertex successor = target(*ei, cfg);
-                std::cerr <<" " <<successor;
-            }
-            std::cerr <<" } ";
-        }
+void
+CallingConvention::appendOutputParameter(const ParameterLocation &newLocation) {
+#ifndef NDEBUG
+    BOOST_FOREACH (const ParameterLocation &existingLocation, outputParameters_)
+        ASSERT_forbid(newLocation == existingLocation);
+#endif
+    outputParameters_.push_back(newLocation);
+}
 
-        std::cerr <<" }\n" <<"graph vertices = {";
-        for (size_t i=0; i<num_vertices(cfg); ++i) {
-            SgAsmBlock *bblock = get(boost::vertex_name, cfg, (CFGVertex)i);
-            assert(bblock!=NULL);
-            std::cerr <<" [" <<i <<"]" <<StringUtility::addrToString(bblock->get_address());
+void
+CallingConvention::print(std::ostream &out, const RegisterDictionary *regdict) const {
+    using namespace StringUtility;
+    ASSERT_not_null(regdict);
+    RegisterNames regNames(regdict);
+
+    out <<cEscape(name_);
+    if (!comment_.empty())
+        out <<" (" <<cEscape(comment_) <<")";
+    out <<" = {" <<wordSize_ <<"-bit words";
+
+    if (!inputParameters_.empty()) {
+        out <<", inputs={";
+        BOOST_FOREACH (const ParameterLocation &loc, inputParameters_) {
+            out <<" ";
+            loc.print(out, regNames);
         }
-        std::cerr <<" }\n";
+        out <<" }";
     }
-#endif
-    std::vector<Policy> policies(nvertices);            // output state indexed by vertex
-    std::vector<bool> pending(nvertices, true);         // what vertices need to be (re)processed? (indexed by vertex)
 
-    /* Initialize the incoming policy of the function entry block by defining certain registers.  The values we use to define
-     * the registers are irrelevant since the policy doesn't track values, only bitmasks describing which bits of each register
-     * are defined. */
-    Policy entry_policy;
-    entry_policy.writeRegister(entry_policy.findRegister("esp", 32), entry_policy.number<32>(0));
-    entry_policy.writeRegister(entry_policy.findRegister("ebp", 32), entry_policy.number<32>(0));
-    entry_policy.writeRegister(entry_policy.findRegister("es", 16), entry_policy.number<16>(0));
-    entry_policy.writeRegister(entry_policy.findRegister("cs", 16), entry_policy.number<16>(0));
-    entry_policy.writeRegister(entry_policy.findRegister("ss", 16), entry_policy.number<16>(0));
-    entry_policy.writeRegister(entry_policy.findRegister("ds", 16), entry_policy.number<16>(0));
-    entry_policy.writeRegister(entry_policy.findRegister("fs", 16), entry_policy.number<16>(0));
-    entry_policy.writeRegister(entry_policy.findRegister("gs", 16), entry_policy.number<16>(0));
+    if (stackParameterOrder_ != ORDER_UNSPECIFIED) {
+        out <<", implied={";
+        switch (stackParameterOrder_) {
+            case LEFT_TO_RIGHT: out <<" left-to-right"; break;
+            case RIGHT_TO_LEFT: out <<" right-to-left"; break;
+            case ORDER_UNSPECIFIED: ASSERT_not_reachable("invalid stack parameter order");
+        }
+
+        if (stackPointerRegister_.is_valid()) {
+            out <<" " <<regNames(stackPointerRegister_) <<"-based stack";
+        } else {
+            out <<" NO-STACK-REGISTER";
+        }
+
+        switch (stackCleanup_) {
+            case CLEANUP_CALLER: out <<" cleaned up by caller"; break;
+            case CLEANUP_CALLEE: out <<" cleaned up by callee"; break;
+            case CLEANUP_UNSPECIFIED: out <<" with UNSPECIFIED cleanup"; break;
+        }
+        out <<"}";
+    }
     
-    /* Solve the flow equation iteratively to find out what's defined at the end of every basic block.   The policies[] stores
-     * this info for each vertex. */
-    bool changed;
-    do {
-        changed = false;
-        for (size_t i=0; i<flowlist.size(); ++i) {
-            CFGVertex vertex = flowlist[i];
-            if (!pending[vertex])
-                continue;
-            pending[vertex] = false;
-            SgAsmBlock *bblock = get(boost::vertex_name, cfg, vertex);
-            assert(bblock!=NULL);
+    if (nonParameterStackSize_ > 0)
+        out <<", " <<(nonParameterStackSize_ >> 3) <<"-byte return";
 
-            /* Incoming policy for the block.  This is the merge of all out policies of predecessor vertices, with special
-             * consideration for the function entry block. */
-            Policy policy;
-            if (bblock==func->get_entry_block())
-                policy = entry_policy;
-            boost::graph_traits<CFG>::in_edge_iterator ei, ei_end;
-            for (boost::tie(ei, ei_end)=in_edges(vertex, cfg); ei!=ei_end; ++ei) {
-                CFGVertex predecessor = source(*ei, cfg);
-                policy.merge(policies[predecessor]);
-            }
-
-            /* Compute output policy of this block. */
-            policy.get_rdundef_state().clear();
-            evaluate_bblock(bblock, policy/*in,out*/);
-
-            /* If output of this block changed what we previously calculated, then mark all its children as pending. */
-            if (!policy.equal_states(policies[vertex])) {
-                changed = true;
-                policies[vertex] = policy;
-                boost::graph_traits<CFG>::out_edge_iterator ei, ei_end;
-                for (boost::tie(ei, ei_end)=out_edges(vertex, cfg); ei!=ei_end; ++ei) {
-                    CFGVertex successor = target(*ei, cfg);
-                    pending[successor] = true;
-                }
-            }
+    if (stackParameterOrder_ != ORDER_UNSPECIFIED || nonParameterStackSize_ > 0) {
+        switch (stackDirection_) {
+            case GROWS_UP: out <<", upward-growing stack"; break;
+            case GROWS_DOWN: out <<", downward-growing stack"; break;
         }
-    } while (changed);
+    }
 
-    /* Get a list of all parts of all registers that were read without being defined. But only do this for the basic blocks
-     * that are reachable from the entry block.  I.e., those CFG vertices that are in the flowlist array. */
-    FindRegisterDefs::State rdundef;
-    for (size_t i=0; i<flowlist.size(); ++i) {
-        CFGVertex vertex = flowlist[i];
-        rdundef.merge(policies[vertex].get_rdundef_state());
-#if 0
-        if (func->get_entry_va()==0x411690) {
-            std::cerr <<"================================================== DEBUG ===========================================\n";
-            SgAsmBlock *blk = get(boost::vertex_name, cfg, vertex);
-            AsmUnparser().unparse(std::cerr, func);
-            std::cerr <<"Block " <<StringUtility::addrToString(blk->get_address()) <<":\n" <<policies[vertex]
-                      <<"Undef reads:\n" <<policies[vertex].get_rdundef_state()
-                      <<"Merged undef:\n" <<rdundef;
+    if (thisParameter_.isValid()) {
+        out <<", this=";
+        thisParameter_.print(out, regNames);
+    }
+    
+    if (!calleeSavedRegisters_.empty()) {
+        out <<", outputs={";
+        BOOST_FOREACH (const ParameterLocation &loc, outputParameters_) {
+            out <<" ";
+            loc.print(out, regNames);
         }
+        out <<"}";
+    }
+
+    if (!calleeSavedRegisters_.empty()) {
+        out <<", saved={";
+        BOOST_FOREACH (const RegisterDescriptor &loc, calleeSavedRegisters_)
+            out <<" " <<regNames(loc);
+        out <<"}";
+    }
+}
+
+    
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      CallingConventionAnalysis
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    
+void
+CallingConventionAnalysis::init(Disassembler *disassembler) {
+    if (disassembler) {
+        const RegisterDictionary *registerDictionary = disassembler->get_registers();
+        ASSERT_not_null(registerDictionary);
+        size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
+
+        SMTSolver *solver = NULL;
+        SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
+
+        cpu_ = disassembler->dispatcher()->create(ops, addrWidth, registerDictionary);
+    }
+}
+        
+void
+CallingConventionAnalysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+    mlog[DEBUG] <<"analyzeFunction(" <<function->printableName() <<")\n";
+
+    // Build the CFG used by the dataflow: dfCfg.  The dfCfg includes only those vertices that are reachable from the entry
+    // point for the function we're analyzing and which belong to that function.  All return points in the function will flow
+    // into a special CALLRET vertex (which is absent if there are no returns).
+    typedef P2::DataFlow::DfCfg DfCfg;
+    DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), partitioner.findPlaceholder(function->address()));
+    size_t startVertexId = 0;
+    DfCfg::ConstVertexIterator returnVertex = dfCfg.vertices().end();
+    BOOST_FOREACH (const DfCfg::Vertex &vertex, dfCfg.vertices()) {
+        if (vertex.value().type() == P2::DataFlow::DfCfgVertex::FUNCRET) {
+            returnVertex = dfCfg.findVertex(vertex.id());
+            break;
+        }
+    }
+    if (returnVertex == dfCfg.vertices().end()) {
+        mlog[DEBUG] <<"  function CFG has no return vertex\n";
+        return;
+    }
+
+    // Build the dataflow engine.
+    typedef DataFlow::Engine<DfCfg, BaseSemantics::StatePtr,
+                             P2::DataFlow::TransferFunction, DataFlow::SemanticsMerge> DfEngine;
+    BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(partitioner.newOperators());
+    P2::DataFlow::MergeFunction merge(cpu);
+    P2::DataFlow::TransferFunction xfer(cpu, partitioner.instructionProvider().stackPointerRegister());
+    DfEngine dfEngine(dfCfg, xfer, merge);
+    dfEngine.maxIterations(dfCfg.nVertices() * 5);      // arbitrary
+
+    // Build the initial state
+    BaseSemantics::StatePtr initialState = xfer.initialState();
+    BaseSemantics::RegisterStateGenericPtr initialRegState =
+        BaseSemantics::RegisterStateGeneric::promote(initialState->get_register_state());
+    initialRegState->initialize_large();
+
+    // Run data flow analysis
+    bool converged = true;
+    try {
+#if 1 // DEBUGGING [Robb P. Matzke 2015-08-13]
+        std::cerr <<"ROBB: Data flow for " <<function->printableName() <<"\n";
+        dfEngine.reset(startVertexId, initialState);
+        for (size_t i=0; i<dfEngine.maxIterations(); ++i) {
+            std::cerr <<"        iteration " <<i <<"\n";
+            dfEngine.runOneIteration();
+        }
+#else
+        dfEngine.runToFixedPoint(startVertexId, initialState);
 #endif
+    } catch (const std::runtime_error &e) {
+        converged = false;                              // didn't converge, so just use what we have
     }
 
-    for (size_t i=0; i<rdundef.n_gprs; ++i) {
-        if (rdundef.gpr[i].defbits!=0) {
-            std::cerr <<"    " <<std::setw(5) <<std::left <<gprToString((X86GeneralPurposeRegister)i)
-                      <<" undef reads = " <<StringUtility::addrToString(rdundef.gpr[i].defbits) <<"\n";
+    // Get the final dataflow state
+    BaseSemantics::StatePtr finalState = dfEngine.getInitialState(returnVertex->id());
+    if (finalState == NULL) {
+        mlog[DEBUG] <<"  data flow analysis did not reach final state\n";
+        return;
+    }
+    if (mlog[DEBUG]) {
+        if (!converged) {
+            mlog[DEBUG] <<"  data flow analysis did not converge to a solution (using partial solution)\n";
+        } else {
+            SymbolicSemantics::Formatter fmt;
+            fmt.set_line_prefix("    ");
+            fmt.expr_formatter.max_depth = 10;          // prevent really long output
+            mlog[DEBUG] <<"  final state:\n" <<(*finalState+fmt);
         }
     }
-}
 
+#if 1 // DEBUGGING [Robb P. Matzke 2015-08-12]
+    std::cerr <<"ROBB: calling convention results for " <<function->printableName() <<":\n";
+    RegisterNames registerName(cpu->get_register_dictionary());
 
+    RegisterSet readWithoutWrite = registersReadWithoutWrite(finalState);
+    std::cerr <<"      registers read without being written first:\n";
+    BOOST_FOREACH (const RegisterDescriptor &reg, readWithoutWrite.values())
+        std::cerr <<"        " <<registerName(reg) <<"\n";
 
+    RegisterSet calleeSaved = registersCalleeSaved(cpu, initialState, finalState, readWithoutWrite);
+    std::cerr <<"      callee-saved registers (from the list above):\n";
+    BOOST_FOREACH (const RegisterDescriptor &reg, calleeSaved.values())
+        std::cerr <<"        " <<registerName(reg) <<"\n";
 
-#if 0
-static void
-test(SgAsmFunction *func)
-{
-    const SgAsmStatementPtrList &blocks = func->get_statementList();
-    for (size_t i=0; i<blocks.size(); ++i) {
-        SgAsmBlock *blk = isSgAsmBlock(blocks[i]);
-        assert(blk!=NULL);
-        regs_defined_in_bblock(blk);
-    }
-}
+    RegisterSet returnValues = registersWriteWithoutRead(finalState);
+    returnValues.erase(calleeSaved);
+    std::cerr <<"      possible return values (registers written and then not read):\n";
+    BOOST_FOREACH (const RegisterDescriptor &reg, returnValues.values())
+        std::cerr <<"        " <<registerName(reg) <<"\n";
 #endif
-
-
-
-
-BinaryCallingConvention::Convention *
-BinaryCallingConvention::analyze_callee(SgAsmFunction *func)
-{
-    solve_flow_equation_iteratively(func);
-    return NULL;
 }
+
+// List of registers read
+CallingConventionAnalysis::RegisterSet
+CallingConventionAnalysis::registersRead(const BaseSemantics::StatePtr &state) {
+    RegisterSet retval;
+    BaseSemantics::RegisterStateGenericPtr regState = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
+    BOOST_FOREACH (const RegisterDescriptor &reg, regState->findProperties(BaseSemantics::RegisterStateGeneric::READ))
+        retval.insert(reg);
+    return retval;
+}
+
+// List of registers written
+CallingConventionAnalysis::RegisterSet
+CallingConventionAnalysis::registersWritten(const BaseSemantics::StatePtr &state) {
+    RegisterSet retval;
+    BaseSemantics::RegisterStateGenericPtr regState = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
+    BOOST_FOREACH (const RegisterDescriptor &reg, regState->findProperties(BaseSemantics::RegisterStateGeneric::WRITTEN))
+        retval.insert(reg);
+    return retval;
+}
+
+// List of registers read and written
+CallingConventionAnalysis::RegisterSet
+CallingConventionAnalysis::registersReadWritten(const BaseSemantics::StatePtr &state) {
+    RegisterSet retval;
+    BaseSemantics::RegisterStateGenericPtr regState = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
+    BaseSemantics::RegisterStateGeneric::PropertySet props;
+    props.insert(BaseSemantics::RegisterStateGeneric::READ);
+    props.insert(BaseSemantics::RegisterStateGeneric::WRITTEN);
+    BOOST_FOREACH (const RegisterDescriptor &reg, regState->findProperties(props))
+        retval.insert(reg);
+    return retval;
+}
+
+// List of registers that were read before they were written. The return value is largest, non-overlapping registers.
+CallingConventionAnalysis::RegisterSet
+CallingConventionAnalysis::registersReadWithoutWrite(const BaseSemantics::StatePtr &state) {
+    RegisterSet retval;
+    BaseSemantics::RegisterStateGenericPtr regState = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
+    BOOST_FOREACH (const RegisterDescriptor &reg,
+                   regState->findProperties(BaseSemantics::RegisterStateGeneric::READ_BEFORE_WRITE))
+        retval.insert(reg);
+    return retval;
+}
+
+// List of registers written and not subsequently read
+CallingConventionAnalysis::RegisterSet
+CallingConventionAnalysis::registersWriteWithoutRead(const BaseSemantics::StatePtr &state) {
+    RegisterSet retval;
+    BaseSemantics::RegisterStateGenericPtr regState = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
+    BaseSemantics::RegisterStateGeneric::PropertySet required;
+    required.insert(BaseSemantics::RegisterStateGeneric::READ);
+    required.insert(BaseSemantics::RegisterStateGeneric::WRITTEN);
+    BOOST_FOREACH (const RegisterDescriptor &reg,
+                   regState->findProperties(required, BaseSemantics::RegisterStateGeneric::READ_AFTER_WRITE))
+        retval.insert(reg);
+    return retval;
+}
+
+// List of callee-saved registers.
+CallingConventionAnalysis::RegisterSet
+CallingConventionAnalysis::registersCalleeSaved(const BaseSemantics::DispatcherPtr &cpu,
+                                                const BaseSemantics::StatePtr &initState,
+                                                const BaseSemantics::StatePtr &finalState,
+                                                const RegisterSet &readBeforeWrite) {
+    RegisterSet retval;
+    BaseSemantics::RiscOperatorsPtr ops = cpu->get_operators();
+    BOOST_FOREACH (const RegisterDescriptor &reg, readBeforeWrite.values()) {
+        BaseSemantics::SValuePtr initValue = initState->readRegister(reg, ops.get());
+        BaseSemantics::SValuePtr finalValue = finalState->readRegister(reg, ops.get());
+        InsnSemanticsExpr::TreeNodePtr initExpr = SymbolicSemantics::SValue::promote(initValue)->get_expression();
+        InsnSemanticsExpr::TreeNodePtr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
+        if (finalExpr->get_flags() == initExpr->get_flags() && finalExpr->must_equal(initExpr, ops->get_solver()))
+            retval.insert(reg);
+    }
+    return retval;
+}
+
+} // namespace
+} // namespace

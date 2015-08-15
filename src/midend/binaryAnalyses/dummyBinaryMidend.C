@@ -10,6 +10,7 @@ void DataFlow::initDiagnostics() {}
 void TaintedFlow::initDiagnostics() {}
 void InstructionSemantics2::initDiagnostics() {}
 void NoOperation::initDiagnostics() {}
+void CallingConvention::initDiagnostics() {}
 
 namespace Strings {
 void initDiagnostics() {}

@@ -4,6 +4,7 @@
 #include "Sawyer/ProgressBar.h"
 #include "AsmUnparser.h"                                // rose::BinaryAnalysis::AsmUnparser
 #include "BaseSemantics2.h"                             // rose::BinaryAnalysis::InstructionSemantics2
+#include "BinaryCallingConvention.h"                    // rose::BinaryAnalysis::CallingConvention
 #include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow
 #include "BinaryLoader.h"                               // BinaryLoader
 #include "BinaryNoOperation.h"                          // rose::BinaryAnalysis::NoOperation
@@ -83,6 +84,7 @@ void initialize() {
         BinaryAnalysis::InstructionSemantics2::initDiagnostics();
         BinaryAnalysis::Strings::initDiagnostics();
         BinaryAnalysis::NoOperation::initDiagnostics();
+        BinaryAnalysis::CallingConvention::initDiagnostics();
         EditDistance::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();
     }
