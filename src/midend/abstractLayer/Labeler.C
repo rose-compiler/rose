@@ -156,7 +156,7 @@ string LabelProperty::labelTypeToString(LabelType lt) {
   case LABEL_FUNCTIONEXIT: return "functionexit";
   case LABEL_BLOCKBEGIN: return "blockbegin";
   case LABEL_BLOCKEND: return "blockend";
-  case LABEL_EMPTY_STMT: return "blockend";
+  case LABEL_EMPTY_STMT: return "emptystmt";
   default:
     cerr<<"Error: unknown label type."<<endl;
     exit(1);

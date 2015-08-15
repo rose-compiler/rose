@@ -112,9 +112,9 @@ void xomp_acc_init(void)
 #endif 
   xomp_max_num_devices = xomp_get_max_devices();
 
-  DDE_head = (DDE**)malloc(sizeof(DDE*)*xomp_max_num_devices);
-  DDE_tail = (DDE**)malloc(sizeof(DDE*)*xomp_max_num_devices);
-  xomp_cuda_prop = (void**)malloc(sizeof(void*)*xomp_max_num_devices);
+  DDE_head = (DDE**)calloc(1,sizeof(DDE*)*xomp_max_num_devices);
+  DDE_tail = (DDE**)calloc(1,sizeof(DDE*)*xomp_max_num_devices);
+  xomp_cuda_prop = (void**)calloc(1,sizeof(void*)*xomp_max_num_devices);
 } 
 
 // this can be called multiple times. But the xomp_cuda_prop variable will only be set once
