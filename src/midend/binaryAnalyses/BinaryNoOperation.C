@@ -99,6 +99,7 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
 
     BaseSemantics::Formatter fmt;
     fmt.set_show_latest_writers(false);
+    fmt.set_show_properties(false);
     std::ostringstream ss;
     ss <<(*state+fmt);
     return ss.str();
