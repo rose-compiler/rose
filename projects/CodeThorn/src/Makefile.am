@@ -297,6 +297,8 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   FIConstAnalysis.h FIConstAnalysis.C \
   PropertyValueTable.h \
   PropertyValueTable.C \
+  Threadification.h \
+  Threadification.C \
   TrivialInlining.C                \
   TrivialInlining.h                \
   DeadCodeElimination.C                \

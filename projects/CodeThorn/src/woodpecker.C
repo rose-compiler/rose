@@ -16,6 +16,7 @@
 #include "SgNodeHelper.h"
 #include "FIConstAnalysis.h"
 #include "TrivialInlining.h"
+#include "Threadification.h"
 
 #include <vector>
 #include <set>
@@ -148,6 +149,7 @@ int main(int argc, char* argv[]) {
     ("generate-conversion-functions","generate code for conversion functions between variable names and variable addresses.")
     ("csv-assert",po::value< string >(), "name of csv file with reachability assert results'")
     ("enable-multi-const-analysis",po::value< string >(), "enable multi-const analysis.")
+    ("transform-thread-variable", "transform code to use additional thread variable.")
     ;
   //    ("int-option",po::value< int >(),"option info")
 
@@ -224,6 +226,14 @@ int main(int argc, char* argv[]) {
 
   if(args.count("stats")) {
     printCodeStatistics(root);
+    exit(0);
+  }
+
+  if(args.count("transform-thread-variable")) {
+    Threadification* threadTransformation=new Threadification();
+    threadTransformation->transform(root);
+    root->unparse(0,0);
+    delete threadTransformation;
     exit(0);
   }
 
