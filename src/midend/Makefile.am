@@ -61,7 +61,7 @@ SUBDIRS = \
 	binaryAnalyses \
 	programTransformation/extractFunctionArgumentsNormalization \
 	programTransformation/singleStatementToBlockNormalization \
-        MFB MDCG
+        MFB MDCG KLT
 
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS += \

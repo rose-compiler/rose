@@ -37,10 +37,10 @@ struct KernelDesc {
         Model::class_t field_class = StaticInitializer::getBaseClass(element, "loop", "klt_loop_container_t");
         return static_initializer.createInitializer< ::MDCG::KLT::LoopContainer<Annotation_, Runtime_> >(field_class, input, file_id);
       }
-#if !defined(TILEK_ACCELERATOR) || !defined(TILEK_TARGET_OPENCL)
+#if defined(TILEK_BASIC) || defined(TILEK_THREADS)
       case 2:
       { // kernel_func_ptr kernel_ptr;
-        MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(kernel->kernel_name, Runtime::host_api.getKernelFnctPtrType(), NULL, NULL, file_id, false, true);
+        MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(kernel->kernel_name, Runtime::host_api.user->kernel_func_ptr_type, NULL, NULL, file_id, false, true);
         MFB::Sage<SgVariableDeclaration>::build_result_t var_decl_res = static_initializer.getDriver().build<SgVariableDeclaration>(var_decl_desc);
 
         SgDeclarationStatement * decl_stmt = isSgDeclarationStatement(var_decl_res.symbol->get_declaration()->get_parent());
@@ -49,7 +49,7 @@ struct KernelDesc {
 
         return SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(var_decl_res.symbol));
       }
-#else
+#elif defined(TILEK_ACCELERATOR)
       case 2:
       { // char * kernel_name;
         return SageBuilder::buildStringVal(kernel->kernel_name);
