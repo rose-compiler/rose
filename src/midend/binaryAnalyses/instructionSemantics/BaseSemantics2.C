@@ -468,46 +468,46 @@ RegisterStateX86::merge(const BaseSemantics::RegisterStatePtr &other_, RiscOpera
     bool changed = false;
     SValuePtr merged;
 
-    if ((merged = ip->merge(other->ip, ops->get_solver()))) {
+    if (ip->createOptionalMerge(other->ip, ops->get_solver()).assignTo(merged)) {
         ip = merged;
         changed = true;
     }
 
     for (size_t i=0; i<n_gprs; ++i) {
-        if ((merged = gpr[i]->merge(other->gpr[i], ops->get_solver()))) {
+        if (gpr[i]->createOptionalMerge(other->gpr[i], ops->get_solver()).assignTo(merged)) {
             gpr[i] = merged;
             changed = true;
         }
     }
 
     for (size_t i=0; i<n_segregs; ++i) {
-        if ((merged = segreg[i]->merge(other->segreg[i], ops->get_solver()))) {
+        if (segreg[i]->createOptionalMerge(other->segreg[i], ops->get_solver()).assignTo(merged)) {
             segreg[i] = merged;
             changed = true;
         }
     }
 
     for (size_t i=0; i<n_flags; ++i) {
-        if ((merged = flag[i]->merge(other->flag[i], ops->get_solver()))) {
+        if (flag[i]->createOptionalMerge(other->flag[i], ops->get_solver()).assignTo(merged)) {
             flag[i] = merged;
             changed = true;
         }
     }
 
     for (size_t i=0; i<n_st; ++i) {
-        if ((merged = st[i]->merge(other->st[i], ops->get_solver()))) {
+        if (st[i]->createOptionalMerge(other->st[i], ops->get_solver()).assignTo(merged)) {
             st[i] = merged;
             changed = true;
         }
     }
 
-    if ((merged = fpstatus->merge(other->fpstatus, ops->get_solver()))) {
+    if (fpstatus->createOptionalMerge(other->fpstatus, ops->get_solver()).assignTo(merged)) {
         fpstatus = merged;
         changed = true;
     }
 
     for (size_t i=0; i<n_xmm; ++i) {
-        if ((merged = xmm[i]->merge(other->xmm[i], ops->get_solver()))) {
+        if (xmm[i]->createOptionalMerge(other->xmm[i], ops->get_solver()).assignTo(merged)) {
             xmm[i] = merged;
             changed = true;
         }
@@ -777,7 +777,7 @@ MemoryCellList::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, Risc
             changed = true;
         } else {
             SValuePtr thisValue = readMemory(otherCell->get_address(), valOps->undefined_(8), addrOps, valOps);
-            if (SValuePtr mergedValue = thisValue->merge(otherValue, valOps->get_solver())) {
+            if (SValuePtr mergedValue = thisValue->createOptionalMerge(otherValue, valOps->get_solver()).orDefault()) {
                 writeMemory(otherCell->get_address(), mergedValue, addrOps, valOps);
                 changed = true;
             }

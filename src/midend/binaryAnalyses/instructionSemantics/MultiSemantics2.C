@@ -58,8 +58,8 @@ SValue::number_(size_t nbits, uint64_t number) const
     return retval;
 }
 
-BaseSemantics::SValuePtr
-SValue::merge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
+Sawyer::Optional<BaseSemantics::SValuePtr>
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
     SValuePtr other = SValue::promote(other_);
     SValuePtr retval = create_empty(other->get_width());
     bool changed = false;
@@ -70,7 +70,7 @@ SValue::merge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
             if (thisValue==NULL) {
                 retval->subvalues.push_back(otherValue);
                 changed = true;
-            } else if (BaseSemantics::SValuePtr mergedValue = thisValue->merge(otherValue, solver)) {
+            } else if (BaseSemantics::SValuePtr mergedValue = thisValue->createOptionalMerge(otherValue, solver).orDefault()) {
                 changed = true;
                 retval->subvalues.push_back(mergedValue);
             } else {
@@ -80,7 +80,7 @@ SValue::merge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
             retval->subvalues.push_back(thisValue);
         }
     }
-    return changed ? retval : SValuePtr();
+    return changed ? Sawyer::Optional<BaseSemantics::SValuePtr>(retval) : Sawyer::Nothing();
 }
 
 bool

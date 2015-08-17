@@ -73,7 +73,8 @@ public:
 
     // Override virtual methods...
 public:
-    virtual BaseSemantics::SValuePtr merge(const BaseSemantics::SValuePtr &other, SMTSolver*) const ROSE_OVERRIDE {
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
+                                                                           SMTSolver*) const ROSE_OVERRIDE {
         TODO("[Robb P. Matzke 2015-08-10]");
     }
 

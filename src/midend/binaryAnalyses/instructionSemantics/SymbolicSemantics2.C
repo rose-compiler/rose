@@ -30,8 +30,8 @@ SValue::isBottom() const {
     return 0 != (get_expression()->get_flags() & InsnSemanticsExpr::TreeNode::BOTTOM);
 }
 
-BaseSemantics::SValuePtr
-SValue::merge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
+Sawyer::Optional<BaseSemantics::SValuePtr>
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
     bool changed = false;
@@ -42,7 +42,7 @@ SValue::merge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
     // If one or the other is BOTTOM then the return value should be BOTTOM.  Some simplifications (like "xor x x => 0") might
     // cause the BOTTOM flag to be removed, and we can't have that, so make sure BOTTOM stays set!
     if (isBottom())
-        return SValuePtr(); // no change
+        return Sawyer::Nothing(); // no change
     if (other->isBottom())
         return bottom_(get_width());
 
@@ -70,7 +70,7 @@ SValue::merge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
     }
     retval->add_defining_instructions(mergedDefiners);
 
-    return changed ? retval : SValuePtr();
+    return changed ? Sawyer::Optional<BaseSemantics::SValuePtr>(retval) : Sawyer::Nothing();
 }
 
 uint64_t

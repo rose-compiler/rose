@@ -533,12 +533,43 @@ public:
      *  most significant side of the value. */
     virtual SValuePtr copy(size_t new_width=0) const = 0;
 
+    /** Possibly create a new value by merging two existing values.
+     *
+     *  This method optionally returns a new semantic value as the data-flow merge of @p this and @p other.  If the two inputs
+     *  are "equal" in some sense of the dataflow implementation then nothing is returned, otherwise a new value is returned.
+     *  Typical usage is like this:
+     *
+     * @code
+     *  if (SValuePtr merged = v1->createOptionalMerge(v2).orDefault()) {
+     *      std::cout <<"v1 and v2 were merged to " <<*merged <<"\n";
+     *  } else {
+     *      std::cout <<"no merge is necessary\n";
+     *  }
+     *
+     *  or
+     *
+     * @code
+     *  SValuePtr merge;
+     *  if (v1->createOptionalMerge(v2).assignTo(merged)) {
+     *      std::cout <<"v1 and v2 were merged to " <<*merged <<"\n";
+     *  } else {
+     *      std::cout <<"v1 and v2 are equal in some sense (no merge necessary)\n";
+     *  }
+     * @endcode
+     *
+     *  If you always want a copy regardless of whether the merge is necessary, then use the @ref createMerged convenience
+     *  function instead. */
+    virtual Sawyer::Optional<SValuePtr> createOptionalMerge(const SValuePtr &other, SMTSolver *solver) const = 0;
+
     /** Create a new value by merging two existing values.
      *
-     *  This constructor is used by dataflow analysis.  If @p other and @p this are "equal" in some sense for dataflow
-     *  depending on the subclass' implementation, then a null pointer is returned since no merge is required. Dataflow engines
-     *  will assume that a merge was performed if and only if the return value is non-null. */
-    virtual SValuePtr merge(const SValuePtr &other, SMTSolver*) const = 0;
+     *  This is a convenience wrapper around @ref createOptionalMerge. It always returns a newly constructed semantic value
+     *  regardless of whether a merge was necessary.  In order to determine if a merge was necessary once can compare the
+     *  return value to @p this using @ref must_equal, although doing so is more expensive than calling @ref
+     *  createOptionalMerged. */
+    SValuePtr createMerged(const SValuePtr &other, SMTSolver *solver) const ROSE_FINAL {
+        return createOptionalMerge(other, solver).orElse(copy());
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts. No-ops since this is the base class

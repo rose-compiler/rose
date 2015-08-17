@@ -74,8 +74,9 @@ public:
             retval->set_width(new_width);
         return retval;
     }
-    virtual BaseSemantics::SValuePtr merge(const BaseSemantics::SValuePtr &other, SMTSolver*) const ROSE_OVERRIDE {
-        return SValuePtr();
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
+                                                                           SMTSolver*) const ROSE_OVERRIDE {
+        return Sawyer::Nothing();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
