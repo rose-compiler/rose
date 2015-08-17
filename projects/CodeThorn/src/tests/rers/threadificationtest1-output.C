@@ -8,7 +8,7 @@ int a64[] = {(42), (43), (44), (45), (46), (47)};
 int ** a62;
 int * cf;
 
-void errorCheck(int thread_id) {};
+void errorCheck(int thread_id) {}
 
 void calculate_outputm1(int thread_id)
 {

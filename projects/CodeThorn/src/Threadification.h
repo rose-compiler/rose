@@ -19,6 +19,7 @@ namespace CodeThorn {
   */
   class Threadification {
   public:
+    Threadification(SPRAY::VariableIdMapping* vim);
     // this transformation introduces new code as strings. It cannot be used for rewrites.
     void transform(SgNode* root);
   private:
@@ -37,6 +38,8 @@ namespace CodeThorn {
        declarations are to be transformed
     */
     void transformVariableDeclarations(SgNode* root, SPRAY::VariableIdSet varIdSet);
+    void transformVariableDeclaration(SgVariableDeclaration* varDecl);
+
     /* transform uses of variables:
        var ==> var[thread_id]
 
@@ -47,7 +50,10 @@ namespace CodeThorn {
        variable is to be transformed. This set is supposed to only
        include variables and pointer variables (but no arrays).
      */
-    void transformVariableAccess(SgNode* root, SPRAY::VariableIdSet varIdSet);
+    void transformVariableAccesses(SgNode* root, SPRAY::VariableIdSet varIdSet);
+    void transformVariableAccess(SgVarRefExp* varRefExp);
+    void transformVariableAccess(SgPntrArrRefExp* arrRefExp, SPRAY::VariableIdSet varIdSet);
+    SPRAY::VariableIdMapping* _variableIdMapping;
   };
 } // end of namespace CodeThorn
 

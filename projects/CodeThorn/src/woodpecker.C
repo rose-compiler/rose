@@ -229,11 +229,15 @@ int main(int argc, char* argv[]) {
     exit(0);
   }
 
+  VariableIdMapping variableIdMapping;
+  variableIdMapping.computeVariableSymbolMapping(root);
+
   if(args.count("transform-thread-variable")) {
-    Threadification* threadTransformation=new Threadification();
+    Threadification* threadTransformation=new Threadification(&variableIdMapping);
     threadTransformation->transform(root);
     root->unparse(0,0);
     delete threadTransformation;
+    cout<<"STATUS: generated program with introduced thread-variable."<<endl;
     exit(0);
   }
 
@@ -266,8 +270,6 @@ int main(int argc, char* argv[]) {
   }
   
   cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
-  VariableIdMapping variableIdMapping;
-  variableIdMapping.computeVariableSymbolMapping(root);
 
   VarConstSetMap varConstSetMap;
   VariableIdSet variablesOfInterest;
