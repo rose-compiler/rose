@@ -74,26 +74,10 @@ public:
     //                                  Types for Boolean properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Properties stored per bit of each register.
-     *
-     *  Each bit of each register has Boolean properties that can be set or cleared independently of other bits or
-     *  properties. The register state stores these properties, but it's up to higher layers to manipulate the bits, typically
-     *  the @c readRegister and @c writeRegister methods of the @ref RiscOperators subclasses. */
-    enum RegisterProperty {
-        READ,                                           /**< The register was read on behalf of an instruction. */
-        WRITTEN,                                        /**< The register was written on behalf of an instruction. */
-        INITIALIZED,                                    /**< The register was written without an instruction. This
-                                                         *   typically happens during state initialization. */
-        READ_BEFORE_WRITE,                              /**< The register was read without having the WRITTEN property. */
-        READ_AFTER_WRITE,                               /**< The register was read after being written. */
-        READ_UNINITIALIZED,                             /**< The register was read without having the WRITTEN or INITIALIZED
-                                                         *   property. */
-    };
-
     /** Set of Boolean properties.
      *
      *  If a property is present in the set then it is assumed to be true, otherwise the property is false. */
-    typedef Sawyer::Container::Set<RegisterProperty> PropertySet;
+    typedef Sawyer::Container::Set<InputOutputProperty> PropertySet;
 
     /** Boolean properties per bit.
      *
@@ -448,8 +432,8 @@ public:
      *  have the property, while the "All" version returns true if all bits of the register have the property.
      *
      * @{ */
-    virtual bool hasPropertyAny(const RegisterDescriptor&, RegisterProperty) const;
-    virtual bool hasPropertyAll(const RegisterDescriptor&, RegisterProperty) const;
+    virtual bool hasPropertyAny(const RegisterDescriptor&, InputOutputProperty) const;
+    virtual bool hasPropertyAll(const RegisterDescriptor&, InputOutputProperty) const;
     /** @} */
 
     /** Get properties.
@@ -503,7 +487,7 @@ public:
      *
      *  Adds the specified property to all bits of the register.  The property can be anything, but is normally either WRITTEN
      *  or INITIALIZED depending on whether the writeRegister operation was on behalf of an instruction or not. */
-    virtual void updateWriteProperties(const RegisterDescriptor&, RegisterProperty);
+    virtual void updateWriteProperties(const RegisterDescriptor&, InputOutputProperty);
 
     /** Update read properties.
      *

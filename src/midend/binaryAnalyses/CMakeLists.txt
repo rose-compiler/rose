@@ -36,8 +36,9 @@ add_library(midend_binary OBJECT
   instructionSemantics/IntervalSemantics.C
   instructionSemantics/IntervalSemantics2.C
   instructionSemantics/LlvmSemantics2.C
-  instructionSemantics/NullSemantics2.C
+  instructionSemantics/MemoryCellList.C
   instructionSemantics/MultiSemantics2.C
+  instructionSemantics/NullSemantics2.C
   instructionSemantics/PartialSymbolicSemantics.C
   instructionSemantics/PartialSymbolicSemantics2.C
   instructionSemantics/RegisterStateGeneric.C
@@ -88,6 +89,7 @@ install(
     instructionSemantics/InsnSemanticsExpr.h
     instructionSemantics/IntervalSemantics2.h
     instructionSemantics/IntervalSemantics.h
+    instructionSemantics/MemoryCellList.h
     instructionSemantics/MultiSemantics2.h
     instructionSemantics/MultiSemantics.h
     instructionSemantics/NullSemantics2.h

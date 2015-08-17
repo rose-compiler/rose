@@ -28,6 +28,7 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/IntervalSemantics.C			\
     instructionSemantics/IntervalSemantics2.C			\
     instructionSemantics/LlvmSemantics2.C			\
+    instructionSemantics/MemoryCellList.C			\
     instructionSemantics/MultiSemantics2.C			\
     instructionSemantics/NullSemantics2.C			\
     instructionSemantics/PartialSymbolicSemantics.C		\
@@ -91,6 +92,7 @@ pkginclude_HEADERS =					\
     instructionSemantics/IntervalSemantics.h		\
     instructionSemantics/IntervalSemantics2.h		\
     instructionSemantics/LlvmSemantics2.h		\
+    instructionSemantics/MemoryCellList.h		\
     instructionSemantics/MultiSemantics.h		\
     instructionSemantics/MultiSemantics2.h		\
     instructionSemantics/NullSemantics.h		\

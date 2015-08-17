@@ -10,6 +10,7 @@
 #include "SMTSolver.h"
 #include "InsnSemanticsExpr.h"
 #include "RegisterStateGeneric.h"
+#include "MemoryCellList.h"
 
 #include <map>
 #include <vector>

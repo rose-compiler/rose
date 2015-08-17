@@ -8,6 +8,7 @@
 #include <Disassembler.h>
 #include <DispatcherX86.h>
 #include <IntervalSemantics2.h>
+#include <MemoryCellList.h>
 #include <NullSemantics2.h>
 #include <PartialSymbolicSemantics2.h>
 #include <Partitioner2/Engine.h>

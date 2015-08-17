@@ -21,6 +21,7 @@
 #include "MemoryMap.h"
 #include "FormatRestorer.h"
 #include "RegisterStateGeneric.h"
+#include "MemoryCellList.h"
 
 namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere

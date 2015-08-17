@@ -2,6 +2,7 @@
 #include "BinaryReturnValueUsed.h"
 #include "BinaryControlFlow.h"
 #include "DispatcherX86.h"
+#include "MemoryCellList.h"
 #include "NullSemantics2.h"
 #include "WorkLists.h"
 

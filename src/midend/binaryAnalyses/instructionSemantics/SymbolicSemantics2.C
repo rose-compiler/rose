@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "MemoryCellList.h"
 #include "SymbolicSemantics2.h"
 #include "integerOps.h"
 
@@ -796,9 +797,7 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
                 break;
         }
     }
-    regs->updateWriteProperties(reg, (insn ?
-                                      BaseSemantics::RegisterStateGeneric::WRITTEN :
-                                      BaseSemantics::RegisterStateGeneric::INITIALIZED));
+    regs->updateWriteProperties(reg, (insn ? BaseSemantics::IO_WRITE : BaseSemantics::IO_INIT));
 }
 
 BaseSemantics::SValuePtr

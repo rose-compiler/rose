@@ -3,6 +3,7 @@
 #include <BinaryNoOperation.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
+#include <MemoryCellList.h>
 #include <SymbolicSemantics2.h>
 
 namespace rose {

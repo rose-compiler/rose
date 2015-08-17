@@ -180,24 +180,24 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
 }
 
 void
-RegisterStateGeneric::updateWriteProperties(const RegisterDescriptor &reg, RegisterProperty prop) {
+RegisterStateGeneric::updateWriteProperties(const RegisterDescriptor &reg, InputOutputProperty prop) {
     insertProperties(reg, prop);
-    if (prop == WRITTEN)
-        eraseProperties(reg, READ_AFTER_WRITE);
+    if (prop == IO_WRITE)
+        eraseProperties(reg, IO_READ_AFTER_WRITE);
 }
 
 void
 RegisterStateGeneric::updateReadProperties(const RegisterDescriptor &reg) {
-    insertProperties(reg, READ);
+    insertProperties(reg, IO_READ);
     BitProperties &props = properties_.insertMaybeDefault(reg);
     BitRange where = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
     BOOST_FOREACH (BitProperties::Node &node, props.findAll(where)) {
-        if (!node.value().exists(WRITTEN)) {
-            node.value().insert(READ_BEFORE_WRITE);
-            if (!node.value().exists(INITIALIZED))
-                node.value().insert(READ_UNINITIALIZED);
+        if (!node.value().exists(IO_WRITE)) {
+            node.value().insert(IO_READ_BEFORE_WRITE);
+            if (!node.value().exists(IO_INIT))
+                node.value().insert(IO_READ_UNINITIALIZED);
         } else {
-            node.value().insert(READ_AFTER_WRITE);
+            node.value().insert(IO_READ_AFTER_WRITE);
         }
     }
 }
@@ -460,7 +460,7 @@ RegisterStateGeneric::get_latest_writers(const RegisterDescriptor &desc) const
 }
 
 bool
-RegisterStateGeneric::hasPropertyAny(const RegisterDescriptor &reg, RegisterProperty prop) const {
+RegisterStateGeneric::hasPropertyAny(const RegisterDescriptor &reg, InputOutputProperty prop) const {
     if (!properties_.exists(reg))
         return false;
     const BitProperties &bitProps = properties_[reg];
@@ -469,7 +469,7 @@ RegisterStateGeneric::hasPropertyAny(const RegisterDescriptor &reg, RegisterProp
 }
 
 bool
-RegisterStateGeneric::hasPropertyAll(const RegisterDescriptor &reg, RegisterProperty prop) const {
+RegisterStateGeneric::hasPropertyAll(const RegisterDescriptor &reg, InputOutputProperty prop) const {
     if (!properties_.exists(reg))
         return false;
     const BitProperties &bitProps = properties_[reg];
@@ -661,13 +661,13 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
                         // properties -- just a few of the more common ones.
                         if (fmt.get_show_properties()) {
                             PropertySet props = getPropertiesUnion(rvi->desc);
-                            if (props.exists(READ_BEFORE_WRITE)) {
+                            if (props.exists(IO_READ_BEFORE_WRITE)) {
                                 stream <<" read-before-write";
-                            } else if (props.exists(WRITTEN) && props.exists(READ)) {
+                            } else if (props.exists(IO_WRITE) && props.exists(IO_READ)) {
                                 // nothing
-                            } else if (props.exists(READ)) {
+                            } else if (props.exists(IO_READ)) {
                                 stream <<" read-only";
-                            } else if (props.exists(WRITTEN)) {
+                            } else if (props.exists(IO_WRITE)) {
                                 stream <<" write-only";
                             }
                         }

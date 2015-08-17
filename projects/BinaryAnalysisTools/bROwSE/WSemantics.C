@@ -4,6 +4,7 @@
 #include <bROwSE/WSemantics.h>
 #include <bROwSE/WToggleButton.h>
 #include <InsnSemanticsExpr.h>                          // ROSE
+#include <MemoryCellList.h>                             // ROSE
 #include <Wt/WAbstractTableModel>
 #include <Wt/WHBoxLayout>
 #include <Wt/WPanel>

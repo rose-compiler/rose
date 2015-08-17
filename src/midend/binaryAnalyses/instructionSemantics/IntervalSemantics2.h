@@ -11,6 +11,7 @@
 #include "integerOps.h"
 #include "rangemap.h"
 #include "RegisterStateGeneric.h"
+#include "MemoryCellList.h"
 
 namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere

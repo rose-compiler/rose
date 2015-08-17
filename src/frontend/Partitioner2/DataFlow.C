@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 
+#include <MemoryCellList.h>
 #include <Partitioner2/DataFlow.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Partitioner.h>
