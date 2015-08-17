@@ -286,10 +286,9 @@ ROSE_DLL_API SgTypeImaginary* buildImaginaryType(SgType *base_type = NULL);
 //! Build a const/volatile type qualifier
 ROSE_DLL_API SgConstVolatileModifier * buildConstVolatileModifier (SgConstVolatileModifier::cv_modifier_enum mtype=SgConstVolatileModifier::e_unknown);
 
-//! Build a Matrix Type for Matlab
-
 #ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
- ROSE_DLL_API SgTypeMatrix* buildMatrixType();
+//! Build a Matlab Matrix Type
+ROSE_DLL_API SgTypeMatrix* buildMatrixType();
 #endif
  
 //@}
@@ -766,14 +765,19 @@ ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList_nfi();
  
 //@}
 
-//----------------------
 //@{
 /*! @name Builders for Matlab nodes
  */
 #ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT 
+//! Build a range expression like start:end or start:stride:end
  ROSE_DLL_API SgRangeExp* buildRangeExp(SgExpression *start);
+ //! Build a Matlab Matrix 
  ROSE_DLL_API SgMatrixExp* buildMatrixExp(SgExprListExp *firstRow);
+
+ //! Build a colon expression :
  ROSE_DLL_API SgMagicColonExp* buildMagicColonExp();
+
+ //! Build a for statement for matlab
  ROSE_DLL_API SgMatlabForStatement* buildMatlabForStatement(SgExpression* loop_index, SgExpression* loop_range, SgBasicBlock* loop_body);
 #endif
 //@}
