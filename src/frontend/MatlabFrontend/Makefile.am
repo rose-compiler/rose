@@ -35,6 +35,18 @@ libroseMatlabFrontend_la_SOURCES = \
 
 pkginclude_HEADERS = MatlabParser.h
 
+noinst_HEADERS = \
+  parser_support/MatlabFunctionBuilder.h \
+  parser_support/StatementList.h \
+  parser_support/SymbolFinder.h \
+  parser_support/base-list.h \
+  parser_support/comment-list.h \
+  parser_support/input.h \
+  parser_support/lex.h \
+  parser_support/octave.gperf.h \
+  parser_support/ourtoken.h
+
+
 clean-local:
 	rm -f *.la matlab_*
 
