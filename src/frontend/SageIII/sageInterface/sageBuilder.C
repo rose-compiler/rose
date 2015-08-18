@@ -467,6 +467,23 @@ bool SageBuilder::inSwitchScope()
      return returnVar;
    }
 
+void SageBuilder::setCaseInsensitive()
+   {
+     symbol_table_case_insensitive_semantics = true;
+   }
+
+void SageBuilder::setCaseSensitive()
+   {
+     symbol_table_case_insensitive_semantics = false;
+   }
+
+void SageBuilder::setCaseFromScope(SgScopeStatement* scope)
+   {
+     ROSE_ASSERT(scope != NULL);
+
+     symbol_table_case_insensitive_semantics = scope->isCaseInsensitive();
+   }
+
 
 // *******************************************************************************
 // *******************************  Build Functions  *****************************
@@ -3540,7 +3557,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
   // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): generated function func = %p \n",func);
 
   // Liao 12/2/2010, special handling for Fortran functions and subroutines
-     if (SageInterface::is_Fortran_language() == true)
+     if ((SageInterface::is_Fortran_language() == true) && (getEnclosingFileNode(scope)->get_outputLanguage() == SgFile::e_Fortran_output_language))
         {
           SgProcedureHeaderStatement * f_func = isSgProcedureHeaderStatement(func);
           ROSE_ASSERT (f_func != NULL);
@@ -3665,7 +3682,7 @@ SgFunctionDeclaration*
 SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList)
    {
      SgFunctionDeclaration * result = NULL;
-     if (SageInterface::is_Fortran_language())
+     if ((SageInterface::is_Fortran_language() == true) && (getEnclosingFileNode(scope)->get_outputLanguage() == SgFile::e_Fortran_output_language))
         {
        // result = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,paralist, /* isMemberFunction = */ false, scope, decoratorList,0);
           result = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,paralist, /* isMemberFunction = */ false, scope, decoratorList, false, NULL, NULL);
@@ -13470,6 +13487,23 @@ AbstractHandle::abstract_handle * SageBuilder::buildAbstractHandle(SgNode* n)
   return ahandle;
 }
 #endif
+
+SgEquivalenceStatement*
+SageBuilder::buildEquivalenceStatement(SgExpression* exp1,SgExpression* exp2)
+{
+  ROSE_ASSERT(exp1 != NULL); 
+  ROSE_ASSERT(exp2 != NULL); 
+  
+  SgExprListExp* tuple = buildExprListExp(exp1,exp2);
+  SgExprListExp* setList = buildExprListExp(tuple);
+  SgEquivalenceStatement* equivalenceStatement = new SgEquivalenceStatement();
+  ROSE_ASSERT(equivalenceStatement->get_equivalence_set_list() == NULL);
+  equivalenceStatement->set_equivalence_set_list(setList);
+  ROSE_ASSERT(equivalenceStatement->get_equivalence_set_list() != NULL);
+  equivalenceStatement->set_firstNondefiningDeclaration(equivalenceStatement);
+  setOneSourcePositionForTransformation(equivalenceStatement); 
+  return equivalenceStatement;
+}
 
 SgSymbol*
 SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope)

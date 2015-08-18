@@ -158,7 +158,7 @@ setSourcePosition( SgInitializedName* initializedName )
 
      if (initializedName->get_startOfConstruct() == NULL)
         {
-          Sg_File_Info* fileInfo = Sg_File_Info::generateDefaultFileInfo();
+          Sg_File_Info* fileInfo = new Sg_File_Info(getCurrentFilename(),0,0);
           fileInfo->setSourcePositionUnavailableInFrontend();
 
        // This is required for the unparser to output the code from the AST.
@@ -177,7 +177,7 @@ setSourcePosition( SgInitializedName* initializedName )
        // Liao 11/5/2010, add end file info
      if (initializedName->get_endOfConstruct() == NULL)
         {
-          Sg_File_Info* fileInfo = Sg_File_Info::generateDefaultFileInfo();
+          Sg_File_Info* fileInfo = new Sg_File_Info(getCurrentFilename(),0,0);
           fileInfo->setSourcePositionUnavailableInFrontend();
 
        // This is required for the unparser to output the code from the AST.
