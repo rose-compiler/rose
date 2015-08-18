@@ -677,6 +677,7 @@ SgTypeLongDouble
 SgTypeLongLong
 SgTypeModifier
 SgTypeMatrix
+SgTypeTuple
 SgTypeNullptr
 SgTypeOfType
 SgTypeShort

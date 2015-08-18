@@ -289,6 +289,9 @@ ROSE_DLL_API SgConstVolatileModifier * buildConstVolatileModifier (SgConstVolati
 #ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
 //! Build a Matlab Matrix Type
 ROSE_DLL_API SgTypeMatrix* buildMatrixType();
+
+//! Build a tuple of types. Useful for a function returning multiple variables of different types
+ROSE_DLL_API SgTypeTuple* buildTupleType(SgType *t1 = NULL, SgType *t2 = NULL, SgType *t3 = NULL, SgType *t4 = NULL, SgType *t5 = NULL, SgType *t6 = NULL, SgType *t7 = NULL, SgType *t8 = NULL, SgType *t9 = NULL, SgType *t10 = NULL); 
 #endif
  
 //@}

@@ -9952,6 +9952,27 @@ SgTypeMatrix* SageBuilder::buildMatrixType()
   return result;
 }
 
+SgTypeTuple* SageBuilder::buildTupleType(SgType *t1, SgType *t2, SgType *t3, SgType *t4, SgType *t5, SgType *t6, SgType *t7, SgType *t8, SgType *t9, SgType *t10)
+{
+  SgTypeTuple *result = new SgTypeTuple();
+  ROSE_ASSERT(result != NULL);
+
+  if(t1) result->append_type(t1);
+  if(t2) result->append_type(t2);
+  if(t3) result->append_type(t3);
+  if(t4) result->append_type(t4);
+  if(t5) result->append_type(t5);
+  if(t6) result->append_type(t6);
+  if(t7) result->append_type(t7);
+  if(t8) result->append_type(t8);
+  if(t9) result->append_type(t9);
+  if(t10) result->append_type(t10);
+
+  SageInterface::setOneSourcePositionForTransformation(result);
+
+  return result;
+}
+
 SgRangeExp* SageBuilder::buildRangeExp(SgExpression *start)
 {
   SgRangeExp *result = new SgRangeExp();
