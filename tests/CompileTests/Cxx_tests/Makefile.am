@@ -1133,7 +1133,8 @@ testOption:
 
 TEST_TEMPLATE_TRANSLATOR = ../../testTemplates
 
-
+# DQ (7/20/2015): Added template tests using new testTemplates translator that forces 
+# output of instantiated templates (part of ongoing improvements to template support).
 # This test translator will work for test2015_32.C - test2015_36.C
 # I will make this in the a better organized set of tests later.
 testTemplateExample: $(TEST_TEMPLATE_TRANSLATOR)

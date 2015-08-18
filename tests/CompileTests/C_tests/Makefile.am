@@ -951,6 +951,8 @@ test_common_configure_test_with_link.passed: %.passed: $(testTranslator)
 #	$(testTranslator) -I$(srcdir) $(ROSE_FLAGS) $(srcdir)/conftest.c -o conftest_configure_test
 	@$(RTH_RUN) CMD="$(testTranslator) -I$(srcdir) $(ROSE_FLAGS) $(srcdir)/conftest.c -o conftest_configure_test" $(top_srcdir)/scripts/test_exit_status $@
 
+# This is a simple demonstration of the token unparsing and how it preserves macros
+# in the generated ROSE code (for the case where the statement is not transformed).
 test_tokenMapping: 
 #	rm -f test2003_12.c.mapping.passed
 #	@$(MAKE) test2003_12.c.mapping.passed

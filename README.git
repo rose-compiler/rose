@@ -966,3 +966,11 @@ Example ouput of gdb trace:
 #3  0x00007ffff6680036 in EDG_ROSE_Translation::getDeclarationScope (scp=...) at /home/dquinlan/ROSE/git-dq-new_app-rc/src/frontend/CxxFrontend/EDG/edgRose/edgRose.C:31917
 #4  0x00007ffff668d7f8 in EDG_ROSE_Translation::convert_variable_use (p=0x947d90) at /home/dquinlan/ROSE/git-dq-new_app-rc/src/frontend/CxxFrontend/EDG/edgRose/edgRose.C:30057
 #5  0x00007ffff667358b in EDG_ROSE_Translation::convert_expression (e=0x9486a8) at /home/dquinlan/ROSE/git-dq-new_app-rc/src/frontend/CxxFrontend/EDG/edgRose/edgRose.C:8025
+
+
+How to get changes associated with a specific comment:
+   git log -1 -p 2475983f864473423be5582d0a96769ded396c2d
+
+   Note that "-1" specifies the current comment (and no previous commits).
+      "-p" means build the patch.
+

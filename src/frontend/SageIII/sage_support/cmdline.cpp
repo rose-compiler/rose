@@ -106,6 +106,11 @@ makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<st
           printf ("In makeSysIncludeList(): bottom of loop: argString_result = %s \n",argString_result.c_str());
 #endif
         }
+
+#if 0
+     std::string argString_result = CommandlineProcessing::generateStringFromArgList(result,false,false);
+     printf ("In makeSysIncludeList(): bottom of function: argString_result = %s \n",argString_result.c_str());
+#endif
    }
 
 /*-----------------------------------------------------------------------------
@@ -5786,6 +5791,19 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      Rose_STL_Container<string> C_ConfigIncludeDirs(C_ConfigIncludeDirsRaw, C_ConfigIncludeDirsRaw + sizeof(C_ConfigIncludeDirsRaw) / sizeof(const char*));
 
 #if 0
+  // printf ("CXX_INCLUDE_STRING = %s \n",CXX_INCLUDE_STRING);
+  // printf ("CXX_INCLUDE_STRING = %s \n",Cxx_ConfigIncludeDirsRaw);
+     printf ("CXX_INCLUDE_STRING = %s \n",Cxx_ConfigIncludeDirsRaw[0]);
+#endif
+
+#if 0
+     for (size_t i=0; i < Cxx_ConfigIncludeDirs.size(); i++)
+        {
+          printf ("Cxx_ConfigIncludeDirs[%" PRIuPTR "] = %s \n",i,Cxx_ConfigIncludeDirs[i].c_str());
+        }
+#endif
+
+#if 0
      for (size_t i=0; i < configDefs.size(); i++)
         {
           printf ("configDefs[%" PRIuPTR "] = %s \n",i,configDefs[i].c_str());
@@ -5838,13 +5856,20 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      vector<string> commandLine;
 
-    // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
-    #ifdef ROSE_BOOST_PATH
-    // Search dir for header files, after all directories specified by -I but
-    // before the standard system directories.
-    commandLine.push_back("--sys_include");
-    commandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
-    #endif
+#if 0
+  // DQ (8/17/2015): Moved this specification of the boost path to after the generation of the -I include_dirs 
+  // to handle the case where a different version of boost is explicitly specified in the -I include_dirs.
+  // This allows ROSE to reproduce the behavior of the GNU g++ and Intel icpc compilers.
+  // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+#ifdef ROSE_BOOST_PATH
+  // Search dir for header files, after all directories specified by -I but before the standard system directories.
+#if 0
+     printf ("Adding boost path = %s \n",ROSE_BOOST_PATH);
+#endif
+     commandLine.push_back("--sys_include");
+     commandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+#endif
+#endif
 
 #ifdef ROSE_USE_MICROSOFT_EXTENSIONS
   // DQ (4/21/2014): Add Microsoft specific options:
@@ -6321,6 +6346,20 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           ROSE_ASSERT(false);
 #endif
         }
+
+#if 1
+  // DQ (8/17/2015): Moved this specification of the boost path to after the generation of the -I include_dirs 
+  // to handle the case where a different version of boost is explicitly specified in the -I include_dirs.
+  // This allows ROSE to reproduce the behavior of the GNU g++ and Intel icpc compilers.
+#ifdef ROSE_BOOST_PATH
+  // Search dir for header files, after all directories specified by -I but before the standard system directories.
+#if 0
+     printf ("Adding (after -I include dirs) boost path = %s \n",ROSE_BOOST_PATH);
+#endif
+     commandLine.push_back("--sys_include");
+     commandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+#endif
+#endif
 
 #if 0
      printf ("Exting as a test! \n");

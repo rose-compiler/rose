@@ -1304,7 +1304,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 #if 1
   // DQ (10/20/2012): This is the older version of this implementation.  Until I am sure that
   // the newer version (below) is what we want to use I will resolve this conflict by keeping
-  // the previousl version in place.
+  // the previous version in place.
 
      if (NULL == astNode)
         {
@@ -1805,6 +1805,18 @@ ROSE_DLL_API SgStatement* findSurroundingStatementFromSameFile(SgStatement* targ
 
 //! Relocate comments and CPP directives from one statement to another.
 ROSE_DLL_API void moveCommentsToNewStatement(SgStatement* sourceStatement, const std::vector<int> & indexList, SgStatement* targetStatement, bool surroundingStatementPreceedsTargetStatement);
+
+// DQ (7/19/2015): This is required to support general unparsing of template instantations for the GNU g++
+// compiler which does not permit name qualification to be used to support the expression of the namespace
+// where a template instantiatoon would be places.  Such name qualification would also sometimes require
+// global qualification which is also not allowed by the GNU g++ compiler.  These issues appear to be 
+// specific to the GNU compiler versions, at least versions 4.4 through 4.8.
+//! Relocate the declaration to be explicitly represented in its associated namespace (required for some backend compilers to process template instantiations).
+ROSE_DLL_API void moveDeclarationToAssociatedNamespace ( SgDeclarationStatement* declarationStatement );
+
+ROSE_DLL_API bool isTemplateInstantiationNode(SgNode* node);
+
+ROSE_DLL_API void wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root);
 
 //@}
 //------------------------------------------------------------------------

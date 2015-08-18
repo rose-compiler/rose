@@ -83,6 +83,11 @@ check-translator-passing: $(TRANSLATOR_TARGETS_passing)
 check-translator-failing: $(TRANSLATOR_TARGETS_failing)
 check-translator: check-translator-passing check-translator-failing
 
+# DQ (8/17/2015): This could be made less boost specific, I think.
+test_boost_include_ordering:
+	../../testTranslator -I/nfs/casc/overture/ROSE/opt/rhel6/x86_64/boost/1_53_0/gcc/4.4.7/include -c $(srcdir)/include_ordering.C
+
+
 ########################################################################################################################
 # The original makefile also had $(QMTEST_Objects) which were test targets, but the rules did not work and they were
 # not run by "make check".  See the Git commit if you're interested. [Robb P Matzke 2014-04-08]
