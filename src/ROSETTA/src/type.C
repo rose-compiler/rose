@@ -38,7 +38,8 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeBool            , "TypeBool",             "T_BOOL" );
 
      #if USE_MATLAB_IR_NODES == 1
-     NEW_TERMINAL_MACRO ( TypeMatrix            , "TypeMatrix",             "T_MATRIX" );
+     NEW_TERMINAL_MACRO ( TypeMatrix          , "TypeMatrix",            "T_MATRIX" );
+     NEW_TERMINAL_MACRO ( TypeTuple           , "TypeTuple",             "T_TUPLE");
      #endif     
 
   // DQ (7/29/2014): Added nullptr type (I think we require this for C++11 support).
@@ -189,7 +190,7 @@ Grammar::setUpTypes ()
 
           TypeNullptr          | DeclType                | TypeOfType
           #if USE_MATLAB_IR_NODES == 1
-          | TypeMatrix
+          | TypeMatrix | TypeTuple
           #endif                    
           , "Type","TypeTag", false);
 
@@ -468,6 +469,14 @@ Grammar::setUpTypes ()
 
 #if USE_MATLAB_IR_NODES == 1
      TypeMatrix.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+     TypeTuple.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     
+     TypeTuple.setDataPrototype("SgTypePtrList", "types", "",
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     TypeTuple.setFunctionPrototype     ("HEADER_TYPE_TUPLE", "../Grammar/Type.code" );
+     TypeTuple.setFunctionSource     ("SOURCE_TYPE_TUPLE", "../Grammar/Type.code" );
 #endif
      
      TypeDefault.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -1052,6 +1061,7 @@ Grammar::setUpTypes ()
 
      #if USE_MATLAB_IR_NODES == 1
        TypeMatrix.editSubstitute( "MANGLED_ID_STRING", "matrix_t" );
+       TypeTuple.editSubstitute( "MANGLED_ID_STRING", "tuple_t" );
      #endif
      
      TypeComplex.editSubstitute( "MANGLED_ID_STRING", "Complex" );

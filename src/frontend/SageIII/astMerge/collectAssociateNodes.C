@@ -232,6 +232,26 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
             ROSE_ASSERT(nodeList.find(NULL) == nodeList.end());
             break;
           }
+
+        case V_SgTypeTuple:
+          {
+            SgTypeTuple *tupleType = isSgTypeTuple(type);
+            ROSE_ASSERT(tupleType != NULL);
+
+            SgTypePtrList typeList = tupleType->get_types();
+
+            for(SgTypePtrList::iterator it = typeList.begin(); it != typeList.end(); it++)
+              {
+                if(*it != NULL)
+                  {
+                    nodeList.insert(*it);
+                    addAssociatedNodes(*it, nodeList, markMemberNodesDefinedToBeDeleted);
+                  }
+              }
+            
+            ROSE_ASSERT(nodeList.find(NULL) == nodeList.end());
+            break;
+          }
 #endif
           
        // DQ (9/5/2011): Added support for SgJavaParameterizedType.
