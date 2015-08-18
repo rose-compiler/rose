@@ -109,7 +109,6 @@ MemoryCell::print(std::ostream &stream, Formatter &fmt) const
         }
     }
 
-#if 0 // [Robb P. Matzke 2015-08-18]: disabled for testing
     // FIXME[Robb P. Matzke 2015-08-12]: This doesn't take into account all combinations of properties -- just a few of the
     // more common ones.
     if (fmt.get_show_properties()) {
@@ -123,7 +122,6 @@ MemoryCell::print(std::ostream &stream, Formatter &fmt) const
             stream <<" write-only";
         }
     }
-#endif
 
     stream <<" value=" <<(*value_+fmt);
 }
