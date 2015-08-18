@@ -57,7 +57,7 @@ std::string stringifyBinaryAnalysisInsnSemanticsExprFormatterShowComments(int n,
 std::string stringifyBinaryAnalysisInsnSemanticsExprLeafNodeLeafType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisInsnSemanticsExprOperator(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisInsnSemanticsExprVisitAction(int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyBinaryAnalysisInstructionSemantics2BaseSemanticsRegisterStateGenericRegisterProperty(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyBinaryAnalysisInstructionSemantics2BaseSemanticsInputOutputProperty(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisInstructionSemantics2DataFlowSemanticsDataFlowEdgeEdgeType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisInstructionSemantics2IntervalSemanticsCarry(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisInstructionSemantics2SymbolicSemanticsRiscOperatorsWritersMode(int n, const char *strip=NULL, bool canonic=false);
@@ -604,6 +604,8 @@ std::string stringifyHighLevelCollectionTypedefsPlacementPosition_Enum(int n, co
 std::string stringifyHighLevelCollectionTypedefsScopeIdentifier_Enum(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyIRProcType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyIRStmtType(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyKLT_Descriptor_tile_kind_e(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyKLT_LoopTree_kind_e(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyM68kDataFormat(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyM68kEffectiveAddressMode(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyM68kEmacRegister(int n, const char *strip=NULL, bool canonic=false);
@@ -613,8 +615,7 @@ std::string stringifyM68kMacRegister(int n, const char *strip=NULL, bool canonic
 std::string stringifyM68kRegisterClass(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyM68kSpecialPurposeRegister(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyM68kSupervisorRegister(int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyMDCG_KLT_Descriptor_tile_kind_e(int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyMDCG_KLT_Runtime_exec_mode_t(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyMDCG_Model_element_t_kind_e(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyMDCG_Model_model_elements_e(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyMatchStatusCheckNodeMode(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyMatchStatusPatternMatchMode(int n, const char *strip=NULL, bool canonic=false);
