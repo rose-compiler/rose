@@ -178,6 +178,16 @@ class GenericIntervalLattice {
     l3.arithMod(l2);
     return l3;
   }
+  static GenericIntervalLattice bitwiseShiftLeft(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    GenericIntervalLattice l3=l1;
+    l3.bitwiseShiftLeft(l2);
+    return l3;
+  }
+  static GenericIntervalLattice bitwiseShiftRight(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    GenericIntervalLattice l3=l1;
+    l3.bitwiseShiftRight(l2);
+    return l3;
+  }
 
   void meet(GenericIntervalLattice other) {
     // 1. handle lower bounds
@@ -393,6 +403,28 @@ class GenericIntervalLattice {
     if(isHighInf()||other.isLowInf())
       setIsHighInf(true);
   }
+// [a,b]*[c,d]<<[a*c,b*d]
+  void bitwiseShiftLeft(GenericIntervalLattice other) {
+    if(!isLowInf() && !other.isLowInf())
+      _low<<=other._low;
+    if(!isHighInf() && !other.isHighInf())
+      _high<<=other._high;
+    if(isLowInf()||other.isLowInf())
+      setIsLowInf(true);
+    if(isHighInf()||other.isHighInf())
+      setIsHighInf(true);
+   }
+  void bitwiseShiftRight(GenericIntervalLattice other) {
+    if(!isLowInf() && !other.isLowInf())
+      _low>>=other._low;
+    if(!isHighInf() && !other.isHighInf())
+      _high>>=other._high;
+    if(isLowInf()||other.isLowInf())
+      setIsLowInf(true);
+    if(isHighInf()||other.isHighInf())
+      setIsHighInf(true);
+   }
+
   static BoolLatticeType isEqual(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     if(l1.isConst()&&l2.isConst()) {
       return BoolLatticeType(l1.getConst()==l2.getConst());
@@ -405,6 +437,7 @@ class GenericIntervalLattice {
       return BoolLatticeType(BoolLatticeType(false));
     }
   }
+
   static GenericIntervalLattice isEqualInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     BoolLatticeType res=isEqual(l1,l2);
     if(res.isTop()) { GenericIntervalLattice el; el.setTop(); return el; }
@@ -412,10 +445,22 @@ class GenericIntervalLattice {
     else if(res.isFalse()) return GenericIntervalLattice(0);
     else if(res.isBot()) { GenericIntervalLattice el; el.setBot(); return el; }
     else {
-      std::cerr<<"GenericIntervalLattice: equalOp: internal error."<<std::endl;
+      std::cerr<<"GenericIntervalLattice: isEqualInterval: internal error."<<std::endl;
       exit(1);
     }
   }
+
+  static GenericIntervalLattice isNotEqualInterval(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+    GenericIntervalLattice res=isEqualInterval(l1,l2);
+    if(res.isTop()||res.isBot()) { return res; }
+    else if(res.getConst()==0) { return GenericIntervalLattice(1); }
+    else if(res.getConst()==1) { return GenericIntervalLattice(0); }
+    else {
+      std::cerr<<"GenericIntervalLattice: isNotEqualInterval: internal error."<<std::endl;
+      exit(1);
+    }
+  }
+
 
   static BoolLatticeType isSmaller(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     // 0. handle special case when both intervals are of length 1

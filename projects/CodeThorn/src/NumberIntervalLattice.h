@@ -25,6 +25,8 @@ namespace SPRAY {
     void operator*=(const Number& other);
     void operator/=(const Number& other);
     void operator%=(const Number& other);
+    void operator<<=(const Number& other);
+    void operator>>=(const Number& other);
     std::string toString() const;
     // TODO: artithmetic operators
   private:

@@ -47,13 +47,21 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     SgNode* lhs=SgNodeHelper::getLhs(node);
     SgNode* rhs=SgNodeHelper::getRhs(node);
     switch(node->variantT()) {
+    case V_SgDotExp:
+    case V_SgArrowExp:
+      evaluate(rhs);
+      return NumberIntervalLattice::top();
     case V_SgEqualityOp:
       return domain->isEqualInterval(evaluate(lhs),evaluate(rhs));
+    case V_SgNotEqualOp:
+      return domain->isNotEqualInterval(evaluate(lhs),evaluate(rhs));
     case V_SgAddOp:  return domain->arithAdd(evaluate(lhs),evaluate(rhs));
     case V_SgSubtractOp: return domain->arithSub(evaluate(lhs),evaluate(rhs));
     case V_SgMultiplyOp: return domain->arithMul(evaluate(lhs),evaluate(rhs));
     case V_SgDivideOp: return domain->arithDiv(evaluate(lhs),evaluate(rhs));
     case V_SgModOp: return domain->arithMod(evaluate(lhs),evaluate(rhs));
+    case V_SgLshiftOp: return domain->bitwiseShiftLeft(evaluate(lhs),evaluate(rhs));
+    case V_SgRshiftOp: return domain->bitwiseShiftRight(evaluate(lhs),evaluate(rhs));
     case V_SgPntrArrRefExp:
       return NumberIntervalLattice::top();
     case V_SgAssignOp: {
@@ -72,12 +80,11 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         ips->setVariable(varId,rhsResult);
         return rhsResult;
       } else {
-        // TODO: handle *var and update modByPointer() ...
-        if(_showWarnings)
-          cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
-        if(_sound) {
-          ips->topifyAllVariables();
-        }
+        //        if(_showWarnings)
+          //          cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<"("<<lhs->class_name()<<") ... setting all address-taken variables to unbounded interval and using rhs interval."<<endl;
+        VariableIdSet varIdSet=_pointerAnalysisInterface->getModByPointer();
+        evaluate(rhs);
+        ips->topifyVariableSet(varIdSet);
         return NumberIntervalLattice::top();
       }
     }
@@ -100,6 +107,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       // discard result as pointer value intervals are not represented in this domain, but evaluate to ensure all side-effects are represented in the state
       evaluate(operand);
       return NumberIntervalLattice::top();
+    case V_SgCastExp: return evaluate(operand);
     case V_SgMinusMinusOp:
     case V_SgPlusPlusOp: {
       int incdecVal=0;
@@ -147,6 +155,8 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
   }
   switch(node->variantT()) {
   case V_SgIntVal: return NumberIntervalLattice(Number(isSgIntVal(node)->get_value()));
+  case V_SgUnsignedIntVal: return NumberIntervalLattice(Number(isSgUnsignedIntVal(node)->get_value()));
+  case V_SgStringVal: return NumberIntervalLattice::top();
   case V_SgVarRefExp: {
     SgVarRefExp* varRefExp=isSgVarRefExp(node);
     ROSE_ASSERT(varRefExp);
