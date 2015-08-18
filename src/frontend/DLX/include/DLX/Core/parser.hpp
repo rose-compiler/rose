@@ -23,11 +23,6 @@ namespace DLX {
 
 namespace Frontend {
 
-/*!
- * \addtogroup grp_dlx_core_frontend
- * @{
- */
-
 // Basic string manip
 
 void skip_whitespace(std::string & directive_str);
@@ -150,8 +145,6 @@ bool Parser::parse_list(std::vector<A> & vect, char start, char stop, char sep) 
 
   return true;
 }
-
-/** @} */
 
 }
 

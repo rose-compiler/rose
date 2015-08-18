@@ -180,7 +180,8 @@ Analyzer::Analyzer():
   _approximated_iterations(0),
   _curr_iteration_cnt(0),
   _next_iteration_cnt(0)
- {
+{
+  variableIdMapping.setModeVariableIdForEachArrayElement(true);
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
   }
@@ -1503,15 +1504,19 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               exit(1);
             }
           } else {
-            cerr << "Warning: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
+            cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
             cerr << "expr: "<< lhs->unparseToString()<<endl;
             cerr << "type: "<<lhs->class_name()<<endl;
-            cerr << "performing no update of state!"<<endl;
-            //exit(1);
+            //cerr << "performing no update of state!"<<endl;
+            exit(1);
           }
         }
       }
       return estateList;
+    } else if(isSgCompoundAssignOp(nextNodeToAnalyze2)) {
+      cerr<<"Error: compound assignment operators not supported. Use normalization to eliminate these operators."<<endl;
+      cerr<<"expr: "<<nextNodeToAnalyze2->unparseToString()<<endl;
+      exit(1);
     }
   }
   // nothing to analyze, just create new estate (from same State) with target label of edge

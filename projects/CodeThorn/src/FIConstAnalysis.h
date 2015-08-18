@@ -93,7 +93,8 @@ class FIConstAnalysis {
 
   static ConstIntLattice analyzeAssignRhs(SgNode* rhs);
   static bool determineVariable(SgNode* node, VariableId& varId, VariableIdMapping& _variableIdMapping);
-  static bool analyzeAssignment(SgAssignOp* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result);
+  // allows to analyse SgAssignOp and SgCompoundAssignOp
+  static bool analyzeAssignment(SgExpression* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result);
   VariableValuePair analyzeVariableDeclaration(SgVariableDeclaration* decl,VariableIdMapping& varIdMapping);
 
   void determineVarConstValueSet(SgNode* node, VariableIdMapping& varIdMapping, VarConstSetMap& map);
