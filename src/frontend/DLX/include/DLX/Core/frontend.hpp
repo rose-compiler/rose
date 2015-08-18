@@ -20,11 +20,6 @@ namespace DLX {
 
 namespace Frontend {
 
-/*!
- * \addtogroup grp_dlx_core_frontend
- * @{
- */
-
 template <class language_tpl>
 class Frontend {
   public:
@@ -52,11 +47,6 @@ class Frontend {
     static generic_clause_t    * parseClause(std::string & directive_str);
     static directive_t         * parse(std::string & directive_str, SgLocatedNode * directive_node);
 
-/*!
- * \addtogroup grp_dlx_core_specific
- * @{
- */
-
     template <typename language_t::construct_kinds_e kind>
     static bool findAssociatedNodes(
       SgLocatedNode * directive_node,
@@ -73,12 +63,10 @@ class Frontend {
 
     bool build_graph(const std::map<SgLocatedNode *, directive_t *> & translation_map);
 
-/*! @} */
-
   public:
     bool parseDirectives(SgNode *);
 
-    void toDot(std::ostream & out) const;
+    void toGraphViz(std::ostream & out) const;
 
   friend bool Directives::findAssociatedNodes<language_t>(SgLocatedNode *, Directives::generic_construct_t<language_t> *, const std::map<SgLocatedNode *, directive_t *> & translation_map); 
   friend bool Directives::parseClauseParameters<language_t>(std::string &, SgLocatedNode *, Directives::generic_clause_t<language_t> *); 
@@ -88,7 +76,7 @@ template <class language_tpl>
 typename Frontend<language_tpl>::generic_construct_t * Frontend<language_tpl>::parseConstruct(std::string & directive_str) {
   assert(language_t::s_construct_labels.size() > 0);
 
-//  std::cout << "> parseConstruct in \"" << directive_str << "\"" << std::endl;
+//std::cerr << "> parseConstruct in \"" << directive_str << "\"" << std::endl;
 
   typename language_t::construct_label_map_t::const_iterator it_construct;
   for (it_construct = language_t::s_construct_labels.begin(); it_construct != language_t::s_construct_labels.end(); it_construct++)
@@ -101,7 +89,7 @@ template <class language_tpl>
 typename Frontend<language_tpl>::generic_clause_t * Frontend<language_tpl>::parseClause(std::string & directive_str) {
   assert(language_t::s_clause_labels.size() > 0);
 
-//  std::cout << "> parseClause    in \"" << directive_str << "\"" << std::endl;
+//std::cerr << "> parseClause    in \"" << directive_str << "\"" << std::endl;
 
   typename language_t::clause_labels_map_t::const_iterator it_clause;
   for (it_clause = language_t::s_clause_labels.begin(); it_clause != language_t::s_clause_labels.end(); it_clause++) {
@@ -121,20 +109,21 @@ typename Frontend<language_tpl>::directive_t * Frontend<language_tpl>::parse(std
 
   directive_t * directive = new directive_t();
 
-//  std::cout << "(1)     directive_str = " << directive_str << std::endl;
+//std::cerr << "(1)     directive_str = " << directive_str << std::endl;
 
   directive->construct = parseConstruct(directive_str);
   assert(directive->construct != NULL);
 
   generic_clause_t * clause = NULL;
   while ((clause = parseClause(directive_str)) != NULL) {
-//    std::cout << "(2) (a) directive_str = " << directive_str << std::endl;
-    assert(Directives::parseClauseParameters(directive_str, directive_node, clause));
-//    std::cout << "(2) (b) directive_str = " << directive_str << std::endl;
+//  std::cerr << "(2) (a) directive_str = " << directive_str << std::endl;
+    bool res = Directives::parseClauseParameters(directive_str, directive_node, clause);
+    assert(res);
+//  std::cerr << "(2) (b) directive_str = " << directive_str << std::endl;
     directive->clause_list.push_back(clause);
   }
 
-//  std::cout << "(3)     directive_str = " << directive_str << std::endl;
+//std::cerr << "(3)     directive_str = " << directive_str << std::endl;
 
   return directive;
 }
@@ -169,14 +158,17 @@ bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
     if (it_directive == translation_map.end()) {
       std::string directive_string = pragma_decl->get_pragma()->get_pragma();
       directive_t * directive = parse(directive_string, pragma_decl);
-      translation_map.insert(std::pair<SgLocatedNode *, directive_t *>(pragma_decl, directive));
-      rtranslation_map.insert(std::pair<directive_t *, SgLocatedNode *>(directive, pragma_decl));
+      if (directive != NULL) {
+        translation_map.insert(std::pair<SgLocatedNode *, directive_t *>(pragma_decl, directive));
+        rtranslation_map.insert(std::pair<directive_t *, SgLocatedNode *>(directive, pragma_decl));
+      }
     }
   }
 
   typename std::map<SgLocatedNode *, directive_t *>::const_iterator it;
   for (it = translation_map.begin(); it != translation_map.end(); it++) {
-    assert(Directives::findAssociatedNodes(it->first, it->second->construct, translation_map));
+    bool res = Directives::findAssociatedNodes(it->first, it->second->construct, translation_map);
+    assert(res);
     directives.push_back(it->second);
   }
 
@@ -186,8 +178,8 @@ bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
 }
 
 template <class language_tpl>
-void Frontend<language_tpl>::toDot(std::ostream & out) const {
-  out << "digraph {" << std::endl;
+void Frontend<language_tpl>::toGraphViz(std::ostream & out) const {
+  out << "digraph directives {" << std::endl;
   typename std::vector<directive_t *>::const_iterator it_directive;
   for (it_directive = directives.begin(); it_directive != directives.end(); it_directive++) {
     typename std::map<typename language_tpl::construct_kinds_e, std::string>::const_iterator it_construct_label = language_tpl::s_construct_labels.find((*it_directive)->construct->kind);
@@ -203,8 +195,6 @@ void Frontend<language_tpl>::toDot(std::ostream & out) const {
   }
   out << "}" << std::endl;
 }
-
-/** @} */
 
 }
 

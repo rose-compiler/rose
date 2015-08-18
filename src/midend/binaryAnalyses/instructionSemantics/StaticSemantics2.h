@@ -72,9 +72,9 @@ protected:
     SgAsmExpression *ast_;
 
 protected:
-    explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {
+    SValue(size_t nbits, SgAsmRiscOperation::RiscOperator op): BaseSemantics::SValue(nbits) {
         static uint64_t nVars = 0;
-        ast_ = SageBuilderAsm::buildRiscOperation(SgAsmRiscOperation::OP_undefined, SageBuilderAsm::buildValueU64(nVars++));
+        ast_ = SageBuilderAsm::buildRiscOperation(op, SageBuilderAsm::buildValueU64(nVars++));
     }
 
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
@@ -95,7 +95,7 @@ public:
      *
      *  This SValue will be used only for its virtual constructors and will never appear in an expression. */
     static SValuePtr instance() {
-        return SValuePtr(new SValue(1));
+        return SValuePtr(new SValue(1, SgAsmRiscOperation::OP_undefined));
     }
 
     /** Instantiate an undefined value.
@@ -103,24 +103,36 @@ public:
      *  Undefined values end up being a SgAsmRiscOperation of type OP_undefined which has a single child which is an integer
      *  identification number.  This allows two such nodes in the AST to be resolved to the same or different undefined value
      *  by virtue of their ID number. */
-    static SValuePtr instance(size_t nbits) {
-        return SValuePtr(new SValue(nbits));
+    static SValuePtr instance_undefined(size_t nbits) {
+        return SValuePtr(new SValue(nbits, SgAsmRiscOperation::OP_undefined));
+    }
+
+    /** Instantiate an unspecified value.
+     *
+     *  Unspecified values end up being a SgAsmRiscOperation of type OP_unspecified which has a single child which is an
+     *  integer identification number.  This allows two such nodes in the AST to be resolved to the same or different
+     *  unspecified value by virtue of their ID number. */
+    static SValuePtr instance_unspecified(size_t nbits) {
+        return SValuePtr(new SValue(nbits, SgAsmRiscOperation::OP_unspecified));
     }
 
     /** Instantiate an integer constant. */
-    static SValuePtr instance(size_t nbits, uint64_t value) {
+    static SValuePtr instance_integer(size_t nbits, uint64_t value) {
         return SValuePtr(new SValue(nbits, value));
     }
 
 public:
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
-        return instance(nbits);
+        return instance_undefined(nbits);
+    }
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const ROSE_OVERRIDE {
+        return instance_unspecified(nbits);
     }
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const ROSE_OVERRIDE {
-        return instance(nbits, value);
+        return instance_integer(nbits, value);
     }
     virtual BaseSemantics::SValuePtr boolean_(bool value) const ROSE_OVERRIDE {
-        return instance(1, value ? 1 : 0);
+        return instance_integer(1, value ? 1 : 0);
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));

@@ -4087,8 +4087,8 @@ SageInterface::generateFileList()
 
   // traverse just the SgFile nodes (both the SgSourceFile and SgBinaryComposite IR nodes)!
   // SgFile::visitRepresentativeNode(fileTraversal);
-     SgSourceFile::visitRepresentativeNode(fileTraversal);
-     SgBinaryComposite::visitRepresentativeNode(fileTraversal);
+     SgSourceFile::traverseMemoryPoolNodes(fileTraversal);
+     SgBinaryComposite::traverseMemoryPoolNodes(fileTraversal);
 
   // This would alternatively traverse all IR nodes in thememory pool!
   // fileTraversal.traverseMemoryPool();

@@ -30,6 +30,16 @@ SValue::undefined_(size_t nbits) const
 }
 
 BaseSemantics::SValuePtr
+SValue::unspecified_(size_t nbits) const
+{
+    SValuePtr retval = create_empty(nbits);
+    ASSERT_require(retval->subvalues.empty());
+    for (size_t i=0; i<subvalues.size(); ++i)
+        retval->subvalues.push_back(subvalues[i]!=NULL ? subvalues[i]->unspecified_(nbits) : BaseSemantics::SValuePtr());
+    return retval;
+}
+
+BaseSemantics::SValuePtr
 SValue::number_(size_t nbits, uint64_t number) const
 {
     SValuePtr retval = create_empty(nbits);
@@ -322,6 +332,15 @@ RiscOperators::undefined_(size_t nbits)
     SValuePtr retval = svalue_empty(nbits);
     SUBDOMAINS(sd, ())
         retval->set_subvalue(sd.idx(), sd->undefined_(nbits));
+    return retval;
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::unspecified_(size_t nbits)
+{
+    SValuePtr retval = svalue_empty(nbits);
+    SUBDOMAINS(sd, ())
+        retval->set_subvalue(sd.idx(), sd->unspecified_(nbits));
     return retval;
 }
 

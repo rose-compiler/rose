@@ -185,6 +185,12 @@ public:
         return 0;
     }
 
+    /* Unspecified value. */
+    template<size_t Len>
+    VerifierValue<Len> unspecified_() {
+        return 0;
+    }
+
     /* A constant */
     template<size_t Len>
     VerifierValue<Len> number(uint64_t n) {

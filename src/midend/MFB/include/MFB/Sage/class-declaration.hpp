@@ -29,18 +29,18 @@ class Sage<SgClassDeclaration> {
 
     struct object_desc_t {
       std::string name;
-      unsigned long kind;
+      size_t kind;
 
       SgSymbol * parent;
-      unsigned file_id; // non-zero
+      size_t file_id; // non-zero
 
       bool create_definition;
 
       object_desc_t(
         std::string name_,
-        unsigned long kind_,
+        size_t kind_,
         SgSymbol * parent_,
-        unsigned file_id_,
+        size_t file_id_,
         bool create_definition_ = true
       );
     };
@@ -58,7 +58,7 @@ template <>
 Sage<SgClassDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgClassDeclaration>(const Sage<SgClassDeclaration>::object_desc_t & desc);
 
 template <>
-void Driver<Sage>::createForwardDeclaration<SgClassDeclaration>(Sage<SgClassDeclaration>::symbol_t symbol, unsigned target_file_id);
+void Driver<Sage>::createForwardDeclaration<SgClassDeclaration>(Sage<SgClassDeclaration>::symbol_t symbol, size_t target_file_id);
 
 /** @} */
 

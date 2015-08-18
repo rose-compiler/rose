@@ -256,6 +256,12 @@ public:
         return ValueType<Len>::undefined();
     }
 
+    /** Unspecified value */
+    template <size_t Len>
+    ValueType<Len> unspecified_() const {
+        return ValueType<Len>::undefined();
+    }
+
     /** Used to build a known constant. */
     template <size_t Len>
     ValueType<Len> number(uint64_t n) const {

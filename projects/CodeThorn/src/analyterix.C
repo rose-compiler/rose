@@ -70,6 +70,7 @@ bool option_lv_analysis=false;
 bool option_interval_analysis=false;
 bool option_at_analysis=false;
 bool option_trace=false;
+bool option_optimize_icfg=false;
 
 //boost::program_options::variables_map args;
 
@@ -316,10 +317,13 @@ int main(int argc, char* argv[]) {
       ("ud-analysis", "use-def analysis.")
       ("at-analysis", "address-taken analysis.")
       ("icfg-dot", "generates the ICFG as dot file.")
+      ("optimize-icfg", "prunes conditions with empty blocks, block begin, and block end icfg nodes.")
+      ("no-optmize-icfg", "does not optimize icfg.")
       ("interval-analysis", "perform interval analysis.")
       ("trace", "show operations as performed by selected solver.")
-      ("print-varidmapping", "prints variableIdMapping")
-      ("print-varidmapping-array", "prints variableIdMapping with array element varids.")
+      ("print-varid-mapping", "prints variableIdMapping")
+      ("print-varid-mapping-array", "prints variableIdMapping with array element varids.")
+      ("print-label-mapping", "prints mapping of labels to statements")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
       ;
   //    ("int-option",po::value< int >(),"option info")
@@ -344,6 +348,12 @@ int main(int argc, char* argv[]) {
       option_prefix=args["prefix"].as<string>().c_str();
     }
 
+    if (args.count("optimize-icfg")) {
+      option_optimize_icfg=true;
+    }
+    if (args.count("no-optimize-icfg")) {
+      option_optimize_icfg=false;
+    }
     if (args.count("trace")) {
       option_trace=true;
     }
@@ -400,9 +410,10 @@ int main(int argc, char* argv[]) {
 
   cout<<"STATUS: computing variableid mapping"<<endl;
   VariableIdMapping variableIdMapping;
-  if (args.count("print-varidmapping-array")) {
+  if (args.count("print-varid-mapping-array")) {
     variableIdMapping.setModeVariableIdForEachArrayElement(true);
   }
+
   variableIdMapping.computeVariableSymbolMapping(root);
   cout<<"VariableIdMapping size: "<<variableIdMapping.getVariableIdSet().size()<<endl;
   Labeler* labeler=new Labeler(root);
@@ -413,13 +424,22 @@ int main(int argc, char* argv[]) {
   //cout<<"IOLabelling:\n"<<iolabeler->toString()<<endl;
 #endif
 
-  if (args.count("print-varidmapping")||args.count("print-varidmapping-array")) {
+  if (args.count("print-varid-mapping")||args.count("print-varid-mapping-array")) {
     variableIdMapping.toStream(cout);
+    return 0;
+  }
+
+  if(args.count("print-label-mapping")) {
+    cout<<labeler->toString();
+    return 0;
   }
 
   if(args.count("icfg-dot")) {
     CFAnalysis* cfAnalysis=new CFAnalysis(labeler);
     Flow flow=cfAnalysis->flow(root);
+    if(option_optimize_icfg) {
+      cfAnalysis->optimizeFlow(flow);
+    }
     InterFlow interFlow=cfAnalysis->interFlow(flow);
     cfAnalysis->intraInterFlow(flow,interFlow);
     string dotString=flow.toDot(labeler);
@@ -427,7 +447,6 @@ int main(int argc, char* argv[]) {
     delete cfAnalysis;
     exit(0);
   }
-
   runAnalyses(root, labeler, &variableIdMapping);
 
   cout << "INFO: generating annotated source code."<<endl;

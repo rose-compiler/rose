@@ -4,7 +4,9 @@
 // #########################################################
 // #########################################################
 
-
+HEADER_EXECUTABLE_FILE_FORMAT_PREDECLARATION_START
+#include <Sawyer/Message.h>
+HEADER_EXECUTABLE_FILE_FORMAT_PREDECLARATION_END
 
 HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION_START
 #include "InstructionEnumsX86.h" /* register numbers, instruction size, etc. */
@@ -223,6 +225,7 @@ HEADER_RISC_OPERATION_START
                 enum RiscOperator {
                         OP_NONE,
 			OP_undefined,
+			OP_unspecified,
                         OP_filterCallTarget,
                         OP_filterReturnTarget,
                         OP_filterIndirectJumpTarget,
@@ -553,6 +556,10 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
           static SgAsmGenericFile *parseBinaryFormat(const char *name);
           static void unparseBinaryFormat(const std::string &name, SgAsmGenericFile*);
           static void unparseBinaryFormat(std::ostream&, SgAsmGenericFile*);
+
+	  // Diagnostics for parsing
+	  static Sawyer::Message::Facility mlog;
+	  static void initDiagnostics();
 
         /** Displays binary data in a fashion similar to the "hexdump -C" command in Unix: an address, numeric byte values,
          *  character byte values.  The format of the output is configurable through the HexdumpFormat argument. There are
@@ -2542,7 +2549,7 @@ HEADER_PE_IMPORT_SECTION_START
                 virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
                 void add_import_directory(SgAsmPEImportDirectory*);
                 void remove_import_directory(SgAsmPEImportDirectory*);
-                static bool import_mesg(const char *fmt, ...);
+                static bool show_import_mesg();
                 static void import_mesg_reset() { mesg_nprinted=0; }
                 size_t reallocate_iats(rose_rva_t start_at);
         private:

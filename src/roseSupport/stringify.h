@@ -62,6 +62,8 @@ std::string stringifyBinaryAnalysisPartitioner2BasicBlockCallbackTermination(int
 std::string stringifyBinaryAnalysisPartitioner2Confidence(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisPartitioner2DataFlowDfCfgVertexType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisPartitioner2EdgeType(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyBinaryAnalysisPartitioner2EngineFunctionReturnAnalysis(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyBinaryAnalysisPartitioner2EngineMemoryDataAdjustment(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisPartitioner2FunctionOwnership(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisPartitioner2InlinerHowInline(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisPartitioner2PartitionerMayReturnVertexInfoState(int n, const char *strip=NULL, bool canonic=false);

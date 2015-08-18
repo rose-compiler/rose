@@ -9,7 +9,7 @@ class RSIM_Linux: public RSIM_Simulator {
     rose_addr_t vdsoMappedVa_;                          // Address where vdso is mapped into specimen, or zero
     rose_addr_t vdsoEntryVa_;                           // Entry address for vdso, or zero
 public:
-    RSIM_Linux(): interpreterBaseVa_(0), vdsoName_("x86vdso"), vdsoMappedVa_(0), vdsoEntryVa_(0) {
+    RSIM_Linux(): interpreterBaseVa_(0), vdsoMappedVa_(0), vdsoEntryVa_(0) {
         init();
     }
 
@@ -17,7 +17,10 @@ public:
     void interpreterBaseVa(rose_addr_t va) { interpreterBaseVa_ = va; }
     rose_addr_t vdsoMappedVa() const { return vdsoMappedVa_; }
     rose_addr_t vdsoEntryVa() const { return vdsoEntryVa_; }
+    const std::string& vdsoName() const { return vdsoName_; }
+    void vdsoName(const std::string &s) { vdsoName_ = s; }
 
+    virtual void loadVsyscalls(RSIM_Process*) = 0;
     virtual void loadSpecimenArch(RSIM_Process*, SgAsmInterpretation*, const std::string &interpName) ROSE_OVERRIDE;
     virtual void initializeStackArch(RSIM_Thread*, SgAsmGenericHeader *) ROSE_OVERRIDE;
     virtual void initializeSimulatedOs(RSIM_Process*, SgAsmGenericHeader*) ROSE_OVERRIDE;
@@ -32,14 +35,19 @@ private:
     template<typename Word>
     rose_addr_t pushArgcArgvEnvAuxv(RSIM_Process*, FILE *trace, SgAsmElfFileHeader*, rose_addr_t sp, rose_addr_t execfn_va);
 
+    template<class guest_dirent_t, class host_dirent_type, int syscallNumber>
+    int getdents_syscall(int fd, rose_addr_t dirent_va, size_t sz);
+
+public:
+    static void syscall_default_leave(RSIM_Thread*, int);
+
 protected:
     rose_addr_t segmentTableVa(SgAsmElfFileHeader *fhdr) const;
 
-    // System calls that are common to both Linux 32- and 64-bit.
-    static void syscall_default_leave(RSIM_Thread*, int);
+    template<class guest_dirent_t, class host_dirent_t>
+    static int getdents_syscall(RSIM_Thread*, int syscallNumber, int fd, rose_addr_t direntVa, size_t sz);
 
-    static void syscall_accept_enter(RSIM_Thread*, int callno);
-    static void syscall_accept_body(RSIM_Thread*, int callno);
+    // System calls that are common to both Linux 32- and 64-bit.
     static void syscall_accept_helper(RSIM_Thread*, int guestSrcFd, rose_addr_t addrVa, rose_addr_t addrLenVa, unsigned flags);
 
     static void syscall_access_enter(RSIM_Thread *t, int callno);
@@ -48,8 +56,6 @@ protected:
     static void syscall_alarm_enter(RSIM_Thread *t, int callno);
     static void syscall_alarm_body(RSIM_Thread *t, int callno);
 
-    static void syscall_bind_enter(RSIM_Thread*, int callno);
-    static void syscall_bind_body(RSIM_Thread*, int callno);
     static void syscall_bind_helper(RSIM_Thread*, int guestFd, rose_addr_t addr_va, size_t addrlen);
 
     static void syscall_brk_enter(RSIM_Thread*, int);
@@ -68,8 +74,6 @@ protected:
     static void syscall_close_enter(RSIM_Thread *t, int callno);
     static void syscall_close_body(RSIM_Thread *t, int callno);
 
-    static void syscall_connect_enter(RSIM_Thread*, int callno);
-    static void syscall_connect_body(RSIM_Thread*, int callno);
     static void syscall_connect_helper(RSIM_Thread *t, int guestFd, rose_addr_t addr_va, size_t addrlen);
 
     static void syscall_creat_enter(RSIM_Thread *t, int callno);
@@ -148,8 +152,6 @@ protected:
     static void syscall_link_enter(RSIM_Thread *t, int callno);
     static void syscall_link_body(RSIM_Thread *t, int callno);
 
-    static void syscall_listen_enter(RSIM_Thread *t, int callno);
-    static void syscall_listen_body(RSIM_Thread *t, int callno);
     static void syscall_listen_helper(RSIM_Thread *t, int guestFd, int backlog);
     
     static void syscall_lseek_enter(RSIM_Thread *t, int callno);
@@ -224,15 +226,17 @@ protected:
     static void syscall_sched_yield_enter(RSIM_Thread *t, int callno);
     static void syscall_sched_yield_body(RSIM_Thread *t, int callno);
 
+    static void syscall_set_robust_list_enter(RSIM_Thread *t, int callno);
+    static void syscall_set_robust_list_body(RSIM_Thread *t, int callno);
+
+    static void syscall_set_tid_address_enter(RSIM_Thread *t, int callno);
+    static void syscall_set_tid_address_body(RSIM_Thread *t, int callno);
+
     static void syscall_setpgid_enter(RSIM_Thread *t, int callno);
     static void syscall_setpgid_body(RSIM_Thread *t, int callno);
 
-    static void syscall_setsockopt_enter(RSIM_Thread*, int callno);
-    static void syscall_setsockopt_body(RSIM_Thread*, int callno);
     static void syscall_setsockopt_helper(RSIM_Thread*, int guestFd, int level, int optname, rose_addr_t optval_va, size_t optsz);
 
-    static void syscall_socket_enter(RSIM_Thread*, int callno);
-    static void syscall_socket_body(RSIM_Thread*, int callno);
     static void syscall_socket_helper(RSIM_Thread*, int family, int type, int protocol);
 
     static void syscall_symlink_enter(RSIM_Thread *t, int callno);

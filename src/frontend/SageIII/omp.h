@@ -45,6 +45,20 @@ int omp_get_dynamic(void);
 void omp_set_nested(int n_nested);
 int omp_get_nested(void);
 
+/*
+ * Support accelerators as target devices
+ */
+/*  find the max number of devices on the system */
+int omp_get_max_devices(void);
+/* set number of active devices to be used */
+void omp_set_num_devices(int); 
+
+/* get number of available devices */
+int omp_get_num_devices(void); 
+// GCC 4.0 provides omp_get_num_devices() already, but without supporting GPUs
+// I have to use another function to bypass it
+int xomp_get_num_devices(void); 
+
 /* 
  * Timer routine
  */
