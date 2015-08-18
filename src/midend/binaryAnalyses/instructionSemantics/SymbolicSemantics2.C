@@ -243,23 +243,22 @@ MemoryState::CellCompressorChoice::operator()(const SValuePtr &address, const Ba
 
 BaseSemantics::SValuePtr
 MemoryState::readMemory(const BaseSemantics::SValuePtr &address_, const BaseSemantics::SValuePtr &dflt,
-                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
-{
-    size_t nbits = dflt->get_width();
+                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+    size_t nBits = dflt->get_width();
     SValuePtr address = SValue::promote(address_);
-    ASSERT_require(8==nbits); // SymbolicSemantics::MemoryState assumes that memory cells contain only 8-bit data
-    bool short_circuited;
-    CellList matches = scan(address, nbits, addrOps, valOps, short_circuited/*out*/);
+    ASSERT_require(8==nBits); // SymbolicSemantics::MemoryState assumes that memory cells contain only 8-bit data
+
+    CellList::iterator cursor = get_cells().begin();
+    CellList cells = scan(cursor /*in,out*/, address, nBits, addrOps, valOps);
 
     // If we fell off the end of the list then the read could be reading from a memory location for which no cell exists.
-    if (!short_circuited) {
-        BaseSemantics::MemoryCellPtr tmpcell = protocell->create(address, dflt);
-        cells.push_front(tmpcell);
-        matches.push_back(tmpcell);
+    if (cursor == get_cells().end()) {
+        BaseSemantics::MemoryCellPtr newCell = insertReadCell(address, dflt);
+        cells.push_back(newCell);
     }
+    updateReadProperties(cells);
 
-    ASSERT_require(dflt->get_width()==nbits);
-    SValuePtr retval = get_cell_compressor()->operator()(address, dflt, addrOps, valOps, matches);
+    SValuePtr retval = get_cell_compressor()->operator()(address, dflt, addrOps, valOps, cells);
     ASSERT_require(retval->get_width()==8);
     return retval;
 }
