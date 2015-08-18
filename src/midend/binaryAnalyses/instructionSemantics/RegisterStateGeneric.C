@@ -477,26 +477,26 @@ RegisterStateGeneric::hasPropertyAll(const RegisterDescriptor &reg, InputOutputP
     return bitProps.existsEverywhere(where, prop);
 }
 
-RegisterStateGeneric::PropertySet
+InputOutputPropertySet
 RegisterStateGeneric::getPropertiesUnion(const RegisterDescriptor &reg) const {
     if (!properties_.exists(reg))
-        return PropertySet();
+        return InputOutputPropertySet();
     const BitProperties &bitProps = properties_[reg];
     BitRange where = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
     return bitProps.getUnion(where);
 }
 
-RegisterStateGeneric::PropertySet
+InputOutputPropertySet
 RegisterStateGeneric::getPropertiesIntersection(const RegisterDescriptor &reg) const {
     if (!properties_.exists(reg))
-        return PropertySet();
+        return InputOutputPropertySet();
     const BitProperties &bitProps = properties_[reg];
     BitRange where = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
     return bitProps.getIntersection(where);
 }
 
 bool
-RegisterStateGeneric::insertProperties(const RegisterDescriptor &reg, const PropertySet &props) {
+RegisterStateGeneric::insertProperties(const RegisterDescriptor &reg, const InputOutputPropertySet &props) {
     if (props.isEmpty())
         return false;
     BitProperties &bitProps = properties_.insertMaybeDefault(reg);
@@ -505,7 +505,7 @@ RegisterStateGeneric::insertProperties(const RegisterDescriptor &reg, const Prop
 }
 
 bool
-RegisterStateGeneric::eraseProperties(const RegisterDescriptor &reg, const PropertySet &props) {
+RegisterStateGeneric::eraseProperties(const RegisterDescriptor &reg, const InputOutputPropertySet &props) {
     if (props.isEmpty() || !properties_.exists(reg))
         return false;
     BitProperties &bitProps = properties_[reg];
@@ -517,7 +517,7 @@ RegisterStateGeneric::eraseProperties(const RegisterDescriptor &reg, const Prope
 }
 
 void
-RegisterStateGeneric::setProperties(const RegisterDescriptor &reg, const PropertySet &props) {
+RegisterStateGeneric::setProperties(const RegisterDescriptor &reg, const InputOutputPropertySet &props) {
     if (props.isEmpty()) {
         eraseProperties(reg);
     } else {
@@ -544,7 +544,7 @@ RegisterStateGeneric::eraseProperties() {
 }
 
 std::vector<RegisterDescriptor>
-RegisterStateGeneric::findProperties(const PropertySet &required, const PropertySet &prohibited) const {
+RegisterStateGeneric::findProperties(const InputOutputPropertySet &required, const InputOutputPropertySet &prohibited) const {
     std::vector<RegisterDescriptor> retval;
     typedef Sawyer::Container::IntervalSet<BitRange> Bits;
     BOOST_FOREACH (const RegisterProperties::Node &regNode, properties_.nodes()) {
@@ -660,7 +660,7 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
                         // exist for different parts of the register.  It also doesn't take into account all combinations f
                         // properties -- just a few of the more common ones.
                         if (fmt.get_show_properties()) {
-                            PropertySet props = getPropertiesUnion(rvi->desc);
+                            InputOutputPropertySet props = getPropertiesUnion(rvi->desc);
                             if (props.exists(IO_READ_BEFORE_WRITE)) {
                                 stream <<" read-before-write";
                             } else if (props.exists(IO_WRITE) && props.exists(IO_READ)) {

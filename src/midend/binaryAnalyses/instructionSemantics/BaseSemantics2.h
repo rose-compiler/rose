@@ -438,6 +438,10 @@ enum InputOutputProperty {
                                                          *   property. */
 };
 
+/** Set of Boolean properties. */
+typedef Sawyer::Container::Set<InputOutputProperty> InputOutputPropertySet;
+
+
 /*******************************************************************************************************************************
  *                                      Exceptions
  *******************************************************************************************************************************/

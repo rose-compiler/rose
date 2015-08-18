@@ -74,17 +74,12 @@ public:
     //                                  Types for Boolean properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Set of Boolean properties.
-     *
-     *  If a property is present in the set then it is assumed to be true, otherwise the property is false. */
-    typedef Sawyer::Container::Set<InputOutputProperty> PropertySet;
-
     /** Boolean properties per bit.
      *
      *  This container stores properties per bit of a major/minor register pair.  For instance, the x86 16-bit AX register
      *  might have different sets of properties for its different subregisters, AL and AH.  This container stores those sets
      *  per bit. */
-    typedef Sawyer::Container::IntervalSetMap<BitRange, PropertySet> BitProperties;
+    typedef Sawyer::Container::IntervalSetMap<BitRange, InputOutputPropertySet> BitProperties;
 
     /** Boolean properties for all registers.
      *
@@ -443,8 +438,8 @@ public:
      *  defined for all bits of the register.
      *
      * @{ */
-    virtual PropertySet getPropertiesUnion(const RegisterDescriptor&) const;
-    virtual PropertySet getPropertiesIntersection(const RegisterDescriptor&) const;
+    virtual InputOutputPropertySet getPropertiesUnion(const RegisterDescriptor&) const;
+    virtual InputOutputPropertySet getPropertiesIntersection(const RegisterDescriptor&) const;
     /** @} */
 
     /** Insert Boolean properties.
@@ -452,20 +447,20 @@ public:
      *  Inserts the specified properties for all bits of the specified register without affecting any other properties.
      *  Returns true if a property was inserted anywhere, false if all specified properties already existed everywhere in the
      *  specified register.  A single property can also be specified due to the RegisterProperties implicit constructor. */
-    virtual bool insertProperties(const RegisterDescriptor&, const PropertySet&);
+    virtual bool insertProperties(const RegisterDescriptor&, const InputOutputPropertySet&);
 
     /** Erase Boolean properties.
      *
      *  Removes the speciied properties from the specified register.  Returns true if any of the properties were erased, false
      *  if none of them already existed. A single property can also be specified due to the RegisterProperties implicit
      *  constructor. */
-    virtual bool eraseProperties(const RegisterDescriptor&, const PropertySet&);
+    virtual bool eraseProperties(const RegisterDescriptor&, const InputOutputPropertySet&);
 
     /** Assign property set.
      *
      *  Assigns the specified property set (or single property) to the specified register. The register will then contain only
      *  those specified properties. */
-    virtual void setProperties(const RegisterDescriptor&, const PropertySet&);
+    virtual void setProperties(const RegisterDescriptor&, const InputOutputPropertySet&);
 
     /** Erase all Boolean properties.
      *
@@ -480,8 +475,9 @@ public:
      *
      *  Return a list of registers that have the @p required properties and lack the @p prohibited properties.  The returned
      *  list contains the largest registers that satisfy the conditions. */
-    virtual std::vector<RegisterDescriptor> findProperties(const PropertySet &required,
-                                                           const PropertySet &prohibited = PropertySet()) const;
+    virtual std::vector<RegisterDescriptor>
+    findProperties(const InputOutputPropertySet &required,
+                   const InputOutputPropertySet &prohibited = InputOutputPropertySet()) const;
 
     /** Update write properties.
      *

@@ -25,8 +25,9 @@ Formatter::rename(uint64_t orig_name)
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
 SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
-    // There's no official way to represent BOTTOM
-    throw BaseSemantics::NotImplemented("SValue merging for PartialSymbolicSemantics is not supported", NULL);
+    if (must_equal(other_, solver))
+        return Sawyer::Nothing();
+    return bottom_(get_width());
 }
 
 bool
