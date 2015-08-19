@@ -89,8 +89,8 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       }
     }
     default:
-      if(_showWarnings) cout<<"Warning: unknown binary operator: "<<node->sage_class_name()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
       if(_sound) {
+        if(_showWarnings) cout<<"Warning: unknown binary operator: "<<node->sage_class_name()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
         ips->topifyAllVariables();
       }
       return NumberIntervalLattice::top();
@@ -146,8 +146,8 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       }
     }
     default: // generates top element
-      if(_showWarnings) cout<<"Warning: unknown unary operator: "<<node->sage_class_name()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
       if(_sound) {
+        if(_showWarnings) cout<<"Warning: unknown unary operator: "<<node->sage_class_name()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
         ips->topifyAllVariables();
       }
       return NumberIntervalLattice::top();
@@ -155,8 +155,15 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
   }
   switch(node->variantT()) {
   case V_SgIntVal: return NumberIntervalLattice(Number(isSgIntVal(node)->get_value()));
+
+  case V_SgUnsignedCharVal: return NumberIntervalLattice(Number(isSgUnsignedCharVal(node)->get_value()));
+  case V_SgUnsignedShortVal: return NumberIntervalLattice(Number(isSgUnsignedShortVal(node)->get_value()));
   case V_SgUnsignedIntVal: return NumberIntervalLattice(Number(isSgUnsignedIntVal(node)->get_value()));
+  case V_SgUnsignedLongVal: return NumberIntervalLattice(Number(isSgUnsignedLongVal(node)->get_value()));
+  case V_SgUnsignedLongLongIntVal: return NumberIntervalLattice(Number(isSgUnsignedLongLongIntVal(node)->get_value()));
+
   case V_SgStringVal: return NumberIntervalLattice::top();
+
   case V_SgVarRefExp: {
     SgVarRefExp* varRefExp=isSgVarRefExp(node);
     ROSE_ASSERT(varRefExp);
@@ -178,12 +185,12 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     }
   }
   default: // generates top element
-    if(_showWarnings) cout<<"Warning: unknown leaf node: "<<node->sage_class_name()<<" ... using unbounded result interval."<<endl;
+    if(_showWarnings) cout<<"Warning: unknown leaf node: "<<node->sage_class_name()<<"("<<node->unparseToString()<<") ... using unbounded result interval."<<endl;
     return NumberIntervalLattice::top();
   }
-  if(_showWarnings) cout<<"Warning: Unknown operator."<<node->sage_class_name()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
   // an unknown operator may have an arbitrary effect, to err on the safe side we topify all variables
   if(_sound) {
+    if(_showWarnings) cout<<"Warning: Unknown operator."<<node->sage_class_name()<<" ... setting all variables to unbounded interval and using unbounded result interval."<<endl;
     ips->topifyAllVariables();
   }
   return NumberIntervalLattice::top();

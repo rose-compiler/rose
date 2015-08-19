@@ -799,11 +799,23 @@ SgFunctionCallExp* SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(SgNode*
   * \date 2012.
  */
 SgFunctionCallExp* SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode* node) {
-  if(SgNode* sexp=isSgExprStatement(node))
-    if(SgNode* assignOp=isSgAssignOp(SgNodeHelper::getExprStmtChild(sexp)))
-      if(isSgVarRefExp(SgNodeHelper::getLhs(assignOp)))
-        if(SgFunctionCallExp* fcp=isSgFunctionCallExp(SgNodeHelper::getRhs(assignOp)))
+  if(SgNode* sexp=isSgExprStatement(node)) {
+    if(SgNode* assignOp=isSgAssignOp(SgNodeHelper::getExprStmtChild(sexp))) {
+      SgNode* lhs=SgNodeHelper::getLhs(assignOp);
+      SgNode* rhs=SgNodeHelper::getRhs(assignOp);
+      if(isSgVarRefExp(lhs)) {
+        /* the result of a function call may be casted. skip those
+           casts to find the actual function call node.
+        */
+        while(isSgCastExp(rhs)) {
+          rhs=SgNodeHelper::getFirstChild(rhs);
+        }
+        if(SgFunctionCallExp* fcp=isSgFunctionCallExp(rhs)) {
           return fcp;
+        }
+      }
+    }
+  }
   return 0;
 }
 
