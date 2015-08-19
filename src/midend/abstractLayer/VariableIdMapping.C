@@ -300,7 +300,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
         sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
         if(sym) {
           found=true;
-          if(modeVariableIdForEachArrayElement && SgNodeHelper::isArrayDeclaration(varDecl)) {
+          if(/*modeVariableIdForEachArrayElement &&*/ SgNodeHelper::isArrayDeclaration(varDecl)) {
             SgNode* initName0=varDecl->get_traversalSuccessorByIndex(1); // get-InitializedName
             ROSE_ASSERT(initName0);
             SgInitializedName* initName=isSgInitializedName(initName0);
@@ -316,8 +316,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
               arraySize=getArrayDimensionsFromInitializer(isSgAggregateInitializer(initName->get_initializer()));
             }
             if(arraySize > 0) {
-              //cout<<arraySize<<" : "<<varDecl->unparseToString()<<endl;
-              //cout<<"INFO: found array decl: size: "<<arraySize;
+              //cout<<"INFO: found array decl: size: "<<arraySize<<" :: "<<varDecl->unparseToString()<<endl;
               registerNewArraySymbol(sym, arraySize);
               symbolSet.insert(sym);
               found = false;

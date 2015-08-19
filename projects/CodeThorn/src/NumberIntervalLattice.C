@@ -39,6 +39,12 @@ void Number::operator/=(const Number& other) {
 void Number::operator%=(const Number& other) {
   _num%=other._num;
 }
+void Number::operator<<=(const Number& other) {
+  _num<<=other._num;
+}
+void Number::operator>>=(const Number& other) {
+  _num>>=other._num;
+}
 std::string Number::toString() const {
   std::stringstream ss;
   ss<<_num;

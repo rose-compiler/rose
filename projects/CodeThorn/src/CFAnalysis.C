@@ -100,16 +100,18 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
   // 2) create a set of <call,entry,exit,callreturn> edges
   InterFlow interFlow;
   LabelSet callLabs=functionCallLabels(flow);
-  //cout << "calllabs: "<<callLabs.size()<<endl;
+  cout << "INFO: number of function call labels: "<<callLabs.size()<<endl;
   for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
     SgNode* callNode=getNode(*i);
+    cout<<"INFO: creating inter-flow for "<<callNode->unparseToString();
     //info: callNode->get_args()
     SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
     if(!funCall) 
-      throw "Error: interFlow: unkown call exp (not a SgFunctionCallExp).";
+      throw "Error: interFlow: unknown call exp (not a SgFunctionCallExp).";
     SgFunctionDefinition* funDef=SgNodeHelper::determineFunctionDefinition(funCall);
     Label callLabel,entryLabel,exitLabel,callReturnLabel;
     if(funDef==0) {
+      cout<<" [no definition found]"<<endl;
       // we were not able to find the funDef in the AST
       //cout << "STATUS: External function ";
       //if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration())
@@ -121,6 +123,7 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
       exitLabel=Labeler::NO_LABEL;
       callReturnLabel=labeler->functionCallReturnLabel(callNode);
     } else {
+       cout<<" [definition found]"<<endl;
       callLabel=*i;
       entryLabel=labeler->functionEntryLabel(funDef);
       exitLabel=labeler->functionExitLabel(funDef);
@@ -564,11 +567,12 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
       flow.insert(externalEdge);
     } else {
       Edge callEdge=Edge((*i).call,EDGE_CALL,(*i).entry);
-      Edge callReturnEdge=Edge((*i).exit,EDGE_CALLRETURN,(*i).callReturn);
-      Edge localEdge=Edge((*i).call,EDGE_LOCAL,(*i).callReturn);
       flow.insert(callEdge);
+      Edge callReturnEdge=Edge((*i).exit,EDGE_CALLRETURN,(*i).callReturn);
       flow.insert(callReturnEdge);
-      flow.insert(localEdge);
+      //TODO: make creation of local edges optional
+      //Edge localEdge=Edge((*i).call,EDGE_LOCAL,(*i).callReturn);
+      //flow.insert(localEdge);
     }
   }
 }

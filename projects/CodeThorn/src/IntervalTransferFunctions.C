@@ -51,10 +51,18 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
     ROSE_ASSERT(caseExpr);
     //cout<<"INFO: transferSwitchCase: VAR"<<varRefExp->unparseToString()<<"=="<<caseExpr->unparseToString()<<endl;
     NumberIntervalLattice num;
-#if 1
-    // might need to use the label of caseExpr here
-    num=evalExpression(lab, caseExpr, pstate);
-#else
+    SgExpression* caseExprOptionalRangeEnd=caseStmt->get_key_range_end();
+    if(caseExprOptionalRangeEnd==0) {
+      // case NUM:
+      num=evalExpression(lab, caseExpr, pstate);
+    } else {
+      // case NUM1 ... NUM2:
+      NumberIntervalLattice numStart=evalExpression(lab, caseExpr, pstate);;
+      NumberIntervalLattice numEnd=evalExpression(lab, caseExprOptionalRangeEnd, pstate);;
+      num=NumberIntervalLattice::join(numStart,numEnd);
+      cout<<"DEBUG: range: "<<num.toString()<<endl;
+    }
+#if 0
     if(SgIntVal* sgIntVal=isSgIntVal(caseExpr)) {
       int val=sgIntVal->get_value();
       num.setLow(val);

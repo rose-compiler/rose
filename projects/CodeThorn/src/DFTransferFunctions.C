@@ -25,7 +25,8 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     return;
   }
   if(_labeler->isFunctionCallLabel(lab)) {
-    // 1) f(x), 2) y=f(x) 3) y+=f(x)
+    // 1) f(x), 2) y=f(x) (but not y+=f(x))
+#if 0    
     if(isSgExprStatement(node)) {
       node=SgNodeHelper::getExprStmtChild(node);
     }
@@ -38,11 +39,14 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
         exit(1);
       }
     }
-
-    if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
+#endif
+    if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(node)) {
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
       transferFunctionCall(lab, funCall, arguments, element);
       return;
+    } else {
+      cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "<<funCall->class_name()<<endl;
+      exit(1);
     }
   }
 
@@ -61,9 +65,11 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
         exit(1);
       }
       SgNode* rhs=SgNodeHelper::getRhs(node);
+      while(isSgCastExp(rhs)) 
+        rhs=SgNodeHelper::getFirstChild(rhs);
       SgFunctionCallExp* funCall=isSgFunctionCallExp(rhs);
       if(!funCall) {
-        cerr<<"Transfer: no function call of rhs of assignment."<<endl;
+        cerr<<"Transfer: no function call on rhs of assignment."<<endl;
         cerr<<node->unparseToString()<<endl;
         exit(1);
       }
