@@ -13,24 +13,24 @@ namespace TileK {
 
 SgInitializedName * cuda_kernel_t::buildGlobalVariable(const std::string & name, SgType * type, SgInitializer * init) const {
   SgInitializedName * res = SageBuilder::buildInitializedName(name, type, init);
-    res->get_storageModifier().setCudaGlobal();
+//  res->get_storageModifier().setCudaGlobal();
   return res;
 }
 
 SgInitializedName * cuda_kernel_t::buildLocalVariable(const std::string & name, SgType * type, SgInitializer * init) const {
   SgInitializedName * res = SageBuilder::buildInitializedName(name, type, init);
-    res->get_storageModifier().setCudaShared();
+//  res->get_storageModifier().setCudaShared();
   return res;
 }
 
 SgInitializedName * cuda_kernel_t::buildConstantVariable(const std::string & name, SgType * type, SgInitializer * init) const {
   SgInitializedName * res = SageBuilder::buildInitializedName(name, type, init);
-    res->get_storageModifier().setCudaConstant();
+//  res->get_storageModifier().setCudaConstant();
   return res;
 }
 
 void cuda_kernel_t::applyKernelModifiers(SgFunctionDeclaration * kernel_decl) const {
-  kernel_decl->get_functionModifier().setOpenclKernel();
+  kernel_decl->get_functionModifier().setCudaKernel();
 }
 
 void cuda_kernel_t::loadUser(const ::MDCG::Model::model_t & model) {
