@@ -153,6 +153,30 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       return NumberIntervalLattice::top();
     }
   }
+  // ternary operator
+  if(isSgConditionalExp(node)) {
+    SgNode* cond=SgNodeHelper::getCond(node);
+    SgNode* trueBranch=SgNodeHelper::getTrueBranch(node);
+    SgNode* falseBranch=SgNodeHelper::getFalseBranch(node);
+    NumberIntervalLattice condVal=evaluate(cond);
+    if(condVal.isBot()) {
+      return NumberIntervalLattice::bot();
+    } else if(condVal.isTop()||!condVal.isConst()) {
+      // analyse both true-branch and false-branch and join.
+        NumberIntervalLattice trueBranchResult=evaluate(trueBranch);
+        NumberIntervalLattice falseBranchResult=evaluate(falseBranch);
+        return NumberIntervalLattice::join(trueBranchResult,falseBranchResult);
+    } else {
+      ROSE_ASSERT(condVal.isConst());
+      SPRAY::Number num=condVal.getConst();
+      int intVal=num.getInt();
+      if(intVal==0)
+        return evaluate(trueBranch);
+      else
+        return evaluate(falseBranch);
+    }
+  }
+
   switch(node->variantT()) {
   case V_SgIntVal: return NumberIntervalLattice(Number(isSgIntVal(node)->get_value()));
 

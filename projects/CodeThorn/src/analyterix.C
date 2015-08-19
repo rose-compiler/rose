@@ -117,26 +117,38 @@ void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAn
           SgVarRefExp* arrayVar=isSgVarRefExp(lhs);
           SgVarRefExp* indexVar=isSgVarRefExp(rhs);
           if(arrayVar&&indexVar) {
-            cout<<"DEBUG: checking: "<<lineCol<<": "<< node->unparseToString()<<endl;
-
-            cout<<"Arrayvar: "<<arrayVar->unparseToString()<<" Index var: "<<indexVar->unparseToString()<<endl;
             VariableIdMapping* variableIdMapping=intervalAnalysis->getVariableIdMapping();
             VariableId arrayVarId=variableIdMapping->variableId(arrayVar);
             VariableId indexVarId=variableIdMapping->variableId(indexVar);
             IntervalPropertyState* intervalPropertyState=dynamic_cast<IntervalPropertyState*>(intervalAnalysis->getPreInfo(*j));
             ROSE_ASSERT(intervalPropertyState);
-            cout<<"ANALYSIS:"<<intervalPropertyState->toString()<<endl;
-            if(variableIdMapping->hasArrayType(arrayVarId)) {
-              cout<<"ARRAY: YES"<<endl;
+            if(!variableIdMapping->hasArrayType(arrayVarId)) {
+              cerr<<"Internal error: determined array variable, but it is not registered as array variable."<<endl;
+              exit(1);
             }
-            cout<<"Array-size:"<<variableIdMapping->getSize(arrayVarId)<<endl;
+            size_t arraySize=variableIdMapping->getSize(arrayVarId);
             if(intervalPropertyState->variableExists(indexVarId)) {
               NumberIntervalLattice indexVariableInterval=intervalPropertyState->getVariable(indexVarId);
-              cout<<"INTERVAL: "<<indexVariableInterval.toString()<<endl;
+              if(indexVariableInterval.isTop()
+                 ||indexVariableInterval.getLow()<0
+                 ||indexVariableInterval.getHigh()>(arraySize-1)) {
+                cout<<"DETECTED: array out of bounds access: "<<lineCol
+                    <<": "<<node->unparseToString()
+                    <<" ("
+                    <<variableIdMapping->variableName(indexVarId)
+                    <<" in "<<indexVariableInterval.toString()
+                    <<" accessing array '"<<variableIdMapping->variableName(arrayVarId)<<"'"
+                    <<" of size "<<arraySize
+                    <<")"
+                    <<endl;
+              }
+            } else if(intervalPropertyState->isBot()) {
+              cout<<"ANALYSIS: not reachable: "<<node->unparseToString()<<endl;
+              // nothing to do
             } else {
-              cout<<"WARNING: variable "<<indexVarId.toString()<<" does not exist in property state. Skipping check."<<endl;
+              cout<<"Error: variable "<<indexVarId.toString()<<" does not exist in property state."<<endl;
+              exit(1);
             }
-            cout<<"Detected: "<<lineCol<<endl;
           } else {
             cerr<<"WARNING: Unsupported array access expression: ";
             cerr<<SPRAY::AstTerm::astTermWithNullValuesToString(arrRefExp)<<endl;
