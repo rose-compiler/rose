@@ -28,7 +28,7 @@ bool Frontend<TileK::language_t>::findAssociatedNodes<TileK::language_t::e_const
 
   construct->assoc_nodes.parent_scope = isSgScopeStatement(pragma_decl->get_parent());
   assert(construct->assoc_nodes.parent_scope != NULL);
-  construct->assoc_nodes.kernel_region = SageInterface::getNextStatement(pragma_decl);
+  construct->assoc_nodes.kernel_region = isSgScopeStatement(SageInterface::getNextStatement(pragma_decl));
   assert(construct->assoc_nodes.kernel_region != NULL);
 
   return true;
@@ -86,49 +86,35 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
   parser.skip_whitespace();
   if (parser.consume("dynamic")) {
     clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_dynamic_tile;
-    clause->parameters.nbr_it = 0;
+    clause->parameters.param = NULL;
   }
   else if (parser.consume("static")) {
     clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_static_tile;
     parser.skip_whitespace();
     if (!parser.consume(',')) return false;
     parser.skip_whitespace();
-    if (!parser.parse<size_t>(clause->parameters.nbr_it)) return false;
+    if (!parser.parse<SgExpression *>(clause->parameters.param)) return false;
   }
 #ifdef TILEK_THREADS
   else if (parser.consume("thread")) {
     clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_thread_tile;
-    clause->parameters.nbr_it = 0;
+    clause->parameters.param = NULL;
   }
 #endif
 #ifdef TILEK_ACCELERATOR
   else if (parser.consume("gang")) {
-    size_t gang_id;
+    clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_gang_tile;
     parser.skip_whitespace();
     if (!parser.consume(',')) return false;
     parser.skip_whitespace();
-    if (!parser.parse<size_t>(gang_id)) return false;
-    switch (gang_id) {
-      case 0: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_gang_0_tile; break;
-      case 1: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_gang_1_tile; break;
-      case 2: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_gang_2_tile; break;
-      default: assert(false);
-    }
-    clause->parameters.nbr_it = 0;
+    if (!parser.parse<SgExpression *>(clause->parameters.param)) return false;
   }
   else if (parser.consume("worker")) {
-    size_t worker_id;
+    clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_worker_tile;
     parser.skip_whitespace();
     if (!parser.consume(',')) return false;
     parser.skip_whitespace();
-    if (!parser.parse<size_t>(worker_id)) return false;
-    switch (worker_id) {
-      case 0: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_worker_0_tile; break;
-      case 1: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_worker_1_tile; break;
-      case 2: clause->parameters.kind = Directives::generic_clause_t<TileK::language_t>::parameters_t<TileK::language_t::e_clause_tile>::e_worker_2_tile; break;
-      default: assert(false);
-    }
-    clause->parameters.nbr_it = 0;
+    if (!parser.parse<SgExpression *>(clause->parameters.param)) return false;
   }
 #endif
   else return false;
@@ -149,9 +135,9 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
 ) {
   DLX::Frontend::Parser parser(directive_str, directive_node);
 
-  if (!parser.consume('('))                                  return false;
-  if (!parser.parse<size_t>(clause->parameters.num_threads)) return false;
-  if (!parser.consume(')'))                                  return false;
+  if (!parser.consume('('))                                          return false;
+  if (!parser.parse<SgExpression *>(clause->parameters.num_threads)) return false;
+  if (!parser.consume(')'))                                          return false;
 
   directive_str = parser.getDirectiveString(); return true;
 }
@@ -176,7 +162,7 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
   else clause->parameters.gang_id = 1;
 
   if (!parser.consume('('))                                return false;
-  if (!parser.parse<size_t>(clause->parameters.num_gangs)) return false;
+  if (!parser.parse<SgExpression *>(clause->parameters.num_gangs)) return false;
   if (!parser.consume(')'))                                return false;
 
   directive_str = parser.getDirectiveString(); return true;
@@ -200,7 +186,7 @@ bool Frontend<TileK::language_t>::parseClauseParameters<TileK::language_t::e_cla
   else clause->parameters.worker_id = 1;
 
   if (!parser.consume('('))                                  return false;
-  if (!parser.parse<size_t>(clause->parameters.num_workers)) return false;
+  if (!parser.parse<SgExpression *>(clause->parameters.num_workers)) return false;
   if (!parser.consume(')'))                                  return false;
 
   directive_str = parser.getDirectiveString(); return true;

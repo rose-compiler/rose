@@ -66,7 +66,7 @@ void Driver<Sage>::loadSymbols<SgNamespaceDeclarationStatement>(size_t file_id, 
   std::set<SgNamespaceSymbol *>::iterator it;
   for (it = namespace_symbols.begin(); it != namespace_symbols.end(); it++)
     if (resolveValidParent<SgNamespaceSymbol>(*it)) {
-//    std::cout << "Namespace Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
+//    std::cerr << "[Info] (MFB::Driver<Sage>::loadSymbols<SgNamespaceDeclarationStatement>) Add: " << (*it)->get_name().getString() << " from File #" << file_id << std::endl;
     }
 }
 

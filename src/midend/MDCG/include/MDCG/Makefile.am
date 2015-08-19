@@ -1,3 +1,3 @@
 
-SUBDIRS=Core KLT
+SUBDIRS=Model Tools
 

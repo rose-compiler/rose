@@ -70,8 +70,8 @@ void  Driver<Sage>::loadSymbols<SgMemberFunctionDeclaration>(size_t file_id, SgS
   std::set<SgMemberFunctionSymbol *>::iterator it;
   for (it = member_function_symbols.begin(); it != member_function_symbols.end(); it++)
     if (resolveValidParent<SgMemberFunctionSymbol>(*it)) {
-      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, size_t>(*it, file_id));
-//    std::cout << "   Method Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
+      p_symbol_to_file_id_map[*it] = file_id;
+//    std::cerr << "[Info] (MFB::Driver<Sage>::loadSymbols<SgMemberFunctionDeclaration>) Add: " << (*it)->get_name().getString() << " from File #" << file_id << std::endl;
     }
 }
 
