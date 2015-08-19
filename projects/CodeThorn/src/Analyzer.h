@@ -16,6 +16,7 @@
 #include <omp.h>
 
 #include <boost/unordered_set.hpp>
+#include <boost/unordered_map.hpp>
 
 #include "AstTerm.h"
 #include "Labeler.h"
@@ -364,6 +365,11 @@ namespace CodeThorn {
     bool isLoopCondLabel(Label lab);
     int getApproximatedIterations() { return _approximated_iterations; }
     int getIterations() { return _iterations; }
+    string getVarNameByIdCode(int varIdCode) {return variableIdMapping.variableName(variableIdMapping.variableIdFromCode(varIdCode));};
+    void mapGlobalVarInsert(std::string name, int* addr);
+  public:
+    boost::unordered_map <std::string,int*> mapGlobalVarAddress;
+    boost::unordered_map <int*,std::string> mapAddressGlobalVar;
   private:
     set<int> _inputVarValues;
     list<int> _inputSequence;
@@ -410,23 +416,27 @@ namespace CodeThorn {
 #ifdef RERS_SPECIALIZATION
 // RERS-binary-binding-specific declarations
 #define STR_VALUE(arg) #arg
+
+// integer variables
+#define INIT_GLOBALVAR(VARNAME) VARNAME = new int[numberOfThreads];
 #define COPY_PSTATEVAR_TO_GLOBALVAR(VARNAME) VARNAME[thread_id] = pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().getIntValue();
-
 //cout<<"PSTATEVAR:"<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].toString()<<"="<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().toString()<<endl;
-
 #define COPY_GLOBALVAR_TO_PSTATEVAR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::CppCapsuleConstIntLattice(VARNAME[thread_id]);
 
-// macro used to generate the initialization of global variables in the hybrid analyzer (linked binary with threads)
-#define INIT_GLOBALVAR(VARNAME) VARNAME = new int[numberOfThreads];
+// pointers to integer variables
+#define INIT_GLOBALPTR(VARNAME) VARNAME = new int*[numberOfThreads]; 
+#define COPY_PSTATEPTR_TO_GLOBALPTR(VARNAME) VARNAME[thread_id] = analyzer->mapGlobalVarAddress[analyzer->getVarNameByIdCode(pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().getIntValue())]
+#define COPY_GLOBALPTR_TO_PSTATEPTR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::CppCapsuleConstIntLattice(analyzer->globalVarIdByName(analyzer->mapAddressGlobalVar[VARNAME[thread_id]]).getIdCode());
+
+// create an entry in the mapping    <var_address>  <-->  <var_name>
+#define REGISTER_GLOBAL_VAR_ADDRESS(VARNAME) analyzer->mapGlobalVarInsert(STR_VALUE(VARNAME), (int*) &VARNAME);
 
 namespace RERS_Problem {
   void rersGlobalVarsCallInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
   void rersGlobalVarsCallReturnInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
   void rersGlobalVarsArrayInit(int numberOfThreads);
-#if 0
-  // input variable passed as a parameter (obsolete since transformation of "input" into a global varialbe)
-  void calculate_output(int);
-#endif
+  void createGlobalVarAddressMaps(CodeThorn::Analyzer* analyzer);
+
   void calculate_output(int numberOfThreads);
   extern int* output;
 }

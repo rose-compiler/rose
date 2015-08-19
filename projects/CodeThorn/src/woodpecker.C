@@ -283,9 +283,14 @@ int main(int argc, char* argv[]) {
     printResult(variableIdMapping,varConstSetMap);
 
   if(csvConstResultFileName) {
-    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&variableIdMapping);
-    cout<<"INFO: number of used vars inside functions: "<<setOfUsedVars.size()<<endl;
-    fiConstAnalysis.filterVariables(setOfUsedVars);
+    VariableIdSet setOfUsedVarsInFunctions=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&variableIdMapping);
+    VariableIdSet setOfUsedVarsGlobalInit=AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(root,&variableIdMapping);
+    VariableIdSet setOfAllUsedVars = setOfUsedVarsInFunctions;
+    setOfAllUsedVars.insert(setOfUsedVarsGlobalInit.begin(), setOfUsedVarsGlobalInit.end());
+    cout<<"INFO: number of used vars inside functions: "<<setOfUsedVarsInFunctions.size()<<endl;
+    cout<<"INFO: number of used vars in global initializations: "<<setOfUsedVarsGlobalInit.size()<<endl;
+    cout<<"INFO: number of vars inside functions or in global inititializations: "<<setOfAllUsedVars.size()<<endl;
+    fiConstAnalysis.filterVariables(setOfAllUsedVars);
     fiConstAnalysis.writeCvsConstResult(variableIdMapping, string(csvConstResultFileName));
   }
 
@@ -297,10 +302,12 @@ int main(int argc, char* argv[]) {
     for(std::list<SgVariableDeclaration*>::iterator i=globalVarDeclList.begin();i!=globalVarDeclList.end();++i) {
       SgInitializedNamePtrList& initNamePtrList=(*i)->get_variables();
       for(SgInitializedNamePtrList::iterator j=initNamePtrList.begin();j!=initNamePtrList.end();++j) {
-	SgInitializedName* initName=*j;
-	SgName varName=initName->get_name();
-	string varNameString=varName; // implicit conversion
-	varNameSet.insert(varNameString);
+	      SgInitializedName* initName=*j;
+        if ( true || isSgArrayType(initName->get_type()) ) {  // optional filter (array variables only)
+	        SgName varName=initName->get_name();
+	        string varNameString=varName; // implicit conversion
+	        varNameSet.insert(varNameString);
+        }
       }
     }
     string code=gen.generateCodeForGlobalVarAdressMaps(varNameSet);

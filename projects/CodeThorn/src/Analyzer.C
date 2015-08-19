@@ -965,7 +965,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 #endif
             // RERS global vars binary handling
             PState _pstate=*estate->pstate();
-            RERS_Problem::rersGlobalVarsCallInit(this,_pstate, omp_get_thread_num() );
+            RERS_Problem::rersGlobalVarsCallInit(this,_pstate, omp_get_thread_num());
             //cout << "DEBUG: global vars initialized before call"<<endl;
 
 #if 0
@@ -2729,6 +2729,7 @@ void Analyzer::runSolver5() {
   if(boolOptions["rers-binary"]) {
     cout << "DEBUG: init of globals with arrays for "<< workers << " threads. " << endl;
     RERS_Problem::rersGlobalVarsArrayInit(workers);
+    RERS_Problem::createGlobalVarAddressMaps(this);
   }
 #endif
   cout <<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
@@ -3588,4 +3589,9 @@ void Analyzer::continueAnalysisFrom(EState * newStartEState) {
   Transition transition(_latestOutputEState,edge,_estateBeforeMissingInput); 
   transitionGraph.add(transition);
   runSolver();
+}
+
+void Analyzer::mapGlobalVarInsert(std::string name, int* addr) {
+  mapGlobalVarAddress[name]=addr;
+  mapAddressGlobalVar[addr]=name;
 }
