@@ -76,7 +76,7 @@ void Generator::insertUserConfig(::DLX::TileK::language_t::directive_t * directi
 }
 
 std::string Generator::kernel_file_tag("kernel");
-std::string Generator::kernel_file_ext("cl");
+std::string Generator::kernel_file_ext("cu");
 
 std::string Generator::static_file_tag("static");
 std::string Generator::static_file_ext("c");

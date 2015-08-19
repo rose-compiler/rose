@@ -61,7 +61,7 @@ void tilek_opencl_init() {
 
   size_t opts_length = strlen(opencl_kernel_options) + 1;
 
-  char * context_storage_modifier = " -DCOMPILE_FOR_KERNEL=1 -DSTORAGE_MODIFIER=__constant";
+  char * context_storage_modifier = " -DCOMPILE_FOR_KERNEL=1 -DSTORAGE_MODIFIER=__constant -DDEVICE_FUNCTION_MODIFIER";
   opts_length += strlen(context_storage_modifier);
 
 #if COMPILE_OPENCL_KERNEL_WITH_DEBUG == 1
