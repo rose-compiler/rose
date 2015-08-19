@@ -101,8 +101,8 @@ $(TOOLNAME3)_rers10: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3)
 
 
 # Create a specialized hybrid analyzer for the given RERS problem. Uses several input parameters, is called by the "generate_rers_hybrid_analyzer" script
-$(TOOLNAME3)_$(PROBLEM): $(OBJECT_FILES_REMOTE) $(HYBRID_DIR)/$(PROBLEM)_copy_functions.o
-	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES_REMOTE) $(PROBLEM)_copy_functions.o -lfl -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM)
+$(TOOLNAME3)_$(PROBLEM): $(OBJECT_FILES_REMOTE) $(HYBRID_DIR)/$(PROBLEM)_copy_functions.o 
+	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES_REMOTE) $(PROBLEM)_copy_functions.o -lfl -L$(CT_BUILD_DIR)/.libs -lspray -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM)
 
 
 xxtest: xxtest.C $(OBJECT_FILES)

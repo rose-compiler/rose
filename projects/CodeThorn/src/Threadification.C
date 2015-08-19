@@ -23,7 +23,9 @@ VariableIdSet Threadification::determineVariablesOfInterest(SgNode* root) {
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
       VariableId varId=_variableIdMapping->variableId(varDecl);
       // specifically exclude array variable declarations
-      if(_variableIdMapping->hasPointerType(varId)||_variableIdMapping->hasIntegerType(varId)) {
+      if( (_variableIdMapping->hasPointerType(varId)||_variableIdMapping->hasIntegerType(varId)) 
+            && _variableIdMapping->variableName(varId) != "stdout" 
+            && _variableIdMapping->variableName(varId) != "__PRETTY_FUNCTION__" ) {
         varIdSet.insert(varId);
       }
     }

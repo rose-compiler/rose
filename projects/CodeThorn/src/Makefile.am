@@ -433,6 +433,7 @@ check-local:
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
 	rm -f *.consistent
+	$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) . #test the analysis of RERS Problem1403 (which features arrays)
 	$(srcdir)/scripts/runLtlRegressionTests $(srcdir) . #run RERS examples in several versions and compare to previous results
 	$(srcdir)/scripts/run_tests_cegpra $(srcdir) . #run CEGPRA tests
 
