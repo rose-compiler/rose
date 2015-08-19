@@ -355,6 +355,14 @@ string Flow::toDot(Labeler* labeler) {
         ss<<SgNodeHelper::nodeToString(node);
       } else if(labeler->isFunctionCallReturnLabel(*i)) {
         ss<<"CallReturn:";
+      } else if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(node)) {
+        ss<<"case "<<caseStmt->get_key()->unparseToString();
+        if(SgExpression* expr=caseStmt->get_key_range_end()) {
+          ss<<" ... "<<expr->unparseToString();
+        }
+        ss<<":";
+      } else if(isSgDefaultOptionStmt(node)) {
+        ss<<"default:";
       } else {
         ss<<SgNodeHelper::nodeToString(node);
       }

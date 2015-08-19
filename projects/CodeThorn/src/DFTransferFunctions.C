@@ -247,14 +247,17 @@ void DFTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* 
 }
 
 void DFTransferFunctions::addParameterPassingVariables() {
-  std::stringstream ss;
   std::string nameprefix="$p";
+  /* this variable is necessary to know the id-range where parameter
+     passing variable-ids are starting in the id-range.
+  */
   parameter0VariableId=_variableIdMapping->createUniqueTemporaryVariableId(nameprefix+"0");
   for(int i=1;i<20;i++) {
+    std::stringstream ss;
     ss<<nameprefix<<i;
     string varName=ss.str();
+    cout<<"Creating parameter name:"<<varName<<endl;
     _variableIdMapping->createUniqueTemporaryVariableId(varName);
-
   }
   resultVariableId=_variableIdMapping->createUniqueTemporaryVariableId("$r");
 }

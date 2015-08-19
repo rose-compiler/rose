@@ -100,6 +100,7 @@ void generateRessourceUsageVis(RDAnalysis* rdAnalyzer) {
 
 void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAnalysis) {
   cout<<"STATUS: checking static array bounds."<<endl;
+  int issuesFound=0;
   SPRAY::Labeler* labeler=intervalAnalysis->getLabeler();
   for(Labeler::iterator j=labeler->begin();j!=labeler->end();++j) {
     SgNode* node=labeler->getNode(*j);
@@ -141,6 +142,7 @@ void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAn
                     <<" of size "<<arraySize
                     <<")"
                     <<endl;
+                issuesFound++;
               }
             } else if(intervalPropertyState->isBot()) {
               cout<<"ANALYSIS: not reachable: "<<node->unparseToString()<<endl;
@@ -156,6 +158,9 @@ void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAn
         }
       }
     }
+  }
+  if(issuesFound==0) {
+    cout<<"PASS: No out of bounds accesses on static arrays in this program."<<endl;
   }
 }
 
@@ -524,6 +529,11 @@ int main(int argc, char* argv[]) {
     cfAnalysis->intraInterFlow(flow,interFlow);
     string dotString=flow.toDot(labeler);
     writeFile("icfg.dot",dotString);
+
+    cout << "generating icfg-clustered.dot."<<endl;
+    DataDependenceVisualizer ddvis(labeler,&variableIdMapping,"none");
+    ddvis.generateDotFunctionClusters(root,cfAnalysis,"icfg-clustered.dot",false);
+
     delete cfAnalysis;
     exit(0);
   }
