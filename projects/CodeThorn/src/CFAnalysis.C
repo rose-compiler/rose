@@ -103,7 +103,7 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
   cout << "INFO: number of function call labels: "<<callLabs.size()<<endl;
   for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
     SgNode* callNode=getNode(*i);
-    cout<<"INFO: creating inter-flow for "<<callNode->unparseToString();
+    //cout<<"INFO: creating inter-flow for "<<callNode->unparseToString();
     //info: callNode->get_args()
     SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
     if(!funCall) 
