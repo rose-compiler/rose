@@ -24,9 +24,9 @@ template<typename Type>
 class GenericIntervalLattice {
   // creates an interval with a known left and right boundary
  public:
- GenericIntervalLattice():_exactJoin(false) { setTop();}
- GenericIntervalLattice(Type number):_low(number),_high(number),_isLowInf(false),_isHighInf(false),_exactJoin(false) {} 
- GenericIntervalLattice(Type left, Type right):_low(left),_high(right),_isLowInf(false),_isHighInf(false),_exactJoin(false) {} 
+ GenericIntervalLattice():_exactJoin(true) { setTop();}
+ GenericIntervalLattice(Type number):_low(number),_high(number),_isLowInf(false),_isHighInf(false),_exactJoin(true) {} 
+ GenericIntervalLattice(Type left, Type right):_low(left),_high(right),_isLowInf(false),_isHighInf(false),_exactJoin(true) {} 
   void setExactJoin(bool exact) { _exactJoin=exact; }
   static GenericIntervalLattice highInfInterval(Type left) {
     GenericIntervalLattice t;
@@ -230,7 +230,7 @@ class GenericIntervalLattice {
     }
     if(isLowInf()||other.isLowInf()) {
       setIsLowInf(true);
-    } else {
+   } else {
       if(_exactJoin) {
         _low=std::min(_low,other._low);
       } else {

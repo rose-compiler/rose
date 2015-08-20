@@ -52,7 +52,12 @@ void SPRAY::IntervalPropertyState::combine(Lattice& other0){
     _bot=false;
   for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
     VariableId varId=(*i).first;
-    intervals[varId].join(other->intervals[varId]);
+    if(other->intervals.find(varId)==other->intervals.end()) {
+      // ps's variable is not in other's ps
+      // nothing to do - assume bot in this case
+    }else {
+      intervals[varId].join(other->intervals[varId]);
+    }
   }
   for(IntervalMapType::iterator i=other->intervals.begin();i!=other->intervals.end();++i) {
     VariableId varId=(*i).first;

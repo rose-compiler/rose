@@ -77,10 +77,19 @@ SPRAY::PASolver1::runSolver() {
       
       bool isApproximatedBy=info->approximatedBy(*_analyzerDataPreInfo[lab1.getId()]);
       if(!isApproximatedBy) {
+        if(_trace) {
+          cout<<"TRACE: old df value : "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
+          cout<<endl;
+        }
+        if(_trace) {
+          cout<<"TRACE: combined with: "<<lab1<<":";info->toStream(cout,0);
+          cout<<endl;
+        }
+
         _analyzerDataPreInfo[lab1.getId()]->combine(*info);
         
         if(_trace) {
-          cout<<"TRACE: new df value: "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
+          cout<<"TRACE: new df value : "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
           cout<<endl;
         }
         

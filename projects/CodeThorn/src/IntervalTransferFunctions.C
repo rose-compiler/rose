@@ -60,7 +60,7 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
       NumberIntervalLattice numStart=evalExpression(lab, caseExpr, pstate);;
       NumberIntervalLattice numEnd=evalExpression(lab, caseExprOptionalRangeEnd, pstate);;
       num=NumberIntervalLattice::join(numStart,numEnd);
-      cout<<"DEBUG: range: "<<num.toString()<<endl;
+      //cout<<"DEBUG: range: "<<num.toString()<<endl;
     }
 #if 0
     if(SgIntVal* sgIntVal=isSgIntVal(caseExpr)) {
