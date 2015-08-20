@@ -2126,6 +2126,10 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DXN (09/14/2011):
           case V_SgNullifyStatement:
 
+          #ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT           
+          case V_SgMatlabForStatement:
+          #endif
+
        // Ignore these scope statements since they are not yet shared
           case V_SgScopeStatement:
           case V_SgBasicBlock:
@@ -2136,14 +2140,10 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgDoWhileStmt:
           case V_SgSwitchStatement:
           case V_SgWhileStmt:
-
-#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT           
-        case V_SgMatlabForStatement:
-             {
+            {
                nodeList.insert(node);
                break;
              }
-#endif
        // DQ (9/8/2012): Added missing case for SgTemplateFunctionDefinition.
           case V_SgTemplateFunctionDefinition:
           case V_SgFunctionDefinition:
