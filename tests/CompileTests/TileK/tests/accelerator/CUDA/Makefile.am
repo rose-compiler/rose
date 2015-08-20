@@ -32,7 +32,7 @@ C_FLAGS+=-I@CUDA_INC_DIR@
 LD_FLAGS+=-L@CUDA_LIB_DIR@ -lcuda -lcudart
 
 NVCC=@CUDA_BIN_DIR@/nvcc
-NVCC_FLAGS+=--compiler-bindir=@CUDA_BIN_DIR@/gcc-4.4
+#NVCC_FLAGS+=--compiler-bindir=@CUDA_BIN_DIR@/gcc-4.4
 else
 CHECK_TARGET+=rose_test_1.c rose_test_2.c
 endif

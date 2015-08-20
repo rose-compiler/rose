@@ -76,8 +76,9 @@ void klt_user_schedule(
     int jit_reg_count = 32;
     jit_opt_vals[2] = (void *)(size_t)jit_reg_count;
 
+    printf("> PTX source: %s\n", ptx_source_file);
     err = cuModuleLoadDataEx(&cu_module, ptx_source_file, 3, jit_options, (void **)jit_opt_vals);
-//  printf("> PTX JIT log:\n%s\n", jit_log_buffer);
+    printf("> PTX JIT log:\n%s\n", jit_log_buffer);
     assert(err == CUDA_SUCCESS);
   }
 

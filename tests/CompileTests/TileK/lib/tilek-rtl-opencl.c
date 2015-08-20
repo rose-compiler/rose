@@ -61,7 +61,7 @@ void tilek_opencl_init() {
 
   size_t opts_length = strlen(opencl_kernel_options) + 1;
 
-  char * context_storage_modifier = " -DCOMPILE_FOR_KERNEL=1 -DSTORAGE_MODIFIER=__constant -DDEVICE_FUNCTION_MODIFIER";
+  char * context_storage_modifier = " -DCOMPILE_FOR_KERNEL=1 -DSTORAGE_MODIFIER=__constant -DDEVICE_FUNCTION_MODIFIER=";
   opts_length += strlen(context_storage_modifier);
 
 #if COMPILE_OPENCL_KERNEL_WITH_DEBUG == 1
@@ -179,6 +179,13 @@ void klt_user_schedule(
 
   for (i = 0; i < subkernel->num_data; i++) {
     err = clEnqueueReadBuffer(tilek_cl_queue, tilek_cl_data[i], CL_FALSE, 0, tilek_size_data[i], kernel->data[subkernel->data_ids[i]].ptr, 0, NULL, NULL);
+    assert(err == CL_SUCCESS);
+  }
+
+  clFinish(tilek_cl_queue);
+
+  for (i = 0; i < subkernel->num_data; i++) {
+    err = clReleaseMemObject(tilek_cl_data[i]);
     assert(err == CL_SUCCESS);
   }
 
