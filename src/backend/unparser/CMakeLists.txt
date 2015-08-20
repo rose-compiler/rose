@@ -21,10 +21,6 @@ else (WIN32)
   if(enable-python)
     add_subdirectory(PythonCodeGeneration)
   endif()
-
-  #if(enable-matlab)
-    add_subdirectory(MatlabCodeGeneration)
-  #endif()
 endif (WIN32)
 
 
@@ -42,8 +38,6 @@ add_library (unparser OBJECT
   CxxCodeGeneration/unparseCxx_expressions.C
   CxxCodeGeneration/unparseCxx_statements.C
   PHPCodeGeneration/unparsePHP.C
-  MatlabCodeGeneration/MatlabUnparser.cc
-  MatlabCodeGeneration/MatlabUnparserBottomUpTraversal.cc
   astUnparseAttribute.C
   unparser.C
   nameQualificationSupport.C
