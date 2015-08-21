@@ -723,6 +723,7 @@ class Analysis {
 private:
     InstructionSemantics2::BaseSemantics::DispatcherPtr cpu_;
     const RegisterDictionary *regDict_;                 // Names for the register parts
+    const Definition *defaultCc_;                       // Default calling convention for called functions
 
     bool hasResults_;                                   // Are the following data members initialized?
     bool didConverge_;                                  // Are the following data members valid (else only approximations)?
@@ -759,6 +760,17 @@ public:
      *  defaults used by @ref InstructionSemantics::SymbolicSemantics. */
     Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
         : cpu_(cpu), regDict_(NULL), hasResults_(false), didConverge_(false) {}
+
+    /** Property: Default calling convention.
+     *
+     *  The data-flow portion of the analysis uses analysis results previously computed for called functions. If a called
+     *  function has no previous analysis result then a default calling convention can be specified for this property and that
+     *  convention's definition determines how the called function modifies the current function's data-flow state.
+     *
+     * @{ */
+    const Definition* defaultCallingConvention() const { return defaultCc_; }
+    void defaultCallingConvention(const Definition *x) { defaultCc_ = x; }
+    /** @} */
 
     /** Analyze one function.
      *
@@ -829,6 +841,12 @@ public:
      *
      *  Locations for stack-based parameters that are used as outputs of the function. */
     const StackVariables& outputStackParameters() const { return outputStackParameters_; }
+
+    /** Concrete stack delta.
+     *
+     *  This is the amount added to the stack pointer by the function.  For caller-cleanup this is usually just the size of the
+     *  non-parameter area (the return address). Stack deltas are measured in bytes. */
+    Sawyer::Optional<int64_t> stackDelta() const { return stackDelta_; }
 
     /** Determine whether a definition matches.
      *

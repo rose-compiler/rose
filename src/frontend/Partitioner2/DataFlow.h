@@ -138,14 +138,31 @@ class TransferFunction {
     BaseSemantics::DispatcherPtr cpu_;
     BaseSemantics::SValuePtr callRetAdjustment_;
     const RegisterDescriptor STACK_POINTER_REG;
+    const CallingConvention::Definition *defaultCallingConvention_;
 public:
-    TransferFunction(const BaseSemantics::DispatcherPtr &cpu, const RegisterDescriptor &stackPointerRegister)
-        : cpu_(cpu), STACK_POINTER_REG(stackPointerRegister) {
+    /** Construct from a CPU.
+     *
+     *  Constructs a new transfer function using the specified @p cpu. */
+    explicit TransferFunction(const BaseSemantics::DispatcherPtr &cpu)
+        : cpu_(cpu), STACK_POINTER_REG(cpu->stackPointerRegister()), defaultCallingConvention_(NULL) {
         size_t adjustment = STACK_POINTER_REG.get_nbits() / 8; // sizeof return address on top of stack
         callRetAdjustment_ = cpu->number_(STACK_POINTER_REG.get_nbits(), adjustment);
     }
 
+    /** Construct an initial state. */
     BaseSemantics::StatePtr initialState() const;
+
+    /** Property: Default calling convention.
+     *
+     *  The default calling convention is used whenever a call is made to a function that has no calling convention
+     *  information. It specifies which registers should be clobbered by the call and how the stack is adjusted when returning
+     *  from the call.  The default calling convention may be a null pointer to indicate that absolutely nothing is known about
+     *  the convention of non-analyzed functions.
+     *
+     * @{ */
+    const CallingConvention::Definition* defaultCallingConvention() const { return defaultCallingConvention_; }
+    void defaultCallingConvention(const CallingConvention::Definition *x) { defaultCallingConvention_ = x; }
+    /** @} */
 
     // Required by dataflow engine: should return a deep copy of the state
     BaseSemantics::StatePtr operator()(const BaseSemantics::StatePtr &incomingState) const {

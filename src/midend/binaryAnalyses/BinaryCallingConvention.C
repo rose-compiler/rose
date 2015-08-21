@@ -71,6 +71,7 @@ dictionaryX86() {
         // 32-bit
         //--------
 
+#if 0 // [Robb P. Matzke 2015-08-21]: don't bother distinguishing because alignment is not used yet.
         // cdecl: gcc < 4.5 uses 4-byte stack alignment
         Definition cc = Definition::x86_32bit_cdecl();
         cc.comment(cc.comment() + " 4-byte alignment");
@@ -82,6 +83,9 @@ dictionaryX86() {
         cc.comment(cc.comment() + " 16-byte alignment");
         cc.stackAlignment(16);
         dict.push_back(cc);
+#else
+        dict.push_back(Definition::x86_32bit_cdecl());
+#endif
 
         // other conventions
         dict.push_back(Definition::x86_32bit_stdcall());
@@ -91,6 +95,7 @@ dictionaryX86() {
         // 64-bit
         //--------
 
+#if 0 // [Robb P. Matzke 2015-08-21]: don't bother distinguishing because alignment is not used yet.
         // cdecl: gcc < 4.5 uses 4-byte stack alignment
         cc = Definition::x86_64bit_cdecl();
         cc.comment(cc.comment() + " 4-byte alignment");
@@ -102,6 +107,9 @@ dictionaryX86() {
         cc.comment(cc.comment() + " 16-byte alignment");
         cc.stackAlignment(16);
         dict.push_back(cc);
+#else
+        dict.push_back(Definition::x86_64bit_cdecl());
+#endif
 
         // other conventions
         dict.push_back(Definition::x86_64bit_stdcall());
@@ -487,7 +495,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     typedef DataFlow::Engine<DfCfg, StatePtr, P2::DataFlow::TransferFunction, DataFlow::SemanticsMerge> DfEngine;
     DispatcherPtr cpu = partitioner.newDispatcher(partitioner.newOperators());
     P2::DataFlow::MergeFunction merge(cpu);
-    P2::DataFlow::TransferFunction xfer(cpu, partitioner.instructionProvider().stackPointerRegister());
+    P2::DataFlow::TransferFunction xfer(cpu);
+    xfer.defaultCallingConvention(defaultCc_);
     DfEngine dfEngine(dfCfg, xfer, merge);
     dfEngine.maxIterations(dfCfg.nVertices() * 5);      // arbitrary
     regDict_ = cpu->get_register_dictionary();

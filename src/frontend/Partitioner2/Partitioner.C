@@ -1844,17 +1844,19 @@ Partitioner::detachFunction(const Function::Ptr &function) {
 }
 
 const CallingConvention::Analysis&
-Partitioner::functionCallingConvention(const Function::Ptr &function) const {
+Partitioner::functionCallingConvention(const Function::Ptr &function,
+                                       const CallingConvention::Definition *dfltCc/*=NULL*/) const {
     ASSERT_not_null(function);
     if (!function->callingConventionAnalysis().hasResults()) {
         function->callingConventionAnalysis() = CallingConvention::Analysis(newDispatcher(newOperators()));
+        function->callingConventionAnalysis().defaultCallingConvention(dfltCc);
         function->callingConventionAnalysis().analyzeFunction(*this, function);
     }
     return function->callingConventionAnalysis();
 }
 
 void
-Partitioner::allFunctionCallingConvention() const {
+Partitioner::allFunctionCallingConvention(const CallingConvention::Definition *dfltCc/*=NULL*/) const {
     using namespace Sawyer::Container::Algorithm;
     FunctionCallGraph cg = functionCallGraph();
     size_t nFunctions = cg.graph().nVertices();
@@ -1869,7 +1871,7 @@ Partitioner::allFunctionCallingConvention() const {
                         t.skipChildren();
                 } else if (!visited[t.vertex()->id()]) {
                     ASSERT_require(t.event() == LEAVE_VERTEX);
-                    functionCallingConvention(t.vertex()->value());
+                    functionCallingConvention(t.vertex()->value(), dfltCc);
                     visited[t.vertex()->id()] = true;
                     ++progress;
                 }

@@ -443,38 +443,80 @@ BaseSemantics::StatePtr
 TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const {
     BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
     BaseSemantics::StatePtr retval = incomingState->clone();
+    const RegisterDictionary *regDict = cpu_->get_register_dictionary();
     ops->set_state(retval);
 
     DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);
     ASSERT_require(vertex != dfCfg.vertices().end());
     if (DfCfgVertex::FAKED_CALL == vertex->value().type()) {
-        // Adjust the stack pointer as if the function call returned.  If we know the function delta then use it, otherwise
-        // assume it just pops the return value.
-        BaseSemantics::SValuePtr delta;
-        if (Function::Ptr callee = vertex->value().callee())
-            delta = callee->stackDelta().getOptional().orDefault();
+        Function::Ptr callee = vertex->value().callee();
+        bool isStackPtrFixed = false;
+        BaseSemantics::RegisterStateGenericPtr genericRegState =
+            boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(retval->get_register_state());
 
-        // Update the result state
-        BaseSemantics::SValuePtr newStack;
-        if (delta) {
-            BaseSemantics::SValuePtr oldStack = ops->readRegister(STACK_POINTER_REG);
-            newStack = ops->add(oldStack, delta);
-        } else if (false) { // FIXME[Robb P. Matzke 2014-12-15]: should only apply if caller cleans up arguments
-            // We don't know the callee's delta, so assume that the callee pops only its return address. This is usually
-            // the correct for caller-cleanup ABIs common on Unix/Linux, but not usually correct for callee-cleanup ABIs
-            // common on Microsoft systems.
-            BaseSemantics::SValuePtr oldStack = ops->readRegister(STACK_POINTER_REG);
-            newStack = ops->add(oldStack, callRetAdjustment_);
+        // Clobber registers that are modified by the callee. The extra calls to updateWriteProperties is because most
+        // RiscOperators implementation won't do that if they don't have a current instruction (which we don't).
+        if (callee && callee->callingConventionAnalysis().hasResults()) {
+            // A previous calling convention analysis knows what registers are clobbered by the call.
+            const CallingConvention::Analysis &ccAnalysis = callee->callingConventionAnalysis();
+            BOOST_FOREACH (const RegisterDescriptor &reg, ccAnalysis.outputRegisters().listAll(regDict)) {
+                ops->writeRegister(reg, ops->undefined_(reg.get_nbits()));
+                if (genericRegState)
+                    genericRegState->insertProperties(reg, BaseSemantics::IO_WRITE);
+            }
+            if (ccAnalysis.stackDelta()) {
+                ops->writeRegister(STACK_POINTER_REG,
+                                   ops->add(ops->readRegister(STACK_POINTER_REG),
+                                            ops->number_(STACK_POINTER_REG.get_nbits(), *ccAnalysis.stackDelta())));
+                if (genericRegState)
+                    genericRegState->updateWriteProperties(STACK_POINTER_REG, BaseSemantics::IO_WRITE);
+                isStackPtrFixed = true;
+            }
+        } else if (defaultCallingConvention_) {
+            // Use a default calling convention definition to decide what registers should be clobbered. Don't clobber the
+            // stack pointer because we might be able to adjust it more intelligently below.
+            BOOST_FOREACH (const CallingConvention::ParameterLocation &loc, defaultCallingConvention_->outputParameters()) {
+                if (loc.type() == CallingConvention::ParameterLocation::REGISTER && loc.reg() != STACK_POINTER_REG) {
+                    ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().get_nbits()));
+                    if (genericRegState)
+                        genericRegState->updateWriteProperties(loc.reg(), BaseSemantics::IO_WRITE);
+                }
+            }
+            BOOST_FOREACH (const RegisterDescriptor &reg, defaultCallingConvention_->scratchRegisters()) {
+                if (reg != STACK_POINTER_REG) {
+                    ops->writeRegister(reg, ops->undefined_(reg.get_nbits()));
+                    if (genericRegState)
+                        genericRegState->updateWriteProperties(reg, BaseSemantics::IO_WRITE);
+                }
+            }
         } else {
-            // We don't know the callee's delta, therefore we don't know how to adjust the delta for the callee's effect.
-            newStack = ops->undefined_(STACK_POINTER_REG.get_nbits());
+            // We have not performed a calling convention analysis and we don't have a default calling convention definition. A
+            // conservative approach would need to set all registers to bottom.  We'll only adjust the stack pointer (below).
         }
-        ASSERT_not_null(newStack);
 
-        // FIXME[Robb P. Matzke 2014-12-15]: We should also reset any part of the state that might have been modified by
-        // the called function(s). Unfortunately we don't have good ABI information at this time, so be permissive and
-        // assume that the callee doesn't have any effect on registers except the stack pointer.
-        ops->writeRegister(STACK_POINTER_REG, newStack);
+        // Adjust the stack pointer if we haven't already.
+        if (!isStackPtrFixed) {
+            BaseSemantics::SValuePtr newStack, delta;
+            if (callee)
+                delta = callee->stackDelta().getOptional().orDefault();
+            if (delta) {
+                BaseSemantics::SValuePtr oldStack = ops->readRegister(STACK_POINTER_REG);
+                newStack = ops->add(oldStack, delta);
+            } else if (false) { // FIXME[Robb P. Matzke 2014-12-15]: should only apply if caller cleans up arguments
+                // We don't know the callee's delta, so assume that the callee pops only its return address. This is usually
+                // the correct for caller-cleanup ABIs common on Unix/Linux, but not usually correct for callee-cleanup ABIs
+                // common on Microsoft systems.
+                BaseSemantics::SValuePtr oldStack = ops->readRegister(STACK_POINTER_REG);
+                newStack = ops->add(oldStack, callRetAdjustment_);
+            } else {
+                // We don't know the callee's delta, therefore we don't know how to adjust the delta for the callee's effect.
+                newStack = ops->undefined_(STACK_POINTER_REG.get_nbits());
+            }
+            ASSERT_not_null(newStack);
+            ops->writeRegister(STACK_POINTER_REG, newStack);
+            if (genericRegState)
+                genericRegState->updateWriteProperties(STACK_POINTER_REG, BaseSemantics::IO_WRITE);
+        }
 
     } else if (DfCfgVertex::FUNCRET == vertex->value().type()) {
         // Identity semantics; this vertex just merges all the various return blocks in the function.

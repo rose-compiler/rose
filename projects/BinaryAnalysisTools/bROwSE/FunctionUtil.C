@@ -363,7 +363,7 @@ functionDataFlow(P2::Partitioner &partitioner, const P2::Function::Ptr &function
             P2::DataFlow::DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), startVertex, ipPredicate);
 
             // Dataflow
-            P2::DataFlow::TransferFunction xfer(cpu, partitioner.instructionProvider().stackPointerRegister());
+            P2::DataFlow::TransferFunction xfer(cpu);
             P2::DataFlow::MergeFunction merge(cpu);
             typedef DataFlow::Engine<P2::DataFlow::DfCfg, BaseSemantics::StatePtr,
                                      P2::DataFlow::TransferFunction, P2::DataFlow::MergeFunction> Engine;

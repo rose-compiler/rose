@@ -769,8 +769,11 @@ RiscOperators::readRegister(const RegisterDescriptor &reg)
     PartialDisableUsedef du(this);
     BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::readRegister(reg);
 
-    RegisterStatePtr regs = RegisterState::promote(get_state()->get_register_state());
-    regs->updateReadProperties(reg);
+    if (get_insn()) {
+        RegisterStatePtr regs = RegisterState::promote(get_state()->get_register_state());
+        regs->updateReadProperties(reg);
+    }
+
     return result;
 }
 
@@ -795,8 +798,8 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
                 regs->insertWriters(reg, insn->get_address());
                 break;
         }
+        regs->updateWriteProperties(reg, (insn ? BaseSemantics::IO_WRITE : BaseSemantics::IO_INIT));
     }
-    regs->updateWriteProperties(reg, (insn ? BaseSemantics::IO_WRITE : BaseSemantics::IO_INIT));
 }
 
 BaseSemantics::SValuePtr
