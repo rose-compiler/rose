@@ -663,5 +663,5 @@ CODETHORN_TESTS= \
     tests/switchtest1.C \
     tests/switchtest2.C \
     tests/switchtest3.C \
-    examples/example-invocations.sh 
-
+    examples/example-invocations.sh \
+    tests/normalization1.C

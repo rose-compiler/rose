@@ -123,7 +123,7 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
       exitLabel=Labeler::NO_LABEL;
       callReturnLabel=labeler->functionCallReturnLabel(callNode);
     } else {
-       cout<<" [definition found]"<<endl;
+      //cout<<" [definition found]"<<endl;
       callLabel=*i;
       entryLabel=labeler->functionEntryLabel(funDef);
       exitLabel=labeler->functionExitLabel(funDef);

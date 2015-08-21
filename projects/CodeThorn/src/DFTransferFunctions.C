@@ -256,7 +256,6 @@ void DFTransferFunctions::addParameterPassingVariables() {
     std::stringstream ss;
     ss<<nameprefix<<i;
     string varName=ss.str();
-    cout<<"Creating parameter name:"<<varName<<endl;
     _variableIdMapping->createUniqueTemporaryVariableId(varName);
   }
   resultVariableId=_variableIdMapping->createUniqueTemporaryVariableId("$r");
