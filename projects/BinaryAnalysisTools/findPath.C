@@ -193,7 +193,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
 
                     "@named{single-bfs}{" +
                     std::string(settings.searchMode==SEARCH_SINGLE_BFS?"This is the default. ":"") +
-                    "This is a breadth-first search that solves on path's feasibility at a time with short circuiting "
+                    "This is a breadth-first search that solves one path's feasibility at a time with short circuiting "
                     "of infeasible prefixes.  It finds the shortest feasible path. Loops are unrolled as many times "
                     "as necessary until a feasible path is found up to the @s{max-path-length}.  This search method "
                     "can consume more memory than the \"single-dfs\" method because multiple paths are in progress "

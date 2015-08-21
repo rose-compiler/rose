@@ -116,9 +116,9 @@ public:
                     // Function arguments
                     BOOST_FOREACH (const P2::DataFlow::StackVariable &var, P2::DataFlow::findFunctionArguments(ops, stackPtr)) {
                         char name[64];
-                        sprintf(name, "arg_%"PRIx64, var.offset);
-                        SValuePtr value = ops->undefined_(8*var.nBytes);
-                        value = ops->readMemory(SS, var.address, value, ops->boolean_(true));
+                        sprintf(name, "arg_%"PRIx64, var.location.offset);
+                        SValuePtr value = ops->undefined_(8*var.location.nBytes);
+                        value = ops->readMemory(SS, var.location.address, value, ops->boolean_(true));
                         std::string valueStr = toString(value);
                         if (!valueStr.empty())
                             locValPairs_.push_back(LocationValue(name, valueStr));
@@ -127,9 +127,9 @@ public:
                     // Function local variables
                     BOOST_FOREACH (const P2::DataFlow::StackVariable &var, P2::DataFlow::findLocalVariables(ops, stackPtr)) {
                         char name[64];
-                        sprintf(name, "var_%"PRIx64, -var.offset);
-                        SValuePtr value = ops->undefined_(8*var.nBytes);
-                        value = ops->readMemory(SS, var.address, value, ops->boolean_(true));
+                        sprintf(name, "var_%"PRIx64, -var.location.offset);
+                        SValuePtr value = ops->undefined_(8*var.location.nBytes);
+                        value = ops->readMemory(SS, var.location.address, value, ops->boolean_(true));
                         std::string valueStr = toString(value);
                         if (!valueStr.empty())
                             locValPairs_.push_back(LocationValue(name, valueStr));
