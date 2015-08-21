@@ -249,11 +249,8 @@ Grammar::setUpStatements ()
           "IOStatement", "IO_STATEMENT", false);
 #endif
 
-
-
-#if USE_MATLAB_IR_NODES == 1
+     //SK(08/20/2015): Matlab For-loop
      NEW_TERMINAL_MACRO (MatlabForStatement,    "MatlabForStatement",    "MATLAB_FOR_STATEMENT");
-#endif
      
 
 #if USE_UPC_IR_NODES
@@ -403,12 +400,7 @@ Grammar::setUpStatements ()
           Global                       | BasicBlock           | IfStmt               | ForStatement       | FunctionDefinition |
           ClassDefinition              | WhileStmt            | DoWhileStmt          | SwitchStatement    | CatchOptionStmt    |
           NamespaceDefinitionStatement | BlockDataStatement   | AssociateStatement   | FortranDo          | ForAllStatement    |
-          UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement | JavaLabelStatement
-
-#if USE_MATLAB_IR_NODES == 1
-          | MatlabForStatement
-#endif
-
+          UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement | JavaLabelStatement | MatlabForStatement
        /* | TemplateInstantiationDefn */,
           "ScopeStatement","SCOPE_STMT", false);
 
@@ -3124,8 +3116,7 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-
-#if USE_MATLAB_IR_NODES == 1
+     //SK: Matlab specific for loop
      MatlabForStatement.setFunctionPrototype ("HEADER_MATLAB_FOR_STATEMENT", "../Grammar/Statement.code" );
      MatlabForStatement.setDataPrototype ( "SgExpression*", "index", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
@@ -3133,7 +3124,6 @@ Grammar::setUpStatements ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
      MatlabForStatement.setDataPrototype ( "SgBasicBlock*", "body", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
-#endif
      
 
   // DQ (3/22/2007): Added new Fortran Nonblocked do loop construct. For example: "do 10 i=... \n 10 a = 1 \n"
@@ -3974,9 +3964,7 @@ Grammar::setUpStatements ()
 #endif
 
 
-#if USE_MATLAB_IR_NODES == 1
      MatlabForStatement.setFunctionSource            ( "SOURCE_MATLAB_FOR_STATEMENT", "../Grammar/Statement.code" );
-#endif
 
 #if 0
   // Every node needs a definition of the post_construction_initialization() member function

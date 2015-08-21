@@ -869,8 +869,7 @@ HEADER_TYPE_COMPLEX_TYPE_START
           virtual void set_type_kind ( SgExpression* type_kind );
 HEADER_TYPE_COMPLEX_TYPE_END
 
-#if USE_MATLAB_IR_NODES == 1
-
+//SK(08/20/2015): SgTypeTuple implementation
 HEADER_TYPE_TUPLE_START
     SgTypePtrList& get_types();
     const SgTypePtrList& get_types() const;
@@ -880,7 +879,6 @@ HEADER_TYPE_TUPLE_START
 
 HEADER_TYPE_TUPLE_END
 
-#endif
 
 HEADER_POINTER_MEMBER_TYPE_START
       //! \deprecated The class_of property has been replaced by the class_type property, an SgType
@@ -2560,7 +2558,6 @@ SOURCE_TYPE_SIGNED_128BIT_TYPE_END
 SOURCE_TYPE_UNSIGNED_128BIT_TYPE_START
 SOURCE_TYPE_UNSIGNED_128BIT_TYPE_END
 
-#if USE_MATLAB_IR_NODES == 1
 SOURCE_TYPE_TUPLE_START
 
 SgTypePtrList&
@@ -2580,7 +2577,6 @@ SgTypeTuple::prepend_type(SgType *what)
    { what->set_parent(this); p_types.insert(p_types.begin(), what); }
 
 SOURCE_TYPE_TUPLE_END
-#endif
 
 SOURCE_TYPE_LONG_DOUBLE_TYPE_START
 SOURCE_TYPE_LONG_DOUBLE_TYPE_END
