@@ -217,7 +217,7 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
                break;
              }
              
-#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
+
         case V_SgTypeMatrix:
           {
             SgTypeMatrix *matrixType = isSgTypeMatrix(type);
@@ -252,7 +252,6 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
             ROSE_ASSERT(nodeList.find(NULL) == nodeList.end());
             break;
           }
-#endif
           
        // DQ (9/5/2011): Added support for SgJavaParameterizedType.
           case V_SgJavaParameterizedType:
@@ -2126,9 +2125,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DXN (09/14/2011):
           case V_SgNullifyStatement:
 
-          #ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT           
           case V_SgMatlabForStatement:
-          #endif
 
        // Ignore these scope statements since they are not yet shared
           case V_SgScopeStatement:

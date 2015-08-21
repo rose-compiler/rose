@@ -1583,9 +1583,7 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
             
-#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
-          case V_SgMatlabForStatement:
-#endif
+          case V_SgMatlabForStatement: //SK: Matlab for statement
           case V_SgBasicBlock:
           case V_SgCatchOptionStmt:
           case V_SgDoWhileStmt:
