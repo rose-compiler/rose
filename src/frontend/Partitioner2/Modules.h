@@ -389,7 +389,7 @@ SgAsmBlock* buildGlobalBlockAst(const Partitioner&, bool relaxed=false);
  *
  *  Builds an abstract syntax tree from the control flow graph.  The returned SgAsmBlock will have child functions; each
  *  function (SgAsmFunction) will have child basic blocks; each basic block (SgAsmBlock) will have child instructions.  If @p
- *  relaxed is true then all IR nodes in the returned tree will satisfy ROSE's invariants concerning them at the expense of not
+ *  relaxed is false then all IR nodes in the returned tree will satisfy ROSE's invariants concerning them at the expense of not
  *  including certain things in the AST; otherwise, when @p relaxed is true, the AST will be as complete as possible but may
  *  violate some invariants.
  *

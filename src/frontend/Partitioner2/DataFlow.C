@@ -293,44 +293,57 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
     int64_t wordNBytes = initialStackPointer->get_width() / 8;
     ASSERT_require2(wordNBytes>0, "overflow");
 
-    // Find groups of consecutive addresses that were written to by the same instruction. This is how we coalesce adjacent
-    // bytes into larger variables.
-    typedef Sawyer::Container::Interval<int64_t> OffsetInterval;
-    typedef Sawyer::Container::IntervalMap<OffsetInterval /*stack_offset*/, rose_addr_t /*writer_addr*/> StackWriters;
-    StackWriters stackWriters;
-    typedef Sawyer::Container::Map<int64_t, BaseSemantics::SValuePtr> OffsetAddress;
-    OffsetAddress offsetAddress;                        // symbolic address for every byte found
+    // Find groups of consecutive addresses that were written to by the same instruction(s) and which have the same I/O
+    // properties. This is how we coalesce adjacent bytes into larger variables.
+    typedef Sawyer::Container::IntervalMap<StackVariableLocation::Interval, StackVariableMeta> CellCoalescer;
+    CellCoalescer cellCoalescer;
+    typedef Sawyer::Container::Map<int64_t, BaseSemantics::SValuePtr> OffsetAddress; // full address per stack offset
+    OffsetAddress offsetAddresses;
     if (BaseSemantics::MemoryCellListPtr memState = BaseSemantics::MemoryCellList::promote(state->get_memory_state())) {
         BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, memState->get_cells()) {
-            SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(cell->get_address());
+            SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(cell->get_address());
             ASSERT_require2(0 == cell->get_value()->get_width() % 8, "memory must be byte addressable");
             size_t nBytes = cell->get_value()->get_width() / 8;
             ASSERT_require(nBytes > 0);
-            if (Sawyer::Optional<int64_t> stackOffset = isStackAddress(addr->get_expression(), initialStackPointer, solver)) {
-                stackWriters.insert(OffsetInterval::baseSize(*stackOffset, nBytes), cell->latestWriter().orElse(0));
-                offsetAddress.insert(*stackOffset, addr);
+            if (Sawyer::Optional<int64_t> stackOffset = isStackAddress(address->get_expression(), initialStackPointer, solver)) {
+                StackVariableLocation location(*stackOffset, nBytes, address);
+                StackVariableMeta meta(cell->getWriters(), cell->ioProperties());
+                cellCoalescer.insert(location.interval(), meta);
+                for (size_t i=0; i<nBytes; ++i) {
+                    BaseSemantics::SValuePtr byteAddr = ops->add(address, ops->number_(address->get_width(), i));
+                    offsetAddresses.insert(*stackOffset+i, byteAddr);
+                }
             }
         }
     }
 
-    // Organize the intervals into a list of stack variables
+    // The cellCoalescer has automatically organized the individual bytes into the largest possible intervals that have the
+    // same set of writers and I/O properties.  We just need to pick them off in order to build the return value.
     std::vector<StackVariable> retval;
-    BOOST_FOREACH (const OffsetInterval &interval, stackWriters.intervals()) {
+    BOOST_FOREACH (const StackVariableLocation::Interval &interval, cellCoalescer.intervals()) {
         int64_t offset = interval.least();
         int64_t nRemaining = interval.size();
         ASSERT_require2(nRemaining>0, "overflow");
         while (nRemaining > 0) {
-            BaseSemantics::SValuePtr addr = offsetAddress.get(offset);
+            BaseSemantics::SValuePtr address = offsetAddresses[offset];
             int64_t nBytes = nRemaining;
-            if (offset < 0 && offset + nBytes > 0) {
-                // Never create a variable that spans memory below and above (or equal to) the initial stack pointer. The
-                // initial stack pointer is generally the boundary between local variables and function arguments (we're
-                // considering the call-return address to be an argument on machines that pass it on the stack).
+
+            // Never create a variable that spans memory below and above (or equal to) the initial stack pointer. The initial
+            // stack pointer is generally the boundary between local variables and function arguments (we're considering the
+            // call-return address to be an argument on machines that pass it on the stack).
+            if (offset < 0 && offset + nBytes > 0)
                 nBytes = -offset;
-            }
+
+            // Never create a variable that's wider than the architecture's natural word size.
             nBytes = std::min(nBytes, wordNBytes);
             ASSERT_require(nBytes>0 && nBytes<=nRemaining);
-            retval.push_back(StackVariable(offset, nBytes, addr));
+
+            // Create the stack variable.
+            StackVariableLocation location(offset, nBytes, address);
+            StackVariableMeta meta = cellCoalescer[offset];
+            retval.push_back(StackVariable(location, meta));
+
+            // Advance to next chunk of bytes within this interval
             offset += nBytes;
             nRemaining -= nBytes;
         }
@@ -343,7 +356,7 @@ findLocalVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
     StackVariables vars = findStackVariables(ops, initialStackPointer);
     StackVariables retval;
     BOOST_FOREACH (const StackVariable &var, vars) {
-        if (var.offset < 0)
+        if (var.location.offset < 0)
             retval.push_back(var);
     }
     return retval;
@@ -354,7 +367,7 @@ findFunctionArguments(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSema
     StackVariables vars = findStackVariables(ops, initialStackPointer);
     StackVariables retval;
     BOOST_FOREACH (const StackVariable &var, vars) {
-        if (var.offset >= 0)
+        if (var.location.offset >= 0)
             retval.push_back(var);
     }
     return retval;

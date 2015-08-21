@@ -2,192 +2,251 @@
 #define ROSE_BinaryAnalysis_CallingConvention_H
 
 #include <BaseSemantics2.h>
+#include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Partitioner.h>
+#include <RegisterParts.h>
 
 namespace rose {
 namespace BinaryAnalysis {
 
+/** Support for binary calling conventions.
+ *
+ *  This namespace has three main classes and a number of auxiliary classes. The main classes are:
+ *
+ *  @li @ref Definition describes a particular calling convention based on external documentation of that calling convention.
+ *
+ *  @li @ref Dictionary is a collection of calling convention definitions.
+ *
+ *  @li @ref Analyzer performs an analysis and can determine which definitions best match the characteristics of some
+ *      specified function. */
+namespace CallingConvention {
+
+/** Initialize diagnostics.
+ *
+ *  This is normally called as part of ROSE's diagnostics initialization, but it doesn't hurt to call it often. */
+void initDiagnostics();
+
+/** Facility for diagnostic output.
+ *
+ *  The facility can be controlled directly or via ROSE's command-line. */
+extern Sawyer::Message::Facility mlog;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      CallingConvention
+//                                      Miscellaneous small types
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Information about calling conventions. */
-class CallingConvention {
+/** The order that arguments are pushed onto the stack. */
+enum StackParameterOrder {
+    LEFT_TO_RIGHT,                                      /**< Stack parameters pushed left to right (Pascal order). */
+    RIGHT_TO_LEFT,                                      /**< Stack parameters pushed right to left (C order). */
+    ORDER_UNSPECIFIED,                                  /**< Stack parameter order is unknown or unspecified. */
+};
+
+/** The direction in which the stack grows. */
+enum StackDirection {
+    GROWS_UP,                                           /**< A push increments the stack pointer. */
+    GROWS_DOWN,                                         /**< A push decrements the stack pointer. */
+};
+
+/** Who is responsible for popping stack parameters. */
+enum StackCleanup {
+    CLEANUP_BY_CALLER,                                  /**< The caller pops all stack parameters. */
+    CLEANUP_BY_CALLEE,                                  /**< The called function pops all stack parameters. */
+    CLEANUP_UNSPECIFIED,                                /**< Stack parameter cleanup is unknown or unspecified. */
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      ParameterLocation
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Abstract parameter location.
+ *
+ *  This class is used to describe the location of a parameter or return value location in a calling convention definition
+ *  outside any analysis (locations resulting from an analysis often contain more information). The location can be a register,
+ *  a memory location at a constant address (e.g., global variable), or a memory location relative to some register (e.g., on a
+ *  stack).  Location descriptors are immutable.
+ *
+ *  The same type is used for input parameters, output parameters, and in-out parameters. Return values are a kind of
+ *  output parameter, although the API usually does not include the return value when it talks about "parameters". */
+class ParameterLocation {
 public:
-    /** Abstract parameter location.
-     *
-     *  Describes a parameter or return value location, which can be a register, a memory location at a constant address (e.g.,
-     *  global variable), or a memory location relative to some register (e.g., on a stack).  Location descriptors are
-     *  immutable.
-     *
-     *  The same type is used for input parameters, output parameters, and in-out parameters. Return values are a kind of
-     *  output parameter, although the API usually does not include the return value when it talks about "parameters". */
-    class ParameterLocation {
-    public:
-        /** Type of location. */
-        enum Type {
-            NO_LOCATION,                                /**< Used by default-constructed locations. */
-            REGISTER,                                   /**< Parameter is in a register. */
-            STACK,                                      /**< Parameter in memory relative to a register. E.g., stack. */
-            ABSOLUTE                                    /**< Parameter is at a fixed memory address. */
-        };
-    private:
-        Type type_;
-        RegisterDescriptor reg_;                        // The argument register, or the stack base register.
-        union {
-            int64_t offset_;                            // Offset from stack base register for stack-based locations.
-            rose_addr_t va_;                            // Absolute address
-        };
-    public:
-        /** Default constructed no-location.
-         *
-         *  This default constructor is useful for indicating no location or for using an STL container, such as @c
-         *  std::vector, that requires a default constructor.  The @ref isValid predicate will return false for
-         *  default-constructed locations. */
-        ParameterLocation()
-            : type_(NO_LOCATION), offset_(0) {}
-
-        /** Constructs a parameter in a register location. */
-        explicit ParameterLocation(const RegisterDescriptor &reg)
-            : type_(REGISTER), reg_(reg), offset_(0) {}
-
-        /** Constructs a parameter at a register-relative memory address. */
-        ParameterLocation(const RegisterDescriptor &reg, int64_t offset)
-            : type_(STACK), reg_(reg), offset_(offset) {}
-
-        /** Constructs a parameter at a fixed memory address. */
-        explicit ParameterLocation(rose_addr_t va)
-            : type_(ABSOLUTE), va_(va) {}
-
-        /** Type of parameter location. */
-        Type type() const { return type_; }
-
-        /** Predicate to determine if location is valid.
-         *
-         *  Returns false for default-constructed locations, true for all others. */
-        bool isValid() const {
-            return type() != NO_LOCATION;
-        }
-
-        /** Register part of location.
-         *
-         *  Returns the register where the parameter is stored (for register parameters) or the register holding the base
-         *  address for register-relative memory parameters.  Returns an invalid (default constructed) register descriptor when
-         *  invoked on a default constructed location or a fixed memory addresses. */
-        const RegisterDescriptor& reg() const {
-            return reg_;
-        }
-
-        /** Offset part of location.
-         *
-         *  Returns the signed byte offset from the base register for register-relative memory parameters.  The memory address
-         *  of the parameter is the contents of the base register plus this byte offset. Returns zero for register parameters,
-         *  parameters stored at fixed memory addresses, and default constructed locations. */
-        int64_t offset() const {
-            return STACK == type_ ? offset_ : (int64_t)0;
-        }
-
-        /** Fixed address location.
-         *
-         *  Returns the address for a parameter stored at a fixed memory address.  Returns zero for register parameters,
-         *  register-relative (stack) parameters, and default constructed locations. */
-        rose_addr_t address() const {
-            return ABSOLUTE == type_ ? va_ : (rose_addr_t)0;
-        }
-
-        /** Equality.
-         *
-         *  Two locations are equal if they are the same type and register, offset, and/or address as appropriate to the type. */
-        bool operator==(const ParameterLocation &other) const {
-            return type_ == other.type_ && reg_ == other.reg_ && offset_ == other.offset_; // &va_ == &offset_
-        }
-
-        /** Inequality.
-         *
-         *  Two locations are unequal if they have different types, registers, offsets, or addresses. */
-        bool operator!=(const ParameterLocation &other) const {
-            return type_ != other.type_ || reg_ != other.reg_ || offset_ != other.offset_; // &va_ == &offset_
-        }
-
-        /** Print location.
-         *
-         * @{ */
-        void print(std::ostream &out, const RegisterDictionary *regdict) const {
-            print(out, RegisterNames(regdict));
-        }
-        void print(std::ostream &out, const RegisterNames &regnames) const {
-            switch (type_) {
-                case NO_LOCATION: out <<"nowhere"; break;
-                case REGISTER: out <<regnames(reg_); break;
-                case STACK: out <<"mem[" <<regnames(reg_) <<"+" <<offset_ <<"]"; break;
-                case ABSOLUTE: out <<"mem[" <<StringUtility::addrToString(va_) <<"]"; break;
-            }
-        }
-        /** @} */
-            
-    };
-
-    /** The order that arguments are pushed onto the stack. */
-    enum StackParameterOrder {
-        LEFT_TO_RIGHT,                                  /**< Stack parameters pushed left to right (Pascal order). */
-        RIGHT_TO_LEFT,                                  /**< Stack parameters pushed right to left (C order). */
-        ORDER_UNSPECIFIED,                              /**< Stack parameter order is unknown or unspecified. */
-    };
-
-    /** The direction in which the stack grows. */
-    enum StackDirection {
-        GROWS_UP,                                       /**< A push increments the stack pointer. */
-        GROWS_DOWN,                                     /**< A push decrements the stack pointer. */
-    };
-
-    /** Who is responsible for popping stack parameters. */
-    enum StackCleanup {
-        CLEANUP_CALLER,                                 /**< The caller pops all stack parameters. */
-        CLEANUP_CALLEE,                                 /**< The called function pops all stack parameters. */
-        CLEANUP_UNSPECIFIED,                            /**< Stack parameter cleanup is unknown or unspecified. */
+    /** Type of location. */
+    enum Type {
+        NO_LOCATION,                                /**< Used by default-constructed locations. */
+        REGISTER,                                   /**< Parameter is in a register. */
+        STACK,                                      /**< Parameter in memory relative to a register. E.g., stack. */
+        ABSOLUTE                                    /**< Parameter is at a fixed memory address. */
     };
 
 private:
+    Type type_;
+    RegisterDescriptor reg_;                        // The argument register, or the stack base register.
+    union {
+        int64_t offset_;                            // Offset from stack base register for stack-based locations.
+        rose_addr_t va_;                            // Absolute address
+    };
+
+public:
+    /** Default constructed no-location.
+     *
+     *  This default constructor is useful for indicating no location or for using an STL container, such as @c
+     *  std::vector, that requires a default constructor.  The @ref isValid predicate will return false for
+     *  default-constructed locations. */
+    ParameterLocation()
+        : type_(NO_LOCATION), offset_(0) {}
+
+    /** Constructs a parameter in a register location. */
+    explicit ParameterLocation(const RegisterDescriptor &reg)
+        : type_(REGISTER), reg_(reg), offset_(0) {}
+
+    /** Constructs a parameter at a register-relative memory address. */
+    ParameterLocation(const RegisterDescriptor &reg, int64_t offset)
+        : type_(STACK), reg_(reg), offset_(offset) {}
+
+    /** Constructs a parameter at a fixed memory address. */
+    explicit ParameterLocation(rose_addr_t va)
+        : type_(ABSOLUTE), va_(va) {}
+
+    /** Type of parameter location. */
+    Type type() const { return type_; }
+
+    /** Predicate to determine if location is valid.
+     *
+     *  Returns false for default-constructed locations, true for all others. */
+    bool isValid() const {
+        return type() != NO_LOCATION;
+    }
+
+    /** Register part of location.
+     *
+     *  Returns the register where the parameter is stored (for register parameters) or the register holding the base
+     *  address for register-relative memory parameters.  Returns an invalid (default constructed) register descriptor when
+     *  invoked on a default constructed location or a fixed memory addresses. */
+    const RegisterDescriptor& reg() const {
+        return reg_;
+    }
+
+    /** Offset part of location.
+     *
+     *  Returns the signed byte offset from the base register for register-relative memory parameters.  The memory address
+     *  of the parameter is the contents of the base register plus this byte offset. Returns zero for register parameters,
+     *  parameters stored at fixed memory addresses, and default constructed locations. */
+    int64_t offset() const {
+        return STACK == type_ ? offset_ : (int64_t)0;
+    }
+
+    /** Fixed address location.
+     *
+     *  Returns the address for a parameter stored at a fixed memory address.  Returns zero for register parameters,
+     *  register-relative (stack) parameters, and default constructed locations. */
+    rose_addr_t address() const {
+        return ABSOLUTE == type_ ? va_ : (rose_addr_t)0;
+    }
+
+    /** Equality.
+     *
+     *  Two locations are equal if they are the same type and register, offset, and/or address as appropriate to the type. */
+    bool operator==(const ParameterLocation &other) const {
+        return type_ == other.type_ && reg_ == other.reg_ && offset_ == other.offset_; // &va_ == &offset_
+    }
+
+    /** Inequality.
+     *
+     *  Two locations are unequal if they have different types, registers, offsets, or addresses. */
+    bool operator!=(const ParameterLocation &other) const {
+        return type_ != other.type_ || reg_ != other.reg_ || offset_ != other.offset_; // &va_ == &offset_
+    }
+
+    /** Print location.
+     *
+     * @{ */
+    void print(std::ostream &out, const RegisterDictionary *regdict) const {
+        print(out, RegisterNames(regdict));
+    }
+    void print(std::ostream &out, const RegisterNames &regnames) const {
+        switch (type_) {
+            case NO_LOCATION: out <<"nowhere"; break;
+            case REGISTER: out <<regnames(reg_); break;
+            case STACK: out <<"mem[" <<regnames(reg_) <<"+" <<offset_ <<"]"; break;
+            case ABSOLUTE: out <<"mem[" <<StringUtility::addrToString(va_) <<"]"; break;
+        }
+    }
+    /** @} */
+
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Definition
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Information about calling conventions.
+ *
+ *  A definition typically comes from external documentation rather than direct analysis. */
+class Definition {
     std::string name_;                                  // Official short name of the convention, like "stdcall".
     std::string comment_;                               // Long name, like "Windows Borland x86-32 fastcall"
-    size_t wordSize_;                                   // Natural word size in bits
+    size_t wordWidth_;                                  // Natural width word size in bits
+    const RegisterDictionary *regDict_;                 // Register dictionary used when this definition was created
     std::vector<ParameterLocation> inputParameters_;    // Input (inc. in-out) parameters; additional stack-based are implied
     std::vector<ParameterLocation> outputParameters_;   // Return values and output parameters.
     StackParameterOrder stackParameterOrder_;           // Order of arguments on the stack
     RegisterDescriptor stackPointerRegister_;           // Base pointer for implied stack parameters
-    size_t nonParameterStackSize_;                      // Size in bits of non-parameter stack area
+    size_t nonParameterStackSize_;                      // Size in bytes of non-parameter stack area
+    size_t stackAlignment_;                             // Stack alignment in bytes (zero means unknown)
     StackDirection stackDirection_;                     // Direction that stack grows from a PUSH operation
     StackCleanup stackCleanup_;                         // Who cleans up stack parameters?
     ParameterLocation thisParameter_;                   // Object pointer for calling conventions that are object methods
     std::set<RegisterDescriptor> calleeSavedRegisters_; // Register that the callee must restore before returning
+    std::set<RegisterDescriptor> scratchRegisters_;     // Caller-saved registers
 
+    // Predefined calling conventions.
 public:
-    /** Initialize diagnostics.
+    /** Returns a predefined, cached calling convention.
      *
-     *  This is normally called as part of ROSE's diagnostics initialization, but it doesn't hurt to call it often. */
-    static void initDiagnostics();
+     * @{ */
+    static const Definition& x86_32bit_cdecl();
+    static const Definition& x86_64bit_cdecl();
+    static const Definition& x86_32bit_stdcall();
+    static const Definition& x86_64bit_stdcall();
+    static const Definition& x86_32bit_fastcall();
+    /** @} */
 
-    /** Facility for diagnostic output.
+    /** Constructs a new pre-defined calling convention based on a register dictionary.
      *
-     *  The facility can be controlled directly or via ROSE's command-line. */
-    static Sawyer::Message::Facility mlog;
+     * @{ */
+    static Definition x86_cdecl(const RegisterDictionary*);
+    static Definition x86_stdcall(const RegisterDictionary*);
+    static Definition x86_fastcall(const RegisterDictionary*);
+    /** @} */
 
 public:
     /** Default constructor.
      *
      *  Constructs a new calling convention with no name or parameters. */
-    CallingConvention()
-        : wordSize_(0), stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {}
+    Definition()
+        : wordWidth_(0), regDict_(NULL), stackAlignment_(0), stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {}
 
     /** Construct a new calling convention.
      *
      *  The name of the calling convention usually comes from the documentation (see @name) and is a single word. The comment
      *  is a more complete name for the convention perhaps including the operating system and architecture but not containing
      *  line termination. */
-    CallingConvention(size_t wordSize, const std::string &name, const std::string &comment)
-        : name_(name), comment_(comment), wordSize_(wordSize), stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {
-        ASSERT_require2(0 == (wordSize & 7) && wordSize > 0, "word size must be a positive multiple of eight");
+    Definition(size_t wordWidth, const std::string &name, const std::string &comment, const RegisterDictionary *regDict)
+        : name_(name), comment_(comment), wordWidth_(wordWidth), regDict_(regDict), stackAlignment_(0),
+          stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {
+        ASSERT_require2(0 == (wordWidth & 7) && wordWidth > 0, "word size must be a positive multiple of eight");
     }
+
+    /** Property: Register dictionary.
+     *
+     *  The register dictionary imparts names to the various register descriptors.
+     *
+     * @{ */
+    const RegisterDictionary* registerDictionary() const { return regDict_; }
+    void registerDictionary(const RegisterDictionary *d) { regDict_ = d; }
+    /** @} */
 
     /** Property: Short name of calling convention.
      *
@@ -214,14 +273,17 @@ public:
 
     /** Property: Word size in bits.
      *
-     *  This is the natural size of a word measured in bits. When searching for a matching calling convention only those
-     *  calling conventions having the desired word size are considered.
+     *  This is the natural width of a word measured in bits. When searching for a matching calling convention only those
+     *  calling conventions having the desired word width are considered.
+     *
+     *  This is named "width" instead of "size" because the binary analysis API generally uses "width" to measure in units of
+     *  bits, while "size" measures in units of bytes.
      *
      * @{ */
-    size_t wordSize() const { return wordSize_; }
-    void wordSize(size_t nBits) {
+    size_t wordWidth() const { return wordWidth_; }
+    void wordWidth(size_t nBits) {
         ASSERT_require2(nBits > 0 && 0 == (nBits & 7), "word size must be a positive multiple of eight");
-        wordSize_ = nBits;
+        wordWidth_ = nBits;
     }
     /** @} */
 
@@ -239,6 +301,9 @@ public:
      *  Returns the vector of input (and in-out) parameters that have been enumerated; does not include implied stack
      *  parameters.  This property is read-only; see also @ref appendInputParameter and @ref clearInputParameters. */
     const std::vector<ParameterLocation>& inputParameters() const { return inputParameters_; }
+
+    /** Compute the set of input registers. */
+    RegisterParts inputRegisterParts() const;
 
     /** Erase enumerated input parameters.
      *
@@ -269,6 +334,9 @@ public:
      *  Returns the vector of output (and in-out) parameters.  This property is read-only; see also @ref appendOutputParameter
      *  and @ref clearOutputParameters. */
     const std::vector<ParameterLocation>& outputParameters() const { return outputParameters_; }
+
+    /** Computes the set of output registers. */
+    RegisterParts outputRegisterParts() const;
 
     /** Erase output parameters.
      *
@@ -323,17 +391,16 @@ public:
 
     /** Property: Size of non-parameter stack area.
      *
-     *  This is the size in bits of the final non-parameter information pushed onto the stack by the function call
-     *  instruction. For instance, the 32-bit x86 @c call instruction pushes a 32-bit return address, but some architectures
-     *  use a link register instead.
+     *  This is the size in bytes of the final non-parameter information pushed onto the stack by the function call
+     *  instruction. For instance, the 32-bit x86 @c call instruction pushes a 4-byte return address, but some architectures
+     *  use a link register instead, pushing nothing onto the stack.
      *
      * @{ */
     size_t nonParameterStackSize() const {
         return nonParameterStackSize_;
     }
-    void nonParameterStackSize(size_t nBits) {
-        ASSERT_require2(0 == (nBits & 7), "must be divisible by eight");
-        nonParameterStackSize_ = nBits;
+    void nonParameterStackSize(size_t nBytes) {
+        nonParameterStackSize_ = nBytes;
     }    
     /** @} */
 
@@ -357,6 +424,16 @@ public:
      * @{ */
     StackCleanup stackCleanup() const { return stackCleanup_; }
     void stackCleanup(StackCleanup x) { stackCleanup_ = x; }
+    /** @} */
+
+    /** Property: Stack alignment.
+     *
+     *  This is the stack alignment measured in bytes for the stack pointer before the caller pushes any non-parameters (e.g.,
+     *  return address) or parameters.  A value of zero means the alignment is unknown or unspecified.
+     *
+     * @{ */
+    size_t stackAlignment() const { return stackAlignment_; }
+    void stackAlignment(size_t nBytes) { stackAlignment_ = nBytes; }
     /** @} */
 
     /** Property: Object pointer parameter.
@@ -401,8 +478,39 @@ public:
     std::set<RegisterDescriptor>& calleeSavedRegisters() { return calleeSavedRegisters_; }
     /** @} */
 
-    /** Print detailed information about this calling convention. */
-    void print(std::ostream&, const RegisterDictionary*) const;
+    /** Compute the set of callee-saved registers. */
+    RegisterParts calleeSavedRegisterParts() const;
+
+    /** Property: Scratch registers.
+     *
+     *  This is the set of registers that are not parameters or return values but which are nonetheless can be modified and not
+     *  restored by the called function.  These are also known as caller-saved registers since the caller must save and restore
+     *  the value across the call if necessary.
+     *
+     * @{ */
+    const std::set<RegisterDescriptor>& scratchRegisters() const { return scratchRegisters_; }
+    std::set<RegisterDescriptor>& scratchRegisters() { return scratchRegisters_; }
+    /** @} */
+
+    /** Computes the set of scratch registers. */
+    RegisterParts scratchRegisterParts() const;
+
+    /** Returns all registers mentioned in this definition.
+     *
+     *  The registers are returned as a RegisterParts, which tracks which bits of registers are present but not which
+     *  individual registers were inserted into the container.  For instance, if x86 AX is inserted first, then inserting the
+     *  overlapping AL and AH registers is a no-op since their bits are already present.
+     *
+     *  The return value does not include registers that are incidental to a parameter's location. For instance, the stack
+     *  pointer register is not included in this list unless its listed as a return register, callee-saved register, or scratch
+     *  register. */
+    RegisterParts getUsedRegisterParts() const;
+
+    /** Print detailed information about this calling convention.
+     *
+     *  If a register dictionary is supplied then that dictionary is used instead of any dictionary already attached to this
+     *  definition. This feature is mostly for backward compatibility. */
+    void print(std::ostream&, const RegisterDictionary *regDict = NULL) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Deprecated API
@@ -412,11 +520,11 @@ public:
     // "get" and "set" from properties that have names that are nouns.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    size_t get_word_size() const ROSE_DEPRECATED("use wordSize property instead") {
-        return wordSize();
+    size_t get_word_size() const ROSE_DEPRECATED("use wordWidth property instead") {
+        return wordWidth();
     }
-    void set_word_size(size_t w) ROSE_DEPRECATED("use wordSize property instead") {
-        wordSize(w);
+    void set_word_size(size_t w) ROSE_DEPRECATED("use wordWidth property instead") {
+        wordWidth(w);
     }
 
     const std::string& get_name() const ROSE_DEPRECATED("use \"name\" property instead") {
@@ -577,74 +685,159 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      CallingConventionAnalysis
+//                                      Dictionary
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** A ordered collection of calling convention definitions. */
+typedef std::vector<Definition> Dictionary;
+
+/** Common calling conventions for x86. These are only 32-bit conventions. */
+const Dictionary& dictionaryX86();
+
+/** Common calling conventions for x86-64. */
+const Dictionary& dictionaryAmd64();
+
+/** Common calling conventions for FreeScale ColdFire (m68k). */
+const Dictionary& dictionaryM68k();
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Analysis
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Function calling convention.
  *
  *  This class encapsulates all information about calling conventions including the analysis functions and the data types. */
-class CallingConventionAnalysis {
+class Analysis {
 public:
+    /** A variable located on the stack.
+     *
+     *  These variable descriptions are different than @ref ParameterLocation because these carry details
+     *  that came from the analysis of a particular function while the latter contains more generic information that applies
+     *  across a wide collection of functions. */
+    typedef Partitioner2::DataFlow::StackVariable StackVariable;
 
-    // Location of an argument or return value
-    class ValueLocation {
-        RegisterDescriptor reg_;                        // Argument is passed in a register.
-        Sawyer::Optional<rose_addr_t> addr_;            // Argument is in a global variable.
-        Sawyer::Optional<int64_t> spOffset_;            // Argument is on the stack.
-        size_t nBits_;                                  // Size of argument
-
-    public:
-        static ValueLocation inRegister(const RegisterDescriptor&);
-        static ValueLocation inGlobal(rose_addr_t address, size_t nBits);
-        static ValueLocation inStack(int64_t offset, size_t nBits);
-
-        bool isInRegister() const;
-        bool isInGlobal() const;
-        bool isInStack() const;
-
-        const RegisterDescriptor& registerDescriptor() const;
-        rose_addr_t globalAddress() const;
-        int64_t stackOffset() const;
-        size_t nBits() const;
-    };
+    /** Container of stack variables. */
+    typedef Partitioner2::DataFlow::StackVariables StackVariables;
 
 private:
-    std::vector<ValueLocation> argLocs_;                // Locations for each argument.
-    bool hasVarArgs_;                                   // Variable number of arguments (argLocs_ are the required args).
-    std::set<RegisterDescriptor> modifiedRegisters_;    // Registers modified by this function.
-    std::set<RegisterDescriptor> restoredRegisters_;    // Registers saved and restored by this function.
-    Sawyer::Optional<int64_t> stackDelta_;              // Stack delta (bytes) for this function inc. return address.
-    std::set<ValueLocation> returnValues_;              // Location of return values.
     InstructionSemantics2::BaseSemantics::DispatcherPtr cpu_;
+    const RegisterDictionary *regDict_;                 // Names for the register parts
+    RegisterParts restoredRegisters_;                   // Registers accessed but restored
+    RegisterParts inputRegisters_;                      // Registers that serve as possible input parameters
+    RegisterParts outputRegisters_;                     // Registers that hold possible return values
+    StackVariables inputStackParameters_;               // Stack variables serving as function inputs
+    StackVariables outputStackParameters_;              // Stack variables serving as possible return values
+    Sawyer::Optional<int64_t> stackDelta_;              // Change in stack across entire function
 
 public:
-    CallingConventionAnalysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
-        : cpu_(cpu) {}
-
-    CallingConventionAnalysis(Disassembler *d) {
+    /** Construct an analysis using specified disassembler.
+     *
+     *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
+    Analysis(Disassembler *d) {
         init(d);
     }
 
+    /** Construct an analysis using specified dispatcher.
+     *
+     *  This constructor uses the supplied dispatcher and associated semantic domain. For best results, the semantic domain
+     *  should be a symbolic domain that uses @ref InstructionSemantics2::BaseSemantics::MemoryCellList "MemoryCellList" and
+     *  @ref InstructionSemantics2::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". These happen to also be the
+     *  defaults used by @ref InstructionSemantics::SymbolicSemantics. */
+    Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
+        : cpu_(cpu) {}
+
+    /** Analyze one functions.
+     *
+     *  This analysis method uses @ref Partitioner2 data structures which are generally faster than using the AST. The
+     *  specified function need not be attached to the partitioner. Results of the analysis are stored in this analysis
+     *  object to be queried after the analysis completes. */
     void analyzeFunction(const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&);
 
-    typedef Sawyer::Container::Set<RegisterDescriptor> RegisterSet;
+    /** Property: Register dictionary.
+     *
+     *  The register dictionary provides names for register parts.  If a dictionary is provided before @ref analyzeFunction is
+     *  called then that dictionary is used if possible, otherwise @ref analyzeFunction assigns a new dictionary. In any case,
+     *  this property is non-null after a call to @ref analyzeFunction.
+     *
+     * @{ */
+    const RegisterDictionary* registerDictionary() const { return regDict_; }
+    void registerDictionary(const RegisterDictionary *d) { regDict_ = d; }
+    /** @} */
 
-    RegisterSet registersRead(const InstructionSemantics2::BaseSemantics::StatePtr&);
-    RegisterSet registersWritten(const InstructionSemantics2::BaseSemantics::StatePtr&);
-    RegisterSet registersReadWritten(const InstructionSemantics2::BaseSemantics::StatePtr&);
+    /** Callee-saved registers.
+     *
+     *  Returns the set of registers that are accessed by the function but which are also reset to their original values before
+     *  the function returns. A callee-saved register will not be included in the set of input or output registers. */
+    const RegisterParts& calleeSavedRegisters() const { return restoredRegisters_; }
 
-    RegisterSet registersReadWithoutWrite(const InstructionSemantics2::BaseSemantics::StatePtr&);
-    RegisterSet registersWriteWithoutRead(const InstructionSemantics2::BaseSemantics::StatePtr&);
+    /** Input registers.
+     *
+     *  Returns the set of registers that the function uses as input values. These are the registers that the function reads
+     *  without first writing and which the function does not restore before returning. */
+    const RegisterParts& inputRegisters() const { return inputRegisters_; }
 
-    RegisterSet registersCalleeSaved(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu,
-                                     const InstructionSemantics2::BaseSemantics::StatePtr &initState,
-                                     const InstructionSemantics2::BaseSemantics::StatePtr &finalState,
-                                     const RegisterSet &registers);
-    
+    /** Output registers.
+     *
+     *  Returns the set of registers into which the function writes potential return values.  These are the registers to which
+     *  the function writes with no following read.  An output register is not also a calle-saved register. */
+    const RegisterParts& outputRegisters() const { return outputRegisters_; }
+
+    /** Input stack parameters.
+     *
+     *  Locations for stack-based parameters that are used as inputs to the function. */
+    const StackVariables& inputStackParameters() const { return inputStackParameters_; }
+
+    /** Output stack parameters.
+     *
+     *  Locations for stack-based parameters that are used as outputs of the function. */
+    const StackVariables& outputStackParameters() const { return outputStackParameters_; }
+
+    /** Determine whether a definition matches.
+     *
+     *  Returns true if the specified definition is compatible with the results of this analysis. */
+    bool match(const Definition&) const;
+
+    /** Find matching calling convention definitions.
+     *
+     *  Given an ordered list of calling convention definitons (a calling convention dictionary) return a list of definitions
+     *  that is consistent with the results of this analysis.  The definitions in the returned list are in the same order as
+     *  those in the specified dictionary. */
+    Dictionary match(const Dictionary&) const;
+
+    /** Print information about the analysis results. */
+    void print(std::ostream&) const;
+
 private:
+    // Finish constructing
     void init(Disassembler*);
+
+    // Recompute the restoredRegisters_ data member.
+    void updateRestoredRegisters(const InstructionSemantics2::BaseSemantics::StatePtr &initialState,
+                                 const InstructionSemantics2::BaseSemantics::StatePtr &finalState);
+
+    // Recompute the inputRegisters_ data member after updateRestoredRegisters is computed.
+    void updateInputRegisters(const InstructionSemantics2::BaseSemantics::StatePtr &state);
+
+    // Recompute the outputRegisters_ data member after updateRestoredRegisters is computed.
+    void updateOutputRegisters(const InstructionSemantics2::BaseSemantics::StatePtr &state);
+
+    // Recompute the input and output stack variables
+    void updateStackParameters(const InstructionSemantics2::BaseSemantics::StatePtr &initialState,
+                               const InstructionSemantics2::BaseSemantics::StatePtr &finalState);
+
+    // Recomputes the stack delta
+    void updateStackDelta(const InstructionSemantics2::BaseSemantics::StatePtr &initialState,
+                          const InstructionSemantics2::BaseSemantics::StatePtr &finalState);
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Free functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::ostream& operator<<(std::ostream&, const Definition&);
+std::ostream& operator<<(std::ostream&, const Analysis&);
+
+} // namespace
 } // namespace
 } // namespace
 

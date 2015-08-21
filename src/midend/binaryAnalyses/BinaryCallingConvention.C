@@ -3,26 +3,26 @@
 
 #include <BinaryDataFlow.h>                             // Dataflow engine
 #include <boost/foreach.hpp>
+#include <Diagnostics.h>
+#include <MemoryCellList.h>
 #include <Partitioner2/DataFlow.h>                      // Dataflow components that we can re-use
 #include <Partitioner2/Partitioner.h>                   // Fast binary analysis data structures
 #include <Partitioner2/Function.h>                      // Fast function data structures
-
-namespace rose {
-namespace BinaryAnalysis {
+#include <Sawyer/ProgressBar.h>
 
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 
+namespace rose {
+namespace BinaryAnalysis {
+namespace CallingConvention {
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      CallingConvention
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-Sawyer::Message::Facility CallingConvention::mlog;
+Sawyer::Message::Facility mlog;
 
 void
-CallingConvention::initDiagnostics() {
+initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
@@ -31,8 +31,227 @@ CallingConvention::initDiagnostics() {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Dictionaries
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const Dictionary&
+dictionaryX86() {
+    static Dictionary dict;
+    if (dict.empty()) {
+        // cdecl: gcc < 4.5 uses 4-byte stack alignment
+        Definition cc = Definition::x86_32bit_cdecl();
+        cc.comment(cc.comment() + " 4-byte alignment");
+        cc.stackAlignment(4);
+        dict.push_back(cc);
+
+        // cdecl: gcc >= 4.5 uses 16-byte stack alignment
+        cc = Definition::x86_32bit_cdecl();
+        cc.comment(cc.comment() + " 16-byte alignment");
+        cc.stackAlignment(16);
+        dict.push_back(cc);
+
+        // other conventions
+        dict.push_back(Definition::x86_32bit_stdcall());
+        dict.push_back(Definition::x86_32bit_fastcall());
+    }
+    return dict;
+}
+
+const Dictionary&
+dictionaryAmd64() {
+    static Dictionary dict;
+    if (dict.empty()) {
+        // cdecl: gcc < 4.5 uses 4-byte stack alignment
+        Definition cc = Definition::x86_64bit_cdecl();
+        cc.comment(cc.comment() + " 4-byte alignment");
+        cc.stackAlignment(4);
+        dict.push_back(cc);
+
+        // cdecl: gcc >= 4.5 uses 16-byte stack alignment
+        cc = Definition::x86_64bit_cdecl();
+        cc.comment(cc.comment() + " 16-byte alignment");
+        cc.stackAlignment(16);
+        dict.push_back(cc);
+
+        // other conventions
+        dict.push_back(Definition::x86_64bit_stdcall());
+    }
+    return dict;
+}
+
+const Dictionary&
+dictionaryM68k() {
+    static Dictionary dict;
+    // FIXME[Robb P. Matzke 2015-08-20]: none defined yet
+    return dict;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Definition
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// class method
+const Definition&
+Definition::x86_32bit_cdecl() {
+    static Definition cc;
+    if (cc.name().empty())
+        cc = x86_cdecl(RegisterDictionary::dictionary_pentium4());
+    return cc;
+}
+
+// class method
+const Definition&
+Definition::x86_64bit_cdecl() {
+    static Definition cc;
+    if (cc.name().empty())
+        cc = x86_cdecl(RegisterDictionary::dictionary_amd64());
+    return cc;
+}
+
+// class method
+Definition
+Definition::x86_cdecl(const RegisterDictionary *regDict) {
+    ASSERT_not_null(regDict);
+    const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
+    Definition cc(SP.get_nbits(), "cdecl", 
+                  "x86-" + StringUtility::numberToString(SP.get_nbits()) + " cdecl",
+                  regDict);
+
+    // Stack characteristics
+    cc.stackPointerRegister(SP);
+    cc.stackDirection(GROWS_DOWN);
+    cc.nonParameterStackSize(cc.wordWidth() >> 3);      // return address
+
+    // All parameters are passed on the stack.
+    cc.stackParameterOrder(RIGHT_TO_LEFT);
+    cc.stackCleanup(CLEANUP_BY_CALLER);
+
+    // Return values
+    cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
+    cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_st, x86_st_0));
+    cc.appendOutputParameter(SP);                       // final value is usually one word greater than initial value
+
+    // Scratch registers (i.e., modified, not callee-saved, not return registers)
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
+
+    // Callee-saved registers (everything else)
+    RegisterParts regParts = regDict->getAllParts() - cc.getUsedRegisterParts();
+    std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
+    cc.calleeSavedRegisters().insert(registers.begin(), registers.end());
+
+    return cc;
+}
+
+// class method
+const Definition&
+Definition::x86_32bit_stdcall() {
+    static Definition cc;
+    if (cc.name().empty())
+        cc = x86_stdcall(RegisterDictionary::dictionary_pentium4());
+    return cc;
+}
+
+// class method
+const Definition&
+Definition::x86_64bit_stdcall() {
+    static Definition cc;
+    if (cc.name().empty())
+        cc = x86_stdcall(RegisterDictionary::dictionary_amd64());
+    return cc;
+}
+
+// class method
+Definition
+Definition::x86_stdcall(const RegisterDictionary *regDict) {
+    ASSERT_not_null(regDict);
+    const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
+    Definition cc(SP.get_nbits(), "stdcall", 
+                  "x86-" + StringUtility::numberToString(SP.get_nbits()) + " stdcall",
+                  regDict);
+
+    // Stack characteristics
+    cc.stackPointerRegister(SP);
+    cc.stackDirection(GROWS_DOWN);
+    cc.nonParameterStackSize(cc.wordWidth() >> 3);      // return address
+
+    // All parameters are passed on the stack
+    cc.stackParameterOrder(RIGHT_TO_LEFT);
+    cc.stackCleanup(CLEANUP_BY_CALLEE);
+
+    // Return values
+    cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
+    cc.appendOutputParameter(SP);
+
+    // Scratch registers (i.e., modified, not callee-saved, not return registers)
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
+
+    // Callee-saved registers (everything else)
+    RegisterParts regParts = regDict->getAllParts() - cc.getUsedRegisterParts();
+    std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
+    cc.calleeSavedRegisters().insert(registers.begin(), registers.end());
+
+    return cc;
+}
+
+// class method
+const Definition&
+Definition::x86_32bit_fastcall() {
+    static Definition cc;
+    if (cc.name().empty())
+        cc = x86_fastcall(RegisterDictionary::dictionary_pentium4());
+    return cc;
+}
+
+// class method
+Definition
+Definition::x86_fastcall(const RegisterDictionary *regDict) {
+    ASSERT_not_null(regDict);
+    const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
+    static Definition cc(SP.get_nbits(), "fastcall",
+                         "x86-" + StringUtility::numberToString(cc.wordWidth()) + " fastcall",
+                         regDict);
+
+    // Stack characteristics
+    cc.stackPointerRegister(SP);
+    cc.stackDirection(GROWS_DOWN);
+    cc.nonParameterStackSize(cc.wordWidth() >> 3);      // return address
+
+    // Uses ECX and EDX for first args that fit; all other parameters are passed on the stack.
+    cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
+    cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
+    cc.stackParameterOrder(RIGHT_TO_LEFT);
+    cc.stackCleanup(CLEANUP_BY_CALLEE);
+
+    // Return values
+    cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
+    cc.appendOutputParameter(SP);
+
+    // Scratch registers (i.e., modified, not callee-saved, not return registers)
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
+    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
+
+    // Callee-saved registers (everything else)
+    RegisterParts regParts = regDict->getAllParts() - cc.getUsedRegisterParts();
+    std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
+    cc.calleeSavedRegisters().insert(registers.begin(), registers.end());
+
+    return cc;
+}
+        
 void
-CallingConvention::appendInputParameter(const ParameterLocation &newLocation) {
+Definition::appendInputParameter(const ParameterLocation &newLocation) {
 #ifndef NDEBUG
     BOOST_FOREACH (const ParameterLocation &existingLocation, inputParameters_)
         ASSERT_forbid(newLocation == existingLocation);
@@ -41,7 +260,7 @@ CallingConvention::appendInputParameter(const ParameterLocation &newLocation) {
 }
 
 void
-CallingConvention::appendOutputParameter(const ParameterLocation &newLocation) {
+Definition::appendOutputParameter(const ParameterLocation &newLocation) {
 #ifndef NDEBUG
     BOOST_FOREACH (const ParameterLocation &existingLocation, outputParameters_)
         ASSERT_forbid(newLocation == existingLocation);
@@ -49,16 +268,64 @@ CallingConvention::appendOutputParameter(const ParameterLocation &newLocation) {
     outputParameters_.push_back(newLocation);
 }
 
+RegisterParts
+Definition::outputRegisterParts() const {
+    RegisterParts retval;
+    BOOST_FOREACH (const ParameterLocation &loc, outputParameters_) {
+        if (loc.type() == ParameterLocation::REGISTER)
+            retval.insert(loc.reg());
+    }
+    return retval;
+}
+
+RegisterParts
+Definition::inputRegisterParts() const {
+    RegisterParts retval;
+    BOOST_FOREACH (const ParameterLocation &loc, inputParameters_) {
+        if (loc.type() == ParameterLocation::REGISTER)
+            retval.insert(loc.reg());
+    }
+    return retval;
+}
+
+RegisterParts
+Definition::scratchRegisterParts() const {
+    RegisterParts retval;
+    BOOST_FOREACH (const RegisterDescriptor &reg, scratchRegisters_)
+        retval.insert(reg);
+    return retval;
+}
+
+RegisterParts
+Definition::calleeSavedRegisterParts() const {
+    RegisterParts retval;
+    BOOST_FOREACH (const RegisterDescriptor &reg, calleeSavedRegisters_)
+        retval.insert(reg);
+    return retval;
+}
+
+RegisterParts
+Definition::getUsedRegisterParts() const {
+    RegisterParts retval = inputRegisterParts();
+    retval |= outputRegisterParts();
+    if (stackPointerRegister_.is_valid())
+        retval.insert(stackPointerRegister_);
+    if (thisParameter_.type() == ParameterLocation::REGISTER)
+        retval.insert(thisParameter_.reg());
+    retval |= calleeSavedRegisterParts();
+    retval |= scratchRegisterParts();
+    return retval;
+}
+
 void
-CallingConvention::print(std::ostream &out, const RegisterDictionary *regdict) const {
+Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/) const {
     using namespace StringUtility;
-    ASSERT_not_null(regdict);
-    RegisterNames regNames(regdict);
+    RegisterNames regNames(regDict ? regDict : regDict_);
 
     out <<cEscape(name_);
     if (!comment_.empty())
         out <<" (" <<cEscape(comment_) <<")";
-    out <<" = {" <<wordSize_ <<"-bit words";
+    out <<" = {" <<wordWidth_ <<"-bit words";
 
     if (!inputParameters_.empty()) {
         out <<", inputs={";
@@ -84,11 +351,11 @@ CallingConvention::print(std::ostream &out, const RegisterDictionary *regdict) c
         }
 
         switch (stackCleanup_) {
-            case CLEANUP_CALLER: out <<" cleaned up by caller"; break;
-            case CLEANUP_CALLEE: out <<" cleaned up by callee"; break;
+            case CLEANUP_BY_CALLER: out <<" cleaned up by caller"; break;
+            case CLEANUP_BY_CALLEE: out <<" cleaned up by callee"; break;
             case CLEANUP_UNSPECIFIED: out <<" with UNSPECIFIED cleanup"; break;
         }
-        out <<"}";
+        out <<" }";
     }
     
     if (nonParameterStackSize_ > 0)
@@ -106,31 +373,43 @@ CallingConvention::print(std::ostream &out, const RegisterDictionary *regdict) c
         thisParameter_.print(out, regNames);
     }
     
-    if (!calleeSavedRegisters_.empty()) {
+    if (!outputParameters_.empty()) {
         out <<", outputs={";
         BOOST_FOREACH (const ParameterLocation &loc, outputParameters_) {
             out <<" ";
             loc.print(out, regNames);
         }
-        out <<"}";
+        out <<" }";
     }
 
+    if (!scratchRegisters_.empty()) {
+        out <<", scratch={";
+        BOOST_FOREACH (const RegisterDescriptor &loc, scratchRegisters_)
+            out <<" " <<regNames(loc);
+        out <<" }";
+    }
+    
     if (!calleeSavedRegisters_.empty()) {
         out <<", saved={";
         BOOST_FOREACH (const RegisterDescriptor &loc, calleeSavedRegisters_)
             out <<" " <<regNames(loc);
-        out <<"}";
+        out <<" }";
     }
 }
 
-    
+std::ostream&
+operator<<(std::ostream &out, const Definition &x) {
+    x.print(out);
+    return out;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      CallingConventionAnalysis
+//                                      Analysis
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     
 void
-CallingConventionAnalysis::init(Disassembler *disassembler) {
+Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
         const RegisterDictionary *registerDictionary = disassembler->get_registers();
         ASSERT_not_null(registerDictionary);
@@ -144,7 +423,7 @@ CallingConventionAnalysis::init(Disassembler *disassembler) {
 }
         
 void
-CallingConventionAnalysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     mlog[DEBUG] <<"analyzeFunction(" <<function->printableName() <<")\n";
 
     // Build the CFG used by the dataflow: dfCfg.  The dfCfg includes only those vertices that are reachable from the entry
@@ -166,39 +445,34 @@ CallingConventionAnalysis::analyzeFunction(const P2::Partitioner &partitioner, c
     }
 
     // Build the dataflow engine.
-    typedef DataFlow::Engine<DfCfg, BaseSemantics::StatePtr,
-                             P2::DataFlow::TransferFunction, DataFlow::SemanticsMerge> DfEngine;
-    BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(partitioner.newOperators());
+    typedef DataFlow::Engine<DfCfg, StatePtr, P2::DataFlow::TransferFunction, DataFlow::SemanticsMerge> DfEngine;
+    DispatcherPtr cpu = partitioner.newDispatcher(partitioner.newOperators());
     P2::DataFlow::MergeFunction merge(cpu);
     P2::DataFlow::TransferFunction xfer(cpu, partitioner.instructionProvider().stackPointerRegister());
     DfEngine dfEngine(dfCfg, xfer, merge);
     dfEngine.maxIterations(dfCfg.nVertices() * 5);      // arbitrary
+    regDict_ = cpu->get_register_dictionary();
 
     // Build the initial state
-    BaseSemantics::StatePtr initialState = xfer.initialState();
-    BaseSemantics::RegisterStateGenericPtr initialRegState =
-        BaseSemantics::RegisterStateGeneric::promote(initialState->get_register_state());
+    StatePtr initialState = xfer.initialState();
+    RegisterStateGenericPtr initialRegState = RegisterStateGeneric::promote(initialState->get_register_state());
     initialRegState->initialize_large();
 
     // Run data flow analysis
     bool converged = true;
     try {
-#if 1 // DEBUGGING [Robb P. Matzke 2015-08-13]
-        std::cerr <<"ROBB: Data flow for " <<function->printableName() <<"\n";
+        // Use this rather than runToFixedPoint because it lets us show a progress report
+        Sawyer::ProgressBar<size_t> progress(mlog[MARCH], function->printableName());
         dfEngine.reset(startVertexId, initialState);
-        for (size_t i=0; i<dfEngine.maxIterations(); ++i) {
-            std::cerr <<"        iteration " <<i <<"\n";
-            dfEngine.runOneIteration();
-        }
-#else
-        dfEngine.runToFixedPoint(startVertexId, initialState);
-#endif
+        while (dfEngine.runOneIteration())
+            ++progress;
     } catch (const std::runtime_error &e) {
+        mlog[WARN] <<e.what() <<"\n";
         converged = false;                              // didn't converge, so just use what we have
     }
 
     // Get the final dataflow state
-    BaseSemantics::StatePtr finalState = dfEngine.getInitialState(returnVertex->id());
+    StatePtr finalState = dfEngine.getInitialState(returnVertex->id());
     if (finalState == NULL) {
         mlog[DEBUG] <<"  data flow analysis did not reach final state\n";
         return;
@@ -213,105 +487,236 @@ CallingConventionAnalysis::analyzeFunction(const P2::Partitioner &partitioner, c
             mlog[DEBUG] <<"  final state:\n" <<(*finalState+fmt);
         }
     }
+    RegisterStateGenericPtr finalRegs = RegisterStateGeneric::promote(finalState->get_register_state());
 
-#if 1 // DEBUGGING [Robb P. Matzke 2015-08-12]
-    std::cerr <<"ROBB: calling convention results for " <<function->printableName() <<":\n";
-    RegisterNames registerName(cpu->get_register_dictionary());
-
-    RegisterSet readWithoutWrite = registersReadWithoutWrite(finalState);
-    std::cerr <<"      registers read without being written first:\n";
-    BOOST_FOREACH (const RegisterDescriptor &reg, readWithoutWrite.values())
-        std::cerr <<"        " <<registerName(reg) <<"\n";
-
-    RegisterSet calleeSaved = registersCalleeSaved(cpu, initialState, finalState, readWithoutWrite);
-    std::cerr <<"      callee-saved registers (from the list above):\n";
-    BOOST_FOREACH (const RegisterDescriptor &reg, calleeSaved.values())
-        std::cerr <<"        " <<registerName(reg) <<"\n";
-
-    RegisterSet returnValues = registersWriteWithoutRead(finalState);
-    returnValues.erase(calleeSaved);
-    std::cerr <<"      possible return values (registers written and then not read):\n";
-    BOOST_FOREACH (const RegisterDescriptor &reg, returnValues.values())
-        std::cerr <<"        " <<registerName(reg) <<"\n";
-#endif
+    // Update analysis results
+    updateRestoredRegisters(initialState, finalState);
+    updateInputRegisters(finalState);
+    updateOutputRegisters(finalState);
+    updateStackParameters(initialState, finalState);
+    updateStackDelta(initialState, finalState);
 }
 
-// List of registers read
-CallingConventionAnalysis::RegisterSet
-CallingConventionAnalysis::registersRead(const BaseSemantics::StatePtr &state) {
-    RegisterSet retval;
-    BaseSemantics::RegisterStateGenericPtr regState = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
-    BOOST_FOREACH (const RegisterDescriptor &reg, regState->findProperties(BaseSemantics::RegisterStateGeneric::READ))
-        retval.insert(reg);
-    return retval;
-}
+void
+Analysis::updateRestoredRegisters(const StatePtr &initialState, const StatePtr &finalState) {
+    restoredRegisters_.clear();
 
-// List of registers written
-CallingConventionAnalysis::RegisterSet
-CallingConventionAnalysis::registersWritten(const BaseSemantics::StatePtr &state) {
-    RegisterSet retval;
-    BaseSemantics::RegisterStateGenericPtr regState = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
-    BOOST_FOREACH (const RegisterDescriptor &reg, regState->findProperties(BaseSemantics::RegisterStateGeneric::WRITTEN))
-        retval.insert(reg);
-    return retval;
-}
+    RegisterStateGenericPtr initialRegs = RegisterStateGeneric::promote(initialState->get_register_state());
+    RegisterStateGenericPtr finalRegs = RegisterStateGeneric::promote(finalState->get_register_state());
+    RiscOperatorsPtr ops = cpu_->get_operators();
 
-// List of registers read and written
-CallingConventionAnalysis::RegisterSet
-CallingConventionAnalysis::registersReadWritten(const BaseSemantics::StatePtr &state) {
-    RegisterSet retval;
-    BaseSemantics::RegisterStateGenericPtr regState = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
-    BaseSemantics::RegisterStateGeneric::PropertySet props;
-    props.insert(BaseSemantics::RegisterStateGeneric::READ);
-    props.insert(BaseSemantics::RegisterStateGeneric::WRITTEN);
-    BOOST_FOREACH (const RegisterDescriptor &reg, regState->findProperties(props))
-        retval.insert(reg);
-    return retval;
-}
-
-// List of registers that were read before they were written. The return value is largest, non-overlapping registers.
-CallingConventionAnalysis::RegisterSet
-CallingConventionAnalysis::registersReadWithoutWrite(const BaseSemantics::StatePtr &state) {
-    RegisterSet retval;
-    BaseSemantics::RegisterStateGenericPtr regState = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
-    BOOST_FOREACH (const RegisterDescriptor &reg,
-                   regState->findProperties(BaseSemantics::RegisterStateGeneric::READ_BEFORE_WRITE))
-        retval.insert(reg);
-    return retval;
-}
-
-// List of registers written and not subsequently read
-CallingConventionAnalysis::RegisterSet
-CallingConventionAnalysis::registersWriteWithoutRead(const BaseSemantics::StatePtr &state) {
-    RegisterSet retval;
-    BaseSemantics::RegisterStateGenericPtr regState = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
-    BaseSemantics::RegisterStateGeneric::PropertySet required;
-    required.insert(BaseSemantics::RegisterStateGeneric::READ);
-    required.insert(BaseSemantics::RegisterStateGeneric::WRITTEN);
-    BOOST_FOREACH (const RegisterDescriptor &reg,
-                   regState->findProperties(required, BaseSemantics::RegisterStateGeneric::READ_AFTER_WRITE))
-        retval.insert(reg);
-    return retval;
-}
-
-// List of callee-saved registers.
-CallingConventionAnalysis::RegisterSet
-CallingConventionAnalysis::registersCalleeSaved(const BaseSemantics::DispatcherPtr &cpu,
-                                                const BaseSemantics::StatePtr &initState,
-                                                const BaseSemantics::StatePtr &finalState,
-                                                const RegisterSet &readBeforeWrite) {
-    RegisterSet retval;
-    BaseSemantics::RiscOperatorsPtr ops = cpu->get_operators();
-    BOOST_FOREACH (const RegisterDescriptor &reg, readBeforeWrite.values()) {
-        BaseSemantics::SValuePtr initValue = initState->readRegister(reg, ops.get());
-        BaseSemantics::SValuePtr finalValue = finalState->readRegister(reg, ops.get());
-        InsnSemanticsExpr::TreeNodePtr initExpr = SymbolicSemantics::SValue::promote(initValue)->get_expression();
+    InputOutputPropertySet props;
+    props.insert(IO_READ_BEFORE_WRITE);
+    props.insert(IO_WRITE);
+    BOOST_FOREACH (const RegisterDescriptor &reg, finalRegs->findProperties(props)) {
+        SValuePtr initialValue = initialRegs->readRegister(reg, ops.get());
+        SValuePtr finalValue = finalRegs->readRegister(reg, ops.get());
+        InsnSemanticsExpr::TreeNodePtr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
         InsnSemanticsExpr::TreeNodePtr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
-        if (finalExpr->get_flags() == initExpr->get_flags() && finalExpr->must_equal(initExpr, ops->get_solver()))
-            retval.insert(reg);
+        if (finalExpr->get_flags() == initialExpr->get_flags() && finalExpr->must_equal(initialExpr, ops->get_solver()))
+            restoredRegisters_.insert(reg);
+    }
+}
+
+void
+Analysis::updateInputRegisters(const StatePtr &state) {
+    inputRegisters_.clear();
+    RegisterStateGenericPtr regs = RegisterStateGeneric::promote(state->get_register_state());
+    BOOST_FOREACH (const RegisterDescriptor &reg, regs->findProperties(IO_READ_BEFORE_WRITE))
+        inputRegisters_.insert(reg);
+    inputRegisters_ -= restoredRegisters_;
+}
+
+void
+Analysis::updateOutputRegisters(const StatePtr &state) {
+    outputRegisters_.clear();
+    RegisterStateGenericPtr regs = RegisterStateGeneric::promote(state->get_register_state());
+    BOOST_FOREACH (const RegisterDescriptor &reg, regs->findProperties(IO_WRITE))
+        outputRegisters_.insert(reg);
+    outputRegisters_ -= restoredRegisters_;
+}
+
+void
+Analysis::updateStackParameters(const StatePtr &initialState, const StatePtr &finalState) {
+    inputStackParameters_.clear();
+    outputStackParameters_.clear();
+
+    RiscOperatorsPtr ops = cpu_->get_operators();
+    MemoryCellListPtr memState = MemoryCellList::promote(finalState->get_memory_state());
+    SValuePtr initialStackPointer = initialState->readRegister(cpu_->stackPointerRegister(), ops.get());
+    ops->set_state(finalState);
+    StackVariables vars = P2::DataFlow::findFunctionArguments(ops, initialStackPointer);
+    const RegisterDescriptor SP = cpu_->stackPointerRegister();
+    BOOST_FOREACH (const StackVariable &var, vars) {
+        if (var.meta.ioProperties.exists(IO_READ_BEFORE_WRITE)) {
+            inputStackParameters_.push_back(var);
+        } else if (var.meta.ioProperties.exists(IO_WRITE) && var.meta.ioProperties.exists(IO_READ_AFTER_WRITE)) {
+            outputStackParameters_.push_back(var);
+        }
+    }
+}
+
+void
+Analysis::updateStackDelta(const StatePtr &initialState, const StatePtr &finalState) {
+    RiscOperatorsPtr ops = cpu_->get_operators();
+    SValuePtr initialStackPointer = initialState->readRegister(cpu_->stackPointerRegister(), ops.get());
+    SValuePtr finalStackPointer = finalState->readRegister(cpu_->stackPointerRegister(), ops.get());
+    SValuePtr stackDelta = ops->subtract(finalStackPointer, initialStackPointer);
+    if (stackDelta->is_number() && stackDelta->get_width()<=64) {
+        stackDelta_ = IntegerOps::signExtend2(stackDelta->get_number(), stackDelta->get_width(), 64);
+    } else {
+        stackDelta_ = Sawyer::Nothing();
+    }
+}
+
+void
+Analysis::print(std::ostream &out) const {
+    RegisterNames regName(regDict_);
+    std::string separator;
+
+    if (!inputRegisters_.isEmpty() || !inputStackParameters_.empty()) {
+        out <<separator <<"inputs={";
+        if (!inputRegisters_.isEmpty()) {
+            BOOST_FOREACH (const RegisterDescriptor &reg, inputRegisters_.listAll(regDict_))
+                out <<" " <<regName(reg);
+        }
+        if (!inputStackParameters_.empty()) {
+            BOOST_FOREACH (const P2::DataFlow::StackVariable &var, inputStackParameters())
+                out <<" stack[" <<var.location.offset <<"]+" <<var.location.nBytes;
+        }
+        out <<" }";
+        separator = ", ";
+    }
+
+    if (!outputRegisters_.isEmpty() || !outputStackParameters_.empty()) {
+        out <<separator <<"outputs={";
+        if (!outputRegisters_.isEmpty()) {
+            BOOST_FOREACH (const RegisterDescriptor &reg, outputRegisters_.listAll(regDict_))
+                out <<" " <<regName(reg);
+        }
+        if (!outputStackParameters_.empty()) {
+            BOOST_FOREACH (const P2::DataFlow::StackVariable &var, outputStackParameters())
+                out <<" stack[" <<var.location.offset <<"]+" <<var.location.nBytes;
+        }
+        out <<" }";
+        separator = ", ";
+    }
+
+    if (!restoredRegisters_.isEmpty()) {
+        out <<separator <<"saved={";
+        BOOST_FOREACH (const RegisterDescriptor &reg, restoredRegisters_.listAll(regDict_))
+            out <<" " <<regName(reg);
+        out <<" }";
+        separator = ", ";
+    }
+
+    if (stackDelta_) {
+        out <<separator <<"stackDelta=" <<(*stackDelta_>=0?"+":"") <<*stackDelta_;
+        separator = ", ";
+    }
+    
+    if (separator.empty())
+        out <<"no I/O";
+}
+
+bool
+Analysis::match(const Definition &cc) const {
+    if (!cpu_)
+        return false;                                   // analysis has not run yet
+    if (cc.wordWidth() != cpu_->stackPointerRegister().get_nbits())
+        return false;
+
+    // Gather up definition's input registers. We always add EIP (or similar) because the analysis will have read it to obtain
+    // the function's first instruction before ever writing to it.  Similarly, we add ESP (or similar) because pushing,
+    // popping, aligning, and allocating local variable space all read ESP before writing to it.
+    RegisterParts ccInputRegisters = cc.inputRegisterParts();
+    ccInputRegisters.insert(cpu_->instructionPointerRegister());
+    ccInputRegisters.insert(cpu_->stackPointerRegister());
+    if (cc.thisParameter().type() == ParameterLocation::REGISTER)
+        ccInputRegisters.insert(cc.thisParameter().reg());
+
+    // Gather up definition's output registers.  We always add EIP (or similar) because the final RET instruction will write
+    // the return address into the EIP register and not subsequently read it. The stack pointer register is not added by
+    // default because not all functions use the stack (e.g., architectures that have link registers); it must be added (or
+    // not) when the definition is created.
+    RegisterParts ccOutputRegisters = cc.outputRegisterParts() | cc.scratchRegisterParts();
+    ccOutputRegisters.insert(cpu_->instructionPointerRegister());
+
+    // Stack delta checks
+    if (stackDelta_) {
+        int64_t normalization = (cc.stackDirection() == GROWS_UP ? -1 : +1);
+        int64_t normalizedStackDelta = *stackDelta_ * normalization; // in bytes
+
+        // All callees must pop the non-parameter area (e.g., return address) of the stack.
+        if (normalizedStackDelta < 0 || (uint64_t)normalizedStackDelta < cc.nonParameterStackSize())
+            return false;
+        normalizedStackDelta -= cc.nonParameterStackSize();
+
+        // The callee must not pop stack parameters if the caller cleans them up.
+        if (cc.stackCleanup() == CLEANUP_BY_CALLER && normalizedStackDelta != 0)
+            return false;
+
+        // For callee cleanup, the callee must pop all the stack variables. It may pop more than what it used (i.e., it must
+        // pop even unused arguments).
+        if (cc.stackCleanup() == CLEANUP_BY_CALLEE) {
+            int64_t normalizedEnd = 0; // one-past first-pushed argument normlized for downward-growing stack
+            BOOST_FOREACH (const StackVariable &var, inputStackParameters_)
+                normalizedEnd = std::max((uint64_t)normalizedEnd, var.location.offset * normalization + var.location.nBytes);
+            BOOST_FOREACH (const StackVariable &var, outputStackParameters_)
+                normalizedEnd = std::max((uint64_t)normalizedEnd, var.location.offset * normalization + var.location.nBytes);
+            if (normalizedStackDelta < normalizedEnd)
+                return false;
+        }
+    }
+    
+    // All analysis output registers must be a definition's output or scratch register.
+    if (!(outputRegisters_ - ccOutputRegisters).isEmpty())
+        return false;
+
+    // All analysis input registers must be a definition's input or "this" register.
+    if (!(inputRegisters_ - ccInputRegisters).isEmpty())
+        return false;
+
+    // All analysis restored registers must be a definition's callee-saved register.
+    if (!(restoredRegisters_ - cc.calleeSavedRegisterParts()).isEmpty())
+        return false;
+
+    // No analysis callee-saved register should be a definition's output or scratch register
+    if (!(outputRegisters_ & ccOutputRegisters).isEmpty())
+        return false;
+
+    // If the definition has an object pointer ("this" parameter) then it should not be an anlysis output or scratch register,
+    // but must be an analysis input register.
+    if (cc.thisParameter().type() == ParameterLocation::REGISTER) {
+        if (ccOutputRegisters.existsAny(cc.thisParameter().reg()))
+            return false;
+        if (!ccInputRegisters.existsAll(cc.thisParameter().reg()))
+            return false;
+    }
+
+    // If the analysis has stack inputs or outputs then the definition must have a valid stack parameter direction.
+    if ((!inputStackParameters().empty() || !outputStackParameters().empty()) && cc.stackParameterOrder() == ORDER_UNSPECIFIED)
+        return false;
+
+    return true;
+}
+
+Dictionary
+Analysis::match(const Dictionary &conventions) const {
+    Dictionary retval;
+    BOOST_FOREACH (const Definition &cc, conventions) {
+        if (match(cc))
+            retval.push_back(cc);
     }
     return retval;
 }
 
+std::ostream&
+operator<<(std::ostream &out, const Analysis &x) {
+    x.print(out);
+    return out;
+}
+
+} // namespace
 } // namespace
 } // namespace
