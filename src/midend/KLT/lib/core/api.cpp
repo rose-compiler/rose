@@ -11,6 +11,10 @@
 #include "KLT/Core/descriptor.hpp"
 #include "KLT/Core/utils.hpp"
 
+#ifndef VERBOSE
+# define VERBOSE 0
+#endif
+
 namespace KLT {
 
 namespace API {
@@ -240,7 +244,9 @@ SgBasicBlock * call_interface_t::generateKernelBody(Descriptor::kernel_t & kerne
 
   createTileIterator(kernel.tiles, symbol_map, bb);
 
+#if VERBOSE
   std::cerr << "[Info] (KLT::call_interface_t::generateKernelBody) Found " << kernel.loops.size() << " loops and " << kernel.tiles.size() << " tiles." << std::endl;
+#endif
 
   return bb;
 }
