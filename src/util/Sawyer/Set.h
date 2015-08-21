@@ -185,7 +185,7 @@ public:
     /** Whether two sets contain the same members.
      *
      *  Returns true if this set and @p other contain exactly the same members. */
-    bool operator==(const Set &other) {
+    bool operator==(const Set &other) const {
         return set_.size() == other.set_.size() && std::equal(set_.begin(), set_.end(), other.set_.begin());
     }
 
@@ -193,7 +193,7 @@ public:
      *
      *  Returns true if this set and the @p other set are not equal, although this method is faster than using
      *  <code>!(*this==other)</code>. */
-    bool operator!=(const Set &other) {
+    bool operator!=(const Set &other) const {
         return (set_.size() != other.set_.size() ||
                 std::mismatch(set_.begin(), set_.end(), other.set_.begin()).first != set_.end());
     }
