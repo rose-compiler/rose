@@ -125,6 +125,7 @@ pkginclude_HEADERS =					\
     BinaryPointerDetection.h				\
     BinaryAnalysisUtils.h				\
     BinaryReturnValueUsed.h				\
+    BinaryStackVariable.h				\
     BinaryString.h					\
     BinaryTaintedFlow.h					\
     DwarfLineMapper.h

@@ -13,6 +13,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
+#include <Sawyer/GraphTraversal.h>
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stack.h>
 
@@ -1840,6 +1841,41 @@ Partitioner::detachFunction(const Function::Ptr &function) {
     // Unlink the function itself
     functions_.erase(function->address());
     function->thaw();
+}
+
+const CallingConvention::Analysis&
+Partitioner::functionCallingConvention(const Function::Ptr &function) const {
+    ASSERT_not_null(function);
+    if (!function->callingConventionAnalysis().hasResults()) {
+        function->callingConventionAnalysis() = CallingConvention::Analysis(newDispatcher(newOperators()));
+        function->callingConventionAnalysis().analyzeFunction(*this, function);
+    }
+    return function->callingConventionAnalysis();
+}
+
+void
+Partitioner::allFunctionCallingConvention() const {
+    using namespace Sawyer::Container::Algorithm;
+    FunctionCallGraph cg = functionCallGraph();
+    size_t nFunctions = cg.graph().nVertices();
+    std::vector<bool> visited(nFunctions, false);
+    Sawyer::ProgressBar<size_t> progress(nFunctions, mlog[MARCH], "calling-convention analysis");
+    for (size_t cgVertexId=0; cgVertexId<nFunctions; ++cgVertexId) {
+        if (!visited[cgVertexId]) {
+            typedef DepthFirstForwardGraphTraversal<const FunctionCallGraph::Graph> Traversal;
+            for (Traversal t(cg.graph(), cg.graph().findVertex(cgVertexId), ENTER_VERTEX|LEAVE_VERTEX); t; ++t) {
+                if (t.event() == ENTER_VERTEX) {
+                    if (visited[t.vertex()->id()])
+                        t.skipChildren();
+                } else if (!visited[t.vertex()->id()]) {
+                    ASSERT_require(t.event() == LEAVE_VERTEX);
+                    functionCallingConvention(t.vertex()->value());
+                    visited[t.vertex()->id()] = true;
+                    ++progress;
+                }
+            }
+        }
+    }
 }
 
 AddressUsageMap

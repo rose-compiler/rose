@@ -443,10 +443,27 @@ Analysis::init(Disassembler *disassembler) {
         cpu_ = disassembler->dispatcher()->create(ops, addrWidth, registerDictionary);
     }
 }
-        
+
+void
+Analysis::clearResults() {
+    hasResults_ = didConverge_ = false;
+    restoredRegisters_.clear();
+    inputRegisters_.clear();
+    outputRegisters_.clear();
+    inputStackParameters_.clear();
+    outputStackParameters_.clear();
+    stackDelta_ = Sawyer::Nothing();
+}
+
+void
+Analysis::clearNonResults() {
+    cpu_ = DispatcherPtr();
+}
+
 void
 Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     mlog[DEBUG] <<"analyzeFunction(" <<function->printableName() <<")\n";
+    clearResults();
 
     // Build the CFG used by the dataflow: dfCfg.  The dfCfg includes only those vertices that are reachable from the entry
     // point for the function we're analyzing and which belong to that function.  All return points in the function will flow
@@ -517,6 +534,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     updateOutputRegisters(finalState);
     updateStackParameters(initialState, finalState);
     updateStackDelta(initialState, finalState);
+    hasResults_ = true;
+    didConverge_ = converged;
 }
 
 void
@@ -525,6 +544,7 @@ Analysis::updateRestoredRegisters(const StatePtr &initialState, const StatePtr &
 
     RegisterStateGenericPtr initialRegs = RegisterStateGeneric::promote(initialState->get_register_state());
     RegisterStateGenericPtr finalRegs = RegisterStateGeneric::promote(finalState->get_register_state());
+    ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
     RiscOperatorsPtr ops = cpu_->get_operators();
 
     InputOutputPropertySet props;
@@ -563,6 +583,7 @@ Analysis::updateStackParameters(const StatePtr &initialState, const StatePtr &fi
     inputStackParameters_.clear();
     outputStackParameters_.clear();
 
+    ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
     RiscOperatorsPtr ops = cpu_->get_operators();
     MemoryCellListPtr memState = MemoryCellList::promote(finalState->get_memory_state());
     SValuePtr initialStackPointer = initialState->readRegister(cpu_->stackPointerRegister(), ops.get());
@@ -580,6 +601,7 @@ Analysis::updateStackParameters(const StatePtr &initialState, const StatePtr &fi
 
 void
 Analysis::updateStackDelta(const StatePtr &initialState, const StatePtr &finalState) {
+    ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
     RiscOperatorsPtr ops = cpu_->get_operators();
     SValuePtr initialStackPointer = initialState->readRegister(cpu_->stackPointerRegister(), ops.get());
     SValuePtr finalStackPointer = finalState->readRegister(cpu_->stackPointerRegister(), ops.get());
@@ -603,7 +625,7 @@ Analysis::print(std::ostream &out) const {
                 out <<" " <<regName(reg);
         }
         if (!inputStackParameters_.empty()) {
-            BOOST_FOREACH (const P2::DataFlow::StackVariable &var, inputStackParameters())
+            BOOST_FOREACH (const StackVariable &var, inputStackParameters())
                 out <<" stack[" <<var.location.offset <<"]+" <<var.location.nBytes;
         }
         out <<" }";
@@ -617,7 +639,7 @@ Analysis::print(std::ostream &out) const {
                 out <<" " <<regName(reg);
         }
         if (!outputStackParameters_.empty()) {
-            BOOST_FOREACH (const P2::DataFlow::StackVariable &var, outputStackParameters())
+            BOOST_FOREACH (const StackVariable &var, outputStackParameters())
                 out <<" stack[" <<var.location.offset <<"]+" <<var.location.nBytes;
         }
         out <<" }";
@@ -643,8 +665,9 @@ Analysis::print(std::ostream &out) const {
 
 bool
 Analysis::match(const Definition &cc) const {
-    if (!cpu_)
-        return false;                                   // analysis has not run yet
+    ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
+    if (!hasResults_)
+        return false;
     if (cc.wordWidth() != cpu_->stackPointerRegister().get_nbits())
         return false;
 

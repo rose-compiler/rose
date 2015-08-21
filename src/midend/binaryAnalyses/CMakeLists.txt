@@ -66,6 +66,7 @@ install(
     BinaryMagic.h
     BinaryNoOperation.h
     BinaryPointerDetection.h
+    BinaryStackVariable.h
     BinaryString.h
     BinaryTaintedFlow.h
     dataflowanalyses/InterruptAnalysis.h

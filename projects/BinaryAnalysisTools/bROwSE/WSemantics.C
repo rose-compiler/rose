@@ -1,5 +1,6 @@
 #include <sage3basic.h>
 
+#include <BinaryStackVariable.h>                        // ROSE
 #include <bROwSE/FunctionUtil.h>
 #include <bROwSE/WSemantics.h>
 #include <bROwSE/WToggleButton.h>
@@ -114,7 +115,7 @@ public:
                     const RegisterDescriptor SS = ctx_.partitioner.instructionProvider().stackSegmentRegister();
 
                     // Function arguments
-                    BOOST_FOREACH (const P2::DataFlow::StackVariable &var, P2::DataFlow::findFunctionArguments(ops, stackPtr)) {
+                    BOOST_FOREACH (const StackVariable &var, P2::DataFlow::findFunctionArguments(ops, stackPtr)) {
                         char name[64];
                         sprintf(name, "arg_%"PRIx64, var.location.offset);
                         SValuePtr value = ops->undefined_(8*var.location.nBytes);
@@ -125,7 +126,7 @@ public:
                     }
 
                     // Function local variables
-                    BOOST_FOREACH (const P2::DataFlow::StackVariable &var, P2::DataFlow::findLocalVariables(ops, stackPtr)) {
+                    BOOST_FOREACH (const StackVariable &var, P2::DataFlow::findLocalVariables(ops, stackPtr)) {
                         char name[64];
                         sprintf(name, "var_%"PRIx64, -var.location.offset);
                         SValuePtr value = ops->undefined_(8*var.location.nBytes);

@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_CallingConvention_H
 
 #include <BaseSemantics2.h>
-#include <Partitioner2/DataFlow.h>
+#include <BinaryStackVariable.h>
 #include <RegisterParts.h>
 
 namespace rose {
@@ -10,6 +10,10 @@ namespace BinaryAnalysis {
 
 // Forwards
 class Disassembler;
+namespace Partitioner2 {
+    class Partitioner;
+    class Function;
+}
 
 /** Support for binary calling conventions.
  *
@@ -716,32 +720,34 @@ const Dictionary& dictionaryX86();
  *
  *  This class encapsulates all information about calling conventions including the analysis functions and the data types. */
 class Analysis {
-public:
-    /** A variable located on the stack.
-     *
-     *  These variable descriptions are different than @ref ParameterLocation because these carry details
-     *  that came from the analysis of a particular function while the latter contains more generic information that applies
-     *  across a wide collection of functions. */
-    typedef Partitioner2::DataFlow::StackVariable StackVariable;
-
-    /** Container of stack variables. */
-    typedef Partitioner2::DataFlow::StackVariables StackVariables;
-
 private:
     InstructionSemantics2::BaseSemantics::DispatcherPtr cpu_;
     const RegisterDictionary *regDict_;                 // Names for the register parts
+
+    bool hasResults_;                                   // Are the following data members initialized?
+    bool didConverge_;                                  // Are the following data members valid (else only approximations)?
     RegisterParts restoredRegisters_;                   // Registers accessed but restored
     RegisterParts inputRegisters_;                      // Registers that serve as possible input parameters
     RegisterParts outputRegisters_;                     // Registers that hold possible return values
     StackVariables inputStackParameters_;               // Stack variables serving as function inputs
     StackVariables outputStackParameters_;              // Stack variables serving as possible return values
     Sawyer::Optional<int64_t> stackDelta_;              // Change in stack across entire function
+    // Don't forget to update clearResults() if you add more.
 
 public:
+    /** Default constructor.
+     *
+     *  This creates an analyzer that is not suitable for analysis since it doesn't know anything about the architecture it
+     *  would be analyzing. This is mostly for use in situations where an analyzer must be constructed as a member of another
+     *  class's default constructor, in containers that initialize their contents with a default constructor, etc. */
+    Analysis()
+        : regDict_(NULL), hasResults_(false), didConverge_(false) {}
+
     /** Construct an analysis using specified disassembler.
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
-    Analysis(Disassembler *d) {
+    Analysis(Disassembler *d)
+        : regDict_(NULL), hasResults_(false), didConverge_(false) {
         init(d);
     }
 
@@ -752,14 +758,38 @@ public:
      *  @ref InstructionSemantics2::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". These happen to also be the
      *  defaults used by @ref InstructionSemantics::SymbolicSemantics. */
     Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
-        : cpu_(cpu) {}
+        : cpu_(cpu), regDict_(NULL), hasResults_(false), didConverge_(false) {}
 
-    /** Analyze one functions.
+    /** Analyze one function.
      *
      *  This analysis method uses @ref Partitioner2 data structures which are generally faster than using the AST. The
      *  specified function need not be attached to the partitioner. Results of the analysis are stored in this analysis
      *  object to be queried after the analysis completes. */
-    void analyzeFunction(const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&);
+    void analyzeFunction(const Partitioner2::Partitioner&, const Sawyer::SharedPointer<Partitioner2::Function>&);
+
+    /** Whether a function has been analyzed.
+     *
+     *  Returns true if this analysis object holds results from analyzing a function. The results might be only approximations
+     *  depending on whether @ref didConverge also returns true. */
+    bool hasResults() const { return hasResults_; }
+
+    /** Whether the analysis results are valid.
+     *
+     *  Returns true if @ref hasResults is true and the analysis converged to a solution.  If the analysis did not converge
+     *  then the other results are only approximations. */
+    bool didConverge() const { return didConverge_; }
+
+    /** Clear analysis results.
+     *
+     *  Resets the analysis results so it looks like this analyzer is initialized but has not run yet. When this method
+     *  returns, @ref hasResults and @ref didConverge will both retun false. */
+    void clearResults();
+
+    /** Clears everything but results.
+     *
+     *  This resets the virtual CPU to the null pointer, possibly freeing some memory if the CPU isn't being used for other
+     *  things. Once the CPU is removed it's no longer possible to do more analysis. */
+    void clearNonResults();
 
     /** Property: Register dictionary.
      *
