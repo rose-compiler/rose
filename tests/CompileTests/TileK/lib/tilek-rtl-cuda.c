@@ -9,7 +9,6 @@
 
 #include <cuda.h>
 #include <builtin_types.h>
-#include <drvapi_error_string.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -17,11 +16,12 @@
 #include <assert.h>
 
 // Define PTX suffix for different platforms
-#if defined(__x86_64) || defined(AMD64) || defined(_M_AMD64)
-#  define PTX_SUFFIX "_64.ptx"
-#else
-#  define PTX_SUFFIX "_32.ptx"
-#endif
+//#if defined(__x86_64) || defined(AMD64) || defined(_M_AMD64)
+//#  define PTX_SUFFIX "_64.ptx"
+//#else
+//#  define PTX_SUFFIX "_32.ptx"
+//#endif
+#define PTX_SUFFIX ".ptx"
 
 extern char * cuda_kernel_file;
 
@@ -29,6 +29,8 @@ void klt_user_schedule(
   struct klt_kernel_t * kernel, struct klt_subkernel_desc_t * subkernel,
   struct klt_loop_context_t * klt_loop_context, struct klt_data_context_t * klt_data_context
 ) {
+  int i, j;
+
   CUdevice cu_device;
   CUcontext cu_context;
   CUmodule cu_module;
@@ -49,7 +51,12 @@ void klt_user_schedule(
   assert(err == CUDA_SUCCESS);
 
   {
-    char * ptx_source_file = ""; // TODO
+    size_t filename_length = strlen(cuda_kernel_file) + strlen(PTX_SUFFIX) + 1;
+    char * ptx_source_file = (char *)malloc(filename_length * sizeof(char));
+    memset(ptx_source_file, 0, filename_length * sizeof(char));
+
+    strcat(ptx_source_file, cuda_kernel_file);
+    strcat(ptx_source_file, PTX_SUFFIX);
 
     CUjit_option * jit_options = malloc(3 * sizeof(CUjit_option));
     void ** jit_opt_vals = malloc(3 * sizeof(void *));
@@ -69,8 +76,9 @@ void klt_user_schedule(
     int jit_reg_count = 32;
     jit_opt_vals[2] = (void *)(size_t)jit_reg_count;
 
+    printf("> PTX source: %s\n", ptx_source_file);
     err = cuModuleLoadDataEx(&cu_module, ptx_source_file, 3, jit_options, (void **)jit_opt_vals);
-//  printf("> PTX JIT log:\n%s\n", jit_log_buffer);
+    printf("> PTX JIT log:\n%s\n", jit_log_buffer);
     assert(err == CUDA_SUCCESS);
   }
 
@@ -80,7 +88,7 @@ void klt_user_schedule(
   // Allocation
 
   CUdeviceptr * cu_data = malloc(kernel->desc->data.num_data * sizeof(CUdeviceptr));
-  size_t * size_data = (cl_mem *)malloc(kernel->desc->data.num_data * sizeof(size_t));
+  size_t * size_data = (size_t *)malloc(kernel->desc->data.num_data * sizeof(size_t));
   for (i = 0; i < kernel->desc->data.num_data; i++) {
     size_data[i] = kernel->desc->data.sizeof_data[i];
     for (j = 0; j < kernel->desc->data.ndims_data[i]; j++) {
@@ -104,7 +112,7 @@ void klt_user_schedule(
   // Move data to device (+ ctx)
 
   for (i = 0; i < kernel->desc->data.num_data; i++) {
-    err = cuMemcpyHtoD(cl_data[i], kernel->data[i].ptr, size_data[i]);
+    err = cuMemcpyHtoD(cu_data[i], kernel->data[i].ptr, size_data[i]);
     assert(err == CUDA_SUCCESS);
   }
 
@@ -116,7 +124,7 @@ void klt_user_schedule(
 
   // Set kernel arguments
 
-  void ** args = malloc((kernel->desc->data.num_param + kernel->desc->data.num_scalar + kernel->desc->data.num_data + kernel->desc->data.num_priv) * sizeof(void *));
+  void ** args = malloc((kernel->desc->data.num_param + kernel->desc->data.num_data) * sizeof(void *));
 
   size_t arg_cnt = 0;
   for (i = 0; i < subkernel->num_params; i++)
@@ -132,8 +140,8 @@ void klt_user_schedule(
   assert(err == CUDA_SUCCESS);
 
   int shared_mem_bytes = 0;
-  err = cuLaunchKernel(cu_kernel, kernel->num_gangs[0], kernel->num_gangs[1], kernel->num_gangs[2],
-                                  kernel->num_workers[0], kernel->num_workers[1], kernel->num_workers[2],
+  err = cuLaunchKernel(cu_kernel, kernel->config->num_gangs[0], kernel->config->num_gangs[1], kernel->config->num_gangs[2],
+                                  kernel->config->num_workers[0], kernel->config->num_workers[1], kernel->config->num_workers[2],
                                   shared_mem_bytes, NULL, args, NULL);
   assert(err == CUDA_SUCCESS);
 
@@ -142,10 +150,8 @@ void klt_user_schedule(
 
   // Move data from device
 
-    error = cuMemcpyDtoH(h_C, d_C, size);
-
   for (i = 0; i < kernel->desc->data.num_data; i++) {
-    err = cuMemcpyDtoH(kernel->data[i].ptr, cl_data[i], size_data[i]);
+    err = cuMemcpyDtoH(kernel->data[i].ptr, cu_data[i], size_data[i]);
     assert(err == CUDA_SUCCESS);
   }
 

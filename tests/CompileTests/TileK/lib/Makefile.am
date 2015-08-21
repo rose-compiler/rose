@@ -103,7 +103,7 @@ libTileK_RTL_threads_la_CFLAGS= \
 if ROSE_HAVE_OPENCL_INC
 libTileK_RTL_opencl_la_SOURCES=tilek-rtl.c tilek-rtl-accelerator.c tilek-rtl-opencl.c
 libTileK_RTL_opencl_la_CFLAGS= \
-  -g -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL -DCOMPILE_OPENCL_KERNEL_WITH_DEBUG=1 \
+  -g -DTILEK_ACCELERATOR -DTILEK_TARGET_OPENCL -DCOMPILE_OPENCL_KERNEL_WITH_DEBUG=0 \
   -I@OPENCL_INC_DIR@ \
   -I$(top_srcdir)/src/midend/KLT/include \
   -I$(srcdir)/../include \
