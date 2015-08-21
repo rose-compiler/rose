@@ -36,9 +36,41 @@ initDiagnostics() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const Dictionary&
+dictionaryArm() {
+    static Dictionary dict;
+    // FIXME[Robb P. Matzke 2015-08-21]: none defind yet
+    return dict;
+}
+
+const Dictionary&
+dictionaryM68k() {
+    static Dictionary dict;
+    // FIXME[Robb P. Matzke 2015-08-20]: none defined yet
+    return dict;
+}
+
+const Dictionary&
+dictionaryMips() {
+    static Dictionary dict;
+    // FIXME[Robb P. Matzke 2015-08-21]: none defind yet
+    return dict;
+}
+
+const Dictionary&
+dictionaryPowerpc() {
+    static Dictionary dict;
+    // FIXME[Robb P. Matzke 2015-08-21]: none defind yet
+    return dict;
+}
+
+const Dictionary&
 dictionaryX86() {
     static Dictionary dict;
     if (dict.empty()) {
+        //--------
+        // 32-bit
+        //--------
+
         // cdecl: gcc < 4.5 uses 4-byte stack alignment
         Definition cc = Definition::x86_32bit_cdecl();
         cc.comment(cc.comment() + " 4-byte alignment");
@@ -54,16 +86,13 @@ dictionaryX86() {
         // other conventions
         dict.push_back(Definition::x86_32bit_stdcall());
         dict.push_back(Definition::x86_32bit_fastcall());
-    }
-    return dict;
-}
 
-const Dictionary&
-dictionaryAmd64() {
-    static Dictionary dict;
-    if (dict.empty()) {
+        //--------
+        // 64-bit
+        //--------
+
         // cdecl: gcc < 4.5 uses 4-byte stack alignment
-        Definition cc = Definition::x86_64bit_cdecl();
+        cc = Definition::x86_64bit_cdecl();
         cc.comment(cc.comment() + " 4-byte alignment");
         cc.stackAlignment(4);
         dict.push_back(cc);
@@ -77,13 +106,6 @@ dictionaryAmd64() {
         // other conventions
         dict.push_back(Definition::x86_64bit_stdcall());
     }
-    return dict;
-}
-
-const Dictionary&
-dictionaryM68k() {
-    static Dictionary dict;
-    // FIXME[Robb P. Matzke 2015-08-20]: none defined yet
     return dict;
 }
 

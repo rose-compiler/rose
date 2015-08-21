@@ -29,6 +29,7 @@ DisassemblerArm::init()
     set_alignment(4);
     set_sex(ByteOrder::ORDER_LSB);
     set_registers(RegisterDictionary::dictionary_arm7()); // only a default
+    callingConventions(CallingConvention::dictionaryArm());
 
     REG_IP = *get_registers()->lookup("r15");
     REG_SP = *get_registers()->lookup("r13");

@@ -3,11 +3,13 @@
 
 #include <BaseSemantics2.h>
 #include <Partitioner2/DataFlow.h>
-#include <Partitioner2/Partitioner.h>
 #include <RegisterParts.h>
 
 namespace rose {
 namespace BinaryAnalysis {
+
+// Forwards
+class Disassembler;
 
 /** Support for binary calling conventions.
  *
@@ -691,14 +693,20 @@ public:
 /** A ordered collection of calling convention definitions. */
 typedef std::vector<Definition> Dictionary;
 
-/** Common calling conventions for x86. These are only 32-bit conventions. */
-const Dictionary& dictionaryX86();
+/** Common calling conventions for ARM. */
+const Dictionary& dictionaryArm();
 
-/** Common calling conventions for x86-64. */
-const Dictionary& dictionaryAmd64();
-
-/** Common calling conventions for FreeScale ColdFire (m68k). */
+/** Common calling conventions for m68k. */
 const Dictionary& dictionaryM68k();
+
+/** Common calling conventions for MIPS. */
+const Dictionary& dictionaryMips();
+
+/** Common calling conventions for PowerPC. */
+const Dictionary& dictionaryPowerpc();
+
+/** Common calling conventions for x86. */
+const Dictionary& dictionaryX86();
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Analysis

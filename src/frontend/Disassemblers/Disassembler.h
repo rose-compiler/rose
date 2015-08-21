@@ -2,6 +2,7 @@
 #define ROSE_DISASSEMBLER_H
 
 #include "threadSupport.h"      /* needed for RTS_mutex_t in this header */
+#include "BinaryCallingConvention.h"
 #include "Diagnostics.h"                                // rose::Diagnostics
 #include "Registers.h"
 #include "MemoryMap.h"
@@ -234,11 +235,36 @@ public:
     virtual ~Disassembler() {}
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Data members
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+    CallingConvention::Dictionary callingConventions_;
 
+protected:
+    const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
+    RegisterDescriptor REG_IP, REG_SP, REG_SS;          /**< Register descriptors initialized during construction. */
+    class Partitioner *p_partitioner;                   /**< Used for placing instructions into blocks and functions. */
+    unsigned p_search;                                  /**< Mask of SearchHeuristic bits specifying instruction searching. */
+    size_t p_wordsize;                                  /**< Word size used by SEARCH_WORDS. */
+    ByteOrder::Endianness p_sex;                        /**< Byte order for SEARCH_WORDS. */
+    size_t p_alignment;                                 /**< Word alignment constraint for SEARCH_WORDS (0 and 1 imply byte). */
+    static std::vector<Disassembler*> disassemblers;    /**< List of disassembler subclasses. */
+    size_t p_ndisassembled;                             /**< Total number of instructions disassembled by disassembleBlock() */
+    unsigned p_protection;                              /**< Memory protection bits that must be set to disassemble. */
+    static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
+    static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
+    static RTS_mutex_t class_mutex;                     /**< Mutex for class-wide thread safety */
 
-    /***************************************************************************************************************************
-     *                                  Registration and lookup methods
-     ***************************************************************************************************************************/
+    /** Prototypical dispatcher for creating real dispatchers */
+    InstructionSemantics2::BaseSemantics::DispatcherPtr p_proto_dispatcher;
+
+public:
+    static Sawyer::Message::Facility mlog;              /**< Disassembler diagnostic streams. */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Registration and lookup methods
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 public:
     /** Register a disassembler instance. More specific disassembler instances should be registered after more general
@@ -345,6 +371,16 @@ public:
     const RegisterDictionary *get_registers() const {
         return p_registers;
     }
+
+    /** Property: Calling convention dictionary.
+     *
+     *  This is a dictionary of the common calling conventions for this architecture.
+     *
+     * @{ */
+    const CallingConvention::Dictionary& callingConventions() const { return callingConventions_; }
+    CallingConvention::Dictionary& callingConventions() { return callingConventions_; }
+    void callingConventions(const CallingConvention::Dictionary &d) { callingConventions_ = d; }
+    /** @} */
 
     /** Returns the register that points to instructions. */
     virtual RegisterDescriptor instructionPointerRegister() const {
@@ -706,28 +742,6 @@ private:
 
 
 
-    /***************************************************************************************************************************
-     *                                          Data members
-     ***************************************************************************************************************************/
-public:
-    static Sawyer::Message::Facility mlog;              /**< Disassembler diagnostic streams. */
-protected:
-    const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
-    RegisterDescriptor REG_IP, REG_SP, REG_SS;          /**< Register descriptors initialized during construction. */
-    class Partitioner *p_partitioner;                   /**< Used for placing instructions into blocks and functions. */
-    unsigned p_search;                                  /**< Mask of SearchHeuristic bits specifying instruction searching. */
-    size_t p_wordsize;                                  /**< Word size used by SEARCH_WORDS. */
-    ByteOrder::Endianness p_sex;                        /**< Byte order for SEARCH_WORDS. */
-    size_t p_alignment;                                 /**< Word alignment constraint for SEARCH_WORDS (0 and 1 imply byte). */
-    static std::vector<Disassembler*> disassemblers;    /**< List of disassembler subclasses. */
-    size_t p_ndisassembled;                             /**< Total number of instructions disassembled by disassembleBlock() */
-    unsigned p_protection;                              /**< Memory protection bits that must be set to disassemble. */
-    static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
-    static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
-    static RTS_mutex_t class_mutex;                     /**< Mutex for class-wide thread safety */
-
-    /** Prototypical dispatcher for creating real dispatchers */
-    InstructionSemantics2::BaseSemantics::DispatcherPtr p_proto_dispatcher;
 };
 
 } // namespace
