@@ -121,7 +121,7 @@ edg-generate-sig.output:
 	if [ $$? -eq 0 ]; then \
 	if ! $(SCRIPT_PATH) --find --progress --ntries=$(EDGBIN_NTRIES) >$@; then \
                $(SCRIPT_PATH) --generate=./; \
-               if ! $$(tail -n 1  edg_binaries.txt >$@); then \
+	       if ! $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig --no-fetch --progress --ntries=$(EDGBIN_NTRIES) >$@; then \
                        rm -f $@ ; \
                        exit 1; \
                fi; \
