@@ -1,24 +1,13 @@
-/** 
- * \file lib/sage/namespace-declaration.cpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #include "MFB/Sage/namespace-declaration.hpp"
 
 #include "sage3basic.h"
 
-#ifndef PATCHING_SAGE_BUILDER_ISSUES
-#  define PATCHING_SAGE_BUILDER_ISSUES 1
+#ifndef VERBOSE
+# define VERBOSE 0
 #endif
 
 namespace MFB {
-
-/*!
- * \addtogroup grp_mfb_sage_nscpdecl
- * @{
-*/
 
 bool ignore(const std::string & name);
 
@@ -66,7 +55,9 @@ void Driver<Sage>::loadSymbols<SgNamespaceDeclarationStatement>(size_t file_id, 
   std::set<SgNamespaceSymbol *>::iterator it;
   for (it = namespace_symbols.begin(); it != namespace_symbols.end(); it++)
     if (resolveValidParent<SgNamespaceSymbol>(*it)) {
-//    std::cerr << "[Info] (MFB::Driver<Sage>::loadSymbols<SgNamespaceDeclarationStatement>) Add: " << (*it)->get_name().getString() << " from File #" << file_id << std::endl;
+#if VERBOSE
+      std::cerr << "[Info] (MFB::Driver<Sage>::loadSymbols<SgNamespaceDeclarationStatement>) Add: " << (*it)->get_name().getString() << " from File #" << file_id << std::endl;
+#endif
     }
 }
 
@@ -213,14 +204,6 @@ void Sage<SgNamespaceDeclarationStatement>::setDefinition(SgNamespaceSymbol * sy
 
   it_per_file_namespace_decl->second.insert(std::pair<SgSourceFile *, SgNamespaceDeclarationStatement *>(file, decl));
 }
-
-/*
-void Sage<SgNamespaceDeclarationStatement>::init() {
-  
-}
-*/
-
-/** @} */
 
 }
 

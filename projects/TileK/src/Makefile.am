@@ -7,7 +7,7 @@ DLX_REL_PATH=src/frontend/DLX
 MFB_REL_PATH=src/midend/MFB
 MDCG_REL_PATH=src/midend/MDCG
 KLT_REL_PATH=src/midend/KLT
-TILEK_REL_PATH=tests/CompileTests/TileK
+TILEK_REL_PATH=projects/TileK
 
 KLT_INC_PATHS= \
   -I$(top_srcdir)/$(DLX_REL_PATH)/include  \

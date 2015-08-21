@@ -9,6 +9,10 @@
 #include "KLT/Core/api.hpp"
 #include "KLT/Core/utils.hpp"
 
+#ifndef VERBOSE
+# define VERBOSE 0
+#endif
+
 namespace MFB {
 
 Driver< ::MFB::KLT::KLT>::Driver(SgProject * project_) : ::MFB::Driver<Sage>(project_) {}
@@ -50,7 +54,9 @@ sage_func_res_t KLT<kernel_t>::buildKernelDecl(::KLT::Descriptor::kernel_t & res
 
   sage_func_desc_t sage_func_desc(res.kernel_name, kernel_ret_type, kernel_param_list, NULL, generator->getKernelFileID(), generator->getKernelFileID());
 
+#if VERBOSE
   std::cerr << "[Info] (MFB::KLT::KLT<kernel_t>::buildKernelDecl) Calling Driver<Sage>::build<SgFunctionDeclaration> to create " << res.kernel_name << " in file #" << generator->getKernelFileID() << "." << std::endl;
+#endif
 
   sage_func_res_t sage_func_res = driver.build<SgFunctionDeclaration>(sage_func_desc);
 
@@ -80,7 +86,9 @@ KLT<kernel_t>::build_result_t KLT<kernel_t>::build(::MFB::Driver< ::MFB::KLT::KL
   object.root->collectLoops(res->loops, loop_translation_map);
   object.root->collectTiles(res->tiles, loop_translation_map);
 
+#if VERBOSE
   std::cerr << "[Info] (MFB::KLT::KLT<kernel_t>::build) " << res->loops.size() << " loops and " << res->tiles.size() << " tiles." << std::endl;
+#endif
 
   res->parameters = object.parameters;
   res->data = object.data;

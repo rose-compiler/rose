@@ -94,8 +94,6 @@ SUBDIRS += frontend_integration
 # DQ (2/15/2014): Adding systemc tests (part of general C++ robustness tests)
 SUBDIRS += systemc_tests
 
-SUBDIRS += TileK
-
 # end of ROSE_USE_CLANG_FRONTEND
 # endif
 
