@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "AsmUnparser.h"
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
+#include "Disassembler.h"
 
 namespace rose {
 namespace BinaryAnalysis {
