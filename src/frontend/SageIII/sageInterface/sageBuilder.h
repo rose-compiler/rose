@@ -286,13 +286,11 @@ ROSE_DLL_API SgTypeImaginary* buildImaginaryType(SgType *base_type = NULL);
 //! Build a const/volatile type qualifier
 ROSE_DLL_API SgConstVolatileModifier * buildConstVolatileModifier (SgConstVolatileModifier::cv_modifier_enum mtype=SgConstVolatileModifier::e_unknown);
 
-#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
 //! Build a Matlab Matrix Type
 ROSE_DLL_API SgTypeMatrix* buildMatrixType();
 
 //! Build a tuple of types. Useful for a function returning multiple variables of different types
 ROSE_DLL_API SgTypeTuple* buildTupleType(SgType *t1 = NULL, SgType *t2 = NULL, SgType *t3 = NULL, SgType *t4 = NULL, SgType *t5 = NULL, SgType *t6 = NULL, SgType *t7 = NULL, SgType *t8 = NULL, SgType *t9 = NULL, SgType *t10 = NULL); 
-#endif
  
 //@}
 
@@ -447,9 +445,8 @@ BUILD_UNARY_PROTO(ConjugateOp)
 BUILD_UNARY_PROTO(VarArgStartOneOperandOp)
 BUILD_UNARY_PROTO(VarArgEndOp)
 
-#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
-  BUILD_UNARY_PROTO(MatrixTransposeOp)
-#endif  
+//Matlab transpose op
+BUILD_UNARY_PROTO(MatrixTransposeOp)
   
 //! Build a type casting expression
 ROSE_DLL_API SgCastExp * buildCastExp(SgExpression *  operand_i = NULL,
@@ -558,16 +555,14 @@ BUILD_BINARY_PROTO(XorAssignOp)
 BUILD_BINARY_PROTO(VarArgCopyOp)
 BUILD_BINARY_PROTO(VarArgStartOp)
 
-#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
-  BUILD_BINARY_PROTO(PowerOp);
-  BUILD_BINARY_PROTO(ElementwisePowerOp);
-  BUILD_BINARY_PROTO(ElementwiseMultiplyOp);
-  BUILD_BINARY_PROTO(ElementwiseDivideOp);
-  BUILD_BINARY_PROTO(LeftDivideOp);
-  BUILD_BINARY_PROTO(ElementwiseLeftDivideOp);
-  BUILD_BINARY_PROTO(ElementwiseAddOp);
-  BUILD_BINARY_PROTO(ElementwiseSubtractOp);
-#endif  
+BUILD_BINARY_PROTO(PowerOp);
+BUILD_BINARY_PROTO(ElementwisePowerOp);
+BUILD_BINARY_PROTO(ElementwiseMultiplyOp);
+BUILD_BINARY_PROTO(ElementwiseDivideOp);
+BUILD_BINARY_PROTO(LeftDivideOp);
+BUILD_BINARY_PROTO(ElementwiseLeftDivideOp);
+BUILD_BINARY_PROTO(ElementwiseAddOp);
+BUILD_BINARY_PROTO(ElementwiseSubtractOp);
   
 #undef BUILD_BINARY_PROTO
 
@@ -771,18 +766,17 @@ ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList_nfi();
 //@{
 /*! @name Builders for Matlab nodes
  */
-#ifdef ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT 
-//! Build a range expression like start:end or start:stride:end
+//! Build a Matlab range expression like start:end or start:stride:end
  ROSE_DLL_API SgRangeExp* buildRangeExp(SgExpression *start);
+
  //! Build a Matlab Matrix 
  ROSE_DLL_API SgMatrixExp* buildMatrixExp(SgExprListExp *firstRow);
 
- //! Build a colon expression :
+ //! Build a Matlab colon expression :
  ROSE_DLL_API SgMagicColonExp* buildMagicColonExp();
 
- //! Build a for statement for matlab
+ //! Build a For-loop statement for matlab
  ROSE_DLL_API SgMatlabForStatement* buildMatlabForStatement(SgExpression* loop_index, SgExpression* loop_range, SgBasicBlock* loop_body);
-#endif
 //@}
 
  
