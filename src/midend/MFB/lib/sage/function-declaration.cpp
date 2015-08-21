@@ -1,9 +1,3 @@
-/** 
- * \file lib/sage/function-declaration.cpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #include "MFB/Sage/function-declaration.hpp"
 #include "MFB/Sage/namespace-declaration.hpp"
@@ -14,12 +8,11 @@
 #  define PATCHING_SAGE_BUILDER_ISSUES 1
 #endif
 
-namespace MFB {
+#ifndef VERBOSE
+# define VERBOSE 0
+#endif
 
-/*!
- * \addtogroup grp_mfb_sage_funcdecl
- * @{
-*/
+namespace MFB {
 
 bool ignore(const std::string & name);
 bool ignore(SgScopeStatement * scope);
@@ -76,7 +69,9 @@ void  Driver<Sage>::loadSymbols<SgFunctionDeclaration>(size_t file_id, SgSourceF
   for (it = function_symbols.begin(); it != function_symbols.end(); it++)
     if (resolveValidParent<SgFunctionSymbol>(*it)) {
       p_symbol_to_file_id_map[*it] = file_id;
-//    std::cerr << "[Info] (MFB::Driver<Sage>::loadSymbols<SgFunctionDeclaration>) Add: " << (*it)->get_name().getString() << " from File #" << file_id << std::endl;
+#if VERBOSE
+      std::cerr << "[Info] (MFB::Driver<Sage>::loadSymbols<SgFunctionDeclaration>) Add: " << (*it)->get_name().getString() << " from File #" << file_id << std::endl;
+#endif
     }
 }
 

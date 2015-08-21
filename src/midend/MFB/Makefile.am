@@ -1,3 +1,3 @@
 
-SUBDIRS = include lib
+SUBDIRS = include/MFB lib/sage lib/klt lib/utils
 

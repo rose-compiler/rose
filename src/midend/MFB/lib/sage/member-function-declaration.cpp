@@ -1,9 +1,3 @@
-/** 
- * \file lib/sage/member-function-declaration.cpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #include "MFB/Sage/member-function-declaration.hpp"
 #include "MFB/Sage/class-declaration.hpp"
@@ -15,12 +9,11 @@
 #  define PATCHING_SAGE_BUILDER_ISSUES 1
 #endif
 
-namespace MFB {
+#ifndef VERBOSE
+# define VERBOSE 0
+#endif
 
-/*!
- * \addtogroup grp_mfb_sage_mfuncdecl
- * @{
-*/
+namespace MFB {
 
 bool ignore(const std::string & name);
 bool ignore(SgScopeStatement * scope);
@@ -71,7 +64,9 @@ void  Driver<Sage>::loadSymbols<SgMemberFunctionDeclaration>(size_t file_id, SgS
   for (it = member_function_symbols.begin(); it != member_function_symbols.end(); it++)
     if (resolveValidParent<SgMemberFunctionSymbol>(*it)) {
       p_symbol_to_file_id_map[*it] = file_id;
-//    std::cerr << "[Info] (MFB::Driver<Sage>::loadSymbols<SgMemberFunctionDeclaration>) Add: " << (*it)->get_name().getString() << " from File #" << file_id << std::endl;
+#if VERBOSE
+      std::cerr << "[Info] (MFB::Driver<Sage>::loadSymbols<SgMemberFunctionDeclaration>) Add: " << (*it)->get_name().getString() << " from File #" << file_id << std::endl;
+#endif
     }
 }
 
@@ -204,8 +199,6 @@ Sage<SgMemberFunctionDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<S
 
   return result;
 }
-
-/** @} */
 
 }
 
