@@ -304,7 +304,6 @@ Grammar::setUpExpressions ()
   // SgAggregateInitializer
      NEW_TERMINAL_MACRO (DesignatedInitializer, "DesignatedInitializer", "DESIGNATED_INITIALIZER" );
 
-     #if USE_MATLAB_IR_NODES
      //SK (06/23/2015) SgMatrixExp for Matlab Matrix
      NEW_TERMINAL_MACRO (MatrixExp, "MatrixExp", "MATRIX_EXP");
 
@@ -329,12 +328,12 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (ElementwiseSubtractOp, "ElementwiseSubtractOp", "ELEMENT_SUBTRACT_OP");
      
      NEW_TERMINAL_MACRO (MatrixTransposeOp, "MatrixTransposeOp", "MATRIX_TRANSPOSE_OP");
-     
+
+     //SK (08/20/2015) Elementwise operators in Matlab
      NEW_NONTERMINAL_MACRO (ElementwiseOp,
                             ElementwiseMultiplyOp    |  ElementwisePowerOp    | ElementwiseLeftDivideOp |
                             ElementwiseDivideOp      |  ElementwiseAddOp      | ElementwiseSubtractOp ,
                             "ElementwiseOp", "ELEMENT_WISE_OP", false);
-     #endif
      
     
      NEW_NONTERMINAL_MACRO (Initializer,
@@ -349,11 +348,9 @@ Grammar::setUpExpressions ()
      NEW_NONTERMINAL_MACRO (UnaryOp,
                             ExpressionRoot | MinusOp            | UnaryAddOp | NotOp           | PointerDerefExp | 
                             AddressOfOp    | MinusMinusOp       | PlusPlusOp | BitComplementOp | CastExp         |
-                            ThrowOp        | RealPartOp         | ImagPartOp | ConjugateOp     | UserDefinedUnaryOp
-                            #if USE_MATLAB_IR_NODES == 1
-                            | MatrixTransposeOp
-                            #endif
-                            ,"UnaryOp","UNARY_EXPRESSION", false);
+                            ThrowOp        | RealPartOp         | ImagPartOp | ConjugateOp     | UserDefinedUnaryOp |
+                            MatrixTransposeOp,
+                            "UnaryOp","UNARY_EXPRESSION", false);
 
 
      NEW_NONTERMINAL_MACRO (CompoundAssignOp,
@@ -371,11 +368,9 @@ Grammar::setUpExpressions ()
           PntrArrRefExp  | ScopeOp          | AssignOp            | ExponentiationOp | JavaUnsignedRshiftOp |
           ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
 
-          NonMembershipOp | IsOp            | IsNotOp          /* | DotDotExp*/
-#if USE_MATLAB_IR_NODES == 1
-                            | ElementwiseOp | PowerOp | LeftDivideOp
-#endif
-          ,"BinaryOp","BINARY_EXPRESSION", false);
+          NonMembershipOp | IsOp            | IsNotOp          /* | DotDotExp*/      | ElementwiseOp        | PowerOp        |
+          LeftDivideOp,
+          "BinaryOp","BINARY_EXPRESSION", false);
 
 
      NEW_NONTERMINAL_MACRO (NaryOp,
@@ -391,16 +386,9 @@ Grammar::setUpExpressions ()
           "ValueExp","ValueExpTag", false);
 
 
-     #if USE_MATLAB_IR_NODES == 1
      NEW_NONTERMINAL_MACRO (ExprListExp,
           ListExp  | TupleExp | MatrixExp,
-          "ExprListExp","EXPR_LIST", /* can have instances = */ true);
-     #else
-     NEW_NONTERMINAL_MACRO (ExprListExp,
-          ListExp  | TupleExp,
-          "ExprListExp","EXPR_LIST", /* can have instances = */ true);
-     #endif
-     
+          "ExprListExp","EXPR_LIST", /* can have instances = */ true);     
 
      // TV (06/06/13) : CudaKernelCall are now considered to be a FunctionCall
      NEW_NONTERMINAL_MACRO (FunctionCallExp,
@@ -432,9 +420,7 @@ Grammar::setUpExpressions ()
           LambdaRefExp        | DictionaryExp           | KeyDatumPair             |
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
-       #if USE_MATLAB_IR_NODES == 1
-          RangeExp            | MagicColonExp           |
-       #endif
+          RangeExp            | MagicColonExp           | //SK(08/20/2015): RangeExp and MagicColonExp for Matlab
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
           ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | NoexceptOp, "Expression", "ExpressionTag", false);
        // ClassExp | FunctionParameterRefExp            | HereExp, "Expression", "ExpressionTag", false);
@@ -852,7 +838,6 @@ Grammar::setUpExpressions ()
      UserDefinedUnaryOp.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      UserDefinedBinaryOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
-     #if USE_MATLAB_IR_NODES == 1
      MatrixExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      RangeExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      MagicColonExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -869,7 +854,6 @@ Grammar::setUpExpressions ()
      
      ElementwiseMultiplyOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ElementwiseLeftDivideOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-     #endif
      
   // DQ (2/27/2005): We want to post_construction_initialization to call set_type so we don't want 
   // and empty function here plus I have added a set_type function for DotStarOp.
@@ -970,7 +954,6 @@ Grammar::setUpExpressions ()
      BitOrOp.editSubstitute         ( "PRECEDENCE_VALUE", " 6" );
      CommaOpExp.editSubstitute      ( "PRECEDENCE_VALUE", " 1" ); // lowest precedence
 
-     #if USE_MATLAB_IR_NODES == 1
      PowerOp.editSubstitute ( "PRECEDENCE_VALUE", "14" );
      ElementwisePowerOp.editSubstitute ( "PRECEDENCE_VALUE", "14" );
      ElementwiseMultiplyOp.editSubstitute ( "PRECEDENCE_VALUE", "13" );
@@ -981,7 +964,6 @@ Grammar::setUpExpressions ()
      ElementwiseAddOp.editSubstitute ( "PRECEDENCE_VALUE", "12" );
      ElementwiseSubtractOp.editSubstitute ( "PRECEDENCE_VALUE", "12" );
      MatrixTransposeOp.editSubstitute ( "PRECEDENCE_VALUE", "15" );
-     #endif
      
   // DQ (1/26/2013): I think this is wrong, "<<" and ">>" have value 7 (lower than "==") (see test2013_42.C).
   // I think this value of 7 is incorrect since it is from a table that lists values in reverse order from how 
@@ -1192,7 +1174,6 @@ Grammar::setUpExpressions ()
      ExprListExp.editSubstitute       ( "LIST_NAME", "expression" );
 
 
-     #if USE_MATLAB_IR_NODES == 1
      MatrixExp.setFunctionPrototype ( "HEADER_MATRIX_EXP", "../Grammar/Expression.code" );
      RangeExp.setFunctionPrototype ( "HEADER_RANGE_EXP", "../Grammar/Expression.code" );
 
@@ -1209,8 +1190,6 @@ Grammar::setUpExpressions ()
      MatrixTransposeOp.setDataPrototype("bool", "is_conjugate", "= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
                                      
-     
-     #endif
      
   // Note that excludeDataPrototype() function does not exist in ROSETTA.
   // DQ (2/7/2011): Exclude support for originalExpressionTree (violates ROSETTA rules for compiling lists and data members).
@@ -3131,14 +3110,9 @@ Grammar::setUpExpressions ()
      YieldExpression.setFunctionSource      ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
 
 
-     #if USE_MATLAB_IR_NODES == 1
-     //MatrixExp.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
      MatrixExp.setFunctionSource    ( "SOURCE_MATRIX_EXP", "../Grammar/Expression.code" );
-
      MagicColonExp.setFunctionSource ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
-
      RangeExp.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
      RangeExp.setFunctionSource    ( "SOURCE_RANGE_EXP", "../Grammar/Expression.code" );
-     #endif
 
    }
