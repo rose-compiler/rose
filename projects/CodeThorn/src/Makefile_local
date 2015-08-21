@@ -28,7 +28,7 @@ YACC                  = bison
 
 #OBJECT_FILES=AType.o Analyzer.C AstTerm.o CFAnalyzer.o CommandLineOptions.o ConstraintRepresentation.o ExprAnalyzer.o InternalChecks.o LTLCheckerFixpoint.o LTLCheckerUnified.o LTLParser.o LanguageRestrictor.o LanguageRestrictorCollection.o Miscellaneous.o StateRepresentations.o Timer.cpp Visualizer.o RDLattice.o  AnalysisAbstractionLayer.o RDAstAttribute.o Flow.o PropertyValueTable.o  defUseQuery.C VariableIdUtils.C addressTakenAnalysis.C RewriteSystem.o SpotConnection.o
 
-OBJECT_FILES=AType.C Analyzer.C AstTerm.C CFAnalyzer.C CommandLineOptions.C ConstraintRepresentation.C ExprAnalyzer.C InternalChecks.C LTLCheckerFixpoint.C LTLCheckerUnified.C LTLParser.o LanguageRestrictor.o LanguageRestrictorCollection.C Miscellaneous.C StateRepresentations.C Timer.cpp Visualizer.C RDLattice.C  AnalysisAbstractionLayer.C RDAstAttribute.C Flow.C PropertyValueTable.C  defUseQuery.C VariableIdUtils.C addressTakenAnalysis.C RewriteSystem.C SpotConnection.C SpotState.C SpotSuccIter.C SpotTgba.C
+OBJECT_FILES=AType.C Analyzer.C AstTerm.C CFAnalyzer.C CommandLineOptions.C ConstraintRepresentation.C ExprAnalyzer.C InternalChecks.C LTLCheckerFixpoint.C LTLCheckerUnified.C LTLParser.o LanguageRestrictor.o LanguageRestrictorCollection.C Miscellaneous.C StateRepresentations.C Timer.cpp Visualizer.C RDLattice.C  AnalysisAbstractionLayer.C RDAstAttribute.C Flow.C PropertyValueTable.C  defUseQuery.C VariableIdUtils.C addressTakenAnalysis.C RewriteSystem.C SpotConnection.C SpotState.C SpotSuccIter.C SpotTgba.C PragmaHandler.C
 
 REGRESSION_DATA_DIR=regressiondata
 
