@@ -12,23 +12,15 @@ BISON                 = bison
 FLEX                  = flex
 
 # Location of library directory after "make install" (set as environment variable)
-ROSE_LIBS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -lrose
+ROSE_LIBS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR)/rose -lrose
 
-# Location of ROSE's libtool (it's only in the compilation path)
-#KNOBS = -DPSTATE_MAINTAINER_LIST -DESTATE_MAINTAINER_LIST -DCSET_MAINTAINER_LIST
-#KNOBS = -DPSTATE_MAINTAINER_SET -DESTATE_MAINTAINER_SET -DCSET_MAINTAINER_SET
-#KNOBS = -DPSTATE_MAINTAINER_HSET -DESTATE_MAINTAINER_HSET -DCSET_MAINTAINER_HSET
-KNOBS = 
-
-CPPFLAGS              = $(KNOBS) -O3 -w -march=native -ftree-vectorize -ggdb $(EXTRA_INCLUDES) -fopenmp -I.
+CPPFLAGS              = -O3 -w -march=native -ftree-vectorize -ggdb $(EXTRA_INCLUDES) -fopenmp -I.
 #CXXCPPFLAGS           = @CXXCPPFLAGS@
 CXXFLAGS              = -Wno-deprecated
 LDFLAGS               = 
 YACC                  = bison
 
-#OBJECT_FILES=AType.o Analyzer.C AstTerm.o CFAnalyzer.o CommandLineOptions.o ConstraintRepresentation.o ExprAnalyzer.o InternalChecks.o LTLCheckerFixpoint.o LTLCheckerUnified.o LTLParser.o LanguageRestrictor.o LanguageRestrictorCollection.o Miscellaneous.o StateRepresentations.o Timer.cpp Visualizer.o RDLattice.o  AnalysisAbstractionLayer.o RDAstAttribute.o Flow.o PropertyValueTable.o  defUseQuery.C VariableIdUtils.C addressTakenAnalysis.C RewriteSystem.o SpotConnection.o
-
-OBJECT_FILES=AType.C Analyzer.C AstTerm.C CFAnalyzer.C CommandLineOptions.C ConstraintRepresentation.C ExprAnalyzer.C InternalChecks.C LTLCheckerFixpoint.C LTLCheckerUnified.C LTLParser.o LanguageRestrictor.o LanguageRestrictorCollection.C Miscellaneous.C StateRepresentations.C Timer.cpp Visualizer.C RDLattice.C  AnalysisAbstractionLayer.C RDAstAttribute.C Flow.C PropertyValueTable.C  defUseQuery.C VariableIdUtils.C addressTakenAnalysis.C RewriteSystem.C SpotConnection.C SpotState.C SpotSuccIter.C SpotTgba.C PragmaHandler.C
+OBJECT_FILES=Analyzer.C CommandLineOptions.C ConstraintRepresentation.C ExprAnalyzer.C InternalChecks.C LanguageRestrictorCollection.C Miscellaneous.C StateRepresentations.C  Timer.cpp Visualizer.C PropertyValueTable.C RewriteSystem.C SpotConnection.C SpotTgba.C  SpotState.C SpotSuccIter.C CounterexampleAnalyzer.C RefinementConstraints.C ArrayElementAccessData.C Specialization.C  PragmaHandler.C
 
 REGRESSION_DATA_DIR=regressiondata
 
@@ -67,7 +59,7 @@ matcherlexer.o: matcherlexer.lxx matcherparser.h
 	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $< -c 
 
 $(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_empty_specialization.o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3) RERS_empty_specialization.o -I.
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o  -o$(TOOLNAME3) RERS_empty_specialization.o -I. -lspray
 
 $(TOOLNAME3)_rers1: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem1_specialization.o
 	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers1 RERS_Problem1_specialization.o -I. $(BOOST_CPPFLAGS) $(ROSE_LIBS)
