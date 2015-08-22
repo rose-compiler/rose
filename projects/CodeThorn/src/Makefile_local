@@ -12,15 +12,15 @@ BISON                 = bison
 FLEX                  = flex
 
 # Location of library directory after "make install" (set as environment variable)
-ROSE_LIBS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR)/rose -lrose
+ROSE_LIBS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR)/rose -L $(SPOT_PREFIX)/lib -lbdd -lspot -lspray -lrose
 
-CPPFLAGS              = -O3 -w -march=native -ftree-vectorize -ggdb $(EXTRA_INCLUDES) -fopenmp -I.
+CPPFLAGS              = -O2 -w -march=native -ftree-vectorize $(EXTRA_INCLUDES) -fopenmp -I.
 #CXXCPPFLAGS           = @CXXCPPFLAGS@
 CXXFLAGS              = -Wno-deprecated
 LDFLAGS               = 
 YACC                  = bison
 
-OBJECT_FILES=Analyzer.C CommandLineOptions.C ConstraintRepresentation.C ExprAnalyzer.C InternalChecks.C LanguageRestrictorCollection.C Miscellaneous.C StateRepresentations.C  Timer.cpp Visualizer.C PropertyValueTable.C RewriteSystem.C SpotConnection.C SpotTgba.C  SpotState.C SpotSuccIter.C CounterexampleAnalyzer.C RefinementConstraints.C ArrayElementAccessData.C Specialization.C  PragmaHandler.C
+OBJECT_FILES=Analyzer.o CommandLineOptions.o ConstraintRepresentation.o ExprAnalyzer.o InternalChecks.o LanguageRestrictorCollection.o Miscellaneous.o StateRepresentations.o  Timer.cpp Visualizer.o PropertyValueTable.o RewriteSystem.o SpotConnection.o SpotTgba.o  SpotState.o SpotSuccIter.o CounterexampleAnalyzer.o RefinementConstraints.o ArrayElementAccessData.o Specialization.o  PragmaHandler.o
 
 REGRESSION_DATA_DIR=regressiondata
 
@@ -35,6 +35,27 @@ all: RERS_BINARY
 # .C.o:
 #	g++ -c -I$(ROSE_INCLUDE_DIR) -o $@ $(@:.o=.C)
 
+###############################################################################################
+
+%.o: %.C %.h
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) -I$(BOOST_HOME)/include $< $(BOOST_CPPFLAGS) -c 
+
+%.o: %.C
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) -I$(BOOST_HOME)/include $< $(BOOST_CPPFLAGS) -c 
+
+$(TOOLNAME3): $(OBJECT_FILES) RERS_empty_specialization.o $(TOOLNAME3).o 
+	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) RERS_empty_specialization.o $(OBJECT_FILES) $(TOOLNAME3).o $(ROSE_LIBS) $(BOOST_CPPFLAGS) -o$(TOOLNAME3)
+
+# Create a specialized hybrid analyzer for the given RERS problem. Uses several input parameters, is called by the "generate_rers_hybrid_analyzer" script
+#$(TOOLNAME3)_$(PROBLEM): $(OBJECT_FILES) $(HYBRID_DIR)/$(PROBLEM)_copy_functions.o 
+#	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS)  $(CPPFLAGS) $(OBJECT_FILES) $(PROBLEM)_copy_functions.o $(ROSE_LIBS) $(BOOST_CPPFLAGS) -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM)
+
+# Create a specialized hybrid analyzer for the given RERS problem. Uses several input parameters, is called by the "generate_rers_hybrid_analyzer" script
+$(TOOLNAME3)_$(PROBLEM): $(OBJECT_FILES_REMOTE) $(HYBRID_DIR)/$(PROBLEM)_copy_functions.o 
+	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS)  $(CPPFLAGS) $(OBJECT_FILES_REMOTE) $(PROBLEM)_copy_functions.o $(ROSE_LIBS) $(BOOST_CPPFLAGS) -lspray -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM)
+
+###############################################################################################
+
 ltlparser: LTLParser.y++ LTL.h
 	$(BISON) -p ltl_ $<
 	$(CXX) -DLTL_PARSER_DEBUG -o $@ $(CXXFLAGS) $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) LTLParser.tab.c++
@@ -43,23 +64,8 @@ LTLParser.o: LTLParser.y++ LTL.h
 	$(BISON) -p ltl_ $<
 	$(CXX) -o $@ $(CXXFLAGS) $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) LTLParser.tab.c++ -c
 
-matcherparser.h: matcherparser.yxx
-	$(BISON) -p matcher --defines=matcherparser.h matcherparser.yxx
-matcherparser.C: matcherparser.yxx
-	$(BISON) -p matcher matcherparser.yxx -omatcherparser.C
-matcherparser.o: matcherparser.h matcherparser.C
-	$(CXX) -o $@ $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -I. matcherparser.C -c
-
-matcherlexer.o: matcherlexer.lxx matcherparser.h
-#	$(FLEX) -Pmatcher -omatcherlexer.C matcherlexer.lxx
-	$(FLEX) -Pmatcher -t matcherlexer.lxx > matcherlexer.C # flex 2.5.35 bug workaround
-	$(CXX) -o $@ $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -I. matcherlexer.C -c
-
-%.o: %.C %.h
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $< -c 
-
 $(TOOLNAME3)_rers1: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem1_specialization.o
-	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers1 RERS_Problem1_specialization.o -I. $(BOOST_CPPFLAGS) $(ROSE_LIBS)
+	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers1 RERS_Problem1_specialization.o -I. $(BOOST_CPPFLAGS) 
 
 $(TOOLNAME3)_rers2: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem2_specialization.o
 	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers2 RERS_Problem2_specialization.o -I.
@@ -88,17 +94,6 @@ $(TOOLNAME3)_rers9: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).
 $(TOOLNAME3)_rers10: $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_Problem10_specialization.o
 	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o -lfl -o$(TOOLNAME3)_rers10 RERS_Problem10_specialization.o -I.
 
-
-$(TOOLNAME3): $(TOOLNAME3).C  $(TOOLNAME3).h $(OBJECT_FILES) $(TOOLNAME3).o RERS_empty_specialization.o
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) $(TOOLNAME3).o  -o$(TOOLNAME3) RERS_empty_specialization.o -I. -lspray
-
-# Create a specialized hybrid analyzer for the given RERS problem. Uses several input parameters, is called by the "generate_rers_hybrid_analyzer" script
-$(TOOLNAME3)_$(PROBLEM): $(OBJECT_FILES_REMOTE) $(HYBRID_DIR)/$(PROBLEM)_copy_functions.o 
-	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES_REMOTE) $(PROBLEM)_copy_functions.o -lfl -L$(CT_BUILD_DIR)/.libs -lspray -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM)
-
-
-xxtest: xxtest.C $(OBJECT_FILES)
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_LIBS) $(OBJECT_FILES) xxtest.C -oxxtest
 
 check: $(TOOLNAME3)
 	./$(TOOLNAME3) --internal-checks
@@ -246,9 +241,6 @@ projectsize:
 	@echo -n "Number of lines: "
 	@wc -l `ls *.h *.C -1 | grep -v parser |  grep -v scanner | grep -v RERS | tr '\n' ' '` *.l?? *.y?? RERS_Problem*_specialization*.C | grep total 
 
-
-%.o: %.C
-	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $< -c 
 
 RERS_BINARY: transform_rers_problems codethorn_rers1 codethorn_rers2 codethorn_rers3 codethorn_rers4 codethorn_rers5 codethorn_rers6 codethorn_rers7 codethorn_rers8 codethorn_rers9 codethorn_rers10
 
