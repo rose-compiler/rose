@@ -14,9 +14,16 @@
 using namespace SPRAY;
 using namespace std;
 
-CFAnalysis::CFAnalysis(Labeler* l):labeler(l){
+CFAnalysis::CFAnalysis(Labeler* l):labeler(l),_createLocalEdge(false){
 }
-
+CFAnalysis::CFAnalysis(Labeler* l, bool createLocalEdge):labeler(l),_createLocalEdge(createLocalEdge){
+}
+void CFAnalysis::setCreateLocalEdge(bool createLocalEdge) {
+  _createLocalEdge=createLocalEdge;
+}
+bool CFAnalysis::getCreateLocalEdge() {
+  return _createLocalEdge;
+}
 size_t CFAnalysis::deleteFunctionCallLocalEdges(Flow& flow) {
   return flow.deleteEdges(EDGE_LOCAL);
 }
@@ -571,8 +578,10 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
       Edge callReturnEdge=Edge((*i).exit,EDGE_CALLRETURN,(*i).callReturn);
       flow.insert(callReturnEdge);
       //TODO: make creation of local edges optional
-      //Edge localEdge=Edge((*i).call,EDGE_LOCAL,(*i).callReturn);
-      //flow.insert(localEdge);
+      if(_createLocalEdge) {
+        Edge localEdge=Edge((*i).call,EDGE_LOCAL,(*i).callReturn);
+        flow.insert(localEdge);
+      }
     }
   }
 }
