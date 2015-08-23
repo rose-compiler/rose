@@ -345,6 +345,17 @@ void Analyzer::addToWorkList(const EState* estate) {
     switch(_explorationMode) {
     case EXPL_DEPTH_FIRST: estateWorkList.push_front(estate);break;
     case EXPL_BREADTH_FIRST: estateWorkList.push_back(estate);break;
+    case EXPL_RANDOM_MODE1: {
+      int perc=4; // 25%-chance depth-first
+      int num=rand();
+      int sel=num%perc;
+      if(sel==0) {
+        estateWorkList.push_front(estate);
+      } else {
+        estateWorkList.push_back(estate);
+      }
+      break;
+    }
     case EXPL_LOOP_AWARE: {
       if(isLoopCondLabel(estate->label())) {
         estateWorkList.push_back(estate);

@@ -338,7 +338,7 @@ namespace CodeThorn {
     bool isPrecise();
     PropertyValueTable reachabilityResults;
     int reachabilityAssertCode(const EState* currentEStatePtr);
-    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST, EXPL_LOOP_AWARE };
+    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST, EXPL_LOOP_AWARE, EXPL_RANDOM_MODE1 };
     void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
     ExplorationMode getExplorationMode() { return _explorationMode; }
     void setSkipSelectedFunctionCalls(bool defer) {

@@ -635,6 +635,8 @@ int main( int argc, char * argv[] ) {
       analyzer.setExplorationMode(Analyzer::EXPL_BREADTH_FIRST);
     } else if(explorationMode=="loop-aware") {
       analyzer.setExplorationMode(Analyzer::EXPL_LOOP_AWARE);
+    } else if(explorationMode=="random-mode1") {
+      analyzer.setExplorationMode(Analyzer::EXPL_RANDOM_MODE1);
     } else {
       cerr<<"Error: unknown state space exploration mode specified with option --exploration-mode."<<endl;
       exit(1);
