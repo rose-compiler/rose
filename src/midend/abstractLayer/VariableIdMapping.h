@@ -75,6 +75,7 @@ class VariableIdMapping {
   bool hasFloatingPointType(VariableId varId);
   bool hasPointerType(VariableId varId);
   bool hasArrayType(VariableId varId);
+  bool isConstantArray(VariableId varId);
   SgVariableDeclaration* getVariableDeclaration(VariableId varId);
   bool isTemporaryVariableId(VariableId varId);
   std::string variableName(VariableId varId);
