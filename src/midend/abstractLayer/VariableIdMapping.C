@@ -89,6 +89,14 @@ bool VariableIdMapping::hasArrayType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgArrayType(type)!=0;
 }
+bool VariableIdMapping::isConstantArray(VariableId varId) {
+  if(hasArrayType(varId)) {
+    // TODO: use new function: hasConstantArrayType.
+    return true;
+  } else {
+    return false;
+  }
+}
 /*! 
   * \author Markus Schordan
   * \date 2012.
