@@ -686,6 +686,15 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
       SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
       assert(initDeclVar);
       VariableId initDeclVarId=getVariableIdMapping()->variableId(initDeclVar);
+      if(variableIdMapping.isConstantArray(initDeclVarId) && boolOptions["rersmode"]) {
+        // in case of a constant array the array (and its members) are not added to the state.
+        // they are considered to be determined from the initializer without representing them
+        // in the state
+        //cout<<"DEBUG: not adding array to PState."<<endl;
+        PState newPState=*currentEState.pstate();
+        ConstraintSet cset=*currentEState.constraints();
+        return createEState(targetLabel,newPState,cset);
+      }
       SgName initDeclVarName=initDeclVar->get_name();
       string initDeclVarNameString=initDeclVarName.getString();
       //cout << "INIT-DECLARATION: var:"<<initDeclVarNameString<<endl;
@@ -1700,9 +1709,15 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     if(currentPState.varExists(rhsVarId)) {
       rhsIntVal=currentPState[rhsVarId].getValue();
     } else {
-      cerr << "WARNING: access to variable "<<variableIdMapping.uniqueLongVariableName(rhsVarId)<< " id:"<<rhsVarId.toString()<<" on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
-      rhsIntVal=AType::Top();
-      isRhsIntVal=true;
+      if(variableIdMapping.isConstantArray(rhsVarId) && boolOptions["rersmode"]) {
+        // in case of an array the id itself is the pointer value
+        ROSE_ASSERT(rhsVarId.isValid());
+        rhsIntVal=rhsVarId.getIdCode();
+      } else {
+        cerr << "WARNING: access to variable "<<variableIdMapping.uniqueLongVariableName(rhsVarId)<< " id:"<<rhsVarId.toString()<<" on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
+        rhsIntVal=AType::Top();
+        isRhsIntVal=true;
+      }
     }
   }
   PState newPState=currentPState;
