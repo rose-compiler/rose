@@ -1,9 +1,3 @@
-/** 
- * \file MDCG/include/MDCG/code-generator.hpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #ifndef __MDCG_TOOLS_STATIC_INITIALIZER_HPP__
 #define __MDCG_TOOLS_STATIC_INITIALIZER_HPP__
@@ -17,14 +11,13 @@
 #include <sstream>
 #include <iterator>
 
+#ifndef VERBOSE
+# define VERBOSE 0
+#endif
+
 namespace MDCG {
 
 namespace Tools {
-
-/*!
- * \addtogroup grp_mdcg_static_initializer
- * @{
-*/
 
 class StaticInitializer {
   public:
@@ -131,7 +124,9 @@ SgInitializer * StaticInitializer::createInitializer(
 ) {
   SgExprListExp * expr_list = SageBuilder::buildExprListExp();
 
+#if VERBOSE
   std::cerr << "[Info] (MDCG::Tools::StaticInitializer::createInitializer) Calls driver.useSymbol<SgClassDeclaration> for symbol: " << element->node->symbol->get_name().getString() << std::endl;
+#endif
 
   driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
 
@@ -193,7 +188,9 @@ SgAggregateInitializer * StaticInitializer::createArray(
 ) {
   SgExprListExp * expr_list = SageBuilder::buildExprListExp();
 
+#if VERBOSE
   std::cerr << "[Info] (MDCG::Tools::StaticInitializer::createArray) Calls driver.useSymbol<SgClassDeclaration> for symbol: " << element->node->symbol->get_name().getString() << std::endl;
+#endif
 
   driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
 
@@ -255,7 +252,9 @@ SgAggregateInitializer * StaticInitializer::createPointerArray(
 ) {
   SgExprListExp * expr_list = SageBuilder::buildExprListExp();
 
+#if VERBOSE
   std::cerr << "[Info] (MDCG::Tools::StaticInitializer::createPointerArray) Calls driver.useSymbol<SgClassDeclaration> for symbol: " << element->node->symbol->get_name().getString() << std::endl;
+#endif
 
   driver.useSymbol<SgClassDeclaration>(element->node->symbol, file_id);
 

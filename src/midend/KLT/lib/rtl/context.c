@@ -1,23 +1,23 @@
 
 #include "KLT/RTL/context.h"
 
-int klt_get_loop_lower(STORAGE_MODIFIER struct klt_loop_context_t * ctx, int idx) {
+DEVICE_FUNCTION_MODIFIER int klt_get_loop_lower(STORAGE_MODIFIER struct klt_loop_context_t * ctx, int idx) {
   return ctx->data[3 * idx];
 }
 
-int klt_get_loop_upper(STORAGE_MODIFIER struct klt_loop_context_t * ctx, int idx) {
+DEVICE_FUNCTION_MODIFIER int klt_get_loop_upper(STORAGE_MODIFIER struct klt_loop_context_t * ctx, int idx) {
   return ctx->data[3 * idx + 1];
 }
 
-int klt_get_loop_stride(STORAGE_MODIFIER struct klt_loop_context_t * ctx, int idx) {
+DEVICE_FUNCTION_MODIFIER int klt_get_loop_stride(STORAGE_MODIFIER struct klt_loop_context_t * ctx, int idx) {
   return ctx->data[3 * idx + 2];
 }
 
-int klt_get_tile_length(STORAGE_MODIFIER struct klt_loop_context_t * ctx, int idx) {
+DEVICE_FUNCTION_MODIFIER int klt_get_tile_length(STORAGE_MODIFIER struct klt_loop_context_t * ctx, int idx) {
   return ctx->data[3 * ctx->num_loops + 2 * idx];
 }
 
-int klt_get_tile_stride(STORAGE_MODIFIER struct klt_loop_context_t * ctx, int idx) {
+DEVICE_FUNCTION_MODIFIER int klt_get_tile_stride(STORAGE_MODIFIER struct klt_loop_context_t * ctx, int idx) {
   return ctx->data[3 * ctx->num_loops + 2 * idx + 1];
 }
 

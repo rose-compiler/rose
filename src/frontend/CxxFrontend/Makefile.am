@@ -97,6 +97,7 @@ else
 # Be sure to use '=' and not ':=' because these need to expand after we've created edg-generate-sig.output
 EDGBIN_SIGNATURE = $(shell cat edg-generate-sig.output 2>/dev/null)
 EDGBIN_BEST_NAME = $(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(EDGBIN_SIGNATURE)
+SCRIPT_PATH = $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig
 
 # This one must be named "EDGBIN_NTRIES" because it's mentioned in an error message from the edg-generate-sig script.
 # Users are directed to override this variable with a higher value (caveat emptor) if an EDG version cannot be found.
@@ -118,9 +119,12 @@ network_checking:
 edg-generate-sig.output: 
 	@wget -q --spider -t 3 --wait=5 http://www.rosecompiler.org ; \
 	if [ $$? -eq 0 ]; then \
-	if ! $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig --find --progress --ntries=$(EDGBIN_NTRIES) >$@; then \
-	    rm -f $@ ; \
-	    exit 1; \
+	if ! $(SCRIPT_PATH) --find --progress --ntries=$(EDGBIN_NTRIES) >$@; then \
+               $(SCRIPT_PATH) --generate=./; \
+	       if ! $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig --no-fetch --progress --ntries=$(EDGBIN_NTRIES) >$@; then \
+                       rm -f $@ ; \
+                       exit 1; \
+               fi; \
 	fi; \
 	else \
 	if ! $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig --no-fetch --progress --ntries=$(EDGBIN_NTRIES) >$@; then \

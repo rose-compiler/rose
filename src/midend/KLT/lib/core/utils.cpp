@@ -4,6 +4,10 @@
 #include "KLT/Core/descriptor.hpp"
 #include "KLT/Core/utils.hpp"
 
+#ifndef VERBOSE
+# define VERBOSE 0
+#endif
+
 namespace KLT {
 
 namespace Utils {
@@ -20,7 +24,9 @@ SgVarRefExp * symbol_map_t::translate(SgVarRefExp * var_ref) const {
   SgVariableSymbol * symbol = var_ref->get_symbol();
   assert(symbol != NULL);
 
+#if VERBOSE
   std::cerr << "[Info] (KLT::Utils::symbol_map_t::translate, SgVarRefExp) symbol = " << symbol->get_name().getString() << std::endl;
+#endif
 
   SgVariableSymbol * loop_symbol = getTranslation(symbol, orig_loops);
   if (loop_symbol != NULL) return SageBuilder::buildVarRefExp(loop_symbol);
@@ -56,7 +62,9 @@ SgPntrArrRefExp * symbol_map_t::translate(SgPntrArrRefExp * arr_ref) const {
 
   assert(arr_ref->get_lhs_operand_i() != NULL);
 
+#if VERBOSE
   std::cerr << "[Info] (KLT::Utils::symbol_map_t::translate, SgPntrArrRefExp) lhs_var_ref = " << arr_ref->get_lhs_operand_i()->class_name() << std::endl;
+#endif
 
   SgVarRefExp * lhs_var_ref = isSgVarRefExp(arr_ref->get_lhs_operand_i());
   if (lhs_var_ref == NULL) {
@@ -66,6 +74,7 @@ SgPntrArrRefExp * symbol_map_t::translate(SgPntrArrRefExp * arr_ref) const {
   SgVariableSymbol * data_symbol = isSgVariableSymbol(lhs_var_ref->get_symbol());
   assert(data_symbol != NULL);
 
+#if VERBOSE
   std::cerr << "[Info] (KLT::Utils::symbol_map_t::translate, SgPntrArrRefExp) data_symbol = " << data_symbol->get_name().getString() << " (" << data_symbol << ")" << std::endl;
   std::cerr << "[Info] (KLT::Utils::symbol_map_t::translate, SgPntrArrRefExp) data.size() = " << data.size() << std::endl;
   {
@@ -73,10 +82,13 @@ SgPntrArrRefExp * symbol_map_t::translate(SgPntrArrRefExp * arr_ref) const {
       std::cerr << "[Info] (KLT::Utils::symbol_map_t::translate, SgPntrArrRefExp)     data.symbol = " << it_data->second->symbol->get_name().getString() << " (" << it_data->second->symbol << "," << it_data->first << ")" << std::endl;
     }
   }
+#endif
 
   data_map_t::const_iterator it_data = data.find(data_symbol);
   if (it_data == data.end()) {
+#if VERBOSE
     std::cerr << "[Warning] (KLT::Utils::symbol_map_t::translate, SgPntrArrRefExp) Variable \"" << data_symbol->get_name().getString() << "\" accessed as array but not a data. Assuming local declaration." << std::endl;
+#endif
     return NULL;
   }
   std::vector<Descriptor::section_t *>::const_iterator it_section = it_data->second->sections.begin();
