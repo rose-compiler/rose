@@ -422,8 +422,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
               }
               VariableId arrayElementId;
               AValue aValue=rhsResult.value();
+              int index=-1;
               if(aValue.isConstInt()) {
-                int index=aValue.getIntValue();
+                index=aValue.getIntValue();
                 arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,index);
                 //cout<<"DEBUG: arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
               } else {
@@ -433,20 +434,50 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
               }
               ROSE_ASSERT(arrayElementId.isValid());
               // read value of variable var id (same as for VarRefExp - TODO: reuse)
+              // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
               if(pstate->varExists(arrayElementId)) {
                 res.result=pstate2[arrayElementId].getValue();
-                //cout<<"DEBUG: retrieved value:"<<res.result<<endl;
+                //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
                 if(res.result.isTop() && useConstraints) {
                   AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(arrayElementId);
                   res.result=val;
                 }
                 return listify(res);
               } else {
-                cerr<<"Error: Array Element does not exist (out of array access?)"<<endl;
-                cerr<<"array-element-id: "<<arrayElementId.toString()<<" name:"<<_variableIdMapping->variableName(arrayElementId)<<endl;
-                cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
-                cerr<<"AST: "<<node->unparseToString()<<endl;
-                exit(1);
+                // check that array is constant array (it is therefore ok that it is not in the state)
+                if(_variableIdMapping->isConstantArray(arrayVarId)) {
+                  SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
+                  int elemIndex=0;
+                  // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
+                  for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
+                    //VariableId arrayElemId=_variableIdMapping->variableIdOfArrayElement(initDeclVarId,elemIndex);
+                    SgExpression* exp=*i;
+                    SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
+                    SgIntVal* intValNode=0;
+                    if(assignInit && (intValNode=isSgIntVal(assignInit->get_operand_i()))) {
+                      int intVal=intValNode->get_value();
+                      //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
+                      //newPState.setVariableToValue(arrayElemId,CodeThorn::CppCapsuleAValue(AType::ConstIntLattice(intVal)));
+                      if(elemIndex==index) {
+                        AType::ConstIntLattice val=AType::ConstIntLattice(intVal);
+                        res.result=val;
+                        return listify(res);
+                      }
+                    } else {
+                      cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+                      exit(1);
+                    }
+                    elemIndex++;
+                  }
+                  cerr<<"Error: access to element of constant array (not in state). Not supported yet."<<endl;
+                  exit(1);
+                } else {
+                  cerr<<"Error: Array Element does not exist (out of array access?)"<<endl;
+                  cerr<<"array-element-id: "<<arrayElementId.toString()<<" name:"<<_variableIdMapping->variableName(arrayElementId)<<endl;
+                  cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
+                  cerr<<"AST: "<<node->unparseToString()<<endl;
+                  exit(1);
+                }
               }
             } else {
               cerr<<"Error: array-access uses expr for denoting the array. Not supported yet."<<endl;

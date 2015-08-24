@@ -47,3 +47,8 @@ v) AEAnalysis (requires ExpressionId)
 vi) VBEAnalysis (requires ExpressionId)
 vii) CodeMotionAnalysis (requires RD+AE)
 23) enable RoseRDAnalysis (after adding missing files)
+
+24) constant array support:
+i) Analyzer::analyzerVariableDeclaration : do not initialize PState for constant arrays
+ii) VariableIdMapping: implement isConstantArray
+iii) hybrid analyzer code: still working?
