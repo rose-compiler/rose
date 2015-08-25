@@ -4608,7 +4608,8 @@ void c_action_label(Token_t * lbl)
             outputState("At MIDDLE #2 of R526 list c_action_data_stmt_object_list()");
 #endif
             ROSE_ASSERT(dataObject->get_variableReference_list() != NULL);
-            dataObject->get_variableReference_list()->append_expression(
+            // Hiro (2014.11.6): order the variables in a data block as they appear.
+            dataObject->get_variableReference_list()->prepend_expression(
                     variableReference);
 
             // printf ("Set parent of variableReference to dataObject \n");
