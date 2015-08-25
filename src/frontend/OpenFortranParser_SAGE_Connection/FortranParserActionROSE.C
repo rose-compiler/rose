@@ -15812,8 +15812,11 @@ void c_action_label(Token_t * lbl)
         ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
         astScopeStack.pop_front();// Pop off the SgFunctionDefinition
-
+#if 0
+        // Hiro (2014.11.6): This asserion could fail.
+        // For example, a program may consist of only a single END statement.
         ROSE_ASSERT(astScopeStack.empty() == false);
+#endif
         SgScopeStatement* topOfStack = *(astScopeStack.begin());
         // printf ("topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
         SgGlobal* globalScope = isSgGlobal(topOfStack);
@@ -16032,7 +16035,11 @@ void c_action_label(Token_t * lbl)
         printf ("In c_action_end_program_stmt(): astScopeStack.front() = %s \n",astScopeStack.front()->class_name().c_str());
 #endif
 
+#if 0
+        // Hiro (2014.11.6): This asserion could fail.
+        // For example, a program may consist of only a single END statement.
         ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+#endif
 #endif
     }
 
