@@ -122,12 +122,13 @@ if test \
    -o "x$rose_boost_version" = "x105000" -o "x$_version" = "x1.50" \
    -o "x$rose_boost_version" = "x105100" -o "x$_version" = "x1.51" \
    -o "x$rose_boost_version" = "x105200" -o "x$_version" = "x1.52" \
-   -o "x$rose_boost_version" = "x105300" -o "x$_version" = "x1.53"
+   -o "x$rose_boost_version" = "x105300" -o "x$_version" = "x1.53" \
+   -o "x$rose_boost_version" = "x105400" -o "x$_version" = "x1.54"
 then
     echo "Reasonable version of Boost found!"
 else
   if test "x$ROSE_ENABLE_BOOST_VERSION_CHECK" = "xyes"; then
-    ROSE_MSG_ERROR([Unsupported version of Boost: '$rose_boost_version'. Only 1.45 to 1.53 is currently supported.])
+    ROSE_MSG_ERROR([Unsupported version of Boost: '$rose_boost_version'. Only 1.45 to 1.54 is currently supported.])
   else
     AC_MSG_WARN([Unsupported version of Boost is being used])
   fi

@@ -178,7 +178,11 @@ bool ControlDependenceGraph::checkCycle(const ControlFlowGraph& cfg)
         boost::add_edge(cfgCopy.getExit(), cfgCopy.getEntry(), cfgCopy);
 
         std::vector<int> component(num_vertices(cfgCopy));
-        int num = boost::strong_components(cfgCopy, &component[0]);
+        int num = boost::strong_components(cfgCopy,
+            make_iterator_property_map(component.begin(),
+                                       get(boost::vertex_index,cfgCopy),
+                                       component[0]));
+        //int num = boost::strong_components(cfgCopy, &component[0]);
 
         return num == 1;
 }
