@@ -715,9 +715,9 @@ Analysis::match(const Definition &cc) const {
         if (cc.stackCleanup() == CLEANUP_BY_CALLEE) {
             int64_t normalizedEnd = 0; // one-past first-pushed argument normlized for downward-growing stack
             BOOST_FOREACH (const StackVariable &var, inputStackParameters_)
-                normalizedEnd = std::max(normalizedEnd, (int64_t)var.location.offset * normalization + var.location.nBytes);
+                normalizedEnd = std::max(normalizedEnd, (int64_t)(var.location.offset * normalization + var.location.nBytes));
             BOOST_FOREACH (const StackVariable &var, outputStackParameters_)
-                normalizedEnd = std::max(normalizedEnd, (int64_t)var.location.offset * normalization + var.location.nBytes);
+                normalizedEnd = std::max(normalizedEnd, (int64_t)(var.location.offset * normalization + var.location.nBytes));
             if (normalizedStackDelta < normalizedEnd)
                 return false;
         }
