@@ -6008,8 +6008,8 @@ void c_action_label(Token_t * lbl)
             namelistStatement->get_group_list().push_back(localList[i]);
         }
 
-        ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock);
-        // ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
+        //ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock);
+        ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
         getTopOfScopeStack()->append_statement(namelistStatement);
 
 #if 0
