@@ -14179,7 +14179,8 @@ void c_action_label(Token_t * lbl)
 
                 // Handle case of format string: print "(a, i8)", "a = ", N (see test2010_123.f90).
                 case V_SgStringVal:
-
+                // Hiro (6/11/2014): the format of PRINT stmt could be given as SgCharVal.
+                case V_SgCharVal:
                 // Handle case of format string (formed from string concatination): print "(a, "||" i8)", "a = ", N (see test2010_124.f90).
                 case V_SgConcatenationOp:
                 {
@@ -14193,8 +14194,11 @@ void c_action_label(Token_t * lbl)
                     // printf ("expressionOnStack->get_type() = %p = %s \n",expressionOnStack->get_type(),expressionOnStack->get_type()->class_name().c_str());
                     SgTypeString* stringType = isSgTypeString(
                             expressionOnStack->get_type());
-                    // ROSE_ASSERT(stringType != NULL);
-                    if (stringType != NULL)
+                    // Hiro (6/11/2014): the format of PRINT stmt could be given as SgCharVal.
+                    SgTypeChar* charType = isSgTypeChar(
+                            expressionOnStack->get_type());
+                   // ROSE_ASSERT(stringType != NULL);
+                    if (stringType != NULL || charType != NULL)
                     {
                         push_token("fmt");
                     }
