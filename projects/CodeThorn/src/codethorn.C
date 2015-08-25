@@ -989,10 +989,12 @@ int main( int argc, char * argv[] ) {
     analyzer.semanticFoldingOfTransitionGraph();
   }
   if(boolOptions["semantic-elimination"]) {
+    cout << "Performing post semantic elimination of transitions (this may take some time):"<<endl;
     analyzer.semanticEliminationOfTransitions();
   }
 
   if(boolOptions["semantic-explosion"]) {
+    cout << "Performing post semantic 'explosion' of output node constraints (this may take some time):"<<endl;
     analyzer.semanticExplosionOfInputNodesFromOutputNodeConstraints();
   }
 
@@ -1001,6 +1003,7 @@ int main( int argc, char * argv[] ) {
   double extractAssertionTracesTime= 0;
   int maxOfShortestAssertInput = -1;
   if ( boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) {
+    cout << "STATUS: extracting assertion traces (this may take some time)"<<endl;
     timer.start();
     maxOfShortestAssertInput = analyzer.extractAssertionTraces();
     extractAssertionTracesTime = timer.getElapsedTimeInMilliSec();
