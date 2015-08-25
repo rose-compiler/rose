@@ -504,7 +504,7 @@ bool Analyzer::isEmptyWorkList() {
   bool res;
 #pragma omp critical(ESTATEWL)
   {
-    res=(estateWorkList.size()==0);
+    res=estateWorkList.empty();
   }
   return res;
 }
@@ -512,7 +512,7 @@ const EState* Analyzer::topWorkList() {
   const EState* estate=0;
 #pragma omp critical(ESTATEWL)
   {
-    if(estateWorkList.size()>0)
+    if(!estateWorkList.empty())
       estate=*estateWorkList.begin();
   }
   return estate;
@@ -521,7 +521,7 @@ const EState* Analyzer::popWorkList() {
   const EState* estate=0;
   #pragma omp critical(ESTATEWL)
   {
-    if(estateWorkList.size()>0)
+    if(!estateWorkList.empty())
       estate=*estateWorkList.begin();
     if(estate) {
       estateWorkList.pop_front();
