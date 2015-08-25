@@ -19246,7 +19246,8 @@ void c_action_label(Token_t * lbl)
                 keyword != NULL ? keyword->text : "NULL");
 
         SgContainsStatement* containsStatement = new SgContainsStatement();
-        SageInterface::setSourcePosition(containsStatement);
+        //SageInterface::setSourcePosition(containsStatement);
+        setSourcePosition(containsStatement,keyword);
         containsStatement->set_definingDeclaration(containsStatement);
 
         astScopeStack.front()->append_statement(containsStatement);
