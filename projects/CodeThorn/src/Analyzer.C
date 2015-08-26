@@ -3478,7 +3478,8 @@ string Analyzer::reversedInOutRunToString(list<const EState*>& run) {
 
 int Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
   list<const EState*> counterexampleRun;
-  if(boolOptions["rers-binary"] && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
+  // TODO: fix the reported minimum depth to reach an assertion for the first time
+  if(true) { //boolOptions["rers-binary"] && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
     counterexampleRun = reverseInOutSequenceBreadthFirst(assertEState, transitionGraph.getStartEState(), 
                                                          boolOptions["counterexamples-with-output"]);
   } else {
