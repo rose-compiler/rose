@@ -848,8 +848,6 @@ int main( int argc, char * argv[] ) {
 
   SgNode* root=sageProject;
   ROSE_ASSERT(root);
-  //VariableIdMapping variableIdMapping;
-  //variableIdMapping.computeVariableSymbolMapping(sageProject);
 
 #if 0
   SgNodeHelper::PragmaList pragmaList=SgNodeHelper::collectPragmaLines("verify",root);
@@ -897,16 +895,19 @@ int main( int argc, char * argv[] ) {
     }
   }
 #else
+  cout <<"STATUS: handling pragmas started."<<endl;
   PragmaHandler pragmaHandler;
   pragmaHandler.handlePragmas(sageProject,&analyzer);
   // TODO: requires more refactoring
   option_specialize_fun_name=pragmaHandler.option_specialize_fun_name;
   boolOptions.registerOption("verify-update-sequence-race-conditions",true);
   // unparse specialized code
-  sageProject->unparse(0,0);
+  //sageProject->unparse(0,0);
+  cout <<"STATUS: handling pragmas finished."<<endl;
 #endif
 
   if(args.count("rewrite")) {
+    cout <<"STATUS: rewrite started."<<endl;
     rewriteSystem.resetStatistics();
     rewriteSystem.rewriteAst(root,analyzer.getVariableIdMapping() ,true,false,true);
     cout<<"Rewrite statistics:"<<endl<<rewriteSystem.getStatistics().toString()<<endl;
@@ -916,6 +917,7 @@ int main( int argc, char * argv[] ) {
   }
 
   if(boolOptions["normalize"]) {
+    cout <<"STATUS: Normalization started."<<endl;
     rewriteSystem.resetStatistics();
     rewriteSystem.rewriteCompoundAssignmentsInAst(root,analyzer.getVariableIdMapping());
     cout <<"STATUS: Normalization finished."<<endl;
