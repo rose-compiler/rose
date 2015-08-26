@@ -17,6 +17,7 @@
 #include "FIConstAnalysis.h"
 #include "TrivialInlining.h"
 #include "Threadification.h"
+#include "RewriteSystem.h"
 
 #include <vector>
 #include <set>
@@ -140,7 +141,7 @@ int main(int argc, char* argv[]) {
     ("rose-help", "show help for compiler frontend options.")
     ("version,v", "display the version.")
     ("stats", "display code statistics.")
-    ("normalize", "normalize code (eliminate compound assignment operators).")
+    ("normalize", po::value< string >(), "normalize code (eliminate compound assignment operators).")
     ("inline",po::value< string >(), "perform inlining ([yes]|no).")
     ("eliminate-empty-if",po::value< string >(), "eliminate if-statements with empty branches in main function ([yes]/no).")
     ("eliminate-dead-code",po::value< string >(), "eliminate dead code (variables and expressions) ([yes]|no).")
@@ -180,17 +181,13 @@ int main(int argc, char* argv[]) {
     csvConstResultFileName=args["csv-const-result"].as<string>().c_str();
   }
   
-  if (args.count("normalize")) {
-    cerr<<"Error: normalization not implemented yet."<<endl;
-    exit(1);
-  }
-  
   boolOptions.init(argc,argv);
   // temporary fake optinos
   boolOptions.registerOption("arith-top",false); // temporary
   boolOptions.registerOption("semantic-fold",false); // temporary
   boolOptions.registerOption("post-semantic-fold",false); // temporary
   // regular options
+  boolOptions.registerOption("normalize",false);
   boolOptions.registerOption("inline",true);
   boolOptions.registerOption("eliminate-empty-if",true);
   boolOptions.registerOption("eliminate-dead-code",true);
@@ -273,9 +270,17 @@ int main(int argc, char* argv[]) {
     } while(num>0);
     cout<<"STATUS: Total number of empty if-statements eliminated: "<<numTotal<<endl;
   }
-  
-  cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
 
+  if(boolOptions["normalize"]) {
+    cout <<"STATUS: Normalization started."<<endl;
+    RewriteSystem rewriteSystem;
+    rewriteSystem.resetStatistics();
+    rewriteSystem.rewriteCompoundAssignmentsInAst(root,&variableIdMapping);
+    cout <<"STATUS: Normalization finished."<<endl;
+
+  }
+ 
+  cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
   VarConstSetMap varConstSetMap;
   VariableIdSet variablesOfInterest;
   FIConstAnalysis fiConstAnalysis(&variableIdMapping);
