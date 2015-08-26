@@ -67,7 +67,7 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
     }
   }
   size_t assignOpNum=assignOpList.size();
-  cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: started.";
+  cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: started."<<endl;
   size_t assignOpNr=1;
   Timer timer;
   double buildTime=0.0, replaceTime=0.0;
@@ -84,7 +84,7 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
     assignOpNr++;
     //cout<<"Buildtime: "<<buildTime<<" Replacetime: "<<replaceTime<<endl;
   }
-  cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: done.";
+  cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: done."<<endl;
 }
 
 SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMapping* variableIdMapping) {
