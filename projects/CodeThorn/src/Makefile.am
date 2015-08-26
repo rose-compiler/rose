@@ -309,6 +309,8 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   ConversionFunctionsGenerator.C \
   RewriteSystem.h \
   RewriteSystem.C \
+  Timer.h \
+  Timer.cpp \
   woodpecker.C
 
 
