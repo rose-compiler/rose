@@ -58,12 +58,22 @@ void RewriteSystem::resetStatistics() {
 
 void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapping* variableIdMapping) {
   RoseAst ast(root);
+  typedef list<SgCompoundAssignOp*> AssignOpListType;
+  AssignOpListType assignOpList;
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(*i)) {
-      SgExpression* newRoot=isSgExpression(buildRewriteCompoundAssignment(*i,variableIdMapping));
-      ROSE_ASSERT(newRoot);
-      SgNodeHelper::replaceExpression(compoundAssignOp,newRoot);
+      assignOpList.push_back(compoundAssignOp);
     }
+  }
+  size_t assignOpNum=assignOpList.size();
+  cout<<"INFO: found "<<assignOpNum<<" compound assignment expressions."<<endl;
+  size_t assignOpNr=1;
+  for(AssignOpListType::iterator i=assignOpList.begin();i!=assignOpList.end();++i) {
+    cout<<"INFO: normalizing compound assign op "<<assignOpNr<<" of "<<assignOpNum<<endl;
+    SgExpression* newRoot=isSgExpression(buildRewriteCompoundAssignment(*i,variableIdMapping));
+    ROSE_ASSERT(newRoot);
+    SgNodeHelper::replaceExpression(*i,newRoot);
+    assignOpNr++;
   }
 }
 
@@ -74,7 +84,7 @@ SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMa
     SgExpression* lhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
     SgExpression* lhsCopy2=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
     SgExpression* rhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getRhs(root)));
-    SgExpression* newExp;
+    SgExpression* newExp=0;
     //TODO: check whether build functions set parent pointers
     switch(root->variantT()) {
     case V_SgPlusAssignOp:
@@ -88,6 +98,9 @@ SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMa
       return SageBuilder::buildAssignOp(lhsCopy2,newExp);
     case V_SgMultAssignOp:
       newExp=SageBuilder::buildMultiplyOp(lhsCopy,rhsCopy);
+      return SageBuilder::buildAssignOp(lhsCopy2,newExp);
+    case V_SgModAssignOp:
+      newExp=SageBuilder::buildModOp(lhsCopy,rhsCopy);
       return SageBuilder::buildAssignOp(lhsCopy2,newExp);
     default: /* ignore all other cases - all other expr remain unmodified */
       return 0;

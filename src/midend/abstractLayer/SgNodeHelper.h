@@ -103,23 +103,15 @@ namespace SgNodeHelper {
   //! returns function name of SgFunctionDefinition, SgFunctionDeclaration, SgFunctionCall.
   std::string getFunctionName(SgNode* node);
 
-  /*! This is a lookup function currently not available in ROSE: It
-     determines for a given function-call-expression its corresponding
-     function-definition if available in the AST. There are three cases:
-
-     case 1: the associated declaration is a defining declaration. In
-     this case this directly referenced definition is returned
-     (available in ROSE).  
-
-     case 2: the associated declaration is a forward declaration. In
-     this case the entire AST is searched for the correct function
-     definition (this lookup is currently not available in
-     ROSE).
-
-     case 3: no definition is available.  (e.g. this is the case for
-     linked stdlib functions). In this case a null-pointer is
-     returned. This is determined after case 2 has been
-     checked.
+  /*! This function determines for a given function-call-expression
+     its corresponding function-definition (by using
+     get_definingDeclaration).  This function has constant
+     complexity. It does not perform a search, but uses the
+     information as present in the AST. If this information is not
+     sufficient to determine the definition of a function it returns
+     0. For a consistent AST this will find all definitions in the
+     same file. It does not find definitions in a other SgFile
+     subtrees.
   */
   SgFunctionDefinition* determineFunctionDefinition(SgFunctionCallExp* fCall);
 

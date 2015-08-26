@@ -101,7 +101,6 @@ LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
     return fLabels;
 }
 
-
 InterFlow CFAnalysis::interFlow(Flow& flow) {
   // 1) for each call use AST information to find its corresponding called function
   // 2) create a set of <call,entry,exit,callreturn> edges
@@ -112,12 +111,11 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
   cout << "INFO: number of function call labels: "<<callLabsNum<<endl;
   int callLabNr=0;
   for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
-    cout<<"INFO: resolving function call "<<callLabNr<<" of "<<callLabsNum<<endl;
+    //cout<<"INFO: resolving function call "<<callLabNr<<" of "<<callLabsNum<<endl;
     SgNode* callNode=getNode(*i);
     //cout<<"INFO: creating inter-flow for "<<callNode->unparseToString();
     //info: callNode->get_args()
     SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
-    //SgFunctionCallExp* funCall=isSgFunctionCallExp(labeler->getNode(*i));
     if(!funCall) 
       throw "Error: interFlow: unknown call exp (not a SgFunctionCallExp).";
     SgFunctionDefinition* funDef=SgNodeHelper::determineFunctionDefinition(funCall);
@@ -134,6 +132,7 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
       entryLabel=Labeler::NO_LABEL;
       exitLabel=Labeler::NO_LABEL;
       callReturnLabel=labeler->functionCallReturnLabel(callNode);
+      //cout <<"No function definition found for call: "<<funCall->unparseToString()<<endl;
     } else {
       //cout<<" [definition found]"<<endl;
       callLabel=*i;

@@ -140,6 +140,7 @@ int main(int argc, char* argv[]) {
     ("rose-help", "show help for compiler frontend options.")
     ("version,v", "display the version.")
     ("stats", "display code statistics.")
+    ("normalize", "normalize code (eliminate compound assignment operators).")
     ("inline",po::value< string >(), "perform inlining ([yes]|no).")
     ("eliminate-empty-if",po::value< string >(), "eliminate if-statements with empty branches in main function ([yes]/no).")
     ("eliminate-dead-code",po::value< string >(), "eliminate dead code (variables and expressions) ([yes]|no).")
@@ -179,6 +180,10 @@ int main(int argc, char* argv[]) {
     csvConstResultFileName=args["csv-const-result"].as<string>().c_str();
   }
   
+  if (args.count("normalize")) {
+    cerr<<"Error: normalization not implemented yet."<<endl;
+    exit(1);
+  }
   
   boolOptions.init(argc,argv);
   // temporary fake optinos
