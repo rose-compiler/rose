@@ -1289,10 +1289,14 @@ int SgNodeHelper::numChildren(SgNode* node) {
 }
 
 void SgNodeHelper::replaceExpression(SgExpression* e1, SgExpression* e2, bool mode) {
-  SgExpression* p=isSgExpression(e1->get_parent());
-  if(p && mode==false) {
-    p->replace_expression(e1,e2);
-    e2->set_parent(p);
+  SgExpression* pe=isSgExpression(e1->get_parent());
+  SgExprStatement* ps=isSgExprStatement(e1->get_parent());
+  if(pe && mode==false) {
+    pe->replace_expression(e1,e2);
+    e2->set_parent(pe);
+  } else if(ps && mode==false) {
+    ps->replace_expression(e1,e2);
+    e2->set_parent(ps);
   } else {
     SageInterface::replaceExpression(e1,e2,mode); // this function is more general but very slow
   }
