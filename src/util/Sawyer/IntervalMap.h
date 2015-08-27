@@ -900,10 +900,15 @@ public:
         }
     }
 
-//
-//    template<T2, Policy2>
-//    bool contains(const IntervalMap<Interval, T2, Policy2> &other) const;
-//
+    template<typename T2, class Policy2>
+    bool contains(const IntervalMap<Interval, T2, Policy2> &other) const {
+        for (ConstNodeIterator iter=nodes().begin(); iter!=nodes().end(); ++iter) {
+            if (!contains(iter->key()))
+                return false;
+        }
+        return true;
+    }
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Private support methods
