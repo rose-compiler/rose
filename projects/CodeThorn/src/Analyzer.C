@@ -391,12 +391,15 @@ bool Analyzer::isActiveGlobalTopify() {
 }
 
 void Analyzer::eventGlobalTopifyTurnedOn() {
+  cout<<"STATUS: mode global-topify activated."<<endl;
   VariableIdSet vset=variableValueMonitor.getVariables();
   int n=0;
   int nt=0;
   for(VariableIdSet::iterator i=vset.begin();i!=vset.end();++i) {
     string name=SgNodeHelper::symbolToString(getVariableIdMapping()->getSymbol(*i));
+    // xxx
     if(name!="input" && name!="output" && !variableIdMapping.hasPointerType(*i)) {
+        //if(name!="input" && name!="output") {
       variableValueMonitor.setVariableMode(VariableValueMonitor::VARMODE_FORCED_TOP,*i);
       n++;
     }
@@ -428,6 +431,9 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
         topifyVariable(pstate, cset, *i);
       }
     }
+    // set cset in general to empty cset, otherwise cset can grow again arbitrarily
+    ConstraintSet cset0; // xxx
+    cset=cset0;
   }
   if(variableValueMonitor.isActive()) {
     VariableIdSet hotVarSet;
@@ -1274,6 +1280,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               assert(newCSet.size()>0);
             } else {
               newCSet.removeAllConstraintsOfVar(varId);
+              // new input value must be const (otherwise constraints must be used)
               newPState[varId]=AType::ConstIntLattice(*i);
             }
             newio.recordVariable(InputOutput::STDIN_VAR,varId);
