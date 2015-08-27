@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "RewriteSystem.h"
+#include "Timer.h"
 
 using namespace std;
 using namespace SPRAY;
@@ -66,15 +67,24 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
     }
   }
   size_t assignOpNum=assignOpList.size();
-  cout<<"INFO: found "<<assignOpNum<<" compound assignment expressions."<<endl;
+  cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: started."<<endl;
   size_t assignOpNr=1;
+  Timer timer;
+  double buildTime=0.0, replaceTime=0.0;
   for(AssignOpListType::iterator i=assignOpList.begin();i!=assignOpList.end();++i) {
-    cout<<"INFO: normalizing compound assign op "<<assignOpNr<<" of "<<assignOpNum<<endl;
+    //cout<<"INFO: normalizing compound assign op "<<assignOpNr<<" of "<<assignOpNum<<endl;
+    timer.start();
     SgExpression* newRoot=isSgExpression(buildRewriteCompoundAssignment(*i,variableIdMapping));
+    buildTime+=timer.getElapsedTimeInMilliSec();
+
     ROSE_ASSERT(newRoot);
+    timer.start();
     SgNodeHelper::replaceExpression(*i,newRoot);
+    replaceTime+=timer.getElapsedTimeInMilliSec();
     assignOpNr++;
+    //cout<<"Buildtime: "<<buildTime<<" Replacetime: "<<replaceTime<<endl;
   }
+  cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: done."<<endl;
 }
 
 SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMapping* variableIdMapping) {

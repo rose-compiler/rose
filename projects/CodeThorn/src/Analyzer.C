@@ -396,17 +396,27 @@ bool Analyzer::isActiveGlobalTopify() {
 }
 
 void Analyzer::eventGlobalTopifyTurnedOn() {
+  cout<<"STATUS: mode global-topify activated."<<endl;
   VariableIdSet vset=variableValueMonitor.getVariables();
   int n=0;
   int nt=0;
   for(VariableIdSet::iterator i=vset.begin();i!=vset.end();++i) {
     string name=SgNodeHelper::symbolToString(getVariableIdMapping()->getSymbol(*i));
-    if(name!="input" && name!="output" && !variableIdMapping.hasPointerType(*i)) {
+    // xxx
+    //if(name!="input" && name!="output" && !variableIdMapping.hasPointerType(*i)) {
+    if(name!="input" && name!="output") {
+    //if(name!="input") {
+    //if(name!="output") {
+      //if(true) {
       variableValueMonitor.setVariableMode(VariableValueMonitor::VARMODE_FORCED_TOP,*i);
       n++;
     }
     nt++;
   }
+  PState::setActiveGlobalTopify(true);
+  PState::setVariableValueMonitor(&variableValueMonitor);
+  PState::_analyzer=this;
+
   cout<<"STATUS: switched to static analysis (approximating "<<n<<" of "<<nt<<" variables with top-conversion)."<<endl;
   //switch to the counter for approximated loop iterations
   if (_maxTransitionsForcedTop > 1 || _maxIterationsForcedTop > 0) {
@@ -427,14 +437,24 @@ void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, VariableId va
 EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
   // here is the best location to adapt the analysis results to certain global restrictions
   if(isActiveGlobalTopify()) {
+    // xxx
+#if 0
     VariableIdSet varSet=pstate.getVariableIds();
     for(VariableIdSet::iterator i=varSet.begin();i!=varSet.end();++i) {
       if(variableValueMonitor.isHotVariable(this,*i)) {
         topifyVariable(pstate, cset, *i);
       }
     }
+#else
+    pstate.topifyState();
+#endif
+    // set cset in general to empty cset, otherwise cset can grow again arbitrarily
+    ConstraintSet cset0; // xxx
+    cset=cset0;
   }
   if(variableValueMonitor.isActive()) {
+    cerr<<"Error: Variable-Value-Monitor: no longer supported."<<endl;
+    exit(1);
     VariableIdSet hotVarSet;
 #pragma omp critical (VARIABLEVALUEMONITOR)
     hotVarSet=variableValueMonitor.getHotVariables(this,&pstate);
@@ -1279,6 +1299,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               assert(newCSet.size()>0);
             } else {
               newCSet.removeAllConstraintsOfVar(varId);
+              // new input value must be const (otherwise constraints must be used)
               newPState[varId]=AType::ConstIntLattice(*i);
             }
             newio.recordVariable(InputOutput::STDIN_VAR,varId);

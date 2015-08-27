@@ -36,6 +36,8 @@ using namespace SPRAY;
 
 namespace CodeThorn {
 
+  class VariableValueMonitor;
+  class Analyzer;
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -59,9 +61,15 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
   string toString(VariableIdMapping* variableIdMapping) const;
   void setAllVariablesToTop();
   void setAllVariablesToValue(CodeThorn::CppCapsuleAValue val);
+  void topifyState();
   void setVariableToTop(VariableId varId);
   void setVariableToValue(VariableId varId, CodeThorn::CppCapsuleAValue val);
   VariableIdSet getVariableIds() const;
+  static void setActiveGlobalTopify(bool val);
+  static void setVariableValueMonitor(VariableValueMonitor* vvm);
+  static bool _activeGlobalTopify;
+  static VariableValueMonitor* _variableValueMonitor;
+  static Analyzer* _analyzer;
 };
 
   ostream& operator<<(ostream& os, const PState& value);

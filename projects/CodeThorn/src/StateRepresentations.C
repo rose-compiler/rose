@@ -17,6 +17,9 @@
 
 #include "boost/regex.hpp"
 
+// only necessary for class VariableValueMonitor
+#include "Analyzer.h"
+
 // it is not necessary to define comparison-ops for Pstate, but
 // the ordering appears to be implementation dependent (but consistent)
 
@@ -133,6 +136,14 @@ bool CodeThorn::operator==(const InputOutput& c1, const InputOutput& c2) {
  */
 bool CodeThorn::operator!=(const InputOutput& c1, const InputOutput& c2) {
   return !(c1==c2);
+}
+
+bool PState::_activeGlobalTopify=false;
+VariableValueMonitor* PState::_variableValueMonitor=0;
+Analyzer* PState::_analyzer=0;
+
+void PState::setActiveGlobalTopify(bool val) {
+  _activeGlobalTopify=val;
 }
 
 /*! 
@@ -353,14 +364,33 @@ void PState::setAllVariablesToValue(CodeThorn::CppCapsuleAValue val) {
     setVariableToValue(varId,val);
   }
 }
-
+void PState::setVariableValueMonitor(VariableValueMonitor* vvm) {
+  _variableValueMonitor=vvm;
+}
 void PState::setVariableToTop(VariableId varId) {
   setVariableToValue(varId, CodeThorn::CppCapsuleAValue(AType::Top()));
 }
 
 void PState::setVariableToValue(VariableId varId, CodeThorn::CppCapsuleAValue val) {
-  operator[](varId)=val;
+  if(_activeGlobalTopify && varIsTop(varId)) {
+    return;
+  }
+  if(false && _activeGlobalTopify && _variableValueMonitor->isHotVariable(_analyzer,varId)) {
+    setVariableToTop(varId);
+  } else {
+    operator[](varId)=val;
+  }
 }
+
+void PState::topifyState() {
+  for(PState::const_iterator i=begin();i!=end();++i) {
+    VariableId varId=(*i).first;
+    if(_activeGlobalTopify && _variableValueMonitor->isHotVariable(_analyzer,varId)) {
+      setVariableToTop(varId);
+    }
+  }
+}
+
 VariableIdSet PState::getVariableIds() const {
   VariableIdSet varIdSet;
   for(PState::const_iterator i=begin();i!=end();++i) {
