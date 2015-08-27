@@ -439,6 +439,9 @@ int main( int argc, char * argv[] ) {
     ("with-ltl-counterexamples", po::value< string >(), "report counterexamples that violate LTL properties [=yes|no]")
     ("counterexamples-with-output", po::value< string >(), "reported counterexamples for LTL or reachability properties also include output values [=yes|no]")
     ("check-ltl-counterexamples", po::value< string >(), "report ltl counterexamples if and only if they are not spurious [=yes|no]")
+    ("reconstruct-assert-paths", po::value< string >(), "takes a result file containing paths to reachable assertions and tries to reproduce them on the analyzed program. [=file-path]")
+    ("reconstruct-max-length", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum length of cyclic I/O patterns found by the analysis. [=pattern_length]")
+    ("reconstruct-max-repetitions", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum number of pattern repetitions that the search is following. [=#pattern_repetitions]")
     ("refinement-constraints-demo", po::value< string >(), "display constraints that are collected in order to later on help a refined analysis avoid spurious counterexamples. [=yes|no]")
     ("cegpra-ltl",po::value< int >(),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
     ("cegpra-ltl-all",po::value< string >(),"Check all specified LTL properties using cegpra [=yes|no]")
@@ -678,6 +681,21 @@ int main( int argc, char * argv[] ) {
     analyzer.setMaxIterationsForcedTop(args["max-iterations-forced-top"].as<int>());
   }
 
+  if(args.count("reconstruct-max-length")) {
+    // a cycilc pattern needs to be discovered two times, therefore multiply the length by 2
+    analyzer.setReconstructMaxInputDepth(args["reconstruct-max-length"].as<int>() * 2);
+  }
+
+  if(args.count("reconstruct-max-repetitions")) {
+    analyzer.setReconstructMaxRepetitions(args["reconstruct-max-repetitions"].as<int>());
+  }
+
+  if(args.count("reconstruct-assert-paths")) {
+    string previousAssertFilePath=args["reconstruct-assert-paths"].as<string>();
+    PropertyValueTable* previousAssertResults=analyzer.loadAssertionsToReconstruct(previousAssertFilePath);
+    analyzer.setReconstructPreviousResults(previousAssertResults);
+  }
+
   if(boolOptions["minimize-states"]) {
     analyzer.setMinimizeStates(true);
   }
@@ -774,6 +792,7 @@ int main( int argc, char * argv[] ) {
         || string(argv[i]).find("--check-ltl-sol")==0
         || string(argv[i]).find("--ltl-in-alphabet")==0
         || string(argv[i]).find("--ltl-out-alphabet")==0
+        || string(argv[i]).find("--reconstruct-assert-paths")==0
         || string(argv[i]).find("--specialize-fun-name")==0
         || string(argv[i]).find("--specialize-fun-param")==0
         ) {
@@ -976,6 +995,11 @@ int main( int argc, char * argv[] ) {
     analyzer.initializeSolver1("main",root,false);
   }
   analyzer.initLabeledAssertNodes(sageProject);
+
+  if(args.count("reconstruct-assert-paths")) {
+    analyzer.setSolver(9);
+    analyzer.setStartPState(*analyzer.popWorkList()->pstate());
+  }
 
   double initRunTime=timer.getElapsedTimeInMilliSec();
 
