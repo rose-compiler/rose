@@ -398,8 +398,11 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
   for(VariableIdSet::iterator i=vset.begin();i!=vset.end();++i) {
     string name=SgNodeHelper::symbolToString(getVariableIdMapping()->getSymbol(*i));
     // xxx
-    if(name!="input" && name!="output" && !variableIdMapping.hasPointerType(*i)) {
-        //if(name!="input" && name!="output") {
+    //if(name!="input" && name!="output" && !variableIdMapping.hasPointerType(*i)) {
+    if(name!="input" && name!="output") {
+    //if(name!="input") {
+    //if(name!="output") {
+      //if(true) {
       variableValueMonitor.setVariableMode(VariableValueMonitor::VARMODE_FORCED_TOP,*i);
       n++;
     }
@@ -430,7 +433,7 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
   // here is the best location to adapt the analysis results to certain global restrictions
   if(isActiveGlobalTopify()) {
     // xxx
-#if 1
+#if 0
     VariableIdSet varSet=pstate.getVariableIds();
     for(VariableIdSet::iterator i=varSet.begin();i!=varSet.end();++i) {
       if(variableValueMonitor.isHotVariable(this,*i)) {
