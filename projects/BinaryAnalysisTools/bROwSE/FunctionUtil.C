@@ -374,7 +374,7 @@ functionDataFlow(P2::Partitioner &partitioner, const P2::Function::Ptr &function
             } catch (const BaseSemantics::Exception &e) {
                 P2::mlog[ERROR] <<e <<"\n";             // probably no semantics for instruction
                 result.error = e.what();
-            } catch (const std::runtime_error &e) {
+            } catch (const DataFlow::NotConverging &e) {
                 P2::mlog[ERROR] <<e.what() <<"\n";      // probably iteration limit exceeded
                 result.error = e.what();
 

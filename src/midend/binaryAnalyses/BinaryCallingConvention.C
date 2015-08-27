@@ -514,7 +514,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         dfEngine.reset(startVertexId, initialState);
         while (dfEngine.runOneIteration())
             ++progress;
-    } catch (const std::runtime_error &e) {
+    } catch (const DataFlow::NotConverging &e) {
         mlog[WARN] <<e.what() <<"\n";
         converged = false;                              // didn't converge, so just use what we have
     }

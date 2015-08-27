@@ -119,6 +119,19 @@ public:
      *  the set of variables present in the specimen being analyzed.  The map is keyed by CFG vertex IDs. */
     typedef Sawyer::Container::Map<size_t, Graph> VertexFlowGraphs;
 
+public:
+    /** Data flow exception base class. */
+    class Exception: public std::runtime_error {
+    public:
+        explicit Exception(const std::string &s): std::runtime_error(s) {}
+    };
+
+    /** Exceptions when a fixed point is not reached. */
+    class NotConverging: public Exception {
+    public:
+        explicit NotConverging(const std::string &s): Exception(s) {}
+    };
+
 private:
     InstructionSemantics2::BaseSemantics::RiscOperatorsPtr userOps_; // operators (and state) provided by the user
     InstructionSemantics2::DataFlowSemantics::RiscOperatorsPtr dfOps_; // data flow operators (which point to user ops)
@@ -335,7 +348,7 @@ public:
 
         /** Max number of iterations to allow.
          *
-         *  Allow N number of calls to runOneIteration.  When the limit is exceeded an <code>std::runtime_error</code> is
+         *  Allow N number of calls to runOneIteration.  When the limit is exceeded a @ref NotConverging exception is
          *  thrown.
          *
          * @{ */
@@ -356,8 +369,8 @@ public:
             using namespace Diagnostics;
             if (!workList_.isEmpty()) {
                 if (++nIterations_ > maxIterations_) {
-                    throw std::runtime_error("dataflow max iterations reached"
-                                             " (max=" + StringUtility::numberToString(maxIterations_) + ")");
+                    throw NotConverging("dataflow max iterations reached"
+                                        " (max=" + StringUtility::numberToString(maxIterations_) + ")");
                 }
                 size_t cfgVertexId = workList_.popFront();
                 if (mlog[DEBUG]) {
@@ -415,7 +428,8 @@ public:
         /** Run data flow until it reaches a fixed point.
          *
          *  Run data flow starting at the specified control flow vertex with the specified initial state until the state
-         *  converges to a fixed point or the maximum number of iterations is reached (in which case an exception is thrown). */
+         *  converges to a fixed point or the maximum number of iterations is reached (in which case a @ref NotConverging
+         *  exception is thrown). */
         void runToFixedPoint(size_t startVertexId, const StatePtr &initialState) {
             reset(startVertexId, initialState);
             while (runOneIteration()) /*void*/;
