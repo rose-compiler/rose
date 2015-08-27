@@ -68,6 +68,14 @@ stringDecoder_CPPFLAGS = $(ROSE_INCLUDES)
 stringDecoder_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Find code that cannot be reached according to static analysis
+
+bin_PROGRAMS += findDeadCode
+findDeadCode_SOURCES = findDeadCode.C
+findDeadCode_CPPFLAGS = $(ROSE_INCLUDES)
+findDeadCode_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Not distributed; not part of the Git repo
 
 detectConstants: detectConstants.C

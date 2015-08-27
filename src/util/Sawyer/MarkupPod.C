@@ -195,6 +195,7 @@ PodFormatter::emit(const ParserResult &parsed) {
     }
 
     std::string cmd = "perldoc "
+                      " -o man"
                       " -w 'center:" + escapeSingleQuoted(chapterName_) + "'"
                       " -w 'date:" + escapeSingleQuoted(dateString_) + "'"
                       // " -w 'name:" + escapeSingleQuoted(pageName_) + "'"

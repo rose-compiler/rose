@@ -1,25 +1,14 @@
-/** 
- * \file lib/sage/variable-declaration.cpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #include "MFB/Sage/variable-declaration.hpp"
 #include "MFB/Sage/namespace-declaration.hpp"
 
 #include "sage3basic.h"
 
-#ifndef PATCHING_SAGE_BUILDER_ISSUES
-#  define PATCHING_SAGE_BUILDER_ISSUES 1
+#ifndef VERBOSE
+# define VERBOSE 0
 #endif
 
 namespace MFB {
-
-/*!
- * \addtogroup grp_mfb_sage_vardecl
- * @{
-*/
 
 bool ignore(const std::string & name);
 bool ignore(SgScopeStatement * scope);
@@ -84,7 +73,9 @@ void  Driver<Sage>::loadSymbols<SgVariableDeclaration>(size_t file_id, SgSourceF
   for (it = variable_symbols.begin(); it != variable_symbols.end(); it++)
     if (resolveValidParent<SgVariableSymbol>(*it)) {
       p_symbol_to_file_id_map[*it] = file_id;
-//    std::cerr << "[Info] (MFB::Driver<Sage>::loadSymbols<SgVariableDeclaration>) Add: " << (*it)->get_name().getString() << " from File #" << file_id << std::endl;
+#if VERBOSE
+      std::cerr << "[Info] (MFB::Driver<Sage>::loadSymbols<SgVariableDeclaration>) Add: " << (*it)->get_name().getString() << " from File #" << file_id << std::endl;
+#endif
     }
 }
 
@@ -171,8 +162,6 @@ void Driver<Sage>::createForwardDeclaration<SgVariableDeclaration>(Sage<SgVariab
 
   assert(false);
 }
-
-/** @} */
 
 }
 

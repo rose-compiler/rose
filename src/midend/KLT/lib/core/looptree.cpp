@@ -6,6 +6,10 @@
 
 #include <iostream>
 
+#ifndef VERBOSE
+# define VERBOSE 0
+#endif
+
 namespace KLT {
 
 namespace LoopTree {
@@ -109,7 +113,9 @@ node_t * node_t::extract(SgStatement * stmt, extraction_context_t & ctx) {
     case e_stmt:  res = stmt_t::extract (stmt, ctx); break;
 
     case e_ignored:
+#if VERBOSE
       std::cerr << "[Warning] (KLT::LoopTrees::node_t::extract) Ignored statement " << stmt << " (type: " << stmt->class_name() << ")." << std::endl;
+#endif
       break;
 
     case e_unknown:
@@ -119,7 +125,9 @@ node_t * node_t::extract(SgStatement * stmt, extraction_context_t & ctx) {
   }
 
   if (res == NULL) {
+#if VERBOSE
     std::cerr << "[Warning] (KLT::LoopTrees::node_t::extract) Statement " << stmt << " (type: " << stmt->class_name() << ") cannot be translated." << std::endl;
+#endif
   }
 
   return res;
@@ -322,11 +330,6 @@ void cond_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::
   branch_false->collectTiles(tiles, loop_translation_map);
 }
 
-/*template <class T>
-bool cmp_id(size_t val, T * elem) {
-  return val < elem->id;
-}*/
-
 template <class T>
 struct CompID {
   bool operator() (T * i   , size_t j) { return (i->id < j    );}
@@ -342,7 +345,9 @@ void loop_t::collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<co
 
   loop_translation_map.insert(std::pair<const loop_t *, Descriptor::loop_t *>(this, loop_desc));
 
+#if VERBOSE
   std::cerr << "[Info] (KLT::LoopTree::loop_t::collectLoops) Loop #" << id << std::endl;
+#endif
 
   assert(!std::binary_search(loops.begin(), loops.end(), id, cmp_id_loop));
 
@@ -363,7 +368,9 @@ void tile_t::collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<co
 
   loop_translation_map.insert(std::pair<const loop_t *, Descriptor::loop_t *>(loop, loop_desc));
 
+#if VERBOSE
   std::cerr << "[Info] (KLT::LoopTree::tile_t::collectLoops) Loop #" << loop->id << std::endl;
+#endif
 
   if (!std::binary_search(loops.begin(), loops.end(), loop->id, cmp_id_loop))
     loops.insert(
@@ -397,7 +404,10 @@ void stmt_t::collectLoops(std::vector<Descriptor::loop_t *> & loops, std::map<co
 void stmt_t::collectTiles(std::vector<Descriptor::tile_t *> & tiles, const std::map<const loop_t *, Descriptor::loop_t *> & loop_translation_map) const {}
 
 node_t * block_t::finalize() {
+#if VERBOSE
   std::cerr << "[Info] (KLT::LoopTree::block_t::finalize)" << std::endl;
+#endif
+
   if (children.size() == 1) {
     node_t * res = children[0]->finalize();
     res->parent = parent;
@@ -413,20 +423,28 @@ node_t * block_t::finalize() {
 }
 
 node_t * cond_t::finalize() {
+#if VERBOSE
   std::cerr << "[Info] (KLT::LoopTree::cond_t::finalize)" << std::endl;
+#endif
+
   branch_true  = branch_true->finalize();
   branch_false = branch_false->finalize();
   return this;
 }
 
 node_t * loop_t::finalize() {
+#if VERBOSE
   std::cerr << "[Info] (KLT::LoopTree::loop_t::finalize) Loop #" << id << std::endl;
+#endif
+
   body = body->finalize();
   return this;
 }
 
 node_t * tile_t::finalize() {
+#if VERBOSE
   std::cerr << "[Info] (KLT::LoopTree::tile_t::finalize) Loop #" << loop->id << ", Tile #" << tile_id << std::endl;
+#endif
 
   if (next_node != NULL) { // it is the last tile in a chain
     assert(next_tile == NULL);
@@ -457,10 +475,12 @@ node_t * tile_t::finalize() {
       prev = curr; curr = prev->next_tile;
       if (curr == NULL) break;
 
+#if VERBOSE
       if (curr->order == order) {
         std::cerr << "[Warning] (KLT::LoopTree::tile_t::finalize) Tile #" << tile_id << " of loop #" << loop->id << " and tile #" << curr->tile_id << " of loop #" << curr->loop->id << " have the same ordering index = " << order << "." << std::endl;
         std::cerr << "[Warning] (KLT::LoopTree::tile_t::finalize) Resulting tile order is undefined." << std::endl; // should be increasing order of the pair loop ID and tile ID. See sort
       }
+#endif
     } while (order > curr->order);
     if (curr == next_tile) {
       // insert first (nothing to do)

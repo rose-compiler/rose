@@ -514,7 +514,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         dfEngine.reset(startVertexId, initialState);
         while (dfEngine.runOneIteration())
             ++progress;
-    } catch (const std::runtime_error &e) {
+    } catch (const DataFlow::NotConverging &e) {
         mlog[WARN] <<e.what() <<"\n";
         converged = false;                              // didn't converge, so just use what we have
     }
@@ -715,9 +715,9 @@ Analysis::match(const Definition &cc) const {
         if (cc.stackCleanup() == CLEANUP_BY_CALLEE) {
             int64_t normalizedEnd = 0; // one-past first-pushed argument normlized for downward-growing stack
             BOOST_FOREACH (const StackVariable &var, inputStackParameters_)
-                normalizedEnd = std::max((uint64_t)normalizedEnd, var.location.offset * normalization + var.location.nBytes);
+                normalizedEnd = std::max(normalizedEnd, (int64_t)(var.location.offset * normalization + var.location.nBytes));
             BOOST_FOREACH (const StackVariable &var, outputStackParameters_)
-                normalizedEnd = std::max((uint64_t)normalizedEnd, var.location.offset * normalization + var.location.nBytes);
+                normalizedEnd = std::max(normalizedEnd, (int64_t)(var.location.offset * normalization + var.location.nBytes));
             if (normalizedStackDelta < normalizedEnd)
                 return false;
         }

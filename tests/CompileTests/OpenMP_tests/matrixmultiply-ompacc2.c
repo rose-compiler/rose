@@ -60,7 +60,8 @@ int mmm()
 {
   int GPU_N , idev;
   int n = N; 
-  GPU_N = xomp_get_num_devices(); 
+//  GPU_N = xomp_get_num_devices(); 
+  GPU_N = 1;
   printf("CUDA-capable device count: %i\n", GPU_N);
 #if 0
     if (GPU_N > MAX_GPU_COUNT)

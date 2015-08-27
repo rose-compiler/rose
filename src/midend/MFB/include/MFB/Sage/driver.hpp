@@ -1,9 +1,3 @@
-/** 
- * \file MFB/include/MFB.hpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #ifndef __MFB_SAGE_DRIVER_HPP__
 #define __MFB_SAGE_DRIVER_HPP__
@@ -15,6 +9,10 @@
 #include <iostream>
 
 #include <boost/filesystem.hpp>
+
+#ifndef VERBOSE
+# define VERBOSE 0
+#endif
 
 class SgType;
 
@@ -46,11 +44,6 @@ class SgTypedefSymbol;
 namespace MFB {
 
 typedef size_t file_id_t;
-
-/*!
- * \addtogroup grp_mfb_sage_driver
- * @{
-*/
 
 template <typename Object>
 class Sage {};
@@ -183,8 +176,6 @@ class Driver<Sage> {
 
 // SgTypedefDeclaration
 
-/** @} */
-
 template <typename Object>
 typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::symbol_t symbol, file_id_t file_id, bool need_forward_only) {
   std::map<file_id_t, SgSourceFile *>::iterator it_file = id_to_file_map.find(file_id);
@@ -197,7 +188,9 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
 
   file_id_t sym_decl_file_id = it_sym_decl_file_id->second;
 
+#if VERBOSE
   std::cerr << "[Info] (MFB::Driver<Sage>::useSymbol) Symbol for " << symbol->get_name().getString() << " found in file #" << sym_decl_file_id << std::endl;
+#endif
 
   bool need_include_directive = !need_forward_only; // TODO find out wether we need a include directive or if we can do with a forward declaration
 

@@ -623,6 +623,22 @@ public:
         return tmp;
     }
 
+    /** In-place union.
+     *
+     *  Inserts the members of @p other set into @p this set. */
+    IntervalSet& operator|=(const IntervalSet &other) {
+        insertMultiple(other);
+        return *this;
+    }
+    
+    /** In-place union with interval.
+     *
+     *  Inserts the @p interval into @p this set. */
+    IntervalSet& operator|=(const Interval &interval) {
+        insert(interval);
+        return *this;
+    }
+
     /** Union of two sets. */
     IntervalSet operator|(const IntervalSet &other) const {
         if (nIntervals() < other.nIntervals()) {
@@ -644,6 +660,22 @@ public:
         return retval;
     }
 
+    /** In-place intersection.
+     *
+     *  Modifies @p this set so it contains only those members that are also in the @p other set. */
+    IntervalSet& operator&=(const IntervalSet &other) {
+        intersect(other);
+        return *this;
+    }
+
+    /** In-place intersection with an interval.
+     *
+     *  Modifies @p this set so it contains only those members that are also in @p interval. */
+    IntervalSet& operator&=(const Interval &interval) {
+        intersect(interval);
+        return *this;
+    }
+
     /** Intersection of two sets. */
     IntervalSet operator&(const IntervalSet &other) const {
         if (nIntervals() < other.nIntervals()) {
@@ -663,6 +695,22 @@ public:
         return retval;
     }
 
+    /** In-place subtraction.
+     *
+     *  Subtracts from @p this set those members of the @p other set. */
+    IntervalSet& operator-=(const IntervalSet &other) {
+        eraseMultiple(other);
+        return *this;
+    }
+
+    /** In-place subtraction of an interval.
+     *
+     *  Removes the specified @p interval of values from @p this set. */
+    IntervalSet& operator-=(const Interval &interval) {
+        erase(interval);
+        return *this;
+    }
+    
     /** Subtract another set from this one.
      *
      *  <code>A-B</code> is equivalent to <code>A & ~B</code> but perhaps faster. */

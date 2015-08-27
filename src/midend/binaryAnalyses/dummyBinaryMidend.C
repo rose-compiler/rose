@@ -2,6 +2,7 @@
 #include "BinaryDataFlow.h"
 #include "BinaryTaintedFlow.h"
 #include "BinaryNoOperation.h"
+#include "BinaryCallingConvention.h"
 
 namespace rose {
 namespace BinaryAnalysis {
