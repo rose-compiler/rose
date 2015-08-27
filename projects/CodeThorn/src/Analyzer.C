@@ -405,6 +405,10 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
     }
     nt++;
   }
+  PState::setActiveGlobalTopify(true);
+  PState::setVariableValueMonitor(&variableValueMonitor);
+  PState::_analyzer=this;
+
   cout<<"STATUS: switched to static analysis (approximating "<<n<<" of "<<nt<<" variables with top-conversion)."<<endl;
   //switch to the counter for approximated loop iterations
   if (_maxTransitionsForcedTop > 1 || _maxIterationsForcedTop > 0) {
@@ -425,17 +429,24 @@ void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, VariableId va
 EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
   // here is the best location to adapt the analysis results to certain global restrictions
   if(isActiveGlobalTopify()) {
+    // xxx
+#if 1
     VariableIdSet varSet=pstate.getVariableIds();
     for(VariableIdSet::iterator i=varSet.begin();i!=varSet.end();++i) {
       if(variableValueMonitor.isHotVariable(this,*i)) {
         topifyVariable(pstate, cset, *i);
       }
     }
+#else
+    pstate.topifyState();
+#endif
     // set cset in general to empty cset, otherwise cset can grow again arbitrarily
     ConstraintSet cset0; // xxx
     cset=cset0;
   }
   if(variableValueMonitor.isActive()) {
+    cerr<<"Error: Variable-Value-Monitor: no longer supported."<<endl;
+    exit(1);
     VariableIdSet hotVarSet;
 #pragma omp critical (VARIABLEVALUEMONITOR)
     hotVarSet=variableValueMonitor.getHotVariables(this,&pstate);
