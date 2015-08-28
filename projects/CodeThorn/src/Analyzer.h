@@ -205,7 +205,15 @@ namespace CodeThorn {
     std::string reversedInOutRunToString(list<const EState*>& run);
     //returns the shortest possible number of input states on the path leading to "target".
     int inputSequenceLength(const EState* target);
-    
+    // the following functions are used by solver 9
+    bool searchForIOPatterns(PState* startPState, int assertion_id, list<int>& inputSuffix, list<int>* partialTrace = NULL, int* inputPatternLength=NULL);
+    bool containsPatternTwoRepetitions(std::list<int>& sequence);
+    bool computePStateAfterInputs(PState& pState, list<int>& inputs, int thread_id, list<int>* iOSequence=NULL);
+    bool computePStateAfterInputs(PState& pState, int input, int thread_id, list<int>* iOSequence=NULL);
+    bool searchPatternPath(int assertion_id, PState& pState, list<int>& inputPattern, list<int>& inputSuffix, int thread_id,list<int>* iOSequence=NULL);
+    list<int> inputsFromPatternTwoRepetitions(list<int> pattern2r);
+    string convertToCeString(list<int>& ceAsIntegers, int maxInputVal);
+
   public:
     SgNode* getCond(SgNode* node);
     void generateAstNodeInfo(SgNode* node);
@@ -230,6 +238,7 @@ namespace CodeThorn {
     void runSolver6();
     void runSolver7();
     void runSolver8();
+    void runSolver9();
     void runSolver();
     //! The analyzer requires a CFAnalysis to obtain the ICFG.
     void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
@@ -292,6 +301,8 @@ namespace CodeThorn {
     }
     
     InputOutput::OpType ioOp(const EState* estate) const;
+
+    PropertyValueTable* loadAssertionsToReconstruct(string filePath);
     
     void setDisplayDiff(int diff) { _displayDiff=diff; }
     void setSolver(int solver) { _solver=solver; }
@@ -332,6 +343,10 @@ namespace CodeThorn {
     void setMaxIterations(size_t maxIterations) { _maxIterations=maxIterations; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
     void setMaxIterationsForcedTop(size_t maxIterations) { _maxIterationsForcedTop=maxIterations; }
+    void setStartPState(PState startPState) { _startPState=startPState; }
+    void setReconstructMaxInputDepth(size_t inputDepth) { _reconstructMaxInputDepth=inputDepth; }
+    void setReconstructMaxRepetitions(size_t repetitions) { _reconstructMaxRepetitions=repetitions; }
+    void setReconstructPreviousResults(PropertyValueTable* previousResults) { _reconstructPreviousResults = previousResults; };
     void eventGlobalTopifyTurnedOn();
     void setMinimizeStates(bool minimizeStates) { _minimizeStates=minimizeStates; }
     bool isIncompleteSTGReady();
@@ -395,6 +410,10 @@ namespace CodeThorn {
     long int _maxIterations;
     long int _maxTransitionsForcedTop;
     long int _maxIterationsForcedTop;
+    PState _startPState;
+    int _reconstructMaxInputDepth;
+    int _reconstructMaxRepetitions;
+    PropertyValueTable* _reconstructPreviousResults;
     bool _treatStdErrLikeFailedAssert;
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;

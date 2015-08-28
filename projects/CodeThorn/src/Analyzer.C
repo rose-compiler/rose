@@ -13,8 +13,12 @@
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
 #include "AnalysisAbstractionLayer.h"
+#include "SpotConnection.h"
 
 #include <boost/bind.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include "boost/lexical_cast.hpp"
 
 #include "Timer.h"
 
@@ -227,6 +231,7 @@ void Analyzer::runSolver() {
   case 6: runSolver6();break;
   case 7: runSolver7();break;
   case 8: runSolver8();break;
+  case 9: runSolver9();break;
   default: assert(0);
   }
 }
@@ -3295,7 +3300,7 @@ void Analyzer::runSolver8() {
         }
       }
       oneSuccessorOnly=oneSuccessorOnly&&(newEStateList.size()==1);
-      // solver 8: only singe traces allowed
+      // solver 8: only single traces allowed
       assert(newEStateList.size()<=1);
       for(list<EState>::iterator nesListIter=newEStateList.begin();
           nesListIter!=newEStateList.end();
@@ -3334,7 +3339,381 @@ void Analyzer::runSolver8() {
   transitionGraph.setIsPrecise(true);
   transitionGraph.setIsComplete(false);
 }
-      
+
+typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
+
+bool Analyzer::searchForIOPatterns(PState* startPState, int assertion_id, list<int>& inputSuffix, list<int>* partialTrace,
+                                   int* inputPatternLength) {
+  // create a new instance of the startPState
+  //TODO: check why init of "output" is necessary
+  (*startPState)[globalVarIdByName("output")]=CodeThorn::AType::CppCapsuleConstIntLattice(-7);
+  PState newStartPState = *startPState;
+  // initialize worklist
+  PStatePlusIOHistory startState = PStatePlusIOHistory(newStartPState, list<int>());
+  std::list<PStatePlusIOHistory> workList;
+  workList.push_back(startState);
+  // statistics and other variables
+  bool foundTrace = false;
+  int processedStates = 0;
+  int previousProcessedStates = 0;
+  unsigned int currentMaxDepth = 0; //debugging
+  int threadNum;
+  int workers=_numberOfThreadsToUse;
+  bool foundTheAssertion; //only access through omp_critical(SOLVERNINEWV)
+  vector<bool> workVector(_numberOfThreadsToUse);
+  set_finished(workVector,true);
+  omp_set_num_threads(workers);
+# pragma omp parallel shared(workVector) private(threadNum)
+  {
+    threadNum=omp_get_thread_num();
+    while(!all_false(workVector)) {
+      if(threadNum==0 && _displayDiff && (processedStates >= (previousProcessedStates+_displayDiff))) {
+        cout << "DEBUG: #processed PStates: " << processedStates << "   currentMaxDepth: " << currentMaxDepth << "   wl size: " << workList.size() << endl;
+        previousProcessedStates=processedStates;
+      }
+      bool sppResult = false;
+      bool isEmptyWorkList;
+      #pragma omp critical(SOLVERNINEWL)
+      {
+        isEmptyWorkList = (workList.empty());
+      }
+      if(isEmptyWorkList || foundTheAssertion) {
+#pragma omp critical(SOLVERNINEWV)
+        {
+          workVector[threadNum]=false;
+        }
+        continue;
+      } else {
+#pragma omp critical(SOLVERNINEWV)
+        {
+          workVector[threadNum]=true;
+        }
+      }
+      // pop worklist
+      PStatePlusIOHistory currentState;
+      bool nextElement;
+      #pragma omp critical(SOLVERNINEWL)
+      {
+        if(!workList.empty()) {
+          processedStates++;
+          currentState=*workList.begin();
+          workList.pop_front();
+          nextElement=true;
+        } else {
+          nextElement=false;
+        }
+      }
+      if (!nextElement) {
+        assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
+        continue;
+      }
+      // generate one new state for each input symbol and continue searching for patterns
+      for (set<int>::iterator inputVal=_inputVarValues.begin(); inputVal!=_inputVarValues.end(); inputVal++) {
+        // copy the state and initialize new input
+        PState newPState = currentState.first;
+        newPState[globalVarIdByName("input")]=CodeThorn::AType::CppCapsuleConstIntLattice(*inputVal);
+        list<int> newHistory = currentState.second;
+        ROSE_ASSERT(newHistory.size() % 2 == 0);
+        newHistory.push_back(*inputVal);
+        // call the next-state function (a.k.a. "calculate_output")
+        RERS_Problem::rersGlobalVarsCallInit(this, newPState, omp_get_thread_num());
+        (void) RERS_Problem::calculate_output( omp_get_thread_num() );
+        int rers_result=RERS_Problem::output[omp_get_thread_num()];
+        // handle assertions found to be reachable
+        if (rers_result==-2) {
+          //Stderr state, do not continue (rers mode)
+        } else if(rers_result<=-100) {
+          // we found a failing assert
+          int index=((rers_result+100)*(-1));
+          assert(index>=0 && index <=99);
+        } else {  // not a failed assertion, continue searching
+          RERS_Problem::rersGlobalVarsCallReturnInit(this, newPState, omp_get_thread_num());
+          newHistory.push_back(rers_result);
+          ROSE_ASSERT(newHistory.size() % 2 == 0);
+          // check for a cyclic pattern
+          bool containsPattern = containsPatternTwoRepetitions(newHistory);
+          if (containsPattern) {
+            // modulo 4: sets of input and output symbols are distinct & the system always alternates between input / ouput 
+            ROSE_ASSERT(newHistory.size() % 4 == 0);
+            //call "follow path"-funtion
+            PState backupPState = PState(newPState);
+            list<int> backupHistory = list<int>(newHistory);
+            list<int> patternInputs = inputsFromPatternTwoRepetitions(newHistory);
+            sppResult = searchPatternPath(assertion_id, newPState, patternInputs, inputSuffix, omp_get_thread_num(), &newHistory);
+            if (sppResult) { // the assertion was found
+              #pragma omp critical(SOLVERNINEWV)
+              {
+                foundTheAssertion=true;
+              }
+              //
+              if (partialTrace) { // update the real counterexample trace
+                #pragma omp critical(SOLVERNINETRACE)
+                {
+                  if (!foundTrace) {
+                    partialTrace->splice(partialTrace->end(), newHistory); //append the real trace suffix
+                    if (inputPatternLength) {
+                      *inputPatternLength = (backupHistory.size() / 4);
+                    }
+                    foundTrace=true;
+                  }
+                }
+              }
+            } else {
+              // search for specific assertion was unsuccessful, continue searching for patterns
+              newPState = backupPState;
+              newHistory = backupHistory;
+            }
+          }
+          // continue only if the maximum depth of input symbols has not yet been reached
+          if (!sppResult) {
+            if ((newHistory.size() / 2) < (unsigned int) _reconstructMaxInputDepth) {
+              // add the new state to the worklist
+              PStatePlusIOHistory newState = PStatePlusIOHistory(newPState, newHistory);
+              #pragma omp critical(SOLVERNINEWL)
+              {
+                currentMaxDepth = currentMaxDepth < newHistory.size() ? newHistory.size() : currentMaxDepth;
+                workList.push_front(newState);
+              }
+            } else {
+              ROSE_ASSERT(newHistory.size() / 2 == (unsigned int) _reconstructMaxInputDepth);
+            }
+          }
+        } // end of else-case "no assertion, continue searching"  
+      } //end of "for each input value"-loop
+    } // while
+  } // omp parallel
+  if (foundTheAssertion) {
+    //cout << "analysis finished (found assertion #" << assertion_id <<")."<<endl;
+    return true;
+  } else {
+    //cout << "analysis finished (worklist is empty)."<<endl;
+    return false;
+  }
+}
+
+list<int> Analyzer::inputsFromPatternTwoRepetitions(list<int> pattern2r) {
+  ROSE_ASSERT(pattern2r.size() % 4 == 0);
+  list<int> result;
+  list<int>::iterator iter = pattern2r.begin();
+  for (unsigned int i = 0; i < (pattern2r.size() / 4); i++) {
+    result.push_back(*iter);
+    iter++;
+    iter++;
+  }
+  return result;
+}
+
+bool Analyzer::computePStateAfterInputs(PState& pState, int input, int thread_id, list<int>* iOSequence) {    
+  pState[globalVarIdByName("input")]=CodeThorn::AType::CppCapsuleConstIntLattice(input);
+  RERS_Problem::rersGlobalVarsCallInit(this, pState, thread_id);
+  (void) RERS_Problem::calculate_output(thread_id);
+  RERS_Problem::rersGlobalVarsCallReturnInit(this, pState, thread_id);
+  if (iOSequence) {
+    iOSequence->push_back(input);
+    int outputVal=RERS_Problem::output[thread_id];
+    // a (std)err state could was encountered, this is not a valid RERS path anymore
+    if (outputVal <= 0) {
+      return false;
+    }
+    iOSequence->push_back(outputVal);
+  }
+  return true;
+}
+
+bool Analyzer::computePStateAfterInputs(PState& pState, list<int>& inputs, int thread_id, list<int>* iOSequence) {
+  for (list<int>::iterator i = inputs.begin(); i !=inputs.end(); i++) {
+    pState[globalVarIdByName("input")]=CodeThorn::AType::CppCapsuleConstIntLattice(*i);
+    RERS_Problem::rersGlobalVarsCallInit(this, pState, thread_id);
+    (void) RERS_Problem::calculate_output(thread_id);
+    RERS_Problem::rersGlobalVarsCallReturnInit(this, pState, thread_id);
+    if (iOSequence) {
+      iOSequence->push_back(*i);
+      int outputVal=RERS_Problem::output[thread_id];
+      // a (std)err state could was encountered, this is not a valid RERS path anymore
+      if (outputVal <= 0) {
+        return false;
+      }
+      iOSequence->push_back(outputVal);
+    }
+  }
+  return true;
+}
+
+bool Analyzer::searchPatternPath(int assertion_id, PState& pState, list<int>& inputPattern, list<int>& inputSuffix, int thread_id, list<int>* iOSequence) {
+  bool validPath = true;
+  int i = 2; // the pattern was found previously, therefore two pattern iterations exist already in "iOSequence"
+  while (validPath && i < _reconstructMaxRepetitions) {
+    // check if the assertion can be found after the current number of pattern iterations
+    if (!inputSuffix.empty()) {
+      PState branchToCheckForAssertion = pState;
+      list<int> iOSquenceStartingAtBranch;
+      computePStateAfterInputs(branchToCheckForAssertion, inputSuffix, thread_id, &iOSquenceStartingAtBranch);
+      int rers_result=RERS_Problem::output[thread_id];
+      if(rers_result<=-100) {
+        // we found a failing assert
+        int index=((rers_result+100)*(-1));
+        assert(index>=0 && index <=99);
+        if(index == assertion_id) {
+          //cout << "DEBUG: found assertion #" << assertion_id << " after " << i << " pattern iterations." << endl; 
+          if (iOSequence) {
+            iOSequence->splice(iOSequence->end(), iOSquenceStartingAtBranch); // append the new I/O symbols to the current trace 
+          }
+          return true;
+        }
+      }  
+    } else {
+      //TODO: try all input symbols
+      cout << "ERROR: reached an unhandled case (empty spurious suffix)." << endl;
+      ROSE_ASSERT(0);
+    }
+    // follow the pattern
+    validPath = computePStateAfterInputs(pState, inputPattern, thread_id, iOSequence);
+    i++;
+  }
+  //cout << "DEBUG: could NOT find assertion #" << assertion_id << " after " << _reconstructMaxRepetitions << " pattern iterations." << endl;  
+  return false;
+}
+
+bool Analyzer::containsPatternTwoRepetitions(std::list<int>& sequence) {
+  if (sequence.size() % 2 != 0) {
+    return false;
+  }
+  bool mismatch = false;
+  list<int>::iterator firstHalf = sequence.begin();
+  //get a pointer to the beginning of the second half of the list
+  list<int>::iterator secondHalf = sequence.begin();
+  for (unsigned int i = 0; i < (sequence.size() / 2); i++) {
+    secondHalf++;
+  }
+  // check for two consecutive repetitions of the same subsequence
+  while (!mismatch && secondHalf != sequence.end()) {
+    if (*firstHalf != *secondHalf) {
+      mismatch = true;
+    } else {
+      firstHalf++;
+      secondHalf++;
+    }
+  }
+  return (!mismatch);
+}
+
+void Analyzer::runSolver9() {
+#ifndef RERS_SPECIALIZATION
+  cout << "ERROR: solver 9 is only compatible with the hybrid analyzer." << endl;
+  ROSE_ASSERT(0);
+#endif
+#ifdef RERS_SPECIALIZATION
+  //initialize the global variable arrays in the linked binary version of the RERS problem
+  if(boolOptions["rers-binary"]) {
+    RERS_Problem::rersGlobalVarsArrayInit(_numberOfThreadsToUse);
+    RERS_Problem::createGlobalVarAddressMaps(this);
+  }
+#endif
+  flow.boostify();
+  reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
+  cerr<<"INFO: number of error labels: "<<reachabilityResults.size()<<endl;
+  int maxInputVal = *( std::max_element(_inputVarValues.begin(), _inputVarValues.end()) ); //required for parsing to characters
+  cout<<"INFO: maximum length of input patterns: "<< (_reconstructMaxInputDepth / 2) <<endl;
+  cout<<"INFO: maximum number of pattern repetitions: "<<_reconstructMaxRepetitions<<endl;
+  cout <<"STATUS: Running parallel solver 9 (reconstruct assertion traces) with "<<_numberOfThreadsToUse<<" threads."<<endl;
+  cout <<"STATUS: This may take a while. Please expect a line of output every 10.000 non-error states. (counter resets itself everytime the prefix is expanded)" << endl;
+  for (unsigned int i = 0; i < _reconstructPreviousResults->size(); i++) {
+    if (_reconstructPreviousResults->getPropertyValue(i) == PROPERTY_VALUE_YES) {
+      bool foundAssertion = false;
+      list<int> realTrace;
+      list<int> suffixRealTrace;
+      int* inputPatternLength = new int();
+      PState startPStateCopy = _startPState;
+      list<int> ceInputs;
+      string ce = _reconstructPreviousResults->getCounterexample(i);
+      //extract list of input values
+      ce = ce.substr(1, (ce.size()-2)); //eliminate outer square brackets
+      std::vector<std::string> symbols;
+      boost::algorithm::split(symbols, ce, boost::algorithm::is_any_of(";"));
+      for (vector<string>::iterator k=symbols.begin(); k!=symbols.end(); k++) {
+        if ((*k)[0]=='i') { //input symbol
+          int inputVal = ((int) (*k)[1]) - ((int) 'A') + 1;
+          ceInputs.push_back(inputVal);
+        }
+      }
+      // try the search with all prefix/suffix combinations of the loaded counterexample
+      list<int> inputSuffix = ceInputs;
+      int ceIndex = 0;
+      foundAssertion = searchForIOPatterns(&startPStateCopy, i, inputSuffix, &suffixRealTrace, inputPatternLength);
+      if (foundAssertion) {
+        reachabilityResults.setPropertyValue(i, PROPERTY_VALUE_YES);
+        realTrace.splice(realTrace.end(), suffixRealTrace); //append the suffix
+        cout << "STATUS: found a trace leading to failing assertion #" << i << " (input lengths: reused prefix: " << ceIndex;
+        cout << ", pattern: " << * inputPatternLength << ", total: " << ((realTrace.size()+1) /2) << ")." << endl;
+        string ce = convertToCeString(realTrace, maxInputVal);
+        reachabilityResults.setCounterexample(i, ce);
+      }
+      ceIndex++;
+      list<int>::iterator ceIter=ceInputs.begin();
+      while (!foundAssertion && ceIter!=ceInputs.end()) {
+        bool validPath = computePStateAfterInputs(startPStateCopy, *ceIter, 0, &realTrace);
+        if (validPath) {
+          inputSuffix.pop_front();
+          suffixRealTrace = list<int>(); //reset the real suffix before searching with a different prefix
+          foundAssertion = searchForIOPatterns(&startPStateCopy, i, inputSuffix, &suffixRealTrace, inputPatternLength);  
+          if (foundAssertion) {
+            reachabilityResults.setPropertyValue(i, PROPERTY_VALUE_YES);
+            realTrace.splice(realTrace.end(), suffixRealTrace); //append the suffix 
+            cout << "STATUS: found a trace leading to failing assertion #" << i << " (input lengths: reused prefix: " << ceIndex;
+            cout << ", pattern: " << * inputPatternLength << ", total: " << ((realTrace.size()+1) /2) << ")." << endl;
+            string ce = convertToCeString(realTrace, maxInputVal);
+            reachabilityResults.setCounterexample(i, ce);
+          }
+        }    
+        ceIndex++;
+        ceIter++;
+      }
+      if (!foundAssertion) {
+        cout << "INFO: no trace to assertion #" << i << " could be found. Maybe try again with greater thresholds." << endl;
+      }
+    }
+  }
+}
+
+string Analyzer::convertToCeString(list<int>& ceAsIntegers, int maxInputVal) {
+  SpotConnection spotConnection;
+  stringstream ss;
+  ss << "[";
+  bool firstElem = true;
+  for (list<int>::iterator i=ceAsIntegers.begin(); i!=ceAsIntegers.end(); i++) {
+    if (!firstElem) {
+      ss << ";";
+    }
+    ss << spotConnection.int2PropName(*i, maxInputVal);
+    firstElem = false;
+  }
+  ss << "]";
+  return ss.str();
+}
+
+
+PropertyValueTable* Analyzer::loadAssertionsToReconstruct(string filePath) {
+  PropertyValueTable* result = new PropertyValueTable(100);
+  ifstream assert_input(filePath.c_str());
+  if (assert_input.is_open()) {
+    //load the containing counterexamples
+    std::string line;
+    while (std::getline(assert_input, line)){
+      std::vector<std::string> entries;
+      boost::algorithm::split(entries, line, boost::algorithm::is_any_of(","));
+      if (entries[1] == "yes") {
+        int property_id = boost::lexical_cast<int>(entries[0]);
+        assert(entries.size() == 3);
+        assert(entries[2] != "");
+        result->setPropertyValue(property_id, PROPERTY_VALUE_YES);
+        result->setCounterexample(property_id, entries[2]);
+      }
+    }
+  }
+  assert_input.close();
+  return result;
+}
+
 int Analyzer::extractAssertionTraces() {
   int maxInputTraceLength = -1;
   for (list<pair<int, const EState*> >::iterator i = _firstAssertionOccurences.begin(); i != _firstAssertionOccurences.end(); ++i ) {
@@ -3501,6 +3880,7 @@ int Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
   list<const EState*> counterexampleRun;
   // TODO: fix the reported minimum depth to reach an assertion for the first time
   if(true) { //boolOptions["rers-binary"] && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
+
     counterexampleRun = reverseInOutSequenceBreadthFirst(assertEState, transitionGraph.getStartEState(), 
                                                          boolOptions["counterexamples-with-output"]);
   } else {
