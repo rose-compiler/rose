@@ -1,7 +1,126 @@
+=========================================================
+Instructions for installing ROSE on Debian 8 "Jessie"
+=========================================================
 
-=========================================================
-Instructions for installing ROSE locally on Debian Stable
-=========================================================
+2015-08-27: Tested on Amazon AWS for ROSE binary analysis.
+
++ Install "aptitude" since that's what the following documentation
+  will use.
+
+	$ sudo apt-get install aptitude
+
++ Make sure the system software is up-to-date.
+
+	$ sudo aptitude update
+	$ sudo aptitude safe-upgrade
+	$ sudo aptitude install build-essential
+
++ Optional downgrade from gcc 4.9 to 4.8. You don't NEED to set up
+  alternatives, but it's easier this way instead of fighting with
+  boost's weird build system that doesn't honor the "CXX=g++-4.8"
+  environment variable.
+
+	$ sudo aptitude install g++-4.8 gfortran-4.8
+	$ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 100
+	$ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 100
+	$ sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-4.8 100
+	$ g++ --version # make sure it says 4.8.*
+
++ Download build systems (ROSE support for autoconf is currently
+  better than cmake, but you'll need cmake if you want to install
+  yaml-cpp and Wt).
+
+	$ sudo aptitude install libtool automake make cmake
+
++ Other prerequisites
+
+  	$ sudo aptitude install flex bison
+	$ sudo aptitude install libssl-dev libxml2-dev libgcrypt11-dev
+	$ sudo aptitude install git
+	# The next few lines are optional, but recommended
+	$ sudo aptitude install doxygen graphviz-dev dot2tex swig
+	$ sudo aptitude install libqt4-dev qt4-dev-tools libgraphicsmagick-dev
+	$ sudo aptitude install libsqlite3-dev libpqxx3-dev postgresql
+	$ sudo aptitude install libreadline-dev libmagic-dev
+  
++ Install Sun/Oracle Java-7 JVM. This is non-libre software that must
+  be downloaded from Oracle's web site. E.g., I downloaded
+  jdk-7u51-linux-x64.tar.gz.
+
+	$ sudo mkdir -p /usr/lib/jvm
+	$ cd /usr/lib/jvm
+	$ sudo tar xf ~/Downloads/jdk-7u51-linux-x64.tar.gz
+	$ sudo ln -s jdk1.7.0_51 java-7-sun
+        $ cd java-7-sun/bin
+	$ for f in $(find . -maxdepth 1 -type f -perm -500 -printf '%f\n'); do \
+	    sudo update-alternatives --install \
+	        /usr/bin/$f $f /usr/lib/jvm/java-7-sun/bin/$f 1072
+	  done
+	  # Ignore warning about not replacing /usr/bin/apt with a
+	  # link.  In fact, make sure its not a link!
+	$ javac -version # make sure it says "javac 1.7.0_51"
+
++ Install ccache (optional)
+
+	$ sudo aptitude install ccache
+	$ ccache -M 8G
+	$ ccache -s
+	$ # make sure PATH points to /usr/lib/ccache
+	$ which g++ # should be /usr/lib/ccache/g++
+
++ Install boost 1.50. Instructions are at http://boost.org. You may
+  need to add "-sNO_ZLIB=1" and/or "-sNO_BZIP2=1" to the "b2"
+  command. (Robb has an "install-boost" script to download, build, and
+  install multiple versions).
+
++ Install yaml-cpp-0.5.1. Instructions are at their web site. YAML
+  support is optional; the binary analysis parts of ROSE use it for
+  reading and writing configuration files. (Robb has an "install-yaml"
+  script that downloads, builds, and installs against multiple
+  versions of boost.)
+
++ Install dlib-18.10 by simply unpacking it (ROSE only uses its header
+  files).  DLib is optional. Some binary analysis tools use it for
+  some graph algorithms.
+
++ Install Wt web toolkit. Wt is optional. Some binary analysis tools
+  use it for a web server. (Robb has an "install-wt" script that
+  downloads, builds, and installs against multiple versions of boost.)
+
++ Install the Yices SMT solver static library and executable for
+  version 1.0.34.  This is non-libre software. Yices is
+  optional. Binary analysis uses it to solve equations that describe
+  memory aliasing and some other things.
+
++ Download some version of ROSE (and optional EDG). Run the "build"
+  and "configure" scripts according to other
+  instructions. Alternatively, use cmake.
+
+  1. If you encounter "ERROR: Could not find
+     "/usr/include/sys/cdefs.h" system header file ... (referenced by
+     ROSE specific "sys/cdefs.h" header file)" then remove the "exit
+     5" line from $ROSE_SOURCE/config/create_system_headers near line
+     287 and re-run the "configure" command. (I'm not sure what effect
+     this has on ROSE's source code analysis, but it's fine for binary
+     analysis.)
+
+  2. If you encounter "configure: error: this package requires Python
+     >= 0.0.0 and < 3.1.4." then change
+     $ROSE_SOURCE/config/support-rose.m4 near line 675 from [3.1.4] to
+     [4.0.0] and then re-run "(cd $ROSE_SOURCE && ./build)" and the
+     "configure" command.
+
++ Compile and install (e.g., "make install").
+
+=====================================================
+Instructions for installing ROSE on Debian 7 "Wheezy"
+=====================================================
+
+Not written yet.
+
+===================================================================
+Instructions for installing ROSE locally on Debian Lenny or Squeeze
+===================================================================
 
 2011-01-05
 
