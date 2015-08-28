@@ -1575,10 +1575,10 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   RoseAst completeast(root);
   startFunRoot=completeast.findFunctionByName(funtofind);
   if(startFunRoot==0) { 
-    std::cerr << "Function '"<<funtofind<<"' not found.\n"; 
+    std::cout << "Function '"<<funtofind<<"' not found.\n"; 
     exit(1);
   } else {
-    std::cerr << "INFO: starting at function '"<<funtofind<<"'."<<endl;
+    std::cout << "INFO: starting at function '"<<funtofind<<"'."<<endl;
   }
   cout << "INIT: Initializing AST node info."<<endl;
   initAstNodeInfo(root);
@@ -2754,7 +2754,7 @@ bool all_false(vector<bool>& v) {
 void Analyzer::runSolver5() {
   flow.boostify();
   reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
-  cerr<<"INFO: number of error labels: "<<reachabilityResults.size()<<endl;
+  cout<<"INFO: number of error labels: "<<reachabilityResults.size()<<endl;
   size_t prevStateSetSize=0; // force immediate report at start
   int threadNum;
   int workers=_numberOfThreadsToUse;
