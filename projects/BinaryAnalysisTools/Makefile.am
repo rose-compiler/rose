@@ -131,7 +131,7 @@ bROwSE_server_SOURCES =				\
 	bROwSE/WStrings.C			\
 	bROwSE/WToggleButton.C
 bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(top_builddir)/src/roseSupport -I$(WT_PREFIX)/include
-bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) -lboost_signals $(ROSE_LIBS)
 
 pkginclude_HEADERS = 				\
         bROwSE/Application.h			\
