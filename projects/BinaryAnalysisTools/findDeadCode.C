@@ -30,10 +30,11 @@ struct Settings {
     bool showAddresses;                                 // show unreached areas as address intervals?
     bool showInstructions;                              // show unreached disassembled instructions?
     bool showDisassembly;                               // disassemble unreached addresses linearly?
+    bool showHexDump;                                   // show unreached areas as data hexdumps?
     bool useCompression;                                // compress sequences of identical instructions?
     Settings()
         : lookForImmediates(true), useDataFlow(true),
-          showMap(false), showAddresses(true), showInstructions(true), showDisassembly(true),
+          showMap(false), showAddresses(true), showInstructions(true), showDisassembly(true), showHexDump(true),
           useCompression(true) {}
 };
 
@@ -144,6 +145,15 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     output.insert(Switch("no-compress")
                   .key("compress")
                   .intrinsicValue(false, settings.useCompression)
+                  .hidden(true));
+
+    output.insert(Switch("show-hexdump")
+                  .intrinsicValue(true, settings.showHexDump)
+                  .doc("Show unused addresses in @man{hexdump}(1) style. The @s{no-show-hexdump} disables this feature. The "
+                       "default is to " + std::string(settings.showHexDump?"":"not ") + "show this output."));
+    output.insert(Switch("no-show-hexdump")
+                  .key("show-hexdump")
+                  .intrinsicValue(false, settings.showHexDump)
                   .hidden(true));
 
     return parser.with(analysis).with(output).parse(argc, argv).apply().unreachedArgs();
@@ -513,11 +523,49 @@ int main(int argc, char *argv[]) {
         sectionSeparator = "\n";
     }
 
+    // Output hexdump-style data
+    if (settings.showHexDump) {
+        std::cout <<sectionSeparator <<"Unreached addresses shown as data\n";
+        HexdumpFormat fmt;
+        fmt.prefix = "  ";
+        uint8_t buf[4096];                              // arbitrary size, but a multiple of 16
+        BOOST_FOREACH (const AddressInterval &interval, unreachable.intervals()) {
+            std::cout <<"  " <<std::string(25, ':')
+                      <<" " <<StringUtility::addrToString(interval.least())
+                      <<" + " <<StringUtility::addrToString(interval.size())
+                      <<" = " <<StringUtility::addrToString(interval.greatest()+1)
+                      <<" " <<std::string(25, ':') <<"\n";
+            rose_addr_t va = interval.least();
+            rose_addr_t nRemain = interval.size();
+            while (nRemain > 0) {
+                size_t bufsz = std::min((rose_addr_t)sizeof(buf), nRemain);
+                if (va % 16)                            // partial first line in order to align the rest
+                    bufsz = std::min(bufsz, 16 - va%16);
+                size_t nRead = engine.memoryMap().at(va).limit(bufsz).read(buf).size();
+                std::cout <<fmt.prefix;
+                SgAsmExecutableFileFormat::hexdump(std::cout, va, buf, nRead, fmt);
+                std::cout <<"\n";
+                if (nRead < bufsz) {
+                    ::mlog[ERROR] <<"short read: got " <<StringUtility::plural(nRead, "bytes") <<", expected " <<bufsz <<"\n";
+                    break;
+                }
+                va += bufsz;
+                nRemain -= bufsz;
+            }
+        }
+        sectionSeparator = "\n";
+    }
+
     // Output unreachable instructions
     if (settings.showInstructions) {
         std::cout <<sectionSeparator <<"Unreachable CFG instructions:\n";
         size_t nShown = 0;
         BOOST_FOREACH (const AddressInterval &interval, unreachable.intervals()) {
+            std::cout <<"  " <<std::string(25, ':')
+                      <<" " <<StringUtility::addrToString(interval.least())
+                      <<" + " <<StringUtility::addrToString(interval.size())
+                      <<" = " <<StringUtility::addrToString(interval.greatest()+1)
+                      <<" " <<std::string(25, ':') <<"\n";
             std::vector<SgAsmInstruction*> insns = partitioner.instructionsOverlapping(interval);
             if (nShown > 0 && !insns.empty())
                 std::cout <<"\n";
