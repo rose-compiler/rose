@@ -372,9 +372,6 @@ void PState::setVariableToTop(VariableId varId) {
 }
 
 void PState::setVariableToValue(VariableId varId, CodeThorn::CppCapsuleAValue val) {
-  if(_activeGlobalTopify && varIsTop(varId)) {
-    return;
-  }
   if(false && _activeGlobalTopify && _variableValueMonitor->isHotVariable(_analyzer,varId)) {
     setVariableToTop(varId);
   } else {
