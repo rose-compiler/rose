@@ -609,6 +609,11 @@ VariableId::toString() const {
   return ss.str();
 }
 
+string
+VariableId::toString(VariableIdMapping& vim) const {
+  return vim.uniqueShortVariableName(*this);
+}
+
 #if 0
 VariableId::VariableId(SgSymbol* sym):sym(sym){
 }

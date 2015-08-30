@@ -139,6 +139,7 @@ class VariableId {
  public:
   VariableId();
   std::string toString() const;
+  std::string toString(VariableIdMapping& vid) const;
   int getIdCode() const { return _id; }
   // we intentionally do not provide a constructor for int because this would clash 
   // with overloaded functions that are using ConstIntLattice (which has an implicit 
