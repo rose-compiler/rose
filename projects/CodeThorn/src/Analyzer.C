@@ -166,6 +166,7 @@ string VariableValueMonitor::toString(VariableIdMapping* variableIdMapping) {
 Analyzer::Analyzer():
   startFunRoot(0),
   cfanalyzer(0),
+  _globalTopifyMode(GTM_IOCF),
   _displayDiff(10000),
   _numberOfThreadsToUse(1),
   _ltlVerifier(2),
@@ -200,6 +201,10 @@ Analyzer::Analyzer():
 
 size_t Analyzer::getNumberOfErrorLabels() {
   return _assertNodes.size();
+}
+
+void Analyzer::setGlobalTopifyMode(GlobalTopifyMode mode) {
+  _globalTopifyMode=mode;
 }
 
 bool Analyzer::isPrecise() {
@@ -402,9 +407,11 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
   int nt=0;
   for(VariableIdSet::iterator i=vset.begin();i!=vset.end();++i) {
     string name=SgNodeHelper::symbolToString(getVariableIdMapping()->getSymbol(*i));
+    bool isCompoundIncVar=(_compoundIncVarsSet.find(*i)!=_compoundIncVarsSet.end());
     // xxx
-    if(name!="input" && name!="output" && !variableIdMapping.hasPointerType(*i)) {
-      //if(name!="input" && name!="output") {
+    //if(name!="input" && name!="output" && name!="cf" && !variableIdMapping.hasPointerType(*i)) {
+    if(name!="input" && name!="output" && name!="cf") {
+    //if(isCompoundIncVar) {
     //if(name!="input") {
     //if(name!="output") {
       //if(true) {
@@ -425,19 +432,29 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
   }
 }
 
+bool Analyzer::isTopified(EState& estate) {
+  const PState* pState=estate.pstate();
+  return pState->isTopifiedState();
+}
+
 void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, VariableId varId) {
-  string name=SgNodeHelper::symbolToString(getVariableIdMapping()->getSymbol(varId));
-  // TODO: provide set of variables to ignore
-  if(name!="input" && name!="output") {
-    pstate.setVariableToTop(varId);
-    cset.removeAllConstraintsOfVar(varId);
-  }
+  //cout<<"DEBUG: DEAD CODE (Analyzer::topifyVariale(..))." <<endl;
+  //exit(1);
+  pstate.setVariableToTop(varId);
+  //cset.removeAllConstraintsOfVar(varId);
+}
+
+// PState and cset are assumed to exist. Pstate is assumed to be topified. Only for topify mode.
+EState Analyzer::createEStateFastTopifyMode(Label label, const PState* oldPStatePtr, const ConstraintSet* oldConstraintSetPtr) {
+  ROSE_ASSERT(isActiveGlobalTopify());
+  EState estate=EState(label,oldPStatePtr,oldConstraintSetPtr);
+  return estate;
 }
 
 EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
   // here is the best location to adapt the analysis results to certain global restrictions
   if(isActiveGlobalTopify()) {
-    // xxx
+    // xxx1
 #if 1
     VariableIdSet varSet=pstate.getVariableIds();
     for(VariableIdSet::iterator i=varSet.begin();i!=varSet.end();++i) {
@@ -446,11 +463,11 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
       }
     }
 #else
-    pstate.topifyState();
+    //pstate.topifyState();
 #endif
     // set cset in general to empty cset, otherwise cset can grow again arbitrarily
-    //ConstraintSet cset0; // xxx
-    //cset=cset0;
+    ConstraintSet cset0; // xxx2
+    cset=cset0;
   }
   if(variableValueMonitor.isActive()) {
     cerr<<"Error: Variable-Value-Monitor: no longer supported."<<endl;
@@ -711,6 +728,15 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
       SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
       assert(initDeclVar);
       VariableId initDeclVarId=getVariableIdMapping()->variableId(initDeclVar);
+
+      // not possible to support yet. getIntValue must succeed on declarations.
+      if(false && variableValueMonitor.isHotVariable(this,initDeclVarId)) {
+        PState newPState=*currentEState.pstate();
+        newPState.setVariableToTop(initDeclVarId);
+        ConstraintSet cset=*currentEState.constraints();
+        return createEState(targetLabel,newPState,cset);
+      }
+
       if(variableIdMapping.isConstantArray(initDeclVarId) && boolOptions["rersmode"]) {
         // in case of a constant array the array (and its members) are not added to the state.
         // they are considered to be determined from the initializer without representing them
@@ -1088,6 +1114,23 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     return elistify(createFailedAssertEState(currentEState,edge.target));
   }
 
+#if 0
+  // xxx add skip on topify here
+  if(isActiveGlobalTopify() && boolOptions["rersmode"]) {
+    Label sourceLabel=edge.source;
+    SPRAY::IOLabeler* ioLabeler=getLabeler();
+    if(!(ioLabeler->isStdIOLabel(sourceLabel)
+         ||ioLabeler->isConditionLabel(sourceLabel)
+         ||ioLabeler->isFunctionCallLabel(sourceLabel)
+         ||ioLabeler->isFunctionCallReturnLabel(sourceLabel)
+         ||ioLabeler->isFunctionEntryLabel(sourceLabel)
+         ||ioLabeler->isFunctionExitLabel(sourceLabel)
+         )) {
+      return elistify(createEStateFastTopifyMode(edge.target,currentEState.pstate(),currentEState.constraints()));
+    }
+  }
+#endif
+
   if(edge.isType(EDGE_CALL)) {
     // 1) obtain actual parameters from source
     // 2) obtain formal parameters from target
@@ -1372,7 +1415,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     }
     if(getLabeler()->isStdErrLabel(lab,&varId)) {
       newio.recordVariable(InputOutput::STDERR_VAR,varId);
-      assert(newio.var==varId);
+      ROSE_ASSERT(newio.var==varId);
       if(boolOptions["abstract-interpreter"]) {
         PState* pstate=const_cast<PState*>(estate->pstate());
         AType::ConstIntLattice aint=(*pstate)[varId].getValue();
@@ -1517,7 +1560,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           ConstraintSet cset=*estate.constraints();
           // only update integer variables. Ensure values of floating-point variables are not computed
           if(variableIdMapping.hasIntegerType(lhsVar)) {
-#if 1
+#if 0
             if(isActiveGlobalTopify()) {
               // TODO: CHECK OUTPUT-OUTPUT HERE
               string varName=variableIdMapping.variableName(lhsVar);
@@ -1540,14 +1583,24 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               }
             }
 #endif
-            //newPState[lhsVar]=(*i).result;
-            newPState.setVariableToValue(lhsVar,(*i).result);
+            // xxx
+            if(variableValueMonitor.isHotVariable(this,lhsVar)) {
+              //cout<<"DEBUG: Topifying hot variable :)"<<lhsVar.toString()<<endl;
+              newPState.setVariableToTop(lhsVar);
+            } else {
+              //newPState[lhsVar]=(*i).result;
+              newPState.setVariableToValue(lhsVar,(*i).result);
+            }
           } else if(variableIdMapping.hasPointerType(lhsVar)) {
             // we assume here that only arrays (pointers to arrays) are assigned
             // see CODE-POINT-1 in ExprAnalyzer.C
             //cout<<"DEBUG: pointer-assignment: "<<lhsVar.toString()<<"="<<(*i).result<<endl;
             //newPState[lhsVar]=(*i).result;
-            newPState.setVariableToValue(lhsVar,(*i).result);
+            if(variableValueMonitor.isHotVariable(this,lhsVar)) {
+              newPState.setVariableToTop(lhsVar);
+            } else {
+              newPState.setVariableToValue(lhsVar,(*i).result);
+            }
           }
           if(!(*i).result.isTop())
             cset.removeAllConstraintsOfVar(lhsVar);
@@ -2879,7 +2932,14 @@ void Analyzer::runSolver5() {
               ++nesListIter) {
             // newEstate is passed by value (not created yet)
             EState newEState=*nesListIter;
-            assert(newEState.label()!=Labeler::NO_LABEL);
+            ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
+#if 0
+            // isTopified is linear in the number of vars in a state
+            if(isActiveGlobalTopify() && !isTopified(newEState)) {
+              cerr<<"EState NOT topified: "<<newEState.toString()<<endl;
+              exit(1);
+            }
+#endif
             if(_stg_trace_filename.size()>0 && !newEState.constraints()->disequalityExists()) {
               std::ofstream fout;
               // _csv_stg_trace_filename is the member-variable of analyzer
@@ -4052,3 +4112,7 @@ void Analyzer::mapGlobalVarInsert(std::string name, int* addr) {
   mapGlobalVarAddress[name]=addr;
   mapAddressGlobalVar[addr]=name;
 }
+
+ void Analyzer::setCompoundIncVarsSet(set<VariableId> ciVars) {
+   _compoundIncVarsSet=ciVars;
+ }

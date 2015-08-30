@@ -317,7 +317,38 @@ string readableruntime(double timeInMilliSeconds) {
 
 static Analyzer* global_analyzer=0;
 
+set<VariableId> determineSetOfCompoundIncVars(VariableIdMapping* vim, SgNode* root) {
+  ROSE_ASSERT(vim);
+  ROSE_ASSERT(root);
+  RoseAst ast(root) ;
+  set<VariableId> compoundIncVarsSet;
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(*i)) {
+      SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(compoundAssignOp));
+      if(lhsVar) {
+        compoundIncVarsSet.insert(vim->variableId(lhsVar));
+      }
+    }
+  }
+  return compoundIncVarsSet;
+}
 
+set<VariableId> determineSetOfConstAssignVars2(VariableIdMapping* vim, SgNode* root) {
+  ROSE_ASSERT(vim);
+  ROSE_ASSERT(root);
+  RoseAst ast(root) ;
+  set<VariableId> constAssignVars;
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
+      SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(assignOp));
+      SgIntVal* rhsIntVal=isSgIntVal(SgNodeHelper::getRhs(assignOp));
+      if(lhsVar && rhsIntVal) {
+        constAssignVars.insert(vim->variableId(lhsVar));
+      }
+    }
+  }
+  return constAssignVars;
+}
 
 int main( int argc, char * argv[] ) {
   string ltl_file;
@@ -935,6 +966,12 @@ int main( int argc, char * argv[] ) {
     exit(0);
   }
 
+  // TODO: refactor this into class Analyzer after normalization has been moved to class Analyzer.
+  set<VariableId> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer.getVariableIdMapping(),root);
+  analyzer.setCompoundIncVarsSet(compoundIncVarsSet);
+  analyzer.setGlobalTopifyMode(Analyzer::GTM_IOCF);
+
+  cout<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
   if(boolOptions["normalize"]) {
     cout <<"STATUS: Normalization started."<<endl;
     rewriteSystem.resetStatistics();

@@ -62,6 +62,7 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
   void setAllVariablesToTop();
   void setAllVariablesToValue(CodeThorn::CppCapsuleAValue val);
   void topifyState();
+  bool isTopifiedState() const;
   void setVariableToTop(VariableId varId);
   void setVariableToValue(VariableId varId, CodeThorn::CppCapsuleAValue val);
   VariableIdSet getVariableIds() const;

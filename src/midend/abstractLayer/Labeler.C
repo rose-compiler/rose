@@ -549,6 +549,10 @@ IOLabeler::IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping):Labele
   computeNodeToLabelMapping();
 }
 
+bool IOLabeler::isStdIOLabel(Label label) {
+  return mappingLabelToLabelProperty[label.getId()].isIOLabel();
+}
+
 bool IOLabeler::isStdOutLabel(Label label) {
   return isStdOutVarLabel(label)||isStdOutConstLabel(label);
 }
