@@ -166,7 +166,7 @@ string VariableValueMonitor::toString(VariableIdMapping* variableIdMapping) {
 Analyzer::Analyzer():
   startFunRoot(0),
   cfanalyzer(0),
-  _globalTopifyMode(GTM_IOCF),
+  _globalTopifyMode(GTM_IO),
   _displayDiff(10000),
   _numberOfThreadsToUse(1),
   _ltlVerifier(2),
@@ -409,12 +409,43 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
     string name=SgNodeHelper::symbolToString(getVariableIdMapping()->getSymbol(*i));
     bool isCompoundIncVar=(_compoundIncVarsSet.find(*i)!=_compoundIncVarsSet.end());
     // xxx
+    bool topifyVar=false;
+    switch(_globalTopifyMode) {
+    case GTM_IO:
+      if(name!="input" && name!="output") {
+	topifyVar=true;
+      }
+      break;
+    case GTM_IOCF:
+      if(name!="input" && name!="output" && name!="cf") {
+	topifyVar=true;
+      }
+      break;
+    case GTM_IOCFPTR:
+      if(name!="input" && name!="output" && name!="cf" && !variableIdMapping.hasPointerType(*i)) {
+	topifyVar=true;
+      }
+      break;
+    case GTM_COMPOUNDASSIGN:
+      if(isCompoundIncVar) {
+	topifyVar=true;
+      }
+      break;
+    case GTM_FLAGS:
+      cerr<<"Error: flags-topify mode not implemented yet. Bailing out."<<endl;
+      exit(1);
+    default:
+      cerr<<"Error: unsupported topify mode selected. Bailing out."<<endl;
+      exit(1);
+    }
+
     //if(name!="input" && name!="output" && name!="cf" && !variableIdMapping.hasPointerType(*i)) {
-    if(name!="input" && name!="output" && name!="cf") {
+    //if(name!="input" && name!="output" && name!="cf") {
     //if(isCompoundIncVar) {
     //if(name!="input") {
     //if(name!="output") {
-      //if(true) {
+    //if(true) {
+    if(topifyVar) {
       variableValueMonitor.setVariableMode(VariableValueMonitor::VARMODE_FORCED_TOP,*i);
       n++;
     }

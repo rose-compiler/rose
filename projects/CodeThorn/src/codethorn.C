@@ -427,7 +427,12 @@ int main( int argc, char * argv[] ) {
     ("rersformat",po::value< int >(),"Set year of rers format (2012, 2013).")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
     ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
-    ("max-transitions-forced-top",po::value< int >(),"Performs approximation after <arg> transitions (default: no limit).")
+    ("max-transitions-forced-top",po::value< int >(),"same as max-transitions-forced-top1 (default).")
+    ("max-transitions-forced-top1",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output) (default: no limit).")
+    ("max-transitions-forced-top2",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output,df) (default: no limit).")
+    ("max-transitions-forced-top3",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output,df,ptr-vars) (default: no limit).")
+    ("max-transitions-forced-top4",po::value< int >(),"Performs approximation after <arg> transitions (exact for all but inc-vars) (default: no limit).")
+    ("max-transitions-forced-top5",po::value< int >(),"Performs approximation after <arg> transitions (exact for input,output,df and vars with 0 to 2 assigned values)) (default: no limit).")
     ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
     ("variable-value-threshold",po::value< int >(),"sets a threshold for the maximum number of different values are stored for each variable.")
     ("dot-io-stg", po::value< string >(), "output STG with explicit I/O node information in dot file [arg]")
@@ -706,10 +711,22 @@ int main( int argc, char * argv[] ) {
 
   if(args.count("max-transitions-forced-top")) {
     analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top"].as<int>());
-  }
-
-  if(args.count("max-iterations-forced-top")) {
-    analyzer.setMaxIterationsForcedTop(args["max-iterations-forced-top"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_IO);
+  } else if(args.count("max-transitions-forced-top1")) {
+    analyzer.setMaxIterationsForcedTop(args["max-transitions-forced-top"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_IO);
+  } else if(args.count("max-transitions-forced-top2")) {
+    analyzer.setMaxIterationsForcedTop(args["max-transitions-forced-top"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_IOCF);
+  } else if(args.count("max-transitions-forced-top3")) {
+    analyzer.setMaxIterationsForcedTop(args["max-transitions-forced-top"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
+  } else if(args.count("max-transitions-forced-top4")) {
+    analyzer.setMaxIterationsForcedTop(args["max-transitions-forced-top"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
+  } else if(args.count("max-transitions-forced-top5")) {
+    analyzer.setMaxIterationsForcedTop(args["max-transitions-forced-top"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
   if(args.count("reconstruct-max-length")) {
