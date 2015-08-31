@@ -32,6 +32,7 @@
 #include <map>
 #include "PragmaHandler.h"
 #include "Miscellaneous2.h"
+#include "FIConstAnalysis.h"
 // test
 #include "Evaluator.h"
 
@@ -982,10 +983,30 @@ int main( int argc, char * argv[] ) {
     exit(0);
   }
 
-  // TODO: refactor this into class Analyzer after normalization has been moved to class Analyzer.
-  set<VariableId> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer.getVariableIdMapping(),root);
-  analyzer.setCompoundIncVarsSet(compoundIncVarsSet);
-  cout<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
+  {
+    // TODO: refactor this into class Analyzer after normalization has been moved to class Analyzer.
+    set<VariableId> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer.getVariableIdMapping(),root);
+    analyzer.setCompoundIncVarsSet(compoundIncVarsSet);
+    cout<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
+  }
+
+  {
+    cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
+    VarConstSetMap varConstSetMap;
+    VariableIdSet variablesOfInterest1,variablesOfInterest2;
+    FIConstAnalysis fiConstAnalysis(analyzer.getVariableIdMapping());
+    fiConstAnalysis.runAnalysis(sageProject);
+    VariableConstInfo* variableConstInfo=fiConstAnalysis.getVariableConstInfo();
+    variablesOfInterest1=fiConstAnalysis.determinedConstantVariables();
+    for(VariableIdSet::iterator i=variablesOfInterest1.begin();i!=variablesOfInterest1.end();++i) {
+      if(!variableConstInfo->isAny(*i) && variableConstInfo->width(*i)<=2) {
+        variablesOfInterest2.insert(*i);
+      }
+    }
+    analyzer.setSmallActivityVarsSet(variablesOfInterest2);
+    cout<<"INFO: variables with number of values <=2:"<<variablesOfInterest2.size()<<endl;
+  }
+
 
   if(boolOptions["normalize"]) {
     cout <<"STATUS: Normalization started."<<endl;

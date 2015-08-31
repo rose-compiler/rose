@@ -408,32 +408,36 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
   for(VariableIdSet::iterator i=vset.begin();i!=vset.end();++i) {
     string name=SgNodeHelper::symbolToString(getVariableIdMapping()->getSymbol(*i));
     bool isCompoundIncVar=(_compoundIncVarsSet.find(*i)!=_compoundIncVarsSet.end());
+    bool isSmallActivityVar=(_smallActivityVarsSet.find(*i)!=_smallActivityVarsSet.end());
     // xxx
     bool topifyVar=false;
     switch(_globalTopifyMode) {
     case GTM_IO:
       if(name!="input" && name!="output") {
-	topifyVar=true;
+        topifyVar=true;
       }
       break;
     case GTM_IOCF:
       if(name!="input" && name!="output" && name!="cf") {
-	topifyVar=true;
+        topifyVar=true;
       }
       break;
     case GTM_IOCFPTR:
       if(name!="input" && name!="output" && name!="cf" && !variableIdMapping.hasPointerType(*i)) {
-	topifyVar=true;
+        topifyVar=true;
       }
       break;
     case GTM_COMPOUNDASSIGN:
       if(isCompoundIncVar) {
-	topifyVar=true;
+        topifyVar=true;
       }
       break;
     case GTM_FLAGS:
-      cerr<<"Error: flags-topify mode not implemented yet. Bailing out."<<endl;
-      exit(1);
+      if(name!="input" && name!="output" && name!="cf" && (!isSmallActivityVar)) {
+        topifyVar=true;
+      }
+      break;
+
     default:
       cerr<<"Error: unsupported topify mode selected. Bailing out."<<endl;
       exit(1);
@@ -4146,4 +4150,8 @@ void Analyzer::mapGlobalVarInsert(std::string name, int* addr) {
 
  void Analyzer::setCompoundIncVarsSet(set<VariableId> ciVars) {
    _compoundIncVarsSet=ciVars;
+ }
+
+ void Analyzer::setSmallActivityVarsSet(set<VariableId> saVars) {
+   _smallActivityVarsSet=saVars;
  }
