@@ -47,7 +47,7 @@ public:
 
         /** Constructs an initial state. */
         virtual InstructionSemantics2::BaseSemantics::StatePtr
-        initialState(const InstructionSemantics2::BaseSemantics::DispatcherPtr&);
+        initialState(const InstructionSemantics2::BaseSemantics::DispatcherPtr&, SgAsmInstruction *firstInsn);
 
         /** Takes a state and returns a normalized string.
          *
@@ -132,7 +132,7 @@ public:
     static void initDiagnostics();
 
 protected:
-    InstructionSemantics2::BaseSemantics::StatePtr initialState() const;
+    InstructionSemantics2::BaseSemantics::StatePtr initialState(SgAsmInstruction *firstInsn) const;
     std::string normalizeState(const InstructionSemantics2::BaseSemantics::StatePtr&) const;
 };
 

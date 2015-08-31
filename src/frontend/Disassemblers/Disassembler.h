@@ -2,6 +2,7 @@
 #define ROSE_DISASSEMBLER_H
 
 #include "threadSupport.h"      /* needed for RTS_mutex_t in this header */
+#include "BinaryCallingConvention.h"
 #include "Diagnostics.h"                                // rose::Diagnostics
 #include "Registers.h"
 #include "MemoryMap.h"
@@ -234,11 +235,36 @@ public:
     virtual ~Disassembler() {}
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Data members
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+    CallingConvention::Dictionary callingConventions_;
 
+protected:
+    const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
+    RegisterDescriptor REG_IP, REG_SP, REG_SS;          /**< Register descriptors initialized during construction. */
+    class Partitioner *p_partitioner;                   /**< Used for placing instructions into blocks and functions. */
+    unsigned p_search;                                  /**< Mask of SearchHeuristic bits specifying instruction searching. */
+    size_t p_wordsize;                                  /**< Word size used by SEARCH_WORDS. */
+    ByteOrder::Endianness p_sex;                        /**< Byte order for SEARCH_WORDS. */
+    size_t p_alignment;                                 /**< Word alignment constraint for SEARCH_WORDS (0 and 1 imply byte). */
+    static std::vector<Disassembler*> disassemblers;    /**< List of disassembler subclasses. */
+    size_t p_ndisassembled;                             /**< Total number of instructions disassembled by disassembleBlock() */
+    unsigned p_protection;                              /**< Memory protection bits that must be set to disassemble. */
+    static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
+    static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
+    static RTS_mutex_t class_mutex;                     /**< Mutex for class-wide thread safety */
 
-    /***************************************************************************************************************************
-     *                                  Registration and lookup methods
-     ***************************************************************************************************************************/
+    /** Prototypical dispatcher for creating real dispatchers */
+    InstructionSemantics2::BaseSemantics::DispatcherPtr p_proto_dispatcher;
+
+public:
+    static Sawyer::Message::Facility mlog;              /**< Disassembler diagnostic streams. */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Registration and lookup methods
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 public:
     /** Register a disassembler instance. More specific disassembler instances should be registered after more general
@@ -346,6 +372,16 @@ public:
         return p_registers;
     }
 
+    /** Property: Calling convention dictionary.
+     *
+     *  This is a dictionary of the common calling conventions for this architecture.
+     *
+     * @{ */
+    const CallingConvention::Dictionary& callingConventions() const { return callingConventions_; }
+    CallingConvention::Dictionary& callingConventions() { return callingConventions_; }
+    void callingConventions(const CallingConvention::Dictionary &d) { callingConventions_ = d; }
+    /** @} */
+
     /** Returns the register that points to instructions. */
     virtual RegisterDescriptor instructionPointerRegister() const {
         ASSERT_require(REG_IP.is_valid());
@@ -420,19 +456,20 @@ public:
         return p_search;
     }
 
-    /** Specifies the word size for the SEARCH_WORDS heuristic. The default is based on the word size of the file header used
-     *  when the disassembler is constructed.
+    /** Property: Machine word size in bits.
+     *
+     *  Natural word size for the machine. This is usually the size of most registers. The default is based on the word size of
+     *  the file header used when the disassembler is constructed.
      *
      *  Thread safety: It is not safe to change the instruction search word size while another thread is using this same
-     *  Disassembler object. */
-    void set_wordsize(size_t);
-
-    /** Returns the word size used by the SEARCH_WORDS heuristic.
+     *  Disassembler object.
      *
-     *  Thread safety: This method is thread safe. */
+     * @{ */
+    void set_wordsize(size_t);
     size_t get_wordsize() const {
         return p_wordsize;
     }
+    /** @} */
 
     /** Specifies the alignment for the SEARCH_WORDS heuristic. The value must be a natural, postive power of two. The default
      *  is determined by the subclass (e.g., x86 would probably set this to one since instructions are not aligned, while ARM
@@ -449,20 +486,21 @@ public:
         return p_alignment;
     }
 
-    /** Specifies the byte order for the SEARCH_WORDS heuristic. The default is based on the byte order of the file header
-     *  used when the disassembler is constructed.
+    /** Property: Memory byte order.
      *
-     *  Thread safety: It is not safe to change the byte sex while another thread is using this same Disassembler object. */
+     *  The byte order for memory. The default is based on the byte order of the file header used when the disassembler is
+     *  constructed.
+     *
+     *  Thread safety: It is not safe to change the byte sex while another thread is using this same Disassembler object.
+     *
+     * @{ */
     void set_sex(ByteOrder::Endianness sex) {
         p_sex = sex;
     }
-
-    /** Returns the byte order used by the SEARCH_WORDS heuristic.
-     *
-     *  Thread safety: This method is thread safe. */
     ByteOrder::Endianness get_sex() const {
         return p_sex;
     }
+    /** @} */
 
     /** Returns the number of instructions successfully disassembled. The counter is updated by disassembleBlock(), which is
      *  generally called by all disassembly methods except for disassembleOne().
@@ -704,28 +742,6 @@ private:
 
 
 
-    /***************************************************************************************************************************
-     *                                          Data members
-     ***************************************************************************************************************************/
-public:
-    static Sawyer::Message::Facility mlog;              /**< Disassembler diagnostic streams. */
-protected:
-    const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
-    RegisterDescriptor REG_IP, REG_SP, REG_SS;          /**< Register descriptors initialized during construction. */
-    class Partitioner *p_partitioner;                   /**< Used for placing instructions into blocks and functions. */
-    unsigned p_search;                                  /**< Mask of SearchHeuristic bits specifying instruction searching. */
-    size_t p_wordsize;                                  /**< Word size used by SEARCH_WORDS. */
-    ByteOrder::Endianness p_sex;                        /**< Byte order for SEARCH_WORDS. */
-    size_t p_alignment;                                 /**< Word alignment constraint for SEARCH_WORDS (0 and 1 imply byte). */
-    static std::vector<Disassembler*> disassemblers;    /**< List of disassembler subclasses. */
-    size_t p_ndisassembled;                             /**< Total number of instructions disassembled by disassembleBlock() */
-    unsigned p_protection;                              /**< Memory protection bits that must be set to disassemble. */
-    static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
-    static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
-    static RTS_mutex_t class_mutex;                     /**< Mutex for class-wide thread safety */
-
-    /** Prototypical dispatcher for creating real dispatchers */
-    InstructionSemantics2::BaseSemantics::DispatcherPtr p_proto_dispatcher;
 };
 
 } // namespace

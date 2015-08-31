@@ -872,7 +872,7 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
         ModulesPe::nameImportThunks(partitioner, interp_);
     Modules::nameConstants(partitioner);
     Modules::nameStrings(partitioner);
-
+    Modules::nameNoopFunctions(partitioner);
 }
 
 void

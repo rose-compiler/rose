@@ -37,37 +37,43 @@
 0x08048968: ================================== Function (import, graph) <mkdir@plt>
 
 0x08048968: Basic block reasons: entry point, CFG head
-0x08048968: ff 25 a0 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1a0<.got.plt+0x0c>]
+0x08048968: ff 25 a0 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1a0<.got.plt+0x0c>]
+0x08048968: Outgoing stack delta: +0
 0x08048968: Successor blocks: unknown
 
 0x08048978: ================================== Function (import, graph) <strncat@plt>
 
 0x08048978: Basic block reasons: entry point, CFG head
-0x08048978: ff 25 a4 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1a4<.got.plt+0x10>]
+0x08048978: ff 25 a4 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1a4<.got.plt+0x10>]
+0x08048978: Outgoing stack delta: +0
 0x08048978: Successor blocks: unknown
 
 0x08048988: ================================== Function (import, graph) <inflate@plt>
 
 0x08048988: Basic block reasons: entry point, CFG head
-0x08048988: ff 25 a8 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1a8<.got.plt+0x14>]
+0x08048988: ff 25 a8 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1a8<.got.plt+0x14>]
+0x08048988: Outgoing stack delta: +0
 0x08048988: Successor blocks: unknown
 
 0x08048998: ================================== Function (import, graph) <write@plt>
 
 0x08048998: Basic block reasons: entry point, CFG head
-0x08048998: ff 25 ac b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1ac<.got.plt+0x18>]
+0x08048998: ff 25 ac b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1ac<.got.plt+0x18>]
+0x08048998: Outgoing stack delta: +0
 0x08048998: Successor blocks: unknown
 
 0x080489a8: ================================== Function (import, graph) <close@plt>
 
 0x080489a8: Basic block reasons: entry point, CFG head
-0x080489a8: ff 25 b0 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1b0<.got.plt+0x1c>]
+0x080489a8: ff 25 b0 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1b0<.got.plt+0x1c>]
+0x080489a8: Outgoing stack delta: +0
 0x080489a8: Successor blocks: unknown
 
 0x080489b8: ================================== Function (import, graph) <perror@plt>
 
 0x080489b8: Basic block reasons: entry point, CFG head
-0x080489b8: ff 25 b4 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1b4<.got.plt+0x20>]
+0x080489b8: ff 25 b4 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1b4<.got.plt+0x20>]
+0x080489b8: Outgoing stack delta: +0
 0x080489b8: Successor blocks: unknown
 
 0x080489c8: ================================== Function (function call, import, graph) <fprintf@plt>
@@ -80,7 +86,8 @@
 0x080489d8: ================================== Function (import, graph) <umask@plt>
 
 0x080489d8: Basic block reasons: entry point, CFG head
-0x080489d8: ff 25 bc b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1bc<.got.plt+0x28>]
+0x080489d8: ff 25 bc b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1bc<.got.plt+0x28>]
+0x080489d8: Outgoing stack delta: +0
 0x080489d8: Successor blocks: unknown
 
 0x080489e8: ================================== Function (function call, import, graph) <dcgettext@plt>
@@ -93,13 +100,15 @@
 0x080489f8: ================================== Function (import, graph) <mmap64@plt>
 
 0x080489f8: Basic block reasons: entry point, CFG head
-0x080489f8: ff 25 c4 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1c4<.got.plt+0x30>]
+0x080489f8: ff 25 c4 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1c4<.got.plt+0x30>]
+0x080489f8: Outgoing stack delta: +0
 0x080489f8: Successor blocks: unknown
 
 0x08048a08: ================================== Function (import, graph) <chmod@plt>
 
 0x08048a08: Basic block reasons: entry point, CFG head
-0x08048a08: ff 25 c8 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1c8<.got.plt+0x34>]
+0x08048a08: ff 25 c8 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1c8<.got.plt+0x34>]
+0x08048a08: Outgoing stack delta: +0
 0x08048a08: Successor blocks: unknown
 
 0x08048a18: ================================== Function (function call, import, graph) <malloc@plt>
@@ -112,37 +121,43 @@
 0x08048a28: ================================== Function (import, graph) <munmap@plt>
 
 0x08048a28: Basic block reasons: entry point, CFG head
-0x08048a28: ff 25 d0 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1d0<.got.plt+0x3c>]
+0x08048a28: ff 25 d0 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1d0<.got.plt+0x3c>]
+0x08048a28: Outgoing stack delta: +0
 0x08048a28: Successor blocks: unknown
 
 0x08048a38: ================================== Function (import, graph) <inflateInit_@plt>
 
 0x08048a38: Basic block reasons: entry point, CFG head
-0x08048a38: ff 25 d4 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1d4<.got.plt+0x40>]
+0x08048a38: ff 25 d4 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1d4<.got.plt+0x40>]
+0x08048a38: Outgoing stack delta: +0
 0x08048a38: Successor blocks: unknown
 
 0x08048a48: ================================== Function (import, graph) <crc32@plt>
 
 0x08048a48: Basic block reasons: entry point, CFG head
-0x08048a48: ff 25 d8 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1d8<.got.plt+0x44>]
+0x08048a48: ff 25 d8 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1d8<.got.plt+0x44>]
+0x08048a48: Outgoing stack delta: +0
 0x08048a48: Successor blocks: unknown
 
 0x08048a58: ================================== Function (import, graph) <getopt@plt>
 
 0x08048a58: Basic block reasons: entry point, CFG head
-0x08048a58: ff 25 dc b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1dc<.got.plt+0x48>]
+0x08048a58: ff 25 dc b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1dc<.got.plt+0x48>]
+0x08048a58: Outgoing stack delta: +0
 0x08048a58: Successor blocks: unknown
 
 0x08048a68: ================================== Function (import, graph) <inflateReset@plt>
 
 0x08048a68: Basic block reasons: entry point, CFG head
-0x08048a68: ff 25 e0 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1e0<.got.plt+0x4c>]
+0x08048a68: ff 25 e0 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1e0<.got.plt+0x4c>]
+0x08048a68: Outgoing stack delta: +0
 0x08048a68: Successor blocks: unknown
 
 0x08048a78: ================================== Function (import, graph) <lseek64@plt>
 
 0x08048a78: Basic block reasons: entry point, CFG head
-0x08048a78: ff 25 e4 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1e4<.got.plt+0x50>]
+0x08048a78: ff 25 e4 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1e4<.got.plt+0x50>]
+0x08048a78: Outgoing stack delta: +0
 0x08048a78: Successor blocks: unknown
 
 0x08048a88: ================================== Function (function call, import, graph) <__libc_start_main@plt>
@@ -155,37 +170,43 @@
 0x08048a98: ================================== Function (import, graph) <printf@plt>
 
 0x08048a98: Basic block reasons: entry point, CFG head
-0x08048a98: ff 25 ec b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1ec<.got.plt+0x58>]
+0x08048a98: ff 25 ec b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1ec<.got.plt+0x58>]
+0x08048a98: Outgoing stack delta: +0
 0x08048a98: Successor blocks: unknown
 
 0x08048aa8: ================================== Function (import, graph) <memcpy@plt>
 
 0x08048aa8: Basic block reasons: entry point, CFG head
-0x08048aa8: ff 25 f0 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1f0<.got.plt+0x5c>]
+0x08048aa8: ff 25 f0 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1f0<.got.plt+0x5c>]
+0x08048aa8: Outgoing stack delta: +0
 0x08048aa8: Successor blocks: unknown
 
 0x08048ab8: ================================== Function (import, graph) <open64@plt>
 
 0x08048ab8: Basic block reasons: entry point, CFG head
-0x08048ab8: ff 25 f4 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1f4<.got.plt+0x60>]
+0x08048ab8: ff 25 f4 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1f4<.got.plt+0x60>]
+0x08048ab8: Outgoing stack delta: +0
 0x08048ab8: Successor blocks: unknown
 
 0x08048ac8: ================================== Function (import, graph) <symlink@plt>
 
 0x08048ac8: Basic block reasons: entry point, CFG head
-0x08048ac8: ff 25 f8 b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1f8<.got.plt+0x64>]
+0x08048ac8: ff 25 f8 b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1f8<.got.plt+0x64>]
+0x08048ac8: Outgoing stack delta: +0
 0x08048ac8: Successor blocks: unknown
 
 0x08048ad8: ================================== Function (import, graph) <snprintf@plt>
 
 0x08048ad8: Basic block reasons: entry point, CFG head
-0x08048ad8: ff 25 fc b1 04 08       |.%....  |          jmp    dword ds:[0x0804b1fc<.got.plt+0x68>]
+0x08048ad8: ff 25 fc b1 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b1fc<.got.plt+0x68>]
+0x08048ad8: Outgoing stack delta: +0
 0x08048ad8: Successor blocks: unknown
 
 0x08048ae8: ================================== Function (import, graph) <__lxstat64@plt>
 
 0x08048ae8: Basic block reasons: entry point, CFG head
-0x08048ae8: ff 25 00 b2 04 08       |.%....  |          jmp    dword ds:[0x0804b200<.got.plt+0x6c>]
+0x08048ae8: ff 25 00 b2 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b200<.got.plt+0x6c>]
+0x08048ae8: Outgoing stack delta: +0
 0x08048ae8: Successor blocks: unknown
 
 0x08048af8: ================================== Function (function call, import, graph) <exit@plt>
@@ -206,49 +227,57 @@
 0x08048b08: ================================== Function (import, graph) <ioctl@plt>
 
 0x08048b08: Basic block reasons: entry point, CFG head
-0x08048b08: ff 25 08 b2 04 08       |.%....  |          jmp    dword ds:[0x0804b208<.got.plt+0x74>]
+0x08048b08: ff 25 08 b2 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b208<.got.plt+0x74>]
+0x08048b08: Outgoing stack delta: +0
 0x08048b08: Successor blocks: unknown
 
 0x08048b18: ================================== Function (import, graph) <utime@plt>
 
 0x08048b18: Basic block reasons: entry point, CFG head
-0x08048b18: ff 25 0c b2 04 08       |.%....  |          jmp    dword ds:[0x0804b20c<.got.plt+0x78>]
+0x08048b18: ff 25 0c b2 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b20c<.got.plt+0x78>]
+0x08048b18: Outgoing stack delta: +0
 0x08048b18: Successor blocks: unknown
 
 0x08048b28: ================================== Function (import, graph) <memset@plt>
 
 0x08048b28: Basic block reasons: entry point, CFG head
-0x08048b28: ff 25 10 b2 04 08       |.%....  |          jmp    dword ds:[0x0804b210<.got.plt+0x7c>]
+0x08048b28: ff 25 10 b2 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b210<.got.plt+0x7c>]
+0x08048b28: Outgoing stack delta: +0
 0x08048b28: Successor blocks: unknown
 
 0x08048b38: ================================== Function (import, graph) <__xmknod@plt>
 
 0x08048b38: Basic block reasons: entry point, CFG head
-0x08048b38: ff 25 14 b2 04 08       |.%....  |          jmp    dword ds:[0x0804b214<.got.plt+0x80>]
+0x08048b38: ff 25 14 b2 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b214<.got.plt+0x80>]
+0x08048b38: Outgoing stack delta: +0
 0x08048b38: Successor blocks: unknown
 
 0x08048b48: ================================== Function (import, graph) <inflateEnd@plt>
 
 0x08048b48: Basic block reasons: entry point, CFG head
-0x08048b48: ff 25 18 b2 04 08       |.%....  |          jmp    dword ds:[0x0804b218<.got.plt+0x84>]
+0x08048b48: ff 25 18 b2 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b218<.got.plt+0x84>]
+0x08048b48: Outgoing stack delta: +0
 0x08048b48: Successor blocks: unknown
 
 0x08048b58: ================================== Function (import, graph) <read@plt>
 
 0x08048b58: Basic block reasons: entry point, CFG head
-0x08048b58: ff 25 1c b2 04 08       |.%....  |          jmp    dword ds:[0x0804b21c<.got.plt+0x88>]
+0x08048b58: ff 25 1c b2 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b21c<.got.plt+0x88>]
+0x08048b58: Outgoing stack delta: +0
 0x08048b58: Successor blocks: unknown
 
 0x08048b68: ================================== Function (import, graph) <lchown@plt>
 
 0x08048b68: Basic block reasons: entry point, CFG head
-0x08048b68: ff 25 20 b2 04 08       |.% ...  |          jmp    dword ds:[0x0804b220<.got.plt+0x8c>]
+0x08048b68: ff 25 20 b2 04 08       |.% ...  |<sp+0 >   jmp    dword ds:[0x0804b220<.got.plt+0x8c>]
+0x08048b68: Outgoing stack delta: +0
 0x08048b68: Successor blocks: unknown
 
 0x08048b78: ================================== Function (import, graph) <geteuid@plt>
 
 0x08048b78: Basic block reasons: entry point, CFG head
-0x08048b78: ff 25 24 b2 04 08       |.%$...  |          jmp    dword ds:[0x0804b224<.got.plt+0x90>]
+0x08048b78: ff 25 24 b2 04 08       |.%$...  |<sp+0 >   jmp    dword ds:[0x0804b224<.got.plt+0x90>]
+0x08048b78: Outgoing stack delta: +0
 0x08048b78: Successor blocks: unknown
 
 0x08048b88: ================================== Function (function call, import, graph) <__gmon_start__@plt>
@@ -261,7 +290,8 @@
 0x08048b98: ================================== Function (import, graph) <strcpy@plt>
 
 0x08048b98: Basic block reasons: entry point, CFG head
-0x08048b98: ff 25 2c b2 04 08       |.%,...  |          jmp    dword ds:[0x0804b22c<.got.plt+0x98>]
+0x08048b98: ff 25 2c b2 04 08       |.%,...  |<sp+0 >   jmp    dword ds:[0x0804b22c<.got.plt+0x98>]
+0x08048b98: Outgoing stack delta: +0
 0x08048b98: Successor blocks: unknown
 
 0x08048bb0: ================================== Function (entry point, graph) <_start>

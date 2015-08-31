@@ -7,6 +7,7 @@
 #include <BinaryDebugger.h>
 #include <Diagnostics.h>
 #include <DispatcherX86.h>
+#include <MemoryCellList.h>
 #include <Partitioner2/Engine.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/CommandLine.h>

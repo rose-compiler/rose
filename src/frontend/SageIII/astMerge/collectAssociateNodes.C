@@ -216,7 +216,43 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
                ROSE_ASSERT(nodeList.find(NULL) == nodeList.end());
                break;
              }
+             
 
+        case V_SgTypeMatrix:
+          {
+            SgTypeMatrix *matrixType = isSgTypeMatrix(type);
+            ROSE_ASSERT(matrixType != NULL);
+
+            if(matrixType->get_base_type() != NULL)
+              {
+                nodeList.insert(matrixType->get_base_type());
+                addAssociatedNodes(matrixType->get_base_type(),nodeList,markMemberNodesDefinedToBeDeleted);
+              }
+            
+            ROSE_ASSERT(nodeList.find(NULL) == nodeList.end());
+            break;
+          }
+
+        case V_SgTypeTuple:
+          {
+            SgTypeTuple *tupleType = isSgTypeTuple(type);
+            ROSE_ASSERT(tupleType != NULL);
+
+            SgTypePtrList typeList = tupleType->get_types();
+
+            for(SgTypePtrList::iterator it = typeList.begin(); it != typeList.end(); it++)
+              {
+                if(*it != NULL)
+                  {
+                    nodeList.insert(*it);
+                    addAssociatedNodes(*it, nodeList, markMemberNodesDefinedToBeDeleted);
+                  }
+              }
+            
+            ROSE_ASSERT(nodeList.find(NULL) == nodeList.end());
+            break;
+          }
+          
        // DQ (9/5/2011): Added support for SgJavaParameterizedType.
           case V_SgJavaParameterizedType:
              {
@@ -2089,6 +2125,8 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DXN (09/14/2011):
           case V_SgNullifyStatement:
 
+          case V_SgMatlabForStatement:
+
        // Ignore these scope statements since they are not yet shared
           case V_SgScopeStatement:
           case V_SgBasicBlock:
@@ -2099,12 +2137,10 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgDoWhileStmt:
           case V_SgSwitchStatement:
           case V_SgWhileStmt:
-             {
-            // printf ("addAssociatedNodes(): ignoring this case of node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
+            {
                nodeList.insert(node);
                break;
              }
-
        // DQ (9/8/2012): Added missing case for SgTemplateFunctionDefinition.
           case V_SgTemplateFunctionDefinition:
           case V_SgFunctionDefinition:

@@ -40,6 +40,13 @@
 class RSIM_Process;
 class RSIM_Thread;
 
+/** Supported machine architectures. */
+enum Architecture {
+    ARCH_NONE,                                          /**< No architecture specified. */
+    ARCH_X86,                                           /**< Intel x86 32- or 64-bit. */
+    ARCH_M68k                                           /**< FreeScale ColdFire m68k. */
+};
+
 /** Styles of core dump. */
 enum CoreStyle {
     CORE_ELF=0x0001,
@@ -1069,28 +1076,30 @@ struct pt_regs_64 {
 
 // The architecture-independen version of pt_regs used by the simulator, a super-set of the architecture-specific versions.
 struct PtRegs {
-    // Common to 32 and 64 bit
+    // Common to all architectures
+    uint64_t ip;                                        // instruction pointer, a.k.a. "pc"
+    uint64_t flags;                                     // condition codes, a.k.a. "ccr"
+
+    // Common to Intel x86 32 and 64 bit
     uint64_t ax;
     uint64_t bx;
     uint64_t cx;
     uint64_t dx;
     uint64_t si;
     uint64_t di;
-    uint64_t flags;
     uint64_t orig_ax;
-    uint64_t ip;
     uint64_t sp;
     uint64_t bp;
     uint64_t cs;
     uint64_t ss;
 
-    // Only 32-bit
+    // Only Intel x86 32-bit
     uint64_t ds;
     uint64_t es;
     uint64_t fs;
     uint64_t gs;
 
-    // Only 64-bit
+    // Only Intel x86 64-bit
     uint64_t r8;
     uint64_t r9;
     uint64_t r10;
@@ -1100,18 +1109,30 @@ struct PtRegs {
     uint64_t r14;
     uint64_t r15;
 
+    // Only ColdFire m68k
+    uint32_t d0, d1, d2, d3, d4, d5, d6, d7;
+    uint32_t a0, a1, a2, a3, a4, a5, a6, a7;
+    uint16_t sr;
+
     PtRegs()
-        : ax(0), bx(0), cx(0), dx(0), si(0), di(0), flags(0), orig_ax(0), ip(0), sp(0), bp(0), cs(0), ss(0),
-          ds(0), es(0), fs(0), gs(0), r8(0), r9(0), r10(0), r11(0), r12(0), r13(0), r14(0), r15(0) {}
+        : ip(0), flags(0), ax(0), bx(0), cx(0), dx(0), si(0), di(0), orig_ax(0), sp(0), bp(0), cs(0), ss(0),
+          ds(0), es(0), fs(0), gs(0), r8(0), r9(0), r10(0), r11(0), r12(0), r13(0), r14(0), r15(0),
+          d0(0), d1(0), d2(0), d3(0), d4(0), d5(0), d6(0), d7(0),
+          a0(0), a1(0), a2(0), a3(0), a4(0), a5(0), a6(0), a7(0) {}
+
     explicit PtRegs(const pt_regs_32 &x)
-        : ax(x.ax), bx(x.bx), cx(x.cx), dx(x.dx), si(x.si), di(x.di), flags(x.flags), orig_ax(x.orig_ax),
-          ip(x.ip), sp(x.sp), bp(x.bp), cs(x.cs), ss(x.ss), ds(x.ds), es(x.es), fs(x.fs), gs(x.gs),
-          r8(0), r9(0), r10(0), r11(0), r12(0), r13(0), r14(0), r15(0) {}
+        : ip(x.ip), flags(x.flags), ax(x.ax), bx(x.bx), cx(x.cx), dx(x.dx), si(x.si), di(x.di), orig_ax(x.orig_ax),
+          sp(x.sp), bp(x.bp), cs(x.cs), ss(x.ss), ds(x.ds), es(x.es), fs(x.fs), gs(x.gs),
+          r8(0), r9(0), r10(0), r11(0), r12(0), r13(0), r14(0), r15(0),
+          d0(0), d1(0), d2(0), d3(0), d4(0), d5(0), d6(0), d7(0),
+          a0(0), a1(0), a2(0), a3(0), a4(0), a5(0), a6(0), a7(0) {}
 
     explicit PtRegs(const pt_regs_64 &x)
-        : ax(x.ax), bx(x.bx), cx(x.cx), dx(x.dx), si(x.si), di(x.di), flags(x.flags), orig_ax(x.orig_ax),
-          ip(x.ip), sp(x.sp), bp(x.bp), cs(x.cs), ss(x.ss), ds(0), es(0), fs(0), gs(0), r8(x.r8), r9(x.r9),
-          r10(x.r10), r11(x.r11), r12(x.r12), r13(x.r13), r14(x.r14), r15(x.r15) {}
+        : ip(x.ip), flags(x.flags), ax(x.ax), bx(x.bx), cx(x.cx), dx(x.dx), si(x.si), di(x.di), orig_ax(x.orig_ax),
+          sp(x.sp), bp(x.bp), cs(x.cs), ss(x.ss), ds(0), es(0), fs(0), gs(0), r8(x.r8), r9(x.r9),
+          r10(x.r10), r11(x.r11), r12(x.r12), r13(x.r13), r14(x.r14), r15(x.r15),
+          d0(0), d1(0), d2(0), d3(0), d4(0), d5(0), d6(0), d7(0),
+          a0(0), a1(0), a2(0), a3(0), a4(0), a5(0), a6(0), a7(0) {}
 
     pt_regs_32 get_pt_regs_32() const {
         pt_regs_32 x;

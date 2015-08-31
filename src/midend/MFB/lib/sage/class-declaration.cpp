@@ -1,9 +1,3 @@
-/** 
- * \file lib/sage/class-declaration.cpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #include "MFB/Sage/class-declaration.hpp"
 #include "MFB/Sage/namespace-declaration.hpp"
@@ -14,12 +8,11 @@
 #  define PATCHING_SAGE_BUILDER_ISSUES 1
 #endif
 
-namespace MFB {
+#ifndef VERBOSE
+# define VERBOSE 0
+#endif
 
-/*!
- * \addtogroup grp_mfb_sage_classdecl
- * @{
-*/
+namespace MFB {
 
 bool ignore(const std::string & name);
 bool ignore(SgScopeStatement * scope);
@@ -67,6 +60,13 @@ void  Driver<Sage>::loadSymbols<SgClassDeclaration>(size_t file_id, SgSourceFile
   for (it_class_decl = class_decl.begin(); it_class_decl != class_decl.end(); it_class_decl++) {
     SgClassDeclaration * class_decl = *it_class_decl;
 
+    if (class_decl->get_definition() == NULL) continue;
+
+    Sg_File_Info * file_info = class_decl->get_file_info();
+    assert(file_info != NULL);
+
+    if (file_info->get_raw_filename() != file->getFileName()) continue;
+
     if (ignore(class_decl->get_scope())) continue;
     if (ignore(class_decl->get_name().getString())) continue;
 
@@ -79,8 +79,10 @@ void  Driver<Sage>::loadSymbols<SgClassDeclaration>(size_t file_id, SgSourceFile
   std::set<SgClassSymbol *>::iterator it;
   for (it = class_symbols.begin(); it != class_symbols.end(); it++)
     if (resolveValidParent<SgClassSymbol>(*it)) {
-      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, size_t>(*it, file_id));
-//    std::cout << "    Class Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
+      p_symbol_to_file_id_map[*it] = file_id;
+#if VERBOSE
+      std::cerr << "[Info] (MFB::Driver<Sage>::loadSymbols<SgClassDeclaration>) Add: " << (*it)->get_name().getString() << " from File #" << file_id << std::endl;
+#endif
     }
 }
 

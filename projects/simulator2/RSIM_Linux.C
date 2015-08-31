@@ -17,6 +17,31 @@ using namespace rose::BinaryAnalysis;
 void
 RSIM_Linux::init() {}
 
+void
+RSIM_Linux::updateExecutablePath() {
+    ASSERT_require(!exeName().empty() && !exeArgs().empty());
+    if (!boost::contains(exeName(), "/")) {
+        ASSERT_not_null(getenv("PATH"));
+        std::string path_env = getenv("PATH");
+        size_t len;
+        for (size_t pos=0; pos!=std::string::npos && pos<path_env.size(); pos+=len+1) {
+            size_t colon = path_env.find_first_of(":;", pos);
+            len = colon==std::string::npos ? path_env.size()-pos : colon-pos;
+            std::string path = path_env.substr(pos, len);
+            std::string fullname = path + "/" + exeName();
+            if (access(fullname.c_str(), R_OK)>=0) {
+                exeArgs()[0] = fullname;
+                break;
+            }
+        }
+    }
+
+    if (access(exeArgs()[0].c_str(), R_OK)<0) {
+        std::cerr <<exeArgs()[0] <<": " <<strerror(errno) <<"\n";
+        exit(1);
+    }
+}
+
 /* Using the new interface is still about as complicated as the old interface because we need to perform only a partial link.
  * We want ROSE to link the interpreter (usually /lib/ld-linux.so) into the AST but not link in any other shared objects.
  * Then we want ROSE to map the interpreter (if present) and all main ELF Segments into the specimen address space but not
@@ -370,7 +395,8 @@ RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr) 
 
     /* Allocate the stack */
     static const size_t stack_size = 0x00016000;
-    rose_addr_t origSp = thread->operators()->readRegister(thread->dispatcher()->REG_anySP)->get_number();
+    RegisterDescriptor SP = thread->get_process()->disassembler()->stackPointerRegister();
+    rose_addr_t origSp = thread->operators()->readRegister(SP)->get_number();
     rose_addr_t sp = origSp;
     rose_addr_t stack_addr = sp - stack_size;
     process->get_memory().insert(AddressInterval::baseSize(stack_addr, stack_size),

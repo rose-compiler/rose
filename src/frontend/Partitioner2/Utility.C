@@ -205,6 +205,11 @@ addressIntervalParser(AddressInterval &storage) {
 }
 
 AddressIntervalParser::Ptr
+addressIntervalParser(std::vector<AddressInterval> &storage) {
+    return AddressIntervalParser::instance(Sawyer::CommandLine::TypedSaver<std::vector<AddressInterval> >::instance(storage));
+}
+
+AddressIntervalParser::Ptr
 addressIntervalParser() {
     return AddressIntervalParser::instance();
 }

@@ -3,6 +3,7 @@
 #include <Partitioner2/Utility.h>
 #include "AsmUnparser_compat.h"
 #include <boost/foreach.hpp>
+#include <integerOps.h>
 
 namespace rose {
 namespace BinaryAnalysis {

@@ -435,17 +435,18 @@ Partitioner::allFunctionStackDelta() const {
     size_t nFunctions = cg.graph().nVertices();
     std::vector<bool> visited(nFunctions, false);
     Sawyer::ProgressBar<size_t> progress(nFunctions, mlog[MARCH], "stack-delta analysis");
-    for (size_t cgVertexId=0; cgVertexId<nFunctions; ++cgVertexId, ++progress) {
+    for (size_t cgVertexId=0; cgVertexId<nFunctions; ++cgVertexId) {
         if (!visited[cgVertexId]) {
             typedef DepthFirstForwardGraphTraversal<const FunctionCallGraph::Graph> Traversal;
             for (Traversal t(cg.graph(), cg.graph().findVertex(cgVertexId), ENTER_VERTEX|LEAVE_VERTEX); t; ++t) {
                 if (t.event() == ENTER_VERTEX) {
                     if (visited[t.vertex()->id()])
                         t.skipChildren();
-                } else {
+                } else if (!visited[t.vertex()->id()]) {
                     ASSERT_require(t.event() == LEAVE_VERTEX);
                     functionStackDelta(t.vertex()->value());
                     visited[t.vertex()->id()] = true;
+                    ++progress;
                 }
             }
         }

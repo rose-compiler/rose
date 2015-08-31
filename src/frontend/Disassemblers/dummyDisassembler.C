@@ -150,12 +150,13 @@ bool SgAsmIntegerType::get_isSigned() const { return false; }
 
 void SgAsmFloatType::check() const {}
 std::string SgAsmFloatType::toString() const { return std::string(); }
-size_t SgAsmFloatType::get_significandOffset() const { return 0; }
-size_t SgAsmFloatType::get_significandNBits() const { return 0; }
-size_t SgAsmFloatType::get_signBitOffset() const { return 0; }
-size_t SgAsmFloatType::get_exponentOffset() const { return 0; }
-size_t SgAsmFloatType::get_exponentNBits() const { return 0; }
-uint64_t SgAsmFloatType::get_exponentBias() const { return 0; }
+SgAsmFloatType::BitRange SgAsmFloatType::significandBits() const { return BitRange(); }
+SgAsmFloatType::BitRange SgAsmFloatType::exponentBits() const { return BitRange(); }
+size_t SgAsmFloatType::signBit() const { return 0; }
+uint64_t SgAsmFloatType::exponentBias() const { return 0; }
+unsigned SgAsmFloatType::flags() const { return 0; }
+bool SgAsmFloatType::gradualUnderflow() const { return false; }
+bool SgAsmFloatType::normalizedSignificand() const { return false; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmVectorType
