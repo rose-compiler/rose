@@ -713,19 +713,19 @@ int main( int argc, char * argv[] ) {
     analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top"].as<int>());
     analyzer.setGlobalTopifyMode(Analyzer::GTM_IO);
   } else if(args.count("max-transitions-forced-top1")) {
-    analyzer.setMaxIterationsForcedTop(args["max-transitions-forced-top"].as<int>());
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top1"].as<int>());
     analyzer.setGlobalTopifyMode(Analyzer::GTM_IO);
   } else if(args.count("max-transitions-forced-top2")) {
-    analyzer.setMaxIterationsForcedTop(args["max-transitions-forced-top"].as<int>());
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top2"].as<int>());
     analyzer.setGlobalTopifyMode(Analyzer::GTM_IOCF);
   } else if(args.count("max-transitions-forced-top3")) {
-    analyzer.setMaxIterationsForcedTop(args["max-transitions-forced-top"].as<int>());
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top3"].as<int>());
     analyzer.setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
   } else if(args.count("max-transitions-forced-top4")) {
-    analyzer.setMaxIterationsForcedTop(args["max-transitions-forced-top"].as<int>());
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top4"].as<int>());
     analyzer.setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
   } else if(args.count("max-transitions-forced-top5")) {
-    analyzer.setMaxIterationsForcedTop(args["max-transitions-forced-top"].as<int>());
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top5"].as<int>());
     analyzer.setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
@@ -879,7 +879,6 @@ int main( int argc, char * argv[] ) {
   }
 
   analyzer.setTreatStdErrLikeFailedAssert(boolOptions["stderr-like-failed-assert"]);
-  
 
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST: started."<<endl;
@@ -986,9 +985,8 @@ int main( int argc, char * argv[] ) {
   // TODO: refactor this into class Analyzer after normalization has been moved to class Analyzer.
   set<VariableId> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer.getVariableIdMapping(),root);
   analyzer.setCompoundIncVarsSet(compoundIncVarsSet);
-  analyzer.setGlobalTopifyMode(Analyzer::GTM_IOCF);
-
   cout<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
+
   if(boolOptions["normalize"]) {
     cout <<"STATUS: Normalization started."<<endl;
     rewriteSystem.resetStatistics();
