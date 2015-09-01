@@ -13,6 +13,7 @@ P2::Attribute::Id ATTR_CfgImage(-1);
 P2::Attribute::Id ATTR_CfgVertexCoords(-1);
 P2::Attribute::Id ATTR_CallGraph(-1);
 P2::Attribute::Id ATTR_NCallers(-1);
+P2::Attribute::Id ATTR_NCallees(-1);
 P2::Attribute::Id ATTR_NReturns(-1);
 P2::Attribute::Id ATTR_MayReturn(-1);
 P2::Attribute::Id ATTR_StackDelta(-1);
@@ -32,6 +33,7 @@ Context::init() {
         ATTR_CfgVertexCoords      = P2::Attribute::registerName("CFG vertex coordinates");
         ATTR_CallGraph            = P2::Attribute::registerName("Function call graph");
         ATTR_NCallers             = P2::Attribute::registerName("Number of call sites from whence function is called");
+        ATTR_NCallees             = P2::Attribute::registerName("Number of calls made by this function");
         ATTR_NReturns             = P2::Attribute::registerName("Number of returning basic blocks");
         ATTR_MayReturn            = P2::Attribute::registerName("May return to caller?");
         ATTR_StackDelta           = P2::Attribute::registerName("Stack pointer delta");

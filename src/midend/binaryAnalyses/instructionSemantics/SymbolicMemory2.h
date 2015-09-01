@@ -63,19 +63,18 @@ public:
     /** @} */
 
 public:
-    // documented in base class
+    virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
+                       BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+
     virtual void clear() ROSE_OVERRIDE;
 
-    // documented in base class
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
 
-    // documented in base class
     virtual void writeMemory(const SValuePtr &address, const SValuePtr &value,
                              RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
 
 public:
-    // documented in base class
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 };
     

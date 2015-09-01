@@ -263,6 +263,19 @@ functionNCallers(P2::Partitioner &partitioner, const P2::Function::Ptr &function
     return nCallers;
 }
 
+// Calculate the number of calls which this function makes and cache it in this function.
+size_t
+functionNCallees(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+    size_t nCallees = 0;
+    if (function && !function->attr<size_t>(ATTR_NCallees).assignTo(nCallees)) {
+        P2::FunctionCallGraph *cg = functionCallGraph(partitioner);
+        ASSERT_not_null(cg);
+        nCallees = cg->nCallsOut(function);
+        function->attr(ATTR_NCallees, nCallees);
+    }
+    return nCallees;
+}
+
 // Calculates the number of function return edges and caches it in the function
 size_t
 functionNReturns(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
@@ -350,16 +363,18 @@ functionDataFlow(P2::Partitioner &partitioner, const P2::Function::Ptr &function
             P2::DataFlow::DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), startVertex, ipPredicate);
 
             // Dataflow
-            P2::DataFlow::TransferFunction xfer(cpu, partitioner.instructionProvider().stackPointerRegister());
-            typedef DataFlow::Engine<P2::DataFlow::DfCfg, P2::DataFlow::State::Ptr, P2::DataFlow::TransferFunction> Engine;
-            Engine engine(dfCfg, xfer);
+            P2::DataFlow::TransferFunction xfer(cpu);
+            P2::DataFlow::MergeFunction merge(cpu);
+            typedef DataFlow::Engine<P2::DataFlow::DfCfg, BaseSemantics::StatePtr,
+                                     P2::DataFlow::TransferFunction, P2::DataFlow::MergeFunction> Engine;
+            Engine engine(dfCfg, xfer, merge);
             engine.maxIterations(10*dfCfg.nVertices()); // arbitrary
             try {
                 engine.runToFixedPoint(0 /*startVertex*/, xfer.initialState());
             } catch (const BaseSemantics::Exception &e) {
                 P2::mlog[ERROR] <<e <<"\n";             // probably no semantics for instruction
                 result.error = e.what();
-            } catch (const std::runtime_error &e) {
+            } catch (const DataFlow::NotConverging &e) {
                 P2::mlog[ERROR] <<e.what() <<"\n";      // probably iteration limit exceeded
                 result.error = e.what();
 
