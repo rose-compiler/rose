@@ -121,8 +121,8 @@ NoOperation::NoOperation(Disassembler *disassembler) {
 
         SMTSolver *solver = NULL;
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
-        ops->set_compute_usedef(false);
-        ops->set_compute_memwriters(true);              // necessary to erase non-written memory
+        ops->computingUseDef(false);
+        ops->computingMemoryWriters(SymbolicSemantics::RiscOperators::TRACK_LATEST_WRITER); // necessary to erase non-written memory
 
         BaseSemantics::MemoryCellListPtr mstate = BaseSemantics::MemoryCellList::promote(ops->get_state()->get_memory_state());
         ASSERT_not_null(mstate);

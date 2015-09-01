@@ -598,7 +598,6 @@ Analysis::updateStackParameters(const StatePtr &initialState, const StatePtr &fi
     SValuePtr initialStackPointer = initialState->readRegister(cpu_->stackPointerRegister(), ops.get());
     ops->set_state(finalState);
     StackVariables vars = P2::DataFlow::findFunctionArguments(ops, initialStackPointer);
-    const RegisterDescriptor SP = cpu_->stackPointerRegister();
     BOOST_FOREACH (const StackVariable &var, vars) {
         if (var.meta.ioProperties.exists(IO_READ_BEFORE_WRITE)) {
             inputStackParameters_.push_back(var);

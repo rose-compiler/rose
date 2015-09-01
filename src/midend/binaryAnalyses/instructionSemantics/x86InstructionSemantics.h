@@ -1505,7 +1505,6 @@ struct X86InstructionSemantics {
             }
 
             case x86_shrd: {
-                Word(5) shiftCount = extract<0, 5>(read8(operands[2]));
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 2: {
                         WordType<16> output = shift_semantics<16, 5>(kind, read16(operands[0]), read16(operands[1]),
