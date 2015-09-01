@@ -108,7 +108,7 @@ vector<SgVarRefExp*> SgNodeHelper::determineVariablesInSubtree(SgNode* node) {
   vector<SgVarRefExp*> varVec;
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgVarRefExp* v=isSgVarRefExp(node)) {
+    if(SgVarRefExp* v=isSgVarRefExp(*i)) {
       varVec.push_back(v);
     }
   }
