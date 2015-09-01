@@ -60,8 +60,9 @@ public:
      *
      *  Constructs and returns an address set containing all addresses represented by this vertex.  For basic block vertices,
      *  this is the union of the addresses occupied by the instructions (not just the starting address of each
-     *  instruction). The indeterminate and user-defined vertices return an empty set. Other vertex types return a singleton
-     *  address. */
+     *  instruction).  For user-defined vertices, this method returns a singleton address. All other vertex types return an
+     *  empty set since it is generally their predecessors that have addresses (e.g., each undiscovered basic block is a
+     *  basic-block CFG vertex whose successor is the special "undiscovered" vertex which has no distinct address. */
     AddressIntervalSet addresses() const;
 
     /** Property: basic block.

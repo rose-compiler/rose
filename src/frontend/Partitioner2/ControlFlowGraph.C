@@ -15,12 +15,12 @@ CfgVertex::addresses() const {
             BOOST_FOREACH (SgAsmInstruction *insn, bblock()->instructions())
                 retval.insert(AddressInterval::baseSize(insn->get_address(), insn->get_size()));
             break;
-        case V_UNDISCOVERED:
-        case V_NONEXISTING:
             retval.insert(address());
             break;
         case V_INDETERMINATE:
         case V_USER_DEFINED:
+        case V_UNDISCOVERED:
+        case V_NONEXISTING:
             break;
     }
     return retval;
