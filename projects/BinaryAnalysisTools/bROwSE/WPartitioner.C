@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WPartitioner.h>
 
 #include <boost/thread.hpp>

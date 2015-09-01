@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WCrossReferences.h>
 #include <Wt/WAbstractTableModel>
 #include <Wt/WPanel>
