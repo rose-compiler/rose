@@ -120,7 +120,7 @@ public:
      *  false if they were all already members.
      *
      * @{ */
-    bool insertWriter(rose_addr_t writerVa) ROSE_FINAL { return writers_.insert(writerVa); }
+    bool insertWriter(rose_addr_t writerVa) /*final*/ { return writers_.insert(writerVa); }
     virtual bool insertWriters(const AddressSet &writerVas) { return writers_.insert(writerVas); }
     /** @} */
 
@@ -130,7 +130,7 @@ public:
      *  addresses existed, false if any were removed.
      *
      * @{ */
-    bool eraseWriter(rose_addr_t writerVa) ROSE_FINAL { return writers_.erase(writerVa); }
+    bool eraseWriter(rose_addr_t writerVa) /*FINAL*/ { return writers_.erase(writerVa); }
     virtual bool eraseWriters(const AddressSet &writerVas) { return writers_.erase(writerVas); }
     /** @} */
 

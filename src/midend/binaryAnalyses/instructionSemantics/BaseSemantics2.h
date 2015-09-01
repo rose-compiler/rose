@@ -592,7 +592,7 @@ public:
      *  regardless of whether a merge was necessary.  In order to determine if a merge was necessary once can compare the
      *  return value to @p this using @ref must_equal, although doing so is more expensive than calling @ref
      *  createOptionalMerged. */
-    SValuePtr createMerged(const SValuePtr &other, SMTSolver *solver) const ROSE_FINAL {
+    SValuePtr createMerged(const SValuePtr &other, SMTSolver *solver) const /*final*/ {
         return createOptionalMerge(other, solver).orElse(copy());
     }
 
