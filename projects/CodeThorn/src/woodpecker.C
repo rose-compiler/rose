@@ -115,31 +115,6 @@ void printCodeStatistics(SgNode* root) {
   cout<<"----------------------------------------------------------------------"<<endl;
 }
 
-VariableIdSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping* variableIdMapping) {
-  VariableIdSet usedVarsInAssertConditions;
-  RoseAst ast(node);
-  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgIfStmt* ifstmt=isSgIfStmt(*i)) {
-      SgNode* cond=SgNodeHelper::getCond(*i);
-      if(cond) {
-	int errorLabelCode=-1;
-        errorLabelCode=ReachabilityAnalysis::isConditionOfIfWithLabeledAssert(cond);
-	if(errorLabelCode>=0) {
-	  //cout<<"Assertion cond: "<<cond->unparseToString()<<endl;
-	  //cout<<"Stmt: "<<ifstmt->unparseToString()<<endl;
-	  std::vector<SgVarRefExp*> vars=SgNodeHelper::determineVariablesInSubtree(cond);
-	  //cout<<"Num of vars: "<<vars.size()<<endl;
-	  for(std::vector<SgVarRefExp*>::iterator j=vars.begin();j!=vars.end();++j) {
-	    VariableId varId=variableIdMapping->variableId(*j);
-	    usedVarsInAssertConditions.insert(varId);
-	  }
-	}
-      }
-    }
-  }
-  return usedVarsInAssertConditions;
-}
-
 int main(int argc, char* argv[]) {
   try {
     if(argc==1) {
@@ -257,11 +232,6 @@ int main(int argc, char* argv[]) {
 
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
-
-  // xxx
-  //VariableIdSet varsInAssertConditions=determineVarsInAssertConditions(root,&variableIdMapping);
-  //cout<<"INFO: Vars in assert conds: "<<varsInAssertConditions.size()<<endl;
-  //exit(0);
 
   if(args.count("transform-thread-variable")) {
     Threadification* threadTransformation=new Threadification(&variableIdMapping);

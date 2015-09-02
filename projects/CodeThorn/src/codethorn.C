@@ -33,6 +33,7 @@
 #include "PragmaHandler.h"
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
+#include "ReachabilityAnalysis.h"
 // test
 #include "Evaluator.h"
 
@@ -349,6 +350,31 @@ set<VariableId> determineSetOfConstAssignVars2(VariableIdMapping* vim, SgNode* r
     }
   }
   return constAssignVars;
+}
+
+VariableIdSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping* variableIdMapping) {
+  VariableIdSet usedVarsInAssertConditions;
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(SgIfStmt* ifstmt=isSgIfStmt(*i)) {
+      SgNode* cond=SgNodeHelper::getCond(ifstmt);
+      if(cond) {
+        int errorLabelCode=-1;
+        errorLabelCode=ReachabilityAnalysis::isConditionOfIfWithLabeledAssert(cond);
+        if(errorLabelCode>=0) {
+          //cout<<"Assertion cond: "<<cond->unparseToString()<<endl;
+          //cout<<"Stmt: "<<ifstmt->unparseToString()<<endl;
+          std::vector<SgVarRefExp*> vars=SgNodeHelper::determineVariablesInSubtree(cond);
+          //cout<<"Num of vars: "<<vars.size()<<endl;
+          for(std::vector<SgVarRefExp*>::iterator j=vars.begin();j!=vars.end();++j) {
+            VariableId varId=variableIdMapping->variableId(*j);
+            usedVarsInAssertConditions.insert(varId);
+          }
+        }
+      }
+    }
+  }
+  return usedVarsInAssertConditions;
 }
 
 int main( int argc, char * argv[] ) {
@@ -989,7 +1015,11 @@ int main( int argc, char * argv[] ) {
     analyzer.setCompoundIncVarsSet(compoundIncVarsSet);
     cout<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
   }
-
+  {
+    VariableIdSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer.getVariableIdMapping());
+    cout<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
+    analyzer.setAssertCondVarsSet(varsInAssertConditions);
+  }
   {
     cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
     VarConstSetMap varConstSetMap;

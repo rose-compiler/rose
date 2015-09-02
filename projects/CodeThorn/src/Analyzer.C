@@ -409,6 +409,7 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
     string name=SgNodeHelper::symbolToString(getVariableIdMapping()->getSymbol(*i));
     bool isCompoundIncVar=(_compoundIncVarsSet.find(*i)!=_compoundIncVarsSet.end());
     bool isSmallActivityVar=(_smallActivityVarsSet.find(*i)!=_smallActivityVarsSet.end());
+    bool isAssertCondVar=(_assertCondVarsSet.find(*i)!=_assertCondVarsSet.end());
     // xxx
     bool topifyVar=false;
     switch(_globalTopifyMode) {
@@ -433,7 +434,9 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
       }
       break;
     case GTM_FLAGS:
-      if(name!="input" && name!="output" && name!="cf" && (!isSmallActivityVar)) {
+      if(((name!="input" && name!="output" && name!="cf") || isCompoundIncVar) 
+         || ((name!="input" && name!="output" && name!="cf") && !isSmallActivityVar)
+         || (((name!="input" && name!="output" && name!="cf") || !isAssertCondVar))) {
         topifyVar=true;
       }
       break;
@@ -4154,4 +4157,8 @@ void Analyzer::mapGlobalVarInsert(std::string name, int* addr) {
 
  void Analyzer::setSmallActivityVarsSet(set<VariableId> saVars) {
    _smallActivityVarsSet=saVars;
+ }
+
+ void Analyzer::setAssertCondVarsSet(set<VariableId> acVars) {
+   _assertCondVarsSet=acVars;
  }

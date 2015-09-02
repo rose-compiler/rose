@@ -79,6 +79,7 @@ codethorn_SOURCES = \
   PragmaHandler.C \
   FIConstAnalysis.h FIConstAnalysis.C \
   CPAstAttribute.h CPAstAttribute.C \
+  ReachabilityAnalysis.h ReachabilityAnalysis.C \
   codethorn.h \
   codethorn.C
 
