@@ -433,14 +433,26 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
         topifyVar=true;
       }
       break;
-    case GTM_FLAGS:
-      if(((name!="input" && name!="output" && name!="cf") || isCompoundIncVar) 
-         || ((name!="input" && name!="output" && name!="cf") && !isSmallActivityVar)
-         || (((name!="input" && name!="output" && name!="cf") || !isAssertCondVar))) {
-        topifyVar=true;
+    case GTM_FLAGS: {
+      if(name=="input" || name=="output" || name=="cf") {
+        topifyVar=false;
+        break;
       }
+      if(isCompoundIncVar) {
+        topifyVar=true;
+        break;
+      }
+      if(!isAssertCondVar) {
+        topifyVar=true;
+        break;
+      }
+      if(!isSmallActivityVar) {
+        topifyVar=true;
+        break;
+      }
+      topifyVar=false;
       break;
-
+    }
     default:
       cerr<<"Error: unsupported topify mode selected. Bailing out."<<endl;
       exit(1);
