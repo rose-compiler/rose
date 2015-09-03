@@ -208,11 +208,13 @@ namespace CodeThorn {
     // the following functions are used by solver 9
     bool searchForIOPatterns(PState* startPState, int assertion_id, list<int>& inputSuffix, list<int>* partialTrace = NULL, int* inputPatternLength=NULL);
     bool containsPatternTwoRepetitions(std::list<int>& sequence);
+    bool containsPatternTwoRepetitions(std::list<int>& sequence, int startIndex, int endIndex);
     bool computePStateAfterInputs(PState& pState, list<int>& inputs, int thread_id, list<int>* iOSequence=NULL);
     bool computePStateAfterInputs(PState& pState, int input, int thread_id, list<int>* iOSequence=NULL);
     bool searchPatternPath(int assertion_id, PState& pState, list<int>& inputPattern, list<int>& inputSuffix, int thread_id,list<int>* iOSequence=NULL);
     list<int> inputsFromPatternTwoRepetitions(list<int> pattern2r);
     string convertToCeString(list<int>& ceAsIntegers, int maxInputVal);
+    int pStateDepthFirstSearch(PState* startPState, int maxDepth, int thread_id, list<int>* partialTrace, int maxInputVal, int patternLength, int PatternIterations);
 
   public:
     SgNode* getCond(SgNode* node);
@@ -239,6 +241,7 @@ namespace CodeThorn {
     void runSolver7();
     void runSolver8();
     void runSolver9();
+    void runSolver10();
     void runSolver();
     //! The analyzer requires a CFAnalysis to obtain the ICFG.
     void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
@@ -347,13 +350,18 @@ namespace CodeThorn {
     void setReconstructMaxInputDepth(size_t inputDepth) { _reconstructMaxInputDepth=inputDepth; }
     void setReconstructMaxRepetitions(size_t repetitions) { _reconstructMaxRepetitions=repetitions; }
     void setReconstructPreviousResults(PropertyValueTable* previousResults) { _reconstructPreviousResults = previousResults; };
+    void setPatternSearchMaxDepth(size_t iODepth) { _patternSearchMaxDepth=iODepth; }
+    void setPatternSearchRepetitions(size_t patternReps) { _patternSearchRepetitions=patternReps; }
+    void setPatternSearchMaxSuffixDepth(size_t suffixDepth) { _patternSearchMaxSuffixDepth=suffixDepth; }
+    void setPatternSearchAssertTable(PropertyValueTable* patternSearchAsserts) { _patternSearchAssertTable = patternSearchAsserts; };
+    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST, EXPL_LOOP_AWARE, EXPL_RANDOM_MODE1 };
+    void setPatternSearchExploration(ExplorationMode explorationMode) { _patternSearchExplorationMode = explorationMode; };
     void eventGlobalTopifyTurnedOn();
     void setMinimizeStates(bool minimizeStates) { _minimizeStates=minimizeStates; }
     bool isIncompleteSTGReady();
     bool isPrecise();
     PropertyValueTable reachabilityResults;
     int reachabilityAssertCode(const EState* currentEStatePtr);
-    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST, EXPL_LOOP_AWARE, EXPL_RANDOM_MODE1 };
     void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
     ExplorationMode getExplorationMode() { return _explorationMode; }
     void setSkipSelectedFunctionCalls(bool defer) {
@@ -414,6 +422,11 @@ namespace CodeThorn {
     int _reconstructMaxInputDepth;
     int _reconstructMaxRepetitions;
     PropertyValueTable* _reconstructPreviousResults;
+    PropertyValueTable*  _patternSearchAssertTable;
+    int _patternSearchMaxDepth;
+    int _patternSearchRepetitions;
+    int _patternSearchMaxSuffixDepth;
+    ExplorationMode _patternSearchExplorationMode;
     bool _treatStdErrLikeFailedAssert;
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;

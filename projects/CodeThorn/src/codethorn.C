@@ -442,6 +442,11 @@ int main( int argc, char * argv[] ) {
     ("reconstruct-assert-paths", po::value< string >(), "takes a result file containing paths to reachable assertions and tries to reproduce them on the analyzed program. [=file-path]")
     ("reconstruct-max-length", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum length of cyclic I/O patterns found by the analysis. [=pattern_length]")
     ("reconstruct-max-repetitions", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum number of pattern repetitions that the search is following. [=#pattern_repetitions]")
+    ("pattern-search-max-depth", po::value< int >(), "parameter of the pattern search mode. Sets the maximum input depth that is searched for cyclic I/O patterns (default: 10).")
+    ("pattern-search-repetitions", po::value< int >(), "parameter of the pattern search mode. Sets the number of unrolled iterations of cyclic I/O patterns (default: 100).")
+    ("pattern-search-max-suffix", po::value< int >(), "parameter of the pattern search mode. Sets the maximum input depth of the suffix that is searched for failing assertions after following an I/O-pattern (default: 5).")
+    ("pattern-search-asserts", po::value< string >(), "reads a .csv-file (one line per assertion, e.g. \"1,yes\"). The pattern search terminates early if traces to all errors with \"yes\" entries have been found. [=file-path]")
+    ("pattern-search-exploration", po::value< string >(), "exploration mode for the pattern search. Note: all suffixes will always be checked using depth-first search. [=depth-first|breadth-first]")
     ("refinement-constraints-demo", po::value< string >(), "display constraints that are collected in order to later on help a refined analysis avoid spurious counterexamples. [=yes|no]")
     ("cegpra-ltl",po::value< int >(),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
     ("cegpra-ltl-all",po::value< string >(),"Check all specified LTL properties using cegpra [=yes|no]")
@@ -681,6 +686,12 @@ int main( int argc, char * argv[] ) {
     analyzer.setMaxIterationsForcedTop(args["max-iterations-forced-top"].as<int>());
   }
 
+  if(args.count("reconstruct-assert-paths")) {
+    string previousAssertFilePath=args["reconstruct-assert-paths"].as<string>();
+    PropertyValueTable* previousAssertResults=analyzer.loadAssertionsToReconstruct(previousAssertFilePath);
+    analyzer.setReconstructPreviousResults(previousAssertResults);
+  }
+
   if(args.count("reconstruct-max-length")) {
     // a cycilc pattern needs to be discovered two times, therefore multiply the length by 2
     analyzer.setReconstructMaxInputDepth(args["reconstruct-max-length"].as<int>() * 2);
@@ -690,10 +701,46 @@ int main( int argc, char * argv[] ) {
     analyzer.setReconstructMaxRepetitions(args["reconstruct-max-repetitions"].as<int>());
   }
 
-  if(args.count("reconstruct-assert-paths")) {
-    string previousAssertFilePath=args["reconstruct-assert-paths"].as<string>();
-    PropertyValueTable* previousAssertResults=analyzer.loadAssertionsToReconstruct(previousAssertFilePath);
-    analyzer.setReconstructPreviousResults(previousAssertResults);
+  if(args.count("pattern-search-max-depth")) {
+    analyzer.setPatternSearchMaxDepth(args["pattern-search-max-depth"].as<int>());
+  } else {
+    analyzer.setPatternSearchMaxDepth(10);
+  }
+
+  if(args.count("pattern-search-repetitions")) {
+    analyzer.setPatternSearchRepetitions(args["pattern-search-repetitions"].as<int>());
+  } else {
+    analyzer.setPatternSearchRepetitions(100);
+  }
+
+  if(args.count("pattern-search-max-suffix")) {
+    analyzer.setPatternSearchMaxSuffixDepth(args["pattern-search-max-suffix"].as<int>());
+  } else {
+    analyzer.setPatternSearchMaxSuffixDepth(5);
+  }
+
+  if(args.count("pattern-search-asserts")) {
+    string patternSearchAssertsPath=args["pattern-search-asserts"].as<string>();
+    PropertyValueTable* patternSearchAsserts=analyzer.loadAssertionsToReconstruct(patternSearchAssertsPath);
+    analyzer.setPatternSearchAssertTable(patternSearchAsserts);
+  } else {
+    PropertyValueTable* patternSearchAsserts = new PropertyValueTable(100);
+    patternSearchAsserts->convertValue(PROPERTY_VALUE_UNKNOWN, PROPERTY_VALUE_YES);
+    analyzer.setPatternSearchAssertTable(patternSearchAsserts);
+  }
+
+  if(args.count("pattern-search-exploration")) {
+    string patternSearchExpMode=args["pattern-search-exploration"].as<string>();
+    if (patternSearchExpMode == "breadth-first") {
+      analyzer.setPatternSearchExploration(Analyzer::EXPL_BREADTH_FIRST);
+    } else if (patternSearchExpMode == "depth-first") {
+      analyzer.setPatternSearchExploration(Analyzer::EXPL_DEPTH_FIRST);
+    } else {
+      cout << "ERROR: pattern search exploration mode \"" << patternSearchExpMode << "\" currently not supported." << endl;
+      ROSE_ASSERT(0);
+    }
+  } else {
+    analyzer.setPatternSearchExploration(Analyzer::EXPL_DEPTH_FIRST);
   }
 
   if(boolOptions["minimize-states"]) {
@@ -793,6 +840,8 @@ int main( int argc, char * argv[] ) {
         || string(argv[i]).find("--ltl-in-alphabet")==0
         || string(argv[i]).find("--ltl-out-alphabet")==0
         || string(argv[i]).find("--reconstruct-assert-paths")==0
+        || string(argv[i]).find("--pattern-search-asserts")==0
+        || string(argv[i]).find("--pattern-search-exploration")==0
         || string(argv[i]).find("--specialize-fun-name")==0
         || string(argv[i]).find("--specialize-fun-param")==0
         ) {
@@ -998,6 +1047,13 @@ int main( int argc, char * argv[] ) {
 
   if(args.count("reconstruct-assert-paths")) {
     analyzer.setSolver(9);
+    analyzer.setStartPState(*analyzer.popWorkList()->pstate());
+  }
+
+  if(args.count("pattern-search-max-depth") || args.count("pattern-search-max-suffix") 
+      || args.count("pattern-search-asserts") || args.count("pattern-search-max-exploration")) {
+    cout << "INFO: at least one of the parameters of mode \"pattern search\" was set. Choosing solver 10." << endl;
+    analyzer.setSolver(10);
     analyzer.setStartPState(*analyzer.popWorkList()->pstate());
   }
 
