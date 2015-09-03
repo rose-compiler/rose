@@ -408,6 +408,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
                 if(pstate->varExists(arrayVarId)) {
                   AValue aValuePtr=pstate2[arrayVarId].getValue();
                   // convert integer to VariableId
+                  ROSE_ASSERT(aValuePtr.isConstInt());
                   int aValueInt=aValuePtr.getIntValue();
                   // change arrayVarId to refered array!
                   //cout<<"DEBUG: defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
