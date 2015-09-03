@@ -273,7 +273,7 @@ VariableId VariableIdMapping::variableId(SgSymbol* sym) {
  */
 SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
   ROSE_ASSERT(varid.isValid());
-  ROSE_ASSERT(varid._id<mappingVarIdToSym.size());
+  ROSE_ASSERT(((size_t)varid._id)<mappingVarIdToSym.size());
   return mappingVarIdToSym[varid._id];
 }
 //SgSymbol* VariableIdMapping::getSymbol(VariableId varId) {
