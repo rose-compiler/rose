@@ -178,11 +178,12 @@ namespace CodeThorn {
     const EState* processNewOrExisting(EState& s);
     const EState* processCompleteNewOrExisting(const EState* es);
     void topifyVariable(PState& pstate, ConstraintSet& cset, VariableId varId);
-    
+    bool isTopified(EState& s);
     EStateSet::ProcessingResult process(EState& s);
     EStateSet::ProcessingResult process(Label label, PState pstate, ConstraintSet cset, InputOutput io);
     const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
     
+    EState createEStateFastTopifyMode(Label label, const PState* oldPStatePtr, const ConstraintSet* oldConstraintSetPtr);
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
 
@@ -393,7 +394,16 @@ namespace CodeThorn {
   public:
     boost::unordered_map <std::string,int*> mapGlobalVarAddress;
     boost::unordered_map <int*,std::string> mapAddressGlobalVar;
+    void setCompoundIncVarsSet(set<VariableId> ciVars);
+    void setSmallActivityVarsSet(set<VariableId> ciVars);
+    void setAssertCondVarsSet(set<VariableId> acVars);
+    enum GlobalTopifyMode {GTM_IO, GTM_IOCF, GTM_IOCFPTR, GTM_COMPOUNDASSIGN, GTM_FLAGS};
+    void setGlobalTopifyMode(GlobalTopifyMode mode);
   private:
+    GlobalTopifyMode _globalTopifyMode;
+    set<VariableId> _compoundIncVarsSet;
+    set<VariableId> _smallActivityVarsSet;
+    set<VariableId> _assertCondVarsSet;
     set<int> _inputVarValues;
     list<int> _inputSequence;
     list<int>::iterator _inputSequenceIterator;

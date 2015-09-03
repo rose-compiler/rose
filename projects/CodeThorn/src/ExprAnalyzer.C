@@ -388,6 +388,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           // assume top for array elements (array elements are not stored in state)
           //cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<"skip:"<<getSkipArrayAccesses()<<endl;
           if(rhsResult.value().isTop()||getSkipArrayAccesses()==true) {
+            // set result to top when index is top
             res.result=AType::Top();
             res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
             resultList.push_back(res);
@@ -407,6 +408,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
                 if(pstate->varExists(arrayVarId)) {
                   AValue aValuePtr=pstate2[arrayVarId].getValue();
                   // convert integer to VariableId
+                  // TODO (topify mode: does read this as integer)
+                  if(!aValuePtr.isConstInt()) {
+                    res.result=AType::Top();
+                    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+                    resultList.push_back(res);
+                    return resultList;
+                  }
                   int aValueInt=aValuePtr.getIntValue();
                   // change arrayVarId to refered array!
                   //cout<<"DEBUG: defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);

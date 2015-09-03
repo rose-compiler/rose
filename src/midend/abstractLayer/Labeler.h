@@ -201,6 +201,7 @@ class IOLabeler : public Labeler {
   IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping);
 
  public:
+  bool isStdIOLabel(Label label);
   bool isStdInLabel(Label label, VariableId* id=0);
   bool isStdOutLabel(Label label); // deprecated
   bool isStdOutVarLabel(Label label, VariableId* id=0);

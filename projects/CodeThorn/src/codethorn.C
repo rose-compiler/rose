@@ -32,6 +32,8 @@
 #include <map>
 #include "PragmaHandler.h"
 #include "Miscellaneous2.h"
+#include "FIConstAnalysis.h"
+#include "ReachabilityAnalysis.h"
 // test
 #include "Evaluator.h"
 
@@ -317,7 +319,63 @@ string readableruntime(double timeInMilliSeconds) {
 
 static Analyzer* global_analyzer=0;
 
+set<VariableId> determineSetOfCompoundIncVars(VariableIdMapping* vim, SgNode* root) {
+  ROSE_ASSERT(vim);
+  ROSE_ASSERT(root);
+  RoseAst ast(root) ;
+  set<VariableId> compoundIncVarsSet;
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(*i)) {
+      SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(compoundAssignOp));
+      if(lhsVar) {
+        compoundIncVarsSet.insert(vim->variableId(lhsVar));
+      }
+    }
+  }
+  return compoundIncVarsSet;
+}
 
+set<VariableId> determineSetOfConstAssignVars2(VariableIdMapping* vim, SgNode* root) {
+  ROSE_ASSERT(vim);
+  ROSE_ASSERT(root);
+  RoseAst ast(root) ;
+  set<VariableId> constAssignVars;
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
+      SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(assignOp));
+      SgIntVal* rhsIntVal=isSgIntVal(SgNodeHelper::getRhs(assignOp));
+      if(lhsVar && rhsIntVal) {
+        constAssignVars.insert(vim->variableId(lhsVar));
+      }
+    }
+  }
+  return constAssignVars;
+}
+
+VariableIdSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping* variableIdMapping) {
+  VariableIdSet usedVarsInAssertConditions;
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(SgIfStmt* ifstmt=isSgIfStmt(*i)) {
+      SgNode* cond=SgNodeHelper::getCond(ifstmt);
+      if(cond) {
+        int errorLabelCode=-1;
+        errorLabelCode=ReachabilityAnalysis::isConditionOfIfWithLabeledAssert(cond);
+        if(errorLabelCode>=0) {
+          //cout<<"Assertion cond: "<<cond->unparseToString()<<endl;
+          //cout<<"Stmt: "<<ifstmt->unparseToString()<<endl;
+          std::vector<SgVarRefExp*> vars=SgNodeHelper::determineVariablesInSubtree(cond);
+          //cout<<"Num of vars: "<<vars.size()<<endl;
+          for(std::vector<SgVarRefExp*>::iterator j=vars.begin();j!=vars.end();++j) {
+            VariableId varId=variableIdMapping->variableId(*j);
+            usedVarsInAssertConditions.insert(varId);
+          }
+        }
+      }
+    }
+  }
+  return usedVarsInAssertConditions;
+}
 
 int main( int argc, char * argv[] ) {
   string ltl_file;
@@ -396,7 +454,12 @@ int main( int argc, char * argv[] ) {
     ("rersformat",po::value< int >(),"Set year of rers format (2012, 2013).")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
     ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
-    ("max-transitions-forced-top",po::value< int >(),"Performs approximation after <arg> transitions (default: no limit).")
+    ("max-transitions-forced-top",po::value< int >(),"same as max-transitions-forced-top1 (default).")
+    ("max-transitions-forced-top1",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output) (default: no limit).")
+    ("max-transitions-forced-top2",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output,df) (default: no limit).")
+    ("max-transitions-forced-top3",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output,df,ptr-vars) (default: no limit).")
+    ("max-transitions-forced-top4",po::value< int >(),"Performs approximation after <arg> transitions (exact for all but inc-vars) (default: no limit).")
+    ("max-transitions-forced-top5",po::value< int >(),"Performs approximation after <arg> transitions (exact for input,output,df and vars with 0 to 2 assigned values)) (default: no limit).")
     ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
     ("variable-value-threshold",po::value< int >(),"sets a threshold for the maximum number of different values are stored for each variable.")
     ("dot-io-stg", po::value< string >(), "output STG with explicit I/O node information in dot file [arg]")
@@ -680,10 +743,22 @@ int main( int argc, char * argv[] ) {
 
   if(args.count("max-transitions-forced-top")) {
     analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top"].as<int>());
-  }
-
-  if(args.count("max-iterations-forced-top")) {
-    analyzer.setMaxIterationsForcedTop(args["max-iterations-forced-top"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_IO);
+  } else if(args.count("max-transitions-forced-top1")) {
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top1"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_IO);
+  } else if(args.count("max-transitions-forced-top2")) {
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top2"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_IOCF);
+  } else if(args.count("max-transitions-forced-top3")) {
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top3"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
+  } else if(args.count("max-transitions-forced-top4")) {
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top4"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
+  } else if(args.count("max-transitions-forced-top5")) {
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top5"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
   if(args.count("reconstruct-assert-paths")) {
@@ -880,7 +955,6 @@ int main( int argc, char * argv[] ) {
   }
 
   analyzer.setTreatStdErrLikeFailedAssert(boolOptions["stderr-like-failed-assert"]);
-  
 
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST: started."<<endl;
@@ -983,6 +1057,35 @@ int main( int argc, char * argv[] ) {
     cout<<"STATUS: generated rewritten program."<<endl;
     exit(0);
   }
+
+  {
+    // TODO: refactor this into class Analyzer after normalization has been moved to class Analyzer.
+    set<VariableId> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer.getVariableIdMapping(),root);
+    analyzer.setCompoundIncVarsSet(compoundIncVarsSet);
+    cout<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
+  }
+  {
+    VariableIdSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer.getVariableIdMapping());
+    cout<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
+    analyzer.setAssertCondVarsSet(varsInAssertConditions);
+  }
+  {
+    cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
+    VarConstSetMap varConstSetMap;
+    VariableIdSet variablesOfInterest1,variablesOfInterest2;
+    FIConstAnalysis fiConstAnalysis(analyzer.getVariableIdMapping());
+    fiConstAnalysis.runAnalysis(sageProject);
+    VariableConstInfo* variableConstInfo=fiConstAnalysis.getVariableConstInfo();
+    variablesOfInterest1=fiConstAnalysis.determinedConstantVariables();
+    for(VariableIdSet::iterator i=variablesOfInterest1.begin();i!=variablesOfInterest1.end();++i) {
+      if(!variableConstInfo->isAny(*i) && variableConstInfo->width(*i)<=2) {
+        variablesOfInterest2.insert(*i);
+      }
+    }
+    analyzer.setSmallActivityVarsSet(variablesOfInterest2);
+    cout<<"INFO: variables with number of values <=2:"<<variablesOfInterest2.size()<<endl;
+  }
+
 
   if(boolOptions["normalize"]) {
     cout <<"STATUS: Normalization started."<<endl;

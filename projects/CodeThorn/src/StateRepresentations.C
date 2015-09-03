@@ -372,11 +372,11 @@ void PState::setVariableToTop(VariableId varId) {
 }
 
 void PState::setVariableToValue(VariableId varId, CodeThorn::CppCapsuleAValue val) {
-  if(_activeGlobalTopify && varIsTop(varId)) {
-    return;
-  }
-  if(false && _activeGlobalTopify && _variableValueMonitor->isHotVariable(_analyzer,varId)) {
-    setVariableToTop(varId);
+  if(false && _activeGlobalTopify) {
+    ROSE_ASSERT(_variableValueMonitor);
+    if(_variableValueMonitor->isHotVariable(_analyzer,varId)) {
+      setVariableToTop(varId);
+    }
   } else {
     operator[](varId)=val;
   }
@@ -389,6 +389,26 @@ void PState::topifyState() {
       setVariableToTop(varId);
     }
   }
+}
+
+bool PState::isTopifiedState() const {
+  if(!_activeGlobalTopify) {
+    return false;
+  }
+  ROSE_ASSERT(_variableValueMonitor);
+  for(PState::const_iterator i=begin();i!=end();++i) {
+    VariableId varId=(*i).first;
+    if(_variableValueMonitor->isHotVariable(_analyzer,varId)) {
+      if(varIsTop(varId)) {
+        continue;
+      } else {
+        cout<<"DEBUG: var is not top (but hot): "<<varId.toString(*_analyzer->getVariableIdMapping())<<":"<<(*i).second.toString()<<endl;
+        cout<<"DEBUG: PState:"<<toString()<<endl;
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 VariableIdSet PState::getVariableIds() const {
