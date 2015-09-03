@@ -734,7 +734,7 @@ Analysis::match(const Definition &cc) const {
     if (!(restoredRegisters_ - cc.calleeSavedRegisterParts()).isEmpty())
         return false;
 
-    // No analysis callee-saved register should be a definition's output or scratch register
+    // If we modified registers we were not allowed to have modified then we're not this calling convention.
     if (!(outputRegisters_ & ccOutputRegisters).isEmpty())
         return false;
 
