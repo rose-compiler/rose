@@ -539,7 +539,6 @@ OptimizeSingleScopWithPoccGeneric (scoplib_scop_p scop,
      stm->nb_iterators += nb_tiled_dim;
 
       free(stm->body);
-<<<<<<< HEAD
       char commentStr[256];
       sprintf (commentStr, "tiled for %d dims", nb_tiled_dim);
       SgLocatedNode* locatedNode = isSgLocatedNode(sageStatementBodies[i]);
@@ -547,8 +546,6 @@ OptimizeSingleScopWithPoccGeneric (scoplib_scop_p scop,
       {
         SageBuilder::buildComment(locatedNode,commentStr,PreprocessingInfo::before,PreprocessingInfo::C_StyleComment);
       }
-=======
->>>>>>> 1b2ed609321865e886ba4d9a0bef7ea6b8ed4e2f
       stm->body = (char*) sageStatementBodies[i];
     }
 

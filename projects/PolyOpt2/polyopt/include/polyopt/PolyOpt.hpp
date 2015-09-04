@@ -95,8 +95,5 @@ int PolyOptAnnotateProject(SgProject* project, PolyRoseOptions& polyoptions);
 int PolyOptAnnotateSubTree(SgNode* root, PolyRoseOptions& polyoptions);
 
 
-<<<<<<< HEAD
 int PolyOptLoopTiling(SgForStatement* forStmt, int tileArg1, int tileArg2, int tileArg3);
-=======
->>>>>>> 1b2ed609321865e886ba4d9a0bef7ea6b8ed4e2f
 #endif
