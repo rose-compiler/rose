@@ -467,11 +467,10 @@ public:
 
 bool
 WPartitioner::partitionSpecimen() {
-    BinaryAnalysis::Disassembler *disassembler = NULL;
     try {
         ctx_.engine.disassembler(NULL);
         ctx_.engine.isaName(isaName());
-        disassembler = ctx_.engine.obtainDisassembler();
+        ctx_.engine.obtainDisassembler();
     } catch (const std::runtime_error&) {
         wIsaError_->setText("ISA must be specified when there is no ELF/PE container.");
         wIsaError_->show();
