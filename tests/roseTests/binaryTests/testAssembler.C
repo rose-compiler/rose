@@ -56,7 +56,7 @@ assemble_all(SgAsmInterpretation *interp)
                 } catch (...) {
                     /*void*/
                 }
-                assembler->set_debug(false);
+                assembler->set_debug(NULL);
             }
             //return;
         }
