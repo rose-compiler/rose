@@ -132,6 +132,20 @@ namespace Cmdline {
     } // namespace Rose::Cmdline::Fortran::OpenFortranParser
   } // namespace Rose::Cmdline::Fortran
 
+  namespace Gnu {
+    /** @returns true if the GNU option requires a user-specified argument.
+     */
+    bool
+    OptionRequiresArgument (const std::string& option);
+
+    void
+    Process (SgProject* project, std::vector<std::string>& argv);
+
+    // --param
+    void
+    ProcessParam (SgProject* project, std::vector<std::string>& argv);
+  } // namespace Rose::Cmdline::Gnu
+
   namespace Java {
     static const std::string option_prefix = "-rose:java:";
 

@@ -2,6 +2,9 @@
 
 #include "sage3basic.h"
 
+#include "Diagnostics.h"
+using namespace rose::Diagnostics;
+
 /* Constructor reads symbol table entries beginning at entry 'i'. We can't pass an array of COFFSymbolEntry_disk structs
  * because the disk size is 18 bytes, which is not properly aligned according to the C standard. Therefore we pass the actual
  * section and table index. The symbol occupies the specified table slot and st_num_aux_entries additional slots. */
@@ -34,7 +37,10 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
     ROSE_ASSERT(fhdr->get_section_table()!=NULL);
     if (p_st_section_num > 0) {
         p_bound = fhdr->get_file()->get_section_by_id(p_st_section_num);
-        ROSE_ASSERT(p_bound != NULL);
+        if (NULL==p_bound) {
+            mlog[WARN] <<"PE symbol \"" <<StringUtility::cEscape(p_st_name) <<"\" (index " <<idx <<")"
+                       <<" is not bound to any section (section " <<p_st_section_num <<")\n";
+        }
     }
     
     /* Make initial guesses for storage class, type, and definition state. We'll adjust them after reading aux entries. */
@@ -164,12 +170,13 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
                    get_value()==0 && NULL!=fhdr->get_file()->get_section_by_name(p_st_name)) {
             /* COMDAT section */
             /*FIXME: not implemented yet*/
-            fprintf(stderr, "COFF aux comdat %s: (FIXME) not implemented yet\n", escapeString(p_st_name).c_str());
+            mlog[ERROR] <<"COFF aux comdat " <<escapeString(p_st_name) <<": (FIXME) not implemented yet\n";
             hexdump(stderr, (rose_addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
 
         } else {
-            fprintf(stderr, "COFF aux unknown %s: (FIXME) st_storage_class=%u, st_type=0x%02x, st_section_num=%d\n", 
-                    escapeString(p_st_name).c_str(), p_st_storage_class, p_st_type, p_st_section_num);
+            mlog[ERROR] <<"COFF aux unknown " <<escapeString(p_st_name)
+                        <<": (FIXME) st_storage_class=" <<p_st_storage_class
+                        <<", st_type=" <<p_st_type <<", st_section_num=" <<p_st_section_num <<"\n";
             hexdump(stderr, symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
         }
     }
@@ -299,7 +306,7 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %s\n",               p, w, "st_storage_class", s);
     fprintf(f, "%s%-*s = \"%s\"\n",           p, w, "st_name", escapeString(p_st_name).c_str());
     fprintf(f, "%s%-*s = %u\n",               p, w, "st_num_aux_entries", p_st_num_aux_entries);
-    fprintf(f, "%s%-*s = %zu bytes\n",        p, w, "aux_data", p_aux_data.size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n",        p, w, "aux_data", p_aux_data.size());
     hexdump(f, 0, std::string(p)+"aux_data at ", p_aux_data);
 }
 
@@ -351,12 +358,11 @@ SgAsmCoffSymbolTable::parse()
             i += symbol->get_st_num_aux_entries();
             p_symbols->get_symbols().push_back(symbol);
         } catch (const ShortRead &e) {
-            fprintf(stderr, "SgAsmCoffSymbolTable::parse: warning: read past end of section \"%s\" [%d]\n"
-                    "    symbol #%zu at file offset 0x%08"PRIx64"\n"
-                    "    skipping %zu symbols (including this one)\n",
-                    get_name()->get_string(true).c_str(), get_id(),
-                    i, e.offset,
-                    fhdr->get_e_coff_nsyms()-i);
+            mlog[WARN] <<"SgAsmCoffSymbolTable::parse: read past end of section \"" <<get_name()->get_string(true) <<"\""
+                       <<"[" <<get_id() <<"]\n"
+                       <<"    symbol #" <<i <<" at file offset " <<StringUtility::addrToString(e.offset) <<"\n"
+                       <<"    skipping " <<StringUtility::plural(fhdr->get_e_coff_nsyms()-i, "symbols")
+                       <<" (including this one)\n";
             break;
         }
     }
@@ -410,7 +416,7 @@ SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu symbols\n", p, w, "size", p_symbols->get_symbols().size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " symbols\n", p, w, "size", p_symbols->get_symbols().size());
     for (size_t i = 0; i < p_symbols->get_symbols().size(); i++) {
         p_symbols->get_symbols()[i]->dump(f, p, i);
     }

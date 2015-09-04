@@ -113,9 +113,9 @@ update          {return cond_return ( UPDATE ); }
 map             {return cond_return ( MAP ); }
 device          {return cond_return ( DEVICE ); }
 alloc           {return cond_return ( ALLOC ); }
-in              {return cond_return ( IN ); }
-out             {return cond_return ( OUT ); }
-inout           {return cond_return ( INOUT ); }
+to              {return cond_return ( TO ); /* change the user level keyword to conform to  OpenMP 4.0 */}
+from            {return cond_return ( FROM ); }
+tofrom          {return cond_return ( TOFROM ); }
 simd            {return cond_return ( SIMD ); }
 safelen         {return cond_return ( SAFELEN ); }
 aligned         {return cond_return ( ALIGNED ); }
@@ -124,6 +124,15 @@ uniform         {return cond_return ( UNIFORM ); }
 aligned         {return cond_return ( ALIGNED ); }
 inbranch        {return cond_return ( INBRANCH ); }
 notinbranch     {return cond_return ( NOTINBRANCH ); }
+
+dist_data       {return ( DIST_DATA); } /*Extensions for data distribution clause
+It is tricky to support mixed variable vs. keyword parsing for dist_data() since it is part of variable list parsing 
+We enforce that users won't use variable names colliding with the keywords (no cond_return() is used)
+TODO: later we can relax this restriction. Fine-grain control of cond_return with new flags.
+*/
+block           {return ( BLOCK ); }
+duplicate       {return ( DUPLICATE ); }
+cyclic          {return ( CYCLIC ); }
 
 
 "="             { return('='); }

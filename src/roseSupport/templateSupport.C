@@ -1,5 +1,6 @@
+#if 0
 
-#include "rose.h"
+#include "sage3basic.h"
 
 #include "templateSupport.h"
 
@@ -10,7 +11,6 @@ using namespace std;
 
 #error "DEAD CODE"
 
-#if 0
 // DQ (10/11/2007): This is no longer used!
 
 
@@ -111,7 +111,7 @@ buildTemplateInstantiationSupportFile( SgProject* project )
             // Read the filename.ti file (where the filename excludes the "rose_" prefix.
                string templateData = StringUtility::readFile(templateInstantiationFile);
             // static void  writeFile ( outputString, fileNameString, directoryName );
-            // printf ("templateData (size = %zu) from %s = %s \n",templateData.size(),templateInstantiationFile.c_str(),templateData.c_str());
+            // printf ("templateData (size = %" PRIuPTR ") from %s = %s \n",templateData.size(),templateInstantiationFile.c_str(),templateData.c_str());
 
             // DQ (5/16/2005): Always put the commandline information into the *.ti files even when they don't reference symbols,
             // the prelink mechanism requires it.
@@ -654,13 +654,3 @@ fixupInstantiatedTemplates ( SgProject* project )
    }
 
 #endif
-
-
-
-
-
-
-
-
-
-

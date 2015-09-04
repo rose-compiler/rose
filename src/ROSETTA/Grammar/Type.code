@@ -23,6 +23,7 @@ HEADER_START
           friend class SgRvalueReferenceType; //!< provide access to private data
           friend class SgDeclType;            //!< provide access to private data
           friend class SgTypedefType;         //!< provide access to private data
+          friend class SgTypeOfType;          //!< provide access to private data
        /*! */
 
      public:
@@ -868,6 +869,17 @@ HEADER_TYPE_COMPLEX_TYPE_START
           virtual void set_type_kind ( SgExpression* type_kind );
 HEADER_TYPE_COMPLEX_TYPE_END
 
+//SK(08/20/2015): SgTypeTuple implementation
+HEADER_TYPE_TUPLE_START
+    SgTypePtrList& get_types();
+    const SgTypePtrList& get_types() const;
+
+    void prepend_type(SgType *what);
+    void append_type(SgType *what);
+
+HEADER_TYPE_TUPLE_END
+
+
 HEADER_POINTER_MEMBER_TYPE_START
       //! \deprecated The class_of property has been replaced by the class_type property, an SgType
           SgClassDefinition* get_class_of() const;
@@ -908,6 +920,15 @@ HEADER_DECL_TYPE_START
           void set_base_type(SgType* base_type);
 
 HEADER_DECL_TYPE_END
+
+
+HEADER_TYPEOF_TYPE_START
+
+          static $CLASSNAME* createType(SgType* base_type, SgExpression* optional_fortran_type_kind = NULL);
+
+          void set_base_type(SgType* base_type);
+
+HEADER_TYPEOF_TYPE_END
 
 
 // #########################################################
@@ -1153,7 +1174,7 @@ SgTypeString::get_mangled (void) const
                   << mangled_length_name.str () // length
                   << "__" << "MANGLED_ID_STRING" << "e__"; // end tag
 
-  // printf ("LEAVING: In SgTypeString::get_mangled(): definedUsingScalarLength = %s lengthScalar = %zu lengthExpression = %p mangled_name = %s \n",p_definedUsingScalarLength ? "true" : "false",p_lengthScalar,p_lengthExpression,mangled_name.str());
+  // printf ("LEAVING: In SgTypeString::get_mangled(): definedUsingScalarLength = %s lengthScalar = %" PRIuPTR " lengthExpression = %p mangled_name = %s \n",p_definedUsingScalarLength ? "true" : "false",p_lengthScalar,p_lengthExpression,mangled_name.str());
 
      return mangled_name;
 #endif
@@ -1263,6 +1284,7 @@ SgType::SgType()
      p_typedefs(NULL),
      p_rvalue_ref_to(NULL),
      p_decltype_ref_to(NULL),
+     p_typeof_ref_to(NULL),
   // DQ (10/3/2010): Readded to the SgType since it is used uniformally within Fortran types.
   // DQ (12/1/2007): This has been moved to the SgModifierType
      p_type_kind(NULL),
@@ -1271,10 +1293,13 @@ SgType::SgType()
      ROSE_ASSERT(p_ref_to == NULL);
      ROSE_ASSERT(p_ptr_to == NULL);
      ROSE_ASSERT(p_modifiers == NULL);
+
      p_typedefs = new SgTypedefSeq();
+
      ROSE_ASSERT(p_typedefs != NULL);
      ROSE_ASSERT(p_rvalue_ref_to == NULL);
      ROSE_ASSERT(p_decltype_ref_to == NULL);
+     ROSE_ASSERT(p_typeof_ref_to == NULL);
 
   // FMZ (2/6/2009): Added a flag for CoArray
      p_isCoArray = false;
@@ -1297,6 +1322,7 @@ SgType::SgType(const SgType & X)
      p_typedefs(X.p_typedefs),
      p_rvalue_ref_to(X.p_rvalue_ref_to),
      p_decltype_ref_to(X.p_decltype_ref_to),
+     p_typeof_ref_to(X.p_typeof_ref_to),
   // DQ (10/3/2010): Readded to the SgType since it is used uniformally within Fortran types.
   // DQ (12/1/2007): This has been moved to the SgModifierType
      p_type_kind(X.p_type_kind),
@@ -1316,6 +1342,7 @@ SgType::SgType(const SgType & X)
      ROSE_ASSERT(p_modifiers == NULL);
      ROSE_ASSERT(p_rvalue_ref_to == NULL);
      ROSE_ASSERT(p_decltype_ref_to == NULL);
+     ROSE_ASSERT(p_typeof_ref_to == NULL);
   // DQ (12/1/2007): This has been moved to the SgModifierType
   // ROSE_ASSERT(p_type_kind == NULL);
 #endif
@@ -1800,7 +1827,7 @@ SgType::stripType(unsigned char bit_array) const
      while (true)
         {
 #if 0
-          printf ("In loop of SgType::stripType(bit_array = %u): counter = %zu this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+          printf ("In loop of SgType::stripType(bit_array = %u): counter = %" PRIuPTR " this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
 #endif
           if ( (bit_array & STRIP_MODIFIER_TYPE) && (modType = isSgModifierType(currentType)) )
              {
@@ -1863,12 +1890,12 @@ SgType::stripType(unsigned char bit_array) const
        // DQ (7/4/2013): This should be a reasonable limit.
           if (counter >= 80)
              {
-               printf ("In loop of SgType::stripType(bit_array = %u): counter = %zu this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+               printf ("In loop of SgType::stripType(bit_array = %u): counter = %" PRIuPTR " this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
              }
           if (counter >= 100)
              {
             // Exit loop and return the currentType... 
-               printf ("In loop of SgType::stripType(bit_array = %u): exiting loop using currentType (counter = %zu) this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
+               printf ("In loop of SgType::stripType(bit_array = %u): exiting loop using currentType (counter = %" PRIuPTR ") this = %p = %s \n",bit_array,counter,currentType,currentType->class_name().c_str());
 #if 0
                break;
 #endif
@@ -2531,6 +2558,25 @@ SOURCE_TYPE_SIGNED_128BIT_TYPE_END
 SOURCE_TYPE_UNSIGNED_128BIT_TYPE_START
 SOURCE_TYPE_UNSIGNED_128BIT_TYPE_END
 
+SOURCE_TYPE_TUPLE_START
+
+SgTypePtrList&
+SgTypeTuple::get_types()
+   { return p_types; }
+
+const SgTypePtrList&
+SgTypeTuple::get_types() const
+   { return p_types; }
+
+void
+SgTypeTuple::append_type(SgType *what)
+   { what->set_parent(this); p_types.push_back(what); }
+
+void
+SgTypeTuple::prepend_type(SgType *what)
+   { what->set_parent(this); p_types.insert(p_types.begin(), what); }
+
+SOURCE_TYPE_TUPLE_END
 
 SOURCE_TYPE_LONG_DOUBLE_TYPE_START
 SOURCE_TYPE_LONG_DOUBLE_TYPE_END
@@ -2565,6 +2611,7 @@ SOURCE_TYPE_BOOL_TYPE_END
 
 SOURCE_TYPE_COMPLEX_TYPE_START
 SOURCE_TYPE_COMPLEX_TYPE_END
+
 
 
 SOURCE_TYPE_DEFAULT_TYPE_START
@@ -2773,6 +2820,115 @@ SgDeclType::get_base_type() const
    }
 
 SOURCE_DECL_TYPE_END
+
+
+SOURCE_TYPEOF_TYPE_START
+
+void
+SgTypeOfType::set_base_type(SgType* base_type)
+   {
+     ROSE_ASSERT(base_type != NULL);
+     if (p_base_expression == NULL || (isSgFunctionParameterRefExp(p_base_expression) != NULL))
+        {
+          p_base_type = base_type;
+        }
+       else
+        {
+       // Prefer the one available in p_base_expression.
+          p_base_type = NULL;
+          if (base_type != p_base_expression->get_type())
+             {
+               printf ("Error: base_type in SgTypeOfType::set_base_type() does not match p_base_expression->get_type() \n");
+             }
+          ROSE_ASSERT(base_type == p_base_expression->get_type());
+        }
+   }
+
+SgType*
+SgTypeOfType::get_base_type() const
+   {
+     SgType* return_type = NULL;
+     ROSE_ASSERT(this != NULL);
+  // ROSE_ASSERT(p_base_expression != NULL);
+     if (p_base_expression == NULL || isSgFunctionParameterRefExp(p_base_expression) != NULL)
+        {
+          return_type = p_base_type;
+        }
+       else
+        {
+          return_type = p_base_expression->get_type();
+        }
+
+     ROSE_ASSERT(return_type != NULL);
+
+     return return_type;
+  // return p_base_expression->get_type();
+   }
+
+/*! Returns a mangled name representation of types taking expressions and base types (e.g., pointer, reference).
+ */
+SgName
+SgTypeOfType::get_mangled (void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+     const SgType* base_type = get_base_type();
+     ROSE_ASSERT (base_type != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_mangled(): base_type = %p = %s \n",base_type,base_type->class_name().c_str());
+#endif
+
+     SgName base_name = base_type->get_mangled();
+
+#if 0
+     printf ("DONE: In $CLASSNAME::get_mangled(): base_type = %p = %s base_name = %s \n",base_type,base_type->class_name().c_str(),base_name.str());
+#endif
+
+  // This can be NULL.
+     const SgExpression* base_expression = get_base_expression();
+  // ROSE_ASSERT (base_expression != NULL);
+     if (base_expression != NULL)
+        {
+#if 0
+          printf ("In $CLASSNAME::get_mangled(): base_expression = %p = %s \n",base_expression,base_expression->class_name().c_str());
+#endif
+
+       // base_name += base_expression->get_mangled();
+       // base_name += SageInterface::get_name(base_expression);
+          base_name += string("_base_expr_") + StringUtility::numberToString(this);
+
+#if 0
+          printf ("DONE: In $CLASSNAME::get_mangled(): base_expression = %p = %s accumulated base_name = %s \n",base_expression,base_expression->class_name().c_str(),base_name.str());
+#endif
+        }
+
+  // DQ (6/21/2006): Use is_null() instead of counting the size (and fixed case were it is null)
+  // ROSE_ASSERT (base_name.get_length ());
+     if (base_name.is_null() == true)
+        {
+       // This happens for code such as: "typedef struct {int id; } *XYZ;"
+#if 0
+          printf ("Warning: In $CLASSNAME::get_mangled(), empty base type name found \n");
+#endif
+          base_name = "un_named_base_type";
+        }
+     ROSE_ASSERT (base_name.is_null() == false);
+
+     SgName mangled_name;
+     mangled_name << "__" << "MANGLED_ID_STRING" << "b__" // start tag
+                  << base_name.str () // base expression and type
+                  << "__" << "MANGLED_ID_STRING" << "e__"; // end tag
+#if 0
+     printf ("LEAVING: In $CLASSNAME::get_mangled(): base_expression = %p = %s base_type = %p = %s mangled_name = %s \n",
+          base_expression,base_expression != NULL ? base_expression->class_name().c_str() : "null",
+          base_type,base_type->class_name().c_str(),mangled_name.str());
+#endif
+
+     return mangled_name;
+   }
+
+SOURCE_TYPEOF_TYPE_END
 
 
 SOURCE_NAMED_TYPE_START
@@ -3740,7 +3896,7 @@ SgFunctionType::SgFunctionType(SgPartialFunctionType *ft)
 #endif
 
      SgTypePtrList::iterator p = ft->get_arguments().begin();
-  // printf ("PartialFunctionType->get_arguments().size() = %zu \n",ft->get_arguments().size());
+  // printf ("PartialFunctionType->get_arguments().size() = %" PRIuPTR " \n",ft->get_arguments().size());
      while(p != ft->get_arguments().end())
         {
        // printf ("     function argument = %p = %s \n",*p,(*p)->sage_class_name());
@@ -4845,6 +5001,13 @@ SgArrayType::get_qualified_name(void) const {
     return SgName(name);
 }
 
+// DQ (6/13/2015): Added forward declaration of namespace function for constant folding.
+namespace ConstantFolding 
+   {
+  // ROSE_DLL_API void constantFoldingOptimization(SgNode* n, bool internalTestingAgainstFrontend = false);
+     ROSE_DLL_API SgValueExp* returnConstantFoldedValueExpression(SgNode* n, bool internalTestingAgainstFrontend = false);
+   }
+
 // RV (1/31/2006): Changed the form of the mangled name to include begin/end tags.
 SgName
 SgArrayType::get_mangled(void) const
@@ -4855,22 +5018,32 @@ SgArrayType::get_mangled(void) const
      ROSE_ASSERT (base_type != NULL);
      SgName base_name = base_type->get_mangled();
 
-  // printf ("In SgArrayType::get_mangled(): mangled base type name = %s \n",base_name.str());
+#define DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING 0
+
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+     printf ("In SgArrayType::get_mangled(): mangled base type name = %s \n",base_name.str());
+#endif
 
      const SgExpression* index_exp = get_index();
      SgName index_name;
      if (index_exp != NULL)
         {
        // DQ (2/12/2011): Now that we support saving the original expression in an array type's size argument 
-       // we want to generate the name from the cconstant folded expression instead of the original expression.
+       // we want to generate the name from the constant folded expression instead of the original expression.
        // index_name = index_exp->unparseToString();
        // printf ("In SgArrayType::get_mangled(): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
        // SgUnsignedLongVal* value = isSgUnsignedLongVal(index_exp);
+
+       // DQ (6/13/2015): Changed from SgUnsignedLongVal to SgValueExp.  Or maybe we need to test for more general case where we handle the contant folding case below.
+       // const SgValueExp* value = isSgUnsignedLongVal(index_exp);
+       // const SgValueExp* value = isSgValueExp(index_exp);
           const SgValueExp* value = isSgUnsignedLongVal(index_exp);
 
        // DQ (2/12/2011): I wonder if we can enforce this...No!
        // ROSE_ASSERT(value != NULL);
-
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+          printf ("In SgArrayType::get_mangled() index_exp = %p = %s value = %p \n",index_exp,index_exp->class_name().c_str(),value);
+#endif
           if (value != NULL)
              {
             // index_name = StringUtility::numberToString(value->get_value());
@@ -4887,6 +5060,9 @@ SgArrayType::get_mangled(void) const
             // might be a more complex array index expressions that could have the same name.
             // index_name = index_exp->unparseToString();
                const SgVarRefExp* varRefExp = isSgVarRefExp(index_exp);
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+               printf ("In SgArrayType::get_mangled() varRefExp = %p \n",varRefExp);
+#endif
                if (varRefExp != NULL)
                   {
                  // index_name = index_exp->unparseToString();
@@ -4923,9 +5099,109 @@ SgArrayType::get_mangled(void) const
                   }
                  else
                   {
-                    index_name = index_exp->unparseToString();
-                  }
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                    printf ("In SgArrayType::get_mangled() index_exp = %p = %s \n",index_exp,index_exp->class_name().c_str());
+#endif
 #if 0
+                 // DQ (6/13/2015): Original code causing expressions to be mixed into the mangled names.
+                    index_name = index_exp->unparseToString();
+#else
+                 // DQ (6/13/2015): bugfix to permit constant valued expressions to be evaluated to constants and the constants used in the mangled names.
+                    SgExpression* original_constant_index_exp = get_index();
+                    ROSE_ASSERT(original_constant_index_exp != NULL);
+
+                 // To narrow this further we could constrain the lhs and rhs to be SgInitVal nodes.
+
+#define TEST_CONSTANT_FOLDING_IN_NAME_MANGLING_OF_TYPES 0
+
+#if TEST_CONSTANT_FOLDING_IN_NAME_MANGLING_OF_TYPES
+                 // DQ (6/14/2015): This is test code to evaluate if we want to use the constant folding in the name mangling.
+                 // This appears to cause test2011_117.C to fail (C++ template issue) (also similar test code in test2014_143.C).
+
+                 // if (isSgAddOp(original_constant_index_exp) != NULL && true)
+                    if (true)
+#else
+                 // DQ (6/14/2015): This predicate will turn off this support for constant folding in the name mangling.
+                    if (isSgAddOp(original_constant_index_exp) != NULL && false)
+#endif
+                       {
+                      // This is a narrow case where this should work, but we need more general support.
+
+                      // Build a shadow copy of the expression so that we can do the constant folding without sideffects on the array index expression.
+                      // SgExpression* shadow_expr = SageInterface::deepCopy<SgExpression>(original_constant_index_exp);
+                         SgExpression* shadow_expr = original_constant_index_exp;
+                         ROSE_ASSERT(shadow_expr != NULL);
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                         printf ("   --- BEFORE: shadow_expr = %p = %s \n",shadow_expr,shadow_expr->class_name().c_str());
+                         printf ("   --- BEFORE: shadow_expr->get_parent() = %p \n",shadow_expr->get_parent());
+#endif
+                      // ConstantFolding::constantFoldingOptimization(const_cast<SgExpression*>(index_exp),false);
+                      // ConstantFolding::constantFoldingOptimization(original_constant_index_exp,false);
+                      // ConstantFolding::constantFoldingOptimization(shadow_expr,false);
+
+                      // DQ (6/13/2015): Added support to return the SgValueExp holding the constant folded value.
+                      // Note that constant folding will have to be extended to support more generality before this will work well.
+                         SgExpression* shadow_constant_value_exp = ConstantFolding::returnConstantFoldedValueExpression(shadow_expr,false);
+                      // index_name = "unknown_constant_valued_index";
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                         if (shadow_constant_value_exp != NULL)
+                            {
+                              printf ("   --- AFTER: shadow_constant_value_exp->get_parent() = %p \n",shadow_constant_value_exp->get_parent());
+                            }
+#endif
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                         printf ("   --- AFTER: shadow_expr = %p = %s \n",shadow_expr,shadow_expr->class_name().c_str());
+                         printf ("   --- AFTER: shadow_constant_value_exp = %p = %s \n",shadow_constant_value_exp,shadow_constant_value_exp != NULL ? shadow_constant_value_exp->class_name().c_str() : "null");
+#endif
+                      // SgExpression* shadow_constant_value_exp = shadow_expr;
+                         SgValueExp* shadow_constant_value = isSgValueExp(shadow_constant_value_exp);
+                      // ROSE_ASSERT(shadow_constant_value != NULL);
+                      // index_name = shadow_constant_value->get_constant_folded_value_as_string().c_str();
+                         if (shadow_constant_value != NULL)
+                            {
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                              printf ("Generate string from shadow_constant_value->get_constant_folded_value_as_string() \n");
+#endif
+                              index_name = shadow_constant_value->get_constant_folded_value_as_string().c_str();
+                            }
+                           else
+                            {
+                           // This may be the case where ConstantFolding::returnConstantFoldedValueExpression() returned a NULL pointer.
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                              printf ("Using backup plan #1: index_exp->unparseToString() \n");
+#endif
+                              index_name = index_exp->unparseToString();
+                            }
+
+                      // Remove node used to hold the constant value expression.
+                         delete shadow_constant_value_exp;
+                         shadow_constant_value_exp = NULL;
+                         shadow_constant_value = NULL;
+
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                         SgExpression* constant_value_index_exp = get_index();
+                         printf ("constant_value_index_exp = %p = %s \n",constant_value_index_exp,constant_value_index_exp->class_name().c_str());
+#endif
+                      // SgValueExp* constant_value = isSgValueExp(constant_value_index_exp);
+                      // Now this should not be a constant value (since we now support in remaining the original expression).
+                      // ROSE_ASSERT(constant_value != NULL);
+                      // ROSE_ASSERT(constant_value == NULL);
+                      // index_name = constant_value->get_constant_folded_value_as_string().c_str();
+#endif
+                       }
+                      else
+                       {
+                      // DQ (6/13/2015): Original code causing expressions to be mixed into the mangled names.
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                         printf ("Using backup plan #2: index_exp->unparseToString() \n");
+#endif
+                         index_name = index_exp->unparseToString();
+                       }
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
+                    printf ("In SgArrayType::get_mangled(): after constant folding: index_name = %s \n",index_name.str());
+#endif
+                  }
+#if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING
                printf ("In SgArrayType::get_mangled(): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
 #endif
              }
@@ -5869,6 +6145,8 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
   // This fails for test2011_121.C.
   // ROSE_ASSERT(returnType->get_declaration() == cd);
 
+#if 0
+  // DQ (3/12/2015): This is failing the test for spurious output, so I will comment out the warning.
   // DQ (2/14/2015): Adding filter to throttle this output.  I think it is important, but it appears to not be critical at the moment.
   // It also appears to be a direct result of the bug fix that removed the collision of computed function types in test2015_11.C.
      if (returnType->get_declaration() != cd)
@@ -5881,6 +6159,7 @@ SgClassType::createType(SgDeclarationStatement* cd, SgExpression* optional_fortr
 
           counter++;
         }
+#endif
 #endif
 
 #if 0
@@ -6309,6 +6588,170 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
    }
 
 SOURCE_CREATE_TYPE_FOR_DECL_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_TYPEOF_TYPE_START
+// SgDeclType* SgDeclType::createType(SgType* base_type, SgExpression* optional_fortran_type_kind)
+SgTypeOfType*
+SgTypeOfType::createType(SgExpression* base_expression, SgExpression* optional_fortran_type_kind)
+   {
+  // DQ (8/2/2014): The decltype takes an expression (and stores it) but references the type of that expression.
+     SgType* base_type = base_expression->get_type();
+     ROSE_ASSERT(base_type != NULL);
+
+  // DQ (8/2/2014): I think that decltype reference types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+#define DEBUG_TYPEOF_CREATETYPE_EXP 0
+
+     if (base_type->p_typeof_ref_to != NULL)
+        {
+#if DEBUG_TYPEOF_CREATETYPE_EXP
+          printf ("In SgTypeOfType::createType(SgExpression*): test 1: base_type->p_typeof_ref_to = %p = %s \n",base_type->p_typeof_ref_to,base_type->p_typeof_ref_to->class_name().c_str());
+#endif
+          return base_type->p_typeof_ref_to;
+        }
+       else
+        {
+          SgTypeOfType* newType = new SgTypeOfType(base_expression,NULL);
+          ROSE_ASSERT(newType != NULL);
+
+          SgName name = newType->get_mangled();
+
+#if DEBUG_TYPEOF_CREATETYPE_EXP
+          printf ("Building a typeoftype (expression argument) reference to base_type = %p = %s name = %s \n",base_type,base_type->class_name().c_str(),name.str());
+#endif
+       // Only look for pointers to type in the global type table.
+          SgType* t = get_globalTypeTable()->lookup_type(name);
+
+#if DEBUG_TYPEOF_CREATETYPE_EXP
+          printf ("Building a typeoftype (expression argument): t = get_globalTypeTable()->lookup_type(name): t = %p \n",t);
+#endif
+          if (t == NULL)
+             {
+            // The pointer type was not found in the type table, put it into the global type table.
+               SgType* root_type = base_type->stripType();
+               ROSE_ASSERT(root_type != NULL);
+               if (handledUsingLocalTable(root_type) == false)
+                  {
+#if DEBUG_TYPEOF_CREATETYPE_EXP
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+#endif
+                    get_globalTypeTable()->insert_type(name,newType);
+                  }
+                 else
+                  {
+#if DEBUG_TYPEOF_CREATETYPE_EXP
+                    printf ("Skip putting the SgTypeOfType into the global type table for specific root types = %s name = %s \n",root_type->class_name().c_str(),name.str());
+#endif
+                  }
+             }
+            else
+             {
+            // If it is already present in the type table then delete the type (so that it will remain unique).
+#if DEBUG_TYPEOF_CREATETYPE_EXP
+               printf ("Mangled type name for SgTypeOfType = %s (already exists in type table) \n",name.str());
+#endif
+               ROSE_ASSERT(t != newType);
+
+               delete newType;
+               newType = NULL;
+
+               newType = isSgTypeOfType(t);
+             }
+
+#if 0
+       // DQ (4/7/2015): We have to allow that all expressions could be different, so we can't reuse the same typeof type.
+          base_type->p_typeof_ref_to = newType;
+          assert(base_type->p_typeof_ref_to != NULL);
+#if DEBUG_TYPEOF_CREATETYPE_EXP
+          printf ("In SgTypeOfType::createType(SgExpression*): test 2: base_type->p_typeof_ref_to = %p = %s \n",base_type->p_typeof_ref_to,base_type->p_typeof_ref_to->class_name().c_str());
+#endif
+          return base_type->p_typeof_ref_to;
+#else
+       // DQ (4/7/2015): We have to allow that all expressions could be different, so we can't reuse the same typeof type (return the neType).
+          return newType;
+#endif
+        }
+   }
+
+SgTypeOfType*
+SgTypeOfType::createType(SgType* base_type, SgExpression* optional_fortran_type_kind)
+   {
+  // DQ (8/2/2014): The decltype takes an expression (and stores it) but references the type of that expression.
+  // SgType* base_type = base_type;
+     ROSE_ASSERT(base_type != NULL);
+
+  // DQ (8/2/2014): I think that decltype reference types can't have a kind parameter, so this should be NULL.
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+#define DEBUG_TYPEOF_CREATETYPE_TYPE 0
+
+#if DEBUG_TYPEOF_CREATETYPE_TYPE
+     printf ("Building a typeoftype (type argument) base_type->p_typeof_ref_to = %p \n",base_type->p_typeof_ref_to);
+#endif
+
+     if (base_type->p_typeof_ref_to)
+        {
+          return base_type->p_typeof_ref_to;
+        }
+       else
+        {
+          SgTypeOfType* newType = new SgTypeOfType(NULL,base_type);
+          ROSE_ASSERT(newType != NULL);
+
+          SgName name = newType->get_mangled();
+
+#if DEBUG_TYPEOF_CREATETYPE_TYPE
+          printf ("Building a typeoftype (type argument) reference to base_type = %p = %s name = %s \n",base_type,base_type->class_name().c_str(),name.str());
+#endif
+       // Only look for pointers to type in the global type table.
+          SgType* t = get_globalTypeTable()->lookup_type(name);
+
+#if DEBUG_TYPEOF_CREATETYPE_TYPE
+          printf ("Building a typeoftype (type argument) get_globalTypeTable()->lookup_type(name = %s) = %p = %s \n",name.str(),t,t != NULL ? t->class_name().c_str() : "null");
+#endif
+          if (t == NULL)
+             {
+            // The pointer type was not found in the type table, put it into the global type table.
+               SgType* root_type = base_type->stripType();
+               ROSE_ASSERT(root_type != NULL);
+               if (handledUsingLocalTable(root_type) == false)
+                  {
+#if DEBUG_TYPEOF_CREATETYPE_TYPE
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+#endif
+                    get_globalTypeTable()->insert_type(name,newType);
+                  }
+                 else
+                  {
+#if DEBUG_TYPEOF_CREATETYPE_TYPE
+                    printf ("Skip putting the SgTypeOfType into the global type table for specific root types = %s name = %s \n",root_type->class_name().c_str(),name.str());
+#endif
+                  }
+             }
+            else
+             {
+            // If it is already present in the type table then delete the type (so that it will remain unique).
+#if DEBUG_TYPEOF_CREATETYPE_TYPE
+               printf ("Mangled type name for SgTypeOfType = %s (already exists in type table) \n",name.str());
+#endif
+               ROSE_ASSERT(t != newType);
+
+               delete newType;
+               newType = NULL;
+
+               newType = isSgTypeOfType(t);
+             }
+
+          base_type->p_typeof_ref_to = newType;
+          assert(base_type->p_typeof_ref_to != NULL);
+
+          return base_type->p_typeof_ref_to;
+        }
+   }
+
+SOURCE_CREATE_TYPE_FOR_TYPEOF_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_START

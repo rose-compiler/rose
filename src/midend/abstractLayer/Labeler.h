@@ -59,8 +59,11 @@ class LabelProperty {
    enum LabelType { LABEL_UNDEF=1, LABEL_OTHER=2, 
                     LABEL_FUNCTIONCALL=100, LABEL_FUNCTIONCALLRETURN,
                     LABEL_FUNCTIONENTRY, LABEL_FUNCTIONEXIT,
-                    LABEL_BLOCKBEGIN, LABEL_BLOCKEND
+                    LABEL_BLOCKBEGIN, LABEL_BLOCKEND,
+                    LABEL_EMPTY_STMT
    };
+   std::string labelTypeToString(LabelType lt);
+
    LabelProperty();
    LabelProperty(SgNode* node);
    LabelProperty(SgNode* node, LabelType labelType);
@@ -74,7 +77,7 @@ class LabelProperty {
    bool isFunctionExitLabel();
    bool isBlockBeginLabel();
    bool isBlockEndLabel();
-
+   bool isEmptyStmtLabel();
  public:
    void initializeIO(VariableIdMapping* variableIdMapping);
 
@@ -157,6 +160,7 @@ class Labeler {
   Label functionExitLabel(SgNode* node);
   bool isFunctionEntryLabel(Label lab);
   bool isFunctionExitLabel(Label lab);
+  bool isEmptyStmtLabel(Label lab);
   bool isBlockBeginLabel(Label lab);
   bool isBlockEndLabel(Label lab);
   bool isFunctionCallLabel(Label lab);

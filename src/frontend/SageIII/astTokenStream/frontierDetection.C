@@ -197,7 +197,9 @@ FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, Fr
           bool forceUnparseFromTokenStream = false;
           bool forceUnparseFromAST         = false;
 #endif
-
+#if 0
+          printf ("ROSE_tokenUnparsingTestingMode = %s \n",ROSE_tokenUnparsingTestingMode ? "true" : "false");
+#endif
        // DQ (12/1/2013): Added switch to control testing mode for token unparsing.
        // Test codes in the tests/roseTests/astTokenStreamTests directory turn on this 
        // variable so that all regression tests can be processed to mix the unparsing of 
@@ -306,6 +308,9 @@ FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, Fr
        // AstAttribute::AttributeNodeInfo* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
        // AstAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
           FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
+#if 0
+          printf ("Adding attribute: test 1: blue \n");
+#endif
           statement->setAttribute(name,attribute);
 
 #if 0
@@ -478,7 +483,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
              {
             // ROSE_ASSERT(synthesizedAttributeList[i].node != NULL);
 #if 0
-               printf ("   --- synthesizedAttributeList[i=%zu].node = %p = %s isFrontier = %s unparseUsingTokenStream = %s unparseFromTheAST = %s containsNodesToBeUnparsedFromTheAST = %s containsNodesToBeUnparsedFromTheTokenStream = %s \n",
+               printf ("   --- synthesizedAttributeList[i=%" PRIuPTR "].node = %p = %s isFrontier = %s unparseUsingTokenStream = %s unparseFromTheAST = %s containsNodesToBeUnparsedFromTheAST = %s containsNodesToBeUnparsedFromTheTokenStream = %s \n",
                     i,synthesizedAttributeList[i].node,
                     synthesizedAttributeList[i].node != NULL                                ? synthesizedAttributeList[i].node->class_name().c_str() : "null",
                     synthesizedAttributeList[i].isFrontier                                  ? "true" : "false",
@@ -607,7 +612,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                             (returnAttribute.unparseUsingTokenStream == false && returnAttribute.unparseFromTheAST == true)  || 
                             (returnAttribute.unparseUsingTokenStream == false && returnAttribute.unparseFromTheAST == false) );
 #if 0
-               printf ("At base of loop over synthesized attribute list elements i = %zu \n",i);
+               printf ("At base of loop over synthesized attribute list elements i = %" PRIuPTR " \n",i);
                printf ("   --- returnAttribute.isFrontier                                  = %s \n",returnAttribute.isFrontier ? "true" : "false");
                printf ("   --- returnAttribute.unparseUsingTokenStream                     = %s \n",returnAttribute.unparseUsingTokenStream ? "true" : "false");
                printf ("   --- returnAttribute.unparseFromTheAST                           = %s \n",returnAttribute.unparseFromTheAST ? "true" : "false");
@@ -637,6 +642,9 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
 
                if (statement != NULL)
                   {
+#if 0
+                    printf ("Adding attribute: test 2: green \n");
+#endif
                     statement->setAttribute(name,attribute);
                   }
              }
@@ -655,7 +663,9 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                     string name    = "token_frontier";
                     string options = "color=\"blue\"";
                     FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
-
+#if 0
+                    printf ("Adding attribute: test 3: blue \n");
+#endif
                     statement->setAttribute(name,attribute);
                   }
              }
@@ -697,7 +707,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
 #if 0
                     for (size_t i = 0; i < synthesizedAttributeList.size(); i++)
                        {
-                         printf ("   --- synthesizedAttributeList[i=%zu].node = %p = %s isFrontier = %s unparseUsingTokenStream = %s unparseFromTheAST = %s containsNodesToBeUnparsedFromTheAST = %s containsNodesToBeUnparsedFromTheTokenStream = %s \n",
+                         printf ("   --- synthesizedAttributeList[i=%" PRIuPTR "].node = %p = %s isFrontier = %s unparseUsingTokenStream = %s unparseFromTheAST = %s containsNodesToBeUnparsedFromTheAST = %s containsNodesToBeUnparsedFromTheTokenStream = %s \n",
                               i,synthesizedAttributeList[i].node,
                               synthesizedAttributeList[i].node != NULL                                ? synthesizedAttributeList[i].node->class_name().c_str() : "null",
                               synthesizedAttributeList[i].isFrontier                                  ? "true " : "false",
@@ -706,7 +716,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                               synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST         ? "true " : "false",
                               synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheTokenStream ? "true " : "false");
 
-                         printf ("   ---   --- synthesizedAttributeList[i=%zu].frontierNodes.size() = %zu \n",i,synthesizedAttributeList[i].frontierNodes.size());
+                         printf ("   ---   --- synthesizedAttributeList[i=%" PRIuPTR "].frontierNodes.size() = %" PRIuPTR " \n",i,synthesizedAttributeList[i].frontierNodes.size());
                        }
 #endif
                     if (synthesizedAttributeList[0].containsNodesToBeUnparsedFromTheAST != synthesizedAttributeList[1].containsNodesToBeUnparsedFromTheAST)
@@ -728,7 +738,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
 #if 0
                     for (size_t i = 0; i < synthesizedAttributeList.size(); i++)
                        {
-                         printf ("   --- synthesizedAttributeList[i=%zu].node = %p = %s isFrontier = %s unparseUsingTokenStream = %s unparseFromTheAST = %s containsNodesToBeUnparsedFromTheAST = %s containsNodesToBeUnparsedFromTheTokenStream = %s \n",
+                         printf ("   --- synthesizedAttributeList[i=%" PRIuPTR "].node = %p = %s isFrontier = %s unparseUsingTokenStream = %s unparseFromTheAST = %s containsNodesToBeUnparsedFromTheAST = %s containsNodesToBeUnparsedFromTheTokenStream = %s \n",
                               i,synthesizedAttributeList[i].node,
                               synthesizedAttributeList[i].node != NULL                                ? synthesizedAttributeList[i].node->class_name().c_str() : "null",
                               synthesizedAttributeList[i].isFrontier                                  ? "true " : "false",
@@ -737,7 +747,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                               synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST         ? "true " : "false",
                               synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheTokenStream ? "true " : "false");
 
-                         printf ("   ---   --- synthesizedAttributeList[i=%zu].frontierNodes.size() = %zu \n",i,synthesizedAttributeList[i].frontierNodes.size());
+                         printf ("   ---   --- synthesizedAttributeList[i=%" PRIuPTR "].frontierNodes.size() = %" PRIuPTR " \n",i,synthesizedAttributeList[i].frontierNodes.size());
                        }
 #endif
                     if (synthesizedAttributeList[0].containsNodesToBeUnparsedFromTheAST == true && synthesizedAttributeList[0].containsNodesToBeUnparsedFromTheTokenStream == true)
@@ -765,7 +775,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
 #if 0
                     for (size_t i = 0; i < synthesizedAttributeList.size(); i++)
                        {
-                         printf ("   --- synthesizedAttributeList[i=%zu].node = %p = %s isFrontier = %s unparseUsingTokenStream = %s unparseFromTheAST = %s containsNodesToBeUnparsedFromTheAST = %s containsNodesToBeUnparsedFromTheTokenStream = %s \n",
+                         printf ("   --- synthesizedAttributeList[i=%" PRIuPTR "].node = %p = %s isFrontier = %s unparseUsingTokenStream = %s unparseFromTheAST = %s containsNodesToBeUnparsedFromTheAST = %s containsNodesToBeUnparsedFromTheTokenStream = %s \n",
                               i,synthesizedAttributeList[i].node,
                               synthesizedAttributeList[i].node != NULL                                ? synthesizedAttributeList[i].node->class_name().c_str() : "null",
                               synthesizedAttributeList[i].isFrontier                                  ? "true " : "false",
@@ -774,7 +784,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                               synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST         ? "true " : "false",
                               synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheTokenStream ? "true " : "false");
 
-                         printf ("   ---   --- synthesizedAttributeList[i=%zu].frontierNodes.size() = %zu \n",i,synthesizedAttributeList[i].frontierNodes.size());
+                         printf ("   ---   --- synthesizedAttributeList[i=%" PRIuPTR "].frontierNodes.size() = %" PRIuPTR " \n",i,synthesizedAttributeList[i].frontierNodes.size());
                        }
 #endif
                  // I don't know why unparseUsingTokenStream are different, but the containsNodesToBeUnparsedFromTheAST are the same.
@@ -811,6 +821,9 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                     string name    = "token_frontier";
                     string options = "color=\"red\"";
                     FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
+#if 0
+                    printf ("Adding attribute: test 4: red \n");
+#endif
                     statement->setAttribute(name,attribute);
                   }
                  else
@@ -821,11 +834,11 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                          SgStatement* synthesized_attribute_statement = synthesizedAttributeList[i].node;
 #if 0
                          printf ("   --- synthesized_attribute_statement = %p = %s \n",synthesized_attribute_statement,synthesized_attribute_statement != NULL ? synthesized_attribute_statement->class_name().c_str() : "null");
-                         printf ("   ---   --- synthesizedAttributeList[i=%zu].isFrontier                                  = %s \n",i,synthesizedAttributeList[i].isFrontier ? "true" : "false");
-                         printf ("   ---   --- synthesizedAttributeList[i=%zu].unparseUsingTokenStream                     = %s \n",i,synthesizedAttributeList[i].unparseUsingTokenStream ? "true" : "false");
-                         printf ("   ---   --- synthesizedAttributeList[i=%zu].unparseFromTheAST                           = %s \n",i,synthesizedAttributeList[i].unparseFromTheAST ? "true" : "false");
-                         printf ("   ---   --- synthesizedAttributeList[i=%zu].containsNodesToBeUnparsedFromTheAST         = %s \n",i,synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST ? "true" : "false");
-                         printf ("   ---   --- synthesizedAttributeList[i=%zu].containsNodesToBeUnparsedFromTheTokenStream = %s \n",i,synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheTokenStream ? "true" : "false");
+                         printf ("   ---   --- synthesizedAttributeList[i=%" PRIuPTR "].isFrontier                                  = %s \n",i,synthesizedAttributeList[i].isFrontier ? "true" : "false");
+                         printf ("   ---   --- synthesizedAttributeList[i=%" PRIuPTR "].unparseUsingTokenStream                     = %s \n",i,synthesizedAttributeList[i].unparseUsingTokenStream ? "true" : "false");
+                         printf ("   ---   --- synthesizedAttributeList[i=%" PRIuPTR "].unparseFromTheAST                           = %s \n",i,synthesizedAttributeList[i].unparseFromTheAST ? "true" : "false");
+                         printf ("   ---   --- synthesizedAttributeList[i=%" PRIuPTR "].containsNodesToBeUnparsedFromTheAST         = %s \n",i,synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST ? "true" : "false");
+                         printf ("   ---   --- synthesizedAttributeList[i=%" PRIuPTR "].containsNodesToBeUnparsedFromTheTokenStream = %s \n",i,synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheTokenStream ? "true" : "false");
 #endif
                          if (synthesized_attribute_statement != NULL)
                             {
@@ -845,7 +858,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                                      else
                                       {
 #if 0
-                                        printf ("Current node = %p = %s not added to frontier node list (add any lists from synthesizedAttributeList[i=%zu].frontierNodes.size() = %zu) \n",n,n->class_name().c_str(),i,synthesizedAttributeList[i].frontierNodes.size());
+                                        printf ("Current node = %p = %s not added to frontier node list (add any lists from synthesizedAttributeList[i=%" PRIuPTR "].frontierNodes.size() = %" PRIuPTR ") \n",n,n->class_name().c_str(),i,synthesizedAttributeList[i].frontierNodes.size());
 #endif
                                      // We don't record nodes that are just containing subtrees to be unparsed from the AST.
                                      // if (synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST == false)
@@ -877,7 +890,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                               printf ("   ---   --- Include synthesized_attribute_statement into frontierNodes (%p = %s) \n",synthesized_attribute_statement,synthesized_attribute_statement->class_name().c_str());
                               returnAttribute.frontierNodes.push_back(synthesized_attribute_statement);
 
-                              printf ("   ---   --- synthesizedAttributeList[i=%zu].containsNodesToBeUnparsedFromTheAST = %s \n",i,synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST ? "true" : "false");
+                              printf ("   ---   --- synthesizedAttributeList[i=%" PRIuPTR "].containsNodesToBeUnparsedFromTheAST = %s \n",i,synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST ? "true" : "false");
 
                            // We don't record nodes that are just containing subtrees to be unparsed from the AST.
                               if (synthesizedAttributeList[i].containsNodesToBeUnparsedFromTheAST == false)
@@ -1046,6 +1059,10 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 #endif
 
 #if 0
+     std::set<SgStatement*> transformedStatementSet = SageInterface::collectTransformedStatements(sourceFile);
+     printf ("In frontierDetectionForTokenStreamMapping(): transformedStatementSet.size() = %zu \n",transformedStatementSet.size());
+#endif
+#if 0
   // Debugging (this set in the constructor).
      printf ("numberOfNodes = %d \n",fdTraversal.numberOfNodes);
 #endif
@@ -1076,7 +1093,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
      map<SgStatement*,FrontierNode*> token_unparse_frontier_map;
 
 #if 0
-     printf ("Final Frontier (topAttribute.frontierNodes.size() = %zu) (n = %p = %s): ",topAttribute.frontierNodes.size(),sourceFile,sourceFile->class_name().c_str());
+     printf ("Final Frontier (topAttribute.frontierNodes.size() = %" PRIuPTR ") (n = %p = %s): ",topAttribute.frontierNodes.size(),sourceFile,sourceFile->class_name().c_str());
 #endif
 
   // DQ (11/29/2013): Used to mark statements that are redundantly mapped to a single token sequence.
@@ -1108,13 +1125,16 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
              }
           FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( statement, name, options);
 
+#if 0
+          printf ("Adding attribute: test 5: skyblue or greenyellow \n");
+#endif
           statement->setAttribute(name,attribute);
 
 #if 0
        // DQ (11/29/2013): Get the token mapping to the AST.
           std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
 
-          printf ("In frontierDetectionForTokenStreamMapping(): tokenStreamSequenceMap.size() = %zu lastTokenIndex = %d \n",tokenStreamSequenceMap.size(),lastTokenIndex);
+          printf ("In frontierDetectionForTokenStreamMapping(): tokenStreamSequenceMap.size() = %" PRIuPTR " lastTokenIndex = %d \n",tokenStreamSequenceMap.size(),lastTokenIndex);
 
           ROSE_ASSERT(tokenStreamSequenceMap.empty() == false);
 
@@ -1257,6 +1277,19 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
 #if 0
      printf ("In frontierDetectionForTokenStreamMapping(): DONE: Calling previousAndNextNodeTraversal() \n");
+#endif
+
+#if 0
+  // DQ (11/20/2013): Test using support for multiple files for Java testing.
+  // Output an optional graph of the AST (just the tree, when active)
+  // generateDOT ( *project );
+  // SgProject* project = isSgProject(sourceFile->get_project());
+  // SgProject* project = sourceFile->get_project();
+     ROSE_ASSERT(project != NULL);
+
+     printf ("In frontierDetectionForTokenStreamMapping(): Output dot file for project \n");
+
+     generateDOTforMultipleFile(*project);
 #endif
 
 #if 0

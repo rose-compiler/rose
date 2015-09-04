@@ -6,7 +6,7 @@
 #include "callbacks.h"          /* Needed for ROSE_Callbacks::List<> */
 #include "BinaryControlFlow.h"
 #include "BinaryFunctionCall.h"
-#include "Disassembler.h"
+#include "BaseSemantics2.h"
 
 class SgAsmInstruction;
 class SgAsmBlock;
@@ -15,6 +15,8 @@ class SgAsmInterpretation;
 
 namespace rose {
 namespace BinaryAnalysis {
+
+class Disassembler;
 
 /** Unparses binary AST into text.
  *
@@ -55,6 +57,7 @@ namespace BinaryAnalysis {
  *           <li>InsnFuncEntry (pre): emits function info at entry points when output is organized by address.</li>
  *           <li>InsnRawBytes (pre): emits address and raw bytes of instruction in a hexdump-like format.</li>
  *           <li>InsnBlockEntry (pre): emits info about first instruction of each block when output is organized by address.</li>
+ *           <li>InsnStackDelta (pre): emits stack delta constant if known</li>
  *           <li>InsnBody (unparse): emits the instruction mnemonic and arguments.</li>
  *           <li>InsnNoEffect (post): emits an indication when an instruction is part of a no-effect sequence of
  *               instructions.  This functor only has an effect if the BasicBlockNoopUpdater functor is run as
@@ -70,6 +73,7 @@ namespace BinaryAnalysis {
  *           <li>BasicBlockReasons (pre): emits the reasons why this block is part of the function.</li>
  *           <li>BasicBlockPredecessors (pre): emits addresses of basic block control flow predecessors.</li>
  *           <li>BasicBlockBody (unparse): unparses each instruction of the basic block.</li>
+ *           <li>BasicBlockOutgoingStackDelta (post): final stack delta if known.</li>
  *           <li>BasicBlockSuccessors (post): emits addresses of basic block control flow successors.</li>
  *           <li>BasicBlockLineTermination (post): emits a linefeed at the end of each basic block.</li>
  *           <li>BasicBlockCleanup (post): cleans up analysis from BasicBlockNoopUpdater and future built-in functors.</li>
@@ -410,6 +414,12 @@ public:
         virtual bool operator()(bool enabled, const InsnArgs &args);
     };
 
+    /** Functor to emit the numeric stack delta at each instruction. */
+    class InsnStackDelta: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const InsnArgs &args);
+    };
+    
     /** Functor to emit the entire instruction.  Output includes the mnemonic, arguments, and comments. */
     class InsnBody: public UnparserCallback {
     public:
@@ -481,6 +491,12 @@ public:
         virtual bool operator()(bool enabled, const BasicBlockArgs &args);
     };
 
+    /** Functor to emit basic block outgoing stack delta. */
+    class BasicBlockOutgoingStackDelta: public UnparserCallback {
+    public:
+        virtual bool operator()(bool enabled, const BasicBlockArgs &args);
+    };
+    
     /** Functor to emit block successor list.  If the unparser's control flow graph is not empty, then we use it to find
      *  successors, otherwise we consult the successors cached in the AST.  The AST-cached successors were probably cached by
      *  the instruction partitioner (see Partitioner class), which does fairly extensive analysis -- certainly more than just
@@ -732,6 +748,7 @@ public:
     InsnAddress insnAddress;
     InsnRawBytes insnRawBytes;
     InsnBlockEntry insnBlockEntry;
+    InsnStackDelta insnStackDelta;
     InsnBody insnBody;
     InsnNoEffect insnNoEffect;
     InsnComment insnComment;
@@ -743,6 +760,7 @@ public:
     BasicBlockNoopUpdater basicBlockNoopUpdater;
     BasicBlockNoopWarning basicBlockNoopWarning;
     BasicBlockBody basicBlockBody;
+    BasicBlockOutgoingStackDelta basicBlockOutgoingStackDelta;
     BasicBlockSuccessors basicBlockSuccessors;
     BasicBlockLineTermination basicBlockLineTermination;
     BasicBlockCleanup basicBlockCleanup;

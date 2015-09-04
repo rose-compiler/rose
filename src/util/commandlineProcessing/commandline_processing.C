@@ -10,6 +10,7 @@
 #include "commandline_processing.h"
 #include <vector>
 #include <algorithm>
+#include "Diagnostics.h"
 
 // Use Brian Gunney's String List Assignent (SLA) library
 #include "sla.h"
@@ -24,6 +25,7 @@
 // DQ (12/31/2005): This is allowed in C files where it can not 
 // effect the users application (just not in header files).
 using namespace std;
+using namespace rose;
 
 Rose_STL_Container<std::string> CommandlineProcessing::extraCppSourceFileSuffixes;
 
@@ -44,6 +46,29 @@ utilVersionString() {
 #endif
     return s;
 }
+
+// Adjust the behavior for failed assertions based on the command-line
+class FailedAssertionBehaviorAdjuster: public Sawyer::CommandLine::SwitchAction {
+protected:
+    FailedAssertionBehaviorAdjuster() {}
+public:
+    typedef Sawyer::SharedPointer<FailedAssertionBehaviorAdjuster> Ptr;
+    enum Behavior { ABORT_ON_FAILURE, EXIT_ON_FAILURE, THROW_ON_FAILURE };
+    static Ptr instance() {
+        return Ptr(new FailedAssertionBehaviorAdjuster);
+    }
+protected:
+    void operator()(const Sawyer::CommandLine::ParserResult &cmdline) {
+        ASSERT_require(cmdline.have("assert"));
+        Sawyer::Assert::AssertFailureHandler handler = NULL;
+        switch (cmdline.parsed("assert", 0).as<Behavior>()) {
+            case ABORT_ON_FAILURE: handler = abortOnFailedAssertion; break;
+            case EXIT_ON_FAILURE:  handler = exitOnFailedAssertion; break;
+            case THROW_ON_FAILURE: handler = throwOnFailedAssertion; break;
+        }
+        failedAssertionBehavior(handler);
+    }
+};
 
 // Returns command-line description for switches that should be always available.
 // Don't add anything to this that might not be applicable to some tool -- this is for all tools, both source and binary.
@@ -69,6 +94,24 @@ CommandlineProcessing::genericSwitches() {
     gen.insert(Switch("version", 'V')
                .action(showVersionAndExit(utilVersionString(), 0))
                .doc("Shows version information for various ROSE components and then exits."));
+
+    // Control how a failing assertion acts. It could abort, exit with non-zero, or throw rose::Diagnostics::FailedAssertion.
+    gen.insert(Switch("assert")
+               .action(FailedAssertionBehaviorAdjuster::instance())
+               .argument("how", enumParser<FailedAssertionBehaviorAdjuster::Behavior>()
+                         ->with("exit", FailedAssertionBehaviorAdjuster::EXIT_ON_FAILURE)
+                         ->with("abort", FailedAssertionBehaviorAdjuster::ABORT_ON_FAILURE)
+                         ->with("throw", FailedAssertionBehaviorAdjuster::THROW_ON_FAILURE))
+               .doc("Determines how a failed assertion behaves.  The choices are \"abort\", \"exit\" with a non-zero value, "
+                    "or \"throw\" a rose::Diagnostics::FailedAssertion exception. The default behavior depends on how ROSE "
+                    "was configured."));
+
+    // Number of threads to use for algorithms that support multi-threading.  NOTE: we should really have a Settings struct for
+    // these switches, but we don't yet. Users will therefore need to query the ParsserResult object to get the switch's
+    // argument.
+    gen.insert(Switch("threads")
+               .argument("n", positiveIntegerParser())
+               .doc("Number of threads to use for algorithms that support multi-threading."));
 
     return gen;
 }
@@ -494,7 +537,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
        // if ( ((*i)[0] != '-') || ((*i)[0] != '+') )
           if ( ((*i)[0] != '-') && ((*i)[0] != '+') )
              {
-            // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %zu \n",counter,(*i).c_str(),(*i).size());
+            // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %" PRIuPTR " \n",counter,(*i).c_str(),(*i).size());
 
             // bool foundSourceFile = false;
 
@@ -545,6 +588,15 @@ CommandlineProcessing::isSourceFilename ( string name )
 
      int length = name.size();
      for ( Rose_STL_Container<string>::iterator j = validSourceFileSuffixes.begin(); j != validSourceFileSuffixes.end(); j++ )
+        {
+          int jlength = (*j).size();
+          if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
+             {
+               return true;
+             }
+        }
+
+     for ( Rose_STL_Container<string>::iterator j = extraCppSourceFileSuffixes.begin(); j != extraCppSourceFileSuffixes.end(); j++ )
         {
           int jlength = (*j).size();
           if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )

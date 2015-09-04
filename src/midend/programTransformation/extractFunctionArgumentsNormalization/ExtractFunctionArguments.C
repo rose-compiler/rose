@@ -220,30 +220,47 @@ void ExtractFunctionArguments::RewriteFunctionCallArguments(const FunctionCallIn
         //Build a declaration for the temporary variable
         SgScopeStatement* scope = functionCallInfo.tempVarDeclarationLocation->get_scope();
         ROSE_ASSERT(scope != NULL );
-        SgVariableDeclaration* tempVarDeclaration;
-        SgExpression* tempVarReference;
-        tie(tempVarDeclaration, tempVarReference) = SageInterface::createTempVariableAndReferenceForExpression(arg, scope);
+
+     // DQ (3/1/2015): Added initialization to these local variables.
+     // SgVariableDeclaration* tempVarDeclaration;
+     // SgExpression* tempVarReference;
+        SgVariableDeclaration* tempVarDeclaration = NULL;
+        SgExpression* tempVarReference = NULL;
+
+     // DQ (3/1/2015): Avoid normalization of function arguments of type SgFunctionType (see inputBug317.C).
+     // This might be an issue more narrowly defined for compiler-generated functions, this is less clear.
+        SgFunctionType* functionType = isSgFunctionType(arg->get_type());
+        if (functionType == NULL)
+           {
+             tie(tempVarDeclaration, tempVarReference) = SageInterface::createTempVariableAndReferenceForExpression(arg, scope);
         
-        // createTempVariableOrReferenceForExpression does not set the parent if the scope stack is empty. Hence set it manually to the currect scope.
-        tempVarDeclaration->set_parent(scope);
+          // createTempVariableOrReferenceForExpression does not set the parent if the scope stack is empty. Hence set it manually to the currect scope.
+             tempVarDeclaration->set_parent(scope);
 #if 0
-        {
-            std::cout<<"\n"<<functionCall->get_file_info()->get_filenameString () << ":" << functionCall->get_file_info()->get_line () << ":" << functionCall->get_file_info()->get_col ();
-            std::cout<<"\n Name = "<< tempVarDeclaration->get_mangled_name().getString()<< ":type :"<<arg->get_type()->class_name() << "Expr class :"<<arg->class_name();
-        }
+                {
+                  std::cout<<"\n"<<functionCall->get_file_info()->get_filenameString () << ":" << functionCall->get_file_info()->get_line() << ":" << functionCall->get_file_info()->get_col();
+                  std::cout<<"\n Name = "<< tempVarDeclaration->get_mangled_name().getString()<< " : type : " << arg->get_type()->class_name() << " Expr class : " << arg->class_name();
+                }
 #endif
-        ROSE_ASSERT(tempVarDeclaration != NULL );
-        ROSE_ASSERT(tempVarDeclaration->get_definition(0) != NULL);
-        ROSE_ASSERT(isSgVariableDefinition(tempVarDeclaration->get_definition()) != NULL);
+             ROSE_ASSERT(tempVarDeclaration != NULL );
+
+          // DQ (3/1/2015): This is not always true (see inputBug317.C).
+             ROSE_ASSERT(tempVarDeclaration->get_definition(0) != NULL);
+             ROSE_ASSERT(isSgVariableDefinition(tempVarDeclaration->get_definition()) != NULL);
         
-        //Insert the temporary variable declaration
-        InsertStatement(tempVarDeclaration, functionCallInfo.tempVarDeclarationLocation, functionCallInfo);
+             //Insert the temporary variable declaration
+             InsertStatement(tempVarDeclaration, functionCallInfo.tempVarDeclarationLocation, functionCallInfo);
         
-        // remember the introduced temp so that it can be queried
-        temporariesIntroduced.push_back(tempVarDeclaration);
+             // remember the introduced temp so that it can be queried
+             temporariesIntroduced.push_back(tempVarDeclaration);
         
-        //Replace the argument with the new temporary variable
-        SageInterface::replaceExpression(arg, tempVarReference);
+             //Replace the argument with the new temporary variable
+             SageInterface::replaceExpression(arg, tempVarReference);
+           }
+          else
+           {
+             printf ("In ExtractFunctionArguments::RewriteFunctionCallArguments(): Skipping normalization of function arguments of type SgFunctionType \n");
+           }
     }
 }
 

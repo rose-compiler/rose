@@ -352,7 +352,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
        else
         {
        // DQ (12/30/2014): This will likely cause an error since some subsequence of the token stream will not be unparsed.
-#if 1
+#if 0
           printf ("ERROR: unparseStatementFromTokenStream(stmt_1=%p=%s,stmt_2=%p=%s): \n",stmt_1,stmt_1->class_name().c_str(),stmt_2,stmt_2->class_name().c_str());
           printf ("   --- e_token_sequence_position_start = %d = %s \n",e_token_sequence_position_start,token_sequence_position_name(e_token_sequence_position_start).c_str());
           printf ("   --- e_token_sequence_position_end   = %d = %s \n",e_token_sequence_position_end,token_sequence_position_name(e_token_sequence_position_end).c_str());
@@ -620,7 +620,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
           while (i != name_list.end() && (*i) != initializedName)
              {
 #if 0
-               printf ("In unparseFunctionParameterDeclaration(): loop: counter = %zu \n",counter);
+               printf ("In unparseFunctionParameterDeclaration(): loop: counter = %" PRIuPTR " \n",counter);
 #endif
                counter++;
                i++;
@@ -628,7 +628,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 
           ROSE_ASSERT(i != name_list.end());
 #if 0
-          printf ("In unparseFunctionParameterDeclaration(): counter = %zu \n",counter);
+          printf ("In unparseFunctionParameterDeclaration(): counter = %" PRIuPTR " \n",counter);
 #endif
        // SgTypePtrList & get_arguments()
           tmp_type = type_argument_list->get_arguments()[counter];
@@ -655,7 +655,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      bool oldStyleDefinition = funcdecl_stmt->get_oldStyleDefinition();
 
 #if 0
-     printf ("unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
+     printf ("unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
      curprint( string("\n/* unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = ") + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
 #endif
 #if 0
@@ -909,7 +909,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
         }
 
 #if 0
-     printf ("Leaving unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
+     printf ("Leaving unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
      curprint( string("\n/* Leaving unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = ") + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
 #endif
    }
@@ -921,7 +921,7 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
      ROSE_ASSERT (funcdecl_stmt != NULL);
 
 #if 0
-     printf ("unparseFunctionArgs(): funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
+     printf ("unparseFunctionArgs(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
      curprint("\n/* unparseFunctionArgs(): funcdecl_stmt->get_args().size() = " + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
 #endif
 
@@ -1109,7 +1109,7 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
           printf ("Found a template function: output the template parameters! \n");
           curprint( " /* < template parameters > */ ");
           SgTemplateArgumentPtrListPtr templateArguments = templateFunctionDeclaration->get_templateArguments();
-          printf ("Number of template arguments for instantiated template function = %zu \n",templateArguments->size());
+          printf ("Number of template arguments for instantiated template function = %" PRIuPTR " \n",templateArguments->size());
           if (templateArguments->size() > 0)
              {
              }
@@ -3384,22 +3384,37 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
      newinfo.unset_inConditional();
 
 #if 0
+
+#error "DEAD CODE!"
+
      SgExpression *tmp_expr = NULL;
      if ( (tmp_expr = for_stmt->get_test_expr()))
           unparseExpression(tmp_expr, info);
 #else
   // DQ (12/13/2005): New code for handling the test (which could be a declaration!)
-  // printf ("Output the test in the for statement format newinfo.inConditional() = %s \n",newinfo.inConditional() ? "true" : "false");
-  // curprint (" /* test */ ");
+#if 0
+     printf ("Output the test in the for statement format newinfo.inConditional() = %s \n",newinfo.inConditional() ? "true" : "false");
+     curprint (" /* test */ ");
+#endif
      SgStatement *test_stmt = for_stmt->get_test();
      ROSE_ASSERT(test_stmt != NULL);
   // if ( test_stmt != NULL )
      SgUnparse_Info testinfo(info);
      testinfo.set_SkipSemiColon();
      testinfo.set_inConditional();
-  // printf ("Output the test in the for statement format testinfo.inConditional() = %s \n",testinfo.inConditional() ? "true" : "false");
+#if 0
+     printf ("Output the test in the for statement format testinfo.inConditional() = %s \n",testinfo.inConditional() ? "true" : "false");
+#endif
      unparseStatement(test_stmt, testinfo);
 #endif
+
+  // DQ (4/6/2015): If the test is a transformation, then we have to output the semi-colon directly (see inliner tutorial test).
+     if (saved_unparsedPartiallyUsingTokenStream == true && test_stmt->isTransformation() == true)
+        {
+       // ROSE_ASSERT(test_stmt->isTransformation() == true);
+       // curprint (" /* output semi-colon at end of test */ ");
+          curprint (";");
+        }
 
 #if 0
      curprint ( string("; "));
@@ -3804,6 +3819,11 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // DQ (12/5/2007): This call to unparse the definition can change the scope in info, so save it and restore it
        // SgScopeStatement* savedScope = info.get_current_scope();
 
+       // DQ (6/23/2015): Added output of type attributes for defining function declaration (see test2015_164.c).
+       // Within GNU the attribute can appear before or after the return type, here it is before the return type.
+       // unp->u_sage->printAttributes(funcdecl_stmt,info);
+       // unp->u_sage->printAttributesForType(funcdecl_stmt,info);
+
        // DQ (12/3/2007): We want the changes to the access state to be saved in
        // the info object. See test2007_172.C for example of why this as a problem,
        // though it is not clear that a private friend is any different than a 
@@ -3929,6 +3949,20 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ("/* after unparsing the return type */");
 #endif
 
+#if 0
+          printf ("funcdecl_stmt->isForward() = %s \n",funcdecl_stmt->isForward() ? "true" : "false");
+          printf ("ninfo.SkipSemiColon()      = %s \n",ninfo.SkipSemiColon() ? "true" : "false");
+#endif
+#if 1
+       // DQ (6/23/2015): Output the GNU attribute where it appears between the return type and the function name.
+       // unp->u_sage->printAttributes(funcdecl_stmt,info);
+       // if (funcdecl_stmt->isForward() == false && !ninfo.SkipSemiColon())
+          if (funcdecl_stmt->isForward() == false)
+             {
+               unp->u_sage->printAttributes(funcdecl_stmt,info);
+             }
+#endif
+
        // DQ (10/15/2006): Mark that we are unparsing a function declaration (or member function declaration)
        // this will help us know when to trim the "::" prefix from the name qualiciation.  The "::" global scope
        // qualifier is not used in function declarations, but is used for function calls.
@@ -3951,6 +3985,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                SgSourceFile* sourceFile = TransformationSupport::getSourceFile(funcdecl_stmt);
                printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
 #endif
+
                if (firstNondefiningFunction != NULL)
                   {
                     ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt) != NULL);
@@ -3969,6 +4004,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()            = %s \n",funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName() = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
                        }
+                 // TV (07/01/2013) : prevent separated generation of decl and defn over an header file and a source file
                  // RPM (12/30/2013): Commented out because this fails for astSnippetTests which deep-copy a function
                  // declaration with definition and then call SageInterface::insertStatementBefore() to insert the copied
                  // ast into a different file.  Granted, this isn't a robust way to copy code from one AST into another
@@ -3989,6 +4025,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName()   = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope() = %p)->getFileName() = %s \n",firstNondefiningFunction->get_scope(),TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope())->getFileName().c_str());
                        }
+                 // TV (07/01/2013) : prevent separated generation of decl and defn over an header file and a source file
                  // RPM (12/10/2013): Commented out because this fails for astSnippetTests which deep-copy a function
                  // forward declaration and SageInterface::insertStatementBefore() the decl into a different file. The
                  // copied-and-inserted declaration is unparsed correctly if this assert is commented out.
@@ -4116,17 +4153,17 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     curprint(" }");
                   }
              }
-#if 0
             else
              {
+#if 0
             // DQ (1/19/2014): Added support for missing attributes.
             // We certainly need to represent a number of different kinds of gnu attributes 
             // consistantly on both the non-defining and defining function declarations.
             // However, this is a bug if the attribute appears after the function declaration
             // (at least for the case of the defining declaration).
                unp->u_sage->printAttributes(funcdecl_stmt,info);
-             }
 #endif
+             }
         }
 
 #if 0
@@ -4207,6 +4244,15 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // DQ (1/19/2014): Adding gnu attribute prefix support.
      ROSE_ASSERT(funcdefn_stmt->get_declaration() != NULL);
+
+#if 0
+  // DQ (6/23/2015): Added output of type attributes for defining function declaration (see test2015_164.c).
+  // Within GNU the attribute can appear before or after the return type, here it is before the return type.
+     SgFunctionDeclaration* funcdecl_stmt = isSgFunctionDeclaration(funcdefn_stmt->get_declaration());
+     ROSE_ASSERT(funcdecl_stmt != NULL);
+     unp->u_sage->printAttributes(funcdecl_stmt,info);
+#endif
+
      unp->u_sage->printPrefixAttributes(funcdefn_stmt->get_declaration(),info);
 
   // DQ (3/24/2004): Need to permit SgMemberFunctionDecl and SgTemplateInstantiationMemberFunctionDecl
@@ -5341,6 +5387,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      printf ("In unparseVarDeclStmt(): vardecl_stmt->get_is_thread_local  = %s \n",vardecl_stmt->get_is_thread_local() ? "true" : "false");
 #endif
 
+  // DQ (4/14/2015): This should always be false because there is nothing to partialy unparse within a variable declaration (that we support).
+     bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
+     ROSE_ASSERT(saved_unparsedPartiallyUsingTokenStream == false);
+
   // DQ (7/25/2014): We can assume that if this is g++ then we are using gcc for the backend C compiler.
      bool usingGxx = false;
      #ifdef USE_CMAKE
@@ -5352,6 +5402,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        usingGxx = (backEndCompiler == "g++");
      #endif
 
+#if 0
+  // DQ (5/24/2015): Moved to output specifier after the "extern" and "static" keywords.
      if (usingGxx)
         {
           SgFile* file = TransformationSupport::getFile(vardecl_stmt);
@@ -5392,8 +5444,18 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          curprint("thread_local ");
                        }
                   }
+                 else
+                  {
+                 // DQ (5/24/2015): Adding support for GNU __thread keyword (thread local support for older versions of C).
+                 // For older compilers we use the __thread modifier.  This may also we what is required for non-C11 support.
+                    if (is_C_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                       {
+                         curprint("__thread ");
+                       }
+                  }
              }
         }
+#endif
 
 #if 0
      vardecl_stmt->get_declarationModifier().display("Called from unparseVarDeclStmt()");
@@ -5484,7 +5546,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // DQ (11/28/2004): There should be at least a single variable here!
      ROSE_ASSERT(vardecl_stmt->get_variables().size() > 0);
-  // printf ("Number of variables = %zu \n",vardecl_stmt->get_variables().size());
+  // printf ("Number of variables = %" PRIuPTR " \n",vardecl_stmt->get_variables().size());
 
   // SgInitializedNamePtrList::iterator p = vardecl_stmt->get_variables().begin();
   // ROSE_ASSERT(p != vardecl_stmt->get_variables().end());
@@ -5520,7 +5582,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(p != vardecl_stmt->get_variables().end());
 
 #if 0
-     printf ("vardecl_stmt->get_variables().size() = %zu \n",vardecl_stmt->get_variables().size());
+     printf ("vardecl_stmt->get_variables().size() = %" PRIuPTR " \n",vardecl_stmt->get_variables().size());
      printf ("(*p)->get_using_C11_Alignas_keyword() = %s \n",(*p)->get_using_C11_Alignas_keyword() ? "true" : "false");
 #endif
 
@@ -5780,8 +5842,81 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
                unp->u_sage->printSpecifier2(vardecl_stmt, saved_ninfo);
 #if 0
+               printf ("DONE: Calling unp->u_sage->printSpecifier2 \n");
                curprint ("\n/* DONE: Calling unp->u_sage->printSpecifier2() */ \n");
 #endif
+
+#if 1
+            // DQ (5/24/2015): Moved to output specifier after the "extern" and "static" keywords.
+            // Note this this is required for test2009_19.c.
+               if (usingGxx)
+                  {
+                    SgFile* file = TransformationSupport::getFile(vardecl_stmt);
+#if 0
+                    printf ("In unparseVarDeclStmt(): resolving file to be %p \n",file);
+#endif
+                    bool is_Cxx_Compiler = false;
+                    bool is_C_Compiler   = false;
+                    if (file != NULL)
+                       {
+                         is_Cxx_Compiler = file->get_Cxx_only();
+                         is_C_Compiler   = file->get_C_only();
+                       }
+                      else
+                       {
+                         printf ("Warning: TransformationSupport::getFile(vardecl_stmt) == NULL \n");
+                       }
+#if 0
+                    printf ("In unparseVarDeclStmt(): is_C_Compiler = %s is_Cxx_Compiler = %s \n",is_C_Compiler ? "true" : "false",is_Cxx_Compiler ? "true" : "false");
+#endif
+                 // DQ (5/24/2015): I think I menat to say that For C we need to use the EDG 4.9 frontend (?).
+                 // For C we need to use the GNU 4.9 compiler.
+                 // Now check the version of the identified GNU g++ compiler.
+                    if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 9) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
+                        {
+                      // DQ (7/25/2014): Adding C11 thread local support.
+                      // if (vardecl_stmt->get_is_thread_local() == true)
+#if 0
+                         printf ("In unparseVarDeclStmt(): GNU or EDG? 4.9 or greater: vardecl_stmt->get_is_thread_local() = %s \n",vardecl_stmt->get_is_thread_local() ? "true" : "false");
+#endif
+                         if (is_C_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                            {
+                              curprint("_Thread_local ");
+                            }
+                       }
+                      else
+                       {
+                      // For C++ we can use the GNU 4.8 compiler.
+                         if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 8) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
+                            {
+                           // DQ (8/13/2014): Adding C++11 thread local support.
+                              if (is_Cxx_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                                 {
+                                   curprint("thread_local ");
+                                 }
+                                else
+                                 {
+                                // DQ (5/24/2015): Added this case to support the C language work even when using the GNU 4.8 compiler.
+                                   if (is_C_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                                      {
+                                     // curprint("_Thread_local ");
+                                        curprint("__thread ");
+                                      }
+                                 }
+                            }
+                           else
+                            {
+                           // DQ (5/24/2015): Adding support for GNU __thread keyword (thread local support for older versions of C).
+                           // For older compilers we use the __thread modifier.  This may also we what is required for non-C11 support.
+                              if (is_C_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                                 {
+                                   curprint("__thread ");
+                                 }
+                            }
+                       }
+                  }
+#endif
+
             // DQ (11/28/2004): Are these true! No! declStmt is really the declaration of any parent scope (excluding global scope!)
             // ROSE_ASSERT(declStmt != NULL);
             // ROSE_ASSERT(isSgTypedefDeclaration(declStmt) == NULL);
@@ -6126,16 +6261,22 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
                          curprint(tmp_name.str());
                        }
+#if 0
+                 // DQ (4/20/2015): Moved the output of the asm declaration specified to after the 2nd part of
+                 // the type has been output (required for variable declarations of type array).See test2015_105.c.
 
                  // DQ (7/25/2006): Support for asm register naming within variable declarations (should also be explicitly marked as "register")
                  // ROSE_ASSERT(decl_item->get_register_name() == 0);
                     if (decl_item->get_register_name_code() != SgInitializedName::e_invalid_register)
                        {
+#if 1
+                         printf ("In unparseVarDeclStmt(): Output asm register name code \n");
+#endif
                       // an asm ("<register name>") is in use
-                          curprint ( string(" asm (\""));
-                       // curprint ( string("<unparse register name>";
-                          curprint ( unparse_register_name(decl_item->get_register_name_code()));
-                          curprint ( string("\")"));
+                         curprint ( string(" asm (\""));
+                      // curprint ( string("<unparse register name>";
+                         curprint ( unparse_register_name(decl_item->get_register_name_code()));
+                         curprint ( string("\")"));
                        }
 
                  // DQ (1/25/2009): If we are not using the Assembly Register codes then we might be using the string 
@@ -6143,11 +6284,15 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // support the use of either Assembly Register codes or raw strings.
                     if (decl_item->get_register_name_string().empty() == false)
                        {
+#if 1
+                         printf ("In unparseVarDeclStmt(): Output asm register name \n");
+#endif
                       // an asm ("<register name>") is in use
-                          curprint ( string(" asm (\""));
-                          curprint ( decl_item->get_register_name_string() );
-                          curprint ( string("\")"));
+                         curprint ( string(" asm (\""));
+                         curprint ( decl_item->get_register_name_string() );
+                         curprint ( string("\")"));
                        }
+#endif
                   }
                  else
                   {
@@ -6187,7 +6332,44 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                curprint("/* END: output using unp->u_type->unparseType (2nd part) */");
 #endif
+            // DQ (4/20/2015): Moved the output of the asm declaration specified to after the 2nd part of
+            // the type has been output (required for variable declarations of type array). See test2015_105.c.
+               if (tmp_name.is_null() == false)
+                  {
+#if 0
+                    printf ("After output --- Variable Name: tmp_name = %s (and second part of type) \n",tmp_name.str());
+#endif
+                    ROSE_ASSERT(decl_item != NULL);
 
+                 // DQ (7/25/2006): Support for asm register naming within variable declarations (should also be explicitly marked as "register")
+                 // ROSE_ASSERT(decl_item->get_register_name() == 0);
+                    if (decl_item->get_register_name_code() != SgInitializedName::e_invalid_register)
+                       {
+#if 0
+                         printf ("In unparseVarDeclStmt(): Output asm register name code \n");
+#endif
+                      // an asm ("<register name>") is in use
+                         curprint ( string(" asm (\""));
+                      // curprint ( string("<unparse register name>";
+                         curprint ( unparse_register_name(decl_item->get_register_name_code()));
+                         curprint ( string("\")"));
+                       }
+
+                 // DQ (1/25/2009): If we are not using the Assembly Register codes then we might be using the string 
+                 // mechanism (stored in SgInitializedName::p_register_name_string). The new EDG/Sage interface can
+                 // support the use of either Assembly Register codes or raw strings.
+                    if (decl_item->get_register_name_string().empty() == false)
+                       {
+#if 0
+                         printf ("In unparseVarDeclStmt(): Output asm register name \n");
+#endif
+                      // an asm ("<register name>") is in use
+                         curprint ( string(" asm (\""));
+                         curprint ( decl_item->get_register_name_string() );
+                         curprint ( string("\")"));
+                       }
+                  }
+               
 #if 0
                printf ("Calling printAttributes() \n");
                curprint("\n/* Calling printAttributes() */ \n ");
@@ -7292,6 +7474,13 @@ Unparse_ExprStmt::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      SgUnparse_Info newinfo(info);
 
+  // DQ (5/9/2015): Added assertion.
+     ROSE_ASSERT(expr_stmt->get_expression() != NULL);
+
+#if 0
+     printf ("\n\nTop of unparseExprStmt() expr_stmt->get_expression() = %p = %s \n",expr_stmt->get_expression(),expr_stmt->get_expression()->class_name().c_str());
+#endif
+
   // Expressions are another place where a class definition should NEVER be unparsed
   // DQ (5/23/2007): Note that statement expressions can have class definition
   // (so they are exceptions, see test2007_51.C).
@@ -7316,17 +7505,25 @@ Unparse_ExprStmt::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
           unparseExpression(expr_stmt->get_expression(), newinfo);
         }
        else
+        {
           assert(false);
+        }
 
      if (newinfo.inVarDecl())
         {
           curprint ( string(","));
         }
        else
+        {
           if (!newinfo.inConditional() && !newinfo.SkipSemiColon())
              {
                curprint ( string(";"));
              }
+        }
+
+#if 0
+     printf ("Leaving unparseExprStmt() expr_stmt->get_expression() = %p = %s \n",expr_stmt->get_expression(),expr_stmt->get_expression()->class_name().c_str());
+#endif
    }
 
 
@@ -7416,7 +7613,7 @@ void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
                statementList->push_back(ifStatement->get_true_body());
                statementList->push_back(ifStatement->get_false_body());
 #if 0
-               printf ("statementList->size() = %zu \n",statementList->size());
+               printf ("statementList->size() = %" PRIuPTR " \n",statementList->size());
 #endif
              }
             else
@@ -8088,15 +8285,25 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
      printf ("In unparseAsmStmt(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
 
-     SgSourceFile* sourceFile = TransformationSupport::getSourceFile(stmt);
-     ROSE_ASSERT(sourceFile != NULL);
+  // DQ (5/23/2015): The p_skip_unparse_asm_commands data member has been changed to be a static data member
+  // so that we can support ASM statments hidden in AST islands (AST subtrees hidden in types and thus not
+  // connected to the AST (since types are shared).  The use of the typeof operator in conjunction with the
+  // GNU statemnet expression can permit this configuration.
+
+  // DQ (5/19/2015): Note that sourceFile will be NULL in the case where the asm statement is in 
+  // a GNU statement expression in a typeof operator. Not clear yet what to do about this case.
+  // See test2015_141.c for an example of this. One solution might be to make the 
+  // skip_unparse_asm_commands variable a static data member.
+  // SgSourceFile* sourceFile = TransformationSupport::getSourceFile(stmt);
+  // ROSE_ASSERT(sourceFile != NULL);
 
   // DQ (1/10/2009): The C language ASM statements are providing significant trouble, they are
   // frequently machine specific and we are compiling then on architectures for which they were 
   // not designed.  This option allows then to be read, constructed in the AST to support analysis
   // but not unparsed in the code given to the backend compiler, since this can fail. (See 
   // test2007_20.C from Linux Kernel for an example).
-     if (sourceFile->get_skip_unparse_asm_commands() == true)
+  // if (sourceFile->get_skip_unparse_asm_commands() == true)
+     if (SgSourceFile::get_skip_unparse_asm_commands() == true)
         {
        // This is a case were we skip the unparsing of the C language ASM statements, because while 
        // we can read then into the AST to support analysis, we can not always output them correctly.  
@@ -8203,12 +8410,12 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 
 #if ASM_DEBUGGING
-     printf ("In unparseAsmStmt(): asmTemplate.length()      = %zu \n",(size_t)asmTemplate.length());
+     printf ("In unparseAsmStmt(): asmTemplate.length()      = %" PRIuPTR " \n",(size_t)asmTemplate.length());
 #endif
 #if 0
      for (size_t i=0; i < asmTemplate.length(); i++)
         {
-          printf ("   --- ascii value for asmTemplate[i=%zu] = %u \n",i,asmTemplate[i]);
+          printf ("   --- ascii value for asmTemplate[i=%" PRIuPTR "] = %u \n",i,asmTemplate[i]);
         }
 #endif
 
@@ -8260,11 +8467,11 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
           size_t numClobbers = asm_stmt->get_clobberRegisterList().size();
 
 #if ASM_DEBUGGING
-          printf ("In unparseAsmStmt(): numClobbers = %zu \n",numClobbers);
+          printf ("In unparseAsmStmt(): numClobbers = %" PRIuPTR " \n",numClobbers);
 #endif
 
 #if ASM_DEBUGGING
-          printf ("In unparseAsmStmt(): numOutputOperands = %zu numInputOperands = %zu numClobbers = %zu \n",numOutputOperands,numInputOperands,numClobbers);
+          printf ("In unparseAsmStmt(): numOutputOperands = %" PRIuPTR " numInputOperands = %" PRIuPTR " numClobbers = %" PRIuPTR " \n",numOutputOperands,numInputOperands,numClobbers);
 #endif
 
        // DQ (2/4/2014): Adding initializer (to make me feel better about this code).
@@ -9147,7 +9354,13 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
             // This is likely a SgTemplateClassDeclaration
                if (isSgTemplateClassDeclaration(stmt) == NULL)
                   {
-                    printf ("Error: In unparseTemplateDeclarationStatment_support(): What is this if not a template function or template member function stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                    printf ("Note: In unparseTemplateDeclarationStatment_support(): What is this if not a template function or template member function stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+
+                 // DQ (7/6/2015): Markus suggested that this might be an unhandled case, but it is not clear it needs to be processed, for now let's detect it.
+                    if (isSgTemplateVariableDeclaration(stmt) != NULL)
+                       {
+                         printf ("Note: In unparseTemplateDeclarationStatment_support(): Found a SgTemplateVariableDeclaration = %p = %s \n",stmt,stmt->class_name().c_str());
+                       }
                   }
              }
         }
@@ -9586,7 +9799,6 @@ Unparse_ExprStmt::unparseMicrosoftAttributeDeclaration (SgStatement* stmt, SgUnp
       ROSE_ASSERT(false);
 #endif
    }
-
 
 
  // EOF

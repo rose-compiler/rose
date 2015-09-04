@@ -33,10 +33,22 @@ int main (int argc, char* argv[])
              {
                SgFunctionCallExp* functionCall = isSgFunctionCallExp(*i);
                ROSE_ASSERT(functionCall != NULL);
-
+#if 0
+               functionCall->get_file_info()->display("inlining function at function call");
+#endif
+#if 0
+            // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
+               checkTransformedFlagsVisitor(project);
+#endif
             // Not all function calls can be inlined in C++, so report if successful.
                bool sucessfullyInlined = doInline(functionCall);
-
+#if 0
+               printf ("sucessfullyInlined = %s \n",sucessfullyInlined ? "true" : "false");
+#endif
+#if 0
+            // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
+               checkTransformedFlagsVisitor(project);
+#endif
                if (sucessfullyInlined == true)
                   {
                  // As soon as the AST is modified recompute the list of function 
@@ -58,17 +70,32 @@ int main (int argc, char* argv[])
         }
      while(modifiedAST == true && count < 10);
 
+  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
+     checkTransformedFlagsVisitor(project);
+
   // Call function to postprocess the AST and fixup symbol tables
      FixSgProject(*project);
-
+#if 0
+  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
+     checkTransformedFlagsVisitor(project);
+#endif
   // Rename each variable declaration
      renameVariables(project);
-
+#if 0
+  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
+     checkTransformedFlagsVisitor(project);
+#endif
   // Fold up blocks
      flattenBlocks(project);
 
+  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
+     checkTransformedFlagsVisitor(project);
+
   // Clean up inliner-generated code
      cleanupInlinedCode(project);
+
+  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
+     checkTransformedFlagsVisitor(project);
 
   // Change members to public
      changeAllMembersToPublic(project);
@@ -76,6 +103,9 @@ int main (int argc, char* argv[])
   // DQ (3/11/2006): This fails so the inlining, or the AST Interface 
   // support, needs more work even though it generated good code.
   // AstTests::runAllTests(project);
+
+  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
+     checkTransformedFlagsVisitor(project);
 
      return backend(project);
    }

@@ -23,7 +23,7 @@ class Unparse_MOD_SAGE
           Unparser* unp;
 
      public:
-          Unparse_MOD_SAGE(Unparser* unp):unp(unp){};
+          Unparse_MOD_SAGE(Unparser* unp);
           virtual ~Unparse_MOD_SAGE() {};
 
           int cur_get_linewrap ();
@@ -112,6 +112,11 @@ class Unparse_MOD_SAGE
        // DQ (4/3/2004): Added to output modifiers (e.g. register) in formal function arguments
        // void printFunctionFormalArgumentSpecifier ( SgType* type, SgUnparse_Info& info );
 
+       // MS: temporary flag for experiments with uparsing of template instantiations
+          static bool experimentalMode;
+          static int experimentalModeVerbose;
+   private:
+          void outputTemplateSpecializationSpecifier2 ( SgDeclarationStatement* decl_stmt );
 
    };
 

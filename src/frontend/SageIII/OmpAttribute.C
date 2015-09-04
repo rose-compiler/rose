@@ -301,6 +301,37 @@ namespace OmpSupport
   }
 
 
+  //! Insert dist_data policy for one dimension of an array into its policy vector (duplicate, block(n), cyclic(4)) (up to size 3)
+  bool OmpAttribute::appendDistDataPolicy(SgVariableSymbol* array_symbol, omp_construct_enum dist_data_policy, SgExpression* size_exp /*= NULL*/)
+  {
+    assert (array_symbol != NULL);
+    SgType* t = array_symbol->get_type();
+    bool isPointer= (isSgPointerType(t) != NULL );
+    bool isArray= (isSgArrayType(t) != NULL);
+    if (!isPointer && ! isArray )
+    {
+      std::cerr<<"Error. OmpAttribute::appendDistDataPolicy() called by ompparser.yy expects a pointer or array type."<<std::endl;
+      std::cerr<<"while seeing "<<t->class_name()<<std::endl;
+    } 
+    this->dist_data_policies[array_symbol].push_back(std::make_pair(dist_data_policy,size_exp));
+    assert (this->dist_data_policies[array_symbol].size() <=3);
+  }
+
+  std::vector < std::pair < omp_construct_enum, SgExpression*> > 
+  OmpAttribute::getDistDataPolicy (SgVariableSymbol* array_symbol)
+  {
+     assert (array_symbol != NULL);
+    SgType* t = array_symbol->get_type();
+    bool isPointer= (isSgPointerType(t) != NULL );
+    bool isArray= (isSgArrayType(t) != NULL);
+    if (!isPointer && ! isArray )
+    {
+      std::cerr<<"Error. OmpAttribute::getDistDataPolicy() expects a pointer or array type."<<std::endl;
+      std::cerr<<"while seeing "<<t->class_name()<<std::endl;
+    } 
+    return this->dist_data_policies[array_symbol];  
+  }
+
   //! Insert a variable into a variable list for clause "targetConstruct", maintain the reversed variable-clause mapping also.
   SgVariableSymbol* OmpAttribute::addVariable(omp_construct_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar/*=NULL*/)
   {
@@ -416,7 +447,7 @@ namespace OmpSupport
   {
     return (find(reduction_operators.begin(), reduction_operators.end(),operatorx) != reduction_operators.end());
   }
-  // Map clause's variant, alloc, in, out, inout 
+  // Map clause's variant, alloc, to, from, tofrom 
   // we store map clauses of the same variants into a single entity
   void OmpAttribute::setMapVariant(omp_construct_enum operatorx)
   {
@@ -585,9 +616,15 @@ namespace OmpSupport
       case e_schedule_runtime: result = "runtime"; break;
 
       case e_map_alloc: result = "alloc"; break;
-      case e_map_in: result = "in"; break;
-      case e_map_out: result = "out"; break;
-      case e_map_inout: result = "inout"; break;
+      case e_map_to: result = "to"; break;
+      case e_map_from: result = "from"; break;
+      case e_map_tofrom: result = "tofrom"; break;
+
+      case e_dist_data: result = "dist_data"; break;
+      case e_duplicate: result = "duplicate"; break;
+      case e_cyclic:    result = "cyclic"; break;
+      case e_block:     result = "block"; break;
+       
 
       case e_simd: result = "simd"; break;
       case e_safelen: result = "safelen"; break;
@@ -911,6 +948,8 @@ namespace OmpSupport
 
      // experimental accelerator clauses 
       case e_map:
+      case e_dist_data:
+
       case e_device:
       case e_safelen:
       case e_linear:
@@ -959,9 +998,9 @@ namespace OmpSupport
     switch (omp_type)
     {
      case e_map_alloc: 
-     case e_map_in:
-     case e_map_out:
-     case e_map_inout:
+     case e_map_to:
+     case e_map_from:
+     case e_map_tofrom:
         result = true;
         break;
       default:
@@ -1141,21 +1180,47 @@ namespace OmpSupport
           omp_construct_enum map_kind = *iter;
           result +=" ("+ OmpSupport::toString(map_kind)+":";
           // variable list is associated to each map variant
-          string varListString = toOpenMPString(getVariableList(map_kind)); // variables are indexed by map kind, not map clause
+          string varListString = toOpenMPString(getVariableList(map_kind), true); // variables are indexed by map kind, not map clause
           result += varListString + ")";
         }
       } 
- 
       else // catch all cases
       {
         result += OmpSupport::toString(omp_type);
       }
     }// end clauses
+    else  // none directive, none clause cases
+      result += OmpSupport::toString(omp_type);
     return result; 
   }
 
+  std::string OmpAttribute::toOpenMPString (std::vector<std::pair<omp_construct_enum ,SgExpression* > >dim_policies)
+  {
+    std::string result; 
+    if (dim_policies.size()>0)
+    {
+      assert (dim_policies.size()<=3);
+      result += " dist_data(";
+      for (size_t i =0; i< dim_policies.size(); i++)
+      {
+        if (i>0) // leading , 
+          result +=","; 
+        std::pair <omp_construct_enum, SgExpression*> policy_pair = dim_policies[i];
+        result+= toOpenMPString(policy_pair.first);
+        if (policy_pair.second != NULL)
+        {
+          result+="(";
+          result+= policy_pair.second->unparseToString();
+          result+=")";
+        }
+      }
+      result += ")";
+    }
+
+    return result;
+  }
   //! Convert a variable list to x,y,z ,without parenthesis.
-  std::string OmpAttribute::toOpenMPString(std::vector<std::pair<std::string,SgNode* > >var_list)
+  std::string OmpAttribute::toOpenMPString(std::vector<std::pair<std::string,SgNode* > >var_list, bool checkDistPolicy /*= false*/)
   {
     string result;
     std::vector<std::pair<std::string,SgNode* > >::iterator iter;
@@ -1180,8 +1245,10 @@ namespace OmpSupport
          result += c_pair.second->unparseToString();
          result+="]";
        } 
-      }
-    }
+       if (checkDistPolicy)
+        result += toOpenMPString(dist_data_policies[sym]);
+      } // if initname
+    } // end for
     return result;
   }
 

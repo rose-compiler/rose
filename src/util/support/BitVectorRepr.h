@@ -1,3 +1,4 @@
+// See also, Sawyer::Container::BitVector ($ROSE/src/util/Sawyer/BitVector.h) which has a much richer API.
 #ifndef BITVECTOR_DATA_REPR_H
 #define BITVECTOR_DATA_REPR_H
 

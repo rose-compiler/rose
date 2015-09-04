@@ -564,19 +564,19 @@ namespace OmpSupport
     SgOmpClause::omp_map_operator_enum result = SgOmpClause::e_omp_map_unknown;
     switch (at_op)
     {
-      case e_map_inout: 
+      case e_map_tofrom: 
         {
-          result = SgOmpClause::e_omp_map_inout;
+          result = SgOmpClause::e_omp_map_tofrom;
           break;
         }
-      case e_map_in: 
+      case e_map_to: 
         {
-          result = SgOmpClause::e_omp_map_in;
+          result = SgOmpClause::e_omp_map_to;
           break;
         }
-      case e_map_out: 
+      case e_map_from: 
         {
-          result = SgOmpClause::e_omp_map_out;
+          result = SgOmpClause::e_omp_map_from;
           break;
         }
       case e_map_alloc: 
@@ -743,7 +743,7 @@ namespace OmpSupport
   }
 
   //! Build a map clause with a given operation type from OmpAttribute
-  // map may have several variants: inout, in, out, and alloc. 
+  // map may have several variants: tofrom, to, from, and alloc. 
   // the variables for each may have dimension info 
   SgOmpMapClause* buildOmpMapClause(OmpAttribute* att, omp_construct_enum map_op)
   {
@@ -984,6 +984,7 @@ namespace OmpSupport
           omp_construct_enum rop = *iter;
           SgOmpClause* sgclause = buildOmpReductionClause(att, rop);
           target->get_clauses().push_back(sgclause);
+          sgclause->set_parent(target);
         }
       }
       else if (c_clause == e_map)
@@ -996,6 +997,7 @@ namespace OmpSupport
           omp_construct_enum rop = *iter;
           SgOmpClause* sgclause = buildOmpMapClause(att, rop);
           target->get_clauses().push_back(sgclause);
+          sgclause->set_parent(target);
         }
       }
       else 
@@ -1233,6 +1235,7 @@ namespace OmpSupport
             SgOmpClause* sgclause = buildOmpNonReductionClause(att, c_clause);
             ROSE_ASSERT(sgclause != NULL);
             first_stmt->get_clauses().push_back(sgclause);
+            sgclause->set_parent(first_stmt);
             break;
           }
           // unique clauses allocated to omp for
@@ -1256,6 +1259,7 @@ namespace OmpSupport
             ROSE_ASSERT(sgclause != NULL);
             // TODO parallel workshare 
             isSgOmpClauseBodyStatement(second_stmt)->get_clauses().push_back(sgclause);
+            sgclause->set_parent(second_stmt);
             break;
           }
         case e_reduction: //special handling for reduction
@@ -1269,6 +1273,7 @@ namespace OmpSupport
               SgOmpClause* sgclause = buildOmpReductionClause(att, rop);
               ROSE_ASSERT(sgclause != NULL);
               isSgOmpClauseBodyStatement(second_stmt)->get_clauses().push_back(sgclause);
+              sgclause->set_parent(second_stmt);
             }
             break;
           }

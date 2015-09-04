@@ -7,8 +7,11 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 libsupportSources = VectorCommandOptions.C CommandOptions.C DAG.C DirectedGraph.C
 
+# Compile with BOOST_CPPFLAGS because that's where the "-pthread" switch is if user wants mult-thread support.
 noinst_LTLIBRARIES = libsupport.la
 libsupport_la_SOURCES = $(libsupportSources)
+libsupport_la_CPPFLAGS = $(BOOST_CPPFLAGS)
+libsupport_la_LDFLAGS = $(BOOST_THREAD_LIB)
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates

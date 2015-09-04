@@ -379,7 +379,9 @@ SgScopeStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 #if 0
           printf ("copy = %p = %s = %s \n",copy,copy->class_name().c_str(),SageInterface::get_name(copy).c_str());
 #endif
+#if 0
           copyScopeStatement->get_file_info()->display("In SgScopeStatement::fixupCopy_scopes()");
+#endif
         }
 
   // DQ (2/6/2009): Comment this out since it fails for the case of the reverseTraversal tests.
@@ -1099,6 +1101,35 @@ SgTemplateInstantiationDecl::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) c
   // Also call the base class version of the fixupCopycopy() member function
      SgClassDeclaration::fixupCopy_scopes(copy,help);
 
+#if 0
+     if (this->get_templateDeclaration() == NULL)
+        {
+          printf ("Error: this = %p = %s name = %s \n",this,this->class_name().c_str(),this->get_name().str());
+          this->get_file_info()->display("SgTemplateInstantiationDecl::fixupCopy_scopes(): this: debug");
+
+          SgTemplateInstantiationDecl* nondefiningDeclaration = isSgTemplateInstantiationDecl(this->get_firstNondefiningDeclaration());
+          SgTemplateInstantiationDecl* definingDeclaration    = isSgTemplateInstantiationDecl(this->get_definingDeclaration());
+
+          printf ("this->get_firstNondefiningDeclaration() = %p nondefiningDeclaration = %p \n",this->get_firstNondefiningDeclaration(),nondefiningDeclaration);
+          printf ("this->get_definingDeclaration()         = %p definingDeclaration    = %p \n",this->get_definingDeclaration(),definingDeclaration);
+          if (nondefiningDeclaration != NULL)
+             {
+               printf ("nondefiningDeclaration->get_templateDeclaration() = %p \n",nondefiningDeclaration->get_templateDeclaration());
+               if (nondefiningDeclaration->get_templateDeclaration() != NULL)
+                  {
+                 // DQ (3/7/2015): This is not the correct place to set this, but this is debugging code.
+                 // Also this is only an issue to EDG 4.7 and not EDG 4.9; and we are about retire EDG 4.7 support.
+                 // printf ("WARNING: setting templateDeclaration in SgTemplateInstantiationDecl::fixupCopy_scopes(): this = %p = %s name = %s \n",this,this->class_name().c_str(),this->get_name().str());
+                 // SgTemplateInstantiationDecl* nondefiningDeclaration = isSgTemplateInstantiationDecl(this->get_firstNondefiningDeclaration());
+                 // this->set_templateDeclaration(nondefiningDeclaration->get_templateDeclaration());
+                  }
+             }
+          if (definingDeclaration != NULL)
+             {
+               printf ("definingDeclaration->get_templateDeclaration() = %p \n",definingDeclaration->get_templateDeclaration());
+             }
+        }
+#endif
      ROSE_ASSERT(this->get_templateDeclaration() != NULL);
      ROSE_ASSERT(templateClassDeclaration_copy->get_templateDeclaration() != NULL);
 
@@ -1829,12 +1860,18 @@ SgIfStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 
      ROSE_ASSERT(this->get_true_body() != NULL);
      ROSE_ASSERT(ifStatement_copy->get_true_body() != NULL);
-     if (isSgScopeStatement(ifStatement_copy->get_true_body())) 
+     if (isSgScopeStatement(ifStatement_copy->get_true_body()) != NULL) 
         {
        // DQ (5/21/2013): Restrict direct access to the symbol table.
        // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->get_symbol_table() != NULL);
        // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->get_symbol_table()->size()  == 0);
-          ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->symbol_table_size() == 0);
+          if (isSgScopeStatement(ifStatement_copy->get_true_body())->symbol_table_size() != 0)
+             {
+               printf ("Warning: (fails for g++ 4.2): isSgScopeStatement(ifStatement_copy->get_true_body())->symbol_table_size() = %zu \n",isSgScopeStatement(ifStatement_copy->get_true_body())->symbol_table_size());
+            // ifStatement_copy->get_true_body()->get_file_info()->display("ifStatement_copy->get_true_body(): debug");
+             }
+       // DQ (3/3/12): This fails for the g++ version 4.2.4 compiler (newer versions of g++ pass fine).
+       // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_true_body())->symbol_table_size() == 0);
         }
 
   // printf ("\nProcess the TRUE body of the SgIfStmt \n\n");
@@ -1842,12 +1879,18 @@ SgIfStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
      this->get_true_body()->fixupCopy_scopes(ifStatement_copy->get_true_body(),help);
 
      ROSE_ASSERT((this->get_false_body() != NULL) == (ifStatement_copy->get_false_body() != NULL));
-     if (isSgScopeStatement(ifStatement_copy->get_false_body())) 
+     if (isSgScopeStatement(ifStatement_copy->get_false_body()) != NULL) 
         {
        // DQ (5/21/2013): Restrict direct access to the symbol table.
        // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->get_symbol_table()->size() == 0);
        // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->get_symbol_table() != NULL);
-          ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->symbol_table_size() == 0);
+          if (isSgScopeStatement(ifStatement_copy->get_false_body())->symbol_table_size() != 0)
+             {
+               printf ("Warning: (fails for g++ 4.2): isSgScopeStatement(ifStatement_copy->get_false_body())->symbol_table_size() = %zu \n",isSgScopeStatement(ifStatement_copy->get_false_body())->symbol_table_size());
+            // ifStatement_copy->get_true_body()->get_file_info()->display("ifStatement_copy->get_false_body(): debug");
+             }
+       // DQ (3/3/12): This fails for the g++ version 4.2.4 compiler (newer versions of g++ pass fine).
+       // ROSE_ASSERT(isSgScopeStatement(ifStatement_copy->get_false_body())->symbol_table_size() == 0);
         }
 
   // printf ("\nProcess the FALSE body of the SgIfStmt \n\n");

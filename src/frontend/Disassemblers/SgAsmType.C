@@ -122,11 +122,15 @@ SgAsmIntegerType::get_isSigned() const {
 
 /** Construct a new floating-point type. */
 SgAsmFloatType::SgAsmFloatType(ByteOrder::Endianness sex, size_t nBits,
-                               size_t significandOffset, size_t significandNBits, size_t signBitOffset,
-                               size_t exponentOffset, size_t exponentNBits, uint64_t exponentBias)
-    : SgAsmScalarType(sex, nBits), p_significandOffset(significandOffset), p_significandNBits(significandNBits),
-      p_signBitOffset(signBitOffset), p_exponentOffset(exponentOffset), p_exponentNBits(exponentNBits),
-      p_exponentBias(exponentBias) {
+                               const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
+                               uint64_t exponentBias, unsigned flags)
+    : SgAsmScalarType(sex, nBits), p_signBitOffset(signBit), p_exponentBias(exponentBias), p_flags(flags) {
+    ASSERT_forbid(significandBits.isEmpty());
+    ASSERT_forbid(exponentBits.isEmpty());
+    p_significandOffset = significandBits.least();
+    p_significandNBits = significandBits.size();
+    p_exponentOffset = exponentBits.least();
+    p_exponentNBits = exponentBits.size();
     check();
 }
 
@@ -134,20 +138,12 @@ SgAsmFloatType::SgAsmFloatType(ByteOrder::Endianness sex, size_t nBits,
 void
 SgAsmFloatType::check() const {
     SgAsmScalarType::check();
-    ASSERT_always_require(p_significandOffset < p_nBits);
-    ASSERT_always_require(p_significandNBits > 0);
-    ASSERT_always_require(p_significandOffset + p_significandNBits <= p_nBits);
-    ASSERT_always_require(p_signBitOffset < p_nBits);
-    ASSERT_always_require(p_exponentOffset < p_nBits);
-    ASSERT_always_require(p_exponentOffset + p_exponentNBits <= p_nBits);
-
-    typedef Sawyer::Container::Interval<size_t> BitRange;
-    BitRange exponentRegion = BitRange::baseSize(p_exponentOffset, p_exponentNBits);
-    BitRange significandRegion = BitRange::baseSize(p_significandOffset, p_significandNBits);
-    BitRange signBit = BitRange::baseSize(p_signBitOffset, 1);
-    ASSERT_always_forbid(exponentRegion.isOverlapping(significandRegion));
-    ASSERT_always_forbid(exponentRegion.isOverlapping(signBit));
-    ASSERT_always_forbid(significandRegion.isOverlapping(signBit));
+    ASSERT_always_forbid(exponentBits().isOverlapping(significandBits()));
+    ASSERT_always_forbid(exponentBits().isOverlapping(signBit()));
+    ASSERT_always_forbid(significandBits().isOverlapping(signBit()));
+    ASSERT_always_require(exponentBits().greatest() < get_nBits());
+    ASSERT_always_require(significandBits().greatest() < get_nBits());
+    ASSERT_always_require(signBit() < get_nBits());
 }
 
 // see super class
@@ -158,39 +154,48 @@ SgAsmFloatType::toString() const {
            <<"significand=[" <<p_significandOffset <<"+" <<p_significandNBits <<"], "
            <<"sign=[" <<p_signBitOffset <<"+1], "
            <<"exponent=[" <<p_exponentOffset <<"+" <<p_exponentNBits <<"], "
-           <<"bias=" <<StringUtility::toHex(p_exponentBias) <<", "
-           <<SgAsmScalarType::toString() <<")";
+           <<"bias=" <<StringUtility::toHex(p_exponentBias) <<", ";
+    if (gradualUnderflow())
+        retval <<" gradualUnderflow, ";
+    if (normalizedSignificand())
+        retval <<" normalizedSignificand, ";
+    retval <<SgAsmScalarType::toString() <<")";
     return retval.str();
 };
 
-size_t
-SgAsmFloatType::get_significandOffset() const {
-    return p_significandOffset;
+SgAsmFloatType::BitRange
+SgAsmFloatType::significandBits() const {
+    return BitRange::baseSize(p_significandOffset, p_significandNBits);
+}
+
+SgAsmFloatType::BitRange
+SgAsmFloatType::exponentBits() const {
+    return BitRange::baseSize(p_exponentOffset, p_exponentNBits);
 }
 
 size_t
-SgAsmFloatType::get_significandNBits() const {
-    return p_significandNBits;
-}
-
-size_t
-SgAsmFloatType::get_signBitOffset() const {
+SgAsmFloatType::signBit() const {
     return p_signBitOffset;
 }
 
-size_t
-SgAsmFloatType::get_exponentOffset() const {
-    return p_exponentOffset;
-}
-
-size_t
-SgAsmFloatType::get_exponentNBits() const {
-    return p_exponentNBits;
-}
-
 uint64_t
-SgAsmFloatType::get_exponentBias() const {
+SgAsmFloatType::exponentBias() const {
     return p_exponentBias;
+}
+
+unsigned
+SgAsmFloatType::flags() const {
+    return p_flags;
+}
+
+bool
+SgAsmFloatType::gradualUnderflow() const {
+    return 0 != (p_flags & GRADUAL_UNDERFLOW);
+}
+
+bool
+SgAsmFloatType::normalizedSignificand() const {
+    return 0 != (p_flags & NORMALIZED_SIGNIFICAND);
 }
 
 

@@ -336,6 +336,49 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      file->display("file: Unparser::unparseFile");
 #endif
 
+     // What kind of language are we unparsing.  These are more robust tests
+     // for multiple files of multiple languages than using SageInterface.  This
+     // is also how the language-dependent parser is called.
+     bool isFortranFile = false;
+     if ( ( (file->get_Fortran_only() == true) &&
+            (file->get_outputLanguage() ==
+             SgFile::e_default_output_language) ) ||
+          (file->get_outputLanguage() == SgFile::e_Fortran_output_language) )
+       {
+         isFortranFile = true;
+       }
+     bool isCfile = false;
+     if ( ( (file->get_C_only() == true) &&
+            (file->get_outputLanguage() ==
+             SgFile::e_default_output_language) ) ||
+          (file->get_outputLanguage() == SgFile::e_C_output_language) )
+       {
+         isCfile = true;
+       }
+     bool isCxxFile = false;
+     if ( ( (file->get_Cxx_only() == true) &&
+            (file->get_outputLanguage() ==
+             SgFile::e_default_output_language) ) ||
+          (file->get_outputLanguage() == SgFile::e_Cxx_output_language) )
+       {
+         isCxxFile = true;
+       }
+     // What about all the others?  X10, Java, ...?
+     // Can only be parsing to one language!
+     ROSE_ASSERT(((int)isFortranFile + (int)isCfile + (int)isCxxFile) <= 1);
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgStatement*> transformedStatementSet_1 = SageInterface::collectTransformedStatements(file);
+     printf ("In Unparser::unparseFile(): part 1: transformedStatementSet_1.size() = %zu \n",transformedStatementSet_1.size());
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgLocatedNode*> modifiedLocatedNodesSet_1 = SageInterface::collectModifiedLocatedNodes(file);
+     printf ("In Unparser::unparseFile(): part 1: modifiedLocatedNodesSet_1.size() = %zu \n",modifiedLocatedNodesSet_1.size());
+#endif
+
   // DQ (6/30/2013): Added support to time the unparsing of the file (name qualification will be nested in this time).
      TimingPerformance timer ("Unparse File:");
 
@@ -350,7 +393,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // transformations.  This also make simple analysis much cheaper since the hidel list computation is
   // expensive (in this implementation).
   // DQ (8/6/2007): Only compute the hidden lists if working with C++ code!
-     if (SageInterface::is_Cxx_language() == true)
+     if (isCxxFile)
         {
        // DQ (5/22/2007): Moved from SgProject::parse() function to here so that propagateHiddenListData() could be called afterward.
        // DQ (5/8/2007): Now build the hidden lists for types and declarations (Robert Preissl's work)
@@ -367,6 +410,12 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
         // Build the local set to use to record when declaration that might required qualified references have been seen.
           std::set<SgNode*> referencedNameSet;
 
+       // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+          std::set<SgLocatedNode*> modifiedLocatedNodesSet_1 = SageInterface::collectModifiedLocatedNodes(file);
+          size_t numberOfModifiedNodesBeforeNameQualification = modifiedLocatedNodesSet_1.size();
+#if 0
+          printf ("In Unparser::unparseFile(): generateNameQualificationSupport(): part 1: modifiedLocatedNodesSet_1.size() = %zu \n",modifiedLocatedNodesSet_1.size());
+#endif
        // printf ("Developing a new implementation of the name qualification support. \n");
           generateNameQualificationSupport(file,referencedNameSet);
        // printf ("DONE: new name qualification support built. \n*************************\n\n");
@@ -375,11 +424,40 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
        // DQ (6/5/2007): We actually need this now since the hidden lists are not pushed to lower scopes where they are required.
        // DQ (5/22/2007): Added support for passing hidden list information about types, declarations and elaborated types to child scopes.
           propagateHiddenListData(file);
+
+       // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+          std::set<SgLocatedNode*> modifiedLocatedNodesSet_2 = SageInterface::collectModifiedLocatedNodes(file);
+          size_t numberOfModifiedNodesAfterNameQualification = modifiedLocatedNodesSet_2.size();
+#if 0
+          printf ("In Unparser::unparseFile(): generateNameQualificationSupport(): part 2: modifiedLocatedNodesSet_2.size() = %zu \n",modifiedLocatedNodesSet_2.size());
+#endif
+
+       // DQ (6/11/2015): Introduce error checking on the AST if we are using the token-based unparsing.
+          if ( (file->get_unparse_tokens() == true) && (numberOfModifiedNodesAfterNameQualification != numberOfModifiedNodesBeforeNameQualification) )
+             {
+               printf ("In Unparser::unparseFile(): numberOfModifiedNodesBeforeNameQualification = %zu numberOfModifiedNodesAfterNameQualification = %zu \n",
+                    numberOfModifiedNodesBeforeNameQualification,numberOfModifiedNodesAfterNameQualification);
+               printf ("ERROR: namequalification step has introduced modified IR nodes in the AST (a problem for the token-based unparsing) \n");
+               ROSE_ASSERT(false);
+             }
+
         }
 
 #if 0
      printf ("In Unparser::unparseFile(): SageInterface::is_C_language() = %s \n",SageInterface::is_C_language() ? "true" : "false");
      printf ("In Unparser::unparseFile(): file->get_unparse_tokens()      = %s \n",file->get_unparse_tokens() ? "true" : "false");
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgStatement*> transformedStatementSet_2 = SageInterface::collectTransformedStatements(file);
+     printf ("In Unparser::unparseFile(): part 2: transformedStatementSet_2.size() = %zu \n",transformedStatementSet_2.size());
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgLocatedNode*> modifiedLocatedNodesSet_2 = SageInterface::collectModifiedLocatedNodes(file);
+     printf ("In Unparser::unparseFile(): part 2: modifiedLocatedNodesSet_2.size() = %zu \n",modifiedLocatedNodesSet_2.size());
 #endif
 
 #if 0
@@ -390,7 +468,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
   // if (SageInterface::is_C_language() == true)
   // if (SageInterface::is_C_language() == true && file->get_unparse_tokens() == true)
-     if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
+     if ( (isCfile || isCxxFile) && file->get_unparse_tokens() == true)
         {
        // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
 #if 0
@@ -404,7 +482,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #if 1
           if ( SgProject::get_verbose() > 0 )
              {
-               printf ("In Unparser::unparseFile(): SgTokenPtrList token_list: token_list.size() = %zu \n",file->get_token_list().size());
+               printf ("In Unparser::unparseFile(): SgTokenPtrList token_list: token_list.size() = %" PRIuPTR " \n",file->get_token_list().size());
              }
 #endif
 
@@ -415,7 +493,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #endif
 
   // DQ (12/6/2014): this is the part of the token stream support that is required after transformations have been done in the AST.
-     if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
+     if ( (isCfile || isCxxFile) && file->get_unparse_tokens() == true)
         {
        // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
 #if 0
@@ -431,7 +509,11 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #endif
         }
      
-
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgStatement*> transformedStatementSet_3 = SageInterface::collectTransformedStatements(file);
+     printf ("In Unparser::unparseFile(): part 3: transformedStatementSet_3.size() = %zu \n",transformedStatementSet_3.size());
+#endif
 
   // Turn ON the error checking which triggers an if the default SgUnparse_Info constructor is called
      SgUnparse_Info::set_forceDefaultConstructorToTriggerError(true);
@@ -710,7 +792,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      ROSEAttributesListContainerPtr filePreprocInfo = file->get_preprocessorDirectivesAndCommentsList();
 
 #if 0
-     printf ("filePreprocInfo->getList().size() = %zu \n",filePreprocInfo->getList().size());
+     printf ("filePreprocInfo->getList().size() = %" PRIuPTR " \n",filePreprocInfo->getList().size());
 #endif
 
   // We should at least have the current files CPP/Comment/Token information (even if it is an empty file).
@@ -720,7 +802,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      ROSE_ASSERT(mapFilenameToAttributes.empty() == true);
 
 #if 0
-     printf ("Evaluate what files are processed in map (filePreprocInfo->getList().size() = %zu) \n",filePreprocInfo->getList().size());
+     printf ("Evaluate what files are processed in map (filePreprocInfo->getList().size() = %" PRIuPTR ") \n",filePreprocInfo->getList().size());
      std::map<std::string,ROSEAttributesList* >::iterator map_iterator = filePreprocInfo->getList().begin();
      while (map_iterator != filePreprocInfo->getList().end())
         {
@@ -729,7 +811,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
           map_iterator++;
         }
-     printf ("DONE: Evaluate what files are processed in map (filePreprocInfo->getList().size() = %zu) \n",filePreprocInfo->getList().size());
+     printf ("DONE: Evaluate what files are processed in map (filePreprocInfo->getList().size() = %" PRIuPTR ") \n",filePreprocInfo->getList().size());
 #endif
 
   // std::map<std::string,ROSEAttributesList* >::iterator currentFileItr = mapFilenameToAttributes.find(fileNameForTokenStream);
@@ -755,7 +837,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
 #if 0
      printf ("Output token list (number of CPP directives and comments = %d): \n",existingListOfAttributes->size());
-     printf ("Output token list (number of tokens = %zu): \n",tokenList.size());
+     printf ("Output token list (number of tokens = %" PRIuPTR "): \n",tokenList.size());
 #endif
 
 #if 0
@@ -2019,14 +2101,19 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                          const SgTemplateArgument* templateArgument = isSgTemplateArgument(astNode);
 #if 0
                       // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
-                         printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s \n",returnString.c_str());
+                         printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
+                      // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s \n",returnString.c_str());
 #endif
                       // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
                          ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
                          roseUnparser.u_exprStmt->unparseTemplateArgument(const_cast<SgTemplateArgument*>(templateArgument),inheritedAttributeInfo);
 #if 0
                       // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
-                         printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s \n",returnString.c_str());
+                      // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
+                      // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s \n",returnString.c_str());
+
+                         string local_returnString = outputString.str();
+                         printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): local_returnString = %s \n",local_returnString.c_str());
 #endif
                          break;
                        }
@@ -2622,6 +2709,15 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // And finally we need to close the file (to flush everything out!)
           ROSE_OutputFile.close();
 
+       // Invoke post-output user-defined callbacks if any.  We must pass the absolute output name because the build system may
+       // have changed directories by now and the callback might need to know how this name compares to the top of the build
+       // tree.
+          if (unparseHelp != NULL) {
+              rose::FileSystem::Path fullOutputName = rose::FileSystem::makeAbsolute(outputFilename);
+              UnparseFormatHelp::PostOutputCallback::Args args(file, fullOutputName);
+              unparseHelp->postOutputCallbacks.apply(true, args);
+          }
+
        // DQ (3/19/2014): If -rose:noclobber_if_different_output, then test the generated file against the original file.
           if (trigger_file_comparision == true)
              {
@@ -2653,7 +2749,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                     if ( SgProject::get_verbose() > 0 )
                        {
-                         printf ("   --- files are the same size = %zu (checking contents) \n",filesize);
+                         printf ("   --- files are the same size = %" PRIuPTR " (checking contents) \n",filesize);
                        }
 
                      size_t counter = 0;
@@ -2681,7 +2777,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                        {
                          size_t saved_filesize       = file_size(saved_output_file);
                          size_t alternative_filesize = file_size(alternative_output_file);
-                         printf ("   --- files are not the same size saved_filesize = %zu alternative_filesize = %zu \n",saved_filesize,alternative_filesize);
+                         printf ("   --- files are not the same size saved_filesize = %" PRIuPTR " alternative_filesize = %" PRIuPTR " \n",saved_filesize,alternative_filesize);
                        }
 
                     files_are_identical = false;

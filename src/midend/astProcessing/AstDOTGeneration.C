@@ -9,6 +9,7 @@
 #include "sage3basic.h"
 #include "AstDOTGeneration.h"
 #include "transformationTracking.h"
+#include "stringify.h"                                  // automatic enum-to-string functions
 
 // DQ (10/21/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
@@ -24,8 +25,8 @@
    #include "AsmUnparser_compat.h"
 #endif
 
-// DQ (12/31/2005): This is OK if not declared in a header file
-using namespace std;
+using namespace std;                                    // DQ (12/31/2005): This is OK if not declared in a header file
+using namespace rose;                                   // until this file is all moved into the rose namespace
 
 void
 AstDOTGeneration::generate(SgNode* node, string filename, traversalType tt, string filenamePostfix)
@@ -84,7 +85,9 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
   // I think this may no longer be required, but I will leave it in place for now
      visitedNodes.insert(node);
 
-  // printf ("AstDOTGeneration::evaluateInheritedAttribute(): node = %s \n",node->class_name().c_str());
+#if 0
+     printf ("AstDOTGeneration::evaluateInheritedAttribute(): node = %s \n",node->class_name().c_str());
+#endif
 
   // We might not want to increment the trace position information for
   // the IR nodes from rose_edg_required_macros_and_functions.h
@@ -122,7 +125,10 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
                   {
                     ia.skipSubTree = true;
                   }
-#if 0
+
+#define DEBUG_DSL_EXAMPLES 0
+
+#if DEBUG_DSL_EXAMPLES
             // DQ (2/14/2015): I think we need to have a mechanism to support this so that we can better 
             // handle visualization of selected portions of large files.
 
@@ -151,7 +157,7 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
              {
              }
 #endif
-#if 0
+#if DEBUG_DSL_EXAMPLES
        // DQ (2/12/2015): Test skipping template member functions that are not from the current file.
        // I think we need to have a mechanism to support this so that we can better handle visualization 
        // of selected portions of large files.
@@ -372,6 +378,17 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                nodelabel += string("\\n") + namespaceDeclarationStatement->get_name();
              }
 
+       // DQ (4/5/2015): Added variable names and associated info to the generated dot file graphs of the AST.
+          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(genericDeclaration);
+          if (variableDeclaration != NULL)
+             {
+            // This is added to support debugging of multiple variables in the same declaration.
+               nodelabel += string("\\n isAssociatedWithDeclarationList = ") + (variableDeclaration->get_isAssociatedWithDeclarationList() ? "true " : "false ");
+
+            // DQ (4/5/2015): I think this is not used and should be removed.
+            // nodelabel += string("\\n isFirstDeclarationOfDeclarationList = ") + (variableDeclaration->get_isFirstDeclarationOfDeclarationList() ? "true " : "false ");
+             }
+
           nodelabel += string("\\n") + name;
         }
 
@@ -389,6 +406,11 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      if (initializedName != NULL)
         {
           nodelabel += string("\\n") + initializedName->get_name();
+
+       // DQ (4/14/2015): We need to have these additional data members output (similar to SgStatement).
+          nodelabel += string("\\n") + string("isModified = ") + string(initializedName->get_isModified() ? "true" : "false");
+          nodelabel += string("\\n") + string("containsTransformation = ") + string(initializedName->get_containsTransformation() ? "true" : "false");
+          nodelabel += string("\\n") + string("isTransformation = ") + string(initializedName->isTransformation() ? "true" : "false");
         }
 
   // DQ (4/6/2011): Added support for output of the value within SgIntVal IR nodes.
@@ -519,13 +541,19 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
         {
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           string name = unparseExpression(genericExpression, NULL, NULL);
-          ROSE_ASSERT(name.empty() == false);
-          nodelabel += string("\\n") + name;
+          if (!name.empty())
+              nodelabel += string("\\n") + name;
 #else
           printf ("Warning: In AstDOTGeneration.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
 #endif
         }
 
+     if (SgAsmRiscOperation *riscOp = isSgAsmRiscOperation(node)) {
+         string name = stringifySgAsmRiscOperationRiscOperator(riscOp->get_riscOperator(), "OP_");
+         if (!name.empty())
+             nodelabel += "\\n" + name;
+     }
+     
   // DQ (10/29/2008): Added some support for additional output of internal names for specific IR nodes.
   // In generall there are long list of these IR nodes in the binary and this helps make some sense of 
   // the lists (sections, symbols, etc.).
@@ -868,6 +896,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                               printf ("Output the DOT graph from the SgFile IR node (SgProject was not traversed) \n");
 
                          dotrep.writeToFileAsGraph(filename);
+                         dotrep.clear();
                        }
                       else
                        {

@@ -37,6 +37,12 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeString          , "TypeString",           "T_STRING" );
      NEW_TERMINAL_MACRO ( TypeBool            , "TypeBool",             "T_BOOL" );
 
+     //SK(08/20/2015): TypeMatrix to represent a Matlab matrix type
+     NEW_TERMINAL_MACRO ( TypeMatrix          , "TypeMatrix",            "T_MATRIX" );
+
+     //SK(08/20/2015): TypeTuple to represent the return type of a Matlab function that can return multiple types
+     NEW_TERMINAL_MACRO ( TypeTuple           , "TypeTuple",             "T_TUPLE");
+
   // DQ (7/29/2014): Added nullptr type (I think we require this for C++11 support).
      NEW_TERMINAL_MACRO ( TypeNullptr         , "TypeNullptr",          "T_NULLPTR" );
 
@@ -51,6 +57,9 @@ Grammar::setUpTypes ()
 
   // DQ (8/2/2014): Adding support for C++11 decltype() (which should be an new SgType in the IR).
      NEW_TERMINAL_MACRO ( DeclType            , "DeclType",             "T_DECLTYPE" );
+
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     NEW_TERMINAL_MACRO ( TypeOfType          , "TypeOfType",             "T_TYPEOF_TYPE" );
 
      NEW_TERMINAL_MACRO ( TypeCAFTeam         , "TypeCAFTeam",          "T_CAFTEAM" );
 
@@ -179,7 +188,10 @@ Grammar::setUpTypes ()
           ArrayType            | TypeEllipse             | TemplateType              | QualifiedNameType    |
           TypeComplex          | TypeImaginary           | TypeDefault               | TypeCAFTeam          |
           TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  | 
-          TypeNullptr          | DeclType , "Type","TypeTag", false);
+          TypeNullptr          | DeclType                | TypeOfType                | TypeMatrix           |
+          TypeTuple , "Type","TypeTag", false);
+
+     //SK(08/20/2015): TypeMatrix and TypeTuple for Matlab
 
 #if 1
   // ***********************************************************************
@@ -254,6 +266,10 @@ Grammar::setUpTypes ()
 
   // DQ (8/2/2014): Adding support for C++11 decltype().
      Type.setDataPrototype("SgDeclType*","decltype_ref_to","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     Type.setDataPrototype("SgTypeOfType*","typeof_ref_to","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 1
@@ -342,6 +358,10 @@ Grammar::setUpTypes ()
   // DQ (8/2/2014): Adding support for C++11 decltype().
      DeclType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      DeclType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     TypeOfType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     TypeOfType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
      TemplateType.excludeFunctionPrototype        ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      TemplateType.excludeFunctionSource           ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
@@ -445,6 +465,18 @@ Grammar::setUpTypes ()
   // DQ (7/29/2014): Added nullptr type (I think we require this for C++11 support).
      TypeNullptr.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+
+     TypeMatrix.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+     TypeTuple.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     
+     TypeTuple.setDataPrototype("SgTypePtrList", "types", "",
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     TypeTuple.setFunctionPrototype     ("HEADER_TYPE_TUPLE", "../Grammar/Type.code" );
+     TypeTuple.setFunctionSource     ("SOURCE_TYPE_TUPLE", "../Grammar/Type.code" );
+
+     
      TypeDefault.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // PointerType.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // ReferenceType.setDataPrototype        ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -508,6 +540,11 @@ Grammar::setUpTypes ()
   // DQ (8/2/2014): Adding support for C++11 decltype().
      CUSTOM_CREATE_TYPE_MACRO(DeclType,
             "SOURCE_CREATE_TYPE_FOR_DECL_TYPE",
+            "SgExpression* expr = NULL");
+
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     CUSTOM_CREATE_TYPE_MACRO(TypeOfType,
+            "SOURCE_CREATE_TYPE_FOR_TYPEOF_TYPE",
             "SgExpression* expr = NULL");
 
   // DQ (12/4/2011): Adding support for template declarations into the AST.
@@ -593,6 +630,9 @@ Grammar::setUpTypes ()
      TypeInt.setDataPrototype           ("int","field_size","= 0",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     TypeMatrix.setDataPrototype           ("SgType*","base_type","= NULL",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     
   // DQ (4/23/2014): I think this has to be defined as NO_TRAVERSAL || TYPE_TRAVERSAL so that we can traverse the nested type.
   // This is required to support type transformations fo the shared memory DSL work. Likely also required for ReferenceType
   // and any other type with a base_type.
@@ -623,6 +663,14 @@ Grammar::setUpTypes ()
                                 CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      DeclType.setFunctionPrototype ("HEADER_GET_BASE_TYPE", "../Grammar/Type.code" );
+
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     TypeOfType.setFunctionPrototype ("HEADER_TYPEOF_TYPE", "../Grammar/Type.code" );
+     TypeOfType.setDataPrototype ("SgExpression*","base_expression","= NULL",
+                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TypeOfType.setDataPrototype ("SgType*","base_type","= NULL",
+                                CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TypeOfType.setFunctionPrototype ("HEADER_GET_BASE_TYPE", "../Grammar/Type.code" );
 
      PointerMemberType.setFunctionPrototype  ("HEADER_POINTER_MEMBER_TYPE", "../Grammar/Type.code" );
      PointerMemberType.setDataPrototype ("SgType*","class_type","= NULL",
@@ -929,6 +977,11 @@ Grammar::setUpTypes ()
      DeclType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      DeclType.setFunctionSource     ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
 
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     TypeOfType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+  // DQ (4/8/2015): We need a specific version of this function for the typeof() operator.
+  // TypeOfType.setFunctionSource     ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
+
      ArrayType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
   // ArrayType.setFunctionSource ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
 
@@ -1002,6 +1055,9 @@ Grammar::setUpTypes ()
   // DQ (7/29/2014): Added nullptr type (I think we require this for C++11 support).
      TypeNullptr.editSubstitute( "MANGLED_ID_STRING", "nullptr_t" );
 
+     TypeMatrix.editSubstitute( "MANGLED_ID_STRING", "matrix_t" );
+     TypeTuple.editSubstitute( "MANGLED_ID_STRING", "tuple_t" );
+     
      TypeComplex.editSubstitute( "MANGLED_ID_STRING", "Complex" );
      TypeImaginary.editSubstitute( "MANGLED_ID_STRING", "Imaginary" );
   // TypeDefault.editSubstitute( "MANGLED_ID_STRING", "u" );
@@ -1011,6 +1067,9 @@ Grammar::setUpTypes ()
 
   // DQ (8/2/2014): Adding support for C++11 decltype().
      DeclType.editSubstitute( "MANGLED_ID_STRING", "decltype" );
+
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     TypeOfType.editSubstitute( "MANGLED_ID_STRING", "typeOftype" );
 
   // ArrayType.editSubstitute( "MANGLED_ID_STRING", "A_" );
      TypeEllipse.editSubstitute( "MANGLED_ID_STRING", "e" );
@@ -1049,6 +1108,9 @@ Grammar::setUpTypes ()
 
   // DQ (8/2/2014): Adding support for C++11 decltype().
      DeclType.setFunctionSource ( "SOURCE_DECL_TYPE", "../Grammar/Type.code");
+
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     TypeOfType.setFunctionSource ( "SOURCE_TYPEOF_TYPE", "../Grammar/Type.code");
 
      ArrayType.setFunctionSource           ( "SOURCE_ARRAY_TYPE", "../Grammar/Type.code");
      ModifierType.setFunctionSource        ( "SOURCE_MODIFIER_TYPE", "../Grammar/Type.code");

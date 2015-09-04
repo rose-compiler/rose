@@ -81,6 +81,11 @@ class VariableIdMapping {
   std::string uniqueLongVariableName(VariableId varId);
   std::string uniqueShortVariableName(VariableId varId);
 
+  // set the size of a data structure represented by this variable-id. Currently only arrays are supported.
+  void setSize(VariableId variableId, size_t size);
+  // get the size of a data structure represented by this variable-id. Currently only arrays are supported.
+  size_t getSize(VariableId variableId);
+
   void registerNewSymbol(SgSymbol* sym);
   void registerNewArraySymbol(SgSymbol* sym, int arraySize);
   void toStream(std::ostream& os);
@@ -97,8 +102,12 @@ class VariableIdMapping {
      this mode must be set before the mapping is computed with computeVariableSymbolMapping
   */
   void setModeVariableIdForEachArrayElement(bool active) { ROSE_ASSERT(mappingVarIdToSym.size()==0); modeVariableIdForEachArrayElement=active; }
+  bool getModeVariableIdForEachArrayElement() { return modeVariableIdForEachArrayElement; }
   SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar);
-
+  size_t getArrayDimensions(SgArrayType* t, std::vector<size_t> *dimensions = NULL);
+  size_t getArrayElementCount(SgArrayType* t);
+  size_t getArrayDimensionsFromInitializer(SgAggregateInitializer* init, std::vector<size_t> *dimensions = NULL);
+  VariableId idForArrayRef(SgPntrArrRefExp* ref);
  private:
   void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node,VariableId id);
   std::string generateDotSgSymbol(SgSymbol* sym);
@@ -109,6 +118,7 @@ class VariableIdMapping {
   VariableId addNewSymbol(SgSymbol* sym);
   // used for mapping in both directions
   std::vector<SgSymbol*> mappingVarIdToSym;
+  std::map<size_t,size_t> mappingVarIdToSize;
   std::map<SgSymbol*,size_t> mappingSymToVarId;
   bool modeVariableIdForEachArrayElement;
 }; // end of class VariableIdMapping
