@@ -230,7 +230,6 @@ int main( int argc, char * argv[] )
      SgFile * cur_file = project->get_fileList()[0];
 
      OmpSupport::enable_accelerator = true;
-     OmpSupport::enable_debugging = true;
      cur_file->set_openmp_lowering(true);
 //     cur_file->set_openmp(true);
 //     cur_file->set_openmp_parse_only(false);
