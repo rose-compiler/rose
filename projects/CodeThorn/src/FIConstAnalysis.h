@@ -10,6 +10,7 @@
 
 using namespace std;
 using namespace CodeThorn::AType;
+using namespace SPRAY;
 
 // does not support -inf, +inf yet
 class VariableValueRangeInfo {
@@ -54,6 +55,7 @@ public:
   int minConst(VariableId);
   int maxConst(VariableId);
   int arraySize(VariableId);
+  bool haveEmptyIntersection(VariableId,VariableId);
   static VariableValueRangeInfo createVariableValueRangeInfo(VariableId varId, VarConstSetMap& map);
   static ConstIntLattice isConstInSet(ConstIntLattice val, set<CppCapsuleConstIntLattice> valSet);
 private:
@@ -91,7 +93,8 @@ class FIConstAnalysis {
 
   static ConstIntLattice analyzeAssignRhs(SgNode* rhs);
   static bool determineVariable(SgNode* node, VariableId& varId, VariableIdMapping& _variableIdMapping);
-  static bool analyzeAssignment(SgAssignOp* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result);
+  // allows to analyse SgAssignOp and SgCompoundAssignOp
+  static bool analyzeAssignment(SgExpression* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result);
   VariableValuePair analyzeVariableDeclaration(SgVariableDeclaration* decl,VariableIdMapping& varIdMapping);
 
   void determineVarConstValueSet(SgNode* node, VariableIdMapping& varIdMapping, VarConstSetMap& map);
@@ -102,10 +105,16 @@ class FIConstAnalysis {
   LabelSet getFalseConditions();
   LabelSet getNonConstConditions();
 
+  void setDetailedOutput(bool);
+
+  // removes all variables that are NOT in this provided set
+  void filterVariables(VariableIdSet& variableIdSet);
+
  private:
   // Expression evaluation functions
   EvalValueType eval(SgExpression* node);
   EvalValueType evalWithMultiConst(SgNode* op, SgVarRefExp* var, EvalValueType val);
+  EvalValueType evalWithMultiConst(SgNode* op, SgVarRefExp* lhsVar, SgVarRefExp* rhsVar);
   EvalValueType evalSgBoolValExp(SgExpression* node);
   EvalValueType evalSgAndOp(EvalValueType lhsResult,EvalValueType rhsResult);
   EvalValueType evalSgOrOp(EvalValueType lhsResult,EvalValueType rhsResult);

@@ -4,12 +4,13 @@
 #include "DataFlowSemantics2.h"
 #include "Diagnostics.h"
 #include "SymbolicSemantics2.h"
-#include "WorkLists.h"
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <list>
-#include <sawyer/GraphTraversal.h>
+#include <Sawyer/GraphTraversal.h>
+#include <Sawyer/DistinctList.h>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -118,6 +119,19 @@ public:
      *  the set of variables present in the specimen being analyzed.  The map is keyed by CFG vertex IDs. */
     typedef Sawyer::Container::Map<size_t, Graph> VertexFlowGraphs;
 
+public:
+    /** Data flow exception base class. */
+    class Exception: public std::runtime_error {
+    public:
+        explicit Exception(const std::string &s): std::runtime_error(s) {}
+    };
+
+    /** Exceptions when a fixed point is not reached. */
+    class NotConverging: public Exception {
+    public:
+        explicit NotConverging(const std::string &s): Exception(s) {}
+    };
+
 private:
     InstructionSemantics2::BaseSemantics::RiscOperatorsPtr userOps_; // operators (and state) provided by the user
     InstructionSemantics2::DataFlowSemantics::RiscOperatorsPtr dfOps_; // data flow operators (which point to user ops)
@@ -143,18 +157,26 @@ public:
 public:
     /** Compute data flow.
      *
-     *  Computes and returns a graph describing how data flow occurs for the specified unit (instructions or basic blocks). The
-     *  vertices of the graph contain the abstract locations that are referenced (read or written) and the edges indicate the
-     *  data flow.  The edge values are integers imparting an ordering to the data flow.
+     *  Computes and returns a graph describing how data flow occurs for the specified instructions (which must have linear
+     *  control flow, e.g., from a single basic block). The vertices of the returned graph contain the abstract locations that
+     *  are referenced (read or written) and the edges indicate the data flow.  The edge values are integers imparting an
+     *  ordering to the data flow.
      *
      *  @{ */
-    Graph buildGraph(SgAsmInstruction*);
-    Graph buildGraph(SgAsmBlock*);
+    Graph buildGraph(const std::vector<SgAsmInstruction*>&);
     /** @} */
 
-private:
-    // Helper for buildGraph
-    void buildGraphProcessInstruction(SgAsmInstruction*);
+    /** Functor to return instructions for a cfg vertex.
+     *
+     *  This is the default unpacker that understands how to unpack SgAsmInstruction and SgAsmBlock. If a CFG has other types
+     *  of vertices then the user will need to pass a different unpacker.  The unpacker function operates on one CFG vertex
+     *  value which it takes as an argument. It should return a vector of instructions in the order they would be executed. */
+    class DefaultVertexUnpacker {
+    public:
+        typedef std::vector<SgAsmInstruction*> Instructions;
+        Instructions operator()(SgAsmInstruction *insn) { return Instructions(1, insn); }
+        Instructions operator()(SgAsmBlock *blk);
+    };
 
 public:
     /** Compute data flow per CFG vertex.
@@ -165,29 +187,32 @@ public:
      *  The algorithm currently implemented here is to use an aggregate semantic domain consisting of a user-supplied semantic
      *  domain in conjunction with a data flow discovery domain, and to process each CFG vertex one time in some arbitrary
      *  depth-first order.  This isn't a rigorous analysis, but it is usually able to accurately identify local and global
-     *  variables, although typically not through pointers or array indexing. */
-    template<class CFG>
-    VertexFlowGraphs buildGraphPerVertex(const CFG &cfg, size_t startVertex) {
+     *  variables, although typically not through pointers or array indexing.
+     *
+     * @{ */
+    template<class CFG, class VertexUnpacker>
+    VertexFlowGraphs buildGraphPerVertex(const CFG &cfg, size_t startVertex, VertexUnpacker vertexUnpacker) {
         using namespace Diagnostics;
         ASSERT_this();
         ASSERT_require(startVertex < cfg.nVertices());
         Stream mesg(mlog[WHERE] <<"buildGraphPerVertex startVertex=" <<startVertex);
 
         VertexFlowGraphs result;
-        result.insert(startVertex, buildGraph(cfg.findVertex(startVertex)->value()));
+        result.insert(startVertex, buildGraph(vertexUnpacker(cfg.findVertex(startVertex)->value())));
         std::vector<InstructionSemantics2::BaseSemantics::StatePtr> postState(cfg.nVertices()); // user-defined states
         postState[startVertex] = userOps_->get_state();
 
         typedef Sawyer::Container::Algorithm::DepthFirstForwardEdgeTraversal<const CFG> Traversal;
         for (Traversal t(cfg, cfg.findVertex(startVertex)); t; ++t) {
-            typename CFG::ConstVertexNodeIterator source = t->source();
-            typename CFG::ConstVertexNodeIterator target = t->target();
+            typename CFG::ConstVertexIterator source = t->source();
+            typename CFG::ConstVertexIterator target = t->target();
             InstructionSemantics2::BaseSemantics::StatePtr state = postState[target->id()];
             if (state==NULL) {
                 ASSERT_not_null(postState[source->id()]);
                 state = postState[target->id()] = postState[source->id()]->clone();
                 userOps_->set_state(state);
-                result.insert(target->id(), buildGraph(target->value()));
+                std::vector<SgAsmInstruction*> insns = vertexUnpacker(target->value());
+                result.insert(target->id(), buildGraph(insns));
             }
         }
         
@@ -195,12 +220,52 @@ public:
         return result;
     }
 
+    template<class CFG>
+    VertexFlowGraphs buildGraphPerVertex(const CFG &cfg, size_t startVertex) {
+        return buildGraphPerVertex(cfg, startVertex, DefaultVertexUnpacker());
+    }
+    /** @} */
+
     /** Get list of unique variables.
      *
      *  This returns a list of unique variables by computing the union of all variables across the index.  Uniqueness is
      *  determined by calling AbstractLocation::mustAlias. The variables are returned in no particular order. */
     VariableList getUniqueVariables(const VertexFlowGraphs&);
 
+    /** Basic merge operation.
+     *
+     *  This merge operator invokes the merge operation in the state. It is here mostly for backward compatibility. */
+    template<class StatePtr>
+    class BasicMerge {
+    public:
+        bool operator()(const StatePtr &dst, const StatePtr &src) const {
+            return dst->merge(src);
+        }
+    };
+
+    /** Basic merge operation for instruction semantics.
+     *
+     *  This merge operator is for data flow that uses an instruction semantics state. */
+    class SemanticsMerge {
+        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops_;
+    public:
+        explicit SemanticsMerge(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops): ops_(ops) {}
+        explicit SemanticsMerge(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu): ops_(cpu->get_operators()) {}
+
+        bool operator()(const InstructionSemantics2::BaseSemantics::StatePtr &dst,
+                        const InstructionSemantics2::BaseSemantics::StatePtr &src) const {
+            struct T {
+                InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops;
+                InstructionSemantics2::BaseSemantics::StatePtr state;
+                T(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
+                    : ops(ops), state(ops->get_state()) {}
+                ~T() { ops->set_state(state); }
+            } t(ops_);
+            ops_->set_state(src);
+            return dst->merge(src, ops_.get());
+        }
+    };
+    
     /** Data flow engine.
      *
      *  The data flow engine traverses the supplied control flow graph, runs the transfer function at each vertex, and merges
@@ -209,28 +274,51 @@ public:
      *  The template arguments are:
      *
      *  @li @p CFG is the type for the control flow graph.  It must implement the Sawyer::Container::Graph API and have
-     *      vertices that point to instructions (SgAsmInstruction) or basic blocks (SgAsmBlock).
+     *      vertex ID numbers of type @c size_t.  The data flow will follow the edges of this graph, invoking a transfer
+     *      function at each vertex.  The vertices are usually basic blocks or instructions, although they can be anything that
+     *      the transfer function can understand.  For instance, its possible for a called function to be represented by a
+     *      special vertex that encapsulates the entire effect of the function, either encoded in the vertex itself or as a
+     *      special case in the transfer function.  Although a normal CFG can be used, one often passes either a subgraph of
+     *      the CFG or an entirely different kind of control flow graph.
      *
-     *  @li @p StatePtr is a pointer to a data state that maps variables to values.  Variables are abstract locations and
-     *      values are members of a lattice as described in the documentation for the DataFlow class.  Since the engine doesn't
-     *      implement any particular ownership paradigm, the state pointer type is usually some kind of smart pointer.  The
-     *      engine requires that the pointer have a copy constructor and assignment operator.
+     *  @li @p StatePtr is a pointer to a data structure that stores an analysis state. A state object is attached to each
+     *      vertex of the CFG to represent the data flow state at that vertex.  The state is logically a map of abstract
+     *      locations (e.g., variables) and their current values.  For example, an instruction semantics @c State object can
+     *      serve as data flow states.  Since the engine doesn't implement any particular ownership paradigm, the state pointer
+     *      type is usually some kind of smart pointer.  The engine requires that the pointer have a copy constructor and
+     *      assignment operator and that it can be compared to a null pointer.
      *
      *  @li @p TransferFunction is a functor that is invoked at each CFG vertex to create a new data state from a previous
      *      data state.  The functor is called with three arguments: a const reference to the control flow graph, the CFG
      *      vertex ID for the vertex being processed, and the incoming state for that vertex.  The call should return a pointer
-     *      to a new state.
+     *      to a new state.  If the transfer function is called with only one argument, the state, then it should just create a
+     *      new state which is a copy of the argument.  For instance, if the CFG vertices contain SgAsmInstruction nodes and
+     *      the @p StatePtr is an instruction semantics state, then the transfer function would most likely perform these
+     *      operations: create a new state by cloning the incoming state, attach the new state to an instruction semantics
+     *      dispatcher (virtual CPU), call the dispatcher's @c processInstruction, return the new state.
+     *
+     *  @li @p MergeFunction is a functor that takes two state pointers and merges the second state into the first state. It
+     *      returns true if the first state changed, false if there was no change. In order for a data flow to reach a fixed
+     *      point the values must form a lattice and a merge operation should return a value which is the greatest lower
+     *      bound. This implies that the lattice has a bottom element that is a descendent of all other vertices.  However, the
+     *      data flow engine is designed to also operate in cases where a fixed point cannot be reached.  For example, if the
+     *      CFG vertices are instructions, the @p StatePtr is an instruction semantics state, and the @p TransferFunction calls
+     *      @c processInstruction then the @p MergeFunction probably calls the state's @p merge method.
      *
      *  The control flow graph and transfer function are specified in the engine's constructor.  The starting CFG vertex and
      *  its initial state are supplied when the engine starts to run. */
-    template<class CFG, class StatePtr, class TransferFunction>
+    template<class CFG, class StatePtr, class TransferFunction, class MergeFunction = BasicMerge<StatePtr> >
     class Engine {
         const CFG &cfg_;
         TransferFunction &xfer_;
+        MergeFunction merge_;
         typedef std::vector<StatePtr> VertexStates;
         VertexStates incomingState_;                    // incoming data flow state per CFG vertex ID
         VertexStates outgoingState_;                    // outgoing data flow state per CFG vertex ID
-        WorkList<size_t> workList_;                     // CFG vertices to be visited, last in first out w/out duplicates
+        typedef Sawyer::Container::DistinctList<size_t> WorkList;
+        WorkList workList_;                             // CFG vertex IDs to be visited, last in first out w/out duplicates
+        size_t maxIterations_;                          // max number of iterations to allow
+        size_t nIterations_;                            // number of iterations since last reset
 
     public:
         /** Constructor.
@@ -238,8 +326,8 @@ public:
          *  Constructs a new data flow engine that will operate over the specified control flow graph using the specified
          *  transfer function.  The control flow graph is incorporated into the engine by reference; the transfer functor is
          *  copied. */
-        Engine(const CFG &cfg, TransferFunction &xfer)
-            : cfg_(cfg), xfer_(xfer), workList_(true) {}
+        Engine(const CFG &cfg, TransferFunction &xfer, MergeFunction merge = MergeFunction())
+            : cfg_(cfg), xfer_(xfer), merge_(merge), maxIterations_(-1), nIterations_(0) {}
 
         /** Reset engine to initial state.
          *
@@ -254,54 +342,112 @@ public:
             outgoingState_.clear();
             outgoingState_.resize(cfg_.nVertices());
             workList_.clear();
-            workList_.push(startVertexId);
+            workList_.pushBack(startVertexId);
+            nIterations_ = 0;
         }
+
+        /** Max number of iterations to allow.
+         *
+         *  Allow N number of calls to runOneIteration.  When the limit is exceeded a @ref NotConverging exception is
+         *  thrown.
+         *
+         * @{ */
+        size_t maxIterations() const { return maxIterations_; }
+        void maxIterations(size_t n) { maxIterations_ = n; }
+        /** @} */
+
+        /** Number of iterations run.
+         *
+         *  The number of times runOneIteration was called since the last reset. */
+        size_t nIterations() const { return nIterations_; }
         
         /** Runs one iteration.
          *
          *  Runs one iteration of data flow analysis by consuming the first item on the work list.  Returns false if the
          *  work list is empty (before of after the iteration). */
         bool runOneIteration() {
-            if (!workList_.empty()) {
-                size_t cfgVertexId = workList_.shift();
+            using namespace Diagnostics;
+            if (!workList_.isEmpty()) {
+                if (++nIterations_ > maxIterations_) {
+                    throw NotConverging("dataflow max iterations reached"
+                                        " (max=" + StringUtility::numberToString(maxIterations_) + ")");
+                }
+                size_t cfgVertexId = workList_.popFront();
+                if (mlog[DEBUG]) {
+                    mlog[DEBUG] <<"runOneIteration: vertex #" <<cfgVertexId <<"\n";
+                    mlog[DEBUG] <<"  remaining worklist is {";
+                    BOOST_FOREACH (size_t id, workList_.items())
+                        mlog[DEBUG] <<" " <<id;
+                    mlog[DEBUG] <<" }\n";
+                }
+                
                 ASSERT_require2(cfgVertexId < cfg_.nVertices(),
                                 "vertex " + boost::lexical_cast<std::string>(cfgVertexId) + " must be valid within CFG");
-                typename CFG::ConstVertexNodeIterator vertex = cfg_.findVertex(cfgVertexId);
+                typename CFG::ConstVertexIterator vertex = cfg_.findVertex(cfgVertexId);
                 StatePtr state = incomingState_[cfgVertexId];
                 ASSERT_not_null2(state,
                                  "initial state must exist for CFG vertex " + boost::lexical_cast<std::string>(cfgVertexId));
+                if (mlog[DEBUG]) {
+                    std::ostringstream ss;
+                    ss <<*state;
+                    mlog[DEBUG] <<"  incoming state for vertex #" <<cfgVertexId <<"\n";
+                    mlog[DEBUG] <<StringUtility::prefixLines(ss.str(), "    ");
+                }
+
                 state = outgoingState_[cfgVertexId] = xfer_(cfg_, cfgVertexId, state);
+                ASSERT_not_null2(state, "outgoing state not created for vertex "+boost::lexical_cast<std::string>(cfgVertexId));
+                if (mlog[DEBUG]) {
+                    std::ostringstream ss;
+                    ss <<*state;
+                    mlog[DEBUG] <<"  outgoing state for vertex #" <<cfgVertexId <<"\n";
+                    mlog[DEBUG] <<StringUtility::prefixLines(ss.str(), "    ");
+                }
                 
                 // Outgoing state must be merged into the incoming states for the CFG successors.  Any such incoming state that
                 // is modified as a result will have its CFG vertex added to the work list.
-                BOOST_FOREACH (const typename CFG::EdgeNode &edge, vertex->outEdges()) {
+                SAWYER_MESG(mlog[DEBUG]) <<"  forwarding vertex #" <<cfgVertexId <<" output state to "
+                                         <<StringUtility::plural(vertex->nOutEdges(), "vertices", "vertex") <<"\n";
+                BOOST_FOREACH (const typename CFG::Edge &edge, vertex->outEdges()) {
                     size_t nextVertexId = edge.target()->id();
                     StatePtr targetState = incomingState_[nextVertexId];
                     if (targetState==NULL) {
-                        incomingState_[nextVertexId] = state;
-                        workList_.push(nextVertexId);
-                    } else if (targetState->merge(state)) {
-                        workList_.push(nextVertexId);
+                        SAWYER_MESG(mlog[DEBUG]) <<"    forwarded to vertex #" <<nextVertexId <<"\n";
+                        incomingState_[nextVertexId] = xfer_(state); // copy the state
+                        workList_.pushBack(nextVertexId);
+                    } else if (merge_(targetState, state)) { // merge state into targetState, return true if changed
+                        SAWYER_MESG(mlog[DEBUG]) <<"    merged with vertex #" <<nextVertexId <<" (which changed as a result)\n";
+                        workList_.pushBack(nextVertexId);
+                    } else {
+                        SAWYER_MESG(mlog[DEBUG]) <<"     merged with vertex #" <<nextVertexId <<" (no change)\n";
                     }
                 }
             }
-            return !workList_.empty();
+            return !workList_.isEmpty();
         }
         
         /** Run data flow until it reaches a fixed point.
          *
          *  Run data flow starting at the specified control flow vertex with the specified initial state until the state
-         *  converges to a fixed point no matter how long that takes. */
+         *  converges to a fixed point or the maximum number of iterations is reached (in which case a @ref NotConverging
+         *  exception is thrown). */
         void runToFixedPoint(size_t startVertexId, const StatePtr &initialState) {
             reset(startVertexId, initialState);
             while (runOneIteration()) /*void*/;
         }
 
-        // Return the final state for the specified CFG vertex.  Users call this to get the results.
+        /** Return the initial state for the specified CFG vertex. */
+        StatePtr getInitialState(size_t cfgVertexId) const {
+            return incomingState_[cfgVertexId];
+        }
+
+        /** Return the final state for the specified CFG vertex.  Users call this to get the results. */
         StatePtr getFinalState(size_t cfgVertexId) const {
             return outgoingState_[cfgVertexId];
         }
 
+        const VertexStates& getInitialStates() const {
+            return incomingState_;
+        }
         const VertexStates& getFinalStates() const {
             return outgoingState_;
         }

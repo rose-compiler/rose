@@ -7,14 +7,7 @@
 #include <iostream>
 #include "VariableIdMapping.h"
 #include "Labeler.h"
-#include "CFAnalyzer.h"
-#include "RDLattice.h"
-#include "DFAnalyzer.h"
-#include "WorkList.h"
-#include "RDAnalyzer.h"
-#include "RDAstAttribute.h"
 #include "AstAnnotator.h"
-#include "DataDependenceVisualizer.h"
 #include "Miscellaneous.h"
 #include "ProgramStats.h"
 #include "CommandLineOptions.h"
@@ -37,18 +30,17 @@ using namespace std;
 using namespace CodeThorn;
 using namespace AType;
 
-#include "ReachabilityResults.h"
+#include "PropertyValueTable.h"
 #include "DeadCodeElimination.h"
 #include "ReachabilityAnalysis.h"
+
+#include "ConversionFunctionsGenerator.h"
 
 //static  VariableIdSet variablesOfInterest;
 static bool detailedOutput=0;
 const char* csvAssertFileName=0;
 const char* csvConstResultFileName=0;
 bool global_option_multiconstanalysis=false;
-
-// temporary
-//#include "ReachabilityAnalysis.C"
 
 #if 0
 bool isVariableOfInterest(VariableId varId) {
@@ -65,10 +57,6 @@ size_t numberOfFunctions(SgNode* node) {
   }
   return num;
 }
-
-//#include "FIConstAnalysis.C"
-//#include "DeadCodeEliminationOperators.C"
-
 
 void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
   cout<<"Result:"<<endl;
@@ -157,6 +145,7 @@ int main(int argc, char* argv[]) {
     ("csv-const-result",po::value< string >(), "generate csv-file [arg] with const-analysis data.")
     ("generate-transformed-code",po::value< string >(), "generate transformed code with prefix rose_ ([yes]|no).")
     ("verbose",po::value< string >(), "print detailed output during analysis and transformation (yes|[no]).")
+    ("generate-conversion-functions","generate code for conversion functions between variable names and variable addresses.")
     ("csv-assert",po::value< string >(), "name of csv file with reachability assert results'")
     ("enable-multi-const-analysis",po::value< string >(), "enable multi-const analysis.")
     ;
@@ -227,10 +216,11 @@ int main(int argc, char* argv[]) {
   }
 #endif
 
-  cout << "INIT: Parsing and creating AST."<<endl;
+  cout << "INIT: Parsing and creating AST started."<<endl;
   SgProject* root = frontend(argc,argv);
   //  AstTests::runAllTests(root);
   // inline all functions
+  cout << "INIT: Parsing and creating AST finished."<<endl;
 
   if(args.count("stats")) {
     printCodeStatistics(root);
@@ -239,9 +229,10 @@ int main(int argc, char* argv[]) {
 
   SgFunctionDefinition* mainFunctionRoot=0;
   if(boolOptions["inline"]) {
+    cout<<"STATUS: eliminating non-called trivial functions."<<endl;
     // inline functions
     TrivialInlining tin;
-    tin.setDetailedOutput(true);
+    tin.setDetailedOutput(detailedOutput);
     tin.inlineFunctions(root);
     DeadCodeElimination dce;
     // eliminate non called functions
@@ -251,9 +242,6 @@ int main(int argc, char* argv[]) {
     cout<<"INFO: Inlining: turned off."<<endl;
   }
 
-  if(boolOptions["inline"]) {
-  }
-  
   if(boolOptions["eliminate-empty-if"]) {
     DeadCodeElimination dce;
     cout<<"STATUS: Eliminating empty if-statements."<<endl;
@@ -275,6 +263,7 @@ int main(int argc, char* argv[]) {
   VariableIdSet variablesOfInterest;
   FIConstAnalysis fiConstAnalysis(&variableIdMapping);
   fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
+  fiConstAnalysis.setDetailedOutput(detailedOutput);
   fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
   variablesOfInterest=fiConstAnalysis.determinedConstantVariables();
   cout<<"INFO: variables of interest: "<<variablesOfInterest.size()<<endl;
@@ -282,14 +271,38 @@ int main(int argc, char* argv[]) {
     printResult(variableIdMapping,varConstSetMap);
 
   if(csvConstResultFileName) {
+    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&variableIdMapping);
+    cout<<"INFO: number of used vars inside functions: "<<setOfUsedVars.size()<<endl;
+    fiConstAnalysis.filterVariables(setOfUsedVars);
     fiConstAnalysis.writeCvsConstResult(variableIdMapping, string(csvConstResultFileName));
+  }
+
+  if(args.count("generate-conversion-functions")) {
+    string conversionFunctionsFileName="conversionFunctions.C";
+    ConversionFunctionsGenerator gen;
+    set<string> varNameSet;
+    std::list<SgVariableDeclaration*> globalVarDeclList=SgNodeHelper::listOfGlobalVars(root);
+    for(std::list<SgVariableDeclaration*>::iterator i=globalVarDeclList.begin();i!=globalVarDeclList.end();++i) {
+      SgInitializedNamePtrList& initNamePtrList=(*i)->get_variables();
+      for(SgInitializedNamePtrList::iterator j=initNamePtrList.begin();j!=initNamePtrList.end();++j) {
+	SgInitializedName* initName=*j;
+	SgName varName=initName->get_name();
+	string varNameString=varName; // implicit conversion
+	varNameSet.insert(varNameString);
+      }
+    }
+    string code=gen.generateCodeForGlobalVarAdressMaps(varNameSet);
+    ofstream myfile;
+    myfile.open(conversionFunctionsFileName.c_str());
+    myfile<<code;
+    myfile.close();
   }
 
   VariableConstInfo vci=*(fiConstAnalysis.getVariableConstInfo());
   DeadCodeElimination dce;
   if(boolOptions["eliminate-dead-code"]) {
     cout<<"STATUS: performing dead code elimination."<<endl;
-    dce.setDetailedOutput(false);
+    dce.setDetailedOutput(detailedOutput);
     dce.setVariablesOfInterest(variablesOfInterest);
     dce.eliminateDeadCodePhase1(root,&variableIdMapping,vci);
     cout<<"STATUS: Eliminated "<<dce.numElimVars()<<" variable declarations."<<endl;
@@ -310,9 +323,9 @@ int main(int argc, char* argv[]) {
     cout<<"INFO: Number of non-const-conditions: "<<fiConstAnalysis.getNonConstConditions().size()<<endl;
     cout<<"STATUS: performing flow-insensensitive reachability analysis."<<endl;
     ReachabilityAnalysis ra;
-    ReachabilityResults reachabilityResults=ra.fiReachabilityAnalysis(labeler, fiConstAnalysis);
+    PropertyValueTable reachabilityResults=ra.fiReachabilityAnalysis(labeler, fiConstAnalysis);
     cout<<"STATUS: generating file "<<csvAssertFileName<<endl;
-    reachabilityResults.write2013File(csvAssertFileName,true);
+    reachabilityResults.writeFile(csvAssertFileName,true);
   }
 #if 0
   rdAnalyzer->determineExtremalLabels(startFunRoot);

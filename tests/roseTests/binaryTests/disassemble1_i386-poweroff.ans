@@ -4,26 +4,39 @@ using this memory map for disassembly:
     va 0x08048114 + 0x00000013 = 0x08048127 r--p at buffer aaf   + 0x00000000 i386-poweroff(.interp)
     va 0x08048127 + 0x00000001 = 0x08048128 r-xp at buffer aab   + 0x00000127 i386-poweroff(LOAD#2)
     va 0x08048128 + 0x00000020 = 0x08048148 r--p at buffer aah   + 0x00000000 i386-poweroff(.note.ABI-tag)
-    va 0x08048148 + 0x0000057c = 0x080486c4 r--- at buffer aau   + 0x00000148 i386-poweroff(.dynsym+.gnu.conflict+.gnu.liblist+.hash)
+    va 0x08048148 + 0x00000160 = 0x080482a8 r--- at buffer aao   + 0x00000148 i386-poweroff(.hash)
+    va 0x080482a8 + 0x00000310 = 0x080485b8 r--- at buffer aaq   + 0x000002a8 i386-poweroff(.dynsym)
+    va 0x080485b8 + 0x00000028 = 0x080485e0 r--- at buffer aas   + 0x000005b8 i386-poweroff(.gnu.liblist)
+    va 0x080485e0 + 0x000000e4 = 0x080486c4 r--- at buffer aau   + 0x000005e0 i386-poweroff(.gnu.conflict)
     va 0x080486c4 + 0x0000008c = 0x08048750 r-xp at buffer aab   + 0x000006c4 i386-poweroff(LOAD#2)
     va 0x08048750 + 0x00000062 = 0x080487b2 r--- at buffer aaw   + 0x00000750 i386-poweroff(.gnu.version)
     va 0x080487b2 + 0x00000002 = 0x080487b4 r-xp at buffer aab   + 0x000007b2 i386-poweroff(LOAD#2)
-    va 0x080487b4 + 0x000001a0 = 0x08048954 r--- at buffer abc   + 0x000007b4 i386-poweroff(.gnu.version_r+.rel.dyn+.rel.plt)
+    va 0x080487b4 + 0x00000030 = 0x080487e4 r--- at buffer aay   + 0x000007b4 i386-poweroff(.gnu.version_r)
+    va 0x080487e4 + 0x00000020 = 0x08048804 r--- at buffer aba   + 0x000007e4 i386-poweroff(.rel.dyn)
+    va 0x08048804 + 0x00000150 = 0x08048954 r--- at buffer abc   + 0x00000804 i386-poweroff(.rel.plt)
     va 0x08048954 + 0x00000017 = 0x0804896b r-x- at buffer abe   + 0x00000954 i386-poweroff(.init)
     va 0x0804896b + 0x00000001 = 0x0804896c r-xp at buffer aab   + 0x0000096b i386-poweroff(LOAD#2)
-    va 0x0804896c + 0x00000f86 = 0x080498f2 r-x- at buffer abk   + 0x0000096c i386-poweroff(.fini+.plt+.text)
+    va 0x0804896c + 0x000002b0 = 0x08048c1c r-x- at buffer abg   + 0x0000096c i386-poweroff(.plt)
+    va 0x08048c1c + 0x00000cbc = 0x080498d8 r-x- at buffer abi   + 0x00000c1c i386-poweroff(.text)
+    va 0x080498d8 + 0x0000001a = 0x080498f2 r-x- at buffer abk   + 0x000018d8 i386-poweroff(.fini)
     va 0x080498f2 + 0x00000002 = 0x080498f4 r-xp at buffer aab   + 0x000018f2 i386-poweroff(LOAD#2)
     va 0x080498f4 + 0x0000039e = 0x08049c92 r--- at buffer abm   + 0x000018f4 i386-poweroff(.rodata)
     va 0x08049c92 + 0x00000002 = 0x08049c94 r-xp at buffer aab   + 0x00001c92 i386-poweroff(LOAD#2)
     va 0x08049c94 + 0x00000004 = 0x08049c98 r--- at buffer abo   + 0x00001c94 i386-poweroff(.eh_frame)
     va 0x08049c98 + 0x00000368 = 0x0804a000 r-xp at buffer aab   + 0x00001c98 i386-poweroff(LOAD#2)
     va 0x0804a000 + 0x00000c98 = 0x0804ac98 rw-p at buffer aak   + 0x00000000 i386-poweroff(LOAD#3)
-    va 0x0804ac98 + 0x00000014 = 0x0804acac rw-- at buffer abu   + 0x00001c98 i386-poweroff(.ctors+.dtors+.jcr)
+    va 0x0804ac98 + 0x00000008 = 0x0804aca0 rw-- at buffer abq   + 0x00001c98 i386-poweroff(.ctors)
+    va 0x0804aca0 + 0x00000008 = 0x0804aca8 rw-- at buffer abs   + 0x00001ca0 i386-poweroff(.dtors)
+    va 0x0804aca8 + 0x00000004 = 0x0804acac rw-- at buffer abu   + 0x00001ca8 i386-poweroff(.jcr)
     va 0x0804acac + 0x000000c8 = 0x0804ad74 rw-p at buffer aam   + 0x00000000 i386-poweroff(.dynamic)
-    va 0x0804ad74 + 0x000000e4 = 0x0804ae58 rw-- at buffer ace   + 0x00001d74 i386-poweroff(.bss+.data+.dynbss+.got+.got.plt)
+    va 0x0804ad74 + 0x00000004 = 0x0804ad78 rw-- at buffer abw   + 0x00001d74 i386-poweroff(.got)
+    va 0x0804ad78 + 0x000000b4 = 0x0804ae2c rw-- at buffer aby   + 0x00001d78 i386-poweroff(.got.plt)
+    va 0x0804ae2c + 0x00000018 = 0x0804ae44 rw-- at buffer aca   + 0x00001e2c i386-poweroff(.data)
+    va 0x0804ae44 + 0x0000000c = 0x0804ae50 rw-- at buffer acc   + 0x00001e44 i386-poweroff(.dynbss)
+    va 0x0804ae50 + 0x00000008 = 0x0804ae58 rw-- at buffer ace   + 0x00001e50 i386-poweroff(.bss)
     va 0x0804ae58 + 0x000001aa = 0x0804b002 r--- at buffer acg   + 0x00001e58 i386-poweroff(.dynstr)
     va 0x0804b002 + 0x00000ac2 = 0x0804bac4 rw-p at buffer aak   + 0x00001002 i386-poweroff(LOAD#3)
-    va 0x0804bac4 + 0x0000053c = 0x0804c000 rw-p at anon aaj     + 0x00000000 i386-poweroff(LOAD#3)
+    va 0x0804bac4 + 0x0000053c = 0x0804c000 rw-p at buffer aaj   + 0x00000000 i386-poweroff(LOAD#3)
 
 
 0x08048954: ================================== Function (function call) unknown name
@@ -64,16 +77,16 @@ using this memory map for disassembly:
 0x0804897b: 00                      |.       | 17 bytes untyped data beginning at 0x0804896b
 0x0804896b: 00 ff                   |..      | (data)   add    bh, bh
 0x0804896d: 35 7c ad 04 08          |5|...   | (data)   xor    eax, 0x0804ad7c
-0x08048972: ff 25 80 ad 04 08       |.%....  | (data)   jmp    DWORD PTR ds:[0x0804ad80]
-0x08048978: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x0804897a: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x08048972: ff 25 80 ad 04 08       |.%....  | (data)   jmp    dword ds:[0x0804ad80]
+0x08048978: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x0804897a: 00 00                   |..      | (data)   add    byte ds:[eax], al
 
 0x0804897c: ================================== Function (function call, import) <strchr@plt>
 0x0804897c: Called by 0x080491c4
 
 0x0804897c: Basic block reasons: entry point, graph-1
 0x0804897c: Predecessor blocks: 0x080492d0<<Func>>
-0x0804897c: ff 25 84 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ad84<.got.plt+0x0c>]
+0x0804897c: ff 25 84 ad 04 08       |.%....  |   jmp    dword ds:[0x0804ad84<.got.plt+0x0c>]
 0x0804897c: Successor blocks: unknown
 
 0x08048982: 68 00 00 00 00 e9 e0 ff |h.......|
@@ -86,7 +99,7 @@ using this memory map for disassembly:
 
 0x0804898c: Basic block reasons: entry point, graph-1
 0x0804898c: Predecessor blocks: 0x08049678<<Func>>
-0x0804898c: ff 25 88 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ad88<.got.plt+0x10>]
+0x0804898c: ff 25 88 ad 04 08       |.%....  |   jmp    dword ds:[0x0804ad88<.got.plt+0x10>]
 0x0804898c: Successor blocks: unknown
 
 0x08048992: 68 08 00 00 00 e9 d0 ff |h.......|
@@ -98,7 +111,7 @@ using this memory map for disassembly:
 0x0804899c: No known callers.
 
 0x0804899c: Basic block reasons: entry point, graph-1
-0x0804899c: ff 25 8c ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ad8c<.got.plt+0x14>]
+0x0804899c: ff 25 8c ad 04 08       |.%....  |   jmp    dword ds:[0x0804ad8c<.got.plt+0x14>]
 0x0804899c: Successor blocks: unknown
 
 0x080489a2: 68 10 00 00 00 e9 c0 ff |h.......|
@@ -112,7 +125,7 @@ using this memory map for disassembly:
 
 0x080489ac: Basic block reasons: entry point, graph-1
 0x080489ac: Predecessor blocks: 0x08049340<<Func>>, 0x0804939f<<Func>>, 0x08049686<<Func>>
-0x080489ac: ff 25 90 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ad90<.got.plt+0x18>]
+0x080489ac: ff 25 90 ad 04 08       |.%....  |   jmp    dword ds:[0x0804ad90<.got.plt+0x18>]
 0x080489ac: Successor blocks: unknown
 
 0x080489b2: 68 18 00 00 00 e9 b0 ff |h.......|
@@ -124,7 +137,7 @@ using this memory map for disassembly:
 0x080489bc: No known callers.
 
 0x080489bc: Basic block reasons: entry point, graph-1
-0x080489bc: ff 25 94 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ad94<.got.plt+0x1c>]
+0x080489bc: ff 25 94 ad 04 08       |.%....  |   jmp    dword ds:[0x0804ad94<.got.plt+0x1c>]
 0x080489bc: Successor blocks: unknown
 
 0x080489c2: 68 20 00 00 00 e9 a0 ff |h ......|
@@ -137,7 +150,7 @@ using this memory map for disassembly:
 
 0x080489cc: Basic block reasons: entry point, graph-1
 0x080489cc: Predecessor blocks: 0x08049322<<Func>>, 0x0804936c<<Func>>, 0x08049393<<Func>>
-0x080489cc: ff 25 98 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ad98<.got.plt+0x20>]
+0x080489cc: ff 25 98 ad 04 08       |.%....  |   jmp    dword ds:[0x0804ad98<.got.plt+0x20>]
 0x080489cc: Successor blocks: unknown
 
 0x080489d2: 68 28 00 00 00 e9 90 ff |h(......|
@@ -150,7 +163,7 @@ using this memory map for disassembly:
 
 0x080489dc: Basic block reasons: entry point, graph-1
 0x080489dc: Predecessor blocks: 0x08048cc4<<Func>>, 0x08048ce0<<Func>>, 0x08048d38<<Func>>
-0x080489dc: ff 25 9c ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ad9c<.got.plt+0x24>]
+0x080489dc: ff 25 9c ad 04 08       |.%....  |   jmp    dword ds:[0x0804ad9c<.got.plt+0x24>]
 0x080489dc: Successor blocks: unknown
 
 0x080489e2: 68 30 00 00 00 e9 80 ff |h0......|
@@ -162,7 +175,7 @@ using this memory map for disassembly:
 0x080489ec: No known callers.
 
 0x080489ec: Basic block reasons: entry point, graph-1
-0x080489ec: ff 25 a0 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ada0<.got.plt+0x28>]
+0x080489ec: ff 25 a0 ad 04 08       |.%....  |   jmp    dword ds:[0x0804ada0<.got.plt+0x28>]
 0x080489ec: Successor blocks: unknown
 
 0x080489f2: 68 38 00 00 00 e9 70 ff |h8....p.|
@@ -174,7 +187,7 @@ using this memory map for disassembly:
 0x080489fc: No known callers.
 
 0x080489fc: Basic block reasons: entry point, graph-1
-0x080489fc: ff 25 a4 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ada4<.got.plt+0x2c>]
+0x080489fc: ff 25 a4 ad 04 08       |.%....  |   jmp    dword ds:[0x0804ada4<.got.plt+0x2c>]
 0x080489fc: Successor blocks: unknown
 
 0x08048a02: 68 40 00 00 00 e9 60 ff |h@....`.|
@@ -186,7 +199,7 @@ using this memory map for disassembly:
 0x08048a0c: No known callers.
 
 0x08048a0c: Basic block reasons: entry point, graph-1
-0x08048a0c: ff 25 a8 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ada8<.got.plt+0x30>]
+0x08048a0c: ff 25 a8 ad 04 08       |.%....  |   jmp    dword ds:[0x0804ada8<.got.plt+0x30>]
 0x08048a0c: Successor blocks: unknown
 
 0x08048a12: 68 48 00 00 00 e9 50 ff |hH....P.|
@@ -198,7 +211,7 @@ using this memory map for disassembly:
 0x08048a1c: No known callers.
 
 0x08048a1c: Basic block reasons: entry point, graph-1
-0x08048a1c: ff 25 ac ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804adac<.got.plt+0x34>]
+0x08048a1c: ff 25 ac ad 04 08       |.%....  |   jmp    dword ds:[0x0804adac<.got.plt+0x34>]
 0x08048a1c: Successor blocks: unknown
 
 0x08048a22: 68 50 00 00 00 e9 40 ff |hP....@.|
@@ -211,7 +224,7 @@ using this memory map for disassembly:
 0x08048a2c: Function does not return to caller.
 
 0x08048a2c: Basic block reasons: entry point, graph-1
-0x08048a2c: ff 25 b0 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804adb0<.got.plt+0x38>]
+0x08048a2c: ff 25 b0 ad 04 08       |.%....  |   jmp    dword ds:[0x0804adb0<.got.plt+0x38>]
 0x08048a2c: Successor blocks: unknown
 
 0x08048a32: 68 58 00 00 00 e9 30 ff |hX....0.|
@@ -223,7 +236,7 @@ using this memory map for disassembly:
 0x08048a3c: No known callers.
 
 0x08048a3c: Basic block reasons: entry point, graph-1
-0x08048a3c: ff 25 b4 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804adb4<.got.plt+0x3c>]
+0x08048a3c: ff 25 b4 ad 04 08       |.%....  |   jmp    dword ds:[0x0804adb4<.got.plt+0x3c>]
 0x08048a3c: Successor blocks: unknown
 
 0x08048a42: 68 60 00 00 00 e9 20 ff |h`.... .|
@@ -236,7 +249,7 @@ using this memory map for disassembly:
 
 0x08048a4c: Basic block reasons: entry point, graph-1
 0x08048a4c: Predecessor blocks: 0x0804945b<<Func>>
-0x08048a4c: ff 25 b8 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804adb8<.got.plt+0x40>]
+0x08048a4c: ff 25 b8 ad 04 08       |.%....  |   jmp    dword ds:[0x0804adb8<.got.plt+0x40>]
 0x08048a4c: Successor blocks: unknown
 
 0x08048a52: 68 68 00 00 00 e9 10 ff |hh......|
@@ -248,7 +261,7 @@ using this memory map for disassembly:
 0x08048a5c: No known callers.
 
 0x08048a5c: Basic block reasons: entry point, graph-1
-0x08048a5c: ff 25 bc ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804adbc<.got.plt+0x44>]
+0x08048a5c: ff 25 bc ad 04 08       |.%....  |   jmp    dword ds:[0x0804adbc<.got.plt+0x44>]
 0x08048a5c: Successor blocks: unknown
 
 0x08048a62: 68 70 00 00 00 e9 00 ff |hp......|
@@ -260,7 +273,7 @@ using this memory map for disassembly:
 0x08048a6c: No known callers.
 
 0x08048a6c: Basic block reasons: entry point, graph-1
-0x08048a6c: ff 25 c0 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804adc0<.got.plt+0x48>]
+0x08048a6c: ff 25 c0 ad 04 08       |.%....  |   jmp    dword ds:[0x0804adc0<.got.plt+0x48>]
 0x08048a6c: Successor blocks: unknown
 
 0x08048a72: 68 78 00 00 00 e9 f0 fe |hx......|
@@ -273,7 +286,7 @@ using this memory map for disassembly:
 
 0x08048a7c: Basic block reasons: entry point, graph-1
 0x08048a7c: Predecessor blocks: 0x08049663<<Func>>
-0x08048a7c: ff 25 c4 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804adc4<.got.plt+0x4c>]
+0x08048a7c: ff 25 c4 ad 04 08       |.%....  |   jmp    dword ds:[0x0804adc4<.got.plt+0x4c>]
 0x08048a7c: Successor blocks: unknown
 
 0x08048a82: 68 80 00 00 00 e9 e0 fe |h.......|
@@ -285,7 +298,7 @@ using this memory map for disassembly:
 0x08048a8c: No known callers.
 
 0x08048a8c: Basic block reasons: entry point, graph-1
-0x08048a8c: ff 25 c8 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804adc8<.got.plt+0x50>]
+0x08048a8c: ff 25 c8 ad 04 08       |.%....  |   jmp    dword ds:[0x0804adc8<.got.plt+0x50>]
 0x08048a8c: Successor blocks: unknown
 
 0x08048a92: 68 88 00 00 00 e9 d0 fe |h.......|
@@ -298,7 +311,7 @@ using this memory map for disassembly:
 
 0x08048a9c: Basic block reasons: entry point, graph-1
 0x08048a9c: Predecessor blocks: 0x08048c1c<<Func>>
-0x08048a9c: ff 25 cc ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804adcc<.got.plt+0x54>]
+0x08048a9c: ff 25 cc ad 04 08       |.%....  |   jmp    dword ds:[0x0804adcc<.got.plt+0x54>]
 0x08048a9c: Successor blocks: unknown
 
 0x08048aa2: 68 90 00 00 00 e9 c0 fe |h.......|
@@ -310,7 +323,7 @@ using this memory map for disassembly:
 0x08048aac: No known callers.
 
 0x08048aac: Basic block reasons: entry point, graph-1
-0x08048aac: ff 25 d0 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804add0<.got.plt+0x58>]
+0x08048aac: ff 25 d0 ad 04 08       |.%....  |   jmp    dword ds:[0x0804add0<.got.plt+0x58>]
 0x08048aac: Successor blocks: unknown
 
 0x08048ab2: 68 98 00 00 00 e9 b0 fe |h.......|
@@ -322,7 +335,7 @@ using this memory map for disassembly:
 0x08048abc: No known callers.
 
 0x08048abc: Basic block reasons: entry point, graph-1
-0x08048abc: ff 25 d4 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804add4<.got.plt+0x5c>]
+0x08048abc: ff 25 d4 ad 04 08       |.%....  |   jmp    dword ds:[0x0804add4<.got.plt+0x5c>]
 0x08048abc: Successor blocks: unknown
 
 0x08048ac2: 68 a0 00 00 00 e9 a0 fe |h.......|
@@ -334,7 +347,7 @@ using this memory map for disassembly:
 0x08048acc: No known callers.
 
 0x08048acc: Basic block reasons: entry point, graph-1
-0x08048acc: ff 25 d8 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804add8<.got.plt+0x60>]
+0x08048acc: ff 25 d8 ad 04 08       |.%....  |   jmp    dword ds:[0x0804add8<.got.plt+0x60>]
 0x08048acc: Successor blocks: unknown
 
 0x08048ad2: 68 a8 00 00 00 e9 90 fe |h.......|
@@ -347,7 +360,7 @@ using this memory map for disassembly:
 
 0x08048adc: Basic block reasons: entry point, graph-1
 0x08048adc: Predecessor blocks: 0x0804948c<<Func>>, 0x0804956f<<Func>>
-0x08048adc: ff 25 dc ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804addc<.got.plt+0x64>]
+0x08048adc: ff 25 dc ad 04 08       |.%....  |   jmp    dword ds:[0x0804addc<.got.plt+0x64>]
 0x08048adc: Successor blocks: unknown
 
 0x08048ae2: 68 b0 00 00 00 e9 80 fe |h.......|
@@ -359,7 +372,7 @@ using this memory map for disassembly:
 0x08048aec: No known callers.
 
 0x08048aec: Basic block reasons: entry point, graph-1
-0x08048aec: ff 25 e0 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ade0<.got.plt+0x68>]
+0x08048aec: ff 25 e0 ad 04 08       |.%....  |   jmp    dword ds:[0x0804ade0<.got.plt+0x68>]
 0x08048aec: Successor blocks: unknown
 
 0x08048af2: 68 b8 00 00 00 e9 70 fe |h.....p.|
@@ -372,7 +385,7 @@ using this memory map for disassembly:
 
 0x08048afc: Basic block reasons: entry point, graph-1
 0x08048afc: Predecessor blocks: 0x08049597<<Func>>
-0x08048afc: ff 25 e4 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ade4<.got.plt+0x6c>]
+0x08048afc: ff 25 e4 ad 04 08       |.%....  |   jmp    dword ds:[0x0804ade4<.got.plt+0x6c>]
 0x08048afc: Successor blocks: unknown
 
 0x08048b02: 68 c0 00 00 00 e9 60 fe |h.....`.|
@@ -385,7 +398,7 @@ using this memory map for disassembly:
 
 0x08048b0c: Basic block reasons: entry point, graph-1
 0x08048b0c: Predecessor blocks: 0x080494b6<<Func>>
-0x08048b0c: ff 25 e8 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ade8<.got.plt+0x70>]
+0x08048b0c: ff 25 e8 ad 04 08       |.%....  |   jmp    dword ds:[0x0804ade8<.got.plt+0x70>]
 0x08048b0c: Successor blocks: unknown
 
 0x08048b12: 68 c8 00 00 00 e9 50 fe |h.....P.|
@@ -398,7 +411,7 @@ using this memory map for disassembly:
 
 0x08048b1c: Basic block reasons: entry point, graph-1
 0x08048b1c: Predecessor blocks: 0x08049607<<Func>>
-0x08048b1c: ff 25 ec ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804adec<.got.plt+0x74>]
+0x08048b1c: ff 25 ec ad 04 08       |.%....  |   jmp    dword ds:[0x0804adec<.got.plt+0x74>]
 0x08048b1c: Successor blocks: unknown
 
 0x08048b22: 68 d0 00 00 00 e9 40 fe |h.....@.|
@@ -411,7 +424,7 @@ using this memory map for disassembly:
 
 0x08048b2c: Basic block reasons: entry point, graph-1
 0x08048b2c: Predecessor blocks: 0x080493b4<<Func>>
-0x08048b2c: ff 25 f0 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804adf0<.got.plt+0x78>]
+0x08048b2c: ff 25 f0 ad 04 08       |.%....  |   jmp    dword ds:[0x0804adf0<.got.plt+0x78>]
 0x08048b2c: Successor blocks: unknown
 
 0x08048b32: 68 d8 00 00 00 e9 30 fe |h.....0.|
@@ -424,7 +437,7 @@ using this memory map for disassembly:
 
 0x08048b3c: Basic block reasons: entry point, graph-1
 0x08048b3c: Predecessor blocks: 0x0804941d<<Func>>, 0x0804957d<<Func>>
-0x08048b3c: ff 25 f4 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804adf4<.got.plt+0x7c>]
+0x08048b3c: ff 25 f4 ad 04 08       |.%....  |   jmp    dword ds:[0x0804adf4<.got.plt+0x7c>]
 0x08048b3c: Successor blocks: unknown
 
 0x08048b42: 68 e0 00 00 00 e9 20 fe |h..... .|
@@ -438,7 +451,7 @@ using this memory map for disassembly:
 
 0x08048b4c: Basic block reasons: entry point, graph-1
 0x08048b4c: Predecessor blocks: 0x08049501<<Func>>, 0x080495cc<<Func>>
-0x08048b4c: ff 25 f8 ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804adf8<.got.plt+0x80>]
+0x08048b4c: ff 25 f8 ad 04 08       |.%....  |   jmp    dword ds:[0x0804adf8<.got.plt+0x80>]
 0x08048b4c: Successor blocks: unknown
 
 0x08048b52: 68 e8 00 00 00 e9 10 fe |h.......|
@@ -452,7 +465,7 @@ using this memory map for disassembly:
 
 0x08048b5c: Basic block reasons: entry point, graph-1
 0x08048b5c: Predecessor blocks: 0x08048d51<<Func>>
-0x08048b5c: ff 25 fc ad 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804adfc<.got.plt+0x84>]
+0x08048b5c: ff 25 fc ad 04 08       |.%....  |   jmp    dword ds:[0x0804adfc<.got.plt+0x84>]
 0x08048b5c: Successor blocks: unknown
 
 0x08048b62: 68 f0 00 00 00 e9 00 fe |h.......|
@@ -464,7 +477,7 @@ using this memory map for disassembly:
 0x08048b6c: No known callers.
 
 0x08048b6c: Basic block reasons: entry point, graph-1
-0x08048b6c: ff 25 00 ae 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ae00<.got.plt+0x88>]
+0x08048b6c: ff 25 00 ae 04 08       |.%....  |   jmp    dword ds:[0x0804ae00<.got.plt+0x88>]
 0x08048b6c: Successor blocks: unknown
 
 0x08048b72: 68 f8 00 00 00 e9 f0 fd |h.......|
@@ -478,7 +491,7 @@ using this memory map for disassembly:
 
 0x08048b7c: Basic block reasons: entry point, graph-1
 0x08048b7c: Predecessor blocks: 0x080491ec<<Func>>, 0x080492e2<<Func>>, 0x08049529<<Func>>, 0x08049543<<Func>>
-0x08048b7c: ff 25 04 ae 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ae04<.got.plt+0x8c>]
+0x08048b7c: ff 25 04 ae 04 08       |.%....  |   jmp    dword ds:[0x0804ae04<.got.plt+0x8c>]
 0x08048b7c: Successor blocks: unknown
 
 0x08048b82: 68 00 01 00 00 e9 e0 fd |h.......|
@@ -491,7 +504,7 @@ using this memory map for disassembly:
 
 0x08048b8c: Basic block reasons: entry point, graph-1
 0x08048b8c: Predecessor blocks: 0x080495f3<<Func>>
-0x08048b8c: ff 25 08 ae 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ae08<.got.plt+0x90>]
+0x08048b8c: ff 25 08 ae 04 08       |.%....  |   jmp    dword ds:[0x0804ae08<.got.plt+0x90>]
 0x08048b8c: Successor blocks: unknown
 
 0x08048b92: 68 08 01 00 00 e9 d0 fd |h.......|
@@ -504,7 +517,7 @@ using this memory map for disassembly:
 
 0x08048b9c: Basic block reasons: entry point, graph-1
 0x08048b9c: Predecessor blocks: 0x08049614<<Func>>, 0x0804963b<<Func>>, 0x0804964f<<Func>>, 0x08049698<<Func>>
-0x08048b9c: ff 25 0c ae 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ae0c<.got.plt+0x94>]
+0x08048b9c: ff 25 0c ae 04 08       |.%....  |   jmp    dword ds:[0x0804ae0c<.got.plt+0x94>]
 0x08048b9c: Successor blocks: unknown
 
 0x08048ba2: 68 10 01 00 00 e9 c0 fd |h.......|
@@ -517,7 +530,7 @@ using this memory map for disassembly:
 
 0x08048bac: Basic block reasons: entry point, graph-1
 0x08048bac: Predecessor blocks: 0x0804943b<<Func>>
-0x08048bac: ff 25 10 ae 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ae10<.got.plt+0x98>]
+0x08048bac: ff 25 10 ae 04 08       |.%....  |   jmp    dword ds:[0x0804ae10<.got.plt+0x98>]
 0x08048bac: Successor blocks: unknown
 
 0x08048bb2: 68 18 01 00 00 e9 b0 fd |h.......|
@@ -529,7 +542,7 @@ using this memory map for disassembly:
 0x08048bbc: No known callers.
 
 0x08048bbc: Basic block reasons: entry point, graph-1
-0x08048bbc: ff 25 14 ae 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ae14<.got.plt+0x9c>]
+0x08048bbc: ff 25 14 ae 04 08       |.%....  |   jmp    dword ds:[0x0804ae14<.got.plt+0x9c>]
 0x08048bbc: Successor blocks: unknown
 
 0x08048bc2: 68 20 01 00 00 e9 a0 fd |h ......|
@@ -543,7 +556,7 @@ using this memory map for disassembly:
 
 0x08048bcc: Basic block reasons: entry point, graph-1
 0x08048bcc: Predecessor blocks: 0x08048cf9<<Func>>, 0x08048d0d<<Func>>, 0x08048d24<<Func>>, 0x0804930e<<Func>>, 0x08049358<<Func>>, 0x0804937f<<Func>>
-0x08048bcc: ff 25 18 ae 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ae18<.got.plt+0xa0>]
+0x08048bcc: ff 25 18 ae 04 08       |.%....  |   jmp    dword ds:[0x0804ae18<.got.plt+0xa0>]
 0x08048bcc: Successor blocks: unknown
 
 0x08048bd2: 68 28 01 00 00 e9 90 fd |h(......|
@@ -556,7 +569,7 @@ using this memory map for disassembly:
 
 0x08048bdc: Basic block reasons: entry point, graph-1
 0x08048bdc: Predecessor blocks: 0x080491c4<<Func>>
-0x08048bdc: ff 25 1c ae 04 08       |.%....  |   jmp    DWORD PTR ds:[0x0804ae1c<.got.plt+0xa4>]
+0x08048bdc: ff 25 1c ae 04 08       |.%....  |   jmp    dword ds:[0x0804ae1c<.got.plt+0xa4>]
 0x08048bdc: Successor blocks: unknown
 
 0x08048be2: 68 30 01 00 00 e9 80 fd |h0......|
@@ -569,7 +582,7 @@ using this memory map for disassembly:
 
 0x08048bec: Basic block reasons: entry point, graph-1
 0x08048bec: Predecessor blocks: 0x080493f0<<Func>>, 0x0804949a<<Func>>
-0x08048bec: ff 25 20 ae 04 08       |.% ...  |   jmp    DWORD PTR ds:[0x0804ae20<.got.plt+0xa8>]
+0x08048bec: ff 25 20 ae 04 08       |.% ...  |   jmp    dword ds:[0x0804ae20<.got.plt+0xa8>]
 0x08048bec: Successor blocks: unknown
 
 0x08048bf2: 68 38 01 00 00 e9 70 fd |h8....p.|
@@ -581,7 +594,7 @@ using this memory map for disassembly:
 0x08048bfc: No known callers.
 
 0x08048bfc: Basic block reasons: entry point, graph-1
-0x08048bfc: ff 25 24 ae 04 08       |.%$...  |   jmp    DWORD PTR ds:[0x0804ae24<.got.plt+0xac>]
+0x08048bfc: ff 25 24 ae 04 08       |.%$...  |   jmp    dword ds:[0x0804ae24<.got.plt+0xac>]
 0x08048bfc: Successor blocks: unknown
 
 0x08048c02: 68 40 01 00 00 e9 60 fd |h@....`.|
@@ -593,7 +606,7 @@ using this memory map for disassembly:
 0x08048c0c: No known callers.
 
 0x08048c0c: Basic block reasons: entry point, graph-1
-0x08048c0c: ff 25 28 ae 04 08       |.%(...  |   jmp    DWORD PTR ds:[0x0804ae28<.got.plt+0xb0>]
+0x08048c0c: ff 25 28 ae 04 08       |.%(...  |   jmp    dword ds:[0x0804ae28<.got.plt+0xb0>]
 0x08048c0c: Successor blocks: unknown
 
 0x08048c12: 68 48 01 00 00 e9 50 fd |hH....P.|
@@ -642,7 +655,7 @@ using this memory map for disassembly:
 0x08048c49: 5b                      |[       |   pop    ebx
 0x08048c4a: 81 c3 2f 21 00 00       |../!..  |   add    ebx, 0x0000212f<8495>
 0x08048c50: 52                      |R       |   push   edx
-0x08048c51: 8b 83 fc ff ff ff       |......  |   mov    eax, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
+0x08048c51: 8b 83 fc ff ff ff       |......  |   mov    eax, dword ds:[ebx + 0xfffffffc<-4>]
 0x08048c57: 85 c0                   |..      |   test   eax, eax
 0x08048c59: 74 02                   |t.      |   je     0x08048c5d<<Insn>>
 0x08048c59: Successor blocks: 0x08048c5b, 0x08048c5d
@@ -671,7 +684,7 @@ using this memory map for disassembly:
 0x08048c64: 55                      |U       |   push   ebp
 0x08048c65: 89 e5                   |..      |   mov    ebp, esp
 0x08048c67: 83 ec 08                |...     |   sub    esp, 0x08
-0x08048c6a: 80 3d 50 ae 04 08 00    |.=P.... |   cmp    BYTE PTR ds:[0x0804ae50<.bss>], 0x00
+0x08048c6a: 80 3d 50 ae 04 08 00    |.=P.... |   cmp    byte ds:[0x0804ae50<.bss>], 0x00
 0x08048c71: 74 0f                   |t.      |   je     0x08048c82<<Insn>>
 0x08048c71: Successor blocks: 0x08048c73, 0x08048c82
 
@@ -688,15 +701,15 @@ using this memory map for disassembly:
 0x08048c78: Predecessor blocks: 0x08048c82
 0x08048c78: Dominator block: 0x08048c82
 0x08048c78: 83 c0 04                |...     |   add    eax, 0x04
-0x08048c7b: a3 34 ae 04 08          |.4...   |   mov    DWORD PTR ds:[0x0804ae34<.data+8>], eax
+0x08048c7b: a3 34 ae 04 08          |.4...   |   mov    dword ds:[0x0804ae34<.data+8>], eax
 0x08048c80: ff d2                   |..      |   call   edx
 0x08048c80: Successor blocks: 0x08048c82, unknown
 
 0x08048c82: Basic block reasons: graph-2
 0x08048c82: Predecessor blocks: 0x08048c64, 0x08048c78
 0x08048c82: Dominator block: 0x08048c64
-0x08048c82: a1 34 ae 04 08          |.4...   |   mov    eax, DWORD PTR ds:[0x0804ae34<.data+8>]
-0x08048c87: 8b 10                   |..      |   mov    edx, DWORD PTR ds:[eax]
+0x08048c82: a1 34 ae 04 08          |.4...   |   mov    eax, dword ds:[0x0804ae34<.data+8>]
+0x08048c87: 8b 10                   |..      |   mov    edx, dword ds:[eax]
 0x08048c89: 85 d2                   |..      |   test   edx, edx
 0x08048c8b: 75 eb                   |u.      |   jne    0x08048c78<<Insn>>
 0x08048c8b: Successor blocks: 0x08048c78, 0x08048c8d
@@ -704,7 +717,7 @@ using this memory map for disassembly:
 0x08048c8d: Basic block reasons: graph-2
 0x08048c8d: Predecessor blocks: 0x08048c82
 0x08048c8d: Dominator block: 0x08048c82
-0x08048c8d: c6 05 50 ae 04 08 01    |..P.... |   mov    BYTE PTR ds:[0x0804ae50<.bss>], 0x01
+0x08048c8d: c6 05 50 ae 04 08 01    |..P.... |   mov    byte ds:[0x0804ae50<.bss>], 0x01
 0x08048c8d: Successor blocks: 0x08048c94
 
 0x08048c94: Basic block reasons: graph-2
@@ -725,7 +738,7 @@ using this memory map for disassembly:
 0x08048c98: 55                      |U       |   push   ebp
 0x08048c99: 89 e5                   |..      |   mov    ebp, esp
 0x08048c9b: 83 ec 08                |...     |   sub    esp, 0x08
-0x08048c9e: a1 a8 ac 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x0804aca8<.jcr>]
+0x08048c9e: a1 a8 ac 04 08          |.....   |   mov    eax, dword ds:[0x0804aca8<.jcr>]
 0x08048ca3: 85 c0                   |..      |   test   eax, eax
 0x08048ca5: 74 19                   |t.      |   je     0x08048cc0<<Insn>>
 0x08048ca5: Successor blocks: 0x08048ca7, 0x08048cc0
@@ -766,9 +779,9 @@ using this memory map for disassembly:
 0x08048cc4: 55                      |U       |   push   ebp
 0x08048cc5: 89 e5                   |..      |   mov    ebp, esp
 0x08048cc7: 83 ec 0c                |...     |   sub    esp, 0x0c
-0x08048cca: ff 35 54 ae 04 08       |.5T...  |   push   DWORD PTR ds:[0x0804ae54<.bss+4>]
+0x08048cca: ff 35 54 ae 04 08       |.5T...  |   push   dword ds:[0x0804ae54<.bss+4>]
 0x08048cd0: 68 2c 99 04 08          |h,...   |   push   0x0804992c<<StaticData@0x080498d8>+0x54>
-0x08048cd5: ff 35 44 ae 04 08       |.5D...  |   push   DWORD PTR ds:[0x0804ae44<.dynbss>]
+0x08048cd5: ff 35 44 ae 04 08       |.5D...  |   push   dword ds:[0x0804ae44<.dynbss>]
 0x08048cdb: e8 fc fc ff ff          |.....   |   call   0x080489dc<fprintf@plt>
 0x08048cdb: Successor blocks: 0x080489dc<fprintf@plt>, 0x08048ce0
 
@@ -776,16 +789,16 @@ using this memory map for disassembly:
 0x08048ce0: Predecessor blocks: 0x08048cc4
 0x08048ce0: Dominator block: 0x08048cc4
 0x08048ce0: 83 c4 0c                |...     |   add    esp, 0x0c
-0x08048ce3: ff 35 54 ae 04 08       |.5T...  |   push   DWORD PTR ds:[0x0804ae54<.bss+4>]
+0x08048ce3: ff 35 54 ae 04 08       |.5T...  |   push   dword ds:[0x0804ae54<.bss+4>]
 0x08048ce9: 68 58 99 04 08          |hX...   |   push   0x08049958<<StaticData@0x080498d8>+0x80>
-0x08048cee: ff 35 44 ae 04 08       |.5D...  |   push   DWORD PTR ds:[0x0804ae44<.dynbss>]
+0x08048cee: ff 35 44 ae 04 08       |.5D...  |   push   dword ds:[0x0804ae44<.dynbss>]
 0x08048cf4: e8 e3 fc ff ff          |.....   |   call   0x080489dc<fprintf@plt>
 0x08048cf4: Successor blocks: 0x080489dc<fprintf@plt>, 0x08048cf9
 
 0x08048cf9: Basic block reasons: graph-2
 0x08048cf9: Predecessor blocks: 0x08048ce0
 0x08048cf9: Dominator block: 0x08048ce0
-0x08048cf9: ff 35 44 ae 04 08       |.5D...  |   push   DWORD PTR ds:[0x0804ae44<.dynbss>]
+0x08048cf9: ff 35 44 ae 04 08       |.5D...  |   push   dword ds:[0x0804ae44<.dynbss>]
 0x08048cff: 6a 32                   |j2      |   push   0x32
 0x08048d01: 6a 01                   |j.      |   push   0x01
 0x08048d03: 68 84 99 04 08          |h....   |   push   0x08049984<<StaticData@0x080498d8>+0xac>
@@ -796,7 +809,7 @@ using this memory map for disassembly:
 0x08048d0d: Predecessor blocks: 0x08048cf9
 0x08048d0d: Dominator block: 0x08048cf9
 0x08048d0d: 83 c4 20                |..      |   add    esp, 0x20
-0x08048d10: ff 35 44 ae 04 08       |.5D...  |   push   DWORD PTR ds:[0x0804ae44<.dynbss>]
+0x08048d10: ff 35 44 ae 04 08       |.5D...  |   push   dword ds:[0x0804ae44<.dynbss>]
 0x08048d16: 6a 23                   |j#      |   push   0x23
 0x08048d18: 6a 01                   |j.      |   push   0x01
 0x08048d1a: 68 b8 99 04 08          |h....   |   push   0x080499b8<<StaticData@0x080498d8>+0xe0>
@@ -806,7 +819,7 @@ using this memory map for disassembly:
 0x08048d24: Basic block reasons: graph-2
 0x08048d24: Predecessor blocks: 0x08048d0d
 0x08048d24: Dominator block: 0x08048d0d
-0x08048d24: ff 35 44 ae 04 08       |.5D...  |   push   DWORD PTR ds:[0x0804ae44<.dynbss>]
+0x08048d24: ff 35 44 ae 04 08       |.5D...  |   push   dword ds:[0x0804ae44<.dynbss>]
 0x08048d2a: 6a 30                   |j0      |   push   0x30
 0x08048d2c: 6a 01                   |j.      |   push   0x01
 0x08048d2e: 68 dc 99 04 08          |h....   |   push   0x080499dc<<StaticData@0x080498d8>+0x0104>
@@ -817,16 +830,16 @@ using this memory map for disassembly:
 0x08048d38: Predecessor blocks: 0x08048d24
 0x08048d38: Dominator block: 0x08048d24
 0x08048d38: 83 c4 1c                |...     |   add    esp, 0x1c
-0x08048d3b: ff 35 54 ae 04 08       |.5T...  |   push   DWORD PTR ds:[0x0804ae54<.bss+4>]
+0x08048d3b: ff 35 54 ae 04 08       |.5T...  |   push   dword ds:[0x0804ae54<.bss+4>]
 0x08048d41: 68 10 9a 04 08          |h....   |   push   0x08049a10<<StaticData@0x080498d8>+0x0138>
-0x08048d46: ff 35 44 ae 04 08       |.5D...  |   push   DWORD PTR ds:[0x0804ae44<.dynbss>]
+0x08048d46: ff 35 44 ae 04 08       |.5D...  |   push   dword ds:[0x0804ae44<.dynbss>]
 0x08048d4c: e8 8b fc ff ff          |.....   |   call   0x080489dc<fprintf@plt>
 0x08048d4c: Successor blocks: 0x080489dc<fprintf@plt>, 0x08048d51
 
 0x08048d51: Basic block reasons: graph-2
 0x08048d51: Predecessor blocks: 0x08048d38
 0x08048d51: Dominator block: 0x08048d38
-0x08048d51: c7 04 24 01 00 00 00    |..$.... |   mov    DWORD PTR ss:[esp], 0x00000001
+0x08048d51: c7 04 24 01 00 00 00    |..$.... |   mov    dword ss:[esp], 0x00000001
 0x08048d58: e8 ff fd ff ff          |.....   |   call   0x08048b5c<exit@plt>
 0x08048d58: Successor blocks: 0x08048b5c<exit@plt>
 
@@ -986,7 +999,7 @@ using this memory map for disassembly:
 0x08048d84: 83 c4 10                |...     | (data)   add    esp, 0x10
 0x08048d87: 85 c0                   |..      | (data)   test   eax, eax
 0x08048d89: 74 05                   |t.      | (data)   je     0x08048d90
-0x08048d8b: 0f be 00                |...     | (data)   movsx  eax, BYTE PTR ds:[eax]
+0x08048d8b: 0f be 00                |...     | (data)   movsx  eax, byte ds:[eax]
 0x08048d8e: c9                      |.       | (data)   leave  
 0x08048d8f: c3                      |.       | (data)   ret    
 0x08048d90: e8 f7 fc ff ff          |.....   | (data)   call   0x08048a8c
@@ -994,21 +1007,21 @@ using this memory map for disassembly:
 0x08048d98: e8 1f fd ff ff          |.....   | (data)   call   0x08048abc
 0x08048d9d: 85 c0                   |..      | (data)   test   eax, eax
 0x08048d9f: 74 0c                   |t.      | (data)   je     0x08048dad
-0x08048da1: 66 83 38 01             |f.8.    | (data)   cmp    WORD PTR ds:[eax], 0x01
+0x08048da1: 66 83 38 01             |f.8.    | (data)   cmp    word ds:[eax], 0x01
 0x08048da5: 75 f1                   |u.      | (data)   jne    0x08048d98
-0x08048da7: 0f b6 40 04             |..@.    | (data)   movzx  eax, BYTE PTR ds:[eax + 0x04]
+0x08048da7: 0f b6 40 04             |..@.    | (data)   movzx  eax, byte ds:[eax + 0x04]
 0x08048dab: c9                      |.       | (data)   leave  
 0x08048dac: c3                      |.       | (data)   ret    
 0x08048dad: e8 fa fc ff ff          |.....   | (data)   call   0x08048aac
 0x08048db2: 50                      |P       | (data)   push   eax
-0x08048db3: ff 35 54 ae 04 08       |.5T...  | (data)   push   DWORD PTR ds:[0x0804ae54]
+0x08048db3: ff 35 54 ae 04 08       |.5T...  | (data)   push   dword ds:[0x0804ae54]
 0x08048db9: 68 4c 9a 04 08          |hL...   | (data)   push   0x08049a4c
-0x08048dbe: ff 35 44 ae 04 08       |.5D...  | (data)   push   DWORD PTR ds:[0x0804ae44]
+0x08048dbe: ff 35 44 ae 04 08       |.5D...  | (data)   push   dword ds:[0x0804ae44]
 0x08048dc4: e8 13 fc ff ff          |.....   | (data)   call   0x080489dc
 0x08048dc9: 83 c4 0c                |...     | (data)   add    esp, 0x0c
-0x08048dcc: ff 35 54 ae 04 08       |.5T...  | (data)   push   DWORD PTR ds:[0x0804ae54]
+0x08048dcc: ff 35 54 ae 04 08       |.5T...  | (data)   push   dword ds:[0x0804ae54]
 0x08048dd2: 68 84 9a 04 08          |h....   | (data)   push   0x08049a84
-0x08048dd7: ff 35 44 ae 04 08       |.5D...  | (data)   push   DWORD PTR ds:[0x0804ae44]
+0x08048dd7: ff 35 44 ae 04 08       |.5D...  | (data)   push   dword ds:[0x0804ae44]
 0x08048ddd: e8 fa fb ff ff          |.....   | (data)   call   0x080489dc
 0x08048de2: b8 ff ff ff ff          |.....   | (data)   mov    eax, 0xffffffff<-1>
 0x08048de7: c9                      |.       | (data)   leave  
@@ -1018,22 +1031,22 @@ using this memory map for disassembly:
 0x08048ded: 89 e5                   |..      | (data)   mov    ebp, esp
 0x08048def: 53                      |S       | (data)   push   ebx
 0x08048df0: 83 ec 24                |..$     | (data)   sub    esp, 0x24
-0x08048df3: 8b 55 0c                |.U.     | (data)   mov    edx, DWORD PTR ss:[ebp + 0x0c]
-0x08048df6: 8b 45 08                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x08]
+0x08048df3: 8b 55 0c                |.U.     | (data)   mov    edx, dword ss:[ebp + 0x0c]
+0x08048df6: 8b 45 08                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x08]
 0x08048df9: 85 d2                   |..      | (data)   test   edx, edx
-0x08048dfb: 89 45 dc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xdc<-36>], eax
-0x08048dfe: c7 45 d8 fa 9a 04 08    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xd8<-40>], 0x08049afa
+0x08048dfb: 89 45 dc                |.E.     | (data)   mov    dword ss:[ebp + 0xdc<-36>], eax
+0x08048dfe: c7 45 d8 fa 9a 04 08    |.E..... | (data)   mov    dword ss:[ebp + 0xd8<-40>], 0x08049afa
 0x08048e05: b8 02 00 00 00          |.....   | (data)   mov    eax, 0x00000002
 0x08048e0a: 74 0c                   |t.      | (data)   je     0x08048e18
-0x08048e0c: c7 45 e0 df 9a 04 08    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xe0<-32>], 0x08049adf
-0x08048e13: 89 55 e4                |.U.     | (data)   mov    DWORD PTR ss:[ebp + 0xe4<-28>], edx
+0x08048e0c: c7 45 e0 df 9a 04 08    |.E..... | (data)   mov    dword ss:[ebp + 0xe0<-32>], 0x08049adf
+0x08048e13: 89 55 e4                |.U.     | (data)   mov    dword ss:[ebp + 0xe4<-28>], edx
 0x08048e16: b0 04                   |..      | (data)   mov    al, 0x04
 0x08048e18: 83 ec 08                |...     | (data)   sub    esp, 0x08
 0x08048e1b: 8d 5d d8                |.].     | (data)   lea    ebx, [ebp + 0xd8<-40>]
 0x08048e1e: 53                      |S       | (data)   push   ebx
 0x08048e1f: 68 e2 9a 04 08          |h....   | (data)   push   0x08049ae2
-0x08048e24: c7 44 85 d8 f1 9a 04 08 |.D......| (data)   mov    DWORD PTR ss:[ebp + eax*0x04 + 0xd8<-40>], 0x08049af1
-0x08048e2c: c7 44 85 dc 00 00 00 00 |.D......| (data)   mov    DWORD PTR ss:[ebp + eax*0x04 + 0xdc<-36>], 0x00000000
+0x08048e24: c7 44 85 d8 f1 9a 04 08 |.D......| (data)   mov    dword ss:[ebp + eax*0x04 + 0xd8<-40>], 0x08049af1
+0x08048e2c: c7 44 85 dc 00 00 00 00 |.D......| (data)   mov    dword ss:[ebp + eax*0x04 + 0xdc<-36>], 0x00000000
 0x08048e34: e8 f3 fb ff ff          |.....   | (data)   call   0x08048a2c
 0x08048e39: 58                      |X       | (data)   pop    eax
 0x08048e3a: 5a                      |Z       | (data)   pop    edx
@@ -1045,9 +1058,9 @@ using this memory map for disassembly:
 0x08048e48: 53                      |S       | (data)   push   ebx
 0x08048e49: 68 03 9b 04 08          |h....   | (data)   push   0x08049b03
 0x08048e4e: e8 d9 fb ff ff          |.....   | (data)   call   0x08048a2c
-0x08048e53: c7 04 24 fa 9a 04 08    |..$.... | (data)   mov    DWORD PTR ss:[esp], 0x08049afa
+0x08048e53: c7 04 24 fa 9a 04 08    |..$.... | (data)   mov    dword ss:[esp], 0x08049afa
 0x08048e5a: e8 6d fb ff ff          |.m...   | (data)   call   0x080489cc
-0x08048e5f: c7 04 24 01 00 00 00    |..$.... | (data)   mov    DWORD PTR ss:[esp], 0x00000001
+0x08048e5f: c7 04 24 01 00 00 00    |..$.... | (data)   mov    dword ss:[esp], 0x00000001
 0x08048e66: e8 f1 fc ff ff          |.....   | (data)   call   0x08048b5c
 0x08048e6b: 90                      |.       | (data)   nop    
 0x08048e6c: 55                      |U       | (data)   push   ebp
@@ -1059,27 +1072,27 @@ using this memory map for disassembly:
 0x08048e75: 83 e4 f0                |...     | (data)   and    esp, 0xf0<-16>
 0x08048e78: 83 ec 18                |...     | (data)   sub    esp, 0x18
 0x08048e7b: 6a 2f                   |j/      | (data)   push   0x2f
-0x08048e7d: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x08048e80: ff 30                   |.0      | (data)   push   DWORD PTR ds:[eax]
-0x08048e82: c7 45 f0 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xf0<-16>], 0x00000000
-0x08048e89: c7 45 ec 01 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xec<-20>], 0x00000001
-0x08048e90: c7 45 e8 01 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xe8<-24>], 0x00000001
-0x08048e97: c7 45 e4 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xe4<-28>], 0x00000000
-0x08048e9e: c7 45 e0 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xe0<-32>], 0x00000000
-0x08048ea5: c7 45 dc 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xdc<-36>], 0x00000000
-0x08048eac: c7 45 d8 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xd8<-40>], 0x00000000
-0x08048eb3: c7 45 d4 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xd4<-44>], 0x00000000
-0x08048eba: c7 45 d0 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xd0<-48>], 0x00000000
+0x08048e7d: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x08048e80: ff 30                   |.0      | (data)   push   dword ds:[eax]
+0x08048e82: c7 45 f0 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xf0<-16>], 0x00000000
+0x08048e89: c7 45 ec 01 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xec<-20>], 0x00000001
+0x08048e90: c7 45 e8 01 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xe8<-24>], 0x00000001
+0x08048e97: c7 45 e4 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xe4<-28>], 0x00000000
+0x08048e9e: c7 45 e0 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xe0<-32>], 0x00000000
+0x08048ea5: c7 45 dc 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xdc<-36>], 0x00000000
+0x08048eac: c7 45 d8 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xd8<-40>], 0x00000000
+0x08048eb3: c7 45 d4 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xd4<-44>], 0x00000000
+0x08048eba: c7 45 d0 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xd0<-48>], 0x00000000
 0x08048ec1: e8 26 fc ff ff          |.&...   | (data)   call   0x08048aec
 0x08048ec6: 83 c4 10                |...     | (data)   add    esp, 0x10
 0x08048ec9: 85 c0                   |..      | (data)   test   eax, eax
 0x08048ecb: 0f 84 5a 01 00 00       |..Z...  | (data)   je     0x0804902b
 0x08048ed1: 40                      |@       | (data)   inc    eax
-0x08048ed2: a3 54 ae 04 08          |.T...   | (data)   mov    DWORD PTR ds:[0x0804ae54], eax
+0x08048ed2: a3 54 ae 04 08          |.T...   | (data)   mov    dword ds:[0x0804ae54], eax
 0x08048ed7: e8 20 fd ff ff          |. ...   | (data)   call   0x08048bfc
 0x08048edc: 85 c0                   |..      | (data)   test   eax, eax
 0x08048ede: 0f 85 51 02 00 00       |..Q...  | (data)   jne    0x08049135
-0x08048ee4: 8b 1d 54 ae 04 08       |..T...  | (data)   mov    ebx, DWORD PTR ds:[0x0804ae54]
+0x08048ee4: 8b 1d 54 ae 04 08       |..T...  | (data)   mov    ebx, dword ds:[0x0804ae54]
 0x08048eea: bf 11 9b 04 08          |.....   | (data)   mov    edi, 0x08049b11
 0x08048eef: b9 07 00 00 00          |.....   | (data)   mov    ecx, 0x00000007
 0x08048ef4: fc                      |.       | (data)   cld    
@@ -1092,12 +1105,12 @@ using this memory map for disassembly:
 0x08048f0a: 89 de                   |..      | (data)   mov    esi, ebx
 0x08048f0c: f3 a6                   |..      | (data)   repe_cmpsb 
 0x08048f0e: 75 08                   |u.      | (data)   jne    0x08048f18
-0x08048f10: c7 45 d4 01 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xd4<-44>], 0x00000001
+0x08048f10: c7 45 d4 01 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xd4<-44>], 0x00000001
 0x08048f17: 90                      |.       | (data)   nop    
 0x08048f18: 50                      |P       | (data)   push   eax
 0x08048f19: 68 18 9b 04 08          |h....   | (data)   push   0x08049b18
-0x08048f1e: ff 75 0c                |.u.     | (data)   push   DWORD PTR ss:[ebp + 0x0c]
-0x08048f21: ff 75 08                |.u.     | (data)   push   DWORD PTR ss:[ebp + 0x08]
+0x08048f1e: ff 75 0c                |.u.     | (data)   push   dword ss:[ebp + 0x0c]
+0x08048f21: ff 75 08                |.u.     | (data)   push   dword ss:[ebp + 0x08]
 0x08048f24: e8 13 fb ff ff          |.....   | (data)   call   0x08048a3c
 0x08048f29: 83 c4 10                |...     | (data)   add    esp, 0x10
 0x08048f2c: 83 f8 ff                |...     | (data)   cmp    eax, 0xff<-1>
@@ -1105,54 +1118,54 @@ using this memory map for disassembly:
 0x08048f31: 83 e8 64                |..d     | (data)   sub    eax, 0x64
 0x08048f34: 83 f8 13                |...     | (data)   cmp    eax, 0x13
 0x08048f37: 77 07                   |w.      | (data)   ja     0x08048f40
-0x08048f39: ff 24 85 58 9b 04 08    |.$.X... | (data)   jmp    DWORD PTR ds:[0x08049b58 + eax*0x04]
+0x08048f39: ff 24 85 58 9b 04 08    |.$.X... | (data)   jmp    dword ds:[0x08049b58 + eax*0x04]
 0x08048f40: e8 7f fd ff ff          |.....   | (data)   call   0x08048cc4
 0x08048f45: 50                      |P       | (data)   push   eax
 0x08048f46: 68 18 9b 04 08          |h....   | (data)   push   0x08049b18
-0x08048f4b: ff 75 0c                |.u.     | (data)   push   DWORD PTR ss:[ebp + 0x0c]
-0x08048f4e: ff 75 08                |.u.     | (data)   push   DWORD PTR ss:[ebp + 0x08]
+0x08048f4b: ff 75 0c                |.u.     | (data)   push   dword ss:[ebp + 0x0c]
+0x08048f4e: ff 75 08                |.u.     | (data)   push   dword ss:[ebp + 0x08]
 0x08048f51: e8 e6 fa ff ff          |.....   | (data)   call   0x08048a3c
 0x08048f56: 83 c4 10                |...     | (data)   add    esp, 0x10
 0x08048f59: 83 f8 ff                |...     | (data)   cmp    eax, 0xff<-1>
 0x08048f5c: 75 d3                   |u.      | (data)   jne    0x08048f31
-0x08048f5e: 8b 55 08                |.U.     | (data)   mov    edx, DWORD PTR ss:[ebp + 0x08]
-0x08048f61: 3b 15 4c ae 04 08       |;.L...  | (data)   cmp    edx, DWORD PTR ds:[0x0804ae4c]
+0x08048f5e: 8b 55 08                |.U.     | (data)   mov    edx, dword ss:[ebp + 0x08]
+0x08048f61: 3b 15 4c ae 04 08       |;.L...  | (data)   cmp    edx, dword ds:[0x0804ae4c]
 0x08048f67: 74 05                   |t.      | (data)   je     0x08048f6e
 0x08048f69: e8 56 fd ff ff          |.V...   | (data)   call   0x08048cc4
 0x08048f6e: 83 ec 0c                |...     | (data)   sub    esp, 0x0c
 0x08048f71: 68 23 9b 04 08          |h#...   | (data)   push   0x08049b23
 0x08048f76: e8 e1 fa ff ff          |.....   | (data)   call   0x08048a5c
-0x08048f7b: 8b 45 e0                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xe0<-32>]
+0x08048f7b: 8b 45 e0                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xe0<-32>]
 0x08048f7e: 83 c4 10                |...     | (data)   add    esp, 0x10
 0x08048f81: 85 c0                   |..      | (data)   test   eax, eax
 0x08048f83: 75 0b                   |u.      | (data)   jne    0x08048f90
-0x08048f85: 8b 45 e4                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xe4<-28>]
+0x08048f85: 8b 45 e4                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xe4<-28>]
 0x08048f88: 85 c0                   |..      | (data)   test   eax, eax
 0x08048f8a: 0f 84 af 00 00 00       |......  | (data)   je     0x0804903f
-0x08048f90: 8b 45 e8                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xe8<-24>]
+0x08048f90: 8b 45 e8                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xe8<-24>]
 0x08048f93: 85 c0                   |..      | (data)   test   eax, eax
 0x08048f95: 75 71                   |uq      | (data)   jne    0x08049008
-0x08048f97: 8b 45 e4                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xe4<-28>]
+0x08048f97: 8b 45 e4                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xe4<-28>]
 0x08048f9a: 85 c0                   |..      | (data)   test   eax, eax
 0x08048f9c: 0f 84 3f 01 00 00       |..?...  | (data)   je     0x080490e1
 0x08048fa2: 83 ec 0c                |...     | (data)   sub    esp, 0x0c
 0x08048fa5: 6a 00                   |j.      | (data)   push   0x00
 0x08048fa7: e8 b0 fb ff ff          |.....   | (data)   call   0x08048b5c
-0x08048fac: c7 45 f0 01 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xf0<-16>], 0x00000001
+0x08048fac: c7 45 f0 01 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xf0<-16>], 0x00000001
 0x08048fb3: e9 47 ff ff ff          |.G...   | (data)   jmp    0x08048eff
-0x08048fb8: c7 45 ec 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xec<-20>], 0x00000000
-0x08048fbf: c7 45 e8 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xe8<-24>], 0x00000000
+0x08048fb8: c7 45 ec 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xec<-20>], 0x00000000
+0x08048fbf: c7 45 e8 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xe8<-24>], 0x00000000
 0x08048fc6: e9 4d ff ff ff          |.M...   | (data)   jmp    0x08048f18
-0x08048fcb: c7 45 e4 01 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xe4<-28>], 0x00000001
+0x08048fcb: c7 45 e4 01 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xe4<-28>], 0x00000001
 0x08048fd2: e9 41 ff ff ff          |.A...   | (data)   jmp    0x08048f18
-0x08048fd7: a1 48 ae 04 08          |.H...   | (data)   mov    eax, DWORD PTR ds:[0x0804ae48]
-0x08048fdc: 89 45 d0                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xd0<-48>], eax
+0x08048fd7: a1 48 ae 04 08          |.H...   | (data)   mov    eax, dword ds:[0x0804ae48]
+0x08048fdc: 89 45 d0                |.E.     | (data)   mov    dword ss:[ebp + 0xd0<-48>], eax
 0x08048fdf: e9 34 ff ff ff          |.4...   | (data)   jmp    0x08048f18
-0x08048fe4: c7 45 dc 01 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xdc<-36>], 0x00000001
+0x08048fe4: c7 45 dc 01 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xdc<-36>], 0x00000001
 0x08048feb: e9 28 ff ff ff          |.(...   | (data)   jmp    0x08048f18
-0x08048ff0: c7 45 d8 01 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xd8<-40>], 0x00000001
+0x08048ff0: c7 45 d8 01 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xd8<-40>], 0x00000001
 0x08048ff7: e9 1c ff ff ff          |.....   | (data)   jmp    0x08048f18
-0x08048ffc: c7 45 e0 01 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xe0<-32>], 0x00000001
+0x08048ffc: c7 45 e0 01 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xe0<-32>], 0x00000001
 0x08049003: e9 10 ff ff ff          |.....   | (data)   jmp    0x08048f18
 0x08049008: 83 ec 0c                |...     | (data)   sub    esp, 0x0c
 0x0804900b: 68 25 9b 04 08          |h%...   | (data)   push   0x08049b25
@@ -1164,16 +1177,16 @@ using this memory map for disassembly:
 0x08049023: 83 c4 20                |..      | (data)   add    esp, 0x20
 0x08049026: e9 6c ff ff ff          |.l...   | (data)   jmp    0x08048f97
 0x0804902b: c7 05 54 ae 04 08 00 00 |..T.....|
-0x08049033: 00 00                   |..      | (data)   mov    DWORD PTR ds:[0x0804ae54], 0x00000000
-0x08049035: 8b 55 0c                |.U.     | (data)   mov    edx, DWORD PTR ss:[ebp + 0x0c]
-0x08049038: 8b 02                   |..      | (data)   mov    eax, DWORD PTR ds:[edx]
+0x08049033: 00 00                   |..      | (data)   mov    dword ds:[0x0804ae54], 0x00000000
+0x08049035: 8b 55 0c                |.U.     | (data)   mov    edx, dword ss:[ebp + 0x0c]
+0x08049038: 8b 02                   |..      | (data)   mov    eax, dword ds:[edx]
 0x0804903a: e9 93 fe ff ff          |.....   | (data)   jmp    0x08048ed2
 0x0804903f: e8 1c fd ff ff          |.....   | (data)   call   0x08048d60
 0x08049044: 83 f8 30                |..0     | (data)   cmp    eax, 0x30
 0x08049047: 0f 84 43 ff ff ff       |..C...  | (data)   je     0x08048f90
 0x0804904d: 83 f8 36                |..6     | (data)   cmp    eax, 0x36
 0x08049050: 0f 84 3a ff ff ff       |..:...  | (data)   je     0x08048f90
-0x08049056: 8b 45 d4                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xd4<-44>]
+0x08049056: 8b 45 d4                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xd4<-44>]
 0x08049059: 85 c0                   |..      | (data)   test   eax, eax
 0x0804905b: 75 69                   |ui      | (data)   jne    0x080490c6
 0x0804905d: 83 ec 0c                |...     | (data)   sub    esp, 0x0c
@@ -1197,13 +1210,13 @@ using this memory map for disassembly:
 0x08049091: 83 c4 14                |...     | (data)   add    esp, 0x14
 0x08049094: 50                      |P       | (data)   push   eax
 0x08049095: e8 12 f9 ff ff          |.....   | (data)   call   0x080489ac
-0x0804909a: 89 1c 24                |..$     | (data)   mov    DWORD PTR ss:[esp], ebx
+0x0804909a: 89 1c 24                |..$     | (data)   mov    dword ss:[esp], ebx
 0x0804909d: e8 ca fa ff ff          |.....   | (data)   call   0x08048b6c
 0x080490a2: 59                      |Y       | (data)   pop    ecx
-0x080490a3: 8b 55 f0                |.U.     | (data)   mov    edx, DWORD PTR ss:[ebp + 0xf0<-16>]
+0x080490a3: 8b 55 f0                |.U.     | (data)   mov    edx, dword ss:[ebp + 0xf0<-16>]
 0x080490a6: 5b                      |[       | (data)   pop    ebx
 0x080490a7: 85 d2                   |..      | (data)   test   edx, edx
-0x080490a9: ff 75 d0                |.u.     | (data)   push   DWORD PTR ss:[ebp + 0xd0<-48>]
+0x080490a9: ff 75 d0                |.u.     | (data)   push   dword ss:[ebp + 0xd0<-48>]
 0x080490ac: b8 2e 9b 04 08          |.....   | (data)   mov    eax, 0x08049b2e
 0x080490b1: 75 05                   |u.      | (data)   jne    0x080490b8
 0x080490b3: b8 31 9b 04 08          |.1...   | (data)   mov    eax, 0x08049b31
@@ -1221,22 +1234,22 @@ using this memory map for disassembly:
 0x080490d8: 6a 0a                   |j.      | (data)   push   0x0a
 0x080490da: 68 34 9b 04 08          |h4...   | (data)   push   0x08049b34
 0x080490df: eb 95                   |..      | (data)   jmp    0x08049076
-0x080490e1: 8b 7d ec                |.}.     | (data)   mov    edi, DWORD PTR ss:[ebp + 0xec<-20>]
+0x080490e1: 8b 7d ec                |.}.     | (data)   mov    edi, dword ss:[ebp + 0xec<-20>]
 0x080490e4: 85 ff                   |..      | (data)   test   edi, edi
 0x080490e6: 0f 85 ac 00 00 00       |......  | (data)   jne    0x08049198
-0x080490ec: 8b 75 dc                |.u.     | (data)   mov    esi, DWORD PTR ss:[ebp + 0xdc<-36>]
+0x080490ec: 8b 75 dc                |.u.     | (data)   mov    esi, dword ss:[ebp + 0xdc<-36>]
 0x080490ef: 85 f6                   |..      | (data)   test   esi, esi
 0x080490f1: 0f 85 97 00 00 00       |......  | (data)   jne    0x0804918e
-0x080490f7: 8b 5d d8                |.].     | (data)   mov    ebx, DWORD PTR ss:[ebp + 0xd8<-40>]
+0x080490f7: 8b 5d d8                |.].     | (data)   mov    ebx, dword ss:[ebp + 0xd8<-40>]
 0x080490fa: 85 db                   |..      | (data)   test   ebx, ebx
 0x080490fc: 0f 85 82 00 00 00       |......  | (data)   jne    0x08049184
-0x08049102: 8b 4d f0                |.M.     | (data)   mov    ecx, DWORD PTR ss:[ebp + 0xf0<-16>]
+0x08049102: 8b 4d f0                |.M.     | (data)   mov    ecx, dword ss:[ebp + 0xf0<-16>]
 0x08049105: 85 c9                   |..      | (data)   test   ecx, ecx
 0x08049107: 74 4f                   |tO      | (data)   je     0x08049158
 0x08049109: 83 ec 0c                |...     | (data)   sub    esp, 0x0c
 0x0804910c: 68 67 45 23 01          |hgE#.   | (data)   push   0x01234567
 0x08049111: e8 e6 f8 ff ff          |.....   | (data)   call   0x080489fc
-0x08049116: c7 04 24 00 00 00 00    |..$.... | (data)   mov    DWORD PTR ss:[esp], 0x00000000
+0x08049116: c7 04 24 00 00 00 00    |..$.... | (data)   mov    dword ss:[esp], 0x00000000
 0x0804911d: e8 da f8 ff ff          |.....   | (data)   call   0x080489fc
 0x08049122: 5b                      |[       | (data)   pop    ebx
 0x08049123: 5e                      |^       | (data)   pop    esi
@@ -1247,11 +1260,11 @@ using this memory map for disassembly:
 0x0804912e: 6a 00                   |j.      | (data)   push   0x00
 0x08049130: e9 72 fe ff ff          |.r...   | (data)   jmp    0x08048fa7
 0x08049135: 50                      |P       | (data)   push   eax
-0x08049136: ff 35 54 ae 04 08       |.5T...  | (data)   push   DWORD PTR ds:[0x0804ae54]
+0x08049136: ff 35 54 ae 04 08       |.5T...  | (data)   push   dword ds:[0x0804ae54]
 0x0804913c: 68 3e 9b 04 08          |h>...   | (data)   push   0x08049b3e
-0x08049141: ff 35 44 ae 04 08       |.5D...  | (data)   push   DWORD PTR ds:[0x0804ae44]
+0x08049141: ff 35 44 ae 04 08       |.5D...  | (data)   push   dword ds:[0x0804ae44]
 0x08049147: e8 90 f8 ff ff          |.....   | (data)   call   0x080489dc
-0x0804914c: c7 04 24 01 00 00 00    |..$.... | (data)   mov    DWORD PTR ss:[esp], 0x00000001
+0x0804914c: c7 04 24 01 00 00 00    |..$.... | (data)   mov    dword ss:[esp], 0x00000001
 0x08049153: e8 04 fa ff ff          |.....   | (data)   call   0x08048b5c
 0x08049158: 83 ec 0c                |...     | (data)   sub    esp, 0x0c
 0x0804915b: 68 ef cd ab 89          |h....   | (data)   push   0x89abcdef
@@ -1261,7 +1274,7 @@ using this memory map for disassembly:
 0x08049167: 6a 14                   |j.      | (data)   push   0x14
 0x08049169: 6a 01                   |j.      | (data)   push   0x01
 0x0804916b: e8 4c fa ff ff          |.L...   | (data)   call   0x08048bbc
-0x08049170: 8b 7d d4                |.}.     | (data)   mov    edi, DWORD PTR ss:[ebp + 0xd4<-44>]
+0x08049170: 8b 7d d4                |.}.     | (data)   mov    edi, dword ss:[ebp + 0xd4<-44>]
 0x08049173: 83 c4 10                |...     | (data)   add    esp, 0x10
 0x08049176: 85 ff                   |..      | (data)   test   edi, edi
 0x08049178: 75 35                   |u5      | (data)   jne    0x080491af
@@ -1313,7 +1326,7 @@ using this memory map for disassembly:
 0x080491db: Dominator block: 0x080491c4
 0x080491db: 83 c4 10                |...     |   add    esp, 0x10
 0x080491de: 85 c0                   |..      |   test   eax, eax
-0x080491e0: 89 85 d8 f7 ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xfffff7d8<-2088>], eax
+0x080491e0: 89 85 d8 f7 ff ff       |......  |   mov    dword ss:[ebp + 0xfffff7d8<-2088>], eax
 0x080491e6: 0f 88 6c 01 00 00       |..l...  |   js     0x08049358<<Insn>>
 0x080491e6: Successor blocks: 0x080491ec, 0x08049358
 
@@ -1321,14 +1334,14 @@ using this memory map for disassembly:
 0x080491ec: Predecessor blocks: 0x080491db
 0x080491ec: Dominator block: 0x080491db
 0x080491ec: 8d 85 e8 f7 ff ff       |......  |   lea    eax, [ebp + 0xfffff7e8<-2072>]
-0x080491f2: 89 85 e4 f7 ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xfffff7e4<-2076>], eax
+0x080491f2: 89 85 e4 f7 ff ff       |......  |   mov    dword ss:[ebp + 0xfffff7e4<-2076>], eax
 0x080491f8: 8d 85 e0 f7 ff ff       |......  |   lea    eax, [ebp + 0xfffff7e0<-2080>]
 0x080491fe: 51                      |Q       |   push   ecx
 0x080491ff: 50                      |P       |   push   eax
 0x08049200: 68 12 89 00 00          |h....   |   push   0x00008912<35090>
-0x08049205: ff b5 d8 f7 ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xfffff7d8<-2088>]
+0x08049205: ff b5 d8 f7 ff ff       |......  |   push   dword ss:[ebp + 0xfffff7d8<-2088>]
 0x0804920b: c7 85 e0 f7 ff ff 00 08 |........|
-0x08049213: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xfffff7e0<-2080>], 0x00000800<2048>
+0x08049213: 00 00                   |..      |   mov    dword ss:[ebp + 0xfffff7e0<-2080>], 0x00000800<2048>
 0x08049215: e8 62 f9 ff ff          |.b...   |   call   0x08048b7c<ioctl@plt>
 0x08049215: Successor blocks: 0x08048b7c<ioctl@plt>, 0x0804921a
 
@@ -1343,20 +1356,20 @@ using this memory map for disassembly:
 0x08049225: Basic block reasons: graph-2
 0x08049225: Predecessor blocks: 0x0804921a
 0x08049225: Dominator block: 0x0804921a
-0x08049225: 8b 85 e0 f7 ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xfffff7e0<-2080>]
+0x08049225: 8b 85 e0 f7 ff ff       |......  |   mov    eax, dword ss:[ebp + 0xfffff7e0<-2080>]
 0x0804922b: c1 e8 05                |...     |   shr    eax, 0x05
-0x0804922e: 89 85 d4 f7 ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xfffff7d4<-2092>], eax
+0x0804922e: 89 85 d4 f7 ff ff       |......  |   mov    dword ss:[ebp + 0xfffff7d4<-2092>], eax
 0x08049234: c7 85 d0 f7 ff ff 01 00 |........|
-0x0804923c: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xfffff7d0<-2096>], 0x00000001
+0x0804923c: 00 00                   |..      |   mov    dword ss:[ebp + 0xfffff7d0<-2096>], 0x00000001
 0x08049234: Successor blocks: 0x0804923e
 
 0x0804923e: Basic block reasons: graph-2
 0x0804923e: Predecessor blocks: 0x08049225, 0x08049334
 0x0804923e: Dominator block: 0x08049225
 0x0804923e: c7 85 dc f7 ff ff 00 00 |........|
-0x08049246: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xfffff7dc<-2084>], 0x00000000
-0x08049248: 8b 85 d4 f7 ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xfffff7d4<-2092>]
-0x0804924e: 39 85 dc f7 ff ff       |9.....  |   cmp    DWORD PTR ss:[ebp + 0xfffff7dc<-2084>], eax
+0x08049246: 00 00                   |..      |   mov    dword ss:[ebp + 0xfffff7dc<-2084>], 0x00000000
+0x08049248: 8b 85 d4 f7 ff ff       |......  |   mov    eax, dword ss:[ebp + 0xfffff7d4<-2092>]
+0x0804924e: 39 85 dc f7 ff ff       |9.....  |   cmp    dword ss:[ebp + 0xfffff7dc<-2084>], eax
 0x08049254: 0f 8d da 00 00 00       |......  |   jge    0x08049334<<Insn>>
 0x08049254: Successor blocks: 0x0804925a, 0x08049334
 
@@ -1365,7 +1378,7 @@ using this memory map for disassembly:
 0x0804925a: Dominator block: 0x0804923e
 0x0804925a: 8d 9d e8 f7 ff ff       |......  |   lea    ebx, [ebp + 0xfffff7e8<-2072>]
 0x08049260: c7 85 cc f7 ff ff 00 00 |........|
-0x08049268: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xfffff7cc<-2100>], 0x00000000
+0x08049268: 00 00                   |..      |   mov    dword ss:[ebp + 0xfffff7cc<-2100>], 0x00000000
 0x08049260: Successor blocks: 0x0804926a
 
 0x0804926a: Basic block reasons: graph-2
@@ -1377,11 +1390,11 @@ using this memory map for disassembly:
 0x0804926c: Basic block reasons: graph-2
 0x0804926c: Predecessor blocks: 0x0804928e, 0x080492c5, 0x080492db, 0x08049303, 0x0804932d
 0x0804926c: Dominator block: 0x0804928e
-0x0804926c: ff 85 dc f7 ff ff       |......  |   inc    DWORD PTR ss:[ebp + 0xfffff7dc<-2084>]
-0x08049272: 8b 85 d4 f7 ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xfffff7d4<-2092>]
-0x08049278: 83 85 cc f7 ff ff 20    |......  |   add    DWORD PTR ss:[ebp + 0xfffff7cc<-2100>], 0x20
+0x0804926c: ff 85 dc f7 ff ff       |......  |   inc    dword ss:[ebp + 0xfffff7dc<-2084>]
+0x08049272: 8b 85 d4 f7 ff ff       |......  |   mov    eax, dword ss:[ebp + 0xfffff7d4<-2092>]
+0x08049278: 83 85 cc f7 ff ff 20    |......  |   add    dword ss:[ebp + 0xfffff7cc<-2100>], 0x20
 0x0804927f: 83 c3 20                |..      |   add    ebx, 0x20
-0x08049282: 39 85 dc f7 ff ff       |9.....  |   cmp    DWORD PTR ss:[ebp + 0xfffff7dc<-2084>], eax
+0x08049282: 39 85 dc f7 ff ff       |9.....  |   cmp    dword ss:[ebp + 0xfffff7dc<-2084>], eax
 0x08049288: 0f 8d a6 00 00 00       |......  |   jge    0x08049334<<Insn>>
 0x08049288: Successor blocks: 0x0804928e, 0x08049334
 
@@ -1395,29 +1408,29 @@ using this memory map for disassembly:
 0x0804929b: f3 a6                   |..      |   repe_cmpsb 
 0x0804929d: 0f 94 c0                |...     |   sete   al
 0x080492a0: 0f b6 c0                |...     |   movzx  eax, al
-0x080492a3: 3b 85 d0 f7 ff ff       |;.....  |   cmp    eax, DWORD PTR ss:[ebp + 0xfffff7d0<-2096>]
+0x080492a3: 3b 85 d0 f7 ff ff       |;.....  |   cmp    eax, dword ss:[ebp + 0xfffff7d0<-2096>]
 0x080492a9: 75 c1                   |u.      |   jne    0x0804926c<<Insn>>
 0x080492a9: Successor blocks: 0x0804926c, 0x080492ab
 
 0x080492ab: Basic block reasons: graph-2
 0x080492ab: Predecessor blocks: 0x0804928e
 0x080492ab: Dominator block: 0x0804928e
-0x080492ab: 8b 85 cc f7 ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xfffff7cc<-2100>]
-0x080492b1: 80 bc 28 e8 f7 ff ff 6c |..(....l|   cmp    BYTE PTR ds:[eax + ebp + 0xfffff7e8<-2072>], 0x6c
+0x080492ab: 8b 85 cc f7 ff ff       |......  |   mov    eax, dword ss:[ebp + 0xfffff7cc<-2100>]
+0x080492b1: 80 bc 28 e8 f7 ff ff 6c |..(....l|   cmp    byte ds:[eax + ebp + 0xfffff7e8<-2072>], 0x6c
 0x080492b9: 75 15                   |u.      |   jne    0x080492d0<<Insn>>
 0x080492b9: Successor blocks: 0x080492bb, 0x080492d0
 
 0x080492bb: Basic block reasons: graph-2
 0x080492bb: Predecessor blocks: 0x080492ab
 0x080492bb: Dominator block: 0x080492ab
-0x080492bb: 80 bc 28 e9 f7 ff ff 6f |..(....o|   cmp    BYTE PTR ds:[eax + ebp + 0xfffff7e9<-2071>], 0x6f
+0x080492bb: 80 bc 28 e9 f7 ff ff 6f |..(....o|   cmp    byte ds:[eax + ebp + 0xfffff7e9<-2071>], 0x6f
 0x080492c3: 75 0b                   |u.      |   jne    0x080492d0<<Insn>>
 0x080492c3: Successor blocks: 0x080492c5, 0x080492d0
 
 0x080492c5: Basic block reasons: graph-2
 0x080492c5: Predecessor blocks: 0x080492bb
 0x080492c5: Dominator block: 0x080492bb
-0x080492c5: 80 bc 28 ea f7 ff ff 00 |..(.....|   cmp    BYTE PTR ds:[eax + ebp + 0xfffff7ea<-2070>], 0x00
+0x080492c5: 80 bc 28 ea f7 ff ff 00 |..(.....|   cmp    byte ds:[eax + ebp + 0xfffff7ea<-2070>], 0x00
 0x080492cd: 74 9d                   |t.      |   je     0x0804926c<<Insn>>
 0x080492cd: Successor blocks: 0x0804926c, 0x080492cf
 
@@ -1447,13 +1460,13 @@ using this memory map for disassembly:
 0x080492e2: Basic block reasons: graph-2
 0x080492e2: Predecessor blocks: 0x080492db
 0x080492e2: Dominator block: 0x080492db
-0x080492e2: 8b 85 cc f7 ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xfffff7cc<-2100>]
+0x080492e2: 8b 85 cc f7 ff ff       |......  |   mov    eax, dword ss:[ebp + 0xfffff7cc<-2100>]
 0x080492e8: 66 83 a4 28 f8 f7 ff ff |f..(....|
-0x080492f0: fe                      |.       |   and    WORD PTR ds:[eax + ebp + 0xfffff7f8<-2056>], 0xfe<-2>
+0x080492f0: fe                      |.       |   and    word ds:[eax + ebp + 0xfffff7f8<-2056>], 0xfe<-2>
 0x080492f1: 50                      |P       |   push   eax
 0x080492f2: 53                      |S       |   push   ebx
 0x080492f3: 68 14 89 00 00          |h....   |   push   0x00008914<35092>
-0x080492f8: ff b5 d8 f7 ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xfffff7d8<-2088>]
+0x080492f8: ff b5 d8 f7 ff ff       |......  |   push   dword ss:[ebp + 0xfffff7d8<-2088>]
 0x080492fe: e8 79 f8 ff ff          |.y...   |   call   0x08048b7c<ioctl@plt>
 0x080492fe: Successor blocks: 0x08048b7c<ioctl@plt>, 0x08049303
 
@@ -1468,7 +1481,7 @@ using this memory map for disassembly:
 0x0804930e: Basic block reasons: graph-2
 0x0804930e: Predecessor blocks: 0x08049303
 0x0804930e: Dominator block: 0x08049303
-0x0804930e: ff 35 44 ae 04 08       |.5D...  |   push   DWORD PTR ds:[0x0804ae44<.dynbss>]
+0x0804930e: ff 35 44 ae 04 08       |.5D...  |   push   dword ds:[0x0804ae44<.dynbss>]
 0x08049314: 6a 11                   |j.      |   push   0x11
 0x08049316: 6a 01                   |j.      |   push   0x01
 0x08049318: 68 e3 9b 04 08          |h....   |   push   0x08049be3<<StaticData@0x080498d8>+0x030b>
@@ -1478,7 +1491,7 @@ using this memory map for disassembly:
 0x08049322: Basic block reasons: graph-2
 0x08049322: Predecessor blocks: 0x0804930e
 0x08049322: Dominator block: 0x0804930e
-0x08049322: 89 1c 24                |..$     |   mov    DWORD PTR ss:[esp], ebx
+0x08049322: 89 1c 24                |..$     |   mov    dword ss:[esp], ebx
 0x08049325: e8 a2 f6 ff ff          |.....   |   call   0x080489cc<perror@plt>
 0x08049325: Successor blocks: 0x080489cc<perror@plt>, 0x0804932a
 
@@ -1500,7 +1513,7 @@ using this memory map for disassembly:
 0x08049334: Basic block reasons: graph-2
 0x08049334: Predecessor blocks: 0x0804923e, 0x0804926c
 0x08049334: Dominator block: 0x0804923e
-0x08049334: ff 8d d0 f7 ff ff       |......  |   dec    DWORD PTR ss:[ebp + 0xfffff7d0<-2096>]
+0x08049334: ff 8d d0 f7 ff ff       |......  |   dec    dword ss:[ebp + 0xfffff7d0<-2096>]
 0x0804933a: 0f 89 fe fe ff ff       |......  |   jns    0x0804923e<<Insn>>
 0x0804933a: Successor blocks: 0x0804923e, 0x08049340
 
@@ -1508,7 +1521,7 @@ using this memory map for disassembly:
 0x08049340: Predecessor blocks: 0x08049334
 0x08049340: Dominator block: 0x08049334
 0x08049340: 83 ec 0c                |...     |   sub    esp, 0x0c
-0x08049343: ff b5 d8 f7 ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xfffff7d8<-2088>]
+0x08049343: ff b5 d8 f7 ff ff       |......  |   push   dword ss:[ebp + 0xfffff7d8<-2088>]
 0x08049349: e8 5e f6 ff ff          |.^...   |   call   0x080489ac<close@plt>
 0x08049349: Successor blocks: 0x080489ac<close@plt>, 0x0804934e
 
@@ -1532,7 +1545,7 @@ using this memory map for disassembly:
 0x08049358: Basic block reasons: graph-2
 0x08049358: Predecessor blocks: 0x080491db
 0x08049358: Dominator block: 0x080491db
-0x08049358: ff 35 44 ae 04 08       |.5D...  |   push   DWORD PTR ds:[0x0804ae44<.dynbss>]
+0x08049358: ff 35 44 ae 04 08       |.5D...  |   push   dword ds:[0x0804ae44<.dynbss>]
 0x0804935e: 6a 08                   |j.      |   push   0x08
 0x08049360: 6a 01                   |j.      |   push   0x01
 0x08049362: 68 f5 9b 04 08          |h....   |   push   0x08049bf5<<StaticData@0x080498d8>+0x031d>
@@ -1542,7 +1555,7 @@ using this memory map for disassembly:
 0x0804936c: Basic block reasons: graph-2
 0x0804936c: Predecessor blocks: 0x08049358
 0x0804936c: Dominator block: 0x08049358
-0x0804936c: c7 04 24 fe 9b 04 08    |..$.... |   mov    DWORD PTR ss:[esp], 0x08049bfe<<StaticData@0x080498d8>+0x0326>
+0x0804936c: c7 04 24 fe 9b 04 08    |..$.... |   mov    dword ss:[esp], 0x08049bfe<<StaticData@0x080498d8>+0x0326>
 0x08049373: e8 54 f6 ff ff          |.T...   |   call   0x080489cc<perror@plt>
 0x08049373: Successor blocks: 0x080489cc<perror@plt>, 0x08049378
 
@@ -1556,7 +1569,7 @@ using this memory map for disassembly:
 0x0804937f: Basic block reasons: graph-2
 0x0804937f: Predecessor blocks: 0x0804921a
 0x0804937f: Dominator block: 0x0804921a
-0x0804937f: ff 35 44 ae 04 08       |.5D...  |   push   DWORD PTR ds:[0x0804ae44<.dynbss>]
+0x0804937f: ff 35 44 ae 04 08       |.5D...  |   push   dword ds:[0x0804ae44<.dynbss>]
 0x08049385: 6a 08                   |j.      |   push   0x08
 0x08049387: 6a 01                   |j.      |   push   0x01
 0x08049389: 68 f5 9b 04 08          |h....   |   push   0x08049bf5<<StaticData@0x080498d8>+0x031d>
@@ -1566,7 +1579,7 @@ using this memory map for disassembly:
 0x08049393: Basic block reasons: graph-2
 0x08049393: Predecessor blocks: 0x0804937f
 0x08049393: Dominator block: 0x0804937f
-0x08049393: c7 04 24 05 9c 04 08    |..$.... |   mov    DWORD PTR ss:[esp], 0x08049c05<<StaticData@0x080498d8>+0x032d>
+0x08049393: c7 04 24 05 9c 04 08    |..$.... |   mov    dword ss:[esp], 0x08049c05<<StaticData@0x080498d8>+0x032d>
 0x0804939a: e8 2d f6 ff ff          |.-...   |   call   0x080489cc<perror@plt>
 0x0804939a: Successor blocks: 0x080489cc<perror@plt>, 0x0804939f
 
@@ -1574,7 +1587,7 @@ using this memory map for disassembly:
 0x0804939f: Predecessor blocks: 0x08049393
 0x0804939f: Dominator block: 0x08049393
 0x0804939f: 5a                      |Z       |   pop    edx
-0x080493a0: ff b5 d8 f7 ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xfffff7d8<-2088>]
+0x080493a0: ff b5 d8 f7 ff ff       |......  |   push   dword ss:[ebp + 0xfffff7d8<-2088>]
 0x080493a6: e8 01 f6 ff ff          |.....   |   call   0x080489ac<close@plt>
 0x080493a6: Successor blocks: 0x080489ac<close@plt>, 0x080493ab
 
@@ -1609,15 +1622,15 @@ using this memory map for disassembly:
 0x080493ba: 81 ec 48 02 00 00       |..H...  |   sub    esp, 0x00000248<584>
 0x080493c0: 68 48 9c 04 08          |hH...   |   push   0x08049c48<<StaticData@0x080498d8>+0x0370>
 0x080493c5: c7 85 c8 fd ff ff 00 00 |........|
-0x080493cd: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xfffffdc8<-568>], 0x00000000
+0x080493cd: 00 00                   |..      |   mov    dword ss:[ebp + 0xfffffdc8<-568>], 0x00000000
 0x080493cf: e8 58 f7 ff ff          |.X...   |   call   0x08048b2c<opendir@plt>
 0x080493cf: Successor blocks: 0x08048b2c<opendir@plt>, 0x080493d4
 
 0x080493d4: Basic block reasons: graph-2
 0x080493d4: Predecessor blocks: 0x080493b4
 0x080493d4: Dominator block: 0x080493b4
-0x080493d4: 89 85 cc fd ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xfffffdcc<-564>], eax
-0x080493da: 8b 95 cc fd ff ff       |......  |   mov    edx, DWORD PTR ss:[ebp + 0xfffffdcc<-564>]
+0x080493d4: 89 85 cc fd ff ff       |......  |   mov    dword ss:[ebp + 0xfffffdcc<-564>], eax
+0x080493da: 8b 95 cc fd ff ff       |......  |   mov    edx, dword ss:[ebp + 0xfffffdcc<-564>]
 0x080493e0: 83 c4 10                |...     |   add    esp, 0x10
 0x080493e3: 85 d2                   |..      |   test   edx, edx
 0x080493e5: b8 ff ff ff ff          |.....   |   mov    eax, 0xffffffff<-1>
@@ -1628,7 +1641,7 @@ using this memory map for disassembly:
 0x080493f0: Predecessor blocks: 0x080493d4, 0x08049409, 0x0804944e, 0x080495a5
 0x080493f0: Dominator block: 0x080493d4
 0x080493f0: 83 ec 0c                |...     |   sub    esp, 0x0c
-0x080493f3: ff b5 cc fd ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xfffffdcc<-564>]
+0x080493f3: ff b5 cc fd ff ff       |......  |   push   dword ss:[ebp + 0xfffffdcc<-564>]
 0x080493f9: e8 ee f7 ff ff          |.....   |   call   0x08048bec<readdir@plt>
 0x080493f9: Successor blocks: 0x08048bec<readdir@plt>, 0x080493fe
 
@@ -1660,7 +1673,7 @@ using this memory map for disassembly:
 0x08049423: 68 00 01 00 00          |h....   |   push   0x00000100<256>
 0x08049428: 8d 85 d8 fd ff ff       |......  |   lea    eax, [ebp + 0xfffffdd8<-552>]
 0x0804942e: 50                      |P       |   push   eax
-0x0804942f: c6 85 d8 fd ff ff 00    |....... |   mov    BYTE PTR ss:[ebp + 0xfffffdd8<-552>], 0x00
+0x0804942f: c6 85 d8 fd ff ff 00    |....... |   mov    byte ss:[ebp + 0xfffffdd8<-552>], 0x00
 0x08049436: e8 01 f7 ff ff          |.....   |   call   0x08048b3c<snprintf@plt>
 0x08049436: Successor blocks: 0x08048b3c<snprintf@plt>, 0x0804943b
 
@@ -1680,7 +1693,7 @@ using this memory map for disassembly:
 0x0804944e: Dominator block: 0x0804943b
 0x0804944e: 83 c4 10                |...     |   add    esp, 0x10
 0x08049451: 85 c0                   |..      |   test   eax, eax
-0x08049453: 89 85 c4 fd ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xfffffdc4<-572>], eax
+0x08049453: 89 85 c4 fd ff ff       |......  |   mov    dword ss:[ebp + 0xfffffdc4<-572>], eax
 0x08049459: 74 95                   |t.      |   je     0x080493f0<<Insn>>
 0x08049459: Successor blocks: 0x080493f0, 0x0804945b
 
@@ -1719,7 +1732,7 @@ using this memory map for disassembly:
 0x0804948c: Predecessor blocks: 0x0804946e, 0x08049475
 0x0804948c: Dominator block: 0x0804946e
 0x0804948c: 83 ec 0c                |...     |   sub    esp, 0x0c
-0x0804948f: ff b5 c4 fd ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xfffffdc4<-572>]
+0x0804948f: ff b5 c4 fd ff ff       |......  |   push   dword ss:[ebp + 0xfffffdc4<-572>]
 0x08049495: e8 42 f6 ff ff          |.B...   |   call   0x08048adc<fclose@plt>
 0x08049495: Successor blocks: 0x08048adc<fclose@plt>, 0x0804949a
 
@@ -1728,7 +1741,7 @@ using this memory map for disassembly:
 0x0804949a: Dominator block: 0x0804948c
 0x0804949a: 83 c4 10                |...     |   add    esp, 0x10
 0x0804949d: 83 ec 0c                |...     |   sub    esp, 0x0c
-0x080494a0: ff b5 cc fd ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xfffffdcc<-564>]
+0x080494a0: ff b5 cc fd ff ff       |......  |   push   dword ss:[ebp + 0xfffffdcc<-564>]
 0x080494a6: e8 41 f7 ff ff          |.A...   |   call   0x08048bec<readdir@plt>
 0x080494a6: Successor blocks: 0x08048bec<readdir@plt>, 0x080494ab
 
@@ -1744,7 +1757,7 @@ using this memory map for disassembly:
 0x080494b6: Predecessor blocks: 0x080493fe, 0x080494ab, 0x080495c5
 0x080494b6: Dominator block: 0x080493fe
 0x080494b6: 83 ec 0c                |...     |   sub    esp, 0x0c
-0x080494b9: ff b5 cc fd ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xfffffdcc<-564>]
+0x080494b9: ff b5 cc fd ff ff       |......  |   push   dword ss:[ebp + 0xfffffdcc<-564>]
 0x080494bf: e8 48 f6 ff ff          |.H...   |   call   0x08048b0c<closedir@plt>
 0x080494bf: Successor blocks: 0x08048b0c<closedir@plt>, 0x080494c4
 
@@ -1752,22 +1765,22 @@ using this memory map for disassembly:
 0x080494c4: Predecessor blocks: 0x080494b6
 0x080494c4: Dominator block: 0x080494b6
 0x080494c4: 83 c4 10                |...     |   add    esp, 0x10
-0x080494c7: 83 bd c8 fd ff ff 40    |......@ |   cmp    DWORD PTR ss:[ebp + 0xfffffdc8<-568>], 0x40
+0x080494c7: 83 bd c8 fd ff ff 40    |......@ |   cmp    dword ss:[ebp + 0xfffffdc8<-568>], 0x40
 0x080494ce: 7d 11                   |}.      |   jge    0x080494e1<<Insn>>
 0x080494ce: Successor blocks: 0x080494d0, 0x080494e1
 
 0x080494d0: Basic block reasons: graph-2
 0x080494d0: Predecessor blocks: 0x080494c4
 0x080494d0: Dominator block: 0x080494c4
-0x080494d0: 8b 85 c8 fd ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xfffffdc8<-568>]
+0x080494d0: 8b 85 c8 fd ff ff       |......  |   mov    eax, dword ss:[ebp + 0xfffffdc8<-568>]
 0x080494d6: c7 84 85 d8 fe ff ff 00 |........|
-0x080494de: 00 00 00                |...     |   mov    DWORD PTR ss:[ebp + eax*0x04 + 0xfffffed8<-296>], 0x00000000
+0x080494de: 00 00 00                |...     |   mov    dword ss:[ebp + eax*0x04 + 0xfffffed8<-296>], 0x00000000
 0x080494d6: Successor blocks: 0x080494e1
 
 0x080494e1: Basic block reasons: graph-2
 0x080494e1: Predecessor blocks: 0x080494c4, 0x080494d0
 0x080494e1: Dominator block: 0x080494c4
-0x080494e1: 8b 85 d8 fe ff ff       |......  |   mov    eax, DWORD PTR ss:[ebp + 0xfffffed8<-296>]
+0x080494e1: 8b 85 d8 fe ff ff       |......  |   mov    eax, dword ss:[ebp + 0xfffffed8<-296>]
 0x080494e7: 31 db                   |1.      |   xor    ebx, ebx
 0x080494e9: 85 c0                   |..      |   test   eax, eax
 0x080494eb: 75 14                   |u.      |   jne    0x08049501<<Insn>>
@@ -1786,7 +1799,7 @@ using this memory map for disassembly:
 0x080494f0: Predecessor blocks: 0x08049520, 0x0804953c
 0x080494f0: Dominator block: 0x08049520
 0x080494f0: 43                      |C       |   inc    ebx
-0x080494f1: 8b 84 9d d8 fe ff ff    |....... |   mov    eax, DWORD PTR ss:[ebp + ebx*0x04 + 0xfffffed8<-296>]
+0x080494f1: 8b 84 9d d8 fe ff ff    |....... |   mov    eax, dword ss:[ebp + ebx*0x04 + 0xfffffed8<-296>]
 0x080494f8: 85 c0                   |..      |   test   eax, eax
 0x080494fa: 74 69                   |ti      |   je     0x08049565<<Insn>>
 0x080494fa: Successor blocks: 0x080494fc, 0x08049565
@@ -1805,9 +1818,9 @@ using this memory map for disassembly:
 0x08049504: 6a 02                   |j.      |   push   0x02
 0x08049506: 50                      |P       |   push   eax
 0x08049507: c7 85 d4 fd ff ff e0 00 |........|
-0x0804950f: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xfffffdd4<-556>], 0x000000e0
+0x0804950f: 00 00                   |..      |   mov    dword ss:[ebp + 0xfffffdd4<-556>], 0x000000e0
 0x08049511: c7 85 d0 fd ff ff 94 00 |........|
-0x08049519: 00 00                   |..      |   mov    DWORD PTR ss:[ebp + 0xfffffdd0<-560>], 0x00000094
+0x08049519: 00 00                   |..      |   mov    dword ss:[ebp + 0xfffffdd0<-560>], 0x00000094
 0x0804951b: e8 2c f6 ff ff          |.,...   |   call   0x08048b4c<open@plt>
 0x0804951b: Successor blocks: 0x08048b4c<open@plt>, 0x08049520
 
@@ -1854,7 +1867,7 @@ using this memory map for disassembly:
 0x08049557: Basic block reasons: graph-2
 0x08049557: Predecessor blocks: 0x08049543
 0x08049557: Dominator block: 0x08049543
-0x08049557: 8b 84 9d d8 fe ff ff    |....... |   mov    eax, DWORD PTR ss:[ebp + ebx*0x04 + 0xfffffed8<-296>]
+0x08049557: 8b 84 9d d8 fe ff ff    |....... |   mov    eax, dword ss:[ebp + ebx*0x04 + 0xfffffed8<-296>]
 0x0804955e: 83 c4 10                |...     |   add    esp, 0x10
 0x08049561: 85 c0                   |..      |   test   eax, eax
 0x08049563: 75 97                   |u.      |   jne    0x080494fc<<Insn>>
@@ -1881,7 +1894,7 @@ using this memory map for disassembly:
 0x0804956f: Predecessor blocks: 0x08049475
 0x0804956f: Dominator block: 0x08049475
 0x0804956f: 83 ec 0c                |...     |   sub    esp, 0x0c
-0x08049572: ff b5 c4 fd ff ff       |......  |   push   DWORD PTR ss:[ebp + 0xfffffdc4<-572>]
+0x08049572: ff b5 c4 fd ff ff       |......  |   push   dword ss:[ebp + 0xfffffdc4<-572>]
 0x08049578: e8 5f f5 ff ff          |._...   |   call   0x08048adc<fclose@plt>
 0x08049578: Successor blocks: 0x08048adc<fclose@plt>, 0x0804957d
 
@@ -1901,19 +1914,19 @@ using this memory map for disassembly:
 0x08049597: Predecessor blocks: 0x0804957d
 0x08049597: Dominator block: 0x0804957d
 0x08049597: 8d 95 d8 fd ff ff       |......  |   lea    edx, [ebp + 0xfffffdd8<-552>]
-0x0804959d: 89 14 24                |..$     |   mov    DWORD PTR ss:[esp], edx
+0x0804959d: 89 14 24                |..$     |   mov    dword ss:[esp], edx
 0x080495a0: e8 57 f5 ff ff          |.W...   |   call   0x08048afc<__strdup@plt>
 0x080495a0: Successor blocks: 0x08048afc<__strdup@plt>, 0x080495a5
 
 0x080495a5: Basic block reasons: graph-2
 0x080495a5: Predecessor blocks: 0x08049597
 0x080495a5: Dominator block: 0x08049597
-0x080495a5: 8b bd c8 fd ff ff       |......  |   mov    edi, DWORD PTR ss:[ebp + 0xfffffdc8<-568>]
-0x080495ab: 89 84 bd d8 fe ff ff    |....... |   mov    DWORD PTR ss:[ebp + edi*0x04 + 0xfffffed8<-296>], eax
+0x080495a5: 8b bd c8 fd ff ff       |......  |   mov    edi, dword ss:[ebp + 0xfffffdc8<-568>]
+0x080495ab: 89 84 bd d8 fe ff ff    |....... |   mov    dword ss:[ebp + edi*0x04 + 0xfffffed8<-296>], eax
 0x080495b2: 47                      |G       |   inc    edi
 0x080495b3: 83 c4 10                |...     |   add    esp, 0x10
 0x080495b6: 83 ff 40                |..@     |   cmp    edi, 0x40
-0x080495b9: 89 bd c8 fd ff ff       |......  |   mov    DWORD PTR ss:[ebp + 0xfffffdc8<-568>], edi
+0x080495b9: 89 bd c8 fd ff ff       |......  |   mov    dword ss:[ebp + 0xfffffdc8<-568>], edi
 0x080495bf: 0f 8c 2b fe ff ff       |..+...  |   jl     0x080493f0<<Insn>>
 0x080495bf: Successor blocks: 0x080493f0, 0x080495c5
 
@@ -1981,12 +1994,12 @@ using this memory map for disassembly:
 0x08049614: Predecessor blocks: 0x08049607
 0x08049614: Dominator block: 0x08049607
 0x08049614: 83 c4 0c                |...     |   add    esp, 0x0c
-0x08049617: 8b 45 10                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x10]
+0x08049617: 8b 45 10                |.E.     |   mov    eax, dword ss:[ebp + 0x10]
 0x0804961a: 6a 20                   |j       |   push   0x20
-0x0804961c: 89 85 7c fe ff ff       |..|...  |   mov    DWORD PTR ss:[ebp + 0xfffffe7c<-388>], eax
-0x08049622: 8b 45 14                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x14]
-0x08049625: ff 75 08                |.u.     |   push   DWORD PTR ss:[ebp + 0x08]
-0x08049628: 66 89 85 78 fe ff ff    |f..x... |   mov    WORD PTR ss:[ebp + 0xfffffe78<-392>], ax
+0x0804961c: 89 85 7c fe ff ff       |..|...  |   mov    dword ss:[ebp + 0xfffffe7c<-388>], eax
+0x08049622: 8b 45 14                |.E.     |   mov    eax, dword ss:[ebp + 0x14]
+0x08049625: ff 75 08                |.u.     |   push   dword ss:[ebp + 0x08]
+0x08049628: 66 89 85 78 fe ff ff    |f..x... |   mov    word ss:[ebp + 0xfffffe78<-392>], ax
 0x0804962f: 8d 85 a4 fe ff ff       |......  |   lea    eax, [ebp + 0xfffffea4<-348>]
 0x08049635: 50                      |P       |   push   eax
 0x08049636: e8 61 f5 ff ff          |.a...   |   call   0x08048b9c<strncpy@plt>
@@ -1997,7 +2010,7 @@ using this memory map for disassembly:
 0x0804963b: Dominator block: 0x08049614
 0x0804963b: 83 c4 0c                |...     |   add    esp, 0x0c
 0x0804963e: 6a 04                   |j.      |   push   0x04
-0x08049640: ff 75 0c                |.u.     |   push   DWORD PTR ss:[ebp + 0x0c]
+0x08049640: ff 75 0c                |.u.     |   push   dword ss:[ebp + 0x0c]
 0x08049643: 8d 85 a0 fe ff ff       |......  |   lea    eax, [ebp + 0xfffffea0<-352>]
 0x08049649: 50                      |P       |   push   eax
 0x0804964a: e8 4d f5 ff ff          |.M...   |   call   0x08048b9c<strncpy@plt>
@@ -2008,7 +2021,7 @@ using this memory map for disassembly:
 0x0804964f: Dominator block: 0x0804963b
 0x0804964f: 83 c4 0c                |...     |   add    esp, 0x0c
 0x08049652: 6a 20                   |j       |   push   0x20
-0x08049654: ff 75 18                |.u.     |   push   DWORD PTR ss:[ebp + 0x18]
+0x08049654: ff 75 18                |.u.     |   push   dword ss:[ebp + 0x18]
 0x08049657: 8d 85 80 fe ff ff       |......  |   lea    eax, [ebp + 0xfffffe80<-384>]
 0x0804965d: 50                      |P       |   push   eax
 0x0804965e: e8 39 f5 ff ff          |.9...   |   call   0x08048b9c<strncpy@plt>
@@ -2018,7 +2031,7 @@ using this memory map for disassembly:
 0x08049663: Predecessor blocks: 0x0804964f
 0x08049663: Dominator block: 0x0804964f
 0x08049663: 8d 85 e8 fc ff ff       |......  |   lea    eax, [ebp + 0xfffffce8<-792>]
-0x08049669: 89 04 24                |..$     |   mov    DWORD PTR ss:[esp], eax
+0x08049669: 89 04 24                |..$     |   mov    dword ss:[esp], eax
 0x0804966c: e8 0b f4 ff ff          |.....   |   call   0x08048a7c<uname@plt>
 0x0804966c: Successor blocks: 0x08048a7c<uname@plt>, 0x08049671
 
@@ -2042,7 +2055,7 @@ using this memory map for disassembly:
 0x08049686: Basic block reasons: graph-2
 0x08049686: Predecessor blocks: 0x08049678
 0x08049686: Dominator block: 0x08049678
-0x08049686: 89 1c 24                |..$     |   mov    DWORD PTR ss:[esp], ebx
+0x08049686: 89 1c 24                |..$     |   mov    dword ss:[esp], ebx
 0x08049689: e8 1e f3 ff ff          |.....   |   call   0x080489ac<close@plt>
 0x08049689: Successor blocks: 0x080489ac<close@plt>, 0x0804968e
 
@@ -2135,15 +2148,15 @@ using this memory map for disassembly:
 0x080496bc: 56                      |V       | (data)   push   esi
 0x080496bd: 53                      |S       | (data)   push   ebx
 0x080496be: 81 ec 3c 03 00 00       |..<...  | (data)   sub    esp, 0x0000033c<828>
-0x080496c4: 8b 7d 08                |.}.     | (data)   mov    edi, DWORD PTR ss:[ebp + 0x08]
+0x080496c4: 8b 7d 08                |.}.     | (data)   mov    edi, dword ss:[ebp + 0x08]
 0x080496c7: 85 ff                   |..      | (data)   test   edi, edi
-0x080496c9: 8b 5d 14                |.].     | (data)   mov    ebx, DWORD PTR ss:[ebp + 0x14]
-0x080496cc: 8b 75 18                |.u.     | (data)   mov    esi, DWORD PTR ss:[ebp + 0x18]
+0x080496c9: 8b 5d 14                |.].     | (data)   mov    ebx, dword ss:[ebp + 0x14]
+0x080496cc: 8b 75 18                |.u.     | (data)   mov    esi, dword ss:[ebp + 0x18]
 0x080496cf: 0f 84 cc 00 00 00       |......  | (data)   je     0x080497a1
 0x080496d5: 83 ec 08                |...     | (data)   sub    esp, 0x08
 0x080496d8: 6a 00                   |j.      | (data)   push   0x00
 0x080496da: 68 84 9c 04 08          |h....   | (data)   push   0x08049c84
-0x080496df: c6 45 c8 00             |.E..    | (data)   mov    BYTE PTR ss:[ebp + 0xc8<-56>], 0x00
+0x080496df: c6 45 c8 00             |.E..    | (data)   mov    byte ss:[ebp + 0xc8<-56>], 0x00
 0x080496e3: e8 24 f3 ff ff          |.$...   | (data)   call   0x08048a0c
 0x080496e8: 83 c4 10                |...     | (data)   add    esp, 0x10
 0x080496eb: 85 c0                   |..      | (data)   test   eax, eax
@@ -2156,12 +2169,12 @@ using this memory map for disassembly:
 0x08049702: e8 85 f4 ff ff          |.....   | (data)   call   0x08048b8c
 0x08049707: 83 c4 0c                |...     | (data)   add    esp, 0x0c
 0x0804970a: 6a 04                   |j.      | (data)   push   0x04
-0x0804970c: 8b 45 10                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x0804970f: ff 75 0c                |.u.     | (data)   push   DWORD PTR ss:[ebp + 0x0c]
-0x08049712: 89 85 4c fe ff ff       |..L...  | (data)   mov    DWORD PTR ss:[ebp + 0xfffffe4c<-436>], eax
+0x0804970c: 8b 45 10                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x10]
+0x0804970f: ff 75 0c                |.u.     | (data)   push   dword ss:[ebp + 0x0c]
+0x08049712: 89 85 4c fe ff ff       |..L...  | (data)   mov    dword ss:[ebp + 0xfffffe4c<-436>], eax
 0x08049718: 8d 85 70 fe ff ff       |..p...  | (data)   lea    eax, [ebp + 0xfffffe70<-400>]
 0x0804971e: 50                      |P       | (data)   push   eax
-0x0804971f: 66 89 9d 48 fe ff ff    |f..H... | (data)   mov    WORD PTR ss:[ebp + 0xfffffe48<-440>], bx
+0x0804971f: 66 89 9d 48 fe ff ff    |f..H... | (data)   mov    word ss:[ebp + 0xfffffe48<-440>], bx
 0x08049726: e8 71 f4 ff ff          |.q...   | (data)   call   0x08048b9c
 0x0804972b: 58                      |X       | (data)   pop    eax
 0x0804972c: 5a                      |Z       | (data)   pop    edx
@@ -2197,13 +2210,13 @@ using this memory map for disassembly:
 0x08049785: 83 ec 0c                |...     | (data)   sub    esp, 0x0c
 0x08049788: 85 f6                   |..      | (data)   test   esi, esi
 0x0804978a: 74 20                   |t       | (data)   je     0x080497ac
-0x0804978c: 80 3e 00                |.>.     | (data)   cmp    BYTE PTR ds:[esi], 0x00
+0x0804978c: 80 3e 00                |.>.     | (data)   cmp    byte ds:[esi], 0x00
 0x0804978f: 89 f0                   |..      | (data)   mov    eax, esi
 0x08049791: 74 19                   |t.      | (data)   je     0x080497ac
 0x08049793: 50                      |P       | (data)   push   eax
 0x08049794: 53                      |S       | (data)   push   ebx
-0x08049795: ff 75 10                |.u.     | (data)   push   DWORD PTR ss:[ebp + 0x10]
-0x08049798: ff 75 0c                |.u.     | (data)   push   DWORD PTR ss:[ebp + 0x0c]
+0x08049795: ff 75 10                |.u.     | (data)   push   dword ss:[ebp + 0x10]
+0x08049798: ff 75 0c                |.u.     | (data)   push   dword ss:[ebp + 0x0c]
 0x0804979b: 57                      |W       | (data)   push   edi
 0x0804979c: e8 2b fe ff ff          |.+...   | (data)   call   0x080495cc
 0x080497a1: 8d 65 f4                |.e.     | (data)   lea    esp, [ebp + 0xf4<-12>]
@@ -2224,7 +2237,7 @@ using this memory map for disassembly:
 0x080497c9: 50                      |P       | (data)   push   eax
 0x080497ca: e8 fd f2 ff ff          |.....   | (data)   call   0x08048acc
 0x080497cf: 8d 85 c8 fc ff ff       |......  | (data)   lea    eax, [ebp + 0xfffffcc8<-824>]
-0x080497d5: 89 04 24                |..$     | (data)   mov    DWORD PTR ss:[esp], eax
+0x080497d5: 89 04 24                |..$     | (data)   mov    dword ss:[esp], eax
 0x080497d8: e8 df f1 ff ff          |.....   | (data)   call   0x080489bc
 0x080497dd: 83 c4 10                |...     | (data)   add    esp, 0x10
 0x080497e0: 85 c0                   |..      | (data)   test   eax, eax
@@ -2233,13 +2246,13 @@ using this memory map for disassembly:
 0x080497e5: 6a 20                   |j       | (data)   push   0x20
 0x080497e7: 83 c0 08                |...     | (data)   add    eax, 0x08
 0x080497ea: 50                      |P       | (data)   push   eax
-0x080497eb: 89 85 c4 fc ff ff       |......  | (data)   mov    DWORD PTR ss:[ebp + 0xfffffcc4<-828>], eax
+0x080497eb: 89 85 c4 fc ff ff       |......  | (data)   mov    dword ss:[ebp + 0xfffffcc4<-828>], eax
 0x080497f1: 8d 85 50 fe ff ff       |..P...  | (data)   lea    eax, [ebp + 0xfffffe50<-432>]
 0x080497f7: 50                      |P       | (data)   push   eax
 0x080497f8: e8 9f f3 ff ff          |.....   | (data)   call   0x08048b9c
 0x080497fd: 83 c4 0c                |...     | (data)   add    esp, 0x0c
 0x08049800: 6a 20                   |j       | (data)   push   0x20
-0x08049802: ff b5 c4 fc ff ff       |......  | (data)   push   DWORD PTR ss:[ebp + 0xfffffcc4<-828>]
+0x08049802: ff b5 c4 fc ff ff       |......  | (data)   push   dword ss:[ebp + 0xfffffcc4<-828>]
 0x08049808: 8d 45 c8                |.E.     | (data)   lea    eax, [ebp + 0xc8<-56>]
 0x0804980b: 50                      |P       | (data)   push   eax
 0x0804980c: e8 8b f3 ff ff          |.....   | (data)   call   0x08048b9c
@@ -2270,7 +2283,7 @@ using this memory map for disassembly:
 0x08049836: Dominator block: 0x0804981c
 0x08049836: 8d 83 20 ff ff ff       |.. ...  |   lea    eax, [ebx + 0xffffff20<-224>]
 0x0804983c: 8d 93 20 ff ff ff       |.. ...  |   lea    edx, [ebx + 0xffffff20<-224>]
-0x08049842: 89 45 f0                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x08049842: 89 45 f0                |.E.     |   mov    dword ss:[ebp + 0xf0<-16>], eax
 0x08049845: 29 d0                   |).      |   sub    eax, edx
 0x08049847: 31 f6                   |1.      |   xor    esi, esi
 0x08049849: c1 f8 02                |...     |   sar    eax, 0x02
@@ -2289,8 +2302,8 @@ using this memory map for disassembly:
 0x08049860: 39 ce 89 fa 72 ee       |9...r.  | 22 bytes untyped data beginning at 0x08049850
 0x08049850: 89 d7                   |..      | (data)   mov    edi, edx
 0x08049852: 89 f6                   |..      | (data)   mov    esi, esi
-0x08049854: ff 14 b2                |...     | (data)   call   DWORD PTR ds:[edx + esi*0x04]
-0x08049857: 8b 4d f0                |.M.     | (data)   mov    ecx, DWORD PTR ss:[ebp + 0xf0<-16>]
+0x08049854: ff 14 b2                |...     | (data)   call   dword ds:[edx + esi*0x04]
+0x08049857: 8b 4d f0                |.M.     | (data)   mov    ecx, dword ss:[ebp + 0xf0<-16>]
 0x0804985a: 29 f9                   |).      | (data)   sub    ecx, edi
 0x0804985c: 46                      |F       | (data)   inc    esi
 0x0804985d: c1 f9 02                |...     | (data)   sar    ecx, 0x02
@@ -2324,7 +2337,7 @@ using this memory map for disassembly:
 0x08049896: 8d 70 ff                |.p.     | (data)   lea    esi, [eax + 0xff<-1>]
 0x08049899: eb 05                   |..      | (data)   jmp    0x080498a0
 0x0804989b: 90                      |.       | (data)   nop    
-0x0804989c: ff 14 b7                |...     | (data)   call   DWORD PTR ds:[edi + esi*0x04]
+0x0804989c: ff 14 b7                |...     | (data)   call   dword ds:[edi + esi*0x04]
 0x0804989f: 4e                      |N       | (data)   dec    esi
 0x080498a0: 83 fe ff                |...     | (data)   cmp    esi, 0xff<-1>
 0x080498a3: 75 f7                   |u.      | (data)   jne    0x0804989c
@@ -2348,7 +2361,7 @@ using this memory map for disassembly:
 0x080498b7: 53                      |S       |   push   ebx
 0x080498b8: 52                      |R       |   push   edx
 0x080498b9: bb 98 ac 04 08          |.....   |   mov    ebx, 0x0804ac98<.ctors>
-0x080498be: a1 98 ac 04 08          |.....   |   mov    eax, DWORD PTR ds:[0x0804ac98<.ctors>]
+0x080498be: a1 98 ac 04 08          |.....   |   mov    eax, dword ds:[0x0804ac98<.ctors>]
 0x080498be: Successor blocks: 0x080498c3
 
 0x080498c3: Basic block reasons: graph-2
@@ -2370,7 +2383,7 @@ using this memory map for disassembly:
 0x080498cd: Basic block reasons: graph-2
 0x080498cd: Predecessor blocks: 0x080498c8
 0x080498cd: Dominator block: 0x080498c8
-0x080498cd: 8b 03                   |..      |   mov    eax, DWORD PTR ds:[ebx]
+0x080498cd: 8b 03                   |..      |   mov    eax, dword ds:[ebx]
 0x080498cd: Successor blocks: 0x080498cf
 
 0x080498cf: Basic block reasons: graph-2
@@ -2630,192 +2643,192 @@ using this memory map for disassembly:
 0x080498ef: 5b                      |[       | (data)   pop    ebx
 0x080498f0: c9                      |.       | (data)   leave  
 0x080498f1: c3                      |.       | (data)   ret    
-0x080498f2: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x080498f4: 03 00                   |..      | (data)   add    eax, DWORD PTR ds:[eax]
-0x080498f6: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x080498f8: 01 00                   |..      | (data)   add    DWORD PTR ds:[eax], eax
-0x080498fa: 02 00                   |..      | (data)   add    al, BYTE PTR ds:[eax]
+0x080498f2: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x080498f4: 03 00                   |..      | (data)   add    eax, dword ds:[eax]
+0x080498f6: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x080498f8: 01 00                   |..      | (data)   add    dword ds:[eax], eax
+0x080498fa: 02 00                   |..      | (data)   add    al, byte ds:[eax]
 0x080498fc: 40                      |@       | (data)   inc    eax
-0x080498fd: 28 23                   |(#      | (data)   sub    BYTE PTR ds:[ebx], ah
-0x080498ff: 29 68 61                |)ha     | (data)   sub    DWORD PTR ds:[eax + 0x61], ebp
+0x080498fd: 28 23                   |(#      | (data)   sub    byte ds:[ebx], ah
+0x080498ff: 29 68 61                |)ha     | (data)   sub    dword ds:[eax + 0x61], ebp
 0x08049902: 6c                      |l       | (data)   insb   
 0x08049903: 74 20                   |t       | (data)   je     0x08049925
-0x08049905: 20 32                   | 2      | (data)   and    BYTE PTR ds:[edx], dh
-0x08049907: 2e 38 34 20             |.84     | (data)   cmp    BYTE PTR cs:[eax], dh
-0x0804990b: 20 32                   | 2      | (data)   and    BYTE PTR ds:[edx], dh
+0x08049905: 20 32                   | 2      | (data)   and    byte ds:[edx], dh
+0x08049907: 2e 38 34 20             |.84     | (data)   cmp    byte cs:[eax], dh
+0x0804990b: 20 32                   | 2      | (data)   and    byte ds:[edx], dh
 0x0804990d: 37                      |7       | (data)   aaa    
 0x0804990e: 2d 4e 6f 76 2d          |-Nov-   | (data)   sub    eax, 0x2d766f4e
-0x08049913: 32 30                   |20      | (data)   xor    dh, BYTE PTR ds:[eax]
-0x08049915: 30 31                   |01      | (data)   xor    BYTE PTR ds:[ecx], dh
-0x08049917: 20 6d 69                | mi     | (data)   and    BYTE PTR ss:[ebp + 0x69], ch
+0x08049913: 32 30                   |20      | (data)   xor    dh, byte ds:[eax]
+0x08049915: 30 31                   |01      | (data)   xor    byte ds:[ecx], dh
+0x08049917: 20 6d 69                | mi     | (data)   and    byte ss:[ebp + 0x69], ch
 0x0804991a: 71 75                   |qu      | (data)   jno    0x08049991
 0x0804991c: 65 6c                   |el      | (data)   insb   
 0x0804991e: 73 40                   |s@      | (data)   jae    0x08049960
-0x08049920: 63 69 73                |cis     | (data)   arpl   WORD PTR ds:[ecx + 0x73], bp
+0x08049920: 63 69 73                |cis     | (data)   arpl   word ds:[ecx + 0x73], bp
 0x08049923: 74 72                   |tr      | (data)   je     0x08049997
 0x08049925: 6f                      |o       | (data)   outsd  
 0x08049926: 6e                      |n       | (data)   outsb  
 0x08049927: 2e 6e                   |.n      | (data)   outsb  
 0x08049929: 6c                      |l       | (data)   insb   
-0x0804992a: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x0804992a: 00 00                   |..      | (data)   add    byte ds:[eax], al
 0x0804992c: 75 73                   |us      | (data)   jne    0x080499a1
 0x0804992e: 61                      |a       | (data)   popad  
-0x0804992f: 67 65 3a 20             |ge:     | (data)   cmp    ah, BYTE PTR gs:[bx + si]
+0x0804992f: 67 65 3a 20             |ge:     | (data)   cmp    ah, byte gs:[bx + si]
 0x08049933: 25 73 20 5b 2d          |%s [-   | (data)   and    eax, 0x2d5b2073
 0x08049938: 6e                      |n       | (data)   outsb  
 0x08049939: 5d                      |]       | (data)   pop    ebp
-0x0804993a: 20 5b 2d                | [-     | (data)   and    BYTE PTR ds:[ebx + 0x2d], bl
+0x0804993a: 20 5b 2d                | [-     | (data)   and    byte ds:[ebx + 0x2d], bl
 0x0804993d: 77 5d                   |w]      | (data)   ja     0x0804999c
-0x0804993f: 20 5b 2d                | [-     | (data)   and    BYTE PTR ds:[ebx + 0x2d], bl
+0x0804993f: 20 5b 2d                | [-     | (data)   and    byte ds:[ebx + 0x2d], bl
 0x08049942: 64 5d                   |d]      | (data)   pop    ebp
-0x08049944: 20 5b 2d                | [-     | (data)   and    BYTE PTR ds:[ebx + 0x2d], bl
+0x08049944: 20 5b 2d                | [-     | (data)   and    byte ds:[ebx + 0x2d], bl
 0x08049947: 66 5d                   |f]      | (data)   pop    bp
-0x08049949: 20 5b 2d                | [-     | (data)   and    BYTE PTR ds:[ebx + 0x2d], bl
-0x0804994c: 69 5d 20 5b 2d 70 5d    |i] [-p] | (data)   imul   ebx, DWORD PTR ss:[ebp + 0x20], 0x5d702d5b
-0x08049953: 0a 00                   |..      | (data)   or     al, BYTE PTR ds:[eax]
-0x08049955: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049957: 00 09                   |..      | (data)   add    BYTE PTR ds:[ecx], cl
-0x08049959: 09 20                   |.       | (data)   or     DWORD PTR ds:[eax], esp
-0x0804995b: 20 2d 6e 3a 20 64       | -n: d  | (data)   and    BYTE PTR ds:[0x64203a6e], ch
+0x08049949: 20 5b 2d                | [-     | (data)   and    byte ds:[ebx + 0x2d], bl
+0x0804994c: 69 5d 20 5b 2d 70 5d    |i] [-p] | (data)   imul   ebx, dword ss:[ebp + 0x20], 0x5d702d5b
+0x08049953: 0a 00                   |..      | (data)   or     al, byte ds:[eax]
+0x08049955: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049957: 00 09                   |..      | (data)   add    byte ds:[ecx], cl
+0x08049959: 09 20                   |.       | (data)   or     dword ds:[eax], esp
+0x0804995b: 20 2d 6e 3a 20 64       | -n: d  | (data)   and    byte ds:[0x64203a6e], ch
 0x08049961: 6f                      |o       | (data)   outsd  
 0x08049962: 6e                      |n       | (data)   outsb  
 0x08049963: 27                      |'       | (data)   daa    
 0x08049964: 74 20                   |t       | (data)   je     0x08049986
 0x08049966: 73 79                   |sy      | (data)   jae    0x080499e1
 0x08049968: 6e                      |n       | (data)   outsb  
-0x08049969: 63 20                   |c       | (data)   arpl   WORD PTR ds:[eax], sp
-0x0804996b: 62 65 66                |bef     | (data)   bound  esp, DWORD PTR ss:[ebp + 0x66]
+0x08049969: 63 20                   |c       | (data)   arpl   word ds:[eax], sp
+0x0804996b: 62 65 66                |bef     | (data)   bound  esp, dword ss:[ebp + 0x66]
 0x0804996e: 6f                      |o       | (data)   outsd  
 0x0804996f: 72 65                   |re      | (data)   jb     0x080499d6
-0x08049971: 20 25 73 69 6e 67       | %sing  | (data)   and    BYTE PTR ds:[0x676e6973], ah
-0x08049977: 20 74 68 65             | the    | (data)   and    BYTE PTR ds:[eax + ebp*0x02 + 0x65], dh
-0x0804997b: 20 73 79                | sy     | (data)   and    BYTE PTR ds:[ebx + 0x79], dh
+0x08049971: 20 25 73 69 6e 67       | %sing  | (data)   and    byte ds:[0x676e6973], ah
+0x08049977: 20 74 68 65             | the    | (data)   and    byte ds:[eax + ebp*0x02 + 0x65], dh
+0x0804997b: 20 73 79                | sy     | (data)   and    byte ds:[ebx + 0x79], dh
 0x0804997e: 73 74                   |st      | (data)   jae    0x080499f4
 0x08049980: 65 6d                   |em      | (data)   insd   
-0x08049982: 0a 00                   |..      | (data)   or     al, BYTE PTR ds:[eax]
-0x08049984: 09 09                   |..      | (data)   or     DWORD PTR ds:[ecx], ecx
-0x08049986: 20 20                   |        | (data)   and    BYTE PTR ds:[eax], ah
+0x08049982: 0a 00                   |..      | (data)   or     al, byte ds:[eax]
+0x08049984: 09 09                   |..      | (data)   or     dword ds:[ecx], ecx
+0x08049986: 20 20                   |        | (data)   and    byte ds:[eax], ah
 0x08049988: 2d 77 3a 20 6f          |-w: o   | (data)   sub    eax, 0x6f203a77
 0x0804998d: 6e                      |n       | (data)   outsb  
 0x0804998e: 6c                      |l       | (data)   insb   
 0x0804998f: 79 20                   |y       | (data)   jns    0x080499b1
 0x08049991: 77 72                   |wr      | (data)   ja     0x08049a05
-0x08049993: 69 74 65 20 61 20 77 74 |ite a wt| (data)   imul   esi, DWORD PTR ss:[ebp + 0x20], 0x74772061
+0x08049993: 69 74 65 20 61 20 77 74 |ite a wt| (data)   imul   esi, dword ss:[ebp + 0x20], 0x74772061
 0x0804999b: 6d                      |m       | (data)   insd   
 0x0804999c: 70 20                   |p       | (data)   jo     0x080499be
 0x0804999e: 72 65                   |re      | (data)   jb     0x08049a05
-0x080499a0: 62 6f 6f                |boo     | (data)   bound  ebp, DWORD PTR ds:[edi + 0x6f]
+0x080499a0: 62 6f 6f                |boo     | (data)   bound  ebp, dword ds:[edi + 0x6f]
 0x080499a3: 74 20                   |t       | (data)   je     0x080499c5
 0x080499a5: 72 65                   |re      | (data)   jb     0x08049a0c
-0x080499a7: 63 6f 72                |cor     | (data)   arpl   WORD PTR ds:[edi + 0x72], bp
-0x080499aa: 64 20 61 6e             |d an    | (data)   and    BYTE PTR fs:[ecx + 0x6e], ah
-0x080499ae: 64 20 65 78             |d ex    | (data)   and    BYTE PTR fs:[ebp + 0x78], ah
-0x080499b2: 69 74 2e 0a 00 00 09 09 |it......| (data)   imul   esi, DWORD PTR ds:[esi + ebp + 0x0a], 0x09090000
-0x080499ba: 20 20                   |        | (data)   and    BYTE PTR ds:[eax], ah
+0x080499a7: 63 6f 72                |cor     | (data)   arpl   word ds:[edi + 0x72], bp
+0x080499aa: 64 20 61 6e             |d an    | (data)   and    byte fs:[ecx + 0x6e], ah
+0x080499ae: 64 20 65 78             |d ex    | (data)   and    byte fs:[ebp + 0x78], ah
+0x080499b2: 69 74 2e 0a 00 00 09 09 |it......| (data)   imul   esi, dword ds:[esi + ebp + 0x0a], 0x09090000
+0x080499ba: 20 20                   |        | (data)   and    byte ds:[eax], ah
 0x080499bc: 2d 64 3a 20 64          |-d: d   | (data)   sub    eax, 0x64203a64
 0x080499c1: 6f                      |o       | (data)   outsd  
 0x080499c2: 6e                      |n       | (data)   outsb  
 0x080499c3: 27                      |'       | (data)   daa    
 0x080499c4: 74 20                   |t       | (data)   je     0x080499e6
 0x080499c6: 77 72                   |wr      | (data)   ja     0x08049a3a
-0x080499c8: 69 74 65 20 61 20 77 74 |ite a wt| (data)   imul   esi, DWORD PTR ss:[ebp + 0x20], 0x74772061
+0x080499c8: 69 74 65 20 61 20 77 74 |ite a wt| (data)   imul   esi, dword ss:[ebp + 0x20], 0x74772061
 0x080499d0: 6d                      |m       | (data)   insd   
 0x080499d1: 70 20                   |p       | (data)   jo     0x080499f3
 0x080499d3: 72 65                   |re      | (data)   jb     0x08049a3a
-0x080499d5: 63 6f 72                |cor     | (data)   arpl   WORD PTR ds:[edi + 0x72], bp
-0x080499d8: 64 2e 0a 00             |d...    | (data)   or     al, BYTE PTR cs:[eax]
-0x080499dc: 09 09                   |..      | (data)   or     DWORD PTR ds:[ecx], ecx
-0x080499de: 20 20                   |        | (data)   and    BYTE PTR ds:[eax], ah
+0x080499d5: 63 6f 72                |cor     | (data)   arpl   word ds:[edi + 0x72], bp
+0x080499d8: 64 2e 0a 00             |d...    | (data)   or     al, byte cs:[eax]
+0x080499dc: 09 09                   |..      | (data)   or     dword ds:[ecx], ecx
+0x080499de: 20 20                   |        | (data)   and    byte ds:[eax], ah
 0x080499e0: 2d 66 3a 20 66          |-f: f   | (data)   sub    eax, 0x66203a66
 0x080499e5: 6f                      |o       | (data)   outsd  
 0x080499e6: 72 63                   |rc      | (data)   jb     0x08049a4b
-0x080499e8: 65 20 68 61             |e ha    | (data)   and    BYTE PTR gs:[eax + 0x61], ch
+0x080499e8: 65 20 68 61             |e ha    | (data)   and    byte gs:[eax + 0x61], ch
 0x080499ec: 6c                      |l       | (data)   insb   
 0x080499ed: 74 2f                   |t/      | (data)   je     0x08049a1e
 0x080499ef: 72 65                   |re      | (data)   jb     0x08049a56
-0x080499f1: 62 6f 6f                |boo     | (data)   bound  ebp, DWORD PTR ds:[edi + 0x6f]
+0x080499f1: 62 6f 6f                |boo     | (data)   bound  ebp, dword ds:[edi + 0x6f]
 0x080499f4: 74 2c                   |t,      | (data)   je     0x08049a22
-0x080499f6: 20 64 6f 6e             | don    | (data)   and    BYTE PTR ds:[edi + ebp*0x02 + 0x6e], ah
+0x080499f6: 20 64 6f 6e             | don    | (data)   and    byte ds:[edi + ebp*0x02 + 0x6e], ah
 0x080499fa: 27                      |'       | (data)   daa    
 0x080499fb: 74 20                   |t       | (data)   je     0x08049a1d
-0x080499fd: 63 61 6c                |cal     | (data)   arpl   WORD PTR ds:[ecx + 0x6c], sp
+0x080499fd: 63 61 6c                |cal     | (data)   arpl   word ds:[ecx + 0x6c], sp
 0x08049a00: 6c                      |l       | (data)   insb   
-0x08049a01: 20 73 68                | sh     | (data)   and    BYTE PTR ds:[ebx + 0x68], dh
+0x08049a01: 20 73 68                | sh     | (data)   and    byte ds:[ebx + 0x68], dh
 0x08049a04: 75 74                   |ut      | (data)   jne    0x08049a7a
 0x08049a06: 64 6f                   |do      | (data)   outsd  
 0x08049a08: 77 6e                   |wn      | (data)   ja     0x08049a78
-0x08049a0a: 2e 0a 00                |...     | (data)   or     al, BYTE PTR cs:[eax]
-0x08049a0d: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049a0f: 00 09                   |..      | (data)   add    BYTE PTR ds:[ecx], cl
-0x08049a11: 09 20                   |.       | (data)   or     DWORD PTR ds:[eax], esp
-0x08049a13: 20 2d 70 3a 20 70       | -p: p  | (data)   and    BYTE PTR ds:[0x70203a70], ch
+0x08049a0a: 2e 0a 00                |...     | (data)   or     al, byte cs:[eax]
+0x08049a0d: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049a0f: 00 09                   |..      | (data)   add    byte ds:[ecx], cl
+0x08049a11: 09 20                   |.       | (data)   or     dword ds:[eax], esp
+0x08049a13: 20 2d 70 3a 20 70       | -p: p  | (data)   and    byte ds:[0x70203a70], ch
 0x08049a19: 6f                      |o       | (data)   outsd  
 0x08049a1a: 77 65                   |we      | (data)   ja     0x08049a81
 0x08049a1c: 72 20                   |r       | (data)   jb     0x08049a3e
 0x08049a1e: 64 6f                   |do      | (data)   outsd  
 0x08049a20: 77 6e                   |wn      | (data)   ja     0x08049a90
-0x08049a22: 20 74 68 65             | the    | (data)   and    BYTE PTR ds:[eax + ebp*0x02 + 0x65], dh
-0x08049a26: 20 73 79                | sy     | (data)   and    BYTE PTR ds:[ebx + 0x79], dh
+0x08049a22: 20 74 68 65             | the    | (data)   and    byte ds:[eax + ebp*0x02 + 0x65], dh
+0x08049a26: 20 73 79                | sy     | (data)   and    byte ds:[ebx + 0x79], dh
 0x08049a29: 73 74                   |st      | (data)   jae    0x08049a9f
 0x08049a2b: 65 6d                   |em      | (data)   insd   
-0x08049a2d: 20 28                   | (      | (data)   and    BYTE PTR ds:[eax], ch
-0x08049a2f: 69 66 20 70 6f 73 73    |if poss | (data)   imul   esp, DWORD PTR ds:[esi + 0x20], 0x73736f70
-0x08049a36: 69 62 6c 65 2c 20 6f    |ible, o | (data)   imul   esp, DWORD PTR ds:[edx + 0x6c], 0x6f202c65
+0x08049a2d: 20 28                   | (      | (data)   and    byte ds:[eax], ch
+0x08049a2f: 69 66 20 70 6f 73 73    |if poss | (data)   imul   esp, dword ds:[esi + 0x20], 0x73736f70
+0x08049a36: 69 62 6c 65 2c 20 6f    |ible, o | (data)   imul   esp, dword ds:[edx + 0x6c], 0x6f202c65
 0x08049a3d: 74 68                   |th      | (data)   je     0x08049aa7
 0x08049a3f: 65 72 77                |erw     | (data)   jb     0x08049ab9
-0x08049a42: 69 73 65 20 25 73 29    |ise %s) | (data)   imul   esi, DWORD PTR ds:[ebx + 0x65], 0x29732520
-0x08049a49: 0a 00                   |..      | (data)   or     al, BYTE PTR ds:[eax]
-0x08049a4b: 00 57 41                |.WA     | (data)   add    BYTE PTR ds:[edi + 0x41], dl
+0x08049a42: 69 73 65 20 25 73 29    |ise %s) | (data)   imul   esi, dword ds:[ebx + 0x65], 0x29732520
+0x08049a49: 0a 00                   |..      | (data)   or     al, byte ds:[eax]
+0x08049a4b: 00 57 41                |.WA     | (data)   add    byte ds:[edi + 0x41], dl
 0x08049a4e: 52                      |R       | (data)   push   edx
 0x08049a4f: 4e                      |N       | (data)   dec    esi
 0x08049a50: 49                      |I       | (data)   dec    ecx
 0x08049a51: 4e                      |N       | (data)   dec    esi
 0x08049a52: 47                      |G       | (data)   inc    edi
-0x08049a53: 3a 20                   |:       | (data)   cmp    ah, BYTE PTR ds:[eax]
-0x08049a55: 63 6f 75                |cou     | (data)   arpl   WORD PTR ds:[edi + 0x75], bp
+0x08049a53: 3a 20                   |:       | (data)   cmp    ah, byte ds:[eax]
+0x08049a55: 63 6f 75                |cou     | (data)   arpl   word ds:[edi + 0x75], bp
 0x08049a58: 6c                      |l       | (data)   insb   
-0x08049a59: 64 20 6e 6f             |d no    | (data)   and    BYTE PTR fs:[esi + 0x6f], ch
+0x08049a59: 64 20 6e 6f             |d no    | (data)   and    byte fs:[esi + 0x6f], ch
 0x08049a5d: 74 20                   |t       | (data)   je     0x08049a7f
 0x08049a5f: 64 65 74 65             |dete    | (data)   je     0x08049ac8
 0x08049a63: 72 6d                   |rm      | (data)   jb     0x08049ad2
-0x08049a65: 69 6e 65 20 72 75 6e    |ine run | (data)   imul   ebp, DWORD PTR ds:[esi + 0x65], 0x6e757220
+0x08049a65: 69 6e 65 20 72 75 6e    |ine run | (data)   imul   ebp, dword ds:[esi + 0x65], 0x6e757220
 0x08049a6c: 6c                      |l       | (data)   insb   
 0x08049a6d: 65 76 65                |eve     | (data)   jbe    0x08049ad5
 0x08049a70: 6c                      |l       | (data)   insb   
-0x08049a71: 20 2d 20 64 6f 69       | - doi  | (data)   and    BYTE PTR ds:[0x696f6420], ch
+0x08049a71: 20 2d 20 64 6f 69       | - doi  | (data)   and    byte ds:[0x696f6420], ch
 0x08049a77: 6e                      |n       | (data)   outsb  
-0x08049a78: 67 20 73 6f             |g so    | (data)   and    BYTE PTR ss:[bp + di + 0x006f], dh
+0x08049a78: 67 20 73 6f             |g so    | (data)   and    byte ss:[bp + di + 0x006f], dh
 0x08049a7c: 66 74 20                |ft      | (data)   je     0x08049a9f
 0x08049a7f: 25 73 0a 00 00          |%s...   | (data)   and    eax, 0x00000a73<2675>
-0x08049a84: 20 20                   |        | (data)   and    BYTE PTR ds:[eax], ah
-0x08049a86: 28 69 74                |(it     | (data)   sub    BYTE PTR ds:[ecx + 0x74], ch
+0x08049a84: 20 20                   |        | (data)   and    byte ds:[eax], ah
+0x08049a86: 28 69 74                |(it     | (data)   sub    byte ds:[ecx + 0x74], ch
 0x08049a89: 27                      |'       | (data)   daa    
 0x08049a8a: 73 20                   |s       | (data)   jae    0x08049aac
-0x08049a8c: 62 65 74                |bet     | (data)   bound  esp, DWORD PTR ss:[ebp + 0x74]
+0x08049a8c: 62 65 74                |bet     | (data)   bound  esp, dword ss:[ebp + 0x74]
 0x08049a8f: 74 65                   |te      | (data)   je     0x08049af6
 0x08049a91: 72 20                   |r       | (data)   jb     0x08049ab3
 0x08049a93: 74 6f                   |to      | (data)   je     0x08049b04
-0x08049a95: 20 75 73                | us     | (data)   and    BYTE PTR ss:[ebp + 0x73], dh
-0x08049a98: 65 20 73 68             |e sh    | (data)   and    BYTE PTR gs:[ebx + 0x68], dh
+0x08049a95: 20 75 73                | us     | (data)   and    byte ss:[ebp + 0x73], dh
+0x08049a98: 65 20 73 68             |e sh    | (data)   and    byte gs:[ebx + 0x68], dh
 0x08049a9c: 75 74                   |ut      | (data)   jne    0x08049b12
 0x08049a9e: 64 6f                   |do      | (data)   outsd  
 0x08049aa0: 77 6e                   |wn      | (data)   ja     0x08049b10
-0x08049aa2: 20 69 6e                | in     | (data)   and    BYTE PTR ds:[ecx + 0x6e], ch
+0x08049aa2: 20 69 6e                | in     | (data)   and    byte ds:[ecx + 0x6e], ch
 0x08049aa5: 73 74                   |st      | (data)   jae    0x08049b1b
 0x08049aa7: 65 61                   |ea      | (data)   popad  
-0x08049aa9: 64 20 6f 66             |d of    | (data)   and    BYTE PTR fs:[edi + 0x66], ch
-0x08049aad: 20 25 73 20 66 72       | %s fr  | (data)   and    BYTE PTR ds:[0x72662073], ah
+0x08049aa9: 64 20 6f 66             |d of    | (data)   and    byte fs:[edi + 0x66], ch
+0x08049aad: 20 25 73 20 66 72       | %s fr  | (data)   and    byte ds:[0x72662073], ah
 0x08049ab3: 6f                      |o       | (data)   outsd  
 0x08049ab4: 6d                      |m       | (data)   insd   
-0x08049ab5: 20 74 68 65             | the    | (data)   and    BYTE PTR ds:[eax + ebp*0x02 + 0x65], dh
-0x08049ab9: 20 63 6f                | co     | (data)   and    BYTE PTR ds:[ebx + 0x6f], ah
+0x08049ab5: 20 74 68 65             | the    | (data)   and    byte ds:[eax + ebp*0x02 + 0x65], dh
+0x08049ab9: 20 63 6f                | co     | (data)   and    byte ds:[ebx + 0x6f], ah
 0x08049abc: 6d                      |m       | (data)   insd   
 0x08049abd: 6d                      |m       | (data)   insd   
 0x08049abe: 61                      |a       | (data)   popad  
 0x08049abf: 6e                      |n       | (data)   outsb  
-0x08049ac0: 64 20 6c 69 6e          |d lin   | (data)   and    BYTE PTR fs:[ecx + ebp*0x02 + 0x6e], ch
-0x08049ac5: 65 29 0a                |e).     | (data)   sub    DWORD PTR gs:[edx], ecx
-0x08049ac8: 00 49 4e                |.IN     | (data)   add    BYTE PTR ds:[ecx + 0x4e], cl
+0x08049ac0: 64 20 6c 69 6e          |d lin   | (data)   and    byte fs:[ecx + ebp*0x02 + 0x6e], ch
+0x08049ac5: 65 29 0a                |e).     | (data)   sub    dword gs:[edx], ecx
+0x08049ac8: 00 49 4e                |.IN     | (data)   add    byte ds:[ecx + 0x4e], cl
 0x08049acb: 49                      |I       | (data)   dec    ecx
 0x08049acc: 54                      |T       | (data)   push   esp
 0x08049acd: 5f                      |_       | (data)   pop    edi
@@ -2826,21 +2839,21 @@ using this memory map for disassembly:
 0x08049ad2: 49                      |I       | (data)   dec    ecx
 0x08049ad3: 4f                      |O       | (data)   dec    edi
 0x08049ad4: 4e                      |N       | (data)   dec    esi
-0x08049ad5: 00 52 55                |.RU     | (data)   add    BYTE PTR ds:[edx + 0x55], dl
+0x08049ad5: 00 52 55                |.RU     | (data)   add    byte ds:[edx + 0x55], dl
 0x08049ad8: 4e                      |N       | (data)   dec    esi
 0x08049ad9: 4c                      |L       | (data)   dec    esp
 0x08049ada: 45                      |E       | (data)   inc    ebp
 0x08049adb: 56                      |V       | (data)   push   esi
 0x08049adc: 45                      |E       | (data)   inc    ebp
 0x08049add: 4c                      |L       | (data)   dec    esp
-0x08049ade: 00 2d 74 00 2f 73       |.-t./s  | (data)   add    BYTE PTR ds:[0x732f0074], ch
-0x08049ae4: 62 69 6e                |bin     | (data)   bound  ebp, DWORD PTR ds:[ecx + 0x6e]
+0x08049ade: 00 2d 74 00 2f 73       |.-t./s  | (data)   add    byte ds:[0x732f0074], ch
+0x08049ae4: 62 69 6e                |bin     | (data)   bound  ebp, dword ds:[ecx + 0x6e]
 0x08049ae7: 2f                      |/       | (data)   das    
 0x08049ae8: 73 68                   |sh      | (data)   jae    0x08049b52
 0x08049aea: 75 74                   |ut      | (data)   jne    0x08049b60
 0x08049aec: 64 6f                   |do      | (data)   outsd  
 0x08049aee: 77 6e                   |wn      | (data)   ja     0x08049b5e
-0x08049af0: 00 6e 6f                |.no     | (data)   add    BYTE PTR ds:[esi + 0x6f], ch
+0x08049af0: 00 6e 6f                |.no     | (data)   add    byte ds:[esi + 0x6f], ch
 0x08049af3: 77 00                   |w.      | (data)   ja     0x08049af5
 0x08049af5: 2f                      |/       | (data)   das    
 0x08049af6: 65 74 63                |etc     | (data)   je     0x08049b5c
@@ -2849,109 +2862,109 @@ using this memory map for disassembly:
 0x08049afc: 75 74                   |ut      | (data)   jne    0x08049b72
 0x08049afe: 64 6f                   |do      | (data)   outsd  
 0x08049b00: 77 6e                   |wn      | (data)   ja     0x08049b70
-0x08049b02: 00 2f                   |./      | (data)   add    BYTE PTR ds:[edi], ch
-0x08049b04: 62 69 6e                |bin     | (data)   bound  ebp, DWORD PTR ds:[ecx + 0x6e]
+0x08049b02: 00 2f                   |./      | (data)   add    byte ds:[edi], ch
+0x08049b04: 62 69 6e                |bin     | (data)   bound  ebp, dword ds:[ecx + 0x6e]
 0x08049b07: 2f                      |/       | (data)   das    
 0x08049b08: 73 68                   |sh      | (data)   jae    0x08049b72
 0x08049b0a: 75 74                   |ut      | (data)   jne    0x08049b80
 0x08049b0c: 64 6f                   |do      | (data)   outsd  
 0x08049b0e: 77 6e                   |wn      | (data)   ja     0x08049b7e
-0x08049b10: 00 72 65                |.re     | (data)   add    BYTE PTR ds:[edx + 0x65], dh
-0x08049b13: 62 6f 6f                |boo     | (data)   bound  ebp, DWORD PTR ds:[edi + 0x6f]
+0x08049b10: 00 72 65                |.re     | (data)   add    byte ds:[edx + 0x65], dh
+0x08049b13: 62 6f 6f                |boo     | (data)   bound  ebp, dword ds:[edi + 0x6f]
 0x08049b16: 74 00                   |t.      | (data)   je     0x08049b18
-0x08049b18: 3a 69 68                |:ih     | (data)   cmp    ch, BYTE PTR ds:[ecx + 0x68]
+0x08049b18: 3a 69 68                |:ih     | (data)   cmp    ch, byte ds:[ecx + 0x68]
 0x08049b1b: 64 66 6e                |dfn     | (data)   outsb  
 0x08049b1e: 70 77                   |pw      | (data)   jo     0x08049b97
 0x08049b20: 74 3a                   |t:      | (data)   je     0x08049b5c
-0x08049b22: 00 2f                   |./      | (data)   add    BYTE PTR ds:[edi], ch
-0x08049b24: 00 7e 7e                |.~~     | (data)   add    BYTE PTR ds:[esi + 0x7e], bh
-0x08049b27: 00 2f                   |./      | (data)   add    BYTE PTR ds:[edi], ch
+0x08049b22: 00 2f                   |./      | (data)   add    byte ds:[edi], ch
+0x08049b24: 00 7e 7e                |.~~     | (data)   add    byte ds:[esi + 0x7e], bh
+0x08049b27: 00 2f                   |./      | (data)   add    byte ds:[edi], ch
 0x08049b29: 68 61 6c 74 00          |halt.   | (data)   push   0x00746c61
 0x08049b2e: 2d 72 00 2d 68          |-r.-h   | (data)   sub    eax, 0x682d0072
-0x08049b33: 00 2f                   |./      | (data)   add    BYTE PTR ds:[edi], ch
+0x08049b33: 00 2f                   |./      | (data)   add    byte ds:[edi], ch
 0x08049b35: 70 6f                   |po      | (data)   jo     0x08049ba6
 0x08049b37: 77 65                   |we      | (data)   ja     0x08049b9e
 0x08049b39: 72 6f                   |ro      | (data)   jb     0x08049baa
-0x08049b3b: 66 66 00 25 73 3a 20 6d |ff.%s: m| (data)   add    BYTE PTR ds:[0x6d203a73], ah
+0x08049b3b: 66 66 00 25 73 3a 20 6d |ff.%s: m| (data)   add    byte ds:[0x6d203a73], ah
 0x08049b43: 75 73                   |us      | (data)   jne    0x08049bb8
 0x08049b45: 74 20                   |t       | (data)   je     0x08049b67
-0x08049b47: 62 65 20                |be      | (data)   bound  esp, DWORD PTR ss:[ebp + 0x20]
+0x08049b47: 62 65 20                |be      | (data)   bound  esp, dword ss:[ebp + 0x20]
 0x08049b4a: 73 75                   |su      | (data)   jae    0x08049bc1
 0x08049b4c: 70 65                   |pe      | (data)   jo     0x08049bb3
 0x08049b4e: 72 75                   |ru      | (data)   jb     0x08049bc5
 0x08049b50: 73 65                   |se      | (data)   jae    0x08049bb7
 0x08049b52: 72 2e                   |r.      | (data)   jb     0x08049b82
-0x08049b54: 0a 00                   |..      | (data)   or     al, BYTE PTR ds:[eax]
-0x08049b56: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x08049b54: 0a 00                   |..      | (data)   or     al, byte ds:[eax]
+0x08049b56: 00 00                   |..      | (data)   add    byte ds:[eax], al
 0x08049b58: bf 8f 04 08 40          |....@   | (data)   mov    edi, 0x4008048f
-0x08049b5d: 8f 04 08                |...     | (data)   pop    DWORD PTR ds:[eax + ecx]
+0x08049b5d: 8f 04 08                |...     | (data)   pop    dword ds:[eax + ecx]
 0x08049b60: fc                      |.       | (data)   cld    
-0x08049b61: 8f 04 08                |...     | (data)   pop    DWORD PTR ds:[eax + ecx]
+0x08049b61: 8f 04 08                |...     | (data)   pop    dword ds:[eax + ecx]
 0x08049b64: 40                      |@       | (data)   inc    eax
-0x08049b65: 8f 04 08                |...     | (data)   pop    DWORD PTR ds:[eax + ecx]
-0x08049b68: f0 8f 04 08             |....    | (data)   lock pop DWORD PTR ds:[eax + ecx]
+0x08049b65: 8f 04 08                |...     | (data)   pop    dword ds:[eax + ecx]
+0x08049b68: f0 8f 04 08             |....    | (data)   lock pop dword ds:[eax + ecx]
 0x08049b6c: e4 8f                   |..      | (data)   in     al, 0x8f<-113>
 0x08049b6e: 04 08                   |..      | (data)   add    al, 0x08
 0x08049b70: 40                      |@       | (data)   inc    eax
-0x08049b71: 8f 04 08                |...     | (data)   pop    DWORD PTR ds:[eax + ecx]
+0x08049b71: 8f 04 08                |...     | (data)   pop    dword ds:[eax + ecx]
 0x08049b74: 40                      |@       | (data)   inc    eax
-0x08049b75: 8f 04 08                |...     | (data)   pop    DWORD PTR ds:[eax + ecx]
+0x08049b75: 8f 04 08                |...     | (data)   pop    dword ds:[eax + ecx]
 0x08049b78: 40                      |@       | (data)   inc    eax
-0x08049b79: 8f 04 08                |...     | (data)   pop    DWORD PTR ds:[eax + ecx]
+0x08049b79: 8f 04 08                |...     | (data)   pop    dword ds:[eax + ecx]
 0x08049b7c: 40                      |@       | (data)   inc    eax
-0x08049b7d: 8f 04 08                |...     | (data)   pop    DWORD PTR ds:[eax + ecx]
+0x08049b7d: 8f 04 08                |...     | (data)   pop    dword ds:[eax + ecx]
 0x08049b80: b8 8f 04 08 40          |....@   | (data)   mov    eax, 0x4008048f
-0x08049b85: 8f 04 08                |...     | (data)   pop    DWORD PTR ds:[eax + ecx]
-0x08049b88: 10 8f 04 08 40 8f       |....@.  | (data)   adc    BYTE PTR ds:[edi + 0x8f400804], cl
+0x08049b85: 8f 04 08                |...     | (data)   pop    dword ds:[eax + ecx]
+0x08049b88: 10 8f 04 08 40 8f       |....@.  | (data)   adc    byte ds:[edi + 0x8f400804], cl
 0x08049b8e: 04 08                   |..      | (data)   add    al, 0x08
 0x08049b90: 40                      |@       | (data)   inc    eax
-0x08049b91: 8f 04 08                |...     | (data)   pop    DWORD PTR ds:[eax + ecx]
+0x08049b91: 8f 04 08                |...     | (data)   pop    dword ds:[eax + ecx]
 0x08049b94: 40                      |@       | (data)   inc    eax
-0x08049b95: 8f 04 08                |...     | (data)   pop    DWORD PTR ds:[eax + ecx]
+0x08049b95: 8f 04 08                |...     | (data)   pop    dword ds:[eax + ecx]
 0x08049b98: d7                      |.       | (data)   xlatb  
-0x08049b99: 8f 04 08                |...     | (data)   pop    DWORD PTR ds:[eax + ecx]
+0x08049b99: 8f 04 08                |...     | (data)   pop    dword ds:[eax + ecx]
 0x08049b9c: 40                      |@       | (data)   inc    eax
-0x08049b9d: 8f 04 08                |...     | (data)   pop    DWORD PTR ds:[eax + ecx]
+0x08049b9d: 8f 04 08                |...     | (data)   pop    dword ds:[eax + ecx]
 0x08049ba0: 40                      |@       | (data)   inc    eax
-0x08049ba1: 8f 04 08                |...     | (data)   pop    DWORD PTR ds:[eax + ecx]
+0x08049ba1: 8f 04 08                |...     | (data)   pop    dword ds:[eax + ecx]
 0x08049ba4: cb                      |.       | (data)   retf   
-0x08049ba5: 8f 04 08                |...     | (data)   pop    DWORD PTR ds:[eax + ecx]
+0x08049ba5: 8f 04 08                |...     | (data)   pop    dword ds:[eax + ecx]
 0x08049ba8: 40                      |@       | (data)   inc    eax
-0x08049ba9: 28 23                   |(#      | (data)   sub    BYTE PTR ds:[ebx], ah
-0x08049bab: 29 69 66                |)if     | (data)   sub    DWORD PTR ds:[ecx + 0x66], ebp
+0x08049ba9: 28 23                   |(#      | (data)   sub    byte ds:[ebx], ah
+0x08049bab: 29 69 66                |)if     | (data)   sub    dword ds:[ecx + 0x66], ebp
 0x08049bae: 64 6f                   |do      | (data)   outsd  
 0x08049bb0: 77 6e                   |wn      | (data)   ja     0x08049c20
-0x08049bb2: 2e 63 20                |.c      | (data)   arpl   WORD PTR cs:[eax], sp
-0x08049bb5: 20 31                   | 1      | (data)   and    BYTE PTR ds:[ecx], dh
-0x08049bb7: 2e 31 31                |.11     | (data)   xor    DWORD PTR cs:[ecx], esi
-0x08049bba: 20 20                   |        | (data)   and    BYTE PTR ds:[eax], ah
-0x08049bbc: 30 32                   |02      | (data)   xor    BYTE PTR ds:[edx], dh
+0x08049bb2: 2e 63 20                |.c      | (data)   arpl   word cs:[eax], sp
+0x08049bb5: 20 31                   | 1      | (data)   and    byte ds:[ecx], dh
+0x08049bb7: 2e 31 31                |.11     | (data)   xor    dword cs:[ecx], esi
+0x08049bba: 20 20                   |        | (data)   and    byte ds:[eax], ah
+0x08049bbc: 30 32                   |02      | (data)   xor    byte ds:[edx], dh
 0x08049bbe: 2d 4a 75 6e 2d          |-Jun-   | (data)   sub    eax, 0x2d6e754a
-0x08049bc3: 31 39                   |19      | (data)   xor    DWORD PTR ds:[ecx], edi
-0x08049bc5: 39 38                   |98      | (data)   cmp    DWORD PTR ds:[eax], edi
-0x08049bc7: 20 20                   |        | (data)   and    BYTE PTR ds:[eax], ah
+0x08049bc3: 31 39                   |19      | (data)   xor    dword ds:[ecx], edi
+0x08049bc5: 39 38                   |98      | (data)   cmp    dword ds:[eax], edi
+0x08049bc7: 20 20                   |        | (data)   and    byte ds:[eax], ah
 0x08049bc9: 6d                      |m       | (data)   insd   
-0x08049bca: 69 71 75 65 6c 73 40    |iquels@ | (data)   imul   esi, DWORD PTR ds:[ecx + 0x75], 0x40736c65
-0x08049bd1: 63 69 73                |cis     | (data)   arpl   WORD PTR ds:[ecx + 0x73], bp
+0x08049bca: 69 71 75 65 6c 73 40    |iquels@ | (data)   imul   esi, dword ds:[ecx + 0x75], 0x40736c65
+0x08049bd1: 63 69 73                |cis     | (data)   arpl   word ds:[ecx + 0x73], bp
 0x08049bd4: 74 72                   |tr      | (data)   je     0x08049c48
 0x08049bd6: 6f                      |o       | (data)   outsd  
 0x08049bd7: 6e                      |n       | (data)   outsb  
 0x08049bd8: 2e 6e                   |.n      | (data)   outsb  
 0x08049bda: 6c                      |l       | (data)   insb   
-0x08049bdb: 00 73 68                |.sh     | (data)   add    BYTE PTR ds:[ebx + 0x68], dh
+0x08049bdb: 00 73 68                |.sh     | (data)   add    byte ds:[ebx + 0x68], dh
 0x08049bde: 61                      |a       | (data)   popad  
 0x08049bdf: 70 65                   |pe      | (data)   jo     0x08049c46
 0x08049be1: 72 00                   |r.      | (data)   jb     0x08049be3
-0x08049be3: 69 66 64 6f 77 6e 3a    |ifdown: | (data)   imul   esp, DWORD PTR ds:[esi + 0x64], 0x3a6e776f
-0x08049bea: 20 73 68                | sh     | (data)   and    BYTE PTR ds:[ebx + 0x68], dh
+0x08049be3: 69 66 64 6f 77 6e 3a    |ifdown: | (data)   imul   esp, dword ds:[esi + 0x64], 0x3a6e776f
+0x08049bea: 20 73 68                | sh     | (data)   and    byte ds:[ebx + 0x68], dh
 0x08049bed: 75 74                   |ut      | (data)   jne    0x08049c63
 0x08049bef: 64 6f                   |do      | (data)   outsd  
 0x08049bf1: 77 6e                   |wn      | (data)   ja     0x08049c61
-0x08049bf3: 20 00                   | .      | (data)   and    BYTE PTR ds:[eax], al
-0x08049bf5: 69 66 64 6f 77 6e 3a    |ifdown: | (data)   imul   esp, DWORD PTR ds:[esi + 0x64], 0x3a6e776f
-0x08049bfc: 20 00                   | .      | (data)   and    BYTE PTR ds:[eax], al
+0x08049bf3: 20 00                   | .      | (data)   and    byte ds:[eax], al
+0x08049bf5: 69 66 64 6f 77 6e 3a    |ifdown: | (data)   imul   esp, dword ds:[esi + 0x64], 0x3a6e776f
+0x08049bfc: 20 00                   | .      | (data)   and    byte ds:[eax], al
 0x08049bfe: 73 6f                   |so      | (data)   jae    0x08049c6f
-0x08049c00: 63 6b 65                |cke     | (data)   arpl   WORD PTR ds:[ebx + 0x65], bp
+0x08049c00: 63 6b 65                |cke     | (data)   arpl   word ds:[ebx + 0x65], bp
 0x08049c03: 74 00                   |t.      | (data)   je     0x08049c05
 0x08049c05: 53                      |S       | (data)   push   ebx
 0x08049c06: 49                      |I       | (data)   dec    ecx
@@ -2964,42 +2977,42 @@ using this memory map for disassembly:
 0x08049c0d: 4f                      |O       | (data)   dec    edi
 0x08049c0e: 4e                      |N       | (data)   dec    esi
 0x08049c0f: 46                      |F       | (data)   inc    esi
-0x08049c10: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049c12: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x08049c10: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049c12: 00 00                   |..      | (data)   add    byte ds:[eax], al
 0x08049c14: 40                      |@       | (data)   inc    eax
-0x08049c15: 28 23                   |(#      | (data)   sub    BYTE PTR ds:[ebx], ah
-0x08049c17: 29 68 64                |)hd     | (data)   sub    DWORD PTR ds:[eax + 0x64], ebp
+0x08049c15: 28 23                   |(#      | (data)   sub    byte ds:[ebx], ah
+0x08049c17: 29 68 64                |)hd     | (data)   sub    dword ds:[eax + 0x64], ebp
 0x08049c1a: 64 6f                   |do      | (data)   outsd  
 0x08049c1c: 77 6e                   |wn      | (data)   ja     0x08049c8c
-0x08049c1e: 2e 63 20                |.c      | (data)   arpl   WORD PTR cs:[eax], sp
-0x08049c21: 20 31                   | 1      | (data)   and    BYTE PTR ds:[ecx], dh
-0x08049c23: 2e 30 31                |.01     | (data)   xor    BYTE PTR cs:[ecx], dh
-0x08049c26: 20 20                   |        | (data)   and    BYTE PTR ds:[eax], ah
-0x08049c28: 30 37                   |07      | (data)   xor    BYTE PTR ds:[edi], dh
+0x08049c1e: 2e 63 20                |.c      | (data)   arpl   word cs:[eax], sp
+0x08049c21: 20 31                   | 1      | (data)   and    byte ds:[ecx], dh
+0x08049c23: 2e 30 31                |.01     | (data)   xor    byte cs:[ecx], dh
+0x08049c26: 20 20                   |        | (data)   and    byte ds:[eax], ah
+0x08049c28: 30 37                   |07      | (data)   xor    byte ds:[edi], dh
 0x08049c2a: 2d 4e 6f 76 2d          |-Nov-   | (data)   sub    eax, 0x2d766f4e
-0x08049c2f: 32 30                   |20      | (data)   xor    dh, BYTE PTR ds:[eax]
-0x08049c31: 30 31                   |01      | (data)   xor    BYTE PTR ds:[ecx], dh
-0x08049c33: 20 20                   |        | (data)   and    BYTE PTR ds:[eax], ah
+0x08049c2f: 32 30                   |20      | (data)   xor    dh, byte ds:[eax]
+0x08049c31: 30 31                   |01      | (data)   xor    byte ds:[ecx], dh
+0x08049c33: 20 20                   |        | (data)   and    byte ds:[eax], ah
 0x08049c35: 6d                      |m       | (data)   insd   
-0x08049c36: 69 71 75 65 6c 73 40    |iquels@ | (data)   imul   esi, DWORD PTR ds:[ecx + 0x75], 0x40736c65
-0x08049c3d: 63 69 73                |cis     | (data)   arpl   WORD PTR ds:[ecx + 0x73], bp
+0x08049c36: 69 71 75 65 6c 73 40    |iquels@ | (data)   imul   esi, dword ds:[ecx + 0x75], 0x40736c65
+0x08049c3d: 63 69 73                |cis     | (data)   arpl   word ds:[ecx + 0x73], bp
 0x08049c40: 74 72                   |tr      | (data)   je     0x08049cb4
 0x08049c42: 6f                      |o       | (data)   outsd  
 0x08049c43: 6e                      |n       | (data)   outsb  
 0x08049c44: 2e 6e                   |.n      | (data)   outsb  
 0x08049c46: 6c                      |l       | (data)   insb   
-0x08049c47: 00 2f                   |./      | (data)   add    BYTE PTR ds:[edi], ch
+0x08049c47: 00 2f                   |./      | (data)   add    byte ds:[edi], ch
 0x08049c49: 70 72                   |pr      | (data)   jo     0x08049cbd
 0x08049c4b: 6f                      |o       | (data)   outsd  
-0x08049c4c: 63 2f                   |c/      | (data)   arpl   WORD PTR ds:[edi], bp
-0x08049c4e: 69 64 65 00 68 64 00 2f |ide.hd./| (data)   imul   esp, DWORD PTR ss:[ebp + 0x00], 0x2f006468
+0x08049c4c: 63 2f                   |c/      | (data)   arpl   word ds:[edi], bp
+0x08049c4e: 69 64 65 00 68 64 00 2f |ide.hd./| (data)   imul   esp, dword ss:[ebp + 0x00], 0x2f006468
 0x08049c56: 70 72                   |pr      | (data)   jo     0x08049cca
 0x08049c58: 6f                      |o       | (data)   outsd  
-0x08049c59: 63 2f                   |c/      | (data)   arpl   WORD PTR ds:[edi], bp
-0x08049c5b: 69 64 65 2f 25 73 2f 6d |ide/%s/m| (data)   imul   esp, DWORD PTR ss:[ebp + 0x2f], 0x6d2f7325
+0x08049c59: 63 2f                   |c/      | (data)   arpl   word ds:[edi], bp
+0x08049c5b: 69 64 65 2f 25 73 2f 6d |ide/%s/m| (data)   imul   esp, dword ss:[ebp + 0x2f], 0x6d2f7325
 0x08049c63: 65 64 69 61 00 64 69 73 |edia.dis|
-0x08049c6b: 6b                      |k       | (data)   imul   esp, DWORD PTR fs:[ecx + 0x00], 0x6b736964
-0x08049c6c: 0a 00                   |..      | (data)   or     al, BYTE PTR ds:[eax]
+0x08049c6b: 6b                      |k       | (data)   imul   esp, dword fs:[ecx + 0x00], 0x6b736964
+0x08049c6c: 0a 00                   |..      | (data)   or     al, byte ds:[eax]
 0x08049c6e: 2f                      |/       | (data)   das    
 0x08049c6f: 64 65 76 2f             |dev/    | (data)   jbe    0x08049ca2
 0x08049c73: 25 73 00 2f 76          |%s./v   | (data)   and    eax, 0x762f0073
@@ -3020,186 +3033,186 @@ using this memory map for disassembly:
 0x08049c8d: 75 74                   |ut      | (data)   jne    0x08049d03
 0x08049c8f: 6d                      |m       | (data)   insd   
 0x08049c90: 70 00                   |p.      | (data)   jo     0x08049c92
-0x08049c92: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049c94: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049c96: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049c9b: ff 00                   |..      | (data)   inc    DWORD PTR ds:[eax]
-0x08049c9d: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x08049c92: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049c94: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049c96: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049c9b: ff 00                   |..      | (data)   inc    dword ds:[eax]
+0x08049c9d: 00 00                   |..      | (data)   add    byte ds:[eax], al
 0x08049c9f: 00 ff                   |..      | (data)   add    bh, bh
-0x08049ca3: ff 00                   |..      | (data)   inc    DWORD PTR ds:[eax]
-0x08049ca5: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049ca7: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049ca9: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049cab: 00 01                   |..      | (data)   add    BYTE PTR ds:[ecx], al
-0x08049cad: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049caf: 00 24 00                |.$.     | (data)   add    BYTE PTR ds:[eax + eax], ah
-0x08049cb2: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x08049ca3: ff 00                   |..      | (data)   inc    dword ds:[eax]
+0x08049ca5: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049ca7: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049ca9: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049cab: 00 01                   |..      | (data)   add    byte ds:[ecx], al
+0x08049cad: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049caf: 00 24 00                |.$.     | (data)   add    byte ds:[eax + eax], ah
+0x08049cb2: 00 00                   |..      | (data)   add    byte ds:[eax], al
 0x08049cb4: 0c 00                   |..      | (data)   or     al, 0x00
-0x08049cb6: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x08049cb6: 00 00                   |..      | (data)   add    byte ds:[eax], al
 0x08049cb8: 54                      |T       | (data)   push   esp
-0x08049cb9: 89 04 08                |...     | (data)   mov    DWORD PTR ds:[eax + ecx], eax
+0x08049cb9: 89 04 08                |...     | (data)   mov    dword ds:[eax + ecx], eax
 0x08049cbc: 0d 00 00 00 d8          |.....   | (data)   or     eax, 0xd8000000
 0x08049cc1: 98                      |.       | (data)   cwde   
 0x08049cc2: 04 08                   |..      | (data)   add    al, 0x08
 0x08049cc4: 04 00                   |..      | (data)   add    al, 0x00
-0x08049cc6: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x08049cc6: 00 00                   |..      | (data)   add    byte ds:[eax], al
 0x08049cc8: 48                      |H       | (data)   dec    eax
-0x08049cc9: 81 04 08 05 00 00 00    |....... | (data)   add    DWORD PTR ds:[eax + ecx], 0x00000005
+0x08049cc9: 81 04 08 05 00 00 00    |....... | (data)   add    dword ds:[eax + ecx], 0x00000005
 0x08049cd0: 58                      |X       | (data)   pop    eax
 0x08049cd1: ae                      |.       | (data)   scasb  
 0x08049cd2: 04 08                   |..      | (data)   add    al, 0x08
 0x08049cd4: 06                      |.       | (data)   push   es
-0x08049cd5: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049cd7: 00 a8 82 04 08 0a       |......  | (data)   add    BYTE PTR ds:[eax + 0x0a080482], ch
-0x08049cdd: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049cdf: 00 97 01 00 00 0b       |......  | (data)   add    BYTE PTR ds:[edi + 0x0b000001], dl
-0x08049ce5: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049ce7: 00 10                   |..      | (data)   add    BYTE PTR ds:[eax], dl
-0x08049ce9: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049ceb: 00 15 00 00 00 00       |......  | (data)   add    BYTE PTR ds:[0x00000000], dl
-0x08049cf1: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049cf3: 00 03                   |..      | (data)   add    BYTE PTR ds:[ebx], al
-0x08049cf5: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049cf7: 00 78 ad                |.x.     | (data)   add    BYTE PTR ds:[eax + 0xad<-83>], bh
+0x08049cd5: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049cd7: 00 a8 82 04 08 0a       |......  | (data)   add    byte ds:[eax + 0x0a080482], ch
+0x08049cdd: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049cdf: 00 97 01 00 00 0b       |......  | (data)   add    byte ds:[edi + 0x0b000001], dl
+0x08049ce5: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049ce7: 00 10                   |..      | (data)   add    byte ds:[eax], dl
+0x08049ce9: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049ceb: 00 15 00 00 00 00       |......  | (data)   add    byte ds:[0x00000000], dl
+0x08049cf1: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049cf3: 00 03                   |..      | (data)   add    byte ds:[ebx], al
+0x08049cf5: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049cf7: 00 78 ad                |.x.     | (data)   add    byte ds:[eax + 0xad<-83>], bh
 0x08049cfa: 04 08                   |..      | (data)   add    al, 0x08
-0x08049cfc: 02 00                   |..      | (data)   add    al, BYTE PTR ds:[eax]
-0x08049cfe: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x08049cfc: 02 00                   |..      | (data)   add    al, byte ds:[eax]
+0x08049cfe: 00 00                   |..      | (data)   add    byte ds:[eax], al
 0x08049d00: 50                      |P       | (data)   push   eax
-0x08049d01: 01 00                   |..      | (data)   add    DWORD PTR ds:[eax], eax
-0x08049d03: 00 14 00                |...     | (data)   add    BYTE PTR ds:[eax + eax], dl
-0x08049d06: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d08: 11 00                   |..      | (data)   adc    DWORD PTR ds:[eax], eax
-0x08049d0a: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x08049d01: 01 00                   |..      | (data)   add    dword ds:[eax], eax
+0x08049d03: 00 14 00                |...     | (data)   add    byte ds:[eax + eax], dl
+0x08049d06: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d08: 11 00                   |..      | (data)   adc    dword ds:[eax], eax
+0x08049d0a: 00 00                   |..      | (data)   add    byte ds:[eax], al
 0x08049d0c: 17                      |.       | (data)   pop    ss
-0x08049d0d: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d0f: 00 04 88                |...     | (data)   add    BYTE PTR ds:[eax + ecx*0x04], al
+0x08049d0d: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d0f: 00 04 88                |...     | (data)   add    byte ds:[eax + ecx*0x04], al
 0x08049d12: 04 08                   |..      | (data)   add    al, 0x08
-0x08049d14: 11 00                   |..      | (data)   adc    DWORD PTR ds:[eax], eax
-0x08049d16: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x08049d14: 11 00                   |..      | (data)   adc    dword ds:[eax], eax
+0x08049d16: 00 00                   |..      | (data)   add    byte ds:[eax], al
 0x08049d18: e4 87                   |..      | (data)   in     al, 0x87<-121>
 0x08049d1a: 04 08                   |..      | (data)   add    al, 0x08
-0x08049d1c: 12 00                   |..      | (data)   adc    al, BYTE PTR ds:[eax]
-0x08049d1e: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d20: 20 00                   | .      | (data)   and    BYTE PTR ds:[eax], al
-0x08049d22: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d24: 13 00                   |..      | (data)   adc    eax, DWORD PTR ds:[eax]
-0x08049d26: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d28: 08 00                   |..      | (data)   or     BYTE PTR ds:[eax], al
-0x08049d2a: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d2e: ff 6f b4                |.o.     | (data)   farJmp DWORD PTR ds:[edi + 0xb4<-76>]
-0x08049d31: 87 04 08                |...     | (data)   xchg   DWORD PTR ds:[eax + ecx], eax
-0x08049d36: ff 6f 01                |.o.     | (data)   farJmp DWORD PTR ds:[edi + 0x01]
-0x08049d39: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x08049d1c: 12 00                   |..      | (data)   adc    al, byte ds:[eax]
+0x08049d1e: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d20: 20 00                   | .      | (data)   and    byte ds:[eax], al
+0x08049d22: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d24: 13 00                   |..      | (data)   adc    eax, dword ds:[eax]
+0x08049d26: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d28: 08 00                   |..      | (data)   or     byte ds:[eax], al
+0x08049d2a: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d2e: ff 6f b4                |.o.     | (data)   farJmp dword ds:[edi + 0xb4<-76>]
+0x08049d31: 87 04 08                |...     | (data)   xchg   dword ds:[eax + ecx], eax
+0x08049d36: ff 6f 01                |.o.     | (data)   farJmp dword ds:[edi + 0x01]
+0x08049d39: 00 00                   |..      | (data)   add    byte ds:[eax], al
 0x08049d3b: 00 f0                   |..      | (data)   add    al, dh
-0x08049d3e: ff 6f 50                |.oP     | (data)   farJmp DWORD PTR ds:[edi + 0x50]
-0x08049d41: 87 04 08                |...     | (data)   xchg   DWORD PTR ds:[eax + ecx], eax
+0x08049d3e: ff 6f 50                |.oP     | (data)   farJmp dword ds:[edi + 0x50]
+0x08049d41: 87 04 08                |...     | (data)   xchg   dword ds:[eax + ecx], eax
 0x08049d44: f9                      |.       | (data)   stc    
-0x08049d46: ff 6f b8                |.o.     | (data)   farJmp DWORD PTR ds:[edi + 0xb8<-72>]
-0x08049d49: 85 04 08                |...     | (data)   test   DWORD PTR ds:[eax + ecx], eax
+0x08049d46: ff 6f b8                |.o.     | (data)   farJmp dword ds:[edi + 0xb8<-72>]
+0x08049d49: 85 04 08                |...     | (data)   test   dword ds:[eax + ecx], eax
 0x08049d4c: f7 fd                   |..      | (data)   idiv   ebp
-0x08049d4e: ff 6f 28                |.o(     | (data)   farJmp DWORD PTR ds:[edi + 0x28]
-0x08049d51: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x08049d4e: ff 6f 28                |.o(     | (data)   farJmp dword ds:[edi + 0x28]
+0x08049d51: 00 00                   |..      | (data)   add    byte ds:[eax], al
 0x08049d53: 00 f8                   |..      | (data)   add    al, bh
-0x08049d56: ff 6f e0                |.o.     | (data)   farJmp DWORD PTR ds:[edi + 0xe0<-32>]
-0x08049d59: 85 04 08                |...     | (data)   test   DWORD PTR ds:[eax + ecx], eax
+0x08049d56: ff 6f e0                |.o.     | (data)   farJmp dword ds:[edi + 0xe0<-32>]
+0x08049d59: 85 04 08                |...     | (data)   test   dword ds:[eax + ecx], eax
 0x08049d5c: f6 fd                   |..      | (data)   idiv   ch
-0x08049d5e: ff 6f e4                |.o.     | (data)   farJmp DWORD PTR ds:[edi + 0xe4<-28>]
-0x08049d61: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d63: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d65: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d67: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d69: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d6b: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d6d: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d6f: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d71: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d73: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d75: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d77: 00 ac ac 04 08 82 89    |....... | (data)   add    BYTE PTR ss:[esp + ebp*0x04 + 0x89820804], ch
+0x08049d5e: ff 6f e4                |.o.     | (data)   farJmp dword ds:[edi + 0xe4<-28>]
+0x08049d61: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d63: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d65: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d67: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d69: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d6b: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d6d: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d6f: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d71: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d73: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d75: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d77: 00 ac ac 04 08 82 89    |....... | (data)   add    byte ss:[esp + ebp*0x04 + 0x89820804], ch
 0x08049d7e: 04 08                   |..      | (data)   add    al, 0x08
-0x08049d80: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d82: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049d84: a0 92 29 00 10          |..)..   | (data)   mov    al, BYTE PTR ds:[0x10002992]
+0x08049d80: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d82: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049d84: a0 92 29 00 10          |..)..   | (data)   mov    al, byte ds:[0x10002992]
 0x08049d89: c2 32 00                |.2.     | (data)   ret    0x0032
 0x08049d8c: 50                      |P       | (data)   push   eax
 0x08049d8d: ac                      |.       | (data)   lodsb  
-0x08049d8e: 32 00                   |2.      | (data)   xor    al, BYTE PTR ds:[eax]
+0x08049d8e: 32 00                   |2.      | (data)   xor    al, byte ds:[eax]
 0x08049d90: 60                      |`       | (data)   pushad 
-0x08049d91: a1 2e 00 a0 ad          |.....   | (data)   mov    eax, DWORD PTR ds:[0xada0002e]
-0x08049d96: 32 00                   |2.      | (data)   xor    al, BYTE PTR ds:[eax]
-0x08049d98: c0 0c 28 00             |..(.    | (data)   ror    BYTE PTR ds:[eax + ebp], 0x00
+0x08049d91: a1 2e 00 a0 ad          |.....   | (data)   mov    eax, dword ds:[0xada0002e]
+0x08049d96: 32 00                   |2.      | (data)   xor    al, byte ds:[eax]
+0x08049d98: c0 0c 28 00             |..(.    | (data)   ror    byte ds:[eax + ebp], 0x00
 0x08049d9c: 70 2c                   |p,      | (data)   jo     0x08049dca
 0x08049d9e: 27                      |'       | (data)   daa    
-0x08049d9f: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x08049d9f: 00 00                   |..      | (data)   add    byte ds:[eax], al
 0x08049da1: 9d                      |.       | (data)   popfd  
 0x08049da2: 25 00 40 1f 2f          |%.@./   | (data)   and    eax, 0x2f1f4000
-0x08049da7: 00 10                   |..      | (data)   add    BYTE PTR ds:[eax], dl
-0x08049da9: a3 2e 00 a0 49          |....I   | (data)   mov    DWORD PTR ds:[0x49a0002e], eax
-0x08049dae: 29 00                   |).      | (data)   sub    DWORD PTR ds:[eax], eax
-0x08049db0: 10 b9 2b 00 60 f3       |..+.`.  | (data)   adc    BYTE PTR ds:[ecx + 0xf360002b], bh
+0x08049da7: 00 10                   |..      | (data)   add    byte ds:[eax], dl
+0x08049da9: a3 2e 00 a0 49          |....I   | (data)   mov    dword ds:[0x49a0002e], eax
+0x08049dae: 29 00                   |).      | (data)   sub    dword ds:[eax], eax
+0x08049db0: 10 b9 2b 00 60 f3       |..+.`.  | (data)   adc    byte ds:[ecx + 0xf360002b], bh
 0x08049db6: 2d 00 d0 33 28          |-..3(   | (data)   sub    eax, 0x2833d000
 0x08049dbb: 00 d0                   |..      | (data)   add    al, dl
 0x08049dbd: a9 2e 00 00 b1          |.....   | (data)   test   eax, 0xb100002e
-0x08049dc2: 2b 00                   |+.      | (data)   sub    eax, DWORD PTR ds:[eax]
-0x08049dc4: c0 ab 2b 00 80 ab 32    |..+...2 | (data)   shr    BYTE PTR ds:[ebx + 0xab80002b], 0x32
-0x08049dcb: 00 10                   |..      | (data)   add    BYTE PTR ds:[eax], dl
+0x08049dc2: 2b 00                   |+.      | (data)   sub    eax, dword ds:[eax]
+0x08049dc4: c0 ab 2b 00 80 ab 32    |..+...2 | (data)   shr    byte ds:[ebx + 0xab80002b], 0x32
+0x08049dcb: 00 10                   |..      | (data)   add    byte ds:[eax], dl
 0x08049dcd: 4d                      |M       | (data)   dec    ebp
 0x08049dce: 24 00                   |$.      | (data)   and    al, 0x00
-0x08049dd0: c0 ac 32 00 50 a9 32 00 |..2.P.2.| (data)   shr    BYTE PTR ds:[edx + esi + 0x32a95000], 0x00
-0x08049dd8: d0 b0 29 00 b0 2b       |..)..+  | (data)   shl    BYTE PTR ds:[eax + 0x2bb00029], 0x01
-0x08049dde: 28 00                   |(.      | (data)   sub    BYTE PTR ds:[eax], al
+0x08049dd0: c0 ac 32 00 50 a9 32 00 |..2.P.2.| (data)   shr    byte ds:[edx + esi + 0x32a95000], 0x00
+0x08049dd8: d0 b0 29 00 b0 2b       |..)..+  | (data)   shl    byte ds:[eax + 0x2bb00029], 0x01
+0x08049dde: 28 00                   |(.      | (data)   sub    byte ds:[eax], al
 0x08049de0: 50                      |P       | (data)   push   eax
 0x08049de1: 9d                      |.       | (data)   popfd  
-0x08049de2: 29 00                   |).      | (data)   sub    DWORD PTR ds:[eax], eax
-0x08049de4: c0 96 29 00 c0 6d 2b    |..)..m+ | (data)   rcl    BYTE PTR ds:[esi + 0x6dc00029], 0x2b
+0x08049de2: 29 00                   |).      | (data)   sub    dword ds:[eax], eax
+0x08049de4: c0 96 29 00 c0 6d 2b    |..)..m+ | (data)   rcl    byte ds:[esi + 0x6dc00029], 0x2b
 0x08049deb: 00 f0                   |..      | (data)   add    al, dh
-0x08049ded: c5 2a                   |.*      | (data)   lds    ebp, DWORD PTR ds:[edx]
-0x08049def: 00 b0 6c 2b 00 e0       |..l+..  | (data)   add    BYTE PTR ds:[eax + 0xe0002b6c], dh
+0x08049ded: c5 2a                   |.*      | (data)   lds    ebp, dword ds:[edx]
+0x08049def: 00 b0 6c 2b 00 e0       |..l+..  | (data)   add    byte ds:[eax + 0xe0002b6c], dh
 0x08049df5: 2c 27                   |,'      | (data)   sub    al, 0x27
-0x08049df7: 00 10                   |..      | (data)   add    BYTE PTR ds:[eax], dl
-0x08049df9: a0 2e 00 20 a5          |... .   | (data)   mov    al, BYTE PTR ds:[0xa520002e]
+0x08049df7: 00 10                   |..      | (data)   add    byte ds:[eax], dl
+0x08049df9: a0 2e 00 20 a5          |... .   | (data)   mov    al, byte ds:[0xa520002e]
 0x08049dfe: 25 00 b0 28 29          |%..()   | (data)   and    eax, 0x2928b000
-0x08049e03: 00 30                   |.0      | (data)   add    BYTE PTR ds:[eax], dh
-0x08049e05: 12 2f                   |./      | (data)   adc    ch, BYTE PTR ds:[edi]
-0x08049e07: 00 b0 ab 29 00 90       |...)..  | (data)   add    BYTE PTR ds:[eax + 0x900029ab], dh
+0x08049e03: 00 30                   |.0      | (data)   add    byte ds:[eax], dh
+0x08049e05: 12 2f                   |./      | (data)   adc    ch, byte ds:[edi]
+0x08049e07: 00 b0 ab 29 00 90       |...)..  | (data)   add    byte ds:[eax + 0x900029ab], dh
 0x08049e0d: 9c                      |.       | (data)   pushfd 
-0x08049e0e: 29 00                   |).      | (data)   sub    DWORD PTR ds:[eax], eax
-0x08049e10: a0 36 28 00 a0          |.6(..   | (data)   mov    al, BYTE PTR ds:[0xa0002836]
+0x08049e0e: 29 00                   |).      | (data)   sub    dword ds:[eax], eax
+0x08049e10: a0 36 28 00 a0          |.6(..   | (data)   mov    al, byte ds:[0xa0002836]
 0x08049e15: 7c 25                   ||%      | (data)   jl     0x08049e3c
 0x08049e17: 00 e0                   |..      | (data)   add    al, ah
 0x08049e19: 40                      |@       | (data)   inc    eax
-0x08049e1a: 28 00                   |(.      | (data)   sub    BYTE PTR ds:[eax], al
+0x08049e1a: 28 00                   |(.      | (data)   sub    byte ds:[eax], al
 0x08049e1c: 60                      |`       | (data)   pushad 
-0x08049e1d: a2 2f 00 10 6e          |./..n   | (data)   mov    BYTE PTR ds:[0x6e10002f], al
-0x08049e22: 2b 00                   |+.      | (data)   sub    eax, DWORD PTR ds:[eax]
+0x08049e1d: a2 2f 00 10 6e          |./..n   | (data)   mov    byte ds:[0x6e10002f], al
+0x08049e22: 2b 00                   |+.      | (data)   sub    eax, dword ds:[eax]
 0x08049e24: 70 c0                   |p.      | (data)   jo     0x08049de6
-0x08049e26: 2b 00                   |+.      | (data)   sub    eax, DWORD PTR ds:[eax]
-0x08049e28: c0 1e 2f                |../     | (data)   rcr    BYTE PTR ds:[esi], 0x2f
-0x08049e2b: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049e2d: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049e2f: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049e31: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049e33: 00 a4 ac 04 08 fc 98    |....... | (data)   add    BYTE PTR ss:[esp + ebp*0x04 + 0x98fc0804], ah
+0x08049e26: 2b 00                   |+.      | (data)   sub    eax, dword ds:[eax]
+0x08049e28: c0 1e 2f                |../     | (data)   rcr    byte ds:[esi], 0x2f
+0x08049e2b: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049e2d: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049e2f: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049e31: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049e33: 00 a4 ac 04 08 fc 98    |....... | (data)   add    byte ss:[esp + ebp*0x04 + 0x98fc0804], ah
 0x08049e3a: 04 08                   |..      | (data)   add    al, 0x08
 0x08049e3c: a8 9b                   |..      | (data)   test   al, 0x9b<-101>
 0x08049e3e: 04 08                   |..      | (data)   add    al, 0x08
 0x08049e40: 14 9c                   |..      | (data)   adc    al, 0x9c<-100>
 0x08049e42: 04 08                   |..      | (data)   add    al, 0x08
 0x08049e44: 60                      |`       | (data)   pushad 
-0x08049e45: 84 35 00 00 00 00       |.5....  | (data)   test   BYTE PTR ds:[0x00000000], dh
-0x08049e4b: 00 01                   |..      | (data)   add    BYTE PTR ds:[ecx], al
-0x08049e4d: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049e4f: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049e51: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049e53: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049e55: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
-0x08049e57: 00 00                   |..      | (data)   add    BYTE PTR ds:[eax], al
+0x08049e45: 84 35 00 00 00 00       |.5....  | (data)   test   byte ds:[0x00000000], dh
+0x08049e4b: 00 01                   |..      | (data)   add    byte ds:[ecx], al
+0x08049e4d: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049e4f: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049e51: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049e53: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049e55: 00 00                   |..      | (data)   add    byte ds:[eax], al
+0x08049e57: 00 00                   |..      | (data)   add    byte ds:[eax], al
 0x08049e59: 5f                      |_       | (data)   pop    edi
 0x08049e5a: 4a                      |J       | (data)   dec    edx
 0x08049e5b: 76 5f                   |v_      | (data)   jbe    0x08049ebc
 0x08049e5d: 52                      |R       | (data)   push   edx
 0x08049e5e: 65 67 69 73 74 65 72 43 |egisterC|
-0x08049e66: 6c                      |l       | (data)   imul   esi, DWORD PTR gs:[bp + di + 0x0074], 0x6c437265
+0x08049e66: 6c                      |l       | (data)   imul   esi, dword gs:[bp + di + 0x0074], 0x6c437265
 0x08049e67: 61                      |a       | (data)   popad  
 0x08049e68: 73 73                   |ss      | (data)   jae    0x08049edd
 0x08049e6a: 65 73 00                |es.     | (data)   jae    0x08049e6d
@@ -3214,27 +3227,27 @@ using this memory map for disassembly:
 0x08049e77: 72 74                   |rt      | (data)   jb     0x08049eed
 0x08049e79: 5f                      |_       | (data)   pop    edi
 0x08049e7a: 5f                      |_       | (data)   pop    edi
-0x08049e7b: 00 6c 69 62             |.lib    | (data)   add    BYTE PTR ds:[ecx + ebp*0x02 + 0x62], ch
-0x08049e7f: 63 2e                   |c.      | (data)   arpl   WORD PTR ds:[esi], bp
+0x08049e7b: 00 6c 69 62             |.lib    | (data)   add    byte ds:[ecx + ebp*0x02 + 0x62], ch
+0x08049e7f: 63 2e                   |c.      | (data)   arpl   word ds:[esi], bp
 0x08049e81: 73 6f                   |so      | (data)   jae    0x08049ef2
-0x08049e83: 2e 36 00 69 6f          |.6.io   | (data)   add    BYTE PTR ss:[ecx + 0x6f], ch
-0x08049e88: 63 74 6c 00             |ctl.    | (data)   arpl   WORD PTR ss:[esp + ebp*0x02 + 0x00], si
+0x08049e83: 2e 36 00 69 6f          |.6.io   | (data)   add    byte ss:[ecx + 0x6f], ch
+0x08049e88: 63 74 6c 00             |ctl.    | (data)   arpl   word ss:[esp + ebp*0x02 + 0x00], si
 0x08049e8c: 67 65 74 75             |getu    | (data)   je     0x08049f05
 0x08049e90: 74 69                   |ti      | (data)   je     0x08049efb
-0x08049e92: 64 00 67 65             |d.ge    | (data)   add    BYTE PTR fs:[edi + 0x65], ah
+0x08049e92: 64 00 67 65             |d.ge    | (data)   add    byte fs:[edi + 0x65], ah
 0x08049e96: 74 65                   |te      | (data)   je     0x08049efd
 0x08049e98: 75 69                   |ui      | (data)   jne    0x08049f03
-0x08049e9a: 64 00 73 6e             |d.sn    | (data)   add    BYTE PTR fs:[ebx + 0x6e], dh
+0x08049e9a: 64 00 73 6e             |d.sn    | (data)   add    byte fs:[ebx + 0x6e], dh
 0x08049e9e: 70 72                   |pr      | (data)   jo     0x08049f12
-0x08049ea0: 69 6e 74 66 00 67 65    |intf.ge | (data)   imul   ebp, DWORD PTR ds:[esi + 0x74], 0x65670066
+0x08049ea0: 69 6e 74 66 00 67 65    |intf.ge | (data)   imul   ebp, dword ds:[esi + 0x74], 0x65670066
 0x08049ea7: 74 65                   |te      | (data)   je     0x08049f0e
 0x08049ea9: 6e                      |n       | (data)   outsb  
 0x08049eaa: 76 00                   |v.      | (data)   jbe    0x08049eac
 0x08049eac: 66 67 65 74 73          |fgets   | (data)   je     0x08049f24
-0x08049eb1: 00 6d 65                |.me     | (data)   add    BYTE PTR ss:[ebp + 0x65], ch
+0x08049eb1: 00 6d 65                |.me     | (data)   add    byte ss:[ebp + 0x65], ch
 0x08049eb4: 6d                      |m       | (data)   insd   
-0x08049eb5: 63 70 79                |cpy     | (data)   arpl   WORD PTR ds:[eax + 0x79], si
-0x08049eb8: 00 70 65                |.pe     | (data)   add    BYTE PTR ds:[eax + 0x65], dh
+0x08049eb5: 63 70 79                |cpy     | (data)   arpl   word ds:[eax + 0x79], si
+0x08049eb8: 00 70 65                |.pe     | (data)   add    byte ds:[eax + 0x65], dh
 0x08049ebb: 72 72                   |rr      | (data)   jb     0x08049f2f
 0x08049ebd: 6f                      |o       | (data)   outsd  
 0x08049ebe: 72 00                   |r.      | (data)   jb     0x08049ec0
@@ -3243,95 +3256,95 @@ using this memory map for disassembly:
 0x08049ec2: 6c                      |l       | (data)   insb   
 0x08049ec3: 6c                      |l       | (data)   insb   
 0x08049ec4: 6f                      |o       | (data)   outsd  
-0x08049ec5: 63 00                   |c.      | (data)   arpl   WORD PTR ds:[eax], ax
+0x08049ec5: 63 00                   |c.      | (data)   arpl   word ds:[eax], ax
 0x08049ec7: 73 6c                   |sl      | (data)   jae    0x08049f35
 0x08049ec9: 65 65 70 00             |eep.    | (data)   jo     0x08049ecd
 0x08049ecd: 6f                      |o       | (data)   outsd  
 0x08049ece: 70 74                   |pt      | (data)   jo     0x08049f44
 0x08049ed0: 61                      |a       | (data)   popad  
 0x08049ed1: 72 67                   |rg      | (data)   jb     0x08049f3a
-0x08049ed3: 00 67 65                |.ge     | (data)   add    BYTE PTR ds:[edi + 0x65], ah
+0x08049ed3: 00 67 65                |.ge     | (data)   add    byte ds:[edi + 0x65], ah
 0x08049ed6: 74 75                   |tu      | (data)   je     0x08049f4d
 0x08049ed8: 74 65                   |te      | (data)   je     0x08049f3f
 0x08049eda: 6e                      |n       | (data)   outsb  
 0x08049edb: 74 00                   |t.      | (data)   je     0x08049edd
 0x08049edd: 73 6f                   |so      | (data)   jae    0x08049f4e
-0x08049edf: 63 6b 65                |cke     | (data)   arpl   WORD PTR ds:[ebx + 0x65], bp
+0x08049edf: 63 6b 65                |cke     | (data)   arpl   word ds:[ebx + 0x65], bp
 0x08049ee2: 74 00                   |t.      | (data)   je     0x08049ee4
 0x08049ee4: 72 65                   |re      | (data)   jb     0x08049f4b
 0x08049ee6: 61                      |a       | (data)   popad  
 0x08049ee7: 64 64 69 72 00 75 6e 61 |ddir.una|
-0x08049eef: 6d                      |m       | (data)   imul   esi, DWORD PTR fs:[edx + 0x00], 0x6d616e75
-0x08049ef0: 65 00 73 74             |e.st    | (data)   add    BYTE PTR gs:[ebx + 0x74], dh
+0x08049eef: 6d                      |m       | (data)   imul   esi, dword fs:[edx + 0x00], 0x6d616e75
+0x08049ef0: 65 00 73 74             |e.st    | (data)   add    byte gs:[ebx + 0x74], dh
 0x08049ef4: 72 72                   |rr      | (data)   jb     0x08049f68
-0x08049ef6: 63 68 72                |chr     | (data)   arpl   WORD PTR ds:[eax + 0x72], bp
-0x08049ef9: 00 66 70                |.fp     | (data)   add    BYTE PTR ds:[esi + 0x70], ah
+0x08049ef6: 63 68 72                |chr     | (data)   arpl   word ds:[eax + 0x72], bp
+0x08049ef9: 00 66 70                |.fp     | (data)   add    byte ds:[esi + 0x70], ah
 0x08049efc: 72 69                   |ri      | (data)   jb     0x08049f67
 0x08049efe: 6e                      |n       | (data)   outsb  
 0x08049eff: 74 66                   |tf      | (data)   je     0x08049f67
-0x08049f01: 00 6b 69                |.ki     | (data)   add    BYTE PTR ds:[ebx + 0x69], ch
+0x08049f01: 00 6b 69                |.ki     | (data)   add    byte ds:[ebx + 0x69], ch
 0x08049f04: 6c                      |l       | (data)   insb   
 0x08049f05: 6c                      |l       | (data)   insb   
-0x08049f06: 00 72 65                |.re     | (data)   add    BYTE PTR ds:[edx + 0x65], dh
-0x08049f09: 62 6f 6f                |boo     | (data)   bound  ebp, DWORD PTR ds:[edi + 0x6f]
+0x08049f06: 00 72 65                |.re     | (data)   add    byte ds:[edx + 0x65], dh
+0x08049f09: 62 6f 6f                |boo     | (data)   bound  ebp, dword ds:[edi + 0x6f]
 0x08049f0c: 74 00                   |t.      | (data)   je     0x08049f0e
-0x08049f0e: 63 68 64                |chd     | (data)   arpl   WORD PTR ds:[eax + 0x64], bp
-0x08049f11: 69 72 00 6f 70 74 69    |ir.opti | (data)   imul   esi, DWORD PTR ds:[edx + 0x00], 0x6974706f
+0x08049f0e: 63 68 64                |chd     | (data)   arpl   word ds:[eax + 0x64], bp
+0x08049f11: 69 72 00 6f 70 74 69    |ir.opti | (data)   imul   esi, dword ds:[edx + 0x00], 0x6974706f
 0x08049f18: 6e                      |n       | (data)   outsb  
-0x08049f19: 64 00 65 6e             |d.en    | (data)   add    BYTE PTR fs:[ebp + 0x6e], ah
+0x08049f19: 64 00 65 6e             |d.en    | (data)   add    byte fs:[ebp + 0x6e], ah
 0x08049f1d: 64 75 74                |dut     | (data)   jne    0x08049f94
 0x08049f20: 65 6e                   |en      | (data)   outsb  
 0x08049f22: 74 00                   |t.      | (data)   je     0x08049f24
 0x08049f24: 73 74                   |st      | (data)   jae    0x08049f9a
 0x08049f26: 72 6e                   |rn      | (data)   jb     0x08049f96
-0x08049f28: 63 70 79                |cpy     | (data)   arpl   WORD PTR ds:[eax + 0x79], si
-0x08049f2b: 00 73 79                |.sy     | (data)   add    BYTE PTR ds:[ebx + 0x79], dh
+0x08049f28: 63 70 79                |cpy     | (data)   arpl   word ds:[eax + 0x79], si
+0x08049f2b: 00 73 79                |.sy     | (data)   add    byte ds:[ebx + 0x79], dh
 0x08049f2e: 6e                      |n       | (data)   outsb  
-0x08049f2f: 63 00                   |c.      | (data)   arpl   WORD PTR ds:[eax], ax
+0x08049f2f: 63 00                   |c.      | (data)   arpl   word ds:[eax], ax
 0x08049f31: 5f                      |_       | (data)   pop    edi
 0x08049f32: 5f                      |_       | (data)   pop    edi
 0x08049f33: 73 74                   |st      | (data)   jae    0x08049fa9
 0x08049f35: 72 64                   |rd      | (data)   jb     0x08049f9b
 0x08049f37: 75 70                   |up      | (data)   jne    0x08049fa9
-0x08049f39: 00 65 78                |.ex     | (data)   add    BYTE PTR ss:[ebp + 0x78], ah
-0x08049f3c: 65 63 76 00             |ecv.    | (data)   arpl   WORD PTR gs:[esi + 0x00], si
+0x08049f39: 00 65 78                |.ex     | (data)   add    byte ss:[ebp + 0x78], ah
+0x08049f3c: 65 63 76 00             |ecv.    | (data)   arpl   word gs:[esi + 0x00], si
 0x08049f40: 67 65 74 74             |gett    | (data)   je     0x08049fb8
-0x08049f44: 69 6d 65 6f 66 64 61    |imeofda | (data)   imul   ebp, DWORD PTR ss:[ebp + 0x65], 0x6164666f
+0x08049f44: 69 6d 65 6f 66 64 61    |imeofda | (data)   imul   ebp, dword ss:[ebp + 0x65], 0x6164666f
 0x08049f4b: 79 00                   |y.      | (data)   jns    0x08049f4d
 0x08049f4d: 67 65 74 6f             |geto    | (data)   je     0x08049fc0
 0x08049f51: 70 74                   |pt      | (data)   jo     0x08049fc7
-0x08049f53: 00 6d 65                |.me     | (data)   add    BYTE PTR ss:[ebp + 0x65], ch
+0x08049f53: 00 6d 65                |.me     | (data)   add    byte ss:[ebp + 0x65], ch
 0x08049f56: 6d                      |m       | (data)   insd   
 0x08049f57: 73 65                   |se      | (data)   jae    0x08049fbe
 0x08049f59: 74 00                   |t.      | (data)   je     0x08049f5b
 0x08049f5b: 6f                      |o       | (data)   outsd  
 0x08049f5c: 70 65                   |pe      | (data)   jo     0x08049fc3
 0x08049f5e: 6e                      |n       | (data)   outsb  
-0x08049f5f: 64 69 72 00 66 63 6c 6f |dir.fclo| (data)   imul   esi, DWORD PTR fs:[edx + 0x00], 0x6f6c6366
+0x08049f5f: 64 69 72 00 66 63 6c 6f |dir.fclo| (data)   imul   esi, dword fs:[edx + 0x00], 0x6f6c6366
 0x08049f67: 73 65                   |se      | (data)   jae    0x08049fce
-0x08049f69: 00 73 74                |.st     | (data)   add    BYTE PTR ds:[ebx + 0x74], dh
+0x08049f69: 00 73 74                |.st     | (data)   add    byte ds:[ebx + 0x74], dh
 0x08049f6c: 64 65 72 72             |derr    | (data)   jb     0x08049fe2
-0x08049f70: 00 70 75                |.pu     | (data)   add    BYTE PTR ds:[eax + 0x75], dh
+0x08049f70: 00 70 75                |.pu     | (data)   add    byte ds:[eax + 0x75], dh
 0x08049f73: 74 75                   |tu      | (data)   je     0x08049fea
 0x08049f75: 74 6c                   |tl      | (data)   je     0x08049fe3
-0x08049f77: 69 6e 65 00 66 77 72    |ine.fwr | (data)   imul   ebp, DWORD PTR ds:[esi + 0x65], 0x72776600
-0x08049f7e: 69 74 65 00 61 63 63 65 |ite.acce| (data)   imul   esi, DWORD PTR ss:[ebp + 0x00], 0x65636361
+0x08049f77: 69 6e 65 00 66 77 72    |ine.fwr | (data)   imul   ebp, dword ds:[esi + 0x65], 0x72776600
+0x08049f7e: 69 74 65 00 61 63 63 65 |ite.acce| (data)   imul   esi, dword ss:[ebp + 0x00], 0x65636361
 0x08049f86: 73 73                   |ss      | (data)   jae    0x08049ffb
-0x08049f88: 00 65 78                |.ex     | (data)   add    BYTE PTR ss:[ebp + 0x78], ah
-0x08049f8b: 69 74 00 66 6f 70 65 6e |it.fopen| (data)   imul   esi, DWORD PTR ds:[eax + eax + 0x66], 0x6e65706f
-0x08049f93: 00 5f 49                |._I     | (data)   add    BYTE PTR ds:[edi + 0x49], bl
+0x08049f88: 00 65 78                |.ex     | (data)   add    byte ss:[ebp + 0x78], ah
+0x08049f8b: 69 74 00 66 6f 70 65 6e |it.fopen| (data)   imul   esi, dword ds:[eax + eax + 0x66], 0x6e65706f
+0x08049f93: 00 5f 49                |._I     | (data)   add    byte ds:[edi + 0x49], bl
 0x08049f96: 4f                      |O       | (data)   dec    edi
 0x08049f97: 5f                      |_       | (data)   pop    edi
 0x08049f98: 73 74                   |st      | (data)   jae    0x0804a00e
-0x08049f9a: 64 69 6e 5f 75 73 65 64 |din_used| (data)   imul   ebp, DWORD PTR fs:[esi + 0x5f], 0x64657375
-0x08049fa2: 00 5f 5f                |.__     | (data)   add    BYTE PTR ds:[edi + 0x5f], bl
+0x08049f9a: 64 69 6e 5f 75 73 65 64 |din_used| (data)   imul   ebp, dword fs:[esi + 0x5f], 0x64657375
+0x08049fa2: 00 5f 5f                |.__     | (data)   add    byte ds:[edi + 0x5f], bl
 0x08049fa5: 6c                      |l       | (data)   insb   
-0x08049fa6: 69 62 63 5f 73 74 61    |ibc_sta | (data)   imul   esp, DWORD PTR ds:[edx + 0x63], 0x6174735f
+0x08049fa6: 69 62 63 5f 73 74 61    |ibc_sta | (data)   imul   esp, dword ds:[edx + 0x63], 0x6174735f
 0x08049fad: 72 74                   |rt      | (data)   jb     0x0804a023
 0x08049faf: 5f                      |_       | (data)   pop    edi
 0x08049fb0: 6d                      |m       | (data)   insd   
 0x08049fb1: 61                      |a       | (data)   popad  
-0x08049fb2: 69 6e 00 75 70 64 77    |in.updw | (data)   imul   ebp, DWORD PTR ds:[esi + 0x00], 0x77647075
+0x08049fb2: 69 6e 00 75 70 64 77    |in.updw | (data)   imul   ebp, dword ds:[esi + 0x00], 0x77647075
 0x08049fb9: 74 6d                   |tm      | (data)   je     0x0804a028
 0x08049fbb: 70 00                   |p.      | (data)   jo     0x08049fbd
 0x08049fbd: 73 74                   |st      | (data)   jae    0x0804a033
@@ -3341,28 +3354,28 @@ using this memory map for disassembly:
 0x08049fc8: 74 65                   |te      | (data)   je     0x0804a02f
 0x08049fca: 6e                      |n       | (data)   outsb  
 0x08049fcb: 74 00                   |t.      | (data)   je     0x08049fcd
-0x08049fcd: 63 6c 6f 73             |clos    | (data)   arpl   WORD PTR ds:[edi + ebp*0x02 + 0x73], bp
+0x08049fcd: 63 6c 6f 73             |clos    | (data)   arpl   word ds:[edi + ebp*0x02 + 0x73], bp
 0x08049fd1: 65 64 69 72 00 66 72 65 |edir.fre|
-0x08049fd9: 65                      |e       | (data)   imul   esi, DWORD PTR fs:[edx + 0x00], 0x65657266
-0x08049fda: 00 47 4c                |.GL     | (data)   add    BYTE PTR ds:[edi + 0x4c], al
+0x08049fd9: 65                      |e       | (data)   imul   esi, dword fs:[edx + 0x00], 0x65657266
+0x08049fda: 00 47 4c                |.GL     | (data)   add    byte ds:[edi + 0x4c], al
 0x08049fdd: 49                      |I       | (data)   dec    ecx
 0x08049fde: 42                      |B       | (data)   inc    edx
 0x08049fdf: 43                      |C       | (data)   inc    ebx
 0x08049fe0: 5f                      |_       | (data)   pop    edi
-0x08049fe1: 32 2e                   |2.      | (data)   xor    ch, BYTE PTR ds:[esi]
-0x08049fe3: 31 00                   |1.      | (data)   xor    DWORD PTR ds:[eax], eax
+0x08049fe1: 32 2e                   |2.      | (data)   xor    ch, byte ds:[esi]
+0x08049fe3: 31 00                   |1.      | (data)   xor    dword ds:[eax], eax
 0x08049fe5: 47                      |G       | (data)   inc    edi
 0x08049fe6: 4c                      |L       | (data)   dec    esp
 0x08049fe7: 49                      |I       | (data)   dec    ecx
 0x08049fe8: 42                      |B       | (data)   inc    edx
 0x08049fe9: 43                      |C       | (data)   inc    ebx
 0x08049fea: 5f                      |_       | (data)   pop    edi
-0x08049feb: 32 2e                   |2.      | (data)   xor    ch, BYTE PTR ds:[esi]
-0x08049fed: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[eax], al
+0x08049feb: 32 2e                   |2.      | (data)   xor    ch, byte ds:[esi]
+0x08049fed: 30 00                   |0.      | (data)   xor    byte ds:[eax], al
 0x08049fef: 2f                      |/       | (data)   das    
 0x08049ff0: 6c                      |l       | (data)   insb   
-0x08049ff1: 69 62 2f 6c 64 2d 6c    |ib/ld-l | (data)   imul   esp, DWORD PTR ds:[edx + 0x2f], 0x6c2d646c
-0x08049ff8: 69 6e 75 78 2e 73 6f    |inux.so | (data)   imul   ebp, DWORD PTR ds:[esi + 0x75], 0x6f732e78
+0x08049ff1: 69 62 2f 6c 64 2d 6c    |ib/ld-l | (data)   imul   esp, dword ds:[edx + 0x2f], 0x6c2d646c
+0x08049ff8: 69 6e 75 78 2e 73 6f    |inux.so | (data)   imul   ebp, dword ds:[esi + 0x75], 0x6f732e78
 
 
 

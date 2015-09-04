@@ -8,7 +8,7 @@
  *************************************************************/
 
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "StateRepresentations.h"
 #include "Analyzer.h"
 #include "CommandLineOptions.h"
@@ -22,45 +22,49 @@ class AssertionExtractor {
   AssertionExtractor(Analyzer* analyzer);
   void computeLabelVectorOfEStates();
   void annotateAst();
-  void setLabeler(Labeler* x);
-  void setVariableIdMapping(VariableIdMapping* x);
+  void setLabeler(SPRAY::Labeler* x);
+  void setVariableIdMapping(SPRAY::VariableIdMapping* x);
   void setPStateSet(PStateSet* x);
   void setEStateSet(EStateSet* x);
 
  private:
-  Labeler* labeler;
-  VariableIdMapping* variableIdMapping;
+  SPRAY::Labeler* labeler;
+  SPRAY::VariableIdMapping* variableIdMapping;
   CodeThorn::PStateSet* pstateSet;
   CodeThorn::EStateSet* estateSet;
-  vector<string> assertions;
+  vector<std::string> assertions;
 };
 
 class Visualizer {
  public:
   Visualizer();
   Visualizer(CodeThorn::Analyzer* analyzer);
-  Visualizer(IOLabeler* l, VariableIdMapping* vim, CodeThorn::Flow* f, CodeThorn::PStateSet* ss, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
+  Visualizer(SPRAY::IOLabeler* l, SPRAY::VariableIdMapping* vim, SPRAY::Flow* f, CodeThorn::PStateSet* ss, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
   void setOptionTransitionGraphDotHtmlNode(bool);
-  void setVariableIdMapping(VariableIdMapping* x);
-  void setLabeler(IOLabeler* x);
-  void setFlow(CodeThorn::Flow* x);
+  void setVariableIdMapping(SPRAY::VariableIdMapping* x);
+  void setLabeler(SPRAY::IOLabeler* x);
+  void setFlow(SPRAY::Flow* x);
   void setPStateSet(CodeThorn::PStateSet* x);
   void setEStateSet(CodeThorn::EStateSet* x);
   void setTransitionGraph(CodeThorn::TransitionGraph* x);
   void createMappings();
-  string pstateToString(const CodeThorn::PState* pstate);
-  string pstateToDotString(const CodeThorn::PState* pstate);
-  string estateToString(const CodeThorn::EState* estate);
-  string estateToDotString(const CodeThorn::EState* estate);
-  string transitionGraphDotHtmlNode(Label lab);
-  string transitionGraphToDot();
-  string transitionGraphWithIOToDot();
-  string foldedTransitionGraphToDot();
-  string estateIdStringWithTemporaries(const CodeThorn::EState* estate);
+  std::string pstateToString(const CodeThorn::PState* pstate);
+  std::string pstateToDotString(const CodeThorn::PState* pstate);
+  std::string estateToString(const CodeThorn::EState* estate);
+  std::string estateToDotString(const CodeThorn::EState* estate);
+  std::string transitionGraphDotHtmlNode(SPRAY::Label lab);
+  std::string transitionGraphToDot();
+  std::string transitionGraphWithIOToDot();
+  // used for displaying abstract ("topified") transition graphs.
+  std::string transitionGraphWithIOToDot(CodeThorn::EStatePtrSet displayedEStates, 
+                                    bool uniteOutputFromAbstractStates, bool includeErrorStates, bool allignAbstractStates);
+  std::string abstractTransitionGraphToDot(); // groups abstract states into a cluster (currently specific to Rers).
+  std::string foldedTransitionGraphToDot();
+  std::string estateIdStringWithTemporaries(const CodeThorn::EState* estate);
  private:
-  IOLabeler* labeler;
-  VariableIdMapping* variableIdMapping;
-  CodeThorn::Flow* flow;
+  SPRAY::IOLabeler* labeler;
+  SPRAY::VariableIdMapping* variableIdMapping;
+  SPRAY::Flow* flow;
   CodeThorn::PStateSet* pstateSet;
   CodeThorn::EStateSet* estateSet;
   CodeThorn::TransitionGraph* transitionGraph;

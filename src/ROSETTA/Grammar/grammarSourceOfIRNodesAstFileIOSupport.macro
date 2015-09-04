@@ -286,7 +286,7 @@ $CLASSNAME_extendMemoryPoolForFileIO( )
     unsigned long newPoolSize = AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME) +
                                 AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME);
 #if 0
-    printf ("blockIndex = %d newPoolSize = %zu AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME) = %zu AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME) = %zu $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE = %d \n",
+    printf ("blockIndex = %d newPoolSize = %" PRIuPTR " AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME) = %" PRIuPTR " AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME) = %" PRIuPTR " $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE = %d \n",
          blockIndex,newPoolSize,AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME),AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME),$CLASSNAME_CLASS_ALLOCATION_POOL_SIZE);
 #endif
 

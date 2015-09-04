@@ -420,8 +420,15 @@ $(MOVE_MERGE_DECLS_DIFF_FILES):$(PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS)
 	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/withmerge/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
 
 
+# DQ (6/28/2015): Added additional tst using new option: -rose:merge_decl_assign
 $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
-		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_%=%)
+	echo "Test without new option: -rose:merge_decl_assign"
+	./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_%=%)
+	echo "Test using new option: -rose:merge_decl_assign"
+	./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -rose:merge_decl_assign -c -rose:debug $(srcdir)/$(@:rose_%=%)
+
+# Without new option fails for test2015_04.C?
+# With new option fails for test2014_12.C
 
 test_move_decls: $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 
@@ -746,16 +753,16 @@ endif
 
 # rules for declaration moving tests
 $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
-		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug $(srcdir)/$(@:rose_%=%)
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking $(srcdir)/$(@:rose_%=%)
 
 $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
-		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:keep_going $(srcdir)/$(@:rose_%=%)
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking -rose:keep_going $(srcdir)/$(@:rose_%=%)
 
 $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2_%=%) moveDeclarationToInnermostScope 
-		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign $(srcdir)/$(@:rose_v2_%=%) -rose:output $@
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking $(srcdir)/$(@:rose_v2_%=%) -rose:output $@
 
 $(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2%=%) moveDeclarationToInnermostScope 
-		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:keep_going $(srcdir)/$(@:rose_v2%=%) -rose:output $@
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking -rose:keep_going $(srcdir)/$(@:rose_v2%=%) -rose:output $@
 
 # interchange the first loop within the input file, interchange depth is 4, lexicographical order is 1.
 rose_inputloopInterchange.C: inputloopInterchange.C loopInterchange
@@ -863,8 +870,8 @@ unit-tests:
 check-local: $(generatedCodeExamples) move_diff_check 
 
 clean-local:
-	rm -f $(generatedCodeExamples) *.dot $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
-	rm -f $(addsuffix .passed, $(generatedCodeExamples))
+	rm -f $(generatedCodeExamples) *.dot $(PASSING_MOVE_DECLS_TESTCODES_RESULTS) $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS)
+	rm -f $(addsuffix .passed, $(generatedCodeExamples)) $(MOVE_DECLS_DIFF_FILES) $(MOVE_MERGE_DECLS_DIFF_FILES)
 	rm -f $(addsuffix .failed, $(generatedCodeExamples))
 	rm -f $(addsuffix .passed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
 	rm -f $(addsuffix .failed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))

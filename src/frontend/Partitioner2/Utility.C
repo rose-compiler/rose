@@ -69,8 +69,8 @@ sortByExpression(const BasicBlock::Successor &a, const BasicBlock::Successor &b)
 }
 
 bool
-sortVerticesByAddress(const ControlFlowGraph::ConstVertexNodeIterator &a,
-                      const ControlFlowGraph::ConstVertexNodeIterator &b) {
+sortVerticesByAddress(const ControlFlowGraph::ConstVertexIterator &a,
+                      const ControlFlowGraph::ConstVertexIterator &b) {
     const CfgVertex &av = a->value();
     const CfgVertex &bv = b->value();
     if (av.type() != bv.type() || av.type() != V_BASIC_BLOCK)
@@ -79,14 +79,14 @@ sortVerticesByAddress(const ControlFlowGraph::ConstVertexNodeIterator &a,
 }
 
 bool
-sortEdgesBySrc(const ControlFlowGraph::ConstEdgeNodeIterator &a,
-               const ControlFlowGraph::ConstEdgeNodeIterator &b) {
+sortEdgesBySrc(const ControlFlowGraph::ConstEdgeIterator &a,
+               const ControlFlowGraph::ConstEdgeIterator &b) {
     return sortVerticesByAddress(a->source(), b->source());
 }
 
 bool
-sortEdgesByDst(const ControlFlowGraph::ConstEdgeNodeIterator &a,
-               const ControlFlowGraph::ConstEdgeNodeIterator &b) {
+sortEdgesByDst(const ControlFlowGraph::ConstEdgeIterator &a,
+               const ControlFlowGraph::ConstEdgeIterator &b) {
     return sortVerticesByAddress(a->target(), b->target());
 }
 
@@ -123,8 +123,8 @@ serialNumber() {
 std::string
 AddressIntervalParser::docString() {
     return ("An address interval can be specified as a single address, or a first and inclusive last address separated by a "
-            "comma, or a begin and exclusive end address seaprated by a hyphen, or a begin address and size in bytes "
-            "separated by a plus sign or an empty string to indicate an empty interval.  The upper address must always be "
+            "comma, or a begin and exclusive end address separated by a hyphen, or a begin address and size in bytes "
+            "separated by a plus sign, or an empty string to indicate an empty interval.  The upper address must always be "
             "greater than or equal to the lower address. Addresses and sizes can be specified in decimal, hexadecimal "
             "(leading \"0x\"), octal (leading \"0\"), or binary (leading \"0b\").");
 }
@@ -205,6 +205,11 @@ addressIntervalParser(AddressInterval &storage) {
 }
 
 AddressIntervalParser::Ptr
+addressIntervalParser(std::vector<AddressInterval> &storage) {
+    return AddressIntervalParser::instance(Sawyer::CommandLine::TypedSaver<std::vector<AddressInterval> >::instance(storage));
+}
+
+AddressIntervalParser::Ptr
 addressIntervalParser() {
     return AddressIntervalParser::instance();
 }
@@ -239,13 +244,13 @@ Trigger::docString() {
 }
 
 std::ostream&
-operator<<(std::ostream &out, const ControlFlowGraph::VertexNode &x) {
+operator<<(std::ostream &out, const ControlFlowGraph::Vertex &x) {
     out <<Partitioner::vertexName(x);
     return out;
 }
 
 std::ostream&
-operator<<(std::ostream &out, const ControlFlowGraph::EdgeNode &x) {
+operator<<(std::ostream &out, const ControlFlowGraph::Edge &x) {
     out <<Partitioner::edgeName(x);
     return out;
 }

@@ -9,7 +9,7 @@ TEST_TARGETS=
 
 SYNTACTIC = $(top_srcdir)/projects/BinaryCloneDetection/syntactic
 
-noinst_HEADERS = CloneDetectionLib.h RunTests.h
+noinst_HEADERS = CloneDetectionLib.h RunTests.h compute_signature_vector.h
 
 noinst_LTLIBRARIES = libCloneDetection.la
 libCloneDetection_la_SOURCES = CloneDetectionLib.C
@@ -217,7 +217,8 @@ CloneDetection_SPECIMENS =			\
 	tests/quicksort.C			\
 	tests/shellsort.C			\
 	tests/simple001.C			\
-	tests/simple002.C
+	tests/simple002.C			\
+	tests/simple003.C
 
 #-----------------------------------------------------------------------------------------------------------------------------
 # A very simple test to ensure that basic things are working

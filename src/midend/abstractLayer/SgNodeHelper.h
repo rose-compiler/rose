@@ -76,7 +76,7 @@ namespace SgNodeHelper {
   //! in constrast to all other expressions in the ROSE AST which are either a SgExprStatement or have a SgExpressionRoot node.
   bool isForIncExpr(SgNode* node);
 
-  //! returns the root node representing the AST of the condition of If, While, DoWhile, For, CondOperator (does not handle switch).
+  //! returns the root node representing the AST of the condition of If, While, DoWhile, For, CondOperator, switch.
   SgNode* getCond(SgNode* node);
 
   //! returns the string representing the condition (removes trailing ';')
@@ -141,7 +141,7 @@ namespace SgNodeHelper {
   //! is true if 'node' is the root node of the AST representing the condition of a Loop construct (While, DoWhile, For).
   bool isLoopCond(SgNode* node);
 
-  //! is true if 'node' is the root node of the AST representing the condition of If, While, DoWhile, For, CondExp. (does not handle switch).
+  //! is true if 'node' is the root node of the AST representing the condition of If, While, DoWhile, For, CondExp, switch.
   bool isCond(SgNode* node);
 
   //! returns true for --Expr and ++Expr, otherwise false.
@@ -293,15 +293,39 @@ namespace SgNodeHelper {
   // returns the list of initializers of an array or struct (e.g. for int a[]={1,2,3} it return the list 1,2,3)
   SgExpressionPtrList& getInitializerListOfAggregateDeclaration(SgVariableDeclaration* decl);
 
-  /* replaces expression e1 by expression e2. Currently it uses the SageInterface::rewriteExpression function
-     but wraps around some addtional checks that significantly improve performance of the replace operation.
+  /*! replaces expression e1 by expression e2. Currently it uses the
+     SageInterface::rewriteExpression function but wraps around some
+     addtional checks that significantly improve performance of the
+     replace operation.
   */
   void replaceExpression(SgExpression* e1, SgExpression* e2, bool mode=false);
 
-  /* replaces the ast with root 'node' with the string 's'. The string is attached to the AST and the unparser uses
-     string s instead of unparsing this substree. This function can be used to generate C++ extensions.
+  /*! replaces the ast with root 'node' with the string 's'. The
+     string is attached to the AST and the unparser uses string s
+     instead of unparsing this substree. This function can be used to
+     generate C++ extensions.
   */
   void replaceAstWithString(SgNode* node, std::string s);
+
+  /*! collects all pragmas with name 'pragmaName' and creates a list
+     of all pragma strings (with stripped off prefix) and the
+     associated SgNode. */
+  typedef std::list<std::pair<std::string,SgNode*> > PragmaList;
+  PragmaList collectPragmaLines(std::string pragmaName,SgNode* root);
+
+  /*! return the verbatim pragma string as it is found in the source
+     code this string includes the leading "#pragma".
+  */
+  std::string getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl);
+
+    // replace in string 'str' each string 'from' with string 'to'.
+    void replaceString(std::string& str, const std::string& from, const std::string& to);
+
+    // checks whether prefix 'prefix' is a prefix in string 's'.
+    bool isPrefix(const std::string& prefix, const std::string& s);
+
+    // checks whether 'elem' is the last child (in traversal order) of node 'parent'.
+    bool isLastChildOf(SgNode* elem, SgNode* parent);
 
   //! Provides functions which match a certain AST pattern and return a pointer to a node of interest inside that pattern.
   namespace Pattern {
@@ -333,9 +357,9 @@ namespace SgNodeHelper {
 
     //! tests pattern for an assert
     bool matchAssertExpr(SgNode* node);
-
+    
   } // end of namespace Pattern
-
+  
 } // end of namespace SgNodeHelper
 
 #endif

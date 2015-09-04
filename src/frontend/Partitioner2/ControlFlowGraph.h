@@ -5,8 +5,9 @@
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/Function.h>
 
-#include <sawyer/Graph.h>
-#include <sawyer/Map.h>
+#include <Sawyer/BiMap.h>
+#include <Sawyer/Graph.h>
+#include <Sawyer/Map.h>
 
 #include <list>
 #include <ostream>
@@ -17,8 +18,6 @@ namespace Partitioner2 {
 
 /** Control flow graph vertex. */
 class CfgVertex {
-    friend class Partitioner;
-private:
     VertexType type_;                                   // type of vertex, special or not
     rose_addr_t startVa_;                               // address of start of basic block
     BasicBlock::Ptr bblock_;                            // basic block, or null if only a place holder
@@ -35,35 +34,67 @@ public:
     }
 
     /** Construct a special vertex. */
-    explicit CfgVertex(VertexType type): type_(type), startVa_(0) {
+    /*implicit*/ CfgVertex(VertexType type): type_(type), startVa_(0) {
         ASSERT_forbid2(type==V_BASIC_BLOCK, "this constructor does not create basic block or placeholder vertices");
     }
 
     /** Returns the vertex type. */
     VertexType type() const { return type_; }
 
-    /** Return the starting address of a placeholder or basic block. */
+    /** Property: starting address.
+     *
+     *  The virtual address for a placeholder or basic block.  User-defined vertices can use this for whatever they want.
+     *
+     * @{ */
     rose_addr_t address() const {
-        ASSERT_require(V_BASIC_BLOCK==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
         return startVa_;
     }
+    void address(rose_addr_t va) {
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        startVa_ = va;
+    }
+    /** @} */
 
-    /** Return the basic block pointer.
+    /** Compute entire address set.
      *
-     *  A null pointer is returned when the vertex is only a basic block placeholder. */
+     *  Constructs and returns an address set containing all addresses represented by this vertex.  For basic block vertices,
+     *  this is the union of the addresses occupied by the instructions (not just the starting address of each
+     *  instruction). The indeterminate and user-defined vertices return an empty set. Other vertex types return a singleton
+     *  address. */
+    AddressIntervalSet addresses() const;
+
+    /** Property: basic block.
+     *
+     *  Pointer to a basic block.  This property is available for @ref V_BASIC_BLOCK or @ref V_USER_DEFINED vertices. A @ref
+     *  V_BASIC_BLOCK vertex with a null @ref bblock property is called a "placeholder".
+     *
+     * @{ */
     const BasicBlock::Ptr& bblock() const {
-        ASSERT_require(V_BASIC_BLOCK==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
         return bblock_;
     }
+    void bblock(const BasicBlock::Ptr &bb) {
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        bblock_ = bb;
+    }
+    /** @} */
 
-    /** Return the function pointer.
+    /** Property: owning function.
      *
-     *  A basic block may belong to a function, in which case the function pointer is returned. Otherwise the null pointer is
-     *  returned. */
+     *  Pointer to a function that owns this vertex.  For instance, a basic block (@ref V_BASIC_BLOCK) can belong to a
+     *  function.  This property is available for @ref V_BASIC_BLOCK and @ref V_USER_DEFINED vertices.
+     *
+     *  @{ */
     const Function::Ptr& function() const {
-        ASSERT_require(V_BASIC_BLOCK==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
         return function_;
     }
+    void function(const Function::Ptr &f) {
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        function_ = f;
+    }
+    /** @} */
 
     /** Turns a basic block vertex into a placeholder.
      *
@@ -72,48 +103,60 @@ public:
         ASSERT_require(V_BASIC_BLOCK==type_);
         bblock_ = BasicBlock::Ptr();
     }
-
-private:
-    // Change the basic block pointer.  Users are not allowed to do this directly; they must go through the Partitioner API.
-    void bblock(const BasicBlock::Ptr &bb) {
-        bblock_ = bb;
-    }
-
-    // Change the function pointer.  Users are not allowed to do this directly; they must go through the Partitioner API.
-    void function(const Function::Ptr &f) {
-        function_ = f;
-    }
 };
 
 /** Control flow graph edge. */
 class CfgEdge {
 private:
     EdgeType type_;
+    Confidence confidence_;
 public:
-    CfgEdge(): type_(E_NORMAL) {}
-    explicit CfgEdge(EdgeType type): type_(type) {}
+    CfgEdge(): type_(E_NORMAL), confidence_(ASSUMED) {}
+    /*implicit*/ CfgEdge(EdgeType type, Confidence confidence=ASSUMED): type_(type), confidence_(confidence) {}
     EdgeType type() const { return type_; }
+    Confidence confidence() const { return confidence_; }
+    void confidence(Confidence c) { confidence_ = c; }
 };
 
 /** Control flow graph. */
 typedef Sawyer::Container::Graph<CfgVertex, CfgEdge> ControlFlowGraph;
 
 /** Mapping from basic block starting address to CFG vertex. */
-typedef Sawyer::Container::Map<rose_addr_t, ControlFlowGraph::VertexNodeIterator> VertexIndex;
+typedef Sawyer::Container::Map<rose_addr_t, ControlFlowGraph::VertexIterator> CfgVertexIndex;
 
 /** List of CFG vertex pointers.
  *
  * @{ */
-typedef std::list<ControlFlowGraph::VertexNodeIterator> VertexList;
-typedef std::list<ControlFlowGraph::ConstVertexNodeIterator> ConstVertexList;
+typedef std::list<ControlFlowGraph::VertexIterator> CfgVertexList;
+typedef std::list<ControlFlowGraph::ConstVertexIterator> CfgConstVertexList;
 /** @} */
 
 /** List of CFG edge pointers.
  *
  * @{ */
-typedef std::list<ControlFlowGraph::EdgeNodeIterator> EdgeList;
-typedef std::list<ControlFlowGraph::ConstEdgeNodeIterator> ConstEdgeList;
+typedef std::list<ControlFlowGraph::EdgeIterator> CfgEdgeList;
+typedef std::list<ControlFlowGraph::ConstEdgeIterator> CfgConstEdgeList;
 /** @} */
+
+/** Set of CFG vertex pointers.
+ *
+ * @{ */
+typedef std::set<ControlFlowGraph::VertexIterator> CfgVertexSet;
+typedef std::set<ControlFlowGraph::ConstVertexIterator> CfgConstVertexSet;
+/** @} */
+
+/** Set of CFG edge pointers.
+ *
+ * @{ */
+typedef std::set<ControlFlowGraph::EdgeIterator> CfgEdgeSet;
+typedef std::set<ControlFlowGraph::ConstEdgeIterator> CfgConstEdgeSet;
+/** @} */
+
+/** Map vertices from one CFG to another CFG and vice versa. */
+typedef Sawyer::Container::BiMap<ControlFlowGraph::ConstVertexIterator, ControlFlowGraph::ConstVertexIterator> CfgVertexMap;
+
+
+
 
 /** Base class for CFG-adjustment callbacks.
  *
@@ -162,6 +205,73 @@ public:
     /** Called when basic block is detached or placeholder erased. */
     virtual bool operator()(bool chain, const DetachedBasicBlock&) = 0;
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Control flow graph utility functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Insert one control flow graph into another.
+ *
+ *  The @p vmap is updated with the mapping of vertices from source to destination. Upon return, <code>vmap[srcVertex]</code>
+ *  will point to the corresponding vertex in the destination graph. */
+void insertCfg(ControlFlowGraph &dst, const ControlFlowGraph &src, CfgVertexMap &vmap /*out*/);
+
+/** Find back edges.
+ *
+ *  Performs a depth-first forward traversal of the @p cfg beginning at the specified vertex. Any edge encountered which points
+ *  back to some vertex in the current traversal path is added to the returned edge set. */
+CfgConstEdgeSet findBackEdges(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &begin);
+
+/** Find function call edges.
+ *
+ *  Returns the list of function call edges for the specified vertex. */
+CfgConstEdgeSet findCallEdges(const ControlFlowGraph::ConstVertexIterator &callSite);
+
+/** Find called functions.
+ *
+ *  Given some vertex in a CFG, return the vertices representing the functions that are called. */
+CfgConstVertexSet findCalledFunctions(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &callSite);
+
+/** Return outgoing call-return edges.
+ *
+ *  A call-return edge represents a short-circuit control flow path across a function call, from the call site to the return
+ *  target. */
+CfgConstEdgeSet findCallReturnEdges(const ControlFlowGraph::ConstVertexIterator &callSite);
+
+/** Find function return vertices.
+ *
+ *  Returns the list of vertices with outgoing E_FUNCTION_RETURN edges. */
+CfgConstVertexSet findFunctionReturns(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &beginVertex);
+
+/** Erase multiple edges.
+ *
+ *  Erases each edge in the @p toErase set. */
+void eraseEdges(ControlFlowGraph&, const CfgConstEdgeSet &toErase);
+
+/** Vertices that are incident to specified edges. */
+CfgConstVertexSet findIncidentVertices(const CfgConstEdgeSet&);
+
+/** Find vertices that have zero degree.
+ *
+ *  Returns a set of vertices that have no incoming or outgoing edges. If @p vertices are specified, then limit the return
+ *  value to the specified vertices; this mode of operation can be significantly faster than scanning the entire graph.
+ *
+ * @{ */
+CfgConstVertexSet findDetachedVertices(const ControlFlowGraph&);
+CfgConstVertexSet findDetachedVertices(const CfgConstVertexSet &vertices);
+/** @} */
+
+/** Return corresponding iterators.
+ *
+ *  Given a set of iterators and a vertex map, return the corresponding iterators by following the forward mapping. Any vertex
+ *  in the argument that is not present in the mapping is silently ignored. */
+CfgConstVertexSet forwardMapped(const CfgConstVertexSet&, const CfgVertexMap&);
+
+/** Return corresponding iterators.
+ *
+ *  Given a set of iterators and a vertex map, return the corresponding iterators by following the reverse mapping. Any vertex
+ *  in the argument that is not present in the mapping is silently ignored. */
+CfgConstVertexSet reverseMapped(const CfgConstVertexSet&, const CfgVertexMap&);
 
 } // namespace
 } // namespace

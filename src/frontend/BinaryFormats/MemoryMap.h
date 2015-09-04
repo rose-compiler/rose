@@ -3,16 +3,27 @@
 
 #include "ByteOrder.h"
 
-#include <sawyer/Access.h>
-#include <sawyer/AddressMap.h>
-#include <sawyer/MappedBuffer.h>
-#include <sawyer/Optional.h>
+#include <Sawyer/Access.h>
+#include <Sawyer/AddressMap.h>
+#include <Sawyer/MappedBuffer.h>
+#include <Sawyer/Optional.h>
 
-/* Increase ADDR if necessary to make it a multiple of ALMNT */
-#define ALIGN_UP(ADDR,ALMNT)       ((((ADDR)+(ALMNT)-1)/(ALMNT))*(ALMNT))
+/** Align address downward to boundary.
+ *
+ *  Returns the largest multiple of alignment which is less than or equal to address. */
+template<typename T>
+T alignUp(T address, T alignment) {
+    return ((address + alignment - 1) / alignment) * alignment;
+}
 
-/* Decrease ADDR if necessary to make it a multiple of ALMNT */
-#define ALIGN_DN(ADDR,ALMNT)       (((ADDR)/(ALMNT))*(ALMNT))
+/** Align address upward to boundary.
+ *
+ *  Returns the smallest multiple of alignment which is greater than or equal to address. Returns zero if no such value can be
+ *  returned due to overflow. */
+template<typename T>
+T alignDown(T address, T alignment) {
+    return (address / alignment) * alignment;
+}
 
 /** An efficient mapping from an address space to stored data.
  *
@@ -75,6 +86,8 @@ public:
     typedef Sawyer::Container::NullBuffer<Address, Value> NullBuffer;
     typedef Sawyer::Container::StaticBuffer<Address, Value> StaticBuffer;
     typedef Sawyer::Container::SegmentPredicate<Address, Value> SegmentPredicate;
+    typedef Sawyer::Container::AddressMapConstraints<Sawyer::Container::AddressMap<rose_addr_t, uint8_t> > Constraints;
+    typedef Sawyer::Container::AddressMapConstraints<const Sawyer::Container::AddressMap<rose_addr_t, uint8_t> > ConstConstraints;
 
 private:
     ByteOrder::Endianness endianness_;
@@ -97,16 +110,20 @@ public:
 
     // Accessibility flags
     static const unsigned NO_ACCESS = 0;
-    static const unsigned READABLE = Sawyer::Access::READABLE;
-    static const unsigned WRITABLE = Sawyer::Access::WRITABLE;
-    static const unsigned EXECUTABLE = Sawyer::Access::EXECUTABLE;
-    static const unsigned IMMUTABLE = Sawyer::Access::IMMUTABLE;
-    static const unsigned PRIVATE = 0x00000100;
+    static const unsigned READABLE      = Sawyer::Access::READABLE;
+    static const unsigned WRITABLE      = Sawyer::Access::WRITABLE;
+    static const unsigned EXECUTABLE    = Sawyer::Access::EXECUTABLE;
+    static const unsigned IMMUTABLE     = Sawyer::Access::IMMUTABLE;
+    static const unsigned PRIVATE       = 0x00000100;
+    static const unsigned INITIALIZED   = 0x00000200;   // Partitioner2: initialized memory even if writable
 
     // Aggregate accessibility flags
     static const unsigned READ_WRITE = READABLE | WRITABLE;
     static const unsigned READ_EXECUTE = READABLE | EXECUTABLE;
     static const unsigned READ_WRITE_EXECUTE = READABLE | WRITABLE | EXECUTABLE;
+
+    // These bits are reserved for use in ROSE
+    static const unsigned RESERVED_ACCESS_BITS = 0x0000ffff;
     
 
 public:
@@ -289,18 +306,19 @@ public:
     }
     
     /** Reads a NUL-terminated string from the memory map.  Reads data beginning at @p startVa in the memory map and
-     *  continuing until one of the following conditions:
-     *    <ul>
-     *      <li>The return value contains the @p desired number of characters.</li>
-     *      <li>The next character to be read is a NUL character.</li>
-     *      <li>A @p validChar function is specified but the next character causes it to return zero.</li>
-     *      <li>An @p invalidChar function is specified and the next character causes it to return non-zero.</li>
-     *    </ul>
+     *  continuing until one of the following conditions is met:
+     *
+     *  @li The desired number of characters has been read (returns empty string)
+     *  @li The next character is the termination character (defaults to NUL)
+     *  @li An @p invalidChar function is specified and the next character causes it to return true (returns empty string)
+     *  @li A validChar function is specified and the next character causes it to return false (returns empty string)
+     *
+     *  The empty string is returned unless the terminator character is encountered.
      *
      *  The @p validChar and @p invalidChar take an integer argument and return an integer value so that the C character
      *  classification functions from <ctype.h> can be used directly. */
     std::string readString(rose_addr_t startVa, size_t desired, int(*validChar)(int)=NULL, int(*invalidChar)(int)=NULL,
-                           unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0) const;
+                           unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0, char terminator='\0') const;
 
     /** Read quickly into a vector. */
     SgUnsignedCharList readVector(rose_addr_t startVa, size_t desired, unsigned requiredPerms=READABLE) const;
@@ -314,9 +332,21 @@ public:
      *
      *  Searches for all of the specified bytes simultaneously and returns the lowest address (subject to @p limits) where one
      *  of the specified values appears.  If none of the specified bytes appear within the given address extent, then this
-     *  method returns none. */
+     *  method returns none.
+     *
+     *  @{ */
     Sawyer::Optional<rose_addr_t> findAny(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
                                           unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0) const;
+    Sawyer::Optional<rose_addr_t> findAny(const AddressInterval &limits, const std::vector<uint8_t> &bytesToFind,
+                                          unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0) const;
+    /** @} */
+
+    /** Search for a byte sequence.
+     *
+     *  Searches for the bytes specified by @p sequence occuring within the specified @p interval.  If the @p interval is empty
+     *  or the sequence cannot be found then nothing is returned. Otherwise, the virtual address for the start of the sequence
+     *  is returned. An empty sequence matches at the beginning of the @p interval. */
+    Sawyer::Optional<rose_addr_t> findSequence(const AddressInterval &interval, const std::vector<uint8_t> &sequence) const;
 
     /** Prints the contents of the map for debugging. The @p prefix string is added to the beginning of every line of output
      *  and typically is used to indent the output.

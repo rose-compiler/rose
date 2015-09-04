@@ -5,6 +5,12 @@
 #include "Diagnostics.h"
 #include "Disassembler.h"
 #include "Partitioner.h"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmExecutableFileFormat
+
+void SgAsmExecutableFileFormat::initDiagnostics() {}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmFloatValueExpression
 
@@ -29,6 +35,7 @@ void SgAsmIntegerValueExpression::set_relativeValue(int64_t, size_t) { abort(); 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmInstruction
 
+const int64_t SgAsmInstruction::INVALID_STACK_DELTA = (uint64_t)1 << 63;
 size_t SgAsmInstruction::get_size() const { return 0; }
 bool SgAsmInstruction::terminatesBasicBlock() { return false; }
 bool SgAsmInstruction::isUnknown() const { return false; }
@@ -40,6 +47,17 @@ bool SgAsmInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>
 bool SgAsmInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) { return false; }
 bool SgAsmInstruction::getBranchTarget(rose_addr_t*) { return false; }
 std::set<rose_addr_t> SgAsmInstruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>();}
+unsigned SgAsmInstruction::get_anyKind() const { return 0; }
+
+std::set<rose_addr_t>
+SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap*) {
+    return std::set<rose_addr_t>();
+}
+
+std::vector<std::pair<size_t,size_t> >
+SgAsmInstruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>&, bool, bool) {
+    return std::vector<std::pair<size_t,size_t> >();
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmArmInstruction
@@ -47,6 +65,7 @@ std::set<rose_addr_t> SgAsmInstruction::getSuccessors(bool* complete) { return s
 bool SgAsmArmInstruction::terminatesBasicBlock() { return false; }
 bool SgAsmArmInstruction::isUnknown() const { return false; }
 std::set<rose_addr_t> SgAsmArmInstruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>(); }
+unsigned SgAsmArmInstruction::get_anyKind() const { return 0; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmM68kInstruction
@@ -58,6 +77,13 @@ bool SgAsmM68kInstruction::isFunctionReturnFast(const std::vector<SgAsmInstructi
 bool SgAsmM68kInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) { return false; }
 bool SgAsmM68kInstruction::isUnknown() const { return false; }
 bool SgAsmM68kInstruction::getBranchTarget(rose_addr_t*) { return false; }
+std::set<rose_addr_t> SgAsmM68kInstruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>();}
+unsigned SgAsmM68kInstruction::get_anyKind() const { return 0; }
+
+std::set<rose_addr_t>
+SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap*) {
+    return std::set<rose_addr_t>();
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmMipsInstruction
@@ -70,6 +96,7 @@ bool SgAsmMipsInstruction::isFunctionReturnFast(const std::vector<SgAsmInstructi
 bool SgAsmMipsInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) { return false; }
 bool SgAsmMipsInstruction::getBranchTarget(rose_addr_t*) { return false; }
 std::set<rose_addr_t> SgAsmMipsInstruction::getSuccessors(bool*) { return std::set<rose_addr_t>();}
+unsigned SgAsmMipsInstruction::get_anyKind() const { return 0; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmPowerpcInstruction
@@ -77,23 +104,24 @@ std::set<rose_addr_t> SgAsmMipsInstruction::getSuccessors(bool*) { return std::s
 bool SgAsmPowerpcInstruction::terminatesBasicBlock() { return false; }
 bool SgAsmPowerpcInstruction::isUnknown() const { return false; } 
 std::set<rose_addr_t> SgAsmPowerpcInstruction::getSuccessors(bool*) { return std::set<rose_addr_t>();}
+unsigned SgAsmPowerpcInstruction::get_anyKind() const { return 0; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmX86Instruction
 
 bool SgAsmX86Instruction::terminatesBasicBlock() { return false; }
 bool SgAsmX86Instruction::isUnknown() const { return false; }
-bool SgAsmX86Instruction::hasEffect() { return false; }
-bool SgAsmX86Instruction::hasEffect(const std::vector<SgAsmInstruction*>&, bool, bool) { return false; }
 bool SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
 bool SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
 bool SgAsmX86Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) { return false; }
 bool SgAsmX86Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) { return false; }
 bool SgAsmX86Instruction::getBranchTarget(rose_addr_t*) { return false; }
+unsigned SgAsmX86Instruction::get_anyKind() const { return 0; }
+std::set<rose_addr_t> SgAsmX86Instruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>();}
 
-std::vector<std::pair<size_t,size_t> >
-SgAsmX86Instruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>&, bool, bool) {
-    return std::vector<std::pair<size_t,size_t> >();
+std::set<rose_addr_t>
+SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap*) {
+    return std::set<rose_addr_t>();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,12 +150,13 @@ bool SgAsmIntegerType::get_isSigned() const { return false; }
 
 void SgAsmFloatType::check() const {}
 std::string SgAsmFloatType::toString() const { return std::string(); }
-size_t SgAsmFloatType::get_significandOffset() const { return 0; }
-size_t SgAsmFloatType::get_significandNBits() const { return 0; }
-size_t SgAsmFloatType::get_signBitOffset() const { return 0; }
-size_t SgAsmFloatType::get_exponentOffset() const { return 0; }
-size_t SgAsmFloatType::get_exponentNBits() const { return 0; }
-uint64_t SgAsmFloatType::get_exponentBias() const { return 0; }
+SgAsmFloatType::BitRange SgAsmFloatType::significandBits() const { return BitRange(); }
+SgAsmFloatType::BitRange SgAsmFloatType::exponentBits() const { return BitRange(); }
+size_t SgAsmFloatType::signBit() const { return 0; }
+uint64_t SgAsmFloatType::exponentBias() const { return 0; }
+unsigned SgAsmFloatType::flags() const { return 0; }
+bool SgAsmFloatType::gradualUnderflow() const { return false; }
+bool SgAsmFloatType::normalizedSignificand() const { return false; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmVectorType

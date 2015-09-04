@@ -1,6 +1,38 @@
-SPOT: C++ Library for LTL Verification
-http://spot.lip6.fr/wiki/SpotWiki
+spotdriver
+----------
+"spotdriver" takes a SPOT TGBA file (1st parameter) and a text file with rers solutions (2nd parameter).
+It parses the LTL formula and expected solutions and checks whether these solutions are correct on the given model TGBA.
+The program then prints out if the provided solutions are correct or, if not, what the error is.
 
-after installation set:
-SPOT_PREFIX to installation directory
+For an example how to run spotdriver please hit "make check" or see "check" in the Makefile.
+
+In order to generate SPOT TGBA files, please consider using CodeThorn with the following options (this example is to be executed from the "spotconnection" subdirectory):
+
+codethorn ./tests/problem28/Problem28_opt.c --input-values="{1,2,3,4,5,6}" --rersmode=yes --spot-stg="./tests/problem28/Problem28_opt_rersmode.spot"
+
+
+--------------.
+SpotConnection|
+--------------*
+
+verify ltl solutions:
+----------------------
+An example command to compare validate LTL results through SpotConnection, CodeThorn's interface with SPOT, looks like the following:
+
+codethorn $(CODETHORN_PREFIX)/src/tests/rers/Problem3.c --input-values="{1,2,3,4,5,6}" --rersmode=yes --check-ltl-sol="$(CODETHORN_PREFIX)/tests/rers/Problem3-solutions.txt"
+
+another example executed from the spotconnection subdirectory:
+
+codethorn ./tests/problem28/Problem28_opt.c --input-values="{1,2,3,4,5,6}" --rersmode=yes --check-ltl-sol="./tests/problem28/Problem28-solutions.txt"
+
+
+check ltl formulae and dump to .csv file:
+-----------------------------------------
+
+To check a file of LTL formulae on a given program's I/O behavior, please use the --check-ltl option. To indicate the filename of the created .csv file specify the --output-file option.
+
+An example command for problem28 would look like the following (executed from the spotconnection subdirectory):
+
+codethorn ./tests/problem28/Problem28_opt.c --input-values="{1,2,3,4,5,6}" --rersmode=yes --check-ltl="./tests/problem28/constraints-5.txt" --output-file="./tests/problem28/Problem28_ltl_results.csv"
+
 

@@ -226,7 +226,7 @@ StringUtility::listToString ( const list<string> & X, bool separateStrings )
   // Build a string representing the concatination of the list of strings
 
      string returnString;
-  // printf ("In listToString: Print out the list of variable names (X.size() = %zu): \n",X.size());
+  // printf ("In listToString: Print out the list of variable names (X.size() = %" PRIuPTR "): \n",X.size());
      list<string>::const_iterator listStringElementIterator;
      for (listStringElementIterator = X.begin(); 
                      listStringElementIterator != X.end();
@@ -522,6 +522,12 @@ StringUtility::cEscape(const std::string &s) {
             case '\r':
                 result += "\\r";
                 break;
+            case '\"':
+                result += "\\\"";
+                break;
+            case '\\':
+                result += "\\\\";
+                break;
             default:
                 if (isprint(ch)) {
                     result += ch;
@@ -602,6 +608,8 @@ StringUtility::unsignedToHex2(uint64_t value, size_t nbits)
 string
 StringUtility::addrToString(uint64_t value, size_t nbits)
 {
+    if (0 == nbits)
+        nbits = value > 0xffffffff ? 64 : 32;
     return toHex2(value, nbits, false, false);
 }
 
@@ -650,19 +658,19 @@ StringUtility::removePseudoRedundentSubstrings ( string X ) // sic
      list<string> XStringList = StringUtility::stringToList(X);
 
 #if 0
-     printf ("XStringList.size() = %zu \n",XStringList.size());
+     printf ("XStringList.size() = %" PRIuPTR " \n",XStringList.size());
 #endif
 
      XStringList.sort();
 
 #if 0
-     printf ("After sort(): XStringList.size() = %zu \n",XStringList.size());
+     printf ("After sort(): XStringList.size() = %" PRIuPTR " \n",XStringList.size());
 #endif
 
      XStringList.unique();
 
 #if 0
-     printf ("After unique(): XStringList.size() = %zu \n",XStringList.size());
+     printf ("After unique(): XStringList.size() = %" PRIuPTR " \n",XStringList.size());
 #endif
 
   // Build a list of the strings that will be modified
@@ -755,7 +763,7 @@ StringUtility::removePseudoRedundentSubstrings ( string X ) // sic
 #endif
              }
 
-       // printf ("listOfDifferences.size() = %zu \n",listOfDifferences.size());
+       // printf ("listOfDifferences.size() = %" PRIuPTR " \n",listOfDifferences.size());
 
        // If there are any elements then we can proceed
           if (!listOfDifferences.empty())
@@ -814,7 +822,7 @@ StringUtility::removePseudoRedundentSubstrings ( string X ) // sic
      listOfStringsToRemove.unique();
 
 #if 0
-     printf ("After loop: listOfStringsToRemove.size() = %zu \n",listOfStringsToRemove.size());
+     printf ("After loop: listOfStringsToRemove.size() = %" PRIuPTR " \n",listOfStringsToRemove.size());
 #endif
 
      for (i = listOfStringsToRemove.begin(); i != listOfStringsToRemove.end(); i++)
@@ -822,32 +830,32 @@ StringUtility::removePseudoRedundentSubstrings ( string X ) // sic
           XStringList.remove(*i);
         }
 #if 0
-     printf ("After loop: XStringList.size() = %zu \n",XStringList.size());
+     printf ("After loop: XStringList.size() = %" PRIuPTR " \n",XStringList.size());
      printf ("After loop: XStringList = %s \n",listToString(XStringList).c_str());
 #endif
 
   // Add the strings the we saved (the resort)
      XStringList.insert(XStringList.end(), modifiedStringList.begin(), modifiedStringList.end());
 #if 0
-     printf ("Before remove(): XStringList.size() = %zu \n",XStringList.size());
+     printf ("Before remove(): XStringList.size() = %" PRIuPTR " \n",XStringList.size());
      printf ("Before remove(): XStringList = %s \n",listToString(XStringList).c_str());
 #endif
 
      XStringList.remove(string("\n"));
 #if 0
-     printf ("Before sort(): XStringList.size() = %zu \n",XStringList.size());
+     printf ("Before sort(): XStringList.size() = %" PRIuPTR " \n",XStringList.size());
      printf ("Before sort(): XStringList = %s \n",listToString(XStringList).c_str());
 #endif
 
      XStringList.sort();
 #if 0
-     printf ("After sort(): XStringList.size() = %zu \n",XStringList.size());
+     printf ("After sort(): XStringList.size() = %" PRIuPTR " \n",XStringList.size());
      printf ("After sort(): XStringList = %s \n",listToString(XStringList).c_str());
 #endif
 
      XStringList.unique();
 #if 0
-     printf ("After unique(): XStringList.size() = %zu \n",XStringList.size());
+     printf ("After unique(): XStringList.size() = %" PRIuPTR " \n",XStringList.size());
      printf ("After unique(): XStringList = %s \n",listToString(XStringList).c_str());
 #endif
 
@@ -1377,8 +1385,8 @@ StringUtility::stripPathFromFileName ( const string & fileNameWithPath )
      string::size_type positionOfLastSlash  = fileNameWithPath.rfind('/');
      string::size_type positionOfFirstSlash = fileNameWithPath.find('/');
 
-     printf ("positionOfLastSlash = %zu \n",positionOfLastSlash);
-     printf ("positionOfFirstSlash = %zu \n",positionOfFirstSlash);
+     printf ("positionOfLastSlash = %" PRIuPTR " \n",positionOfLastSlash);
+     printf ("positionOfFirstSlash = %" PRIuPTR " \n",positionOfFirstSlash);
 
      string returnString;
      if (positionOfLastSlash != string::npos)
@@ -1446,8 +1454,8 @@ StringUtility::stripFileSuffixFromFileName ( const string & fileNameWithSuffix )
      size_t lastSlashPos = fileNameWithSuffix.rfind('/');
      size_t lastDotPos   = fileNameWithSuffix.rfind('.');
 
-  // printf ("lastSlashPos = %zu \n",lastSlashPos);
-  // printf ("lastDotPos   = %zu \n",lastDotPos);
+  // printf ("lastSlashPos = %" PRIuPTR " \n",lastSlashPos);
+  // printf ("lastDotPos   = %" PRIuPTR " \n",lastDotPos);
 
      if (lastSlashPos != string::npos && lastDotPos < lastSlashPos)
           returnString = fileNameWithSuffix;

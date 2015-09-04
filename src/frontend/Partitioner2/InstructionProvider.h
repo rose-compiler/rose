@@ -4,9 +4,9 @@
 #include "Disassembler.h"
 #include "BaseSemantics2.h"
 
-#include <sawyer/Assert.h>
-#include <sawyer/Map.h>
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/Assert.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/SharedPointer.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -66,7 +66,6 @@ public:
     void disableDisassembler() { useDisassembler_ = false; }
     /** @} */
 
-
     /** Returns the instruction at the specified virtual address, or null.
      *
      *  If the virtual address is non-executable then a null pointer is returned, otherwise either a valid instruction or an
@@ -74,6 +73,12 @@ public:
      *  disassembled, including the case when the first byte of a multi-byte instruction is executable but the remaining bytes
      *  are not executable. */
     SgAsmInstruction* operator[](rose_addr_t va) const;
+
+    /** Insert an instruction into the cache.
+     *
+     *  This instruction provider saves a pointer to the instruction without taking ownership.  If an instruction already
+     *  exists at the new instruction's address then the new instruction replaces the old instruction. */
+    void insert(SgAsmInstruction*);
 
     /** Returns the disassembler.
      *
@@ -91,6 +96,9 @@ public:
 
     /** Returns the register dictionary. */
     const RegisterDictionary* registerDictionary() const { return disassembler_->get_registers(); }
+
+    /** Returns the calling convention dictionary. */
+    const CallingConvention::Dictionary& callingConventions() const { return disassembler_->callingConventions(); }
 
     /** Register used as the instruction pointer. */
     RegisterDescriptor instructionPointerRegister() const { return disassembler_->instructionPointerRegister(); }

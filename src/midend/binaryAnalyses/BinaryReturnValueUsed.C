@@ -2,6 +2,7 @@
 #include "BinaryReturnValueUsed.h"
 #include "BinaryControlFlow.h"
 #include "DispatcherX86.h"
+#include "MemoryCellList.h"
 #include "NullSemantics2.h"
 #include "WorkLists.h"
 
@@ -109,6 +110,9 @@ public:
     virtual BaseSemantics::RegisterStatePtr clone() const ROSE_OVERRIDE {
         return RegisterStatePtr(new RegisterState(*this));
     }
+    virtual bool merge(const BaseSemantics::RegisterStatePtr &other, BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
+        throw BaseSemantics::NotImplemented("ReturnValueUsed semantics is not suitable for dataflow", NULL);
+    }
     virtual void clear()ROSE_OVERRIDE {
         wroteValue_ = readUninitialized_ = false;
     }
@@ -137,6 +141,7 @@ public:
     bool readUninitialized() {
         return readUninitialized_;
     }
+
 };
     
 // The actual analysis for a function call starting at a function call return point and terminating each path whenever we reach
@@ -147,7 +152,8 @@ static bool returnValueUsed(const Cfg &cfg, CfgVertex startVertex, const Registe
     BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
     BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
     BaseSemantics::RiscOperatorsPtr ops = NullSemantics::RiscOperators::instance(state);
-    BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops);
+    size_t addrWidth = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp).get_nbits();
+    BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops, addrWidth);
 
     WorkList<CfgVertex> worklist(true);
     Map<CfgVertex, size_t> seen;

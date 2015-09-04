@@ -104,14 +104,19 @@ public:
 
     // Run-time checks
     void test(const BaseSemantics::RiscOperatorsPtr &ops) {
+        ByteOrder::Endianness savedByteOrder = ops->get_state()->get_memory_state()->get_byteOrder();
+        ops->get_state()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_LSB);
         test(ops->get_protoval(), ops->get_state(), ops);
+        ops->get_state()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_MSB);
+        test(ops->get_protoval(), ops->get_state(), ops);
+        ops->get_state()->get_memory_state()->set_byteOrder(savedByteOrder);
     }
     
     void test(const BaseSemantics::SValuePtr &protoval,
               const BaseSemantics::StatePtr &state,
               const BaseSemantics::RiscOperatorsPtr &ops) {
 
-        const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
+        const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
         const RegisterDescriptor *reg32_ = regdict->lookup("eip");
         require(reg32_!=NULL, "register lookup");
         const RegisterDescriptor reg32 = *reg32_;
@@ -134,6 +139,11 @@ public:
         BaseSemantics::SValuePtr v1 = protoval->undefined_(8);
         check_sval_type(v1, "SValue::undefined_()");
         require(v1->get_width()==8, "SValue::undefined_() width");
+
+        // Virtual constructor: unspecified_()
+        BaseSemantics::SValuePtr v1b = protoval->unspecified_(8);
+        check_sval_type(v1b, "SValue::unspecified_()");
+        require(v1b->get_width()==8, "SValue::unspecified() width");
 
         // Virtual constructor: number_().  Note that we can't check that the number is actually concrete and has a value
         // because BaseSemantics defines only the API for is_number() and get_number() and not the semantics of those
@@ -427,25 +437,41 @@ public:
             check_sval_type(ops_v28, "RiscOperators::negate");
             require(ops_v28->get_width()==32, "RiscOperators::negate width");
 
-            BaseSemantics::SValuePtr ops_v29 = ops->signedDivide(v32a, v8);
-            check_sval_type(ops_v29, "RiscOperators::signedDivide");
-            require(ops_v29->get_width()==32, "RiscOperators::signedDivide width");
+            try {
+                BaseSemantics::SValuePtr ops_v29 = ops->signedDivide(v32a, v8);
+                check_sval_type(ops_v29, "RiscOperators::signedDivide");
+                require(ops_v29->get_width()==32, "RiscOperators::signedDivide width");
+            } catch (const BaseSemantics::Exception&) {
+                // possible division by zero
+            }
 
-            BaseSemantics::SValuePtr ops_v30 = ops->signedModulo(v32a, v8);
-            check_sval_type(ops_v30, "RiscOperators::signedModulo");
-            require(ops_v30->get_width()==8, "RiscOperators::signedModulo width");
+            try {
+                BaseSemantics::SValuePtr ops_v30 = ops->signedModulo(v32a, v8);
+                check_sval_type(ops_v30, "RiscOperators::signedModulo");
+                require(ops_v30->get_width()==8, "RiscOperators::signedModulo width");
+            } catch (const BaseSemantics::Exception&) {
+                // possible division by zero
+            }
 
             BaseSemantics::SValuePtr ops_v31 = ops->signedMultiply(v32a, v8);
             check_sval_type(ops_v31, "RiscOperators::signedMultiply");
             require(ops_v31->get_width()==40, "RiscOperators::signedMultiply width");
 
-            BaseSemantics::SValuePtr ops_v32 = ops->unsignedDivide(v32a, v8);
-            check_sval_type(ops_v32, "RiscOperators::unsignedDivide");
-            require(ops_v32->get_width()==32, "RiscOperators::unsignedDivide width");
+            try {
+                BaseSemantics::SValuePtr ops_v32 = ops->unsignedDivide(v32a, v8);
+                check_sval_type(ops_v32, "RiscOperators::unsignedDivide");
+                require(ops_v32->get_width()==32, "RiscOperators::unsignedDivide width");
+            } catch (const BaseSemantics::Exception&) {
+                // possible division by zero
+            }
 
-            BaseSemantics::SValuePtr ops_v33 = ops->unsignedModulo(v32a, v8);
-            check_sval_type(ops_v33, "RiscOperators::unsignedModulo");
-            require(ops_v33->get_width()==8, "RiscOperators::unsignedModulo width");
+            try {
+                BaseSemantics::SValuePtr ops_v33 = ops->unsignedModulo(v32a, v8);
+                check_sval_type(ops_v33, "RiscOperators::unsignedModulo");
+                require(ops_v33->get_width()==8, "RiscOperators::unsignedModulo width");
+            } catch (const BaseSemantics::Exception&) {
+                // possible division by zero
+            }
 
             BaseSemantics::SValuePtr ops_v34 = ops->unsignedMultiply(v32a, v8);
             check_sval_type(ops_v34, "RiscOperators::unsignedMultiply");

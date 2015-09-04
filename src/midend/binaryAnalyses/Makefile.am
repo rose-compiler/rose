@@ -18,32 +18,40 @@ libbinaryMidend_la_SOURCES =					\
     dataflowanalyses/RoseBin_Emulate.cpp			\
     dataflowanalyses/RoseBin_DataFlowAbstract.cpp		\
     instructionSemantics/BaseSemantics2.C			\
+    instructionSemantics/ConcreteSemantics2.C			\
     instructionSemantics/DataFlowSemantics2.C			\
     instructionSemantics/DispatcherM68k.C			\
     instructionSemantics/DispatcherPowerpc.C			\
     instructionSemantics/DispatcherX86.C			\
-    instructionSemantics/NullSemantics2.C			\
-    instructionSemantics/MultiSemantics2.C			\
-    instructionSemantics/PartialSymbolicSemantics2.C		\
-    instructionSemantics/findConstants.C			\
     instructionSemantics/FindRegisterDefs.C			\
     instructionSemantics/InsnSemanticsExpr.C			\
     instructionSemantics/IntervalSemantics.C			\
     instructionSemantics/IntervalSemantics2.C			\
     instructionSemantics/LlvmSemantics2.C			\
+    instructionSemantics/MemoryCellList.C			\
+    instructionSemantics/MultiSemantics2.C			\
+    instructionSemantics/NullSemantics2.C			\
     instructionSemantics/PartialSymbolicSemantics.C		\
-    instructionSemantics/TraceSemantics2.C			\
+    instructionSemantics/PartialSymbolicSemantics2.C		\
+    instructionSemantics/RegisterStateGeneric.C			\
     instructionSemantics/SMTSolver.C				\
+    instructionSemantics/StaticSemantics2.C			\
+    instructionSemantics/SymbolicMemory2.C			\
     instructionSemantics/SymbolicSemantics.C			\
     instructionSemantics/SymbolicSemantics2.C			\
+    instructionSemantics/TraceSemantics2.C			\
     instructionSemantics/YicesSolver.C				\
+    instructionSemantics/findConstants.C			\
     GraphAlgorithms.C						\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
     BinaryDominance.C						\
     BinaryFunctionCall.C					\
     BinaryCallingConvention.C					\
+    BinaryMagic.C						\
+    BinaryNoOperation.C						\
     BinaryReturnValueUsed.C					\
+    BinaryString.C						\
     BinaryTaintedFlow.C						\
     DwarfLineMapper.C
 else
@@ -72,31 +80,36 @@ pkginclude_HEADERS =					\
     dataflowanalyses/RoseBin_DefUseAnalysis.h		\
     dataflowanalyses/RoseBin_Emulate.h			\
     dataflowanalyses/RoseBin_VariableAnalysis.h		\
-    instructionSemantics/ReadWriteRegisterFragment.h	\
-    instructionSemantics/findConstants.h		\
-    instructionSemantics/FindRegisterDefs.h		\
-    instructionSemantics/InsnSemanticsExpr.h		\
     instructionSemantics/BaseSemantics.h		\
     instructionSemantics/BaseSemantics2.h		\
+    instructionSemantics/ConcreteSemantics2.h		\
     instructionSemantics/DataFlowSemantics2.h		\
     instructionSemantics/DispatcherM68k.h		\
     instructionSemantics/DispatcherPowerpc.h		\
     instructionSemantics/DispatcherX86.h		\
+    instructionSemantics/FindRegisterDefs.h		\
+    instructionSemantics/InsnSemanticsExpr.h		\
     instructionSemantics/IntervalSemantics.h		\
     instructionSemantics/IntervalSemantics2.h		\
     instructionSemantics/LlvmSemantics2.h		\
-    instructionSemantics/NullSemantics.h		\
-    instructionSemantics/NullSemantics2.h		\
+    instructionSemantics/MemoryCellList.h		\
     instructionSemantics/MultiSemantics.h		\
     instructionSemantics/MultiSemantics2.h		\
+    instructionSemantics/NullSemantics.h		\
+    instructionSemantics/NullSemantics2.h		\
     instructionSemantics/PartialSymbolicSemantics.h	\
     instructionSemantics/PartialSymbolicSemantics2.h	\
+    instructionSemantics/ReadWriteRegisterFragment.h	\
+    instructionSemantics/RegisterStateGeneric.h		\
     instructionSemantics/SMTSolver.h			\
+    instructionSemantics/StaticSemantics2.h		\
+    instructionSemantics/SymbolicMemory2.h		\
     instructionSemantics/SymbolicSemantics.h		\
     instructionSemantics/SymbolicSemantics2.h		\
     instructionSemantics/TestSemantics2.h		\
     instructionSemantics/TraceSemantics2.h		\
     instructionSemantics/YicesSolver.h			\
+    instructionSemantics/findConstants.h		\
     instructionSemantics/flowEquations.h		\
     instructionSemantics/x86InstructionSemantics.h	\
     libraryIdentification/functionIdentification.h	\
@@ -107,9 +120,13 @@ pkginclude_HEADERS =					\
     BinaryDominance.h					\
     BinaryFunctionCall.h				\
     BinaryCallingConvention.h				\
+    BinaryMagic.h					\
+    BinaryNoOperation.h					\
     BinaryPointerDetection.h				\
     BinaryAnalysisUtils.h				\
     BinaryReturnValueUsed.h				\
+    BinaryStackVariable.h				\
+    BinaryString.h					\
     BinaryTaintedFlow.h					\
     DwarfLineMapper.h
 

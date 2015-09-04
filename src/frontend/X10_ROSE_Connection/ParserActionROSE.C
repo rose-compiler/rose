@@ -4260,7 +4260,7 @@ JNIEXPORT void JNICALL cactionBinaryExpressionEnd(JNIEnv *env, jclass, jint x10_
         printf ("Build an Binary Expression End \n");
 
     // These are the operator code values directly from ECJ.
-    enum ops {
+    enum ops {                                          // NO_STRINGIFY
         ERROR_OPERATOR       = 0, // This is not a ECJ value 
         AND                  = 2,
         DIVIDE               = 9, 
@@ -6031,7 +6031,7 @@ JNIEXPORT void JNICALL cactionPostfixExpressionEnd(JNIEnv *env, jclass, jint x10
 
             cout << "Error: default reached in cactionPostfixExpressionEnd() operator_kind = " <<  operator_kind << endl;
             cout.flush();
-            binaryExpressionSupport<SgPlusPlusOp>(); // Any operator so that we can "keep going" !!! EROSE_ASSERT(false);
+            unaryExpressionSupport<SgPlusPlusOp>(); // Any operator so that we can "keep going" !!! EROSE_ASSERT(false);
     }
 
     // Mark this a a postfix operator
@@ -6079,7 +6079,7 @@ JNIEXPORT void JNICALL cactionPrefixExpressionEnd(JNIEnv *env, jclass, jint x10_
 
             cout << "Error: default reached in cactionPrefixExpressionEnd() operator_kind = " <<  operator_kind << endl;
             cout.flush();
-            binaryExpressionSupport<SgPlusPlusOp>(); // Any operator so that we can "keep going" !!! EROSE_ASSERT(false);
+            unaryExpressionSupport<SgPlusPlusOp>(); // Any operator so that we can "keep going" !!! EROSE_ASSERT(false);
     }
 
     // Mark this a a prefix operator
@@ -6738,7 +6738,7 @@ JNIEXPORT void JNICALL cactionUnaryExpressionEnd(JNIEnv *env, jclass, jint x10_o
 
             cout << "Error: default reached in cactionUnaryExpressionEnd() operator_kind = " <<  operator_kind << endl;
             cout.flush();
-            binaryExpressionSupport<SgUnaryAddOp>(); // Any operator so that we can "keep going" !!! EROSE_ASSERT(false);
+            unaryExpressionSupport<SgUnaryAddOp>(); // Any operator so that we can "keep going" !!! EROSE_ASSERT(false);
     }
 
     setX10SourcePosition((SgLocatedNode *) astX10ComponentStack.top(), env, x10Token);

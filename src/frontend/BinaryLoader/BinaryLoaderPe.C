@@ -60,17 +60,17 @@ BinaryLoaderPe::align_values(SgAsmGenericSection *section, MemoryMap *map,
         mapped_alignment = 0x200;
 
     /* Align file size upward even before we align the file offset downward. */
-    rose_addr_t file_size = ALIGN_UP(section->get_size(), file_alignment);
+    rose_addr_t file_size = alignUp(section->get_size(), file_alignment);
 
     /* Map the entire section's file content (aligned) or the requested map size, whichever is larger. */
     rose_addr_t mapped_size = std::max(section->get_mapped_size(), file_size);
 
     /* Align file offset downward but do not adjust file size. */
-    rose_addr_t file_offset = ALIGN_DN(section->get_offset(), file_alignment);
+    rose_addr_t file_offset = alignDown(section->get_offset(), file_alignment);
 
     /* Align the preferred relative virtual address downward without regard for the base virtual address, and do not adjust
      * mapped size. */
-    rose_addr_t mapped_va = header->get_base_va() + ALIGN_DN(section->get_mapped_preferred_rva(), mapped_alignment);
+    rose_addr_t mapped_va = header->get_base_va() + alignDown(section->get_mapped_preferred_rva(), mapped_alignment);
 
     *malign_lo_p = mapped_alignment;
     *malign_hi_p = 1;

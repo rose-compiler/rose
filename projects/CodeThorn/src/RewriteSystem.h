@@ -14,19 +14,26 @@ struct RewriteStatistics {
   int numVariableElim;
   int numArrayUpdates; // number of array updates (i.e. assignments)
   int numConstExprElim; // number of const-expr found and substituted by constant (new rule, includes variables)
+  // resets all statistics counters to 0.
   void reset();
-  string toString();
+  std::string toString();
+  // create a comma separated value string
+  std::string toCsvString();
 private:
   void init();
 };
 
 class RewriteSystem {
  public:
-  void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapping);
-  void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace=false, bool ruleAddReorder=false);
+  void rewriteCompoundAssignmentsInAst(SgNode* root, SPRAY::VariableIdMapping* variableIdMapping);
+  SgNode* buildRewriteCompoundAssignment(SgNode* root, SPRAY::VariableIdMapping* variableIdMapping);
+  void rewriteCompoundAssignments(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping);
+  void rewriteAst(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping, bool rewriteTrace=false, bool ruleAddReorder=false, bool performCompoundAssignmentsElimination=false);
   RewriteStatistics getStatistics();
   void resetStatistics();
- public:
+  RewriteStatistics getRewriteStatistics();
+  RewriteStatistics* getRewriteStatisticsPtr() { return &dump1_stats; }
+ private:
   RewriteStatistics dump1_stats;
 };
 

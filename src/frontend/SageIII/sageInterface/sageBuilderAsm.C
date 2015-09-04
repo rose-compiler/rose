@@ -3,7 +3,7 @@
 #include "BinaryLoader.h"
 
 #include <boost/foreach.hpp>
-#include <sawyer/CommandLine.h>                         // needed for CommandLine::Parser.programName(), i.e., argv[0]
+#include <Sawyer/CommandLine.h>                         // needed for CommandLine::Parser.programName(), i.e., argv[0]
 
 namespace rose {
 namespace SageBuilderAsm {
@@ -321,24 +321,45 @@ buildTypeI64() {
 SgAsmFloatType*
 buildIeee754Binary32() {
     static SgAsmFloatType *cached = NULL;
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmFloatType(ByteOrder::ORDER_LSB, 32, 0, 23, 31, 23, 8, 127));
+    if (!cached) {
+        SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 32,
+                                                    SgAsmFloatType::BitRange::baseSize(0, 23), // significand
+                                                    SgAsmFloatType::BitRange::baseSize(23, 8), // exponent
+                                                    31,                                        // sign bit
+                                                    127,                                       // exponent bias
+                                                    SgAsmFloatType::NORMALIZED_SIGNIFICAND|SgAsmFloatType::GRADUAL_UNDERFLOW);
+        cached = SgAsmType::registerOrDelete(fpType);
+    }
     return cached;
 }
 
 SgAsmFloatType*
 buildIeee754Binary64() {
     static SgAsmFloatType *cached = NULL;
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmFloatType(ByteOrder::ORDER_LSB, 64, 0, 52, 63, 52, 11, 1023));
+    if (!cached) {
+        SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 64,
+                                                    SgAsmFloatType::BitRange::baseSize(0, 52),  // significand
+                                                    SgAsmFloatType::BitRange::baseSize(52, 11), // exponent
+                                                    63,                                         // sign bit
+                                                    1023,                                       // exponent bias
+                                                    SgAsmFloatType::NORMALIZED_SIGNIFICAND|SgAsmFloatType::GRADUAL_UNDERFLOW);
+        cached = SgAsmType::registerOrDelete(fpType);
+    }
     return cached;
 }
 
 SgAsmFloatType*
 buildIeee754Binary80() {
     static SgAsmFloatType *cached = NULL;
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmFloatType(ByteOrder::ORDER_LSB, 80, 0, 64, 79, 64, 15, 16383));
+    if (!cached) {
+        SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 80,
+                                                    SgAsmFloatType::BitRange::baseSize(0, 64),  // significand
+                                                    SgAsmFloatType::BitRange::baseSize(64, 15), // exponent
+                                                    79,                                         // sign bit
+                                                    16383,                                      // exponent bias
+                                                    SgAsmFloatType::NORMALIZED_SIGNIFICAND|SgAsmFloatType::GRADUAL_UNDERFLOW);
+        cached = SgAsmType::registerOrDelete(fpType);
+    }
     return cached;
 }
 
@@ -387,8 +408,15 @@ buildTypeX86Float80() {
 SgAsmFloatType*
 buildTypeM68kFloat96() {
     static SgAsmFloatType *cached = NULL;
-    if (!cached)
-        cached = new SgAsmFloatType(ByteOrder::ORDER_MSB, 96, 0, 64, 95, 80, 15, 16383);
+    if (!cached) {
+        SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 96,
+                                                    SgAsmFloatType::BitRange::baseSize(0, 64),  // significand
+                                                    SgAsmFloatType::BitRange::baseSize(80, 15), // exponent
+                                                    95,                                         // sign bit
+                                                    16383,                                      // exponent bias
+                                                    SgAsmFloatType::NORMALIZED_SIGNIFICAND|SgAsmFloatType::GRADUAL_UNDERFLOW);
+        cached = SgAsmType::registerOrDelete(fpType);
+    }
     return cached;
 }
 
@@ -683,6 +711,50 @@ buildArmSpecialRegisterList(SgAsmExpression *lhs) {
     return a;
 }
 
+SgAsmRiscOperation*
+buildRiscOperation(SgAsmRiscOperation::RiscOperator op) {
+    SgAsmRiscOperation *retval = new SgAsmRiscOperation(op);
+    SgAsmExprListExp *operands = new SgAsmExprListExp;
+    operands->set_parent(retval);
+    retval->set_operands(operands);
+    return retval;
+}
+
+SgAsmRiscOperation*
+buildRiscOperation(SgAsmRiscOperation::RiscOperator op, SgAsmExpression *e1) {
+    SgAsmRiscOperation *retval = buildRiscOperation(op);
+    appendExpression(retval->get_operands(), e1);
+    return retval;
+}
+
+SgAsmRiscOperation*
+buildRiscOperation(SgAsmRiscOperation::RiscOperator op, SgAsmExpression *e1, SgAsmExpression *e2) {
+    SgAsmRiscOperation *retval = buildRiscOperation(op);
+    appendExpression(retval->get_operands(), e1);
+    appendExpression(retval->get_operands(), e2);
+    return retval;
+}
+
+SgAsmRiscOperation*
+buildRiscOperation(SgAsmRiscOperation::RiscOperator op, SgAsmExpression *e1, SgAsmExpression *e2, SgAsmExpression *e3) {
+    SgAsmRiscOperation *retval = buildRiscOperation(op);
+    appendExpression(retval->get_operands(), e1);
+    appendExpression(retval->get_operands(), e2);
+    appendExpression(retval->get_operands(), e3);
+    return retval;
+}
+
+SgAsmRiscOperation*
+buildRiscOperation(SgAsmRiscOperation::RiscOperator op, SgAsmExpression *e1, SgAsmExpression *e2, SgAsmExpression *e3,
+                   SgAsmExpression *e4) {
+    SgAsmRiscOperation *retval = buildRiscOperation(op);
+    appendExpression(retval->get_operands(), e1);
+    appendExpression(retval->get_operands(), e2);
+    appendExpression(retval->get_operands(), e3);
+    appendExpression(retval->get_operands(), e4);
+    return retval;
+}
+
 // FIXME[Robb P. Matzke 2014-07-21]: deprecated
 SgAsmExprListExp*
 makeExprListExp() {
@@ -692,6 +764,14 @@ makeExprListExp() {
 SgAsmExprListExp*
 buildExprListExpression() {
     return new SgAsmExprListExp();
+}
+
+void
+appendExpression(SgAsmExprListExp *exprList, SgAsmExpression *expr) {
+    ASSERT_not_null(exprList);
+    ASSERT_not_null(expr);
+    expr->set_parent(exprList);
+    exprList->get_expressions().push_back(expr);
 }
 
 SgAsmBlock*

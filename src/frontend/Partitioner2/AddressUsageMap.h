@@ -6,9 +6,9 @@
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/OwnedDataBlock.h>
 
-#include <sawyer/IntervalMap.h>
-#include <sawyer/IntervalSet.h>
-#include <sawyer/Optional.h>
+#include <Sawyer/IntervalMap.h>
+#include <Sawyer/IntervalSet.h>
+#include <Sawyer/Optional.h>
 
 #include <algorithm>
 #include <boost/foreach.hpp>
@@ -318,6 +318,13 @@ public:
     AddressIntervalSet unusedExtent(const AddressInterval&) const;
     AddressIntervalSet unusedExtent(const AddressIntervalSet&) const;
     /** @} */
+
+    /** Next unused address interval.
+     *
+     *  Returns the next address interval that begins at or after the specified address and which does not correspond to any
+     *  instruction, basic block, data block, or function. The largest such interval is returned, but it will not contain any
+     *  values less than @p minVa. Returns an empty interval if no such interval exists. */
+    AddressInterval nextUnused(rose_addr_t minVa) const;
 
     /** Determines whether an instruction exists in the map.
      *

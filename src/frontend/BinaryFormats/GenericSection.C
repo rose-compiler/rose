@@ -4,8 +4,10 @@
 #include "sage3basic.h"
 #include "stringify.h"
 #include "MemoryMap.h"
+#include "Diagnostics.h"
 
 using namespace rose;
+using namespace rose::Diagnostics;
 
 /** Section constructors set the optional section header relationship--a bidirectional link between this new section and its
  *  optional, single header.  This new section points to its header and the header contains a list that points to this new
@@ -76,14 +78,14 @@ SgAsmGenericSection::align()
 
     if (get_file_alignment()>0) {
         rose_addr_t old_offset = get_offset();
-        rose_addr_t new_offset = ALIGN_UP(old_offset, get_file_alignment());
+        rose_addr_t new_offset = alignUp(old_offset, get_file_alignment());
         set_offset(new_offset);
         changed = changed ? true : (old_offset!=new_offset);
     }
 
     if (is_mapped() && get_mapped_alignment()>0) {
         rose_addr_t old_rva = get_mapped_preferred_rva();
-        rose_addr_t new_rva = ALIGN_UP(old_rva, get_mapped_alignment());
+        rose_addr_t new_rva = alignUp(old_rva, get_mapped_alignment());
         set_mapped_preferred_rva(new_rva);
         changed = changed ? true : (old_rva!=new_rva);
     }
@@ -401,22 +403,16 @@ SgAsmGenericSection::read_content_str(rose_addr_t abs_offset, bool strict)
 std::string
 SgAsmGenericSection::read_content_local_str(rose_addr_t rel_offset, bool strict)
 {
-    static char *buf=NULL;
-    static size_t nalloc=0;
-    size_t nused=0;
-
+    std::string retval;
     while (1) {
-        if (nused >= nalloc) {
-            nalloc = std::max((size_t)32, 2*nalloc);
-            buf = (char*)realloc(buf, nalloc);
-            ROSE_ASSERT(buf!=NULL);
+        char ch;
+        if (read_content_local(rel_offset+retval.size(), &ch, 1, strict)) {
+            if ('\0'==ch)
+                return retval;
+            retval += ch;
+        } else {
+            return retval;
         }
-
-        unsigned char byte;
-        read_content_local(rel_offset+nused, &byte, 1, strict);
-        if (!byte)
-            return std::string(buf, nused);
-        buf[nused++] = byte;
     }
 }
 
@@ -516,16 +512,16 @@ SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, 
         if (((const char*)buf)[i]) {
             char mesg[1024];
             sprintf(mesg, "non-zero value truncated: buf[0x%zx]=0x%02x", i, ((const unsigned char*)buf)[i]);
-            fprintf(stderr, "SgAsmGenericSection::write: error: %s", mesg);
-            fprintf(stderr, " in [%d] \"%s\"\n", get_id(), get_name()->get_string(true).c_str());
-            fprintf(stderr, "    section is at file offset 0x%08"PRIx64" (%"PRIu64"), size 0x%"PRIx64" (%"PRIu64") bytes\n", 
-                    get_offset(), get_offset(), get_size(), get_size());
-            fprintf(stderr, " write %zu byte%s at section offset 0x%08"PRIx64"\n", bufsize, 1==bufsize?"":"s", offset);
-            fprintf(stderr, "      ");
+            mlog[ERROR] <<"SgAsmGenericSection::write: error: " <<mesg
+                        <<" in [" <<get_id() <<"] \"" <<get_name()->get_string(true) <<"\"\n"
+                        <<"    section is at file offset " <<StringUtility::addrToString(get_offset())
+                        <<" size " <<StringUtility::plural(get_size(), "bytes") <<"\n"
+                        <<"    write " <<StringUtility::plural(bufsize, "bytes")
+                        <<" at section offset " <<StringUtility::addrToString(offset) <<"\n";
             HexdumpFormat hf;
             hf.prefix = "      ";
-            hexdump(stderr, get_offset()+offset, (const unsigned char*)buf, bufsize, hf);
-            fprintf(stderr, "\n");
+            hexdump(mlog[ERROR], get_offset()+offset, (const unsigned char*)buf, bufsize, hf);
+            mlog[ERROR] <<"\n";
             throw SgAsmGenericFile::ShortWrite(this, offset, bufsize, mesg);
         }
     }

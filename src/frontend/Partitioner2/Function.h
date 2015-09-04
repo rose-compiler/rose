@@ -1,12 +1,15 @@
 #ifndef ROSE_Partitioner2_Function_H
 #define ROSE_Partitioner2_Function_H
 
+#include <BaseSemantics2.h>
+#include <BinaryCallingConvention.h>
 #include <Partitioner2/Attribute.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/DataBlock.h>
 
-#include <sawyer/Map.h>
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/Cached.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/SharedPointer.h>
 
 #include <set>
 #include <string>
@@ -15,6 +18,9 @@
 namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
+
+/** Shared-ownership pointer for function. */
+typedef Sawyer::SharedPointer<class Function> FunctionPtr;
 
 /** Describes one function.
  *
@@ -34,16 +40,29 @@ public:
                      OWN_EXPLICIT,                      /**< Function owns the block explicitly, the normal ownership. */
                      OWN_PROVISIONAL,                   /**< Function might own the block in the future. */
     };
-    typedef Sawyer::SharedPointer<Function> Ptr;
+
+    /** Shared-ownership pointer for function. */
+    typedef FunctionPtr Ptr;
 
 private:
     rose_addr_t entryVa_;                               // entry address; destination for calls to this function
     std::string name_;                                  // optional function name
+    std::string comment_;                               // optional multi-line, plain-text, commment
     unsigned reasons_;                                  // reason bits from SgAsmFunction::FunctionReason
     std::set<rose_addr_t> bblockVas_;                   // addresses of basic blocks
     std::vector<DataBlock::Ptr> dblocks_;               // data blocks owned by this function, sorted by starting address
     bool isFrozen_;                                     // true if function is represented by the CFG
+    CallingConvention::Analysis ccAnalysis_;            // analysis showing how registers etc. are used
 
+    // The following members are caches either because their value is seldom needed and expensive to compute, or because the
+    // value is best computed at a higher layer (e.g., in the partitioner) yet it makes the most sense to store it here. Make
+    // sure clearCache() resets these to initial values.
+    Sawyer::Cached<InstructionSemantics2::BaseSemantics::SValuePtr> stackDelta_;// net change in stack pointer
+
+    void clearCache() {
+        stackDelta_.clear();
+    }
+    
 protected:
     // Use instance() instead
     explicit Function(rose_addr_t entryVa, const std::string &name, unsigned reasons)
@@ -74,6 +93,15 @@ public:
     void name(const std::string &name) { name_ = name; }
     /** @} */
 
+    /** Optional function comment.
+     *
+     *  Comments are multi-line, plain-text (not HTML), ASCII.
+     *
+     * @{ */
+    const std::string& comment() const { return comment_; }
+    void comment(const std::string &s) { comment_ = s; }
+    /** @} */
+
     /** Function reasons.  These are SgAsmFunction::FunctionReason bits.
      *
      *  @{ */
@@ -96,6 +124,7 @@ public:
      *  specified address is already part of the function then it is not added a second time. */
     void insertBasicBlock(rose_addr_t bblockVa) {       // no-op if exists
         ASSERT_forbid(isFrozen_);
+        clearCache();
         bblockVas_.insert(bblockVa);
     }
 
@@ -107,6 +136,7 @@ public:
     void eraseBasicBlock(rose_addr_t bblockVa) {        // no-op if not existing
         ASSERT_forbid(isFrozen_);
         ASSERT_forbid2(bblockVa==entryVa_, "function entry block cannot be removed");
+        clearCache();
         bblockVas_.erase(bblockVa);
     }
 
@@ -134,8 +164,47 @@ public:
      *  a frozen state; detaching a function from the CFG thaws it. */
     bool isFrozen() const { return isFrozen_; }
 
+    /** True if function is a thunk.
+     *
+     *  This function is a thunk if it is marked as such in its reason codes via @ref SgAsmFunction::FUNC_THUNK and it has
+     *  exactly one basic block.
+     *
+     *  See also, @ref Partitioner::functionThunkTarget that is a stronger predicate and also returns the address of the thunk
+     *  target. */
+    bool isThunk() const;
+
     /** Number of basic blocks in the function. */
     size_t nBasicBlocks() const { return bblockVas_.size(); }
+
+    /** Property: Stack delta.
+     *
+     *  The stack delta is the net change in the stack pointer between the entrance to the function and its return.
+     *  See @ref Partitioner::functionStackDelta for details about how it is computed and what it means.
+     *
+     *  This property is updated by a specific stack delta analysis, which usually runs faster than a more complete data-flow
+     *  analysis. However, the @ref callingConventionAnalysis results might also contain a stack delta as a concrete value, and
+     *  that analysis is more complete.
+     *
+     * @{ */
+    const Sawyer::Cached<InstructionSemantics2::BaseSemantics::SValuePtr>& stackDelta() const { return stackDelta_; }
+
+    /** Property: Calling convention analysis results.
+     *
+     *  This property holds the results from calling convention analysis. It contains information about what registers and
+     *  stack locations are accessed and whether they serve as inputs or outputs and which registers are used but restored
+     *  before returning (callee-saved).  It also stores a concrete stack delta.  The analysis is not updated by this class;
+     *  objects of this class only store the results provided by something else.
+     *
+     *  The analysis itself does not fully describe a calling convention since a function might not use all features of the
+     *  calling convention.  For instance, a no-op function could match any number of calling convention definitions.
+     *
+     *  The @c hasResults and @c didConverge methods invoked on the return value will tell you whether an analysis has run and
+     *  whether the results are valid, respectively.
+     *
+     * @{ */
+    const CallingConvention::Analysis& callingConventionAnalysis() const { return ccAnalysis_; }
+    CallingConvention::Analysis& callingConventionAnalysis() { return ccAnalysis_; }
+    /** @} */
 
     /** A printable name for the function.  Returns a string like 'function 0x10001234 "main"'.  The function name is not
      *  included if the name is empty. */

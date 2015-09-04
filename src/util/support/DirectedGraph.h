@@ -1,3 +1,4 @@
+// See also Sawyer::Container::Graph ($ROSE/src/util/Sawyer/Graph.h)
 
 #ifndef DIRECTED_GRAPH_IMPL
 #define DIRECTED_GRAPH_IMPL

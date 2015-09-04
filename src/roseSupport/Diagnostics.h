@@ -2,8 +2,13 @@
 #ifndef ROSE_Diagnostics_H
 #define ROSE_Diagnostics_H
 
-#include "sawyer/Assert.h"
-#include "sawyer/Message.h"
+#include "Sawyer/Assert.h"
+#include "Sawyer/Message.h"
+
+// How failed assertions behave
+#define ROSE_ASSERTION_ABORT    1                       // call abort()
+#define ROSE_ASSERTION_EXIT     2                       // call exit(1)
+#define ROSE_ASSERTION_THROW    3                       // throw rose::Diagnostics::FailedAssertion
 
 namespace rose {
 
@@ -11,7 +16,7 @@ namespace rose {
  *
  *  ROSE uses the free [Sawyer](http://github.com/matzke1/sawyer) library to emit diagnostic messages for events such as
  *  debugging, program tracing, informational messages, warning and error messages, progress reports, and runtime logic
- *  assertions. The Sawyer message support can be found in the Sawyer::Message name space in "sawyer/Message.h", and the
+ *  assertions. The Sawyer message support can be found in the Sawyer::Message name space in "Sawyer/Message.h", and the
  *  run-time logic assertions can be found in the Sawyer::Assert name space in "assert/Assert.h" (which also defines a number
  *  of C preprocessor macros whose names begin with "ASSERT_".
  *
@@ -321,8 +326,8 @@ public:
  * locally defined @c mlog.  Therefore, a "using namespace rose::Diagnostics" probably needs to be in effect. */
 StreamPrintf mfprintf(std::ostream &stream);
 
-// See mfprintf
-#define mprintf mfprintf(mlog[rose::Diagnostics::DEBUG]) /*"mlog" must be resolved at point where macro is expanded*/
+// See mfprintf. "mlog" must be resolved at point where macro is expanded.
+#define mprintf rose::Diagnostics::mfprintf(mlog[rose::Diagnostics::DEBUG]) 
 
 } // namespace
 } // namespace

@@ -473,7 +473,7 @@ public:
         if (1==cells.size())
             return cells.front().value();
         // FIXME: This makes no attempt to remove duplicate values
-        TreeNodePtr expr = LeafNode::create_memory(8);
+        TreeNodePtr expr = LeafNode::create_memory(addr.get_expression()->get_nbits(), 8);
         for (typename CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
             expr = InternalNode::create(8, InsnSemanticsExpr::OP_WRITE,
                                         expr, ci->address().get_expression(), ci->value().get_expression());
@@ -671,13 +671,13 @@ protected:
                                          *   read so that subsequent reads from the same address will return the
                                          *   same value. */
     bool p_discard_popped_memory;       /**< Property that determines how the stack behaves.  When set, any time
-                                         * the stack pointer is adjusted, memory below the stack pointer and having
-                                         * the same address name as the stack pointer is removed (the memory
-                                         * location becomes undefined). The default is false, that is, no special
-                                         * treatment for the stack. */
+                                         *   the stack pointer is adjusted, memory below the stack pointer and having
+                                         *   the same address name as the stack pointer is removed (the memory
+                                         *   location becomes undefined). The default is false, that is, no special
+                                         *   treatment for the stack. */
     size_t ninsns;                      /**< Total number of instructions processed. This is incremented by
-                                         * startInstruction(), which is the first thing called by
-                                         * X86InstructionSemantics::processInstruction(). */
+                                         *   startInstruction(), which is the first thing called by
+                                         *   X86InstructionSemantics::processInstruction(). */
     SMTSolver *solver;                  /**< The solver to use for Satisfiability Modulo Theory, or NULL. */
 
 public:
@@ -1094,6 +1094,14 @@ depending on whether the loop is to be taken again, or not.\n");
     /** See NullSemantics::Policy::undefined_() */
     template <size_t Len>
     ValueType<Len> undefined_() const {
+        ValueType<Len> retval;
+        retval.defined_by(cur_insn);
+        return retval;
+    }
+
+    /** See NullSemantics::Policy::unspecified_() */
+    template <size_t Len>
+    ValueType<Len> unspecified_() const {
         ValueType<Len> retval;
         retval.defined_by(cur_insn);
         return retval;

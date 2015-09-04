@@ -8,17 +8,23 @@ INCLUDES = $(ROSE_INCLUDES)
 # makefile.
 noinst_LTLIBRARIES = libPartitioner.la
 
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 libPartitioner_la_SOURCES =			\
 	AddressUsageMap.C			\
 	Attribute.C				\
 	BasicBlock.C				\
+	CfgPath.C				\
+	Config.C				\
 	ControlFlowGraph.C			\
 	DataBlock.C				\
+	DataFlow.C				\
 	Engine.C				\
 	Exception.C				\
 	Function.C				\
 	FunctionCallGraph.C			\
+	GraphViz.C				\
 	InstructionProvider.C			\
+	MayReturnAnalysis.C			\
 	Modules.C				\
 	ModulesElf.C				\
 	ModulesM68k.C				\
@@ -26,5 +32,10 @@ libPartitioner_la_SOURCES =			\
 	ModulesX86.C				\
 	OwnedDataBlock.C			\
 	Partitioner.C				\
+	Reference.C				\
 	Semantics.C				\
+	StackDeltaAnalysis.C			\
 	Utility.C
+else
+libPartitioner_la_SOURCES = dummyPartitioner2.C
+endif

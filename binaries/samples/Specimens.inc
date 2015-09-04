@@ -120,9 +120,12 @@ elf_exe_x86_specimens =				\
     i386-fnstsw					\
     i386-fst					\
     i386-int3					\
+    i386-lea					\
     i386-mixed					\
+    i386-mov					\
     i386-mul					\
     i386-nologin				\
+    i386-noop					\
     i386-overlap				\
     i386-pop					\
     i386-pivot_root				\
@@ -133,6 +136,7 @@ elf_exe_x86_specimens =				\
     i386-stmxcsr				\
     i386-wait					\
     i386-taintflow1				\
+    i386-thunks-7				\
     i686-test1.O0.bin				\
     i686-test1.O3-stripped.bin			\
     i686-test1.O3.bin				\
@@ -191,13 +195,18 @@ other_distributed =				\
     i386-fnstsw.s				\
     i386-fst.s					\
     i386-int3.s					\
+    i386-lea.s					\
     i386-mixed.s				\
+    i386-mov.s					\
     i386-mul.s					\
+    i386-noop.s					\
     i386-overlap.s				\
     i386-pop.s					\
     i386-pushfd.s				\
     i386-pxor.s					\
     i386-stmxcsr.s				\
+    i386-taintedflow1.c				\
+    i386-thunks-7.s				\
     i386-wait.s					\
     memreadwrite.s				\
     pentium-movd.s				\

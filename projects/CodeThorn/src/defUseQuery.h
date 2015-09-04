@@ -18,6 +18,7 @@
 #include "VariableIdUtils.h"
 
 using namespace CodeThorn;
+using namespace SPRAY;
 
 // VariableId is short hand for named memory
 // locations
@@ -169,6 +170,10 @@ DefUseVarsInfo(const VarsInfo& _def_info, const VarsInfo& _use_info, const Funct
 
   // for more readability
   std::string str(VariableIdMapping& vidm);  
+
+  // Add VariableIds corresponding to all elements of *array_name* to
+  // *dev_vars_info* or *use_vars_info* depending on *def*.
+  void addAllArrayElements(SgInitializedName* array_name, VariableIdMapping& vidm, bool def);
 };
 
 // used by the getDefUseVarsInfo_rec to traverse the 

@@ -652,12 +652,23 @@ StatementReplace (SgStatement *parent, Elemtype *& cur, SgStatement *target, SgS
 #endif
 
           cur = static_cast<Elemtype *>(newstmt);
-          parent->set_isModified(true);
+#if 0
+          if (SgProject::get_verbose() >= 1)
+             {
+               printf ("In StatementReplace: test 1: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+             }
+#endif
+       // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+       // parent->set_isModified(true);
+
           return true;
         }
      return false;
    }
 #else
+
+#error "DEAD CODE!"
+
 // DQ (12/30/2009): This is an attempt to build a more portable function to support new smaller ROSETTA generated files.
 // If we want to build this as a non-template function then we will have to reference "SgLocatedNode *& cur" as 
 // "SgLocatedNode ** cur" (or perhaps using SgStatement), else the types prevent the function from working.
@@ -679,6 +690,9 @@ StatementReplace (SgStatement *parent, SgStatement *& cur, SgStatement *target, 
         }
      return false;
    }
+
+#error "DEAD CODE!"
+
 #endif
 
 #if 0
@@ -1054,7 +1068,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
   // void testAstForUniqueNodes ( SgNode* node );
 
 #if 0
-     printf ("In StatementListInsertChild: l.size() = %zu \n",l.size());
+     printf ("In StatementListInsertChild: l.size() = %" PRIuPTR " \n",l.size());
      printf ("In StatementListInsertChild: inFront  = %s \n",inFront ? "true" : "false");
      printf ("In StatementListInsertChild: parent   = %p \n",parent);
      printf ("In StatementListInsertChild: target   = %p \n",target);
@@ -1087,8 +1101,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                   {
                  // DQ (9/27/2007): Reported as an error by STL debugging mode, fixed as part of move from std::list to std::vector uniformly in ROSE.
                     l.erase(l.begin() + p);
-
-                    parent->set_isModified(true);
+#if 0
+                    if (SgProject::get_verbose() >= 1)
+                       {
+                         printf ("In StatementListInsertChild: test 1: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                       }
+#endif
+                 // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                 // parent->set_isModified(true);
                   }
 
                if (!inFront)
@@ -1190,7 +1210,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                       // n->set_scope(parentScope);
 
                          l.insert(l.begin() + p, static_cast<Elemtype*>(n));
-                         parent->set_isModified(true);
+#if 0
+                         if (SgProject::get_verbose() >= 1)
+                            {
+                              printf ("In StatementListInsertChild: test 2: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                            }
+#endif
+                      // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                      // parent->set_isModified(true);
 
                       // DQ (4/3/2012): Added test to make sure that the pointers are unique.
                       // testAstForUniqueNodes(parentScope);
@@ -1222,7 +1249,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                       // n->set_scope(parentScope);
 
                          l.insert(l.begin() + p, static_cast<Elemtype*>(stmt));
-                         parent->set_isModified(true);
+#if 0
+                         if (SgProject::get_verbose() >= 1)
+                            {
+                              printf ("In StatementListInsertChild: test 3: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                            }
+#endif
+                      // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                      // parent->set_isModified(true);
 
                       // DQ (4/3/2012): Added test to make sure that the pointers are unique.
                       // testAstForUniqueNodes(parentScope);
@@ -1360,6 +1394,19 @@ HEADER_FORALL_STATEMENT_START
 HEADER_FORALL_STATEMENT_END
 
 
+
+HEADER_MATLAB_FOR_STATEMENT_START
+/*#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual bool cfgIsIndexInteresting(unsigned int) const;
+          virtual unsigned int cfgFindChildIndex(SgNode* n);
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif*/
+HEADER_MATLAB_FOR_STATEMENT_END
+
+
 HEADER_CATCH_STATEMENT_SEQ_START
 HEADER_LIST_DECLARATIONS
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -1473,6 +1520,34 @@ HEADER_LIST_DECLARATIONS
 
        // DQ (12/22/2014): Adding support for EDG normalized template member and non-member functions.
           bool isNormalizedTemplateFunction() const;
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length_for_return_type() const;
+          void set_name_qualification_length_for_return_type(int name_qualification_length_for_return_type);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required_for_return_type() const;
+          void set_type_elaboration_required_for_return_type(bool type_elaboration_required_for_return_type);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required_for_return_type() const;
+          void set_global_qualification_required_for_return_type(bool global_qualification_required_for_return_type);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_requiresNameQualificationOnReturnType () const;
+          void set_requiresNameQualificationOnReturnType ( bool requiresNameQualificationOnReturnType );
 
 HEADER_FUNCTION_DECLARATION_STATEMENT_END
 
@@ -1852,6 +1927,22 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
           void unsetVolatileAttribute();
 #endif
 
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_requiresGlobalNameQualificationOnType () const;
+          void set_requiresGlobalNameQualificationOnType ( bool requiresGlobalNameQualificationOnType );
+
   // DQ (12/21/2011): Modified to support SgTemplateVariableDeclaration to use this function.
   // private:
      protected:
@@ -1930,6 +2021,18 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
 
      protected:
        // GB (09/26/2007): Added this function as part of the move to index-based traversals.
@@ -2585,6 +2688,22 @@ HEADER_TYPEDEF_DECLARATION_STATEMENT_START
       //! This function generates the qualified name prefix to be used with the base type of the typedef declaration.
           SgName get_qualified_name_prefix_for_base_type() const;
 
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_requiresGlobalNameQualificationOnType() const;
+          void set_requiresGlobalNameQualificationOnType(bool requiresGlobalNameQualificationOnType);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length_for_base_type() const;
+          void set_name_qualification_length_for_base_type(int name_qualification_length_for_base_type);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required_for_base_type() const;
+          void set_type_elaboration_required_for_base_type(bool type_elaboration_required_for_base_type);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required_for_base_type() const;
+          void set_global_qualification_required_for_base_type(bool global_qualification_required_for_base_type);
+
      private:
        // GB (09/25/2007): Added this function as part of the traversal island fix.
       //! Internal support for the traversal mechanism.
@@ -3008,6 +3127,18 @@ HEADER_NAMESPACE_ALIAS_DECLARATION_STATEMENT_START
        // DQ (8/30/2009): Added namespace alias support.
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
+
 HEADER_NAMESPACE_ALIAS_DECLARATION_STATEMENT_END
 
 HEADER_USING_DIRECTIVE_STATEMENT_START
@@ -3020,6 +3151,18 @@ HEADER_USING_DIRECTIVE_STATEMENT_START
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
           virtual SgName get_mangled_name(void) const;
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
 
 HEADER_USING_DIRECTIVE_STATEMENT_END
 
@@ -3036,6 +3179,18 @@ HEADER_USING_DECLARATION_STATEMENT_START
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
           virtual SgName get_mangled_name(void) const;
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          int get_name_qualification_length() const;
+          void set_name_qualification_length(int name_qualification_length);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool type_elaboration_required);
+
+       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool global_qualification_required);
 
 HEADER_USING_DECLARATION_STATEMENT_END
 
@@ -3715,7 +3870,7 @@ void
 SgStatement::insert_statement(SgStatement* target, const SgStatementPtrList& newstmtList, bool inFront)
    {
 #if 0
-      printf ("In SgStatement::insert_statement(): insert newstmtList.size() = %zu before/after target = %p = %s \n",newstmtList.size(),target,target->class_name().c_str());
+      printf ("In SgStatement::insert_statement(): insert newstmtList.size() = %" PRIuPTR " before/after target = %p = %s \n",newstmtList.size(),target,target->class_name().c_str());
 #endif
 
      SgBasicBlock* tmp = new SgBasicBlock();
@@ -4035,13 +4190,23 @@ SgStatement::get_scope(void) const
                  // expression (test case is tests/CompileTests/Cxx_tests/test2006_148.C), so we need to skip over non-statements
                     SgNode* stmtTemp = stmt;
                     do {
-                      // printf ("In SgStatement::get_scope(): (do-while loop) stmtTemp = %p = %s \n",stmtTemp,stmtTemp->class_name().c_str());
+#if 0
+                         printf ("In SgStatement::get_scope(): (do-while loop) stmtTemp = %p = %s \n",stmtTemp,stmtTemp->class_name().c_str());
+#endif
                          stmtTemp = stmtTemp->get_parent();
                        }
                  // while (stmtTemp && !isSgStatement(stmtTemp));
                  // while ((stmtTemp != NULL) && !isSgStatement(stmtTemp));
-                    while ((stmtTemp != NULL) && (isSgStatement(stmtTemp) == NULL) && (isSgArrayType(stmtTemp) == NULL));
+                 // while ((stmtTemp != NULL) && (isSgStatement(stmtTemp) == NULL) && (isSgArrayType(stmtTemp) == NULL));
+                    while ((stmtTemp != NULL) && (isSgStatement(stmtTemp) == NULL) && (isSgArrayType(stmtTemp) == NULL) && (isSgTypeOfType(stmtTemp) == NULL) );
 
+                 // DQ (5/13/2015): Added debugging support.
+                    if (stmtTemp == NULL)
+                       {
+                          printf ("Error: stmtTemp == NULL: in loop over parents from stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                          ROSE_ASSERT(stmt->get_file_info() != NULL);
+                          stmt->get_file_info()->display("Error: SgStatement has NULL parent");
+                       }
                     ROSE_ASSERT (stmtTemp != NULL);
                     stmt = isSgStatement(stmtTemp);
 
@@ -4064,9 +4229,12 @@ SgStatement::get_scope(void) const
                        }
                       else
                        {
+                      // DQ (5/16/2015): This can also be the SgTypeOf operator.
                       // DQ (2/17/2014): This must be the case of an SgArrayType (not clear what to do here, return NULL).
                          SgArrayType* arrayType = isSgArrayType(stmtTemp);
-                         ROSE_ASSERT(arrayType != NULL);
+                         SgTypeOfType* typeOfType = isSgTypeOfType(stmtTemp);
+                      // ROSE_ASSERT(arrayType != NULL);
+                         ROSE_ASSERT(arrayType != NULL || typeOfType != NULL);
 #if 0
                          printf ("In get_scope(): identified input node to be part of SgArrayType: returning NULL \n");
 #endif
@@ -4348,6 +4516,13 @@ void
 SgScopeStatement::set_type_elaboration_list ( const std::set<SgSymbol*> & type_elaboration_list )
    {
      assert (this != NULL);
+
+#if 1
+  // DQ (6/12/2015): Need to evluate if this is used, if it is part of the API that must not set the isModified, etc.
+     printf ("Inside of SgScopeStatement::set_type_elaboration_list(): we need to know if this is called! \n");
+     ROSE_ASSERT(false);
+#endif
+
      set_isModified(true);
      p_type_elaboration_list = type_elaboration_list;
    }
@@ -4364,6 +4539,13 @@ void
 SgScopeStatement::set_hidden_type_list ( const std::set<SgSymbol*> & hidden_type_list )
    {
      assert (this != NULL);
+
+#if 1
+  // DQ (6/12/2015): Need to evluate if this is used, if it is part of the API that must not set the isModified, etc.
+     printf ("Inside of SgScopeStatement::set_type_elaboration_list(): we need to know if this is called! \n");
+     ROSE_ASSERT(false);
+#endif
+
      set_isModified(true);
      p_hidden_type_list = hidden_type_list;
    }
@@ -4380,6 +4562,13 @@ void
 SgScopeStatement::set_hidden_declaration_list ( const std::set<SgSymbol*> & hidden_declaration_list )
    {
      assert (this != NULL);
+
+#if 1
+  // DQ (6/12/2015): Need to evluate if this is used, if it is part of the API that must not set the isModified, etc.
+     printf ("Inside of SgScopeStatement::set_type_elaboration_list(): we need to know if this is called! \n");
+     ROSE_ASSERT(false);
+#endif
+
      set_isModified(true);
      p_hidden_declaration_list = hidden_declaration_list;
    }
@@ -4536,6 +4725,10 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
    {
      assert (p_symbol_table != NULL);
 
+#if 0
+     printf ("TOP SgScopeStatement::insert_symbol(%s,%p) into scope = %p = %s symbol = %p = %s \n",n.str(),s,this,this->class_name().c_str(),s,s->class_name().c_str());
+#endif
+
   // DQ (5/9/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4589,6 +4782,58 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
              }
           ROSE_ASSERT(namespaceDefinitionStatement == globalNamespaceDefinitionStatement || aliasSymbol != NULL);
 #endif
+        }
+
+  // DQ (2/27/2015): This is the problem that is causing test2014_83.C, test2014_88.C, test2014_89.C, and test2014_90.C to fail in the development branch.
+  // TV (7/18/2013): If this is a Global Scope then insert an alias in the project wide Global Scope
+  // TODO: Check that the symbol have project wide visibility (static function in C)
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) 
+        {
+       // DQ (2/28/2015): Original code.
+       // SgAliasSymbol* aliasSymbol = new SgAliasSymbol(s);
+
+          SgProject * project = SageInterface::getProject(global_scope);
+          if (project != NULL) 
+             {
+               SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+               assert(globalScopeAcrossFiles != NULL);
+
+            // DQ (2/28/2015): Added assertion (fails for snippet injection and for some java support).
+            // ROSE_ASSERT(global_scope != globalScopeAcrossFiles);
+               if (global_scope != globalScopeAcrossFiles)
+                  {
+                 // DQ (2/28/2015): We need to handle the case where the input symbol "s" is a SgAliasSymbol.
+                    SgAliasSymbol* aliasSymbol = NULL;
+                    SgAliasSymbol* tmp_aliasSymbol = isSgAliasSymbol(s);
+                    if (tmp_aliasSymbol != NULL)
+                       {
+                      // Call the copy constructor in this case (maybe this detail should be buried into the semantics of the SgAliasSymbol constructor call).
+                         aliasSymbol = new SgAliasSymbol(*tmp_aliasSymbol);
+                       }
+                      else
+                       {
+                         aliasSymbol = new SgAliasSymbol(s);
+                       }
+#if 0
+                    printf ("In SgScopeStatement::insert_symbol(): Insert SgAliasSymbol = %p for input symbol = %p = %s into the globalScopeAcrossFiles = %p global_scope = %p \n",
+                         aliasSymbol,s,s->class_name().c_str(),globalScopeAcrossFiles,global_scope);
+#endif
+                    globalScopeAcrossFiles->get_symbol_table()->insert(n,aliasSymbol);
+                  }
+                 else
+                  {
+#if 1
+                    printf ("Warning: In SgScopeStatement::insert_symbol(): global_scope == globalScopeAcrossFiles: skip insertion of redundant SgAliasSymbol \n");
+#endif
+                  }
+             }
+            else
+             {
+#if 0
+               printf ("In SgScopeStatement::insert_symbol(): project == NULL \n");
+#endif
+             }
         }
 
 #if 0
@@ -4646,7 +4891,15 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
         }
 #endif
 
+#if 0
+     printf ("In SgScopeStatement::insert_symbol(%s,%p) into scope = %p = %s symbol = %p = %s \n",n.str(),s,this,this->class_name().c_str(),s,s->class_name().c_str());
+#endif
+
      p_symbol_table->insert(n,s);
+
+#if 0
+     printf ("Leaving SgScopeStatement::insert_symbol() \n");
+#endif
    }
 
 void
@@ -4693,6 +4946,22 @@ SgScopeStatement::remove_symbol ( SgSymbol* s )
              }
         }
 
+  // TV (7/18/2013): If this is a Global Scope then remove the alias symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+
+         SgName n = s->get_name();
+
+         SgSymbol * aliasSymbol = globalScopeAcrossFiles->get_symbol_table()->find_aliased_symbol(n,s);
+         if (aliasSymbol != NULL)
+           globalScopeAcrossFiles->get_symbol_table()->remove(aliasSymbol);
+       }
+     }
+
      p_symbol_table->remove(s);
    }
 
@@ -4700,6 +4969,9 @@ SgScopeStatement::remove_symbol ( SgSymbol* s )
 int
 SgScopeStatement::lookup_symbol(const SgName& n, SgSymbol *s) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4709,11 +4981,19 @@ SgScopeStatement::lookup_symbol(const SgName& n, SgSymbol *s) const
 
           return globalNamespaceDefinitionStatement->get_symbol_table()->find(n,s);
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-          return p_symbol_table->find(n,s);
-        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         return globalScopeAcrossFiles->get_symbol_table()->find(n,s) || p_symbol_table->find(n,s);
+       }
+     }
+
+     return p_symbol_table->find(n,s);
    }
 
   // first symbol with n
@@ -4721,23 +5001,32 @@ SgScopeStatement::lookup_symbol(const SgName& n, SgSymbol *s) const
 SgSymbol*
 SgScopeStatement::lookup_symbol(const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
         {
           ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-
-       // SgSymbol* symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find_any(n);
           SgSymbol* symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find_any(n,templateParameterList,templateArgumentList);
           return symbol;
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-       // return p_symbol_table->find_any(n);
-          return p_symbol_table->find_any(n,templateParameterList,templateArgumentList);
-        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_any(n,templateParameterList,templateArgumentList);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_any(n,templateParameterList,templateArgumentList);
    }
 
 // DQ (1/30/2007): Added these back into ROSE.
@@ -4746,6 +5035,9 @@ SgScopeStatement::lookup_symbol(const SgName& n, SgTemplateParameterPtrList* tem
 SgTypedefSymbol*
 SgScopeStatement::lookup_typedef_symbol(const SgName& n) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4756,11 +5048,20 @@ SgScopeStatement::lookup_typedef_symbol(const SgName& n) const
           SgTypedefSymbol* symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find_typedef(n);
           return symbol;
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-          return p_symbol_table->find_typedef(n);
-        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgTypedefSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_typedef(n);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_typedef(n);
    }
 
 // DQ (1/30/2007): Added these back into ROSE.
@@ -4769,7 +5070,9 @@ SgScopeStatement::lookup_typedef_symbol(const SgName& n) const
 SgEnumSymbol*
 SgScopeStatement::lookup_enum_symbol(const SgName& n) const
    {
-#if 1
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4780,15 +5083,20 @@ SgScopeStatement::lookup_enum_symbol(const SgName& n) const
           SgEnumSymbol* symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find_enum(n);
           return symbol;
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-          return p_symbol_table->find_enum(n);
-        }
-#else
-     assert (p_symbol_table != NULL);
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgEnumSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_enum(n);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
      return p_symbol_table->find_enum(n);
-#endif
    }
 
 // DQ (1/30/2007): Added these back into ROSE.
@@ -4797,7 +5105,9 @@ SgScopeStatement::lookup_enum_symbol(const SgName& n) const
 SgEnumFieldSymbol*
 SgScopeStatement::lookup_enum_field_symbol(const SgName& n) const
    {
-#if 1
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4808,15 +5118,20 @@ SgScopeStatement::lookup_enum_field_symbol(const SgName& n) const
           SgEnumFieldSymbol* symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find_enum_field(n);
           return symbol;
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-          return p_symbol_table->find_enum_field(n);
-        }
-#else
-     assert (p_symbol_table != NULL);
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgEnumFieldSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_enum_field(n);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
      return p_symbol_table->find_enum_field(n);
-#endif
    }
 
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
@@ -4834,7 +5149,6 @@ SgScopeStatement::lookup_variable_symbol(const SgName& n) const
      ROSE_ASSERT (this != NULL);
      ROSE_ASSERT (p_symbol_table != NULL);
 
-#if 1
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4843,19 +5157,23 @@ SgScopeStatement::lookup_variable_symbol(const SgName& n) const
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
 
           SgVariableSymbol* symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find_variable(n);
-#if 0
-          printf ("symbol from namespace's global_definition(): name = %s symbol = %p = %s \n",n.str(),symbol,symbol != NULL ? symbol->class_name().c_str() : "NULL");
-#endif
-       // DQ (5/19/2013): The find_variable() function will resolve the SgAliasSymbol to its alias.
+
           return symbol;
         }
-       else
-        {
-          return p_symbol_table->find_variable(n);
-        }
-#else
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgVariableSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_variable(n);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
      return p_symbol_table->find_variable(n);
-#endif
    }
 
 
@@ -4867,6 +5185,9 @@ SgScopeStatement::lookup_variable_symbol(const SgName& n) const
 SgClassSymbol*
 SgScopeStatement::lookup_class_symbol(const SgName& n) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4875,19 +5196,30 @@ SgScopeStatement::lookup_class_symbol(const SgName& n) const
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
           return globalNamespaceDefinitionStatement->get_symbol_table()->find_class(n);
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-          return p_symbol_table->find_class(n);
-        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgClassSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_class(n);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_class(n);
    }
 #endif
 
 SgClassSymbol*
 SgScopeStatement::lookup_class_symbol(const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const
    {
-  // DQ (8/22/2012): We need more information to disambiguate where template argument name qualification would be important. See test2012_195.C.
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
 
+  // DQ (8/22/2012): We need more information to disambiguate where template argument name qualification would be important. See test2012_195.C.
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4896,11 +5228,20 @@ SgScopeStatement::lookup_class_symbol(const SgName& n, SgTemplateArgumentPtrList
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
           return globalNamespaceDefinitionStatement->get_symbol_table()->find_class(n,templateArgumentsList);
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-          return p_symbol_table->find_class(n,templateArgumentsList);
-        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgClassSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_class(n,templateArgumentsList);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_class(n,templateArgumentsList);
    }
 
 // DQ (1/30/2007): Added these back into ROSE.
@@ -4909,6 +5250,9 @@ SgScopeStatement::lookup_class_symbol(const SgName& n, SgTemplateArgumentPtrList
 SgLabelSymbol*
 SgScopeStatement::lookup_label_symbol(const SgName& n) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4917,11 +5261,20 @@ SgScopeStatement::lookup_label_symbol(const SgName& n) const
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
           return globalNamespaceDefinitionStatement->get_symbol_table()->find_label(n);
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-          return p_symbol_table->find_label(n);
-        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgLabelSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_label(n);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_label(n);
    }
 
 //
@@ -4930,7 +5283,9 @@ SgScopeStatement::lookup_label_symbol(const SgName& n) const
 SgJavaLabelSymbol*
 SgScopeStatement::lookup_java_label_symbol(const SgName& n) const
    {
-     assert (p_symbol_table != NULL);
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
      return p_symbol_table->find_java_label(n);
    }
 
@@ -4942,6 +5297,9 @@ SgScopeStatement::lookup_java_label_symbol(const SgName& n) const
 SgFunctionSymbol*
 SgScopeStatement::lookup_function_symbol(const SgName& n, const SgType* t, SgTemplateArgumentPtrList* templateArgumentsList) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4951,12 +5309,20 @@ SgScopeStatement::lookup_function_symbol(const SgName& n, const SgType* t, SgTem
        // return globalNamespaceDefinitionStatement->get_symbol_table()->find_function(n,t);
           return globalNamespaceDefinitionStatement->get_symbol_table()->find_function(n,t,templateArgumentsList);
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-       // return p_symbol_table->find_function(n,t);
-          return p_symbol_table->find_function(n,t,templateArgumentsList);
-        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+          assert(globalScopeAcrossFiles != NULL);
+         SgFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_function(n,t,templateArgumentsList);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_function(n,t,templateArgumentsList);
    }
 
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
@@ -4965,6 +5331,9 @@ SgScopeStatement::lookup_function_symbol(const SgName& n, const SgType* t, SgTem
 SgFunctionSymbol*
 SgScopeStatement::lookup_function_symbol(const SgName& n) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4973,135 +5342,21 @@ SgScopeStatement::lookup_function_symbol(const SgName& n) const
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
           return globalNamespaceDefinitionStatement->get_symbol_table()->find_function(n);
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-          return p_symbol_table->find_function(n);
-        }
-   }
-/*
-SgMemberFunctionSymbol*
-SgScopeStatement::lookup_member_function_symbol(const SgName& n, const SgType* t) const
-   {
-     ROSE_ASSERT (this != NULL);
-     ROSE_ASSERT (p_symbol_table != NULL);
-
-  // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
-     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
-     if (namespaceDefinitionStatement != NULL)
-        {
-          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
-          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-          return globalNamespaceDefinitionStatement->get_symbol_table()->find_nontemplate_member_function(n,t);
-        }
 
   // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) {
        SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgMemberFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_nontemplate_member_function(n,t);
-       if (symbol != NULL) return symbol;
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_function(n);
+         if (symbol != NULL) return symbol;
+       }
      }
 
-     return p_symbol_table->find_nontemplate_member_function(n,t);
+     return p_symbol_table->find_function(n);
    }
-
-// DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
-// DQ (5/22/2006): I would like to restrict support of a number of functions that I 
-// think are redundant with the simple lookup_symbol(const SgName& n) (above).
-SgMemberFunctionSymbol*
-SgScopeStatement::lookup_member_function_symbol(const SgName& n) const
-   {
-     ROSE_ASSERT (this != NULL);
-     ROSE_ASSERT (p_symbol_table != NULL);
-
-  // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
-     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
-     if (namespaceDefinitionStatement != NULL)
-        {
-          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
-          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-          return globalNamespaceDefinitionStatement->get_symbol_table()->find_nontemplate_member_function(n);
-        }
-
-  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
-     const SgGlobal * global_scope = isSgGlobal(this);
-     if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_nontemplate_member_function(n);
-       if (symbol != NULL) return symbol;
-     }
-
-     return p_symbol_table->find_nontemplate_member_function(n);
-   }
-
-SgTemplateMemberFunctionSymbol*
-SgScopeStatement::lookup_member_function_symbol(const SgName& n, const SgType* t) const
-   {
-     ROSE_ASSERT (this != NULL);
-     ROSE_ASSERT (p_symbol_table != NULL);
-
-  // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
-     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
-     if (namespaceDefinitionStatement != NULL)
-        {
-          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
-          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_member_function(n,t);
-        }
-
-  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
-     const SgGlobal * global_scope = isSgGlobal(this);
-     if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgTemplateMemberFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_member_function(n,t);
-       if (symbol != NULL) return symbol;
-     }
-
-     return p_symbol_table->find_template_member_function(n,t);
-   }
-
-// DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
-// DQ (5/22/2006): I would like to restrict support of a number of functions that I 
-// think are redundant with the simple lookup_symbol(const SgName& n) (above).
-SgTemplateMemberFunctionSymbol*
-SgScopeStatement::lookup_member_function_symbol(const SgName& n) const
-   {
-     ROSE_ASSERT (this != NULL);
-     ROSE_ASSERT (p_symbol_table != NULL);
-
-  // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
-     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
-     if (namespaceDefinitionStatement != NULL)
-        {
-          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
-          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_member_function(n);
-        }
-
-  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
-     const SgGlobal * global_scope = isSgGlobal(this);
-     if (global_scope != NULL) {
-       SgProject * project = SageInterface::getProject(global_scope);
-       assert(project != NULL);
-       SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-       assert(globalScopeAcrossFiles != NULL);
-       SgTemplateFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_member_function(n);
-       if (symbol != NULL) return symbol;
-     }
-
-     return p_symbol_table->find_template_member_function(n);
-   }
-*/
 
 // DQ (1/30/2007): Added these back into ROSE.
 // DQ (5/22/2006): I would like to restrict support of a number of functions that I 
@@ -5109,24 +5364,31 @@ SgScopeStatement::lookup_member_function_symbol(const SgName& n) const
 SgNamespaceSymbol*
 SgScopeStatement::lookup_namespace_symbol ( const SgName & n ) const
    {
-#if 1
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
         {
           ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
-          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
+          const SgNamespaceDefinitionStatement * globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
           return globalNamespaceDefinitionStatement->get_symbol_table()->find_namespace(n);
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-          return p_symbol_table->find_namespace(n);
-        }
-#else
-     assert (p_symbol_table != NULL);
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgNamespaceSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_namespace(n);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
      return p_symbol_table->find_namespace(n);
-#endif
    }
 
 
@@ -5136,6 +5398,9 @@ SgScopeStatement::lookup_namespace_symbol ( const SgName & n ) const
 SgTemplateSymbol*
 SgScopeStatement::lookup_template_symbol (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -5144,11 +5409,20 @@ SgScopeStatement::lookup_template_symbol (const SgName& n, SgTemplateParameterPt
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
           return globalNamespaceDefinitionStatement->get_symbol_table()->find_template(n,templateParameterList,templateSpecializationArgumentList);
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-          return p_symbol_table->find_template(n,templateParameterList,templateSpecializationArgumentList);
-        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgTemplateSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template(n,templateParameterList,templateSpecializationArgumentList);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_template(n,templateParameterList,templateSpecializationArgumentList);
    }
 #endif
 
@@ -5156,6 +5430,9 @@ SgScopeStatement::lookup_template_symbol (const SgName& n, SgTemplateParameterPt
 SgTemplateClassSymbol*
 SgScopeStatement::lookup_template_class_symbol (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList ) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -5167,11 +5444,20 @@ SgScopeStatement::lookup_template_class_symbol (const SgName& n, SgTemplateParam
 #endif
           return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_class(n, templateParameterList, templateSpecializationArgumentList);
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-          return p_symbol_table->find_template_class(n, templateParameterList, templateSpecializationArgumentList);
-        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgTemplateClassSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_class(n, templateParameterList, templateSpecializationArgumentList);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_template_class(n, templateParameterList, templateSpecializationArgumentList);
    }
 
 // DQ (8/22/2012): If we have template arguments then we have a chance to disambiguate SgTemplateInstantiationDecl IR nodes based on the
@@ -5180,6 +5466,9 @@ SgScopeStatement::lookup_template_class_symbol (const SgName& n, SgTemplateParam
 SgClassSymbol*
 SgScopeStatement::lookup_nontemplate_class_symbol (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -5187,22 +5476,34 @@ SgScopeStatement::lookup_nontemplate_class_symbol (const SgName& n, SgTemplateAr
           ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
 #if 0
-          printf ("In SgScopeStatement::lookup_nontemplate_class_symbol(): name = %s templateArgumentsList = %p size = %zu globalNamespaceDefinitionStatement = %p = %s \n",
+          printf ("In SgScopeStatement::lookup_nontemplate_class_symbol(): name = %s templateArgumentsList = %p size = %" PRIuPTR " globalNamespaceDefinitionStatement = %p = %s \n",
                n.str(),templateArgumentsList,(templateArgumentsList != NULL ? templateArgumentsList->size() : 0),globalNamespaceDefinitionStatement,globalNamespaceDefinitionStatement->class_name().c_str());
 #endif
           return globalNamespaceDefinitionStatement->get_symbol_table()->find_nontemplate_class(n,templateArgumentsList);
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-          return p_symbol_table->find_nontemplate_class(n,templateArgumentsList);
-        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgClassSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_nontemplate_class(n,templateArgumentsList);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_nontemplate_class(n,templateArgumentsList);
    }
 
 // SgTemplateFunctionSymbol* SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const
 SgTemplateFunctionSymbol*
 SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -5213,13 +5514,20 @@ SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType
        // return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_function(n,t,templateParameterList,templateSpecializationArgumentList);
           return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_function(n,t,templateParameterList);
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-       // return p_symbol_table->find_template_function(n,t);
-       // return p_symbol_table->find_template_function(n,t,templateParameterList,templateSpecializationArgumentList);
-          return p_symbol_table->find_template_function(n,t,templateParameterList);
-        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgTemplateFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_function(n,t,templateParameterList);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_template_function(n,t,templateParameterList);
    }
 
 // DQ (8/10/2013): Modified version of function to support template arguments (where used).
@@ -5227,6 +5535,9 @@ SgScopeStatement::lookup_template_function_symbol (const SgName& n, const SgType
 SgFunctionSymbol*
 SgScopeStatement::lookup_nontemplate_function_symbol (const SgName& n, const SgType* t, SgTemplateArgumentPtrList* templateArgumentsList) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -5235,17 +5546,29 @@ SgScopeStatement::lookup_nontemplate_function_symbol (const SgName& n, const SgT
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
           return globalNamespaceDefinitionStatement->get_symbol_table()->find_nontemplate_function(n,t,templateArgumentsList);
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-          return p_symbol_table->find_nontemplate_function(n,t,templateArgumentsList);
-        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_nontemplate_function(n,t,templateArgumentsList);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_nontemplate_function(n,t,templateArgumentsList);
    }
 
 // SgTemplateMemberFunctionSymbol* SgScopeStatement::lookup_template_member_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const
 SgTemplateMemberFunctionSymbol*
 SgScopeStatement::lookup_template_member_function_symbol (const SgName& n, const SgType* t, SgTemplateParameterPtrList* templateParameterList) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -5256,13 +5579,20 @@ SgScopeStatement::lookup_template_member_function_symbol (const SgName& n, const
        // return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_member_function(n,t,templateParameterList,templateSpecializationArgumentList);
           return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_member_function(n,t,templateParameterList);
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-       // return p_symbol_table->find_template_member_function(n,t);
-       // return p_symbol_table->find_template_member_function(n,t,templateParameterList,templateSpecializationArgumentList);
-          return p_symbol_table->find_template_member_function(n,t,templateParameterList);
-        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgTemplateMemberFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_member_function(n,t,templateParameterList);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_template_member_function(n,t,templateParameterList);
    }
 
 
@@ -5270,6 +5600,9 @@ SgScopeStatement::lookup_template_member_function_symbol (const SgName& n, const
 SgMemberFunctionSymbol*
 SgScopeStatement::lookup_nontemplate_member_function_symbol (const SgName& n, const SgType* t, SgTemplateArgumentPtrList* templateArgumentsList) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
   // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -5279,12 +5612,20 @@ SgScopeStatement::lookup_nontemplate_member_function_symbol (const SgName& n, co
        // return globalNamespaceDefinitionStatement->get_symbol_table()->find_nontemplate_member_function(n,t);
           return globalNamespaceDefinitionStatement->get_symbol_table()->find_nontemplate_member_function(n,t,templateArgumentsList);
         }
-       else
-        {
-          assert (p_symbol_table != NULL);
-       // return p_symbol_table->find_nontemplate_member_function(n,t);
-          return p_symbol_table->find_nontemplate_member_function(n,t,templateArgumentsList);
-        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+         SgMemberFunctionSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_nontemplate_member_function(n,t,templateArgumentsList);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+     return p_symbol_table->find_nontemplate_member_function(n,t,templateArgumentsList);
    }
 
 
@@ -5301,7 +5642,6 @@ SgScopeStatement::find_symbol_from_declaration(const T* node) const
 
      return p_symbol_table->find(node);
    }
-
 
 // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
 // DQ (5/22/2006): I would like to restrict support of a number of functions that I 
@@ -5593,6 +5933,9 @@ SgScopeStatement::containsOnlyDeclarations() const
 
        // DQ (11/27/2011): Adding more support for template declarations in the AST.
           case V_SgTemplateFunctionDefinition:
+
+      // SK (08/06/2015): Adding SgMatlabForStatement that represents Matlab for loop
+          case V_SgMatlabForStatement:
 
           case V_SgIfStmt:
           case V_SgSwitchStatement:
@@ -6015,7 +6358,7 @@ SgScopeStatement::generateStatementList()
              }
         }
 
-  // printf ("In generateStatementList(): returnList.size() = %zu \n",returnList.size());
+  // printf ("In generateStatementList(): returnList.size() = %" PRIuPTR " \n",returnList.size());
 
      return returnList;
    }
@@ -6172,6 +6515,18 @@ SgScopeStatement::getStatementList ()
                currentStatementList = &(doStatement->get_body()->getStatementList());
                break;
              }
+
+	     //SK(08/06/2015): Adding support for MatlabForStatement:
+	case V_SgMatlabForStatement:
+	    {
+	      SgMatlabForStatement *matlabForStatement = isSgMatlabForStatement(currentScope);
+	      ROSE_ASSERT(matlabForStatement != NULL);
+	      ROSE_ASSERT (matlabForStatement->get_body() != NULL);
+
+	      currentStatementList = &(matlabForStatement->get_body()->getStatementList());
+	      break;
+	    }
+
 
           default:
                printf ("ERROR: default reached in switch (getStatementList()) currentScope = %s \n",currentScope->sage_class_name());
@@ -6374,6 +6729,16 @@ SgScopeStatement::getStatementList () const
                break;
              }
 
+	case V_SgMatlabForStatement:
+	    {
+	      const SgMatlabForStatement *matlabForStatement = isSgMatlabForStatement(currentScope);
+	      ROSE_ASSERT(matlabForStatement != NULL);
+	      ROSE_ASSERT(matlabForStatement->get_body() != NULL);
+
+	      return matlabForStatement->get_body()->getStatementList();
+	      break;
+	    }
+
           case V_SgForAllStatement:
              { 
                const SgForAllStatement* forAllScope = isSgForAllStatement(currentScope);
@@ -6476,7 +6841,7 @@ SgScopeStatement::generateStatementList() const
              }
         }
 
-  // printf ("In generateStatementList(): returnList.size() = %zu \n",returnList.size());
+  // printf ("In generateStatementList(): returnList.size() = %" PRIuPTR " \n",returnList.size());
 
      return returnList;
    }
@@ -7804,7 +8169,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
           if ( ( (appendTemplateArguments == true) && (templateArgListPtr->size() > 0) ) && (skipEmptyTemplateArgumentList == false) )
              {
 #if 0
-               printf ("In $CLASSNAME::resetTemplateName(): templateArgListPtr->size() = %zu \n",templateArgListPtr->size());
+               printf ("In $CLASSNAME::resetTemplateName(): templateArgListPtr->size() = %" PRIuPTR " \n",templateArgListPtr->size());
 #endif
 
                returnName += " < ";
@@ -9148,6 +9513,11 @@ SgDeclarationStatement::get_type() const
   // DQ (3/15/2014): Added warning since we don't want to be calling this function (unless we make it virtual).
      printf ("WARNING: Non-virtual base class SgDeclarationStatement::get_type() called: this = %p = %s \n",this,this->class_name().c_str());
 
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      return NULL;
    }
 
@@ -9669,6 +10039,15 @@ SgForAllStatement::post_construction_initialization()
    }
 
 SOURCE_FORALL_STATEMENT_END
+
+
+SOURCE_MATLAB_FOR_STATEMENT_START
+void
+SgMatlabForStatement::post_construction_initialization()
+   {
+   }
+SOURCE_MATLAB_FOR_STATEMENT_END
+
 
 SOURCE_UPC_FORALL_STATEMENT_START
 
@@ -10746,6 +11125,130 @@ SgFunctionDeclaration::isNormalizedTemplateFunction() const
         }
 
      return string_represents_function_body;
+   }
+
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgFunctionDeclaration::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgFunctionDeclaration::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+bool 
+SgFunctionDeclaration::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgFunctionDeclaration::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgFunctionDeclaration::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgFunctionDeclaration::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
+bool 
+SgFunctionDeclaration::get_requiresNameQualificationOnReturnType () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_requiresNameQualificationOnReturnType;
+   }
+
+void
+SgFunctionDeclaration::set_requiresNameQualificationOnReturnType ( bool requiresNameQualificationOnReturnType )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_requiresNameQualificationOnReturnType = requiresNameQualificationOnReturnType;
+   }
+
+
+int
+SgFunctionDeclaration::get_name_qualification_length_for_return_type() const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length_for_return_type;
+   }
+
+void
+SgFunctionDeclaration::set_name_qualification_length_for_return_type(int name_qualification_length_for_return_type)
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length_for_return_type = name_qualification_length_for_return_type;
+   }
+
+bool
+SgFunctionDeclaration::get_type_elaboration_required_for_return_type() const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required_for_return_type;
+   }
+
+void
+SgFunctionDeclaration::set_type_elaboration_required_for_return_type(bool type_elaboration_required_for_return_type)
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required_for_return_type = type_elaboration_required_for_return_type;
+   }
+
+bool
+SgFunctionDeclaration::get_global_qualification_required_for_return_type() const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required_for_return_type;
+   }
+
+void
+SgFunctionDeclaration::set_global_qualification_required_for_return_type(bool global_qualification_required_for_return_type)
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required_for_return_type = global_qualification_required_for_return_type;
    }
 
 
@@ -12435,6 +12938,77 @@ SgVariableDeclaration::set_baseTypeDefiningDeclaration(SgDeclarationStatement* d
         }
    }
 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgVariableDeclaration::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgVariableDeclaration::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+bool 
+SgVariableDeclaration::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgVariableDeclaration::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgVariableDeclaration::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgVariableDeclaration::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
+bool 
+SgVariableDeclaration::get_requiresGlobalNameQualificationOnType () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_requiresGlobalNameQualificationOnType;
+   }
+
+void
+SgVariableDeclaration::set_requiresGlobalNameQualificationOnType ( bool requiresGlobalNameQualificationOnType )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+     
+     p_requiresGlobalNameQualificationOnType = requiresGlobalNameQualificationOnType;
+   }
 
 SOURCE_VARIABLE_DECLARATION_STATEMENT_END
 
@@ -12855,6 +13429,61 @@ SgClassDeclaration::compute_classDefinition() const
         }
    }
 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgClassDeclaration::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgClassDeclaration::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+bool 
+SgClassDeclaration::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgClassDeclaration::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgClassDeclaration::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgClassDeclaration::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
 SOURCE_CLASS_DECLARATION_STATEMENT_END
 
 SOURCE_STMT_DECLARATION_STATEMENT_START
@@ -12874,7 +13503,7 @@ SgTemplateInstantiationDecl::post_construction_initialization()
   // in some cases is shared with other IR nodes within Sage III.  This is a bug
   // which effects the handling of defining vs. non-defining declarations.
 
-  // printf ("p_templateArguments.size() = %zu \n",p_templateArguments.size());
+  // printf ("p_templateArguments.size() = %" PRIuPTR " \n",p_templateArguments.size());
 
   // DQ (2/17/2007): Set the parents of all template arguments to the template instantiation
   // JJW (8/6/2008): p_templateArguments is not a pointer anymore
@@ -13016,7 +13645,7 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
           ROSE_ASSERT(template_name.is_null() == false);
 
 #if 0
-          printf ("In SgTemplateInstantiationDecl::get_mangled_name(): template_name = %s get_templateArguments().size() = %zu get_scope() = %p \n",template_name.str(),get_templateArguments().size(),get_scope());
+          printf ("In SgTemplateInstantiationDecl::get_mangled_name(): template_name = %s get_templateArguments().size() = %" PRIuPTR " get_scope() = %p \n",template_name.str(),get_templateArguments().size(),get_scope());
 #endif
 
        // DQ (5/31/2012): Added test for template brackets that are caught later in AstConsistencyTests.
@@ -13060,13 +13689,13 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
        // SgName mangledName = mangleTemplate (get_templateName(),get_templateArguments(),get_scope());
           SgName mangledName = mangleTemplate(template_name,get_templateArguments(),get_scope());
 #if 0
-          printf ("After mangleTemplate(): get_templateArguments().size() = %zu mangledName = %s \n",get_templateArguments().size(),mangledName.str());
+          printf ("After mangleTemplate(): get_templateArguments().size() = %" PRIuPTR " mangledName = %s \n",get_templateArguments().size(),mangledName.str());
 #endif
           ROSE_ASSERT(get_firstNondefiningDeclaration() != NULL);
 #if 0
-          printf ("After mangleTemplate(): get_firstNondefiningDeclaration()->get_templateArguments().size() = %zu \n",isSgTemplateInstantiationDecl(get_firstNondefiningDeclaration())->get_templateArguments().size());
+          printf ("After mangleTemplate(): get_firstNondefiningDeclaration()->get_templateArguments().size() = %" PRIuPTR " \n",isSgTemplateInstantiationDecl(get_firstNondefiningDeclaration())->get_templateArguments().size());
           if (get_definingDeclaration() != NULL)
-               printf ("After mangleTemplate(): get_definingDeclaration()->get_templateArguments().size() = %zu \n",isSgTemplateInstantiationDecl(get_definingDeclaration())->get_templateArguments().size());
+               printf ("After mangleTemplate(): get_definingDeclaration()->get_templateArguments().size() = %" PRIuPTR " \n",isSgTemplateInstantiationDecl(get_definingDeclaration())->get_templateArguments().size());
 #endif
 #if 0
           printf ("In SgTemplateInstantiationDecl::get_mangled_name(): (NOT found in cache) mangledNameString = %s get_name() = %s get_templateName() = %s \n",mangledNameString.c_str(),get_name().str(),get_templateName().str());
@@ -15146,6 +15775,74 @@ SgTypedefDeclaration::get_baseTypeDefiningDeclaration() const
      return compute_baseTypeDefiningDeclaration();
    }
 
+bool 
+SgTypedefDeclaration::get_requiresGlobalNameQualificationOnType () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_requiresGlobalNameQualificationOnType;
+   }
+
+void
+SgTypedefDeclaration::set_requiresGlobalNameQualificationOnType ( bool requiresGlobalNameQualificationOnType )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+     
+     p_requiresGlobalNameQualificationOnType = requiresGlobalNameQualificationOnType;
+   }
+
+int 
+SgTypedefDeclaration::get_name_qualification_length_for_base_type () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length_for_base_type;
+   }
+
+void
+SgTypedefDeclaration::set_name_qualification_length_for_base_type ( int name_qualification_length_for_base_type )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+     
+     p_name_qualification_length_for_base_type = name_qualification_length_for_base_type;
+   }
+
+bool 
+SgTypedefDeclaration::get_type_elaboration_required_for_base_type () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required_for_base_type;
+   }
+
+void
+SgTypedefDeclaration::set_type_elaboration_required_for_base_type ( bool type_elaboration_required_for_base_type )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+     
+     p_type_elaboration_required_for_base_type = type_elaboration_required_for_base_type;
+   }
+
+bool 
+SgTypedefDeclaration::get_global_qualification_required_for_base_type () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required_for_base_type;
+   }
+
+void
+SgTypedefDeclaration::set_global_qualification_required_for_base_type ( bool global_qualification_required_for_base_type )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required_for_base_type = global_qualification_required_for_base_type;
+   }
+
 SOURCE_TYPEDEF_DECLARATION_STATEMENT_END
 
 
@@ -15946,6 +16643,61 @@ SgNamespaceAliasDeclarationStatement::get_symbol_from_symbol_table() const
      return get_scope()->find_symbol_from_declaration(this);
    }
 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgNamespaceAliasDeclarationStatement::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgNamespaceAliasDeclarationStatement::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+bool 
+SgNamespaceAliasDeclarationStatement::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgNamespaceAliasDeclarationStatement::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgNamespaceAliasDeclarationStatement::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgNamespaceAliasDeclarationStatement::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
 SOURCE_NAMESPACE_ALIAS_DECLARATION_STATEMENT_END
 
 SOURCE_NAMESPACE_DEFINITION_STATEMENT_START
@@ -16136,6 +16888,61 @@ SgUsingDirectiveStatement::get_mangled_name(void) const
      return returnName;
    }
 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgUsingDirectiveStatement::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgUsingDirectiveStatement::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+bool 
+SgUsingDirectiveStatement::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgUsingDirectiveStatement::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgUsingDirectiveStatement::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgUsingDirectiveStatement::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
 SOURCE_USING_DIRECTIVE_STATEMENT_END
 
 SOURCE_USING_DECLARATION_STATEMENT_START
@@ -16167,7 +16974,63 @@ SgUsingDeclarationStatement::get_mangled_name(void) const
      return returnName;
    }
 
+// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA 
+// so that we could avoid them setting the isModified flag which is a problem in the
+// name qualification support for C++ (interfering with the token-based unparsing).
+int 
+SgUsingDeclarationStatement::get_name_qualification_length () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_name_qualification_length;
+   }
+
+void
+SgUsingDeclarationStatement::set_name_qualification_length ( int name_qualification_length )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_name_qualification_length = name_qualification_length;
+   }
+
+bool 
+SgUsingDeclarationStatement::get_type_elaboration_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_type_elaboration_required;
+   }
+
+void
+SgUsingDeclarationStatement::set_type_elaboration_required ( bool type_elaboration_required )
+   {
+     ROSE_ASSERT (this != NULL);
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_type_elaboration_required = type_elaboration_required;
+   }
+
+bool 
+SgUsingDeclarationStatement::get_global_qualification_required () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_global_qualification_required;
+   }
+
+void
+SgUsingDeclarationStatement::set_global_qualification_required ( bool global_qualification_required )
+   {
+     ROSE_ASSERT (this != NULL);
+
+  // This can't be called by the name qualification API (see test2015_26.C).
+  // set_isModified(true);
+
+     p_global_qualification_required = global_qualification_required;
+   }
+
 SOURCE_USING_DECLARATION_STATEMENT_END
+
 
 SOURCE_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT_START
 

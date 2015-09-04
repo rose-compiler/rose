@@ -23,6 +23,13 @@ Formatter::rename(uint64_t orig_name)
  *                                      SValue
  *******************************************************************************************************************************/
 
+Sawyer::Optional<BaseSemantics::SValuePtr>
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
+    if (must_equal(other_, solver))
+        return Sawyer::Nothing();
+    return bottom_(get_width());
+}
+
 bool
 SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const 
 {
@@ -115,8 +122,8 @@ RiscOperators::instance(const RegisterDictionary *regdict)
     // extra function calls.
 #endif
 #endif
-    BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-    BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
+    BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
+    MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
     memory->set_byte_restricted(false); // because extracting bytes from a word results in new variables for this domain
     BaseSemantics::StatePtr state = State::instance(registers, memory);
     SMTSolver *solver = NULL;
@@ -546,9 +553,11 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
 {
 #ifndef NDEBUG
     size_t nbits = value->get_width();
-    ASSERT_require(8==nbits || 16==nbits || 32==nbits);
+    ASSERT_require2(nbits % 8 == 0, "write to memory must be in byte units");
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
 #endif
+    if (condition->is_number() && !condition->get_number())
+        return;
 
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
     state->writeMemory(address, value, this, this);
@@ -562,7 +571,9 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
 {
     size_t nbits = dflt_->get_width();
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
-    ASSERT_require(8==nbits || 16==nbits || 32==nbits);
+    ASSERT_require2(nbits % 8 == 0, "read from memory must be in byte units");
+    if (condition->is_number() && !condition->get_number())
+        return dflt_;
 
     // Default values come from an optional memory map if possible, otherwise use the passed-in default.
     BaseSemantics::SValuePtr dflt = dflt_;

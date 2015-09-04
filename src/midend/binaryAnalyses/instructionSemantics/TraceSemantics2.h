@@ -2,7 +2,7 @@
 #define Rose_TraceSemantics2_H
 
 #include "BaseSemantics2.h"
-#include "threadSupport.h"
+#include "Diagnostics.h"
 
 namespace rose {
 namespace BinaryAnalysis {                      // documented elsewhere
@@ -49,9 +49,34 @@ namespace InstructionSemantics2 {               // documented elsewhere
  */
 namespace TraceSemantics {
 
-/*******************************************************************************************************************************
- *                                      RISC Operators
- *******************************************************************************************************************************/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Semantic values
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef void SValue;
+typedef boost::shared_ptr<void> SValuePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Register state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef void RegisterState;
+typedef boost::shared_ptr<void> RegisterStatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Memory state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef void MemoryState;
+typedef boost::shared_ptr<void> MemoryStatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RISC operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
  *  deleted. */
@@ -59,49 +84,36 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Wraps RISC operators so they can be traced. */
 class RiscOperators: public BaseSemantics::RiscOperators {
-protected:
-    class LinePrefix: public RTS_Message::Prefix {
-    private:
-        BaseSemantics::RiscOperatorsPtr ops;
-        SgAsmInstruction *cur_insn;
-        size_t ninsns;
-    public:
-        LinePrefix(): cur_insn(NULL), ninsns(0) {}
-        void set_ops(const BaseSemantics::RiscOperatorsPtr &ops) { this->ops = ops; }
-        void set_insn(SgAsmInstruction *insn);
-        virtual void operator()(FILE*) ROSE_OVERRIDE;
-    };
-
-    BaseSemantics::RiscOperatorsPtr subdomain;          // Domain to which all our RISC operators chain
-    LinePrefix line_prefix;
-    RTS_Message mesg;                                   // Formats tracing output
-
+    BaseSemantics::RiscOperatorsPtr subdomain_;         // Domain to which all our RISC operators chain
+    Sawyer::Message::Stream stream_;                    // stream to which output is emitted
+    size_t nInsns_;                                     // number of instructions processed
+    
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors.
 protected:
     // use the version that takes a subdomain instead of this c'tor
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver), mesg(stderr, &line_prefix) {
+        : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
         set_name("Trace");
     }
 
     // use the version that takes a subdomain instead of this c'tor.
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver), mesg(stderr, &line_prefix) {
+        : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
         set_name("Trace");
     }
 
     explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &subdomain)
-        : BaseSemantics::RiscOperators(subdomain->get_state(), subdomain->get_solver()), subdomain(subdomain),
-          mesg(stderr, &line_prefix) {
+        : BaseSemantics::RiscOperators(subdomain->get_state(), subdomain->get_solver()),
+          subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
         set_name("Trace");
-        line_prefix.set_ops(subdomain);
     }
 
 public:
     virtual ~RiscOperators() {
-        mesg.mesg("operators destroyed");
+        linePrefix();
+        stream_ <<"operators destroyed\n";
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -128,8 +140,7 @@ public:
         RiscOperatorsPtr self = subdomain->get_state()!=NULL ?
                                 RiscOperatorsPtr(new RiscOperators(subdomain->get_state(), subdomain->get_solver())) :
                                 RiscOperatorsPtr(new RiscOperators(subdomain->get_protoval(), subdomain->get_solver()));
-        self->subdomain = subdomain;
-        self->line_prefix.set_ops(subdomain);
+        self->subdomain_ = subdomain;
         return self;
     }
 
@@ -166,31 +177,47 @@ public:
     // Methods first defined at this level of the class hierarchy
 public:
     /** Obtain a pointer to the subdomain's RISC operators.  The subdomain is the one that is being traced. */
-    virtual BaseSemantics::RiscOperatorsPtr get_subdomain() const {
-        return subdomain;
+    virtual BaseSemantics::RiscOperatorsPtr get_subdomain() const ROSE_DEPRECATED("use subdomain instead") {
+        return subdomain();
     }
+
 
     /** Set the subdomain that is to be traced. All our RISC operators will simply chain to the subdomain operators. */
-    void set_subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain) {
-        this->subdomain = subdomain;
-        line_prefix.set_ops(subdomain);
+    void set_subdomain(const BaseSemantics::RiscOperatorsPtr &sd) ROSE_DEPRECATED("use subdomain instead") {
+        subdomain(sd);
     }
 
-    /** Check that we have a valid subdomain.  If the subdomain isn't value (hasn't been set) then throw an exception. */
-    void check_subdomain() const {
-        if (subdomain==NULL)
+    /** Property: Subdomain to which operations are forwarded.
+     *
+     * @{ */
+    const BaseSemantics::RiscOperatorsPtr& subdomain() const { return subdomain_; }
+    void subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain) { subdomain_ = subdomain; }
+    /** @} */
+
+    /** Check that we have a valid subdomain.  If the subdomain isn't value (hasn't been set) then throw an exception.
+     *
+     *  @{ */
+    void check_subdomain() const ROSE_DEPRECATED("use checkSubodmain instead") {
+        checkSubdomain();
+    }
+    void checkSubdomain() const {
+        if (subdomain_==NULL)
             throw BaseSemantics::Exception("subdomain is not set; nothing to trace", NULL);
     }
+    /** @} */
 
-    /** Set the I/O stream to which tracing will be emitted.  The default is standard error. */
-    void set_stream(FILE *f) { mesg.set_file(f); }
-
-    /** Obtain the I/O stream to which tracing is being emitted. */
-    FILE *get_stream() const { return mesg.get_file(); }
-        
+    /** Property: output stream to which tracing is emitted.  The default is the INFO stream of the
+     * rose::BinaryAnalysis::InstructionSemantics2 message facility. Output will only show up when this stream is enabled.
+     *
+     * @{ */
+    Sawyer::Message::Stream& stream() { return stream_; }
+    void stream(Sawyer::Message::Stream &s) { stream_ = s; }
+    /** @} */
 
 protected:
+    void linePrefix();
     std::string toString(const BaseSemantics::SValuePtr&);
+    std::string toString(SgAsmFloatType*);
     void check_equal_widths(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
     const BaseSemantics::SValuePtr &check_width(const BaseSemantics::SValuePtr &a, size_t nbits,
                                                 const std::string &what="result");
@@ -203,7 +230,7 @@ protected:
                 size_t);
     void before(const std::string&, const RegisterDescriptor&, const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
                 const BaseSemantics::SValuePtr&);
-    void before(const std::string&, SgAsmInstruction*);
+    void before(const std::string&, SgAsmInstruction*, bool showAddress);
     void before(const std::string&, size_t);
     void before(const std::string&, size_t, uint64_t);
     void before(const std::string&, const BaseSemantics::SValuePtr&);
@@ -212,6 +239,10 @@ protected:
     void before(const std::string&, const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
     void before(const std::string&, const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
                 const BaseSemantics::SValuePtr&);
+    void before(const std::string&, const BaseSemantics::SValuePtr&, SgAsmFloatType*);
+    void before(const std::string&, const BaseSemantics::SValuePtr&, SgAsmFloatType*, const BaseSemantics::SValuePtr&);
+    void before(const std::string&, const BaseSemantics::SValuePtr&, SgAsmFloatType*, SgAsmFloatType*);
+    void before(const std::string&, const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&, SgAsmFloatType*);
 
     void after();
     const BaseSemantics::SValuePtr& after(const BaseSemantics::SValuePtr&);
@@ -235,8 +266,10 @@ public:
     virtual void finishInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
     
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr boolean_(bool value) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) ROSE_OVERRIDE;
 
     virtual BaseSemantics::SValuePtr filterCallTarget(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr filterReturnTarget(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
@@ -246,43 +279,71 @@ public:
     virtual BaseSemantics::SValuePtr rdtsc() ROSE_OVERRIDE;
 
     // The actual RISC operators. These are pure virtual in the base class
-    virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr or_(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr xor_(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr invert(const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr extract(const BaseSemantics::SValuePtr&, size_t begin_bit, size_t end_bit);
-    virtual BaseSemantics::SValuePtr concat(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr leastSignificantSetBit(const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr mostSignificantSetBit(const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr rotateLeft(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr rotateRight(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr shiftLeft(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
+    virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr or_(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr xor_(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr invert(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr extract(const BaseSemantics::SValuePtr&, size_t begin_bit, size_t end_bit) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr concat(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr leastSignificantSetBit(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr mostSignificantSetBit(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr rotateLeft(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr rotateRight(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr shiftLeft(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr shiftRight(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr shiftRightArithmetic(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr&);
+    virtual BaseSemantics::SValuePtr shiftRightArithmetic(const BaseSemantics::SValuePtr&,
+                                                          const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr ite(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
-                                         const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr unsignedExtend(const BaseSemantics::SValuePtr&, size_t nbits);
-    virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr&, size_t nbits);
-    virtual BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
+                                         const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr unsignedExtend(const BaseSemantics::SValuePtr&, size_t nbits) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr&, size_t nbits) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
-                                                    const BaseSemantics::SValuePtr&, BaseSemantics::SValuePtr&/*out*/);
-    virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr signedModulo(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr signedMultiply(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr unsignedDivide(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr unsignedModulo(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
-    virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
+                                                    const BaseSemantics::SValuePtr&,
+                                                    BaseSemantics::SValuePtr&/*out*/) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr signedModulo(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr signedMultiply(const BaseSemantics::SValuePtr&,
+                                                    const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr unsignedDivide(const BaseSemantics::SValuePtr&,
+                                                    const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr unsignedModulo(const BaseSemantics::SValuePtr&,
+                                                    const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr&,
+                                                      const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
 
     virtual void interrupt(int majr, int minr);
 
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&);
-    virtual void writeRegister(const RegisterDescriptor&, const BaseSemantics::SValuePtr&);
+    virtual BaseSemantics::SValuePtr fpFromInteger(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpToInteger(const BaseSemantics::SValuePtr&, SgAsmFloatType*,
+                                                 const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpConvert(const BaseSemantics::SValuePtr&, SgAsmFloatType*, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpIsNan(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpIsDenormalized(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpIsZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpIsInfinity(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpSign(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpEffectiveExponent(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpAdd(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
+                                           SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpSubtract(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
+                                                SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpMultiply(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
+                                                SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpDivide(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
+                                              SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpSquareRoot(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpRoundTowardZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&) ROSE_OVERRIDE;
+    virtual void writeRegister(const RegisterDescriptor&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond);
+                                                const BaseSemantics::SValuePtr &dflt,
+                                                const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
     virtual void writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
-                             const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond);
+                             const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 };
 
 } // namespace

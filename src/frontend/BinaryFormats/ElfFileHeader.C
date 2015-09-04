@@ -1,6 +1,9 @@
 /* ELF File Header (SgAsmElfFileHeader and related classes) */
 
 #include "sage3basic.h"
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
 
 /** Construct a new ELF File Header with default values. The new section is placed at file offset zero and the size is
  *  initially one byte (calling parse() will extend it as necessary). Setting the initial size of non-parsed sections to a
@@ -84,7 +87,7 @@ SgAsmElfFileHeader::machine_to_isa(unsigned machine) const
       default:
         /*FIXME: There's a whole lot more. See Dan's Elf reader. */
         // DQ (10/12/2008): Need more information to address PowerPC support.
-        fprintf(stderr, "Warning: SgAsmElfFileHeader::parse::p_e_machine = 0x%lx (%lu)\n", p_e_machine, p_e_machine);
+        mlog[WARN] <<"SgAsmElfFileHeader::parse::p_e_machine = " <<p_e_machine <<"\n";
         return ISA_OTHER;
     }
 }
@@ -573,7 +576,7 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u%s\n",                           p, w, "e_ident_file_class",     p_e_ident_file_class, class_s);
     fprintf(f, "%s%-*s = %u\n",                             p, w, "e_ident_file_version",   p_e_ident_file_version);
     for (size_t i=0; i < p_e_ident_padding.size(); i++)
-        fprintf(f, "%s%-*s = [%zu] %u\n",                   p, w, "e_ident_padding",     i, p_e_ident_padding[i]);
+        fprintf(f, "%s%-*s = [%" PRIuPTR "] %u\n",                   p, w, "e_ident_padding",     i, p_e_ident_padding[i]);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_type",                 p_e_type);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_machine",              p_e_machine);
     fprintf(f, "%s%-*s = 0x%08lx\n",                        p, w, "e_flags",                p_e_flags);

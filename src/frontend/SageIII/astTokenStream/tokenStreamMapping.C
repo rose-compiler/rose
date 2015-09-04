@@ -443,7 +443,7 @@ TokenMappingTraversal::consistancyCheck()
           ROSE_ASSERT(tokenStreamSequenceVector[i]->node != NULL);
           if (tokenStreamSequenceMap.find(tokenStreamSequenceVector[i]->node) == tokenStreamSequenceMap.end())
              {
-               printf ("Error: cannot find: tokenStreamSequenceVector[i=%zu] = %p node = %p = %s \n",i,tokenStreamSequenceVector[i],tokenStreamSequenceVector[i]->node,tokenStreamSequenceVector[i]->node->class_name().c_str());
+               printf ("Error: cannot find: tokenStreamSequenceVector[i=%" PRIuPTR "] = %p node = %p = %s \n",i,tokenStreamSequenceVector[i],tokenStreamSequenceVector[i]->node,tokenStreamSequenceVector[i]->node->class_name().c_str());
                tokenStreamSequenceVector[i]->node->get_file_info()->display("error: can't find node in tokenStreamSequenceMap: debug");
 
                printf ("Error: TokenStreamSequenceToNodeMapping* element in tokenStreamSequenceVector not found in tokenStreamSequenceMap \n");
@@ -868,7 +868,7 @@ end [shape=Msquare];
      for (size_t i = 0; i < tokenList.size(); i++)
         {
 #if 0
-          printf ("tokenList[i=%zu] = %p \n",i,tokenList[i]);
+          printf ("tokenList[i=%" PRIuPTR "] = %p \n",i,tokenList[i]);
 #endif
           string token_name = "token #";
           token_name += StringUtility::numberToString(i) + "\\n";
@@ -1464,6 +1464,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                  // DQ (10/14/2013): Added consistancy test.
                     consistancyCheck();
 
+#if 0
                  // DQ (1/6/2015): Adding assertions to eliminate possible null entries in the tokenStreamSequenceMap.
                  // ROSE_ASSERT(childAttributes[i].node != NULL);
                     if (childAttributes[i].node == NULL)
@@ -1480,6 +1481,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                          counter++;
                        }
+#endif
 
                  // Look up these children in the tokenStreamSequenceMap
                  // if (tokenStreamSequenceMap.find(childAttributes[i].node) != tokenStreamSequenceMap.end())
@@ -1608,7 +1610,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                              mappingInfo->node,mappingInfo->node->class_name().c_str());
 #endif
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                                        printf ("BEFORE ERASE: tokenStreamSequenceMap.size() = %zu tokenStreamSequenceVector.size() = %zu \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
+                                        printf ("BEFORE ERASE: tokenStreamSequenceMap.size() = %" PRIuPTR " tokenStreamSequenceVector.size() = %" PRIuPTR " \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
 #endif
                                      // Remove the associated token stream subsequence from the map.
                                      // ROSE_ASSERT(tokenStreamSequenceMap.find(mappingInfo->node) != tokenStreamSequenceMap.end());
@@ -1634,7 +1636,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                              printf ("mappingInfo = %p node = %p = %s NOT FOUND in tokenStreamSequenceVector \n",mappingInfo,mappingInfo->node,mappingInfo->node->class_name().c_str());
                                            }
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                                        printf ("AFTER ERASE: tokenStreamSequenceMap.size() = %zu tokenStreamSequenceVector.size() = %zu \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
+                                        printf ("AFTER ERASE: tokenStreamSequenceMap.size() = %" PRIuPTR " tokenStreamSequenceVector.size() = %" PRIuPTR " \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
 #endif
                                      // DQ (10/14/2013): Added consistancy test.
                                         consistancyCheck();
@@ -1672,7 +1674,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
                          ROSE_ASSERT(mappingInfo_to_add != NULL);
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                         printf ("BEFORE erase: tokenToNodeVector.size() = %zu \n",tokenToNodeVector.size());
+                         printf ("BEFORE erase: tokenToNodeVector.size() = %" PRIuPTR " \n",tokenToNodeVector.size());
 #endif
                       // DQ (10/14/2013): Added consistancy test.
                          consistancyCheck();
@@ -1689,7 +1691,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          for (size_t index = 0; index < tokenToNodeEntriesToRemove.size(); index++)
                             {
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                              printf ("tokenToNodeEntriesToRemove[index=%zu] = %p node = %p = %s \n",index,tokenToNodeEntriesToRemove[index],tokenToNodeEntriesToRemove[index]->node,tokenToNodeEntriesToRemove[index]->node->class_name().c_str());
+                              printf ("tokenToNodeEntriesToRemove[index=%" PRIuPTR "] = %p node = %p = %s \n",index,tokenToNodeEntriesToRemove[index],tokenToNodeEntriesToRemove[index]->node,tokenToNodeEntriesToRemove[index]->node->class_name().c_str());
 #endif
                               vector<TokenStreamSequenceToNodeMapping*>::iterator k1,k2;
                               k1 = find(tokenToNodeVector.begin(),tokenToNodeVector.end(),tokenToNodeEntriesToRemove[index]);
@@ -1701,7 +1703,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               ROSE_ASSERT(tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end());
                               ROSE_ASSERT(tokenToNodeEntriesToRemove[index]->node != NULL);
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                              printf ("BEFORE ERASE: tokenStreamSequenceMap.size() = %zu tokenStreamSequenceVector.size() = %zu \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
+                              printf ("BEFORE ERASE: tokenStreamSequenceMap.size() = %" PRIuPTR " tokenStreamSequenceVector.size() = %" PRIuPTR " \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
 #endif
                            // tokenStreamSequenceMap.erase(tokenToNodeEntriesToRemove[index].node);
                            // tokenStreamSequenceMap.erase(tokenStreamSequenceMap.find(tokenToNodeEntriesToRemove[index]->node));
@@ -1712,7 +1714,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                 else
                                  {
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                                   printf ("tokenToNodeEntriesToRemove[index=%zu] = %p node = %p = %s NOT FOUND in tokenStreamSequenceMap \n",
+                                   printf ("tokenToNodeEntriesToRemove[index=%" PRIuPTR "] = %p node = %p = %s NOT FOUND in tokenStreamSequenceMap \n",
                                         index,tokenToNodeEntriesToRemove[index],tokenToNodeEntriesToRemove[index]->node,tokenToNodeEntriesToRemove[index]->node->class_name().c_str());
 #endif
                                  }
@@ -1725,16 +1727,16 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                 else
                                  {
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                                   printf ("tokenToNodeEntriesToRemove[index=%zu] = %p node = %p = %s NOT FOUND in tokenStreamSequenceVector \n",
+                                   printf ("tokenToNodeEntriesToRemove[index=%" PRIuPTR "] = %p node = %p = %s NOT FOUND in tokenStreamSequenceVector \n",
                                         index,tokenToNodeEntriesToRemove[index],tokenToNodeEntriesToRemove[index]->node,tokenToNodeEntriesToRemove[index]->node->class_name().c_str());
 #endif
                                  }
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                              printf ("AFTER ERASE: tokenStreamSequenceMap.size() = %zu tokenStreamSequenceVector.size() = %zu \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
+                              printf ("AFTER ERASE: tokenStreamSequenceMap.size() = %" PRIuPTR " tokenStreamSequenceVector.size() = %" PRIuPTR " \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
 #endif
                             }
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                         printf ("AFTER erase: tokenToNodeVector.size() = %zu \n",tokenToNodeVector.size());
+                         printf ("AFTER erase: tokenToNodeVector.size() = %" PRIuPTR " \n",tokenToNodeVector.size());
 #endif
                       // DQ (10/14/2013): Added consistancy test.
                          consistancyCheck();
@@ -1821,7 +1823,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                printf ("$$$$$$$$$$$$ List the IR nodes that have an identified token subsequence mappings (tokenToNodeVector.size() = %zu): \n",tokenToNodeVector.size());
                for (size_t j = 0; j < tokenToNodeVector.size(); j++)
                   {
-                    printf ("   --- tokenToNodeVector[j=%zu] = %p = %s \n",j,tokenToNodeVector[j]->node,tokenToNodeVector[j]->node->class_name().c_str());
+                    printf ("   --- tokenToNodeVector[j=%" PRIuPTR "] = %p = %s \n",j,tokenToNodeVector[j]->node,tokenToNodeVector[j]->node->class_name().c_str());
                  // printf ("   --- is first child with token mapping = %s \n",(firstChildWithTokenMapping == j) ? "true" : "false");
                  // printf ("   --- is last child with token mapping  = %s \n",(lastChildWithTokenMapping == j) ? "true" : "false");
                     printf ("   --- tokenToNodeVector[j=%zu]->leading_whitespace_start  = %d end = %d \n",j,tokenToNodeVector[j]->leading_whitespace_start,tokenToNodeVector[j]->leading_whitespace_end);
@@ -1972,7 +1974,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
             // ROSE_ASSERT(firstChildWithTokenMapping <= lastChildWithTokenMapping);
 #if 0
-               printf ("tokenToNodeVector.size() = %zu childrenWithoutTokenMappings.size() = %zu \n",tokenToNodeVector.size(),childrenWithoutTokenMappings.size());
+               printf ("tokenToNodeVector.size() = %" PRIuPTR " childrenWithoutTokenMappings.size() = %" PRIuPTR " \n",tokenToNodeVector.size(),childrenWithoutTokenMappings.size());
                printf ("   --- firstChildWithTokenMapping = %d \n",firstChildWithTokenMapping);
                printf ("   --- lastChildWithTokenMapping  = %d \n",lastChildWithTokenMapping);
 #endif
@@ -2019,7 +2021,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                     for (size_t i = 0; i < tokenToNodeVector.size(); i++)
                        {
 #if DEBUG_LEADING_AND_TRAILING_WHITESPACE
-                         printf ("In evaluateSynthesizedAttribute(): tokenToNodeVector[%zu] = %p \n",i,tokenToNodeVector[i]);
+                         printf ("In evaluateSynthesizedAttribute(): tokenToNodeVector[%" PRIuPTR "] = %p \n",i,tokenToNodeVector[i]);
 #endif
                          TokenStreamSequenceToNodeMapping* mappingInfo = tokenToNodeVector[i];
 #if DEBUG_LEADING_AND_TRAILING_WHITESPACE
@@ -2315,15 +2317,19 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                                         if (temp_i == 0 && previous_mappingInfo->node == mappingInfo->node)
                                            {
+#if 0
                                              printf ("WARNING: (in leading whitespace computation): Need logic to look at the outer scope! \n");
                                           // ROSE_ASSERT(false);
+#endif
                                            }
                                       }
 
                                 // DQ (1/28/2015): Added assertion.
                                    if (previous_mappingInfo->node == mappingInfo->node)
                                       {
+#if 0
                                         printf ("WARNING: previous_mappingInfo->node == mappingInfo->node: I think this should not happen! i = %d temp_i = %d \n",i,temp_i);
+#endif
                                       }
                                 // ROSE_ASSERT(previous_mappingInfo->node != mappingInfo->node);
 
@@ -2449,8 +2455,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                                         if (temp_i == 0 && previous_mappingInfo->node == mappingInfo->node)
                                            {
+#if 0
                                              printf ("WARNING: (in trailing whitespace computation): Need logic to look at the outer scope! \n");
                                           // ROSE_ASSERT(false);
+#endif
                                            }
                                       }
 
@@ -2464,7 +2472,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                 // DQ (1/28/2015): Added assertion.
                                    if (previous_mappingInfo->node == mappingInfo->node)
                                       {
+#if 0
                                         printf ("WARNING: previous_mappingInfo->node == mappingInfo->node: I think this should not happen! i = %d temp_i = %d \n",i,temp_i);
+#endif
                                       }
                                 // ROSE_ASSERT(previous_mappingInfo->node != mappingInfo->node);
 
@@ -4352,7 +4362,9 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                  // DQ (1/26/2015): This appears to be triggered by a SgNullStatement.
                     if (subtreeHasValidSourcePosition == true && process_node == false)
                        {
+#if 0
                          printf ("WARNING: This does not make sense: (subtreeHasValidSourcePosition == true && process_node == false): n = %p = %s \n",n,n->class_name().c_str());
+#endif
                       // printf ("ERROR: This does not make sense: (subtreeHasValidSourcePosition == true && process_node == false) \n");
                       // ROSE_ASSERT(false);
                        }
@@ -5608,15 +5620,40 @@ void
 buildTokenStreamFrontier(SgSourceFile* sourceFile)
    {
 #if 0
-     printf ("In buildTokenStreamMapping(): Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+     printf ("In buildTokenStreamFrontier(): Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgStatement*> transformedStatementSet_1 = SageInterface::collectTransformedStatements(sourceFile);
+     printf ("In buildTokenStreamFrontier(): part 1: transformedStatementSet_1.size() = %zu \n",transformedStatementSet_1.size());
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgLocatedNode*> modifiedLocatedNodesSet_1 = SageInterface::collectModifiedLocatedNodes(sourceFile);
+     printf ("In buildTokenStreamFrontier(): part 1: modifiedLocatedNodesSet_1.size() = %zu \n",modifiedLocatedNodesSet_1.size());
+#endif
+
+  // DQ (4/14/2015): After a more detailed evaluation of this function it does not acomplish it's objectives.
   // Note that we first detect the frontier based on a synthysised attribute traversal to record 
   // where nodes can contain transformation even if they are not a transformation directly.
      simpleFrontierDetectionForTokenStreamMapping(sourceFile);
 
 #if 0
-     printf ("In buildTokenStreamMapping(): DONE: Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+     printf ("In buildTokenStreamFrontier(): DONE: Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgStatement*> transformedStatementSet_2 = SageInterface::collectTransformedStatements(sourceFile);
+     printf ("In buildTokenStreamFrontier(): part 2: transformedStatementSet_2.size() = %zu \n",transformedStatementSet_2.size());
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgLocatedNode*> modifiedLocatedNodesSet_2 = SageInterface::collectModifiedLocatedNodes(sourceFile);
+     printf ("In buildTokenStreamFrontier(): part 2: modifiedLocatedNodesSet_2.size() = %zu \n",modifiedLocatedNodesSet_2.size());
 #endif
 
 #if 0
@@ -5624,21 +5661,25 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      ROSE_ASSERT(false);
 #endif
 
-#if 1
   // DQ (12/6/2014): I think we need the frontier mechanism, and then the partial use of token 
   // streams on nodes containing transformations is required to provide a more precise generated 
   // code (precise representation with minimal diff).
 
 #if 0
-     printf ("In buildTokenStreamMapping(): Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+     printf ("In buildTokenStreamFrontier(): Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
   // Note that we first detect the frontier.
      frontierDetectionForTokenStreamMapping(sourceFile);
 
 #if 0
-     printf ("In buildTokenStreamMapping(): DONE: Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+     printf ("In buildTokenStreamFrontier(): DONE: Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgStatement*> transformedStatementSet_3 = SageInterface::collectTransformedStatements(sourceFile);
+     printf ("In buildTokenStreamFrontier(): part 3: transformedStatementSet_3.size() = %zu \n",transformedStatementSet_3.size());
 #endif
 
   // ************************************************************************************************
@@ -5661,10 +5702,11 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
 
 #if 0
-     printf ("In buildTokenStreamMapping(): tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
+     printf ("In buildTokenStreamFrontier(): tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
 #endif
 
-     ROSE_ASSERT(tokenStreamSequenceMap.empty() == false);
+  // DQ (2/28/2015): This assertion will be false where the input is an empty file.
+  // ROSE_ASSERT(tokenStreamSequenceMap.empty() == false);
 
      map<SgStatement*,FrontierNode*> token_unparse_frontier_map = sourceFile->get_token_unparse_frontier();
 
@@ -5694,7 +5736,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
           if (j != tokenSequenceEndMap.end())
              {
 #if 0
-                printf ("In buildTokenStreamMapping(): Found associated tokenStreamSequence = %p for statement = %p = %s (%d,%d) \n",
+                printf ("In buildTokenStreamFrontier(): Found associated tokenStreamSequence = %p for statement = %p = %s (%d,%d) \n",
                      tokenSubsequence,statement,statement->class_name().c_str(),tokenSubsequence->token_subsequence_start,tokenSubsequence->token_subsequence_end);
 #endif
                i->second->redundant_token_subsequence = true;
@@ -5747,7 +5789,10 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
           i++;
         }
 #else
-  // DQ (12/6/2014): I ahve deactivated this feature since I think we might not need it.
+
+#error "DEAD CODE!"
+
+  // DQ (12/6/2014): I have deactivated this feature since I think we might not need it.
      printf ("NOTE: Skipping the processing of the frontier nodes \n");
 #endif
 
@@ -5814,6 +5859,17 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
   // are redundantly mapped to a single token sequence (represented by the last token index).
      sourceFile->set_redundantTokenEndingsSet(redundantTokenEndings);
      sourceFile->set_redundantlyMappedTokensToStatementMultimap(tokenSequenceEndMultimap);
+
+#if 0
+  // DQ (11/20/2013): Test using support for multiple files for Java testing.
+  // Output an optional graph of the AST (just the tree, when active)
+  // generateDOT ( *project );
+  // SgProject* project = isSgProject(sourceFile->get_project());
+     SgProject* project = sourceFile->get_project();
+     ROSE_ASSERT(project != NULL);
+
+     generateDOTforMultipleFile(*project);
+#endif
 
 #if 0
      printf ("Identify the frontier IR nodes that redundantly map to a single token sequence \n");
@@ -6066,7 +6122,7 @@ ALT_buildTokenStreamMapping(SgSourceFile* sourceFile)
              }
           ROSE_ASSERT(lastElement->trailing_whitespace_start <= lastElement->trailing_whitespace_end);
 #if 0
-          printf ("Setting the last token's trailing_whitespace (%d,%d) tokenVector.size() = %zu \n",lastElement->trailing_whitespace_start,lastElement->trailing_whitespace_end,tokenVector.size());
+          printf ("Setting the last token's trailing_whitespace (%d,%d) tokenVector.size() = %" PRIuPTR " \n",lastElement->trailing_whitespace_start,lastElement->trailing_whitespace_end,tokenVector.size());
 #endif
         }
 #endif

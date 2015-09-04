@@ -61,7 +61,6 @@ enum M68kSpecialPurposeRegister {
     m68k_spr_fpcr,                                      /**< Floating-point control register. */
     m68k_spr_fpsr,                                      /**< Floating-point status register. */
     m68k_spr_fpiar,                                     /**< Floating-point instruction address register. */
-    m68k_spr_vbr,                                       /**< Interrupt vector base address. */
 };
 
 enum M68kMacRegister {
@@ -80,31 +79,40 @@ enum M68kMacRegister {
 };
 
 enum M68kEmacRegister {
-    m68k_emac_macsr,                     /**< EMAC status register. */
-    m68k_emac_acc0,                      /**< EMAC accumulator 0. */
-    m68k_emac_acc1,                      /**< EMAC accumulator 1. */
-    m68k_emac_acc2,                      /**< EMAC accumulator 2. */
-    m68k_emac_acc3,                      /**< EMAC accumulator 3. */
-    m68k_emac_mask,                      /**< EMAC mask register. */
+    m68k_emac_macsr,                                    /**< EMAC status register. */
+    m68k_emac_acc0,                                     /**< EMAC accumulator 0. */
+    m68k_emac_acc1,                                     /**< EMAC accumulator 1. */
+    m68k_emac_acc2,                                     /**< EMAC accumulator 2. */
+    m68k_emac_acc3,                                     /**< EMAC accumulator 3. */
+    m68k_emac_mask,                                     /**< EMAC mask register. */
 };
 
 enum M68kSupervisorRegister {
-    m68k_sup_ssp,                       /**< Supervisor stack pointer. */
-    m68k_sup_vbr,                       /**< Vector base register. */
-    m68k_sup_sfc,                       /**< Alternate function. */
-    m68k_sup_dfc,                       /**< Code registers. */
-    m68k_sup_cacr,                      /**< Cache control register. */
-    m68k_sup_asid,                      /**< Address space ID register. */
-    m68k_sup_acr0,                      /**< Access control register 0 (data). */
-    m68k_sup_acr1,                      /**< Access control register 1 (data). */
-    m68k_sup_acr2,                      /**< Access control register 2 (instruction). */
-    m68k_sup_acr3,                      /**< Access control register 3 (instruction). */
-    m68k_sup_mmubar,                    /**< MMU base address register. */
-    m68k_sup_rombar0,                   /**< ROM base address register 0. */
-    m68k_sup_rombar1,                   /**< ROM base address register 1. */
-    m68k_sup_rambar0,                   /**< RAM base address register 0. */
-    m68k_sup_rambar1,                   /**< RAM base address register 1. */
-    m68k_sup_mbar,                      /**< Module base address register. */
+    m68k_sup_vbr,                                       /**< Interrupt vector base address. */
+    m68k_sup_ssp,                                       /**< Supervisor stack pointer. */
+    m68k_sup_sfc,                                       /**< Alternate function. */
+    m68k_sup_dfc,                                       /**< Code registers. */
+    m68k_sup_cacr,                                      /**< Cache control register. */
+    m68k_sup_asid,                                      /**< Address space ID register. */
+    m68k_sup_acr0,                                      /**< Access control register 0 (data). */
+    m68k_sup_acr1,                                      /**< Access control register 1 (data). */
+    m68k_sup_acr2,                                      /**< Access control register 2 (instruction). */
+    m68k_sup_acr3,                                      /**< Access control register 3 (instruction). */
+    m68k_sup_mmubar,                                    /**< MMU base address register. */
+    m68k_sup_rombar0,                                   /**< ROM base address register 0. */
+    m68k_sup_rombar1,                                   /**< ROM base address register 1. */
+    m68k_sup_rambar0,                                   /**< RAM base address register 0. */
+    m68k_sup_rambar1,                                   /**< RAM base address register 1. */
+    m68k_sup_mbar,                                      /**< Module base address register. */
+    m68k_sup_mpcr,                                      /**< Multiprocessor control register. */
+    m68k_sup_edrambar,                                  /**< Embedded DRAM base address register. */
+    m68k_sup_secmbar,                                   /**< Secondary module base address register. */
+    m68k_sup_0_pcr1,                                    /**< RAM 0 permutation control register 1. */
+    m68k_sup_0_pcr2,                                    /**< RAM 0 permutation control register 2. */
+    m68k_sup_0_pcr3,                                    /**< RAM 0 permutation control register 3. */
+    m68k_sup_1_pcr1,                                    /**< RAM 1 permutation control register 1. */
+    m68k_sup_1_pcr2,                                    /**< RAM 1 permutation control register 2. */
+    m68k_sup_1_pcr3,                                    /**< RAM 1 permutation control register 3. */
 };
 
 /** M68k effective addressing modes.
@@ -399,7 +407,7 @@ enum M68kInstructionKind {
     m68k_move_sr,                                       /**< Move status register */
     m68k_move16,                                        /**< Move 16-byte block */
     m68k_movea,                                         /**< Move address from source to destination */
-//    m68k_movec,
+    m68k_movec,                                         /**< Move control register */
     m68k_movem,                                         /**< Move multiple registers */
     m68k_movep,                                         /**< Move peripheral data */
     m68k_moveq,                                         /**< Move quick */

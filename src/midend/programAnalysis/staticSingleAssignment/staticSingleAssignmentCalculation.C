@@ -271,7 +271,7 @@ void StaticSingleAssignment::run(bool interprocedural, bool treatPointersAsStruc
     }
 
 #ifdef DISPLAY_TIMINGS
-    printf("-- Timing: Inserting all local defs for %zu functions took %.2f seconds.\n",
+    printf("-- Timing: Inserting all local defs for %" PRIuPTR " functions took %.2f seconds.\n",
             interestingFunctions.size(), time.elapsed());
     fflush(stdout);
     time.restart();

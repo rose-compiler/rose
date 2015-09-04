@@ -16,8 +16,9 @@ namespace OmpSupport
   // OpenMP version info.
   extern bool enable_accelerator;  
 
-  // enable detailed output, intermediate dot files for debugging the OpenMP processing process.
-  extern bool enable_debugging; 
+ // A flag to control if device data environment runtime functions are used to automatically manage data as much as possible.
+ // instead of generating explicit data allocation, copy, free functions. 
+   extern  bool useDDE /* = true */;  
   //! makeDataSharingExplicit() can call some of existing functions for some work in OmpSupport namespace by Hongyi 07/16/2012
   //! TODO: add a function within the OmpSupport namespace, the function should transform the AST, so all variables' data-sharing attributes are explicitied represented in the AST. ROSE has dedicated AST nodes for OpenMP directives and the associated clauses, such as private, shared, reduction.
 
@@ -53,6 +54,9 @@ namespace OmpSupport
 
   //! Insert runtime init and terminate routines to main() entry
   void insertRTLinitAndCleanCode(SgSourceFile* ); 
+
+  //Pei-Hung Insert accelerator init 
+  void insertAcceleratorInit(SgSourceFile* ); 
 
   //! A driver to traverse AST trees and invoke individual translators for OpenMP constructs, (not in use)
   //! Postorder is preferred. 
@@ -133,6 +137,9 @@ namespace OmpSupport
 
   //! Collect variables from given types of OpenMP clauses associated with an omp statement: private, reduction, etc 
   ROSE_DLL_API SgInitializedNamePtrList collectClauseVariables (SgOmpClauseBodyStatement * clause_stmt, const VariantVector& vvt);
+
+  //! Collect expression from given types of OpenMP clauses associated with an omp statement: private, reduction, etc 
+  ROSE_DLL_API SgExpression* getClauseExpression (SgOmpClauseBodyStatement * clause_stmt, const VariantVector& vvt);
 
   //! Check if a variable is in a variable list of a given clause type
   ROSE_DLL_API bool isInClauseVariableList(SgInitializedName* var, SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt);

@@ -9,6 +9,7 @@
 #include <set>
 
 using namespace CodeThorn;
+using namespace SPRAY;
 
 /*********************
  * utility functions *
@@ -160,6 +161,24 @@ std::string DefUseVarsInfo::str(VariableIdMapping& vidm)
   return oss.str();
 }
 
+void DefUseVarsInfo::addAllArrayElements(SgInitializedName* array_name, VariableIdMapping& vidm, bool def)
+{
+  assert(array_name);
+  VariableId array_var_id = vidm.variableId(array_name);
+  SgArrayType* array_type = isSgArrayType(array_name->get_type());
+  if (!array_type)
+    return;
+  int elements = vidm.getArrayElementCount(array_type);
+  if (!elements)
+    elements = vidm.getArrayDimensionsFromInitializer(isSgAggregateInitializer(array_name->get_initializer()));
+  VarsInfo& info = (def ? def_vars_info : use_vars_info);
+  VariableIdTypeInfo sgn_type_info_elem = getVariableIdTypeInfo(array_var_id, vidm);
+  for (int e = 0; e < elements; e++) {
+    VariableId element_id = vidm.variableIdOfArrayElement(array_var_id, e);
+    info.first.insert(VariableIdInfo(element_id, sgn_type_info_elem));
+  }
+}
+
 /**************
  * ExprWalker *
  **************/
@@ -287,10 +306,38 @@ void ExprWalker::visit(SgCompoundAssignOp* sgn)
  * ExprWalker for SgBinaryOp that can be lvalues *
  *************************************************/
 
-void ExprWalker::visit(SgPntrArrRefExp* sgn)
+void ExprWalker::visit(SgPntrArrRefExp* ref)
 {
-  SgExpression* lhs_addr = sgn->get_lhs_operand(); // get the address computation expr of the array
-  SgExpression* rhs_expr = sgn->get_rhs_operand(); // get the index expression
+  SgExpression* lhs_addr = ref->get_lhs_operand(); // get the address computation expr of the array
+  SgExpression* rhs_expr = ref->get_rhs_operand(); // get the index expression
+
+  if (vidm.getModeVariableIdForEachArrayElement()) {
+    // Handle array elements specifically.
+    // Used in RD analysis.
+    SgExpression* array_expr;
+    SageInterface::isArrayReference(ref, &array_expr);
+    SgVarRefExp* array_var = isSgVarRefExp(array_expr);
+    VariableId array_reference = vidm.idForArrayRef(ref);
+    if (array_reference.isValid()) {
+      // We know which element is referenced,
+      // mark that element.
+      VariableIdTypeInfo sgn_type_info_elem = getVariableIdTypeInfo(array_reference, vidm);
+      VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
+      VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
+
+      if (isModExpr) {
+        def_vars_info.first.insert(VariableIdInfo(array_reference, sgn_type_info_elem));
+      } else {
+        use_vars_info.first.insert(VariableIdInfo(array_reference, sgn_type_info_elem));
+      }
+    } else {
+      // An unknown element is referenced,
+      // mark all array elements.
+      duvi.addAllArrayElements(SageInterface::convertRefToInitializedName(array_var), vidm, isModExpr);
+    }
+    return;
+  }
+
   DefUseVarsInfo lduvi, rduvi;
   // check for the type of address computation expr
   // if p is pointer type in p[expr]
@@ -934,10 +981,12 @@ void ExprWalker::visit(SgVarRefExp* sgn)
   VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
   VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
 
-  if(isModExpr) {
+  if(vidm.getModeVariableIdForEachArrayElement() && sgn_type_info == arrayType) {
+    // If found a reference to whole array, def/use all its elements.
+    duvi.addAllArrayElements(SageInterface::convertRefToInitializedName(sgn), vidm, isModExpr);
+  } else if(isModExpr) {
     def_vars_info.first.insert(VariableIdInfo(vid, sgn_type_info));
-  }
-  else {
+  } else {
     use_vars_info.first.insert(VariableIdInfo(vid, sgn_type_info));
   }
 }
@@ -967,7 +1016,11 @@ void ExprWalker::visit(SgInitializedName* sgn)
   // determine the type info
   VariableIdTypeInfo sgn_type_info = getVariableIdTypeInfo(vid, vidm);
 
-  def_vars_info.first.insert(VariableIdInfo(vid, sgn_type_info));
+  if(vidm.getModeVariableIdForEachArrayElement() && sgn_type_info == arrayType)
+    // When defining an array, define all its elements.
+    duvi.addAllArrayElements(sgn, vidm, true);
+  else
+    def_vars_info.first.insert(VariableIdInfo(vid, sgn_type_info));
 
   duvi = duvi + rduvi;
 }

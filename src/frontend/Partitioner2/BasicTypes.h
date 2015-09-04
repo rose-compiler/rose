@@ -16,6 +16,9 @@ enum VertexType {
     V_UNDISCOVERED,                                     /**< The special "undiscovered" vertex. */
     V_INDETERMINATE,                                    /**< Special vertex destination for indeterminate edges. */
     V_NONEXISTING,                                      /**< Special vertex destination for non-existing basic blocks. */
+    V_USER_DEFINED,                                     /**< User defined vertex. These vertices don't normally appear in the
+                                                         *   global control flow graph but might appear in other kinds of
+                                                         *   graphs that are closely related to a CFG, such as a paths graph. */
 };
 
 /** Partitioner control flow edge types. */
@@ -31,6 +34,21 @@ enum EdgeType {
                                                          *   represent the fact that the called function eventually returns
                                                          *   even if the instructions for the called function are not available
                                                          *   to analyze. */
+    E_FUNCTION_XFER,                                    /**< Edge is a function call transfer. A function call transfer is
+                                                         *   similar to @ref E_FUNCTION_CALL except the entire call frame is
+                                                         *   transferred to the target function and this function is no longer
+                                                         *   considered part of the call stack; a return from the target
+                                                         *   function will skip over this function. Function call transfers
+                                                         *   most often occur as the edge leaving a thunk. */
+    E_USER_DEFINED,                                     /**< User defined edge.  These edges don't normally appear in the
+                                                         *   global control flow graph but might appear in other kinds of
+                                                         *   graphs that are closely related to a CFG, such as a paths graph. */
+};
+
+/** How sure are we of something. */
+enum Confidence {
+    ASSUMED,                                            /**< The value is an assumption without any proof. */
+    PROVED,                                             /**< The value was somehow proved. */
 };
 
 class Partitioner;

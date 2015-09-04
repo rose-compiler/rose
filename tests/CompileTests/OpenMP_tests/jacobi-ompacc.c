@@ -1,3 +1,4 @@
+// Naive version without any optimizations
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -58,6 +59,18 @@ int n,m,mits;
 REAL tol,relax=1.0,alpha=0.0543; 
 REAL u[MSIZE][MSIZE],f[MSIZE][MSIZE],uold[MSIZE][MSIZE];
 REAL dx,dy;
+
+// value, reference value, and the number of significant digits to be ensured.
+double diff_ratio (double val, double ref, int significant_digits)
+{ 
+  assert (significant_digits>=1);
+  double diff_ratio = fabs(val - ref )/fabs(ref);
+  double upper_limit = pow (0.1, significant_digits); // 1.0/(double(10^significant_digits)) ;
+  printf("value :%E  ref_value: %E  diff_ratio: %E upper_limit: %E \n",val, ref, diff_ratio, upper_limit);
+  // ensure the number of the significant digits to be the same 
+  assert ( diff_ratio < upper_limit);
+  return diff_ratio;
+} 
 
 int main (void) 
 {
@@ -194,16 +207,16 @@ void jacobi( )
     /* Copy new solution into old */
 // Must split the omp for into two parallel for regions since the translation focuses on parallel to generate the outlined kernel
 // We need two CUDA kernels for implementing global synchronization so we have to have two omp parallel directives!!
-//#pragma omp target map(in:n, m, omega, ax, ay, u[0:n][0:m],f[0:n][0:m]) map(alloc:uold[0:n][0:m])
+//#pragma omp target map(to:n, m, omega, ax, ay, u[0:n][0:m],f[0:n][0:m]) map(alloc:uold[0:n][0:m])
 //#pragma omp parallel
 //    {
-#pragma omp target map(in:n, m, u[0:n][0:m]) map(out:uold[0:n][0:m])
+#pragma omp target map(to:n, m, u[0:n][0:m]) map(from:uold[0:n][0:m])
 #pragma omp parallel for private(j,i)
       for(i=0;i<n;i++)   
         for(j=0;j<m;j++)
           uold[i][j] = u[i][j]; 
 
-#pragma omp target map(in:n, m, omega, ax, ay, b, f[0:n][0:m], uold[0:n][0:m]) map(out:u[0:n][0:m])
+#pragma omp target map(to:n, m, omega, ax, ay, b, f[0:n][0:m], uold[0:n][0:m]) map(from:u[0:n][0:m])
 #pragma omp parallel for private(resid,j,i) reduction(+:error) // nowait
       for (i=1;i<(n-1);i++)  
         for (j=1;j<(m-1);j++)   
@@ -231,8 +244,7 @@ void jacobi( )
   printf("Residual:%E\n", error); 
   printf("Residual_ref :%E\n", resid_ref); 
   printf ("Diff ref=%E\n", fabs(error-resid_ref));
-  assert (fabs(error-resid_ref) < 1E-14);
-
+  assert (fabs(error-resid_ref) < 1E-13);
 }
 
 /*      subroutine error_check (n,m,alpha,dx,dy,u,f) 
@@ -260,10 +272,8 @@ void error_check ( )
       error = error + temp*temp; 
     }
   error = sqrt(error)/(n*m);
-  printf("Solution Error :%E \n",error);
-  printf("Solution Error Ref :%E \n",error_ref);
-  printf ("Diff ref=%E\n", fabs(error-error_ref));
-  assert (fabs(error-error_ref) < 1E-14);
+  printf("Verifying Solution Error...\n");
+  diff_ratio(error, error_ref, 5);
 }
 
 

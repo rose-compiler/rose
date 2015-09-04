@@ -10,6 +10,8 @@
 #include "BaseSemantics2.h"
 #include "integerOps.h"
 #include "rangemap.h"
+#include "RegisterStateGeneric.h"
+#include "MemoryCellList.h"
 
 namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere
@@ -52,9 +54,9 @@ std::ostream& operator<<(std::ostream &o, const Interval &x);
 /** Set of intervals. */
 typedef RangeMap<Interval> Intervals;
 
-/*******************************************************************************************************************************
- *                                      Semantic value
- *******************************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Semantic values
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to an SValue object. SValue objects are reference counted and should not be explicitly deleted. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
@@ -131,7 +133,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors inherited from the super class
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance(nbits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
+        return instance(nbits);
+    }
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const ROSE_OVERRIDE {
         return instance(nbits);
     }
 
@@ -144,6 +152,8 @@ public:
             retval->set_width(new_width);
         return retval;
     }
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
+                                                                           SMTSolver *solver) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors first defined at this level of the class hierarchy
@@ -172,6 +182,10 @@ public:
 public:
     virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
+
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
 
     virtual bool is_number() const ROSE_OVERRIDE {
         return 1==p_intervals.size();
@@ -204,9 +218,18 @@ public:
 
 };
 
-/*******************************************************************************************************************************
- *                                      Memory State
- *******************************************************************************************************************************/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Register state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef BaseSemantics::RegisterStateGeneric RegisterState;
+typedef BaseSemantics::RegisterStateGenericPtr RegisterStateGenericPtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Memory state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a MemoryState object.  MemoryState objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
@@ -281,9 +304,18 @@ public:
                              BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE;
 };
 
-/*******************************************************************************************************************************
- *                                      RISC Operators
- *******************************************************************************************************************************/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Complete state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef BaseSemantics::State State;
+typedef BaseSemantics::StatePtr StatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RISC operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
  *  deleted. */
@@ -313,9 +345,9 @@ public:
      *  IntervalSemantics. */
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
-        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
+        BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
-        BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
+        BaseSemantics::StatePtr state = State::instance(registers, memory);
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 

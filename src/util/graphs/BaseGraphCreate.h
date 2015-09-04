@@ -36,11 +36,11 @@ class BaseGraphCreate
   virtual void DeleteNode( BaseGraphNode *n)=0;
   virtual void DeleteEdge( BaseGraphEdge *n)=0;
 
-  GraphAccessBase::GetNodeIterator;
-  GraphAccessBase::GetNodeEdgeIterator;
-  GraphAccessBase::GetEdgeEndPoint;
-  GraphAccessBase::ContainNode;
-  GraphAccessBase::ContainEdge;
+  using GraphAccessBase::GetNodeIterator;
+  using GraphAccessBase::GetNodeEdgeIterator;
+  using GraphAccessBase::GetEdgeEndPoint;
+  using GraphAccessBase::ContainNode;
+  using GraphAccessBase::ContainEdge;
 };
 
 template <class GraphImpl>

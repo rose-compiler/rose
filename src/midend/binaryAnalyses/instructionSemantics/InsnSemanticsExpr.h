@@ -9,19 +9,14 @@
 
 #include <cassert>
 #include <inttypes.h>
-#include <sawyer/BitVector.h>
-#include <sawyer/SharedPointer.h>
-#include <sawyer/SmallObject.h>
+#include <Sawyer/BitVector.h>
+#include <Sawyer/SharedPointer.h>
+#include <Sawyer/SmallObject.h>
 #include <set>
 #include <vector>
 
 namespace rose {
 namespace BinaryAnalysis {
-
-/** Cache hash values in nodes.  If this is defined, then the @p hashval data member member is used to store a hash for the
- *  node and its children.  The hash can be used to prove that two expressions are not structurally equivalent, thus avoiding a
- *  more expensive traversal of an expression tree. */
-#define InsnSemanticsExpr_USE_HASHES
 
 class SMTSolver;
 
@@ -33,8 +28,7 @@ namespace InsnSemanticsExpr {
 /** Operators for internal nodes of the expression tree. Commutative operators generally take one or more operands.  Operators
  *  such as shifting, extending, and truncating have the size operand appearing before the bit vector on which to operate (this
  *  makes the output more human-readable since the size operand is often a constant). */
-enum Operator 
-    {
+enum Operator {
     OP_ADD,                 /**< Addition. One or more operands, all the same width. */
     OP_AND,                 /**< Boolean AND. Operands are all Boolean (1-bit) values. See also OP_BV_AND. */
     OP_ASR,                 /**< Arithmetic shift right. Operand B shifted by A bits; 0 <= A < width(B). A is unsigned. */
@@ -98,7 +92,9 @@ struct Formatter {
         CMT_AFTER,                              /**< Show comments after the node. */
         CMT_INSTEAD,                            /**< Like CMT_AFTER, but show comments instead of variable names. */
     };
-    Formatter(): show_comments(CMT_INSTEAD), do_rename(false), add_renames(true), use_hexadecimal(true), max_depth(0) {}
+    Formatter()
+        : show_comments(CMT_INSTEAD), do_rename(false), add_renames(true), use_hexadecimal(true),
+          max_depth(0), cur_depth(0), show_width(true), show_flags(true) {}
     ShowComments show_comments;                 /**< Show node comments when printing? */
     bool do_rename;                             /**< Use the @p renames map to rename variables to shorter names? */
     bool add_renames;                           /**< Add additional entries to the @p renames as variables are encountered? */
@@ -106,6 +102,8 @@ struct Formatter {
     size_t max_depth;                           /**< If non-zero, then replace deep parts of expressions with "...". */
     size_t cur_depth;                           /**< Depth in expression. */
     RenameMap renames;                          /**< Map for renaming variables to use smaller integers. */
+    bool show_width;                            /**< Show width in bits inside square brackets. */
+    bool show_flags;                            /**< Show user-defined flags inside square brackets. */
 };
 
 /** Return type for visitors. */
@@ -114,6 +112,12 @@ enum VisitAction {
     TRUNCATE,                               /**< For a pre-order depth-first visit, do not descend into children. */
     TERMINATE,                              /**< Terminate the traversal. */
 };
+
+/** Maximum number of nodes that can be reported.
+ *
+ *  If @ref nnodes returns this value then the size of the expressions could not be counted. This can happens when the
+ *  expression contains a large number of common subexpressions. */
+extern const uint64_t MAX_NNODES;       // defined in .C so we don't pollute user namespace with limit macros
 
 /** Base class for visiting nodes during expression traversal.  The preVisit method is called before children are visited, and
  *  the postVisit method is called after children are visited.  If preVisit returns TRUNCATE, then the children are not
@@ -133,15 +137,65 @@ public:
  *  lattice and not a graph with cycles), tree nodes are always referenced through shared-ownership pointers
  *  (<code>Sawyer::SharedPointer<const T></code> where @t T is one of the tree node types: TreeNode, InternalNode, or LeafNode.
  *  For convenience, we define TreeNodePtr, InternalNodePtr, and LeafNodePtr typedefs.  The pointers themselves collectively
- *  own the pointer to the tree node and thus the tree node pointer should never be deleted explicitly. */
+ *  own the pointer to the tree node and thus the tree node pointer should never be deleted explicitly.
+ *
+ *  Each node has a bit flags property, the bits of which are defined by the user.  New nodes are created having all bits
+ *  cleared unless the user specifies a value in the constructor.  Bits are significant for hashing. Simplifiers produce
+ *  result expressions whose bits are set in a predictable manner with the following rules:
+ *
+ *  @li Internal Node Rule: The flags for an internal node are the union of the flags of its subtrees.
+ *
+ *  @li Simplification Discard Rule: If a simplification discards a subtree then that subtree does not contribute flags to the
+ *      result.  E.g., cancellation of terms in an @c add operation.
+ *
+ *  @li Simplification Create Rule: If a simplification creates a new leaf node that doesn't depend on the input expression
+ *      that new leaf node will have zero flags.  E.g., XOR of an expression with itself; an add operation where all the terms
+ *      cancel each other resulting in zero.
+ *
+ *  @li Simplification Folding Rule: If a simplification creates a new expression from some combination of incoming expressions
+ *      then the flags of the new expression are the union of the flags from the expressions on which it depends. E.g.,
+ *      constant folding, which is therefore consistent with the Internal Node Rule.
+ *
+ *  @li Hashing Rule: User-defined flags are significant for hashing.  E.g., structural equivalence will return false if the
+ *      two expressions have different flags since structural equivalence uses hashes.
+ *
+ *  @li Relational Operator Rule:  Simplification of relational operators to produce a Boolean constant will act as if they are
+ *      performing constant folding even if the simplification is on variables.  E.g., <code>(ule v1 v1)</code> results in true
+ *      with flags the same as @c v1. */
 class TreeNode: public Sawyer::SharedObject, public Sawyer::SharedFromThis<TreeNode>, public Sawyer::SmallObject {
 protected:
-    size_t nbits;               /**< Number of significant bits. Constant over the life of the node. */
+    size_t nbits;                /**< Number of significant bits. Constant over the life of the node. */
+    size_t domainWidth_;         /**< Width of domain for unary functions. E.g., memory. */
+    unsigned flags_;             /**< Bit flags. Meaning of flags is up to the user. Low-order 16 bits are reserved. */
     mutable std::string comment; /**< Optional comment. Only for debugging; not significant for any calculation. */
-    mutable uint64_t hashval;   /**< Optional hash used as a quick way to indicate that two expressions are different. */
-public:
-    TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment), hashval(0) { ASSERT_require(nbits>0); }
+    mutable uint64_t hashval;    /**< Optional hash used as a quick way to indicate that two expressions are different. */
 
+public:
+    // Bit flags
+
+    /** These flags are reserved for use within ROSE. */
+    static const unsigned RESERVED_FLAGS = 0x0000ffff;
+
+    /** Value is somehow indeterminate. E.g., read from writable memory. */
+    static const unsigned INDETERMINATE  = 0x00000001;
+
+    /** Value is somehow unspecified. A value that is intantiated as part of processing a machine instruction where the ISA
+     * documentation is incomplete or says that some result is unspecified or undefined. Intel documentation for the x86 shift
+     * and rotate instructions, for example, states that certain status bits have "undefined" values after the instruction
+     * executes. */
+    static const unsigned UNSPECIFIED    = 0x00000002;
+
+    /** Value represents bottom in dataflow analysis.  If this flag is used by ROSE's dataflow engine to represent a bottom
+     *  value in a lattice. */
+    static const unsigned BOTTOM         = 0x00000004;
+
+protected:
+    TreeNode()
+        : nbits(0), domainWidth_(0), flags_(0), hashval(0) {}
+    explicit TreeNode(std::string comment, unsigned flags=0)
+        : nbits(0), domainWidth_(0), flags_(flags), comment(comment), hashval(0) {}
+
+public:
     /** Returns true if two expressions must be equal (cannot be unequal).  If an SMT solver is specified then that solver is
      * used to answer this question, otherwise equality is established by looking only at the structure of the two
      * expressions. Two expressions can be equal without being the same width (e.g., a 32-bit constant zero is equal to a
@@ -166,10 +220,7 @@ public:
      * structural equivalence, the equivalent_to() predicate. The @p from and @p to expressions must have the same width. */
     virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const = 0;
 
-    /** Returns true if the expression is a known value.
-     *
-     *  FIXME: The current implementation returns true only when @p this node is leaf node with a known value. Since
-     *         InsnSemanticsExpr does not do constant folding, this is of limited use. [RPM 2010-06-08]. */
+    /** Returns true if the expression is a known value. */
     virtual bool is_known() const = 0;
 
     /** Returns the integer value of a node for which is_known() returns true.  The high-order bits, those beyond the number of
@@ -187,6 +238,24 @@ public:
     /** Returns the number of significant bits.  An expression with a known value is guaranteed to have all higher-order bits
      *  cleared. */
     size_t get_nbits() const { return nbits; }
+
+    /** Returns the user-defined bit flags. */
+    unsigned get_flags() const { return flags_; }
+
+    /** Sets flags. Since symbolic expressions are immutable it is not possible to change the flags directly. Therefore if the
+     *  desired flags are different than the current flags a new expression is created that is the same in every other
+     *  respect. If the flags are not changed then the original expression is returned. */
+    TreeNodePtr newFlags(unsigned flags) const;
+
+    /** Returns address width for memory expressions.
+     *
+     *  The return value is non-zero if and only if this tree node is a memory expression. */
+    size_t domainWidth() const { return domainWidth_; }
+
+    /** Check whether expression is scalar.
+     *
+     *  Everything is scalar except for memory. */
+    bool isScalar() const { return 0 == domainWidth_; }
 
     /** Traverse the expression.  The expression is traversed in a depth-first visit.  The final return value is the final
      *  return value of the last call to the visitor. */
@@ -206,6 +275,9 @@ public:
      *
      *  @sa nnodesUnique */
     virtual uint64_t nnodes() const = 0;
+
+    /** Number of unique nodes in expression. */
+    uint64_t nnodesUnique() const;
 
     /** Returns the variables appearing in the expression. */
     std::set<LeafNodePtr> get_variables() const;
@@ -266,6 +338,15 @@ public:
     /** Asserts that expressions are acyclic. This is intended only for debugging. */
     void assert_acyclic() const;
 
+    /** Find common subexpressions.
+     *
+     *  Returns a vector of the largest common subexpressions. The list is computed by performing a depth-first search on this
+     *  expression and adding expressions to the return vector whenever a subtree is encountered a second time. Therefore the
+     *  if a common subexpression A contains another common subexpression B then B will appear earlier in the list than A. */
+    std::vector<TreeNodePtr> findCommonSubexpressions() const;
+
+protected:
+    void printFlags(std::ostream &o, unsigned flags, char &bracket) const;
 };
 
 /** Operator-specific simplification methods. */
@@ -343,6 +424,9 @@ struct UextendSimplifier: Simplifier {
 struct SextendSimplifier: Simplifier {
     virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
+struct EqSimplifier: Simplifier {
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+};
 struct SgeSimplifier: Simplifier {
     virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
@@ -414,39 +498,48 @@ private:
 
     // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
     // accidently using pointers to these objects -- all access should be through shared-ownership pointers.
-    InternalNode(size_t nbits, Operator op, const std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {}
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {
+        : TreeNode(comment), op(op), nnodes_(1) {
         add_child(a);
+        adjustWidth();
+        adjustBitFlags(0);
+        ASSERT_require(get_nbits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {
+        : TreeNode(comment), op(op), nnodes_(1) {
         add_child(a);
         add_child(b);
+        adjustWidth();
+        adjustBitFlags(0);
+        ASSERT_require(get_nbits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, const TreeNodePtr &c,
                  std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {
+        : TreeNode(comment), op(op), nnodes_(1) {
         add_child(a);
         add_child(b);
         add_child(c);
+        adjustWidth();
+        adjustBitFlags(0);
+        ASSERT_require(get_nbits() == nbits);
     }
-    InternalNode(size_t nbits, Operator op, const TreeNodes &children, std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {
+    InternalNode(size_t nbits, Operator op, const TreeNodes &children, std::string comment="", unsigned flags=0)
+        : TreeNode(comment), op(op), nnodes_(1) {
         for (size_t i=0; i<children.size(); ++i)
             add_child(children[i]);
+        adjustWidth();
+        adjustBitFlags(flags);
+        ASSERT_require(get_nbits() == nbits);
     }
 
 public:
     /** Create a new expression node. Although we're creating internal nodes, the simplification process might replace it with
      *  a leaf node. Use these class methods instead of c'tors.
      *
+     *  Flags are normally initialized as the union of the flags of the operator arguments subject to various rules in the
+     *  expression simplifiers. Flags specified in the constructor are set in addition to those that would normally be set.
+     *
      *  @{ */
-    static TreeNodePtr create(size_t nbits, Operator op, const std::string comment="") {
-        InternalNodePtr retval(new InternalNode(nbits, op, comment));
-        return retval->simplifyTop();
-    }
     static TreeNodePtr create(size_t nbits, Operator op, const TreeNodePtr &a, const std::string comment="") {
         InternalNodePtr retval(new InternalNode(nbits, op, a, comment));
         return retval->simplifyTop();
@@ -461,8 +554,9 @@ public:
         InternalNodePtr retval(new InternalNode(nbits, op, a, b, c, comment));
         return retval->simplifyTop();
     }
-    static TreeNodePtr create(size_t nbits, Operator op, const TreeNodes &children, const std::string comment="") {
-        InternalNodePtr retval(new InternalNode(nbits, op, children, comment));
+    static TreeNodePtr create(size_t nbits, Operator op, const TreeNodes &children, const std::string comment="",
+                              unsigned flags=0) {
+        InternalNodePtr retval(new InternalNode(nbits, op, children, comment, flags));
         return retval->simplifyTop();
     }
     /** @} */
@@ -535,8 +629,15 @@ public:
 protected:
     /** Appends @p child as a new child of this node. The modification is done in place, so one must be careful that this node
      *  is not part of other expressions.  It is safe to call add_child() on a node that was just created and not used anywhere
-     *  yet. */
+     *  yet. If you add a new child, then you probably need to call adjustWidth after the last one is added. */
     void add_child(const TreeNodePtr &child);
+
+    /** Adjust width based on operands. This should only be called from constructors. */
+    void adjustWidth();
+
+    /** Adjust user-defined bit flags. This should only be called from constructors.  Flags are the union of the operand flags
+     *  subject to simplification rules, unioned with the specified flags. */
+    void adjustBitFlags(unsigned extraFlags);
 };
 
 /** Leaf node of an expression tree for instruction semantics.
@@ -550,28 +651,31 @@ private:
     uint64_t name;                     /**< Variable ID number when 'known' is false. */
 
     // Private to help prevent creating pointers to leaf nodes.  See create_* methods instead.
-    LeafNode(std::string comment=""): TreeNode(32, comment), leaf_type(CONSTANT), name(0) {}
+    LeafNode()
+        : TreeNode(""), leaf_type(CONSTANT), name(0) {}
+    explicit LeafNode(const std::string &comment, unsigned flags=0)
+        : TreeNode(comment, flags), leaf_type(CONSTANT), name(0) {}
 
     static uint64_t name_counter;
 
 public:
     /** Construct a new free variable with a specified number of significant bits. */
-    static LeafNodePtr create_variable(size_t nbits, std::string comment="");
+    static LeafNodePtr create_variable(size_t nbits, std::string comment="", unsigned flags=0);
 
     /** Construct a new integer with the specified number of significant bits. Any high-order bits beyond the specified size
      *  will be zeroed. */
-    static LeafNodePtr create_integer(size_t nbits, uint64_t n, std::string comment="");
+    static LeafNodePtr create_integer(size_t nbits, uint64_t n, std::string comment="", unsigned flags=0);
 
     /** Construct a new known value with the specified bits. */
-    static LeafNodePtr create_constant(const Sawyer::Container::BitVector &bits, std::string comment="");
+    static LeafNodePtr create_constant(const Sawyer::Container::BitVector &bits, std::string comment="", unsigned flags=0);
 
     /** Create a new Boolean, a single-bit integer. */
-    static LeafNodePtr create_boolean(bool b, std::string comment="") {
-        return create_integer(1, (uint64_t)(b?1:0), comment.empty() ? std::string(b?"true":"false") : comment);
+    static LeafNodePtr create_boolean(bool b, std::string comment="", unsigned flags=0) {
+        return create_integer(1, (uint64_t)(b?1:0), comment, flags);
     }
 
-    /** Construct a new memory state.  A memory state is a function that maps a 32-bit address to a value of specified size. */
-    static LeafNodePtr create_memory(size_t nbits, std::string comment="");
+    /** Construct a new memory state.  A memory state is a function that maps addresses to values. */
+    static LeafNodePtr create_memory(size_t addressWidth, size_t valueWidth, std::string comment="", unsigned flags=0);
 
     /* see superclass, where these are pure virtual */
     virtual bool is_known() const;
@@ -595,6 +699,12 @@ public:
      *  that this method returns.  It should only be invoked on leaf nodes for which is_known() returns false. */
     uint64_t get_name() const;
 
+    /** Returns a string for the leaf.
+     *
+     *  Variables are returned as "vN", memory is returned as "mN", and constants are returned as a hexadecimal string, where N
+     *  is a variable or memory number. */
+    std::string toString() const;
+
     // documented in super class
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
@@ -607,6 +717,25 @@ public:
 
 std::ostream& operator<<(std::ostream &o, const TreeNode&);
 std::ostream& operator<<(std::ostream &o, const TreeNode::WithFormatter&);
+
+/** Counts the number of nodes.
+ *
+ *  Counts the total number of nodes in multiple expressions.  The return value is a saturated sum, returning MAX_NNODES if an
+ *  overflow occurs. */
+template<typename InputIterator>
+uint64_t
+nnodes(InputIterator begin, InputIterator end) {
+    uint64_t total = 0;
+    for (InputIterator ii=begin; ii!=end; ++ii) {
+        uint64_t n = (*ii)->nnodes();
+        if (MAX_NNODES==n)
+            return MAX_NNODES;
+        if (total + n < total)
+            return MAX_NNODES;
+        total += n;
+    }
+    return total;
+}
 
 /** Counts the number of unique nodes.
  *
@@ -643,6 +772,40 @@ nnodesUnique(InputIterator begin, InputIterator end)
         status = (*ii)->depth_first_traversal(visitor);
     return visitor.nUnique;
 }
+
+/** Find common subexpressions.
+ *
+ *  This is similar to @ref TreeNodePtr::findCommonSubexpressions except the analysis is over a collection of expressions
+ *  rather than a single expression.
+ *
+ * @{ */
+std::vector<TreeNodePtr> findCommonSubexpressions(const std::vector<TreeNodePtr>&);
+
+template<typename InputIterator>
+std::vector<TreeNodePtr>
+findCommonSubexpressions(InputIterator begin, InputIterator end) {
+    typedef Sawyer::Container::Map<TreeNodePtr, size_t> NodeCounts;
+    struct T1: Visitor {
+        NodeCounts nodeCounts;
+        std::vector<TreeNodePtr> result;
+
+        VisitAction preVisit(const TreeNodePtr &node) ROSE_OVERRIDE {
+            size_t &nSeen = nodeCounts.insertMaybe(node, 0);
+            if (2 == ++nSeen)
+                result.push_back(node);
+            return nSeen>1 ? TRUNCATE : CONTINUE;
+        }
+
+        VisitAction postVisit(const TreeNodePtr&) ROSE_OVERRIDE {
+            return CONTINUE;
+        }
+    } visitor;
+
+    for (InputIterator ii=begin; ii!=end; ++ii)
+        (*ii)->depth_first_traversal(visitor);
+    return visitor.result;
+}
+/** @} */
 
 } // namespace
 } // namespace

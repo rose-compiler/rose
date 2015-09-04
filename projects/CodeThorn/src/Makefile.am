@@ -6,34 +6,29 @@ EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 
-if ROSE_APPROVED_PYTHON_VERSION
+bin_PROGRAMS = codethorn matcher_demo varwatch woodpecker analyterix
 
-bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker analyterix
 #ast_demo matcher_demo iterator_test
 CLEANFILES = 
 
-AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp
+AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_PREFIX)/lib
 
 noinst_PROGRAMS = addressTakenAnalysis 
 
 MYDATE = $(shell date +%Y_%m_%d)
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_builddir)
+INCLUDES = $(ROSE_INCLUDES) -I$(top_builddir) -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include
 
-# in V1.2 there are no KNOBS
-KNOBS = 
-
+# this line create speparately named object files
 codethorn_CXXFLAGS = $(KNOBS) -fopenmp -Wall -O3 -march=native -ftree-vectorize
-codethorn_LDADD = -lfl -lrose
+
+codethorn_DEPENDENCIES=libspray.la
+codethorn_LDADD = -lrose -lspot -lbdd -lspray
 codethorn_SOURCES = \
   AType.C                          \
   AType.h                          \
   Analyzer.C                       \
   Analyzer.h                       \
-  AstTerm.C                        \
-  AstTerm.h                        \
-  CFAnalyzer.C                     \
-  CFAnalyzer.h                     \
   CollectionOperators.h            \
   CommandLineOptions.C             \
   CommandLineOptions.h             \
@@ -48,13 +43,7 @@ codethorn_SOURCES = \
   InternalChecks.C                 \
   InternalChecks.h                 \
   LTL.h                            \
-  LTLCheckerFixpoint.C             \
-  LTLCheckerFixpoint.h             \
-  LTLCheckerUnified.C              \
-  LTLCheckerUnified.h              \
   LTLParser.y++                    \
-  LanguageRestrictor.C             \
-  LanguageRestrictor.h             \
   LanguageRestrictorCollection.C   \
   LanguageRestrictorCollection.h   \
   Miscellaneous.C                  \
@@ -66,47 +55,43 @@ codethorn_SOURCES = \
   Timer.h                          \
   Visualizer.C                     \
   Visualizer.h                     \
-  RDLattice.h                      \
-  RDLattice.C                      \
-  codethorn.C                      \
-  codethorn.h                      \
-  WorkListSeq.h                    \
-  DFAnalyzer.h                     \
-  AnalysisAbstractionLayer.h       \
-  AnalysisAbstractionLayer.C       \
-  RDAstAttribute.h         \
-  RDAstAttribute.C         \
+  Evaluator.h                      \
   RERS_empty_specialization.C      \
-  Flow.h \
-  Flow.C \
-  ReachabilityResults.h \
-  ReachabilityResults.C \
-  defUseQuery.C \
-  defUseQuery.h \
-  VariableIdUtils.C \
-  VariableIdUtils.h \
-  addressTakenAnalysis.C \
-  addressTakenAnalysis.h \
+  PropertyValueTable.h \
+  PropertyValueTable.C \
   RewriteSystem.C \
-  RewriteSystem.h 
+  RewriteSystem.h \
+  SpotConnection.C \
+  SpotConnection.h \
+  SpotTgba.C \
+  SpotTgba.h \
+  SpotState.C \
+  SpotState.h \
+  SpotSuccIter.C \
+  SpotSuccIter.h \
+  CounterexampleAnalyzer.C \
+  CounterexampleAnalyzer.h \
+  RefinementConstraints.C \
+  RefinementConstraints.h \
+  ArrayElementAccessData.h \
+  ArrayElementAccessData.C \
+  Specialization.h \
+  Specialization.C \
+  PragmaHandler.h \
+  PragmaHandler.C \
+  codethorn.h \
+  codethorn.C
 
 addressTakenAnalysis_SOURCES = \
   Timer.cpp \
-  AstTerm.C \
-  AnalysisAbstractionLayer.C \
   Miscellaneous.C \
   CommandLineOptions.C \
-  addressTakenAnalysis.C \
-  addressTakenAnalysis.h \
-  defUseQuery.C \
-  defUseQuery.h \
-  VariableIdUtils.C \
-  VariableIdUtils.h \
   addressTakenAnalysisDriver.C
 
-addressTakenAnalysis_LDADD = -lrose
+addressTakenAnalysis_LDADD = -lrose -lspray
+addressTakenAnalysis_DEPENDENCIES=libspray.la
 
-# used only in specialized analyzer
+# workaround to intentionally fool policy
 faketarget:
 	RERS_Problem10_specialization.C
 	RERS_Problem1_specialization.C
@@ -119,9 +104,6 @@ faketarget:
 	RERS_Problem8_specialization.C
 	RERS_Problem9_specialization.C
 	rers_cpp_forward_decls.C
-	rdmain.C
-	MFAnalyzer.h
-	MFAnalyzer.C
 	RDLattice.h
 	RDLattice.C
 	WorkList.h
@@ -133,7 +115,6 @@ faketarget:
 	WorkListOMP.h
 	WorkListOMP.C
 	WorkListSeq.C
-	DFAnalyzer.C
 	DeadCodeEliminationOperators.C 
 	spotconnection/ltlverifier.C 
 	spotconnection/stg2.c 
@@ -154,6 +135,118 @@ faketarget:
 	tests/rdtest3.C 
 	tests/rdtest4.C 
 	tests/rers13_mini1.C 
+	CppExprEvaluator.h
+	CppExprEvaluator.C
+	AbstractValue.C
+	AbstractValue.h
+	CPDomain.hpp
+	Domain.hpp
+	GenericIntervalLattice.h
+	IOSequenceGenerator.C
+	InfoOperations.C
+	ReachabilityResults.C
+	ReachabilityResults.h
+	cpptests/cpp-test-1.C
+	intervalLattice/testIntervalLattice.C
+	outdated.cpp
+	rtests/array1/checkarrayoperators.cpp
+	rtests/linked-list/900_create_insert_delall.C
+	rtests/linked-list/901_create_insert_delall.C
+	rtests/linked-list/902_create_insert_delall.C
+	rtests/linked-list/rose_900_create_insert_delall.C
+	rtests/linked-list/rose_900_create_insert_delall_mod2.C
+	rtests/linked-list/rose_901_create_insert_delall.C
+	rtests/linked-list/rose_902_create_insert_delall.C
+	rtests/linked-list/test_2014_09_26_rose_900_create_insert_delall.C
+	rtests/linked-list/test_rose_900_create_insert_delall_mod.C
+	rtests/ross-event/rose_simple2-event-funcs-modified-2.c
+	rtests/ross-event/rose_simple2-event-funcs-modified.c
+	rtests/ross-event/runtime.C
+	rtests/ross-event/runtime.h
+	rtests/ross-event/runtime_macros.h
+	rtests/ross-event/simple2-bs.c
+	rtests/ross-event/simple2-event-funcs.c
+	rtests/ross-event/simple2.c
+	rtests/vector1/RevStack.h
+	rtests/vector1/rev_rtest3.C
+	rtests/vector1/rev_rtest4.C
+	rtests/vector1/rev_rtest4.cpp.C
+	rtests/vector1/rev_rtest4.cpppure.C
+	rtests/vector1/revcheck.C
+	rtests/vector1/revtest.C
+	rtests/vector1/rose_rev_rtest4.C
+	rtests/vector1/rose_rev_rtest4.cpp.C
+	rtests/vector1/rose_rev_rtest4.cpppure.C
+	rtests/vector1/rose_rev_rtest4.cpppure2.C
+	rtests/vector1/rtest1.C
+	rtests/vector1/rtest2.C
+	runtime/isstacktest.C
+	runtime/runtime.C
+	runtime/runtime.h
+	runtime/runtime_macros.h
+	runtime/testruntimesystem.C
+	spotconnection/spotdriver.C
+	spotconnection/spotdriver.h
+	testAbstractValue.C
+	tests/Problem1403_mymod.c
+	tests/arraytest1.c
+	tests/basictest17.C
+	tests/cfgtest1.C
+	tests/consttest1.C
+	tests/consttest2.C
+	tests/consttest3.C
+	tests/consttest4.C
+	tests/csettest1.c
+	tests/lvtest1.C
+	tests/lvtest2.C
+	tests/lvtest3.C
+	tests/rers/Problem1T_size5_14.c
+	tests/rers/Problem1_mod.c
+	tests/rers/Problem1_pmod.c
+	tests/rers/inputsequencepack/Problem1_pmod.c
+	tests/rev1.C
+	tests/cptest10.C
+	tests/cptest1.C
+	tests/cptest2.C
+	tests/cptest3.C
+	tests/cptest4.C
+	tests/cptest5.C
+	tests/cptest6.C
+	tests/cptest7.C
+	tests/cptest8.C
+	tests/cptest9.C
+	tests/mailinglist2.C
+	tests/mailinglist3.C
+	tests/arraytest2.C
+	addressTakenAnalysis.h
+	addressTakenAnalysis_obsolete/addressTakenAnalysis.h
+	addressTakenAnalysis_obsolete/defUseQuery.h
+	defUseQuery.h
+	Lattice.h
+	rtests/ross-event/runtime.h
+	runtime/runtime.h
+	rtests/ross-event/runtime_macros.h
+	runtime/runtime_macros.h
+	Timer.h
+	VariableIdUtils.h
+	addressTakenAnalysis_obsolete/VariableIdUtils.h
+	CPDomain.hpp
+	LTL.h
+	rtests/vector1/RevStack.h 
+	tests/rers/Problem1401_opt.c
+	tests/rers/Problem1402_opt.c
+	tests/rers/Problem1403_opt.c
+	tests/varid-test1.C
+	tests/arraytest3.C
+	tests/basicblocks1.C
+	tests/blocks1.C
+	tests/interval-test1.C
+	tests/interval-test2.C
+	tests/polyopt/jacobi-1d-imper.h
+	tests/polyopt/jacobi-1d-imper_annot.c
+	tests/polyopt/jacobi-2d-imper.h
+	tests/polyopt/jacobi-2d-imper_orig_tileonly_size16_tile_8_2_1.c
+	tests/polyopt/polybench.h
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
@@ -161,27 +254,23 @@ REGRESSION_DATA_DIR=regressiondata
 .PHONY: codethorn-dist viz bsps docs test checkdemos
 
 # MS: matcher_demo
-matcher_demo_LDADD = -lrose
-matcher_demo_SOURCES = Timer.cpp AstTerm.C matcher_demo.C
-#matcher_demo_AM_YFLAGS = -d -p matcherparser
-#matcher_demo_AM_LFLAGS = -Pmatcherparser -o$(LEX_OUTPUT_ROOT).c
+matcher_demo_DEPENDENCIES=libspray.la
+matcher_demo_LDADD = -lrose -lspray
+matcher_demo_SOURCES = Timer.cpp matcher_demo.C
 BUILT_SOURCES = 
 AM_YFLAGS =
 AM_LFLAGS =
 
-varwatch_LDADD = -lrose
+varwatch_DEPENDENCIES=libspray.la
+varwatch_LDADD = -lrose -lspray
 varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
 
-rdmain_LDADD = -lrose
-rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C rdmain.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C  DataDependenceVisualizer.h DataDependenceVisualizer.C \
-  AnalysisAbstractionLayer.h       \
-  AnalysisAbstractionLayer.C       \
-  RDAstAttribute.h         \
-  RDAstAttribute.C         \
+#rdmain_LDADD = -lrose
+#rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
+  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
+  DataDependenceVisualizer.h DataDependenceVisualizer.C \
   UDAstAttribute.h                 \
   UDAstAttribute.C                 \
-  AstTerm.h                        \
-  AstTerm.C                        \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
   ProgramStats.h                 \
@@ -189,92 +278,71 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyz
   Flow.h \
   Flow.C \
   DFAstAttributeConversion.h DFAstAttributeConversion.C \
-  defUseQuery.C \
-  defUseQuery.h \
-  VariableIdUtils.C \
-  VariableIdUtils.h \
-  addressTakenAnalysis.C \
-  addressTakenAnalysis.h
+  PropertyState.h \
+  PropertyState.C \
+  FIPointerAnalysis.h \
+  FIPointerAnalysis.C \
+  rdmain.C 
 
-woodpecker_LDADD = -lrose
-woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C RDLattice.h RDLattice.C RDAnalyzer.h RDAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
-  AnalysisAbstractionLayer.h       \
-  AnalysisAbstractionLayer.C       \
+woodpecker_DEPENDENCIES=libspray.la
+woodpecker_LDADD = -lrose -lspray
+woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
+ LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
+  DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AType.h                          \
   AType.C                          \
-  RDAstAttribute.h         \
-  RDAstAttribute.C         \
+  CPAstAttribute.h CPAstAttribute.C \
   UDAstAttribute.h                 \
   UDAstAttribute.C                 \
-  CPAstAttribute.h CPAstAttribute.C \
-  AstTerm.h                        \
-  AstTerm.C                        \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
   ProgramStats.h                 \
   ProgramStats.C                 \
-  Flow.h \
-  Flow.C \
   FIConstAnalysis.h FIConstAnalysis.C \
-  defUseQuery.C \
-  defUseQuery.h \
-  VariableIdUtils.C \
-  VariableIdUtils.h \
-  addressTakenAnalysis.C \
-  addressTakenAnalysis.h \
-  ReachabilityResults.h \
-  ReachabilityResults.C \
+  PropertyValueTable.h \
+  PropertyValueTable.C \
   TrivialInlining.C                \
   TrivialInlining.h                \
   DeadCodeElimination.C                \
   DeadCodeElimination.h                \
   ReachabilityAnalysis.C \
   ReachabilityAnalysis.h \
+  ConversionFunctionsGenerator.h \
+  ConversionFunctionsGenerator.C \
   woodpecker.C
 
 
-analyterix_LDADD = -lrose
+#  DFAnalysisBase.C \
+#  DFAnalysisBase.h
+
+analyterix_DEPENDENCIES=libspray.la
+analyterix_LDADD = -lrose -lspray
 analyterix_SOURCES = \
-  CommandLineOptions.h CommandLineOptions.C \
-  DFAstAttributeConversion.h DFAstAttributeConversion.C \
-  AnalysisAbstractionLayer.h       \
-  AnalysisAbstractionLayer.C       \
-  CFAnalyzer.h \
-  CFAnalyzer.C \
-  RDLattice.h \
-  RDLattice.C \
-  RDAnalyzer.h \
-  RDAnalyzer.C \
-  FIConstAnalysis.h FIConstAnalysis.C \
-  LanguageRestrictor.h \
-  LanguageRestrictor.C \
-  LanguageRestrictorCollection.h \
-  LanguageRestrictorCollection.C \
-  DataDependenceVisualizer.h \
-  DataDependenceVisualizer.C \
-  AType.h \
   AType.C \
-  RDAstAttribute.h \
-  RDAstAttribute.C \
-  UDAstAttribute.h \
-  UDAstAttribute.C \
+  AType.h \
   CPAstAttribute.h CPAstAttribute.C \
-  AstTerm.h \
-  AstTerm.C \
+  CommandLineOptions.h \
+  CommandLineOptions.C \
+  DataDependenceVisualizer.C \
+  DataDependenceVisualizer.h \
+  DFAstAttributeConversion.h DFAstAttributeConversion.C \
+  FIConstAnalysis.h FIConstAnalysis.C \
+  FIPointerAnalysis.C \
+  FIPointerAnalysis.h \
+  LanguageRestrictorCollection.C \
+  LanguageRestrictorCollection.h \
   Miscellaneous.C \
   Miscellaneous.h \
-  ProgramStats.h \
   ProgramStats.C \
-  Flow.h \
-  Flow.C \
-  defUseQuery.C \
-  defUseQuery.h \
-  VariableIdUtils.C \
-  VariableIdUtils.h \
-  addressTakenAnalysis.C \
-  addressTakenAnalysis.h \
-  ReachabilityResults.h \
-  ReachabilityResults.C \
+  ProgramStats.h \
+  PropertyValueTable.C \
+  PropertyValueTable.h \
+  RoseRDAnalysis.C \
+  RoseRDAnalysis.h \
+  TransformationOperators.h \
+  TransformationOperators.C \
+  UDAstAttribute.C \
+  UDAstAttribute.h \
   analyterix.C
 
 # obsolete since integration into ROSE
@@ -291,103 +359,90 @@ analyterix_SOURCES = \
 #iterator_test_LDADD = -lrose libmatcher.la
 
 #MS: ast_demo not integrated yet
-#ast_demo_SOURCES = ast_demo.C Timer.cpp Timer.h  RoseAst.C RoseAst.h AstTerm.C AstTerm.h
+#ast_demo_SOURCES = ast_demo.C Timer.cpp Timer.h  RoseAst.C RoseAst.h
 #ast_demo_LFLAGS = -Pmatcher
 #ast_demo_YFLAGS = -d -p matcher
 
+pkglib_LTLIBRARIES = libspray.la
+libspray_la_LDFLAGS= -no-undefined
+libspray_la_LDFLAGS=
+libspray_la_SOURCES=\
+ AliasAnalysis.h \
+ AnalysisAbstractionLayer.h \
+ AnalysisAstAnnotator.h \
+ AstTerm.h \
+ CFAnalysis.h \
+ DFAnalysisBase.h \
+ DFTransferFunctions.h \
+ IntervalAnalysis.h \
+ IntervalAstAttribute.h \
+ IntervalAstAttributeInterface.h \
+ IntervalPropertyState.h \
+ IntervalPropertyStateFactory.h \
+ IntervalTransferFunctions.h \
+ LVAnalysis.h \
+ LVAstAttribute.h \
+ LVAstAttributeInterface.h \
+ LVLattice.h \
+ LVTransferFunctions.h \
+ LanguageRestrictor.h \
+ NumberIntervalLattice.h \
+ PASolver1.h \
+ PointerAnalysisInterface.h \
+ RDAnalysis.h \
+ RDAstAttribute.h \
+ RDTransferFunctions.h \
+ WorkListSeq.h \
+ AnalysisAstAnnotator.C \
+ AliasAnalysis.C \
+ AstTerm.C \
+ CFAnalysis.C \
+ CppExprEvaluator.C \
+ DFAnalysisBase.C \
+ DFTransferFunctions.C \
+ Flow.C \
+ IntervalAnalysis.C \
+ IntervalAstAttribute.C \
+ IntervalPropertyStateFactory.C \
+ IntervalPropertyState.C \
+ IntervalTransferFunctions.C \
+ IntervalAstAttributeInterface.C \
+ LanguageRestrictor.C \
+ Lattice.C \
+ LVAnalysis.C \
+ LVAstAttribute.C \
+ LVAstAttributeInterface.C \
+ LVLattice.C \
+ LVTransferFunctions.C \
+ NumberIntervalLattice.C \
+ PASolver1.C \
+ PointerAnalysisInterface.C \
+ PropertyState.C \
+ RDAnalysis.C \
+ RDAstAttribute.C \
+ RDLattice.C \
+ RDTransferFunctions.C \
+ VariableIdUtils.C \
+ AnalysisAbstractionLayer.C \
+ addressTakenAnalysis.C \
+ defUseQuery.C
 
 check-local:
 	./codethorn --internal-checks				 
 	@echo ================================================================
-	@echo CHECK: all of the following formulae should evaluate to "YES"!
+	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
-	./codethorn --rersmode=yes --edg:no_warnings $(srcdir)/tests/rers_mini1.c    --verify $(srcdir)/tests/rers_mini1.ltl
 	rm -f *.consistent
-	$(MAKE) $(CONSISTENCY_CHECKS)
+	$(srcdir)/scripts/runLtlRegressionTests $(srcdir) . #run RERS examples in several versions and compare to previous results
+	$(srcdir)/scripts/run_tests_cegpra $(srcdir) . #run CEGPRA tests
 
 checkdemos: 
 	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 	./ast_demo $(srcdir)/tests/basictest5.C
 
-test:
-	./codethorn --rers-mode=yes --edg:no_warnings $(srcdir)/tests/rers/Problem1.c \
-	               --verify $(srcdir)/tests/rers/properties1.txt \
-	               --csv-assert Problem1-assert.csv \
-	               --csv-ltl Problem1-ltl.csv
-
-# Consistency checks
-# make sure that all permutations of analyzer options yield consistent results
-CONSISTENCY_CHECKS=$(patsubst %,Problem%.consistent, $(shell seq 1))
-%.consistent: $(srcdir)/tests/rers/%.c codethorn Makefile
-	./codethorn --rersmode=yes --edg:no_warnings --colors=no $< --threads=8 \
-         --ltl-verifier=1 --semantic-fold=no \
-         --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
-         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.0.csv,$<)
-	./codethorn --rersmode=yes --edg:no_warnings --colors=no $< --threads=8 \
-         --ltl-verifier=1 --semantic-fold=yes \
-         --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
-         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.1.csv,$<)
-	./codethorn --rersmode=yes --edg:no_warnings --colors=no $< --threads=8 \
-         --ltl-verifier=2 --semantic-fold=no \
-         --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
-         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.2.csv,$<)
-	./codethorn --rersmode=yes --edg:no_warnings --colors=no $< --threads=8 \
-         --ltl-verifier=2 --semantic-fold=yes \
-         --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
-         --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.3.csv,$<)
-
-# DQ (10/21/2013): Changed with permission from Markus.
-dummy_target:
-        # DOS2UNIX
-	perl -pe 's/\r?\n|\r/\n/g' -i $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.[0-9].csv,$<)
-        # paste all csv's line-by-line
-	paste -d "," $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%.[0-9].csv,$<) >$@
-        # ensure that all variants are consistent
-        #if egrep '(yes,.*no,)|(no,.*yes,)' $@; then false; fi
-
-deactivated_tests:
-        # now also compare with counterexamples
-	python $(srcdir)/regressiondata/validate.py \
-	  --csv $(patsubst $(srcdir)/tests/rers/%.c,%.0.csv,$<) \
-	  --log $(patsubst $(srcdir)/tests/rers/%.c,$(srcdir)/regressiondata/%.log,$<)
-	python $(srcdir)/regressiondata/validate.py \
-	  --csv $(patsubst $(srcdir)/tests/rers/%.c,%.1.csv,$<) \
-	  --log $(patsubst $(srcdir)/tests/rers/%.c,$(srcdir)/regressiondata/%.log,$<)
-	python $(srcdir)/regressiondata/validate.py \
-	  --csv $(patsubst $(srcdir)/tests/rers/%.c,%.2.csv,$<) \
-	  --log $(patsubst $(srcdir)/tests/rers/%.c,$(srcdir)/regressiondata/%.log,$<)
-	python $(srcdir)/regressiondata/validate.py \
-	  --csv $(patsubst $(srcdir)/tests/rers/%.c,%.3.csv,$<) \
-	  --log $(patsubst $(srcdir)/tests/rers/%.c,$(srcdir)/regressiondata/%.log,$<)
-        # Finally, compare with reference solutions
-	python $(srcdir)/tests/rers/verify.py \
-	  --ref  $(patsubst %.c,%-solutions.csv,$<) \
-	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.0.csv,$<) || echo "** XFAIL"
-	python $(srcdir)/tests/rers/verify.py \
-	  --ref  $(patsubst %.c,%-solutions.csv,$<) \
-	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.1.csv,$<) || echo "** XFAIL"
-	python $(srcdir)/tests/rers/verify.py \
-	  --ref  $(patsubst %.c,%-solutions.csv,$<) \
-	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.2.csv,$<) || echo "** XFAIL"
-	python $(srcdir)/tests/rers/verify.py \
-	  --ref  $(patsubst %.c,%-solutions.csv,$<) \
-	  --mine $(patsubst $(srcdir)/tests/rers/%.c,%.3.csv,$<) || echo "** XFAIL"
-
-
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
 rers: $(RERS)
-
-# parallel tests with make -j<N> test
-%.log: $(srcdir)/tests/rers/%.c codethorn Makefile
-	./codethorn --rersmode=yes --edg:no_warnings --colors=no $< \
-	     --verify $(patsubst $(srcdir)/tests/rers/Problem%.c,$(srcdir)/tests/rers/properties%.txt,$<) \
-	     --csv-ltl $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%-ltl.csv,$<) \
-	     --csv-assert $(patsubst $(srcdir)/tests/rers/Problem%.c,Problem%-assert.csv,$<) >$@
-
-
-validate:
-	cd regressiondata && python validate.py --log Problem1.log --csv rers_Problem1_ltl_csv.txt
 
 docs:
 	doxygen Doxyfile
@@ -447,32 +502,6 @@ bsps: codethorn
 
 codethorn-dist:
 	tar cvzf codethorn_$(MYDATE).tgz *.C *cpp *.h *.lxx *.yxx tests/*.C tests/*.c Makefile*
-
-
-asserttest: codethorn
-	./codethorn --edg:no_warnings $(srcdir)/tests/asserttest2.c --csv-assert assert_csv.txt
-
-regressiontest: codethorn
-	@./codethorn --rersmode=yes --csv-assert tmp_rers_mini1_assert_csv.txt --csv-ltl tmp_rers_mini1_ltl_csv.txt --verify $(srcdir)/tests/rers_mini1.ltl --viz=yes $(srcdir)/tests/rers_mini1.c
-	@echo "-----------------------"
-	@sort -u tmp_rers_mini1_assert_csv.txt > tmp2_rers_mini1_assert_csv.txt 
-	@diff tmp2_rers_mini1_assert_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt
-	@echo "Regression assert test PASSED."
-	@diff tmp_rers_mini1_ltl_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_ltl_csv.txt
-	@echo "Regression LTL test PASSED."
-	@sort -u transitiongraph1.dat > rg1.dat
-	@sort -u $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat > rg2.dat
-	@diff rg1.dat rg2.dat
-	@echo "Regression transition graph test PASSED."
-	@echo "-----------------------"
-	@echo "All regression tests PASSED."
-	@echo "-----------------------"
-
-# use with caution
-generateregressiondata:
-	./codethorn --rersmode=yes --csv-assert $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt --csv-ltl $(REGRESSION_DATA_DIR)/rers_mini1_ltl_csv.txt --verify $(srcdir)/tests/rers_mini1.ltl --viz=yes $(srcdir)/tests/rers_mini1.c 
-	sort -u transitiongraph1.dat > tmp_transitiongraph1.dat
-	cp tmp_transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat
 
 CODETHORN_TESTS= \
     tests/asserttest1.c \
@@ -626,21 +655,12 @@ CODETHORN_TESTS= \
     tests/rers/Problem28_opt.C \
     tests/rers/Problem901-solutions.csv \
     tests/rers/Problem901-solutions.ltl.csv \
-    tests/rers/Problem901.c
+    tests/rers/Problem901.c \
+    tests/gototest1.C \
+    tests/gototest2.C \
+    tests/gototest3.C \
+    tests/switchtest1.C \
+    tests/switchtest2.C \
+    tests/switchtest3.C \
+    examples/example-invocations.sh 
 
-# MS: does not exist
-#    tests/test.ltl \
-# xxtest.C # MS: intentionally here as comment
-
-else
-all-local:
-	@echo ================================================================
-	@echo "SKIPPING COMPILATION OF CODETHORN (too old version of Python)"
-	@echo ================================================================
-
-check-local:
-	@echo ================================================================
-	@echo   "SKIPPING TESTING OF CODETHORN (too old version of Python)"
-	@echo ================================================================
-
-endif

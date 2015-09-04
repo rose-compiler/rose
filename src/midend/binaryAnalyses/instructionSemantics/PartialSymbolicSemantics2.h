@@ -20,6 +20,8 @@
 #include "BaseSemantics2.h"
 #include "MemoryMap.h"
 #include "FormatRestorer.h"
+#include "RegisterStateGeneric.h"
+#include "MemoryCellList.h"
 
 namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere
@@ -42,9 +44,9 @@ namespace PartialSymbolicSemantics {
 
 extern uint64_t name_counter;
 
-/*******************************************************************************************************************************
- *                                      Print Formatter
- *******************************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Print formatter
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Formatter that renames variables on the fly.  When this formatter is used, named variables are renamed using lower
  *  numbers. This is useful for human-readable output because variable names tend to get very large (like "v904885611"). */
@@ -58,9 +60,10 @@ public:
     uint64_t rename(uint64_t orig_name);
 };
 
-/*******************************************************************************************************************************
- *                                      Value Type
- *******************************************************************************************************************************/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Semantic values
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
@@ -81,7 +84,12 @@ protected:
 
     SValue(size_t nbits, uint64_t number)
         : BaseSemantics::SValue(nbits), name(0), offset(number), negate(false) {
-        this->offset &= IntegerOps::genMask<uint64_t>(nbits);
+        if (nbits <= 64) {
+            this->offset &= IntegerOps::genMask<uint64_t>(nbits);
+        } else {
+            name = ++name_counter;
+            offset = 0;
+        }
     }
 
     SValue(size_t nbits, uint64_t name, uint64_t offset, bool negate)
@@ -115,7 +123,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance(nbits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
+        return instance(nbits);
+    }
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const ROSE_OVERRIDE {
         return instance(nbits);
     }
 
@@ -129,6 +143,9 @@ public:
             retval->set_width(new_width);
         return retval;
     }
+
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
+                                                                           SMTSolver*) const ROSE_OVERRIDE;
     
     /** Virtual allocating constructor. Creates a new semantic value with full control over all aspects of the value. */
     virtual BaseSemantics::SValuePtr create(size_t nbits, uint64_t name, uint64_t offset, bool negate) const {
@@ -158,6 +175,10 @@ public:
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
 
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
+
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
     
     virtual bool is_number() const ROSE_OVERRIDE {
         return 0==name;
@@ -170,17 +191,28 @@ public:
 };
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Register state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*******************************************************************************************************************************
- *                                      Memory
- *******************************************************************************************************************************/
+typedef BaseSemantics::RegisterStateGeneric RegisterState;
+typedef BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Memory state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // PartialSymbolicSemantics uses BaseSemantics::MemoryCellList (or subclass) as its memory state, and does not expect the
 // MemoryCellList to be byte-restricted (i.e., the cells can store multi-byte values).
 
-/*******************************************************************************************************************************
- *                                      Machine State
- *******************************************************************************************************************************/
+typedef BaseSemantics::MemoryCellList MemoryState;
+typedef BaseSemantics::MemoryCellListPtr MemoryStatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Complete state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a State object.  State objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class State> StatePtr;
@@ -202,8 +234,8 @@ protected:
         (void) SValue::promote(memory->get_addr_protoval());
         (void) SValue::promote(memory->get_val_protoval());
 
-        // This state should use a BaseSemantics::MemoryCellList that is not byte restricted.
-        BaseSemantics::MemoryCellListPtr mcl = BaseSemantics::MemoryCellList::promote(memory);
+        // This state should use a memory that is not byte restricted.
+        MemoryStatePtr mcl = MemoryState::promote(memory);
         ASSERT_require(!mcl->get_byte_restricted());
     }
 
@@ -260,9 +292,10 @@ public:
     virtual void discard_popped_memory();
 };
 
-/*******************************************************************************************************************************
- *                                      RISC Operators
- *******************************************************************************************************************************/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RISC operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
  *  deleted. */

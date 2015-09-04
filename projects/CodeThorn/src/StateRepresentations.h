@@ -14,7 +14,7 @@
 #include <map>
 #include <utility>
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "AType.h"
 #include "VariableIdMapping.h"
 #include "ConstraintRepresentation.h"
@@ -27,12 +27,12 @@ typedef int EStateId;
 #include "HashFun.h"
 #include "HSetMaintainer.h"
 
-//using namespace CodeThorn;
-
 using CodeThorn::CppCapsuleAValue;
 using CodeThorn::ConstraintSet;
 using CodeThorn::ConstraintSetMaintainer;
-using CodeThorn::Edge;
+using SPRAY::Edge;
+
+using namespace SPRAY;
 
 namespace CodeThorn {
 
@@ -46,11 +46,11 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
     }
   friend ostream& operator<<(ostream& os, const PState& value);
   friend istream& operator>>(istream& os, PState& value);
-  bool varExists(VariableId varname) const;
-  bool varIsConst(VariableId varname) const;
+  bool varExists(VariableId varId) const;
+  bool varIsConst(VariableId varId) const;
   bool varIsTop(VariableId varId) const;
-  AValue varValue(VariableId varname) const;
-  string varValueToString(VariableId varname) const;
+  AValue varValue(VariableId varId) const;
+  string varValueToString(VariableId varId) const;
   void deleteVar(VariableId varname);
   long memorySize() const;
   void fromStream(istream& is);
@@ -59,13 +59,17 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
   string toString(VariableIdMapping* variableIdMapping) const;
   void setAllVariablesToTop();
   void setAllVariablesToValue(CodeThorn::CppCapsuleAValue val);
+  void setVariableToTop(VariableId varId);
+  void setVariableToValue(VariableId varId, CodeThorn::CppCapsuleAValue val);
+  VariableIdSet getVariableIds() const;
 };
 
   ostream& operator<<(ostream& os, const PState& value);
   istream& operator>>(istream& os, PState& value);
 
-typedef set<const PState*> PStatePtrSet;
+  typedef set<const PState*> PStatePtrSet;
 
+#ifdef USE_CUSTOM_HSET
 class PStateHashFun {
    public:
     PStateHashFun(long prime=9999991) : tabSize(prime) {}
@@ -80,14 +84,44 @@ class PStateHashFun {
    private:
     long tabSize;
 };
+#else
+class PStateHashFun {
+   public:
+    PStateHashFun() {}
+    long operator()(PState* s) const {
+      unsigned int hash=1;
+      for(PState::iterator i=s->begin();i!=s->end();++i) {
+        hash=((hash<<8)+((long)(*i).second.getValue().hash()))^hash;
+      }
+      return long(hash);
+    }
+   private:
+};
+#endif
+class PStateEqualToPred {
+   public:
+    PStateEqualToPred() {}
+    bool operator()(PState* s1, PState* s2) const {
+      if(s1->size()!=s2->size()) {
+        return false;
+      } else {
+        for(PState::iterator i1=s1->begin(), i2=s2->begin();i1!=s1->end();(++i1,++i2)) {
+          if(*i1!=*i2)
+            return false;
+        }
+      }
+      return true;
+    }
+   private:
+};
 
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
-class PStateSet : public HSetMaintainer<PState,PStateHashFun> {
+ class PStateSet : public HSetMaintainer<PState,PStateHashFun,PStateEqualToPred> {
  public:
-  typedef HSetMaintainer<PState,PStateHashFun>::ProcessingResult ProcessingResult;
+  typedef HSetMaintainer<PState,PStateHashFun,PStateEqualToPred>::ProcessingResult ProcessingResult;
   string toString();
   PStateId pstateId(const PState* pstate);
   PStateId pstateId(const PState pstate);
@@ -118,6 +152,7 @@ class InputOutput {
   bool isStdOutIO() const { return op==STDOUT_VAR || op==STDOUT_CONST; }
   bool isStdErrIO() const { return op==STDERR_VAR || op==STDERR_CONST; }
   bool isFailedAssertIO() const { return op==FAILED_ASSERT; }
+  bool isNonIO() const { return op==NONE; }
 };
 
 bool operator<(const InputOutput& c1, const InputOutput& c2);
@@ -131,7 +166,7 @@ bool operator!=(const InputOutput& c1, const InputOutput& c2);
 
 class EState {
  public:
- EState():_label(Labeler::NO_LABEL),_pstate(0),_constraints(0){}
+ EState():_label(Label()),_pstate(0),_constraints(0){}
  EState(Label label, const PState* pstate):_label(label),_pstate(pstate),_constraints(0){}
  EState(Label label, const PState* pstate, const ConstraintSet* cset):_label(label),_pstate(pstate),_constraints(cset){}
  EState(Label label, const PState* pstate, const ConstraintSet* cset, InputOutput io):_label(label),_pstate(pstate),_constraints(cset),io(io){}
@@ -147,13 +182,16 @@ class EState {
   //void setIO(InputOutput io) { io=io;} TODO: investigate
   const PState* pstate() const { return _pstate; }
   const ConstraintSet* constraints() const { return _constraints; }
-  InputOutput::OpType ioOp(Labeler*) const;
+  ConstraintSet allInfoAsConstraints() const;
+  InputOutput::OpType ioOp() const;
   // isBot():no value, isTop(): any value (not unique), isConstInt():one concrete integer (int getIntValue())
   AType::ConstIntLattice determineUniqueIOValue() const;
   /* Predicate that determines whether all variables can be determined to be bound to a constant value.
      This function uses the entire PState and all available constraints to determine constness.
    */
   bool isConst(VariableIdMapping* vid) const;
+  bool isRersTopified(VariableIdMapping* vid) const;
+  string predicateToString(VariableIdMapping* vid) const;
  private:
   Label _label;
   const PState* _pstate;
@@ -186,6 +224,7 @@ struct EStateLessComp {
   * \author Markus Schordan
   * \date 2012.
  */
+#ifdef USE_CUSTOM_HSET
 class EStateHashFun {
    public:
     EStateHashFun(long prime=9999991) : tabSize(prime) {}
@@ -198,17 +237,36 @@ class EStateHashFun {
    private:
     long tabSize;
 };
-
+#else
+class EStateHashFun {
+   public:
+    EStateHashFun() {}
+    long operator()(EState* s) const {
+      unsigned int hash=1;
+      hash=(long)s->label().getId()*(((long)s->pstate())+1)*(((long)s->constraints())+1);
+      return long(hash);
+    }
+   private:
+};
+#endif
+class EStateEqualToPred {
+   public:
+    EStateEqualToPred() {}
+    long operator()(EState* s1, EState* s2) const {
+      return *s1==*s2;
+    }
+   private:
+};
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
-class EStateSet : public HSetMaintainer<EState,EStateHashFun> {
+ class EStateSet : public HSetMaintainer<EState,EStateHashFun,EStateEqualToPred> {
  public:
- EStateSet():HSetMaintainer<EState,EStateHashFun>(),_constraintSetMaintainer(0){}
+ EStateSet():HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>(),_constraintSetMaintainer(0){}
  public:
-  typedef HSetMaintainer<EState,EStateHashFun>::ProcessingResult ProcessingResult;
-  string toString() const;
+  typedef HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult ProcessingResult;
+  string toString(VariableIdMapping* variableIdMapping=0) const;
   EStateId estateId(const EState* estate) const;
   EStateId estateId(const EState estate) const;
   string estateIdString(const EState* estate) const;
@@ -224,6 +282,7 @@ class EStateSet : public HSetMaintainer<EState,EStateHashFun> {
  */
 class Transition {
  public:
+  Transition() {}
  Transition(const EState* source,Edge edge, const EState* target):source(source),edge(edge),target(target){}
 public:
   const EState* source; // source node
@@ -232,11 +291,11 @@ public:
   string toString() const;
 
 };
-
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
+#ifdef USE_CUSTOM_HSET
 class TransitionHashFun {
    public:
     TransitionHashFun(long prime=99991) : tabSize(prime) {}
@@ -249,6 +308,27 @@ class TransitionHashFun {
       private:
     long tabSize;
 };
+#else
+class TransitionHashFun {
+   public:
+    TransitionHashFun() {}
+    long operator()(Transition* s) const {
+      unsigned int hash=1;
+      hash=((((long)s->source)+1)<<8)+(long)s->target*(long)s->edge.hash();
+      return long(hash);
+    }
+      private:
+};
+#endif
+
+class TransitionEqualToPred {
+   public:
+    TransitionEqualToPred() {}
+    bool operator()(Transition* t1, Transition* t2) const {
+      return t1->source==t2->source && t1->target==t2->target && t1->edge==t2->edge;
+    }
+   private:
+};
 
 bool operator==(const Transition& t1, const Transition& t2);
 bool operator!=(const Transition& t1, const Transition& t2);
@@ -259,8 +339,6 @@ class EStateList : public list<EState> {
   string toString();
 };
 
-
-
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -269,19 +347,20 @@ class EStateList : public list<EState> {
  typedef set<const EState*> EStatePtrSet;
  typedef set<const Transition*> TransitionPtrSet;
 
-class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
+ class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun,TransitionEqualToPred> {
  public:
    typedef set<const Transition*> TransitionPtrSet;
- TransitionGraph():_startLabel(Labeler::NO_LABEL),_numberOfNodes(0){}
+ TransitionGraph():_startLabel(Label()),_numberOfNodes(0){}
   EStatePtrSet transitionSourceEStateSetOfLabel(Label lab);
   EStatePtrSet estateSetOfLabel(Label lab);
   EStatePtrSet estateSet();
+  long numberOfObservableStates(bool inlcudeIn=true, bool includeOut=true, bool includeErr=true);
   void add(Transition trans);
   string toString() const;
   LabelSet labelSetOfIoOperations(InputOutput::OpType op);
   // eliminates all duplicates of edges
-  long removeDuplicates();
-  Label getStartLabel() { assert(_startLabel!=Labeler::NO_LABEL); return _startLabel; }
+  //long removeDuplicates();
+  Label getStartLabel() { assert(_startLabel!=Label()); return _startLabel; }
   void setStartLabel(Label lab) { _startLabel=lab; }
   // this allows to deal with multiple start transitions (must share same start state)
   const EState* getStartEState();
@@ -307,12 +386,18 @@ class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun> {
   void eliminateEState(const EState* estate);
   int eliminateBackEdges();
   void determineBackEdges(const EState* state, set<const EState*>& visited, TransitionPtrSet& tpSet);
+  void setIsPrecise(bool v);
+  void setIsComplete(bool v);
+  bool isPrecise();
+  bool isComplete();
  private:
   Label _startLabel;
   int _numberOfNodes; // not used yet
   map<const EState*,TransitionPtrSet > _inEdges;
   map<const EState*,TransitionPtrSet > _outEdges;
   set<const EState*> _recomputedestateSet;
+  bool _preciseSTG;
+  bool _completeSTG;
 };
 
 } // namespace CodeThorn

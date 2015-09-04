@@ -836,6 +836,7 @@ optimizeSingleScop(scoplib_scop_p scoplibScop,
     std::cout << "[PolyOpt] Scop #"<< scopId << " successfully optimized"
 	      << std::endl;
 }
+<<<<<<< HEAD
 
 
 int PolyOptLoopTiling(SgForStatement* forStmt, int tileArg1, int tileArg2, int tileArg3)
@@ -857,3 +858,5 @@ int PolyOptLoopTiling(SgForStatement* forStmt, int tileArg1, int tileArg2, int t
   return retval;
 
 }
+=======
+>>>>>>> 1b2ed609321865e886ba4d9a0bef7ea6b8ed4e2f

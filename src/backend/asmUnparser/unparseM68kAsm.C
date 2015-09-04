@@ -17,7 +17,7 @@ std::string
 unparseM68kExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers)
 {
     if (!registers)
-        registers = RegisterDictionary::dictionary_m68000_altnames();
+        registers = RegisterDictionary::dictionary_coldfire_emac();
     RegisterNames name_of(registers);
     std::string result = "";
     if (expr==NULL)
@@ -45,18 +45,20 @@ unparseM68kExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels
 
         // Optional label.  Prefer a label supplied by the caller's LabelMap, but not for single-byte constants.  If
         // there's no caller-supplied label, then consider whether the value expression is relative to some other IR node.
-        std::string label;
-        if (ival->get_significantBits()>8) {
-            if (0!=value && labels!=NULL) {
-                AsmUnparser::LabelMap::const_iterator li = labels->find(value);
-                if (li!=labels->end())
-                    label = li->second;
+        if (expr->get_comment().empty()) {
+            std::string label;
+            if (ival->get_significantBits()>8) {
+                if (0!=value && labels!=NULL) {
+                    AsmUnparser::LabelMap::const_iterator li = labels->find(value);
+                    if (li!=labels->end())
+                        label = li->second;
+                }
             }
+            if (label.empty())
+                label = ival->get_label();
+            result = StringUtility::appendAsmComment(result, label);
         }
-        if (label.empty())
-            label = ival->get_label();
-        if (!label.empty())
-            result += "<" + label + ">";
+
     } else if (SgAsmRegisterNames *regs = isSgAsmRegisterNames(expr)) {
         // The usual assembly is to show only an integer register mask.  That's not very friendly, especially since the meaning
         // of the bits is dependent on the addressing mode of the other instruction.  So we show the register names instead in
@@ -72,9 +74,7 @@ unparseM68kExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels
         result = "<UNHANDLED_EXPRESSION type=" + expr->class_name() + ">";
     }
 
-    if (expr->get_replacement() != "")
-        result += "<" + expr->get_replacement() + ">";
-    if (expr->get_comment() != "")
-        result += "<" + expr->get_comment() + ">";
+    result = StringUtility::appendAsmComment(result, expr->get_replacement());
+    result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }

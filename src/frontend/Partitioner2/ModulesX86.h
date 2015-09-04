@@ -24,8 +24,8 @@ protected:
     Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchStandardPrologue); } /**< Allocating constructor. */
-    virtual Function::Ptr function() const ROSE_OVERRIDE { return function_; }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Matches an x86 function prologue with hot patch.
@@ -39,8 +39,8 @@ public:
 class MatchHotPatchPrologue: public MatchStandardPrologue {
 public:
     static Ptr instance() { return Ptr(new MatchHotPatchPrologue); } /**< Allocating constructor. */
-    virtual Function::Ptr function() const ROSE_OVERRIDE { return function_; }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Matches an x86 <cde>MOV EDI,EDI; PUSH ESI</code> function prologe. */
@@ -49,8 +49,8 @@ protected:
     Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchAbbreviatedPrologue); }
-    virtual Function::Ptr function() const ROSE_OVERRIDE { return function_; }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Matches an x86 "ENTER xxx, 0" prologue. */
@@ -59,8 +59,31 @@ protected:
     Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchEnterPrologue); } /**< Allocating constructor. */
-    virtual Function::Ptr function() const ROSE_OVERRIDE { return function_; }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+};
+
+/** Match thunk.
+ *
+ *  Matches any thunk of the form matched by @ref isThunk.  This callback is invoked at addresses that are not part of the
+ *  partitioner's CFG and will only match instructions not in the CFG. */
+class MatchThunk: public FunctionPrologueMatcher {
+protected:
+    std::vector<Function::Ptr> functions_;
+public:
+    static Ptr instance() { return Ptr(new MatchThunk); } /**< Allocating constructor. */
+    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return functions_; }
+    virtual bool match(const Partitioner&, rose_addr_t anchor) ROSE_OVERRIDE;
+};
+
+/** Match RET followed by PUSH with intervening no-op padding. */
+class MatchRetPadPush: public FunctionPrologueMatcher {
+protected:
+    Function::Ptr function_;
+public:
+    static Ptr instance() { return Ptr(new MatchRetPadPush); } /**< Allocating constructor. */
+    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Basic block callback to detect function returns.
@@ -81,10 +104,61 @@ public:
  *  the "case" labels, adding them as successors to this basic block. */
 class SwitchSuccessors: public BasicBlockCallback {
 public:
-    /** Allocating constructor. */
-    static Ptr instance() { return Ptr(new SwitchSuccessors); }
+    static Ptr instance() { return Ptr(new SwitchSuccessors); } /**< Allocating constructor. */
     virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
 };
+
+/** Determines whether an instruction sequence begins with a thunk.  There are a number of these functions:
+ *
+ *  @li @ref isJmpImmThunk looks for "JMP address"
+ *  @li @ref isJmpMemThunk looks for "JMP [address]"
+ *  @li @ref isLeaJmpThunk looks for "LEA ECX, [EBP+const]; JMP address"
+ *  @li @ref isMovJmpThunk looks for "MOV reg, [address]; JMP reg"
+ *
+ *  The @ref isThunk function tries to match any of the above patterns.  The return value is the number of instructions that
+ *  were matched.
+ *
+ * @{ */
+size_t isJmpMemThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
+size_t isLeaJmpThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
+size_t isMovJmpThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
+size_t isJmpImmThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
+size_t isThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
+/** @} */
+
+/** Matches "ENTER x, 0" */
+bool matchEnterAnyZero(const Partitioner&, SgAsmX86Instruction*);
+
+/** Matches "JMP constant".
+ *
+ *  Returns the constant if matched, nothing otherwise. */
+Sawyer::Optional<rose_addr_t> matchJmpConst(const Partitioner&, SgAsmX86Instruction*);
+
+/** Matches "LEA ECX, [EBP + constant]" or variant. */
+bool matchLeaCxMemBpConst(const Partitioner&, SgAsmX86Instruction*);
+
+/** Matches "JMP [address]" or variant. */
+bool matchJmpMem(const Partitioner&, SgAsmX86Instruction*);
+
+/** Matches "MOV EBP, ESP" or variant. */
+bool matchMovBpSp(const Partitioner&, SgAsmX86Instruction*);
+
+/** Matches "MOV EDI, EDI" or variant. */
+bool matchMovDiDi(const Partitioner&, SgAsmX86Instruction*);
+
+/** Matches "PUSH EBP" or variant. */
+bool matchPushBp(const Partitioner&, SgAsmX86Instruction*);
+
+/** Matches "PUSH SI" or variant. */
+bool matchPushSi(const Partitioner&, SgAsmX86Instruction*);
+
+/** Returns number of leading instructions that form a valid thunk. */
+size_t isThunk(const std::vector<SgAsmInstruction*> &insns);
+
+/** Split thunks off from start of functions.
+ *
+ *  Splits as many thunks as possible off the front of all functions currently attached to the partitioner's CFG. */
+void splitThunkFunctions(Partitioner&);
 
 /** Reads a table of code addresses.
  *

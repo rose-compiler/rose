@@ -9,6 +9,8 @@
 #include "BaseSemantics2.h"
 #include "SMTSolver.h"
 #include "InsnSemanticsExpr.h"
+#include "RegisterStateGeneric.h"
+#include "MemoryCellList.h"
 
 #include <map>
 #include <vector>
@@ -41,14 +43,14 @@ typedef InsnSemanticsExpr::LeafNode LeafNode;
 typedef InsnSemanticsExpr::LeafNodePtr LeafNodePtr;
 typedef InsnSemanticsExpr::InternalNode InternalNode;
 typedef InsnSemanticsExpr::InternalNodePtr InternalNodePtr;
+typedef InsnSemanticsExpr::TreeNode TreeNode;
 typedef InsnSemanticsExpr::TreeNodePtr TreeNodePtr;
 typedef std::set<SgAsmInstruction*> InsnSet;
 
 
-
-/******************************************************************************************************************
- *                                      Value type
- ******************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Semantic values
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
@@ -145,38 +147,55 @@ protected:
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
         expr = LeafNode::create_integer(nbits, number);
     }
+    SValue(TreeNodePtr expr): BaseSemantics::SValue(expr->get_nbits()) {
+        this->expr = expr;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
-        return SValuePtr(new SValue(1));
+        return SValuePtr(new SValue(LeafNode::create_variable(1)));
+    }
+
+    /** Instantiate a new data-flow bottom value of specified width. */
+    static SValuePtr instance_bottom(size_t nbits) {
+        return SValuePtr(new SValue(LeafNode::create_variable(nbits, "", TreeNode::BOTTOM)));
     }
 
     /** Instantiate a new undefined value of specified width. */
-    static SValuePtr instance(size_t nbits) {
-        return SValuePtr(new SValue(nbits));
+    static SValuePtr instance_undefined(size_t nbits) {
+        return SValuePtr(new SValue(LeafNode::create_variable(nbits)));
+    }
+
+    /** Instantiate a new unspecified value of specified width. */
+    static SValuePtr instance_unspecified(size_t nbits) {
+        return SValuePtr(new SValue(LeafNode::create_variable(nbits, "", TreeNode::UNSPECIFIED)));
     }
 
     /** Instantiate a new concrete value. */
-    static SValuePtr instance(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(nbits, value));
+    static SValuePtr instance_integer(size_t nbits, uint64_t value) {
+        return SValuePtr(new SValue(LeafNode::create_integer(nbits, value)));
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance_bottom(nbits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
-        return instance(nbits);
+        return instance_undefined(nbits);
+    }
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const ROSE_OVERRIDE {
+        return instance_unspecified(nbits);
     }
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const ROSE_OVERRIDE {
-        return instance(nbits, value);
+        return instance_integer(nbits, value);
     }
     virtual BaseSemantics::SValuePtr boolean_(bool value) const ROSE_OVERRIDE {
-        SValuePtr result = SValue::promote(number_(1, value?1:0));
-        result->get_expression()->set_comment(value?"true":"false");
-        return result;
+        return instance_integer(1, value?1:0);
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
@@ -184,6 +203,8 @@ public:
             retval->set_width(new_width);
         return retval;
     }
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
+                                                                           SMTSolver*) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
@@ -206,6 +227,8 @@ public:
     virtual void set_width(size_t nbits) ROSE_OVERRIDE {
         ASSERT_require(nbits==get_width());
     }
+
+    virtual bool isBottom() const ROSE_OVERRIDE;
 
     virtual bool is_number() const ROSE_OVERRIDE {
         return expr->is_known();
@@ -301,10 +324,17 @@ public:
 };
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Register state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/******************************************************************************************************************
- *                                      Memory state
- ******************************************************************************************************************/
+typedef BaseSemantics::RegisterStateGeneric RegisterState;
+typedef BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Memory state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a MemoryState object.  MemoryState objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
@@ -432,7 +462,7 @@ public:
      *  not have a run-time type that is a SymbolicSemantics::MemoryState or subclass thereof. */
     static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
         MemoryStatePtr retval = boost::dynamic_pointer_cast<MemoryState>(x);
-        ASSERT_not_null(x);
+        ASSERT_not_null(retval);
         return retval;
     }
     
@@ -464,10 +494,17 @@ public:
 };
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Complete state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/******************************************************************************************************************
- *                                      RISC Operators
- ******************************************************************************************************************/
+typedef BaseSemantics::State State;
+typedef BaseSemantics::StatePtr StatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RISC operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
  *  deleted. */
@@ -497,13 +534,15 @@ class RiscOperators: public BaseSemantics::RiscOperators {
     // Real constructors
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver), compute_usedef(false), omit_cur_insn(false) {
+        : BaseSemantics::RiscOperators(protoval, solver), computingUseDef_(false), omit_cur_insn(false),
+          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER) {
         set_name("Symbolic");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver), compute_usedef(false), omit_cur_insn(false) {
+        : BaseSemantics::RiscOperators(state, solver), computingUseDef_(false), omit_cur_insn(false),
+          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER) {
         set_name("Symbolic");
         (void) SValue::promote(state->get_protoval()); // values must have SymbolicSemantics::SValue dynamic type
     }
@@ -515,9 +554,9 @@ public:
      * SymbolicSemantics. */
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
-        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
+        BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
-        BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
+        BaseSemantics::StatePtr state = State::instance(registers, memory);
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
@@ -562,14 +601,14 @@ public:
 public:
     virtual BaseSemantics::SValuePtr boolean_(bool b) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::boolean_(b));
-        if (compute_usedef && !omit_cur_insn)
+        if (computingUseDef_ && !omit_cur_insn)
             retval->defined_by(get_insn());
         return retval;
     }
 
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::number_(nbits, value));
-        if (compute_usedef && !omit_cur_insn)
+        if (computingUseDef_ && !omit_cur_insn)
             retval->defined_by(get_insn());
         return retval;
     }
@@ -589,6 +628,14 @@ protected:
         return SValue::promote(undefined_(nbits));
     }
 
+    SValuePtr svalue_bottom(size_t nbits) {
+        return SValue::promote(bottom_(nbits));
+    }
+
+    SValuePtr svalue_unspecified(size_t nbits) {
+        return SValue::promote(unspecified_(nbits));
+    }
+
     SValuePtr svalue_number(size_t nbits, uint64_t value) {
         return SValue::promote(number_(nbits, value));
     }
@@ -599,18 +646,92 @@ protected:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Configuration properties
+public:
+    enum WritersMode {
+        TRACK_NO_WRITERS,                               // do not track writers
+        TRACK_LATEST_WRITER,                            // save only the latest writer
+        TRACK_ALL_WRITERS,                              // save all writers
+    };
+
 protected:
-    bool compute_usedef;                // if true, add use-def info to each value
-    bool omit_cur_insn;                 // if true, do not include cur_insn as a definer
+    bool computingUseDef_;                              // if true, add use-def info to each value
+    bool omit_cur_insn;                                 // if true, do not include cur_insn as a definer
+    WritersMode computingMemoryWriters_;                // whether to track writers (instruction VAs) to memory.
+    WritersMode computingRegisterWriters_;              // whether to track writers (instruction VAs) to registers.
 
 public:
-    /** Accessor for the compute_usedef property.  If compute_usedef is set, then RISC operators will update the set of
-     *  defining instructions in their return values, computing the new set from the sets of definers for the RISC operands and
-     *  possibly the current instruction (the current instruction is usually not a definer if it simply copies data verbatim).
+    /** Property: Comput use-def information.
+     *
+     *  If this property is set, then RISC operators will update the set of defining instructions in their return values,
+     *  computing the new set from the sets of definers for the RISC operands and possibly the current instruction (the current
+     *  instruction is usually not a definer if it simply copies data verbatim).
+     *
      * @{ */
-    void set_compute_usedef(bool b=true) { compute_usedef = b; }
-    void clear_compute_usedef() { set_compute_usedef(false); }
-    bool get_compute_usedef() const { return compute_usedef; }
+    bool computingUseDef() const { return computingUseDef_; }
+    void computingUseDef(bool b) { computingUseDef_ = b; }
+    /** @} */
+    
+    // [Robb P. Matzke 2015-08-10] deprecated API
+    void set_compute_usedef(bool b=true) ROSE_DEPRECATED("use computingUseDef instead") { computingUseDef(b); }
+    void clear_compute_usedef() ROSE_DEPRECATED("use computingUseDef instead") { computingUseDef(false); }
+    bool get_compute_usedef() ROSE_DEPRECATED("use computingUseDef instead") { return computingUseDef(); }
+
+    /** Property: Track latest writer to each memory location.
+     *
+     *  Controls whether each @ref writeMemory operation updates the list of writers. The following values are allowed for this
+     *  property:
+     *
+     *  @li @c TRACK_NO_WRITERS: Does not update the memory state's writers information. Using this setting will make that
+     *      data structure available for other purposes. The data structure can store a set of addresses independently for each
+     *      memory cell.
+     *
+     *  @li @c TRACK_LATEST_WRITER:  Each write operation clobbers all previous write information for the affected
+     *      memory address.
+     *
+     *  @li @c TRACK_ALL_WRITERS: Each write operation inserts the instruction address into the set of addresses stored for the
+     *      affected memory cell without removing any addresses that are already associated with that cell. While this works
+     *      well for analysis over a small region of code (like a single function), it might cause the writer sets to become
+     *      very large when the same memory state is used over large regions (like a whole program).
+     *
+     * @{ */
+    void computingMemoryWriters(WritersMode m) { computingMemoryWriters_ = m; }
+    WritersMode computingMemoryWriters() const { return computingMemoryWriters_; }
+    /** @} */
+
+    // [Robb P. Matzke 2015-08-10] deprecated API
+    void set_compute_memwriters(bool b = true) ROSE_DEPRECATED("use computingMemoryWriters instead") {
+        computingMemoryWriters(b ? TRACK_LATEST_WRITER : TRACK_NO_WRITERS);
+    }
+    void clear_compute_memwriters() ROSE_DEPRECATED("use computingMemoryWriters instead") {
+        computingMemoryWriters(TRACK_NO_WRITERS);
+    }
+    bool get_compute_memwriters() const ROSE_DEPRECATED("use computingMemoryWriters instead") {
+        return computingMemoryWriters() != TRACK_NO_WRITERS;
+    }
+
+    /** Property: track latest writer to each register.
+     *
+     *  Controls whether each @ref writeRegister operation updates the list of writers.  The following values are allowed for
+     *  this property:
+     *
+     *  @li @c TRACK_NO_WRITERS: Does not update the register state's writers information. Using this setting will make that
+     *      data structure available for other purposes. The data structure can store a set of addresses independently for each
+     *      bit of each register.
+     *
+     *  @li @c TRACK_LATEST_WRITER:  Each write operation clobbers all previous write information for the affected
+     *      register. This information is stored per bit so that if instruction 1 writes to EAX and then instruction 2 writes
+     *      to AX then the high-order 16 bits of EAX will have {1} as the writer set while the low order bits will have {2} as
+     *      its writer set.
+     *
+     *  @li @c TRACK_ALL_WRITERS: Each write operation inserts the instruction address into the set of addresses stored for the
+     *      affected register (or register part) without removing any addresses that are already associated with that
+     *      register. While this works well for analysis over a small region of code (like a single function), it might cause
+     *      the writer sets to become very large when the same register state is used over large regions (like a whole
+     *      program).
+     *
+     * @{ */
+    void computingRegisterWriters(WritersMode m) { computingRegisterWriters_ = m; }
+    WritersMode computingRegisterWriters() const { return computingRegisterWriters_; }
     /** @} */
 
     // Used internally to control whether cur_insn should be omitted from the list of definers.

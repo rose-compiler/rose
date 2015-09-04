@@ -24,9 +24,9 @@ bool sortDataBlocks(const DataBlock::Ptr&, const DataBlock::Ptr&);
 bool sortFunctionsByAddress(const Function::Ptr&, const Function::Ptr&);
 bool sortFunctionNodesByAddress(const SgAsmFunction*, const SgAsmFunction*);
 bool sortByExpression(const BasicBlock::Successor&, const BasicBlock::Successor&);
-bool sortVerticesByAddress(const ControlFlowGraph::ConstVertexNodeIterator&, const ControlFlowGraph::ConstVertexNodeIterator&);
-bool sortEdgesBySrc(const ControlFlowGraph::ConstEdgeNodeIterator&, const ControlFlowGraph::ConstEdgeNodeIterator&);
-bool sortEdgesByDst(const ControlFlowGraph::ConstEdgeNodeIterator&, const ControlFlowGraph::ConstEdgeNodeIterator&);
+bool sortVerticesByAddress(const ControlFlowGraph::ConstVertexIterator&, const ControlFlowGraph::ConstVertexIterator&);
+bool sortEdgesBySrc(const ControlFlowGraph::ConstEdgeIterator&, const ControlFlowGraph::ConstEdgeIterator&);
+bool sortEdgesByDst(const ControlFlowGraph::ConstEdgeIterator&, const ControlFlowGraph::ConstEdgeIterator&);
 bool sortBlocksForAst(SgAsmBlock*, SgAsmBlock*);
 bool sortInstructionsByAddress(SgAsmInstruction*, SgAsmInstruction*);
 
@@ -105,11 +105,24 @@ existsUnique(const Container &container, const Value &item, Comparator cmp) {
     return true;
 }
 
+// Retrieve an item from a sorted container
+template<class Container, class Value, class Comparator>
+Sawyer::Optional<Value>
+getUnique(const Container &container, const Value &item, Comparator cmp) {
+    if (item==NULL)
+        return Sawyer::Nothing();
+    ASSERT_require(isSorted(container, cmp, true));     // unique, sorted items
+    typename Container::const_iterator lb = lowerBound(container, item, cmp);
+    if (lb==container.end() || cmp(*lb, item) || cmp(item, *lb))
+        return Sawyer::Nothing();
+    return *lb;
+}
+
 std::ostream& operator<<(std::ostream&, const AddressUser&);
 std::ostream& operator<<(std::ostream&, const AddressUsers&);
 std::ostream& operator<<(std::ostream&, const AddressUsageMap&);
-std::ostream& operator<<(std::ostream&, const ControlFlowGraph::VertexNode&);
-std::ostream& operator<<(std::ostream&, const ControlFlowGraph::EdgeNode&);
+std::ostream& operator<<(std::ostream&, const ControlFlowGraph::Vertex&);
+std::ostream& operator<<(std::ostream&, const ControlFlowGraph::Edge&);
 
 /** Parse an address interval.
  *
@@ -141,6 +154,7 @@ private:
 };
 
 AddressIntervalParser::Ptr addressIntervalParser(AddressInterval &storage);
+AddressIntervalParser::Ptr addressIntervalParser(std::vector<AddressInterval> &storage);
 AddressIntervalParser::Ptr addressIntervalParser();
 
 /** Trigger based on number of times called. */

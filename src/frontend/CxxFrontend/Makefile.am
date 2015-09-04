@@ -1,4 +1,26 @@
+################################################################################
+# How to install ROSE without EDG source code on a machine with no network:
+#   On a machine with a network connection:
+#     1. git-clone the ROSE sources
+#     2. copy the ROSE source tree to the other machine
+#     3. create a build directory and configure (minimal config is okay)
+#     4. in $BUILD/src/frontend/CxxFrontend run "make download-edg"
+#     5. follow the instructions to copy some files to the other machine
+# 
+#   On the non-networked machine:
+#     1. create a build directory and configure like usual
+#     2. copy the two files and symlink from step 5 above (*)
+#     3. run make
+# 
+#   *Note: the files must be copied such that the mtime for the
+#    tarball is not earlier than the other file, or else make will try
+#    to download on the non-networked machine.  The easiest way to
+#    ensure proper mtimes is to touch(1) the tarball after copying
+#    the files.
+################################################################################
+
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+MOSTLYCLEANFILES =
 
 SUBDIRS = Clang
 DIST_SUBDIRS = Clang
@@ -20,6 +42,7 @@ EDGBIN_NAME_PREFIX=roseBinaryEDG-@ROSE_EDG_MAJOR_VERSION_NUMBER@-@ROSE_EDG_MINOR
 EDGBIN_NAME_SUFFIX=$(build_triplet_without_redhat)-$(GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX)
 
 if ROSE_HAS_EDG_SOURCE
+
 ###############################################################################################################################
 # We have the EDG source code (ROSE_HAS_EDG_SOURCE)
 ###############################################################################################################################
@@ -59,9 +82,8 @@ binary_edg_tarball: $(EDGBIN_THIS_NAME).tar.gz
 .PHONY: upload_edg_binary
 upload_edg_binary: $(EDGBIN_DESTINATIONS)
 
-
-
 else
+
 ###############################################################################################################################
 # We don't have the EDG source code (!ROSE_HAS_EDG_SOURCE)
 ###############################################################################################################################
@@ -71,23 +93,91 @@ else
 # We use the edg-generate-sig script to choose the best version from a list of available versions.  If there's a version
 # number (SHA1) already stored in the bincompat-sig file in the top of the source tree then edg-generate-sig will use
 # that rather than doing a bunch of git commands.
-EDGBIN_SIGNATURE:=$(shell $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig --find --progress)
-EDGBIN_BEST_NAME:=$(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(EDGBIN_SIGNATURE)
 
+# Be sure to use '=' and not ':=' because these need to expand after we've created edg-generate-sig.output
+EDGBIN_SIGNATURE = $(shell cat edg-generate-sig.output 2>/dev/null)
+EDGBIN_BEST_NAME = $(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(EDGBIN_SIGNATURE)
+SCRIPT_PATH = $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig
+
+# This one must be named "EDGBIN_NTRIES" because it's mentioned in an error message from the edg-generate-sig script.
+# Users are directed to override this variable with a higher value (caveat emptor) if an EDG version cannot be found.
+EDGBIN_NTRIES = 1
 all-am: EDG/libroseEDG.la
+
+network_checking:
+	wget -q --spider -t 3 --wait=5 http://www.rosecompiler.org ; \
+	if [ $$? -eq 0 ]; then \
+	echo "ROSE WebServer is Reachable"; \
+	else \
+	echo "ROSE WebServer is NOT Reachable"; \
+	fi
+
+
+# Run the edg-generate-sig script to find an appropriate version number.  We cannot use make's $(shell...) function because
+# it sometimes discards standard error and doesn't cause make to fail if the command fails.  If edg-generate-sig fails then
+# remove the edg-generate-sig.output file so that re-running make will fail the same way next time.
+edg-generate-sig.output: 
+	@wget -q --spider -t 3 --wait=5 http://www.rosecompiler.org ; \
+	if [ $$? -eq 0 ]; then \
+	if ! $(SCRIPT_PATH) --find --progress --ntries=$(EDGBIN_NTRIES) >$@; then \
+               $(SCRIPT_PATH) --generate=./; \
+	       if ! $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig --no-fetch --progress --ntries=$(EDGBIN_NTRIES) >$@; then \
+                       rm -f $@ ; \
+                       exit 1; \
+               fi; \
+	fi; \
+	else \
+	if ! $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig --no-fetch --progress --ntries=$(EDGBIN_NTRIES) >$@; then \
+	    rm -f $@ ; \
+	    exit 1; \
+	fi; \
+	fi
 
 # Try to get the EDG binary tarball if we don't have it.  Team members might be able to get it from a local directory,
 # but others will need to go to a Web server.  We use wget rather than curl because curl was sometimes placing error
 # messages inside the tarball.  Note, we can't have two make targets with the same name even if they are in separate parts
 # of an automake 'if' statement; so we add a 'download-' prefix to this one.
-download-$(EDGBIN_BEST_NAME).tar.gz:
-	@test -n "$(EDGBIN_SIGNATURE)" || ( \
-      echo "[FATAL] Invalid EDG binary compatibility signature '$(EDGBIN_SIGNATURE)' in filename '$(EDGBIN_BEST_NAME)'. Please contact rose-public@nersc.gov to troubleshoot this error message." && \
-      exit 1);
-		wget -O "$@" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz"
+EDG.tar.gz:  edg-generate-sig.output
+	@if [ "$(EDGBIN_SIGNATURE)" = "" ]; then \
+	    echo "Invalid EDG binary compatibility signature "$(EDGBIN_SIGNATURE)" in filename '$(EDGBIN_BEST_NAME)'." >&2; \
+	    echo "Please contact rose-public@nersc.gov to troubleshoot this error message." >&2; \
+	    exit 1; \
+	fi
+	@if [ ! -f $@ ]; then \
+	echo "$@ not found, checking if "$(EDGBIN_BEST_NAME).tar.gz" is available"; \
+		if [ ! -f "$(EDGBIN_BEST_NAME).tar.gz" ]; then \
+		echo ""$(EDGBIN_BEST_NAME).tar.gz" not found, download it!";\
+			wget -q --spider -t 3 --wait=5 $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz ; \
+			if [ $$? -eq 0 ]; then \
+				wget -O "$(EDGBIN_BEST_NAME).tar.gz" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz"; \
+			else \
+				echo "Destination not reachable: download EDG binary from the following link when the network is available:"; \
+				echo "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz";\
+			fi; \
+		fi; \
+		touch $(EDGBIN_BEST_NAME).tar.gz; \
+		echo "Symbolic link "$(EDGBIN_BEST_NAME).tar.gz" to $@!";\
+		ln -sf $(EDGBIN_BEST_NAME).tar.gz $@; \
+	fi
+
+# This target can be used to explicitly download the EDG tarball without needing to know its name.
+.PHONY: download-edg
+download-edg: EDG.tar.gz
+	@echo
+	@echo "The EDG tarball is $(EDGBIN_BEST_NAME).tar.gz"
+	@echo "To compile on a system with no network, copy this EDG tarball, the EDG.tar.gz symlink, and"
+	@echo "the edg-generate-sig.output file to the $$ROSE_BUILD/src/frontend/CxxFrontend directory on"
+	@echo "the machine with no network."
+
+# This target is for the user to obtain the EDG tarball name without downloading anything
+.PHONY: show-edg-name show-edg-url
+show-edg-name: edg-generate-sig.output
+	@echo $(EDGBIN_BEST_NAME).tar.gz
+show-edg-url: edg-generate-sig.output
+	@echo $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz
 
 # Unpack the EDG tarball. Note: $(am__untar) comes from configure and if it's not set then there's something wrong with configure.
-EDG/libroseEDG.la: download-$(EDGBIN_BEST_NAME).tar.gz
+EDG/libroseEDG.la: EDG.tar.gz
 	GZIP=$(GZIP_ENV) gunzip -c $< |$(am__untar)
 	rm -rf EDG
 	mkdir -p EDG
@@ -98,13 +188,16 @@ EDG/libroseEDG.la: download-$(EDGBIN_BEST_NAME).tar.gz
 
 installdir = ${datadir}
 
+MOSTLYCLEANFILES += edg-generate-sig.output edg_binaries.txt EDG.tar.gz
+
 endif
+
 ###############################################################################################################################
 # Stuff that's common to both uploading and downloading EDG tarballs
 ###############################################################################################################################
 
 # Cleanup
-MOSTLYCLEANFILES = EDG/libroseEDG.la
+MOSTLYCLEANFILES += EDG/libroseEDG.la
 clean-local:
 	rm -rf EDG/.libs {download-,}$(EDGBIN_NAME_PREFIX)-*.tar.gz
 endif

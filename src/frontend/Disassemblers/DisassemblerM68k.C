@@ -7,7 +7,7 @@
 #include "sageBuilderAsm.h"
 #include "DispatcherM68k.h"
 
-#include <sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
+#include <Sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
 
 #if 1 /*DEBUGGING [Robb P. Matzke 2013-10-02]*/
 #include "AsmUnparser_compat.h"
@@ -242,6 +242,7 @@ integerFormat(unsigned fmtNumber)
         case 0: return m68k_fmt_i8;
         case 1: return m68k_fmt_i16;
         case 2: return m68k_fmt_i32;
+        case 3: return m68k_fmt_i16;
     }
     ASSERT_not_reachable("invalid integer format number: " + numberToString(fmtNumber));
 }
@@ -435,6 +436,118 @@ DisassemblerM68k::makeConditionCodeRegister()
     RegisterDescriptor desc(m68k_regclass_spr, m68k_spr_sr, 0, 8); // CCR is the low byte of the status register
     SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(desc);
     expr->set_type(makeType(m68k_fmt_i8));
+    return expr;
+}
+
+SgAsmRegisterReferenceExpression *
+DisassemblerM68k::makeColdFireControlRegister(unsigned regnum) {
+    // From table 8.3: "Coldfire CPU Space Assignments" in "CFPRM ColdFire Family Programmer's Reference Manual"
+    // for the privileged MOVEC instruction.
+    RegisterDescriptor rd;
+    switch (regnum) {
+        // Memory management control registers
+        case 0x002:                                     // cache control register (CACR)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_cacr, 0, 32);
+            break;
+        case 0x003:                                     // address space identifier register (ASID)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_asid, 0, 32);
+            break;
+        case 0x004:                                     // access control registers 0 (ACR0)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_acr0, 0, 32);
+            break;
+        case 0x005:                                     // access control registers 1 (ACR1)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_acr1, 0, 32);
+            break;
+        case 0x006:                                     // access control registers 2 (ACR2)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_acr2, 0, 32);
+            break;
+        case 0x007:                                     // access control registers 3 (ACR3)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_acr3, 0, 32);
+            break;
+        case 0x008:                                     // mmu base address register (MMUBAR)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_mmubar, 0, 32);
+            break;
+
+        // Processor miscellaneous registers
+        case 0x801:                                     // vector base register (VBR)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_vbr, 0, 32);
+            break;
+        case 0x80f:                                     // program counter (PC)
+            return makeProgramCounter();
+
+        // Local memory and module control registers
+        case 0xc00:                                     // ROM base address register 0 (ROMBAR0)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_rombar0, 0, 32);
+            break;
+        case 0xc01:                                     // ROM base address register 1 (ROMBAR1)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_rombar1, 0, 32);
+            break;
+        case 0xc04:                                     // RAM base address register 0 (RAMBAR0)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_rambar0, 0, 32);
+            break;
+        case 0xc05:                                     // RAM base address register 1( RAMBAR1)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_rambar1, 0, 32);
+            break;
+        case 0xc0c:                                     // multiprocessor control register (MPCR)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_mpcr, 0, 32);
+            break;
+        case 0xc0d:                                     // embedded DRAM base address register (EDRAMBAR)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_edrambar, 0, 32);
+            break;
+        case 0xc0e:                                     // secondary module base address register (SECMBAR)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_secmbar, 0, 32);
+            break;
+        case 0xc0f:                                     // primary module base address register (MBAR)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_mbar, 0, 32);
+            break;
+
+        // Local memory address permutation control registers
+        case 0xd02:                                     // 32 msbs of RAM 0 permutation control register 1 (PCR1U0)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_0_pcr1, 32, 32);
+            break;
+        case 0xd03:                                     // 32 lsbs of RAM 0 permutation control register 1 (PCR1L0)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_0_pcr1, 0, 32);
+            break;
+        case 0xd04:                                     // 32 msbs of RAM 0 permutation control register 2 (PCR2U0)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_0_pcr2, 32, 32);
+            break;
+        case 0xd05:                                     // 32 lsbs of RAM 0 permutation control register 2 (PCR2L0)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_0_pcr2, 0, 32);
+            break;
+        case 0xd06:                                     // 32 msbs of RAM 0 permutation control register 3 (PCR3U0)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_0_pcr3, 32, 32);
+            break;
+        case 0xd07:                                     // 32 lsbs of RAM 0 permutation control register 3 (PCR3L0)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_0_pcr3, 0, 32);
+            break;
+        case 0xd0a:                                     // 32 msbs of RAM 1 permutation control register 1 (PCR1U1)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_1_pcr1, 32, 32);
+            break;
+        case 0xd0b:                                     // 32 lsbs of RAM 1 permutation control register 1 (PCR1L1)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_1_pcr1, 0, 32);
+            break;
+        case 0xd0c:                                     // 32 msbs of RAM 1 permutation control register 2 (PCR2U1)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_1_pcr2, 32, 32);
+            break;
+        case 0xd0d:                                     // 32 lsbs of RAM 1 permutation control register 2 (PCR2L1)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_1_pcr2, 0, 32);
+            break;
+        case 0xd0e:                                     // 32 msbs of RAM 1 permutation control register 3 (PCR3U1)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_1_pcr3, 32, 32);
+            break;
+        case 0xd0f:                                     // 32 lsbs of RAM 1 permutation control register 3 (PCR3L1)
+            rd = RegisterDescriptor(m68k_regclass_sup, m68k_sup_1_pcr3, 0, 32);
+            break;
+
+        default:
+            // "Not all control registers are implemented in every processor design. Attempted access to undefined or
+            // unimplemented control register space produces undefined results." [Programmer's Reference Manual].
+            throw Disassembler::Exception("invalid control register number: " +
+                                          StringUtility::toHex2(regnum, 12, false, false));
+    }
+    SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(rd);
+    ASSERT_require(rd.get_nbits()==32);
+    expr->set_type(makeType(m68k_fmt_i32));
     return expr;
 }
 
@@ -3763,6 +3876,17 @@ struct M68k_movea: M68k {
     }
 };
 
+// MOVEC.L <ea>y, Rc
+struct M68k_move_to_cr: M68k {
+    M68k_move_to_cr(): M68k("move_to_cr", m68k_family,
+                            OP(4) & BITS<0, 11>(0xe7b)) {}
+    SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
+        SgAsmExpression *src = d->makeDataAddressRegister(extract<12, 15>(d->instructionWord(1)), m68k_fmt_i32, 0);
+        SgAsmExpression *dst = d->makeColdFireControlRegister(extract<0, 11>(d->instructionWord(1)));
+        return d->makeInstruction(m68k_movec, "movec.l", src, dst);
+    }
+};
+
 // MOVEM.W <ea>y, #list
 // MOVEM.L <ea>y, #list
 struct M68k_movem_mr: M68k {
@@ -4498,7 +4622,7 @@ struct M68k_trapv: M68k {
 // TST.L <ea>y
 struct M68k_tst: M68k {
     M68k_tst(): M68k("tst", m68k_family,
-                     OP(4) & BITS<8, 11>(0xa) & (BITS<6, 7>(0) | BITS<6, 7>(1) | BITS<6, 7>(2)) & EAM(m68k_eam_all)) {}
+                     OP(4) & BITS<8, 11>(0xa) & EAM(m68k_eam_all)) {}
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         M68kDataFormat fmt = integerFormat(extract<6, 7>(w0));
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), fmt, 0);
@@ -4669,19 +4793,24 @@ void
 DisassemblerM68k::init()
 {
     // Default register dictionary
+    const RegisterDictionary *regdict = NULL;
     if ((family & m68k_freescale) != 0) {
-        set_registers(RegisterDictionary::dictionary_coldfire_emac());
+        regdict = RegisterDictionary::dictionary_coldfire_emac();
     } else {
-        set_registers(RegisterDictionary::dictionary_m68000());
+        regdict = RegisterDictionary::dictionary_m68000();
     }
+    set_registers(regdict);
     REG_IP = *get_registers()->lookup("pc");
     REG_SP = *get_registers()->lookup("a7");
 
     p_proto_dispatcher = InstructionSemantics2::DispatcherM68k::instance();
+    p_proto_dispatcher->addressWidth(32);
+    p_proto_dispatcher->set_register_dictionary(regdict);
 
     set_wordsize(2);
     set_alignment(2);
     set_sex(ByteOrder::ORDER_MSB);
+    callingConventions(CallingConvention::dictionaryM68k());
 
     idis_table.resize(17);
 
@@ -4827,6 +4956,7 @@ DisassemblerM68k::init()
     M68k_DECODER(move_to_acc);
     M68k_DECODER(move_to_accext);
     M68k_DECODER(move_to_ccr);
+    M68k_DECODER(move_to_cr);
     M68k_DECODER(move_to_macsr);
     M68k_DECODER(move_to_mask);
     M68k_DECODER(move_to_sr);

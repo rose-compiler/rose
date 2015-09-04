@@ -15,14 +15,13 @@ void initialize()
 {
   dx = 2.0 / (n - 1);
   dy = 2.0 / (m - 1);
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++) 
     for (int j = 0; j < m; j++) {
       int yy = (int )(- 1.0 + dy * ((double )(j - 1)));
       int xx = (int )(- 1.0 + dx * ((double )(i - 1)));
       u[i][j] = 0.0;
       f[i][j] = - 1.0 * alpha * (1.0 - (xx * xx)) * (1.0 - (yy * yy)) - 2.0 * (1.0 - (xx * xx)) - 2.0 * (1.0 - (yy * yy));
     }
-  }
 }
 
 void foo(int len,float *compression,float *vnewc,float *delvc,float *compHalfStep)

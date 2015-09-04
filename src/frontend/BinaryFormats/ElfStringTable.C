@@ -9,6 +9,9 @@
  */
 
 #include "sage3basic.h"
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
     
 /** Non-parsing constructor. The ELF String Table is constructed to contain one NUL byte. */
 void
@@ -185,12 +188,11 @@ SgAsmElfStrtab::create_storage(rose_addr_t offset, bool shared)
      * since the latter is guaranteed to never be freed or shared. This exception is used when creating a new, unallocated
      * string (see SgAsmStoredString(SgAsmGenericStrtab,const std::string&)). */
     if (p_num_freed>0 && (!p_dont_free || offset!=p_dont_free->get_offset())) {
-        fprintf(stderr,
-                "SgAsmElfStrtab::create_storage(%"PRIu64"): %zu other string%s (of %zu created) in [%d] \"%s\""
-                " %s been modified and/or reallocated!\n",
-                offset, p_num_freed, 1==p_num_freed?"":"s", p_storage_list.size(),
-                get_container()->get_id(), get_container()->get_name()->get_string(true).c_str(),
-                1==p_num_freed?"has":"have");
+        mlog[WARN] <<"SgAsmElfStrtab::create_storage(" <<StringUtility::addrToString(offset) <<"): "
+                   <<StringUtility::plural(p_num_freed, "other strings")
+                   <<" (of " <<p_storage_list.size() <<" created)"
+                   <<" in [" <<get_container()->get_id() <<"] \"" <<get_container()->get_name()->get_string(true) <<"\" "
+                   <<(1==p_num_freed?"has":"have") <<" been modified and/or reallocated\n";
         ROSE_ASSERT(0==p_num_freed);
     }
     
@@ -204,7 +206,7 @@ void
 SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, rose_addr_t offset)
 {
     ROSE_ASSERT(p_dont_free && storage!=p_dont_free && storage->get_offset()==p_dont_free->get_offset());
-    std::string s = get_container()->read_content_local_str(offset);
+    std::string s = get_container()->read_content_local_str(offset, false /*relax*/);
     storage->set_offset(offset);
     storage->set_string(s);
 }

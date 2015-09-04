@@ -867,6 +867,7 @@ SgStatement* PastToSage::buildUserStatement(s_past_cloogstmt_t* statement)
     retStmt->getAttachedPreprocessingInfo();
   if(attached != NULL)
     {
+<<<<<<< HEAD
 //      attached->clear();
       for(Rose_STL_Container<PreprocessingInfo * >::iterator it = attached->begin(); it != attached->end(); ++it)
       {
@@ -882,6 +883,16 @@ SgStatement* PastToSage::buildUserStatement(s_past_cloogstmt_t* statement)
           attached->erase(it);
         }
       }  
+=======
+      if (! _polyoptions.getQuiet())
+	{
+	  std::cout << "[PastToSage] Warning:  SCoP statement has attached"
+	    " preprocessing info!  It will be cleared." << std::endl;
+	  std::cout << "[PastToSage]   Offending Statement: " <<
+	    origStatement->unparseToCompleteString() << std::endl;
+	}
+      attached->clear();
+>>>>>>> 1b2ed609321865e886ba4d9a0bef7ea6b8ed4e2f
     }
 
   // Perform variable substitution

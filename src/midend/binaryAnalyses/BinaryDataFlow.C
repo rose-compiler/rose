@@ -31,56 +31,36 @@ DataFlow::init(const BaseSemantics::DispatcherPtr &userDispatcher) {
     ASSERT_not_null(dispatcher_);
 }
 
-void
-DataFlow::buildGraphProcessInstruction(SgAsmInstruction *insn)
-{
-    mlog[DEBUG] <<"  processing " <<unparseInstructionWithAddress(insn) <<"\n";
-    dispatcher_->processInstruction(insn);
+std::vector<SgAsmInstruction*>
+DataFlow::DefaultVertexUnpacker::operator()(SgAsmBlock *blk) {
+    return SageInterface::querySubTree<SgAsmInstruction>(blk);
 }
 
 DataFlow::Graph
-DataFlow::buildGraph(SgAsmInstruction *insn) {
-    ASSERT_this();
-    ASSERT_not_null(insn);
-    ASSERT_not_null(dispatcher_);
-    dfOps_->clearGraph();
-
-    if (mlog[DEBUG]) {
-        mlog[DEBUG] <<"buildGraph: incoming state at " <<StringUtility::addrToString(insn->get_address()) <<":\n";
-        userOps_->print(mlog[DEBUG], "  |");
-    }
-
-    buildGraphProcessInstruction(insn);
-
-    if (mlog[DEBUG]) {
-        mlog[DEBUG] <<"  outgoing state:\n";
-        userOps_->print(mlog[DEBUG], "  |");
-    }
-
-    return dfOps_->getGraph();
-}
-
-DataFlow::Graph
-DataFlow::buildGraph(SgAsmBlock *bb)
+DataFlow::buildGraph(const std::vector<SgAsmInstruction*> &insns)
 {
     ASSERT_this();
-    ASSERT_not_null(bb);
     ASSERT_not_null(dispatcher_);
     dfOps_->clearGraph();
 
-    if (mlog[DEBUG]) {
-        mlog[DEBUG] <<"buildGraph: incoming state at " <<StringUtility::addrToString(bb->get_address()) <<":\n";
-        userOps_->print(mlog[DEBUG], "  |");
+    if (insns.empty()) {
+        mlog[DEBUG] <<"buildGraph: empty graph; returning empty data flows\n";
+    } else {
+        if (mlog[DEBUG]) {
+            mlog[DEBUG] <<"buildGraph: incoming state at " <<StringUtility::addrToString(insns.front()->get_address()) <<":\n";
+            userOps_->print(mlog[DEBUG], "  |");
+        }
+
+        BOOST_FOREACH (SgAsmInstruction *insn, insns) {
+            mlog[DEBUG] <<"  processing " <<unparseInstructionWithAddress(insn) <<"\n";
+            dispatcher_->processInstruction(insn);
+        }
+
+        if (mlog[DEBUG]) {
+            mlog[DEBUG] <<"  outgoing state:\n";
+            userOps_->print(mlog[DEBUG], "  |");
+        }
     }
-
-    BOOST_FOREACH (SgAsmInstruction *insn, SageInterface::querySubTree<SgAsmInstruction>(bb))
-        buildGraphProcessInstruction(insn);
-
-    if (mlog[DEBUG]) {
-        mlog[DEBUG] <<"  outgoing state:\n";
-        userOps_->print(mlog[DEBUG], "  |");
-    }
-
     return dfOps_->getGraph();
 }
 

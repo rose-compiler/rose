@@ -70,7 +70,7 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
 
         case V_SgAsmMemoryReferenceExpression: {
             SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(expr);
-            result = mipsTypeToPtrName(mr->get_type()) + " PTR [" +
+            result = mipsTypeToPtrName(mr->get_type()) + " [" +
                      unparseMipsExpression(mr->get_address(), labels, registers) + "]";
             break;
         }
@@ -90,12 +90,14 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
 
             // Optional label.  Prefer a label supplied by the caller's LabelMap, but not for single-byte constants.  If
             // there's no caller-supplied label, then consider whether the value expression is relative to some other IR node.
-            std::string label;
-            if (ival->get_significantBits()>8)
-                label =mipsValToLabel(value, labels);
-            if (label.empty())
-                label = ival->get_label();
-            result = StringUtility::appendAsmComment(result, label);
+            if (expr->get_comment().empty()) {
+                std::string label;
+                if (ival->get_significantBits()>8)
+                    label = mipsValToLabel(value, labels);
+                if (label.empty())
+                    label = ival->get_label();
+                result = StringUtility::appendAsmComment(result, label);
+            }
             break;
         }
 
@@ -105,5 +107,6 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
     }
 
     result = StringUtility::appendAsmComment(result, expr->get_replacement());
+    result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }

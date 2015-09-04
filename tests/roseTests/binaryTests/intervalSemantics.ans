@@ -422,7 +422,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080482f0: jmp    DWORD PTR ds:[0x080496d4<.got.plt+0x0c>]
+0x080482f0: jmp    dword ds:[0x080496d4<.got.plt+0x0c>]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -476,7 +476,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048300: jmp    DWORD PTR ds:[0x080496d8<.got.plt+0x10>]
+0x08048300: jmp    dword ds:[0x080496d8<.got.plt+0x10>]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -530,7 +530,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048310: jmp    DWORD PTR ds:[0x080496dc<.got.plt+0x14>]
+0x08048310: jmp    dword ds:[0x080496dc<.got.plt+0x14>]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -584,7 +584,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048320: jmp    DWORD PTR ds:[0x080496e0<.got.plt+0x18>]
+0x08048320: jmp    dword ds:[0x080496e0<.got.plt+0x18>]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -638,7 +638,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048330: jmp    DWORD PTR ds:[0x080496e4<.got.plt+0x1c>]
+0x08048330: jmp    dword ds:[0x080496e4<.got.plt+0x1c>]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -1772,7 +1772,7 @@ registers:
     ip      = { 0x08048375[32] }
 memory:
 
-0x08048375: mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
+0x08048375: mov    edx, dword ds:[ebx + 0xfffffffc<-4>]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -2339,7 +2339,7 @@ registers:
     ip      = { 0x08048396[32] }
 memory:
 
-0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00
+0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -2444,7 +2444,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x0804839f: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
+0x0804839f: mov    eax, dword ds:[0x080496f0<.data+8>]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -2495,7 +2495,7 @@ registers:
     ip      = { 0x080483a4[32] }
 memory:
 
-0x080483a4: mov    edx, DWORD PTR ds:[eax]
+0x080483a4: mov    edx, dword ds:[eax]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -2648,7 +2648,7 @@ registers:
     ip      = { 0x080483c5[32] }
 memory:
 
-0x080483c5: mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01
+0x080483c5: mov    byte ds:[0x080496f4<.bss>], 0x01
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -2906,7 +2906,7 @@ registers:
     ip      = { 0x080483b3[32] }
 memory:
 
-0x080483b3: mov    DWORD PTR ds:[0x080496f0<.data+8>], eax
+0x080483b3: mov    dword ds:[0x080496f0<.data+8>], eax
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -3011,7 +3011,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483ba: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
+0x080483ba: mov    eax, dword ds:[0x080496f0<.data+8>]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -3062,7 +3062,7 @@ registers:
     ip      = { 0x080483bf[32] }
 memory:
 
-0x080483bf: mov    edx, DWORD PTR ds:[eax]
+0x080483bf: mov    edx, dword ds:[eax]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -3371,7 +3371,7 @@ registers:
     ip      = { 0x080483d6[32] }
 memory:
 
-0x080483d6: mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]
+0x080483d6: mov    eax, dword ds:[0x080495f8<.jcr>]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -3836,7 +3836,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483e8: mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>
+0x080483e8: mov    dword ss:[esp], 0x080495f8<.jcr>
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -4301,7 +4301,7 @@ registers:
     ip      = { 0x0804841e[32] }
 memory:
 
-0x0804841e: mov    DWORD PTR ss:[esp + 0x04], edx
+0x0804841e: mov    dword ss:[esp + 0x04], edx
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -4352,7 +4352,7 @@ registers:
     ip      = { 0x08048422[32] }
 memory:
 
-0x08048422: mov    DWORD PTR ss:[esp], 0x0000000a
+0x08048422: mov    dword ss:[esp], 0x0000000a
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -4817,7 +4817,7 @@ registers:
     ip      = { 0x08048446[32] }
 memory:
 
-0x08048446: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x08048446: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -5231,7 +5231,7 @@ registers:
     ip      = { 0x08048466[32] }
 memory:
 
-0x08048466: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x08048466: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -5336,7 +5336,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048472: mov    DWORD PTR ss:[esp], 0x00000000
+0x08048472: mov    dword ss:[esp], 0x00000000
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -5594,7 +5594,7 @@ registers:
     ip      = { 0x08048486[32] }
 memory:
 
-0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]
+0x08048486: inc    dword ds:[0x080496f8<.bss+4>]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -5645,7 +5645,7 @@ registers:
     ip      = { 0x0804848c[32] }
 memory:
 
-0x0804848c: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x0804848c: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -5750,7 +5750,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048498: mov    DWORD PTR ss:[esp], 0x00000000
+0x08048498: mov    dword ss:[esp], 0x00000000
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -6575,7 +6575,7 @@ registers:
     ip      = { 0x080484db[32] }
 memory:
 
-0x080484db: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x080484db: mov    dword ss:[ebp + 0xf0<-16>], eax
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -7655,7 +7655,7 @@ registers:
     ip      = { 0x08048546[32] }
 memory:
 
-0x08048546: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x08048546: mov    dword ss:[ebp + 0xf0<-16>], eax
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -8066,7 +8066,7 @@ registers:
     ip      = { 0x08048560[32] }
 memory:
 
-0x08048560: call   DWORD PTR ds:[esi]
+0x08048560: call   dword ds:[esi]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -8222,7 +8222,7 @@ registers:
     ip      = { 0x08048566[32] }
 memory:
 
-0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi
+0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -8945,7 +8945,7 @@ registers:
     ip      = { 0x0804858c[32] }
 memory:
 
-0x0804858c: mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]
+0x0804858c: mov    eax, dword ds:[0x080495e8<.ctors>]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }
@@ -9308,7 +9308,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080485a5: mov    eax, DWORD PTR ds:[ebx]
+0x080485a5: mov    eax, dword ds:[ebx]
 registers:
     ax      = { doubleword[32] }
     cx      = { doubleword[32] }

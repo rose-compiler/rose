@@ -1,0 +1,96 @@
+/* Interpretation ELF */
+0x080480a0: ================================== Function (entry point, graph) <_start>
+0x080480a0: Function does not return to caller.
+
+0x080480a0: Basic block reasons: entry point, CFG head
+0x080480a0: 74 01                   |t.      |<sp+0 >   je     0x080480a3<case1>
+0x080480a0: Outgoing stack delta: +0
+0x080480a0: Successor blocks: 0x080480a2, 0x080480a3
+
+0x080480a2: Basic block reasons: 
+0x080480a2: f4                      |.       |          hlt    
+0x080480a2: Successor blocks: none
+
+0x080480a3: Basic block reasons: 
+0x080480a3: 89 d8                   |..      |<sp+0 >   mov    eax, ebx
+0x080480a5: 89 c0                   |..      |<sp+0 >   mov    eax, eax
+0x080480a7: 74 f9                   |t.      |<sp+0 >   je     0x080480a2<end>
+0x080480a7: Outgoing stack delta: +0
+0x080480a7: Successor blocks: 0x080480a2, 0x080480a9
+
+0x080480a9: Basic block reasons: 
+0x080480a9: 01 c0                   |..      |<sp+0 >   add    eax, eax
+0x080480ab: 01 db                   |..      |<sp+0 >   add    ebx, ebx
+0x080480ad: 01 d8                   |..      |<sp+0 >   add    eax, ebx
+0x080480af: 74 f1                   |t.      |<sp+0 >   je     0x080480a2<end>
+0x080480af: Outgoing stack delta: +0
+0x080480af: Successor blocks: 0x080480a2, 0x080480b1
+
+0x080480b1: Basic block reasons: 
+0x080480b1: b8 01 00 00 00          |.....   |<sp+0 >   mov    eax, 0x00000001
+0x080480b6: 74 ea                   |t.      |<sp+0 >   je     0x080480a2<end>
+0x080480b6: Outgoing stack delta: +0
+0x080480b6: Successor blocks: 0x080480a2, 0x080480b8
+
+0x080480b8: Basic block reasons: 
+0x080480b8: b8 03 00 00 00          |.....   |<sp+0 >   mov    eax, 0x00000003
+0x080480bd: bb 04 00 00 00          |.....   |<sp+0 >   mov    ebx, 0x00000004
+0x080480c2: 01 d8                   |..      |<sp+0 >   add    eax, ebx
+0x080480c4: f7 d9                   |..      |<sp+0 >   neg    ecx
+0x080480c6: 74 da                   |t.      |<sp+0 >   je     0x080480a2<end>
+0x080480c6: Outgoing stack delta: +0
+0x080480c6: Successor blocks: 0x080480a2, 0x080480c8
+
+0x080480c8: Basic block reasons: 
+0x080480c8: 89 d8                   |..      |<sp+0 >   mov    eax, ebx
+0x080480ca: 88 fc                   |..      |<sp+0 >   mov    ah, bh
+0x080480cc: 88 dc                   |..      |<sp+0 >   mov    ah, bl
+0x080480ce: 66 89 c8                |f..     |<sp+0 >   mov    ax, cx
+0x080480d1: 89 d8                   |..      |<sp+0 >   mov    eax, ebx
+0x080480d3: 74 cd                   |t.      |<sp+0 >   je     0x080480a2<end>
+0x080480d3: Outgoing stack delta: +0
+0x080480d3: Successor blocks: 0x080480a2, 0x080480d5
+
+0x080480d5: Basic block reasons: 
+0x080480d5: 89 18                   |..      |<sp+0 >   mov    dword ds:[eax], ebx
+0x080480d7: 74 c9                   |t.      |<sp+0 >   je     0x080480a2<end>
+0x080480d7: Outgoing stack delta: +0
+0x080480d7: Successor blocks: 0x080480a2, 0x080480d9
+
+0x080480d9: Basic block reasons: 
+0x080480d9: 8b 03                   |..      |<sp+0 >   mov    eax, dword ds:[ebx]
+0x080480db: 74 c5                   |t.      |<sp+0 >   je     0x080480a2<end>
+0x080480db: Outgoing stack delta: +0
+0x080480db: Successor blocks: 0x080480a2, 0x080480dd
+
+0x080480dd: Basic block reasons: 
+0x080480dd: c1 e8 0a                |...     |<sp+0 >   shr    eax, 0x0a
+0x080480e0: c1 e8 0a                |...     |<sp+0 >   shr    eax, 0x0a
+0x080480e3: c1 e8 0a                |...     |<sp+0 >   shr    eax, 0x0a
+0x080480e6: c1 e8 02                |...     |<sp+0 >   shr    eax, 0x02
+0x080480e9: 89 d8                   |..      |<sp+0 >   mov    eax, ebx
+0x080480eb: 74 b5                   |t.      |<sp+0 >   je     0x080480a2<end>
+0x080480eb: Outgoing stack delta: +0
+0x080480eb: Successor blocks: 0x080480a2, 0x080480ed
+
+0x080480ed: Basic block reasons: 
+0x080480ed: b8 01 00 00 00          |.....   |<sp+0 >   mov    eax, 0x00000001
+0x080480f2: 31 c0                   |1.      |<sp+0 >   xor    eax, eax
+0x080480f4: f7 d9                   |..      |<sp+0 >   neg    ecx
+0x080480f6: 74 aa                   |t.      |<sp+0 >   je     0x080480a2<end>
+0x080480f6: Outgoing stack delta: +0
+0x080480f6: Successor blocks: 0x080480a2, 0x080480f8
+
+0x080480f8: Basic block reasons: 
+0x080480f8: 68 03 00 00 00          |h....   |<sp+0 >   push   0x00000003
+0x080480fd: b8 07 00 00 00          |.....   |<sp-4 >   mov    eax, 0x00000007
+0x08048102: 50                      |P       |<sp-4 >   push   eax
+0x08048103: 74 9d                   |t.      |<sp-8 >   je     0x080480a2<end>
+0x08048103: Outgoing stack delta: -8
+0x08048103: Successor blocks: 0x080480a2, 0x08048105
+
+0x08048105: Basic block reasons: 
+0x08048105: f4                      |.       |<sp-8 >   hlt    
+0x08048105: Outgoing stack delta: -8
+0x08048105: Successor blocks: none
+

@@ -15,9 +15,9 @@ namespace InstructionSemantics2 { // documented elsewhere
  *  semantics API (the RISC operations), or for debugging. */
 namespace NullSemantics {
 
-/*******************************************************************************************************************************
- *                                      ValueType
- *******************************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Semantic values
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
@@ -56,7 +56,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nBits) const ROSE_OVERRIDE {
+        return instance(nBits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nBits) const ROSE_OVERRIDE {
+        return instance(nBits);
+    }
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nBits) const ROSE_OVERRIDE {
         return instance(nBits);
     }
     virtual BaseSemantics::SValuePtr number_(size_t nBits, uint64_t number) const ROSE_OVERRIDE {
@@ -67,6 +73,10 @@ public:
         if (new_width!=0 && new_width!=retval->get_width())
             retval->set_width(new_width);
         return retval;
+    }
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
+                                                                           SMTSolver*) const ROSE_OVERRIDE {
+        return Sawyer::Nothing();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,8 +92,19 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Implementations of functions inherited
 public:
-    virtual bool is_number() const { return false; }
-    virtual uint64_t get_number() const { ASSERT_not_reachable("not a number"); uint64_t retval; return retval;}
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
+
+    virtual bool is_number() const ROSE_OVERRIDE {
+        return false;
+    }
+
+    virtual uint64_t get_number() const ROSE_OVERRIDE {
+        ASSERT_not_reachable("not a number");
+        uint64_t retval;
+        return retval;
+    }
 
     virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE {
         return true;
@@ -99,9 +120,9 @@ public:
 };
 
 
-/*******************************************************************************************************************************
- *                                      Registers
- *******************************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Register state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
 
@@ -136,6 +157,10 @@ public:
         return retval;
     }
 
+    virtual bool merge(const BaseSemantics::RegisterStatePtr &other_, BaseSemantics::RiscOperators*) {
+        return false;
+    }
+
     virtual void clear() ROSE_OVERRIDE {}
     virtual void zero() ROSE_OVERRIDE {}
 
@@ -150,9 +175,9 @@ public:
 };
 
 
-/*******************************************************************************************************************************
- *                                      Memory
- *******************************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Memory state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
@@ -199,11 +224,22 @@ public:
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {}
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE {}
+    virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
+                       BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE { return false; }
 };
 
-/*******************************************************************************************************************************
- *                                      RISC Operators
- *******************************************************************************************************************************/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Complete state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef BaseSemantics::State State;
+typedef BaseSemantics::StatePtr StatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RISC operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
  *  deleted. */

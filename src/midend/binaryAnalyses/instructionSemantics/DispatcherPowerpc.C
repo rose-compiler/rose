@@ -1,6 +1,9 @@
 #include "sage3basic.h"
 #include "BaseSemantics2.h"
+#include "Diagnostics.h"
 #include "DispatcherPowerpc.h"
+
+using namespace rose::Diagnostics;
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -32,7 +35,7 @@ public:
         BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
         SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
         ASSERT_require(insn!=NULL && insn==operators->get_insn());
-        operators->writeRegister(dispatcher->REG_IAR, operators->number_(32, insn->get_address() + 4));
+        dispatcher->advanceInstructionPointer(insn);
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
         p(dispatcher.get(), operators.get(), insn, operands);
     }
@@ -1060,10 +1063,38 @@ DispatcherPowerpc::regcache_init()
 }
 
 void
+DispatcherPowerpc::memory_init() {
+    if (BaseSemantics::StatePtr state = get_state()) {
+        if (BaseSemantics::MemoryStatePtr memory = state->get_memory_state()) {
+            switch (memory->get_byteOrder()) {
+                case ByteOrder::ORDER_LSB:
+                    break;
+                case ByteOrder::ORDER_MSB:
+                    mlog[WARN] <<"x86 memory state is using big-endian byte order\n";
+                    break;
+                case ByteOrder::ORDER_UNSPECIFIED:
+                    memory->set_byteOrder(ByteOrder::ORDER_LSB);
+                    break;
+            }
+        }
+    }
+}
+
+void
 DispatcherPowerpc::set_register_dictionary(const RegisterDictionary *regdict)
 {
     BaseSemantics::Dispatcher::set_register_dictionary(regdict);
     regcache_init();
+}
+
+RegisterDescriptor
+DispatcherPowerpc::instructionPointerRegister() const {
+    return REG_IAR;
+}
+
+RegisterDescriptor
+DispatcherPowerpc::stackPointerRegister() const {
+    return findRegister("r1");
 }
 
 void

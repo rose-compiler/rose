@@ -2,7 +2,9 @@
  * special section in the section table, but rather have the SgAsmPEFileHeader::PAIR_IMPORTS RVA/Size pair point to part of the
  * memory mapped from another read-only section, such as the ".text" section. */
 #include "sage3basic.h"
-#include <stdarg.h>
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
 
 /** @class SgAsmPEImportSection
  *
@@ -151,27 +153,11 @@
 /** Counter for import_mesg() */
 size_t SgAsmPEImportSection::mesg_nprinted = 0;
 
-/** Optionally prints an error/warning/info message regarding import tables. The messages are silenced after a certain amount
- *  are printed. Returns true if printed; false if silenced. */
 bool
-SgAsmPEImportSection::import_mesg(const char *fmt, ...)
+SgAsmPEImportSection::show_import_mesg()
 {
     static const size_t max_to_print=15;
-
-    bool printed=false;
-    va_list ap;
-    va_start(ap, fmt);
-
-    if (mesg_nprinted < max_to_print) {
-        vfprintf(stderr, fmt, ap);
-        printed = true;
-    } else if (mesg_nprinted == max_to_print) {
-        fprintf(stderr, "Import message limit reached; import diagnostics are now suppressed.\n");
-    }
-
-    ++mesg_nprinted;
-    va_end(ap);
-    return printed;
+    return ++mesg_nprinted <= max_to_print;
 }
 
 void
@@ -330,7 +316,8 @@ SgAsmPEImportSection::unparse(std::ostream &f) const
         try {
             idir->unparse(f, this, i);
         } catch(const ShortWrite&) {
-            import_mesg("SgAsmImportSection::unparse: error: Import Directory #%zu skipped (short write)\n", i);
+            if (show_import_mesg())
+                mlog[WARN] <<"SgAsmImportSection::unparse: Import Directory #" <<i <<" skipped (short write)\n";
         }
     }
 
@@ -354,7 +341,7 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmPESection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu\n", p, w, "ndirectories", p_import_directories->get_vector().size());
+    fprintf(f, "%s%-*s = %" PRIuPTR "\n", p, w, "ndirectories", p_import_directories->get_vector().size());
     for (size_t i=0; i<p_import_directories->get_vector().size(); i++)
         p_import_directories->get_vector()[i]->dump(f, p, i);
 

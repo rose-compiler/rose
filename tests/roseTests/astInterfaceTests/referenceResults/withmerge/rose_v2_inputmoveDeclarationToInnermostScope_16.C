@@ -8,7 +8,7 @@ void foobar(int e)
   if (e) {
     int d = 0;
   }
-  else {
+   else {
     int d = 1;
   }
 }

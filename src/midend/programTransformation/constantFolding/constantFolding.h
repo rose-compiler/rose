@@ -66,6 +66,9 @@ class ConstantFoldingTraversal
 // not folding the input node itself. 
 ROSE_DLL_API void constantFoldingOptimization(SgNode* n, bool internalTestingAgainstFrontend = false);
 
+// DQ (6/13/2015): Added support to return the constant valued expression.
+ROSE_DLL_API SgValueExp* returnConstantFoldedValueExpression(SgNode* n, bool internalTestingAgainstFrontend = false);
+
 // ***************************************************************************
 // Constant un-folding is implemented here as a test to verify the correctness 
 // of the constant folding.

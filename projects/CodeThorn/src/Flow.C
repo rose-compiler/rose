@@ -1,11 +1,12 @@
 #include "sage3basic.h"
 
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "Labeler.h"
 #include "AstTerm.h"
 #include <boost/foreach.hpp>
 
-using namespace CodeThorn;
+using namespace SPRAY;
+using namespace std;
 
 Edge::Edge():source(0),target(0){
 }
@@ -42,7 +43,10 @@ void Edge::addType(EdgeType et) {
   }
   if(isType(EDGE_PATH))
     return;
-  if(!isType(EDGE_PATH) && !(et==EDGE_PATH) && !boolOptions["semantic-fold"] && !boolOptions["post-semantic-fold"]) {
+  else {
+    // some checks that ensure that no nodes are merged that cannot
+    // coexist. For arbitrary CFG transformations EDGE_PATH should be
+    // used
     switch(et) {
     case EDGE_FORWARD: if(isType(EDGE_BACKWARD)) ok=false;break;
     case EDGE_BACKWARD: if(isType(EDGE_FORWARD)) ok=false;break;
@@ -121,7 +125,7 @@ string Edge::typeToString(EdgeType et) {
     cerr<<"Error: Edge-type is not of 'enum EdgeType'.";
     exit(1);
   }
-  return ""; // dead code. just to provide some return value to avoid false positive compiler warnings
+  return ""; // dead code.
 }
 
 string Edge::color() const {
@@ -184,7 +188,7 @@ string InterFlow::toString() const {
   return res;
 }
 
-bool CodeThorn::operator<(const InterEdge& e1, const InterEdge& e2) {
+bool SPRAY::operator<(const InterEdge& e1, const InterEdge& e2) {
   if(e1.call!=e2.call) 
     return e1.call<e2.call;
   if(e1.entry!=e2.entry)
@@ -194,7 +198,7 @@ bool CodeThorn::operator<(const InterEdge& e1, const InterEdge& e2) {
   return e1.callReturn<e2.callReturn;
 }
 
-bool CodeThorn::operator==(const InterEdge& e1, const InterEdge& e2) {
+bool SPRAY::operator==(const InterEdge& e1, const InterEdge& e2) {
   return e1.call==e2.call
     && e1.entry==e2.entry
     && e1.exit==e2.exit
@@ -202,19 +206,19 @@ bool CodeThorn::operator==(const InterEdge& e1, const InterEdge& e2) {
     ;
 }
 
-bool CodeThorn::operator!=(const InterEdge& e1, const InterEdge& e2) {
+bool SPRAY::operator!=(const InterEdge& e1, const InterEdge& e2) {
   return !(e1==e2);
 }
 
-bool CodeThorn::operator==(const Edge& e1, const Edge& e2) {
+bool SPRAY::operator==(const Edge& e1, const Edge& e2) {
   assert(&e1);
   assert(&e2);
   return e1.source==e2.source && e1.typesCode()==e2.typesCode() && e1.target==e2.target;
 }
-bool CodeThorn::operator!=(const Edge& e1, const Edge& e2) {
+bool SPRAY::operator!=(const Edge& e1, const Edge& e2) {
   return !(e1==e2);
 }
-bool CodeThorn::operator<(const Edge& e1, const Edge& e2) {
+bool SPRAY::operator<(const Edge& e1, const Edge& e2) {
   assert(&e1);
   assert(&e2);
   if(e1.source!=e2.source)
@@ -243,14 +247,22 @@ Flow::Flow():_boostified(false) {
 void Flow::boostify() {
   cout<<"STATUS: converting ICFG to boost graph representation ... "<<endl;
   edge_t e; bool b;
+  ROSE_ASSERT(!_boostified);
   for(Flow::iterator i=begin();i!=end();++i) {
-    tie(e,b)=add_edge((*i).source,(*i).target,_flowGraph);
+    tie(e,b)=add_edge((*i).source.getId(),(*i).target.getId(),_flowGraph);
     _flowGraph[e]=(*i).getTypes();
   }
   _boostified=true;
   cout<<"STATUS: converting ICFG to boost graph representation: DONE."<<endl;
 }
 
+SPRAY::Flow Flow::reverseFlow() {
+  Flow reverseFlow;
+  for(Flow::iterator i=begin();i!=end();++i) {
+    reverseFlow.insert(Edge((*i).target,(*i).getTypes(),(*i).source));
+  }
+  return reverseFlow;
+}
 
 void Flow::resetDotOptions() {
   _dotOptionDisplayLabel=true;
@@ -318,6 +330,7 @@ string Flow::toDot(Labeler* labeler) {
   if(_dotOptionHeaderFooter)
     ss<<"digraph G {\n";
   LabelSet nlabs=nodeLabels();
+  cout<<"toDot:: Flow label-set size: "<<nlabs.size()<<endl;
   for(LabelSet::iterator i=nlabs.begin();i!=nlabs.end();++i) {
     if(_dotOptionDisplayLabel) {
       ss << *i;
@@ -328,15 +341,23 @@ string Flow::toDot(Labeler* labeler) {
     }
     if(_dotOptionDisplayStmt) {
       SgNode* node=labeler->getNode(*i);
-      if(labeler->isFunctionEntryLabel(*i))
+      if(labeler->isBlockBeginLabel(*i)) {
+        ss<<"{";
+      } else if(labeler->isBlockEndLabel(*i)) {
+        ss<<"}";
+      } else if(labeler->isFunctionEntryLabel(*i)) {
         ss<<"Entry:";
-      if(labeler->isFunctionExitLabel(*i))
+        ss<<SgNodeHelper::nodeToString(node);
+      } else if(labeler->isFunctionExitLabel(*i)) {
         ss<<"Exit:";
-      if(labeler->isFunctionCallLabel(*i))
+      } else if(labeler->isFunctionCallLabel(*i)) {
         ss<<"Call:";
-      if(labeler->isFunctionCallReturnLabel(*i))
+        ss<<SgNodeHelper::nodeToString(node);
+      } else if(labeler->isFunctionCallReturnLabel(*i)) {
         ss<<"CallReturn:";
-      ss<<SgNodeHelper::nodeToString(node);
+      } else {
+        ss<<SgNodeHelper::nodeToString(node);
+      }
     }
     if(_dotOptionDisplayLabel||_dotOptionDisplayStmt)
       ss << "\"";
@@ -414,7 +435,7 @@ Flow Flow::outEdges(Label label) {
     // index = get(vertex_index, _flowGraph);
     GraphTraits::out_edge_iterator out_i, out_end;
     GraphTraits::edge_descriptor e;
-    for (tie(out_i, out_end) = out_edges(label, _flowGraph); 
+    for (tie(out_i, out_end) = out_edges(label.getId(), _flowGraph); 
          out_i != out_end; ++out_i) {
       e = *out_i;
       Label src = source(e, _flowGraph), targ = target(e, _flowGraph);

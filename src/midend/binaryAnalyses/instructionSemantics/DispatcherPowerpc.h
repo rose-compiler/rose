@@ -20,12 +20,14 @@ typedef boost::shared_ptr<class DispatcherPowerpc> DispatcherPowerpcPtr;
 class DispatcherPowerpc: public BaseSemantics::Dispatcher {
 protected:
     // prototypical constructor
-    DispatcherPowerpc() {}
+    DispatcherPowerpc(): BaseSemantics::Dispatcher(32, RegisterDictionary::dictionary_powerpc()) {}
 
-    explicit DispatcherPowerpc(const BaseSemantics::RiscOperatorsPtr &ops): BaseSemantics::Dispatcher(ops) {
-        set_register_dictionary(RegisterDictionary::dictionary_powerpc());
+    DispatcherPowerpc(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
+        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : RegisterDictionary::dictionary_powerpc()) {
+        ASSERT_require(32==addrWidth);
         regcache_init();
         iproc_init();
+        memory_init();
     }
 
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
@@ -33,6 +35,9 @@ protected:
 
     /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
     void regcache_init();
+
+    /** Make sure memory is set up correctly. For instance, byte order should be little endian. */
+    void memory_init();
 
 public:
     /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The
@@ -48,13 +53,19 @@ public:
     }
     
     /** Constructor. */
-    static DispatcherPowerpcPtr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
-        return DispatcherPowerpcPtr(new DispatcherPowerpc(ops));
+    static DispatcherPowerpcPtr instance(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth,
+                                         const RegisterDictionary *regs=NULL) {
+        return DispatcherPowerpcPtr(new DispatcherPowerpc(ops, addrWidth, regs));
     }
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops) const ROSE_OVERRIDE {
-        return instance(ops);
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth=0,
+                                                const RegisterDictionary *regs=NULL) const ROSE_OVERRIDE {
+        if (0==addrWidth)
+            addrWidth = addressWidth();
+        if (!regs)
+            regs = get_register_dictionary();
+        return instance(ops, addrWidth, regs);
     }
 
     /** Dynamic cast to a DispatcherPowerpcPtr with assertion. */
@@ -65,6 +76,10 @@ public:
     }
 
     virtual void set_register_dictionary(const RegisterDictionary *regdict) ROSE_OVERRIDE;
+
+    virtual RegisterDescriptor instructionPointerRegister() const ROSE_OVERRIDE;
+
+    virtual RegisterDescriptor stackPointerRegister() const ROSE_OVERRIDE;
 
     virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);

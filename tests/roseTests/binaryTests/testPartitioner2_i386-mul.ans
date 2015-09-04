@@ -1,0 +1,19 @@
+/* Interpretation ELF */
+0x080480a0: ================================== Function (entry point, graph) <_start>
+0x080480a0: Function does not return to caller.
+
+0x080480a0: Basic block reasons: entry point, CFG head
+0x080480a0: 89 d8                   |..      |<sp+0 >   mov    eax, ebx
+0x080480a2: 89 da                   |..      |<sp+0 >   mov    edx, ebx
+0x080480a4: f7 e6                   |..      |<sp+0 >   mul    esi
+0x080480a6: 89 d8                   |..      |<sp+0 >   mov    eax, ebx
+0x080480a8: 89 da                   |..      |<sp+0 >   mov    edx, ebx
+0x080480aa: f7 e1                   |..      |<sp+0 >   mul    ecx
+0x080480ac: 89 d8                   |..      |<sp+0 >   mov    eax, ebx
+0x080480ae: 89 da                   |..      |<sp+0 >   mov    edx, ebx
+0x080480b0: f7 64 24 14             |.d$.    |<sp+0 >   mul    dword ss:[esp + 0x14]
+0x080480b4: b8 01 00 00 00          |.....   |<sp+0 >   mov    eax, 0x00000001
+0x080480b9: cd 80                   |..      |<sp+0 >   int    0x80<-128>
+0x080480bb: f4                      |.       |          hlt    
+0x080480bb: Successor blocks: none
+

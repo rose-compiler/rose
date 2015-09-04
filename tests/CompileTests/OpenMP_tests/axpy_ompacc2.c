@@ -1,3 +1,5 @@
+// Add example of writing multiple device code using OpenMP 4.0
+//
 /* change this to do saxpy or daxpy : single precision or double precision*/
 #define REAL double
 
@@ -22,7 +24,7 @@ void axpy_ompacc(REAL* x, REAL* y, int n, REAL a) {
       we also need to let the runtime know what the target device is so the runtime will chose the right function to call if the code are generated 
       #pragma omp target device (gpu0) map(x, y) 
    */
-  #pragma omp target device (gpu0) map(inout: y[0:n]) map(in: x[0:n],a,n)
+  #pragma omp target device (gpu0) map(tofrom: y[0:n]) map(to: x[0:n],a,n)
   #pragma omp parallel for shared(x, y, n, a) private(i)
   for (i = 0; i < n; ++i)
     y[i] += a * x[i];
@@ -48,7 +50,7 @@ void axpy_mdev_v1(REAL* x, REAL* y, int n, REAL a) {
         }
         endi=starti + partsize;
 
-#pragma omp target device (devid) map(inout: y[starti:endi]) map(in: x[starti:endi],a,partsize)
+#pragma omp target device (devid) map(tofrom: y[starti:endi]) map(to: x[starti:endi],a,partsize)
 #pragma omp parallel for shared(x, y, partsize, a) private(i)
         for (i = 0; i < partsize; ++i)
           y[i] += a * x[i];

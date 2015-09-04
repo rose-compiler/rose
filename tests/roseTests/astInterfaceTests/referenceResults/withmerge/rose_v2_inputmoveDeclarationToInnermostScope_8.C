@@ -15,7 +15,7 @@ void foo(int cond,int *blockx,int loSt)
     int tmp = 6;
     printf("%d",tmp);
   }
-  else {
+   else {
     int tmp = 7;
     printf("%d",tmp);
   }
@@ -28,7 +28,7 @@ void foo(int cond,int *blockx,int loSt)
       int blockx;
       blockx++;
     }
-    else {
+     else {
       int blockx;
       blockx--;
     }
@@ -39,7 +39,7 @@ void foo(int cond,int *blockx,int loSt)
     stmp = 6;
     printf("%d",stmp);
   }
-  else {
+   else {
     stmp = 7;
     printf("%d",stmp);
   }

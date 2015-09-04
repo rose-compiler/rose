@@ -2,8 +2,8 @@
 #include "rose_getline.h"
 #include "rose_strtoull.h"
 #include "Diagnostics.h"
-#include <sawyer/CommandLine.h>
-#include <sawyer/ProgressBar.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/ProgressBar.h>
 #include <set>
 
 typedef rose_addr_t Value;

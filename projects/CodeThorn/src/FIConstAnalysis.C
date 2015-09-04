@@ -76,8 +76,8 @@ bool FIConstAnalysis::determineVariable(SgNode* node, VariableId& varId, Variabl
   }
 }
 
-
-bool FIConstAnalysis::analyzeAssignment(SgAssignOp* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result) {
+bool FIConstAnalysis::analyzeAssignment(SgExpression* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result) {
+  ROSE_ASSERT(isSgAssignOp(assignOp)||isSgCompoundAssignOp(assignOp));
   const VariableId varId;
   const ConstIntLattice varValue;
   SgNode* lhs=SgNodeHelper::getLhs(assignOp);
@@ -103,12 +103,12 @@ VariableValuePair FIConstAnalysis::analyzeVariableDeclaration(SgVariableDeclarat
       SgInitializer* initializer=initName->get_initializer();
       SgAssignInitializer* assignInitializer=0;
       if(initializer && (assignInitializer=isSgAssignInitializer(initializer))) {
-        //cout << "initializer found:"<<endl;
+        if(detailedOutput) cout << "initializer found:"<<endl;
         SgExpression* rhs=assignInitializer->get_operand_i();
         assert(rhs);
         return VariableValuePair(initDeclVarId,analyzeAssignRhs(rhs));
       } else {
-        //cout << "no initializer (OK)."<<endl;
+        if(detailedOutput) cout << "no initializer (OK)."<<endl;
         return VariableValuePair(initDeclVarId,AType::Top());
       }
     } else {
@@ -128,20 +128,43 @@ void FIConstAnalysis::determineVarConstValueSet(SgNode* node, VariableIdMapping&
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
       VariableValuePair res=analyzeVariableDeclaration(varDecl,varIdMapping);
-      if(detailedOutput) cout<<"analyzing variable declaration :"<<res.toString(varIdMapping)<<endl;
+      if(detailedOutput) cout<<"INFO: analyzing variable declaration :"<<res.toString(varIdMapping)<<endl;
       //update map
+      map[res.varId].insert(res.varValue);
     }
     if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
       VariableValuePair res;
       bool hasLhsVar=analyzeAssignment(assignOp,varIdMapping,&res);
       if(hasLhsVar) {
-        //cout<<"analyzing variable assignment  :"<<res.toString(varIdMapping)<<endl;
+        if(detailedOutput) cout<<"INFO: analyzing variable assignment (SgAssignOp)  :"<<res.toString(varIdMapping)<<endl;
         map[res.varId].insert(res.varValue);
       } else {
         // not handled yet (the new def-use sets allow to handle this better)
-        cerr<<"Warning: ignoring assignment."<<endl;
+        cerr<<"Warning: unknown lhs of assignment."<<endl;
+        // TODO: all vars have to go to top and all additional entries must be top
+        exit(1);
       }
     }
+    // check for operators: +=, -=, ...
+    if(SgCompoundAssignOp* assignOp=isSgCompoundAssignOp(*i)) {
+      VariableValuePair res;
+      bool hasLhsVar=analyzeAssignment(assignOp,varIdMapping,&res);
+      if(hasLhsVar) {
+        if(detailedOutput) cout<<"INFO: analyzing variable assignment (SgCompoundAssignOp)  :"<<res.toString(varIdMapping)<<endl;
+        // set properly to Top (update of variable)
+#if 0
+        CppCapsuleConstIntLattice valCapsule;
+        ConstIntLattice topVal(AType::Top);
+        valCapsule.setValue(topVal);
+#endif
+        map[res.varId].insert(CppCapsuleConstIntLattice(Top()));
+      } else {
+        cerr<<"Warning: unknown lhs of compound assignment."<<endl;
+        // TODO: all vars have to go to top and all additional entries must be top
+        exit(1);
+      }
+    }
+
     // ignore everything else (as of now)
   }
 }
@@ -230,6 +253,19 @@ int VariableConstInfo::arraySize(VariableId varId) {
   return vri.arraySize();
 }
 
+bool VariableConstInfo::haveEmptyIntersection(VariableId varId1,VariableId varId2) {
+  set<CppCapsuleConstIntLattice> var1Set=(*_map)[varId1];
+  set<CppCapsuleConstIntLattice> var2Set=(*_map)[varId2];
+  for(set<CppCapsuleConstIntLattice>::iterator i=var1Set.begin();
+      i!=var1Set.end();
+      ++i) {
+    if(var2Set.find(*i)!=var2Set.end()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool VariableConstInfo::isAny(VariableId varId) {
   return createVariableValueRangeInfo(varId,*_map).isTop();
 }
@@ -260,7 +296,7 @@ int VariableConstInfo::maxConst(VariableId varId) {
   return vri.maxIntValue();
 }
 bool VariableConstInfo::isInConstSet(VariableId varId, int varVal) {
-  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
+  //VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
   return isConstInSet(ConstIntLattice(varVal),(*_map)[varId]).isTrue();
 }
 int VariableConstInfo::uniqueConst(VariableId varId) {
@@ -400,68 +436,130 @@ EvalValueType FIConstAnalysis::evalSgOrOp(EvalValueType lhsResult,EvalValueType 
   return res;
 }
 
-EvalValueType FIConstAnalysis::evalWithMultiConst(SgNode* op, SgVarRefExp* var, EvalValueType val) {
+EvalValueType FIConstAnalysis::evalWithMultiConst(SgNode* op, SgVarRefExp* lhsVar, SgVarRefExp* rhsVar) {
+  VariableId lhsVarId;
+  bool lhsIsVar=determineVariable(lhsVar, lhsVarId, *global_variableIdMapping);
+  assert(lhsIsVar);
+  bool lhsIsMultiConst=global_variableConstInfo->isMultiConst(lhsVarId);
+  VariableId rhsVarId;
+  bool rhsIsVar=determineVariable(rhsVar, rhsVarId, *global_variableIdMapping);
+  assert(rhsIsVar);
+  bool rhsIsMultiConst=global_variableConstInfo->isMultiConst(rhsVarId);
+  ROSE_ASSERT(lhsIsMultiConst && rhsIsMultiConst);
+
+  int lhsMinConst=global_variableConstInfo->minConst(lhsVarId);
+  int lhsMaxConst=global_variableConstInfo->maxConst(lhsVarId);
+  int rhsMinConst=global_variableConstInfo->minConst(rhsVarId);
+  int rhsMaxConst=global_variableConstInfo->maxConst(rhsVarId);
+  
+  EvalValueType res=AType::Top(); 
+  bool haveEmptyIntersect=global_variableConstInfo->haveEmptyIntersection(lhsVarId,rhsVarId);
+  switch(op->variantT()) {
+  case V_SgEqualityOp:
+    if(haveEmptyIntersect) res=EvalValueType(false);
+    else res=AType::Top();
+    break;
+  case V_SgNotEqualOp: 
+    if(haveEmptyIntersect) res=EvalValueType(true);
+    else res=AType::Top();
+    break;
+  case V_SgGreaterOrEqualOp:
+    if(lhsMinConst>=rhsMaxConst) res=EvalValueType(true);
+    else if(lhsMaxConst<rhsMinConst) res=EvalValueType(false);
+    else res=AType::Top();
+    break;
+  case V_SgGreaterThanOp:
+    if(lhsMinConst>rhsMaxConst) res=EvalValueType(true);
+    else if(lhsMaxConst<=rhsMinConst) res=EvalValueType(false);
+    else res=AType::Top();
+    break;
+  case V_SgLessOrEqualOp:
+    if(lhsMaxConst<=rhsMinConst) res=EvalValueType(true);
+    else if(lhsMinConst>rhsMaxConst) res=EvalValueType(false);
+    else res=AType::Top();
+    break;
+  case V_SgLessThanOp:
+    if(lhsMaxConst<rhsMinConst) res=EvalValueType(true);
+    else if(lhsMinConst>=rhsMaxConst) res=EvalValueType(false);
+    else res=AType::Top();
+    break;
+  default:
+    cerr<<"Error: evalWithMultiConst: unknown operator."<<endl;
+    assert(0);
+  }
+  
+  if(detailedOutput) cout<<" Result: "<<res.toString()<<endl;
+  return res;
+}
+
+EvalValueType FIConstAnalysis::evalWithMultiConst(SgNode* op, SgVarRefExp* var, EvalValueType constVal0) {
   ROSE_ASSERT(op);
   ROSE_ASSERT(var);
 
   ROSE_ASSERT(global_variableIdMapping);
   ROSE_ASSERT(global_variableConstInfo);
 
-  assert(!(val.isTop()||val.isBot()));
+  assert(!(constVal0.isTop()||constVal0.isBot()));
 
-    EvalValueType res=AType::Top(); // default if no more precise result can be determined
+  EvalValueType res=AType::Top(); // default if no more precise result can be determined
 
-  int constVal=val.getIntValue();
+  if(detailedOutput) cout<<"evalWithMultiConst:"<<op->unparseToString();
+
+  int constVal=constVal0.getIntValue();
   VariableId varId;
   bool isVar=determineVariable(var, varId, *global_variableIdMapping);
   assert(isVar);
-  if(detailedOutput) cout<<"evalWithMultiConst:"<<op->unparseToString();
   bool myIsMultiConst=global_variableConstInfo->isMultiConst(varId);
   if(myIsMultiConst) {
-    bool myIsInConstSet=global_variableConstInfo->isInConstSet(varId,constVal);
+    bool constValIsInVarMultiConstSet=global_variableConstInfo->isInConstSet(varId,constVal);
     int myMinConst=global_variableConstInfo->minConst(varId);
     int myMaxConst=global_variableConstInfo->maxConst(varId);
     if(detailedOutput) {
       cout<<" isMC:"<<myIsMultiConst;
-      cout<<" isInConstSet:"<<myIsInConstSet;
+      cout<<" isInConstSet:"<<constValIsInVarMultiConstSet;
       cout<<" min:"<<myMinConst;
       cout<<" max:"<<myMaxConst;
     }
     //cout<<endl;
     
-    // it holds here: val *is* a multi const
-    // handle all cases with 3-valued logic
+    // it holds here: val *is* a multi const! (more than one const value)
     switch(op->variantT()) {
     case V_SgEqualityOp:
-      if(!myIsInConstSet) res=EvalValueType(false);
+      // case of one value is handled by const-analysis
+      if(!constValIsInVarMultiConstSet) res=EvalValueType(false);
       else res=AType::Top();
       break;
     case V_SgNotEqualOp: 
-      if(!myIsInConstSet) res=EvalValueType(true);
+      // case of one value is handled by const-analysis
+      if(!constValIsInVarMultiConstSet) res=EvalValueType(true);
       else res=AType::Top();
       break;
     case V_SgGreaterOrEqualOp:
-      if(myMaxConst>=constVal) res=EvalValueType(true);
-      else res=EvalValueType(false);
+      if(myMinConst>=constVal) res=EvalValueType(true);
+      else if(myMaxConst<constVal) res=EvalValueType(false);
+      else res=AType::Top();
       break;
     case V_SgGreaterThanOp:
-      if(myMaxConst>constVal) res=EvalValueType(true);
-      else res=EvalValueType(false);
-      break;
-    case V_SgLessThanOp:
-      if(myMinConst<constVal) res=EvalValueType(true);
-      else res=EvalValueType(false);
+      if(myMinConst>constVal) res=EvalValueType(true);
+      else if(myMaxConst<=constVal) res=EvalValueType(false);
+      else res=AType::Top();
       break;
     case V_SgLessOrEqualOp:
-      if(myMinConst<=constVal) res=EvalValueType(true);
-      else res=EvalValueType(false);
+      if(myMaxConst<=constVal) res=EvalValueType(true);
+      else if(myMinConst>constVal) res=EvalValueType(false);
+      else res=AType::Top();
+      break;
+    case V_SgLessThanOp:
+      if(myMaxConst<constVal) res=EvalValueType(true);
+      else if(myMinConst>=constVal) res=EvalValueType(false);
+      else res=AType::Top();
       break;
     default:
       cerr<<"Error: evalWithMultiConst: unknown operator."<<endl;
       assert(0);
     }
   } else {
-    if(detailedOutput) cout<<" not MC.";
+    if(detailedOutput) cout<<" not multi-const.";
   }
 
   if(detailedOutput) cout<<" Result: "<<res.toString()<<endl;
@@ -474,7 +572,6 @@ bool FIConstAnalysis::isConstVal(SgExpression* node) {
 
 EvalValueType FIConstAnalysis::eval(SgExpression* node) {
   EvalValueType res;
-  stringstream watch;
 
   if(dynamic_cast<SgBinaryOp*>(node)) {
     SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(node));
@@ -485,13 +582,26 @@ EvalValueType FIConstAnalysis::eval(SgExpression* node) {
     if(option_multiconstanalysis) {
       // refinement for special cases handled by multi-const analysis
       if(isRelationalOperator(node)) {
-        EvalValueType res2;
+        EvalValueType res2=AType::Top();
         if(isSgVarRefExp(lhs) && isConstVal(rhs))
           res2=evalWithMultiConst(node,isSgVarRefExp(lhs),eval(rhs));
         if(isConstVal(lhs) && isSgVarRefExp(rhs))
           res2=evalWithMultiConst(node,isSgVarRefExp(rhs),eval(lhs));
+        if(isSgVarRefExp(lhs) && isSgVarRefExp(rhs)) {
+          EvalValueType resLhs=evalSgVarRefExp(lhs);
+          EvalValueType resRhs=evalSgVarRefExp(rhs);
+          if(resRhs.isConstInt()) {
+            res2=evalWithMultiConst(node,isSgVarRefExp(lhs),resRhs);
+          } else if(resLhs.isConstInt()) {
+            res2=evalWithMultiConst(node,isSgVarRefExp(rhs),resLhs);            
+          } else {
+            res2=evalWithMultiConst(node,isSgVarRefExp(lhs),isSgVarRefExp(rhs));
+          }
+        }
+
         if(!res2.isTop()) {
           // found a more precise result with multi-const analysis results
+          ROSE_ASSERT(!res2.isBot());
           return res2;
         }
       }
@@ -547,6 +657,19 @@ void FIConstAnalysis::attachAstAttributes(Labeler* labeler, string attributeName
     SgNode* node=labeler->getNode(*i);
     ROSE_ASSERT(node);
     node->setAttribute(attributeName, new CPAstAttribute(global_variableConstInfo,node,global_variableIdMapping));
+  }
+}
+
+void FIConstAnalysis::filterVariables(VariableIdSet& variableIdSet) {
+  VariableIdSet toBeRemoved;
+  for(VarConstSetMap::iterator i=_varConstSetMap.begin();i!=_varConstSetMap.end();++i) {
+    VariableId varId=(*i).first;
+    if(variableIdSet.find(varId)==variableIdSet.end()) {
+      toBeRemoved.insert(varId);
+    }
+  }
+  for(VariableIdSet::iterator i=toBeRemoved.begin();i!=toBeRemoved.end();++i) {
+    _varConstSetMap.erase(*i);
   }
 }
 
@@ -613,6 +736,7 @@ void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, 
     else
       myfile<<"CA_UNKNOWN";
     myfile<<",";    
+    //myfile<<arraySize<<",";
 #if 1
     set<CppCapsuleConstIntLattice> valueSet=(*i).second;
     stringstream setstr;
@@ -677,4 +801,8 @@ LabelSet FIConstAnalysis::getFalseConditions() {
 }
 LabelSet FIConstAnalysis::getNonConstConditions() {
   return nonConstConditions;
+}
+
+void FIConstAnalysis::setDetailedOutput(bool flag) {
+  detailedOutput=flag;
 }

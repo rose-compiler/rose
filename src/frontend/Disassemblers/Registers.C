@@ -1,6 +1,10 @@
 #include "sage3basic.h"
 #include "Registers.h"
 
+// These are here temporarily until the classes in this file can be moved into rose::BinaryAnalysis
+using namespace rose;
+using namespace rose::BinaryAnalysis;
+
 std::ostream&
 operator<<(std::ostream &o, const RegisterDictionary &dict)
 {
@@ -149,6 +153,24 @@ RegisterDictionary::lookup(const RegisterDescriptor &rdesc) const {
     return empty;
 }
 
+RegisterDescriptor
+RegisterDictionary::findLargestRegister(unsigned major, unsigned minor, size_t maxWidth) const {
+    RegisterDescriptor retval;
+    for (Entries::const_iterator iter=forward.begin(); iter!=forward.end(); ++iter) {
+        const RegisterDescriptor &reg = iter->second;
+        if (major == reg.get_major() && minor == reg.get_minor()) {
+            if (maxWidth > 0 && reg.get_nbits() > maxWidth) {
+                // ignore
+            } else if (!retval.is_valid()) {
+                retval = reg;
+            } else if (retval.get_nbits() < reg.get_nbits()) {
+                retval = reg;
+            }
+        }
+    }
+    return retval;
+}
+
 void
 RegisterDictionary::resize(const std::string &name, unsigned new_nbits) {
     const RegisterDescriptor *old_desc = lookup(name);
@@ -156,6 +178,14 @@ RegisterDictionary::resize(const std::string &name, unsigned new_nbits) {
     RegisterDescriptor new_desc = *old_desc;
     new_desc.set_nbits(new_nbits);
     insert(name, new_desc);
+}
+
+RegisterParts
+RegisterDictionary::getAllParts() const {
+    RegisterParts retval;
+    BOOST_FOREACH (const Entries::value_type &node, forward)
+        retval.insert(node.second);
+    return retval;
 }
 
 const RegisterDictionary::Entries &
@@ -987,7 +1017,6 @@ RegisterDictionary::dictionary_m68000()
         regs->insert("sr_i",  m68k_regclass_spr, m68k_spr_sr, 8,  3);           // interrupt priority mask
         regs->insert("sr_s",  m68k_regclass_spr, m68k_spr_sr, 13, 1);           // status register user mode bit
         regs->insert("sr_t",  m68k_regclass_spr, m68k_spr_sr, 14, 2);           // status register trace mode bits
-        regs->insert("vbr",   m68k_regclass_spr, m68k_spr_vbr, 0, 32);          // vector base register
 
         // Floating point data registers
         // These registers hold 96-bit extended-precision real format ("X") values. However, since the X format has
@@ -1020,8 +1049,8 @@ RegisterDictionary::dictionary_m68000()
         regs->insert("aexc_ovfl",  m68k_regclass_spr, m68k_spr_fpsr,  6,  1);   // overflow
         regs->insert("aexc_iop",   m68k_regclass_spr, m68k_spr_fpsr,  7,  1);   // invalid operation
         regs->insert("fpsr_exc",   m68k_regclass_spr, m68k_spr_fpsr,  8,  8);   // exception status
-        regs->insert("exc_inex1",  m68k_regclass_spr, m68k_spr_fpsr,  8,  1);   // inexact decimal input
-        regs->insert("exc_inex2",  m68k_regclass_spr, m68k_spr_fpsr,  9,  1);   // inexact operation
+        regs->insert("exc_inex1",  m68k_regclass_spr, m68k_spr_fpsr,  8,  1);   // inexact decimal input (input is denormalized)
+        regs->insert("exc_inex2",  m68k_regclass_spr, m68k_spr_fpsr,  9,  1);   // inexact operation (inexact result)
         regs->insert("exc_dz",     m68k_regclass_spr, m68k_spr_fpsr, 10,  1);   // divide by zero
         regs->insert("exc_unfl",   m68k_regclass_spr, m68k_spr_fpsr, 11,  1);   // underflow
         regs->insert("exc_ovfl",   m68k_regclass_spr, m68k_spr_fpsr, 12,  1);   // overflow
@@ -1039,7 +1068,8 @@ RegisterDictionary::dictionary_m68000()
         regs->insert("fpiar", m68k_regclass_spr,   m68k_spr_fpiar,   0, 32);    // floating-point instruction address reg
         
         // Supervisor registers (SR register is listed above since its CCR bits are available in user mode)
-        regs->insert("ssp",     m68k_regclass_sup, m68k_sup_ssp,     0, 32);    // supervisor A7 stack pointer
+        regs->insert("ssp",      m68k_regclass_sup, m68k_sup_ssp,       0, 32); // supervisor A7 stack pointer
+        regs->insert("vbr",      m68k_regclass_sup, m68k_sup_vbr,       0, 32); // vector base register
     }
     return regs;
 }
@@ -1085,6 +1115,35 @@ RegisterDictionary::dictionary_coldfire()
         regs->insert("macsr_omc", m68k_regclass_mac, m68k_mac_macsr, 7,  1);    //   Overflow/saturation mode
         regs->insert("acc",       m68k_regclass_mac, m68k_mac_acc0,  0, 32);    // MAC accumulator
         regs->insert("mask",      m68k_regclass_mac, m68k_mac_mask,  0, 32);    // MAC mask register (upper 16 bits are set)
+
+        // Supervisor registers
+        regs->insert("cacr",     m68k_regclass_sup, m68k_sup_cacr,      0, 32); // cache control register
+        regs->insert("asid",     m68k_regclass_sup, m68k_sup_asid,      0, 32); // address space ID register
+        regs->insert("acr0",     m68k_regclass_sup, m68k_sup_acr0,      0, 32); // access control register 0 (data)
+        regs->insert("acr1",     m68k_regclass_sup, m68k_sup_acr1,      0, 32); // access control register 1 (data)
+        regs->insert("acr2",     m68k_regclass_sup, m68k_sup_acr2,      0, 32); // access control register 2 (instruction)
+        regs->insert("acr3",     m68k_regclass_sup, m68k_sup_acr3,      0, 32); // access control register 3 (instruction)
+        regs->insert("mmubar",   m68k_regclass_sup, m68k_sup_mmubar,    0, 32); // MMU base address register
+        regs->insert("rombar0",  m68k_regclass_sup, m68k_sup_rombar0,   0, 32); // ROM base address register 0
+        regs->insert("rombar1",  m68k_regclass_sup, m68k_sup_rombar1,   0, 32); // ROM base address register 1
+        regs->insert("rambar0",  m68k_regclass_sup, m68k_sup_rambar0,   0, 32); // RAM base address register 0
+        regs->insert("rambar1",  m68k_regclass_sup, m68k_sup_rambar1,   0, 32); // RAM base address register 1
+        regs->insert("mbar",     m68k_regclass_sup, m68k_sup_mbar,      0, 32); // module base address register
+        regs->insert("mpcr",     m68k_regclass_sup, m68k_sup_mpcr,      0, 32); // multiprocessor control register
+        regs->insert("edrambar", m68k_regclass_sup, m68k_sup_edrambar,  0, 32); // embedded DRAM base address register
+        regs->insert("secmbar",  m68k_regclass_sup, m68k_sup_secmbar,   0, 32); // secondary module base address register
+        regs->insert("pcr1u0",   m68k_regclass_sup, m68k_sup_0_pcr1,   32, 32); // 32 msbs of RAM 0 permutation control reg 1
+        regs->insert("pcr1l0",   m68k_regclass_sup, m68k_sup_0_pcr1,    0, 32); // 32 lsbs of RAM 0 permutation control reg 1
+        regs->insert("pcr2u0",   m68k_regclass_sup, m68k_sup_0_pcr2,   32, 32); // 32 msbs of RAM 0 permutation control reg 2
+        regs->insert("pcr2l0",   m68k_regclass_sup, m68k_sup_0_pcr2,    0, 32); // 32 lsbs of RAM 0 permutation control reg 2
+        regs->insert("pcr3u0",   m68k_regclass_sup, m68k_sup_0_pcr3,   32, 32); // 32 msbs of RAM 0 permutation control reg 3
+        regs->insert("pcr3l0",   m68k_regclass_sup, m68k_sup_0_pcr3,    0, 32); // 32 lsbs of RAM 0 permutation control reg 3
+        regs->insert("pcr1u1",   m68k_regclass_sup, m68k_sup_1_pcr1,   32, 32); // 32 msbs of RAM 1 permutation control reg 1
+        regs->insert("pcr1l1",   m68k_regclass_sup, m68k_sup_1_pcr1,    0, 32); // 32 lsbs of RAM 1 permutation control reg 1
+        regs->insert("pcr2u1",   m68k_regclass_sup, m68k_sup_1_pcr2,   32, 32); // 32 msbs of RAM 1 permutation control reg 2
+        regs->insert("pcr2l1",   m68k_regclass_sup, m68k_sup_1_pcr2,    0, 32); // 32 lsbs of RAM 1 permutation control reg 2
+        regs->insert("pcr3u1",   m68k_regclass_sup, m68k_sup_1_pcr3,   32, 32); // 32 msbs of RAM 1 permutation control reg 3
+        regs->insert("pcr3l1",   m68k_regclass_sup, m68k_sup_1_pcr3,    0, 32); // 32 lsbs of RAM 1 permutation control reg 3
     }
     return regs;
 }

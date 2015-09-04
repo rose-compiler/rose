@@ -1,9 +1,9 @@
 using this memory map for disassembly:
     va 0x00400000 + 0x00000200 = 0x00400200 r--- at buffer aan   + 0x00000000 asm_code_samples_gcc.exe(PE File Header)
-    va 0x00400200 + 0x00000200 = 0x00400400 r--p at anon aam     + 0x00000000 asm_code_samples_gcc.exe(PE File Header)
+    va 0x00400200 + 0x00000200 = 0x00400400 r--p at buffer aam   + 0x00000000 asm_code_samples_gcc.exe(PE File Header)
     va 0x00401000 + 0x00000a00 = 0x00401a00 r-x- at buffer aap   + 0x00000400 asm_code_samples_gcc.exe(.text)
     va 0x00402000 + 0x00000200 = 0x00402200 r--- at buffer aar   + 0x00000e00 asm_code_samples_gcc.exe(.rdata)
-    va 0x00403000 + 0x00000040 = 0x00403040 rw-p at anon aat     + 0x00000000 asm_code_samples_gcc.exe(.bss)
+    va 0x00403000 + 0x00000040 = 0x00403040 rw-p at buffer aat   + 0x00000000 asm_code_samples_gcc.exe(.bss)
     va 0x00404000 + 0x00000200 = 0x00404200 rw-- at buffer aav   + 0x00001000 asm_code_samples_gcc.exe(.idata)
 
 
@@ -16,7 +16,7 @@ using this memory map for disassembly:
 0x00401001: 89 e5                   |..      |   mov    ebp, esp
 0x00401003: 83 ec 08                |...     |   sub    esp, 0x08
 0x00401006: 83 e4 f0                |...     |   and    esp, 0xf0<-16>
-0x00401009: a1 00 30 40 00          |..0@.   |   mov    eax, DWORD PTR ds:[0x00403000<.bss>]
+0x00401009: a1 00 30 40 00          |..0@.   |   mov    eax, dword ds:[0x00403000<.bss>]
 0x0040100e: 85 c0                   |..      |   test   eax, eax
 0x00401010: 74 01                   |t.      |   je     0x00401013<<Insn>>
 0x00401010: Successor blocks: 0x00401012, 0x00401013
@@ -30,15 +30,15 @@ using this memory map for disassembly:
 0x00401013: Basic block reasons: graph-1
 0x00401013: Predecessor blocks: 0x00401000
 0x00401013: Dominator block: 0x00401000
-0x00401013: d9 7d fe                |.}.     |   fnstcw WORD PTR ss:[ebp + 0xfe<-2>]
-0x00401016: 0f b7 45 fe             |..E.    |   movzx  eax, WORD PTR ss:[ebp + 0xfe<-2>]
+0x00401013: d9 7d fe                |.}.     |   fnstcw word ss:[ebp + 0xfe<-2>]
+0x00401016: 0f b7 45 fe             |..E.    |   movzx  eax, word ss:[ebp + 0xfe<-2>]
 0x0040101a: 25 c0 f0 ff ff          |%....   |   and    eax, 0xfffff0c0<-3904>
-0x0040101f: 66 89 45 fe             |f.E.    |   mov    WORD PTR ss:[ebp + 0xfe<-2>], ax
-0x00401023: 0f b7 45 fe             |..E.    |   movzx  eax, WORD PTR ss:[ebp + 0xfe<-2>]
+0x0040101f: 66 89 45 fe             |f.E.    |   mov    word ss:[ebp + 0xfe<-2>], ax
+0x00401023: 0f b7 45 fe             |..E.    |   movzx  eax, word ss:[ebp + 0xfe<-2>]
 0x00401027: 0d 3f 03 00 00          |.?...   |   or     eax, 0x0000033f<831>
-0x0040102c: 66 89 45 fe             |f.E.    |   mov    WORD PTR ss:[ebp + 0xfe<-2>], ax
-0x00401030: d9 6d fe                |.m.     |   fldcw  WORD PTR ss:[ebp + 0xfe<-2>]
-0x00401033: c7 04 24 4b 14 40 00    |..$K.@. |   mov    DWORD PTR ss:[esp], 0x0040144b<<StaticData@0x00401073>+0x03d8>
+0x0040102c: 66 89 45 fe             |f.E.    |   mov    word ss:[ebp + 0xfe<-2>], ax
+0x00401030: d9 6d fe                |.m.     |   fldcw  word ss:[ebp + 0xfe<-2>]
+0x00401033: c7 04 24 4b 14 40 00    |..$K.@. |   mov    dword ss:[esp], 0x0040144b<<StaticData@0x00401073>+0x03d8>
 0x0040103a: e8 71 05 00 00          |.q...   |   call   0x004015b0<<Func>>
 0x0040103a: Successor blocks: 0x004015b0<<Func>>
 
@@ -57,24 +57,24 @@ using this memory map for disassembly:
 0x00401050: 55                      |U       |   push   ebp
 0x00401051: 89 e5                   |..      |   mov    ebp, esp
 0x00401053: 83 ec 04                |...     |   sub    esp, 0x04
-0x00401056: c7 45 fc 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
-0x0040105d: 8b 45 08                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x00401060: 3b 45 0c                |;E.     |   cmp    eax, DWORD PTR ss:[ebp + 0x0c]
+0x00401056: c7 45 fc 00 00 00 00    |.E..... |   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x0040105d: 8b 45 08                |.E.     |   mov    eax, dword ss:[ebp + 0x08]
+0x00401060: 3b 45 0c                |;E.     |   cmp    eax, dword ss:[ebp + 0x0c]
 0x00401063: 7e 09                   |~.      |   jle    0x0040106e<<Insn>>
 0x00401063: Successor blocks: 0x00401065, 0x0040106e
 
 0x00401065: Basic block reasons: graph-2
 0x00401065: Predecessor blocks: 0x00401050
 0x00401065: Dominator block: 0x00401050
-0x00401065: 8b 45 0c                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x00401068: 03 45 08                |.E.     |   add    eax, DWORD PTR ss:[ebp + 0x08]
-0x0040106b: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401065: 8b 45 0c                |.E.     |   mov    eax, dword ss:[ebp + 0x0c]
+0x00401068: 03 45 08                |.E.     |   add    eax, dword ss:[ebp + 0x08]
+0x0040106b: 89 45 fc                |.E.     |   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x0040106b: Successor blocks: 0x0040106e
 
 0x0040106e: Basic block reasons: graph-2
 0x0040106e: Predecessor blocks: 0x00401050, 0x00401065
 0x0040106e: Dominator block: 0x00401050
-0x0040106e: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
+0x0040106e: 8b 45 fc                |.E.     |   mov    eax, dword ss:[ebp + 0xfc<-4>]
 0x00401071: c9                      |.       |   leave  
 0x00401072: c3                      |.       |   ret    
 0x00401072: Successor blocks: unknown
@@ -242,318 +242,318 @@ using this memory map for disassembly:
 0x00401073: 55                      |U       | (data)   push   ebp
 0x00401074: 89 e5                   |..      | (data)   mov    ebp, esp
 0x00401076: 83 ec 04                |...     | (data)   sub    esp, 0x04
-0x00401079: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
-0x00401080: 8b 45 08                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x00401083: 3b 45 0c                |;E.     | (data)   cmp    eax, DWORD PTR ss:[ebp + 0x0c]
+0x00401079: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x00401080: 8b 45 08                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x08]
+0x00401083: 3b 45 0c                |;E.     | (data)   cmp    eax, dword ss:[ebp + 0x0c]
 0x00401086: 7f 12                   |..      | (data)   jg     0x0040109a
-0x00401088: 8b 45 08                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x0040108b: 3b 45 10                |;E.     | (data)   cmp    eax, DWORD PTR ss:[ebp + 0x10]
+0x00401088: 8b 45 08                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x08]
+0x0040108b: 3b 45 10                |;E.     | (data)   cmp    eax, dword ss:[ebp + 0x10]
 0x0040108e: 75 0a                   |u.      | (data)   jne    0x0040109a
-0x00401090: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x00401093: 3b 45 10                |;E.     | (data)   cmp    eax, DWORD PTR ss:[ebp + 0x10]
+0x00401090: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x00401093: 3b 45 10                |;E.     | (data)   cmp    eax, dword ss:[ebp + 0x10]
 0x00401096: 74 02                   |t.      | (data)   je     0x0040109a
 0x00401098: eb 0c                   |..      | (data)   jmp    0x004010a6
-0x0040109a: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x0040109d: 03 45 08                |.E.     | (data)   add    eax, DWORD PTR ss:[ebp + 0x08]
-0x004010a0: 03 45 10                |.E.     | (data)   add    eax, DWORD PTR ss:[ebp + 0x10]
-0x004010a3: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
-0x004010a6: 8b 45 fc                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
+0x0040109a: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x0040109d: 03 45 08                |.E.     | (data)   add    eax, dword ss:[ebp + 0x08]
+0x004010a0: 03 45 10                |.E.     | (data)   add    eax, dword ss:[ebp + 0x10]
+0x004010a3: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
+0x004010a6: 8b 45 fc                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xfc<-4>]
 0x004010a9: c9                      |.       | (data)   leave  
 0x004010aa: c3                      |.       | (data)   ret    
 0x004010ab: 55                      |U       | (data)   push   ebp
 0x004010ac: 89 e5                   |..      | (data)   mov    ebp, esp
 0x004010ae: 83 ec 04                |...     | (data)   sub    esp, 0x04
-0x004010b1: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
-0x004010b8: 8b 45 08                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x004010bb: 3b 45 0c                |;E.     | (data)   cmp    eax, DWORD PTR ss:[ebp + 0x0c]
+0x004010b1: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x004010b8: 8b 45 08                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x08]
+0x004010bb: 3b 45 0c                |;E.     | (data)   cmp    eax, dword ss:[ebp + 0x0c]
 0x004010be: 7e 1f                   |~.      | (data)   jle    0x004010df
-0x004010c0: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x004010c3: 3b 45 10                |;E.     | (data)   cmp    eax, DWORD PTR ss:[ebp + 0x10]
+0x004010c0: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x004010c3: 3b 45 10                |;E.     | (data)   cmp    eax, dword ss:[ebp + 0x10]
 0x004010c6: 7e 17                   |~.      | (data)   jle    0x004010df
-0x004010c8: 8b 45 10                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x004010cb: 3b 45 14                |;E.     | (data)   cmp    eax, DWORD PTR ss:[ebp + 0x14]
+0x004010c8: 8b 45 10                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x10]
+0x004010cb: 3b 45 14                |;E.     | (data)   cmp    eax, dword ss:[ebp + 0x14]
 0x004010ce: 7e 0f                   |~.      | (data)   jle    0x004010df
-0x004010d0: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x004010d3: 03 45 08                |.E.     | (data)   add    eax, DWORD PTR ss:[ebp + 0x08]
-0x004010d6: 03 45 10                |.E.     | (data)   add    eax, DWORD PTR ss:[ebp + 0x10]
-0x004010d9: 03 45 14                |.E.     | (data)   add    eax, DWORD PTR ss:[ebp + 0x14]
-0x004010dc: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
-0x004010df: 8b 45 fc                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
+0x004010d0: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x004010d3: 03 45 08                |.E.     | (data)   add    eax, dword ss:[ebp + 0x08]
+0x004010d6: 03 45 10                |.E.     | (data)   add    eax, dword ss:[ebp + 0x10]
+0x004010d9: 03 45 14                |.E.     | (data)   add    eax, dword ss:[ebp + 0x14]
+0x004010dc: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
+0x004010df: 8b 45 fc                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xfc<-4>]
 0x004010e2: c9                      |.       | (data)   leave  
 0x004010e3: c3                      |.       | (data)   ret    
 0x004010e4: 55                      |U       | (data)   push   ebp
 0x004010e5: 89 e5                   |..      | (data)   mov    ebp, esp
 0x004010e7: 83 ec 04                |...     | (data)   sub    esp, 0x04
-0x004010ea: 8b 45 08                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x004010ed: 3b 45 0c                |;E.     | (data)   cmp    eax, DWORD PTR ss:[ebp + 0x0c]
+0x004010ea: 8b 45 08                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x08]
+0x004010ed: 3b 45 0c                |;E.     | (data)   cmp    eax, dword ss:[ebp + 0x0c]
 0x004010f0: 7e 0b                   |~.      | (data)   jle    0x004010fd
-0x004010f2: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x004010f5: 03 45 08                |.E.     | (data)   add    eax, DWORD PTR ss:[ebp + 0x08]
-0x004010f8: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x004010f2: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x004010f5: 03 45 08                |.E.     | (data)   add    eax, dword ss:[ebp + 0x08]
+0x004010f8: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x004010fb: eb 0d                   |..      | (data)   jmp    0x0040110a
-0x004010fd: 8b 45 08                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x00401100: 8b 55 10                |.U.     | (data)   mov    edx, DWORD PTR ss:[ebp + 0x10]
+0x004010fd: 8b 45 08                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x08]
+0x00401100: 8b 55 10                |.U.     | (data)   mov    edx, dword ss:[ebp + 0x10]
 0x00401103: 29 c2                   |).      | (data)   sub    edx, eax
 0x00401105: 89 d0                   |..      | (data)   mov    eax, edx
-0x00401107: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
-0x0040110a: 8b 45 fc                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
+0x00401107: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
+0x0040110a: 8b 45 fc                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xfc<-4>]
 0x0040110d: c9                      |.       | (data)   leave  
 0x0040110e: c3                      |.       | (data)   ret    
 0x0040110f: 55                      |U       | (data)   push   ebp
 0x00401110: 89 e5                   |..      | (data)   mov    ebp, esp
 0x00401112: 83 ec 04                |...     | (data)   sub    esp, 0x04
-0x00401115: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
-0x0040111c: 8b 45 08                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x0040111f: 3b 45 0c                |;E.     | (data)   cmp    eax, DWORD PTR ss:[ebp + 0x0c]
+0x00401115: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x0040111c: 8b 45 08                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x08]
+0x0040111f: 3b 45 0c                |;E.     | (data)   cmp    eax, dword ss:[ebp + 0x0c]
 0x00401122: 7d 0f                   |}.      | (data)   jge    0x00401133
 0x00401124: 8d 45 0c                |.E.     | (data)   lea    eax, [ebp + 0x0c]
-0x00401127: ff 08                   |..      | (data)   dec    DWORD PTR ds:[eax]
-0x00401129: ff 45 08                |.E.     | (data)   inc    DWORD PTR ss:[ebp + 0x08]
+0x00401127: ff 08                   |..      | (data)   dec    dword ds:[eax]
+0x00401129: ff 45 08                |.E.     | (data)   inc    dword ss:[ebp + 0x08]
 0x0040112c: 8d 45 fc                |.E.     | (data)   lea    eax, [ebp + 0xfc<-4>]
-0x0040112f: ff 00                   |..      | (data)   inc    DWORD PTR ds:[eax]
+0x0040112f: ff 00                   |..      | (data)   inc    dword ds:[eax]
 0x00401131: eb e9                   |..      | (data)   jmp    0x0040111c
-0x00401133: 8b 45 fc                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
+0x00401133: 8b 45 fc                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xfc<-4>]
 0x00401136: c9                      |.       | (data)   leave  
 0x00401137: c3                      |.       | (data)   ret    
 0x00401138: 55                      |U       | (data)   push   ebp
 0x00401139: 89 e5                   |..      | (data)   mov    ebp, esp
 0x0040113b: 83 ec 08                |...     | (data)   sub    esp, 0x08
-0x0040113e: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
-0x00401145: c7 45 f8 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xf8<-8>], 0x00000000
-0x0040114c: 83 7d f8 09             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x09
+0x0040113e: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x00401145: c7 45 f8 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
+0x0040114c: 83 7d f8 09             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x09
 0x00401150: 7f 0f                   |..      | (data)   jg     0x00401161
-0x00401152: 8b 45 f8                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
+0x00401152: 8b 45 f8                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf8<-8>]
 0x00401155: 8d 55 fc                |.U.     | (data)   lea    edx, [ebp + 0xfc<-4>]
-0x00401158: 01 02                   |..      | (data)   add    DWORD PTR ds:[edx], eax
+0x00401158: 01 02                   |..      | (data)   add    dword ds:[edx], eax
 0x0040115a: 8d 45 f8                |.E.     | (data)   lea    eax, [ebp + 0xf8<-8>]
-0x0040115d: ff 00                   |..      | (data)   inc    DWORD PTR ds:[eax]
+0x0040115d: ff 00                   |..      | (data)   inc    dword ds:[eax]
 0x0040115f: eb eb                   |..      | (data)   jmp    0x0040114c
-0x00401161: 8b 45 fc                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
+0x00401161: 8b 45 fc                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xfc<-4>]
 0x00401164: c9                      |.       | (data)   leave  
 0x00401165: c3                      |.       | (data)   ret    
 0x00401166: 55                      |U       | (data)   push   ebp
 0x00401167: 89 e5                   |..      | (data)   mov    ebp, esp
 0x00401169: 83 ec 0c                |...     | (data)   sub    esp, 0x0c
-0x0040116c: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
-0x00401173: c7 45 f8 00 20 40 00    |.E.. @. | (data)   mov    DWORD PTR ss:[ebp + 0xf8<-8>], 0x00402000
-0x0040117a: c7 45 f4 0b 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xf4<-12>], 0x0000000b
-0x00401181: 83 7d f4 00             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf4<-12>], 0x00
+0x0040116c: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x00401173: c7 45 f8 00 20 40 00    |.E.. @. | (data)   mov    dword ss:[ebp + 0xf8<-8>], 0x00402000
+0x0040117a: c7 45 f4 0b 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xf4<-12>], 0x0000000b
+0x00401181: 83 7d f4 00             |.}..    | (data)   cmp    dword ss:[ebp + 0xf4<-12>], 0x00
 0x00401185: 78 17                   |x.      | (data)   js     0x0040119e
-0x00401187: 8b 45 f4                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf4<-12>]
-0x0040118a: 03 45 f8                |.E.     | (data)   add    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
-0x0040118d: 80 38 6c                |.8l     | (data)   cmp    BYTE PTR ds:[eax], 0x6c
+0x00401187: 8b 45 f4                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf4<-12>]
+0x0040118a: 03 45 f8                |.E.     | (data)   add    eax, dword ss:[ebp + 0xf8<-8>]
+0x0040118d: 80 38 6c                |.8l     | (data)   cmp    byte ds:[eax], 0x6c
 0x00401190: 75 05                   |u.      | (data)   jne    0x00401197
 0x00401192: 8d 45 fc                |.E.     | (data)   lea    eax, [ebp + 0xfc<-4>]
-0x00401195: ff 00                   |..      | (data)   inc    DWORD PTR ds:[eax]
+0x00401195: ff 00                   |..      | (data)   inc    dword ds:[eax]
 0x00401197: 8d 45 f4                |.E.     | (data)   lea    eax, [ebp + 0xf4<-12>]
-0x0040119a: ff 08                   |..      | (data)   dec    DWORD PTR ds:[eax]
+0x0040119a: ff 08                   |..      | (data)   dec    dword ds:[eax]
 0x0040119c: eb e3                   |..      | (data)   jmp    0x00401181
-0x0040119e: 8b 45 fc                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
+0x0040119e: 8b 45 fc                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xfc<-4>]
 0x004011a1: c9                      |.       | (data)   leave  
 0x004011a2: c3                      |.       | (data)   ret    
 0x004011a3: 55                      |U       | (data)   push   ebp
 0x004011a4: 89 e5                   |..      | (data)   mov    ebp, esp
 0x004011a6: 83 ec 08                |...     | (data)   sub    esp, 0x08
-0x004011a9: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
-0x004011b0: 8b 45 08                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x004011b3: 89 45 f8                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xf8<-8>], eax
-0x004011b6: 83 7d f8 02             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x02
+0x004011a9: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x004011b0: 8b 45 08                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x08]
+0x004011b3: 89 45 f8                |.E.     | (data)   mov    dword ss:[ebp + 0xf8<-8>], eax
+0x004011b6: 83 7d f8 02             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x02
 0x004011ba: 74 1e                   |t.      | (data)   je     0x004011da
-0x004011bc: 83 7d f8 02             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x02
+0x004011bc: 83 7d f8 02             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x02
 0x004011c0: 7f 08                   |..      | (data)   jg     0x004011ca
-0x004011c2: 83 7d f8 01             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x01
+0x004011c2: 83 7d f8 01             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x01
 0x004011c6: 74 0a                   |t.      | (data)   je     0x004011d2
 0x004011c8: eb 1e                   |..      | (data)   jmp    0x004011e8
-0x004011ca: 83 7d f8 03             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x03
+0x004011ca: 83 7d f8 03             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x03
 0x004011ce: 74 12                   |t.      | (data)   je     0x004011e2
 0x004011d0: eb 16                   |..      | (data)   jmp    0x004011e8
-0x004011d2: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x004011d5: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x004011d2: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x004011d5: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x004011d8: eb 0e                   |..      | (data)   jmp    0x004011e8
-0x004011da: 8b 45 10                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x004011dd: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x004011da: 8b 45 10                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x10]
+0x004011dd: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x004011e0: eb 06                   |..      | (data)   jmp    0x004011e8
-0x004011e2: 8b 45 14                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x14]
-0x004011e5: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
-0x004011e8: 8b 45 fc                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
+0x004011e2: 8b 45 14                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x14]
+0x004011e5: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
+0x004011e8: 8b 45 fc                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xfc<-4>]
 0x004011eb: c9                      |.       | (data)   leave  
 0x004011ec: c3                      |.       | (data)   ret    
 0x004011ed: 55                      |U       | (data)   push   ebp
 0x004011ee: 89 e5                   |..      | (data)   mov    ebp, esp
 0x004011f0: 83 ec 04                |...     | (data)   sub    esp, 0x04
-0x004011f3: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
-0x004011fa: 83 7d 08 0c             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0x08], 0x0c
+0x004011f3: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x004011fa: 83 7d 08 0c             |.}..    | (data)   cmp    dword ss:[ebp + 0x08], 0x0c
 0x004011fe: 0f 87 99 00 00 00       |......  | (data)   ja     0x0040129d
-0x00401204: 8b 45 08                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x08]
+0x00401204: 8b 45 08                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x08]
 0x00401207: c1 e0 02                |...     | (data)   shl    eax, 0x02
-0x0040120a: 8b 80 10 20 40 00       |... @.  | (data)   mov    eax, DWORD PTR ds:[eax + 0x00402010]
+0x0040120a: 8b 80 10 20 40 00       |... @.  | (data)   mov    eax, dword ds:[eax + 0x00402010]
 0x00401210: ff e0                   |..      | (data)   jmp    eax
-0x00401212: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x00401215: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401212: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x00401215: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x00401218: e9 80 00 00 00          |.....   | (data)   jmp    0x0040129d
-0x0040121d: 8b 45 10                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x00401220: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x0040121d: 8b 45 10                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x10]
+0x00401220: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x00401223: eb 78                   |.x      | (data)   jmp    0x0040129d
-0x00401225: 8b 45 14                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x14]
-0x00401228: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401225: 8b 45 14                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x14]
+0x00401228: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x0040122b: eb 70                   |.p      | (data)   jmp    0x0040129d
-0x0040122d: 8b 45 10                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x00401230: 8b 55 0c                |.U.     | (data)   mov    edx, DWORD PTR ss:[ebp + 0x0c]
+0x0040122d: 8b 45 10                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x10]
+0x00401230: 8b 55 0c                |.U.     | (data)   mov    edx, dword ss:[ebp + 0x0c]
 0x00401233: 29 c2                   |).      | (data)   sub    edx, eax
 0x00401235: 89 d0                   |..      | (data)   mov    eax, edx
-0x00401237: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401237: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x0040123a: eb 61                   |.a      | (data)   jmp    0x0040129d
-0x0040123c: 8b 45 14                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x14]
-0x0040123f: 8b 55 10                |.U.     | (data)   mov    edx, DWORD PTR ss:[ebp + 0x10]
+0x0040123c: 8b 45 14                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x14]
+0x0040123f: 8b 55 10                |.U.     | (data)   mov    edx, dword ss:[ebp + 0x10]
 0x00401242: 29 c2                   |).      | (data)   sub    edx, eax
 0x00401244: 89 d0                   |..      | (data)   mov    eax, edx
-0x00401246: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401246: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x00401249: eb 52                   |.R      | (data)   jmp    0x0040129d
-0x0040124b: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x0040124e: 8b 55 14                |.U.     | (data)   mov    edx, DWORD PTR ss:[ebp + 0x14]
+0x0040124b: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x0040124e: 8b 55 14                |.U.     | (data)   mov    edx, dword ss:[ebp + 0x14]
 0x00401251: 29 c2                   |).      | (data)   sub    edx, eax
 0x00401253: 89 d0                   |..      | (data)   mov    eax, edx
-0x00401255: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401255: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x00401258: eb 43                   |.C      | (data)   jmp    0x0040129d
-0x0040125a: 8b 45 10                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x0040125d: 03 45 0c                |.E.     | (data)   add    eax, DWORD PTR ss:[ebp + 0x0c]
-0x00401260: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x0040125a: 8b 45 10                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x10]
+0x0040125d: 03 45 0c                |.E.     | (data)   add    eax, dword ss:[ebp + 0x0c]
+0x00401260: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x00401263: eb 38                   |.8      | (data)   jmp    0x0040129d
-0x00401265: 8b 45 14                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x14]
-0x00401268: 03 45 10                |.E.     | (data)   add    eax, DWORD PTR ss:[ebp + 0x10]
-0x0040126b: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401265: 8b 45 14                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x14]
+0x00401268: 03 45 10                |.E.     | (data)   add    eax, dword ss:[ebp + 0x10]
+0x0040126b: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x0040126e: eb 2d                   |.-      | (data)   jmp    0x0040129d
-0x00401270: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x00401273: 03 45 14                |.E.     | (data)   add    eax, DWORD PTR ss:[ebp + 0x14]
-0x00401276: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401270: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x00401273: 03 45 14                |.E.     | (data)   add    eax, dword ss:[ebp + 0x14]
+0x00401276: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x00401279: eb 22                   |."      | (data)   jmp    0x0040129d
-0x0040127b: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x0040127e: 0f af 45 10             |..E.    | (data)   imul   eax, DWORD PTR ss:[ebp + 0x10]
-0x00401282: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x0040127b: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x0040127e: 0f af 45 10             |..E.    | (data)   imul   eax, dword ss:[ebp + 0x10]
+0x00401282: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x00401285: eb 16                   |..      | (data)   jmp    0x0040129d
-0x00401287: 8b 45 10                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x0040128a: 0f af 45 14             |..E.    | (data)   imul   eax, DWORD PTR ss:[ebp + 0x14]
-0x0040128e: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401287: 8b 45 10                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x10]
+0x0040128a: 0f af 45 14             |..E.    | (data)   imul   eax, dword ss:[ebp + 0x14]
+0x0040128e: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x00401291: eb 0a                   |..      | (data)   jmp    0x0040129d
-0x00401293: 8b 45 14                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x14]
-0x00401296: 0f af 45 0c             |..E.    | (data)   imul   eax, DWORD PTR ss:[ebp + 0x0c]
-0x0040129a: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
-0x0040129d: 8b 45 fc                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
+0x00401293: 8b 45 14                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x14]
+0x00401296: 0f af 45 0c             |..E.    | (data)   imul   eax, dword ss:[ebp + 0x0c]
+0x0040129a: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
+0x0040129d: 8b 45 fc                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xfc<-4>]
 0x004012a0: c9                      |.       | (data)   leave  
 0x004012a1: c3                      |.       | (data)   ret    
 0x004012a2: 55                      |U       | (data)   push   ebp
 0x004012a3: 89 e5                   |..      | (data)   mov    ebp, esp
 0x004012a5: 83 ec 08                |...     | (data)   sub    esp, 0x08
-0x004012a8: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
-0x004012af: 8b 45 08                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x004012b2: 89 45 f8                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xf8<-8>], eax
-0x004012b5: 83 7d f8 08             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x08
+0x004012a8: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x004012af: 8b 45 08                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x08]
+0x004012b2: 89 45 f8                |.E.     | (data)   mov    dword ss:[ebp + 0xf8<-8>], eax
+0x004012b5: 83 7d f8 08             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x08
 0x004012b9: 0f 84 23 01 00 00       |..#...  | (data)   je     0x004013e2
-0x004012bf: 83 7d f8 08             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x08
+0x004012bf: 83 7d f8 08             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x08
 0x004012c3: 7f 4c                   |.L      | (data)   jg     0x00401311
-0x004012c5: 83 7d f8 04             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x04
+0x004012c5: 83 7d f8 04             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x04
 0x004012c9: 0f 84 d8 00 00 00       |......  | (data)   je     0x004013a7
-0x004012cf: 83 7d f8 04             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x04
+0x004012cf: 83 7d f8 04             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x04
 0x004012d3: 7f 23                   |.#      | (data)   jg     0x004012f8
-0x004012d5: 83 7d f8 02             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x02
+0x004012d5: 83 7d f8 02             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x02
 0x004012d9: 0f 84 b2 00 00 00       |......  | (data)   je     0x00401391
-0x004012df: 83 7d f8 02             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x02
+0x004012df: 83 7d f8 02             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x02
 0x004012e3: 0f 8f b3 00 00 00       |......  | (data)   jg     0x0040139c
-0x004012e9: 83 7d f8 01             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x01
+0x004012e9: 83 7d f8 01             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x01
 0x004012ed: 0f 84 93 00 00 00       |......  | (data)   je     0x00401386
 0x004012f3: e9 4e 01 00 00          |.N...   | (data)   jmp    0x00401446
-0x004012f8: 83 7d f8 06             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x06
+0x004012f8: 83 7d f8 06             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x06
 0x004012fc: 0f 84 c6 00 00 00       |......  | (data)   je     0x004013c8
-0x00401302: 83 7d f8 06             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x06
+0x00401302: 83 7d f8 06             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x06
 0x00401306: 0f 8f cb 00 00 00       |......  | (data)   jg     0x004013d7
 0x0040130c: e9 a8 00 00 00          |.....   | (data)   jmp    0x004013b9
-0x00401311: 81 7d f8 cc 00 00 00    |.}..... | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x000000cc
+0x00401311: 81 7d f8 cc 00 00 00    |.}..... | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x000000cc
 0x00401318: 0f 84 f2 00 00 00       |......  | (data)   je     0x00401410
-0x0040131e: 81 7d f8 cc 00 00 00    |.}..... | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x000000cc
+0x0040131e: 81 7d f8 cc 00 00 00    |.}..... | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x000000cc
 0x00401325: 7f 26                   |.&      | (data)   jg     0x0040134d
-0x00401327: 83 7d f8 0a             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x0a
+0x00401327: 83 7d f8 0a             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x0a
 0x0040132b: 0f 84 c7 00 00 00       |......  | (data)   je     0x004013f8
-0x00401331: 83 7d f8 0a             |.}..    | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x0a
+0x00401331: 83 7d f8 0a             |.}..    | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x0a
 0x00401335: 0f 8c b2 00 00 00       |......  | (data)   jl     0x004013ed
-0x0040133b: 81 7d f8 cb 00 00 00    |.}..... | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x000000cb
+0x0040133b: 81 7d f8 cb 00 00 00    |.}..... | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x000000cb
 0x00401342: 0f 84 bc 00 00 00       |......  | (data)   je     0x00401404
 0x00401348: e9 f9 00 00 00          |.....   | (data)   jmp    0x00401446
-0x0040134d: 81 7d f8 ce 00 00 00    |.}..... | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x000000ce
+0x0040134d: 81 7d f8 ce 00 00 00    |.}..... | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x000000ce
 0x00401354: 0f 84 cd 00 00 00       |......  | (data)   je     0x00401427
-0x0040135a: 81 7d f8 ce 00 00 00    |.}..... | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x000000ce
+0x0040135a: 81 7d f8 ce 00 00 00    |.}..... | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x000000ce
 0x00401361: 0f 8c b5 00 00 00       |......  | (data)   jl     0x0040141c
-0x00401367: 81 7d f8 1c 04 00 00    |.}..... | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x0000041c<1052>
+0x00401367: 81 7d f8 1c 04 00 00    |.}..... | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x0000041c<1052>
 0x0040136e: 0f 84 be 00 00 00       |......  | (data)   je     0x00401432
-0x00401374: 81 7d f8 29 08 00 00    |.}.)... | (data)   cmp    DWORD PTR ss:[ebp + 0xf8<-8>], 0x00000829<2089>
+0x00401374: 81 7d f8 29 08 00 00    |.}.)... | (data)   cmp    dword ss:[ebp + 0xf8<-8>], 0x00000829<2089>
 0x0040137b: 0f 84 bc 00 00 00       |......  | (data)   je     0x0040143d
 0x00401381: e9 c0 00 00 00          |.....   | (data)   jmp    0x00401446
-0x00401386: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x00401389: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401386: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x00401389: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x0040138c: e9 b5 00 00 00          |.....   | (data)   jmp    0x00401446
-0x00401391: 8b 45 10                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x00401394: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401391: 8b 45 10                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x10]
+0x00401394: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x00401397: e9 aa 00 00 00          |.....   | (data)   jmp    0x00401446
-0x0040139c: 8b 45 14                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x14]
-0x0040139f: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x0040139c: 8b 45 14                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x14]
+0x0040139f: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x004013a2: e9 9f 00 00 00          |.....   | (data)   jmp    0x00401446
-0x004013a7: 8b 45 10                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x004013aa: 8b 55 0c                |.U.     | (data)   mov    edx, DWORD PTR ss:[ebp + 0x0c]
+0x004013a7: 8b 45 10                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x10]
+0x004013aa: 8b 55 0c                |.U.     | (data)   mov    edx, dword ss:[ebp + 0x0c]
 0x004013ad: 29 c2                   |).      | (data)   sub    edx, eax
 0x004013af: 89 d0                   |..      | (data)   mov    eax, edx
-0x004013b1: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x004013b1: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x004013b4: e9 8d 00 00 00          |.....   | (data)   jmp    0x00401446
-0x004013b9: 8b 45 14                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x14]
-0x004013bc: 8b 55 10                |.U.     | (data)   mov    edx, DWORD PTR ss:[ebp + 0x10]
+0x004013b9: 8b 45 14                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x14]
+0x004013bc: 8b 55 10                |.U.     | (data)   mov    edx, dword ss:[ebp + 0x10]
 0x004013bf: 29 c2                   |).      | (data)   sub    edx, eax
 0x004013c1: 89 d0                   |..      | (data)   mov    eax, edx
-0x004013c3: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x004013c3: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x004013c6: eb 7e                   |.~      | (data)   jmp    0x00401446
-0x004013c8: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x004013cb: 8b 55 14                |.U.     | (data)   mov    edx, DWORD PTR ss:[ebp + 0x14]
+0x004013c8: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x004013cb: 8b 55 14                |.U.     | (data)   mov    edx, dword ss:[ebp + 0x14]
 0x004013ce: 29 c2                   |).      | (data)   sub    edx, eax
 0x004013d0: 89 d0                   |..      | (data)   mov    eax, edx
-0x004013d2: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x004013d2: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x004013d5: eb 6f                   |.o      | (data)   jmp    0x00401446
-0x004013d7: 8b 45 10                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x004013da: 03 45 0c                |.E.     | (data)   add    eax, DWORD PTR ss:[ebp + 0x0c]
-0x004013dd: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x004013d7: 8b 45 10                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x10]
+0x004013da: 03 45 0c                |.E.     | (data)   add    eax, dword ss:[ebp + 0x0c]
+0x004013dd: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x004013e0: eb 64                   |.d      | (data)   jmp    0x00401446
-0x004013e2: 8b 45 14                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x14]
-0x004013e5: 03 45 10                |.E.     | (data)   add    eax, DWORD PTR ss:[ebp + 0x10]
-0x004013e8: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x004013e2: 8b 45 14                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x14]
+0x004013e5: 03 45 10                |.E.     | (data)   add    eax, dword ss:[ebp + 0x10]
+0x004013e8: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x004013eb: eb 59                   |.Y      | (data)   jmp    0x00401446
-0x004013ed: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x004013f0: 03 45 14                |.E.     | (data)   add    eax, DWORD PTR ss:[ebp + 0x14]
-0x004013f3: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x004013ed: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x004013f0: 03 45 14                |.E.     | (data)   add    eax, dword ss:[ebp + 0x14]
+0x004013f3: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x004013f6: eb 4e                   |.N      | (data)   jmp    0x00401446
-0x004013f8: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x004013fb: 0f af 45 10             |..E.    | (data)   imul   eax, DWORD PTR ss:[ebp + 0x10]
-0x004013ff: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x004013f8: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x004013fb: 0f af 45 10             |..E.    | (data)   imul   eax, dword ss:[ebp + 0x10]
+0x004013ff: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x00401402: eb 42                   |.B      | (data)   jmp    0x00401446
-0x00401404: 8b 45 10                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x00401407: 0f af 45 14             |..E.    | (data)   imul   eax, DWORD PTR ss:[ebp + 0x14]
-0x0040140b: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401404: 8b 45 10                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x10]
+0x00401407: 0f af 45 14             |..E.    | (data)   imul   eax, dword ss:[ebp + 0x14]
+0x0040140b: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x0040140e: eb 36                   |.6      | (data)   jmp    0x00401446
-0x00401410: 8b 45 14                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x14]
-0x00401413: 0f af 45 0c             |..E.    | (data)   imul   eax, DWORD PTR ss:[ebp + 0x0c]
-0x00401417: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401410: 8b 45 14                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x14]
+0x00401413: 0f af 45 0c             |..E.    | (data)   imul   eax, dword ss:[ebp + 0x0c]
+0x00401417: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x0040141a: eb 2a                   |.*      | (data)   jmp    0x00401446
-0x0040141c: 8b 45 10                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x0040141f: 33 45 0c                |3E.     | (data)   xor    eax, DWORD PTR ss:[ebp + 0x0c]
-0x00401422: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x0040141c: 8b 45 10                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x10]
+0x0040141f: 33 45 0c                |3E.     | (data)   xor    eax, dword ss:[ebp + 0x0c]
+0x00401422: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x00401425: eb 1f                   |..      | (data)   jmp    0x00401446
-0x00401427: 8b 45 14                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x14]
-0x0040142a: 33 45 10                |3E.     | (data)   xor    eax, DWORD PTR ss:[ebp + 0x10]
-0x0040142d: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401427: 8b 45 14                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x14]
+0x0040142a: 33 45 10                |3E.     | (data)   xor    eax, dword ss:[ebp + 0x10]
+0x0040142d: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x00401430: eb 14                   |..      | (data)   jmp    0x00401446
-0x00401432: 8b 45 0c                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x00401435: 33 45 14                |3E.     | (data)   xor    eax, DWORD PTR ss:[ebp + 0x14]
-0x00401438: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
+0x00401432: 8b 45 0c                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x0c]
+0x00401435: 33 45 14                |3E.     | (data)   xor    eax, dword ss:[ebp + 0x14]
+0x00401438: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
 0x0040143b: eb 09                   |..      | (data)   jmp    0x00401446
-0x0040143d: 8b 45 10                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0x10]
-0x00401440: 23 45 0c                |#E.     | (data)   and    eax, DWORD PTR ss:[ebp + 0x0c]
-0x00401443: 89 45 fc                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
-0x00401446: 8b 45 fc                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
+0x0040143d: 8b 45 10                |.E.     | (data)   mov    eax, dword ss:[ebp + 0x10]
+0x00401440: 23 45 0c                |#E.     | (data)   and    eax, dword ss:[ebp + 0x0c]
+0x00401443: 89 45 fc                |.E.     | (data)   mov    dword ss:[ebp + 0xfc<-4>], eax
+0x00401446: 8b 45 fc                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xfc<-4>]
 0x00401449: c9                      |.       | (data)   leave  
 0x0040144a: c3                      |.       | (data)   ret    
 0x0040144b: 55                      |U       | (data)   push   ebp
@@ -565,75 +565,75 @@ using this memory map for disassembly:
 0x0040145c: 83 c0 0f                |...     | (data)   add    eax, 0x0f
 0x0040145f: c1 e8 04                |...     | (data)   shr    eax, 0x04
 0x00401462: c1 e0 04                |...     | (data)   shl    eax, 0x04
-0x00401465: 89 45 ec                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xec<-20>], eax
-0x00401468: 8b 45 ec                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xec<-20>]
+0x00401465: 89 45 ec                |.E.     | (data)   mov    dword ss:[ebp + 0xec<-20>], eax
+0x00401468: 8b 45 ec                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xec<-20>]
 0x0040146b: e8 10 01 00 00          |.....   | (data)   call   0x00401580
 0x00401470: e8 9b 01 00 00          |.....   | (data)   call   0x00401610
-0x00401475: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
-0x0040147c: c7 45 f8 01 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xf8<-8>], 0x00000001
-0x00401483: c7 45 f4 02 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xf4<-12>], 0x00000002
-0x0040148a: c7 45 f0 03 00 00 00    |.E..... | (data)   mov    DWORD PTR ss:[ebp + 0xf0<-16>], 0x00000003
-0x00401491: 8b 45 f4                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf4<-12>]
-0x00401494: 89 44 24 04             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x04], eax
-0x00401498: 8b 45 f8                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
-0x0040149b: 89 04 24                |..$     | (data)   mov    DWORD PTR ss:[esp], eax
+0x00401475: c7 45 fc 00 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x0040147c: c7 45 f8 01 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xf8<-8>], 0x00000001
+0x00401483: c7 45 f4 02 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xf4<-12>], 0x00000002
+0x0040148a: c7 45 f0 03 00 00 00    |.E..... | (data)   mov    dword ss:[ebp + 0xf0<-16>], 0x00000003
+0x00401491: 8b 45 f4                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf4<-12>]
+0x00401494: 89 44 24 04             |.D$.    | (data)   mov    dword ss:[esp + 0x04], eax
+0x00401498: 8b 45 f8                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x0040149b: 89 04 24                |..$     | (data)   mov    dword ss:[esp], eax
 0x0040149e: e8 ad fb ff ff          |.....   | (data)   call   0x00401050
-0x004014a3: 8b 45 f0                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf0<-16>]
-0x004014a6: 89 44 24 08             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x08], eax
-0x004014aa: 8b 45 f4                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf4<-12>]
-0x004014ad: 89 44 24 04             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x04], eax
-0x004014b1: 8b 45 f8                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
-0x004014b4: 89 04 24                |..$     | (data)   mov    DWORD PTR ss:[esp], eax
+0x004014a3: 8b 45 f0                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf0<-16>]
+0x004014a6: 89 44 24 08             |.D$.    | (data)   mov    dword ss:[esp + 0x08], eax
+0x004014aa: 8b 45 f4                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf4<-12>]
+0x004014ad: 89 44 24 04             |.D$.    | (data)   mov    dword ss:[esp + 0x04], eax
+0x004014b1: 8b 45 f8                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x004014b4: 89 04 24                |..$     | (data)   mov    dword ss:[esp], eax
 0x004014b7: e8 b7 fb ff ff          |.....   | (data)   call   0x00401073
-0x004014bc: 8b 45 fc                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
-0x004014bf: 89 44 24 0c             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x0c], eax
-0x004014c3: 8b 45 f0                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf0<-16>]
-0x004014c6: 89 44 24 08             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x08], eax
-0x004014ca: 8b 45 f4                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf4<-12>]
-0x004014cd: 89 44 24 04             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x04], eax
-0x004014d1: 8b 45 f8                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
-0x004014d4: 89 04 24                |..$     | (data)   mov    DWORD PTR ss:[esp], eax
+0x004014bc: 8b 45 fc                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x004014bf: 89 44 24 0c             |.D$.    | (data)   mov    dword ss:[esp + 0x0c], eax
+0x004014c3: 8b 45 f0                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf0<-16>]
+0x004014c6: 89 44 24 08             |.D$.    | (data)   mov    dword ss:[esp + 0x08], eax
+0x004014ca: 8b 45 f4                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf4<-12>]
+0x004014cd: 89 44 24 04             |.D$.    | (data)   mov    dword ss:[esp + 0x04], eax
+0x004014d1: 8b 45 f8                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x004014d4: 89 04 24                |..$     | (data)   mov    dword ss:[esp], eax
 0x004014d7: e8 cf fb ff ff          |.....   | (data)   call   0x004010ab
-0x004014dc: 8b 45 f0                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf0<-16>]
-0x004014df: 89 44 24 08             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x08], eax
-0x004014e3: 8b 45 f4                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf4<-12>]
-0x004014e6: 89 44 24 04             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x04], eax
-0x004014ea: 8b 45 f8                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
-0x004014ed: 89 04 24                |..$     | (data)   mov    DWORD PTR ss:[esp], eax
+0x004014dc: 8b 45 f0                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf0<-16>]
+0x004014df: 89 44 24 08             |.D$.    | (data)   mov    dword ss:[esp + 0x08], eax
+0x004014e3: 8b 45 f4                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf4<-12>]
+0x004014e6: 89 44 24 04             |.D$.    | (data)   mov    dword ss:[esp + 0x04], eax
+0x004014ea: 8b 45 f8                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x004014ed: 89 04 24                |..$     | (data)   mov    dword ss:[esp], eax
 0x004014f0: e8 ef fb ff ff          |.....   | (data)   call   0x004010e4
-0x004014f5: 8b 45 f4                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf4<-12>]
-0x004014f8: 89 44 24 04             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x04], eax
-0x004014fc: 8b 45 f8                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
-0x004014ff: 89 04 24                |..$     | (data)   mov    DWORD PTR ss:[esp], eax
+0x004014f5: 8b 45 f4                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf4<-12>]
+0x004014f8: 89 44 24 04             |.D$.    | (data)   mov    dword ss:[esp + 0x04], eax
+0x004014fc: 8b 45 f8                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x004014ff: 89 04 24                |..$     | (data)   mov    dword ss:[esp], eax
 0x00401502: e8 08 fc ff ff          |.....   | (data)   call   0x0040110f
 0x00401507: e8 2c fc ff ff          |.,...   | (data)   call   0x00401138
 0x0040150c: e8 55 fc ff ff          |.U...   | (data)   call   0x00401166
-0x00401511: 8b 45 f0                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf0<-16>]
-0x00401514: 89 44 24 0c             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x0c], eax
-0x00401518: 8b 45 f4                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf4<-12>]
-0x0040151b: 89 44 24 08             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x08], eax
-0x0040151f: 8b 45 f8                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
-0x00401522: 89 44 24 04             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x04], eax
-0x00401526: 8b 45 fc                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
-0x00401529: 89 04 24                |..$     | (data)   mov    DWORD PTR ss:[esp], eax
+0x00401511: 8b 45 f0                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf0<-16>]
+0x00401514: 89 44 24 0c             |.D$.    | (data)   mov    dword ss:[esp + 0x0c], eax
+0x00401518: 8b 45 f4                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf4<-12>]
+0x0040151b: 89 44 24 08             |.D$.    | (data)   mov    dword ss:[esp + 0x08], eax
+0x0040151f: 8b 45 f8                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x00401522: 89 44 24 04             |.D$.    | (data)   mov    dword ss:[esp + 0x04], eax
+0x00401526: 8b 45 fc                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x00401529: 89 04 24                |..$     | (data)   mov    dword ss:[esp], eax
 0x0040152c: e8 72 fc ff ff          |.r...   | (data)   call   0x004011a3
-0x00401531: 8b 45 f0                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf0<-16>]
-0x00401534: 89 44 24 0c             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x0c], eax
-0x00401538: 8b 45 f4                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf4<-12>]
-0x0040153b: 89 44 24 08             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x08], eax
-0x0040153f: 8b 45 f8                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
-0x00401542: 89 44 24 04             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x04], eax
-0x00401546: 8b 45 fc                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
-0x00401549: 89 04 24                |..$     | (data)   mov    DWORD PTR ss:[esp], eax
+0x00401531: 8b 45 f0                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf0<-16>]
+0x00401534: 89 44 24 0c             |.D$.    | (data)   mov    dword ss:[esp + 0x0c], eax
+0x00401538: 8b 45 f4                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf4<-12>]
+0x0040153b: 89 44 24 08             |.D$.    | (data)   mov    dword ss:[esp + 0x08], eax
+0x0040153f: 8b 45 f8                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x00401542: 89 44 24 04             |.D$.    | (data)   mov    dword ss:[esp + 0x04], eax
+0x00401546: 8b 45 fc                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x00401549: 89 04 24                |..$     | (data)   mov    dword ss:[esp], eax
 0x0040154c: e8 9c fc ff ff          |.....   | (data)   call   0x004011ed
-0x00401551: 8b 45 f0                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf0<-16>]
-0x00401554: 89 44 24 0c             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x0c], eax
-0x00401558: 8b 45 f4                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf4<-12>]
-0x0040155b: 89 44 24 08             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x08], eax
-0x0040155f: 8b 45 f8                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
-0x00401562: 89 44 24 04             |.D$.    | (data)   mov    DWORD PTR ss:[esp + 0x04], eax
-0x00401566: 8b 45 fc                |.E.     | (data)   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
-0x00401569: 89 04 24                |..$     | (data)   mov    DWORD PTR ss:[esp], eax
+0x00401551: 8b 45 f0                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf0<-16>]
+0x00401554: 89 44 24 0c             |.D$.    | (data)   mov    dword ss:[esp + 0x0c], eax
+0x00401558: 8b 45 f4                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf4<-12>]
+0x0040155b: 89 44 24 08             |.D$.    | (data)   mov    dword ss:[esp + 0x08], eax
+0x0040155f: 8b 45 f8                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x00401562: 89 44 24 04             |.D$.    | (data)   mov    dword ss:[esp + 0x04], eax
+0x00401566: 8b 45 fc                |.E.     | (data)   mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x00401569: 89 04 24                |..$     | (data)   mov    dword ss:[esp], eax
 0x0040156c: e8 31 fd ff ff          |.1...   | (data)   call   0x004012a2
 0x00401571: c9                      |.       | (data)   leave  
 0x00401572: c3                      |.       | (data)   ret    
@@ -661,7 +661,7 @@ using this memory map for disassembly:
 0x0040158d: Predecessor blocks: 0x00401586
 0x0040158d: Dominator block: 0x00401586
 0x0040158d: 81 e9 00 10 00 00       |......  |   sub    ecx, 0x00001000<4096>
-0x00401593: 83 09 00                |...     |   or     DWORD PTR ds:[ecx], 0x00
+0x00401593: 83 09 00                |...     |   or     dword ds:[ecx], 0x00
 0x00401596: 2d 00 10 00 00          |-....   |   sub    eax, 0x00001000<4096>
 0x00401596: Successor blocks: 0x0040159b
 
@@ -675,11 +675,11 @@ using this memory map for disassembly:
 0x0040159d: Predecessor blocks: 0x00401586
 0x0040159d: Dominator block: 0x00401586
 0x0040159d: 29 c1                   |).      |   sub    ecx, eax
-0x0040159f: 83 09 00                |...     |   or     DWORD PTR ds:[ecx], 0x00
+0x0040159f: 83 09 00                |...     |   or     dword ds:[ecx], 0x00
 0x004015a2: 89 e0                   |..      |   mov    eax, esp
 0x004015a4: 89 cc                   |..      |   mov    esp, ecx
-0x004015a6: 8b 08                   |..      |   mov    ecx, DWORD PTR ds:[eax]
-0x004015a8: 8b 40 04                |.@.     |   mov    eax, DWORD PTR ds:[eax + 0x04]
+0x004015a6: 8b 08                   |..      |   mov    ecx, dword ds:[eax]
+0x004015a8: 8b 40 04                |.@.     |   mov    eax, dword ds:[eax + 0x04]
 0x004015a8: Successor blocks: 0x004015ab
 
 0x004015ab: Basic block reasons: fragment, graph-2; 79% code likelihood
@@ -701,11 +701,11 @@ using this memory map for disassembly:
 0x004015b1: 31 c0                   |1.      |   xor    eax, eax
 0x004015b3: 89 e5                   |..      |   mov    ebp, esp
 0x004015b5: 83 ec 18                |...     |   sub    esp, 0x18
-0x004015b8: 89 75 fc                |.u.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], esi
-0x004015bb: 8b 75 08                |.u.     |   mov    esi, DWORD PTR ss:[ebp + 0x08]
-0x004015be: 89 5d f8                |.].     |   mov    DWORD PTR ss:[ebp + 0xf8<-8>], ebx
-0x004015c1: 89 44 24 04             |.D$.    |   mov    DWORD PTR ss:[esp + 0x04], eax
-0x004015c5: 89 34 24                |.4$     |   mov    DWORD PTR ss:[esp], esi
+0x004015b8: 89 75 fc                |.u.     |   mov    dword ss:[ebp + 0xfc<-4>], esi
+0x004015bb: 8b 75 08                |.u.     |   mov    esi, dword ss:[ebp + 0x08]
+0x004015be: 89 5d f8                |.].     |   mov    dword ss:[ebp + 0xf8<-8>], ebx
+0x004015c1: 89 44 24 04             |.D$.    |   mov    dword ss:[esp + 0x04], eax
+0x004015c5: 89 34 24                |.4$     |   mov    dword ss:[esp], esi
 0x004015c8: e8 53 00 00 00          |.S...   |   call   0x00401620<<Func>>
 0x004015c8: Successor blocks: 0x004015cd, 0x00401620<<Func>>
 
@@ -720,13 +720,13 @@ using this memory map for disassembly:
 0x004015d4: Basic block reasons: graph-1
 0x004015d4: Predecessor blocks: 0x004015cd
 0x004015d4: Dominator block: 0x004015cd
-0x004015d4: c7 04 24 00 00 00 00    |..$.... |   mov    DWORD PTR ss:[esp], 0x00000000
+0x004015d4: c7 04 24 00 00 00 00    |..$.... |   mov    dword ss:[esp], 0x00000000
 0x004015d4: Successor blocks: 0x004015db
 
 0x004015db: Basic block reasons: graph-1
 0x004015db: Predecessor blocks: 0x004015d4, 0x00401600
 0x004015db: Dominator block: 0x004015cd
-0x004015db: ff 15 84 40 40 00       |...@@.  |   call   DWORD PTR ds:[0x00404084<.idata+0x84>]
+0x004015db: ff 15 84 40 40 00       |...@@.  |   call   dword ds:[0x00404084<.idata+0x84>]
 0x004015db: Successor blocks: 0x004015e1, unknown
 
 0x004015e1: Basic block reasons: graph-1
@@ -735,9 +735,9 @@ using this memory map for disassembly:
 0x004015e1: 81 ec c0 00 00 00       |......  |   sub    esp, 0x000000c0
 0x004015e7: 8d 5c 24 17             |.\$.    |   lea    ebx, [esp + 0x17]
 0x004015eb: 83 e3 f0                |...     |   and    ebx, 0xf0<-16>
-0x004015ee: c7 03 00 00 00 00       |......  |   mov    DWORD PTR ds:[ebx], 0x00000000
-0x004015f4: 89 5c 24 04             |.\$.    |   mov    DWORD PTR ss:[esp + 0x04], ebx
-0x004015f8: 89 34 24                |.4$     |   mov    DWORD PTR ss:[esp], esi
+0x004015ee: c7 03 00 00 00 00       |......  |   mov    dword ds:[ebx], 0x00000000
+0x004015f4: 89 5c 24 04             |.\$.    |   mov    dword ss:[esp + 0x04], ebx
+0x004015f8: 89 34 24                |.4$     |   mov    dword ss:[esp], esi
 0x004015fb: e8 20 00 00 00          |. ...   |   call   0x00401620<<Func>>
 0x004015fb: Successor blocks: 0x00401600, 0x00401620<<Func>>
 
@@ -745,7 +745,7 @@ using this memory map for disassembly:
 0x00401600: Predecessor blocks: 0x004015e1
 0x00401600: Dominator block: 0x004015e1
 0x00401600: 83 ec 08                |...     |   sub    esp, 0x08
-0x00401603: 89 1c 24                |..$     |   mov    DWORD PTR ss:[esp], ebx
+0x00401603: 89 1c 24                |..$     |   mov    dword ss:[esp], ebx
 0x00401606: eb d3                   |..      |   jmp    0x004015db<<Insn>>
 0x00401606: Successor blocks: 0x004015db
 
@@ -755,7 +755,7 @@ using this memory map for disassembly:
 0x00401610: No known callers.
 
 0x00401610: Basic block reasons: entry point, graph-2
-0x00401610: ff 25 74 40 40 00       |.%t@@.  |   jmp    DWORD PTR ds:[0x00404074<.idata+0x74>]
+0x00401610: ff 25 74 40 40 00       |.%t@@.  |   jmp    dword ds:[0x00404074<.idata+0x74>]
 0x00401610: Successor blocks: unknown
 
 0x00401616: 90 90                   |..      | 2-byte padding beginning at 0x00401616
@@ -773,7 +773,7 @@ using this memory map for disassembly:
 0x00401623: 89 e5                   |..      |   mov    ebp, esp
 0x00401625: 53                      |S       |   push   ebx
 0x00401626: 83 ec 04                |...     |   sub    esp, 0x04
-0x00401629: 8b 5d 0c                |.].     |   mov    ebx, DWORD PTR ss:[ebp + 0x0c]
+0x00401629: 8b 5d 0c                |.].     |   mov    ebx, dword ss:[ebp + 0x0c]
 0x0040162c: 85 db                   |..      |   test   ebx, ebx
 0x0040162e: 0f 84 ef 00 00 00       |......  |   je     0x00401723<<Insn>>
 0x0040162e: Successor blocks: 0x00401634, 0x00401723
@@ -781,57 +781,57 @@ using this memory map for disassembly:
 0x00401634: Basic block reasons: graph-1
 0x00401634: Predecessor blocks: 0x00401620, 0x00401738
 0x00401634: Dominator block: 0x00401620
-0x00401634: c7 43 04 a8 00 00 00    |.C..... |   mov    DWORD PTR ds:[ebx + 0x04], 0x000000a8
+0x00401634: c7 43 04 a8 00 00 00    |.C..... |   mov    dword ds:[ebx + 0x04], 0x000000a8
 0x0040163b: 31 c9                   |1.      |   xor    ecx, ecx
 0x0040163d: ba 84 00 00 00          |.....   |   mov    edx, 0x00000084
-0x00401642: c7 43 08 ed 03 00 00    |.C..... |   mov    DWORD PTR ds:[ebx + 0x08], 0x000003ed<1005>
+0x00401642: c7 43 08 ed 03 00 00    |.C..... |   mov    dword ds:[ebx + 0x08], 0x000003ed<1005>
 0x00401649: 85 c0                   |..      |   test   eax, eax
-0x0040164b: c7 43 0c 12 00 00 00    |.C..... |   mov    DWORD PTR ds:[ebx + 0x0c], 0x00000012
-0x00401652: 89 8b 80 00 00 00       |......  |   mov    DWORD PTR ds:[ebx + 0x00000080], ecx
-0x00401658: 89 93 84 00 00 00       |......  |   mov    DWORD PTR ds:[ebx + 0x00000084], edx
-0x0040165e: c7 43 2c 60 18 40 00    |.C,`.@. |   mov    DWORD PTR ds:[ebx + 0x2c], 0x00401860
-0x00401665: c7 43 30 68 18 40 00    |.C0h.@. |   mov    DWORD PTR ds:[ebx + 0x30], 0x00401868
-0x0040166c: c7 43 14 14 30 40 00    |.C..0@. |   mov    DWORD PTR ds:[ebx + 0x14], 0x00403014<.bss+0x14>
+0x0040164b: c7 43 0c 12 00 00 00    |.C..... |   mov    dword ds:[ebx + 0x0c], 0x00000012
+0x00401652: 89 8b 80 00 00 00       |......  |   mov    dword ds:[ebx + 0x00000080], ecx
+0x00401658: 89 93 84 00 00 00       |......  |   mov    dword ds:[ebx + 0x00000084], edx
+0x0040165e: c7 43 2c 60 18 40 00    |.C,`.@. |   mov    dword ds:[ebx + 0x2c], 0x00401860
+0x00401665: c7 43 30 68 18 40 00    |.C0h.@. |   mov    dword ds:[ebx + 0x30], 0x00401868
+0x0040166c: c7 43 14 14 30 40 00    |.C..0@. |   mov    dword ds:[ebx + 0x14], 0x00403014<.bss+0x14>
 0x00401673: 0f 85 98 00 00 00       |......  |   jne    0x00401711<<Insn>>
 0x00401673: Successor blocks: 0x00401679, 0x00401711
 
 0x00401679: Basic block reasons: graph-1
 0x00401679: Predecessor blocks: 0x00401634
 0x00401679: Dominator block: 0x00401634
-0x00401679: a1 78 40 40 00          |.x@@.   |   mov    eax, DWORD PTR ds:[0x00404078<.idata+0x78>]
-0x0040167e: 89 43 10                |.C.     |   mov    DWORD PTR ds:[ebx + 0x10], eax
+0x00401679: a1 78 40 40 00          |.x@@.   |   mov    eax, dword ds:[0x00404078<.idata+0x78>]
+0x0040167e: 89 43 10                |.C.     |   mov    dword ds:[ebx + 0x10], eax
 0x0040167e: Successor blocks: 0x00401681
 
 0x00401681: Basic block reasons: graph-1
 0x00401681: Predecessor blocks: 0x00401679, 0x00401711
 0x00401681: Dominator block: 0x00401634
-0x00401681: c7 43 78 00 00 00 00    |.Cx.... |   mov    DWORD PTR ds:[ebx + 0x78], 0x00000000
-0x00401688: 8b 45 08                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x0040168b: c7 43 48 30 18 40 00    |.CH0.@. |   mov    DWORD PTR ds:[ebx + 0x48], 0x00401830<<Func>>
-0x00401692: c7 43 4c 20 18 40 00    |.CL .@. |   mov    DWORD PTR ds:[ebx + 0x4c], 0x00401820<<Func>>
-0x00401699: 89 43 28                |.C(     |   mov    DWORD PTR ds:[ebx + 0x28], eax
-0x0040169c: 8b 45 00                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x00]
-0x0040169f: c7 43 50 10 18 40 00    |.CP..@. |   mov    DWORD PTR ds:[ebx + 0x50], 0x00401810<<Func>>
-0x004016a6: c7 43 54 00 18 40 00    |.CT..@. |   mov    DWORD PTR ds:[ebx + 0x54], 0x00401800<<Insn>>
-0x004016ad: c7 43 24 10 30 40 00    |.C$.0@. |   mov    DWORD PTR ds:[ebx + 0x24], 0x00403010<.bss+0x10>
-0x004016b4: 89 03                   |..      |   mov    DWORD PTR ds:[ebx], eax
-0x004016b6: c7 43 18 f0 17 40 00    |.C...@. |   mov    DWORD PTR ds:[ebx + 0x18], 0x004017f0<<Insn>>
-0x004016bd: c7 43 1c e0 17 40 00    |.C...@. |   mov    DWORD PTR ds:[ebx + 0x1c], 0x004017e0<<Insn>>
-0x004016c4: c7 43 20 d0 17 40 00    |.C ..@. |   mov    DWORD PTR ds:[ebx + 0x20], 0x004017d0<<Insn>>
-0x004016cb: c7 43 44 c0 17 40 00    |.CD..@. |   mov    DWORD PTR ds:[ebx + 0x44], 0x004017c0<<Func>>
-0x004016d2: c7 04 24 00 00 00 00    |..$.... |   mov    DWORD PTR ss:[esp], 0x00000000
+0x00401681: c7 43 78 00 00 00 00    |.Cx.... |   mov    dword ds:[ebx + 0x78], 0x00000000
+0x00401688: 8b 45 08                |.E.     |   mov    eax, dword ss:[ebp + 0x08]
+0x0040168b: c7 43 48 30 18 40 00    |.CH0.@. |   mov    dword ds:[ebx + 0x48], 0x00401830<<Func>>
+0x00401692: c7 43 4c 20 18 40 00    |.CL .@. |   mov    dword ds:[ebx + 0x4c], 0x00401820<<Func>>
+0x00401699: 89 43 28                |.C(     |   mov    dword ds:[ebx + 0x28], eax
+0x0040169c: 8b 45 00                |.E.     |   mov    eax, dword ss:[ebp + 0x00]
+0x0040169f: c7 43 50 10 18 40 00    |.CP..@. |   mov    dword ds:[ebx + 0x50], 0x00401810<<Func>>
+0x004016a6: c7 43 54 00 18 40 00    |.CT..@. |   mov    dword ds:[ebx + 0x54], 0x00401800<<Insn>>
+0x004016ad: c7 43 24 10 30 40 00    |.C$.0@. |   mov    dword ds:[ebx + 0x24], 0x00403010<.bss+0x10>
+0x004016b4: 89 03                   |..      |   mov    dword ds:[ebx], eax
+0x004016b6: c7 43 18 f0 17 40 00    |.C...@. |   mov    dword ds:[ebx + 0x18], 0x004017f0<<Insn>>
+0x004016bd: c7 43 1c e0 17 40 00    |.C...@. |   mov    dword ds:[ebx + 0x1c], 0x004017e0<<Insn>>
+0x004016c4: c7 43 20 d0 17 40 00    |.C ..@. |   mov    dword ds:[ebx + 0x20], 0x004017d0<<Insn>>
+0x004016cb: c7 43 44 c0 17 40 00    |.CD..@. |   mov    dword ds:[ebx + 0x44], 0x004017c0<<Func>>
+0x004016d2: c7 04 24 00 00 00 00    |..$.... |   mov    dword ss:[esp], 0x00000000
 0x004016d9: e8 72 01 00 00          |.r...   |   call   0x00401850<<Func>>
 0x004016d9: Successor blocks: 0x004016de, 0x00401850<<Func>>
 
 0x004016de: Basic block reasons: graph-1
 0x004016de: Predecessor blocks: 0x00401681
 0x004016de: Dominator block: 0x00401681
-0x004016de: 89 43 7c                |.C|     |   mov    DWORD PTR ds:[ebx + 0x7c], eax
+0x004016de: 89 43 7c                |.C|     |   mov    dword ds:[ebx + 0x7c], eax
 0x004016e1: 83 ec 04                |...     |   sub    esp, 0x04
-0x004016e4: c7 43 34 00 20 40 00    |.C4. @. |   mov    DWORD PTR ds:[ebx + 0x34], 0x00402000<.rdata>
-0x004016eb: c7 43 38 00 20 40 00    |.C8. @. |   mov    DWORD PTR ds:[ebx + 0x38], 0x00402000<.rdata>
-0x004016f2: c7 43 3c 00 30 40 00    |.C<.0@. |   mov    DWORD PTR ds:[ebx + 0x3c], 0x00403000<.bss>
-0x004016f9: c7 43 40 40 30 40 00    |.C@@0@. |   mov    DWORD PTR ds:[ebx + 0x40], 0x00403040
+0x004016e4: c7 43 34 00 20 40 00    |.C4. @. |   mov    dword ds:[ebx + 0x34], 0x00402000<.rdata>
+0x004016eb: c7 43 38 00 20 40 00    |.C8. @. |   mov    dword ds:[ebx + 0x38], 0x00402000<.rdata>
+0x004016f2: c7 43 3c 00 30 40 00    |.C<.0@. |   mov    dword ds:[ebx + 0x3c], 0x00403000<.bss>
+0x004016f9: c7 43 40 40 30 40 00    |.C@@0@. |   mov    dword ds:[ebx + 0x40], 0x00403040
 0x00401700: e8 8b 00 00 00          |.....   |   call   0x00401790<<Func>>
 0x00401700: Successor blocks: 0x00401705, 0x00401790<<Func>>
 
@@ -844,7 +844,7 @@ using this memory map for disassembly:
 0x0040170a: Basic block reasons: graph-1
 0x0040170a: Predecessor blocks: 0x00401705, 0x0040172f
 0x0040170a: Dominator block: 0x00401620
-0x0040170a: 8b 5d fc                |.].     |   mov    ebx, DWORD PTR ss:[ebp + 0xfc<-4>]
+0x0040170a: 8b 5d fc                |.].     |   mov    ebx, dword ss:[ebp + 0xfc<-4>]
 0x0040170d: c9                      |.       |   leave  
 0x0040170e: c2 08 00                |...     |   ret    0x0008
 0x0040170e: Successor blocks: unknown
@@ -852,16 +852,16 @@ using this memory map for disassembly:
 0x00401711: Basic block reasons: graph-1
 0x00401711: Predecessor blocks: 0x00401634
 0x00401711: Dominator block: 0x00401634
-0x00401711: 8b 93 a4 00 00 00       |......  |   mov    edx, DWORD PTR ds:[ebx + 0x000000a4]
-0x00401717: a1 78 40 40 00          |.x@@.   |   mov    eax, DWORD PTR ds:[0x00404078<.idata+0x78>]
-0x0040171c: 89 10                   |..      |   mov    DWORD PTR ds:[eax], edx
+0x00401711: 8b 93 a4 00 00 00       |......  |   mov    edx, dword ds:[ebx + 0x000000a4]
+0x00401717: a1 78 40 40 00          |.x@@.   |   mov    eax, dword ds:[0x00404078<.idata+0x78>]
+0x0040171c: 89 10                   |..      |   mov    dword ds:[eax], edx
 0x0040171e: e9 5e ff ff ff          |.^...   |   jmp    0x00401681<<Insn>>
 0x0040171e: Successor blocks: 0x00401681
 
 0x00401723: Basic block reasons: graph-1
 0x00401723: Predecessor blocks: 0x00401620
 0x00401723: Dominator block: 0x00401620
-0x00401723: c7 04 24 08 00 00 00    |..$.... |   mov    DWORD PTR ss:[esp], 0x00000008
+0x00401723: c7 04 24 08 00 00 00    |..$.... |   mov    dword ss:[esp], 0x00000008
 0x0040172a: e8 11 01 00 00          |.....   |   call   0x00401840<<Func>>
 0x0040172a: Successor blocks: 0x0040172f, 0x00401840<<Func>>
 
@@ -889,7 +889,7 @@ using this memory map for disassembly:
 0x00401750: No known callers.
 
 0x00401750: Basic block reasons: entry point, graph-2
-0x00401750: ff 25 84 40 40 00       |.%.@@.  |   jmp    DWORD PTR ds:[0x00404084<.idata+0x84>]
+0x00401750: ff 25 84 40 40 00       |.%.@@.  |   jmp    dword ds:[0x00404084<.idata+0x84>]
 0x00401750: Successor blocks: unknown
 
 0x00401756: 90 90                   |..      | 2-byte padding beginning at 0x00401756
@@ -901,22 +901,22 @@ using this memory map for disassembly:
 0x00401760: Predecessor blocks: 0x00401790<<Func>>
 0x00401760: 55                      |U       |   push   ebp
 0x00401761: 89 e5                   |..      |   mov    ebp, esp
-0x00401763: 8b 4d 08                |.M.     |   mov    ecx, DWORD PTR ss:[ebp + 0x08]
+0x00401763: 8b 4d 08                |.M.     |   mov    ecx, dword ss:[ebp + 0x08]
 0x00401766: 56                      |V       |   push   esi
-0x00401767: 8b 75 10                |.u.     |   mov    esi, DWORD PTR ss:[ebp + 0x10]
+0x00401767: 8b 75 10                |.u.     |   mov    esi, dword ss:[ebp + 0x10]
 0x0040176a: 53                      |S       |   push   ebx
-0x0040176b: 8b 5d 0c                |.].     |   mov    ebx, DWORD PTR ss:[ebp + 0x0c]
+0x0040176b: 8b 5d 0c                |.].     |   mov    ebx, dword ss:[ebp + 0x0c]
 0x0040176e: eb 0c                   |..      |   jmp    0x0040177c<<Insn>>
 0x0040176e: Successor blocks: 0x0040177c
 
 0x00401770: Basic block reasons: graph-1
 0x00401770: Predecessor blocks: 0x0040177c
 0x00401770: Dominator block: 0x0040177c
-0x00401770: 8b 51 04                |.Q.     |   mov    edx, DWORD PTR ds:[ecx + 0x04]
-0x00401773: 8b 01                   |..      |   mov    eax, DWORD PTR ds:[ecx]
+0x00401770: 8b 51 04                |.Q.     |   mov    edx, dword ds:[ecx + 0x04]
+0x00401773: 8b 01                   |..      |   mov    eax, dword ds:[ecx]
 0x00401775: 83 c1 08                |...     |   add    ecx, 0x08
 0x00401778: 01 f2                   |..      |   add    edx, esi
-0x0040177a: 01 02                   |..      |   add    DWORD PTR ds:[edx], eax
+0x0040177a: 01 02                   |..      |   add    dword ds:[edx], eax
 0x0040177a: Successor blocks: 0x0040177c
 
 0x0040177c: Basic block reasons: graph-1
@@ -951,9 +951,9 @@ using this memory map for disassembly:
 0x00401796: 89 e5                   |..      |   mov    ebp, esp
 0x00401798: b8 50 20 40 00          |.P @.   |   mov    eax, 0x00402050
 0x0040179d: 83 ec 0c                |...     |   sub    esp, 0x0c
-0x004017a0: 89 54 24 08             |.T$.    |   mov    DWORD PTR ss:[esp + 0x08], edx
-0x004017a4: 89 44 24 04             |.D$.    |   mov    DWORD PTR ss:[esp + 0x04], eax
-0x004017a8: c7 04 24 50 20 40 00    |..$P @. |   mov    DWORD PTR ss:[esp], 0x00402050
+0x004017a0: 89 54 24 08             |.T$.    |   mov    dword ss:[esp + 0x08], edx
+0x004017a4: 89 44 24 04             |.D$.    |   mov    dword ss:[esp + 0x04], eax
+0x004017a8: c7 04 24 50 20 40 00    |..$P @. |   mov    dword ss:[esp], 0x00402050
 0x004017af: e8 ac ff ff ff          |.....   |   call   0x00401760<<Func>>
 0x004017af: Successor blocks: 0x00401760<<Func>>, 0x004017b4
 
@@ -971,7 +971,7 @@ using this memory map for disassembly:
 0x004017c0: No known callers.
 
 0x004017c0: Basic block reasons: entry point, graph-2
-0x004017c0: ff 25 7c 40 40 00       |.%|@@.  |   jmp    DWORD PTR ds:[0x0040407c<.idata+0x7c>]
+0x004017c0: ff 25 7c 40 40 00       |.%|@@.  |   jmp    dword ds:[0x0040407c<.idata+0x7c>]
 0x004017c0: Successor blocks: unknown
 
 0x004017c6: 90 90                   |..      | 2-byte padding beginning at 0x004017c6
@@ -980,16 +980,16 @@ using this memory map for disassembly:
 0x004017c8: No known callers.
 
 0x004017c8: Basic block reasons: entry point, graph-2
-0x004017c8: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
-0x004017ca: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
-0x004017cc: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
-0x004017ce: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
+0x004017c8: 00 00                   |..      |   add    byte ds:[eax], al
+0x004017ca: 00 00                   |..      |   add    byte ds:[eax], al
+0x004017cc: 00 00                   |..      |   add    byte ds:[eax], al
+0x004017ce: 00 00                   |..      |   add    byte ds:[eax], al
 0x004017ce: Successor blocks: 0x004017d0
 
 0x004017d0: Basic block reasons: graph-2
 0x004017d0: Predecessor blocks: 0x004017c8
 0x004017d0: Dominator block: 0x004017c8
-0x004017d0: ff 25 90 40 40 00       |.%.@@.  |   jmp    DWORD PTR ds:[0x00404090<.idata+0x90>]
+0x004017d0: ff 25 90 40 40 00       |.%.@@.  |   jmp    dword ds:[0x00404090<.idata+0x90>]
 0x004017d0: Successor blocks: unknown
 
 0x004017d6: 90 90                   |..      | 2-byte padding beginning at 0x004017d6
@@ -998,16 +998,16 @@ using this memory map for disassembly:
 0x004017d8: No known callers.
 
 0x004017d8: Basic block reasons: entry point, graph-2
-0x004017d8: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
-0x004017da: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
-0x004017dc: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
-0x004017de: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
+0x004017d8: 00 00                   |..      |   add    byte ds:[eax], al
+0x004017da: 00 00                   |..      |   add    byte ds:[eax], al
+0x004017dc: 00 00                   |..      |   add    byte ds:[eax], al
+0x004017de: 00 00                   |..      |   add    byte ds:[eax], al
 0x004017de: Successor blocks: 0x004017e0
 
 0x004017e0: Basic block reasons: graph-2
 0x004017e0: Predecessor blocks: 0x004017d8
 0x004017e0: Dominator block: 0x004017d8
-0x004017e0: ff 25 88 40 40 00       |.%.@@.  |   jmp    DWORD PTR ds:[0x00404088<.idata+0x88>]
+0x004017e0: ff 25 88 40 40 00       |.%.@@.  |   jmp    dword ds:[0x00404088<.idata+0x88>]
 0x004017e0: Successor blocks: unknown
 
 0x004017e6: 90 90                   |..      | 2-byte padding beginning at 0x004017e6
@@ -1016,16 +1016,16 @@ using this memory map for disassembly:
 0x004017e8: No known callers.
 
 0x004017e8: Basic block reasons: entry point, graph-2
-0x004017e8: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
-0x004017ea: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
-0x004017ec: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
-0x004017ee: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
+0x004017e8: 00 00                   |..      |   add    byte ds:[eax], al
+0x004017ea: 00 00                   |..      |   add    byte ds:[eax], al
+0x004017ec: 00 00                   |..      |   add    byte ds:[eax], al
+0x004017ee: 00 00                   |..      |   add    byte ds:[eax], al
 0x004017ee: Successor blocks: 0x004017f0
 
 0x004017f0: Basic block reasons: graph-2
 0x004017f0: Predecessor blocks: 0x004017e8
 0x004017f0: Dominator block: 0x004017e8
-0x004017f0: ff 25 8c 40 40 00       |.%.@@.  |   jmp    DWORD PTR ds:[0x0040408c<.idata+0x8c>]
+0x004017f0: ff 25 8c 40 40 00       |.%.@@.  |   jmp    dword ds:[0x0040408c<.idata+0x8c>]
 0x004017f0: Successor blocks: unknown
 
 0x004017f6: 90 90                   |..      | 2-byte padding beginning at 0x004017f6
@@ -1034,10 +1034,10 @@ using this memory map for disassembly:
 0x004017f8: No known callers.
 
 0x004017f8: Basic block reasons: entry point, graph-2
-0x004017f8: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
-0x004017fa: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
-0x004017fc: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
-0x004017fe: 00 00                   |..      |   add    BYTE PTR ds:[eax], al
+0x004017f8: 00 00                   |..      |   add    byte ds:[eax], al
+0x004017fa: 00 00                   |..      |   add    byte ds:[eax], al
+0x004017fc: 00 00                   |..      |   add    byte ds:[eax], al
+0x004017fe: 00 00                   |..      |   add    byte ds:[eax], al
 0x00401800: 55                      |U       |   push   ebp
 0x00401801: 89 e5                   |..      |   mov    ebp, esp
 0x00401803: 5d                      |]       |   pop    ebp
@@ -1091,7 +1091,7 @@ using this memory map for disassembly:
 
 0x00401840: Basic block reasons: entry point, graph-1
 0x00401840: Predecessor blocks: 0x00401723<<Func>>
-0x00401840: ff 25 80 40 40 00       |.%.@@.  |   jmp    DWORD PTR ds:[0x00404080<.idata+0x80>]
+0x00401840: ff 25 80 40 40 00       |.%.@@.  |   jmp    dword ds:[0x00404080<.idata+0x80>]
 0x00401840: Successor blocks: unknown
 
 0x00401846: 90 90                   |..      | 2-byte padding beginning at 0x00401846
@@ -1101,7 +1101,7 @@ using this memory map for disassembly:
 
 0x00401850: Basic block reasons: entry point, graph-1
 0x00401850: Predecessor blocks: 0x00401681<<Func>>
-0x00401850: ff 25 9c 40 40 00       |.%.@@.  |   jmp    DWORD PTR ds:[0x0040409c<.idata+0x9c>]
+0x00401850: ff 25 9c 40 40 00       |.%.@@.  |   jmp    dword ds:[0x0040409c<.idata+0x9c>]
 0x00401850: Successor blocks: unknown
 
 0x00401856: 90 90                   |..      | 2-byte padding beginning at 0x00401856
