@@ -147,8 +147,6 @@ namespace OmpSupport
   // find all SgPragmaDeclaration nodes within a file and parse OpenMP pragmas into OmpAttribute info.
   void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
   {
-   if (enable_debugging)
-     cout<<"Entering attachOmpAttributeInfo() ... "<<endl;
     ROSE_ASSERT(sageFilePtr != NULL);
     if (sageFilePtr->get_openmp() == false)
       return;
@@ -163,8 +161,6 @@ namespace OmpSupport
       // For C/C++, search pragma declarations for OpenMP directives 
       std::vector <SgNode*> all_pragmas = NodeQuery::querySubTree (sageFilePtr, V_SgPragmaDeclaration);
       std::vector<SgNode*>::iterator iter;
-      if (enable_debugging)
-         cout<<"Number of pragma declarations found: "<< all_pragmas.size() <<endl;
       for(iter=all_pragmas.begin();iter!=all_pragmas.end();iter++)
       {
         SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
@@ -208,14 +204,12 @@ namespace OmpSupport
             omp_parse();
 #endif
             OmpAttribute* attribute = getParsedDirective();
+            //cout<<"sage_gen_be.C:23758 debug:\n"<<pragmaString<<endl;
+            //attribute->print();//debug only for now
             addOmpAttribute(attribute,pragmaDeclaration);
-            if (enable_debugging)
-            {
-              cout<<"sage_gen_be.C:23758 debug:\n"<<pragmaString<<endl;
-              cout<<"debug: attachOmpAttributeInfo() for a pragma:"<<pragmaString<<"at address:"<<pragmaDeclaration<<endl;
-              cout<<"file info for it is:"<<pragmaDeclaration->get_file_info()->get_filename()<<endl;
-              attribute->print();//debug only for now
-            }
+            //cout<<"debug: attachOmpAttributeInfo() for a pragma:"<<pragmaString<<"at address:"<<pragmaDeclaration<<endl;
+            //cout<<"file info for it is:"<<pragmaDeclaration->get_file_info()->get_filename()<<endl;
+
 #if 1 // Liao, 2/12/2010, this could be a bad idea. It causes trouble in comparing 
             //user-defined and compiler-generated OmpAttribute.
             // We attach the attribute redundantly on affected loops also
@@ -232,9 +226,6 @@ namespace OmpSupport
         }
       }// end for
     }
-
-   if (enable_debugging)
-     cout<<"Existing attachOmpAttributeInfo() ... "<<endl;
   }
   // Clause node builders
   //----------------------------------------------------------
@@ -1862,34 +1853,15 @@ This is no perfect solution until we handle preprocessing information as structu
     // transformation (e.g. declaration of private variables will add variables
     // to the local scope).  So this function has side-effects for all languages.
 
-    if (SgProject::get_verbose() > 1 || OmpSupport::enable_debugging)
+    if (SgProject::get_verbose() > 1)
     {
       printf ("Processing OpenMP directives \n");
-    }
-
-    // Handle the side effects of OpenMP flags
-    // if lowering is request, it trumps other flags.
-    if (sageFilePtr->get_openmp_lowering())
-    {
-      sageFilePtr->set_openmp(true) ;
-      sageFilePtr->set_openmp_parse_only(false);
-      sageFilePtr->set_openmp_ast_only(false);
-
-    }    // if ast only is requested, set other two flags
-    else if (sageFilePtr->get_openmp_ast_only())
-    {
-      sageFilePtr->set_openmp(true) ;
-      sageFilePtr->set_openmp_parse_only(false);
-    } 
-    else if (sageFilePtr->get_openmp_parse_only())
-    {
-      sageFilePtr->set_openmp(true) ;
     }
 
     ROSE_ASSERT(sageFilePtr != NULL);
     if (sageFilePtr->get_openmp() == false)
     {
-      if (SgProject::get_verbose() > 1 || OmpSupport::enable_debugging )
+      if (SgProject::get_verbose() > 1)
       {
         printf ("Skipping calls to lower OpenMP sageFilePtr->get_openmp() = %s \n",sageFilePtr->get_openmp() ? "true" : "false");
       }
@@ -1902,7 +1874,7 @@ This is no perfect solution until we handle preprocessing information as structu
     // stop here if only OpenMP parsing is requested
     if (sageFilePtr->get_openmp_parse_only())
     {
-      if (SgProject::get_verbose() > 1|| OmpSupport::enable_debugging )
+      if (SgProject::get_verbose() > 1)
       {
         printf ("Skipping calls to lower OpenMP sageFilePtr->get_openmp_parse_only() = %s \n",sageFilePtr->get_openmp_parse_only() ? "true" : "false");
       }
