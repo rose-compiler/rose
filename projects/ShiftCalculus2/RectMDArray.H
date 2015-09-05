@@ -51,7 +51,7 @@ public:
   RectMDArray(RectMDArray<T,C,D,E>&& a_srcArray);
 
   /// slice constructor for RectMDArray, used by the slice functions
-  RectMDArray(std::shared_ptr<T> a_data, T* a_ptr, const Box& a_box);
+  RectMDArray(std::shared_ptr<T>& a_data, T* a_ptr, const Box& a_box);
   /// Destructor.
   ~RectMDArray(); 
   /// Setting a RectMDArray to a constant value.
@@ -117,6 +117,8 @@ public:
   std::shared_ptr<T> m_sliceData()  {return m_data;} 
   T* m_slicePtr() {return m_rawPtr;}
 
+       // DQ (2/22/2015): I want this specific interface.
+          T* getPointer() {return m_rawPtr;}
 private:
 
  

@@ -2,6 +2,7 @@
 // Example ROSE Translator reads input program and implements a DSL embedded within C++
 // to support the stencil computations, and required runtime support is developed seperately.
 #include "rose.h"
+#include "ompAstConstruction.h"
 
 #include "stencilAndStencilOperatorDetection.h"
 #include "stencilEvaluation.h"
@@ -28,10 +29,23 @@ int main( int argc, char * argv[] )
   // bool frontendConstantFolding = true;
      bool frontendConstantFolding = false;
 
-  // Generate the ROSE AST.
-     SgProject* project = frontend(argc,argv,frontendConstantFolding);
-     ROSE_ASSERT(project != NULL);
+// Liao, support a flag to control if CUDA code should be generated
+// ./shiftCalculusCompiler -rose:dslcompiler:cuda  -c input_file
+    std::vector <std::string> argvList (argv, argv + argc);
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","cuda",true))
+    {
+      std::cout<<"Turning on CUDA code generation ..."<<std::endl;
+      b_gen_cuda = true;
+//      argvList.push_back("-rose:openmp:lowering");
+    }
+    else
+      b_gen_cuda = false;
 
+
+  // Generate the ROSE AST.
+     //SgProject* project = frontend(argc,argv,frontendConstantFolding);
+     SgProject* project = frontend(argvList,frontendConstantFolding);
+     ROSE_ASSERT(project != NULL);
 #if DEBUG_USING_DOT_GRAPHS
   // generateDOTforMultipleFile(*project);
      generateDOT(*project,"_before_transformation");
@@ -100,18 +114,47 @@ int main( int argc, char * argv[] )
      printf ("DONE: Call generateStencilCode to generate example code \n");
 #endif
 
-  // AST consistency tests (optional for users, but this enforces more of our tests)
+   // Further generate CUDA code if requested
+   if (b_gen_cuda)
+   {
+     // We only process one single input file at a time
+     ROSE_ASSERT (project->get_fileList().size() ==1);
+     SgFile * cur_file = project->get_fileList()[0];
+
+     OmpSupport::enable_accelerator = true;
+     OmpSupport::enable_debugging = true;
+     cur_file->set_openmp_lowering(true);
+//     cur_file->set_openmp(true);
+//     cur_file->set_openmp_parse_only(false);
+
+     // process OpenMP directives, including omp target
+     OmpSupport::processOpenMP(isSgSourceFile(cur_file));
+
+#if 0 // use rose:output instead to control this
+     // rename output file to have .cu suffice
+     // change .c suffix to .cu suffix
+     std::string orig_name = cur_file->get_file_info()->get_filenameString();
+     std::string file_suffix = StringUtility::fileNameSuffix(orig_name);
+     // We only allow C file to be compatible with nvcc CUDA compiler
+     //ROSE_ASSERT (CommandlineProcessing::isCFileNameSuffix(file_suffix));
+     orig_name = StringUtility::stripPathFromFileName(orig_name);
+     std::string naked_name = StringUtility::stripFileSuffixFromFileName(orig_name);
+     cur_file->set_unparse_output_filename("rose_"+naked_name+".cu");
+#endif
+   }
+
+     // AST consistency tests (optional for users, but this enforces more of our tests)
      AstTests::runAllTests(project);
 
 #if DEBUG_USING_DOT_GRAPHS
      printf ("Write out the DOT file after the transformation \n");
-  // generateDOTforMultipleFile(*project,"after_transformation");
+     // generateDOTforMultipleFile(*project,"after_transformation");
      generateDOT(*project,"_after_transformation");
      printf ("DONE: Write out the DOT file after the transformation \n");
 #endif
 #if DEBUG_USING_DOT_GRAPHS && 0
-  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
-  // const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
+     // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+     // const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"_after");
 #endif
 

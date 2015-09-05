@@ -204,7 +204,7 @@ public:
      *  The set/clear modifiers return the previous value of this property.
      *
      * @{ */
-    bool coalesceOnRead() const ROSE_FINAL { return coalesceOnRead_; }
+    bool coalesceOnRead() const /*final*/ { return coalesceOnRead_; }
     virtual void coalesceOnRead(bool b) { coalesceOnRead_ = b; }
     /** @} */
 

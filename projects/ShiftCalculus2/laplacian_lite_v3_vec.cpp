@@ -12,11 +12,11 @@
 //a single box. BLOCKSIZE, DOMAINSIZE and DIM are set in the Makefile
 
 
-//#define BLOCKSIZE 32
-//#define DIM       3
+#define BLOCKSIZE 32
+#define DIM       3
 // #define DIM       2
 
-#include "laplacian_lite_v3.h"
+#include "laplacian_lite_v3_old.h"
 
 void initialize(RectMDArray<double>& patch)
 {

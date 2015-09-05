@@ -2000,6 +2000,9 @@ projects/Fortran_to_C/tests/Makefile
 projects/vectorization/Makefile
 projects/vectorization/src/Makefile
 projects/vectorization/tests/Makefile
+projects/MultiLevelMemory/Makefile
+projects/MultiLevelMemory/src/Makefile
+projects/MultiLevelMemory/tests/Makefile
 projects/PolyOpt2/Makefile
 projects/PolyOpt2/polyopt/Makefile
 projects/PolyOpt2/src/Makefile
