@@ -5,7 +5,7 @@ noinst_PROGRAMS =
 INCLUDES = $(ROSE_INCLUDES)
 TEST_CONFIG = $(top_srcdir)/scripts/test_exit_status
 TEST_TARGETS =
-EXTRA_DIST =
+EXTRA_DIST = compile/smtSolvePragmaPath.h src/smtPragmaPathLib.h src/smtQueryLib.h tools/collectPaths.h tools/pointerPredicateTranslationRules.cpp tutorial/findOnePragma.h tutorial/multipleIndividualPragmaCheck.h utils/SMTPragmaBackend.h utils/extractPragmaInfo.h utils/handleVariablesForSMTLib.h utils/pragmaParse.h utils/utilHeader.h
 SMTSRC = $(srcdir)/src
 SMTCOMPILE = $(srcdir)/compile
 SMTUTIL = $(srcdir)/utils
@@ -17,93 +17,12 @@ SMTDOCS = $(srcdir)/docs
 SMTANDVARCODE = $(srcdir)/utils/handleVariablesForSMTLib.cpp $(srcdir)/utils/getStatementInfoForSMTLib.cpp
 
 
-#testCollectPaths_SOURCES = $(SMTTOOLS)/testCollectPaths.cpp $(SMTTOOLS)/collectPaths.cpp $(SMTANDVARCODE)
-#testCollectPaths_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-#testSMTTranslatePathCollector_SOURCES = $(SMTTOOLS)/testSMTTranslatePathCollector.cpp $(SMTTOOLS)/SMTTranslatePathCollector.cpp $(SMTTOOLS)/collectPaths.cpp $(SMTANDVARCODE)
-#testSMTTranslatePathCollector_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-#writePath_SOURCES = $(SMTUTIL)/writePath.cpp $(SMTTOOLS)/collectPaths.cpp $(SMTANDVARCODE)
-#writePath_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-
-#testDriver_SOURCES = $(SMTTESTS)/s_exp_tests/testDriver.cpp $(SMTANDVARCODE)
-#testDriver_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-#pathCollection_SOURCES = $(SMTUTIL)/collectPaths.cpp  $(SMTUTIL)/collectPathsEx.cpp
-#pathCollection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-
-#GetRuleQuery_SOURCES = $(SMTUTIL)/evalForRuleQuery.cpp $(SMTUTIL)/collectStatementsLib.cpp $(SMTUTIL)/getDependencyInfo.cpp $(SMTCOMPILE)/GetRuleQuery.cpp
-#GetRuleQuery_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-#writeStatements_SOURCES = $(SMTANDVARCODE) $(SMTUTIL)/writeStatements.cpp
-#writeStatements_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-#scopeInfoTest_SOURCES = $(SMTUTIL)/ruleQueryLib.cpp $(SMTTESTS)/utility_tests/scopeInfoTest.cpp
-#scopeInfoTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-
-
-#ASTSynth_SOURCES = $(SMTUTIL)/ASTSynth.cpp $(SMTANDVARCODE)
-#ASTSynth_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-#translateASTZ3_SOURCES = $(SMTUTIL)/translateFromASTLib.cpp $(SMTANDVARCODE) $(SMTUTIL)/translateFromAST.cpp
-#translateASTZ3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-
-#testVarFinalState_SOURCES = $(SMTANDVARCODE) $(SMTTESTS)/areUtilitiesFunctional/testVariableFinalStateCalc.cpp
-
-#testVarFinalState_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-#testDefUseUtility_SOURCES = $(SMTANDVARCODE) $(SMTTESTS)/areUtilitiesFunctional/testDefUse.cpp
-#testDefUseUtility_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-#newDFS_SOURCES = $(SMTUTIL)/newDFSSgGraph.cpp $(SMTUTIL)/newDFSLib.cpp
-#newDFS_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-#newDFSPointToPoint_SOURCES = $(SMTUTIL)/newDFSSgGraphPointToPoint.cpp $(SMTUTIL)/newDFSLib.cpp
-#newDFSPointToPoint_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-
-#changeToWhiles_SOURCES = $(SMTUTIL)/changeToWhiles.cpp
-#changeToWhiles_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-
-#listStatements_SOURCES = $(SMTUTIL)/listStatements.cpp $(SMTUTIL)/extractPragmaInfo.cpp
-#listStatements_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-#listStatements_SOURCES =  $(SMTANDVARCODE) $(SMTUTIL)/extractPragmaInfo.cpp $(SMTCOMPILE)/listStatements.cpp
-
-#listStatements_SOURCES = $(SMTUTIL)/listStatLib.cpp $(SMTUTIL)/getDependencyInfo.cpp $(SMTUTIL)/extractPragmaInfo.cpp $(SMTCOMPILE)/listStatements.cpp
-#listStatements_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-#pragmaToPragma_SOURCES = $(SMTUTIL)/pragmaToPragma.cpp
-#pragmaToPragma_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-#writeVars_SOURCES = $(SMTUTIL)/writeVars.cpp
-#writeVars_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-#writeAnnotatedPreSMT_SOURCES = $(SMTUTIL)/writeAnnotatedPreSMT.cpp $(SMTSRC)/smtQueryLibUnbound.cpp
-#writeAnnotatedPreSMT_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-
-#writeVarsForStatements_SOURCES = $(SMTUTIL)/writeVarsForStatements.cpp $(SMTSRC)/smtQueryLib.cpp
-#writeVarsForStatements_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-#writeVarsForFunctions_SOURCES = $(SMTUTIL)/writeVarsForFunctions.cpp
-#writeVarsForFunctions_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-#extractPragmaInfo_SOURCES = $(SMTUTIL)/extractPragmaInfo.cpp
-#extractPragmaInfo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
 noinst_PROGRAMS += smtSolvePragmaPath
 smtSolvePragmaPath_SOURCES = $(SMTUTIL)/pragmaParse.cpp $(SMTCOMPILE)/smtSolvePragmaPath.cpp $(SMTSRC)/smtQueryLib.cpp $(SMTSRC)/smtPragmaPathLib.cpp
 
 smtSolvePragmaPath_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
-#noinst_PROGRAMS+=checkPragmaParse
-#checkPragmaParse_SOURCES = $(SMTUTIL)/pragmaParse.cpp $(SMTUTIL)/checkPragmaParse.cpp
 
-#checkPragmaParse_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 noinst_PROGRAMS+=multipleIndividualPragmaCheck
 multipleIndividualPragmaCheck_SOURCES = $(SMTTUTORIAL)/multipleIndividualPragmaCheck.cpp $(SMTUTIL)/pragmaParse.cpp $(SMTUTIL)/SMTPragmaBackend.cpp $(SMTSRC)/smtQueryLib.cpp
@@ -115,49 +34,168 @@ findOnePragma_SOURCES = $(SMTUTIL)/pragmaParse.cpp $(SMTTUTORIAL)/findOnePragma.
 findOnePragma_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 
-#INCLUDES = $(ROSE_INCLUDES)
-#LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-C_REQ_TESTS=
+C_PASSING_TESTS=
+C_FAILING_TESTS=
+C_ARRAY_TESTS_PREFIX=$(srcdir)/tests/arrays
 
-C_ARRAY_TESTS_PREFIX=$(srcdir)/tests/arrays/passing
-C_IF_TESTS_PREFIX=$(srcdir)/tests/if_statements/passing
+C_ARRAY_PASSING_TESTS=\
+        $(C_ARRAY_TESTS_PREFIX)/passing/arrAccess1.pragma.c \
+        $(C_ARRAY_TESTS_PREFIX)/passing/arrAccess1.test.pragma.c \
+        $(C_ARRAY_TESTS_PREFIX)/passing/arrAccess2.test.pragma.c \
+        $(C_ARRAY_TESTS_PREFIX)/passing/arrAccess3.test.pragma.c \
+        $(C_ARRAY_TESTS_PREFIX)/passing/arrAccess4.test.pragma.c \
+        $(C_ARRAY_TESTS_PREFIX)/passing/arrAccess5.test.pragma.c \
+        $(C_ARRAY_TESTS_PREFIX)/passing/arrAccess5.unknowns.test.pragma.c
+        $(C_ARRAY_TESTS_PREFIX)/passing/arrAccess6.test.pragma.c \
+        $(C_ARRAY_TESTS_PREFIX)/passing/arrAccess7.test.pragma.c \
+        $(C_ARRAY_TESTS_PREFIX)/passing/arrAccess7.unknowns.test.pragma.c
 
-C_ARRAY_TESTS=\
-	$(C_ARRAY_TESTS_PREFIX)/arrAccess1.pragma.c \
-	$(C_ARRAY_TESTS_PREFIX)/arrAccess1.test.pragma.c \
-	$(C_ARRAY_TESTS_PREFIX)/arrAccess2.test.pragma.c \
-	$(C_ARRAY_TESTS_PREFIX)/arrAccess3.test.pragma.c \
-	$(C_ARRAY_TESTS_PREFIX)/arrAccess4.test.pragma.c \
-	$(C_ARRAY_TESTS_PREFIX)/arrAccess5.test.pragma.c \
-	$(C_ARRAY_TESTS_PREFIX)/arrAccess5.unknowns.test.pragma.c
-	$(C_ARRAY_TESTS_PREFIX)/arrAccess6.test.pragma.c \
-	$(C_ARRAY_TESTS_PREFIX)/arrAccess7.test.pragma.c \
-	$(C_ARRAY_TESTS_PREFIX)/arrAccess7.unknowns.test.pragma.c
-
-C_REQ_TESTS+=$(C_ARRAY_TESTS)
+C_ARRAY_FAILING_TESTS=
 
 
+C_PASSING_TESTS+=$(C_ARRAY_PASSING_TESTS)
+C_FAILING_TESTS+=$(C_ARRAY_FAILING_TESTS)
 
 
-C_IF_TESTS=\
-	$(C_IF_TESTS_PREFIX)/basicIfTests.pragma.c \
-	$(C_IF_TESTS_PREFIX)/compound_conditions2.pragma.c \
-	$(C_IF_TESTS_PREFIX)/simpleif3.pragma.c \
-	$(C_IF_TESTS_PREFIX)/compound_conditionals.c 
 
-C_REQ_TESTS+=$(C_IF_TESTS)
+C_IF_TESTS_PREFIX=$(srcdir)/tests/if_statements
+
+C_IF_PASSING_TESTS=\
+        $(C_IF_TESTS_PREFIX)/passing/basicIfTests.pragma.c \
+        $(C_IF_TESTS_PREFIX)/passing/compound_conditions2.pragma.c \
+        $(C_IF_TESTS_PREFIX)/passing/simpleif3.pragma.c \
+        $(C_IF_TESTS_PREFIX)/passing/compound_conditionals.c \
+        $(C_IF_TESTS_PREFIX)/passing/elseif1.c\
+        $(C_IF_TESTS_PREFIX)/passing/justIf.c
+C_IF_FAILING_TESTS=
+
+C_PASSING_TESTS+=$(C_IF_PASSING_TESTS)
+C_FAILING_TESTS+=$(C_IF_FAILING_TESTS)
+
+C_COMPOUND_ASSIGN_TESTS_PREFIX=$(srcdir)/tests/compoundAssignTests
+
+C_COMPOUND_ASSIGN_PASSING_TESTS=\
+	$(C_COMPOUND_ASSIGN_TESTS)/passing/c_assign_test1.c\
+	$(C_COMPOUND_ASSIGN_TESTS)/passing/c_assign_test2.c\
+	$(C_COMPOUND_ASSIGN_TESTS)/passing/c_assign_test3.c
+
+C_COMPOUND_ASSIGN_FAILING_TESTS=
+
+C_PASSING_TESTS+=$(C_COMPOUND_ASSIGN_PASSING_TESTS)
+C_FAILING_TESTS+=$(C_COMPOUND_ASSIGN_FAILING_TESTS)
+
+C_COMPOUND_CONDITIONALS_TESTS_PREFIX=$(srcdir)/tests/compoundConditionals
+
+C_COMPOUND_CONDITIONALS_PASSING_TESTS=$(C_COMPOUND_CONDITIONALS_TESTS_PREFIX)/passing/t1.c
+C_COMPOUND_CONDITIONALS_FAILING_TESTS=
+
+C_PASSING_TESTS+=$(C_COMPOUND_CONDITIONALS_PASSING_TESTS)
+C_FAILING_TESTS+=$(C_COMPOUND_CONDITIONALS_FAILING_TESTS)
+
+C_ALGORITHMS_TESTS_PREFIX=$(srcdir)/tests/algorithms
+C_ALGORITHMS_PASSING_TESTS= \
+C_ALGORITHMS_FAILING_TESTS=$(C_ALGORITHMS_TESTS_PREFIX)/failing/bisection.c
+
+C_PASSING_TESTS+=$(C_ALGORITHMS_PASSING_TESTS)
+C_FAILING_TESTS+=$(C_ALGORITHMS_FAILING_TESTS)
+
+C_FINAL_VALUES_TESTS_PREFIX=$(srcdir)/tests/final_values_tests
+C_FINAL_VALUES_PASSING_TESTS=
+C_FINAL_VALUES_FAILING_TESTS=$(C_FINAL_VALUES_TESTS_PREFIX)/failing/finalCheck1.c
+C_PASSING_TESTS+=$(C_FINAL_VALUES_PASSING_TESTS)
+C_FAILING_TESTS+=$(C_FINAL_VALUES_FAILING_TESTS)
+
+C_INTERPROCEDURAL_TESTS_PREFIX=$(srcdir)/tests/interprocedural_tests
+C_INTERPROCEDURAL_PASSING_TESTS=
+C_INTERPROCEDURAL_FAILING_TESTS=$(C_INTERPROCEDURAL_TESTS_PREFIX)/failing/tf1.c
+
+C_PASSING_TESTS+=$(C_INTERPROCEDURAL_PASSING_TESTS)
+C_FAILING_TESTS+=$(C_INTERPROCEDURAL_FAILING_TESTS)
+C_LOOP_TESTS_PREFIX=$(srcdir)/tests/loop_tests
+C_LOOP_PASSING_TESTS= \
+	$(C_LOOP_TESTS_PREFIX)/passing/while1.c\
+	$(C_LOOP_TESTS_PREFIX)/passing/whileTest4.c
+
+C_LOOP_FAILING_TESTS=\
+	$(C_LOOP_TESTS_PREFIX)/failing/mWhiles1.c\
+	$(C_LOOP_TESTS_PREFIX)/failing/whileTest1.c\
+	$(C_LOOP_TESTS_PREFIX)/failing/whileTest2.c\
+	$(C_LOOP_TESTS_PREFIX)/failing/whileTest3.c
+
+C_PASSING_TESTS+=$(C_LOOP_PASSING_TESTS)
+C_FAILING_TESTS+=$(C_LOOP_FAILING_TESTS)
+
+C_NUMERICAL_ANALYSIS_PREFIX=$(srcdir)/tests/numerical_analysis
+C_NUMERICAL_ANALYSIS_PASSING_TESTS=
+C_NUMERICAL_ANALYSIS_FAILING_TESTS=\
+	$(C_NUMERICAL_ANALYSIS_PREFIX)/failing/fixedpoint.c \
+	$(C_NUMERICAL_ANALYSIS_PREFIX)/failing/MandelbrotExampleNormalized.c
+C_PASSING_TESTS+=$(C_NUMERICAL_ANALYSIS_PASSING_TESTS)
+C_FAILING_TESTS+=$(C_NUMERICAL_ANALYSIS_FAILING_TESTS)
+
+C_NUMERIC_OPERATORS_PREFIX=$(srcdir)/tests/numeric_operators
+C_NUMERIC_OPERATORS_TESTS=$(C_NUMERIC_OPERATORS_PREFIX)/passing/numericalComparisonBinaryOps.pragma.c
+C_NUMERIC_OPERATORS_TESTS_FAILING=
+
+
+C_PASSING_TESTS+=$(C_IF_PASSING_TESTS)
 
 C_RESULT_QUERY_TESTS_PREFIX=$(srcdir)/tests/ResultQueryTests
 
-C_RESULT_QUERY_TESTS=\
-	$(C_RESULT_QUERY_TESTS_PREFIX)/test2.c\
-	$(C_RESULT_QUERY_TESTS_PREFIX)/test3.c\
-	$(C_RESULT_QUERY_TESTS_PREFIX)/test4.c
-Z3_RESULT_QUERY_TESTS=\
-	$(C_RESULT_QUERY_TESTS_PREFIX)/test2.c.RQ.smt2\
-	$(C_RESULT_QUERY_TESTS_PREFIX)/test3.c.RQ.smt2\
-	$(C_RESULT_QUERY_TESTS_PREFIX)/test4.c.RQ.smt2
+C_RESULT_QUERY_PASSING_TESTS=\
+	$(C_RESULT_QUERY_TESTS_PREFIX)/passing/test2.c\
+	$(C_RESULT_QUERY_TESTS_PREFIX)/passing/test3.c\
+	$(C_RESULT_QUERY_TESTS_PREFIX)/passing/test4.c
+
+C_RESULT_QUERY_FAILING_TESTS=$(C_RESULT_QUERY_TESTS_PREFIX)/failing/testWithConditionalPragma.c
+
+C_PASSING_TESTS+=$(C_RESULT_QUERY_PASSING_TESTS)
+C_FAILING_TESTS+=$(C_RESULT_QUERY_FAILING_TESTS)
+
+C_OPERATOR_CHECK_PREFIX=$(srcdir)/tests/operator_check
+C_OPERATOR_CHECK_PASSING_TESTS=
+C_OPERATOR_CHECK_FAILING_TESTS=\
+	$(C_OPERATOR_CHECK_TESTS_PREFIX)/failing/test1.c\
+	$(C_OPERATOR_CHECK_TESTS_PREFIX)/failing/test2.c\
+	$(C_OPERATOR_CHECK_TESTS_PREFIX)/failing/test3.c\
+	$(C_OPERATOR_CHECK_TESTS_PREFIX)/failing/test4.c
+
+C_PASSING_TESTS+=$(C_OPERATOR_CHECK_PASSING_TESTS)
+C_FAILING_TESTS+=$(C_OPERATOR_CHECK_FAILING_TESTS)
+
+C_RECURSIVE_FUNCTIONS_PREFIX=$(srcdir)/tests/recursive_functions
+C_RECURSIVE_FUNCTIONS_PASSING_TESTS=
+C_RECURSIVE_FUNCTIONS_FAILING_TESTS=$(C_RECURSIVE_FUNCTIONS_PREFIX)/failing/sum.c
+
+C_PASSING_TESTS+=$(C_RECURSIVE_FUNCTIONS_PASSING_TESTS)
+C_FAILING_TESTS+=$(C_RECURSIVE_FUNCTIONS_FAILING_TESTS)
+
+
+C_TYPES_PREFIX=$(srcdir)/tests/types
+C_TYPES_PASSING_TESTS=
+C_TYPES_FAILING_TESTS=$(C_TYPES_PREFIX)/failing/type_test.c
+
+C_PASSING_TESTS+=$(C_TYPES_PASSING_TESTS)
+C_FAILING_TESTS+=$(C_TYPES_FAILING_TESTS)
+
+C_UNARY_OPS_PREFIX=$(srcdir)/tests/unaryOpsTests
+C_UNARY_OPS_PASSING_TESTS=\
+	$(C_UNARY_OPS_PREFIX)/passing/MinusMinusPrefix.c\
+	$(C_UNARY_OPS_PREFIX)/passing/PlusPlusPrefix.c
+
+C_UNARY_OPS_FAILING_TESTS=\
+	$(C_UNARY_OPS_PREFIX)/failing/MinusMinusPostfix.c\
+	$(C_UNARY_OPS_PREFIX)/failing/PlusPlusPostfix.c
+
+C_PASSING_TESTS+=$(C_UNARY_OPS_PASSING_TESTS)
+C_FAILING_TESTS+=$(C_UNARY_OPS_FAILING_TESTS)
+
+
+#Z3_RESULT_QUERY_TESTS=\
+#	$(C_RESULT_QUERY_TESTS_PREFIX)/test2.c.RQ.smt2\
+#	$(C_RESULT_QUERY_TESTS_PREFIX)/test3.c.RQ.smt2\
+#	$(C_RESULT_QUERY_TESTS_PREFIX)/test4.c.RQ.smt2
 
 noinst_PROGRAMS += get_type
 get_type_SOURCES = $(SMTUTIL)/get_type.cpp
@@ -194,9 +232,14 @@ $(z3_TEST_TARGETS): %.result: % $(TEST_CONFIG)
 	@$(RTH_RUN) CMD="z3 -smt2 $<" $(TEST_CONFIG) $@
 endif
 
+analyzeBasic_TEST_TARGETS=$(C_PASSING_TESTS)
 
-.PHONY: check-analyzePath
+$(analyzeBasic_TEST_TARGETS): ap_%.passed: % $(TEST_CONFIG)
+	@$(RTH_RUN) CMD="./analyzePath -edg:w -c $<" $(TEST_CONFIG) $@
+	head --lines=-3 $@ > $@.smt2
+.PHONY: check-analyzePath check-analyzeBasic
 check-analyzePath: $(analyzePath_TEST_TARGETS)
+check-analyzeBasic: $(analyzeBasic_TEST_TARGETS)
 
 EXTRA_DIST+=$(analyzePath_SPECIMENS)
 TEST_TARGETS+=$(analyzePath_TEST_TARGETS) 
@@ -238,7 +281,7 @@ replaceExpressionsAndSimplifyExpressions_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPAR
 	
 
 
-#smtSolvePragmaPath_SPECIMENS = $(C_REQ_TESTS)
+#smtSolvePragmaPath_SPECIMENS = $(C_PASSING_TESTS)
 #smtSolvePragmaPath_TEST_TARGETS = $(smtSolvePragmaPath_SPECIMENS)
 #$(smtSolvePragmaPath_TEST_TARGETS): smtSolvePragmaPath
 #	./smtSolvePragmaPath $@ >> pragmaPathResults;
