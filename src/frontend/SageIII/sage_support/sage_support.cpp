@@ -3081,6 +3081,90 @@ SgSourceFile::fixupASTSourcePositionsBasedOnDetectedLineDirectives(set<int> equi
    }
 #endif
 
+// Hiro(2015/8/1): ampersand removal
+static bool copyFileWithAmpersandRemoval(const string& srcfile, const string& dstfile)
+{
+  ifstream ifs(srcfile.c_str(),ios::in);
+  ofstream ofs(dstfile.c_str(),ios::out);
+  int c = 0;
+  bool isAmpersandRemoved = false;
+  string comment;
+  while( (c=ifs.get()) != EOF ){
+    // a comment line
+    if( c == '!' ){
+      ofs << (char)c;
+      while((c=ifs.get()) != EOF){
+        // copy comments
+        ofs << (char)c;
+        if(c=='\n'){
+          break;
+        }
+      }
+    }
+    // An ampersand is found.
+    // If a line is ended with an ampersand, the line is continued on the next line.
+    else if( c == '&' ){
+      string line;
+      line.clear();
+      line += (char)c;
+      while((c=ifs.get()) != EOF) {
+        line += (char)c;
+        if(c=='\n'){
+          line.clear();
+          break; // the line is ended with &
+        }
+        else if(c=='!'){
+          comment += (char)c;
+          while((c=ifs.get()) != EOF) {
+            comment += (char)c;
+            if(c=='\n') break;
+          }
+          line.clear();
+          break; // the line is ended with &
+        }
+        else if(isspace(c)==false){
+          ofs << line;
+          break; // the line is not ended with &
+        }
+      }
+      // If the line is ended with &, look for the 1st character of the next line.
+      if( line.empty() )  {
+        isAmpersandRemoved=true;
+        while((c=ifs.get()) != EOF) {
+          if(isspace(c)==false){
+            if(c=='&') break;
+            else if (c=='!'){
+              // keep a comment line
+              comment += (char)c;
+              while((c=ifs.get()) != EOF) {
+                comment += (char)c;
+                if(c=='\n') break;
+              }
+            }
+            else {
+              ofs << ' ' << (char)c;
+              break;
+            }
+          }
+        }
+      }
+    } // -- if (c=='&')
+    else if(c=='\n'){
+      ofs << (char)c;
+      if(comment.empty()==false){
+        ofs << comment;
+        comment.clear();
+      }
+    }
+    else {
+      ofs << (char)c;
+    }
+  }
+  ifs.close();
+  ofs.close();
+  return isAmpersandRemoved;
+}
+
 int
 SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputCommandLine )
    {
@@ -3123,6 +3207,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // printf ("######################### Inside of SgSourceFile::build_Fortran_AST() ############################ \n");
 
      bool requires_C_preprocessor = get_requires_C_preprocessor();
+     bool isAmpersandRemoval = false;
      if (requires_C_preprocessor == true)
         {
           int errorCode;
@@ -3212,6 +3297,53 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           }
      }
 
+#if 1 // Hiro(2015/7/30): ampersand removal to avoid OFP from crashing at Fortran line continuation
+     {
+       string sourceFilename    = get_sourceFileNameWithPath();
+       string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+       string tmpFilename = "/tmp/rose_XXXXXX";
+       char* nameTemplate = new char[tmpFilename.size()+1]; // string length + '\0'
+       memcpy(nameTemplate,tmpFilename.c_str(),tmpFilename.size()+1);
+       int fd = mkstemp(nameTemplate);
+       if(fd<0){
+         cout << "cannot create a temporal file " << nameTemplate << endl;
+         cout << "(" << strerror(errno) << ")" << endl;
+         ROSE_ASSERT(false);
+       }
+       tmpFilename = nameTemplate;
+       delete[] nameTemplate;
+       try {
+         if(requires_C_preprocessor==true)
+           isAmpersandRemoval = copyFileWithAmpersandRemoval(sourceFileNameOutputFromCpp,tmpFilename);
+         else
+           isAmpersandRemoval = copyFileWithAmpersandRemoval(sourceFilename,tmpFilename);
+       }
+       catch(exception &e)
+         {
+           cout << "Error in removing ampersand characters"
+                << " (" << e.what() << ")" << endl;
+           ROSE_ASSERT(false);
+         }
+       try {
+         // copy back
+         if(isAmpersandRemoval==true){
+           boost::filesystem::copy_file(tmpFilename,sourceFileNameOutputFromCpp,
+                                        boost::filesystem::copy_option::overwrite_if_exists);
+           requires_C_preprocessor = true;
+           set_requires_C_preprocessor(true);
+           get_globalScope()->get_startOfConstruct()->set_filenameString(sourceFileNameOutputFromCpp);
+           get_globalScope()->get_endOfConstruct()->set_filenameString(sourceFileNameOutputFromCpp);
+         }
+         // remove the temporal file
+         boost::filesystem::remove(tmpFilename);
+       }
+       catch(exception &e){
+         cout << "Error in copying file " << tmpFilename << " to " << sourceFileNameOutputFromCpp
+              << " (" << e.what() << ")" << endl;
+         ROSE_ASSERT(false);
+       }
+     }
+#endif
 
   // DQ (9/30/2007): Introduce syntax checking on input code (initially we can just call the backend compiler
   // and let it report on the syntax errors).  Later we can make this a command line switch to disable (default
