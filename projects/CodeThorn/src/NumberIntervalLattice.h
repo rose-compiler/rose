@@ -33,6 +33,14 @@ namespace SPRAY {
     int _num;
   };
   
+  Number operator+(const Number& n1, const Number& n2);
+  Number operator-(const Number& n1, const Number& n2);
+  Number operator*(const Number& n1, const Number& n2);
+  Number operator/(const Number& n1, const Number& n2);
+  Number operator%(const Number& n1, const Number& n2);
+  Number operator<<(const Number& n1, const Number& n2);
+  Number operator>>(const Number& n1, const Number& n2);
+
   std::ostream& operator<< (std::ostream &out, Number &number);
  
   class NumberIntervalLattice : public SPRAY::GenericIntervalLattice<Number> {

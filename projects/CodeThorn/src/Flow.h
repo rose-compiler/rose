@@ -56,6 +56,7 @@ namespace SPRAY {
    * \author Markus Schordan
    * \date 2012.
    */
+  //Sawyer::Container::Graph< Label, EdgeType>
   class Flow : public std::set<Edge> {
   public:  
     Flow();

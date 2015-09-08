@@ -12,9 +12,9 @@
   INSTEAD ref to AnalysisBaseMechanisms is passed around
 
 13) refactor rdmain, integrate into analyterix
-14) remove rdmain
-15) integrate matcher_demo into anlyterix; remove matcher_demo
-17) establish Normalizer
+14) remove rdmain (is already deactivated)
+15) integrate matcher_demo into CodeThorn; remove matcher_demo
+17) establish Normalizer (DFAnalysisBase contains now a normalizeProgram method. But a Normalization class is still missing)
 i) define normalization/denormalization pairs (denormalizer adapts analysis results)
 ii) every normalization establishes a subset of the language (provide language-restrictor/checker for this subset)
 iii) normalize function calls
@@ -51,4 +51,6 @@ ii) VariableIdMapping: implement isConstantArray
   i) rename to IntegerLattice
   ii) rename (and rewrite all user code) to not overload && and || anymore.
   iii) remove indirection of number-types in CodeThorn (only possible after removal of && and ||)
-  ii) Use IntegerLattice instead of Number in IntervalLattice
+
+26) iv-analysis: add initialization of global variables
+

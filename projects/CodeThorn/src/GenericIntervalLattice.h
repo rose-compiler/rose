@@ -400,8 +400,8 @@ class GenericIntervalLattice {
       Type n2=_high;
       Type n3=other._low;
       Type n4=other._high;
-      Type nmin=std::min(n1*n3,min(n1*n4,min(n2*n3,n2*n4)));
-      Type nmax=std::max(n1*n3,max(n1*n4,max(n2*n3,n2*n4)));
+      Type nmin=std::min(n1*n3,std::min(n1*n4,std::min(n2*n3,n2*n4)));
+      Type nmax=std::max(n1*n3,std::max(n1*n4,std::max(n2*n3,n2*n4)));
       setLow(nmin);
       setHigh(nmax);
       return;
@@ -425,8 +425,8 @@ class GenericIntervalLattice {
       Type n2=_high;
       Type n3=other._low;
       Type n4=other._high;
-      Type nmin=std::min(n1/n3,min(n1/n4,min(n2/n3,n2/n4)));
-      Type nmax=std::max(n1/n3,max(n1/n4,max(n2/n3,n2/n4)));
+      Type nmin=std::min(n1/n3,std::min(n1/n4,std::min(n2/n3,n2/n4)));
+      Type nmax=std::max(n1/n3,std::max(n1/n4,std::max(n2/n3,n2/n4)));
       setLow(nmin);
       setHigh(nmax);
       return;
@@ -449,8 +449,8 @@ class GenericIntervalLattice {
       Type n2=_high;
       Type n3=other._low;
       Type n4=other._high;
-      Type nmin=std::min(n1%n3,min(n1%n4,min(n2%n3,n2%n4)));
-      Type nmax=std::max(n1%n3,max(n1%n4,max(n2%n3,n2%n4)));
+      Type nmin=std::min(n1%n3,std::min(n1%n4,std::min(n2%n3,n2%n4)));
+      Type nmax=std::max(n1%n3,std::max(n1%n4,std::max(n2%n3,n2%n4)));
       setLow(nmin);
       setHigh(nmax);
       return;
@@ -473,8 +473,8 @@ class GenericIntervalLattice {
       Type n2=_high;
       Type n3=other._low;
       Type n4=other._high;
-      Type nmin=std::min(n1<<n3,min(n1<<n4,min(n2<<n3,n2<<n4)));
-      Type nmax=std::max(n1<<n3,max(n1<<n4,max(n2<<n3,n2<<n4)));
+      Type nmin=std::min(n1<<n3,std::min(n1<<n4,std::min(n2<<n3,n2<<n4)));
+      Type nmax=std::max(n1<<n3,std::max(n1<<n4,std::max(n2<<n3,n2<<n4)));
       setLow(nmin);
       setHigh(nmax);
       return;
@@ -497,8 +497,8 @@ class GenericIntervalLattice {
       Type n2=_high;
       Type n3=other._low;
       Type n4=other._high;
-      Type nmin=std::min(n1>>n3,min(n1>>n4,min(n2>>n3,n2>>n4)));
-      Type nmax=std::max(n1>>n3,max(n1>>n4,max(n2>>n3,n2>>n4)));
+      Type nmin=std::min(n1>>n3,std::min(n1>>n4,std::min(n2>>n3,n2>>n4)));
+      Type nmax=std::max(n1>>n3,std::max(n1>>n4,std::max(n2>>n3,n2>>n4)));
       setLow(nmin);
       setHigh(nmax);
       return;
