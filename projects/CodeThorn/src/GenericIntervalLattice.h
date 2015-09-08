@@ -12,7 +12,7 @@
 
 /* represents one interval
   Requirements: Type must support algorithms: min, max; operators: '<','==', binary +,-,*,/,%, ; values: -1, +1.
-  Binary operations on bot remain bot (this should be used for error checking)
+  Binary operations on bot remains bot (this should be used for error checking)
 */
 
 // we may want to make this type a template parameter of IntervalLattice for handling relational operators
@@ -317,6 +317,7 @@ class GenericIntervalLattice {
   }
 
   void arithDiv(Type val) {
+    // TODO: handle division by zero
     if(operationOnBot())
       return;
     if(!isLowInf())
@@ -332,6 +333,30 @@ class GenericIntervalLattice {
       _low%=val;
     if(!isHighInf())
       _high%=val;
+  }
+
+  void min(GenericIntervalLattice other) {
+    if(isLowInf()) {
+      return;
+    } else if(other.isLowInf()) {
+      setLowInf(true);
+      return;
+    } else {
+      ROSE_ASSERT(_low<=_high);
+      return std::min(std::min(_low,other._low),other._high);
+    }
+  }
+
+  void max(GenericIntervalLattice other) {
+    if(isHighInf()) {
+      return;
+    } else if(other.isHighInf()) {
+      setHighInf(true);
+      return;
+    } else {
+      ROSE_ASSERT(_low<=_high);
+      return std::max(std::max(_high,other._low),other._high);
+    }
   }
 
   // [a,b]+[c,d]=[a+c,b+d]
@@ -362,68 +387,126 @@ class GenericIntervalLattice {
       setIsHighInf(true);
   }
 
-  // [a,b]*[c,d]=[a*c,b*d]
+  // TODO: not finished for top/bot
+  // [a,b]*[c,d]=[min(a*c,a*d,b*c,b*d),max(a*c,a*d,b*c,b*d)]
   void arithMul(GenericIntervalLattice other) {
-    if(binaryOperationOnBot(other))
+    if(binaryOperationOnBot(other)) {
       return;
-    if(!isLowInf() && !other.isLowInf())
-      _low*=other._low;
-    if(!isHighInf() && !other.isHighInf())
-      _high*=other._high;
-    if(isLowInf()||other.isLowInf())
+    } else if(!isLowInf() 
+              && !other.isLowInf() 
+              && !isHighInf() 
+              && !other.isHighInf()) {
+      Type n1=_low;
+      Type n2=_high;
+      Type n3=other._low;
+      Type n4=other._high;
+      Type nmin=std::min(n1*n3,min(n1*n4,min(n2*n3,n2*n4)));
+      Type nmax=std::max(n1*n3,max(n1*n4,max(n2*n3,n2*n4)));
+      setLow(nmin);
+      setHigh(nmax);
+      return;
+    } else {
       setIsLowInf(true);
-    if(isHighInf()||other.isHighInf())
       setIsHighInf(true);
+    }
   }
 
-  // [a,b]/[c,d]=[a/d,b/c]
+  // TODO: not finished for top/bot
+  // TODO: division by zero not handled yet
+  // [a,b]/[c,d]=[min(a/c,a/d,b/c,b/d),max(a/c,a/d,b/c,b/d)]
   void arithDiv(GenericIntervalLattice other) {
-    if(binaryOperationOnBot(other))
+    if(binaryOperationOnBot(other)) {
       return;
-    if(!isLowInf() && !other.isHighInf())
-      _low/=other._high;
-    if(!isHighInf() && !other.isLowInf())
-      _high/=other._low;
-    if(isLowInf()||other.isHighInf())
+    } else if(!isLowInf() 
+              && !other.isLowInf() 
+              && !isHighInf() 
+              && !other.isHighInf()) {
+      Type n1=_low;
+      Type n2=_high;
+      Type n3=other._low;
+      Type n4=other._high;
+      Type nmin=std::min(n1/n3,min(n1/n4,min(n2/n3,n2/n4)));
+      Type nmax=std::max(n1/n3,max(n1/n4,max(n2/n3,n2/n4)));
+      setLow(nmin);
+      setHigh(nmax);
+      return;
+    } else {
       setIsLowInf(true);
-    if(isHighInf()||other.isLowInf())
       setIsHighInf(true);
+    }
   }
 
-  // [a,b]%[c,d]=[a%d,b%c]
+  // TODO: not finished for top/bot
+  // [a,b]%[c,d]=[min(a%c,a%d,b%c,b%d),max(a%c,a%d,b%c,b%d)]
   void arithMod(GenericIntervalLattice other) {
-    if(binaryOperationOnBot(other))
+    if(binaryOperationOnBot(other)) {
       return;
-    if(!isLowInf() && !other.isHighInf())
-      _low%=other._high;
-    if(!isHighInf() && !other.isLowInf())
-      _high%=other._low;
-    if(isLowInf()||other.isHighInf())
+    } else if(!isLowInf() 
+              && !other.isLowInf() 
+              && !isHighInf() 
+              && !other.isHighInf()) {
+      Type n1=_low;
+      Type n2=_high;
+      Type n3=other._low;
+      Type n4=other._high;
+      Type nmin=std::min(n1%n3,min(n1%n4,min(n2%n3,n2%n4)));
+      Type nmax=std::max(n1%n3,max(n1%n4,max(n2%n3,n2%n4)));
+      setLow(nmin);
+      setHigh(nmax);
+      return;
+    } else {
       setIsLowInf(true);
-    if(isHighInf()||other.isLowInf())
       setIsHighInf(true);
+    }
   }
-// [a,b]*[c,d]<<[a*c,b*d]
+
+  // TODO: not finished for top/bot
+// [a,b]<<[c,d]= same as multiply but with '<<' (no neg. shift)
   void bitwiseShiftLeft(GenericIntervalLattice other) {
-    if(!isLowInf() && !other.isLowInf())
-      _low<<=other._low;
-    if(!isHighInf() && !other.isHighInf())
-      _high<<=other._high;
-    if(isLowInf()||other.isLowInf())
+    if(binaryOperationOnBot(other)) {
+      return;
+    } else if(!isLowInf() 
+              && !other.isLowInf() 
+              && !isHighInf() 
+              && !other.isHighInf()) {
+      Type n1=_low;
+      Type n2=_high;
+      Type n3=other._low;
+      Type n4=other._high;
+      Type nmin=std::min(n1<<n3,min(n1<<n4,min(n2<<n3,n2<<n4)));
+      Type nmax=std::max(n1<<n3,max(n1<<n4,max(n2<<n3,n2<<n4)));
+      setLow(nmin);
+      setHigh(nmax);
+      return;
+    } else {
       setIsLowInf(true);
-    if(isHighInf()||other.isHighInf())
       setIsHighInf(true);
-   }
+    }
+  }
+
+  // TODO: not finished for top/bot
+  // [a,b]<<[c,d]= same as division but with '>>' (no neg. shift)
   void bitwiseShiftRight(GenericIntervalLattice other) {
-    if(!isLowInf() && !other.isLowInf())
-      _low>>=other._low;
-    if(!isHighInf() && !other.isHighInf())
-      _high>>=other._high;
-    if(isLowInf()||other.isLowInf())
+    if(binaryOperationOnBot(other)) {
+      return;
+    } else if(!isLowInf() 
+              && !other.isLowInf() 
+              && !isHighInf() 
+              && !other.isHighInf()) {
+      Type n1=_low;
+      Type n2=_high;
+      Type n3=other._low;
+      Type n4=other._high;
+      Type nmin=std::min(n1>>n3,min(n1>>n4,min(n2>>n3,n2>>n4)));
+      Type nmax=std::max(n1>>n3,max(n1>>n4,max(n2>>n3,n2>>n4)));
+      setLow(nmin);
+      setHigh(nmax);
+      return;
+    } else {
       setIsLowInf(true);
-    if(isHighInf()||other.isHighInf())
       setIsHighInf(true);
-   }
+    }
+  }
 
   static BoolLatticeType isEqual(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     if(l1.isConst()&&l2.isConst()) {
