@@ -8,6 +8,8 @@ using namespace boost;
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 
+#include "Sawyer/Graph.h"
+
 namespace SPRAY {
 
   enum EdgeType { EDGE_UNKNOWN=0, EDGE_FORWARD, EDGE_BACKWARD, EDGE_TRUE, EDGE_FALSE, EDGE_LOCAL, EDGE_CALL, EDGE_CALLRETURN, EDGE_EXTERNAL, EDGE_PATH };
@@ -56,7 +58,7 @@ namespace SPRAY {
    * \author Markus Schordan
    * \date 2012.
    */
-  //Sawyer::Container::Graph< Label, EdgeType>
+
   class Flow : public std::set<Edge> {
   public:  
     Flow();
@@ -112,7 +114,7 @@ namespace SPRAY {
     std::string _fixedColor;
     bool _dotOptionHeaderFooter;
     bool _boostified;
-    
+    Sawyer::Container::Graph< Label, EdgeType>  _SawyerflowGraph;
     FlowGraph _flowGraph;
   };
   

@@ -414,7 +414,7 @@ size_t Flow::deleteEdges(Flow& edges) {
   Flow::iterator i=edges.begin();
   while(i!=end()) {
     erase(i++); // MS: it is paramount to pass a copy of the iterator, and perform a post-increment.
-      numDeleted++;
+    numDeleted++;
   }
   return numDeleted;
 }
