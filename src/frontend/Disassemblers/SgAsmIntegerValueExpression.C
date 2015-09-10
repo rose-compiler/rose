@@ -228,7 +228,7 @@ SgAsmIntegerValueExpression::makeRelativeTo(SgNode *baseNode)
             needWidth = 8;
         }
     } else {
-        if (offset < -4294967296) {
+        if (offset < -4294967296ll) {
             needWidth = 64;
         } else if (offset < -65536) {
             needWidth = 32;

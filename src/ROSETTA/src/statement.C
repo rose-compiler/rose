@@ -11,6 +11,7 @@
 #endif
 #endif
 
+
 /*
   DQ (3/2/2004): After March 1st meeting with Bjarne, it seems clear we should 
                  support a few more IR nodes specific to templates.
@@ -248,6 +249,9 @@ Grammar::setUpStatements ()
           "IOStatement", "IO_STATEMENT", false);
 #endif
 
+     //SK(08/20/2015): Matlab For-loop
+     NEW_TERMINAL_MACRO (MatlabForStatement,    "MatlabForStatement",    "MATLAB_FOR_STATEMENT");
+     
 
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
@@ -396,7 +400,7 @@ Grammar::setUpStatements ()
           Global                       | BasicBlock           | IfStmt               | ForStatement       | FunctionDefinition |
           ClassDefinition              | WhileStmt            | DoWhileStmt          | SwitchStatement    | CatchOptionStmt    |
           NamespaceDefinitionStatement | BlockDataStatement   | AssociateStatement   | FortranDo          | ForAllStatement    |
-          UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement | JavaLabelStatement
+          UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement | JavaLabelStatement | MatlabForStatement
        /* | TemplateInstantiationDefn */,
           "ScopeStatement","SCOPE_STMT", false);
 
@@ -3111,6 +3115,17 @@ Grammar::setUpStatements ()
      ForAllStatement.setDataPrototype ( "SgLabelRefExp*", "end_numeric_label", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+
+     //SK: Matlab specific for loop
+     MatlabForStatement.setFunctionPrototype ("HEADER_MATLAB_FOR_STATEMENT", "../Grammar/Statement.code" );
+     MatlabForStatement.setDataPrototype ( "SgExpression*", "index", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     MatlabForStatement.setDataPrototype ( "SgExpression*", "range", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     MatlabForStatement.setDataPrototype ( "SgBasicBlock*", "body", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     
+
   // DQ (3/22/2007): Added new Fortran Nonblocked do loop construct. For example: "do 10 i=... \n 10 a = 1 \n"
      FortranNonblockedDo.setFunctionPrototype ( "HEADER_FORTRAN_NONBLOCKED_DO", "../Grammar/Statement.code" );
   // This end_statement can be shared so don't traverse it (to avoid errors if not marked as explicitly shared.
@@ -3947,6 +3962,9 @@ Grammar::setUpStatements ()
 
      ForAllStatement.setFunctionSource            ( "SOURCE_FORALL_STATEMENT", "../Grammar/Statement.code" );
 #endif
+
+
+     MatlabForStatement.setFunctionSource            ( "SOURCE_MATLAB_FOR_STATEMENT", "../Grammar/Statement.code" );
 
 #if 0
   // Every node needs a definition of the post_construction_initialization() member function

@@ -23,7 +23,8 @@ unparser_la_sources=\
 	$(unparseLanguageIndependenceSupport_la_sources) \
 	$(unparsePHPCodeGeneration_la_sources) \
 	$(unparsePythonCodeGeneration_la_sources) \
-	$(unparseX10CodeGeneration_la_sources)
+	$(unparseX10CodeGeneration_la_sources) \
+	$(unparseMatlabCodeGeneration_la_sources)
 
 
 unparser_includeHeaders=\
@@ -35,7 +36,8 @@ unparser_includeHeaders=\
 	$(unparseLanguageIndependenceSupport_includeHeaders) \
 	$(unparsePHPCodeGeneration_includeHeaders) \
 	$(unparsePythonCodeGeneration_includeHeaders) \
-	$(unparseX10CodeGeneration_includeHeaders)
+	$(unparseX10CodeGeneration_includeHeaders) \
+	$(unparseMatlabCodeGeneration_includeHeaders)
 
 unparser_extraDist=\
 	$(unparserPath)/CMakeLists.txt \
@@ -47,7 +49,8 @@ unparser_extraDist=\
 	$(unparseLanguageIndependenceSupport_extraDist) \
 	$(unparsePHPCodeGeneration_extraDist) \
 	$(unparsePythonCodeGeneration_extraDist) \
-	$(unparseX10CodeGeneration_extraDist)
+	$(unparseX10CodeGeneration_extraDist) \
+	$(unparseMatlabCodeGeneration_extraDist)
 
 unparser_cleanLocal=\
 	rm -rf \
@@ -62,5 +65,5 @@ unparser_cleanLocal=\
 	$(unparseLanguageIndependenceSupport_cleanLocal); \
 	$(unparsePHPCodeGeneration_cleanLocal); \
 	$(unparsePythonCodeGeneration_cleanLocal); \
-	$(unparseX10CodeGeneration_cleanLocal)
-
+	$(unparseX10CodeGeneration_cleanLocal); \
+	$(unparseMatlabCodeGeneration_cleanLocal)
