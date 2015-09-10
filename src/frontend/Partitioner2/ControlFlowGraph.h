@@ -56,6 +56,14 @@ public:
     }
     /** @} */
 
+    /** Compute entire address set.
+     *
+     *  Constructs and returns an address set containing all addresses represented by this vertex.  For basic block vertices,
+     *  this is the union of the addresses occupied by the instructions (not just the starting address of each
+     *  instruction). The indeterminate and user-defined vertices return an empty set. Other vertex types return a singleton
+     *  address. */
+    AddressIntervalSet addresses() const;
+
     /** Property: basic block.
      *
      *  Pointer to a basic block.  This property is available for @ref V_BASIC_BLOCK or @ref V_USER_DEFINED vertices. A @ref

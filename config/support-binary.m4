@@ -71,7 +71,7 @@ ROSE_SUPPORT_YAML
 
 # Is the GNU readline library available?  This is used by some projects to allow users to edit inputs. E.g., simulator2
 # has an interactive debugger that uses readline to read debugger commands.
-ROSE_SUPPORT_READLINE
+ROSE_SUPPORT_LIBREADLINE
 
 # Call supporting macro to check for "--enable-i386" switch
 ROSE_SUPPORT_I386

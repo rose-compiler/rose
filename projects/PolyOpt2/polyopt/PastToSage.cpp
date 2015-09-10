@@ -867,14 +867,21 @@ SgStatement* PastToSage::buildUserStatement(s_past_cloogstmt_t* statement)
     retStmt->getAttachedPreprocessingInfo();
   if(attached != NULL)
     {
-      if (! _polyoptions.getQuiet())
-	{
-	  std::cout << "[PastToSage] Warning:  SCoP statement has attached"
-	    " preprocessing info!  It will be cleared." << std::endl;
-	  std::cout << "[PastToSage]   Offending Statement: " <<
-	    origStatement->unparseToCompleteString() << std::endl;
-	}
-      attached->clear();
+//      attached->clear();
+      for(Rose_STL_Container<PreprocessingInfo * >::iterator it = attached->begin(); it != attached->end(); ++it)
+      {
+        if((*it)->getTypeOfDirective() != PreprocessingInfo::C_StyleComment)
+        {
+           if (! _polyoptions.getQuiet())
+            {
+	       std::cout << "[PastToSage] Warning:  SCoP statement has attached"
+	         " preprocessing info!  It will be cleared." << std::endl;
+               std::cout << "[PastToSage]   Offending Statement: " <<
+	       origStatement->unparseToCompleteString() << std::endl;
+	    }
+          attached->erase(it);
+        }
+      }  
     }
 
   // Perform variable substitution

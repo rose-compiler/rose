@@ -76,8 +76,8 @@ bool FIConstAnalysis::determineVariable(SgNode* node, VariableId& varId, Variabl
   }
 }
 
-
-bool FIConstAnalysis::analyzeAssignment(SgAssignOp* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result) {
+bool FIConstAnalysis::analyzeAssignment(SgExpression* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result) {
+  ROSE_ASSERT(isSgAssignOp(assignOp)||isSgCompoundAssignOp(assignOp));
   const VariableId varId;
   const ConstIntLattice varValue;
   SgNode* lhs=SgNodeHelper::getLhs(assignOp);
@@ -128,7 +128,7 @@ void FIConstAnalysis::determineVarConstValueSet(SgNode* node, VariableIdMapping&
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
       VariableValuePair res=analyzeVariableDeclaration(varDecl,varIdMapping);
-      if(detailedOutput) cout<<"analyzing variable declaration :"<<res.toString(varIdMapping)<<endl;
+      if(detailedOutput) cout<<"INFO: analyzing variable declaration :"<<res.toString(varIdMapping)<<endl;
       //update map
       map[res.varId].insert(res.varValue);
     }
@@ -136,13 +136,35 @@ void FIConstAnalysis::determineVarConstValueSet(SgNode* node, VariableIdMapping&
       VariableValuePair res;
       bool hasLhsVar=analyzeAssignment(assignOp,varIdMapping,&res);
       if(hasLhsVar) {
-        //cout<<"analyzing variable assignment  :"<<res.toString(varIdMapping)<<endl;
+        if(detailedOutput) cout<<"INFO: analyzing variable assignment (SgAssignOp)  :"<<res.toString(varIdMapping)<<endl;
         map[res.varId].insert(res.varValue);
       } else {
         // not handled yet (the new def-use sets allow to handle this better)
-        cerr<<"Warning: ignoring assignment."<<endl;
+        cerr<<"Warning: unknown lhs of assignment."<<endl;
+        // TODO: all vars have to go to top and all additional entries must be top
+        exit(1);
       }
     }
+    // check for operators: +=, -=, ...
+    if(SgCompoundAssignOp* assignOp=isSgCompoundAssignOp(*i)) {
+      VariableValuePair res;
+      bool hasLhsVar=analyzeAssignment(assignOp,varIdMapping,&res);
+      if(hasLhsVar) {
+        if(detailedOutput) cout<<"INFO: analyzing variable assignment (SgCompoundAssignOp)  :"<<res.toString(varIdMapping)<<endl;
+        // set properly to Top (update of variable)
+#if 0
+        CppCapsuleConstIntLattice valCapsule;
+        ConstIntLattice topVal(AType::Top);
+        valCapsule.setValue(topVal);
+#endif
+        map[res.varId].insert(CppCapsuleConstIntLattice(Top()));
+      } else {
+        cerr<<"Warning: unknown lhs of compound assignment."<<endl;
+        // TODO: all vars have to go to top and all additional entries must be top
+        exit(1);
+      }
+    }
+
     // ignore everything else (as of now)
   }
 }

@@ -1582,7 +1582,8 @@ SageInterface::get_name ( const SgScopeStatement* scope )
        // DQ (11/30/2007): Added more fortran support.
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
-
+            
+          case V_SgMatlabForStatement: //SK: Matlab for statement
           case V_SgBasicBlock:
           case V_SgCatchOptionStmt:
           case V_SgDoWhileStmt:
@@ -4087,8 +4088,8 @@ SageInterface::generateFileList()
 
   // traverse just the SgFile nodes (both the SgSourceFile and SgBinaryComposite IR nodes)!
   // SgFile::visitRepresentativeNode(fileTraversal);
-     SgSourceFile::visitRepresentativeNode(fileTraversal);
-     SgBinaryComposite::visitRepresentativeNode(fileTraversal);
+     SgSourceFile::traverseMemoryPoolNodes(fileTraversal);
+     SgBinaryComposite::traverseMemoryPoolNodes(fileTraversal);
 
   // This would alternatively traverse all IR nodes in thememory pool!
   // fileTraversal.traverseMemoryPool();

@@ -20,10 +20,10 @@ Register location use-def is stored in
 BaseSemantics::RegisterStateGeneric objects. The following methods are
 provided:
 
-+ set_latest_writer(REGISTER, INSN_LABEL) //sets use-def for register
-+ labels = get_latest_writers(REGISTER) //query for one register
-+ clear_latest_writer(REGISTER) //clears use-def for one register
-+ clear_latest_writers() //clears only use-def information
++ setWriters(REGISTER, INSN_LABEL) //sets use-def for register
++ labels = getWritersUnion(REGISTER) //query for one register
++ eraseWriters(REGISTER) //clears use-def for one register
++ eraseWriters() //clears only use-def information
 + clear() //clears entire register state, incuding use-def
 
 where REGISTER is a RegisterDescriptor describing not only the machine
@@ -35,9 +35,9 @@ Latest writer information is stored at bit resolution and does not
 need to be queried at the same granularity as it was initialized. For
 instance, the following is permitted (pseudo code):
 
-   set_latest_writer("ah", insn1)
-   set_latest_writer("al", insn2)
-   labels = get_latest_writer("ax") // returns {insn1, insn2}
+   setWriters("ah", insn1)
+   setWriters("al", insn2)
+   labels = getWriterUnion("ax") // returns {insn1, insn2}
 
 Register use-def is stored separately from register values -- it is
 permissible to store use-def info for registers that have no value,
@@ -59,13 +59,13 @@ writer is an optional instruction label.  The following methods are
 used to support memory-based use-def:
 
 In MemoryCell:
-  + label = get_latest_writer()
-  + set_latest_writer(INSN_LABEL)
-  + clear_latest_writer()
+  + label = getWritersUnion()
+  + setWriters(INSN_LABEL)
+  + eraseWriters()
 
 In MemoryCellList:
   + memory_cell = get_latest_written_cell()
-  + labels = get_latest_writers(ADDR, SIZE, OPS)
+  + labels = getWritersUnion(ADDR, SIZE, OPS)
 
 where INSN_LABEL is an instruction label (instruction virtual
 address), ADDR is an SValue to indicate the address for cells being

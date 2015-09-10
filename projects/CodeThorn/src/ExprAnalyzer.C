@@ -539,6 +539,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   case V_SgVarRefExp: {
     VariableId varId;
     bool isVar=ExprAnalyzer::variable(node,varId);
+    //cout<<"DEBUG: EvalConstInt: V_SgVarRefExp: isVar:"<<isVar<<", varIdcode:"<<varId.getIdCode()<<"Source:"<<node->unparseToString()<<endl;
     assert(isVar);
     const PState* pstate=estate.pstate();
     if(pstate->varExists(varId)) {

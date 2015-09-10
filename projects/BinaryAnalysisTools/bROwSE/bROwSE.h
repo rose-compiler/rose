@@ -61,6 +61,7 @@ extern P2::Attribute::Id ATTR_CfgImage;
 extern P2::Attribute::Id ATTR_CfgVertexCoords;
 extern P2::Attribute::Id ATTR_CallGraph;
 extern P2::Attribute::Id ATTR_NCallers;
+extern P2::Attribute::Id ATTR_NCallees;
 extern P2::Attribute::Id ATTR_NReturns;
 extern P2::Attribute::Id ATTR_MayReturn;
 extern P2::Attribute::Id ATTR_StackDelta;

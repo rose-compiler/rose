@@ -120,7 +120,7 @@ static bool do_usedef = true;
 #   include "SymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         SymbolicSemantics::RiscOperatorsPtr retval = SymbolicSemantics::RiscOperators::instance(regdict);
-        retval->set_compute_usedef(do_usedef);
+        retval->computingUseDef(do_usedef);
         TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
                       SymbolicSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
                       SymbolicSemantics::RiscOperatorsPtr> tester;

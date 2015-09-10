@@ -43,6 +43,9 @@ public:
 
     // Virtual allocating constructors
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance(nbits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
         return instance(nbits);
     }
@@ -70,10 +73,20 @@ public:
 
     // Override virtual methods...
 public:
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
+                                                                           SMTSolver*) const ROSE_OVERRIDE {
+        TODO("[Robb P. Matzke 2015-08-10]");
+    }
+
     virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE {
         return true;
     }
+
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+        return false;
+    }
+
+    virtual bool isBottom() const ROSE_OVERRIDE {
         return false;
     }
 

@@ -207,7 +207,7 @@ RSIM_Linux32::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembl
 }
 
 PtRegs
-RSIM_Linux32::initialRegistersArch() {
+RSIM_Linux32::initialRegistersArch(RSIM_Process*) {
     PtRegs regs;
     memset(&regs, 0, sizeof regs);
     regs.sp = 0xc0000000ul;                             // high end of stack, exclusive
@@ -2016,6 +2016,7 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
             }
 
             semid64_ds_32 guest_ds;
+            memset(&guest_ds, 0, sizeof guest_ds);
             guest_ds.sem_perm.key = host_ds.sem_perm.__key;
             guest_ds.sem_perm.uid = host_ds.sem_perm.uid;
             guest_ds.sem_perm.gid = host_ds.sem_perm.gid;
@@ -2025,15 +2026,23 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
             guest_ds.sem_perm.pad1 = host_ds.sem_perm.__pad1;
             guest_ds.sem_perm.seq = host_ds.sem_perm.__seq;
             guest_ds.sem_perm.pad2 = host_ds.sem_perm.__pad2;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.sem_perm.unused1 = host_ds.sem_perm.__unused1;
             guest_ds.sem_perm.unused2 = host_ds.sem_perm.__unused1;
+#endif
             guest_ds.sem_otime = host_ds.sem_otime;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused1 = host_ds.__unused1;
+#endif
             guest_ds.sem_ctime = host_ds.sem_ctime;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused2 = host_ds.__unused2;
+#endif
             guest_ds.sem_nsems = host_ds.sem_nsems;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused3 = host_ds.__unused3;
             guest_ds.unused4 = host_ds.__unused4;
+#endif
             if (sizeof(guest_ds)!=t->get_process()->mem_write(&guest_ds, guest_semun.ptr, sizeof guest_ds)) {
                 t->syscall_return(-EFAULT);
                 return;
@@ -2056,6 +2065,7 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
             int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &semun);
 #else           /* amd64 */
             semid_ds host_ds;
+            memset(&host_ds, 0, sizeof host_ds);
             host_ds.sem_perm.__key = guest_ds.sem_perm.key;
             host_ds.sem_perm.uid = guest_ds.sem_perm.uid;
             host_ds.sem_perm.gid = guest_ds.sem_perm.gid;
@@ -2065,15 +2075,23 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
             host_ds.sem_perm.__pad1 = guest_ds.sem_perm.pad1;
             host_ds.sem_perm.__seq = guest_ds.sem_perm.seq;
             host_ds.sem_perm.__pad2 = guest_ds.sem_perm.pad2;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.sem_perm.__unused1 = guest_ds.sem_perm.unused1;
             host_ds.sem_perm.__unused1 = guest_ds.sem_perm.unused2;
+#endif
             host_ds.sem_otime = guest_ds.sem_otime;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.__unused1 = guest_ds.unused1;
+#endif
             host_ds.sem_ctime = guest_ds.sem_ctime;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.__unused2 = guest_ds.unused2;
+#endif
             host_ds.sem_nsems = guest_ds.sem_nsems;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.__unused3 = guest_ds.unused3;
             host_ds.__unused4 = guest_ds.unused4;
+#endif
             int result = syscall(SYS_semctl, semid, semnum, cmd, &host_ds);
 #endif
             t->syscall_return(-1==result?-errno:result);
@@ -2303,6 +2321,7 @@ sys_msgctl(RSIM_Thread *t, uint32_t msqid, uint32_t cmd, uint32_t buf_va)
             }
 
             msqid64_ds_32 guest_ds;
+            memset(&guest_ds, 0, sizeof guest_ds);
             guest_ds.msg_perm.key = host_ds.msg_perm.__key;
             guest_ds.msg_perm.uid = host_ds.msg_perm.uid;
             guest_ds.msg_perm.gid = host_ds.msg_perm.gid;
@@ -2312,18 +2331,20 @@ sys_msgctl(RSIM_Thread *t, uint32_t msqid, uint32_t cmd, uint32_t buf_va)
             guest_ds.msg_perm.pad1 = host_ds.msg_perm.__pad1;
             guest_ds.msg_perm.seq = host_ds.msg_perm.__seq;
             guest_ds.msg_perm.pad2 = host_ds.msg_perm.__pad2;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.msg_perm.unused1 = host_ds.msg_perm.__unused1;
             guest_ds.msg_perm.unused2 = host_ds.msg_perm.__unused2;
+#endif
             guest_ds.msg_stime = host_ds.msg_stime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused1 = host_ds.__unused1;
 #endif
             guest_ds.msg_rtime = host_ds.msg_rtime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused2 = host_ds.__unused2;
 #endif
             guest_ds.msg_ctime = host_ds.msg_ctime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused3 = host_ds.__unused3;
 #endif
             guest_ds.msg_cbytes = host_ds.__msg_cbytes;
@@ -2331,8 +2352,10 @@ sys_msgctl(RSIM_Thread *t, uint32_t msqid, uint32_t cmd, uint32_t buf_va)
             guest_ds.msg_qbytes = host_ds.msg_qbytes;
             guest_ds.msg_lspid = host_ds.msg_lspid;
             guest_ds.msg_lrpid = host_ds.msg_lrpid;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused4 = host_ds.__unused4;
             guest_ds.unused5 = host_ds.__unused5;
+#endif
 
             if (sizeof(guest_ds)!=t->get_process()->mem_write(&guest_ds, buf_va, sizeof guest_ds)) {
                 t->syscall_return(-EFAULT);
@@ -2443,6 +2466,7 @@ sys_shmctl(RSIM_Thread *t, uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             }
 
             shmid64_ds_32 guest_ds;
+            memset(&guest_ds, 0, sizeof guest_ds);
             guest_ds.shm_perm.key = host_ds.shm_perm.__key;
             guest_ds.shm_perm.uid = host_ds.shm_perm.uid;
             guest_ds.shm_perm.gid = host_ds.shm_perm.gid;
@@ -2452,26 +2476,30 @@ sys_shmctl(RSIM_Thread *t, uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             guest_ds.shm_perm.pad1 = host_ds.shm_perm.__pad1;
             guest_ds.shm_perm.seq = host_ds.shm_perm.__seq;
             guest_ds.shm_perm.pad2 = host_ds.shm_perm.__pad2;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.shm_perm.unused1 = host_ds.shm_perm.__unused1;
             guest_ds.shm_perm.unused2 = host_ds.shm_perm.__unused2;
+#endif
             guest_ds.shm_segsz = host_ds.shm_segsz;
             guest_ds.shm_atime = host_ds.shm_atime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused1 = host_ds.__unused1;
 #endif
             guest_ds.shm_dtime = host_ds.shm_dtime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused2 = host_ds.__unused2;
 #endif
             guest_ds.shm_ctime = host_ds.shm_ctime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused3 = host_ds.__unused3;
 #endif
             guest_ds.shm_cpid = host_ds.shm_cpid;
             guest_ds.shm_lpid = host_ds.shm_lpid;
             guest_ds.shm_nattch = host_ds.shm_nattch;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused4 = host_ds.__unused4;
             guest_ds.unused5 = host_ds.__unused5;
+#endif
 
             if (sizeof(guest_ds)!=t->get_process()->mem_write(&guest_ds, buf_va, sizeof guest_ds)) {
                 t->syscall_return(-EFAULT);
@@ -2516,15 +2544,18 @@ sys_shmctl(RSIM_Thread *t, uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             }
 
             shminfo64_32 guest_info;
+            memset(&guest_info, 0, sizeof guest_info);
             guest_info.shmmax = host_info.shmmax;
             guest_info.shmmin = host_info.shmmin;
             guest_info.shmmni = host_info.shmmni;
             guest_info.shmseg = host_info.shmseg;
             guest_info.shmall = host_info.shmall;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_info.unused1 = host_info.unused1;
             guest_info.unused2 = host_info.unused2;
             guest_info.unused3 = host_info.unused3;
             guest_info.unused4 = host_info.unused4;
+#endif
             if (sizeof(guest_info)!=t->get_process()->mem_write(&guest_info, buf_va, sizeof guest_info)) {
                 t->syscall_return(-EFAULT);
                 return;
@@ -2549,6 +2580,7 @@ sys_shmctl(RSIM_Thread *t, uint32_t shmid, uint32_t cmd, uint32_t buf_va)
                 return;
             }
             shmid_ds host_ds;
+            memset(&host_ds, 0, sizeof host_ds);
             host_ds.shm_perm.__key = guest_ds.shm_perm.key;
             host_ds.shm_perm.uid = guest_ds.shm_perm.uid;
             host_ds.shm_perm.gid = guest_ds.shm_perm.gid;
@@ -2558,26 +2590,30 @@ sys_shmctl(RSIM_Thread *t, uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             host_ds.shm_perm.__pad1 = guest_ds.shm_perm.pad1;
             host_ds.shm_perm.__seq = guest_ds.shm_perm.seq;
             host_ds.shm_perm.__pad2 = guest_ds.shm_perm.pad2;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.shm_perm.__unused1 = guest_ds.shm_perm.unused1;
             host_ds.shm_perm.__unused2 = guest_ds.shm_perm.unused2;
+#endif
             host_ds.shm_segsz = guest_ds.shm_segsz;
             host_ds.shm_atime = guest_ds.shm_atime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.__unused1 = guest_ds.unused1;
 #endif
             host_ds.shm_dtime = guest_ds.shm_dtime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.__unused2 = guest_ds.unused2;
 #endif
             host_ds.shm_ctime = guest_ds.shm_ctime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.__unused3 = guest_ds.unused3;
 #endif
             host_ds.shm_cpid = guest_ds.shm_cpid;
             host_ds.shm_lpid = guest_ds.shm_lpid;
             host_ds.shm_nattch = guest_ds.shm_nattch;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.__unused4 = guest_ds.unused4;
             host_ds.__unused5 = guest_ds.unused5;
+#endif
 
             int result = shmctl(shmid, cmd, &host_ds);
             t->syscall_return(-1==result?-errno:result);

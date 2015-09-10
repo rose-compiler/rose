@@ -48,6 +48,7 @@ SUBDIRS = \
 	Fortran_to_C \
 	mint \
 	vectorization \
+	MultiLevelMemory \
 	extractMPISkeleton \
 	RoseBlockLevelTracing \
 	LineDeleter \
@@ -185,10 +186,8 @@ SUBDIRS += SatSolver
 # endif
 
 SUBDIRS += PolyhedralModel
-# SUBDIRS += demos-dlx-mdcg
+SUBDIRS += TileK
 # SUBDIRS += rose-tooling
-# TOO1 (07/08/2015): Disabled until Tristan fixes the failing release test.
-# SUBDIRS += TileK
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
 #     StaticDynamicAnalysis/DynamicCPU

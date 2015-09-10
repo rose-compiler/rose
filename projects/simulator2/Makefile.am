@@ -7,8 +7,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 MOSTLYCLEANFILES=
 EXTRA_DIST=
 include_HEADERS=
+noinst_HEADERS=
+bin_PROGRAMS=
 noinst_PROGRAMS=
-lib_LIBRARIES=
 TEST_TARGETS = 
 
 ###############################################################################################################################
@@ -22,11 +23,12 @@ EXTRA_DIST += README test_status.txt internal_tests.conf syscall_tests.conf pthr
 #  SIMULATOR LIBRARY
 ###############################################################################################################################
 
-noinst_LTLIBRARIES = libRSIM.la
+lib_LTLIBRARIES = libRSIM.la
 libRSIM_la_CPPFLAGS = $(ROSE_INCLUDES)
 libRSIM_la_SOURCES =				\
 	RSIM_Adapter.C				\
 	RSIM_Callbacks.C			\
+	RSIM_ColdFire.C				\
 	RSIM_Common.C				\
 	RSIM_Debugger.C				\
 	RSIM_Futex.C				\
@@ -43,6 +45,7 @@ libRSIM_la_SOURCES =				\
 include_HEADERS +=				\
 	RSIM_Adapter.h				\
 	RSIM_Callbacks.h			\
+	RSIM_ColdFire.h				\
 	RSIM_Common.h				\
 	RSIM_Debugger.h				\
 	RSIM_Futex.h				\
@@ -68,7 +71,7 @@ $(libRSIM_la_SOURCES:.C=.lo): %.lo: %.h
 EXTRA_DIST += RSIM_Private.h
 
 # The simulator, which uses ROSE interfaces where possible.
-noinst_PROGRAMS += x86sim
+bin_PROGRAMS += x86sim
 x86sim_SOURCES = x86sim.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES)
 x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
@@ -78,6 +81,12 @@ noinst_PROGRAMS += show-initial-stack
 show_initial_stack_SOURCES = show-initial-stack.C
 show_initial_stack_CPPFLAGS = $(ROSE_INCLUDES)
 show_initial_stack_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+# demo to show how to monitor some file-related system calls
+noinst_PROGRAMS += ports_opened
+ports_opened_SOURCES = demos/ports_opened.C
+ports_opened_CPPFLAGS = $(ROSE_INCLUDES)
+ports_opened_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 ###############################################################################################################################
 #  INTERNAL SIMULATOR TESTS
@@ -660,7 +669,7 @@ $(SYS_TEST_SUPPORT_OBJ): %.o: $(srcdir)/syscall_tests/%.c
 MOSTLYCLEANFILES += libtestsupport.a
 
 # The ipc support library
-include_HEADERS += $(srcdir)/syscall_tests/ipcmsg.h  $(srcdir)/syscall_tests/ipcsem.h  $(srcdir)/syscall_tests/ipcshm.h
+noinst_HEADERS += $(srcdir)/syscall_tests/ipcmsg.h  $(srcdir)/syscall_tests/ipcsem.h  $(srcdir)/syscall_tests/ipcshm.h
 IPC_SUPPORT_SRC = $(srcdir)/syscall_tests/libipc.c
 IPC_SUPPORT_OBJ = $(patsubst %.c, %.o, $(notdir $(IPC_SUPPORT_SRC)))
 EXTRA_DIST += $(IPC_SUPPORT_SRC)

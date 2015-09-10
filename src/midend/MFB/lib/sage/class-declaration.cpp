@@ -1,9 +1,3 @@
-/** 
- * \file lib/sage/class-declaration.cpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #include "MFB/Sage/class-declaration.hpp"
 #include "MFB/Sage/namespace-declaration.hpp"
@@ -14,12 +8,11 @@
 #  define PATCHING_SAGE_BUILDER_ISSUES 1
 #endif
 
-namespace MFB {
+#ifndef VERBOSE
+# define VERBOSE 0
+#endif
 
-/*!
- * \addtogroup grp_mfb_sage_classdecl
- * @{
-*/
+namespace MFB {
 
 bool ignore(const std::string & name);
 bool ignore(SgScopeStatement * scope);
@@ -59,13 +52,20 @@ bool Driver<Sage>::resolveValidParent<SgClassSymbol>(SgClassSymbol * symbol) {
 }
 
 template <>
-void  Driver<Sage>::loadSymbols<SgClassDeclaration>(unsigned file_id, SgSourceFile * file) {
+void  Driver<Sage>::loadSymbols<SgClassDeclaration>(size_t file_id, SgSourceFile * file) {
   std::vector<SgClassDeclaration *> class_decl = SageInterface::querySubTree<SgClassDeclaration>(file);
 
   std::set<SgClassSymbol *> class_symbols;
   std::vector<SgClassDeclaration *>::const_iterator it_class_decl;
   for (it_class_decl = class_decl.begin(); it_class_decl != class_decl.end(); it_class_decl++) {
     SgClassDeclaration * class_decl = *it_class_decl;
+
+    if (class_decl->get_definition() == NULL) continue;
+
+    Sg_File_Info * file_info = class_decl->get_file_info();
+    assert(file_info != NULL);
+
+    if (file_info->get_raw_filename() != file->getFileName()) continue;
 
     if (ignore(class_decl->get_scope())) continue;
     if (ignore(class_decl->get_name().getString())) continue;
@@ -79,16 +79,18 @@ void  Driver<Sage>::loadSymbols<SgClassDeclaration>(unsigned file_id, SgSourceFi
   std::set<SgClassSymbol *>::iterator it;
   for (it = class_symbols.begin(); it != class_symbols.end(); it++)
     if (resolveValidParent<SgClassSymbol>(*it)) {
-      p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned>(*it, file_id));
-//    std::cout << "    Class Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
+      p_symbol_to_file_id_map[*it] = file_id;
+#if VERBOSE
+      std::cerr << "[Info] (MFB::Driver<Sage>::loadSymbols<SgClassDeclaration>) Add: " << (*it)->get_name().getString() << " from File #" << file_id << std::endl;
+#endif
     }
 }
 
 Sage<SgClassDeclaration>::object_desc_t::object_desc_t(
   std::string name_,
-  unsigned long kind_,
+  size_t kind_,
   SgSymbol * parent_,
-  unsigned file_id_,
+  size_t file_id_,
   bool create_definition_
 ) :
   name(name_),
@@ -116,7 +118,7 @@ Sage<SgClassDeclaration>::build_result_t Driver<Sage>::build<SgClassDeclaration>
     result.symbol = decl_scope->lookup_class_symbol(desc.name);
     assert(result.symbol != NULL);
 
-    p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, unsigned>(result.symbol, desc.file_id));
+    p_symbol_to_file_id_map.insert(std::pair<SgSymbol *, size_t>(result.symbol, desc.file_id));
     p_valid_symbols.insert(result.symbol);
     p_parent_map.insert(std::pair<SgSymbol *, SgSymbol *>(result.symbol, desc.parent));
     p_class_symbols.insert(result.symbol);
@@ -169,7 +171,7 @@ Sage<SgClassDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgClassDec
   else {
     assert(desc.file_id != 0);
 
-    std::map<unsigned, SgSourceFile *>::iterator it_file = id_to_file_map.find(desc.file_id);
+    std::map<size_t, SgSourceFile *>::iterator it_file = id_to_file_map.find(desc.file_id);
     assert(it_file != id_to_file_map.end());
     SgSourceFile * decl_file = it_file->second;
     assert(decl_file != NULL);
@@ -185,8 +187,8 @@ Sage<SgClassDeclaration>::build_scopes_t Driver<Sage>::getBuildScopes<SgClassDec
 }
 
 template <>
-void Driver<Sage>::createForwardDeclaration<SgClassDeclaration>(Sage<SgClassDeclaration>::symbol_t symbol, unsigned target_file_id) {
-  std::map<unsigned, SgSourceFile *>::iterator it_target_file = id_to_file_map.find(target_file_id);
+void Driver<Sage>::createForwardDeclaration<SgClassDeclaration>(Sage<SgClassDeclaration>::symbol_t symbol, size_t target_file_id) {
+  std::map<size_t, SgSourceFile *>::iterator it_target_file = id_to_file_map.find(target_file_id);
   assert(it_target_file != id_to_file_map.end());
   SgSourceFile * target_file = it_target_file->second;
   assert(target_file != NULL);

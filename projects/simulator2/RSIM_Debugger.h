@@ -1,6 +1,8 @@
 #ifndef ROSE_RSIM_Debugger_H
 #define ROSE_RSIM_Debugger_H
 
+#include <RSIM_Simulator.h>
+
 namespace RSIM_Debugger {
 
 /** Attach an interactive debugger to the simulator.  This must be done before the process is loaded. */

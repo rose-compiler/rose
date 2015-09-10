@@ -178,7 +178,6 @@ AC_SUBST(GCC_MINOR_VERSION)
   ROSE_SUPPORT_GMP
   ROSE_SUPPORT_ISL
   ROSE_SUPPORT_MPI
-  ROSE_SUPPORT_LIBREADLINE
 
 ##
 #########################################################################################
@@ -863,6 +862,10 @@ ROSE_SUPPORT_HASKELL
 
 ROSE_SUPPORT_CUDA
 
+# Call support macro for Z3
+
+ROSE_SUPPORT_Z3
+
 # Call supporting macro for bddbddb
 ROSE_SUPPORT_BDDBDDB
 
@@ -1048,12 +1051,13 @@ AC_SUBST(ROSE_USE_CANDL)
 AC_SUBST(CANDL_PATH)
 
 # *****************************************************************
-#            Accelerator Support (CUDA, OpenCL, OpenACC)
+#            Accelerator Support (CUDA, OpenCL)
 # *****************************************************************
 
+# Check: --with-cuda-inc, --with-cuda-lib, and  --with-cuda-bin
 ROSE_CHECK_CUDA
+# Check: --with-opencl-inc, --with-opencl-lib
 ROSE_CHECK_OPENCL
-ROSE_CHECK_OPENACC
 
 # *****************************************************************
 #            Option to define DOXYGEN SUPPORT
@@ -1710,6 +1714,7 @@ src/frontend/SageIII/astVisualization/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/SageIII/astFromString/Makefile
 src/frontend/SageIII/includeDirectivesProcessing/Makefile
+src/frontend/MatlabFrontend/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/CxxFrontend/Clang/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
@@ -1723,14 +1728,7 @@ src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/frontend/DLX/Makefile
-src/frontend/DLX/docs/Makefile
-src/frontend/DLX/docs/doxygen/Makefile
-src/frontend/DLX/docs/doxygen/doxy.conf
-src/frontend/DLX/include/Makefile
-src/frontend/DLX/include/DLX/Makefile
 src/frontend/DLX/include/DLX/Core/Makefile
-src/frontend/DLX/include/DLX/KLT/Makefile
-src/frontend/DLX/lib/Makefile
 src/frontend/DLX/lib/core/Makefile
 src/frontend/Partitioner2/Makefile
 src/midend/Makefile
@@ -1743,31 +1741,26 @@ src/midend/programTransformation/extractFunctionArgumentsNormalization/Makefile
 src/midend/programTransformation/singleStatementToBlockNormalization/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
 src/midend/MFB/Makefile
-src/midend/MFB/docs/Makefile
-src/midend/MFB/docs/doxygen/Makefile
-src/midend/MFB/docs/doxygen/doxy.conf
-src/midend/MFB/include/Makefile
 src/midend/MFB/include/MFB/Makefile
 src/midend/MFB/include/MFB/Sage/Makefile
-src/midend/MFB/lib/Makefile
+src/midend/MFB/include/MFB/KLT/Makefile
 src/midend/MFB/lib/sage/Makefile
+src/midend/MFB/lib/klt/Makefile
+src/midend/MFB/lib/utils/Makefile
 src/midend/MDCG/Makefile
-src/midend/MDCG/docs/Makefile
-src/midend/MDCG/docs/doxygen/Makefile
-src/midend/MDCG/docs/doxygen/doxy.conf
-src/midend/MDCG/include/Makefile
-src/midend/MDCG/include/MDCG/Makefile
-src/midend/MDCG/lib/Makefile
+src/midend/MDCG/include/MDCG/Model/Makefile
+src/midend/MDCG/include/MDCG/Tools/Makefile
+src/midend/MDCG/lib/model/Makefile
+src/midend/MDCG/lib/tools/Makefile
+src/midend/KLT/Makefile
+src/midend/KLT/include/KLT/Core/Makefile
+src/midend/KLT/include/KLT/MDCG/Makefile
+src/midend/KLT/include/KLT/DLX/Makefile
+src/midend/KLT/include/KLT/RTL/Makefile
+src/midend/KLT/lib/core/Makefile
+src/midend/KLT/lib/mdcg/Makefile
+src/midend/KLT/lib/rtl/Makefile
 src/backend/Makefile
-src/backend/KLT/Makefile
-src/backend/KLT/docs/Makefile
-src/backend/KLT/docs/doxygen/Makefile
-src/backend/KLT/docs/doxygen/doxy.conf
-src/backend/KLT/include/Makefile
-src/backend/KLT/include/KLT/Makefile
-src/backend/KLT/include/KLT/Core/Makefile
-src/backend/KLT/lib/Makefile
-src/backend/KLT/lib/core/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
 src/roseExtensions/sqlite3x/Makefile
@@ -1826,6 +1819,8 @@ src/roseExtensions/roseHPCToolkit/docs/Makefile
 src/roseExtensions/failSafe/Makefile
 src/roseIndependentSupport/Makefile
 src/roseIndependentSupport/dot2gml/Makefile
+projects/ArithmeticMeasureTool/Makefile
+projects/ArithmeticMeasureTool/src/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
 projects/AtermTranslation/Makefile
@@ -1975,6 +1970,7 @@ projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
 projects/RosePolly/Makefile
 projects/simulator/Makefile
+projects/SMTPathFeasibility/Makefile
 projects/symbolicAnalysisFramework/Makefile
 projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile
 projects/symbolicAnalysisFramework/src/external/Makefile
@@ -2004,6 +2000,9 @@ projects/Fortran_to_C/tests/Makefile
 projects/vectorization/Makefile
 projects/vectorization/src/Makefile
 projects/vectorization/tests/Makefile
+projects/MultiLevelMemory/Makefile
+projects/MultiLevelMemory/src/Makefile
+projects/MultiLevelMemory/tests/Makefile
 projects/PolyOpt2/Makefile
 projects/PolyOpt2/polyopt/Makefile
 projects/PolyOpt2/src/Makefile
@@ -2059,17 +2058,33 @@ projects/Viz/src/Makefile
 projects/Viz/tools/Makefile
 projects/Viz/examples/Makefile
 projects/TileK/Makefile
+projects/TileK/include/DLX/TileK/Makefile
+projects/TileK/include/RTL/Host/Makefile
+projects/TileK/include/RTL/Kernel/OpenCL/Makefile
+projects/TileK/include/RTL/Kernel/CUDA/Makefile
 projects/TileK/lib/Makefile
-projects/TileK/lib/dlx/tilek/Makefile
-projects/TileK/lib/klt/tilek/Makefile
-projects/TileK/lib/klt/language/Makefile
-projects/TileK/lib/klt/runtime/Makefile
-projects/TileK/lib/mdcg/tilek/Makefile
-projects/TileK/lib/mfb/klt/Makefile
-projects/TileK/lib/tilek/Makefile
 projects/TileK/src/Makefile
-projects/TileK/examples/Makefile
-projects/TileK/tests/Makefile
+projects/TileK/tests/rtl/Makefile
+projects/TileK/tests/basic/Makefile
+projects/TileK/tests/threads/Makefile
+projects/TileK/tests/accelerator/Makefile
+projects/TileK/tests/accelerator/OpenCL/Makefile
+projects/TileK/tests/accelerator/CUDA/Makefile
+projects/TileK/doc/Makefile
+projects/TileK/doc/index.html
+projects/TileK/doc/dlx.doxy
+projects/TileK/doc/mfb.doxy
+projects/TileK/doc/mdcg.doxy
+projects/TileK/doc/klt.doxy
+projects/TileK/doc/klt-rtl.doxy
+projects/TileK/doc/tilek-basic.doxy
+projects/TileK/doc/tilek-rtl-basic.doxy
+projects/TileK/doc/tilek-threads.doxy
+projects/TileK/doc/tilek-rtl-threads.doxy
+projects/TileK/doc/tilek-opencl.doxy
+projects/TileK/doc/tilek-rtl-opencl.doxy
+projects/TileK/doc/tilek-cuda.doxy
+projects/TileK/doc/tilek-rtl-cuda.doxy
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2148,6 +2163,8 @@ tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/frontend_integration/Makefile
 tests/CompileTests/x10_tests/Makefile
 tests/CompileTests/systemc_tests/Makefile
+tests/CompileTests/mixLanguage_tests/Makefile
+tests/CompileTests/Matlab_tests/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile

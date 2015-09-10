@@ -97,6 +97,9 @@ public:
     /** Returns the register dictionary. */
     const RegisterDictionary* registerDictionary() const { return disassembler_->get_registers(); }
 
+    /** Returns the calling convention dictionary. */
+    const CallingConvention::Dictionary& callingConventions() const { return disassembler_->callingConventions(); }
+
     /** Register used as the instruction pointer. */
     RegisterDescriptor instructionPointerRegister() const { return disassembler_->instructionPointerRegister(); }
 

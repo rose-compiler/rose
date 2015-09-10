@@ -59,6 +59,7 @@ SPRAY::PASolver1::runSolver() {
       cout<<endl;
     }
     _transferFunctions.transfer(lab0,*info);
+    ROSE_ASSERT(info);
     if(_trace) {
       cout<<"TRACE: transfer function result: "<<lab1<<":";
       ROSE_ASSERT(info);
