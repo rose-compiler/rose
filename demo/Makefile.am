@@ -60,8 +60,6 @@ demo_binary_analysis_B:
 	sleep 10
 	$(MAKE) demo_9
 	sleep 10
-	$(MAKE) demo_10
-	sleep 10
 
 demo_binary_analysis_C:
 	$(MAKE) demo_11
@@ -150,14 +148,6 @@ demo_9:
 	@echo "Built checker directory $(top_srcdir)/../CompassCheckers/demoBufferOverflowCheckerTest"
 	@echo "End of demo_9"
 
-# The demo shows the translation of a binary into a low level representation to support general 
-# instrcution set independent analysis.  Also demonstrated disassemble and semantic analysis of 
-# PowerPC instruction set.  The semantic analysis of binaries is supported for x86 and PowerPC
-# (but not yet for ARM).
-demo_10:
-	cd $(top_builddir)/projects/assemblyToSourceAst; $(MAKE) ppc-check
-	@echo "End of demo_10"
-
 # Demonstrate AST diff using BinQ on binary instructions (only on the instructions)
 demo_11b:
 	cd $(top_builddir)/projects/BinQ; $(MAKE) demo_diff
@@ -229,7 +219,6 @@ check-local:
 	@echo "Testing demos..." 
 #	make demo_2_test
 	make demo_3_test
-#	make demo_10
 #	make demo_13
 	@echo "****************************************************************************"
 	@echo "******** ROSE/demo: make check rule complete (terminated normally) *********"
