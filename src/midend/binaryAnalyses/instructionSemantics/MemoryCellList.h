@@ -139,7 +139,7 @@ public:
      *  Changes writer information to be excactly the specified address or set of addresses.
      *
      * @{ */
-    void setWriter(rose_addr_t writerVa) ROSE_FINAL;
+    void setWriter(rose_addr_t writerVa) /*final*/;
     virtual void setWriters(const AddressSet &writerVas) { writers_.insert(writerVas); }
     /** @} */
 

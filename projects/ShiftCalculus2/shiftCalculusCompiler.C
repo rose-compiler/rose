@@ -2,6 +2,7 @@
 // Example ROSE Translator reads input program and implements a DSL embedded within C++
 // to support the stencil computations, and required runtime support is developed seperately.
 #include "rose.h"
+#include "ompAstConstruction.h"
 
 #include "stencilAndStencilOperatorDetection.h"
 #include "stencilEvaluation.h"
@@ -35,6 +36,45 @@ int main( int argc, char * argv[] )
   // bool frontendConstantFolding = true;
      bool frontendConstantFolding = false;
 
+// Liao, support a flag to control if CUDA code should be generated
+// ./shiftCalculusCompiler -rose:dslcompiler:cuda  -c input_file
+    std::vector <std::string> argvList (argv, argv + argc);
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","cuda",true))
+    {
+      std::cout<<"Turning on CUDA code generation ..."<<std::endl;
+      b_gen_cuda = true;
+//      argvList.push_back("-rose:openmp:lowering");
+    }
+    else
+      b_gen_cuda = false;
+// Pei-Hung, enable loop collapsing
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","collapse",true))
+    {
+      std::cout<<"Turning on OpenMP loop collapsing ..."<<std::endl;
+      b_enable_collapse = true;
+//      argvList.push_back("-rose:openmp:lowering");
+    }
+    else
+      b_enable_collapse = false;
+// Pei-Hung, code generation to fulfill polyopt 
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","polyopt",true))
+    {
+      std::cout<<"Generating code for PolyOpt  ..."<<std::endl;
+      b_enable_polyopt = true;
+//      argvList.push_back("-rose:openmp:lowering");
+    }
+    else
+      b_enable_polyopt = false;
+
+// Pei-Hung, code generation to vectorization 
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","vectorization",true))
+    {
+      std::cout<<"Generating code for vectorization  ..."<<std::endl;
+      b_gen_vectorization = true;
+//      argvList.push_back("-rose:openmp:lowering");
+    }
+    else
+      b_gen_vectorization = false;
   // Generate the ROSE AST.
      SgProject* project = frontend(argc,argv,frontendConstantFolding);
      ROSE_ASSERT(project != NULL);
@@ -182,6 +222,33 @@ int main( int argc, char * argv[] )
      printf ("DONE: Call generateStencilCode to generate example code \n");
 #endif
 
+   // Further generate CUDA code if requested
+   if (b_gen_cuda)
+   {
+     // We only process one single input file at a time
+     ROSE_ASSERT (project->get_fileList().size() ==1);
+     SgFile * cur_file = project->get_fileList()[0];
+
+     OmpSupport::enable_accelerator = true;
+     cur_file->set_openmp_lowering(true);
+//     cur_file->set_openmp(true);
+//     cur_file->set_openmp_parse_only(false);
+
+     // process OpenMP directives, including omp target
+     OmpSupport::processOpenMP(isSgSourceFile(cur_file));
+
+#if 0 // use rose:output instead to control this
+     // rename output file to have .cu suffice
+     // change .c suffix to .cu suffix
+     std::string orig_name = cur_file->get_file_info()->get_filenameString();
+     std::string file_suffix = StringUtility::fileNameSuffix(orig_name);
+     // We only allow C file to be compatible with nvcc CUDA compiler
+     //ROSE_ASSERT (CommandlineProcessing::isCFileNameSuffix(file_suffix));
+     orig_name = StringUtility::stripPathFromFileName(orig_name);
+     std::string naked_name = StringUtility::stripFileSuffixFromFileName(orig_name);
+     cur_file->set_unparse_output_filename("rose_"+naked_name+".cu");
+#endif
+   }
 #if 0
      printf ("Exiting after call to generateStencilCode() \n");
      ROSE_ASSERT(false);

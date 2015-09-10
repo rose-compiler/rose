@@ -48,6 +48,7 @@ SUBDIRS = \
 	Fortran_to_C \
 	mint \
 	vectorization \
+	MultiLevelMemory \
 	extractMPISkeleton \
 	RoseBlockLevelTracing \
 	LineDeleter \

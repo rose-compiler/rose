@@ -862,6 +862,10 @@ ROSE_SUPPORT_HASKELL
 
 ROSE_SUPPORT_CUDA
 
+# Call support macro for Z3
+
+ROSE_SUPPORT_Z3
+
 # Call supporting macro for bddbddb
 ROSE_SUPPORT_BDDBDDB
 
@@ -1966,6 +1970,7 @@ projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
 projects/RosePolly/Makefile
 projects/simulator/Makefile
+projects/SMTPathFeasibility/Makefile
 projects/symbolicAnalysisFramework/Makefile
 projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile
 projects/symbolicAnalysisFramework/src/external/Makefile
@@ -1995,6 +2000,9 @@ projects/Fortran_to_C/tests/Makefile
 projects/vectorization/Makefile
 projects/vectorization/src/Makefile
 projects/vectorization/tests/Makefile
+projects/MultiLevelMemory/Makefile
+projects/MultiLevelMemory/src/Makefile
+projects/MultiLevelMemory/tests/Makefile
 projects/PolyOpt2/Makefile
 projects/PolyOpt2/polyopt/Makefile
 projects/PolyOpt2/src/Makefile
