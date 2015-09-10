@@ -307,7 +307,12 @@ findImmediateValues(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
     return t1.values;
 }
 
-// Scan memory for reachable addresses.
+// Scan memory for reachable addresses. This is a little more complex than just reading one address at a time because:
+//   1. We want it to be efficient, so we read a whole buffer at once and look for addresses in the buffer.
+//   2. We need to handle alignment, byte order, and various sizes of addresses.
+//   3. Depending on alignment and size, addresses can overlap each other in memory.
+//   4. We need to watch out for addresses that would span two of our buffer-sized windows read from memory
+//   5. We need to be careful of addresses that are 2^32 (or 2^64) to avoid overflow when incrementing
 static void
 insertAddressesFromMemory(AddressIntervalSet &reachable /*in,out*/, const P2::Partitioner &partitioner,
                           const MemoryMap &map, size_t bytesPerWord, size_t alignment, ByteOrder::Endianness sex) {
@@ -323,37 +328,39 @@ insertAddressesFromMemory(AddressIntervalSet &reachable /*in,out*/, const P2::Pa
                 break;                                  // overflow
             bufVa = tmp;
         }
-        size_t bufSz = map.at(bufVa).limit(sizeof buf).read(buf).size();
+        size_t bufSize = map.at(bufVa).limit(sizeof buf).read(buf).size();
+        if (bufSize < bytesPerWord) {
+            bufVa += bytesPerWord;
+            if (bufVa <= map.hull().least())
+                break;                                  // overflow
+            continue;
+        }
 
         size_t bufOffset = 0;
         while (1) {
             bufOffset = alignUp(bufOffset, alignment);
-            if (bufOffset + bytesPerWord > sizeof buf)
+            if (bufOffset + bytesPerWord > bufSize)
                 break;
 
             rose_addr_t targetVa = 0;
             switch (sex) {
                 case ByteOrder::ORDER_LSB:
-                    for (size_t j=0; j<bytesPerWord; j++)
-                        targetVa |= buf[i+j] << (8*j);
+                    for (size_t i=0; i<bytesPerWord; i++)
+                        targetVa |= buf[bufOffset+i] << (8*i);
                     break;
                 case ByteOrder::ORDER_MSB:
-                    for (size_t j=0; j<bytesPerWord; j++)
-                        targetVa = (targetVa << 8) | buf[i+j];
+                    for (size_t i=0; i<bytesPerWord; i++)
+                        targetVa = (targetVa << 8) | buf[bufOffset+i];
                     break;
+                default:
+                    ASSERT_not_reachable("invalid byte order");
             }
-#if 1 // DEBUGGING [Robb P Matzke 2015-08-29]
-            std::cerr <<"ROBB: found mem[" <<StringUtility::addrToString(bufVa+i) <<"] = "
-                      <<StringUtility::addrToString(targetVa) <<"\n";
-#endif
-
             P2::ControlFlowGraph::ConstVertexIterator targetVertex = partitioner.findPlaceholder(targetVa);
             if (targetVertex != partitioner.cfg().vertices().end())
                 insertReachableRecursively(reachable, partitioner, targetVertex);
             ++bufOffset;
         }
         bufVa += bufOffset;
-            
     }
 }
 
@@ -557,10 +564,8 @@ int main(int argc, char *argv[]) {
     }
     info <<"analyzing " <<StringUtility::plural(executableSpace.size(), "bytes") <<" of address space\n";
 
-    if (0 == settings.addressSize) {
-        DispatcherPtr cpu = partitioner.newDispatcher(partitioner.newOperators());
-        settings.addressSize = cpu->stackPointerRegister().get_nbits() >> 3;
-    }
+    if (0 == settings.addressSize)
+        settings.addressSize = partitioner.newDispatcher(partitioner.newOperators())->stackPointerRegister().get_nbits() >> 3;
     if (0 == settings.addressAlignment)
         settings.addressAlignment = 1;
 
