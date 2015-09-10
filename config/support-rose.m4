@@ -1969,7 +1969,6 @@ projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
 projects/RosePolly/Makefile
-projects/simulator/Makefile
 projects/SMTPathFeasibility/Makefile
 projects/symbolicAnalysisFramework/Makefile
 projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile
