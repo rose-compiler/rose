@@ -16,8 +16,8 @@
 #include <gcrypt.h>
 #endif
 
-#include "x86InstructionSemantics.h"
 #include "BaseSemantics2.h"
+#include "integerOps.h"
 #include "MemoryMap.h"
 #include "FormatRestorer.h"
 #include "RegisterStateGeneric.h"

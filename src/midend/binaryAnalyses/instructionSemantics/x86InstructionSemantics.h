@@ -1,3 +1,6 @@
+// This API is deprecated. Use rose::BinaryAnalysis::InstructionSemantics2 instead.  It hasn't been supported for at least a
+// year and some instructions have known bugs in their semantics. [Robb P. Matzke 2015-09-10]
+
 #ifndef ROSE_X86INSTRUCTIONSEMANTICS_H
 #define ROSE_X86INSTRUCTIONSEMANTICS_H
 

@@ -1,7 +1,6 @@
 #ifndef Rose_NullSemantics2_H
 #define Rose_NullSemantics2_H
 
-#include "x86InstructionSemantics.h"
 #include "BaseSemantics2.h"
 
 namespace rose {
