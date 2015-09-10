@@ -121,7 +121,7 @@ namespace BinaryAnalysis {
  *  The instruction semantics architecture is designed to allow users to specialize nearly every part of it.  ROSE defines
  *  triplets (value type, state type, RISC operators) that are designed to work together to implement a particular semantic
  *  domain, but users are free to subclass any of those components to build customized semantic domains.  For example, the x86
- *  simulator (in "projects/simulator") subclasses the PartialSymbolicSemantics state in order to use memory mapped via ROSE's
+ *  simulator (in "projects/simulator2") subclasses the PartialSymbolicSemantics state in order to use memory mapped via ROSE's
  *  MemoryMap class, and to handle system calls (among other things).
  *
  *  When writing a subclass the author should implement three versions of each constructor: the real constructor, the static
@@ -324,8 +324,8 @@ namespace BinaryAnalysis {
  *  state.  In fact, in order to follow flow-of-control from one instruction to another, it is customary to read the x86 EIP
  *  (instruction pointer register) value to get the address for the next instruction fetch.
  *
- *  One can find actual uses of instruction semantics in ROSE by searching for DispatcherX86.  Also, the simulator project (in
- *  projects/simulator) has many examples how to use instruction semantics--in fact, the simulator defines its own concrete
+ *  One can find actual uses of instruction semantics in ROSE by searching for DispatcherX86.  Also, the simulator2 project (in
+ *  projects/simulator2) has many examples how to use instruction semantics--in fact, the simulator defines its own concrete
  *  domain by subclassing PartialSymbolicSemantics in order to execute specimen programs.
  */
 namespace InstructionSemantics2 {
