@@ -82,7 +82,7 @@ typedef double PetscLogDouble;
 // This code is removed and new code based on this is in ROSE/src/midend/astDiagnostics/astPerformance.[hC]
 
 long int
-ROSE::getCurrentMemoryUsage()
+rose::getCurrentMemoryUsage()
    {
   // PetscLogDouble mem;
      long int mem;

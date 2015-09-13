@@ -672,7 +672,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           printf ("This is a deprecated option in ROSE (use --h or --help instead).\n");
   // Default
           cout << version_message() << endl;
-       // ROSE::usage(0);
+       // rose::usage(0);
           SgFile::usage(0);
           exit(0);
         }
@@ -691,7 +691,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // printf ("option --help found \n");
        // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
        // version();
-       // ROSE::usage(0);
+       // rose::usage(0);
           cout << version_message() << endl;
           SgFile::usage(0);
           exit(0);
@@ -1268,9 +1268,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           unsigned int length = argv[i].size();
 
        // printf ("assemble compiler command line option: argv[%d] = %s length = %d \n",i,argv[i],length);
-       // printf ("ROSE::sourceFileNamesWithoutPath[%d] = \n",sourceFileNameCounter,
-       //     ROSE::sourceFileNamesWithoutPath[sourceFileNameCounter]);
-       // ROSE_ASSERT (ROSE::sourceFileNamesWithoutPath[sourceFileNameCounter] != NULL);
+       // printf ("rose::sourceFileNamesWithoutPath[%d] = \n",sourceFileNameCounter,
+       //     rose::sourceFileNamesWithoutPath[sourceFileNameCounter]);
+       // ROSE_ASSERT (rose::sourceFileNamesWithoutPath[sourceFileNameCounter] != NULL);
 
        // DQ (12/8/2007): This leverages existing support in commandline processing
        // p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
@@ -3463,7 +3463,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           CommandlineProcessing::isOption(argv,"-","(h|help)",true)      == true )
         {
        // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
-       // ROSE::usage(0);
+       // rose::usage(0);
           cout << version_message() << endl;
           usage(0);
        // exit(0);
@@ -7664,8 +7664,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
      std::string sourceFileName = get_sourceFileNameWithPath();
 
-     std::string oldFileNamePathOnly = ROSE::getPathFromFileName(sourceFileName.c_str());
-     std::string oldFileName         = ROSE::stripPathFromFileName(sourceFileName.c_str());
+     std::string oldFileNamePathOnly = rose::getPathFromFileName(sourceFileName.c_str());
+     std::string oldFileName         = rose::utility_stripPathFromFileName(sourceFileName.c_str());
 
 #if 0
      printf ("oldFileNamePathOnly = %s \n",oldFileNamePathOnly.c_str());

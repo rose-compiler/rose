@@ -42,9 +42,9 @@ const int roseTargetCacheLineSize = 32;
 #endif
 
 // DQ (8/10/2004): This was moved to the SgFile a long time ago and should not be used any more)
-// bool ROSE::verbose                 = false;
+// bool rose::verbose                 = false;
 // DQ (8/11/2004): build a global state here
-// int ROSE::roseVerbose = 0;
+// int rose::roseVerbose = 0;
 
 
 #define OUTPUT_TO_FILE true
@@ -52,18 +52,18 @@ const int roseTargetCacheLineSize = 32;
 
 
 // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
-std::map<SgNode*,TokenStreamSequenceToNodeMapping*> ROSE::tokenSubsequenceMap;
+std::map<SgNode*,TokenStreamSequenceToNodeMapping*> rose::tokenSubsequenceMap;
 
 // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
-// std::vector<FrontierNode*> ROSE::frontierNodes;
-std::map<SgStatement*,FrontierNode*> ROSE::frontierNodes;
+// std::vector<FrontierNode*> rose::frontierNodes;
+std::map<SgStatement*,FrontierNode*> rose::frontierNodes;
 
 // DQ (11/27/2013): Adding adjacency information for the nodes in the token unparsing AST frontier.
-std::map<SgNode*,PreviousAndNextNodeData*> ROSE::previousAndNextNodeMap;
+std::map<SgNode*,PreviousAndNextNodeData*> rose::previousAndNextNodeMap;
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
-std::multimap<int,SgStatement*> ROSE::redundantlyMappedTokensToStatementMultimap;
-std::set<int> ROSE::redundantTokenEndingsSet;
+std::multimap<int,SgStatement*> rose::redundantlyMappedTokensToStatementMultimap;
+std::set<int> rose::redundantTokenEndingsSet;
 
 
 
@@ -245,7 +245,7 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // make sure that there is some sort of commandline (at least a file specified)
      if (argv.size() == 1)
         {
-       // ROSE::usage(1);      // Print usage and exit with exit status == 1
+       // rose::usage(1);      // Print usage and exit with exit status == 1
           SgFile::usage(1);      // Print usage and exit with exit status == 1
         }
 
@@ -841,11 +841,11 @@ pdfPrintAbstractSyntaxTreeEDG ( SgFile *file )
   // Use the PDF file declared in the EDG/src/displayTree.C
      extern PDF* pdfGlobalFile;
 
-     printf ("ROSE::getWorkingDirectory() = %s \n",ROSE::getWorkingDirectory());
-     sprintf(filename,"%s/%s.edg.pdf",ROSE::getWorkingDirectory(),ROSE::stripPathFromFileName(ROSE::getFileName(file)));
+     printf ("rose::getWorkingDirectory() = %s \n",rose::getWorkingDirectory());
+     sprintf(filename,"%s/%s.edg.pdf",rose::getWorkingDirectory(),rose::utility_stripPathFromFileName(rose::getFileName(file)));
      printf ("filename = %s \n",filename);
 
-     ifstream sourceFile (ROSE::getFileName(file));
+     ifstream sourceFile (rose::getFileName(file));
      if (!sourceFile)
           cerr << "ERROR opening sourceFile" << endl;
      ROSE_ASSERT (sourceFile);
@@ -971,7 +971,7 @@ generatePDFofEDG ( const SgProject & project )
 
 #if 1
 int
-ROSE::getLineNumber ( SgLocatedNode* locatedNodePointer )
+rose::getLineNumber ( SgLocatedNode* locatedNodePointer )
    {
   // Get the line number from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
@@ -991,7 +991,7 @@ ROSE::getLineNumber ( SgLocatedNode* locatedNodePointer )
 #endif
 #if 1
 int
-ROSE::getColumnNumber ( SgLocatedNode* locatedNodePointer )
+rose::getColumnNumber ( SgLocatedNode* locatedNodePointer )
    {
   // Get the line number from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
@@ -1011,7 +1011,7 @@ ROSE::getColumnNumber ( SgLocatedNode* locatedNodePointer )
 #endif
 #if 1
 std::string
-ROSE::getFileName ( SgLocatedNode* locatedNodePointer )
+rose::getFileName ( SgLocatedNode* locatedNodePointer )
    {
   // Get the filename from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
@@ -1021,7 +1021,7 @@ ROSE::getFileName ( SgLocatedNode* locatedNodePointer )
      if (locatedNodePointer->get_file_info() != NULL)
         {
           ROSE_ASSERT (locatedNodePointer->get_file_info() != NULL);
-       // printf ("In ROSE::getFileName(): locatedNodePointer->get_file_info() = %p \n",locatedNodePointer->get_file_info());
+       // printf ("In rose::getFileName(): locatedNodePointer->get_file_info() = %p \n",locatedNodePointer->get_file_info());
           Sg_File_Info* fileInfo = locatedNodePointer->get_file_info();
           fileName = fileInfo->get_filenameString();
         }
@@ -1030,7 +1030,7 @@ ROSE::getFileName ( SgLocatedNode* locatedNodePointer )
    }
 #endif
 #if 1
-bool ROSE:: isPartOfTransformation( SgLocatedNode* locatedNodePointer )
+bool rose:: isPartOfTransformation( SgLocatedNode* locatedNodePointer )
 {
   bool result = false;
   Sg_File_Info *fileInfo = locatedNodePointer->get_file_info();
@@ -1041,7 +1041,7 @@ bool ROSE:: isPartOfTransformation( SgLocatedNode* locatedNodePointer )
 #endif
 
 std::string
-ROSE::getFileNameWithoutPath ( SgStatement* statementPointer )
+rose::getFileNameWithoutPath ( SgStatement* statementPointer )
    {
   // Get the filename from the Sage III statement object
      ROSE_ASSERT (statementPointer != NULL);
@@ -1050,12 +1050,12 @@ ROSE::getFileNameWithoutPath ( SgStatement* statementPointer )
   // char* fileName = getFileName(statementPointer);
      std::string fileName = statementPointer->get_file_info()->get_filenameString();
 
-     return stripPathFromFileName(fileName);
+     return utility_stripPathFromFileName(fileName);
    }
 
 #if 1
 std::string
-ROSE::stripPathFromFileName ( const std::string& fileNameWithPath )
+rose::utility_stripPathFromFileName ( const std::string& fileNameWithPath )
    {
      size_t pos = fileNameWithPath.rfind('/');
      if (pos == std::string::npos || pos == fileNameWithPath.size() - 1) {
@@ -1068,7 +1068,7 @@ ROSE::stripPathFromFileName ( const std::string& fileNameWithPath )
 
 #if 0
 std::string
-ROSE::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
+rose::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
    {
   // This function is not sophisticated enough to handle binaries with paths such as:
   //    ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/tutorial/inputCode_binaryAST_1
@@ -1094,7 +1094,7 @@ ROSE::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
 #if 1
 // DQ (3/15/2005): New, simpler and better implementation suggested function from Tom, thanks Tom!
 string
-ROSE::getPathFromFileName ( const string fileName )
+rose::getPathFromFileName ( const string fileName )
    {
      size_t pos = fileName.rfind('/');
      if (pos == std::string::npos) {
@@ -1110,14 +1110,14 @@ ROSE::getPathFromFileName ( const string fileName )
 #if 0
  //! get the source directory (requires an input string currently)
 char*
-ROSE::getSourceDirectory ( char* fileNameWithPath )
+rose::getSourceDirectory ( char* fileNameWithPath )
    {
      return getPathFromFileName (fileNameWithPath);
    }
 #else
  //! get the source directory (requires an input string currently)
 string
-ROSE::getSourceDirectory ( string fileNameWithPath )
+rose::getSourceDirectory ( string fileNameWithPath )
    {
      return getPathFromFileName (fileNameWithPath);
    }
@@ -1126,7 +1126,7 @@ ROSE::getSourceDirectory ( string fileNameWithPath )
 #if 0
  //! get the current directory
 char*
-ROSE::getWorkingDirectory ()
+rose::getWorkingDirectory ()
    {
      int i = 0;  // index variable declaration
 
@@ -1141,8 +1141,8 @@ ROSE::getWorkingDirectory ()
      ROSE_ASSERT (returnString != NULL);
 
   // The semantics of the getcwd is that these should be the same (see if they are)
-  // printf ("In ROSE::getWorkingDirectory: Current directory = %s \n",currentDirectory);
-  // printf ("In ROSE::getWorkingDirectory: Current directory = %s \n",returnString);
+  // printf ("In rose::getWorkingDirectory: Current directory = %s \n",currentDirectory);
+  // printf ("In rose::getWorkingDirectory: Current directory = %s \n",returnString);
 
   // live with the possible memory leak for now
   // delete currentDirectory;
@@ -1153,7 +1153,7 @@ ROSE::getWorkingDirectory ()
 #else
  //! get the current directory
 string
-ROSE::getWorkingDirectory ()
+rose::getWorkingDirectory ()
    {
   // DQ (9/5/2006): Increase the buffer size
   // const int maxPathNameLength = 1024;
@@ -1178,7 +1178,7 @@ ROSE::getWorkingDirectory ()
 #endif
 
 SgName
-ROSE::concatenate ( const SgName & X, const SgName & Y )
+rose::concatenate ( const SgName & X, const SgName & Y )
    {
      return X + Y;
    }
@@ -1186,7 +1186,7 @@ ROSE::concatenate ( const SgName & X, const SgName & Y )
 #if 0
 // DQ (9/5/2008): Try to remove this function!
 std::string
-ROSE::getFileName ( const SgFile* file )
+rose::getFileName ( const SgFile* file )
    {
   // Get the filename from the Sage II file object
      ROSE_ASSERT (file != NULL);
@@ -1202,7 +1202,7 @@ ROSE::getFileName ( const SgFile* file )
 #if 1
 // DQ (9/5/2008): Try to remove this function!
 string
-ROSE::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
+rose::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
    {
      string returnString;
 
@@ -1229,7 +1229,7 @@ ROSE::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
           ROSE_ASSERT (file != NULL);
           if (file != NULL)
              {
-            // returnString = ROSE::getFileName(file);
+            // returnString = rose::getFileName(file);
                returnString = file->getFileName();
              }
 
@@ -1242,20 +1242,20 @@ ROSE::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
 #endif
 
 void
-ROSE::usage (int status)
+rose::usage (int status)
    {
      SgFile::usage(status);
   // exit(status);
    }
 
 int 
-ROSE::containsString ( const std::string& masterString, const std::string& targetString )
+rose::containsString ( const std::string& masterString, const std::string& targetString )
    {
      return masterString.find(targetString) != string::npos;
    }
 
 void
-ROSE::filterInputFile ( const string inputFileName, const string outputFileName )
+rose::filterInputFile ( const string inputFileName, const string outputFileName )
    {
   // This function filters the input file to remove ^M characters and expand tabs etc.
   // Any possible processing of the input file, before being compiled, should be done
@@ -1265,7 +1265,7 @@ ROSE::filterInputFile ( const string inputFileName, const string outputFileName 
    }
 
 SgStatement*
-ROSE::getNextStatement ( SgStatement *currentStatement )
+rose::getNextStatement ( SgStatement *currentStatement )
    {
      ROSE_ASSERT (currentStatement  != NULL);
     //CI (1/3/2007): This sued to be not implemented ,,, here is my try
@@ -1326,7 +1326,7 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
                                                                  // currentStatement is not found in the list
                                                                  if (i ==  statementList.end()) 
                                                                  {
-                                                                   cerr<<"fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list"<<endl;
+                                                                   cerr<<"fatal error: rose::getNextStatement(): current statement is not found within its scope's statement list"<<endl;
                                                                    cerr<<"current statement is "<<currentStatement->class_name()<<endl;
                                                                    cerr<<currentStatement->get_file_info()->displayString()<<endl;
                                                                    cerr<<"Its scope is "<<scope->class_name()<<endl;
@@ -1357,7 +1357,7 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
    }
          
 SgStatement*
-ROSE::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /*= true*/)
+rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /*= true*/)
    {
      ROSE_ASSERT (targetStatement  != NULL);
 
@@ -1378,10 +1378,10 @@ ROSE::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
      ROSE_ASSERT (scope != targetStatement);
 
 #if 0
-     printf ("@@@@@ In ROSE::getPreviousStatement(): targetStatement = %s \n",targetStatement->sage_class_name());
-     printf ("@@@@@ In ROSE::getPreviousStatement(): targetStatement->unparseToString() = %s \n",targetStatement->unparseToString().c_str());
-     printf ("@@@@@ In ROSE::getPreviousStatement(): scope = %s \n",scope->sage_class_name());
-     printf ("@@@@@ In ROSE::getPreviousStatement(): scope->unparseToString() = %s \n",scope->unparseToString().c_str());
+     printf ("@@@@@ In rose::getPreviousStatement(): targetStatement = %s \n",targetStatement->sage_class_name());
+     printf ("@@@@@ In rose::getPreviousStatement(): targetStatement->unparseToString() = %s \n",targetStatement->unparseToString().c_str());
+     printf ("@@@@@ In rose::getPreviousStatement(): scope = %s \n",scope->sage_class_name());
+     printf ("@@@@@ In rose::getPreviousStatement(): scope->unparseToString() = %s \n",scope->unparseToString().c_str());
 #endif
 
      switch (targetStatement->variantT())

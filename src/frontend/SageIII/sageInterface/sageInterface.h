@@ -67,7 +67,7 @@ The namespace, SageInterface, collects functions that operate on the IR and are 
     \internal Further organization of the functions in this namespace is required.
 Major AST manipulation functions are scattered in the following directories
    - src/midend/astUtil/astInterface
-   - src/roseSupport/utility_function.h,  namespace ROSE
+   - src/roseSupport/utility_function.h,  namespace rose
    - src/roseSupport/TransformationSupport.h, class TransformationSupport
    - src/midend/astInlining/inlinerSupport.C
    - src/frontend/SageIII/sageInterface
