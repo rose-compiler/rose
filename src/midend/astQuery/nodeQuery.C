@@ -525,8 +525,8 @@ NodeQuery::querySolverVariableTypes (SgNode * astNode)
      SgInitializedNamePtrList sageInitializedNameList = sageVariableDeclaration->get_variables();
 
 
-     printf ("\nHere is a function declaration :Line = %d Columns = %d \n", ROSE:: getLineNumber (isSgLocatedNode(astNode) ), ROSE:: getColumnNumber ( isSgLocatedNode(astNode) ));
-     cout << "The filename is:" << ROSE::getFileName(isSgLocatedNode(astNode)) << endl;
+     printf ("\nHere is a function declaration :Line = %d Columns = %d \n", rose:: getLineNumber (isSgLocatedNode(astNode) ), rose:: getColumnNumber ( isSgLocatedNode(astNode) ));
+     cout << "The filename is:" << rose::getFileName(isSgLocatedNode(astNode)) << endl;
 
 
      typedef SgInitializedNamePtrList::iterator LI;
@@ -561,10 +561,10 @@ NodeQuery::querySolverVariableTypes (SgNode * astNode)
 
 #if DEBUG_NODEQUERY
         printf ("\nIn filename: %s ",
-            ROSE::getFileName (isSgLocatedNode (astNode)));
+            rose::getFileName (isSgLocatedNode (astNode)));
         printf ("\nHere is a variable :Line = %d Columns = %d \n",
-            ROSE::getLineNumber (isSgLocatedNode (astNode)),
-            ROSE::getColumnNumber (isSgLocatedNode (astNode)));
+            rose::getLineNumber (isSgLocatedNode (astNode)),
+            rose::getColumnNumber (isSgLocatedNode (astNode)));
         //cout << "The typename of the variable is: " << typeName << endl;
 #endif
 
