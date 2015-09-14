@@ -63,7 +63,7 @@ enum TraversalEvent {
                                *   become quite deep.  A traversal stopped at this event returns the vertex which is being left
                                *   and the edge by which the vertex was originally entered.  If the vertex was set as an
                                *   explicit traversal position then the edge will be an end iterator. */
-    FOLLOW_EDGE     = 0x0020, // Internal: current edge was followed to find neighbor vertex
+    FOLLOW_EDGE     = 0x0020  // Internal: current edge was followed to find neighbor vertex
 };
 
 // Event sets (doxygen doesn't pick these up, so they're documented in the TraversalEvent enum
