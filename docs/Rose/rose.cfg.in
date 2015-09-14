@@ -670,6 +670,8 @@ INPUT                  = @top_pwd@/rose.docs \
                          @top_pwd@/docs/Rose/AvailableDocumentation.docs \
                          @top_pwd@/src/frontend/SageIII \
                          @top_srcdir@/src/frontend/frontend.docs \
+			 @top_srcdir@/docs/Rose/Installation \
+			 @top_srcdir@/docs/Rose/FAQ-Binary.dox \
                          @top_srcdir@/docs/Rose \
                          @top_srcdir@/docs/testDoxygen \
                          @top_srcdir@/src/ROSETTA/src/binaryInstruction.C \
@@ -866,6 +868,7 @@ EXCLUDE_SYMBOLS        =
 EXAMPLE_PATH           = @top_srcdir@/docs/testDoxygen/example1.C \
                          @top_srcdir@/docs/testDoxygen/example1_test.C \
                          @top_srcdir@/docs/testDoxygen/rose_example1_test.C \
+			 @top_srcdir@/docs/Rose/Examples \
                          @top_srcdir@/src/util/Sawyer/docs/examples
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
