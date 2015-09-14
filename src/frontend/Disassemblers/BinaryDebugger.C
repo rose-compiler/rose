@@ -374,7 +374,7 @@ BinaryDebugger::clearBreakpoint(const AddressInterval &va) {
 
 void
 BinaryDebugger::singleStep() {
-    sendCommand(PTRACE_SINGLESTEP, child_, 0, (void*)sendSignal_);
+    sendCommand(PTRACE_SINGLESTEP, child_, 0, (void*)sendSignal_);// void* cast is okay--it's part of the Linux ptrace API
     waitForChild();
 }
 
@@ -488,7 +488,7 @@ BinaryDebugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
 void
 BinaryDebugger::runToBreakpoint() {
     if (breakpoints_.isEmpty()) {
-        sendCommand(PTRACE_CONT, child_, 0, (void*)sendSignal_);
+        sendCommand(PTRACE_CONT, child_, 0, (void*)sendSignal_);// void* cast is okay--it's part of the Linux ptrace API
         waitForChild();
     } else {
         while (1) {

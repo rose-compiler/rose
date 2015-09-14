@@ -392,6 +392,13 @@ Engine::specimenNameDocumentation() {
             "overwriting existing parts of the map.  This can be useful when the user wants accurate information about "
             "how that native loader links in shared objects since ROSE's linker doesn't always have identical behavior.}"
 
+            "@bullet{If the file name begins with the string \"srec:\" then it is treated as Motorola S-Record format. "
+            "Mapping attributes are stored after the first column and before the second; the file name appears after the "
+            "second colon.  The only mapping attributes supported at this time are permissions, specified as an equal "
+            "sign ('=') followed by zero or more of the letters \"r\", \"w\", and \"x\" to signify read, write, and "
+            "execute permissions. If no letters are present after the equal sign, then the memory has no permissions; "
+            "if the equal sign itself is also missing then the segments are given read, write, and execute permission.}"
+
             "@bullet{If the name ends with \".srec\" and doesn't match the previous list of prefixes then it is assumed "
             "to be a text file containing Motorola S-Records and will be parsed as such and loaded into the memory map "
             "with read, write, and execute permissions.}"
@@ -448,6 +455,7 @@ Engine::isNonContainer(const std::string &name) {
     return (boost::starts_with(name, "map:") ||         // map file directly into MemoryMap
             boost::starts_with(name, "proc:") ||        // map process memory into MemoryMap
             boost::starts_with(name, "run:") ||         // run a process in a debugger, then map into MemoryMap
+            boost::starts_with(name, "srec:") ||        // Motorola S-Record format
             boost::ends_with(name, ".srec"));           // Motorola S-Record format
 }
 
@@ -559,22 +567,56 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                 throw std::runtime_error(exeName + " " + debugger.howTerminated() + " without reaching a breakpoint");
             map_.insertProcess(":noattach:" + StringUtility::numberToString(debugger.isAttached()));
             debugger.terminate();
-        } else if (boost::ends_with(fileName, ".srec")) {
-            if (fileName.size()!=strlen(fileName.c_str())) {
-                throw std::runtime_error("file name contains internal NUL characters: \"" +
-                                         StringUtility::cEscape(fileName) + "\"");
+        } else if (boost::starts_with(fileName, "srec:") || boost::ends_with(fileName, ".srec")) {
+            std::string resource;                       // name of file to open
+            unsigned perms = MemoryMap::READABLE | MemoryMap::WRITABLE | MemoryMap::EXECUTABLE;
+
+            if (boost::starts_with(fileName, "srec:")) {
+                // Format is "srec:[=PERMS]:FILENAME" where PERMS are the letters "r", "w", and/or "x"
+                std::vector<std::string> parts = StringUtility::split(":", fileName, 3);
+                if (parts.size() != 3)
+                    throw std::runtime_error("second ':' expected in \"srec\" URI (expected \"srec:[=PERMS]:FILENAME\")");
+                resource = parts[2];
+
+                // Permissions, like "=rw". Lack of '=...' means default permissions; nothing after '=' means no permissions
+                // (e.g., "srec:=:filename").
+                if (!parts[1].empty()) {
+                    if ('=' != parts[1][0])
+                        throw std::runtime_error("expected \"=PERMS\" in \"srec:\" URI");
+                    perms = 0;
+                    for (size_t i=1; i<parts[1].size(); ++i) {
+                        switch (parts[1][i]) {
+                            case 'r': perms |= MemoryMap::READABLE; break;
+                            case 'w': perms |= MemoryMap::WRITABLE; break;
+                            case 'x': perms |= MemoryMap::EXECUTABLE; break;
+                            default:
+                                throw std::runtime_error("invalid permission character '" +
+                                                         StringUtility::cEscape(parts[1].substr(i, 1)) +
+                                                         "' in \"srec:\" URI");
+                                break;
+                        }
+                    }
+                }
+            } else {
+                resource = fileName;
             }
-            std::ifstream input(fileName.c_str());
+            
+            // Parse and load the S-Record file
+            if (resource.size()!=strlen(resource.c_str())) {
+                throw std::runtime_error("file name contains internal NUL characters: \"" +
+                                         StringUtility::cEscape(resource) + "\"");
+            }
+            std::ifstream input(resource.c_str());
             if (!input.good()) {
                 throw std::runtime_error("cannot open Motorola S-Record file: \"" +
-                                         StringUtility::cEscape(fileName) + "\"");
+                                         StringUtility::cEscape(resource) + "\"");
             }
             std::vector<SRecord> srecs = SRecord::parse(input);
             for (size_t i=0; i<srecs.size(); ++i) {
                 if (!srecs[i].error().empty())
-                    mlog[ERROR] <<fileName <<":" <<(i+1) <<": S-Record: " <<srecs[i].error() <<"\n";
+                    mlog[ERROR] <<resource <<":" <<(i+1) <<": S-Record: " <<srecs[i].error() <<"\n";
             }
-            SRecord::load(srecs, map_, true /*create*/, MemoryMap::READABLE|MemoryMap::WRITABLE|MemoryMap::EXECUTABLE);
+            SRecord::load(srecs, map_, true /*create*/, perms);
         }
     }
 }

@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/Application.h>
 
 #include <bROwSE/WAssemblyListing.h>

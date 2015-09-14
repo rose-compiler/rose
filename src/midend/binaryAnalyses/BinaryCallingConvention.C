@@ -598,7 +598,6 @@ Analysis::updateStackParameters(const StatePtr &initialState, const StatePtr &fi
     SValuePtr initialStackPointer = initialState->readRegister(cpu_->stackPointerRegister(), ops.get());
     ops->set_state(finalState);
     StackVariables vars = P2::DataFlow::findFunctionArguments(ops, initialStackPointer);
-    const RegisterDescriptor SP = cpu_->stackPointerRegister();
     BOOST_FOREACH (const StackVariable &var, vars) {
         if (var.meta.ioProperties.exists(IO_READ_BEFORE_WRITE)) {
             inputStackParameters_.push_back(var);
@@ -735,7 +734,7 @@ Analysis::match(const Definition &cc) const {
     if (!(restoredRegisters_ - cc.calleeSavedRegisterParts()).isEmpty())
         return false;
 
-    // No analysis callee-saved register should be a definition's output or scratch register
+    // If we modified registers we were not allowed to have modified then we're not this calling convention.
     if (!(outputRegisters_ & ccOutputRegisters).isEmpty())
         return false;
 

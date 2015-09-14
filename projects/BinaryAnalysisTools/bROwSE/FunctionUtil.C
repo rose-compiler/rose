@@ -1,5 +1,5 @@
 // Operations on specimen functions
-#include <sage3basic.h>
+#include <rose.h>
 
 #include <BaseSemantics2.h>                             // ROSE
 #include <bROwSE/FunctionUtil.h>

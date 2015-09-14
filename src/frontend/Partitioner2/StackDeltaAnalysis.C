@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 
+#include <AsmUnparser_compat.h>
 #include <BinaryDataFlow.h>
 #include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Partitioner.h>

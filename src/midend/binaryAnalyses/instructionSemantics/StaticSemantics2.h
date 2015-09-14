@@ -2,6 +2,7 @@
 #ifndef Rose_StaticSemantics2_H
 #define Rose_StaticSemantics2_H
 
+#include "Disassembler.h"
 #include "NullSemantics2.h"
 
 namespace rose {

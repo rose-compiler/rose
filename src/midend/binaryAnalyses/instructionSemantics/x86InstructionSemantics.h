@@ -1,3 +1,6 @@
+// This API is deprecated. Use rose::BinaryAnalysis::InstructionSemantics2 instead.  It hasn't been supported for at least a
+// year and some instructions have known bugs in their semantics. [Robb P. Matzke 2015-09-10]
+
 #ifndef ROSE_X86INSTRUCTIONSEMANTICS_H
 #define ROSE_X86INSTRUCTIONSEMANTICS_H
 
@@ -1505,7 +1508,6 @@ struct X86InstructionSemantics {
             }
 
             case x86_shrd: {
-                Word(5) shiftCount = extract<0, 5>(read8(operands[2]));
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 2: {
                         WordType<16> output = shift_semantics<16, 5>(kind, read16(operands[0]), read16(operands[1]),

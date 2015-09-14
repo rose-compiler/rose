@@ -738,7 +738,6 @@ SgAsmPEFileHeader::reallocate()
      * don't change (i.e., don't increase e_nt_hdr_size if the bytes beyond it are zero anyway, and if they aren't then adjust
      * it as little as possible.  The RVA/Size pairs are considered to be part of the NT Optional Header. */
     size_t oh_size = p_rvasize_pairs->get_pairs().size() * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
-    size_t rvasize_offset; /*offset with respect to "oh" buffer allocated below*/
     if (4==get_word_size()) {
         oh_size += sizeof(PE32OptHeader_disk);
     } else if (8==get_word_size()) {
@@ -749,10 +748,8 @@ SgAsmPEFileHeader::reallocate()
     unsigned char *oh = new unsigned char[oh_size];
     if (4==get_word_size()) {
         encode((PE32OptHeader_disk*)oh);
-        rvasize_offset = sizeof(PE32OptHeader_disk);
     } else if (8==get_word_size()) {
         encode((PE64OptHeader_disk*)oh);
-        rvasize_offset = sizeof(PE64OptHeader_disk);
     } else {
         delete[] oh;
         throw FormatError("unsupported PE word size");

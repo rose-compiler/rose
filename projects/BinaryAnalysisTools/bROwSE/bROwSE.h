@@ -1,7 +1,6 @@
 #ifndef bROwSE_H
 #define bROwSE_H
 
-#include <rose.h>
 #include <Color.h>                                      // ROSE
 #include <Diagnostics.h>                                // ROSE
 #include <Partitioner2/Engine.h>                        // ROSE

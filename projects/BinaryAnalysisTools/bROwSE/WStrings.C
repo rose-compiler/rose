@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WStrings.h>
 
 #include <boost/regex.hpp>

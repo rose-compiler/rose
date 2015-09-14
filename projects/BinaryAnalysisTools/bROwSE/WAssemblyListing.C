@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WAssemblyListing.h>
 
 #include <BinaryControlFlow.h>                          // ROSE

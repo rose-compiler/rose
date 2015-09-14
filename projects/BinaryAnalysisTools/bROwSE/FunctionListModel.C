@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/FunctionListModel.h>
 #include <bROwSE/FunctionUtil.h>
 #include <boost/bind.hpp>

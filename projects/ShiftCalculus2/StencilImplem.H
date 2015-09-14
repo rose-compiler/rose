@@ -70,6 +70,44 @@ Stencil<TCoef> Stencil<TCoef>::operator+
 };
 
 template <class TCoef> 
+Stencil<TCoef> Stencil<TCoef>::operator+=
+(const Stencil<TCoef> a_stencil) 
+{
+  if ((m_destShift != a_stencil.m_destShift) ||
+      (m_destRefratio != a_stencil.m_destRefratio))
+    {
+      cout << "error - trying to add two stencils with different"
+           << " LHS shifts / ratios" << endl;
+      abort();
+    }
+  vector<TCoef> newCoefs = a_stencil.m_coef;
+  vector<Point> newOffsets = a_stencil.m_offsets;
+  for (int l1 = 0 ; l1 < m_coef.size();l1++)
+    {
+      Point loc = m_offsets[l1];
+      bool isThere = false;
+      int locThere;
+      for (int l2 = 0;l2 < a_stencil.m_coef.size();l2++)
+        {
+          if (a_stencil.m_offsets[l2] == loc)
+            {
+              isThere = true;
+              locThere = l2;
+            }
+        }
+      if (isThere) 
+        {
+          newCoefs[locThere] += m_coef[l1];
+        }
+      else
+        {
+          newCoefs.push_back(m_coef[l1]);
+          newOffsets.push_back(m_offsets[l1]);
+        }
+    }
+  return *this;
+};
+template <class TCoef> 
 Stencil<TCoef> Stencil<TCoef>::operator*
 (const Stencil<TCoef> a_stencil) const
 {
