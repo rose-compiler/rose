@@ -171,6 +171,17 @@ using this memory map for disassembly:
 0x0040055d: 66 66 90                |ff.     |   nop    
 0x0040055d: Successor blocks: 0x00400560<<Func>>
 
+0x00400578: Basic block reasons: fragment, CFG head; 71% code likelihood
+0x00400578: bf e0 07 50 00          |...P.   |   mov    edi, 0x005007e0<.jcr>
+0x0040057d: 49 89 c3                |I..     |   mov    r11, rax
+0x00400580: c9                      |.       |   leave  
+0x00400580: Successor blocks: 0x00400581
+
+0x00400581: Basic block reasons: fragment, CFG head; 71% code likelihood
+0x00400581: Predecessor blocks: 0x00400578
+0x00400581: 41 ff e3                |A..     |   jmp    r11
+0x00400581: Successor blocks: unknown
+
 0x004004fc: ================================== Function (function call) unknown name
 0x004004fc: Called by 0x00400468
 
@@ -281,7 +292,6 @@ using this memory map for disassembly:
 
 0x0040056e: ================================== Function (graph) unknown name
 0x0040056e: Called by 0x00400560
-0x0040056e: This function calls 0x00400578
 0x0040056e: This function calls 0x00400584
 
 0x0040056e: Basic block reasons: fragment, graph-2; 71% code likelihood
@@ -289,32 +299,13 @@ using this memory map for disassembly:
 0x0040056e: b8 00 00 00 00          |.....   |   mov    eax, 0x00000000
 0x00400573: 48 85 c0                |H..     |   test   rax, rax
 0x00400576: 74 0c                   |t.      |   je     0x0000000000400584<<Func>>
-0x00400576: Successor blocks: 0x00400578<<Func>>, 0x00400584<<Func>>
-
-0x00400578: ================================== Function (graph) unknown name
-0x00400578: Called by 0x0040056e
-0x00400578: This function calls 0x00400581
-
-0x00400578: Basic block reasons: fragment, graph-2; 71% code likelihood
-0x00400578: Predecessor blocks: 0x0040056e<<Func>>
-0x00400578: bf e0 07 50 00          |...P.   |   mov    edi, 0x005007e0<.jcr>
-0x0040057d: 49 89 c3                |I..     |   mov    r11, rax
-0x00400580: c9                      |.       |   leave  
-0x00400580: Successor blocks: 0x00400581<<Func>>
-
-0x00400581: ================================== Function (graph) unknown name
-0x00400581: Called by 0x00400578
-
-0x00400581: Basic block reasons: fragment, graph-2; 71% code likelihood
-0x00400581: Predecessor blocks: 0x00400578<<Func>>
-0x00400581: 41 ff e3                |A..     |   jmp    r11
-0x00400581: Successor blocks: unknown
+0x00400576: Successor blocks: 0x00400584<<Func>>
 
 0x00400584: ================================== Function (graph) unknown name
 0x00400584: Called by 0x00400560
 0x00400584: Called by 0x0040056e
 
-0x00400584: Basic block reasons: fragment, graph-2; 71% code likelihood
+0x00400584: Basic block reasons: entry point, graph-2
 0x00400584: Predecessor blocks: 0x00400560<<Func>>, 0x0040056e<<Func>>
 0x00400584: c9                      |.       |   leave  
 0x00400585: c3                      |.       |   ret    
