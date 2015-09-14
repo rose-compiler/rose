@@ -1,0 +1,13 @@
+// -*- c++ -*-
+
+/** @page installing_doxygen Installing Doxygen
+ *
+ *  Instructions for installing <a href="http://www.stack.nl/~dimitri/doxygen">Doxygen</a>, a ROSE software dependency.
+ *
+ *  @section installing_doxygen_rhel Redhat Enterprise Linux
+ *
+ *  @todo Describe how to install Doxygen on RHEL.
+ *
+ *  @section installing_doxygen_jessie Debian 8 "Jessie"
+ *
+ *  Run <code>apt-get install doxygen</code> as the administrator. */

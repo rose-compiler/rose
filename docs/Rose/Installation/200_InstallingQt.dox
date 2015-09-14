@@ -1,0 +1,13 @@
+// -*- c++ -*-
+
+/** @page installing_qt Installing Qt
+ *
+ *  Instructions for installing <a href="https://www.qt.io">Qt</a>, a ROSE software dependency.
+ *
+ *  @section installing_qt_rhel Redhat Enterprise Linux
+ *
+ *  @todo Describe how to install Qt on RHEL.
+ *
+ *  @section installing_qt_jessie Debian 8 "Jessie"
+ *
+ *  Run <code>apt-get install libqt4-dev qt4-dev-tools</code> as the administrator. */

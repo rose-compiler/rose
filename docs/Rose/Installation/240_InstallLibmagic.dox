@@ -1,0 +1,14 @@
+// -*- c++ -*-
+
+/** @page installing_libmagic Installing libmagic
+ *
+ *  Instructions for installing <a href="https://packages.debian.org/unstable/libdevel/libmagic-dev">libmagic</a>, a ROSE
+ *  software dependency.
+ *
+ *  @section installing_libmagic_rhel Redhat Enterprise Linux
+ *
+ *  @todo Describe how to install libmagic on RHEL.
+ *
+ *  @section installing_libmagic_jessie Debian 8 "Jessie"
+ *
+ *  Run <code>apt-get install libmagic-dev</code> as the administrator. */

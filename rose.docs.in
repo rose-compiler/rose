@@ -104,5 +104,4 @@
  * 
  * @section download_instructions Download instructions
  * 
- *  ROSE is an open source project available at [github](https://github.com/rose-compiler/rose) and
- *  [rosecompiler.org](http://rosecompiler.org). */
+ *  ROSE is an open source project that can be installed from source code. See @ref installing.

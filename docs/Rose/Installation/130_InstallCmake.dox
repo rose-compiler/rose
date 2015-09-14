@@ -1,0 +1,13 @@
+// -*- c++ -*-
+
+/** @page installing_cmake Installing CMake
+ *
+ *  Instructions for installing <a href="http://www.cmake.org">CMake</a>, a ROSE software dependency.
+ *
+ *  @section installing_cmake_rhel Redhat Enterprise Linux
+ *
+ *  @todo Describe how to install CMake on RHEL.
+ *
+ *  @section installing_cmake_jessie Debian 8 "Jessie"
+ *
+ *  Run <code>apt-get install cmake</code> as the administrator. */

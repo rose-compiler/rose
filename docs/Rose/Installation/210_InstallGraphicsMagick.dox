@@ -1,0 +1,13 @@
+// -*- c++ -*-
+
+/** @page installing_graphicsmagick Installing GraphicsMagick
+ *
+ *  Instructions for installing <a href="http://www.graphicsmagick.org">GraphicsMagick</a>, a ROSE software dependency.
+ *
+ *  @section installing_graphicsmagick_rhel Redhat Enterprise Linux
+ *
+ *  @todo Describe how to install GraphicsMagick on RHEL.
+ *
+ *  @section installing_graphicsmagick_jessie Debian 8 "Jessie"
+ *
+ *  Run <code>apt-get install libgraphicsmagick-dev</code> as the administrator. */

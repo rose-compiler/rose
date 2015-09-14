@@ -1,0 +1,18 @@
+// -*- c++ -*-
+
+/** @page installing_database Installing a Relational Database Management System
+ *
+ *  Instructions for installing <a href="https://sqlite.org">SQLite3</a> and/or
+ *  <a href="http://www.postgresql.org">PostgreSQL</a>, a ROSE software dependency.
+ *
+ *  This document only describes how to install the libraries used by ROSE; it does not describe how to set up or manage a
+ *  database system.
+ *
+ *  @section installing_database_rhel Redhat Enterprise Linux
+ *
+ *  @todo Describe how to install SQLite3 or PostgreSQL on RHEL.
+ *
+ *  @section installing_database_jessie Debian 8 "Jessie"
+ *
+ *  Run <code>apt-get install libsqlite3-dev</code> and/or <code>apt-get install libpqxx3-dev postgresql</code> as the
+ *  administrator. */

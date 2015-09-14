@@ -1,0 +1,22 @@
+// -*- c++ -*-
+
+/** @page installing_wt Installing Wt
+ *
+ *  Instructions for installing <a href="http://www.webtoolkit.eu/wt">Wt</a>, a ROSE software dependency.
+ *
+ *  Since Wt depends on Boost, we recommend that you compile Wt from scratch rather than using a version already packaged for
+ *  your distribution.  It is wise to install Wt into a directory whose name includes the Wt version number, the boost version
+ *  number, and the compiler version number.
+ *
+ *  @code
+ *  BOOST_ROOT=/my/boost/installation/directory
+ *  WT_ROOT=/my/desired/wt/installation/directory
+ *  wget -O wt-3.3.3.tar.gz "http://prdownloads.sourceforge.net/witty/wt-3.3.3.tar.gz?download"
+ *  tar xf wt-3.3.3.tar.gz
+ *  mkdir wt-3.3.3/_build
+ *  cd wt-3.3.3/_build
+ *  cmake .. -DBOOST_ROOT=$BOOST_ROOT -DWT_WRASTERIMAGE_IMPLEMENTATION=GraphicsMagick \
+ *           -DCMAKE_INSTALL_PREFIX=$WT_ROOT -DCONFIGDIR=$WT_ROOT/etc/wt
+ *  make install
+ *  @endcode */
+
