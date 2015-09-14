@@ -34,7 +34,7 @@
  *    word is capitalized and all other words except proper names and abbreviations are lower-case.
  *
  *  + <b>"ROSE":</b> The name of this project is "ROSE", not "Rose" and not "rose".  However, within the documentation
- *    itself it's seldom necessary to mention %ROSE by name.
+ *    itself it's seldom necessary to mention ROSE by name.
  *
  *  @subsection doxy_api Doxygen documentation for API entities
  *

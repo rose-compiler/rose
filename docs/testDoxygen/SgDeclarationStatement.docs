@@ -65,7 +65,7 @@ C and C++ declarations can come in several forms, for example:
 typedef struct { int A; } A; // unnamed class declaration (which gets a name from the typedef)
 struct A { int i; };         // autonomous declaration
 struct B { int i; } b;       // non autonomous declaration
-@endocde
+@endcode
 
 In these cases "struct" and "class" can be used interchangablily. Internally 
 "struct" and "class" are he same (but with a different enum to classify them,

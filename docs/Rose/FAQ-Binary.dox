@@ -83,18 +83,18 @@ namespace BinaryAnalysis {
  *  ROSE's definition of basic block (BB) relaxes the usual requirement that a BB's instructions be contiguous and
  *  non-overlapping in memory, and instead uses only control flow properties: a BB's instructions are always executed
  *  sequentially from the first to the last.  ROSE uses BBs in most of its analysis because at the semantics level, a BB and an
- *  individual instructions are indistinguishable, but a BB "does more". Most analysis is more efficient when its able to
+ *  individual instruction are indistinguishable, but a BB "does more". Most analysis is more efficient when it's able to
  *  perform larger units of work.
  *
  * @subsection disassembly_3 Q3. Why are there two partitioners?
  *
  *  There are actually three. Originally the @ref BinaryAnalysis::Disassembler had its own recursive-descent algorithm and
  *  those functions are still present for backward compatibility (we'll likely deprecate them once @ref Partitioner2 is
- *  ready). The @ref BinaryAnalysis::Partitioner2 was the first version to exist separately from the disassembler and is the
+ *  ready). The @ref BinaryAnalysis::Partitioner was the first version to exist separately from the disassembler and is the
  *  version currently (June 2015) used by ROSE's @ref frontend function.  This one is well tested, but doesn't allow for much
  *  customization. In confusing situations it sometimes creates far more "functions" than what actually exist. Finally, the
  *  @ref Partitioner2 is a completely new design that allows users to customize how partitioning is performed. It is currently
- *  under development, although many new tools are already using it.  It's main drawback is that it goes to the opposite
+ *  under development, although many new tools are already using it.  Its main drawback is that it goes to the opposite
  *  extreme of @ref Partitioner, failing to create functions for code with confusing CFG (this is a temporary condition, and in
  *  any case, users have enough information to create additional functions from the missed instructions).
  *
