@@ -1,6 +1,81 @@
+dnl Tests for presence of doxygen and some ROSE-specific switches for
+dnl configuring documentation.
 AC_DEFUN([ROSE_SUPPORT_DOXYGEN],
 [
-# Begin macro ROSE_SUPPORT_DOXYGEN.
+    DOXYGEN_DISABLE_HOWTO="Use --without-doxygen to disable generation of ROSE API documentation."
+
+    dnl Find the doxygen program
+    ROSE_ARG_WITH(
+        [doxygen],							dnl  --with-[doxygen]
+        [for doxygen],							dnl "checking [for doxygen]"
+        [Program for generating the API reference manual.],		dnl help string
+        [yes])	     		    		  			dnl default is to use system version
+
+    if test "$ROSE_WITH_DOXYGEN" = "no"; then
+        DOXYGEN=
+    elif test "$ROSE_WITH_DOXYGEN" = "yes"; then
+        DOXYGEN=doxygen
+    else
+        DOXYGEN="$ROSE_WITH_DOXYGEN"
+    fi
+
+    dnl Check the doxygen version number if doxygen is available
+    if test "$DOXYGEN" != ""; then
+        DOXYGEN_VERSION=$($DOXYGEN --version 2>/dev/null)
+        if test "$DOXYGEN_VERSION" = ""; then
+            AC_MSG_FAILURE([doxygen command "$DOXYGEN --version" did not report a version number; $DOXYGEN_DISABLE_HOWTO])
+        fi
+
+        DOXYGEN_VERSION_HAVE_MAJOR=$(echo "$DOXYGEN_VERSION" |cut -d. -f1)
+        DOXYGEN_VERSION_HAVE_MINOR=$(echo "$DOXYGEN_VERSION" |cut -d. -f2)
+        DOXYGEN_VERSION_HAVE_PATCH=$(echo "$DOXYGEN_VERSION" |cut -d. -f3)
+        if test "$DOXYGEN_VERSION_HAVE_MAJOR" = "" -o \
+             	"$DOXYGEN_VERSION_HAVE_MINOR" = "" -o \
+             	"$DOXYGEN_VERSION_HAVE_PATCH" = ""; then
+            AC_MSG_FAILURE([malformed doxygen version number "$DOXYGEN_VERSION" reported by "$DOXYGEN --version"])
+        fi
+
+        DOXYGEN_VERSION_NEED="1.8.1"
+        DOXYGEN_VERSION_NEED_MAJOR=$(echo "$DOXYGEN_VERSION_NEED" |cut -d. -f1)
+        DOXYGEN_VERSION_NEED_MINOR=$(echo "$DOXYGEN_VERSION_NEED" |cut -d. -f2)
+        DOXYGEN_VERSION_NEED_PATCH=$(echo "$DOXYGEN_VERSION_NEED" |cut -d. -f3)
+
+        if test "$DOXYGEN_VERSION_HAVE_MAJOR" -gt "$DOXYGEN_VERSION_NEED_MAJOR"; then
+            DOXYGEN_VERSION_IS_OKAY=yes
+        elif test "$DOXYGEN_VERSION_HAVE_MAJOR" -lt "$DOXYGEN_VERSION_NEED_MAJOR"; then
+            DOXYGEN_VERSION_IS_OKAY=no
+        elif test "$DOXYGEN_VERSION_HAVE_MINOR" -gt "$DOXYGEN_VERSION_NEED_MINOR"; then
+            DOXYGEN_VERSION_IS_OKAY=yes
+        elif test "$DOXYGEN_VERSION_HAVE_MINOR" -lt "$DOXYGEN_VERSION_NEED_MINOR"; then
+            DOXYGEN_VERSION_IS_OKAY=no
+        elif test "$DOXYGEN_VERSION_HAVE_PATCH" -ge "$DOXYGEN_VERSION_NEED_PATCH"; then
+            DOXYGEN_VERSION_IS_OKAY=yes
+        else
+            DOXYGEN_VERSION_IS_OKAY=no
+        fi
+
+        if test "$DOXYGEN_VERSION_IS_OKAY" != "yes"; then
+            AC_MSG_FAILURE([$DOXYGEN $DOXYGEN_VERSION is too old; need at least $DOXYGEN_VERSION_NEED. $DOXYGEN_DISABLE_HOWTO])
+        fi
+    fi
+
+    # Report    
+    if test "$DOXYGEN" = ""; then
+        AC_MSG_WARN([The ROSE API reference manual will not be generated (needs --with-doxygen)])
+    else      
+        AC_MSG_NOTICE([$DOXYGEN version $DOXYGEN_VERSION is used to generate the ROSE API reference manual.])
+    fi
+
+
+    # Results for the doxygen executable
+    AM_CONDITIONAL(ROSE_HAVE_DOXYGEN, test "$DOXYGEN" != "")
+    AC_SUBST(DOXYGEN, "$DOXYGEN")
+
+
+# The remaining stuff is the original content of this macro and enables/disables various features
+# assuming that doxygen is present.
+    
+
 
 # DQ Comment: We need a better name than --enable-doxygen-internal
 # use: --enable-developer-docs
