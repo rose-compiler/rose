@@ -15,8 +15,18 @@ logo:
 AvailableDocumentation.docs:
 	cd ../Rose; $(MAKE) AvailableDocumentation.docs
 
+if ROSE_HAVE_DOXYGEN
+
 docs: logo copyPublications test.cfg AvailableDocumentation.docs
-	doxygen test.cfg
+	$(DOXYGEN) test.cfg
+
+else
+
+docs: logo copyPublications test.cfg AvailableDocumentation.docs
+	@echo "Doxygen documentation not generated (configure with '--with-doxygen')" >&2
+	@false
+
+endif
 
 # DQ (1/25/2006): Renamed clean rule since we don't want "make clean" 
 # at the top level directory to always remove this documentation.

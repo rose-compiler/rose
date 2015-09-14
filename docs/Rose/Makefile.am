@@ -74,13 +74,28 @@ $(ROSE_MAINPAGE_DOCUMENTATION): $(top_srcdir)/rose.docs.in
 	cd $(top_builddir); $(MAKE) rose.docs
 
 # DQ (1/27/2014): Add simple makefile rule to run doxygen to generate ROSE API docs.
+.PHONY: doxygen_docs
+if ROSE_HAVE_DOXYGEN
+
 doxygen_docs: rose.cfg AvailableDocumentation.docs
-	doxygen rose.cfg
+	$(DOXYGEN) rose.cfg
 
 # A more complex dependence is defined that requires the sage.tag file
 $(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
 	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
-	doxygen rose.cfg
+	$(DOXYGEN) rose.cfg
+
+else
+
+doxygen_docs: rose.cfg AvailableDocumentation.docs
+	@echo "Doxygen documentation not generated (configure with --with-doxygen)" >&2
+	@false
+
+$(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
+	@echo "Doxygen documentation not generated (configure with --with-doxygen)" >&2
+	@false
+endif
+
 
 # DQ (3/4/2014): This is a redundant makefile rule (mistake).
 # DQ (7/11/2009): Added rule to force generation of Doxygen documentation.
@@ -184,7 +199,7 @@ $(HASKELLPORT_APIDOCS):
 RoseQtDoc:
 if !OS_MACOSX
 	@echo "Skipping doxygen processing of roseQtWidgets.doxygen (failing in OSX)"
-#	doxygen roseQtWidgets.doxygen
+#	$(DOXYGEN) roseQtWidgets.doxygen
 endif
 # Liao, 2014/1/10, comment out $(HASKELLPORT_APIDOCS) to migrate to EDG 4.7 based rose
 make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_Exam.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL) $(AUTOTUNING_MANUAL) RoseQtDoc
