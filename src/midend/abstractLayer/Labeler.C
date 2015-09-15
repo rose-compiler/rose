@@ -402,6 +402,17 @@ bool Labeler::isConditionLabel(Label lab) {
   return SgNodeHelper::isCond(getNode(lab));
 }
 
+bool Labeler::isSwitchExprLabel(Label lab) {
+  SgNode* node=getNode(lab);
+  if(SgNodeHelper::isCond(node)) {
+    SgLocatedNode* loc=isSgLocatedNode(node);
+    if(loc) {
+      return isSgSwitchStatement(loc->get_parent());
+    }
+  }
+  return false;
+}
+
 bool Labeler::isFirstLabelOfMultiLabeledNode(Label lab) {
   return isFunctionCallLabel(lab)||isFunctionEntryLabel(lab)||isBlockBeginLabel(lab);
 }
