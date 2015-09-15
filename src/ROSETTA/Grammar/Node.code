@@ -11,8 +11,8 @@ HEADER_NODE_PREDECLARATION_START
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
-#include <sawyer/Interval.h>
-#include <sawyer/IntervalSet.h>
+#include <Sawyer/Interval.h>
+#include <Sawyer/IntervalSet.h>
 
 #include "Cxx_Grammar.h"
 

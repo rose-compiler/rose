@@ -37,6 +37,12 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeString          , "TypeString",           "T_STRING" );
      NEW_TERMINAL_MACRO ( TypeBool            , "TypeBool",             "T_BOOL" );
 
+     //SK(08/20/2015): TypeMatrix to represent a Matlab matrix type
+     NEW_TERMINAL_MACRO ( TypeMatrix          , "TypeMatrix",            "T_MATRIX" );
+
+     //SK(08/20/2015): TypeTuple to represent the return type of a Matlab function that can return multiple types
+     NEW_TERMINAL_MACRO ( TypeTuple           , "TypeTuple",             "T_TUPLE");
+
   // DQ (7/29/2014): Added nullptr type (I think we require this for C++11 support).
      NEW_TERMINAL_MACRO ( TypeNullptr         , "TypeNullptr",          "T_NULLPTR" );
 
@@ -182,7 +188,10 @@ Grammar::setUpTypes ()
           ArrayType            | TypeEllipse             | TemplateType              | QualifiedNameType    |
           TypeComplex          | TypeImaginary           | TypeDefault               | TypeCAFTeam          |
           TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  | 
-          TypeNullptr          | DeclType                | TypeOfType , "Type","TypeTag", false);
+          TypeNullptr          | DeclType                | TypeOfType                | TypeMatrix           |
+          TypeTuple , "Type","TypeTag", false);
+
+     //SK(08/20/2015): TypeMatrix and TypeTuple for Matlab
 
 #if 1
   // ***********************************************************************
@@ -456,6 +465,18 @@ Grammar::setUpTypes ()
   // DQ (7/29/2014): Added nullptr type (I think we require this for C++11 support).
      TypeNullptr.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+
+     TypeMatrix.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+     TypeTuple.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     
+     TypeTuple.setDataPrototype("SgTypePtrList", "types", "",
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     TypeTuple.setFunctionPrototype     ("HEADER_TYPE_TUPLE", "../Grammar/Type.code" );
+     TypeTuple.setFunctionSource     ("SOURCE_TYPE_TUPLE", "../Grammar/Type.code" );
+
+     
      TypeDefault.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // PointerType.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // ReferenceType.setDataPrototype        ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -609,6 +630,9 @@ Grammar::setUpTypes ()
      TypeInt.setDataPrototype           ("int","field_size","= 0",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     TypeMatrix.setDataPrototype           ("SgType*","base_type","= NULL",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     
   // DQ (4/23/2014): I think this has to be defined as NO_TRAVERSAL || TYPE_TRAVERSAL so that we can traverse the nested type.
   // This is required to support type transformations fo the shared memory DSL work. Likely also required for ReferenceType
   // and any other type with a base_type.
@@ -1031,6 +1055,9 @@ Grammar::setUpTypes ()
   // DQ (7/29/2014): Added nullptr type (I think we require this for C++11 support).
      TypeNullptr.editSubstitute( "MANGLED_ID_STRING", "nullptr_t" );
 
+     TypeMatrix.editSubstitute( "MANGLED_ID_STRING", "matrix_t" );
+     TypeTuple.editSubstitute( "MANGLED_ID_STRING", "tuple_t" );
+     
      TypeComplex.editSubstitute( "MANGLED_ID_STRING", "Complex" );
      TypeImaginary.editSubstitute( "MANGLED_ID_STRING", "Imaginary" );
   // TypeDefault.editSubstitute( "MANGLED_ID_STRING", "u" );

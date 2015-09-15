@@ -62,11 +62,9 @@ levenshteinDistance(const std::vector<T> &src, const std::vector<T> &tgt)
         dict.unique_push_zero(tgt[j]);
 
     for (size_t i=1; i<=x; ++i) {
-        size_t db = 0;
         for (size_t j=1; j<=y; ++j) {
             if (src[i-1]==tgt[j-1]) {
                 score[i+1][j+1] = score[i][j];
-                db = j;
             } else {
                 score[i+1][j+1] = std::min(score[i][j], std::min(score[i+1][j], score[i][j+1])) + 1;
             }

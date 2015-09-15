@@ -120,6 +120,8 @@ Grammar::setUpBinaryInstructions()
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmInstruction.setDataPrototype("int64_t", "stackDelta", "= SgAsmInstruction::INVALID_STACK_DELTA",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmInstruction.setDataPrototype("SgAsmExprListExp*", "semantics", "= NULL",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 
 
 
@@ -283,8 +285,14 @@ Grammar::setUpBinaryInstructions()
     AsmCommonSubExpression.setDataPrototype("SgAsmExpression*", "subexpression", "= 0",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-
-
+    // Static semantics. This is the static, AST version of instruction semantics.
+    NEW_TERMINAL_MACRO(AsmRiscOperation, "AsmRiscOperation", "AsmRiscOperationTag");
+    AsmRiscOperation.setFunctionPrototype("HEADER_RISC_OPERATION", "../Grammar/BinaryInstruction.code");
+    AsmRiscOperation.setDataPrototype("SgAsmRiscOperation::RiscOperator", "riscOperator", "= SgAsmRiscOperation::OP_NONE",
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+    AsmRiscOperation.setDataPrototype("SgAsmExprListExp*", "operands", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    
     // Lists of expressions
     NEW_TERMINAL_MACRO(AsmExprListExp, "AsmExprListExp", "AsmExprListExpTag");
     AsmExprListExp.setDataPrototype("SgAsmExpressionPtrList", "expressions", "",
@@ -302,7 +310,8 @@ Grammar::setUpBinaryInstructions()
     NEW_NONTERMINAL_MACRO(AsmExpression,
                           AsmValueExpression           | AsmBinaryExpression            | AsmUnaryExpression        |
                           AsmMemoryReferenceExpression | AsmRegisterReferenceExpression | AsmControlFlagsExpression |
-                          AsmCommonSubExpression       | AsmExprListExp                 | AsmRegisterNames,
+                          AsmCommonSubExpression       | AsmExprListExp                 | AsmRegisterNames          |
+                          AsmRiscOperation,
                           "AsmExpression", "AsmExpressionTag", false);
     AsmExpression.setFunctionPrototype("HEADER_EXPRESSION", "../Grammar/BinaryInstruction.code");
     AsmExpression.setDataPrototype("SgAsmType*", "type", "= NULL",
@@ -331,6 +340,7 @@ Grammar::setUpBinaryInstructions()
     // Floating-point types.
     NEW_TERMINAL_MACRO(AsmFloatType, "AsmFloatType", "AsmFloatTypeTag");
     AsmFloatType.setFunctionPrototype("HEADER_FLOAT_TYPE", "../Grammar/BinaryInstruction.code");
+    AsmFloatType.setPredeclarationString("HEADER_FLOAT_TYPE_PREDECLARATION", "../Grammar/BinaryInstruction.code");
     AsmFloatType.setDataPrototype("size_t", "significandOffset", "=(size_t)(-1)", // offset to significand lsb; read-only
                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmFloatType.setDataPrototype("size_t", "significandNBits", "=(size_t)(-1)", // size of significand in bits; read-only
@@ -342,6 +352,8 @@ Grammar::setUpBinaryInstructions()
     AsmFloatType.setDataPrototype("size_t", "exponentNBits", "=(size_t)(-1)", // number of bits in the exponent; read-only
                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmFloatType.setDataPrototype("uint64_t", "exponentBias", "=0", // zero-point of exponent; read-only
+                                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmFloatType.setDataPrototype("unsigned", "flags", "=0", // read-only
                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
     // Scalar types
@@ -2581,6 +2593,8 @@ Grammar::setUpBinaryInstructions()
                           AsmElfEHFrameEntryFDList | AsmDwarfInformation | AsmPEImportItem | AsmPEImportItemList,
                           "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false);
     AsmExecutableFileFormat.setFunctionPrototype("HEADER_EXECUTABLE_FILE_FORMAT", "../Grammar/BinaryInstruction.code");
+    AsmExecutableFileFormat.setPredeclarationString("HEADER_EXECUTABLE_FILE_FORMAT_PREDECLARATION",
+                                               "../Grammar/BinaryInstruction.code");
 
 
 

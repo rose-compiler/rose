@@ -20,6 +20,13 @@ using namespace std;
 
 #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
 
+// MS: temporary flag for experiments with uparsing of template instantiations
+bool Unparse_MOD_SAGE::experimentalMode=false;
+int Unparse_MOD_SAGE::experimentalModeVerbose=0;
+
+Unparse_MOD_SAGE::Unparse_MOD_SAGE(Unparser* unp):unp(unp) {
+}
+
 //-----------------------------------------------------------------------------------
 //  void Unparse_MOD_SAGE::isOperator
 //
@@ -1273,6 +1280,12 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
 void
 Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement* decl_stmt )
    {
+     if(experimentalMode)
+       {
+         outputTemplateSpecializationSpecifier2 ( decl_stmt );
+         return;
+       }
+
 #if 0
      if ( (isSgTemplateInstantiationDecl(decl_stmt) != NULL) ||
           (isSgTemplateInstantiationFunctionDecl(decl_stmt) != NULL) ||
@@ -1301,7 +1314,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
             // Normal case for output of template instantiations (which ROSE puts out as specializations)
             // curprint( "template<> ");
 #if 0
-               curprint( "\n/* In outputTemplateSpecializationSpecifier(): Normal case for output of template instantiations */ ");
+               curprint( "\n/* In outputTemplateSpecializationSpecifier(): Normal case for output of template instantiations: " +  decl_stmt->class_name() + " */ ");
 #endif
             // DQ (5/2/2012): If this is a function template instantiation in a class template instantiation then 
             // we don't want the "template<>" (error in g++, at least).  See test2012_59.C.
@@ -1322,13 +1335,93 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                   }
                  else
                   {
-                    curprint("template<> ");
+                 // DQ (7/6/2015): template member function instantiations defined outside of the template class shoudl not be output with the "template<>" syntax.
+                 // curprint("template<> ");
+                    if (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) != NULL)
+                       {
+                      // Check for additional rule in the output of "template<>" for member function instantiations.
+                         SgTemplateInstantiationDefn* templateClassInstatiationDefn = isSgTemplateInstantiationDefn(decl_stmt->get_scope());
+                         if (templateClassInstatiationDefn != NULL)
+                            {
+                           // Supress output of "template<>" syntax for template member function instantiations.
+                              SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt);
+#if 0
+                              printf ("templateInstantiationMemberFunctionDecl = %p \n",templateInstantiationMemberFunctionDecl);
+                              printf ("templateInstantiationMemberFunctionDecl->get_templateName() = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
+                              printf ("templateInstantiationMemberFunctionDecl->get_templateDeclaration() = %p \n",templateInstantiationMemberFunctionDecl->get_templateDeclaration());
+                              printf ("templateInstantiationMemberFunctionDecl->get_templateArguments().size() = %zu \n",templateInstantiationMemberFunctionDecl->get_templateArguments().size());
+                              printf ("templateInstantiationMemberFunctionDecl->get_nameResetFromMangledForm() = %s \n",templateInstantiationMemberFunctionDecl->get_nameResetFromMangledForm() ? "true" : "false");
+#endif
+                           // DQ (7/6/2015): Check if these is a prototype that was output via the associated class being output as a template instantiation.
+                           // If the class containing the member function was output (e.g. when the testTemplates translator is run on test2015_35.C) 
+                           // then we don't want the "template<>" syntax on the member function instantiation, else if it was not output (e.g. when 
+                           // testTranslator is run on test2015_35.C) then we require the "template<>" syntax.
+                              SgTemplateInstantiationMemberFunctionDecl* nondefiningTemplateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt->get_firstNondefiningDeclaration());
+                              ROSE_ASSERT(nondefiningTemplateInstantiationMemberFunctionDecl != NULL);
+                              SgTemplateInstantiationDefn* nondefiningTemplateClassInstatiationDefn = isSgTemplateInstantiationDefn(nondefiningTemplateInstantiationMemberFunctionDecl->get_parent());
+                              ROSE_ASSERT(nondefiningTemplateClassInstatiationDefn != NULL);
+                              SgTemplateInstantiationDecl* templateClassInstantiation = isSgTemplateInstantiationDecl(nondefiningTemplateClassInstatiationDefn->get_parent());
+                              ROSE_ASSERT(templateClassInstantiation != NULL);
+                              bool isOutput = false;
+#if 0
+                              printf ("templateClassInstantiation->get_file_info()->isCompilerGenerated()      = %s \n",templateClassInstantiation->get_file_info()->isCompilerGenerated() ? "true" : "false");
+                              printf ("templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() = %s \n",templateClassInstantiation->get_file_info()->isOutputInCodeGeneration() ? "true" : "false");
+#endif
+                              isOutput = (templateClassInstantiation->get_file_info()->isCompilerGenerated() && templateClassInstantiation->get_file_info()->isOutputInCodeGeneration());
+                              if (isOutput == true)
+                                 {
+#if 0
+                                   curprint("/* Member function's class instantation WAS output, so we need to supress the output of template<> syntax */ ");
+#endif
+                                 }
+                                else
+                                 {
+#if 0
+                                   curprint("/* Member function's class instantation was NOT output, so we need to output of template<> syntax */ ");
+#endif
+                                   curprint("template<> ");
+                                 }
+#if 0
+                           // DQ (7/7/2015): I now don't think this is an effective test.
+                              if (templateInstantiationMemberFunctionDecl->get_templateArguments().size() == 0)
+                                 {
+                                // This case is to support test2004_67.C
+#if 0
+                                   curprint("/* Member function without template arguments from template class instantiatons requires the output of template<> syntax */ ");
+#endif
+                                // curprint("template<> ");
+                                 }
+                                else
+                                 {
+#if 0
+                                   curprint("/* Supress output of template<> syntax for template member function instantiations */ ");
+#endif
+                                 }
+#endif
+                            }
+                           else
+                            {
+#if 0
+                              curprint("/* Member function instantiatons in non-template clases still output template<> syntax */ ");
+#endif
+                              curprint("template<> ");
+                            }
+                       }
+                      else
+                       {
+#if 0
+                         curprint("/* This requires the output of the template<> syntax */ ");
+#endif
+                         curprint("template<> ");
+                       }
                   }
              }
         }
+#if 0
+     curprint( "\n/* Leaving outputTemplateSpecializationSpecifier() */ ");
+#endif
 #endif
    }
-
 
 void
 Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_Info& info)
@@ -1466,7 +1559,26 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
                   }
                  else
                   {
+#if 0
+                    printf ("In printSpecifier2(): Output function's inline keyword \n");
+#endif
+#if 1
+                 // DQ (6/27/2015): We need this to be output because the isGnuAttributeAlwaysInline() maybe true, but we need to output
+                 // the "inline" keyword for GNU 4.2.4 compiler (only able to demonstrate the problem on Google protobuffer on RHEL5).
                     curprint( "inline ");
+#else
+                    if (functionDeclaration->get_functionModifier().isGnuAttributeAlwaysInline() == true)
+                       {
+                      // Supress use of redundant inline keyword if the GNU attribute is being used.
+#if 0
+                         printf ("In printSpecifier2(): Supress use of redundant inline keyword if the GNU attribute is being used \n");
+#endif
+                       }
+                      else
+                       {
+                         curprint( "inline ");
+                       }
+#endif
                   }
              }
 
@@ -1523,6 +1635,10 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
              }
 
        // DQ (4/20/2015): Added support for GNU cdecl attribute.
+#if 0
+          printf ("functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeCdecl() = %s \n",
+               functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeCdecl() ? "true" : "false");
+#endif
           if (functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeCdecl() == true)
              {
 #if 0
@@ -2026,7 +2142,7 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
           if (initializedName->isGnuAttributePacked() == true)
              {
             // curprint(" /* from printAttributes(SgDeclarationStatement*) triggered from SgInitializedName */ __attribute__((packed))");
-               curprint(" __attribute__((packed))");
+               curprint(" __attribute__((packed)) ");
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -2064,79 +2180,79 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // DQ (2/26/2013): Added noinline attribute code generation.
           if (functionDeclaration->get_functionModifier().isGnuAttributeConstructor() == true)
              {
-               curprint( " __attribute__((constructor))");
+               curprint( " __attribute__((constructor)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeDestructor() == true)
              {
-               curprint( " __attribute__((destructor))");
+               curprint( " __attribute__((destructor)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributePure() == true)
              {
-               curprint( " __attribute__((pure))");
+               curprint( " __attribute__((pure)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeWeak() == true)
              {
-               curprint( " __attribute__((weak))");
+               curprint( " __attribute__((weak)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeUnused() == true)
              {
-               curprint( " __attribute__((unused))");
+               curprint( " __attribute__((unused)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeUsed() == true)
              {
-               curprint( " __attribute__((used))");
+               curprint( " __attribute__((used)) ");
              }
 #if 0
           printf ("In printAttributes(SgDeclarationStatement*): functionDeclaration->get_functionModifier().isGnuAttributeDeprecated() = %s \n",functionDeclaration->get_functionModifier().isGnuAttributeDeprecated() ? "true" : "false");
 #endif
           if (functionDeclaration->get_functionModifier().isGnuAttributeDeprecated() == true)
              {
-               curprint( " __attribute__((deprecated))");
+               curprint( " __attribute__((deprecated)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeMalloc() == true)
              {
-               curprint( " __attribute__((malloc))");
+               curprint( " __attribute__((malloc)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeNaked() == true)
              {
-               curprint( " __attribute__((naked))");
+               curprint( " __attribute__((naked)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeNoInstrumentFunction() == true)
              {
-               curprint( " __attribute__((no_instrument_function))");
+               curprint( " __attribute__((no_instrument_function)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeNoCheckMemoryUsage() == true)
              {
-               curprint( " __attribute__((no_check_memory_usage))");
+               curprint( " __attribute__((no_check_memory_usage)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeNoInline() == true)
              {
-               curprint( " __attribute__((noinline))");
+               curprint( " __attribute__((noinline)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeAlwaysInline() == true)
              {
-               curprint( " __attribute__((always_inline))");
+               curprint( " __attribute__((always_inline)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeNoThrow() == true)
              {
-               curprint( " __attribute__((no_throw))");
+               curprint( " __attribute__((no_throw)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeWeakReference() == true)
              {
-               curprint( " __attribute__((weakref))");
+               curprint( " __attribute__((weakref)) ");
              }
 
        // DQ (1/5/2014): Adding support for gnu visibility attributes.
@@ -2193,7 +2309,7 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
                  // curprint(" __attribute__((visibility%s))",s.c_str());
                     curprint(" __attribute__((visibility");
                     curprint(s);
-                    curprint("))");
+                    curprint(")) ");
                   }
              }
 #if 0
@@ -2232,7 +2348,10 @@ Unparse_MOD_SAGE::printPrefixAttributes(SgDeclarationStatement* decl_stmt, SgUnp
 #endif
        // DQ (1/19/2014): Adding support for gnu attribute regnum to support use in Valgrind application.
           int gnu_regparm_value = functionDeclaration->get_gnu_regparm_attribute();
-          if (gnu_regparm_value > 0)
+
+       // DQ (5/27/2015): Note that zero is a ligitimate value to use, so the default should be -1.
+       // if (gnu_regparm_value > 0)
+          if (gnu_regparm_value >= 0)
              {
                string s = StringUtility::numberToString(gnu_regparm_value);
 #if 0
@@ -2632,3 +2751,25 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
         }
 #endif
    }
+
+// MS: to activate this function set Unparse_MOD_SAGE::experimentalMode=true
+void Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier2 ( SgDeclarationStatement* decl_stmt ) {
+  if (isSgTemplateInstantiationDecl(decl_stmt)
+      || isSgTemplateInstantiationFunctionDecl(decl_stmt)
+      || isSgTemplateInstantiationMemberFunctionDecl(decl_stmt)) {
+    if (isSgTemplateInstantiationDirectiveStatement(decl_stmt->get_parent())) {
+      if(experimentalModeVerbose==1) curprint("/*0*/");
+      curprint("template ");
+    } else if (isSgTemplateInstantiationDecl(decl_stmt)) {
+      if(experimentalModeVerbose==1) curprint("/*1*/");
+      curprint("template<> ");
+    } else if (isSgTemplateInstantiationDefn(decl_stmt->get_parent())) {
+      if(experimentalModeVerbose==1) curprint("/*2*/");
+    } else if (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt)) {
+      if(experimentalModeVerbose==1) curprint("/*3*/");
+    } else {
+      cerr<<"WARNING: Unknown template construct: "<<decl_stmt->class_name()<<endl;
+      //ROSE_ASSERT(0);
+    }
+  }
+}
