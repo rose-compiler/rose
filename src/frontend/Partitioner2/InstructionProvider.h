@@ -4,9 +4,9 @@
 #include "Disassembler.h"
 #include "BaseSemantics2.h"
 
-#include <sawyer/Assert.h>
-#include <sawyer/Map.h>
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/Assert.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/SharedPointer.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -96,6 +96,9 @@ public:
 
     /** Returns the register dictionary. */
     const RegisterDictionary* registerDictionary() const { return disassembler_->get_registers(); }
+
+    /** Returns the calling convention dictionary. */
+    const CallingConvention::Dictionary& callingConventions() const { return disassembler_->callingConventions(); }
 
     /** Register used as the instruction pointer. */
     RegisterDescriptor instructionPointerRegister() const { return disassembler_->instructionPointerRegister(); }

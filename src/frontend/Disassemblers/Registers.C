@@ -1,6 +1,10 @@
 #include "sage3basic.h"
 #include "Registers.h"
 
+// These are here temporarily until the classes in this file can be moved into rose::BinaryAnalysis
+using namespace rose;
+using namespace rose::BinaryAnalysis;
+
 std::ostream&
 operator<<(std::ostream &o, const RegisterDictionary &dict)
 {
@@ -150,12 +154,14 @@ RegisterDictionary::lookup(const RegisterDescriptor &rdesc) const {
 }
 
 RegisterDescriptor
-RegisterDictionary::findLargestRegister(unsigned major, unsigned minor) const {
+RegisterDictionary::findLargestRegister(unsigned major, unsigned minor, size_t maxWidth) const {
     RegisterDescriptor retval;
     for (Entries::const_iterator iter=forward.begin(); iter!=forward.end(); ++iter) {
         const RegisterDescriptor &reg = iter->second;
         if (major == reg.get_major() && minor == reg.get_minor()) {
-            if (!retval.is_valid()) {
+            if (maxWidth > 0 && reg.get_nbits() > maxWidth) {
+                // ignore
+            } else if (!retval.is_valid()) {
                 retval = reg;
             } else if (retval.get_nbits() < reg.get_nbits()) {
                 retval = reg;
@@ -172,6 +178,14 @@ RegisterDictionary::resize(const std::string &name, unsigned new_nbits) {
     RegisterDescriptor new_desc = *old_desc;
     new_desc.set_nbits(new_nbits);
     insert(name, new_desc);
+}
+
+RegisterParts
+RegisterDictionary::getAllParts() const {
+    RegisterParts retval;
+    BOOST_FOREACH (const Entries::value_type &node, forward)
+        retval.insert(node.second);
+    return retval;
 }
 
 const RegisterDictionary::Entries &
@@ -1035,8 +1049,8 @@ RegisterDictionary::dictionary_m68000()
         regs->insert("aexc_ovfl",  m68k_regclass_spr, m68k_spr_fpsr,  6,  1);   // overflow
         regs->insert("aexc_iop",   m68k_regclass_spr, m68k_spr_fpsr,  7,  1);   // invalid operation
         regs->insert("fpsr_exc",   m68k_regclass_spr, m68k_spr_fpsr,  8,  8);   // exception status
-        regs->insert("exc_inex1",  m68k_regclass_spr, m68k_spr_fpsr,  8,  1);   // inexact decimal input
-        regs->insert("exc_inex2",  m68k_regclass_spr, m68k_spr_fpsr,  9,  1);   // inexact operation
+        regs->insert("exc_inex1",  m68k_regclass_spr, m68k_spr_fpsr,  8,  1);   // inexact decimal input (input is denormalized)
+        regs->insert("exc_inex2",  m68k_regclass_spr, m68k_spr_fpsr,  9,  1);   // inexact operation (inexact result)
         regs->insert("exc_dz",     m68k_regclass_spr, m68k_spr_fpsr, 10,  1);   // divide by zero
         regs->insert("exc_unfl",   m68k_regclass_spr, m68k_spr_fpsr, 11,  1);   // underflow
         regs->insert("exc_ovfl",   m68k_regclass_spr, m68k_spr_fpsr, 12,  1);   // overflow

@@ -1,0 +1,43 @@
+# Sample makefile showing how to write your own simulator.
+# This makefile assumes:
+#   1. The installation directory is $(ROSE_INSTALLED)
+#   2. ROSE library has been configured, built, and installed using autoconf; "make -C $ROSE_BUILDDIR install", or
+#      more quickly:
+#        $ make -C $ROSE_BUILDDIR/src install
+#        $ install -c -m 644 $ROSE_BUILDDIR/rosePublicConfig.h $ROSE_INSTALLED/include
+#   3. The simulator has been built and installed ("make -C $ROSE_BUILDDIR/projects/simulator2 install")
+
+
+# Directory where ROSE is installed, often "/usr" or "/usr/local".  This is the same value that was given as the "--prefix"
+# argument for the autoconf "configure" script when ROSE was configured.
+ROSE_INSTALLED = /home/matzke/GS-CAD/ROSE/sources/x86-64/_build/installed
+
+# Standard C++ compiler stuff. This can be hard-coded, but it is better to query it from rose-config.
+CPPFLAGS = $(shell $(ROSE_INSTALLED)/bin/rose-config cppflags) -I$(ROSE_INSTALLED)/include
+CFLAGS   = $(shell $(ROSE_INSTALLED)/bin/rose-config cflags)
+LDFLAGS  = $(shell $(ROSE_INSTALLED)/bin/rose-config ldflags) -lRSIM
+
+MOSTLYCLEANFILES =
+
+all: demo
+
+#############################################################################################################################
+# To test this, copy demos/ports_opened.C to a fresh build directory and name it demo.C, then edit the file and replace the
+# "#include <RSIM_Private.h>" with "#define ROSE_ENABLE_SIMULATOR". Build with "make -f SampleMakefile".
+
+demo.o: demo.C
+	$(CXX) $(CPPFLAGS) $(CFLAGS) -o $@ -c $^
+
+demo: demo.o
+	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ $^
+	@echo "Remember to set:"
+	@echo "  LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:$(shell $(ROSE_INSTALLED)/bin/rose-config libdirs)"
+
+MOSTLYCLEANFILES += demo demo.o
+
+#############################################################################################################################
+# Standard boilerplate
+
+.PHONY: clean
+clean:
+	rm -f $(MOSTLYCLEANFILES)

@@ -34,6 +34,7 @@ class RDAnalysis : public DFAnalysisBase {
   SPRAY::LabelSet getPreRDs(Label lab, VariableId);
   SPRAY::LabelSet getPostRDs(Label lab, VariableId);
   virtual void initializeExtremalValue(Lattice* element);
+  void initialize(SgProject* root) { DFAnalysisBase::initialize(root, true); }
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);
 };

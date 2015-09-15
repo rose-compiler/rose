@@ -1,13 +1,14 @@
 /* Interpretation ELF */
 0x08048060: ================================== Function (entry point, graph) <_start>
+0x08048060: Function does not return to caller.
 
 0x08048060: Basic block reasons: entry point, CFG head
-0x08048060: 81 ec 08 00 00 00       |......  |          sub    esp, 0x00000008
-0x08048066: 89 04 24                |..$     |          mov    dword ss:[esp], eax
-0x08048069: 8b 0c 24                |..$     |          mov    ecx, dword ss:[esp]
-0x0804806c: 8b 44 24 fc             |.D$.    |          mov    eax, dword ss:[esp + 0xfc<-4>]
-0x08048070: b8 01 00 00 00          |.....   |          mov    eax, 0x00000001
-0x08048075: cd 80                   |..      |          int    0x80<-128>
+0x08048060: 81 ec 08 00 00 00       |......  |<sp+0 >   sub    esp, 0x00000008
+0x08048066: 89 04 24                |..$     |<sp-8 >   mov    dword ss:[esp], eax
+0x08048069: 8b 0c 24                |..$     |<sp-8 >   mov    ecx, dword ss:[esp]
+0x0804806c: 8b 44 24 fc             |.D$.    |<sp-8 >   mov    eax, dword ss:[esp + 0xfc<-4>]
+0x08048070: b8 01 00 00 00          |.....   |<sp-8 >   mov    eax, 0x00000001
+0x08048075: cd 80                   |..      |<sp-8 >   int    0x80<-128>
 0x08048077: f4                      |.       |          hlt    
 0x08048077: Successor blocks: none
 

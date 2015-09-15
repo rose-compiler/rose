@@ -1,27 +1,16 @@
-/** 
- * \file lib/sage/driver.cpp
- *
- * \author Tristan Vanderbruggen
- *
- */
+
+#include "sage3basic.h"
 
 #include "MFB/Sage/driver.hpp"
 #include "MFB/Sage/api.hpp"
 
-#include "sage3basic.h"
-
 #include <boost/filesystem.hpp>
 
-#ifndef PATCHING_SAGE_BUILDER_ISSUES
-#  define PATCHING_SAGE_BUILDER_ISSUES 1
+#ifndef VERBOSE
+# define VERBOSE 0
 #endif
 
 namespace MFB {
-
-/*!
- * \addtogroup grp_mfb_sage_driver
- * @{
-*/
 
 bool ignore(const std::string & name) {
   return name.find("__builtin") == 0 || name.find("__frontend_specific_variable_to_provide_header_file_path") == 0;
@@ -32,7 +21,7 @@ bool ignore(SgScopeStatement * scope) {
 }
 
 template <>
-void Driver<Sage>::loadSymbols<SgDeclarationStatement>(unsigned file_id, SgSourceFile * file) {
+void Driver<Sage>::loadSymbols<SgDeclarationStatement>(size_t file_id, SgSourceFile * file) {
   loadSymbols<SgNamespaceDeclarationStatement>(file_id, file);
   loadSymbols<SgFunctionDeclaration>(file_id, file);
   loadSymbols<SgClassDeclaration>(file_id, file);
@@ -40,19 +29,19 @@ void Driver<Sage>::loadSymbols<SgDeclarationStatement>(unsigned file_id, SgSourc
   loadSymbols<SgMemberFunctionDeclaration>(file_id, file);
 }
 
-unsigned Driver<Sage>::getFileID(const boost::filesystem::path & path) const {
-  std::map<boost::filesystem::path, unsigned>::const_iterator it_file_id = path_to_id_map.find(path);
+size_t Driver<Sage>::getFileID(const boost::filesystem::path & path) const {
+  std::map<boost::filesystem::path, size_t>::const_iterator it_file_id = path_to_id_map.find(path);
   assert(it_file_id != path_to_id_map.end());
   return it_file_id->second;
 }
 
-unsigned Driver<Sage>::getFileID(SgSourceFile * source_file) const {
-  std::map<SgSourceFile *, unsigned>::const_iterator it_file_id = file_to_id_map.find(source_file);
+size_t Driver<Sage>::getFileID(SgSourceFile * source_file) const {
+  std::map<SgSourceFile *, size_t>::const_iterator it_file_id = file_to_id_map.find(source_file);
   assert(it_file_id != file_to_id_map.end());
   return it_file_id->second;
 }
 
-unsigned Driver<Sage>::getFileID(SgScopeStatement * scope) const {
+size_t Driver<Sage>::getFileID(SgScopeStatement * scope) const {
   SgFile * enclosing_file = SageInterface::getEnclosingFileNode(scope);
   assert(enclosing_file != NULL); // FIXME Contingency : Scope Stack
 
@@ -76,7 +65,9 @@ Driver<Sage>::Driver(SgProject * project_) :
   p_function_symbols(),
   p_class_symbols(),
   p_variable_symbols(),
-  p_member_function_symbols()
+  p_member_function_symbols(),
+  p_typedef_symbols(),
+  p_type_scope_map()
 { 
   assert(project != NULL);
 
@@ -91,19 +82,22 @@ Driver<Sage>::Driver(SgProject * project_) :
   std::vector<SgFile *>::const_iterator it_file;
   for (it_file = files.begin(); it_file != files.end(); it_file++) {
     SgSourceFile * src_file = isSgSourceFile(*it_file);
-    if (src_file != NULL)
-      add(src_file);
+    if (src_file != NULL) add(src_file);
   }
 }
 
 Driver<Sage>::~Driver() {}
 
-unsigned Driver<Sage>::add(SgSourceFile * file) {
-  unsigned id = file_id_counter++;
+size_t Driver<Sage>::add(SgSourceFile * file) {
+  size_t id = file_id_counter++;
 
-  id_to_file_map.insert(std::pair<unsigned, SgSourceFile *>(id, file));
-  file_to_id_map.insert(std::pair<SgSourceFile *, unsigned>(file, id));
-  file_id_to_accessible_file_id_map.insert(std::pair<unsigned, std::set<unsigned> >(id, std::set<unsigned>())).first->second.insert(id);
+#if VERBOSE
+  std::cerr << "[Info] (MFB::Driver<Sage>::Driver<Sage>) Add file: " << file->get_sourceFileNameWithoutPath() << " as File #" << id << std::endl;
+#endif
+
+  id_to_file_map.insert(std::pair<size_t, SgSourceFile *>(id, file));
+  file_to_id_map.insert(std::pair<SgSourceFile *, size_t>(file, id));
+  file_id_to_accessible_file_id_map.insert(std::pair<size_t, std::set<size_t> >(id, std::set<size_t>())).first->second.insert(id);
 
   /// \todo detect other accessible file (opt: add recursively)
 
@@ -112,11 +106,13 @@ unsigned Driver<Sage>::add(SgSourceFile * file) {
   return id;
 }
 
-unsigned Driver<Sage>::add(const boost::filesystem::path & path) {
-  assert(boost::filesystem::exists(path));
-  assert(boost::filesystem::is_regular_file(path));
+size_t Driver<Sage>::add(const boost::filesystem::path & path) {
+  if (!boost::filesystem::exists(path) || !boost::filesystem::is_regular_file(path)) {
+    std::cerr << "[Error] (Driver<Sage>::add) Cannot find: " << path << std::endl;
+    assert(false);
+  }
 
-  std::map<boost::filesystem::path, unsigned>::const_iterator it_file_id = path_to_id_map.find(path);
+  std::map<boost::filesystem::path, size_t>::const_iterator it_file_id = path_to_id_map.find(path);
   if (it_file_id != path_to_id_map.end())
     return it_file_id->second;
   else {
@@ -125,46 +121,46 @@ unsigned Driver<Sage>::add(const boost::filesystem::path & path) {
     file->set_skip_unparse(true);
     file->set_skipfinalCompileStep(true);
 
-    unsigned id = add(file);
+    size_t id = add(file);
 
-    path_to_id_map.insert(std::pair<boost::filesystem::path, unsigned>(path, id));
+    path_to_id_map.insert(std::pair<boost::filesystem::path, size_t>(path, id));
 
     return id;
   }
 }
 
-unsigned Driver<Sage>::create(const boost::filesystem::path & path) {
+size_t Driver<Sage>::create(const boost::filesystem::path & path) {
   assert(path_to_id_map.find(path) == path_to_id_map.end());
 
   if (boost::filesystem::exists(path))
     boost::filesystem::remove(path);
 
-  std::map<boost::filesystem::path, unsigned>::const_iterator it_file_id = path_to_id_map.find(path);
+  std::map<boost::filesystem::path, size_t>::const_iterator it_file_id = path_to_id_map.find(path);
   assert(it_file_id == path_to_id_map.end());
     
   SgSourceFile * file = isSgSourceFile(SageBuilder::buildFile(path.string(), path.string(), project));
   assert(file != NULL);
-  SageInterface::attachComment(file, "/* File generated by Driver<Model>::getFileID(\"" + path.string() + "\") */");
+  SageInterface::attachComment(file, "/* File generated by MFB::Driver<Sage> */");
   file->set_skipfinalCompileStep(true);
 
-  unsigned id = file_id_counter++;
+  size_t id = file_id_counter++;
 
-  id_to_file_map.insert(std::pair<unsigned, SgSourceFile *>(id, file));
-  file_to_id_map.insert(std::pair<SgSourceFile *, unsigned>(file, id));
-  path_to_id_map.insert(std::pair<boost::filesystem::path, unsigned>(path, id));
-  file_id_to_accessible_file_id_map.insert(std::pair<unsigned, std::set<unsigned> >(id, std::set<unsigned>())).first->second.insert(id);
+  id_to_file_map.insert(std::pair<size_t, SgSourceFile *>(id, file));
+  file_to_id_map.insert(std::pair<SgSourceFile *, size_t>(file, id));
+  path_to_id_map.insert(std::pair<boost::filesystem::path, size_t>(path, id));
+  file_id_to_accessible_file_id_map.insert(std::pair<size_t, std::set<size_t> >(id, std::set<size_t>())).first->second.insert(id);
 
   return id;
 }
 
-void Driver<Sage>::setUnparsedFile(unsigned file_id) const {
-  std::map<unsigned, SgSourceFile *>::const_iterator it_file = id_to_file_map.find(file_id);
+void Driver<Sage>::setUnparsedFile(size_t file_id) const {
+  std::map<size_t, SgSourceFile *>::const_iterator it_file = id_to_file_map.find(file_id);
   assert(it_file != id_to_file_map.end());
   it_file->second->set_skip_unparse(false);
 }
 
-void Driver<Sage>::setCompiledFile(unsigned file_id) const {
-  std::map<unsigned, SgSourceFile *>::const_iterator it_file = id_to_file_map.find(file_id);
+void Driver<Sage>::setCompiledFile(size_t file_id) const {
+  std::map<size_t, SgSourceFile *>::const_iterator it_file = id_to_file_map.find(file_id);
   assert(it_file != id_to_file_map.end());
   it_file->second->set_skipfinalCompileStep(false);
 }
@@ -173,7 +169,6 @@ boost::filesystem::path resolve(
     const boost::filesystem::path & p,
     const boost::filesystem::path & base = boost::filesystem::current_path()
 ) {
-//    boost::filesystem::path abs_p = boost::filesystem::absolute(p,base);
     boost::filesystem::path abs_p = p;
     boost::filesystem::path result;
     for(boost::filesystem::path::iterator it=abs_p.begin();
@@ -206,10 +201,10 @@ boost::filesystem::path resolve(
     return result;
 }
 
-void Driver<Sage>::addIncludeDirectives(unsigned target_file_id, unsigned header_file_id) {
+void Driver<Sage>::addIncludeDirectives(size_t target_file_id, size_t header_file_id) {
   std::string header_file_name;
 
-  std::map<unsigned, SgSourceFile *>::const_iterator it_file = id_to_file_map.find(target_file_id);
+  std::map<size_t, SgSourceFile *>::const_iterator it_file = id_to_file_map.find(target_file_id);
   assert(it_file != id_to_file_map.end());
   SgSourceFile * target_file = it_file->second;
   assert(target_file != NULL);
@@ -236,8 +231,8 @@ void Driver<Sage>::addIncludeDirectives(unsigned target_file_id, unsigned header
   SageInterface::insertHeader(target_file, header_file_name);
 }
 
-void Driver<Sage>::addExternalHeader(unsigned file_id, std::string header_name, bool is_system_header) {
-  std::map<unsigned, SgSourceFile *>::iterator it_file = id_to_file_map.find(file_id);
+void Driver<Sage>::addExternalHeader(size_t file_id, std::string header_name, bool is_system_header) {
+  std::map<size_t, SgSourceFile *>::iterator it_file = id_to_file_map.find(file_id);
   assert(it_file != id_to_file_map.end());
   
   SgSourceFile * file = it_file->second;
@@ -246,8 +241,8 @@ void Driver<Sage>::addExternalHeader(unsigned file_id, std::string header_name, 
   SageInterface::insertHeader(file, header_name, is_system_header);
 }
 
-void Driver<Sage>::addPragmaDecl(unsigned file_id, std::string str) {
-  std::map<unsigned, SgSourceFile *>::iterator it_file = id_to_file_map.find(file_id);
+void Driver<Sage>::addPragmaDecl(size_t file_id, std::string str) {
+  std::map<size_t, SgSourceFile *>::iterator it_file = id_to_file_map.find(file_id);
   assert(it_file != id_to_file_map.end());
   
   SgSourceFile * file = it_file->second;
@@ -257,7 +252,7 @@ void Driver<Sage>::addPragmaDecl(unsigned file_id, std::string str) {
   SageInterface::prependStatement(SageBuilder::buildPragmaDeclaration(str, global), global);
 }
 
-void Driver<Sage>::addPointerToTopParentDeclaration(SgSymbol * symbol, unsigned file_id) {
+void Driver<Sage>::addPointerToTopParentDeclaration(SgSymbol * symbol, size_t file_id) {
   SgSymbol * parent = symbol;
   std::map<SgSymbol *, SgSymbol *>::const_iterator it_parent = p_parent_map.find(symbol);
   assert(it_parent != p_parent_map.end());
@@ -276,13 +271,13 @@ void Driver<Sage>::addPointerToTopParentDeclaration(SgSymbol * symbol, unsigned 
     SgInitializedName * init_name = isSgInitializedName(var_sym->get_symbol_basis());
     assert(init_name != NULL);
 
-    // TODO
+    assert(false); // TODO
   }
   else
     decl_to_add = isSgDeclarationStatement(parent->get_symbol_basis());
   assert(decl_to_add != NULL);
 
-  std::map<unsigned, SgSourceFile *>::iterator it_file = id_to_file_map.find(file_id);
+  std::map<size_t, SgSourceFile *>::iterator it_file = id_to_file_map.find(file_id);
   assert(it_file != id_to_file_map.end());
   SgSourceFile * file = it_file->second;
   assert(file != NULL);
@@ -295,7 +290,7 @@ void Driver<Sage>::addPointerToTopParentDeclaration(SgSymbol * symbol, unsigned 
     SageInterface::prependStatement(decl_to_add, global_scope);
 }
 
-api_t * Driver<Sage>::getAPI(unsigned file_id) const {
+api_t * Driver<Sage>::getAPI(size_t file_id) const {
   api_t * api = new api_t();
 
   // Namespaces are not local to a file. If a namespace have been detected in any file, it will be in the API
@@ -303,7 +298,7 @@ api_t * Driver<Sage>::getAPI(unsigned file_id) const {
   for (it_namespace_symbol = p_namespace_symbols.begin(); it_namespace_symbol != p_namespace_symbols.end(); it_namespace_symbol++)
     api->namespace_symbols.insert(*it_namespace_symbol);
 
-  std::map<SgSymbol *, unsigned>::const_iterator it_sym_decl_file_id;
+  std::map<SgSymbol *, size_t>::const_iterator it_sym_decl_file_id;
 
   std::set<SgFunctionSymbol *>::const_iterator it_function_symbol;
   for (it_function_symbol = p_function_symbols.begin(); it_function_symbol != p_function_symbols.end(); it_function_symbol++) {
@@ -317,9 +312,9 @@ api_t * Driver<Sage>::getAPI(unsigned file_id) const {
   std::set<SgClassSymbol *>::const_iterator it_class_symbol;
   for (it_class_symbol = p_class_symbols.begin(); it_class_symbol != p_class_symbols.end(); it_class_symbol++) {
     it_sym_decl_file_id = p_symbol_to_file_id_map.find(*it_class_symbol);
-    assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
+//  assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
 
-    if (it_sym_decl_file_id->second == file_id)
+    if (it_sym_decl_file_id != p_symbol_to_file_id_map.end() && it_sym_decl_file_id->second == file_id)
       api->class_symbols.insert(*it_class_symbol);
   }
 
@@ -344,10 +339,10 @@ api_t * Driver<Sage>::getAPI(unsigned file_id) const {
   return api;
 }
 
-api_t * Driver<Sage>::getAPI(const std::set<unsigned> & file_ids) const {
+api_t * Driver<Sage>::getAPI(const std::set<size_t> & file_ids) const {
   assert(file_ids.size() > 0);
 
-  std::set<unsigned>::const_iterator it = file_ids.begin();
+  std::set<size_t>::const_iterator it = file_ids.begin();
 
   api_t * api = getAPI(*it);
   it++;
@@ -391,7 +386,109 @@ api_t * Driver<Sage>::getAPI() const {
   return api;
 }
 
-/** @} */
+SgGlobal * Driver<Sage>::getGlobalScope(file_id_t id) const {
+  std::map<file_id_t, SgSourceFile *>::const_iterator it = id_to_file_map.find(id);
+  return it != id_to_file_map.end() ? (it->second != NULL ? it->second->get_globalScope() : NULL) : NULL;  
+}
+
+void Driver<Sage>::useType(SgType * type, file_id_t file_id) {
+  useType(type, getGlobalScope(file_id));
+}
+
+void Driver<Sage>::useType(SgType * type, SgScopeStatement * scope) {
+  SgNamedType    * named_type = isSgNamedType(type);
+  SgModifierType * mod_type   = isSgModifierType(type);
+  SgPointerType  * ptr_type   = isSgPointerType(type);
+  SgArrayType    * arr_type   = isSgArrayType(type);
+  if (named_type != NULL) {
+    SgClassType   * class_type = isSgClassType(named_type);
+    SgEnumType    * enum_type  = isSgEnumType(named_type);
+    SgTypedefType * tdf_type   = isSgTypedefType(named_type);
+
+    assert(class_type != NULL || enum_type != NULL || tdf_type != NULL);
+
+    SgGlobal * global_scope = SageInterface::getGlobalScope(scope);
+    std::map<SgScopeStatement *, std::set<SgType *> >::iterator it_type_scope = p_type_scope_map.find(global_scope);
+    if (it_type_scope == p_type_scope_map.end())
+      it_type_scope = p_type_scope_map.insert(std::pair<SgScopeStatement *, std::set<SgType *> >(global_scope, std::set<SgType *>())).first;
+    std::set<SgType *>::iterator it_type = it_type_scope->second.find(type);
+    if (it_type == it_type_scope->second.end()) {
+      it_type_scope->second.insert(type);
+
+      SgDeclarationStatement * decl_stmt = named_type->get_declaration();
+      assert(decl_stmt != NULL);
+
+      if (class_type != NULL) {
+        decl_stmt = decl_stmt->get_definingDeclaration();
+        assert(decl_stmt != NULL);
+
+        SgClassDeclaration * class_decl = isSgClassDeclaration(decl_stmt);
+        assert(class_decl != NULL);
+
+        SgName name = class_decl->get_name();
+
+        SgClassDeclaration * decl_copy = isSgClassDeclaration(SageInterface::copyStatement(decl_stmt));
+        assert(decl_copy != NULL);
+        SgClassDeclaration * nondef_decl = SageBuilder::buildNondefiningClassDeclaration_nfi(name, decl_copy->get_class_type(), global_scope, false, NULL);
+
+        decl_copy->set_parent(global_scope);
+        decl_copy->set_scope(global_scope);
+        decl_copy->set_firstNondefiningDeclaration(nondef_decl);
+        decl_copy->set_definingDeclaration(decl_copy);
+
+        nondef_decl->set_parent(global_scope);
+        nondef_decl->set_scope(global_scope);
+        nondef_decl->set_firstNondefiningDeclaration(nondef_decl);
+        nondef_decl->set_definingDeclaration(decl_copy);
+
+        nondef_decl->set_type(decl_copy->get_type());
+
+//      global_scope->insert_symbol(name, new SgClassSymbol(decl_copy));
+        SageInterface::prependStatement(decl_copy, global_scope);
+      }
+      else if (enum_type != NULL) {
+        decl_stmt = decl_stmt->get_definingDeclaration();
+        assert(decl_stmt != NULL);
+
+        SgEnumDeclaration * enum_decl = isSgEnumDeclaration(decl_stmt);
+        assert(enum_decl != NULL);
+
+        SgName name = enum_decl->get_name();
+        SgSymbol * enum_sym = scope->lookup_enum_symbol(name);
+        if (enum_sym != NULL) return;
+
+        SgEnumDeclaration * decl_copy = isSgEnumDeclaration(SageInterface::copyStatement(decl_stmt));
+        assert(decl_copy != NULL);
+
+        decl_copy->set_parent(global_scope);
+        decl_copy->set_scope(global_scope);
+//      global_scope->insert_symbol(name, new SgEnumSymbol(decl_copy));
+        SageInterface::prependStatement(decl_copy, global_scope);
+      }
+      else if (tdf_type != NULL) {
+        SgTypedefDeclaration * tdf_decl = isSgTypedefDeclaration(decl_stmt);
+        assert(tdf_decl != NULL);
+
+        SgName name = tdf_decl->get_name();
+        SgSymbol * tdf_sym = scope->lookup_typedef_symbol(name);
+        if (tdf_sym != NULL) return;
+
+        useType(tdf_type->get_base_type(), scope);
+
+        SgTypedefDeclaration * decl_copy = isSgTypedefDeclaration(SageInterface::copyStatement(decl_stmt));
+        assert(decl_copy != NULL);
+
+        decl_copy->set_parent(global_scope);
+        decl_copy->set_scope(global_scope);
+//      global_scope->insert_symbol(name, new SgTypedefSymbol(decl_copy));
+        SageInterface::prependStatement(decl_copy, global_scope);
+      }
+    }
+  }
+  else if (mod_type != NULL) useType(mod_type->get_base_type(), scope);
+  else if (ptr_type != NULL) useType(ptr_type->get_base_type(), scope);
+  else if (arr_type != NULL) useType(arr_type->get_base_type(), scope);
+}
 
 }
 

@@ -16,7 +16,7 @@
 #include <boost/progress.hpp>
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/Stopwatch.h>
 
 using namespace std;
 

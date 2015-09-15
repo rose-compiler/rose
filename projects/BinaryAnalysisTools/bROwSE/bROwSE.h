@@ -1,7 +1,6 @@
 #ifndef bROwSE_H
 #define bROwSE_H
 
-#include <rose.h>
 #include <Color.h>                                      // ROSE
 #include <Diagnostics.h>                                // ROSE
 #include <Partitioner2/Engine.h>                        // ROSE
@@ -61,6 +60,7 @@ extern P2::Attribute::Id ATTR_CfgImage;
 extern P2::Attribute::Id ATTR_CfgVertexCoords;
 extern P2::Attribute::Id ATTR_CallGraph;
 extern P2::Attribute::Id ATTR_NCallers;
+extern P2::Attribute::Id ATTR_NCallees;
 extern P2::Attribute::Id ATTR_NReturns;
 extern P2::Attribute::Id ATTR_MayReturn;
 extern P2::Attribute::Id ATTR_StackDelta;

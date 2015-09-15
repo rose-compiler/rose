@@ -264,6 +264,32 @@ DSL_Support::buildDataPointer(const string & pointerVariableName, SgVariableSymb
    }
 
 
+SgVariableDeclaration*
+DSL_Support::buildMultiDimPointer(const string & pointerVariableName, SgVariableSymbol* variableSymbol, SgScopeStatement* outerScope, std::vector<SgVariableSymbol*> SymbolArray, int dimSize)
+   {
+     SgArrayType* baseType = SageBuilder::buildArrayType(SageBuilder::buildDoubleType(), SageBuilder::buildVarRefExp(SymbolArray[0]));
+
+     for(int i=1; i < dimSize-1; ++i)
+     {
+        SgArrayType* oldType = baseType; 
+        SgArrayType* newType = SageBuilder::buildArrayType(oldType, SageBuilder::buildVarRefExp(SymbolArray[i]));
+        baseType = newType;
+     } 
+
+  // Optionally build a pointer variable so that we can optionally support a C style indexing for the DTEC DSL blocks.
+     SgExpression* pointerExp = buildMemberFunctionCall(variableSymbol,"getPointer",NULL,false);
+     ROSE_ASSERT(pointerExp != NULL);
+     SgPointerType* castType = SageBuilder::buildPointerType(baseType);
+     SgCastExp* castExp = SageBuilder::buildCastExp(pointerExp, castType,SgCastExp::e_C_style_cast);
+     SgAssignInitializer* assignInitializer = SageBuilder::buildAssignInitializer_nfi(castExp);
+     ROSE_ASSERT(assignInitializer != NULL);
+
+  // Build the variable declaration for the pointer to the data.
+     SgVariableDeclaration* variableDeclaration  = SageBuilder::buildVariableDeclaration_nfi(pointerVariableName,castType,assignInitializer,outerScope);
+     ROSE_ASSERT(variableDeclaration != NULL);
+
+     return variableDeclaration;
+   }
 
 
 SgInitializedName*

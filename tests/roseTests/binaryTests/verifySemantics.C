@@ -7,10 +7,11 @@
 #include <BinaryDebugger.h>
 #include <Diagnostics.h>
 #include <DispatcherX86.h>
+#include <MemoryCellList.h>
 #include <Partitioner2/Engine.h>
-#include <sawyer/BitVector.h>
-#include <sawyer/CommandLine.h>
-#include <sawyer/ProgressBar.h>
+#include <Sawyer/BitVector.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/ProgressBar.h>
 #include <TraceSemantics2.h>
 
 namespace P2 = rose::BinaryAnalysis::Partitioner2;

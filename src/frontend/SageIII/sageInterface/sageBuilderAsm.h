@@ -142,8 +142,16 @@ SgAsmBinaryRor* buildRorExpression(SgAsmExpression *lhs, SgAsmExpression *rhs);
 SgAsmUnaryRrx* buildRrxExpression(SgAsmExpression *lhs);
 SgAsmUnaryArmSpecialRegisterList *buildArmSpecialRegisterList(SgAsmExpression *lhs);
 SgAsmExprListExp* buildExprListExpression();
+void appendExpression(SgAsmExprListExp*, SgAsmExpression*);
 SgAsmMemoryReferenceExpression* buildMemoryReferenceExpression(SgAsmExpression *addr, SgAsmExpression *segment=NULL,
                                                                SgAsmType *type=NULL);
+SgAsmRiscOperation* buildRiscOperation(SgAsmRiscOperation::RiscOperator);
+SgAsmRiscOperation* buildRiscOperation(SgAsmRiscOperation::RiscOperator, SgAsmExpression*);
+SgAsmRiscOperation* buildRiscOperation(SgAsmRiscOperation::RiscOperator, SgAsmExpression*, SgAsmExpression*);
+SgAsmRiscOperation* buildRiscOperation(SgAsmRiscOperation::RiscOperator, SgAsmExpression*, SgAsmExpression*, SgAsmExpression*);
+SgAsmRiscOperation* buildRiscOperation(SgAsmRiscOperation::RiscOperator, SgAsmExpression*, SgAsmExpression*, SgAsmExpression*,
+                                       SgAsmExpression*);
+
 
 // Operators (deprecated because they should have been named "build" rather than "make" [Robb P. Matzke 2014-07-21])
 SgAsmBinaryAdd* makeAdd(SgAsmExpression *lhs, SgAsmExpression *rhs) ROSE_DEPRECATED("use buildAddExpression");

@@ -2,6 +2,7 @@
  * file) because then they won't get indexed/formatted/etc. by C-aware tools. */
 
 #include "sage3basic.h"
+#include "AsmUnparser_compat.h"
 #include "Diagnostics.h"
 #include "Disassembler.h"
 #include "DispatcherM68k.h"

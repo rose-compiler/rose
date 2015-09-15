@@ -1,6 +1,9 @@
 #include "sage3basic.h"
 #include "BaseSemantics2.h"
+#include "Diagnostics.h"
 #include "DispatcherPowerpc.h"
+
+using namespace rose::Diagnostics;
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -1056,6 +1059,24 @@ DispatcherPowerpc::regcache_init()
         REG_CR  = findRegister("cr", 32);               // condition register
         REG_CR0 = findRegister("cr0", 4);               // CR Field 0, result of fixed-point instruction; set by record()
         REG_CTR = findRegister("ctr", 32);              // count register
+    }
+}
+
+void
+DispatcherPowerpc::memory_init() {
+    if (BaseSemantics::StatePtr state = get_state()) {
+        if (BaseSemantics::MemoryStatePtr memory = state->get_memory_state()) {
+            switch (memory->get_byteOrder()) {
+                case ByteOrder::ORDER_LSB:
+                    break;
+                case ByteOrder::ORDER_MSB:
+                    mlog[WARN] <<"x86 memory state is using big-endian byte order\n";
+                    break;
+                case ByteOrder::ORDER_UNSPECIFIED:
+                    memory->set_byteOrder(ByteOrder::ORDER_LSB);
+                    break;
+            }
+        }
     }
 }
 

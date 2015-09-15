@@ -1,6 +1,7 @@
 #ifndef RSIM_CloneDetection_H
 #define RSIM_CloneDetection_H
 
+#include "Disassembler.h"
 #include "PartialSymbolicSemantics.h"
 #include "x86InstructionSemantics.h"
 #include "BinaryPointerDetection.h"

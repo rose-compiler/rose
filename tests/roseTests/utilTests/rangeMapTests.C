@@ -1,7 +1,7 @@
 #include <boost/foreach.hpp>
 #include <set>
 #include <rangemap.h>
-#include <sawyer/IntervalMap.h>
+#include <Sawyer/IntervalMap.h>
 
 // We want a map that associates Key with ValueSet, compressing adjacent keys with equal ValueSet.
 typedef size_t Key;

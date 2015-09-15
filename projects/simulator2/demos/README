@@ -1,0 +1,5 @@
+This directory contains a number of demonstrations of how to use RSIM
+for analysis.  They are meant as demos, not fully functional analyses,
+and therefore have various shortcomings and aren't well tested.  Full
+details of each demo are documented at the top of each source
+file.

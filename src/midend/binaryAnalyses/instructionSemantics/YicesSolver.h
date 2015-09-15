@@ -1,8 +1,9 @@
 #ifndef Rose_YicesSolver_H
 #define Rose_YicesSolver_H
 
+#include "rosePublicConfig.h"
 #include "SMTSolver.h"
-#include <sawyer/Map.h>
+#include <Sawyer/Map.h>
 
 #ifdef ROSE_HAVE_LIBYICES
 #  include <yices_c.h>

@@ -91,10 +91,12 @@ namespace CodeThorn {
       // that will be checked.
       void compareResults(TransitionGraph& stg, std::string ltl_fsPlusRes_file, 
 					std::set<int> inVals, std::set<int> outVals);
-      //returns a copy of the current LTL result table. returned object needs to be deleted by calling function.
+      // returns a pointer to the LTL results table.
       PropertyValueTable* getLtlResults();
-      //resets the LTL results table to all unknown properties.
+      // resets the LTL results table to all unknown properties.
       void resetLtlResults();
+      // only resets a specific entry in the results table.
+      void resetLtlResults(int property);
 
     private:
       //Removes every "WU" in a string with 'W". Necessary because only accepts this syntax.

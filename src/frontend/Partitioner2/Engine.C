@@ -15,13 +15,12 @@
 #include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Semantics.h>
 #include <Partitioner2/Utility.h>
-#include <sawyer/GraphTraversal.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/GraphTraversal.h>
+#include <Sawyer/Stopwatch.h>
 
 #ifdef ROSE_HAVE_LIBYAML
 #include <yaml-cpp/yaml.h>
 #endif
-
 
 using namespace rose::Diagnostics;
 
@@ -44,7 +43,7 @@ Engine::reset() {
     binaryLoader_ = NULL;
     disassembler_ = NULL;
     map_.clear();
-    basicBlockWorkList_ = BasicBlockWorkList::instance();
+    basicBlockWorkList_ = BasicBlockWorkList::instance(this);
 }
 
 // Returns true if the specified vertex has at least one E_CALL_RETURN edge
@@ -120,6 +119,38 @@ Engine::loaderSwitches() {
                    "defaults to 128.  An argument of zero disables the removal.  When this switch is not specified at "
                    "all, this tool assumes a value of " +
                    StringUtility::plural(settings_.loader.deExecuteZeros, "bytes") + "."));
+
+    sg.insert(Switch("executable")
+              .intrinsicValue(true, settings_.loader.memoryIsExecutable)
+              .doc("Adds execute permission to the entire memory map, aside from regions excluded by @s{remove-zeros}. "
+                   "The executable bit determines whether the partitioner is allowed to make instructions at some address, "
+                   "so using this switch is an easy way to make the disassembler think that all of memory may contain "
+                   "instructions.  The default is to not add executable permission to all of memory."));
+    sg.insert(Switch("no-executable")
+              .key("executable")
+              .intrinsicValue(false, settings_.loader.memoryIsExecutable)
+              .hidden(true));
+
+    sg.insert(Switch("data")
+              .argument("state", enumParser<MemoryDataAdjustment>(settings_.loader.memoryDataAdjustment)
+                        ->with("constant", DATA_IS_CONSTANT)
+                        ->with("initialized", DATA_IS_INITIALIZED)
+                        ->with("default", DATA_NO_CHANGE))
+              .doc("Globally adjusts the memory map to influence how the partitioner treats reads from concrete memory "
+                   "addresses.  The values for @v{state} are one of these words:"
+                   "@named{constant}{Causes write access to be removed from all memory segments and the partitioner treats "
+                   "memory reads as returning a concrete value." +
+                   std::string(DATA_IS_CONSTANT==settings_.loader.memoryDataAdjustment?" This is the default.":"") + "}"
+                   "@named{initialized}{Causes the initialized bit to be added to all memory segments and the partitioner "
+                   "treats reads from such addresses to return a concrete value, plus if the address is writable, "
+                   "indeterminate values." +
+                   std::string(DATA_IS_INITIALIZED==settings_.loader.memoryDataAdjustment?" This is the default.":"") + "}"
+                   "@named{default}{Causes the engine to not change data access bits for memory." +
+                   std::string(DATA_NO_CHANGE==settings_.loader.memoryDataAdjustment?" This is the default.":"") + "}"
+                   "One of the things influenced by these access flags is indirect jumps, like x86 \"jmp [@v{addr}]\". If "
+                   "@v{addr} is constant memory, then the \"jmp\" has a single constant successor; if @v{addr} is "
+                   "non-constant but initialized, then the \"jmp\" will have a single constant successor and indeterminate "
+                   "successors; otherwise it will have only indeterminate successors."));
 
     return sg;
 }
@@ -210,6 +241,30 @@ Engine::partitionerSwitches() {
               .intrinsicValue(false, settings_.partitioner.findingDeadCode)
               .hidden(true));
 
+    sg.insert(Switch("find-thunks")
+              .intrinsicValue(true, settings_.partitioner.findingThunks)
+              .doc("Search for common thunk patterns in areas of executable memory that have not been previously "
+                   "discovered to contain other functions.  When this switch is enabled, the function-searching callbacks "
+                   "include the patterns to match thunks.  This switch does not cause the thunk's instructions to be "
+                   "detached as a separate function from the thunk's target function; that's handled by the "
+                   "@s{split-thunks} switch.  The @s{no-find-thunks} switch turns thunk searching off. The default "
+                   "is to " + std::string(settings_.partitioner.findingThunks ? "" : "not ") + "search for thunks."));
+    sg.insert(Switch("no-find-thunks")
+              .key("find-thunks")
+              .intrinsicValue(false, settings_.partitioner.findingThunks)
+              .hidden(true));
+
+    sg.insert(Switch("split-thunks")
+              .intrinsicValue(true, settings_.partitioner.splittingThunks)
+              .doc("Look for common thunk patterns at the start of existing functions and split off those thunk "
+                   "instructions to their own separate function.  The @s{no-detach-thunks} switch turns this feature "
+                   "off.  The default is to " + std::string(settings_.partitioner.splittingThunks?"":"not ") +
+                   "split thunks into their own functions."));
+    sg.insert(Switch("no-split-thunks")
+              .key("split-thunks")
+              .intrinsicValue(false, settings_.partitioner.splittingThunks)
+              .hidden(true));
+
     sg.insert(Switch("pe-scrambler")
               .argument("dispatcher_address", nonNegativeIntegerParser(settings_.partitioner.peScramblerDispatcherVa))
               .doc("Simulate the action of the PEScrambler dispatch function in order to rewrite CFG edges.  Any edges "
@@ -279,10 +334,22 @@ Engine::partitionerSwitches() {
               .hidden(true));
 
     sg.insert(Switch("functions-return")
-              .argument("boolean", booleanParser(settings_.partitioner.functionReturnsAssumed))
-              .doc("If the may-return analysis is inconclusive then either assume that such functions may "
-                   "return to their caller or never return.  The default is that they " +
-                   std::string(settings_.partitioner.functionReturnsAssumed?"may":"never") + " return."));
+              .argument("how", enumParser<FunctionReturnAnalysis>(settings_.partitioner.functionReturnAnalysis)
+                        ->with("always", MAYRETURN_ALWAYS_YES)
+                        ->with("never", MAYRETURN_ALWAYS_NO)
+                        ->with("yes", MAYRETURN_DEFAULT_YES)
+                        ->with("no", MAYRETURN_DEFAULT_NO))
+              .doc("Determines how function may-return analysis is performed. This analysis returns true if a call to the "
+                   "function has a possibility of returning, false if the call has no possibility of returning, or "
+                   "indeterminate if the analysis cannot decide.  The partitioner will attempt to disassemble instructions "
+                   "at the fall-through address of a call if the call has a possibility of returning, otherwise that address "
+                   "will be disassembled only if it can be reached by some other mechanism.\n\n"
+
+                   "This switch accepts one of these four words:"
+                   "@named{always}{Assume that all function calls may return without ever running the may-return analysis.}"
+                   "@named{never}{Assume that all functions cannot return to the caller and never run the may-return analysis.}"
+                   "@named{yes}{Assume a function returns if the may-return analysis cannot decide. This is the default.}"
+                   "@named{no}{Assume a function does not return if the may-return analysis cannot decide.}"));
 
     return sg;
 }
@@ -324,6 +391,13 @@ Engine::specimenNameDocumentation() {
             "a mapped executable address is reached, and then its memory is copied into ROSE's memory map possibly "
             "overwriting existing parts of the map.  This can be useful when the user wants accurate information about "
             "how that native loader links in shared objects since ROSE's linker doesn't always have identical behavior.}"
+
+            "@bullet{If the file name begins with the string \"srec:\" then it is treated as Motorola S-Record format. "
+            "Mapping attributes are stored after the first column and before the second; the file name appears after the "
+            "second colon.  The only mapping attributes supported at this time are permissions, specified as an equal "
+            "sign ('=') followed by zero or more of the letters \"r\", \"w\", and \"x\" to signify read, write, and "
+            "execute permissions. If no letters are present after the equal sign, then the memory has no permissions; "
+            "if the equal sign itself is also missing then the segments are given read, write, and execute permission.}"
 
             "@bullet{If the name ends with \".srec\" and doesn't match the previous list of prefixes then it is assumed "
             "to be a text file containing Motorola S-Records and will be parsed as such and loaded into the memory map "
@@ -381,6 +455,7 @@ Engine::isNonContainer(const std::string &name) {
     return (boost::starts_with(name, "map:") ||         // map file directly into MemoryMap
             boost::starts_with(name, "proc:") ||        // map process memory into MemoryMap
             boost::starts_with(name, "run:") ||         // run a process in a debugger, then map into MemoryMap
+            boost::starts_with(name, "srec:") ||        // Motorola S-Record format
             boost::ends_with(name, ".srec"));           // Motorola S-Record format
 }
 
@@ -403,8 +478,11 @@ Engine::parseContainers(const std::vector<std::string> &fileNames) {
     // Prune away things we recognize as not being binary containers.
     std::vector<std::string> frontendNames;
     BOOST_FOREACH (const std::string &fileName, fileNames) {
-        if (boost::starts_with(fileName, "run:") || !isNonContainer(fileName))
+        if (boost::starts_with(fileName, "run:") && fileName.size()>4) {
+            frontendNames.push_back(fileName.substr(4));
+        } else if (!isNonContainer(fileName)) {
             frontendNames.push_back(fileName);
+        }
     }
 
     // Process through ROSE's frontend()
@@ -489,29 +567,76 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                 throw std::runtime_error(exeName + " " + debugger.howTerminated() + " without reaching a breakpoint");
             map_.insertProcess(":noattach:" + StringUtility::numberToString(debugger.isAttached()));
             debugger.terminate();
-        } else if (boost::ends_with(fileName, ".srec")) {
-            if (fileName.size()!=strlen(fileName.c_str())) {
-                throw std::runtime_error("file name contains internal NUL characters: \"" +
-                                         StringUtility::cEscape(fileName) + "\"");
+        } else if (boost::starts_with(fileName, "srec:") || boost::ends_with(fileName, ".srec")) {
+            std::string resource;                       // name of file to open
+            unsigned perms = MemoryMap::READABLE | MemoryMap::WRITABLE | MemoryMap::EXECUTABLE;
+
+            if (boost::starts_with(fileName, "srec:")) {
+                // Format is "srec:[=PERMS]:FILENAME" where PERMS are the letters "r", "w", and/or "x"
+                std::vector<std::string> parts = StringUtility::split(":", fileName, 3);
+                if (parts.size() != 3)
+                    throw std::runtime_error("second ':' expected in \"srec\" URI (expected \"srec:[=PERMS]:FILENAME\")");
+                resource = parts[2];
+
+                // Permissions, like "=rw". Lack of '=...' means default permissions; nothing after '=' means no permissions
+                // (e.g., "srec:=:filename").
+                if (!parts[1].empty()) {
+                    if ('=' != parts[1][0])
+                        throw std::runtime_error("expected \"=PERMS\" in \"srec:\" URI");
+                    perms = 0;
+                    for (size_t i=1; i<parts[1].size(); ++i) {
+                        switch (parts[1][i]) {
+                            case 'r': perms |= MemoryMap::READABLE; break;
+                            case 'w': perms |= MemoryMap::WRITABLE; break;
+                            case 'x': perms |= MemoryMap::EXECUTABLE; break;
+                            default:
+                                throw std::runtime_error("invalid permission character '" +
+                                                         StringUtility::cEscape(parts[1].substr(i, 1)) +
+                                                         "' in \"srec:\" URI");
+                                break;
+                        }
+                    }
+                }
+            } else {
+                resource = fileName;
             }
-            std::ifstream input(fileName.c_str());
+            
+            // Parse and load the S-Record file
+            if (resource.size()!=strlen(resource.c_str())) {
+                throw std::runtime_error("file name contains internal NUL characters: \"" +
+                                         StringUtility::cEscape(resource) + "\"");
+            }
+            std::ifstream input(resource.c_str());
             if (!input.good()) {
                 throw std::runtime_error("cannot open Motorola S-Record file: \"" +
-                                         StringUtility::cEscape(fileName) + "\"");
+                                         StringUtility::cEscape(resource) + "\"");
             }
             std::vector<SRecord> srecs = SRecord::parse(input);
             for (size_t i=0; i<srecs.size(); ++i) {
                 if (!srecs[i].error().empty())
-                    mlog[ERROR] <<fileName <<":" <<(i+1) <<": S-Record: " <<srecs[i].error() <<"\n";
+                    mlog[ERROR] <<resource <<":" <<(i+1) <<": S-Record: " <<srecs[i].error() <<"\n";
             }
-            SRecord::load(srecs, map_, true /*create*/, MemoryMap::READABLE|MemoryMap::WRITABLE|MemoryMap::EXECUTABLE);
+            SRecord::load(srecs, map_, true /*create*/, perms);
         }
     }
 }
 
 void
 Engine::adjustMemoryMap() {
+    if (settings_.loader.memoryIsExecutable)
+        map_.any().changeAccess(MemoryMap::EXECUTABLE, 0);
     Modules::deExecuteZeros(map_/*in,out*/, settings_.loader.deExecuteZeros);
+
+    switch (settings_.loader.memoryDataAdjustment) {
+        case DATA_IS_CONSTANT:
+            map_.any().changeAccess(0, MemoryMap::WRITABLE);
+            break;
+        case DATA_IS_INITIALIZED:
+            map_.any().changeAccess(MemoryMap::INITIALIZED, 0);
+            break;
+        case DATA_NO_CHANGE:
+            break;
+    }
 }
 
 MemoryMap&
@@ -590,9 +715,25 @@ Engine::createBarePartitioner() {
     ASSERT_not_null(basicBlockWorkList_);
     p.cfgAdjustmentCallbacks().prepend(basicBlockWorkList_);
 
+    // Perform some finalization whenever a basic block is created.  For instance, this figures out whether we should add an
+    // extra indeterminate edge for indirect jump instructions that go through initialized but writable memory.
+    p.basicBlockCallbacks().append(BasicBlockFinalizer::instance());
+
+    // If the may-return analysis is run and cannot decide whether a function may return, should we assume that it may or
+    // cannot return?  The engine decides whether to actually invoke the analysis -- this just sets what to do if it's
+    // invoked.
+    switch (settings_.partitioner.functionReturnAnalysis) {
+        case MAYRETURN_ALWAYS_YES:
+        case MAYRETURN_DEFAULT_YES:
+            p.assumeFunctionsReturn(true);
+            break;
+        case MAYRETURN_ALWAYS_NO:
+        case MAYRETURN_DEFAULT_NO:
+            p.assumeFunctionsReturn(false);
+    }
+
     // Miscellaneous settings
     p.enableSymbolicSemantics(settings_.partitioner.usingSemantics);
-    p.assumeFunctionsReturn(settings_.partitioner.functionReturnsAssumed);
     if (settings_.partitioner.followingGhostEdges)
         p.basicBlockCallbacks().append(Modules::AddGhostSuccessors::instance());
     if (!settings_.partitioner.discontiguousBlocks)
@@ -619,8 +760,8 @@ Engine::createGenericPartitioner() {
     p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchAbbreviatedPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
-    p.functionPrologueMatchers().push_back(ModulesX86::MatchLeaJmpThunk::instance());
-    p.functionPrologueMatchers().push_back(ModulesX86::MatchMovJmpThunk::instance());
+    if (settings_.partitioner.findingThunks)
+        p.functionPrologueMatchers().push_back(ModulesX86::MatchThunk::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
     p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
     p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
@@ -647,8 +788,8 @@ Engine::createTunedPartitioner() {
         p.functionPrologueMatchers().push_back(ModulesX86::MatchHotPatchPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
-        p.functionPrologueMatchers().push_back(ModulesX86::MatchLeaJmpThunk::instance());
-        p.functionPrologueMatchers().push_back(ModulesX86::MatchMovJmpThunk::instance());
+        if (settings_.partitioner.findingThunks)
+            p.functionPrologueMatchers().push_back(ModulesX86::MatchThunk::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
         p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
         p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
@@ -691,7 +832,7 @@ Engine::createPartitionerFromAst(SgAsmInterpretation *interp) {
             bblock->insertSuccessor(ival->get_absoluteValue(), ival->get_significantBits());
         if (!blockAst->get_successors_complete()) {
             size_t nbits = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
-            bblock->insertSuccessor(Semantics::SValue::instance(nbits));
+            bblock->insertSuccessor(Semantics::SValue::instance_undefined(nbits));
         }
 
         partitioner.attachBasicBlock(bblock);
@@ -752,16 +893,28 @@ Engine::runPartitionerRecursive(Partitioner &partitioner) {
     if (settings_.partitioner.findingIntraFunctionData)
         attachSurroundedDataToFunctions(partitioner);
 
-    // Perform a final pass over all functions and issue reports about strange CFG
-    attachBlocksToFunctions(partitioner, true /*report*/);
+    // Another pass to attach blocks to functions
+    attachBlocksToFunctions(partitioner);
 }
 
 void
 Engine::runPartitionerFinal(Partitioner &partitioner) {
+    if (settings_.partitioner.splittingThunks) {
+        // Splitting thunks off the front of a basic block causes the rest of the basic block to be discarded and then
+        // rediscovered. This might also create additional blocks due to the fact that opaque predicate analysis runs only on
+        // single blocks at a time -- splitting the block may have broken the opaque predicate.
+        ModulesX86::splitThunkFunctions(partitioner);
+        discoverBasicBlocks(partitioner);
+    }
+
+    // Perform a final pass over all functions and issue reports about strange CFG
+    attachBlocksToFunctions(partitioner, true /*report*/);
+
     if (interp_)
         ModulesPe::nameImportThunks(partitioner, interp_);
     Modules::nameConstants(partitioner);
     Modules::nameStrings(partitioner);
+    Modules::nameNoopFunctions(partitioner);
 }
 
 void
@@ -1269,6 +1422,51 @@ Engine::updateAnalysisResults(Partitioner &partitioner) {
 //                                      Partitioner low-level stuff
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Called every time an instructionis added to a basic block.
+bool
+Engine::BasicBlockFinalizer::operator()(bool chain, const Args &args) {
+    if (chain) {
+        BasicBlock::Ptr bb = args.bblock;
+        ASSERT_not_null(bb);
+        ASSERT_require(bb->nInstructions() > 0);
+
+        if (args.bblock->finalState() == NULL)
+            return true;
+        Semantics::MemoryStatePtr mem = Semantics::MemoryState::promote(args.bblock->finalState()->get_memory_state());
+        BaseSemantics::RiscOperatorsPtr ops = args.bblock->dispatcher()->get_operators();
+
+        // Should we add an indeterminate CFG edge from this basic block?  For instance, a "JMP [ADDR]" instruction should get
+        // an indeterminate edge if ADDR is a writable region of memory. There are two situations: ADDR is non-writable, in
+        // which case RiscOperators::readMemory would have returned a free variable to indicate an indeterminate value, or ADDR
+        // is writable but its MemoryMap::INITIALIZED bit is set to indicate it has a valid value already, in which case
+        // RiscOperators::readMemory would have returned the value stored there but also marked the value as being
+        // INDETERMINATE.  The InsnSemanticsExpr::TreeNode::INDETERMINATE bit in the expression should have been carried along
+        // so that things like "MOV EAX, [ADDR]; JMP EAX" will behave the same as "JMP [ADDR]".
+        bool addIndeterminateEdge = false;
+        size_t addrWidth = 0;
+        BOOST_FOREACH (const BasicBlock::Successor &successor, args.partitioner.basicBlockSuccessors(args.bblock)) {
+            if (!successor.expr()->is_number()) {       // BB already has an indeterminate successor?
+                addIndeterminateEdge = false;
+                break;
+            } else if (!addIndeterminateEdge &&
+                       (successor.expr()->get_expression()->get_flags() & InsnSemanticsExpr::TreeNode::INDETERMINATE) != 0) {
+                addIndeterminateEdge = true;
+                addrWidth = successor.expr()->get_width();
+            }
+        }
+
+        // Add an edge
+        if (addIndeterminateEdge) {
+            ASSERT_require(addrWidth != 0);
+            BaseSemantics::SValuePtr addr = ops->undefined_(addrWidth);
+            args.bblock->insertSuccessor(addr);
+            SAWYER_MESG(mlog[DEBUG]) <<args.bblock->printableName()
+                                     <<": added indeterminate successor for initialized, non-constant memory read\n";
+        }
+    }
+    return chain;
+}
+
 // Add basic block to worklist(s)
 bool
 Engine::BasicBlockWorkList::operator()(bool chain, const AttachedBasicBlock &args) {
@@ -1276,21 +1474,37 @@ Engine::BasicBlockWorkList::operator()(bool chain, const AttachedBasicBlock &arg
         ASSERT_not_null(args.partitioner);
         const Partitioner *p = args.partitioner;
 
+        // Basic block that is not yet discovered. We could use the special "undiscovered" CFG vertex, but there is no ordering
+        // guarantee for its incoming edges.  We want to process undiscovered vertices in a depth-first manner, which is why we
+        // maintain our own list instead.  The reason for depth-first discovery is that some analyses are recursive in nature
+        // and we want to try to have children discovered and analyzed before we try to analyze the parent.  For instance,
+        // may-return analysis for one vertex probably depends on the may-return analysis of its successors.
         if (args.bblock == NULL) {
-            // Basic block that is not yet discovered. We could use the special "undiscovered" CFG vertex, but there is no
-            // ordering guarantee for its incoming edges.  We want to process undiscovered vertices in a depth-first manner,
-            // which is why we maintain our own list instead.  The reason for depth-first discovery is that some analyses are
-            // recursive in nature and we want to try to have children discovered and analyzed before we try to analyze the
-            // parent.  For instance, may-return analysis for one vertex probably depends on the may-return analysis of its
-            // successors.
             undiscovered_.pushBack(args.startVa);
-        } else if (p->basicBlockIsFunctionCall(args.bblock)) {
-            // If a new function call is inserted and it has no E_CALL_RETURN edge and at least one of its callees has an
-            // indeterminate value for its may-return analysis, then add this block to the list of blocks for which we may need
-            // to later add a call-return edge.
+            return chain;
+        }
+
+        // If a new function call is inserted and it has no E_CALL_RETURN edge and at least one of its callees has an
+        // indeterminate value for its may-return analysis, then add this block to the list of blocks for which we may need to
+        // later add a call-return edge. The engine can be configured to also just assume that all function calls may return
+        // (or never return).
+        if (p->basicBlockIsFunctionCall(args.bblock)) {
             ControlFlowGraph::ConstVertexIterator placeholder = p->findPlaceholder(args.startVa);
-            ASSERT_require(placeholder != p->cfg().vertices().end());
-            boost::logic::tribool mayReturn = hasAnyCalleeReturn(*p, placeholder);
+            boost::logic::tribool mayReturn;
+            switch (engine_->functionReturnAnalysis()) {
+                case MAYRETURN_ALWAYS_YES:
+                    mayReturn = true;
+                    break;
+                case MAYRETURN_ALWAYS_NO:
+                    mayReturn = false;
+                    break;
+                case MAYRETURN_DEFAULT_YES:
+                case MAYRETURN_DEFAULT_NO: {
+                    ASSERT_require(placeholder != p->cfg().vertices().end());
+                    mayReturn = hasAnyCalleeReturn(*p, placeholder);
+                    break;
+                }
+            }
             if (!hasCallReturnEdges(placeholder) && (mayReturn || boost::logic::indeterminate(mayReturn)))
                 pendingCallReturn_.pushBack(args.startVa);
         }
@@ -1386,11 +1600,25 @@ Engine::makeNextCallReturnEdge(Partitioner &partitioner, boost::logic::tribool a
 
         // If the new vertex lacks a call-return edge (tested above) and its callee has positive or indeterminate may-return
         // then we may need to add a call-return edge depending on whether assumeCallReturns is true.
+        boost::logic::tribool mayReturn;
         Confidence confidence = PROVED;
-        boost::logic::tribool mayReturn = hasAnyCalleeReturn(partitioner, caller);
-        if (boost::logic::indeterminate(mayReturn)) {
-            mayReturn = assumeReturns;
-            confidence = ASSUMED;
+        switch (settings_.partitioner.functionReturnAnalysis) {
+            case MAYRETURN_ALWAYS_NO:
+                mayReturn = false;
+                confidence = ASSUMED;
+                break;
+            case MAYRETURN_ALWAYS_YES:
+                mayReturn = true;
+                confidence = ASSUMED;
+                break;
+            case MAYRETURN_DEFAULT_YES:
+            case MAYRETURN_DEFAULT_NO:
+                mayReturn = hasAnyCalleeReturn(partitioner, caller);
+                if (boost::logic::indeterminate(mayReturn)) {
+                    mayReturn = assumeReturns;
+                    confidence = ASSUMED;
+                }
+                break;
         }
 
         if (mayReturn) {
@@ -1425,8 +1653,8 @@ Engine::makeNextBasicBlockFromPlaceholder(Partitioner &partitioner) {
         }
         ASSERT_require(placeholder->value().type() == V_BASIC_BLOCK);
         if (placeholder->value().bblock()) {
-            mlog[WARN] <<"makeNextBasicBlockFromPlacholder: block " <<StringUtility::addrToString(va)
-                       <<" was on the undiscovered worklist but is already discovered\n";
+            SAWYER_MESG(mlog[DEBUG]) <<"makeNextBasicBlockFromPlacholder: block " <<StringUtility::addrToString(va)
+                                     <<" was on the undiscovered worklist but is already discovered\n";
             continue;
         }
         BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);

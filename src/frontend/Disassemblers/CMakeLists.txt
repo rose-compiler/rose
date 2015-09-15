@@ -7,11 +7,11 @@ add_library(roseDisassemblers OBJECT
   AssemblerX86Init.C DisassemblerArm.C Disassembler.C DisassemblerMips.C
   DisassemblerM68k.C DisassemblerPowerpc.C DisassemblerX86.C BinaryDebugger.C
   Expressions.C IPDParser.C IPDUnparser.C Partitioner.C PStatistics.C
-  Registers.C SgAsmArmInstruction.C SgAsmBlock.C SgAsmExpression.C
+  Registers.C SgAsmArmInstruction.C SgAsmBlock.C SgAsmExecutableFileFormat.C SgAsmExpression.C
   SgAsmFloatValueExpression.C SgAsmFunction.C SgAsmInstruction.C
   SgAsmIntegerValueExpression.C SgAsmInterpretation.C SgAsmType.C
   SgAsmM68kInstruction.C SgAsmMipsInstruction.C SgAsmPowerpcInstruction.C
-  SgAsmX86Instruction.C x86InstructionProperties.C)
+  SgAsmX86Instruction.C x86InstructionProperties.C RegisterParts.C)
 add_dependencies(roseDisassemblers rosetta_generated)
 
 
@@ -23,5 +23,5 @@ install(FILES
     DisassemblerMips.h DisassemblerPowerpc.h DisassemblerX86.h
     InstructionEnumsM68k.h x86InstructionProperties.h
     armInstructionEnum.h InstructionEnumsMips.h InstructionEnumsX86.h
-    Partitioner.h Registers.h powerpcInstructionEnum.h
+    Partitioner.h Registers.h powerpcInstructionEnum.h RegisterParts.h
 	DESTINATION include)

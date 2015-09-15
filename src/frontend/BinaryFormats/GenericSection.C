@@ -4,8 +4,10 @@
 #include "sage3basic.h"
 #include "stringify.h"
 #include "MemoryMap.h"
+#include "Diagnostics.h"
 
 using namespace rose;
+using namespace rose::Diagnostics;
 
 /** Section constructors set the optional section header relationship--a bidirectional link between this new section and its
  *  optional, single header.  This new section points to its header and the header contains a list that points to this new
@@ -473,20 +475,17 @@ SgAsmGenericSection::read_content_local_sleb128(rose_addr_t *rel_offset, bool st
 rose_addr_t
 SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, const void *buf) const
 {
-    size_t nwrite, nzero;
+    size_t nwrite;
 
     ROSE_ASSERT(this != NULL);
 
     /* Don't write past end of section */
     if (offset>=get_size()) {
         nwrite = 0;
-        nzero  = bufsize;
     } else if (offset+bufsize<=get_size()) {
         nwrite = bufsize;
-        nzero = 0;
     } else {
         nwrite = get_size() - offset;
-        nzero = bufsize - nwrite;
     }
 
     /* Don't write past end of current EOF if we can help it. */
@@ -510,16 +509,16 @@ SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, 
         if (((const char*)buf)[i]) {
             char mesg[1024];
             sprintf(mesg, "non-zero value truncated: buf[0x%zx]=0x%02x", i, ((const unsigned char*)buf)[i]);
-            fprintf(stderr, "SgAsmGenericSection::write: error: %s", mesg);
-            fprintf(stderr, " in [%d] \"%s\"\n", get_id(), get_name()->get_string(true).c_str());
-            fprintf(stderr, "    section is at file offset 0x%08"PRIx64" (%"PRIu64"), size 0x%"PRIx64" (%"PRIu64") bytes\n", 
-                    get_offset(), get_offset(), get_size(), get_size());
-            fprintf(stderr, " write %" PRIuPTR " byte%s at section offset 0x%08"PRIx64"\n", bufsize, 1==bufsize?"":"s", offset);
-            fprintf(stderr, "      ");
+            mlog[ERROR] <<"SgAsmGenericSection::write: error: " <<mesg
+                        <<" in [" <<get_id() <<"] \"" <<get_name()->get_string(true) <<"\"\n"
+                        <<"    section is at file offset " <<StringUtility::addrToString(get_offset())
+                        <<" size " <<StringUtility::plural(get_size(), "bytes") <<"\n"
+                        <<"    write " <<StringUtility::plural(bufsize, "bytes")
+                        <<" at section offset " <<StringUtility::addrToString(offset) <<"\n";
             HexdumpFormat hf;
             hf.prefix = "      ";
-            hexdump(stderr, get_offset()+offset, (const unsigned char*)buf, bufsize, hf);
-            fprintf(stderr, "\n");
+            hexdump(mlog[ERROR], get_offset()+offset, (const unsigned char*)buf, bufsize, hf);
+            mlog[ERROR] <<"\n";
             throw SgAsmGenericFile::ShortWrite(this, offset, bufsize, mesg);
         }
     }
@@ -694,16 +693,12 @@ SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map) const
         Extent e = i->first;
         assert(e.first()+e.size() <= get_size());
         const unsigned char *extent_data;
-        size_t nwrite;
         if (e.first() >= p_data.size()) {
             extent_data = NULL;
-            nwrite = 0;
         } else if (e.first() + e.size() > p_data.size()) {
             extent_data = &p_data[e.first()];
-            nwrite = p_data.size() - e.first();
         } else {
             extent_data = &p_data[e.first()];
-            nwrite = e.size();
         }
         if (extent_data)
             write(f, e.first(), e.size(), extent_data);

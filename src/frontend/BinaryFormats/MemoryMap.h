@@ -3,10 +3,10 @@
 
 #include "ByteOrder.h"
 
-#include <sawyer/Access.h>
-#include <sawyer/AddressMap.h>
-#include <sawyer/MappedBuffer.h>
-#include <sawyer/Optional.h>
+#include <Sawyer/Access.h>
+#include <Sawyer/AddressMap.h>
+#include <Sawyer/MappedBuffer.h>
+#include <Sawyer/Optional.h>
 
 /** Align address downward to boundary.
  *
@@ -110,16 +110,20 @@ public:
 
     // Accessibility flags
     static const unsigned NO_ACCESS = 0;
-    static const unsigned READABLE = Sawyer::Access::READABLE;
-    static const unsigned WRITABLE = Sawyer::Access::WRITABLE;
-    static const unsigned EXECUTABLE = Sawyer::Access::EXECUTABLE;
-    static const unsigned IMMUTABLE = Sawyer::Access::IMMUTABLE;
-    static const unsigned PRIVATE = 0x00000100;
+    static const unsigned READABLE      = Sawyer::Access::READABLE;
+    static const unsigned WRITABLE      = Sawyer::Access::WRITABLE;
+    static const unsigned EXECUTABLE    = Sawyer::Access::EXECUTABLE;
+    static const unsigned IMMUTABLE     = Sawyer::Access::IMMUTABLE;
+    static const unsigned PRIVATE       = 0x00000100;
+    static const unsigned INITIALIZED   = 0x00000200;   // Partitioner2: initialized memory even if writable
 
     // Aggregate accessibility flags
     static const unsigned READ_WRITE = READABLE | WRITABLE;
     static const unsigned READ_EXECUTE = READABLE | EXECUTABLE;
     static const unsigned READ_WRITE_EXECUTE = READABLE | WRITABLE | EXECUTABLE;
+
+    // These bits are reserved for use in ROSE
+    static const unsigned RESERVED_ACCESS_BITS = 0x0000ffff;
     
 
 public:

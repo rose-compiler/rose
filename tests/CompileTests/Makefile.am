@@ -48,6 +48,8 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 # DQ (7/14/2013): Temporarily commented out this test to evaluate progress on tests/CompileTests directory.
 #  SUBDIRS += Fortran_tests CAF2_tests
    SUBDIRS += Fortran_tests
+#Pei-Hung (7/13/2015): Adding mixlanguage tests (patches from Stephen Guzik)
+   SUBDIRS += mixLanguage_tests
 endif
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -78,6 +80,10 @@ endif
 
 if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += Python_tests
+endif
+
+if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
+   SUBDIRS += Matlab_tests
 endif
 
 SUBDIRS += CudaTests

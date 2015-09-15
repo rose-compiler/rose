@@ -5,9 +5,9 @@
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/Function.h>
 
-#include <sawyer/BiMap.h>
-#include <sawyer/Graph.h>
-#include <sawyer/Map.h>
+#include <Sawyer/BiMap.h>
+#include <Sawyer/Graph.h>
+#include <Sawyer/Map.h>
 
 #include <list>
 #include <ostream>
@@ -18,8 +18,6 @@ namespace Partitioner2 {
 
 /** Control flow graph vertex. */
 class CfgVertex {
-    friend class Partitioner;
-private:
     VertexType type_;                                   // type of vertex, special or not
     rose_addr_t startVa_;                               // address of start of basic block
     BasicBlock::Ptr bblock_;                            // basic block, or null if only a place holder
@@ -36,35 +34,68 @@ public:
     }
 
     /** Construct a special vertex. */
-    explicit CfgVertex(VertexType type): type_(type), startVa_(0) {
+    /*implicit*/ CfgVertex(VertexType type): type_(type), startVa_(0) {
         ASSERT_forbid2(type==V_BASIC_BLOCK, "this constructor does not create basic block or placeholder vertices");
     }
 
     /** Returns the vertex type. */
     VertexType type() const { return type_; }
 
-    /** Return the starting address of a placeholder or basic block. */
+    /** Property: starting address.
+     *
+     *  The virtual address for a placeholder or basic block.  User-defined vertices can use this for whatever they want.
+     *
+     * @{ */
     rose_addr_t address() const {
-        ASSERT_require(V_BASIC_BLOCK==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
         return startVa_;
     }
+    void address(rose_addr_t va) {
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        startVa_ = va;
+    }
+    /** @} */
 
-    /** Return the basic block pointer.
+    /** Compute entire address set.
      *
-     *  A null pointer is returned when the vertex is only a basic block placeholder. */
+     *  Constructs and returns an address set containing all addresses represented by this vertex.  For basic block vertices,
+     *  this is the union of the addresses occupied by the instructions (not just the starting address of each
+     *  instruction).  For user-defined vertices, this method returns a singleton address. All other vertex types return an
+     *  empty set since it is generally their predecessors that have addresses (e.g., each undiscovered basic block is a
+     *  basic-block CFG vertex whose successor is the special "undiscovered" vertex which has no distinct address. */
+    AddressIntervalSet addresses() const;
+
+    /** Property: basic block.
+     *
+     *  Pointer to a basic block.  This property is available for @ref V_BASIC_BLOCK or @ref V_USER_DEFINED vertices. A @ref
+     *  V_BASIC_BLOCK vertex with a null @ref bblock property is called a "placeholder".
+     *
+     * @{ */
     const BasicBlock::Ptr& bblock() const {
-        ASSERT_require(V_BASIC_BLOCK==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
         return bblock_;
     }
+    void bblock(const BasicBlock::Ptr &bb) {
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        bblock_ = bb;
+    }
+    /** @} */
 
-    /** Return the function pointer.
+    /** Property: owning function.
      *
-     *  A basic block may belong to a function, in which case the function pointer is returned. Otherwise the null pointer is
-     *  returned. */
+     *  Pointer to a function that owns this vertex.  For instance, a basic block (@ref V_BASIC_BLOCK) can belong to a
+     *  function.  This property is available for @ref V_BASIC_BLOCK and @ref V_USER_DEFINED vertices.
+     *
+     *  @{ */
     const Function::Ptr& function() const {
-        ASSERT_require(V_BASIC_BLOCK==type_);
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
         return function_;
     }
+    void function(const Function::Ptr &f) {
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        function_ = f;
+    }
+    /** @} */
 
     /** Turns a basic block vertex into a placeholder.
      *
@@ -72,17 +103,6 @@ public:
     void nullify() {
         ASSERT_require(V_BASIC_BLOCK==type_);
         bblock_ = BasicBlock::Ptr();
-    }
-
-private:
-    // Change the basic block pointer.  Users are not allowed to do this directly; they must go through the Partitioner API.
-    void bblock(const BasicBlock::Ptr &bb) {
-        bblock_ = bb;
-    }
-
-    // Change the function pointer.  Users are not allowed to do this directly; they must go through the Partitioner API.
-    void function(const Function::Ptr &f) {
-        function_ = f;
     }
 };
 
@@ -93,7 +113,7 @@ private:
     Confidence confidence_;
 public:
     CfgEdge(): type_(E_NORMAL), confidence_(ASSUMED) {}
-    explicit CfgEdge(EdgeType type, Confidence confidence=ASSUMED): type_(type), confidence_(confidence) {}
+    /*implicit*/ CfgEdge(EdgeType type, Confidence confidence=ASSUMED): type_(type), confidence_(confidence) {}
     EdgeType type() const { return type_; }
     Confidence confidence() const { return confidence_; }
     void confidence(Confidence c) { confidence_ = c; }
@@ -241,6 +261,18 @@ CfgConstVertexSet findIncidentVertices(const CfgConstEdgeSet&);
 CfgConstVertexSet findDetachedVertices(const ControlFlowGraph&);
 CfgConstVertexSet findDetachedVertices(const CfgConstVertexSet &vertices);
 /** @} */
+
+/** Return corresponding iterators.
+ *
+ *  Given a set of iterators and a vertex map, return the corresponding iterators by following the forward mapping. Any vertex
+ *  in the argument that is not present in the mapping is silently ignored. */
+CfgConstVertexSet forwardMapped(const CfgConstVertexSet&, const CfgVertexMap&);
+
+/** Return corresponding iterators.
+ *
+ *  Given a set of iterators and a vertex map, return the corresponding iterators by following the reverse mapping. Any vertex
+ *  in the argument that is not present in the mapping is silently ignored. */
+CfgConstVertexSet reverseMapped(const CfgConstVertexSet&, const CfgVertexMap&);
 
 } // namespace
 } // namespace

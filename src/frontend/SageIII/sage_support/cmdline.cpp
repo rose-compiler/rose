@@ -14,7 +14,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/replace.hpp>
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 
 using namespace rose;                                   // temporary, until this file lives in namespace rose
 
@@ -7470,22 +7470,55 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #if DEBUG_COMPILER_COMMAND_LINE
                printf ("get_objectFileNameWithPath() = %s: get_multifile_support() == true: Strip the -o <file> option and subsitute a *.o file based on the source file name \n",get_objectFileNameWithPath().c_str());
 #endif
-               std::vector<Rose_STL_Container<string>::iterator> deleteList;
+            // DQ (5/27/2015): We need to save the strings instead of the iterators that reference the strings.
+            // The more direct use of strings instead of iterator values that reference the strings will eliminate 
+            // the iterator invalidation that occurse in the loop over the deleteList to remove the strings from 
+            // the argcArgvList.
+            // std::vector<Rose_STL_Container<string>::iterator> deleteList;
+               std::vector<string> deleteList;
                for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
                   {
                     if (i->substr(0,2) == "-o")
                        {
                       // argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
-                         deleteList.push_back(i);
+#if 0
+                         printf ("Add to delete list: *i = %s \n",(*i).c_str());
+#endif
+                      // deleteList.push_back(i);
+                         deleteList.push_back(*i);
+#if 0
+                         for (size_t k = 0; k < deleteList.size(); k++)
+                            {
+                           // printf ("deleteList[k=%zu] = %s \n",k,(*deleteList[k]).c_str());
+                              printf ("deleteList[k=%zu] = %s \n",k,deleteList[k].c_str());
+                            }
+#endif
                          Rose_STL_Container<string>::iterator j = i;
                          j++;
-                         deleteList.push_back(j);
+#if 0
+                         printf ("Add to delete list: *j = %s \n",(*j).c_str());
+#endif
+                      // deleteList.push_back(j);
+                         deleteList.push_back(*j);
+#if 0
+                         for (size_t k = 0; k < deleteList.size(); k++)
+                            {
+                           // printf ("deleteList[k=%zu] = %s \n",k,(*deleteList[k]).c_str());
+                              printf ("deleteList[k=%zu] = %s \n",k,deleteList[k].c_str());
+                            }
+#endif
                        }
                   }
 
-               for (std::vector<Rose_STL_Container<string>::iterator>::iterator i = deleteList.begin(); i != deleteList.end(); i++)
+            // for (std::vector<Rose_STL_Container<string>::iterator>::iterator i = deleteList.begin(); i != deleteList.end(); i++)
+               for (std::vector<string>::iterator i = deleteList.begin(); i != deleteList.end(); i++)
                   {
-                    argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*(*i)));
+#if 0
+                  // printf ("Deleting *i = %s \n",(*(*i)).c_str());
+                     printf ("Deleting *i = %s \n",(*i).c_str());
+#endif
+                 // argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*(*i)));
+                    argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
                   }
 
             // Next we add a new object file specification based on the source file name. A later step will 

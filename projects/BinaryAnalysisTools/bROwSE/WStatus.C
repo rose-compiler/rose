@@ -1,10 +1,11 @@
+#include <rose.h>
 #include <bROwSE/WStatus.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <Color.h>                                      // ROSE
 #include <Diagnostics.h>                                // ROSE
 #include <InsnSemanticsExpr.h>                          // ROSE
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/SharedPointer.h>
 #include <sys/resource.h>
 #include <Wt/WAbstractTableModel>
 #include <Wt/WHBoxLayout>

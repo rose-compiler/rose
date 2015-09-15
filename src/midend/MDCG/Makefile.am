@@ -1,3 +1,3 @@
 
-SUBDIRS = include lib docs
+SUBDIRS = include/MDCG/Model include/MDCG/Tools lib/model lib/tools
 

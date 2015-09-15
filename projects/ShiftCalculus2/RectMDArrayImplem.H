@@ -48,7 +48,7 @@ template <class T, unsigned int C, unsigned char D, unsigned char E> RectMDArray
 
 
 template <class T, unsigned int C, unsigned char D, unsigned char E> 
-RectMDArray<T,C,D,E>::RectMDArray(std::shared_ptr<T> a_data, T* a_ptr, const Box& a_box):m_data(a_data),m_rawPtr(a_ptr),m_box(a_box)
+RectMDArray<T,C,D,E>::RectMDArray(std::shared_ptr<T>& a_data, T* a_ptr, const Box& a_box):m_data(a_data),m_rawPtr(a_ptr),m_box(a_box)
 {
 
 };

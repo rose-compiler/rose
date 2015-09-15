@@ -1,5 +1,5 @@
-#ifndef Rose_BaseSemantics2_H  
-#define Rose_BaseSemantics2_H
+#ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_H 
+#define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_H
 
 #include "Diagnostics.h"
 #include "Registers.h"
@@ -9,10 +9,12 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/optional.hpp>
-#include <sawyer/Assert.h>
-#include <sawyer/IntervalMap.h>
-#include <sawyer/Map.h>
-#include <sawyer/Optional.h>
+#include <Sawyer/Assert.h>
+#include <Sawyer/IntervalMap.h>
+#include <Sawyer/IntervalSetMap.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/Optional.h>
+#include <Sawyer/Set.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -345,7 +347,8 @@ class RiscOperators;
  *  methods for semantic objects. */
 class Formatter {
 public:
-    Formatter(): regdict(NULL), suppress_initial_values(false), indentation_suffix("  "), show_latest_writers(true) {}
+    Formatter(): regdict(NULL), suppress_initial_values(false), indentation_suffix("  "), show_latest_writers(true),
+                 show_properties(true) {}
     virtual ~Formatter() {}
 
     /** The register dictionary which is used for printing register names.
@@ -381,12 +384,20 @@ public:
     void clear_show_latest_writers() { show_latest_writers = false; }
     /** @} */
 
+    /** Whether to show register properties.
+     * @{ */
+    bool get_show_properties() const { return show_properties; }
+    void set_show_properties(bool b=true) { show_properties = b; }
+    void clear_show_properties() { show_properties = false; }
+    /** @} */
+
 protected:
     RegisterDictionary *regdict;
     bool suppress_initial_values;
     std::string line_prefix;
     std::string indentation_suffix;
     bool show_latest_writers;
+    bool show_properties;
 };
 
 /** Adjusts a Formatter for one additional level of indentation.  The formatter's line prefix is adjusted by appending the
@@ -406,6 +417,31 @@ public:
     }
 };
 
+/** Boolean properties related to I/O.
+ *
+ *  These Boolean properties keep track of whether a value was read from and/or written to a register or memory state.  Each
+ *  state implementation has different capabilities, so see the implementation for details.  In short, @ref
+ *  RegisterStateGeneric tracks these properties per bit of each register while memory states generally track them on a
+ *  byte-by-byte basis.
+ *
+ *  Although the register and memory state objects provide the data members for storing this information, the properties are
+ *  generally manipulated by higher layers such as the @c readRegister, @c writeRegister, @c readMemory, and @c writeMemory
+ *  methods in a @ref RiscOperators implementation. */
+enum InputOutputProperty {
+    IO_READ,                                            /**< The location was read on behalf of an instruction. */
+    IO_WRITE,                                           /**< The location was written on behalf of an instruction. */
+    IO_INIT,                                            /**< The location was written without an instruction. This
+                                                         *   typically happens during state initialization. */
+    IO_READ_BEFORE_WRITE,                               /**< The location was read without having the IO_WRITE property. */
+    IO_READ_AFTER_WRITE,                                /**< The location was read after being written. */
+    IO_READ_UNINITIALIZED,                              /**< The location was read without having the IO_WRITE or IO_INIT
+                                                         *   property. */
+};
+
+/** Set of Boolean properties. */
+typedef Sawyer::Container::Set<InputOutputProperty> InputOutputPropertySet;
+
+
 /*******************************************************************************************************************************
  *                                      Exceptions
  *******************************************************************************************************************************/
@@ -416,6 +452,12 @@ public:
     SgAsmInstruction *insn;
     Exception(const std::string &mesg, SgAsmInstruction *insn): std::runtime_error(mesg), insn(insn) {}
     void print(std::ostream&) const;
+};
+
+class NotImplemented: public Exception {
+public:
+    NotImplemented(const std::string &mesg, SgAsmInstruction *insn)
+        : Exception(mesg, insn) {}
 };
 
 /*******************************************************************************************************************************
@@ -478,8 +520,28 @@ public:
     // constructors (usually named "instance")--it's because this is an abstract class.
 public:
     /** Create a new undefined semantic value.  The new semantic value will have the same dynamic type as the value
-     *  on which this virtual method is called.  This is the most common way that a new value is created. */
+     *  on which this virtual method is called.  This is the most common way that a new value is created. The @ref unspecified_
+     *  method is closely related.
+     *
+     *  @sa unspecified_ */
     virtual SValuePtr undefined_(size_t nbits) const = 0; // hot
+
+    /** Create a new unspecified semantic value. The new semantic value will have the same dynamic type as the value on which
+     *  this virtual method is called.  Undefined (@ref undefined_) and unspecified are closely related.  Unspecified values
+     *  are the same as undefined values except they're instantiated as the result of some machine instruction where the ISA
+     *  documentation indicates that the value is unspecified (e.g., status flags for x86 shift and rotate instructions).
+     *
+     *  Most semantic domains make no distinction between undefined and unspecified.
+     *
+     *  @sa undefined_ */
+    virtual SValuePtr unspecified_(size_t nbits) const = 0;
+
+    /** Data-flow bottom value.
+     *
+     *  Returns a new value that represents bottom in a data-flow analysis. If a semantic domain can represent a bottom value
+     *  then the @ref isBottom predicate is true when invoked on this method's return value. If a semantic domain cannot
+     *  support a bottom value, then it may return some other value. */
+    virtual SValuePtr bottom_(size_t nBits) const = 0;
 
     /** Create a new concrete semantic value. The new value will represent the specified concrete value and have the same
      *  dynamic type as the value on which this virtual method is called. This is the most common way that a new constant is
@@ -496,6 +558,44 @@ public:
      *  most significant side of the value. */
     virtual SValuePtr copy(size_t new_width=0) const = 0;
 
+    /** Possibly create a new value by merging two existing values.
+     *
+     *  This method optionally returns a new semantic value as the data-flow merge of @p this and @p other.  If the two inputs
+     *  are "equal" in some sense of the dataflow implementation then nothing is returned, otherwise a new value is returned.
+     *  Typical usage is like this:
+     *
+     * @code
+     *  if (SValuePtr merged = v1->createOptionalMerge(v2).orDefault()) {
+     *      std::cout <<"v1 and v2 were merged to " <<*merged <<"\n";
+     *  } else {
+     *      std::cout <<"no merge is necessary\n";
+     *  }
+     *
+     *  or
+     *
+     * @code
+     *  SValuePtr merge;
+     *  if (v1->createOptionalMerge(v2).assignTo(merged)) {
+     *      std::cout <<"v1 and v2 were merged to " <<*merged <<"\n";
+     *  } else {
+     *      std::cout <<"v1 and v2 are equal in some sense (no merge necessary)\n";
+     *  }
+     * @endcode
+     *
+     *  If you always want a copy regardless of whether the merge is necessary, then use the @ref createMerged convenience
+     *  function instead. */
+    virtual Sawyer::Optional<SValuePtr> createOptionalMerge(const SValuePtr &other, SMTSolver *solver) const = 0;
+
+    /** Create a new value by merging two existing values.
+     *
+     *  This is a convenience wrapper around @ref createOptionalMerge. It always returns a newly constructed semantic value
+     *  regardless of whether a merge was necessary.  In order to determine if a merge was necessary once can compare the
+     *  return value to @p this using @ref must_equal, although doing so is more expensive than calling @ref
+     *  createOptionalMerged. */
+    SValuePtr createMerged(const SValuePtr &other, SMTSolver *solver) const /*final*/ {
+        return createOptionalMerge(other, solver).orElse(copy());
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts. No-ops since this is the base class
 public:
@@ -507,6 +607,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // The rest of the API...
 public:
+    /** Determines whether a value is a data-flow bottom.
+     *
+     *  Returns true if this value represents a bottom value for data-flow analysis.  Any RiscOperation performed on an operand
+     *  whose isBottom predicate returns true will itself return a bottom value.  This includes operations like "xor x x" which
+     *  would normally return zero. */
+    virtual bool isBottom() const = 0;
+
     /** Determines if the value is a concrete number. Concrete numbers can be created with the number_(), boolean_()
      *  virtual constructors, or by other means. */
     virtual bool is_number() const = 0;
@@ -659,6 +766,11 @@ public:
     /** Set all registers to the zero. */
     virtual void zero() = 0;
 
+    /** Merge register states for data flow analysis.
+     *
+     *  Merges the @p other state into this state, returning true if this state changed. */
+    virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) = 0;
+
     /** Read a value from a register. The register descriptor, @p reg, not only describes which register, but also which bits
      * of that register (e.g., "al", "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to
      * different parts of that register). The RISC operations are provided so that they can be used to extract the correct bits
@@ -701,279 +813,6 @@ public:
     WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
     /** @} */
 
-};
-
-/** Smart pointer to a RegisterStateGeneric object.  RegisterStateGeneric objects are reference counted and should not be
- *  explicitly deleted. */
-typedef boost::shared_ptr<class RegisterStateGeneric> RegisterStateGenericPtr;
-
-/** A RegisterState for any architecture.
- *
- *  This state stores a list of non-overlapping registers and their values, typically only for the registers that have been
- *  accessed.  The state automatically switches between different representations when accessing a register that overlaps with
- *  one or more stored registers.  For instance, if the state stores 64-bit registers and the specimen suddently switches to
- *  32-bit mode, this state will split the 64-bit registers into 32-bit pieces.  If the analysis later returns to 64-bit mode,
- *  the 32-bit pieces are concatenated back to 64-bit values. This splitting and concatenation occurs on a per-register basis
- *  at the time the register is read or written.
- *
- *  The register state also maintains optional information about the most recent writer of each register. The most recent
- *  writer is represented by a virtual address (rose_addr_t) and the addresses are stored at bit resolution--each bit of the
- *  register may have its own writer information. */
-class RegisterStateGeneric: public RegisterState {
-public:
-    // Like a RegisterDescriptor, but only the major and minor numbers.  This state maintains lists of registers, one list per
-    // major-minor pair.  When reading or writing a register, the register being accessed is guaranteed to overlap only with
-    // those registers on the matching major-minor list, if it overlaps at all.  The lists are typically short (e.g., one list
-    // might refer to all the parts of the x86 RAX register, but the RBX parts would be on a different list. None of the
-    // registers stored on a particular list overlap with any other register on that same list; when adding new register that
-    // would overlap, the registers with which it overlaps must be removed first.
-    struct RegStore {
-        unsigned majr, minr;
-        RegStore(const RegisterDescriptor &d) // implicit
-            : majr(d.get_major()), minr(d.get_minor()) {}
-        bool operator<(const RegStore &other) const {
-            return majr<other.majr || (majr==other.majr && minr<other.minr);
-        }
-    };
-    struct RegPair {
-        RegisterDescriptor desc;
-        SValuePtr value;
-        RegPair(const RegisterDescriptor &desc, const SValuePtr &value): desc(desc), value(value) {}
-    };
-
-    typedef std::vector<RegPair> RegPairs;
-    typedef Map<RegStore, RegPairs> Registers;
-
-    // A mapping from the bits of a register (e.g., 'al' of 'rax') to the virtual address of the instruction that last wrote
-    // a value to those bits.
-    typedef RangeMap<Extent, RangeMapNumeric<Extent, rose_addr_t> > WrittenParts;
-    typedef Map<RegStore, WrittenParts> WritersMap;
-    WritersMap writers;
-
-protected:
-    Registers registers;                        /**< Values for registers that have been accessed. */
-    bool coalesceOnRead;                        /**< If set, do not modify register representations on readRegister. */
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Real constructors
-protected:
-    explicit RegisterStateGeneric(const SValuePtr &protoval, const RegisterDictionary *regdict)
-        : RegisterState(protoval, regdict), coalesceOnRead(true) {
-        clear();
-    }
-
-    RegisterStateGeneric(const RegisterStateGeneric &other)
-        : RegisterState(other), registers(other.registers), coalesceOnRead(true) {
-        deep_copy_values();
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Static allocating constructors
-public:
-    /** Instantiate a new register state. The @p protoval argument must be a non-null pointer to a semantic value which will be
-     *  used only to create additional instances of the value via its virtual constructors.  The prototypical value is normally
-     *  of the same type for all parts of a semantic analysis: its state and operator classes.
-     *
-     *  The register dictionary, @p regdict, describes the registers that can be stored by this register state, and should be
-     *  compatible with the register dictionary used for other parts of binary analysis. */
-    static RegisterStateGenericPtr instance(const SValuePtr &protoval, const RegisterDictionary *regdict) {
-        return RegisterStateGenericPtr(new RegisterStateGeneric(protoval, regdict));
-    }
-
-    /** Instantiate a new copy of an existing register state. */
-    static RegisterStateGenericPtr instance(const RegisterStateGenericPtr &other) {
-        return RegisterStateGenericPtr(new RegisterStateGeneric(*other));
-    }
-    
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Virtual constructors
-public:
-    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const ROSE_OVERRIDE {
-        return instance(protoval, regdict);
-    }
-
-    virtual RegisterStatePtr clone() const ROSE_OVERRIDE {
-        return RegisterStateGenericPtr(new RegisterStateGeneric(*this));
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Dynamic pointer casts
-public:
-    /** Run-time promotion of a base register state pointer to a RegisterStateGeneric pointer. This is a checked conversion--it
-     *  will fail if @p from does not point to a RegisterStateGeneric object. */
-    static RegisterStateGenericPtr promote(const RegisterStatePtr &from) {
-        RegisterStateGenericPtr retval = boost::dynamic_pointer_cast<RegisterStateGeneric>(from);
-        ASSERT_not_null(retval);
-        return retval;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Methods we inherit
-public:
-    virtual void clear() ROSE_OVERRIDE;
-    virtual void zero() ROSE_OVERRIDE;
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) ROSE_OVERRIDE;
-    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
-    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Methods first defined at this level of the class hierarchy
-public:
-    /** Initialize all registers of the dictionary.  When the dictionary contains overlapping registers, only the largest
-     *  registers are initialized. For example, on a 32-bit x86 architecture EAX would be initialized but not AX, AH, or AL;
-     *  requesting AX, AH, or AL will return part of the initial EAX value. */
-    virtual void initialize_large();
-
-    /** Initialize all registers of the dictionary.  When the dictionary contains overlapping registers, only the smallest
-     *  registers are initialized. For example, on a 32-bit x86 architecture, AX, AH, AL and the non-named high-order 16 bits
-     *  of AX are inititialized, but EAX isn't explicitly initialized.  Requesting the value of EAX will return a value
-     *  constructed from the various smaller parts. */
-    virtual void initialize_small();
-
-    /** Initialize the specified registers of the dictionary.  Each register in the list must not overlap with any other
-     *  register in the list, or strange things will happen.  If @p initialize_to_zero is set then the specified registers are
-     *  initialized to zero, otherwise they're initialized with the prototypical value's constructor that takes only a size
-     *  parameter. This method is somewhat low level and doesn't do much error checking. */
-    void initialize_nonoverlapping(const std::vector<RegisterDescriptor>&, bool initialize_to_zero);
-
-    /** Returns the list of all registers and their values.  The returned registers are guaranteed to be non-overlapping,
-     * although they might not correspond to actual named machine registers.  For instance, if a 32-bit value was written to
-     * the x86 EFLAGS register then the return value will contain a register/value pair for EFLAGS but no pairs for individual
-     * flags.  If one subsequently writes a 1-bit value to the ZF flag (bit 6 of EFLAGS) then the return value will contain a
-     * register/value pair for ZF, and also a pair for bits 0-5, and a pair for bits 7-31, neither of which correspond to
-     * actual register names in x86 (there is no name for bits 0-5 as a whole). The readRegister() and writeRegister() methods
-     * can be used to re-cast the various pairs into other groupings; get_stored_registers() is a lower-level interface. */
-    virtual RegPairs get_stored_registers() const;
-
-    /** Determines if some of the specified register is stored in the state. Returns true even if only part of the requested
-     *  register is in the state (as when one asks about EAX and the state only stores AX). This is slightly more efficient
-     *  than calling stored_parts():
-     *
-     * @code
-     *  RegisterStateGenericPtr rstate = ...;
-     *  RegisterDescriptor reg = ...;
-     *  assert(rstate->partly_exists(reg) == !parts_exist(reg).empty());
-     * @endcode
-     */
-    virtual bool is_partly_stored(const RegisterDescriptor&) const;
-
-    /** Determines if the specified register is wholly stored in the state. Returns if the state contains data for the entire
-     *  register, even if that data is split among several smaller parts or exists as a subset of a larger part. */
-    virtual bool is_wholly_stored(const RegisterDescriptor&) const;
-
-    /** Determines if the specified register is stored exactly in the state. Returns true only if the specified register wholly
-     *  exists and a value can be returned without extracting or concatenating values from larger or smaller stored parts. Note
-     *  that a value can also be returned without extracting or conctenating if the state contains no data for the specified
-     *  register, as indicated by is_partly_stored() returning false. */
-    virtual bool is_exactly_stored(const RegisterDescriptor&) const;
-
-    /** Returns a description of which bits of a register are stored.  The return value is an ExtentMap that contains the bits
-     * that are stored in the state. This does not return the value of any parts of stored registers--one gets that with
-     * readRegister(). The return value does not contain any bits that are not part of the specified register. */
-    virtual ExtentMap stored_parts(const RegisterDescriptor&) const;
-
-    /** Cause a register to not be stored.  Erases all record of the specified register. The RiscOperators pointer is used for
-     *  its extract operation if the specified register is not exactly stored in the state, such as if the state
-     *  stores RIP and one wants to erase only the 32-bits overlapping with EIP. */
-    virtual void erase_register(const RegisterDescriptor&, RiscOperators*);
-
-    /** Functors for traversing register values in a register state. */
-    class Visitor {
-    public:
-        virtual ~Visitor() {}
-        virtual SValuePtr operator()(const RegisterDescriptor&, const SValuePtr&) = 0;
-    };
-
-    /** Traverse register/value pairs.  Traverses all the (non-overlapping) registers and their values, calling the specified
-     *  functor for each register/value pair. If the functor returns a new SValue then the return value becomes the new value
-     *  for that register.  The new value must have the same width as the register.
-     *
-     *  For example, the following code performs a symbolic substitution across all the registers:
-     *
-     *  @code
-     *   struct Substitution: BaseSemantics::RegisterStateGeneric::Visitor {
-     *       SymbolicSemantics::SValuePtr from, to;
-     *
-     *       Substitution(const SymbolicSemantics::SValuePtr &from, const SymbolicSemantics::SValuePtr &to)
-     *           : from(from), to(to) {}
-     *
-     *       BaseSemantics::SValuePtr operator()(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &val_) {
-     *           SymbolicSemantics::SValuePtr val = SymbolicSemantics::SValue::promote(val_);
-     *           return val->substitute(from, to);
-     *       }
-     *   };
-     *
-     *   SymbolicSemantics::SValuePtr original_esp = ...;
-     *   SymbolicSemantics::SValuePtr fp = ...; // the frame pointer in terms of original_esp
-     *   Substitution subst(original_esp, fp);
-     *   RegisterStateGenericPtr regs = ...;
-     *   std::cerr <<*regs; // register values before substitution
-     *   regs->traverse(subst);
-     *   std::cerr <<*regs; // all original_esp have been replaced by fp
-     *  @endcode
-     *
-     * As with most ROSE and STL traversals, the Visitor is not allowed to modify the structure of the object over which it is
-     * traversing.  In other words, it's permissible to change the values pointed to by the state, but it is not permissible to
-     * perform any operation that might change the list of register parts by adding, removing, or combining parts.  This
-     * includes calling readRegister() and writeRegister() except when the register being read or written is already exactly
-     * stored in the state as indicated by is_exactly_stored().
-     */
-    virtual void traverse(Visitor&);
-
-    /** Set the writer for the specified register. Each register (major-minor pair) is able to store a virtual address for each
-     *  bit of the register.  By convention, this data member stores the virtual address of the instruction that most recently
-     *  wrote a value to those bits. */
-    virtual void set_latest_writer(const RegisterDescriptor&, rose_addr_t writer_va);
-
-    /** Clear the writer for the specified register.  Information about the virtual address of the instruction that most
-     *  recently wrote a value to the specified register is removed from the register.  The value of the register is not
-     *  affected by this call, but the last-writer information is adjusted so it looks like no instruction wrote the bits to
-     *  the specified register. See also, set_latest_writer(). */
-    virtual void clear_latest_writer(const RegisterDescriptor&);
-
-    /** Clear all information about latest writers for all registers. */
-    virtual void clear_latest_writers();
-
-    /** Obtain the set of virtual addresses stored as the latest writers for a register.  A register may have more than one
-     *  writer if the register's value was written in parts (such as when requesting the writers for x86 AX when separate
-     *  instructions wrote to AL and AH. A register may have no writers if the writer information has been cleared (via
-     *  clear_latest_writer()), or no data has ever been written to the register, or data has been written but no writer was
-     *  specified. */
-    virtual std::set<rose_addr_t> get_latest_writers(const RegisterDescriptor&) const;
-
-    /** Whether reading modifies representation.  When the @ref readRegister method is called to obtain a value for a desired
-     *  register that overlaps with some (parts of) registers that already exist in this register state we can proceed in two
-     *  ways. In both cases the return value will include data that's already stored, but the difference is in how we store the
-     *  returned value in the register state: (1) we can erase the (parts of) existing registers that overlap and store the
-     *  desired register and store the returned value so that the register we just read appears as one atomic value, or (2) we
-     *  can keep the existing registers and write only those parts of the return value that fall between the gaps.
-     *
-     *  If the coalesceOnRead property is set, then the returned value is stored atomically even when the value might be a
-     *  function of values that are already stored. Otherwise, existing registerss are not rearranged and only those parts of
-     *  the return value that fall into the gaps between existing registers are stored.
-     *
-     *  The set/clear modifiers return the previous value of this property.
-     *
-     * @{ */
-    virtual bool get_coalesceOnRead() { return coalesceOnRead; }
-    virtual bool set_coalesceOnRead(bool b=true) { bool retval=coalesceOnRead; coalesceOnRead=b; return retval; }
-    virtual bool clear_coalescOnRead() { return set_coalesceOnRead(false); }
-    /** @} */
-
-    /** Temporarily turn off coalescing on read.  Original state is restored by the destructor. */
-    class NoCoalesceOnRead {
-        RegisterStateGeneric *rstate_;
-        bool oldValue_;
-    public:
-        /** Turn off coalesceOnRead for the specified register state. */
-        explicit NoCoalesceOnRead(RegisterStateGeneric *rstate): rstate_(rstate), oldValue_(rstate->clear_coalescOnRead()) {}
-        ~NoCoalesceOnRead() { rstate_->set_coalesceOnRead(oldValue_); }
-    };
-    
-protected:
-    void deep_copy_values();
-    static void get_nonoverlapping_parts(const Extent &overlap, const RegPair &rp, RiscOperators *ops,
-                                         RegPairs *pairs/*out*/);
 };
 
 /** Smart pointer to a RegisterStateX86 object.  RegisterStateX86 objects are reference counted and should not be
@@ -1070,6 +909,7 @@ public:
     virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
+    virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
@@ -1172,6 +1012,11 @@ public:
     void set_byteOrder(ByteOrder::Endianness bo) { byteOrder_ = bo; }
     /** @} */
 
+    /** Merge memory states for data flow analysis.
+     *
+     *  Merges the @p other state into this state, returning true if this state changed. */
+    virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) = 0;
+
     /** Read a value from memory.
      *
      *  Consults the memory represented by this MemoryState object and returns a semantic value. Depending on the semantic
@@ -1235,348 +1080,6 @@ public:
     WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
     WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
     /** @} */
-};
-
-/******************************************************************************************************************
- *                                  Cell List Memory State
- ******************************************************************************************************************/
-
-/** Smart pointer to a MemoryCell object.  MemoryCell objects are reference counted and should not be explicitly deleted. */
-typedef boost::shared_ptr<class MemoryCell> MemoryCellPtr;
-
-/** Represents one location in memory.
- *
- *  Each memory cell has an address and a value. MemoryCell objects are used by the MemoryCellList to represent a memory
- *  state. */
-class MemoryCell: public boost::enable_shared_from_this<MemoryCell> {
-    SValuePtr address_;                                 // Address of memory cell.
-    SValuePtr value_;                                   // Value stored at that address.
-    Sawyer::Optional<rose_addr_t> latestWriter_;        // Optional address for most recent writer of this cell's value.
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Real constructors
-protected:
-    MemoryCell(const SValuePtr &address, const SValuePtr &value)
-        : address_(address), value_(value) {
-        ASSERT_not_null(address);
-        ASSERT_not_null(value);
-    }
-
-    // deep-copy cell list so modifying this new one doesn't alter the existing one
-    MemoryCell(const MemoryCell &other) {
-        address_ = other.address_->copy();
-        value_ = other.value_->copy();
-        latestWriter_ = other.latestWriter_;
-    }
-
-public:
-    virtual ~MemoryCell() {}
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Static allocating constructors
-public:
-    /** Instantiates a new memory cell object with the specified address and value. */
-    static MemoryCellPtr instance(const SValuePtr &address, const SValuePtr &value) {
-        return MemoryCellPtr(new MemoryCell(address, value));
-    }
-
-    /** Instantiates a new copy of an existing cell. */
-    static MemoryCellPtr instance(const MemoryCellPtr &other) {
-        return MemoryCellPtr(new MemoryCell(*other));
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Virtual constructors
-public:
-    /** Creates a new memory cell object with the specified address and value. */
-    virtual MemoryCellPtr create(const SValuePtr &address, const SValuePtr &value) {
-        return instance(address, value);
-    }
-
-    /** Creates a new deep-copy of this memory cell. */
-    virtual MemoryCellPtr clone() const {
-        return MemoryCellPtr(new MemoryCell(*this));
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Dynamic pointer casts. No-op since this is the base class.
-public:
-    static MemoryCellPtr promote(const MemoryCellPtr &x) {
-        ASSERT_not_null(x);
-        return x;
-    }
-    
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Methods first declared at this level of the class hierarchy
-public:
-    /** Accessor for the memory cell address.
-     * @{ */
-    virtual SValuePtr get_address() const { return address_; }
-    virtual void set_address(const SValuePtr &addr) {
-        ASSERT_not_null(addr);
-        address_ = addr;
-    }
-    /** @}*/
-
-    /** Accessor for the value stored at a memory location.
-     * @{ */
-    virtual SValuePtr get_value() const { return value_; }
-    virtual void set_value(const SValuePtr &v) {
-        ASSERT_not_null(v);
-        value_ = v;
-    }
-    /** @}*/
-
-    /** Accessor for the last writer for a memory location.  Each memory cell is able to store an optional virtual address to
-     *  describe the most recent instruction that wrote to this memory location.
-     * @{ */
-    virtual boost::optional<rose_addr_t> get_latest_writer() const ROSE_DEPRECATED("use latestWriter instead") {
-        return latestWriter_ ? boost::optional<rose_addr_t>(*latestWriter_) : boost::optional<rose_addr_t>();
-    }
-    virtual void set_latest_writer(rose_addr_t writer_va) ROSE_DEPRECATED("use latestWriter instead") {
-        latestWriter_ = writer_va;
-    }
-    virtual void clear_latest_writer() ROSE_DEPRECATED("use clearLatestWriter instead") {
-        latestWriter_ = Sawyer::Nothing();
-    }
-
-    virtual Sawyer::Optional<rose_addr_t> latestWriter() const { return latestWriter_; }
-    virtual void latestWriter(rose_addr_t writerVa) { latestWriter_ = writerVa; }
-    virtual void latestWriter(const Sawyer::Optional<rose_addr_t> w) { latestWriter_ = w; }
-    virtual void clearLatestWriter() { latestWriter_ = Sawyer::Nothing(); }
-    /** @} */
-
-    /** Determines whether two memory cells can alias one another.  Two cells may alias one another if it is possible that
-     *  their addresses cause them to overlap.  For cells containing one-byte values, aliasing may occur if their two addresses
-     *  may be equal; multi-byte cells will need to check ranges of addresses. */
-    virtual bool may_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const;
-
-    /** Determines whether two memory cells must alias one another.  Two cells must alias one another when it can be proven
-     * that their addresses cause them to overlap.  For cells containing one-byte values, aliasing must occur unless their
-     * addresses can be different; multi-byte cells will need to check ranges of addresses. */
-    virtual bool must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const;
-    
-    /** Print the memory cell on a single line.
-     * @{ */
-    void print(std::ostream &stream) const {
-        Formatter fmt;
-        print(stream, fmt);
-    }
-    virtual void print(std::ostream&, Formatter&) const;
-    /** @} */
-
-    /** State with formatter. See with_formatter(). */
-    class WithFormatter {
-        MemoryCellPtr obj;
-        Formatter &fmt;
-    public:
-        WithFormatter(const MemoryCellPtr &obj, Formatter &fmt): obj(obj), fmt(fmt) {}
-        void print(std::ostream &stream) const { obj->print(stream, fmt); }
-    };
-
-    /** Used for printing states with formatting. The usual way to use this is:
-     * @code
-     *  MemoryCellPtr obj = ...;
-     *  Formatter fmt = ...;
-     *  std::cout <<"The value is: " <<(*obj+fmt) <<"\n";
-     * @endcode
-     * @{ */
-    WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
-    WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
-    /** @} */
-};
-
-/** Smart pointer to a MemoryCell object. MemoryCell objects are reference counted and should not be explicitly deleted. */
-typedef boost::shared_ptr<class MemoryCellList> MemoryCellListPtr;
-
-/** Simple list-based memory state.
- *
- *  MemoryCellList uses a list of MemoryCell objects to represent the memory state. Each memory cell contains at least an
- *  address and a value, both of which have a run-time width.  The default MemoryCellList configuration restricts memory cell
- *  values to be one byte wide and requires the caller to perform any necessary byte extraction or concatenation when higher
- *  software layers are reading/writing multi-byte values.  Using one-byte values simplifies the aliasing calculations.
- *  However, this class defines a @p byte_restricted property that can be set to false to allow the memory to store
- *  variable-width cell values.
- *
- *  MemoryCellList also provides a scan() method that returns a list of memory cells that alias a specified address. This
- *  method can be used by a higher-level readMemory() operation in preference to the usuall MemoryState::readMemory().
- *
- *  There is no requirement that a State use a MemoryCellList as its memory state; it can use any subclass of MemoryState.
- *  Since MemoryCellList is derived from MemoryState it must provide virtual allocating constructors, which makes it possible
- *  for users to define their own subclasses and use them in the semantic framework.
- *
- *  This implementation stores memory cells in reverse chronological order: the most recently created cells appear at the
- *  beginning of the list.  Subclasses, of course, are free to reorder the list however they want. */
-class MemoryCellList: public MemoryState {
-public:
-    typedef std::list<MemoryCellPtr> CellList;
-protected:
-    MemoryCellPtr protocell;                            // prototypical memory cell used for its virtual constructors
-    CellList cells;                                     // list of cells in reverse chronological order
-    bool byte_restricted;                               // are cell values all exactly one byte wide?
-    MemoryCellPtr latest_written_cell;                  // the cell whose value was most recently written to, if any
-    bool occlusionsErased_;                             // prune away old cells that are occluded by newer ones.
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Real constructors
-protected:
-    explicit MemoryCellList(const MemoryCellPtr &protocell)
-        : MemoryState(protocell->get_address(), protocell->get_value()),
-          protocell(protocell), byte_restricted(true), occlusionsErased_(false) {
-        ASSERT_not_null(protocell);
-        ASSERT_not_null(protocell->get_address());
-        ASSERT_not_null(protocell->get_value());
-    }
-
-    MemoryCellList(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
-        : MemoryState(addrProtoval, valProtoval),
-          protocell(MemoryCell::instance(addrProtoval, valProtoval)),
-          byte_restricted(true), occlusionsErased_(false) {}
-
-    // deep-copy cell list so that modifying this new state does not modify the existing state
-    MemoryCellList(const MemoryCellList &other)
-        : MemoryState(other), protocell(other.protocell), byte_restricted(other.byte_restricted),
-          occlusionsErased_(other.occlusionsErased_) {
-        for (CellList::const_iterator ci=other.cells.begin(); ci!=other.cells.end(); ++ci)
-            cells.push_back((*ci)->clone());
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Static allocating constructors
-public:
-    /** Instantiate a new prototypical memory state. This constructor uses the default type for the cell type (based on the
-     *  semantic domain). The prototypical values are usually the same (addresses and stored values are normally the same
-     *  type). */
-    static MemoryCellListPtr instance(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) {
-        return MemoryCellListPtr(new MemoryCellList(addrProtoval, valProtoval));
-    }
-    
-    /** Instantiate a new memory state with prototypical memory cell. */
-    static MemoryCellListPtr instance(const MemoryCellPtr &protocell) {
-        return MemoryCellListPtr(new MemoryCellList(protocell));
-    }
-
-    /** Instantiate a new copy of an existing memory state. */
-    static MemoryCellListPtr instance(const MemoryCellListPtr &other) {
-        return MemoryCellListPtr(new MemoryCellList(*other));
-    }
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Virtual constructors
-public:
-    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const ROSE_OVERRIDE {
-        return instance(addrProtoval, valProtoval);
-    }
-    
-    /** Virtual allocating constructor. */
-    virtual MemoryStatePtr create(const MemoryCellPtr &protocell) const {
-        return instance(protocell);
-    }
-
-    virtual MemoryStatePtr clone() const ROSE_OVERRIDE {
-        return MemoryStatePtr(new MemoryCellList(*this));
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Dynamic pointer casts
-public:
-    /** Promote a base memory state pointer to a BaseSemantics::MemoryCellList pointer. The memory state @p m must have
-     *  a BaseSemantics::MemoryCellList dynamic type. */
-    static MemoryCellListPtr promote(const BaseSemantics::MemoryStatePtr &m) {
-        MemoryCellListPtr retval = boost::dynamic_pointer_cast<MemoryCellList>(m);
-        ASSERT_not_null(retval);
-        return retval;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Methods we inherited
-public:
-    virtual void clear() ROSE_OVERRIDE {
-        cells.clear();
-        latest_written_cell.reset();
-    }
-
-    /** Read a value from memory.
-     *
-     *  See BaseSemantics::MemoryState() for requirements.  This implementation scans the reverse chronological cell list until
-     *  it finds a cell that must alias the specified addresses and value size. Along the way, it accumulates a list of cells
-     *  that may alias the specified address.  If the accumulated list does not contain exactly one cell, or the scan fell off
-     *  the end of the list, then @p dflt becomes the return value, otherwise the return value is the single value on the
-     *  accumulated list. If the @p dflt value is returned, then it is also pushed onto the front of the cell list.
-     *
-     *  The width of the @p dflt value determines how much data is read. The base implementation assumes that all cells contain
-     *  8-bit values. */
-    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
-                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
-
-    /** Write a value to memory.
-     *
-     *  See BaseSemantics::MemoryState() for requirements.  This implementation creates a new memory cell and pushes it onto
-     *  the front of the cell list.
-     *
-     *  The base implementation assumes that all cells contain 8-bit values. */
-    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value,
-                             RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
-
-    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Methods first declared at this level of the class hierarchy
-public:
-    /** Indicates whether memory cell values are required to be eight bits wide.  The default is true since this simplifies the
-     * calculations for whether two memory cells are alias and how to combine the value from two or more aliasing cells. A
-     * memory that contains only eight-bit values requires that the caller concatenate/extract individual bytes when
-     * reading/writing multi-byte values.
-     * @{ */
-    virtual bool get_byte_restricted() const { return byte_restricted; }
-    virtual void set_byte_restricted(bool b) { byte_restricted = b; }
-    /** @} */
-
-    /** Property: erase occluded cells.
-     *
-     *  If this property is true, then writing a new cell to memory will also erase all older cells that must alias the new
-     *  cell.  Erasing occlusions can adversely affect performance for some semantic domains.
-     *
-     * @{ */
-    bool occlusionsErased() const { return occlusionsErased_; }
-    void occlusionsErased(bool b) { occlusionsErased_ = b; }
-    /** @} */
-
-    /** Remove memory cells that were read but never written.
-     *
-     *  The determination of whether a cell was read but never written is based on whether the cell has a latest writer. */
-    virtual void clearNonWritten();
-
-    /** Scans the cell list and returns entries that may alias the given address and value size. The scanning starts at the
-     *  beginning of the list (which is normally stored in reverse chronological order) and continues until it reaches either
-     *  the end, or a cell that must alias the specified address. If the last cell in the returned list must alias the
-     *  specified address, then true is returned via @p short_circuited argument. */
-    virtual CellList scan(const BaseSemantics::SValuePtr &address, size_t nbits, RiscOperators *addrOps, RiscOperators *valOps,
-                          bool &short_circuited/*out*/) const;
-
-    /** Visitor for traversing a cell list. */
-    class Visitor {
-    public:
-        virtual ~Visitor() {}
-        virtual void operator()(MemoryCellPtr&) = 0;
-    };
-
-    /** Visit each memory cell. */
-    void traverse(Visitor &visitor);
-
-    /** Returns the list of all memory cells.
-     * @{ */
-    virtual const CellList& get_cells() const { return cells; }
-    virtual       CellList& get_cells()       { return cells; }
-    /** @} */
-
-    /** Returns the cell most recently written. */
-    virtual MemoryCellPtr get_latest_written_cell() const { return latest_written_cell; }
-
-    /** Returns the union of writer virtual addresses for cells that may alias the given address. */
-    virtual std::set<rose_addr_t> get_latest_writers(const SValuePtr &addr, size_t nbits,
-                                                     RiscOperators *addrOps, RiscOperators *valOps);
 };
 
 /******************************************************************************************************************
@@ -1781,6 +1284,13 @@ public:
     WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
     WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
     /** @} */
+
+    /** Merge operation for data flow analysis.
+     *
+     *  Merges the @p other state into this state. Returns true if this state changed, false otherwise.  This method usually
+     *  isn't overridden in subclasses since all the base implementation does is invoke the merge operation on the memory state
+     *  and register state. */
+    virtual bool merge(const StatePtr &other, RiscOperators *ops);
 };
 
 /******************************************************************************************************************
@@ -1957,6 +1467,9 @@ public:
     virtual SValuePtr undefined_(size_t nbits) {
         return protoval->undefined_(nbits);
     }
+    virtual SValuePtr unspecified_(size_t nbits) {
+        return protoval->unspecified_(nbits);
+    }
 
     /** Returns a number of the specified bit width.  Uses the prototypical value to virtually construct a new value. */
     virtual SValuePtr number_(size_t nbits, uint64_t value) {
@@ -1968,7 +1481,12 @@ public:
         return protoval->boolean_(value);
     }
 
+    /** Returns a data-flow bottom value. Uses the prototypical value to virtually construct a new value. */
+    virtual SValuePtr bottom_(size_t nbits) {
+        return protoval->bottom_(nbits);
+    }
 
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  x86-specific Operations (FIXME)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2000,7 +1518,7 @@ public:
     virtual void cpuid() {}
 
     /** Invoked for the x86 RDTSC instruction. FIXME: x86-specific stuff should be in the dispatcher. */
-    virtual SValuePtr rdtsc() { return undefined_(64); }
+    virtual SValuePtr rdtsc() { return unspecified_(64); }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2192,6 +1710,87 @@ public:
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Floating-point operations
+    //
+    // For now these all have default implementations that throw NotImplemented, but we might change them to pure virtual
+    // sometime in the future so they're consistent with most other RISC operators. [Robb P. Matzke 2015-08-03]
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** Construct a floating-point value from an integer value. */
+    virtual SValuePtr fpFromInteger(const SValuePtr &intValue, SgAsmFloatType *fpType);
+
+    /** Construct an integer value from a floating-point value.
+     *
+     *  The bits of @p fpValue are interpreted according to the @ref fpType and converted to a signed integer value
+     *  that fits in @p integerWidth bits. This is done by truncating the fractional part of the floating point number, thus
+     *  rounding toward zero. If @p fpValue is not a number then @p dflt is returned. */
+    virtual SValuePtr fpToInteger(const SValuePtr &fpValue, SgAsmFloatType *fpType, const SValuePtr &dflt);
+
+    /** Convert from one floating-point type to another.
+     *
+     *  Converts the floating-point value @p a having type @p aType to the return value having @p retType. */
+    virtual SValuePtr fpConvert(const SValuePtr &a, SgAsmFloatType *aType, SgAsmFloatType *retType);
+
+    /** Whether a floating-point value is a special not-a-number bit pattern. */
+    virtual SValuePtr fpIsNan(const SValuePtr &fpValue, SgAsmFloatType *fpType);
+
+    /** Whether a floating-point value is denormalized. */
+    virtual SValuePtr fpIsDenormalized(const SValuePtr &fpValue, SgAsmFloatType *fpType);
+
+    /** Whether a floating-point value is equal to zero. */
+    virtual SValuePtr fpIsZero(const SValuePtr &fpValue, SgAsmFloatType *fpType);
+
+    /** Whether a floating-point value is infinity.
+     *
+     *  Returns true if the floating point value is plus or minus infinity.  Querying the sign bit will return the sign of the
+     *  infinity. */
+    virtual SValuePtr fpIsInfinity(const SValuePtr &fpValue, SgAsmFloatType *fpType);
+
+    /** Sign of floating-point value.
+     *
+     *  Returns the value of the floating-point sign bit. */
+    virtual SValuePtr fpSign(const SValuePtr &fpValue, SgAsmFloatType *fpType);
+
+    /** Exponent of floating-point value.
+     *
+     *  Returns the exponent of the floating point value. For normalized values this returns the stored exponent minus the
+     *  exponent bias.  For denormalized numbers this returns the stored exponent minus the exponent bias minus an additional
+     *  amount to normalize the significand. */
+    virtual SValuePtr fpEffectiveExponent(const SValuePtr &fpValue, SgAsmFloatType *fpType);
+
+    /** Add two floating-point values.
+     *
+     *  Adds two floating-point values that have the same type and returns the sum in the same type. */
+    virtual SValuePtr fpAdd(const SValuePtr &a, const SValuePtr &b, SgAsmFloatType *fpType);
+
+    /** Subtract one floating-point value from another.
+     *
+     *  Subtracts @p b from @p a and returns the difference. All three floating-point values have the same type.  The default
+     *  implementation is in terms of negate and add. */
+    virtual SValuePtr fpSubtract(const SValuePtr &a, const SValuePtr &b, SgAsmFloatType *fpType);
+
+    /** Multiply two floating-point values.
+     *
+     *  Multiplies two floating-point values and returns the product. All three values have the same type. */
+    virtual SValuePtr fpMultiply(const SValuePtr &a, const SValuePtr &b, SgAsmFloatType *fpType);
+
+    /** Divide one floating-point value by another.
+     *
+     *  Computes @p a divided by @p b and returns the result. All three floating-point values have the same type. */
+    virtual SValuePtr fpDivide(const SValuePtr &a, const SValuePtr &b, SgAsmFloatType *fpType);
+
+    /** Square root.
+     *
+     *  Computes and returns the square root of the specified floating-point value.  Both values have the same type. */
+    virtual SValuePtr fpSquareRoot(const SValuePtr &a, SgAsmFloatType *fpType);
+
+    /** Round toward zero.
+     *
+     *  Truncate the fractional part of the floating point number. */
+    virtual SValuePtr fpRoundTowardZero(const SValuePtr &a, SgAsmFloatType *fpType);
+
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  State Accessing Operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
@@ -2359,7 +1958,6 @@ public:
      *  instruction itself is only used for the duration of this call. */
     virtual void iproc_replace(SgAsmInstruction *insn, InsnProcessor *iproc);    
 
-protected:
     /** Given an instruction, return the InsnProcessor key that can be used as an index into the iproc_table. */
     virtual int iproc_key(SgAsmInstruction*) const = 0;
 
@@ -2392,6 +1990,10 @@ public:
     virtual SValuePtr undefined_(size_t nbits) const {
         ASSERT_not_null(operators);
         return operators->undefined_(nbits);
+    }
+    virtual SValuePtr unspecified_(size_t nbits) const {
+        ASSERT_not_null(operators);
+        return operators->unspecified_(nbits);
     }
 
     /** Return a semantic value representing a number. */
@@ -2509,8 +2111,6 @@ public:
 std::ostream& operator<<(std::ostream&, const Exception&);
 std::ostream& operator<<(std::ostream&, const SValue&);
 std::ostream& operator<<(std::ostream&, const SValue::WithFormatter&);
-std::ostream& operator<<(std::ostream&, const MemoryCell&);
-std::ostream& operator<<(std::ostream&, const MemoryCell::WithFormatter&);
 std::ostream& operator<<(std::ostream&, const MemoryState&);
 std::ostream& operator<<(std::ostream&, const MemoryState::WithFormatter&);
 std::ostream& operator<<(std::ostream&, const RegisterState&);

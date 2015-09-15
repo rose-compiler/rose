@@ -6,9 +6,9 @@
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/OwnedDataBlock.h>
 
-#include <sawyer/IntervalMap.h>
-#include <sawyer/IntervalSet.h>
-#include <sawyer/Optional.h>
+#include <Sawyer/IntervalMap.h>
+#include <Sawyer/IntervalSet.h>
+#include <Sawyer/Optional.h>
 
 #include <algorithm>
 #include <boost/foreach.hpp>

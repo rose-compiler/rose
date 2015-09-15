@@ -1,0 +1,46 @@
+using this memory map for disassembly:
+    va 0x08048000 + 0x00000074 = 0x08048074 r-xp at buffer aac   + 0x00000000 i386-thunks-7(LOAD#0)
+    va 0x08048074 + 0x00000024 = 0x08048098 r--p at buffer aae   + 0x00000000 i386-thunks-7(.note.gnu.build-id)
+    va 0x08048098 + 0x00000008 = 0x080480a0 r-xp at buffer aac   + 0x00000098 i386-thunks-7(LOAD#0)
+    va 0x080480a0 + 0x00000016 = 0x080480b6 r-x- at buffer aag   + 0x000000a0 i386-thunks-7(.text)
+    va 0x080480b6 + 0x00000002 = 0x080480b8 r-xp at buffer aac   + 0x000000b6 i386-thunks-7(LOAD#0)
+    va 0x080480b8 + 0x00000004 = 0x080480bc r--- at buffer aai   + 0x000000b8 i386-thunks-7(.rodata)
+    va 0x080480bc + 0x0000026a = 0x08048326 r-xp at buffer aac   + 0x000000bc i386-thunks-7(LOAD#0)
+    va 0x08048326 + 0x00000cda = 0x08049000 r-xp at buffer aab   + 0x00000000 i386-thunks-7(LOAD#0)
+
+
+0x080480a0: ================================== Function (entry point) unknown name
+0x080480a0: No known callers.
+0x080480a0: This function calls 0x080480b1
+0x080480a0: Function does not return to caller.
+
+0x080480a0: Basic block reasons: entry point, graph-1
+0x080480a0: 68 10 00 00 00          |h....   |   push   0x00000010
+0x080480a5: e8 07 00 00 00          |.....   |   call   0x080480b1<<Func>>
+0x080480a5: Successor blocks: 0x080480b1<<Func>>
+
+0x080480aa: Basic block reasons: graph-1
+0x080480aa: f4                      |.       |   hlt    
+0x080480aa: Successor blocks: none
+
+0x080480ab: ================================== Function (function call) unknown name
+0x080480ab: Called by 0x080480b1
+0x080480ab: Function does not return to caller.
+
+0x080480ab: Basic block reasons: entry point, graph-3
+0x080480ab: Predecessor blocks: 0x080480b1<<Func>>
+0x080480ab: ff 25 b8 80 04 08       |.%....  |   jmp    dword ds:[0x080480b8<.rodata>]
+0x080480ab: Successor blocks: none
+
+0x080480b1: ================================== Function (function call, thunk) unknown name
+0x080480b1: Called by 0x080480a0
+0x080480b1: This function calls 0x080480ab
+0x080480b1: Function does not return to caller.
+
+0x080480b1: Basic block reasons: entry point, graph-1
+0x080480b1: Predecessor blocks: 0x080480a0<<Func>>
+0x080480b1: e9 f5 ff ff ff          |.....   |   jmp    0x080480ab<<Func>>
+0x080480b1: Successor blocks: 0x080480ab<<Func>>
+
+
+

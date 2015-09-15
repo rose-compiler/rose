@@ -8,6 +8,7 @@
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 #include "BinaryLoader.h"
+#include "MemoryCellList.h"
 #include "PartialSymbolicSemantics.h"           // FIXME: expensive to compile; remove when no longer needed [RPM 2012-05-06]
 #include "stringify.h"
 
@@ -17,8 +18,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <math.h>
-#include <sawyer/Optional.h>
-#include <sawyer/ProgressBar.h>
+#include <Sawyer/Optional.h>
+#include <Sawyer/ProgressBar.h>
 #include <stdarg.h>
 
 namespace rose {

@@ -20,10 +20,14 @@ void AnalysisAstAnnotator::annotateAnalysisPrePostInfoAsComments(SgNode* node, s
         //std::cerr << "WARNING: attaching comments to AST nodes of type SgCtorInitializerList not possible. We are skipping this annotation and continue."<<std::endl;
         continue;
       }
+      // TODO: workaround. Should not be labeled.
+      if(isSgSwitchStatement(stmt)) {
+        continue;
+      }
       ROSE_ASSERT(_labeler);
       //cout << "@"<<stmt<<" "<<stmt->class_name()<<" FOUND LABEL: "<<_labeler->getLabel(stmt)<<endl;
       Label label=_labeler->getLabel(stmt);
-      if(label!=Labeler::NO_LABEL) {
+      if(label!=Labeler::NO_LABEL && !_labeler->isBlockBeginLabel(label) && !_labeler->isBlockEndLabel(label)) {
         string labelString=_labeler->labelToString(label);
         string commentStart="// ";
         string preInfoString;
@@ -48,8 +52,13 @@ void AnalysisAstAnnotator::annotateAnalysisPrePostInfoAsComments(SgNode* node, s
           ppInfo1=PreprocessingInfo::after;
           ppInfo2=PreprocessingInfo::before;
         }
-        insertComment(commentStart+labelString+" "+analysisInfoTypeDescription+": "+preInfoString,ppInfo1,stmt);
-        insertComment(commentStart+labelString+" "+analysisInfoTypeDescription+": "+postInfoString,ppInfo2,stmt);
+        insertComment(commentStart+labelString+" "+analysisInfoTypeDescription+"-"+"in "+": "+preInfoString,ppInfo1,stmt);
+
+        // TODO: workaround for ROSE's wrong comment unparsing of "case x:" (unparses after the block, not right after the case)
+        if(!isSgCaseOptionStmt(stmt)&&!isSgDefaultOptionStmt(stmt)) {
+          insertComment(commentStart+labelString+" "+analysisInfoTypeDescription+"-"+"out"+": "+postInfoString,ppInfo2,stmt);
+        }
+
       }
     }
   }

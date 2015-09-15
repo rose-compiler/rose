@@ -168,6 +168,7 @@ Analyzer::Analyzer():
   _solver(5),
   _analyzerMode(AM_ALL_STATES),
   _maxTransitions(-1),
+  _maxIterations(-1),
   _maxTransitionsForcedTop(-1),
   _maxIterationsForcedTop(-1),
   _treatStdErrLikeFailedAssert(false),
@@ -179,7 +180,8 @@ Analyzer::Analyzer():
   _approximated_iterations(0),
   _curr_iteration_cnt(0),
   _next_iteration_cnt(0)
- {
+{
+  variableIdMapping.setModeVariableIdForEachArrayElement(true);
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
   }
@@ -200,9 +202,14 @@ bool Analyzer::isPrecise() {
 }
 
 bool Analyzer::isIncompleteSTGReady() {
-  if(_maxTransitions==-1)
+  if(_maxTransitions==-1 && _maxIterations==-1)
     return false;
-  return (long int)transitionGraph.size()>=_maxTransitions;
+  else if ((_maxTransitions!=-1) && ((long int) transitionGraph.size()>=_maxTransitions))
+    return true;
+  else if ((_maxIterations!=-1) && ((long int) _iterations>_maxIterations))
+    return true;
+  else // at least one maximum mode is active, but the corresponding limit has not yet been reached
+    return false;
 }
 
 ExprAnalyzer* Analyzer::getExprAnalyzer() {
@@ -1497,15 +1504,19 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               exit(1);
             }
           } else {
-            cerr << "Warning: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
+            cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
             cerr << "expr: "<< lhs->unparseToString()<<endl;
             cerr << "type: "<<lhs->class_name()<<endl;
-            cerr << "performing no update of state!"<<endl;
-            //exit(1);
+            //cerr << "performing no update of state!"<<endl;
+            exit(1);
           }
         }
       }
       return estateList;
+    } else if(isSgCompoundAssignOp(nextNodeToAnalyze2)) {
+      cerr<<"Error: compound assignment operators not supported. Use normalization to eliminate these operators."<<endl;
+      cerr<<"expr: "<<nextNodeToAnalyze2->unparseToString()<<endl;
+      exit(1);
     }
   }
   // nothing to analyze, just create new estate (from same State) with target label of edge
@@ -1547,11 +1558,19 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   cout << "STATUS: Building CFGs finished."<<endl;
   if(boolOptions["reduce-cfg"]) {
     int cnt;
-    cnt=cfanalyzer->reduceBlockBeginNodes(flow);
-    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" block nodes)"<<endl;
-    cnt=cfanalyzer->reduceEmptyConditionNodes(flow);
-    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" empty condition nodes)"<<endl;
+#if 0
+    // TODO: not working yet because elimination of empty if branches can cause true and false branches to co-exist.
+    cnt=cfanalyzer->optimizeFlow(flow);
+    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" block begin, block end nodes, empty cond nodes.)"<<endl;
+#else
+    cout << "INIT: CFG reduction is currently limited to block end nodes."<<endl;
+    cnt=cfanalyzer->reduceBlockEndNodes(flow);
+    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" block end nodes)"<<endl;
+#endif
   }
+  int cnt=cfanalyzer->reduceBlockEndNodes(flow);
+  cout << "INIT: enforced CFG reduction of block end nodes OK. (eliminated "<<cnt<<" block end nodes)"<<endl;
+
   cout << "INIT: Intra-Flow OK. (size: " << flow.size() << " edges)"<<endl;
   if(oneFunctionOnly) {
     cout<<"INFO: analyzing one function only. No inter-procedural flow."<<endl;
@@ -3227,7 +3246,7 @@ void Analyzer::runSolver8() {
         }
       }
       oneSuccessorOnly=oneSuccessorOnly&&(newEStateList.size()==1);
-      // solver 8: only traces allowed (no branching)
+      // solver 8: only singe traces allowed
       assert(newEStateList.size()<=1);
       for(list<EState>::iterator nesListIter=newEStateList.begin();
           nesListIter!=newEStateList.end();
@@ -3519,7 +3538,9 @@ void Analyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData)
   _numberOfThreadsToUse = 1;
   _solver = 8;
   _maxTransitions = -1,
+  _maxIterations = -1,
   _maxTransitionsForcedTop = -1;
+  _maxIterationsForcedTop = -1;
   _topifyModeActive = false;
   _numberOfThreadsToUse = 1;
   _latestOutputEState = NULL;

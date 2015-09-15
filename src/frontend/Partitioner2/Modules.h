@@ -7,7 +7,7 @@
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Utility.h>
 
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/SharedPointer.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -337,6 +337,19 @@ size_t findSymbolFunctions(const Partitioner&, SgAsmGenericHeader*, std::vector<
  *  expression happens to be an address that has a name. */
 void nameConstants(const Partitioner&);
 
+/** Find functions that are no-ops.
+ *
+ *  Finds functions that are no-ops and returns them in ascending order of entry addresses. */
+std::vector<Function::Ptr> findNoopFunctions(const Partitioner&);
+
+/** Give names to functions that are no-ops.
+ *
+ *  Scans the list of attached functions to find those whose only action is to return to the caller (via @ref
+ *  findNoopFunctions) and gives names to those that don't have names.  The names are of the form "noop_ADDR() -> void" where
+ *  ADDR is the hexadecimal entry address. The C++ trailing return type syntax is used so that functions can be easily sorted
+ *  according to their names. */
+void nameNoopFunctions(const Partitioner&);
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  Partitioner conversion to AST
@@ -376,7 +389,7 @@ SgAsmBlock* buildGlobalBlockAst(const Partitioner&, bool relaxed=false);
  *
  *  Builds an abstract syntax tree from the control flow graph.  The returned SgAsmBlock will have child functions; each
  *  function (SgAsmFunction) will have child basic blocks; each basic block (SgAsmBlock) will have child instructions.  If @p
- *  relaxed is true then all IR nodes in the returned tree will satisfy ROSE's invariants concerning them at the expense of not
+ *  relaxed is false then all IR nodes in the returned tree will satisfy ROSE's invariants concerning them at the expense of not
  *  including certain things in the AST; otherwise, when @p relaxed is true, the AST will be as complete as possible but may
  *  violate some invariants.
  *

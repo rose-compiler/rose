@@ -4,7 +4,9 @@
 // #########################################################
 // #########################################################
 
-
+HEADER_EXECUTABLE_FILE_FORMAT_PREDECLARATION_START
+#include <Sawyer/Message.h>
+HEADER_EXECUTABLE_FILE_FORMAT_PREDECLARATION_END
 
 HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION_START
 #include "InstructionEnumsX86.h" /* register numbers, instruction size, etc. */
@@ -42,12 +44,16 @@ class RegisterDictionary;
 HEADER_INTERPRETATION_PREDECLARATION_END
 
 HEADER_CONSTANT_EXPRESSION_PREDECLARATION_START
-#include <sawyer/BitVector.h>
+#include <Sawyer/BitVector.h>
 HEADER_CONSTANT_EXPRESSION_PREDECLARATION_END
 
 HEADER_BINARY_INSTRUCTION_PREDECLARATION_START
 #include "MemoryMap.h"
 HEADER_BINARY_INSTRUCTION_PREDECLARATION_END
+
+HEADER_FLOAT_TYPE_PREDECLARATION_START
+#include <Sawyer/BitVector.h>
+HEADER_FLOAT_TYPE_PREDECLARATION_END
 
 HEADER_BINARY_START
 
@@ -212,6 +218,70 @@ HEADER_EXPRESSION_START
         public:
                 size_t get_nBits() const;
 HEADER_EXPRESSION_END
+
+
+
+HEADER_RISC_OPERATION_START
+        public:
+                // One enum per RISC operator.  The names are the same as the RISC operator.  Note that some of these
+                // operators aren't normally part of the base set. For instance, "subtract" and comparison operations
+                // are usually implemented in terms of more basic operations like add_, invert, and equalToZero.
+                enum RiscOperator {
+                        OP_NONE,
+			OP_bottom,
+			OP_undefined,
+			OP_unspecified,
+                        OP_filterCallTarget,
+                        OP_filterReturnTarget,
+                        OP_filterIndirectJumpTarget,
+                        OP_hlt,
+                        OP_cpuid,
+                        OP_rdtsc,
+                        OP_and_,
+                        OP_or_,
+                        OP_xor_,
+                        OP_invert,
+                        OP_extract,
+                        OP_concat,
+                        OP_leastSignificantSetBit,
+                        OP_mostSignificantSetBit,
+                        OP_rotateLeft,
+                        OP_rotateRight,
+                        OP_shiftLeft,
+                        OP_shiftRight,
+                        OP_shiftRightArithmetic,
+                        OP_equalToZero,
+                        OP_ite,
+                        OP_isEqual,
+                        OP_isNotEqual,
+                        OP_isUnsignedLessThan,
+                        OP_isUnsignedLessThanOrEqual,
+                        OP_isUnsignedGreaterThan,
+                        OP_isUnsignedGreaterThanOrEqual,
+                        OP_isSignedLessThan,
+                        OP_isSignedLessThanOrEqual,
+                        OP_isSignedGreaterThan,
+                        OP_isSignedGreaterThanOrEqual,
+                        OP_unsignedExtend,
+                        OP_signExtend,
+                        OP_add,		// two args + optional carry bit
+                        OP_addCarries,  // carries from a 3-arg add operation
+                        OP_subtract,
+                        OP_negate,
+                        OP_signedDivide,
+                        OP_signedModulo,
+                        OP_signedMultiply,
+                        OP_unsignedDivide,
+                        OP_unsignedModulo,
+                        OP_unsignedMultiply,
+                        OP_interrupt,
+                        OP_readRegister,
+                        OP_writeRegister,
+                        OP_readMemory,  //  three or four args depending on whether segment register is present
+                        OP_writeMemory, //  ditto
+                        OP_N_OPERATORS  // must be last
+                };
+HEADER_RISC_OPERATION_END
 
 
 
@@ -491,6 +561,10 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
           static SgAsmGenericFile *parseBinaryFormat(const char *name);
           static void unparseBinaryFormat(const std::string &name, SgAsmGenericFile*);
           static void unparseBinaryFormat(std::ostream&, SgAsmGenericFile*);
+
+	  // Diagnostics for parsing
+	  static Sawyer::Message::Facility mlog;
+	  static void initDiagnostics();
 
         /** Displays binary data in a fashion similar to the "hexdump -C" command in Unix: an address, numeric byte values,
          *  character byte values.  The format of the output is configurable through the HexdumpFormat argument. There are
@@ -2480,7 +2554,7 @@ HEADER_PE_IMPORT_SECTION_START
                 virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
                 void add_import_directory(SgAsmPEImportDirectory*);
                 void remove_import_directory(SgAsmPEImportDirectory*);
-                static bool import_mesg(const char *fmt, ...);
+                static bool show_import_mesg();
                 static void import_mesg_reset() { mesg_nprinted=0; }
                 size_t reallocate_iats(rose_rva_t start_at);
         private:
@@ -3622,7 +3696,7 @@ HEADER_BINARY_X86_INSTRUCTION_START
                 static X86InstructionSize instructionSizeForWidth(size_t);
                 static size_t widthForInstructionSize(X86InstructionSize);
                 static const RegisterDictionary* registersForInstructionSize(X86InstructionSize);
-		static const RegisterDictionary* registersForWidth(size_t);
+                static const RegisterDictionary* registersForWidth(size_t);
 
                 virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
                 virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
@@ -4004,17 +4078,31 @@ HEADER_INTEGER_TYPE_END
 
 HEADER_FLOAT_TYPE_START
         public:
+                enum {
+                    GRADUAL_UNDERFLOW      = 0x00000001,
+                    NORMALIZED_SIGNIFICAND = 0x00000002
+                };
+
+                typedef Sawyer::Container::BitVector::BitRange BitRange;
+
                 SgAsmFloatType(ByteOrder::Endianness, size_t nBits,
-                               size_t significandOffset, size_t significandNBits, size_t signBitOffset,
-                               size_t exponentOffset, size_t exponentNBits, uint64_t exponentBias);
+                               const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
+                               uint64_t exponentBias, unsigned flags);
+
                 virtual void check() const;
                 virtual std::string toString() const;
-                size_t get_significandOffset() const;
-                size_t get_significandNBits() const;
-                size_t get_signBitOffset() const;
-                size_t get_exponentOffset() const;
-                size_t get_exponentNBits() const;
-                uint64_t get_exponentBias() const;
+                
+                // These return the position of the significand, exponent, and sign bit fields.
+                BitRange significandBits() const;
+                BitRange exponentBits() const;
+                size_t signBit() const;
+
+		uint64_t exponentBias() const;
+
+                // Boolean properties (same names as their enum constants)
+                unsigned flags() const;
+                bool gradualUnderflow() const;
+                bool normalizedSignificand() const;
 HEADER_FLOAT_TYPE_END
 
 

@@ -48,6 +48,7 @@ SUBDIRS = \
 	Fortran_to_C \
 	mint \
 	vectorization \
+	MultiLevelMemory \
 	extractMPISkeleton \
 	RoseBlockLevelTracing \
 	LineDeleter \
@@ -123,6 +124,8 @@ if !ROSE_USING_ROSE_ANALYSIS
    SUBDIRS += RTED simulator
 endif
 
+SUBDIRS += simulator2
+
 # DQ (2/12/2010): compass appears to be a problem for the code generation support
 # in ROSE, so lets' move on and return to compass later for this level of support.
 #    compass
@@ -183,7 +186,7 @@ SUBDIRS += SatSolver
 # endif
 
 SUBDIRS += PolyhedralModel
-# SUBDIRS += demos-dlx-mdcg
+SUBDIRS += TileK
 # SUBDIRS += rose-tooling
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.

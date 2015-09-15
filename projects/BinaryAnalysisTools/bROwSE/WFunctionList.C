@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WAddressSpace.h>
 #include <bROwSE/WFunctionList.h>
 
@@ -51,6 +52,7 @@ WFunctionList::init() {
     model_->analyzers().push_back(FunctionImported::instance());
     model_->analyzers().push_back(FunctionExported::instance());
     model_->analyzers().push_back(FunctionNCallers::instance());
+    model_->analyzers().push_back(FunctionNCallees::instance());
     model_->analyzers().push_back(FunctionNReturns::instance());
     model_->analyzers().push_back(FunctionMayReturn::instance());
     model_->analyzers().push_back(FunctionStackDelta::instance());

@@ -8,37 +8,56 @@
 #include "VariableIdMapping.h"
 #include "RoseAst.h"
 #include <set>
+#include <vector>
 
 using namespace std;
 using namespace SPRAY;
 
-size_t
-VariableIdMapping::getArrayElementCount(SgArrayType* t) {
+int exprToInt(SgExpression* exp) {
+  if(SgUnsignedLongVal* valExp = isSgUnsignedLongVal(exp))
+    return valExp->get_value();
+  else if(SgIntVal* valExpInt = isSgIntVal(exp))
+    return valExpInt->get_value();
+  else
+    return -1;
+}
+
+// Puts sizes of the array dimensions into the vector,
+// returns total element count.
+size_t VariableIdMapping::getArrayDimensions(SgArrayType* t, vector<size_t> *dimensions/* = NULL*/) {
   ROSE_ASSERT(t);
-  size_t result=0; 
-  SgExpression * indexExp =  t->get_index();
-  
-  // assume dimension default to 0 if not specified ,such as a[] 
-  if (indexExp == NULL) {
-    // no index expression, check for initializer size (only correct for one-dimensional case)
-    result = 0;
-  } else  { 
-    SgUnsignedLongVal * valExp = isSgUnsignedLongVal(indexExp);
-    SgIntVal * valExpInt = isSgIntVal(indexExp);
-    if (valExp)
-      result = valExp->get_value(); 
-    if(valExpInt) 
-      result = valExpInt->get_value(); 
-  }
-  
-  // consider multi dimensional case 
-  SgArrayType* arraybase = isSgArrayType(t->get_base_type());
-  if (arraybase) {
-    result = result * getArrayElementCount(arraybase);
-  }
+  size_t result = 0;
+  int curIndex = exprToInt(t->get_index());
+  if(curIndex != -1)
+    result = curIndex;
+  SgArrayType* arrayBase = isSgArrayType(t->get_base_type());
+  if(dimensions)
+    dimensions->push_back(curIndex);
+  if(arrayBase)
+    result *= getArrayDimensions(arrayBase, dimensions);
   return result;
 }
 
+size_t VariableIdMapping::getArrayElementCount(SgArrayType* t) {
+  return getArrayDimensions(t);
+}
+
+// Calculates sizes of array dimensions based on its initializer size,
+// puts them in *dimensions*, returns total element count or 0 if there's no initializer.
+size_t VariableIdMapping::getArrayDimensionsFromInitializer(SgAggregateInitializer* init,
+                                                            vector<size_t> *dimensions/* = NULL*/) {
+  if(!init)
+    return 0;
+  SgExpressionPtrList& initializers = init->get_initializers()->get_expressions();
+  if(initializers.empty())
+    return 0;
+  size_t result = initializers.size();
+  if(dimensions)
+    dimensions->push_back(result);
+  if(SgAggregateInitializer* nested_init = isSgAggregateInitializer(initializers[0]))
+    result *= getArrayDimensionsFromInitializer(nested_init, dimensions);
+  return result;
+}
 
 VariableIdMapping::VariableIdMapping():modeVariableIdForEachArrayElement(false) {
 }
@@ -245,11 +264,24 @@ VariableId VariableIdMapping::variableId(SgSymbol* sym) {
   * \date 2012.
  */
 SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
+  ROSE_ASSERT(varid.isValid());
+  ROSE_ASSERT(varid._id<mappingVarIdToSym.size());
   return mappingVarIdToSym[varid._id];
 }
 //SgSymbol* VariableIdMapping::getSymbol(VariableId varId) {
 //  return varId.getSymbol();
 //}
+
+void VariableIdMapping::setSize(VariableId variableId, size_t size) {
+  ROSE_ASSERT(hasArrayType(variableId));
+  mappingVarIdToSize[variableId._id]=size;
+}
+
+size_t VariableIdMapping::getSize(VariableId variableId) {
+  ROSE_ASSERT(hasArrayType(variableId));
+  return mappingVarIdToSize[variableId._id];
+}
+
 
 /*! 
   * \author Markus Schordan
@@ -280,15 +312,16 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
               arraySize=getArrayElementCount(arrayType);
             }
             if(arraySize==0) {
-              // if type does not specify type then the initializer length defines the length
-              SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(varDecl);
-              arraySize=initList.size();
+              // check the initializer
+              arraySize=getArrayDimensionsFromInitializer(isSgAggregateInitializer(initName->get_initializer()));
             }
-            //cout<<arraySize<<" : "<<varDecl->unparseToString()<<endl;
-            //cout<<"INFO: found array decl: size: "<<arraySize;
-            registerNewArraySymbol(sym,arraySize);
-            symbolSet.insert(sym);
-            found=false;
+            if(arraySize > 0) {
+              //cout<<arraySize<<" : "<<varDecl->unparseToString()<<endl;
+              //cout<<"INFO: found array decl: size: "<<arraySize;
+              registerNewArraySymbol(sym, arraySize);
+              symbolSet.insert(sym);
+              found = false;
+            }
           }
         } else {
           cerr<<"WARNING: computeVariableSymbolMapping: VariableDeclaration without associated symbol found. Ignoring.";
@@ -394,19 +427,74 @@ VariableId VariableIdMapping::variableId(SgInitializedName* initName) {
 }
 
 VariableId VariableIdMapping::variableIdOfArrayElement(VariableId arrayVar, int elemIndex) {
-  int idCode=arrayVar.getIdCode();
-  int elemIdCode=idCode+elemIndex;
+  int idCode = arrayVar.getIdCode();
+  int elemIdCode = idCode + elemIndex;
   VariableId elemVarId;
   elemVarId.setIdCode(elemIdCode);
   return elemVarId;
 }
+
+// Returns a valid VariableId corresponding to *ref*
+// if indices in *ref* are all integers and sizes of
+// all array dimensions are known.
+// Returns an invalid VariableId otherwise.
+VariableId VariableIdMapping::idForArrayRef(SgPntrArrRefExp* ref)
+{
+  assert(ref);
+  VariableId result;
+  result.setIdCode(-1);
+
+  // Check failure conditions
+  if(isSgPntrArrRefExp(ref->get_parent()))
+    return result;
+  SgExpression* varRef;
+  vector<SgExpression*> subscripts;
+  vector<SgExpression*>* pSubscripts = &subscripts;
+  SageInterface::isArrayReference(ref, &varRef, &pSubscripts);
+  SgVarRefExp* arrVar = isSgVarRefExp(varRef);
+  if(!arrVar)
+    return result;
+  SgArrayType* arrType = isSgArrayType(SageInterface::convertRefToInitializedName(arrVar)->get_type());
+  if(!arrType)
+    return result;
+  vector<size_t> arrayDimensions;
+  size_t arrSize = getArrayDimensions(arrType, &arrayDimensions);
+  if(!arrSize) {
+    arrayDimensions.clear();
+    arrSize = getArrayDimensionsFromInitializer(
+                isSgAggregateInitializer(SageInterface::convertRefToInitializedName(arrVar)->get_initializer()), 
+                &arrayDimensions);
+  }
+  if(!arrSize)
+    return result; // Array size is unknown
+  assert(arrayDimensions.size() == subscripts.size());
+
+  // Calculate the index as below.
+  // int a[M][N][K];
+  // a[x][y][z] => index = x*N*K + y*K + z.
+  int index = 0;
+  for(unsigned i = 0; i < subscripts.size(); i++) {
+    int curIndex = exprToInt(subscripts[i]);
+    if(curIndex == -1)
+      return result;
+    int dimension_size = (i == arrayDimensions.size() - 1 ? 1 : arrayDimensions[i + 1]);
+    for(unsigned d = i + 2; d < arrayDimensions.size(); d++)
+      dimension_size*= arrayDimensions[d];
+    index += curIndex*dimension_size;
+  }
+
+  VariableId varId = variableId(arrVar);
+  result = variableIdOfArrayElement(varId, index);
+  return result;
+}
+
 
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
 bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
-  return dynamic_cast<UniqueTemporaryVariableSymbol*>(getSymbol(varId));
+  return dynamic_cast<UniqueTemporaryVariableSymbol*>(getSymbol(varId))!=0;
 }
 
 /*! 
@@ -436,12 +524,20 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
   ROSE_ASSERT(arraySize>0);
   if(mappingSymToVarId.find(sym)==mappingSymToVarId.end()) {
     // map symbol to var-id of array variable symbol
-    mappingSymToVarId[sym]=mappingVarIdToSym.size();
-    for(int i=0;i<arraySize;i++) {
-    // assign one var-id for each array element
-      //cout<<"registering "<<i<<endl;
+    size_t newVariableIdCode=mappingVarIdToSym.size();
+    mappingSymToVarId[sym]=newVariableIdCode;
+    VariableId tmpVarId=variableIdFromCode(newVariableIdCode);
+    if(getModeVariableIdForEachArrayElement()) {
+      // assign one var-id for each array element
+      for(int i=0;i<arraySize;i++) {
+        mappingVarIdToSym.push_back(sym);
+      }
+    } else {
+      // assign one vari-id for entire array
       mappingVarIdToSym.push_back(sym);
     }
+    // size needs to be set *after* mappingVarIdToSym has been updated
+    setSize(tmpVarId,arraySize);
   } else {
     cerr<< "Error: attempt to register existing array symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym)<<endl;
     exit(1);

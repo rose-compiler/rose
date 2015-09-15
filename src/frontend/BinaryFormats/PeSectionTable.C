@@ -2,6 +2,9 @@
 #include "sage3basic.h"
 #include "BinaryLoader.h"
 #include "MemoryMap.h"
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
 
 void
 SgAsmPESectionTableEntry::ctor(const PESectionTableEntry_disk *disk)
@@ -130,8 +133,7 @@ SgAsmPESectionTableEntry::encode(PESectionTableEntry_disk *disk) const
 {
     /* The file can hold up to eight characters of the name. The name is NUL-padded, not necessarily NUL-terminated. */
     if (p_name.size()>8) {
-        fprintf(stderr, "warning: section name too long to store in PE file: \"%s\" (truncated)\n",
-                escapeString(p_name).c_str());
+        mlog[WARN] <<"section name too long to store in PE file: \"" <<escapeString(p_name) <<"\" (truncated)\n";
     }
     memset(disk->name, 0, sizeof(disk->name));
 
@@ -206,9 +208,9 @@ SgAsmPESectionTable::parse()
     for (size_t i=0; i<fhdr->get_e_nsections(); i++) {
         SgAsmPESectionTableEntry::PESectionTableEntry_disk disk;
         if (entsize!=read_content_local(i * entsize, &disk, entsize, false))
-            fprintf(stderr, "SgAsmPESectionTable::parse: warning: section table entry %" PRIuPTR " at file offset 0x%08"PRIx64
-                    " extends beyond end of defined section table.\n",
-                    i, get_offset()+i*entsize);
+            mlog[WARN] <<"SgAsmPESectionTable::parse: section table entry " <<i
+                       <<" at file offset " <<StringUtility::addrToString(get_offset()+i*entsize)
+                       <<" extends beyond end of defined section table.\n";
         SgAsmPESectionTableEntry *entry = new SgAsmPESectionTableEntry(&disk);
 
         SgAsmPESection *section = NULL;

@@ -16,11 +16,6 @@ namespace DLX {
 
 namespace Directives {
 
-/*!
- * \addtogroup grp_dlx_core_directives
- * @{
- */
-
 template <class language_tpl> struct generic_construct_t;
 template <class language_tpl> struct generic_clause_t;
 
@@ -55,8 +50,6 @@ struct directive_t {
     successor_list.push_back(std::pair<relation_e, directive_t<language_t> *>(rel, directive));
   }
 };
-
-/** @} */
 
 }
 

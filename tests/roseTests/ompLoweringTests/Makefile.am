@@ -55,10 +55,12 @@ OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc.c \
         axpy_ompacc3.c \
         matrixmultiply-ompacc.c \
+        matrixmultiply-ompacc2.c \
         jacobi-ompacc.c \
         jacobi-ompacc-v2.c \
         jacobi-ompacc-opt1.c \
-        jacobi-ompacc-opt2.c 
+        jacobi-ompacc-opt2.c \
+	jacobi-ompacc-multiGPU.c 
 
 OMP_ACC_TESTCODES_CXX_REQUIRED_TO_PASS = \
         jacobi-ompacc2.cpp

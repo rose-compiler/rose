@@ -1,9 +1,10 @@
+#include <rose.h>
 #include <bROwSE/WStrings.h>
 
 #include <boost/regex.hpp>
 #include <bROwSE/WAddressSpace.h>
 #include <bROwSE/WStringDetail.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/Stopwatch.h>
 #include <stringify.h>                                  // ROSE
 #include <Wt/WAbstractTableModel>
 #include <Wt/WHBoxLayout>
@@ -244,13 +245,13 @@ public:
                 sex = ByteOrder::ORDER_LSB;
 
             Strings::StringFinder analyzer;
-            analyzer.minLength(5);
-            analyzer.maxLength(65536);
-            analyzer.discardCodePoints(false);
-            analyzer.keepOnlyLongest(true);
+            analyzer.settings().minLength = 5;
+            analyzer.settings().maxLength = 65536;
+            analyzer.settings().keepingOnlyLongest = true;
             analyzer.insertCommonEncoders(sex);
             analyzer.insertUncommonEncoders(sex);
-            BOOST_FOREACH (const Strings::EncodedString &string, analyzer.find(memoryMap_.require(MemoryMap::READABLE))) {
+            analyzer.find(memoryMap_.require(MemoryMap::READABLE));
+            BOOST_FOREACH (const Strings::EncodedString &string, analyzer.strings()) {
                 size_t nrefs = xrefs_.getOrDefault(P2::Reference(string.address())).size();
                 rows_.push_back(Row(string, nrefs));
             }

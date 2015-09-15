@@ -69,6 +69,10 @@ ROSE_SUPPORT_YICES
 # Is the C++ libyaml available? [https://code.google.com/p/yaml-cpp]
 ROSE_SUPPORT_YAML
 
+# Is the GNU readline library available?  This is used by some projects to allow users to edit inputs. E.g., simulator2
+# has an interactive debugger that uses readline to read debugger commands.
+ROSE_SUPPORT_LIBREADLINE
+
 # Call supporting macro to check for "--enable-i386" switch
 ROSE_SUPPORT_I386
 
@@ -104,9 +108,10 @@ AC_SUBST(ETHER_PREFIX)
 AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 
 # libgcrypt is used for computing SHA1 hashes of binary basic block semantics, among other things. [RPM 2010-05-12]
-AC_CHECK_HEADERS(gcrypt.h)
+AC_CHECK_HEADERS(gcrypt.h,,[HAVE_GCRYPT=yes],[HAVE_GCRYPT=no])
 AC_CHECK_LIB(gpg-error,gpg_strerror) dnl needed by statically linked libgcrypt
 AC_CHECK_LIB(gcrypt,gcry_check_version)
+AM_CONDITIONAL([HAS_LIBRARY_GCRYPT], [test "x$HAVE_GCRYPT" = "xyes"])
 
 # Check for POSIX threads.  Just because we have POSIX threads does not necessarily mean that the user wants ROSE
 # to be compiled with multi-thread support.  See also "--with-boost-thread" configure switch.

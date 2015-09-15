@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WSplash.h>
 #include <Wt/WImage>
 #include <Wt/WPushButton>

@@ -1,10 +1,30 @@
 #include "sage3basic.h"
 #include <Partitioner2/ControlFlowGraph.h>
-#include <sawyer/GraphTraversal.h>
+#include <Sawyer/GraphTraversal.h>
 
 namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
+
+AddressIntervalSet
+CfgVertex::addresses() const {
+    AddressIntervalSet retval;
+    switch (type()) {
+        case V_BASIC_BLOCK:
+            retval.insert(address());
+            BOOST_FOREACH (SgAsmInstruction *insn, bblock()->instructions())
+                retval.insert(AddressInterval::baseSize(insn->get_address(), insn->get_size()));
+            break;
+            retval.insert(address());
+            break;
+        case V_INDETERMINATE:
+        case V_USER_DEFINED:
+        case V_UNDISCOVERED:
+        case V_NONEXISTING:
+            break;
+    }
+    return retval;
+}
 
 void
 insertCfg(ControlFlowGraph &dst, const ControlFlowGraph &src, CfgVertexMap &vmap /*out*/) {
@@ -118,6 +138,27 @@ findDetachedVertices(const CfgConstVertexSet &vertices) {
     }
     return retval;
 }
+
+CfgConstVertexSet
+forwardMapped(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap) {
+    CfgConstVertexSet retval;
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
+        if (vmap.forward().exists(vertex))
+            retval.insert(vmap.forward()[vertex]);
+    }
+    return retval;
+}
+
+CfgConstVertexSet
+reverseMapped(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap) {
+    CfgConstVertexSet retval;
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
+        if (vmap.reverse().exists(vertex))
+            retval.insert(vmap.reverse()[vertex]);
+    }
+    return retval;
+}
+
 
 } // namespace
 } // namespace

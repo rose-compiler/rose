@@ -632,12 +632,22 @@ public:
             return retval;
         }
 
-        /** See NullSemantics::Policy::false_() */
+        /** See NullSemantics::Policy::undefined_() */
         template<size_t nBits>
         ValueType<nBits> undefined_() {
             ValueType<nBits> retval;
             before();
             CALL_SUBS_0(undefined_<nBits>, retval);
+            after();
+            return retval;
+        }
+
+        /** See NullSemantics::Policy::unspecified_() */
+        template<size_t nBits>
+        ValueType<nBits> unspecified_() {
+            ValueType<nBits> retval;
+            before();
+            CALL_SUBS_0(unspecified_<nBits>, retval);
             after();
             return retval;
         }

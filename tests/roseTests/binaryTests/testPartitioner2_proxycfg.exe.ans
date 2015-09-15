@@ -1498,7 +1498,7 @@
 0x01001900: Outgoing stack delta: +0
 0x01001900: Successor blocks: unknown
 
-0x0100190c: ================================== Function (function call, graph) unknown name
+0x0100190c: ================================== Function (function call, thunk, graph) unknown name
 
 0x0100190c: Basic block reasons: entry point
 0x0100190c: ff 25 8c 41 00 01       |.%.A..  |<sp+0 >   jmp    dword ds:[0x0100418c<IAT+0x80>]
@@ -1541,7 +1541,7 @@
 0x01001944: ================================== Function (function call, graph) unknown name
 
 0x01001944: Basic block reasons: entry point
-0x01001944: 68 96 19 00 01          |h....   |<sp+0 >   push   0x01001996
+0x01001944: 68 96 19 00 01          |h....   |<sp+0 >   push   0x01001996<<Func>>
 0x01001949: 64 a1 00 00 00 00       |d.....  |<sp-4 >   mov    eax, dword fs:[0x00000000]
 0x0100194f: 50                      |P       |<sp-4 >   push   eax
 0x01001950: 8b 44 24 10             |.D$.    |<sp-8 >   mov    eax, dword ss:[esp + 0x10]
@@ -1575,6 +1575,13 @@
 0x0100198e: 51                      |Q       |          push   ecx
 0x0100198f: c3                      |.       |          ret    
 0x0100198f: Successor blocks: unknown
+
+0x01001996: ================================== Function (thunk, graph) unknown name
+
+0x01001996: Basic block reasons: entry point, CFG head
+0x01001996: ff 25 68 41 00 01       |.%hA..  |<sp+0 >   jmp    dword ds:[0x01004168<IAT+0x5c>]
+0x01001996: Outgoing stack delta: +0
+0x01001996: Successor blocks: unknown
 
 0x010019a2: ================================== Function (function call, graph) unknown name
 

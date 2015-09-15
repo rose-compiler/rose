@@ -61,6 +61,12 @@ Interval::print(std::ostream &o) const
  *                                      Semantic value
  *******************************************************************************************************************************/
 
+Sawyer::Optional<BaseSemantics::SValuePtr>
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
+    // There's no official way to represent BOTTOM
+    throw BaseSemantics::NotImplemented("SValue merging for IntervalSemantics is not supported", NULL);
+}
+
 // class method
 SValuePtr
 SValue::instance_from_bits(size_t nbits, uint64_t possible_bits)

@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WHexDump.h>
 
 #include <bROwSE/FunctionUtil.h>
@@ -6,7 +7,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <Diagnostics.h>
 #include <rose_strtoull.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/Stopwatch.h>
 #include <Wt/WHBoxLayout>
 #include <Wt/WLineEdit>
 #include <Wt/WPushButton>

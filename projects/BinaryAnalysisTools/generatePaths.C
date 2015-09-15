@@ -1,7 +1,7 @@
 #include <rose.h>
 
 #include <iostream>
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 #include <string>
 
 struct Settings {
@@ -66,7 +66,7 @@ generateSequence(const std::string &ctrlExpr, const std::string &resultVar, size
         generateBinaryTree(ctrlExpr, resultVar, nestingLevel);
     } else {
         for (size_t i=0; i<settings.sequenceLength; ++i) {
-            std::cout <<indentation(nestingLevel) <<"if ((" <<ctrlExpr <<" & 1) == " <<(i%2) <<") {\n";
+            std::cout <<indentation(nestingLevel) <<"if ((" <<ctrlExpr <<" & 1) == 0) {\n";
             generateBinaryTree(ctrlExpr, resultVar, nestingLevel+1);
             std::cout <<indentation(nestingLevel) <<"} else {\n";
             generateBinaryTree(ctrlExpr, resultVar, nestingLevel+1);

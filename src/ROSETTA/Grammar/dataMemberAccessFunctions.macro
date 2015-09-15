@@ -5,6 +5,13 @@ $DATA_TYPE
 $CLASSNAME::get_$DATA () const
    {
      ROSE_ASSERT (this != NULL);
+
+#if 0
+  // DQ (6/12/2015): Added debugging support to trace setting of isModified flag 
+  // used to trigger marking transformations for the token-based unparsing.
+     printf ("$CLASSNAME::get_$DATA = %p = %s \n",this,this->class_name().c_str());
+#endif
+
      return p_$DATA;
    }
 
@@ -12,6 +19,13 @@ void
 $CLASSNAME::set_$DATA ( $DATA_TYPE $DATA )
    {
      ROSE_ASSERT (this != NULL);
+
+#if 0
+  // DQ (6/12/2015): Added debugging support to trace setting of isModified flag 
+  // used to trigger marking transformations for the token-based unparsing.
+     printf ("$CLASSNAME::set_$DATA = %p = %s \n",this,this->class_name().c_str());
+#endif
+
      set_isModified(true);
      $TEST_DATA_POINTER
      p_$DATA = $DATA;

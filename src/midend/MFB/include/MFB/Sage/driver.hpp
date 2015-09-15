@@ -1,9 +1,3 @@
-/** 
- * \file MFB/include/MFB.hpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #ifndef __MFB_SAGE_DRIVER_HPP__
 #define __MFB_SAGE_DRIVER_HPP__
@@ -12,10 +6,17 @@
 
 #include <string>
 #include <utility>
+#include <iostream>
 
 #include <boost/filesystem.hpp>
 
+#ifndef VERBOSE
+# define VERBOSE 0
+#endif
+
 class SgType;
+
+class SgGlobal;
 
 class SgFunctionDeclaration;
 class SgFunctionParameterList;
@@ -34,16 +35,15 @@ class SgNamespaceSymbol;
 class SgNamespaceDefinitionStatement;
 
 class SgVariableDeclaration;
-class  SgVariableSymbol;
+class SgVariableSymbol;
 class SgInitializer;
 class SgInitializedName;
 
+class SgTypedefSymbol;
+
 namespace MFB {
 
-/*!
- * \addtogroup grp_mfb_sage_driver
- * @{
-*/
+typedef size_t file_id_t;
 
 template <typename Object>
 class Sage {};
@@ -53,8 +53,6 @@ class api_t;
 template <>
 class Driver<Sage> {
   public:
-    typedef unsigned file_id_t;
-
     SgProject * project;
 
   private:
@@ -85,6 +83,12 @@ class Driver<Sage> {
     std::set<SgVariableSymbol *>       p_variable_symbols;
     std::set<SgMemberFunctionSymbol *> p_member_function_symbols;
 
+    std::set<SgTypedefSymbol *> p_typedef_symbols;
+
+  // Type management
+    
+    std::map<SgScopeStatement *, std::set<SgType *> > p_type_scope_map;
+
   private:
     template <typename Object>
     void loadSymbols(file_id_t file_id, SgSourceFile * file);
@@ -100,10 +104,6 @@ class Driver<Sage> {
     template <typename Symbol>
     bool resolveValidParent(Symbol * symbol);
 
-    file_id_t getFileID(const boost::filesystem::path & path) const;
-    file_id_t getFileID(SgSourceFile * source_file) const;
-    file_id_t getFileID(SgScopeStatement * scope) const;
-
     file_id_t add(SgSourceFile * file);
 
   protected:
@@ -117,6 +117,11 @@ class Driver<Sage> {
     /// Create or load a file
     file_id_t create(const boost::filesystem::path & path);
     file_id_t add(const boost::filesystem::path & path);
+
+    file_id_t getFileID(const boost::filesystem::path & path) const;
+    file_id_t getFileID(SgSourceFile * source_file) const;
+    file_id_t getFileID(SgScopeStatement * scope) const;
+    SgGlobal * getGlobalScope(file_id_t id) const;
 
     /// Set a file to be unparsed with the project (by default file added to the driver are *NOT* unparsed)
     void setUnparsedFile(file_id_t file_id) const;
@@ -153,6 +158,9 @@ class Driver<Sage> {
     template <typename Object>
     typename Sage<Object>::build_result_t build(const typename Sage<Object>::object_desc_t & desc);
 
+    void useType(SgType * type, SgScopeStatement * scope);
+    void useType(SgType * type, file_id_t file_id);
+
     /// Import external header for a given file
     void addExternalHeader(file_id_t file_id, std::string header_name, bool is_system_header = true);
 
@@ -168,21 +176,23 @@ class Driver<Sage> {
 
 // SgTypedefDeclaration
 
-/** @} */
-
 template <typename Object>
 typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::symbol_t symbol, file_id_t file_id, bool need_forward_only) {
   std::map<file_id_t, SgSourceFile *>::iterator it_file = id_to_file_map.find(file_id);
   assert(it_file != id_to_file_map.end());
 
-  std::map<SgSymbol *, file_id_t>::iterator it_sym_decl_file_id = p_symbol_to_file_id_map.find(symbol);
+  std::map<SgSymbol *, file_id_t>::const_iterator it_sym_decl_file_id = p_symbol_to_file_id_map.find((SgSymbol *)symbol);
+  if (it_sym_decl_file_id == p_symbol_to_file_id_map.end())
+    std::cerr << "[Error] (MFB::Driver<Sage>::useSymbol) Cannot find a file for " << symbol->get_name().getString() << std::endl;
   assert(it_sym_decl_file_id != p_symbol_to_file_id_map.end());
 
   file_id_t sym_decl_file_id = it_sym_decl_file_id->second;
 
-  bool need_include_directive = !need_forward_only;
+#if VERBOSE
+  std::cerr << "[Info] (MFB::Driver<Sage>::useSymbol) Symbol for " << symbol->get_name().getString() << " found in file #" << sym_decl_file_id << std::endl;
+#endif
 
-  // TODO find out wether we need a include directive or if we can do with a forward declaration
+  bool need_include_directive = !need_forward_only; // TODO find out wether we need a include directive or if we can do with a forward declaration
 
   if (need_include_directive) {
     std::map<file_id_t, std::set<file_id_t> >::iterator it_accessible_file_ids = file_id_to_accessible_file_id_map.find(file_id);
@@ -195,7 +205,7 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
       accessible_file_ids.insert(sym_decl_file_id);
     }
 
-    addPointerToTopParentDeclaration(symbol, file_id);
+//  addPointerToTopParentDeclaration((SgSymbol *)symbol, file_id);
   }
   else {
     createForwardDeclaration<Object>(symbol, file_id);
@@ -206,7 +216,7 @@ typename Sage<Object>::symbol_t Driver<Sage>::useSymbol(typename Sage<Object>::s
 }
 
 template <typename Object>
-void Driver<Sage>::createForwardDeclaration(typename Sage<Object>::symbol_t symbol, unsigned target_file_id) {
+void Driver<Sage>::createForwardDeclaration(typename Sage<Object>::symbol_t symbol, size_t target_file_id) {
   assert(false);
 }
 

@@ -1,9 +1,11 @@
 /* Interpretation ELF */
 0x080480a0: ================================== Function (entry point, graph) <_start>
+0x080480a0: Function does not return to caller.
 
 0x080480a0: Basic block reasons: entry point, CFG head
-0x080480a0: e9 04 00 00 00          |.....   |          jmp    0x080480a9<<Insn>>
-0x080480a9: f4                      |.       |          hlt    
+0x080480a0: e9 04 00 00 00          |.....   |<sp+0 >   jmp    0x080480a9<<Insn>>
+0x080480a9: f4                      |.       |<sp+0 >   hlt    
+0x080480a9: Outgoing stack delta: +0
 0x080480a9: Successor blocks: none
 
 0x080480a5: Basic block reasons: CFG head

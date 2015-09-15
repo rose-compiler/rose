@@ -1,0 +1,434 @@
+Linux x86/amd64 simulator. See "x86sim --help" for usage.
+
+== Intructuction ==
+
+x86sim is a simulator for linux-x86 and linux-amd64. It's composed of
+three main parts:
+
+1. ROSE's instruction semantics layer simulates the execution of each
+   instruction.  The simulator uses ConcreteSemantics2.h and overrides
+   a few of the RISC operators in order to do things like intercepting
+   system calls.  This part of the simulator is relatively small and
+   simple since most of the code is part of the ROSE library itself.
+
+2. The simulator emulates certain parts of the Linux operating system
+   such as process and thread abstractions, signal delivery, memory
+   management (mmap and friends), segment registers and the global and
+   local descriptor tables, fast user-space mutexes (futexes), process
+   loading (exec), system call dispatching, etc.
+
+3. The simulator provides a framework for interacting with the
+   simulated guest executable, mostly by registering callbacks that
+   are triggered at certain points of execution. For instance, the
+   simulator's interactive debugger is implemented entirely from
+   callbacks.
+
+== Definitions ==
+
+The "guest" consists of a binary "specimen" whose instructions are
+being simulated, and a simulated Linux "guest OS".
+
+The "host" is the simulator itself running on the "host OS".
+
+The guest and host need not be the same architecture. E.g., it's
+possible to run 32-bit guest specimen in a simulated 32-bit guest OS
+all running in a 64-bit version of ROSE. The 32-bit host is not well
+tested at this time, and running a 64-bit guest in a 32-bit host has
+not been tested at all yet [2015-06-29].
+
+== Quick start ==
+
+To simulate a 32-bit specimen: As of 2015-07-28, the supplied VDSO
+causes a segmentation fault (reported as the simulator not being able
+to disassemble an instruction at a certain address in libc), so use
+"--vdso=/dev/null" to disable fast system calls.  Also, native loading
+is not implemented for x86.
+
+$ i386 -R ./x86sim --arch=linux-x86 --vdso=/dev/null /bin/x86/grep root /etc/passwd
+
+To simulate a 64-bit specimen: be sure that linux-vdso.so and
+vsyscall-amd64 have been copied to the current working directory (or
+use the "--vdso" and "--vsyscall" switches), and/or use the
+"--trace=mmap" to verify that they're present in the simulated memory
+maps (the vdso need not be present when "--native-load" is used).
+
+$ x86_64 -R ./x86sim --arch=linux-amd64 /bin/amd64/grep root /etc/passwd
+
+== Initial program load ==
+
+x86sim can completely emulate the Linux loader, or it can initialize
+itself from a native Linux load (the latter is currently only
+implemented for 64-bit guests on a 64-bit host [2015-06-29]).
+The emulated load is the default.
+
+The native load is triggered by specifying "--native-load" and works
+by starting the specimen natively in a debugger and breaking at its
+first instruction.  The simulators memory and registers are
+initialized from the stopped specimen and then the native specimen is
+killed before the simulator continues.  For reproducible results with
+native loading you'll probably want to run the native-loading
+simulator inside "x86_64 -R" or "i386 -R" to turn off address
+randomization.
+
+== Linux virtual dynamic shared object (VDSO) ==
+
+Linux programs are linked with an ELF library provided by the
+kernel. For 32-bit programs this is linux-gate.so and for 64-bit
+programs it's linux-vdso.so.  The vdso contains, among other things,
+the mechanism for the guest to make system calls.
+
+For a native load, the VDSO becomes part of the emulated process
+automatically.  For native loads a VDSO can be specified with the
+"--vdso" command-line switch. Currently [2015-06-29] a VDSO is
+required for 64-bit guests and causes problems for 32-bit guests.
+
+Since the VDSO is not stored in the filesystem, but rather comes from
+the kernel, you must get a copy of it when using emulated
+loading. There are many ways to do this, and here's one way using the
+simulator:
+
+1. Choose some benign executable with the same architecture as the
+   specimen you're interested in loading.  For example, you could use
+   "/bin/cat".
+
+2. Run /bin/cat in the simulator with the interactive debugger
+   enabled and using native loading.
+
+   $ x86_64 -R ./x86sim --arch=linux-amd64 --debugger --native-load /bin/cat
+
+3. In the debugger, print the memory map and look for the entry with
+   "vdso" in its name:
+
+    RSIM> memory
+    va 0x00400000 + 0x0000c000 = 0x0040c000 r-x- at buffer aaa   + 0x00000000 proc:9461(/bin/cat)
+    va 0x0060c000 + 0x00001000 = 0x0060d000 rw-- at buffer aab   + 0x00000000 proc:9461(/bin/cat)
+    va 0x00007ffff7ddf000 + 0x0001e000 = 0x00007ffff7dfd000 r-x- at buffer aac   + 0x00000000 proc:9461(/lib/ld-2.11.3.so)
+    va 0x00007ffff7ffb000 + 0x00001000 = 0x00007ffff7ffc000 r-x- at buffer aad   + 0x00000000 proc:9461([vdso])
+    va 0x00007ffff7ffc000 + 0x00002000 = 0x00007ffff7ffe000 rw-- at buffer aae   + 0x00000000 proc:9461(/lib/ld-2.11.3.so)
+    va 0x00007ffff7ffe000 + 0x00001000 = 0x00007ffff7fff000 rw-- at buffer aaf   + 0x00000000 proc:9461()
+    va 0x00007ffffffe9000 + 0x00016000 = 0x00007ffffffff000 rw-- at buffer aag   + 0x00000000 proc:9461([stack])
+
+4. Dump the vdso section to a file, then quit the simulator. There
+   must be no white space around the "+".
+
+    RSIM> memory dump linux-vdso.so 0x00007ffff7ffb000+0x00001000
+    RSIM> quit
+
+5. Now use this file when doing emulated loading:
+
+   $ ./x86sim .... --vdso=linux-vdso.so ....
+
+== Linux vsyscall ==
+
+Some Linux-amd64 system calls are implemented by mapping a page of the
+Linux kernel into user space at address 0xffffffffff600000. In order
+to use these system calls the simulator must implement them itself,
+and does so by mapping some assembly to that location.  The assembly
+is contained in the "vsyscall-amd64" file and the "--vsyscall" switch
+says where to look for that file.  The default is the current working
+directory.
+
+If the vsyscall page is not mapped then certain system calls will
+likely segfault.  For Linux 2.6.32-amd64 for instance, these are
+the time, gettimeofday, and getcpu syscalls.
+
+== Process and thread model ==
+
+The simulator runs each guest process in a separate simulator process,
+and each guest thread in its own simulator thread.  Since the guest
+process and threads are being simulated they don't have their own
+Linux process and threads. Any system calls performed by the host on
+behalf of the guest are actually operating on the host process and
+threads.  This can lead to some subtle behavior:
+
+* Attaching to a guest's process with a debugger like GDB will
+  actually be attaching to the simulator instead.
+
+* The guest and host share all file descriptors. Although the
+  simulator keeps guest and host file descriptors separated and
+  keeps a mapping between guest and host descriptors, they initially
+  share file descriptors for standard input, output, and error.
+
+* If the guest accesses the "/proc/<pid>/" filesystem on Linux it will
+  be accessing information about the simulator, not itself.
+
+* Sending a signal to a host process or thread may or may not cause the
+  signal to be forwarded to the guest process or thread.
+
+* The simulator is multi-threaded C++ program even if the guest is a
+  single threaded C program.
+
+== System calls ==
+
+All attempts by the guest to execute a system call need to be
+intercepted by the simulator, marshaled from simulated guest memory to
+host memory, a system call performed by the host on behalf of the
+guest, and then the results marshaled back to the simulated
+memory. For a 32-bit guest running on a 64-bit host there's additional
+translation steps as part of the marshaling.
+
+Only the most common system calls are implemented, but the mechanism
+allows users to implement their own.  Here's how:
+
+Lets say you get the simulator error "syscall_22(...) is not
+implemented".  So you look for "22" in /usr/include/asm/unistd_64.h
+(or unistd_32.h depending on your guest's architecture) and find that
+it's the "access" system call.  As a rough approximation you can look
+at the documentation for "access" in section 2 of the man pages, but
+this will document the "access" function in the C library, not the
+syscall. Usually they're mostly the same, the your canonical reference
+is to find the system call function in the Linux kernel source code.
+
+Your next task is to write at least two functions to handle the
+"access" call: one for printing the function call name and its
+arguments, and one for doing the actual system call on behalf of the
+guest. A third function to print results is optional.
+
+Here's the function to print the syscall name and arguments. The "s"
+and "f" methods are for walking through the argument list where "s"
+prints a string (the file name) and "f" prints the flags. The "TF" and
+"T_END" are macros defined in RSIM_Common.h:
+
+    void
+    syscall_access_enter(RSIM_Thread *t, int callno) {
+	static const Translate flags[] = { TF(R_OK), TF(W_OK), TF(X_OK), TF(F_OK), T_END };
+	t->syscall_enter("access").s().f(flags);
+    }
+
+Here's the function to do the actual work on behalf of the guest:
+
+    void
+    syscall_access_body(RSIM_Thread *t, int callno) {
+	rose_addr_t nameVa = t->syscall_arg(0);
+	bool error;
+	std::string name = t->get_process()->read_string(nameVa, 0, &error);
+	if (error) {
+	    t->syscall_return(-EFAULT);
+	    return;
+	}
+	int mode = t->syscall_arg(1);
+	int result = access(name.c_str(), mode);
+	if (-1 == result)
+	    result = -errno;
+	t->syscall_return(result);
+    }
+
+Finally, one needs to register these two functions with the simulator
+so they get called whenever system call 22 is needed. The "sim" is
+your simulator object, and syscall_default_leave is the function to
+supply when there's nothing special to do for printing the syscall
+return value:
+
+    sim.syscall_define(22, syscall_access_enter, syscall_access_body,
+                       RSIM_Linux::syscall_default_leave)
+
+== fork (clone) and exec system calls ==
+
+The simulator is always multi-threaded even when the guest has a
+single thread. In order to simulate a fork on behalf of the guest, the
+simulator needs to call fork() natively, but calling fork in a
+multi-threaded program is fraught with danger.  See this blog for a
+good description
+[http://www.linuxprogrammingblog.com/threads-and-fork-think-twice-before-using-them].
+
+In short, the problem is that fork() can interrupt threads in the
+parent process while they're executing in critical sections, and that
+the only functions safe to call in the child process are async signal
+safe functions (which excludes things like I/O, memory allocation,
+etc.). Unfortunately, the simulator needs to continue simulating guest
+instructions in the child after fork returns, which involves lots more
+than just async-signal safe functions!
+
+It's theoretically possible to use pthread_atfork to handle these
+cases, but this is is hard to do correctly and we still don't have
+guarantees that libraries used by ROSE are doing it right even if ROSE
+is. Besides, the Boost thread library, which we're using for
+portability, does not have an equivalent function.
+
+== Interactive debugger ==
+
+The simulator has a built-in interactive debugger that gets triggered
+when the simulator is run with the "--debugger" switch. It will break
+before executing the first guest instruction (BTW, the earliest GDB
+can break is after executing the first instruction).
+
+The GNU readline is used for entering commands if ROSE was configured
+with "--with-readline", otherwise commands cannot be edited (other
+than backspace) and there is no command-history.
+
+The debugger was written mainly to help the simulator developer fix
+bugs in instruction semantics and system call handling. It has no
+documentation or help system other than this file and the source
+code. At this time [2015-06-29] the commands are as follows, many of
+which have aliases.
+
+In the descriptions below, INTERVAL is either a single integer, or a
+base and size separated by "+" (no intervening space), or a base and
+end (exclusive) separated by a ",", or a base and maximum (inclusive)
+separated by a "-".  All integer values can be in decimal, octal
+(leading "0"), hexadecimal (leading "0x"), or binary (leading "0b").
+
+    b[reak]
+        List breakpoints.
+
+    b[reak] INTERVAL
+        Stop when any instruction whose starting address is in the
+        specified interval is about to be executed.
+
+    b[reak] insn INSTRUCTION
+        Stop whenever an instruction with the specified mnemonic is
+        about to be executed. For example, "break insn rdtsc" will
+        cause a stop whenever the specimen tries to read the time
+        stamp counter register.
+
+    b[reak] syscall INTERVAL
+        Stop whenever a system call is about to be executed where the
+        syscall number is present in the specified interval.
+
+    b[reak] fd INTERVAL
+        Stop whenever any system call takes a file descriptor whose
+        value is present in the specified interval.  This does not
+        break for system calls that produce a new file descriptor
+        (unless, like dup2, they also operate on that file
+        descriptor).
+
+    b[reak] del[ete] ...
+        Inserting "delete" after the "break" and before the rest of
+        the arguments removes the breakpoints rather than adding them.
+
+    c[ontinue]
+        Allow guest to continue executing until some break point is
+        reached.
+
+    detach
+        Detach the debugger, allowing the guest to execute unimpeded.
+
+    m[emory]
+        Print information about the guest's memory segments.
+
+    m[emory] del INTERVAL
+        Unmap the specified interval of addresses from the specimen's
+        memory address space.
+
+    m[emory] protect MODE [INTERVAL]
+        Sets memory protection bits for the specified address
+        interval. The MODE are letters "r" (read), "w" (write), "x"
+        (execute), or "-" (ignored).  If INTERVAL is missing then all
+        of memory is affected.
+
+    m[emory] dump FILE INTERVAL
+        Copies simulated memory in the specified INTERVAL to a file
+        whose name is given as FILE.  An existing file is
+        overwritten.
+
+    m[emory] map RESOURCE
+        Copies memory from a file into the guest. The memory map
+        resource string has the form
+        MEMORY_PROPERTIES:FILE_PROPERTIES:FILE_NAME where
+        MEMORY_PROPERTIES and FILE_PROPERTIES are optional but the
+        two colons are always required.  The MEMORY_PROPERTIES have
+        the form "[ADDRESS][+VSIZE][=ACCESS]" where each of the items
+        is optional (indicated by the square brackets which should not
+        be present in the actual resource string). The ADDRESS is the
+        starting address where the file will be mapped and defaults to
+        the address of the lowest unmapped interval that is large
+        enough to hold the new map segment; VSIZE is the size in bytes
+        of the interval to be mapped, defaulting to the size of the
+        file data; and ACCESS is the accessibility represented by zero
+        or more of the characters "r" (readable), "w" (writable), and
+        "x" (executable) in that order and defaulting to the
+        accessibility of the file.  The FILE_PROPERTIES have the form
+        "[OFFSET][+FSIZE]" where OFFSET is an offset from the
+        beginning of the file defaulting to zero; SIZE is the number
+        of bytes to read from the file, defaulting to the amount of
+        data that is available. If VSIZE is specified then exactly
+        that many bytes are mapped by zero-padding the file data if
+        necessary; otherwise, when FSIZE is specified then exactly
+        FSIZE bytes are mapped by zero padding the file data that
+        could be read; otherwise the file size (adjusted by OFFSET)
+        determines the mapped size. The numeric properties can be
+        specified in decimal, octal, or hexadecimal using the usual C
+        syntax (leading "0x" for hexadecimal, leading "0" for octal,
+        otherwise decimal).
+
+    m[emory] hexdump INTERVAL
+        Produces a "hexdump -C" style output of the specified memory
+        region. It is best to provide an interval that begins on a
+        16-byte boundary.
+
+    q[uit]
+        Cause the simulator to exit immediately.
+
+    r[egisters]
+        Prints the value of all simulator registers.
+
+    r[egister] check
+        Reads the following lines, up to a blank line, which
+	are the output from GDB's "i r" command and reports
+	differences in register values between the simulator
+	and GDB.
+
+    r[egister] check fix
+        Like "register check" but also updates the simulator's
+        registers to be equal to GDB's registers.
+
+    r[egister] NAME
+        Prints the value of register whose name is NAME.
+
+    r[egister] NAME VALUE
+        Set the named register to have the specified value.
+
+    s[tep] [N]
+        Execute at most N (default is 1) instructions or until a break
+        point is reached.  The "si" command is an alias since typing
+        "s" in GDB can step through many instructions and it's easy to
+        get RSIM and GDB commands mixed up when you have two windows
+        open side by side.
+
+    x/...
+        Similar to the GDB "x/" command, so see GDB's documentation.
+
+== Disassembly issues ==
+
+The simulator disassembles machine instructions only when that memory
+is about to be executed the first time, and the instruction is
+cached. Self-modifying code will not work correctly with this approach.
+
+== Signal handling ==
+
+Signals delivered to x86sim will be treated as if they were intended
+for the specimen (x86sim never gets a SIGSEGV anyway ;-).  After the
+OS kernel delivers the signal to x86sim, x86sim will deliver it to the
+specimen. This final delivery always happens between instructions.
+
+We don't yet handle signal stacks, although adding one wouldn't be
+that hard.
+
+Pressing Control-C won't do what usually happens--it won't immediately
+kill x86sim.  Instead, the SIGINT is handled just like the other
+signals in that x86sim will deliver it to the specimen.  Usually the
+specimen will not have a handler registered for SIGINT and x86sim will
+cause the specimen to exit, thus exiting x86sim as well.  If you're
+unable to kill x86sim with a Control-C, try Control-\ or, from another
+terminal, run "kill -SIGKILL PID" where PID is the process ID of
+x86sim (and the specimen).
+
+If x86sim fails an assertion (assert() or ROSE_ASSERT()) it will look
+like the specimen failed the assertion since x86sim traps the signal
+and delivers it to the specimen. This is true of all signals produced
+by x86sim for x86sim.
+
+== Futex issues ==
+
+Fast user-space mutexes (futexes) don't work reliably because
+simulator memory operations are not atomic with respect to the real
+underlying sys_futex() system call.  The symptom is usually that one
+or more threads will become deadlocked when it does a futex_wait
+system call when it shouldn't, and therefore there's never a
+corresponding futex_wake from another thread.
+
+== Writing programs that use a simulator ==
+
+The best example is x86sim.C, but the "demos" directory contains more
+examples, including a sample makefile.
+

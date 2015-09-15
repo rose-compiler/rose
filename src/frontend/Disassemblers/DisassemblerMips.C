@@ -3600,6 +3600,7 @@ DisassemblerMips::init()
     set_wordsize(4);
     set_alignment(4);
     set_sex(ByteOrder::ORDER_MSB);
+    callingConventions(CallingConvention::dictionaryMips());
 
     insert_idis(&mips32_abs_s);
     insert_idis(&mips32_abs_d);

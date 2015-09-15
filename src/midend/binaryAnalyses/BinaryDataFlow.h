@@ -8,8 +8,8 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <list>
-#include <sawyer/GraphTraversal.h>
-#include <sawyer/DistinctList.h>
+#include <Sawyer/GraphTraversal.h>
+#include <Sawyer/DistinctList.h>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -119,6 +119,19 @@ public:
      *  the set of variables present in the specimen being analyzed.  The map is keyed by CFG vertex IDs. */
     typedef Sawyer::Container::Map<size_t, Graph> VertexFlowGraphs;
 
+public:
+    /** Data flow exception base class. */
+    class Exception: public std::runtime_error {
+    public:
+        explicit Exception(const std::string &s): std::runtime_error(s) {}
+    };
+
+    /** Exceptions when a fixed point is not reached. */
+    class NotConverging: public Exception {
+    public:
+        explicit NotConverging(const std::string &s): Exception(s) {}
+    };
+
 private:
     InstructionSemantics2::BaseSemantics::RiscOperatorsPtr userOps_; // operators (and state) provided by the user
     InstructionSemantics2::DataFlowSemantics::RiscOperatorsPtr dfOps_; // data flow operators (which point to user ops)
@@ -219,6 +232,40 @@ public:
      *  determined by calling AbstractLocation::mustAlias. The variables are returned in no particular order. */
     VariableList getUniqueVariables(const VertexFlowGraphs&);
 
+    /** Basic merge operation.
+     *
+     *  This merge operator invokes the merge operation in the state. It is here mostly for backward compatibility. */
+    template<class StatePtr>
+    class BasicMerge {
+    public:
+        bool operator()(const StatePtr &dst, const StatePtr &src) const {
+            return dst->merge(src);
+        }
+    };
+
+    /** Basic merge operation for instruction semantics.
+     *
+     *  This merge operator is for data flow that uses an instruction semantics state. */
+    class SemanticsMerge {
+        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops_;
+    public:
+        explicit SemanticsMerge(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops): ops_(ops) {}
+        explicit SemanticsMerge(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu): ops_(cpu->get_operators()) {}
+
+        bool operator()(const InstructionSemantics2::BaseSemantics::StatePtr &dst,
+                        const InstructionSemantics2::BaseSemantics::StatePtr &src) const {
+            struct T {
+                InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops;
+                InstructionSemantics2::BaseSemantics::StatePtr state;
+                T(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
+                    : ops(ops), state(ops->get_state()) {}
+                ~T() { ops->set_state(state); }
+            } t(ops_);
+            ops_->set_state(src);
+            return dst->merge(src, ops_.get());
+        }
+    };
+    
     /** Data flow engine.
      *
      *  The data flow engine traverses the supplied control flow graph, runs the transfer function at each vertex, and merges
@@ -227,26 +274,44 @@ public:
      *  The template arguments are:
      *
      *  @li @p CFG is the type for the control flow graph.  It must implement the Sawyer::Container::Graph API and have
-     *      vertices that point to instructions (SgAsmInstruction) or basic blocks (SgAsmBlock).
+     *      vertex ID numbers of type @c size_t.  The data flow will follow the edges of this graph, invoking a transfer
+     *      function at each vertex.  The vertices are usually basic blocks or instructions, although they can be anything that
+     *      the transfer function can understand.  For instance, its possible for a called function to be represented by a
+     *      special vertex that encapsulates the entire effect of the function, either encoded in the vertex itself or as a
+     *      special case in the transfer function.  Although a normal CFG can be used, one often passes either a subgraph of
+     *      the CFG or an entirely different kind of control flow graph.
      *
-     *  @li @p StatePtr is a pointer to a data state that maps variables to values.  Variables are abstract locations and
-     *      values are members of a lattice as described in the documentation for the DataFlow class.  Since the engine doesn't
-     *      implement any particular ownership paradigm, the state pointer type is usually some kind of smart pointer.  The
-     *      engine requires that the pointer have a copy constructor and assignment operator and that it can be compared to a
-     *      null pointer.
+     *  @li @p StatePtr is a pointer to a data structure that stores an analysis state. A state object is attached to each
+     *      vertex of the CFG to represent the data flow state at that vertex.  The state is logically a map of abstract
+     *      locations (e.g., variables) and their current values.  For example, an instruction semantics @c State object can
+     *      serve as data flow states.  Since the engine doesn't implement any particular ownership paradigm, the state pointer
+     *      type is usually some kind of smart pointer.  The engine requires that the pointer have a copy constructor and
+     *      assignment operator and that it can be compared to a null pointer.
      *
      *  @li @p TransferFunction is a functor that is invoked at each CFG vertex to create a new data state from a previous
      *      data state.  The functor is called with three arguments: a const reference to the control flow graph, the CFG
      *      vertex ID for the vertex being processed, and the incoming state for that vertex.  The call should return a pointer
      *      to a new state.  If the transfer function is called with only one argument, the state, then it should just create a
-     *      new state which is a copy of the argument.
+     *      new state which is a copy of the argument.  For instance, if the CFG vertices contain SgAsmInstruction nodes and
+     *      the @p StatePtr is an instruction semantics state, then the transfer function would most likely perform these
+     *      operations: create a new state by cloning the incoming state, attach the new state to an instruction semantics
+     *      dispatcher (virtual CPU), call the dispatcher's @c processInstruction, return the new state.
+     *
+     *  @li @p MergeFunction is a functor that takes two state pointers and merges the second state into the first state. It
+     *      returns true if the first state changed, false if there was no change. In order for a data flow to reach a fixed
+     *      point the values must form a lattice and a merge operation should return a value which is the greatest lower
+     *      bound. This implies that the lattice has a bottom element that is a descendent of all other vertices.  However, the
+     *      data flow engine is designed to also operate in cases where a fixed point cannot be reached.  For example, if the
+     *      CFG vertices are instructions, the @p StatePtr is an instruction semantics state, and the @p TransferFunction calls
+     *      @c processInstruction then the @p MergeFunction probably calls the state's @p merge method.
      *
      *  The control flow graph and transfer function are specified in the engine's constructor.  The starting CFG vertex and
      *  its initial state are supplied when the engine starts to run. */
-    template<class CFG, class StatePtr, class TransferFunction>
+    template<class CFG, class StatePtr, class TransferFunction, class MergeFunction = BasicMerge<StatePtr> >
     class Engine {
         const CFG &cfg_;
         TransferFunction &xfer_;
+        MergeFunction merge_;
         typedef std::vector<StatePtr> VertexStates;
         VertexStates incomingState_;                    // incoming data flow state per CFG vertex ID
         VertexStates outgoingState_;                    // outgoing data flow state per CFG vertex ID
@@ -261,8 +326,8 @@ public:
          *  Constructs a new data flow engine that will operate over the specified control flow graph using the specified
          *  transfer function.  The control flow graph is incorporated into the engine by reference; the transfer functor is
          *  copied. */
-        Engine(const CFG &cfg, TransferFunction &xfer)
-            : cfg_(cfg), xfer_(xfer), maxIterations_(-1), nIterations_(0) {}
+        Engine(const CFG &cfg, TransferFunction &xfer, MergeFunction merge = MergeFunction())
+            : cfg_(cfg), xfer_(xfer), merge_(merge), maxIterations_(-1), nIterations_(0) {}
 
         /** Reset engine to initial state.
          *
@@ -283,7 +348,7 @@ public:
 
         /** Max number of iterations to allow.
          *
-         *  Allow N number of calls to runOneIteration.  When the limit is exceeded an <code>std::runtime_error</code> is
+         *  Allow N number of calls to runOneIteration.  When the limit is exceeded a @ref NotConverging exception is
          *  thrown.
          *
          * @{ */
@@ -304,8 +369,8 @@ public:
             using namespace Diagnostics;
             if (!workList_.isEmpty()) {
                 if (++nIterations_ > maxIterations_) {
-                    throw std::runtime_error("dataflow max iterations reached"
-                                             " (max=" + StringUtility::numberToString(maxIterations_) + ")");
+                    throw NotConverging("dataflow max iterations reached"
+                                        " (max=" + StringUtility::numberToString(maxIterations_) + ")");
                 }
                 size_t cfgVertexId = workList_.popFront();
                 if (mlog[DEBUG]) {
@@ -349,7 +414,7 @@ public:
                         SAWYER_MESG(mlog[DEBUG]) <<"    forwarded to vertex #" <<nextVertexId <<"\n";
                         incomingState_[nextVertexId] = xfer_(state); // copy the state
                         workList_.pushBack(nextVertexId);
-                    } else if (targetState->merge(state)) {
+                    } else if (merge_(targetState, state)) { // merge state into targetState, return true if changed
                         SAWYER_MESG(mlog[DEBUG]) <<"    merged with vertex #" <<nextVertexId <<" (which changed as a result)\n";
                         workList_.pushBack(nextVertexId);
                     } else {
@@ -363,7 +428,8 @@ public:
         /** Run data flow until it reaches a fixed point.
          *
          *  Run data flow starting at the specified control flow vertex with the specified initial state until the state
-         *  converges to a fixed point no matter how long that takes. */
+         *  converges to a fixed point or the maximum number of iterations is reached (in which case a @ref NotConverging
+         *  exception is thrown). */
         void runToFixedPoint(size_t startVertexId, const StatePtr &initialState) {
             reset(startVertexId, initialState);
             while (runOneIteration()) /*void*/;
