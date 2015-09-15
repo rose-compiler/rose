@@ -14,9 +14,9 @@ namespace BinaryAnalysis {
  *  These are questions that have been asked by users and answered (or at least reviewed) by a ROSE developer.
  *
  **********
- * @section general General information
+ * @section binfaq_general General information
  *
- * @subsection general_1 Q1. What does binary analysis have to do with source-to-source translation?
+ * @subsection binfaq_general_1 Q1. What does binary analysis have to do with source-to-source translation?
  *
  *  ROSE was, and is still primarily, a source-to-source compiler. But it turns out that much of what happens in source code
  *  analysis can be applied to binary analysis.  For instance, parsing of an ELF or PE container (the non-instructions,
@@ -26,7 +26,7 @@ namespace BinaryAnalysis {
  *  call graphs, data flow, etc. that's very similar to source code. A goal is to be able to unify source and binary analysis
  *  as much as possible.
  *
- * @subsection general_2 Q2. I'm interested in binary analysis. Where is a good place to start?
+ * @subsection binfaq_general_2 Q2. I'm interested in binary analysis. Where is a good place to start?
  *
  *  Most of the binary analysis capabilities are documented in the library itself and are part the doxygen output. The best
  *  place to start is the @ref rose::BinaryAnalysis "BinaryAnalysis" namespace.  In short,
@@ -51,7 +51,7 @@ namespace BinaryAnalysis {
  *  + An @ref AsmUnparser can generate an assembly listing (for human consumption, not reassembly), the @ref backend can
  *    generate a new executable, the @ref Partitioner2::GraphViz "GraphViz" class can generate graphs.
  *
- * @subsection general_3 Q3. Why is binary analysis slow, and what can I do about it?
+ * @subsection binfaq_general_3 Q3. Why is binary analysis slow, and what can I do about it?
  *
  *  ROSE has extensive invariant checks (i.e., @c assert), encapsulation, and polymorphic classes.  When compiling ROSE, make
  *  sure to turn on optimizations (e.g., <code>-O3 -fomit-frame-pointer</code>), turn off assertion checking
@@ -66,9 +66,9 @@ namespace BinaryAnalysis {
  *  more modular, complex, and configurable than simple disassemblers, and this comes at a cost.
  *
  **********
- * @section disassembly Disassembling and partitioning
+ * @section binfaq_disassembly Disassembling and partitioning
  *
- * @subsection disassembly_1 Q1. What is "partitioning"?
+ * @subsection binfaq_disassembly_1 Q1. What is "partitioning"?
  *
  *  Unlike many disassemblers that use a linear sweep through memory disassembling everything they encounter, ROSE uses a
  *  recursive approach.  It starts with a set of addresses obtained from the user or from parsing the ELF or PE container,
@@ -78,7 +78,7 @@ namespace BinaryAnalysis {
  *  is to group instructions together to form functions, essentially coloring parts of the control flow graph, thereby
  *  partitioning its vertices into smaller subgraphs.
  *
- * @subsection disassembly_2 Q2. Why does ROSE use basic blocks?
+ * @subsection binfaq_disassembly_2 Q2. Why does ROSE use basic blocks?
  *
  *  ROSE's definition of basic block (BB) relaxes the usual requirement that a BB's instructions be contiguous and
  *  non-overlapping in memory, and instead uses only control flow properties: a BB's instructions are always executed
@@ -86,7 +86,7 @@ namespace BinaryAnalysis {
  *  individual instruction are indistinguishable, but a BB "does more". Most analysis is more efficient when it's able to
  *  perform larger units of work.
  *
- * @subsection disassembly_3 Q3. Why are there two partitioners?
+ * @subsection binfaq_disassembly_3 Q3. Why are there two partitioners?
  *
  *  There are actually three. Originally the @ref BinaryAnalysis::Disassembler had its own recursive-descent algorithm and
  *  those functions are still present for backward compatibility (we'll likely deprecate them once @ref Partitioner2 is
@@ -98,7 +98,7 @@ namespace BinaryAnalysis {
  *  extreme of @ref Partitioner, failing to create functions for code with confusing CFG (this is a temporary condition, and in
  *  any case, users have enough information to create additional functions from the missed instructions).
  *
- * @subsection disassembly_4 Q4. Why is ROSE's CFG structured the way it is?
+ * @subsection binfaq_disassembly_4 Q4. Why is ROSE's CFG structured the way it is?
  *
  *  ROSE has many CFGs that it uses internally, some of which are exposed through an API.  For instance, the @ref Partitioner2
  *  has a CFG that it creates while discovering instructions, and a resulting global CFG at the end. Many users find this CFG
@@ -113,13 +113,13 @@ namespace BinaryAnalysis {
  *  the called function would return.
  *
  **********
- * @section cfg Control flow graphs
+ * @section binfaq_cfg Control flow graphs
  *
- * @subsection cfg_1 Q1. 
+ * @subsection binfaq_cfg_1 Q1. 
  **********
- * @section semantics Instruction semantics
+ * @section binfaq_semantics Instruction semantics
  *
- * @subsection semantics_1 Q1. Why not store semantics in the AST?
+ * @subsection binfaq_semantics_1 Q1. Why not store semantics in the AST?
  *
  *  Instruction semantics are encoded as C++ code instead of explicitly stored in the AST as subtrees of @ref SgAsmInstruction
  *  for two main reasons:
@@ -136,7 +136,7 @@ namespace BinaryAnalysis {
  *  InstructionSemantics2::StaticSemantics "StaticSemantics".  The approach used by this relatively simple semantic domain can
  *  be used to construct pretty much any kind of semantic data structure the user wants.
  *
- * @subsection semantics_2 Q2. Why not use SgExpression AST nodes as symbolic expression?
+ * @subsection binfaq_semantics_2 Q2. Why not use SgExpression AST nodes as symbolic expression?
  *
  *  We decided to use @ref InsnSemanticsExpr instead because:
  *
@@ -150,7 +150,7 @@ namespace BinaryAnalysis {
  *    generating expressions and who knows what has references to parts of a tree.  We end up in a situation where no
  *    analysis frees anything because it's afraid that something else might be referencing it still.
  *
- * @subsection semantics_3 Q3. Is it possible to generate an SgExpression AST from semantics?
+ * @subsection binfaq_semantics_3 Q3. Is it possible to generate an SgExpression AST from semantics?
  *
  *  Yes. In fact, the semantics were designed specifically for generating a variety of data structures, and the ROSE AST is
  *  just one possibility. Some examples:
@@ -165,7 +165,7 @@ namespace BinaryAnalysis {
  *  By default, the AST is not populated with instruction semantics because we've found the virtual representation to be more
  *  flexible and uses less memory.  But if you want them, see @ref InstructionSemantics2::StaticSemantics "StaticSemantics".
  *
- * @subsection semantics_4 Q4. How does one access the memory of a binary specimen?
+ * @subsection binfaq_semantics_4 Q4. How does one access the memory of a binary specimen?
  *
  *  ROSE provides at least two levels of access. If all you've done is parse a binary container (ELF, PE) then you can traverse
  *  the AST to find the @ref SgAsmGenericFile or @ref SgAsmGenericSection in which you're interested and use one of its methods.
@@ -173,7 +173,7 @@ namespace BinaryAnalysis {
  *  If the @ref BinaryLoader has executed then you can traverse the AST to find a @ref SgAsmInterpretation, which has a method
  *  to return a @ref MemoryMap.
  *
- * @subsection semantics_5 Q5. How can semantics be made to use specimen memory?
+ * @subsection binfaq_semantics_5 Q5. How can semantics be made to use specimen memory?
  *
  *  Some implementations of @ref InstructionSemantics2::BaseSemantics::RiscOperators "RiscOperators" have
  *  a method that can be called to set the memory map. However, many of these semantics will only read from memory locations
@@ -187,7 +187,7 @@ namespace BinaryAnalysis {
  *  InstructionSemantics2::SymbolicSemantics::RiscOperators::readMemory "readMemory" method to do what you want, namely, read
  *  the memory and construct a new symbolic value from what was read.
  *
- * @subsection semantics_6 Q6. How do I add a data member to an existing SValue?
+ * @subsection binfaq_semantics_6 Q6. How do I add a data member to an existing SValue?
  *
  *  To extend an SValue, create a new SValue class that inherits from an existing SValue. @ref
  *  InstructionSemantics2::BaseSemantics::SValue is the base class of the SValue hierarchy.  As described @ref
@@ -218,7 +218,7 @@ namespace BinaryAnalysis {
  *  back to ROSE (or you want an easy way to test your semantics against real programs), then the
  *  projects/BinaryAnalysisTools/debugSemantics.C should be modified to support your semantics domain.
  *
- * @subsection semantics_7 Q7. Can I attach information to symbolic expressions?
+ * @subsection binfaq_semantics_7 Q7. Can I attach information to symbolic expressions?
  *
  *  It is not possible to directly attach user-defined data to the @ref InsnSemanticsExpr::TreeNode that serves as a base class
  *  for symbolic expressions and which is pointed to by the values (i.e., @c SValue) of the instruction semantic's

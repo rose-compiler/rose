@@ -4,9 +4,9 @@
  *
  *  Instructions for installing <a href="http://www.haskell.org/ghc">ghc</a>, a ROSE software dependency.
  *
- *  The GNU Haskell compiler, ghc, is part of the GNU Compiler Collection. To install ghc run "configure" and "make
- *  install". That should be all that is required.  ROSE will detect the existence of "ghc" at "configure" time and setup
- *  what is required internally.  To turn off the use of Haskell support, use the configure option "\--with-haskell=no".
+ *  The Glasgow Haskell compiler, ghc, is installed by running "configure" and "make install". That should be all that is
+ *  required.  ROSE will detect the existence of "ghc" at "configure" time and setup what is required internally.  To turn off
+ *  the use of Haskell support, use the configure option "\--with-haskell=no".
  *
  *  Note that ROSE enforces a particular version of ghc because ROSE requires some default modules that have been removed in
  *  more  recently released versions of ghc. */

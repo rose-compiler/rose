@@ -2,7 +2,8 @@
 
 /** @page installation Installation
  *
- * ********************************
+ *  How to install ROSE.
+ *
  *  @section installation_obtaining Obtaining ROSE
  *
  *  ROSE is free (libre) software distributed under a modified BSD licencse. The ROSE team at Lawrence Livermore National
@@ -15,16 +16,23 @@
  *  @li Once per week the development release goes through a more extensive testing process and a release is pushed to the
  *      "master" branch of https://github.com/rose-compiler/rose if all tests pass.
  *
- *  ROSE can be downloaded with standard Git commands (preferred) or as a Zip archive from the URLs mentioned above. ROSE uses a
- *  continuous integration paradigm and thus does not have monotonically increasing "x.y.z" style version numbers.  To obtain
- *  the identification for a particular version of ROSE, run "git rev-parse HEAD" in the ROSE source directory (the reported
- *  SHA1 hash can be abbreviated to 7 or so characters for convenience).
+ *  ROSE can be downloaded with standard Git commands (preferred) or as a Zip archive from the URLs mentioned above.
+ *
+ *  @code
+ *  git clone https://github.com/rose-compiler/rose
+ *  cd rose
+ *  @endcode
+ *
+ *  ROSE uses a continuous integration paradigm and thus does not have monotonically increasing "x.y.z" style version numbers.
+ *  To obtain the identification for a particular version of ROSE, run "git rev-parse HEAD" in the ROSE source directory (the
+ *  reported SHA1 hash can be abbreviated to 7 or so characters for convenience).
  *
  *  The repositories listed above are the official release points; other repositories might be available but are unofficial.
  *  Some members of the ROSE team also distribute custom builds in virtual machines, which can be a good way to get up and
  *  playing quickly. Query one of the ROSE mailing lists to find this information, which changes from time to time.
  *
- * ********************************
+ *
+ *
  *  @section installation_hardware Hardware requirements
  *
  *  ROSE is tested and suppported on <a href="http://www.redhat.com/en/technologies/linux-platforms/enterprise-linux">Redhat
@@ -37,6 +45,8 @@
  *  48 gigabytes of RAM. Developers working on ROSE itself may want to consider using
  *  <a href="https://ccache.samba.org">ccache</a> to speed up recompiles; rebuilding the library takes about two minutes on the
  *  same hardware with ccache.
+ *
+ *
  *
  *  @section installation_prerequisites Sotware dependencies
  *
@@ -258,7 +268,7 @@
  *      <td><a href="http://xmlsoft.org">libxml2</a></td>
  *      <td>Optional</td>
  *      <td>Any recent version</td>
- *      <td>?<?td>
+ *      <td>?</td>
  *      <td>For parsing XML files in certain tools such as roseHPCT and BinaryContextLookup. See @ref installing_libxml2.</td>
  *    </tr>
  *
@@ -283,7 +293,8 @@
  *  @todo Add shell scripts to install the ROSE software dependencies on RHEL and Debian. Most of the instructions are already
  *  available in the docs/readmes directory, but it would be nice if we could include them in the interactive documentation.
  *
- * ********************************
+ *
+ *
  *  @section installation_config Configuring ROSE
  *
  *  ROSE must be configured before it can be built.  Two mechanisms are supported: GNU autotools and CMake. Most tests, tools,
@@ -319,7 +330,8 @@
  *
  *  @todo Document how to get the list of variables that can be set with the "-D" switch for the "cmake" command.
  *
- * ********************************
+ *
+ *
  *  @section installation_build Building the library
  *
  *  To build the library, run "make" and "make install" in $ROSE_BLD.  You may specify an amount of parallelism with make's
@@ -336,7 +348,8 @@
  *  The "check" targets in the makefiles run a variety of tests, most of which are also run by the automated continuous
  *  integration and release testing.
  *
- * ********************************
+ *
+ *
  *  @section installation_using Using the library
  *
  *  Once the ROSE library has been configured, built, and installed it can be used. Any program that uses ROSE will likely need
@@ -345,4 +358,12 @@
  *
  *  Here's an example makefile:
  *
- *  @includelineno docs/Rose/Examples/SampleMakefile */
+ *  @includelineno SampleMakefile
+ *
+ *
+ *
+ *  @section installation_nextsteps Next steps
+ *
+ *  If you're interested in source code analysis or source-to-source translation, read the
+ *  <a href="http://rosecompiler.org/ROSE_Tutorial/ROSE-Tutorial.pdf">ROSE tutorial</a>. If you're interested in binary
+ *  analysis try @ref binary_tutorial. */

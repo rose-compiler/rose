@@ -6,11 +6,11 @@
  * 
  * @authors LLNL staff:
  *            <b>Dan Quinlan and Chunhua Liao, Robb Matzke, Markus Schordan, Justin Too</b> \n
- *          Former LLNL post-docs (most of them are still active on ROSE project):
- *            <b>Thomas Panas,
- *               Jeremiah Willcock,
- *               Qing Yi,
- *               Rich Vuduc</b> \n
+ *          Former LLNL post-docs:
+ *            Thomas Panas,
+ *            Jeremiah Willcock,
+ *            Qing Yi,
+ *            Rich Vuduc \n
  *          Student interns at LLNL (not up-to-date): 
  *            Gergo Barany (Technical University of Vienna),
  *            Michael Byrd (University of California at Davis),
@@ -43,8 +43,10 @@
  *            Brian White (Cornell University),
  *            Gary Yuan (University of California at Davis), and
  *            Yuan Zhao (Rice University).
- * 
- * @section introduction Introduction
+ *
+ *
+ *
+ * @section mainpage_introduction Introduction
  * 
  *  ROSE is a tool for building source-to-source translators (sometimes confused with a preprocessor which is generally less
  *  sophisticated internally).  ROSE is particularly useful in building custom tools that operate on source code for C, C99,
@@ -52,25 +54,27 @@
  *  Laboratory to use their version of the Open Fortran Parser (OFP).  Our use of ROSE is focused on the development of
  *  optimizing source-to-source tools to support development of large scale scientific applications (applications typically
  *  about one million lines of code in size).
- * 
- * @section documentation Supporting documentation
+ *
+ *
+ *
+ * @section mainpage_documentation Where to get help
  * 
  *  You are reading Doxygen generated documentation that serves as the primary reference for the ROSE API, among other things.
  *  Other forms of documentation:
- * 
- * @subsection website Web site
+ *
+ * @subsection mainpage_docs_website Web site
  * 
  *  The [ROSE Web Site](http://www.rosecompiler.org) is the main location to get more information about the ROSE project. Built
  *  in 2005, it has been slow to evolve since we wanted to keep a low profile as long as possible while we focused on
  *  robustness issues within the ROSE project and infrastructure.
  * 
- * @subsection user_manual User manual
+ * @subsection mainpage_docs_usermanual User manual
  *
  *  The [ROSE User Manual](http://www.rosecompiler.org/ROSE_UserManual/ROSE-@VERSION@-UserManual.pdf) presents how to get
  *  started with ROSE and documents features of the ROSE infrastructure. It can also be found in the docs/Rose
  *  directory. Postscript and PDF versions can be generated from the TeX source.
  * 
- * @subsection tutorial Tutorial
+ * @subsection mainpage_docs_tutorial Tutorial
  *
  *  The [ROSE Tutorial](http://www.rosecompiler.org/ROSE_Tutorial/ROSE-@VERSION@-Tutorial.pdf) presents a collection of
  *  examples using ROSE and can be found in the "tutorial" directory of the ROSE source tree.  Users can play with the examples
@@ -83,7 +87,7 @@
  *  + inputs to the examples are also in the "tutorial" directory.
  *  + output from each example is placed into the tutorial documentation.
  * 
- * @subsection email_list Email lists
+ * @subsection mainpage_docs_email Email lists
  *
  *  We have three mailing lists:
  *
@@ -95,13 +99,15 @@
  *
  *  + [rose-public](https://mailman.mersc.gov/mailman/listinfo/rose-public) is for anyone that uses ROSE.
  * 
- * @subsection publications Publications
+ * @subsection mainpage_docs_publications Publications
  *
  *  ROSE is a research project which emphasises publication about the new technologies that we are developing, often as part of
  *  external collaborations.  Publications specific to the ROSE project can be found at the main ROSE web page as [project
  *  publications](http://rosecompiler.org/ROSE_HTML_Reference/ProjectPublications.html) and [project
  *  talks](http://rosecompiler.org/ROSE_HTML_Reference/ProjectTalks.html).
+ *
+ *
+ *
+ * @section mainpage_next Next steps
  * 
- * @section download_instructions Download instructions
- * 
- *  ROSE is an open source project that can be installed from source code. See @ref installing.
+ *  ROSE is an open source project that can be installed from source code. See @ref installation. */

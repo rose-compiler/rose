@@ -91,7 +91,7 @@ namespace BinaryAnalysis {
  *  StringFinder finder;                        // holds settings
  *  finder.settings().minLength = 5;            // no strings shorter than 5 characters
  *  finder.settings().maxLength = 65536;        // ignore very long strings
- *  finder.includeCommonEncoders();             // how to match strings
+ *  finder.insertCommonEncoders();              // how to match strings
  *  finder.find(map.require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE));
  *
  *  BOOST_FOREACH (const EncodedString &string, finder.strings()) {
