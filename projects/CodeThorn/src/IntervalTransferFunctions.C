@@ -87,6 +87,41 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
   * \author Markus Schordan
   * \date 2015.
  */
+void SPRAY::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pstate) {
+  IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(pstate);
+  Label lab0=edge.source;
+  //Label lab1=edge.target;
+  SgNode* node=_labeler->getNode(lab0);
+  if(isSgExprStatement(node)) {
+    node=SgNodeHelper::getExprStmtChild(node);
+  }
+  if(SgExpression* expr=isSgExpression(node)) {
+    NumberIntervalLattice res=evalExpression(lab0,expr,pstate);
+    if((res.isTrue() && edge.isType(SPRAY::EDGE_TRUE))
+       ||(res.isFalse() && edge.isType(SPRAY::EDGE_FALSE))
+       ||(res.isTop())) {
+      return;
+    } else {
+      //cout<<"INFO: detected non-reachable state."<<endl;
+      //cout<<"DEBUG: EDGE: "<<edge.toString()<<endl;
+      //cout<<"RESULT: "<<res.toString()<<endl;
+      ROSE_ASSERT(!res.isBot());
+      ROSE_ASSERT((res.isFalse()&&edge.isType(SPRAY::EDGE_TRUE))
+                  ||(res.isTrue()&&edge.isType(SPRAY::EDGE_FALSE)));
+      // non-reachable state
+      ips.setBot();
+      return;
+    }
+  } else {
+    cerr<<"Error: interval analysis: unsupported condition type."<<endl;
+    exit(1);
+  }
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2015.
+ */
 void SPRAY::IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& pstate) {
   evalExpression(lab,node,pstate); // ignore return value
 }

@@ -208,6 +208,14 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       return NumberIntervalLattice(1,1);
     }
   }
+  case V_SgFunctionCallExp: {
+    if(SgNodeHelper::getFunctionName(node)=="__assert_fail") {
+      return NumberIntervalLattice::bot();
+    } else {
+      if(_showWarnings) cout<<"Warning: unknown function call: "<<node->unparseToString()<<" ... using unbounded result interval."<<endl;
+      return NumberIntervalLattice::top();
+    }
+  }
   default: // generates top element
     if(_showWarnings) cout<<"Warning: unknown leaf node: "<<node->sage_class_name()<<"("<<node->unparseToString()<<") ... using unbounded result interval."<<endl;
     return NumberIntervalLattice::top();

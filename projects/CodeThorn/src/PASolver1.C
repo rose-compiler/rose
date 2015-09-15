@@ -66,7 +66,7 @@ SPRAY::PASolver1::runSolver() {
         cout<<"->"<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
         cout<<endl;
       }
-      _transferFunctions.transfer(lab0,*info);
+      _transferFunctions.transfer(edge,*info);
       ROSE_ASSERT(info);
       if(_trace) {
         cout<<"TRACE: transfer function result: "<<lab1<<":";

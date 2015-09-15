@@ -248,6 +248,13 @@ faketarget:
 	tests/polyopt/jacobi-2d-imper.h
 	tests/polyopt/jacobi-2d-imper_orig_tileonly_size16_tile_8_2_1.c
 	tests/polyopt/polybench.h
+	SourceCodeFormat.C
+	SourceCodeFormat.h
+	tests/arraytest4.C
+	tests/interval-test3.C
+	tests/rers/threadificationtest1-output.C
+	tests/rers/threadificationtest1.C
+
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata

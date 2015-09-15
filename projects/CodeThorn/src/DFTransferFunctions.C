@@ -12,6 +12,21 @@ using namespace SPRAY;
 
 DFTransferFunctions::DFTransferFunctions():_labeler(0),_variableIdMapping(0){}
 
+void DFTransferFunctions::transfer(Edge edge, Lattice& element) {
+    Label lab0=edge.source;
+    // switch statement has its own transfer functions which are selected in transfer function
+    if(_labeler->isConditionLabel(lab0)&&!_labeler->isSwitchExprLabel(lab0)) {
+      transferCondition(edge,element);
+    } else {
+      transfer(lab0,element);
+    }
+}
+
+void DFTransferFunctions::transferCondition(Edge edge, Lattice& element) {
+  Label lab0=edge.source;
+  transfer(lab0,element);
+}
+
 void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   ROSE_ASSERT(_labeler);
   //cout<<"transfer @label:"<<lab<<endl;
@@ -26,20 +41,6 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   }
   if(_labeler->isFunctionCallLabel(lab)) {
     // 1) f(x), 2) y=f(x) (but not y+=f(x))
-#if 0    
-    if(isSgExprStatement(node)) {
-      node=SgNodeHelper::getExprStmtChild(node);
-    }
-    if(isSgAssignOp(node)||isSgCompoundAssignOp(node)) {
-      SgNode* rhs=SgNodeHelper::getRhs(node);
-      if(isSgFunctionCallExp(rhs)) {
-        node=rhs;
-      } else {
-        cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "<<node->class_name()<<endl;
-        exit(1);
-      }
-    }
-#endif
     if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(node)) {
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
       transferFunctionCall(lab, funCall, arguments, element);

@@ -49,6 +49,23 @@ class GenericIntervalLattice {
     _low=-1;
     _high=+1;
   }
+  bool includesZero() {
+    GenericIntervalLattice zero(0);
+    return isSubIntervalOf(zero,*this);
+  }
+  // definitely represents a value equal to 0
+  bool isFalse() {
+    GenericIntervalLattice zero(0);
+    BoolLatticeType bool3=isEqual(zero,*this);
+    return bool3.isTrue();
+  }
+  // definitely represents a value not equal to 0
+  bool isTrue() {
+    GenericIntervalLattice zero(0);
+    BoolLatticeType bool3=isEqual(zero,*this);
+    return bool3.isFalse();
+  }
+
   bool isBot() {
     return isEmpty();
   }
@@ -412,7 +429,6 @@ class GenericIntervalLattice {
   }
 
   // TODO: not finished for top/bot
-  // TODO: division by zero not handled yet
   // [a,b]/[c,d]=[min(a/c,a/d,b/c,b/d),max(a/c,a/d,b/c,b/d)]
   void arithDiv(GenericIntervalLattice other) {
     if(binaryOperationOnBot(other)) {
@@ -425,6 +441,15 @@ class GenericIntervalLattice {
       Type n2=_high;
       Type n3=other._low;
       Type n4=other._high;
+      if(n3==0) {
+        if(n4!=0) {
+          std::cout<<"INFO: division by zero interval adjustment."<<std::endl;
+          n3+=1;
+        } else {
+          other.setBot();
+          std::cout<<"INFO: division by zero interval (lengh=1). Continue with bot."<<std::endl;
+        }
+      }
       Type nmin=std::min(n1/n3,std::min(n1/n4,std::min(n2/n3,n2/n4)));
       Type nmax=std::max(n1/n3,std::max(n1/n4,std::max(n2/n3,n2/n4)));
       setLow(nmin);
