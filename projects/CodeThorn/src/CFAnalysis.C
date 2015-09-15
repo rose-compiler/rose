@@ -14,9 +14,16 @@
 using namespace SPRAY;
 using namespace std;
 
-CFAnalysis::CFAnalysis(Labeler* l):labeler(l){
+CFAnalysis::CFAnalysis(Labeler* l):labeler(l),_createLocalEdge(false){
 }
-
+CFAnalysis::CFAnalysis(Labeler* l, bool createLocalEdge):labeler(l),_createLocalEdge(createLocalEdge){
+}
+void CFAnalysis::setCreateLocalEdge(bool createLocalEdge) {
+  _createLocalEdge=createLocalEdge;
+}
+bool CFAnalysis::getCreateLocalEdge() {
+  return _createLocalEdge;
+}
 size_t CFAnalysis::deleteFunctionCallLocalEdges(Flow& flow) {
   return flow.deleteEdges(EDGE_LOCAL);
 }
@@ -94,22 +101,27 @@ LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
     return fLabels;
 }
 
-
 InterFlow CFAnalysis::interFlow(Flow& flow) {
   // 1) for each call use AST information to find its corresponding called function
   // 2) create a set of <call,entry,exit,callreturn> edges
+  cout<<"STATUS: establishing inter-flow ..."<<endl;
   InterFlow interFlow;
   LabelSet callLabs=functionCallLabels(flow);
-  //cout << "calllabs: "<<callLabs.size()<<endl;
+  int callLabsNum=callLabs.size();
+  cout << "INFO: number of function call labels: "<<callLabsNum<<endl;
+  int callLabNr=0;
   for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
+    //cout<<"INFO: resolving function call "<<callLabNr<<" of "<<callLabsNum<<endl;
     SgNode* callNode=getNode(*i);
+    //cout<<"INFO: creating inter-flow for "<<callNode->unparseToString();
     //info: callNode->get_args()
     SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
     if(!funCall) 
-      throw "Error: interFlow: unkown call exp (not a SgFunctionCallExp).";
+      throw "Error: interFlow: unknown call exp (not a SgFunctionCallExp).";
     SgFunctionDefinition* funDef=SgNodeHelper::determineFunctionDefinition(funCall);
     Label callLabel,entryLabel,exitLabel,callReturnLabel;
     if(funDef==0) {
+      //cout<<" [no definition found]"<<endl;
       // we were not able to find the funDef in the AST
       //cout << "STATUS: External function ";
       //if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration())
@@ -120,15 +132,18 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
       entryLabel=Labeler::NO_LABEL;
       exitLabel=Labeler::NO_LABEL;
       callReturnLabel=labeler->functionCallReturnLabel(callNode);
+      //cout <<"No function definition found for call: "<<funCall->unparseToString()<<endl;
     } else {
+      //cout<<" [definition found]"<<endl;
       callLabel=*i;
       entryLabel=labeler->functionEntryLabel(funDef);
       exitLabel=labeler->functionExitLabel(funDef);
       callReturnLabel=labeler->functionCallReturnLabel(callNode);
     }
     interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
-      
+    callLabNr++;
   }
+  cout<<"STATUS: inter-flow established."<<endl;
   return interFlow;
 }
 
@@ -564,11 +579,14 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
       flow.insert(externalEdge);
     } else {
       Edge callEdge=Edge((*i).call,EDGE_CALL,(*i).entry);
-      Edge callReturnEdge=Edge((*i).exit,EDGE_CALLRETURN,(*i).callReturn);
-      Edge localEdge=Edge((*i).call,EDGE_LOCAL,(*i).callReturn);
       flow.insert(callEdge);
+      Edge callReturnEdge=Edge((*i).exit,EDGE_CALLRETURN,(*i).callReturn);
       flow.insert(callReturnEdge);
-      flow.insert(localEdge);
+      //TODO: make creation of local edges optional
+      if(_createLocalEdge) {
+        Edge localEdge=Edge((*i).call,EDGE_LOCAL,(*i).callReturn);
+        flow.insert(localEdge);
+      }
     }
   }
 }

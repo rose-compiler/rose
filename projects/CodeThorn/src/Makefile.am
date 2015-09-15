@@ -25,8 +25,6 @@ codethorn_CXXFLAGS = $(KNOBS) -fopenmp -Wall -O3 -march=native -ftree-vectorize
 codethorn_DEPENDENCIES=libspray.la
 codethorn_LDADD = -lrose -lspot -lbdd -lspray
 codethorn_SOURCES = \
-  AType.C                          \
-  AType.h                          \
   Analyzer.C                       \
   Analyzer.h                       \
   CollectionOperators.h            \
@@ -79,6 +77,9 @@ codethorn_SOURCES = \
   Specialization.C \
   PragmaHandler.h \
   PragmaHandler.C \
+  FIConstAnalysis.h FIConstAnalysis.C \
+  CPAstAttribute.h CPAstAttribute.C \
+  ReachabilityAnalysis.h ReachabilityAnalysis.C \
   codethorn.h \
   codethorn.C
 
@@ -247,6 +248,13 @@ faketarget:
 	tests/polyopt/jacobi-2d-imper.h
 	tests/polyopt/jacobi-2d-imper_orig_tileonly_size16_tile_8_2_1.c
 	tests/polyopt/polybench.h
+	SourceCodeFormat.C
+	SourceCodeFormat.h
+	tests/arraytest4.C
+	tests/interval-test3.C
+	tests/rers/threadificationtest1-output.C
+	tests/rers/threadificationtest1.C
+
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
@@ -289,8 +297,6 @@ woodpecker_LDADD = -lrose -lspray
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
   DataDependenceVisualizer.h DataDependenceVisualizer.C \
-  AType.h                          \
-  AType.C                          \
   CPAstAttribute.h CPAstAttribute.C \
   UDAstAttribute.h                 \
   UDAstAttribute.C                 \
@@ -301,6 +307,8 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   FIConstAnalysis.h FIConstAnalysis.C \
   PropertyValueTable.h \
   PropertyValueTable.C \
+  Threadification.h \
+  Threadification.C \
   TrivialInlining.C                \
   TrivialInlining.h                \
   DeadCodeElimination.C                \
@@ -309,6 +317,10 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   ReachabilityAnalysis.h \
   ConversionFunctionsGenerator.h \
   ConversionFunctionsGenerator.C \
+  RewriteSystem.h \
+  RewriteSystem.C \
+  Timer.h \
+  Timer.cpp \
   woodpecker.C
 
 
@@ -318,8 +330,6 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
 analyterix_DEPENDENCIES=libspray.la
 analyterix_LDADD = -lrose -lspray
 analyterix_SOURCES = \
-  AType.C \
-  AType.h \
   CPAstAttribute.h CPAstAttribute.C \
   CommandLineOptions.h \
   CommandLineOptions.C \
@@ -371,6 +381,7 @@ libspray_la_SOURCES=\
  AnalysisAbstractionLayer.h \
  AnalysisAstAnnotator.h \
  AstTerm.h \
+ AType.h \
  CFAnalysis.h \
  DFAnalysisBase.h \
  DFTransferFunctions.h \
@@ -386,6 +397,7 @@ libspray_la_SOURCES=\
  LVLattice.h \
  LVTransferFunctions.h \
  LanguageRestrictor.h \
+ Miscellaneous2.h \
  NumberIntervalLattice.h \
  PASolver1.h \
  PointerAnalysisInterface.h \
@@ -396,6 +408,7 @@ libspray_la_SOURCES=\
  AnalysisAstAnnotator.C \
  AliasAnalysis.C \
  AstTerm.C \
+ AType.C \
  CFAnalysis.C \
  CppExprEvaluator.C \
  DFAnalysisBase.C \
@@ -414,6 +427,7 @@ libspray_la_SOURCES=\
  LVAstAttributeInterface.C \
  LVLattice.C \
  LVTransferFunctions.C \
+ Miscellaneous2.C \
  NumberIntervalLattice.C \
  PASolver1.C \
  PointerAnalysisInterface.C \
@@ -433,6 +447,7 @@ check-local:
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
 	rm -f *.consistent
+	$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) . #test the analysis of RERS Problem1403 (which features arrays)
 	$(srcdir)/scripts/runLtlRegressionTests $(srcdir) . #run RERS examples in several versions and compare to previous results
 	$(srcdir)/scripts/run_tests_cegpra $(srcdir) . #run CEGPRA tests
 
@@ -662,5 +677,5 @@ CODETHORN_TESTS= \
     tests/switchtest1.C \
     tests/switchtest2.C \
     tests/switchtest3.C \
-    examples/example-invocations.sh 
-
+    examples/example-invocations.sh \
+    tests/normalization1.C

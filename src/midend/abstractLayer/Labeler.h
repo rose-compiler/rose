@@ -166,6 +166,7 @@ class Labeler {
   bool isFunctionCallLabel(Label lab);
   bool isFunctionCallReturnLabel(Label lab);
   bool isConditionLabel(Label lab);
+  bool isSwitchExprLabel(Label lab);
   bool isFirstLabelOfMultiLabeledNode(Label lab);
   bool isSecondLabelOfMultiLabeledNode(Label lab);
   class iterator {
@@ -201,6 +202,7 @@ class IOLabeler : public Labeler {
   IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping);
 
  public:
+  bool isStdIOLabel(Label label);
   bool isStdInLabel(Label label, VariableId* id=0);
   bool isStdOutLabel(Label label); // deprecated
   bool isStdOutVarLabel(Label label, VariableId* id=0);
