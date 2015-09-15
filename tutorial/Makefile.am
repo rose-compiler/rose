@@ -62,8 +62,11 @@ NOINST_TUTORIAL_EXAMPLES = \
    bin_example \
    binaryAnalysisExample \
    binaryAnalysis_symbolTable \
+   binaryCallGraph \
    binaryFileRead \
    binaryFileWrite \
+   binaryHelloWorld \
+   binaryStrings \
    sb_callgraphAnalysis \
    buildFile \
    buildCFG \
@@ -152,6 +155,10 @@ endif
 binaryFileRead_SOURCES = binaryFileRead.C
 
 binaryFileWrite_SOURCES = binaryFileWrite.C
+
+binaryCallGraph_SOURCES = binaryCallGraph.C
+
+binaryHelloWorld_SOURCES = binaryHelloWorld.C
 
 ASTGraphGenerator_SOURCES = ASTGraphGenerator.C
 

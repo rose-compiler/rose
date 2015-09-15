@@ -1,4 +1,11 @@
 # Doxyfile 1.8.1.1
+#
+# This is the minimum doxygen version supported by ROSE. Newer
+# versions of doxygen will probably produce warnings about certain
+# things in this file. Do not regenerate this file to a newer version
+# without prior discussion. [The ROSE Team]
+
+
 
 # This file describes the settings to be used by the documentation system
 # doxygen (www.doxygen.org) for a project.
@@ -662,15 +669,19 @@ WARN_LOGFILE           =
 # NOTE: If your file isn't being picked up by doxygen, then perhaps it's listed
 #       in the EXCLUDE variable below.
 
-# DQ (1/10/2014): Removed these files to permit doxygen to be run directly from docs/Rose directory.
-#                         @top_srcdir@/src/frontend/CxxFrontend/EDG/EDG_4.7/documentation.docs              
-#                         @top_srcdir@/src/frontend/BinaryFormats/Interpretation.C                          
+# NOTE: Do not add EDG source files to this list or else source code may leak
+#       into the documentation.
+
+# NOTE: The order of the files/directories listed here is generally the same order
+#       they'll appear in the documentation except when some other sort order
+#       prevails (e.g., alphabetical or source-order).
 
 INPUT                  = @top_pwd@/rose.docs \
                          @top_pwd@/docs/Rose/AvailableDocumentation.docs \
                          @top_pwd@/src/frontend/SageIII \
                          @top_srcdir@/src/frontend/frontend.docs \
 			 @top_srcdir@/docs/Rose/Installation \
+			 @top_srcdir@/docs/Rose/BinaryTutorial.dox \
 			 @top_srcdir@/docs/Rose/FAQ-Binary.dox \
                          @top_srcdir@/docs/Rose \
                          @top_srcdir@/docs/testDoxygen \
@@ -865,10 +876,7 @@ EXCLUDE_SYMBOLS        =
 # directories that contain example code fragments that are included (see
 # the \include command).
 
-EXAMPLE_PATH           = @top_srcdir@/docs/testDoxygen/example1.C \
-                         @top_srcdir@/docs/testDoxygen/example1_test.C \
-                         @top_srcdir@/docs/testDoxygen/rose_example1_test.C \
-			 @top_srcdir@/docs/Rose/Examples \
+EXAMPLE_PATH           = @top_srcdir@/tutorial \
                          @top_srcdir@/src/util/Sawyer/docs/examples
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
@@ -1281,7 +1289,7 @@ DISABLE_INDEX          = NO
 # Since the tree basically has the same information as the tab index you
 # could consider to set DISABLE_INDEX to NO when enabling this option.
 
-GENERATE_TREEVIEW      = YES
+GENERATE_TREEVIEW      = NO
 
 # The ENUM_VALUES_PER_LINE tag can be used to set the number of enum values
 # (range [0,1..20]) that doxygen will group on one line in the generated HTML
@@ -1361,7 +1369,12 @@ SEARCHENGINE           = YES
 # full text search. The disadvantages are that it is more difficult to setup
 # and does not have live searching capabilities.
 
-SERVER_BASED_SEARCH    = NO
+SERVER_BASED_SEARCH    = YES
+
+# The following needs doxygen 1.8.3 or later. [Matzke 2015-09-14]
+# Fixme: This needs to change to http://rosecompiler.org/doxysearch.cgi eventually.
+EXTERNAL_SEARCH = YES
+SEARCHENGINE_URL = https://hoosierfocus.com/ROSE/doxysearch.cgi
 
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output
