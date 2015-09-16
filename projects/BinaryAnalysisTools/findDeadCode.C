@@ -24,18 +24,24 @@ typedef Sawyer::Container::DistinctList<P2::Function::Ptr> FunctionWorkList;
 // Convenient struct to hold settings specific to this tool. Settings related to disassembling are in the engine.
 struct Settings {
     std::vector<AddressInterval> reachableVas;          // addresses declared to be reachable
+    bool useContainer;                                  // assume entry points, exports, etc. are reachable?
     bool lookForImmediates;                             // find reachable code using instruction immediates?
     bool useDataFlow;                                   // use data flow analysis to find concrete values?
+    std::vector<AddressInterval> readableVas;           // where to search for instruction addresses in data
+    size_t addressAlignment;                            // alignment for reading addresses from data areas
+    size_t addressSize;                                 // size of an address in bytes, or zero to auto-detect
     bool showMap;                                       // show the memory map?
     bool showAddresses;                                 // show unreached areas as address intervals?
+    bool showReachableAddresses;                        // show reachable areas as address intervals?
     bool showInstructions;                              // show unreached disassembled instructions?
     bool showDisassembly;                               // disassemble unreached addresses linearly?
     bool showHexDump;                                   // show unreached areas as data hexdumps?
     bool useCompression;                                // compress sequences of identical instructions?
+    bool showStats;                                     // show some final statistics
     Settings()
-        : lookForImmediates(true), useDataFlow(true),
-          showMap(false), showAddresses(true), showInstructions(true), showDisassembly(true), showHexDump(true),
-          useCompression(true) {}
+        : useContainer(true), lookForImmediates(true), useDataFlow(true), addressAlignment(1), addressSize(0),
+          showMap(false), showAddresses(false), showReachableAddresses(false), showInstructions(false),
+          showDisassembly(false), showHexDump(false), useCompression(true), showStats(true) {}
 };
 
 // Describe and parse the command-line
@@ -60,6 +66,16 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                     .doc("Addresses that are declared to be reachable. This switch can occur more than once in order to "
                          "specify non-contiguous addresses, each time specifying one contiguous interval. " +
                          P2::AddressIntervalParser::docString()));
+
+    analysis.insert(Switch("use-container")
+                    .intrinsicValue(true, settings.useContainer)
+                    .doc("When this switch is present, the analysis assumes that entry pointers and exported functions "
+                         "are always reachable.  The @s{no-use-container} does not make this assumption.  The default is to " +
+                         std::string(settings.useContainer?"":"not ") + "assume such functions are reachable."));
+    analysis.insert(Switch("no-use-container")
+                    .key("use-container")
+                    .intrinsicValue(false, settings.useContainer)
+                    .hidden(true));
 
     analysis.insert(Switch("immediates")
                     .intrinsicValue(true, settings.lookForImmediates)
@@ -86,6 +102,25 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                     .intrinsicValue(false, settings.useDataFlow)
                     .hidden(true));
 
+    analysis.insert(Switch("read-from")
+                    .argument("addresses", P2::addressIntervalParser(settings.readableVas))
+                    .whichValue(SAVE_ALL)
+                    .doc("Addresses that are read in order to find constants that are the addresses of basic blocks. "
+                         "Such basic blocks are assumed to be reachable. This switch can occur more than once in order to "
+                         "specify non-contiguous addresses, each time specifying one contiguous interval. " +
+                         P2::AddressIntervalParser::docString()));
+
+    analysis.insert(Switch("alignment")
+                    .argument("bytes", nonNegativeIntegerParser(settings.addressAlignment))
+                    .doc("Alignment to use when reading addresses.  If the alignment is smaller than the address size "
+                         "then addresses are read from overlapping areas of memory.  The default alignment is " +
+                         StringUtility::numberToString(settings.addressAlignment) + "."));
+
+    analysis.insert(Switch("address-size")
+                    .argument("nbytes", nonNegativeIntegerParser(settings.addressSize))
+                    .doc("Size of an address in bytes.  This is used when searching for addresses in memory.  A value of "
+                         "zero (the default) will assume addresses are the same as the architecture's word size."));
+
     SwitchGroup output("Output switches");
 
     output.insert(Switch("show-map")
@@ -110,6 +145,18 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                   .intrinsicValue(false, settings.showAddresses)
                   .hidden(true));
 
+    output.insert(Switch("show-reachable-addresses")
+                  .intrinsicValue(true, settings.showReachableAddresses)
+                  .doc("List those instruction addresses that are determined to be reachable.  These addresses are "
+                       "used to compute the unreachable lists (i.e., the analysis finds reachable addresses and "
+                       "complements that set, intersecting with the set of executable addresses, to obtain unreachable "
+                       "addresses).  The @s{no-show-reachable-addresses} switch disables showing reachable addresses. The "
+                       "default is to " + std::string(settings.showReachableAddresses?"":"not ") + "show these addresses."));
+    output.insert(Switch("no-show-reachable-addresses")
+                  .key("show-reachable-addresses")
+                  .intrinsicValue(false, settings.showReachableAddresses)
+                  .hidden(true));
+    
     output.insert(Switch("show-instructions")
                   .intrinsicValue(true, settings.showInstructions)
                   .doc("Causes a list of unreached instructions to be displayed. These are instructions that have been "
@@ -154,6 +201,15 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     output.insert(Switch("no-show-hexdump")
                   .key("show-hexdump")
                   .intrinsicValue(false, settings.showHexDump)
+                  .hidden(true));
+
+    output.insert(Switch("show-stats")
+                  .intrinsicValue(true, settings.showStats)
+                  .doc("Show some general statistics about the detection.  The @s{no-show-stats} disables this feature. The "
+                       "default is to " + std::string(settings.showStats?"":"not ") + "show this output."));
+    output.insert(Switch("no-show-stats")
+                  .key("show-stats")
+                  .intrinsicValue(false, settings.showStats)
                   .hidden(true));
 
     return parser.with(analysis).with(output).parse(argc, argv).apply().unreachedArgs();
@@ -206,7 +262,7 @@ insertReachableRecursively(AddressIntervalSet &reachable /*in,out*/, const P2::P
     for (Traversal t(partitioner.cfg(), start); t; ++t) {
         AddressIntervalSet vertexAddresses = t->value().addresses();
         if (reachable.contains(vertexAddresses)) {
-            t.skipChildren();
+            t.skipChildren();                           // includes vertexAddresses.isEmpty case
         } else {
             reachable |= vertexAddresses;
         }
@@ -249,6 +305,63 @@ findImmediateValues(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
             t1.traverse(insn, preorder);
     }
     return t1.values;
+}
+
+// Scan memory for reachable addresses. This is a little more complex than just reading one address at a time because:
+//   1. We want it to be efficient, so we read a whole buffer at once and look for addresses in the buffer.
+//   2. We need to handle alignment, byte order, and various sizes of addresses.
+//   3. Depending on alignment and size, addresses can overlap each other in memory.
+//   4. We need to watch out for addresses that would span two of our buffer-sized windows read from memory
+//   5. We need to be careful of addresses that are 2^32 (or 2^64) to avoid overflow when incrementing
+static void
+insertAddressesFromMemory(AddressIntervalSet &reachable /*in,out*/, const P2::Partitioner &partitioner,
+                          const MemoryMap &map, size_t bytesPerWord, size_t alignment, ByteOrder::Endianness sex) {
+    ASSERT_require(bytesPerWord <= sizeof(rose_addr_t));
+    alignment = std::max(alignment, (size_t)1);
+    uint8_t buf[4096];                                  // arbitrary size
+    rose_addr_t bufVa = map.hull().least();
+    while (map.atOrAfter(bufVa).next().assignTo(bufVa)) {
+
+        {
+            rose_addr_t tmp = alignUp(bufVa, alignment);
+            if (tmp < bufVa)
+                break;                                  // overflow
+            bufVa = tmp;
+        }
+        size_t bufSize = map.at(bufVa).limit(sizeof buf).read(buf).size();
+        if (bufSize < bytesPerWord) {
+            bufVa += bytesPerWord;
+            if (bufVa <= map.hull().least())
+                break;                                  // overflow
+            continue;
+        }
+
+        size_t bufOffset = 0;
+        while (1) {
+            bufOffset = alignUp(bufOffset, alignment);
+            if (bufOffset + bytesPerWord > bufSize)
+                break;
+
+            rose_addr_t targetVa = 0;
+            switch (sex) {
+                case ByteOrder::ORDER_LSB:
+                    for (size_t i=0; i<bytesPerWord; i++)
+                        targetVa |= buf[bufOffset+i] << (8*i);
+                    break;
+                case ByteOrder::ORDER_MSB:
+                    for (size_t i=0; i<bytesPerWord; i++)
+                        targetVa = (targetVa << 8) | buf[bufOffset+i];
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid byte order");
+            }
+            P2::ControlFlowGraph::ConstVertexIterator targetVertex = partitioner.findPlaceholder(targetVa);
+            if (targetVertex != partitioner.cfg().vertices().end())
+                insertReachableRecursively(reachable, partitioner, targetVertex);
+            ++bufOffset;
+        }
+        bufVa += bufOffset;
+    }
 }
 
 // Scan reachable code to find immediate values mentioned in instructions. If an immediate value happens to be a basic block
@@ -451,6 +564,10 @@ int main(int argc, char *argv[]) {
     }
     info <<"analyzing " <<StringUtility::plural(executableSpace.size(), "bytes") <<" of address space\n";
 
+    if (0 == settings.addressSize)
+        settings.addressSize = partitioner.newDispatcher(partitioner.newOperators())->stackPointerRegister().get_nbits() >> 3;
+    if (0 == settings.addressAlignment)
+        settings.addressAlignment = 1;
 
     //------------------------------------------ 
     // Mark things as reachable in various ways
@@ -467,14 +584,32 @@ int main(int argc, char *argv[]) {
     }
 
     // Addresses declared reachable from the container (entry points, exports, etc).
-    info <<"marking entry points and exports";
-    timer.restart();
-    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
-        if (0 != (function->reasons() & (SgAsmFunction::FUNC_ENTRY_POINT | SgAsmFunction::FUNC_EXPORT)))
-            reachable.insert(function->address());
+    if (settings.useContainer) {
+        info <<"marking entry points and exports";
+        timer.restart();
+        BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+            if (0 != (function->reasons() & (SgAsmFunction::FUNC_ENTRY_POINT | SgAsmFunction::FUNC_EXPORT)))
+                reachable.insert(function->address());
+        }
+        info <<"; took " <<timer <<" seconds\n";
     }
-    info <<"; took " <<timer <<" seconds\n";
 
+    // Addresses found by scanning memory
+    if (!settings.readableVas.empty()) {
+        using InstructionSemantics2::BaseSemantics::DispatcherPtr;
+        info <<"scanning memory for addresses";
+        timer.restart();
+        MemoryMap readable = engine.memoryMap();
+        readable.any().changeAccess(0, MemoryMap::READABLE);
+        BOOST_FOREACH (const AddressInterval &interval, settings.readableVas)
+            readable.within(interval).changeAccess(MemoryMap::READABLE, 0);
+        readable.require(MemoryMap::READABLE).keep();
+        ByteOrder::Endianness sex = ByteOrder::ORDER_LSB;// FIXME[Robb P Matzke 2015-08-29]
+        insertAddressesFromMemory(reachable /*in,out*/, partitioner, readable,
+                                  settings.addressSize, settings.addressAlignment, sex);
+        info <<"; took " <<timer <<" seconds\n";
+    }
+    
     // Recursively mark everything that reachable by CFG edges from other reachable things.
     info <<"recursive marking using the CFG";
     timer.restart();
@@ -496,25 +631,38 @@ int main(int argc, char *argv[]) {
         insertReachableByDataFlow(reachable, partitioner);
         info <<"; took " <<timer <<" seconds\n";
     }
+
     
     //------------------------------------------ 
     // Compute and show unreachable stuff
     //------------------------------------------
     timer.restart();
     info <<"generating results...\n";
-    
+    std::string sectionSeparator = "";
+
+    // Show reachable addresses
+    if (settings.showReachableAddresses) {
+        std::cout <<sectionSeparator
+                  <<"Found " <<StringUtility::plural(reachable.size(), "bytes") <<" of reachable, executable addresses:\n";
+        BOOST_FOREACH (const AddressInterval &interval, reachable.intervals()) {
+            std::cout <<"  " <<StringUtility::addrToString(interval.least())
+                      <<" + " <<StringUtility::addrToString(interval.size())
+                      <<" = " <<StringUtility::addrToString(interval.greatest()+1) <<"\n";
+        }
+        sectionSeparator = "\n";
+    }
+
     // Everything that's non-reachable is dead code if it also appears in executable memory.
     AddressIntervalSet unreachable = ~reachable & executableSpace;
     if (unreachable.isEmpty()) {
         std::cout <<"no unreachable addresses found\n";
         return 0;
     }
-    std::string sectionSeparator = "";
 
     // Output unreachable addresses
     if (settings.showAddresses) {
         std::cout <<sectionSeparator
-                  <<"Found " <<StringUtility::plural(unreachable.size(), "bytes") <<" of unreachable, executable addresses\n";
+                  <<"Found " <<StringUtility::plural(unreachable.size(), "bytes") <<" of unreachable, executable addresses:\n";
         BOOST_FOREACH (const AddressInterval &interval, unreachable.intervals()) {
             std::cout <<"  " <<StringUtility::addrToString(interval.least())
                       <<" + " <<StringUtility::addrToString(interval.size())
@@ -605,7 +753,7 @@ int main(int argc, char *argv[]) {
                     if (insn) {
                         unparser.unparse(std::cout, insn);
                     } else {
-                        std::cerr <<"  no instruction\n";
+                        std::cout <<"  no instruction\n";
                     }
                 }
                 prevInsn = insn;
@@ -620,11 +768,22 @@ int main(int argc, char *argv[]) {
             } else if (prevInsn) {
                 unparser.unparse(std::cout, prevInsn);
             } else {
-                std::cerr <<"  no instruction\n";
+                std::cout <<"  no instruction\n";
             }
         }
         sectionSeparator = "\n";
     }
 
+    if (settings.showStats) {
+        std::cout <<sectionSeparator <<"Statistics:\n";
+        std::cout <<"  number of executable addresses:  " <<executableSpace.size() <<"\n";
+        std::cout <<"  number of bytes in CFG:          " <<partitioner.aum().size()
+                  <<" (" <<(100.0*partitioner.aum().size() / executableSpace.size()) <<"%)\n";
+        std::cout <<"  number of reachable addresses:   " <<reachable.size()
+                  <<" (" <<(100.0*reachable.size() / executableSpace.size()) <<"%)\n";
+        std::cout <<"  number of unreachable addresses: " <<unreachable.size()
+                  <<" (" <<(100.0*unreachable.size() / executableSpace.size()) <<"%)\n";
+    }
+    
     info <<"generating results; took " <<timer <<" seconds\n";
 }

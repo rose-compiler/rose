@@ -1,4 +1,6 @@
 #include "sage3basic.h"
+
+#include "AsmUnparser_compat.h"
 #include "BinaryDataFlow.h"
 #include "Diagnostics.h"
 

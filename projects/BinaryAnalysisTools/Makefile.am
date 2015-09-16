@@ -79,7 +79,7 @@ findDeadCode_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # Not distributed; not part of the Git repo
 
 detectConstants: detectConstants.C
-	libtool --mode=compile			\
+	$(top_builddir)/libtool --mode=compile	\
 	    $(CXX) -c				\
 	    -DUSE_PARTITIONER2			\
 	    $(CFLAGS)				\
@@ -87,12 +87,12 @@ detectConstants: detectConstants.C
 	    -I$(top_builddir)			\
 	    $(ROSE_INCLUDES)			\
 	    -o detectConstants.o $^
-	libtool --mode=link			\
+	$(top_builddir)/libtool --mode=link	\
 	    $(CXX)				\
 	    $(CFLAGS)				\
 	    $(LIBS_WITH_RPATH)			\
 	    $(ROSE_LIBS)			\
-	    -o $@ detectConstants.o
+	    -o $@ detectConstants.lo
 
 MOSTLYCLEANFILES += detectConstants detectConstants.o
 

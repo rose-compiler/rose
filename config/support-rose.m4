@@ -2187,7 +2187,6 @@ tests/roseTests/astRewriteTests/Makefile
 tests/roseTests/astSymbolTableTests/Makefile
 tests/roseTests/astTokenStreamTests/Makefile
 tests/roseTests/binaryTests/Makefile
-tests/roseTests/binaryTests/SemanticVerification/Makefile
 tests/roseTests/binaryTests/libraryIdentification_tests/Makefile
 tests/roseTests/binaryTests/Pin_tests/Makefile
 tests/roseTests/binaryTests/Dwarf_tests/Makefile

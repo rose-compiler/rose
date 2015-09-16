@@ -114,13 +114,15 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
   VariableIdSet globalVars=AnalysisAbstractionLayer::globalVariables(root,&_variableIdMapping);
   VariableIdSet usedVarsInFuncs=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&_variableIdMapping);
   VariableIdSet usedVarsInGlobalVarsInitializers=AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(root,&_variableIdMapping);
-  VariableIdSet usedGlobalVarIds=globalVars*usedVarsInFuncs; //+usedVarsInGlobalVarsInitializers;;
-  usedGlobalVarIds.insert(usedVarsInGlobalVarsInitializers.begin(),
-			  usedVarsInGlobalVarsInitializers.end());
+  VariableIdSet usedGlobalVarIds=globalVars; //*usedVarsInFuncs; //+usedVarsInGlobalVarsInitializers;;
+  //  usedGlobalVarIds.insert(usedVarsInGlobalVarsInitializers.begin(),
+  //			  usedVarsInGlobalVarsInitializers.end());
   cout <<"INFO: number of global variables: "<<globalVars.size()<<endl;
   //  cout <<"INFO: used variables in functions: "<<usedVarsInFuncs.size()<<endl;
   //cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
   Lattice* elem=_initialElementFactory->create();
+  initializeExtremalValue(elem);
+  cout << "INIT: initial element: ";elem->toStream(cout,&_variableIdMapping);
   list<SgVariableDeclaration*> globalVarDecls=SgNodeHelper::listOfGlobalVars(root);
   for(list<SgVariableDeclaration*>::iterator i=globalVarDecls.begin();i!=globalVarDecls.end();++i) {
     if(usedGlobalVarIds.find(_variableIdMapping.variableId(*i))!=usedGlobalVarIds.end()) {
@@ -128,10 +130,10 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
       ROSE_ASSERT(_transferFunctions);
       _transferFunctions->transfer(_labeler->getLabel(*i),*elem);
     } else {
-      //cout<<"INFO: filtered from initial state: "<<(*i)->unparseToString()<<endl;
+      cout<<"INFO: filtered from initial state: "<<(*i)->unparseToString()<<endl;
     }
   }
-  cout << "INIT: initial element: ";
+  cout << "INIT: initial state: ";
   elem->toStream(cout,&_variableIdMapping);
   cout<<endl;
   _globalVariablesState=elem;
@@ -179,8 +181,9 @@ DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/*
   cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
   {
     size_t numDeletedEdges=_cfanalyzer->deleteFunctionCallLocalEdges(_flow);
+    cout<<"INIT: deleted "<<numDeletedEdges<<" local edges."<<endl;
     int numReducedNodes=0; //_cfanalyzer->reduceBlockBeginNodes(_flow);
-    cout << "INIT: Optimization finished (educed nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
+    cout << "INIT: Optimization finished (reduced nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
   }
 
   ROSE_ASSERT(_initialElementFactory);
@@ -216,6 +219,10 @@ void DFAnalysisBase::initializeTransferFunctions() {
 
 void DFAnalysisBase::setPointerAnalysis(PointerAnalysisInterface* pa) {
   _pointerAnalysisInterface=pa;
+}
+
+SPRAY::PointerAnalysisInterface* DFAnalysisBase::getPointerAnalysis() {
+  return _pointerAnalysisInterface;
 }
 
 void

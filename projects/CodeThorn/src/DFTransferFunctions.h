@@ -3,6 +3,7 @@
 
 #include "Labeler.h"
 #include "Lattice.h"
+#include "Flow.h"
 #include "PointerAnalysisInterface.h"
 
 namespace SPRAY {
@@ -20,6 +21,9 @@ public:
   // allow for some pointer analysis to be used directly
   void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pointerAnalysisInterface) { _pointerAnalysisInterface=pointerAnalysisInterface; }
   SPRAY::PointerAnalysisInterface* getPointerAnalysisInterface() { return _pointerAnalysisInterface; }
+
+  virtual void transfer(SPRAY::Edge edge, Lattice& element);
+  virtual void transferCondition(Edge edge, Lattice& element);
 
   virtual void transfer(SPRAY::Label lab, Lattice& element);
   virtual void transferExpression(SPRAY::Label label, SgExpression* expr, Lattice& element);
