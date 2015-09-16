@@ -21,3 +21,8 @@ identity.cpp is a test that essentially does a copy using a single shift
               stencil, where all entires in the shift are zero and coefficient is one
 
 laplacian.cpp applies the laplacian operator on the given source box.
+
+
+Experimental support for CUDA code generation
+* -rose:dslcompiler:cuda  : will internally insert OpenMP 4.0 accelerator directives and call OpenMP lowering to generate CUDA code
+ e.g. ./shiftCalculusCompiler -rose:dslcompiler:cuda  -c laplacian_lite.cpp

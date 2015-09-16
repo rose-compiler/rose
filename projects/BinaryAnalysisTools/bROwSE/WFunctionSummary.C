@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WFunctionSummary.h>
 
 #include <Color.h>                                      // ROSE

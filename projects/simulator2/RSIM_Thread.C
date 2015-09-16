@@ -36,12 +36,14 @@ RSIM_Thread::ctor()
 
 BaseSemantics::SValuePtr
 RSIM_Thread::pop() {
-    size_t resultWidth = dispatcher()->REG_anySP.get_nbits();         // number of bits to read from memory
-    BaseSemantics::SValuePtr oldSp = operators()->readRegister(dispatcher()->REG_anySP);
+    RegisterDescriptor SP = get_process()->disassembler()->stackPointerRegister();
+    RegisterDescriptor SS = get_process()->disassembler()->stackSegmentRegister();
+    size_t resultWidth = SP.get_nbits();                // number bits to read from memory
+    BaseSemantics::SValuePtr oldSp = operators()->readRegister(SP);
     BaseSemantics::SValuePtr dflt = operators()->undefined_(resultWidth);
-    BaseSemantics::SValuePtr retval = operators()->readMemory(dispatcher()->REG_SS, oldSp, dflt, operators()->boolean_(true));
+    BaseSemantics::SValuePtr retval = operators()->readMemory(SS, oldSp, dflt, operators()->boolean_(true));
     BaseSemantics::SValuePtr newSp = operators()->add(oldSp, operators()->number_(oldSp->get_width(), resultWidth/8));
-    operators()->writeRegister(dispatcher()->REG_anySP, newSp);
+    operators()->writeRegister(SP, newSp);
     return retval;
 }
 
@@ -76,7 +78,8 @@ RSIM_Thread::id()
     sprintf(buf1, "%1.3f", elapsed);
 
     char buf2[64];
-    uint64_t eip = operators()->readRegister(dispatcher()->REG_anyIP)->get_number();
+    RegisterDescriptor IP = get_process()->disassembler()->instructionPointerRegister();
+    uint64_t eip = operators()->readRegister(IP)->get_number();
 
     int n = snprintf(buf2, sizeof(buf2), "0x%08"PRIx64"[%zu]: ", eip, operators()->get_ninsns());
     assert(n>=0 && (size_t)n<sizeof(buf2)-1);
@@ -116,11 +119,12 @@ RSIM_Thread::operators() const
     ASSERT_not_reachable("invalid RiscOperators type");
 }
 
-SgAsmX86Instruction *
+SgAsmInstruction *
 RSIM_Thread::current_insn()
 {
-    rose_addr_t ip = operators()->readRegister(dispatcher()->REG_anyIP)->get_number();
-    SgAsmX86Instruction *insn = isSgAsmX86Instruction(get_process()->get_instruction(ip));
+    RegisterDescriptor IP = get_process()->disassembler()->instructionPointerRegister();
+    rose_addr_t ip = operators()->readRegister(IP)->get_number();
+    SgAsmInstruction *insn = get_process()->get_instruction(ip);
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
     return insn;
 }
@@ -380,21 +384,25 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::SigInfo &_info)
             signal_mask |= (uint64_t)1 << (signo-1);
             sighand.sigprocmask(SIG_SETMASK, &signal_mask, NULL);
 
-            /* Clear flags per ABI for function entry. */
-            operators()->writeRegister(dispatcher()->REG_DF, operators()->boolean_(false));
-            operators()->writeRegister(dispatcher()->REG_TF, operators()->boolean_(false));
+            if (DispatcherX86 *x86 = dynamic_cast<DispatcherX86*>(dispatcher().get())) {
+                /* Clear flags per ABI for function entry. */
+                operators()->writeRegister(x86->REG_DF, operators()->boolean_(false));
+                operators()->writeRegister(x86->REG_TF, operators()->boolean_(false));
 
-            /* Set up registers for signal handler. */
-            size_t wordWidth = dispatcher()->REG_anyIP.get_nbits();
-            ASSERT_require(wordWidth==32 || wordWidth==64);
-            operators()->writeRegister(dispatcher()->REG_anyAX, operators()->number_(wordWidth, signo));
-            operators()->writeRegister(dispatcher()->REG_anyCX, operators()->number_(wordWidth, 0));
-            operators()->writeRegister(dispatcher()->REG_DS, operators()->number_(16, 0x2b));
-            operators()->writeRegister(dispatcher()->REG_ES, operators()->number_(16, 0x2b));
-            operators()->writeRegister(dispatcher()->REG_SS, operators()->number_(16, 0x2b));
-            operators()->writeRegister(dispatcher()->REG_CS, operators()->number_(16, 0x23));
-            operators()->writeRegister(dispatcher()->REG_anySP, operators()->number_(wordWidth, frame_va));
-            operators()->writeRegister(dispatcher()->REG_anyIP, operators()->number_(wordWidth, sa.handlerVa));
+                /* Set up registers for signal handler. */
+                size_t wordWidth = x86->REG_anyIP.get_nbits();
+                ASSERT_require(wordWidth==32 || wordWidth==64);
+                operators()->writeRegister(x86->REG_anyAX, operators()->number_(wordWidth, signo));
+                operators()->writeRegister(x86->REG_anyCX, operators()->number_(wordWidth, 0));
+                operators()->writeRegister(x86->REG_DS, operators()->number_(16, 0x2b));
+                operators()->writeRegister(x86->REG_ES, operators()->number_(16, 0x2b));
+                operators()->writeRegister(x86->REG_SS, operators()->number_(16, 0x2b));
+                operators()->writeRegister(x86->REG_CS, operators()->number_(16, 0x23));
+                operators()->writeRegister(x86->REG_anySP, operators()->number_(wordWidth, frame_va));
+                operators()->writeRegister(x86->REG_anyIP, operators()->number_(wordWidth, sa.handlerVa));
+            } else {
+                TODO("architecture not supported");
+            }
         }
     }
 
@@ -451,9 +459,12 @@ RSIM_Thread::sys_sigreturn()
 {
     Sawyer::Message::Stream mesg(tracing(TRACE_SIGNAL));
 
+    DispatcherX86 *x86 = dynamic_cast<DispatcherX86*>(dispatcher().get());
+    ASSERT_not_null(x86);
+
     /* Sighandler frame address is eight less than the current SP because the return from sighandler popped the frame's
      * pretcode, and the retcode popped the signo. */
-    uint32_t sp = operators()->readRegister(dispatcher()->REG_ESP)->get_number();
+    uint32_t sp = operators()->readRegister(x86->REG_ESP)->get_number();
     uint32_t frame_va = sp - 8; 
 
     RSIM_SignalHandling::sigframe_32 frame;
@@ -477,7 +488,7 @@ RSIM_Thread::sys_sigreturn()
 
     /* Restore hardware context.  Restore only certain flags. */
     PtRegs regs;
-    uint32_t eflags = operators()->readRegister(dispatcher()->REG_EFLAGS)->get_number();
+    uint32_t eflags = operators()->readRegister(x86->REG_EFLAGS)->get_number();
     sighand.restore_sigcontext(frame.sc, eflags, &regs);
     init_regs(regs);
     return 0;
@@ -622,9 +633,21 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
         mfprintf(mesg)("%s", title.c_str());
     }
 
-    size_t wordWidth = dispatcher()->REG_anyIP.get_nbits();
-    rose_addr_t bp = operators()->readRegister(dispatcher()->REG_anyBP)->get_number();
-    rose_addr_t ip = operators()->readRegister(dispatcher()->REG_anyIP)->get_number();
+    DispatcherX86 *x86 = dynamic_cast<DispatcherX86*>(dispatcher().get());
+    DispatcherM68k *m68k = dynamic_cast<DispatcherM68k*>(dispatcher().get());
+
+    const RegisterDescriptor IP = get_process()->disassembler()->instructionPointerRegister();
+    const RegisterDescriptor SP = get_process()->disassembler()->stackPointerRegister();
+    RegisterDescriptor BP;
+    if (x86) {
+        BP = x86->REG_anyBP;
+    } else if (m68k) {
+        BP = m68k->REG_A[6];
+    }
+
+    size_t wordWidth = IP.get_nbits();
+    rose_addr_t bp = operators()->readRegister(BP)->get_number();
+    rose_addr_t ip = operators()->readRegister(IP)->get_number();
 
     static const int maxStackFrames = 32;               // arbitrary
     for (int i=0; i<maxStackFrames; i++) {
@@ -648,7 +671,7 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
             /* Presumably being called after a CALL but before EBP is saved on the stack.  In this case, the return address
              * of the inner-most function should be at ss:[esp], and containing functions have set up their stack
              * frames. */
-            rose_addr_t sp = operators()->readRegister(dispatcher()->REG_anySP)->get_number();
+            rose_addr_t sp = operators()->readRegister(SP)->get_number();
             if (32 == wordWidth) {
                 uint32_t tmp;
                 if (4!=process->mem_read(&tmp, sp, 4))
@@ -740,23 +763,25 @@ RSIM_Thread::main()
     get_callbacks().call_thread_callbacks(RSIM_Callbacks::BEFORE, this, true);
     RSIM_Process *process = get_process();
 
+    const RegisterDescriptor IP = get_process()->disassembler()->instructionPointerRegister();
+    DispatcherX86 *x86 = dynamic_cast<DispatcherX86*>(dispatcher().get()); // might be null
+
     boost::this_thread::disable_interruption interruptionsAreDisabled;
     while (true) {
         boost::this_thread::interruption_point();
         report_progress_maybe();
         try {
             /* Returned from signal handler? This code simulates the sigframe_32 or rt_sigframe_32 "retcode" */
-            uint64_t ip = operators()->readRegister(dispatcher()->REG_anyIP)->get_number();
+            uint64_t ip = operators()->readRegister(IP)->get_number();
             if (ip == SIGHANDLER_RETURN) {
+                ASSERT_not_null(x86);
                 pop();
-                operators()->writeRegister(dispatcher()->REG_anyAX,
-                                           operators()->number_(dispatcher()->REG_anyAX.get_nbits(), 119));
+                operators()->writeRegister(x86->REG_anyAX, operators()->number_(x86->REG_anyAX.get_nbits(), 119));
                 sys_sigreturn();
                 continue;
                 
             } else if (ip == SIGHANDLER_RT_RETURN) {
-                operators()->writeRegister(dispatcher()->REG_anyAX,
-                                           operators()->number_(dispatcher()->REG_anyAX.get_nbits(), 173));
+                operators()->writeRegister(x86->REG_anyAX, operators()->number_(x86->REG_anyAX.get_nbits(), 173));
                 sys_rt_sigreturn();
                 continue;
             }
@@ -770,12 +795,12 @@ RSIM_Thread::main()
             /* Find the instruction.  Callbacks might change the value of the EIP register, in which case we should re-fetch
              * the instruction. The pre-instruction callbacks will be invoked for each re-fetched instruction, but the
              * post-instruction callback is only invoked for the final instruction. */
-            SgAsmX86Instruction *insn = NULL;
+            SgAsmInstruction *insn = NULL;
             bool cb_status;
             do {
                 insn = current_insn();
                 cb_status = callbacks.call_insn_callbacks(RSIM_Callbacks::BEFORE, this, insn, true);
-            } while (insn->get_address()!=operators()->readRegister(dispatcher()->REG_anyIP)->get_number());
+            } while (insn->get_address()!=operators()->readRegister(IP)->get_number());
 
             /* Simulate an instruction.  In order to make our simulated instructions atomic (at least among the simulators) we
              * use a shared semaphore that was created in RSIM_Thread::ctor(). */
@@ -831,8 +856,7 @@ RSIM_Thread::main()
             }
 
             // Advance to next instruction without regard for any branching
-            RegisterDescriptor IP = dispatcher()->REG_anyIP;
-            SgAsmX86Instruction *insn = current_insn();
+            SgAsmInstruction *insn = current_insn();
             operators()->writeRegister(IP, operators()->number_(IP.get_nbits(), insn->get_address() + insn->get_size()));
 #endif
         } catch (const RSIM_Semantics::Halt &e) {
@@ -877,34 +901,37 @@ RSIM_Thread::get_regs() const
 {
     PtRegs regs;
 
+    DispatcherX86 *x86 = dynamic_cast<DispatcherX86*>(dispatcher().get());
+    ASSERT_not_null(x86);
+
     // 32-bit registers (stored as 64-bit values)
-    regs.ip = operators()->readRegister(dispatcher()->REG_anyIP)->get_number();
-    regs.ax = operators()->readRegister(dispatcher()->REG_anyAX)->get_number();
-    regs.bx = operators()->readRegister(dispatcher()->REG_anyBX)->get_number();
-    regs.cx = operators()->readRegister(dispatcher()->REG_anyCX)->get_number();
-    regs.dx = operators()->readRegister(dispatcher()->REG_anyDX)->get_number();
-    regs.si = operators()->readRegister(dispatcher()->REG_anySI)->get_number();
-    regs.di = operators()->readRegister(dispatcher()->REG_anyDI)->get_number();
-    regs.bp = operators()->readRegister(dispatcher()->REG_anyBP)->get_number();
-    regs.sp = operators()->readRegister(dispatcher()->REG_anySP)->get_number();
-    regs.cs = operators()->readRegister(dispatcher()->REG_CS)->get_number();
-    regs.ds = operators()->readRegister(dispatcher()->REG_DS)->get_number();
-    regs.es = operators()->readRegister(dispatcher()->REG_ES)->get_number();
-    regs.fs = operators()->readRegister(dispatcher()->REG_FS)->get_number();
-    regs.gs = operators()->readRegister(dispatcher()->REG_GS)->get_number();
-    regs.ss = operators()->readRegister(dispatcher()->REG_SS)->get_number();
-    regs.flags = operators()->readRegister(dispatcher()->REG_anyFLAGS)->get_number();
+    regs.ip = operators()->readRegister(x86->REG_anyIP)->get_number();
+    regs.ax = operators()->readRegister(x86->REG_anyAX)->get_number();
+    regs.bx = operators()->readRegister(x86->REG_anyBX)->get_number();
+    regs.cx = operators()->readRegister(x86->REG_anyCX)->get_number();
+    regs.dx = operators()->readRegister(x86->REG_anyDX)->get_number();
+    regs.si = operators()->readRegister(x86->REG_anySI)->get_number();
+    regs.di = operators()->readRegister(x86->REG_anyDI)->get_number();
+    regs.bp = operators()->readRegister(x86->REG_anyBP)->get_number();
+    regs.sp = operators()->readRegister(x86->REG_anySP)->get_number();
+    regs.cs = operators()->readRegister(x86->REG_CS)->get_number();
+    regs.ds = operators()->readRegister(x86->REG_DS)->get_number();
+    regs.es = operators()->readRegister(x86->REG_ES)->get_number();
+    regs.fs = operators()->readRegister(x86->REG_FS)->get_number();
+    regs.gs = operators()->readRegister(x86->REG_GS)->get_number();
+    regs.ss = operators()->readRegister(x86->REG_SS)->get_number();
+    regs.flags = operators()->readRegister(x86->REG_anyFLAGS)->get_number();
 
     // additional 64-bit registers
     if (get_process()->wordSize() == 64) {
-        regs.r15 = operators()->readRegister(dispatcher()->REG_R15)->get_number();
-        regs.r14 = operators()->readRegister(dispatcher()->REG_R14)->get_number();
-        regs.r13 = operators()->readRegister(dispatcher()->REG_R13)->get_number();
-        regs.r12 = operators()->readRegister(dispatcher()->REG_R12)->get_number();
-        regs.r11 = operators()->readRegister(dispatcher()->REG_R11)->get_number();
-        regs.r10 = operators()->readRegister(dispatcher()->REG_R10)->get_number();
-        regs.r9 = operators()->readRegister(dispatcher()->REG_R9)->get_number();
-        regs.r8 = operators()->readRegister(dispatcher()->REG_R8)->get_number();
+        regs.r15 = operators()->readRegister(x86->REG_R15)->get_number();
+        regs.r14 = operators()->readRegister(x86->REG_R14)->get_number();
+        regs.r13 = operators()->readRegister(x86->REG_R13)->get_number();
+        regs.r12 = operators()->readRegister(x86->REG_R12)->get_number();
+        regs.r11 = operators()->readRegister(x86->REG_R11)->get_number();
+        regs.r10 = operators()->readRegister(x86->REG_R10)->get_number();
+        regs.r9 = operators()->readRegister(x86->REG_R9)->get_number();
+        regs.r8 = operators()->readRegister(x86->REG_R8)->get_number();
     }
 
     return regs;
@@ -915,34 +942,56 @@ RSIM_Thread::init_regs(const PtRegs &regs)
 {
     size_t wordWidth = get_process()->wordSize();
 
-    // Registers in common for a 32-bit and 64-bit architecture
-    operators()->writeRegister(dispatcher()->REG_anyIP, operators()->number_(wordWidth, regs.ip));
-    operators()->writeRegister(dispatcher()->REG_anyAX, operators()->number_(wordWidth, regs.ax));
-    operators()->writeRegister(dispatcher()->REG_anyBX, operators()->number_(wordWidth, regs.bx));
-    operators()->writeRegister(dispatcher()->REG_anyCX, operators()->number_(wordWidth, regs.cx));
-    operators()->writeRegister(dispatcher()->REG_anyDX, operators()->number_(wordWidth, regs.dx));
-    operators()->writeRegister(dispatcher()->REG_anySI, operators()->number_(wordWidth, regs.si));
-    operators()->writeRegister(dispatcher()->REG_anyDI, operators()->number_(wordWidth, regs.di));
-    operators()->writeRegister(dispatcher()->REG_anyBP, operators()->number_(wordWidth, regs.bp));
-    operators()->writeRegister(dispatcher()->REG_anySP, operators()->number_(wordWidth, regs.sp));
-    operators()->writeRegister(dispatcher()->REG_CS, operators()->number_(16, regs.cs));
-    operators()->writeRegister(dispatcher()->REG_DS, operators()->number_(16, regs.ds));
-    operators()->writeRegister(dispatcher()->REG_ES, operators()->number_(16, regs.es));
-    operators()->writeRegister(dispatcher()->REG_FS, operators()->number_(16, regs.fs));
-    operators()->writeRegister(dispatcher()->REG_GS, operators()->number_(16, regs.gs));
-    operators()->writeRegister(dispatcher()->REG_SS, operators()->number_(16, regs.ss));
-    operators()->writeRegister(dispatcher()->REG_anyFLAGS, operators()->number_(wordWidth, regs.flags));
+    if (DispatcherX86 *x86 = dynamic_cast<DispatcherX86*>(dispatcher().get())) {
+        // Registers in common for a 32-bit and 64-bit architecture
+        operators()->writeRegister(x86->REG_anyIP, operators()->number_(wordWidth, regs.ip));
+        operators()->writeRegister(x86->REG_anyAX, operators()->number_(wordWidth, regs.ax));
+        operators()->writeRegister(x86->REG_anyBX, operators()->number_(wordWidth, regs.bx));
+        operators()->writeRegister(x86->REG_anyCX, operators()->number_(wordWidth, regs.cx));
+        operators()->writeRegister(x86->REG_anyDX, operators()->number_(wordWidth, regs.dx));
+        operators()->writeRegister(x86->REG_anySI, operators()->number_(wordWidth, regs.si));
+        operators()->writeRegister(x86->REG_anyDI, operators()->number_(wordWidth, regs.di));
+        operators()->writeRegister(x86->REG_anyBP, operators()->number_(wordWidth, regs.bp));
+        operators()->writeRegister(x86->REG_anySP, operators()->number_(wordWidth, regs.sp));
+        operators()->writeRegister(x86->REG_CS, operators()->number_(16, regs.cs));
+        operators()->writeRegister(x86->REG_DS, operators()->number_(16, regs.ds));
+        operators()->writeRegister(x86->REG_ES, operators()->number_(16, regs.es));
+        operators()->writeRegister(x86->REG_FS, operators()->number_(16, regs.fs));
+        operators()->writeRegister(x86->REG_GS, operators()->number_(16, regs.gs));
+        operators()->writeRegister(x86->REG_SS, operators()->number_(16, regs.ss));
+        operators()->writeRegister(x86->REG_anyFLAGS, operators()->number_(wordWidth, regs.flags));
 
-    // Registers only existing on a 64-bit architecture
-    if (64 == wordWidth) {
-        operators()->writeRegister(dispatcher()->REG_R15, operators()->number_(wordWidth, regs.r15));
-        operators()->writeRegister(dispatcher()->REG_R14, operators()->number_(wordWidth, regs.r14));
-        operators()->writeRegister(dispatcher()->REG_R13, operators()->number_(wordWidth, regs.r13));
-        operators()->writeRegister(dispatcher()->REG_R12, operators()->number_(wordWidth, regs.r12));
-        operators()->writeRegister(dispatcher()->REG_R11, operators()->number_(wordWidth, regs.r11));
-        operators()->writeRegister(dispatcher()->REG_R10, operators()->number_(wordWidth, regs.r10));
-        operators()->writeRegister(dispatcher()->REG_R9, operators()->number_(wordWidth, regs.r9));
-        operators()->writeRegister(dispatcher()->REG_R8, operators()->number_(wordWidth, regs.r8));
+        // Registers only existing on a 64-bit architecture
+        if (64 == wordWidth) {
+            operators()->writeRegister(x86->REG_R15, operators()->number_(wordWidth, regs.r15));
+            operators()->writeRegister(x86->REG_R14, operators()->number_(wordWidth, regs.r14));
+            operators()->writeRegister(x86->REG_R13, operators()->number_(wordWidth, regs.r13));
+            operators()->writeRegister(x86->REG_R12, operators()->number_(wordWidth, regs.r12));
+            operators()->writeRegister(x86->REG_R11, operators()->number_(wordWidth, regs.r11));
+            operators()->writeRegister(x86->REG_R10, operators()->number_(wordWidth, regs.r10));
+            operators()->writeRegister(x86->REG_R9, operators()->number_(wordWidth, regs.r9));
+            operators()->writeRegister(x86->REG_R8, operators()->number_(wordWidth, regs.r8));
+        }
+    } else if (DispatcherM68k *m68k = dynamic_cast<DispatcherM68k*>(dispatcher().get())) {
+        operators()->writeRegister(m68k->REG_PC, operators()->number_(32, regs.ip));
+        operators()->writeRegister(m68k->REG_CCR, operators()->number_(8, regs.flags));
+        operators()->writeRegister(m68k->REG_SR, operators()->number_(16, regs.sr));
+        operators()->writeRegister(m68k->REG_D[0], operators()->number_(32, regs.d0));
+        operators()->writeRegister(m68k->REG_D[1], operators()->number_(32, regs.d1));
+        operators()->writeRegister(m68k->REG_D[2], operators()->number_(32, regs.d2));
+        operators()->writeRegister(m68k->REG_D[3], operators()->number_(32, regs.d3));
+        operators()->writeRegister(m68k->REG_D[4], operators()->number_(32, regs.d4));
+        operators()->writeRegister(m68k->REG_D[5], operators()->number_(32, regs.d5));
+        operators()->writeRegister(m68k->REG_D[6], operators()->number_(32, regs.d6));
+        operators()->writeRegister(m68k->REG_D[7], operators()->number_(32, regs.d7));
+        operators()->writeRegister(m68k->REG_A[0], operators()->number_(32, regs.a0));
+        operators()->writeRegister(m68k->REG_A[1], operators()->number_(32, regs.a1));
+        operators()->writeRegister(m68k->REG_A[2], operators()->number_(32, regs.a2));
+        operators()->writeRegister(m68k->REG_A[3], operators()->number_(32, regs.a3));
+        operators()->writeRegister(m68k->REG_A[4], operators()->number_(32, regs.a4));
+        operators()->writeRegister(m68k->REG_A[5], operators()->number_(32, regs.a5));
+        operators()->writeRegister(m68k->REG_A[6], operators()->number_(32, regs.a6));
+        operators()->writeRegister(m68k->REG_A[7], operators()->number_(32, regs.a7));
     }
 }
 
@@ -952,13 +1001,16 @@ RSIM_Thread::set_gdt(const SegmentDescriptor &ud)
     SegmentDescriptor &entry = gdt_entry(ud.entry_number);
     entry = ud;
 
+    DispatcherX86 *x86 = dynamic_cast<DispatcherX86*>(dispatcher().get());
+    ASSERT_not_null(x86);
+
     /* Make sure all affected shadow registers are reloaded. */
-    operators()->writeRegister(dispatcher()->REG_CS, operators()->readRegister(dispatcher()->REG_CS));
-    operators()->writeRegister(dispatcher()->REG_DS, operators()->readRegister(dispatcher()->REG_DS));
-    operators()->writeRegister(dispatcher()->REG_ES, operators()->readRegister(dispatcher()->REG_ES));
-    operators()->writeRegister(dispatcher()->REG_FS, operators()->readRegister(dispatcher()->REG_FS));
-    operators()->writeRegister(dispatcher()->REG_GS, operators()->readRegister(dispatcher()->REG_GS));
-    operators()->writeRegister(dispatcher()->REG_SS, operators()->readRegister(dispatcher()->REG_SS));
+    operators()->writeRegister(x86->REG_CS, operators()->readRegister(x86->REG_CS));
+    operators()->writeRegister(x86->REG_DS, operators()->readRegister(x86->REG_DS));
+    operators()->writeRegister(x86->REG_ES, operators()->readRegister(x86->REG_ES));
+    operators()->writeRegister(x86->REG_FS, operators()->readRegister(x86->REG_FS));
+    operators()->writeRegister(x86->REG_GS, operators()->readRegister(x86->REG_GS));
+    operators()->writeRegister(x86->REG_SS, operators()->readRegister(x86->REG_SS));
 
     return ud.entry_number;
 }
@@ -1214,7 +1266,8 @@ RSIM_Thread::sys_sigsuspend(const RSIM_SignalHandling::SigSet *mask) {
 int
 RSIM_Thread::sys_sigaltstack(const stack_32 *in, stack_32 *out)
 {
-    uint32_t sp = operators()->readRegister(dispatcher()->REG_ESP)->get_number();
+    const RegisterDescriptor SP = get_process()->disassembler()->stackPointerRegister();
+    uint32_t sp = operators()->readRegister(SP)->get_number();
     return sighand.sigaltstack(in, out, sp);
 }
 
@@ -1226,7 +1279,10 @@ RSIM_Thread::emulate_syscall()
     assert(0==status);
     insn_semaphore_posted = true;
 
-    unsigned callno = operators()->readRegister(dispatcher()->REG_anyAX)->get_number();
+    DispatcherX86 *x86 = dynamic_cast<DispatcherX86*>(dispatcher().get());
+    ASSERT_not_null(x86);
+
+    unsigned callno = operators()->readRegister(x86->REG_anyAX)->get_number();
     bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
     if (cb_status) {
         RSIM_Simulator *sim = get_process()->get_simulator();

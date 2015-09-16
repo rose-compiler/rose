@@ -68,10 +68,18 @@ stringDecoder_CPPFLAGS = $(ROSE_INCLUDES)
 stringDecoder_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Find code that cannot be reached according to static analysis
+
+bin_PROGRAMS += findDeadCode
+findDeadCode_SOURCES = findDeadCode.C
+findDeadCode_CPPFLAGS = $(ROSE_INCLUDES)
+findDeadCode_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Not distributed; not part of the Git repo
 
 detectConstants: detectConstants.C
-	libtool --mode=compile			\
+	$(top_builddir)/libtool --mode=compile	\
 	    $(CXX) -c				\
 	    -DUSE_PARTITIONER2			\
 	    $(CFLAGS)				\
@@ -79,12 +87,12 @@ detectConstants: detectConstants.C
 	    -I$(top_builddir)			\
 	    $(ROSE_INCLUDES)			\
 	    -o detectConstants.o $^
-	libtool --mode=link			\
+	$(top_builddir)/libtool --mode=link	\
 	    $(CXX)				\
 	    $(CFLAGS)				\
 	    $(LIBS_WITH_RPATH)			\
 	    $(ROSE_LIBS)			\
-	    -o $@ detectConstants.o
+	    -o $@ detectConstants.lo
 
 MOSTLYCLEANFILES += detectConstants detectConstants.o
 
@@ -123,7 +131,7 @@ bROwSE_server_SOURCES =				\
 	bROwSE/WStrings.C			\
 	bROwSE/WToggleButton.C
 bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(top_builddir)/src/roseSupport -I$(WT_PREFIX)/include
-bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) -lboost_signals $(ROSE_LIBS)
 
 pkginclude_HEADERS = 				\
         bROwSE/Application.h			\

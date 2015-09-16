@@ -382,7 +382,7 @@ RTS_Message::output_lines(const char *s)
         s = t ? t+1 : NULL;
     }
     if (sol)
-        in_multi = false;
+        in_multi = NULL;
 }
 
 /* We need to identical va_list args because some systems do not allow it to be reused after calling vsnprintf() */
@@ -496,7 +496,7 @@ RTS_Message::mesg(const char *fmt, ...)
         output_lines(buffer);
         if (!sol)
             output_lines("\n");
-        in_multi = false;
+        in_multi = NULL;
     } RTS_WRITE_END;
     return *this;
 }

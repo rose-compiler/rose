@@ -91,7 +91,7 @@ private:
 public:
     /** Construct a constraint that matches everything. */
     AddressMapConstraints(AddressMap *map)
-        : map_(map), never_(false), maxSize_(-1), singleSegment_(false), requiredAccess_(0), prohibitedAccess_(0) {}
+        : map_(map), never_(false), maxSize_(size_t(-1)), singleSegment_(false), requiredAccess_(0), prohibitedAccess_(0) {}
 
     // Implicitly construct constraints for a const AddressMap from a non-const address map.
     operator AddressMapConstraints<const AddressMap>() const {
@@ -1409,7 +1409,7 @@ public:
      * @code
      *  typedef AddressMap<Address,Value> Map;
      *  Map map = ...;
-     *  for (Address a=map.hull().greatest(); map.atOrBelow(a).require(READABLE).next(MATCH_BACKWARD).assignTo(a); --a) {
+     *  for (Address a=map.hull().greatest(); map.atOrBefore(a).require(READABLE).next(MATCH_BACKWARD).assignTo(a); --a) {
      *      ...
      *      if (a == map.hull().least())
      *          break;

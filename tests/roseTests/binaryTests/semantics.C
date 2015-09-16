@@ -14,30 +14,15 @@
 #define SYMBOLIC_DOMAIN 3
 #define INTERVAL_DOMAIN 4
 #define MULTI_DOMAIN 5
-#define FINDCONST_DOMAIN 6
-#define FINDCONSTABI_DOMAIN 7
-
-// SEMANTIC_API values
-#define OLD_API 1
-#define NEW_API 2
 
 // SMT_SOLVER values
 #define NO_SOLVER 0
 #define YICES_LIB 1
 #define YICES_EXE 2
 
-#if !defined(SEMANTIC_API)
-#   error "SEMANTIC_API must be defined on the compiler command line"
-#elif SEMANTIC_API == OLD_API
-#   include "x86InstructionSemantics.h"
-    using namespace rose::BinaryAnalysis::InstructionSemantics;
-#elif SEMANTIC_API == NEW_API
-#   include "DispatcherX86.h"
-#   include "TestSemantics2.h"
-    using namespace rose::BinaryAnalysis::InstructionSemantics2;
-#else
-#   error "invalid value for SEMANTIC_API"
-#endif
+#include "DispatcherX86.h"
+#include "TestSemantics2.h"
+using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
 #if !defined(SMT_SOLVER) || SMT_SOLVER == NO_SOLVER
 #   include "SMTSolver.h"
@@ -72,12 +57,6 @@ static bool do_usedef = true;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if SEMANTIC_DOMAIN == NULL_DOMAIN
 
-#if SEMANTIC_API == OLD_API
-#   include "NullSemantics.h"
-#   define MyValueType rose::BinaryAnalysis::InstructionSemantics::NullSemantics::ValueType
-#   define MyState     rose::BinaryAnalysis::InstructionSemantics::NullSemantics::State
-#   define MyPolicy    rose::BinaryAnalysis::InstructionSemantics::NullSemantics::Policy<MyState, MyValueType>
-#else
 #   include "NullSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         BaseSemantics::RiscOperatorsPtr retval = NullSemantics::RiscOperators::instance(regdict);
@@ -87,16 +66,9 @@ static bool do_usedef = true;
         tester.test(retval);
         return retval;
     }
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif  SEMANTIC_DOMAIN == PARTSYM_DOMAIN
-#if SEMANTIC_API == OLD_API
-#   include "PartialSymbolicSemantics.h"
-#   define MyValueType rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::ValueType
-#   define MyState     rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::State
-#   define MyPolicy    rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics::Policy<MyState, MyValueType>
-#else
 #   include "PartialSymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         BaseSemantics::RiscOperatorsPtr retval = PartialSymbolicSemantics::RiscOperators::instance(regdict);
@@ -106,37 +78,23 @@ static bool do_usedef = true;
         tester.test(retval);
         return retval;
     }
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif  SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
 
-#if SEMANTIC_API == OLD_API
-#   include "SymbolicSemantics.h"
-#   define MyValueType rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
-#   define MyState     rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State
-#   define MyPolicy    rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy<MyState, MyValueType>
-#else
 #   include "SymbolicSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         SymbolicSemantics::RiscOperatorsPtr retval = SymbolicSemantics::RiscOperators::instance(regdict);
-        retval->set_compute_usedef(do_usedef);
+        retval->computingUseDef(do_usedef);
         TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
                       SymbolicSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
                       SymbolicSemantics::RiscOperatorsPtr> tester;
         tester.test(retval);
         return retval;
     }
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == INTERVAL_DOMAIN
-#if SEMANTIC_API == OLD_API
-#   include "IntervalSemantics.h"
-#   define MyValueType rose::BinaryAnalysis::InstructionSemantics::IntervalSemantics::ValueType
-#   define MyState     rose::BinaryAnalysis::InstructionSemantics::IntervalSemantics::State
-#   define MyPolicy    rose::BinaryAnalysis::InstructionSemantics::IntervalSemantics::Policy<MyState, MyValueType>
-#else
 #   include "IntervalSemantics2.h"
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         BaseSemantics::RiscOperatorsPtr retval = IntervalSemantics::RiscOperators::instance(regdict);
@@ -146,23 +104,9 @@ static bool do_usedef = true;
         tester.test(retval);
         return retval;
     }
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == MULTI_DOMAIN
-#if SEMANTIC_API == OLD_API
-#   include "MultiSemantics.h"
-#   include "PartialSymbolicSemantics.h"
-#   include "SymbolicSemantics.h"
-#   include "IntervalSemantics.h"
-#   define MyMultiSemanticsClass MultiSemantics<                                                                               \
-        PartialSymbolicSemantics::ValueType, PartialSymbolicSemantics::State, PartialSymbolicSemantics::Policy,                \
-        SymbolicSemantics::ValueType, SymbolicSemantics::State, SymbolicSemantics::Policy,                                     \
-        IntervalSemantics::ValueType, IntervalSemantics::State, IntervalSemantics::Policy>
-#   define MyValueType MyMultiSemanticsClass::ValueType
-#   define MyState MyMultiSemanticsClass::State
-#   define MyPolicy MyMultiSemanticsClass::Policy<MyState, MyValueType>
-#else
 #   include "MultiSemantics2.h"
 #   include "PartialSymbolicSemantics2.h"
 #   include "SymbolicSemantics2.h"
@@ -178,62 +122,12 @@ static bool do_usedef = true;
         ops->add_subdomain(s3, "Interval");
         return ops;
     }
-#endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#elif SEMANTIC_DOMAIN == FINDCONST_DOMAIN
-
-#if SEMANTIC_API == OLD_API
-#   include "findConstants.h"
-#   define MyValueType rose::BinaryAnalysis::FindConstants::XVariablePtr
-    struct MyPolicy: public rose::BinaryAnalysis::FindConstants::FindConstantsPolicy {
-        void startInstruction(SgAsmInstruction *insn) {
-            addr = insn->get_address();
-            newIp = number<32>(addr);
-            if (rsets.find(addr)==rsets.end())
-                rsets[addr].setToBottom();
-            cur_state = rsets[addr];
-            rose::BinaryAnalysis::FindConstants::currentInstruction = isSgAsmX86Instruction(insn);
-        }
-        void print(std::ostream &out) {
-            out <<cur_state <<"    ip = " <<newIp <<"\n";
-        }
-    };
-
-#else
-#   error "FindConstantsPolicy has no counterpart in the new InstructionSemantics2 API"
-#endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#elif  SEMANTIC_DOMAIN == FINDCONSTABI_DOMAIN
-
-#if SEMANTIC_API == OLD_API
-#   include "findConstants.h"
-#   define MyValueType rose::BinaryAnalysis::FindConstants::XVariablePtr
-    struct MyPolicy: public rose::BinaryAnalysis::FindConstants::FindConstantsABIPolicy {
-        void startInstruction(SgAsmInstruction *insn) {
-            addr = insn->get_address();
-            newIp = number<32>(addr);
-            if (rsets.find(addr)==rsets.end())
-                rsets[addr].setToBottom();
-            cur_state = rsets[addr];
-            rose::BinaryAnalysis::FindConstants::currentInstruction = isSgAsmX86Instruction(insn);
-        }
-        void print(std::ostream &out) {
-            out <<cur_state <<"    ip = " <<newIp <<"\n";
-        }
-    };
-
-#else
-#   error "FindConstantsABIPolicy has no counterpart in the new InstructionSematnics2 API"
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #else
 #error "invalid value for SEMANTIC_DOMAIN"
 #endif
 
-#if SEMANTIC_API == NEW_API
 // Show the register state for BaseSemantics::RegisterStateGeneric in the same format as for RegisterStateX86. This is
 // for comparison of the two register states when verifying results.  It's also close to the format used by the old binary
 // semantics API.
@@ -326,7 +220,6 @@ show_state(const BaseSemantics::RiscOperatorsPtr &ops)
     std::cout <<"memory:\n";
     ops->get_state()->print_memory(std::cout, memfmt);
 }
-#endif
 
 
 /* Analyze a single interpretation a block at a time */
@@ -352,7 +245,6 @@ analyze_interp(SgAsmInterpretation *interp)
         SgAsmX86Instruction *insn = si->second;
         insns.erase(si);
 
-#if SEMANTIC_API == NEW_API
         BaseSemantics::RiscOperatorsPtr operators = make_ops();
         BaseSemantics::Formatter formatter;
         formatter.set_suppress_initial_values();
@@ -384,21 +276,8 @@ analyze_interp(SgAsmInterpretation *interp)
             BaseSemantics::SValuePtr st_top = operators->number_(REG_FPSTATUS_TOP->get_nbits(), 0);
             operators->writeRegister(*REG_FPSTATUS_TOP, st_top);
         }
-#else   // OLD_API
-        typedef X86InstructionSemantics<MyPolicy, MyValueType> MyDispatcher;
-        MyPolicy operators;
-        MyDispatcher dispatcher(operators);
-#   if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
-        operators.set_solver(make_solver());
-        SymbolicSemantics::Formatter formatter;
-        formatter.expr_formatter.do_rename = true;
-        formatter.expr_formatter.add_renames = true;
-#   elif SEMANTIC_DOMAIN != FINDCONST_DOMAIN && SEMANTIC_DOMAIN != FINDCONSTABI_DOMAIN
-        BaseSemantics::Formatter formatter;
-#   endif
-#endif
 
-#if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN && SEMANTIC_API == NEW_API
+#if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
         BaseSemantics::SValuePtr orig_esp;
         if (do_test_subst) {
             // Only request the orig_esp if we're going to use it later because it causes an esp value to be instantiated
@@ -415,7 +294,6 @@ analyze_interp(SgAsmInterpretation *interp)
         while (1) {
             /* Analyze current instruction */
             std::cout <<"\n" <<unparseInstructionWithAddress(insn) <<"\n";
-#if SEMANTIC_API == NEW_API
             try {
                 dispatcher->processInstruction(insn);
 #   if 0 /*DEBUGGING [Robb P. Matzke 2013-05-01]*/
@@ -426,57 +304,16 @@ analyze_interp(SgAsmInterpretation *interp)
             } catch (const BaseSemantics::Exception &e) {
                 std::cout <<e <<"\n";
             }
-#else       // OLD API
-            try {
-                dispatcher.processInstruction(insn);
-#   if SEMANTIC_DOMAIN == FINDCONST_DOMAIN || SEMANTIC_DOMAIN == FINDCONSTABI_DOMAIN
-                operators.print(std::cout);
-#   else
-                operators.print(std::cout, formatter);
-#   endif
-            } catch (const MyDispatcher::Exception &e) {
-                std::cout <<e <<"\n";
-                break;
-#   if SEMANTIC_DOMAIN == PARTSYM_DOMAIN
-            } catch (const MyPolicy::Exception &e) {
-                std::cout <<e <<"\n";
-                break;
-#   endif
-            } catch (const rose::BinaryAnalysis::SMTSolver::Exception &e) {
-                std::cout <<e <<" [ "<<unparseInstructionWithAddress(insn) <<"]\n";
-                break;
-            }
-#endif
 
             /* Never follow CALL instructions */
             if (insn->get_kind()==x86_call || insn->get_kind()==x86_farcall)
                 break;
 
             /* Get next instruction of this block */
-#if SEMANTIC_API == NEW_API
             BaseSemantics::SValuePtr ip = operators->readRegister(dispatcher->findRegister("eip"));
             if (!ip->is_number())
                 break;
             rose_addr_t next_addr = ip->get_number();
-#else       // OLD_API
-#   if SEMANTIC_DOMAIN == PARTSYM_DOMAIN || SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
-            MyValueType<32> ip = operators.get_ip();
-            if (!ip.is_known()) break;
-            rose_addr_t next_addr = ip.known_value();
-#   elif SEMANTIC_DOMAIN == NULL_DOMAIN || SEMANTIC_DOMAIN == INTERVAL_DOMAIN
-            MyValueType<32> ip = operators.readRegister<32>(dispatcher.REG_EIP);
-            if (!ip.is_known()) break;
-            rose_addr_t next_addr = ip.known_value();
-#   elif SEMANTIC_DOMAIN == MULTI_DOMAIN
-            PartialSymbolicSemantics::ValueType<32> ip = operators.readRegister<32>(dispatcher.REG_EIP)
-                                                         .get_subvalue(MyMultiSemanticsClass::SP0());
-            if (!ip.is_known()) break;
-            rose_addr_t next_addr = ip.known_value();
-#   else
-            if (operators.newIp->get().name) break;
-            rose_addr_t next_addr = operators.newIp->get().offset;
-#   endif
-#endif
             si = insns.find(next_addr);
             if (si==insns.end()) break;
             insn = si->second;
@@ -484,7 +321,7 @@ analyze_interp(SgAsmInterpretation *interp)
         }
 
         // Test substitution on the symbolic state.
-#if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN && SEMANTIC_API == NEW_API
+#if SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
         if (do_test_subst) {
             SymbolicSemantics::SValuePtr from = SymbolicSemantics::SValue::promote(orig_esp);
             BaseSemantics::SValuePtr newvar = operators->undefined_(32);
@@ -553,14 +390,12 @@ int main(int argc, char *argv[]) {
         std::cout <<"analyzed headers: " <<analysis.ninterps<< "\n";
     }
 
-#if SEMANTIC_API == NEW_API
     std::ostream &info = std::cerr; // do not include in answer because objects vary in size per architecture
     info <<"Before vacuum...\n";
     BaseSemantics::SValue::poolAllocator().showInfo(info);
     BaseSemantics::SValue::poolAllocator().vacuum();
     info <<"After vacuum...\n";
     BaseSemantics::SValue::poolAllocator().showInfo(info);
-#endif
 
     return 0;
 }

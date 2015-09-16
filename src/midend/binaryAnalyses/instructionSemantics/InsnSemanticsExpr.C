@@ -41,6 +41,23 @@ to_str(Operator o)
  *                                      TreeNode methods
  *******************************************************************************************************************************/
 
+TreeNodePtr
+TreeNode::newFlags(unsigned newFlags) const {
+    if (newFlags == flags_)
+        return sharedFromThis();
+    if (InternalNodePtr inode = isInternalNode())
+        return InternalNode::create(get_nbits(), inode->get_operator(), inode->get_children(), get_comment(), newFlags);
+    LeafNodePtr lnode = isLeafNode();
+    ASSERT_not_null(lnode);
+    if (lnode->is_known())
+        return LeafNode::create_constant(lnode->get_bits(), get_comment(), newFlags);
+    if (lnode->is_variable())
+        return LeafNode::create_variable(get_nbits(), get_comment(), newFlags);
+    if (lnode->is_memory())
+        return LeafNode::create_memory(domainWidth(), get_nbits(), get_comment(), newFlags);
+    ASSERT_not_reachable("invalid leaf node type");
+}
+    
 std::set<LeafNodePtr>
 TreeNode::get_variables() const
 {
@@ -118,6 +135,11 @@ TreeNode::printFlags(std::ostream &o, unsigned flags, char &bracket) const {
         o <<bracket <<"unspec";
         bracket = ',';
         flags &= ~UNSPECIFIED;
+    }
+    if ((flags & BOTTOM) != 0) {
+        o <<bracket <<"bottom";
+        bracket = ',';
+        flags &= ~BOTTOM;
     }
     if (flags != 0) {
         o <<bracket <<"f=" <<std::hex <<flags <<std::dec;
@@ -297,8 +319,8 @@ InternalNode::adjustWidth() {
 }
 
 void
-InternalNode::adjustBitFlags() {
-    flags_ = 0;
+InternalNode::adjustBitFlags(unsigned flags) {
+    flags_ = flags;
     BOOST_FOREACH (const TreeNodePtr &child, children)
         flags_ |= child->get_flags();
 }

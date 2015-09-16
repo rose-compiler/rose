@@ -27,6 +27,7 @@ protected:
         ASSERT_require(32==addrWidth);
         regcache_init();
         iproc_init();
+        memory_init();
     }
 
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
@@ -34,6 +35,9 @@ protected:
 
     /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
     void regcache_init();
+
+    /** Make sure memory is set up correctly. For instance, byte order should be little endian. */
+    void memory_init();
 
 public:
     /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The

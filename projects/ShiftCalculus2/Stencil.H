@@ -20,6 +20,10 @@ public:
   Stencil<T> operator*(const Stencil<T> a_stencil) const;
   void operator*=(const T& a_coef);
   Stencil<T> operator+(const Stencil<T> a_stencil) const;
+       // DQ (2/15/2015): Added operator+=() to support clearer updates of an existing object for compile-time analysis.
+       // Stencil<T> operator+= (const Stencil<T> a_stencil) const;
+  Stencil<T> operator+= (const Stencil<T> a_stencil);
+
   void stencilDump() const; 
   void setDestRefratio(Point a_pt){m_destRefratio = a_pt;};
   void setSrcRefratio(Point a_pt){m_srcRefratio = a_pt;}; 

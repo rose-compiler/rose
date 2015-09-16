@@ -48,8 +48,9 @@
 0x080482a8: ================================== Function (import, graph) <DYNAMIC_LINKER_TRAMPOLINE>
 
 0x080482a8: Basic block reasons: entry point, CFG head
-0x080482a8: ff 35 d0 97 04 08       |.5....  |          push   dword ds:[0x080497d0<.got.plt+4>]
-0x080482ae: ff 25 d4 97 04 08       |.%....  |          jmp    dword ds:[0x080497d4<.got.plt+8>]
+0x080482a8: ff 35 d0 97 04 08       |.5....  |<sp+0 >   push   dword ds:[0x080497d0<.got.plt+4>]
+0x080482ae: ff 25 d4 97 04 08       |.%....  |<sp-4 >   jmp    dword ds:[0x080497d4<.got.plt+8>]
+0x080482ae: Outgoing stack delta: -4
 0x080482ae: Successor blocks: unknown
 
 0x080482b8: ================================== Function (function call, import, graph) <__gmon_start__@plt>
@@ -180,550 +181,649 @@
 0x08048392: Successor blocks: unknown
 
 0x08048394: ================================== Function (symbol, graph) <main>
+0x08048394: Function stack delta: +4
 
 0x08048394: Basic block reasons: entry point, CFG head
-0x08048394: 55                      |U       |          push   ebp
-0x08048395: 89 e5                   |..      |          mov    ebp, esp
-0x08048397: b8 00 00 00 00          |.....   |          mov    eax, 0x00000000
-0x0804839c: 5d                      |]       |          pop    ebp
-0x0804839d: c3                      |.       |          ret    
+0x08048394: 55                      |U       |<sp+0 >   push   ebp
+0x08048395: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x08048397: b8 00 00 00 00          |.....   |<sp-4 >   mov    eax, 0x00000000
+0x0804839c: 5d                      |]       |<sp-4 >   pop    ebp
+0x0804839d: c3                      |.       |<sp+0 >   ret    
+0x0804839d: Outgoing stack delta: +4
 0x0804839d: Successor blocks: unknown
 
 0x0804839e: ================================== Function (symbol, graph) <simple01>
+0x0804839e: Function stack delta: +4
 
 0x0804839e: Basic block reasons: entry point, CFG head
-0x0804839e: 55                      |U       |          push   ebp
-0x0804839f: 89 e5                   |..      |          mov    ebp, esp
-0x080483a1: 8b 45 08                |.E.     |          mov    eax, dword ss:[ebp + 0x08]
-0x080483a4: 5d                      |]       |          pop    ebp
-0x080483a5: c3                      |.       |          ret    
+0x0804839e: 55                      |U       |<sp+0 >   push   ebp
+0x0804839f: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080483a1: 8b 45 08                |.E.     |<sp-4 >   mov    eax, dword ss:[ebp + 0x08]
+0x080483a4: 5d                      |]       |<sp-4 >   pop    ebp
+0x080483a5: c3                      |.       |<sp+0 >   ret    
+0x080483a5: Outgoing stack delta: +4
 0x080483a5: Successor blocks: unknown
 
 0x080483a6: ================================== Function (symbol, graph) <simple02>
+0x080483a6: Function stack delta: +4
 
 0x080483a6: Basic block reasons: entry point, CFG head
-0x080483a6: 55                      |U       |          push   ebp
-0x080483a7: 89 e5                   |..      |          mov    ebp, esp
-0x080483a9: 8b 45 08                |.E.     |          mov    eax, dword ss:[ebp + 0x08]
-0x080483ac: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x080483ae: 5d                      |]       |          pop    ebp
-0x080483af: c3                      |.       |          ret    
+0x080483a6: 55                      |U       |<sp+0 >   push   ebp
+0x080483a7: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080483a9: 8b 45 08                |.E.     |<sp-4 >   mov    eax, dword ss:[ebp + 0x08]
+0x080483ac: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x080483ae: 5d                      |]       |<sp-4 >   pop    ebp
+0x080483af: c3                      |.       |<sp+0 >   ret    
+0x080483af: Outgoing stack delta: +4
 0x080483af: Successor blocks: unknown
 
 0x080483b0: ================================== Function (symbol, graph) <simple03>
+0x080483b0: Function stack delta: +4
 
 0x080483b0: Basic block reasons: entry point, CFG head
-0x080483b0: 55                      |U       |          push   ebp
-0x080483b1: 89 e5                   |..      |          mov    ebp, esp
-0x080483b3: 8b 45 08                |.E.     |          mov    eax, dword ss:[ebp + 0x08]
-0x080483b6: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x080483b8: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x080483ba: 5d                      |]       |          pop    ebp
-0x080483bb: c3                      |.       |          ret    
+0x080483b0: 55                      |U       |<sp+0 >   push   ebp
+0x080483b1: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080483b3: 8b 45 08                |.E.     |<sp-4 >   mov    eax, dword ss:[ebp + 0x08]
+0x080483b6: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x080483b8: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x080483ba: 5d                      |]       |<sp-4 >   pop    ebp
+0x080483bb: c3                      |.       |<sp+0 >   ret    
+0x080483bb: Outgoing stack delta: +4
 0x080483bb: Successor blocks: unknown
 
 0x080483bc: ================================== Function (symbol, graph) <simple04>
+0x080483bc: Function stack delta: +4
 
 0x080483bc: Basic block reasons: entry point, CFG head
-0x080483bc: 55                      |U       |          push   ebp
-0x080483bd: 89 e5                   |..      |          mov    ebp, esp
-0x080483bf: a1 e8 97 04 08          |.....   |          mov    eax, dword ds:[0x080497e8<(data)g1>]
-0x080483c4: 5d                      |]       |          pop    ebp
-0x080483c5: c3                      |.       |          ret    
+0x080483bc: 55                      |U       |<sp+0 >   push   ebp
+0x080483bd: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080483bf: a1 e8 97 04 08          |.....   |<sp-4 >   mov    eax, dword ds:[0x080497e8<(data)g1>]
+0x080483c4: 5d                      |]       |<sp-4 >   pop    ebp
+0x080483c5: c3                      |.       |<sp+0 >   ret    
+0x080483c5: Outgoing stack delta: +4
 0x080483c5: Successor blocks: unknown
 
 0x080483c6: ================================== Function (symbol, graph) <simple05>
+0x080483c6: Function stack delta: +4
 
 0x080483c6: Basic block reasons: entry point, CFG head
-0x080483c6: 55                      |U       |          push   ebp
-0x080483c7: 89 e5                   |..      |          mov    ebp, esp
-0x080483c9: a1 ec 97 04 08          |.....   |          mov    eax, dword ds:[0x080497ec<(data)g2>]
-0x080483ce: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x080483d0: 5d                      |]       |          pop    ebp
-0x080483d1: c3                      |.       |          ret    
+0x080483c6: 55                      |U       |<sp+0 >   push   ebp
+0x080483c7: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080483c9: a1 ec 97 04 08          |.....   |<sp-4 >   mov    eax, dword ds:[0x080497ec<(data)g2>]
+0x080483ce: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x080483d0: 5d                      |]       |<sp-4 >   pop    ebp
+0x080483d1: c3                      |.       |<sp+0 >   ret    
+0x080483d1: Outgoing stack delta: +4
 0x080483d1: Successor blocks: unknown
 
 0x080483d2: ================================== Function (symbol, graph) <simple06>
+0x080483d2: Function stack delta: +4
 
 0x080483d2: Basic block reasons: entry point, CFG head
-0x080483d2: 55                      |U       |          push   ebp
-0x080483d3: 89 e5                   |..      |          mov    ebp, esp
-0x080483d5: a1 f0 97 04 08          |.....   |          mov    eax, dword ds:[0x080497f0<(data)g3>]
-0x080483da: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x080483dc: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x080483de: 5d                      |]       |          pop    ebp
-0x080483df: c3                      |.       |          ret    
+0x080483d2: 55                      |U       |<sp+0 >   push   ebp
+0x080483d3: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080483d5: a1 f0 97 04 08          |.....   |<sp-4 >   mov    eax, dword ds:[0x080497f0<(data)g3>]
+0x080483da: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x080483dc: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x080483de: 5d                      |]       |<sp-4 >   pop    ebp
+0x080483df: c3                      |.       |<sp+0 >   ret    
+0x080483df: Outgoing stack delta: +4
 0x080483df: Successor blocks: unknown
 
 0x080483e0: ================================== Function (symbol, graph) <simple07>
+0x080483e0: Function stack delta: +4
 
 0x080483e0: Basic block reasons: entry point, CFG head
-0x080483e0: 55                      |U       |          push   ebp
-0x080483e1: 89 e5                   |..      |          mov    ebp, esp
-0x080483e3: b8 e8 97 04 08          |.....   |          mov    eax, 0x080497e8<(data)g1>
-0x080483e8: 5d                      |]       |          pop    ebp
-0x080483e9: c3                      |.       |          ret    
+0x080483e0: 55                      |U       |<sp+0 >   push   ebp
+0x080483e1: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080483e3: b8 e8 97 04 08          |.....   |<sp-4 >   mov    eax, 0x080497e8<(data)g1>
+0x080483e8: 5d                      |]       |<sp-4 >   pop    ebp
+0x080483e9: c3                      |.       |<sp+0 >   ret    
+0x080483e9: Outgoing stack delta: +4
 0x080483e9: Successor blocks: unknown
 
 0x080483ea: ================================== Function (symbol, graph) <simple08>
+0x080483ea: Function stack delta: +4
 
 0x080483ea: Basic block reasons: entry point, CFG head
-0x080483ea: 55                      |U       |          push   ebp
-0x080483eb: 89 e5                   |..      |          mov    ebp, esp
-0x080483ed: a1 f0 97 04 08          |.....   |          mov    eax, dword ds:[0x080497f0<(data)g3>]
-0x080483f2: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x080483f4: 5d                      |]       |          pop    ebp
-0x080483f5: c3                      |.       |          ret    
+0x080483ea: 55                      |U       |<sp+0 >   push   ebp
+0x080483eb: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080483ed: a1 f0 97 04 08          |.....   |<sp-4 >   mov    eax, dword ds:[0x080497f0<(data)g3>]
+0x080483f2: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x080483f4: 5d                      |]       |<sp-4 >   pop    ebp
+0x080483f5: c3                      |.       |<sp+0 >   ret    
+0x080483f5: Outgoing stack delta: +4
 0x080483f5: Successor blocks: unknown
 
 0x080483f6: ================================== Function (symbol, graph) <simple09>
+0x080483f6: Function stack delta: +4
 
 0x080483f6: Basic block reasons: entry point, CFG head
-0x080483f6: 55                      |U       |          push   ebp
-0x080483f7: 89 e5                   |..      |          mov    ebp, esp
-0x080483f9: 83 ec 10                |...     |          sub    esp, 0x10
-0x080483fc: a1 ec 97 04 08          |.....   |          mov    eax, dword ds:[0x080497ec<(data)g2>]
-0x08048401: 89 45 fc                |.E.     |          mov    dword ss:[ebp + 0xfc<-4>], eax
-0x08048404: 8b 45 fc                |.E.     |          mov    eax, dword ss:[ebp + 0xfc<-4>]
-0x08048407: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x08048409: c9                      |.       |          leave  
-0x0804840a: c3                      |.       |          ret    
+0x080483f6: 55                      |U       |<sp+0 >   push   ebp
+0x080483f7: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080483f9: 83 ec 10                |...     |<sp-4 >   sub    esp, 0x10
+0x080483fc: a1 ec 97 04 08          |.....   |<sp-20>   mov    eax, dword ds:[0x080497ec<(data)g2>]
+0x08048401: 89 45 fc                |.E.     |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], eax
+0x08048404: 8b 45 fc                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x08048407: 8b 00                   |..      |<sp-20>   mov    eax, dword ds:[eax]
+0x08048409: c9                      |.       |<sp-20>   leave  
+0x0804840a: c3                      |.       |<sp+0 >   ret    
+0x0804840a: Outgoing stack delta: +4
 0x0804840a: Successor blocks: unknown
 
 0x0804840b: ================================== Function (symbol, graph) <simple10>
+0x0804840b: Function stack delta: +4
 
 0x0804840b: Basic block reasons: entry point, CFG head
-0x0804840b: 55                      |U       |          push   ebp
-0x0804840c: 89 e5                   |..      |          mov    ebp, esp
-0x0804840e: a1 08 98 04 08          |.....   |          mov    eax, dword ds:[0x08049808<(data)g4>]
-0x08048413: 5d                      |]       |          pop    ebp
-0x08048414: c3                      |.       |          ret    
+0x0804840b: 55                      |U       |<sp+0 >   push   ebp
+0x0804840c: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x0804840e: a1 08 98 04 08          |.....   |<sp-4 >   mov    eax, dword ds:[0x08049808<(data)g4>]
+0x08048413: 5d                      |]       |<sp-4 >   pop    ebp
+0x08048414: c3                      |.       |<sp+0 >   ret    
+0x08048414: Outgoing stack delta: +4
 0x08048414: Successor blocks: unknown
 
 0x08048415: ================================== Function (symbol, graph) <simple11>
+0x08048415: Function stack delta: +4
 
 0x08048415: Basic block reasons: entry point, CFG head
-0x08048415: 55                      |U       |          push   ebp
-0x08048416: 89 e5                   |..      |          mov    ebp, esp
-0x08048418: a1 10 98 04 08          |.....   |          mov    eax, dword ds:[0x08049810<.bss+0x10>]
-0x0804841d: 5d                      |]       |          pop    ebp
-0x0804841e: c3                      |.       |          ret    
+0x08048415: 55                      |U       |<sp+0 >   push   ebp
+0x08048416: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x08048418: a1 10 98 04 08          |.....   |<sp-4 >   mov    eax, dword ds:[0x08049810<.bss+0x10>]
+0x0804841d: 5d                      |]       |<sp-4 >   pop    ebp
+0x0804841e: c3                      |.       |<sp+0 >   ret    
+0x0804841e: Outgoing stack delta: +4
 0x0804841e: Successor blocks: unknown
 
 0x0804841f: ================================== Function (symbol, graph) <simple12>
+0x0804841f: Function stack delta: +4
 
 0x0804841f: Basic block reasons: entry point, CFG head
-0x0804841f: 55                      |U       |          push   ebp
-0x08048420: 89 e5                   |..      |          mov    ebp, esp
-0x08048422: 8b 45 08                |.E.     |          mov    eax, dword ss:[ebp + 0x08]
-0x08048425: 8b 04 85 08 98 04 08    |....... |          mov    eax, dword ds:[0x08049808<(data)g4> + eax*0x04]
-0x0804842c: 5d                      |]       |          pop    ebp
-0x0804842d: c3                      |.       |          ret    
+0x0804841f: 55                      |U       |<sp+0 >   push   ebp
+0x08048420: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x08048422: 8b 45 08                |.E.     |<sp-4 >   mov    eax, dword ss:[ebp + 0x08]
+0x08048425: 8b 04 85 08 98 04 08    |....... |<sp-4 >   mov    eax, dword ds:[0x08049808<(data)g4> + eax*0x04]
+0x0804842c: 5d                      |]       |<sp-4 >   pop    ebp
+0x0804842d: c3                      |.       |<sp+0 >   ret    
+0x0804842d: Outgoing stack delta: +4
 0x0804842d: Successor blocks: unknown
 
 0x0804842e: ================================== Function (symbol, graph) <simple13>
+0x0804842e: Function stack delta: +4
 
 0x0804842e: Basic block reasons: entry point, CFG head
-0x0804842e: 55                      |U       |          push   ebp
-0x0804842f: 89 e5                   |..      |          mov    ebp, esp
-0x08048431: a1 f4 97 04 08          |.....   |          mov    eax, dword ds:[0x080497f4<(data)e1>]
-0x08048436: 5d                      |]       |          pop    ebp
-0x08048437: c3                      |.       |          ret    
+0x0804842e: 55                      |U       |<sp+0 >   push   ebp
+0x0804842f: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x08048431: a1 f4 97 04 08          |.....   |<sp-4 >   mov    eax, dword ds:[0x080497f4<(data)e1>]
+0x08048436: 5d                      |]       |<sp-4 >   pop    ebp
+0x08048437: c3                      |.       |<sp+0 >   ret    
+0x08048437: Outgoing stack delta: +4
 0x08048437: Successor blocks: unknown
 
 0x08048438: ================================== Function (symbol, graph) <simple14>
+0x08048438: Function stack delta: +4
 
 0x08048438: Basic block reasons: entry point, CFG head
-0x08048438: 55                      |U       |          push   ebp
-0x08048439: 89 e5                   |..      |          mov    ebp, esp
-0x0804843b: a1 f8 97 04 08          |.....   |          mov    eax, dword ds:[0x080497f8<(data)e2>]
-0x08048440: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x08048442: 5d                      |]       |          pop    ebp
-0x08048443: c3                      |.       |          ret    
+0x08048438: 55                      |U       |<sp+0 >   push   ebp
+0x08048439: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x0804843b: a1 f8 97 04 08          |.....   |<sp-4 >   mov    eax, dword ds:[0x080497f8<(data)e2>]
+0x08048440: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x08048442: 5d                      |]       |<sp-4 >   pop    ebp
+0x08048443: c3                      |.       |<sp+0 >   ret    
+0x08048443: Outgoing stack delta: +4
 0x08048443: Successor blocks: unknown
 
 0x08048444: ================================== Function (symbol, graph) <simple15>
+0x08048444: Function stack delta: +4
 
 0x08048444: Basic block reasons: entry point, CFG head
-0x08048444: 55                      |U       |          push   ebp
-0x08048445: 89 e5                   |..      |          mov    ebp, esp
-0x08048447: a1 fc 97 04 08          |.....   |          mov    eax, dword ds:[0x080497fc<(data)e3>]
-0x0804844c: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x0804844e: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x08048450: 5d                      |]       |          pop    ebp
-0x08048451: c3                      |.       |          ret    
+0x08048444: 55                      |U       |<sp+0 >   push   ebp
+0x08048445: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x08048447: a1 fc 97 04 08          |.....   |<sp-4 >   mov    eax, dword ds:[0x080497fc<(data)e3>]
+0x0804844c: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x0804844e: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x08048450: 5d                      |]       |<sp-4 >   pop    ebp
+0x08048451: c3                      |.       |<sp+0 >   ret    
+0x08048451: Outgoing stack delta: +4
 0x08048451: Successor blocks: unknown
 
 0x08048452: ================================== Function (symbol, graph) <simple16>
+0x08048452: Function stack delta: +4
 
 0x08048452: Basic block reasons: entry point, CFG head
-0x08048452: 55                      |U       |          push   ebp
-0x08048453: 89 e5                   |..      |          mov    ebp, esp
-0x08048455: b8 f4 97 04 08          |.....   |          mov    eax, 0x080497f4<(data)e1>
-0x0804845a: 5d                      |]       |          pop    ebp
-0x0804845b: c3                      |.       |          ret    
+0x08048452: 55                      |U       |<sp+0 >   push   ebp
+0x08048453: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x08048455: b8 f4 97 04 08          |.....   |<sp-4 >   mov    eax, 0x080497f4<(data)e1>
+0x0804845a: 5d                      |]       |<sp-4 >   pop    ebp
+0x0804845b: c3                      |.       |<sp+0 >   ret    
+0x0804845b: Outgoing stack delta: +4
 0x0804845b: Successor blocks: unknown
 
 0x0804845c: ================================== Function (symbol, graph) <simple17>
+0x0804845c: Function stack delta: +4
 
 0x0804845c: Basic block reasons: entry point, CFG head
-0x0804845c: 55                      |U       |          push   ebp
-0x0804845d: 89 e5                   |..      |          mov    ebp, esp
-0x0804845f: a1 fc 97 04 08          |.....   |          mov    eax, dword ds:[0x080497fc<(data)e3>]
-0x08048464: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x08048466: 5d                      |]       |          pop    ebp
-0x08048467: c3                      |.       |          ret    
+0x0804845c: 55                      |U       |<sp+0 >   push   ebp
+0x0804845d: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x0804845f: a1 fc 97 04 08          |.....   |<sp-4 >   mov    eax, dword ds:[0x080497fc<(data)e3>]
+0x08048464: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x08048466: 5d                      |]       |<sp-4 >   pop    ebp
+0x08048467: c3                      |.       |<sp+0 >   ret    
+0x08048467: Outgoing stack delta: +4
 0x08048467: Successor blocks: unknown
 
 0x08048468: ================================== Function (symbol, graph) <simple18>
+0x08048468: Function stack delta: +4
 
 0x08048468: Basic block reasons: entry point, CFG head
-0x08048468: 55                      |U       |          push   ebp
-0x08048469: 89 e5                   |..      |          mov    ebp, esp
-0x0804846b: 83 ec 10                |...     |          sub    esp, 0x10
-0x0804846e: a1 f8 97 04 08          |.....   |          mov    eax, dword ds:[0x080497f8<(data)e2>]
-0x08048473: 89 45 fc                |.E.     |          mov    dword ss:[ebp + 0xfc<-4>], eax
-0x08048476: 8b 45 fc                |.E.     |          mov    eax, dword ss:[ebp + 0xfc<-4>]
-0x08048479: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x0804847b: c9                      |.       |          leave  
-0x0804847c: c3                      |.       |          ret    
+0x08048468: 55                      |U       |<sp+0 >   push   ebp
+0x08048469: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x0804846b: 83 ec 10                |...     |<sp-4 >   sub    esp, 0x10
+0x0804846e: a1 f8 97 04 08          |.....   |<sp-20>   mov    eax, dword ds:[0x080497f8<(data)e2>]
+0x08048473: 89 45 fc                |.E.     |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], eax
+0x08048476: 8b 45 fc                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x08048479: 8b 00                   |..      |<sp-20>   mov    eax, dword ds:[eax]
+0x0804847b: c9                      |.       |<sp-20>   leave  
+0x0804847c: c3                      |.       |<sp+0 >   ret    
+0x0804847c: Outgoing stack delta: +4
 0x0804847c: Successor blocks: unknown
 
 0x0804847d: ================================== Function (symbol, graph) <simple19>
+0x0804847d: Function stack delta: +4
 
 0x0804847d: Basic block reasons: entry point, CFG head
-0x0804847d: 55                      |U       |          push   ebp
-0x0804847e: 89 e5                   |..      |          mov    ebp, esp
-0x08048480: a1 1c 98 04 08          |.....   |          mov    eax, dword ds:[0x0804981c<(data)e4>]
-0x08048485: 5d                      |]       |          pop    ebp
-0x08048486: c3                      |.       |          ret    
+0x0804847d: 55                      |U       |<sp+0 >   push   ebp
+0x0804847e: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x08048480: a1 1c 98 04 08          |.....   |<sp-4 >   mov    eax, dword ds:[0x0804981c<(data)e4>]
+0x08048485: 5d                      |]       |<sp-4 >   pop    ebp
+0x08048486: c3                      |.       |<sp+0 >   ret    
+0x08048486: Outgoing stack delta: +4
 0x08048486: Successor blocks: unknown
 
 0x08048487: ================================== Function (symbol, graph) <simple20>
+0x08048487: Function stack delta: +4
 
 0x08048487: Basic block reasons: entry point, CFG head
-0x08048487: 55                      |U       |          push   ebp
-0x08048488: 89 e5                   |..      |          mov    ebp, esp
-0x0804848a: a1 24 98 04 08          |.$...   |          mov    eax, dword ds:[0x08049824<.bss+0x24>]
-0x0804848f: 5d                      |]       |          pop    ebp
-0x08048490: c3                      |.       |          ret    
+0x08048487: 55                      |U       |<sp+0 >   push   ebp
+0x08048488: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x0804848a: a1 24 98 04 08          |.$...   |<sp-4 >   mov    eax, dword ds:[0x08049824<.bss+0x24>]
+0x0804848f: 5d                      |]       |<sp-4 >   pop    ebp
+0x08048490: c3                      |.       |<sp+0 >   ret    
+0x08048490: Outgoing stack delta: +4
 0x08048490: Successor blocks: unknown
 
 0x08048491: ================================== Function (symbol, graph) <simple21>
+0x08048491: Function stack delta: +4
 
 0x08048491: Basic block reasons: entry point, CFG head
-0x08048491: 55                      |U       |          push   ebp
-0x08048492: 89 e5                   |..      |          mov    ebp, esp
-0x08048494: 8b 45 08                |.E.     |          mov    eax, dword ss:[ebp + 0x08]
-0x08048497: 8b 04 85 1c 98 04 08    |....... |          mov    eax, dword ds:[0x0804981c<(data)e4> + eax*0x04]
-0x0804849e: 5d                      |]       |          pop    ebp
-0x0804849f: c3                      |.       |          ret    
+0x08048491: 55                      |U       |<sp+0 >   push   ebp
+0x08048492: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x08048494: 8b 45 08                |.E.     |<sp-4 >   mov    eax, dword ss:[ebp + 0x08]
+0x08048497: 8b 04 85 1c 98 04 08    |....... |<sp-4 >   mov    eax, dword ds:[0x0804981c<(data)e4> + eax*0x04]
+0x0804849e: 5d                      |]       |<sp-4 >   pop    ebp
+0x0804849f: c3                      |.       |<sp+0 >   ret    
+0x0804849f: Outgoing stack delta: +4
 0x0804849f: Successor blocks: unknown
 
 0x080484a0: ================================== Function (symbol, graph) <simple22>
+0x080484a0: Function stack delta: +4
 
 0x080484a0: Basic block reasons: entry point, CFG head
-0x080484a0: 55                      |U       |          push   ebp
-0x080484a1: 89 e5                   |..      |          mov    ebp, esp
-0x080484a3: 83 ec 08                |...     |          sub    esp, 0x08
-0x080484a6: 8b 45 08                |.E.     |          mov    eax, dword ss:[ebp + 0x08]
-0x080484a9: ff d0                   |..      |          call   eax
+0x080484a0: 55                      |U       |<sp+0 >   push   ebp
+0x080484a1: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080484a3: 83 ec 08                |...     |<sp-4 >   sub    esp, 0x08
+0x080484a6: 8b 45 08                |.E.     |<sp-12>   mov    eax, dword ss:[ebp + 0x08]
+0x080484a9: ff d0                   |..      |<sp-12>   call   eax
+0x080484a9: Outgoing stack delta: -16
 0x080484a9: Successor blocks: 0x080484ab, unknown
 
 0x080484ab: Basic block reasons: 
-0x080484ab: c9                      |.       |          leave  
-0x080484ac: c3                      |.       |          ret    
+0x080484ab: c9                      |.       |<sp-12>   leave  
+0x080484ac: c3                      |.       |<sp+0 >   ret    
+0x080484ac: Outgoing stack delta: +4
 0x080484ac: Successor blocks: unknown
 
 0x080484ad: ================================== Function (symbol, graph) <simple23>
+0x080484ad: Function stack delta: +4
 
 0x080484ad: Basic block reasons: entry point, CFG head
-0x080484ad: 55                      |U       |          push   ebp
-0x080484ae: 89 e5                   |..      |          mov    ebp, esp
-0x080484b0: 83 ec 28                |..(     |          sub    esp, 0x28
-0x080484b3: c7 45 f4 64 00 00 00    |.E.d... |          mov    dword ss:[ebp + 0xf4<-12>], 0x00000064
-0x080484ba: 8d 45 f4                |.E.     |          lea    eax, [ebp + 0xf4<-12>]
-0x080484bd: 89 04 24                |..$     |          mov    dword ss:[esp], eax
-0x080484c0: 8b 45 08                |.E.     |          mov    eax, dword ss:[ebp + 0x08]
-0x080484c3: ff d0                   |..      |          call   eax
+0x080484ad: 55                      |U       |<sp+0 >   push   ebp
+0x080484ae: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080484b0: 83 ec 28                |..(     |<sp-4 >   sub    esp, 0x28
+0x080484b3: c7 45 f4 64 00 00 00    |.E.d... |<sp-44>   mov    dword ss:[ebp + 0xf4<-12>], 0x00000064
+0x080484ba: 8d 45 f4                |.E.     |<sp-44>   lea    eax, [ebp + 0xf4<-12>]
+0x080484bd: 89 04 24                |..$     |<sp-44>   mov    dword ss:[esp], eax
+0x080484c0: 8b 45 08                |.E.     |<sp-44>   mov    eax, dword ss:[ebp + 0x08]
+0x080484c3: ff d0                   |..      |<sp-44>   call   eax
+0x080484c3: Outgoing stack delta: -48
 0x080484c3: Successor blocks: 0x080484c5, unknown
 
 0x080484c5: Basic block reasons: 
-0x080484c5: c9                      |.       |          leave  
-0x080484c6: c3                      |.       |          ret    
+0x080484c5: c9                      |.       |<sp-44>   leave  
+0x080484c6: c3                      |.       |<sp+0 >   ret    
+0x080484c6: Outgoing stack delta: +4
 0x080484c6: Successor blocks: unknown
 
 0x080484c7: ================================== Function (symbol, graph) <simple24>
+0x080484c7: Function stack delta: +4
 
 0x080484c7: Basic block reasons: entry point, CFG head
-0x080484c7: 55                      |U       |          push   ebp
-0x080484c8: 89 e5                   |..      |          mov    ebp, esp
-0x080484ca: 83 ec 18                |...     |          sub    esp, 0x18
-0x080484cd: 8b 45 0c                |.E.     |          mov    eax, dword ss:[ebp + 0x0c]
-0x080484d0: 89 04 24                |..$     |          mov    dword ss:[esp], eax
-0x080484d3: 8b 45 08                |.E.     |          mov    eax, dword ss:[ebp + 0x08]
-0x080484d6: ff d0                   |..      |          call   eax
+0x080484c7: 55                      |U       |<sp+0 >   push   ebp
+0x080484c8: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080484ca: 83 ec 18                |...     |<sp-4 >   sub    esp, 0x18
+0x080484cd: 8b 45 0c                |.E.     |<sp-28>   mov    eax, dword ss:[ebp + 0x0c]
+0x080484d0: 89 04 24                |..$     |<sp-28>   mov    dword ss:[esp], eax
+0x080484d3: 8b 45 08                |.E.     |<sp-28>   mov    eax, dword ss:[ebp + 0x08]
+0x080484d6: ff d0                   |..      |<sp-28>   call   eax
+0x080484d6: Outgoing stack delta: -32
 0x080484d6: Successor blocks: 0x080484d8, unknown
 
 0x080484d8: Basic block reasons: 
-0x080484d8: c9                      |.       |          leave  
-0x080484d9: c3                      |.       |          ret    
+0x080484d8: c9                      |.       |<sp-28>   leave  
+0x080484d9: c3                      |.       |<sp+0 >   ret    
+0x080484d9: Outgoing stack delta: +4
 0x080484d9: Successor blocks: unknown
 
 0x080484da: ================================== Function (symbol, graph) <simple25>
+0x080484da: Function stack delta: +4
 
 0x080484da: Basic block reasons: entry point, CFG head
-0x080484da: 55                      |U       |          push   ebp
-0x080484db: 89 e5                   |..      |          mov    ebp, esp
-0x080484dd: 83 ec 18                |...     |          sub    esp, 0x18
-0x080484e0: 8b 45 0c                |.E.     |          mov    eax, dword ss:[ebp + 0x0c]
-0x080484e3: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x080484e5: 89 04 24                |..$     |          mov    dword ss:[esp], eax
-0x080484e8: 8b 45 08                |.E.     |          mov    eax, dword ss:[ebp + 0x08]
-0x080484eb: ff d0                   |..      |          call   eax
+0x080484da: 55                      |U       |<sp+0 >   push   ebp
+0x080484db: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080484dd: 83 ec 18                |...     |<sp-4 >   sub    esp, 0x18
+0x080484e0: 8b 45 0c                |.E.     |<sp-28>   mov    eax, dword ss:[ebp + 0x0c]
+0x080484e3: 8b 00                   |..      |<sp-28>   mov    eax, dword ds:[eax]
+0x080484e5: 89 04 24                |..$     |<sp-28>   mov    dword ss:[esp], eax
+0x080484e8: 8b 45 08                |.E.     |<sp-28>   mov    eax, dword ss:[ebp + 0x08]
+0x080484eb: ff d0                   |..      |<sp-28>   call   eax
+0x080484eb: Outgoing stack delta: -32
 0x080484eb: Successor blocks: 0x080484ed, unknown
 
 0x080484ed: Basic block reasons: 
-0x080484ed: c9                      |.       |          leave  
-0x080484ee: c3                      |.       |          ret    
+0x080484ed: c9                      |.       |<sp-28>   leave  
+0x080484ee: c3                      |.       |<sp+0 >   ret    
+0x080484ee: Outgoing stack delta: +4
 0x080484ee: Successor blocks: unknown
 
 0x080484ef: ================================== Function (symbol, graph) <flow01>
+0x080484ef: Function stack delta: +4
 
 0x080484ef: Basic block reasons: entry point, CFG head
-0x080484ef: 55                      |U       |          push   ebp
-0x080484f0: 89 e5                   |..      |          mov    ebp, esp
-0x080484f2: 83 7d 08 00             |.}..    |          cmp    dword ss:[ebp + 0x08], 0x00
-0x080484f6: 74 07                   |t.      |          je     0x080484ff<<BBlock>>
+0x080484ef: 55                      |U       |<sp+0 >   push   ebp
+0x080484f0: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080484f2: 83 7d 08 00             |.}..    |<sp-4 >   cmp    dword ss:[ebp + 0x08], 0x00
+0x080484f6: 74 07                   |t.      |<sp-4 >   je     0x080484ff<<BBlock>>
+0x080484f6: Outgoing stack delta: -4
 0x080484f6: Successor blocks: 0x080484f8, 0x080484ff
 
 0x080484f8: Basic block reasons: 
-0x080484f8: 8b 45 0c                |.E.     |          mov    eax, dword ss:[ebp + 0x0c]
-0x080484fb: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x080484fd: eb 05                   |..      |          jmp    0x08048504<<BBlock>>
+0x080484f8: 8b 45 0c                |.E.     |<sp-4 >   mov    eax, dword ss:[ebp + 0x0c]
+0x080484fb: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x080484fd: eb 05                   |..      |<sp-4 >   jmp    0x08048504<<BBlock>>
+0x080484fd: Outgoing stack delta: -4
 0x080484fd: Successor blocks: 0x08048504
 
 0x080484ff: Basic block reasons: 
-0x080484ff: 8b 45 10                |.E.     |          mov    eax, dword ss:[ebp + 0x10]
-0x08048502: 8b 00                   |..      |          mov    eax, dword ds:[eax]
+0x080484ff: 8b 45 10                |.E.     |<sp-4 >   mov    eax, dword ss:[ebp + 0x10]
+0x08048502: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x08048502: Outgoing stack delta: -4
 0x08048502: Successor blocks: 0x08048504
 
 0x08048504: Basic block reasons: 
-0x08048504: 5d                      |]       |          pop    ebp
-0x08048505: c3                      |.       |          ret    
+0x08048504: 5d                      |]       |<sp-4 >   pop    ebp
+0x08048505: c3                      |.       |<sp+0 >   ret    
+0x08048505: Outgoing stack delta: +4
 0x08048505: Successor blocks: unknown
 
 0x08048506: ================================== Function (symbol, graph) <flow02>
+0x08048506: Function stack delta: +4
 
 0x08048506: Basic block reasons: entry point, CFG head
-0x08048506: 55                      |U       |          push   ebp
-0x08048507: 89 e5                   |..      |          mov    ebp, esp
-0x08048509: 83 7d 08 00             |.}..    |          cmp    dword ss:[ebp + 0x08], 0x00
-0x0804850d: 74 07                   |t.      |          je     0x08048516<<BBlock>>
+0x08048506: 55                      |U       |<sp+0 >   push   ebp
+0x08048507: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x08048509: 83 7d 08 00             |.}..    |<sp-4 >   cmp    dword ss:[ebp + 0x08], 0x00
+0x0804850d: 74 07                   |t.      |<sp-4 >   je     0x08048516<<BBlock>>
+0x0804850d: Outgoing stack delta: -4
 0x0804850d: Successor blocks: 0x0804850f, 0x08048516
 
 0x0804850f: Basic block reasons: 
-0x0804850f: 8b 45 0c                |.E.     |          mov    eax, dword ss:[ebp + 0x0c]
-0x08048512: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x08048514: eb 05                   |..      |          jmp    0x0804851b<<BBlock>>
+0x0804850f: 8b 45 0c                |.E.     |<sp-4 >   mov    eax, dword ss:[ebp + 0x0c]
+0x08048512: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x08048514: eb 05                   |..      |<sp-4 >   jmp    0x0804851b<<BBlock>>
+0x08048514: Outgoing stack delta: -4
 0x08048514: Successor blocks: 0x0804851b
 
 0x08048516: Basic block reasons: 
-0x08048516: 8b 45 10                |.E.     |          mov    eax, dword ss:[ebp + 0x10]
-0x08048519: 8b 00                   |..      |          mov    eax, dword ds:[eax]
+0x08048516: 8b 45 10                |.E.     |<sp-4 >   mov    eax, dword ss:[ebp + 0x10]
+0x08048519: 8b 00                   |..      |<sp-4 >   mov    eax, dword ds:[eax]
+0x08048519: Outgoing stack delta: -4
 0x08048519: Successor blocks: 0x0804851b
 
 0x0804851b: Basic block reasons: 
-0x0804851b: 5d                      |]       |          pop    ebp
-0x0804851c: c3                      |.       |          ret    
+0x0804851b: 5d                      |]       |<sp-4 >   pop    ebp
+0x0804851c: c3                      |.       |<sp+0 >   ret    
+0x0804851c: Outgoing stack delta: +4
 0x0804851c: Successor blocks: unknown
 
 0x0804851d: ================================== Function (symbol, graph) <flow03>
+0x0804851d: Function stack delta: +4
 
 0x0804851d: Basic block reasons: entry point, CFG head
-0x0804851d: 55                      |U       |          push   ebp
-0x0804851e: 89 e5                   |..      |          mov    ebp, esp
-0x08048520: 83 ec 10                |...     |          sub    esp, 0x10
-0x08048523: 83 7d 08 00             |.}..    |          cmp    dword ss:[ebp + 0x08], 0x00
-0x08048527: 74 05                   |t.      |          je     0x0804852e<<BBlock>>
+0x0804851d: 55                      |U       |<sp+0 >   push   ebp
+0x0804851e: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x08048520: 83 ec 10                |...     |<sp-4 >   sub    esp, 0x10
+0x08048523: 83 7d 08 00             |.}..    |<sp-20>   cmp    dword ss:[ebp + 0x08], 0x00
+0x08048527: 74 05                   |t.      |<sp-20>   je     0x0804852e<<BBlock>>
+0x08048527: Outgoing stack delta: -20
 0x08048527: Successor blocks: 0x08048529, 0x0804852e
 
 0x08048529: Basic block reasons: 
-0x08048529: 8b 45 0c                |.E.     |          mov    eax, dword ss:[ebp + 0x0c]
-0x0804852c: eb 03                   |..      |          jmp    0x08048531<<BBlock>>
+0x08048529: 8b 45 0c                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x0c]
+0x0804852c: eb 03                   |..      |<sp-20>   jmp    0x08048531<<BBlock>>
+0x0804852c: Outgoing stack delta: -20
 0x0804852c: Successor blocks: 0x08048531
 
 0x0804852e: Basic block reasons: 
-0x0804852e: 8b 45 10                |.E.     |          mov    eax, dword ss:[ebp + 0x10]
+0x0804852e: 8b 45 10                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x10]
+0x0804852e: Outgoing stack delta: -20
 0x0804852e: Successor blocks: 0x08048531
 
 0x08048531: Basic block reasons: 
-0x08048531: 89 45 fc                |.E.     |          mov    dword ss:[ebp + 0xfc<-4>], eax
-0x08048534: 8b 45 fc                |.E.     |          mov    eax, dword ss:[ebp + 0xfc<-4>]
-0x08048537: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x08048539: c9                      |.       |          leave  
-0x0804853a: c3                      |.       |          ret    
+0x08048531: 89 45 fc                |.E.     |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], eax
+0x08048534: 8b 45 fc                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x08048537: 8b 00                   |..      |<sp-20>   mov    eax, dword ds:[eax]
+0x08048539: c9                      |.       |<sp-20>   leave  
+0x0804853a: c3                      |.       |<sp+0 >   ret    
+0x0804853a: Outgoing stack delta: +4
 0x0804853a: Successor blocks: unknown
 
 0x0804853b: ================================== Function (symbol, graph) <flow04>
+0x0804853b: Function stack delta: +4
 
 0x0804853b: Basic block reasons: entry point, CFG head
-0x0804853b: 55                      |U       |          push   ebp
-0x0804853c: 89 e5                   |..      |          mov    ebp, esp
-0x0804853e: 83 ec 10                |...     |          sub    esp, 0x10
-0x08048541: c7 45 fc 00 00 00 00    |.E..... |          mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
-0x08048548: c7 45 f8 00 00 00 00    |.E..... |          mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
-0x0804854f: eb 0c                   |..      |          jmp    0x0804855d<<BBlock>>
+0x0804853b: 55                      |U       |<sp+0 >   push   ebp
+0x0804853c: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x0804853e: 83 ec 10                |...     |<sp-4 >   sub    esp, 0x10
+0x08048541: c7 45 fc 00 00 00 00    |.E..... |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x08048548: c7 45 f8 00 00 00 00    |.E..... |<sp-20>   mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
+0x0804854f: eb 0c                   |..      |<sp-20>   jmp    0x0804855d<<BBlock>>
+0x0804854f: Outgoing stack delta: -20
 0x0804854f: Successor blocks: 0x0804855d
 
 0x08048551: Basic block reasons: 
-0x08048551: 8b 45 0c                |.E.     |          mov    eax, dword ss:[ebp + 0x0c]
-0x08048554: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x08048556: 01 45 fc                |.E.     |          add    dword ss:[ebp + 0xfc<-4>], eax
-0x08048559: 83 45 f8 01             |.E..    |          add    dword ss:[ebp + 0xf8<-8>], 0x01
+0x08048551: 8b 45 0c                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x0c]
+0x08048554: 8b 00                   |..      |<sp-20>   mov    eax, dword ds:[eax]
+0x08048556: 01 45 fc                |.E.     |<sp-20>   add    dword ss:[ebp + 0xfc<-4>], eax
+0x08048559: 83 45 f8 01             |.E..    |<sp-20>   add    dword ss:[ebp + 0xf8<-8>], 0x01
+0x08048559: Outgoing stack delta: -20
 0x08048559: Successor blocks: 0x0804855d
 
 0x0804855d: Basic block reasons: 
-0x0804855d: 8b 45 f8                |.E.     |          mov    eax, dword ss:[ebp + 0xf8<-8>]
-0x08048560: 3b 45 08                |;E.     |          cmp    eax, dword ss:[ebp + 0x08]
-0x08048563: 7c ec                   ||.      |          jl     0x08048551<<BBlock>>
+0x0804855d: 8b 45 f8                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x08048560: 3b 45 08                |;E.     |<sp-20>   cmp    eax, dword ss:[ebp + 0x08]
+0x08048563: 7c ec                   ||.      |<sp-20>   jl     0x08048551<<BBlock>>
+0x08048563: Outgoing stack delta: -20
 0x08048563: Successor blocks: 0x08048551, 0x08048565
 
 0x08048565: Basic block reasons: 
-0x08048565: 8b 45 fc                |.E.     |          mov    eax, dword ss:[ebp + 0xfc<-4>]
-0x08048568: c9                      |.       |          leave  
-0x08048569: c3                      |.       |          ret    
+0x08048565: 8b 45 fc                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x08048568: c9                      |.       |<sp-20>   leave  
+0x08048569: c3                      |.       |<sp+0 >   ret    
+0x08048569: Outgoing stack delta: +4
 0x08048569: Successor blocks: unknown
 
 0x0804856a: ================================== Function (symbol, graph) <flow05>
+0x0804856a: Function stack delta: +4
 
 0x0804856a: Basic block reasons: entry point, CFG head
-0x0804856a: 55                      |U       |          push   ebp
-0x0804856b: 89 e5                   |..      |          mov    ebp, esp
-0x0804856d: 83 ec 10                |...     |          sub    esp, 0x10
-0x08048570: c7 45 fc 00 00 00 00    |.E..... |          mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
-0x08048577: c7 45 f8 00 00 00 00    |.E..... |          mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
-0x0804857e: eb 1d                   |..      |          jmp    0x0804859d<<BBlock>>
+0x0804856a: 55                      |U       |<sp+0 >   push   ebp
+0x0804856b: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x0804856d: 83 ec 10                |...     |<sp-4 >   sub    esp, 0x10
+0x08048570: c7 45 fc 00 00 00 00    |.E..... |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x08048577: c7 45 f8 00 00 00 00    |.E..... |<sp-20>   mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
+0x0804857e: eb 1d                   |..      |<sp-20>   jmp    0x0804859d<<BBlock>>
+0x0804857e: Outgoing stack delta: -20
 0x0804857e: Successor blocks: 0x0804859d
 
 0x08048580: Basic block reasons: 
-0x08048580: 8b 45 f8                |.E.     |          mov    eax, dword ss:[ebp + 0xf8<-8>]
-0x08048583: 83 e0 01                |...     |          and    eax, 0x01
-0x08048586: 84 c0                   |..      |          test   al, al
-0x08048588: 74 07                   |t.      |          je     0x08048591<<BBlock>>
+0x08048580: 8b 45 f8                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x08048583: 83 e0 01                |...     |<sp-20>   and    eax, 0x01
+0x08048586: 84 c0                   |..      |<sp-20>   test   al, al
+0x08048588: 74 07                   |t.      |<sp-20>   je     0x08048591<<BBlock>>
+0x08048588: Outgoing stack delta: -20
 0x08048588: Successor blocks: 0x0804858a, 0x08048591
 
 0x0804858a: Basic block reasons: 
-0x0804858a: 8b 45 0c                |.E.     |          mov    eax, dword ss:[ebp + 0x0c]
-0x0804858d: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x0804858f: eb 05                   |..      |          jmp    0x08048596<<BBlock>>
+0x0804858a: 8b 45 0c                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x0c]
+0x0804858d: 8b 00                   |..      |<sp-20>   mov    eax, dword ds:[eax]
+0x0804858f: eb 05                   |..      |<sp-20>   jmp    0x08048596<<BBlock>>
+0x0804858f: Outgoing stack delta: -20
 0x0804858f: Successor blocks: 0x08048596
 
 0x08048591: Basic block reasons: 
-0x08048591: 8b 45 10                |.E.     |          mov    eax, dword ss:[ebp + 0x10]
-0x08048594: 8b 00                   |..      |          mov    eax, dword ds:[eax]
+0x08048591: 8b 45 10                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x10]
+0x08048594: 8b 00                   |..      |<sp-20>   mov    eax, dword ds:[eax]
+0x08048594: Outgoing stack delta: -20
 0x08048594: Successor blocks: 0x08048596
 
 0x08048596: Basic block reasons: 
-0x08048596: 01 45 fc                |.E.     |          add    dword ss:[ebp + 0xfc<-4>], eax
-0x08048599: 83 45 f8 01             |.E..    |          add    dword ss:[ebp + 0xf8<-8>], 0x01
+0x08048596: 01 45 fc                |.E.     |<sp-20>   add    dword ss:[ebp + 0xfc<-4>], eax
+0x08048599: 83 45 f8 01             |.E..    |<sp-20>   add    dword ss:[ebp + 0xf8<-8>], 0x01
+0x08048599: Outgoing stack delta: -20
 0x08048599: Successor blocks: 0x0804859d
 
 0x0804859d: Basic block reasons: 
-0x0804859d: 8b 45 f8                |.E.     |          mov    eax, dword ss:[ebp + 0xf8<-8>]
-0x080485a0: 3b 45 08                |;E.     |          cmp    eax, dword ss:[ebp + 0x08]
-0x080485a3: 7c db                   ||.      |          jl     0x08048580<<BBlock>>
+0x0804859d: 8b 45 f8                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x080485a0: 3b 45 08                |;E.     |<sp-20>   cmp    eax, dword ss:[ebp + 0x08]
+0x080485a3: 7c db                   ||.      |<sp-20>   jl     0x08048580<<BBlock>>
+0x080485a3: Outgoing stack delta: -20
 0x080485a3: Successor blocks: 0x08048580, 0x080485a5
 
 0x080485a5: Basic block reasons: 
-0x080485a5: 8b 45 fc                |.E.     |          mov    eax, dword ss:[ebp + 0xfc<-4>]
-0x080485a8: c9                      |.       |          leave  
-0x080485a9: c3                      |.       |          ret    
+0x080485a5: 8b 45 fc                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x080485a8: c9                      |.       |<sp-20>   leave  
+0x080485a9: c3                      |.       |<sp+0 >   ret    
+0x080485a9: Outgoing stack delta: +4
 0x080485a9: Successor blocks: unknown
 
 0x080485aa: ================================== Function (symbol, graph) <flow06>
+0x080485aa: Function stack delta: +4
 
 0x080485aa: Basic block reasons: entry point, CFG head
-0x080485aa: 55                      |U       |          push   ebp
-0x080485ab: 89 e5                   |..      |          mov    ebp, esp
-0x080485ad: 83 ec 10                |...     |          sub    esp, 0x10
-0x080485b0: c7 45 fc 00 00 00 00    |.E..... |          mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
-0x080485b7: c7 45 f8 00 00 00 00    |.E..... |          mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
-0x080485be: eb 20                   |.       |          jmp    0x080485e0<<BBlock>>
+0x080485aa: 55                      |U       |<sp+0 >   push   ebp
+0x080485ab: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080485ad: 83 ec 10                |...     |<sp-4 >   sub    esp, 0x10
+0x080485b0: c7 45 fc 00 00 00 00    |.E..... |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x080485b7: c7 45 f8 00 00 00 00    |.E..... |<sp-20>   mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
+0x080485be: eb 20                   |.       |<sp-20>   jmp    0x080485e0<<BBlock>>
+0x080485be: Outgoing stack delta: -20
 0x080485be: Successor blocks: 0x080485e0
 
 0x080485c0: Basic block reasons: 
-0x080485c0: 8b 45 f8                |.E.     |          mov    eax, dword ss:[ebp + 0xf8<-8>]
-0x080485c3: 83 e0 01                |...     |          and    eax, 0x01
-0x080485c6: 84 c0                   |..      |          test   al, al
-0x080485c8: 74 0a                   |t.      |          je     0x080485d4<<BBlock>>
+0x080485c0: 8b 45 f8                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x080485c3: 83 e0 01                |...     |<sp-20>   and    eax, 0x01
+0x080485c6: 84 c0                   |..      |<sp-20>   test   al, al
+0x080485c8: 74 0a                   |t.      |<sp-20>   je     0x080485d4<<BBlock>>
+0x080485c8: Outgoing stack delta: -20
 0x080485c8: Successor blocks: 0x080485ca, 0x080485d4
 
 0x080485ca: Basic block reasons: 
-0x080485ca: 8b 45 0c                |.E.     |          mov    eax, dword ss:[ebp + 0x0c]
-0x080485cd: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x080485cf: 01 45 fc                |.E.     |          add    dword ss:[ebp + 0xfc<-4>], eax
-0x080485d2: eb 08                   |..      |          jmp    0x080485dc<<BBlock>>
+0x080485ca: 8b 45 0c                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x0c]
+0x080485cd: 8b 00                   |..      |<sp-20>   mov    eax, dword ds:[eax]
+0x080485cf: 01 45 fc                |.E.     |<sp-20>   add    dword ss:[ebp + 0xfc<-4>], eax
+0x080485d2: eb 08                   |..      |<sp-20>   jmp    0x080485dc<<BBlock>>
+0x080485d2: Outgoing stack delta: -20
 0x080485d2: Successor blocks: 0x080485dc
 
 0x080485d4: Basic block reasons: 
-0x080485d4: 8b 45 10                |.E.     |          mov    eax, dword ss:[ebp + 0x10]
-0x080485d7: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x080485d9: 01 45 fc                |.E.     |          add    dword ss:[ebp + 0xfc<-4>], eax
+0x080485d4: 8b 45 10                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x10]
+0x080485d7: 8b 00                   |..      |<sp-20>   mov    eax, dword ds:[eax]
+0x080485d9: 01 45 fc                |.E.     |<sp-20>   add    dword ss:[ebp + 0xfc<-4>], eax
+0x080485d9: Outgoing stack delta: -20
 0x080485d9: Successor blocks: 0x080485dc
 
 0x080485dc: Basic block reasons: 
-0x080485dc: 83 45 f8 01             |.E..    |          add    dword ss:[ebp + 0xf8<-8>], 0x01
+0x080485dc: 83 45 f8 01             |.E..    |<sp-20>   add    dword ss:[ebp + 0xf8<-8>], 0x01
+0x080485dc: Outgoing stack delta: -20
 0x080485dc: Successor blocks: 0x080485e0
 
 0x080485e0: Basic block reasons: 
-0x080485e0: 8b 45 f8                |.E.     |          mov    eax, dword ss:[ebp + 0xf8<-8>]
-0x080485e3: 3b 45 08                |;E.     |          cmp    eax, dword ss:[ebp + 0x08]
-0x080485e6: 7c d8                   ||.      |          jl     0x080485c0<<BBlock>>
+0x080485e0: 8b 45 f8                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x080485e3: 3b 45 08                |;E.     |<sp-20>   cmp    eax, dword ss:[ebp + 0x08]
+0x080485e6: 7c d8                   ||.      |<sp-20>   jl     0x080485c0<<BBlock>>
+0x080485e6: Outgoing stack delta: -20
 0x080485e6: Successor blocks: 0x080485c0, 0x080485e8
 
 0x080485e8: Basic block reasons: 
-0x080485e8: 8b 45 fc                |.E.     |          mov    eax, dword ss:[ebp + 0xfc<-4>]
-0x080485eb: c9                      |.       |          leave  
-0x080485ec: c3                      |.       |          ret    
+0x080485e8: 8b 45 fc                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x080485eb: c9                      |.       |<sp-20>   leave  
+0x080485ec: c3                      |.       |<sp+0 >   ret    
+0x080485ec: Outgoing stack delta: +4
 0x080485ec: Successor blocks: unknown
 
 0x080485ed: ================================== Function (symbol, graph) <flow07>
+0x080485ed: Function stack delta: +4
 
 0x080485ed: Basic block reasons: entry point, CFG head
-0x080485ed: 55                      |U       |          push   ebp
-0x080485ee: 89 e5                   |..      |          mov    ebp, esp
-0x080485f0: 83 ec 10                |...     |          sub    esp, 0x10
-0x080485f3: c7 45 fc 00 00 00 00    |.E..... |          mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
-0x080485fa: 83 7d 08 00             |.}..    |          cmp    dword ss:[ebp + 0x08], 0x00
-0x080485fe: 75 08                   |u.      |          jne    0x08048608<<BBlock>>
+0x080485ed: 55                      |U       |<sp+0 >   push   ebp
+0x080485ee: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x080485f0: 83 ec 10                |...     |<sp-4 >   sub    esp, 0x10
+0x080485f3: c7 45 fc 00 00 00 00    |.E..... |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x080485fa: 83 7d 08 00             |.}..    |<sp-20>   cmp    dword ss:[ebp + 0x08], 0x00
+0x080485fe: 75 08                   |u.      |<sp-20>   jne    0x08048608<<BBlock>>
+0x080485fe: Outgoing stack delta: -20
 0x080485fe: Successor blocks: 0x08048600, 0x08048608
 
 0x08048600: Basic block reasons: 
-0x08048600: 8b 45 0c                |.E.     |          mov    eax, dword ss:[ebp + 0x0c]
-0x08048603: 89 45 fc                |.E.     |          mov    dword ss:[ebp + 0xfc<-4>], eax
-0x08048606: eb 06                   |..      |          jmp    0x0804860e<<BBlock>>
+0x08048600: 8b 45 0c                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x0c]
+0x08048603: 89 45 fc                |.E.     |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], eax
+0x08048606: eb 06                   |..      |<sp-20>   jmp    0x0804860e<<BBlock>>
+0x08048606: Outgoing stack delta: -20
 0x08048606: Successor blocks: 0x0804860e
 
 0x08048608: Basic block reasons: 
-0x08048608: 8b 45 10                |.E.     |          mov    eax, dword ss:[ebp + 0x10]
-0x0804860b: 89 45 fc                |.E.     |          mov    dword ss:[ebp + 0xfc<-4>], eax
+0x08048608: 8b 45 10                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0x10]
+0x0804860b: 89 45 fc                |.E.     |<sp-20>   mov    dword ss:[ebp + 0xfc<-4>], eax
+0x0804860b: Outgoing stack delta: -20
 0x0804860b: Successor blocks: 0x0804860e
 
 0x0804860e: Basic block reasons: 
-0x0804860e: 8b 45 fc                |.E.     |          mov    eax, dword ss:[ebp + 0xfc<-4>]
-0x08048611: 8b 00                   |..      |          mov    eax, dword ds:[eax]
-0x08048613: c9                      |.       |          leave  
-0x08048614: c3                      |.       |          ret    
+0x0804860e: 8b 45 fc                |.E.     |<sp-20>   mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x08048611: 8b 00                   |..      |<sp-20>   mov    eax, dword ds:[eax]
+0x08048613: c9                      |.       |<sp-20>   leave  
+0x08048614: c3                      |.       |<sp+0 >   ret    
+0x08048614: Outgoing stack delta: +4
 0x08048614: Successor blocks: unknown
 
 0x08048620: ================================== Function (symbol, graph) <__libc_csu_fini>
+0x08048620: Function stack delta: +4
 
 0x08048620: Basic block reasons: entry point, CFG head
-0x08048620: 55                      |U       |          push   ebp
-0x08048621: 89 e5                   |..      |          mov    ebp, esp
-0x08048623: 5d                      |]       |          pop    ebp
-0x08048624: c3                      |.       |          ret    
+0x08048620: 55                      |U       |<sp+0 >   push   ebp
+0x08048621: 89 e5                   |..      |<sp-4 >   mov    ebp, esp
+0x08048623: 5d                      |]       |<sp-4 >   pop    ebp
+0x08048624: c3                      |.       |<sp+0 >   ret    
+0x08048624: Outgoing stack delta: +4
 0x08048624: Successor blocks: unknown
 
 0x08048630: ================================== Function (symbol, graph) <__libc_csu_init>

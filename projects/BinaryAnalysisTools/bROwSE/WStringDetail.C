@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WStringDetail.h>
 
 #include <boost/algorithm/string/case_conv.hpp>

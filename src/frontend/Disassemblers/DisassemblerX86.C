@@ -113,6 +113,8 @@ DisassemblerX86::init(size_t wordsize)
     set_sex(ByteOrder::ORDER_LSB);
     ASSERT_not_null(get_registers());
 
+    callingConventions(CallingConvention::dictionaryX86());
+
     /* Not actually necessary because we'll call it before each instruction. We call it here just to initialize all the data
      * members to reasonable values for debugging. */
     startInstruction(0, NULL, 0);

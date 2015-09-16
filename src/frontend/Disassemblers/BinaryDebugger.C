@@ -194,7 +194,7 @@ BinaryDebugger::init() {
     userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     15,               0, 64), 0x0190); // 16
     //                                                                                       0x01a0
 
-#elif defined(__linux) && defined(__x86_64) && __WORDSIZE==32
+#elif defined(__linux) && defined(__x86) && __WORDSIZE==32
     //------------------------------------                                                 struct  struct
     // Entries for 32-bit user_regs_struct                                                 offset  size
     //------------------------------------                                                 (byte)  (bytes)
@@ -374,7 +374,7 @@ BinaryDebugger::clearBreakpoint(const AddressInterval &va) {
 
 void
 BinaryDebugger::singleStep() {
-    sendCommand(PTRACE_SINGLESTEP, child_, 0, (void*)sendSignal_);
+    sendCommand(PTRACE_SINGLESTEP, child_, 0, (void*)sendSignal_);// void* cast is okay--it's part of the Linux ptrace API
     waitForChild();
 }
 
@@ -488,7 +488,7 @@ BinaryDebugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
 void
 BinaryDebugger::runToBreakpoint() {
     if (breakpoints_.isEmpty()) {
-        sendCommand(PTRACE_CONT, child_, 0, (void*)sendSignal_);
+        sendCommand(PTRACE_CONT, child_, 0, (void*)sendSignal_);// void* cast is okay--it's part of the Linux ptrace API
         waitForChild();
     } else {
         while (1) {

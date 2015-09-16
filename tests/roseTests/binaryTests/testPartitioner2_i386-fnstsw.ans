@@ -1,11 +1,12 @@
 /* Interpretation ELF */
 0x080480a0: ================================== Function (entry point, graph) <_start>
+0x080480a0: Function does not return to caller.
 
 0x080480a0: Basic block reasons: entry point, CFG head
-0x080480a0: df e0                   |..      |          fnstsw ax
-0x080480a2: dd 3d 02 00 00 04       |.=....  |          fnstsw word ds:[0x04000002]
-0x080480a8: b8 01 00 00 00          |.....   |          mov    eax, 0x00000001
-0x080480ad: cd 80                   |..      |          int    0x80<-128>
+0x080480a0: df e0                   |..      |<sp+0 >   fnstsw ax
+0x080480a2: dd 3d 02 00 00 04       |.=....  |<sp+0 >   fnstsw word ds:[0x04000002]
+0x080480a8: b8 01 00 00 00          |.....   |<sp+0 >   mov    eax, 0x00000001
+0x080480ad: cd 80                   |..      |<sp+0 >   int    0x80<-128>
 0x080480af: f4                      |.       |          hlt    
 0x080480af: Successor blocks: none
 

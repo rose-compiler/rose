@@ -321,24 +321,45 @@ buildTypeI64() {
 SgAsmFloatType*
 buildIeee754Binary32() {
     static SgAsmFloatType *cached = NULL;
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmFloatType(ByteOrder::ORDER_LSB, 32, 0, 23, 31, 23, 8, 127));
+    if (!cached) {
+        SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 32,
+                                                    SgAsmFloatType::BitRange::baseSize(0, 23), // significand
+                                                    SgAsmFloatType::BitRange::baseSize(23, 8), // exponent
+                                                    31,                                        // sign bit
+                                                    127,                                       // exponent bias
+                                                    SgAsmFloatType::NORMALIZED_SIGNIFICAND|SgAsmFloatType::GRADUAL_UNDERFLOW);
+        cached = SgAsmType::registerOrDelete(fpType);
+    }
     return cached;
 }
 
 SgAsmFloatType*
 buildIeee754Binary64() {
     static SgAsmFloatType *cached = NULL;
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmFloatType(ByteOrder::ORDER_LSB, 64, 0, 52, 63, 52, 11, 1023));
+    if (!cached) {
+        SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 64,
+                                                    SgAsmFloatType::BitRange::baseSize(0, 52),  // significand
+                                                    SgAsmFloatType::BitRange::baseSize(52, 11), // exponent
+                                                    63,                                         // sign bit
+                                                    1023,                                       // exponent bias
+                                                    SgAsmFloatType::NORMALIZED_SIGNIFICAND|SgAsmFloatType::GRADUAL_UNDERFLOW);
+        cached = SgAsmType::registerOrDelete(fpType);
+    }
     return cached;
 }
 
 SgAsmFloatType*
 buildIeee754Binary80() {
     static SgAsmFloatType *cached = NULL;
-    if (!cached)
-        cached = SgAsmType::registerOrDelete(new SgAsmFloatType(ByteOrder::ORDER_LSB, 80, 0, 64, 79, 64, 15, 16383));
+    if (!cached) {
+        SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 80,
+                                                    SgAsmFloatType::BitRange::baseSize(0, 64),  // significand
+                                                    SgAsmFloatType::BitRange::baseSize(64, 15), // exponent
+                                                    79,                                         // sign bit
+                                                    16383,                                      // exponent bias
+                                                    SgAsmFloatType::NORMALIZED_SIGNIFICAND|SgAsmFloatType::GRADUAL_UNDERFLOW);
+        cached = SgAsmType::registerOrDelete(fpType);
+    }
     return cached;
 }
 
@@ -387,8 +408,15 @@ buildTypeX86Float80() {
 SgAsmFloatType*
 buildTypeM68kFloat96() {
     static SgAsmFloatType *cached = NULL;
-    if (!cached)
-        cached = new SgAsmFloatType(ByteOrder::ORDER_MSB, 96, 0, 64, 95, 80, 15, 16383);
+    if (!cached) {
+        SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 96,
+                                                    SgAsmFloatType::BitRange::baseSize(0, 64),  // significand
+                                                    SgAsmFloatType::BitRange::baseSize(80, 15), // exponent
+                                                    95,                                         // sign bit
+                                                    16383,                                      // exponent bias
+                                                    SgAsmFloatType::NORMALIZED_SIGNIFICAND|SgAsmFloatType::GRADUAL_UNDERFLOW);
+        cached = SgAsmType::registerOrDelete(fpType);
+    }
     return cached;
 }
 

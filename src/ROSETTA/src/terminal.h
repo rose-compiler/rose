@@ -413,6 +413,8 @@ class Terminal
   // DQ (10/4/2014): Support for ATerms.
      std::string buildAtermSupport();
 
+     // MS (5/27/2015)
+     std::string outputFields();
    };
 
 #endif

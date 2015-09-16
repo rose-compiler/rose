@@ -278,7 +278,6 @@ findInterruptFunctions(const Partitioner &partitioner, rose_addr_t vectorVa) {
     return functions;
 }
 
-
 } // namespace
 } // namespace
 } // namespace

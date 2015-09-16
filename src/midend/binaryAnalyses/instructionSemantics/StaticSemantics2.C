@@ -1,5 +1,7 @@
 #include "sage3basic.h"
 #include "StaticSemantics2.h"
+
+#include "Disassembler.h"
 #include "stringify.h"
 
 namespace rose {

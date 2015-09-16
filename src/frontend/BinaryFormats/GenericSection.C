@@ -475,20 +475,17 @@ SgAsmGenericSection::read_content_local_sleb128(rose_addr_t *rel_offset, bool st
 rose_addr_t
 SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, const void *buf) const
 {
-    size_t nwrite, nzero;
+    size_t nwrite;
 
     ROSE_ASSERT(this != NULL);
 
     /* Don't write past end of section */
     if (offset>=get_size()) {
         nwrite = 0;
-        nzero  = bufsize;
     } else if (offset+bufsize<=get_size()) {
         nwrite = bufsize;
-        nzero = 0;
     } else {
         nwrite = get_size() - offset;
-        nzero = bufsize - nwrite;
     }
 
     /* Don't write past end of current EOF if we can help it. */
@@ -696,16 +693,12 @@ SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map) const
         Extent e = i->first;
         assert(e.first()+e.size() <= get_size());
         const unsigned char *extent_data;
-        size_t nwrite;
         if (e.first() >= p_data.size()) {
             extent_data = NULL;
-            nwrite = 0;
         } else if (e.first() + e.size() > p_data.size()) {
             extent_data = &p_data[e.first()];
-            nwrite = p_data.size() - e.first();
         } else {
             extent_data = &p_data[e.first()];
-            nwrite = e.size();
         }
         if (extent_data)
             write(f, e.first(), e.size(), extent_data);
