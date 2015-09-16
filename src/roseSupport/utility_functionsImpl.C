@@ -1,9 +1,10 @@
 #ifdef TEMPLATE_IMPLEMENTATIONS
 
+#include "sage3basic.h"
+
 #ifndef UTILITY_FUNCTION_TEMPLATES_C
 #define UTILITY_FUNCTION_TEMPLATES_C
 
-#include "sage3basic.h"
 #include "AstDOTGeneration.h"
 #include "wholeAST_API.h"
 
