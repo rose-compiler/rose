@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_cmake Installing CMake
+/** @defgroup installing_cmake Installing CMake
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing <a href="http://www.cmake.org">CMake</a>, a ROSE software dependency.
  *

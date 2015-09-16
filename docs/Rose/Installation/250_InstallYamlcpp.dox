@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_yamlcpp Installing YAML-cpp
+/** @defgroup installing_yamlcpp Installing YAML-cpp
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing <a href="https://github.com/jbeder/yaml-cpp">YAML-cpp</a>, a ROSE software dependency.
  *

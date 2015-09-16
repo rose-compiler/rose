@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_wget Installing wget
+/** @defgroup installing_wget Installing wget
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing <a href="https://www.gnu.org/software/wget">wget</a>, a ROSE software dependency.
  *

@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_wt Installing Wt
+/** @defgroup installing_wt Installing Wt
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing <a href="http://www.webtoolkit.eu/wt">Wt</a>, a ROSE software dependency.
  *

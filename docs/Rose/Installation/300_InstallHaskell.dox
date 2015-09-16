@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_haskell Installing Haskell
+/** @defgroup installing_haskell Installing Haskell
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing <a href="http://www.haskell.org/ghc">ghc</a>, a ROSE software dependency.
  *

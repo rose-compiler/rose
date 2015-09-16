@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_readline Installing GNU readline
+/** @defgroup installing_readline Installing GNU readline
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing <a href="http://cnswww.cns.cwru.edu/php/chet/readline/rltop.html">GNU readline</a>, a ROSE
  *  software dependency.

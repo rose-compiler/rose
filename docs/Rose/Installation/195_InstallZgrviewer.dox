@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_zgrviewer Installing ZGRViewer
+/** @defgroup installing_zgrviewer Installing ZGRViewer
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing <a href="http://zvtm.sourceforge.net/zgrviewer.html">ZGRViewer</a>, a ROSE software dependency.
  *

@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_crypto Installing cryptography libraries
+/** @defgroup installing_crypto Installing cryptography libraries
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing cryptography libraries that are ROSE software dependencies.
  *

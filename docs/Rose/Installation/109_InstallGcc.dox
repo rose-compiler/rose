@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_gcc Installing the GNU Compiler Collection
+/** @defgroup installing_gcc Installing the GNU Compiler Collection
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing <a href="https://gcc.gnu.org">GCC</a>, a ROSE software dependency.
  *

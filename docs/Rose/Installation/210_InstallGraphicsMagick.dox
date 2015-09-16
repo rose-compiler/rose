@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_graphicsmagick Installing GraphicsMagick
+/** @defgroup installing_graphicsmagick Installing GraphicsMagick
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing <a href="http://www.graphicsmagick.org">GraphicsMagick</a>, a ROSE software dependency.
  *

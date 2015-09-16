@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_flexbison Installing flex and bison.
+/** @defgroup installing_flexbison Installing flex and bison.
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing <a href="http://flex.sourceforge.net">Flex</a> and <a
  *  href="https://www.gnu.org/software/bison">bison</a>, ROSE software dependencies.

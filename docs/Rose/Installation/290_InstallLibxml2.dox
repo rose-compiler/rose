@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_libxml2 Installing libxml2
+/** @defgroup installing_libxml2 Installing libxml2
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing <a href="http://xmlsoft.org">libxml2</a>, a ROSE software dependency.
  *

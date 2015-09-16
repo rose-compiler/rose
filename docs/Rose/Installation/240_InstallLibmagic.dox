@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_libmagic Installing libmagic
+/** @defgroup installing_libmagic Installing libmagic
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing <a href="https://packages.debian.org/unstable/libdevel/libmagic-dev">libmagic</a>, a ROSE
  *  software dependency.

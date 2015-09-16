@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_jre Installing the Java runtime environment
+/** @defgroup installing_jre Installing the Java runtime environment
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing the Java runtime environment, a ROSE software dependency.
  *

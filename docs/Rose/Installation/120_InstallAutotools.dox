@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_autotools Installing GNU Autotools
+/** @defgroup installing_autotools Installing GNU Autotools
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing GNU autotools, a ROSE software dependency.
  *

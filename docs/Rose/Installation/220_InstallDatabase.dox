@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page installing_database Installing a Relational Database Management System
+/** @defgroup installing_database Installing a Relational Database Management System
+ *  @ingroup software_dependencies
  *
  *  Instructions for installing <a href="https://sqlite.org">SQLite3</a> and/or
  *  <a href="http://www.postgresql.org">PostgreSQL</a>, a ROSE software dependency.
