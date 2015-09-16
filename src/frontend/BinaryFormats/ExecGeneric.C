@@ -80,28 +80,18 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
              * immediately after the DOS File Header (various forms of Extended DOS Header exist). The Extended DOS Header
              * contains a file offset to a PE, NE, LE, or LX File Header, the first bytes of which are a magic number. The
              * is_* methods check for this magic number. */
-            SgAsmGenericHeader *big_hdr = NULL;
             if (SgAsmPEFileHeader::is_PE(ef)) {
                 SgAsmDOSExtendedHeader *dos2_hdr = new SgAsmDOSExtendedHeader(dos_hdr);
                 dos2_hdr->parse();
                 SgAsmPEFileHeader *pe_hdr = new SgAsmPEFileHeader(ef);
                 pe_hdr->set_offset(dos2_hdr->get_e_lfanew());
                 pe_hdr->parse();
-                big_hdr = pe_hdr;
             } else if (SgAsmNEFileHeader::is_NE(ef)) {
                 SgAsmNEFileHeader::parse(dos_hdr);
             } else if (SgAsmLEFileHeader::is_LE(ef)) { /*or LX*/
                 SgAsmLEFileHeader::parse(dos_hdr);
             }
-
-#if 0 /*This iterferes with disassembling the DOS interpretation*/
-            /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header,
-             * constrain it to not extend beyond the beginning of the PE, NE, LE, or LX file header. This makes detecting
-             * holes in the PE format much easier. */
-            dos_hdr->parse_rm_section(big_hdr ? big_hdr->get_offset() : 0);
-#else
             dos_hdr->parse_rm_section(0);
-#endif
         } else {
             if (ef) delete ef->get_data_converter();
             SageInterface::deleteAST(ef);      /* ~SgAsmGenericFile() closes ef->p_fd if it was opened. */

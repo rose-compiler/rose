@@ -6,7 +6,6 @@
 #include "callbacks.h"          /* Needed for ROSE_Callbacks::List<> */
 #include "BinaryControlFlow.h"
 #include "BinaryFunctionCall.h"
-#include "Disassembler.h"
 #include "BaseSemantics2.h"
 
 class SgAsmInstruction;
@@ -16,6 +15,8 @@ class SgAsmInterpretation;
 
 namespace rose {
 namespace BinaryAnalysis {
+
+class Disassembler;
 
 /** Unparses binary AST into text.
  *

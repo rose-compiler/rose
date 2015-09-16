@@ -1,7 +1,13 @@
 
-//typedef unsigned long size_t;
-
-#include <stdlib.h>
+// TV (7/24/2015): including cstdlib causes:
+//      rose/src/backend/unparser/nameQualificationSupport.C:5293:
+//               virtual NameQualificationInheritedAttribute NameQualificationTraversal::evaluateInheritedAttribute(SgNode*, NameQualificationInheritedAttribute):
+//               Assertion `currentStatement != __null' failed.
+#if 1
+typedef unsigned long size_t;
+#else
+#include <cstdlib>
+#endif
 
 /* CUDA Built-in Types */
 
