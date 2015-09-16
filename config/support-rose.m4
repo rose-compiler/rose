@@ -2257,6 +2257,7 @@ docs/Rose/ROSE_DeveloperInstructions.tex
 docs/Rose/ROSE_DemoGuide.tex
 docs/Rose/gettingStarted.tex
 docs/Rose/rose.cfg
+docs/Rose/rose-install-demo.cfg
 docs/Rose/roseQtWidgets.doxygen
 docs/Rose/sage.cfg
 docs/Rose/Tutorial/Makefile
