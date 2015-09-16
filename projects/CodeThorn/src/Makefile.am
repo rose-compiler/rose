@@ -6,22 +6,88 @@ EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 
-bin_PROGRAMS = codethorn matcher_demo varwatch woodpecker analyterix
+bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo varwatch
 
-#ast_demo matcher_demo iterator_test
 CLEANFILES = 
 
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_PREFIX)/lib
 
-noinst_PROGRAMS = addressTakenAnalysis 
+noinst_PROGRAMS = addressTakenAnalysis matcher_demo varwatch
 
 MYDATE = $(shell date +%Y_%m_%d)
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_builddir) -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include
+#AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_builddir) -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/Codethorn/src -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include
+
+pkglib_LTLIBRARIES = libspray.la
+libspray_la_LDFLAGS= -no-undefined
+libspray_la_SOURCES=\
+ AliasAnalysis.h \
+ AnalysisAbstractionLayer.h \
+ AnalysisAstAnnotator.h \
+ AstTerm.h \
+ AType.h \
+ CFAnalysis.h \
+ DFAnalysisBase.h \
+ DFTransferFunctions.h \
+ IntervalAnalysis.h \
+ IntervalAstAttribute.h \
+ IntervalAstAttributeInterface.h \
+ IntervalPropertyState.h \
+ IntervalPropertyStateFactory.h \
+ IntervalTransferFunctions.h \
+ LVAnalysis.h \
+ LVAstAttribute.h \
+ LVAstAttributeInterface.h \
+ LVLattice.h \
+ LVTransferFunctions.h \
+ LanguageRestrictor.h \
+ Miscellaneous2.h \
+ NumberIntervalLattice.h \
+ PASolver1.h \
+ PointerAnalysisInterface.h \
+ RDAnalysis.h \
+ RDAstAttribute.h \
+ RDTransferFunctions.h \
+ WorkListSeq.h \
+ AnalysisAstAnnotator.C \
+ AliasAnalysis.C \
+ AstTerm.C \
+ AType.C \
+ CFAnalysis.C \
+ CppExprEvaluator.C \
+ DFAnalysisBase.C \
+ DFTransferFunctions.C \
+ Flow.C \
+ IntervalAnalysis.C \
+ IntervalAstAttribute.C \
+ IntervalPropertyStateFactory.C \
+ IntervalPropertyState.C \
+ IntervalTransferFunctions.C \
+ IntervalAstAttributeInterface.C \
+ LanguageRestrictor.C \
+ Lattice.C \
+ LVAnalysis.C \
+ LVAstAttribute.C \
+ LVAstAttributeInterface.C \
+ LVLattice.C \
+ LVTransferFunctions.C \
+ Miscellaneous2.C \
+ NumberIntervalLattice.C \
+ PASolver1.C \
+ PointerAnalysisInterface.C \
+ PropertyState.C \
+ RDAnalysis.C \
+ RDAstAttribute.C \
+ RDLattice.C \
+ RDTransferFunctions.C \
+ VariableIdUtils.C \
+ AnalysisAbstractionLayer.C \
+ addressTakenAnalysis.C \
+ defUseQuery.C
 
 # this line create speparately named object files
-codethorn_CXXFLAGS = $(KNOBS) -fopenmp -Wall -O3 -march=native -ftree-vectorize
-
+codethorn_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
 codethorn_DEPENDENCIES=libspray.la
 codethorn_LDADD = -lrose -lspot -lbdd -lspray
 codethorn_SOURCES = \
@@ -373,73 +439,6 @@ analyterix_SOURCES = \
 #ast_demo_LFLAGS = -Pmatcher
 #ast_demo_YFLAGS = -d -p matcher
 
-pkglib_LTLIBRARIES = libspray.la
-libspray_la_LDFLAGS= -no-undefined
-libspray_la_LDFLAGS=
-libspray_la_SOURCES=\
- AliasAnalysis.h \
- AnalysisAbstractionLayer.h \
- AnalysisAstAnnotator.h \
- AstTerm.h \
- AType.h \
- CFAnalysis.h \
- DFAnalysisBase.h \
- DFTransferFunctions.h \
- IntervalAnalysis.h \
- IntervalAstAttribute.h \
- IntervalAstAttributeInterface.h \
- IntervalPropertyState.h \
- IntervalPropertyStateFactory.h \
- IntervalTransferFunctions.h \
- LVAnalysis.h \
- LVAstAttribute.h \
- LVAstAttributeInterface.h \
- LVLattice.h \
- LVTransferFunctions.h \
- LanguageRestrictor.h \
- Miscellaneous2.h \
- NumberIntervalLattice.h \
- PASolver1.h \
- PointerAnalysisInterface.h \
- RDAnalysis.h \
- RDAstAttribute.h \
- RDTransferFunctions.h \
- WorkListSeq.h \
- AnalysisAstAnnotator.C \
- AliasAnalysis.C \
- AstTerm.C \
- AType.C \
- CFAnalysis.C \
- CppExprEvaluator.C \
- DFAnalysisBase.C \
- DFTransferFunctions.C \
- Flow.C \
- IntervalAnalysis.C \
- IntervalAstAttribute.C \
- IntervalPropertyStateFactory.C \
- IntervalPropertyState.C \
- IntervalTransferFunctions.C \
- IntervalAstAttributeInterface.C \
- LanguageRestrictor.C \
- Lattice.C \
- LVAnalysis.C \
- LVAstAttribute.C \
- LVAstAttributeInterface.C \
- LVLattice.C \
- LVTransferFunctions.C \
- Miscellaneous2.C \
- NumberIntervalLattice.C \
- PASolver1.C \
- PointerAnalysisInterface.C \
- PropertyState.C \
- RDAnalysis.C \
- RDAstAttribute.C \
- RDLattice.C \
- RDTransferFunctions.C \
- VariableIdUtils.C \
- AnalysisAbstractionLayer.C \
- addressTakenAnalysis.C \
- defUseQuery.C
 
 check-local:
 	./codethorn --internal-checks				 

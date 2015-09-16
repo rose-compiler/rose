@@ -55,7 +55,6 @@ SUBDIRS = \
 
 # DQ (3/16/2015): Removed for temporary teesting.
 #	BinFuncDetect 
-#  CodeThorn
 
 # DQ (3/16/2015): Test for a version of g++ that will allow use of C++11 for the AMR Shift Calculs DSL work.
 if ROSE_USING_GCC_VERSION_LATER_4_8
