@@ -16,6 +16,8 @@
 #include "SgNodeHelper.h"
 #include "FIConstAnalysis.h"
 #include "TrivialInlining.h"
+#include "Threadification.h"
+#include "RewriteSystem.h"
 
 #include <vector>
 #include <set>
@@ -113,7 +115,6 @@ void printCodeStatistics(SgNode* root) {
   cout<<"----------------------------------------------------------------------"<<endl;
 }
 
-
 int main(int argc, char* argv[]) {
   try {
     if(argc==1) {
@@ -139,6 +140,7 @@ int main(int argc, char* argv[]) {
     ("rose-help", "show help for compiler frontend options.")
     ("version,v", "display the version.")
     ("stats", "display code statistics.")
+    ("normalize", po::value< string >(), "normalize code (eliminate compound assignment operators).")
     ("inline",po::value< string >(), "perform inlining ([yes]|no).")
     ("eliminate-empty-if",po::value< string >(), "eliminate if-statements with empty branches in main function ([yes]/no).")
     ("eliminate-dead-code",po::value< string >(), "eliminate dead code (variables and expressions) ([yes]|no).")
@@ -148,6 +150,7 @@ int main(int argc, char* argv[]) {
     ("generate-conversion-functions","generate code for conversion functions between variable names and variable addresses.")
     ("csv-assert",po::value< string >(), "name of csv file with reachability assert results'")
     ("enable-multi-const-analysis",po::value< string >(), "enable multi-const analysis.")
+    ("transform-thread-variable", "transform code to use additional thread variable.")
     ;
   //    ("int-option",po::value< int >(),"option info")
 
@@ -177,13 +180,13 @@ int main(int argc, char* argv[]) {
     csvConstResultFileName=args["csv-const-result"].as<string>().c_str();
   }
   
-  
   boolOptions.init(argc,argv);
   // temporary fake optinos
   boolOptions.registerOption("arith-top",false); // temporary
   boolOptions.registerOption("semantic-fold",false); // temporary
   boolOptions.registerOption("post-semantic-fold",false); // temporary
   // regular options
+  boolOptions.registerOption("normalize",false);
   boolOptions.registerOption("inline",true);
   boolOptions.registerOption("eliminate-empty-if",true);
   boolOptions.registerOption("eliminate-dead-code",true);
@@ -227,6 +230,18 @@ int main(int argc, char* argv[]) {
     exit(0);
   }
 
+  VariableIdMapping variableIdMapping;
+  variableIdMapping.computeVariableSymbolMapping(root);
+
+  if(args.count("transform-thread-variable")) {
+    Threadification* threadTransformation=new Threadification(&variableIdMapping);
+    threadTransformation->transform(root);
+    root->unparse(0,0);
+    delete threadTransformation;
+    cout<<"STATUS: generated program with introduced thread-variable."<<endl;
+    exit(0);
+  }
+
   SgFunctionDefinition* mainFunctionRoot=0;
   if(boolOptions["inline"]) {
     cout<<"STATUS: eliminating non-called trivial functions."<<endl;
@@ -254,11 +269,17 @@ int main(int argc, char* argv[]) {
     } while(num>0);
     cout<<"STATUS: Total number of empty if-statements eliminated: "<<numTotal<<endl;
   }
-  
-  cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
-  VariableIdMapping variableIdMapping;
-  variableIdMapping.computeVariableSymbolMapping(root);
 
+  if(boolOptions["normalize"]) {
+    cout <<"STATUS: Normalization started."<<endl;
+    RewriteSystem rewriteSystem;
+    rewriteSystem.resetStatistics();
+    rewriteSystem.rewriteCompoundAssignmentsInAst(root,&variableIdMapping);
+    cout <<"STATUS: Normalization finished."<<endl;
+
+  }
+ 
+  cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
   VarConstSetMap varConstSetMap;
   VariableIdSet variablesOfInterest;
   FIConstAnalysis fiConstAnalysis(&variableIdMapping);
@@ -271,9 +292,14 @@ int main(int argc, char* argv[]) {
     printResult(variableIdMapping,varConstSetMap);
 
   if(csvConstResultFileName) {
-    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&variableIdMapping);
-    cout<<"INFO: number of used vars inside functions: "<<setOfUsedVars.size()<<endl;
-    fiConstAnalysis.filterVariables(setOfUsedVars);
+    VariableIdSet setOfUsedVarsInFunctions=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&variableIdMapping);
+    VariableIdSet setOfUsedVarsGlobalInit=AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(root,&variableIdMapping);
+    VariableIdSet setOfAllUsedVars = setOfUsedVarsInFunctions;
+    setOfAllUsedVars.insert(setOfUsedVarsGlobalInit.begin(), setOfUsedVarsGlobalInit.end());
+    cout<<"INFO: number of used vars inside functions: "<<setOfUsedVarsInFunctions.size()<<endl;
+    cout<<"INFO: number of used vars in global initializations: "<<setOfUsedVarsGlobalInit.size()<<endl;
+    cout<<"INFO: number of vars inside functions or in global inititializations: "<<setOfAllUsedVars.size()<<endl;
+    fiConstAnalysis.filterVariables(setOfAllUsedVars);
     fiConstAnalysis.writeCvsConstResult(variableIdMapping, string(csvConstResultFileName));
   }
 
@@ -285,10 +311,12 @@ int main(int argc, char* argv[]) {
     for(std::list<SgVariableDeclaration*>::iterator i=globalVarDeclList.begin();i!=globalVarDeclList.end();++i) {
       SgInitializedNamePtrList& initNamePtrList=(*i)->get_variables();
       for(SgInitializedNamePtrList::iterator j=initNamePtrList.begin();j!=initNamePtrList.end();++j) {
-	SgInitializedName* initName=*j;
-	SgName varName=initName->get_name();
-	string varNameString=varName; // implicit conversion
-	varNameSet.insert(varNameString);
+	      SgInitializedName* initName=*j;
+        if ( true || isSgArrayType(initName->get_type()) ) {  // optional filter (array variables only)
+	        SgName varName=initName->get_name();
+	        string varNameString=varName; // implicit conversion
+	        varNameSet.insert(varNameString);
+        }
       }
     }
     string code=gen.generateCodeForGlobalVarAdressMaps(varNameSet);

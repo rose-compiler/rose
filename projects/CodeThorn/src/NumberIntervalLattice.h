@@ -25,12 +25,22 @@ namespace SPRAY {
     void operator*=(const Number& other);
     void operator/=(const Number& other);
     void operator%=(const Number& other);
+    void operator<<=(const Number& other);
+    void operator>>=(const Number& other);
     std::string toString() const;
     // TODO: artithmetic operators
   private:
     int _num;
   };
   
+  Number operator+(const Number& n1, const Number& n2);
+  Number operator-(const Number& n1, const Number& n2);
+  Number operator*(const Number& n1, const Number& n2);
+  Number operator/(const Number& n1, const Number& n2);
+  Number operator%(const Number& n1, const Number& n2);
+  Number operator<<(const Number& n1, const Number& n2);
+  Number operator>>(const Number& n1, const Number& n2);
+
   std::ostream& operator<< (std::ostream &out, Number &number);
  
   class NumberIntervalLattice : public SPRAY::GenericIntervalLattice<Number> {

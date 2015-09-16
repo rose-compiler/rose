@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------
-CodeThorn 1.2 (2012-10-12)
+CodeThorn
 ----------------------------------------------------------------------------
 
 CodeThorn is a tool for program analysis and verification. It analyzes
@@ -11,76 +11,21 @@ program analysis algorithms and approaches in program verification in
 combining above approaches. Therefore the target language is
 currently kept small and restircted to a small subset of C/C++.
 
-The implemented base approach is an instance of a general framework. The
-analysis is an interprocedural flow-sensitive analysis. Different
-forms of context information are currently investigated.
-
-CodeThorn 1.2 is based on the ROSE (LLNL) compiler framework and can
-analyse a subset of C/C++. Verification is supported with liner time
-logic formulae to specify properties of the input/output behaviour of
-a given program. Based on the results of a static analysis, the
-formulae are automatically proven to be true or false. Fur the
-currently supported subset no annotations are required by the user.
-
-Codethorn generates the results of the analysis either as textual
-output or as dot graphs (visualization).
-
-CodeThorn generates several visualizations of analysis results as dot output:
-
-1) AST (ast.dot) : blue nodes are labeled and correspond to one or more nodes
-   in the CFG, semantics of white nodes are handled by the transfer functions.
-2) Control flow graph (cfg.dot) : a control flow graph (as usual)
-3) Transition Graph (transitiongraph1.dot) : a graph showing the computed
-   system states. The nodes represent System States and consist of:
-   a) a label, representing an abstract program counter
-   b) a Property State
-   c) a Constraint Set
-   d) Input/Output and Exit information of the program (not finished in Alpha yet)
-   The edges represent state transitions and correspond to cfg edges. They are labeled
-   with the respective statement which has been analyzed by a transfer function.
-
-4) A folded Transition Graph (transitiongraph2.dot) : represents
-   essentially the same information as the transition graph above, but
-   folded for each program location. System states are represented as
-   single grey rectangles and associated as block structure with its
-   respective program location (represented as red blocks (with a
-   label)).
-   Edges: green edges represent true-branches
-          red edges represent false-branches
-		  black edges represent forward-edges
-          blue edges represent backward-edges (in loops)
-
-   "make viz" invokes dot to translate all visualizations to ps files. The ps files
-   are stored in the directory "viz".
-
-
-Data output formats:
-
-1) The state transition graph (STG) is generated as an external data
-file (for further processing by other analysis tools). The system
-states include all computed information about the program.
-2) Results of LTL verification and reachability analysis of specific
-program locations (CSV file)
-3) Analyzer statistics and timing information (CSV file)
-
-
-Multi-Core Support:
-
-CodeThorn 1.2 can be run in parallel using the command line option
---threads=<NUM> where NUM is the number of used OpenMP threads.
+Most of the analyses are limited to certain subsets of C or C++,
+demonstrating a certain approach, or allowing to reproduce published
+results.
 
 ----------------------------------------------------------------------------
 DOCUMENTATION:
 ----------------------------------------------------------------------------
 
-run "make docs". A doxygen documentation is generated as
-docs/doxygen/html/index.html
+Documentation can be found in the docs directory.
 
 ----------------------------------------------------------------------------
 AUTHORS:
 ----------------------------------------------------------------------------
 
-The authors of CodeThorn 1.2 are Markus Schordan and Adrian Prantl. 
+The authors of CodeThorn are Markus Schordan, Adrian Prantl, Marc Jasper.
 
 ----------------------------------------------------------------------------
 VERSION:
@@ -89,48 +34,16 @@ VERSION:
 see VERSION_HISTORY.
 
 ----------------------------------------------------------------------------
-AVAILABILITY:
-----------------------------------------------------------------------------
-
-CodeThorn is maintained as a (tracking) branch of ROSE. Contributions are
-pushed to the ROSE repository frequently. The latest version of CodeThorn
-is available on github at: git://github.com/mschordan/rose.git
-
-Website: http://staff.technikum-wien.at/~schordan/codethorn
-
-If you are interested in ROSE but not CodeThorn check out ROSE from:
-git://github.com/rose-compiler/rose.git
-
-----------------------------------------------------------------------------
 CodeThorn INSTALLATION:
 ----------------------------------------------------------------------------
 1) install ROSE
-2) set the following environment variables:
-   ROSE_INCLUDE_DIR=
-   ROSE_LIB_DIR=
-   BOOST_CPPFLAGS=
-   LD_LIBRARY_PATH=
-
-ROSE_INCLUDE_DIR should refer to the include directory of installed ROSE
-e.g. /home/myhomedir/roseinstall/include
-
-ROSE_LIB_DIR should refer to the library where the ROSE libary can be found
-e.g. /home/myhomedir/roseinstall/lib
-
-BOOST_CPPFLAGS should include flags which are required to compile with boost libs
-e.g. -pthread -I/home/myhomedir/boostinstall/include
-
-LD_LIBRARY_PATH should include the ROSE and BOOST libs
-e.g. LD_LIBRARY_PATH=/home/myhomedir/roseinstall/lib:/home/myhomedir/boostinstall/lib
-
-cd codethorn/src
-make
-make check
+2) cd projects/CodeThorn/src
+   make -j6
+   make install
 
 ----------------------------------------------------------------------------
 LICENSE
 ----------------------------------------------------------------------------
 
-We use a similar license as the ROSE project. CodeThorn is
+CodeThorn uses a similar license as the ROSE project. CodeThorn is
 maintained as a subproject of ROSE. See COPYING.
-

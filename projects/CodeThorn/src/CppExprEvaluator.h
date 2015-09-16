@@ -4,6 +4,7 @@
 #include "VariableIdMapping.h"
 #include "PropertyState.h"
 #include "NumberIntervalLattice.h"
+#include "PointerAnalysisInterface.h"
 
 namespace SPRAY {
 class CppExprEvaluator {
@@ -16,6 +17,8 @@ class CppExprEvaluator {
   void setVariableIdMapping(VariableIdMapping* variableIdMapping);
   bool isValid();
   void setShowWarnings(bool warnings);
+  void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pointerAnalysisInterface);
+  void setSoundness(bool s);
  private:
   bool isExprRootNode(SgNode* node);
   SgNode* findExprRootNode(SgNode* node);
@@ -23,6 +26,8 @@ class CppExprEvaluator {
   VariableIdMapping* variableIdMapping;
   PropertyState* propertyState;
   bool _showWarnings;
+  SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
+  bool _sound;
 };
 }
 #endif
