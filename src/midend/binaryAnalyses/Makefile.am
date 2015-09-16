@@ -8,7 +8,6 @@ libbinaryMidend_la_DEPENDENCIES =
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 libbinaryMidend_la_SOURCES =					\
     AbstractLocation.C						\
-    binary_analysis.C						\
     RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAnalysis.cpp	\
     RoseBin_printInstructions.cpp RoseBin_DataFlowAnalysis.cpp	\
     RoseBin_CallGraphAnalysis.cpp RoseBin_FlowAnalysis.cpp	\
@@ -67,7 +66,6 @@ endif
 
 pkginclude_HEADERS =					\
     AbstractLocation.h					\
-    binary_analysis.h					\
     GraphAlgorithms.h					\
     RoseBin_CallGraphAnalysis.h				\
     RoseBin_CompareAnalysis.h				\
