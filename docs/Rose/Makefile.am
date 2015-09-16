@@ -79,11 +79,17 @@ if ROSE_HAVE_DOXYGEN
 
 doxygen_docs: rose.cfg AvailableDocumentation.docs
 	$(DOXYGEN) rose.cfg
+	if [ "$(DOXYINDEXER)" != "" -a -e ROSE_WebPages/searchdata.xml ]; then	\
+	    $(DOXYINDEXER) ROSE_WebPages/searchdata.xml;			\
+	fi
 
 # A more complex dependence is defined that requires the sage.tag file
 $(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
 	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
 	$(DOXYGEN) rose.cfg
+	if [ "$(DOXYINDEXER)" != "" -a -e ROSE_WebPages/searchdata.xml ]; then	\
+	    $(DOXYINDEXER) ROSE_WebPages/searchdata.xml;			\
+	fi
 
 else
 
