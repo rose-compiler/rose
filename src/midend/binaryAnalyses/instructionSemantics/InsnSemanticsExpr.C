@@ -277,10 +277,13 @@ InternalNode::adjustWidth() {
         }
         case OP_SMUL:
         case OP_UMUL: {
-            ASSERT_require(nchildren() == 2);
-            ASSERT_require(child(0)->isScalar());
-            ASSERT_require(child(1)->isScalar());
-            nbits = child(0)->get_nbits() + child(1)->get_nbits();
+            ASSERT_require(nchildren() >= 1);
+            size_t totalWidth = 0;
+            for (size_t i=0; i<nchildren(); ++i) {
+                ASSERT_require(child(i)->isScalar());
+                totalWidth += child(i)->get_nbits();
+            }
+            nbits = totalWidth;
             domainWidth_ = 0;
             break;
         }
