@@ -254,7 +254,6 @@ protected:
     unsigned p_protection;                              /**< Memory protection bits that must be set to disassemble. */
     static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
     static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
-    static RTS_mutex_t class_mutex;                     /**< Mutex for class-wide thread safety */
 
     /** Prototypical dispatcher for creating real dispatchers */
     InstructionSemantics2::BaseSemantics::DispatcherPtr p_proto_dispatcher;
@@ -729,6 +728,7 @@ public:
 private:
     /** Initialize class (e.g., register built-in disassemblers). This class method is thread safe, using class_mutex. */
     static void initclass();
+    static void initclass_helper();
 
     /** Called only during construction. Thread safe. */
     void ctor();
