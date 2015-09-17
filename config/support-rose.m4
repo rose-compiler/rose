@@ -1986,6 +1986,11 @@ projects/RTC/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
+projects/ManyCoreRuntime2/Makefile
+projects/ManyCoreRuntime2/runtime/Makefile
+projects/ManyCoreRuntime2/transformation/Makefile
+projects/ManyCoreRuntime2/tests/Makefile
+projects/ManyCoreRuntime2/docs/Makefile
 projects/MapleDSL/Makefile
 projects/StencilManyCore/Makefile
 projects/mint/Makefile
