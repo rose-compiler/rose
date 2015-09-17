@@ -124,7 +124,7 @@ AC_COMPILE_IFELSE([struct S {int a, b;}; static __thread struct S x;],
          AC_MSG_RESULT([__thread])],
         [AC_MSG_RESULT([not supported])])
 
-# These headers and types are needed by projects/simulator [matzke 2009-07-02]
+# These headers and types are needed by projects/simulator2
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
 AC_CHECK_HEADERS([sys/types.h sys/mman.h sys/stat.h sys/uio.h sys/wait.h sys/utsname.h sys/ioctl.h sys/sysinfo.h sys/socket.h])
 AC_CHECK_HEADERS([termios.h grp.h syscall.h])

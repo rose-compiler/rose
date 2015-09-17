@@ -12,6 +12,21 @@ using namespace SPRAY;
 
 DFTransferFunctions::DFTransferFunctions():_labeler(0),_variableIdMapping(0){}
 
+void DFTransferFunctions::transfer(Edge edge, Lattice& element) {
+    Label lab0=edge.source;
+    // switch statement has its own transfer functions which are selected in transfer function
+    if(_labeler->isConditionLabel(lab0)&&!_labeler->isSwitchExprLabel(lab0)) {
+      transferCondition(edge,element);
+    } else {
+      transfer(lab0,element);
+    }
+}
+
+void DFTransferFunctions::transferCondition(Edge edge, Lattice& element) {
+  Label lab0=edge.source;
+  transfer(lab0,element);
+}
+
 void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   ROSE_ASSERT(_labeler);
   //cout<<"transfer @label:"<<lab<<endl;
@@ -25,24 +40,14 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     return;
   }
   if(_labeler->isFunctionCallLabel(lab)) {
-    // 1) f(x), 2) y=f(x) 3) y+=f(x)
-    if(isSgExprStatement(node)) {
-      node=SgNodeHelper::getExprStmtChild(node);
-    }
-    if(isSgAssignOp(node)||isSgCompoundAssignOp(node)) {
-      SgNode* rhs=SgNodeHelper::getRhs(node);
-      if(isSgFunctionCallExp(rhs)) {
-        node=rhs;
-      } else {
-        cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "<<node->class_name()<<endl;
-        exit(1);
-      }
-    }
-
-    if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
+    // 1) f(x), 2) y=f(x) (but not y+=f(x))
+    if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(node)) {
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
       transferFunctionCall(lab, funCall, arguments, element);
       return;
+    } else {
+      cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "<<funCall->class_name()<<endl;
+      exit(1);
     }
   }
 
@@ -61,9 +66,11 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
         exit(1);
       }
       SgNode* rhs=SgNodeHelper::getRhs(node);
+      while(isSgCastExp(rhs)) 
+        rhs=SgNodeHelper::getFirstChild(rhs);
       SgFunctionCallExp* funCall=isSgFunctionCallExp(rhs);
       if(!funCall) {
-        cerr<<"Transfer: no function call of rhs of assignment."<<endl;
+        cerr<<"Transfer: no function call on rhs of assignment."<<endl;
         cerr<<node->unparseToString()<<endl;
         exit(1);
       }
@@ -241,14 +248,16 @@ void DFTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* 
 }
 
 void DFTransferFunctions::addParameterPassingVariables() {
-  std::stringstream ss;
   std::string nameprefix="$p";
+  /* this variable is necessary to know the id-range where parameter
+     passing variable-ids are starting in the id-range.
+  */
   parameter0VariableId=_variableIdMapping->createUniqueTemporaryVariableId(nameprefix+"0");
   for(int i=1;i<20;i++) {
+    std::stringstream ss;
     ss<<nameprefix<<i;
     string varName=ss.str();
     _variableIdMapping->createUniqueTemporaryVariableId(varName);
-
   }
   resultVariableId=_variableIdMapping->createUniqueTemporaryVariableId("$r");
 }

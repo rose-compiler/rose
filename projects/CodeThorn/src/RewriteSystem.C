@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "RewriteSystem.h"
+#include "Timer.h"
 
 using namespace std;
 using namespace SPRAY;
@@ -58,13 +59,32 @@ void RewriteSystem::resetStatistics() {
 
 void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapping* variableIdMapping) {
   RoseAst ast(root);
+  typedef list<SgCompoundAssignOp*> AssignOpListType;
+  AssignOpListType assignOpList;
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(*i)) {
-      SgExpression* newRoot=isSgExpression(buildRewriteCompoundAssignment(*i,variableIdMapping));
-      ROSE_ASSERT(newRoot);
-      SgNodeHelper::replaceExpression(compoundAssignOp,newRoot);
+      assignOpList.push_back(compoundAssignOp);
     }
   }
+  size_t assignOpNum=assignOpList.size();
+  cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: started."<<endl;
+  size_t assignOpNr=1;
+  Timer timer;
+  double buildTime=0.0, replaceTime=0.0;
+  for(AssignOpListType::iterator i=assignOpList.begin();i!=assignOpList.end();++i) {
+    //cout<<"INFO: normalizing compound assign op "<<assignOpNr<<" of "<<assignOpNum<<endl;
+    timer.start();
+    SgExpression* newRoot=isSgExpression(buildRewriteCompoundAssignment(*i,variableIdMapping));
+    buildTime+=timer.getElapsedTimeInMilliSec();
+
+    ROSE_ASSERT(newRoot);
+    timer.start();
+    SgNodeHelper::replaceExpression(*i,newRoot);
+    replaceTime+=timer.getElapsedTimeInMilliSec();
+    assignOpNr++;
+    //cout<<"Buildtime: "<<buildTime<<" Replacetime: "<<replaceTime<<endl;
+  }
+  cout<<"INFO: transforming "<<assignOpNum<<" compound assignment expressions: done."<<endl;
 }
 
 SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMapping* variableIdMapping) {
@@ -74,7 +94,7 @@ SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMa
     SgExpression* lhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
     SgExpression* lhsCopy2=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
     SgExpression* rhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getRhs(root)));
-    SgExpression* newExp;
+    SgExpression* newExp=0;
     //TODO: check whether build functions set parent pointers
     switch(root->variantT()) {
     case V_SgPlusAssignOp:
@@ -88,6 +108,9 @@ SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMa
       return SageBuilder::buildAssignOp(lhsCopy2,newExp);
     case V_SgMultAssignOp:
       newExp=SageBuilder::buildMultiplyOp(lhsCopy,rhsCopy);
+      return SageBuilder::buildAssignOp(lhsCopy2,newExp);
+    case V_SgModAssignOp:
+      newExp=SageBuilder::buildModOp(lhsCopy,rhsCopy);
       return SageBuilder::buildAssignOp(lhsCopy2,newExp);
     default: /* ignore all other cases - all other expr remain unmodified */
       return 0;

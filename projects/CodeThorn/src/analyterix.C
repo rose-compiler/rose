@@ -35,6 +35,8 @@
 #include "AnalysisAbstractionLayer.h"
 #include "AliasAnalysis.h"
 
+#include "AstTerm.h"
+
 #include <vector>
 #include <set>
 #include <list>
@@ -68,6 +70,7 @@ bool option_rd_analysis=false;
 bool option_ud_analysis=false;
 bool option_lv_analysis=false;
 bool option_interval_analysis=false;
+bool option_check_static_array_bounds=false;
 bool option_at_analysis=false;
 bool option_trace=false;
 bool option_optimize_icfg=false;
@@ -93,6 +96,72 @@ void generateRessourceUsageVis(RDAnalysis* rdAnalyzer) {
   ps.setGenerateWithSource(false);
   ps.generateResourceUsageICFGDotFile("resourceusageicfg.dot");
   rdAnalyzer->getFlow()->resetDotOptions();
+}
+
+void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAnalysis) {
+  cout<<"STATUS: checking static array bounds."<<endl;
+  int issuesFound=0;
+  SPRAY::Labeler* labeler=intervalAnalysis->getLabeler();
+  for(Labeler::iterator j=labeler->begin();j!=labeler->end();++j) {
+    SgNode* node=labeler->getNode(*j);
+    std::string lineCol=SgNodeHelper::sourceLineColumnToString(node);
+    if(isSgStatement(node)&&!isSgFunctionDefinition(node)&&!isSgBasicBlock(node)) {
+      RoseAst ast(node);
+      for(RoseAst::iterator i=ast.begin();i!=ast.end();i++) {
+        if(SgPntrArrRefExp* arrRefExp=isSgPntrArrRefExp(*i)) {
+          SgNode* lhs=SgNodeHelper::getLhs(arrRefExp);
+          SgNode* rhs=SgNodeHelper::getRhs(arrRefExp);
+          // go to the right most expression of "x->y->...->z[i]"
+          while(isSgArrowExp(lhs)) {
+            lhs=SgNodeHelper::getRhs(isSgArrowExp(lhs));
+          }
+          SgVarRefExp* arrayVar=isSgVarRefExp(lhs);
+          SgVarRefExp* indexVar=isSgVarRefExp(rhs);
+          if(arrayVar&&indexVar) {
+            VariableIdMapping* variableIdMapping=intervalAnalysis->getVariableIdMapping();
+            VariableId arrayVarId=variableIdMapping->variableId(arrayVar);
+            VariableId indexVarId=variableIdMapping->variableId(indexVar);
+            IntervalPropertyState* intervalPropertyState=dynamic_cast<IntervalPropertyState*>(intervalAnalysis->getPreInfo(*j));
+            ROSE_ASSERT(intervalPropertyState);
+            if(!variableIdMapping->hasArrayType(arrayVarId)) {
+              cerr<<"Internal error: determined array variable, but it is not registered as array variable."<<endl;
+              exit(1);
+            }
+            size_t arraySize=variableIdMapping->getSize(arrayVarId);
+            if(intervalPropertyState->variableExists(indexVarId)) {
+              NumberIntervalLattice indexVariableInterval=intervalPropertyState->getVariable(indexVarId);
+              if(indexVariableInterval.isTop()
+                 ||indexVariableInterval.getLow()<0
+                 ||indexVariableInterval.getHigh()>(arraySize-1)) {
+                cout<<"DETECTED: array out of bounds access: "<<lineCol
+                    <<": "<<node->unparseToString()
+                    <<" ("
+                    <<variableIdMapping->variableName(indexVarId)
+                    <<" in "<<indexVariableInterval.toString()
+                    <<" accessing array '"<<variableIdMapping->variableName(arrayVarId)<<"'"
+                    <<" of size "<<arraySize
+                    <<")"
+                    <<endl;
+                issuesFound++;
+              }
+            } else if(intervalPropertyState->isBot()) {
+              cout<<"ANALYSIS: not reachable: "<<node->unparseToString()<<endl;
+              // nothing to do
+            } else {
+              cout<<"Error: variable "<<indexVarId.toString()<<" does not exist in property state."<<endl;
+              exit(1);
+            }
+          } else {
+            cerr<<"WARNING: Unsupported array access expression: ";
+            cerr<<SPRAY::AstTerm::astTermWithNullValuesToString(arrRefExp)<<endl;
+          }
+        }
+      }
+    }
+  }
+  if(issuesFound==0) {
+    cout<<"PASS: No out of bounds accesses on static arrays in this program."<<endl;
+  }
 }
 
 void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
@@ -133,6 +202,12 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     SPRAY::IntervalAnalysis* intervalAnalyzer=new SPRAY::IntervalAnalysis();
     cout << "STATUS: initializing interval analyzer."<<endl;
     intervalAnalyzer->initialize(root);
+    cout << "STATUS: running pointer analysis."<<endl;
+    ROSE_ASSERT(intervalAnalyzer->getVariableIdMapping());
+    SPRAY::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(),root);
+    fipa->initialize();
+    fipa->run();
+    intervalAnalyzer->setPointerAnalysis(fipa);
     cout << "STATUS: initializing interval transfer functions."<<endl;
     intervalAnalyzer->initializeTransferFunctions();
     cout << "STATUS: initializing interval global variables."<<endl;
@@ -144,6 +219,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
     intervalAnalyzer->determineExtremalLabels(startFunRoot);
     intervalAnalyzer->run();
+
 #if 0
     intervalAnalyzer->attachInInfoToAst("iv-analysis-in");
     intervalAnalyzer->attachOutInfoToAst("iv-analysis-out");
@@ -154,7 +230,11 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     AnalysisAstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
     ara.annotateAnalysisPrePostInfoAsComments(root,"iv-analysis",intervalAnalyzer);
 #endif
+    if(option_check_static_array_bounds) {
+      checkStaticArrayBounds(root,intervalAnalyzer);
+    }
 
+    delete fipa;
   }
 
   if(option_lv_analysis) {
@@ -321,6 +401,7 @@ int main(int argc, char* argv[]) {
       ("no-optmize-icfg", "does not optimize icfg.")
       ("interval-analysis", "perform interval analysis.")
       ("trace", "show operations as performed by selected solver.")
+      ("check-static-array-bounds", "check static array bounds (uses interval analysis).")
       ("print-varid-mapping", "prints variableIdMapping")
       ("print-varid-mapping-array", "prints variableIdMapping with array element varids.")
       ("print-label-mapping", "prints mapping of labels to statements")
@@ -368,6 +449,10 @@ int main(int argc, char* argv[]) {
     }
     if(args.count("interval-analysis")) {
       option_interval_analysis=true;
+    }
+    if(args.count("check-static-array-bounds")) {
+      option_interval_analysis=true;
+      option_check_static_array_bounds=true;
     }
     if(args.count("ud-analysis")) {
       option_rd_analysis=true; // required
@@ -444,6 +529,11 @@ int main(int argc, char* argv[]) {
     cfAnalysis->intraInterFlow(flow,interFlow);
     string dotString=flow.toDot(labeler);
     writeFile("icfg.dot",dotString);
+
+    cout << "generating icfg-clustered.dot."<<endl;
+    DataDependenceVisualizer ddvis(labeler,&variableIdMapping,"none");
+    ddvis.generateDotFunctionClusters(root,cfAnalysis,"icfg-clustered.dot",false);
+
     delete cfAnalysis;
     exit(0);
   }

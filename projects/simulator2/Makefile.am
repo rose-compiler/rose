@@ -1265,3 +1265,33 @@ clean-local: $(SYS_TEST_CLEANUPS) $(PTHREAD_TEST_CLEANUPS) $(TYPES_1_CLEANUPS)
 	rm -rf tmp-sim x-core.rose test-file-fchown32
 	-chmod -f -R a+rwx fchmodattestdir* fchmodattestfile*.txt
 	rm -rf             fchmodattestdir* fchmodattestfile*.txt
+
+###############################################################################################################################
+# These things are reported by the policy checkers as being unused. They should be investigated and them removed. Some of them
+# likely don't work anymore anyway since we never compile them.
+###############################################################################################################################
+
+old_stuff_to_remove =				\
+	local_tests/client_transactions.c	\
+	local_tests/testFutexInput.c		\
+	local_tests/types_extern.c		\
+	papers/concrete_1.C			\
+	papers/concrete_2.C			\
+	papers/glibc_strcmp.c			\
+	papers/grep_sample_1.c			\
+	papers/gzip_sample_1.c			\
+	papers/gzip_sample_2.c			\
+	papers/ptrace_jmp.C			\
+	papers/symbolic_1.C			\
+	papers/symbolic_2.C			\
+	papers/types_1.C			\
+	syscall_tests/syscall_sa.199.c		\
+	syscall_tests/syscall_sa.200.c		\
+	syscall_tests/syscall_sa.201.c		\
+	syscall_tests/syscall_sa.202.c		\
+	syscall_tests/syscall_sa.224.c		\
+	testFutex.C				\
+	x86dis.C				\
+	x86futex.C				\
+	x86robb.C				\
+	x86win.C

@@ -72,8 +72,9 @@ string DataDependenceVisualizer::nodeSourceCode(Label lab) {
     return "FunctionEntry";
   if(_labeler->isFunctionExitLabel(lab))
     return "FunctionExit";
+  SgNode* node=getNode(lab);
   // all other cases
-  return SgNodeHelper::doubleQuotedEscapedString(getNode(lab)->unparseToString());
+  return SgNodeHelper::doubleQuotedEscapedString(node->unparseToString());
 }
 
 /*! 
@@ -113,7 +114,10 @@ void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnaly
     stringstream ss;
     SgNode* fdefNode=_labeler->getNode(*i);
     string functionName=SgNodeHelper::getFunctionName(fdefNode);
-    ss<<"subgraph cluster_"<<(k++)<<" { label=\""<<functionName<<"\"style=filled; color=lightgrey; \n";
+    ss<<"subgraph cluster_"<<(k++)
+      <<" { label=\""<<functionName
+      //      <<"\"style=filled; color=lightgrey; \n";
+      <<"\"color=blue; \n";
     Flow flow=cfanalyzer->flow(fdefNode);
     flow.setDotOptionHeaderFooter(false);
     ss<<flow.toDot(_labeler);
@@ -276,7 +280,9 @@ void DataDependenceVisualizer::generateDotFunctionClusters(LabelSetSet functionL
   int k=0;
   for(LabelSetSet::iterator i=functionLabelSetSet.begin();i!=functionLabelSetSet.end();++i) {
     cout<<"Generating cluster "<<k<<endl;
-    ss<<"subgraph cluster_"<<(k++)<<" { style=filled; color=lightgrey; ";
+    ss<<"subgraph cluster_"<<(k++)
+      //      <<" { style=filled; color=lightgrey; ";
+      <<" { color=blue; ";
     for(LabelSet::iterator j=(*i).begin();j!=(*i).end();++j) {
       ss<<(*j)<<" ";
     }

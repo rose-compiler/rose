@@ -91,15 +91,6 @@ enum RTS_Layer {
      *     RSIM_PROCESS_OBJ        < RSIM_PROCESS_CLONE_OBJ
      *     RSIM_SIGNALHANDLING_OBJ < RSIM_PROCESS_OBJ
      */
-    RTS_LAYER_RSIM_SIGNALHANDLING_OBJ   = 200,          /**< RSIM_SignalHandling */
-    RTS_LAYER_RSIM_PROCESS_OBJ          = 201,          /**< RSIM_Process */
-    RTS_LAYER_RSIM_PROCESS_CLONE_OBJ    = 202,          /**< RSIM_Process::Clone */
-    RTS_LAYER_RSIM_THREAD_OBJ           = 203,          /**< RSIM_Thread */
-    RTS_LAYER_RSIM_THREAD_CLASS         = 204,          /**< RSIM_Thread */
-    RTS_LAYER_RSIM_SYSCALLDISABLER_OBJ  = 205,          /**< RSIM_Adapter::SyscallDisabler */
-    RTS_LAYER_RSIM_TRACEIO_OBJ          = 206,          /**< RSIM_Adapter::TraceIO */
-    RTS_LAYER_RSIM_SIMULATOR_CLASS      = 207,          /**< RSIM_Simulator */
-    RTS_LAYER_RSIM_SIMULATOR_OBJ        = 208,          /**< RSIM_Simulator */
 
     /* User layers.  These are for people that might want to use the ROSE Thread Support outside ROSE, such as in ROSE
      * projects.   We leave it up to them to organize how they'll use the available layers. */

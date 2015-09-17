@@ -486,9 +486,11 @@ class Grammar
                     Terminal* grammarnode;
                     std::string text;
                     std::string nodetext;
+                    std::string terminalname;
                     std::string nonterminalsbunch;
                     std::string terminalsbunch;
                     std::string problematicnodes;
+                    bool isTerminal;
              };
 
           typedef std::string (Grammar::*evaluateStringAttributeFunctionType)(Terminal&, std::string);
