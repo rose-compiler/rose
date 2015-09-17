@@ -71,9 +71,10 @@ struct Settings {
     bool showStates;                                    // show register and memory state after each instruction?
     bool showInitialState;                              // show initial state if showStates is set?
     AddressInterval bblockInterval;                     // which basic blocks to process
+    bool useMemoryMap;                                  // state uses MemoryMap to initialize memory?
     Settings()
         : trace(false), showUseDef(true), showInitialValues(false), showStates(true), showInitialState(false),
-          bblockInterval(AddressInterval::whole()) {}
+          bblockInterval(AddressInterval::whole()), useMemoryMap(false) {}
 };
 
 static std::vector<std::string>
@@ -138,7 +139,18 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .doc("Restrict semantics to only those basic blocks that start at the specified address(es). The @v{interval} "
                     "can be a single address, a pair of address separated by \",\" (inclusive) or \"-\" (end is not inclusive), "
                     "or an address and size separated by \"+\".  The default is to process all basic blocks.\n"));
-               
+
+    ctl.insert(Switch("use-memory-map")
+               .intrinsicValue(true, settings.useMemoryMap)
+               .doc("Adds the specimen's memory map to the memory state and/or RISC operators if they support using a memory "
+                    "map. For most domains that allow this, it essentially initializes memory based on values loaded from "
+                    "the executable.  The @s{no-use-memory-map} turns this off. The default is to " +
+                    std::string(settings.useMemoryMap?"":"not ") + "use the memory map."));
+    ctl.insert(Switch("no-use-memory-map")
+               .key("use-memory-map")
+               .intrinsicValue(false, settings.useMemoryMap)
+               .hidden(true));
+
 
     //------------------------------------------------
     SwitchGroup out("Output switches");
@@ -321,26 +333,28 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
     }
 }
 
-static BaseSemantics::RiscOperatorsPtr
-makeRiscOperators(const Settings &settings, const RegisterDictionary *regdict) {
-    const std::string &className = settings.opsClassName;
-    if (className == "list") {
-        std::cout <<"semantic class names:\n"
+static void
+listRiscOperators() {
+    std::cout <<"semantic class names:\n"
 #ifdef EXAMPLE_EXTENSIONS
-                  <<"  example          com::example::semantics::RiscOperators\n"
+              <<"  example          com::example::semantics::RiscOperators\n"
 #endif
-                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators\n"
-                  <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::RiscOperators\n"
-                  <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RiscOperators\n"
-                  <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::RiscOperators\n"
-                  <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators\n"
-                  <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators\n";
-        exit(0);
-    } else if (className.empty()) {
+              <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators\n"
+              <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::RiscOperators\n"
+              <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RiscOperators\n"
+              <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::RiscOperators\n"
+              <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators\n"
+              <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators\n";
+}
+
+static BaseSemantics::RiscOperatorsPtr
+makeRiscOperators(const Settings &settings, const P2::Engine &engine, const P2::Partitioner &partitioner) {
+    const std::string &className = settings.opsClassName;
+    if (className.empty())
         throw std::runtime_error("--semantics switch is required");
-    }
     
     SMTSolver *solver = makeSolver(settings);
+    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
     BaseSemantics::SValuePtr protoval = makeProtoVal(settings);
     BaseSemantics::RegisterStatePtr rstate = makeRegisterState(settings, protoval, regdict);
     BaseSemantics::MemoryStatePtr mstate = makeMemoryState(settings, protoval, protoval, regdict);
@@ -358,7 +372,10 @@ makeRiscOperators(const Settings &settings, const RegisterDictionary *regdict) {
     } else if (className == "null") {
         return NullSemantics::RiscOperators::instance(state, solver);
     } else if (className == "partial") {
-        return PartialSymbolicSemantics::RiscOperators::instance(state, solver);
+        PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(state, solver);
+        if (settings.useMemoryMap)
+            ops->set_memory_map(new MemoryMap(engine.memoryMap()));
+        return ops;
     } else if (className == "partitioner2") {
         return P2::Semantics::RiscOperators::instance(state, solver);
     } else if (className == "symbolic") {
@@ -386,12 +403,11 @@ adjustSettings(Settings &settings) {
 // Test the API for various combinations of classes.  Sorry this is so long and doesn't handle every case -- that's the pitfal
 // of trying to mix runtime configuration and C++ templates.
 static void
-testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
+testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::Partitioner &partitioner) {
     std::cout <<"=====================================================================================\n"
               <<"=== Performing basic API tests                                                    ===\n"
               <<"=====================================================================================\n";
-    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
-    BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, regdict);
+    BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, engine, partitioner);
     if (settings.opsClassName == settings.valueClassName &&
         settings.opsClassName == settings.rstateClassName &&
         settings.opsClassName == settings.mstateClassName) {
@@ -473,7 +489,8 @@ testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
 }
 
 static void
-runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const P2::Partitioner &partitioner) {
+runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
+             const P2::Engine &engine, const P2::Partitioner &partitioner) {
     if (!settings.bblockInterval.isContaining(bblock->address()))
         return;
 
@@ -481,7 +498,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
               <<"=== Starting a new basic block                                                    ===\n"
               <<"=====================================================================================\n";
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
-    BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, regdict);
+    BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, engine, partitioner);
 
     BaseSemantics::Formatter formatter;
     formatter.set_suppress_initial_values(!settings.showInitialValues);
@@ -537,16 +554,19 @@ main(int argc, char *argv[]) {
     Settings settings;
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
     adjustSettings(settings);
-    (void) makeRiscOperators(settings, RegisterDictionary::dictionary_i386());// for "list" side effects
+    if (settings.opsClassName == "list") {
+        listRiscOperators();
+        exit(0);
+    }
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
 
     // Parse, disassemble, and partition
     P2::Partitioner partitioner = engine.partition(specimenNames);
 
-    testSemanticsApi(settings, partitioner);
+    testSemanticsApi(settings, engine, partitioner);
     
     // Run sementics on each basic block
     BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, partitioner.basicBlocks())
-        runSemantics(bblock, settings, partitioner);
+        runSemantics(bblock, settings, engine, partitioner);
 }

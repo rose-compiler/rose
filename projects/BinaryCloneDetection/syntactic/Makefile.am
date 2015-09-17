@@ -134,10 +134,10 @@ EXTRA_DIST = 					\
 	callLSH.h				\
 	collateByHash.C				\
 	createCloneDetectionVectorsBinary.h	\
-        createCloneDetectionVectorsSource.h     \
 	createSignatureVectors.h		\
 	createVectors.C				\
 	findExactClones.h			\
+	lshParameterFinding.h			\
 	lsh/BasicDefinitions.h			\
 	lsh/BucketHashing.C			\
 	lsh/BucketHashing.h			\

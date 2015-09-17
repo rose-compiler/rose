@@ -3613,13 +3613,8 @@ class StackFrame {
    \item Binary (DQ) \\
    \begin{enumerate}
       \item InstructionSemantics \\
-	Implemented in the X86InstructionSemantics class, which
-	requires a policy class (such as FindConstantsPolicy) at
-	compile time.
-
-	The implementation only supports 32-bit x86 and is not well
-	documented.
-      
+      See doxygen documentation for the
+      rose::BinaryAnalysis::InstructionSemantics2 namespace.
       \item Library Identification (FLIRT) \\
       This has not yet been moved from {\tt developersScratchSpace/Dan/libraryIdentification\_tests}
       to a more useful location in ROSE.  Likely should be put in the {\em midend} as part

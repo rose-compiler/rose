@@ -116,7 +116,7 @@ check-local:
 
 
 # DQ (1/21/2009): Used as part of demos (since zgrviewer takes too long to visualize the associated dot file (25 minutes).
-EXTRA_DIST = CMakeLists.txt #astEquivalenceGraphForBinaryCode3.png
+EXTRA_DIST = CMakeLists.txt attributeSupport.h sequenceGeneration.h treeIsomorphism.h
 
 clean-local:
 	rm -f output-local.dot output-rose.dot output1.png output2.png

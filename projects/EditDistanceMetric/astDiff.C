@@ -17,7 +17,6 @@ using namespace rose;
 
 // #include "labelTrace.h"
 #include "treeIsomorphism.h"
-#include "treeDiff.h"
 #include "sequenceGeneration.h"
 #include "treeEditDistance.h"
 #include "commandLine.h"

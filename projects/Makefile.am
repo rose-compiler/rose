@@ -118,9 +118,8 @@ endif
 endif
 
 # DQ (7/21/2010): Removed RTED since it is a problem to compile with ROSE (projects/RTED/CppRuntimeSystem/test.cpp).
-# DQ (7/21/2010): Removed simulator since it is a problem to compile with ROSE (projects/simulator/emulator.C).
 if !ROSE_USING_ROSE_ANALYSIS
-   SUBDIRS += RTED simulator
+   SUBDIRS += RTED
 endif
 
 SUBDIRS += simulator2
