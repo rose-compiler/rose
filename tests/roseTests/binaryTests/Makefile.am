@@ -53,16 +53,6 @@ execFormatsTest.passed: execFormatsTest.conf execFormatsTest
 	@$(RTH_RUN) $< $@
 
 
-#Test the binary control flow graph that uses the semantic representation to perform an accurate analysis
-noinst_PROGRAMS += testBinCFG
-testBinCFG_SOURCES = testBinCFG.C
-testBinCFG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += testBinCFG.passed
-EXTRA_DIST += testBinCFG.conf
-MOSTLYCLEANFILES += cfg_x86.dot
-testBinCFG.passed: testBinCFG.conf testBinCFG
-	@$(RTH_RUN) INPUT=libm-2.3.6.so $< $@
-
 # Tests for the newer BinaryAnalysis::ControlFlow class.
 noinst_PROGRAMS += testControlFlow
 testControlFlow_SOURCES = testControlFlow.C
@@ -88,16 +78,6 @@ testControlFlow-E.passed: testControlFlow.conf testControlFlow
 noinst_PROGRAMS += cfg2
 cfg2_SOURCES = cfg2.C
 cfg2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
-#Test the binary call graph that uses the semantic representation to perform an accurate analysis
-noinst_PROGRAMS += testBinCG
-testBinCG_SOURCES = testBinCG.C
-testBinCG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += testBinCG.C
-EXTRA_DIST += testBinCG.conf
-MOSTLYCLEANFILES += cfg_x86.dot
-testBinCG.passed: testBinCG.conf testBinCG testBinCFG.passed
-	@$(RTH_RUN) INPUT=libm-2.3.6.so $< $@
 
 # Tests for the newer BinaryAnalysis::FunctionCall class.
 noinst_PROGRAMS += testFunctionCall
@@ -990,10 +970,7 @@ demo_testAssembler: testAssembler demo_yicesSemanticsLib
 	@echo; echo; echo "Demo for $<"; echo
 	./testAssembler $(BINARY_SAMPLES)/buffer2.bin
 
-demo_testBinCFG: testBinCFG demo_testAssembler
-	: no demo yet for testBinCFG
-
-demo_expandCoreDump: expandCoreDump demo_testBinCFG
+demo_expandCoreDump: expandCoreDump demo_testAssembler
 	: no demo yet for expandCoreDump
 
 demo_functionBoundaries: functionBoundaries demo_exapndCoreDump

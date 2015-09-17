@@ -3,6 +3,8 @@
 #include "rose_getline.h"
 #include "SMTSolver.h"
 
+#include <boost/thread/locks.hpp>
+#include <boost/thread/mutex.hpp>
 #include <fcntl.h> /*for O_RDWR, etc.*/
 #include <Sawyer/Stopwatch.h>
 
@@ -17,7 +19,7 @@ operator<<(std::ostream &o, const SMTSolver::Exception &e)
 }
 
 SMTSolver::Stats SMTSolver::class_stats;
-RTS_mutex_t SMTSolver::class_stats_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_ROSE_SMT_SOLVERS);
+boost::mutex SMTSolver::class_stats_mutex;
 
 void
 SMTSolver::init()
@@ -27,20 +29,16 @@ SMTSolver::init()
 SMTSolver::Stats
 SMTSolver::get_class_stats() 
 {
-    Stats retval;
-    RTS_MUTEX(class_stats_mutex) {
-        retval = class_stats;
-    } RTS_MUTEX_END;
-    return retval;
+    boost::lock_guard<boost::mutex> lock(class_stats_mutex);
+    return class_stats;
 }
 
 // class method
 void
 SMTSolver::reset_class_stats()
 {
-    RTS_MUTEX(class_stats_mutex) {
-        class_stats = Stats();
-    } RTS_MUTEX_END;
+    boost::lock_guard<boost::mutex> lock(class_stats_mutex);
+    class_stats = Stats();
 }
 
 InsnSemanticsExpr::TreeNodePtr
@@ -85,9 +83,10 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 
     // Keep track of how often we call the SMT solver.
     ++stats.ncalls;
-    RTS_MUTEX(class_stats_mutex) {
+    {
+        boost::lock_guard<boost::mutex> lock(class_stats_mutex);
         ++class_stats.ncalls;
-    } RTS_MUTEX_END;
+    }
     output_text = "";
 
     /* Generate the input file for the solver. */
@@ -122,9 +121,10 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
     int status __attribute__((unused)) = stat(tmpfile.name, &sb);
     ASSERT_require(status>=0);
     stats.input_size += sb.st_size;
-    RTS_MUTEX(class_stats_mutex) {
+    {
+        boost::lock_guard<boost::mutex> lock(class_stats_mutex);
         class_stats.input_size += sb.st_size;
-    } RTS_MUTEX_END;
+    }
 
     /* Show solver input */
     if (debug) {
@@ -149,9 +149,10 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
         ssize_t nread;
         while ((nread=rose_getline(&line, &line_alloc, output))>0) {
             stats.output_size += nread;
-            RTS_MUTEX(class_stats_mutex) {
+            {
+                boost::lock_guard<boost::mutex> lock(class_stats_mutex);
                 class_stats.output_size += nread;
-            } RTS_MUTEX_END;
+            }
             if (!got_satunsat_line) {
                 if (0==strncmp(line, "sat", 3) && isspace(line[3])) {
                     retval = SAT_YES;

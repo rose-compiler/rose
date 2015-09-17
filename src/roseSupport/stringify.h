@@ -296,6 +296,13 @@ std::string stringifyE_SgDivideOp(int n, const char *strip=NULL, bool canonic=fa
 std::string stringifyE_SgDoWhileStmt(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgDotExp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgDotStarOp(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgElementwiseAddOp(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgElementwiseDivideOp(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgElementwiseLeftDivideOp(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgElementwiseMultiplyOp(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgElementwiseOp(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgElementwisePowerOp(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgElementwiseSubtractOp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgElseWhereStatement(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgEndfileStatement(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgEntryStatement(int n, const char *strip=NULL, bool canonic=false);
@@ -368,12 +375,16 @@ std::string stringifyE_SgLambdaCapture(int n, const char *strip=NULL, bool canon
 std::string stringifyE_SgLambdaCaptureList(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgLambdaExp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgLambdaRefExp(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgLeftDivideOp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgLessOrEqualOp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgLessThanOp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgListComprehension(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgListExp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgLshiftAssignOp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgLshiftOp(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgMatlabForStatement(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgMatrixExp(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgMatrixTransposeOp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgMemberFunctionDeclaration(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgMemberFunctionSymbol(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgMemberFunctionType(int n, const char *strip=NULL, bool canonic=false);
@@ -450,6 +461,7 @@ std::string stringifyE_SgPointerAssignOp(int n, const char *strip=NULL, bool can
 std::string stringifyE_SgPointerDerefExp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgPointerMemberType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgPointerType(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgPowerOp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgPragmaDeclaration(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgPrintStatement(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgProcedureHeaderStatement(int n, const char *strip=NULL, bool canonic=false);
@@ -458,6 +470,7 @@ std::string stringifyE_SgProject(int n, const char *strip=NULL, bool canonic=fal
 std::string stringifyE_SgPythonGlobalStmt(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgPythonPrintStmt(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgQualifiedNameType(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgRangeExp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgReadStatement(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgRealPartOp(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgReferenceType(int n, const char *strip=NULL, bool canonic=false);
@@ -523,6 +536,7 @@ std::string stringifyE_SgTypeLabel(int n, const char *strip=NULL, bool canonic=f
 std::string stringifyE_SgTypeLong(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeLongDouble(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeLongLong(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgTypeMatrix(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeNullptr(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeOfType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeShort(int n, const char *strip=NULL, bool canonic=false);
@@ -533,6 +547,7 @@ std::string stringifyE_SgTypeSignedLong(int n, const char *strip=NULL, bool cano
 std::string stringifyE_SgTypeSignedLongLong(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeSignedShort(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeString(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyE_SgTypeTuple(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeUnknown(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeUnsigned128bitInteger(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyE_SgTypeUnsignedChar(int n, const char *strip=NULL, bool canonic=false);
@@ -687,7 +702,6 @@ std::string stringifyROSE_token_idsROSE_C_CXX_Additional_Info(int n, const char 
 std::string stringifyROSE_token_idsROSE_C_CXX_alternate_tok(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyROSE_token_idsROSE_C_CXX_keywords(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyROSE_token_ids_whitespace(int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyRTS_Layer(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyReachingDefType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyRegisterDictionarySortBySizeDirection(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyRoseBin_ArchArchitecture(int n, const char *strip=NULL, bool canonic=false);

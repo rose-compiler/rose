@@ -6,8 +6,8 @@
 #endif
 
 #include "InsnSemanticsExpr.h"
-#include "threadSupport.h"
 
+#include <boost/thread/mutex.hpp>
 #include <inttypes.h>
 
 namespace rose {
@@ -134,7 +134,7 @@ protected:
     std::string output_text;
 
     // Statistics
-    static RTS_mutex_t class_stats_mutex;
+    static boost::mutex class_stats_mutex;
     static Stats class_stats;                   // all access must be protected by class_stats_mutex
     Stats stats;
 
