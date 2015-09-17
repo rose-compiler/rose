@@ -27,7 +27,6 @@ libroseSupport_la_SOURCES =			\
 	roseTranslators.C			\
 	utility_functions.C			\
 	memoryUsage.C				\
-	threadSupport.C				\
 	IncludeDirective.C			\
 	SqlDatabase.C				\
 	Diagnostics.C				\
@@ -42,7 +41,6 @@ pkginclude_HEADERS =				\
 	roseTranslators.h			\
 	stringify.h				\
 	utility_functions.h			\
-	threadSupport.h				\
 	IncludeDirective.h			\
 	SqlDatabase.h				\
 	Diagnostics.h
