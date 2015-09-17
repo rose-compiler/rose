@@ -6,7 +6,6 @@
 #endif
 
 #include "InsnSemanticsExpr.h"
-#include "threadSupport.h"
 
 #include <boost/thread/mutex.hpp>
 #include <inttypes.h>
