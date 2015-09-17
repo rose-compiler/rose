@@ -1,6 +1,6 @@
 #!/bin/sh -ex
 # TOO (2/18/2011): stripped down copy of ROSE/scripts/hudson/runTest for testing
-# projects/simulator as a standalone hudson job.
+# projects/simulator2 as a standalone hudson job.
 
 
 export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:${ROSE_TEST_OPENGL_PATH}/lib:$LD_LIBRARY_PATH"
@@ -206,8 +206,8 @@ echo "Done with configure step"
 #    COMPILE STEP
 #
 #    1) make -C src
-#    2) make -C projects/simulator
-#    3) make -C projects/simulator run-tests
+#    2) make -C projects/simulator2
+#    3) make -C projects/simulator2 run-tests
 #
 ####################################################################################
 echo "Starting compile step"
@@ -223,18 +223,18 @@ echo "Test compile step: src"
    fi
 
 
-echo "Test compile step: projects/simulator"
-   make -j${NUM_PROCESS} -C projects/simulator
+echo "Test compile step: projects/simulator2"
+   make -j${NUM_PROCESS} -C projects/simulator2
    if [ $? -ne 0 ]  ; then
-        echo "fatal error during 'make projects/simulator'  , aborting..."
+        echo "fatal error during 'make projects/simulator2'  , aborting..."
         # tps : call this line before any exit. It resets the Windows test
         echo 3 > $win_file
         exit 3
    fi
 
 
-echo "Test make check step: projects/simulator"
-   make -j${NUM_PROCESS} -C projects/simulator run-tests
+echo "Test make check step: projects/simulator2"
+   make -j${NUM_PROCESS} -C projects/simulator2 run-tests
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make check'  , aborting..."
         # tps : call this line before any exit. It resets the Windows test

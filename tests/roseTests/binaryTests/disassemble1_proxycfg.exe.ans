@@ -114,7 +114,7 @@ using this memory map for disassembly:
 0x010011d9: Predecessor blocks: 0x010011bb, 0x010011cb
 0x010011d9: Dominator block: 0x0100117f
 0x010011d9: ff 15 48 41 00 01       |..HA..  |   call   dword ds:[0x01004148<IAT+0x3c>]
-0x010011d9: Successor blocks: 0x010011df, unknown
+0x010011d9: Successor blocks: 0x010011df
 
 0x010011df: Basic block reasons: graph-1
 0x010011df: Predecessor blocks: 0x010011d9
@@ -750,7 +750,7 @@ using this memory map for disassembly:
 0x0100145e: Predecessor blocks: 0x01001459
 0x0100145e: Dominator block: 0x01001459
 0x0100145e: ff 15 24 41 00 01       |..$A..  |   call   dword ds:[0x01004124<IAT+0x18>]
-0x0100145e: Successor blocks: 0x01001464, unknown
+0x0100145e: Successor blocks: 0x01001464
 
 0x01001464: Basic block reasons: graph-1
 0x01001464: Predecessor blocks: 0x0100145e
@@ -1433,7 +1433,7 @@ using this memory map for disassembly:
 0x01001718: Predecessor blocks: 0x01001714
 0x01001718: Dominator block: 0x01001714
 0x01001718: ff 15 24 41 00 01       |..$A..  |   call   dword ds:[0x01004124<IAT+0x18>]
-0x01001718: Successor blocks: 0x0100171e, unknown
+0x01001718: Successor blocks: 0x0100171e
 
 0x0100171e: Basic block reasons: graph-1
 0x0100171e: Predecessor blocks: 0x01001718
@@ -1748,7 +1748,7 @@ using this memory map for disassembly:
 0x010018ad: Predecessor blocks: 0x01001899, 0x010018a6
 0x010018ad: Dominator block: 0x01001899
 0x010018ad: ff 15 88 41 00 01       |...A..  |   call   dword ds:[0x01004188<IAT+0x7c>]
-0x010018ad: Successor blocks: 0x010018b3, unknown
+0x010018ad: Successor blocks: 0x010018b3
 
 0x010018b3: Basic block reasons: graph-1
 0x010018b3: Predecessor blocks: 0x010018ad
@@ -1792,7 +1792,7 @@ using this memory map for disassembly:
 0x010018dc: Basic block reasons: fragment, CFG head; 69% code likelihood
 0x010018dc: Predecessor blocks: 0x010018c9, 0x010018d5
 0x010018dc: ff 15 94 41 00 01       |...A..  |   call   dword ds:[0x01004194<IAT+0x88>]
-0x010018dc: Successor blocks: unknown
+0x010018dc: Successor blocks: none
 
 0x010018ed: Basic block reasons: graph-1
 0x010018ed: Predecessor blocks: 0x010018b3
