@@ -3486,7 +3486,7 @@ void Analyzer::runSolver9() {
 #endif
   flow.boostify();
   reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
-  cour<<"INFO: number of error labels: "<<reachabilityResults.size()<<endl;
+  cout<<"INFO: number of error labels: "<<reachabilityResults.size()<<endl;
   int maxInputVal = *( std::max_element(_inputVarValues.begin(), _inputVarValues.end()) ); //required for parsing to characters
   cout<<"INFO: maximum length of input patterns: "<< (_reconstructMaxInputDepth / 2) <<endl;
   cout<<"INFO: maximum number of pattern repetitions: "<<_reconstructMaxRepetitions<<endl;
