@@ -8,7 +8,12 @@ INCLUDES = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = shiftCalculusCompiler  
 
-CPPFLAGS += -std=c++11
+# Liao, 9/14/15 C++11 has only been available since G++ 4.3. 
+# In versions pre-G++ 4.7, you'll have to use -std=c++0x, for more recent versions you can use -std=c++11.
+#CXX11FLAG = -std=c++0x
+CXX11FLAG = -std=c++11
+
+CPPFLAGS += $(CXX11FLAG)
  
 shiftCalculusCompiler_SOURCES = shiftCalculusCompiler.C stencilAndStencilOperatorDetection.C stencilEvaluation.C stencilFiniteStateMachine.C dslSupport.C dslCodeGeneration.C lowLevelCodeGeneration.C
 
@@ -119,6 +124,13 @@ rose_laplacian_lite_v3.cu: shiftCalculusCompiler
 	@echo "********************************************************************************************"
 	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -std=c++11 -rose:skipfinalCompileStep -rose:output $@  $(srcdir)/laplacian_lite_v3.cpp
 
+rose_laplacian_lite_v3_mpi.cpp: shiftCalculusCompiler
+	@echo "********************************************************************************************"
+	@echo "******* ROSE/projects/ShiftCalculus: code generation for MPI ********"
+	@echo "********************************************************************************************"
+	./shiftCalculusCompiler -c -rose:dslcompiler:mpi -std=c++11 -rose:skipfinalCompileStep -rose:output $@  $(srcdir)/laplacian_lite_v3.cpp
+
+
 rose_laplacian_lite_v3_GPU_collapsed.cu: 
 	@echo "********************************************************************************************"
 	@echo "******* ROSE/projects/ShiftCalculus: code generation for GPU with loop collapsing   ********"
@@ -134,9 +146,12 @@ test12: shiftCalculusCompiler
 # test5 - test8 test subsets of the stencil specification.
 localTests: test4 test2 test5 test6 test7 test8
 
+mpiTests: rose_laplacian_lite_v3_mpi.cpp
+
 cudaTests: rose_laplacian_lite_v3.cu rose_laplacian_lite_v3_GPU_collapsed.cu 
 
 demo: test10 cudaTests test10poly test10vector test10MLM
+demo2015: test10 cudaTests test10vector 
 
 check-local:
 	@echo "Tests for Shift Calculus examples."

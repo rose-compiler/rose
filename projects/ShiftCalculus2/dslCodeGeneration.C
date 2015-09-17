@@ -20,6 +20,8 @@ using namespace DSL_Support;
 
 //We don't generate cuda code by default
 bool b_gen_cuda = false;
+
+bool b_gen_mpi = false;
 // disable collapse by default
 bool b_enable_collapse = false;
 // disable polyopt by default
@@ -47,7 +49,7 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
   //         }
   //    }
 
-  // This function genertes the loop nest only:
+  // This function generates the loop nest only:
   //    SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBody)
 
   // This function generates the statement in the inner most loop body:
