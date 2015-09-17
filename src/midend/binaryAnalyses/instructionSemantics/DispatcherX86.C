@@ -2637,7 +2637,7 @@ struct IP_pmuludq: P {
             BaseSemantics::SValuePtr result;
             for (size_t i=0; i<nOps; ++i) {
                 BaseSemantics::SValuePtr term0 = ops->extract(dst, (2*i+0)*32, (2*i+1)*32);
-                BaseSemantics::SValuePtr term1 = ops->extract(src, (2*i*0)*32, (2*i+1)*32);
+                BaseSemantics::SValuePtr term1 = ops->extract(src, (2*i+0)*32, (2*i+1)*32);
                 BaseSemantics::SValuePtr product = ops->unsignedMultiply(term0, term1);
                 result = result ? ops->concat(result, product) : product;
             }
