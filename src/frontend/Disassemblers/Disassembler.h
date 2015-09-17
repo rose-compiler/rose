@@ -1,7 +1,6 @@
 #ifndef ROSE_DISASSEMBLER_H
 #define ROSE_DISASSEMBLER_H
 
-#include "threadSupport.h"      /* needed for RTS_mutex_t in this header */
 #include "BinaryCallingConvention.h"
 #include "Diagnostics.h"                                // rose::Diagnostics
 #include "Registers.h"

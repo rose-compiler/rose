@@ -4,6 +4,7 @@
 #include "rose_strtoull.h"
 #include "YicesSolver.h"
 
+#include <boost/thread/locks.hpp>
 #include <errno.h>
 
 #ifdef _MSC_VER
@@ -64,9 +65,10 @@ YicesSolver::satisfiable(const std::vector<TreeNodePtr> &exprs)
     if (get_linkage() & LM_LIBRARY) {
 
         ++stats.ncalls;
-        RTS_MUTEX(class_stats_mutex) {
+        {
+            boost::lock_guard<boost::mutex> lock(class_stats_mutex);
             ++class_stats.ncalls;
-        } RTS_MUTEX_END;
+        }
 
         if (!context) {
             context = yices_mk_context();
