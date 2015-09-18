@@ -4,9 +4,8 @@
 #include "sage3basic.h"
 #include "SymbolicSemantics.h"
 #include "SymbolicSemantics2.h"
-#include "PartialSymbolicSemantics.h"
+#include "PartialSymbolicSemantics2.h"
 #include "DispatcherX86.h"
-#include "YicesSolver.h"
 #include "Disassembler.h"
 #include "Diagnostics.h"
 
@@ -372,8 +371,8 @@ SgAsmX86Instruction::getBranchTarget(rose_addr_t *target) {
 BinaryAnalysis::Disassembler::AddressSet
 SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete, const MemoryMap *initial_memory)
 {
-    using namespace rose::BinaryAnalysis::InstructionSemantics;
     Stream debug(mlog[DEBUG]);
+    using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
     if (debug) {
         debug <<"SgAsmX86Instruction::getSuccessors(" <<StringUtility::addrToString(insns.front()->get_address())
@@ -387,63 +386,50 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
      * successors, a thorough analysis might be able to narrow it down to a single successor. We should not make special
      * assumptions about CALL and FARCALL instructions -- their only successor is the specified address operand. */
     if (!*complete || successors.size()>1) {
-
-#if 0
-        /* Use the most robust semantic analysis available.  Warning: this can be very slow, especially when an SMT solver is
-         * involved! */
-# if defined(ROSE_YICES) || defined(ROSE_HAVE_LIBYICES)
-        YicesSolver yices;
-        if (yices.available_linkage() & YicesSolver::LM_LIBRARY) {
-            yices.set_linkage(YicesSolver::LM_LIBRARY);
+        const RegisterDictionary *regdict;
+        if (SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(this)) {
+            regdict = RegisterDictionary::dictionary_for_isa(interp);
         } else {
-            yices.set_linkage(YicesSolver::LM_EXECUTABLE);
+            switch (get_baseSize()) {
+                case x86_insnsize_16:
+                    regdict = RegisterDictionary::dictionary_i286();
+                    break;
+                case x86_insnsize_32:
+                    regdict = RegisterDictionary::dictionary_pentium4();
+                    break;
+                case x86_insnsize_64:
+                    regdict = RegisterDictionary::dictionary_amd64();
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid x86 instruction size");
+            }
         }
-        SMTSolver *solver = &yices;
-# else
-        SMTSolver *solver = NULL;
-# endif
-        if (debug && solver)
-            solver->set_debug(stderr);
-        typedef SymbolicSemantics::Policy<> Policy;
-        typedef SymbolicSemantics::ValueType<32> RegisterType;
-        typedef X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> Semantics;
-        Policy policy(solver);
-#else
-        typedef PartialSymbolicSemantics::Policy<> Policy;
-        typedef PartialSymbolicSemantics::ValueType<32> RegisterType;
-        typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
-        Policy policy;
-        policy.set_map(initial_memory);
-#endif
+        const RegisterDescriptor IP = regdict->findLargestRegister(x86_regclass_ip, 0);
+        PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
+        ops->set_memory_map(initial_memory);
+        BaseSemantics::DispatcherPtr cpu = DispatcherX86::instance(ops, IP.get_nbits(), regdict);
+
         try {
-            Semantics semantics(policy);
-            for (size_t i=0; i<insns.size(); i++) {
-                SgAsmX86Instruction* insn = isSgAsmX86Instruction(insns[i]);
-                semantics.processInstruction(insn);
-                if (debug) {
-                    debug << "  state after " <<unparseInstructionWithAddress(insn) <<"\n"
-                          <<policy.get_state();
-                }
+            BOOST_FOREACH (SgAsmInstruction *insn, insns) {
+                cpu->processInstruction(insn);
+                SAWYER_MESG(debug) <<"  state after " <<unparseInstructionWithAddress(insn) <<"\n" <<*ops;
             }
-            const RegisterType &newip = policy.get_ip();
-            if (newip.is_known()) {
+            BaseSemantics::SValuePtr ip = ops->readRegister(IP);
+            if (ip->is_number()) {
                 successors.clear();
-                successors.insert(newip.known_value());
-                *complete = true; /*this is the complete set of successors*/
+                successors.insert(ip->get_number());
+                *complete = true;
             }
-        } catch(const Semantics::Exception& e) {
+        } catch(const BaseSemantics::Exception &e) {
             /* Abandon entire basic block if we hit an instruction that's not implemented. */
-            debug <<e <<"\n";
-        } catch(const Policy::Exception& e) {
-            /* Abandon entire basic block if the semantics policy cannot handle the instruction. */
             debug <<e <<"\n";
         }
     }
 
     if (debug) {
         debug <<"  successors:";
-        for (BinaryAnalysis::Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si)
-            debug <<" " <<StringUtility::addrToString(*si);
+        BOOST_FOREACH (rose_addr_t va, successors)
+            debug <<" " <<StringUtility::addrToString(va);
         debug <<(*complete?"":"...") <<"\n";
     }
 

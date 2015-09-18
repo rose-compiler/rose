@@ -1837,8 +1837,6 @@ projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
 projects/ConstructNameSimilarityAnalysis/Makefile
-projects/CodeThorn/Makefile
-projects/CodeThorn/src/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
 projects/DataFaultTolerance/test/Makefile
@@ -1969,7 +1967,6 @@ projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
 projects/RosePolly/Makefile
-projects/simulator/Makefile
 projects/SMTPathFeasibility/Makefile
 projects/symbolicAnalysisFramework/Makefile
 projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile
@@ -1989,6 +1986,11 @@ projects/RTC/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
+projects/ManyCoreRuntime2/Makefile
+projects/ManyCoreRuntime2/runtime/Makefile
+projects/ManyCoreRuntime2/transformation/Makefile
+projects/ManyCoreRuntime2/tests/Makefile
+projects/ManyCoreRuntime2/docs/Makefile
 projects/MapleDSL/Makefile
 projects/StencilManyCore/Makefile
 projects/mint/Makefile

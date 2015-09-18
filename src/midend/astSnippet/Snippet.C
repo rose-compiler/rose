@@ -5,9 +5,6 @@
 #include "LinearCongruentialGenerator.h"
 #include "rose_getline.h"
 
-/* Needed for __attribute__ definition on Visual Studio */
-#include "threadSupport.h"
-
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
