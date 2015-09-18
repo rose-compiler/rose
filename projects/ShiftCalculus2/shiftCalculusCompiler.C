@@ -248,7 +248,8 @@ int main( int argc, char * argv[] )
      ROSE_ASSERT (main_def != NULL);
 
     // Setup MPI
-     
+    SgStatement* decl_rank = buildStatementFromString("int _xomp_rank;", main_def); 
+    prependStatement(main_def, decl_rank);
     // testing generating  MPI_Wtime()
      SgExprStatement* mpi_time_stmt = buildFunctionCallStmt ("MPI_Wtime", buildDoubleType(), NULL,main_def);
      SgStatement* last_decl = findLastDeclarationStatement (main_def);
