@@ -13,6 +13,7 @@ public:
   ~IntervalTransferFunctions();
   //  IntervalTransferFunctions(NumberIntervalLattice* domain, PropertyState* p, SPRAY::Labeler* l, VariableIdMapping* vid);
   NumberIntervalLattice evalExpression(SPRAY::Label label, SgExpression* expr, Lattice& element);
+  void transferCondition(SPRAY::Edge edge, Lattice& element);
   void transferExpression(SPRAY::Label label, SgExpression* expr, Lattice& element);
   void transferDeclaration(SPRAY::Label label, SgVariableDeclaration* decl, Lattice& element);
   void transferSwitchCase(SPRAY::Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate);

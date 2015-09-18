@@ -8,9 +8,9 @@
 class ReachabilityAnalysis {
  public:
   PropertyValueTable fiReachabilityAnalysis(Labeler& labeler, FIConstAnalysis& fiConstAnalysis);
- private:
-  int isIfWithLabeledAssert(SgNode* node);
-  int isConditionOfIfWithLabeledAssert(SgNode* node);
+ public:
+  static int isIfWithLabeledAssert(SgNode* node);
+  static int isConditionOfIfWithLabeledAssert(SgNode* node);
 };
 
 #endif // REACHABILITYANALYSIS_H
