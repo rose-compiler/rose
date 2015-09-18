@@ -2356,9 +2356,24 @@ postfix_operator
       return false;
   }
   // statements
+  /*
+    statement
+      : labeled_statement
+      | compound_statement
+      | expression_statement
+      | selection_statement
+      | iteration_statement
+      | jump_statement
+      ;
+   C89 only allows variable declarations (declarators) in the front section of a function definition.
+   To support C++ style variable declarations in any places, we allow match_statement to 
+   match declarator
+   * */ 
   bool afs_match_statement()
   {
     bool result = false;
+    if (afs_match_declaration())
+      result = true;
     if (afs_match_labeled_statement())
       result = true;
     else if (afs_match_compound_statement())  

@@ -16601,6 +16601,34 @@ SageBuilder::fixupCopyOfAstFromSeparateFileInNewTargetAst(SgStatement *insertion
      SgSymbolTable::set_force_search_of_base_classes(false);
    }
 
+// Liao 9/18/2015
+// The parser is implemented in
+// src/frontend/SageIII/astFromString/AstFromString.h .C
+SgStatement* SageBuilder::buildStatementFromString(const std::string& s, SgScopeStatement * scope)
+{
+
+  SgStatement* result = NULL;
+  ROSE_ASSERT (scope != NULL);
+  // set input and context for the parser
+  AstFromString::c_char = s.c_str();
+  assert (AstFromString::c_char== s.c_str());
+  AstFromString::c_sgnode = scope;
+  AstFromString::c_parsed_node = NULL;
+
+  if (AstFromString::afs_match_statement())
+  {
+    result = isSgStatement(AstFromString::c_parsed_node); // grab the result
+    assert (result != NULL);
+  }
+  else
+  {
+    cerr<<"Error. buildStatementFromString() cannot parse the input string:"<<s
+        <<"\n\t within the given scope:"<<scope->class_name() <<endl;
+    ROSE_ASSERT(false);
+  }
+  return result;
+}
+
 //-----------------------------------------------------------------------------
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 //-----------------------------------------------------------------------------
