@@ -19,4 +19,4 @@ NASC_SOURCES=\
  
 include_HEADERS = 
 
-EXTRA_DIST = 
+EXTRA_DIST = $(srcdir)/NASC.h 
