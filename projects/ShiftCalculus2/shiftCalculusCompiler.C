@@ -15,6 +15,8 @@
 #define DEBUG_USING_DOT_GRAPHS 1
 
 using namespace SPRAY; 
+using namespace SageInterface; 
+using namespace SageBuilder; 
 
 VariableIdMapping variableIdMapping;
 
@@ -240,7 +242,18 @@ int main( int argc, char * argv[] )
    { 
      //#include "mpi.h" 
      SageInterface::insertHeader (isSgSourceFile(cur_file), "mpi.h", false);
+     SgFunctionDeclaration* main_decl = findMain(cur_file); 
+     ROSE_ASSERT (main_decl != NULL);
+     SgFunctionDefinition* main_def = main_decl->get_definition();
+     ROSE_ASSERT (main_def != NULL);
+
+    // Setup MPI
      
+    // testing generating  MPI_Wtime()
+     SgExprStatement* mpi_time_stmt = buildFunctionCallStmt ("MPI_Wtime", buildDoubleType(), NULL,main_def);
+     SgStatement* last_decl = findLastDeclarationStatement (main_def);
+     insertStatementAfter (last_decl, mpi_time_stmt);
+
    }
 
    // Further generate CUDA code if requested

@@ -22,7 +22,7 @@ namespace AstFromString
    \brief  Semi-global variables
  */
 
-  //! maximum length for a buffer for a variable, constant, or pragma construct name
+  //! Maximum length for a buffer for a variable, constant, or pragma construct name
   #define OFS_MAX_LEN 256
 
   //! A namespace scope char* to avoid passing and returning a target c string for every and each function
@@ -105,7 +105,7 @@ namespace AstFromString
   //! Match a function definition. Not yet implemented.
   ROSE_DLL_API bool afs_match_function_definition();
 
-  //! Match a declaration. Not yet implemented. 
+  //! Match a declaration. Only the simplest int i=9; style declaration is supported for now
   ROSE_DLL_API bool afs_match_declaration();
 
   //!Match declaration specifiers. Not yet implemented.
