@@ -250,7 +250,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmX86Instruction* binInst, string& oper
   int counter=0;
   SgAsmRegisterReferenceExpression* refExpr =NULL;
   std::pair<X86RegisterClass, int>  code ;
-  RoseBin_support::X86PositionInRegister pos ;
+  RoseBin_support::X86PositionInRegister pos = RoseBin_support::x86_regpos_unknown;
 
   // iterate through the operands (for x86 = 2 operands)
   SgAsmExpressionPtrList ptrList = opList->get_operands();
