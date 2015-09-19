@@ -2,7 +2,7 @@
 # Update ROSE with the latest Sawyer source code
 set -e
 
-SAWYER_REPO=${1-github.com:matzke1/sawyer}
+SAWYER_REPO=${1-https://github.com/matzke1/sawyer}
 
 emit_cpp_warning() {
     echo "// WARNING: Changes to this file must be contributed back to Sawyer or else they will"
