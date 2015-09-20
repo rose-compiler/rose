@@ -1,6 +1,5 @@
-
 // Example ROSE Translator reads input program and implements a DSL embedded within C++
-// to support the stencil computations, and required runtime support is developed seperately.
+// to support the stencil computations, and required runtime support is developed separately.
 #include "rose.h"
 #include "ompAstConstruction.h"
 
@@ -75,6 +74,17 @@ int main( int argc, char * argv[] )
     }
     else
       b_gen_vectorization = false;
+// If MPI code generation is turned on
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","mpi",true))
+    {
+      std::cout<<"Turning on MPI code generation ..."<<std::endl;
+      b_gen_mpi = true;
+//      argvList.push_back("-rose:openmp:lowering");
+    }
+    else
+      b_gen_mpi = false;
+
+      
   // Generate the ROSE AST.
      SgProject* project = frontend(argc,argv,frontendConstantFolding);
      ROSE_ASSERT(project != NULL);
@@ -222,12 +232,21 @@ int main( int argc, char * argv[] )
      printf ("DONE: Call generateStencilCode to generate example code \n");
 #endif
 
+   ROSE_ASSERT (project->get_fileList().size() ==1);
+   SgFile * cur_file = project->get_fileList()[0];
+
+   // Generate MPI specific code
+   if (b_gen_mpi)
+   { 
+     //#include "mpi.h" 
+     SageInterface::insertHeader (isSgSourceFile(cur_file), "mpi.h", false);
+     
+   }
+
    // Further generate CUDA code if requested
    if (b_gen_cuda)
    {
      // We only process one single input file at a time
-     ROSE_ASSERT (project->get_fileList().size() ==1);
-     SgFile * cur_file = project->get_fileList()[0];
 
      OmpSupport::enable_accelerator = true;
      cur_file->set_openmp_lowering(true);
@@ -249,6 +268,7 @@ int main( int argc, char * argv[] )
      cur_file->set_unparse_output_filename("rose_"+naked_name+".cu");
 #endif
    }
+
 #if 0
      printf ("Exiting after call to generateStencilCode() \n");
      ROSE_ASSERT(false);
