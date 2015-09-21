@@ -24,6 +24,14 @@ int main(int argc, char** argv)
   // int j;
   s= buildStatementFromString ("int j;", f_body); 
   appendStatement(s, f_body);
+  ROSE_ASSERT (isSgVariableDeclaration(s)!=NULL);
+  ROSE_ASSERT (s->get_parent() != NULL);
+
+  // int k = 10;
+  s= buildStatementFromString ("int k = 10;", f_body); 
+  appendStatement(s, f_body);
+  ROSE_ASSERT (isSgVariableDeclaration(s)!=NULL);
+  ROSE_ASSERT (s->get_parent() != NULL);
 
   // for () 
   s= buildStatementFromString ("for (i=0; i<100; i++) x+=i;", f_body); 
@@ -37,6 +45,11 @@ int main(int argc, char** argv)
   // function call statement
   s= buildStatementFromString ("foo();", f_body); 
   appendStatement(s, f_body);
+ 
+  // function call statement
+  s= buildStatementFromString ("bar(k);", f_body); 
+  appendStatement(s, f_body);
+
 
   // labeled statement
   s= buildStatementFromString ("mylabel:;", f_body); 

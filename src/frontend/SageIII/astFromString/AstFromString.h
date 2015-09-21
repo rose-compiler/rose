@@ -108,14 +108,14 @@ namespace AstFromString
   //! Match a declaration. Only the simplest int i=9; style declaration is supported for now
   ROSE_DLL_API bool afs_match_declaration();
 
-  //!Match declaration specifiers. Not yet implemented.
-  ROSE_DLL_API bool afs_match_declaration_specifiers();
+  //!Match declaration specifiers, store the matched type into *tt 
+  ROSE_DLL_API bool afs_match_declaration_specifiers(SgType** tt);
 
   //!Match an init declarator list. Not yet implemented.
   ROSE_DLL_API bool afs_match_init_declarator_list();
 
-  //! Match init declarator. Not yet implemented.
-  ROSE_DLL_API bool afs_match_init_declarator();
+  //! Match init declarator. 
+  ROSE_DLL_API bool afs_match_init_declarator(SgType** mod_type, SgName** sname, SgExpression** initializer);
 
   //! Match a storage class specifier. Not yet implemented.
   ROSE_DLL_API bool afs_match_storage_class_specifier();
@@ -139,10 +139,17 @@ namespace AstFromString
   // enumerator
   //! Match a type qualifier : 'const' | 'volatile'
   ROSE_DLL_API bool afs_match_type_qualifier();
-  //declarator
-  //direct_declarator
+
+  //! Match a declarator
+  ROSE_DLL_API bool afs_match_declarator(SgType** modified_type);
+
+  //! Match a direct declarator
+  ROSE_DLL_API bool afs_match_direct_declarator();
   // declarator_suffix
-  // pointer
+  
+  //! Pointer constructs like * type
+  ROSE_DLL_API bool afs_match_pointer();
+  
   //parameter_type_list
   // parameter_list
   //parameter_declaration
@@ -153,6 +160,7 @@ namespace AstFromString
   //direct_abstract_declarator
   //abstract_declarator_suffix
   // initializer
+  bool afs_match_initializer(); 
   // initializer_list
 
 
