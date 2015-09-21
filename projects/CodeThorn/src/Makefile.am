@@ -419,6 +419,8 @@ analyterix_SOURCES = \
   TransformationOperators.C \
   UDAstAttribute.C \
   UDAstAttribute.h \
+  ProgramAbstractionLayer.h \
+  ProgramAbstractionLayer.C \
   analyterix.C
 
 # obsolete since integration into ROSE
