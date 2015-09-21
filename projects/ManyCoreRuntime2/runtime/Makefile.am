@@ -11,5 +11,5 @@ libmulticore_la_SOURCES =\
 include_HEADERS= multicore.h 
 
 EXTRA_DIST = $(srcdir)/core.h $(srcdir)/multicore.h stencil.h \
-             $(srcdir)/core.C $(srcdir)/multicore.C
+             $(srcdir)/core.C $(srcdir)/multicore.C $(srcdir)/rdtsc.h
 
