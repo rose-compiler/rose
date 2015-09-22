@@ -76,6 +76,14 @@ findDeadCode_CPPFLAGS = $(ROSE_INCLUDES)
 findDeadCode_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Parse and simplify symbolic expressions
+
+bin_PROGRAMS += symbolicSimplifier
+symbolicSimplifier_SOURCES = symbolicSimplifier.C
+symbolicSimplifier_CPPFLAGS = $(ROSE_INCLUDES)
+symbolicSimplifier_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Not distributed; not part of the Git repo
 
 detectConstants: detectConstants.C

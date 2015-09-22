@@ -14,7 +14,12 @@ public:
     /** Syntax errors that are thrown. */
     class SyntaxError: public std::runtime_error {
     public:
-        SyntaxError(const std::string &mesg, const std::string &filename, unsigned lineNumber, unsigned columnNumber);
+        std::string inputName;                          /**< Name of input, usually a file name. */
+        unsigned lineNumber;                            /**< Line number (1-origin). Zero if position info is not available. */
+        unsigned columnNumber;                          /**< Column number (0-origin). Unused when @c lineNumber is zero. */
+        void print(std::ostream&) const;                /**< Print error message to stream. */
+        SyntaxError(const std::string &mesg, const std::string &inputName, unsigned lineNumber, unsigned columnNumber);
+        ~SyntaxError() throw () {}
     };
 
 public:
@@ -30,8 +35,8 @@ public:
 private:
     void init();
 };
-
     
+std::ostream& operator<<(std::ostream&, const SymbolicExprParser::SyntaxError&);
 
 } // namespace
 } // namespace

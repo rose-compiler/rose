@@ -19,10 +19,30 @@ namespace BinaryAnalysis {
 //                                      SyntaxError
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SymbolicExprParser::SyntaxError::SyntaxError(const std::string &mesg, const std::string &filename,
+SymbolicExprParser::SyntaxError::SyntaxError(const std::string &mesg, const std::string &inputName,
                                              unsigned lineNumber, unsigned columnNumber)
-    : std::runtime_error(filename + ":" + boost::lexical_cast<std::string>(lineNumber) + "." +
-                         boost::lexical_cast<std::string>(columnNumber) + ": " + mesg) {}
+    : std::runtime_error(mesg), inputName(inputName), lineNumber(lineNumber), columnNumber(columnNumber) {}
+
+void
+SymbolicExprParser::SyntaxError::print(std::ostream &out) const {
+    if (!inputName.empty()) {
+        out <<StringUtility::cEscape(inputName);
+        if (lineNumber != 0)
+            out <<":" <<lineNumber <<"." <<columnNumber;
+        out <<": ";
+    }
+    if (what() && *what()) {
+        out <<what();
+    } else {
+        out <<"syntax error";
+    }
+}
+
+std::ostream&
+operator<<(std::ostream &out, const SymbolicExprParser::SyntaxError &error) {
+    error.print(out);
+    return out;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Token
@@ -170,19 +190,26 @@ private:
     }
     
     // Skip over angle-bracket comments like <this is a comment>. Any right angle brackets that are part of the comment must be
-    // escaped.
+    // escaped. Unescaped angle brackets can be nested like parentheses.
     void consumeInlineComment() {
         ASSERT_require('<' == nextCharacter());
         unsigned startLine = lineNumber_;
         unsigned startColumn = columnNumber_;
+        unsigned depth = 0;
         while (1) {
             switch (nextCharacter()) {
                 case EOF:
                     throw SymbolicExprParser::SyntaxError("end of comment not found before end of input",
                                                           name_, startLine, startColumn);
+                case '<':
+                    consumeCharacter();
+                    ++depth;
+                    break;
                 case '>':
                     consumeCharacter();
-                    return;
+                    if (0 == --depth)
+                        return;
+                    break;
                 case '\'':
                     consumeEscapeSequence();
                     break;
@@ -391,8 +418,12 @@ SymbolicExprParser::parse(std::istream &input, const std::string &inputName, uns
                 LeafNodePtr leaf;
                 boost::smatch matches;
                 if (0 == tokens[0].width) {
-                    throw tokens[0].syntaxError("variable \""+StringUtility::cEscape(tokens[0].string)+"\" must have "
-                                                "a non-zero width specified", inputName);
+                    if (tokens[0].string == "...") {
+                        throw tokens[0].syntaxError("input is an abbreviated expression; parts are missing", inputName);
+                    } else {
+                        throw tokens[0].syntaxError("variable \""+StringUtility::cEscape(tokens[0].string)+"\" must have "
+                                                    "a non-zero width specified", inputName);
+                    }
                 }
                 if (boost::regex_match(tokens[0].string, matches, boost::regex("v(\\d+)"))) {
                     uint64_t varId = rose_strtoull(matches.str(1).c_str(), NULL, 10);
