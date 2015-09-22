@@ -518,23 +518,14 @@ void Specialization::printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, Variab
 
 string Specialization::iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping) {
   stringstream ss;
-  bool exists=false;
   for(IterationVariables::iterator i=iterationVars.begin();i!=iterationVars.end();++i) {
     if(i!=iterationVars.begin())
       ss<<", ";
     ss<<variableIdMapping->variableName((*i).first);
     if((*i).second) {
       ss<<"[par]";
-      exists=true;
     }
   }
-#if 0
-  if(!exists) {
-    cerr<<"Error: iterVarsAndParVarToString:: parallel iteration var is not an iteration variable."<<endl;
-    cerr<<"Variable: "<<variableIdMapping->variableName(parallelIterationVar)<<endl;
-    exit(1);
-  }
-#endif
   return ss.str();
 }
 

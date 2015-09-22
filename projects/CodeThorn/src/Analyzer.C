@@ -3597,7 +3597,7 @@ void Analyzer::runSolver10() {
   int processedStates = 0;
   int previousProcessedStates = 0;
   int checkIfFinishedEvery = 500;
-  int previousFinishedCheckStates = 0;
+  //int previousFinishedCheckStates = 0;
   unsigned int currentMaxDepth = 0; //debugging
   int threadNum;
   int workers=_numberOfThreadsToUse;
@@ -3621,7 +3621,7 @@ void Analyzer::runSolver10() {
         if (finished) {
           earlyTermination = true;
         }
-        previousFinishedCheckStates = processedStates;
+        //previousFinishedCheckStates = processedStates;
       }
       // display a status report every ~10.000 non-error PStates
       if(threadNum==0 && _displayDiff && (processedStates >= (previousProcessedStates+_displayDiff))) {
