@@ -124,6 +124,12 @@
  *    description of what needs to be fixed. Also include @em your name (i.e., the person who thinks there's a
  *    problem) and the date.
  *
+ *  + <b>Author name:</b> Do not insert your own name as the author. There are a number of reasons: first, we all work on all
+ *    parts of ROSE to some degree and most of us would not be willing to remove another author's name if we make edits to the
+ *    documentation even if that author is no longer with the ROSE team, which leads to the name eventually becoming inaccurate
+ *    and/or misleading. Second, if some names are inaccurate then none of the names can be trusted. Finally, the question of
+ *    who wrote what is answered better by the revision control system than by annotations in the source code.
+ *
  *  + <b>Proofread:</b> Proofread your documentation in a web browser after doxygen runs.  One common error is for doxygen to
  *    make a link to a capitalized word (like Function, at least as this is being written) that happens to also be an entity in
  *    the API. Prefix such words with a percent sign when the link is unintended.  Likewise, authors should try to avoid class
