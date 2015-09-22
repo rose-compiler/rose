@@ -31,7 +31,7 @@ noinst_PROGRAMS = \
     generateUniqueName annotateExpressionsWithUniqueNames buildExternalStatement \
     buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern \
     insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences \
-    buildJavaPackage createAbstractHandles moveDeclarationToInnermostScope
+    buildJavaPackage createAbstractHandles moveDeclarationToInnermostScope buildStatementFromString
 
 # list of test SAGE AST builders 
 fixVariableReferences_SOURCES = fixVariableReferences.C 
@@ -92,6 +92,7 @@ loopCollapsing_SOURCES                    = loopCollapsing.C
 loopCollapsingDirective_SOURCES           = loopCollapsingDirective.C
 createAbstractHandles_SOURCES             = createAbstractHandles.C
 moveDeclarationToInnermostScope_SOURCES   = moveDeclarationToInnermostScope.C
+buildStatementFromString_SOURCES          = buildStatementFromString.C
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
 
@@ -154,6 +155,7 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_3.C\
   rose_inputloopCollapsing_4.C\
   rose_inputloopCollapsing_5.C\
+  rose_inputbuildStatementFromString.C \
   buildJavaPackage.passed 
 
 # section for declaration moving tool
@@ -497,6 +499,7 @@ group1 =						\
 	rose_inputbuildTypedefDeclaration.C		\
 	rose_inputgetDependentDecls.C			\
 	rose_inputreplaceWithPattern.C                  \
+	rose_inputbuildStatementFromString.C            \
 	rose_inputcreateAbstractHandles.C
 
 $(group1): rose_input%.C: input%.C %
@@ -856,7 +859,7 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C			\
        inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C  inputcreateAbstractHandles.C \
        inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C \
-       inputbuildJavaPackage.C inputloopCollapsing_1.C
+       inputbuildJavaPackage.C inputloopCollapsing_1.C inputbuildStatementFromString.C
 
 
 # JP (10/4/14): Added the unit tests

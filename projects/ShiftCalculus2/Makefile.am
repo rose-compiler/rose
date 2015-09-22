@@ -163,7 +163,8 @@ check-local:
 	@echo "********************************************************************************************"
 
 
-EXTRA_DIST = 
+EXTRA_DIST = refCode]ls/laplacian_mpi.cpp refCode/laplacian_mpi_v1_1.cpp refCode/laplacian_mpi_v1.cpp refCode/laplacian_mpi_v2.cpp \
+             refCode/laplacian_mpi_wrt.cpp refCode/laplacian_mpi_v1_2.cpp refCode/laplacian_mpi_v2_2.cpp refCode/laplacian_mpi_v4.cpp
 CLEANFILES = 
 
 clean-local:

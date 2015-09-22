@@ -40,7 +40,6 @@ void initialize(class RectMDArray< double  , 1 , 1 , 1 > &patch)
 
 int checksum(class RectMDArray< double  , 1 , 1 , 1 > &orig, class RectMDArray< double  , 1 , 1 , 1 > &result)
 {
-
   if(orig.dataSize() != result.dataSize()) 
     return 1;
   class Box D0 = orig . getBox();
@@ -52,8 +51,6 @@ int checksum(class RectMDArray< double  , 1 , 1 , 1 > &orig, class RectMDArray< 
   } 
   return 0; 
 }
-
-
 
 int main(int argc,char *argv[])
 {
@@ -120,6 +117,7 @@ int main(int argc,char *argv[])
     arraySize_Z_dest = bxdest .  size (2);
     sourceDataPointer = Asrc->getPointer();
     destinationDataPointer = Adest->getPointer();
+    //reference sequential version
     for (k = lb2dest; k <= ub2dest; ++k) {
       for (j = lb1dest; j <= ub1dest; ++j) {
         for (i = lb0dest; i <= ub0dest; ++i) {
