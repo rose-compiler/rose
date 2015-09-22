@@ -22,7 +22,8 @@ int main(int argc, char** argv)
   SgStatement* s = NULL;
 
   // int j;
-  s= buildStatementFromString ("int j;", f_body); 
+  // It only supports single variable declaration for now due to the limitation of ROSE AST
+  s= buildStatementFromString ("int** j;", f_body); 
   appendStatement(s, f_body);
   ROSE_ASSERT (isSgVariableDeclaration(s)!=NULL);
   ROSE_ASSERT (s->get_parent() != NULL);
