@@ -1924,6 +1924,19 @@ LeafNode::create_variable(size_t nbits, std::string comment, unsigned flags)
 
 /* class method */
 LeafNodePtr
+LeafNode::create_existing_variable(size_t nbits, uint64_t id, const std::string &comment, unsigned flags) {
+    ASSERT_require(nbits > 0);
+    LeafNode *node = new LeafNode(comment, flags);
+    node->nbits = nbits;
+    node->leaf_type = BITVECTOR;
+    node->name = id;
+    name_counter = std::max(name_counter, id+1);
+    LeafNodePtr retval(node);
+    return retval;
+}
+
+/* class method */
+LeafNodePtr
 LeafNode::create_integer(size_t nbits, uint64_t n, std::string comment, unsigned flags)
 {
     ASSERT_require(nbits > 0);
