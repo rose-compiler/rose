@@ -115,7 +115,7 @@ namespace AstFromString
   ROSE_DLL_API bool afs_match_init_declarator_list();
 
   //! Match init declarator. 
-  ROSE_DLL_API bool afs_match_init_declarator(SgType** mod_type, SgName** sname, SgExpression** initializer);
+  ROSE_DLL_API bool afs_match_init_declarator(SgType* orig_type, SgType** mod_type, SgName** sname, SgExpression** initializer);
 
   //! Match a storage class specifier. Not yet implemented.
   ROSE_DLL_API bool afs_match_storage_class_specifier();
@@ -141,14 +141,14 @@ namespace AstFromString
   ROSE_DLL_API bool afs_match_type_qualifier();
 
   //! Match a declarator
-  ROSE_DLL_API bool afs_match_declarator(SgType** modified_type);
+  ROSE_DLL_API bool afs_match_declarator(SgType* orig_type, SgType** modified_type);
 
   //! Match a direct declarator
   ROSE_DLL_API bool afs_match_direct_declarator();
   // declarator_suffix
   
   //! Pointer constructs like * type
-  ROSE_DLL_API bool afs_match_pointer();
+  ROSE_DLL_API bool afs_match_pointer(SgType* orig_type);
   
   //parameter_type_list
   // parameter_list

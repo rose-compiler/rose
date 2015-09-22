@@ -83,7 +83,7 @@ namespace AstFromString
 
   //! Match a given sub c string from the input c string, again skip heading space/tabs if any
   //  checkTrail: Check the immediate following character after the match, it must be one of
-  //      whitespace, end of str, newline, tab, (, ), or '!', etc.
+  //      whitespace, end of str, newline, tab, (, ), *, or '!', etc.
   //      Set to true by default, used to ensure the matched substr is a full identifier/keywords.
   //      If try to match operators (+=, etc), please set checkTrail to false!!
   //
@@ -118,11 +118,12 @@ namespace AstFromString
     // could only be either space or \n, \0, \t, !comments
     // or the match is revoked, e.g: "parallel1" match sub str "parallel" but 
     // the trail is not legal
-    // TODO: any other characters?
+    // TODO: any other characters? 
     //     TV (12/22/2013) : added ',' as legal trail.
+    //     Liao (9/21/2015) : added '*' as legal trail, e.g. int* j; 
     if (checkTrail)
     {
-      if (*c_char!=' '&&*c_char!='\0'&&*c_char!='\n'&&*c_char!='\t' &&*c_char!='!' &&*c_char!='(' &&*c_char!=')' &&*c_char!=',')
+      if (*c_char!=' '&&*c_char!='\0'&&*c_char!='\n'&&*c_char!='\t' &&*c_char!='!' &&*c_char!='(' &&*c_char!=')' &&*c_char!=',' &&*c_char!='*')
       {
         result = false;
         c_char = old_char;
@@ -969,7 +970,8 @@ namespace AstFromString
     {
       c_parsed_node = buildUnsignedLongLongType();
       result = true;
-    } //TODO struct_or_union_specifier
+    } 
+    //TODO struct_or_union_specifier
     //TODO num_specifier
     //TODO TYPE_NAME
 
@@ -2366,14 +2368,15 @@ postfix_operator
    At this stage, previous parsing should already found a base type stored in c_parsed_node.
    Matching a pointer will generate a new type pointing to the base type
    * */
-  bool afs_match_pointer ()
+  bool afs_match_pointer (SgType* orig_type)
   {
     bool result = false;
     const char* old_char = c_char;
 
-    assert (c_parsed_node != NULL);
+//    assert (c_parsed_node != NULL);
+    assert (orig_type!= NULL);
     //TODO double check this assumption: declaration_specifiers should be in front of this pointer 
-    SgType* base_type = isSgType (c_parsed_node);
+    SgType* base_type = orig_type;
     assert (base_type != NULL);
 
     if (afs_match_char('*') )
@@ -2390,6 +2393,7 @@ postfix_operator
       }
       //TODO handle type_qualifier_list  const, volatile
 
+      return true; 
     }
     else
       c_char = old_char; // need to restore context
@@ -2426,11 +2430,11 @@ postfix_operator
       | direct_declarator
       ;
   */
-   bool afs_match_declarator(SgType** mod_type) 
+   bool afs_match_declarator(SgType* orig_type, SgType** mod_type) 
    {
      bool result = false;
 
-     if (afs_match_pointer())
+     if (afs_match_pointer(orig_type))
      {
        // store the modified type 
        *mod_type = isSgPointerType(c_parsed_node); 
@@ -2455,12 +2459,12 @@ postfix_operator
         | declarator '=' initializer
         ;    
     * */
-  bool afs_match_init_declarator(SgType** mod_type, SgName** sname, SgExpression** initializer) 
+  bool afs_match_init_declarator(SgType* orig_type, SgType** mod_type, SgName** sname, SgExpression** initializer) 
   {
     bool result = false; 
     const char* old_char = c_char;
 
-    if (afs_match_declarator(mod_type))
+    if (afs_match_declarator(orig_type, mod_type))
     {
       *sname = isSgName(c_parsed_node);  // must preserve it here, later match will overwrite it!
       assert (sname);
@@ -2895,7 +2899,7 @@ so we take a short cut to match init_declartor() instead of init_declarator_list
     SgExpression* init_exp = NULL; 
 
    // common case of int i = 10;  don't forget the ending ; 
-    if (afs_match_declaration_specifiers (&orig_type) && afs_match_init_declarator (&mod_type, &sname, &init_exp) && afs_match_char(';'))
+    if (afs_match_declaration_specifiers (&orig_type) && afs_match_init_declarator (orig_type, &mod_type, &sname, &init_exp) && afs_match_char(';'))
     {
       assert (orig_type != NULL);
       assert (sname != NULL);
@@ -2911,7 +2915,7 @@ so we take a short cut to match init_declartor() instead of init_declarator_list
 
       c_parsed_node = SageBuilder::buildVariableDeclaration(*sname, orig_type, assign_init, scope);
       result = true; // must set this !! 
-    } // TODO handle declaration_specifiers ';'
+    } // TODO handle declaration_specifiers ';', have to roll back the side effects or previous branch
     else
       c_char = old_char;
 
