@@ -31,9 +31,9 @@ RDTransferFunctions::RDTransferFunctions() {
   * \date 2013.
  */
 void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element0) {
-  RDLattice* element1=dynamic_cast<RDLattice*>(&element0);
-  ROSE_ASSERT(element1);
-  RDLattice& element=*element1;
+  // throws bad_cast exception when downcasting to the wrong type
+  RDLattice& element=dynamic_cast<RDLattice&>(element0);
+
   // update analysis information
   // this is only correct for RERS12-C programs
   // 1) remove all pairs with lhs-variableid
@@ -83,9 +83,6 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Latt
 //NOTE: missing: UD must take uses in initializers into account
 void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element0) {
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
-  //  ROSE_ASSERT(element1);
-  //RDLattice& element=*element1;
-
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(node);
   // same as in transferExpression ... needs to be refined
@@ -131,9 +128,7 @@ void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* 
   * \date 2013.
  */
 void RDTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element0) {
-  RDLattice* element1=dynamic_cast<RDLattice*>(&element0);
-  ROSE_ASSERT(element1);
-  RDLattice& element=*element1;
+  RDLattice& element=dynamic_cast<RDLattice&>(element0);
 
   // uses and defs in argument-expressions
   for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
@@ -145,9 +140,9 @@ void RDTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* cal
   * \date 2013.
  */
 void RDTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element0) {
-  RDLattice* element1=dynamic_cast<RDLattice*>(&element0);
+  RDLattice& element=dynamic_cast<RDLattice&>(element0);
   VariableId varId=_variableIdMapping->variableId(lhsVar);
-  element1->insertPair(lab,varId);
+  element.insertPair(lab,varId);
 }
 //NOTE: UD analysis must take uses of function-call arguments into account
 /*! 
@@ -155,9 +150,7 @@ void RDTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhs
   * \date 2013.
  */
 void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element0) {
-  RDLattice* element1=dynamic_cast<RDLattice*>(&element0);
-  ROSE_ASSERT(element1);
-  RDLattice& element=*element1;
+  RDLattice& element=dynamic_cast<RDLattice&>(element0);
 
   // generate RDs for each parameter variable
   for(SgInitializedNamePtrList::iterator i=formalParameters.begin();
@@ -178,9 +171,7 @@ void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition*
  */
 void RDTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, Lattice& element0) {
 
-  RDLattice* element1=dynamic_cast<RDLattice*>(&element0);
-  ROSE_ASSERT(element1);
-  RDLattice& element=*element1;
+  RDLattice& element=dynamic_cast<RDLattice&>(element0);
 
   // remove all declared variable at function exit (including function parameter variables)
   for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {
