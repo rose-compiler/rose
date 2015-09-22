@@ -15,6 +15,7 @@
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stopwatch.h>
+#include <SymbolicExprParser.h>
 #include <SymbolicMemory2.h>
 #include <SymbolicSemantics2.h>
 #include <YicesSolver.h>
@@ -57,6 +58,8 @@ struct Settings {
     bool debugSmtSolver;                                // turn on SMT debugging?
     Sawyer::Optional<rose_addr_t> initialStackPtr;      // concrete value to use for stack pointer register initial value
     size_t nThreads;                                    // number of threads for algorithms that support multi-threading
+    std::vector<std::string> registerPostConditionsStr; // final conditions for registers
+    std::vector<std::string> memoryPostConditionsStr;   // final conditions for memory
     Settings()
         : beginVertex("_start"), maxRecursionDepth(4), maxCallDepth(100), maxPathLength(1600), vertexVisitLimit(1),
           showInstructions(true), showConstraints(false), showFinalState(false), showFunctionSubgraphs(true),
@@ -220,6 +223,27 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
                .doc("Comma-separated list (or multiple occurrences of this switch) of function entry addresses for "
                     "functions that should be summarized/approximated instead of traversed."));
 
+    //---------------------------
+    SwitchGroup pcond("Post-condition switches");
+    pcond.insert(Switch("register-postcondition")
+                 .argument("reg=value", anyParser(settings.registerPostConditionsStr))
+                 .whichValue(SAVE_ALL)
+                 .doc("Supplies a post condition for a register. The @v{reg} part of the switch argument is a register "
+                      "name and the @p{value} part is a symbolic expression as parsed by the "
+                      "rose::BinaryAnalysis::SymbolicExprParser class. In short, this class excepts s-expressions in "
+                      "a format similar to Lisp. For example, \"@s{register-postcondition} 'ebx = 0'\". This siwtch may "
+                      "appear more than once to specify a conjunction of post conditions."));
+
+    pcond.insert(Switch("memory-postcondition")
+                 .argument("addr=value", anyParser(settings.memoryPostConditionsStr))
+                 .whichValue(SAVE_ALL)
+                 .doc("Supplies a post condition for a memory location. The @v{addr} part of the switch argument is a "
+                      "symbolic memory address and the @p{value} part is the byte value stored at that addres. Both "
+                      "address and value use the syntax parsed by the rose::BinaryAnalysis::SymbolicExprParser class. "
+                      "In short, this class excepts s-expressions in a format similar to Lisp. For example, "
+                      "\"@s{register-postcondition} 'ebx = 0'\". This siwtch may appear more than once to specify a "
+                      "conjunction of post conditions."));
+
     //--------------------------- 
     SwitchGroup out("Output switches");
     out.insert(Switch("show-instructions")
@@ -309,7 +333,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
                .intrinsicValue(false, settings.debugSmtSolver)
                .hidden(true));
 
-    ParserResult cmdline = parser.with(cfg).with(out).parse(argc, argv).apply();
+    ParserResult cmdline = parser.with(cfg).with(pcond).with(out).parse(argc, argv).apply();
 
     // These switches from the rose library have no Settings struct yet, so we need to query the parser results to get them.
     if (cmdline.have("threads"))
@@ -1123,11 +1147,68 @@ printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pat
     }
 }
 
+// Parse register post-condition strings and add them to the path constraints.
+static void
+incorporateRegisterPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops contains final path state
+                                  std::vector<InsnSemanticsExpr::TreeNodePtr> &pathConstraints /*out*/) {
+    ASSERT_not_null(ops);
+    BaseSemantics::RegisterStatePtr regState = ops->get_state()->get_register_state();
+    BOOST_FOREACH (const std::string &regPostCondStr, settings.registerPostConditionsStr) {
+        boost::regex re("\\s*([a-zA-Z_][a-zA-Z_0-9]*)\\s*=\\s*(.*?)\\s*");
+        boost::smatch matches;
+        if (!boost::regex_match(regPostCondStr, matches, re))
+            throw std::runtime_error("register postcondition must be of the form \"register = value\": " + regPostCondStr);
+        const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(matches.str(1));
+        if (NULL == regp)
+            throw std::runtime_error("register '"+matches.str(1)+"' is not a valid register: " + regPostCondStr);
+        InsnSemanticsExpr::TreeNodePtr rhs = SymbolicExprParser().parse(matches.str(2));
+        if (regp->get_nbits() != rhs->get_nbits()) {
+            throw std::runtime_error("register/expr width mismatch (reg=" + StringUtility::numberToString(regp->get_nbits()) +
+                                     ", expr=" + StringUtility::numberToString(rhs->get_nbits()) + "): " + regPostCondStr);
+        }
+        BaseSemantics::SValuePtr lhs = regState->readRegister(*regp, ops.get());
+        InsnSemanticsExpr::TreeNodePtr expr =
+            InsnSemanticsExpr::InternalNode::create(regp->get_nbits(), InsnSemanticsExpr::OP_EQ,
+                                                    SymbolicSemantics::SValue::promote(lhs)->get_expression(), rhs);
+        pathConstraints.push_back(expr);
+    }
+}
+
+// Parse memory post-condition strings and add them to the path constraints
+static void
+incorporateMemoryPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops contains final path state
+                                std::vector<InsnSemanticsExpr::TreeNodePtr> &pathConstraints /*out*/) {
+    ASSERT_not_null(ops);
+    BaseSemantics::MemoryStatePtr memState = ops->get_state()->get_memory_state();
+    BOOST_FOREACH (const std::string &memPostCondStr, settings.memoryPostConditionsStr) {
+        SymbolicExprParser parser;
+        std::istringstream input(memPostCondStr);
+        InsnSemanticsExpr::TreeNodePtr addrExpr = parser.parse(input);
+        InsnSemanticsExpr::TreeNodePtr rhsExpr = parser.parse(input);
+
+        SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(ops->undefined_(8));
+        addr->set_expression(addrExpr);
+        BaseSemantics::SValuePtr lhs = memState->readMemory(addr, ops->undefined_(8), ops.get(), ops.get());
+        InsnSemanticsExpr::TreeNodePtr expr =
+            InsnSemanticsExpr::InternalNode::create(8, InsnSemanticsExpr::OP_EQ,
+                                                    SymbolicSemantics::SValue::promote(lhs)->get_expression(), rhsExpr);
+        pathConstraints.push_back(expr);
+    }
+}
+
+// Incorporate post conditions into the path constraints
+static void
+incorporatePostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops contains final path state
+                          std::vector<InsnSemanticsExpr::TreeNodePtr> &pathConstraints /*out*/) {
+    incorporateRegisterPostConditions(ops, pathConstraints);
+    incorporateMemoryPostConditions(ops, pathConstraints);
+}
+
 /** Process one path. Given a path, determine if the path is feasible.  If @p showResults is set, then emit information about
  *  the initial conditions that cause this path to be taken. */
 static SMTSolver::Satisfiable
 singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths, const P2::CfgPath &path,
-                      bool emitResults) {
+                      bool atEndOfPath) {
     using namespace rose::BinaryAnalysis::InsnSemanticsExpr;     // TreeNode, InternalNode, LeafNode
     ASSERT_require(settings.searchMode == SEARCH_SINGLE_DFS);
 
@@ -1170,12 +1251,14 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
             pathConstraints.push_back(constraint);
         }
     }
+    if (atEndOfPath)
+        incorporatePostConditions(ops, pathConstraints /*out*/);
 
     // Are the constraints satisfiable.  Empty constraints are tivially satisfiable.
     SMTSolver::Satisfiable isSatisfied = SMTSolver::SAT_UNKNOWN;
     isSatisfied = solver.satisfiable(pathConstraints);
 
-    if (!emitResults)
+    if (!atEndOfPath)
         return isSatisfied;
 
     if (isSatisfied == SMTSolver::SAT_YES) {
@@ -1545,6 +1628,7 @@ singleThreadBfsWorker(BfsContext *ctx) {
         }
 
         // Accumulate all constraints along this path and invoke the SMT solver.
+        bool atEndOfPath = ctx->pathsEndVertices.find(pathsEdge->target()) != ctx->pathsEndVertices.end();
         SMTSolver::Satisfiable isFeasible = SMTSolver::SAT_UNKNOWN;
         std::vector<TreeNodePtr> pathConstraints;
         if (!abandonPrefix) {
@@ -1558,6 +1642,8 @@ singleThreadBfsWorker(BfsContext *ctx) {
                     break;                              // vertex is the root of the tree
                 vertex = vertex->inEdges().begin()->source();
             }
+            if (atEndOfPath)
+                incorporatePostConditions(ops, pathConstraints /*out*/);
             SAWYER_MESG(debug) <<"  solving " <<StringUtility::plural(pathConstraints.size(), "path constraints") <<"\n";
             isFeasible = solver.satisfiable(pathConstraints);
             if (SMTSolver::SAT_NO == isFeasible)
@@ -1567,7 +1653,6 @@ singleThreadBfsWorker(BfsContext *ctx) {
         }
 
         // Print results
-        bool atEndOfPath = ctx->pathsEndVertices.find(pathsEdge->target()) != ctx->pathsEndVertices.end();
         bool shouldExit = false;
         if (isFeasible == SMTSolver::SAT_YES && atEndOfPath) {
             SAWYER_MESG(debug) <<"  path is feasible and complete (printing results)\n";
