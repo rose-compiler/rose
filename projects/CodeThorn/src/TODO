@@ -52,5 +52,5 @@ ii) VariableIdMapping: implement isConstantArray
   ii) rename (and rewrite all user code) to not overload && and || anymore.
   iii) remove indirection of number-types in CodeThorn (only possible after removal of && and ||)
 
-26) iv-analysis: add initialization of global variables
-
+27) Lattice<=PropertyState(+transfer)
+    Only Solver needs to know the transfer functions
