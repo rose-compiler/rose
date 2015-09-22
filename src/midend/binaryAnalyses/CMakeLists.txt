@@ -1,6 +1,5 @@
 add_library(midend_binary OBJECT
   AbstractLocation.C
-  binary_analysis.C
   BinaryCallingConvention.C
   BinaryControlFlow.C
   BinaryDataFlow.C
@@ -56,7 +55,6 @@ add_dependencies(midend_binary rosetta_generated)
 install(
   FILES
     AbstractLocation.h
-    binary_analysis.h
     BinaryAnalysisUtils.h
     BinaryCallingConvention.h
     BinaryControlFlow.h

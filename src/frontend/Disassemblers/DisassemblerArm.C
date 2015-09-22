@@ -468,7 +468,6 @@ DisassemblerArm::disassemble()
       bool bit20 = (insn >> 20) & 1;
       bool bit21 = (insn >> 21) & 1;
       bool bit22 = (insn >> 22) & 1;
-      bool bit23 = (insn >> 23) & 1;
       bool bit24 = (insn >> 24) & 1;
       bool bit25 = (insn >> 25) & 1;
       bool bit4_and_bit7 = bit4 && bit7;
@@ -538,6 +537,8 @@ DisassemblerArm::disassemble()
                   reg->set_parent(regs);
                 }
               }
+#if 0 // [Robb P Matzke 2015-09-16]: 'base' is set but not used.
+              bool bit23 = (insn >> 23) & 1;
               SgAsmExpression* base = rn;
               if (bit21) { // w
                 SgAsmExpression* offset = SageBuilderAsm::buildValueU8(regs->get_expressions().size() * 4);
@@ -547,6 +548,7 @@ DisassemblerArm::disassemble()
                     base = SageBuilderAsm::buildSubtractPostupdateExpression(rn, offset);
                 }
               }
+#endif
 
            // DQ (11/29/2009): This is a MSVC warning: warning C4805: '|' : unsafe mix of type 'uint32_t' and type 'bool' in operation
               switch (((insn >> 21) & 62) | bit20) { // p, u, s, l

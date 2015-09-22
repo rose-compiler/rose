@@ -197,7 +197,9 @@ enum State {
     INITIAL_STATE    = -3,                              /**< Initial state just after a reset. */
     ERROR_STATE      = -4,                              /**< Decoder is in an error condition. */
     USER_DEFINED_0   = 0,                               /**< First user-defined value. */
-    USER_DEFINED_MAX = 128,                             /**< Maximum user-defined value. */
+    USER_DEFINED_1   = 1,                               /**< Second user-defined value. */
+    USER_DEFINED_2   = 2,                               /**< Third user-defined value. */
+    USER_DEFINED_MAX = 128                              /**< Maximum user-defined value. */
 };
 
 /** Returns true for COMPLETED_STATE or FINAL_STATE. */

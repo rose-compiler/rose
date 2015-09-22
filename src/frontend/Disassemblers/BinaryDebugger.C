@@ -93,6 +93,15 @@ sendCommand(__ptrace_request request, int child, void *addr=0, void *data=0) {
     return result;
 }
 
+static long
+sendCommandInt(__ptrace_request request, int child, void *addr, int i) {
+    // Avoid doing a cast because that will cause a G++ warning.
+    void *ptr = 0;
+    ASSERT_require(sizeof i <= sizeof ptr);
+    memcpy(&ptr, &i, sizeof i);
+    return sendCommand(request, child, addr, ptr);
+}
+
 #if defined(BOOST_WINDOWS) || __WORDSIZE==32
 static rose_addr_t
 getInstructionPointer(const user_regs_struct &regs) {
@@ -374,7 +383,7 @@ BinaryDebugger::clearBreakpoint(const AddressInterval &va) {
 
 void
 BinaryDebugger::singleStep() {
-    sendCommand(PTRACE_SINGLESTEP, child_, 0, (void*)sendSignal_);// void* cast is okay--it's part of the Linux ptrace API
+    sendCommandInt(PTRACE_SINGLESTEP, child_, 0, sendSignal_);
     waitForChild();
 }
 
@@ -488,7 +497,7 @@ BinaryDebugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
 void
 BinaryDebugger::runToBreakpoint() {
     if (breakpoints_.isEmpty()) {
-        sendCommand(PTRACE_CONT, child_, 0, (void*)sendSignal_);// void* cast is okay--it's part of the Linux ptrace API
+        sendCommandInt(PTRACE_CONT, child_, 0, sendSignal_);
         waitForChild();
     } else {
         while (1) {
