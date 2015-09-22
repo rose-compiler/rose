@@ -83,6 +83,7 @@ libspray_la_SOURCES=\
  RDTransferFunctions.C \
  VariableIdUtils.C \
  AnalysisAbstractionLayer.C \
+ ProgramAbstractionLayer.C \
  addressTakenAnalysis.C \
  defUseQuery.C
 
@@ -419,8 +420,6 @@ analyterix_SOURCES = \
   TransformationOperators.C \
   UDAstAttribute.C \
   UDAstAttribute.h \
-  ProgramAbstractionLayer.h \
-  ProgramAbstractionLayer.C \
   analyterix.C
 
 # obsolete since integration into ROSE
