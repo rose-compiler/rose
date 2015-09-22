@@ -234,8 +234,8 @@
  *    <tr>
  *      <td><a href="http://dlib.net">Dlib</a></td>
  *      <td>Optional</td>
- *      <td>18.10</td>
- *      <td>18.10</td>
+ *      <td>18.10 - 18.17</td>
+ *      <td>18.17</td>
  *      <td>For certain binary analysis algorithms. See @ref installing_dlib.</td>
  *    </tr>
  *
