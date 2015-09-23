@@ -14,14 +14,13 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h> // for abort()
-#include <assert.h>
 #include <sys/time.h>
 #include <string.h> // for memcpy()
 
 /* prototype declarations */
 
-/*Initialize MPI and obtain default rank and number of processes*/
-extern void xomp_init_mpi (int* argc, char** argv[], int * rank, int * nproc); 
+/*Initialize MPI and obtain default rank and number of processes, return 0 if successful */
+extern int xomp_init_mpi (int* argc, char** argv[], int * rank, int * nproc); 
 
 #ifdef __cplusplus
  }
