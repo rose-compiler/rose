@@ -159,7 +159,7 @@
  *    InstructionSemantics2::BaseSemantics::RiscOperators "RiscOperators"</code>).
  *
  *  + Code snippets are indicated by preceding the word with @c @@c. If more than one word or if it contains special
- *    characters, use HTML @c \<code> and @c \<endcode> tags instead.
+ *    characters, use HTML @c \<code> and @c \</code> tags instead.
  *  
  *  + To include an entire example source file into the documentation, use the @c @@includelineno directive, which takes the
  *    name of the file to include. No path is necessary, but the file must live in a directory known to Doxygen, such as the
