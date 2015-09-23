@@ -25,11 +25,13 @@
 //#define DIM       3
 // #define DIM       2
 #define debug 0
-#define SIZE 511
+#define SIZE 511  // SPACE.H defines BLOCKSIZE
 #include "mpi.h"
+#include "libxomp_mpi.h"
 #include <ctime>
 #include "laplacian_lite_v3.h"
 
+#define USE_XOMP_MPI 1
 void initialize(class RectMDArray< double  , 1 , 1 , 1 > &patch)
 {
   class Box D0 = patch . getBox();
@@ -56,9 +58,14 @@ int main(int argc,char *argv[])
 {
 // MPI setup
   int rank, nprocs;
+
+#if USE_XOMP_MPI
+  xomp_init_mpi (&argc, &argv, &rank, &nprocs);
+#else
   MPI_Init (&argc, &argv);
   MPI_Comm_rank (MPI_COMM_WORLD, &rank);
   MPI_Comm_size (MPI_COMM_WORLD, &nprocs);
+#endif
 
   const class Point zero = getZeros();
   const class Point ones = getOnes();
@@ -75,15 +82,21 @@ int main(int argc,char *argv[])
 // the source box. 
   const class Box bxsrc = bxdest .  grow (1);
 
+//MPI specific code: each array dimension boundary information : [lower: size]
+// upper bounds can be omitted
   int lb0src, lb1src, lb2src, ub0src, ub1src, ub2src;
   int arraySize_X_src, arraySize_Y_src, arraySize_Z_src;
   int lb0dest, lb1dest, lb2dest, ub0dest, ub1dest, ub2dest;
   int arraySize_X_dest, arraySize_Y_dest, arraySize_Z_dest;
   int i,j,k;
 
+// MPI specific code: for mapped arrays, 
+//          to direction: one copy
+//          from direction: one copy also
   double *sourceDataPointer;
   double *destinationDataPointer;
   double *destinationDataPointer_new;
+
   class RectMDArray< double  , 1 , 1 , 1 > *Asrc;
   class RectMDArray< double  , 1 , 1 , 1 > *Adest;
   class RectMDArray< double  , 1 , 1 , 1 > *Adest_new;
@@ -97,31 +110,47 @@ int main(int argc,char *argv[])
     initialize(*Asrc);
     initialize(*Adest);
     begin = MPI_Wtime();
+
     lb2src = bxsrc .  getLowCorner ()[2];
     ub2src = bxsrc .  getHighCorner ()[2];
     arraySize_X_src = bxsrc .  size (0);
+
     lb1src = bxsrc .  getLowCorner ()[1];
     ub1src = bxsrc .  getHighCorner ()[1];
     arraySize_Y_src = bxsrc .  size (1);
+
     lb0src = bxsrc .  getLowCorner ()[0];
     ub0src = bxsrc .  getHighCorner ()[0];
     arraySize_Z_src = bxsrc .  size (2);
+
     lb2dest = bxdest .  getLowCorner ()[2];
     ub2dest = bxdest .  getHighCorner ()[2];
     arraySize_X_dest = bxdest .  size (0);
+
     lb1dest = bxdest .  getLowCorner ()[1];
     ub1dest = bxdest .  getHighCorner ()[1];
     arraySize_Y_dest = bxdest .  size (1);
+
     lb0dest = bxdest .  getLowCorner ()[0];
     ub0dest = bxdest .  getHighCorner ()[0];
     arraySize_Z_dest = bxdest .  size (2);
+
     sourceDataPointer = Asrc->getPointer();
     destinationDataPointer = Adest->getPointer();
-    //reference sequential version
+//----------------------------------------------------------    
+//   reference sequential version
     for (k = lb2dest; k <= ub2dest; ++k) {
       for (j = lb1dest; j <= ub1dest; ++j) {
         for (i = lb0dest; i <= ub0dest; ++i) {
-          destinationDataPointer[arraySize_X_dest * (arraySize_Y_dest * k + j) + i] = sourceDataPointer[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + -1) + (j-lb1src)) + (i-lb0src)] + sourceDataPointer[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + 1) + (j-lb1src)) + (i-lb0src)] + sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + ((j-lb1src) + -1)) + (i-lb0src)] + sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + ((j-lb1src) + 1)) + (i-lb0src)] + sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + ((i-lb0src) + -1)] + sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + ((i-lb0src) + 1)] + sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + (i-lb0src)] * -6.00000;
+          destinationDataPointer[arraySize_X_dest * (arraySize_Y_dest * k + j) + i] = 
+                 sourceDataPointer[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + -1) + (j-lb1src)) + (i-lb0src)] + 
+                 sourceDataPointer[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + 1) + (j-lb1src)) + (i-lb0src)] + 
+                 sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + ((j-lb1src) + -1)) + (i-lb0src)] + 
+                 sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + ((j-lb1src) + 1)) + (i-lb0src)] + 
+                 sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + ((i-lb0src) + -1)] + 
+                 sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + ((i-lb0src) + 1)] + 
+                 sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + (i-lb0src)] * -6.00000;
+
 #if debug
         cout << i << " " << j << " " << k << " " << destinationDataPointer[arraySize_X_dest * (arraySize_Y_dest * k + j) + i] << "= " << sourceDataPointer[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + -1) + (j-lb1src)) + (i-lb0src)] << "+" << sourceDataPointer[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + 1) + (j-lb1src)) + (i-lb0src)] << "+" << sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + ((j-lb1src) + -1)) + (i-lb0src)] << "+" << sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + ((j-lb1src) + 1)) + (i-lb0src)] << "+" << sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + ((i-lb0src) + -1)] << "+" << sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + ((i-lb0src) + 1)] << "+" << sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + (i-lb0src)] << "* -6.00000" << endl;
 #endif
@@ -156,18 +185,24 @@ int main(int argc,char *argv[])
   MPI_Bcast( &lb0src, 1, MPI_INT, 0, MPI_COMM_WORLD); 
   MPI_Bcast( &lb1src, 1, MPI_INT, 0, MPI_COMM_WORLD); 
   MPI_Bcast( &lb2src, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+// upper bounds can be omitted, calculated by add lower+size
   MPI_Bcast( &ub0src, 1, MPI_INT, 0, MPI_COMM_WORLD); 
   MPI_Bcast( &ub1src, 1, MPI_INT, 0, MPI_COMM_WORLD); 
   MPI_Bcast( &ub2src, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+
   MPI_Bcast( &arraySize_X_src, 1, MPI_INT, 0, MPI_COMM_WORLD); 
   MPI_Bcast( &arraySize_Y_src, 1, MPI_INT, 0, MPI_COMM_WORLD); 
   MPI_Bcast( &arraySize_Z_src, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+
   MPI_Bcast( &lb0dest, 1, MPI_INT, 0, MPI_COMM_WORLD); 
   MPI_Bcast( &lb1dest, 1, MPI_INT, 0, MPI_COMM_WORLD); 
   MPI_Bcast( &lb2dest, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+
+// upper bounds can be omitted, calculated by add lower+size
   MPI_Bcast( &ub0dest, 1, MPI_INT, 0, MPI_COMM_WORLD); 
   MPI_Bcast( &ub1dest, 1, MPI_INT, 0, MPI_COMM_WORLD); 
   MPI_Bcast( &ub2dest, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+
   MPI_Bcast( &arraySize_X_dest, 1, MPI_INT, 0, MPI_COMM_WORLD); 
   MPI_Bcast( &arraySize_Y_dest, 1, MPI_INT, 0, MPI_COMM_WORLD); 
   MPI_Bcast( &arraySize_Z_dest, 1, MPI_INT, 0, MPI_COMM_WORLD); 
@@ -186,13 +221,15 @@ int main(int argc,char *argv[])
   else
     offsetdest += rank;
 
+  //data partitions for each process
   distsrc = (double*)calloc(1,sizeof(double)*(distdestsize+2*nghost)*arraySize_X_src*arraySize_Y_src);
+  // no need to initialize
   distdest = (double*)calloc(1,sizeof(double)*(distdestsize)*arraySize_X_dest*arraySize_Y_dest);
 
 
   if(rank == 0)
   {
-    // team leader send data to all members
+    // team leader send source data to all members
     int copyOffset = offsetdest * arraySize_X_src*arraySize_Y_src;
     int copySize = (distdestsize + 2 * nghost) * arraySize_X_src*arraySize_Y_src;
     if(nprocs > 1)    
@@ -200,6 +237,7 @@ int main(int argc,char *argv[])
       int dest, send_tag=1;
       MPI_Request send_reqs[nprocs-1];
       MPI_Status send_status[nprocs-1];
+      // dest rank
       for(dest = 1; dest < nprocs; ++dest)
       {
         int sendSize = arraySize_Z_dest / nprocs;
@@ -245,18 +283,18 @@ cout << "Master send size " << sendSize<< " from offset " << sendOffset << " "  
 //   printf("Receiver:%d has result %d: %f\n",rank, idx, distsrc[idx]); 
   }
 
-// computation
+// computation, only k loop is distributed
   for (k = lb2dest; k < distdestsize; ++k) {
     for (j = lb1dest; j <= ub1dest; ++j) {
       for (i = lb0dest; i <= ub0dest; ++i) {
         distdest[arraySize_X_dest * (arraySize_Y_dest * k + j) + i] = \
-distsrc[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + -1) + (j-lb1src)) + (i-lb0src)] + \
-distsrc[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + 1) + (j-lb1src)) + (i-lb0src)] + \
-distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + ((j-lb1src) + -1)) + (i-lb0src)] + \
-distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + ((j-lb1src) + 1)) + (i-lb0src)] + \
-distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + ((i-lb0src) + -1)] + \
-distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + ((i-lb0src) + 1)] + \
-distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + (i-lb0src)] * -6.00000;
+             distsrc[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + -1) + (j-lb1src)) + (i-lb0src)] + \
+             distsrc[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + 1) + (j-lb1src)) + (i-lb0src)] + \
+             distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + ((j-lb1src) + -1)) + (i-lb0src)] + \
+             distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + ((j-lb1src) + 1)) + (i-lb0src)] + \
+             distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + ((i-lb0src) + -1)] + \
+             distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + ((i-lb0src) + 1)] + \
+             distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + (i-lb0src)] * -6.00000;
 #if debug
        cout << "rank" << rank << " "  << i << " " << j << " " << k << " " << distdest[arraySize_X_dest * (arraySize_Y_dest * k + j) + i] << "= " << \
 distsrc[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + -1) + (j-lb1src)) + (i-lb0src)] << "+" << \
@@ -275,7 +313,7 @@ distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + (i-lb0sr
 
   if(rank == 0)
   {
-// team leader receives data to all members
+// team leader receives destination data from all members
     int src, recv_tag=1;
     MPI_Request recv_reqs[nprocs-1];
     MPI_Status recv_status[nprocs-1];

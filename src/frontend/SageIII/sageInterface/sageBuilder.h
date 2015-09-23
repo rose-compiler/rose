@@ -1325,6 +1325,9 @@ ROSE_DLL_API SgStaticAssertionDeclaration* buildStaticAssertionDeclaration(SgExp
 // DQ (8/17/2014): Adding support for Microsoft MSVC specific attributes.
 ROSE_DLL_API SgMicrosoftAttributeDeclaration* buildMicrosoftAttributeDeclaration (const SgName & name);
 
+// Liao (9/18/2015): experimental support of building a statement from a string 
+ROSE_DLL_API SgStatement* buildStatementFromString(const std::string & stmt_str, SgScopeStatement* scope);
+
 //@}
 
 //--------------------------------------------------------------
