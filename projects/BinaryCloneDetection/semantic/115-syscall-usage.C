@@ -377,7 +377,7 @@ main(int argc, char *argv[])
             ++argno;
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
-            usage(0);
+            ::usage(0);
         } else if (!strcmp(argv[argno], "--link")) {
             link = true;
         } else if (!strcmp(argv[argno], "--no-link")) {
@@ -389,7 +389,7 @@ main(int argc, char *argv[])
         }
     }
     if (argno+2!=argc)
-        usage(1);
+        ::usage(1);
 
     std::string db_name(argv[argno++]);
     std::cout << "Connecting to db:" << db_name << std::endl;
