@@ -66,7 +66,7 @@ namespace BinaryAnalysis {
  *
  *
  *
- *  @section bintut_config How should ROSE be configured to permit binary analysis?
+ *  @section bintut_config Installing and confguring ROSE for binary analysis
  *
  *  The binary analysis features have a large number of software dependencies beyond what the source-to-source side of ROSE
  *  uses, but fortunately all of them are optional.  If a software dependency is not available then the analysis that uses it
