@@ -42,6 +42,18 @@ TEST_TARGETS += testBoost.passed
 testBoost.passed: testBoost
 	./testBoost
 
+# Check parsing of symbolic expressions via rose::BinaryAnalysis::SymbolicExprParser
+noinst_PROGRAMS += testSymbolicExprParser
+testSymbolicExprParser_SOURCES = testSymbolicExprParser.C
+testSymbolicExprParser_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testSymbolicExprParser.passed
+testSymbolicExprParser.passed: $(TEST_WITH_ANSWER) testSymbolicExprParser
+	@$(RTH_RUN)						\
+		TITLE="parsing of symbolic expressions [$@]"	\
+		CMD="./testSymbolicExprParser"			\
+		ANS="$(srcdir)/testSymbolicExprParser.ans"	\
+		$< $@
+
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
 noinst_PROGRAMS += execFormatsTest

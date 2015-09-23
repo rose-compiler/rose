@@ -35,6 +35,7 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/RegisterStateGeneric.C			\
     instructionSemantics/SMTSolver.C				\
     instructionSemantics/StaticSemantics2.C			\
+    instructionSemantics/SymbolicExprParser.C			\
     instructionSemantics/SymbolicMemory2.C			\
     instructionSemantics/SymbolicSemantics.C			\
     instructionSemantics/SymbolicSemantics2.C			\
@@ -101,6 +102,7 @@ pkginclude_HEADERS =					\
     instructionSemantics/RegisterStateGeneric.h		\
     instructionSemantics/SMTSolver.h			\
     instructionSemantics/StaticSemantics2.h		\
+    instructionSemantics/SymbolicExprParser.h		\
     instructionSemantics/SymbolicMemory2.h		\
     instructionSemantics/SymbolicSemantics.h		\
     instructionSemantics/SymbolicSemantics2.h		\
