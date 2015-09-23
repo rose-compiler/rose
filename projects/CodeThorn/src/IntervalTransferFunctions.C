@@ -38,7 +38,7 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
     VariableId varId;
     if(SgVarRefExp* varRefExp=isSgVarRefExp(cond)) {
       // if the switch-cond is a variable set the interval to the case label (this function is called for each case label)
-      varId=_variableIdMapping->variableId(varRefExp);
+      varId=getVariableIdMapping()->variableId(varRefExp);
       ROSE_ASSERT(varId.isValid());
       knownValueIntervalOfSwitchVar=ips.getVariable(varId);
     } else {
@@ -90,7 +90,7 @@ void SPRAY::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pst
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(pstate);
   Label lab0=edge.source;
   //Label lab1=edge.target;
-  SgNode* node=_labeler->getNode(lab0);
+  SgNode* node=getLabeler()->getNode(lab0);
   if(isSgExprStatement(node)) {
     node=SgNodeHelper::getExprStmtChild(node);
   }
@@ -137,11 +137,11 @@ void SPRAY::IntervalTransferFunctions::transferReturnStmtExpr(Label lab, SgExpre
   * \date 2015.
  */
 SPRAY::NumberIntervalLattice SPRAY::IntervalTransferFunctions::evalExpression(Label lab, SgExpression* node, Lattice& pstate) {
-  //ROSE_ASSERT(_variableIdMapping); TODO
+  //ROSE_ASSERT(getVariableIdMapping()); TODO
   NumberIntervalLattice niLattice;
   //cout<<"TINFO: transferExpression "<<node->unparseToString()<<endl;
   _cppExprEvaluator->setPropertyState(&pstate);
-  //cout<<"PSTATE:";pstate.toStream(cout,_variableIdMapping);cout<<endl;
+  //cout<<"PSTATE:";pstate.toStream(cout,getVariableIdMapping());cout<<endl;
   niLattice=_cppExprEvaluator->evaluate(node);
   return niLattice;
 }
@@ -153,8 +153,8 @@ SPRAY::NumberIntervalLattice SPRAY::IntervalTransferFunctions::evalExpression(La
 void SPRAY::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element) {
   ROSE_ASSERT(this!=0);
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
-  ROSE_ASSERT(_variableIdMapping);
-  VariableId varId=_variableIdMapping->variableId(node);
+  ROSE_ASSERT(getVariableIdMapping());
+  VariableId varId=getVariableIdMapping()->variableId(node);
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
   ips.addVariable(varId);
   SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(declnode);
@@ -195,7 +195,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgV
   VariableId resVarId=getResultVariableId();
   if(lhsVar!=0) {
     //cout<<"DEBUG: updated var=f(...)."<<endl;
-    VariableId varId=_variableIdMapping->variableId(lhsVar);  
+    VariableId varId=getVariableIdMapping()->variableId(lhsVar);  
     // set lhs-var to the return-value
     ips.setVariable(varId,ips.getVariable(resVarId));
   }
@@ -214,7 +214,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFuncti
       i!=formalParameters.end();
       ++i) {
     SgInitializedName* formalParameterName=*i;
-    VariableId formalParameterVarId=_variableIdMapping->variableId(formalParameterName);
+    VariableId formalParameterVarId=getVariableIdMapping()->variableId(formalParameterName);
     IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
     // get value of actual parameter
     VariableId paramId=getParameterVariableId(paramNr);
