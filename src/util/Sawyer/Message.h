@@ -1460,6 +1460,11 @@ public:
      *  Thread safety: This method is thread-safe. */
     bool enabled() const;
 
+    // We'd like bool context to return a value that can't be used in arithmetic or comparison operators, but unfortunately
+    // we need to also work with the super class (std::basic_ios) that has an implicit "void*" conversion which conflicts with
+    // the way Sawyer normally handles this (see SharedPointer for an example).  We therefore override the super-class'
+    // void* conversion and "!" operator instead.
+
     /** Returns true if this stream is enabled.
      *
      *  This implicit conversion to bool can be used to conveniently avoid expensive insertion operations when a stream is
@@ -1476,7 +1481,10 @@ public:
      * @endcode
      *
      * Thread safety: This method is thread-safe. */
-    operator bool();
+    operator void*() const {
+        return enabled() ? const_cast<Stream*>(this) : NULL;
+    }
+    bool operator!() const { return !enabled(); }
 
     // See Stream::bool()
     #define SAWYER_MESG(message_stream) message_stream && message_stream

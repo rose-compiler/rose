@@ -1409,7 +1409,7 @@ public:
      * @code
      *  typedef AddressMap<Address,Value> Map;
      *  Map map = ...;
-     *  for (Address a=map.hull().greatest(); map.atOrBelow(a).require(READABLE).next(MATCH_BACKWARD).assignTo(a); --a) {
+     *  for (Address a=map.hull().greatest(); map.atOrBefore(a).require(READABLE).next(MATCH_BACKWARD).assignTo(a); --a) {
      *      ...
      *      if (a == map.hull().least())
      *          break;

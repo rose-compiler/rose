@@ -7,11 +7,11 @@ AC_DEFUN([ROSE_SUPPORT_LIBREADLINE],
     [Use the GNU libreadline library for interactive input. If not present then editing of input lines will not be possible.],
     []
   )
-  if test "x$CONFIG_HAS_ROSE_WITH_LIBREADLINE" = "xno"; then
+  if test "x$ROSE_WITH_LIBREADLINE" = "xno"; then
     LIBREADLINE_INSTALL_PATH=
     LIBREADLINE_INCLUDE_PATH=
     LIBREADLINE_LIBRARY_PATH=
-  elif test "x$CONFIG_HAS_ROSE_WITH_LIBREADLINE" = "xyes"; then
+  elif test "x$ROSE_WITH_LIBREADLINE" = "xyes"; then
     LIBREADLINE_INSTALL_PATH=/usr
     LIBREADLINE_INCLUDE_PATH=/usr/include
     LIBREADLINE_LIBRARY_PATH=/usr/lib

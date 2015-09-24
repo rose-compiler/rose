@@ -88,4 +88,31 @@ Terminal::outputClassesAndFields ()
      return returnString;
    }
 
+string
+Terminal::outputFields () {
+  string returnString;
+  vector<GrammarString *> localList;
+  vector<GrammarString *> localExcludeList;
+  vector<GrammarString *>::iterator stringListIterator;
+  
+  // Initialize with local node data
+  localList        = getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+  localExcludeList = getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
+
+  // Now edit the list to remove elements appearing within the exclude list
+  Grammar::editStringList ( localList, localExcludeList );
+  
+  // returnString += "\n";
+  for( stringListIterator = localList.begin();
+       stringListIterator != localList.end();
+       stringListIterator++ ) {
+    string typeName           = (*stringListIterator)->getTypeNameString();
+    string variableNameString = (*stringListIterator)->getVariableNameString();
+    string typeVarString      = "(" + typeName + ", p_" + variableNameString + ") ";
+    
+    returnString += typeVarString;
+  }
+  ROSE_ASSERT (localExcludeList.size() == 0);
+  return returnString;
+}
 

@@ -5989,6 +5989,8 @@ BUILD_UNARY_DEF(ConjugateOp)
 BUILD_UNARY_DEF(VarArgStartOneOperandOp)
 BUILD_UNARY_DEF(VarArgEndOp)
 
+BUILD_UNARY_DEF(MatrixTransposeOp) //SK(08/20/2015): Matlab matrix transpose operators
+
 #undef BUILD_UNARY_DEF
 
 SgCastExp * SageBuilder::buildCastExp(SgExpression *  operand_i,
@@ -6197,6 +6199,16 @@ BUILD_BINARY_DEF(XorAssignOp)
 
 BUILD_BINARY_DEF(VarArgCopyOp)
 BUILD_BINARY_DEF(VarArgStartOp)
+
+//SK(08/20/2015): Matlab operators
+BUILD_BINARY_DEF(PowerOp);
+BUILD_BINARY_DEF(ElementwisePowerOp);
+BUILD_BINARY_DEF(ElementwiseMultiplyOp);
+BUILD_BINARY_DEF(ElementwiseDivideOp);
+BUILD_BINARY_DEF(LeftDivideOp);
+BUILD_BINARY_DEF(ElementwiseLeftDivideOp);
+BUILD_BINARY_DEF(ElementwiseAddOp);
+BUILD_BINARY_DEF(ElementwiseSubtractOp);
 
 #undef BUILD_BINARY_DEF
 
@@ -8114,6 +8126,19 @@ SgDoWhileStmt * SageBuilder::buildDoWhileStmt_nfi(SgStatement *  body, SgStateme
   return result;
 }
 
+SgMatlabForStatement* SageBuilder::buildMatlabForStatement(SgExpression* loop_index, SgExpression* loop_range, SgBasicBlock* loop_body)
+{
+  SgMatlabForStatement* result = new SgMatlabForStatement(loop_index, loop_range, loop_body);
+  SageInterface::setOneSourcePositionForTransformation(result);
+
+  ROSE_ASSERT(result != NULL);
+
+  loop_index->set_parent(result);
+  loop_range->set_parent(result);
+  loop_body->set_parent(result);
+  return result;
+}
+
 SgBreakStmt * SageBuilder::buildBreakStmt()
 {
   SgBreakStmt* result = new SgBreakStmt();
@@ -9915,6 +9940,67 @@ SgTypeImaginary* SageBuilder::buildImaginaryType(SgType* base_type /*=NULL*/)
    ROSE_ASSERT(result!=NULL);
    return result;
  }
+
+//! Build a Matrix Type for Matlab
+SgTypeMatrix* SageBuilder::buildMatrixType()
+{
+  SgTypeMatrix *result = new SgTypeMatrix();
+  ROSE_ASSERT(result != NULL);
+  return result;
+}
+
+//! Build a type that holds multiple types. Used to represent the return type of a matlab function when it returns multiple variables of different types
+SgTypeTuple* SageBuilder::buildTupleType(SgType *t1, SgType *t2, SgType *t3, SgType *t4, SgType *t5, SgType *t6, SgType *t7, SgType *t8, SgType *t9, SgType *t10)
+{
+  SgTypeTuple *result = new SgTypeTuple();
+  ROSE_ASSERT(result != NULL);
+
+  if(t1) result->append_type(t1);
+  if(t2) result->append_type(t2);
+  if(t3) result->append_type(t3);
+  if(t4) result->append_type(t4);
+  if(t5) result->append_type(t5);
+  if(t6) result->append_type(t6);
+  if(t7) result->append_type(t7);
+  if(t8) result->append_type(t8);
+  if(t9) result->append_type(t9);
+  if(t10) result->append_type(t10);
+
+  SageInterface::setOneSourcePositionForTransformation(result);
+
+  return result;
+}
+
+SgRangeExp* SageBuilder::buildRangeExp(SgExpression *start)
+{
+  SgRangeExp *result = new SgRangeExp();
+  SageInterface::setOneSourcePositionForTransformation(result);
+  ROSE_ASSERT(result != NULL);
+  
+  result->append(start);
+  return result;
+}
+
+SgMatrixExp* SageBuilder::buildMatrixExp(SgExprListExp *firstRow)
+{
+  SgMatrixExp *result = new SgMatrixExp();
+  SageInterface::setOneSourcePositionForTransformation(result);
+  
+  result->append_expression(firstRow);
+  ROSE_ASSERT(result != NULL);
+  
+  return result;
+}
+
+SgMagicColonExp* SageBuilder::buildMagicColonExp()
+{
+  SgMagicColonExp *result = new SgMagicColonExp();
+  SageInterface::setOneSourcePositionForTransformation(result);
+
+  ROSE_ASSERT(result != NULL);
+
+  return result;
+}
 
 //! Build a const/volatile type qualifier
 SgConstVolatileModifier * SageBuilder::buildConstVolatileModifier (SgConstVolatileModifier::cv_modifier_enum mtype/*=SgConstVolatileModifier::e_unknown*/)
@@ -16518,6 +16604,34 @@ SageBuilder::fixupCopyOfAstFromSeparateFileInNewTargetAst(SgStatement *insertion
   // DQ (3/30/2014): Turn this off (since we only only want to use it for the AST fixup, currently).
      SgSymbolTable::set_force_search_of_base_classes(false);
    }
+
+// Liao 9/18/2015
+// The parser is implemented in
+// src/frontend/SageIII/astFromString/AstFromString.h .C
+SgStatement* SageBuilder::buildStatementFromString(const std::string& s, SgScopeStatement * scope)
+{
+
+  SgStatement* result = NULL;
+  ROSE_ASSERT (scope != NULL);
+  // set input and context for the parser
+  AstFromString::c_char = s.c_str();
+  assert (AstFromString::c_char== s.c_str());
+  AstFromString::c_sgnode = scope;
+  AstFromString::c_parsed_node = NULL;
+
+  if (AstFromString::afs_match_statement())
+  {
+    result = isSgStatement(AstFromString::c_parsed_node); // grab the result
+    assert (result != NULL);
+  }
+  else
+  {
+    cerr<<"Error. buildStatementFromString() cannot parse the input string:"<<s
+        <<"\n\t within the given scope:"<<scope->class_name() <<endl;
+    ROSE_ASSERT(false);
+  }
+  return result;
+}
 
 //-----------------------------------------------------------------------------
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
