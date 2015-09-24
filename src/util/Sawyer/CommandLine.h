@@ -173,7 +173,7 @@ enum SortOrder {
                                                          *   sections will appear in the order of the Parser::doc calls, or
                                                          *   switches are sorted within a switch group according to the order
                                                          *   they were inserted into the group. */
-    DOCKEY_ORDER,                                       /**< Entities are sorted according to their documentation keys.
+    DOCKEY_ORDER                                        /**< Entities are sorted according to their documentation keys.
                                                          *   Documentation keys, which default to lower-case entity names, are
                                                          *   used to sort the entities within their container. This is the
                                                          *   default. */
@@ -1789,7 +1789,7 @@ enum WhichValue {
     SAVE_LAST,                                          /**< Use only the last occurrence and ignore all previous. */
     SAVE_FIRST,                                         /**< Use only the first occurrence and ignore all previous. */
     SAVE_ALL,                                           /**< Save all values as a vector. */
-    SAVE_AUGMENTED,                                     /**< Save the first value, or modify previously saved value. */
+    SAVE_AUGMENTED                                      /**< Save the first value, or modify previously saved value. */
 };
 
 /** Describes one command-line switch.

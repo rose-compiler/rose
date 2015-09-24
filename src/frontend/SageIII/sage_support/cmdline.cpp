@@ -4147,6 +4147,35 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 #endif
 
+// #ifdef __INTEL_COMPILER
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+  // DQ (9/9/2015): The Intel compiler sets this to an old value (likely to match the MS Visual Studio C++ compiler).
+#if 1
+     printf ("Intel compiler being used as backend compiler: Identified this = %p -std=c++11 via more direct command line argument evaluation \n",this);
+#endif
+
+     if ( SgProject::get_verbose() >= 1 )
+          printf ("Intel compiler being used: Cxx11 mode ON \n");
+     set_Cxx11_only(true);
+     set_Cxx11_gnu_only(false);
+
+  // Set gnu specific level of C99 support to false.
+  // set_Cxx11_gnu_only(false);
+
+  // DQ (7/31/2013): If we turn on C99, then turn off C89.
+     set_C89_only(false);
+     set_C89_gnu_only(false);
+     set_C99_only(false);
+     set_C99_gnu_only(false);
+     set_C11_only(false);
+     set_C11_gnu_only(false);
+
+  // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
+     set_C_only(false);
+
+     ROSE_ASSERT(get_Cxx11_only() == true);
+#endif
+
 #if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
@@ -5898,6 +5927,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (7/3/2013): Adding option to specify the version of GNU to emulate.
      int emulate_gnu_version_number = __GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__;
 
+// #ifdef __INTEL_COMPILER
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+  // DQ (9/6/2015): Reset to specific version of GNU for Intel v14 compiler.
+     emulate_gnu_version_number = 4*10000 + 8*100 + 3;
+#endif
+
   // DQ (7/3/2014): Testing if we emulate a different version of GNU g++.
   // emulate_gnu_version_number = 4*10000 + 8*100 + 1;
 
@@ -6339,6 +6374,15 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
             // DQ (11/29/2006): Specify C++ mode for handling in rose_edg_required_macros_and_functions.h
                commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
+
+// #ifdef __INTEL_COMPILER
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+            // DQ (9/9/2015): The Intel compiler sets this to an old value (likely to match the MS Visual Studio C++ compiler).
+            // This is not consistant with GNU, but required for Intel header file compatablity (or is is that Intel is using 
+            // the GNU header files and it is required for GNU compatability?). I think that setting this predefined macro is 
+            // not allowed by EDG in MSVC mode.
+               commandLine.push_back("-D__cplusplus=199711L");
+#endif
              }
 
 #if 0

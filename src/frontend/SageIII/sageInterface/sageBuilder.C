@@ -2824,6 +2824,10 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #if 0
      printf ("In buildNondefiningFunctionDeclaration_T(): func_type = %p = %s \n",func_type,func_type->class_name().c_str());
 #endif
+#if 0
+  // printf ("In buildNondefiningFunctionDeclaration_T(): paralist->get_args()[0]->unparseToString() = %s \n",paralist->get_args()[0]->unparseToString().c_str());
+     printf ("In buildNondefiningFunctionDeclaration_T(): func_type->unparseToString() = %s \n",func_type->unparseToString().c_str());
+#endif
 
   // function declaration
      actualFunction* func = NULL;

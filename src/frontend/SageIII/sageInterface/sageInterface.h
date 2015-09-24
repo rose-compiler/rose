@@ -153,6 +153,9 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
 inline size_t hash_value(SgNode* t) {return (size_t)t;}
 #endif
 
+#if 0
+// DQ (8/3/2015): We expect that this is not used and is generating a warnings so we 
+// can best fix it by removing it.
 struct hash_nodeptr
    {
 // CH (4/9/2010): Use boost::hash instead
@@ -176,6 +179,7 @@ struct hash_nodeptr
 #ifndef SWIG
 // DQ (3/10/2013): This appears to be a problem for the SWIG interface (undefined reference at link-time).
   void supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap );
+#endif
 #endif
 
  //------------------------------------------------------------------------

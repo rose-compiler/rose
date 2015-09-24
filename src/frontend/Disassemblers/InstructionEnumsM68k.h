@@ -43,7 +43,7 @@ enum M68kFamily {
     m68k_freescale_fpu  = 0x10000000,                   /**< Freescale FPU, original ColdFire floating point ISA. */
     m68k_freescale_mac  = 0x20000000,                   /**< Freescale MAC, original ColdFire multiply-accumulate ISA. */
     m68k_freescale_emac = 0x40000000,                   /**< Freescale EMAC, enhanced multiply-accumulate ISA. */
-    m68k_freescale_emacb= 0x80000000,                   /**< Freescale EMAC_B, dual accumulation instructions. */
+    m68k_freescale_emacb= 0x80000000                    /**< Freescale EMAC_B, dual accumulation instructions. */
 };
 
 enum M68kRegisterClass {
@@ -52,7 +52,7 @@ enum M68kRegisterClass {
     m68k_regclass_fpr,                                  /**< Floating point registers. */
     m68k_regclass_spr,                                  /**< Special purpose registers. */
     m68k_regclass_mac,                                  /**< Multiply-accumulate registers (includes EMAC registers). */
-    m68k_regclass_sup,                                  /**< Supervisor registers. */
+    m68k_regclass_sup                                   /**< Supervisor registers. */
 };
 
 enum M68kSpecialPurposeRegister {
@@ -60,7 +60,7 @@ enum M68kSpecialPurposeRegister {
     m68k_spr_sr,                                        /**< Status register, including condition codes. */
     m68k_spr_fpcr,                                      /**< Floating-point control register. */
     m68k_spr_fpsr,                                      /**< Floating-point status register. */
-    m68k_spr_fpiar,                                     /**< Floating-point instruction address register. */
+    m68k_spr_fpiar                                      /**< Floating-point instruction address register. */
 };
 
 enum M68kMacRegister {
@@ -75,7 +75,7 @@ enum M68kMacRegister {
     m68k_mac_ext1,                                      /**< Extension for ACC1. */
     m68k_mac_ext2,                                      /**< Extension for ACC2. */
     m68k_mac_ext3,                                      /**< Extension for ACC3. */
-    m68k_mac_mask,                                      /**< MAC mask register. */
+    m68k_mac_mask                                       /**< MAC mask register. */
 };
 
 enum M68kEmacRegister {
@@ -84,7 +84,7 @@ enum M68kEmacRegister {
     m68k_emac_acc1,                                     /**< EMAC accumulator 1. */
     m68k_emac_acc2,                                     /**< EMAC accumulator 2. */
     m68k_emac_acc3,                                     /**< EMAC accumulator 3. */
-    m68k_emac_mask,                                     /**< EMAC mask register. */
+    m68k_emac_mask                                      /**< EMAC mask register. */
 };
 
 enum M68kSupervisorRegister {
@@ -112,7 +112,7 @@ enum M68kSupervisorRegister {
     m68k_sup_0_pcr3,                                    /**< RAM 0 permutation control register 3. */
     m68k_sup_1_pcr1,                                    /**< RAM 1 permutation control register 1. */
     m68k_sup_1_pcr2,                                    /**< RAM 1 permutation control register 2. */
-    m68k_sup_1_pcr3,                                    /**< RAM 1 permutation control register 3. */
+    m68k_sup_1_pcr3                                     /**< RAM 1 permutation control register 3. */
 };
 
 /** M68k effective addressing modes.
@@ -222,7 +222,7 @@ enum M68kEffectiveAddressMode {
 
     // additional useful masks
     m68k_eam_direct  = 0x00000003,      /**< All register direct addressing modes. */                   // NO_STRINGIFY
-    m68k_eam_pc      = 0x00007c00,      /**< All PC address modes. */
+    m68k_eam_pc      = 0x00007c00       /**< All PC address modes. */
 };
 
 /** M68k data formats for floating-point operations.
@@ -236,7 +236,7 @@ enum M68kDataFormat {
     m68k_fmt_i16 = 4,                                   /**< 16-bit integer. */
     m68k_fmt_f64 = 5,                                   /**< 64-bit floating point, "double real". */
     m68k_fmt_i8  = 6,                                   /**< 8-bit integer. */
-    m68k_fmt_unknown = 255,                             /**< Invalid format. */
+    m68k_fmt_unknown = 255                              /**< Invalid format. */
 };
 
 enum M68kInstructionKind {

@@ -616,6 +616,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_165.c \
      test2015_166.c \
      test2015_167.c \
+     test2015_168.c \
+     test2015_169.c \
+     test2015_170.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 # DQ (4/11/2015): New failing tests:
@@ -997,21 +1000,30 @@ test_using_explicit_output_file_option:
 test_using_implicit_output_file_option:
 	$(testTranslator) -rose:verbose 0 -MMD -MF .subdirs-install.d $(srcdir)/test2015_86.c
 
+# DQ (8/28/2015): Exclude tests using the GNU specific "-m32" option when using the Intel v14 compiler.
 # DQ (4/9/2015): Added test for using -m32 -mrtd options (required for Xen).
 test_rtd_use: $(testTranslator) $(srcdir)/test2015_89.h
+if !USING_INTEL_COMPILER
 	$(testTranslator) -m32 -mrtd -rose:C89 -c $(srcdir)/test2015_89.c
+endif
 
+# DQ (8/28/2015): Exclude tests using the GNU specific "-m32" option when using the Intel v14 compiler.
 # DQ (4/10/2015): Added test for using -m32 option which fouces __uint128_t to be undefined (required for Xen).
 test_m32_use: $(testTranslator)
+if !USING_INTEL_COMPILER
 	$(testTranslator) -m32 -rose:C89 -c $(srcdir)/test2015_95.c
+endif
 
 # DQ (5/12/2015): Test demonstrated by Xen build system (where test2015_133.S is a generated C source code file).
 test_file_suffix: $(testTranslator) 
 	$(testTranslator) -c $(srcdir)/test2015_133.S
 
+# DQ (8/28/2015): Exclude tests using the GNU specific "-m32" option when using the Intel v14 compiler.
 # DQ (5/24/2015): Added test for using -mregparm=3 -m32 option which fouces the regparm(0) parameter in __attribute__ (( cdecl, regparm(0) )) to be significant.
 test_mregparm_m32_use: $(testTranslator)
+if !USING_INTEL_COMPILER
 	$(testTranslator) -mregparm=3 -m32 -rose:C89 -c $(srcdir)/test2015_154.c
+endif
 
 # DQ (5/24/2015): Added test for using -mregparm=3 -m32 option which fouces the regparm(0) parameter in __attribute__ (( cdecl, regparm(0) )) to be significant.
 test_optimization_specifier_O: $(testTranslator)

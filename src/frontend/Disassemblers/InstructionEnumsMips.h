@@ -11,7 +11,7 @@ enum MipsRegisterClass {
     mips_regclass_cp0gpr,       /**< General purpose registers for coprocessor 0. Minors are 0..31. */
     mips_regclass_cp2gpr,       /**< Coprocessor 2 general purpose registers. Minors are implementation defined. */
     mips_regclass_cp2spr,       /**< Coprocessor 2 special purpose (i.e., control) registers. Minors are implementation dfnd. */
-    mips_regclass_sgpr,         /**< Shadow general purpose registers. */
+    mips_regclass_sgpr          /**< Shadow general purpose registers. */
 };
 
 /** Portions of the FCSR register. These are the minor numbers for mips_regclass_fcsr. */
@@ -19,7 +19,7 @@ enum MipsFcsrMinors {
     mips_fcsr_all,              /**< All bits of the FCSR. */
     mips_fcsr_fccr,             /**< Bits that compose the FP condition codes register. */
     mips_fcsr_fexr,             /**< Bits that compose the FP exceptions register. */
-    mips_fcsr_fenr,             /**< Bits that compose the FP enables register. */
+    mips_fcsr_fenr              /**< Bits that compose the FP enables register. */
 };
 
 /** MIPS special purpose register minor numbers. */

@@ -104,7 +104,7 @@ typedef std::vector<ContentPtr> TagArgs;
 enum DivSpan {
     DIVIDING,                                           /**< A tag that divides output into paragraphs. */
     SPANNING,                                           /**< A tag that appears within a paragraph. */
-    VERBATIM,                                           /**< Tags are not parsed as tags. */
+    VERBATIM                                            /**< Tags are not parsed as tags. */
 };
 
 /** Declaration for tag arguments.

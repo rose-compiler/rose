@@ -359,6 +359,20 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_115.C \
   inputmoveDeclarationToInnermostScope_test2015_116.C 
 
+# DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.
+FAILING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
+  inputmoveDeclarationToInnermostScope_test2014_09.C \
+  inputmoveDeclarationToInnermostScope_test2014_12.C \
+  inputmoveDeclarationToInnermostScope_test2015_04.C \
+inputmoveDeclarationToInnermostScope_test2015_100.C \
+inputmoveDeclarationToInnermostScope_test2015_101.C \
+inputmoveDeclarationToInnermostScope_test2015_106.C \
+inputmoveDeclarationToInnermostScope_test2015_107.C \
+inputmoveDeclarationToInnermostScope_test2015_114.C \
+inputmoveDeclarationToInnermostScope_test2015_45.C \
+inputmoveDeclarationToInnermostScope_test2015_62.C
+
+
 # DQ (8/16/2015): Failing test with bugfix for type transformations.
 #  inputmoveDeclarationToInnermostScope_test2014_12.C 
 #  inputmoveDeclarationToInnermostScope_test2015_04.C 
@@ -860,7 +874,14 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C			\
        inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C  inputcreateAbstractHandles.C \
        inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C \
-       inputbuildJavaPackage.C inputloopCollapsing_1.C
+       inputbuildJavaPackage.C inputloopCollapsing_1.C \
+       inputmoveDeclarationToInnermostScope_test2014_15.h \
+       inputmoveDeclarationToInnermostScope_test2014_19.h \
+       inputmoveDeclarationToInnermostScope_test2014_23.h \
+       inputmoveDeclarationToInnermostScope_test2015_13.h \
+       inputmoveDeclarationToInnermostScope_test2015_16.h \
+       inputmoveDeclarationToInnermostScope_test2015_22.h \
+       inputmoveDeclarationToInnermostScope_test2015_40.h 
 
 
 # JP (10/4/14): Added the unit tests
