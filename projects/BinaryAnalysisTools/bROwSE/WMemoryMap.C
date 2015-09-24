@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WMemoryMap.h>
 
 #include <boost/algorithm/string/trim.hpp>

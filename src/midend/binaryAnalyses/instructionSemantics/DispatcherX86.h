@@ -34,6 +34,7 @@ protected:
           processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {
         regcache_init();
         iproc_init();
+        memory_init();
     }
 
 public:
@@ -43,6 +44,9 @@ public:
 
     /** Load the cached register descriptors.  This happens at construction and on set_register_dictionary() calls. */
     void regcache_init();
+
+    /** Make sure memory is set up correctly. For instance, byte order should be little endian. */
+    void memory_init();
 
 public:
     /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The

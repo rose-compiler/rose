@@ -16,10 +16,12 @@
 #include <gcrypt.h>
 #endif
 
-#include "x86InstructionSemantics.h"
 #include "BaseSemantics2.h"
+#include "integerOps.h"
 #include "MemoryMap.h"
 #include "FormatRestorer.h"
+#include "RegisterStateGeneric.h"
+#include "MemoryCellList.h"
 
 namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere
@@ -121,6 +123,9 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance(nbits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
         return instance(nbits);
     }
@@ -138,6 +143,9 @@ public:
             retval->set_width(new_width);
         return retval;
     }
+
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
+                                                                           SMTSolver*) const ROSE_OVERRIDE;
     
     /** Virtual allocating constructor. Creates a new semantic value with full control over all aspects of the value. */
     virtual BaseSemantics::SValuePtr create(size_t nbits, uint64_t name, uint64_t offset, bool negate) const {
@@ -167,6 +175,10 @@ public:
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
 
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
+
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
     
     virtual bool is_number() const ROSE_OVERRIDE {
         return 0==name;

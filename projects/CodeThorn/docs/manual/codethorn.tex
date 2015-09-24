@@ -40,6 +40,17 @@
 \newcommand{\redarrow}{{\color{DarkRed} \Pisymbol{pzd}{217}}}
 \newcommand{\minibox}[2]{\begin{minipage}{#1}\raggedright #2\end{minipage}}
 
+%\newcommand{\fixme}[1]{\begin{tikzpicture}
+%\node[bottom color=red!80!white, top color=red!70!black, rounded corners,
+%      font=\bf\color{white}\footnotesize] {
+%  \begin{minipage}{.75\columnwidth}
+%    FIXME\\
+%    #1
+%  \end{minipage}
+%};
+%\end{tikzpicture}
+%}
+
 \lstset{
   language=C,
   basicstyle=\small,%\scriptsize, %\footnotesize\ttfamily,
@@ -56,68 +67,129 @@
 }
 
 \begin{document}
-\title{The CodeThorn Program Analyzer}
+\title{CodeThorn}
 
-\author{
-\small
-\begin{tabular}{ll}
-Markus Schordan                        & Adrian Prantl\\
-Institute of Computer Science          & Center for Applied Scientific Computing\\
-UAS Technikum Wien                     & Lawrence Livermore National Laboratory\\
-\texttt{schordan@technikum-wien.at}   & \texttt{adrian@llnl.gov}\\
+\author{\small
+Markus Schordan, Adrian Prantl, Marc Jasper
 \end{tabular}
-}
 \date{\today}
 
 \maketitle
 
 \begin{abstract}
-  CodeThorn.
-\end{abstract}
-
-%-------------------------------------------------------------------------
-
-\newcommand{\fixme}[1]{\begin{tikzpicture}
-\node[bottom color=red!80!white, top color=red!70!black, rounded corners,
-      font=\bf\color{white}\footnotesize] {
-  \begin{minipage}{.75\columnwidth}
-    FIXME\\
-    #1
-  \end{minipage}
-};
-\end{tikzpicture}
-}
-
-\section{Introduction}
-\label{sec:intro}
 
 CodeThorn is a tool for analyzing C/C++ programs, combining approaches
 from data flow analysis, constraint-based analysis, and model
 checking. The main focus in the development of CodeThorn is the
 exploration of program analysis algorithms in combining above
-approaches and to explore methods for combining static analsyis
-with methods for verification of software.
+approaches and to explore methods for combining static analsyis with
+methods for verification of software.
 
-We currently restrict the input language to a small subset of C++ as we
-are also using it when normalizing compute intensive code for
-optimizations. 
+The input language is currently restricted to a subset of C.
 
-In CodeThorn (in its present version 1.2) we integrate three approaches:
+\end{abstract}
 
-\begin{itemize}
-\item Data-flow analysis (inter-procedural flow-senstive analysis, computing property states) 
-\item Constraint-based analysis (extracting constraints from a given program and using those in narrowing down possible values of input variables on different branches)
-\item Model checking (verifying LTLs using a state transition graph)
-\end{itemize}
+%-------------------------------------------------------------------------
 
-In the following sections we will describe briefly each approach and
-how we combine them in analyzing programs. 
+\section{Introduction}
+\label{sec:intro}
+
+CodeThorn was initially developed as a tool for exploring approaches
+for reachbility analysis and verification of linear temporal logic
+formulae based for finite state systems. This was later extended to
+also perform specialisation of programs and program equivalence
+checking. CodeThorn is based on ROSE \cite{roseWWW} and uses the ROSE abstract syntax
+tree as basis for its input. A number of components have been moved
+from CodeThorn to ROSE over time. What remains are command line
+options that allow to access those features conveniently or also to
+reproduce some published results.
+
+\subsection{Benchmarks}
 
 We have found the RERS-challenge
-problems \footnote{http://www.rers-challenge.org} being an excellent guidence in crafting this early version of the tool and investigating the impact and performance of each of the approaches on the overall results, and in particular the opportunities we see emerge and limitations we currently face in respect to verfication.
+problems \footnote{http://www.rers-challenge.org} being an excellent
+guidence in crafting this early version of the tool and investigating
+the impact and performance of each of the approaches on the overall
+results. For the RERS programs linear temporal logic formulae are
+provided. This allows to verify behavioral properties of these
+programs. Reachability properties can be verified by checking the
+reachability of failing assertions.
 
-\input{stg}
-\input{ltl}
+For program equivalence checking and data race detection the
+Polybench/C 3.2 suite has provided a good basis for evaluation. By
+generating various polyhedral variants of the 30+ benchmarks CodeThorn
+can be used to check the equivalence of two given programs and verify
+whether the optimizations are semantics preserving. Furthermore
+parallel OpenMP for loops are recognized and can be checked not to
+introduce data races. Currently these approaches are extended to
+address other large scale applications.
+
+\section{Analysis Overview}
+
+The analysis is performed in five phases
+
+\begin{enumerate}
+\item Syntactic and semantic analysis of the input program (ROSE). The program is analyzed and represented in memory as annotated abstract syntax tree (AST).
+\item Control flow analysis. We compute a control flow graph (CFG) for the AST. Transitions, as computed for the state transition graph in the next phase, correspond to edges in the CFG.
+\item General Data Flow analysis. We perform a data flow analysis with the general framework as described in \ref{section-algorithm}. During this analysis the state transition graph is computed.
+\item LTL-Checking. Input to the LTL-Checking phase is the state transition graph and the LTL-formulae.
+\item Reporting of analysis results. Assert reachability is computed based on the transition graph. Results for LTL-formulae are computed solely by the LTL-checker.
+\end{enumerate}
+
+Important properties of the perfomed analysis are
+
+\subsection{Program State}
+
+A program state consists of a label (lab), a property state (pstate), a constraint set (cset), an IO property (io).
+
+PState = Var $\rightarrow$ Val where Val is either a constant or top. Val is a lifted integer set.
+SState = Lab x PState x Constraints x IO
+
+Constraints is a set of constraints (see above).
+
+IO determines whether one of the variables in PState is an input or output variable. More specifically, whether a variable is read from stdin, or printed to stdout or stderr. Furthermore it determines whether the state produces an output which is caused by a failed assert.
+
+Labels are unique and represented as numbers. Ordering is therefore the same as for numbers.
+
+Each constraints set is associated with an id. The id is used in PState.
+
+Hence, the analysis information is represented as:
+
+\begin{itemize}
+\item Label: num
+\item PState: VarId $\rightarrow$ Val
+\item SState: Label $\times$ PStateId $\times$ ConstraintId $\times$ IOId
+\end{itemize}
+
+\subsection{IO Property - Input/Output and Exit Information}
+
+This property represents the information that the operation is either
+an input, an output, or a failed-assert operation. From the label and
+the associated statement, details as relevant to reporting the
+analysis results can be extracted. For example, in the RERS-problems
+we find the information for a failed-assert by a) using the label to
+find the corresponding statement and b) the associated C error label
+is then found in a look-up operation on the ROSE AST.
+
+\section{The State Transition Graph}
+
+\newcommand{\deqop}[0]{\#\#}
+\newcommand{\eq}[0]{=}
+
+The State Transition Graph is a graph that represents a state
+transition system where nodes represent system states and edges
+represent the transition between two states as computed by the
+evaluations of the respective transfer function. They are therefore
+annotated with the respective statement which has been analyzed by the
+transfer function.
+
+\section{Command Line Options}
+
+TODO.
+
+\section{Visualizations}
+
+TODO.
 
 \bibliographystyle{unsrtnat}
 \bibliography{codethorn}

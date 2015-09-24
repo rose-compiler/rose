@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WHexDump.h>
 
 #include <bROwSE/FunctionUtil.h>

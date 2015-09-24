@@ -227,7 +227,7 @@ RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembl
 }
     
 PtRegs
-RSIM_Linux64::initialRegistersArch() {
+RSIM_Linux64::initialRegistersArch(RSIM_Process*) {
     if (settings().nativeLoad)
         return initialRegs_;
 

@@ -185,6 +185,10 @@ public:
      * executes. */
     static const unsigned UNSPECIFIED    = 0x00000002;
 
+    /** Value represents bottom in dataflow analysis.  If this flag is used by ROSE's dataflow engine to represent a bottom
+     *  value in a lattice. */
+    static const unsigned BOTTOM         = 0x00000004;
+
 protected:
     TreeNode()
         : nbits(0), domainWidth_(0), flags_(0), hashval(0) {}
@@ -237,6 +241,11 @@ public:
 
     /** Returns the user-defined bit flags. */
     unsigned get_flags() const { return flags_; }
+
+    /** Sets flags. Since symbolic expressions are immutable it is not possible to change the flags directly. Therefore if the
+     *  desired flags are different than the current flags a new expression is created that is the same in every other
+     *  respect. If the flags are not changed then the original expression is returned. */
+    TreeNodePtr newFlags(unsigned flags) const;
 
     /** Returns address width for memory expressions.
      *
@@ -493,7 +502,7 @@ private:
         : TreeNode(comment), op(op), nnodes_(1) {
         add_child(a);
         adjustWidth();
-        adjustBitFlags();
+        adjustBitFlags(0);
         ASSERT_require(get_nbits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, std::string comment="")
@@ -501,7 +510,7 @@ private:
         add_child(a);
         add_child(b);
         adjustWidth();
-        adjustBitFlags();
+        adjustBitFlags(0);
         ASSERT_require(get_nbits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, const TreeNodePtr &c,
@@ -511,21 +520,24 @@ private:
         add_child(b);
         add_child(c);
         adjustWidth();
-        adjustBitFlags();
+        adjustBitFlags(0);
         ASSERT_require(get_nbits() == nbits);
     }
-    InternalNode(size_t nbits, Operator op, const TreeNodes &children, std::string comment="")
+    InternalNode(size_t nbits, Operator op, const TreeNodes &children, std::string comment="", unsigned flags=0)
         : TreeNode(comment), op(op), nnodes_(1) {
         for (size_t i=0; i<children.size(); ++i)
             add_child(children[i]);
         adjustWidth();
-        adjustBitFlags();
-        ASSERT_require(get_nbits() == nbits);
+        adjustBitFlags(flags);
+        ASSERT_require(0 == nbits || get_nbits() == nbits);
     }
 
 public:
     /** Create a new expression node. Although we're creating internal nodes, the simplification process might replace it with
      *  a leaf node. Use these class methods instead of c'tors.
+     *
+     *  Flags are normally initialized as the union of the flags of the operator arguments subject to various rules in the
+     *  expression simplifiers. Flags specified in the constructor are set in addition to those that would normally be set.
      *
      *  @{ */
     static TreeNodePtr create(size_t nbits, Operator op, const TreeNodePtr &a, const std::string comment="") {
@@ -542,8 +554,9 @@ public:
         InternalNodePtr retval(new InternalNode(nbits, op, a, b, c, comment));
         return retval->simplifyTop();
     }
-    static TreeNodePtr create(size_t nbits, Operator op, const TreeNodes &children, const std::string comment="") {
-        InternalNodePtr retval(new InternalNode(nbits, op, children, comment));
+    static TreeNodePtr create(size_t nbits, Operator op, const TreeNodes &children, const std::string comment="",
+                              unsigned flags=0) {
+        InternalNodePtr retval(new InternalNode(nbits, op, children, comment, flags));
         return retval->simplifyTop();
     }
     /** @} */
@@ -622,8 +635,9 @@ protected:
     /** Adjust width based on operands. This should only be called from constructors. */
     void adjustWidth();
 
-    /** Adjust user-defined bit flags. This should only be called from constructors. */
-    void adjustBitFlags();
+    /** Adjust user-defined bit flags. This should only be called from constructors.  Flags are the union of the operand flags
+     *  subject to simplification rules, unioned with the specified flags. */
+    void adjustBitFlags(unsigned extraFlags);
 };
 
 /** Leaf node of an expression tree for instruction semantics.
@@ -647,6 +661,11 @@ private:
 public:
     /** Construct a new free variable with a specified number of significant bits. */
     static LeafNodePtr create_variable(size_t nbits, std::string comment="", unsigned flags=0);
+
+    /*  Construct another reference to an existing variable.  This method is used internally by the expression parsing
+     *  mechanism to produce a new instance of some previously existing variable -- both instances are the same variable and
+     *  therefore should be given the same size (although this consistency cannot be checked automatically). */
+    static LeafNodePtr create_existing_variable(size_t nbits, uint64_t id, const std::string &comment="", unsigned flags=0);
 
     /** Construct a new integer with the specified number of significant bits. Any high-order bits beyond the specified size
      *  will be zeroed. */

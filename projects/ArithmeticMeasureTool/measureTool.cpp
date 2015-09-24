@@ -30,54 +30,6 @@ bool processStatements(SgNode* n)
     ROSE_ASSERT(scope != NULL);
 
    instrumentLoopForCounting (loop);
-#if 0
-    // Only for a do-loop which immediately follows  chiterations =  ..
-    SgVariableSymbol * chiterations_sym = lookupVariableSymbolInParentScopes(SgName("chiterations"), loop);
-    if (chiterations_sym==NULL) return false;
-    SgStatement* prev_stmt = getPreviousStatement(loop,false);
-
-    // backwards search, skipping pragma declaration etc.
-    while (prev_stmt!=NULL && !isAssignmentStmtOf (prev_stmt, chiterations_sym->get_declaration()))
-      prev_stmt = getPreviousStatement(prev_stmt,false);
-
-    if (prev_stmt == NULL) return false;
-    //        if (!isAssignmentStmtOf (prev_stmt, chiterations_sym->get_declaration())) return;
-
-    // To support nested loops, we need to use unique chiterations variable for each loop
-    // otherwise the value stored in inner loop will overwrite the iteration count for the outerloop.
-    //
-    // cout FP operations for each loop
-    CountFPOperations (loop);
-    //chflops=chflops+chiterations*n
-    FPCounters* current_result = getFPCounters (loop);
-    if (current_result->getTotalCount() >0)
-    {
-      SgExprStatement* stmt = buildCounterAccumulationStmt("chflops", "chiterations", buildIntVal(current_result->getTotalCount()),scope);
-      insertStatementAfter (loop, stmt);
-      attachComment(stmt,"      aitool generated FLOPS counting statement ...");
-    }
-
-    // Obtain per-iteration load/store bytes calculation expressions
-    // excluding scalar types to match the manual version
-    SgStatement* loop_body = loop->get_loop_body();
-    //CountLoadStoreBytes (SgLocatedNode* input, bool includeScalars = true, bool includeIntType = true);
-    std::pair <SgExpression*, SgExpression*> load_store_count_pair = CountLoadStoreBytes (loop_body, false, true);
-    // chstores=chstores+chiterations*8
-    if (load_store_count_pair.second!= NULL)
-    {
-      SgExprStatement* store_byte_stmt = buildCounterAccumulationStmt("chstores", "chiterations", load_store_count_pair.second, scope);
-      insertStatementAfter (loop, store_byte_stmt);
-      attachComment(store_byte_stmt,"      aitool generated Stores counting statement ...");
-    }
-    // handle loads stmt 2nd so it can be inserted as the first after the loop
-    // build  chloads=chloads+chiterations*2*8
-    if (load_store_count_pair.first != NULL)
-    {
-      SgExprStatement* load_byte_stmt = buildCounterAccumulationStmt("chloads", "chiterations", load_store_count_pair.first, scope);
-      insertStatementAfter (loop, load_byte_stmt);
-      attachComment(load_byte_stmt,"      aitool generated Loads counting statement ...");
-    }
-#endif  
     // verify the counting results are consistent with reference results from pragmas	 
     if (SgStatement* prev_stmt = getPreviousStatement(loop))
     {
@@ -124,60 +76,10 @@ bool processStatements(SgNode* n)
   else if (SgFortranDo* doloop = isSgFortranDo(n))
   {
      instrumentLoopForCounting (doloop);
-#if 0
-    // Only for a do-loop which immediately follows  chiterations =  ..
-    SgVariableSymbol * chiterations_sym = lookupVariableSymbolInParentScopes(SgName("chiterations"), doloop);
-    if (chiterations_sym==NULL) return false; 
-    SgStatement* prev_stmt = getPreviousStatement(doloop);
-    if (prev_stmt == NULL) return false;
-    if (!isAssignmentStmtOf (prev_stmt, chiterations_sym->get_declaration())) return false; 
-
-    // count FP operations for a single iteration , or the loop body
-    CountFPOperations(doloop->get_body());
-    FPCounters* current_result = getFPCounters (doloop->get_body());// only count loop body for now
-    current_result->printInfo("Calculated counts are ....");
-
-    // Obtain per-iteration load/store bytes calculation expressions
-    // excluding scalar types to match the manual version
-    std::pair <SgExpression*, SgExpression*> load_store_count_pair = CountLoadStoreBytes (doloop->get_body(), false, true);
-    // generate flops stmt first so it will be bumped to the last in the end 
-    // chflops=chflops+chiterations*(3*2 +4)
-    if (current_result->getTotalCount() >0)
-    {
-      SgExprStatement* stmt = buildCounterAccumulationStmt("chflops", "chiterations", buildIntVal(current_result->getTotalCount()), doloop->get_scope());
-      insertStatementAfter (doloop, stmt);
-      attachComment(stmt,"      aitool generated statement ...");
-    }  
-
-    // chstores=chstores+chiterations*8
-    if (load_store_count_pair.second!= NULL)
-    {
-      SgExprStatement* store_byte_stmt = buildCounterAccumulationStmt("chstores", "chiterations", load_store_count_pair.second, doloop->get_scope());
-      insertStatementAfter (doloop, store_byte_stmt);
-      attachComment(store_byte_stmt,"      aitool generated statement ...");
-    }
-    // handle loads stmt 2nd so it can be inserted as the first after the loop
-    // build  chloads=chloads+chiterations*2*8
-    if (load_store_count_pair.first != NULL)
-    {
-      SgExprStatement* load_byte_stmt = buildCounterAccumulationStmt("chloads", "chiterations", load_store_count_pair.first, doloop->get_scope());
-      insertStatementAfter (doloop, load_byte_stmt);
-      attachComment(load_byte_stmt,"      aitool generated statement ...");
-    }
-#endif
   }
   return true;
 }
 
-#if 0 //preorder is not friendly for transformation
-class visitorTraversal : public AstSimpleProcessing
-{
-  protected:
-    void virtual visit (SgNode* n)
-    {
-    } // end visit()
-};
-#endif
 //==============================================================================
 int main (int argc, char** argv)
 {
@@ -228,6 +130,7 @@ int main (int argc, char** argv)
     SgSourceFile* s_file = isSgSourceFile(cur_file);
     if (s_file != NULL)
     {
+      // Preorder is not friendly for transformation
       //exampleTraversal.traverseWithinFile(s_file, postorder);
       Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(s_file,V_SgStatement);
       for (Rose_STL_Container<SgNode *>::reverse_iterator i = nodeList.rbegin(); i != nodeList.rend(); i++)

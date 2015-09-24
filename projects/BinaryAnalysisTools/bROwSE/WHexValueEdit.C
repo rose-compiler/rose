@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WHexValueEdit.h>
 
 #include <rose_strtoull.h>

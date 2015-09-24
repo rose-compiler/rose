@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WAddressComboBox.h>
 #include <Wt/WComboBox>
 #include <Wt/WPushButton>

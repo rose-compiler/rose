@@ -3,6 +3,7 @@
 #include <BinaryNoOperation.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
+#include <MemoryCellList.h>
 #include <SymbolicSemantics2.h>
 
 namespace rose {
@@ -28,13 +29,19 @@ NoOperation::initDiagnostics() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BaseSemantics::StatePtr
-NoOperation::StateNormalizer::initialState(const BaseSemantics::DispatcherPtr &cpu) {
+NoOperation::StateNormalizer::initialState(const BaseSemantics::DispatcherPtr &cpu, SgAsmInstruction *insn) {
+    ASSERT_not_null(cpu);
+
     BaseSemantics::StatePtr state = cpu->get_state()->clone();
     state->clear();
 
     BaseSemantics::RegisterStateGenericPtr rstate = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
     if (rstate)
         rstate->initialize_large();
+
+    RegisterDescriptor IP = cpu->instructionPointerRegister();
+    state->writeRegister(IP, cpu->number_(IP.get_nbits(), insn->get_address()), cpu->get_operators().get());
+
     return state;
 }
 
@@ -93,6 +100,7 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
 
     BaseSemantics::Formatter fmt;
     fmt.set_show_latest_writers(false);
+    fmt.set_show_properties(false);
     std::ostringstream ss;
     ss <<(*state+fmt);
     return ss.str();
@@ -113,8 +121,8 @@ NoOperation::NoOperation(Disassembler *disassembler) {
 
         SMTSolver *solver = NULL;
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
-        ops->set_compute_usedef(false);
-        ops->set_compute_memwriters(true);              // necessary to erase non-written memory
+        ops->computingDefiners(SymbolicSemantics::TRACK_NO_DEFINERS);
+        ops->computingMemoryWriters(SymbolicSemantics::TRACK_LATEST_WRITER); // necessary to erase non-written memory
 
         BaseSemantics::MemoryCellListPtr mstate = BaseSemantics::MemoryCellList::promote(ops->get_state()->get_memory_state());
         ASSERT_not_null(mstate);
@@ -133,14 +141,17 @@ NoOperation::normalizeState(const BaseSemantics::StatePtr &state) const {
 }
 
 BaseSemantics::StatePtr
-NoOperation::initialState() const {
+NoOperation::initialState(SgAsmInstruction *insn) const {
+    ASSERT_not_null(insn);
     ASSERT_not_null(cpu_);
     BaseSemantics::StatePtr state;
     if (normalizer_) {
-        state = normalizer_->initialState(cpu_);
+        state = normalizer_->initialState(cpu_, insn);
     } else {
         state = cpu_->get_state()->clone();
         state->clear();
+        RegisterDescriptor IP = cpu_->instructionPointerRegister();
+        state->writeRegister(IP, cpu_->number_(IP.get_nbits(), insn->get_address()), cpu_->get_operators().get());
     }
 
     // Set the stack pointer to a concrete value
@@ -155,17 +166,21 @@ NoOperation::initialState() const {
 
 bool
 NoOperation::isNoop(SgAsmInstruction *insn) const {
-    if (!cpu_ || !insn)
+    if (!cpu_)
         return false;                                   // assume instruction has an effect if we can't prove otherwise.
+    if (!insn)
+        return true;
     return isNoop(std::vector<SgAsmInstruction*>(1, insn));
 }
 
 bool
 NoOperation::isNoop(const std::vector<SgAsmInstruction*> &insns) const {
-    if (!cpu_ || insns.empty())
+    if (!cpu_)
         return false;                                   // assume sequence has effect if we can't prove otherwise
+    if (insns.empty())
+        return true;
 
-    cpu_->get_operators()->set_state(initialState());
+    cpu_->get_operators()->set_state(initialState(insns.front()));
     std::string startState = normalizeState(cpu_->get_state());
     try {
         BOOST_FOREACH (SgAsmInstruction *insn, insns)
@@ -175,6 +190,9 @@ NoOperation::isNoop(const std::vector<SgAsmInstruction*> &insns) const {
     }
 
     std::string endState = normalizeState(cpu_->get_state());
+    SAWYER_MESG(mlog[DEBUG]) <<"== startState ==\n" <<startState <<"\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"== endState ==\n" <<endState   <<"\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"start and end states " <<(startState==endState ? "are equal":"differ") <<"\n";
     return startState == endState;
 }
     
@@ -199,7 +217,7 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
     // for now. FIXME[Robb P. Matzke 2015-05-11]
     std::vector<std::string> states;
     bool hadError = false;
-    cpu_->get_operators()->set_state(initialState());
+    cpu_->get_operators()->set_state(initialState(insns.front()));
     const RegisterDescriptor regIP = cpu_->instructionPointerRegister();
     try {
         BOOST_FOREACH (SgAsmInstruction *insn, insns) {

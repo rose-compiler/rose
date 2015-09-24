@@ -44,10 +44,12 @@ SUBDIRS = \
 	PowerAwareCompiler \
    taintcheck \
 	ManyCoreRuntime \
+	ManyCoreRuntime2 \
 	StencilManyCore \
 	Fortran_to_C \
 	mint \
 	vectorization \
+	MultiLevelMemory \
 	extractMPISkeleton \
 	RoseBlockLevelTracing \
 	LineDeleter \
@@ -55,7 +57,6 @@ SUBDIRS = \
 
 # DQ (3/16/2015): Removed for temporary teesting.
 #	BinFuncDetect 
-#  CodeThorn
 
 # DQ (3/16/2015): Test for a version of g++ that will allow use of C++11 for the AMR Shift Calculs DSL work.
 if ROSE_USING_GCC_VERSION_LATER_4_8
@@ -118,9 +119,8 @@ endif
 endif
 
 # DQ (7/21/2010): Removed RTED since it is a problem to compile with ROSE (projects/RTED/CppRuntimeSystem/test.cpp).
-# DQ (7/21/2010): Removed simulator since it is a problem to compile with ROSE (projects/simulator/emulator.C).
 if !ROSE_USING_ROSE_ANALYSIS
-   SUBDIRS += RTED simulator
+   SUBDIRS += RTED
 endif
 
 SUBDIRS += simulator2
@@ -185,7 +185,7 @@ SUBDIRS += SatSolver
 # endif
 
 SUBDIRS += PolyhedralModel
-# SUBDIRS += demos-dlx-mdcg
+SUBDIRS += TileK
 # SUBDIRS += rose-tooling
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.

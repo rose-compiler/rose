@@ -776,21 +776,14 @@ using this memory map for disassembly:
 0x004011de: b8 00 00 00 00          |.....   |   mov    eax, 0x00000000
 0x004011e3: 48 85 c0                |H..     |   test   rax, rax
 0x004011e6: 74 0c                   |t.      |   je     0x00000000004011f4<<Insn>>
-0x004011e6: Successor blocks: 0x004011e8, 0x004011f4
+0x004011e6: Successor blocks: 0x004011f4
 
-0x004011e8: Basic block reasons: graph-2
-0x004011e8: Predecessor blocks: 0x004011de
-0x004011e8: Dominator block: 0x004011de
-0x004011e8: bf 40 25 50 00          |.@%P.   |   mov    edi, 0x00502540<.jcr>
-0x004011ed: 49 89 c3                |I..     |   mov    r11, rax
-0x004011f0: c9                      |.       |   leave  
-0x004011f0: Successor blocks: 0x004011f1
-
-0x004011f1: Basic block reasons: graph-2
-0x004011f1: Predecessor blocks: 0x004011e8
-0x004011f1: Dominator block: 0x004011e8
-0x004011f1: 41 ff e3                |A..     |   jmp    r11
-0x004011f1: Successor blocks: unknown
+0x004011e8: bf 40 25 50 00 49 89 c3 |.@%P.I..|
+0x004011f0: c9 41 ff e3             |.A..    | 12 bytes untyped data beginning at 0x004011e8
+0x004011e8: bf 40 25 50 00          |.@%P.   | (data)   mov    edi, 0x00502540
+0x004011ed: 49 89 c3                |I..     | (data)   mov    r11, rax
+0x004011f0: c9                      |.       | (data)   leave  
+0x004011f1: 41 ff e3                |A..     | (data)   jmp    r11
 
 0x004011f4: Basic block reasons: graph-2
 0x004011f4: Predecessor blocks: 0x004011d0, 0x004011de

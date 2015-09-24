@@ -1,7 +1,7 @@
-
 // Example ROSE Translator reads input program and implements a DSL embedded within C++
-// to support the stencil computations, and required runtime support is developed seperately.
+// to support the stencil computations, and required runtime support is developed separately.
 #include "rose.h"
+#include "ompAstConstruction.h"
 
 #include "stencilAndStencilOperatorDetection.h"
 #include "stencilEvaluation.h"
@@ -15,6 +15,8 @@
 #define DEBUG_USING_DOT_GRAPHS 1
 
 using namespace SPRAY; 
+using namespace SageInterface; 
+using namespace SageBuilder; 
 
 VariableIdMapping variableIdMapping;
 
@@ -35,8 +37,59 @@ int main( int argc, char * argv[] )
   // bool frontendConstantFolding = true;
      bool frontendConstantFolding = false;
 
+// Liao, support a flag to control if CUDA code should be generated
+// ./shiftCalculusCompiler -rose:dslcompiler:cuda  -c input_file
+    std::vector <std::string> argvList (argv, argv + argc);
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","cuda",true))
+    {
+      std::cout<<"Turning on CUDA code generation ..."<<std::endl;
+      b_gen_cuda = true;
+//      argvList.push_back("-rose:openmp:lowering");
+    }
+    else
+      b_gen_cuda = false;
+// Pei-Hung, enable loop collapsing
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","collapse",true))
+    {
+      std::cout<<"Turning on OpenMP loop collapsing ..."<<std::endl;
+      b_enable_collapse = true;
+//      argvList.push_back("-rose:openmp:lowering");
+    }
+    else
+      b_enable_collapse = false;
+// Pei-Hung, code generation to fulfill polyopt 
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","polyopt",true))
+    {
+      std::cout<<"Generating code for PolyOpt  ..."<<std::endl;
+      b_enable_polyopt = true;
+//      argvList.push_back("-rose:openmp:lowering");
+    }
+    else
+      b_enable_polyopt = false;
+
+// Pei-Hung, code generation to vectorization 
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","vectorization",true))
+    {
+      std::cout<<"Generating code for vectorization  ..."<<std::endl;
+      b_gen_vectorization = true;
+//      argvList.push_back("-rose:openmp:lowering");
+    }
+    else
+      b_gen_vectorization = false;
+// If MPI code generation is turned on
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","mpi",true))
+    {
+      std::cout<<"Turning on MPI code generation ..."<<std::endl;
+      b_gen_mpi = true;
+//      argvList.push_back("-rose:openmp:lowering");
+    }
+    else
+      b_gen_mpi = false;
+
+      
   // Generate the ROSE AST.
-     SgProject* project = frontend(argc,argv,frontendConstantFolding);
+     //SgProject* project = frontend(argc,argv,frontendConstantFolding);
+     SgProject* project = frontend(argvList,frontendConstantFolding);
      ROSE_ASSERT(project != NULL);
 
      try
@@ -181,6 +234,67 @@ int main( int argc, char * argv[] )
 #if 1
      printf ("DONE: Call generateStencilCode to generate example code \n");
 #endif
+
+   ROSE_ASSERT (project->get_fileList().size() ==1);
+   SgFile * cur_file = project->get_fileList()[0];
+
+   // Generate MPI specific code
+   if (b_gen_mpi)
+   { 
+     //#include "mpi.h" 
+     SageInterface::insertHeader (isSgSourceFile(cur_file), "libxomp_mpi.h", false);
+     SageInterface::insertHeader (isSgSourceFile(cur_file), "mpi.h", false);
+     SgFunctionDeclaration* main_decl = findMain(cur_file); 
+     ROSE_ASSERT (main_decl != NULL);
+     SgFunctionDefinition* main_def = main_decl->get_definition();
+     ROSE_ASSERT (main_def != NULL);
+     SgBasicBlock* func_body = main_def->get_body();
+     ROSE_ASSERT (func_body != NULL);
+
+     // Setup MPI
+     SgStatement* decl_rank = buildStatementFromString("int _xomp_rank;", func_body); 
+     prependStatement(decl_rank, func_body);
+
+     SgStatement* decl_nprocs= buildStatementFromString("int _xomp_nprocs;", func_body); 
+     prependStatement(decl_nprocs, func_body);
+
+     // xomp_init_mpi (&argc, &argv, &_xomp_rank, &_xomp_nprocs);
+     SgExprListExp * para_list = buildExprListExp (buildAddressOfOp (buildVarRefExp("argc", func_body)), 
+                      buildAddressOfOp (buildVarRefExp("argv", func_body)),
+                      buildAddressOfOp (buildVarRefExp("_xomp_rank", func_body)),
+                      buildAddressOfOp (buildVarRefExp("_xomp_nprocs", func_body))
+                      );
+     SgExprStatement* mpi_init_stmt = buildFunctionCallStmt ("xomp_init_mpi", buildIntType(), para_list, func_body);
+//     SgStatement* last_decl = findLastDeclarationStatement (func_body);
+     insertStatementAfter (decl_rank, mpi_init_stmt);
+
+   }
+
+   // Further generate CUDA code if requested
+   if (b_gen_cuda)
+   {
+     // We only process one single input file at a time
+
+     OmpSupport::enable_accelerator = true;
+     cur_file->set_openmp_lowering(true);
+//     cur_file->set_openmp(true);
+//     cur_file->set_openmp_parse_only(false);
+
+     // process OpenMP directives, including omp target
+     OmpSupport::processOpenMP(isSgSourceFile(cur_file));
+
+#if 0 // use rose:output instead to control this
+     // rename output file to have .cu suffice
+     // change .c suffix to .cu suffix
+     std::string orig_name = cur_file->get_file_info()->get_filenameString();
+     std::string file_suffix = StringUtility::fileNameSuffix(orig_name);
+     // We only allow C file to be compatible with nvcc CUDA compiler
+     //ROSE_ASSERT (CommandlineProcessing::isCFileNameSuffix(file_suffix));
+     orig_name = StringUtility::stripPathFromFileName(orig_name);
+     std::string naked_name = StringUtility::stripFileSuffixFromFileName(orig_name);
+     cur_file->set_unparse_output_filename("rose_"+naked_name+".cu");
+#endif
+   }
 
 #if 0
      printf ("Exiting after call to generateStencilCode() \n");

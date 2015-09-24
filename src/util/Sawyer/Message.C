@@ -1292,12 +1292,6 @@ Stream::enabled() const {
 }
 
 // thread-safe
-SAWYER_EXPORT
-Stream::operator bool() {
-    return enabled();
-}
-
-// thread-safe
 SAWYER_EXPORT void
 Stream::enable(bool b) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);

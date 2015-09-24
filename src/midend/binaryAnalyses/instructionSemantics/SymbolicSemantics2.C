@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "MemoryCellList.h"
 #include "SymbolicSemantics2.h"
 #include "integerOps.h"
 
@@ -24,6 +25,54 @@ public:
 /*******************************************************************************************************************************
  *                                      SValue
  *******************************************************************************************************************************/
+
+bool
+SValue::isBottom() const {
+    return 0 != (get_expression()->get_flags() & InsnSemanticsExpr::TreeNode::BOTTOM);
+}
+
+Sawyer::Optional<BaseSemantics::SValuePtr>
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
+    SValuePtr other = SValue::promote(other_);
+    ASSERT_require(get_width() == other->get_width());
+    bool changed = false;
+    unsigned mergedFlags = get_expression()->get_flags() | other->get_expression()->get_flags();
+    SValuePtr retval = SValue::promote(copy());
+    retval->set_expression(retval->get_expression()->newFlags(mergedFlags));
+
+    // If one or the other is BOTTOM then the return value should be BOTTOM.  Some simplifications (like "xor x x => 0") might
+    // cause the BOTTOM flag to be removed, and we can't have that, so make sure BOTTOM stays set!
+    if (isBottom())
+        return Sawyer::Nothing(); // no change
+    if (other->isBottom())
+        return bottom_(get_width());
+
+    // Merge symbolic expressions.  This version is pretty simple: either the two expressions are equal in which case we'll go
+    // on to merge flags; or they're not, in which case we return bottom.  A more complicated version might try to return a set
+    // of values.
+    if (!get_expression()->must_equal(other->get_expression(), solver)) {
+        TreeNodePtr expr = LeafNode::create_variable(retval->get_width(), "", mergedFlags | InsnSemanticsExpr::TreeNode::BOTTOM);
+        retval->set_expression(expr);
+        changed = true;
+    }
+
+    // Merge flags.  We've handled BOTTOM flags already; here we handle all others, including user-defined flags.
+    if (get_expression()->get_flags() != mergedFlags) {
+        retval->set_expression(retval->get_expression()->newFlags(mergedFlags));
+        changed = true;
+    }
+
+    // Merge definers
+    InsnSet mergedDefiners = retval->get_defining_instructions();
+    InsnSet otherDefiners = other->get_defining_instructions();
+    BOOST_FOREACH (SgAsmInstruction *definer, otherDefiners) {
+        if (mergedDefiners.insert(definer).second)
+            changed = true;
+    }
+    retval->add_defining_instructions(mergedDefiners);
+
+    return changed ? Sawyer::Optional<BaseSemantics::SValuePtr>(retval) : Sawyer::Nothing();
+}
 
 uint64_t
 SValue::get_number() const
@@ -76,6 +125,8 @@ SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) con
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width()==other->get_width());
+    if (isBottom() || other->isBottom())
+        return true;
     return get_expression()->may_equal(other->get_expression(), solver);
 }
 
@@ -84,6 +135,8 @@ SValue::must_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) co
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width()==other->get_width());
+    if (isBottom() || other->isBottom())
+        return false;
     return get_expression()->must_equal(other->get_expression(), solver);
 }
 
@@ -105,10 +158,9 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
     Formatter *formatter = dynamic_cast<Formatter*>(&formatter_);
     InsnSemanticsExpr::Formatter dflt_expr_formatter;
     InsnSemanticsExpr::Formatter &expr_formatter = formatter ? formatter->expr_formatter : dflt_expr_formatter;
+    std::string closing;
 
-    if (defs.empty()) {
-        stream <<(*expr + expr_formatter);
-    } else {
+    if (!defs.empty()) {
         stream <<"{defs={";
         size_t ndefs=0;
         for (InsnSet::const_iterator di=defs.begin(); di!=defs.end(); ++di, ++ndefs) {
@@ -116,8 +168,16 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
             if (insn!=NULL)
                 stream <<(ndefs>0?",":"") <<StringUtility::addrToString(insn->get_address());
         }
-        stream <<"}, expr=" <<(*expr+expr_formatter) <<"}";
+        stream <<"}, expr=";
+        closing = "}";
     }
+
+    if (isBottom()) {
+        stream <<"BOTTOM (";
+        closing = ")" + closing;
+    }
+
+    stream <<(*expr + expr_formatter) <<closing;
 }
     
 
@@ -132,32 +192,29 @@ MemoryState::CellCompressorMcCarthy::operator()(const SValuePtr &address, const 
                                                 BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
                                                 const CellList &cells)
 {
-    bool compute_usedef = true;
-    if (RiscOperators *addrOpsSymbolic = dynamic_cast<RiscOperators*>(addrOps)) {
-        compute_usedef = addrOpsSymbolic->get_compute_usedef();
-    } else if (RiscOperators *valOpsSymbolic = dynamic_cast<RiscOperators*>(valOps)) {
-        compute_usedef = valOpsSymbolic->get_compute_usedef();
-    }
-
     if (1==cells.size())
         return SValue::promote(cells.front()->get_value()->copy());
+
+    RiscOperators *valOpsSymbolic = dynamic_cast<RiscOperators*>(valOps);
+    ASSERT_not_null(valOpsSymbolic);
+    DefinersMode valDefinersMode = valOpsSymbolic->computingDefiners();
+
     // FIXME: This makes no attempt to remove duplicate values [Robb Matzke 2013-03-01]
     TreeNodePtr expr = LeafNode::create_memory(address->get_width(), dflt->get_width());
-    InsnSet definers;
+    InsnSet addrDefiners, valDefiners;
     for (CellList::const_reverse_iterator ci=cells.rbegin(); ci!=cells.rend(); ++ci) {
         SValuePtr cell_addr = SValue::promote((*ci)->get_address());
         SValuePtr cell_value  = SValue::promote((*ci)->get_value());
         expr = InternalNode::create(8, InsnSemanticsExpr::OP_WRITE,
                                     expr, cell_addr->get_expression(), cell_value->get_expression());
-        if (compute_usedef) {
-            const InsnSet &cell_definers = cell_value->get_defining_instructions();
-            definers.insert(cell_definers.begin(), cell_definers.end());
+        if (valDefinersMode != TRACK_NO_DEFINERS) {
+            const InsnSet &definers = cell_value->get_defining_instructions();
+            valDefiners.insert(definers.begin(), definers.end());
         }
     }
-    SValuePtr retval = SValue::promote(address->undefined_(8)); // "address" used only to lookup virtual function
+    SValuePtr retval = SValue::promote(valOps->undefined_(dflt->get_width()));
     retval->set_expression(InternalNode::create(8, InsnSemanticsExpr::OP_READ, expr, address->get_expression()));
-    if (compute_usedef)
-        retval->add_defining_instructions(definers);
+    retval->set_defining_instructions(valDefiners);
     return retval;
 }
 
@@ -183,23 +240,22 @@ MemoryState::CellCompressorChoice::operator()(const SValuePtr &address, const Ba
 
 BaseSemantics::SValuePtr
 MemoryState::readMemory(const BaseSemantics::SValuePtr &address_, const BaseSemantics::SValuePtr &dflt,
-                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
-{
-    size_t nbits = dflt->get_width();
+                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+    size_t nBits = dflt->get_width();
     SValuePtr address = SValue::promote(address_);
-    ASSERT_require(8==nbits); // SymbolicSemantics::MemoryState assumes that memory cells contain only 8-bit data
-    bool short_circuited;
-    CellList matches = scan(address, nbits, addrOps, valOps, short_circuited/*out*/);
+    ASSERT_require(8==nBits); // SymbolicSemantics::MemoryState assumes that memory cells contain only 8-bit data
+
+    CellList::iterator cursor = get_cells().begin();
+    CellList cells = scan(cursor /*in,out*/, address, nBits, addrOps, valOps);
 
     // If we fell off the end of the list then the read could be reading from a memory location for which no cell exists.
-    if (!short_circuited) {
-        BaseSemantics::MemoryCellPtr tmpcell = protocell->create(address, dflt);
-        cells.push_front(tmpcell);
-        matches.push_back(tmpcell);
+    if (cursor == get_cells().end()) {
+        BaseSemantics::MemoryCellPtr newCell = insertReadCell(address, dflt);
+        cells.push_back(newCell);
     }
+    updateReadProperties(cells);
 
-    ASSERT_require(dflt->get_width()==nbits);
-    SValuePtr retval = get_cell_compressor()->operator()(address, dflt, addrOps, valOps, matches);
+    SValuePtr retval = get_cell_compressor()->operator()(address, dflt, addrOps, valOps, cells);
     ASSERT_require(retval->get_width()==8);
     return retval;
 }
@@ -258,11 +314,22 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     ASSERT_require(a->get_width()==b->get_width());
+    if (a->isBottom() || b->isBottom())
+        return bottom_(a->get_width());
 
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_AND,
                                                         a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -272,11 +339,22 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     ASSERT_require(a->get_width()==b->get_width());
+    if (a->isBottom() || b->isBottom())
+        return bottom_(a->get_width());
     
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_OR,
                                                         a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -286,6 +364,8 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     ASSERT_require(a->get_width()==b->get_width());
+    if (a->isBottom() || b->isBottom())
+        return bottom_(a->get_width());
 
     SValuePtr retval;
     // We leave these simplifications here because InsnSemanticsExpr doesn't yet have a way to pass an SMT solver to its
@@ -298,8 +378,17 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
         retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_BV_XOR,
                                                   a->get_expression(), b->get_expression()));
     }
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
     
@@ -307,9 +396,19 @@ BaseSemantics::SValuePtr
 RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
+    if (a->isBottom())
+        return bottom_(a->get_width());
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_INVERT, a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
+
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -319,16 +418,22 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
     SValuePtr a = SValue::promote(a_);
     ASSERT_require(end_bit<=a->get_width());
     ASSERT_require(begin_bit<end_bit);
+    if (a->isBottom())
+        return bottom_(end_bit-begin_bit);
+
     SValuePtr retval = svalue_expr(InternalNode::create(end_bit-begin_bit, InsnSemanticsExpr::OP_EXTRACT,
                                                         LeafNode::create_integer(32, begin_bit),
                                                         LeafNode::create_integer(32, end_bit),
                                                         a->get_expression()));
-    if (compute_usedef) {
-        if (retval->get_width()==a->get_width()) {
-            retval->defined_by(NULL, a->get_defining_instructions());
-        } else {
-            retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
-        }
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            if (retval->get_width() != a->get_width())
+                retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
     }
     return retval;
 }
@@ -338,10 +443,21 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &lo_bits_, const BaseSemant
 {
     SValuePtr lo = SValue::promote(lo_bits_);
     SValuePtr hi = SValue::promote(hi_bits_);
+    if (lo->isBottom() || hi->isBottom())
+        return bottom_(lo->get_width() + hi->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(lo->get_width()+hi->get_width(), InsnSemanticsExpr::OP_CONCAT,
                                                         hi->get_expression(), lo->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, lo->get_defining_instructions(), hi->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(lo);
+            retval->add_defining_instructions(hi);      // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -349,9 +465,19 @@ BaseSemantics::SValuePtr
 RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
+    if (a->isBottom())
+        return bottom_(1);
+
     SValuePtr retval = svalue_expr(InternalNode::create(1, InsnSemanticsExpr::OP_ZEROP, a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -365,11 +491,25 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
     ASSERT_require(1==sel->get_width());
     ASSERT_require(a->get_width()==b->get_width());
 
+    // (ite bottom A B) should be A when A==B. However, InsnSemanticsExpr would have already simplified that to A.
+    if (sel->isBottom())
+        return bottom_(a->get_width());
+
     SValuePtr retval;
     if (sel->is_number()) {
         retval = SValue::promote(sel->get_number() ? a->copy() : b->copy());
-        if (compute_usedef)
-            retval->defined_by(omit_cur_insn ? NULL : cur_insn, sel->get_defining_instructions());
+        switch (computingDefiners_) {
+            case TRACK_NO_DEFINERS:
+                break;
+            case TRACK_ALL_DEFINERS:
+#if 0 // [Robb P. Matzke 2015-09-17]: not present in original version
+                retval->add_defining_instructions(sel->get_number() ? a : b);
+#endif
+                retval->add_defining_instructions(sel); // fall through...
+            case TRACK_LATEST_DEFINER:
+                retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+                break;
+        }
         return retval;
     }
     if (solver) {
@@ -380,8 +520,18 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
         bool can_be_true = SMTSolver::SAT_NO != solver->satisfiable(assertion);
         if (!can_be_true) {
             retval = SValue::promote(b->copy());
-            if (compute_usedef)
-                retval->defined_by(omit_cur_insn ? NULL : cur_insn, sel->get_defining_instructions());
+            switch (computingDefiners_) {
+                case TRACK_NO_DEFINERS:
+                    break;
+                case TRACK_ALL_DEFINERS:
+#if 0 // [Robb P. Matzke 2015-09-17]: not present in original version
+                    retval->add_defining_instructions(b);
+#endif
+                    retval->add_defining_instructions(sel); // fall through...
+                case TRACK_LATEST_DEFINER:
+                    retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+                    break;
+            }
             return retval;
         }
 
@@ -391,16 +541,33 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
         bool can_be_false = SMTSolver::SAT_NO != solver->satisfiable(assertion);
         if (!can_be_false) {
             retval = SValue::promote(a->copy());
-            if (compute_usedef)
-                retval->defined_by(omit_cur_insn ? NULL : cur_insn, sel->get_defining_instructions());
+            switch (computingDefiners_) {
+                case TRACK_NO_DEFINERS:
+                    break;
+                case TRACK_ALL_DEFINERS:
+#if 0 // [Robb P. Matzke 2015-09-17]: not present in original version
+                    retval->add_defining_instructions(a);
+#endif
+                    retval->add_defining_instructions(sel); // fall through...
+                case TRACK_LATEST_DEFINER:
+                    retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+                    break;
+            }
             return retval;
         }
     }
     retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ITE, sel->get_expression(),
                                               a->get_expression(), b->get_expression()));
-    if (compute_usedef) {
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, sel->get_defining_instructions(),
-                           a->get_defining_instructions(), b->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);
+            retval->add_defining_instructions(sel); // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
     }
     return retval;
 }
@@ -409,9 +576,19 @@ BaseSemantics::SValuePtr
 RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
+    if (a->isBottom())
+        return bottom_(a->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_LSSB, a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -419,9 +596,19 @@ BaseSemantics::SValuePtr
 RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
+    if (a->isBottom())
+        return bottom_(a->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_MSSB, a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -430,10 +617,21 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantic
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
+    if (a->isBottom() || sa->isBottom())
+        return bottom_(a->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ROL,
                                                         sa->get_expression(), a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(sa);      // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -442,10 +640,21 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemanti
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
+    if (a->isBottom() || sa->isBottom())
+        return bottom_(a->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ROR,
                                                         sa->get_expression(), a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(sa);      // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -454,10 +663,21 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
+    if (a->isBottom() || sa->isBottom())
+        return bottom_(a->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SHL0,
                                                         sa->get_expression(), a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(sa);      // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -466,10 +686,21 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
+    if (a->isBottom() || sa->isBottom())
+        return bottom_(a->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SHR0,
                                                         sa->get_expression(), a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(sa);      // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -478,10 +709,21 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
+    if (a->isBottom() || sa->isBottom())
+        return bottom_(a->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ASR,
                                                         sa->get_expression(), a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), sa->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(sa);      // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -489,15 +731,21 @@ BaseSemantics::SValuePtr
 RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 {
     SValuePtr a = SValue::promote(a_);
+    if (a->isBottom())
+        return bottom_(new_width);
+
     SValuePtr retval = svalue_expr(InternalNode::create(new_width, InsnSemanticsExpr::OP_UEXTEND,
                                                         LeafNode::create_integer(32, new_width),
                                                         a->get_expression()));
-    if (compute_usedef) {
-        if (retval->get_width()==a->get_width()) {
-            retval->defined_by(NULL, a->get_defining_instructions());
-        } else {
-            retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
-        }
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            if (retval->get_width() != a->get_width())
+                retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
     }
     return retval;
 }
@@ -508,10 +756,21 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     ASSERT_require(a->get_width()==b->get_width());
+    if (a->isBottom() || b->isBottom())
+        return bottom_(a->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_ADD,
                                                         a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -520,6 +779,10 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSeman
                               const BaseSemantics::SValuePtr &c, BaseSemantics::SValuePtr &carry_out/*out*/)
 {
     ASSERT_require(a->get_width()==b->get_width() && c->get_width()==1);
+    if (a->isBottom() || b->isBottom() || c->isBottom()) {
+        carry_out = bottom_(a->get_width());
+        return bottom_(a->get_width());
+    }
     BaseSemantics::SValuePtr aa = unsignedExtend(a, a->get_width()+1);
     BaseSemantics::SValuePtr bb = unsignedExtend(b, a->get_width()+1);
     BaseSemantics::SValuePtr cc = unsignedExtend(c, a->get_width()+1);
@@ -532,9 +795,19 @@ BaseSemantics::SValuePtr
 RiscOperators::negate(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
+    if (a->isBottom())
+        return bottom_(a->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_NEGATE, a->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -543,10 +816,21 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
+    if (a->isBottom() || b->isBottom())
+        return bottom_(a->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_SDIV,
                                                         a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -555,10 +839,21 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
+    if (a->isBottom() || b->isBottom())
+        return bottom_(b->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(b->get_width(), InsnSemanticsExpr::OP_SMOD,
                                                         a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -568,10 +863,20 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     size_t retwidth = a->get_width() + b->get_width();
+    if (a->isBottom() || b->isBottom())
+        return bottom_(retwidth);
     SValuePtr retval = svalue_expr(InternalNode::create(retwidth, InsnSemanticsExpr::OP_SMUL,
                                                         a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -580,10 +885,21 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
+    if (a->isBottom() || b->isBottom())
+        return bottom_(a->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(a->get_width(), InsnSemanticsExpr::OP_UDIV,
                                                         a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -592,10 +908,21 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
+    if (a->isBottom() || b->isBottom())
+        return bottom_(b->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(b->get_width(), InsnSemanticsExpr::OP_UMOD,
                                                         a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -605,10 +932,21 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     size_t retwidth = a->get_width() + b->get_width();
+    if (a->isBottom() || b->isBottom())
+        return bottom_(retwidth);
+
     SValuePtr retval = svalue_expr(InternalNode::create(retwidth, InsnSemanticsExpr::OP_UMUL,
                                                         a->get_expression(), b->get_expression()));
-    if (compute_usedef)
-        retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions(), b->get_defining_instructions());
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);
+            retval->add_defining_instructions(b);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -616,15 +954,21 @@ BaseSemantics::SValuePtr
 RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 {
     SValuePtr a = SValue::promote(a_);
+    if (a->isBottom())
+        return bottom_(a->get_width());
+
     SValuePtr retval = svalue_expr(InternalNode::create(new_width, InsnSemanticsExpr::OP_SEXTEND,
                                                         LeafNode::create_integer(32, new_width),
                                                         a->get_expression()));
-    if (compute_usedef) {
-        if (retval->get_width()==a->get_width()) {
-            retval->defined_by(NULL, a->get_defining_instructions());
-        } else {
-            retval->defined_by(omit_cur_insn ? NULL : cur_insn, a->get_defining_instructions());
-        }
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            retval->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            if (retval->get_width() != a->get_width())
+                retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
     }
     return retval;
 }
@@ -633,7 +977,14 @@ BaseSemantics::SValuePtr
 RiscOperators::readRegister(const RegisterDescriptor &reg) 
 {
     PartialDisableUsedef du(this);
-    return BaseSemantics::RiscOperators::readRegister(reg);
+    BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::readRegister(reg);
+
+    if (get_insn()) {
+        RegisterStatePtr regs = RegisterState::promote(get_state()->get_register_state());
+        regs->updateReadProperties(reg);
+    }
+
+    return result;
 }
 
 void
@@ -643,11 +994,21 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
     PartialDisableUsedef du(this);
     BaseSemantics::RiscOperators::writeRegister(reg, a);
 
-    // Update latest writer info when appropriate and able to do so.
-    if (SgAsmInstruction *insn = get_insn()) {
-        RegisterStatePtr regs = boost::dynamic_pointer_cast<RegisterState>(get_state()->get_register_state());
-        if (regs!=NULL)
-            regs->set_latest_writer(reg, insn->get_address());
+    // Update register properties and writer info.
+    RegisterStatePtr regs = RegisterState::promote(get_state()->get_register_state());
+    SgAsmInstruction *insn = get_insn();
+    if (insn) {
+        switch (computingRegisterWriters()) {
+            case TRACK_NO_WRITERS:
+                break;
+            case TRACK_LATEST_WRITER:
+                regs->setWriters(reg, insn->get_address());
+                break;
+            case TRACK_ALL_WRITERS:
+                regs->insertWriters(reg, insn->get_address());
+                break;
+        }
+        regs->updateWriteProperties(reg, (insn ? BaseSemantics::IO_WRITE : BaseSemantics::IO_INIT));
     }
 }
 
@@ -661,13 +1022,15 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
     if (condition->is_number() && !condition->get_number())
         return dflt;
+    if (address->isBottom())
+        return bottom_(dflt->get_width());
 
     PartialDisableUsedef du(this);
 
     // Read the bytes and concatenate them together. InsnSemanticsExpr will simplify the expression so that reading after
     // writing a multi-byte value will return the original value written rather than a concatenation of byte extractions.
     SValuePtr retval;
-    InsnSet defs;
+    InsnSet allDefiners;
     size_t nbytes = nbits/8;
     BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
@@ -679,18 +1042,27 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
             retval = byte_value;
         } else if (ByteOrder::ORDER_MSB==mem->get_byteOrder()) {
             retval = SValue::promote(concat(byte_value, retval));
-        } else {
+        } else if (ByteOrder::ORDER_LSB==mem->get_byteOrder()) {
             retval = SValue::promote(concat(retval, byte_value));
+        } else {
+            // See BaseSemantics::MemoryState::set_byteOrder
+            throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", get_insn());
         }
-        if (compute_usedef) {
-            const InsnSet &definers = byte_value->get_defining_instructions();
-            defs.insert(definers.begin(), definers.end());
+        if (computingDefiners() == TRACK_ALL_DEFINERS) {
+            const InsnSet &byteDefiners = byte_value->get_defining_instructions();
+            allDefiners.insert(byteDefiners.begin(), byteDefiners.end());
         }
     }
 
     ASSERT_require(retval!=NULL && retval->get_width()==nbits);
-    if (compute_usedef)
-        retval->defined_by(NULL, defs);
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+        case TRACK_LATEST_DEFINER:
+            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            break;
+    }
     return retval;
 }
 
@@ -702,6 +1074,8 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
     if (condition->is_number() && !condition->get_number())
         return;
+    if (address->isBottom())
+        return;
     SValuePtr value = SValue::promote(value_->copy());
     PartialDisableUsedef du(this);
     size_t nbits = value->get_width();
@@ -709,18 +1083,38 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
     size_t nbytes = nbits/8;
     BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbytes; ++bytenum) {
-        size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
+        size_t byteOffset = 0;
+        if (1 == nbytes) {
+            // void
+        } else if (ByteOrder::ORDER_MSB == mem->get_byteOrder()) {
+            byteOffset = nbytes - (bytenum+1);
+        } else if (ByteOrder::ORDER_LSB == mem->get_byteOrder()) {
+            byteOffset = bytenum;
+        } else {
+            // See BaseSemantics::MemoryState::set_byteOrder
+            throw BaseSemantics::Exception("multi-byte write with memory having unspecified byte order", get_insn());
+        }
+
         BaseSemantics::SValuePtr byte_value = extract(value, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
         state->writeMemory(byte_addr, byte_value, this, this);
 
         // Update the latest writer info if we have a current instruction and the memory state supports it.
-        if (compute_memwriters) {
+        if (computingMemoryWriters() != TRACK_NO_WRITERS) {
             if (SgAsmInstruction *insn = get_insn()) {
                 if (BaseSemantics::MemoryCellListPtr cells = boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem)) {
                     BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell();
                     ASSERT_not_null(cell); // we just wrote to it!
-                    cell->latestWriter(insn->get_address());
+                    switch (computingMemoryWriters()) {
+                        case TRACK_NO_WRITERS:
+                            break;
+                        case TRACK_LATEST_WRITER:
+                            cell->setWriter(insn->get_address());
+                            break;
+                        case TRACK_ALL_WRITERS:
+                            cell->insertWriter(insn->get_address());
+                            break;
+                    }
                 }
             }
         }

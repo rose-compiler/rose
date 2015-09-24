@@ -1495,7 +1495,7 @@ public:
      *  performing any analysis. */
     BaseSemantics::SValuePtr functionStackDelta(const Function::Ptr &function) const /*final*/;
 
-    /** Stack delta analysis for all functions. */
+    /** Compute stack delta analysis for all functions. */
     void allFunctionStackDelta() const /*final*/;
 
     /** May-return analysis for one function.
@@ -1504,8 +1504,42 @@ public:
      *  basicBlockOptionalMayReturn invoked on the function's entry block. See that method for details. */
     Sawyer::Optional<bool> functionOptionalMayReturn(const Function::Ptr &function) const /*final*/;
 
-    /** May-return analysis for all functions. */
+    /** Compute may-return analysis for all functions. */
     void allFunctionMayReturn() const /*final*/;
+
+    /** Calling convention analysis for one function.
+     *
+     *  Analyses a function to determine characteristics of its calling convention, such as which registers are callee-saved,
+     *  which registers and stack locations are input parameters, and which are output parameters.   The calling convention
+     *  analysis itself does not define the entire calling convention--instead, the analysis results must be matched against a
+     *  dictionary of calling convention definitions.
+     *
+     *  Since this analysis is based on data-flow, which is based on a control flow graph, the function must be attached to the
+     *  CFG/AUM and all its basic blocks must also exist in the CFG/AUM.
+     *
+     *  Warning: If the specified function calls other functions for which a calling convention analysis has not been run the
+     *  analysis of this function may be incorrect.  This is because the analysis of this function must know which registers
+     *  are clobbered by the call in order to produce accurate results. See also, @ref allFunctionCallingConvention. If a
+     *  default calling convention is supplied then it determines which registers are clobbered by a call to a function that
+     *  hasn't been analyzed yet.
+     *
+     *  Calling convention analysis results are stored in the function object. If calling convention analysis has already been
+     *  run for this function then the old results are returned.  The old results can be cleared on a per-function basis with
+     *  <code>function->callingConventionAnalysis().clear()</code>. */
+    const CallingConvention::Analysis& functionCallingConvention(const Function::Ptr&,
+                                                                 const CallingConvention::Definition *dflt=NULL) const /*final*/;
+
+    /** Compute calling conventions for all functions.
+     *
+     *  Analyzes calling conventions for all functions and caches results in the function objects. The analysis uses a depth
+     *  first traversal of the call graph, invoking the analysis as the traversal unwinds. This increases the chance that the
+     *  calling conventions of callees are known before their callers are analyzed. However, this analysis must break cycles in
+     *  mutually recursive calls, and does so by using an optional default calling convention where the cycle is broken. This
+     *  default is not inserted as a result--it only influences the data-flow portion of the analysis.
+     *
+     *  After this method runs, results can be queried per function with either @ref Function::callingConventionAnalysis or
+     *  @ref functionCallingConvention. */
+    void allFunctionCallingConvention(const CallingConvention::Definition *dflt=NULL) const /*final*/;
 
     /** Adjust inter-function edge types.
      *

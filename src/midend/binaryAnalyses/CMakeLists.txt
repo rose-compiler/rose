@@ -1,6 +1,5 @@
 add_library(midend_binary OBJECT
   AbstractLocation.C
-  binary_analysis.C
   BinaryCallingConvention.C
   BinaryControlFlow.C
   BinaryDataFlow.C
@@ -36,12 +35,15 @@ add_library(midend_binary OBJECT
   instructionSemantics/IntervalSemantics.C
   instructionSemantics/IntervalSemantics2.C
   instructionSemantics/LlvmSemantics2.C
-  instructionSemantics/NullSemantics2.C
+  instructionSemantics/MemoryCellList.C
   instructionSemantics/MultiSemantics2.C
+  instructionSemantics/NullSemantics2.C
   instructionSemantics/PartialSymbolicSemantics.C
   instructionSemantics/PartialSymbolicSemantics2.C
+  instructionSemantics/RegisterStateGeneric.C
   instructionSemantics/SMTSolver.C
   instructionSemantics/StaticSemantics2.C
+  instructionSemantics/SymbolicExprParser.C
   instructionSemantics/SymbolicMemory2.C
   instructionSemantics/SymbolicSemantics.C
   instructionSemantics/SymbolicSemantics2.C
@@ -54,7 +56,6 @@ add_dependencies(midend_binary rosetta_generated)
 install(
   FILES
     AbstractLocation.h
-    binary_analysis.h
     BinaryAnalysisUtils.h
     BinaryCallingConvention.h
     BinaryControlFlow.h
@@ -64,6 +65,7 @@ install(
     BinaryMagic.h
     BinaryNoOperation.h
     BinaryPointerDetection.h
+    BinaryStackVariable.h
     BinaryString.h
     BinaryTaintedFlow.h
     dataflowanalyses/InterruptAnalysis.h
@@ -87,6 +89,7 @@ install(
     instructionSemantics/InsnSemanticsExpr.h
     instructionSemantics/IntervalSemantics2.h
     instructionSemantics/IntervalSemantics.h
+    instructionSemantics/MemoryCellList.h
     instructionSemantics/MultiSemantics2.h
     instructionSemantics/MultiSemantics.h
     instructionSemantics/NullSemantics2.h
@@ -94,8 +97,10 @@ install(
     instructionSemantics/PartialSymbolicSemantics2.h
     instructionSemantics/PartialSymbolicSemantics.h
     instructionSemantics/ReadWriteRegisterFragment.h
+    instructionSemantics/RegisterStateGeneric.h
     instructionSemantics/SMTSolver.h
     instructionSemantics/StaticSemantics2.h
+    instructionSemantics/SymbolicExprParser.h
     instructionSemantics/SymbolicMemory2.h
     instructionSemantics/SymbolicSemantics2.h
     instructionSemantics/SymbolicSemantics.h

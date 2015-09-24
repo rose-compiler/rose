@@ -1,5 +1,6 @@
 /* Interpretation ELF */
 0x080480a0: ================================== Function (entry point, graph) <_start>
+0x080480a0: Function does not return to caller.
 
 0x080480a0: Basic block reasons: entry point, CFG head
 0x080480a0: d9 c0                   |..      |          fld    st(0)

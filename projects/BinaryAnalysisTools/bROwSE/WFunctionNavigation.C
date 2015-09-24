@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WFunctionNavigation.h>
 #include <Wt/WComboBox>
 #include <Wt/WPushButton>

@@ -19,7 +19,6 @@
 #include "boost/graph/exception.hpp"
 #include <boost/graph/graphviz.hpp>
 
-#include <rose.h>
 #include "sqlite3x.h"
 
 //! the different graph types, used for graphdata.graphType field

@@ -108,7 +108,7 @@ vector<SgVarRefExp*> SgNodeHelper::determineVariablesInSubtree(SgNode* node) {
   vector<SgVarRefExp*> varVec;
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(SgVarRefExp* v=isSgVarRefExp(node)) {
+    if(SgVarRefExp* v=isSgVarRefExp(*i)) {
       varVec.push_back(v);
     }
   }
@@ -659,29 +659,36 @@ bool SgNodeHelper::isForwardFunctionDeclaration(SgNode* node) {
  */
 SgFunctionDefinition* SgNodeHelper::determineFunctionDefinition(SgFunctionCallExp* funCall) {
   if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration()) {
-    if(SgFunctionDefinition* funDef=funDecl->get_definition()) {
-      return funDef;
-    } else {
-      // forward declaration (we have not found the function definition yet)
-      // 1) use parent pointers and search for Root node (likely to be SgProject node)
-      SgNode* root=funDecl;
-      SgNode* parent=0;
-      while(!SgNodeHelper::isAstRoot(root)) {
-        parent=SgNodeHelper::getParent(root);
-        root=parent;
-      }
-      assert(root);
-      // 2) search in AST for the function's definition now
-      RoseAst ast(root);
-      for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-        if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(*i)) {
-          if(!SgNodeHelper::isForwardFunctionDeclaration(funDecl2)) {
-            SgSymbol* sym2=funDecl2->search_for_symbol_from_symbol_table();
-            SgSymbol* sym1=funDecl->search_for_symbol_from_symbol_table();
-            if(sym1!=0 && sym1==sym2) {
-              SgFunctionDefinition* fundef2=funDecl2->get_definition();
-              assert(fundef2);
-              return fundef2;
+    if(SgDeclarationStatement* defFunDecl=funDecl->get_definingDeclaration()) {
+      if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(defFunDecl)) {
+        if(SgFunctionDefinition* funDef=funDecl2->get_definition()) {
+          return funDef;
+        } else {
+          //cout<<"INFO: no definition found for call: "<<funCall->unparseToString()<<endl;
+          return 0;
+          // the following code is dead code: searching the AST is inefficient. This code will refactored and removed from here.
+          // forward declaration (we have not found the function definition yet)
+          // 1) use parent pointers and search for Root node (likely to be SgProject node)
+          SgNode* root=defFunDecl;
+          SgNode* parent=0;
+          while(!SgNodeHelper::isAstRoot(root)) {
+            parent=SgNodeHelper::getParent(root);
+            root=parent;
+          }
+          assert(root);
+          // 2) search in AST for the function's definition now
+          RoseAst ast(root);
+          for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+            if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(*i)) {
+              if(!SgNodeHelper::isForwardFunctionDeclaration(funDecl2)) {
+                SgSymbol* sym2=funDecl2->search_for_symbol_from_symbol_table();
+                SgSymbol* sym1=funDecl->search_for_symbol_from_symbol_table();
+                if(sym1!=0 && sym1==sym2) {
+                  SgFunctionDefinition* fundef2=funDecl2->get_definition();
+                  assert(fundef2);
+                  return fundef2;
+                }
+              }
             }
           }
         }
@@ -799,11 +806,23 @@ SgFunctionCallExp* SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(SgNode*
   * \date 2012.
  */
 SgFunctionCallExp* SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(SgNode* node) {
-  if(SgNode* sexp=isSgExprStatement(node))
-    if(SgNode* assignOp=isSgAssignOp(SgNodeHelper::getExprStmtChild(sexp)))
-      if(isSgVarRefExp(SgNodeHelper::getLhs(assignOp)))
-        if(SgFunctionCallExp* fcp=isSgFunctionCallExp(SgNodeHelper::getRhs(assignOp)))
+  if(SgNode* sexp=isSgExprStatement(node)) {
+    if(SgNode* assignOp=isSgAssignOp(SgNodeHelper::getExprStmtChild(sexp))) {
+      SgNode* lhs=SgNodeHelper::getLhs(assignOp);
+      SgNode* rhs=SgNodeHelper::getRhs(assignOp);
+      if(isSgVarRefExp(lhs)) {
+        /* the result of a function call may be casted. skip those
+           casts to find the actual function call node.
+        */
+        while(isSgCastExp(rhs)) {
+          rhs=SgNodeHelper::getFirstChild(rhs);
+        }
+        if(SgFunctionCallExp* fcp=isSgFunctionCallExp(rhs)) {
           return fcp;
+        }
+      }
+    }
+  }
   return 0;
 }
 
@@ -1270,10 +1289,14 @@ int SgNodeHelper::numChildren(SgNode* node) {
 }
 
 void SgNodeHelper::replaceExpression(SgExpression* e1, SgExpression* e2, bool mode) {
-  SgExpression* p=isSgExpression(e1->get_parent());
-  if(p && mode==false) {
-    p->replace_expression(e1,e2);
-    e2->set_parent(p);
+  SgExpression* pe=isSgExpression(e1->get_parent());
+  SgExprStatement* ps=isSgExprStatement(e1->get_parent());
+  if(pe && mode==false) {
+    pe->replace_expression(e1,e2);
+    e2->set_parent(pe);
+  } else if(ps && mode==false) {
+    ps->replace_expression(e1,e2);
+    e2->set_parent(ps);
   } else {
     SageInterface::replaceExpression(e1,e2,mode); // this function is more general but very slow
   }

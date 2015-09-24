@@ -1,6 +1,7 @@
 #ifndef RSIM_CloneDetection_H
 #define RSIM_CloneDetection_H
 
+#include "Disassembler.h"
 #include "PartialSymbolicSemantics.h"
 #include "x86InstructionSemantics.h"
 #include "BinaryPointerDetection.h"
@@ -752,7 +753,6 @@ public:
     bool operator==(const OutputGroup &other) const;
     void clear();
     void print(std::ostream&, const std::string &title="", const std::string &prefix="") const;
-    void print(RTS_Message*, const std::string &title="", const std::string &prefix="") const;
     friend std::ostream& operator<<(std::ostream &o, const OutputGroup &outputs) {
         outputs.print(o);
         return o;

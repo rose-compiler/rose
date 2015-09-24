@@ -1582,7 +1582,8 @@ SageInterface::get_name ( const SgScopeStatement* scope )
        // DQ (11/30/2007): Added more fortran support.
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
-
+            
+          case V_SgMatlabForStatement: //SK: Matlab for statement
           case V_SgBasicBlock:
           case V_SgCatchOptionStmt:
           case V_SgDoWhileStmt:

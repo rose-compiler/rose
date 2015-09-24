@@ -15,6 +15,12 @@ namespace ConcreteSemantics {
 //                                      SValue
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Sawyer::Optional<BaseSemantics::SValuePtr>
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
+    // There's no official way to represent BOTTOM
+    throw BaseSemantics::NotImplemented("SValue merging for ConcreteSemantics is not supported", NULL);
+}
+
 void
 SValue::bits(const Sawyer::Container::BitVector &newBits) {
     ASSERT_require(newBits.size() == bits_.size());
@@ -130,6 +136,12 @@ MemoryState::writeMemory(const BaseSemantics::SValuePtr &addr_, const BaseSemant
     if (!map_.at(addr).exists())
         allocatePage(addr);
     map_.at(addr).limit(1).write(&value);
+}
+
+bool
+MemoryState::merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
+                   BaseSemantics::RiscOperators *valOps) {
+    throw BaseSemantics::NotImplemented("MemoryState merging for ConcreteSemantics is not supported", NULL);
 }
 
 void
@@ -527,8 +539,11 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
             retval = byte_value;
         } else if (ByteOrder::ORDER_MSB==mem->get_byteOrder()) {
             retval = concat(byte_value, retval);
-        } else {
+        } else if (ByteOrder::ORDER_LSB==mem->get_byteOrder()) {
             retval = concat(retval, byte_value);
+        } else {
+            // See BaseSemantics::MemoryState::set_byteOrder
+            throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", get_insn());
         }
     }
 
@@ -548,11 +563,118 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
     size_t nbytes = nbits/8;
     BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbytes; ++bytenum) {
-        size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
+        size_t byteOffset = 0;
+        if (1 == nbytes) {
+            // void
+        } else if (ByteOrder::ORDER_MSB==mem->get_byteOrder()) {
+            byteOffset = nbytes-(bytenum+1);
+        } else if (ByteOrder::ORDER_LSB==mem->get_byteOrder()) {
+            byteOffset = bytenum;
+        } else {
+            // See BaseSemantics::MemoryState::set_byteOrder
+            throw BaseSemantics::Exception("multi-byte write with memory having unspecified byte order", get_insn());
+        }
+
         BaseSemantics::SValuePtr byte_value = extract(value, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
         state->writeMemory(byte_addr, byte_value, this, this);
     }
+}
+
+double
+RiscOperators::exprToDouble(const BaseSemantics::SValuePtr &a, SgAsmFloatType *aType) {
+    ASSERT_require(a->is_number());
+    if (aType == SageBuilderAsm::buildIeee754Binary64()) {
+        ASSERT_require(sizeof(double) == sizeof(int64_t));
+        union {
+            double fp;
+            int64_t i;
+        } u;
+        u.i = a->get_number();
+        return u.fp;
+    } else if (aType == SageBuilderAsm::buildIeee754Binary32()) {
+        ASSERT_require(sizeof(float) == sizeof(int32_t));
+        union {
+            float fp;
+            int32_t i;
+        } u;
+        u.i = a->get_number();
+        return u.fp;
+    } else {
+        throw BaseSemantics::NotImplemented("exprToDouble type not supported", get_insn());
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::doubleToExpr(double d, SgAsmFloatType *retType) {
+    if (retType == SageBuilderAsm::buildIeee754Binary64()) {
+        ASSERT_require(sizeof(double) == sizeof(int64_t));
+        union {
+            double fp;
+            int64_t i;
+        } u;
+        u.fp = d;
+        return svalue_number(64, u.i);
+    } else if (retType == SageBuilderAsm::buildIeee754Binary32()) {
+        ASSERT_require(sizeof(float) == sizeof(int32_t));
+        union {
+            float fp;
+            int32_t i;
+        } u;
+        u.fp = d;
+        return svalue_number(32, u.i);
+    } else {
+        throw BaseSemantics::NotImplemented("doubleToExpr type not supported", get_insn());
+    }
+}
+    
+BaseSemantics::SValuePtr
+RiscOperators::fpFromInteger(const BaseSemantics::SValuePtr &intValue, SgAsmFloatType *retType) {
+    ASSERT_require(intValue->is_number());
+    return doubleToExpr((double)intValue->get_number(), retType);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpToInteger(const BaseSemantics::SValuePtr &a, SgAsmFloatType *aType, const BaseSemantics::SValuePtr &dflt) {
+    double ad = exprToDouble(a, aType);
+    size_t nBits = dflt->get_width();
+    double minInt = -pow(2.0, nBits-1);
+    double maxInt = pow(2.0, nBits-1);
+    if (isnan(ad) || ad < minInt || ad >= maxInt)
+        return dflt;
+    int64_t ai = ad;
+    return number_(nBits, ai);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpAdd(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *fpType) {
+    double ad = exprToDouble(a, fpType);
+    double bd = exprToDouble(b, fpType);
+    double result = ad + bd;
+    return doubleToExpr(result, fpType);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpSubtract(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *fpType) {
+    double ad = exprToDouble(a, fpType);
+    double bd = exprToDouble(b, fpType);
+    double result = ad - bd;
+    return doubleToExpr(result, fpType);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *fpType) {
+    double ad = exprToDouble(a, fpType);
+    double bd = exprToDouble(b, fpType);
+    double result = ad * bd;
+    return doubleToExpr(result, fpType);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatType *fpType) {
+    double ad = exprToDouble(a, fpType);
+    double result = trunc(ad);
+    return doubleToExpr(result, fpType);
 }
 
 } // namespace

@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WToggleButton.h>
 #include <Wt/WImage>
 #include <Wt/WStackedWidget>

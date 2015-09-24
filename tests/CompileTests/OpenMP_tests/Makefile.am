@@ -148,7 +148,8 @@ C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
 	jacobi-ompacc.c \
 	jacobi-ompacc-v2.c \
 	jacobi-ompacc-opt1.c \
-	jacobi-ompacc-opt2.c
+	jacobi-ompacc-opt2.c \
+	jacobi-ompacc-multiGPU.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
         jacobi-ompacc2.cpp \

@@ -539,6 +539,13 @@ OptimizeSingleScopWithPoccGeneric (scoplib_scop_p scop,
      stm->nb_iterators += nb_tiled_dim;
 
       free(stm->body);
+      char commentStr[256];
+      sprintf (commentStr, "tiled for %d dims", nb_tiled_dim);
+      SgLocatedNode* locatedNode = isSgLocatedNode(sageStatementBodies[i]);
+      if(locatedNode)
+      {
+        SageBuilder::buildComment(locatedNode,commentStr,PreprocessingInfo::before,PreprocessingInfo::C_StyleComment);
+      }
       stm->body = (char*) sageStatementBodies[i];
     }
 

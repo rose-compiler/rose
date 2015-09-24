@@ -51,6 +51,10 @@ HEADER_BINARY_INSTRUCTION_PREDECLARATION_START
 #include "MemoryMap.h"
 HEADER_BINARY_INSTRUCTION_PREDECLARATION_END
 
+HEADER_FLOAT_TYPE_PREDECLARATION_START
+#include <Sawyer/BitVector.h>
+HEADER_FLOAT_TYPE_PREDECLARATION_END
+
 HEADER_BINARY_START
 
  /*  This class forms a base class for all of the types represented in the Asm Instruction grammar.
@@ -224,6 +228,7 @@ HEADER_RISC_OPERATION_START
                 // are usually implemented in terms of more basic operations like add_, invert, and equalToZero.
                 enum RiscOperator {
                         OP_NONE,
+			OP_bottom,
 			OP_undefined,
 			OP_unspecified,
                         OP_filterCallTarget,
@@ -4073,17 +4078,31 @@ HEADER_INTEGER_TYPE_END
 
 HEADER_FLOAT_TYPE_START
         public:
+                enum {
+                    GRADUAL_UNDERFLOW      = 0x00000001,
+                    NORMALIZED_SIGNIFICAND = 0x00000002
+                };
+
+                typedef Sawyer::Container::BitVector::BitRange BitRange;
+
                 SgAsmFloatType(ByteOrder::Endianness, size_t nBits,
-                               size_t significandOffset, size_t significandNBits, size_t signBitOffset,
-                               size_t exponentOffset, size_t exponentNBits, uint64_t exponentBias);
+                               const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
+                               uint64_t exponentBias, unsigned flags);
+
                 virtual void check() const;
                 virtual std::string toString() const;
-                size_t get_significandOffset() const;
-                size_t get_significandNBits() const;
-                size_t get_signBitOffset() const;
-                size_t get_exponentOffset() const;
-                size_t get_exponentNBits() const;
-                uint64_t get_exponentBias() const;
+                
+                // These return the position of the significand, exponent, and sign bit fields.
+                BitRange significandBits() const;
+                BitRange exponentBits() const;
+                size_t signBit() const;
+
+		uint64_t exponentBias() const;
+
+                // Boolean properties (same names as their enum constants)
+                unsigned flags() const;
+                bool gradualUnderflow() const;
+                bool normalizedSignificand() const;
 HEADER_FLOAT_TYPE_END
 
 

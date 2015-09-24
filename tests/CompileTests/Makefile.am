@@ -82,6 +82,10 @@ if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += Python_tests
 endif
 
+if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
+   SUBDIRS += Matlab_tests
+endif
+
 SUBDIRS += CudaTests
 
 # Used to check all C and C++ test codes: not really specific to EDG 4.x
@@ -89,8 +93,6 @@ SUBDIRS += frontend_integration
 
 # DQ (2/15/2014): Adding systemc tests (part of general C++ robustness tests)
 SUBDIRS += systemc_tests
-
-SUBDIRS += TileK
 
 # end of ROSE_USE_CLANG_FRONTEND
 # endif

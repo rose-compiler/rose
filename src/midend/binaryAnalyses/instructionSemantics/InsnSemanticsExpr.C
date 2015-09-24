@@ -37,10 +37,106 @@ to_str(Operator o)
     return buf;
 }
 
+// Escape control and non-printing characters
+static std::string
+escapeCharacter(char ch) {
+    switch (ch) {
+        case '\a': return "\\a";
+        case '\b': return "\\b";
+        case '\t': return "\\t";
+        case '\n': return "\\n";
+        case '\v': return "\\v";
+        case '\f': return "\\f";
+        case '\r': return "\\r";
+        default:
+            if (!isprint(ch)) {
+                char buf[16];
+                sprintf(buf, "\\%03o", (unsigned)ch);
+                return buf;
+            }
+            return std::string(1, ch);
+    }
+}
+
+// Escape a string when it appears where a symbol name could appear.
+static std::string
+nameEscape(const std::string &s) {
+    std::string retval;
+    BOOST_FOREACH (char ch, s) {
+        switch (ch) {
+            case '(':
+            case ')':
+            case '[':
+            case ']':
+            case '<':
+            case '>':
+                retval += std::string("\\") + ch;
+                break;
+            default:
+                retval += escapeCharacter(ch);
+                break;
+        }
+    }
+    return retval;
+}
+
+// Escape text that appears inside a "<...>" style comment.
+static std::string
+commentEscape(const std::string &s) {
+    std::string retval;
+
+    // Escape angle brackets if they're not balanced.  We could be smarter and escape only the unbalanced angle brackets. We'll
+    // leave that as an exercise for the reader. ;-)
+    bool escapeAngleBrackets = false;
+    int angleBracketDepth = 0;
+    BOOST_FOREACH (char ch, s) {
+        if ('<' == ch) {
+            ++angleBracketDepth;
+        } else if ('>' == ch && --angleBracketDepth < 0) {
+            escapeAngleBrackets = true;
+            break;
+        }
+    }
+
+    BOOST_FOREACH (char ch, s) {
+        switch (ch) {
+            case '<':
+            case '>':
+                if (escapeAngleBrackets) {
+                    retval += std::string("\\") + ch;
+                } else {
+                    retval += ch;
+                }
+                break;
+            default:
+                retval += ch;
+                break;
+        }
+    }
+    return retval;
+}
+
 /*******************************************************************************************************************************
  *                                      TreeNode methods
  *******************************************************************************************************************************/
 
+TreeNodePtr
+TreeNode::newFlags(unsigned newFlags) const {
+    if (newFlags == flags_)
+        return sharedFromThis();
+    if (InternalNodePtr inode = isInternalNode())
+        return InternalNode::create(get_nbits(), inode->get_operator(), inode->get_children(), get_comment(), newFlags);
+    LeafNodePtr lnode = isLeafNode();
+    ASSERT_not_null(lnode);
+    if (lnode->is_known())
+        return LeafNode::create_constant(lnode->get_bits(), get_comment(), newFlags);
+    if (lnode->is_variable())
+        return LeafNode::create_variable(get_nbits(), get_comment(), newFlags);
+    if (lnode->is_memory())
+        return LeafNode::create_memory(domainWidth(), get_nbits(), get_comment(), newFlags);
+    ASSERT_not_reachable("invalid leaf node type");
+}
+    
 std::set<LeafNodePtr>
 TreeNode::get_variables() const
 {
@@ -118,6 +214,11 @@ TreeNode::printFlags(std::ostream &o, unsigned flags, char &bracket) const {
         o <<bracket <<"unspec";
         bracket = ',';
         flags &= ~UNSPECIFIED;
+    }
+    if ((flags & BOTTOM) != 0) {
+        o <<bracket <<"bottom";
+        bracket = ',';
+        flags &= ~BOTTOM;
     }
     if (flags != 0) {
         o <<bracket <<"f=" <<std::hex <<flags <<std::dec;
@@ -255,10 +356,13 @@ InternalNode::adjustWidth() {
         }
         case OP_SMUL:
         case OP_UMUL: {
-            ASSERT_require(nchildren() == 2);
-            ASSERT_require(child(0)->isScalar());
-            ASSERT_require(child(1)->isScalar());
-            nbits = child(0)->get_nbits() + child(1)->get_nbits();
+            ASSERT_require(nchildren() >= 1);
+            size_t totalWidth = 0;
+            for (size_t i=0; i<nchildren(); ++i) {
+                ASSERT_require(child(i)->isScalar());
+                totalWidth += child(i)->get_nbits();
+            }
+            nbits = totalWidth;
             domainWidth_ = 0;
             break;
         }
@@ -297,8 +401,8 @@ InternalNode::adjustWidth() {
 }
 
 void
-InternalNode::adjustBitFlags() {
-    flags_ = 0;
+InternalNode::adjustBitFlags(unsigned flags) {
+    flags_ = flags;
     BOOST_FOREACH (const TreeNodePtr &child, children)
         flags_ |= child->get_flags();
 }
@@ -318,6 +422,8 @@ InternalNode::print(std::ostream &o, Formatter &fmt) const
 
     o <<"(" <<to_str(op);
 
+    // The width of an operator is not normally too useful since it can also be inferred from the width of its operands, but we
+    // print it anyway for the benefit of mere humans.
     char bracket = '[';
     if (fmt.show_width) {
         o <<bracket <<nbits;
@@ -332,6 +438,7 @@ InternalNode::print(std::ostream &o, Formatter &fmt) const
     if (bracket != '[')
         o <<"]";
 
+    // Print the operand list.
     if (fmt.max_depth!=0 && fmt.cur_depth>=fmt.max_depth && 0!=nchildren()) {
         o <<" ...";
     } else {
@@ -383,6 +490,9 @@ InternalNode::print(std::ostream &o, Formatter &fmt) const
         }
     }
     o <<")";
+
+    if (!get_comment().empty())
+        o <<"<" <<commentEscape(get_comment()) <<">";
 }
 
 bool
@@ -698,9 +808,12 @@ InternalNode::identity(uint64_t ident) const
             return InternalNode::create(get_nbits(), OP_UEXTEND, LeafNode::create_integer(8, get_nbits()), args.front());
         return args.front();
     }
-    
-    // construct the new node but don't simplify it yet (i.e., don't use InternalNode::create())
-    return InternalNodePtr(new InternalNode(get_nbits(), get_operator(), args, get_comment()));
+
+    // Don't simplify the return value recursively
+    InternalNode *inode = new InternalNode(0, get_operator(), args, get_comment());
+    if (inode->get_nbits() != get_nbits())
+        return sharedFromThis();                        // don't simplify if width changed.
+    return InternalNodePtr(inode);
 }
 
 TreeNodePtr
@@ -1899,6 +2012,19 @@ LeafNode::create_variable(size_t nbits, std::string comment, unsigned flags)
 
 /* class method */
 LeafNodePtr
+LeafNode::create_existing_variable(size_t nbits, uint64_t id, const std::string &comment, unsigned flags) {
+    ASSERT_require(nbits > 0);
+    LeafNode *node = new LeafNode(comment, flags);
+    node->nbits = nbits;
+    node->leaf_type = BITVECTOR;
+    node->name = id;
+    name_counter = std::max(name_counter, id+1);
+    LeafNodePtr retval(node);
+    return retval;
+}
+
+/* class method */
+LeafNodePtr
 LeafNode::create_integer(size_t nbits, uint64_t n, std::string comment, unsigned flags)
 {
     ASSERT_require(nbits > 0);
@@ -2001,12 +2127,14 @@ LeafNode::print_as_signed(std::ostream &o, Formatter &formatter, bool as_signed)
     bool showed_comment = false;
     if (is_known()) {
         if (bits.size() == 1) {
+            // Boolean values
             if (bits.toInteger()) {
                 o <<"true";
             } else {
                 o <<"false";
             }
         } else if (bits.size() <= 64) {
+            // Integer values that are small enough to use the machine's native type.
             uint64_t ival = bits.toInteger();
             if ((32==nbits || 64==nbits) && 0!=(ival & 0xffff0000) && 0xffff0000!=(ival & 0xffff0000)) {
                 // The value is probably an address, so print it like one.
@@ -2033,13 +2161,16 @@ LeafNode::print_as_signed(std::ostream &o, Formatter &formatter, bool as_signed)
                 }
             }
         } else {
-            // FIXME[Robb P. Matzke 2014-05-05]: we should change StringUtility functions to handle BitVector arguments
+            // Integers that are too wide -- use bit vector support instead.
+            // FIXME[Robb P. Matzke 2014-05-05]: we should change StringUtility functions to handle BitVector arguments also.
             o <<"0x" <<bits.toHex();
         }
     } else if (formatter.show_comments==Formatter::CMT_INSTEAD && !comment.empty()) {
-        o <<comment;
+        // Use the comment as the variable name.
+        o <<nameEscape(comment);
         showed_comment = true;
     } else {
+        // Show the variable name.
         uint64_t renamed = name;
         if (formatter.do_rename) {
             RenameMap::iterator found = formatter.renames.find(name);
@@ -2063,19 +2194,22 @@ LeafNode::print_as_signed(std::ostream &o, Formatter &formatter, bool as_signed)
         o <<renamed;
     }
 
-    char bracket = '[';
+    // Bit width of variable.  All variables have this otherwise there's no way for the parser to tell how wide a variable is
+    // when reading it back in.
     if (formatter.show_width) {
-        o <<bracket <<nbits;
-        bracket = ',';
+        o <<'[' <<nbits <<']';
     }
+
+    // Comment stuff
+    char bracket='<';
     if (formatter.show_flags)
-        printFlags(o, get_flags(), bracket);
+        printFlags(o, get_flags(), bracket /*in,out*/);
     if (!showed_comment && formatter.show_comments!=Formatter::CMT_SILENT && !comment.empty()) {
-        o <<bracket <<comment;
+        o <<bracket <<commentEscape(comment);
         bracket = ',';
     }
-    if (bracket != '[')
-        o <<"]";
+    if (bracket != '<')
+        o <<">";
 }
 
 bool
