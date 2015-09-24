@@ -15682,7 +15682,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 
 
 #if 0
-// This function is not implemented our used, but it might be when the final code is refactored.
+// This function is not implemented or used, but it might be when the final code is refactored.
 
 // rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr>
 // void SageInterface::supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap )
