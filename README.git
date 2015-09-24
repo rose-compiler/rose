@@ -984,3 +984,6 @@ Compiling ROSE with Intel compiler:
    CC=icc CXX=icpc /home/dquinlan/ROSE/git_rose_development/configure --with-C_OPTIMIZE=no --with-CXX_OPTIMIZE=no --with-ROSE_LONG_MAKE_CHECK_RULE=yes --prefix=/home/dquinlan/ROSE/ROSE_CompileTree/git_LINUX-64bit-intel-v14-rose_development-rc_install --with-boost=/nfs/casc/overture/ROSE/opt/rhel7/x86_64/boost/1_54_0/gcc/4.8.3 --disable-boost-version-check
 
 
+After new desktop machine:
+   smgit commit -am "Fixes for Intel compiler and GNU g++ version 4.8.3, also fixed to pass policy tests."
+   smgit push origin HEAD:dquinlan/dq-development-rc

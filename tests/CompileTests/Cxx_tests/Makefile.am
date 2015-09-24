@@ -278,8 +278,35 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_27.C \
    test2015_28.C \
    test2015_29.C \
+   test2015_30.C \
+   test2015_32.C \
+   test2015_33.C \
+   test2015_34.C \
+   test2015_35.C \
+   test2015_36.C \
+   test2015_40.C \
+   test2015_43.C \
+   test2015_44.C \
+   test2015_45.C \
+   test2015_50.C \
+   test2015_52.C \
+   test2015_55.C \
+   test2015_57.C \
+   test2015_58.C \
+   test2015_59.C \
+   test2015_60.C \
+   test2015_61.C \
+   test2015_70.C \
+   test2015_76.C \
+   test2015_77.C \
+   test2015_78.C \
+   test2015_79.C \
+   test2015_80.C \
+   test2015_81.C \
    lulesh.C \
    luleshTALC.C
+
+# Note that Samer's reported bugs are: test2015_62.C, test2015_63.C test2015_64.C.
 
 # This files for the GNU g++ 4.8.3 compiler (but works for 4.8.1 and other versions of g++ (4.2 thorugh 4.7).
 #  test2014_76.C 
