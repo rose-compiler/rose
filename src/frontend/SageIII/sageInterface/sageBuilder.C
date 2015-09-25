@@ -3755,6 +3755,28 @@ SageBuilder::buildNondefiningTemplateFunctionDeclaration (const SgName & name, S
   // SgTemplateFunctionDeclaration* result = buildNondefiningFunctionDeclaration_T <SgTemplateFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope, decoratorList, false, templateArgumentsList);
      SgTemplateFunctionDeclaration* result = buildNondefiningFunctionDeclaration_T <SgTemplateFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope, decoratorList, false, NULL, templateParameterList);
 
+#if 0
+  // Optional debugging.
+  // DQ (9/24/2015): Added more testing (for boost 1.54 and test2015_62.C).
+     ROSE_ASSERT(result != NULL);
+     ROSE_ASSERT(templateParameterList != NULL);
+     ROSE_ASSERT(result->get_templateParameters().size() == templateParameterList->size());
+     SgTemplateFunctionDeclaration* firstNondefining_result = isSgTemplateFunctionDeclaration(result->get_firstNondefiningDeclaration());
+     ROSE_ASSERT(firstNondefining_result != NULL);
+     if (firstNondefining_result->get_templateParameters().size() != templateParameterList->size())
+        {
+          printf ("name   = %s \n",name.str());
+          printf ("result = %p \n",result);
+          ROSE_ASSERT(scope != NULL);
+          printf ("scope  = %p = %s \n",scope,scope->class_name().c_str());
+          printf ("firstNondefining_result = %p \n",firstNondefining_result);
+          printf ("templateParameterList->size()                            = %zu \n",templateParameterList->size());
+          printf ("firstNondefining_result->get_templateParameters().size() = %zu \n",firstNondefining_result->get_templateParameters().size());
+          firstNondefining_result->get_startOfConstruct()->display("Error: firstNondefining_result->get_templateParameters().size() == templateParameterList->size()");
+        }
+     ROSE_ASSERT(firstNondefining_result->get_templateParameters().size() == templateParameterList->size());
+#endif
+
   // DQ (12/12/2011): Added test.
      ROSE_ASSERT(result != NULL);
      if (result->get_symbol_from_symbol_table() == NULL)
