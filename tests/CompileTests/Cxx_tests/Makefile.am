@@ -290,7 +290,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_45.C \
    test2015_50.C \
    test2015_52.C \
-   test2015_55.C \
    test2015_57.C \
    test2015_58.C \
    test2015_59.C \
@@ -306,10 +305,18 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    lulesh.C \
    luleshTALC.C
 
+# DQ (9/24/2015): This test code fails with the older versions of g++ (version 4.4.7).
+# This is now handled using conditional compilation in the test code directly.
+#  test2015_59.C 
+
 # Note that Samer's reported bugs are: test2015_62.C, test2015_63.C test2015_64.C.
 
 # This files for the GNU g++ 4.8.3 compiler (but works for 4.8.1 and other versions of g++ (4.2 thorugh 4.7).
 #  test2014_76.C 
+
+# DQ (9/24/2015): Removed test2013_304.C from tests/input_codes/cxx/Makefile_variables file since it
+# does not compile with ROSE when imulating the Intel compiler (v14) which assumes c++11 mode. This
+# test is not placed into the regression tests when not using the Intel compiler.
 
 # This test code uses what is to the intel compiler a C++11 feature.  More specifically it uses header files
 # that require this to be compiled using C++11, so it needs to be put into the C++11 tests, even though for
@@ -317,10 +324,12 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
 # with version 4.9 (not 4.8).
 if !USING_INTEL_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2013_304.C \
    test2014_159.C \
    test2014_187.C \
    test2014_187_work_around.C \
-   test2014_211.C 
+   test2014_211.C \
+   test2015_55.C
 endif
 
 # DQ (5/28/2015): Removed this file because it is used by the makefile rule: 

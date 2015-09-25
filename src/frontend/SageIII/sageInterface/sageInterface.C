@@ -7857,6 +7857,8 @@ SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* ro
 
      std::vector<SgDeclarationStatement*> templateInstantiationVector;
 
+  // DQ (9/24/2015): This feature is not available yet in CMake (Markus is adding the library support for this feature).
+#ifndef USE_CMAKE
      RoseAst ast(root);
 
      int n = 0;
@@ -7876,6 +7878,10 @@ SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* ro
                n++;
              }
        }
+#else
+     std::cerr << "This feature for now is available with autotools only!" << std::endl;
+     ROSE_ASSERT(false);
+#endif
 
 #if 0
      printf ("Identified n = %d template instantiations \n",n);
