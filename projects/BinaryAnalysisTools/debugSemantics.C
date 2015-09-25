@@ -72,9 +72,12 @@ struct Settings {
     bool showInitialState;                              // show initial state if showStates is set?
     AddressInterval bblockInterval;                     // which basic blocks to process
     bool useMemoryMap;                                  // state uses MemoryMap to initialize memory?
+    bool runNoopAnalysis;                               // run no-op analysis on each instruction individually?
+    bool testAdaptiveRegisterState;                     // test RegisterStateGeneric
     Settings()
         : trace(false), showUseDef(true), showInitialValues(false), showStates(true), showInitialState(false),
-          bblockInterval(AddressInterval::whole()), useMemoryMap(false) {}
+          bblockInterval(AddressInterval::whole()), useMemoryMap(false), runNoopAnalysis(false),
+          testAdaptiveRegisterState(false) {}
 };
 
 static std::vector<std::string>
@@ -151,6 +154,28 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .intrinsicValue(false, settings.useMemoryMap)
                .hidden(true));
 
+    ctl.insert(Switch("noop-analysis")
+               .intrinsicValue(true, settings.runNoopAnalysis)
+               .doc("Runs the no-op analysis on each instruction and reports when an instruction has no effect on the "
+                    "machine except to change the instruction pointer.  The @s{no-noop-analysis} switch turns this off. "
+                    "The default is to " + std::string(settings.runNoopAnalysis?"":"not ") + "run this analysis."));
+    ctl.insert(Switch("no-noop-analysis")
+               .key("noop-analysis")
+               .intrinsicValue(false, settings.runNoopAnalysis)
+               .hidden(true));
+
+    ctl.insert(Switch("test-adaptive-registers")
+               .intrinsicValue(true, settings.testAdaptiveRegisterState)
+               .doc("Allows the RegisterStateGeneric::accessModifiesExistingLocations property to be turned on or off based "
+                    "on the contents of the stack pointer register.  While the stack pointer contains the value "
+                    "0x137017c1 the set of stored register locations is not allowed to change. E.g., reading AL when the "
+                    "register state is storing AX will not cause it to start sorting AL and AH instead of AX. The "
+                    "@s{no-test-adaptive-registers} switch disables this feature. The default is to " +
+                    std::string(settings.testAdaptiveRegisterState?"":"not ") + " operate in this mode."));
+    ctl.insert(Switch("no-test-adaptive-registers")
+               .key("test-adaptive-registers")
+               .intrinsicValue(false, settings.testAdaptiveRegisterState)
+               .hidden(true));
 
     //------------------------------------------------
     SwitchGroup out("Output switches");
@@ -194,6 +219,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .key("show-initial-state")
                .intrinsicValue(false, settings.showInitialState)
                .hidden(true));
+
     
     //------------------------------------------------
     parser.doc("Synopsis", "@prop{programName} @s{semantics} @v{class} [@v{switches}] @v{specimen_name}");
@@ -529,6 +555,25 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
         std::cout <<"Initial state:\n" <<(*ops+formatter) <<"\n";
     BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
         std::cout <<unparseInstructionWithAddress(insn) <<"\n";
+
+        // See the comments in $ROSE/binaries/samples/x86-64-adaptiveRegs.s for details
+        if (settings.testAdaptiveRegisterState) {
+            BaseSemantics::RegisterStateGenericPtr regState =
+                boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(ops->get_state()->get_register_state());
+            if (regState) {
+                RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
+                BaseSemantics::SValuePtr sp = ops->readRegister(SP);
+                unsigned magic = sp->is_number() ? sp->get_number() : 0;
+                unsigned settings = (magic & 0xfffffffc) == 0x137017c0 ? (magic & 3) : 3;
+                regState->accessModifiesExistingLocations(settings & 1);
+                regState->accessCreatesLocations(settings & 2);
+                std::cout <<"RegisterStateGeneric: accessModifiesExistingLocations="
+                          <<(regState->accessModifiesExistingLocations() ? "yes" : "no")
+                          <<", accessCreatesLocations="
+                          <<(regState->accessCreatesLocations() ? "yes" : "no") <<"\n";
+            }
+        }
+
         try {
             dispatcher->processInstruction(insn);
         } catch (const BaseSemantics::Exception &e) {
@@ -537,9 +582,16 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
         if (settings.showStates)
             std::cout <<(*ops+formatter) <<"\n";
 
-        NoOperation nopAnalyzer(dispatcher);
-        if (nopAnalyzer.isNoop(insn))
-            std::cerr <<"Instruction has no effect (other than changing the instruction pointer register)\n";
+        if (settings.runNoopAnalysis) {
+            // Use a different state for no-op analysis, otherwise it will end up messing with the state we're using for our
+            // own semantics.
+            BaseSemantics::RiscOperatorsPtr ops2 = makeRiscOperators(settings, engine, partitioner);
+            BaseSemantics::DispatcherPtr dispatcher2 = partitioner.instructionProvider().dispatcher();
+            dispatcher2 = dispatcher2->create(ops2);
+            NoOperation nopAnalyzer(dispatcher2);
+            if (nopAnalyzer.isNoop(insn))
+                std::cerr <<"Instruction has no effect (other than changing the instruction pointer register)\n";
+        }
     }
 }
 
