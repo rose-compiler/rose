@@ -94,7 +94,8 @@ memory:
 0x004000f7: mov    dword ds:[0x0000000000000008], eax
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
-  rax          [writer=0x004000e5] = 0x0706050403020100<506097522914230528>[64]
+  eax          [writer=0x004000e5] = 0x03020100<50462976>[32]
+  REG0.0@32    [writer=0x004000e5] = 0x07060504<117835012>[32]
   rsp          [writer=0x004000e1] read-before-write = (add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64])
   rbp          [writer=0x004000e2] read-before-write = (add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64])
   rip          [writer=0x004000f7] write-only = 0x00000000004000fe<4194558>[64]
@@ -124,7 +125,9 @@ memory:
 0x004000fe: mov    word ds:[0x000000000000000c], ax
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
-  rax          [writer=0x004000e5] = 0x0706050403020100<506097522914230528>[64]
+  ax           [writer=0x004000e5] = 0x0100<256>[16]
+  REG0.0@16    [writer=0x004000e5] = 0x0302<770>[16]
+  REG0.0@32    [writer=0x004000e5] = 0x07060504<117835012>[32]
   rsp          [writer=0x004000e1] read-before-write = (add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64])
   rbp          [writer=0x004000e2] read-before-write = (add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64])
   rip          [writer=0x004000fe] write-only = 0x0000000000400106<4194566>[64]
@@ -156,7 +159,10 @@ memory:
 0x00400106: mov    byte ds:[0x000000000000000e], al
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
-  rax          [writer=0x004000e5] = 0x0706050403020100<506097522914230528>[64]
+  al           [writer=0x004000e5] = 0x00[8]
+  ah           [writer=0x004000e5] = 0x01[8]
+  REG0.0@16    [writer=0x004000e5] = 0x0302<770>[16]
+  REG0.0@32    [writer=0x004000e5] = 0x07060504<117835012>[32]
   rsp          [writer=0x004000e1] read-before-write = (add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64])
   rbp          [writer=0x004000e2] read-before-write = (add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64])
   rip          [writer=0x00400106] write-only = 0x000000000040010d<4194573>[64]
@@ -189,7 +195,9 @@ memory:
 0x0040010d: mov    word ds:[0x000000000000000f], ax
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
-  rax          [writer=0x004000e5] = 0x0706050403020100<506097522914230528>[64]
+  ax           [writer=0x004000e5] = 0x0100<256>[16]
+  REG0.0@16    [writer=0x004000e5] = 0x0302<770>[16]
+  REG0.0@32    [writer=0x004000e5] = 0x07060504<117835012>[32]
   rsp          [writer=0x004000e1] read-before-write = (add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64])
   rbp          [writer=0x004000e2] read-before-write = (add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64])
   rip          [writer=0x0040010d] write-only = 0x0000000000400115<4194581>[64]
@@ -224,7 +232,8 @@ memory:
 0x00400115: mov    dword ds:[0x0000000000000011], eax
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
-  rax          [writer=0x004000e5] = 0x0706050403020100<506097522914230528>[64]
+  eax          [writer=0x004000e5] = 0x03020100<50462976>[32]
+  REG0.0@32    [writer=0x004000e5] = 0x07060504<117835012>[32]
   rsp          [writer=0x004000e1] read-before-write = (add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64])
   rbp          [writer=0x004000e2] read-before-write = (add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64])
   rip          [writer=0x00400115] write-only = 0x000000000040011c<4194588>[64]
@@ -310,7 +319,9 @@ memory:
 0x00400124: mov    byte ds:[0x000000000000001d], ah
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
-  rax          [writer=0x004000e5] = 0x0706050403020100<506097522914230528>[64]
+  al           [writer=0x004000e5] = 0x00[8]
+  ah           [writer=0x004000e5] = 0x01[8]
+  REG0.0@16    [writer=0x004000e5] = 0x070605040302<7722435347202>[48]
   rsp          [writer=0x004000e1] read-before-write = (add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64])
   rbp          [writer=0x004000e2] read-before-write = (add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64])
   rip          [writer=0x00400124] write-only = 0x000000000040012b<4194603>[64]
@@ -358,7 +369,9 @@ memory:
 0x0040012b: leave  
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
-  rax          [writer=0x004000e5] = 0x0706050403020100<506097522914230528>[64]
+  al           [writer=0x004000e5] = 0x00[8]
+  ah           [writer=0x004000e5] = 0x01[8]
+  REG0.0@16    [writer=0x004000e5] = 0x070605040302<7722435347202>[48]
   rip          [writer=0x0040012b] write-only = 0x000000000040012c<4194604>[64]
   fpstatus_top = 0x0[3]
 memory:
@@ -404,19 +417,21 @@ memory:
 0x0040012c: ret    
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
-  rax          [writer=0x004000e5] = 0x0706050403020100<506097522914230528>[64]
+  al           [writer=0x004000e5] = 0x00[8]
+  ah           [writer=0x004000e5] = 0x01[8]
+  REG0.0@16    [writer=0x004000e5] = 0x070605040302<7722435347202>[48]
   rsp          [writer=0x0040012c] read-before-write = (add[64] rsp_0[64] 0x0000000000000008[64])
-  rip          [writer=0x0040012c] write-only = v3822[64]
+  rip          [writer=0x0040012c] write-only = v3838[64]
   fpstatus_top = 0x0[3]
 memory:
-  addr=(add[64] rsp_0[64] 0x0000000000000007[64]) read-before-write value=(extract[8] 0x00000038[32] 0x00000040[32] v3822[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000006[64]) read-before-write value=(extract[8] 0x00000030[32] 0x00000038[32] v3822[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000005[64]) read-before-write value=(extract[8] 0x00000028[32] 0x00000030[32] v3822[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000004[64]) read-before-write value=(extract[8] 0x00000020[32] 0x00000028[32] v3822[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000003[64]) read-before-write value=(extract[8] 0x00000018[32] 0x00000020[32] v3822[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000002[64]) read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] v3822[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000001[64]) read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] v3822[64])
-  addr=rsp_0[64] read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] v3822[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000007[64]) read-before-write value=(extract[8] 0x00000038[32] 0x00000040[32] v3838[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000006[64]) read-before-write value=(extract[8] 0x00000030[32] 0x00000038[32] v3838[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000005[64]) read-before-write value=(extract[8] 0x00000028[32] 0x00000030[32] v3838[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000004[64]) read-before-write value=(extract[8] 0x00000020[32] 0x00000028[32] v3838[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000003[64]) read-before-write value=(extract[8] 0x00000018[32] 0x00000020[32] v3838[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000002[64]) read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] v3838[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000001[64]) read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] v3838[64])
+  addr=rsp_0[64] read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] v3838[64])
   addr=0x000000000000001d[64] writer=0x00400124 value=0x01[8]
   addr=0x000000000000001c[64] writer=0x0040011c value=0x07[8]
   addr=0x000000000000001b[64] writer=0x0040011c value=0x06[8]
@@ -685,17 +700,17 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
   rax          [writer=0x00400131] = 0x0706050403020100<506097522914230528>[64]
   rsp          [writer=0x00400164] read-before-write = (add[64] rsp_0[64] 0x0000000000000008[64])
-  rip          [writer=0x00400164] write-only = v3994[64]
+  rip          [writer=0x00400164] write-only = v4010[64]
   fpstatus_top = 0x0[3]
 memory:
-  addr=(add[64] rsp_0[64] 0x0000000000000007[64]) read-before-write value=(extract[8] 0x00000038[32] 0x00000040[32] v3994[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000006[64]) read-before-write value=(extract[8] 0x00000030[32] 0x00000038[32] v3994[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000005[64]) read-before-write value=(extract[8] 0x00000028[32] 0x00000030[32] v3994[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000004[64]) read-before-write value=(extract[8] 0x00000020[32] 0x00000028[32] v3994[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000003[64]) read-before-write value=(extract[8] 0x00000018[32] 0x00000020[32] v3994[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000002[64]) read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] v3994[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000001[64]) read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] v3994[64])
-  addr=rsp_0[64] read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] v3994[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000007[64]) read-before-write value=(extract[8] 0x00000038[32] 0x00000040[32] v4010[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000006[64]) read-before-write value=(extract[8] 0x00000030[32] 0x00000038[32] v4010[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000005[64]) read-before-write value=(extract[8] 0x00000028[32] 0x00000030[32] v4010[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000004[64]) read-before-write value=(extract[8] 0x00000020[32] 0x00000028[32] v4010[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000003[64]) read-before-write value=(extract[8] 0x00000018[32] 0x00000020[32] v4010[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000002[64]) read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] v4010[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000001[64]) read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] v4010[64])
+  addr=rsp_0[64] read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] v4010[64])
   addr=0x000000000000000e[64] writer=0x0040015c value=0x00[8]
   addr=0x000000000000000d[64] writer=0x00400154 value=0x01[8]
   addr=0x000000000000000c[64] writer=0x00400154 value=0x00[8]
@@ -936,17 +951,17 @@ registers:
   ah           [writer=0x00400191] write-only = 0xff<-1>[8]
   REG0.0@16    [writer=0x00400187] write-only = 0xa7a6a5a4a3a2<184334185440162,-97140791270494>[48]
   rsp          [writer=0x00400194] read-before-write = (add[64] rsp_0[64] 0x0000000000000008[64])
-  rip          [writer=0x00400194] write-only = v4143[64]
+  rip          [writer=0x00400194] write-only = v4159[64]
   fpstatus_top = 0x0[3]
 memory:
-  addr=(add[64] rsp_0[64] 0x0000000000000007[64]) read-before-write value=(extract[8] 0x00000038[32] 0x00000040[32] v4143[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000006[64]) read-before-write value=(extract[8] 0x00000030[32] 0x00000038[32] v4143[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000005[64]) read-before-write value=(extract[8] 0x00000028[32] 0x00000030[32] v4143[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000004[64]) read-before-write value=(extract[8] 0x00000020[32] 0x00000028[32] v4143[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000003[64]) read-before-write value=(extract[8] 0x00000018[32] 0x00000020[32] v4143[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000002[64]) read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] v4143[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000001[64]) read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] v4143[64])
-  addr=rsp_0[64] read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] v4143[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000007[64]) read-before-write value=(extract[8] 0x00000038[32] 0x00000040[32] v4159[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000006[64]) read-before-write value=(extract[8] 0x00000030[32] 0x00000038[32] v4159[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000005[64]) read-before-write value=(extract[8] 0x00000028[32] 0x00000030[32] v4159[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000004[64]) read-before-write value=(extract[8] 0x00000020[32] 0x00000028[32] v4159[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000003[64]) read-before-write value=(extract[8] 0x00000018[32] 0x00000020[32] v4159[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000002[64]) read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] v4159[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000001[64]) read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] v4159[64])
+  addr=rsp_0[64] read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] v4159[64])
   addr=(add[64] rsp_0[64] 0xffffffffffffffff<18446744073709551615,-1>[64]) writer=0x00400165 value=(extract[8] 0x00000038[32] 0x00000040[32] rbp_0[64])
   addr=(add[64] rsp_0[64] 0xfffffffffffffffe<18446744073709551614,-2>[64]) writer=0x00400165 value=(extract[8] 0x00000030[32] 0x00000038[32] rbp_0[64])
   addr=(add[64] rsp_0[64] 0xfffffffffffffffd<18446744073709551613,-3>[64]) writer=0x00400165 value=(extract[8] 0x00000028[32] 0x00000030[32] rbp_0[64])
@@ -1174,17 +1189,17 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
   rax          [writers={0x004001c1, 0x004001cb}] write-only = 0xa7a6a5a4a3a2ffa0<12080525177006522272>[64]
   rsp          [writer=0x004001ce] read-before-write = (add[64] rsp_0[64] 0x0000000000000008[64])
-  rip          [writer=0x004001ce] write-only = v4336[64]
+  rip          [writer=0x004001ce] write-only = v4352[64]
   fpstatus_top = 0x0[3]
 memory:
-  addr=(add[64] rsp_0[64] 0x0000000000000007[64]) read-before-write value=(extract[8] 0x00000038[32] 0x00000040[32] v4336[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000006[64]) read-before-write value=(extract[8] 0x00000030[32] 0x00000038[32] v4336[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000005[64]) read-before-write value=(extract[8] 0x00000028[32] 0x00000030[32] v4336[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000004[64]) read-before-write value=(extract[8] 0x00000020[32] 0x00000028[32] v4336[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000003[64]) read-before-write value=(extract[8] 0x00000018[32] 0x00000020[32] v4336[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000002[64]) read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] v4336[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000001[64]) read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] v4336[64])
-  addr=rsp_0[64] read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] v4336[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000007[64]) read-before-write value=(extract[8] 0x00000038[32] 0x00000040[32] v4352[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000006[64]) read-before-write value=(extract[8] 0x00000030[32] 0x00000038[32] v4352[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000005[64]) read-before-write value=(extract[8] 0x00000028[32] 0x00000030[32] v4352[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000004[64]) read-before-write value=(extract[8] 0x00000020[32] 0x00000028[32] v4352[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000003[64]) read-before-write value=(extract[8] 0x00000018[32] 0x00000020[32] v4352[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000002[64]) read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] v4352[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000001[64]) read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] v4352[64])
+  addr=rsp_0[64] read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] v4352[64])
   addr=(add[64] rsp_0[64] 0xffffffffffffffff<18446744073709551615,-1>[64]) writer=0x00400195 value=(extract[8] 0x00000038[32] 0x00000040[32] rbp_0[64])
   addr=(add[64] rsp_0[64] 0xfffffffffffffffe<18446744073709551614,-2>[64]) writer=0x00400195 value=(extract[8] 0x00000030[32] 0x00000038[32] rbp_0[64])
   addr=(add[64] rsp_0[64] 0xfffffffffffffffd<18446744073709551613,-3>[64]) writer=0x00400195 value=(extract[8] 0x00000028[32] 0x00000030[32] rbp_0[64])
@@ -1269,7 +1284,8 @@ memory:
 0x004001e7: mov    dword ds:[0x0000000000000000], eax
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=no
 registers:
-  rax          [writer=0x004001d3] = 0x0706050403020100<506097522914230528>[64]
+  eax          [writer=0x004001d3] = 0x03020100<50462976>[32]
+  REG0.0@32    [writer=0x004001d3] write-only = 0x07060504<117835012>[32]
   rsp          [writer=0x004001dd] read-before-write = 0x00000000137017c1<326113217>[64]
   rbp          [writer=0x004001d0] read-before-write = (add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64])
   rip          [writer=0x004001e7] write-only = 0x00000000004001ee<4194798>[64]
@@ -1351,17 +1367,17 @@ RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocation
 registers:
   rax          [writer=0x004001d3] = 0x0706050403020100<506097522914230528>[64]
   rsp          [writer=0x004001f7] read-before-write = (add[64] rsp_0[64] 0x0000000000000008[64])
-  rip          [writer=0x004001f7] write-only = v4484[64]
+  rip          [writer=0x004001f7] write-only = v4502[64]
   fpstatus_top = 0x0[3]
 memory:
-  addr=(add[64] rsp_0[64] 0x0000000000000007[64]) read-before-write value=(extract[8] 0x00000038[32] 0x00000040[32] v4484[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000006[64]) read-before-write value=(extract[8] 0x00000030[32] 0x00000038[32] v4484[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000005[64]) read-before-write value=(extract[8] 0x00000028[32] 0x00000030[32] v4484[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000004[64]) read-before-write value=(extract[8] 0x00000020[32] 0x00000028[32] v4484[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000003[64]) read-before-write value=(extract[8] 0x00000018[32] 0x00000020[32] v4484[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000002[64]) read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] v4484[64])
-  addr=(add[64] rsp_0[64] 0x0000000000000001[64]) read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] v4484[64])
-  addr=rsp_0[64] read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] v4484[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000007[64]) read-before-write value=(extract[8] 0x00000038[32] 0x00000040[32] v4502[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000006[64]) read-before-write value=(extract[8] 0x00000030[32] 0x00000038[32] v4502[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000005[64]) read-before-write value=(extract[8] 0x00000028[32] 0x00000030[32] v4502[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000004[64]) read-before-write value=(extract[8] 0x00000020[32] 0x00000028[32] v4502[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000003[64]) read-before-write value=(extract[8] 0x00000018[32] 0x00000020[32] v4502[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000002[64]) read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] v4502[64])
+  addr=(add[64] rsp_0[64] 0x0000000000000001[64]) read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] v4502[64])
+  addr=rsp_0[64] read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] v4502[64])
   addr=0x000000000000000b[64] writer=0x004001ee value=0x07[8]
   addr=0x000000000000000a[64] writer=0x004001ee value=0x06[8]
   addr=0x0000000000000009[64] writer=0x004001ee value=0x05[8]
