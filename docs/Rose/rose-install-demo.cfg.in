@@ -680,7 +680,7 @@ WARN_LOGFILE           =
 #       they'll appear in the documentation except when some other sort order
 #       prevails (e.g., alphabetical or source-order).
 
-INPUT                  = @top_pwd@/rose.docs \
+INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/docs/Rose/Installation
 
 

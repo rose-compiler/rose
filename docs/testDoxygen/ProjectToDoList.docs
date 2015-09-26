@@ -1,5 +1,5 @@
 /*!
-\page projectToDoList ROSE Project ToDo List
+\defgroup projectToDoList ROSE Project ToDo List
 
     This page documents remaining things to do which are not a part of the 
 todo list generated specific to each IR node by Doxygen.  The source for this

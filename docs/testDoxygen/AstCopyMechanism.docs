@@ -1,6 +1,6 @@
 // -*- c++ -*-
 
-/** @page ast_copy_mechanism AST copy mechanism
+/** @defgroup ast_copy_mechanism AST copy mechanism
  *
  *  The AST copy mechanism is to deep-copy parts of an AST.
  * 

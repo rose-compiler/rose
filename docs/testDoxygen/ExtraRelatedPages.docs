@@ -1,6 +1,6 @@
 // -*- c++ -*-
 
-/** @page ast_node_constructors Sage IR node default constructors
+/** @defgroup ast_node_constructors Sage IR node default constructors
  *
  *  Sage IR node default constructors are not useful.
  *
@@ -9,7 +9,7 @@
  *  useful to construct them this way.  A better way to construct IR nodes is with the @ref SageBuilder API. */
 
 
-/** @page sage_attribute_mechanism Sage IR node attributes
+/** @defgroup sage_attribute_mechanism Sage IR node attributes
  *
  *  Attaching user-defined attributes to IR nodes.
  *  

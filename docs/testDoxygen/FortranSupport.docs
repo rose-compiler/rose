@@ -1,4 +1,4 @@
-/*! \page FortranSupport ROSE Fortran Support
+/*! \defgroup FortranSupport ROSE Fortran Support
 
     This page describes some of the current collaboration with Rice to define the 
     Fortran Support within ROSE.  
