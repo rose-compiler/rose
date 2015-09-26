@@ -54,7 +54,7 @@ enum X86GeneralPurposeRegister {
     x86_gpr_r12         = 12,
     x86_gpr_r13         = 13,
     x86_gpr_r14         = 14,
-    x86_gpr_r15         = 15,
+    x86_gpr_r15         = 15
 };
 
 /** Intel x86 ST-related registers.  These are the 8 80-bit floating point registers. */
@@ -67,7 +67,7 @@ enum X86StRegister {
     x86_st_5            = 5,
     x86_st_6            = 6,
     x86_st_7            = 7,
-    x86_st_nregs        = 8,                            // number of ST registers
+    x86_st_nregs        = 8                             // number of ST registers
 };
 
 /** Minor numbers for x86_regclass_flag. */
@@ -76,7 +76,7 @@ enum X86Flags {
     x86_flags_fpstatus   = 1,                           // floating-point status flags
     x86_flags_fptag      = 2,                           // floating-point tag register
     x86_flags_fpctl      = 3,                           // floating-point control register
-    x86_flags_mxcsr      = 4,                           // SSE control and status register
+    x86_flags_mxcsr      = 4                            // SSE control and status register
 };
 
 /** Intel x86 status flags. These are the bit offsets in the x86_flags_status register. */
@@ -143,7 +143,7 @@ enum X86Exception {
                                                          *   instruction. */
     x86_exception_ac,                                   /**< Alignment check. Any data reference in memory. */
     x86_exception_mc,                                   /**< Machine check. Model-dependent machine check errors. */
-    x86_exception_xm,                                   /**< SIMD floating-point numeric error. SSE/SSE2/SSE3 floating-point
+    x86_exception_xm                                    /**< SIMD floating-point numeric error. SSE/SSE2/SSE3 floating-point
                                                          *   instructions. */
 };
 

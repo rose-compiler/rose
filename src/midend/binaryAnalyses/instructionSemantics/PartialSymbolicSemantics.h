@@ -211,8 +211,15 @@ namespace PartialSymbolicSemantics {
             BaseSemantics::Formatter fmt;
             print(o, s, fmt);
         }
+
+#ifdef __INTEL_COMPILER
+     // DQ (8/28/2015): from Intel v14 icpc: error: initial value of reference to non-const must be an lvalue
+        void print_diff_registers(std::ostream &o, const State&,
+                                  BaseSemantics::Formatter &fmt ) const;
+#else
         void print_diff_registers(std::ostream &o, const State&,
                                   BaseSemantics::Formatter &fmt = BaseSemantics::Formatter()) const;
+#endif
         /** @} */
 
         /** Tests registers of two states for equality. */

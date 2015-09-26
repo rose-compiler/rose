@@ -90,7 +90,7 @@ HEADER_OMP_CLAUSE_START
           e_omp_map_to,
           e_omp_map_from,
           e_omp_map_tofrom,
-          e_omp_map_last,
+          e_omp_map_last
         };
 
 

@@ -65,6 +65,10 @@ void foobar()
     int* y_ptr = &y1;
 
  // Call the integer destructor!
-    y_ptr->~int();
+ // y_ptr->~int();
+    typedef int xxx;
+
+ // unparses as: "y_ptr -> ~int;" but should unparse as "typedef int xxx; y_ptr->~xxx();"
+    y_ptr->~xxx();
 #endif
   }

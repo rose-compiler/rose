@@ -4,5 +4,9 @@
 // Thanks,
 // Justin Holewinski
 
+#warning "before xmmintrin.h"
+
 #include <xmmintrin.h>
 /* Empty source file */
+
+#warning "after xmmintrin.h"

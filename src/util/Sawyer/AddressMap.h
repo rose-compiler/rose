@@ -91,7 +91,7 @@ private:
 public:
     /** Construct a constraint that matches everything. */
     AddressMapConstraints(AddressMap *map)
-        : map_(map), never_(false), maxSize_(size_t(-1)), singleSegment_(false), requiredAccess_(0), prohibitedAccess_(0) {}
+      : map_(map), never_(false), maxSize_((size_t)-1), singleSegment_(false), requiredAccess_(0), prohibitedAccess_(0) {}
 
     // Implicitly construct constraints for a const AddressMap from a non-const address map.
     operator AddressMapConstraints<const AddressMap>() const {
