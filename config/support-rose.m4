@@ -1670,7 +1670,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
 AC_CONFIG_FILES([
 stamp-h
 Makefile
-rose.docs
 config/Makefile
 src/Makefile
 src/util/Makefile

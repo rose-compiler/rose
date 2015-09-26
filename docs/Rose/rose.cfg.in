@@ -676,7 +676,7 @@ WARN_LOGFILE           =
 #       they'll appear in the documentation except when some other sort order
 #       prevails (e.g., alphabetical or source-order).
 
-INPUT                  = @top_pwd@/rose.docs \
+INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_pwd@/docs/Rose/AvailableDocumentation.docs \
                          @top_pwd@/src/frontend/SageIII \
                          @top_srcdir@/src/frontend/frontend.docs \
@@ -1384,13 +1384,13 @@ SEARCHENGINE_URL = https://hoosierfocus.com/ROSE/doxysearch.cgi
 # If the GENERATE_LATEX tag is set to YES (the default) Doxygen will
 # generate Latex output.
 
-GENERATE_LATEX         = NO
+GENERATE_LATEX         = YES
 
 # The LATEX_OUTPUT tag is used to specify where the LaTeX docs will be put.
 # If a relative path is entered the value of OUTPUT_DIRECTORY will be
 # put in front of it. If left blank `latex' will be used as the default path.
 
-LATEX_OUTPUT           = ROSE_UserManual_LaTeX
+LATEX_OUTPUT           = ROSE_LaTeX_Reference
 
 # The LATEX_CMD_NAME tag can be used to specify the LaTeX command name to be
 # invoked. If left blank `latex' will be used as the default command name.

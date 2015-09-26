@@ -42,7 +42,6 @@ SageDocsDependencies = \
 # What the generation of doxygen output for Rose depends upon
 RoseDocsDependencies = \
      rose.cfg \
-     $(top_builddir)/rose.docs \
      $(top_builddir)/src/frontend/SageIII/sage.docs \
      $(top_srcdir)/src/frontend/SageIII/sage.docs.in \
      $(top_srcdir)/src/extra.docs \
@@ -54,8 +53,7 @@ RoseDocsDependencies = \
      $(top_srcdir)/src/midend/astProcessing/AstProcessing.docs \
      $(top_srcdir)/src/backend/unparser/unparser.docs \
      $(top_srcdir)/src/3rdPartyLibraries/MSTL/MSTL.docs \
-     $(top_srcdir)/src/roseExtensions/roseHPCToolkit/docs/roseHPCToolkit.docs \
-     $(top_srcdir)/rose.docs.in
+     $(top_srcdir)/src/roseExtensions/roseHPCToolkit/docs/roseHPCToolkit.docs
 
 # If the generated sage source code is older than the code used to
 # generate the sage source code then regenerate the sage source code
@@ -67,11 +65,6 @@ $(SAGE_GENERATED_CODE): $(SOURCE_FOR_SAGE_GENERATED_CODE)
 # $(SAGE_DOXYGEN_TAG_FILE): sage-docs
 
 SAGE_MAINPAGE_DOCUMENTATION = $(top_builddir)/src/frontend/SageIII/sage.docs
-ROSE_MAINPAGE_DOCUMENTATION = $(top_builddir)/rose.docs
-
-# Build rule to update rose.docs in ROSE/src/frontend/SageIII directory
-$(ROSE_MAINPAGE_DOCUMENTATION): $(top_srcdir)/rose.docs.in
-	cd $(top_builddir); $(MAKE) rose.docs
 
 # DQ (1/27/2014): Add simple makefile rule to run doxygen to generate ROSE API docs.
 .PHONY: doxygen_docs
@@ -84,7 +77,7 @@ doxygen_docs: rose.cfg AvailableDocumentation.docs
 	fi
 
 # A more complex dependence is defined that requires the sage.tag file
-$(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
+$(RoseDoxygenDocumentation): $(RoseDocsDependencies)  rose.cfg
 	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
 	$(DOXYGEN) rose.cfg
 	if [ "$(DOXYINDEXER)" != "" -a -e ROSE_WebPages/searchdata.xml ]; then	\
@@ -97,7 +90,7 @@ doxygen_docs: rose.cfg AvailableDocumentation.docs
 	@echo "Doxygen documentation not generated (configure with --with-doxygen)" >&2
 	@false
 
-$(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
+$(RoseDoxygenDocumentation): $(RoseDocsDependencies) rose.cfg
 	@echo "Doxygen documentation not generated (configure with --with-doxygen)" >&2
 	@false
 endif
@@ -105,7 +98,7 @@ endif
 
 # DQ (3/4/2014): This is a redundant makefile rule (mistake).
 # DQ (7/11/2009): Added rule to force generation of Doxygen documentation.
-#doxygen_docs: $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
+#doxygen_docs: $(RoseDocsDependencies) rose.cfg
 #	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
 #	doxygen rose.cfg || exit 1
 #	echo "Doxygen generated documentation terminated normally."
