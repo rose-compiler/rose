@@ -677,14 +677,13 @@ WARN_LOGFILE           =
 #       prevails (e.g., alphabetical or source-order).
 
 INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
-                         @top_pwd@/docs/Rose/AvailableDocumentation.docs \
-                         @top_pwd@/src/frontend/SageIII \
-                         @top_srcdir@/src/frontend/frontend.docs \
 			 @top_srcdir@/docs/Rose/Installation \
 			 @top_srcdir@/docs/Rose/BinaryTutorial.dox \
 			 @top_srcdir@/docs/Rose/FAQ-Binary.dox \
 			 @top_srcdir@/docs/Rose/Developers.dox \
                          @top_srcdir@/docs/Rose \
+                         @top_pwd@/src/frontend/SageIII \
+                         @top_srcdir@/src/frontend/frontend.docs \
                          @top_srcdir@/docs/testDoxygen \
                          @top_srcdir@/src/ROSETTA/src/binaryInstruction.C \
                          @top_srcdir@/src/frontend/Disassemblers \
