@@ -103,7 +103,12 @@ public:
         assert(!empty());
         return r_first;
     }
-    const Value relaxed_first() const {
+
+// DQ (9/3/2015): Intel v14 compiler warns that use of "const" is meaningless.
+// I think this is correct since this is being returned by value.
+//  const Value 
+    Value 
+    relaxed_first() const {
         if (!empty())
             return first();
         if (1==r_first-r_last)
@@ -453,7 +458,10 @@ void
 Range<double>::clear();
 
 template<>
-const double
+// DQ (9/3/2015): Intel v14 compiler warns that use of "const" is meaningless.
+// I think this is correct since this is being returned by value.
+// const double
+double
 Range<double>::relaxed_first() const;
 
 template<>
@@ -496,7 +504,10 @@ void
 Range<float>::clear();
 
 template<>
-const float
+// DQ (9/3/2015): Intel v14 compiler warns that use of "const" is meaningless.
+// I think this is correct since this is being returned by value.
+// const float
+float
 Range<float>::relaxed_first() const;
 
 template<>

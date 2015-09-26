@@ -1268,11 +1268,11 @@ SgStatement*
 rose::getNextStatement ( SgStatement *currentStatement )
    {
      ROSE_ASSERT (currentStatement  != NULL);
-    //CI (1/3/2007): This sued to be not implemented ,,, here is my try
-    //! get next statement will return the next statement in a function or method. if at the end or outside, it WILL return NULL
+  // CI (1/3/2007): This used to be not implemented ,,, here is my try
+  //! get next statement will return the next statement in a function or method. if at the end or outside, it WILL return NULL
      
      SgStatement      *nextStatement = NULL;
-     SgScopeStatement *scope             = currentStatement->get_scope();
+     SgScopeStatement *scope         = currentStatement->get_scope();
      ROSE_ASSERT (scope != NULL);
 
   // DQ (9/18/2010): If we try to get the next statement from SgGlobal, then return NULL.
@@ -1283,6 +1283,11 @@ rose::getNextStatement ( SgStatement *currentStatement )
   // function (previous bug fixed, but tested here).
      ROSE_ASSERT (scope != currentStatement);
 
+#if 0
+     printf ("In ROSE::getNextStatement(): currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+     printf ("   --- scope = %p = %s \n",scope,scope->class_name().c_str());
+#endif
+
      switch (currentStatement->variantT())
         {
           case V_SgForInitStatement:
@@ -1291,70 +1296,99 @@ rose::getNextStatement ( SgStatement *currentStatement )
           case V_SgFunctionDefinition:
           case V_SgStatement:
           case V_SgFunctionParameterList:
-                                        
-                                                         ROSE_ASSERT(0);
-                                                         // not specified
-                                                         break;
+             {
+               ROSE_ASSERT(false);
+            // not specified
+               break;
+             }
+
           default:
              {
             // We have to handle the cases of a SgStatementPtrList and a 
             // SgDeclarationStatementPtrList separately
-                                                         if (scope->containsOnlyDeclarations() == true)
-                                                         {
-                                                                 // Usually a global scope or class declaration scope
-                                                                 SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
-                                                                 Rose_STL_Container<SgDeclarationStatement*>::iterator i;
-                                                                 for (i = declarationList.begin();(*i)!=currentStatement;i++) {}
-                                                                 // now i == currentStatement
-                                                                 i++;
-                                                                 if (declarationList.end() == i) nextStatement=NULL;
-                                                                 else nextStatement=*i;
-                                                         }
-                                                         else
-                                                         {
-                                                                 SgStatementPtrList & statementList = scope->getStatementList();
-                                                                 Rose_STL_Container<SgStatement*>::iterator i;
-                                                                 // Liao, 11/18/2009, Handle the rare case that current statement is not found
-                                                                 // in its scope's statement list
-                                                                 //for (i = statementList.begin();(*i)!=currentStatement;i++) 
-                                                                 for (i = statementList.begin();(*i)!=currentStatement && i!= statementList.end();i++) 
-                                                                 {
-                                                                 //  SgStatement* cur_stmt = *i;
-                                                                 //  cout<<"Skipping current statement: "<<cur_stmt->class_name()<<endl;
-                                                                 //  cout<<cur_stmt->get_file_info()->displayString()<<endl;
-                                                                 }
-                                                                 // currentStatement is not found in the list
-                                                                 if (i ==  statementList.end()) 
-                                                                 {
-                                                                   cerr<<"fatal error: rose::getNextStatement(): current statement is not found within its scope's statement list"<<endl;
-                                                                   cerr<<"current statement is "<<currentStatement->class_name()<<endl;
-                                                                   cerr<<currentStatement->get_file_info()->displayString()<<endl;
-                                                                   cerr<<"Its scope is "<<scope->class_name()<<endl;
-                                                                   cerr<<scope->get_file_info()->displayString()<<endl;
-                                                                   ROSE_ASSERT (false);
-                                                                  }
-                                                                 //  now i == currentStatement
-                                                                 ROSE_ASSERT (*i == currentStatement);
-                                                                 i++;
-                                                                 if (statementList.end() == i) nextStatement=NULL;
-                                                                 else nextStatement=*i;
-                                                         }
+               if (scope->containsOnlyDeclarations() == true)
+                  {
+                 // Usually a global scope or class declaration scope
+                    SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
+                    Rose_STL_Container<SgDeclarationStatement*>::iterator i;
+                 // for (i = declarationList.begin(); (*i) != currentStatement; i++) {}
+                    for (i = declarationList.begin(); (i != declarationList.end() && (*i) != currentStatement); i++) {}
+                 // now i == currentStatement
+
+                 // DQ (7/19/2015): Needed to add support for template instatiations that might not be 
+                 // located in there scope (because they would be name qualified).
+                    if (i == declarationList.end())
+                       {
+#if 0
+                         printf ("Note: statement was not found in it's scope (happens for some template instantiations) \n");
+#endif
+                         nextStatement = NULL;
+                       }
+                      else
+                       {
+                         i++;
+                         if (declarationList.end() == i) 
+                              nextStatement = NULL;
+                           else
+                              nextStatement=*i;
+                       }
+                  }
+                 else
+                  {
+                    SgStatementPtrList & statementList = scope->getStatementList();
+                    Rose_STL_Container<SgStatement*>::iterator i;
+                 // Liao, 11/18/2009, Handle the rare case that current statement is not found
+                 // in its scope's statement list
+                 // for (i = statementList.begin();(*i)!=currentStatement;i++) 
+                    for (i = statementList.begin(); (*i) != currentStatement && i != statementList.end(); i++) 
+                       {
+                      //  SgStatement* cur_stmt = *i;
+                      //  cout<<"Skipping current statement: "<<cur_stmt->class_name()<<endl;
+                      //  cout<<cur_stmt->get_file_info()->displayString()<<endl;
+                       }
+
+                 // currentStatement is not found in the list
+                    if (i ==  statementList.end()) 
+                       {
+                         cerr<<"fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list"<<endl;
+                         cerr<<"current statement is "<<currentStatement->class_name()<<endl;
+                         cerr<<currentStatement->get_file_info()->displayString()<<endl;
+                         cerr<<"Its scope is "<<scope->class_name()<<endl;
+                         cerr<<scope->get_file_info()->displayString()<<endl;
+                         ROSE_ASSERT (false);
+                       }
+
+                 // now i == currentStatement
+                    ROSE_ASSERT (*i == currentStatement);
+
+                 // DQ (7/19/2015): Added assertion that should be true, else i++ is not defined.
+                    ROSE_ASSERT(i != statementList.end());
+
+                    i++;
+                    if (statementList.end() == i)
+                          nextStatement = NULL;
+                       else
+                          nextStatement = *i;
+                  }
 
             // If the target statement was the last statement in a scope then 
                if (nextStatement == NULL)
-                                                         {
-                                                                 // Someone might think of a better answer than NULL
-                                                         }
+                  {
+                 // Someone might think of a better answer than NULL
+                  }
+
+               break;
              }
-                                                 break;
         }
-     //This assertion does not make sense. 
-     //Since a trailing statement within a scope can have null next statement, 
-     //and  the statement can be not global scope statement, Liao 3/12/2009
-     //ROSE_ASSERT (isSgGlobal(currentStatement) != NULL || nextStatement != NULL);
+
+  // This assertion does not make sense. 
+  // Since a trailing statement within a scope can have null next statement, 
+  // and  the statement can be not global scope statement, Liao 3/12/2009
+  // ROSE_ASSERT (isSgGlobal(currentStatement) != NULL || nextStatement != NULL);
 
      return nextStatement;
    }
+
          
 SgStatement*
 rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /*= true*/)

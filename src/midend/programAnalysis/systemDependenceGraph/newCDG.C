@@ -178,8 +178,15 @@ bool ControlDependenceGraph::checkCycle(const ControlFlowGraph& cfg)
         boost::add_edge(cfgCopy.getExit(), cfgCopy.getEntry(), cfgCopy);
 
         std::vector<int> component(num_vertices(cfgCopy));
-        int num = boost::strong_components(cfgCopy, &component[0]);
 
+#ifdef __INTEL_COMPILER
+     // DQ (8/28/2015): from Intel v14 icpc: 
+        int num = 0;
+        printf ("Error: code not supported by Intel v14 compiler \n");
+        ROSE_ASSERT(false);
+#else
+        int num = boost::strong_components(cfgCopy, &component[0]);
+#endif
         return num == 1;
 }
 
