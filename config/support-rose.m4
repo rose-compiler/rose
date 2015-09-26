@@ -2248,7 +2248,6 @@ exampleTranslators/defaultTranslator/Makefile
 docs/Makefile
 docs/Rose/footer.html
 docs/Rose/leftmenu.html
-docs/Rose/AvailableDocumentation.docs
 docs/Rose/Makefile
 docs/Rose/manual.tex
 docs/Rose/ROSE_InstallationInstructions.tex

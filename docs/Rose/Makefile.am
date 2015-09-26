@@ -70,7 +70,7 @@ SAGE_MAINPAGE_DOCUMENTATION = $(top_builddir)/src/frontend/SageIII/sage.docs
 .PHONY: doxygen_docs
 if ROSE_HAVE_DOXYGEN
 
-doxygen_docs: rose.cfg AvailableDocumentation.docs
+doxygen_docs: rose.cfg
 	$(DOXYGEN) rose.cfg
 	if [ "$(DOXYINDEXER)" != "" -a -e ROSE_WebPages/searchdata.xml ]; then	\
 	    $(DOXYINDEXER) ROSE_WebPages/searchdata.xml;			\
@@ -86,7 +86,7 @@ $(RoseDoxygenDocumentation): $(RoseDocsDependencies)  rose.cfg
 
 else
 
-doxygen_docs: rose.cfg AvailableDocumentation.docs
+doxygen_docs: rose.cfg
 	@echo "Doxygen documentation not generated (configure with --with-doxygen)" >&2
 	@false
 
@@ -171,11 +171,11 @@ latexDependences = \
      rosePlatformConfigureOptions.txt
 
 # website contents
-html-local: AvailableDocumentation.docs $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz
+html-local: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz
 
 footer.html: footer.html.in
 leftmenu.html: leftmenu.html.in
-AvailableDocumentation.docs: AvailableDocumentation.docs.in
+
 # Liao, 6/11/2008. Added a new directory (Projects) for various ROSE projects 
 # compass_build_tooldir=$(top_builddir)/projects/compass/tools
 COMPASS_MANUAL = $(compass_build_tooldir)/compass/doc/compass.pdf
@@ -403,7 +403,7 @@ docs:
 html-docs: html
 
 EXTRA_DIST = CMakeLists.txt \
-   WEB_DOCS_README AvailableDocumentation.docs.in \
+   WEB_DOCS_README \
    sage.cfg.in rose.cfg.in roseQtWidgets.doxygen.in \
    fixme.sty  acknowledgments.tex bothlevel.c \
    bibliography.tex  examples.tex fd-docs.tex overviewOfRose.tex pre-docs.tex loopTransformDoc.tex  \
@@ -433,7 +433,7 @@ CLEANFILES = roseDoxygen.tags SageIntermediateForm *.log *.aux *.dvi \
 	     rose.cfg roseCommandline.txt roseConfigureOptions* roseExecutionOutput.txt \
 	     roseHelpOutput.txt rose_roseTestProgram.C roseTestProgram.C sage.cfg \
 	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz footer.html \
-	     AvailableDocumentation.docs  leftmenu.html rosePlatformPrerequisites.txt \
+	     leftmenu.html rosePlatformPrerequisites.txt \
         rosePlatformConfigureOptions.txt
 
 .PHONY :generated_files_for_manual generated_ompLowering_files_for_manual generated_autoPar_files_for_manual generated_upcCompile_files_for_manual generated_upcTrans_files_for_manual
