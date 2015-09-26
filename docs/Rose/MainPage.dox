@@ -53,6 +53,7 @@
  *  @li [The ROSE website](http://rosecompiler.org)
  *  @li @ref installation "Download and installation"
  *  @li [Source code analysis tutorial](http://rosecompiler.org/ROSE_Tutorial/ROSE-Tutorial.pdf) (PDF)
+ *  @li @ref binary_tutorial
  *  @li [ROSE user manual](http://rosecompiler.org/ROSE_UserManual/ROSE-UserManual.pdf) (PDF)
  *  @li [Research publications (1)](http://rosecompiler.org/ROSE_HTML_Reference/ProjectPublications.html)
  *  @li [Research publications (2)](http://rosecompiler.org/?page_id=182)
@@ -65,6 +66,7 @@
  *  @li [Projects using ROSE](http://rosecompiler.org/?page_id=16)
  *  @li [Highlights](http://rosecompiler.org/?page_id=25)
  *  @li [Outreach](http://rosecompiler.org/?page_id=28)
+ *  @li @ref developer_docs
  *  @li [About us](http://rosecompiler.org/?page_id=31)
  *
  * @subsection mainpage_gtoc_previous Other releases

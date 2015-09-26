@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
-/** @page how_to_document Writing documentation
+/** @defgroup how_to_document Writing documentation
+ *  @ingroup developer_docs
  *
  *  How to write good API and non-API documentation in ROSE.
  *
