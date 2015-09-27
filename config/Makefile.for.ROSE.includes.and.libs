@@ -520,3 +520,8 @@ RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
 	VALGRIND=$(VALGRIND) BINARY_SAMPLES=$(BINARY_SAMPLES)
 
 RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
+
+# DQ (9/27/2015): Added to support new use of AM_CPPFLAGS instead of INCLUDES 
+# (depreicated in automake and for which many warnings are generated).
+CPPFLAGS = $(AM_CPPFLAGS)
+
