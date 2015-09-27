@@ -11,7 +11,7 @@ endif
 
 # This lists a large number of directories.  If "make install"
 # is run then we only need a single directory
-INCLUDES = -Winvalid-pch $(ROSE_INCLUDES) 
+AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES) 
 
 
 # DQ (7/23/2008): New handling of EDG builds a single library instead of two.
@@ -37,9 +37,9 @@ endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
    libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
-#   libroseExperimentalOpenFortranParserlibraries =
-#   ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
-#   ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(_PREFIX)/lib -lxenctrl
+#  libroseExperimentalOpenFortranParserlibraries =
+#  ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
+#  ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(_PREFIX)/lib -lxenctrl
 else
    libroseExperimentalOpenFortranParserlibraries =
 endif
@@ -278,12 +278,12 @@ rose_config_installed_cppflags =		\
 	-I@includedir@/rose			\
 	$(ROSE_QT_INCLUDE)			\
 	$(ROSE_SQLITE_DATABASE_INCLUDE)		\
-	$(ROSE_PHP_INCLUDES)			\
-	$(ROSE_YICES_INCLUDES)			\
-	$(ROSE_YAML_INCLUDES)			\
-	$(ROSE_LIBMAGIC_INCLUDES)		\
-	$(ROSE_DWARF_INCLUDES)			\
-	$(ROSE_WINE_INCLUDES)			\
+	$(ROSE_PHP_AM_CPPFLAGS)			\
+	$(ROSE_YICES_AM_CPPFLAGS)			\
+	$(ROSE_YAML_AM_CPPFLAGS)			\
+	$(ROSE_LIBMAGIC_AM_CPPFLAGS)		\
+	$(ROSE_DWARF_AM_CPPFLAGS)			\
+	$(ROSE_WINE_AM_CPPFLAGS)			\
 	$(ROSE_PCH_INCLUDE)			\
 	$(INTEL_PIN_INCLUDE_PATHS)		\
 	$(ROSE_ETHER_INCLUDE)			\

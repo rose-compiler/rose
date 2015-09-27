@@ -119,10 +119,16 @@ AC_CHECK_HEADERS(pthread.h)
 
 # Check for the __thread keyword.  This type qualifier creates objects that are thread local.
 AC_MSG_CHECKING([for thread local storage type qualifier])
-AC_COMPILE_IFELSE([struct S {int a, b;}; static __thread struct S x;],
+
+# DQ (9/26/2015): Making this code more portable with out warnings.
+# AC_COMPILE_IFELSE([struct S {int a, b;}; static __thread struct S x;],
+#        [AC_DEFINE(ROSE_THREAD_LOCAL_STORAGE, __thread, [Define to __thread keyword for thread local storage.])
+#         AC_MSG_RESULT([__thread])],
+#        [AC_MSG_RESULT([not supported])])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([struct S {int a, b;}; static __thread struct S x;],
         [AC_DEFINE(ROSE_THREAD_LOCAL_STORAGE, __thread, [Define to __thread keyword for thread local storage.])
          AC_MSG_RESULT([__thread])],
-        [AC_MSG_RESULT([not supported])])
+        [AC_MSG_RESULT([not supported])])])
 
 # These headers and types are needed by projects/simulator2
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
