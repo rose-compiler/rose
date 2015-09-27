@@ -91,10 +91,10 @@ endif
 VFA_TEST_NAMES = $(basename $(VFA_TEST_SPECIMENS))
 VFA_TEST_TARGETS = $(addprefix vfa_, $(addsuffix .passed, $(VFA_TEST_NAMES)))
 VFA_TEST_SWITCHES = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
-VFA_TEST_AM_CPPFLAGS = -I$(VFA_SPECIMEN_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
+VFA_TEST_INCLUDES = -I$(VFA_SPECIMEN_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
 
 $(VFA_TEST_TARGETS): vfa_%.passed: $(VFA_SPECIMEN_DIR)/%.C VirtualFunctionAnalysisTest $(CHECK_EXIT_STATUS)
-	@$(RTH_RUN) CMD="./VirtualFunctionAnalysisTest $(VFA_TEST_SWITCHES) $(VFA_TEST_AM_CPPFLAGS) -c $<" $(CHECK_EXIT_STATUS) $@
+	@$(RTH_RUN) CMD="./VirtualFunctionAnalysisTest $(VFA_TEST_SWITCHES) $(VFA_TEST_INCLUDES) -c $<" $(CHECK_EXIT_STATUS) $@
 
 .PHONY: check-vfa
 check-vfa: $(VFA_TEST_TARGETS)

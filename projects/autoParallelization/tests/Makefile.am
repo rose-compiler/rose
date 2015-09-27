@@ -73,7 +73,7 @@ $(CXX_TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
 # used to find omp.h, added it as one of  rose headers
-TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/src/frontend/SageIII
+TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 # Turned of the debug flag to have a cleaner screen output, Liao, 9/16/2009
@@ -131,7 +131,7 @@ REFERENCE_PATH=$(top_srcdir)/projects/autoParallelization/tests/references
 C_TEST_DIFF_FILES=$(C_TEST_Generated_Files:.c=.c.diff)
 
 $(C_TEST_Generated_Files):../autoPar 
-	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/$(@:rose_%=%) >> log.out
+	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:rose_%=%) >> log.out
 
 # object files means rose_ *.c files also exist
 #$(C_TEST_DIFF_FILES):$(C_TEST_Objects)
@@ -142,30 +142,30 @@ $(C_TEST_DIFF_FILES): $(C_TEST_Generated_Files)
 
 
 $(C_TEST_Objects): ../autoPar $(@:.o=.c)
-	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.c) >> $(@).out 
-#$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.c) | fold >$(@:.o=.out) # pipeline buries return code
+	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) >> $(@).out 
+#$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) | fold >$(@:.o=.out) # pipeline buries return code
 
 $(CXX_TEST_Objects): ../autoPar $(@:.o=.C)
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.C) >> $(@).out
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) >> $(@).out
 rose_interp1_elem.C: ../autoPar interp1_elem.C
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -c -annot $(srcdir)/floatArray.annot -annot $(srcdir)/funcs.annot -annot $(srcdir)/Index.annot $(srcdir)/interp1_elem.C	
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/floatArray.annot -annot $(srcdir)/funcs.annot -annot $(srcdir)/Index.annot $(srcdir)/interp1_elem.C	
 rose_doall_vector.C: ../autoPar doall_vector.C
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -c -annot $(srcdir)/std_vector.annot $(srcdir)/doall_vector.C
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/std_vector.annot $(srcdir)/doall_vector.C
 
 rose_doall_vector2.C: ../autoPar doall_vector2.C
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -c -annot $(srcdir)/std_vector.annot $(srcdir)/doall_vector2.C
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/std_vector.annot $(srcdir)/doall_vector2.C
 
 rose_Stress2.cc: ../autoPar Stress2.cc
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -c -annot $(srcdir)/clibfunc.annot $(srcdir)/Stress2.cc
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/clibfunc.annot $(srcdir)/Stress2.cc
 
 test_diff.out : ../autoPar $(top_srcdir)/tests/CompileTests/OpenMP_tests/jacobi.c
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -rose:autopar:enable_diff -c $(top_srcdir)/tests/CompileTests/OpenMP_tests/jacobi.c > test_diff.out
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -rose:autopar:enable_diff -c $(top_srcdir)/tests/CompileTests/OpenMP_tests/jacobi.c > test_diff.out
 
 # Two files are singled out since their output will be put in tutorial text
 doall_2.out: ../autoPar doall_2.c 
-	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/doall_2.c > doall_2.out
+	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/doall_2.c > doall_2.out
 inner_only.out: ../autoPar inner_only.c 
-	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/inner_only.c > inner_only.out
+	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/inner_only.c > inner_only.out
 check-local:
 	@echo "Test for ROSE automatic parallelization."
 	@$(MAKE) $(C_TEST_Objects)

@@ -48,7 +48,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
 # $(TEST_Objects): $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C)
 $(TEST_Objects): $(TEST_TRANSLATOR)
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_WINE_AM_CPPFLAGS) $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_WINE_INCLUDES) $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 

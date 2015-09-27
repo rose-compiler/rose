@@ -17,12 +17,12 @@ TESTCODE_CURRENTLY_FAILING =
 
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave
 # used to find omp.h, added it as one of  rose headers
-TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/src/frontend/SageIII
+TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
 PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
 
 $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c hcpragma
-	./hcpragma $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -c $<
+	./hcpragma $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
 
 generatedCodeExamples = \
    rose_inputbuildFromString.C

@@ -24,9 +24,9 @@ if ROSE_USE_MAPLE
 #  LDADD += -L$(MAPLE_LIBDIR) -lmaplec -lmaple
 #  omexample_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -L$(MAPLE_LIBDIR) -lmaplec -lmaple
 #  omexample_LDADD = -L$(MAPLE_LIBDIR) -lmaplec -lmaple -lmclient -lprocessor64
-#  omexample_AM_CPPFLAGS = $(MAPLE_AM_CPPFLAGS)
+#  omexample_INCLUDES = $(MAPLE_INCLUDES)
    LDADD += -L$(MAPLE_LIBDIR) -lmaplec -lmaple -lmclient -lprocessor64
-   AM_CPPFLAGS += $(MAPLE_AM_CPPFLAGS)
+   AM_CPPFLAGS += $(MAPLE_INCLUDES)
 endif
 
 TESTCODES_REQUIRED_TO_PASS = test2014_01.C

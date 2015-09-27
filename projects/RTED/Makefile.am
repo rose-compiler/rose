@@ -15,7 +15,7 @@ if !OS_MACOSX
 # tps removed -pthreads from AM_CPPFLAGS
 AM_CPPFLAGS = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch
 TESTSUITEINCL = -I$(srcdir) -I.
-UPC_AM_CPPFLAGS =  -I$(top_srcdir)/config
+UPC_INCLUDES =  -I$(top_srcdir)/config
 
 EXTRACT_EXPECTED_ERROR_SCRIPT=$(srcdir)/extract-expected-error.sed
 EXTRACT_EXPECTED_ERROR=sed -n -f $(EXTRACT_EXPECTED_ERROR_SCRIPT)
@@ -83,7 +83,7 @@ runtimeCheck.o: runtimeCheck.cpp
 ROSE_FLAGS = -rose:verbose 0
 
 TEST_TRANSLATOR = ./runtimeCheck all $(ROSE_FLAGS)
-TESTCODE_AM_CPPFLAGS =
+TESTCODE_INCLUDES =
 
 
 CLEANFILES = *.out *.ti *.pdf test_runtime* *.txt rose_test_c_E_1_1_a
@@ -434,7 +434,7 @@ rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp rted_source/%_s.cpp $(RTS
 	$(call TRANSFORMING_FILES, .cpp, $(RTED_CXX), Cxx)
 
 rted_source/%_rose.upc: runtimeCheck rted_source/%.upc rted_source/%_s.upc $(RTS) $(srcdir)/RuntimeSystem.h
-	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC -DWITH_UPC $(UPC_AM_CPPFLAGS))
+	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC -DWITH_UPC $(UPC_INCLUDES))
 
 
 rted_source/%_rose.c: runtimeCheck rted_source/%.c $(RTS) $(srcdir)/RuntimeSystem.h
@@ -444,7 +444,7 @@ rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp $(RTS) $(srcdir)/RuntimeS
 	$(call TRANSFORMING_FILES, .cpp, $(RTED_CXX), Cxx)
 
 rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(RTS) $(srcdir)/RuntimeSystem.h
-	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC -DWITH_UPC $(UPC_AM_CPPFLAGS))
+	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC -DWITH_UPC $(UPC_INCLUDES))
 
 #------------------------------------------------------------------------------
 

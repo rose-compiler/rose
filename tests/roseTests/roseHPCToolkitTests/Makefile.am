@@ -23,7 +23,7 @@ rosehpctincdir = $(includedir)/rosehpct
 # Default header file search path
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir) \
            $(ROSE_INCLUDES) \
-           $(ROSEHPCT_DEP_AM_CPPFLAGS) \
+           $(ROSEHPCT_DEP_INCLUDES) \
            -I$(ROSEHPCT_SRC_ROOT)/include
 
 # Default link flags for executables

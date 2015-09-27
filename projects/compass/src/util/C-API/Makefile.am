@@ -10,7 +10,7 @@ AM_CPPFLAGS = -I$(srcdir)/.. -I$(srcdir)/../../compassSupport $(ROSE_INCLUDES)
 if ROSE_MPI
 #LTCXXCOMPILE = \
 #	$(LIBTOOL) --tag=CXX --mode=compile $(MPICXX) $(DEFS) \
-#        $(DEFAULT_AM_CPPFLAGS) $(AM_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
+#        $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
 #        $(AM_CXXFLAGS) $(CXXFLAGS)
 #CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(MPICXX) $(AM_CXXFLAGS) \
 #        $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@

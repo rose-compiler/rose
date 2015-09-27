@@ -36,7 +36,7 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
 $(TEST_Objects): main
 	echo "Copy the file to build a second one to main ..."
-#	$(VALGRIND) ./main $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+#	$(VALGRIND) ./main $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 	$(VALGRIND) ./main $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
 
 bin_PROGRAMS = main

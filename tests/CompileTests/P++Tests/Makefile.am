@@ -31,7 +31,7 @@ ROSE_FLAGS = -rose:test 6
 ## them directly into the test code directory (testing only the compilation with ROSE
 ## and not the execution!)
 ## Include the path to A++ and the transformation specification
-## AM_CPPFLAGS = @Axx_AM_CPPFLAGS@
+## AM_CPPFLAGS = @Axx_INCLUDES@
 MPI_INCLUDE = -I/usr/local/mpi/mpich-1.1.1/include -I/usr/local/mpi/mpich-1.1.1/lib/solaris/ch_p4
 
 AM_CPPFLAGS = -I. -I../../.. -I$(top_srcdir)/tests/CompileTests/P++Tests -I$(top_srcdir)/include $(MPI_INCLUDE)

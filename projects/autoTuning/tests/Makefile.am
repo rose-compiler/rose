@@ -21,7 +21,7 @@ ROSE_FLAGS+=-rose:outline:enable_liveness -I$(top_srcdir)/projects/autoTuning
 
 AT_BUILD=$(top_builddir)/projects/autoTuning/tests
 AT_FLAGS=-rose:outline:output_path "$(AT_BUILD)"
-AT_AM_CPPFLAGS=-I$(top_srcdir)/src/frontend/SageIII
+AT_INCLUDES=-I$(top_srcdir)/src/frontend/SageIII
 # experimental flags. not well sorted out for the interaction between OpenMP and outlining
 # TODO reduction clause with omp for  should ignored if all reduction variables are no longer shared
 # this should be fixed in outliner's Transform.cc: 
@@ -35,7 +35,7 @@ rose_jacobi.c:../autoTuning
 
 # aggressive code triage based on outer most OpenMP for loop
 rose_jacobi-omp.c:../autoTuning
-	../autoTuning -c  $(ROSE_FLAGS) $(AT_FLAGS) $(AT_AM_CPPFLAGS) $(EQUAL_PATH1) $(ROSE_PROF2) $(ROSE_FLAGS2) $(srcdir)/jacobi-omp.c
+	../autoTuning -c  $(ROSE_FLAGS) $(AT_FLAGS) $(AT_INCLUDES) $(EQUAL_PATH1) $(ROSE_PROF2) $(ROSE_FLAGS2) $(srcdir)/jacobi-omp.c
 
 # alternative performance information collected by GNU gprof -L -l, line-by-line profiling results
 rose_jacobi2.c:../autoTuning

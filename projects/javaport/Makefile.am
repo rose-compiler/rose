@@ -12,11 +12,11 @@ if ENABLE_JAVAPORT
 
 # DQ (3/6/2013): We need a version of the ROSE_INLCUDES paths that excludes any possability of including the -isystem option.
 # To keep compile commands tidy, please ONLY put required include flags here.
-JAVA_AM_CPPFLAGS = -I$(JAVA_PATH)/include -I$(JAVA_PATH)/include/linux
+JAVA_INCLUDES = -I$(JAVA_PATH)/include -I$(JAVA_PATH)/include/linux
 if ROSE_MPI
 # This case is not handled.
 else
-AM_CPPFLAGS = $(ROSE_INCLUDES) $(JAVA_AM_CPPFLAGS)
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(JAVA_INCLUDES)
 endif
 
 # This is just to get the environment for Java.

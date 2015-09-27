@@ -78,16 +78,16 @@ TESTCODES_CURRENTLY_FAILING = \
 #ROSE_FLAGS = -rose:openmp
 ROSE_FLAGS = -rose:openmp:ast_only
 
-TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/src/frontend/SageIII
+TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
 PASSING_F77_TEST_OBJECTS = $(F77_TESTCODES_TO_PASS:.f=.o)
 PASSING_F90_TEST_OBJECTS = $(F90_TESTCODES_TO_PASS:.f90=.o)
 
 $(PASSING_F77_TEST_OBJECTS): %.o:$(srcdir)/%.f ../parseOmp
-	../parseOmp $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -c $<
+	../parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
 
 $(PASSING_F90_TEST_OBJECTS): %.o:$(srcdir)/%.f90 ../parseOmp
-	../parseOmp $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -c $<
+	../parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
 
 ../parseOmp:
 	$(MAKE) -C ../. parseOmp

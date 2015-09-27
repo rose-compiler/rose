@@ -20,7 +20,7 @@ $(CXX_TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
 # used to find omp.h, added it as one of  rose headers
-TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/projects/A++DataLayout/include 
+TESTCODE_INCLUDES = -I$(top_srcdir)/projects/A++DataLayout/include 
 
 ROSE_FLAGS = -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict 
 
@@ -29,7 +29,7 @@ LAYOUTEXEC = $(top_builddir)/projects/A++DataLayout/ArrayLayoutTransformation
 CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
 $(CXX_TEST_Objects): $(LAYOUTEXEC) $(@:.o=.C)
-	 $(LAYOUTEXEC) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) $(srcdir)/spec.C $(srcdir)/$(@:.o=.C) > log.out
+	 $(LAYOUTEXEC) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) $(srcdir)/spec.C $(srcdir)/$(@:.o=.C) > log.out
 
 check-local:
 	@echo "Test for A++DataLayout preprocessor."

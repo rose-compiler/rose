@@ -68,9 +68,9 @@ verify.inc:
 #		head -$$((lin-1)) $(compass_checker_dir)/$${file}/$${file}.C >> catChecker.C ;\
 # 		echo "-I$(compass_checker_dir)/$${file}" >> catCheckerIncludes.txt ;\
 # 	done ;\
-# 	export CAT_CHECKER_AM_CPPFLAGS=`cat catCheckerIncludes.txt` ;\
-# 	echo "env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) $(AM_CPPFLAGS) $${CAT_CHECKER_AM_CPPFLAGS} catChecker.C" ;\
-# 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:verbose 0 -I$(top_builddir) $(AM_CPPFLAGS) $${CAT_CHECKER_AM_CPPFLAGS} catChecker.C ;\
+# 	export CAT_CHECKER_INCLUDES=`cat catCheckerIncludes.txt` ;\
+# 	echo "env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) $(AM_CPPFLAGS) $${CAT_CHECKER_INCLUDES} catChecker.C" ;\
+# 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:verbose 0 -I$(top_builddir) $(AM_CPPFLAGS) $${CAT_CHECKER_INCLUDES} catChecker.C ;\
 # 	'
 
 
@@ -92,8 +92,8 @@ oneBigVerify: compassVerifier compass_parameters
 			echo "-I$(compass_checker_dir)/$${prefix}" >> catCheckerIncludes.txt ;\
 		done ;\
 		rm -f $$tmpfile ;\
-		export CAT_CHECKER_AM_CPPFLAGS=`cat catCheckerIncludes.txt` ;\
-		env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:verbose 0 $${CAT_CHECKER_AM_CPPFLAGS} -I$(top_builddir) $(AM_CPPFLAGS) $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) catChecker.C ;\
+		export CAT_CHECKER_INCLUDES=`cat catCheckerIncludes.txt` ;\
+		env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:verbose 0 $${CAT_CHECKER_INCLUDES} -I$(top_builddir) $(AM_CPPFLAGS) $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) catChecker.C ;\
 	'
  
 verify.makefile: verify.inc

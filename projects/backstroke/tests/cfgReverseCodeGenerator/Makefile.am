@@ -18,7 +18,7 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:detect_dangling_pointers
 
 EXTRA_DIST = test_Basic.C test_Basic2.C test_Basic3.C
 
-TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/projects/backstroke/pluggableReverser
+TESTCODE_INCLUDES = -I$(top_srcdir)/projects/backstroke/pluggableReverser
 
 TESTCODES_REQUIRED_TO_PASS = \
 test_Basic1.C \
@@ -31,7 +31,7 @@ TEST_Objects = ${TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
 $(TEST_Objects):reverserTest
 	@cp $(top_srcdir)/projects/backstroke/tests/cfgReverseCodeGenerator/testcases/$(@:.o=.C) $(@:.o=.C)
-	./reverserTest $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -c $(@:.o=.C)
+	./reverserTest $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(@:.o=.C)
 
 check-local:
 	@$(MAKE) $(TEST_Objects)

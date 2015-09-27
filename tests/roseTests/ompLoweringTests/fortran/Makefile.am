@@ -62,12 +62,12 @@ F90_TEST_OBJECT_REQUIRED_TO_RUN = ${F90_TESTCODES_REQUIRED_TO_RUN:.f90=.o}
 TEST_DIR = $(top_srcdir)/tests/CompileTests/OpenMP_tests/fortran
 
 # the place to find omp.h, libgomp_g.h etc
-TEST_AM_CPPFLAGS = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/programTransformation/ompLowering
+TEST_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/programTransformation/ompLowering
 
 ../roseomp:
 	make -C ../. roseomp
 # this flag is used for the long list of CXX test files
-TEST_FLAGS = $(TEST_AM_CPPFLAGS) -rose:openmp:lowering -g --edg:no_warnings #-fno-underscoring #-rose:verbose 2 #--edg:restrict #-rose:wave 
+TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering -g --edg:no_warnings #-fno-underscoring #-rose:verbose 2 #--edg:restrict #-rose:wave 
 
 
 # rules to build .o from .f for OpenMP test codes
