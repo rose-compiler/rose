@@ -19,12 +19,12 @@ compassMainGui_SOURCES = \
 
 compassMainGui_LDADD = -L$(compass_support_bdir) -L$(compass_build_tooldir)/compass -lCompassCheckers -lCompass $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
-# INCLUDES = $(ROSE_INCLUDES) $(QT_INCLUDES) $(QROSE_CXXFLAGS) $(BOOST_CPPFLAGS) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I.
+# AM_CPPFLAGS = $(ROSE_INCLUDES) $(QT_AM_CPPFLAGS) $(QROSE_CXXFLAGS) $(BOOST_CPPFLAGS) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I.
 
 if ROSE_MPI
-INCLUDES = -DROSE_MPI $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I.
+AM_CPPFLAGS = -DROSE_MPI $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I.
 else
-INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I.
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I.
 endif
 
 

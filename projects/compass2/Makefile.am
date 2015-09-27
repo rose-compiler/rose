@@ -8,7 +8,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 #  Compass2
 # ------------------------------------------------------------------------------
 
-INCLUDES=\
+AM_CPPFLAGS=\
 	-I$(top_srcdir)/projects \
 	-I$(top_srcdir)/projects/compass2 \
 	$(XERCES_CPPFLAGS) \

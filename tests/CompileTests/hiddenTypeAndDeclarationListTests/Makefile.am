@@ -46,7 +46,7 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
 # Some of these test codes reference A++ header fiels as part of their tests
 # Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
@@ -56,7 +56,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
 $(TEST_Objects): ../../testTranslator
-	../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	../../testTranslator $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 
 # This requires a special makefile rule
 test2005_56.o: ../../testTranslator
@@ -66,7 +66,7 @@ CURRENT_DIRECTORY = `pwd`
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
 $(QMTEST_Objects): ../../testTranslator
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
 
 # This must be placed after the more general rule to work properly!
 test2005_56.qmt: ../../testTranslator

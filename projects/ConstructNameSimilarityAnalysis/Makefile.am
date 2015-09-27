@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = nameTests
 
@@ -32,7 +32,7 @@ PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
 ## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
@@ -40,10 +40,10 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 # and a number of other tests require a path to the source directory.
 # $(TEST_Objects): preprocessor $(srcdir)/$(@:.o=.C)
 $(TEST_Objects): nameTests
-#	$(VALGRIND) ./statements $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../Cxx_tests -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
+#	$(VALGRIND) ./statements $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir)/../Cxx_tests -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
 	echo "Copy the file to the local build tree so that the tview program can access it with the generated .highlight file ..."
 	cp $(srcdir)/../Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	$(VALGRIND) ./nameTests $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../Cxx_tests -c $(@:.o=.C)
+	$(VALGRIND) ./nameTests $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir)/../Cxx_tests -c $(@:.o=.C)
 
 # This was a bug specific to the normalization of source file names to absolute paths
 testNames: nameTests

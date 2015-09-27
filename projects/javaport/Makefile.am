@@ -12,11 +12,11 @@ if ENABLE_JAVAPORT
 
 # DQ (3/6/2013): We need a version of the ROSE_INLCUDES paths that excludes any possability of including the -isystem option.
 # To keep compile commands tidy, please ONLY put required include flags here.
-JAVA_INCLUDES = -I$(JAVA_PATH)/include -I$(JAVA_PATH)/include/linux
+JAVA_AM_CPPFLAGS = -I$(JAVA_PATH)/include -I$(JAVA_PATH)/include/linux
 if ROSE_MPI
 # This case is not handled.
 else
-INCLUDES = $(ROSE_INCLUDES) $(JAVA_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(JAVA_AM_CPPFLAGS)
 endif
 
 # This is just to get the environment for Java.
@@ -37,7 +37,7 @@ javalibdir	= $(datadir)/java
 
 lib_LTLIBRARIES	= librose_wrap.la 
 nodist_librose_wrap_la_SOURCES	= rose_wrap.cxx
-librose_wrap_la_CPPFLAGS	= $(INCLUDES)
+librose_wrap_la_CPPFLAGS	= $(AM_CPPFLAGS)
 
 librose_wrap_la_LIBADD		= -lrose $(RT_LIBS) 
 librose_wrap_la_LDFLAGS	= -L../../src 
@@ -52,7 +52,7 @@ SWIG_OPTIONS =
 
 rose_wrap.cxx:	rose.i
 	mkdir -p gov/llnl/casc/rose
-	$(SWIG) `echo $(INCLUDES) | sed 's/ -pthread / /g' | sed 's/ -Winvalid-pch / /g'  | sed 's/ -fPIC / /g'` \
+	$(SWIG) `echo $(AM_CPPFLAGS) | sed 's/ -pthread / /g' | sed 's/ -Winvalid-pch / /g'  | sed 's/ -fPIC / /g'` \
 	  -DUSE_ROSE -DROSE_USE_SWIG_SUPPORT \
 	  -c++ -java $(SWIG_OPTIONS) $(SWIG_DEBUG_OPTIONS) -I$(srcdir) \
 	  -package gov.llnl.casc.rose -outdir gov/llnl/casc/rose \

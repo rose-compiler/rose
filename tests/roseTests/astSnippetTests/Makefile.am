@@ -4,7 +4,7 @@ EXTRA_DIST =
 TEST_TARGETS =
 MOSTLYCLEANFILES =
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 
 ###############################################################################################################################

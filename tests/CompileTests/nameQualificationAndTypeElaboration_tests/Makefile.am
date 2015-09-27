@@ -85,7 +85,7 @@ PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/Cxx
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(PERFORMANCE_REPORT_OPTION)
 
 ## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 #VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=yes --error-limit=no --show-reachable=yes
@@ -103,7 +103,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 # and a number of other tests require a path to the source directory.
 # $(TEST_Objects): preprocessor $(srcdir)/$(@:.o=.C)
 $(TEST_Objects): $(TEST_TRANSLATOR)
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 
 CURRENT_DIRECTORY = `pwd`
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
@@ -114,11 +114,11 @@ QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 # $(QMTEST_Objects): preprocessor $(srcdir)/$(@:.qmt=.C)
 $(QMTEST_Objects): $(TEST_TRANSLATOR) 
 #	@echo "Calling QMTEST_Objects rule for Cxx_tests directory: "
-	qm.sh f rose.RoseTest $(TEST_TRANSLATOR) NULL $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+	qm.sh f rose.RoseTest $(TEST_TRANSLATOR) NULL $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
 
 # This must be placed after the more general rule to work properly!
 test2005_56.qmt: $(TEST_TRANSLATOR)
-	qm.sh f rose.RoseTest $(TEST_TRANSLATOR) NULL $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+	qm.sh f rose.RoseTest $(TEST_TRANSLATOR) NULL $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
 #	$(VALGRIND) ../preprocessor -rose:verbose 2 -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" $(srcdir)/test2005_56.C -o test2005_56
 
 # This is a rule to add the current files into a QMTest database
@@ -151,5 +151,5 @@ clean-local:
 
 
 gprof: $(TEST_TRANSLATOR) $(srcdir)/test2001_11.C
-#	gprof ../preprocessor $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/test2001_11.C
+#	gprof ../preprocessor $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/test2001_11.C
 

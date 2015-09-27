@@ -59,26 +59,26 @@ CLEANFILES = CHECKER_LIST_WITHOUT_COMMENTS compass_makefile.inc compass_paramete
 
 # Test Compass using a small test file
 testRose: compassMain compass_parameters
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -I$(top_builddir) $(INCLUDES) $(srcdir)/tests/exampleTest_2.C
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -I$(top_builddir) $(AM_CPPFLAGS) $(srcdir)/tests/exampleTest_2.C
 
 # Test Compass using a large file within ROSE
 testCxx_Grammar: compassMain compass_parameters
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -I$(top_builddir) $(INCLUDES) $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -I$(top_builddir) $(AM_CPPFLAGS) $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 
 testAllInputsTogether: compassMain compass_parameters
 	env COMPASS_PARAMETERS=./compass_parameters ./compassMain $(COMPASS_CHECKER_TESTS)
 
 # Flymake Support in ROSE
 check-syntax: compassMain compass_parameters
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:includeFile $(CHK_SOURCES:_flymake.C=) $(CHK_SOURCES)
-#       @$(top_builddir)/projects/compass/compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:excludeFile .code -rose:excludeFile .macro -rose:includeFile $(CHK_SOURCES) $(CHK_SOURCES)
-#       $(top_builddir)/projects/compass/compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:includeFile $(CHK_SOURCES:_flymake.C=) $(CHK_SOURCES)
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_AM_CPPFLAGS) -rose:includeFile $(CHK_SOURCES:_flymake.C=) $(CHK_SOURCES)
+#       @$(top_builddir)/projects/compass/compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_AM_CPPFLAGS) -rose:excludeFile .code -rose:excludeFile .macro -rose:includeFile $(CHK_SOURCES) $(CHK_SOURCES)
+#       $(top_builddir)/projects/compass/compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_AM_CPPFLAGS) -rose:includeFile $(CHK_SOURCES:_flymake.C=) $(CHK_SOURCES)
 
 #testEmacs: compassMain compass_parameters
-#	env COMPASS_PARAMETERS=./compass_parameters ./compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:includeFile $(srcdir)/testEmacs.C $(srcdir)/testEmacs.C
+#	env COMPASS_PARAMETERS=./compass_parameters ./compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_AM_CPPFLAGS) -rose:includeFile $(srcdir)/testEmacs.C $(srcdir)/testEmacs.C
 
 #testEmacsSize: compassMain compass_parameters
-#	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) $(srcdir)/testEmacs.C > wc.out
+#	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_AM_CPPFLAGS) $(srcdir)/testEmacs.C > wc.out
 #	wc -l wc.out
 
 # DQ (1/15/2009): This fails in a Boost problem of some sort!

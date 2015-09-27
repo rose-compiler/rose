@@ -71,7 +71,7 @@ AC_DEFUN([AX_BOOST_IOSTREAMS],
             [
                 AC_LANG_PUSH([C++])
                 AC_COMPILE_IFELSE(
-                    AC_LANG_PROGRAM(
+                    [AC_LANG_PROGRAM(
                         [[
                             @%:@include <boost/iostreams/device/mapped_file.hpp>
                         ]],
@@ -80,7 +80,7 @@ AC_DEFUN([AX_BOOST_IOSTREAMS],
                             boost::iostreams::mapped_file f(params);
                             f.const_data();
                             return 0;
-                        ]]),
+                        ]])],
                     ax_cv_boost_iostreams=yes,
                     ax_cv_boost_iostreams=no)
                 AC_LANG_POP([C++])

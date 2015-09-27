@@ -12,7 +12,7 @@ demo_1:
 # that are a part of this demo.
 if ROSE_USE_QT
 
-INCLUDES = $(ROSE_INCLUDES) 
+AM_CPPFLAGS = $(ROSE_INCLUDES) 
 
 # There are no executables built as part of this demo (so far)
 noinst_PROGRAMS = 

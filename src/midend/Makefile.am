@@ -76,7 +76,7 @@ endif
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-INCLUDES=\
+AM_CPPFLAGS=\
 	$(ROSE_INCLUDES) \
 	-I${top_srcdir}/src/midend/programAnalysis/CFG \
 	-I$(mAstUtilPath) \

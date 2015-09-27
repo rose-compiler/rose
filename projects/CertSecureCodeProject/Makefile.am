@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 noinst_PROGRAMS = certTests
 
@@ -630,7 +630,7 @@ $(TESTCODE_CURRENTLY_FAILING)
 ROSE_FLAGS = 
 
 ## Include the path to A++ and the transformation specification
-# TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+# TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)

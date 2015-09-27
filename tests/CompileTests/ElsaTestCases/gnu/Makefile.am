@@ -84,13 +84,13 @@ TRANSLATOR_EXECUTABLE = $(top_builddir)/tests/testTranslator
 TEST_TRANSLATOR = $(TRANSLATOR_EXECUTABLE) $(ROSE_FLAGS)
 
 ## Include the path to A++ and the transformation specification
-# TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
+# TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
 
 $(TEST_Objects): $(TESTCODES)
-	$(TEST_TRANSLATOR) $(INCLUDES) -c $(srcdir)/$(@:.o=.cc)
+	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.cc)
 
 $(TEST2_Objects): $(C_TESTCODES)
-	$(TEST_TRANSLATOR) -rose:C $(INCLUDES) -c $(srcdir)/$(@:.o=.c)
+	$(TEST_TRANSLATOR) -rose:C $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.c)
 
 
 EXTRA_DIST = $(TESTCODES) $(C_TESTCODES) bugs

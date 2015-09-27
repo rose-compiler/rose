@@ -15,7 +15,7 @@ LIBS = -L$(ATERM_INSTALL_PATH)/lib -lATerm
 
 # TRAVERSE_OBJS = UntypedNodes.o OFPNodes.o OFPExpr.o OFPUnparser.o UntypedASTBuilder.o traversal.o ofp_traverse_productions.o
 
-INCLUDES = $(A_TERM_INCLUDE) $(ROSE_INCLUDES) $(SDF_GRAMMAR_DIR)
+AM_CPPFLAGS = $(A_TERM_INCLUDE) $(ROSE_INCLUDES) $(SDF_GRAMMAR_DIR)
 
 noinst_LTLIBRARIES = libexperimentalOFP.la
 libexperimentalOFP_la_SOURCES = $(libexperimentalOFP_Sources)

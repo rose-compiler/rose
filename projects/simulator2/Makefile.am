@@ -1141,7 +1141,7 @@ PTHREAD_INPUTS_FAILING =                                                        
 #	these tests are hard coded to always fail
 #		    $(srcdir)/pthread_tests/pthread_attr_setscope.5-1.c
 
-PTHREAD_TEST_INCLUDES=							\
+PTHREAD_TEST_AM_CPPFLAGS=							\
 	$(srcdir)/pthread_tests/posixtest.h 	 			\
         $(srcdir)/pthread_tests/pthread_atfork.testfrmw.c		\
         $(srcdir)/pthread_tests/pthread_atfork.testfrmw.h		\
@@ -1201,7 +1201,7 @@ PTHREAD_TEST_INCLUDES=							\
 	$(srcdir)/pthread_tests/speculative.5-2.c			\
 	$(srcdir)/pthread_tests/speculative.6-1.c
 
-EXTRA_DIST += $(PTHREAD_TEST_INPUTS_SRC) $(PTHREAD_TEST_INCLUDES)
+EXTRA_DIST += $(PTHREAD_TEST_INPUTS_SRC) $(PTHREAD_TEST_AM_CPPFLAGS)
 
 PTHREAD_TEST_INPUTS = $(basename $(notdir $(PTHREAD_TEST_INPUTS_SRC)))
 MOSTLYCLEANFILES += $(PTHREAD_TEST_INPUTS) $(addsufix .o, $(PTHREAD_TEST_INPUTS))

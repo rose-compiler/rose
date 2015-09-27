@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Build the test language restrictor executable
@@ -19,7 +19,7 @@ EXTRA_DIST =
 
 CLEANFILES = 
 
-TESTCODE_INCLUDES = -I$(top_srcdir)/projects/backstroke/pluggableReverser -I$(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/testcases
+TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/projects/backstroke/pluggableReverser -I$(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/testcases
 
 TESTCODES_REQUIRED_TO_PASS = \
 test_Basic2.C \
@@ -32,7 +32,7 @@ TEST_Objects = ${TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
 $(TEST_Objects):pluggableReverser 
 	@cp $(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/testcases/$(@:.o=.C) $(@:.o=.C)
-	./pluggableReverser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(@:.o=.C)    
+	./pluggableReverser $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -c $(@:.o=.C)    
 
 check-local:
 	@$(MAKE) $(TEST_Objects)

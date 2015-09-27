@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 
 # Some source code is generated (call make in ROSE/src/ROSETTA/src to generate these files)

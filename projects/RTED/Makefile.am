@@ -12,10 +12,10 @@ EXTRA_DIST = index_array.txt \
 if !OS_MACOSX
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-# tps removed -pthreads from INCLUDES
-INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch
+# tps removed -pthreads from AM_CPPFLAGS
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch
 TESTSUITEINCL = -I$(srcdir) -I.
-UPC_INCLUDES =  -I$(top_srcdir)/config
+UPC_AM_CPPFLAGS =  -I$(top_srcdir)/config
 
 EXTRACT_EXPECTED_ERROR_SCRIPT=$(srcdir)/extract-expected-error.sed
 EXTRACT_EXPECTED_ERROR=sed -n -f $(EXTRACT_EXPECTED_ERROR_SCRIPT)
@@ -83,7 +83,7 @@ runtimeCheck.o: runtimeCheck.cpp
 ROSE_FLAGS = -rose:verbose 0
 
 TEST_TRANSLATOR = ./runtimeCheck all $(ROSE_FLAGS)
-TESTCODE_INCLUDES =
+TESTCODE_AM_CPPFLAGS =
 
 
 CLEANFILES = *.out *.ti *.pdf test_runtime* *.txt rose_test_c_E_1_1_a
@@ -434,7 +434,7 @@ rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp rted_source/%_s.cpp $(RTS
 	$(call TRANSFORMING_FILES, .cpp, $(RTED_CXX), Cxx)
 
 rted_source/%_rose.upc: runtimeCheck rted_source/%.upc rted_source/%_s.upc $(RTS) $(srcdir)/RuntimeSystem.h
-	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC -DWITH_UPC $(UPC_INCLUDES))
+	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC -DWITH_UPC $(UPC_AM_CPPFLAGS))
 
 
 rted_source/%_rose.c: runtimeCheck rted_source/%.c $(RTS) $(srcdir)/RuntimeSystem.h
@@ -444,7 +444,7 @@ rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp $(RTS) $(srcdir)/RuntimeS
 	$(call TRANSFORMING_FILES, .cpp, $(RTED_CXX), Cxx)
 
 rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(RTS) $(srcdir)/RuntimeSystem.h
-	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC -DWITH_UPC $(UPC_INCLUDES))
+	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC -DWITH_UPC $(UPC_AM_CPPFLAGS))
 
 #------------------------------------------------------------------------------
 
@@ -459,7 +459,7 @@ rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(RTS) $(srcdir)/RuntimeS
 #  3: additional parameters, like linking against debugger ...
 #COMPILING_RUNTIME_SYSTEM =  @echo -n "$(2) -g -o $@ $(filter rted_source/%$(strip $(1)), $^) \
 #				      $(srcdir)/$(RTS) \
-#				      $(INCLUDES) \
+#				      $(AM_CPPFLAGS) \
 #				      -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) \
 #	 		              -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@)) \
 #				      -I$(top_builddir) \
@@ -480,10 +480,10 @@ COMPILING_RUNTIME_SYSTEM +=    -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@
 			   echo -n " done.";
 
 RuntimeSystemCxx.o: $(srcdir)/RuntimeSystem.cpp $(srcdir)/RuntimeSystem.h
-	$(CXX) -g -Wall -Wextra $(INCLUDES) -o $@ -c $<
+	$(CXX) -g -Wall -Wextra $(AM_CPPFLAGS) -o $@ -c $<
 
 RuntimeSystemUpc.o: $(srcdir)/RuntimeSystem.cpp $(srcdir)/RuntimeSystem.h
-	$(CXX) -g -Wall -Wextra -DWITH_UPC=1 $(INCLUDES) -o $@ -c $<
+	$(CXX) -g -Wall -Wextra -DWITH_UPC=1 $(AM_CPPFLAGS) -o $@ -c $<
 
 ParallelRTS.o: $(srcdir)/ParallelRTS.upc $(srcdir)/ParallelRTS.h
 	$(UPC) -g -Wall -Wextra -DIN_TARGET_LIBS -DWITH_UPC=1 -o $@ -c $<

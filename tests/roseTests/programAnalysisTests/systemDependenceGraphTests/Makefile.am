@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # The src/midend/programAnalysis/systemDependenceGraph/Makefile.am has a note from Dan on 2/9/2014 and the source files are
 # not compiled for GCC > 4.6. Therefore we cannot compile the testSDG program either for GCC > 4.6. [Robb Matzke, 2014-10-15]
@@ -751,7 +751,7 @@ test2005_187.C \
 test2005_114.C \
 test2006_47.C 
 
-TEST_INCLUDES = \
+TEST_AM_CPPFLAGS = \
 	-I$(top_srcdir)/tests/CompileTests/A++Code \
 	-I$(top_srcdir)/tests/CompileTests/C_tests \
 	-I$(top_srcdir)/tests/CompileTests/Cxx_tests 
@@ -764,7 +764,7 @@ TEST_C:
 
 .PHONY: $(C_TESTCODES_REQUIRED_TO_PASS)
 $(C_TESTCODES_REQUIRED_TO_PASS): testSDG
-	./testSDG --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
+	./testSDG --edg:no_warnings -w -rose:verbose 0 $(TEST_AM_CPPFLAGS) -c $@
 
 .PHONY: TEST_CXX
 TEST_CXX:
@@ -774,7 +774,7 @@ TEST_CXX:
 
 .PHONY: $(CXX_TESTCODES_REQUIRED_TO_PASS)
 $(CXX_TESTCODES_REQUIRED_TO_PASS): testSDG
-	./testSDG --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
+	./testSDG --edg:no_warnings -w -rose:verbose 0 $(TEST_AM_CPPFLAGS) -c $@
 
 check-local:
 	@echo TESTS DISABLED! #@$(MAKE) TEST_C

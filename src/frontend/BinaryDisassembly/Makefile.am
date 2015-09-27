@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) @MYSQL_INCLUDE@
+AM_CPPFLAGS = $(ROSE_INCLUDES) @MYSQL_INCLUDE@
 
 # binarylibdir = $(libdir)
 

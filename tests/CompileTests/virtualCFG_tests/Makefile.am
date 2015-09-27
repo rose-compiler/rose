@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 bin_PROGRAMS = generateVirtualCFG
 
 generateVirtualCFG_SOURCES = generateVirtualCFG.C
@@ -583,7 +583,7 @@ endif # ROSE_USE_LONG_MAKE_CHECK_RULE
 
 # Some of these test codes reference A++ header fiels as part of their tests
 # Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
@@ -615,22 +615,22 @@ F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03.passed}
 JAVA_FILES = ${JAVA_TESTCODES_REQUIRED_TO_PASS:.java=.java.passed}
 
 $(CXX_FILES): %.passed: testVirtualCFG
-#	./testVirtualCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
-#	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
-	@$(RTH_RUN) CMD="./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
+#	./testVirtualCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
+#	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
+	@$(RTH_RUN) CMD="./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/../Cxx_tests/$(@:.CXX.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 
 # ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C.o}: testVirtualCFG
 # $(C_FILES): testVirtualCFG $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
 $(C_FILES): %.passed: testVirtualCFG $(srcdir)/../Cxx_tests/$(@:.C.passed=.C)
 #	cp $(srcdir)/../Cxx_tests/$(@:.C-o=.C) $(@:.C-o=.temp.c)
 	@cp $(srcdir)/../Cxx_tests/$(@:.C.passed=.C) $(@:.C.passed=.temp.c)
-#	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) && touch $@
-	@$(RTH_RUN) CMD="./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C.passed=.temp.c)" $(top_srcdir)/scripts/test_exit_status $@
+#	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(@:.C-o=.temp.c) && touch $@
+	@$(RTH_RUN) CMD="./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(@:.C.passed=.temp.c)" $(top_srcdir)/scripts/test_exit_status $@
 
 $(C99_FILES): %.passed: testVirtualCFG $(srcdir)/../C99_tests/$(@:.C99.passed=.c)
 	@cp $(srcdir)/../C99_tests/$(@:.C99.passed=.c) $(@:.C99.passed=.temp.c)
-#	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) && touch $@
-	@$(RTH_RUN) CMD="./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99.passed=.temp.c)" $(top_srcdir)/scripts/test_exit_status $@
+#	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_AM_CPPFLAGS) -c $(@:.C99-o=.temp.c) && touch $@
+	@$(RTH_RUN) CMD="./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_AM_CPPFLAGS) -c $(@:.C99.passed=.temp.c)" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/15/2011): I have reenabled these test and identified the subset which passed so they can be reqularly tested.
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.

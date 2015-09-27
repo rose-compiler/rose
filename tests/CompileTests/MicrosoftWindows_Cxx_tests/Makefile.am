@@ -239,7 +239,7 @@ SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
 
 # DQ (8/18/2014): When unparsing Microsoft extensions we can't pass this the generated code to the GNU g++ compiler.
 # DQ (5/8/2011): Adding -rose:skipfinalCompileStep so that we can test the new name qualification support that is not yet hooked up to the unparser.
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS)
+# ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS)
 # ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS)
 # ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS) -pedantic-errors -std=c++98
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS) -pedantic-errors -std=c++98
@@ -247,11 +247,11 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(S
 # DQ (3/10/2013): Add the Boost path so that the case where Boost is not installed in /usr/include is covered.
 # Some of these test codes reference A++ header files as part of their tests
 # Include the path to A++ and the transformation specification
-# TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
-# TESTCODE_INCLUDES = $(ROSE_BOOST_PREINCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
-# TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
-TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH)
-APP_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+# TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
+# TESTCODE_AM_CPPFLAGS = $(ROSE_BOOST_PREINCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
+# TESTCODE_AM_CPPFLAGS = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_AM_CPPFLAGS = $(ROSE_BOOST_NORMAL_INCLUDE_PATH)
+APP_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o} ${ROSE__CXX_TESTS__BOOST:.C=.o}
 PASSING_TEST_Sources = ${TESTCODES:.C=.C.passed} ${ROSE__CXX_TESTS__BOOST:.C=.C.passed}
@@ -276,49 +276,49 @@ TEST_TRANSLATOR = ../../testTranslator
 # $(TEST_Objects):
 # $(TEST_Objects): %.o: $(ROSE__CXX_TESTS_DIR)/%.C ../../testTranslator
 # if !ROSE_USE_INSURE
-# 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c "$<"
-# #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-# #	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+# 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c "$<"
+# #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+# #	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 # else
 # #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
 # #	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; $(TEST_TRANSLATOR) --help > /dev/null; echo "Fixed"; fi
 # #	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
-# #	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+# #	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 # #	echo "Removing the just built copy of lt-testTranslator to save space..."
 # #	rm -f testTranslator_$(@:.o=)
-# 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
+# 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(@:.o=.C)
 # endif
 
 # $(TEST_Sources_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 # $(TEST_Sources): %.passed: $(ROSE__CXX_TESTS_DIR)/%.C ../../testTranslator
 $(TEST_Sources): %.passed: $(TEST_TRANSLATOR)
 if !ROSE_USE_INSURE
-#	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c "$<"
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
-#	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-#	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+#	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c "$<"
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
+#	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+#	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
 #	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; $(TEST_TRANSLATOR) --help > /dev/null; echo "Fixed"; fi
 #	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
-#	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+#	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 #	echo "Removing the just built copy of lt-testTranslator to save space..."
 #	rm -f testTranslator_$(@:.o=)
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(@:.o=.C)
 endif
 
 # DQ (9/18/2011): This is testing the option to process the AST to use the constant folded values (contained in the AST).
 $(TEST_Objects_FoldedConstants): ../../testTranslatorFoldedConstants
-	$(VALGRIND) ../../testTranslatorFoldedConstants $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.foldedConstants-o=.C) && touch $@
-#	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	$(VALGRIND) ../../testTranslatorFoldedConstants $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.foldedConstants-o=.C) && touch $@
+#	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 
 # DQ (9/18/2011): This is the equivalent to the default using testTranslator (so not critical to run this).
 $(TEST_Objects_UnfoldedConstants): ../../testTranslatorUnfoldedConstants
-	$(VALGRIND) ../../testTranslatorUnfoldedConstants $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.unfoldedConstants-o=.C) && touch $@
+	$(VALGRIND) ../../testTranslatorUnfoldedConstants $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.unfoldedConstants-o=.C) && touch $@
 
 # DQ (4/6/2010): Added test for parsing only (tested here for C++ code)
 testParser:../../testParser
-	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/test2001_01.C
+	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/test2001_01.C
 
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
@@ -334,7 +334,7 @@ CURRENT_DIRECTORY = `pwd`
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
 $(QMTEST_Objects): $(TEST_TRANSLATOR)
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/$(TEST_TRANSLATOR) NULL $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/$(TEST_TRANSLATOR) NULL $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
 
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
@@ -370,7 +370,7 @@ testBuildUsingAbsolutePath: $(TEST_TRANSLATOR)
 	$(TEST_TRANSLATOR) -rose:verbose 0 `pwd`/roseTestProgram.C
 
 test_msvc_1:
-#	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
+#	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 #	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/cl_preprocessed_hello2.cxx
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/cl_preprocessed_hello2_noline.cxx
 

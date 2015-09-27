@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-TESTCODE_INCLUDES = 
+TESTCODE_AM_CPPFLAGS = 
 
 ROSE2LLVM_FLAGS = --rose2llvm:emit-llvm
 
@@ -80,13 +80,13 @@ DIFF_CHECK = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.c.diff)
 $(C_TEST_EXECUTABLES): ../src/rose2llvm 
 	@cp $(srcdir)/$(@:=.c) $(@:=.c)
 	@cp $(srcdir)/$(@:=.c.in) $(@:=.c.in)
-	../src/rose2llvm $(TESTCODE_INCLUDES) $(ROSE2LLVM_FLAGS) -o $@ $(@:=.c)
+	../src/rose2llvm $(TESTCODE_AM_CPPFLAGS) $(ROSE2LLVM_FLAGS) -o $@ $(@:=.c)
 
 $(C_TEST_OUT): $(C_TEST_EXECUTABLES)
 	./$(@:.c.out=) < $(@:.c.out=.c.in) > $@	
 
 $(C_TEST_CLANG_EXECUTABLES): $(C_TEST_EXECUTABLES)
-	$(CLANG) $(TESTCODE_INCLUDES) $(CLANG_FLAGS) -o $@ $(@:.clang=.c)
+	$(CLANG) $(TESTCODE_AM_CPPFLAGS) $(CLANG_FLAGS) -o $@ $(@:.clang=.c)
 
 $(C_TEST_CLANG_OUT): $(C_TEST_CLANG_EXECUTABLES)
 	./$(@:.c.clang.out=.clang) < $(@:.c.clang.out=.c.in) > $@

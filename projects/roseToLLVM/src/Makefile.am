@@ -8,9 +8,9 @@ if ROSE_USE_LLVM
 #############################################################################
 #MAINTAINERCLEANFILES	= Makefile.in
 
-INCLUDES = 	-I$(srcdir)/rosetollvm/include \
+AM_CPPFLAGS = 	-I$(srcdir)/rosetollvm/include \
 			$(ROSE_INCLUDES) \
-			$(ROSE_LLVM_INCLUDES) 
+			$(ROSE_LLVM_AM_CPPFLAGS) 
 #############################################################################
 
 EXTRA_DIST		 =

@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 bin_PROGRAMS = generateStaticCFG
 
 generateStaticCFG_SOURCES = generateStaticCFG.C
@@ -456,7 +456,7 @@ endif # ROSE_USE_LONG_MAKE_CHECK_RULE
 
 # Some of these test codes reference A++ header fiels as part of their tests
 # Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
@@ -508,34 +508,34 @@ F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03.passed}
 F03_INTER_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-INT.passed}
 
 $(CXX_FILES): testStaticCFG
-#	./testStaticCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
-	@$(RTH_RUN) CMD="./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
+#	./testStaticCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
+	@$(RTH_RUN) CMD="./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/../Cxx_tests/$(@:.CXX.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 
 $(CXX_INTER_FILES): testInterproceduralCFG
-#	./testInterproceduralCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-INT-o=.C) && touch $@
-	@$(RTH_RUN) CMD="./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-INT.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
+#	./testInterproceduralCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/../Cxx_tests/$(@:.CXX-INT-o=.C) && touch $@
+	@$(RTH_RUN) CMD="./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/../Cxx_tests/$(@:.CXX-INT.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 
 
 $(C_FILES): testStaticCFG $(srcdir)/../Cxx_tests/$(@:.C.passed=.C)
 	@cp $(srcdir)/../Cxx_tests/$(@:.C.passed=.C) $(@:.C.passed=.temp.c)
-#	./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) && touch $@
-	@$(RTH_RUN) CMD="./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C.passed=.temp.c)" $(top_srcdir)/scripts/test_exit_status $@
+#	./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(@:.C-o=.temp.c) && touch $@
+	@$(RTH_RUN) CMD="./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(@:.C.passed=.temp.c)" $(top_srcdir)/scripts/test_exit_status $@
 
 $(C_INTER_FILES): testInterproceduralCFG $(srcdir)/../Cxx_tests/$(@:.C-INT.passed=.C)
 	@cp $(srcdir)/../Cxx_tests/$(@:.C-INT.passed=.C) $(@:.C-INT.passed=.temp.int.c)
-#	./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-INT-o=.temp.int.c) && touch $@
-	@$(RTH_RUN) CMD="./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-INT.passed=.temp.int.c)" $(top_srcdir)/scripts/test_exit_status $@
+#	./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(@:.C-INT-o=.temp.int.c) && touch $@
+	@$(RTH_RUN) CMD="./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(@:.C-INT.passed=.temp.int.c)" $(top_srcdir)/scripts/test_exit_status $@
 
 
 $(C99_FILES): testStaticCFG $(srcdir)/../C99_tests/$(@:.C99.passed=.c)
 	@cp $(srcdir)/../C99_tests/$(@:.C99.passed=.c) $(@:.C99.passed=.temp.c)
-#	./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) && touch $@
-	@$(RTH_RUN) CMD="./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99.passed=.temp.c)" $(top_srcdir)/scripts/test_exit_status $@
+#	./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_AM_CPPFLAGS) -c $(@:.C99-o=.temp.c) && touch $@
+	@$(RTH_RUN) CMD="./testStaticCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_AM_CPPFLAGS) -c $(@:.C99.passed=.temp.c)" $(top_srcdir)/scripts/test_exit_status $@
 
 $(C99_INTER_FILES): testInterproceduralCFG $(srcdir)/../C99_tests/$(@:.C99-INT.passed=.c)
 	@cp $(srcdir)/../C99_tests/$(@:.C99-INT.passed=.c) $(@:.C99-INT.passed=.temp.int.c)
-#	./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-INT-o=.temp.int.c) && touch $@
-	@$(RTH_RUN) CMD="./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-INT.passed=.temp.int.c)" $(top_srcdir)/scripts/test_exit_status $@
+#	./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_AM_CPPFLAGS) -c $(@:.C99-INT-o=.temp.int.c) && touch $@
+	@$(RTH_RUN) CMD="./testInterproceduralCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_AM_CPPFLAGS) -c $(@:.C99-INT.passed=.temp.int.c)" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/15/2011): I have reenabled these test and identified the subset which passed so they can be reqularly tested.
 # All of the tests passing for the virtualCFG tests also pass for the staticCFG tests.

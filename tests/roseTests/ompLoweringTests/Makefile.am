@@ -6,7 +6,7 @@ SUBDIRS += fortran
 endif
 
 # Default header file search path
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 roseomp_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 roseompacc_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
@@ -208,15 +208,15 @@ TESTCODE_CURRENTLY_FAILING = \
 # we reuse the OpenMP sources files from the OpenMP compile test directory
 TEST_DIR = $(top_srcdir)/tests/CompileTests/OpenMP_tests
 # the place to find omp.h, libgomp_g.h etc
-TEST_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/programTransformation/ompLowering -I$(top_builddir)
+TEST_AM_CPPFLAGS = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/programTransformation/ompLowering -I$(top_builddir)
 
 noinst_PROGRAMS = roseomp roseompacc
 roseomp_SOURCES = roseomp.C
 roseompacc_SOURCES = roseompacc.C # a relaxed version without consistency checking for fast prototyping
 
 # this flag is used for the long list of CXX test files
-TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering -g --edg:no_warnings #-rose:verbose 2 #--edg:restrict #-rose:wave 
-ACC_TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering -g --edg:no_warnings #-rose:openmp:nodde #-rose:verbose 2 #--edg:restrict #-rose:wave 
+TEST_FLAGS = $(TEST_AM_CPPFLAGS) -rose:openmp:lowering -g --edg:no_warnings #-rose:verbose 2 #--edg:restrict #-rose:wave 
+ACC_TEST_FLAGS = $(TEST_AM_CPPFLAGS) -rose:openmp:lowering -g --edg:no_warnings #-rose:openmp:nodde #-rose:verbose 2 #--edg:restrict #-rose:wave 
 
 # We only include test codes required to compile here.
 # Runnable codes are handled separatedly, 
@@ -283,9 +283,9 @@ $(PASSING_OMP_ACC_TEST_CXX_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.cpp roseompacc
 #	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/matrixmultiply-ompacc.c 
 
 #axpy_ompacc.out:rose_axpy_ompacc.cu
-#	nvcc $<  $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
+#	nvcc $<  $(TEST_AM_CPPFLAGS) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
 #matrixmultiply-ompacc.out:rose_matrixmultiply-ompacc.cu
-#	nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
+#	nvcc $< $(TEST_AM_CPPFLAGS) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
 
 # NOTE: ROSE Test Harness has mechanisms for checking answers via diffs that could possibly be used here. It would also
 # be able to handle via its filters the cases mentioned below where function names have random integer numbers. [RPM
@@ -324,13 +324,13 @@ MY_FINAL_LINK = -L$(top_builddir)/src/midend -lxomp $(GOMP_PATH)/libgomp.a -lpth
 $(PASSING_OMP_ACC_TEST_EXE_Files): %.out: rose_%.cu
 	@$(RTH_RUN) \
 		TITLE="$(NVCCBIN)/nvcc $(notdir $<) [$@.passed]" \
-		CMD="$(NVCCBIN)/nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp.c $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@ $(GOMP_PATH)/libgomp.a -lpthread -lm" \
+		CMD="$(NVCCBIN)/nvcc $< $(TEST_AM_CPPFLAGS) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp.c $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@ $(GOMP_PATH)/libgomp.a -lpthread -lm" \
 		$(TEST_EXIT_STATUS) $@.passed
 
 $(PASSING_OMP_ACC_TEST_CXX_EXE_Files): %.out: rose_%.cu
 	@$(RTH_RUN) \
 		TITLE="$(NVCCBIN)/nvcc $(notdir $<) [$@.passed]" \
-		CMD="$(NVCCBIN)/nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp.c $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@ $(GOMP_PATH)/libgomp.a -lpthread -lm" \
+		CMD="$(NVCCBIN)/nvcc $< $(TEST_AM_CPPFLAGS) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp.c $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@ $(GOMP_PATH)/libgomp.a -lpthread -lm" \
 		$(TEST_EXIT_STATUS) $@.passed
 
 

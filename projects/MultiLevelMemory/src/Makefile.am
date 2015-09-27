@@ -11,7 +11,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 DEFS =
 POCC_INSTALL = $(top_builddir)/src/3rdPartyLibraries/pocc
 
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/../../PolyOpt2/polyopt/include \
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir)/../../PolyOpt2/polyopt/include \
 	-I$(POCC_INSTALL)/driver/pocc/include				\
 	-I$(POCC_INSTALL)/driver/pocc-utils/include			\
 	-I$(POCC_INSTALL)/optimizers/install-letsee/include		\

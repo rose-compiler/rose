@@ -6,7 +6,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # if ROSE_USE_BOOST_WAVE
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # This is a shorted list that tests more quickly.
 TESTCODES_REQUIRED_TO_PASS = \
@@ -36,7 +36,7 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
 $(TEST_Objects): main
 	echo "Copy the file to build a second one to main ..."
-#	$(VALGRIND) ./main $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+#	$(VALGRIND) ./main $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 	$(VALGRIND) ./main $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
 
 bin_PROGRAMS = main

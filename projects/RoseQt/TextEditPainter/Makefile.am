@@ -6,7 +6,7 @@ include $(top_srcdir)/projects/roseQt/UseQtWidgets.inc
 if ROSE_WITH_ROSEQT
 
 
-INCLUDES = $(QT_INCLUDES)
+AM_CPPFLAGS = $(QT_AM_CPPFLAGS)
                          
 
 bin_PROGRAMS = textEditPainterDemo

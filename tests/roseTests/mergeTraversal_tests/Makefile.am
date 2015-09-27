@@ -3,7 +3,7 @@ noinst_PROGRAMS =
 TEST_TARGETS =
 EXTRA_DIST =
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
@@ -28,7 +28,7 @@ traversalArray2.passed: $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C trave
 	@$(RTH_RUN) \
 		DISABLED="not tested in original makefile" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/traversalArray -rose:verbose 0 -I$(top_builddir) $(INCLUDES) -c $(abspath $<)" \
+		CMD="$$(pwd)/traversalArray -rose:verbose 0 -I$(top_builddir) $(AM_CPPFLAGS) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------

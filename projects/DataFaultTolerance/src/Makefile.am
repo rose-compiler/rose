@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir) \
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir) \
 	 -I$(top_srcdir)/projects/DataFaultTolerance/includes
 
 

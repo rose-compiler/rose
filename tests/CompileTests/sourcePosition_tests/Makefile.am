@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = statements
 
@@ -655,16 +655,16 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 ROSE_FLAGS = --edg:no_warnings -w
 
 ## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 # A number of tests require the path to the A++ include directory 
 # and a number of other tests require a path to the source directory.
 # $(TEST_Objects): preprocessor $(srcdir)/$(@:.o=.C)
 $(TEST_Objects): statements
-#	$(VALGRIND) ./statements $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../Cxx_tests -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
+#	$(VALGRIND) ./statements $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir)/../Cxx_tests -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
 	echo "Copy the file to the local build tree so that the tview program can access it with the generated .highlight file ..."
 	cp $(srcdir)/../Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	$(VALGRIND) ./statements $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../Cxx_tests -c $(@:.o=.C)
+	$(VALGRIND) ./statements $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir)/../Cxx_tests -c $(@:.o=.C)
 
 # DQ (11/11/2012): Example command-line to run tview on generated file in current directory.
 # Must be in the source directory and this there is no absolute path to the build_dir so this 

@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_DWARF
 
-INCLUDES = $(ROSE_INCLUDES) 
+AM_CPPFLAGS = $(ROSE_INCLUDES) 
 
 noinst_PROGRAMS = dwarfReader roseDwarfReader dwarfDumpMinimal
 
@@ -17,7 +17,7 @@ dwarfDumpMinimal_SOURCES = dwarfDumpMinimal.C
 dwarfDumpMinimal_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 print:
-	echo "includes = $(INCLUDES)"
+	echo "includes = $(AM_CPPFLAGS)"
 
 # Collect using: "size /sbin/* | sort -rn"
 TESTCODES_REQUIRED_TO_PASS = 

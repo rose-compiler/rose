@@ -5,7 +5,7 @@ bin_PROGRAMS = SPEEDES_event_detector
 # simpleComputationReverser_SOURCES = simpleComputationReverser.C
 SPEEDES_event_detector_SOURCES = SPEEDES_event_detector.cpp
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = speedes_test_code.cpp

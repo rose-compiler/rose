@@ -682,7 +682,7 @@ COMMENTS_FROM_ALL_FILES_OPTION = -rose:collectAllCommentsAndDirectives
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(PERFORMANCE_REPORT_OPTION) $(COMMENTS_FROM_ALL_FILES_OPTION)
 
 ## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=yes --error-limit=no --show-reachable=yes
@@ -703,7 +703,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 # $(TEST_Objects): preprocessor $(srcdir)/$(@:.o=.C)
 $(TEST_Objects): $(TEST_TRANSLATOR)
 #	cp $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C) .
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../../CompileTests/Cxx_tests -c $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir)/../../CompileTests/Cxx_tests -c $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C)
 	rm -f $(@:.o=.C)
 
 
@@ -717,7 +717,7 @@ QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 # $(QMTEST_Objects): preprocessor $(srcdir)/$(@:.qmt=.C)
 $(QMTEST_Objects): $(TEST_TRANSLATOR)
 #	@echo "Calling QMTEST_Objects rule for Cxx_tests directory: "
-	qm.sh f rose.RoseTest $(TEST_TRANSLATOR) NULL $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+	qm.sh f rose.RoseTest $(TEST_TRANSLATOR) NULL $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
 
 # This is a rule to add the current files into a QMTest database
 build_qmtest_database: $(QMTEST_Objects)
@@ -753,5 +753,5 @@ clean-local:
 
 
 gprof: $(TEST_TRANSLATOR) $(srcdir)/test2001_11.C
-#	gprof ../preprocessor $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/test2001_11.C
+#	gprof ../preprocessor $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/test2001_11.C
 

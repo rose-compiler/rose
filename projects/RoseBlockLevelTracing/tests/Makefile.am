@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-TESTCODE_INCLUDES = 
+TESTCODE_AM_CPPFLAGS = 
 
 F2C_FLAGS = -rose:C_output_language 
 

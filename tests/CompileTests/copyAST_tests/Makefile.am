@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = copyExample copyLoops copyBlocks copyFunctionDefinitions
 
@@ -823,7 +823,7 @@ EXTRA_ALL_TESTCODES = $(EXTRA_TESTCODES_REQUIRED_TO_PASS) $(TESTS_STILL_TOO_HARD
 ROSE_FLAGS = --edg:no_warnings -rose:verbose 0 --edg:restrict
 
 ## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 # VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
@@ -854,11 +854,11 @@ $(TEST_Sources): %.passed: ./copyExample
 # $(EXTRA_TEST_Objects): copyExample $(srcdir)/$(@:.o=.C)
 # $(EXTRA_TEST_Objects): copyExample
 ##	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
-#	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
+#	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
 
 $(EXTRA_TEST_Sources): %.passed: ./copyExample
-#	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
-	@$(RTH_RUN) CMD="./copyExample $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
+#	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
+	@$(RTH_RUN) CMD="./copyExample $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/../Cxx_tests/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
@@ -896,7 +896,7 @@ testCopyFunctionDefinitions: copyFunctionDefinitions
 
 
 
-# INCLUDES = $(ROSE_INCLUDES)
+# AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # bin_PROGRAMS = copyExample
 

@@ -1229,7 +1229,7 @@ endif
 
 # DQ (4/6/2010): Added test for parsing only (tested here for C++ code)
 testParser: ../../testParser
-	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/test2007_01.f90
+	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/test2007_01.f90
 
 
 QMTEST_Objects = ${ALL_TESTCODES:.f90=.qmt}

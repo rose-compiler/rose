@@ -23,7 +23,7 @@ $(CXX_TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
 # used to find omp.h, added it as one of  rose headers
-TESTCODE_INCLUDES = -I$(top_srcdir)/projects/A++DataLayout/include 
+TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/projects/A++DataLayout/include 
 
 ROSE_FLAGS = -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict 
 
@@ -32,11 +32,11 @@ LAYOUTEXEC = $(top_builddir)/projects/A++DataLayout/ArrayLayoutTransformation
 CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
 $(CXX_TEST_Objects): $(LAYOUTEXEC) $(@:.o=.C)
-	 $(LAYOUTEXEC) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) $(srcdir)/perf_spec_nolayout.C $(srcdir)/$(@:.o=.C) > log.out
+	 $(LAYOUTEXEC) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) $(srcdir)/perf_spec_nolayout.C $(srcdir)/$(@:.o=.C) > log.out
 	 mv rose_$(@:.o=.C) rose_wolayout_$(@:.o=.C)
 
 
-LAYOUTFILES = for i in {1..11} ; do $(LAYOUTEXEC) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) $(srcdir)/perf_spec$$i.C $(srcdir)/perf_test$$i.C > log.out ; mv rose_perf_test$$i.C rose_layout_perf_test$$i.C ; done 
+LAYOUTFILES = for i in {1..11} ; do $(LAYOUTEXEC) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) $(srcdir)/perf_spec$$i.C $(srcdir)/perf_test$$i.C > log.out ; mv rose_perf_test$$i.C rose_layout_perf_test$$i.C ; done 
 
 check-local:
 	@echo "Test for A++DataLayout preprocessor."

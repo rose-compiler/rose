@@ -9,7 +9,7 @@ if !USING_XTENSA_BACKEND_COMPILER
 SUBDIRS += roseHPCT 
 endif
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # all: exampleMakefile
 
@@ -575,10 +575,10 @@ testInheritedAttributeTraversal: inheritedAttributeTraversal
 testPersistantAttributes: persistantAttributes
 	./persistantAttributes -c $(srcdir)/inputCode_ExampleTraversals_2.C
 
-# TAU_INCLUDES = -I/home/dquinlan/TAU/tau-2.14.8/include
-TAU_INCLUDES = -I$(srcdir)/TAU_INCLUDE_DIR
+# TAU_AM_CPPFLAGS = -I/home/dquinlan/TAU/tau-2.14.8/include
+TAU_AM_CPPFLAGS = -I$(srcdir)/TAU_INCLUDE_DIR
 testTauInstrumenter: tauInstrumenter
-	./tauInstrumenter $(TAU_INCLUDES) -c $(srcdir)/inputCode_tauInstrumenter.C
+	./tauInstrumenter $(TAU_AM_CPPFLAGS) -c $(srcdir)/inputCode_tauInstrumenter.C
 
 testTypeTransformation: typeTransformation
 	./typeTransformation -c $(srcdir)/inputCode_typeTransformation.C
@@ -731,13 +731,13 @@ testSwitchWithoutDefault: switchWithoutDefault
 	./switchWithoutDefault -rose:verbose 0 -I$(srcdir) -c $(srcdir)/inputCode_switchWithoutDefault.C
 
 testRoseSwitchWithoutDefault: switchWithoutDefault
-	./switchWithoutDefault -rose:verbose 0 -I.. $(INCLUDES) -c ../src/frontend/SageIII/Cxx_Grammar.C
+	./switchWithoutDefault -rose:verbose 0 -I.. $(AM_CPPFLAGS) -c ../src/frontend/SageIII/Cxx_Grammar.C
 
 testAddStruct: addStruct
-	./addStruct -rose:verbose 0 -I.. $(INCLUDES) -c $(srcdir)/inputCode_addStruct.C
+	./addStruct -rose:verbose 0 -I.. $(AM_CPPFLAGS) -c $(srcdir)/inputCode_addStruct.C
 
 testsnprintf: sprintf_to_snprintf
-#	./sprintf_to_snprintf -rose:verbose 0 -I.. $(INCLUDES) -c $(srcdir)/inputCode_sprintf_to_snprintf.C
+#	./sprintf_to_snprintf -rose:verbose 0 -I.. $(AM_CPPFLAGS) -c $(srcdir)/inputCode_sprintf_to_snprintf.C
 	./sprintf_to_snprintf -rose:verbose 0 -c $(srcdir)/inputCode_sprintf_to_snprintf.C
 
 testSeedBugsExample_arrayIndexing: seedBugsExample_arrayIndexing
@@ -1356,7 +1356,7 @@ scopeInformation.out: scopeInformation
 	./scopeInformation $(ROSE_FLAGS) -c $(srcdir)/inputCode_scopeInformation.C > scopeInformation.out
 
 rose_inputCode_tauInstrumenter.C: tauInstrumenter
-#	./tauInstrumenter $(ROSE_FLAGS) $(TAU_INCLUDES) -c $(srcdir)/inputCode_tauInstrumenter.C
+#	./tauInstrumenter $(ROSE_FLAGS) $(TAU_AM_CPPFLAGS) -c $(srcdir)/inputCode_tauInstrumenter.C
 	echo "Test Failed!" > rose_inputCode_tauInstrumenter.C
 
 rose_inputCode_inlineTransformations.C: inlineTransformations

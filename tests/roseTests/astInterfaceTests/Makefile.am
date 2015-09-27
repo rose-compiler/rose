@@ -8,7 +8,7 @@ SUBDIR = typeEquivalenceTests unitTests
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
-INCLUDES =  \
+AM_CPPFLAGS =  \
         $(ROSE_INCLUDES) \
         -I$(top_srcdir)/src/frontend/SageIII/sageInterface
 # We install a few test programs since they might be useful for external users

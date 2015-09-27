@@ -16,7 +16,7 @@ MOSTLYCLEANFILES=
 if USE_BINARY_ANALYSIS_TESTS
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 TEST_WITH_ANSWER = $(top_srcdir)/scripts/test_with_answer

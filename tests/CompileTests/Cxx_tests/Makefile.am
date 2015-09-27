@@ -1018,13 +1018,13 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENT
 # DQ (3/10/2013): Add the Boost path so that the case where Boost is not installed in /usr/include is covered.
 # Some of these test codes reference A++ header files as part of their tests
 # Include the path to A++ and the transformation specification
-# TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
-# TESTCODE_INCLUDES = $(ROSE_BOOST_PREINCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
-# TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
-TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH)
-APP_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
+# TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
+# TESTCODE_AM_CPPFLAGS = $(ROSE_BOOST_PREINCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
+# TESTCODE_AM_CPPFLAGS = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_AM_CPPFLAGS = $(ROSE_BOOST_NORMAL_INCLUDE_PATH)
+APP_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
 
-TESTS_THAT_FAIL =
+# TESTS_THAT_FAIL =
 
 # This test fails on Debian, GCC-4.4.5, boost-1.47.0 in buildTemplateClassDeclaration_nfi with the error message "detected
 # isSgClassType(nondefdecl->get_type())->get_declaration() != isSgDeclarationStatement(nondefdecl) (problem with Boost code
@@ -1052,33 +1052,33 @@ TEST_TRANSLATOR = ../../testTranslator
 # $(TEST_Objects):
 # $(TEST_Objects): %.o: $(ROSE__CXX_TESTS_DIR)/%.C ../../testTranslator
 # if !ROSE_USE_INSURE
-# 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c "$<"
-# #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
-# #	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+# 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c "$<"
+# #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+# #	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 # else
 # #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
 # #	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; $(TEST_TRANSLATOR) --help > /dev/null; echo "Fixed"; fi
 # #	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
-# #	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+# #	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 # #	echo "Removing the just built copy of lt-testTranslator to save space..."
 # #	rm -f testTranslator_$(@:.o=)
-# 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
+# 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(@:.o=.C)
 # endif
 
 $(TEST_Sources): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 if !ROSE_USE_INSURE
 	@$(RTH_RUN) \
-		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
+		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $<" \
 		TITLE="testTranslator $(notdir $<) [$@]" \
 		$(top_srcdir)/scripts/test_exit_status $@
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
 #	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; $(TEST_TRANSLATOR) --help > /dev/null; echo "Fixed"; fi
 #	cp ../../.libs/lt-testTranslator testTranslator_$(@:.o=)
-#	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+#	./testTranslator_$(@:.o=) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 #	echo "Removing the just built copy of lt-testTranslator to save space..."
 #	rm -f testTranslator_$(@:.o=)
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(@:.o=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(@:.o=.C)
 endif
 
 FAILING_TEST_targets = $(addsuffix .passed, $(TESTS_THAT_FAIL))
@@ -1089,16 +1089,16 @@ $(FAILING_TEST_targets): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/
 
 # DQ (9/18/2011): This is testing the option to process the AST to use the constant folded values (contained in the AST).
 $(TEST_Objects_FoldedConstants): ../../testTranslatorFoldedConstants
-	$(VALGRIND) ../../testTranslatorFoldedConstants $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.foldedConstants-o=.C) && touch $@
-#	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	$(VALGRIND) ../../testTranslatorFoldedConstants $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.foldedConstants-o=.C) && touch $@
+#	$(VALGRIND) ../../testFrontEnd $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 
 # DQ (9/18/2011): This is the equivalent to the default using testTranslator (so not critical to run this).
 $(TEST_Objects_UnfoldedConstants): ../../testTranslatorUnfoldedConstants
-	$(VALGRIND) ../../testTranslatorUnfoldedConstants $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.unfoldedConstants-o=.C) && touch $@
+	$(VALGRIND) ../../testTranslatorUnfoldedConstants $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.unfoldedConstants-o=.C) && touch $@
 
 # DQ (4/6/2010): Added test for parsing only (tested here for C++ code)
 testParser:../../testParser
-	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/test2001_01.C
+	$(VALGRIND) ../../testParser $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/test2001_01.C
 
 # This requires a special makefile rule
 test2005_56.o: $(TEST_TRANSLATOR)
@@ -1133,9 +1133,9 @@ if !USING_INTEL_COMPILER
 #$(ROSE__CXX_TESTS_DIR)/test2013_09.o: $(TEST_TRANSLATOR)
 test2013_09.C.passed: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."
-#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
-#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) -c $(srcdir)/test2013_09.C -o test2013_09.o
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_AM_CPPFLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_AM_CPPFLAGS) -c $(srcdir)/test2013_09.C -o test2013_09.o
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_AM_CPPFLAGS) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 else
 test2013_09.C.passed: $(TEST_TRANSLATOR)
 endif
@@ -1220,7 +1220,7 @@ CURRENT_DIRECTORY = `pwd`
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
 $(QMTEST_Objects): $(TEST_TRANSLATOR)
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/$(TEST_TRANSLATOR) NULL $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/$(TEST_TRANSLATOR) NULL $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
 
 # This must be placed after the more general rule to work properly!
 test2005_56.qmt: $(TEST_TRANSLATOR)

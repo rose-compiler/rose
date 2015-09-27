@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS = hcpragma testParserBuilder buildFromString
@@ -17,12 +17,12 @@ TESTCODE_CURRENTLY_FAILING =
 
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave
 # used to find omp.h, added it as one of  rose headers
-TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
+TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/src/frontend/SageIII
 
 PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
 
 $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c hcpragma
-	./hcpragma $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
+	./hcpragma $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -c $<
 
 generatedCodeExamples = \
    rose_inputbuildFromString.C

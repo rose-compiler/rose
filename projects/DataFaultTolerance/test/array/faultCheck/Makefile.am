@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) \
+AM_CPPFLAGS = $(ROSE_INCLUDES) \
 	   -I$(top_srcdir)/projects/DataFaultTolerance/includes
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
@@ -18,14 +18,14 @@ $(CXX_TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
 # used to find .h, added it as one of  rose headers
-TESTCODE_INCLUDES = -I$(top_srcdir)/projects/DataFaultTolerance/includes 
+TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/projects/DataFaultTolerance/includes 
 LIB_DIR = -L$(top_builddir)/projects/DataFaultTolerance/src
 TEST_PATH = $(top_srcdir)/projects/DataFaultTolerance/test/array/faultCheck
 
 CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.exe}
 
 $(CXX_TEST_Objects): $(CXX_TESTCODES_REQUIRED_TO_PASS)
-	$(CXX) $(TESTCODE_INCLUDES) $(LIB_DIR) $(TEST_PATH)/$(@:.exe=.C) -o $(@:.exe=.out) -lfaulttolerancearray ; \
+	$(CXX) $(TESTCODE_AM_CPPFLAGS) $(LIB_DIR) $(TEST_PATH)/$(@:.exe=.C) -o $(@:.exe=.out) -lfaulttolerancearray ; \
 	(./$(@:.exe=.out) ) >> actual.log 2>&1 & \
 	sleep 1 
 

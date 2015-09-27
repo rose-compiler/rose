@@ -31,10 +31,10 @@ ROSE_FLAGS = -rose:test 6
 ## them directly into the test code directory (testing only the compilation with ROSE
 ## and not the execution!)
 ## Include the path to A++ and the transformation specification
-## INCLUDES = @Axx_INCLUDES@
+## AM_CPPFLAGS = @Axx_AM_CPPFLAGS@
 MPI_INCLUDE = -I/usr/local/mpi/mpich-1.1.1/include -I/usr/local/mpi/mpich-1.1.1/lib/solaris/ch_p4
 
-INCLUDES = -I. -I../../.. -I$(top_srcdir)/tests/CompileTests/P++Tests -I$(top_srcdir)/include $(MPI_INCLUDE)
+AM_CPPFLAGS = -I. -I../../.. -I$(top_srcdir)/tests/CompileTests/P++Tests -I$(top_srcdir)/include $(MPI_INCLUDE)
 
 # libTestSource_a_SOURCES = $(TESTCODES)
 
@@ -50,7 +50,7 @@ check-local:
 	@echo "**********************************************************************************************"
 
 $(TEST_Objects): $(TESTCODES)
-	../../testTranslator $(ROSE_FLAGS) $(INCLUDES) -c $(srcdir)/$(@:.o=.C)
+	../../testTranslator $(ROSE_FLAGS) $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.C)
 
 
 ## Run each test with this script (required to get the

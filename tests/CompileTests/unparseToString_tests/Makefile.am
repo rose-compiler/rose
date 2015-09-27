@@ -27,7 +27,7 @@ SPECIMEN_DIR = $(abs_top_srcdir)/tests/CompileTests/Cxx_tests
 include ../Cxx_tests/Makefile-pass.inc
 SPECIMENS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
 TEST_CONFIG = $(top_srcdir)/scripts/test_exit_status
-TEST_INCLUDES = -I$(SPECIMEN_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
+TEST_AM_CPPFLAGS = -I$(SPECIMEN_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
 
 # The makefile targets for "make check"
 unparseAll_TEST_TARGETS = $(addprefix ua_, $(addsuffix .passed, $(SPECIMENS)))
@@ -41,9 +41,9 @@ check-unparseType: $(unparseType_TEST_TARGETS)
 
 # How to run each test across each specimen
 $(unparseAll_TEST_TARGETS): ua_%.passed: $(SPECIMEN_DIR)/% $(TEST_CONFIG) unparseToString
-	@$(RTH_RUN) CMD="./unparseToString --all --edg:no_warnings -w --edg:restrict $(TEST_INCLUDES) -c $<" $(TEST_CONFIG) $@
+	@$(RTH_RUN) CMD="./unparseToString --all --edg:no_warnings -w --edg:restrict $(TEST_AM_CPPFLAGS) -c $<" $(TEST_CONFIG) $@
 $(unparseType_TEST_TARGETS): ut_%.passed: $(SPECIMEN_DIR)/% $(TEST_CONFIG) unparseToString
-	@$(RTH_RUN) CMD="./unparseToString       --edg:no_warnings -w --edg:restrict $(TEST_INCLUDES) -c $<" $(TEST_CONFIG) $@
+	@$(RTH_RUN) CMD="./unparseToString       --edg:no_warnings -w --edg:restrict $(TEST_AM_CPPFLAGS) -c $<" $(TEST_CONFIG) $@
 
 test_unparseProject: unparseProject
 	./unparseProject $(srcdir)/test2014_26.C

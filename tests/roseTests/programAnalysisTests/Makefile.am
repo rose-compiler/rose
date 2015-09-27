@@ -22,7 +22,7 @@ CHECK_ANSWER = $(top_srcdir)/scripts/test_against_answer
 CHECK_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal -I${top_srcdir}/src/midend/programAnalysis/CFG -I${top_srcdir}/src/midend/programAnalysis/bitvectorDataflow -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/util/graphs -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil -I$(top_srcdir)/src/midend/programAnalysis/ 
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal -I${top_srcdir}/src/midend/programAnalysis/CFG -I${top_srcdir}/src/midend/programAnalysis/bitvectorDataflow -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/util/graphs -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil -I$(top_srcdir)/src/midend/programAnalysis/ 
 #-I$(top_srcdir)/src/midend/programAnalysis/ptrTrace/GAI/ICFG/
 
 
@@ -91,10 +91,10 @@ endif
 VFA_TEST_NAMES = $(basename $(VFA_TEST_SPECIMENS))
 VFA_TEST_TARGETS = $(addprefix vfa_, $(addsuffix .passed, $(VFA_TEST_NAMES)))
 VFA_TEST_SWITCHES = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
-VFA_TEST_INCLUDES = -I$(VFA_SPECIMEN_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
+VFA_TEST_AM_CPPFLAGS = -I$(VFA_SPECIMEN_DIR) -I$(top_srcdir)/tests/CompileTests/A++Code
 
 $(VFA_TEST_TARGETS): vfa_%.passed: $(VFA_SPECIMEN_DIR)/%.C VirtualFunctionAnalysisTest $(CHECK_EXIT_STATUS)
-	@$(RTH_RUN) CMD="./VirtualFunctionAnalysisTest $(VFA_TEST_SWITCHES) $(VFA_TEST_INCLUDES) -c $<" $(CHECK_EXIT_STATUS) $@
+	@$(RTH_RUN) CMD="./VirtualFunctionAnalysisTest $(VFA_TEST_SWITCHES) $(VFA_TEST_AM_CPPFLAGS) -c $<" $(CHECK_EXIT_STATUS) $@
 
 .PHONY: check-vfa
 check-vfa: $(VFA_TEST_TARGETS)

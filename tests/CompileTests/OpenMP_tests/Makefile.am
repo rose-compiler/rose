@@ -11,7 +11,7 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   SUBDIRS += fortran 
 endif
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 C_TESTCODES_REQUIRED_TO_PASS = \
@@ -175,7 +175,7 @@ TESTCODE_CURRENTLY_FAILING = \
 
 ROSE_FLAGS = -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave
 # used to find omp.h, added it as one of  rose headers
-TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
+TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/src/frontend/SageIII
 
 PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
 
@@ -186,10 +186,10 @@ PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
 C_OMP_ACC_TEST_Unparsed = $(addprefix rose_,${C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS})
 
 $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c parseOmp
-	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
+	./parseOmp $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -c $<
 
 $(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp parseOmp
-	./parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c $<
+	./parseOmp ${ROSE_FLAGS} ${TESTCODE_AM_CPPFLAGS} -c $<
 
 check-c:$(PASSING_C_TEST_Objects) 
 check-cxx:$(PASSING_CXX_TEST_Objects)
@@ -204,10 +204,10 @@ $(TESTCODE_CURRENTLY_FAILING)
 # Test for a bug which happens when more than two source files show in the command line
 # the translator should now be able to avoid duplicated processing of pragma statements
 bonds-2.o: $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c parseOmp
-	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c
+	./parseOmp $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c
 
 macroIds.o: $(srcdir)/macroIds.c parseOmp
-	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -rose:collectAllCommentsAndDirectives $(srcdir)/macroIds.c
+	./parseOmp $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -rose:collectAllCommentsAndDirectives $(srcdir)/macroIds.c
 
 # test parsing experimental OpenMP accelerator directives, Liao 1/16/2013
 #$(C_OMP_ACC_TEST_Objects): %.o:$(srcdir)/%.c parseOmp

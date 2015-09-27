@@ -21,9 +21,9 @@ ROSEHPCT_BUILD_ROOT = $(top_builddir)/src/roseExtensions/roseHPCToolkit
 rosehpctincdir = $(includedir)/rosehpct
 
 # Default header file search path
-INCLUDES = -I$(top_srcdir) -I$(top_builddir) \
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir) \
            $(ROSE_INCLUDES) \
-           $(ROSEHPCT_DEP_INCLUDES) \
+           $(ROSEHPCT_DEP_AM_CPPFLAGS) \
            -I$(ROSEHPCT_SRC_ROOT)/include
 
 # Default link flags for executables

@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS = testCodeBuilderTest
@@ -17,7 +17,7 @@ EXTRA_DIST =
 
 CLEANFILES =
 
-TESTCODE_INCLUDES = -I$(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test -I/opt/local/include \
+TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test -I/opt/local/include \
 	-I$(top_srcdir)/projects/backstroke/testCodeGeneration/include
 
 check-local:
@@ -28,8 +28,8 @@ check-local:
 
 test: FORCE
 #cp $(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test/rctypes.h rctypes.h
-	./testCodeBuilderTest $(TESTCODE_INCLUDES)
-	g++ test.C -o test $(TESTCODE_INCLUDES)
+	./testCodeBuilderTest $(TESTCODE_AM_CPPFLAGS)
+	g++ test.C -o test $(TESTCODE_AM_CPPFLAGS)
 	./test
 
 FORCE:

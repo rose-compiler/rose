@@ -208,8 +208,10 @@ if ROSE_WITH_ATERM
 endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-#  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal/libexperimentalRoseFortran.la
-   libroseExperimentalOpenFortranParserlibraries =
+#   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal/libexperimentalRoseFortran.la
+
+# DQ (9/26/2015): This is defined in src/Makefile.am
+#   libroseExperimentalOpenFortranParserlibraries =
 #   ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
 #   ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(top_builddir)/src/frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal -lexperimentalRoseFortran
     ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal -lexperimentalOFP
