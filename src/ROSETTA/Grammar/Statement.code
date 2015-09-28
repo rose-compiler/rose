@@ -15663,8 +15663,12 @@ SgTypedefDeclaration::get_mangled_name (void) const
              {
                mangleQualifiersString = mangleQualifiers(get_scope());
              }
-
-          mangledName = joinMangledQualifiers (mangleQualifiersString,get_name()) + baseType->get_mangled();
+	// ciwainsky (2015-09-28):
+        //   the original implementation of the name-mangling added the file-name to anonymous structures.
+        //   if such structures were used as arguments to functions cross file matching via manglednames is not possible.
+        //   Therefore the mangling must only be based on the qualifiers and the name 
+        //   mangledName = joinMangledQualifiers (mangleQualifiersString,get_name()) + baseType->get_mangled();
+        mangledName = joinMangledQualifiers (mangleQualifiersString,get_name());
 
        // DQ (1/29/2007): We need to make this more specific to this IR nodes so that a typedef of an unnamed struct does not be mangled to be the same name
           mangledName += "__typedef_declaration";
