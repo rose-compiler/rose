@@ -104,7 +104,7 @@ EDGBIN_NTRIES = 1
 all-am: EDG/libroseEDG.la
 
 network_checking:
-	wget -q --spider -t 3 --wait=5 http://www.rosecompiler.or ; \ 
+	wget -q --spider -t 3 --wait=5 http://www.rosecompiler.org ; \
 	if [ $$? -eq 0 ]; then \
 	echo "ROSE WebServer is Reachable"; \
 	else \
@@ -116,7 +116,7 @@ network_checking:
 # it sometimes discards standard error and doesn't cause make to fail if the command fails.  If edg-generate-sig fails then
 # remove the edg-generate-sig.output file so that re-running make will fail the same way next time.
 edg-generate-sig.output: 
-	@wget -q --spider -t 3 --wait=5 http://www.rosecompiler.or ; \ 
+	@wget -q --spider -t 3 --wait=5 http://www.rosecompiler.org ; \
 	if [ $$? -eq 0 ]; then \
 	if ! $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig --find --progress --ntries=$(EDGBIN_NTRIES) >$@; then \
 	    rm -f $@ ; \
