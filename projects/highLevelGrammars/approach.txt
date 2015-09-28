@@ -162,8 +162,8 @@ void $DEFINED_LIBRARY_NAME_RecognitionTraversal::visit (SgNode* astNode)
         {
           if (astNode->variantT()) == V_SgFuncCallExp)
              {
-               string fileName = ROSE::getFileName(statement);
-               printf ("Parent statement in file = %s at line = %d \n",fileName.c_str(),ROSE::getLineNumber(statement));
+               string fileName = rose::getFileName(statement);
+               printf ("Parent statement in file = %s at line = %d \n",fileName.c_str(),rose::getLineNumber(statement));
 
             // If the statement is in a file within the subdirectory structure of the library's
             // directiry structure then it is considered to be a library abstraction

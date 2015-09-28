@@ -2,7 +2,7 @@
 // addtogroup documented_example Documented Example 1
 
 /**
-   \page ROSE_DocumentationExperiment AST Construction Documentation Experiment
+   \defgroup ROSE_DocumentationExperiment AST Construction Documentation Experiment
 @{
 
 

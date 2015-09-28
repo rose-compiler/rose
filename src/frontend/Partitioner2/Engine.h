@@ -68,7 +68,7 @@ namespace Partitioner2 {
  *           "This tool disassembles the specified specimen and presents the "
  *           "results as a pseudo assembly listing, that is, a listing intended "
  *           "for human consumption rather than assembly.";
- *       SgProject *project = P2::Engine().frontend(argc, argv, purpose, description);
+ *       SgAsmBlock *gblock = P2::Engine().frontend(argc, argv, purpose, description);
  *  @endcode
  *
  *  @section topsteps High level operations

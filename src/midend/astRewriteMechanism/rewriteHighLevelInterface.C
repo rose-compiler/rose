@@ -55,7 +55,7 @@ HighLevelRewrite::generatePrefixAndSuffix (
              {
                SgStatement* currentStatement = TransformationSupport::getStatement(astNode);
                ROSE_ASSERT (currentStatement != NULL);
-               startingStatementForPrefixGeneration = ROSE::getPreviousStatement(currentStatement);
+               startingStatementForPrefixGeneration = rose::getPreviousStatement(currentStatement);
                ROSE_ASSERT (startingStatementForPrefixGeneration != NULL);
              }
 

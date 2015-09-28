@@ -43,7 +43,7 @@ public:
     virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
-/** Matches an x86 <cde>MOV EDI,EDI; PUSH ESI</code> function prologe. */
+/** Matches an x86 <code>MOV EDI,EDI; PUSH ESI</code> function prologe. */
 class MatchAbbreviatedPrologue: public FunctionPrologueMatcher {
 protected:
     Function::Ptr function_;

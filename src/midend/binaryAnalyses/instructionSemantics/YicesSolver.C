@@ -54,7 +54,7 @@ YicesSolver::available_linkage()
 
 /* See YicesSolver.h */
 SMTSolver::Satisfiable
-YicesSolver::satisfiable(const std::vector<TreeNodePtr> &exprs)
+YicesSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 {
     clear_evidence();
     Satisfiable retval = trivially_satisfiable(exprs);
@@ -545,7 +545,7 @@ YicesSolver::out_binary(std::ostream &o, const char *opname, const InternalNodeP
  *  will be rewritten as
  *  \code
  *      (ite (= COND 0b1) S1 S2)
- *  \code
+ *  \endcode
  */
 void
 YicesSolver::out_ite(std::ostream &o, const InternalNodePtr &in)

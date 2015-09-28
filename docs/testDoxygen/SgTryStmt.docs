@@ -5,7 +5,7 @@
 /*!
 \class SgTryStmt
 \brief This class represents the concept of try statement within the try-catch
-    support for exception handling in C++.
+support for exception handling in C++.
 
 \sa
 \ref SgTryStmt_usage  "Example of using a SgTryStmt object"
@@ -17,13 +17,13 @@
 
 /*! \var SgTryStmt::p_body
 \brief This pointer points to a SgBasicBlock containing the statements to be execued by
-    the try block.
+the try block.
 
 */
 
 /*! \var SgTryStmt::p_catch_statement_seq_root
 \brief This pointer points to a SgCatchStatementSeq and connects the try statement to the
-    sequence of catch statements within the support of exception handling.
+sequence of catch statements within the support of exception handling.
 
 */
 
@@ -45,7 +45,7 @@ otherwise.
 \fn SgTryStmt::SgTryStmt ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgTryStmt base class.
+This constructor builds the SgTryStmt base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -58,14 +58,14 @@ otherwise.
 \fn SgTryStmt::~SgTryStmt()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgTryStmt::isSgTryStmt (SgNode *s)
 \brief Cast function (from derived class to SgTryStmt pointer).
 
-   This functions returns a SgTryStmt pointer for any input of a 
+This functions returns a SgTryStmt pointer for any input of a 
 pointer to an object derived from a SgTryStmt.
 
 \return Returns valid pointer to SgTryStmt if input is derived from a SgLocatedNode.
@@ -75,7 +75,7 @@ pointer to an object derived from a SgTryStmt.
 \fn SgTryStmt::isSgTryStmt (const SgNode *s)
 \brief Cast function (from derived class to SgTryStmt pointer).
 
-   This functions returns a SgTryStmt pointer for any input of a 
+This functions returns a SgTryStmt pointer for any input of a 
 pointer to an object derived from a SgTryStmt.
 
 \return Returns valid pointer to SgTryStmt if input is derived from a SgLocatedNode.

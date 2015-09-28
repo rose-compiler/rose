@@ -376,8 +376,8 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
                    string original_filename = file->getFileName();
 
                 // DQ (7/4/2008): Fix filenamePostfix to go before the "."
-                // string filename = string("./") + ROSE::stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
-//                 string filename = string("./") + ROSE::stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
+                // string filename = string("./") + rose::utility_stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
+//                 string filename = string("./") + rose::utility_stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
                    string filename = string("./") + StringUtility::stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
 
                 // printf ("generated filename for dot file (from SgSourceFile or SgBinaryComposite) = %s file->get_parent() = %p \n",filename.c_str(),file->get_parent());

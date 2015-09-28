@@ -1,23 +1,4 @@
-
-// Don't show these pages in the user's documentation (only in the developer's version)
- /*! \if documentDevelopmentVersionUsingDoxygen
-          \page DoxygenBugs Doxygen Bugs
-
-          Since I have found several bugs in doxygen and we want to use it to document Rose
-          I thought I would write down a few of them and provide a location where we could keep
-          each other informed about them as we work.  
-             -# internal command does not work on blocks that define groups, it does seem 
-                to work elsewhere.
-             -# The -\# command does not work in paragraphs associated with the todo command.
-             -# \\section commands can't appear in \\defgroup blocks (causes a seg fault
-                in doxygen processing).
-             -# Can't document an enum outside of the location in the file where it
-                appears.
-             -# When refering to a function name in text autolink can't understand "(",
-                ")", and ";"; and does not build the link.
-             -# Nested classes are not represented in the generated documentation
-             -# Grouping of nested classes seems to have no effect.
-     \endif
- */
-
-
+// -*- c++ -*-
+//
+// This file had a list of doxygen bugs, but the list was old (2008) and I know that some of these things work fine in recent
+// versions of doxygen because I use them. Therefore I'm deleting this page. [Robb P. Matzke 2015-05-15]

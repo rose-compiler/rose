@@ -49,7 +49,6 @@ SUBDIRS = \
 	Fortran_to_C \
 	mint \
 	vectorization \
-	MultiLevelMemory \
 	extractMPISkeleton \
 	RoseBlockLevelTracing \
 	LineDeleter \
@@ -174,8 +173,10 @@ if ROSE_WITH_ATERM
 endif
 
 # Pei-Hung (12/17/2014): adding PolyOpt only when POCC is available
+# Pei-Hung (09/24/2015): MultiLevelMemory requires POCC
 if ROSE_WITH_POCC
-   SUBDIRS += PolyOpt2
+   SUBDIRS += PolyOpt2 \
+	MultiLevelMemory
 endif
 
 # DQ (2/28/2010): We can't make this conditionsl this since then the Makefile.in will 

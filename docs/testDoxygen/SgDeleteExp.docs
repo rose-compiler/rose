@@ -7,7 +7,7 @@
 \brief This class represents the concept of a C++ call to the delete operator.
 
 \todo I believe we can associate the destructors from the class with 
-      delete operators.
+delete operators.
 
 \sa
 \ref SgDeleteExp_usage  "Example of using a SgDeleteExp object"
@@ -34,8 +34,8 @@
 \todo Check if this bool data member is used and/or required.
 
 \internal  Not clear if this is required since Sage III should have the scope sufficent to output
-    any required name qualification.  More generally we should be able to eliminate this
-    once we explicitly store all explicit qualified names.
+any required name qualification.  More generally we should be able to eliminate this
+once we explicitly store all explicit qualified names.
 
 */
 
@@ -47,7 +47,7 @@
 \fn SgDeleteExp::SgDeleteExp ( Sg_File_Info* startOfConstruct = NULL, SgClassSymbol *symbol = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgDeleteExp base class.
+This constructor builds the SgDeleteExp base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -60,14 +60,14 @@
 \fn SgDeleteExp::~SgDeleteExp()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgDeleteExp::isSgDeleteExp (SgNode *s)
 \brief Cast function (from derived class to SgDeleteExp pointer).
 
-   This functions returns a SgDeleteExp pointer for any input of a 
+This functions returns a SgDeleteExp pointer for any input of a 
 pointer to an object derived from a SgDeleteExp.
 
 \return Returns valid pointer to SgDeleteExp if input is derived from a SgLocatedNode.
@@ -77,7 +77,7 @@ pointer to an object derived from a SgDeleteExp.
 \fn SgDeleteExp::isSgDeleteExp (const SgNode *s)
 \brief Cast function (from derived class to SgDeleteExp pointer).
 
-   This functions returns a SgDeleteExp pointer for any input of a 
+This functions returns a SgDeleteExp pointer for any input of a 
 pointer to an object derived from a SgDeleteExp.
 
 \return Returns valid pointer to SgDeleteExp if input is derived from a SgLocatedNode.
