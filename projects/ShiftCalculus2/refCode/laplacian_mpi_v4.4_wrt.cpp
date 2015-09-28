@@ -154,10 +154,6 @@ int main(int argc,char *argv[])
     lb0dest = bxdest .  getLowCorner ()[0];
     ub0dest = bxdest .  getHighCorner ()[0];
     arraySize_Z_dest = bxdest .  size (2);
-    //They are different! one with halo, the other does not.
-    assert (arraySize_Z_src == arraySize_Z_dest +2 );
-    assert (arraySize_X_src == arraySize_X_dest +2 );
-    assert (arraySize_Y_src == arraySize_Y_dest +2 );
 
     sourceDataPointer = Asrc->getPointer();
     destinationDataPointer_ref = Adest_ref->getPointer();
@@ -279,13 +275,27 @@ int main(int argc,char *argv[])
   //distdest = (double*)calloc(1,sizeof(double)*(distdestsize)*arraySize_X_dest*arraySize_Y_dest);
   distdest = (double*)calloc(sizeof(double),(distdestsize)*arraySize_X_dest*arraySize_Y_dest);
 
-#if 0
+  // copy source data from source master to each process's local buffer
+  // TODO wrap into a runtime function call
+  // Parameters: 
+  //
+  // INPUT
+  //    sourceDataPointer: source array address
+  //    source array dimension info:  size_x, size_y, size_z
+  //    distribution policy: block on z dimension
+  //    total processes: nprocs
+  //    rank ID, 
+  //    halo region size: 
+  //    offsetdest: 0, + chunk , +2chunks, ... etc , can be calculated internally
+  //    distdestsize: this can be calculated internally 
+  //
+  // OUTPUT: modified things
+  //      distsrc: local copy of master/slave process
   if(rank == 0)
   {
     //  [starting offset: size]
     //  This is already calculated by the data distribution runtime function?
     //  Not really, halo region is not counted.
-    //  Why is this?   offset based on destination dimension info, but multiplied with source dimension info??
     int copyOffset = offsetdest * arraySize_X_src*arraySize_Y_src;
     int copySize = (distdestsize + 2 * nghost) * arraySize_X_src*arraySize_Y_src;
     assert (copyOffset == offsetdest);
@@ -345,29 +355,6 @@ cout << "Master send size " << sendSize<< " from offset " << sendOffset << " "  
 //   printf("Receiver:%d has result %d: %f\n",rank, idx, distsrc[idx]); 
   }
 
-#else
-  // copy source data from source master to each process's local buffer
-  // wrap into a runtime function call
-  // Parameters: 
-  //
-  // INPUT
-  //    sourceDataPointer: source array address
-  //    source array dimension info:  size_x, size_y, size_z
-  //    distribution policy: block on z dimension
-  //    total processes: nprocs
-  //    rank ID, 
-  //    halo region size: 
-  //    offsetdest: 0, + chunk , +2chunks, ... etc , can be calculated internally
-  //    distdestsize: this can be calculated internally 
-  //
-  // OUTPUT: modified things
-  //      distsrc: local copy of master/slave process
-// extern void xomp_divide_scatter_array_to_all (void * sourceDataPointer, int element_type_id, int x_dim_size, int y_dim_size, int z_dim_size,
-// int distributed_dimension_id, int halo_size, int rank_id, int process_count, int** distsrc);
-  xomp_divide_scatter_array_to_all (sourceDataPointer, arraySize_X_src, arraySize_Y_src, arraySize_Z_src, 2, 1, rank, nprocs, &distsrc);
-//       arraySize_X_dest, arraySize_Y_dest, arraySize_Z_dest);
-#endif
-
 // computation, only k loop is distributed
 // TODO a scheduler for loop to obtain lower and upper for k loop
 // Also matches the k loop distribution of the nested loop
@@ -402,22 +389,6 @@ distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + (i-lb0sr
 //cout << "end of k = " << k << endl;
   }
 
-// A runtime function to collect data
-// void xomp_collect_scattered_array_from_all ()
-// Parameters:
-//  nproces
-//  arraySize_X_dest
-//  arraySize_Y_dest
-//  arraySize_Z_dest
-//  
-//
-// destinationDataPointer // aggregated data on the master process
-// distdest // distributed portions on each process
-//
-// Calculated one:
-//    offsetdest, distdestsize
-//
-
   if(rank == 0)
   {
 // team leader receives destination data from all members
@@ -425,7 +396,7 @@ distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + (i-lb0sr
     MPI_Request recv_reqs[nprocs-1];
     MPI_Status recv_status[nprocs-1];
     for(src = 1; src < nprocs; ++src)
-    { // partitions of the result (destination) array 
+    {
       int recvSize = arraySize_Z_dest / nprocs;
       int recvOffset = src * recvSize;
       if(src < arraySize_Z_dest%nprocs)
@@ -442,8 +413,7 @@ distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + (i-lb0sr
     }  
     MPI_Waitall(nprocs-1,recv_reqs,recv_status);
     // local copy (this could be optional, but simplier for transformation)
-    //memcpy(destinationDataPointer+offsetdest, distdest,distdestsize* bxdest.size(0)* bxdest.size(1)*sizeof(double));
-    memcpy(destinationDataPointer+offsetdest, distdest,distdestsize* arraySize_X_dest * arraySize_Y_dest *sizeof(double));
+    memcpy(destinationDataPointer+offsetdest,distdest,distdestsize*bxdest.size(0)*bxdest.size(1)*sizeof(double));
 
     end = MPI_Wtime();
     elapsed_secs = (end - begin);
