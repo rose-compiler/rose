@@ -4087,8 +4087,8 @@ SageInterface::generateFileList()
 
   // traverse just the SgFile nodes (both the SgSourceFile and SgBinaryComposite IR nodes)!
   // SgFile::visitRepresentativeNode(fileTraversal);
-     SgSourceFile::visitRepresentativeNode(fileTraversal);
-     SgBinaryComposite::visitRepresentativeNode(fileTraversal);
+     SgSourceFile::traverseMemoryPoolNodes(fileTraversal);
+     SgBinaryComposite::traverseMemoryPoolNodes(fileTraversal);
 
   // This would alternatively traverse all IR nodes in thememory pool!
   // fileTraversal.traverseMemoryPool();
@@ -8575,7 +8575,7 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
    attachComment(fringe_decl, "iter_count = (ub-lb+1)%step ==0?(ub-lb+1)/step: (ub-lb+1)/step+1;");
    attachComment(fringe_decl, "fringe = iter_count%unroll_factor==0 ? 0:unroll_factor*step");
 
-  // compile-time evaluate to see if initor is a constant of value 0
+  // compile-time evaluate to see if index is a constant of value 0
   // if so, the iteration count can be divided even by the unrolling factor
   // and no fringe loop is needed
   // WE have to fold on its parent node to get a possible constant since

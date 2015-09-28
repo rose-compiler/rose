@@ -1553,11 +1553,19 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   cout << "STATUS: Building CFGs finished."<<endl;
   if(boolOptions["reduce-cfg"]) {
     int cnt;
-    cnt=cfanalyzer->reduceBlockBeginNodes(flow);
-    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" block nodes)"<<endl;
-    cnt=cfanalyzer->reduceEmptyConditionNodes(flow);
-    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" empty condition nodes)"<<endl;
+#if 0
+    // TODO: not working yet because elimination of empty if branches can cause true and false branches to co-exist.
+    cnt=cfanalyzer->optimizeFlow(flow);
+    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" block begin, block end nodes, empty cond nodes.)"<<endl;
+#else
+    cout << "INIT: CFG reduction is currently limited to block end nodes."<<endl;
+    cnt=cfanalyzer->reduceBlockEndNodes(flow);
+    cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" block end nodes)"<<endl;
+#endif
   }
+  int cnt=cfanalyzer->reduceBlockEndNodes(flow);
+  cout << "INIT: enforced CFG reduction of block end nodes OK. (eliminated "<<cnt<<" block end nodes)"<<endl;
+
   cout << "INIT: Intra-Flow OK. (size: " << flow.size() << " edges)"<<endl;
   if(oneFunctionOnly) {
     cout<<"INFO: analyzing one function only. No inter-procedural flow."<<endl;

@@ -5,12 +5,14 @@ mpaCallGraphAnalysis_includes=\
 
 
 mpaCallGraphAnalysis_la_sources=\
+	$(mpaCallGraphAnalysisPath)/newCallGraph.C \
 	$(mpaCallGraphAnalysisPath)/CallGraph.C \
 	$(mpaCallGraphAnalysisPath)/CallGraphDB.C \
 	$(mpaCallGraphAnalysisPath)/ClassHierarchyGraph.C
 
 
 mpaCallGraphAnalysis_includeHeaders=\
+	$(mpaCallGraphAnalysisPath)/newCallGraph.h \
 	$(mpaCallGraphAnalysisPath)/CallGraph.h \
 	$(mpaCallGraphAnalysisPath)/ClassHierarchyGraph.h
 

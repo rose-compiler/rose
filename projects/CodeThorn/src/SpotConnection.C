@@ -337,8 +337,9 @@ std::list<std::string>* SpotConnection::loadFormulae(istream& input) {
   bool explicitPropertyNumber = false;  //indicates whether or not an ID for the property could be extraced from the file
   LtlProperty* nextFormula = new LtlProperty();
   while (std::getline(input, line)){
-  //basic assumption: there is a formula after each number "#X:" (X being an integer) before the next number occurs
-    if (line.size() > 0 && line.at(0) == '#') {   // e.g. "#1:", the number by which the porperty is being refered to comes after '#'
+    //basic assumption: there is a formula after each number "#X:" (X being an integer) before the next number occurs
+    // e.g. "#1:", the number by which the porperty is being refered to comes after '#'
+    if (line.size() > 0 && line.at(0) == '#' && line.find_first_of(':') != string::npos) {  
       int endIndex = line.find_first_of (':', 0); //the ':' marks the end of the property number
       nextFormula->propertyNumber = boost::lexical_cast<int>(line.substr(1, (endIndex-1)));
       explicitPropertyNumber = true;

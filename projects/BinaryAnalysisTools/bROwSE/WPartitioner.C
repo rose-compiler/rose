@@ -163,6 +163,22 @@ WPartitioner::init() {
         wFindDeadCode_->setToolTip(tip);
         wFindDeadCode_->setCheckState(Wt::Checked);
 
+        tip = "Whether to search for instruction patterns that are indicative of thunks. When this is not checked, a thunk "
+              "will be found only if it is the target of some function call.  This effectively expands the list of patterns "
+              "that indicate the start of a function and does not control whether a thunk's instructions are split into "
+              "a distinct function or attached to the target function.";
+        new Wt::WBreak(c);
+        wFindThunks_ = new Wt::WCheckBox("Find thunk patterns?", c);
+        wFindThunks_->setToolTip(tip);
+        wFindThunks_->setCheckState(Wt::Checked);
+
+        tip = "Whether a post-processing pass should find thunks at the beginning of functions and split those thunk "
+              "instructions into their own mini function.";
+        new Wt::WBreak(c);
+        wSplitThunks_ = new Wt::WCheckBox("Split thunks into their own functions?", c);
+        wSplitThunks_->setToolTip(tip);
+        wSplitThunks_->setCheckState(Wt::Unchecked);
+
         tip = "PEScrambler is \"a tool to obfuscate win32 binaries automatically. It can relocate portions of code and protect "
               "them with anti-disassembly code. It also defeats static program flow analysis by re-routing all function calls "
               "through a central dispatcher function.\" ROSE is largely immune to these techniques by default, and supplying "
@@ -463,9 +479,12 @@ WPartitioner::partitionSpecimen() {
     ctx_.engine.findingDeadCode(findDeadCode());
     ctx_.engine.findingIntraFunctionCode(followGhostEdges()==FOLLOW_LATER);
     ctx_.engine.usingSemantics(useSemantics());
-    ctx_.engine.functionReturnsAssumed(assumeFunctionsReturn());
+    ctx_.engine.functionReturnAnalysis(assumeFunctionsReturn() ?
+                                       P2::Engine::MAYRETURN_DEFAULT_YES : P2::Engine::MAYRETURN_DEFAULT_NO);
     ctx_.engine.followingGhostEdges(followGhostEdges());
     ctx_.engine.discontiguousBlocks(allowDiscontiguousBlocks());
+    ctx_.engine.findingThunks(findingThunks());
+    ctx_.engine.splittingThunks(splittingThunks());
     if (defeatPeScrambler())
         ctx_.engine.peScramblerDispatcherVa(peScramblerDispatcherVa());
     ctx_.engine.doingPostAnalysis(false);               // we'll do it explicitly to get progress reports
@@ -546,6 +565,16 @@ WPartitioner::allowDiscontiguousBlocks() const {
 bool
 WPartitioner::findDeadCode() const {
     return wFindDeadCode_->checkState() == Wt::Checked;
+}
+
+bool
+WPartitioner::findingThunks() const {
+    return wFindThunks_->checkState() == Wt::Checked;
+}
+
+bool
+WPartitioner::splittingThunks() const {
+    return wSplitThunks_->checkState() == Wt::Checked;
 }
 
 bool

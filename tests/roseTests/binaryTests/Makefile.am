@@ -365,6 +365,14 @@ TEST_TARGETS += cory004.passed
 cory004.passed: $(TEST_EXIT_STATUS) cory004
 	@$(RTH_RUN) CMD=./cory004 $< $@
 
+# Test disassembling between functions
+noinst_PROGRAMS += cory006
+cory006_SOURCES = cory006.C
+cory006_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += cory006.passed
+cory006.passed: $(TEST_EXIT_STATUS) cory006
+	@$(RTH_RUN) CMD="./cory006 $(top_srcdir)/binaries/samples/i386-cory006" $< $@
+
 # Test symbolic semantics memory read-after-write
 noinst_PROGRAMS += testSymReadWrite
 testSymReadWrite_SOURCES = testSymReadWrite.C
@@ -449,6 +457,30 @@ testRNG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testRNG.passed
 testRNG.passed: testRNG
 	@$(RTH_RUN) CMD="./testRNG" $(TEST_EXIT_STATUS) $@
+
+# Symbolic expression simplifications
+noinst_PROGRAMS += testSymbolicSimplification
+testSymbolicSimplification_SOURCES = testSymbolicSimplification.C
+testSymbolicSimplification_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testSymbolicSimplification.passed
+testSymbolicSimplification.passed: $(TEST_WITH_ANSWER) testSymbolicSimplification testSymbolicSimplification.ans
+	@$(RTH_RUN)						\
+		TITLE="test symbolic simplification [$@]"	\
+		CMD="./testSymbolicSimplification"		\
+		ANS="$(srcdir)/testSymbolicSimplification.ans"	\
+		$< $@
+
+# Symbolic expression user-defined flags
+noinst_PROGRAMS += testSymbolicFlags
+testSymbolicFlags_SOURCES = testSymbolicFlags.C
+testSymbolicFlags_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testSymbolicFlags.passed
+testSymbolicFlags.passed: $(TEST_WITH_ANSWER) testSymbolicFlags testSymbolicFlags.ans
+	@$(RTH_RUN)					\
+		TITLE="test symbolic flags [$@]"	\
+		CMD="./testSymbolicFlags"		\
+		ANS="$(srcdir)/testSymbolicFlags.ans"	\
+		$< $@
 
 # Instruction semantics verification
 noinst_PROGRAMS += verifySemantics

@@ -36,6 +36,43 @@ SPRAY::IntervalTransferFunctions::~IntervalTransferFunctions() {
   * \author Markus Schordan
   * \date 2014.
  */
+void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate) {
+  IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&pstate);
+  ROSE_ASSERT(ips);
+  //ROSE_ASSERT(_variableIdMapping); TODO
+  // temporary: handle only special case of var and constant
+  if(isSgExprStatement(condStmt)) {
+    // TODO
+    SgNode* cond=SgNodeHelper::getExprStmtChild(condStmt);
+    if(SgVarRefExp* varRefExp=isSgVarRefExp(cond)) {
+      VariableId varId=_variableIdMapping->variableId(varRefExp);
+      ROSE_ASSERT(varId.isValid());
+      SgExpression* caseExpr=caseStmt->get_key();
+      ROSE_ASSERT(caseExpr);
+      //cout<<"INFO: transferSwitchCase: VAR"<<varRefExp->unparseToString()<<"=="<<caseExpr->unparseToString()<<endl;
+      if(SgIntVal* sgIntVal=isSgIntVal(caseExpr)) {
+        ROSE_ASSERT(_cppExprEvaluator);
+        NumberIntervalLattice num;
+#if 0
+        // not stable yet
+        num=_cppExprEvaluator->evaluate(caseExpr);
+#else
+        int val=sgIntVal->get_value();
+        num.setLow(val);
+        num.setHigh(val);
+#endif
+        // TODO: check whether case value is in the allowed range, otherwise filter.
+        ips->setVariable(varId,num);
+      }
+      //cout<<"DONE."<<endl;
+    }
+  }
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2014.
+ */
 void SPRAY::IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& pstate) {
   //ROSE_ASSERT(_variableIdMapping); TODO
   NumberIntervalLattice niLattice;

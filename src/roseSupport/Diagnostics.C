@@ -84,6 +84,7 @@ void initialize() {
         BinaryAnalysis::Strings::initDiagnostics();
         BinaryAnalysis::NoOperation::initDiagnostics();
         EditDistance::initDiagnostics();
+        SgAsmExecutableFileFormat::initDiagnostics();
     }
 }
 

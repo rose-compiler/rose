@@ -10,17 +10,24 @@
 namespace KLT {
 
 template <class Annotation> class Data;
-template <class Annotation, class Language, class Runtime> class Kernel;
 template <class Annotation> class LoopTrees;
+template <class Annotation, class Runtime> class Kernel;
 
 /*!
  * \addtogroup grp_klt_dataflow
  * @{
 */
 
-template <class Annotation, class Language, class Runtime>
+template <class Annotation, class Runtime>
 class DataFlow {
   public:
+    typedef typename LoopTrees<Annotation>::node_t node_t;
+    typedef typename LoopTrees<Annotation>::loop_t loop_t;
+    typedef typename LoopTrees<Annotation>::tile_t tile_t;
+    typedef typename LoopTrees<Annotation>::cond_t cond_t;
+    typedef typename LoopTrees<Annotation>::block_t block_t;
+    typedef typename LoopTrees<Annotation>::stmt_t stmt_t;
+
     struct data_access_t {
       Data<Annotation> * data;
       std::vector<SgExpression *> subscripts;
@@ -35,34 +42,22 @@ class DataFlow {
       std::set<Data<Annotation> *> datas;
       std::set<Data<Annotation> *> datas_in;
       std::set<Data<Annotation> *> datas_out;
-      std::map<typename LoopTrees<Annotation>::node_t *, accesses_list_t > accesses_map;
+      std::map<node_t *, accesses_list_t > accesses_map;
     };
 
   private:
-    void append_access(
-      SgExpression * exp,
-      std::vector<data_access_t> & access_set,
-      const context_t & context
-    ) const;
+    void append_access(SgExpression * exp, std::vector<data_access_t> & access_set, const context_t & context) const;
 
   public:
-    void createContextFromLoopTree(
-      const LoopTrees<Annotation> & loop_trees,
-      context_t & context
-    ) const;
+    void createContextFromLoopTree(const LoopTrees<Annotation> & loop_trees, context_t & context) const;
 
-    void markSplittedData(
-      const context_t & context
-    ) const;
+    void markSplittedData(const context_t & context) const {}
 
-    void generateFlowSets(
-      const std::list<Kernel<Annotation, Language, Runtime> *> & kernels,
-      const context_t & context
-    ) const;
+    void generateFlowSets(const std::list<Kernel<Annotation, Runtime> *> & kernels, const context_t & context) const;
 };
 
-template <class Annotation, class Language, class Runtime>
-void DataFlow<Annotation, Language, Runtime>::append_access(
+template <class Annotation, class Runtime>
+void DataFlow<Annotation, Runtime>::append_access(
   SgExpression * exp,
   std::vector<data_access_t> & access_set,
   const context_t & context
@@ -95,8 +90,8 @@ void DataFlow<Annotation, Language, Runtime>::append_access(
   }
 }
 
-template <class Annotation, class Language, class Runtime>
-void DataFlow<Annotation, Language, Runtime>::createContextFromLoopTree(
+template <class Annotation, class Runtime>
+void DataFlow<Annotation, Runtime>::createContextFromLoopTree(
   const LoopTrees<Annotation> & loop_trees,
   context_t & context
 ) const {
@@ -108,6 +103,7 @@ void DataFlow<Annotation, Language, Runtime>::createContextFromLoopTree(
   typename std::set<Data<Annotation> *>::iterator it_data;
 
   const std::vector<Data<Annotation> *> & data_vect = loop_trees.getDatas();
+//std::cerr << "data_vect.size() = " << data_vect.size() << std::endl;
   context.datas.insert(data_vect.begin(), data_vect.end());
   for (it_data = context.datas.begin(); it_data != context.datas.end(); it_data++) {
     assert(*it_data != NULL);
@@ -116,17 +112,20 @@ void DataFlow<Annotation, Language, Runtime>::createContextFromLoopTree(
     if ((*it_data)->isFlowOut())
       context.datas_out.insert(*it_data);
   }
+//std::cerr << "context.datas.size() = "     << context.datas.size() << std::endl;
+//std::cerr << "context.datas_in.size() = "  << context.datas_in.size() << std::endl;
+//std::cerr << "context.datas_out.size() = " << context.datas_out.size() << std::endl;
 
-  const std::vector<typename LoopTrees<Annotation>::node_t *> & nodes = loop_trees.getNodes();
-  typename std::vector<typename LoopTrees<Annotation>::node_t *>::const_iterator it_node;
+  const std::vector<node_t *> & nodes = loop_trees.getNodes();
+  typename std::vector<node_t *>::const_iterator it_node;
   for (it_node = nodes.begin(); it_node != nodes.end(); it_node++) {
-    typename LoopTrees<Annotation>::cond_t * cond = dynamic_cast<typename LoopTrees<Annotation>::cond_t *>(*it_node);
-    typename LoopTrees<Annotation>::stmt_t * stmt = dynamic_cast<typename LoopTrees<Annotation>::stmt_t *>(*it_node);
+    cond_t * cond = dynamic_cast<cond_t *>(*it_node);
+    stmt_t * stmt = dynamic_cast<stmt_t *>(*it_node);
 
     if (cond == NULL && stmt == NULL) continue;
 
-    typename std::map<typename LoopTrees<Annotation>::node_t *, accesses_list_t>::iterator it_access = 
-          context.accesses_map.insert(std::pair<typename LoopTrees<Annotation>::node_t *, accesses_list_t>(*it_node, accesses_list_t())).first;
+    typename std::map<node_t *, accesses_list_t>::iterator it_access = 
+          context.accesses_map.insert(std::pair<node_t *, accesses_list_t>(*it_node, accesses_list_t())).first;
 
     std::vector<data_access_t> & read  = it_access->second.reads;
     std::vector<data_access_t> & write = it_access->second.writes;
@@ -180,33 +179,39 @@ void DataFlow<Annotation, Language, Runtime>::createContextFromLoopTree(
       }
       else assert(false);
     }
+
+//  std::cerr << "read.size() = " << read.size() << std::endl;
+//  std::cerr << "write.size() = " << write.size() << std::endl;
   }
 }
 
-template <class Annotation, class Language, class Runtime>
-void DataFlow<Annotation, Language, Runtime>::generateFlowSets(
-  const std::list<Kernel<Annotation, Language, Runtime> *> & kernels,
+template <class Annotation, class Runtime>
+void DataFlow<Annotation, Runtime>::generateFlowSets(
+  const std::list<Kernel<Annotation, Runtime> *> & kernels,
   const context_t & context
 ) const {
-  assert(!context.datas.empty());
+  typedef typename Kernel<Annotation, Runtime>::dataflow_t dataflow_t;
+
+  if (context.datas.empty()) return;
+
   assert(!context.accesses_map.empty());
 
   assert(kernels.size() > 0);
 
-  typename std::list<Kernel<Annotation, Language, Runtime> *>::const_iterator it_kernel;
-  typename std::list<Kernel<Annotation, Language, Runtime> *>::const_reverse_iterator rit_kernel;
+  typename std::list<Kernel<Annotation, Runtime> *>::const_iterator it_kernel;
+  typename std::list<Kernel<Annotation, Runtime> *>::const_reverse_iterator rit_kernel;
   typename std::set<Data<Annotation> *>::iterator it_data;
 
   // 1 - Aggregate read/write sets for each kernel
 
   for (it_kernel = kernels.begin(); it_kernel != kernels.end(); it_kernel++) {
-    Kernel<Annotation, Language, Runtime> * kernel = *it_kernel;
-    typename Kernel<Annotation, Language, Runtime>::dataflow_t & data_flow = kernel->getDataflow();
-    const std::vector<typename LoopTrees<Annotation>::node_t *> & nodes = kernel->getNodes();
-    typename std::vector<typename LoopTrees<Annotation>::node_t *>::const_iterator it_node;
+    Kernel<Annotation, Runtime> * kernel = *it_kernel;
+    dataflow_t & data_flow = kernel->getDataflow();
+    const std::vector<node_t *> & nodes = kernel->getNodes();
+    typename std::vector<node_t *>::const_iterator it_node;
 
     for (it_node = nodes.begin(); it_node != nodes.end(); it_node++) {
-      typename std::map<typename LoopTrees<Annotation>::node_t *, accesses_list_t>::const_iterator it_access_list = context.accesses_map.find(*it_node);
+      typename std::map<node_t *, accesses_list_t>::const_iterator it_access_list = context.accesses_map.find(*it_node);
       if (it_access_list == context.accesses_map.end()) continue;
       typename std::vector<data_access_t>::const_iterator it_access;
       for (it_access = it_access_list->second.reads.begin(); it_access != it_access_list->second.reads.end(); it_access++)
@@ -224,8 +229,8 @@ void DataFlow<Annotation, Language, Runtime>::generateFlowSets(
   std::set<Data<Annotation> *> datas_out(context.datas_out);
 
   for (it_kernel = kernels.begin(); it_kernel != kernels.end(); it_kernel++) {
-    Kernel<Annotation, Language, Runtime> * kernel = *it_kernel;
-    typename Kernel<Annotation, Language, Runtime>::dataflow_t & data_flow = kernel->getDataflow();
+    Kernel<Annotation, Runtime> * kernel = *it_kernel;
+    dataflow_t & data_flow = kernel->getDataflow();
 
     Data<Annotation>::set_intersection(data_flow.flow_in, datas_in, data_flow.datas);
 
@@ -233,8 +238,8 @@ void DataFlow<Annotation, Language, Runtime>::generateFlowSets(
   }
 
   for (rit_kernel = kernels.rbegin(); rit_kernel != kernels.rend(); rit_kernel++) {
-    Kernel<Annotation, Language, Runtime> * kernel = *rit_kernel;
-    typename Kernel<Annotation, Language, Runtime>::dataflow_t & data_flow = kernel->getDataflow();
+    Kernel<Annotation, Runtime> * kernel = *rit_kernel;
+    dataflow_t & data_flow = kernel->getDataflow();
 
     Data<Annotation>::set_intersection(data_flow.flow_out, datas_out, data_flow.datas);
 

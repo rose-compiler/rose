@@ -27,10 +27,14 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Memory state.
  *
- *  Able to read concrete values from memory that is readable but lacks write permission.  All other operations are delegated
- *  to the symbolic semantics memory state. */
+ *  Reading from an address that is either not writable (lacks MemoryMap::WRITABLE) or which is initialized (has
+ *  MemoryMap::INITIALIZED) obtains the data directly from the memory map.
+ *
+ *  Addresses for each read operation are saved in a list which is nominally reset at the beginning of each instruction. */
 class MemoryState: public SymbolicSemantics::MemoryState {
     const MemoryMap *map_;
+    std::vector<SValuePtr> addressesRead_;
+
 protected:
     explicit MemoryState(const BaseSemantics::MemoryCellPtr &protocell)
         : SymbolicSemantics::MemoryState(protocell), map_(NULL) {}
@@ -91,6 +95,13 @@ public:
      *  @{ */
     const MemoryMap* memoryMap() const;
     void memoryMap(const MemoryMap *map) { map_=map; }
+    /** @} */
+
+    /** Property: concrete virtual addresses that were read.
+     *
+     * @{ */
+    const std::vector<SValuePtr>& addressesRead() const { return addressesRead_; }
+    std::vector<SValuePtr>& addressesRead() { return addressesRead_; }
     /** @} */
 
 public:
@@ -195,6 +206,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
 public:
+    virtual void startInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
     virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr &a_,
                                           const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;

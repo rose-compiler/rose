@@ -240,10 +240,11 @@ void jacobi( )
 
     k = k + 1;
   }          /*  End iteration loop */
-
   printf("Total Number of Iterations:%d\n",k); 
-  printf("Verifying residual.. \n");
-  diff_ratio (error, resid_ref, 5);
+  printf("Residual:%E\n", error); 
+  printf("Residual_ref :%E\n", resid_ref);
+  printf ("Diff ref=%E\n", fabs(error-resid_ref));
+  assert (fabs(error-resid_ref) < 1E-13);
 }
 
 /*      subroutine error_check (n,m,alpha,dx,dy,u,f) 
@@ -262,16 +263,19 @@ void error_check ( )
   error = 0.0 ;
 
   //#pragma omp parallel for private(xx,yy,temp,j,i) reduction(+:error)
-  for (i=0;i<n;i++)
-    for (j=0;j<m;j++)
-    { 
-      xx = -1.0 + dx * (i-1);
-      yy = -1.0 + dy * (j-1);
-      temp  = u[i][j] - (1.0-xx*xx)*(1.0-yy*yy);
-      error = error + temp*temp; 
-    }
-  error = sqrt(error)/(n*m);
-  printf("Verifying Solution Error...\n");
-  diff_ratio(error, error_ref, 5);
+    for (i=0;i<n;i++)
+      for (j=0;j<m;j++)
+      { 
+        xx = -1.0 + dx * (i-1);
+        yy = -1.0 + dy * (j-1);
+        temp  = u[i][j] - (1.0-xx*xx)*(1.0-yy*yy);
+        error = error + temp*temp; 
+      }
+    error = sqrt(error)/(n*m);
+    printf("Solution Error :%E \n",error);
+    printf("Solution Error Ref :%E \n",error_ref);
+    printf ("Diff ref=%E\n", fabs(error-error_ref));
+    assert (fabs(error-error_ref) < 1E-13);
+
 }
 

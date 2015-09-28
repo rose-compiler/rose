@@ -863,14 +863,13 @@ bool SgNodeHelper::isLoopCond(SgNode* node) {
     return false;
 }
 
-
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
 bool SgNodeHelper::isCond(SgNode* node) {
   SgNode* parent=node->get_parent();
-  if(isSgIfStmt(parent)||isSgWhileStmt(parent)||isSgDoWhileStmt(parent)||isSgForStatement(parent)||isSgConditionalExp(parent))
+  if(isSgIfStmt(parent)||isSgWhileStmt(parent)||isSgDoWhileStmt(parent)||isSgForStatement(parent)||isSgConditionalExp(parent)||isSgSwitchStatement(parent))
     return SgNodeHelper::getCond(parent)==node && node!=0;
   else
     return false;
@@ -961,6 +960,10 @@ SgNode* SgNodeHelper::getCond(SgNode* node) {
   if(SgForStatement* forstmt=isSgForStatement(node)) {
     return forstmt->get_test();
   }
+  if(SgSwitchStatement* switchstmt=isSgSwitchStatement(node)) {
+    return switchstmt->get_item_selector();
+  }
+
   throw "SgNodeHelper::getCond: improper node operation.";
 }
 
@@ -1292,8 +1295,10 @@ bool SgNodeHelper::isPointerVariable(SgVarRefExp* var) {
 }
 
 bool SgNodeHelper::isArrayDeclaration(SgVariableDeclaration* decl) {
-// TODO: ensure that this is an array (check type)
-  return isAggregateDeclaration(decl);
+  if (isAggregateDeclaration(decl))
+    return true;
+  SgType* type = decl->get_variables()[0]->get_type();
+  return isSgArrayType(type);
 }
 
 bool SgNodeHelper::isAggregateDeclaration(SgVariableDeclaration* decl) {

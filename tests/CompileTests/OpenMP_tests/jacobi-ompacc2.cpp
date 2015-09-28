@@ -240,8 +240,10 @@ void jacobi( )
   }          /*  End iteration loop */
 
   printf("Total Number of Iterations:%d\n",k); 
-  printf("Verifying residual.. \n");
-  diff_ratio (error, resid_ref, 5);
+  printf("Residual:%E\n", error); 
+  printf("Residual_ref :%E\n", resid_ref);
+  printf ("Diff ref=%E\n", fabs(error-resid_ref));
+  assert (fabs(error-resid_ref) < 1E-13);
 }
 
 /*      subroutine error_check (n,m,alpha,dx,dy,u,f) 
