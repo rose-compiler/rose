@@ -588,7 +588,7 @@ protected:
     RegPairs& scanAccessedLocations(const RegisterDescriptor &reg, RiscOperators *ops, bool markOverlapping,
                                     RegPairs &accessedParts /*out*/, RegPairs &preservedParts /*out*/);
 
-    void assertStorageConditions() const;
+    void assertStorageConditions(const std::string &where, const RegisterDescriptor &what) const;
 };
 
 } // namespace
