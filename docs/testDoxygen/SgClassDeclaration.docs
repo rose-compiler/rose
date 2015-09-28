@@ -8,7 +8,7 @@
 concept of an instantiated class template as well.
 
 
-    Declaration statements are where variables and types are
+Declaration statements are where variables and types are
 defined and become available for use within a program.  Declarations
 are strored in symbols (\ref SgSymbol) and used to associate
 the symbol with a location within a scope within the application 
@@ -19,7 +19,7 @@ function declarations, namespace declarations, pragma declarations,
 template declarations, typedef declarations, using declarations,
 using directives, variable declarations, etc.
 
-   An important concept for a few types fo declarations is that
+An important concept for a few types fo declarations is that
 of defining vs. non-defining.  Defining declarations are associated with
 definitions, for example a class definition or function definition.
 A class declaration where a class is defined (instead of a forward 
@@ -38,34 +38,46 @@ also share their name, but this is not implemented yet).  If a variable
 is defined to be extern or only defined through a refererence or pointer, 
 then there would be no defining declaration (only a non-defining declaration).
 
-   The following code contains no defining declaration for the 
-type "foobar": \n
-     typedef struct foobar *((FunctionPointer)(void);\n
-     foobar* foobar_pointer = NULL; \n
+The following code contains no defining declaration for the 
+type "foobar":
+
+@code
+typedef struct foobar *((FunctionPointer)(void);
+foobar* foobar_pointer = NULL;
+@endcode
+
 and yet is vailid code (even though there is no explicit forward declaration
 of "foobar" as a class (or struct).  In this case foobar is represented
 using a non-defining declaration internally and that declaration is 
 reference multiple types (once within each statement).  Note that
 the code abouve is valid C++, and not valid C code (to make it valid C code 
 we would have to add "struct" the pointer declaration, for example:
-     struct foobar* foobar_pointer = NULL; \n
+
+@code
+struct foobar* foobar_pointer = NULL;
+@endcode
+
 So C++ is not always a super set of C :-).
 
 
-Different types of declarations explained: \n
-    C and C++ declarations can come in several forms, for example: \n
-typedef struct { int A; } A; // unnamed class declaration (which gets a name from the typedef) \n
-struct A { int i; };         // autonomous declaration \n
-struct B { int i; } b;       // non autonomous declaration \n
+Different types of declarations explained:
+C and C++ declarations can come in several forms, for example:
+
+@code
+typedef struct { int A; } A; // unnamed class declaration (which gets a name from the typedef)
+struct A { int i; };         // autonomous declaration
+struct B { int i; } b;       // non autonomous declaration
+@endcode
+
 In these cases "struct" and "class" can be used interchangablily. Internally 
 "struct" and "class" are he same (but with a different enum to classify them,
 see SgNameType and SgClassType).  Clearly most C++ code uses autonomous 
 declarations.
 
-    There are no uses of this IR node anywhere.  All statements
+There are no uses of this IR node anywhere.  All statements
 are derived from this SgClassDeclaration class.
 
-\internal This is a base class for all statements.
+This is a base class for all statements.
 
 \sa
 \ref SgClassDeclaration_usage  "Example of using a SgClassDeclaration object"
@@ -99,22 +111,22 @@ are derived from this SgClassDeclaration class.
 /*!
 \var SgClassDeclaration::p_definition
 \brief This is the class definition (alway a valid pointer, except for explicitly marked
-    forward declarations).
+forward declarations).
 
-   When this is a defining or nondefining declartion the p_definition pointer is
+When this is a defining or nondefining declartion the p_definition pointer is
 always valid.  However, as a separate rule, all forward declarations are both
 makred explicit as forward declarations AND have a NULL value for their p_definition 
 pointer.
 
 \internal The declaration associated with the definition is the defining declaration and
-    may not be the same as that pointed to by the "this" pointer.
+may not be the same as that pointed to by the "this" pointer.
 */
 
 /*!
 \var SgClassDeclaration::p_from_template
 \brief This records if the class declaration is associated with a template.
 
-   This boolean value is set to true if this is a non-template class nested 
+This boolean value is set to true if this is a non-template class nested 
 in a templated class.  We have an explicit IR node for template classes, but
 this is only flag to indicate that several template specific rules apply to
 the declaration of this class if the value is true.  For example, the class
@@ -134,7 +146,7 @@ is required for the parent templated class.
          SgClassDefinition *definition=NULL)
 \brief This is the only constructor.
 
-   This constructor builds the SgClassDeclaration base class. but has some specific
+This constructor builds the SgClassDeclaration base class. but has some specific
 side-effects (some of which have been removed in the latest work).  It is however
 still that case that if the definition is provided then it's declaration will be changed
 to the declaration being constructed (a warning message it output if this happens and
@@ -149,7 +161,7 @@ this side-effect will be removed soon).
 \fn SgClassDeclaration::~SgClassDeclaration()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 
 */
 
@@ -157,7 +169,7 @@ this side-effect will be removed soon).
 \fn SgClassDeclaration::isSgClassDeclaration (SgNode *s)
 \brief Cast function (from derived class to SgClassDeclaration pointer).
 
-   This functions returns a SgClassDeclaration pointer for any input of a 
+This functions returns a SgClassDeclaration pointer for any input of a 
 pointer to an object derived from a SgClassDeclaration.
 
 \return Returns valid pointer to SgClassDeclaration if input is derived from a SgLocatedNode.
@@ -167,7 +179,7 @@ pointer to an object derived from a SgClassDeclaration.
 \fn SgClassDeclaration::isSgClassDeclaration (const SgNode *s)
 \brief Cast function (from derived class to SgClassDeclaration pointer).
 
-   This functions returns a SgClassDeclaration pointer for any input of a 
+This functions returns a SgClassDeclaration pointer for any input of a 
 pointer to an object derived from a SgClassDeclaration.
 
 \return Returns valid pointer to SgClassDeclaration if input is derived from a SgLocatedNode.

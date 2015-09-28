@@ -132,7 +132,7 @@ struct generateDOTExtendedforMultipleFile ;
 // src/util/stringSupport/string_functions.h:223: Error: Previous declaration of 'getPathFromFileName'
 // So exclude this code below.
 
-namespace ROSE
+namespace rose
    {
   // This class serves as a catch all location for functions of general use within ROSE
   // we have added variables that are set using command line parameters to avoid the use of
@@ -165,7 +165,7 @@ namespace ROSE
           ROSE_DLL_API std::string getSourceDirectory  ( std::string fileNameWithPath ); //! get the sourceDirectory directory
 
           std::string getFileNameWithoutPath ( SgStatement* statementPointer );
-          ROSE_DLL_API std::string stripPathFromFileName ( const std::string& fileNameWithPath ); //! get the filename from the full filename
+          ROSE_DLL_API std::string utility_stripPathFromFileName ( const std::string& fileNameWithPath ); //! get the filename from the full filename
 
           ROSE_DLL_API std::string getPathFromFileName   ( std::string fileNameWithPath ); //! get the path from the full filename
 

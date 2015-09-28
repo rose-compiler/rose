@@ -5,12 +5,12 @@
 /*!
 \class SgTemplateInstantiationMemberFunctionDecl
 \brief This class represents the concept of an instantiation of member function template
-    or a member function of an instantiation of a template class.
+or a member function of an instantiation of a template class.
 
 \internal 
 
 \todo Make the "*PtrList" typed objects non-pointer data members (lists) instead of
-    pointer to lists.
+pointer to lists.
 
 */
 
@@ -29,38 +29,38 @@
 \brief This is the name of the templated class (in the form "name<args>")
 
 \internal This name is computed internally (in AST post-processing) and stored 
-    explicitly.  It can be reset by calling resetTemplateName(SgTemplateInstantiationDecl).
+explicitly.  It can be reset by calling resetTemplateName(SgTemplateInstantiationDecl).
 */
 
 /*!
 \var SgTemplateInstantiationMemberFunctionDecl::p_templateDeclaration
 \brief This is the template declarations (SgTemplateDeclaration) from which this template
-    instantiation is constructed.  This can be NULL, as I recall, for nested classes.
+instantiation is constructed.  This can be NULL, as I recall, for nested classes.
 
 */
 
 /*!
 \var SgTemplateInstantiationMemberFunctionDecl::p_templateArguments
 \brief This is a pointer to a list of pointers to SgTemplateArgument objects (used with
-    the SgTemplateDeclaration to construct this instantiation).
+the SgTemplateDeclaration to construct this instantiation).
 
-   The template arguments are used to generate the full template name recorded in
-   p_templateName.  All arguments are saved into the argument list, but not all
-   arguments are output in the generated code (see SgTemplateArgument for details).
+The template arguments are used to generate the full template name recorded in
+p_templateName.  All arguments are saved into the argument list, but not all
+arguments are output in the generated code (see SgTemplateArgument for details).
 
 \note Template arguments are found in the instantiations, and template parameters are found
-    in the SgTemplateDeclaration (arguments are not the same a parameters, same as for
-    descriptions for functions).
+in the SgTemplateDeclaration (arguments are not the same a parameters, same as for
+descriptions for functions).
 */
 
 /*!
 \var SgTemplateInstantiationMemberFunctionDecl::p_nameResetFromMangledForm
 \brief This bool value is set to false at construction and later reset to true 
-   within post-processing as each instantiated template name is reset from EDG
-   names (e.g. "A____L42") to ROSE generated names (e.g. "A<int>").  Either names
-   would work as well for some purposes, but for source to source translation purposes
-   we wanted the original names to be used (also avoids/simplifies linking issues 
-   using generated code with non-generated code).
+within post-processing as each instantiated template name is reset from EDG
+names (e.g. "A____L42") to ROSE generated names (e.g. "A<int>").  Either names
+would work as well for some purposes, but for source to source translation purposes
+we wanted the original names to be used (also avoids/simplifies linking issues 
+using generated code with non-generated code).
 
 \internal This variable is set/reset internally and there is no need for it to be set by the user!
 */
@@ -72,7 +72,7 @@
 \fn SgTemplateInstantiationMemberFunctionDecl::SgTemplateInstantiationMemberFunctionDecl ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgTemplateInstantiationMemberFunctionDecl base class.
+This constructor builds the SgTemplateInstantiationMemberFunctionDecl base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -85,14 +85,14 @@
 \fn SgTemplateInstantiationMemberFunctionDecl::~SgTemplateInstantiationMemberFunctionDecl()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgTemplateInstantiationMemberFunctionDecl::isSgTemplateInstantiationMemberFunctionDecl (SgNode *s)
 \brief Cast function (from derived class to SgTemplateInstantiationMemberFunctionDecl pointer).
 
-   This functions returns a SgTemplateInstantiationMemberFunctionDecl pointer for any input of a 
+This functions returns a SgTemplateInstantiationMemberFunctionDecl pointer for any input of a 
 pointer to an object derived from a SgTemplateInstantiationMemberFunctionDecl.
 
 \return Returns valid pointer to SgTemplateInstantiationMemberFunctionDecl if input is derived from a SgLocatedNode.
@@ -102,7 +102,7 @@ pointer to an object derived from a SgTemplateInstantiationMemberFunctionDecl.
 \fn SgTemplateInstantiationMemberFunctionDecl::isSgTemplateInstantiationMemberFunctionDecl (const SgNode *s)
 \brief Cast function (from derived class to SgTemplateInstantiationMemberFunctionDecl pointer).
 
-   This functions returns a SgTemplateInstantiationMemberFunctionDecl pointer for any input of a 
+This functions returns a SgTemplateInstantiationMemberFunctionDecl pointer for any input of a 
 pointer to an object derived from a SgTemplateInstantiationMemberFunctionDecl.
 
 \return Returns valid pointer to SgTemplateInstantiationMemberFunctionDecl if input is derived from a SgLocatedNode.

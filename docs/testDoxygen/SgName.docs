@@ -6,19 +6,19 @@
 \class SgName
 \brief This class represents strings within the IR nodes.
 
-   It contains a number of operators that make it similar to the C++ string class.
+It contains a number of operators that make it similar to the C++ string class.
 
 \internal This class internally contains a "char*" C style string.
 
 \todo Define a string conversion operator so that we can handle 
-   "SgName name; string s = name;"  This would start the process of 
-   internally having SgName contain a C++ style string.
+"SgName name; string s = name;"  This would start the process of 
+internally having SgName contain a C++ style string.
 
 \todo Change SgName to store a C++ style std::string, instead of a C style char*.
 
 \todo Some of the member functions defined in this class will be removed 
-   (head(), tail(), etc.) because they represent low level string handling which is best
-    done on a C++ style string more directly using C++ string operators.
+(head(), tail(), etc.) because they represent low level string handling which is best
+done on a C++ style string more directly using C++ string operators.
 
 \sa
 \ref SgName_usage  "Example of using a SgName object"
@@ -41,7 +41,7 @@
 \fn SgName::SgName()
 \brief This is the constructor.
 
-   This constructor builds the SgName base class.
+This constructor builds the SgName base class.
 
 \sa 
 \ref SgName_create "Example:create an SgName object"
@@ -51,14 +51,14 @@
 \fn SgName::~SgName()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgName::isSgName (SgNode *s)
 \brief Cast function (from derived class to SgName pointer).
 
-   This functions returns a SgName pointer for any input of a 
+This functions returns a SgName pointer for any input of a 
 pointer to an object derived from a SgName.
 
 \return Returns valid pointer to SgName if input is derived from a SgLocatedNode.
@@ -68,7 +68,7 @@ pointer to an object derived from a SgName.
 \fn SgName::isSgName (const SgNode *s)
 \brief Cast function (from derived class to SgName pointer).
 
-   This functions returns a SgName pointer for any input of a 
+This functions returns a SgName pointer for any input of a 
 pointer to an object derived from a SgName.
 
 \return Returns valid pointer to SgName if input is derived from a SgLocatedNode.

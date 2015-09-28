@@ -1678,7 +1678,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
 AC_CONFIG_FILES([
 stamp-h
 Makefile
-rose.docs
 config/Makefile
 src/Makefile
 src/util/Makefile
@@ -2257,7 +2256,6 @@ exampleTranslators/defaultTranslator/Makefile
 docs/Makefile
 docs/Rose/footer.html
 docs/Rose/leftmenu.html
-docs/Rose/AvailableDocumentation.docs
 docs/Rose/Makefile
 docs/Rose/manual.tex
 docs/Rose/ROSE_InstallationInstructions.tex
@@ -2266,6 +2264,7 @@ docs/Rose/ROSE_DeveloperInstructions.tex
 docs/Rose/ROSE_DemoGuide.tex
 docs/Rose/gettingStarted.tex
 docs/Rose/rose.cfg
+docs/Rose/rose-install-demo.cfg
 docs/Rose/roseQtWidgets.doxygen
 docs/Rose/sage.cfg
 docs/Rose/Tutorial/Makefile

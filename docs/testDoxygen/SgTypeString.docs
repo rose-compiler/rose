@@ -26,7 +26,7 @@
 \fn SgTypeString::SgTypeString()
 \brief This is the constructor.
 
-   This constructor builds the SgTypeString base class.
+This constructor builds the SgTypeString base class.
 
 \sa 
 \ref SgTypeString_create "Example:create an SgTypeString object"
@@ -36,14 +36,14 @@
 \fn SgTypeString::~SgTypeString()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgTypeString::isSgTypeString (SgNode *s)
 \brief Cast function (from derived class to SgTypeString pointer).
 
-   This functions returns a SgTypeString pointer for any input of a 
+This functions returns a SgTypeString pointer for any input of a 
 pointer to an object derived from a SgTypeString.
 
 \return Returns valid pointer to SgTypeString if input is derived from a SgLocatedNode.
@@ -53,7 +53,7 @@ pointer to an object derived from a SgTypeString.
 \fn SgTypeString::isSgTypeString (const SgNode *s)
 \brief Cast function (from derived class to SgTypeString pointer).
 
-   This functions returns a SgTypeString pointer for any input of a 
+This functions returns a SgTypeString pointer for any input of a 
 pointer to an object derived from a SgTypeString.
 
 \return Returns valid pointer to SgTypeString if input is derived from a SgTypeString node.

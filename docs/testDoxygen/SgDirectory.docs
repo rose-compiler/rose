@@ -6,16 +6,16 @@
 \class SgDirectory
 \brief This class represents a directory within a projects file structure of files and directories.
 
-    This IR node is intended to allow the AST at the SgProject level to have the same
-    representation as a project being compiled using ROSE.
+This IR node is intended to allow the AST at the SgProject level to have the same
+representation as a project being compiled using ROSE.
 
 \internal This is not yet used in ROSE and has been added as an experiment to support very
-    large ASTs for a whole project. It is expected a a million lines of code will require
-    a few Gig of storage, but memory is cheap, so we will see what we can accomplish.
-    Note that it is a limitation of ROSETTA that we have to have the file list and the
-    directory list be pointers to separate (new) IR nodes that contain the actually STL
-    lists of files and directories.  Note clear if this limitation in ROSETTA is
-    documented anywhere :-).
+large ASTs for a whole project. It is expected a a million lines of code will require
+a few Gig of storage, but memory is cheap, so we will see what we can accomplish.
+Note that it is a limitation of ROSETTA that we have to have the file list and the
+directory list be pointers to separate (new) IR nodes that contain the actually STL
+lists of files and directories.  Note clear if this limitation in ROSETTA is
+documented anywhere :-).
 
 \todo Consider adding a SgFileInfo data member to be uniform with SgFile.
 
@@ -37,7 +37,7 @@
 \fn SgDirectory::SgDirectory()
 \brief This is the constructor.
 
-   This constructor builds the SgDirectory base class.
+This constructor builds the SgDirectory base class.
 
 \sa 
 \ref SgDirectory_create "Example:create an SgDirectory object"
@@ -47,14 +47,14 @@
 \fn SgDirectory::~SgDirectory()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgDirectory::isSgDirectory (SgNode *s)
 \brief Cast function (from derived class to SgDirectory pointer).
 
-   This functions returns a SgDirectory pointer for any input of a 
+This functions returns a SgDirectory pointer for any input of a 
 pointer to an object derived from a SgDirectory.
 
 \return Returns valid pointer to SgDirectory if input is derived from a SgLocatedNode.
@@ -64,7 +64,7 @@ pointer to an object derived from a SgDirectory.
 \fn SgDirectory::isSgDirectory (const SgNode *s)
 \brief Cast function (from derived class to SgDirectory pointer).
 
-   This functions returns a SgDirectory pointer for any input of a 
+This functions returns a SgDirectory pointer for any input of a 
 pointer to an object derived from a SgDirectory.
 
 \return Returns valid pointer to SgDirectory if input is derived from a SgLocatedNode.

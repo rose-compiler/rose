@@ -8,15 +8,18 @@ logo:
 #	can copy it to the where it will put the web pages (./ROSE_HTML_Reference)
 	cp @top_srcdir@/docs/Rose/compass_rose.gif .
 
-# DQ (8/29/2008):
-# Added support to build (in the ROSE/docs/Rose directory) the AvailableDocumentation.docs 
-# file from the AvailableDocumentation.docs.in (as required by the generated test.cfg in 
-# this directory.
-AvailableDocumentation.docs:
-	cd ../Rose; $(MAKE) AvailableDocumentation.docs
+if ROSE_HAVE_DOXYGEN
 
-docs: logo copyPublications test.cfg AvailableDocumentation.docs
-	doxygen test.cfg
+docs: logo copyPublications test.cfg
+	$(DOXYGEN) test.cfg
+
+else
+
+docs: logo copyPublications test.cfg
+	@echo "Doxygen documentation not generated (configure with '--with-doxygen')" >&2
+	@false
+
+endif
 
 # DQ (1/25/2006): Renamed clean rule since we don't want "make clean" 
 # at the top level directory to always remove this documentation.
