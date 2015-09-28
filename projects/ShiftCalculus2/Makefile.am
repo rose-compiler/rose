@@ -177,7 +177,9 @@ check-local:
 
 EXTRA_DIST = refCode]ls/laplacian_mpi.cpp refCode/laplacian_mpi_v1_1.cpp refCode/laplacian_mpi_v1.cpp refCode/laplacian_mpi_v2.cpp \
              refCode/laplacian_mpi_wrt.cpp refCode/laplacian_mpi_v1_2.cpp refCode/laplacian_mpi_v2_2.cpp refCode/laplacian_mpi_v4.cpp \
-	     refCode/laplacian_mpi_v4_wrt.cpp refCode/rose_laplacian_lite_v4.cpp
+	     refCode/laplacian_mpi_v4_wrt.cpp refCode/rose_laplacian_lite_v4.cpp refCode/laplacian_mpi_v3.cpp refCode/laplacian_mpi_v4.1_wrt.cpp \
+	     refCode/laplacian_mpi_v4.2_wrt.cpp refCode/laplacian_mpi_v4.3_wrt.cpp refCode/laplacian_mpi_v4.4_wrt.cpp \
+	     refCode/rose_laplacian_lite_v4.1.cpp runtime/libxomp_mpi.h runtime/test_xomp_init_mpi.c runtime/xomp_mpi.c
 CLEANFILES = 
 
 clean-local:
