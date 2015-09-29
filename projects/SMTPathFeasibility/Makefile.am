@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
 noinst_PROGRAMS =
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 TEST_CONFIG = $(top_srcdir)/scripts/test_exit_status
 TEST_TARGETS =
 EXTRA_DIST = compile/smtSolvePragmaPath.h src/smtPragmaPathLib.h src/smtQueryLib.h tools/collectPaths.h tools/pointerPredicateTranslationRules.cpp tutorial/findOnePragma.h tutorial/multipleIndividualPragmaCheck.h utils/SMTPragmaBackend.h utils/extractPragmaInfo.h utils/handleVariablesForSMTLib.h utils/pragmaParse.h utils/utilHeader.h docs/analyzePathDocumentation.tex docs/analyzePathDocumentation.pdf

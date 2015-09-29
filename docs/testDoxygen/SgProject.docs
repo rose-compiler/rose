@@ -5,22 +5,22 @@
 /*!
 \class SgProject
 \brief This class represents a source project, with a list of SgFile objects and global
-    information about the project (commandline details, AST merge options, etc.).
+information about the project (commandline details, AST merge options, etc.).
 
-   This IR nodes contains list of files, etc. after internal command-line processing.
-   The original argc and argv are not modified and left in tact for processing by the 
-   ROSE translator.  The SgProject node keeps a deep copy of the original argc and
-   argv as an STL list of strings (representing the command-line arguments).
-   Also, if ROSE and/or EDG specific command-line options are not wanted in the ROSE 
-   translator, they may be stripped from argc and argv, using the member functions:
+This IR nodes contains list of files, etc. after internal command-line processing.
+The original argc and argv are not modified and left in tact for processing by the 
+ROSE translator.  The SgProject node keeps a deep copy of the original argc and
+argv as an STL list of strings (representing the command-line arguments).
+Also, if ROSE and/or EDG specific command-line options are not wanted in the ROSE 
+translator, they may be stripped from argc and argv, using the member functions:
      -# void stripRoseCommandLineOptions (int &argc, char **&argv), and\or
      -# void stripEdgCommandLineOptions (int &argc, char **&argv).
-   These functions will modify the input argc and argv values.
+These functions will modify the input argc and argv values.
 
 \internal This IR node does not appear many times in an AST (typically only once).  
 
 \todo Make the "*PtrList" typed objects non-pointer data members (lists) instead of
-    pointer to lists.
+pointer to lists.
 
 \todo Implement a "-dumpversion" for compatibility with GNU (icc does the same).
 
@@ -38,7 +38,7 @@
 \brief This is the list of files within the project.
 
 \internal  This is an STL list, I think that the get_file() member function should be
-    deprecated so that we access the list like all other STL lists.
+deprecated so that we access the list like all other STL lists.
 */
 
 /*!
@@ -51,7 +51,7 @@
 /*!
 \var SgProject::project_argv
 \brief This is a copy to the argv (pointer) value (array of pointers to C-style strings
-    representing command line options specified).
+representing command line options specified).
 
 \internal  This is not processed to group multi-argument command line options. This is a static variable.
 */
@@ -61,13 +61,13 @@
 \brief This is the level of verbosity assumed to apply to the whole project (all AST processing).
 
 \internal  This is a static variable, which might make it difficult to multiple SgProject
-    IR nodes to coexist within the same problem.
+IR nodes to coexist within the same problem.
 */
 
 /*!
 \var SgProject::p_originalCommandLineArgumentList
 \brief Copy of original argc and argv command line passed to ROSE translator (converted to
-    STL list of strings).
+STL list of strings).
 
 \internal This is a deep copy.
 */
@@ -83,8 +83,8 @@
 \var SgProject::p_backendErrorCode
 \brief Error code returnd from processing of generated source code using vendor compiler.
 
-   This value should be passed back out of the main() function by the user translator (for
-   support of makefile processing).
+This value should be passed back out of the main() function by the user translator (for
+support of makefile processing).
 
 \internal This error code is returned by the ROSE backend() function.
 */
@@ -93,7 +93,7 @@
 \var SgProject::p_outputFileName
 \brief Filename specific using "-o" option on command line.
 
-   Set as part of normal command line processing within ROSE.
+Set as part of normal command line processing within ROSE.
 
 \internal  This is set to a default value of "a.out" if "-o" is not specified.
 */
@@ -103,7 +103,7 @@
 \brief List of all source file names specified on the command line.
 
 \internal  This can be an empty list (if none are specified). This should be updated by
-    the AST Merge mechanism.
+the AST Merge mechanism.
 */
 
 /*!
@@ -117,7 +117,7 @@
 \var SgProject::p_libraryFileList
 \brief List of all libraries specified on command line.
 
-   List all libraries specified using ".a" or ".so" syntax.
+List all libraries specified using ".a" or ".so" syntax.
 
 \internal  Required to assemble link lines for backend vendor compiler.
 */
@@ -146,13 +146,13 @@
 /*!
 \var SgProject::p_compileOnly
 \brief This controls if we are to act as a linker (by calling the vendor compiler as a
-    linker/prelinker).
+linker/prelinker).
 
-    The value of p_compileOnly is true if "-c" appears on the command line and is false if not.
+The value of p_compileOnly is true if "-c" appears on the command line and is false if not.
 
 \internal  This is a simple pass through to the vendor compiler to do the linking.  If no
-    transformations occured to instantiated templates, then the vendor compiler handles
-    all prelinking template instantiation as well.
+transformations occured to instantiated templates, then the vendor compiler handles
+all prelinking template instantiation as well.
 */
 
 /*!
@@ -160,28 +160,28 @@
 \brief This controls if we are to handle the prelink (not implemented).
 
 \internal  We implemented a prelink mechanism, but it was not very robust, so until we
-    have a better one this should be false.  It is use to control testing of the existing
-    prelink mechanism (which will be rewritten).
+have a better one this should be false.  It is use to control testing of the existing
+prelink mechanism (which will be rewritten).
 */
 
 /*!
 \var SgProject::p_template_instantiation_mode
 \brief This controls the degree of template instantiation by ROSE.  No template
-    instantiation is required by ROSE if all template instantiation can be handled by the
-    backend vendor C++ compiler.
+instantiation is required by ROSE if all template instantiation can be handled by the
+backend vendor C++ compiler.
 
 \internal  The default is currently to output only transformed instantiated templates and
-    to do so as static template functions where they are instantiated template functions
-    because we don't have a sufficiently powerful global prelink mechanism to control the 
-    assignment of instantiated template functions and member functions to files (to avoid
-    multiply defined symbols at link time).
+to do so as static template functions where they are instantiated template functions
+because we don't have a sufficiently powerful global prelink mechanism to control the 
+assignment of instantiated template functions and member functions to files (to avoid
+multiply defined symbols at link time).
 */
 
 /*!
 \var SgProject::p_astMerge
 \brief This controls the merging of AST when multiple files are being processed.
 
-    "-rose:astMerge" triggers the use of the file specified by
+"-rose:astMerge" triggers the use of the file specified by
 "-rose:astMergeCommandFile <filename>" which stores the working directory and 
 the command line required to compile the target file.  It is an error to specify 
 "-rose:astMerge" without also specifying "-rose:astMergeCommandFile <filename>".
@@ -197,7 +197,7 @@ See manual for details of AST merge mechanism.
 \var SgProject::p_astMergeCommandFile
 \brief This stores the name of the file where information is collected for the AST Merge mechanism.
 
-    "-rose:astMerge" triggers the use of the file specified by
+"-rose:astMerge" triggers the use of the file specified by
 "-rose:astMergeCommandFile <filename>" which stores the working directory and 
 the command line required to compile the target file.  It is an error to specify 
 "-rose:astMerge" without also specifying "-rose:astMergeCommandFile <filename>".
@@ -213,15 +213,15 @@ See manual for details of AST merge mechanism.
 \var SgProject::p_openmp_linking
 \brief This flag is used to indicate if OpenMP lowering is requested by the command line so linking to ROSE's OpenMP runtime library is needed.
 
-    This flag is set to be false by default.
-    "-rose:openmp:lowering" triggers this flag to be set to true. 
-    SgFile::p_openmp_lowering will not be sufficient since there is no 
-    SgFile in the AST when a ROSE translator is used as a linker wrapper.
-    So we have to have a project level flag to indicate the need.
-    Using a flag like SgProject::p_OpenMP_Only won't be sufficient neither
-    since OpenMP input files can be handled in three different ways in ROSE:
-    1) parsing only 2) generating dedicated AST 3) actual OpenMP lowering
-    Only the one with lowering will need special linking support to connect to libxomp.a and pthreads.
+This flag is set to be false by default.
+"-rose:openmp:lowering" triggers this flag to be set to true. 
+SgFile::p_openmp_lowering will not be sufficient since there is no 
+SgFile in the AST when a ROSE translator is used as a linker wrapper.
+So we have to have a project level flag to indicate the need.
+Using a flag like SgProject::p_OpenMP_Only won't be sufficient neither
+since OpenMP input files can be handled in three different ways in ROSE:
+1) parsing only 2) generating dedicated AST 3) actual OpenMP lowering
+Only the one with lowering will need special linking support to connect to libxomp.a and pthreads.
 */
 
 
@@ -233,7 +233,7 @@ See manual for details of AST merge mechanism.
 \fn SgProject::SgProject()
 \brief This is the constructor.
 
-   This constructor builds the SgProject base class.
+This constructor builds the SgProject base class.
 
 \sa 
 \ref SgProject_create "Example:create an SgProject object"
@@ -243,14 +243,14 @@ See manual for details of AST merge mechanism.
 \fn SgProject::~SgProject()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgProject::isSgProject (SgNode *s)
 \brief Cast function (from derived class to SgProject pointer).
 
-   This functions returns a SgProject pointer for any input of a 
+This functions returns a SgProject pointer for any input of a 
 pointer to an object derived from a SgProject.
 
 \return Returns valid pointer to SgProject if input is derived from a SgLocatedNode.
@@ -260,7 +260,7 @@ pointer to an object derived from a SgProject.
 \fn SgProject::isSgProject (const SgNode *s)
 \brief Cast function (from derived class to SgProject pointer).
 
-   This functions returns a SgProject pointer for any input of a 
+This functions returns a SgProject pointer for any input of a 
 pointer to an object derived from a SgProject.
 
 \return Returns valid pointer to SgProject if input is derived from a SgLocatedNode.

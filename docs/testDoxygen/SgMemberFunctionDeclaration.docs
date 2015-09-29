@@ -6,15 +6,15 @@
 \class SgMemberFunctionDeclaration
 \brief This class represents the concept of a member function declaration statement.
 
-    The member function declaration is derived from a function declaration and adds
+The member function declaration is derived from a function declaration and adds
 specific data members that are relavant.
 
 \note Constructors, destructors, and conversion operators are handled as member fucntions 
-    with names associated with their classes.
+with names associated with their classes.
 
 \internal  The scope can at times be that of the global scope, when this happens 
-     users should access the scope through get_firstNondefiningDeclaration().
-     This appears to be a bug internally.
+users should access the scope through get_firstNondefiningDeclaration().
+This appears to be a bug internally.
 
 
 */
@@ -31,11 +31,11 @@ specific data members that are relavant.
 
 /*! \var SgMemberFunctionDeclaration::p_CtorInitializerList
 \brief This is the constructor preinitialization list (used only for the constructor
-    definitions).
+definitions).
 
 \internal This data member might make more sense in the SgFunctionDefinition (or we could
-    build a SgMemberFunctionDefinition from the SgFunctionDefinition, and put the
-    constructor initialization list there).
+build a SgMemberFunctionDefinition from the SgFunctionDefinition, and put the
+constructor initialization list there).
 */
 
 //////////////////////////////////////////////////////////////////////////
@@ -45,7 +45,7 @@ specific data members that are relavant.
 \fn SgMemberFunctionDeclaration::SgMemberFunctionDeclaration ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgMemberFunctionDeclaration base class.
+This constructor builds the SgMemberFunctionDeclaration base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -58,14 +58,14 @@ specific data members that are relavant.
 \fn SgMemberFunctionDeclaration::~SgMemberFunctionDeclaration()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgMemberFunctionDeclaration::isSgMemberFunctionDeclaration (SgNode *s)
 \brief Cast function (from derived class to SgMemberFunctionDeclaration pointer).
 
-   This functions returns a SgMemberFunctionDeclaration pointer for any input of a 
+This functions returns a SgMemberFunctionDeclaration pointer for any input of a 
 pointer to an object derived from a SgMemberFunctionDeclaration.
 
 \return Returns valid pointer to SgMemberFunctionDeclaration if input is derived from a SgLocatedNode.
@@ -75,7 +75,7 @@ pointer to an object derived from a SgMemberFunctionDeclaration.
 \fn SgMemberFunctionDeclaration::isSgMemberFunctionDeclaration (const SgNode *s)
 \brief Cast function (from derived class to SgMemberFunctionDeclaration pointer).
 
-   This functions returns a SgMemberFunctionDeclaration pointer for any input of a 
+This functions returns a SgMemberFunctionDeclaration pointer for any input of a 
 pointer to an object derived from a SgMemberFunctionDeclaration.
 
 \return Returns valid pointer to SgMemberFunctionDeclaration if input is derived from a SgLocatedNode.

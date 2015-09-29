@@ -6,25 +6,25 @@
 \class SgFunctionParameterList
 \brief This class represents the concept of a declaration list.
 
-   This class is used in the function declaration IR node (SgFunctionDeclaration).
+This class is used in the function declaration IR node (SgFunctionDeclaration).
 
 \internal This class is separated as its own IR node so that the traversals can 
-    have either a list or a collection on non-list data members.
+have either a list or a collection on non-list data members.
 
 \todo Check scopes of variables in function parameter list, should point to function
-    definition, if the function definition exists, else they are undefined. If they
-    are undefined then we still have to have something for them to point to, we could
-    propose that this be the scope of the function declaration (I think this is what is
-    done).  The test in the tutorial tests this and it seems to be correct.
+definition, if the function definition exists, else they are undefined. If they
+are undefined then we still have to have something for them to point to, we could
+propose that this be the scope of the function declaration (I think this is what is
+done).  The test in the tutorial tests this and it seems to be correct.
 
 \todo Not clear if this should be a declaration statement (might make more sense derived
-    from SgSupport, or perhaps from SgLocatedNode (with other IR nodes that are currently 
-    derived from SgSupport, see SgLocatedNode for details).
+from SgSupport, or perhaps from SgLocatedNode (with other IR nodes that are currently 
+derived from SgSupport, see SgLocatedNode for details).
 
 \todo If this should be a SgDeclarationStatement (and there is a reasonable argument for
-    this) then perhaps the declaration containing any default parameters should be the
-    defining declaration, independent of the defining declaration of the associated
-    function declaration.
+this) then perhaps the declaration containing any default parameters should be the
+defining declaration, independent of the defining declaration of the associated
+function declaration.
 
 \sa
 \ref SgFunctionParameterList_usage  "Example of using a SgFunctionParameterList object"
@@ -47,7 +47,7 @@
 \fn SgFunctionParameterList::SgFunctionParameterList ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgFunctionParameterList base class.
+This constructor builds the SgFunctionParameterList base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -60,14 +60,14 @@
 \fn SgFunctionParameterList::~SgFunctionParameterList()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgFunctionParameterList::isSgFunctionParameterList (SgNode *s)
 \brief Cast function (from derived class to SgFunctionParameterList pointer).
 
-   This functions returns a SgFunctionParameterList pointer for any input of a 
+This functions returns a SgFunctionParameterList pointer for any input of a 
 pointer to an object derived from a SgFunctionParameterList.
 
 \return Returns valid pointer to SgFunctionParameterList if input is derived from a SgLocatedNode.
@@ -77,7 +77,7 @@ pointer to an object derived from a SgFunctionParameterList.
 \fn SgFunctionParameterList::isSgFunctionParameterList (const SgNode *s)
 \brief Cast function (from derived class to SgFunctionParameterList pointer).
 
-   This functions returns a SgFunctionParameterList pointer for any input of a 
+This functions returns a SgFunctionParameterList pointer for any input of a 
 pointer to an object derived from a SgFunctionParameterList.
 
 \return Returns valid pointer to SgFunctionParameterList if input is derived from a SgLocatedNode.

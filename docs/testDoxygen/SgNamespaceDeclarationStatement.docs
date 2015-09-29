@@ -6,7 +6,7 @@
 \class SgNamespaceDeclarationStatement
 \brief This class represents the concept of a C++ namespace declaration.
 
-   The namespace declaration is differernt from many other declarations in that 
+The namespace declaration is differernt from many other declarations in that 
 there is not concept of a namespace declaration that does not have an associated 
 definition (SgNamespaceDefinitionStatement). In a sense each SgNamespaceDeclarationStatement
 is a defining declaration, yet there can be more than one of them, so this concept of
@@ -18,12 +18,12 @@ that SgNamespaceDeclarationStatement as a defining declaration.  As a result:
       - Always return a valid pointer, and
       - Will point to the first declaration of SgNamespaceDeclarationStatement
 
-   The scope of SgNamespaceDeclarationStatement is computed structurally from the 
+The scope of SgNamespaceDeclarationStatement is computed structurally from the 
 parent information.
 
 \todo Consider having a function which could generate a list of all the
-    SgNamespaceDeclarationStatement IR nodes that match the same namspace.
-    This would make a good first project for a new student.
+SgNamespaceDeclarationStatement IR nodes that match the same namspace.
+This would make a good first project for a new student.
 
 \todo Include a graph to show how scopes are handled within the AST.
 
@@ -43,7 +43,7 @@ parent information.
 
 /*! \var SgNamespaceDeclarationStatement::p_definition
 \brief This pointer points to the SgNamespaceDefinitionStatement, which holds the
-    declarations within the namespace.
+declarations within the namespace.
 
 */
 
@@ -51,7 +51,7 @@ parent information.
 \brief Records special case of an unnamed namespace.
 
 \internal Marking the IR nodes as unnamed is better than just having an empty string for
-    p_name.  This provides a reasonable mechanism to implement error checking internally.
+p_name.  This provides a reasonable mechanism to implement error checking internally.
 
 */
 
@@ -69,7 +69,7 @@ parent information.
 \fn SgNamespaceDeclarationStatement::SgNamespaceDeclarationStatement ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgNamespaceDeclarationStatement base class.
+This constructor builds the SgNamespaceDeclarationStatement base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -82,14 +82,14 @@ parent information.
 \fn SgNamespaceDeclarationStatement::~SgNamespaceDeclarationStatement()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgNamespaceDeclarationStatement::isSgNamespaceDeclarationStatement (SgNode *s)
 \brief Cast function (from derived class to SgNamespaceDeclarationStatement pointer).
 
-   This functions returns a SgNamespaceDeclarationStatement pointer for any input of a 
+This functions returns a SgNamespaceDeclarationStatement pointer for any input of a 
 pointer to an object derived from a SgNamespaceDeclarationStatement.
 
 \return Returns valid pointer to SgNamespaceDeclarationStatement if input is derived from a SgLocatedNode.
@@ -99,7 +99,7 @@ pointer to an object derived from a SgNamespaceDeclarationStatement.
 \fn SgNamespaceDeclarationStatement::isSgNamespaceDeclarationStatement (const SgNode *s)
 \brief Cast function (from derived class to SgNamespaceDeclarationStatement pointer).
 
-   This functions returns a SgNamespaceDeclarationStatement pointer for any input of a 
+This functions returns a SgNamespaceDeclarationStatement pointer for any input of a 
 pointer to an object derived from a SgNamespaceDeclarationStatement.
 
 \return Returns valid pointer to SgNamespaceDeclarationStatement if input is derived from a SgLocatedNode.

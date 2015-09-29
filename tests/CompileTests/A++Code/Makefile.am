@@ -66,7 +66,7 @@ endif
 ../../testTranslator:
 	@$(MAKE) -C ../../. testTranslator
 $(TEST_Objects): $(TESTCODES) ../../testTranslator
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 
 EXTRA_DIST = $(EXAMPLE_TESTCODES) \
    A++.h array_domain.h data_hash.h dimension_macros.h lazy_expression.h lazy_taskset.h \
@@ -82,4 +82,4 @@ clean-local:
 	rm -rf ti_files
 
 test:
-	$(VALGRIND) $(TEST_TRANSLATOR) -DHAVE_CONFIG_H $(INCLUDES) -I$(srcdir) -c $(srcdir)/domain.C
+	$(VALGRIND) $(TEST_TRANSLATOR) -DHAVE_CONFIG_H $(AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/domain.C

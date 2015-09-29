@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = printLoopInfo
 
@@ -36,7 +36,7 @@ FORCE_TEST_CODES_TO_RUN:
 $(TEST_Objects): $(TESTCODES) FORCE_TEST_CODES_TO_RUN printLoopInfo
 	: remove this so that we can force the examples to be run
 	rm -f $(TEST_Objects)
-	./printLoopInfo -I$(srcdir) $(ROSE_FLAGS) -DHAVE_CONFIG_H $(INCLUDES) -c $(srcdir)/$(@:.o=.C)
+	./printLoopInfo -I$(srcdir) $(ROSE_FLAGS) -DHAVE_CONFIG_H $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.C)
 	: remove this so that we can force the examples to be run
 	rm -f $(TEST_Objects)
 

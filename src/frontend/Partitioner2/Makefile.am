@@ -1,5 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # Binary partitioner -- partitions instructions into basic blocks and
 # functions.  Header files must be installed under the Partitioner2

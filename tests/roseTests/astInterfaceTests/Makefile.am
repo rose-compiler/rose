@@ -8,7 +8,7 @@ SUBDIR = typeEquivalenceTests unitTests
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
-INCLUDES =  \
+AM_CPPFLAGS =  \
         $(ROSE_INCLUDES) \
         -I$(top_srcdir)/src/frontend/SageIII/sageInterface
 # We install a few test programs since they might be useful for external users
@@ -236,7 +236,6 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2014_08.C \
   inputmoveDeclarationToInnermostScope_test2014_10.C \
   inputmoveDeclarationToInnermostScope_test2014_11.C \
-  inputmoveDeclarationToInnermostScope_test2014_12.C \
   inputmoveDeclarationToInnermostScope_test2014_13.C \
   inputmoveDeclarationToInnermostScope_test2014_14.C \
   inputmoveDeclarationToInnermostScope_test2014_15.C \
@@ -257,7 +256,6 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_01.C \
   inputmoveDeclarationToInnermostScope_test2015_02.C \
   inputmoveDeclarationToInnermostScope_test2015_03.C \
-  inputmoveDeclarationToInnermostScope_test2015_04.C \
   inputmoveDeclarationToInnermostScope_test2015_05.C \
   inputmoveDeclarationToInnermostScope_test2015_06.C \
   inputmoveDeclarationToInnermostScope_test2015_07.C \
@@ -298,7 +296,6 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_42.C \
   inputmoveDeclarationToInnermostScope_test2015_43.C \
   inputmoveDeclarationToInnermostScope_test2015_44.C \
-  inputmoveDeclarationToInnermostScope_test2015_45.C \
   inputmoveDeclarationToInnermostScope_test2015_46.C \
   inputmoveDeclarationToInnermostScope_test2015_47.C \
   inputmoveDeclarationToInnermostScope_test2015_48.C \
@@ -315,7 +312,6 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_59.C \
   inputmoveDeclarationToInnermostScope_test2015_60.C \
   inputmoveDeclarationToInnermostScope_test2015_61.C \
-  inputmoveDeclarationToInnermostScope_test2015_62.C \
   inputmoveDeclarationToInnermostScope_test2015_63.C \
   inputmoveDeclarationToInnermostScope_test2015_64.C \
   inputmoveDeclarationToInnermostScope_test2015_65.C \
@@ -363,9 +359,29 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_111.C \
   inputmoveDeclarationToInnermostScope_test2015_112.C \
   inputmoveDeclarationToInnermostScope_test2015_113.C \
-  inputmoveDeclarationToInnermostScope_test2015_114.C \
   inputmoveDeclarationToInnermostScope_test2015_115.C \
   inputmoveDeclarationToInnermostScope_test2015_116.C 
+
+# DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.
+FAILING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
+  inputmoveDeclarationToInnermostScope_test2014_09.C \
+  inputmoveDeclarationToInnermostScope_test2014_12.C \
+  inputmoveDeclarationToInnermostScope_test2015_04.C \
+inputmoveDeclarationToInnermostScope_test2015_100.C \
+inputmoveDeclarationToInnermostScope_test2015_101.C \
+inputmoveDeclarationToInnermostScope_test2015_106.C \
+inputmoveDeclarationToInnermostScope_test2015_107.C \
+inputmoveDeclarationToInnermostScope_test2015_114.C \
+inputmoveDeclarationToInnermostScope_test2015_45.C \
+inputmoveDeclarationToInnermostScope_test2015_62.C
+
+
+# DQ (8/16/2015): Failing test with bugfix for type transformations.
+#  inputmoveDeclarationToInnermostScope_test2014_12.C 
+#  inputmoveDeclarationToInnermostScope_test2015_04.C 
+#  inputmoveDeclarationToInnermostScope_test2015_45.C 
+#  inputmoveDeclarationToInnermostScope_test2015_62.C 
+#  inputmoveDeclarationToInnermostScope_test2015_114.C 
 
 # DQ (1/11/2014): Failing test with new design.
 #  inputmoveDeclarationToInnermostScope_test2015_45.C 
@@ -422,7 +438,7 @@ $(MOVE_MERGE_DECLS_DIFF_FILES):$(PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS)
 	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/withmerge/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
 
 
-# DQ (6/28/2015): Added additional tst using new option: -rose:merge_decl_assign
+# DQ (6/28/2015): Added additional test using new option: -rose:merge_decl_assign
 $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
 	echo "Test without new option: -rose:merge_decl_assign"
 	./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_%=%)
@@ -434,6 +450,9 @@ $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS): $(srcdir)/
 
 test_move_decls: $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 
+# DQ (8/16/2015): This test demonstrates a recent bug in the token based unparsing caused by a 
+# fix to support more general recognition of transforamtions of types).
+# test2014_12.C demonstrates the first issue.
 test_move_decls_with_token_unparsing: $(PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_RESULTS)
 	@echo "********************************************************************************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/astInterface_tests/moveDeclarationToInnermostScope: make test_move_decls_with_token_unparsing rule complete (terminated normally) ******"
@@ -859,7 +878,14 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C			\
        inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C  inputcreateAbstractHandles.C \
        inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C \
-       inputbuildJavaPackage.C inputloopCollapsing_1.C inputbuildStatementFromString.C
+       inputbuildJavaPackage.C inputloopCollapsing_1.C inputbuildStatementFromString.C \
+       inputmoveDeclarationToInnermostScope_test2014_15.h \
+       inputmoveDeclarationToInnermostScope_test2014_19.h \
+       inputmoveDeclarationToInnermostScope_test2014_23.h \
+       inputmoveDeclarationToInnermostScope_test2015_13.h \
+       inputmoveDeclarationToInnermostScope_test2015_16.h \
+       inputmoveDeclarationToInnermostScope_test2015_22.h \
+       inputmoveDeclarationToInnermostScope_test2015_40.h 
 
 
 # JP (10/4/14): Added the unit tests

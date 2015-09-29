@@ -8,7 +8,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 #  Compass2
 # ------------------------------------------------------------------------------
 
-INCLUDES=\
+AM_CPPFLAGS=\
 	-I$(top_srcdir)/projects \
 	-I$(top_srcdir)/projects/compass2 \
 	$(XERCES_CPPFLAGS) \
@@ -247,7 +247,7 @@ compass2_xml_DATA = \
 	$(COMPASS_PARAMETERS_GRAMMAR_FILE) \
 	$(COMPASS_PARAMETERS_DEFAULT_FILE)
 
-CPPFLAGS=\
+CPPFLAGS += \
 	-DPREFIX_COMPASS2_XML_DIR="\"$(compass2_xmldir)\"" \
 	-DSOURCE_COMPASS2_XML_DIR="\"@ABS_COMPASS2_XML_SRCDIR@\""
 

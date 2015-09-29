@@ -17,7 +17,7 @@ main(int argc, char *argv[])
 {
     int argno = parse_commandline(argc, argv);
     if (argno+1!=argc)
-        usage(1);
+        CloneDetection::RunTests::usage(1);
     SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
     SqlDatabase::TransactionPtr tx = conn->transaction();
     int64_t cmd_id = start_command(tx, argc, argv, "running tests");

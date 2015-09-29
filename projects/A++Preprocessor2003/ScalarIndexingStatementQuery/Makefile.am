@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = \
+AM_CPPFLAGS = \
      $(ROSE_INCLUDES) \
      -I$(top_srcdir)/ExamplePreprocessors/A++P++Preprocessor \
      -I$(top_srcdir)/ExamplePreprocessors/A++P++Preprocessor/ArrayAssignmentStatementQuery \

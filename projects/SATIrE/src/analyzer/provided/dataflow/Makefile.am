@@ -139,7 +139,7 @@ satire/satiredfa.h: $(foreach a, $(X_ANALYZERS), satire/$(a)_implementation.h)
 		cp `printf %s/%s_implementation.h $$a $$a` satire; \
 	done
 
-INCLUDES = -I$(top_builddir)/src/satire \
+AM_CPPFLAGS = -I$(top_builddir)/src/satire \
        -I$(top_srcdir)/src/termite/satire \
        -I$(top_builddir)/src/termite/satire \
        -I$(top_srcdir)/src/analyzer/annotation/satire \
@@ -158,12 +158,12 @@ INCLUDES = -I$(top_builddir)/src/satire \
        -I$(BOOST_INCLUDE_DIR)
 
 if WITH_PAG
-INCLUDES += -I$(PAG_INCLUDE_DIR)/pag \
+AM_CPPFLAGS += -I$(PAG_INCLUDE_DIR)/pag \
             -I$(PAG_INCLUDE_DIR)/pag/analyzer
 endif
 
 if WITH_SWI_PROLOG
-INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR)
+AM_CPPFLAGS += -I$(SWI_PROLOG_INCLUDE_DIR)
 endif
 
 satiredfa.C: satire/satiredfa.h satiredfa_analyzers satiredfa_cases

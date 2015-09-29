@@ -19,7 +19,7 @@ SgStatement*
 MidLevelRewrite<ASTNodeCollection>::previousPrefixRelevantStatement ( 
    SgStatement* currentStatement )
    {
-     SgStatement* returnStatement = ROSE::getPreviousStatement(currentStatement);
+     SgStatement* returnStatement = rose::getPreviousStatement(currentStatement);
      switch (returnStatement->variantT())
         {
           case SgFunctionDefinition:
@@ -136,7 +136,7 @@ MidLevelRewrite<ASTNodeCollection>::generatePrefixAndSuffix (
             // (e.g. for test codes that replace the current statement with itself 
             // (which can happen in reality as well)).
             // printf ("Looking for previous statement of currentStatement = %s \n",currentStatement->sage_class_name());
-               SgStatement* startingLocation = ROSE::getPreviousStatement(currentStatement);
+               SgStatement* startingLocation = rose::getPreviousStatement(currentStatement);
                ROSE_ASSERT (startingLocation != NULL);
 
             // Handle special cases where we want to start a little further toward the root in the AST
@@ -147,7 +147,7 @@ MidLevelRewrite<ASTNodeCollection>::generatePrefixAndSuffix (
                     case V_SgMemberFunctionDeclaration:
                        {
                       // printf ("Handling special case of SgClassDeclaration or SgFunctionDeclaration \n");
-                         startingLocation = ROSE::getPreviousStatement(startingLocation);
+                         startingLocation = rose::getPreviousStatement(startingLocation);
                          break;
                        }
                     default:
@@ -304,11 +304,11 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
      SgSourceFile* currentFile = TransformationSupport::getSourceFile(astNode);
      ROSE_ASSERT (currentFile != NULL);
      // Keep the suffix to deal differently with C, C++, etc.
-     std::string currentFileNameWithSuffix = ROSE::stripPathFromFileName(currentFile->getFileName());
+     std::string currentFileNameWithSuffix = rose::utility_stripPathFromFileName(currentFile->getFileName());
   // printf ("currentFileNameWithSuffix = %s \n",currentFileNameWithSuffix.c_str());
-  // string currentFileName = ROSE::stripFileSuffixFromFileName(currentFileNameWithSuffix.c_str());
+  // string currentFileName = rose::stripFileSuffixFromFileName(currentFileNameWithSuffix.c_str());
   // printf ("currentFileName = %s \n",currentFileName.c_str());
-  // std::string currentFileName = ROSE::stripFileSuffixFromFileName(ROSE::stripPathFromFileName(currentFile->getFileName()));
+  // std::string currentFileName = rose::stripFileSuffixFromFileName(rose::utility_stripPathFromFileName(currentFile->getFileName()));
   //   std::string currentFileName = StringUtility::stripFileSuffixFromFileName(StringUtility::stripPathFromFileName(currentFile->getFileName()));
 
   // Make the file name different each time a new set of transformation strings are compiled
@@ -363,7 +363,7 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
   // printf ("DONE: Calling SgProject constructor \n");
 
 #if 0
-     std::string pdffilename = std::string("./") + std::string(ROSE::stripPathFromFileName(ROSE::getFileName(transformationASTPointer)))+".pdf";
+     std::string pdffilename = std::string("./") + std::string(rose::utility_stripPathFromFileName(rose::getFileName(transformationASTPointer)))+".pdf";
   // printf ("Expected PDF file name = %s \n",pdffilename.c_str());
 
   // Output the source code file (as represented by the SAGE AST) as a PDF file (with bookmarks)
@@ -375,7 +375,7 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
 #endif
 
 #if 0
-     std::string dotfilename=string("./") + std::string(ROSE::stripPathFromFileName(ROSE::getFileName(transformationASTPointer)))+".dot";
+     std::string dotfilename=string("./") + std::string(rose::utility_stripPathFromFileName(rose::getFileName(transformationASTPointer)))+".dot";
   // printf ("Expected DOT file name = %s \n",dotfilename.c_str());
 
   // test ROSE specific class

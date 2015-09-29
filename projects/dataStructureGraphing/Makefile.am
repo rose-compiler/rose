@@ -4,7 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # subsitution for various C++ template control variables.
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # DQ (2/2/2004): Not clear why ROSE_LIBS is not enough.  Need to fix ROSE to use just two libraries!
 # LDADD = $(ROSE_LIBS)

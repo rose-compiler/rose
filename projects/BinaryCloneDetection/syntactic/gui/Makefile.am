@@ -15,7 +15,7 @@ if !ROSE_BUILD_OS_IS_OSX
 	binaryCloneGui_LDADD += -lrt
 endif
 
-INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
 
 
 compass_parameters:

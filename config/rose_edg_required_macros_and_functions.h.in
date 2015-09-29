@@ -45,12 +45,24 @@
   #define _OVERRIDE_COMPLEX_SPECIALIZATION_
 #endif
 
+/* DQ (8/28/2015): Adding specialized support for Intel compiler. */
+#ifdef __INTEL_COMPILER
+  #define __inline inline
+#endif
+
 /* DQ (3/15/2015): Adding support for uint128 (required for Xen) */
 /* This shuld be a test of the version of EDG, but it is not clear how to do that. */
 #if ((__GNUC__ == 4) && (__GNUC_MINOR__ < 8))
    /* DQ (3/15/2015): Adding support for uint128 (required for Xen) */
       typedef long long int __int128_t;
       typedef unsigned long long int __uint128_t;
+#endif
+
+/* DQ (9/23/2015): Adding support for avoid use of non-GNU language features in EDG frontend */
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8) && (__GNUC_PATCHLEVEL__ >= 3))
+   #define _GTHREAD_USE_MUTEX_INIT_FUNC
+   #define _GTHREAD_USE_RECURSIVE_MUTEX_INIT_FUNC
+   #define _GTHREAD_USE_COND_INIT_FUNC
 #endif
 
 /* DQ (10/22/2010): Isolate some of the OSX specific details. */

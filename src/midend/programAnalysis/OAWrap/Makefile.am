@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES =  $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis/OAWrap -I$(top_srcdir)/src/midend/programAnalysis
+AM_CPPFLAGS =  $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis/OAWrap -I$(top_srcdir)/src/midend/programAnalysis
 
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .

@@ -8,7 +8,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 lineDeleter_includedir=$(prefix)
-INCLUDES = $(ROSE_INCLUDES) -I$(lineDeleter_includedir)
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(lineDeleter_includedir)
 LDADD    = $(ROSE_LIBS)
 
 noinst_PROGRAMS = lineDeleter

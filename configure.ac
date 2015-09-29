@@ -34,7 +34,10 @@ dnl +--------------------------------------------------------------------------+
 dnl | Autotools setup
 dnl +--------------------------------------------------------------------------+
 AC_CONFIG_AUX_DIR([config])
-AM_INIT_AUTOMAKE([foreign tar-pax 1.9.5])
+
+# DQ (9/26/2015): Added option to eliminate large number of automake warnings.
+# AM_INIT_AUTOMAKE([foreign tar-pax 1.9.5])
+AM_INIT_AUTOMAKE([foreign tar-pax 1.9.5 subdir-objects])
 AM_CONFIG_HEADER([rose_config.h])
 
 # TOO1 (9/23/2013): Use the builtin verbose mechanism of Automake:

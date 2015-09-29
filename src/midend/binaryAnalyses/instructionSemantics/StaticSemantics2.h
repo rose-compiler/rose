@@ -27,12 +27,12 @@ namespace InstructionSemantics2 {       // documented elsewhere
  *  attached can be many times larger than when using dynamic semantics.
  *
  *  By default, ROSE does not generate the static semantics, and each instruction's @ref SgAsmInstruction::get_semantics
- *  "semantics" property will be null.  Semantics can be added to any instruction by @ref RiscOperators::processInstruction
- *  "executing" the instruction in this StaticSemantics domain.  Each time the instruction is executed in this domain its
- *  previous semantics are thrown away and recalculated, so you should generally only do this once; that's the nature that
- *  makes these semantics "static".  If you want to calculate static semantics for lots of instructions, which is often the
- *  case, the @ref attachInstructionSemantics functions can do that: they process an entire AST, adding semantics to all the
- *  instructions they find. */
+ *  "semantics" property will be null.  Semantics can be added to any instruction by @ref
+ *  BaseSemantics::RiscOperators::processInstruction "executing" the instruction in this StaticSemantics domain.  Each time the
+ *  instruction is executed in this domain its previous semantics are thrown away and recalculated, so you should generally
+ *  only do this once; that's the nature that makes these semantics "static".  If you want to calculate static semantics for
+ *  lots of instructions, which is often the case, the @ref attachInstructionSemantics functions can do that: they process an
+ *  entire AST, adding semantics to all the instructions they find. */
 namespace StaticSemantics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

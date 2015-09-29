@@ -19,7 +19,7 @@ CXXFLAGS += $(ROSE_OPTIMIZATION_LEVEL) $(ROSE_VERBOSE) -I$(srcdir)/parser_suppor
 
 lib_LTLIBRARIES = libroseMatlabFrontend.la
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 libroseMatlabFrontend_la_DEPENDENCIES =
 libroseMatlabFrontend_la_SOURCES = \
 	MatlabParser.cc \

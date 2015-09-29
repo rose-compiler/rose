@@ -1,7 +1,7 @@
 
 /*!
 \class AST_FILE_IO
-\brief Class holding stat ic data and functions supporting File I/O.
+\brief Class holding static data and functions supporting File I/O.
 
 \todo  Consider making this a namespace.
 

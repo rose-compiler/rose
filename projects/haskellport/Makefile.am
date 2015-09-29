@@ -17,7 +17,7 @@ EXTRA_DIST = CMakeLists.txt $(NONGENERATED_HSFILES) sage3.h.C WrapCxxContainers.
 
 if USE_HASKELL
 
-INCLUDES = \
+AM_CPPFLAGS = \
      $(ROSE_INCLUDES) -I$(top_srcdir)/projects/DocumentationGenerator
 
 noinst_PROGRAMS = genStubsAndWrappers

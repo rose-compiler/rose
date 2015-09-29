@@ -5280,7 +5280,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           if (originalExpressionTree != NULL)
              {
 #if 0
-            // DQ (7/23/2011): I don't thisnk this code is required or executed (testing this!)
+            // DQ (7/23/2011): I don't think this code is required or executed (testing this!)
                printf ("I don't think this is executed since original expression tree's are traversed as part of the AST \n");
                ROSE_ASSERT(false);
 #endif
@@ -5290,6 +5290,26 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
             // DQ (6/30/2013): Added to support using generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
                SgStatement* currentStatement = TransformationSupport::getStatement(n);
+#if 1
+            // DQ (9/14/2015): Added debugging code.
+            // DQ (9/14/2015): This can be an expression in a type, in which case we don't have an associated scope.
+               if (currentStatement == NULL)
+                  {
+                 // This can be an expression in a type, in which case we don't have an associated scope.
+                    printf ("Note: This can be an expression in a type, in which case we don't have an associated scope: expression = %p = %s originalExpressionTree = %p = %s \n",
+                         expression,expression->class_name().c_str(),originalExpressionTree,originalExpressionTree->class_name().c_str());
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(currentStatement != NULL);
+                    SgScopeStatement* currentScope = currentStatement->get_scope();
+                    ROSE_ASSERT(currentScope != NULL);
+
+                 // DQ (6/30/2013): For the recursive call use generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
+                 // generateNameQualificationSupport(originalExpressionTree,referencedNameSet);
+                    generateNestedTraversalWithExplicitScope(originalExpressionTree,currentScope);
+                  }
+#else
                ROSE_ASSERT(currentStatement != NULL);
                SgScopeStatement* currentScope = currentStatement->get_scope();
                ROSE_ASSERT(currentScope != NULL);
@@ -5297,6 +5317,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
             // DQ (6/30/2013): For the recursive call use generateNestedTraversalWithExplicitScope() instead of generateNameQualificationSupport().
             // generateNameQualificationSupport(originalExpressionTree,referencedNameSet);
                generateNestedTraversalWithExplicitScope(originalExpressionTree,currentScope);
+#endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("@@@@@@@@@@@@@ DONE: Recursive call to the originalExpressionTree = %p = %s \n",originalExpressionTree,originalExpressionTree->class_name().c_str());

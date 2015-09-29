@@ -1,4 +1,4 @@
-INCLUDES = -I$(ROSE_INCLUDE_DIR) \
+AM_CPPFLAGS = -I$(ROSE_INCLUDE_DIR) \
     -I$(BOOSTDIR)/include \
     -I$(top_builddir)/src/satire \
     -I$(top_srcdir)/src/analyzer/icfgbuilder/satire \
@@ -14,16 +14,16 @@ INCLUDES = -I$(ROSE_INCLUDE_DIR) \
     -I$(top_builddir)/src/termite/satire
 
 if WITH_PAG
-INCLUDES += -I$(PAG_INCLUDE_DIR)/pag -I$(PAG_INCLUDE_DIR)/pag/analyzer
+AM_CPPFLAGS += -I$(PAG_INCLUDE_DIR)/pag -I$(PAG_INCLUDE_DIR)/pag/analyzer
 endif
 
 if WITH_SWI_PROLOG
-INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR)
+AM_CPPFLAGS += -I$(SWI_PROLOG_INCLUDE_DIR)
 endif
 
 SYNDIR=$(top_builddir)/src/analyzer/astaccess/satire
 
-INCLUDES += -I$(SYNDIR)
+AM_CPPFLAGS += -I$(SYNDIR)
 
 noinst_LTLIBRARIES = libAstAccess.la
 nobase_include_HEADERS = satire/ast_support_funcs.h \

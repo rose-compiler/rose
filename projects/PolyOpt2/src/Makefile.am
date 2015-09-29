@@ -6,7 +6,7 @@ POCC_INSTALL = $(top_builddir)/src/3rdPartyLibraries/pocc
 DEFS = 
 
 #############################################################################
-INCLUDES = -I$(srcdir)/include	$(ROSE_INCLUDES)\
+AM_CPPFLAGS = -I$(srcdir)/include	$(ROSE_INCLUDES)\
 	-I$(srcdir)							\
 	-I$(srcdir)/../polyopt/include					\
 	-I$(POCC_INSTALL)/driver/pocc/include				\

@@ -8,7 +8,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 #  Fortran_directive
 # ------------------------------------------------------------------------------
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD    = $(ROSE_LIBS)
 
 bin_PROGRAMS = NASC

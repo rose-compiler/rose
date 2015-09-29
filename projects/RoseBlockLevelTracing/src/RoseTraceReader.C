@@ -50,7 +50,7 @@ public:
         m_fileUnderCompilation = fileRoot->get_file_info()->get_physical_filename();
         m_roseDBFile = dbFile;
         m_counter = 0;
-        m_fileIdUnderCompilation  = ROSE::GetProjectWideUniqueIdForPhysicalFile(m_roseDBFile, m_fileUnderCompilation);
+        m_fileIdUnderCompilation  = rose::GetProjectWideUniqueIdForPhysicalFile(m_roseDBFile, m_fileUnderCompilation);
         traverse(fileRoot, preorder);
     }
     

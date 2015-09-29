@@ -7,7 +7,7 @@
 \brief This class represents the location of the code associated with the IR node in the
 original source code. 
 
-    This object is used to represent the starting and the ending position of the source code
+This object is used to represent the starting and the ending position of the source code
 associated with some IR nodes (in other cases the endOfConstruct returnes the same data 
 as the startOfConstruct).
 
@@ -39,7 +39,7 @@ as the startOfConstruct).
     SgSymbols don't have a Sg_File_Info object, but are ALWAYS shared. \n
    (multiple classifications can co-exist).
 
-    Note that p_filename is correctly initialized in the Sg_File_Info object for a 
+Note that p_filename is correctly initialized in the Sg_File_Info object for a 
 SgGlobal, but the p_line and p_col are set to 0 (zero).  All other IR nodes have valid 
 Sg_File_Info objects with correct p_filename and p_line and p_col set to nonzero 
 values.  A few IR nodes in the AST will have a default value of their Sg_File_Info
@@ -54,24 +54,24 @@ are implemented in the SgNode, for uniformity, but return NULL for all but the
 SgLocatedNodes and the SgInitializedName IR nodes.
 
 \todo isOutputInCodeGeneration() is orthogonal to isCompilerGenerated and
-    isTransformation().  Currently IR nodes that are marked as isTransformation()
-    are output, but these need to be marked as also being isOutputInCodeGeneration()
-    so that orthogonality of the concepts is maintained.
+isTransformation().  Currently IR nodes that are marked as isTransformation()
+are output, but these need to be marked as also being isOutputInCodeGeneration()
+so that orthogonality of the concepts is maintained.
 
 \todo It is possible to call get_file_info() on a SgFileInfo object and this needs to be
-    fixed because it does not make any sense.  This is because get_file_info is defined as
-    a virtual function on SgNode.  Not sure this is a great design, but maybe it just
-    needs a local implementation of a private get_file_info() member function so that it
-    can't be called (can be hidden).
+fixed because it does not make any sense.  This is because get_file_info is defined as
+a virtual function on SgNode.  Not sure this is a great design, but maybe it just
+needs a local implementation of a private get_file_info() member function so that it
+can't be called (can be hidden).
 
 \todo Should there be a simpler way to copy a SgFileInfo object than:
-    "new Sg_File_Info(*fileInfo);" or "fileInfo->copy();"; likely not!
+"new Sg_File_Info(*fileInfo);" or "fileInfo->copy();"; likely not!
 
 \todo Define the subset of IR nodes which would all have:
       -# Sg_File_Info
       -# AstAttributeMechanism
       -# SgNode (parent pointer) \n
-      This will make the documentation more intuative.  The argument supporting this is
+    This will make the documentation more intuative.  The argument supporting this is
     that we operate on those IR nodes that correspond to the visual representation of the
     source code (so we can exclude SgSymbols, and SgTypes).  Having the same subset of
     IR nodes permits a simpler documentation of the API and intuition as to where it
@@ -85,21 +85,21 @@ SgLocatedNodes and the SgInitializedName IR nodes.
       -# SgTemplateParameter
 
 \todo Remove the functions: isCompilerGeneratedNodeToBeUnparsed(),
-    setCompilerGeneratedNodeToBeUnparsed(), and unsetCompilerGeneratedNodeToBeUnparsed()
-    from where they are called.
+setCompilerGeneratedNodeToBeUnparsed(), and unsetCompilerGeneratedNodeToBeUnparsed()
+from where they are called.
 
 \todo Consider putting the endOfConstruct information into the single Sg_File_Info object.
-    Currently the SgLocatedNode stores two Sg_File_Info objects, one for the beginning and
-    the end of each construct.  This would save significant space in the AST.
-    Additional information in the Sg_File_Info could be:
+Currently the SgLocatedNode stores two Sg_File_Info objects, one for the beginning and
+the end of each construct.  This would save significant space in the AST.
+Additional information in the Sg_File_Info could be:
      - offset from starting line number to the end of construct
      - flag for if end of construct is located in the same file as the start of construct
 
 \todo Consider using "short int" instead of "int" for the file_id, line, and col
-      (and maybe the classificationBitField) to reduce the size of the data structure.
-      Padding is not a significant issue since data structures are allocated in 
-      contiguious memory (except for padding to at least the nearest byte if bit field
-      widths are used.
+(and maybe the classificationBitField) to reduce the size of the data structure.
+Padding is not a significant issue since data structures are allocated in 
+contiguious memory (except for padding to at least the nearest byte if bit field
+widths are used.
 
 \sa
 \ref Sg_File_Info_usage  "Example of using a Sg_File_Info object"
@@ -114,34 +114,34 @@ SgLocatedNodes and the SgInitializedName IR nodes.
 \var Sg_File_Info::p_filename
 \brief This is the filename of the location of the source code for this IR node.
 
-    Note that the filename of the start of a construct CAN be different from the start of
-    the language construct (#include can be used to do this).  The name of the file
-    also the included the full path to the file in the directory structure.
+Note that the filename of the start of a construct CAN be different from the start of
+the language construct (#include can be used to do this).  The name of the file
+also the included the full path to the file in the directory structure.
 
-    The value of this variable is always a valid pointer if the classification is not
-    isTransformed or isCompilerGenerated.
-    If IR node is compiler generated for a transformation then value is set to either
-    "compilerGenerated" or "transformation", but should be considered to be undefined.
+The value of this variable is always a valid pointer if the classification is not
+isTransformed or isCompilerGenerated.
+If IR node is compiler generated for a transformation then value is set to either
+"compilerGenerated" or "transformation", but should be considered to be undefined.
 
 \internal  This name is often quite long and likely is a significantly redundent piece of
-    information stored for each IR node (twice, considering a Sg_File_Info object is used
-    for the start and end of each IR node (where it is used, e.g. SgLocatedNodes and the
-    SgInitializedName IR nodes).
+information stored for each IR node (twice, considering a Sg_File_Info object is used
+for the start and end of each IR node (where it is used, e.g. SgLocatedNodes and the
+SgInitializedName IR nodes).
 */
 
 /*!
 \var Sg_File_Info::p_file_id
 \brief This is a key that maps integers to file names, it prevents redundent storage of filename strings.
 
-   This is part of a mechanism to reduce the memory requirements of the IR (to support
-   whole program analysis in ROSE).  The values are keys to an STL map which relates
-   file ids to file name strings, allowing a more compressed representation of the
-   filename data in the Sg_File_Info object.  There are two maps, one for finding 
-   the filename string from a file id integer (p_fileidtoname_map), and another for 
-   the reverse map (p_nametofileid_map).
+This is part of a mechanism to reduce the memory requirements of the IR (to support
+whole program analysis in ROSE).  The values are keys to an STL map which relates
+file ids to file name strings, allowing a more compressed representation of the
+filename data in the Sg_File_Info object.  There are two maps, one for finding 
+the filename string from a file id integer (p_fileidtoname_map), and another for 
+the reverse map (p_nametofileid_map).
 
 \internal We will in the future limit the range of this value (expect a signed short int:
-   16 bits, 32K = 32768 files plus negative values for special cases).
+16 bits, 32K = 32768 files plus negative values for special cases).
 
 */
 
@@ -150,16 +150,16 @@ SgLocatedNodes and the SgInitializedName IR nodes.
 \var Sg_File_Info::p_line
 \brief This is the line number of the location of the source code for this IR node.
 
-   This information is useful in the heuristics of attaching comments to IR nodes
-   (SgStatement and SgExpression IR nodes).
+This information is useful in the heuristics of attaching comments to IR nodes
+(SgStatement and SgExpression IR nodes).
 
-   The value of this variable is always greater than or equal to zero. In the case of 
+The value of this variable is always greater than or equal to zero. In the case of 
 isCompilerGenerated() == true or isTransformation() == true then value is INT_MAX-1.
 This value if define for this case so that all comments will be attached before the 
 associated statement.  
 
 \internal We will in the future limit the range of this value (expect a short int: 
-   20 bits, 1000K = 1,048,576 lines per file).
+20 bits, 1000K = 1,048,576 lines per file).
 */
 
 
@@ -167,14 +167,14 @@ associated statement.
 \var Sg_File_Info::p_col
 \brief This is the column number of the location of the source code for this IR node.
 
-   This information is useful in the heuristics of attaching comments to IR nodes
+This information is useful in the heuristics of attaching comments to IR nodes
 (SgStatement and SgExpression IR nodes).
 
-   The value of this variable is always greater than or equal to zero.
+The value of this variable is always greater than or equal to zero.
 If IR node is compiler generated for a transformation then value is set to INT_MAX-1.
 
 \internal We will in the future limit the range of this value (expect a short int: 
-   16 bits, 64K = 65536 charaters per line).
+16 bits, 64K = 65536 charaters per line).
 */
 
 
@@ -182,11 +182,11 @@ If IR node is compiler generated for a transformation then value is set to INT_M
 \var Sg_File_Info::p_classificationBitField
 \brief This is mechanism for classification of the IR node.
 
-    IR nodes use this mechanism to classify themselves as either part of a transformation
-    or compiler generated (other enum values of Sg_File_Info::classifier are not used).
+IR nodes use this mechanism to classify themselves as either part of a transformation
+or compiler generated (other enum values of Sg_File_Info::classifier are not used).
 
 \internal We will in the future limit the range of this value (expect an unsigned char: 
-   8 bits, 64K = 65536 charaters per line).
+8 bits, 64K = 65536 charaters per line).
 */
 
 
@@ -194,7 +194,7 @@ If IR node is compiler generated for a transformation then value is set to INT_M
 \var Sg_File_Info::p_fileIDsToUnparse
 \brief This set contains a list of all file ids for which the accompanying IR node should be unparsed.
 
-    This is part of the AST Merge mechanism.
+This is part of the AST Merge mechanism.
 This set contains a list of file ids. During unparsing, if we encounter
 a node with this Sg_File_Info object, we only want to unparse this file
 if the file we are currently unparsing is in this list.
@@ -246,10 +246,10 @@ if the file we are currently unparsing is in this list.
 /*!
 \var Sg_File_Info::p_isPartOfTransformation
 \brief This is a depreicated variable, previously used to indicate if an IR node was 
-     part of a transformation.
+part of a transformation.
 
 \internal This variable is redundant with the information stored in the
-     p_classificationBitField.
+p_classificationBitField.
 
 \deprecated This data member will be removed at some point.
 */
@@ -263,12 +263,12 @@ if the file we are currently unparsing is in this list.
 \fn Sg_File_Info::Sg_File_Info()
 \brief This is the less useful default constructor.
 
-   This constructor builds the Sg_File_Info base class.
+This constructor builds the Sg_File_Info base class.
 
 \internal This constructor should be deprecated since we don't want it to be used.
-   It's presence is historical, since it was previously used a lot (inappropriately).
-   Before it is removed we likely need a constructor that can take a
-   Sg_File_Info::classifier enum value.
+It's presence is historical, since it was previously used a lot (inappropriately).
+Before it is removed we likely need a constructor that can take a
+Sg_File_Info::classifier enum value.
 
 \sa 
 \ref Sg_File_Info_create "Example:create an Sg_File_Info object"
@@ -278,7 +278,7 @@ if the file we are currently unparsing is in this list.
 \fn Sg_File_Info::Sg_File_Info ( const char *filename, int line=0, int col=0 )
 \brief This is the more useful constructor.
 
-   This constructor builds the Sg_File_Info base class.
+This constructor builds the Sg_File_Info base class.
 
 \sa 
 \ref Sg_File_Info_create "Example:create an Sg_File_Info object"
@@ -286,7 +286,7 @@ if the file we are currently unparsing is in this list.
 
 /*!
 \fn Sg_File_Info::Sg_File_Info(const Sg_File_Info & X)
-   \brief This the copy constructor (deep copy made).
+\brief This the copy constructor (deep copy made).
 
 \internal This constructor does a deep copy of all data in the Sg_File_Info object.
 
@@ -298,14 +298,14 @@ if the file we are currently unparsing is in this list.
 \fn Sg_File_Info::~Sg_File_Info()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn Sg_File_Info::isSg_File_Info (SgNode *s)
 \brief Cast function (from derived class to Sg_File_Info pointer).
 
-   This functions returns a Sg_File_Info pointer for any input of a 
+This functions returns a Sg_File_Info pointer for any input of a 
 pointer to an object derived from a Sg_File_Info.
 
 \return Returns valid pointer to Sg_File_Info if input is derived from a SgLocatedNode.
@@ -315,7 +315,7 @@ pointer to an object derived from a Sg_File_Info.
 \fn Sg_File_Info::isSg_File_Info (const SgNode *s)
 \brief Cast function (from derived class to Sg_File_Info pointer).
 
-   This functions returns a Sg_File_Info pointer for any input of a 
+This functions returns a Sg_File_Info pointer for any input of a 
 pointer to an object derived from a Sg_File_Info.
 
 \return Returns valid pointer to Sg_File_Info if input is derived from a SgLocatedNode.
@@ -324,7 +324,7 @@ pointer to an object derived from a Sg_File_Info.
 /*!
 \fn Sg_File_Info::set_line ( int line )
 \brief This function sets the line number of the construct's association with source code
-    in the source file named by p_filename.
+in the source file named by p_filename.
 
 \return Returns an integer.
 */
@@ -334,8 +334,8 @@ pointer to an object derived from a Sg_File_Info.
 \brief  This function sets the filename of the construct's association with source code.
 
 \internal This function should be updated to take and return a string.  Likely we can 
-    implement an overloaded function with takes and resturns a string and preserve this
-    function (deprecated) for a period of time.
+implement an overloaded function with takes and resturns a string and preserve this
+function (deprecated) for a period of time.
 
 \return Returns char* (will return C++ string at some point later)
 */
@@ -371,13 +371,13 @@ pointer to an object derived from a Sg_File_Info.
 \fn Sg_File_Info::get_filename () const
 \brief Returns filename of source code associated with IR node.
 
-   The filename returned is manipulated under some contitions:
-      - if isTransformation() is true then "transformation" is returned as the filename.
-      - if isCompilerGenerated() is true then "comilerGenerated" is returned as the filename.
-      - if isCompilerGeneratedNodeToBeUnparsed() is true then "comilerGenerated" is returned as the filename.
+The filename returned is manipulated under some contitions:
+- if isTransformation() is true then "transformation" is returned as the filename.
+- if isCompilerGenerated() is true then "comilerGenerated" is returned as the filename.
+- if isCompilerGeneratedNodeToBeUnparsed() is true then "comilerGenerated" is returned as the filename.
 
 \internal For debugging purposes it is an error to ask for the filename from any IR node
-    for which hasPositionInSource() == false.
+for which hasPositionInSource() == false.
 
 \return Returns char* (will return C++ string in the future).
 */
@@ -400,8 +400,8 @@ pointer to an object derived from a Sg_File_Info.
 \fn Sg_File_Info::get_raw_filename () const
 \brief Returns filename of source code associated with IR node.
 
-   The filename is not manipulated! The value of p_filename is returned whatever the IR
-   node classification.
+The filename is not manipulated! The value of p_filename is returned whatever the IR
+node classification.
 
 \internal This is useful for debugging.
 
@@ -428,8 +428,8 @@ pointer to an object derived from a Sg_File_Info.
 \brief  No earthly idea what this function does!
 
 \todo figure out what this does, it appears to be called in two places (attachment of
-    comments and CPP directives (attachPreprocessingInfo.C) and marking template
-    specializations for output (markTemplateSpecializationsForOutput.C)).
+comments and CPP directives (attachPreprocessingInfo.C) and marking template
+specializations for output (markTemplateSpecializationsForOutput.C)).
 
 \return Returns bool.
 */
@@ -446,10 +446,10 @@ pointer to an object derived from a Sg_File_Info.
 /*!
 \fn Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 \brief  Static function to return new Sg_File_Info object set to default values
-    appropriate for transformations.
+appropriate for transformations.
 
-    This function calls setOutputInCodeGeneration() and sets the file_id to be
-    TRANSFORMATION_FILE_ID.
+This function calls setOutputInCodeGeneration() and sets the file_id to be
+TRANSFORMATION_FILE_ID.
 
 \return Returns pointer to Sg_File_Info.
 */
@@ -458,16 +458,16 @@ pointer to an object derived from a Sg_File_Info.
 /*!
 \fn Sg_File_Info::generateFileInfoForTransformationNode( int file_id )
 \brief Static function to return new Sg_File_Info object set to default values appropriate
-    for transformations that are not in the source file.
+for transformations that are not in the source file.
 
-    Static function which allows specification of transformation with assignement to 
-    a specific file (where it would be unparsed). This function will call
-    setOutputInCodeGeneration() and sets the file_id to a non-negative value.
-    This function is useful when transformation to a program happen within a
-    header file (e.g. including a header file as part of a transformation).
+Static function which allows specification of transformation with assignement to 
+a specific file (where it would be unparsed). This function will call
+setOutputInCodeGeneration() and sets the file_id to a non-negative value.
+This function is useful when transformation to a program happen within a
+header file (e.g. including a header file as part of a transformation).
 
-    Setting the file_id to the current source file should have the same result (semantics)
-    as Sg_File_Info::generateDefaultFileInfoForTransformationNode().
+Setting the file_id to the current source file should have the same result (semantics)
+as Sg_File_Info::generateDefaultFileInfoForTransformationNode().
 
 \return Returns pointer to Sg_File_Info.
 */
@@ -475,10 +475,10 @@ pointer to an object derived from a Sg_File_Info.
 /*!
 \fn Sg_File_Info::generateFileInfoForTransformationNode( string filename )
 \brief Static function to return new Sg_File_Info object set to default values appropriate
-    for transformations that are not in the source file.
+for transformations that are not in the source file.
 
-   Function similar to previous function, but takes a filename to support new files that
-    have not ben seen previously (e.g. new header file).
+Function similar to previous function, but takes a filename to support new files that
+have not ben seen previously (e.g. new header file).
 
 \return Returns pointer to Sg_File_Info.
 */
@@ -496,11 +496,11 @@ pointer to an object derived from a Sg_File_Info.
 \fn Sg_File_Info::hasPositionInSource() const
 \brief Abstracts query as to if an IR node maps back to the source code (evolving set of reasons whey this can be false).
 
-   There are several reasons why an IR node might NOT have a mapping back to the source code:
-     - could be a part of a transformation (isTransformation() == true)
-     - could be a compiler generated statement or expression (isCompilerGenerated() == true)
-     - could be compiler generated and marked for output by the unparser
-       (isCompilerGeneratedNodeToBeUnparsed() == true)
+There are several reasons why an IR node might NOT have a mapping back to the source code:
+- could be a part of a transformation (isTransformation() == true)
+- could be a compiler generated statement or expression (isCompilerGenerated() == true)
+- could be compiler generated and marked for output by the unparser
+(isCompilerGeneratedNodeToBeUnparsed() == true)
 
 \internal This is an evolving set of reasons, so abstracting it as a member function is helpful.
 
@@ -519,9 +519,9 @@ pointer to an object derived from a Sg_File_Info.
 \brief Returns true only if compiler generated (either by the front-end or by ROSE).
 
 \internal We do not presently distinguish between compiler generated code from EDG or by
-    ROSE.  For example template instatiations are not marked as compiler generated by EDG,
-    but if ROSE generates specializations from instatioated templates then they are marked
-    by ROSE as being compiler generated.
+ROSE.  For example template instatiations are not marked as compiler generated by EDG,
+but if ROSE generates specializations from instatioated templates then they are marked
+by ROSE as being compiler generated.
 
 \return Returns bool.
 */
@@ -531,8 +531,8 @@ pointer to an object derived from a Sg_File_Info.
 \brief Returns true only if compiler generated and required to be unparsed in generated code.
 
 \internal Templates instatiated by ROSE are marked as compiler generated, but only those 
-     instatiated templates that are used in the source file are required and so only
-     those must be unparsed in the generated code.
+instatiated templates that are used in the source file are required and so only
+those must be unparsed in the generated code.
 
 \deprecated This now calls isOutputInCodeGeneration(), and will be removed soon.
 
@@ -544,10 +544,10 @@ pointer to an object derived from a Sg_File_Info.
 \brief Returns true only if required to be unparsed in generated code.
 
 \internal Templates instatiated by ROSE are marked as compiler generated, but only those 
-     instatiated templates that are used in the source file are required and so only
-     those must be unparsed in the generated code. Note that currently all transformed IR
-     nodes are implicitly considered to be marked as \em outputInCodeGeneration, but this will
-     be made an explicit requirement in the future. 
+instatiated templates that are used in the source file are required and so only
+those must be unparsed in the generated code. Note that currently all transformed IR
+nodes are implicitly considered to be marked as \em outputInCodeGeneration, but this will
+be made an explicit requirement in the future. 
 
 \return Returns bool.
 */
@@ -557,9 +557,9 @@ pointer to an object derived from a Sg_File_Info.
 \brief Returns true only if shared internally (either by the front-end or by ROSE).
 
 \internal This is a new classification supporting the AST merge mechanism.  Currently
-    numerous types of IR nodes that are shared (SgType, SgSymbol, many non-defining
-    declarations, etc.) are not explicitly marked as shared.  This may be correct in 
-    a future release (requires more thought).
+numerous types of IR nodes that are shared (SgType, SgSymbol, many non-defining
+declarations, etc.) are not explicitly marked as shared.  This may be correct in 
+a future release (requires more thought).
 
 \return Returns bool.
 */
@@ -567,7 +567,7 @@ pointer to an object derived from a Sg_File_Info.
 /*!
 \fn Sg_File_Info::unsetTransformation()
 \brief If the IR node is a transformation it marks it false (zeros transformation marker bit
-    internally).
+internally).
 
 \return Returns void.
 */
@@ -643,12 +643,12 @@ pointer to an object derived from a Sg_File_Info.
 \fn bool Sg_File_Info::ok()
 \brief Checks internal consistancy of data.
 
-     This function verifies:
-       -# filename pointer is valid
-       -# if not compiler generaated then line number > 0
+This function verifies:
+-# filename pointer is valid
+-# if not compiler generaated then line number > 0
 
-     Defined to be used in tests:
-          ROSE_ASSERT(statement->get_file_info()->ok());
+Defined to be used in tests:
+ROSE_ASSERT(statement->get_file_info()->ok());
 
 \return Returns bool.
 */
@@ -677,7 +677,7 @@ pointer to an object derived from a Sg_File_Info.
 /*!
 \fn Sg_File_Info::operator> ( const Sg_File_Info & X, const Sg_File_Info & Y )
 \brief This relational operator tests two Sg_File_Info objects for X being after Y in the
-    same file.
+same file.
 
 \return Returns bool.
 */
@@ -685,7 +685,7 @@ pointer to an object derived from a Sg_File_Info.
 /*!
 \fn Sg_File_Info::operator< ( const Sg_File_Info & X, const Sg_File_Info & Y )
 \brief This relational operator tests two Sg_File_Info objects for X being before Y in the
-    same file.
+same file.
 
 \return Returns bool.
 */
@@ -693,7 +693,7 @@ pointer to an object derived from a Sg_File_Info.
 /*!
 \fn Sg_File_Info::operator>= ( const Sg_File_Info & X, const Sg_File_Info & Y )
 \brief This relational operator tests two Sg_File_Info objects for X being at the same
-    position or after Y in the same file.
+position or after Y in the same file.
 
 \return Returns bool.
 */
@@ -701,7 +701,7 @@ pointer to an object derived from a Sg_File_Info.
 /*!
 \fn Sg_File_Info::operator<= ( const Sg_File_Info & X, const Sg_File_Info & Y )
 \brief This relational operator tests two Sg_File_Info objects for X being at the same
-    position or before Y in the same file.
+position or before Y in the same file.
 
 \return Returns bool.
 */

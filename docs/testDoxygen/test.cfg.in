@@ -390,7 +390,6 @@ WARN_LOGFILE           =
 INPUT                  = @srcdir@ \
                          @top_srcdir@ \
                          @top_pwd@ \
-                         @top_pwd@/docs/Rose/AvailableDocumentation.docs \
                          @top_srcdir@/src/midend/astDiagnostics/AstDiagnostics.docs \
                          @top_srcdir@/src/midend/astDiagnostics/AstConsistencyTests.C \
                          @DOXYGEN_ADDED_DIRECTORY_1@ \

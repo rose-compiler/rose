@@ -515,6 +515,10 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_2],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_2.
 
+# DQ (9/26/2015): Since the config/ltdl.m4 file in regenerated, we can't edit it easily.
+# So make this a requirement so that it will not be expanded there.
+m4_require([_LT_SYS_DYNAMIC_LINKER])
+
 # AC_REQUIRE([AC_PROG_CXX])
 AC_PROG_CXX
 
@@ -759,7 +763,11 @@ AC_ARG_ENABLE([rose-openGL],
   [  --enable-rose-openGL  enable openGL],
   [  rose_openGL=${enableval}
 AC_PATH_X dnl We need to do this by hand for some reason
-MDL_HAVE_OPENGL
+
+# DQ (9/26/2015): Using more recent autoconf macro to avoid warnings.
+# MDL_HAVE_OPENGL
+AC_FIND_OPENGL
+
 echo "have_GL = '$have_GL' and have_glut = '$have_glut' and rose_openGL = '$rose_openGL'"
 #AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$openGL" = xno)
 if test ! "x$rose_openGL" = xno; then
@@ -1670,7 +1678,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
 AC_CONFIG_FILES([
 stamp-h
 Makefile
-rose.docs
 config/Makefile
 src/Makefile
 src/util/Makefile
@@ -2249,7 +2256,6 @@ exampleTranslators/defaultTranslator/Makefile
 docs/Makefile
 docs/Rose/footer.html
 docs/Rose/leftmenu.html
-docs/Rose/AvailableDocumentation.docs
 docs/Rose/Makefile
 docs/Rose/manual.tex
 docs/Rose/ROSE_InstallationInstructions.tex
@@ -2258,6 +2264,7 @@ docs/Rose/ROSE_DeveloperInstructions.tex
 docs/Rose/ROSE_DemoGuide.tex
 docs/Rose/gettingStarted.tex
 docs/Rose/rose.cfg
+docs/Rose/rose-install-demo.cfg
 docs/Rose/roseQtWidgets.doxygen
 docs/Rose/sage.cfg
 docs/Rose/Tutorial/Makefile

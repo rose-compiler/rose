@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/backstroke
 LINK	 = $(CXXLINK)
 
 # noinst_LTLIBRARIES lists all the librarlies that should be built, but not installed

@@ -58,7 +58,7 @@ filterOnNodes::operator()(filterOnNodes::argument_type x) const
      if ( locatedNode != NULL )
         {
           Sg_File_Info* fileInfo = locatedNode->get_file_info();
-          std::string filename(ROSE::stripPathFromFileName(fileInfo->get_filename()));
+          std::string filename(rose::utility_stripPathFromFileName(fileInfo->get_filename()));
 
 
 

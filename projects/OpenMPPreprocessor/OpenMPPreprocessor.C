@@ -53,7 +53,7 @@ OpenMPTraversal::evaluateRewriteInheritedAttribute (
 SgStatement*
 getPreviousStatement ( SgStatement *targetStatement )
    {
-     SgStatement *previousStatement = ROSE::getPreviousStatement(targetStatement);
+     SgStatement *previousStatement = rose::getPreviousStatement(targetStatement);
      return previousStatement;
    }
 

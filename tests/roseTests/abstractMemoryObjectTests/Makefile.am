@@ -3,7 +3,7 @@ noinst_PROGRAMS =
 EXTRA_DIST =
 TEST_TARGETS =
 
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir)
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 #------------------------------------------------------------------------------------------------------------------------

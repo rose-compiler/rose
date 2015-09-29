@@ -5,7 +5,7 @@ SUBDIRS = LANL_POP
 endif
 
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	$(ROSE_INCLUDES) 
 
 

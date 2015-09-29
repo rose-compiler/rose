@@ -9,7 +9,7 @@ if !USING_XTENSA_BACKEND_COMPILER
 SUBDIRS += roseHPCT 
 endif
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # all: exampleMakefile
 
@@ -62,8 +62,11 @@ NOINST_TUTORIAL_EXAMPLES = \
    bin_example \
    binaryAnalysisExample \
    binaryAnalysis_symbolTable \
+   binaryCallGraph \
    binaryFileRead \
    binaryFileWrite \
+   binaryHelloWorld \
+   binaryStrings \
    sb_callgraphAnalysis \
    buildFile \
    buildCFG \
@@ -152,6 +155,10 @@ endif
 binaryFileRead_SOURCES = binaryFileRead.C
 
 binaryFileWrite_SOURCES = binaryFileWrite.C
+
+binaryCallGraph_SOURCES = binaryCallGraph.C
+
+binaryHelloWorld_SOURCES = binaryHelloWorld.C
 
 ASTGraphGenerator_SOURCES = ASTGraphGenerator.C
 
@@ -731,13 +738,13 @@ testSwitchWithoutDefault: switchWithoutDefault
 	./switchWithoutDefault -rose:verbose 0 -I$(srcdir) -c $(srcdir)/inputCode_switchWithoutDefault.C
 
 testRoseSwitchWithoutDefault: switchWithoutDefault
-	./switchWithoutDefault -rose:verbose 0 -I.. $(INCLUDES) -c ../src/frontend/SageIII/Cxx_Grammar.C
+	./switchWithoutDefault -rose:verbose 0 -I.. $(AM_CPPFLAGS) -c ../src/frontend/SageIII/Cxx_Grammar.C
 
 testAddStruct: addStruct
-	./addStruct -rose:verbose 0 -I.. $(INCLUDES) -c $(srcdir)/inputCode_addStruct.C
+	./addStruct -rose:verbose 0 -I.. $(AM_CPPFLAGS) -c $(srcdir)/inputCode_addStruct.C
 
 testsnprintf: sprintf_to_snprintf
-#	./sprintf_to_snprintf -rose:verbose 0 -I.. $(INCLUDES) -c $(srcdir)/inputCode_sprintf_to_snprintf.C
+#	./sprintf_to_snprintf -rose:verbose 0 -I.. $(AM_CPPFLAGS) -c $(srcdir)/inputCode_sprintf_to_snprintf.C
 	./sprintf_to_snprintf -rose:verbose 0 -c $(srcdir)/inputCode_sprintf_to_snprintf.C
 
 testSeedBugsExample_arrayIndexing: seedBugsExample_arrayIndexing

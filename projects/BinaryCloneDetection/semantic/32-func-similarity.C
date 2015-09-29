@@ -814,7 +814,7 @@ main(int argc, char *argv[])
             ++argno;
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
-            usage(0);
+            ::usage(0);
         } else if (!strncmp(argv[argno], "--aggregate=", 12)) {
             if (!strcmp(argv[argno]+12, "average")) {
                 opt.aggregation = AG_AVERAGE;
@@ -894,7 +894,7 @@ main(int argc, char *argv[])
         }
     }
     if (argno+1!=argc)
-        usage(1);
+        ::usage(1);
     SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
     transaction = conn->transaction();
     int64_t cmd_id = CloneDetection::start_command(transaction, argc, argv, "calculating function similarity");

@@ -14,8 +14,13 @@ int __builtin_ia32_psrldi(int,int);
 int __builtin_ia32_psrlqi(long long,int);
 #endif
 
-
-
+#ifdef __INTEL_COMPILER
+// Added type for Intel compilers.
+// typedef __m64 v2si;
+// typedef unsigned long int __m64;
+// typedef __v2si __m64;
+// #define __m64
+#endif
 
 #ifdef __MMX__
   #include<emmintrin.h>

@@ -234,7 +234,7 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir)
 #	@$(MAKE) $(TEST_Objects)
 
 $(TEST_Objects): $(TESTCODES)
-	$(TEST_TRANSLATOR) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.cc)
+	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.cc)
 
 EXTRA_DIST = $(TESTCODES) c c99 msvc
 

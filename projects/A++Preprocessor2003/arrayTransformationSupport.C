@@ -275,8 +275,8 @@ ArrayTransformationSupport::buildLoopNest ( const OperandDataBaseType & operandD
      ROSE_ASSERT (dimensionOfArrayStatement > 0);
 
   // Make sure that the return string is allocated on the heap 
-  // (use the ROSE::stringDuplicate function to force this)
-     char* loopNestString = ROSE::stringDuplicate (loopNestTemplate);
+  // (use the rose::stringDuplicate function to force this)
+     char* loopNestString = rose::stringDuplicate (loopNestTemplate);
 
      bool consistantAcrossAllOperands = TRUE;     // consistantIndexingAcrossAllOperands (operandCodeList);
 
@@ -350,7 +350,7 @@ ArrayTransformationSupport::buildLoopNest ( const OperandDataBaseType & operandD
           ROSE_ASSERT (staticLocalLoopNestTemplate != NULL);
 
        // Build the string on the heap (since the copyEdit function requires that)
-          char* localLoopNestTemplate = ROSE::stringDuplicate(staticLocalLoopNestTemplate);
+          char* localLoopNestTemplate = rose::stringDuplicate(staticLocalLoopNestTemplate);
           ROSE_ASSERT (localLoopNestTemplate != NULL);
 
        // char staticNumberString[128];
@@ -360,17 +360,17 @@ ArrayTransformationSupport::buildLoopNest ( const OperandDataBaseType & operandD
           char* tempLoopNestString =
        //      TransformationSpecificationType::copyEdit ( localLoopNestTemplate, "$dim", numberString );
                SgNode::copyEdit ( localLoopNestTemplate, "$dim", numberString );
-          loopNestString = ROSE::stringConcatinate (loopNestString,tempLoopNestString);
+          loopNestString = rose::stringConcatinate (loopNestString,tempLoopNestString);
         }
 
   // Add a target string to support the substitution of the inner loop body later
-     loopNestString = ROSE::stringConcatinate (loopNestString,"$INNER_LOOP; \n");
+     loopNestString = rose::stringConcatinate (loopNestString,"$INNER_LOOP; \n");
 
   // Generate the closing braces
      for (i=0; i < dimensionOfArrayStatement; i++)
         {
           char* localLoopNestTemplate = "      } \n";
-          loopNestString              = ROSE::stringConcatinate (loopNestString,localLoopNestTemplate);
+          loopNestString              = rose::stringConcatinate (loopNestString,localLoopNestTemplate);
         }
 
      ROSE_ASSERT (loopNestString != NULL);
@@ -648,7 +648,7 @@ ArrayTransformationSupport::buildOperandSpecificVariableDeclarations (
        // printf ("Test 5: localOperandDataTemplate    = %s \n",localOperandDataTemplate);
 
        // Build of the final string by concatination of the string build within each iteration of the loop
-       // variableData = ROSE::stringConcatinate (variableData,localOperandDataTemplate);
+       // variableData = rose::stringConcatinate (variableData,localOperandDataTemplate);
           variableData += localOperandDataTemplate;
 
        // Increment the operand code to iterate with the listStringElementIterator
@@ -824,7 +824,7 @@ ArrayTransformationSupport::buildOperandSpecificVariableInitialization (
        // printf ("Test 5: localOperandDataTemplate    = %s \n",localOperandDataTemplate.c_str());
 
        // Build of the final string by concatination of the string build within each iteration of the loop
-       // variableData = ROSE::stringConcatinate (variableData,localOperandDataTemplate);
+       // variableData = rose::stringConcatinate (variableData,localOperandDataTemplate);
           variableData += localOperandDataTemplate;
 
        // Increment the operand code to iterate with the listStringElementIterator
@@ -859,7 +859,7 @@ ArrayTransformationSupport::buildOperandVariableDeclarationMacro (
    {
   // We don't need the variableName since we return $VARIABLE_NAME instead which is substituted by
   // the calling function this may be a poor design however.
-  // char* variableName = ROSE::stringDuplicate(operandNameString.c_str());
+  // char* variableName = rose::stringDuplicate(operandNameString.c_str());
 
   // declare the return string
      string operandDataSetupMacroString;
@@ -976,7 +976,7 @@ ArrayTransformationSupport::buildOperandVariableInitializationMacro (
    {
   // We don't need the variableName since we return $VARIABLE_NAME instead which is substituted by
   // the calling function this may be a poor design however.
-  // char* variableName = ROSE::stringDuplicate(operandNameString.c_str());
+  // char* variableName = rose::stringDuplicate(operandNameString.c_str());
 
   // declare the return string
      string operandDataSetupMacroString;
@@ -1084,7 +1084,7 @@ ArrayTransformationSupport::buildOperandSubscriptMacro (
      ROSE_ASSERT (arrayDimension > 0);
 
   // template for final macro for each operand
-  // char* macroTemplateString = ROSE::stringDuplicate("#define SC$VARIABLE_IDENTIFIER($OFFSET_VARIABLE_ARGS) $SUBSCRIPT_COMPUTATION");
+  // char* macroTemplateString = rose::stringDuplicate("#define SC$VARIABLE_IDENTIFIER($OFFSET_VARIABLE_ARGS) $SUBSCRIPT_COMPUTATION");
      string macroTemplateString = "#define SC$VARIABLE_IDENTIFIER($OFFSET_VARIABLE_ARGS) $SUBSCRIPT_COMPUTATION";
   // ROSE_ASSERT (macroTemplateString != NULL);
 
@@ -1140,7 +1140,7 @@ ArrayTransformationSupport::buildOperandSubscriptMacro (
                  else
                   {
                  // Don't both defining a subscript computation macro since one is already defined for counter == 0
-                    subscriptComputationMacroString = ROSE::stringDuplicate("");
+                    subscriptComputationMacroString = rose::stringDuplicate("");
                   }
 #endif
             // Remove the _$VARIABLE_IDENTIFIER substring since this one macro will be use for
@@ -1272,11 +1272,11 @@ ArrayTransformationSupport::buildOperandSubscriptMacro (
      string returnString;
 
   // Now process it so that the string can be unparsed as a macro by the unparser
-  // if (ROSE::isSameName(subscriptComputationMacroString,"") == TRUE)
+  // if (rose::isSameName(subscriptComputationMacroString,"") == TRUE)
      if (subscriptComputationMacroString == "")
         {
        // Don't turn empty strings into macros
-       // returnString = ROSE::stringDuplicate("");
+       // returnString = rose::stringDuplicate("");
         }
        else
         {
@@ -1314,7 +1314,7 @@ ArrayTransformationSupport::buildChainedString (
      for (i = 2; i <= arrayDimension; i++)
         {
        // Build the multidimensional case
-       // subscriptMacroString = ROSE::stringConcatinate (subscriptMacroString,nextDimensionString);
+       // subscriptMacroString = rose::stringConcatinate (subscriptMacroString,nextDimensionString);
           subscriptMacroString = subscriptMacroString + nextDimensionString;
 
        // Generate a string representing the index into the list of operands

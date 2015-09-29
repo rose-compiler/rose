@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) \
+AM_CPPFLAGS = $(ROSE_INCLUDES) \
 	   -I$(top_srcdir)/projects/DataFaultTolerance/includes
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \

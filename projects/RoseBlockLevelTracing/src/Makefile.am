@@ -7,7 +7,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 
 RoseBlockLevelTracing_includedir=$(prefix)
-INCLUDES = $(ROSE_INCLUDES) -I$(RoseBlockLevelTracing_includedir)
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(RoseBlockLevelTracing_includedir)
 LDADD = $(ROSE_LIBS)
 
 bin_PROGRAMS = RoseBlockLevelTracing  RoseTraceReader RoseMultiTraceCommonPathFinder RoseCommonPathToSgNodeMapper

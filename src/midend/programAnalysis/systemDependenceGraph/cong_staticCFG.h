@@ -27,8 +27,13 @@ namespace StaticCFG
 typedef boost::function<bool(const VirtualCFG::CFGNode&)> CFGNodeFilter;
 
 
+#ifndef __INTEL_COMPILER
+// DQ (8/28/2015): from Intel v14 icpc: 
+//    error: "CFGNode" has already been declared in the current scope
+//    error: "CFGEdge" has already been declared in the current scope
 typedef VirtualCFG::FilteredCFGNode<CFGNodeFilter> CFGNode;
 typedef VirtualCFG::FilteredCFGEdge<CFGNodeFilter> CFGEdge;
+#endif
 
 typedef boost::shared_ptr<CFGNode> CFGNodePtr;
 typedef boost::shared_ptr<CFGEdge> CFGEdgePtr;

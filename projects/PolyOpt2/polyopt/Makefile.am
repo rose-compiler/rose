@@ -5,7 +5,7 @@ POCC_INSTALL = $(top_builddir)/src/3rdPartyLibraries/pocc
 
 DEFS = 
 #############################################################################
-INCLUDES = -I$(srcdir)/include	$(ROSE_INCLUDES)\
+AM_CPPFLAGS = -I$(srcdir)/include	$(ROSE_INCLUDES)\
 	-I$(POCC_INSTALL)/driver/pocc/include				\
 	-I$(POCC_INSTALL)/driver/pocc-utils/include			\
 	-I$(POCC_INSTALL)/optimizers/install-letsee/include		\

@@ -6,7 +6,7 @@ MOSTLYCLEANFILES =
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 EXTRA_DIST = README.txt
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 #------------------------------------------------------------------------------------------------------------------------
 # It makes no sense to install these since some (at least parallelMerge) have hard-coded paths to other executables.

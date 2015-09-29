@@ -7,7 +7,7 @@ HEADER_START
        // and not required which is required to match the other aspects of the copy mechanism code generation.
        // Specifically it is a problem to declare the copy function everywhere because it is not implemented 
        // for the SgSymbol IR nodes. I'm not clear why it is not implemented for these IR nodes.
-      /*! \brief Copies AST (whole subtree, depending on the SgCopyHelp class */
+       /* \brief Copies AST (whole subtree, depending on the SgCopyHelp class */
        // virtual SgNode* copy ( const SgCopyHelp & help) const;
 
       /*! \brief returns a string representing the class name */
@@ -17,8 +17,8 @@ HEADER_START
           virtual VariantT variantT() const; // MS: new variant used in tree traversal
 
       /*! \brief static variant value */
-		  // King84 (2010.08.16): Moved this to an enum to save space, since it's only used at compiler-time anyway.
-          // static const VariantT static_variant = V_$CLASSNAME;
+       // King84 (2010.08.16): Moved this to an enum to save space, since it's only used at compiler-time anyway.
+       // static const VariantT static_variant = V_$CLASSNAME;
           enum { static_variant = V_$CLASSNAME };
 
        /* the generated cast function */
@@ -43,6 +43,8 @@ HEADER_START
 #if 1
        /* RPM (2009-06-03): Apparently this must all be on one line for configuration "--with-javaport"; reverting r5427 */
        // void operator delete (void* pointer) { $CLASSNAME::operator delete (pointer,sizeof($CLASSNAME)); };
+       // DQ (9/2/2015): Added comment for delete operator.
+      /*! \brief ROSETTA generated delete operator: deletes all non-traversed members. */
           void operator delete (void* pointer);
 #else
        // DQ (4/5/2007): This is not the correct operator that we want, but appears to be required to compile ROSE with ROSE.
@@ -62,6 +64,7 @@ HEADER_START
        // DQ (1/2/2006): Compute the amount of memory allocated for this type within the AST.
       /*! \brief Returns the total number of IR nodes of this type */
           static size_t numberOfNodes();
+
       /*! \brief Returns the size in bytes of the total memory allocated for all IR nodes of this type */
           static size_t memoryUsage();
 
@@ -78,22 +81,30 @@ HEADER_START
               it would be unwieldy to have many of the internal classes in ROSE be explicitly defined as friends.
          
        */
+
        // MS: 02/12/02 container of pointers to AST successor nodes used in the traversal
        // overridden in every class by *generated* implementation
+      /*! \brief container of pointers to AST successor nodes used in the traversal overridden in every class by *generated* implementation */
           virtual std::vector<SgNode*> get_traversalSuccessorContainer();
        // MS: 06/28/02 container of names of variables or container indices 
        // used used in the traversal to access AST successor nodes
        // overridden in every class by *generated* implementation
+      /*! \brief container of names of variables or container indices used used in the traversal
+          to access AST successor nodes overridden in every class by *generated* implementation */
           virtual std::vector<std::string> get_traversalSuccessorNamesContainer();
 
        // GB (09/25/2007): Functions for index-based access to traversal successors; these are hopefully a lot faster
        // than all the vector copies. The implementation for these functions is generated for each class.
+      /*! \brief return number of children in the traversal successor list */
           virtual size_t get_numberOfTraversalSuccessors();
+      /*! \brief index-based access to traversal successors by index number */
           virtual SgNode *get_traversalSuccessorByIndex(size_t idx);
+      /*! \brief index-based access to traversal successors by child node */
           virtual size_t get_childIndex(SgNode *child);
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
        // MS: 08/16/2002 method for generating RTI information
+      /*! \brief return C++ Runtime-Time-Information */
           virtual RTIReturnType roseRTI();
 #endif
       /* */
@@ -106,6 +117,7 @@ HEADER_START
           These functions have been deprecated from use.
        */
       /* */
+
       /*! returns a C style string (char*) representing the class name */
           virtual const char* sage_class_name() const ROSE_DEPRECATED_FUNCTION;
 
@@ -130,18 +142,19 @@ HEADER_START
           or by particularly knowledgable users for specialized tools or applications.
        */
       /* */
+
        // DQ (11/26/2005): Support for visitor pattern mechanims
        // (inferior to ROSE traversal mechanism, experimental).
       /*! \brief \b FOR \b INTERNAL \b USE Support for visitor pattern.
        */
           void executeVisitorMemberFunction (ROSE_VisitorPattern & visitor);
 
-		/** DXN (08/09/2010): support for the classic visitor pattern done in GoF
-		*/
-		virtual void accept (ROSE_VisitorPattern & visitor);
+      /* DXN (08/09/2010): support for the classic visitor pattern done in GoF */
+      /*! \brief support for the classic visitor pattern done in GoF */
+          virtual void accept (ROSE_VisitorPattern & visitor);
 
        // DQ (12/26/2005): Support for traversal based on the memory pool
-      /*! \brief \b FOR \b INTERNAL \b USE Support for visitor pattern.
+      /*! \brief \b FOR \b INTERNAL \b USE Support for visitor pattern over all IR nodes by type of IR node.
        */
           static void traverseMemoryPoolNodes(ROSE_VisitTraversal & visit);
 
@@ -150,14 +163,12 @@ HEADER_START
           static void traverseMemoryPoolVisitorPattern(ROSE_VisitorPattern & visitor);
 
        // DQ (2/9/2006): Added to support traversal over single representative of each IR node
-       // This traversal helps support intrnal tools that call static member functions.
+       // This traversal helps support internal tools that call static member functions.
        // note: this function operates on the memory pools.
       /*! \brief \b FOR \b INTERNAL \b USE Support for type-based traversal.
        */
           static void visitRepresentativeNode (ROSE_VisitTraversal & visit);
       /* */
-
-
 
 
      public:
@@ -168,6 +179,7 @@ HEADER_START
           or by particularly knowledgable users for specialized tools or applications.
        */
       /* */
+
       /*! \brief \b FOR \b INTERNAL \b USE This is used in internal tests to verify that all IR nodes are allocated from the heap.
 
           The AST File I/O depends upon the allocation of IR nodes being from the heap, stack based or global IR nodes should
@@ -233,7 +245,9 @@ HEADER_START
        */
           virtual long getChildIndex( SgNode* childNode ) const;
 
-      /*! \brief Constructor for use by AST File I/O Mechanism
+      // DQ (9/2/2015): Since this function is generated by ROSETTA, we can't define the 
+      // comment here (changed to be a C style comment and not be a doxygen comment).
+      /* \brief Constructor for use by AST File I/O Mechanism
 
           This constructor permits the IR node to be rebuilt from the contiguously arranged data in memory 
           which obtained via fast binary file I/O from disk.
@@ -256,17 +270,22 @@ HEADER_START
        */
       /* */
 
-       /* JH (10/24/2005): Two typefefs. The TestType notes the type every pointer is cast to before
+       /* JH (10/24/2005): Two typedefs. The TestType notes the type every pointer is cast to before
           we compare them. Since I had several problems with this, I decided to make a typdef to ensure
           that I use the same type everywhere, if any changes are made. THe second one declares the type
           (actually unsigned long) where teh pointer address gets converted to. On 64 bit platforms this
           might got changed, but unfortunatly, the return types are still unsigned longs. There exists
           a correspinding one in the AST_FILE_IO class!
        */
-      /*! \brief Typedef used for low level memory access.
+      // DQ (9/2/2015): This typedef is no longer used, we can't define the 
+      // comment here (changed to be a C style comment and not be a doxygen comment).
+      /* \brief Typedef used for low level memory access.
        */
        // typedef unsigned char* TestType;
-      /*! \brief Typedef used to hold memory addresses as values.
+
+      // DQ (9/2/2015): This typedef is no longer used, we can't define the 
+      // comment here (changed to be a C style comment and not be a doxygen comment).
+      /* \brief Typedef used to hold memory addresses as values.
        */
        // typedef unsigned long  AddressType;
 
@@ -276,29 +295,46 @@ HEADER_START
       /*! \brief Methods to find the pointer to a global and local index
        */
           friend $CLASSNAME* $CLASSNAME_getPointerFromGlobalIndex ( unsigned long globalIndex ) ;
+
       /*! \brief Get the size of the memory pool
 
           It actually returns the size of the whole blocks allocated, no matter they contain valid pointers or not.
        */
           friend unsigned long $CLASSNAME_getNumberOfValidNodesAndSetGlobalIndexInFreepointer( unsigned long );
+
+      /*! \brief clear the memory pool */
           friend void $CLASSNAME_clearMemoryPool ( );
+
+      /*! \brief internal support for AST file I/O (operating on the memory pools) */
           friend void $CLASSNAME_extendMemoryPoolForFileIO ( unsigned long );
+
+      /*! \brief internal support for AST file I/O (operating on the memory pools) */
           friend void $CLASSNAME_getNextValidPointer ( std::pair<$CLASSNAME*, std::vector < unsigned char* > :: const_iterator >& );
+
+      /*! \brief internal support for AST file I/O (operating on the memory pools) */
           friend void $CLASSNAME_resetValidFreepointers( );
 
 // endif for ifndef ROSE_USE_SWIG_SUPPORT
 #endif
 
        // necessary, to have direct access to the p_freepointer and the private methods !
+      /*! \brief friend class declaration to support AST File I/O */
           friend class AST_FILE_IO;
+
+      /*! \brief friend class declaration to support AST File I/O */
           friend class $CLASSNAMEStorageClass;
+
+      /*! \brief friend class declaration to support AST File I/O */
           friend class AstSpecificDataManagingClass;
+
+      /*! \brief friend class declaration to support AST File I/O */
           friend class AstSpecificDataManagingClassStorageClass;
 
     public:
+      /*! \brief IR node constructor to support AST File I/O */
           $CLASSNAME( const $CLASSNAMEStorageClass& source );
 
-     // private: // JJW hack
+ // private: // JJW hack
        /*
           name AST Memory Allocation Support Variables
           Memory allocations support variables 
@@ -334,6 +370,8 @@ HEADER_START
           unfortunately SDF tools and Stratego both fail to obay the ATerm API).
        */
           virtual ATerm generate_ATerm();
+
+      /*! \brief Support for generation of ATerms. */
           virtual void generate_ATerm_Annotation(ATerm & term);
    #endif
 #endif
