@@ -11,7 +11,9 @@ AC_DEFUN([ROSE_FLAG_CXX_OPTIONS], [
 # so we must know our host and the compiler used.
 AC_REQUIRE([AC_CANONICAL_HOST])
 AC_REQUIRE([AC_PROG_CXX])
-AC_REQUIRE([BTNG_INFO_CXX_ID])
+
+# DQ (9/26/2015): Commented out to supress warning in aclocal.
+# AC_REQUIRE([BTNG_INFO_CXX_ID])
 
 dnl *********************************************************************
 dnl * Set up the Preprocessor -D options CXXDEBUG and ARCH_DEFINES

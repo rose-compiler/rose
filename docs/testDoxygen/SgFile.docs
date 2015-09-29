@@ -5,9 +5,9 @@
 /*!
 \class SgFile
 \brief This class represents a source file for a project (which may contian 
-       many source files and or directories).
+many source files and or directories).
 
-    This IR node contains information specific to this file and references the 
+This IR node contains information specific to this file and references the 
 project for more project (global) information.  The dominately useful data in 
 this IR node is the pointer to the global scope for this file (structurally
 global scope, but actually file scope and global scope by C++ scoping rules).
@@ -17,27 +17,27 @@ rather bizzar that we keep all the file names instead of just the single relavan
 one!   This should be fixed as it is confusing.
 
 \todo The ROSEAttributesListContainerPtr p_preprocessorDirectivesAndCommentsList
-    should be implemented a list instead of a pointer to a list.  This might require
-    a list copy in the internal hand,ing, but would simplify the design and there is
-    not the same memory constraint of having a pointer to a list vs. a list here because 
-    the list is almost always valid (most source code incluses at least one comment or
-    CPP directive) and there is only one SgFile object per source file (so there are
-    relatively few SgFile nodes in even a very large AST).
+should be implemented a list instead of a pointer to a list.  This might require
+a list copy in the internal hand,ing, but would simplify the design and there is
+not the same memory constraint of having a pointer to a list vs. a list here because 
+the list is almost always valid (most source code incluses at least one comment or
+CPP directive) and there is only one SgFile object per source file (so there are
+relatively few SgFile nodes in even a very large AST).
 
 \todo This IR nodes now has a Sg_File_Info pointer, however it needs to be made consistant
-    with the filename that is returned from SgFile::get_fileName().
+with the filename that is returned from SgFile::get_fileName().
 
 \todo The default constructor for SgFile sets the SgGlobal pointer to NULL and perhaps it
-    would be better if it set it to a valid SgGlobal object then we would have a better
-    defined empty list of declarations.
+would be better if it set it to a valid SgGlobal object then we would have a better
+defined empty list of declarations.
 
 \todo Yarden has suggested we provide a way to modify the link line that would be 
-    generated to support the backend compilation.  I think we should have a list 
-    of strings that could be added to the link line (appended to the end would be 
-    the simplist).  Else we need a virtual function that could be overloaded to 
-    customize the control over the link command generation (however we want to 
-    discourage the derivation of user defined IR nodes from existing IR nodes 
-    since this would break some of the internal mechanisms that use the memory pools).
+generated to support the backend compilation.  I think we should have a list 
+of strings that could be added to the link line (appended to the end would be 
+the simplist).  Else we need a virtual function that could be overloaded to 
+customize the control over the link command generation (however we want to 
+discourage the derivation of user defined IR nodes from existing IR nodes 
+since this would break some of the internal mechanisms that use the memory pools).
 
 \sa
 \ref SgFile_usage  "Example of using a SgFile object"
@@ -52,8 +52,8 @@ one!   This should be fixed as it is confusing.
 \var SgFile::p_root
 \brief This is the global scope.
 
-    Note that the global scope contains the file scope as the two are not structurally
-    differentiated within the source code.
+Note that the global scope contains the file scope as the two are not structurally
+differentiated within the source code.
 
 \internal  This name will be changed to "globalScope" at some point.
 */
@@ -62,50 +62,50 @@ one!   This should be fixed as it is confusing.
 \var SgFile::p_no_implicit_templates
 \brief This is a reference to the GNU g++ command line option (same name).
 
-    If the option "-no_implicit_templates" is seen on the command line then this is true.
-    Else it may be manipulated directly within the ROSE command line processing.
+If the option "-no_implicit_templates" is seen on the command line then this is true.
+Else it may be manipulated directly within the ROSE command line processing.
 
-    This option controls if instantiated templates should be output where they are
-    not specified explicitly via explicit template instatiation directives (see
-    SgTemplateInstatiationDirectiveStatement, formally part of C++).
+This option controls if instantiated templates should be output where they are
+not specified explicitly via explicit template instatiation directives (see
+SgTemplateInstatiationDirectiveStatement, formally part of C++).
 
 \internal  We need to see this option since it effects how template instantiations are
-    generated. Other backend compilers may force this to be recognized in other ways so that
-    we map other vendor's equivalent compiler options to this one.
+generated. Other backend compilers may force this to be recognized in other ways so that
+we map other vendor's equivalent compiler options to this one.
 */
 
 /*!
 \var SgFile::p_no_implicit_inline_templates
 \brief This is a reference to the GNU g++ command line option (same name).
 
-    If the option "-no_implicit_inline_templates" is seen on the command line then this is true.
-    Else it may be manipulated directly within the ROSE command line processing.
+If the option "-no_implicit_inline_templates" is seen on the command line then this is true.
+Else it may be manipulated directly within the ROSE command line processing.
 
-    This option controls if instantiated templates for inline functions should be output where they are
-    not specified explicitly via explicit template instatiation directives (see
-    SgTemplateInstatiationDirectiveStatement, formally part of C++).
+This option controls if instantiated templates for inline functions should be output where they are
+not specified explicitly via explicit template instatiation directives (see
+SgTemplateInstatiationDirectiveStatement, formally part of C++).
 
 \internal  We need to see this option since it effects how template instantiations are
-    generated.  Other backend compilers may force this to be recognized in other ways so that
-    we map other vendor's equivalent compiler options to this one.
+generated.  Other backend compilers may force this to be recognized in other ways so that
+we map other vendor's equivalent compiler options to this one.
 */
 
 /*!
 \var ROSEAttributesListContainerPtr SgFile::p_preprocessorDirectivesAndCommentsList
 \brief This is the container of comments and preprocessor control statements that was
-    extracted from the file and which has been woven back into the AST (using heuristics).
+extracted from the file and which has been woven back into the AST (using heuristics).
 
-   This information is extracted from the file using a lex based parser.  Within AST post
-   processing the comments and preprocessor control statements are woven back into the 
-   AST using simple heuristics.  They are attached to the IR nodes as attributes
-   (see AST attribute Mechanism).  They are unparsed as part of the code generation 
-   phase.
+This information is extracted from the file using a lex based parser.  Within AST post
+processing the comments and preprocessor control statements are woven back into the 
+AST using simple heuristics.  They are attached to the IR nodes as attributes
+(see AST attribute Mechanism).  They are unparsed as part of the code generation 
+phase.
 */
 
 /*!
 \var SgFile::p_originalCommandLineArgumentList
 \brief Copy of original argc and argv command line passed to ROSE translator (converted to
-    STL list of strings).
+STL list of strings).
 
 \internal This is a deep copy.
 */
@@ -114,14 +114,14 @@ one!   This should be fixed as it is confusing.
 \var SgFile::p_file_info
 \brief This object permits the file name map mechanism to be used on SgFile objects.
 
-    This Sg_File_Info object encapsulates the file id mechanism which maps file ids
-    (integers) to filenames (strings). This permist us to save significant storage
-    by holding string names only once in memory and associating integers with them
-    saving memory and simplify matching file names.  The memory saving is because there 
-    would otherwise be a LOT of redundant filename strings, 2 per IR node in many cases.
-    the performance advantage is that integer comparisons are significantly than string
-    comparisions and there are a lot of these (one per IR node) in the traversal
-    mechanisms.
+This Sg_File_Info object encapsulates the file id mechanism which maps file ids
+(integers) to filenames (strings). This permist us to save significant storage
+by holding string names only once in memory and associating integers with them
+saving memory and simplify matching file names.  The memory saving is because there 
+would otherwise be a LOT of redundant filename strings, 2 per IR node in many cases.
+the performance advantage is that integer comparisons are significantly than string
+comparisions and there are a lot of these (one per IR node) in the traversal
+mechanisms.
 
 \internal The filename is not currently correct, I think.
 */
@@ -134,7 +134,7 @@ one!   This should be fixed as it is confusing.
 \fn SgFile::SgFile()
 \brief This is the constructor.
 
-   This constructor builds the SgFile base class.
+This constructor builds the SgFile base class.
 
 \sa 
 \ref SgFile_create "Example:create an SgFile object"
@@ -144,14 +144,14 @@ one!   This should be fixed as it is confusing.
 \fn SgFile::~SgFile()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgFile::isSgFile (SgNode *s)
 \brief Cast function (from derived class to SgFile pointer).
 
-   This functions returns a SgFile pointer for any input of a 
+This functions returns a SgFile pointer for any input of a 
 pointer to an object derived from a SgFile.
 
 \return Returns valid pointer to SgFile if input is derived from a SgLocatedNode.
@@ -161,7 +161,7 @@ pointer to an object derived from a SgFile.
 \fn SgFile::isSgFile (const SgNode *s)
 \brief Cast function (from derived class to SgFile pointer).
 
-   This functions returns a SgFile pointer for any input of a 
+This functions returns a SgFile pointer for any input of a 
 pointer to an object derived from a SgFile.
 
 \return Returns valid pointer to SgFile if input is derived from a SgLocatedNode.
@@ -171,12 +171,12 @@ pointer to an object derived from a SgFile.
 \fn SgFile::get_globalScope()
 \brief Function to return global scope (list of declaration statments, SgGlobal).
 
-   This functions returns a SgGlobal pointer.
+This functions returns a SgGlobal pointer.
 
 \return Returns valid pointer to SgGlobal.
 
 \internal This return value is never NULL, but could be a SgGlobal containing
-    an empty list.
+an empty list.
 */
 
 /*!

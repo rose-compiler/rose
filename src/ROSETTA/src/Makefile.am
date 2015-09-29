@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 EXTRA_DIST = CMakeLists.txt \
    ROSETTA_macros.h  grammar.h grammarString.h terminal.h

@@ -1,0 +1,9 @@
+// -*- c++ -*-
+
+// This module serves as the top level for all developer-specific documentation which probably shouldn't be in the list of
+// pages that are presented to non-developer users.  That's why it's a @defgroup instead of a @page. [Robb P. Matzke 2015-09-26]
+
+/** @defgroup developer_docs Library developers and collaborators
+ *  @brief Documentation oriented toward those working on ROSE.
+ *
+ *  This documentation is mostly for those who work on the ROSE library or who work closely with the library development team. */

@@ -282,18 +282,22 @@ $CLASSNAME_extendMemoryPoolForFileIO( )
  // DQ (7/25/2014): Commented out to avoid compiler warning with GNU 4.8.
  // bool firstEntry = true;
 
-    int blockIndex = $CLASSNAME_Memory_Block_List.size();
-    unsigned long newPoolSize = AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME) +
-                                AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME);
+ // int blockIndex = $CLASSNAME_Memory_Block_List.size();
+    size_t blockIndex = $CLASSNAME_Memory_Block_List.size();
+ // unsigned long newPoolSize = AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME) +
+ //                             AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME);
+    size_t newPoolSize = AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME) +
+                         AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME);
 #if 0
-    printf ("blockIndex = %d newPoolSize = %" PRIuPTR " AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME) = %" PRIuPTR " AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME) = %" PRIuPTR " $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE = %d \n",
+    printf ("blockIndex = %lu newPoolSize = %" PRIuPTR " AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME) = %" PRIuPTR " AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME) = %" PRIuPTR " $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE = %d \n",
          blockIndex,newPoolSize,AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME),AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME),$CLASSNAME_CLASS_ALLOCATION_POOL_SIZE);
 #endif
 
-    while ( (unsigned long) (blockIndex * $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE) < newPoolSize)
+ // while ( (unsigned long) (blockIndex * $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE) < newPoolSize)
+    while ( (blockIndex * $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE) < newPoolSize)
       {
 #if 0
-        printf ("     Allocating a new block: blockIndex = %d \n",blockIndex);
+        printf ("     Allocating a new block: blockIndex = %lu \n",blockIndex);
 #endif
         pointer = ($CLASSNAME*) ROSE_MALLOC ( $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME) );
         assert( pointer != NULL );

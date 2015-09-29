@@ -9,7 +9,7 @@ slicing_SOURCES = slicing.cpp
 slicing_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = CMakeLists.txt $(TESTCODES)

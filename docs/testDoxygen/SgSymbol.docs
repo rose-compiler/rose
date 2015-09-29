@@ -11,7 +11,7 @@ declarations and names.  It is also more compact than carrying around
 names as strings.  The SgSymbol can contain many references and is a shared 
 IR node.
 
-    A "symbol" within the compiler is a concept of a name.  The simplest
+A "symbol" within the compiler is a concept of a name.  The simplest
 example is a variable name, the variable most often has a name but internally 
 within the compiler the variable is referenced as a symbol, the symbol data
 struction contains a name, type, and declaration (where the name was first
@@ -25,7 +25,7 @@ Mappings from names to symbols are held in the "Symbol Table" which provides
 for a quick (hashed) lookup on the symbol for any name.  Mappings from the symbol to
 the name are held through pointers to the declaration (stored within the symbol).
 
-   To organize the symbols, they are differentiated by type, each symbol is
+To organize the symbols, they are differentiated by type, each symbol is
 derived from the SgSymbol class and defines a specialized interface for that
 specific kind of IR node.  For example, there are symbol objects specific to classes,
 templates, variable, enums, functions, member functions, lables, function types,
@@ -34,26 +34,26 @@ for generating a name when it is located elsewhere), and a declaration, and
 often a reference to a type (or function to returning the type if not held 
 in the symbol directly).
 
-   Each SgSymbol has a get_name() member function which gets the associated name
+Each SgSymbol has a get_name() member function which gets the associated name
 of the symbol, usually from the stored declaration. A few symbols have an explicitly 
 stored name (SgName), this is done where the name is derived from a named type (SgNamedType).
 
-    IMPORTANT: Declarations in Symbols \n
+IMPORTANT: Declarations in Symbols \n
 Indepedent of the different kinds of declarations (declarations are statements),
 declarations can be considered to be definind and non-defining.  See
 \ref SgDeclarationStatement for details.  where there exist defining and 
 non-defining declarations symbols within Sage III always reference non-defining 
 declarations (only non-defining declarations are shared within the AST).
 
-    There are no uses of this IR node anywhere.  All expressions and statements
+There are no uses of this IR node anywhere.  All expressions and statements
 are derived from this IR node to build either SgExpression or SgStatement 
 derived classes.
 
 \internal This is a base class for all symbols.
 
 \todo Consider derivation of SgEnumSymbol, SgClassSymbol, SgFunctionTypeSymbol, and 
-    SgTypedefSymbol from a common SgTypeSymbol.  Then supporting functions for 
-    SgTypeSymbol would lookup any of these type based symbols.
+SgTypedefSymbol from a common SgTypeSymbol.  Then supporting functions for 
+SgTypeSymbol would lookup any of these type based symbols.
 
 \sa \ref SgDeclarationStatement
 
@@ -86,7 +86,7 @@ current construct.
 \fn SgSymbol::SgSymbol()
 \brief This is the default constructor.
 
-   This constructor builds the SgSymbol base class.
+This constructor builds the SgSymbol base class.
 
 \sa 
 \ref SgSymbol_create "Example:create an SgSymbol object"
@@ -120,7 +120,7 @@ current construct.
 \fn SgSymbol::isSgSymbol (SgNode *s)
 \brief Cast function (from derived class to SgSymbol pointer).
 
-   This functions returns a SgSymbol pointer for any input of a 
+This functions returns a SgSymbol pointer for any input of a 
 pointer to an object derived from a SgSymbol.
 
 \return Returns valid pointer to SgSymbol if input is derived from a SgSymbol.
@@ -130,7 +130,7 @@ pointer to an object derived from a SgSymbol.
 \fn SgSymbol::isSgSymbol (const SgNode *s)
 \brief Cast function (from derived class to SgSymbol pointer).
 
-   This functions returns a SgSymbol pointer for any input of a 
+This functions returns a SgSymbol pointer for any input of a 
 pointer to an object derived from a SgSymbol.
 
 \return Returns valid pointer to SgSymbol if input is derived from a SgSymbol.

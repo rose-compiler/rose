@@ -8,7 +8,7 @@
 are derived from SgLocatedNodes, since similar to statement, expressions
 have a concrete location within the user's source code.
 
-    There are no direct uses of this IR node anywhere.  All expressions
+There are no direct uses of this IR node anywhere.  All expressions
 are derived from this IR node to build derived classes such as unary and
 binary operators, conditional expressions, delete expression, variable 
 reference expressions, etc.
@@ -101,35 +101,35 @@ expression statement with a null pointer (none too elegant). Sage III now has bo
 SgNullStatement and a SgNullExpression.
 
 \todo Consider placing the VARARGS expression nodes into a common base class
-   derived from SgExpression.
+derived from SgExpression.
 
 \todo I have removed the access functions from the explicit storage of type information in
-    SgExpression objects as phase 1 of a 2 phase approach to eliminate the storage of the
-    type in the SgExpression IR nodes.  This type should be computed where required.
-    This would avoid it being held redundently.  This mechanism is being redone
-    internally.  Some IR nodes will have likely have to store there type explicaitly
-    (function expressions for example, though it might be better computed through the
-    symbol).  It is not clear it this computing of the type will be better than stroing of
-    the type explicitly.  It might be required for SgBinaryOp IR nodes to store the type
-    if it is not clearly from either the lhs or rhs (if no simple rule exists).
+SgExpression objects as phase 1 of a 2 phase approach to eliminate the storage of the
+type in the SgExpression IR nodes.  This type should be computed where required.
+This would avoid it being held redundently.  This mechanism is being redone
+internally.  Some IR nodes will have likely have to store there type explicaitly
+(function expressions for example, though it might be better computed through the
+symbol).  It is not clear it this computing of the type will be better than stroing of
+the type explicitly.  It might be required for SgBinaryOp IR nodes to store the type
+if it is not clearly from either the lhs or rhs (if no simple rule exists).
 
 \todo SgScopeOp is deprecated and will be removed in a future version of ROSE.
-      It is a hold over from support for CC++ which is not supported in SAGE III anymore.
+It is a hold over from support for CC++ which is not supported in SAGE III anymore.
 
 \todo SgRefExp is deprecated and will be removed in a future version of ROSE.
-      It is not used anywhere within SAGE III and I don't know why it is there.
+It is not used anywhere within SAGE III and I don't know why it is there.
 
 \todo Need to find an example of where SgClassNameRefExp is used.  It is build in
-      the EDG/Sage III translation, but not in a way that it is obvious that it is
-      still used within Sage III.  So this may have to be removed at a latr date.
+the EDG/Sage III translation, but not in a way that it is obvious that it is
+still used within Sage III.  So this may have to be removed at a latr date.
 
 \todo To support Fortran parser we need an IR node which will represent the
-      ambiguity of an array access or function call expression.  These are
-      then resolved within the AST after parsing (requires AST Fixup rule).
+ambiguity of an array access or function call expression.  These are
+then resolved within the AST after parsing (requires AST Fixup rule).
 
 \todo Fortran support requires support for function call using: "foo(temp=*<label>)"
-      this might force the development of a label expression to support this.
-      Code using this compiles with gfortran, so it appears to be F90.
+this might force the development of a label expression to support this.
+Code using this compiles with gfortran, so it appears to be F90.
 
 
 \sa
@@ -174,7 +174,7 @@ interpritation of the frontend regarding the use of parenthesis.
 \fn SgExpression::SgExpression ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgExpression base class.
+This constructor builds the SgExpression base class.
 
 \param startOfConstruct represents the position in the source code
 \sa 
@@ -185,14 +185,14 @@ interpritation of the frontend regarding the use of parenthesis.
 \fn SgExpression::~SgExpression()
 \brief This is the destructor.
 
-   Only the Sg_File_Info object can be deleted in this object.
+Only the Sg_File_Info object can be deleted in this object.
 */
 
 /*!
 \fn SgExpression::isSgExpression (SgNode *s)
 \brief Cast function (from derived class to SgExpression pointer).
 
-   This functions returns a SgExpression pointer for any input of a 
+This functions returns a SgExpression pointer for any input of a 
 pointer to an object derived from a SgExpression.
 
 \return Returns valid pointer to SgExpression if input is derived from a SgExpression.
@@ -202,7 +202,7 @@ pointer to an object derived from a SgExpression.
 \fn SgExpression::isSgExpression (const SgNode *s)
 \brief Cast function (from derived class to SgExpression pointer).
 
-   This functions returns a SgExpression pointer for any input of a 
+This functions returns a SgExpression pointer for any input of a 
 pointer to an object derived from a SgExpression.
 
 \return Returns valid pointer to SgExpression if input is derived from a SgExpression.
@@ -213,7 +213,7 @@ pointer to an object derived from a SgExpression.
 \fn SgExpression::get_need_paren (void) const
 \brief returns bool value if front-end considers parenthesis to be required.
 
-   This function returns a boolean value which is true if parenthesis are required
+This function returns a boolean value which is true if parenthesis are required
 for the proper eveluation of the current expression.  The frontend is however overly
 conservative and introduces parenthesis too often.  The value as determined by the 
 frontend is saved in the SAGE III AST because it is sometimes required for more
@@ -228,12 +228,12 @@ parenthesis within expressions (this makes the output more appealing).
 \fn SgExpression::set_need_paren (bool need_paren)
 \brief This function allows the p_need_paren flag to be set (used internally).
 
-   This function is mostly used internally but would required for the construction of
+This function is mostly used internally but would required for the construction of
 specific expression trees where the operator precedence would be insufficent to generate
 the correct code (which si the purpose of adding parenthesis in source code).
 
 \param need_paren - sets value of internal p_need_paren flag (true if parenthesis are
-    needed around the expression).
+needed around the expression).
 \return Returns void.
 */
 
@@ -248,7 +248,7 @@ the correct code (which si the purpose of adding parenthesis in source code).
 \fn SgExpression::set_lvalue (bool lvalue)
 \brief This function allows the p_lvalue flag to be set (used internally).
 
-   This function is mostly used internally but would required for the construction of
+This function is mostly used internally but would required for the construction of
 specific expression trees. In general it is set by the frontend, but not used elsewhere
 within SAGE III (will be tested in the future).
 
@@ -311,7 +311,7 @@ type (note that get_expression_type() is for internal use only).
 \fn SgExpression::set_type()
 \brief Set the type associated with this expression
 
-   This is an internally call function, it sets up the type of the expression 
+This is an internally call function, it sets up the type of the expression 
 based upon the types of the subexpressions (if any). Thus it takes no 
 arguments.
 
@@ -322,7 +322,7 @@ arguments.
 \fn SgExpression::get_expression_type() const
 \brief \b FOR \b INTERNAL \b USE Data access function for explicitly stored type.
 
-   This access function is used internally to access explicitly stored types (where it
+This access function is used internally to access explicitly stored types (where it
 is required to be stored).  Currently a larger number of IR nodes have this
 data member than where it is explicitly required, this will be fixed in the
 future. Where used, this function can return NULL if the explicitly stored
@@ -336,7 +336,7 @@ being removed).
 \fn SgExpression::set_expression_type()
 \brief \b FOR \b INTERNAL \b USE Data access function for explicitly stored type.
 
-   This function is only meaningful where the type is explicitly stored.
+This function is only meaningful where the type is explicitly stored.
 It is an internally called function, it sets up the type of the expression 
 based upon the types of the subexpressions (if any). Thus it takes no 
 arguments.

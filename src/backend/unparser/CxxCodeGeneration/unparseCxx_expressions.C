@@ -2067,9 +2067,17 @@ Unparse_ExprStmt::unparseCompoundLiteral (SgExpression* expr, SgUnparse_Info& in
      SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializedName->get_initptr());
      ROSE_ASSERT(aggregateInitializer != NULL);
      ROSE_ASSERT(aggregateInitializer->get_uses_compound_literal() == true);
+#if 0
+     printf ("Calling unparseAggrInit() \n");
+     curprint ("/* Calling unparseAggrInit() */ \n");
+#endif
 
      unparseAggrInit(aggregateInitializer,info);
 
+#if 0
+     printf ("DONE: Calling unparseAggrInit() \n");
+     curprint ("/* DONE: Calling unparseAggrInit() */ \n");
+#endif
 #if 0
      printf ("unparseCompoundLiteral not implemented yet! \n");
 #endif
@@ -6048,7 +6056,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 #define DEBUG_AGGREGATE_INITIALIZER 0
 
 #if DEBUG_AGGREGATE_INITIALIZER
-     printf ("In unparseAggrInit(): aggr_init->get_uses_compound_literal() = %s \n",aggr_init->get_uses_compound_literal() ? "true" : "false");
+     printf ("In unparseAggrInit(): aggr_init = %p = %s aggr_init->get_uses_compound_literal() = %s \n",aggr_init,aggr_init->class_name().c_str(),aggr_init->get_uses_compound_literal() ? "true" : "false");
      curprint ("/* In unparseAggrInit() */ ");
 #endif
 
@@ -6106,6 +6114,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
           curprint ("(");
 
 #if 0
+          printf ("In unparseAggrInit(): aggr_init->get_type() = %p = %s \n",aggr_init->get_type(),aggr_init->get_type()->class_name().c_str());
           curprint ("/* output type in unparseAggrInit() */ ");
 #endif
        // DQ (9/4/2013): We need to unparse the full type (both the first and second parts of the type).

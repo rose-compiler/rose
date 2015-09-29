@@ -208,8 +208,10 @@ if ROSE_WITH_ATERM
 endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-#  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal/libexperimentalRoseFortran.la
-   libroseExperimentalOpenFortranParserlibraries =
+#   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal/libexperimentalRoseFortran.la
+
+# DQ (9/26/2015): This is defined in src/Makefile.am
+#   libroseExperimentalOpenFortranParserlibraries =
 #   ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
 #   ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(top_builddir)/src/frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal -lexperimentalRoseFortran
     ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal -lexperimentalOFP
@@ -518,3 +520,8 @@ RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
 	VALGRIND=$(VALGRIND) BINARY_SAMPLES=$(BINARY_SAMPLES)
 
 RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
+
+# DQ (9/27/2015): Added to support new use of AM_CPPFLAGS instead of INCLUDES 
+# (depreicated in automake and for which many warnings are generated).
+CPPFLAGS = $(AM_CPPFLAGS)
+

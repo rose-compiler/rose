@@ -30,7 +30,7 @@
 \fn SgPythonGlobalStmt::isSgPythonGlobalStmt (SgNode *s)
 \brief Cast function (from derived class to SgPythonGlobalStmt pointer).
 
-   This functions returns a SgPythonGlobalStmt pointer for any input of a 
+This functions returns a SgPythonGlobalStmt pointer for any input of a 
 pointer to an object derived from a SgPythonGlobalStmt.
 
 \return Returns valid pointer to SgPythonGlobalStmt if input is derived from a SgLocatedNode.
@@ -40,7 +40,7 @@ pointer to an object derived from a SgPythonGlobalStmt.
 \fn SgPythonGlobalStmt::isSgPythonGlobalStmt (const SgNode *s)
 \brief Cast function (from derived class to SgPythonGlobalStmt pointer).
 
-   This functions returns a SgPythonGlobalStmt pointer for any input of a 
+This functions returns a SgPythonGlobalStmt pointer for any input of a 
 pointer to an object derived from a SgPythonGlobalStmt.
 
 \return Returns valid pointer to SgPythonGlobalStmt if input is derived from a SgLocatedNode.

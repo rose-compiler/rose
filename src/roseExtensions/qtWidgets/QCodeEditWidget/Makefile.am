@@ -7,7 +7,7 @@ noinst_LTLIBRARIES = libQCodeEditWidget.la
 
 
 # Contents of Makefile.am.pre
-INCLUDES += -I$(srcdir)/QCodeEdit -I$(srcdir)/QCodeEdit/document
+AM_CPPFLAGS += -I$(srcdir)/QCodeEdit -I$(srcdir)/QCodeEdit/document
 SUBDIRS = QCodeEdit
 libQCodeEditWidget_la_LIBADD   =  QCodeEdit/libQCodeEdit.la
 

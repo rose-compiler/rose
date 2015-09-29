@@ -9,10 +9,10 @@
 \internal 
 
 \todo The conditional in this test is currently an expression, but should be a
-    SgConditional or a SgStatement (e.g. so that it can be a variable declaration).
+SgConditional or a SgStatement (e.g. so that it can be a variable declaration).
 
 \todo Now that the test is a SgStatement, perhaps the name of the field should be 
-      "test" instead of "test_expr".
+"test" instead of "test_expr".
 
 */
 
@@ -38,12 +38,12 @@
 \note I think this is a poor name for this variable.
 
 \todo This should be changed to be a SgStatement (to follow the C++ standard).
-    this way it could be an expression (via an expression statement) or a variable
-    declaration with initializer (via a SgVariableDeclaration).
-    We also have the condition specified before the body within the ROSETTA
-    specification and this causes the traversal to travers the condition and body in the
-    wrong order (for do-while, the traversal should be body forst and condition second).
-    See test2005_114.C for more details and example code (example of strange loops).
+this way it could be an expression (via an expression statement) or a variable
+declaration with initializer (via a SgVariableDeclaration).
+We also have the condition specified before the body within the ROSETTA
+specification and this causes the traversal to travers the condition and body in the
+wrong order (for do-while, the traversal should be body forst and condition second).
+See test2005_114.C for more details and example code (example of strange loops).
 */
 
 /*! \var SgForStatement::p_increment_expr_root
@@ -56,7 +56,7 @@
 \brief This pointer a SgBasicBlock, and holds the statements in the body of the loop.
 
 \note I think this is a poor name for this variable (should be "body" to match other IR
-      nodes).
+nodes).
 
 \todo Change "loop_body" to "body" to be consistant with other scopes that contain a SgBasicBlock.
 
@@ -71,7 +71,7 @@
 \fn SgForStatement::SgForStatement ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgForStatement base class.
+This constructor builds the SgForStatement base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -84,14 +84,14 @@
 \fn SgForStatement::~SgForStatement()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgForStatement::isSgForStatement (SgNode *s)
 \brief Cast function (from derived class to SgForStatement pointer).
 
-   This functions returns a SgForStatement pointer for any input of a 
+This functions returns a SgForStatement pointer for any input of a 
 pointer to an object derived from a SgForStatement.
 
 \return Returns valid pointer to SgForStatement if input is derived from a SgLocatedNode.
@@ -101,7 +101,7 @@ pointer to an object derived from a SgForStatement.
 \fn SgForStatement::isSgForStatement (const SgNode *s)
 \brief Cast function (from derived class to SgForStatement pointer).
 
-   This functions returns a SgForStatement pointer for any input of a 
+This functions returns a SgForStatement pointer for any input of a 
 pointer to an object derived from a SgForStatement.
 
 \return Returns valid pointer to SgForStatement if input is derived from a SgLocatedNode.

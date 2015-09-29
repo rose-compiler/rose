@@ -422,12 +422,12 @@ TransformationStringTemplatedType<HighLevelCollectionTypedefs>::getAssociatedSta
           printf ("   i = %s tempScope = %s at line %d \n",
                HighLevelCollectionTypedefs::getRelativeScopeString(ScopeIdentifierEnum(i)).c_str(),
                tempScope->sage_class_name(),
-               ROSE::getLineNumber(tempScope));
+               rose::getLineNumber(tempScope));
           printf ("\n");
         }
 
      printf ("Exiting after output of all possible scopes: currentStatement = %s \n",
-          currentStatement->sage_class_name(),ROSE::getLineNumber(currentStatement));
+          currentStatement->sage_class_name(),rose::getLineNumber(currentStatement));
      printf ("     currentStatement->unparseToString() = \n%s\n",currentStatement->unparseToString().c_str());
      ROSE_ABORT();
 #endif
@@ -440,7 +440,7 @@ TransformationStringTemplatedType<HighLevelCollectionTypedefs>::getAssociatedSta
      printf ("After call to getScope(): relativeScope = %s scope = %s at line %d \n",
           HighLevelCollectionTypedefs::getRelativeScopeString(relativeScope).c_str(),
           scope->sage_class_name(),
-          ROSE::getLineNumber(scope));
+          rose::getLineNumber(scope));
 #endif
 
      SgStatement* associatedASTNode = NULL;
@@ -594,14 +594,14 @@ TransformationStringTemplatedType (
                     HighLevelCollectionTypedefs::getRelativeScopeString(ScopeIdentifierEnum(i)).c_str(),
                     HighLevelCollectionTypedefs::getRelativeLocationString(PlacementPositionEnum(j)).c_str(),
                     tempStatement->sage_class_name(),
-                    ROSE::getLineNumber(tempStatement));
+                    rose::getLineNumber(tempStatement));
             // printf ("\n");
              }
         }
 
      printf ("\n");
      printf ("Exiting after output of all possible scopes and locations in each scope: currentStatement = %s \n",
-          currentStatement->sage_class_name(),ROSE::getLineNumber(currentStatement));
+          currentStatement->sage_class_name(),rose::getLineNumber(currentStatement));
      printf ("     currentStatement->unparseToString() = \n%s\n",currentStatement->unparseToString().c_str());
      ROSE_ABORT();
 #endif
