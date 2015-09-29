@@ -103,10 +103,11 @@ symbolicSimplifier_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #------------------------------------------------------------------------------------------------------------------------
 # Generate source code from a binary specimen
 
-bin_PROGRAMS += binaryToSource
-binaryToSource_SOURCES = binaryToSource.C
-binaryToSource_CPPFLAGS = $(ROSE_INCLUDES)
-binaryToSource_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+#[Robb P Matzke, 2015-09-29]: not ready yet
+#bin_PROGRAMS += binaryToSource
+#binaryToSource_SOURCES = binaryToSource.C
+#binaryToSource_CPPFLAGS = $(ROSE_INCLUDES)
+#binaryToSource_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Not distributed; not part of the Git repo
