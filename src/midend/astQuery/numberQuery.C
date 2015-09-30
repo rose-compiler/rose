@@ -197,8 +197,8 @@ NumberQuery::queryNumberOfOperands (SgNode * astNode)
 
 #if DEBUG_NUMBERQUER
     printf ("\nHere is a declaration:Line = %d Columns = %d \n",
-        ROSE::getLineNumber (isSgLocatedNode (astNode)),
-        ROSE::getColumnNumber (isSgLocatedNode (astNode)));
+        rose::getLineNumber (isSgLocatedNode (astNode)),
+        rose::getColumnNumber (isSgLocatedNode (astNode)));
 #endif
   }
 

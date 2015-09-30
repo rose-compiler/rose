@@ -6,15 +6,15 @@
 \class SgFunctionCallExp
 \brief This class represents the concept of a C++ function call (which is an expression).
 
-    Note that a function call is assembled from a function expression and arguments.
+Note that a function call is assembled from a function expression and arguments.
 The two are bound together in a function call, function expressions are never called
 directly (the function call argument list can be empty).
 
 \internal When overloaded operators are used the function name becomes the name of the
-    operator (e.g. "operator+").  In these cases the precedence of the operator is that
-    of the operator being overloaded and is different from a normal function call.  Most
-    of this detail is hidden since operands in the expression tree are represented by functions
-    with parameter lists (represented by a SgExprListExp), and not simple expression trees.
+operator (e.g. "operator+").  In these cases the precedence of the operator is that
+of the operator being overloaded and is different from a normal function call.  Most
+of this detail is hidden since operands in the expression tree are represented by functions
+with parameter lists (represented by a SgExprListExp), and not simple expression trees.
 
 \sa
 \ref SgFunctionCallExp_usage  "Example of using a SgFunctionCallExp object"
@@ -34,7 +34,7 @@ directly (the function call argument list can be empty).
 \fn SgFunctionCallExp::SgFunctionCallExp ( Sg_File_Info* startOfConstruct = NULL, SgClassSymbol *symbol = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgFunctionCallExp base class.
+This constructor builds the SgFunctionCallExp base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -47,14 +47,14 @@ directly (the function call argument list can be empty).
 \fn SgFunctionCallExp::~SgFunctionCallExp()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgFunctionCallExp::isSgFunctionCallExp (SgNode *s)
 \brief Cast function (from derived class to SgFunctionCallExp pointer).
 
-   This functions returns a SgFunctionCallExp pointer for any input of a 
+This functions returns a SgFunctionCallExp pointer for any input of a 
 pointer to an object derived from a SgFunctionCallExp.
 
 \return Returns valid pointer to SgFunctionCallExp if input is derived from a SgLocatedNode.
@@ -64,7 +64,7 @@ pointer to an object derived from a SgFunctionCallExp.
 \fn SgFunctionCallExp::isSgFunctionCallExp (const SgNode *s)
 \brief Cast function (from derived class to SgFunctionCallExp pointer).
 
-   This functions returns a SgFunctionCallExp pointer for any input of a 
+This functions returns a SgFunctionCallExp pointer for any input of a 
 pointer to an object derived from a SgFunctionCallExp.
 
 \return Returns valid pointer to SgFunctionCallExp if input is derived from a SgLocatedNode.

@@ -4,7 +4,7 @@ EXTRA_DIST = buffer2.bin
 
 SUBDIRS = analyses graphanalyses
 
-INCLUDES = $(ROSE_INCLUDES) -I. $(LTDLINCL)
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I. $(LTDLINCL)
 
 bin_PROGRAMS = binCompassMain 
 

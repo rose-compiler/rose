@@ -5,7 +5,7 @@ TEST_TARGETS =
 EXTRA_DIST =
 MOSTLYCLEANFILES =
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
@@ -18,7 +18,7 @@ TEST_TARGETS += CommentInsertion.passed
 CommentInsertion.passed: inputProgram5.C testCommentInsertion
 	@$(RTH_RUN) \
 		DISABLED="commented out in the original makefile" \
-		CMD="./testCommentInsertion $(INCLUDES) -c $<" \
+		CMD="./testCommentInsertion $(AM_CPPFLAGS) -c $<" \
 		$(TEST_EXIT_STATUS) $@
 
 EXTRA_DIST += inputProgram5.C
@@ -51,7 +51,7 @@ TEST_TARGETS += testAccumulatedAttribute.passed
 testAccumulatedAttribute.passed: testRewritePermutations
 	@$(RTH_RUN) \
 		DISABLED="AST rewrite mechanism still has a bug [DQ 8/6/2005]" \
-		CMD="./testRewritePermutations -rose:verbose 0 -E $(ROSE_FLAGS) $(INCLUDES) -c $(srcdir)/inputDeclarationTest.C" \
+		CMD="./testRewritePermutations -rose:verbose 0 -E $(ROSE_FLAGS) $(AM_CPPFLAGS) -c $(srcdir)/inputDeclarationTest.C" \
 		$(TEST_EXIT_STATUS) $@
 #EXTRA_DIST += inputDeclarationTest.C
 MOSTLYCLEANFILES += rose_inputDeclarationTest.C
@@ -60,7 +60,7 @@ TEST_TARGETS += RewritePermutations.passed
 RewritePermutations.passed: inputProgram1.C testRewritePermutations
 	@$(RTH_RUN) \
 		DISABLED="commented out in the original makefile" \
-		CMD="./testRewritePermutations $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		CMD="./testRewritePermutations $(ROSE_FLAGS) $(AM_CPPFLAGS) -c $<" \
 		$(TEST_EXIT_STATUS) $@
 
 EXTRA_DIST += inputProgram1.C
@@ -73,7 +73,7 @@ noinst_PROGRAMS += testMidLevelInterface
 testMidLevelInterface_SOURCES = testMidLevelInterface.C
 
 TEST_TARGETS += localMidLevelInterfaceTest.passed
-midLevelInterface_includes = -I$(srcdir) -I/home/bmiller/SOFTWARE/tau-2.12.9/include $(INCLUDES)
+midLevelInterface_includes = -I$(srcdir) -I/home/bmiller/SOFTWARE/tau-2.12.9/include $(AM_CPPFLAGS)
 localMidLevelInterfaceTest.passed: inputProgram2.C testMidLevelInterface
 	@$(RTH_RUN) \
 		DISABLED="not executed in the original makefile" \
@@ -93,7 +93,7 @@ TEST_TARGETS += RewriteReplacementPermutations.passed
 RewriteReplacementPermutations.passed: inputProgram4.C testRewriteReplacementPermutations
 	@$(RTH_RUN) \
 		DISABLED="fails because the AST rewrite mechanism still has a bug [DQ 8/6/2005]" \
-		CMD="./testRewriteReplacementPermutations $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		CMD="./testRewriteReplacementPermutations $(ROSE_FLAGS) $(AM_CPPFLAGS) -c $<" \
 		$(TEST_EXIT_STATUS) $@
 
 EXTRA_DIST += inputProgram4.C
@@ -113,7 +113,7 @@ TEST_TARGETS += ReplaceStatements.passed
 ReplaceStatements.passed: inputProgram2.C testReplacementStatements
 	@$(RTH_RUN) \
 		DISABLED="fails until we update scopes of statements added by rewrite system [DQ 12/6/2004]" \
-		CMD="./testReplacementStatements $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		CMD="./testReplacementStatements $(ROSE_FLAGS) $(AM_CPPFLAGS) -c $<" \
 		$(TEST_EXIT_STATUS) $@
 
 EXTRA_DIST += inputProgram2.C
@@ -129,7 +129,7 @@ TEST_TARGETS += RemoveStatements.passed
 RemoveStatements.passed: inputProgram3.C testRemoveStatements
 	@$(RTH_RUN) \
 		DISABLED="commented out in original makefile" \
-		CMD="./testRemoveStatements $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		CMD="./testRemoveStatements $(ROSE_FLAGS) $(AM_CPPFLAGS) -c $<" \
 		$(TEST_EXIT_STATUS) $@
 
 EXTRA_DIST += inputProgram3.C
@@ -145,7 +145,7 @@ TEST_TARGETS += testExamples.passed
 testExamples.passed: inputProgram1.C testExample1
 	@$(RTH_RUN) \
 		DISABLED="not executed by the original makefile" \
-		CMD="./testExample1 $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		CMD="./testExample1 $(ROSE_FLAGS) $(AM_CPPFLAGS) -c $<" \
 		$(TEST_EXIT_STATUS) $@
 
 EXTRA_DIST += inputProgram1.C
@@ -162,17 +162,17 @@ TEST_TARGETS += PrefixAndSuffixTest.passed PrefixAndSuffixTestNewEDGFrontEnd.pas
 PrefixAndSuffixTest.passed: testDeclarationPrefixGeneration_testCode.C testDeclarationPrefixGeneration
 	@$(RTH_RUN) \
 		DISABLED="not executed by the original makefile" \
-		CMD="./testDeclarationPrefixGeneration $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		CMD="./testDeclarationPrefixGeneration $(ROSE_FLAGS) $(AM_CPPFLAGS) -c $<" \
 		$(TEST_EXIT_STATUS) $@
 PrefixAndSuffixTestNewEDGFrontEnd.passed: testDeclarationPrefixGeneration_testCode.C testDeclarationPrefixGeneration
 	@$(RTH_RUN) \
 		DISABLED="not executed by the original makefile" \
-		CMD="./testDeclarationPrefixGeneration -rose:test 2 $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		CMD="./testDeclarationPrefixGeneration -rose:test 2 $(ROSE_FLAGS) $(AM_CPPFLAGS) -c $<" \
 		$(TEST_EXIT_STATUS) $@
 PrefixAndSuffixTestKCCFrontEnd.passed: testDeclarationPrefixGeneration_testCode.C testDeclarationPrefixGeneration
 	@$(RTH_RUN) \
 		DISABLED="not executed by the original makefile" \
-		CMD="./testDeclarationPrefixGeneration -rose:test 1 $(ROSE_FLAGS) $(INCLUDES) -c $<" \
+		CMD="./testDeclarationPrefixGeneration -rose:test 1 $(ROSE_FLAGS) $(AM_CPPFLAGS) -c $<" \
 		$(TEST_EXIT_STATUS) $@
 
 EXTRA_DIST += testDeclarationPrefixGeneration_testCode.C
@@ -189,7 +189,7 @@ TEST_TARGETS += testMillerBug.passed
 testMillerBug.passed: tauTestProgram.C TauMidTraversal.h tauifyPreprocessor
 	@$(RTH_RUN) \
 		DISABLED="not executed by the original makefile" \
-		CMD="./tauifyPreprocessor $(INCLUDES) -c $<" \
+		CMD="./tauifyPreprocessor $(AM_CPPFLAGS) -c $<" \
 		$(TEST_EXIT_STATUS) $@
 EXTRA_DIST += tauTestProgram.C
 MOSTLYCLEANFILES += rose_tauTestProgram.C

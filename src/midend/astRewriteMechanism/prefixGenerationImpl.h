@@ -73,8 +73,8 @@ evaluateInheritedAttribute (
             // Skip the SgFunctionParameterList statement since unparsing
             // the function declaration will generate parameter list
 
-               std::string targetFilename      = ROSE::getFileNameByTraversalBackToFileNode(currentStatement);
-            // string declarationFilename = ROSE::getFileName(currentStatement);
+               std::string targetFilename      = rose::getFileNameByTraversalBackToFileNode(currentStatement);
+            // string declarationFilename = rose::getFileName(currentStatement);
             // string declarationFilename = currentStatement->get_file_info()->get_filename();
 
             // DQ (7/19/2005):

@@ -805,9 +805,17 @@ public:
     void print_diff(std::ostream &o) const {
         print_diff(o, orig_state, cur_state);
     }
+
+#ifdef __INTEL_COMPILER
+ // DQ (8/28/2015): from Intel v14 icpc: error: initial value of reference to non-const must be an lvalue
+    void print_diff(std::ostream &o, BaseSemantics::Formatter &fmt ) const {
+        print_diff(o, orig_state, cur_state, fmt);
+    }
+#else
     void print_diff(std::ostream &o, BaseSemantics::Formatter &fmt = BaseSemantics::Formatter()) const {
         print_diff(o, orig_state, cur_state, fmt);
     }
+#endif
     /** @} */
 
     /** Returns the SHA1 hash of the difference between the current state and the original state.  If libgcrypt is
@@ -892,7 +900,7 @@ public:
     /** Reads a single-byte value from memory.
      *
      *  Reads from the specified memory state and updates the original state if appropriate.  Reading from a memory
-     *  state might actually create new memory cells in the original state.  The @dflt is the byte value to save to
+     *  state might actually create new memory cells in the original state.  The @p dflt is the byte value to save to
      *  the original state when appropriate. */
     ValueType<8> mem_read_byte(State<ValueType> &state, const ValueType<32> &addr, const ValueType<8> &dflt) const {
         typedef typename State<ValueType>::Memory::CellList CellList;
@@ -917,7 +925,7 @@ public:
     /** Reads a multi-byte value from memory.
      *
      *  Reads a multi-byte, little-endian value from memory and updates the original state if appropriate.  Reading
-     *  from a memory state might actually create new memory cells in the original state.  The @dflt is the value
+     *  from a memory state might actually create new memory cells in the original state.  The @p dflt is the value
      *  to save to the original state when appropriate. */
     template <size_t nBits>
     ValueType<nBits> mem_read(State<ValueType> &state, const ValueType<32> &addr,

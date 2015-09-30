@@ -16,27 +16,29 @@ SUBDIRS = roseAtermAPI
 # A_TERM_INCLUDE = -I$(srcdir)/aterm-2.5/aterm
 # A_TERM_INCLUDE = -I$(ATERM_INSTALL_PATH)/include
 
-# INCLUDES = $(ROSE_INCLUDES) $(A_TERM_INCLUDE)
-# INCLUDES = $(A_TERM_INCLUDE) $(ROSE_INCLUDES)
-INCLUDES = $(ROSE_INCLUDES)
+# AM_CPPFLAGS = $(ROSE_INCLUDES) $(A_TERM_INCLUDE)
+# AM_CPPFLAGS = $(A_TERM_INCLUDE) $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # bin_PROGRAMS = termToStratego strategoToTerm termGraph termGraph_using_RoseAtermAPI termGraph_using_RoseAtermAPI_withForwardedFunctions
 # bin_PROGRAMS = termToStratego strategoToTerm termGraph termGraph_using_RoseAtermAPI testTranslation_AST_to_ATerm_to_AST testTranslation_AST_to_ATerm testTranslation_ATerm_to_AST
 bin_PROGRAMS = testTranslation_AST_to_ATerm testTranslation_ATerm_to_AST termpretty
 
-termToStratego_SOURCES = termToStratego.C astToAtermImpl.C atermTranslation.h
+# termToStratego_SOURCES = termToStratego.C astToAtermImpl.C atermTranslation.h
 
-strategoToTerm_SOURCES = strategoToTerm.C atermToAstImpl.C atermTranslation.h
+# DQ (9/26/2015): Comment out to avoid warning in automake.
+# strategoToTerm_SOURCES = strategoToTerm.C atermToAstImpl.C atermTranslation.h
 
-termGraph_SOURCES = termGraph.C
+# DQ (9/26/2015): Comment out to avoid warning in automake.
+# termGraph_SOURCES = termGraph.C
 
 # termGraph_using_RoseAtermAPI_SOURCES = termGraph_using_RoseAtermAPI.C
-termGraph_using_RoseAtermAPI_SOURCES = termGraph_using_RoseAtermAPI.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
+# termGraph_using_RoseAtermAPI_SOURCES = termGraph_using_RoseAtermAPI.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
 
 # testTranslation_AST_to_ATerm_to_AST_SOURCES = testTranslation_AST_to_ATerm_to_AST.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
 # testTranslation_AST_to_ATerm_SOURCES = testTranslation_AST_to_ATerm.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
 # testTranslation_ATerm_to_AST_SOURCES = testTranslation_ATerm_to_AST.C astToAtermImpl.C atermToAstImpl.C atermTranslation.h
-testTranslation_AST_to_ATerm_to_AST_SOURCES = testTranslation_AST_to_ATerm_to_AST.C atermTranslation.h
+# testTranslation_AST_to_ATerm_to_AST_SOURCES = testTranslation_AST_to_ATerm_to_AST.C atermTranslation.h
 testTranslation_AST_to_ATerm_SOURCES = testTranslation_AST_to_ATerm.C atermTranslation.h
 testTranslation_ATerm_to_AST_SOURCES = testTranslation_ATerm_to_AST.C atermTranslation.h
 
@@ -54,10 +56,10 @@ LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ATERM_LIB_DIR)/libATerm.a
 # Permit linking to alternative ROSE ATerm API used to support new non-serialized API for Stratego.
 # termGraph_using_RoseAtermAPI_withForwardedFunctions_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ./roseAtermAPI/libATerm.la
 # termGraph_using_RoseAtermAPI_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(srcdir)/aterm-2.5/aterm/libATerm.la
-termGraph_using_RoseAtermAPI_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+# termGraph_using_RoseAtermAPI_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
 # Added new test code to increase testing
-testTranslation_AST_to_ATerm_to_AST_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+# testTranslation_AST_to_ATerm_to_AST_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 # testTranslation_AST_to_ATerm_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 # testTranslation_ATerm_to_AST_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
@@ -81,7 +83,7 @@ ALL_TESTCODES = $(TESTCODES) $(TESTCODE_CURRENTLY_FAILING)
 
 # PASSING_TEST_Output = $(addprefix rose_,${TESTCODES})
 # TEST_Output = $(addprefix rose_,${ALL_TESTCODES})
-PASSING_TEST_Output = $(TESTCODES_REQUIRED_TO_PASS)
+# PASSING_TEST_Output = $(TESTCODES_REQUIRED_TO_PASS)
 TEST_Output = $(ALL_TESTCODES)
 PASSING_TEST_Output = $(addsuffix .passed, $(filter-out $(TESTCODE_CURRENTLY_FAILING), $(ALL_TESTCODES)))
 

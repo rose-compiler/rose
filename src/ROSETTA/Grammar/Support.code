@@ -90,7 +90,7 @@ HEADER_OMP_CLAUSE_START
           e_omp_map_to,
           e_omp_map_from,
           e_omp_map_tofrom,
-          e_omp_map_last,
+          e_omp_map_last
         };
 
 
@@ -15048,8 +15048,8 @@ SgFile::getWorkingDirectory ()
      currentDirectory[maxPathNameLength - 1] = 0; // Just in case
 
   // The semantics of the getcwd is that these shuld be the same (see if they are)
-  // printf ("In ROSE::getWorkingDirectory: Current directory = %s \n",currentDirectory);
-  // printf ("In ROSE::getWorkingDirectory: Current directory = %s \n",returnString);
+  // printf ("In rose::getWorkingDirectory: Current directory = %s \n",currentDirectory);
+  // printf ("In rose::getWorkingDirectory: Current directory = %s \n",returnString);
 
   // live with the possible memory leak for now
   // delete currentDirectory;
@@ -15090,7 +15090,7 @@ SgFile::generateOutputFileName() const
 
      std::string sourceFileName = get_sourceFileNameWithPath();
 
-  // std::string baseFileName    = ROSE::stripPathFromFileName(sourceFileName.c_str());
+  // std::string baseFileName    = rose::utility_stripPathFromFileName(sourceFileName.c_str());
      std::string baseFileName    = StringUtility::stripPathFromFileName(sourceFileName);
 
      std::string baseFileNameWithoutSuffix = StringUtility::stripFileSuffixFromFileName(baseFileName);
@@ -15561,14 +15561,14 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
   // We could later make this a map of maps using the SgSourceFile IR node as the key (or the Sg_File_Info fileId value (which is tied to the filename)).
-     ROSE::tokenSubsequenceMap = tokenStreamSequenceMap;
+     rose::tokenSubsequenceMap = tokenStreamSequenceMap;
    }
 
 std::map<SgNode*,TokenStreamSequenceToNodeMapping*> &
 SgSourceFile::get_tokenSubsequenceMap()
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
-     return ROSE::tokenSubsequenceMap;
+     return rose::tokenSubsequenceMap;
    }
 
 // void SgSourceFile::set_token_unparse_frontier(std::vector<FrontierNode*> & tokenStreamSequenceMap)
@@ -15577,7 +15577,7 @@ SgSourceFile::set_token_unparse_frontier(std::map<SgStatement*,FrontierNode*> & 
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
   // We could later make this a map of maps using the SgSourceFile IR node as the key (or the Sg_File_Info fileId value (which is tied to the filename)).
-     ROSE::frontierNodes = tokenStreamSequenceMap;
+     rose::frontierNodes = tokenStreamSequenceMap;
    }
 
 // std::vector<FrontierNode*> & SgSourceFile::get_token_unparse_frontier()
@@ -15585,7 +15585,7 @@ std::map<SgStatement*,FrontierNode*> &
 SgSourceFile::get_token_unparse_frontier()
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
-     return ROSE::frontierNodes;
+     return rose::frontierNodes;
    }
 
 void 
@@ -15593,14 +15593,14 @@ SgSourceFile::set_token_unparse_frontier_adjacency(std::map<SgNode*,PreviousAndN
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
   // We could later make this a map of maps using the SgSourceFile IR node as the key (or the Sg_File_Info fileId value (which is tied to the filename)).
-     ROSE::previousAndNextNodeMap = tokenStreamSequenceMap;
+     rose::previousAndNextNodeMap = tokenStreamSequenceMap;
    }
 
 std::map<SgNode*,PreviousAndNextNodeData*> &
 SgSourceFile::get_token_unparse_frontier_adjacency()
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
-     return ROSE::previousAndNextNodeMap;
+     return rose::previousAndNextNodeMap;
    }
 
 
@@ -15608,14 +15608,14 @@ SgSourceFile::get_token_unparse_frontier_adjacency()
 void
 SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(std::multimap<int,SgStatement*> & X)
    {
-     ROSE::redundantlyMappedTokensToStatementMultimap = X;
+     rose::redundantlyMappedTokensToStatementMultimap = X;
    }
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
 std::multimap<int,SgStatement*> &
 SgSourceFile::get_redundantlyMappedTokensToStatementMultimap()
    {
-     return ROSE::redundantlyMappedTokensToStatementMultimap;
+     return rose::redundantlyMappedTokensToStatementMultimap;
    }
 
 
@@ -15623,14 +15623,14 @@ SgSourceFile::get_redundantlyMappedTokensToStatementMultimap()
 void
 SgSourceFile::set_redundantTokenEndingsSet(std::set<int> & X)
    {
-     ROSE::redundantTokenEndingsSet = X;
+     rose::redundantTokenEndingsSet = X;
    }
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
 std::set<int> &
 SgSourceFile::get_redundantTokenEndingsSet()
    {
-     return ROSE::redundantTokenEndingsSet;
+     return rose::redundantTokenEndingsSet;
    }
 
 
@@ -16683,7 +16683,7 @@ std::string
 SgProject::get_Java_destdir (void) const
    {
     if (p_Java_destdir == "") {
-      return ROSE::getWorkingDirectory();
+      return rose::getWorkingDirectory();
     }
     return p_Java_destdir;
    }
@@ -16718,7 +16718,7 @@ std::string
 SgProject::get_Java_source_destdir (void) const
    {
     if (p_Java_source_destdir == "") {
-      return ROSE::getWorkingDirectory();
+      return rose::getWorkingDirectory();
     }
     return p_Java_source_destdir;
   }

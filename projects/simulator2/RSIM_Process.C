@@ -5,6 +5,7 @@
 
 #include "Diagnostics.h"
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <errno.h>

@@ -5,9 +5,9 @@
 /*!
 \class SgDefaultOptionStmt
 \brief This class represents the concept of a C or C++ default case within a switch
-    statement.
+statement.
 
-   The default case in a switch statement is optional within C and C++, it is not 
+The default case in a switch statement is optional within C and C++, it is not 
 currently a part of ROSE AST normalization to build one for each switch, though this might
 be done at some point (in which case it will be marked as compiler-generated).  At
 present any statement associated with the defalut case is placed into a compiler generated
@@ -25,10 +25,10 @@ normalizations.
 
 /*! \var SgDefaultOptionStmt::p_body
 \brief This pointer points to SgBasicBlock holding the statements executed for the default
-    case of a switch statement.
+case of a switch statement.
 
 \internal This should always be a vailid pointer (a current AST normalization).  The list
-    can however be empty.
+can however be empty.
 
 */
 
@@ -40,7 +40,7 @@ normalizations.
 \fn SgDefaultOptionStmt::SgDefaultOptionStmt ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgDefaultOptionStmt base class.
+This constructor builds the SgDefaultOptionStmt base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -53,14 +53,14 @@ normalizations.
 \fn SgDefaultOptionStmt::~SgDefaultOptionStmt()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgDefaultOptionStmt::isSgDefaultOptionStmt (SgNode *s)
 \brief Cast function (from derived class to SgDefaultOptionStmt pointer).
 
-   This functions returns a SgDefaultOptionStmt pointer for any input of a 
+This functions returns a SgDefaultOptionStmt pointer for any input of a 
 pointer to an object derived from a SgDefaultOptionStmt.
 
 \return Returns valid pointer to SgDefaultOptionStmt if input is derived from a SgLocatedNode.
@@ -70,7 +70,7 @@ pointer to an object derived from a SgDefaultOptionStmt.
 \fn SgDefaultOptionStmt::isSgDefaultOptionStmt (const SgNode *s)
 \brief Cast function (from derived class to SgDefaultOptionStmt pointer).
 
-   This functions returns a SgDefaultOptionStmt pointer for any input of a 
+This functions returns a SgDefaultOptionStmt pointer for any input of a 
 pointer to an object derived from a SgDefaultOptionStmt.
 
 \return Returns valid pointer to SgDefaultOptionStmt if input is derived from a SgLocatedNode.

@@ -6,16 +6,23 @@
 \class SgLabelStatement
 \brief This class represents the concept of a C or C++ label statement.
 
-    The label statment is used for labels asociated with goto statements.
+The label statment is used for labels asociated with goto statements.
 
-    A label construct in C++ has a statement associated with it,
+A label construct in C++ has a statement associated with it,
 this concept is not represented in ROSE, but is one of the ways 
 that IPR differs from ROSE.  It seems that EDG accepts the representation of
 a label without a statement as an extension (ref Peter).  An empty
 statement is an alternative representation:
-    label:;
+
+@code
+label:;
+@endicode
+
 instead of
-    label:
+
+@code
+label:
+@endcode
 
 To handle the case where a label is used without an associated statement
 ROSE will unparse: "LABEL:;"
@@ -58,7 +65,7 @@ statement is already in the list of statements for the scope).
 \fn SgLabelStatement::SgLabelStatement ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgLabelStatement base class.
+This constructor builds the SgLabelStatement base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -71,14 +78,14 @@ statement is already in the list of statements for the scope).
 \fn SgLabelStatement::~SgLabelStatement()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgLabelStatement::isSgLabelStatement (SgNode *s)
 \brief Cast function (from derived class to SgLabelStatement pointer).
 
-   This functions returns a SgLabelStatement pointer for any input of a 
+This functions returns a SgLabelStatement pointer for any input of a 
 pointer to an object derived from a SgLabelStatement.
 
 \return Returns valid pointer to SgLabelStatement if input is derived from a SgLocatedNode.
@@ -88,7 +95,7 @@ pointer to an object derived from a SgLabelStatement.
 \fn SgLabelStatement::isSgLabelStatement (const SgNode *s)
 \brief Cast function (from derived class to SgLabelStatement pointer).
 
-   This functions returns a SgLabelStatement pointer for any input of a 
+This functions returns a SgLabelStatement pointer for any input of a 
 pointer to an object derived from a SgLabelStatement.
 
 \return Returns valid pointer to SgLabelStatement if input is derived from a SgLocatedNode.

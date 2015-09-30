@@ -4,7 +4,7 @@ bin_PROGRAMS = ROSS_event_detector
 
 ROSS_event_detector_SOURCES = ROSS_event_detector.cpp
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = 

@@ -5,17 +5,17 @@
 /*!
 \class SgCtorInitializerList
 \brief This class represents the concept of a contructor initializer list (used in
-    constructor (member function) definitions).
+constructor (member function) definitions).
 
-    Constructors are simply member functions with a name matching the class name (or
-    instantiated template name).  Constructor initialization lists (also called 
-    preinitialization lists) are used only within the member function definition
-    (never in the declaration).
+Constructors are simply member functions with a name matching the class name (or
+instantiated template name).  Constructor initialization lists (also called 
+preinitialization lists) are used only within the member function definition
+(never in the declaration).
 
 \internal It is presently used in the SgMemberFunctionDeclaration
-    but it might be that it would be better placed into the SgFunctionDefinition.
-    this would at least be similar to the handling of the base class list (stored
-    in the SgClassDefinition and not the SgClassDeclaration).
+but it might be that it would be better placed into the SgFunctionDefinition.
+this would at least be similar to the handling of the base class list (stored
+in the SgClassDefinition and not the SgClassDeclaration).
 
 \sa
 \ref SgCtorInitializerList_usage  "Example of using a SgCtorInitializerList object"
@@ -38,7 +38,7 @@
 \fn SgCtorInitializerList::SgCtorInitializerList ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgCtorInitializerList base class.
+This constructor builds the SgCtorInitializerList base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -51,14 +51,14 @@
 \fn SgCtorInitializerList::~SgCtorInitializerList()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgCtorInitializerList::isSgCtorInitializerList (SgNode *s)
 \brief Cast function (from derived class to SgCtorInitializerList pointer).
 
-   This functions returns a SgCtorInitializerList pointer for any input of a 
+This functions returns a SgCtorInitializerList pointer for any input of a 
 pointer to an object derived from a SgCtorInitializerList.
 
 \return Returns valid pointer to SgCtorInitializerList if input is derived from a SgLocatedNode.
@@ -68,7 +68,7 @@ pointer to an object derived from a SgCtorInitializerList.
 \fn SgCtorInitializerList::isSgCtorInitializerList (const SgNode *s)
 \brief Cast function (from derived class to SgCtorInitializerList pointer).
 
-   This functions returns a SgCtorInitializerList pointer for any input of a 
+This functions returns a SgCtorInitializerList pointer for any input of a 
 pointer to an object derived from a SgCtorInitializerList.
 
 \return Returns valid pointer to SgCtorInitializerList if input is derived from a SgLocatedNode.

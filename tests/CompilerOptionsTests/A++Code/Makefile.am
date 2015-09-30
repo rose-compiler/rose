@@ -1,8 +1,8 @@
 ## Process this file with automake to create Makefile.in
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompilerOptionsTests/A++Code -I$(srcdir) 
+# AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompilerOptionsTests/A++Code -I$(srcdir) 
 
 
 ## Add bugs to this line as they are fixed so that they can be used as test problems
@@ -44,8 +44,8 @@ $(TEST_Objects): $(TESTCODES)
 	@echo "Testing use of \"-E\" options:"
 	@echo "     a standard compiler option which runs the \"C\" preprocessor (cpp) and pipes output to stdout"
 	@echo "##############################"
-	$(TEST_TRANSLATOR) -DHAVE_CONFIG_H -E $(INCLUDES) -c $(srcdir)/$(@:.o=.C) > $(@:.o=.C)
-	g++ -DHAVE_CONFIG_H $(INCLUDES) -c $(@:.o=.C)
+	$(TEST_TRANSLATOR) -DHAVE_CONFIG_H -E $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.C) > $(@:.o=.C)
+	g++ -DHAVE_CONFIG_H $(AM_CPPFLAGS) -c $(@:.o=.C)
 
 # DQ (8/26/2004): I have selected a file at random to test the make sure that
 # the translator built with ROSE has no output!  Output from ROSE translators
@@ -55,7 +55,7 @@ testQuietOutput: test_bool.C
 	@echo "Test compilation for any output (should be zero!)"
 	@echo "#################################################"
 	rm -f outputFile; \
-	$(TEST_TRANSLATOR) -DHAVE_CONFIG_H $(INCLUDES) -c $(srcdir)/test_bool.C >& outputFile; \
+	$(TEST_TRANSLATOR) -DHAVE_CONFIG_H $(AM_CPPFLAGS) -c $(srcdir)/test_bool.C >& outputFile; \
 	outputLines=`wc -l < outputFile`; \
 	echo "outputLines = $$outputLines"; \
 	if test $$outputLines -eq 0; then \

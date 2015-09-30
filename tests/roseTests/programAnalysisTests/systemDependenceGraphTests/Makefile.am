@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # The src/midend/programAnalysis/systemDependenceGraph/Makefile.am has a note from Dan on 2/9/2014 and the source files are
 # not compiled for GCC > 4.6. Therefore we cannot compile the testSDG program either for GCC > 4.6. [Robb Matzke, 2014-10-15]

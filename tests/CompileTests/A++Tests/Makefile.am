@@ -20,9 +20,9 @@ TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
 
 ## These tests use the version of A++ source code (really only the header files) 
 ## that are a part of ROSE (located in ROSE/TESTS/CompileTests/A++Tests
-# INCLUDES = -I. -I../../.. -I$(top_srcdir)/tests/CompileTests/A++Tests -I$(top_srcdir)/include
-# INCLUDES = -I. -I../../.. -I$(srcdir)/../A++Code
-INCLUDES = -I$(srcdir)/../A++Code
+# AM_CPPFLAGS = -I. -I../../.. -I$(top_srcdir)/tests/CompileTests/A++Tests -I$(top_srcdir)/include
+# AM_CPPFLAGS = -I. -I../../.. -I$(srcdir)/../A++Code
+AM_CPPFLAGS = -I$(srcdir)/../A++Code
 
 # This rule is run after automake's internal check rule (which we don't want to use)
 check-local:
@@ -33,7 +33,7 @@ check-local:
 
 
 $(TEST_Objects): $(TESTCODES)
-	$(TEST_TRANSLATOR) $(INCLUDES) -c $(srcdir)/$(@:.o=.C)
+	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.C)
 
 EXTRA_DIST = $(TESTCODES)
 

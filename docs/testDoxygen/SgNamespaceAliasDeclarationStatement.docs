@@ -6,7 +6,7 @@
 \class SgNamespaceAliasDeclarationStatement
 \brief This class represents the concept of a C++ namespace alias declaration statement.
 
-   For a namespace Y, this appears in the code as "namespace X = Y;".  In general
+For a namespace Y, this appears in the code as "namespace X = Y;".  In general
 "X" is a shorter name for what in "Y" might be unwieldy.
 
 \sa
@@ -36,7 +36,7 @@
 \fn SgNamespaceAliasDeclarationStatement::SgNamespaceAliasDeclarationStatement ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgNamespaceAliasDeclarationStatement base class.
+This constructor builds the SgNamespaceAliasDeclarationStatement base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -49,14 +49,14 @@
 \fn SgNamespaceAliasDeclarationStatement::~SgNamespaceAliasDeclarationStatement()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgNamespaceAliasDeclarationStatement::isSgNamespaceAliasDeclarationStatement (SgNode *s)
 \brief Cast function (from derived class to SgNamespaceAliasDeclarationStatement pointer).
 
-   This functions returns a SgNamespaceAliasDeclarationStatement pointer for any input of a 
+This functions returns a SgNamespaceAliasDeclarationStatement pointer for any input of a 
 pointer to an object derived from a SgNamespaceAliasDeclarationStatement.
 
 \return Returns valid pointer to SgNamespaceAliasDeclarationStatement if input is derived from a SgLocatedNode.
@@ -66,7 +66,7 @@ pointer to an object derived from a SgNamespaceAliasDeclarationStatement.
 \fn SgNamespaceAliasDeclarationStatement::isSgNamespaceAliasDeclarationStatement (const SgNode *s)
 \brief Cast function (from derived class to SgNamespaceAliasDeclarationStatement pointer).
 
-   This functions returns a SgNamespaceAliasDeclarationStatement pointer for any input of a 
+This functions returns a SgNamespaceAliasDeclarationStatement pointer for any input of a 
 pointer to an object derived from a SgNamespaceAliasDeclarationStatement.
 
 \return Returns valid pointer to SgNamespaceAliasDeclarationStatement if input is derived from a SgLocatedNode.

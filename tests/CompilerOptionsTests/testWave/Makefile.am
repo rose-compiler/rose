@@ -21,7 +21,7 @@ testWaveTokens_SOURCES = \
 
 testWaveTokens_LDADD = $(ROSE_LIBS)
 
-INCLUDES = $(ROSE_INCLUDES) 
+AM_CPPFLAGS = $(ROSE_INCLUDES) 
 
 TESTCODES_REQUIRED_TO_PASS = \
      test1.c \

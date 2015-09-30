@@ -269,7 +269,7 @@ main(int argc, char *argv[])
             ++argno;
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
-            usage(0);
+            ::usage(0);
         } else if (!strcmp(argv[argno], "--link")) {
             opt.link = true;
         } else if (!strcmp(argv[argno], "--no-link")) {
@@ -298,7 +298,7 @@ main(int argc, char *argv[])
         }
     }
     if (argno+2!=argc)
-        usage(1);
+        ::usage(1);
     SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(argv[argno++])->transaction();
     int64_t cmd_id = start_command(tx, argc, argv, "adding functions");
     std::string specimen_name = StringUtility::getAbsolutePathFromRelativePath(argv[argno++], true);

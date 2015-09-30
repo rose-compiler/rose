@@ -69,8 +69,8 @@ verify.inc:
 # 		echo "-I$(compass_checker_dir)/$${file}" >> catCheckerIncludes.txt ;\
 # 	done ;\
 # 	export CAT_CHECKER_INCLUDES=`cat catCheckerIncludes.txt` ;\
-# 	echo "env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) $(INCLUDES) $${CAT_CHECKER_INCLUDES} catChecker.C" ;\
-# 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:verbose 0 -I$(top_builddir) $(INCLUDES) $${CAT_CHECKER_INCLUDES} catChecker.C ;\
+# 	echo "env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) $(AM_CPPFLAGS) $${CAT_CHECKER_INCLUDES} catChecker.C" ;\
+# 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:verbose 0 -I$(top_builddir) $(AM_CPPFLAGS) $${CAT_CHECKER_INCLUDES} catChecker.C ;\
 # 	'
 
 
@@ -93,7 +93,7 @@ oneBigVerify: compassVerifier compass_parameters
 		done ;\
 		rm -f $$tmpfile ;\
 		export CAT_CHECKER_INCLUDES=`cat catCheckerIncludes.txt` ;\
-		env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:verbose 0 $${CAT_CHECKER_INCLUDES} -I$(top_builddir) $(INCLUDES) $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) catChecker.C ;\
+		env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:verbose 0 $${CAT_CHECKER_INCLUDES} -I$(top_builddir) $(AM_CPPFLAGS) $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) catChecker.C ;\
 	'
  
 verify.makefile: verify.inc
@@ -111,9 +111,9 @@ verify.makefile: verify.inc
 		echo -e "\n$${dir}:" >> verify.makefile ;\
 		echo -e "\t@sh -c \"\\" >> verify.makefile ;\
 		echo -e "\t\techo -e \\\"\\\n./\$$(COMPILER) $(compass_checker_dir)/$${dir}/$${dir}.C\\\n\\\" ;\\" >> verify.makefile ;\
-		echo -e "\t\tenv COMPASS_PARAMETERS=./compass_parameters ./\$$(COMPILER) -I$(top_builddir) $(INCLUDES) $(compass_checker_dir)/$${dir}/$${dir}.C &> $${f1} ;\\" >> verify.makefile ;\
+		echo -e "\t\tenv COMPASS_PARAMETERS=./compass_parameters ./\$$(COMPILER) -I$(top_builddir) $(AM_CPPFLAGS) $(compass_checker_dir)/$${dir}/$${dir}.C &> $${f1} ;\\" >> verify.makefile ;\
 		echo -e "\t\tdeclare -i err_code=\\\$$\$$? ;\\" >> verify.makefile ;\
-		echo -e "\t\techo -e \\\"\\\n***Command Line: \$$(COMPILER) -I$(top_builddir) $(INCLUDES) $(compass_checker_dir)/$${dir}/$${dir}.C \\\" >> $${f1} ;\\" >> verify.makefile ;\
+		echo -e "\t\techo -e \\\"\\\n***Command Line: \$$(COMPILER) -I$(top_builddir) $(AM_CPPFLAGS) $(compass_checker_dir)/$${dir}/$${dir}.C \\\" >> $${f1} ;\\" >> verify.makefile ;\
 		echo -e "\t\techo -e \\\"\\\n***Exit Code: \\\$$\$$err_code\\\" >> $${f1} ;\\" >> verify.makefile ;\
 		echo -e "\t\tif((\\\$$\$$err_code!=0)); then \\" >> verify.makefile ;\
 		echo -e "\t\t\techo -e \\\"\\\nError: ./\$$(COMPILER) exit FAILURE, see `pwd`/$${f1}\\\n\\\" ;\\" >> verify.makefile ;\
@@ -150,21 +150,21 @@ new_allow_list_setup:
 	done
 
 new_allow_list: compassVerifier $(srcdir)/RULE_SELECTION.in $(TOOLBUILD)/buildCheckers.C new_allow_list_setup
-	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $(compass_support_dir)/compass.C && cp functions.allow compass_parameters
-	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $(TOOLBUILD)/buildCheckers.C && cp functions.allow compass_parameters
+	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(AM_CPPFLAGS) $(compass_support_dir)/compass.C && cp functions.allow compass_parameters
+	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(AM_CPPFLAGS) $(TOOLBUILD)/buildCheckers.C && cp functions.allow compass_parameters
 	$(MAKE) oneBigVerify && cp functions.allow compass_parameters
 	sed '$$d' functions.allow | sed -e '1d' > $(compass_checker_dir)/allowedFunctions/compass_parameters ; tail -1 functions.allow | awk -F= '{print $$1 "=-" $$2}' >> $(compass_checker_dir)/allowedFunctions/compass_parameters
 	rm -f compass_parameters RULE_SELECTION compassTestMain.*
 
 new_allow_list_long: compassVerifier $(srcdir)/RULE_SELECTION.in $(TOOLBUILD)/buildCheckers.C new_allow_list_setup
-	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $(compass_support_dir)/compass.C && cp functions.allow compass_parameters
-	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $(TOOLBUILD)/buildCheckers.C && cp functions.allow compass_parameters
+	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(AM_CPPFLAGS) $(compass_support_dir)/compass.C && cp functions.allow compass_parameters
+	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(AM_CPPFLAGS) $(TOOLBUILD)/buildCheckers.C && cp functions.allow compass_parameters
 	@sh -c '\
 		for d in `$(FIND_ALL_CHECKERS)`;\
 		do \
 			checker=`basename $$d` ;\
-			echo "COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $${d}/$${checker}.C && cp functions.allow compass_parameters" ;\
-			env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $${d}/$${checker}.C && cp functions.allow compass_parameters ;\
+			echo "COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(AM_CPPFLAGS) $${d}/$${checker}.C && cp functions.allow compass_parameters" ;\
+			env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(AM_CPPFLAGS) $${d}/$${checker}.C && cp functions.allow compass_parameters ;\
 		done ;\
 	'
 	sed '$$d' functions.allow | sed -e '1d' > $(compass_checker_dir)/allowedFunctions/compass_parameters ; tail -1 functions.allow | awk -F= '{print $$1 "=-" $$2}' >> $(compass_checker_dir)/allowedFunctions/compass_parameters
@@ -177,6 +177,6 @@ verify: compassVerifier compass_parameters verify.makefile
 	$(MAKE) -f verify.makefile -$${MAKEFLAGS}
 
 foo:
-	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) /home/yuan5/ROSE/AUG0508/ROSE/projects/compass/extensions/checkers/allowedFunctions/allowedFunctions.C 
+	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(AM_CPPFLAGS) /home/yuan5/ROSE/AUG0508/ROSE/projects/compass/extensions/checkers/allowedFunctions/allowedFunctions.C 
 
 ################################################################################

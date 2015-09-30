@@ -1,6 +1,6 @@
 ## Process this file with automake to create Makefile.in.
 
-INCLUDES = -I$(ROSE_INCLUDE_DIR) \
+AM_CPPFLAGS = -I$(ROSE_INCLUDE_DIR) \
     -I$(BOOSTDIR)/include \
     -I$(top_builddir)/src/satire \
     -I$(top_srcdir)/src/analyzer/icfgbuilder/satire \
@@ -16,11 +16,11 @@ INCLUDES = -I$(ROSE_INCLUDE_DIR) \
     -I$(top_builddir)/src/termite/satire
 
 if WITH_PAG
-INCLUDES += -I$(PAG_INCLUDE_DIR)/pag -I$(PAG_INCLUDE_DIR)/pag/analyzer
+AM_CPPFLAGS += -I$(PAG_INCLUDE_DIR)/pag -I$(PAG_INCLUDE_DIR)/pag/analyzer
 endif
 
 if WITH_SWI_PROLOG
-INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR)
+AM_CPPFLAGS += -I$(SWI_PROLOG_INCLUDE_DIR)
 endif
 
 noinst_LTLIBRARIES = libAstNumbering.la

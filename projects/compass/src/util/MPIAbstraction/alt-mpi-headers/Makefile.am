@@ -21,7 +21,7 @@ ALTMPI_LIB_OUT_DIR = lib
 # The distribution builds the $(ALTMPI_OUT_DIR) and the $(ALTMPI_LIB_OUT_DIR)
 # into the source tree (different from the development bversion of ROSE, so 
 # include the directory for that location as well.
-INCLUDES = -I. -I$(srcdir) -I$(ALTMPI_OUT_DIR) -I$(srcdir)/$(ALTMPI_OUT_DIR)
+AM_CPPFLAGS = -I. -I$(srcdir) -I$(ALTMPI_OUT_DIR) -I$(srcdir)/$(ALTMPI_OUT_DIR)
 
 #==========================================================================
 

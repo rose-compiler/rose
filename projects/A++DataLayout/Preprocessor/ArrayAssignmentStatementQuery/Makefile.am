@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = \
+AM_CPPFLAGS = \
      $(ROSE_INCLUDES) \
      -I$(top_srcdir)/projects/A++DataLayout \
      -I$(top_srcdir)/projects/A++DataLayout/include \

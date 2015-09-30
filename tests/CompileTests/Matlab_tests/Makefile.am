@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 noinst_PROGRAMS = matlabIdentityTranslator
 matlabIdentityTranslator_SOURCES = matlabIdentityTranslator.C
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/MatlabFrontend -I$(top_srcdir)/src/backend/unparser/MatlabCodeGeneration/
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/MatlabFrontend -I$(top_srcdir)/src/backend/unparser/MatlabCodeGeneration/
 matlabIdentityTranslator_LDADD = $(ROSE_LIBS) $(top_builddir)/src/frontend/MatlabFrontend/libroseMatlabFrontend.la
 
 ALL_MATLAB_TESTCODES = \

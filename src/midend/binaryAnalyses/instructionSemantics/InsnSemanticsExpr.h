@@ -529,7 +529,7 @@ private:
             add_child(children[i]);
         adjustWidth();
         adjustBitFlags(flags);
-        ASSERT_require(get_nbits() == nbits);
+        ASSERT_require(0 == nbits || get_nbits() == nbits);
     }
 
 public:
@@ -661,6 +661,11 @@ private:
 public:
     /** Construct a new free variable with a specified number of significant bits. */
     static LeafNodePtr create_variable(size_t nbits, std::string comment="", unsigned flags=0);
+
+    /*  Construct another reference to an existing variable.  This method is used internally by the expression parsing
+     *  mechanism to produce a new instance of some previously existing variable -- both instances are the same variable and
+     *  therefore should be given the same size (although this consistency cannot be checked automatically). */
+    static LeafNodePtr create_existing_variable(size_t nbits, uint64_t id, const std::string &comment="", unsigned flags=0);
 
     /** Construct a new integer with the specified number of significant bits. Any high-order bits beyond the specified size
      *  will be zeroed. */

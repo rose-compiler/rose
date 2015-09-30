@@ -33,7 +33,7 @@ OPENGL_LIBS   = -lGL -lGLU -lglut
 # CPPFLAGS = -I/usr/local/include/graphviz/ -I/usr/X11R6/include/
 # CFLAGS   = -I/usr/local/include/graphviz/ -I/usr/X11R6/include/
 
-INCLUDES =  $(FLTK_INCLUDE) $(GRAPHVIZ_INCLUDE) $(GLUT_INCLUDE) $(OPENGL_INCLUDE)
+AM_CPPFLAGS =  $(FLTK_INCLUDE) $(GRAPHVIZ_INCLUDE) $(GLUT_INCLUDE) $(OPENGL_INCLUDE)
 
 bin_PROGRAMS = dotgl
 

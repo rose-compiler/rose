@@ -4,7 +4,7 @@ TEST_TARGETS =
 EXTRA_DIST =
 MOSTLYCLEANFILES =
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 #------------------------------------------------------------------------------------------------------------------------

@@ -33,15 +33,15 @@ namespace BinaryAnalysis {
  *
  *  This namespace consists of three major parts and a number of smaller parts.  The major parts are:
  *
- *  @li @ref Partitioner: The partitioner is responsible for organizing instructions into basic blocks and basic blocks into
- *      functions. It has methods to discover new parts of the executable, and methods to control how those parts are organized
- *      into larger parts.  It queries a memory map and an instruction provider and updates a global control flow graph (CFG)
- *      and address usage map (AUM). It's operations are quite low-level and its behavior is customized primarily by
- *      callbacks.
+ *  @li @ref Partitioner2::Partitioner "Partitioner": The partitioner is responsible for organizing instructions into basic
+ *      blocks and basic blocks into functions. It has methods to discover new parts of the executable, and methods to control
+ *      how those parts are organized into larger parts.  It queries a memory map and an instruction provider and updates a
+ *      global control flow graph (CFG) and address usage map (AUM). It's operations are quite low-level and its behavior is
+ *      customized primarily by callbacks.
  *
- *  @il @ref Engine: The engine contains the higher-level functionality that drives the partitioner.  Where the partitioner
- *      knows @em how to make a basic block or a function, the engine know @em where to make a basic block or function.  The
- *      engine is customized by subclassing it and overriding various methods.
+ *  @li @ref Partitioner2::Engine "Engine": The engine contains the higher-level functionality that drives the partitioner.
+ *      Where the partitioner knows @em how to make a basic block or a function, the engine know @em where to make a basic
+ *      block or function.  The engine is customized by subclassing it and overriding various methods.
  *
  *  Disassembly techniques fall into two broad categories: linear disassembly and recursive disassembly.  Linear disassembly
  *  progresses by starting at some low address in the specimen address space, disassembling one instruction, and then moving on
@@ -93,7 +93,7 @@ namespace Partitioner2 {
  *      their basic blocks.  A single address may have multiple overlapping instructions (although this isn't the usual case),
  *      and every instruction represented by the map belongs to exactly one basic block that belongs to the CFG.
  *
- * @section basic_block Basic Blocks
+ * @section partitoner_basic_block Basic Blocks
  *
  *  A basic block (BB) is a sequence of distinct instructions that are always executed linearly from beginning to end with no
  *  branching into or out of the middle of the BB.  The semantics of a BB are the composition of the semantics of each
@@ -125,7 +125,7 @@ namespace Partitioner2 {
  *  block, and the CFG will contain an edge to the special "indeterminate" vertex.  Blocks that have improper alignment are
  *  treated as if they started at an unmapped or non-executable address.
  *
- * @section data_block Data Blocks
+ * @section partitioner_data_block Data Blocks
  *
  *  A data block is an address and data type anywhere in memory.  A data block can be attached to a CFG/AUM, or exist in a
  *  detached state. They are attached to the CFG/AUM by virtue of being owned by one or more basic blocks or functions that are
@@ -133,7 +133,7 @@ namespace Partitioner2 {
  *  such as branch tables are typically attached to a basic block.  A data block may be attached to more than one function
  *  and/or basic block, and the CFG/AUM is able to support multiple data blocks having the same address.
  *
- * @section functions Functions
+ * @section partitioner_functions Functions
  *
  *  A function is a collection of one or more basic blocks related by control flow edges.  One basic block is special in that
  *  it serves as the only entry point to this function for inter-function edges (usually function calls).  Any edge that leaves
@@ -146,7 +146,7 @@ namespace Partitioner2 {
  *  through the Partitioner API so that the CFG/AUM can be updated.  When a function becomes detached from the CFG it thaws out
  *  again and can be modified.  The CFG/AUM will contain at most one function per function starting address.
  *
- * @section cfg Control Flow Graph
+ * @section partitioner_cfg Control Flow Graph
  *
  *  At any point in time, the partitioner's control flow graph represents those basic blocks (and indirectly the instructions)
  *  that have been selected to appear in the final abstract syntax tree (AST).  This is a subset of all basic blocks ever
@@ -208,7 +208,7 @@ namespace Partitioner2 {
  *
  *  @li @ref E_NORMAL: represents any edge not in one of the above categories.
  *
- * @section aum Address Usage Map
+ * @section partitioner_aum Address Usage Map
  *
  *  The address usage map (AUM) is similar to the control flow graph in that they both represent the same set of instructions,
  *  basic blocks, and functions. But where the CFG organizes them according to their control flow relationships, the AUM
@@ -219,7 +219,7 @@ namespace Partitioner2 {
  *  within, span, or overlap an address or address interval. For small intervals the results can usually be obtained in
  *  logorithmic time, but querying large intervals can be slower.
  *
- * @section prioritizing Prioritizing Work
+ * @section partitioner_prioritizing Prioritizing Work
  *
  *  The partitioner itself does not prioritize work or perform work automatically--it must be told what to do, usually through
  *  an engine.  However, the partitioner does have certain features that facilitate prioritization at higher layers. Namely, it
@@ -244,7 +244,7 @@ namespace Partitioner2 {
  *
  *  The base implementation of @ref Engine uses these features to prioritize its work and can be consulted as an example.
  *
- * @section provisional Provisional Detection
+ * @section partitioner_provisional Provisional Detection
  *
  *  (This section is a placeholder for an idea that is not yet implemented.)
  *
@@ -262,11 +262,11 @@ namespace Partitioner2 {
  *
  *  A more efficient mechanism might be developed in the future.
  *
- * @section functions Function Boundary Determination
+ * @section partitioner_functions Function Boundary Determination
  *
  *  (This section is a placeholder for future documentation).
  *
- * @section faq Frequenctly Asked Questions
+ * @section partitioner_faq Frequenctly Asked Questions
  *
  * Q. Why is this class final?
  *

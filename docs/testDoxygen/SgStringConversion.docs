@@ -34,7 +34,7 @@ languages. See SgCastExp for more info.
 \fn SgStringConversion::SgStringConversion ( SgExpression* exp )
 \brief This is the constructor.
 
-   This constructor builds the SgStringConversion base class.
+This constructor builds the SgStringConversion base class.
 
 \param exp The expression to be converted to a string.
 */
@@ -49,7 +49,7 @@ languages. See SgCastExp for more info.
 \fn SgStringConversion::isSgStringConversion (SgNode *s)
 \brief Cast function (from derived class to SgStringConversion pointer).
 
-   This functions returns a SgStringConversion pointer for any input of a 
+This functions returns a SgStringConversion pointer for any input of a 
 pointer to an object derived from a SgStringConversion.
 
 \return Returns valid pointer to SgStringConversion if input is derived from a SgStringConversion.
@@ -59,7 +59,7 @@ pointer to an object derived from a SgStringConversion.
 \fn SgStringConversion::isSgStringConversion (const SgNode *s)
 \brief Cast function (from derived class to SgStringConversion pointer).
 
-   This functions returns a SgStringConversion pointer for any input of a 
+This functions returns a SgStringConversion pointer for any input of a 
 pointer to an object derived from a SgStringConversion.
 
 \return Returns valid pointer to SgStringConversion if input is derived from a SgStringConversion.

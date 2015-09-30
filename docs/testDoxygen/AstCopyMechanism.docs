@@ -1,28 +1,30 @@
-/*! \page AST_Copy_Mechanism ROSE AST Copy Mechanism
+// -*- c++ -*-
 
-    This page describes the AST copy mechanism in ROSE.
-
-\section CopyDesign Design of the AST Copy Mechanism
-
-    The ROSE AST copy mechanism is supported by a member function on each IR nodes called
-    "copy".  A parameter to the copy member function permits the user to tailor the copy
-    mechanism to do deep or shallow copies within selected portions of the AST.
-
-\todo Most types are shared, but named types are copied, and the copies need to have there
-      declarations reset to the new AST.
-
-\todo base class modifiers are shared and this should be fixed.
-
-\todo Friend function in classes are not represented by symbols in the global scope.
-      Not that this is always the rule, it is the default for ROSE and it is setup
-      inconsistantly in the generated AST copy.  See copytest2007_39.C.
-
-\todo copytest2007_46.C is too difficult to figure out (likely because the
-    SgTemplateArguments are shared).
-
-\todo copytest2007_47.C is too complex and likely demonstrates an error.
-
-\todo copytest2007_49.C is too complex and likely demonstrates an error.
-
-
-*/
+/** @defgroup ast_copy_mechanism AST copy mechanism
+ *
+ *  The AST copy mechanism is to deep-copy parts of an AST.
+ * 
+ *  @section esign Design
+ * 
+ *  The AST copy mechanism is supported by a member function on each IR node called @c copy.  A parameter to the @c copy
+ *  member function permits the user to tailor the copy mechanism to do deep or shallow copies within selected portions of the
+ *  AST.
+ * 
+ * @todo Most types are shared, but named types are copied, and the copies need to have their declarations reset to the new
+ *       AST. [prior to 2015-05-15]
+ * 
+ * @todo Base class modifiers are shared and this should be fixed. [prior to 2015-05-15]
+ * 
+ * @todo Friend function in classes are not represented by symbols in the global scope. Not that this is always the rule, it is
+ *       the default for ROSE and it is setup inconsistantly in the generated AST copy.  See copytest2007_39.C. [prior to
+ *       2015-05-15]
+ * 
+ * @todo copytest2007_46.C is too difficult to figure out (likely because the SgTemplateArguments are shared). [prior to
+ *       2015-05-15]
+ * 
+ * @todo copytest2007_47.C is too complex and likely demonstrates an error. [prior to 2015-05-15]
+ * 
+ * @todo copytest2007_49.C is too complex and likely demonstrates an error. [prior to 2015-05-15]
+ *
+ * @todo This page needs a cross reference to the functions that implement copying. [Robb P. Matzke 2015-05-15]
+ */

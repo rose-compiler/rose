@@ -76,7 +76,7 @@ TRANSLATOR_EXECUTABLE = $(top_builddir)/tests/testTranslator
 TEST_TRANSLATOR = $(TRANSLATOR_EXECUTABLE) $(ROSE_FLAGS)
 
 $(TEST_Objects): $(C_TESTCODES)
-	$(TEST_TRANSLATOR) $(INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.c)
+	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.c)
 
 EXTRA_DIST = $(C_TESTCODES)
 

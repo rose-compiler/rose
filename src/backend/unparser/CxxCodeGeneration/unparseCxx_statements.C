@@ -596,10 +596,13 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
   // DQ (9/7/2014): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
+#if 1
+  // DQ (9/14/2015): Test disabling this for C++11 mode.
+
   // DQ (7/10/2014): Added support for using the original type syntax (saved as the declared function type).
      if (funcdecl_stmt->get_type_syntax_is_available() == true)
         {
-       // Here we want to use the type syntx that originally appears with this function declaration in the original code.
+       // Here we want to use the type syntax that originally appears with this function declaration in the original code.
           SgFunctionType* function_type = funcdecl_stmt->get_type_syntax();
           ROSE_ASSERT(function_type != NULL);
 #if 0
@@ -645,6 +648,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
        // DQ (7/10/2014): Enforce this rule.
           ROSE_ASSERT(funcdecl_stmt->get_type_syntax() == NULL);
         }
+#endif
 
 #if 0
      printf ("In unparseFunctionParameterDeclaration(): exiting as a test! \n");
@@ -5847,10 +5851,29 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 
 #if 1
+               SgFile* file = TransformationSupport::getFile(vardecl_stmt);
+#if 0
+               printf ("In unparseVarDeclStmt(): resolving file to be %p \n",file);
+#endif
+               bool is_Cxx_Compiler = false;
+               bool is_C_Compiler   = false;
+               if (file != NULL)
+                  {
+                    is_Cxx_Compiler = file->get_Cxx_only();
+                    is_C_Compiler   = file->get_C_only();
+                  }
+                 else
+                  {
+                    printf ("Warning: TransformationSupport::getFile(vardecl_stmt) == NULL \n");
+                  }
+#if 0
+               printf ("In unparseVarDeclStmt(): is_C_Compiler = %s is_Cxx_Compiler = %s \n",is_C_Compiler ? "true" : "false",is_Cxx_Compiler ? "true" : "false");
+#endif
             // DQ (5/24/2015): Moved to output specifier after the "extern" and "static" keywords.
             // Note this this is required for test2009_19.c.
                if (usingGxx)
                   {
+#if 0
                     SgFile* file = TransformationSupport::getFile(vardecl_stmt);
 #if 0
                     printf ("In unparseVarDeclStmt(): resolving file to be %p \n",file);
@@ -5868,6 +5891,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                        }
 #if 0
                     printf ("In unparseVarDeclStmt(): is_C_Compiler = %s is_Cxx_Compiler = %s \n",is_C_Compiler ? "true" : "false",is_Cxx_Compiler ? "true" : "false");
+#endif
 #endif
                  // DQ (5/24/2015): I think I menat to say that For C we need to use the EDG 4.9 frontend (?).
                  // For C we need to use the GNU 4.9 compiler.
@@ -5912,6 +5936,27 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                                  {
                                    curprint("__thread ");
                                  }
+                            }
+                       }
+                  }
+                 else
+                  {
+                 // DQ (8/28/2015): Adding support for not GNU compilers (e.g. Intel v14 compiler.
+#if 0
+                    printf ("usingGxx == false: so __thread not output: vardecl_stmt->get_is_thread_local() == %s \n",(vardecl_stmt->get_is_thread_local() == true) ? "true" : "false");
+#endif
+                 // DQ (8/13/2014): Adding C++11 thread local support.
+                    if (is_Cxx_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                       {
+                         curprint("thread_local ");
+                       }
+                      else
+                       {
+                      // DQ (5/24/2015): Added this case to support the C language work even when using the GNU 4.8 compiler.
+                         if (is_C_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                            {
+                           // curprint("_Thread_local ");
+                              curprint("__thread ");
                             }
                        }
                   }

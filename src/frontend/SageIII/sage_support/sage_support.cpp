@@ -2257,7 +2257,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
 
   // printf ("In SgFile::setupSourceFilename(const vector<string>& argv): p_sourceFileNameWithPath = %s \n",get_sourceFileNameWithPath().c_str());
   // tps: 08/18/2010, This should call StringUtility for WINDOWS- there are two implementations of this?
-  // set_sourceFileNameWithoutPath( ROSE::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
+  // set_sourceFileNameWithoutPath( rose::utility_stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
      set_sourceFileNameWithoutPath( StringUtility::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
 
      initializeSourcePosition(sourceFilename);
@@ -2473,7 +2473,7 @@ SgFile::callFrontEnd()
       // should be "disable_edg" instead of "disable_edg_backend".
           get_disable_edg_backend() == false && get_new_frontend() == true)
         {
-       // ROSE::new_frontend = true;
+       // rose::new_frontend = true;
 
        // We can either use the newest EDG frontend separately (useful for debugging)
        // or the EDG frontend that is included in SAGE III (currently EDG 3.3).
@@ -2495,7 +2495,7 @@ SgFile::callFrontEnd()
 
       // Use the current version of the EDG frontend from EDG (or any other version)
       // abort();
-         printf ("ROSE::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
+         printf ("rose::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
 
          std::string frontEndCommandLineString;
          if ( get_KCC_frontend() == true )
@@ -5205,7 +5205,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argc,argv);
   // ROSE_ASSERT (fileList.size() == 1);
   // p_sourceFileNameWithPath    = *(fileList.begin());
-  // p_sourceFileNameWithoutPath = ROSE::stripPathFromFileName(p_sourceFileNameWithPath.c_str());
+  // p_sourceFileNameWithoutPath = rose::utility_stripPathFromFileName(p_sourceFileNameWithPath.c_str());
 
 #if 1
   // ROSE_ASSERT (get_unparse_output_filename().empty() == true);
@@ -5236,7 +5236,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 #endif
                if (project->get_unparse_in_same_directory_as_input_file() == true)
                   {
-                    outputFilename = ROSE::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
+                    outputFilename = rose::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
 
                     printf ("In SgFile::compileOutput(): Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
 

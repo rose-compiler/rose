@@ -4,7 +4,7 @@ EXTRA_DIST =
 TEST_TARGETS =
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 SPECIMENS = input1.C
 EXTRA_DIST += $(SPECIMENS)
 

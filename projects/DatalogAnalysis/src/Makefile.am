@@ -5,7 +5,7 @@ SUBDIRS = DBFactories
 # Automake conditional to control use of ROSE with BDDBDDB
 if ROSE_USE_BDDBDDB
 
-INCLUDES = -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/../include
+AM_CPPFLAGS = -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/../include
 
 GENERATED_SOURCE_DIR = $(top_builddir)/projects/DatalogAnalysis/relationTranslatorGenerator
 # GENERATED_SOURCE = $(GENERATED_SOURCE_DIR)/output/RelationVisitor.cc

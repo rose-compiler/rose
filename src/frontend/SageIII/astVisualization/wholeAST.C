@@ -1617,7 +1617,14 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                          printf ("Error: charVal = %d \n",charVal->get_value());
                        }
                   }
-               ROSE_ASSERT(valueExp->get_parent() != NULL);
+
+            // DQ (8/29/2015): Make this a comment so that I can better debug this problem.
+               if (valueExp->get_parent() == NULL)
+                  {
+                    printf ("ERROR: valueExp->get_parent() == NULL in AST visualization: valueExp = %p = %s \n",valueExp,valueExp->class_name().c_str());
+                  }
+            // ROSE_ASSERT(valueExp->get_parent() != NULL);
+
             // labelWithSourceCode = "\\n value = " + valueExp->unparseToString() + "\\n" + StringUtility::numberToString(node) + "  ";
             // labelWithSourceCode = string("\\n value = nnn") + "\\n" + StringUtility::numberToString(node) + "  ";
 

@@ -5,9 +5,9 @@
 /*!
 \class SgSupport
 \brief This class represents the base class of a numbr of IR nodes that don't otherwise fit
-       into the existing hierarchy of statement, expression, types, and symbols.
+into the existing hierarchy of statement, expression, types, and symbols.
 
-    There are no uses of this IR node anywhere.  All SgSupport based IR nodes
+There are no uses of this IR node anywhere.  All SgSupport based IR nodes
 are derived from this SgSupport class.
 
 \internal This is a base class for all SgSupport objects.
@@ -22,7 +22,7 @@ are derived from this SgSupport class.
 /////////////////////////////////////////////////////////////////////////
 
 /*
-   There are no data members for this class.
+There are no data members for this class.
 */
 
 
@@ -33,7 +33,7 @@ are derived from this SgSupport class.
 \fn SgSupport::SgSupport()
 \brief This is the constructor.
 
-   This constructor builds the SgSupport base class.
+This constructor builds the SgSupport base class.
 
 \sa 
 \ref SgSupport_create "Example:create an SgSupport object"
@@ -43,14 +43,14 @@ are derived from this SgSupport class.
 \fn SgSupport::~SgSupport()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgSupport::isSgSupport (SgNode *s)
 \brief Cast function (from derived class to SgSupport pointer).
 
-   This functions returns a SgSupport pointer for any input of a 
+This functions returns a SgSupport pointer for any input of a 
 pointer to an object derived from a SgSupport.
 
 \return Returns valid pointer to SgSupport if input is derived from a SgLocatedNode.
@@ -60,7 +60,7 @@ pointer to an object derived from a SgSupport.
 \fn SgSupport::isSgSupport (const SgNode *s)
 \brief Cast function (from derived class to SgSupport pointer).
 
-   This functions returns a SgSupport pointer for any input of a 
+This functions returns a SgSupport pointer for any input of a 
 pointer to an object derived from a SgSupport.
 
 \return Returns valid pointer to SgSupport if input is derived from a SgLocatedNode.

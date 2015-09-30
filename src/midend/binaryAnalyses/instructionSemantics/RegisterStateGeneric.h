@@ -16,10 +16,11 @@ typedef boost::shared_ptr<class RegisterStateGeneric> RegisterStateGenericPtr;
  *
  *  This state stores a list of non-overlapping registers and their values, typically only for the registers that have been
  *  accessed.  The state automatically switches between different representations when accessing a register that overlaps with
- *  one or more stored registers.  For instance, if the state stores 64-bit registers and the specimen suddently switches to
- *  32-bit mode, this state will split the 64-bit registers into 32-bit pieces.  If the analysis later returns to 64-bit mode,
- *  the 32-bit pieces are concatenated back to 64-bit values. This splitting and concatenation occurs on a per-register basis
- *  at the time the register is read or written.
+ *  one or more stored registers (see the @ref accessModifiesExistingLocations and @ref accessCreatesLocations properties).
+ *  For instance, if the state stores 64-bit registers and the specimen suddently switches to 32-bit mode, this state will
+ *  split the 64-bit registers into 32-bit pieces.  If the analysis later returns to 64-bit mode, the 32-bit pieces are
+ *  concatenated back to 64-bit values. This splitting and concatenation occurs on a per-register basis at the time the
+ *  register is read or written.
  *
  *  The register state also stores optional information about writers for each register. Writer information (addresses of
  *  instructions that wrote to the register) are stored as sets defined at each bit of the register. This allows a wide
@@ -33,6 +34,17 @@ class RegisterStateGeneric: public RegisterState {
     //                                  Basic Types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Exception when register storage is not present.
+     *
+     *  If the @ref accessCreatesLocations property is clear and a caller attempts to access a register (or part) that is not
+     *  stored in the state, then an exception of this type is thrown. */
+    class RegisterNotPresent: public std::runtime_error {
+        RegisterDescriptor desc_;
+    public:
+        explicit RegisterNotPresent(const RegisterDescriptor &d)
+            : std::runtime_error("accessed register is not available in register state") {}
+    };
+
     /** A range of bits indexes.
      *
      *  Represents of contiguous interval of bit indexes, such as all bits numbered zero through 15, inclusive. */
@@ -61,13 +73,14 @@ public:
         RegisterDescriptor desc;
         SValuePtr value;
         RegPair(const RegisterDescriptor &desc, const SValuePtr &value): desc(desc), value(value) {}
+        BitRange location() const { return BitRange::baseSize(desc.get_offset(), desc.get_nbits()); }
     };
 
     /** Vector of register/value pairs. */
     typedef std::vector<RegPair> RegPairs;
 
     /** Values for all registers. */
-    typedef Map<RegStore, RegPairs> Registers;
+    typedef Sawyer::Container::Map<RegStore, RegPairs> Registers;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -107,7 +120,8 @@ public:
 private:
     RegisterProperties properties_;                     // Boolean properties for each bit of each register.
     RegisterAddressSet writers_;                        // Writing instruction address set for each bit of each register
-    bool coalesceOnRead_;                               // Modify representations when reading registers?
+    bool accessModifiesExistingLocations_;              // Can read/write modify existing locations?
+    bool accessCreatesLocations_;                       // Can new locations be created?
 
 protected:
     /** Values for registers that have been accessed.
@@ -118,7 +132,7 @@ protected:
      *  short (e.g., one list might refer to all the parts of the x86 RAX register, but the RBX parts would be on a different
      *  list. None of the registers stored on a particular list overlap with any other register on that same list; when adding
      *  new register that would overlap, the registers with which it overlaps must be removed first. */
-    Registers registers;
+    Registers registers_;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -128,13 +142,13 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
     explicit RegisterStateGeneric(const SValuePtr &protoval, const RegisterDictionary *regdict)
-        : RegisterState(protoval, regdict), coalesceOnRead_(true) {
+        : RegisterState(protoval, regdict), accessModifiesExistingLocations_(true), accessCreatesLocations_(true) {
         clear();
     }
 
     RegisterStateGeneric(const RegisterStateGeneric &other)
-        : RegisterState(other), properties_(other.properties_), writers_(other.writers_), coalesceOnRead_(true),
-          registers(other.registers) {
+        : RegisterState(other), properties_(other.properties_), writers_(other.writers_),
+          accessModifiesExistingLocations_(true), accessCreatesLocations_(true), registers_(other.registers_) {
         deep_copy_values();
     }
 
@@ -188,40 +202,87 @@ public:
     //                                  Object properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Whether reading modifies representation.
+    /** Property: Whether stored registers are adapted to access patterns.
      *
-     *  When the @ref readRegister method is called to obtain a value for a desired register that overlaps with some (parts of)
-     *  registers that already exist in this register state we can proceed in two ways. In both cases the return value will
-     *  include data that's already stored, but the difference is in how we store the returned value in the register state: (1)
-     *  we can erase the (parts of) existing registers that overlap and store the desired register and store the returned value
-     *  so that the register we just read appears as one atomic value, or (2) we can keep the existing registers and write only
-     *  those parts of the return value that fall between the gaps.
+     *  When accessing an existing register for read or write, the register state can adapt the list of existing storage
+     *  locations to match the access pattern.  For instance, accessing the middle of a register could split the register into
+     *  three storage locations or leave it as one. Similarly accessing a register that spans two or more storage locations
+     *  could either concatenate them into one location or leave them separate.
      *
-     *  If the coalesceOnRead property is set, then the returned value is stored atomically even when the value might be a
-     *  function of values that are already stored. Otherwise, existing registerss are not rearranged and only those parts of
-     *  the return value that fall into the gaps between existing registers are stored.
+     *  When this property is true then existing storage locations can be modified, otherwise extra steps are taken to preserve
+     *  the list of storage locations.
      *
-     *  The set/clear modifiers return the previous value of this property.
+     *  This property does not applies only to @ref readRegister and @ref writeRegister and not to those methods that are not
+     *  typically called as part of processing instruction semantics.
      *
      * @{ */
-    bool coalesceOnRead() const /*final*/ { return coalesceOnRead_; }
-    virtual void coalesceOnRead(bool b) { coalesceOnRead_ = b; }
+    bool accessModifiesExistingLocations() const /*final*/ { return accessModifiesExistingLocations_; }
+    virtual void accessModifiesExistingLocations(bool b) { accessModifiesExistingLocations_ = b; }
     /** @} */
 
-    /** Temporarily turn off coalescing on read.  Original state is restored by the destructor. */
-    class NoCoalesceOnRead {
+    /** Guards whether access can change set of existing locations.
+     *
+     *  This guard temporarily enables or disables the @ref accessModifiesExistingLocations property, restoring the property to
+     *  its original value when the guard is destroyed. */
+    class AccessModifiesExistingLocationsGuard {
         RegisterStateGeneric *rstate_;
-        bool oldValue_;
+        bool savedValue_;
     public:
-        /** Turn off coalesceOnRead for the specified register state. */
-        explicit NoCoalesceOnRead(RegisterStateGeneric *rstate)
-            : rstate_(rstate), oldValue_(rstate->coalesceOnRead()) {
-            rstate->coalesceOnRead(false);
+        AccessModifiesExistingLocationsGuard(RegisterStateGeneric *rstate, bool newValue)
+            : rstate_(rstate), savedValue_(rstate->accessModifiesExistingLocations()) {
+            rstate_->accessModifiesExistingLocations(newValue);
         }
-        ~NoCoalesceOnRead() {
-            rstate_->coalesceOnRead(oldValue_);
+        ~AccessModifiesExistingLocationsGuard() {
+            rstate_->accessModifiesExistingLocations(savedValue_);
         }
     };
+
+    /** Property: Whether access can create new locations.
+     *
+     *  This property controls what happens if some part of a register is accessed that isn't stored in the state. If the
+     *  property is true then that part of the register springs into existence, otherwise an @ref RegisterNotPresent exception
+     *  is thrown.
+     *
+     * @{ */
+    bool accessCreatesLocations() const /*final*/ { return accessCreatesLocations_; }
+    virtual void accessCreatesLocations(bool b) { accessCreatesLocations_ = b; }
+    /** @} */
+
+    /** Guards whether access is able to create new locations.
+     *
+     *  This guard temporarily enables or disables the @ref accessCreatesLocations property, restoring the property to its
+     *  original value when the guard is destroyed. */
+    class AccessCreatesLocationsGuard {
+        RegisterStateGeneric *rstate_;
+        bool savedValue_;
+    public:
+        AccessCreatesLocationsGuard(RegisterStateGeneric *rstate, bool newValue)
+            : rstate_(rstate), savedValue_(rstate->accessCreatesLocations()) {
+            rstate_->accessCreatesLocations(newValue);
+        }
+        ~AccessCreatesLocationsGuard() {
+            rstate_->accessCreatesLocations(savedValue_);
+        }
+    };
+
+    // [Robb P. Matzke 2015-09-23]: deprecated
+    bool coalesceOnRead() const /*final*/ ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
+        return accessModifiesExistingLocations();
+    }
+
+    // [Robb P. Matzke 2015-09-23]: deprecated
+    virtual void coalesceOnRead(bool b) ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
+        accessModifiesExistingLocations(b);
+    }
+
+    // [Robb P. Matzke 2015-09-23]: deprecated
+    class NoCoalesceOnRead                              // ROSE_DEPRECATED("use AccessModifiesExistingLocationsGuard isntead")
+        : public AccessModifiesExistingLocationsGuard {
+    public:
+        explicit NoCoalesceOnRead(RegisterStateGeneric *rstate)
+            : AccessModifiesExistingLocationsGuard(rstate, false) {}
+    };
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Inherited non-constructors
@@ -503,17 +564,17 @@ public:
     virtual std::set<rose_addr_t> get_latest_writers(const RegisterDescriptor&) const
         ROSE_DEPRECATED("use getWritersUnion instead");
 
-    virtual bool get_coalesceOnRead() ROSE_DEPRECATED("use coalesceOnRead instead") {
-        return coalesceOnRead();
+    virtual bool get_coalesceOnRead() ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
+        return accessModifiesExistingLocations();
     }
-    virtual bool set_coalesceOnRead(bool b=true) ROSE_DEPRECATED("use coalesceOnRead instead") {
-        bool retval=coalesceOnRead();
-        coalesceOnRead(b);
+    virtual bool set_coalesceOnRead(bool b=true) ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
+        bool retval=accessModifiesExistingLocations();
+        accessModifiesExistingLocations(b);
         return retval;
     }
-    virtual bool clear_coalescOnRead() ROSE_DEPRECATED("use coalesceOnRead instead") {
-        bool retval = coalesceOnRead();
-        coalesceOnRead(false);
+    virtual bool clear_coalescOnRead() ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
+        bool retval = accessModifiesExistingLocations();
+        accessModifiesExistingLocations(false);
         return retval;
     }
 
@@ -523,8 +584,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
     void deep_copy_values();
-    static void get_nonoverlapping_parts(const Extent &overlap, const RegPair &rp, RiscOperators *ops,
-                                         RegPairs *pairs/*out*/);
+
+    RegPairs& scanAccessedLocations(const RegisterDescriptor &reg, RiscOperators *ops, bool markOverlapping,
+                                    RegPairs &accessedParts /*out*/, RegPairs &preservedParts /*out*/);
+
+    void assertStorageConditions(const std::string &where, const RegisterDescriptor &what) const;
 };
 
 } // namespace

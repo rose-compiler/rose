@@ -4,9 +4,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # DQ (10/20/2013): Allow alternative support using ROSE ATerm library API.
 # SUBDIRS = tests
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES) 
 
-bin_PROGRAMS = shiftCalculusCompiler  
+bin_PROGRAMS = shiftCalculusCompiler 
+noinst_PROGRAMS = mpiCodeGenerator 
 
 # Liao, 9/14/15 C++11 has only been available since G++ 4.3. 
 # In versions pre-G++ 4.7, you'll have to use -std=c++0x, for more recent versions you can use -std=c++11.
@@ -16,6 +17,8 @@ CXX11FLAG = -std=c++11
 CPPFLAGS += $(CXX11FLAG)
  
 shiftCalculusCompiler_SOURCES = shiftCalculusCompiler.C stencilAndStencilOperatorDetection.C stencilEvaluation.C stencilFiniteStateMachine.C dslSupport.C dslCodeGeneration.C lowLevelCodeGeneration.C
+
+mpiCodeGenerator_SOURCES = mpiCodeGenerator.C mpiCodeGenerator.h
 
 include_HEADERS = shiftCalculusCompiler.h stencilAndStencilOperatorDetection.h stencilEvaluation.h stencilFiniteStateMachine.h dslSupport.h dslCodeGeneration.h lowLevelCodeGeneration.h
 
@@ -124,12 +127,20 @@ rose_laplacian_lite_v3.cu: shiftCalculusCompiler
 	@echo "********************************************************************************************"
 	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -std=c++11 -rose:skipfinalCompileStep -rose:output $@  $(srcdir)/laplacian_lite_v3.cpp
 
-rose_laplacian_lite_v3_mpi.cpp: shiftCalculusCompiler
+# wait until the dsl compiler generates correct sequential code
+rose_laplacian_lite_v4_mpi.cpp: mpiCodeGenerator
 	@echo "********************************************************************************************"
 	@echo "******* ROSE/projects/ShiftCalculus: code generation for MPI ********"
 	@echo "********************************************************************************************"
-	./shiftCalculusCompiler -c -rose:dslcompiler:mpi -std=c++11 -rose:skipfinalCompileStep -rose:output $@  $(srcdir)/laplacian_lite_v3.cpp
+	./mpiCodeGenerator -c -std=c++11 -I$(srcdir) -I$(srcdir)/runtime -rose:output $@  $(srcdir)/refCode/rose_laplacian_lite_v4.cpp 
 
+#rose_laplacian_lite_v3_mpi.cpp: shiftCalculusCompiler
+#	@echo "********************************************************************************************"
+#	@echo "******* ROSE/projects/ShiftCalculus: code generation for MPI ********"
+#	@echo "********************************************************************************************"
+#	./shiftCalculusCompiler -c -rose:dslcompiler:mpi -std=c++11 -I$(srcdir)/runtime -rose:output $@  $(srcdir)/laplacian_lite_v3.cpp 
+#	#./shiftCalculusCompiler -c -rose:dslcompiler:mpi -std=c++11 -rose:skipfinalCompileStep -rose:output $@  $(srcdir)/laplacian_lite_v3.cpp 
+#	&> /dev/null
 
 rose_laplacian_lite_v3_GPU_collapsed.cu: 
 	@echo "********************************************************************************************"
@@ -146,7 +157,8 @@ test12: shiftCalculusCompiler
 # test5 - test8 test subsets of the stencil specification.
 localTests: test4 test2 test5 test6 test7 test8
 
-mpiTests: rose_laplacian_lite_v3_mpi.cpp
+#rose_laplacian_lite_v3_mpi.cpp
+mpiTests: rose_laplacian_lite_v4_mpi.cpp 
 
 cudaTests: rose_laplacian_lite_v3.cu rose_laplacian_lite_v3_GPU_collapsed.cu 
 
@@ -163,10 +175,12 @@ check-local:
 	@echo "********************************************************************************************"
 
 
-EXTRA_DIST = 
+EXTRA_DIST = refCode]ls/laplacian_mpi.cpp refCode/laplacian_mpi_v1_1.cpp refCode/laplacian_mpi_v1.cpp refCode/laplacian_mpi_v2.cpp \
+             refCode/laplacian_mpi_wrt.cpp refCode/laplacian_mpi_v1_2.cpp refCode/laplacian_mpi_v2_2.cpp refCode/laplacian_mpi_v4.cpp \
+	     refCode/laplacian_mpi_v4_wrt.cpp refCode/rose_laplacian_lite_v4.cpp
 CLEANFILES = 
 
 clean-local:
-	rm -rf rose_*.C *.pdf *.cu rose_*.cpp
+	rm -rf rose_*.C *.pdf *.cu rose_*.cpp laplacian_lite_v3_vec.cpp laplacian_lite_v3_vec.ti test10
 	rm -f a.out *.dot 
 

@@ -11,7 +11,8 @@ namespace ROSE_token_ids
    // whitespace token IDs
       enum whitespace
          {
-           T_NOTKNOWN,
+        // DQ (9/2/2015): Removed comma to avoid Intel v14 compiler warning.
+           T_NOTKNOWN
         // The following are non UNIX whitespace
          };
 
@@ -163,7 +164,8 @@ enum ROSE_C_CXX_alternate_tok
         C_CXX_RIGHT_SQUARE_ALT,//The :> which is the same as ]
         C_CXX_HASH_ALT, // The #
         C_CXX_HASH_HASH_ALT, // The 
-        C_CXX_and_ALT, // The #
+     // DQ (9/2/2015): Removed comma to avoid Intel v14 compiler warning.
+        C_CXX_and_ALT // The #
     };
 
 enum ROSE_C_CXX_Additional_Info

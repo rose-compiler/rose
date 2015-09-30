@@ -1,0 +1,14 @@
+// -*- c++ -*-
+
+/** @defgroup installing_libxml2 Installing libxml2
+ *  @ingroup software_dependencies
+ *
+ *  Instructions for installing <a href="http://xmlsoft.org">libxml2</a>, a ROSE software dependency.
+ *
+ *  @section installing_libxml2_rhel Redhat Enterprise Linux
+ *
+ *  @todo Describe how to install libxml2 on RHEL.
+ *
+ *  @section installing_libxml2_jessie Debian 8 "Jessie"
+ *
+ *  Run <code>apt-get install libxml2-dev</code> as the administrator. */

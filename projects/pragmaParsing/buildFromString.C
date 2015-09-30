@@ -8,6 +8,7 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace AstFromString;
 
+/* Moved into SageBuilder
 //! Build a statement from its string format, under the specified scope. Additional SageInterface function calls are needed to insert the built statement into a desired point under the scope.
 SgStatement* buildStatementFromString(const string& s, SgScopeStatement * scope)
 {
@@ -36,6 +37,7 @@ SgStatement* buildStatementFromString(const string& s, SgScopeStatement * scope)
 
   return result;
 }
+*/
 int main(int argc, char** argv)
 {
   SgProject* project = frontend(argc, argv);

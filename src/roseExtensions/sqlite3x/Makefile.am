@@ -3,7 +3,7 @@ EXTRA_DIST = CMakeLists.txt
 
 if ROSE_USE_SQLITE_DATABASE
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # The SQLite3x library, a C++ wrapper around the libsqlite3 C API.  This is an old version of libsqlite3x, but the
 # API changed in newer versions, so we're sticking with the old version.  We've also made a few changes to it ourselves.
