@@ -310,14 +310,16 @@ RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValueP
                     valueToWrite = loValue;
                 }
                 {
-                    size_t extractBegin = overlap.least() - accessedLocation.least();
-                    size_t extractEnd = extractBegin + overlap.size();
+                    size_t nbits = overlap.size();
+                    size_t extractBegin = overlap.least() - storedLocation.least();
+                    size_t extractEnd = extractBegin + nbits;
                     SValuePtr midValue = ops->extract(value, extractBegin, extractEnd);
                     valueToWrite = valueToWrite ? ops->concat(valueToWrite, midValue) : midValue;
                 }
                 if (overlap.greatest() < storedLocation.greatest()) {
+                    size_t nbits = storedLocation.greatest() - overlap.greatest();
                     size_t extractBegin = overlap.greatest()+1 - storedLocation.least();
-                    size_t extractEnd = storedLocation.greatest() + 1;
+                    size_t extractEnd = extractBegin + nbits;
                     SValuePtr hiValue = ops->extract(regpair.value, extractBegin, extractEnd);
                     valueToWrite = valueToWrite ? ops->concat(valueToWrite, hiValue) : hiValue;
                 }
