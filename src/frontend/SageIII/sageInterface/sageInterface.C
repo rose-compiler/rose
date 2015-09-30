@@ -2776,8 +2776,44 @@ SageInterface::isOverloaded ( SgFunctionDeclaration* functionDeclaration )
        else
         {
        // This is a non-member function declaration
-          printf ("In SageInterface::isOverloaded(): case of non-member function not yet implemented! \n");
-          ROSE_ASSERT(false);
+//          printf ("In SageInterface::isOverloaded(): case of non-member function not yet implemented! \n");
+//          ROSE_ASSERT(false);
+						// We need to search the scope for all declarations matching this functions name and
+						// compare its signature, to see whether we have overloaded functions
+						SgScopeStatement *declarationScope = NULL;
+						counter = 1;
+						while((declarationScope = isSgScopeStatement(functionDeclaration->get_parent())) == NULL){
+						}
+						// get all functions declared in this scope
+						SgDeclarationStatementPtrList declStmtList = declarationScope->getDeclarationList();
+						for(SgDeclarationStatementPtrList::iterator iter = declStmtList.begin(); iter != declStmtList.end(); ++iter){
+							if(isSgFunctionDeclaration(*iter)){
+								SgFunctionDeclaration *testDecl = isSgFunctionDeclaration(*iter);
+								printf("Found Function declaration for functionDeclaration->get_name() = %s\n\twith: %s\n", functionDeclaration->get_name().str(), testDecl->get_name().str());
+								// we now check for the name and the arguments list
+								if(testDecl->get_qualified_name() == functionDeclaration->get_qualified_name()){
+									printf("Qualified names are equal\n");
+									// assuming this comparison works as intended these functions have the same name
+									SgFunctionType *testType = testDecl->get_type();
+									SgFunctionType *refType = functionDeclaration->get_type();
+									SgTypePtrList tList = testType->get_arguments();
+									SgTypePtrList rList = refType->get_arguments();
+									printf("Number of arguments test: %d ref: %d\n", tList.size(), rList.size());
+									if(tList.size() == rList.size()){
+										for(SgTypePtrList::iterator i = tList.begin(), /*SgTypePtrList::iterator*/ j = rList.begin();
+											i != tList.end(), j != rList.end(); ++i, ++j){
+												printf("Comparing types: %p != %p\nMangles names \n\ttest:%s \n\treference: %s\n", *i, *j, (*i)->get_mangled().str(), (*j)->get_mangled().str());
+												if( (*i) != (*j) ){
+													counter++;
+												}
+										}
+									} else {
+										counter++;
+									}
+									printf("Are these functions an overload: %d\n", (counter>1));
+								}
+							}
+						}
         }
 
   // DQ (10/11/2007): Fixup to use the counter and consider more than 1 function with the same name an overloaded member function.
