@@ -100,12 +100,14 @@ AC_DEFUN([ROSE_SUPPORT_DOXYGEN],
         DOXYGEN_HIDE_FRIEND_COMPOUNDS="NO"
         DOXYGEN_ENABLED_SECTIONS="documentDevelopmentVersionUsingDoxygen"
     else
+        dnl [Robb Matzke, 2015-09-30]: I'm turning off DOXYGEN_HIDE_UNDOC_MEMBERS and DOXYGEN_HIDE_UNDOC_CLASSES by
+	dnl default until we've had a change to properly document the multitude of things that have no documentation.
         DOXYGEN_EXTRACT_ALL="NO"
         DOXYGEN_EXTRACT_PRIVATE="NO"
         DOXYGEN_EXTRACT_STATIC="NO"
         DOXYGEN_INTERNAL_DOCS="NO"
-        DOXYGEN_HIDE_UNDOC_MEMBERS="YES"
-        DOXYGEN_HIDE_UNDOC_CLASSES="YES"
+        DOXYGEN_HIDE_UNDOC_MEMBERS="NO"
+        DOXYGEN_HIDE_UNDOC_CLASSES="NO"
         DOXYGEN_HIDE_FRIEND_COMPOUNDS="YES"
         DOXYGEN_ENABLED_SECTIONS="documentUserVersionUsingDoxygen"
     fi
