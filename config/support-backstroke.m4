@@ -1,7 +1,7 @@
 
-AC_DEFUN([ROSE_SUPPORT_BACKSTOKE],
+AC_DEFUN([ROSE_SUPPORT_BACKSTROKE],
 [
-# Begin macro ROSE_SUPPORT_BACKSTOKE.
+# Begin macro ROSE_SUPPORT_BACKSTROKE.
 
 # Inclusion of test for specific Discrete Event Simulators
 
