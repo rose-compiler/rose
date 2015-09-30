@@ -6640,13 +6640,21 @@ SgAggregateInitializer::replace_expression(SgExpression* o, SgExpression* n)
 SgType*
 SgAggregateInitializer::get_type() const
    {
+#if 0
+     printf ("In SgAggregateInitializer::get_type(): p_expression_type = %p \n",p_expression_type);
+#endif
      if (p_expression_type != NULL)
         {
+#if 0
+          printf ("SgAggregateInitializer::get_type(): p_expression_type != NULL: return p_expression_type = %p = %s \n",p_expression_type,p_expression_type->class_name().c_str());
+#endif
           return p_expression_type;
         }
        else
         {
-       // printf ("SgAggregateInitializer::get_type(): default case\n");
+#if 0
+          printf ("SgAggregateInitializer::get_type(): default case: return SgTypeDefault::createType()\n");
+#endif
           return SgTypeDefault::createType();
         }
    }

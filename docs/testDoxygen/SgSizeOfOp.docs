@@ -9,7 +9,7 @@
 \todo Need to implement support in EDG/SageIII translation for this operator.
 
 \internal This operator is only seen in the AST within expression trees
-    which came from constant folded expression.
+which came from constant folded expression.
 
 \sa
 \ref SgSizeOfOp_usage  "Example of using a SgSizeOfOp object"
@@ -24,7 +24,7 @@
 \var SgSizeOfOp::p_operand_expr
 \brief This a pointer to the expression given to the sizeof operator.
 
-   This is the expression provided as an argument to the sizeof operator
+This is the expression provided as an argument to the sizeof operator
 (if it is an expression).
 
 */
@@ -33,7 +33,7 @@
 \var SgSizeOfOp::p_operand_type
 \brief This a pointer to the SgType given to the sizeof operator.
 
-   This is the type provided as an argument to the sizeof operator
+This is the type provided as an argument to the sizeof operator
 (if it is a type).
 
 */
@@ -60,7 +60,7 @@
 \fn SgSizeOfOp::SgSizeOfOp ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgSizeOfOp base class.
+This constructor builds the SgSizeOfOp base class.
 
 \param startOfConstruct represents the position in the source code
 \sa 
@@ -71,14 +71,14 @@
 \fn SgSizeOfOp::~SgSizeOfOp()
 \brief This is the destructor.
 
-   Only the Sg_File_Info object can be deleted in this object.
+Only the Sg_File_Info object can be deleted in this object.
 */
 
 /*!
 \fn SgSizeOfOp::isSgSizeOfOp (SgNode *s)
 \brief Cast function (from derived class to SgSizeOfOp pointer).
 
-   This functions returns a SgSizeOfOp pointer for any input of a 
+This functions returns a SgSizeOfOp pointer for any input of a 
 pointer to an object derived from a SgSizeOfOp.
 
 \return Returns valid pointer to SgSizeOfOp if input is derived from a SgSizeOfOp.
@@ -88,7 +88,7 @@ pointer to an object derived from a SgSizeOfOp.
 \fn SgSizeOfOp::isSgSizeOfOp (const SgNode *s)
 \brief Cast function (from derived class to SgSizeOfOp pointer).
 
-   This functions returns a SgSizeOfOp pointer for any input of a 
+This functions returns a SgSizeOfOp pointer for any input of a 
 pointer to an object derived from a SgSizeOfOp.
 
 \return Returns valid pointer to SgSizeOfOp if input is derived from a SgSizeOfOp.

@@ -7,7 +7,7 @@ noinst_LTLIBRARIES = libqnfa.la
 
 
 # Contents of Makefile.am.pre
-INCLUDES += -I$(srcdir)/..  -I$(srcdir)/../document -I$(srcdir)/../widgets 
+AM_CPPFLAGS += -I$(srcdir)/..  -I$(srcdir)/../document -I$(srcdir)/../widgets 
 
 # End of Makefile.am.pre Content
 

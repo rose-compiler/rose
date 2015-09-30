@@ -19,7 +19,6 @@ namespace AstFromString
   SgNode* c_sgnode = NULL; 
   SgNode* c_parsed_node = NULL; // the generated SgNode from a parsing function.
 
-
   // note: afs_skip_xxx() optional skip 0 or more patterns
   //       afs_match_xxx() try to match a pattern, undo side effect if failed.
   // afs means Ast From String 
@@ -84,7 +83,7 @@ namespace AstFromString
 
   //! Match a given sub c string from the input c string, again skip heading space/tabs if any
   //  checkTrail: Check the immediate following character after the match, it must be one of
-  //      whitespace, end of str, newline, tab, (, ), or '!', etc.
+  //      whitespace, end of str, newline, tab, (, ), *, or '!', etc.
   //      Set to true by default, used to ensure the matched substr is a full identifier/keywords.
   //      If try to match operators (+=, etc), please set checkTrail to false!!
   //
@@ -119,11 +118,12 @@ namespace AstFromString
     // could only be either space or \n, \0, \t, !comments
     // or the match is revoked, e.g: "parallel1" match sub str "parallel" but 
     // the trail is not legal
-    // TODO: any other characters?
+    // TODO: any other characters? 
     //     TV (12/22/2013) : added ',' as legal trail.
+    //     Liao (9/21/2015) : added '*' as legal trail, e.g. int* j; 
     if (checkTrail)
     {
-      if (*c_char!=' '&&*c_char!='\0'&&*c_char!='\n'&&*c_char!='\t' &&*c_char!='!' &&*c_char!='(' &&*c_char!=')' &&*c_char!=',')
+      if (*c_char!=' '&&*c_char!='\0'&&*c_char!='\n'&&*c_char!='\t' &&*c_char!='!' &&*c_char!='(' &&*c_char!=')' &&*c_char!=',' &&*c_char!='*')
       {
         result = false;
         c_char = old_char;
@@ -356,7 +356,9 @@ namespace AstFromString
 */
     else
     {
-      printf("cannot recognize an identifier:^%s^ not a variable ref, not a type ref.\n",buffer);
+// we may just see a variable name when parsing int a; 
+// It is totally fine to return a name
+//      printf("cannot recognize an identifier:^%s^ not a variable ref, not a type ref.\n",buffer);
       //c_parsed_node = NULL;
       //assert(0);
       //c_char = old_char;
@@ -364,7 +366,6 @@ namespace AstFromString
       c_parsed_node = new SgName(buffer);
       assert (c_parsed_node != NULL);
     }
-
     return true;
   }
 
@@ -692,7 +693,7 @@ namespace AstFromString
       } 
     }
 
-    // handle optional signed /usngined 
+    // handle optional signed /unsigned 
     bool has_signed = false;
     bool has_unsigned = false;
     if ( find(sq_list.begin(), sq_list.end(), buildSignedLongLongType())!= sq_list.end())
@@ -843,7 +844,7 @@ namespace AstFromString
     else
     {
       c_char = old_char;
-      return false;
+      result = false;
     }
 
     // TODO 
@@ -853,7 +854,7 @@ namespace AstFromString
     }
 #endif
 
-    return true;
+    return result;
   }
   /*
      type_qualifier
@@ -861,7 +862,7 @@ namespace AstFromString
      | 'volatile'
      ;
 
-*/
+  */
   bool afs_match_type_qualifier()
   {
     bool result = false;
@@ -969,7 +970,8 @@ namespace AstFromString
     {
       c_parsed_node = buildUnsignedLongLongType();
       result = true;
-    } //TODO struct_or_union_specifier
+    } 
+    //TODO struct_or_union_specifier
     //TODO num_specifier
     //TODO TYPE_NAME
 
@@ -1007,7 +1009,7 @@ namespace AstFromString
       if (match_qualifier  || match_specifier)
       {
         cur_result = true;
-        result = true; // one occurence is sufficient for a successful match
+        result = true; // one occurrence is sufficient for a successful match
         sq_list.push_back(c_parsed_node);
       }
       else
@@ -2355,11 +2357,166 @@ postfix_operator
     else
       return false;
   }
+
+  /*
+    pointer
+        : '*'
+        | '*' type_qualifier_list
+        | '*' pointer
+        | '*' type_qualifier_list pointer
+        ;
+   At this stage, previous parsing should already found a base type stored in c_parsed_node.
+   Matching a pointer will generate a new type pointing to the base type
+   * */
+  bool afs_match_pointer (SgType* orig_type)
+  {
+    bool result = false;
+    const char* old_char = c_char;
+
+//    assert (c_parsed_node != NULL);
+    assert (orig_type!= NULL);
+    //TODO double check this assumption: declaration_specifiers should be in front of this pointer 
+    SgType* base_type = orig_type;
+    assert (base_type != NULL);
+
+    if (afs_match_char('*') )
+    {
+      base_type = buildPointerType(base_type);
+      c_parsed_node = base_type; 
+      result = true; 
+
+      // match optional one or more pointer
+      while (afs_match_char('*'))
+      {
+        base_type = buildPointerType(base_type);
+        c_parsed_node = base_type; 
+      }
+      //TODO handle type_qualifier_list  const, volatile
+
+      return true; 
+    }
+    else
+      c_char = old_char; // need to restore context
+
+    return result; 
+  }
+  /*
+    direct_declarator
+      : IDENTIFIER
+      | '(' declarator ')'
+      | direct_declarator '[' constant_expression ']'
+      | direct_declarator '[' ']'
+      | direct_declarator '(' parameter_type_list ')'
+      | direct_declarator '(' identifier_list ')'
+      | direct_declarator '(' ')'
+      ;
+   * */
+  bool afs_match_direct_declarator()
+  {
+     bool result = false;
+     if (afs_match_identifier())
+     {
+        // we expect to see SgName, not a symbol yet.  
+        SgName* sname = isSgName(c_parsed_node); 
+        assert (sname != NULL);
+        result = true;  
+     } 
+     // TODO other options 
+     return result; 
+  }
+  /*
+  declarator
+      : pointer direct_declarator
+      | direct_declarator
+      ;
+  */
+   bool afs_match_declarator(SgType* orig_type, SgType** mod_type) 
+   {
+     bool result = false;
+
+     if (afs_match_pointer(orig_type))
+     {
+       // store the modified type 
+       *mod_type = isSgPointerType(c_parsed_node); 
+       assert ((*mod_type) != NULL);
+       if (afs_match_direct_declarator())
+       {
+         // c_parsed_node should store the identifier name now 
+         result = true; 
+       }
+     }
+     else if (afs_match_direct_declarator())
+     {
+       // c_parsed_node should store the identifier name now 
+       result = true; 
+     }  
+
+     return result;  
+   } 
+   /*
+    init_declarator 
+        : declarator  // may store both modified type and an identifier like ** a 
+        | declarator '=' initializer
+        ;    
+    * */
+  bool afs_match_init_declarator(SgType* orig_type, SgType** mod_type, SgName** sname, SgExpression** initializer) 
+  {
+    bool result = false; 
+    const char* old_char = c_char;
+
+    if (afs_match_declarator(orig_type, mod_type))
+    {
+      *sname = isSgName(c_parsed_node);  // must preserve it here, later match will overwrite it!
+      assert (sname);
+      c_parsed_node = NULL; // prep for initializer
+      if (afs_match_char('=') && afs_match_initializer())
+      {
+        *initializer = isSgExpression(c_parsed_node); 
+        assert (initializer != NULL);
+      }  
+      return true; 
+    }
+    else
+    {
+      c_char = old_char;
+    }
+    return result;  
+  }
+
+  /*
+     initializer
+       : assignment_expression
+       | '{' initializer_list '}'
+       | '{' initializer_list ',' '}'
+  ;
+   * */
+  bool afs_match_initializer()
+  {
+     bool result = false;
+     if (afs_match_assignment_expression())
+       result = true; 
+     return result; 
+  }
   // statements
+  /*
+    statement
+      : labeled_statement
+      | compound_statement
+      | expression_statement
+      | selection_statement
+      | iteration_statement
+      | jump_statement
+      ;
+   C89 only allows variable declarations (declarators) in the front section of a function definition.
+   To support C++ style variable declarations in any places, we allow match_statement to 
+   match declarator
+   * */ 
   bool afs_match_statement()
   {
     bool result = false;
-    if (afs_match_labeled_statement())
+    if (afs_match_declaration())
+      result = true;
+    else if (afs_match_labeled_statement())
       result = true;
     else if (afs_match_compound_statement())  
       result = true;
@@ -2687,9 +2844,82 @@ jump_statement
     return result;
   }
 
+/*
+
+declaration_specifiers
+  : storage_class_specifier
+  | storage_class_specifier declaration_specifiers
+  | type_specifier
+  | type_specifier declaration_specifiers
+  | type_qualifier
+  | type_qualifier declaration_specifiers
+  ;
+
+OR ANTLR grammar
+
+declaration_specifiers
+  :   (   storage_class_specifier
+        |   type_specifier
+        |   type_qualifier
+        )+
+  ;
+
+   */
+
+bool afs_match_declaration_specifiers(SgType** tt)
+{
+  bool result = false;
+  if (afs_match_type_specifier ())
+  {
+    *tt = isSgType(c_parsed_node); 
+    ROSE_ASSERT ((*tt) != NULL);
+    result = true;  
+  } 
+   //TODO other cases
+  return result; 
+}
+
+
+/*
+declaration
+  : declaration_specifiers ';'
+  | declaration_specifiers init_declarator_list ';'
+  ;
+
+ROSE only supports  int i;  int j; not int i,j,k;
+so we take a short cut to match init_declartor() instead of init_declarator_list 
+*/
   bool afs_match_declaration() {
     const char* old_char = c_char;
+    bool result = false;
 
+    SgType* orig_type= NULL;
+    SgType* mod_type=NULL; 
+    SgName* sname=NULL; 
+    SgExpression* init_exp = NULL; 
+
+   // common case of int i = 10;  don't forget the ending ; 
+    if (afs_match_declaration_specifiers (&orig_type) && afs_match_init_declarator (orig_type, &mod_type, &sname, &init_exp) && afs_match_char(';'))
+    {
+      assert (orig_type != NULL);
+      assert (sname != NULL);
+
+      if (mod_type) // pointer types
+        orig_type = mod_type; 
+
+      SgScopeStatement * scope = getScope(c_sgnode);
+      assert (scope != NULL);
+      SgAssignInitializer *assign_init = NULL;
+      if (init_exp)
+        assign_init = buildAssignInitializer(init_exp, orig_type);
+
+      c_parsed_node = SageBuilder::buildVariableDeclaration(*sname, orig_type, assign_init, scope);
+      result = true; // must set this !! 
+    } // TODO handle declaration_specifiers ';', have to roll back the side effects or previous branch
+    else
+      c_char = old_char;
+
+#if 0
     if (!afs_match_type_name()) {
       c_char = old_char;
       return false;
@@ -2729,8 +2959,8 @@ jump_statement
     SgScopeStatement * scope = getScope(c_sgnode);
     assert (scope != NULL);
     c_parsed_node = SageBuilder::buildVariableDeclaration(*ident, type, init, scope);
-
-    return true;
+#endif
+    return result;
   }
 
 } // end namespace AstFromString

@@ -38,7 +38,7 @@ libroseX10_la_SOURCES = \
 	x10_main.cpp
 
 # BOOST_CPPFLAGS is included because that's where the -pthread switch is located if user desires it.
-INCLUDES =							\
+AM_CPPFLAGS =							\
 	$(ROSE_INCLUDES)					\
 	-I$(top_srcdir)/src/frontend/X10_ROSE_Connection	\
 	-I$(X10_DIR)						\

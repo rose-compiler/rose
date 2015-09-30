@@ -6,29 +6,29 @@
 \class SgVariableDefinition
 \brief This class represents the definition (initialization) of a variable.
 
-   The most common use of the SgVariableDefinition is to store the associated bitfield
+The most common use of the SgVariableDefinition is to store the associated bitfield
 specifier in declarations such as "int x:4;" which is a four bit integer variable.
 The range of the value should be (1,32) for 32 bit machines and (1,64) for 64 bit
 machines.  The SgVariableDefinition is also used as a supporting IR node for variable
 declarations using the "extern" keyword.
 
-   The variable definition is separate from the variable declaration when the declaration
+The variable definition is separate from the variable declaration when the declaration
 is using the "extern" keyword.  Thus "extern int i;" is a SgVariableDeclaration, while
 a subsequent "int i;" or "int i = 0;" would be the variable definition
 (SgVariableDefinition). Without the "extern" keyword, the two concepts
 are represented using the single SgVariableDeclaration IR node.
 
 \note Both SgVariableDeclaration and SgVariableDefinition are both derived from
-    SgDeclaration.  This is because a SgVariableDefinition does not represent a
-    scope like all other definitions (which are derived from SgScopeStatement).
+SgDeclaration.  This is because a SgVariableDefinition does not represent a
+scope like all other definitions (which are derived from SgScopeStatement).
 
 \todo If a SgVariableDefinition is built internally as part of a SgVariableDeclaration 
-    it should be marked as compiler generated if the "extern" keyword was not used in
-    the SgVariableDeclaration.  This needs to be looked into.
+it should be marked as compiler generated if the "extern" keyword was not used in
+the SgVariableDeclaration.  This needs to be looked into.
 
 \todo Constant folding happens when the bitfield is a variable and the variable name is
-    lost.  This IR nodes needs to be modified to alternatively store the associated 
-    SgExpression (in case it is a root of an expression tree).
+lost.  This IR nodes needs to be modified to alternatively store the associated 
+SgExpression (in case it is a root of an expression tree).
 
 \sa
 \ref SgVariableDefinition_usage  "Example of using a SgVariableDefinition object"
@@ -46,18 +46,18 @@ are represented using the single SgVariableDeclaration IR node.
 
 /*! \var SgVariableDefinition::p_bitfield
 \brief This a pointer to a value specifies the bitwidth of the variable (used to control
-    memory layout/padding of data members in data structures).
+memory layout/padding of data members in data structures).
 
-    This is a somewhat rare feature of C, and so C++. variables of some types can be
+This is a somewhat rare feature of C, and so C++. variables of some types can be
 specified to have a specific bit width (usually a number of bits smaller than the 
 default size).
 
 \internal  I'm not sure that this has to be a SgUnsignedLongVal, since the value is likely
-    always less than the word length; 32 (typicaly), 64 (common), 128 (in the future).
-    Currently we use the null value of the pointer to indicate when the bitfield is 
-    to be relavant; a better implementation would be to have a default value or 
-    a second bool variable to indicate clealy when the bitfield is relavant.
-    a pointer to a integer value seems a poor design.
+always less than the word length; 32 (typicaly), 64 (common), 128 (in the future).
+Currently we use the null value of the pointer to indicate when the bitfield is 
+to be relavant; a better implementation would be to have a default value or 
+a second bool variable to indicate clealy when the bitfield is relavant.
+a pointer to a integer value seems a poor design.
 
 */
 
@@ -69,7 +69,7 @@ default size).
 \fn SgVariableDefinition::SgVariableDefinition ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgVariableDefinition base class.
+This constructor builds the SgVariableDefinition base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -82,14 +82,14 @@ default size).
 \fn SgVariableDefinition::~SgVariableDefinition()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgVariableDefinition::isSgVariableDefinition (SgNode *s)
 \brief Cast function (from derived class to SgVariableDefinition pointer).
 
-   This functions returns a SgVariableDefinition pointer for any input of a 
+This functions returns a SgVariableDefinition pointer for any input of a 
 pointer to an object derived from a SgVariableDefinition.
 
 \return Returns valid pointer to SgVariableDefinition if input is derived from a SgLocatedNode.
@@ -99,7 +99,7 @@ pointer to an object derived from a SgVariableDefinition.
 \fn SgVariableDefinition::isSgVariableDefinition (const SgNode *s)
 \brief Cast function (from derived class to SgVariableDefinition pointer).
 
-   This functions returns a SgVariableDefinition pointer for any input of a 
+This functions returns a SgVariableDefinition pointer for any input of a 
 pointer to an object derived from a SgVariableDefinition.
 
 \return Returns valid pointer to SgVariableDefinition if input is derived from a SgLocatedNode.

@@ -62,12 +62,12 @@ AM_CXXFLAGS=\
 	-D__LOCALSTL_H
 
 
-INCLUDES_OMP=\
+AM_CPPFLAGS_OMP=\
 	$(mpaDefUseAnalysis_includesOmp) \
 	$(mpaVariableRenaming_includesOmp)
 
 
-INCLUDES=\
+AM_CPPFLAGS=\
 	$(ROSE_INCLUDES) \
 	$(mpaCallGraphAnalysis_includes) \
 	$(mpaCFG_includes) \
@@ -83,7 +83,7 @@ INCLUDES=\
 	$(mpaValuePropagation_includes) \
 	$(mpaVariableRenaming_includes) \
 	$(mpaEditDistance_includes) \
-	$(INCLUDES_OMP)
+	$(AM_CPPFLAGS_OMP)
 
 
 BUILT_SOURCES=\

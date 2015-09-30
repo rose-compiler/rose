@@ -93,7 +93,7 @@ buildTemplateInstantiationSupportFile( SgProject* project )
      for (fileIndex = sourceFilenameList.begin(); fileIndex != sourceFilenameList.end(); fileIndex++)
         {
           string filenameWithPath = *fileIndex;
-          string filename         = ROSE::stripPathFromFileName(filenameWithPath.c_str());
+          string filename         = rose::utility_stripPathFromFileName(filenameWithPath.c_str());
 
           int filenameLength = filename.length();
        // printf ("In buildTemplateInstantiationSupportFile: filename = %s \n",filename.c_str());
@@ -141,7 +141,7 @@ buildTemplateInstantiationSupportFile( SgProject* project )
                  // This approach gets the names correct but does not instantiate templates correctly!
                  // printf ("Non-working naming scheme (builds templates wrong, but names the files correctly) \n");
 
-                    string pathInFilename   = ROSE::getPathFromFileName(filenameWithPath.c_str());
+                    string pathInFilename   = rose::getPathFromFileName(filenameWithPath.c_str());
                  // string newFileName = "rose_" + filename;
                  // string modifiedTemplateInstantiationFile = string("rose_") + templateInstantiationFile;
                     string modifiedTemplateInstantiationFile;
@@ -288,7 +288,7 @@ instantiateTemplates ( SgProject* project )
                Rose_STL_Container<string>::iterator fileIndex = sourceFilenameList.begin();
                ROSE_ASSERT (sourceFilenameList.size() == 1);
                string filenameWithPath = *fileIndex;
-               string filename         = ROSE::stripPathFromFileName(filenameWithPath.c_str());
+               string filename         = rose::utility_stripPathFromFileName(filenameWithPath.c_str());
 
                int filenameLength = filename.length();
                printf ("In instantiateTemplates(): filename = %s \n",filename.c_str());

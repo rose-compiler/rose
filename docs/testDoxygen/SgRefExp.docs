@@ -38,7 +38,7 @@
 \fn SgRefExp::SgRefExp ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgRefExp base class.
+This constructor builds the SgRefExp base class.
 
 \param startOfConstruct represents the position in the source code
 \sa 
@@ -49,14 +49,14 @@
 \fn SgRefExp::~SgRefExp()
 \brief This is the destructor.
 
-   Only the Sg_File_Info object can be deleted in this object.
+Only the Sg_File_Info object can be deleted in this object.
 */
 
 /*!
 \fn SgRefExp::isSgRefExp (SgNode *s)
 \brief Cast function (from derived class to SgRefExp pointer).
 
-   This functions returns a SgRefExp pointer for any input of a 
+This functions returns a SgRefExp pointer for any input of a 
 pointer to an object derived from a SgRefExp.
 
 \return Returns valid pointer to SgRefExp if input is derived from a SgRefExp.
@@ -66,7 +66,7 @@ pointer to an object derived from a SgRefExp.
 \fn SgRefExp::isSgRefExp (const SgNode *s)
 \brief Cast function (from derived class to SgRefExp pointer).
 
-   This functions returns a SgRefExp pointer for any input of a 
+This functions returns a SgRefExp pointer for any input of a 
 pointer to an object derived from a SgRefExp.
 
 \return Returns valid pointer to SgRefExp if input is derived from a SgRefExp.

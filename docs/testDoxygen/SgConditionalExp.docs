@@ -43,7 +43,7 @@
 \fn SgConditionalExp::SgConditionalExp ( Sg_File_Info* startOfConstruct = NULL, SgClassSymbol *symbol = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgConditionalExp base class.
+This constructor builds the SgConditionalExp base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -56,14 +56,14 @@
 \fn SgConditionalExp::~SgConditionalExp()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgConditionalExp::isSgConditionalExp (SgNode *s)
 \brief Cast function (from derived class to SgConditionalExp pointer).
 
-   This functions returns a SgConditionalExp pointer for any input of a 
+This functions returns a SgConditionalExp pointer for any input of a 
 pointer to an object derived from a SgConditionalExp.
 
 \return Returns valid pointer to SgConditionalExp if input is derived from a SgLocatedNode.
@@ -73,7 +73,7 @@ pointer to an object derived from a SgConditionalExp.
 \fn SgConditionalExp::isSgConditionalExp (const SgNode *s)
 \brief Cast function (from derived class to SgConditionalExp pointer).
 
-   This functions returns a SgConditionalExp pointer for any input of a 
+This functions returns a SgConditionalExp pointer for any input of a 
 pointer to an object derived from a SgConditionalExp.
 
 \return Returns valid pointer to SgConditionalExp if input is derived from a SgLocatedNode.
@@ -138,7 +138,7 @@ pointer to an object derived from a SgConditionalExp.
 \fn SgConditionalExp::set_expression_type(SgType* expression_type)
 \brief Access function for p_expression_type.
 
-   Both the p_true_exp and p_false_exp must have the same type.
+Both the p_true_exp and p_false_exp must have the same type.
 
 \param expression_type type of result.
 

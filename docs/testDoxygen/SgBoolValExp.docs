@@ -9,7 +9,7 @@
 \internal This is a base class for all value expressions.
 
 \todo The name "SgBoolValExp" should be "SgBoolVal" to be consistant with the names of all
-    other classes derived from SgValueExp.
+other classes derived from SgValueExp.
 
 \sa
 \ref SgBoolValExp_usage  "Example of using a SgBoolValExp object"
@@ -34,7 +34,7 @@ left hand side value (lvalue).
 \fn SgBoolValExp::SgBoolValExp ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgBoolValExp base class.
+This constructor builds the SgBoolValExp base class.
 
 \param startOfConstruct represents the position in the source code
 \sa 
@@ -45,6 +45,6 @@ left hand side value (lvalue).
 \fn SgBoolValExp::~SgBoolValExp()
 \brief This is the destructor.
 
-   Only the Sg_File_Info object can be deleted in this object.
+Only the Sg_File_Info object can be deleted in this object.
 */
 
