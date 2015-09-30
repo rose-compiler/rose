@@ -22,7 +22,7 @@ $(CXX_TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
 # used to find omp.h, added it as one of  rose headers
-TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/projects/A++DataLayout/include 
+TESTCODE_INCLUDES = -I$(top_srcdir)/projects/A++DataLayout/include 
 
 ROSE_FLAGS = -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict 
 
@@ -32,7 +32,7 @@ CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
 
 $(CXX_TEST_Objects): $(LAYOUTEXEC) $(@:.o=.C)
-	 $(LAYOUTEXEC) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) $(srcdir)/spec1.C $(srcdir)/$(@:.o=.C) >> out.log 2>> actual.log & \
+	 $(LAYOUTEXEC) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) $(srcdir)/spec1.C $(srcdir)/$(@:.o=.C) >> out.log 2>> actual.log & \
 	 sleep 1 
 
 	 
@@ -41,7 +41,7 @@ DIFFOUT = if [[ $$(diff -r actual.log $(srcdir)/expected.log) != "" ]]; then :; 
 PERF_TEST_Objects = ${PERF_TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
 $(PERF_TEST_Objects): $(LAYOUTEXEC) $(@:.o=.C)
-	 $(LAYOUTEXEC) $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) $(srcdir)/perf_spec1.C $(srcdir)/$(@:.o=.C) > log.out
+	 $(LAYOUTEXEC) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) $(srcdir)/perf_spec1.C $(srcdir)/$(@:.o=.C) > log.out
 
 performance:
 	@echo "Performance Test for A++DataLayout interleaveAcrossArrays."

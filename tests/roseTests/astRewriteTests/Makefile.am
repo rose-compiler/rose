@@ -33,7 +33,7 @@ testIncludeDirectiveInsertion_SOURCES = testIncludeDirectiveInsertion.C
 TEST_TARGETS += IncludeDirectiveInsertion.passed
 IncludeDirectiveInsertion.passed: inputProgram6.C testIncludeDirectiveInsertion
 	@$(RTH_RUN) \
-		CMD="./testIncludeDirectiveInsertion -rose:verbose 0 -I$(srcdir) $(TAU_AM_CPPFLAGS) -c $<" \
+		CMD="./testIncludeDirectiveInsertion -rose:verbose 0 -I$(srcdir) $(TAU_INCLUDES) -c $<" \
 		$(TEST_EXIT_STATUS) $@
 
 EXTRA_DIST += inputProgram6.C
@@ -198,7 +198,7 @@ TEST_TARGETS += testTAU.passed
 testTAU.passed: $(srcdir)/tauExample.C
 	@$(RTH_RUN) \
 		DISABLED="not executed by the original makefile" \
-		CMD="g++ -I$(top_srcdir)/tutorial/TAU_INCLUDE_DIR $(TAU_AM_CPPFLAGS) -o tauExample.o -c $<" \
+		CMD="g++ -I$(top_srcdir)/tutorial/TAU_INCLUDE_DIR $(TAU_INCLUDES) -o tauExample.o -c $<" \
 		$(TEST_EXIT_STATUS) $@
 EXTRA_DIST += tauExample.C
 MOSTLYCLEANFILES += rose_tauExample.C

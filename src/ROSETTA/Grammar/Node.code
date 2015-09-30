@@ -2845,8 +2845,8 @@ $CLASSNAME::buildCommandLineToSubstituteTransformationFile( const vector<string>
                if ( (length > 2) && (argv[i][length-2] == '.') && ( (argv[i][length-1] == 'c') || (argv[i][length-1] == 'C') ) )
                   {
                  // printf ("Found a filename = %s \n",argv[i]);
-                 // ROSE::sourceFileNamesWithPath    [fileNameCounter] = strdup(argv[i]);
-                 // ROSE::sourceFileNamesWithoutPath [fileNameCounter] = strdup(argv[i]);
+                 // rose::sourceFileNamesWithPath    [fileNameCounter] = strdup(argv[i]);
+                 // rose::sourceFileNamesWithoutPath [fileNameCounter] = strdup(argv[i]);
                  // argv[i] = "rose_transformation.C";
                  // transformation_argv[i] = "rose_transformation.C";
                     transformation_argv[i] = strdup(newFileName.c_str());

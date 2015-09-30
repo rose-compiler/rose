@@ -746,7 +746,7 @@ test2005_187.C \
 test2005_114.C \
 test2006_47.C 
 
-TEST_AM_CPPFLAGS = \
+TEST_INCLUDES = \
 	-I$(top_srcdir)/tests/CompileTests/A++Code \
 	-I$(top_srcdir)/tests/CompileTests/C_tests \
 	-I$(top_srcdir)/tests/CompileTests/Cxx_tests 
@@ -759,7 +759,7 @@ TEST_C:
 
 .PHONY: $(C_TESTCODES_REQUIRED_TO_PASS)
 $(C_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
-	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_AM_CPPFLAGS) -c $@
+	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
 
 .PHONY: TEST_CXX
 TEST_CXX:
@@ -769,7 +769,7 @@ TEST_CXX:
 
 .PHONY: $(CXX_TESTCODES_REQUIRED_TO_PASS)
 $(CXX_TESTCODES_REQUIRED_TO_PASS): ssaTestHarness
-	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_AM_CPPFLAGS) -c $@
+	./ssaTestHarness --edg:no_warnings -w -rose:verbose 0 $(TEST_INCLUDES) -c $@
 
 check-local:
 	@$(MAKE) TEST_C

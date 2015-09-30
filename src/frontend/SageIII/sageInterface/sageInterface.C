@@ -8191,12 +8191,12 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
 SgStatement* SageInterface::getNextStatement(SgStatement * currentStmt)
    {
   // reuse the implementation in ROSE namespace from src/roseSupport/utility_functions.C
-     return ROSE::getNextStatement(currentStmt);
+     return rose::getNextStatement(currentStmt);
    }
 
 SgStatement* SageInterface::getPreviousStatement(SgStatement * currentStmt, bool climbOutScope /*= true*/)
    {
-     return ROSE::getPreviousStatement(currentStmt, climbOutScope);
+     return rose::getPreviousStatement(currentStmt, climbOutScope);
    }
 
 bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {

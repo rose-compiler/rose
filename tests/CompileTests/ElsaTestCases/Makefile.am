@@ -856,7 +856,7 @@ TRANSLATOR_EXECUTABLE = ../../testTranslator
 TEST_TRANSLATOR = $(TRANSLATOR_EXECUTABLE) $(ROSE_FLAGS)
 
 ## Include the path to A++ and the transformation specification
-# TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
+# TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
 
 $(TEST_Objects): $(TESTCODES)
 	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.cc)

@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_QT
 
-AM_CPPFLAGS = $(ROSE_INCLUDES) $(QT_AM_CPPFLAGS) 
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(QT_INCLUDES) 
 
 #LD_FLAGS = @LIB_ROSE@ @ROSE_LDFLAGS@  @LIB_QT@ @QT_LDFLAGS@
 METASOURCES = auto

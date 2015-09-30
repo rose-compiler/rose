@@ -150,7 +150,7 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
 
                SgName name = functionSymbol->get_name();
             // printf ("name = %s \n",name.str());
-            // string tempName = ROSE::stringDuplicate(name.str());
+            // string tempName = rose::stringDuplicate(name.str());
                string tempName = name.str();
 
             // int stringLength = strlen(tempName);
@@ -289,7 +289,7 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
 
                SgName name = functionSymbol->get_name();
             // printf ("name = %s \n",name.str());
-            // string tempName = ROSE::stringDuplicate(name.str());
+            // string tempName = rose::stringDuplicate(name.str());
                string tempName = name.str();
 
             // int stringLength = strlen(tempName);

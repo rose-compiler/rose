@@ -6,7 +6,7 @@
 \class SgBasicBlock
 \brief This class represents the concept of a block (not a basic block from control flow analysis).
 
-    SgBasicBlocks are used in other IR nodes where a list of statements is
+SgBasicBlocks are used in other IR nodes where a list of statements is
 required.  However, if you need a list of statements we suggest you use an
 STL list instead of borrowing and extending the semantics of SgBasicBlock.
 
@@ -36,7 +36,7 @@ STL list instead of borrowing and extending the semantics of SgBasicBlock.
 \fn SgBasicBlock::SgBasicBlock ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgBasicBlock base class.
+This constructor builds the SgBasicBlock base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -49,14 +49,14 @@ STL list instead of borrowing and extending the semantics of SgBasicBlock.
 \fn SgBasicBlock::~SgBasicBlock()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgBasicBlock::isSgBasicBlock (SgNode *s)
 \brief Cast function (from derived class to SgBasicBlock pointer).
 
-   This functions returns a SgBasicBlock pointer for any input of a 
+This functions returns a SgBasicBlock pointer for any input of a 
 pointer to an object derived from a SgBasicBlock.
 
 \return Returns valid pointer to SgBasicBlock if input is derived from a SgLocatedNode.
@@ -66,7 +66,7 @@ pointer to an object derived from a SgBasicBlock.
 \fn SgBasicBlock::isSgBasicBlock (const SgNode *s)
 \brief Cast function (from derived class to SgBasicBlock pointer).
 
-   This functions returns a SgBasicBlock pointer for any input of a 
+This functions returns a SgBasicBlock pointer for any input of a 
 pointer to an object derived from a SgBasicBlock.
 
 \return Returns valid pointer to SgBasicBlock if input is derived from a SgLocatedNode.
@@ -90,7 +90,7 @@ pointer to an object derived from a SgBasicBlock.
 \fn SgBasicBlock::get_qualified_name() const
 \brief Returns SgName (a string) representing the name of the current scope.
 
-   See discussion of mangled names in the documentation.
+See discussion of mangled names in the documentation.
 
 \return Returns SgName (a string).
 */

@@ -26,7 +26,7 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 ## linker needs to know about STL
 ## By adding the -ptr. on the link line we should be able to avoid 
 ## specifying the Templates.DB/*.o file explicitly on the link line
-## LDFLAGS = @STL_AM_CPPFLAGS@
+## LDFLAGS = @STL_INCLUDES@
 
 LDADD = $(ROSE_LIBS)
 

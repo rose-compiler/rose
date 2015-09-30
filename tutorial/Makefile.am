@@ -62,8 +62,11 @@ NOINST_TUTORIAL_EXAMPLES = \
    bin_example \
    binaryAnalysisExample \
    binaryAnalysis_symbolTable \
+   binaryCallGraph \
    binaryFileRead \
    binaryFileWrite \
+   binaryHelloWorld \
+   binaryStrings \
    sb_callgraphAnalysis \
    buildFile \
    buildCFG \
@@ -152,6 +155,10 @@ endif
 binaryFileRead_SOURCES = binaryFileRead.C
 
 binaryFileWrite_SOURCES = binaryFileWrite.C
+
+binaryCallGraph_SOURCES = binaryCallGraph.C
+
+binaryHelloWorld_SOURCES = binaryHelloWorld.C
 
 ASTGraphGenerator_SOURCES = ASTGraphGenerator.C
 
@@ -575,10 +582,10 @@ testInheritedAttributeTraversal: inheritedAttributeTraversal
 testPersistantAttributes: persistantAttributes
 	./persistantAttributes -c $(srcdir)/inputCode_ExampleTraversals_2.C
 
-# TAU_AM_CPPFLAGS = -I/home/dquinlan/TAU/tau-2.14.8/include
-TAU_AM_CPPFLAGS = -I$(srcdir)/TAU_INCLUDE_DIR
+# TAU_INCLUDES = -I/home/dquinlan/TAU/tau-2.14.8/include
+TAU_INCLUDES = -I$(srcdir)/TAU_INCLUDE_DIR
 testTauInstrumenter: tauInstrumenter
-	./tauInstrumenter $(TAU_AM_CPPFLAGS) -c $(srcdir)/inputCode_tauInstrumenter.C
+	./tauInstrumenter $(TAU_INCLUDES) -c $(srcdir)/inputCode_tauInstrumenter.C
 
 testTypeTransformation: typeTransformation
 	./typeTransformation -c $(srcdir)/inputCode_typeTransformation.C
@@ -1356,7 +1363,7 @@ scopeInformation.out: scopeInformation
 	./scopeInformation $(ROSE_FLAGS) -c $(srcdir)/inputCode_scopeInformation.C > scopeInformation.out
 
 rose_inputCode_tauInstrumenter.C: tauInstrumenter
-#	./tauInstrumenter $(ROSE_FLAGS) $(TAU_AM_CPPFLAGS) -c $(srcdir)/inputCode_tauInstrumenter.C
+#	./tauInstrumenter $(ROSE_FLAGS) $(TAU_INCLUDES) -c $(srcdir)/inputCode_tauInstrumenter.C
 	echo "Test Failed!" > rose_inputCode_tauInstrumenter.C
 
 rose_inputCode_inlineTransformations.C: inlineTransformations

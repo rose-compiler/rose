@@ -5,7 +5,7 @@
 /*!
 \class SgInitializedName 
 \brief This class represents the notion of a declared variable.  
- 
+
 
 Each variable in the program has a SgInitializedName object which
 represents its definition. A SgVariableDeclaration for example might
@@ -23,7 +23,7 @@ In order to have a valid SgInitializedName object, this information must be prov
 - the variable name which represents the variable that is being declared in this class.
 - the variable type
 - the declaration object which contains the SgInitializedName ( this might be a SgVariableDeclaration, SgFunctionParameterList, SgClassDeclaration,etc)
- 
+
 \sa 
 
 \ref SgInitializedName_create "Example of creating an SgInitializedName object"
@@ -125,7 +125,7 @@ not show up in the pdf or the dot files (not traversed).
 
 \b Dan's \b explaination
 
-   This points to the SgVariableDefinition and is the same as get_definition().
+This points to the SgVariableDefinition and is the same as get_definition().
 
 */
 
@@ -158,7 +158,7 @@ member is set to the parent SgInitializedName.
 \var SgInitializedName::p_prev_itemptr
 \brief  Pointer to the previous SgInitializedName in the declaration.
 
- \b Alin's \b intuitive \b explanation
+\b Alin's \b intuitive \b explanation
 
 This is a pointer to the previous SgInitializedName in a declaration
 statement. For example, if there is a declaration statement of this
@@ -210,7 +210,7 @@ SgStorageModifier information.
 This value is set based on an enum value of GNU standard codes mappings to register names.
 
 \internal This is a very architecture dependent aspect of the Sage III IR.  We only
-    currently represent code for the Intel X86 processor.
+currently represent code for the Intel X86 processor.
 */
 
 /*!
@@ -225,7 +225,7 @@ simple way around this detail since we have to support the more general use of
 the asm options in C and C++.
 
 \internal This is less architecture dependent than the GNU standard register codes, but
-    takes more storage (though it is not used often).
+takes more storage (though it is not used often).
 */
 
 
@@ -259,7 +259,7 @@ the asm options in C and C++.
 
 /*!
 \fn SgInitializedName::SgInitializedName ( Sg_File_Info* fileInfo, const SgName& name, SgType *typeptr, SgInitializer* iptr, 
-                                           SgDeclarationStatement *declptr, SgScopeStatement* scope, SgInitializedName *prev_itemptr );
+SgDeclarationStatement *declptr, SgScopeStatement* scope, SgInitializedName *prev_itemptr );
 \brief This is the constructor
 
 
@@ -281,8 +281,8 @@ the asm options in C and C++.
 \brief This is the constructor
 
 \deprecated This is an older constructor which does not include the Sg_File_Info or the
-    SgScopeStatement in its parameter list.  These must be set explicitly using the data
-    member's access functions when using this constructor.
+SgScopeStatement in its parameter list.  These must be set explicitly using the data
+member's access functions when using this constructor.
 
 \param name the variable name
 \param typeptr a pointer to the variable's type object
@@ -355,7 +355,7 @@ detailed variable x
 
 /*! \fn SgInitializedName::get_symbol_from_symbol_table() const
 \brief \b FOR \b INTERNAL \b USE Get the associated symbol from the symbol table in the stored scope.
-       Users should use the SgInitializedName::search_for_symbol_from_symbol_table() instead.
+Users should use the SgInitializedName::search_for_symbol_from_symbol_table() instead.
 */
 
 /*! \fn SgInitializedName::search_for_symbol_from_symbol_table() const

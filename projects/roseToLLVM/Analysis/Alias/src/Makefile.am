@@ -3,8 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 if ROSE_USE_LLVM
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) \
-		   $(ROSE_LLVM_AM_CPPFLAGS) \
-		   $(ROSE_BOOST_AM_CPPFLAGS) \
+		   $(ROSE_LLVM_INCLUDES) \
+		   $(ROSE_BOOST_INCLUDES) \
 		   -I$(top_srcdir)/projects/roseToLLVM/src/rosetollvm/include \
 		   -I$(top_srcdir)/projects/roseToLLVM/Analysis/Alias/include 
 

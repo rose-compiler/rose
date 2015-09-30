@@ -500,7 +500,7 @@ TRANSLATOR_EXECUTABLE = $(top_builddir)/tests/testTranslator
 TEST_TRANSLATOR = $(TRANSLATOR_EXECUTABLE) $(ROSE_FLAGS)
 
 ## Include the path to A++ and the transformation specification
-TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
+TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
 
 # Test for Old-Style C function definitions
 test2004_19.o: $(srcdir)/test2004_19.C $(TRANSLATOR_EXECUTABLE)
@@ -638,7 +638,7 @@ gconv_info_C99.o:
 #	@$(MAKE) $(TEST_Objects)
 
 $(TEST_Objects): $(TESTCODES)
-	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.C)
+	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C)
 
 EXTRA_DIST = \
      confdefs.h test2001_05.h  test2001_15.h  test2001_18A.h  test2001_18B.h \

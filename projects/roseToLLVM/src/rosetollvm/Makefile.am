@@ -5,7 +5,7 @@ EXTRA_DIST = include
 if ROSE_USE_LLVM
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) \
-		   $(ROSE_LLVM_AM_CPPFLAGS) \
+		   $(ROSE_LLVM_INCLUDES) \
 		   -I$(srcdir)/include
 
 #pkginclude_HEADERS 	= \

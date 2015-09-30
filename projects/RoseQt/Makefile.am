@@ -7,8 +7,8 @@ if ROSE_WITH_ROSEQT
 
 ROSEHPCT_BUILD_ROOT = $(top_builddir)/src/roseExtensions/roseHPCToolkit
 
-#AM_CPPFLAGS += $(ROSEQT_AM_CPPFLAGS) $(QT_AM_CPPFLAGS) $(ROSE_INCLUDES) $(ROSEHPCT_DEP_AM_CPPFLAGS)
-AM_CPPFLAGS +=  $(ROSEHPCT_DEP_AM_CPPFLAGS) -I$(top_srcdir)/src/roseExtensions/roseHPCToolkit/include
+#AM_CPPFLAGS += $(ROSEQT_INCLUDES) $(QT_INCLUDES) $(ROSE_INCLUDES) $(ROSEHPCT_DEP_INCLUDES)
+AM_CPPFLAGS +=  $(ROSEHPCT_DEP_INCLUDES) -I$(top_srcdir)/src/roseExtensions/roseHPCToolkit/include
 
 CXXFLAGS += -DFRONTEND_CALL=\"$(top_builddir)/src/roseExtensions/qtWidgets/frontend_process\"
 

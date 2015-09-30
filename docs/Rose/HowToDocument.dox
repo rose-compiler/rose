@@ -1,0 +1,254 @@
+// -*- c++ -*-
+
+/** @defgroup how_to_document Writing documentation
+ *  @ingroup developer_docs
+ *
+ *  How to write good API and non-API documentation in ROSE.
+ *
+ *  This chapter is mainly for developers working on the ROSE library as opposed to users developing software that uses the
+ *  library. It specifies how we would like to have the ROSE library source code documented. The style enumerated here does not
+ *  necessarily need to be used for projects, tests, the tutorial, user-code, etc.  Each item is also presented along with our
+ *  motivation for doing it this way.
+ *
+ *  @todo The Doxygen style guide has not been reviewed by rose-core yet. [Robb P. Matzke 2015-05-15]
+ *
+ *  ROSE uses Doxygen for two broad categories of documentation:
+ *
+ *  + For documenting the ROSE API. Doxygen is able to generate the structure of the documentation, and authors fill in the
+ *    descriptions.
+ *
+ *  + For documenting non-API things that are nonetheless tied to a particular version of ROSE.  An example is this page
+ *    itself, which might change over time as ROSE evolves and which must go through ROSE's continuous integration testing
+ *    and/or release testing.
+ *
+ *
+ *
+ *  @section doxy_quick Quick start
+ *
+ *  Here's an example that documents a couple of closely-related class member functions. Things to note:
+ *
+ *  @li Use C-style block comments for documentation.
+ *  @li First line (up to punctuation) is a summary -- the autobrief string that shows up in tables of contents.
+ *  @li Use @c @@ref when referring to another class and @c @@p when mentioning a parameter.
+ *  @li Use @c @@{ and @c @@} to give the same documentation to both member functions.
+ *  @li You can easily insert HTTP links into documentation.
+ *
+ *  @verbinclude DoxygenExample.dox
+ *
+ *  @section doxy_general General Doxygen style
+ *
+ *  Both categories of documentation (API and non-API) are written as comments in C source code and follow the same style
+ *  conventions.
+ *
+ *  + <b>Comment style:</b> Whether to use block- or line-style comments is up to the author. However, authors are encouraged
+ *    to use block style comments for Doxygen documentation and line-style comments for non-Doxygen documentation so that IDEs
+ *    can easily highlight them differently. Furthermore, a vertical line of "*" down the left side of block comments has two
+ *    useful benefits: it helps those developers that don't use syntax-highlighting IDEs to realize that lines are part of a
+ *    comment, and it provides a hint that lines matched by @p grep style searching are comments rather than code. Both become
+ *    more important as the size of the block comment grows, especially if it contains lines that might look like code.
+ *
+ *  + <b>Use Javadoc style:</b> Javadoc style uses the at-sign ("@") rather than the backslash ("\") to introduce Doxygen
+ *    key words. The backslash style comes from the much less common Qt documentation system. IDEs tend to have fewer problems
+ *    recognizing the Javadoc style due to its popularity and the fact that "@" is relatively uncommon in C++ code.  Similarly,
+ *    the presence of "!" to mark the start of a Doxygen comment is a Qt-ism, so avoid it for similar reasons.
+ *
+ *  + <b>Explicit references:</b> Although Doxygen will automatically create cross references to any word that has strange
+ *    capitalization or underscores, using an explicit @c @@ref will cause Doxygen to emit an error if the referent's
+ *    name changes and breaks the link.  Our goal is to eventually fix all Doxygen warnings so that new warnings are easy to
+ *    spot.
+ *
+ *  + <b>Capitalization:</b> Use the Wikipedia style of capitalization for pages, sections, and subsections. Namely, the first
+ *    word is capitalized and all other words except proper names and abbreviations are lower-case. Titles do not end with
+ *    punctuation.
+ *
+ *  + <b>"ROSE":</b> The name of this project is "ROSE", not "Rose" and not "rose".  However, within the documentation
+ *    itself it's seldom necessary to mention ROSE by name.
+ *
+ *
+ *
+ *  @section doxy_nonapi Doxygen documentation for non-API entities
+ *
+ *  As mentioned, one of ROSE's uses of Doxygen is for documentation not related to any specific API element (such as this page
+ *  itself). This section intends to show how to document such things.
+ *
+ *  <b>Pages or modules?</b> Non-API documentation is generally organized into Doxygen "Related pages" and/or "Modules", with
+ *  the main differences between them being that pages are relatively large non-hierarchical chapter-like things, while modules
+ *  are are smaller (usually) and hierarchical. The distinction is blurry though because both support sections and
+ *  subsections. Use this table to help decide:
+ *
+ *  <table>
+ *    <tr>
+ *      <td><b>Use "Related pages"</b></td>
+ *      <td><b>Use "Modules"</b></td>
+ *    </tr>
+ *    <tr>
+ *      <td>Subject is important enough to be a chapter in a book?</td>
+ *      <td>Subject would be an appendix in a book?</td>
+ *    </tr>
+ *    <tr>
+ *      <td>Subject should be listed in the top-level table of contents?</td>
+ *      <td>Subject should be listed in some broader subject's page?</td>
+ *    </tr>
+ *    <tr>
+ *      <td>User would read the entire subject linearly?</td>
+ *      <td>User would jump around in the subject area?</td>
+ *    </tr>
+ *    <tr>
+ *      <td>Subject has two levels of nesting?</td>
+ *      <td>Subject has arbitrarily deep hierarchy?</td>
+ *    </tr>
+ *    <tr>
+ *      <td>Subject's sections should appear together in a single HTML page?</td>
+ *      <td>Subject's sections should each be on their own HTML page?</td>
+ *    </tr>
+ *  </table>
+ *
+ *  Pages are created with Doxygen's @c @@page directive, which takes a unique global identifier and a title. The first
+ *  sentence is the auto-brief content (regardless of whether @c @@brief is present) that will show up in the "Related pages"
+ *  list. The auto-brief sentence should fit on one line, end with a period, and should not be identical to the title; it
+ *  should restate the title in different words or else the table of contents looks awkward:
+ *
+ *  @code
+ *  * @page binary_tutorial Getting started with binary analysis
+ *  * @brief Overview showing how to write binary analysis tools.
+ *  @endcode
+ *
+ *  Modules, on the other hand, are created with Doxygen's @c @@defgroup directives and the hierarchy is formed by declaring one
+ *  module to be in another with @c @@ingroup. The group is defined with a unique global identifier followed by a title. The @c
+ *  @@ingroup takes the global identifier of some other @c @@defgroup.  The first sentence is the auto-brief content regardless
+ *  of whether the
+ *  @c @@brief is used:
+ *
+ *  @code
+ *  * @defgroup installation_dependencies_boost How to install Boost
+ *  * @ingroup installation_dependencies
+ *  * @brief Instructions for installing Boost, a ROSE software dependency.
+ *  @endcode
+ *
+ *  <b>Location of documentation source?</b> Regardless of whether one chooses to write a page or a module, the documentation
+ *  needs to be placed in a C++ source file. These files should have the extension ".dox" (".docs" is acceptable too, but avoid
+ *  ".doc" and ".docx") and the documentation should be written as a block comment.  IDEs can be told that these files are
+ *  actually C++ code, so you'll get whatever fancy comment-handling features your IDE normally provides. For example, Emacs
+ *  excels at formatting C++ block comments and can reflow paragraphs, add the vertical line of stars, spell check, highlight
+ *  Doxygen tags, etc.
+ *
+ *  These ".dox" files can live anywhere in the ROSE source tree, but we prefer that they're somewhere under the top-level
+ *  "docs" directory along with all the non-Doxygen documentation.  Once you've added the new file, you should edit
+ *  "docs/Rose/rose.cfg.in", find the @c INPUT variable, and add your new file to the list.  For Doxygen "pages", the position
+ *  in the list determines the order of that page relative to other pages. Doxygen might still find your file if you fail to
+ *  list it in the @c INPUT variable, but it will be sorted more or less alphabetically.
+ *
+ *
+ * 
+ *  @section doxy_api Doxygen documentation for API entities
+ *
+ *  The original purpose of Doxygen is to document the files, name spaces, classes, functions, and other types that compose an
+ *  API. Doxygen automatically generates the document structure from C++ declarations and the API author fills in those things
+ *  that cannot be done automatically, which is the majority of the text.  The bullets below reference this declaration:
+ *
+ *  @code
+ *  public: std::vector<std::string> splitString(const std::string &inputString, const std::string &separator);
+ *  @endcode
+ *
+ *  + <b>Co-location:</b> The Doxygen comment should be adjacent to the thing it documents.  Some people claim this
+ *    unnecessarily clutters the header file and that the comment should be in a separate file, but the counter argument is that
+ *    by having documentation near the declaration it is more likely to be updated if the declaration changes.  Also, the
+ *    cluttering-up claim is made moot by any reasonably capable IDE, especially if we separate API and implementation
+ *    documentation by using C-style block comments for one and C++ line comments for the other.
+ *
+ *  + <b>Auto brief:</b> The Doxygen configuration is set up so that the first sentence of documentation gets used as the @c
+ *    @@brief value without having to specify @c @@brief. The brief content should be concise! In particular, it should not
+ *    start with "This function..." (since Doxygen context provides that), it should easily fit on one line, it should not
+ *    repeat information obvious from the declaration, and it should end with a period.  Example: "Splits a string into
+ *    substrings according to separator strings."
+ *
+ *  + <b>Public versus private:</b> Every public and protected part of the API must be documented. Documentation is as
+ *    important as implementation; even so-called "self documenting" practices need additional human-written descriptions to
+ *    make them useful to users that might not be familiar with a certain technique or algorithm.  If some entity is not
+ *    documented then it is not worthy of being a member of the API!  Eventually we will disable the switches that allow
+ *    Doxygen to generate stub documentation for non-documented parts of the API.  The private things should not be documented
+ *    with Doxygen because if someone's using these they need to be reading the source anyway.
+ *
+ *  + <b>Description:</b> All API entities must have a clear description except if the auto-brief statement together with the
+ *    declaration entirely captures all details of interest to a user, which is seldom the case.  The description should
+ *    describe any pre and post conditions, what happens if an error is detected, and provide an example directly or indirectly
+ *    if appropriate. Type information need not be repeated since it's already documented in the declaration. Example: "The @@p
+ *    inputString is scanned to find each non-overlapping occurrence of the @@p separator string from left to right. The
+ *    substrings between the identified separators are returned in the order they occur, including empty substrings.  If no
+ *    separator is found in the input string then only the input string is returned, even if it is empty."
+ *
+ *  + <b>%Function parameters:</b> %Function parameters need to be documented when their type and/or name is not
+ *    sufficient. They can be documented in list format or as part of the function's description.  Use the @c @@p formatting
+ *    tag when referring to a parameter.  It may work better to document related parameters in a descriptive paragraph than
+ *    listing each one separately. If using a list, there's no need to include a parameter if the parameter is sufficiently
+ *    documented in the main description or by the declaration; combine closely related parameters into a single item; attempt
+ *    to minimize forward references by rewording or reordering.
+ *
+ *  + <b>To-do lists:</b> If you need to mark documentation that should be fixed, use the @c @@todo tag and include a
+ *    description of what needs to be fixed. Also include @em your name (i.e., the person who thinks there's a
+ *    problem) and the date.
+ *
+ *  + <b>Author name:</b> Do not insert your own name as the author. There are a number of reasons: first, we all work on all
+ *    parts of ROSE to some degree and most of us would not be willing to remove another author's name if we make edits to the
+ *    documentation even if that author is no longer with the ROSE team, which leads to the name eventually becoming inaccurate
+ *    and/or misleading. Second, if some names are inaccurate then none of the names can be trusted. Finally, the question of
+ *    who wrote what is answered better by the revision control system than by annotations in the source code.
+ *
+ *  + <b>Proofread:</b> Proofread your documentation in a web browser after Doxygen runs.  One common error is for Doxygen to
+ *    make a link to a capitalized word (like Function, at least as this is being written) that happens to also be an entity in
+ *    the API. Prefix such words with a percent sign when the link is unintended.  Likewise, authors should try to avoid class
+ *    and namespace names that are also common words in order to prevent Doxygen from suddenly making those words links
+ *    throughout all documentation. The documentation is generated by running <code>make -C $ROSE_BLD/docs/Rose
+ *    doxygen_docs</code> or by invoking the "doxygen" command on the "$ROSE_BLD/docs/Rose/rose.cfg" file.  In a web browser,
+ *    open the resulting "$ROSE_BLD/docs/Rose/ROSE_WebPages/ROSE_HTML_Reference/index.html" file.
+ *
+ *  @section doxy_directives Doxygen directives
+ *
+ *  <!-- Note to developers: This section is easier to read in the HTML output because the source version contains
+ *       extra escapes in order to quote the Doxygen, HTML, and Markdown directives. BTW, this note itself is an example of
+ *       writing a comment inside a Doxygen comment using the HTML syntax. -->
+ *
+ *  Doxygen understands a subset of [HTML](http://www.stack.nl/~dimitri/doxygen/manual/htmlcmds.html), its own
+ *  [Javadoc-like directives](http://www.stack.nl/~dimitri/doxygen/manual/commands.html), and
+ *  [Markdown](http://www.stack.nl/~dimitri/doxygen/manual/markdown.html).  The most useful are:
+ *
+ *  + Sections and subsections are introduced by @c @@section or @c @@subsection followed by a unique identifier followed by
+ *    the name of the section using Title capitalization described above.
+ *
+ *  + Function parameter names are indicated with @c @@p followed by the parameter name. This typesets them in a consistent
+ *    style.
+ *
+ *  + References to other symbols, pages, and modules  are indicated with @c @@ref followed by the name or ID.  The look-up
+ *    for symbols is similar to how the C++ compiler would look up the name, so you might need to qualify it with some
+ *    namespace or even place the comment inside a namespace. If you don't want the qualified name cluttering the final HTML,
+ *    follow the qualified name with a shorter name in double quotes (e.g., <code>@@ref
+ *    InstructionSemantics2::BaseSemantics::RiscOperators "RiscOperators"</code>).
+ *
+ *  + Code snippets are indicated by preceding the word with @c @@c. If more than one word or if it contains special
+ *    characters, use HTML @c \<code> and @c \</code> tags instead.
+ *  
+ *  + To include an entire example source file into the documentation, use the @c @@includelineno directive, which takes the
+ *    name of the file to include. No path is necessary, but the file must live in a directory known to Doxygen, such as the
+ *    "tutorial" directory. (see ROSE's Doxygen configuration file).
+ *
+ *  + To include a few lines from an example source file, use the @c @@snippet mechanism.  This mechanism is easier to use than
+ *    the older method of trying to match certain patterns of code.  The @c @@snippet directive takes two arguments: the name
+ *    of an example source file, and the name of a snippet. The beginning and end of the snippet is marked in the source file
+ *    using Doxygen comments of the form <code>//! [snippet name goes in here]</code>.  Snippet names can include space
+ *    characters.
+ *
+ *  * To document a namespace, class, function, variable, etc., place the documentation immediately prior to the declaration
+ *    and use a block style comment that starts with two asterisks: <code>/\*\*</code>.  Alternatively, for variables and
+ *    enum constants it's sometimes more convenient to put the documenting comment *after* the declaration, in which case the
+ *    comment should start with <code>/\*\*\<</code>.
+ *
+ *  @section doxy_next Next steps
+ *
+ *  Doxygen, as one would expect from a documentation generator, is well documented at its
+ *  [website](https://doxygen.org). There are also a
+ *  [number](http://www.digilife.be/quickreferences/QRC/Doxygen%20Quick%20Reference.pdf)
+ *  [of](http://www.sztaki.hu/%7Eszcsaba/software/DoxygenQuickReference-2.pdf)
+ *  [quick](http://www.cs.uwm.edu/~cs536/cs536-2/library/Doxygen%20Quick%20Reference.htm)
+ *  [references](http://www.yolinux.com/TUTORIALS/LinuxTutorialC++CodingStyle.html#DOXYGEN)
+ *  available.
+ */

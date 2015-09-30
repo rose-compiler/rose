@@ -18,7 +18,7 @@ endif
 
 .C.o:
 	$(MPICXX) $(DEFS) \
-        $(DEFAULT_AM_CPPFLAGS) $(AM_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
+        $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
         $(AM_CXXFLAGS) $(CXXFLAGS) $< -c -o $@
 
 parallel_functionBased_dynamicBalance$(EXEEXT): $(parallel_functionBased_dynamicBalance_OBJECTS) $(parallel_functionBased_dynamicBalance_DEPENDENCIES)

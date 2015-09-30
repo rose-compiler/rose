@@ -713,7 +713,7 @@ simple_test:expNormTest FORCE
 
 
 ## Include the path to A++ and the transformation specification
-TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 # DQ (9/27/2011): Added optional test for detection of dangling pointers in AST (fails only for test2006_74.C).
 #                 Relax the test to level 1 (from level 2: error) to just provide error message instead of assertion.
@@ -722,7 +722,7 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:detect_dangling_pointers
 
 $(TEST_Objects):expNormTest 
 	@cp $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	./expNormTest $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
+	./expNormTest $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $(@:.o=.C)
 
 check-local:
 	@$(MAKE) simple_test

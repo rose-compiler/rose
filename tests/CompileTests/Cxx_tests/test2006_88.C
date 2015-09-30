@@ -40,7 +40,7 @@ varRefExp: j
 grand parent is NULL
 translator:
 /usr/casc/overture/bwhite/rose-staging-area/ROSE-0.8.8a/src/roseSupport/utility_functions.C:719:
-static std::string ROSE::getFileNameByTraversalBackToFileNode(SgNode*):
+static std::string rose::getFileNameByTraversalBackToFileNode(SgNode*):
 Assertion `parent != __null' failed.
 Abort
 

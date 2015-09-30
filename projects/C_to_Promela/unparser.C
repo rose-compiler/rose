@@ -54,7 +54,7 @@ string globalUnparseToString ( SgNode* astNode, SgUnparse_Info* inputUnparseInfo
 
        // DQ (5/31/2005): Get the filename from a traversal back through the parents to the SgFile
        // fileNameOfStatementsToUnparse = locatedNode->getFileName();
-       // fileNameOfStatementsToUnparse = ROSE::getFileNameByTraversalBackToFileNode(locatedNode);
+       // fileNameOfStatementsToUnparse = rose::getFileNameByTraversalBackToFileNode(locatedNode);
           if (locatedNode->get_parent() == NULL)
              {
             // DQ (7/29/2005):
@@ -66,7 +66,7 @@ string globalUnparseToString ( SgNode* astNode, SgUnparse_Info* inputUnparseInfo
              }
             else
              {
-               fileNameOfStatementsToUnparse = ROSE::getFileNameByTraversalBackToFileNode(locatedNode);
+               fileNameOfStatementsToUnparse = rose::getFileNameByTraversalBackToFileNode(locatedNode);
              }
           
         }
@@ -137,8 +137,8 @@ string globalUnparseToString ( SgNode* astNode, SgUnparse_Info* inputUnparseInfo
                     SgFile* file = &(project->get_file(i));
                     ROSE_ASSERT(file != NULL);
                     string unparsedFileString = globalUnparseToString(file,inputUnparseInfoPointer);
-                    string prefixString       = string("/* TOP:")      + string(ROSE::getFileName(file)) + string(" */ \n");
-                    string suffixString       = string("\n/* BOTTOM:") + string(ROSE::getFileName(file)) + string(" */ \n\n");
+                    string prefixString       = string("/* TOP:")      + string(rose::getFileName(file)) + string(" */ \n");
+                    string suffixString       = string("\n/* BOTTOM:") + string(rose::getFileName(file)) + string(" */ \n\n");
                     returnString += prefixString + unparsedFileString + suffixString;
                   }
              }
@@ -200,8 +200,8 @@ string globalUnparseToString ( SgNode* astNode, SgUnparse_Info* inputUnparseInfo
                               SgFile* file = &(project->get_file(i));
                               ROSE_ASSERT(file != NULL);
                               string unparsedFileString = globalUnparseToString(file,inputUnparseInfoPointer);
-                              string prefixString       = string("/* TOP:")      + string(ROSE::getFileName(file)) + string(" */ \n");
-                              string suffixString       = string("\n/* BOTTOM:") + string(ROSE::getFileName(file)) + string(" */ \n\n");
+                              string prefixString       = string("/* TOP:")      + string(rose::getFileName(file)) + string(" */ \n");
+                              string suffixString       = string("\n/* BOTTOM:") + string(rose::getFileName(file)) + string(" */ \n\n");
                               returnString += prefixString + unparsedFileString + suffixString;
                             }
                          break;

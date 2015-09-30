@@ -6,8 +6,8 @@
 \class SgTypeComplex
 \brief This class represents a C99 complex type.
 
-   This type can be used in C++ codes by using either the new "_Complex" syntax or the
-    older syntax __complex__ (older syntax may be GNU specific).  Note that C++ codes
+This type can be used in C++ codes by using either the new "_Complex" syntax or the
+older syntax __complex__ (older syntax may be GNU specific).  Note that C++ codes
 can alternatively use the complex classes and avoid use of this type. This is here 
 mostly to support C99 extensions to C.
 
@@ -29,7 +29,7 @@ mostly to support C99 extensions to C.
 \fn SgTypeComplex::SgTypeComplex()
 \brief This is the constructor.
 
-   This constructor builds the SgTypeComplex base class.
+This constructor builds the SgTypeComplex base class.
 
 \sa 
 \ref SgTypeComplex_create "Example:create an SgTypeComplex object"
@@ -39,14 +39,14 @@ mostly to support C99 extensions to C.
 \fn SgTypeComplex::~SgTypeComplex()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgTypeComplex::isSgTypeComplex (SgNode *s)
 \brief Cast function (from derived class to SgTypeComplex pointer).
 
-   This functions returns a SgTypeComplex pointer for any input of a 
+This functions returns a SgTypeComplex pointer for any input of a 
 pointer to an object derived from a SgTypeComplex.
 
 \return Returns valid pointer to SgTypeComplex if input is derived from a SgLocatedNode.
@@ -56,7 +56,7 @@ pointer to an object derived from a SgTypeComplex.
 \fn SgTypeComplex::isSgTypeComplex (const SgNode *s)
 \brief Cast function (from derived class to SgTypeComplex pointer).
 
-   This functions returns a SgTypeComplex pointer for any input of a 
+This functions returns a SgTypeComplex pointer for any input of a 
 pointer to an object derived from a SgTypeComplex.
 
 \return Returns valid pointer to SgTypeComplex if input is derived from a SgTypeComplex node.

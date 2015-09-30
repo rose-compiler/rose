@@ -17,7 +17,7 @@ EXTRA_DIST =
 
 CLEANFILES =
 
-TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test -I/opt/local/include \
+TESTCODE_INCLUDES = -I$(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test -I/opt/local/include \
 	-I$(top_srcdir)/projects/backstroke/testCodeGeneration/include
 
 check-local:
@@ -28,8 +28,8 @@ check-local:
 
 test: FORCE
 #cp $(top_srcdir)/projects/backstroke/tests/pluggableReverserTest/test/rctypes.h rctypes.h
-	./testCodeBuilderTest $(TESTCODE_AM_CPPFLAGS)
-	g++ test.C -o test $(TESTCODE_AM_CPPFLAGS)
+	./testCodeBuilderTest $(TESTCODE_INCLUDES)
+	g++ test.C -o test $(TESTCODE_INCLUDES)
 	./test
 
 FORCE:

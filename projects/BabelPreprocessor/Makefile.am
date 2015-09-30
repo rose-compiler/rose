@@ -43,10 +43,10 @@ $(TEST_Objects): $(TESTCODES)
 	: remove this so that we can force the examples to be run
 	rm -f $(TEST_Objects)
 
-APP_AM_CPPFLAGS = -I$(top_srcdir)/TESTS/CompileTests/A++Code -I$(top_srcdir)/include
+APP_INCLUDES = -I$(top_srcdir)/TESTS/CompileTests/A++Code -I$(top_srcdir)/include
 APP_TESTS    = testApp.o
 $(APP_TESTS): example7
-	./example7 -DHAVE_CONFIG_H $(ROSE_FLAGS) $(APP_AM_CPPFLAGS) $(AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	./example7 -DHAVE_CONFIG_H $(ROSE_FLAGS) $(APP_INCLUDES) $(AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 
 EXAMPLE7_INPUT_TEST = testApp
 test_ArrayPreprocessor: all ArrayPreprocessor $(ArrayPreprocessor_DEPENDENCIES)

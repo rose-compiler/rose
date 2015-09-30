@@ -14,7 +14,7 @@
 
 using namespace std;
 
-namespace ROSE {
+namespace rose {
     // This API takes a rose database file, typically specified via -rose:projectSpecificDatabaseFile commandline
     // and a physical file. If the physical file is already recorded in the database file, the corresponding id
     // is returned, otehrwise, a new entry is made into the database file and the new id is returned.

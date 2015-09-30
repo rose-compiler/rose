@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-TESTCODE_AM_CPPFLAGS = 
+TESTCODE_INCLUDES = 
 
 ROSE2LLVM_FLAGS = --edg:no-warnings -rose:verbose 0
 

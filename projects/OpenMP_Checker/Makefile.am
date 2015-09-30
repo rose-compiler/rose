@@ -21,17 +21,17 @@ TESTCODE_CURRENTLY_FAILING =
 
 ROSE_FLAGS = -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave
 # used to find omp.h, added it as one of  rose headers
-TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/src/frontend/SageIII
+TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
 PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
 
 PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
 
 $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c ompChecker
-	./ompChecker $(ROSE_FLAGS) $(TESTCODE_AM_CPPFLAGS) -c $<
+	./ompChecker $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
 
 $(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp ompChecker
-	./ompChecker ${ROSE_FLAGS} ${TESTCODE_AM_CPPFLAGS} -c $<
+	./ompChecker ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c $<
 
 ALL_TESTCODES = \
 $(C_TESTCODES_REQUIRED_TO_PASS) \

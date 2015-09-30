@@ -4,10 +4,10 @@
 
 /*!
 \class SgClinkageStartStatement
-\brief This class represents the concept of a C style "extern \"C\" " declaration.  But
-    such information (linkage) is stored within linkage modifiers currently.
+\brief This class represents the concept of a C style <code>extern "C"</code> declaration.  But
+such information (linkage) is stored within linkage modifiers currently.
 
-    This class is no longer used, see SgLinkageModifier for more details on 
+This class is no longer used, see SgLinkageModifier for more details on 
 how this is handled currently.
 
 \deprecated This class is not used and will be removed in a later release.
@@ -36,7 +36,7 @@ how this is handled currently.
 \fn SgClinkageStartStatement::SgClinkageStartStatement ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgClinkageStartStatement base class.
+This constructor builds the SgClinkageStartStatement base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -49,14 +49,14 @@ how this is handled currently.
 \fn SgClinkageStartStatement::~SgClinkageStartStatement()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgClinkageStartStatement::isSgClinkageStartStatement (SgNode *s)
 \brief Cast function (from derived class to SgClinkageStartStatement pointer).
 
-   This functions returns a SgClinkageStartStatement pointer for any input of a 
+This functions returns a SgClinkageStartStatement pointer for any input of a 
 pointer to an object derived from a SgClinkageStartStatement.
 
 \return Returns valid pointer to SgClinkageStartStatement if input is derived from a SgLocatedNode.
@@ -66,7 +66,7 @@ pointer to an object derived from a SgClinkageStartStatement.
 \fn SgClinkageStartStatement::isSgClinkageStartStatement (const SgNode *s)
 \brief Cast function (from derived class to SgClinkageStartStatement pointer).
 
-   This functions returns a SgClinkageStartStatement pointer for any input of a 
+This functions returns a SgClinkageStartStatement pointer for any input of a 
 pointer to an object derived from a SgClinkageStartStatement.
 
 \return Returns valid pointer to SgClinkageStartStatement if input is derived from a SgLocatedNode.

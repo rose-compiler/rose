@@ -20,6 +20,6 @@ libhpdf_la_SOURCES =	hpdf_annotation.c hpdf_array.c hpdf_binary.c hpdf_boolean.c
 libhpdf_la_LIBADD = @LTLIBOBJS@
 libhpdf_la_LDFLAGS = -release @VERSION@
 # JJW for ROSE: Added this line to enable building outside source tree
-libhpdf_la_AM_CPPFLAGS = -I$(top_srcdir)/include
+libhpdf_la_INCLUDES = -I$(top_srcdir)/include
 
 EXTRA_DIST = CMakeLists.txt

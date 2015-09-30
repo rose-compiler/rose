@@ -10,7 +10,7 @@ if ROSE_USE_LLVM
 
 AM_CPPFLAGS = 	-I$(srcdir)/rosetollvm/include \
 			$(ROSE_INCLUDES) \
-			$(ROSE_LLVM_AM_CPPFLAGS) 
+			$(ROSE_LLVM_INCLUDES) 
 #############################################################################
 
 EXTRA_DIST		 =

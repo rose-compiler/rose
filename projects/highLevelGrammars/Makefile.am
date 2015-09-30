@@ -42,7 +42,7 @@ TEST_Objects = ${TESTCODES:.C=.o}
 
 ROSE_FLAGS =
 
-APP_AM_CPPFLAGS = $(top_srcdir)/tests/CompileTests/A++Code
+APP_INCLUDES = $(top_srcdir)/tests/CompileTests/A++Code
 
 # This rule generates a dependency that forces the "make check" 
 # test to always compile the test code
@@ -51,7 +51,7 @@ FORCE_TEST_CODES_TO_RUN:
 $(TEST_Objects): $(TESTCODES) FORCE_TEST_CODES_TO_RUN highLevelGrammarGenerator
 	: remove this so that we can force the examples to be run
 	rm -f $(TEST_Objects)
-	./highLevelGrammarGenerator -I$(srcdir) $(ROSE_FLAGS) $(AM_CPPFLAGS) $(NANOS_AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.C)
+	./highLevelGrammarGenerator -I$(srcdir) $(ROSE_FLAGS) $(AM_CPPFLAGS) $(NANOS_INCLUDES) -c $(srcdir)/$(@:.o=.C)
 	: remove this so that we can force the examples to be run
 	rm -f $(TEST_Objects)
 
@@ -74,7 +74,7 @@ $(GENERATED_SOURCE): highLevelGrammarGenerator $(srcdir)/testCode.C
 	$(VALGRIND) ./highLevelGrammarGenerator -c $(srcdir)/testCode.C
 
 testApp: highLevelGrammarGenerator $(srcdir)/testApp.C FORCE_TEST_CODES_TO_RUN
-	$(VALGRIND) ./highLevelGrammarGenerator -I$(APP_AM_CPPFLAGS) -c $(srcdir)/testApp.C
+	$(VALGRIND) ./highLevelGrammarGenerator -I$(APP_INCLUDES) -c $(srcdir)/testApp.C
 
 test: testApp $(GENERATED_SOURCE_DEP) exampleTranslator
 	$(VALGRIND) ./exampleTranslator -c $(srcdir)/testCode.C

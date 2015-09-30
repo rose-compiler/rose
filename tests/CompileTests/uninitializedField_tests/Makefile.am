@@ -438,7 +438,7 @@ endif # ROSE_USE_LONG_MAKE_CHECK_RULE
 
 # Some of these test codes reference A++ header fiels as part of their tests
 # Include the path to A++ and the transformation specification
-TESTCODE_AM_CPPFLAGS = -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
@@ -462,18 +462,18 @@ RUN_VALGRIND = $(LIBTOOL) --mode=execute $(VALGRIND_BINARY) --tool=memcheck -q
 
 $(CXX_FILES): testUninitializedFields
 	-rm -f $(@:.CXX-o=.CXX-log)
-	$(RUN_VALGRIND) ./testUninitializedFields $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) 2>$(@:.CXX-o=.CXX-log) && touch $@
+	$(RUN_VALGRIND) ./testUninitializedFields $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) 2>$(@:.CXX-o=.CXX-log) && touch $@
 
 # ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C.o}: testUninitializedFields
 $(C_FILES): testUninitializedFields $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
 	-rm -f $(@:.C-o=.C-log)
 	cp $(srcdir)/../Cxx_tests/$(@:.C-o=.C) $(@:.C-o=.temp.c)
-	$(RUN_VALGRIND) ./testUninitializedFields $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_AM_CPPFLAGS) -c $(@:.C-o=.temp.c) 2>$(@:.C-o=.C-log) && touch $@
+	$(RUN_VALGRIND) ./testUninitializedFields $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) 2>$(@:.C-o=.C-log) && touch $@
 
 $(C99_FILES): testUninitializedFields $(srcdir)/../C99_tests/$(@:.C99-o=.c)
 	-rm -f $(@:.C99-o=.C99-log)
 	cp $(srcdir)/../C99_tests/$(@:.C99-o=.c) $(@:.C99-o=.temp.c)
-	$(RUN_VALGRIND) ./testUninitializedFields $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_AM_CPPFLAGS) -c $(@:.C99-o=.temp.c) 2>$(@:.C99-o=.C99-log) && touch $@
+	$(RUN_VALGRIND) ./testUninitializedFields $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) 2>$(@:.C99-o=.C99-log) && touch $@
 
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
 $(F90_FILES): ./testUninitializedFields

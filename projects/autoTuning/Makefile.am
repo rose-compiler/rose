@@ -5,9 +5,9 @@ SUBDIRS = . tests doc
 ROSEHPCT_SRC_ROOT = $(top_srcdir)/src/roseExtensions/roseHPCToolkit
 ROSEHPCT_BUILD_ROOT = $(top_builddir)/src/roseExtensions/roseHPCToolkit
 
-# ROSEHPCT_DEP_AM_CPPFLAGS contains include paths to libxml2
+# ROSEHPCT_DEP_INCLUDES contains include paths to libxml2
 AM_CPPFLAGS = $(ROSE_INCLUDES) \
-	$(ROSEHPCT_DEP_AM_CPPFLAGS) \
+	$(ROSEHPCT_DEP_INCLUDES) \
 	-I$(ROSEHPCT_SRC_ROOT)/include
 
 ROSEHPCT_LIBS = $(ROSEHPCT_BUILD_ROOT)/src/librosehpct.la \

@@ -58,13 +58,13 @@ ROSE_FLAGS = -rose:verbose 0
 # ROSE_FLAGS = 
 
 #TEST_TRANSLATOR = ./slice $(ROSE_FLAGS)
-TESTCODE_AM_CPPFLAGS =
+TESTCODE_INCLUDES =
 
 # DQ (7/12/2004): Modified to run with make -j4 options
 $(TEST_Objects): multiPassTest $(TESTCODES) 
 #	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 	@echo "Compiling test code using multiple programs: slice multiPassTest generateSDG generateCDG generateDDG and ..." #generateSlicedSDG testSlicing 
-#	$(TEST_TRANSLATOR) $(TESTCODE_AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+#	$(TEST_TRANSLATOR) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
 #	./slice -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
 	./multiPassTest -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
 	./generateSDG -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)

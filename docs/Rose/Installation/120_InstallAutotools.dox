@@ -1,0 +1,14 @@
+// -*- c++ -*-
+
+/** @defgroup installing_autotools Installing GNU Autotools
+ *  @ingroup software_dependencies
+ *
+ *  Instructions for installing GNU autotools, a ROSE software dependency.
+ *
+ *  @section installing_autotools_rhel Redhat Enterprise Linux
+ *
+ *  @todo Describe how to install GNU autotools on RHEL.
+ *
+ *  @section installing_autotools_jessie Debian 8 "Jessie"
+ *
+ *  Run <code>apt-get install libtool automake</code> as the administrator. */

@@ -5,7 +5,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 ####################################################################################
 
 # Build variable to SystemC include directory.
-SYSTEM_C_AM_CPPFLAGS = -I$(srcdir)/include
+SYSTEM_C_INCLUDES = -I$(srcdir)/include
 
 # Files that represent header files from ROSE that we can now compile with ROSE.
 # However we don't want to distribute the System C include files, so we can't 
@@ -40,7 +40,7 @@ $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) test
 
 $(TEST_Sources): %.passed: $(TEST_TRANSLATOR) $(srcdir)/$(@:.C.passed=.C)
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(SYSTEM_C_AM_CPPFLAGS) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(SYSTEM_C_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
@@ -48,7 +48,7 @@ QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 CURRENT_DIRECTORY = `pwd`
 $(QMTEST_Objects): $(TEST_TRANSLATOR) $(srcdir)/$(@:.qmt=.C)
 	@echo "Calling QMTEST_Objects rule: "
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -I$(top_builddir) $(SYSTEM_C_AM_CPPFLAGS) -c $(srcdir)/$(@:.qmt=.C)
+	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -I$(top_builddir) $(SYSTEM_C_INCLUDES) -c $(srcdir)/$(@:.qmt=.C)
 
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
