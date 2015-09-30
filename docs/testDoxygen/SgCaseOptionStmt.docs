@@ -19,8 +19,8 @@
 \brief This pointer points to a SgExpressionRoot object.
 
 \todo Evaluate if this should really be a SgExpressionRoot or just a SgExpression.
-      It should perhaps really be a SgValue (but check the C++ grammar to be sure).
-      then make the p_key_range_end the same type to be consistant.
+It should perhaps really be a SgValue (but check the C++ grammar to be sure).
+then make the p_key_range_end the same type to be consistant.
 
 */
 
@@ -29,8 +29,8 @@
 case label is used.
 
 \internal We can't represent the range a ... b as an expression in C or C++ so we need to
-    explicitly store the start and end of the range where it is used as a case label.
-    The p_key_root is the start of the range.
+explicitly store the start and end of the range where it is used as a case label.
+The p_key_root is the start of the range.
 
 */
 
@@ -47,7 +47,7 @@ case label is used.
 \fn SgCaseOptionStmt::SgCaseOptionStmt ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgCaseOptionStmt base class.
+This constructor builds the SgCaseOptionStmt base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -60,14 +60,14 @@ case label is used.
 \fn SgCaseOptionStmt::~SgCaseOptionStmt()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgCaseOptionStmt::isSgCaseOptionStmt (SgNode *s)
 \brief Cast function (from derived class to SgCaseOptionStmt pointer).
 
-   This functions returns a SgCaseOptionStmt pointer for any input of a 
+This functions returns a SgCaseOptionStmt pointer for any input of a 
 pointer to an object derived from a SgCaseOptionStmt.
 
 \return Returns valid pointer to SgCaseOptionStmt if input is derived from a SgLocatedNode.
@@ -77,7 +77,7 @@ pointer to an object derived from a SgCaseOptionStmt.
 \fn SgCaseOptionStmt::isSgCaseOptionStmt (const SgNode *s)
 \brief Cast function (from derived class to SgCaseOptionStmt pointer).
 
-   This functions returns a SgCaseOptionStmt pointer for any input of a 
+This functions returns a SgCaseOptionStmt pointer for any input of a 
 pointer to an object derived from a SgCaseOptionStmt.
 
 \return Returns valid pointer to SgCaseOptionStmt if input is derived from a SgLocatedNode.

@@ -5,7 +5,7 @@
 /*!
 \class SgSpawnStmt
 \brief This class is part of the older CC++ concept. It is not a part of C or C++ (this IR
-    node is not used and will be removed in a future release).
+node is not used and will be removed in a future release).
 
 \deprecated This class is not used and will be removed in a future release.
 
@@ -31,7 +31,7 @@
 \fn SgSpawnStmt::SgSpawnStmt ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgSpawnStmt base class.
+This constructor builds the SgSpawnStmt base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -44,14 +44,14 @@
 \fn SgSpawnStmt::~SgSpawnStmt()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgSpawnStmt::isSgSpawnStmt (SgNode *s)
 \brief Cast function (from derived class to SgSpawnStmt pointer).
 
-   This functions returns a SgSpawnStmt pointer for any input of a 
+This functions returns a SgSpawnStmt pointer for any input of a 
 pointer to an object derived from a SgSpawnStmt.
 
 \return Returns valid pointer to SgSpawnStmt if input is derived from a SgLocatedNode.
@@ -61,7 +61,7 @@ pointer to an object derived from a SgSpawnStmt.
 \fn SgSpawnStmt::isSgSpawnStmt (const SgNode *s)
 \brief Cast function (from derived class to SgSpawnStmt pointer).
 
-   This functions returns a SgSpawnStmt pointer for any input of a 
+This functions returns a SgSpawnStmt pointer for any input of a 
 pointer to an object derived from a SgSpawnStmt.
 
 \return Returns valid pointer to SgSpawnStmt if input is derived from a SgLocatedNode.

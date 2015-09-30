@@ -6,7 +6,7 @@
 \class SgThrowOp
 \brief This class represents the C++ throw expression (handled as a unary operator).
 
-    This class represents three different approaches to the use of the throw 
+This class represents three different approaches to the use of the throw 
 expression within a C++ program. 
    1) throw expression (with specified function)
    2) throw exceoption specification (with list of types to throw)
@@ -16,11 +16,11 @@ The constructor takes the parameters required to empliment these three kinds of 
 \internal We should perhaps define specialized constructors for each kind of throw.
 
 \todo Make the "*PtrList" typed objects non-pointer data members (lists) instead of
-    pointer to lists.
+pointer to lists.
 
 \todo Consider that get_type() returns a SgDefalutType and should return the SgType 
-    associated with the last expression in the list (research details of the list of
-    pointers in the C++ throw operator).
+associated with the last expression in the list (research details of the list of
+pointers in the C++ throw operator).
 
 \sa
 \ref SgThrowOp_create "Example:create an SgThrowOp object"
@@ -38,7 +38,7 @@ The constructor takes the parameters required to empliment these three kinds of 
 \var SgThrowOp::p_typeList
 \brief This list of types required to support the exception-specification throw.
 
-   The throw operator can take a list of types, this is called and 
+The throw operator can take a list of types, this is called and 
 exception-specification throw (see C++ specification for details).
 
 */
@@ -47,7 +47,7 @@ exception-specification throw (see C++ specification for details).
 \var SgThrowOp::p_throwKind
 \brief This enum value classifies the throw as either of three different kinds.
 
-   This variable is used to classify the throw and either:
+This variable is used to classify the throw and either:
    #) throw expression (with specified function)
    #) throw exceoption specification (with list of types to throw)
    #) rethrow current exception (specified as simply "throw;")
@@ -70,7 +70,7 @@ the IR node.
 \fn SgThrowOp::SgThrowOp ( Sg_File_Info* startOfConstruct = NULL , SgExpression *operand_i=NULL, SgType *expression_type=NULL, SgTypePtrListPtr typeList=NULL, SgThrowOp::e_throw_kind throwKind=SgThrowOp::unknown_throw)
 \brief This is the only constructor.
 
-   This constructor builds the SgThrowOp base class.
+This constructor builds the SgThrowOp base class.
 
 \param startOfConstruct represents the position in the source code
 \sa 
@@ -82,14 +82,14 @@ the IR node.
 \fn SgThrowOp::~SgThrowOp()
 \brief This is the destructor.
 
-   Only the Sg_File_Info object can be deleted in this object.
+Only the Sg_File_Info object can be deleted in this object.
 */
 
 /*!
 \fn SgThrowOp::isSgThrowOp (SgNode *s)
 \brief Cast function (from derived class to SgThrowOp pointer).
 
-   This functions returns a SgThrowOp pointer for any input of a 
+This functions returns a SgThrowOp pointer for any input of a 
 pointer to an object derived from a SgThrowOp.
 
 \return Returns valid pointer to SgThrowOp if input is derived from a SgThrowOp.
@@ -99,7 +99,7 @@ pointer to an object derived from a SgThrowOp.
 \fn SgThrowOp::isSgThrowOp (const SgNode *s)
 \brief Cast function (from derived class to SgThrowOp pointer).
 
-   This functions returns a SgThrowOp pointer for any input of a 
+This functions returns a SgThrowOp pointer for any input of a 
 pointer to an object derived from a SgThrowOp.
 
 \return Returns valid pointer to SgThrowOp if input is derived from a SgThrowOp.
@@ -109,7 +109,7 @@ pointer to an object derived from a SgThrowOp.
 \fn SgThrowOp::get_typeList()
 \brief Return internal pointer to SgTypePtrList (STL list of SgType pointers).
 
-   Return internal pointer to SgTypePtrList (STL list of SgType pointers).
+Return internal pointer to SgTypePtrList (STL list of SgType pointers).
 
 \return Returns valid pointer to SgTypePtrList.
 */

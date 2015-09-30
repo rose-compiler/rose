@@ -5,9 +5,9 @@
 /*!
 \class SgConstructorInitializer
 \brief This class represents the notion of an initializer for a variable declaration or
-    expression in a function call argument list.
+expression in a function call argument list.
 
-    There are no direct uses of this IR node anywhere.  All initializers
+There are no direct uses of this IR node anywhere.  All initializers
 are derived from this IR node to build derived classes such as SgConstructorInitializer,
 SgAssignInitializer, and SgAggregateInitializer.
 
@@ -26,13 +26,13 @@ SgAssignInitializer, and SgAggregateInitializer.
 \var SgConstructorInitializer::p_declaration
 \brief This points to the associated member function declaration (a constructor).
 
-   Note that this pointer can be NULL if no such constructor is defined (e.g. compiler
+Note that this pointer can be NULL if no such constructor is defined (e.g. compiler
 generated default constructor).
 
 \internal Constructors not explicit in the source code are not presently generated in ROSE
-    if there were to be generated in the future they will be marked as compiler generated
-    and likely we can then enforce that this be a valid pointer.  This variable is an
-    exception to the general rule that we have no NULL pointes within the AST.
+if there were to be generated in the future they will be marked as compiler generated
+and likely we can then enforce that this be a valid pointer.  This variable is an
+exception to the general rule that we have no NULL pointes within the AST.
 */
 
 /*!
@@ -40,8 +40,8 @@ generated default constructor).
 \brief This points to the argument list of the associated constructor call.
 
 \internal Note that this pointer is always a valid pointer, even if the constructor and class
-    declaration pointers are NULL.  This list can also be empty, but the poitner to the
-    list is always valid.
+declaration pointers are NULL.  This list can also be empty, but the poitner to the
+list is always valid.
 */
 
 /*
@@ -51,7 +51,7 @@ generated default constructor).
 \brief This points to the associated class declaration for this constructor.
 
 \internal This can at times be a NULL pointer, e.g. calls to unimplemented default constructors, if so then the bool valued variable
-    "p_associated_class_unknown" is always true.
+"p_associated_class_unknown" is always true.
 */
 
 /*!
@@ -59,15 +59,15 @@ generated default constructor).
 \brief This points to the associated type for this constructor.
 
 \internal This pointer should always be valid,
-    "p_associated_class_unknown" is true iff "p_expression_type" is not a SgClassType.
+"p_associated_class_unknown" is true iff "p_expression_type" is not a SgClassType.
 */
 
 /*!
 \var SgConstructorInitializer::p_need_name
 \brief This bool value controls the output of the class name.
 
-   This might be somewhat redundant with the explicit vs. implement representation in the
-    source code (recorded in another flag of the SgExpression base class).
+This might be somewhat redundant with the explicit vs. implement representation in the
+source code (recorded in another flag of the SgExpression base class).
 */
 
 /*!
@@ -81,18 +81,18 @@ generated default constructor).
 \var SgConstructorInitializer::p_need_parenthesis_after_name
 \brief This bool value controls the output of "()" after the class name.
 
-    The controls the output at "class X x;" or "class X x();".
+The controls the output at "class X x;" or "class X x();".
 */
 
 /*!
 \var SgConstructorInitializer::p_associated_class_unknown
 \brief This bool value indicates when p_declaration should be a valid pointer.
 
-    If true, then p_declaration is NULL, else if false, then p_declaration should 
+If true, then p_declaration is NULL, else if false, then p_declaration should 
 be a valid pointer.
 
 \todo Enforce p_declaration is valid pointer when p_associated_class_unknown is false 
-    within AST consistency tests.
+within AST consistency tests.
 */
 
 //////////////////////////////////////////////////////////////////////////
@@ -108,7 +108,7 @@ be a valid pointer.
 \fn SgConstructorInitializer::SgConstructorInitializer ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgConstructorInitializer base class.
+This constructor builds the SgConstructorInitializer base class.
 
 \param startOfConstruct represents the position in the source code
 \sa 
@@ -119,14 +119,14 @@ be a valid pointer.
 \fn SgConstructorInitializer::~SgConstructorInitializer()
 \brief This is the destructor.
 
-   Only the Sg_File_Info object can be deleted in this object.
+Only the Sg_File_Info object can be deleted in this object.
 */
 
 /*!
 \fn SgConstructorInitializer::isSgConstructorInitializer (SgNode *s)
 \brief Cast function (from derived class to SgConstructorInitializer pointer).
 
-   This functions returns a SgConstructorInitializer pointer for any input of a 
+This functions returns a SgConstructorInitializer pointer for any input of a 
 pointer to an object derived from a SgConstructorInitializer.
 
 \return Returns valid pointer to SgConstructorInitializer if input is derived from a SgConstructorInitializer.
@@ -136,7 +136,7 @@ pointer to an object derived from a SgConstructorInitializer.
 \fn SgConstructorInitializer::isSgConstructorInitializer (const SgNode *s)
 \brief Cast function (from derived class to SgConstructorInitializer pointer).
 
-   This functions returns a SgConstructorInitializer pointer for any input of a 
+This functions returns a SgConstructorInitializer pointer for any input of a 
 pointer to an object derived from a SgConstructorInitializer.
 
 \return Returns valid pointer to SgConstructorInitializer if input is derived from a SgConstructorInitializer.
@@ -170,7 +170,7 @@ pointer to an object derived from a SgConstructorInitializer.
 \fn SgConstructorInitializer::get_expression_type() const
 \brief Access function for p_expression_type, returns pointer to SgType associated with constructor.
 
-   This is usually a SgClassType, but it can also be a primative type
+This is usually a SgClassType, but it can also be a primative type
 (typically in association with a new operator).
 
 \return Returns pointer to SgType.

@@ -6,7 +6,7 @@
 \class SgTypeImaginary
 \brief This class represents a C99 complex type.
 
-   This type can be used in only C and C99 codes, the syntax is "_Imaginary".
+This type can be used in only C and C99 codes, the syntax is "_Imaginary".
 This is added to support C and C99 complex support.
 
 \sa
@@ -27,7 +27,7 @@ This is added to support C and C99 complex support.
 \fn SgTypeImaginary::SgTypeImaginary()
 \brief This is the constructor.
 
-   This constructor builds the SgTypeImaginary base class.
+This constructor builds the SgTypeImaginary base class.
 
 \sa 
 \ref SgTypeImaginary_create "Example:create an SgTypeImaginary object"
@@ -37,14 +37,14 @@ This is added to support C and C99 complex support.
 \fn SgTypeImaginary::~SgTypeImaginary()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgTypeImaginary::isSgTypeImaginary (SgNode *s)
 \brief Cast function (from derived class to SgTypeImaginary pointer).
 
-   This functions returns a SgTypeImaginary pointer for any input of a 
+This functions returns a SgTypeImaginary pointer for any input of a 
 pointer to an object derived from a SgTypeImaginary.
 
 \return Returns valid pointer to SgTypeImaginary if input is derived from a SgLocatedNode.
@@ -54,7 +54,7 @@ pointer to an object derived from a SgTypeImaginary.
 \fn SgTypeImaginary::isSgTypeImaginary (const SgNode *s)
 \brief Cast function (from derived class to SgTypeImaginary pointer).
 
-   This functions returns a SgTypeImaginary pointer for any input of a 
+This functions returns a SgTypeImaginary pointer for any input of a 
 pointer to an object derived from a SgTypeImaginary.
 
 \return Returns valid pointer to SgTypeImaginary if input is derived from a SgTypeImaginary node.

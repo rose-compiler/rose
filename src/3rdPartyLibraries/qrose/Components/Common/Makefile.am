@@ -4,7 +4,7 @@ SUBDIRS=icons
 
 if ROSE_USE_QT
 
-AM_CPPFLAGS = $(ROSE_INCLUDES) $(QT_AM_CPPFLAGS) 
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(QT_INCLUDES) 
 
 METASOURCES = auto
 pkginclude_HEADERS = QRAstInfo.h QRCoords.h  QRIcons.h QRPixmap.h QRAttribute.h  QRoseComponent.h

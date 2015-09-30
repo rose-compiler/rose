@@ -6,15 +6,15 @@
 \class SgFunctionDeclaration
 \brief This class represents the concept of a function declaration statement.
 
-    A function declaration can be either a forward declaration or a defining declaration.
+A function declaration can be either a forward declaration or a defining declaration.
 If it is a defining declaration then it contains a pointer to the function definition.
 Future work will allow this class to have a valide defining and non-defining declaration
 similar to the class declaration, but this is not yet implemented.
 
-   This class is used as a base class for member function declarations and both template 
+This class is used as a base class for member function declarations and both template 
 functions and template member function declarations.
 
-   The name of the function is stored in "p_name". However, if the function is a constructor
+The name of the function is stored in "p_name". However, if the function is a constructor
 or destructor the value of "p_name" is ignored (should be unset, perhaps) and the name is
 generated from the unqualified class name.  This handles the complexity of resetting
 templated names which likely have been stored in the constructor before the template
@@ -22,20 +22,20 @@ names have been reset from the form "ABC____L8" to "ABC<int>" as requied to comp
 unparsed code.
 
 \internal This is a base class for all function and member declaration statments
-          (including templated functions and member functions).
+(including templated functions and member functions).
 
 \todo Need to mark function declarations appearing in the file
-    rose_edg_required_macros_and_functions.h as compiler generated
-    since they are either builtin functions for gcc and g++ or those those
-    builtin function that gcc and g++ required and which EDG fails to include
-    as builtin when compiling with EDG's GNU_COMPATABILITY_MODE (current 
-    default for ROSE).
+rose_edg_required_macros_and_functions.h as compiler generated
+since they are either builtin functions for gcc and g++ or those those
+builtin function that gcc and g++ required and which EDG fails to include
+as builtin when compiling with EDG's GNU_COMPATABILITY_MODE (current 
+default for ROSE).
 
 \todo Need to better handle fiend injection rules, currently the SgFunctionSymbol
-    for a friend function is placed into the global scope.  It likely should be
-    the outer scope for a non-defining declaration and the class scope for a defining 
-    declaration.  But the exact rules for this are more complex.  So the location
-    of the SgFunctionSymbol in the symbol table of SgGlobal is a poor approximation.
+for a friend function is placed into the global scope.  It likely should be
+the outer scope for a non-defining declaration and the class scope for a defining 
+declaration.  But the exact rules for this are more complex.  So the location
+of the SgFunctionSymbol in the symbol table of SgGlobal is a poor approximation.
 
 */
 
@@ -52,13 +52,13 @@ unparsed code.
 /*! \var SgFunctionDeclaration::p_name
 \brief This variable stores the string representing the function name. 
 
-   This variable stores the string representing the function name.  The value is
+This variable stores the string representing the function name.  The value is
 ignored in the case of a member function constructor or destructor (where upon the
 name returned from get_name() is generated from the class name). This handling is
 important for constructors and constructor initializer handling associated with 
 instantiated template class declarations).
 
-   The name of the function is stored in "p_name". However, if the function is a constructor
+The name of the function is stored in "p_name". However, if the function is a constructor
 or destructor the value of "p_name" is ignored (should be unset, perhaps) and the name is
 generated from the unqualified class name.  This handles the complexity of resetting
 templated names which likely have been stored in the constructor before the template
@@ -71,7 +71,7 @@ unparsed code.
 /*! \var SgFunctionDeclaration::p_args
 \brief This variable stores the function parameters (as declared).
 
-   This variable stores the function parameters. The names and types are 
+This variable stores the function parameters. The names and types are 
 stored as they are declared so different for old K&R C style from newer C
 style (both of which are acdeptable within ANSI C!).
 
@@ -80,7 +80,7 @@ style (both of which are acdeptable within ANSI C!).
 /*! \var SgFunctionDeclaration::p_functionModifier
 \brief This variable stores flags representing use of inline, virtual, etc.
 
-   This variable stores what the C++ grammar referes to as "function modifiers".
+This variable stores what the C++ grammar referes to as "function modifiers".
 Values held here are: inline, virtual, pure virtual, default, explicit.
 
 */
@@ -88,7 +88,7 @@ Values held here are: inline, virtual, pure virtual, default, explicit.
 /*! \var SgFunctionDeclaration::p_specialFunctionModifier
 \brief This variable stores flags representing use of constructor, destructor, etc.
 
-   This variable stores what the C++ grammar referes to as "special function modifiers".
+This variable stores what the C++ grammar referes to as "special function modifiers".
 Values held here are: default, not special, constructor, destructor, conversion operator,
 operator.
 
@@ -97,7 +97,7 @@ operator.
 /*! \var SgFunctionDeclaration::p_type
 \brief This variable stores the SgFunctionType.
 
-   This variable stores the SgFunctionType.  All types are shared within
+This variable stores the SgFunctionType.  All types are shared within
 the Sage III AST.
 
 */
@@ -105,7 +105,7 @@ the Sage III AST.
 /*! \var SgFunctionDeclaration::p_decoratorList
 \brief This variable stores a list of decorators.
 
-   This variable stores a list of expressions that decorate this function. This member
+This variable stores a list of expressions that decorate this function. This member
 is intended for use with Python, and should be NULL otherwise.
 
 */
@@ -113,55 +113,55 @@ is intended for use with Python, and should be NULL otherwise.
 /*! \var SgFunctionDeclaration::p_forwardDefinition
 \brief This variable stores the SgFunctionDefinition.
 
-   This variable stores the SgFunctionDefinition. It is presently NULL if
+This variable stores the SgFunctionDefinition. It is presently NULL if
 the declaration is a forward declaration.  This will be made more uniform
 with how defining vs. non-defining declarations are handled in the 
 SgClassDeclaration.
 
 \deprecated This is now redundant with the more general mechanism of defining and
-            non-defining declarations which is implemented at the SgDeclaration level.
+non-defining declarations which is implemented at the SgDeclaration level.
 
 \internal The handling via defining and non-defining declaration for function declarations
-          is not yet implemented and will be implemented similar to that done for class 
-          declarations.
+is not yet implemented and will be implemented similar to that done for class 
+declarations.
 */
 
 /*! \var SgFunctionDeclaration::p_definition
 \brief This variable stores the SgFunctionDefinition.
 
-   This variable stores the SgFunctionDefinition. It is presently NULL if
+This variable stores the SgFunctionDefinition. It is presently NULL if
 the declaration is a forward declaration.  This will be made more uniform
 with how defining vs. non-defining declarations are handled in the 
 SgClassDeclaration.
 
 \deprecated This is now redundant with the more general mechanism of defining and
-            non-defining declarations which is implemented at the SgDeclaration level.
+non-defining declarations which is implemented at the SgDeclaration level.
 
 \internal The handling via defining and non-defining declaration for function declarations
-          is not yet implemented and will be implemented similar to that done for class 
-          declarations.
+is not yet implemented and will be implemented similar to that done for class 
+declarations.
 */
 
 /*! \var SgFunctionDeclaration::p_definition_ref
 \brief This variable stores the SgFunctionDefinition.
 
-   This variable stores the SgFunctionDefinition. It is presently NULL if
+This variable stores the SgFunctionDefinition. It is presently NULL if
 the declaration is a forward declaration.  This will be made more uniform
 with how defining vs. non-defining declarations are handled in the 
 SgClassDeclaration.
 
 \deprecated This is now redundant with the more general mechanism of defining and
-            non-defining declarations which is implemented at the SgDeclaration level.
+non-defining declarations which is implemented at the SgDeclaration level.
 
 \internal The handling via defining and non-defining declaration for function declarations
-          is not yet implemented and will be implemented similar to that done for class 
-          declarations.
+is not yet implemented and will be implemented similar to that done for class 
+declarations.
 */
 
 /*! \var SgFunctionDeclaration::p_mangled_name
 \brief This variable stores the mangled name.
 
-   This variable stores the string representing the mangled function name.
+This variable stores the string representing the mangled function name.
 This name is unique within the AST (as required by C and C++ language definition).
 
 */
@@ -169,7 +169,7 @@ This name is unique within the AST (as required by C and C++ language definition
 /*! \var SgFunctionDeclaration::p_orig_return_type
 \brief This variable stores the SgType pointer representing the function return type.
 
-   This variable stores the function return type (SgType).  All types are shared within
+This variable stores the function return type (SgType).  All types are shared within
 the Sage III AST.  Not clear why it is called the "original return type" since functions
 can't be overloaded upon their return type (virtual or otherwise).
 
@@ -177,23 +177,23 @@ can't be overloaded upon their return type (virtual or otherwise).
 
 /*! \var SgFunctionDeclaration::p_from_template
 \brief This boolean variable records if the function originally came from a template
-    function (now largely redundant information).
+function (now largely redundant information).
 
-   This boolean variable records if the function originally came from a template
+This boolean variable records if the function originally came from a template
 function (now largely redundant information).  The IR now has a special type for
 functions that are instantiated from function templates. 
 
 \deprecated This variable will likely be removed in the future.
 
 \internal This value is ALWAYS true for a SgTemplateInstantiationFunctionDecl and 
-          SgTemplateInstantiationMemberFunctionDecl; otherwise it is ALWAYS false.
+SgTemplateInstantiationMemberFunctionDecl; otherwise it is ALWAYS false.
 
 */
 
 /*! \var SgFunctionDeclaration::p_oldStyleDefinition
 \brief This boolean variable records if the function uses the old style definition.
 
-   This boolean variable records if the function was declared using the old style
+This boolean variable records if the function was declared using the old style
 definition.
 
 \internal This should maybe be moved to the SgFunctionParameterList class.
@@ -209,7 +209,7 @@ definition.
 \fn SgFunctionDeclaration::SgFunctionDeclaration ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgFunctionDeclaration base class.
+This constructor builds the SgFunctionDeclaration base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -222,14 +222,14 @@ definition.
 \fn SgFunctionDeclaration::~SgFunctionDeclaration()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgFunctionDeclaration::isSgFunctionDeclaration (SgNode *s)
 \brief Cast function (from derived class to SgFunctionDeclaration pointer).
 
-   This functions returns a SgFunctionDeclaration pointer for any input of a 
+This functions returns a SgFunctionDeclaration pointer for any input of a 
 pointer to an object derived from a SgFunctionDeclaration.
 
 \return Returns valid pointer to SgFunctionDeclaration if input is derived from a SgLocatedNode.
@@ -239,7 +239,7 @@ pointer to an object derived from a SgFunctionDeclaration.
 \fn SgFunctionDeclaration::isSgFunctionDeclaration (const SgNode *s)
 \brief Cast function (from derived class to SgFunctionDeclaration pointer).
 
-   This functions returns a SgFunctionDeclaration pointer for any input of a 
+This functions returns a SgFunctionDeclaration pointer for any input of a 
 pointer to an object derived from a SgFunctionDeclaration.
 
 \return Returns valid pointer to SgFunctionDeclaration if input is derived from a SgLocatedNode.
@@ -249,15 +249,15 @@ pointer to an object derived from a SgFunctionDeclaration.
 \fn SgFunctionDeclaration::isTemplateFunction () const
 \brief Determines if function is a template or non-template function.
 
-   This function returns true if the current function is explicitly declared to be a
-   template function. It returns fals if it is a normal function, member function, or 
-   member function of a templated class.
+This function returns true if the current function is explicitly declared to be a
+template function. It returns fals if it is a normal function, member function, or 
+member function of a templated class.
 
 \internal This function is required because member function of template are represented by
-          SgTemplateInstantiationMemberFunction IR nodea the same as explicitly templated 
-          member functions.  This function helps distinguish between the two types and is
-          used in determining which functions to output as template specializations (which
-          is now ROSE puts out template instantiations that it generates).
+SgTemplateInstantiationMemberFunction IR nodea the same as explicitly templated 
+member functions.  This function helps distinguish between the two types and is
+used in determining which functions to output as template specializations (which
+is now ROSE puts out template instantiations that it generates).
 
 \return Returns bool value.
 */
