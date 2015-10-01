@@ -131,8 +131,13 @@ void RDTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* cal
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
 
   // uses and defs in argument-expressions
+  int paramNr=0;
   for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
+    VariableId paramId=getParameterVariableId(paramNr);
     transferExpression(lab,*i,element);
+    // insert parameter variable
+    element.insertPair(lab,paramId);
+    paramNr++;
   }
 }
 /*! 
@@ -141,10 +146,16 @@ void RDTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* cal
  */
 void RDTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element0) {
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
-  VariableId varId=getVariableIdMapping()->variableId(lhsVar);
-  element.insertPair(lab,varId);
+  if(lhsVar) {
+    VariableId varId=getVariableIdMapping()->variableId(lhsVar);
+    element.insertPair(lab,varId);
+  }
+  // determine variable-id of dedicated variable for holding the return value
+  VariableId resVarId=getResultVariableId();
+  // remove variable-id pairs of dedicated variable for holding the return value
+  element.removeAllPairsWithVariableId(resVarId);
 }
-//NOTE: UD analysis must take uses of function-call arguments into account
+
 /*! 
   * \author Markus Schordan
   * \date 2013.
@@ -153,15 +164,17 @@ void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition*
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
 
   // generate RDs for each parameter variable
+  int paramNr=0;
   for(SgInitializedNamePtrList::iterator i=formalParameters.begin();
       i!=formalParameters.end();
       ++i) {
     SgInitializedName* formalParameterName=*i;
     assert(formalParameterName);
     VariableId formalParameterVarId=getVariableIdMapping()->variableId(formalParameterName);
-    // it must hold that this VarId does not exist in the RD-element
-    //assert
     element.insertPair(lab,formalParameterVarId);
+    VariableId paramId=getParameterVariableId(paramNr);
+    element.removeAllPairsWithVariableId(paramId);
+    paramNr++;
   }
 }
 
@@ -170,7 +183,6 @@ void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition*
   * \date 2013.
  */
 void RDTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, Lattice& element0) {
-
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
 
   // remove all declared variable at function exit (including function parameter variables)
@@ -178,5 +190,11 @@ void RDTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* 
     VariableId varId=*i;
     element.removeAllPairsWithVariableId(varId);
   }
-  // TODO:: return variable $r
+}
+
+void RDTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* node, Lattice& element0) {
+  RDLattice& element=dynamic_cast<RDLattice&>(element0);
+  transferExpression(lab,node,element);
+  VariableId resVarId=getResultVariableId();
+  element.insertPair(lab,resVarId);
 }
