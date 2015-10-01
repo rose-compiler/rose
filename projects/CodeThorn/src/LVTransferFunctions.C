@@ -23,7 +23,7 @@ void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* nod
 
   // KILL
   // (for programs with pointers we require a set here)
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*_variableIdMapping);
+  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping());
   ROSE_ASSERT(_pointerAnalysisInterface);
   VariableIdSet modVarIds=_pointerAnalysisInterface->getModByPointer();
   // union sets
@@ -36,7 +36,7 @@ void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* nod
     element.removeVariableId(var);
   }
   // GEN
-  VariableIdSet useVarIds=AnalysisAbstractionLayer::useVariables(node,*_variableIdMapping);  
+  VariableIdSet useVarIds=AnalysisAbstractionLayer::useVariables(node,*getVariableIdMapping());  
   for(VariableIdMapping::VariableIdSet::iterator i=useVarIds.begin();i!=useVarIds.end();++i) {
     element.insertVariableId(*i);
   }
@@ -52,7 +52,7 @@ void SPRAY::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDeclar
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(node);
   // same as in transferExpression ... needs to be refined
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*_variableIdMapping);  
+  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping());  
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
     // since multiple memory locations may be modified, we cannot know which one will be updated and cannot remove information add information
     assert(0);
@@ -63,7 +63,7 @@ void SPRAY::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDeclar
   }
 
   SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(declnode);  
-  VariableIdSet useVarIds=AnalysisAbstractionLayer::astSubTreeVariables(initExp,*_variableIdMapping);  
+  VariableIdSet useVarIds=AnalysisAbstractionLayer::astSubTreeVariables(initExp,*getVariableIdMapping());  
   for(VariableIdMapping::VariableIdSet::iterator i=useVarIds.begin();i!=useVarIds.end();++i) {
     element.insertVariableId(*i);
   }
@@ -86,7 +86,7 @@ void SPRAY::LVTransferFunctions::transferFunctionCall(Label lab,  SgFunctionCall
 void SPRAY::LVTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element0) {
   if(lhsVar) {
     LVLattice& element=dynamic_cast<LVLattice&>(element0);
-    VariableId varId=_variableIdMapping->variableId(lhsVar);
+    VariableId varId=getVariableIdMapping()->variableId(lhsVar);
     element.insertVariableId(varId);
   }
 }
@@ -103,7 +103,7 @@ void SPRAY::LVTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefi
       ++i) {
     SgInitializedName* formalParameterName=*i;
     assert(formalParameterName);
-    VariableId formalParameterVarId=_variableIdMapping->variableId(formalParameterName);
+    VariableId formalParameterVarId=getVariableIdMapping()->variableId(formalParameterName);
     element.removeVariableId(formalParameterVarId);
   }
 }

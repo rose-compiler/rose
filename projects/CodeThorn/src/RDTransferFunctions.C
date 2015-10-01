@@ -40,7 +40,7 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Latt
   // 2) add (lab,lhs.varid)
 
   // (for programs with pointers we require a set here)
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*_variableIdMapping);  
+  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping());  
   ROSE_ASSERT(_pointerAnalysisInterface);
   if(hasDereferenceOperation(node)) {
     VariableIdSet modVarIds=_pointerAnalysisInterface->getModByPointer();
@@ -58,9 +58,9 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Latt
       VariableId next_var_id;
       prev_var_id.setIdCode(var.getIdCode() - 1);
       next_var_id.setIdCode(var.getIdCode() + 1);
-      SgSymbol *var_smb = _variableIdMapping->getSymbol(var);
-      SgSymbol *prev_var_smb = _variableIdMapping->getSymbol(prev_var_id);
-      SgSymbol *next_var_smb = _variableIdMapping->getSymbol(next_var_id);
+      SgSymbol *var_smb = getVariableIdMapping()->getSymbol(var);
+      SgSymbol *prev_var_smb = getVariableIdMapping()->getSymbol(prev_var_id);
+      SgSymbol *next_var_smb = getVariableIdMapping()->getSymbol(next_var_id);
       if((var_smb == prev_var_smb) || (var_smb == next_var_smb))
         element.removeAllPairsWithVariableId(var);
     }
@@ -86,22 +86,22 @@ void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* 
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(node);
   // same as in transferExpression ... needs to be refined
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*_variableIdMapping);  
+  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping());  
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
     // If an array is defined, we add all its elements to def set.
     // Remove pairs corresponding to array elements as in transferExpression()
     // but now assert that only elements of one array were modified.
     unsigned elements = 0;
-    SgSymbol *array_smb = _variableIdMapping->getSymbol(*(defVarIds.begin()));
+    SgSymbol *array_smb = getVariableIdMapping()->getSymbol(*(defVarIds.begin()));
     for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
       VariableId var = *i;
       VariableId prev_var_id;
       VariableId next_var_id;
       prev_var_id.setIdCode(var.getIdCode() - 1);
       next_var_id.setIdCode(var.getIdCode() + 1);
-      SgSymbol *var_smb = _variableIdMapping->getSymbol(var);
-      SgSymbol *prev_var_smb = _variableIdMapping->getSymbol(prev_var_id);
-      SgSymbol *next_var_smb = _variableIdMapping->getSymbol(next_var_id);
+      SgSymbol *var_smb = getVariableIdMapping()->getSymbol(var);
+      SgSymbol *prev_var_smb = getVariableIdMapping()->getSymbol(prev_var_id);
+      SgSymbol *next_var_smb = getVariableIdMapping()->getSymbol(next_var_id);
       if((var_smb == prev_var_smb) || (var_smb == next_var_smb)) {
         element.removeAllPairsWithVariableId(var);
         elements++;
@@ -131,8 +131,13 @@ void RDTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* cal
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
 
   // uses and defs in argument-expressions
+  int paramNr=0;
   for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
+    VariableId paramId=getParameterVariableId(paramNr);
     transferExpression(lab,*i,element);
+    // insert parameter variable
+    element.insertPair(lab,paramId);
+    paramNr++;
   }
 }
 /*! 
@@ -141,10 +146,16 @@ void RDTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* cal
  */
 void RDTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element0) {
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
-  VariableId varId=_variableIdMapping->variableId(lhsVar);
-  element.insertPair(lab,varId);
+  if(lhsVar) {
+    VariableId varId=getVariableIdMapping()->variableId(lhsVar);
+    element.insertPair(lab,varId);
+  }
+  // determine variable-id of dedicated variable for holding the return value
+  VariableId resVarId=getResultVariableId();
+  // remove variable-id pairs of dedicated variable for holding the return value
+  element.removeAllPairsWithVariableId(resVarId);
 }
-//NOTE: UD analysis must take uses of function-call arguments into account
+
 /*! 
   * \author Markus Schordan
   * \date 2013.
@@ -153,15 +164,17 @@ void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition*
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
 
   // generate RDs for each parameter variable
+  int paramNr=0;
   for(SgInitializedNamePtrList::iterator i=formalParameters.begin();
       i!=formalParameters.end();
       ++i) {
     SgInitializedName* formalParameterName=*i;
     assert(formalParameterName);
-    VariableId formalParameterVarId=_variableIdMapping->variableId(formalParameterName);
-    // it must hold that this VarId does not exist in the RD-element
-    //assert
+    VariableId formalParameterVarId=getVariableIdMapping()->variableId(formalParameterName);
     element.insertPair(lab,formalParameterVarId);
+    VariableId paramId=getParameterVariableId(paramNr);
+    element.removeAllPairsWithVariableId(paramId);
+    paramNr++;
   }
 }
 
@@ -170,7 +183,6 @@ void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition*
   * \date 2013.
  */
 void RDTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, Lattice& element0) {
-
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
 
   // remove all declared variable at function exit (including function parameter variables)
@@ -178,5 +190,11 @@ void RDTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* 
     VariableId varId=*i;
     element.removeAllPairsWithVariableId(varId);
   }
-  // TODO:: return variable $r
+}
+
+void RDTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* node, Lattice& element0) {
+  RDLattice& element=dynamic_cast<RDLattice&>(element0);
+  transferExpression(lab,node,element);
+  VariableId resVarId=getResultVariableId();
+  element.insertPair(lab,resVarId);
 }

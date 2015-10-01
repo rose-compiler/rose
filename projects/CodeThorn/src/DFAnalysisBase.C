@@ -206,8 +206,7 @@ DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/*
 void DFAnalysisBase::initializeTransferFunctions() {
   ROSE_ASSERT(_transferFunctions);
   ROSE_ASSERT(getLabeler());
-  _transferFunctions->setLabeler(getLabeler());
-  _transferFunctions->setVariableIdMapping(getVariableIdMapping());
+  _transferFunctions->setProgramAbstractionLayer(_programAbstractionLayer);
   if(_pointerAnalysisInterface==0)
     _transferFunctions->setPointerAnalysis(_pointerAnalysisEmptyImplementation);
   else
