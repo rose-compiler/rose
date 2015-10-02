@@ -26,8 +26,7 @@ SPRAY::IntervalTransferFunctions::~IntervalTransferFunctions() {
   * \date 2015.
  */
 void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate) {
-  IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&pstate);
-  ROSE_ASSERT(ips);
+  IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(pstate);
   if(isSgExprStatement(condStmt)) {
     SgExpression* cond=isSgExpression(SgNodeHelper::getExprStmtChild(condStmt));
     ROSE_ASSERT(cond);
@@ -39,9 +38,9 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
     VariableId varId;
     if(SgVarRefExp* varRefExp=isSgVarRefExp(cond)) {
       // if the switch-cond is a variable set the interval to the case label (this function is called for each case label)
-      varId=_variableIdMapping->variableId(varRefExp);
+      varId=getVariableIdMapping()->variableId(varRefExp);
       ROSE_ASSERT(varId.isValid());
-      knownValueIntervalOfSwitchVar=ips->getVariable(varId);
+      knownValueIntervalOfSwitchVar=ips.getVariable(varId);
     } else {
       // the switch-cond is not a variable. We evaluate the expression but do not maintain its interval in a program variable
       knownValueIntervalOfSwitchVar=evalExpression(lab, cond, pstate);
@@ -71,11 +70,11 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
 #endif
     if(!NumberIntervalLattice::haveOverlap(knownValueIntervalOfSwitchVar,num)) {
       //cout<<"INFO: state detected non-reachable."<<endl;
-      ips->setBot();
+      ips.setBot();
       return;
     }
     if(varId.isValid()) {
-      ips->setVariable(varId,num);
+      ips.setVariable(varId,num);
     }
   } else {
     cerr<<"Error: switch condition not a SgExprStmt. Unsupported program structure."<<endl;
@@ -91,7 +90,7 @@ void SPRAY::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pst
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(pstate);
   Label lab0=edge.source;
   //Label lab1=edge.target;
-  SgNode* node=_labeler->getNode(lab0);
+  SgNode* node=getLabeler()->getNode(lab0);
   if(isSgExprStatement(node)) {
     node=SgNodeHelper::getExprStmtChild(node);
   }
@@ -127,11 +126,10 @@ void SPRAY::IntervalTransferFunctions::transferExpression(Label lab, SgExpressio
 }
 
 void SPRAY::IntervalTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* node, Lattice& pstate) {
-  IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&pstate);
-  ROSE_ASSERT(ips);
+  IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(pstate);
   NumberIntervalLattice res=evalExpression(lab,node,pstate);
   VariableId resVarId=getResultVariableId();
-  ips->setVariable(resVarId,res);
+  ips.setVariable(resVarId,res);
 }
 
 /*! 
@@ -139,11 +137,11 @@ void SPRAY::IntervalTransferFunctions::transferReturnStmtExpr(Label lab, SgExpre
   * \date 2015.
  */
 SPRAY::NumberIntervalLattice SPRAY::IntervalTransferFunctions::evalExpression(Label lab, SgExpression* node, Lattice& pstate) {
-  //ROSE_ASSERT(_variableIdMapping); TODO
+  //ROSE_ASSERT(getVariableIdMapping()); TODO
   NumberIntervalLattice niLattice;
   //cout<<"TINFO: transferExpression "<<node->unparseToString()<<endl;
   _cppExprEvaluator->setPropertyState(&pstate);
-  //cout<<"PSTATE:";pstate.toStream(cout,_variableIdMapping);cout<<endl;
+  //cout<<"PSTATE:";pstate.toStream(cout,getVariableIdMapping());cout<<endl;
   niLattice=_cppExprEvaluator->evaluate(node);
   return niLattice;
 }
@@ -155,17 +153,16 @@ SPRAY::NumberIntervalLattice SPRAY::IntervalTransferFunctions::evalExpression(La
 void SPRAY::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element) {
   ROSE_ASSERT(this!=0);
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
-  ROSE_ASSERT(_variableIdMapping);
-  VariableId varId=_variableIdMapping->variableId(node);
-  IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
-  ROSE_ASSERT(ips);
-  ips->addVariable(varId);
+  ROSE_ASSERT(getVariableIdMapping());
+  VariableId varId=getVariableIdMapping()->variableId(node);
+  IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
+  ips.addVariable(varId);
   SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(declnode);
   if(initExp) {
     //NumberIntervalLattice res=_cppExprEvaluator->evaluate(initExp,ips);
-    NumberIntervalLattice res=evalExpression(lab,initExp,*ips);
+    NumberIntervalLattice res=evalExpression(lab,initExp,ips);
     ROSE_ASSERT(!res.isBot());
-    ips->setVariable(varId,res);
+    ips.setVariable(varId,res);
   }
 }
 
@@ -176,11 +173,11 @@ void SPRAY::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariable
  */
 void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element) {
   int paramNr=0;
-  IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
+  IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
   for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
     VariableId paramId=getParameterVariableId(paramNr);
-    ips->addVariable(paramId);
-    ips->setVariable(paramId,evalExpression(lab,*i,element));
+    ips.addVariable(paramId);
+    ips.setVariable(paramId,evalExpression(lab,*i,ips));
     paramNr++;
   }
 }
@@ -189,7 +186,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctio
   * \date 2015.
  */
 void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element) {
-  IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
+  IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
   if(isSgCompoundAssignOp(callExp->get_parent())) {
     cerr<<"Error: transferFunctionCallReturn: compound assignment of function call results not supported. Normalization required."<<endl;
     exit(1);
@@ -198,12 +195,12 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgV
   VariableId resVarId=getResultVariableId();
   if(lhsVar!=0) {
     //cout<<"DEBUG: updated var=f(...)."<<endl;
-    VariableId varId=_variableIdMapping->variableId(lhsVar);  
+    VariableId varId=getVariableIdMapping()->variableId(lhsVar);  
     // set lhs-var to the return-value
-    ips->setVariable(varId,ips->getVariable(resVarId));
+    ips.setVariable(varId,ips.getVariable(resVarId));
   }
   // remove the return-variable from the state (the return-variable is temporary)
-  ips->removeVariable(resVarId);
+  ips.removeVariable(resVarId);
 }
 
 /*! 
@@ -217,14 +214,14 @@ void SPRAY::IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFuncti
       i!=formalParameters.end();
       ++i) {
     SgInitializedName* formalParameterName=*i;
-    VariableId formalParameterVarId=_variableIdMapping->variableId(formalParameterName);
-    IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
+    VariableId formalParameterVarId=getVariableIdMapping()->variableId(formalParameterName);
+    IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
     // get value of actual parameter
     VariableId paramId=getParameterVariableId(paramNr);
     // remove parameter variable
-    ips->addVariable(formalParameterVarId);
-    ips->setVariable(formalParameterVarId,ips->getVariable(paramId));
-    ips->removeVariable(paramId);
+    ips.addVariable(formalParameterVarId);
+    ips.setVariable(formalParameterVarId,ips.getVariable(paramId));
+    ips.removeVariable(paramId);
     paramNr++;
   }
 }
@@ -237,8 +234,8 @@ void SPRAY::IntervalTransferFunctions::transferFunctionExit(Label lab, SgFunctio
   // remove all declared variables at function exit (including function parameter variables)
   for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {
     VariableId varId=*i;
-    IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
-    ips->removeVariable(varId);
+    IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
+    ips.removeVariable(varId);
   }
 }
 
