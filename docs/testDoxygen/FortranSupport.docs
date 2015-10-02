@@ -1,4 +1,5 @@
 /*! \defgroup FortranSupport ROSE Fortran Support
+    \ingroup old_documentation
 
     This page describes some of the current collaboration with Rice to define the 
     Fortran Support within ROSE.  

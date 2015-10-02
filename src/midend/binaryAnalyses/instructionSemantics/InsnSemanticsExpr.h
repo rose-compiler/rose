@@ -135,7 +135,7 @@ public:
  *
  *  In order that subtrees can be freely assigned as children of other nodes (provided the structure as a whole remains a
  *  lattice and not a graph with cycles), tree nodes are always referenced through shared-ownership pointers
- *  (<code>Sawyer::SharedPointer<const T></code> where @t T is one of the tree node types: TreeNode, InternalNode, or LeafNode.
+ *  (<code>Sawyer::SharedPointer<const T></code> where @p T is one of the tree node types: TreeNode, InternalNode, or LeafNode.
  *  For convenience, we define TreeNodePtr, InternalNodePtr, and LeafNodePtr typedefs.  The pointers themselves collectively
  *  own the pointer to the tree node and thus the tree node pointer should never be deleted explicitly.
  *
@@ -780,7 +780,7 @@ nnodesUnique(InputIterator begin, InputIterator end)
 
 /** Find common subexpressions.
  *
- *  This is similar to @ref TreeNodePtr::findCommonSubexpressions except the analysis is over a collection of expressions
+ *  This is similar to @ref TreeNode::findCommonSubexpressions except the analysis is over a collection of expressions
  *  rather than a single expression.
  *
  * @{ */

@@ -165,7 +165,7 @@ class Disassembler;
  *
  *  @section AsmUnparser_Examples Examples
  *
- *  @subsection Ex1 Changing register names
+ *  @subsection AsmUnparser_Example1 Changing register names
  *
  *  This example shows how one can replace a register name with something else.  Let's say that MIPS32 Release 1 instructions
  *  are being unparsed and you'd rather see "lr" (for "link register") rather than "r31" or "ra".  This can be accomplished by
@@ -182,7 +182,7 @@ class Disassembler;
  *  unparser.unparse(std::cout, interp);
  *  @endcode
  *
- *  @subsection Ex2 Unparsing to HTML
+ *  @subsection AsmUnparser_Example2 Unparsing to HTML
  *
  *  This next example shows how to escape entire instructions for HTML output, and surround each instruction with an HTML table
  *  row.  We could have just as easily combined all three parts into a single functor, but doing it this way makes the example
