@@ -92,7 +92,7 @@
  *
  *    <tr>
  *      <td>GNU autotools</td>
- *      <td>Required</td>
+ *      <td>Required (or cmake)</td>
  *      <td>automake-1.11.1 or later; autoconf-2.59 or later; libtool-1.5.6 or later</td>
  *      <td><a href="https://www.gnu.org/software/automake">automake-1.11.1</a>,
  *          <a href="http://www.gnu.org/software/autoconf/autoconf.html">autoconf-2.67</a>,
@@ -103,7 +103,7 @@
  *
  *    <tr>
  *      <td><a href="http://www.cmake.org">CMake</a></td>
- *      <td>Required</td>
+ *      <td>Required (or autotools)</td>
  *      <td>2.8.12 or later</td>
  *      <td>2.8.12</td>
  *      <td>Configures ROSE and generates makefiles. You can install either this dependency or the GNU autotools. See @ref
@@ -124,6 +124,15 @@
  *      <td>Sun/Oracle version 7</td>
  *      <td>1.7.0_51</td>
  *      <td>Runtime for Java and Fortran frontends in ROSE. See @ref installing_jre.</td>
+ *    </tr>
+ *
+ *    <tr>
+ *      <td>Java Development Kit</td>
+ *      <td>Required (cmake)</td>
+ *      <td>Any version 7</td>
+ *      <td>OpenJDK 7</td>
+ *      <td>A JDK is required when configuring ROSE with cmake, even if the Java and Fortran frontends are disabled.
+ *          See @ref installing_jdk.</td>
  *    </tr>
  *    
  *    <tr>
