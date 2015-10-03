@@ -50,14 +50,14 @@ mpaStaticInterproceduralSlicing_extraDist=\
 	$(mpaStaticInterproceduralSlicingPath)/CMakeLists.txt
 
 
-mpaStaticInterproceduralSlicing_cleanLocal=\
-	rm -rf \
-		$(mpaStaticInterproceduralSlicingPath)/Templates.DB \
-		$(mpaStaticInterproceduralSlicingPath)/ii_files \
-		$(mpaStaticInterproceduralSlicingPath)/ti_files \
-		$(mpaStaticInterproceduralSlicingPath)/cxx_templates
+mpaStaticInterproceduralSlicing_cleanLocal=
+#	rm -rf \
+#		$(mpaStaticInterproceduralSlicingPath)/Templates.DB \
+#		$(mpaStaticInterproceduralSlicingPath)/ii_files \
+#		$(mpaStaticInterproceduralSlicingPath)/ti_files \
+#		$(mpaStaticInterproceduralSlicingPath)/cxx_templates
 
 
-mpaStaticInterproceduralSlicing_distCleanLocal=\
-	rm -rf \
-		$(mpaStaticInterproceduralSlicingPath)/Templates.DB
+mpaStaticInterproceduralSlicing_distCleanLocal=
+#	rm -rf \
+#		$(mpaStaticInterproceduralSlicingPath)/Templates.DB

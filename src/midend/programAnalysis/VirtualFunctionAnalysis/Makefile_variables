@@ -33,14 +33,14 @@ mpaVirtualFunctionAnalysis_extraDist=\
 	$(mpaVirtualFunctionAnalysisPath)/CMakeLists.txt
 
 
-mpaVirtualFunctionAnalysis_cleanLocal=\
-	rm -rf \
-		$(mpaVirtualFunctionAnalysisPath)/Templates.DB \
-		$(mpaVirtualFunctionAnalysisPath)/ii_files \
-		$(mpaVirtualFunctionAnalysisPath)/ti_files \
-		$(mpaVirtualFunctionAnalysisPath)/cxx_templates
+mpaVirtualFunctionAnalysis_cleanLocal=
+#	rm -rf \
+#		$(mpaVirtualFunctionAnalysisPath)/Templates.DB \
+#		$(mpaVirtualFunctionAnalysisPath)/ii_files \
+#		$(mpaVirtualFunctionAnalysisPath)/ti_files \
+#		$(mpaVirtualFunctionAnalysisPath)/cxx_templates
 
 
-mpaVirtualFunctionAnalysis_distCleanLocal=\
-	rm -rf \
-		$(mpaVirtualFunctionAnalysisPath)/Templates.DB
+mpaVirtualFunctionAnalysis_distCleanLocal=
+#	rm -rf \
+#		$(mpaVirtualFunctionAnalysisPath)/Templates.DB
