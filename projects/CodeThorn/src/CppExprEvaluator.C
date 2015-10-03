@@ -110,15 +110,6 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     case V_SgCastExp: return evaluate(operand);
     case V_SgMinusMinusOp:
     case V_SgPlusPlusOp: {
-      int incdecVal=0;
-      if(isSgPlusPlusOp(node)) {
-        incdecVal=1;
-      } else if(isSgMinusMinusOp(node)) {
-          incdecVal=-1;
-      } else {
-        cerr<<"Error: CppExprEvaluator: unknown operator in ++/-- computation:"<<node->sage_class_name()<<endl;
-        exit(1);
-      }
       SgVarRefExp* varRefExp=isSgVarRefExp(SgNodeHelper::getFirstChild(node));
       if(varRefExp) {
         VariableId varId=variableIdMapping->variableId(varRefExp);

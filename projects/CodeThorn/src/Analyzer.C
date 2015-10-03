@@ -3486,7 +3486,7 @@ void Analyzer::runSolver9() {
 #endif
   flow.boostify();
   reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
-  cerr<<"INFO: number of error labels: "<<reachabilityResults.size()<<endl;
+  cout<<"INFO: number of error labels: "<<reachabilityResults.size()<<endl;
   int maxInputVal = *( std::max_element(_inputVarValues.begin(), _inputVarValues.end()) ); //required for parsing to characters
   cout<<"INFO: maximum length of input patterns: "<< (_reconstructMaxInputDepth / 2) <<endl;
   cout<<"INFO: maximum number of pattern repetitions: "<<_reconstructMaxRepetitions<<endl;
@@ -3572,7 +3572,7 @@ void Analyzer::runSolver10() {
       assertionsToFind++;
     }
   }
-  cerr<<"INFO: number of error labels to find: " << assertionsToFind << " (out of " << reachabilityResults.size() << ")" << endl;
+  cout<<"INFO: number of error labels to find: " << assertionsToFind << " (out of " << reachabilityResults.size() << ")" << endl;
   string expMode = "";
   if (_patternSearchExplorationMode == EXPL_BREADTH_FIRST) {
     expMode = "breadth-first";
@@ -3597,7 +3597,7 @@ void Analyzer::runSolver10() {
   int processedStates = 0;
   int previousProcessedStates = 0;
   int checkIfFinishedEvery = 500;
-  int previousFinishedCheckStates = 0;
+  //int previousFinishedCheckStates = 0;
   unsigned int currentMaxDepth = 0; //debugging
   int threadNum;
   int workers=_numberOfThreadsToUse;
@@ -3621,7 +3621,7 @@ void Analyzer::runSolver10() {
         if (finished) {
           earlyTermination = true;
         }
-        previousFinishedCheckStates = processedStates;
+        //previousFinishedCheckStates = processedStates;
       }
       // display a status report every ~10.000 non-error PStates
       if(threadNum==0 && _displayDiff && (processedStates >= (previousProcessedStates+_displayDiff))) {
