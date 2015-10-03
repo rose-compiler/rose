@@ -100,7 +100,7 @@ mpaAnnotationLanguageParser_cleanLocal=\
 		lex.ann.c \
 		language-parser.cc \
 		language.tab.h \
-		tempBisonOutput.*; \
-	rm -f \
-		$(mpaAnnotationLanguageParserPath)/*.lo \
-		$(mpaAnnotationLanguageParserPath)/*.la
+		tempBisonOutput.*; 
+#	rm -f \
+#		$(mpaAnnotationLanguageParserPath)/*.lo \
+#		$(mpaAnnotationLanguageParserPath)/*.la

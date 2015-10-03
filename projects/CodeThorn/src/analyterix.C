@@ -494,15 +494,11 @@ int main(int argc, char* argv[]) {
     }
 
   cout<<"STATUS: computing variableid mapping"<<endl;
-  VariableIdMapping variableIdMapping;
+  ProgramAbstractionLayer* programAbstractionLayer=new ProgramAbstractionLayer();
+  programAbstractionLayer->initialize(root);
   if (args.count("print-varid-mapping-array")) {
-    variableIdMapping.setModeVariableIdForEachArrayElement(true);
+    programAbstractionLayer->getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
   }
-
-  variableIdMapping.computeVariableSymbolMapping(root);
-  cout<<"VariableIdMapping size: "<<variableIdMapping.getVariableIdSet().size()<<endl;
-  Labeler* labeler=new Labeler(root);
-  //cout<<"Labelling:\n"<<labeler->toString()<<endl;
 
 #if 0
   IOLabeler* iolabeler=new IOLabeler(root,&variableIdMapping);
@@ -510,40 +506,40 @@ int main(int argc, char* argv[]) {
 #endif
 
   if (args.count("print-varid-mapping")||args.count("print-varid-mapping-array")) {
-    variableIdMapping.toStream(cout);
+    programAbstractionLayer->getVariableIdMapping()->toStream(cout);
     return 0;
   }
 
   if(args.count("print-label-mapping")) {
-    cout<<labeler->toString();
+    cout<<(programAbstractionLayer->getLabeler()->toString());
     return 0;
   }
 
   if(args.count("icfg-dot")) {
-    CFAnalysis* cfAnalysis=new CFAnalysis(labeler);
+    CFAnalysis* cfAnalysis=new CFAnalysis(programAbstractionLayer->getLabeler());
     Flow flow=cfAnalysis->flow(root);
     if(option_optimize_icfg) {
       cfAnalysis->optimizeFlow(flow);
     }
     InterFlow interFlow=cfAnalysis->interFlow(flow);
     cfAnalysis->intraInterFlow(flow,interFlow);
-    string dotString=flow.toDot(labeler);
+    string dotString=flow.toDot(programAbstractionLayer->getLabeler());
     writeFile("icfg.dot",dotString);
 
     cout << "generating icfg-clustered.dot."<<endl;
-    DataDependenceVisualizer ddvis(labeler,&variableIdMapping,"none");
+    DataDependenceVisualizer ddvis(programAbstractionLayer->getLabeler(),programAbstractionLayer->getVariableIdMapping(),"none");
     ddvis.generateDotFunctionClusters(root,cfAnalysis,"icfg-clustered.dot",false);
 
     delete cfAnalysis;
     exit(0);
   }
-  runAnalyses(root, labeler, &variableIdMapping);
+  runAnalyses(root, programAbstractionLayer->getLabeler(), programAbstractionLayer->getVariableIdMapping());
 
   cout << "INFO: generating annotated source code."<<endl;
   root->unparse(0,0);
 
   if(option_rose_rd_analysis) {
-    Experimental::RoseRDAnalysis::generateRoseRDDotFiles(labeler,root);
+    Experimental::RoseRDAnalysis::generateRoseRDDotFiles(programAbstractionLayer->getLabeler(),root);
   }
 
   cout<< "STATUS: finished."<<endl;

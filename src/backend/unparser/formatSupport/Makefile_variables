@@ -12,10 +12,10 @@ unparseFormatSupport_extraDist=\
 	$(formatSupportPath)/CMakeLists.txt
 
 
-unparseFormatSupport_cleanLocal=\
-	rm -rf \
-		$(formatSupportPath)/Templates.DB \
-		$(formatSupportPath)/ii_files \
-		$(formatSupportPath)/ti_files \
-		$(formatSupportPath)/core
+unparseFormatSupport_cleanLocal=
+#	rm -rf \
+#		$(formatSupportPath)/Templates.DB \
+#		$(formatSupportPath)/ii_files \
+#		$(formatSupportPath)/ti_files \
+#		$(formatSupportPath)/core
 

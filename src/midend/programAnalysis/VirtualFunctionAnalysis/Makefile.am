@@ -12,10 +12,10 @@ noinst_LTLIBRARIES = libVirtualFunctionAnalysis.la
 libVirtualFunctionAnalysis_la_SOURCES = $(libVirtualFunctionAnalysisSources)
 
 clean-local:
-	rm -rf Templates.DB ii_files ti_files cxx_templates
+#	rm -rf ./Templates.DB ./ii_files ./ti_files ./cxx_templates
 
 distclean-local:
-	rm -rf Templates.DB
+#	rm -rf ./Templates.DB
 
 pkginclude_HEADERS = IntraProcDataFlowAnalysis.h InterProcDataFlowAnalysis.h IntraProcAliasAnalysis.h PtrAliasAnalysis.h VirtualFunctionAnalysis.h 
 
