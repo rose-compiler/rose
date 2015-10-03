@@ -25,6 +25,7 @@ namespace SageInterface {
   ROSE_DLL_API void setSourcePosition(SgNode* node);
 }
 
+/** Functions that build an AST. */
 namespace SageBuilder 
 {
 
