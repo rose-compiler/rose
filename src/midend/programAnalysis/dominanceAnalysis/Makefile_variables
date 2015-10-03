@@ -11,14 +11,14 @@ mpaDominanceAnalysis_extraDist=\
 	$(mpaDominanceAnalysisPath)/CMakeLists.txt
 
 
-mpaDominanceAnalysis_cleanLocal=\
-	rm -rf \
-		$(mpaDominanceAnalysisPath)/Templates.DB \
-		$(mpaDominanceAnalysisPath)/ii_files \
-		$(mpaDominanceAnalysisPath)/ti_files \
-		$(mpaDominanceAnalysisPath)/cxx_templates
+mpaDominanceAnalysis_cleanLocal=
+#	rm -rf \
+#		$(mpaDominanceAnalysisPath)/Templates.DB \
+#		$(mpaDominanceAnalysisPath)/ii_files \
+#		$(mpaDominanceAnalysisPath)/ti_files \
+#		$(mpaDominanceAnalysisPath)/cxx_templates
 
 
-mpaDominanceAnalysis_distCleanLocal=\
-	rm -rf \
-		$(mpaDominanceAnalysisPath)/Templates.DB
+mpaDominanceAnalysis_distCleanLocal=
+#	rm -rf \
+#		$(mpaDominanceAnalysisPath)/Templates.DB

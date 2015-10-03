@@ -9,6 +9,6 @@ unparseX10CodeGeneration_includeHeaders=\
 unparseX10CodeGeneration_extraDist=\
 	$(x10CodeGenerationPath)/CMakeLists.txt
 
-unparseX10CodeGeneration_cleanLocal=\
-	rm -rf $(x10CodeGenerationPath)/core
+unparseX10CodeGeneration_cleanLocal=
+#	rm -rf $(x10CodeGenerationPath)/core
 
