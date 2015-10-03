@@ -20,8 +20,8 @@ unparseLanguageIndependenceSupport_extraDist=\
 	$(languageIndependenceSupportPath)/CMakeLists.txt
 
 
-unparseLanguageIndependenceSupport_cleanLocal=\
-	rm -rf \
-		$(languageIndependenceSupportPath)/ii_files \
-		$(languageIndependenceSupportPath)/ti_files \
-		$(languageIndependenceSupportPath)/core
+unparseLanguageIndependenceSupport_cleanLocal=
+#	rm -rf \
+#		$(languageIndependenceSupportPath)/ii_files \
+#		$(languageIndependenceSupportPath)/ti_files \
+#		$(languageIndependenceSupportPath)/core

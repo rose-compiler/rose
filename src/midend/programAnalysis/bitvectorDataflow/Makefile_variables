@@ -36,14 +36,14 @@ mpaBitvectorDataflow_extraDist=\
 	$(mpaBitvectorDataflowPath)/CMakeLists.txt
 
 
-mpaBitvectorDataflow_cleanLocal=\
-	rm -rf \
-		$(mpaBitvectorDataflowPath)/Templates.DB \
-		$(mpaBitvectorDataflowPath)/ii_files \
-		$(mpaBitvectorDataflowPath)/ti_files \
-		$(mpaBitvectorDataflowPath)/cxx_templates
+mpaBitvectorDataflow_cleanLocal=
+#	rm -rf \
+#		$(mpaBitvectorDataflowPath)/Templates.DB \
+#		$(mpaBitvectorDataflowPath)/ii_files \
+#		$(mpaBitvectorDataflowPath)/ti_files \
+#		$(mpaBitvectorDataflowPath)/cxx_templates
 
 
-mpaBitvectorDataflow_distCleanLocal=\
-	rm -rf \
-		$(mpaBitvectorDataflowPath)/Templates.DB
+mpaBitvectorDataflow_distCleanLocal=
+#	rm -rf \
+#		$(mpaBitvectorDataflowPath)/Templates.DB

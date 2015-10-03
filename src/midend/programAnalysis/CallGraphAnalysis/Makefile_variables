@@ -21,14 +21,14 @@ mpaCallGraphAnalysis_extraDist=\
 	$(mpaCallGraphAnalysisPath)/CMakeLists.txt
 
 
-mpaCallGraphAnalysis_cleanLocal=\
-	rm -rf \
-		$(mpaCallGraphAnalysisPath)/Templates.DB \
-		$(mpaCallGraphAnalysisPath)/ii_files \
-		$(mpaCallGraphAnalysisPath)/ti_files \
-		$(mpaCallGraphAnalysisPath)/cxx_templates
+mpaCallGraphAnalysis_cleanLocal=
+#	rm -rf \
+#		$(mpaCallGraphAnalysisPath)/Templates.DB \
+#		$(mpaCallGraphAnalysisPath)/ii_files \
+#		$(mpaCallGraphAnalysisPath)/ti_files \
+#		$(mpaCallGraphAnalysisPath)/cxx_templates
 
 
-mpaCallGraphAnalysis_distCleanLocal=\
-	rm -rf \
-		$(mpaCallGraphAnalysisPath)/Templates.DB
+mpaCallGraphAnalysis_distCleanLocal=
+#	rm -rf \
+#		$(mpaCallGraphAnalysisPath)/Templates.DB
