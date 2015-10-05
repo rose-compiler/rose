@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# AUTOMAKE_OPTIONS = subdir-objects
+
 AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES) -I$(srcdir)/graph -I$(srcdir)/libraryIdentification 
 
 noinst_LTLIBRARIES = libbinaryMidend.la

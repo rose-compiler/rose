@@ -30,14 +30,14 @@ mpaCFG_extraDist=\
 	$(mpaCFGPath)/CMakeLists.txt
 
 
-mpaCFG_cleanLocal=\
-	rm -rf \
-		$(mpaCFGPath)/Templates.DB \
-		$(mpaCFGPath)/ii_files \
-		$(mpaCFGPath)/ti_files \
-		$(mpaCFGPath)/cxx_templates
+mpaCFG_cleanLocal=
+#	rm -rf \
+#		$(mpaCFGPath)/Templates.DB \
+#		$(mpaCFGPath)/ii_files \
+#		$(mpaCFGPath)/ti_files \
+#		$(mpaCFGPath)/cxx_templates
 
 
-mpaCFG_distCleanLocal=\
-	rm -rf \
-		$(mpaCFGPath)/Templates.DB
+mpaCFG_distCleanLocal=
+#	rm -rf \
+#		$(mpaCFGPath)/Templates.DB
