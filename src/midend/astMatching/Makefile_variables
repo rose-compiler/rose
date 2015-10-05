@@ -3,7 +3,7 @@
 mAstMatching_built_sources=matcherparser.C 
 
 mAstMatching_la_sources=\
-	matcherparser.C \
+	$(mAstMatchingPath)/matcherparser.C \
 	$(mAstMatchingPath)/RoseAst.C \
 	$(mAstMatchingPath)/AstMatching.C \
 	$(mAstMatchingPath)/MatchOperation.C
@@ -14,6 +14,7 @@ mAstMatching_libadd=\
 mAstMatching_includeHeaders=\
 	$(mAstMatchingPath)/RoseAst.h \
 	$(mAstMatchingPath)/matcherparser_decls.h \
+	$(mAstMatchingPath)/matcherparser.h \
 	$(mAstMatchingPath)/AstMatching.h \
 	$(mAstMatchingPath)/MatchOperation.h
 
@@ -21,24 +22,21 @@ mAstMatching_extraDist=\
 	$(mAstMatchingPath)/CMakeLists.txt \
 	$(mAstMatchingPath)/AstMatching.docs \
 	$(mAstMatchingPath)/matcherlexer.ll \
-	$(mAstMatchingPath)/matcherparser.yy \
-	$(builddir)/matcherparser.C \
-	$(builddir)/matcherparser.h
+	$(mAstMatchingPath)/matcherparser.yy
 
 mAstMatching_cleanLocal=\
 	rm -rf \
-        $(mAstMatchingPath)/matcherparser.h \
-        $(mAstMatchingPath)/matcherparser.C \
 		$(mAstMatchingPath)/cxx_templates \
 		$(mAstMatchingPath)/ii_files \
 		$(mAstMatchingPath)/ti_files \
-		$(mAstMatchingPath)/Templates.DB
+        	$(mAstMatchingPath)/Templates.DB
 
 mAstMatching_distCleanLocal=\
 	rm -rf \
 		$(mAstMatchingPath)/Templates.DB
 
 # explicit rules because of multiple bison parser
+# this file is a tracked file now. It will only be rebuilt if manually deleted
 matcherparser.C: $(srcdir)/$(mAstMatchingPath)/matcherlexer.ll $(srcdir)/$(mAstMatchingPath)/matcherparser.yy
 	$(AM_V_GEN)
 	@$(YACC) $(YFLAGS) -d -p matcherparser $(srcdir)/$(mAstMatchingPath)/matcherparser.yy # generates y.tab.h/c
