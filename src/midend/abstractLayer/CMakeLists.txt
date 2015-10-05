@@ -1,11 +1,22 @@
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+add_library(abstractLayer OBJECT
+  AstAnnotator.C
+  CPAstAttributeInterface.C
+  DFAstAttribute.C
+  Labeler.C
+  RDAstAttributeInterface.C
+  SgNodeHelper.C
+  VariableIdMapping.C
+  )
 
+add_dependencies(abstractLayer rosetta_generated)
 
-########### next target ###############
-
-#add_library(libabstractLayer ${libabstractLayer_SRC})
-
-########### install files ###############
-
-install(FILES AstAnnotator.h CPAstAttributeInterface.h DFAstAttribute.h Labeler.h RDAstAttributeInterface.h SgNodeHelper.h VariableIdMapping.h DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES
+  AstAnnotator.h
+  CPAstAttributeInterface.h
+  DFAstAttribute.h
+  Labeler.h
+  RDAstAttributeInterface.h
+  SgNodeHelper.h
+  VariableIdMapping.h
+  DESTINATION ${INCLUDE_INSTALL_DIR})

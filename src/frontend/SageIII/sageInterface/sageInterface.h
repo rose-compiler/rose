@@ -54,36 +54,12 @@ ROSE_DLL_API std::string getVariantName (VariantT v);
 //! An alias for Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 #define TRANS_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 
-//------------------------------------------------------------------------
-/*! \brief This namespace is to organize functions that are useful when operating on the AST.
 
-  \defgroup frontendSageUtilityFunctions SAGE III utility functions(SageInterface)
-  \ingroup ROSE_FrontEndGroup
-
-    The Sage III IR design attempts to be minimalist. Thus additional functionality is
-intended to be presented using separate higher level interfaces which work with the IR.
-The namespace, SageInterface, collects functions that operate on the IR and are supportive of numerous types of routine operations required to support general analysis and transformation of the AST.
-
-    \internal Further organization of the functions in this namespace is required.
-Major AST manipulation functions are scattered in the following directories
-   - src/midend/astUtil/astInterface
-   - src/roseSupport/utility_function.h,  namespace rose
-   - src/roseSupport/TransformationSupport.h, class TransformationSupport
-   - src/midend/astInlining/inlinerSupport.C
-   - src/frontend/SageIII/sageInterface
-   - projects: such as outliner, OpenMP_Translator
-Some other utility functions not related AST can be found in
-   - src/util/stringSupport/string_functions.h, namespace StringUtility
-   - src/roseExtensions/dataStructureTraversal/helpFunctions.C
-   - projects/dataStructureGraphing/helpFunctions.C
-
-
-    \todo A number of additional things to do:
-         - Pull scope handling out of EDG/Sage III translation so that is is made
-           available to anyone else building the Sage III IR from scratch (which
-           when it gets non-trivial, involves the manipulation of scopes).
-         - Other stuff ...
- */
+/** Functions that are useful when operating on the AST.
+ *
+ *  The Sage III IR design attempts to be minimalist. Thus additional functionality is intended to be presented using separate
+ *  higher level interfaces which work with the IR.  This namespace collects functions that operate on the IR and support
+ *  numerous types of operations that are common to general analysis and transformation of the AST. */
 namespace SageInterface
    {
   // DQ (4/3/2014): Added general AST support seperate from the AST.
