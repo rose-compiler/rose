@@ -91,11 +91,8 @@ namespace SageInterface {
 // We need this so that USE_CMAKE will be seen (set via configure).
 #include "rose_config.h"
 
-#ifndef USE_CMAKE
-// DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
 // DQ (3/4/2014): We need this feature to support the function: isStructurallyEquivalentAST().
 #include "RoseAst.h"
-#endif
 
 //! C++ SageBuilder namespace specific state for storage of the source code position state (used to control how the source code positon is defined for IR nodes built within the SageBuilder interface).
 extern SageBuilder::SourcePositionClassification SageBuilder::SourcePositionClassificationMode;
@@ -7858,7 +7855,7 @@ SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* ro
      std::vector<SgDeclarationStatement*> templateInstantiationVector;
 
   // DQ (9/24/2015): This feature is not available yet in CMake (Markus is adding the library support for this feature).
-#ifndef USE_CMAKE
+#ifndef USE_CMAKEx
      RoseAst ast(root);
 
      int n = 0;
@@ -18426,7 +18423,7 @@ SageInterface::isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 )
    {
   // DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
 
-#ifndef USE_CMAKE
+#ifndef USE_CMAKEx
   // DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
 
   // This is AST container for the ROSE AST that will provide an iterator.
@@ -19207,7 +19204,7 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
 //    std::cout << "Pointers are equal, returning true" << std::endl;
     return true;
   }
-#ifndef USE_CMAKE
+#ifndef USE_CMAKEx
   RoseAst subT1(t1);
   RoseAst subT2(t2);
 
