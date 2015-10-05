@@ -33,12 +33,15 @@ RSIM_ColdFire::parseMainExecutable(RSIM_Process *process) {
         .doc("Description",
              "This part of the simulator command-line is responsible for configuring how @v{resources} are loaded into "
              "simulated FreeScale ColdFire system memory.  If switches are provided here they must be separated from "
-             "simulator switches with a \"--\" to prevent the simulator itself from interpreting them.")
-        .with(engine.engineSwitches())
+             "simulator switches with a \"--\" to prevent the simulator itself from interpreting them.\n\n" +
+             engine.specimenNameDocumentation())
+        .with(Switch("help", 'h')
+              .hidden(true)
+              .action(showHelpAndExit(0)))
         .with(engine.loaderSwitches());
     std::vector<std::string> resources = parser.parse(exeArgs()).apply().unreachedArgs();
     engine.isaName("coldfire");
-    MemoryMap map = engine.loadSpecimens(exeArgs());
+    MemoryMap map = engine.loadSpecimens(resources);
     process->mem_transaction_start("specimen main memory");
     process->get_memory() = map;                        // shallow copy, new segments point to same old data
 
