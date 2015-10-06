@@ -542,8 +542,8 @@ public:
 
     /** Update write properties.
      *
-     *  Adds the specified property to all bits of the register.  The property can be anything, but is normally either WRITTEN
-     *  or INITIALIZED depending on whether the writeRegister operation was on behalf of an instruction or not. */
+     *  Adds the specified property to all bits of the register.  The property can be anything, but is normally either IO_WRITE
+     *  or IO_INIT depending on whether the writeRegister operation was on behalf of an instruction or not. */
     virtual void updateWriteProperties(const RegisterDescriptor&, InputOutputProperty);
 
     /** Update read properties.
