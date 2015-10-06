@@ -5,7 +5,6 @@ set(astProcessing_SRC
   AstDOTGeneration.C
   AstProcessing.C
   AstSimpleProcessing.C
-  Ast.C
   AstNodePtrs.C
   AstSuccessorsSelectors.C
   AstAttributeMechanism.C
@@ -31,7 +30,7 @@ set(files_to_install
   AstTextAttributesHandling.h AstDOTGeneration.h AstProcessing.h
   AstSimpleProcessing.h AstTraverseToRoot.h AstNodePtrs.h
   AstSuccessorsSelectors.h AstReverseProcessing.h
-  AstReverseSimpleProcessing.h Ast.h AstRestructure.h AstClearVisitFlags.h
+  AstReverseSimpleProcessing.h AstRestructure.h AstClearVisitFlags.h
   AstTraversal.h AstCombinedProcessing.h AstCombinedProcessingImpl.h
   AstCombinedSimpleProcessing.h StackFrameVector.h AstDOTGenerationImpl.C
   graphProcessing.h graphProcessingSgIncGraph.h graphTemplate.h
