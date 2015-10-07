@@ -33,14 +33,14 @@ mpaValuepropagation_extraDist=\
 	$(mpaValuePropagationPath)/CMakeLists.txt
 
 
-mpaValuePropagation_cleanLocal=\
-	rm -rf \
-		$(mpaValuePropagationPath)/Templates.DB \
-		$(mpaValuePropagationPath)/ii_files \
-		$(mpaValuePropagationPath)/ti_files \
-		$(mpaValuePropagationPath)/cxx_templates
+mpaValuePropagation_cleanLocal=
+#	rm -rf \
+#		$(mpaValuePropagationPath)/Templates.DB \
+#		$(mpaValuePropagationPath)/ii_files \
+#		$(mpaValuePropagationPath)/ti_files \
+#		$(mpaValuePropagationPath)/cxx_templates
 
 
-mpaValuePropagation_distCleanLocal=\
-	rm -rf \
-		$(mpaValuePropagationPath)/Templates.DB
+mpaValuePropagation_distCleanLocal=
+#	rm -rf \
+#		$(mpaValuePropagationPath)/Templates.DB

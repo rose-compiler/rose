@@ -15,12 +15,12 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 ROSE_FLAGS = --edg:no_warnings -w
 
-
-
 noinst_HEADERS = \
    coverage_funcsC.h \
    inputCode_collectComments.h
    #yices_c.h
+
+noinst_PROGRAMS =
 
 # Liao 5/7/2010  We want to have a few installable programs as tools for users
 bin_PROGRAMS = \
@@ -36,6 +36,13 @@ bin_PROGRAMS += \
 endif
    #traverseBinCFG \
    #traverseSourceCFG 
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+noinst_PROGRAMS += 				\
+   binaryCallGraph				\
+   binaryHelloWorld				\
+   binaryStrings
+endif
 
 #varSubstCopy , disabled this one Liao, and sorted the list
 # tutorial examples which will not be installed to ROSE_INS/bin
@@ -62,11 +69,8 @@ NOINST_TUTORIAL_EXAMPLES = \
    bin_example \
    binaryAnalysisExample \
    binaryAnalysis_symbolTable \
-   binaryCallGraph \
    binaryFileRead \
    binaryFileWrite \
-   binaryHelloWorld \
-   binaryStrings \
    sb_callgraphAnalysis \
    buildFile \
    buildCFG \
@@ -142,9 +146,9 @@ NOINST_TUTORIAL_EXAMPLES = \
 
 # DQ (3/21/2009): Separate those that compile under Cygwin from those that don't.
 if ROSE_BUILD_OS_IS_CYGWIN
-  noinst_PROGRAMS = $(NOINST_TUTORIAL_EXAMPLES)
+  noinst_PROGRAMS += $(NOINST_TUTORIAL_EXAMPLES)
 else
-  noinst_PROGRAMS = $(NOINST_TUTORIAL_EXAMPLES) sharedMemoryTraversals
+  noinst_PROGRAMS += $(NOINST_TUTORIAL_EXAMPLES) sharedMemoryTraversals
   sharedMemoryTraversals_SOURCES = sharedMemoryTraversals.C
 endif
 

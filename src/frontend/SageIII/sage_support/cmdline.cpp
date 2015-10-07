@@ -4150,12 +4150,13 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 // #ifdef __INTEL_COMPILER
 #ifdef BACKEND_CXX_IS_INTEL_COMPILER
   // DQ (9/9/2015): The Intel compiler sets this to an old value (likely to match the MS Visual Studio C++ compiler).
-#if 1
+#if 0
      printf ("Intel compiler being used as backend compiler: Identified this = %p -std=c++11 via more direct command line argument evaluation \n",this);
 #endif
 
      if ( SgProject::get_verbose() >= 1 )
           printf ("Intel compiler being used: Cxx11 mode ON \n");
+
      set_Cxx11_only(true);
      set_Cxx11_gnu_only(false);
 

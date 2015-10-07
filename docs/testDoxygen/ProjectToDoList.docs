@@ -1,5 +1,6 @@
 /*!
 \defgroup projectToDoList ROSE Project ToDo List
+\ingroup old_documentation
 
     This page documents remaining things to do which are not a part of the 
 todo list generated specific to each IR node by Doxygen.  The source for this
@@ -45,8 +46,8 @@ report the position of the declaration of the variable referenced
 Work that will be done within a later release:
    -# Use of "--edg:old_c" to support K\&R C does not work because the prototyped versions 
       of functions are used within rose_edg_macros_and_functions_required_for_gnu.h and 
-      these are not allowed in EDG's {\tt --old_c} mode (translated from the 
-      ROSE {\tt --edg:old_c}.
+      these are not allowed in EDG's <code>--old_c</code> mode (translated from the 
+      ROSE <code>--edg:old_c</code>.
    -# Need to add -FPIC flags to compile line by default (currently specified explicitly)
    -# Overloaded operators need to have their precedence computed so that we can avoid the
     numerous special cases that we currently handle in the code generation (unparsing).
@@ -470,7 +471,7 @@ should include:
      specified on the commandline (Instressing!)
 
 
-\section AST Normalization of Implicit C++ functionality
+\section projecttodo_ast_normalization AST Normalization of Implicit C++ functionality
 
    This is a suite of transformations designed to transform C++ code to make
 those things that are expressed implicitly in the language be expressed

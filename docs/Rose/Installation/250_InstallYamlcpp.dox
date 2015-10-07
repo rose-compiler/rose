@@ -6,7 +6,7 @@
  *  Instructions for installing <a href="https://github.com/jbeder/yaml-cpp">YAML-cpp</a>, a ROSE software dependency.
  *
  *  You must install this library from source code unless you're compiling ROSE using your system's default Boost
- *  libraries. I've you've compiled your own boost libraries then also compile yaml-cpp using that same boost.  We recommend
+ *  libraries. If you've compiled your own boost libraries then also compile yaml-cpp using that same boost.  We recommend
  *  that you install yaml-cpp into a directory whose name includes the yaml-cpp version number, the boost version number, and
  *  the compiler version number.
  *
