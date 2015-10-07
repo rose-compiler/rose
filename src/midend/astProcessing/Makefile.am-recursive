@@ -10,7 +10,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 libastprocessingSources = \
    AstNodeVisitMapping.C AstTextAttributesHandling.C \
-   AstDOTGeneration.C AstProcessing.C AstSimpleProcessing.C Ast.C \
+   AstDOTGeneration.C AstProcessing.C AstSimpleProcessing.C \
    AstNodePtrs.C AstSuccessorsSelectors.C AstAttributeMechanism.C \
    AstReverseSimpleProcessing.C AstClearVisitFlags.C \
    AstTraversal.C AstCombinedSimpleProcessing.C \
@@ -18,7 +18,7 @@ libastprocessingSources = \
 else
 libastprocessingSources = \
    AstPDFGeneration.C AstNodeVisitMapping.C AstTextAttributesHandling.C \
-   AstDOTGeneration.C AstProcessing.C AstSimpleProcessing.C Ast.C \
+   AstDOTGeneration.C AstProcessing.C AstSimpleProcessing.C \
    AstNodePtrs.C AstSuccessorsSelectors.C AstAttributeMechanism.C \
    AstReverseSimpleProcessing.C AstRestructure.C AstClearVisitFlags.C \
    AstTraversal.C AstCombinedSimpleProcessing.C \
@@ -52,7 +52,7 @@ include_HEADERS = \
    AstTextAttributesHandling.h AstDOTGeneration.h AstProcessing.h \
    AstSimpleProcessing.h AstTraverseToRoot.h AstNodePtrs.h \
    AstSuccessorsSelectors.h AstReverseProcessing.h \
-   AstReverseSimpleProcessing.h Ast.h AstRestructure.h AstClearVisitFlags.h \
+   AstReverseSimpleProcessing.h AstRestructure.h AstClearVisitFlags.h \
    AstTraversal.h AstCombinedProcessing.h AstCombinedProcessingImpl.h \
    AstCombinedSimpleProcessing.h StackFrameVector.h AstSharedMemoryParallelProcessing.h \
    AstSharedMemoryParallelProcessingImpl.h AstSharedMemoryParallelSimpleProcessing.h graphProcessing.h \

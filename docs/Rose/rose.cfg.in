@@ -519,25 +519,25 @@ STRICT_PROTO_MATCHING  = NO
 # disable (NO) the todo list. This list is created by putting \todo
 # commands in the documentation.
 
-GENERATE_TODOLIST      = YES
+GENERATE_TODOLIST      = NO
 
 # The GENERATE_TESTLIST tag can be used to enable (YES) or
 # disable (NO) the test list. This list is created by putting \test
 # commands in the documentation.
 
-GENERATE_TESTLIST      = YES
+GENERATE_TESTLIST      = NO
 
 # The GENERATE_BUGLIST tag can be used to enable (YES) or
 # disable (NO) the bug list. This list is created by putting \bug
 # commands in the documentation.
 
-GENERATE_BUGLIST       = YES
+GENERATE_BUGLIST       = NO
 
 # The GENERATE_DEPRECATEDLIST tag can be used to enable (YES) or
 # disable (NO) the deprecated list. This list is created by putting
 # \deprecated commands in the documentation.
 
-GENERATE_DEPRECATEDLIST= YES
+GENERATE_DEPRECATEDLIST= NO
 
 # The ENABLED_SECTIONS tag can be used to enable conditional
 # documentation sections, marked by \if sectionname ... \endif.
@@ -832,6 +832,8 @@ RECURSIVE              = NO
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
+# Use this to "comment out" whole files that are deprecated. [Robb Matzke, 2015-10-01]
+
 EXCLUDE                = @top_srcdir@/src/frontend/CxxFrontend/EDG \
                          @top_srcdir@/AST_RewriteMechanism/testRewrite.h \
                          @top_srcdir@/AST_RewriteMechanism/testRewrite.C \
@@ -848,6 +850,17 @@ EXCLUDE                = @top_srcdir@/src/frontend/CxxFrontend/EDG \
                          @top_srcdir@/util/roseString.C \
                          @top_srcdir@/docs/Rose/AstProcessing \
                          @top_srcdir@/docs/Rose/Tutorial \
+			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/BaseSemantics.h \
+			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/FindRegisterDefs.h \
+			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/IntervalSemantics.h \
+			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/MultiSemantics.h \
+			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/NullSemantics.h \
+			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/PartialSymbolicSemantics.h \
+			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/ReadWriteRegisterFragment.h \
+			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics.h \
+			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/findConstants.h \
+			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/flowEquations.h \
+			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/x86InstructionSemantics.h \
                          @top_pwd@/src/frontend/SageIII/StorageClasses.h
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or

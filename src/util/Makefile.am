@@ -2,6 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = stringSupport commandlineProcessing support graphs
 
+# AUTOMAKE_OPTIONS = subdir-objects
+
 # To keep compile commands tidy, please ONLY put required include flags here.
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 

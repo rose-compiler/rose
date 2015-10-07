@@ -16,9 +16,9 @@ unparseFortran_extraDist=\
 	$(fortranCodeGenerationPath)/CMakeLists.txt
 
 
-unparseFortran_cleanLocal=\
-	rm -rf \
-		$(fortranCodeGenerationPath)/ii_files \
-		$(fortranCodeGenerationPath)/ti_files \
-		$(fortranCodeGenerationPath)/core
+unparseFortran_cleanLocal=
+#	rm -rf \
+#		$(fortranCodeGenerationPath)/ii_files \
+#		$(fortranCodeGenerationPath)/ti_files \
+#		$(fortranCodeGenerationPath)/core
 
