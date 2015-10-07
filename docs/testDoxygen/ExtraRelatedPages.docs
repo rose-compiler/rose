@@ -1,6 +1,7 @@
 // -*- c++ -*-
 
 /** @defgroup ast_node_constructors Sage IR node default constructors
+ *  @ingroup old_documentation
  *
  *  Sage IR node default constructors are not useful.
  *
@@ -10,6 +11,7 @@
 
 
 /** @defgroup sage_attribute_mechanism Sage IR node attributes
+ *  @ingroup old_documentation
  *
  *  Attaching user-defined attributes to IR nodes.
  *  

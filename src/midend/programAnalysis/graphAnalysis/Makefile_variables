@@ -32,16 +32,16 @@ mpaGraphAnalysis_extraDist=\
 	$(mpaGraphAnalysisPath)/CMakeLists.txt
 
 
-mpaGraphAnalysis_cleanLocal=\
-	rm -rf \
-		$(mpaGraphAnalysisPath)/Templates.DB \
-		$(mpaGraphAnalysisPath)/ii_files \
-		$(mpaGraphAnalysisPath)/ti_files \
-		$(mpaGraphAnalysisPath)/cxx_templates \
-		$(mpaGraphAnalysisPath)/*.la \
-		$(mpaGraphAnalysisPath)/*.lo
+mpaGraphAnalysis_cleanLocal=
+#	rm -rf \
+#		$(mpaGraphAnalysisPath)/Templates.DB \
+#		$(mpaGraphAnalysisPath)/ii_files \
+#		$(mpaGraphAnalysisPath)/ti_files \
+#		$(mpaGraphAnalysisPath)/cxx_templates \
+#		$(mpaGraphAnalysisPath)/*.la \
+#		$(mpaGraphAnalysisPath)/*.lo
 
 
-mpaGraphAnalysis_distCleanLocal=\
-	rm -rf \
-		$(mpaGraphAnalysisPath)/Templates.DB
+mpaGraphAnalysis_distCleanLocal=
+#	rm -rf \
+#		$(mpaGraphAnalysisPath)/Templates.DB

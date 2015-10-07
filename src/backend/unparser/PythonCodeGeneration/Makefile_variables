@@ -11,8 +11,8 @@ unparsePythonCodeGeneration_extraDist=\
 	$(pythonCodeGenerationPath)/CMakeLists.txt
 
 
-unparsePythonCodeGeneration_cleanLocal=\
-	rm -rf \
-		$(pythonCodeGenerationPath)/ii_files \
-		$(pythonCodeGenerationPath)/ti_files \
-		$(pythonCodeGenerationPath)/core
+unparsePythonCodeGeneration_cleanLocal=
+#	rm -rf \
+#		$(pythonCodeGenerationPath)/ii_files \
+#		$(pythonCodeGenerationPath)/ti_files \
+#		$(pythonCodeGenerationPath)/core

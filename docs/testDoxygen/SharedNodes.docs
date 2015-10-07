@@ -3,6 +3,7 @@
 // **********************************************************************************
 /*!
 \defgroup SharedNodes Shared vs. Nonshared IR Nodes within Sage III
+\ingroup old_documentation
 
 Within the AST some types of IR nodes referenced via pointers and are shared while
 others are never shared:

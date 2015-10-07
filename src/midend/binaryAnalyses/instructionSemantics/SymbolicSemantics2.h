@@ -70,7 +70,7 @@ public:
  *  instructions that were used to define the value.  This provides a framework for some simple forms of value-based def-use
  *  analysis. See get_defining_instructions() for details.
  * 
- *  @section Unk_Uinit Unknown versus Uninitialized Values
+ *  @section symbolic_semantics_unknown Unknown versus Uninitialized Values
  *
  *  One sometimes needs to distinguish between registers (or other named storage locations) that contain an
  *  "unknown" value versus registers that have not been initialized. By "unknown" we mean a value that has no

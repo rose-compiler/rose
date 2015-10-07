@@ -29,14 +29,14 @@ mpaOAWrap_extraDist=\
 	$(mpaOAWrapPath)/CMakeLists.txt
 
 
-mpaOAWrap_cleanLocal=\
-	rm -rf \
-		$(mpaOAWrapPath)/Templates.DB \
-		$(mpaOAWrapPath)/ii_files \
-		$(mpaOAWrapPath)/ti_files \
-		$(mpaOAWrapPath)/cxx_templates
+mpaOAWrap_cleanLocal=
+#	rm -rf \
+#		$(mpaOAWrapPath)/Templates.DB \
+#		$(mpaOAWrapPath)/ii_files \
+#		$(mpaOAWrapPath)/ti_files \
+#		$(mpaOAWrapPath)/cxx_templates
 
 
-mpaOAWrap_distCleanLocal=\
-	rm -rf \
-		$(mpaOAWrapPath)/Templates.DB
+mpaOAWrap_distCleanLocal=
+#	rm -rf \
+#		$(mpaOAWrapPath)/Templates.DB

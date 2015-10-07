@@ -262,7 +262,7 @@ namespace Partitioner2 {
  *
  *  A more efficient mechanism might be developed in the future.
  *
- * @section partitioner_functions Function Boundary Determination
+ * @section partitioner_function_boundaries Function Boundary Determination
  *
  *  (This section is a placeholder for future documentation).
  *
