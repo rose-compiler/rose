@@ -3539,7 +3539,11 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
     std::string nodeName = grammarnode->getName();
 
  // DQ (2/7/2011): Added message to report which nodes are in violation of ROSETTA rules.
-    printf ("Warning: Detected node violating ROSETTA rules (some exceptions are allowed): nodeName = %s, num-trav-datam:%d, num-trav-container:%d\n",nodeName.c_str(),info.numSingleDataMembers,info.numContainerMembers);
+
+ /* MS (10/8/2015): turned off the warning. This doesn't break
+  anything except the enums for synthesized attributes access. But those
+  will be removed. */
+ //   printf ("Warning: Detected node violating ROSETTA rules (some exceptions are allowed): nodeName = %s, num-trav-datam:%d, num-trav-container:%d\n",nodeName.c_str(),info.numSingleDataMembers,info.numContainerMembers);
 
  // DQ (2/7/2011): Added SgExprListExp to the list so that we can support originalExpressionTree data member in SgExpression.
  // Liao I made more exceptions for some OpenMP specific nodes for now
