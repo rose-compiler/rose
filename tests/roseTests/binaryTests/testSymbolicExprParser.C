@@ -1,7 +1,7 @@
 #include <rose.h>
 
 #include <InsnSemanticsExpr.h>
-#include <SymbolicExprParser.h>
+#include <BinarySymbolicExprParser.h>
 
 using namespace rose::BinaryAnalysis;
 

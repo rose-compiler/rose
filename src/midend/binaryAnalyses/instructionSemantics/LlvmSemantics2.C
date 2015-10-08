@@ -1218,7 +1218,7 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
             case InsnSemanticsExpr::OP_NOOP:
             case InsnSemanticsExpr::OP_WRITE:
                 throw BaseSemantics::Exception("LLVM translation for " +
-                                               stringifyBinaryAnalysisInsnSemanticsExprOperator(inode->get_operator()) +
+                                               stringifyBinaryAnalysisSymbolicExprOperator(inode->get_operator()) +
                                                " is not implemented yet", NULL);
 
             // no default because we want warnings when a new operator is added

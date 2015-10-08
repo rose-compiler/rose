@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
 #include <Sawyer/CommandLine.h>
-#include <SymbolicExprParser.h>
+#include <BinarySymbolicExprParser.h>
 
 #ifdef ROSE_HAVE_LIBREADLINE
 # include <readline/readline.h>

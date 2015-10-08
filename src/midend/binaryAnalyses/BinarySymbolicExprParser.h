@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_SymbolicExprParser_H
 #define ROSE_BinaryAnalysis_SymbolicExprParser_H
 
-#include <InsnSemanticsExpr.h>
+#include <BinarySymbolicExpr.h>
 #include <Sawyer/SharedPointer.h>
 
 namespace rose {
@@ -184,7 +184,7 @@ public:
         /** Operator to expand the symbol into an expression tree. The width in bits is either the width specified in square
          *  brackets for the symbol, or zero. Functors are all called for each symbol, and the first one to return non-null is
          *  the one that's used to generate the symbolic expression. */
-        virtual InsnSemanticsExpr::TreeNodePtr operator()(const Token &name) = 0;
+        virtual SymbolicExpr::TreeNodePtr operator()(const Token &name) = 0;
     };
 
     /** Functor to expand a function symbol into a symbolic expression. */
@@ -198,7 +198,7 @@ public:
         /** Operator to expand the function symbol into an expression tree. The width in bits is either the width specified in
          *  square brackets for the function symbol, or zero.  Functors are all called for each symbol, and the first one to
          *  return non-null is the one that's used to generate the symbolic expression. */
-        virtual InsnSemanticsExpr::TreeNodePtr operator()(const Token &name, const InsnSemanticsExpr::TreeNodes &operands) = 0;
+        virtual SymbolicExpr::TreeNodePtr operator()(const Token &name, const SymbolicExpr::TreeNodes &operands) = 0;
     };
 
     /** Ordered symbol table. */
@@ -219,18 +219,18 @@ public:
      *
      *  Parses the string and returns the first expression in the string. Throws a @ref SyntaxError if problems are
      *  encountered. */
-    InsnSemanticsExpr::TreeNodePtr parse(const std::string&, const std::string &inputName="string");
+    SymbolicExpr::TreeNodePtr parse(const std::string&, const std::string &inputName="string");
 
     /** Create a symbolic expression by parsing a file.
      *
      *  Parses the file and returns the first expression in the file. Throws a @ref SyntaxError if problems are encountered. */
-    InsnSemanticsExpr::TreeNodePtr parse(std::istream &input, const std::string &filename,
-                                         unsigned lineNumber=1, unsigned columnNumber=0);
+    SymbolicExpr::TreeNodePtr parse(std::istream &input, const std::string &filename,
+                                    unsigned lineNumber=1, unsigned columnNumber=0);
 
     /** Create a symbolic expression by parsing a token stream.
      *
      *  Parses the token stream and returns its first expression. Throws a @ref SyntaxError if problems are encountered. */
-    InsnSemanticsExpr::TreeNodePtr parse(TokenStream&);
+    SymbolicExpr::TreeNodePtr parse(TokenStream&);
 
     /** Append a new symbol to the symbol table. */
     void appendSymbol(const SymbolExpansion::Ptr&);

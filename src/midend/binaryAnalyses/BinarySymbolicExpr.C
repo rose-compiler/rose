@@ -2,7 +2,7 @@
 
 #include "sage3basic.h"
 
-#include "InsnSemanticsExpr.h"
+#include "BinarySymbolicExpr.h"
 #include "SMTSolver.h"
 #include "stringify.h"
 #include "integerOps.h"
@@ -12,7 +12,7 @@
 
 namespace rose {
 namespace BinaryAnalysis {
-namespace InsnSemanticsExpr {
+namespace SymbolicExpr {
 
 uint64_t
 LeafNode::name_counter = 0;
@@ -24,7 +24,7 @@ const char *
 to_str(Operator o)
 {
     static char buf[64];
-    std::string s = stringifyBinaryAnalysisInsnSemanticsExprOperator(o, "OP_");
+    std::string s = stringifyBinaryAnalysisSymbolicExprOperator(o, "OP_");
     ASSERT_require(s.size()<sizeof buf);
     strcpy(buf, s.c_str());
     for (char *s=buf; *s; s++) {
@@ -195,12 +195,12 @@ TreeNode::assert_acyclic() const
 uint64_t
 TreeNode::nnodesUnique() const {
     std::vector<TreeNodePtr> exprs(1, sharedFromThis());
-    return InsnSemanticsExpr::nnodesUnique(exprs.begin(), exprs.end());
+    return SymbolicExpr::nnodesUnique(exprs.begin(), exprs.end());
 }
 
 std::vector<TreeNodePtr>
 TreeNode::findCommonSubexpressions() const {
-    return InsnSemanticsExpr::findCommonSubexpressions(std::vector<TreeNodePtr>(1, sharedFromThis()));
+    return SymbolicExpr::findCommonSubexpressions(std::vector<TreeNodePtr>(1, sharedFromThis()));
 }
 
 void
