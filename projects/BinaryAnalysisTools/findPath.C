@@ -1152,25 +1152,51 @@ static void
 incorporateRegisterPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops contains final path state
                                   std::vector<InsnSemanticsExpr::TreeNodePtr> &pathConstraints /*out*/) {
     ASSERT_not_null(ops);
+    std::string inputName = "tool argument";
     BaseSemantics::RegisterStatePtr regState = ops->get_state()->get_register_state();
     BOOST_FOREACH (const std::string &regPostCondStr, settings.registerPostConditionsStr) {
-        boost::regex re("\\s*([a-zA-Z_][a-zA-Z_0-9]*)\\s*=\\s*(.*?)\\s*");
-        boost::smatch matches;
-        if (!boost::regex_match(regPostCondStr, matches, re))
-            throw std::runtime_error("register postcondition must be of the form \"register = value\": " + regPostCondStr);
-        const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(matches.str(1));
-        if (NULL == regp)
-            throw std::runtime_error("register '"+matches.str(1)+"' is not a valid register: " + regPostCondStr);
-        InsnSemanticsExpr::TreeNodePtr rhs = SymbolicExprParser().parse(matches.str(2));
-        if (regp->get_nbits() != rhs->get_nbits()) {
-            throw std::runtime_error("register/expr width mismatch (reg=" + StringUtility::numberToString(regp->get_nbits()) +
-                                     ", expr=" + StringUtility::numberToString(rhs->get_nbits()) + "): " + regPostCondStr);
+        try {
+            std::istringstream input(regPostCondStr);
+            SymbolicExprParser::TokenStream tokens(input, inputName);
+
+            // Register name is a symbol.
+            if (tokens[0].type() != SymbolicExprParser::Token::SYMBOL)
+                throw tokens[0].syntaxError("expected register name", inputName);
+            const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(tokens[0].lexeme());
+            if (NULL == regp)
+                throw tokens[0].syntaxError("not a valid register name", inputName);
+            tokens.shift();
+
+            // Register name is followed by an '='
+            if (tokens[0].type() != SymbolicExprParser::Token::SYMBOL || tokens[0].lexeme() != "=")
+                throw tokens[0].syntaxError("expected '=' between memory address and value", inputName);
+            tokens.shift();
+
+            // Remainder of input is the register's value
+            InsnSemanticsExpr::TreeNodePtr rhs = SymbolicExprParser().parse(tokens);
+            if (tokens[0].type() != SymbolicExprParser::Token::NONE)
+                throw tokens[0].syntaxError("extra text after end of expression", inputName);
+            if (regp->get_nbits() != rhs->get_nbits()) {
+                throw std::runtime_error("register/expr width mismatch "
+                                         "(reg=" + StringUtility::numberToString(regp->get_nbits()) +
+                                         ", expr=" + StringUtility::numberToString(rhs->get_nbits()) + ")"
+                                         ": " + regPostCondStr);
+            }
+
+            // Build the SMT constraint
+            BaseSemantics::SValuePtr lhs = regState->readRegister(*regp, ops.get());
+            InsnSemanticsExpr::TreeNodePtr expr =
+                InsnSemanticsExpr::InternalNode::create(1, InsnSemanticsExpr::OP_EQ,
+                                                        SymbolicSemantics::SValue::promote(lhs)->get_expression(), rhs);
+            pathConstraints.push_back(expr);
+        } catch (const SymbolicExprParser::SyntaxError &e) {
+            std::cerr <<e <<"\n";
+            if (e.lineNumber != 0) {
+                std::cerr <<"    argument: " <<regPostCondStr <<"\n"
+                          <<"    here------" <<std::string(e.columnNumber, '-') <<"^\n\n";
+            }
+            exit(1);
         }
-        BaseSemantics::SValuePtr lhs = regState->readRegister(*regp, ops.get());
-        InsnSemanticsExpr::TreeNodePtr expr =
-            InsnSemanticsExpr::InternalNode::create(regp->get_nbits(), InsnSemanticsExpr::OP_EQ,
-                                                    SymbolicSemantics::SValue::promote(lhs)->get_expression(), rhs);
-        pathConstraints.push_back(expr);
     }
 }
 
@@ -1179,29 +1205,64 @@ static void
 incorporateMemoryPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops contains final path state
                                 std::vector<InsnSemanticsExpr::TreeNodePtr> &pathConstraints /*out*/) {
     ASSERT_not_null(ops);
+    std::string inputName = "tool argument";
     BaseSemantics::MemoryStatePtr memState = ops->get_state()->get_memory_state();
     BOOST_FOREACH (const std::string &memPostCondStr, settings.memoryPostConditionsStr) {
-        SymbolicExprParser parser;
-        std::istringstream input(memPostCondStr);
-        InsnSemanticsExpr::TreeNodePtr addrExpr = parser.parse(input);
-        InsnSemanticsExpr::TreeNodePtr rhsExpr = parser.parse(input);
+        try {
+            std::istringstream input(memPostCondStr);
+            SymbolicExprParser::TokenStream tokens(input, inputName);
 
-        SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(ops->undefined_(8));
-        addr->set_expression(addrExpr);
-        BaseSemantics::SValuePtr lhs = memState->readMemory(addr, ops->undefined_(8), ops.get(), ops.get());
-        InsnSemanticsExpr::TreeNodePtr expr =
-            InsnSemanticsExpr::InternalNode::create(8, InsnSemanticsExpr::OP_EQ,
-                                                    SymbolicSemantics::SValue::promote(lhs)->get_expression(), rhsExpr);
-        pathConstraints.push_back(expr);
+            // Memory address expression
+            InsnSemanticsExpr::TreeNodePtr addrExpr = SymbolicExprParser().parse(tokens);
+
+            // Equal sign
+            if (tokens[0].type() != SymbolicExprParser::Token::SYMBOL || tokens[0].lexeme() != "=")
+                throw tokens[0].syntaxError("expected '=' between memory address and value", inputName);
+            tokens.shift();
+
+            // Value stored at memory address
+            InsnSemanticsExpr::TreeNodePtr rhsExpr = SymbolicExprParser().parse(tokens);
+            if (tokens[0].type() != SymbolicExprParser::Token::NONE)
+                throw tokens[0].syntaxError("extra text after end of expression", inputName);
+            if (rhsExpr->get_nbits() != 8) {
+                throw std::runtime_error("expr width should be 8 bits "
+                                         "(got " + StringUtility::numberToString(rhsExpr->get_nbits()) + "): " + memPostCondStr);
+            }
+
+            // Build the SMT constraint
+            SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(ops->undefined_(8));
+            addr->set_expression(addrExpr);
+            BaseSemantics::SValuePtr lhs = memState->readMemory(addr, ops->undefined_(8), ops.get(), ops.get());
+            InsnSemanticsExpr::TreeNodePtr expr =
+                InsnSemanticsExpr::InternalNode::create(1, InsnSemanticsExpr::OP_EQ,
+                                                        SymbolicSemantics::SValue::promote(lhs)->get_expression(), rhsExpr);
+            pathConstraints.push_back(expr);
+        } catch (const SymbolicExprParser::SyntaxError &e) {
+            std::cerr <<e <<"\n";
+            if (e.lineNumber != 0) {
+                std::cerr <<"    argument: " <<memPostCondStr <<"\n"
+                          <<"    here------" <<std::string(e.columnNumber, '-') <<"^\n\n";
+            }
+            exit(1);
+        }
     }
 }
 
-// Incorporate post conditions into the path constraints
+// Incorporate post conditions into the path constraints.
 static void
 incorporatePostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops contains final path state
                           std::vector<InsnSemanticsExpr::TreeNodePtr> &pathConstraints /*out*/) {
     incorporateRegisterPostConditions(ops, pathConstraints);
     incorporateMemoryPostConditions(ops, pathConstraints);
+}
+
+// Checks that post-conditions are valid before we spend a long time looking for feasible paths.
+static void
+checkPostConditionSyntax(const P2::Partitioner &partitioner) {
+    BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    std::vector<InsnSemanticsExpr::TreeNodePtr> pathConstraints;
+    incorporatePostConditions(ops, pathConstraints);
 }
 
 /** Process one path. Given a path, determine if the path is feasible.  If @p showResults is set, then emit information about
@@ -2297,7 +2358,6 @@ int main(int argc, char *argv[]) {
     if (SgProject *project = SageInterface::getProject())
         srcMapper = DwarfLineMapper(project);
 
-
     // Calculate average number of function calls per function
     if (1) {
         size_t nFunctionCalls = 0;
@@ -2308,8 +2368,10 @@ int main(int argc, char *argv[]) {
         info <<"average number of function calls per function: "
              <<((double)nFunctionCalls / partitioner.nFunctions()) <<"\n";
     }
-    
-    // Process individual paths
+
+    checkPostConditionSyntax(partitioner);
+
+    // Process individual paths (this may take a LONG TIME!)
     switch (settings.searchMode) {
         case SEARCH_MULTI:
             findAndProcessMultiPaths(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges);
