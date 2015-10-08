@@ -173,7 +173,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
                        }
 #endif
                  // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
-                    if (atermAnnotationStringProcessed == false && grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
+                    if (atermAnnotationStringProcessed == false && grammarString->automaticGenerationOfDataAccessFunctions != NO_ACCESS_FUNCTIONS)
                        {
                       // Note that the type traversal will include the static members, so we need to include it in our pattern for the match to work.
                       // if (typenameString.substr(0,7) != "static " && typenameString.substr(0,11) != "$CLASSNAME*")
@@ -287,7 +287,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
             // atermAnnotationString += string("  // ") + typenameString + "\n";
 
             // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
-               if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
+               if (grammarString->automaticGenerationOfDataAccessFunctions != NO_ACCESS_FUNCTIONS)
                   {
                  // string atermTypeName = "ATmake";
                  // These are the easy types to support using an ATerm Int
@@ -341,7 +341,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
             // printf ("Found typeKind == SGNAME \n");
 #endif
             // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
-               if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
+               if (grammarString->automaticGenerationOfDataAccessFunctions != NO_ACCESS_FUNCTIONS)
                   {
                  // string atermTypeName = "ATmake";
                  // These are the easy types to support using an ATerm Int
@@ -380,7 +380,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
                printf ("Found typeKind == ENUM_TYPE \n");
 #endif
             // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
-               if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
+               if (grammarString->automaticGenerationOfDataAccessFunctions != NO_ACCESS_FUNCTIONS)
                   {
                     atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<int>\",(this->get_" + grammarString->getVariableNameString() + "()))); \n";
 
@@ -692,7 +692,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 
           bool toBeTraversed = grammarString->getToBeTraversed().getValue();
 
-          bool isInConstructorParameterList = grammarString->getIsInConstructorParameterList().getValue();
+          bool isInConstructorParameterList = grammarString->getIsInConstructorParameterList();
 
 #if 0
           outputFile << "// firstConstructorParameter             = " << (firstConstructorParameter             ? "true" : "false") << "\n";
@@ -803,7 +803,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                        }
 
                  // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
-                    if (atermAnnotationStringProcessed == false && grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
+                    if (atermAnnotationStringProcessed == false && grammarString->automaticGenerationOfDataAccessFunctions != NO_ACCESS_FUNCTIONS)
                        {
                          if (typenameString.substr(0,7) != "static " && typenameString.substr(0,11) != "$CLASSNAME*")
                             {
@@ -882,7 +882,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                   constructorArgumentsString,atermArgumentsSubstring,atermPatternSubstring,dataMemberString,dataMemberString_post,integer_counter);
 
             // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
-               if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
+               if (grammarString->automaticGenerationOfDataAccessFunctions != NO_ACCESS_FUNCTIONS)
                   {
                  // string atermTypeName = "ATmake";
                  // These are the easy types to support using an ATerm Int
@@ -922,7 +922,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                   constructorArgumentsString,atermArgumentsSubstring,atermPatternSubstring,dataMemberString,dataMemberString_post,integer_counter);
 
             // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
-               if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
+               if (grammarString->automaticGenerationOfDataAccessFunctions != NO_ACCESS_FUNCTIONS)
                   {
                  // string atermTypeName = "ATmake";
                  // These are the easy types to support using an ATerm Int
@@ -963,7 +963,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                buildDataMember(node,grammarString,firstAterm,firstConstructorParameter,lastDataMemberWasConstructorParameter,isInConstructorParameterList,constructorArgumentsString,atermArgumentsSubstring,atermPatternSubstring,dataMemberString,dataMemberString_post,integer_counter);
 
             // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
-               if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
+               if (grammarString->automaticGenerationOfDataAccessFunctions != NO_ACCESS_FUNCTIONS)
                   {
                     atermAnnotationString += "     term = ATsetAnnotation(term, ATmake(\"" + grammarString->getVariableNameString() + "\"),ATmake(\"<int>\",(this->get_" + grammarString->getVariableNameString() + "()))); \n";
 
@@ -1320,7 +1320,7 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
                        }
                       else
                        {
-                         if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
+                         if (grammarString->automaticGenerationOfDataAccessFunctions != NO_ACCESS_FUNCTIONS)
                             {
                            // initializerString = string("= ") + "is" + typenameBase + "(getAtermNodeAttribute(term,\"" + attributeName + "\"))";
                            // if (node.isDerivedFrom("SgType") == true)
@@ -1398,7 +1398,7 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
        // dataMemberString += "          " + grammarString->getTypeNameString() + " local_" + grammarString->getVariableNameString() + " " + initializerString + "; \n";
 
        // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
-          if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
+          if (grammarString->automaticGenerationOfDataAccessFunctions != NO_ACCESS_FUNCTIONS)
              {
                bool processDataMember = true;
                processDataMember = processDataMember && (grammarString->getTypeNameString() != "RegisterDescriptor");
@@ -1554,7 +1554,7 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
                   }
 
             // Don't generate ATerm annotations for data members that don't have ROSE IR node access functions.
-               if (grammarString->automaticGenerationOfDataAccessFunctions.getValue() != TAG_NO_ACCESS_FUNCTIONS)
+               if (grammarString->automaticGenerationOfDataAccessFunctions != NO_ACCESS_FUNCTIONS)
                   {
                  // Exclude the freepointer variable since it is part of the ROSE memory management and not intented to be set explicitly.
                  // It might be equivalent to filter on those data member that have access functions.  Also exclude some data members

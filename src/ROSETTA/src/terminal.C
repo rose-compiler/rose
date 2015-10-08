@@ -227,9 +227,9 @@ Terminal::buildConstructorBody ( bool withInitializers, ConstructParamEnum confi
         {
        // QY 11/9/04  added additional types of constructor parameters 
           string variableNameString = (*stringListIterator)->getVariableNameString();
-          switch ( (*stringListIterator)->getIsInConstructorParameterList().getValue() )
+          switch ( (*stringListIterator)->getIsInConstructorParameterList() )
              {
-               case TAG_NO_CONSTRUCTOR_PARAMETER:
+               case NO_CONSTRUCTOR_PARAMETER:
                  // DQ (11/20/2004): This test does not appear to work to skip cases where the initializer is empty
                  // the reason is that getDefaultInitializerString() returns a char* and the wrong operator!= is being used!
                  // if ((*stringListIterator)->getDefaultInitializerString() != "")
@@ -240,7 +240,7 @@ Terminal::buildConstructorBody ( bool withInitializers, ConstructParamEnum confi
                        }
                     break;
 
-               case TAG_CONSTRUCTOR_PARAMETER:
+               case CONSTRUCTOR_PARAMETER:
                     returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
                     break;
                default:
@@ -352,9 +352,9 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
                       // for more examples).
                          bool buildConstructorArgument = false;
 
-                         switch (data->automaticGenerationOfDataAccessFunctions.getValue())
+                         switch (data->automaticGenerationOfDataAccessFunctions)
                             {
-                              case TAG_NO_ACCESS_FUNCTIONS:
+                              case NO_ACCESS_FUNCTIONS:
                                  {
                                    string localVarNameString = "result->p_" + string(data->getVariableNameString());
                                    varNameString = localVarNameString;
@@ -373,7 +373,7 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
                                    break;
                                  }
 
-                              case TAG_BUILD_LIST_ACCESS_FUNCTIONS:
+                              case BUILD_LIST_ACCESS_FUNCTIONS:
                                  {
                                    string localVarNameString = "result->get_" + string(data->getVariableNameString()) + "()";
                                    varNameString = localVarNameString;
@@ -391,8 +391,8 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
                                    break;
                                  }
 
-                              case TAG_BUILD_ACCESS_FUNCTIONS:
-                              case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:
+                              case BUILD_ACCESS_FUNCTIONS:
+                              case BUILD_FLAG_ACCESS_FUNCTIONS:
                                  {
 
                                 // DQ (9/24/2005): Added comments to generated code!
@@ -794,15 +794,15 @@ Terminal::buildDataAccessFunctions ( const GrammarString & inputMemberData)
         {
           return "\n";
         }
-     switch (config.getValue())
+     switch (config)
         {
-          case TAG_BUILD_ACCESS_FUNCTIONS:
+          case BUILD_ACCESS_FUNCTIONS:
                filename = "../Grammar/dataMemberAccessFunctions.macro";
                break;
-          case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:
+          case BUILD_FLAG_ACCESS_FUNCTIONS:
                filename = "../Grammar/flagMemberAccessFunctions.macro";
                break;
-          case TAG_BUILD_LIST_ACCESS_FUNCTIONS:
+          case BUILD_LIST_ACCESS_FUNCTIONS:
                filename = "../Grammar/listMemberAccessFunctions.macro";
                break;
           default:
@@ -867,7 +867,7 @@ Terminal::buildDataAccessFunctions ( const GrammarString & inputMemberData)
 
 #if 0
   // DQ (8/9/2008): Debugging output of access function for case of BUILD_LIST_ACCESS_FUNCTIONS
-     if (config.getValue() == TAG_BUILD_LIST_ACCESS_FUNCTIONS)
+     if (config == BUILD_LIST_ACCESS_FUNCTIONS)
           printf ("functionString = %s \n",functionString.c_str());
 #endif
 
