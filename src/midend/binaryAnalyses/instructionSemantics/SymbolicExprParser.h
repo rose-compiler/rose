@@ -70,7 +70,7 @@ public:
               lineNumber_(lineNumber), columnNumber_(columnNumber) {}
 
         /** Creates a syntax error from a token plus message. */
-        SymbolicExprParser::SyntaxError syntaxError(const std::string &mesg, const std::string &name) const {
+        SymbolicExprParser::SyntaxError syntaxError(const std::string &mesg, const std::string &name="input") const {
             return SymbolicExprParser::SyntaxError(mesg, name, lineNumber_, columnNumber_);
         }
 

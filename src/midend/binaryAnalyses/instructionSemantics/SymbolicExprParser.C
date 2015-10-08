@@ -206,6 +206,8 @@ SymbolicExprParser::TokenStream::consumeTerm() {
                 retval += (char)consumeCharacter();
             } else if (nextCharacter() == '\\') {
                 retval += (char)consumeEscapeSequence();
+            } else {
+                break;
             }
         }
     } else {
@@ -310,6 +312,28 @@ SymbolicExprParser::TokenStream::fillTokenList(size_t idx) {
 //                                      SymbolicExprParser
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Throws an exception for functions named "..."
+class AbbreviatedFunction: public SymbolicExprParser::FunctionExpansion {
+public:
+    static Ptr instance() { return Ptr(new AbbreviatedFunction); }
+    InsnSemanticsExpr::TreeNodePtr operator()(const SymbolicExprParser::Token &op, const InsnSemanticsExpr::TreeNodes &args) {
+        if (op.lexeme() == "...")
+            throw op.syntaxError("input is an abbreviated expression; parts are missing");
+        return InsnSemanticsExpr::TreeNodePtr();
+    }
+};
+
+// Throws an exception for symbols named "..."
+class AbbreviatedSymbol: public SymbolicExprParser::SymbolExpansion {
+public:
+    static Ptr instance() { return Ptr(new AbbreviatedSymbol); }
+    InsnSemanticsExpr::TreeNodePtr operator()(const SymbolicExprParser::Token &symbol) {
+        if (symbol.lexeme() == "...")
+            throw symbol.syntaxError("input is an abbreviated expression; parts are missing");
+        return InsnSemanticsExpr::TreeNodePtr();
+    }
+};
+        
 // Generates symbolic expressions for the SMT operators
 class SmtFunctions: public SymbolicExprParser::FunctionExpansion {
 protected:
@@ -414,10 +438,31 @@ public:
     }
 };
 
+class CanonicalVariable: public SymbolicExprParser::SymbolExpansion {
+public:
+    static Ptr instance() { return Ptr(new CanonicalVariable); }
+    InsnSemanticsExpr::TreeNodePtr operator()(const SymbolicExprParser::Token &symbol) {
+        boost::smatch matches;
+        if (!boost::regex_match(symbol.lexeme(), matches, boost::regex("v(\\d+)")))
+            return InsnSemanticsExpr::TreeNodePtr();
+        if (symbol.width() == 0) {
+            throw symbol.syntaxError("variable \"" + StringUtility::cEscape(symbol.lexeme()) + "\""
+                                     " must have a non-zero width specified");
+        }
+        uint64_t varId = rose_strtoull(matches.str(1).c_str(), NULL, 10);
+        return InsnSemanticsExpr::LeafNode::create_existing_variable(symbol.width(), varId);
+    }
+};
+
+
 void
 SymbolicExprParser::init() {
+    appendFunction(AbbreviatedFunction::instance());
     appendFunction(SmtFunctions::instance());
     appendFunction(CFunctions::instance());
+
+    appendSymbol(AbbreviatedSymbol::instance());
+    appendSymbol(CanonicalVariable::instance());
 }
 
 TreeNodePtr
@@ -453,26 +498,17 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 break;
             }
             case Token::SYMBOL: {
-                LeafNodePtr leaf;
-                boost::smatch matches;
-                if (0 == tokens[0].width()) {
-                    if (tokens[0].lexeme() == "...") {
-                        throw tokens[0].syntaxError("input is an abbreviated expression; parts are missing", tokens.name());
-                    } else {
-                        throw tokens[0].syntaxError("variable \""+StringUtility::cEscape(tokens[0].lexeme())+"\" must have "
-                                                    "a non-zero width specified", tokens.name());
-                    }
+                TreeNodePtr expr;
+                BOOST_FOREACH (const SymbolExpansion::Ptr &symbol, symbolTable_) {
+                    if ((expr = (*symbol)(tokens[0])))
+                        break;
                 }
-                if (boost::regex_match(tokens[0].lexeme(), matches, boost::regex("v(\\d+)"))) {
-                    uint64_t varId = rose_strtoull(matches.str(1).c_str(), NULL, 10);
-                    leaf = LeafNode::create_existing_variable(tokens[0].width(), varId);
-                } else {
-                    leaf = LeafNode::create_variable(tokens[0].width(), tokens[0].lexeme());
-                }
+                if (expr == NULL)
+                    throw tokens[0].syntaxError("unrecognized symbol: \"" + StringUtility::cEscape(tokens[0].lexeme()) + "\"");
                 tokens.shift();
                 if (stack.empty())
-                    return leaf;
-                stack.back().operands.push_back(leaf);
+                    return expr;
+                stack.back().operands.push_back(expr);
                 break;
             }
             case Token::BITVECTOR: {
@@ -487,20 +523,20 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 tokens.shift();
                 if (stack.empty())
                     throw tokens[0].syntaxError("unexpected right parenthesis", tokens.name());
-                TreeNodePtr inode;
+                TreeNodePtr expr;
                 BOOST_FOREACH (const FunctionExpansion::Ptr &function, functionTable_) {
-                    if ((inode = (*function)(stack.back().op, stack.back().operands)))
+                    if ((expr = (*function)(stack.back().op, stack.back().operands)))
                         break;
                 }
-                if (inode == NULL) {
-                    stack.back().op.syntaxError("unrecognized function name: \"" +
-                                                StringUtility::cEscape(stack.back().op.lexeme()) + "\"",
-                                                tokens.name());
+                if (expr == NULL) {
+                    throw stack.back().op.syntaxError("unrecognized function name: \"" +
+                                                      StringUtility::cEscape(stack.back().op.lexeme()) + "\"",
+                                                      tokens.name());
                 }
                 stack.pop_back();
                 if (stack.empty())
-                    return inode;
-                stack.back().operands.push_back(inode);
+                    return expr;
+                stack.back().operands.push_back(expr);
                 break;
             }
             case Token::NONE:
