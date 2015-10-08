@@ -1403,13 +1403,13 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & 
                withInitializers = false;
 
             // DQ (11/7/2006): Mark it temporarily as NOT a constructor parameter.
-               returnValue->isInConstructorParameterList = NO_CONSTRUCTOR_PARAMETER;
+               returnValue->setIsInConstructorParameterList(NO_CONSTRUCTOR_PARAMETER);
 
                string constructorParameterString_2 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_2 + "); \n";
 
             // DQ (11/7/2006): Turn it back on as a constructor parameter (and reset the defaultInitializerString)
-               returnValue->isInConstructorParameterList = CONSTRUCTOR_PARAMETER;
+               returnValue->setIsInConstructorParameterList(CONSTRUCTOR_PARAMETER);
                returnValue->defaultInitializerString = defaultInitializer;
 #if 0
             // DQ (10/7/2014): Adding support for Aterm specific function to build ROSE IR nodes (only generated where constructors are generated).
@@ -2061,10 +2061,8 @@ Grammar::buildVariantsStringDataBase ( StringUtility::FileWithLineNumbers & outp
        }
        variantNames[i->first] = i->second;
      }
-     bool first = true;
      for (size_t i=0; i < variantNames.size(); i++) {
        middleString += openString + "(VariantT)" + StringUtility::numberToString(i) + separatorString + variantNames[i] + closeString;
-       first = false;
      }
 
   // string endString = "          {$MARKER_LAST_TAG, \"last tag\" } \n   }; \n\n\n";
