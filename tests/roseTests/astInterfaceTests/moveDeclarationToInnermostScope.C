@@ -479,6 +479,8 @@ int main(int argc, char * argv[])
 #endif
       }
 
+#if 1
+// DQ (10/6/2015): Remove transformation for debugging token-unparsing.
   if (!isIdentity)
      {
          SgFilePtrList file_ptr_list = project->get_fileList();
@@ -502,6 +504,7 @@ int main(int argc, char * argv[])
             generateDOTforMultipleFile(*project);
 #endif
      }
+#endif
 
   // string filename= SageInterface::generateProjectName(project);
   // generateDOTforMultipleFile(*project);
@@ -517,8 +520,15 @@ int main(int argc, char * argv[])
         generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
       }
 
+#if 0
+// DQ (10/6/2015): Remove transformation for debugging token-unparsing.
+   printf ("Calling cleanupNontransformedBasicBlockNode() \n");
+#endif
+#if 1
 // DQ (1/18/2015): Denormalize some specific normalized bodies as a test.
    SageInterface::cleanupNontransformedBasicBlockNode();
+// printf ("DONE: Calling cleanupNontransformedBasicBlockNode() \n");
+#endif
 
   if (transTracking)
   { 
