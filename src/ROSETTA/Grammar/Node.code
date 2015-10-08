@@ -2654,8 +2654,13 @@ SgNode::set_isModified ( bool isModified)
   // DQ (4/14/2015): Adding testing to identify side-effects in the AST.
      if (SgProject::get_verbose() >= 3)
         {
-          printf ("SgNode::set_isModified() called for node = %p = %s \n",this,this->class_name().c_str());
-
+       // DQ (10/6/2015): Skip the output of this debug info for SgUnparse_Info IR nodes.
+       // printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
+       // if (!(isSgUnparse_Info(this) != NULL || isSgToken(this) != NULL))
+          if (isSgUnparse_Info(this) == NULL && isSgToken(this) == NULL)
+             {
+               printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
+             }
 #if 0
           printf ("Exiting as a test in SgNode::set_isModified \n");
           ROSE_ASSERT(false);

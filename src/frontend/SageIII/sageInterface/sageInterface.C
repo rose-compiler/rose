@@ -13136,7 +13136,7 @@ void SageInterface::recordNormalizations(SgStatement* s)
 void SageInterface::cleanupNontransformedBasicBlockNode()
    {
   // Remove unused basic block IR nodes added as part of normalization.
-  // This function shuld be called before the unparse step.
+  // This function should be called before the unparse step.
 
 #if 0
      printf ("In SageInterface::cleanupNontransformedBasicBlockNode(): addedBasicBlockNodes.size() = %zu \n",addedBasicBlockNodes.size());
@@ -13154,6 +13154,8 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
                 SgStatement* parentOfBlock = isSgStatement(b->get_parent());
                 ROSE_ASSERT(parentOfBlock != NULL);
 
+                bool wasPreviouslyModified = parentOfBlock->get_isModified();
+
                 SgStatement* s = b->get_statements()[0];
                 ROSE_ASSERT(s != NULL);
 
@@ -13164,17 +13166,43 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
                           SgIfStmt* ifStatement = isSgIfStmt(parentOfBlock);
                           if (b == ifStatement->get_true_body())
                              {
+#if 0
+                               printf ("Calling set_true_body on ifStatement = %p = %s \n",ifStatement,ifStatement->class_name().c_str());
+#endif
+                            // DQ (10/6/2015): This member function call is causing the IR node to be marked as transformed.
                                ifStatement->set_true_body(s);
+#if 0
+                               printf ("Calling set_parent on s = %p = %n \n",s,s->class_name().c_str());
+#endif
+                            // DQ (10/6/2015): Calls to the set_parent member function do NOT cause the either node to be marked as isModfied.
                                s->set_parent(ifStatement);
+#if 0
+                               printf ("DONE: Calling set_parent on s = %p = %n \n",s,s->class_name().c_str());
+#endif
                                *i = NULL;
                             // delete b;
                              }
                             else
                              {
                                ROSE_ASSERT(b == ifStatement->get_false_body());
+#if 0
+                               printf ("Calling set_false_body on ifStatement = %p = %s \n",ifStatement,ifStatement->class_name().c_str());
+#endif
+                            // DQ (10/6/2015): This member function call is causing the IR node to be marked as transformed.
                                ifStatement->set_false_body(s);
+#if 0
+                               printf ("Calling set_parent on s = %p = %n \n",s,s->class_name().c_str());
+#endif
+                            // DQ (10/6/2015): Calls to the set_parent member function do NOT cause the either node to be marked as isModfied.
                                s->set_parent(ifStatement);
+#if 0
+                               printf ("DONE: Calling set_parent on s = %p = %n \n",s,s->class_name().c_str());
+#endif
                                *i = NULL;
+#if 0
+                               printf ("Mark as NOT modified after calling set_false_body on ifStatement = %p = %n \n",ifStatement,ifStatement->class_name().c_str());
+#endif
+                            // ifStatement->set_isModified(false);
 #if 0
                                printf ("Error: case not handled in case V_SgIfStmt: parentOfBlock = %p = %s \n",parentOfBlock,parentOfBlock->class_name().c_str());
                                ROSE_ASSERT(false);
@@ -13260,6 +13288,19 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
                           printf ("Error: case not handled in switch: parentOfBlock = %p = %s \n",parentOfBlock,parentOfBlock->class_name().c_str());
                           ROSE_ASSERT(false);
                         }
+                   }
+
+             // DQ (10/6/2015): Added code to reset isModified flag if it was only modified by this function.
+                if (wasPreviouslyModified == false)
+                   {
+                     if (parentOfBlock->get_isModified() == true)
+                        {
+#if 1
+                          printf ("In SageInterface::cleanupNontransformedBasicBlockNode(): parentOfBlock reset to FALSE after IR node member function call (e.g. set_body()): parentOfBlock = %p = %s \n",parentOfBlock,parentOfBlock->class_name().c_str());
+#endif
+                          parentOfBlock->set_isModified(false);
+                        }
+
                    }
 #if 0
                 printf ("Exiting as a test! \n");
@@ -13595,6 +13636,9 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
       bool allowEmptyBody; 
       Visitor (bool flag):allowEmptyBody(flag) {}
       virtual void visit(SgNode* n) {
+
+        bool wasPreviouslyModified = n->get_isModified();
+
         switch (n->variantT()) {
           case V_SgForStatement: {
             ensureBasicBlockAsBodyOfFor(isSgForStatement(n));
@@ -13615,6 +13659,18 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
           case V_SgIfStmt: {
             ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(n));
             ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(n), allowEmptyBody);
+#if 0
+         // DQ (10/6/2015): Debugging why changes are being made to the AST for token-based unparsing.
+            printf ("In changeAllBodiesToBlocks(): case SgIfStmt: n->get_isModified() = %s \n",n->get_isModified() ? "true" : "false");
+#endif
+#if 0
+         // Reset this to false as a test.
+            if (n->get_isModified() == true)
+               {
+                 n->set_isModified(false);
+                 printf ("In changeAllBodiesToBlocks(): AFTER RESET: case SgIfStmt: n->get_isModified() = %s \n",n->get_isModified() ? "true" : "false");
+               }
+#endif
             break;
           }
           case V_SgCatchOptionStmt: {
@@ -13633,6 +13689,20 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
               break;
             }
         }
+
+  // DQ (10/6/2015): Added code to reset isModified flag if it was only modified by this function.
+     if (wasPreviouslyModified == false)
+        {
+          if (n->get_isModified() == true)
+             {
+#if 1
+               printf ("In SageInterface::changeAllBodiesToBlocks(): parentOfBlock reset to FALSE after IR node member function call (e.g. set_body()): parentOfBlock = %p = %s \n",n,n->class_name().c_str());
+#endif
+               n->set_isModified(false);
+             }
+
+        }
+
       }
     };
     Visitor(createEmptyBody).traverse(top, postorder);
