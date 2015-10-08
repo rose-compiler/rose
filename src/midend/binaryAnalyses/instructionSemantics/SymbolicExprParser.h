@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_SymbolicExprParser_H
 
 #include <InsnSemanticsExpr.h>
-#include <Sawyer/Map.h>
+#include <Sawyer/SharedPointer.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -21,8 +21,6 @@ namespace BinaryAnalysis {
  *        operations assert that their arguments are correct. Now that users can easily construct their own symbolic
  *        expressions from text, we need to make the failure modes less extreme. [Robb P. Matzke 2015-09-22]. */
 class SymbolicExprParser {
-    Sawyer::Container::Map<std::string, InsnSemanticsExpr::Operator> ops_;
-
 public:
     /** Syntax errors that are thrown. */
     class SyntaxError: public std::runtime_error {
@@ -153,8 +151,12 @@ public:
         /** Skip over white space and/or inline comments. */
         void consumeWhiteSpaceAndComments();
 
-        /** Parse and consume a term. Terms contain any characters except unescaped parentheses, angle brackets, square
-         *  brackets, and white space. This includes symbols and numeric constants. */
+        /** Parse and consume a term.
+         *
+         *  A term is a numeric constant or a symbol.  Symbols that start with a letter or underscore contain only letters,
+         *  underscores, and decimal digits.  Symbols that start with other than a letter or underscore end at the first
+         *  unescaped white-space, comment, parenthesis, angle bracket, or square bracket. Escaping the special character with
+         *  a backslash will cause it to become part of the symbol. */
         std::string consumeTerm();
 
         /** Parse and consume a width specification. A width specification is a decimal number in square brackets. */
@@ -170,6 +172,44 @@ public:
         // Try to fill the token vector so it contains tokens up through at least [idx]
         void fillTokenList(size_t idx);
     };
+
+    /** Functor to expand a symbol into a symbolic expression. */
+    class SymbolExpansion: public Sawyer::SharedObject {
+    public:
+        virtual ~SymbolExpansion() {}
+
+        /** Shared pointer. Uses reference counting. */
+        typedef Sawyer::SharedPointer<SymbolExpansion> Ptr;
+
+        /** Operator to expand the symbol into an expression tree. The width in bits is either the width specified in square
+         *  brackets for the symbol, or zero. Functors are all called for each symbol, and the first one to return non-null is
+         *  the one that's used to generate the symbolic expression. */
+        virtual InsnSemanticsExpr::TreeNodePtr operator()(const Token &name) = 0;
+    };
+
+    /** Functor to expand a function symbol into a symbolic expression. */
+    class FunctionExpansion: public Sawyer::SharedObject {
+    public:
+        virtual ~FunctionExpansion() {}
+
+        /** Shared pointer. Uses reference counting. */
+        typedef Sawyer::SharedPointer<FunctionExpansion> Ptr;
+
+        /** Operator to expand the function symbol into an expression tree. The width in bits is either the width specified in
+         *  square brackets for the function symbol, or zero.  Functors are all called for each symbol, and the first one to
+         *  return non-null is the one that's used to generate the symbolic expression. */
+        virtual InsnSemanticsExpr::TreeNodePtr operator()(const Token &name, const InsnSemanticsExpr::TreeNodes &operands) = 0;
+    };
+
+    /** Ordered symbol table. */
+    typedef std::vector<SymbolExpansion::Ptr> SymbolTable;
+
+    /** Ordered function table. */
+    typedef std::vector<FunctionExpansion::Ptr> FunctionTable;
+
+private:
+    SymbolTable symbolTable_;
+    FunctionTable functionTable_;
 
 public:
     /** Default constructor. */
@@ -191,6 +231,26 @@ public:
      *
      *  Parses the token stream and returns its first expression. Throws a @ref SyntaxError if problems are encountered. */
     InsnSemanticsExpr::TreeNodePtr parse(TokenStream&);
+
+    /** Append a new symbol to the symbol table. */
+    void appendSymbol(const SymbolExpansion::Ptr&);
+
+    /** Append a new function to the function table. */
+    void appendFunction(const FunctionExpansion::Ptr&);
+
+    /** Return all symbols.
+     *
+     * @{ */
+    const SymbolTable& symbolTable() const { return symbolTable_; }
+    SymbolTable& symbolTable() { return symbolTable_; }
+    /** @} */
+
+    /** Return all functions.
+     *
+     * @{ */
+    const FunctionTable& functionTable() const { return functionTable_; }
+    FunctionTable& functionTable() { return functionTable_; }
+    /** @} */
 
 private:
     void init();

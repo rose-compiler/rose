@@ -199,11 +199,22 @@ std::string
 SymbolicExprParser::TokenStream::consumeTerm() {
     ASSERT_require(EOF!=nextCharacter());
     std::string retval;
-    while (EOF != nextCharacter() && !isspace(nextCharacter()) && !strchr("()<>[]", nextCharacter())) {
-        if ('\\' == nextCharacter()) {
-            retval += (char)consumeEscapeSequence();
-        } else {
-            retval += (char)consumeCharacter();
+    if (EOF == nextCharacter()) {
+    } else if (isalpha(nextCharacter()) || nextCharacter() == '_') {
+        while (EOF != nextCharacter()) {
+            if (isalpha(nextCharacter()) || isdigit(nextCharacter()) || nextCharacter() == '_') {
+                retval += (char)consumeCharacter();
+            } else if (nextCharacter() == '\\') {
+                retval += (char)consumeEscapeSequence();
+            }
+        }
+    } else {
+        while (EOF != nextCharacter() && !isspace(nextCharacter()) && !strchr("()<>[]", nextCharacter())) {
+            if ('\\' == nextCharacter()) {
+                retval += (char)consumeEscapeSequence();
+            } else {
+                retval += (char)consumeCharacter();
+            }
         }
     }
     ASSERT_forbid2(retval.empty(), "term expected");
@@ -299,50 +310,114 @@ SymbolicExprParser::TokenStream::fillTokenList(size_t idx) {
 //                                      SymbolicExprParser
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Generates symbolic expressions for the SMT operators
+class SmtFunctions: public SymbolicExprParser::FunctionExpansion {
+protected:
+    Sawyer::Container::Map<std::string, InsnSemanticsExpr::Operator> ops_;
+
+    SmtFunctions() {
+        ops_.insert("add",          OP_ADD);
+        ops_.insert("and",          OP_AND);
+        ops_.insert("asr",          OP_ASR);
+        ops_.insert("bv-and",       OP_BV_AND);
+        ops_.insert("bv-or",        OP_BV_OR);
+        ops_.insert("bv-xor",       OP_BV_XOR);
+        ops_.insert("concat",       OP_CONCAT);
+        ops_.insert("eq",           OP_EQ);
+        ops_.insert("extract",      OP_EXTRACT);
+        ops_.insert("invert",       OP_INVERT);
+        ops_.insert("ite",          OP_ITE);
+        ops_.insert("lssb",         OP_LSSB);
+        ops_.insert("mssb",         OP_MSSB);
+        ops_.insert("ne",           OP_NE);
+        ops_.insert("negate",       OP_NEGATE);
+        ops_.insert("noop",         OP_NOOP);
+        ops_.insert("or",           OP_OR);
+        ops_.insert("read",         OP_READ);
+        ops_.insert("rol",          OP_ROL);
+        ops_.insert("ror",          OP_ROR);
+        ops_.insert("sdiv",         OP_SDIV);
+        ops_.insert("sextend",      OP_SEXTEND);
+        ops_.insert("sge",          OP_SGE);
+        ops_.insert("sgt",          OP_SGT);
+        ops_.insert("shl0",         OP_SHL0);
+        ops_.insert("shl1",         OP_SHL1);
+        ops_.insert("shr0",         OP_SHR0);
+        ops_.insert("shr1",         OP_SHR1);
+        ops_.insert("sle",          OP_SLE);
+        ops_.insert("slt",          OP_SLT);
+        ops_.insert("smod",         OP_SMOD);
+        ops_.insert("smul",         OP_SMUL);
+        ops_.insert("udiv",         OP_UDIV);
+        ops_.insert("uextend",      OP_UEXTEND);
+        ops_.insert("uge",          OP_UGE);
+        ops_.insert("ugt",          OP_UGT);
+        ops_.insert("ule",          OP_ULE);
+        ops_.insert("ult",          OP_ULT);
+        ops_.insert("umod",         OP_UMOD);
+        ops_.insert("umul",         OP_UMUL);
+        ops_.insert("write",        OP_WRITE);
+        ops_.insert("zerop",        OP_ZEROP);
+    }
+
+public:
+    static Ptr instance() {
+        return Ptr(new SmtFunctions);
+    }
+
+    virtual InsnSemanticsExpr::TreeNodePtr operator()(const SymbolicExprParser::Token &op,
+                                                      const InsnSemanticsExpr::TreeNodes &args) ROSE_OVERRIDE {
+        if (!ops_.exists(op.lexeme()))
+            return InsnSemanticsExpr::TreeNodePtr();
+        return InsnSemanticsExpr::InternalNode::create(op.width(), ops_[op.lexeme()], args);
+    }
+};
+
+// Creates symbolic expressions using more C-like operator names
+class CFunctions: public SymbolicExprParser::FunctionExpansion {
+protected:
+    Sawyer::Container::Map<std::string, InsnSemanticsExpr::Operator> ops_;
+
+    CFunctions() {
+        ops_.insert("+",        OP_ADD);
+        ops_.insert("&&",       OP_AND);
+        ops_.insert("&",        OP_BV_AND);
+        ops_.insert("|",        OP_BV_OR);
+        ops_.insert("^",        OP_BV_XOR);
+        ops_.insert("==",       OP_EQ);
+        ops_.insert("~",        OP_INVERT);
+        ops_.insert("?",        OP_ITE);
+        ops_.insert("!=",       OP_NE);
+        ops_.insert("-",        OP_NEGATE);
+        ops_.insert("||",       OP_OR);
+        ops_.insert("<<",       OP_SHL0);               // requires escapes since '<' introduces a comment
+        ops_.insert(">>",       OP_SHR0);
+        ops_.insert("/",        OP_UDIV);
+        ops_.insert(">=",       OP_UGE);
+        ops_.insert(">",        OP_UGT);
+        ops_.insert("<=",       OP_ULE);                // requires escapes since '<' introduces a comment
+        ops_.insert("<",        OP_ULT);                // requires escapes since '<' introduces a comment
+        ops_.insert("%",        OP_UMOD);
+        ops_.insert("*",        OP_UMUL);
+    }
+        
+public:
+    static Ptr instance() {
+        return Ptr(new CFunctions);
+    }
+
+    virtual InsnSemanticsExpr::TreeNodePtr operator()(const SymbolicExprParser::Token &op,
+                                                      const InsnSemanticsExpr::TreeNodes &args) ROSE_OVERRIDE {
+        if (!ops_.exists(op.lexeme()))
+            return InsnSemanticsExpr::TreeNodePtr();
+        return InsnSemanticsExpr::InternalNode::create(op.width(), ops_[op.lexeme()], args);
+    }
+};
+
 void
 SymbolicExprParser::init() {
-    ops_.insert("add",          OP_ADD);
-    ops_.insert("and",          OP_AND);
-    ops_.insert("asr",          OP_ASR);
-    ops_.insert("bv-and",       OP_BV_AND);
-    ops_.insert("bv-or",        OP_BV_OR);
-    ops_.insert("bv-xor",       OP_BV_XOR);
-    ops_.insert("concat",       OP_CONCAT);
-    ops_.insert("eq",           OP_EQ);
-    ops_.insert("extract",      OP_EXTRACT);
-    ops_.insert("invert",       OP_INVERT);
-    ops_.insert("ite",          OP_ITE);
-    ops_.insert("lssb",         OP_LSSB);
-    ops_.insert("mssb",         OP_MSSB);
-    ops_.insert("ne",           OP_NE);
-    ops_.insert("negate",       OP_NEGATE);
-    ops_.insert("noop",         OP_NOOP);
-    ops_.insert("or",           OP_OR);
-    ops_.insert("read",         OP_READ);
-    ops_.insert("rol",          OP_ROL);
-    ops_.insert("ror",          OP_ROR);
-    ops_.insert("sdiv",         OP_SDIV);
-    ops_.insert("sextend",      OP_SEXTEND);
-    ops_.insert("sge",          OP_SGE);
-    ops_.insert("sgt",          OP_SGT);
-    ops_.insert("shl0",         OP_SHL0);
-    ops_.insert("shl1",         OP_SHL1);
-    ops_.insert("shr0",         OP_SHR0);
-    ops_.insert("shr1",         OP_SHR1);
-    ops_.insert("sle",          OP_SLE);
-    ops_.insert("slt",          OP_SLT);
-    ops_.insert("smod",         OP_SMOD);
-    ops_.insert("smul",         OP_SMUL);
-    ops_.insert("udiv",         OP_UDIV);
-    ops_.insert("uextend",      OP_UEXTEND);
-    ops_.insert("uge",          OP_UGE);
-    ops_.insert("ugt",          OP_UGT);
-    ops_.insert("ule",          OP_ULE);
-    ops_.insert("ult",          OP_ULT);
-    ops_.insert("umod",         OP_UMOD);
-    ops_.insert("umul",         OP_UMUL);
-    ops_.insert("write",        OP_WRITE);
-    ops_.insert("zerop",        OP_ZEROP);
+    appendFunction(SmtFunctions::instance());
+    appendFunction(CFunctions::instance());
 }
 
 TreeNodePtr
@@ -358,13 +433,11 @@ SymbolicExprParser::parse(std::istream &input, const std::string &inputName, uns
 }
 
 struct PartialInternalNode {
-    InsnSemanticsExpr::Operator op;
-    size_t nBits;
+    SymbolicExprParser::Token op;
     std::vector<TreeNodePtr> operands;
-    SymbolicExprParser::Token ltparen;                  // left paren token needed for error message position info
-
-    PartialInternalNode(InsnSemanticsExpr::Operator op, size_t nBits, const SymbolicExprParser::Token &ltparen)
-        : op(op), nBits(nBits), ltparen(ltparen) {}
+    SymbolicExprParser::Token ltparen;                  // for error messages
+    PartialInternalNode(const SymbolicExprParser::Token &op, const SymbolicExprParser::Token &ltparen)
+        : op(op), ltparen(ltparen) {}
 };
 
 TreeNodePtr
@@ -375,9 +448,7 @@ SymbolicExprParser::parse(TokenStream &tokens) {
             case Token::LTPAREN: {
                 if (tokens[1].type()!=Token::SYMBOL)
                     throw tokens[0].syntaxError("expected operator after left paren", tokens.name());
-                if (!ops_.exists(tokens[1].lexeme()))
-                    throw tokens[1].syntaxError("unknown operator name", tokens.name());
-                stack.push_back(PartialInternalNode(ops_[tokens[1].lexeme()], tokens[1].width(), tokens[0]));
+                stack.push_back(PartialInternalNode(tokens[1], tokens[0]));
                 tokens.shift(2);
                 break;
             }
@@ -416,7 +487,16 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 tokens.shift();
                 if (stack.empty())
                     throw tokens[0].syntaxError("unexpected right parenthesis", tokens.name());
-                TreeNodePtr inode = InternalNode::create(stack.back().nBits, stack.back().op, stack.back().operands);
+                TreeNodePtr inode;
+                BOOST_FOREACH (const FunctionExpansion::Ptr &function, functionTable_) {
+                    if ((inode = (*function)(stack.back().op, stack.back().operands)))
+                        break;
+                }
+                if (inode == NULL) {
+                    stack.back().op.syntaxError("unrecognized function name: \"" +
+                                                StringUtility::cEscape(stack.back().op.lexeme()) + "\"",
+                                                tokens.name());
+                }
                 stack.pop_back();
                 if (stack.empty())
                     return inode;
@@ -424,12 +504,24 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 break;
             }
             case Token::NONE:
-                ASSERT_not_reachable("end of input");
+                ASSERT_not_reachable("end of input");   // should have been handled above
         }
     }
     if (stack.empty())
         throw SyntaxError("empty input", tokens.name(), tokens.lineNumber(), tokens.columnNumber());
     throw stack.back().ltparen.syntaxError("expression not closed before end of input", tokens.name());
+}
+
+void
+SymbolicExprParser::appendSymbol(const SymbolExpansion::Ptr &functor) {
+    ASSERT_not_null(functor);
+    symbolTable_.push_back(functor);
+}
+
+void
+SymbolicExprParser::appendFunction(const FunctionExpansion::Ptr &functor) {
+    ASSERT_not_null(functor);
+    functionTable_.push_back(functor);
 }
 
 } // namespace
