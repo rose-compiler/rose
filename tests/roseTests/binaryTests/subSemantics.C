@@ -29,7 +29,7 @@ public:
         : SymbolicSemantics::ValueType<nBits>(other), state(VAL_DEFINED) {}
     explicit MyValueType(uint64_t n, std::string comment="")
         : SymbolicSemantics::ValueType<nBits>(n, comment), state(VAL_DEFINED) {}
-    explicit MyValueType(const InsnSemanticsExpr::TreeNodePtr &node)
+    explicit MyValueType(const SymbolicExpr::TreeNodePtr &node)
         : SymbolicSemantics::ValueType<nBits>(node), state(VAL_DEFINED) {}
 
     // Our own new methods to access the value state

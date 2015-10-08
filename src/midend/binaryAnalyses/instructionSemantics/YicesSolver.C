@@ -14,7 +14,7 @@
 namespace rose {
 namespace BinaryAnalysis {
 
-using namespace InsnSemanticsExpr;
+using namespace SymbolicExpr;
 
 void
 YicesSolver::init()
@@ -54,7 +54,7 @@ YicesSolver::available_linkage()
 
 /* See YicesSolver.h */
 SMTSolver::Satisfiable
-YicesSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
+YicesSolver::satisfiable(const std::vector<SymbolicExpr::TreeNodePtr> &exprs)
 {
     clear_evidence();
     Satisfiable retval = trivially_satisfiable(exprs);
@@ -705,7 +705,7 @@ YicesSolver::out_zerop(std::ostream &o, const InternalNodePtr &in)
     o <<") 0b1 0b0)";
 }
 
-/** Output for multiply. The OP_SMUL and OP_UMUL nodes of InsnSemanticsExpr define the result width to be the sum of the input
+/** Output for multiply. The OP_SMUL and OP_UMUL nodes of SymbolicExpr define the result width to be the sum of the input
  *  widths. Yices' bv-mul operator requires that both operands are the same size and the result is the size of each operand.
  *  Therefore, we rewrite (OP_SMUL A B) to become, in Yices:
  *  \code
@@ -1123,7 +1123,7 @@ YicesSolver::ctx_zerop(const InternalNodePtr &in)
 #endif
 
 #ifdef ROSE_HAVE_LIBYICES
-/** Generate a Yices expression for multiply. The OP_SMUL and OP_UMUL nodes of InsnSemanticsExpr define the result width to be
+/** Generate a Yices expression for multiply. The OP_SMUL and OP_UMUL nodes of SymbolicExpr define the result width to be
  *  the sum of the input widths. Yices' bv-mul operator requires that both operands are the same size and the result is the
  *  size of each operand. Therefore, we rewrite (OP_SMUL A B) to become, in Yices:
  *  \code

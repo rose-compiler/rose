@@ -1,5 +1,5 @@
 #include <rose.h>
-#include <InsnSemanticsExpr.h>
+#include <BinarySymbolicExpr.h>
 #include <SymbolicSemantics2.h>
 #include <YicesSolver.h>
 
@@ -57,7 +57,7 @@ test_yices_linkage() {
 
 static void
 test_add_simplifications() {
-    using namespace InsnSemanticsExpr;
+    using namespace SymbolicExpr;
 
     TreeNodePtr reg = LeafNode::create_variable(32, "esp_0");
     TreeNodePtr nreg = InternalNode::create(32, OP_NEGATE, reg);

@@ -41,16 +41,16 @@ SMTSolver::reset_class_stats()
     class_stats = Stats();
 }
 
-InsnSemanticsExpr::TreeNodePtr
+SymbolicExpr::TreeNodePtr
 SMTSolver::evidence_for_address(uint64_t addr)
 {
     return evidence_for_name(StringUtility::addrToString(addr));
 }
 
 SMTSolver::Satisfiable
-SMTSolver::trivially_satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs_)
+SMTSolver::trivially_satisfiable(const std::vector<SymbolicExpr::TreeNodePtr> &exprs_)
 {
-    std::vector<InsnSemanticsExpr::TreeNodePtr> exprs(exprs_.begin(), exprs_.end());
+    std::vector<SymbolicExpr::TreeNodePtr> exprs(exprs_.begin(), exprs_.end());
     for (size_t i=0; i<exprs.size(); ++i) {
         if (exprs[i]->is_known()) {
             ASSERT_require(1==exprs[i]->get_nbits());
@@ -64,7 +64,7 @@ SMTSolver::trivially_satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePt
 }
 
 SMTSolver::Satisfiable
-SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
+SMTSolver::satisfiable(const std::vector<SymbolicExpr::TreeNodePtr> &exprs)
 {
     bool got_satunsat_line = false;
 
@@ -187,15 +187,15 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
     
 
 SMTSolver::Satisfiable
-SMTSolver::satisfiable(const InsnSemanticsExpr::TreeNodePtr &tn)
+SMTSolver::satisfiable(const SymbolicExpr::TreeNodePtr &tn)
 {
-    std::vector<InsnSemanticsExpr::TreeNodePtr> exprs;
+    std::vector<SymbolicExpr::TreeNodePtr> exprs;
     exprs.push_back(tn);
     return satisfiable(exprs);
 }
 
 SMTSolver::Satisfiable
-SMTSolver::satisfiable(std::vector<InsnSemanticsExpr::TreeNodePtr> exprs, const InsnSemanticsExpr::TreeNodePtr &expr)
+SMTSolver::satisfiable(std::vector<SymbolicExpr::TreeNodePtr> exprs, const SymbolicExpr::TreeNodePtr &expr)
 {
     if (expr!=NULL)
         exprs.push_back(expr);

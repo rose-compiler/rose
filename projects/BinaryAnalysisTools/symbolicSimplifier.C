@@ -63,7 +63,7 @@ main(int argc, char *argv[]) {
 
         // Parse the expression
         try {
-            InsnSemanticsExpr::TreeNodePtr expr = SymbolicExprParser().parse(line);
+            SymbolicExpr::TreeNodePtr expr = SymbolicExprParser().parse(line);
             std::cout <<"Parsed value = " <<*expr <<"\n\n";
         } catch (const SymbolicExprParser::SyntaxError &e) {
             std::cerr <<e <<"\n";

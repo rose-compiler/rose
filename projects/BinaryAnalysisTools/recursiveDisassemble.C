@@ -843,7 +843,7 @@ int main(int argc, char *argv[]) {
 #if 0 // DEBUGGING [Robb P. Matzke 2014-08-23]
     // This should free all symbolic expressions except for perhaps a few held by something we don't know about.
     partitioner.clear();
-    InsnSemanticsExpr::TreeNode::poolAllocator().showInfo(std::cerr);
+    SymbolicExpr::TreeNode::poolAllocator().showInfo(std::cerr);
     std::cerr <<"all done; entering busy loop\n";
     while (1);                                          // makes us easy to find in process listings
 #endif

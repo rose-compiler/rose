@@ -6,9 +6,9 @@
 // remaining output is correct.  The default expression printer will print a non-empty comment in lieu of the variable name.
 
 #include <rose.h>
-#include <InsnSemanticsExpr.h>
+#include <BinarySymbolicExpr.h>
 
-using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
+using namespace rose::BinaryAnalysis::SymbolicExpr;
 
 // Bit flags (low-order 16 bits are reserved for ROSE, so don't use them)
 static const unsigned UNDEFINED = 0x00010000;

@@ -562,8 +562,8 @@ Analysis::updateRestoredRegisters(const StatePtr &initialState, const StatePtr &
     BOOST_FOREACH (const RegisterDescriptor &reg, finalRegs->findProperties(props)) {
         SValuePtr initialValue = initialRegs->readRegister(reg, ops.get());
         SValuePtr finalValue = finalRegs->readRegister(reg, ops.get());
-        InsnSemanticsExpr::TreeNodePtr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
-        InsnSemanticsExpr::TreeNodePtr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
+        SymbolicExpr::TreeNodePtr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
+        SymbolicExpr::TreeNodePtr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
         if (finalExpr->get_flags() == initialExpr->get_flags() && finalExpr->must_equal(initialExpr, ops->get_solver()))
             restoredRegisters_.insert(reg);
     }

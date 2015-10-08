@@ -17,7 +17,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
         return dflt;
     size_t nbits = dflt->get_width();
     SValuePtr addr = SValue::promote(addr_);
-    return svalue_expr(InternalNode::create(nbits, InsnSemanticsExpr::OP_READ,
+    return svalue_expr(InternalNode::create(nbits, SymbolicExpr::OP_READ,
                                             LeafNode::create_memory(addr->get_width(), nbits), addr->get_expression()));
 }
 
@@ -29,7 +29,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
         return;
     SValuePtr addr = SValue::promote(addr_);
     SValuePtr data = SValue::promote(data_);
-    mem_writes.push_back(InternalNode::create(data->get_width(), InsnSemanticsExpr::OP_WRITE,
+    mem_writes.push_back(InternalNode::create(data->get_width(), SymbolicExpr::OP_WRITE,
                                               LeafNode::create_memory(addr->get_width(), data->get_width()),
                                               addr->get_expression(), data->get_expression())->isInternalNode());
 }
@@ -193,7 +193,7 @@ RiscOperators::get_instruction_pointer()
 void
 RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
 {
-    struct T1: InsnSemanticsExpr::Visitor {
+    struct T1: SymbolicExpr::Visitor {
         RiscOperators *ops;
         std::ostream &o;
         const RegisterDescriptors &regs;
@@ -201,12 +201,12 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
         std::set<uint64_t> seen;
         T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
             : ops(ops), o(o), regs(regs), dictionary(dictionary) {}
-        virtual InsnSemanticsExpr::VisitAction preVisit(const TreeNodePtr &node) ROSE_OVERRIDE {
+        virtual SymbolicExpr::VisitAction preVisit(const TreeNodePtr &node) ROSE_OVERRIDE {
             if (!seen.insert(node->hash()).second)
-                return InsnSemanticsExpr::TRUNCATE; // already processed this same expression
+                return SymbolicExpr::TRUNCATE; // already processed this same expression
             size_t width = node->get_nbits();
             if (InternalNodePtr inode = node->isInternalNode()) {
-                if (InsnSemanticsExpr::OP_READ==inode->get_operator()) {
+                if (SymbolicExpr::OP_READ==inode->get_operator()) {
                     ASSERT_require(2==inode->nchildren());
                     ops->emit_assignment(o, ops->emit_memory_read(o, inode->child(1), width));
                 }
@@ -220,10 +220,10 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
                     LeafNodePtr t1 = ops->emit_expression(o, leaf);// handles local vars, global vars, and undefs
                 }
             }
-            return InsnSemanticsExpr::CONTINUE;
+            return SymbolicExpr::CONTINUE;
         }
-        virtual InsnSemanticsExpr::VisitAction postVisit(const TreeNodePtr&) ROSE_OVERRIDE {
-            return InsnSemanticsExpr::CONTINUE;
+        virtual SymbolicExpr::VisitAction postVisit(const TreeNodePtr&) ROSE_OVERRIDE {
+            return SymbolicExpr::CONTINUE;
         }
     } t1(this, o, regs, dictionary);
 
@@ -321,7 +321,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     // addresses isn't valid.  This can happen because the ROSE disassembler might be using a more advanced analysis than we
     // use here.
     InternalNodePtr inode = eip->get_expression()->isInternalNode();
-    if (inode && InsnSemanticsExpr::OP_ITE==inode->get_operator()) {
+    if (inode && SymbolicExpr::OP_ITE==inode->get_operator()) {
         LeafNodePtr leaf1 = inode->child(1)->isLeafNode();
         LeafNodePtr leaf2 = inode->child(2)->isLeafNode();
         if (leaf1!=NULL && leaf1->is_known() && leaf2!=NULL && leaf2->is_known()) {
@@ -428,7 +428,7 @@ RiscOperators::emit_memory_writes(std::ostream &o)
     for (size_t i=0; i<mem_writes.size(); ++i) {
         InternalNodePtr inode = mem_writes[i]->isInternalNode();
         ASSERT_not_null(inode);
-        ASSERT_require(inode->get_operator() == InsnSemanticsExpr::OP_WRITE);
+        ASSERT_require(inode->get_operator() == SymbolicExpr::OP_WRITE);
         ASSERT_require(inode->nchildren()==3);
         TreeNodePtr addr = inode->child(1);
         TreeNodePtr value = inode->child(2);
@@ -657,10 +657,10 @@ RiscOperators::emit_logical_right_shift_ones(std::ostream &o, const TreeNodePtr 
 {
     TreeNodePtr t1 = emit_logical_right_shift(o, value, amount);
     size_t width = std::max(value->get_nbits(), amount->get_nbits());
-    TreeNodePtr ones = InternalNode::create(width, InsnSemanticsExpr::OP_ADD,
+    TreeNodePtr ones = InternalNode::create(width, SymbolicExpr::OP_ADD,
                                             LeafNode::create_integer(width, value->get_nbits()),
-                                            InternalNode::create(width, InsnSemanticsExpr::OP_NEGATE,
-                                                                 InternalNode::create(width, InsnSemanticsExpr::OP_UEXTEND,
+                                            InternalNode::create(width, SymbolicExpr::OP_NEGATE,
+                                                                 InternalNode::create(width, SymbolicExpr::OP_UEXTEND,
                                                                                       LeafNode::create_integer(8, width),
                                                                                       amount)));
     return emit_binary(o, "or", t1, ones);
@@ -1063,160 +1063,160 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
         TreeNodePtr operator_result;
         TreeNodes operands = inode->get_children();
         switch (inode->get_operator()) {
-            case InsnSemanticsExpr::OP_ADD:
+            case SymbolicExpr::OP_ADD:
                 operator_result = emit_left_associative(o, "add", operands);
                 break;
-            case InsnSemanticsExpr::OP_AND:
+            case SymbolicExpr::OP_AND:
                 operator_result = emit_left_associative(o, "and", operands);
                 break;
-            case InsnSemanticsExpr::OP_ASR:
+            case SymbolicExpr::OP_ASR:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_arithmetic_right_shift(o, operands[1], operands[0]);
                 break;
-            case InsnSemanticsExpr::OP_BV_AND:
+            case SymbolicExpr::OP_BV_AND:
                 operator_result = emit_left_associative(o, "and", operands);
                 break;
-            case InsnSemanticsExpr::OP_BV_OR:
+            case SymbolicExpr::OP_BV_OR:
                 operator_result = emit_left_associative(o, "or", operands);
                 break;
-            case InsnSemanticsExpr::OP_BV_XOR:
+            case SymbolicExpr::OP_BV_XOR:
                 operator_result = emit_left_associative(o, "xor", operands);
                 break;
-            case InsnSemanticsExpr::OP_CONCAT:
+            case SymbolicExpr::OP_CONCAT:
                 operator_result = emit_concat(o, operands);
                 break;
-            case InsnSemanticsExpr::OP_EQ:
+            case SymbolicExpr::OP_EQ:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp eq", operands[0], operands[1]);
                 break;
-            case InsnSemanticsExpr::OP_EXTRACT:
+            case SymbolicExpr::OP_EXTRACT:
                 ASSERT_require(3==operands.size());
                 operator_result = emit_extract(o, operands[2], operands[0], inode->get_nbits());
                 break;
-            case InsnSemanticsExpr::OP_INVERT:
+            case SymbolicExpr::OP_INVERT:
                 ASSERT_require(1==operands.size());
                 operator_result = emit_invert(o, operands[0]);
                 break;
-            case InsnSemanticsExpr::OP_ITE:
+            case SymbolicExpr::OP_ITE:
                 ASSERT_require(3==operands.size());
                 operator_result = emit_ite(o, operands[0], operands[1], operands[2]);
                 break;
-            case InsnSemanticsExpr::OP_LSSB:
+            case SymbolicExpr::OP_LSSB:
                 ASSERT_require(1==operands.size());
                 operator_result = emit_lssb(o, operands[0]);
                 break;
-            case InsnSemanticsExpr::OP_MSSB:
+            case SymbolicExpr::OP_MSSB:
                 ASSERT_require(1==operands.size());
                 operator_result = emit_mssb(o, operands[0]);
                 break;
-            case InsnSemanticsExpr::OP_NE:
+            case SymbolicExpr::OP_NE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ne", operands[0], operands[1]);
                 break;
-            case InsnSemanticsExpr::OP_NEGATE:
+            case SymbolicExpr::OP_NEGATE:
                 ASSERT_require(1==operands.size());
                 operator_result = emit_binary(o, "sub", LeafNode::create_integer(operands[0]->get_nbits(), 0), operands[0]);
                 break;
-            case InsnSemanticsExpr::OP_OR:
+            case SymbolicExpr::OP_OR:
                 operator_result = emit_left_associative(o, "or", operands);
                 break;
-            case InsnSemanticsExpr::OP_READ:
+            case SymbolicExpr::OP_READ:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_memory_read(o, operands[1], inode->get_nbits());
                 break;
-            case InsnSemanticsExpr::OP_ROL:
+            case SymbolicExpr::OP_ROL:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_rotate_left(o, operands[1], operands[0]);
                 break;
-            case InsnSemanticsExpr::OP_ROR:
+            case SymbolicExpr::OP_ROR:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_rotate_right(o, operands[1], operands[0]);
                 break;
-            case InsnSemanticsExpr::OP_SDIV:
+            case SymbolicExpr::OP_SDIV:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_signed_divide(o, operands[0], operands[1]);
                 break;
-            case InsnSemanticsExpr::OP_SEXTEND:
+            case SymbolicExpr::OP_SEXTEND:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_sign_extend(o, operands[1], inode->get_nbits());
                 break;
-            case InsnSemanticsExpr::OP_SGE:
+            case SymbolicExpr::OP_SGE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp sge", operands[0], operands[1]);
                 break;
-            case InsnSemanticsExpr::OP_SGT:
+            case SymbolicExpr::OP_SGT:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp sgt", operands[0], operands[1]);
                 break;
-            case InsnSemanticsExpr::OP_SHL0:
+            case SymbolicExpr::OP_SHL0:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_left_shift(o, operands[1], operands[0]);
                 break;
-            case InsnSemanticsExpr::OP_SHL1:
+            case SymbolicExpr::OP_SHL1:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_left_shift_ones(o, operands[1], operands[0]);
                 break;
-            case InsnSemanticsExpr::OP_SHR0:
+            case SymbolicExpr::OP_SHR0:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_logical_right_shift(o, operands[1], operands[0]);
                 break;
-            case InsnSemanticsExpr::OP_SHR1:
+            case SymbolicExpr::OP_SHR1:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_logical_right_shift_ones(o, operands[1], operands[0]);
                 break;
-            case InsnSemanticsExpr::OP_SLE:
+            case SymbolicExpr::OP_SLE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp sle", operands[0], operands[1]);
                 break;
-            case InsnSemanticsExpr::OP_SLT:
+            case SymbolicExpr::OP_SLT:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp slt", operands[0], operands[1]);
                 break;
-            case InsnSemanticsExpr::OP_SMOD:
+            case SymbolicExpr::OP_SMOD:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_signed_modulo(o, operands[0], operands[1]);
                 break;
-            case InsnSemanticsExpr::OP_SMUL:
+            case SymbolicExpr::OP_SMUL:
                 operator_result = emit_signed_multiply(o, operands);
                 break;
-            case InsnSemanticsExpr::OP_UDIV:
+            case SymbolicExpr::OP_UDIV:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_unsigned_divide(o, operands[0], operands[1]);
                 break;
-            case InsnSemanticsExpr::OP_UEXTEND:
+            case SymbolicExpr::OP_UEXTEND:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_zero_extend(o, operands[1], inode->get_nbits());
                 break;
-            case InsnSemanticsExpr::OP_UGE:
+            case SymbolicExpr::OP_UGE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp uge", operands[0], operands[1]);
                 break;
-            case InsnSemanticsExpr::OP_UGT:
+            case SymbolicExpr::OP_UGT:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ugt", operands[0], operands[1]);
                 break;
-            case InsnSemanticsExpr::OP_ULE:
+            case SymbolicExpr::OP_ULE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ule", operands[0], operands[1]);
                 break;
-            case InsnSemanticsExpr::OP_ULT:
+            case SymbolicExpr::OP_ULT:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ult", operands[0], operands[1]);
                 break;
-            case InsnSemanticsExpr::OP_UMOD:
+            case SymbolicExpr::OP_UMOD:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_unsigned_modulo(o, operands[0], operands[1]);
                 break;
-            case InsnSemanticsExpr::OP_UMUL:
+            case SymbolicExpr::OP_UMUL:
                 operator_result = emit_unsigned_multiply(o, operands);
                 break;
-            case InsnSemanticsExpr::OP_ZEROP:
+            case SymbolicExpr::OP_ZEROP:
                 ASSERT_require(1==operands.size());
                 operator_result = emit_compare(o, "icmp eq", operands[0], LeafNode::create_integer(operands[0]->get_nbits(), 0));
                 break;
 
-            case InsnSemanticsExpr::OP_NOOP:
-            case InsnSemanticsExpr::OP_WRITE:
+            case SymbolicExpr::OP_NOOP:
+            case SymbolicExpr::OP_WRITE:
                 throw BaseSemantics::Exception("LLVM translation for " +
                                                stringifyBinaryAnalysisSymbolicExprOperator(inode->get_operator()) +
                                                " is not implemented yet", NULL);

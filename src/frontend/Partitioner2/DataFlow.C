@@ -243,9 +243,9 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
 
 // If the expression is an offset from the initial stack register then return the offset, else nothing.
 static Sawyer::Optional<int64_t>
-isStackAddress(const rose::BinaryAnalysis::InsnSemanticsExpr::TreeNodePtr &expr,
+isStackAddress(const rose::BinaryAnalysis::SymbolicExpr::TreeNodePtr &expr,
                const BaseSemantics::SValuePtr &initialStackPointer, SMTSolver *solver) {
-    using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
+    using namespace rose::BinaryAnalysis::SymbolicExpr;
     using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
     if (!initialStackPointer)

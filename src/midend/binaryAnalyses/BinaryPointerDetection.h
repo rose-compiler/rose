@@ -104,7 +104,7 @@ public:
     size_t merge_value(ValueType<nBits> &inout, const ValueType<nBits> &other, SMTSolver *smt_solver) {
         if (inout.get_expression()->must_equal(other.get_expression(), smt_solver))
             return 0;
-        InsnSemanticsExpr::LeafNodePtr inout_leaf = inout.get_expression()->isLeafNode();
+        SymbolicExpr::LeafNodePtr inout_leaf = inout.get_expression()->isLeafNode();
         if (inout_leaf && inout_leaf->is_variable())
             return 0;
         inout.set_expression(ValueType<nBits>()); // set expression without affecting defining instructions
@@ -362,8 +362,8 @@ protected:
         template<size_t Len>
         void writeRegister(const RegisterDescriptor &reg, const ValueType<Len> &value) {
             if (0==info->pass && !value.is_known() && reg == this->findRegister("eip", 32)) {
-                InsnSemanticsExpr::InternalNodePtr inode = value.get_expression()->isInternalNode();
-                if (inode!=NULL && InsnSemanticsExpr::OP_ITE==inode->get_operator() &&
+                SymbolicExpr::InternalNodePtr inode = value.get_expression()->isInternalNode();
+                if (inode!=NULL && SymbolicExpr::OP_ITE==inode->get_operator() &&
                     inode->child(1)->is_known() && inode->child(2)->is_known()) {
                     // We must have processed a branch instruction.  Both directions of the branch are concrete addresses, so
                     // there is no code pointer involved here.
@@ -521,7 +521,7 @@ public:
                 // Find control flow successors
                 std::set<rose_addr_t> successors;
                 ValueType<32> eip_value = policy.template readRegister<32>(semantics.REG_EIP);
-                InsnSemanticsExpr::InternalNodePtr inode = eip_value.get_expression()->isInternalNode();
+                SymbolicExpr::InternalNodePtr inode = eip_value.get_expression()->isInternalNode();
                 if (eip_value.is_known()) {
                     successors.insert(eip_value.known_value());
                     // assume all CALLs return since we might not actually traverse the called function.  If we had done a full
@@ -529,7 +529,7 @@ public:
                     // indeed a function call, and if so, whether the called function's can_return() property is set.
                     if (insn->get_kind()==x86_call)
                         successors.insert(insn->get_address() + insn->get_size());
-                } else if (NULL!=inode && InsnSemanticsExpr::OP_ITE==inode->get_operator() &&
+                } else if (NULL!=inode && SymbolicExpr::OP_ITE==inode->get_operator() &&
                            inode->child(1)->is_known() && inode->child(2)->is_known()) {
                     successors.insert(inode->child(1)->get_value()); // the if-true case
                     successors.insert(inode->child(2)->get_value()); // the if-false case

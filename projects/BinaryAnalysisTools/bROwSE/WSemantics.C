@@ -1,10 +1,10 @@
 #include <rose.h>
 
 #include <BinaryStackVariable.h>                        // ROSE
+#include <BinarySymbolicExpr.h>                         // ROSE
 #include <bROwSE/FunctionUtil.h>
 #include <bROwSE/WSemantics.h>
 #include <bROwSE/WToggleButton.h>
-#include <InsnSemanticsExpr.h>                          // ROSE
 #include <MemoryCellList.h>                             // ROSE
 #include <Wt/WAbstractTableModel>
 #include <Wt/WHBoxLayout>
@@ -47,7 +47,7 @@ public:
     }
 
     std::string toString(const BaseSemantics::SValuePtr &valueBase) {
-        using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
+        using namespace rose::BinaryAnalysis::SymbolicExpr;
         SymbolicSemantics::SValuePtr value = SymbolicSemantics::SValue::promote(valueBase);
         LeafNodePtr leaf = value->get_expression()->isLeafNode();
         if (leaf && leaf->is_known()) {

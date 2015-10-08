@@ -1,6 +1,5 @@
 #include <rose.h>
 
-#include <InsnSemanticsExpr.h>
 #include <BinarySymbolicExprParser.h>
 
 using namespace rose::BinaryAnalysis;
@@ -36,7 +35,7 @@ main() {
     SymbolicExprParser parser;
     for (size_t i=0; i<sizeof(inputs)/sizeof(*inputs); ++i) {
         std::cout <<"Parser input: " <<inputs[i] <<"\n";
-        InsnSemanticsExpr::TreeNodePtr symbolicExpression = parser.parse(inputs[i]);
+        SymbolicExpr::TreeNodePtr symbolicExpression = parser.parse(inputs[i]);
         std::cout <<"Parse expr:   " <<*symbolicExpression <<"\n\n";
         
     }

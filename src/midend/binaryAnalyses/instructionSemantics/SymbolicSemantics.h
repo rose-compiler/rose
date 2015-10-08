@@ -38,12 +38,12 @@ namespace InstructionSemantics {    // documented elsewhere
  *  will be answered by very naive comparison of the expression trees. */
 namespace SymbolicSemantics {
 
-typedef InsnSemanticsExpr::LeafNode LeafNode;
-typedef InsnSemanticsExpr::LeafNodePtr LeafNodePtr;
-typedef InsnSemanticsExpr::InternalNode InternalNode;
-typedef InsnSemanticsExpr::InternalNodePtr InternalNodePtr;
-typedef InsnSemanticsExpr::TreeNode TreeNode;
-typedef InsnSemanticsExpr::TreeNodePtr TreeNodePtr;
+typedef SymbolicExpr::LeafNode LeafNode;
+typedef SymbolicExpr::LeafNodePtr LeafNodePtr;
+typedef SymbolicExpr::InternalNode InternalNode;
+typedef SymbolicExpr::InternalNodePtr InternalNodePtr;
+typedef SymbolicExpr::TreeNode TreeNode;
+typedef SymbolicExpr::TreeNodePtr TreeNodePtr;
 typedef std::set<SgAsmInstruction*> InsnSet;
 
 /** Formatter for symbolic values. */
@@ -52,7 +52,7 @@ public:
     Formatter(): show_defs(true) {
         expr_formatter.use_hexadecimal = false;             // preserve the old behavior in API1
     }
-    InsnSemanticsExpr::Formatter expr_formatter;
+    SymbolicExpr::Formatter expr_formatter;
     bool show_defs;
 };
 
@@ -67,7 +67,7 @@ public:
  *  operations.
  *
  *  A ValueType has an intrinsic size in bits and points to an expression composed of the TreeNode types defined in
- *  InsnSemanticsExpr.h. ValueType cannot directly be a TreeNode because ValueType's bit size is a template
+ *  BinarySymbolicExpr.h. ValueType cannot directly be a TreeNode because ValueType's bit size is a template
  *  argument while tree node sizes are stored as a data member.  Therefore, ValueType will always point to a
  *  TreeNode.  Most of the methods that are invoked on ValueType just call the same methods for TreeNode.
  *
@@ -362,7 +362,7 @@ public:
             return false;
         TreeNodePtr x_addr = this->address().get_expression();
         TreeNodePtr y_addr = addr.get_expression();
-        TreeNodePtr assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ, x_addr, y_addr);
+        TreeNodePtr assertion = InternalNode::create(1, SymbolicExpr::OP_EQ, x_addr, y_addr);
         return SMTSolver::SAT_NO != solver->satisfiable(assertion);
     }
 
@@ -475,10 +475,10 @@ public:
         // FIXME: This makes no attempt to remove duplicate values
         TreeNodePtr expr = LeafNode::create_memory(addr.get_expression()->get_nbits(), 8);
         for (typename CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
-            expr = InternalNode::create(8, InsnSemanticsExpr::OP_WRITE,
+            expr = InternalNode::create(8, SymbolicExpr::OP_WRITE,
                                         expr, ci->address().get_expression(), ci->value().get_expression());
         }
-        ValueType<8> retval(InternalNode::create(8, InsnSemanticsExpr::OP_READ, expr, addr.get_expression()));
+        ValueType<8> retval(InternalNode::create(8, SymbolicExpr::OP_READ, expr, addr.get_expression()));
         for (typename CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci)
             retval.add_defining_instructions(ci->value().get_defining_instructions());
         return retval;
@@ -502,7 +502,7 @@ public:
         if (a.is_known()) {
             retval = ValueType<8>((a.known_value()>>(bytenum*8)) & IntegerOps::GenMask<uint64_t, 8>::value);
         } else {
-            retval = ValueType<8>(InternalNode::create(8, InsnSemanticsExpr::OP_EXTRACT,
+            retval = ValueType<8>(InternalNode::create(8, SymbolicExpr::OP_EXTRACT,
                                                        LeafNode::create_integer(32, 8*bytenum),
                                                        LeafNode::create_integer(32, 8*bytenum+8),
                                                        a.get_expression()));
@@ -519,7 +519,7 @@ public:
         if (a.is_known()) {
             retval = ValueType<32>(a.known_value()+n);
         } else {
-            retval = ValueType<32>(InternalNode::create(32, InsnSemanticsExpr::OP_ADD,
+            retval = ValueType<32>(InternalNode::create(32, SymbolicExpr::OP_ADD,
                                                         a.get_expression(), LeafNode::create_integer(32, n)));
         }
         retval.set_defining_instructions(a.get_defining_instructions());
@@ -751,7 +751,7 @@ public:
     bool equal_states(const State<ValueType>&, const State<ValueType>&) const;
 
     /** Print the current state of this policy.  If a print helper is specified then it will be passed along to the
-     *  InsnSemanticsExpr::print() method.
+     *  SymbolicExpr::print() method.
      * @{ */
     void print(std::ostream &o) const {
         BaseSemantics::Formatter fmt;
@@ -835,13 +835,13 @@ public:
             retval = ValueType<ToLen>(a.get_expression());
             retval.defined_by(NULL, a.get_defining_instructions());
         } else if (FromLen>ToLen) {
-            retval = ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_EXTRACT,
+            retval = ValueType<ToLen>(InternalNode::create(ToLen, SymbolicExpr::OP_EXTRACT,
                                                            LeafNode::create_integer(32, 0),
                                                            LeafNode::create_integer(32, ToLen),
                                                            a.get_expression()));
             retval.defined_by(cur_insn, a.get_defining_instructions());
         } else {
-            retval = ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_UEXTEND,
+            retval = ValueType<ToLen>(InternalNode::create(ToLen, SymbolicExpr::OP_UEXTEND,
                                                            LeafNode::create_integer(32, ToLen),
                                                            a.get_expression()));
             retval.defined_by(cur_insn, a.get_defining_instructions());
@@ -861,13 +861,13 @@ public:
             retval = ValueType<ToLen>(a.get_expression());
             retval.defined_by(NULL, a.get_defining_instructions());
         } else if (FromLen > ToLen) {
-            retval = ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_EXTRACT,
+            retval = ValueType<ToLen>(InternalNode::create(ToLen, SymbolicExpr::OP_EXTRACT,
                                                            LeafNode::create_integer(32, 0),
                                                            LeafNode::create_integer(32, ToLen),
                                                            a.get_expression()));
             retval.defined_by(cur_insn, a.get_defining_instructions());
         } else {
-            retval = ValueType<ToLen>(InternalNode::create(ToLen, InsnSemanticsExpr::OP_SEXTEND,
+            retval = ValueType<ToLen>(InternalNode::create(ToLen, SymbolicExpr::OP_SEXTEND,
                                                            LeafNode::create_integer(32, ToLen),
                                                            a.get_expression()));
             retval.defined_by(cur_insn, a.get_defining_instructions());
@@ -888,7 +888,7 @@ public:
                                               IntegerOps::genMask<uint64_t>(EndAt-BeginAt));
             retval.defined_by(cur_insn, a.get_defining_instructions());
         } else {
-            retval = ValueType<EndAt-BeginAt>(InternalNode::create(EndAt-BeginAt, InsnSemanticsExpr::OP_EXTRACT,
+            retval = ValueType<EndAt-BeginAt>(InternalNode::create(EndAt-BeginAt, SymbolicExpr::OP_EXTRACT,
                                                                    LeafNode::create_integer(32, BeginAt),
                                                                    LeafNode::create_integer(32, EndAt),
                                                                    a.get_expression()));
@@ -954,7 +954,7 @@ public:
             matched = true; // and prove otherwise
             for (size_t bytenum=0; bytenum<bytes.size() && matched; ++bytenum) {
                 InternalNodePtr extract = bytes[bytenum].get_expression()->isInternalNode();
-                if (!extract || InsnSemanticsExpr::OP_EXTRACT!=extract->get_operator()) {
+                if (!extract || SymbolicExpr::OP_EXTRACT!=extract->get_operator()) {
                     matched = false;
                     break;
                 }
@@ -981,7 +981,7 @@ public:
                 retval = ValueType<nBits>(e0);
             } else {
                 ASSERT_require(e0->get_nbits()>nBits);
-                retval = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_EXTRACT,
+                retval = ValueType<nBits>(InternalNode::create(nBits, SymbolicExpr::OP_EXTRACT,
                                                                LeafNode::create_integer(32, 0),
                                                                LeafNode::create_integer(32, nBits),
                                                                e0));
@@ -997,7 +997,7 @@ public:
                 } else if (nBits==8) {
                     word = ValueType<nBits>(byte.get_expression());
                 } else {
-                    word = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_UEXTEND,
+                    word = ValueType<nBits>(InternalNode::create(nBits, SymbolicExpr::OP_UEXTEND,
                                                                  LeafNode::create_integer(32, nBits),
                                                                  byte.get_expression()));
                 }
@@ -1007,7 +1007,7 @@ public:
                     if (word.is_known()) {
                         word = ValueType<nBits>(word.known_value() << (bytenum*8));
                     } else {
-                        word = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_SHR0,
+                        word = ValueType<nBits>(InternalNode::create(nBits, SymbolicExpr::OP_SHR0,
                                                                      LeafNode::create_integer(32, bytenum*8),
                                                                      word.get_expression()));
                     }
@@ -1019,7 +1019,7 @@ public:
                 } else if (retval.is_known() && word.is_known()) {
                     retval = ValueType<nBits>(retval.known_value() | word.known_value());
                 } else {
-                    retval = ValueType<nBits>(InternalNode::create(nBits, InsnSemanticsExpr::OP_BV_OR,
+                    retval = ValueType<nBits>(InternalNode::create(nBits, SymbolicExpr::OP_BV_OR,
                                                                    retval.get_expression(), word.get_expression()));
                 }
             }
@@ -1186,7 +1186,7 @@ depending on whether the loop is to be taken again, or not.\n");
         } else if (b.is_known() && 0==b.known_value()) {
             return a;
         }
-        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ADD,
+        retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_ADD,
                                                      a.get_expression(),
                                                      b.get_expression()));
         retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
@@ -1212,7 +1212,7 @@ depending on whether the loop is to be taken again, or not.\n");
         if (a.is_known() && b.is_known()) {
             retval = ValueType<Len>(a.known_value() & b.known_value());
         } else {
-            retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_BV_AND,
+            retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_BV_AND,
                                                          a.get_expression(), b.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
@@ -1226,7 +1226,7 @@ depending on whether the loop is to be taken again, or not.\n");
         if (a.is_known()) {
             retval = a.known_value() ? false_() : true_();
         } else {
-            retval = ValueType<1>(InternalNode::create(1, InsnSemanticsExpr::OP_ZEROP, a.get_expression()));
+            retval = ValueType<1>(InternalNode::create(1, SymbolicExpr::OP_ZEROP, a.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions());
         return retval;
@@ -1239,7 +1239,7 @@ depending on whether the loop is to be taken again, or not.\n");
         if (a.is_known()) {
             retval = ValueType<Len>(LeafNode::create_integer(Len, ~a.known_value()));
         } else {
-            retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_INVERT, a.get_expression()));
+            retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_INVERT, a.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions());
         return retval;
@@ -1252,7 +1252,7 @@ depending on whether the loop is to be taken again, or not.\n");
         if (a.is_known() && b.is_known()) {
             retval = ValueType<Len1+Len2>(a.known_value() | (b.known_value() << Len1));
         } else {
-            retval = ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, InsnSemanticsExpr::OP_CONCAT,
+            retval = ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, SymbolicExpr::OP_CONCAT,
                                                                b.get_expression(), a.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
@@ -1270,7 +1270,7 @@ depending on whether the loop is to be taken again, or not.\n");
         }
         if (solver) {
             /* If the selection expression cannot be true, then return ifFalse */
-            TreeNodePtr assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ,
+            TreeNodePtr assertion = InternalNode::create(1, SymbolicExpr::OP_EQ,
                                                          sel.get_expression(),
                                                          LeafNode::create_integer(1, 1));
             bool can_be_true = SMTSolver::SAT_NO != solver->satisfiable(assertion);
@@ -1281,7 +1281,7 @@ depending on whether the loop is to be taken again, or not.\n");
             }
 
             /* If the selection expression cannot be false, then return ifTrue */
-            assertion = InternalNode::create(1, InsnSemanticsExpr::OP_EQ,
+            assertion = InternalNode::create(1, SymbolicExpr::OP_EQ,
                                              sel.get_expression(), LeafNode::create_integer(1, 0));
             bool can_be_false = SMTSolver::SAT_NO != solver->satisfiable(assertion);
             if (!can_be_false) {
@@ -1290,7 +1290,7 @@ depending on whether the loop is to be taken again, or not.\n");
                 return retval;
             }
         }
-        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ITE, sel.get_expression(),
+        retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_ITE, sel.get_expression(),
                                                      ifTrue.get_expression(), ifFalse.get_expression()));
         retval.defined_by(cur_insn, sel.get_defining_instructions(),
                           ifTrue.get_defining_instructions(), ifFalse.get_defining_instructions());
@@ -1314,7 +1314,7 @@ depending on whether the loop is to be taken again, or not.\n");
             retval.defined_by(cur_insn, a.get_defining_instructions());
             return retval;
         }
-        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_LSSB, a.get_expression()));
+        retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_LSSB, a.get_expression()));
         retval.defined_by(cur_insn, a.get_defining_instructions());
         return retval;
     }
@@ -1336,7 +1336,7 @@ depending on whether the loop is to be taken again, or not.\n");
             retval.defined_by(cur_insn, a.get_defining_instructions());
             return retval;
         }
-        retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_MSSB, a.get_expression()));
+        retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_MSSB, a.get_expression()));
         retval.defined_by(cur_insn, a.get_defining_instructions());
         return retval;
     }
@@ -1348,7 +1348,7 @@ depending on whether the loop is to be taken again, or not.\n");
         if (a.is_known()) {
             retval = ValueType<Len>(-a.known_value());
         } else {
-            retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_NEGATE, a.get_expression()));
+            retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_NEGATE, a.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions());
         return retval;
@@ -1361,7 +1361,7 @@ depending on whether the loop is to be taken again, or not.\n");
         if (a.is_known() && b.is_known()) {
             retval = ValueType<Len>(a.known_value() | b.known_value());
         } else {
-            retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_BV_OR,
+            retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_BV_OR,
                                                          a.get_expression(), b.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
@@ -1375,7 +1375,7 @@ depending on whether the loop is to be taken again, or not.\n");
         if (a.is_known() && sa.is_known()) {
             retval = ValueType<Len>(IntegerOps::rotateLeft<Len>(a.known_value(), sa.known_value()));
         } else {
-            retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ROL,
+            retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_ROL,
                                                          sa.get_expression(), a.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
@@ -1389,7 +1389,7 @@ depending on whether the loop is to be taken again, or not.\n");
         if (a.is_known() && sa.is_known()) {
             retval = ValueType<Len>(IntegerOps::rotateRight<Len>(a.known_value(), sa.known_value()));
         } else {
-            retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ROR,
+            retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_ROR,
                                                          sa.get_expression(), a.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
@@ -1403,7 +1403,7 @@ depending on whether the loop is to be taken again, or not.\n");
         if (a.is_known() && sa.is_known()) {
             retval = ValueType<Len>(IntegerOps::shiftLeft<Len>(a.known_value(), sa.known_value()));
         } else {
-            retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_SHL0,
+            retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_SHL0,
                                                          sa.get_expression(), a.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
@@ -1417,7 +1417,7 @@ depending on whether the loop is to be taken again, or not.\n");
         if (a.is_known() && sa.is_known()) {
             retval = ValueType<Len>(IntegerOps::shiftRightLogical<Len>(a.known_value(), sa.known_value()));
         } else {
-            retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_SHR0,
+            retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_SHR0,
                                                          sa.get_expression(), a.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
@@ -1431,7 +1431,7 @@ depending on whether the loop is to be taken again, or not.\n");
         if (a.is_known() && sa.is_known()) {
             retval = ValueType<Len>(IntegerOps::shiftRightArithmetic<Len>(a.known_value(), sa.known_value()));
         } else {
-            retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_ASR,
+            retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_ASR,
                                                          sa.get_expression(), a.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), sa.get_defining_instructions());
@@ -1452,7 +1452,7 @@ depending on whether the loop is to be taken again, or not.\n");
             retval = ValueType<Len1>(IntegerOps::signExtend<Len1, 64>(a.known_value()) /
                                      IntegerOps::signExtend<Len2, 64>(b.known_value()));
         } else {
-            retval = ValueType<Len1>(InternalNode::create(Len1, InsnSemanticsExpr::OP_SDIV,
+            retval = ValueType<Len1>(InternalNode::create(Len1, SymbolicExpr::OP_SDIV,
                                                           a.get_expression(), b.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
@@ -1467,7 +1467,7 @@ depending on whether the loop is to be taken again, or not.\n");
             retval = ValueType<Len2>(IntegerOps::signExtend<Len1, 64>(a.known_value()) %
                                      IntegerOps::signExtend<Len2, 64>(b.known_value()));
         } else {
-            retval = ValueType<Len2>(InternalNode::create(Len2, InsnSemanticsExpr::OP_SMOD,
+            retval = ValueType<Len2>(InternalNode::create(Len2, SymbolicExpr::OP_SMOD,
                                                           a.get_expression(), b.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
@@ -1482,7 +1482,7 @@ depending on whether the loop is to be taken again, or not.\n");
             retval = ValueType<Len1+Len2>(IntegerOps::signExtend<Len1, 64>(a.known_value()) *
                                           IntegerOps::signExtend<Len2, 64>(b.known_value()));
         } else {
-            retval = ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, InsnSemanticsExpr::OP_SMUL,
+            retval = ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, SymbolicExpr::OP_SMUL,
                                                                a.get_expression(), b.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
@@ -1496,7 +1496,7 @@ depending on whether the loop is to be taken again, or not.\n");
         if (a.is_known() && b.is_known() && 0!=b.known_value()) {
             retval = ValueType<Len1>(a.known_value() / b.known_value());
         } else {
-            retval = ValueType<Len1>(InternalNode::create(Len1, InsnSemanticsExpr::OP_UDIV,
+            retval = ValueType<Len1>(InternalNode::create(Len1, SymbolicExpr::OP_UDIV,
                                                           a.get_expression(), b.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
@@ -1510,7 +1510,7 @@ depending on whether the loop is to be taken again, or not.\n");
         if (a.is_known() && b.is_known() && 0!=b.known_value()) {
             retval = ValueType<Len2>(a.known_value() % b.known_value());
         } else {
-            retval = ValueType<Len2>(InternalNode::create(Len2, InsnSemanticsExpr::OP_UMOD,
+            retval = ValueType<Len2>(InternalNode::create(Len2, SymbolicExpr::OP_UMOD,
                                                           a.get_expression(), b.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
@@ -1524,7 +1524,7 @@ depending on whether the loop is to be taken again, or not.\n");
         if (a.is_known() && b.is_known()) {
             retval = ValueType<Len1+Len2>(a.known_value()*b.known_value());
         } else {
-            retval = ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, InsnSemanticsExpr::OP_UMUL,
+            retval = ValueType<Len1+Len2>(InternalNode::create(Len1+Len2, SymbolicExpr::OP_UMUL,
                                                                a.get_expression(), b.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
@@ -1540,7 +1540,7 @@ depending on whether the loop is to be taken again, or not.\n");
         } else if (a.get_expression()->must_equal(b.get_expression(), solver)) {
             retval = number<Len>(0);
         } else {
-            retval = ValueType<Len>(InternalNode::create(Len, InsnSemanticsExpr::OP_BV_XOR,
+            retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_BV_XOR,
                                                          a.get_expression(), b.get_expression()));
         }
         retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());

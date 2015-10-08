@@ -8,7 +8,7 @@
 
 #include "BaseSemantics2.h"
 #include "SMTSolver.h"
-#include "InsnSemanticsExpr.h"
+#include "BinarySymbolicExpr.h"
 #include "RegisterStateGeneric.h"
 #include "MemoryCellList.h"
 
@@ -39,12 +39,12 @@ namespace InstructionSemantics2 {       // documented elsewhere
 *  naive comparison of the expression trees. */
 namespace SymbolicSemantics {
 
-typedef InsnSemanticsExpr::LeafNode LeafNode;
-typedef InsnSemanticsExpr::LeafNodePtr LeafNodePtr;
-typedef InsnSemanticsExpr::InternalNode InternalNode;
-typedef InsnSemanticsExpr::InternalNodePtr InternalNodePtr;
-typedef InsnSemanticsExpr::TreeNode TreeNode;
-typedef InsnSemanticsExpr::TreeNodePtr TreeNodePtr;
+typedef SymbolicExpr::LeafNode LeafNode;
+typedef SymbolicExpr::LeafNodePtr LeafNodePtr;
+typedef SymbolicExpr::InternalNode InternalNode;
+typedef SymbolicExpr::InternalNodePtr InternalNodePtr;
+typedef SymbolicExpr::TreeNode TreeNode;
+typedef SymbolicExpr::TreeNodePtr TreeNodePtr;
 typedef std::set<SgAsmInstruction*> InsnSet;
 
 
@@ -58,7 +58,7 @@ typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 /** Formatter for symbolic values. */
 class Formatter: public BaseSemantics::Formatter {
 public:
-    InsnSemanticsExpr::Formatter expr_formatter;
+    SymbolicExpr::Formatter expr_formatter;
 };
 
 /** Type of values manipulated by the SymbolicSemantics domain.
@@ -66,7 +66,7 @@ public:
  *  Values of type type are used whenever a value needs to be stored, such as memory addresses, the values stored at those
  *  addresses, the values stored in registers, the operands for RISC operations, and the results of those operations.
  *
- *  An SValue points to an expression composed of the TreeNode types defined in InsnSemanticsExpr.h, and also stores the set of
+ *  An SValue points to an expression composed of the TreeNode types defined in BinarySymbolicExpr.h, and also stores the set of
  *  instructions that were used to define the value.  This provides a framework for some simple forms of value-based def-use
  *  analysis. See get_defining_instructions() for details.
  * 
@@ -223,7 +223,7 @@ public:
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
 
     // It's not possible to change the size of a symbolic expression in place. That would require that we recursively change
-    // the size of the InsnSemanticsExpr, which might be shared with many unrelated values whose size we don't want to affect.
+    // the size of the SymbolicExpr, which might be shared with many unrelated values whose size we don't want to affect.
     virtual void set_width(size_t nbits) ROSE_OVERRIDE {
         ASSERT_require(nbits==get_width());
     }
