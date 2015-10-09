@@ -17,9 +17,9 @@ SymbolicMemory::expression(const SymbolicExpr::Ptr &expr) {
 void
 SymbolicMemory::clear() {
     if (mem_) {
-        mem_ = SymbolicExpr::LeafNode::create_memory(mem_->domainWidth(), mem_->nBits());
+        mem_ = SymbolicExpr::makeMemory(mem_->domainWidth(), mem_->nBits());
     } else {
-        mem_ = SymbolicExpr::LeafNode::create_memory(32, 8); // can be adjusted later
+        mem_ = SymbolicExpr::makeMemory(32, 8);         // can be adjusted later
     }
 }
 
@@ -33,9 +33,9 @@ SymbolicMemory::readMemory(const SValuePtr &address_, const SValuePtr &dflt, Ris
                         StringUtility::numberToString(mem_->nBits()) + "-bit values");
 
         // We can finalize the domain and range widths for the memory now that they've been given.
-        mem_ = SymbolicExpr::LeafNode::create_memory(address->get_width(), dflt->get_width());
+        mem_ = SymbolicExpr::makeMemory(address->get_width(), dflt->get_width());
     }
-    SymbolicExpr::Ptr resultExpr = SymbolicExpr::InternalNode::create(8, SymbolicExpr::OP_READ, mem_, address->get_expression());
+    SymbolicExpr::Ptr resultExpr = SymbolicExpr::makeRead(mem_, address->get_expression());
     SymbolicSemantics::SValuePtr retval = SymbolicSemantics::SValue::promote(dflt->copy());
     retval->set_expression(resultExpr);
     return retval;
@@ -52,10 +52,10 @@ SymbolicMemory::writeMemory(const SValuePtr &address_, const SValuePtr &value_, 
                         StringUtility::numberToString(mem_->nBits()) + "-bit values");
 
         // We can finalize the domain and range widths for the memory now that they've been given.
-        mem_ = SymbolicExpr::LeafNode::create_memory(address->get_width(), value->get_width());
+        mem_ = SymbolicExpr::makeMemory(address->get_width(), value->get_width());
     }
 
-    mem_ = SymbolicExpr::InternalNode::create(mem_->nBits(), SymbolicExpr::OP_WRITE, mem_, address->get_expression(), value->get_expression());
+    mem_ = SymbolicExpr::makeWrite(mem_, address->get_expression(), value->get_expression());
 }
 
 bool

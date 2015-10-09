@@ -57,15 +57,15 @@ test_yices_linkage() {
 
 static void
 test_add_simplifications() {
-    SymbolicExpr::Ptr reg = SymbolicExpr::LeafNode::create_variable(32, "esp_0");
+    SymbolicExpr::Ptr reg = SymbolicExpr::LeafNode::createVariable(32, "esp_0");
     SymbolicExpr::Ptr nreg = SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_NEGATE, reg);
-    SymbolicExpr::Ptr number = SymbolicExpr::LeafNode::create_integer(32, 0xfffffffc);
+    SymbolicExpr::Ptr number = SymbolicExpr::LeafNode::createInteger(32, 0xfffffffc);
     SymbolicExpr::Ptr t1 = SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_ADD, reg, nreg, number);
     std::cout <<"(add esp_0 (negate esp_0) 0xfffffffc) = " <<*t1 <<"\n";
 
-    SymbolicExpr::Ptr n1 = SymbolicExpr::LeafNode::create_variable(32, "esp_0");
-    SymbolicExpr::Ptr n2 = SymbolicExpr::LeafNode::create_integer(32, 4);
-    SymbolicExpr::Ptr n3 = SymbolicExpr::LeafNode::create_integer(32, 8);
+    SymbolicExpr::Ptr n1 = SymbolicExpr::LeafNode::createVariable(32, "esp_0");
+    SymbolicExpr::Ptr n2 = SymbolicExpr::LeafNode::createInteger(32, 4);
+    SymbolicExpr::Ptr n3 = SymbolicExpr::LeafNode::createInteger(32, 8);
     SymbolicExpr::Ptr n4 = SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_ADD, n1, n2);
     SymbolicExpr::Ptr n5 = SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_ADD, n4, n3);
     SymbolicExpr::Ptr n6 = SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_NEGATE, n1);

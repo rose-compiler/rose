@@ -25,7 +25,7 @@ protected:
     explicit SymbolicMemory(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
         : MemoryState(addrProtoval, valProtoval) {
         // Initially assume that addresses are 32 bits wide and values are 8 bits wide. We can change this on the first access.
-        mem_ = SymbolicExpr::LeafNode::create_memory(32, 8);
+        mem_ = SymbolicExpr::makeMemory(32, 8);
     }
 
 public:

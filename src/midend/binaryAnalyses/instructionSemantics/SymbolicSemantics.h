@@ -146,7 +146,7 @@ public:
 
     /** Construct a value that is unknown and unique. */
     ValueType(std::string comment="") {
-        expr = LeafNode::create_variable(nBits, comment);
+        expr = LeafNode::createVariable(nBits, comment);
     }
 
     /** Copy constructor. */
@@ -157,7 +157,7 @@ public:
 
     /** Construct a ValueType with a known value. */
     explicit ValueType(uint64_t n, std::string comment="") {
-        expr = LeafNode::create_integer(nBits, n, comment);
+        expr = LeafNode::createInteger(nBits, n, comment);
     }
 
     /** Construct a ValueType from a TreeNode. */
@@ -473,7 +473,7 @@ public:
         if (1==cells.size())
             return cells.front().value();
         // FIXME: This makes no attempt to remove duplicate values
-        TreeNodePtr expr = LeafNode::create_memory(addr.get_expression()->nBits(), 8);
+        TreeNodePtr expr = LeafNode::createMemory(addr.get_expression()->nBits(), 8);
         for (typename CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
             expr = InternalNode::create(8, SymbolicExpr::OP_WRITE,
                                         expr, ci->address().get_expression(), ci->value().get_expression());
@@ -503,8 +503,8 @@ public:
             retval = ValueType<8>((a.known_value()>>(bytenum*8)) & IntegerOps::GenMask<uint64_t, 8>::value);
         } else {
             retval = ValueType<8>(InternalNode::create(8, SymbolicExpr::OP_EXTRACT,
-                                                       LeafNode::create_integer(32, 8*bytenum),
-                                                       LeafNode::create_integer(32, 8*bytenum+8),
+                                                       LeafNode::createInteger(32, 8*bytenum),
+                                                       LeafNode::createInteger(32, 8*bytenum+8),
                                                        a.get_expression()));
         }
         retval.defined_by(NULL, a.get_defining_instructions());
@@ -520,7 +520,7 @@ public:
             retval = ValueType<32>(a.known_value()+n);
         } else {
             retval = ValueType<32>(InternalNode::create(32, SymbolicExpr::OP_ADD,
-                                                        a.get_expression(), LeafNode::create_integer(32, n)));
+                                                        a.get_expression(), LeafNode::createInteger(32, n)));
         }
         retval.set_defining_instructions(a.get_defining_instructions());
         return retval;
@@ -836,13 +836,13 @@ public:
             retval.defined_by(NULL, a.get_defining_instructions());
         } else if (FromLen>ToLen) {
             retval = ValueType<ToLen>(InternalNode::create(ToLen, SymbolicExpr::OP_EXTRACT,
-                                                           LeafNode::create_integer(32, 0),
-                                                           LeafNode::create_integer(32, ToLen),
+                                                           LeafNode::createInteger(32, 0),
+                                                           LeafNode::createInteger(32, ToLen),
                                                            a.get_expression()));
             retval.defined_by(cur_insn, a.get_defining_instructions());
         } else {
             retval = ValueType<ToLen>(InternalNode::create(ToLen, SymbolicExpr::OP_UEXTEND,
-                                                           LeafNode::create_integer(32, ToLen),
+                                                           LeafNode::createInteger(32, ToLen),
                                                            a.get_expression()));
             retval.defined_by(cur_insn, a.get_defining_instructions());
         }
@@ -862,13 +862,13 @@ public:
             retval.defined_by(NULL, a.get_defining_instructions());
         } else if (FromLen > ToLen) {
             retval = ValueType<ToLen>(InternalNode::create(ToLen, SymbolicExpr::OP_EXTRACT,
-                                                           LeafNode::create_integer(32, 0),
-                                                           LeafNode::create_integer(32, ToLen),
+                                                           LeafNode::createInteger(32, 0),
+                                                           LeafNode::createInteger(32, ToLen),
                                                            a.get_expression()));
             retval.defined_by(cur_insn, a.get_defining_instructions());
         } else {
             retval = ValueType<ToLen>(InternalNode::create(ToLen, SymbolicExpr::OP_SEXTEND,
-                                                           LeafNode::create_integer(32, ToLen),
+                                                           LeafNode::createInteger(32, ToLen),
                                                            a.get_expression()));
             retval.defined_by(cur_insn, a.get_defining_instructions());
         }
@@ -889,8 +889,8 @@ public:
             retval.defined_by(cur_insn, a.get_defining_instructions());
         } else {
             retval = ValueType<EndAt-BeginAt>(InternalNode::create(EndAt-BeginAt, SymbolicExpr::OP_EXTRACT,
-                                                                   LeafNode::create_integer(32, BeginAt),
-                                                                   LeafNode::create_integer(32, EndAt),
+                                                                   LeafNode::createInteger(32, BeginAt),
+                                                                   LeafNode::createInteger(32, EndAt),
                                                                    a.get_expression()));
             retval.defined_by(cur_insn, a.get_defining_instructions());
         }
@@ -982,8 +982,8 @@ public:
             } else {
                 ASSERT_require(e0->nBits()>nBits);
                 retval = ValueType<nBits>(InternalNode::create(nBits, SymbolicExpr::OP_EXTRACT,
-                                                               LeafNode::create_integer(32, 0),
-                                                               LeafNode::create_integer(32, nBits),
+                                                               LeafNode::createInteger(32, 0),
+                                                               LeafNode::createInteger(32, nBits),
                                                                e0));
             }
         } else {
@@ -998,7 +998,7 @@ public:
                     word = ValueType<nBits>(byte.get_expression());
                 } else {
                     word = ValueType<nBits>(InternalNode::create(nBits, SymbolicExpr::OP_UEXTEND,
-                                                                 LeafNode::create_integer(32, nBits),
+                                                                 LeafNode::createInteger(32, nBits),
                                                                  byte.get_expression()));
                 }
 
@@ -1008,7 +1008,7 @@ public:
                         word = ValueType<nBits>(word.known_value() << (bytenum*8));
                     } else {
                         word = ValueType<nBits>(InternalNode::create(nBits, SymbolicExpr::OP_SHR0,
-                                                                     LeafNode::create_integer(32, bytenum*8),
+                                                                     LeafNode::createInteger(32, bytenum*8),
                                                                      word.get_expression()));
                     }
                 }
@@ -1177,7 +1177,7 @@ depending on whether the loop is to be taken again, or not.\n");
         ValueType<Len> retval;
         if (a.is_known()) {
             if (b.is_known()) {
-                retval = ValueType<Len>(LeafNode::create_integer(Len, a.known_value()+b.known_value()));
+                retval = ValueType<Len>(LeafNode::createInteger(Len, a.known_value()+b.known_value()));
                 retval.defined_by(cur_insn, a.get_defining_instructions(), b.get_defining_instructions());
                 return retval;
             } else if (0==a.known_value()) {
@@ -1237,7 +1237,7 @@ depending on whether the loop is to be taken again, or not.\n");
     ValueType<Len> invert(const ValueType<Len> &a) const {
         ValueType<Len> retval;
         if (a.is_known()) {
-            retval = ValueType<Len>(LeafNode::create_integer(Len, ~a.known_value()));
+            retval = ValueType<Len>(LeafNode::createInteger(Len, ~a.known_value()));
         } else {
             retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_INVERT, a.get_expression()));
         }
@@ -1272,7 +1272,7 @@ depending on whether the loop is to be taken again, or not.\n");
             /* If the selection expression cannot be true, then return ifFalse */
             TreeNodePtr assertion = InternalNode::create(1, SymbolicExpr::OP_EQ,
                                                          sel.get_expression(),
-                                                         LeafNode::create_integer(1, 1));
+                                                         LeafNode::createInteger(1, 1));
             bool can_be_true = SMTSolver::SAT_NO != solver->satisfiable(assertion);
             if (!can_be_true) {
                 ValueType<Len> retval = ifFalse;
@@ -1282,7 +1282,7 @@ depending on whether the loop is to be taken again, or not.\n");
 
             /* If the selection expression cannot be false, then return ifTrue */
             assertion = InternalNode::create(1, SymbolicExpr::OP_EQ,
-                                             sel.get_expression(), LeafNode::create_integer(1, 0));
+                                             sel.get_expression(), LeafNode::createInteger(1, 0));
             bool can_be_false = SMTSolver::SAT_NO != solver->satisfiable(assertion);
             if (!can_be_false) {
                 ValueType<Len> retval = ifTrue;

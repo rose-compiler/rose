@@ -728,7 +728,7 @@ private:
                     } else {
                         varComment += base->comment();
                     }
-                    Sawyer::Container::BitVector tmp = offset->get_bits();
+                    Sawyer::Container::BitVector tmp = offset->bits();
                     if (tmp.get(tmp.size()-1)) {
                         varComment += " - 0x" + tmp.negate().toHex();
                     } else {
@@ -1183,8 +1183,7 @@ incorporateRegisterPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, //
             // Build the SMT constraint
             BaseSemantics::SValuePtr lhs = regState->readRegister(*regp, ops.get());
             SymbolicExpr::Ptr expr =
-                SymbolicExpr::InternalNode::create(1, SymbolicExpr::OP_EQ,
-                                                   SymbolicSemantics::SValue::promote(lhs)->get_expression(), rhs);
+                SymbolicExpr::makeEq(SymbolicSemantics::SValue::promote(lhs)->get_expression(), rhs);
             pathConstraints.push_back(expr);
         } catch (const SymbolicExprParser::SyntaxError &e) {
             std::cerr <<e <<"\n";
@@ -1231,8 +1230,7 @@ incorporateMemoryPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // o
             addr->set_expression(addrExpr);
             BaseSemantics::SValuePtr lhs = memState->readMemory(addr, ops->undefined_(8), ops.get(), ops.get());
             SymbolicExpr::Ptr expr =
-                SymbolicExpr::InternalNode::create(1, SymbolicExpr::OP_EQ,
-                                                   SymbolicSemantics::SValue::promote(lhs)->get_expression(), rhsExpr);
+                SymbolicExpr::makeEq(SymbolicSemantics::SValue::promote(lhs)->get_expression(), rhsExpr);
             pathConstraints.push_back(expr);
         } catch (const SymbolicExprParser::SyntaxError &e) {
             std::cerr <<e <<"\n";
@@ -1302,9 +1300,9 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
                 return SMTSolver::SAT_NO;
             }
         } else if (hasVirtualAddress(pathEdge->target())) {
-            SymbolicExpr::LeafPtr targetVa = SymbolicExpr::LeafNode::create_integer(ip->get_width(), virtualAddress(pathEdge->target()));
-            SymbolicExpr::Ptr constraint = SymbolicExpr::InternalNode::create(1, SymbolicExpr::OP_EQ, targetVa,
-                                                                              SymbolicSemantics::SValue::promote(ip)->get_expression());
+            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), virtualAddress(pathEdge->target()));
+            SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
+                                                                SymbolicSemantics::SValue::promote(ip)->get_expression());
             pathConstraints.push_back(constraint);
         }
     }
@@ -1675,11 +1673,9 @@ singleThreadBfsWorker(BfsContext *ctx) {
         // If this edge is not a number and we know the EIP at the end of this path edge, then we have a path constraint that
         // needs to be solved.
         if (!abandonPrefix && !ip->is_number() && pathsEdge->target()->value().type() != P2::V_INDETERMINATE) {
-            SymbolicExpr::LeafPtr targetVa =
-                SymbolicExpr::LeafNode::create_integer(ip->get_width(), pathsEdge->target()->value().address());
-            SymbolicExpr::Ptr constraint =
-                SymbolicExpr::InternalNode::create(1, SymbolicExpr::OP_EQ, targetVa,
-                                                   SymbolicSemantics::SValue::promote(ip)->get_expression());
+            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), pathsEdge->target()->value().address());
+            SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
+                                                                SymbolicSemantics::SValue::promote(ip)->get_expression());
             bfsVertex->value().constraint = constraint;
             SAWYER_MESG(debug) <<"  path edge has constraint expression\n";
         }
@@ -1922,9 +1918,7 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     BaseSemantics::SymbolicMemoryPtr s2mem = BaseSemantics::SymbolicMemory::promote(s2->get_memory_state());
     SymbolicExpr::Ptr memExpr1 = s1mem->expression();
     SymbolicExpr::Ptr memExpr2 = s2mem->expression();
-    SymbolicExpr::Ptr mergedExpr =
-        SymbolicExpr::InternalNode::create(memExpr1->nBits(), SymbolicExpr::OP_ITE, s1Constraint->get_expression(),
-                                           memExpr1, memExpr2);
+    SymbolicExpr::Ptr mergedExpr = SymbolicExpr::makeIte(s1Constraint->get_expression(), memExpr1, memExpr2);
     BaseSemantics::SymbolicMemoryPtr mergedMem = BaseSemantics::SymbolicMemory::promote(s1mem->clone());
     mergedMem->expression(mergedExpr);
 
@@ -2129,7 +2123,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
         // Final path expression
         BaseSemantics::SValuePtr path = ops->readRegister(REG_PATH);
         TreeNodePtr constraint = InternalNode::create(1, OP_EQ,
-                                                      LeafNode::create_integer(1, 1),
+                                                      SymbolicExpr::makeInteger(1, 1),
                                                       SymbolicSemantics::SValue::promote(path)->get_expression());
         info <<"  constraints expression has " <<StringUtility::plural(constraint->nnodes(), "terms") <<"\n";
         if (settings.showConstraints) {

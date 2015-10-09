@@ -27,6 +27,10 @@ class SMTSolver;
  *  different goals. */
 namespace SymbolicExpr {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Basic Types
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Operators for internal nodes of the expression tree.
  *
  *  Commutative operators generally take one or more operands.  Operators such as shifting, extending, and truncating have the
@@ -133,6 +137,11 @@ public:
     virtual VisitAction preVisit(const Ptr&) = 0;
     virtual VisitAction postVisit(const Ptr&) = 0;
 };
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Base Node Type
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Any node of an expression tree for instruction semantics, from which the InternalNode and LeafNode classes are derived.
  *  Every node has a specified number of significant bits that is constant over the life of the node.
@@ -480,6 +489,11 @@ public:
     }
 };
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Simplification
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct AddSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
     virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
@@ -598,6 +612,11 @@ struct MssbSimplifier: Simplifier {
     virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Internal Nodes
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Internal node of an expression tree for instruction semantics. Each internal node has an operator (constant for the life of
  *  the node and obtainable with get_operator()) and zero or more children. Children are added to the internal node during the
  *  construction phase. Once construction is complete, the children should only change in ways that don't affect the value of
@@ -610,30 +629,30 @@ private:
 
     // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
     // accidently using pointers to these objects -- all access should be through shared-ownership pointers.
-    InternalNode(size_t nbits, Operator op, const Ptr &a, std::string comment="")
+    InternalNode(size_t nbits, Operator op, const Ptr &a, std::string comment="", unsigned flags=0)
         : Node(comment), op_(op), nnodes_(1) {
         addChild(a);
         adjustWidth();
-        adjustBitFlags(0);
-        ASSERT_require(nBits() == nbits);
+        adjustBitFlags(flags);
+        ASSERT_require(0 == nbits || nBits() == nbits);
     }
-    InternalNode(size_t nbits, Operator op, const Ptr &a, const Ptr &b, std::string comment="")
+    InternalNode(size_t nbits, Operator op, const Ptr &a, const Ptr &b, std::string comment="", unsigned flags=0)
         : Node(comment), op_(op), nnodes_(1) {
         addChild(a);
         addChild(b);
         adjustWidth();
-        adjustBitFlags(0);
-        ASSERT_require(nBits() == nbits);
+        adjustBitFlags(flags);
+        ASSERT_require(0 == nbits || nBits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
-                 std::string comment="")
+                 std::string comment="", unsigned flags=0)
         : Node(comment), op_(op), nnodes_(1) {
         addChild(a);
         addChild(b);
         addChild(c);
         adjustWidth();
-        adjustBitFlags(0);
-        ASSERT_require(nBits() == nbits);
+        adjustBitFlags(flags);
+        ASSERT_require(0 == nbits || nBits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const Nodes &children, std::string comment="", unsigned flags=0)
         : Node(comment), op_(op), nnodes_(1) {
@@ -652,18 +671,18 @@ public:
      *  expression simplifiers. Flags specified in the constructor are set in addition to those that would normally be set.
      *
      *  @{ */
-    static Ptr create(size_t nbits, Operator op, const Ptr &a, const std::string comment="") {
-        InternalPtr retval(new InternalNode(nbits, op, a, comment));
+    static Ptr create(size_t nbits, Operator op, const Ptr &a, const std::string comment="", unsigned flags=0) {
+        InternalPtr retval(new InternalNode(nbits, op, a, comment, flags));
         return retval->simplifyTop();
     }
     static Ptr create(size_t nbits, Operator op, const Ptr &a, const Ptr &b,
-                      const std::string comment="") {
-        InternalPtr retval(new InternalNode(nbits, op, a, b, comment));
+                      const std::string comment="", unsigned flags=0) {
+        InternalPtr retval(new InternalNode(nbits, op, a, b, comment, flags));
         return retval->simplifyTop();
     }
     static Ptr create(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
-                      const std::string comment="") {
-        InternalPtr retval(new InternalNode(nbits, op, a, b, c, comment));
+                      const std::string comment="", unsigned flags=0) {
+        InternalPtr retval(new InternalNode(nbits, op, a, b, c, comment, flags));
         return retval->simplifyTop();
     }
     static Ptr create(size_t nbits, Operator op, const Nodes &children, const std::string comment="",
@@ -787,6 +806,11 @@ protected:
     void adjustBitFlags(unsigned extraFlags);
 };
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Leaf Nodes
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Leaf node of an expression tree for instruction semantics.
  *
  *  A leaf node is either a known bit vector value, a free bit vector variable, or a memory state. */
@@ -807,40 +831,83 @@ private:
 
 public:
     /** Construct a new free variable with a specified number of significant bits. */
-    static LeafPtr create_variable(size_t nbits, std::string comment="", unsigned flags=0);
+    static LeafPtr createVariable(size_t nbits, const std::string &comment="", unsigned flags=0);
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    static LeafPtr create_variable(size_t nbits, std::string comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use createVariable instead") {
+        return createVariable(nbits, comment, flags);
+    }
 
     /*  Construct another reference to an existing variable.  This method is used internally by the expression parsing
      *  mechanism to produce a new instance of some previously existing variable -- both instances are the same variable and
      *  therefore should be given the same size (although this consistency cannot be checked automatically). */
-    static LeafPtr create_existing_variable(size_t nbits, uint64_t id, const std::string &comment="", unsigned flags=0);
+    static LeafPtr createExistingVariable(size_t nbits, uint64_t id, const std::string &comment="", unsigned flags=0);
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    static LeafPtr create_existing_variable(size_t nbits, uint64_t id, const std::string &comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use createExistingVariable instead") {
+        return createExistingVariable(nbits, id, comment, flags);
+    }
 
     /** Construct a new integer with the specified number of significant bits. Any high-order bits beyond the specified size
      *  will be zeroed. */
-    static LeafPtr create_integer(size_t nbits, uint64_t n, std::string comment="", unsigned flags=0);
+    static LeafPtr createInteger(size_t nbits, uint64_t n, std::string comment="", unsigned flags=0);
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    static LeafPtr create_integer(size_t nbits, uint64_t n, std::string comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use createInteger instead") {
+        return createInteger(nbits, n, comment, flags);
+    }
 
     /** Construct a new known value with the specified bits. */
-    static LeafPtr create_constant(const Sawyer::Container::BitVector &bits, std::string comment="", unsigned flags=0);
+    static LeafPtr createConstant(const Sawyer::Container::BitVector &bits, std::string comment="", unsigned flags=0);
 
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    static LeafPtr create_constant(const Sawyer::Container::BitVector &bits, std::string comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use createConstant instead") {
+        return createConstant(bits, comment, flags);
+    }
+    
     /** Create a new Boolean, a single-bit integer. */
-    static LeafPtr create_boolean(bool b, std::string comment="", unsigned flags=0) {
-        return create_integer(1, (uint64_t)(b?1:0), comment, flags);
+    static LeafPtr createBoolean(bool b, std::string comment="", unsigned flags=0) {
+        return createInteger(1, (uint64_t)(b?1:0), comment, flags);
+    }
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    static LeafPtr create_boolean(bool b, std::string comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use createBoolean instead") {
+        return createBoolean(b, comment, flags);
     }
 
     /** Construct a new memory state.  A memory state is a function that maps addresses to values. */
-    static LeafPtr create_memory(size_t addressWidth, size_t valueWidth, std::string comment="", unsigned flags=0);
+    static LeafPtr createMemory(size_t addressWidth, size_t valueWidth, std::string comment="", unsigned flags=0);
 
-    /* see superclass, where these are pure virtual */
-    virtual bool isNumber() const;
-    virtual uint64_t toInt() const;
-    virtual const Sawyer::Container::BitVector& get_bits() const;
-    virtual bool mustEqual(const Ptr &other, SMTSolver*) const;
-    virtual bool mayEqual(const Ptr &other, SMTSolver*) const;
-    virtual bool isEquivalentTo(const Ptr &other) const;
-    virtual int compareStructure(const Ptr& other) const;
-    virtual Ptr substitute(const Ptr &from, const Ptr &to) const;
-    virtual VisitAction depthFirstTraversal(Visitor&) const;
-    virtual uint64_t nNodes() const { return 1; }
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    static LeafPtr create_memory(size_t addressWidth, size_t valueWidth, std::string comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use createMemory instead") {
+        return createMemory(addressWidth, valueWidth, comment, flags);
+    }
+    
+    // from base class
+    virtual bool isNumber() const ROSE_OVERRIDE;
+    virtual uint64_t toInt() const ROSE_OVERRIDE;
+    virtual bool mustEqual(const Ptr &other, SMTSolver*) const ROSE_OVERRIDE;
+    virtual bool mayEqual(const Ptr &other, SMTSolver*) const ROSE_OVERRIDE;
+    virtual bool isEquivalentTo(const Ptr &other) const ROSE_OVERRIDE;
+    virtual int compareStructure(const Ptr& other) const ROSE_OVERRIDE;
+    virtual Ptr substitute(const Ptr &from, const Ptr &to) const ROSE_OVERRIDE;
+    virtual VisitAction depthFirstTraversal(Visitor&) const ROSE_OVERRIDE;
+    virtual uint64_t nNodes() const ROSE_OVERRIDE { return 1; }
 
+    /** Property: Bits stored for numeric values. */
+    const Sawyer::Container::BitVector& bits() const;
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    const Sawyer::Container::BitVector& get_bits() const ROSE_DEPRECATED("use 'bits' property instead") {
+        return bits();
+    }
+    
     /** Is the node a bitvector variable? */
     virtual bool isVariable() const;
 
@@ -896,6 +963,78 @@ public:
         printAsUnsigned(o, f);
     }
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Factories
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Leaf constructor.
+ *
+ *  Constructs an expression leaf node. This is a wrapper around one of the "create" factory methods in @ref LeafNode.
+ *
+ * @{ */
+Ptr makeVariable(size_t nbits, const std::string &comment="", unsigned flags=0);
+Ptr makeExistingVariable(size_t nbits, uint64_t id, const std::string &comment="", unsigned flags=0);
+Ptr makeInteger(size_t nbits, uint64_t n, const std::string &comment="", unsigned flags=0);
+Ptr makeConstant(const Sawyer::Container::BitVector&, const std::string &comment="", unsigned flags=0);
+Ptr makeBoolean(bool, const std::string &comment="", unsigned flags=0);
+Ptr makeMemory(size_t addressWidth, size_t valueWidth, const std::string &comment="", unsigned flags=0);
+/** @} */
+
+/** Internal node constructor.
+ *
+ *  Constructs an internal node. This is a wrapper around one of the "create" factory methods in @ref InternalNode. It
+ *  interprets its operands as unsigned values unless the method has "Signed" in its name.
+ *
+ * @{ */
+Ptr makeAdd(const Ptr&a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeBooleanAnd(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeAsr(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeAnd(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeOr(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeXor(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeConcat(const Ptr &hi, const Ptr &lo, const std::string &comment="", unsigned flags=0);
+Ptr makeEq(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeExtract(const Ptr &begin, const Ptr &end, const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeInvert(const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeIte(const Ptr &cond, const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeLssb(const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeMssb(const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeNe(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeNegate(const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeBooleanOr(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeRead(const Ptr &mem, const Ptr &addr, const std::string &comment="", unsigned flags=0);
+Ptr makeRol(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeRor(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeSignedDiv(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeSignExtend(const Ptr &newSize, const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeSignedGe(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeSignedGt(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeShl0(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeShl1(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeShr0(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeShr1(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeSignedLe(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeSignedLt(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeSignedMod(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeSignedMul(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeDiv(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeExtend(const Ptr &newSize, const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeGe(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeGt(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeLe(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeLt(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeMod(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeMul(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeWrite(const Ptr &mem, const Ptr &addr, const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeZerop(const Ptr &a, const std::string &comment="", unsigned flags=0);
+/** @} */
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Miscellaneous functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 std::ostream& operator<<(std::ostream &o, const Node&);
 std::ostream& operator<<(std::ostream &o, const Node::WithFormatter&);

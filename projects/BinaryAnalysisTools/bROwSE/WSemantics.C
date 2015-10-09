@@ -56,7 +56,7 @@ public:
                 uint64_t v = leaf->toInt();
                 return StringUtility::toHex2(v, leaf->nBits());
             } else {
-                return leaf->get_bits().toHex();
+                return leaf->bits().toHex();
             }
         }
         return "? " + StringUtility::plural(valueBase->get_width(), "bits");

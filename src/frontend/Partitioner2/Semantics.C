@@ -30,7 +30,7 @@ MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantic
             uint8_t byte;
             if (1 == map_->at(va).limit(1).read(&byte).size()) {
                 unsigned flags = isModifiable ? SymbolicExpr::Node::INDETERMINATE : 0;
-                SymbolicExpr::Ptr expr = SymbolicExpr::LeafNode::create_integer(8, byte, "", flags);
+                SymbolicExpr::Ptr expr = SymbolicExpr::makeInteger(8, byte, "", flags);
                 SymbolicSemantics::SValuePtr val = SymbolicSemantics::SValue::promote(valOps->undefined_(8));
                 val->set_expression(expr);
                 return val;

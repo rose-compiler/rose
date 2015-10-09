@@ -445,7 +445,7 @@ public:
                                      " must have a non-zero width specified");
         }
         uint64_t varId = rose_strtoull(matches.str(1).c_str(), NULL, 10);
-        return SymbolicExpr::LeafNode::create_existing_variable(symbol.width(), varId);
+        return SymbolicExpr::makeExistingVariable(symbol.width(), varId);
     }
 };
 
@@ -507,7 +507,7 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 break;
             }
             case Token::BITVECTOR: {
-                SymbolicExpr::LeafPtr leaf = SymbolicExpr::LeafNode::create_constant(tokens[0].bits());
+                SymbolicExpr::Ptr leaf = SymbolicExpr::makeConstant(tokens[0].bits());
                 tokens.shift(1);
                 if (stack.empty())
                     return leaf;

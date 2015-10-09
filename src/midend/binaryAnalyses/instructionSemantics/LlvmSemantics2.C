@@ -17,8 +17,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
         return dflt;
     size_t nbits = dflt->get_width();
     SValuePtr addr = SValue::promote(addr_);
-    return svalue_expr(InternalNode::create(nbits, SymbolicExpr::OP_READ,
-                                            LeafNode::create_memory(addr->get_width(), nbits), addr->get_expression()));
+    return svalue_expr(SymbolicExpr::makeRead(SymbolicExpr::makeMemory(addr->get_width(), nbits), addr->get_expression()));
 }
 
 void
@@ -29,9 +28,8 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
         return;
     SValuePtr addr = SValue::promote(addr_);
     SValuePtr data = SValue::promote(data_);
-    mem_writes.push_back(InternalNode::create(data->get_width(), SymbolicExpr::OP_WRITE,
-                                              LeafNode::create_memory(addr->get_width(), data->get_width()),
-                                              addr->get_expression(), data->get_expression())->isInternalNode());
+    mem_writes.push_back(SymbolicExpr::makeWrite(SymbolicExpr::makeMemory(addr->get_width(), data->get_width()),
+                                                 addr->get_expression(), data->get_expression())->isInternalNode());
 }
 
 void
@@ -488,7 +486,7 @@ RiscOperators::llvm_term(const ExpressionPtr &expr)
 LeafPtr
 RiscOperators::next_temporary(size_t nbits)
 {
-    return LeafNode::create_variable(nbits);
+    return LeafNode::createVariable(nbits);
 }
 
 std::string
@@ -644,7 +642,7 @@ RiscOperators::emit_logical_right_shift(std::ostream &o, const ExpressionPtr &va
             if (amount_leaf->toInt() == 0)
                 return value;
             if (amount_leaf->toInt() >= value->nBits())
-                return LeafNode::create_integer(value->nBits(), 0);
+                return SymbolicExpr::makeInteger(value->nBits(), 0);
         }
     }
     return emit_binary(o, "lshr", value, emit_unsigned_resize(o, amount, value->nBits()));
@@ -657,12 +655,9 @@ RiscOperators::emit_logical_right_shift_ones(std::ostream &o, const ExpressionPt
 {
     ExpressionPtr t1 = emit_logical_right_shift(o, value, amount);
     size_t width = std::max(value->nBits(), amount->nBits());
-    ExpressionPtr ones = InternalNode::create(width, SymbolicExpr::OP_ADD,
-                                        LeafNode::create_integer(width, value->nBits()),
-                                        InternalNode::create(width, SymbolicExpr::OP_NEGATE,
-                                                             InternalNode::create(width, SymbolicExpr::OP_UEXTEND,
-                                                                                  LeafNode::create_integer(8, width),
-                                                                                  amount)));
+    ExpressionPtr ones = SymbolicExpr::makeAdd(SymbolicExpr::makeInteger(width, value->nBits()),
+                                               SymbolicExpr::makeNegate(SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(8, width),
+                                                                                                 amount)));
     return emit_binary(o, "or", t1, ones);
 }
 
@@ -676,7 +671,7 @@ RiscOperators::emit_arithmetic_right_shift(std::ostream &o, const ExpressionPtr 
             if (amount_leaf->toInt() == 0)
                 return value;
             if (amount_leaf->toInt() >= value->nBits())
-                return LeafNode::create_integer(value->nBits(), 0);
+                return SymbolicExpr::makeInteger(value->nBits(), 0);
         }
     }
     return emit_binary(o, "ashr", value, emit_unsigned_resize(o, amount, value->nBits()));
@@ -692,7 +687,7 @@ RiscOperators::emit_left_shift(std::ostream &o, const ExpressionPtr &value, cons
             if (amount_leaf->toInt() == 0)
                 return value;
             if (amount_leaf->toInt() >= value->nBits())
-                return LeafNode::create_integer(value->nBits(), 0);
+                return SymbolicExpr::makeInteger(value->nBits(), 0);
         }
     }
     return emit_binary(o, "shl", value, emit_unsigned_resize(o, amount, value->nBits()));
@@ -706,7 +701,7 @@ RiscOperators::emit_left_shift_ones(std::ostream &o, const ExpressionPtr &value,
 {
     size_t width = value->nBits();
     ExpressionPtr t1 = emit_left_shift(o, value, amount);
-    ExpressionPtr ones = emit_invert(o, emit_left_shift(o, LeafNode::create_integer(width, -1), amount));
+    ExpressionPtr ones = emit_invert(o, emit_left_shift(o, SymbolicExpr::makeInteger(width, -1), amount));
     return emit_binary(o, "or", t1, ones);
 }
 
@@ -721,7 +716,7 @@ ExpressionPtr
 RiscOperators::emit_lssb(std::ostream &o, const ExpressionPtr &value)
 {
     size_t width = value->nBits();
-    LeafPtr zero = LeafNode::create_integer(width, 0);
+    LeafPtr zero = LeafNode::createInteger(width, 0);
     LeafPtr t1 = emit_expression(o, value);
     ExpressionPtr t2 = emit_compare(o, "icmp eq", t1, zero);
     LeafPtr t3 = next_temporary(width);
@@ -743,13 +738,13 @@ ExpressionPtr
 RiscOperators::emit_mssb(std::ostream &o, const ExpressionPtr &value)
 {
     size_t width = value->nBits();
-    LeafPtr zero = LeafNode::create_integer(width, 0);
+    LeafPtr zero = LeafNode::createInteger(width, 0);
     LeafPtr t1 = emit_expression(o, value);
     ExpressionPtr t2 = emit_compare(o, "icmp eq", t1, zero);
     LeafPtr t3 = next_temporary(width);
     o <<prefix() <<llvm_lvalue(t3) <<" = call " <<llvm_integer_type(width)
       <<" @llvm.ctlz.i" <<StringUtility::numberToString(width) <<"(" <<llvm_integer_type(width) <<" " <<llvm_term(t1) <<")\n";
-    ExpressionPtr t4 = emit_binary(o, "sub", LeafNode::create_integer(width, width-1), t3);
+    ExpressionPtr t4 = emit_binary(o, "sub", SymbolicExpr::makeInteger(width, width-1), t3);
     ExpressionPtr t5 = emit_ite(o, t2, zero, t4);
     return t5;
 }
@@ -766,7 +761,7 @@ RiscOperators::emit_extract(std::ostream &o, const ExpressionPtr &value, const E
 ExpressionPtr
 RiscOperators::emit_invert(std::ostream &o, const ExpressionPtr &value)
 {
-    return emit_binary(o, "xor", value, LeafNode::create_integer(value->nBits(), -1));
+    return emit_binary(o, "xor", value, SymbolicExpr::makeInteger(value->nBits(), -1));
 }
 
 // Emit LLVM instructions for a left-associative binary operator. If only one operand is given, then simply return that operand
@@ -805,7 +800,7 @@ RiscOperators::emit_concat(std::ostream &o, TreeNodes operands)
     for (size_t i=1; i<operands.size(); ++i) {
         ExpressionPtr t1 = emit_zero_extend(o, result, result_width);
         ExpressionPtr t2 = emit_zero_extend(o, operands[i], result_width);
-        ExpressionPtr t3 = emit_left_shift(o, t2, LeafNode::create_integer(result_width, shift));
+        ExpressionPtr t3 = emit_left_shift(o, t2, SymbolicExpr::makeInteger(result_width, shift));
         result = emit_binary(o, "or", t1, t3);
         shift += operands[i]->nBits();
     }
@@ -915,8 +910,8 @@ RiscOperators::emit_rotate_left(std::ostream &o, const ExpressionPtr &value, con
 {
     ExpressionPtr t3 = emit_left_shift(o, value, amount);
     ExpressionPtr t4 = emit_unsigned_binary(o, "sub",
-                                      LeafNode::create_integer(amount->nBits(), 32),
-                                      amount);
+                                            SymbolicExpr::makeInteger(amount->nBits(), 32),
+                                            amount);
     ExpressionPtr t5 = emit_arithmetic_right_shift(o, value, t4);
     ExpressionPtr t6 = emit_unsigned_binary(o, "or", t3, t5);
     return t6;
@@ -933,8 +928,8 @@ RiscOperators::emit_rotate_right(std::ostream &o, const ExpressionPtr &value, co
 {
     ExpressionPtr t3 = emit_arithmetic_right_shift(o, value, amount);
     ExpressionPtr t4 = emit_unsigned_binary(o, "sub",
-                                      LeafNode::create_integer(amount->nBits(), 32),
-                                      amount);
+                                            SymbolicExpr::makeInteger(amount->nBits(), 32),
+                                            amount);
     ExpressionPtr t5 = emit_left_shift(o, value, t4);
     ExpressionPtr t6 = emit_unsigned_binary(o, "or", t3, t5);
     return t6;
@@ -1115,7 +1110,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
                 break;
             case SymbolicExpr::OP_NEGATE:
                 ASSERT_require(1==operands.size());
-                operator_result = emit_binary(o, "sub", LeafNode::create_integer(operands[0]->nBits(), 0), operands[0]);
+                operator_result = emit_binary(o, "sub", SymbolicExpr::makeInteger(operands[0]->nBits(), 0), operands[0]);
                 break;
             case SymbolicExpr::OP_OR:
                 operator_result = emit_left_associative(o, "or", operands);
@@ -1212,7 +1207,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
                 break;
             case SymbolicExpr::OP_ZEROP:
                 ASSERT_require(1==operands.size());
-                operator_result = emit_compare(o, "icmp eq", operands[0], LeafNode::create_integer(operands[0]->nBits(), 0));
+                operator_result = emit_compare(o, "icmp eq", operands[0], SymbolicExpr::makeInteger(operands[0]->nBits(), 0));
                 break;
 
             case SymbolicExpr::OP_NOOP:

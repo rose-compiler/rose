@@ -295,7 +295,7 @@ YicesSolver::evidence_for_name(const std::string &name)
     Evidence::const_iterator found = evidence.find(name);
     if (found==evidence.end())
         return SymbolicExpr::Ptr(); // null
-    return SymbolicExpr::LeafNode::create_integer(found->second.first/*nbits*/, found->second.second/*value*/);
+    return SymbolicExpr::makeInteger(found->second.first/*nbits*/, found->second.second/*value*/);
 }
 
 void
@@ -452,7 +452,7 @@ YicesSolver::out_expr(std::ostream &o, const SymbolicExpr::Ptr &tn)
             if (ln->nBits() <= 64) {
                 o <<"(mk-bv " <<ln->nBits() <<" " <<ln->toInt() <<")";
             } else {
-                o <<"0b" <<ln->get_bits().toBinary();
+                o <<"0b" <<ln->bits().toBinary();
             }
         } else if (ln->isMemory()) {
             o <<"m" <<ln->nameId();
@@ -579,7 +579,7 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::Int
             o <<")";
         }
     } else {
-        SymbolicExpr::LeafPtr ident = SymbolicExpr::LeafNode::create_integer(in->child(0)->nBits(), identity_element ? (uint64_t)(-1) : 0);
+        SymbolicExpr::Ptr ident = SymbolicExpr::makeInteger(in->child(0)->nBits(), identity_element ? (uint64_t)(-1) : 0);
         out_expr(o, ident);
         o <<")";
     }
@@ -841,7 +841,7 @@ YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn)
             } else {
                 int tmp[ln->nBits()];
                 for (size_t i=0; i<ln->nBits(); ++i)
-                    tmp[i] = ln->get_bits().get(i) ? 1 : 0;
+                    tmp[i] = ln->bits().get(i) ? 1 : 0;
                 retval = yices_mk_bv_constant_from_array(context, ln->nBits(), tmp);
             }
         } else {
