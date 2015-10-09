@@ -50,11 +50,11 @@ public:
         SymbolicSemantics::SValuePtr value = SymbolicSemantics::SValue::promote(valueBase);
         SymbolicExpr::LeafPtr leaf = value->get_expression()->isLeafNode();
         if (leaf && leaf->isNumber()) {
-            if (1==leaf->get_nbits()) {
+            if (1==leaf->nBits()) {
                 return leaf->toInt() ? "true" : "false";
-            } else if (leaf->get_nbits()<=64) {
+            } else if (leaf->nBits()<=64) {
                 uint64_t v = leaf->toInt();
-                return StringUtility::toHex2(v, leaf->get_nbits());
+                return StringUtility::toHex2(v, leaf->nBits());
             } else {
                 return leaf->get_bits().toHex();
             }

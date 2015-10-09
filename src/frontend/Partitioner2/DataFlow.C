@@ -273,7 +273,7 @@ isStackAddress(const rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
     if (!variable->mustEqual(initialStack, solver))
         return Sawyer::Nothing();
 
-    int64_t val = IntegerOps::signExtend2(constant->toInt(), constant->get_nbits(), 64);
+    int64_t val = IntegerOps::signExtend2(constant->toInt(), constant->nBits(), 64);
     return val;
 }
 

@@ -564,7 +564,7 @@ Analysis::updateRestoredRegisters(const StatePtr &initialState, const StatePtr &
         SValuePtr finalValue = finalRegs->readRegister(reg, ops.get());
         SymbolicExpr::Ptr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
         SymbolicExpr::Ptr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
-        if (finalExpr->get_flags() == initialExpr->get_flags() && finalExpr->mustEqual(initialExpr, ops->get_solver()))
+        if (finalExpr->flags() == initialExpr->flags() && finalExpr->mustEqual(initialExpr, ops->get_solver()))
             restoredRegisters_.insert(reg);
     }
 }

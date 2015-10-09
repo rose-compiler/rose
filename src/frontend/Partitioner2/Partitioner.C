@@ -631,10 +631,10 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
             // Special handling for if-then-else expressions
             if (SymbolicExpr::InternalPtr ifNode = pc->get_expression()->isInternalNode()) {
                 if (ifNode->get_operator()==SymbolicExpr::OP_ITE) {
-                    Semantics::SValuePtr expr = Semantics::SValue::promote(ops->undefined_(ifNode->get_nbits()));
+                    Semantics::SValuePtr expr = Semantics::SValue::promote(ops->undefined_(ifNode->nBits()));
                     expr->set_expression(ifNode->child(1));
                     worklist.push_back(expr);
-                    expr = Semantics::SValue::promote(ops->undefined_(ifNode->get_nbits()));
+                    expr = Semantics::SValue::promote(ops->undefined_(ifNode->nBits()));
                     expr->set_expression(ifNode->child(2));
                     worklist.push_back(expr);
                     continue;

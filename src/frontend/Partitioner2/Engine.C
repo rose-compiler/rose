@@ -1449,7 +1449,7 @@ Engine::BasicBlockFinalizer::operator()(bool chain, const Args &args) {
                 addIndeterminateEdge = false;
                 break;
             } else if (!addIndeterminateEdge &&
-                       (successor.expr()->get_expression()->get_flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
+                       (successor.expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
                 addIndeterminateEdge = true;
                 addrWidth = successor.expr()->get_width();
             }

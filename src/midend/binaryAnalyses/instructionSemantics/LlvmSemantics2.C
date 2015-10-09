@@ -204,7 +204,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
         virtual SymbolicExpr::VisitAction preVisit(const ExpressionPtr &node) ROSE_OVERRIDE {
             if (!seen.insert(node->hash()).second)
                 return SymbolicExpr::TRUNCATE; // already processed this same expression
-            size_t width = node->get_nbits();
+            size_t width = node->nBits();
             if (InternalPtr inode = node->isInternalNode()) {
                 if (SymbolicExpr::OP_READ==inode->get_operator()) {
                     ASSERT_require(2==inode->nchildren());
@@ -214,7 +214,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
                 LeafPtr leaf = node->isLeafNode();
                 ASSERT_not_null(leaf);
                 if (leaf->is_variable()) {
-                    std::string comment = leaf->get_comment();
+                    std::string comment = leaf->comment();
                     if (comment.size()>2 && 0==comment.substr(comment.size()-2).compare("_0"))
                         ops->add_variable(leaf);        // becomes a global variable if not already
                     LeafPtr t1 = ops->emit_expression(o, leaf);// handles local vars, global vars, and undefs
@@ -231,17 +231,17 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
     RegisterStatePtr regstate = RegisterState::promote(get_state()->get_register_state());
     for (size_t i=0; i<regs.size(); ++i) {
         SValuePtr value = SValue::promote(regstate->readRegister(regs[i], this));
-        value->get_expression()->depth_first_traversal(t1);
+        value->get_expression()->depthFirstTraversal(t1);
     }
 
     // Prerequisites for memory writes
     for (TreeNodes::const_iterator mwi=mem_writes.begin(); mwi!=mem_writes.end(); ++mwi) {
         const ExpressionPtr mem_write = *mwi;
-        mem_write->depth_first_traversal(t1);
+        mem_write->depthFirstTraversal(t1);
     }
 
     // Prerequisites for the instruction pointer.
-    get_instruction_pointer()->get_expression()->depth_first_traversal(t1);
+    get_instruction_pointer()->get_expression()->depthFirstTraversal(t1);
 }
 
 void
@@ -266,8 +266,8 @@ RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescript
         SValuePtr value = SValue::promote(regstate->readRegister(regs[i], this));
         o <<prefix() <<"; register " <<name <<" = " <<*value <<"\n";
         ExpressionPtr t1 = emit_expression(o, value);
-        o <<prefix() <<"store " <<llvm_integer_type(t1->get_nbits()) <<" " <<llvm_term(t1)
-          <<", " <<llvm_integer_type(t1->get_nbits()) <<"* @" <<name <<"\n";
+        o <<prefix() <<"store " <<llvm_integer_type(t1->nBits()) <<" " <<llvm_term(t1)
+          <<", " <<llvm_integer_type(t1->nBits()) <<"* @" <<name <<"\n";
     }
 }
 
@@ -378,7 +378,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
             LeafPtr t1 = emit_expression(o, eip);
             LeafPtr t2 = next_temporary(32);        // pointer to the function
             o <<prefix() <<llvm_lvalue(t2) <<" = inttoptr "
-              <<llvm_integer_type(t1->get_nbits()) <<" " <<llvm_term(t1) <<" to void()*\n";
+              <<llvm_integer_type(t1->nBits()) <<" " <<llvm_term(t1) <<" to void()*\n";
             o <<prefix() <<"call void " <<llvm_term(t2) <<"()\n";
             o <<prefix() <<"ret void\n";
             return;
@@ -393,7 +393,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
             LeafPtr t2 = next_temporary(32);        // pointer to the function
             std::string ret_label = addr_label(latest_insn->get_address() + latest_insn->get_size());
             o <<prefix() <<llvm_lvalue(t2) <<" = inttoptr "
-              <<llvm_integer_type(t1->get_nbits()) <<" " <<llvm_term(t1) <<" to void()*\n";
+              <<llvm_integer_type(t1->nBits()) <<" " <<llvm_term(t1) <<" to void()*\n";
             o <<prefix() <<"call void " <<llvm_term(t2) <<"()\n";
             o <<prefix() <<"br label %" <<ret_label <<"\n";
             return;
@@ -405,7 +405,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     // the "indirectbr" instruction, so we need to use the "switch" instruction.
     {
         LeafPtr t1 = emit_expression(o, eip);
-        std::string type = llvm_integer_type(t1->get_nbits());
+        std::string type = llvm_integer_type(t1->nBits());
         std::string dflt_label = next_label();
         o <<prefix() <<"switch " <<type <<" " <<llvm_term(t1) <<", label %" <<dflt_label <<" [";
         for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
@@ -476,7 +476,7 @@ RiscOperators::llvm_term(const ExpressionPtr &expr)
     leaf = rewrites.get_value_or(leaf->hash(), leaf);
 
     if (leaf->isNumber()) {
-        int64_t sv = IntegerOps::signExtend2(leaf->toInt(), leaf->get_nbits(), 8*sizeof(int64_t));
+        int64_t sv = IntegerOps::signExtend2(leaf->toInt(), leaf->nBits(), 8*sizeof(int64_t));
         return StringUtility::numberToString(sv);
     }
 
@@ -528,12 +528,12 @@ ExpressionPtr
 RiscOperators::emit_zero_extend(std::ostream &o, const ExpressionPtr &value, size_t nbits)
 {
     ASSERT_not_null(value);
-    ASSERT_require(value->get_nbits() <= nbits);
-    if (value->get_nbits() == nbits)
+    ASSERT_require(value->nBits() <= nbits);
+    if (value->nBits() == nbits)
         return value;
 
     LeafPtr t1 = emit_expression(o, value);
-    std::string t1_type = llvm_integer_type(t1->get_nbits());
+    std::string t1_type = llvm_integer_type(t1->nBits());
     LeafPtr t2 = next_temporary(nbits);
     std::string t2_type = llvm_integer_type(nbits);
     o <<prefix() <<llvm_lvalue(t2) <<" = zext " <<t1_type <<" " <<llvm_term(t1) <<" to " <<t2_type <<"\n";
@@ -545,12 +545,12 @@ ExpressionPtr
 RiscOperators::emit_sign_extend(std::ostream &o, const ExpressionPtr &value, size_t nbits)
 {
     ASSERT_not_null(value);
-    ASSERT_require(value->get_nbits() <= nbits);
-    if (value->get_nbits() == nbits)
+    ASSERT_require(value->nBits() <= nbits);
+    if (value->nBits() == nbits)
         return value;
 
     ExpressionPtr t1 = emit_expression(o, value);
-    std::string t1_type = llvm_integer_type(t1->get_nbits());
+    std::string t1_type = llvm_integer_type(t1->nBits());
     LeafPtr t2 = next_temporary(nbits);
     std::string t2_type = llvm_integer_type(nbits);
     o <<prefix() <<llvm_lvalue(t2) <<" = sext " <<t1_type <<" " <<llvm_term(t1) <<" to " <<t2_type <<"\n";
@@ -563,12 +563,12 @@ ExpressionPtr
 RiscOperators::emit_truncate(std::ostream &o, const ExpressionPtr &value, size_t nbits)
 {
     ASSERT_not_null(value);
-    ASSERT_require(value->get_nbits() >= nbits);
-    if (value->get_nbits() == nbits)
+    ASSERT_require(value->nBits() >= nbits);
+    if (value->nBits() == nbits)
         return value;
 
     ExpressionPtr t1 = emit_expression(o, value);
-    std::string t1_type = llvm_integer_type(t1->get_nbits());
+    std::string t1_type = llvm_integer_type(t1->nBits());
     LeafPtr t2 = next_temporary(nbits);
     std::string t2_type = llvm_integer_type(nbits);
 #if 1 /*DEBUGGING [Robb P. Matzke 2014-01-15]*/
@@ -583,9 +583,9 @@ RiscOperators::emit_truncate(std::ostream &o, const ExpressionPtr &value, size_t
 ExpressionPtr
 RiscOperators::emit_unsigned_resize(std::ostream &o, const ExpressionPtr &value, size_t nbits)
 {
-    if (value->get_nbits()==nbits)
+    if (value->nBits()==nbits)
         return value;
-    if (value->get_nbits() < nbits)
+    if (value->nBits() < nbits)
         return emit_zero_extend(o, value, nbits);
     return emit_truncate(o, value, nbits);
 }
@@ -596,11 +596,11 @@ RiscOperators::emit_binary(std::ostream &o, const std::string &llvm_operator, co
 {
     ASSERT_not_null(a);
     ASSERT_not_null(b);
-    ASSERT_require(a->get_nbits() == b->get_nbits());
-    std::string type = llvm_integer_type(a->get_nbits());
+    ASSERT_require(a->nBits() == b->nBits());
+    std::string type = llvm_integer_type(a->nBits());
     ExpressionPtr t1 = emit_expression(o, a);
     ExpressionPtr t2 = emit_expression(o, b);
-    LeafPtr t3 = next_temporary(a->get_nbits());
+    LeafPtr t3 = next_temporary(a->nBits());
     o <<prefix() <<llvm_lvalue(t3) <<" = " <<llvm_operator
       <<" " <<type <<" " <<llvm_term(t1) <<", " <<llvm_term(t2) <<"\n";
     return t3;
@@ -613,7 +613,7 @@ RiscOperators::emit_signed_binary(std::ostream &o, const std::string &llvm_opera
 {
     ASSERT_not_null(a);
     ASSERT_not_null(b);
-    size_t width = std::max(a->get_nbits(), b->get_nbits());
+    size_t width = std::max(a->nBits(), b->nBits());
     ExpressionPtr t1 = emit_sign_extend(o, a, width);
     ExpressionPtr t2 = emit_sign_extend(o, b, width);
     return emit_binary(o, llvm_operator, t1, t2);
@@ -627,7 +627,7 @@ RiscOperators::emit_unsigned_binary(std::ostream &o, const std::string &llvm_ope
 {
     ASSERT_not_null(a);
     ASSERT_not_null(b);
-    size_t width = std::max(a->get_nbits(), b->get_nbits());
+    size_t width = std::max(a->nBits(), b->nBits());
     ExpressionPtr t1 = emit_zero_extend(o, a, width);
     ExpressionPtr t2 = emit_zero_extend(o, b, width);
     return emit_binary(o, llvm_operator, t1, t2);
@@ -643,11 +643,11 @@ RiscOperators::emit_logical_right_shift(std::ostream &o, const ExpressionPtr &va
         if (amount_leaf->isNumber()) {
             if (amount_leaf->toInt() == 0)
                 return value;
-            if (amount_leaf->toInt() >= value->get_nbits())
-                return LeafNode::create_integer(value->get_nbits(), 0);
+            if (amount_leaf->toInt() >= value->nBits())
+                return LeafNode::create_integer(value->nBits(), 0);
         }
     }
-    return emit_binary(o, "lshr", value, emit_unsigned_resize(o, amount, value->get_nbits()));
+    return emit_binary(o, "lshr", value, emit_unsigned_resize(o, amount, value->nBits()));
 }
 
 // Emit the LLVM instructions for a right shift that inserts set bits rather than zeros.  The amount could be non-constant,
@@ -656,9 +656,9 @@ ExpressionPtr
 RiscOperators::emit_logical_right_shift_ones(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
     ExpressionPtr t1 = emit_logical_right_shift(o, value, amount);
-    size_t width = std::max(value->get_nbits(), amount->get_nbits());
+    size_t width = std::max(value->nBits(), amount->nBits());
     ExpressionPtr ones = InternalNode::create(width, SymbolicExpr::OP_ADD,
-                                        LeafNode::create_integer(width, value->get_nbits()),
+                                        LeafNode::create_integer(width, value->nBits()),
                                         InternalNode::create(width, SymbolicExpr::OP_NEGATE,
                                                              InternalNode::create(width, SymbolicExpr::OP_UEXTEND,
                                                                                   LeafNode::create_integer(8, width),
@@ -675,11 +675,11 @@ RiscOperators::emit_arithmetic_right_shift(std::ostream &o, const ExpressionPtr 
         if (amount_leaf->isNumber()) {
             if (amount_leaf->toInt() == 0)
                 return value;
-            if (amount_leaf->toInt() >= value->get_nbits())
-                return LeafNode::create_integer(value->get_nbits(), 0);
+            if (amount_leaf->toInt() >= value->nBits())
+                return LeafNode::create_integer(value->nBits(), 0);
         }
     }
-    return emit_binary(o, "ashr", value, emit_unsigned_resize(o, amount, value->get_nbits()));
+    return emit_binary(o, "ashr", value, emit_unsigned_resize(o, amount, value->nBits()));
 }
 
 // Emit an LLVM left-shift expression if necessary.  If the shift amount is the constant zero then this is a no-op. LLVM
@@ -691,11 +691,11 @@ RiscOperators::emit_left_shift(std::ostream &o, const ExpressionPtr &value, cons
         if (amount_leaf->isNumber()) {
             if (amount_leaf->toInt() == 0)
                 return value;
-            if (amount_leaf->toInt() >= value->get_nbits())
-                return LeafNode::create_integer(value->get_nbits(), 0);
+            if (amount_leaf->toInt() >= value->nBits())
+                return LeafNode::create_integer(value->nBits(), 0);
         }
     }
-    return emit_binary(o, "shl", value, emit_unsigned_resize(o, amount, value->get_nbits()));
+    return emit_binary(o, "shl", value, emit_unsigned_resize(o, amount, value->nBits()));
 }
 
 // Emits the LLVM equivalent of ROSE's OP_SHL1, which shifts 1 bits into the LSB side of the value. LLVM doesn't have an
@@ -704,7 +704,7 @@ RiscOperators::emit_left_shift(std::ostream &o, const ExpressionPtr &value, cons
 ExpressionPtr
 RiscOperators::emit_left_shift_ones(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
-    size_t width = value->get_nbits();
+    size_t width = value->nBits();
     ExpressionPtr t1 = emit_left_shift(o, value, amount);
     ExpressionPtr ones = emit_invert(o, emit_left_shift(o, LeafNode::create_integer(width, -1), amount));
     return emit_binary(o, "or", t1, ones);
@@ -720,7 +720,7 @@ RiscOperators::emit_left_shift_ones(std::ostream &o, const ExpressionPtr &value,
 ExpressionPtr
 RiscOperators::emit_lssb(std::ostream &o, const ExpressionPtr &value)
 {
-    size_t width = value->get_nbits();
+    size_t width = value->nBits();
     LeafPtr zero = LeafNode::create_integer(width, 0);
     LeafPtr t1 = emit_expression(o, value);
     ExpressionPtr t2 = emit_compare(o, "icmp eq", t1, zero);
@@ -742,7 +742,7 @@ RiscOperators::emit_lssb(std::ostream &o, const ExpressionPtr &value)
 ExpressionPtr
 RiscOperators::emit_mssb(std::ostream &o, const ExpressionPtr &value)
 {
-    size_t width = value->get_nbits();
+    size_t width = value->nBits();
     LeafPtr zero = LeafNode::create_integer(width, 0);
     LeafPtr t1 = emit_expression(o, value);
     ExpressionPtr t2 = emit_compare(o, "icmp eq", t1, zero);
@@ -766,7 +766,7 @@ RiscOperators::emit_extract(std::ostream &o, const ExpressionPtr &value, const E
 ExpressionPtr
 RiscOperators::emit_invert(std::ostream &o, const ExpressionPtr &value)
 {
-    return emit_binary(o, "xor", value, LeafNode::create_integer(value->get_nbits(), -1));
+    return emit_binary(o, "xor", value, LeafNode::create_integer(value->nBits(), -1));
 }
 
 // Emit LLVM instructions for a left-associative binary operator. If only one operand is given, then simply return that operand
@@ -775,12 +775,12 @@ ExpressionPtr
 RiscOperators::emit_left_associative(std::ostream &o, const std::string &llvm_operator, const TreeNodes &operands)
 {
     ASSERT_require(!operands.empty());
-    const size_t width = operands[0]->get_nbits();
+    const size_t width = operands[0]->nBits();
     std::string type = llvm_integer_type(width);
     ExpressionPtr result = operands[0];
 
     for (size_t i=1; i<operands.size(); ++i) {
-        ASSERT_require(operands[i]->get_nbits() == width);
+        ASSERT_require(operands[i]->nBits() == width);
         result = emit_binary(o, llvm_operator, result, operands[i]);
     }
     return result;
@@ -797,17 +797,17 @@ RiscOperators::emit_concat(std::ostream &o, TreeNodes operands)
 
     size_t result_width = 0;
     for (size_t i=0; i<operands.size(); ++i)
-        result_width += operands[i]->get_nbits();
+        result_width += operands[i]->nBits();
 
     std::reverse(operands.begin(), operands.end());     // we want least-significant to most-significant
     ExpressionPtr result = operands[0];
-    size_t shift = operands[0]->get_nbits();
+    size_t shift = operands[0]->nBits();
     for (size_t i=1; i<operands.size(); ++i) {
         ExpressionPtr t1 = emit_zero_extend(o, result, result_width);
         ExpressionPtr t2 = emit_zero_extend(o, operands[i], result_width);
         ExpressionPtr t3 = emit_left_shift(o, t2, LeafNode::create_integer(result_width, shift));
         result = emit_binary(o, "or", t1, t3);
-        shift += operands[i]->get_nbits();
+        shift += operands[i]->nBits();
     }
     return result;
 }
@@ -817,11 +817,11 @@ RiscOperators::emit_concat(std::ostream &o, TreeNodes operands)
 ExpressionPtr
 RiscOperators::emit_signed_divide(std::ostream &o, const ExpressionPtr &numerator, const ExpressionPtr &denominator)
 {
-    size_t width = std::max(numerator->get_nbits(), denominator->get_nbits());
+    size_t width = std::max(numerator->nBits(), denominator->nBits());
     ExpressionPtr t1 = emit_sign_extend(o, numerator, width);
     ExpressionPtr t2 = emit_sign_extend(o, denominator, width);
     ExpressionPtr t3 = emit_binary(o, "sdiv", t1, t2);
-    return emit_truncate(o, t3, numerator->get_nbits());
+    return emit_truncate(o, t3, numerator->nBits());
 }
 
 // Emits LLVM to compute a ratio.  LLVM requires that the numerator and denominator have the same width; ROSE only stipulates
@@ -829,11 +829,11 @@ RiscOperators::emit_signed_divide(std::ostream &o, const ExpressionPtr &numerato
 ExpressionPtr
 RiscOperators::emit_unsigned_divide(std::ostream &o, const ExpressionPtr &numerator, const ExpressionPtr &denominator)
 {
-    size_t width = std::max(numerator->get_nbits(), denominator->get_nbits());
+    size_t width = std::max(numerator->nBits(), denominator->nBits());
     ExpressionPtr t1 = emit_zero_extend(o, numerator, width);
     ExpressionPtr t2 = emit_zero_extend(o, denominator, width);
     ExpressionPtr t3 = emit_binary(o, "udiv", t1, t2);
-    return emit_truncate(o, t3, numerator->get_nbits());
+    return emit_truncate(o, t3, numerator->nBits());
 }
 
 // Emits LLVM to compute a remainder.  In LLVM the width of the result is the same as the width of the numerator, but in ROSE
@@ -841,11 +841,11 @@ RiscOperators::emit_unsigned_divide(std::ostream &o, const ExpressionPtr &numera
 ExpressionPtr
 RiscOperators::emit_signed_modulo(std::ostream &o, const ExpressionPtr &numerator, const ExpressionPtr &denominator)
 {
-    size_t width = std::max(numerator->get_nbits(), denominator->get_nbits());
+    size_t width = std::max(numerator->nBits(), denominator->nBits());
     ExpressionPtr t1 = emit_sign_extend(o, numerator, width);
     ExpressionPtr t2 = emit_sign_extend(o, denominator, width);
     ExpressionPtr t3 = emit_binary(o, "srem", t1, t2);
-    return emit_truncate(o, t3, denominator->get_nbits());
+    return emit_truncate(o, t3, denominator->nBits());
 }
 
 // Emits LLVM to compute a remainder.  In LLVM the width of the result is the same as the width of the numerator, but in ROSE
@@ -853,11 +853,11 @@ RiscOperators::emit_signed_modulo(std::ostream &o, const ExpressionPtr &numerato
 ExpressionPtr
 RiscOperators::emit_unsigned_modulo(std::ostream &o, const ExpressionPtr &numerator, const ExpressionPtr &denominator)
 {
-    size_t width = std::max(numerator->get_nbits(), denominator->get_nbits());
+    size_t width = std::max(numerator->nBits(), denominator->nBits());
     ExpressionPtr t1 = emit_zero_extend(o, numerator, width);
     ExpressionPtr t2 = emit_zero_extend(o, denominator, width);
     ExpressionPtr t3 = emit_binary(o, "urem", t1, t2);
-    return emit_truncate(o, t3, denominator->get_nbits());
+    return emit_truncate(o, t3, denominator->nBits());
 }
 
 // Emits LLVM to compute the product of all the operands.  Multiply operations in LLVM are always sign-independent since the
@@ -870,7 +870,7 @@ RiscOperators::emit_signed_multiply(std::ostream &o, const TreeNodes &operands)
 
     size_t result_width = 0;
     for (size_t i=0; i<operands.size(); ++i)
-        result_width += operands[i]->get_nbits();
+        result_width += operands[i]->nBits();
 
     ExpressionPtr result = operands[0];
     for (size_t i=1; i<operands.size(); ++i) {
@@ -892,7 +892,7 @@ RiscOperators::emit_unsigned_multiply(std::ostream &o, const TreeNodes &operands
 
     size_t result_width = 0;
     for (size_t i=0; i<operands.size(); ++i)
-        result_width += operands[i]->get_nbits();
+        result_width += operands[i]->nBits();
 
     ExpressionPtr result = operands[0];
     for (size_t i=1; i<operands.size(); ++i) {
@@ -915,7 +915,7 @@ RiscOperators::emit_rotate_left(std::ostream &o, const ExpressionPtr &value, con
 {
     ExpressionPtr t3 = emit_left_shift(o, value, amount);
     ExpressionPtr t4 = emit_unsigned_binary(o, "sub",
-                                      LeafNode::create_integer(amount->get_nbits(), 32),
+                                      LeafNode::create_integer(amount->nBits(), 32),
                                       amount);
     ExpressionPtr t5 = emit_arithmetic_right_shift(o, value, t4);
     ExpressionPtr t6 = emit_unsigned_binary(o, "or", t3, t5);
@@ -933,7 +933,7 @@ RiscOperators::emit_rotate_right(std::ostream &o, const ExpressionPtr &value, co
 {
     ExpressionPtr t3 = emit_arithmetic_right_shift(o, value, amount);
     ExpressionPtr t4 = emit_unsigned_binary(o, "sub",
-                                      LeafNode::create_integer(amount->get_nbits(), 32),
+                                      LeafNode::create_integer(amount->nBits(), 32),
                                       amount);
     ExpressionPtr t5 = emit_left_shift(o, value, t4);
     ExpressionPtr t6 = emit_unsigned_binary(o, "or", t3, t5);
@@ -949,7 +949,7 @@ RiscOperators::emit_compare(std::ostream &o, const std::string &llvm_op, const E
     LeafPtr t2 = emit_expression(o, b);
     LeafPtr t3 = next_temporary(1);
     o <<prefix() <<llvm_lvalue(t3) <<" = " <<llvm_op
-      <<" " <<llvm_integer_type(t1->get_nbits()) <<" " <<llvm_term(t1) <<", " <<llvm_term(t2) <<"\n";
+      <<" " <<llvm_integer_type(t1->nBits()) <<" " <<llvm_term(t1) <<", " <<llvm_term(t2) <<"\n";
     return t3;
 }
 
@@ -960,10 +960,10 @@ RiscOperators::emit_ite(std::ostream &o, const ExpressionPtr &cond, const Expres
     ASSERT_not_null(cond);
     ASSERT_not_null(a);
     ASSERT_not_null(b);
-    ASSERT_require(cond->get_nbits()==1);
-    ASSERT_require(a->get_nbits()==b->get_nbits());
+    ASSERT_require(cond->nBits()==1);
+    ASSERT_require(a->nBits()==b->nBits());
 
-    size_t width = a->get_nbits();
+    size_t width = a->nBits();
     LeafPtr t1 = emit_expression(o, cond);
     LeafPtr t2 = emit_expression(o, a);
     LeafPtr t3 = emit_expression(o, b);
@@ -982,7 +982,7 @@ RiscOperators::emit_memory_read(std::ostream &o, const ExpressionPtr &addr, size
     // Convert ADDR to a pointer T2. The pointer type is "iNBITS*"
     LeafPtr t1 = emit_expression(o, addr);
     LeafPtr t2 = next_temporary(32);                // a 32-bit address
-    o <<prefix() <<llvm_lvalue(t2) <<" = inttoptr " <<llvm_integer_type(t1->get_nbits()) <<" " <<llvm_term(t1)
+    o <<prefix() <<llvm_lvalue(t2) <<" = inttoptr " <<llvm_integer_type(t1->nBits()) <<" " <<llvm_term(t1)
       <<" to " <<llvm_integer_type(nbits) <<"*\n";
 
     // Dereference pointer T2 to get the return value.
@@ -1014,11 +1014,11 @@ RiscOperators::emit_memory_write(std::ostream &o, const ExpressionPtr &addr, con
     LeafPtr t1 = emit_expression(o, value);
     LeafPtr t2 = emit_expression(o, addr);
 
-    LeafPtr t3 = next_temporary(value->get_nbits());
-    o <<prefix() <<llvm_lvalue(t3) <<" = inttoptr " <<llvm_integer_type(addr->get_nbits()) <<" " <<llvm_term(t2)
-      <<" to " <<llvm_integer_type(value->get_nbits()) <<"*\n";
-    o <<prefix() <<"store " <<llvm_integer_type(value->get_nbits()) <<" " <<llvm_term(t1)
-      <<", " <<llvm_integer_type(value->get_nbits()) <<"* " <<llvm_term(t3) <<"\n";
+    LeafPtr t3 = next_temporary(value->nBits());
+    o <<prefix() <<llvm_lvalue(t3) <<" = inttoptr " <<llvm_integer_type(addr->nBits()) <<" " <<llvm_term(t2)
+      <<" to " <<llvm_integer_type(value->nBits()) <<"*\n";
+    o <<prefix() <<"store " <<llvm_integer_type(value->nBits()) <<" " <<llvm_term(t1)
+      <<", " <<llvm_integer_type(value->nBits()) <<"* " <<llvm_term(t3) <<"\n";
 }
 
 LeafPtr
@@ -1048,11 +1048,11 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
                 // This is a reference to a ROSE variable that has no corresponding LLVM variable.  This can happen for things
                 // like the x86 TEST instruction, which leaves the AF register in an undefined state--if we then try to print
                 // the definition of AF we will encounter a ROSE variable with no LLVM variable.
-                LeafPtr t1 = next_temporary(leaf->get_nbits());
-                o <<prefix() <<llvm_lvalue(t1) <<" = add " <<llvm_integer_type(leaf->get_nbits()) <<" undef, undef\n";
+                LeafPtr t1 = next_temporary(leaf->nBits());
+                o <<prefix() <<llvm_lvalue(t1) <<" = add " <<llvm_integer_type(leaf->nBits()) <<" undef, undef\n";
                 cur_expr = t1;
             } else if ('@'==varname[0]) {
-                cur_expr = emit_global_read(o, varname, leaf->get_nbits());
+                cur_expr = emit_global_read(o, varname, leaf->nBits());
             }
         }
     }
@@ -1091,7 +1091,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
                 break;
             case SymbolicExpr::OP_EXTRACT:
                 ASSERT_require(3==operands.size());
-                operator_result = emit_extract(o, operands[2], operands[0], inode->get_nbits());
+                operator_result = emit_extract(o, operands[2], operands[0], inode->nBits());
                 break;
             case SymbolicExpr::OP_INVERT:
                 ASSERT_require(1==operands.size());
@@ -1115,14 +1115,14 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
                 break;
             case SymbolicExpr::OP_NEGATE:
                 ASSERT_require(1==operands.size());
-                operator_result = emit_binary(o, "sub", LeafNode::create_integer(operands[0]->get_nbits(), 0), operands[0]);
+                operator_result = emit_binary(o, "sub", LeafNode::create_integer(operands[0]->nBits(), 0), operands[0]);
                 break;
             case SymbolicExpr::OP_OR:
                 operator_result = emit_left_associative(o, "or", operands);
                 break;
             case SymbolicExpr::OP_READ:
                 ASSERT_require(2==operands.size());
-                operator_result = emit_memory_read(o, operands[1], inode->get_nbits());
+                operator_result = emit_memory_read(o, operands[1], inode->nBits());
                 break;
             case SymbolicExpr::OP_ROL:
                 ASSERT_require(2==operands.size());
@@ -1138,7 +1138,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
                 break;
             case SymbolicExpr::OP_SEXTEND:
                 ASSERT_require(2==operands.size());
-                operator_result = emit_sign_extend(o, operands[1], inode->get_nbits());
+                operator_result = emit_sign_extend(o, operands[1], inode->nBits());
                 break;
             case SymbolicExpr::OP_SGE:
                 ASSERT_require(2==operands.size());
@@ -1185,7 +1185,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
                 break;
             case SymbolicExpr::OP_UEXTEND:
                 ASSERT_require(2==operands.size());
-                operator_result = emit_zero_extend(o, operands[1], inode->get_nbits());
+                operator_result = emit_zero_extend(o, operands[1], inode->nBits());
                 break;
             case SymbolicExpr::OP_UGE:
                 ASSERT_require(2==operands.size());
@@ -1212,7 +1212,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
                 break;
             case SymbolicExpr::OP_ZEROP:
                 ASSERT_require(1==operands.size());
-                operator_result = emit_compare(o, "icmp eq", operands[0], LeafNode::create_integer(operands[0]->get_nbits(), 0));
+                operator_result = emit_compare(o, "icmp eq", operands[0], LeafNode::create_integer(operands[0]->nBits(), 0));
                 break;
 
             case SymbolicExpr::OP_NOOP:
@@ -1257,7 +1257,7 @@ RiscOperators::add_variable(const LeafPtr &var)
     ASSERT_require(var!=NULL && var->is_variable());
     std::string name = get_variable(var);
     if (name.empty()) {
-        name = var->get_comment();
+        name = var->comment();
         if (name.empty()) {
             name = "%v" + StringUtility::numberToString(var->get_name());
         } else if (name.size()>2 && 0==name.substr(name.size()-2).compare("_0")) {
@@ -1283,11 +1283,11 @@ RiscOperators::emit_assignment(std::ostream &o, const ExpressionPtr &rhs)
     ASSERT_not_null(rhs);
     LeafPtr t1 = emit_expression(o, rhs);
 
-    if (t1->is_variable() && t1->get_comment().empty())
+    if (t1->is_variable() && t1->comment().empty())
         return t1;
 
-    LeafPtr lhs = next_temporary(rhs->get_nbits());
-    o <<prefix() <<llvm_lvalue(lhs) <<" = " <<llvm_integer_type(rhs->get_nbits()) <<" " <<llvm_term(t1) <<"\n";
+    LeafPtr lhs = next_temporary(rhs->nBits());
+    o <<prefix() <<llvm_lvalue(lhs) <<" = " <<llvm_integer_type(rhs->nBits()) <<" " <<llvm_term(t1) <<"\n";
     add_rewrite(rhs, lhs);
     return lhs;
 }

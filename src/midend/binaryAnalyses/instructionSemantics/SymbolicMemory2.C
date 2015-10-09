@@ -17,7 +17,7 @@ SymbolicMemory::expression(const SymbolicExpr::Ptr &expr) {
 void
 SymbolicMemory::clear() {
     if (mem_) {
-        mem_ = SymbolicExpr::LeafNode::create_memory(mem_->domainWidth(), mem_->get_nbits());
+        mem_ = SymbolicExpr::LeafNode::create_memory(mem_->domainWidth(), mem_->nBits());
     } else {
         mem_ = SymbolicExpr::LeafNode::create_memory(32, 8); // can be adjusted later
     }
@@ -26,11 +26,11 @@ SymbolicMemory::clear() {
 SValuePtr
 SymbolicMemory::readMemory(const SValuePtr &address_, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
     SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(address_);
-    if (address->get_width() != mem_->domainWidth() || dflt->get_width() != mem_->get_nbits()) {
+    if (address->get_width() != mem_->domainWidth() || dflt->get_width() != mem_->nBits()) {
         ASSERT_require2(mem_->isLeafNode() && mem_->isLeafNode()->is_memory(),
                         "invalid address and/or value size for memory; expecting " +
                         StringUtility::numberToString(mem_->domainWidth()) + "-bit addresses and " +
-                        StringUtility::numberToString(mem_->get_nbits()) + "-bit values");
+                        StringUtility::numberToString(mem_->nBits()) + "-bit values");
 
         // We can finalize the domain and range widths for the memory now that they've been given.
         mem_ = SymbolicExpr::LeafNode::create_memory(address->get_width(), dflt->get_width());
@@ -45,17 +45,17 @@ void
 SymbolicMemory::writeMemory(const SValuePtr &address_, const SValuePtr &value_, RiscOperators *addrOps, RiscOperators *valOps) {
     SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(address_);
     SymbolicSemantics::SValuePtr value = SymbolicSemantics::SValue::promote(value_);
-    if (address->get_width() != mem_->domainWidth() || value->get_width() != mem_->get_nbits()) {
+    if (address->get_width() != mem_->domainWidth() || value->get_width() != mem_->nBits()) {
         ASSERT_require2(mem_->isLeafNode() && mem_->isLeafNode()->is_memory(),
                         "invalid address and/or value size for memory; expecting " +
                         StringUtility::numberToString(mem_->domainWidth()) + "-bit addresses and " +
-                        StringUtility::numberToString(mem_->get_nbits()) + "-bit values");
+                        StringUtility::numberToString(mem_->nBits()) + "-bit values");
 
         // We can finalize the domain and range widths for the memory now that they've been given.
         mem_ = SymbolicExpr::LeafNode::create_memory(address->get_width(), value->get_width());
     }
 
-    mem_ = SymbolicExpr::InternalNode::create(mem_->get_nbits(), SymbolicExpr::OP_WRITE, mem_, address->get_expression(), value->get_expression());
+    mem_ = SymbolicExpr::InternalNode::create(mem_->nBits(), SymbolicExpr::OP_WRITE, mem_, address->get_expression(), value->get_expression());
 }
 
 bool

@@ -723,10 +723,10 @@ private:
                                       StringUtility::numberToString(nBytes) + " bytes starting ";
                     }
                     varComment += "at address ";
-                    if (base->get_comment().empty()) {
+                    if (base->comment().empty()) {
                         varComment = base->toString();
                     } else {
-                        varComment += base->get_comment();
+                        varComment += base->comment();
                     }
                     Sawyer::Container::BitVector tmp = offset->get_bits();
                     if (tmp.get(tmp.size()-1)) {
@@ -1173,10 +1173,10 @@ incorporateRegisterPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, //
             SymbolicExpr::Ptr rhs = SymbolicExprParser().parse(tokens);
             if (tokens[0].type() != SymbolicExprParser::Token::NONE)
                 throw tokens[0].syntaxError("extra text after end of expression", inputName);
-            if (regp->get_nbits() != rhs->get_nbits()) {
+            if (regp->get_nbits() != rhs->nBits()) {
                 throw std::runtime_error("register/expr width mismatch "
                                          "(reg=" + StringUtility::numberToString(regp->get_nbits()) +
-                                         ", expr=" + StringUtility::numberToString(rhs->get_nbits()) + ")"
+                                         ", expr=" + StringUtility::numberToString(rhs->nBits()) + ")"
                                          ": " + regPostCondStr);
             }
 
@@ -1221,9 +1221,9 @@ incorporateMemoryPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // o
             SymbolicExpr::Ptr rhsExpr = SymbolicExprParser().parse(tokens);
             if (tokens[0].type() != SymbolicExprParser::Token::NONE)
                 throw tokens[0].syntaxError("extra text after end of expression", inputName);
-            if (rhsExpr->get_nbits() != 8) {
+            if (rhsExpr->nBits() != 8) {
                 throw std::runtime_error("expr width should be 8 bits "
-                                         "(got " + StringUtility::numberToString(rhsExpr->get_nbits()) + "): " + memPostCondStr);
+                                         "(got " + StringUtility::numberToString(rhsExpr->nBits()) + "): " + memPostCondStr);
             }
 
             // Build the SMT constraint
@@ -1923,7 +1923,7 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     SymbolicExpr::Ptr memExpr1 = s1mem->expression();
     SymbolicExpr::Ptr memExpr2 = s2mem->expression();
     SymbolicExpr::Ptr mergedExpr =
-        SymbolicExpr::InternalNode::create(memExpr1->get_nbits(), SymbolicExpr::OP_ITE, s1Constraint->get_expression(),
+        SymbolicExpr::InternalNode::create(memExpr1->nBits(), SymbolicExpr::OP_ITE, s1Constraint->get_expression(),
                                            memExpr1, memExpr2);
     BaseSemantics::SymbolicMemoryPtr mergedMem = BaseSemantics::SymbolicMemory::promote(s1mem->clone());
     mergedMem->expression(mergedExpr);

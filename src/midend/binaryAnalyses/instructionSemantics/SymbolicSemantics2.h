@@ -147,7 +147,7 @@ protected:
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
         expr = LeafNode::create_integer(nbits, number);
     }
-    SValue(ExprPtr expr): BaseSemantics::SValue(expr->get_nbits()) {
+    SValue(ExprPtr expr): BaseSemantics::SValue(expr->nBits()) {
         this->expr = expr;
     }
 
@@ -646,7 +646,7 @@ public:
     // implementations.
 protected:
     SValuePtr svalue_expr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) {
-        SValuePtr newval = SValue::promote(protoval->undefined_(expr->get_nbits()));
+        SValuePtr newval = SValue::promote(protoval->undefined_(expr->nBits()));
         newval->set_expression(expr);
         newval->set_defining_instructions(defs);
         return newval;

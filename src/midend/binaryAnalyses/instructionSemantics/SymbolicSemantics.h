@@ -162,7 +162,7 @@ public:
 
     /** Construct a ValueType from a TreeNode. */
     explicit ValueType(const TreeNodePtr &node) {
-        ASSERT_require(node->get_nbits()==nBits);
+        ASSERT_require(node->nBits()==nBits);
         expr = node;
     }
 
@@ -473,7 +473,7 @@ public:
         if (1==cells.size())
             return cells.front().value();
         // FIXME: This makes no attempt to remove duplicate values
-        TreeNodePtr expr = LeafNode::create_memory(addr.get_expression()->get_nbits(), 8);
+        TreeNodePtr expr = LeafNode::create_memory(addr.get_expression()->nBits(), 8);
         for (typename CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
             expr = InternalNode::create(8, SymbolicExpr::OP_WRITE,
                                         expr, ci->address().get_expression(), ci->value().get_expression());
@@ -977,10 +977,10 @@ public:
         // we have to construct a return value by extending and shifting the bytes and bitwise-OR them together.
         if (matched) {
             TreeNodePtr e0 = bytes[0].get_expression()->isInternalNode()->child(2);
-            if (e0->get_nbits()==nBits) {
+            if (e0->nBits()==nBits) {
                 retval = ValueType<nBits>(e0);
             } else {
-                ASSERT_require(e0->get_nbits()>nBits);
+                ASSERT_require(e0->nBits()>nBits);
                 retval = ValueType<nBits>(InternalNode::create(nBits, SymbolicExpr::OP_EXTRACT,
                                                                LeafNode::create_integer(32, 0),
                                                                LeafNode::create_integer(32, nBits),

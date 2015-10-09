@@ -28,7 +28,7 @@ public:
 
 bool
 SValue::isBottom() const {
-    return 0 != (get_expression()->get_flags() & SymbolicExpr::Node::BOTTOM);
+    return 0 != (get_expression()->flags() & SymbolicExpr::Node::BOTTOM);
 }
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
@@ -36,7 +36,7 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *s
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
     bool changed = false;
-    unsigned mergedFlags = get_expression()->get_flags() | other->get_expression()->get_flags();
+    unsigned mergedFlags = get_expression()->flags() | other->get_expression()->flags();
     SValuePtr retval = SValue::promote(copy());
     retval->set_expression(retval->get_expression()->newFlags(mergedFlags));
 
@@ -57,7 +57,7 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *s
     }
 
     // Merge flags.  We've handled BOTTOM flags already; here we handle all others, including user-defined flags.
-    if (get_expression()->get_flags() != mergedFlags) {
+    if (get_expression()->flags() != mergedFlags) {
         retval->set_expression(retval->get_expression()->newFlags(mergedFlags));
         changed = true;
     }
@@ -143,13 +143,13 @@ SValue::must_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) co
 std::string
 SValue::get_comment() const
 {
-    return get_expression()->get_comment();
+    return get_expression()->comment();
 }
 
 void
 SValue::set_comment(const std::string &s) const
 {
-    get_expression()->set_comment(s);
+    get_expression()->comment(s);
 }
 
 void

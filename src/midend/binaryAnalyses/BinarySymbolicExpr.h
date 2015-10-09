@@ -280,23 +280,46 @@ public:
      *  not considered significant for comparisons, computing hash values, etc.
      *
      * @{ */
-    const std::string& get_comment() const { return comment_; }
-    void set_comment(const std::string &s) const { comment_=s; }
+    const std::string& comment() const { return comment_; }
+    void comment(const std::string &s) const { comment_ = s; } // comments are mutable, so this is const
     /** @} */
 
-    /** Returns the number of significant bits.  An expression with a known value is guaranteed to have all higher-order bits
-     *  cleared. */
-    size_t get_nbits() const { return nBits_; }
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    const std::string& get_comment() const ROSE_DEPRECATED("use 'comment' property instead") {
+        return comment();
+    }
 
-    /** Returns the user-defined bit flags. */
-    unsigned get_flags() const { return flags_; }
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    void set_comment(const std::string &s) const ROSE_DEPRECATED("use 'comment' property instead") {
+        comment(s);
+    }
+
+    /** Property: Number of significant bits.
+     *
+     *  An expression with a known value is guaranteed to have all higher-order bits cleared. */
+    size_t nBits() const { return nBits_; }
+
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    size_t get_nbits() const ROSE_DEPRECATED("use 'nBits' property instead") {
+        return nBits();
+    }
+
+    /** Property: User-defined bit flags.
+     *
+     *  This property is significant for hashing, comparisons, and possibly other operations, therefore it is immutable.  To
+     *  change the flags one must create a new expression; see @ref newFlags. */
+    unsigned flags() const { return flags_; }
+
+    unsigned get_flags() const ROSE_DEPRECATED("use 'flags' property instead") {
+        return flags();
+    }
 
     /** Sets flags. Since symbolic expressions are immutable it is not possible to change the flags directly. Therefore if the
      *  desired flags are different than the current flags a new expression is created that is the same in every other
      *  respect. If the flags are not changed then the original expression is returned. */
     Ptr newFlags(unsigned flags) const;
 
-    /** Returns address width for memory expressions.
+    /** Property: Width for memory expressions.
      *
      *  The return value is non-zero if and only if this tree node is a memory expression. */
     size_t domainWidth() const { return domainWidth_; }
@@ -306,13 +329,22 @@ public:
      *  Everything is scalar except for memory. */
     bool isScalar() const { return 0 == domainWidth_; }
 
-    /** Traverse the expression.  The expression is traversed in a depth-first visit.  The final return value is the final
-     *  return value of the last call to the visitor. */
-    virtual VisitAction depth_first_traversal(Visitor&) const = 0;
+    /** Traverse the expression.
+     *
+     *  The expression is traversed in a depth-first visit.  The final return value is the final return value of the last call
+     *  to the visitor. */
+    virtual VisitAction depthFirstTraversal(Visitor&) const = 0;
 
-    /** Computes the size of an expression by counting the number of nodes.  Operates in constant time.   Note that it is
-     *  possible (even likely) for the 64-bit return value to overflow in expressions when many nodes are shared.  For
-     *  instance, the following loop will create an expression that contains more than 2^64 nodes:
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    VisitAction depth_first_traversal(Visitor &v) const ROSE_DEPRECATED("use depthFirstTraversal instead") {
+        return depthFirstTraversal(v);
+    }
+
+    /** Computes the size of an expression by counting the number of nodes.
+     *
+     *  Operates in constant time.  Note that it is possible (even likely) for the 64-bit return value to overflow in
+     *  expressions when many nodes are shared.  For instance, the following loop will create an expression that contains more
+     *  than 2^64 nodes:
      *
      *  @code
      *   SymbolicExpr expr = LeafNode::create_variable(32);
@@ -322,14 +354,29 @@ public:
      *
      *  When an overflow occurs the result is meaningless.
      *
-     *  @sa nnodesUnique */
-    virtual uint64_t nnodes() const = 0;
+     *  @sa nNodesUnique */
+    virtual uint64_t nNodes() const = 0;
+
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    uint64_t nnodes() const ROSE_DEPRECATED("use nNodes() instead") {
+        return nNodes();
+    }
 
     /** Number of unique nodes in expression. */
-    uint64_t nnodesUnique() const;
+    uint64_t nNodesUnique() const;
+
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    uint64_t nnodesUnique() const ROSE_DEPRECATED("use nNodesUnique instead") {
+        return nNodesUnique();
+    }
 
     /** Returns the variables appearing in the expression. */
-    std::set<LeafPtr> get_variables() const;
+    std::set<LeafPtr> getVariables() const;
+
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    std::set<LeafPtr> get_variables() const ROSE_DEPRECATED("use getVariables instead") {
+        return getVariables();
+    }
 
     /** Dynamic cast of this object to an internal node. */
     InternalPtr isInternalNode() const {
@@ -344,7 +391,12 @@ public:
     /** Returns true if this node has a hash value computed and cached. The hash value zero is reserved to indicate that no
      *  hash has been computed; if a node happens to actually hash to zero, it will not be cached and will be recomputed for
      *  every call to hash(). */
-    bool is_hashed() const { return hashval_!=0; }
+    bool isHashed() const { return hashval_ != 0; }
+
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    bool is_hashed() const ROSE_DEPRECATED("use isHashed instead") {
+        return isHashed();
+    }
 
     /** Returns (and caches) the hash value for this node.  If a hash value is not cached in this node, then a new hash value
      *  is computed and cached. */
@@ -368,14 +420,20 @@ public:
      *  fmt.show_comments = Formatter::CMT_AFTER; //show comments after the variable
      *  Ptr expression = ...;
      *  std::cout <<"method 1: "; expression->print(std::cout, fmt); std::cout <<"\n";
-     *  std::cout <<"method 2: " <<expression->with_format(fmt) <<"\n";
+     *  std::cout <<"method 2: " <<expression->withFormat(fmt) <<"\n";
      *  std::cout <<"method 3: " <<*expression+fmt <<"\n";
      * 
      * @endcode
      * @{ */
-    WithFormatter with_format(Formatter &fmt) const { return WithFormatter(sharedFromThis(), fmt); }
-    WithFormatter operator+(Formatter &fmt) const { return with_format(fmt); }
+    WithFormatter withFormat(Formatter &fmt) const { return WithFormatter(sharedFromThis(), fmt); }
+    WithFormatter operator+(Formatter &fmt) const { return withFormat(fmt); }
     /** @} */
+
+
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    WithFormatter with_format(Formatter &fmt) const ROSE_DEPRECATED("use withFormat instead") {
+        return withFormat(fmt);
+    }
 
     /** Print the expression to a stream.  The output is an S-expression with no line-feeds. The format of the output is
      *  controlled by the mutable Formatter argument.
@@ -385,7 +443,12 @@ public:
     /** @} */
 
     /** Asserts that expressions are acyclic. This is intended only for debugging. */
-    void assert_acyclic() const;
+    void assertAcyclic() const;
+
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    void assert_acyclic() const {
+        return assertAcyclic();
+    }
 
     /** Find common subexpressions.
      *
@@ -552,7 +615,7 @@ private:
         add_child(a);
         adjustWidth();
         adjustBitFlags(0);
-        ASSERT_require(get_nbits() == nbits);
+        ASSERT_require(nBits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const Ptr &a, const Ptr &b, std::string comment="")
         : Node(comment), op(op), nnodes_(1) {
@@ -560,7 +623,7 @@ private:
         add_child(b);
         adjustWidth();
         adjustBitFlags(0);
-        ASSERT_require(get_nbits() == nbits);
+        ASSERT_require(nBits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
                  std::string comment="")
@@ -570,7 +633,7 @@ private:
         add_child(c);
         adjustWidth();
         adjustBitFlags(0);
-        ASSERT_require(get_nbits() == nbits);
+        ASSERT_require(nBits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const Nodes &children, std::string comment="", unsigned flags=0)
         : Node(comment), op(op), nnodes_(1) {
@@ -578,7 +641,7 @@ private:
             add_child(children[i]);
         adjustWidth();
         adjustBitFlags(flags);
-        ASSERT_require(0 == nbits || get_nbits() == nbits);
+        ASSERT_require(0 == nbits || nBits() == nbits);
     }
 
 public:
@@ -620,8 +683,8 @@ public:
         return false; /*if it's known, then it would have been folded to a leaf*/
     }
     virtual uint64_t toInt() const { ASSERT_forbid2(true, "not a number"); return 0;}
-    virtual VisitAction depth_first_traversal(Visitor&) const;
-    virtual uint64_t nnodes() const { return nnodes_; }
+    virtual VisitAction depthFirstTraversal(Visitor&) const;
+    virtual uint64_t nNodes() const { return nnodes_; }
 
     /** Returns the number of children. */
     size_t nchildren() const { return children.size(); }
@@ -740,8 +803,8 @@ public:
     virtual bool isEquivalentTo(const Ptr &other) const;
     virtual int compareStructure(const Ptr& other) const;
     virtual Ptr substitute(const Ptr &from, const Ptr &to) const;
-    virtual VisitAction depth_first_traversal(Visitor&) const;
-    virtual uint64_t nnodes() const { return 1; }
+    virtual VisitAction depthFirstTraversal(Visitor&) const;
+    virtual uint64_t nNodes() const { return 1; }
 
     /** Is the node a bitvector variable? */
     virtual bool is_variable() const;
@@ -778,7 +841,7 @@ std::ostream& operator<<(std::ostream &o, const Node::WithFormatter&);
  *  overflow occurs. */
 template<typename InputIterator>
 uint64_t
-nnodes(InputIterator begin, InputIterator end) {
+nNodes(InputIterator begin, InputIterator end) {
     uint64_t total = 0;
     for (InputIterator ii=begin; ii!=end; ++ii) {
         uint64_t n = (*ii)->nnodes();
@@ -791,13 +854,23 @@ nnodes(InputIterator begin, InputIterator end) {
     return total;
 }
 
+// [Robb P. Matzke 2015-10-08]: deprecated
+template<typename InputIterator>
+uint64_t
+nnodes(InputIterator begin, InputIterator end) ROSE_DEPRECATED("use nNodes instead");
+template<typename InputIterator>
+uint64_t
+nnodes(InputIterator begin, InputIterator end) {
+    return nNodes(begin, end);
+}
+
 /** Counts the number of unique nodes.
  *
  *  Counts the number of unique nodes across a number of expressions.  Nodes shared between two expressions are counted only
  *  one time, whereas the Node::nnodes virtual method counts shared nodes multiple times. */
 template<typename InputIterator>
 uint64_t
-nnodesUnique(InputIterator begin, InputIterator end)
+nNodesUnique(InputIterator begin, InputIterator end)
 {
     struct T1: Visitor {
         typedef std::set<const Node*> SeenNodes;
@@ -823,8 +896,18 @@ nnodesUnique(InputIterator begin, InputIterator end)
 
     VisitAction status = CONTINUE;
     for (InputIterator ii=begin; ii!=end && TERMINATE!=status; ++ii)
-        status = (*ii)->depth_first_traversal(visitor);
+        status = (*ii)->depthFirstTraversal(visitor);
     return visitor.nUnique;
+}
+
+// [Robb P. Matzke 2015-10-08]: deprecated
+template<typename InputIterator>
+uint64_t
+nnodesUnique(InputIterator begin, InputIterator end) ROSE_DEPRECATED("use nNodesUnique instead");
+template<typename InputIterator>
+uint64_t
+nnodesUnique(InputIterator begin, InputIterator end) {
+    return nNodesUnique(begin, end);
 }
 
 /** Find common subexpressions.
@@ -856,7 +939,7 @@ findCommonSubexpressions(InputIterator begin, InputIterator end) {
     } visitor;
 
     for (InputIterator ii=begin; ii!=end; ++ii)
-        (*ii)->depth_first_traversal(visitor);
+        (*ii)->depthFirstTraversal(visitor);
     return visitor.result;
 }
 /** @} */

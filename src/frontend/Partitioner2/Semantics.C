@@ -56,7 +56,7 @@ BaseSemantics::SValuePtr
 RiscOperators::trim(const BaseSemantics::SValuePtr &a_) {
     if (trimThreshold_ > 0) {
         SValuePtr a = SValue::promote(a_);
-        if (a->get_expression()->nnodes() > trimThreshold_)
+        if (a->get_expression()->nNodes() > trimThreshold_)
             return get_protoval()->undefined_(a->get_width());
     }
     return a_;
