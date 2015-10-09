@@ -604,41 +604,41 @@ struct MssbSimplifier: Simplifier {
  *  the node as a whole (since this node might be pointed to by any number of expressions). */
 class InternalNode: public Node {
 private:
-    Operator op;
-    Nodes children;
+    Operator op_;
+    Nodes children_;
     uint64_t nnodes_;                                   // total number of nodes; self + children's nnodes
 
     // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
     // accidently using pointers to these objects -- all access should be through shared-ownership pointers.
     InternalNode(size_t nbits, Operator op, const Ptr &a, std::string comment="")
-        : Node(comment), op(op), nnodes_(1) {
-        add_child(a);
+        : Node(comment), op_(op), nnodes_(1) {
+        addChild(a);
         adjustWidth();
         adjustBitFlags(0);
         ASSERT_require(nBits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const Ptr &a, const Ptr &b, std::string comment="")
-        : Node(comment), op(op), nnodes_(1) {
-        add_child(a);
-        add_child(b);
+        : Node(comment), op_(op), nnodes_(1) {
+        addChild(a);
+        addChild(b);
         adjustWidth();
         adjustBitFlags(0);
         ASSERT_require(nBits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
                  std::string comment="")
-        : Node(comment), op(op), nnodes_(1) {
-        add_child(a);
-        add_child(b);
-        add_child(c);
+        : Node(comment), op_(op), nnodes_(1) {
+        addChild(a);
+        addChild(b);
+        addChild(c);
         adjustWidth();
         adjustBitFlags(0);
         ASSERT_require(nBits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const Nodes &children, std::string comment="", unsigned flags=0)
-        : Node(comment), op(op), nnodes_(1) {
+        : Node(comment), op_(op), nnodes_(1) {
         for (size_t i=0; i<children.size(); ++i)
-            add_child(children[i]);
+            addChild(children[i]);
         adjustWidth();
         adjustBitFlags(flags);
         ASSERT_require(0 == nbits || nBits() == nbits);
@@ -687,29 +687,56 @@ public:
     virtual uint64_t nNodes() const { return nnodes_; }
 
     /** Returns the number of children. */
-    size_t nchildren() const { return children.size(); }
+    size_t nChildren() const { return children_.size(); }
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    size_t nchildren() const ROSE_DEPRECATED("use nChildren instead") {
+        return nChildren();
+    }
 
     /** Returns the specified child. */
-    Ptr child(size_t idx) const { ASSERT_require(idx<children.size()); return children[idx]; }
+    Ptr child(size_t idx) const { ASSERT_require(idx<children_.size()); return children_[idx]; }
 
-    /** Returns all children. */
-    Nodes get_children() const { return children; }
+    /** Property: Children.
+     *
+     *  The children are the operands for an operator expression. */
+    const Nodes& children() const { return children_; }
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    Nodes get_children() const ROSE_DEPRECATED("use 'children' property instead") {
+        return children();
+    }
 
     /** Returns the operator. */
-    Operator get_operator() const { return op; }
+    Operator getOperator() const { return op_; }
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    Operator get_operator() const ROSE_DEPRECATED("use getOperator instead") {
+        return getOperator();
+    }
 
     /** Simplifies the specified internal node. Returns a new node if necessary, otherwise returns this. */
     Ptr simplifyTop() const;
 
     /** Perform constant folding.  This method returns either a new expression (if changes were mde) or the original
      *  expression. The simplifier is specific to the kind of operation at the node being simplified. */
-    Ptr constant_folding(const Simplifier &simplifier) const;
+    Ptr foldConstants(const Simplifier&) const;
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    Ptr constant_folding(const Simplifier &simplifier) const ROSE_DEPRECATED("use foldConstants instead") {
+        return foldConstants(simplifier);
+    }
 
     /** Simplifies non-associative operators by flattening the specified internal node with its children that are the same
      *  internal node type. Call this only if the top node is a truly non-associative. A new node is returned only if
      *  changed. When calling both nonassociative and commutative, it's usually more appropriate to call nonassociative
      *  first. */
-    InternalPtr nonassociative() const;
+    InternalPtr associative() const;
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    InternalPtr nonassociative() const ROSE_DEPRECATED("use 'associative' instead") {
+        return associative();
+    }
 
     /** Simplifies commutative operators by sorting arguments. The arguments are sorted so that all the internal nodes come
      *  before the leaf nodes. Call this only if the top node is truly commutative.  A new node is returned only if
@@ -723,7 +750,11 @@ public:
     Ptr involutary() const;
 
     /** Simplifies nested shift-like operators. Simplifies (shift AMT1 (shift AMT2 X)) to (shift (add AMT1 AMT2) X). */
-    Ptr additive_nesting() const;
+    Ptr additiveNesting() const;
+
+    Ptr additive_nesting() const ROSE_DEPRECATED("use additiveNesting instead") {
+        return additiveNesting();
+    }
 
     /** Removes identity arguments. Returns either a new expression or the original expression. */
     Ptr identity(uint64_t ident) const;
@@ -735,14 +766,18 @@ public:
      *  the simplification could result in a leaf node, we return an OP_NOOP internal node instead. */
     Ptr rewrite(const Simplifier &simplifier) const;
 
-    // documented in super class
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
 protected:
     /** Appends @p child as a new child of this node. The modification is done in place, so one must be careful that this node
      *  is not part of other expressions.  It is safe to call add_child() on a node that was just created and not used anywhere
      *  yet. If you add a new child, then you probably need to call adjustWidth after the last one is added. */
-    void add_child(const Ptr &child);
+    void addChild(const Ptr &child);
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    void add_child(const Ptr &child) ROSE_DEPRECATED("use addChild instead") {
+        addChild(child);
+    }
 
     /** Adjust width based on operands. This should only be called from constructors. */
     void adjustWidth();
@@ -758,17 +793,17 @@ protected:
 class LeafNode: public Node {
 private:
     enum LeafType { CONSTANT, BITVECTOR, MEMORY };
-    LeafType leaf_type;
-    Sawyer::Container::BitVector bits; /**< Value when 'known' is true */
-    uint64_t name;                     /**< Variable ID number when 'known' is false. */
+    LeafType leafType_;
+    Sawyer::Container::BitVector bits_; /**< Value when 'known' is true */
+    uint64_t name_;                     /**< Variable ID number when 'known' is false. */
 
     // Private to help prevent creating pointers to leaf nodes.  See create_* methods instead.
     LeafNode()
-        : Node(""), leaf_type(CONSTANT), name(0) {}
+        : Node(""), leafType_(CONSTANT), name_(0) {}
     explicit LeafNode(const std::string &comment, unsigned flags=0)
-        : Node(comment, flags), leaf_type(CONSTANT), name(0) {}
+        : Node(comment, flags), leafType_(CONSTANT), name_(0) {}
 
-    static uint64_t name_counter;
+    static uint64_t nameCounter_;
 
 public:
     /** Construct a new free variable with a specified number of significant bits. */
@@ -807,14 +842,31 @@ public:
     virtual uint64_t nNodes() const { return 1; }
 
     /** Is the node a bitvector variable? */
-    virtual bool is_variable() const;
+    virtual bool isVariable() const;
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    bool is_variable() const ROSE_DEPRECATED("use isVariable instead") {
+        return isVariable();
+    }
 
     /** Does the node represent memory? */
-    virtual bool is_memory() const;
+    virtual bool isMemory() const;
 
-    /** Returns the name of a free variable.  The output functions print variables as "vN" where N is an integer. It is this N
-     *  that this method returns.  It should only be invoked on leaf nodes for which @ref isNumber returns false. */
-    uint64_t get_name() const;
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    bool is_memory() const ROSE_DEPRECATED("use isMemory instead") {
+        return isMemory();
+    }
+
+    /** Returns the name ID of a free variable.
+     *
+     *  The output functions print variables as "vN" where N is an integer. It is this N that this method returns.  It should
+     *  only be invoked on leaf nodes for which @ref isNumber returns false. */
+    uint64_t nameId() const;
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    uint64_t get_name() const ROSE_DEPRECATED("use nameId instead") {
+        return nameId();
+    }
 
     /** Returns a string for the leaf.
      *
@@ -826,9 +878,22 @@ public:
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
     /** Prints an integer interpreted as a signed value. */
-    void print_as_signed(std::ostream&, Formatter&, bool as_signed=true) const;
-    void print_as_unsigned(std::ostream &o, Formatter &f) const {
-        print_as_signed(o, f, false);
+    void printAsSigned(std::ostream&, Formatter&, bool asSigned=true) const;
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    void print_as_signed(std::ostream &stream, Formatter &formatter, bool as_signed=true) const
+        ROSE_DEPRECATED("use printAsSigned instead") {
+        printAsSigned(stream, formatter, as_signed);
+    }
+
+    /** Prints an integer interpreted as an unsigned value. */
+    void printAsUnsigned(std::ostream &o, Formatter &f) const {
+        printAsSigned(o, f, false);
+    }
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    void print_as_unsigned(std::ostream &o, Formatter &f) const ROSE_DEPRECATED("use printAsUnsigned instead") {
+        printAsUnsigned(o, f);
     }
 };
 

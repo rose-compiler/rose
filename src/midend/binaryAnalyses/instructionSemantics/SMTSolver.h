@@ -71,7 +71,7 @@ public:
     virtual SymbolicExpr::Ptr evidence_for_variable(const SymbolicExpr::Ptr &var) {
         SymbolicExpr::LeafPtr ln = var->isLeafNode();
         ASSERT_require(ln && !ln->isNumber());
-        return evidence_for_variable(ln->get_name());
+        return evidence_for_variable(ln->nameId());
     }
     /** @} */
 

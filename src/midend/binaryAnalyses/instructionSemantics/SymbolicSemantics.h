@@ -954,7 +954,7 @@ public:
             matched = true; // and prove otherwise
             for (size_t bytenum=0; bytenum<bytes.size() && matched; ++bytenum) {
                 InternalNodePtr extract = bytes[bytenum].get_expression()->isInternalNode();
-                if (!extract || SymbolicExpr::OP_EXTRACT!=extract->get_operator()) {
+                if (!extract || SymbolicExpr::OP_EXTRACT!=extract->getOperator()) {
                     matched = false;
                     break;
                 }

@@ -332,21 +332,21 @@ YicesSolver::out_define(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &e
             if (!seen.insert(getRawPointer(node)).second)
                 return SymbolicExpr::TRUNCATE;          // already processed this subexpression
             if (SymbolicExpr::LeafPtr leaf = node->isLeafNode()) {
-                if (leaf->is_variable()) {
-                    if (defns->find(leaf->get_name())==defns->end()) {
-                        defns->insert(leaf->get_name());
+                if (leaf->isVariable()) {
+                    if (defns->find(leaf->nameId())==defns->end()) {
+                        defns->insert(leaf->nameId());
                         o <<"\n";
                         if (!leaf->comment().empty())
                             o <<StringUtility::prefixLines(leaf->comment(), "; ") <<"\n";
-                        o <<"(define v" <<leaf->get_name() <<"::" <<get_typename(leaf) <<")\n";
+                        o <<"(define v" <<leaf->nameId() <<"::" <<get_typename(leaf) <<")\n";
                     }
-                } else if (leaf->is_memory()) {
-                    if (defns->find(leaf->get_name())==defns->end()) {
-                        defns->insert(leaf->get_name());
+                } else if (leaf->isMemory()) {
+                    if (defns->find(leaf->nameId())==defns->end()) {
+                        defns->insert(leaf->nameId());
                         o <<"\n";
                         if (!leaf->comment().empty())
                             o <<StringUtility::prefixLines(leaf->comment(), "; ") <<"\n";
-                        o <<"(define m" <<leaf->get_name() <<"::" <<get_typename(leaf) <<")\n";
+                        o <<"(define m" <<leaf->nameId() <<"::" <<get_typename(leaf) <<")\n";
                     }
                 }
             }
@@ -396,7 +396,7 @@ YicesSolver::out_comments(std::ostream &o, const std::vector<SymbolicExpr::Ptr> 
             if (!seen.insert(getRawPointer(node)).second)
                 return SymbolicExpr::TRUNCATE;          // already processed this subexpression
             if (SymbolicExpr::LeafPtr leaf = node->isLeafNode()) {
-                if ((leaf->is_variable() || leaf->is_memory()) && !leaf->comment().empty()) {
+                if ((leaf->isVariable() || leaf->isMemory()) && !leaf->comment().empty()) {
                     if (!commented) {
                         o <<"\n"
                           <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
@@ -454,15 +454,15 @@ YicesSolver::out_expr(std::ostream &o, const SymbolicExpr::Ptr &tn)
             } else {
                 o <<"0b" <<ln->get_bits().toBinary();
             }
-        } else if (ln->is_memory()) {
-            o <<"m" <<ln->get_name();
+        } else if (ln->isMemory()) {
+            o <<"m" <<ln->nameId();
         } else {
-            ASSERT_require(ln->is_variable());
-            o <<"v" <<ln->get_name();
+            ASSERT_require(ln->isVariable());
+            o <<"v" <<ln->nameId();
         }
     } else {
         ASSERT_not_null(in);
-        switch (in->get_operator()) {
+        switch (in->getOperator()) {
             case SymbolicExpr::OP_ADD:        out_la(o, "bv-add", in, false);                 break;
             case SymbolicExpr::OP_AND:        out_la(o, "and", in, true);                     break;
             case SymbolicExpr::OP_ASR:        out_asr(o, in);                                 break;
@@ -514,7 +514,7 @@ void
 YicesSolver::out_unary(std::ostream &o, const char *opname, const SymbolicExpr::InternalPtr &in)
 {
     ASSERT_require(opname && *opname);
-    ASSERT_require(in && 1==in->nchildren());
+    ASSERT_require(in && 1==in->nChildren());
 
     o <<"(" <<opname <<" ";
     out_expr(o, in->child(0));
@@ -526,7 +526,7 @@ void
 YicesSolver::out_binary(std::ostream &o, const char *opname, const SymbolicExpr::InternalPtr &in)
 {
     ASSERT_require(opname && *opname);
-    ASSERT_require(in && 2==in->nchildren());
+    ASSERT_require(in && 2==in->nChildren());
 
     o <<"(" <<opname <<" ";
     out_expr(o, in->child(0));
@@ -548,7 +548,7 @@ YicesSolver::out_binary(std::ostream &o, const char *opname, const SymbolicExpr:
 void
 YicesSolver::out_ite(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 {
-    ASSERT_require(in && 3==in->nchildren());
+    ASSERT_require(in && 3==in->nChildren());
     ASSERT_require(in->child(0)->nBits()==1);
     o <<"(ite (= ";
     out_expr(o, in->child(0));
@@ -566,14 +566,14 @@ void
 YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::InternalPtr &in, bool identity_element)
 {
     ASSERT_require(opname && *opname);
-    ASSERT_require(in && in->nchildren()>=1);
+    ASSERT_require(in && in->nChildren()>=1);
 
-    for (size_t i=1; i<std::max((size_t)2, in->nchildren()); i++)
+    for (size_t i=1; i<std::max((size_t)2, in->nChildren()); i++)
         o <<"(" <<opname <<" ";
     out_expr(o, in->child(0));
 
-    if (in->nchildren()>1) {
-        for (size_t i=1; i<in->nchildren(); i++) {
+    if (in->nChildren()>1) {
+        for (size_t i=1; i<in->nChildren(); i++) {
             o <<" ";
             out_expr(o, in->child(i));
             o <<")";
@@ -589,7 +589,7 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::Int
 void
 YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::InternalPtr &in)
 {
-    if (in->nchildren()==1) {
+    if (in->nChildren()==1) {
         out_unary(o, opname, in);
     } else {
         out_la(o, opname, in, false);
@@ -600,7 +600,7 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::Int
 void
 YicesSolver::out_extract(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 {
-    ASSERT_require(in && 3==in->nchildren());
+    ASSERT_require(in && 3==in->nChildren());
     ASSERT_require(in->child(0)->isNumber());
     ASSERT_require(in->child(1)->isNumber());
     ASSERT_require(in->child(0)->toInt() < in->child(1)->toInt());
@@ -617,7 +617,7 @@ YicesSolver::out_extract(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 void
 YicesSolver::out_sext(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 {
-    ASSERT_require(in && 2==in->nchildren());
+    ASSERT_require(in && 2==in->nChildren());
     ASSERT_require(in->child(0)->isNumber()); /*Yices bv-sign-extend needs a number for the second operand*/
     ASSERT_require(in->child(0)->toInt() > in->child(1)->nBits());
     size_t extend_by = in->child(0)->toInt() - in->child(1)->nBits();
@@ -633,7 +633,7 @@ YicesSolver::out_sext(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 void
 YicesSolver::out_uext(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 {
-    ASSERT_require(in && 2==in->nchildren());
+    ASSERT_require(in && 2==in->nChildren());
     ASSERT_require(in->child(0)->isNumber()); /*Yices mk-bv needs a number for the size operand*/
     ASSERT_require(in->child(0)->toInt() > in->child(1)->nBits());
     size_t extend_by = in->child(0)->toInt() - in->child(1)->nBits();
@@ -649,7 +649,7 @@ YicesSolver::out_shift(std::ostream &o, const char *opname, const SymbolicExpr::
                        bool newbits)
 {
     ASSERT_require(opname && *opname);
-    ASSERT_require(in && 2==in->nchildren());
+    ASSERT_require(in && 2==in->nChildren());
     ASSERT_require(in->child(0)->isNumber()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
 
     o <<"(" <<opname <<(newbits?"1":"0") <<" ";
@@ -669,7 +669,7 @@ YicesSolver::out_shift(std::ostream &o, const char *opname, const SymbolicExpr::
 void
 YicesSolver::out_asr(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 {
-    ASSERT_require(in && 2==in->nchildren());
+    ASSERT_require(in && 2==in->nChildren());
     SymbolicExpr::Ptr vector = in->child(1);
     uint64_t vector_size = vector->nBits();
     ASSERT_require(in->child(0)->isNumber());
@@ -697,7 +697,7 @@ YicesSolver::out_asr(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 void
 YicesSolver::out_zerop(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 {
-    ASSERT_require(in && 1==in->nchildren());
+    ASSERT_require(in && 1==in->nChildren());
     o <<"(ite (= (mk-bv " <<in->child(0)->nBits() <<" 0) ";
     out_expr(o, in->child(0));
     o <<") 0b1 0b0)";
@@ -765,25 +765,25 @@ YicesSolver::ctx_define(const std::vector<SymbolicExpr::Ptr> &exprs, Definitions
             if (!seen.insert(getRawPointer(node)).second)
                 return SymbolicExpr::TRUNCATE;          // already processed this subexpression
             if (SymbolicExpr::LeafPtr leaf = node->isLeafNode()) {
-                if (leaf->is_variable()) {
-                    if (defns->find(leaf->get_name()) == defns->end()) {
-                        defns->insert(leaf->get_name());
+                if (leaf->isVariable()) {
+                    if (defns->find(leaf->nameId()) == defns->end()) {
+                        defns->insert(leaf->nameId());
                         yices_type bvtype = yices_mk_bitvector_type(self->context, leaf->nBits());
                         ASSERT_not_null(bvtype);
                         char name[64];
-                        snprintf(name, sizeof name, "v%"PRIu64, leaf->get_name());
+                        snprintf(name, sizeof name, "v%"PRIu64, leaf->nameId());
                         yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(self->context, name, bvtype);
                         ASSERT_not_null(vdecl);
                     }
-                } else if (leaf->is_memory()) {
-                    if (defns->find(leaf->get_name()) == defns->end()) {
-                        defns->insert(leaf->get_name());
+                } else if (leaf->isMemory()) {
+                    if (defns->find(leaf->nameId()) == defns->end()) {
+                        defns->insert(leaf->nameId());
                         yices_type domain = yices_mk_bitvector_type(self->context, leaf->domainWidth());
                         yices_type range = yices_mk_bitvector_type(self->context, leaf->nBits());
                         yices_type ftype = yices_mk_function_type(self->context, &domain, 1, range);
                         ASSERT_not_null(ftype);
                         char name[64];
-                        snprintf(name, sizeof name, "m%"PRIu64, leaf->get_name());
+                        snprintf(name, sizeof name, "m%"PRIu64, leaf->nameId());
                         yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(self->context, name, ftype);
                         ASSERT_not_null(vdecl);
                     }
@@ -845,16 +845,16 @@ YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn)
                 retval = yices_mk_bv_constant_from_array(context, ln->nBits(), tmp);
             }
         } else {
-            ASSERT_require(ln->is_memory() || ln->is_variable());
+            ASSERT_require(ln->isMemory() || ln->isVariable());
             char name[64];
-            sprintf(name, "%c%"PRIu64, ln->is_memory()?'m':'v', ln->get_name());
+            sprintf(name, "%c%"PRIu64, ln->isMemory()?'m':'v', ln->nameId());
             yices_var_decl vdecl = yices_get_var_decl_from_name(context, name);
             ASSERT_not_null(vdecl);
             retval = yices_mk_var_from_decl(context, vdecl);
         }
     } else {
         ASSERT_not_null(in);
-        switch (in->get_operator()) {
+        switch (in->getOperator()) {
             case SymbolicExpr::OP_ADD:        retval = ctx_la(yices_mk_bv_add, in, false);            break;
             case SymbolicExpr::OP_AND:        retval = ctx_la(yices_mk_and, in, true);                break;
             case SymbolicExpr::OP_ASR:        retval = ctx_asr(in);                                   break;
@@ -910,7 +910,7 @@ yices_expr
 YicesSolver::ctx_unary(UnaryAPI f, const SymbolicExpr::InternalPtr &in)
 {
     ASSERT_not_null(f);
-    ASSERT_require(in && 1==in->nchildren());
+    ASSERT_require(in && 1==in->nChildren());
     yices_expr retval = (f)(context, ctx_expr(in->child(0)));
     ASSERT_not_null(retval);
     return retval;
@@ -923,7 +923,7 @@ yices_expr
 YicesSolver::ctx_binary(BinaryAPI f, const SymbolicExpr::InternalPtr &in)
 {
     ASSERT_not_null(f);
-    ASSERT_require(in && 2==in->nchildren());
+    ASSERT_require(in && 2==in->nChildren());
     yices_expr retval = (f)(context, ctx_expr(in->child(0)), ctx_expr(in->child(1)));
     ASSERT_not_null(retval);
     return retval;
@@ -935,7 +935,7 @@ YicesSolver::ctx_binary(BinaryAPI f, const SymbolicExpr::InternalPtr &in)
 yices_expr
 YicesSolver::ctx_ite(const SymbolicExpr::InternalPtr &in)
 {
-    ASSERT_require(in && 3==in->nchildren());
+    ASSERT_require(in && 3==in->nChildren());
     ASSERT_require(in->child(0)->nBits()==1);
     yices_expr cond = yices_mk_eq(context, ctx_expr(in->child(0)), yices_mk_bv_constant(context, 1, 1));
     yices_expr retval = yices_mk_ite(context, cond, ctx_expr(in->child(1)), ctx_expr(in->child(2)));
@@ -951,16 +951,16 @@ yices_expr
 YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InternalPtr &in, bool identity)
 {
     ASSERT_not_null(f);
-    ASSERT_require(in && in->nchildren()>=1);
+    ASSERT_require(in && in->nChildren()>=1);
 
     yices_expr retval = ctx_expr(in->child(0));
 
-    for (size_t i=1; i<in->nchildren(); i++) {
+    for (size_t i=1; i<in->nChildren(); i++) {
         retval = (f)(context, retval, ctx_expr(in->child(i)));
         ASSERT_not_null(retval);
     }
     
-    if (1==in->nchildren()) {
+    if (1==in->nChildren()) {
         yices_expr ident = yices_mk_bv_constant(context, 1, identity ? (uint64_t)(-1) : 0);
         retval = (f)(context, retval, ident);
         ASSERT_not_null(retval);
@@ -975,13 +975,13 @@ yices_expr
 YicesSolver::ctx_la(NaryAPI f, const SymbolicExpr::InternalPtr &in, bool identity)
 {
     ASSERT_not_null(f);
-    ASSERT_require(in && in->nchildren()>=1);
-    yices_expr *operands = new yices_expr[in->nchildren()];
-    for (size_t i=0; i<in->nchildren(); i++) {
+    ASSERT_require(in && in->nChildren()>=1);
+    yices_expr *operands = new yices_expr[in->nChildren()];
+    for (size_t i=0; i<in->nChildren(); i++) {
         operands[i] = ctx_expr(in->child(i));
         ASSERT_not_null(operands[i]);
     }
-    yices_expr retval = (f)(context, operands, in->nchildren());
+    yices_expr retval = (f)(context, operands, in->nChildren());
     ASSERT_not_null(retval);
     delete[] operands;
     return retval;
@@ -992,7 +992,7 @@ YicesSolver::ctx_la(NaryAPI f, const SymbolicExpr::InternalPtr &in, bool identit
 yices_expr
 YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InternalPtr &in)
 {
-    ASSERT_require(in->nchildren()>1);
+    ASSERT_require(in->nChildren()>1);
     return ctx_la(f, in, false);
 }
 #endif
@@ -1002,7 +1002,7 @@ YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InternalPtr &in)
 yices_expr
 YicesSolver::ctx_extract(const SymbolicExpr::InternalPtr &in)
 {
-    ASSERT_require(in && 3==in->nchildren());
+    ASSERT_require(in && 3==in->nChildren());
     ASSERT_require(in->child(0)->isNumber());
     ASSERT_require(in->child(1)->isNumber());
     ASSERT_require(in->child(0)->toInt() < in->child(1)->toInt());
@@ -1021,7 +1021,7 @@ YicesSolver::ctx_extract(const SymbolicExpr::InternalPtr &in)
 yices_expr
 YicesSolver::ctx_sext(const SymbolicExpr::InternalPtr &in)
 {
-    ASSERT_require(in && 2==in->nchildren());
+    ASSERT_require(in && 2==in->nChildren());
     ASSERT_require(in->child(0)->isNumber());
     ASSERT_require(in->child(0)->toInt() > in->child(1)->nBits());
     unsigned extend_by = in->child(0)->toInt() - in->child(1)->nBits();
@@ -1039,7 +1039,7 @@ YicesSolver::ctx_sext(const SymbolicExpr::InternalPtr &in)
 yices_expr
 YicesSolver::ctx_uext(const SymbolicExpr::InternalPtr &in)
 {
-    ASSERT_require(in && 2==in->nchildren());
+    ASSERT_require(in && 2==in->nChildren());
     ASSERT_require(in->child(0)->isNumber()); /*Yices mk-bv needs a number for the size operand*/
     ASSERT_require(in->child(0)->toInt() > in->child(1)->nBits());
     size_t extend_by = in->child(0)->toInt() - in->child(1)->nBits();
@@ -1056,7 +1056,7 @@ YicesSolver::ctx_uext(const SymbolicExpr::InternalPtr &in)
 yices_expr
 YicesSolver::ctx_shift(ShiftAPI f, const SymbolicExpr::InternalPtr &in)
 {
-    ASSERT_require(in && 2==in->nchildren());
+    ASSERT_require(in && 2==in->nChildren());
     ASSERT_require(in->child(0)->isNumber()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
     unsigned shift_amount = in->child(0)->toInt();
     yices_expr retval = (f)(context, ctx_expr(in->child(1)), shift_amount);
@@ -1078,7 +1078,7 @@ YicesSolver::ctx_shift(ShiftAPI f, const SymbolicExpr::InternalPtr &in)
 yices_expr
 YicesSolver::ctx_asr(const SymbolicExpr::InternalPtr &in)
 {
-    ASSERT_require(in && 2==in->nchildren());
+    ASSERT_require(in && 2==in->nChildren());
     SymbolicExpr::Ptr vector = in->child(1);
     unsigned vector_size = vector->nBits();
     ASSERT_require(in->child(0)->isNumber());
@@ -1108,7 +1108,7 @@ YicesSolver::ctx_asr(const SymbolicExpr::InternalPtr &in)
 yices_expr
 YicesSolver::ctx_zerop(const SymbolicExpr::InternalPtr &in)
 {
-    ASSERT_require(in && 1==in->nchildren());
+    ASSERT_require(in && 1==in->nChildren());
     yices_expr retval = yices_mk_ite(context,
                                      yices_mk_eq(context, 
                                                  yices_mk_bv_constant(context, in->child(0)->nBits(), 0), 

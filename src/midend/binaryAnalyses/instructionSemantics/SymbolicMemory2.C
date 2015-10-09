@@ -27,7 +27,7 @@ SValuePtr
 SymbolicMemory::readMemory(const SValuePtr &address_, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
     SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(address_);
     if (address->get_width() != mem_->domainWidth() || dflt->get_width() != mem_->nBits()) {
-        ASSERT_require2(mem_->isLeafNode() && mem_->isLeafNode()->is_memory(),
+        ASSERT_require2(mem_->isLeafNode() && mem_->isLeafNode()->isMemory(),
                         "invalid address and/or value size for memory; expecting " +
                         StringUtility::numberToString(mem_->domainWidth()) + "-bit addresses and " +
                         StringUtility::numberToString(mem_->nBits()) + "-bit values");
@@ -46,7 +46,7 @@ SymbolicMemory::writeMemory(const SValuePtr &address_, const SValuePtr &value_, 
     SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(address_);
     SymbolicSemantics::SValuePtr value = SymbolicSemantics::SValue::promote(value_);
     if (address->get_width() != mem_->domainWidth() || value->get_width() != mem_->nBits()) {
-        ASSERT_require2(mem_->isLeafNode() && mem_->isLeafNode()->is_memory(),
+        ASSERT_require2(mem_->isLeafNode() && mem_->isLeafNode()->isMemory(),
                         "invalid address and/or value size for memory; expecting " +
                         StringUtility::numberToString(mem_->domainWidth()) + "-bit addresses and " +
                         StringUtility::numberToString(mem_->nBits()) + "-bit values");

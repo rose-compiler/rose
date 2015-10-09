@@ -213,7 +213,7 @@ public:
             BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
             BaseSemantics::SValuePtr newStack;
             SymbolicExpr::LeafPtr leaf;
-            if (delta && (leaf = Semantics::SValue::promote(delta)->get_expression()->isLeafNode()) && leaf->is_variable()) {
+            if (delta && (leaf = Semantics::SValue::promote(delta)->get_expression()->isLeafNode()) && leaf->isVariable()) {
                 // We tried to compute stack delta but were unable to come up with anything meaningful.
                 delta = BaseSemantics::SValuePtr();
             }

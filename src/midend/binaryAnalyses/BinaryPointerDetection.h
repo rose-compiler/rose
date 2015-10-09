@@ -105,7 +105,7 @@ public:
         if (inout.get_expression()->mustEqual(other.get_expression(), smt_solver))
             return 0;
         SymbolicExpr::LeafPtr inout_leaf = inout.get_expression()->isLeafNode();
-        if (inout_leaf && inout_leaf->is_variable())
+        if (inout_leaf && inout_leaf->isVariable())
             return 0;
         inout.set_expression(ValueType<nBits>()); // set expression without affecting defining instructions
         return 1;
@@ -363,7 +363,7 @@ protected:
         void writeRegister(const RegisterDescriptor &reg, const ValueType<Len> &value) {
             if (0==info->pass && !value.is_known() && reg == this->findRegister("eip", 32)) {
                 SymbolicExpr::InternalPtr inode = value.get_expression()->isInternalNode();
-                if (inode!=NULL && SymbolicExpr::OP_ITE==inode->get_operator() &&
+                if (inode!=NULL && SymbolicExpr::OP_ITE==inode->getOperator() &&
                     inode->child(1)->isNumber() && inode->child(2)->isNumber()) {
                     // We must have processed a branch instruction.  Both directions of the branch are concrete addresses, so
                     // there is no code pointer involved here.
@@ -529,7 +529,7 @@ public:
                     // indeed a function call, and if so, whether the called function's can_return() property is set.
                     if (insn->get_kind()==x86_call)
                         successors.insert(insn->get_address() + insn->get_size());
-                } else if (NULL!=inode && SymbolicExpr::OP_ITE==inode->get_operator() &&
+                } else if (NULL!=inode && SymbolicExpr::OP_ITE==inode->getOperator() &&
                            inode->child(1)->isNumber() && inode->child(2)->isNumber()) {
                     successors.insert(inode->child(1)->toInt()); // the if-true case
                     successors.insert(inode->child(2)->toInt()); // the if-false case

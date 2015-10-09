@@ -206,14 +206,14 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
                 return SymbolicExpr::TRUNCATE; // already processed this same expression
             size_t width = node->nBits();
             if (InternalPtr inode = node->isInternalNode()) {
-                if (SymbolicExpr::OP_READ==inode->get_operator()) {
-                    ASSERT_require(2==inode->nchildren());
+                if (SymbolicExpr::OP_READ==inode->getOperator()) {
+                    ASSERT_require(2==inode->nChildren());
                     ops->emit_assignment(o, ops->emit_memory_read(o, inode->child(1), width));
                 }
             } else {
                 LeafPtr leaf = node->isLeafNode();
                 ASSERT_not_null(leaf);
-                if (leaf->is_variable()) {
+                if (leaf->isVariable()) {
                     std::string comment = leaf->comment();
                     if (comment.size()>2 && 0==comment.substr(comment.size()-2).compare("_0"))
                         ops->add_variable(leaf);        // becomes a global variable if not already
@@ -321,7 +321,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     // addresses isn't valid.  This can happen because the ROSE disassembler might be using a more advanced analysis than we
     // use here.
     InternalPtr inode = eip->get_expression()->isInternalNode();
-    if (inode && SymbolicExpr::OP_ITE==inode->get_operator()) {
+    if (inode && SymbolicExpr::OP_ITE==inode->getOperator()) {
         LeafPtr leaf1 = inode->child(1)->isLeafNode();
         LeafPtr leaf2 = inode->child(2)->isLeafNode();
         if (leaf1!=NULL && leaf1->isNumber() && leaf2!=NULL && leaf2->isNumber()) {
@@ -428,8 +428,8 @@ RiscOperators::emit_memory_writes(std::ostream &o)
     for (size_t i=0; i<mem_writes.size(); ++i) {
         InternalPtr inode = mem_writes[i]->isInternalNode();
         ASSERT_not_null(inode);
-        ASSERT_require(inode->get_operator() == SymbolicExpr::OP_WRITE);
-        ASSERT_require(inode->nchildren()==3);
+        ASSERT_require(inode->getOperator() == SymbolicExpr::OP_WRITE);
+        ASSERT_require(inode->nChildren()==3);
         ExpressionPtr addr = inode->child(1);
         ExpressionPtr value = inode->child(2);
         o <<prefix() <<"; store value=" <<*value <<" at address=" <<*addr <<"\n";
@@ -463,8 +463,8 @@ RiscOperators::llvm_integer_type(size_t width)
 std::string
 RiscOperators::llvm_lvalue(const LeafPtr &var)
 {
-    ASSERT_require(var && var->is_variable());
-    ASSERT_require(!variables.exists(var->get_name()));         // LLVM assembly is SSA
+    ASSERT_require(var && var->isVariable());
+    ASSERT_require(!variables.exists(var->nameId()));         // LLVM assembly is SSA
     return add_variable(var);
 }
 
@@ -1042,7 +1042,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
 
     // Handle leaf nodes
     if (LeafPtr leaf = cur_expr->isLeafNode()) {
-        if (leaf->is_variable()) {
+        if (leaf->isVariable()) {
             std::string varname = get_variable(leaf);
             if (varname.empty()) {
                 // This is a reference to a ROSE variable that has no corresponding LLVM variable.  This can happen for things
@@ -1061,8 +1061,8 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
     // calls to emit_expression().
     while (InternalPtr inode = cur_expr->isInternalNode()) {
         ExpressionPtr operator_result;
-        TreeNodes operands = inode->get_children();
-        switch (inode->get_operator()) {
+        TreeNodes operands = inode->children();
+        switch (inode->getOperator()) {
             case SymbolicExpr::OP_ADD:
                 operator_result = emit_left_associative(o, "add", operands);
                 break;
@@ -1218,7 +1218,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
             case SymbolicExpr::OP_NOOP:
             case SymbolicExpr::OP_WRITE:
                 throw BaseSemantics::Exception("LLVM translation for " +
-                                               stringifyBinaryAnalysisSymbolicExprOperator(inode->get_operator()) +
+                                               stringifyBinaryAnalysisSymbolicExprOperator(inode->getOperator()) +
                                                " is not implemented yet", NULL);
 
             // no default because we want warnings when a new operator is added
@@ -1229,7 +1229,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
 
     // The return value must be a constant or variable
     LeafPtr retval = cur_expr->isLeafNode();
-    ASSERT_require(retval!=NULL && (retval->isNumber() || retval->is_variable()));
+    ASSERT_require(retval!=NULL && (retval->isNumber() || retval->isVariable()));
 
     // Add a rewrite rule so that next time we're asked to emit the same expression we can just emit the result without going
     // through all this work again.
@@ -1246,7 +1246,7 @@ RiscOperators::add_rewrite(const ExpressionPtr &from, const LeafPtr &to)
         rewrites.erase(from->hash());
     } else {
         rewrites.insert(std::make_pair(from->hash(), to));
-        if (to->is_variable())
+        if (to->isVariable())
             add_variable(to);
     }
 }
@@ -1254,18 +1254,18 @@ RiscOperators::add_rewrite(const ExpressionPtr &from, const LeafPtr &to)
 std::string
 RiscOperators::add_variable(const LeafPtr &var)
 {
-    ASSERT_require(var!=NULL && var->is_variable());
+    ASSERT_require(var!=NULL && var->isVariable());
     std::string name = get_variable(var);
     if (name.empty()) {
         name = var->comment();
         if (name.empty()) {
-            name = "%v" + StringUtility::numberToString(var->get_name());
+            name = "%v" + StringUtility::numberToString(var->nameId());
         } else if (name.size()>2 && 0==name.substr(name.size()-2).compare("_0")) {
             name = "@" + name.substr(0, name.size()-2);
         } else {
             name = "@" + name;
         }
-        variables.insert(std::make_pair(var->get_name(), name));
+        variables.insert(std::make_pair(var->nameId(), name));
     }
     return name;
 }
@@ -1273,8 +1273,8 @@ RiscOperators::add_variable(const LeafPtr &var)
 std::string
 RiscOperators::get_variable(const LeafPtr &var)
 {
-    ASSERT_require(var!=NULL && var->is_variable());
-    return variables.get_value_or(var->get_name(), "");
+    ASSERT_require(var!=NULL && var->isVariable());
+    return variables.get_value_or(var->nameId(), "");
 }
 
 LeafPtr
@@ -1283,7 +1283,7 @@ RiscOperators::emit_assignment(std::ostream &o, const ExpressionPtr &rhs)
     ASSERT_not_null(rhs);
     LeafPtr t1 = emit_expression(o, rhs);
 
-    if (t1->is_variable() && t1->comment().empty())
+    if (t1->isVariable() && t1->comment().empty())
         return t1;
 
     LeafPtr lhs = next_temporary(rhs->nBits());

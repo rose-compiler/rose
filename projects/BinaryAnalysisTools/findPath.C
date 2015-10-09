@@ -712,8 +712,8 @@ private:
                     varComment += "at address " + addrLeaf->toString();
                 }
             } else if (SymbolicExpr::InternalPtr addrINode = addrExpr->isInternalNode()) {
-                if (addrINode->get_operator() == SymbolicExpr::OP_ADD && addrINode->nchildren() == 2 &&
-                    addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->is_variable() &&
+                if (addrINode->getOperator() == SymbolicExpr::OP_ADD && addrINode->nChildren() == 2 &&
+                    addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->isVariable() &&
                     addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->isNumber()) {
                     SymbolicExpr::LeafPtr base = addrINode->child(0)->isLeafNode();
                     SymbolicExpr::LeafPtr offset = addrINode->child(1)->isLeafNode();
@@ -796,7 +796,7 @@ public:
 
         // Save a description of the variable
         SymbolicExpr::Ptr valExpr = SymbolicSemantics::SValue::promote(retval)->get_expression();
-        if (valExpr->isLeafNode() && valExpr->isLeafNode()->is_variable()) {
+        if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable()) {
             std::string comment = commentForVariable(addr, "read");
             varComment(valExpr->isLeafNode()->toString(), comment);
         }
@@ -827,7 +827,7 @@ public:
 
         // Save a description of the variable
         SymbolicExpr::Ptr valExpr = SymbolicSemantics::SValue::promote(value)->get_expression();
-        if (valExpr->isLeafNode() && valExpr->isLeafNode()->is_variable()) {
+        if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable()) {
             std::string comment = commentForVariable(addr, "write");
             varComment(valExpr->isLeafNode()->toString(), comment);
         }
