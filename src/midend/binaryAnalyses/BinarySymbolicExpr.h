@@ -31,7 +31,7 @@ namespace SymbolicExpr {
 //                                      Basic Types
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Operators for internal nodes of the expression tree.
+/** Operators for interior nodes of the expression tree.
  *
  *  Commutative operators generally take one or more operands.  Operators such as shifting, extending, and truncating have the
  *  size operand appearing before the bit vector on which to operate (this makes the output more human-readable since the size
@@ -84,12 +84,12 @@ enum Operator {
 const char *to_str(Operator o);
 
 class Node;
-class InternalNode;
-class LeafNode;
+class Interior;
+class Leaf;
 
 typedef Sawyer::SharedPointer<const Node> Ptr;
-typedef Sawyer::SharedPointer<const InternalNode> InternalPtr;
-typedef Sawyer::SharedPointer<const LeafNode> LeafPtr;
+typedef Sawyer::SharedPointer<const Interior> InteriorPtr;
+typedef Sawyer::SharedPointer<const Leaf> LeafPtr;
 typedef std::vector<Ptr> Nodes;
 typedef Map<uint64_t, uint64_t> RenameMap;
 
@@ -143,20 +143,21 @@ public:
 //                                      Base Node Type
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Any node of an expression tree for instruction semantics, from which the InternalNode and LeafNode classes are derived.
+/** Base class for symbolic expression nodes.
+ *
  *  Every node has a specified number of significant bits that is constant over the life of the node.
  *
  *  In order that subtrees can be freely assigned as children of other nodes (provided the structure as a whole remains a
  *  lattice and not a graph with cycles), tree nodes are always referenced through shared-ownership pointers
- *  (<code>Sawyer::SharedPointer<const T></code> where @p T is one of the tree node types: Node, InternalNode, or LeafNode.
- *  For convenience, we define Ptr, InternalPtr, and LeafPtr typedefs.  The pointers themselves collectively
- *  own the pointer to the tree node and thus the tree node pointer should never be deleted explicitly.
+ *  (<code>Sawyer::SharedPointer<const T></code> where @p T is one of the tree node types: @ref Node, @ref Interior, or @ref
+ *  Leaf.  For convenience, we define Ptr, InteriorPtr, and LeafPtr typedefs.  The pointers themselves collectively own the
+ *  pointer to the tree node and thus the tree node pointer should never be deleted explicitly.
  *
  *  Each node has a bit flags property, the bits of which are defined by the user.  New nodes are created having all bits
  *  cleared unless the user specifies a value in the constructor.  Bits are significant for hashing. Simplifiers produce
  *  result expressions whose bits are set in a predictable manner with the following rules:
  *
- *  @li Internal Node Rule: The flags for an internal node are the union of the flags of its subtrees.
+ *  @li Interior Node Rule: The flags for an interior node are the union of the flags of its subtrees.
  *
  *  @li Simplification Discard Rule: If a simplification discards a subtree then that subtree does not contribute flags to the
  *      result.  E.g., cancellation of terms in an @c add operation.
@@ -167,7 +168,7 @@ public:
  *
  *  @li Simplification Folding Rule: If a simplification creates a new expression from some combination of incoming expressions
  *      then the flags of the new expression are the union of the flags from the expressions on which it depends. E.g.,
- *      constant folding, which is therefore consistent with the Internal Node Rule.
+ *      constant folding, which is therefore consistent with the Interior Node Rule.
  *
  *  @li Hashing Rule: User-defined flags are significant for hashing.  E.g., structural equivalence will return false if the
  *      two expressions have different flags since structural equivalence uses hashes.
@@ -231,7 +232,7 @@ public:
     
     /** Tests two expressions for structural equivalence.
      *
-     *  Two leaf nodes are equivalent if they are the same width and have equal values or are the same variable. Two internal
+     *  Two leaf nodes are equivalent if they are the same width and have equal values or are the same variable. Two interior
      *  nodes are equivalent if they are the same width, the same operation, have the same number of children, and those
      *  children are all pairwise equivalent. */
     virtual bool isEquivalentTo(const Ptr &other) const = 0;
@@ -356,9 +357,9 @@ public:
      *  than 2^64 nodes:
      *
      *  @code
-     *   SymbolicExpr expr = LeafNode::create_variable(32);
+     *   SymbolicExpr expr = Leaf::createVariable(32);
      *   for(size_t i=0; i<64; ++i)
-     *       expr = InternalNode::create(32, OP_ADD, expr, expr)
+     *       expr = Interior::create(32, OP_ADD, expr, expr)
      *  @endcode
      *
      *  When an overflow occurs the result is meaningless.
@@ -387,14 +388,19 @@ public:
         return getVariables();
     }
 
-    /** Dynamic cast of this object to an internal node. */
-    InternalPtr isInternalNode() const {
-        return sharedFromThis().dynamicCast<const InternalNode>();
+    /** Dynamic cast of this object to an interior node. */
+    InteriorPtr isInteriorNode() const {
+        return sharedFromThis().dynamicCast<const Interior>();
+    }
+
+    // [Robb P. Matzke 2015-10-09]: deprecated
+    InteriorPtr isInternalNode() const ROSE_DEPRECATED("use isInteriorNode instead") {
+        return isInteriorNode();
     }
 
     /** Dynamic cast of this object to a leaf node. */
     LeafPtr isLeafNode() const {
-        return sharedFromThis().dynamicCast<const LeafNode>();
+        return sharedFromThis().dynamicCast<const Leaf>();
     }
 
     /** Returns true if this node has a hash value computed and cached. The hash value zero is reserved to indicate that no
@@ -484,7 +490,7 @@ public:
 
     /** Rewrite the entire expression to something simpler. Returns the new node if the node can be simplified, otherwise
      *  returns null. */
-    virtual Ptr rewrite(const InternalNode*) const {
+    virtual Ptr rewrite(const Interior*) const {
         return Ptr();
     }
 };
@@ -496,19 +502,19 @@ public:
 
 struct AddSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct AndSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct OrSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct XorSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct SmulSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
@@ -518,79 +524,79 @@ struct UmulSimplifier: Simplifier {
 };
 struct ConcatSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct ExtractSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct AsrSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct InvertSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct NegateSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct IteSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct NoopSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct RolSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct RorSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct UextendSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct SextendSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct EqSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct SgeSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct SgtSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct SleSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct SltSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct UgeSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct UgtSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct UleSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct UltSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct ZeropSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct SdivSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct SmodSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct UdivSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct UmodSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct ShiftSimplifier: Simplifier {
     bool newbits;
@@ -599,29 +605,29 @@ struct ShiftSimplifier: Simplifier {
 };
 struct ShlSimplifier: ShiftSimplifier {
     ShlSimplifier(bool newbits): ShiftSimplifier(newbits) {}
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct ShrSimplifier: ShiftSimplifier {
     ShrSimplifier(bool newbits): ShiftSimplifier(newbits) {}
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct LssbSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 struct MssbSimplifier: Simplifier {
-    virtual Ptr rewrite(const InternalNode*) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(const Interior*) const ROSE_OVERRIDE;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Internal Nodes
+//                                      Interior Nodes
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Internal node of an expression tree for instruction semantics. Each internal node has an operator (constant for the life of
- *  the node and obtainable with get_operator()) and zero or more children. Children are added to the internal node during the
+/** Interior node of an expression tree for instruction semantics. Each interior node has an operator (constant for the life of
+ *  the node and obtainable with get_operator()) and zero or more children. Children are added to the interior node during the
  *  construction phase. Once construction is complete, the children should only change in ways that don't affect the value of
  *  the node as a whole (since this node might be pointed to by any number of expressions). */
-class InternalNode: public Node {
+class Interior: public Node {
 private:
     Operator op_;
     Nodes children_;
@@ -629,14 +635,14 @@ private:
 
     // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
     // accidently using pointers to these objects -- all access should be through shared-ownership pointers.
-    InternalNode(size_t nbits, Operator op, const Ptr &a, std::string comment="", unsigned flags=0)
+    Interior(size_t nbits, Operator op, const Ptr &a, std::string comment="", unsigned flags=0)
         : Node(comment), op_(op), nnodes_(1) {
         addChild(a);
         adjustWidth();
         adjustBitFlags(flags);
         ASSERT_require(0 == nbits || nBits() == nbits);
     }
-    InternalNode(size_t nbits, Operator op, const Ptr &a, const Ptr &b, std::string comment="", unsigned flags=0)
+    Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, std::string comment="", unsigned flags=0)
         : Node(comment), op_(op), nnodes_(1) {
         addChild(a);
         addChild(b);
@@ -644,7 +650,7 @@ private:
         adjustBitFlags(flags);
         ASSERT_require(0 == nbits || nBits() == nbits);
     }
-    InternalNode(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
+    Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
                  std::string comment="", unsigned flags=0)
         : Node(comment), op_(op), nnodes_(1) {
         addChild(a);
@@ -654,7 +660,7 @@ private:
         adjustBitFlags(flags);
         ASSERT_require(0 == nbits || nBits() == nbits);
     }
-    InternalNode(size_t nbits, Operator op, const Nodes &children, std::string comment="", unsigned flags=0)
+    Interior(size_t nbits, Operator op, const Nodes &children, std::string comment="", unsigned flags=0)
         : Node(comment), op_(op), nnodes_(1) {
         for (size_t i=0; i<children.size(); ++i)
             addChild(children[i]);
@@ -664,7 +670,7 @@ private:
     }
 
 public:
-    /** Create a new expression node. Although we're creating internal nodes, the simplification process might replace it with
+    /** Create a new expression node. Although we're creating interior nodes, the simplification process might replace it with
      *  a leaf node. Use these class methods instead of c'tors.
      *
      *  Flags are normally initialized as the union of the flags of the operator arguments subject to various rules in the
@@ -672,22 +678,22 @@ public:
      *
      *  @{ */
     static Ptr create(size_t nbits, Operator op, const Ptr &a, const std::string comment="", unsigned flags=0) {
-        InternalPtr retval(new InternalNode(nbits, op, a, comment, flags));
+        InteriorPtr retval(new Interior(nbits, op, a, comment, flags));
         return retval->simplifyTop();
     }
     static Ptr create(size_t nbits, Operator op, const Ptr &a, const Ptr &b,
                       const std::string comment="", unsigned flags=0) {
-        InternalPtr retval(new InternalNode(nbits, op, a, b, comment, flags));
+        InteriorPtr retval(new Interior(nbits, op, a, b, comment, flags));
         return retval->simplifyTop();
     }
     static Ptr create(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
                       const std::string comment="", unsigned flags=0) {
-        InternalPtr retval(new InternalNode(nbits, op, a, b, c, comment, flags));
+        InteriorPtr retval(new Interior(nbits, op, a, b, c, comment, flags));
         return retval->simplifyTop();
     }
     static Ptr create(size_t nbits, Operator op, const Nodes &children, const std::string comment="",
                       unsigned flags=0) {
-        InternalPtr retval(new InternalNode(nbits, op, children, comment, flags));
+        InteriorPtr retval(new Interior(nbits, op, children, comment, flags));
         return retval->simplifyTop();
     }
     /** @} */
@@ -734,7 +740,7 @@ public:
         return getOperator();
     }
 
-    /** Simplifies the specified internal node. Returns a new node if necessary, otherwise returns this. */
+    /** Simplifies the specified interior node. Returns a new node if necessary, otherwise returns this. */
     Ptr simplifyTop() const;
 
     /** Perform constant folding.  This method returns either a new expression (if changes were mde) or the original
@@ -746,25 +752,25 @@ public:
         return foldConstants(simplifier);
     }
 
-    /** Simplifies non-associative operators by flattening the specified internal node with its children that are the same
-     *  internal node type. Call this only if the top node is a truly non-associative. A new node is returned only if
+    /** Simplifies non-associative operators by flattening the specified interior node with its children that are the same
+     *  interior node type. Call this only if the top node is a truly non-associative. A new node is returned only if
      *  changed. When calling both nonassociative and commutative, it's usually more appropriate to call nonassociative
      *  first. */
-    InternalPtr associative() const;
+    InteriorPtr associative() const;
 
     // [Robb P. Matzke 2015-10-09]: deprecated
-    InternalPtr nonassociative() const ROSE_DEPRECATED("use 'associative' instead") {
+    InteriorPtr nonassociative() const ROSE_DEPRECATED("use 'associative' instead") {
         return associative();
     }
 
-    /** Simplifies commutative operators by sorting arguments. The arguments are sorted so that all the internal nodes come
+    /** Simplifies commutative operators by sorting arguments. The arguments are sorted so that all the interior nodes come
      *  before the leaf nodes. Call this only if the top node is truly commutative.  A new node is returned only if
      *  changed. When calling both nonassociative and commutative, it's usually more appropriate to call nonassociative
      *  first. */
-    InternalPtr commutative() const;
+    InteriorPtr commutative() const;
 
     /** Simplifies involutary operators.  An involutary operator is one that is its own inverse.  This method should only be
-     *  called if this node is an internal node whose operator has the involutary property (such as invert or negate). Returns
+     *  called if this node is an interior node whose operator has the involutary property (such as invert or negate). Returns
      *  either a new expression that is simplified, or the original expression. */
     Ptr involutary() const;
 
@@ -781,8 +787,8 @@ public:
     /** Replaces a binary operator with its only argument. Returns either a new expression or the original expression. */
     Ptr unaryNoOp() const;
 
-    /** Simplify an internal node. Returns a new node if this node could be simplified, otherwise returns this node. When
-     *  the simplification could result in a leaf node, we return an OP_NOOP internal node instead. */
+    /** Simplify an interior node. Returns a new node if this node could be simplified, otherwise returns this node. When
+     *  the simplification could result in a leaf node, we return an OP_NOOP interior node instead. */
     Ptr rewrite(const Simplifier &simplifier) const;
 
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
@@ -814,7 +820,7 @@ protected:
 /** Leaf node of an expression tree for instruction semantics.
  *
  *  A leaf node is either a known bit vector value, a free bit vector variable, or a memory state. */
-class LeafNode: public Node {
+class Leaf: public Node {
 private:
     enum LeafType { CONSTANT, BITVECTOR, MEMORY };
     LeafType leafType_;
@@ -822,9 +828,9 @@ private:
     uint64_t name_;                     /**< Variable ID number when 'known' is false. */
 
     // Private to help prevent creating pointers to leaf nodes.  See create_* methods instead.
-    LeafNode()
+    Leaf()
         : Node(""), leafType_(CONSTANT), name_(0) {}
-    explicit LeafNode(const std::string &comment, unsigned flags=0)
+    explicit Leaf(const std::string &comment, unsigned flags=0)
         : Node(comment, flags), leafType_(CONSTANT), name_(0) {}
 
     static uint64_t nameCounter_;
@@ -970,7 +976,7 @@ public:
 
 /** Leaf constructor.
  *
- *  Constructs an expression leaf node. This is a wrapper around one of the "create" factory methods in @ref LeafNode.
+ *  Constructs an expression leaf node. This is a wrapper around one of the "create" factory methods in @ref Leaf.
  *
  * @{ */
 Ptr makeVariable(size_t nbits, const std::string &comment="", unsigned flags=0);
@@ -981,9 +987,9 @@ Ptr makeBoolean(bool, const std::string &comment="", unsigned flags=0);
 Ptr makeMemory(size_t addressWidth, size_t valueWidth, const std::string &comment="", unsigned flags=0);
 /** @} */
 
-/** Internal node constructor.
+/** Interior node constructor.
  *
- *  Constructs an internal node. This is a wrapper around one of the "create" factory methods in @ref InternalNode. It
+ *  Constructs an interior node. This is a wrapper around one of the "create" factory methods in @ref Interior. It
  *  interprets its operands as unsigned values unless the method has "Signed" in its name.
  *
  * @{ */

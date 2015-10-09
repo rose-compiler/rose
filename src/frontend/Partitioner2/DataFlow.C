@@ -257,7 +257,7 @@ isStackAddress(const rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
         return 0;
 
     // Otherwise the expression must be (add SP0 N) where N != 0
-    SymbolicExpr::InternalPtr inode = expr->isInternalNode();
+    SymbolicExpr::InteriorPtr inode = expr->isInteriorNode();
     if (!inode || inode->getOperator() != SymbolicExpr::OP_ADD || inode->nChildren()!=2)
         return Sawyer::Nothing();
 

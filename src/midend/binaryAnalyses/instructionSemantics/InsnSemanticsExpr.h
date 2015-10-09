@@ -54,11 +54,11 @@ using SymbolicExpr::OP_WRITE;
 using SymbolicExpr::OP_ZEROP;
 
 typedef SymbolicExpr::Node TreeNode ROSE_DEPRECATED("use rose::BinaryAnalysis::SymbolicExpr instead");
-typedef SymbolicExpr::InternalNode InternalNode ROSE_DEPRECATED("use rose::BinaryAnalysis::SymbolicExpr instead");
-typedef SymbolicExpr::LeafNode LeafNode ROSE_DEPRECATED("use rose::BinaryAnalysis::SymbolicExpr instead");
+typedef SymbolicExpr::Interior InternalNode ROSE_DEPRECATED("use rose::BinaryAnalysis::SymbolicExpr instead");
+typedef SymbolicExpr::Leaf LeafNode ROSE_DEPRECATED("use rose::BinaryAnalysis::SymbolicExpr instead");
 
 typedef SymbolicExpr::Ptr TreeNodePtr ROSE_DEPRECATED("use rose::BinaryAnalysis::SymbolicExpr instead");
-typedef SymbolicExpr::InternalPtr InternalNodePtr ROSE_DEPRECATED("use rose::BinaryAnalysis::SymbolicExpr instead");
+typedef SymbolicExpr::InteriorPtr InternalNodePtr ROSE_DEPRECATED("use rose::BinaryAnalysis::SymbolicExpr instead");
 typedef SymbolicExpr::LeafPtr LeafNodePtr ROSE_DEPRECATED("use rose::BinaryAnalysis::SymbolicExpr instead");
 
 typedef SymbolicExpr::Nodes TreeNodes ROSE_DEPRECATED("use rose::BinaryAnalysis::SymbolicExpr instead");

@@ -29,7 +29,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
     SValuePtr addr = SValue::promote(addr_);
     SValuePtr data = SValue::promote(data_);
     mem_writes.push_back(SymbolicExpr::makeWrite(SymbolicExpr::makeMemory(addr->get_width(), data->get_width()),
-                                                 addr->get_expression(), data->get_expression())->isInternalNode());
+                                                 addr->get_expression(), data->get_expression())->isInteriorNode());
 }
 
 void
@@ -203,7 +203,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
             if (!seen.insert(node->hash()).second)
                 return SymbolicExpr::TRUNCATE; // already processed this same expression
             size_t width = node->nBits();
-            if (InternalPtr inode = node->isInternalNode()) {
+            if (InteriorPtr inode = node->isInteriorNode()) {
                 if (SymbolicExpr::OP_READ==inode->getOperator()) {
                     ASSERT_require(2==inode->nChildren());
                     ops->emit_assignment(o, ops->emit_memory_read(o, inode->child(1), width));
@@ -318,7 +318,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     // we must watch out for the case when the ROSE disassembler determined that the predicate is opaque and one of the target
     // addresses isn't valid.  This can happen because the ROSE disassembler might be using a more advanced analysis than we
     // use here.
-    InternalPtr inode = eip->get_expression()->isInternalNode();
+    InteriorPtr inode = eip->get_expression()->isInteriorNode();
     if (inode && SymbolicExpr::OP_ITE==inode->getOperator()) {
         LeafPtr leaf1 = inode->child(1)->isLeafNode();
         LeafPtr leaf2 = inode->child(2)->isLeafNode();
@@ -424,7 +424,7 @@ void
 RiscOperators::emit_memory_writes(std::ostream &o)
 {
     for (size_t i=0; i<mem_writes.size(); ++i) {
-        InternalPtr inode = mem_writes[i]->isInternalNode();
+        InteriorPtr inode = mem_writes[i]->isInteriorNode();
         ASSERT_not_null(inode);
         ASSERT_require(inode->getOperator() == SymbolicExpr::OP_WRITE);
         ASSERT_require(inode->nChildren()==3);
@@ -1054,7 +1054,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
     
     // Emit LLVM for symbolic operators until the result is a leaf node (LLVM variable or constant). This causes recursive
     // calls to emit_expression().
-    while (InternalPtr inode = cur_expr->isInternalNode()) {
+    while (InteriorPtr inode = cur_expr->isInteriorNode()) {
         ExpressionPtr operator_result;
         TreeNodes operands = inode->children();
         switch (inode->getOperator()) {

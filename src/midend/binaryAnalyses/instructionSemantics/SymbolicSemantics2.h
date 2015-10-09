@@ -39,10 +39,10 @@ namespace InstructionSemantics2 {       // documented elsewhere
 *  naive comparison of the expression trees. */
 namespace SymbolicSemantics {
 
-typedef SymbolicExpr::LeafNode LeafNode;
+typedef SymbolicExpr::Leaf LeafNode;
 typedef SymbolicExpr::LeafPtr LeafPtr;
-typedef SymbolicExpr::InternalNode InternalNode;
-typedef SymbolicExpr::InternalPtr InternalPtr;
+typedef SymbolicExpr::Interior InteriorNode;
+typedef SymbolicExpr::InteriorPtr InteriorPtr;
 typedef SymbolicExpr::Node ExprNode;
 typedef SymbolicExpr::Ptr ExprPtr;
 typedef std::set<SgAsmInstruction*> InsnSet;

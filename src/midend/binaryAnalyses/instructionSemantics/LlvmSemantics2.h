@@ -13,10 +13,10 @@ namespace LlvmSemantics {
 
 typedef std::vector<RegisterDescriptor> RegisterDescriptors;
 
-typedef SymbolicExpr::LeafNode LeafNode;
+typedef SymbolicExpr::Leaf LeafNode;
 typedef SymbolicExpr::LeafPtr LeafPtr;
-typedef SymbolicExpr::InternalNode InternalNode;
-typedef SymbolicExpr::InternalPtr InternalPtr;
+typedef SymbolicExpr::Interior InteriorNode;
+typedef SymbolicExpr::InteriorPtr InteriorPtr;
 typedef SymbolicExpr::Ptr ExpressionPtr;
 typedef SymbolicExpr::Nodes TreeNodes;
 

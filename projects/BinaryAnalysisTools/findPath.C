@@ -711,7 +711,7 @@ private:
                     }
                     varComment += "at address " + addrLeaf->toString();
                 }
-            } else if (SymbolicExpr::InternalPtr addrINode = addrExpr->isInternalNode()) {
+            } else if (SymbolicExpr::InteriorPtr addrINode = addrExpr->isInteriorNode()) {
                 if (addrINode->getOperator() == SymbolicExpr::OP_ADD && addrINode->nChildren() == 2 &&
                     addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->isVariable() &&
                     addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->isNumber()) {

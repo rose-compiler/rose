@@ -38,10 +38,10 @@ namespace InstructionSemantics {    // documented elsewhere
  *  will be answered by very naive comparison of the expression trees. */
 namespace SymbolicSemantics {
 
-typedef SymbolicExpr::LeafNode LeafNode;
+typedef SymbolicExpr::Leaf LeafNode;
 typedef SymbolicExpr::LeafPtr LeafNodePtr;
-typedef SymbolicExpr::InternalNode InternalNode;
-typedef SymbolicExpr::InternalPtr InternalNodePtr;
+typedef SymbolicExpr::Interior InternalNode;
+typedef SymbolicExpr::InteriorPtr InternalNodePtr;
 typedef SymbolicExpr::Node TreeNode;
 typedef SymbolicExpr::Ptr TreeNodePtr;
 typedef std::set<SgAsmInstruction*> InsnSet;
@@ -953,7 +953,7 @@ public:
         if (bytes.size()>1) {
             matched = true; // and prove otherwise
             for (size_t bytenum=0; bytenum<bytes.size() && matched; ++bytenum) {
-                InternalNodePtr extract = bytes[bytenum].get_expression()->isInternalNode();
+                InternalNodePtr extract = bytes[bytenum].get_expression()->isInteriorNode();
                 if (!extract || SymbolicExpr::OP_EXTRACT!=extract->getOperator()) {
                     matched = false;
                     break;
@@ -966,8 +966,8 @@ public:
                     break;
                 }
                 if (bytenum>0) {
-                    TreeNodePtr e0 = bytes[0      ].get_expression()->isInternalNode()->child(2);
-                    TreeNodePtr ei = bytes[bytenum].get_expression()->isInternalNode()->child(2);
+                    TreeNodePtr e0 = bytes[0      ].get_expression()->isInteriorNode()->child(2);
+                    TreeNodePtr ei = bytes[bytenum].get_expression()->isInteriorNode()->child(2);
                     matched = e0->isEquivalentTo(ei);
                 }
             }
@@ -976,7 +976,7 @@ public:
         // If the bytes match the above pattern, then we can just return (the low order bits of) EXPR_0, otherwise
         // we have to construct a return value by extending and shifting the bytes and bitwise-OR them together.
         if (matched) {
-            TreeNodePtr e0 = bytes[0].get_expression()->isInternalNode()->child(2);
+            TreeNodePtr e0 = bytes[0].get_expression()->isInteriorNode()->child(2);
             if (e0->nBits()==nBits) {
                 retval = ValueType<nBits>(e0);
             } else {

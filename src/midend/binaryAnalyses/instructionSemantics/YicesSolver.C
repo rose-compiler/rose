@@ -443,7 +443,7 @@ void
 YicesSolver::out_expr(std::ostream &o, const SymbolicExpr::Ptr &tn)
 {
     SymbolicExpr::LeafPtr ln = tn->isLeafNode();
-    SymbolicExpr::InternalPtr in = tn->isInternalNode();
+    SymbolicExpr::InteriorPtr in = tn->isInteriorNode();
     std::string subExprName;
     if (termNames.getOptional(tn).assignTo(subExprName)) {
         o <<subExprName;
@@ -511,7 +511,7 @@ YicesSolver::out_expr(std::ostream &o, const SymbolicExpr::Ptr &tn)
 
 /** Output for unary operators. */
 void
-YicesSolver::out_unary(std::ostream &o, const char *opname, const SymbolicExpr::InternalPtr &in)
+YicesSolver::out_unary(std::ostream &o, const char *opname, const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(opname && *opname);
     ASSERT_require(in && 1==in->nChildren());
@@ -523,7 +523,7 @@ YicesSolver::out_unary(std::ostream &o, const char *opname, const SymbolicExpr::
 
 /** Output for binary operators. */
 void
-YicesSolver::out_binary(std::ostream &o, const char *opname, const SymbolicExpr::InternalPtr &in)
+YicesSolver::out_binary(std::ostream &o, const char *opname, const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(opname && *opname);
     ASSERT_require(in && 2==in->nChildren());
@@ -546,7 +546,7 @@ YicesSolver::out_binary(std::ostream &o, const char *opname, const SymbolicExpr:
  *  \endcode
  */
 void
-YicesSolver::out_ite(std::ostream &o, const SymbolicExpr::InternalPtr &in)
+YicesSolver::out_ite(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in && 3==in->nChildren());
     ASSERT_require(in->child(0)->nBits()==1);
@@ -563,7 +563,7 @@ YicesSolver::out_ite(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 /** Output for left-associative, binary operators. The identity_element is sign-extended and used as the second operand
  *  if only one operand is supplied. */
 void
-YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::InternalPtr &in, bool identity_element)
+YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::InteriorPtr &in, bool identity_element)
 {
     ASSERT_require(opname && *opname);
     ASSERT_require(in && in->nChildren()>=1);
@@ -587,7 +587,7 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::Int
 
 /** Output for left-associative operators. */
 void
-YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::InternalPtr &in)
+YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::InteriorPtr &in)
 {
     if (in->nChildren()==1) {
         out_unary(o, opname, in);
@@ -598,7 +598,7 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::Int
 
 /** Output for extract. Yices bv-extract first two arguments must be constants. */
 void
-YicesSolver::out_extract(std::ostream &o, const SymbolicExpr::InternalPtr &in)
+YicesSolver::out_extract(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in && 3==in->nChildren());
     ASSERT_require(in->child(0)->isNumber());
@@ -615,7 +615,7 @@ YicesSolver::out_extract(std::ostream &o, const SymbolicExpr::InternalPtr &in)
  *  argument should be extended.  We compute that from the first argument of the OP_SEXTEND operator (the new size) and the
  *  size of the second operand (the bit vector to be extended). */
 void
-YicesSolver::out_sext(std::ostream &o, const SymbolicExpr::InternalPtr &in)
+YicesSolver::out_sext(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in && 2==in->nChildren());
     ASSERT_require(in->child(0)->isNumber()); /*Yices bv-sign-extend needs a number for the second operand*/
@@ -631,7 +631,7 @@ YicesSolver::out_sext(std::ostream &o, const SymbolicExpr::InternalPtr &in)
  *  (bv-concat (mk-bv [NewSize-OldSize] 0) Vector)
  */
 void
-YicesSolver::out_uext(std::ostream &o, const SymbolicExpr::InternalPtr &in)
+YicesSolver::out_uext(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in && 2==in->nChildren());
     ASSERT_require(in->child(0)->isNumber()); /*Yices mk-bv needs a number for the size operand*/
@@ -645,7 +645,7 @@ YicesSolver::out_uext(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 
 /** Output for shift operators. */
 void
-YicesSolver::out_shift(std::ostream &o, const char *opname, const SymbolicExpr::InternalPtr &in,
+YicesSolver::out_shift(std::ostream &o, const char *opname, const SymbolicExpr::InteriorPtr &in,
                        bool newbits)
 {
     ASSERT_require(opname && *opname);
@@ -667,7 +667,7 @@ YicesSolver::out_shift(std::ostream &o, const char *opname, const SymbolicExpr::
  * where [VectorSize], [VectorSize-1], and [ShiftAmount] are numeric constants.
  */
 void
-YicesSolver::out_asr(std::ostream &o, const SymbolicExpr::InternalPtr &in)
+YicesSolver::out_asr(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in && 2==in->nChildren());
     SymbolicExpr::Ptr vector = in->child(1);
@@ -695,7 +695,7 @@ YicesSolver::out_asr(std::ostream &o, const SymbolicExpr::InternalPtr &in)
  *  \endcode
  */
 void
-YicesSolver::out_zerop(std::ostream &o, const SymbolicExpr::InternalPtr &in)
+YicesSolver::out_zerop(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in && 1==in->nChildren());
     o <<"(ite (= (mk-bv " <<in->child(0)->nBits() <<" 0) ";
@@ -711,7 +711,7 @@ YicesSolver::out_zerop(std::ostream &o, const SymbolicExpr::InternalPtr &in)
  *  \endcode
  */
 void
-YicesSolver::out_mult(std::ostream &o, const SymbolicExpr::InternalPtr &in)
+YicesSolver::out_mult(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in->nBits() == in->child(0)->nBits() + in->child(1)->nBits());
     size_t extend0 = in->child(1)->nBits(); // amount by which to extend arg0
@@ -726,7 +726,7 @@ YicesSolver::out_mult(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 
 /** Output for write. */
 void
-YicesSolver::out_write(std::ostream &o, const SymbolicExpr::InternalPtr &in)
+YicesSolver::out_write(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
 {
     o <<"(update ";
     out_expr(o, in->child(0));  // previous memory state
@@ -739,7 +739,7 @@ YicesSolver::out_write(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 
 /** Output for read. */
 void
-YicesSolver::out_read(std::ostream &o, const SymbolicExpr::InternalPtr &in)
+YicesSolver::out_read(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
 {
     o <<"(";
     out_expr(o, in->child(0));  // memory state from which we are reading
@@ -831,7 +831,7 @@ YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn)
 {
     yices_expr retval = 0;
     SymbolicExpr::LeafPtr ln = tn->isLeafNode();
-    SymbolicExpr::InternalPtr in = tn->isInternalNode();
+    SymbolicExpr::InteriorPtr in = tn->isInteriorNode();
     if (termExprs.getOptional(tn).assignTo(retval)) {
         return retval;
     } else if (ln) {
@@ -907,7 +907,7 @@ YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn)
 #ifdef ROSE_HAVE_LIBYICES
 /* Create Yices expression from unary ROSE expression. */
 yices_expr
-YicesSolver::ctx_unary(UnaryAPI f, const SymbolicExpr::InternalPtr &in)
+YicesSolver::ctx_unary(UnaryAPI f, const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_not_null(f);
     ASSERT_require(in && 1==in->nChildren());
@@ -920,7 +920,7 @@ YicesSolver::ctx_unary(UnaryAPI f, const SymbolicExpr::InternalPtr &in)
 #ifdef ROSE_HAVE_LIBYICES
 /* Create Yices epxression from binary ROSE expression. */
 yices_expr
-YicesSolver::ctx_binary(BinaryAPI f, const SymbolicExpr::InternalPtr &in)
+YicesSolver::ctx_binary(BinaryAPI f, const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_not_null(f);
     ASSERT_require(in && 2==in->nChildren());
@@ -933,7 +933,7 @@ YicesSolver::ctx_binary(BinaryAPI f, const SymbolicExpr::InternalPtr &in)
 #ifdef ROSE_HAVE_LIBYICES
 /* Create Yices expression for if-then-else operator. */
 yices_expr
-YicesSolver::ctx_ite(const SymbolicExpr::InternalPtr &in)
+YicesSolver::ctx_ite(const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in && 3==in->nChildren());
     ASSERT_require(in->child(0)->nBits()==1);
@@ -948,7 +948,7 @@ YicesSolver::ctx_ite(const SymbolicExpr::InternalPtr &in)
 /* Create Yices expression for left-associative, binary operators. The @p identity is sign-extended and used as the
  * second operand if only one operand is supplied. */
 yices_expr
-YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InternalPtr &in, bool identity)
+YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InteriorPtr &in, bool identity)
 {
     ASSERT_not_null(f);
     ASSERT_require(in && in->nChildren()>=1);
@@ -972,7 +972,7 @@ YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InternalPtr &in, bool ident
 
 #ifdef ROSE_HAVE_LIBYICES
 yices_expr
-YicesSolver::ctx_la(NaryAPI f, const SymbolicExpr::InternalPtr &in, bool identity)
+YicesSolver::ctx_la(NaryAPI f, const SymbolicExpr::InteriorPtr &in, bool identity)
 {
     ASSERT_not_null(f);
     ASSERT_require(in && in->nChildren()>=1);
@@ -990,7 +990,7 @@ YicesSolver::ctx_la(NaryAPI f, const SymbolicExpr::InternalPtr &in, bool identit
 
 #ifdef ROSE_HAVE_LIBYICES
 yices_expr
-YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InternalPtr &in)
+YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in->nChildren()>1);
     return ctx_la(f, in, false);
@@ -1000,7 +1000,7 @@ YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InternalPtr &in)
 #ifdef ROSE_HAVE_LIBYICES
 /** Generate a Yices expression for extract. The yices_mk_bv_extract() second two arguments must be constants. */
 yices_expr
-YicesSolver::ctx_extract(const SymbolicExpr::InternalPtr &in)
+YicesSolver::ctx_extract(const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in && 3==in->nChildren());
     ASSERT_require(in->child(0)->isNumber());
@@ -1019,7 +1019,7 @@ YicesSolver::ctx_extract(const SymbolicExpr::InternalPtr &in)
  *  the second argument should be extended.  We compute that from the first argument of the OP_SEXTEND operator (the new size)
  *  and the size of the second operand (the bit vector to be extended). */
 yices_expr
-YicesSolver::ctx_sext(const SymbolicExpr::InternalPtr &in)
+YicesSolver::ctx_sext(const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in && 2==in->nChildren());
     ASSERT_require(in->child(0)->isNumber());
@@ -1037,7 +1037,7 @@ YicesSolver::ctx_sext(const SymbolicExpr::InternalPtr &in)
  *  (bv-concat (mk-bv [NewSize-OldSize] 0) Vector)
  */
 yices_expr
-YicesSolver::ctx_uext(const SymbolicExpr::InternalPtr &in)
+YicesSolver::ctx_uext(const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in && 2==in->nChildren());
     ASSERT_require(in->child(0)->isNumber()); /*Yices mk-bv needs a number for the size operand*/
@@ -1054,7 +1054,7 @@ YicesSolver::ctx_uext(const SymbolicExpr::InternalPtr &in)
 #ifdef ROSE_HAVE_LIBYICES
 /** Generates a Yices expression for shift operators. */
 yices_expr
-YicesSolver::ctx_shift(ShiftAPI f, const SymbolicExpr::InternalPtr &in)
+YicesSolver::ctx_shift(ShiftAPI f, const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in && 2==in->nChildren());
     ASSERT_require(in->child(0)->isNumber()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
@@ -1076,7 +1076,7 @@ YicesSolver::ctx_shift(ShiftAPI f, const SymbolicExpr::InternalPtr &in)
  * where [VectorSize], [VectorSize-1], and [ShiftAmount] are numeric constants.
  */
 yices_expr
-YicesSolver::ctx_asr(const SymbolicExpr::InternalPtr &in)
+YicesSolver::ctx_asr(const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in && 2==in->nChildren());
     SymbolicExpr::Ptr vector = in->child(1);
@@ -1106,7 +1106,7 @@ YicesSolver::ctx_asr(const SymbolicExpr::InternalPtr &in)
  *  \endcode
  */
 yices_expr
-YicesSolver::ctx_zerop(const SymbolicExpr::InternalPtr &in)
+YicesSolver::ctx_zerop(const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in && 1==in->nChildren());
     yices_expr retval = yices_mk_ite(context,
@@ -1129,7 +1129,7 @@ YicesSolver::ctx_zerop(const SymbolicExpr::InternalPtr &in)
  *  \endcode
  */
 yices_expr
-YicesSolver::ctx_mult(const SymbolicExpr::InternalPtr &in)
+YicesSolver::ctx_mult(const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in->nBits() == in->child(0)->nBits() + in->child(1)->nBits());
     size_t extend0 = in->child(1)->nBits(); // amount by which to extend arg0
@@ -1146,7 +1146,7 @@ YicesSolver::ctx_mult(const SymbolicExpr::InternalPtr &in)
 #ifdef ROSE_HAVE_LIBYICES
 /** Write to memory. */
 yices_expr
-YicesSolver::ctx_write(const SymbolicExpr::InternalPtr &in)
+YicesSolver::ctx_write(const SymbolicExpr::InteriorPtr &in)
 {
     yices_expr func = ctx_expr(in->child(0));
     yices_expr arg  = ctx_expr(in->child(1));
@@ -1161,7 +1161,7 @@ YicesSolver::ctx_write(const SymbolicExpr::InternalPtr &in)
 #ifdef ROSE_HAVE_LIBYICES
 /** Read from memory. */
 yices_expr
-YicesSolver::ctx_read(const SymbolicExpr::InternalPtr &in)
+YicesSolver::ctx_read(const SymbolicExpr::InteriorPtr &in)
 {
     yices_expr func = ctx_expr(in->child(0));
     yices_expr arg  = ctx_expr(in->child(1));

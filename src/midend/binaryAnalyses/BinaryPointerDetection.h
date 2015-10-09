@@ -362,7 +362,7 @@ protected:
         template<size_t Len>
         void writeRegister(const RegisterDescriptor &reg, const ValueType<Len> &value) {
             if (0==info->pass && !value.is_known() && reg == this->findRegister("eip", 32)) {
-                SymbolicExpr::InternalPtr inode = value.get_expression()->isInternalNode();
+                SymbolicExpr::InteriorPtr inode = value.get_expression()->isInteriorNode();
                 if (inode!=NULL && SymbolicExpr::OP_ITE==inode->getOperator() &&
                     inode->child(1)->isNumber() && inode->child(2)->isNumber()) {
                     // We must have processed a branch instruction.  Both directions of the branch are concrete addresses, so
@@ -521,7 +521,7 @@ public:
                 // Find control flow successors
                 std::set<rose_addr_t> successors;
                 ValueType<32> eip_value = policy.template readRegister<32>(semantics.REG_EIP);
-                SymbolicExpr::InternalPtr inode = eip_value.get_expression()->isInternalNode();
+                SymbolicExpr::InteriorPtr inode = eip_value.get_expression()->isInteriorNode();
                 if (eip_value.is_known()) {
                     successors.insert(eip_value.known_value());
                     // assume all CALLs return since we might not actually traverse the called function.  If we had done a full

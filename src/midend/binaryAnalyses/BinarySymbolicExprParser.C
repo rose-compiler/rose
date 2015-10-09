@@ -389,7 +389,7 @@ public:
     virtual SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
         if (!ops_.exists(op.lexeme()))
             return SymbolicExpr::Ptr();
-        return SymbolicExpr::InternalNode::create(op.width(), ops_[op.lexeme()], args);
+        return SymbolicExpr::Interior::create(op.width(), ops_[op.lexeme()], args);
     }
 };
 
@@ -429,7 +429,7 @@ public:
     virtual SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
         if (!ops_.exists(op.lexeme()))
             return SymbolicExpr::Ptr();
-        return SymbolicExpr::InternalNode::create(op.width(), ops_[op.lexeme()], args);
+        return SymbolicExpr::Interior::create(op.width(), ops_[op.lexeme()], args);
     }
 };
 

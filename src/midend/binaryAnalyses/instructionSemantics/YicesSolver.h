@@ -93,20 +93,20 @@ private:
     void out_assert(std::ostream&, const SymbolicExpr::Ptr&);
     void out_number(std::ostream&, const SymbolicExpr::Ptr&);
     void out_expr(std::ostream&, const SymbolicExpr::Ptr&);
-    void out_unary(std::ostream&, const char *opname, const SymbolicExpr::InternalPtr&);
-    void out_binary(std::ostream&, const char *opname, const SymbolicExpr::InternalPtr&);
-    void out_ite(std::ostream&, const SymbolicExpr::InternalPtr&);
-    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InternalPtr&, bool identity_elmt);
-    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InternalPtr&);
-    void out_extract(std::ostream&, const SymbolicExpr::InternalPtr&);
-    void out_sext(std::ostream&, const SymbolicExpr::InternalPtr&);
-    void out_uext(std::ostream&, const SymbolicExpr::InternalPtr&);
-    void out_shift(std::ostream&, const char *opname, const SymbolicExpr::InternalPtr&, bool newbits);
-    void out_asr(std::ostream&, const SymbolicExpr::InternalPtr&);
-    void out_zerop(std::ostream&, const SymbolicExpr::InternalPtr&);
-    void out_mult(std::ostream &o, const SymbolicExpr::InternalPtr&);
-    void out_read(std::ostream &o, const SymbolicExpr::InternalPtr&);
-    void out_write(std::ostream &o, const SymbolicExpr::InternalPtr&);
+    void out_unary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
+    void out_binary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
+    void out_ite(std::ostream&, const SymbolicExpr::InteriorPtr&);
+    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, bool identity_elmt);
+    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
+    void out_extract(std::ostream&, const SymbolicExpr::InteriorPtr&);
+    void out_sext(std::ostream&, const SymbolicExpr::InteriorPtr&);
+    void out_uext(std::ostream&, const SymbolicExpr::InteriorPtr&);
+    void out_shift(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, bool newbits);
+    void out_asr(std::ostream&, const SymbolicExpr::InteriorPtr&);
+    void out_zerop(std::ostream&, const SymbolicExpr::InteriorPtr&);
+    void out_mult(std::ostream &o, const SymbolicExpr::InteriorPtr&);
+    void out_read(std::ostream &o, const SymbolicExpr::InteriorPtr&);
+    void out_write(std::ostream &o, const SymbolicExpr::InteriorPtr&);
 
 #ifdef ROSE_HAVE_LIBYICES
     typedef Sawyer::Container::Map<SymbolicExpr::Ptr, yices_expr> TermExprs;
@@ -123,21 +123,21 @@ private:
     void ctx_define(const std::vector<SymbolicExpr::Ptr>&, Definitions*);
     void ctx_assert(const SymbolicExpr::Ptr&);
     yices_expr ctx_expr(const SymbolicExpr::Ptr&);
-    yices_expr ctx_unary(UnaryAPI, const SymbolicExpr::InternalPtr&);
-    yices_expr ctx_binary(BinaryAPI, const SymbolicExpr::InternalPtr&);
-    yices_expr ctx_ite(const SymbolicExpr::InternalPtr&);
-    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InternalPtr&, bool identity_elmt);
-    yices_expr ctx_la(NaryAPI, const SymbolicExpr::InternalPtr&, bool identity_elmt);
-    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InternalPtr&);
-    yices_expr ctx_extract(const SymbolicExpr::InternalPtr&);
-    yices_expr ctx_sext(const SymbolicExpr::InternalPtr&);
-    yices_expr ctx_uext(const SymbolicExpr::InternalPtr&);
-    yices_expr ctx_shift(ShiftAPI, const SymbolicExpr::InternalPtr&);
-    yices_expr ctx_asr(const SymbolicExpr::InternalPtr&);
-    yices_expr ctx_zerop(const SymbolicExpr::InternalPtr&);
-    yices_expr ctx_mult(const SymbolicExpr::InternalPtr&);
-    yices_expr ctx_read(const SymbolicExpr::InternalPtr&);
-    yices_expr ctx_write(const SymbolicExpr::InternalPtr&);
+    yices_expr ctx_unary(UnaryAPI, const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_binary(BinaryAPI, const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_ite(const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&, bool identity_elmt);
+    yices_expr ctx_la(NaryAPI, const SymbolicExpr::InteriorPtr&, bool identity_elmt);
+    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_extract(const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_sext(const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_uext(const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_shift(ShiftAPI, const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_asr(const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_zerop(const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_mult(const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_read(const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_write(const SymbolicExpr::InteriorPtr&);
     
 #else
     void *context; /*unused for now*/

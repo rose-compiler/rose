@@ -78,7 +78,7 @@ std::string stringifyBinaryAnalysisSMTSolverSatisfiable(int n, const char *strip
 std::string stringifyBinaryAnalysisSRecordType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisStringsState(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisSymbolicExprFormatterShowComments(int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyBinaryAnalysisSymbolicExprLeafNodeLeafType(int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyBinaryAnalysisSymbolicExprLeafLeafType(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisSymbolicExprOperator(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisSymbolicExprVisitAction(int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisSymbolicExprParserTokenType(int n, const char *strip=NULL, bool canonic=false);
