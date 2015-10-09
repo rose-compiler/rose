@@ -50,7 +50,7 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *s
     // Merge symbolic expressions.  This version is pretty simple: either the two expressions are equal in which case we'll go
     // on to merge flags; or they're not, in which case we return bottom.  A more complicated version might try to return a set
     // of values.
-    if (!get_expression()->must_equal(other->get_expression(), solver)) {
+    if (!get_expression()->mustEqual(other->get_expression(), solver)) {
         ExprPtr expr = SymbolicExpr::LeafNode::create_variable(retval->get_width(), "", mergedFlags | SymbolicExpr::Node::BOTTOM);
         retval->set_expression(expr);
         changed = true;
@@ -79,7 +79,7 @@ SValue::get_number() const
 {
     LeafPtr leaf = expr->isLeafNode();
     ASSERT_not_null(leaf);
-    return leaf->get_value();
+    return leaf->toInt();
 }
 
 SValuePtr
@@ -127,7 +127,7 @@ SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) con
     ASSERT_require(get_width()==other->get_width());
     if (isBottom() || other->isBottom())
         return true;
-    return get_expression()->may_equal(other->get_expression(), solver);
+    return get_expression()->mayEqual(other->get_expression(), solver);
 }
 
 bool
@@ -137,7 +137,7 @@ SValue::must_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) co
     ASSERT_require(get_width()==other->get_width());
     if (isBottom() || other->isBottom())
         return false;
-    return get_expression()->must_equal(other->get_expression(), solver);
+    return get_expression()->mustEqual(other->get_expression(), solver);
 }
 
 std::string
@@ -372,7 +372,7 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
     // simplifier.
     if (a->is_number() && b->is_number() && a->get_width()<=64) {
         retval = svalue_number(a->get_width(), a->get_number() ^ b->get_number());
-    } else if (a->get_expression()->must_equal(b->get_expression(), solver)) {
+    } else if (a->get_expression()->mustEqual(b->get_expression(), solver)) {
         retval = svalue_number(a->get_width(), 0);
     } else {
         retval = svalue_expr(SymbolicExpr::InternalNode::create(a->get_width(), SymbolicExpr::OP_BV_XOR,

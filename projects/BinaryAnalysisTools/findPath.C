@@ -703,7 +703,7 @@ private:
         if (nBytes != 1) {
             SymbolicExpr::Ptr addrExpr = SymbolicSemantics::SValue::promote(addr)->get_expression();
             if (SymbolicExpr::LeafPtr addrLeaf = addrExpr->isLeafNode()) {
-                if (addrLeaf->is_known()) {
+                if (addrLeaf->isNumber()) {
                     varComment += "\n";
                     if (nBytes > 1) {
                         varComment += StringUtility::numberToString(byteNumber) + " of " +
@@ -714,7 +714,7 @@ private:
             } else if (SymbolicExpr::InternalPtr addrINode = addrExpr->isInternalNode()) {
                 if (addrINode->get_operator() == SymbolicExpr::OP_ADD && addrINode->nchildren() == 2 &&
                     addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->is_variable() &&
-                    addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->is_known()) {
+                    addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->isNumber()) {
                     SymbolicExpr::LeafPtr base = addrINode->child(0)->isLeafNode();
                     SymbolicExpr::LeafPtr offset = addrINode->child(1)->isLeafNode();
                     varComment += "\n";

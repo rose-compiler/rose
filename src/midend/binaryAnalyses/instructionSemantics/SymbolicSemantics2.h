@@ -231,7 +231,7 @@ public:
     virtual bool isBottom() const ROSE_OVERRIDE;
 
     virtual bool is_number() const ROSE_OVERRIDE {
-        return expr->is_known();
+        return expr->isNumber();
     }
 
     virtual uint64_t get_number() const ROSE_OVERRIDE;

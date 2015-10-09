@@ -253,7 +253,7 @@ isStackAddress(const rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
 
     // Special case where (add SP0 0) is simplified to SP0
     SymbolicExpr::LeafPtr variable = expr->isLeafNode();
-    if (variable && variable->must_equal(initialStack, solver))
+    if (variable && variable->mustEqual(initialStack, solver))
         return 0;
 
     // Otherwise the expression must be (add SP0 N) where N != 0
@@ -263,17 +263,17 @@ isStackAddress(const rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
 
     variable = inode->child(0)->isLeafNode();
     SymbolicExpr::LeafPtr constant = inode->child(1)->isLeafNode();
-    if (!constant || !constant->is_known())
+    if (!constant || !constant->isNumber())
         std::swap(variable, constant);
-    if (!constant || !constant->is_known())
+    if (!constant || !constant->isNumber())
         return Sawyer::Nothing();
     if (!variable || !variable->is_variable())
         return Sawyer::Nothing();
 
-    if (!variable->must_equal(initialStack, solver))
+    if (!variable->mustEqual(initialStack, solver))
         return Sawyer::Nothing();
 
-    int64_t val = IntegerOps::signExtend2(constant->get_value(), constant->get_nbits(), 64);
+    int64_t val = IntegerOps::signExtend2(constant->toInt(), constant->get_nbits(), 64);
     return val;
 }
 

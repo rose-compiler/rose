@@ -168,11 +168,11 @@ public:
  *      with flags the same as @c v1. */
 class Node: public Sawyer::SharedObject, public Sawyer::SharedFromThis<Node>, public Sawyer::SmallObject {
 protected:
-    size_t nbits;                /**< Number of significant bits. Constant over the life of the node. */
-    size_t domainWidth_;         /**< Width of domain for unary functions. E.g., memory. */
-    unsigned flags_;             /**< Bit flags. Meaning of flags is up to the user. Low-order 16 bits are reserved. */
-    mutable std::string comment; /**< Optional comment. Only for debugging; not significant for any calculation. */
-    mutable uint64_t hashval;    /**< Optional hash used as a quick way to indicate that two expressions are different. */
+    size_t nBits_;                    /**< Number of significant bits. Constant over the life of the node. */
+    size_t domainWidth_;              /**< Width of domain for unary functions. E.g., memory. */
+    unsigned flags_;                  /**< Bit flags. Meaning of flags is up to the user. Low-order 16 bits are reserved. */
+    mutable std::string comment_;     /**< Optional comment. Only for debugging; not significant for any calculation. */
+    mutable uint64_t hashval_;        /**< Optional hash used as a quick way to indicate that two expressions are different. */
 
 public:
     // Bit flags
@@ -195,53 +195,98 @@ public:
 
 protected:
     Node()
-        : nbits(0), domainWidth_(0), flags_(0), hashval(0) {}
+        : nBits_(0), domainWidth_(0), flags_(0), hashval_(0) {}
     explicit Node(std::string comment, unsigned flags=0)
-        : nbits(0), domainWidth_(0), flags_(flags), comment(comment), hashval(0) {}
+        : nBits_(0), domainWidth_(0), flags_(flags), comment_(comment), hashval_(0) {}
 
 public:
-    /** Returns true if two expressions must be equal (cannot be unequal).  If an SMT solver is specified then that solver is
-     * used to answer this question, otherwise equality is established by looking only at the structure of the two
-     * expressions. Two expressions can be equal without being the same width (e.g., a 32-bit constant zero is equal to a
-     * 16-bit constant zero). */
-    virtual bool must_equal(const Ptr& other, SMTSolver*) const = 0;
+    /** Returns true if two expressions must be equal (cannot be unequal).
+     *
+     *  If an SMT solver is specified then that solver is used to answer this question, otherwise equality is established by
+     *  looking only at the structure of the two expressions. Two expressions can be equal without being the same width (e.g.,
+     *  a 32-bit constant zero is equal to a 16-bit constant zero). */
+    virtual bool mustEqual(const Ptr &other, SMTSolver*) const = 0;
+
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    bool must_equal(const Ptr& other, SMTSolver *solver) const ROSE_DEPRECATED("use mustEqual instead") {
+        return mustEqual(other, solver);
+    }
 
     /** Returns true if two expressions might be equal, but not necessarily be equal. */
-    virtual bool may_equal(const Ptr& other, SMTSolver*) const = 0;
+    virtual bool mayEqual(const Ptr &other, SMTSolver*) const = 0;
 
-    /** Tests two expressions for structural equivalence.  Two leaf nodes are equivalent if they are the same width and have
-     *  equal values or are the same variable. Two internal nodes are equivalent if they are the same width, the same
-     *  operation, have the same number of children, and those children are all pairwise equivalent. */
-    virtual bool equivalent_to(const Ptr& other) const = 0;
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    bool may_equal(const Ptr &other, SMTSolver *solver) const ROSE_DEPRECATED("use mayEqual instead") {
+        return mayEqual(other, solver);
+    }
+    
+    /** Tests two expressions for structural equivalence.
+     *
+     *  Two leaf nodes are equivalent if they are the same width and have equal values or are the same variable. Two internal
+     *  nodes are equivalent if they are the same width, the same operation, have the same number of children, and those
+     *  children are all pairwise equivalent. */
+    virtual bool isEquivalentTo(const Ptr &other) const = 0;
 
-    /** Compare two expressions structurally for sorting. Returns -1 if @p this is less than @p other, 0 if they are
-     *  structurally equal, and 1 if @p this is greater than @p other.  This function returns zero when an only when @ref
-     *  equivalent_to returns zero, but @ref equivalent_to can be much faster since it uses hashing. */
-    virtual int structural_compare(const Ptr& other) const = 0;
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    bool equivalent_to(const Ptr& other) const ROSE_DEPRECATED("use isEquivalentTo instead") {
+        return isEquivalentTo(other);
+    }
+    
+    /** Compare two expressions structurally for sorting.
+     *
+     *  Returns -1 if @p this is less than @p other, 0 if they are structurally equal, and 1 if @p this is greater than @p
+     *  other.  This function returns zero when an only when @ref isEquivalentTo returns zero, but @ref isEquivalentTo can be
+     *  much faster since it uses hashing. */
+    virtual int compareStructure(const Ptr &other) const = 0;
 
-    /** Substitute one value for another. Finds all occurrances of @p from in this expression and replace them with @p to. If a
-     * substitution occurs, then a new expression is returned. The matching of @p from to sub-parts of this expression uses
-     * structural equivalence, the equivalent_to() predicate. The @p from and @p to expressions must have the same width. */
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    int structural_compare(const Ptr& other) const ROSE_DEPRECATED("use compareStructure instead") {
+        return compareStructure(other);
+    }
+    
+    /** Substitute one value for another.
+     *
+     *  Finds all occurrances of @p from in this expression and replace them with @p to. If a substitution occurs, then a new
+     *  expression is returned. The matching of @p from to sub-parts of this expression uses structural equivalence, the
+     *  @ref isEquivalentTo predicate. The @p from and @p to expressions must have the same width. */
     virtual Ptr substitute(const Ptr &from, const Ptr &to) const = 0;
 
-    /** Returns true if the expression is a known value. */
-    virtual bool is_known() const = 0;
+    /** Returns true if the expression is a known numeric value.
+     *
+     *  The value itself is stored in the @ref number property. */
+    virtual bool isNumber() const = 0;
 
-    /** Returns the integer value of a node for which is_known() returns true.  The high-order bits, those beyond the number of
-     *  significant bits returned by get_nbits(), are guaranteed to be zero. */
-    virtual uint64_t get_value() const = 0;
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    bool is_known() const ROSE_DEPRECATED("use isNumber instead") {
+        return isNumber();
+    }
 
-    /** Accessors for the comment string associated with a node. Comments can be changed after a node has been created since
-     *  the comment is not intended to be used for anything but annotation and/or debugging. I.e., comments are not
-     *  considered significant for comparisons, computing hash values, etc.
+    /** Property: integer value of expression node.
+     *
+     *  Returns the integer value of a node for which @ref isKnown returns true.  The high-order bits, those beyond the number
+     *  of significant bits returned by the @ref nBits propert, are guaranteed to be zero. */
+    virtual uint64_t toInt() const = 0;
+
+    // [Robb P. Matzke 2015-10-08]: deprecated
+    uint64_t get_value() const ROSE_DEPRECATED("use toInt instead") {
+        return toInt();
+    }
+
+    /** Property: Comment.
+     *
+     *  Comments can be changed after a node has been created since the comment is not intended to be used for anything but
+     *  annotation and/or debugging. If many expressions are sharing the same node, then the comment is changed in all those
+     *  expressions. Changing the comment property is allowed even though nodes are generally immutable because comments are
+     *  not considered significant for comparisons, computing hash values, etc.
+     *
      * @{ */
-    const std::string& get_comment() const { return comment; }
-    void set_comment(const std::string &s) const { comment=s; }
+    const std::string& get_comment() const { return comment_; }
+    void set_comment(const std::string &s) const { comment_=s; }
     /** @} */
 
     /** Returns the number of significant bits.  An expression with a known value is guaranteed to have all higher-order bits
      *  cleared. */
-    size_t get_nbits() const { return nbits; }
+    size_t get_nbits() const { return nBits_; }
 
     /** Returns the user-defined bit flags. */
     unsigned get_flags() const { return flags_; }
@@ -299,7 +344,7 @@ public:
     /** Returns true if this node has a hash value computed and cached. The hash value zero is reserved to indicate that no
      *  hash has been computed; if a node happens to actually hash to zero, it will not be cached and will be recomputed for
      *  every call to hash(). */
-    bool is_hashed() const { return hashval!=0; }
+    bool is_hashed() const { return hashval_!=0; }
 
     /** Returns (and caches) the hash value for this node.  If a hash value is not cached in this node, then a new hash value
      *  is computed and cached. */
@@ -566,15 +611,15 @@ public:
     /** @} */
 
     /* see superclass, where these are pure virtual */
-    virtual bool must_equal(const Ptr &other, SMTSolver*) const;
-    virtual bool may_equal(const Ptr &other, SMTSolver*) const;
-    virtual bool equivalent_to(const Ptr &other) const;
-    virtual int structural_compare(const Ptr& other) const;
+    virtual bool mustEqual(const Ptr &other, SMTSolver*) const;
+    virtual bool mayEqual(const Ptr &other, SMTSolver*) const;
+    virtual bool isEquivalentTo(const Ptr &other) const;
+    virtual int compareStructure(const Ptr& other) const;
     virtual Ptr substitute(const Ptr &from, const Ptr &to) const;
-    virtual bool is_known() const {
+    virtual bool isNumber() const {
         return false; /*if it's known, then it would have been folded to a leaf*/
     }
-    virtual uint64_t get_value() const { ASSERT_forbid2(true, "not a constant value"); return 0;}
+    virtual uint64_t toInt() const { ASSERT_forbid2(true, "not a number"); return 0;}
     virtual VisitAction depth_first_traversal(Visitor&) const;
     virtual uint64_t nnodes() const { return nnodes_; }
 
@@ -687,13 +732,13 @@ public:
     static LeafPtr create_memory(size_t addressWidth, size_t valueWidth, std::string comment="", unsigned flags=0);
 
     /* see superclass, where these are pure virtual */
-    virtual bool is_known() const;
-    virtual uint64_t get_value() const;
+    virtual bool isNumber() const;
+    virtual uint64_t toInt() const;
     virtual const Sawyer::Container::BitVector& get_bits() const;
-    virtual bool must_equal(const Ptr &other, SMTSolver*) const;
-    virtual bool may_equal(const Ptr &other, SMTSolver*) const;
-    virtual bool equivalent_to(const Ptr &other) const;
-    virtual int structural_compare(const Ptr& other) const;
+    virtual bool mustEqual(const Ptr &other, SMTSolver*) const;
+    virtual bool mayEqual(const Ptr &other, SMTSolver*) const;
+    virtual bool isEquivalentTo(const Ptr &other) const;
+    virtual int compareStructure(const Ptr& other) const;
     virtual Ptr substitute(const Ptr &from, const Ptr &to) const;
     virtual VisitAction depth_first_traversal(Visitor&) const;
     virtual uint64_t nnodes() const { return 1; }
@@ -705,7 +750,7 @@ public:
     virtual bool is_memory() const;
 
     /** Returns the name of a free variable.  The output functions print variables as "vN" where N is an integer. It is this N
-     *  that this method returns.  It should only be invoked on leaf nodes for which is_known() returns false. */
+     *  that this method returns.  It should only be invoked on leaf nodes for which @ref isNumber returns false. */
     uint64_t get_name() const;
 
     /** Returns a string for the leaf.

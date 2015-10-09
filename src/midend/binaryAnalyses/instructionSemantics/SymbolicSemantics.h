@@ -220,14 +220,14 @@ public:
 
     /** Returns true if the value is a known constant. */
     virtual bool is_known() const {
-        return expr->is_known();
+        return expr->isNumber();
     }
 
     /** Returns the value of a known constant. Assumes this value is a known constant. */
     virtual uint64_t known_value() const {
         LeafNodePtr leaf = expr->isLeafNode();
         ASSERT_not_null(leaf);
-        return leaf->get_value();
+        return leaf->toInt();
     }
 
     /** Returns the expression stored in this value.  Expressions are reference counted; the reference count of the
@@ -351,7 +351,7 @@ public:
      *  "overlap".  The @p solver is optional but recommended (absence of a solver will result in a naive
      *  definition). */
     bool must_alias(const ValueType<32> &addr, SMTSolver *solver) const {
-        return this->address().get_expression()->must_equal(addr.get_expression(), solver);
+        return this->address().get_expression()->mustEqual(addr.get_expression(), solver);
     }
 
     /** Returns true if address can refer to this memory cell. */
@@ -960,15 +960,15 @@ public:
                 }
                 LeafNodePtr arg0 = extract->child(0)->isLeafNode();
                 LeafNodePtr arg1 = extract->child(1)->isLeafNode();
-                if (!arg0 || !arg0->is_known() || arg0->get_value()!=8*bytenum ||
-                    !arg1 || !arg1->is_known() || arg1->get_value()!=8*(bytenum+1)) {
+                if (!arg0 || !arg0->isNumber() || arg0->toInt()!=8*bytenum ||
+                    !arg1 || !arg1->isNumber() || arg1->toInt()!=8*(bytenum+1)) {
                     matched = false;
                     break;
                 }
                 if (bytenum>0) {
                     TreeNodePtr e0 = bytes[0      ].get_expression()->isInternalNode()->child(2);
                     TreeNodePtr ei = bytes[bytenum].get_expression()->isInternalNode()->child(2);
-                    matched = e0->equivalent_to(ei);
+                    matched = e0->isEquivalentTo(ei);
                 }
             }
         }
@@ -1537,7 +1537,7 @@ depending on whether the loop is to be taken again, or not.\n");
         ValueType<Len> retval;
         if (a.is_known() && b.is_known()) {
             retval = ValueType<Len>(a.known_value() ^ b.known_value());
-        } else if (a.get_expression()->must_equal(b.get_expression(), solver)) {
+        } else if (a.get_expression()->mustEqual(b.get_expression(), solver)) {
             retval = number<Len>(0);
         } else {
             retval = ValueType<Len>(InternalNode::create(Len, SymbolicExpr::OP_BV_XOR,

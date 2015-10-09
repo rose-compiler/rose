@@ -49,11 +49,11 @@ public:
     std::string toString(const BaseSemantics::SValuePtr &valueBase) {
         SymbolicSemantics::SValuePtr value = SymbolicSemantics::SValue::promote(valueBase);
         SymbolicExpr::LeafPtr leaf = value->get_expression()->isLeafNode();
-        if (leaf && leaf->is_known()) {
+        if (leaf && leaf->isNumber()) {
             if (1==leaf->get_nbits()) {
-                return leaf->get_value() ? "true" : "false";
+                return leaf->toInt() ? "true" : "false";
             } else if (leaf->get_nbits()<=64) {
-                uint64_t v = leaf->get_value();
+                uint64_t v = leaf->toInt();
                 return StringUtility::toHex2(v, leaf->get_nbits());
             } else {
                 return leaf->get_bits().toHex();

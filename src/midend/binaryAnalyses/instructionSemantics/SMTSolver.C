@@ -52,9 +52,9 @@ SMTSolver::trivially_satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs_)
 {
     std::vector<SymbolicExpr::Ptr> exprs(exprs_.begin(), exprs_.end());
     for (size_t i=0; i<exprs.size(); ++i) {
-        if (exprs[i]->is_known()) {
+        if (exprs[i]->isNumber()) {
             ASSERT_require(1==exprs[i]->get_nbits());
-            if (0==exprs[i]->get_value())
+            if (0==exprs[i]->toInt())
                 return SAT_NO;
             std::swap(exprs[i], exprs.back()); // order of exprs is not important
             exprs.resize(exprs.size()-1);

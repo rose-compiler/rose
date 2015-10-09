@@ -434,8 +434,8 @@ void
 YicesSolver::out_number(std::ostream &o, const SymbolicExpr::Ptr &tn)
 {
     SymbolicExpr::LeafPtr ln = tn->isLeafNode();
-    ASSERT_require(ln && ln->is_known());
-    o <<ln->get_value();
+    ASSERT_require(ln && ln->isNumber());
+    o <<ln->toInt();
 }
 
 /** Output for one expression. */
@@ -448,9 +448,9 @@ YicesSolver::out_expr(std::ostream &o, const SymbolicExpr::Ptr &tn)
     if (termNames.getOptional(tn).assignTo(subExprName)) {
         o <<subExprName;
     } else if (ln) {
-        if (ln->is_known()) {
+        if (ln->isNumber()) {
             if (ln->get_nbits() <= 64) {
-                o <<"(mk-bv " <<ln->get_nbits() <<" " <<ln->get_value() <<")";
+                o <<"(mk-bv " <<ln->get_nbits() <<" " <<ln->toInt() <<")";
             } else {
                 o <<"0b" <<ln->get_bits().toBinary();
             }
@@ -601,11 +601,11 @@ void
 YicesSolver::out_extract(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 {
     ASSERT_require(in && 3==in->nchildren());
-    ASSERT_require(in->child(0)->is_known());
-    ASSERT_require(in->child(1)->is_known());
-    ASSERT_require(in->child(0)->get_value() < in->child(1)->get_value());
-    size_t lo = in->child(0)->get_value();
-    size_t hi = in->child(1)->get_value() - 1;          /*inclusive*/
+    ASSERT_require(in->child(0)->isNumber());
+    ASSERT_require(in->child(1)->isNumber());
+    ASSERT_require(in->child(0)->toInt() < in->child(1)->toInt());
+    size_t lo = in->child(0)->toInt();
+    size_t hi = in->child(1)->toInt() - 1;          /*inclusive*/
     o <<"(bv-extract " <<hi <<" " <<lo <<" ";
     out_expr(o, in->child(2));
     o <<")";
@@ -618,9 +618,9 @@ void
 YicesSolver::out_sext(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 {
     ASSERT_require(in && 2==in->nchildren());
-    ASSERT_require(in->child(0)->is_known()); /*Yices bv-sign-extend needs a number for the second operand*/
-    ASSERT_require(in->child(0)->get_value() > in->child(1)->get_nbits());
-    size_t extend_by = in->child(0)->get_value() - in->child(1)->get_nbits();
+    ASSERT_require(in->child(0)->isNumber()); /*Yices bv-sign-extend needs a number for the second operand*/
+    ASSERT_require(in->child(0)->toInt() > in->child(1)->get_nbits());
+    size_t extend_by = in->child(0)->toInt() - in->child(1)->get_nbits();
     o <<"(bv-sign-extend  ";
     out_expr(o, in->child(1)); /*vector*/
     o <<" " <<extend_by <<")";
@@ -634,9 +634,9 @@ void
 YicesSolver::out_uext(std::ostream &o, const SymbolicExpr::InternalPtr &in)
 {
     ASSERT_require(in && 2==in->nchildren());
-    ASSERT_require(in->child(0)->is_known()); /*Yices mk-bv needs a number for the size operand*/
-    ASSERT_require(in->child(0)->get_value() > in->child(1)->get_nbits());
-    size_t extend_by = in->child(0)->get_value() - in->child(1)->get_nbits();
+    ASSERT_require(in->child(0)->isNumber()); /*Yices mk-bv needs a number for the size operand*/
+    ASSERT_require(in->child(0)->toInt() > in->child(1)->get_nbits());
+    size_t extend_by = in->child(0)->toInt() - in->child(1)->get_nbits();
 
     o <<"(bv-concat (mk-bv " <<extend_by <<" 0) ";
     out_expr(o, in->child(1));
@@ -650,11 +650,11 @@ YicesSolver::out_shift(std::ostream &o, const char *opname, const SymbolicExpr::
 {
     ASSERT_require(opname && *opname);
     ASSERT_require(in && 2==in->nchildren());
-    ASSERT_require(in->child(0)->is_known()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
+    ASSERT_require(in->child(0)->isNumber()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
 
     o <<"(" <<opname <<(newbits?"1":"0") <<" ";
     out_expr(o, in->child(1));
-    o <<" " <<in->child(0)->get_value() <<")";
+    o <<" " <<in->child(0)->toInt() <<")";
 }
 
 /** Output for arithmetic right shift.  Yices doesn't have a sign-extending right shift, therefore we implement it in terms of
@@ -672,8 +672,8 @@ YicesSolver::out_asr(std::ostream &o, const SymbolicExpr::InternalPtr &in)
     ASSERT_require(in && 2==in->nchildren());
     SymbolicExpr::Ptr vector = in->child(1);
     uint64_t vector_size = vector->get_nbits();
-    ASSERT_require(in->child(0)->is_known());
-    uint64_t shift_amount = in->child(0)->get_value();
+    ASSERT_require(in->child(0)->isNumber());
+    uint64_t shift_amount = in->child(0)->toInt();
 
     o <<"(ite (= (mk-bv 1 1) (bv-extract " <<(vector_size-1) <<" " <<(vector_size-1) <<" ";
     out_expr(o, vector);
@@ -835,9 +835,9 @@ YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn)
     if (termExprs.getOptional(tn).assignTo(retval)) {
         return retval;
     } else if (ln) {
-        if (ln->is_known()) {
+        if (ln->isNumber()) {
             if (ln->get_nbits() <= 64) {
-                retval = yices_mk_bv_constant(context, ln->get_nbits(), ln->get_value());
+                retval = yices_mk_bv_constant(context, ln->get_nbits(), ln->toInt());
             } else {
                 int tmp[ln->get_nbits()];
                 for (size_t i=0; i<ln->get_nbits(); ++i)
@@ -1003,11 +1003,11 @@ yices_expr
 YicesSolver::ctx_extract(const SymbolicExpr::InternalPtr &in)
 {
     ASSERT_require(in && 3==in->nchildren());
-    ASSERT_require(in->child(0)->is_known());
-    ASSERT_require(in->child(1)->is_known());
-    ASSERT_require(in->child(0)->get_value() < in->child(1)->get_value());
-    size_t lo = in->child(0)->get_value();
-    size_t hi = in->child(1)->get_value() - 1; /*inclusive*/
+    ASSERT_require(in->child(0)->isNumber());
+    ASSERT_require(in->child(1)->isNumber());
+    ASSERT_require(in->child(0)->toInt() < in->child(1)->toInt());
+    size_t lo = in->child(0)->toInt();
+    size_t hi = in->child(1)->toInt() - 1; /*inclusive*/
     yices_expr retval = yices_mk_bv_extract(context, hi, lo, ctx_expr(in->child(2)));
     ASSERT_not_null(retval);
     return retval;
@@ -1022,9 +1022,9 @@ yices_expr
 YicesSolver::ctx_sext(const SymbolicExpr::InternalPtr &in)
 {
     ASSERT_require(in && 2==in->nchildren());
-    ASSERT_require(in->child(0)->is_known());
-    ASSERT_require(in->child(0)->get_value() > in->child(1)->get_nbits());
-    unsigned extend_by = in->child(0)->get_value() - in->child(1)->get_nbits();
+    ASSERT_require(in->child(0)->isNumber());
+    ASSERT_require(in->child(0)->toInt() > in->child(1)->get_nbits());
+    unsigned extend_by = in->child(0)->toInt() - in->child(1)->get_nbits();
     yices_expr retval = yices_mk_bv_sign_extend(context, ctx_expr(in->child(1)), extend_by);
     ASSERT_not_null(retval);
     return retval;
@@ -1040,9 +1040,9 @@ yices_expr
 YicesSolver::ctx_uext(const SymbolicExpr::InternalPtr &in)
 {
     ASSERT_require(in && 2==in->nchildren());
-    ASSERT_require(in->child(0)->is_known()); /*Yices mk-bv needs a number for the size operand*/
-    ASSERT_require(in->child(0)->get_value() > in->child(1)->get_nbits());
-    size_t extend_by = in->child(0)->get_value() - in->child(1)->get_nbits();
+    ASSERT_require(in->child(0)->isNumber()); /*Yices mk-bv needs a number for the size operand*/
+    ASSERT_require(in->child(0)->toInt() > in->child(1)->get_nbits());
+    size_t extend_by = in->child(0)->toInt() - in->child(1)->get_nbits();
     yices_expr retval = yices_mk_bv_concat(context,
                                            yices_mk_bv_constant(context, extend_by, 0),
                                            ctx_expr(in->child(1)));
@@ -1057,8 +1057,8 @@ yices_expr
 YicesSolver::ctx_shift(ShiftAPI f, const SymbolicExpr::InternalPtr &in)
 {
     ASSERT_require(in && 2==in->nchildren());
-    ASSERT_require(in->child(0)->is_known()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
-    unsigned shift_amount = in->child(0)->get_value();
+    ASSERT_require(in->child(0)->isNumber()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
+    unsigned shift_amount = in->child(0)->toInt();
     yices_expr retval = (f)(context, ctx_expr(in->child(1)), shift_amount);
     ASSERT_not_null(retval);
     return retval;
@@ -1081,8 +1081,8 @@ YicesSolver::ctx_asr(const SymbolicExpr::InternalPtr &in)
     ASSERT_require(in && 2==in->nchildren());
     SymbolicExpr::Ptr vector = in->child(1);
     unsigned vector_size = vector->get_nbits();
-    ASSERT_require(in->child(0)->is_known());
-    unsigned shift_amount = in->child(0)->get_value();
+    ASSERT_require(in->child(0)->isNumber());
+    unsigned shift_amount = in->child(0)->toInt();
     yices_expr retval = yices_mk_ite(context, 
                                      yices_mk_eq(context, 
                                                  yices_mk_bv_constant(context, 1, 1), 

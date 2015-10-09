@@ -324,9 +324,9 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     if (inode && SymbolicExpr::OP_ITE==inode->get_operator()) {
         LeafPtr leaf1 = inode->child(1)->isLeafNode();
         LeafPtr leaf2 = inode->child(2)->isLeafNode();
-        if (leaf1!=NULL && leaf1->is_known() && leaf2!=NULL && leaf2->is_known()) {
-            rose_addr_t true_va = leaf1->get_value();
-            rose_addr_t false_va = leaf2->get_value();
+        if (leaf1!=NULL && leaf1->isNumber() && leaf2!=NULL && leaf2->isNumber()) {
+            rose_addr_t true_va = leaf1->toInt();
+            rose_addr_t false_va = leaf2->toInt();
             if (false_va != fallthrough_va)
                 std::swap(true_va, false_va);
             SgAsmFunction *true_func = getEnclosingNode<SgAsmFunction>(insns.get_value_or(true_va, NULL));
@@ -475,8 +475,8 @@ RiscOperators::llvm_term(const ExpressionPtr &expr)
     ASSERT_not_null(leaf);
     leaf = rewrites.get_value_or(leaf->hash(), leaf);
 
-    if (leaf->is_known()) {
-        int64_t sv = IntegerOps::signExtend2(leaf->get_value(), leaf->get_nbits(), 8*sizeof(int64_t));
+    if (leaf->isNumber()) {
+        int64_t sv = IntegerOps::signExtend2(leaf->toInt(), leaf->get_nbits(), 8*sizeof(int64_t));
         return StringUtility::numberToString(sv);
     }
 
@@ -640,10 +640,10 @@ ExpressionPtr
 RiscOperators::emit_logical_right_shift(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
     if (LeafPtr amount_leaf = amount->isLeafNode()) {
-        if (amount_leaf->is_known()) {
-            if (amount_leaf->get_value() == 0)
+        if (amount_leaf->isNumber()) {
+            if (amount_leaf->toInt() == 0)
                 return value;
-            if (amount_leaf->get_value() >= value->get_nbits())
+            if (amount_leaf->toInt() >= value->get_nbits())
                 return LeafNode::create_integer(value->get_nbits(), 0);
         }
     }
@@ -672,10 +672,10 @@ ExpressionPtr
 RiscOperators::emit_arithmetic_right_shift(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
     if (LeafPtr amount_leaf = amount->isLeafNode()) {
-        if (amount_leaf->is_known()) {
-            if (amount_leaf->get_value() == 0)
+        if (amount_leaf->isNumber()) {
+            if (amount_leaf->toInt() == 0)
                 return value;
-            if (amount_leaf->get_value() >= value->get_nbits())
+            if (amount_leaf->toInt() >= value->get_nbits())
                 return LeafNode::create_integer(value->get_nbits(), 0);
         }
     }
@@ -688,10 +688,10 @@ ExpressionPtr
 RiscOperators::emit_left_shift(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
     if (LeafPtr amount_leaf = amount->isLeafNode()) {
-        if (amount_leaf->is_known()) {
-            if (amount_leaf->get_value() == 0)
+        if (amount_leaf->isNumber()) {
+            if (amount_leaf->toInt() == 0)
                 return value;
-            if (amount_leaf->get_value() >= value->get_nbits())
+            if (amount_leaf->toInt() >= value->get_nbits())
                 return LeafNode::create_integer(value->get_nbits(), 0);
         }
     }
@@ -1229,7 +1229,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
 
     // The return value must be a constant or variable
     LeafPtr retval = cur_expr->isLeafNode();
-    ASSERT_require(retval!=NULL && (retval->is_known() || retval->is_variable()));
+    ASSERT_require(retval!=NULL && (retval->isNumber() || retval->is_variable()));
 
     // Add a rewrite rule so that next time we're asked to emit the same expression we can just emit the result without going
     // through all this work again.

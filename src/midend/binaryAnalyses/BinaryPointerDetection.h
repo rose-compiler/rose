@@ -38,7 +38,7 @@ public:
         SMTSolver *solver;
         MemoryCellComparator(const ValueType<32> &address, SMTSolver *solver=NULL): address(address), solver(solver) {}
         bool operator()(const MemoryCell &elmt) {
-            return elmt.address().get_expression()->must_equal(address.get_expression(), solver);
+            return elmt.address().get_expression()->mustEqual(address.get_expression(), solver);
         }
     };
 
@@ -102,7 +102,7 @@ public:
     // change is made).  Returns 1 if the merge operation changes the first argument, zero if no change is made.
     template<size_t nBits>
     size_t merge_value(ValueType<nBits> &inout, const ValueType<nBits> &other, SMTSolver *smt_solver) {
-        if (inout.get_expression()->must_equal(other.get_expression(), smt_solver))
+        if (inout.get_expression()->mustEqual(other.get_expression(), smt_solver))
             return 0;
         SymbolicExpr::LeafPtr inout_leaf = inout.get_expression()->isLeafNode();
         if (inout_leaf && inout_leaf->is_variable())
@@ -205,7 +205,7 @@ protected:
             SMTSolver *solver;
             Comparator(const ValueType<32> &addr, SMTSolver *solver=NULL): addr(addr), solver(solver) {}
             bool operator()(const Pointer &elmt) {
-                return elmt.address.get_expression()->must_equal(addr.get_expression(), solver);
+                return elmt.address.get_expression()->mustEqual(addr.get_expression(), solver);
             }
         };
 
@@ -364,7 +364,7 @@ protected:
             if (0==info->pass && !value.is_known() && reg == this->findRegister("eip", 32)) {
                 SymbolicExpr::InternalPtr inode = value.get_expression()->isInternalNode();
                 if (inode!=NULL && SymbolicExpr::OP_ITE==inode->get_operator() &&
-                    inode->child(1)->is_known() && inode->child(2)->is_known()) {
+                    inode->child(1)->isNumber() && inode->child(2)->isNumber()) {
                     // We must have processed a branch instruction.  Both directions of the branch are concrete addresses, so
                     // there is no code pointer involved here.
                 } else {
@@ -430,7 +430,7 @@ public:
         bool retval = false;
         SMTSolver *solver = YicesSolver::available_linkage() ? new YicesSolver : NULL;
         for (typename Pointers::const_iterator pi=info.pointers.begin(); pi!=info.pointers.end() && !retval; ++pi)
-            retval = va.get_expression()->must_equal(pi->address.get_expression(), solver);
+            retval = va.get_expression()->mustEqual(pi->address.get_expression(), solver);
         delete solver;
         return retval;
     }
@@ -530,9 +530,9 @@ public:
                     if (insn->get_kind()==x86_call)
                         successors.insert(insn->get_address() + insn->get_size());
                 } else if (NULL!=inode && SymbolicExpr::OP_ITE==inode->get_operator() &&
-                           inode->child(1)->is_known() && inode->child(2)->is_known()) {
-                    successors.insert(inode->child(1)->get_value()); // the if-true case
-                    successors.insert(inode->child(2)->get_value()); // the if-false case
+                           inode->child(1)->isNumber() && inode->child(2)->isNumber()) {
+                    successors.insert(inode->child(1)->toInt()); // the if-true case
+                    successors.insert(inode->child(2)->toInt()); // the if-false case
                 } else {
                     // we don't know the successors, so skip them (FIXME: This could be improved [Robb Matzke 2013-01-07])
                 }
