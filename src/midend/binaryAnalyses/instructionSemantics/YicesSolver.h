@@ -30,7 +30,7 @@ public:
     };
 
     /** Maps expression nodes to term names.  This map is populated for common subexpressions. */
-    typedef Sawyer::Container::Map<SymbolicExpr::TreeNodePtr, std::string> TermNames;
+    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, std::string> TermNames;
 
     /** Constructor prefers to use the Yices executable interface. See set_linkage(). */
     YicesSolver(): linkage(LM_NONE), context(NULL) {
@@ -38,7 +38,7 @@ public:
     }
     virtual ~YicesSolver();
 
-    virtual void generate_file(std::ostream&, const std::vector<SymbolicExpr::TreeNodePtr> &exprs, Definitions*);
+    virtual void generate_file(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*);
     virtual std::string get_command(const std::string &config_name);
 
     /** Returns a bit vector indicating what calling modes are available.  The bits are defined by the LinkMode enum. */
@@ -60,15 +60,15 @@ public:
      *  output containing "sat" or "unsat". However, Yices provides a library that can optionally be linked into ROSE, and
      *  uses this library if the link mode is LM_LIBRARY.
      *  @{ */
-    virtual Satisfiable satisfiable(const std::vector<SymbolicExpr::TreeNodePtr> &exprs);
-    virtual Satisfiable satisfiable(const SymbolicExpr::TreeNodePtr &tn) {
-        std::vector<SymbolicExpr::TreeNodePtr> exprs;
+    virtual Satisfiable satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs);
+    virtual Satisfiable satisfiable(const SymbolicExpr::Ptr &tn) {
+        std::vector<SymbolicExpr::Ptr> exprs;
         exprs.push_back(tn);
         return satisfiable(exprs);
     }
     /** @} */
 
-    virtual SymbolicExpr::TreeNodePtr evidence_for_name(const std::string&) /*overrides*/;
+    virtual SymbolicExpr::Ptr evidence_for_name(const std::string&) /*overrides*/;
     virtual std::vector<std::string> evidence_names() /*overrides*/;
     virtual void clear_evidence() /*overrides*/;
 
@@ -83,33 +83,33 @@ private:
     TermNames termNames;                                // only used by Yices executable translator; library uses termExprs
     void init();
 
-    static std::string get_typename(const SymbolicExpr::TreeNodePtr&);
+    static std::string get_typename(const SymbolicExpr::Ptr&);
 
     /* These out_*() functions convert a SymbolicExpr expression into text which is suitable as input to "yices"
      * executable. */
-    void out_comments(std::ostream&, const std::vector<SymbolicExpr::TreeNodePtr>&);
-    void out_common_subexpressions(std::ostream&, const std::vector<SymbolicExpr::TreeNodePtr>&);
-    void out_define(std::ostream&, const std::vector<SymbolicExpr::TreeNodePtr>&, Definitions*);
-    void out_assert(std::ostream&, const SymbolicExpr::TreeNodePtr&);
-    void out_number(std::ostream&, const SymbolicExpr::TreeNodePtr&);
-    void out_expr(std::ostream&, const SymbolicExpr::TreeNodePtr&);
-    void out_unary(std::ostream&, const char *opname, const SymbolicExpr::InternalNodePtr&);
-    void out_binary(std::ostream&, const char *opname, const SymbolicExpr::InternalNodePtr&);
-    void out_ite(std::ostream&, const SymbolicExpr::InternalNodePtr&);
-    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InternalNodePtr&, bool identity_elmt);
-    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InternalNodePtr&);
-    void out_extract(std::ostream&, const SymbolicExpr::InternalNodePtr&);
-    void out_sext(std::ostream&, const SymbolicExpr::InternalNodePtr&);
-    void out_uext(std::ostream&, const SymbolicExpr::InternalNodePtr&);
-    void out_shift(std::ostream&, const char *opname, const SymbolicExpr::InternalNodePtr&, bool newbits);
-    void out_asr(std::ostream&, const SymbolicExpr::InternalNodePtr&);
-    void out_zerop(std::ostream&, const SymbolicExpr::InternalNodePtr&);
-    void out_mult(std::ostream &o, const SymbolicExpr::InternalNodePtr&);
-    void out_read(std::ostream &o, const SymbolicExpr::InternalNodePtr&);
-    void out_write(std::ostream &o, const SymbolicExpr::InternalNodePtr&);
+    void out_comments(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
+    void out_common_subexpressions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
+    void out_define(std::ostream&, const std::vector<SymbolicExpr::Ptr>&, Definitions*);
+    void out_assert(std::ostream&, const SymbolicExpr::Ptr&);
+    void out_number(std::ostream&, const SymbolicExpr::Ptr&);
+    void out_expr(std::ostream&, const SymbolicExpr::Ptr&);
+    void out_unary(std::ostream&, const char *opname, const SymbolicExpr::InternalPtr&);
+    void out_binary(std::ostream&, const char *opname, const SymbolicExpr::InternalPtr&);
+    void out_ite(std::ostream&, const SymbolicExpr::InternalPtr&);
+    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InternalPtr&, bool identity_elmt);
+    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InternalPtr&);
+    void out_extract(std::ostream&, const SymbolicExpr::InternalPtr&);
+    void out_sext(std::ostream&, const SymbolicExpr::InternalPtr&);
+    void out_uext(std::ostream&, const SymbolicExpr::InternalPtr&);
+    void out_shift(std::ostream&, const char *opname, const SymbolicExpr::InternalPtr&, bool newbits);
+    void out_asr(std::ostream&, const SymbolicExpr::InternalPtr&);
+    void out_zerop(std::ostream&, const SymbolicExpr::InternalPtr&);
+    void out_mult(std::ostream &o, const SymbolicExpr::InternalPtr&);
+    void out_read(std::ostream &o, const SymbolicExpr::InternalPtr&);
+    void out_write(std::ostream &o, const SymbolicExpr::InternalPtr&);
 
 #ifdef ROSE_HAVE_LIBYICES
-    typedef Sawyer::Container::Map<SymbolicExpr::TreeNodePtr, yices_expr> TermExprs;
+    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, yices_expr> TermExprs;
     TermExprs termExprs;                                // for common subexpressions
 
     /* These ctx_*() functions build a Yices context object if Yices is linked into this executable. */
@@ -119,25 +119,25 @@ private:
     typedef yices_expr (*ShiftAPI)(yices_context, yices_expr, unsigned amount);
 
     yices_context context;
-    void ctx_common_subexpressions(const std::vector<SymbolicExpr::TreeNodePtr>&);
-    void ctx_define(const std::vector<SymbolicExpr::TreeNodePtr>&, Definitions*);
-    void ctx_assert(const SymbolicExpr::TreeNodePtr&);
-    yices_expr ctx_expr(const SymbolicExpr::TreeNodePtr&);
-    yices_expr ctx_unary(UnaryAPI, const SymbolicExpr::InternalNodePtr&);
-    yices_expr ctx_binary(BinaryAPI, const SymbolicExpr::InternalNodePtr&);
-    yices_expr ctx_ite(const SymbolicExpr::InternalNodePtr&);
-    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InternalNodePtr&, bool identity_elmt);
-    yices_expr ctx_la(NaryAPI, const SymbolicExpr::InternalNodePtr&, bool identity_elmt);
-    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InternalNodePtr&);
-    yices_expr ctx_extract(const SymbolicExpr::InternalNodePtr&);
-    yices_expr ctx_sext(const SymbolicExpr::InternalNodePtr&);
-    yices_expr ctx_uext(const SymbolicExpr::InternalNodePtr&);
-    yices_expr ctx_shift(ShiftAPI, const SymbolicExpr::InternalNodePtr&);
-    yices_expr ctx_asr(const SymbolicExpr::InternalNodePtr&);
-    yices_expr ctx_zerop(const SymbolicExpr::InternalNodePtr&);
-    yices_expr ctx_mult(const SymbolicExpr::InternalNodePtr&);
-    yices_expr ctx_read(const SymbolicExpr::InternalNodePtr&);
-    yices_expr ctx_write(const SymbolicExpr::InternalNodePtr&);
+    void ctx_common_subexpressions(const std::vector<SymbolicExpr::Ptr>&);
+    void ctx_define(const std::vector<SymbolicExpr::Ptr>&, Definitions*);
+    void ctx_assert(const SymbolicExpr::Ptr&);
+    yices_expr ctx_expr(const SymbolicExpr::Ptr&);
+    yices_expr ctx_unary(UnaryAPI, const SymbolicExpr::InternalPtr&);
+    yices_expr ctx_binary(BinaryAPI, const SymbolicExpr::InternalPtr&);
+    yices_expr ctx_ite(const SymbolicExpr::InternalPtr&);
+    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InternalPtr&, bool identity_elmt);
+    yices_expr ctx_la(NaryAPI, const SymbolicExpr::InternalPtr&, bool identity_elmt);
+    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InternalPtr&);
+    yices_expr ctx_extract(const SymbolicExpr::InternalPtr&);
+    yices_expr ctx_sext(const SymbolicExpr::InternalPtr&);
+    yices_expr ctx_uext(const SymbolicExpr::InternalPtr&);
+    yices_expr ctx_shift(ShiftAPI, const SymbolicExpr::InternalPtr&);
+    yices_expr ctx_asr(const SymbolicExpr::InternalPtr&);
+    yices_expr ctx_zerop(const SymbolicExpr::InternalPtr&);
+    yices_expr ctx_mult(const SymbolicExpr::InternalPtr&);
+    yices_expr ctx_read(const SymbolicExpr::InternalPtr&);
+    yices_expr ctx_write(const SymbolicExpr::InternalPtr&);
     
 #else
     void *context; /*unused for now*/

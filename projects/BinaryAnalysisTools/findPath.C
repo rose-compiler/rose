@@ -694,7 +694,6 @@ private:
      *  an address as opposed to a value stored across some addresses. */
     std::string commentForVariable(const BaseSemantics::SValuePtr &addr, const std::string &accessMode,
                                    size_t byteNumber=0, size_t nBytes=0) {
-        using namespace SymbolicExpr;
         std::string varComment = "first " + accessMode + " at ";
         if (pathInsnIndex_ != (size_t)(-1))
             varComment += "path position #" + StringUtility::numberToString(pathInsnIndex_) + ", ";
@@ -702,8 +701,8 @@ private:
 
         // Sometimes we can save useful information about the address.
         if (nBytes != 1) {
-            TreeNodePtr addrExpr = SymbolicSemantics::SValue::promote(addr)->get_expression();
-            if (LeafNodePtr addrLeaf = addrExpr->isLeafNode()) {
+            SymbolicExpr::Ptr addrExpr = SymbolicSemantics::SValue::promote(addr)->get_expression();
+            if (SymbolicExpr::LeafPtr addrLeaf = addrExpr->isLeafNode()) {
                 if (addrLeaf->is_known()) {
                     varComment += "\n";
                     if (nBytes > 1) {
@@ -712,12 +711,12 @@ private:
                     }
                     varComment += "at address " + addrLeaf->toString();
                 }
-            } else if (InternalNodePtr addrINode = addrExpr->isInternalNode()) {
-                if (addrINode->get_operator() == OP_ADD && addrINode->nchildren() == 2 &&
+            } else if (SymbolicExpr::InternalPtr addrINode = addrExpr->isInternalNode()) {
+                if (addrINode->get_operator() == SymbolicExpr::OP_ADD && addrINode->nchildren() == 2 &&
                     addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->is_variable() &&
                     addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->is_known()) {
-                    LeafNodePtr base = addrINode->child(0)->isLeafNode();
-                    LeafNodePtr offset = addrINode->child(1)->isLeafNode();
+                    SymbolicExpr::LeafPtr base = addrINode->child(0)->isLeafNode();
+                    SymbolicExpr::LeafPtr offset = addrINode->child(1)->isLeafNode();
                     varComment += "\n";
                     if (nBytes > 1) {
                         varComment += StringUtility::numberToString(byteNumber) + " of " +
@@ -796,7 +795,7 @@ public:
             return retval;                              // not called from dispatcher on behalf of an instruction
 
         // Save a description of the variable
-        SymbolicExpr::TreeNodePtr valExpr = SymbolicSemantics::SValue::promote(retval)->get_expression();
+        SymbolicExpr::Ptr valExpr = SymbolicSemantics::SValue::promote(retval)->get_expression();
         if (valExpr->isLeafNode() && valExpr->isLeafNode()->is_variable()) {
             std::string comment = commentForVariable(addr, "read");
             varComment(valExpr->isLeafNode()->toString(), comment);
@@ -827,7 +826,7 @@ public:
         Super::writeMemory(segreg, addr, value, cond);
 
         // Save a description of the variable
-        SymbolicExpr::TreeNodePtr valExpr = SymbolicSemantics::SValue::promote(value)->get_expression();
+        SymbolicExpr::Ptr valExpr = SymbolicSemantics::SValue::promote(value)->get_expression();
         if (valExpr->isLeafNode() && valExpr->isLeafNode()->is_variable()) {
             std::string comment = commentForVariable(addr, "write");
             varComment(valExpr->isLeafNode()->toString(), comment);
@@ -910,8 +909,6 @@ buildVirtualCpu(const P2::Partitioner &partitioner) {
 /** Process instructions for one basic block on the specified virtual CPU. */
 static void
 processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::DispatcherPtr &cpu, size_t pathInsnIndex) {
-    using namespace SymbolicExpr;
-
     ASSERT_not_null(bblock);
     
     // Update the path constraint "register"
@@ -1075,7 +1072,7 @@ insertCallSummary(P2::ControlFlowGraph &paths /*in,out*/, const P2::ControlFlowG
 
 static void
 printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pathsGraph, const P2::CfgPath &path,
-             size_t pathNumber, const std::vector<SymbolicExpr::TreeNodePtr> &pathConstraints, SMTSolver &solver,
+             size_t pathNumber, const std::vector<SymbolicExpr::Ptr> &pathConstraints, SMTSolver &solver,
              const RiscOperatorsPtr &ops) {
     std::cout <<"Found feasible path #" <<pathNumber
               <<" with " <<StringUtility::plural(path.nVertices(), "vertices", "vertex") <<".\n";
@@ -1133,7 +1130,7 @@ printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pat
             std::cout <<"    none\n";
         } else {
             size_t idx = 0;
-            BOOST_FOREACH (const SymbolicExpr::TreeNodePtr &constraint, pathConstraints)
+            BOOST_FOREACH (const SymbolicExpr::Ptr &constraint, pathConstraints)
                 std::cout <<"    #" <<std::setw(5) <<std::left <<idx++ <<" " <<*constraint <<"\n";
         }
     }
@@ -1150,7 +1147,7 @@ printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pat
 // Parse register post-condition strings and add them to the path constraints.
 static void
 incorporateRegisterPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops contains final path state
-                                  std::vector<SymbolicExpr::TreeNodePtr> &pathConstraints /*out*/) {
+                                  std::vector<SymbolicExpr::Ptr> &pathConstraints /*out*/) {
     ASSERT_not_null(ops);
     std::string inputName = "tool argument";
     BaseSemantics::RegisterStatePtr regState = ops->get_state()->get_register_state();
@@ -1173,7 +1170,7 @@ incorporateRegisterPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, //
             tokens.shift();
 
             // Remainder of input is the register's value
-            SymbolicExpr::TreeNodePtr rhs = SymbolicExprParser().parse(tokens);
+            SymbolicExpr::Ptr rhs = SymbolicExprParser().parse(tokens);
             if (tokens[0].type() != SymbolicExprParser::Token::NONE)
                 throw tokens[0].syntaxError("extra text after end of expression", inputName);
             if (regp->get_nbits() != rhs->get_nbits()) {
@@ -1185,7 +1182,7 @@ incorporateRegisterPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, //
 
             // Build the SMT constraint
             BaseSemantics::SValuePtr lhs = regState->readRegister(*regp, ops.get());
-            SymbolicExpr::TreeNodePtr expr =
+            SymbolicExpr::Ptr expr =
                 SymbolicExpr::InternalNode::create(1, SymbolicExpr::OP_EQ,
                                                    SymbolicSemantics::SValue::promote(lhs)->get_expression(), rhs);
             pathConstraints.push_back(expr);
@@ -1203,7 +1200,7 @@ incorporateRegisterPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, //
 // Parse memory post-condition strings and add them to the path constraints
 static void
 incorporateMemoryPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops contains final path state
-                                std::vector<SymbolicExpr::TreeNodePtr> &pathConstraints /*out*/) {
+                                std::vector<SymbolicExpr::Ptr> &pathConstraints /*out*/) {
     ASSERT_not_null(ops);
     std::string inputName = "tool argument";
     BaseSemantics::MemoryStatePtr memState = ops->get_state()->get_memory_state();
@@ -1213,7 +1210,7 @@ incorporateMemoryPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // o
             SymbolicExprParser::TokenStream tokens(input, inputName);
 
             // Memory address expression
-            SymbolicExpr::TreeNodePtr addrExpr = SymbolicExprParser().parse(tokens);
+            SymbolicExpr::Ptr addrExpr = SymbolicExprParser().parse(tokens);
 
             // Equal sign
             if (tokens[0].type() != SymbolicExprParser::Token::SYMBOL || tokens[0].lexeme() != "=")
@@ -1221,7 +1218,7 @@ incorporateMemoryPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // o
             tokens.shift();
 
             // Value stored at memory address
-            SymbolicExpr::TreeNodePtr rhsExpr = SymbolicExprParser().parse(tokens);
+            SymbolicExpr::Ptr rhsExpr = SymbolicExprParser().parse(tokens);
             if (tokens[0].type() != SymbolicExprParser::Token::NONE)
                 throw tokens[0].syntaxError("extra text after end of expression", inputName);
             if (rhsExpr->get_nbits() != 8) {
@@ -1233,7 +1230,7 @@ incorporateMemoryPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // o
             SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(ops->undefined_(8));
             addr->set_expression(addrExpr);
             BaseSemantics::SValuePtr lhs = memState->readMemory(addr, ops->undefined_(8), ops.get(), ops.get());
-            SymbolicExpr::TreeNodePtr expr =
+            SymbolicExpr::Ptr expr =
                 SymbolicExpr::InternalNode::create(1, SymbolicExpr::OP_EQ,
                                                    SymbolicSemantics::SValue::promote(lhs)->get_expression(), rhsExpr);
             pathConstraints.push_back(expr);
@@ -1251,7 +1248,7 @@ incorporateMemoryPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // o
 // Incorporate post conditions into the path constraints.
 static void
 incorporatePostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops contains final path state
-                          std::vector<SymbolicExpr::TreeNodePtr> &pathConstraints /*out*/) {
+                          std::vector<SymbolicExpr::Ptr> &pathConstraints /*out*/) {
     incorporateRegisterPostConditions(ops, pathConstraints);
     incorporateMemoryPostConditions(ops, pathConstraints);
 }
@@ -1261,7 +1258,7 @@ static void
 checkPostConditionSyntax(const P2::Partitioner &partitioner) {
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
-    std::vector<SymbolicExpr::TreeNodePtr> pathConstraints;
+    std::vector<SymbolicExpr::Ptr> pathConstraints;
     incorporatePostConditions(ops, pathConstraints);
 }
 
@@ -1270,7 +1267,6 @@ checkPostConditionSyntax(const P2::Partitioner &partitioner) {
 static SMTSolver::Satisfiable
 singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths, const P2::CfgPath &path,
                       bool atEndOfPath) {
-    using namespace rose::BinaryAnalysis::SymbolicExpr;     // TreeNode, InternalNode, LeafNode
     ASSERT_require(settings.searchMode == SEARCH_SINGLE_DFS);
 
     static int npaths = -1;
@@ -1291,7 +1287,7 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     setInitialState(cpu, path.frontVertex());
-    std::vector<SymbolicExpr::TreeNodePtr> pathConstraints;
+    std::vector<SymbolicExpr::Ptr> pathConstraints;
 
     size_t pathInsnIndex = 0;
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, path.edges()) {
@@ -1306,9 +1302,9 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
                 return SMTSolver::SAT_NO;
             }
         } else if (hasVirtualAddress(pathEdge->target())) {
-            LeafNodePtr targetVa = LeafNode::create_integer(ip->get_width(), virtualAddress(pathEdge->target()));
-            TreeNodePtr constraint = InternalNode::create(1, OP_EQ,
-                                                          targetVa, SymbolicSemantics::SValue::promote(ip)->get_expression());
+            SymbolicExpr::LeafPtr targetVa = SymbolicExpr::LeafNode::create_integer(ip->get_width(), virtualAddress(pathEdge->target()));
+            SymbolicExpr::Ptr constraint = SymbolicExpr::InternalNode::create(1, SymbolicExpr::OP_EQ, targetVa,
+                                                                              SymbolicSemantics::SValue::promote(ip)->get_expression());
             pathConstraints.push_back(constraint);
         }
     }
@@ -1580,7 +1576,7 @@ std::ostream& operator<<(std::ostream &out, const SinglePathProgress &x) {
 struct BfsForestVertex {
     P2::ControlFlowGraph::ConstEdgeIterator pathsEdge;  // last CFG edge in path
     BaseSemantics::StatePtr state;                      // state at entry to this edge
-    SymbolicExpr::TreeNodePtr constraint;               // optional path constraint
+    SymbolicExpr::Ptr constraint;                       // optional path constraint
     size_t nInsns;                                      // number of instructions to start of this edge
     size_t id;                                          // id number for debugging worklist
     BfsForestVertex(const P2::ControlFlowGraph::ConstEdgeIterator &pathsEdge, const BaseSemantics::StatePtr &state,
@@ -1631,8 +1627,6 @@ struct BfsContext {
 // Runs in a separate thread.
 static void
 singleThreadBfsWorker(BfsContext *ctx) {
-    using namespace rose::BinaryAnalysis::SymbolicExpr;
-
     YicesSolver solver;
     size_t lastTestedPathLength = 0;
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(ctx->partitioner);
@@ -1681,9 +1675,11 @@ singleThreadBfsWorker(BfsContext *ctx) {
         // If this edge is not a number and we know the EIP at the end of this path edge, then we have a path constraint that
         // needs to be solved.
         if (!abandonPrefix && !ip->is_number() && pathsEdge->target()->value().type() != P2::V_INDETERMINATE) {
-            LeafNodePtr targetVa = LeafNode::create_integer(ip->get_width(), pathsEdge->target()->value().address());
-            TreeNodePtr constraint = InternalNode::create(1, OP_EQ, targetVa,
-                                                          SymbolicSemantics::SValue::promote(ip)->get_expression());
+            SymbolicExpr::LeafPtr targetVa =
+                SymbolicExpr::LeafNode::create_integer(ip->get_width(), pathsEdge->target()->value().address());
+            SymbolicExpr::Ptr constraint =
+                SymbolicExpr::InternalNode::create(1, SymbolicExpr::OP_EQ, targetVa,
+                                                   SymbolicSemantics::SValue::promote(ip)->get_expression());
             bfsVertex->value().constraint = constraint;
             SAWYER_MESG(debug) <<"  path edge has constraint expression\n";
         }
@@ -1691,7 +1687,7 @@ singleThreadBfsWorker(BfsContext *ctx) {
         // Accumulate all constraints along this path and invoke the SMT solver.
         bool atEndOfPath = ctx->pathsEndVertices.find(pathsEdge->target()) != ctx->pathsEndVertices.end();
         SMTSolver::Satisfiable isFeasible = SMTSolver::SAT_UNKNOWN;
-        std::vector<TreeNodePtr> pathConstraints;
+        std::vector<SymbolicExpr::Ptr> pathConstraints;
         if (!abandonPrefix) {
             BfsForest::VertexIterator vertex=bfsVertex;
             lastTestedPathLength = 0;
@@ -1885,8 +1881,6 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
 static BaseSemantics::StatePtr
 mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
                      const BaseSemantics::StatePtr &s1, const BaseSemantics::StatePtr &s2) {
-    using namespace SymbolicExpr;
-
     ASSERT_not_null(ops);
     ASSERT_not_null(s2);
     if (s1 == NULL)
@@ -1926,10 +1920,11 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     // Merge memory states s1mem and s2mem into mergedMem
     BaseSemantics::SymbolicMemoryPtr s1mem = BaseSemantics::SymbolicMemory::promote(s1->get_memory_state());
     BaseSemantics::SymbolicMemoryPtr s2mem = BaseSemantics::SymbolicMemory::promote(s2->get_memory_state());
-    TreeNodePtr memExpr1 = s1mem->expression();
-    TreeNodePtr memExpr2 = s2mem->expression();
-    TreeNodePtr mergedExpr = InternalNode::create(memExpr1->get_nbits(), OP_ITE, s1Constraint->get_expression(),
-                                                  memExpr1, memExpr2);
+    SymbolicExpr::Ptr memExpr1 = s1mem->expression();
+    SymbolicExpr::Ptr memExpr2 = s2mem->expression();
+    SymbolicExpr::Ptr mergedExpr =
+        SymbolicExpr::InternalNode::create(memExpr1->get_nbits(), SymbolicExpr::OP_ITE, s1Constraint->get_expression(),
+                                           memExpr1, memExpr2);
     BaseSemantics::SymbolicMemoryPtr mergedMem = BaseSemantics::SymbolicMemory::promote(s1mem->clone());
     mergedMem->expression(mergedExpr);
 
@@ -2020,7 +2015,6 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
                      const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex,
                      const P2::CfgConstVertexSet &pathsEndVertices) {
     using namespace Sawyer::Container::Algorithm;
-    using namespace SymbolicExpr;
 #if 1 // [Robb P. Matzke 2015-05-09]
     TODO("[Robb P. Matzke 2015-05-09]");
 #else

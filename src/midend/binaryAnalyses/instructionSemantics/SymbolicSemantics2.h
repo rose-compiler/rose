@@ -40,11 +40,11 @@ namespace InstructionSemantics2 {       // documented elsewhere
 namespace SymbolicSemantics {
 
 typedef SymbolicExpr::LeafNode LeafNode;
-typedef SymbolicExpr::LeafNodePtr LeafNodePtr;
+typedef SymbolicExpr::LeafPtr LeafPtr;
 typedef SymbolicExpr::InternalNode InternalNode;
-typedef SymbolicExpr::InternalNodePtr InternalNodePtr;
-typedef SymbolicExpr::TreeNode TreeNode;
-typedef SymbolicExpr::TreeNodePtr TreeNodePtr;
+typedef SymbolicExpr::InternalPtr InternalPtr;
+typedef SymbolicExpr::Node ExprNode;
+typedef SymbolicExpr::Ptr ExprPtr;
 typedef std::set<SgAsmInstruction*> InsnSet;
 
 
@@ -66,7 +66,7 @@ public:
  *  Values of type type are used whenever a value needs to be stored, such as memory addresses, the values stored at those
  *  addresses, the values stored in registers, the operands for RISC operations, and the results of those operations.
  *
- *  An SValue points to an expression composed of the TreeNode types defined in BinarySymbolicExpr.h, and also stores the set of
+ *  An SValue points to an expression composed of the ExprNode types defined in BinarySymbolicExpr.h, and also stores the set of
  *  instructions that were used to define the value.  This provides a framework for some simple forms of value-based def-use
  *  analysis. See get_defining_instructions() for details.
  * 
@@ -132,7 +132,7 @@ public:
 class SValue: public BaseSemantics::SValue {
 protected:
     /** The symbolic expression for this value.  Symbolic expressions are reference counted. */
-    TreeNodePtr expr;
+    ExprPtr expr;
 
     /** Instructions defining this value.  Any instruction that saves the value to a register or memory location
      *  adds itself to the saved value. */
@@ -147,7 +147,7 @@ protected:
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
         expr = LeafNode::create_integer(nbits, number);
     }
-    SValue(TreeNodePtr expr): BaseSemantics::SValue(expr->get_nbits()) {
+    SValue(ExprPtr expr): BaseSemantics::SValue(expr->get_nbits()) {
         this->expr = expr;
     }
 
@@ -161,7 +161,7 @@ public:
 
     /** Instantiate a new data-flow bottom value of specified width. */
     static SValuePtr instance_bottom(size_t nbits) {
-        return SValuePtr(new SValue(LeafNode::create_variable(nbits, "", TreeNode::BOTTOM)));
+        return SValuePtr(new SValue(LeafNode::create_variable(nbits, "", ExprNode::BOTTOM)));
     }
 
     /** Instantiate a new undefined value of specified width. */
@@ -171,7 +171,7 @@ public:
 
     /** Instantiate a new unspecified value of specified width. */
     static SValuePtr instance_unspecified(size_t nbits) {
-        return SValuePtr(new SValue(LeafNode::create_variable(nbits, "", TreeNode::UNSPECIFIED)));
+        return SValuePtr(new SValue(LeafNode::create_variable(nbits, "", ExprNode::UNSPECIFIED)));
     }
 
     /** Instantiate a new concrete value. */
@@ -278,13 +278,13 @@ public:
     /** Returns the expression stored in this value.
      *
      *  Expressions are reference counted; the reference count of the returned expression is not incremented. */
-    virtual const TreeNodePtr& get_expression() const {
+    virtual const ExprPtr& get_expression() const {
         return expr;
     }
 
     /** Changes the expression stored in the value.
      * @{ */
-    virtual void set_expression(const TreeNodePtr &new_expr) {
+    virtual void set_expression(const ExprPtr &new_expr) {
         expr = new_expr;
     }
     virtual void set_expression(const SValuePtr &source) {
@@ -645,7 +645,7 @@ public:
     // New methods for constructing values, so we don't have to write so many SValue::promote calls in the RiscOperators
     // implementations.
 protected:
-    SValuePtr svalue_expr(const TreeNodePtr &expr, const InsnSet &defs=InsnSet()) {
+    SValuePtr svalue_expr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) {
         SValuePtr newval = SValue::promote(protoval->undefined_(expr->get_nbits()));
         newval->set_expression(expr);
         newval->set_defining_instructions(defs);

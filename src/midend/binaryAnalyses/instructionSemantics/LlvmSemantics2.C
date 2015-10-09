@@ -201,28 +201,28 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
         std::set<uint64_t> seen;
         T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
             : ops(ops), o(o), regs(regs), dictionary(dictionary) {}
-        virtual SymbolicExpr::VisitAction preVisit(const TreeNodePtr &node) ROSE_OVERRIDE {
+        virtual SymbolicExpr::VisitAction preVisit(const ExpressionPtr &node) ROSE_OVERRIDE {
             if (!seen.insert(node->hash()).second)
                 return SymbolicExpr::TRUNCATE; // already processed this same expression
             size_t width = node->get_nbits();
-            if (InternalNodePtr inode = node->isInternalNode()) {
+            if (InternalPtr inode = node->isInternalNode()) {
                 if (SymbolicExpr::OP_READ==inode->get_operator()) {
                     ASSERT_require(2==inode->nchildren());
                     ops->emit_assignment(o, ops->emit_memory_read(o, inode->child(1), width));
                 }
             } else {
-                LeafNodePtr leaf = node->isLeafNode();
+                LeafPtr leaf = node->isLeafNode();
                 ASSERT_not_null(leaf);
                 if (leaf->is_variable()) {
                     std::string comment = leaf->get_comment();
                     if (comment.size()>2 && 0==comment.substr(comment.size()-2).compare("_0"))
                         ops->add_variable(leaf);        // becomes a global variable if not already
-                    LeafNodePtr t1 = ops->emit_expression(o, leaf);// handles local vars, global vars, and undefs
+                    LeafPtr t1 = ops->emit_expression(o, leaf);// handles local vars, global vars, and undefs
                 }
             }
             return SymbolicExpr::CONTINUE;
         }
-        virtual SymbolicExpr::VisitAction postVisit(const TreeNodePtr&) ROSE_OVERRIDE {
+        virtual SymbolicExpr::VisitAction postVisit(const ExpressionPtr&) ROSE_OVERRIDE {
             return SymbolicExpr::CONTINUE;
         }
     } t1(this, o, regs, dictionary);
@@ -236,7 +236,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
 
     // Prerequisites for memory writes
     for (TreeNodes::const_iterator mwi=mem_writes.begin(); mwi!=mem_writes.end(); ++mwi) {
-        const TreeNodePtr mem_write = *mwi;
+        const ExpressionPtr mem_write = *mwi;
         mem_write->depth_first_traversal(t1);
     }
 
@@ -265,7 +265,7 @@ RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescript
         ASSERT_require(!name.empty());
         SValuePtr value = SValue::promote(regstate->readRegister(regs[i], this));
         o <<prefix() <<"; register " <<name <<" = " <<*value <<"\n";
-        TreeNodePtr t1 = emit_expression(o, value);
+        ExpressionPtr t1 = emit_expression(o, value);
         o <<prefix() <<"store " <<llvm_integer_type(t1->get_nbits()) <<" " <<llvm_term(t1)
           <<", " <<llvm_integer_type(t1->get_nbits()) <<"* @" <<name <<"\n";
     }
@@ -320,10 +320,10 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     // we must watch out for the case when the ROSE disassembler determined that the predicate is opaque and one of the target
     // addresses isn't valid.  This can happen because the ROSE disassembler might be using a more advanced analysis than we
     // use here.
-    InternalNodePtr inode = eip->get_expression()->isInternalNode();
+    InternalPtr inode = eip->get_expression()->isInternalNode();
     if (inode && SymbolicExpr::OP_ITE==inode->get_operator()) {
-        LeafNodePtr leaf1 = inode->child(1)->isLeafNode();
-        LeafNodePtr leaf2 = inode->child(2)->isLeafNode();
+        LeafPtr leaf1 = inode->child(1)->isLeafNode();
+        LeafPtr leaf2 = inode->child(2)->isLeafNode();
         if (leaf1!=NULL && leaf1->is_known() && leaf2!=NULL && leaf2->is_known()) {
             rose_addr_t true_va = leaf1->get_value();
             rose_addr_t false_va = leaf2->get_value();
@@ -340,7 +340,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
                 std::min(succs_va[0], succs_va[1])==std::min(true_va, false_va) &&
                 std::max(succs_va[0], succs_va[1])==std::max(true_va, false_va)) {
                 // This is a normal intra-function conditional branch that can be translated directly to an LLVM "br"
-                LeafNodePtr t1 = emit_expression(o, inode->child(0));
+                LeafPtr t1 = emit_expression(o, inode->child(0));
                 o <<prefix() <<"br i1 " <<llvm_term(t1)
                   <<", label %" <<addr_label(true_va) <<", label %" <<addr_label(false_va) <<"\n";
                 return;
@@ -351,7 +351,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
                 return;
             } else if (true_func==func && false_func==func) {
                 // CFG succs info is fishy, but both values of the "ite" are valid intra-function blocks
-                LeafNodePtr t1 = emit_expression(o, inode->child(0));
+                LeafPtr t1 = emit_expression(o, inode->child(0));
                 o <<prefix() <<"br i1 " <<llvm_term(t1)
                   <<", label %" <<addr_label(true_va) <<", label %" <<addr_label(false_va) <<"\n";
                 return;
@@ -375,8 +375,8 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
         std::vector<SgAsmInstruction*> func_insns = querySubTree<SgAsmInstruction>(func);
         if (func_insns.size()==1 && func_insns.front()==insn_x86 &&
             (insn_x86->get_kind() == x86_jmp || insn_x86->get_kind() == x86_farjmp)) {
-            LeafNodePtr t1 = emit_expression(o, eip);
-            LeafNodePtr t2 = next_temporary(32);        // pointer to the function
+            LeafPtr t1 = emit_expression(o, eip);
+            LeafPtr t2 = next_temporary(32);        // pointer to the function
             o <<prefix() <<llvm_lvalue(t2) <<" = inttoptr "
               <<llvm_integer_type(t1->get_nbits()) <<" " <<llvm_term(t1) <<" to void()*\n";
             o <<prefix() <<"call void " <<llvm_term(t2) <<"()\n";
@@ -389,8 +389,8 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     // all known functions.  FIXME[Robb P. Matzke 2014-01-09]: Detection of a function call is architecture dependent.
     if (SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(latest_insn)) {
         if (insn_x86->get_kind() == x86_call || insn_x86->get_kind() == x86_farcall) {
-            LeafNodePtr t1 = emit_expression(o, eip);
-            LeafNodePtr t2 = next_temporary(32);        // pointer to the function
+            LeafPtr t1 = emit_expression(o, eip);
+            LeafPtr t2 = next_temporary(32);        // pointer to the function
             std::string ret_label = addr_label(latest_insn->get_address() + latest_insn->get_size());
             o <<prefix() <<llvm_lvalue(t2) <<" = inttoptr "
               <<llvm_integer_type(t1->get_nbits()) <<" " <<llvm_term(t1) <<" to void()*\n";
@@ -404,7 +404,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     // since we don't actually know them we must enumerate all basic blocks of the function.  Note that LLVM 2.5 does not have
     // the "indirectbr" instruction, so we need to use the "switch" instruction.
     {
-        LeafNodePtr t1 = emit_expression(o, eip);
+        LeafPtr t1 = emit_expression(o, eip);
         std::string type = llvm_integer_type(t1->get_nbits());
         std::string dflt_label = next_label();
         o <<prefix() <<"switch " <<type <<" " <<llvm_term(t1) <<", label %" <<dflt_label <<" [";
@@ -426,12 +426,12 @@ void
 RiscOperators::emit_memory_writes(std::ostream &o)
 {
     for (size_t i=0; i<mem_writes.size(); ++i) {
-        InternalNodePtr inode = mem_writes[i]->isInternalNode();
+        InternalPtr inode = mem_writes[i]->isInternalNode();
         ASSERT_not_null(inode);
         ASSERT_require(inode->get_operator() == SymbolicExpr::OP_WRITE);
         ASSERT_require(inode->nchildren()==3);
-        TreeNodePtr addr = inode->child(1);
-        TreeNodePtr value = inode->child(2);
+        ExpressionPtr addr = inode->child(1);
+        ExpressionPtr value = inode->child(2);
         o <<prefix() <<"; store value=" <<*value <<" at address=" <<*addr <<"\n";
         emit_memory_write(o, addr, value);
     }
@@ -444,11 +444,11 @@ RiscOperators::make_current()
     mem_writes.clear();
 }
 
-LeafNodePtr
+LeafPtr
 RiscOperators::emit_expression(std::ostream &o, const SValuePtr &value)
 {
     ASSERT_not_null(value);
-    LeafNodePtr result = emit_expression(o, value->get_expression());
+    LeafPtr result = emit_expression(o, value->get_expression());
     ASSERT_not_null(result);
     return result;
 }
@@ -461,7 +461,7 @@ RiscOperators::llvm_integer_type(size_t width)
 }
 
 std::string
-RiscOperators::llvm_lvalue(const LeafNodePtr &var)
+RiscOperators::llvm_lvalue(const LeafPtr &var)
 {
     ASSERT_require(var && var->is_variable());
     ASSERT_require(!variables.exists(var->get_name()));         // LLVM assembly is SSA
@@ -469,9 +469,9 @@ RiscOperators::llvm_lvalue(const LeafNodePtr &var)
 }
 
 std::string
-RiscOperators::llvm_term(const TreeNodePtr &expr)
+RiscOperators::llvm_term(const ExpressionPtr &expr)
 {
-    LeafNodePtr leaf = expr->isLeafNode();
+    LeafPtr leaf = expr->isLeafNode();
     ASSERT_not_null(leaf);
     leaf = rewrites.get_value_or(leaf->hash(), leaf);
 
@@ -485,7 +485,7 @@ RiscOperators::llvm_term(const TreeNodePtr &expr)
     return name;
 }
 
-LeafNodePtr
+LeafPtr
 RiscOperators::next_temporary(size_t nbits)
 {
     return LeafNode::create_variable(nbits);
@@ -524,34 +524,34 @@ RiscOperators::function_label(SgAsmFunction *func)
 
 // Emit an LLVM instruction to zero-extend a value if necessary.  If the value is already the specified width then this is a
 // no-op.
-TreeNodePtr
-RiscOperators::emit_zero_extend(std::ostream &o, const TreeNodePtr &value, size_t nbits)
+ExpressionPtr
+RiscOperators::emit_zero_extend(std::ostream &o, const ExpressionPtr &value, size_t nbits)
 {
     ASSERT_not_null(value);
     ASSERT_require(value->get_nbits() <= nbits);
     if (value->get_nbits() == nbits)
         return value;
 
-    LeafNodePtr t1 = emit_expression(o, value);
+    LeafPtr t1 = emit_expression(o, value);
     std::string t1_type = llvm_integer_type(t1->get_nbits());
-    LeafNodePtr t2 = next_temporary(nbits);
+    LeafPtr t2 = next_temporary(nbits);
     std::string t2_type = llvm_integer_type(nbits);
     o <<prefix() <<llvm_lvalue(t2) <<" = zext " <<t1_type <<" " <<llvm_term(t1) <<" to " <<t2_type <<"\n";
     return t2;
 }
 
 // Emit an LLVM instruction to sign-extend a value.  If the value is already the specified width then this is a no-op.
-TreeNodePtr
-RiscOperators::emit_sign_extend(std::ostream &o, const TreeNodePtr &value, size_t nbits)
+ExpressionPtr
+RiscOperators::emit_sign_extend(std::ostream &o, const ExpressionPtr &value, size_t nbits)
 {
     ASSERT_not_null(value);
     ASSERT_require(value->get_nbits() <= nbits);
     if (value->get_nbits() == nbits)
         return value;
 
-    TreeNodePtr t1 = emit_expression(o, value);
+    ExpressionPtr t1 = emit_expression(o, value);
     std::string t1_type = llvm_integer_type(t1->get_nbits());
-    LeafNodePtr t2 = next_temporary(nbits);
+    LeafPtr t2 = next_temporary(nbits);
     std::string t2_type = llvm_integer_type(nbits);
     o <<prefix() <<llvm_lvalue(t2) <<" = sext " <<t1_type <<" " <<llvm_term(t1) <<" to " <<t2_type <<"\n";
     return t2;
@@ -559,17 +559,17 @@ RiscOperators::emit_sign_extend(std::ostream &o, const TreeNodePtr &value, size_
 
 // Emit an LLVM instruction to truncate a value if necessary.  If the value is already the specified width then this is
 // a no-op.
-TreeNodePtr
-RiscOperators::emit_truncate(std::ostream &o, const TreeNodePtr &value, size_t nbits)
+ExpressionPtr
+RiscOperators::emit_truncate(std::ostream &o, const ExpressionPtr &value, size_t nbits)
 {
     ASSERT_not_null(value);
     ASSERT_require(value->get_nbits() >= nbits);
     if (value->get_nbits() == nbits)
         return value;
 
-    TreeNodePtr t1 = emit_expression(o, value);
+    ExpressionPtr t1 = emit_expression(o, value);
     std::string t1_type = llvm_integer_type(t1->get_nbits());
-    LeafNodePtr t2 = next_temporary(nbits);
+    LeafPtr t2 = next_temporary(nbits);
     std::string t2_type = llvm_integer_type(nbits);
 #if 1 /*DEBUGGING [Robb P. Matzke 2014-01-15]*/
     ASSERT_require(0!=t1_type.compare(t2_type));
@@ -580,8 +580,8 @@ RiscOperators::emit_truncate(std::ostream &o, const TreeNodePtr &value, size_t n
 
 // Emit LLVM to make value the specified size by zero extending or truncating as necessary.  This is a no-op if the value
 // is already the desired size.
-TreeNodePtr
-RiscOperators::emit_unsigned_resize(std::ostream &o, const TreeNodePtr &value, size_t nbits)
+ExpressionPtr
+RiscOperators::emit_unsigned_resize(std::ostream &o, const ExpressionPtr &value, size_t nbits)
 {
     if (value->get_nbits()==nbits)
         return value;
@@ -591,16 +591,16 @@ RiscOperators::emit_unsigned_resize(std::ostream &o, const TreeNodePtr &value, s
 }
 
 // Emits an LLVM binary operator.  Both operands must be the same width.
-TreeNodePtr
-RiscOperators::emit_binary(std::ostream &o, const std::string &llvm_operator, const TreeNodePtr &a, const TreeNodePtr &b)
+ExpressionPtr
+RiscOperators::emit_binary(std::ostream &o, const std::string &llvm_operator, const ExpressionPtr &a, const ExpressionPtr &b)
 {
     ASSERT_not_null(a);
     ASSERT_not_null(b);
     ASSERT_require(a->get_nbits() == b->get_nbits());
     std::string type = llvm_integer_type(a->get_nbits());
-    TreeNodePtr t1 = emit_expression(o, a);
-    TreeNodePtr t2 = emit_expression(o, b);
-    LeafNodePtr t3 = next_temporary(a->get_nbits());
+    ExpressionPtr t1 = emit_expression(o, a);
+    ExpressionPtr t2 = emit_expression(o, b);
+    LeafPtr t3 = next_temporary(a->get_nbits());
     o <<prefix() <<llvm_lvalue(t3) <<" = " <<llvm_operator
       <<" " <<type <<" " <<llvm_term(t1) <<", " <<llvm_term(t2) <<"\n";
     return t3;
@@ -608,38 +608,38 @@ RiscOperators::emit_binary(std::ostream &o, const std::string &llvm_operator, co
 
 // Emits an LLVM binary operator.  The width of the result is the maximum width of the operands. The narrower of the two
 // operands is sign extended to the same width as the result.
-TreeNodePtr
-RiscOperators::emit_signed_binary(std::ostream &o, const std::string &llvm_operator, const TreeNodePtr &a, const TreeNodePtr &b)
+ExpressionPtr
+RiscOperators::emit_signed_binary(std::ostream &o, const std::string &llvm_operator, const ExpressionPtr &a, const ExpressionPtr &b)
 {
     ASSERT_not_null(a);
     ASSERT_not_null(b);
     size_t width = std::max(a->get_nbits(), b->get_nbits());
-    TreeNodePtr t1 = emit_sign_extend(o, a, width);
-    TreeNodePtr t2 = emit_sign_extend(o, b, width);
+    ExpressionPtr t1 = emit_sign_extend(o, a, width);
+    ExpressionPtr t2 = emit_sign_extend(o, b, width);
     return emit_binary(o, llvm_operator, t1, t2);
 }
 
 // Emits an LLVM binary operator.  The width of the result is the maximum width of the operands. The narrower of the two
 // operands is zero extended to the same width as the result.
-TreeNodePtr
+ExpressionPtr
 RiscOperators::emit_unsigned_binary(std::ostream &o, const std::string &llvm_operator,
-                                    const TreeNodePtr &a, const TreeNodePtr &b)
+                                    const ExpressionPtr &a, const ExpressionPtr &b)
 {
     ASSERT_not_null(a);
     ASSERT_not_null(b);
     size_t width = std::max(a->get_nbits(), b->get_nbits());
-    TreeNodePtr t1 = emit_zero_extend(o, a, width);
-    TreeNodePtr t2 = emit_zero_extend(o, b, width);
+    ExpressionPtr t1 = emit_zero_extend(o, a, width);
+    ExpressionPtr t2 = emit_zero_extend(o, b, width);
     return emit_binary(o, llvm_operator, t1, t2);
 }
 
 // Emit an LLVM logical left shift expression if necessary.  If the shift amount is the constant zero then this is a no-op.
 // LLVM requires that the shift amount be the same width as the value being shifted.  The shift amount is interpreted as
 // unsigned.
-TreeNodePtr
-RiscOperators::emit_logical_right_shift(std::ostream &o, const TreeNodePtr &value, const TreeNodePtr &amount)
+ExpressionPtr
+RiscOperators::emit_logical_right_shift(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
-    if (LeafNodePtr amount_leaf = amount->isLeafNode()) {
+    if (LeafPtr amount_leaf = amount->isLeafNode()) {
         if (amount_leaf->is_known()) {
             if (amount_leaf->get_value() == 0)
                 return value;
@@ -652,26 +652,26 @@ RiscOperators::emit_logical_right_shift(std::ostream &o, const TreeNodePtr &valu
 
 // Emit the LLVM instructions for a right shift that inserts set bits rather than zeros.  The amount could be non-constant,
 // so we need to be careful about how we do this.
-TreeNodePtr
-RiscOperators::emit_logical_right_shift_ones(std::ostream &o, const TreeNodePtr &value, const TreeNodePtr &amount)
+ExpressionPtr
+RiscOperators::emit_logical_right_shift_ones(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
-    TreeNodePtr t1 = emit_logical_right_shift(o, value, amount);
+    ExpressionPtr t1 = emit_logical_right_shift(o, value, amount);
     size_t width = std::max(value->get_nbits(), amount->get_nbits());
-    TreeNodePtr ones = InternalNode::create(width, SymbolicExpr::OP_ADD,
-                                            LeafNode::create_integer(width, value->get_nbits()),
-                                            InternalNode::create(width, SymbolicExpr::OP_NEGATE,
-                                                                 InternalNode::create(width, SymbolicExpr::OP_UEXTEND,
-                                                                                      LeafNode::create_integer(8, width),
-                                                                                      amount)));
+    ExpressionPtr ones = InternalNode::create(width, SymbolicExpr::OP_ADD,
+                                        LeafNode::create_integer(width, value->get_nbits()),
+                                        InternalNode::create(width, SymbolicExpr::OP_NEGATE,
+                                                             InternalNode::create(width, SymbolicExpr::OP_UEXTEND,
+                                                                                  LeafNode::create_integer(8, width),
+                                                                                  amount)));
     return emit_binary(o, "or", t1, ones);
 }
 
 // Emit an LLVM expression for arithmetic right shift.  If the shift amount is the constant zero then this is a no-op.  LLVM
 // requires that the shift amount be the same width as the value being shifted.  The shift amount is interpretted as unsigned.
-TreeNodePtr
-RiscOperators::emit_arithmetic_right_shift(std::ostream &o, const TreeNodePtr &value, const TreeNodePtr &amount)
+ExpressionPtr
+RiscOperators::emit_arithmetic_right_shift(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
-    if (LeafNodePtr amount_leaf = amount->isLeafNode()) {
+    if (LeafPtr amount_leaf = amount->isLeafNode()) {
         if (amount_leaf->is_known()) {
             if (amount_leaf->get_value() == 0)
                 return value;
@@ -684,10 +684,10 @@ RiscOperators::emit_arithmetic_right_shift(std::ostream &o, const TreeNodePtr &v
 
 // Emit an LLVM left-shift expression if necessary.  If the shift amount is the constant zero then this is a no-op. LLVM
 // requires that the shift amount be the same width as the value being shifted.  The shift amount is interpretted as unsigned.
-TreeNodePtr
-RiscOperators::emit_left_shift(std::ostream &o, const TreeNodePtr &value, const TreeNodePtr &amount)
+ExpressionPtr
+RiscOperators::emit_left_shift(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
-    if (LeafNodePtr amount_leaf = amount->isLeafNode()) {
+    if (LeafPtr amount_leaf = amount->isLeafNode()) {
         if (amount_leaf->is_known()) {
             if (amount_leaf->get_value() == 0)
                 return value;
@@ -701,12 +701,12 @@ RiscOperators::emit_left_shift(std::ostream &o, const TreeNodePtr &value, const 
 // Emits the LLVM equivalent of ROSE's OP_SHL1, which shifts 1 bits into the LSB side of the value. LLVM doesn't have an
 // operator that shifts set bits into the left side of a value, so we use the zero-inserting left shift operator, the invert
 // operator, and the bitwise OR operator instead.
-TreeNodePtr
-RiscOperators::emit_left_shift_ones(std::ostream &o, const TreeNodePtr &value, const TreeNodePtr &amount)
+ExpressionPtr
+RiscOperators::emit_left_shift_ones(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
     size_t width = value->get_nbits();
-    TreeNodePtr t1 = emit_left_shift(o, value, amount);
-    TreeNodePtr ones = emit_invert(o, emit_left_shift(o, LeafNode::create_integer(width, -1), amount));
+    ExpressionPtr t1 = emit_left_shift(o, value, amount);
+    ExpressionPtr ones = emit_invert(o, emit_left_shift(o, LeafNode::create_integer(width, -1), amount));
     return emit_binary(o, "or", t1, ones);
 }
 
@@ -717,17 +717,17 @@ RiscOperators::emit_left_shift_ones(std::ostream &o, const TreeNodePtr &value, c
 //    %2 = icmp eq i32 %1, 0                     ; is zero?
 //    %3 = call i32 @llvm.cttz.i32(i32 %1)       ; number of trailing zeros (not used if %1 is zero)
 //    %4 = select i1 %2, i32 0, i32 %3           ; result
-TreeNodePtr
-RiscOperators::emit_lssb(std::ostream &o, const TreeNodePtr &value)
+ExpressionPtr
+RiscOperators::emit_lssb(std::ostream &o, const ExpressionPtr &value)
 {
     size_t width = value->get_nbits();
-    LeafNodePtr zero = LeafNode::create_integer(width, 0);
-    LeafNodePtr t1 = emit_expression(o, value);
-    TreeNodePtr t2 = emit_compare(o, "icmp eq", t1, zero);
-    LeafNodePtr t3 = next_temporary(width);
+    LeafPtr zero = LeafNode::create_integer(width, 0);
+    LeafPtr t1 = emit_expression(o, value);
+    ExpressionPtr t2 = emit_compare(o, "icmp eq", t1, zero);
+    LeafPtr t3 = next_temporary(width);
     o <<prefix() <<llvm_lvalue(t3) <<" = call " <<llvm_integer_type(width)
       <<" @llvm.cttz.i" <<StringUtility::numberToString(width) <<"(" <<llvm_integer_type(width) <<" " <<llvm_term(t1) <<")\n";
-    TreeNodePtr t4 = emit_ite(o, t2, zero, t3);
+    ExpressionPtr t4 = emit_ite(o, t2, zero, t3);
     return t4;
 }
 
@@ -739,45 +739,45 @@ RiscOperators::emit_lssb(std::ostream &o, const TreeNodePtr &value)
 //    %3 = call i32 @llvm.ctlz.i32(i32 %1, i1 0) ; number of leading zeros (not used if %1 is zero)
 //    %4 = sub i32 31, %3                        ; result if value is non-zero
 //    %5 = select i1 %2, i32 0, i32 %4           ; final result
-TreeNodePtr
-RiscOperators::emit_mssb(std::ostream &o, const TreeNodePtr &value)
+ExpressionPtr
+RiscOperators::emit_mssb(std::ostream &o, const ExpressionPtr &value)
 {
     size_t width = value->get_nbits();
-    LeafNodePtr zero = LeafNode::create_integer(width, 0);
-    LeafNodePtr t1 = emit_expression(o, value);
-    TreeNodePtr t2 = emit_compare(o, "icmp eq", t1, zero);
-    LeafNodePtr t3 = next_temporary(width);
+    LeafPtr zero = LeafNode::create_integer(width, 0);
+    LeafPtr t1 = emit_expression(o, value);
+    ExpressionPtr t2 = emit_compare(o, "icmp eq", t1, zero);
+    LeafPtr t3 = next_temporary(width);
     o <<prefix() <<llvm_lvalue(t3) <<" = call " <<llvm_integer_type(width)
       <<" @llvm.ctlz.i" <<StringUtility::numberToString(width) <<"(" <<llvm_integer_type(width) <<" " <<llvm_term(t1) <<")\n";
-    TreeNodePtr t4 = emit_binary(o, "sub", LeafNode::create_integer(width, width-1), t3);
-    TreeNodePtr t5 = emit_ite(o, t2, zero, t4);
+    ExpressionPtr t4 = emit_binary(o, "sub", LeafNode::create_integer(width, width-1), t3);
+    ExpressionPtr t5 = emit_ite(o, t2, zero, t4);
     return t5;
 }
 
 // Emit LLVM instructions for an extract operator.  LLVM doesn't have a dedicated extract instruction, so we right shift
 // and truncate.
-TreeNodePtr
-RiscOperators::emit_extract(std::ostream &o, const TreeNodePtr &value, const TreeNodePtr &from, size_t result_nbits)
+ExpressionPtr
+RiscOperators::emit_extract(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &from, size_t result_nbits)
 {
     return emit_truncate(o, emit_logical_right_shift(o, value, from), result_nbits);
 }
 
 // Emit LLVM to invert all bits of a value.  LLVM doesn't have a dedicated invert operator, so we use xor instead.
-TreeNodePtr
-RiscOperators::emit_invert(std::ostream &o, const TreeNodePtr &value)
+ExpressionPtr
+RiscOperators::emit_invert(std::ostream &o, const ExpressionPtr &value)
 {
     return emit_binary(o, "xor", value, LeafNode::create_integer(value->get_nbits(), -1));
 }
 
 // Emit LLVM instructions for a left-associative binary operator. If only one operand is given, then simply return that operand
 // without doing anything.  When more than one operand is given they must all be the same width.
-TreeNodePtr
+ExpressionPtr
 RiscOperators::emit_left_associative(std::ostream &o, const std::string &llvm_operator, const TreeNodes &operands)
 {
     ASSERT_require(!operands.empty());
     const size_t width = operands[0]->get_nbits();
     std::string type = llvm_integer_type(width);
-    TreeNodePtr result = operands[0];
+    ExpressionPtr result = operands[0];
 
     for (size_t i=1; i<operands.size(); ++i) {
         ASSERT_require(operands[i]->get_nbits() == width);
@@ -788,7 +788,7 @@ RiscOperators::emit_left_associative(std::ostream &o, const std::string &llvm_op
 
 // Emits LLVM to concatenate operands. LLVM doesn't have a dedicated concatenation operator, so we must build the result with
 // left shift and bit-wise OR operators.  Operands are given from most significant to least significant.
-TreeNodePtr
+ExpressionPtr
 RiscOperators::emit_concat(std::ostream &o, TreeNodes operands)
 {
     ASSERT_require(!operands.empty());
@@ -800,12 +800,12 @@ RiscOperators::emit_concat(std::ostream &o, TreeNodes operands)
         result_width += operands[i]->get_nbits();
 
     std::reverse(operands.begin(), operands.end());     // we want least-significant to most-significant
-    TreeNodePtr result = operands[0];
+    ExpressionPtr result = operands[0];
     size_t shift = operands[0]->get_nbits();
     for (size_t i=1; i<operands.size(); ++i) {
-        TreeNodePtr t1 = emit_zero_extend(o, result, result_width);
-        TreeNodePtr t2 = emit_zero_extend(o, operands[i], result_width);
-        TreeNodePtr t3 = emit_left_shift(o, t2, LeafNode::create_integer(result_width, shift));
+        ExpressionPtr t1 = emit_zero_extend(o, result, result_width);
+        ExpressionPtr t2 = emit_zero_extend(o, operands[i], result_width);
+        ExpressionPtr t3 = emit_left_shift(o, t2, LeafNode::create_integer(result_width, shift));
         result = emit_binary(o, "or", t1, t3);
         shift += operands[i]->get_nbits();
     }
@@ -814,56 +814,56 @@ RiscOperators::emit_concat(std::ostream &o, TreeNodes operands)
 
 // Emits LLVM to compute a ratio.  LLVM requires that the numerator and denominator have the same width; ROSE only stipulates
 // that the return value has the same width as the numerator.
-TreeNodePtr
-RiscOperators::emit_signed_divide(std::ostream &o, const TreeNodePtr &numerator, const TreeNodePtr &denominator)
+ExpressionPtr
+RiscOperators::emit_signed_divide(std::ostream &o, const ExpressionPtr &numerator, const ExpressionPtr &denominator)
 {
     size_t width = std::max(numerator->get_nbits(), denominator->get_nbits());
-    TreeNodePtr t1 = emit_sign_extend(o, numerator, width);
-    TreeNodePtr t2 = emit_sign_extend(o, denominator, width);
-    TreeNodePtr t3 = emit_binary(o, "sdiv", t1, t2);
+    ExpressionPtr t1 = emit_sign_extend(o, numerator, width);
+    ExpressionPtr t2 = emit_sign_extend(o, denominator, width);
+    ExpressionPtr t3 = emit_binary(o, "sdiv", t1, t2);
     return emit_truncate(o, t3, numerator->get_nbits());
 }
 
 // Emits LLVM to compute a ratio.  LLVM requires that the numerator and denominator have the same width; ROSE only stipulates
 // that the return value has the same width as the numerator.
-TreeNodePtr
-RiscOperators::emit_unsigned_divide(std::ostream &o, const TreeNodePtr &numerator, const TreeNodePtr &denominator)
+ExpressionPtr
+RiscOperators::emit_unsigned_divide(std::ostream &o, const ExpressionPtr &numerator, const ExpressionPtr &denominator)
 {
     size_t width = std::max(numerator->get_nbits(), denominator->get_nbits());
-    TreeNodePtr t1 = emit_zero_extend(o, numerator, width);
-    TreeNodePtr t2 = emit_zero_extend(o, denominator, width);
-    TreeNodePtr t3 = emit_binary(o, "udiv", t1, t2);
+    ExpressionPtr t1 = emit_zero_extend(o, numerator, width);
+    ExpressionPtr t2 = emit_zero_extend(o, denominator, width);
+    ExpressionPtr t3 = emit_binary(o, "udiv", t1, t2);
     return emit_truncate(o, t3, numerator->get_nbits());
 }
 
 // Emits LLVM to compute a remainder.  In LLVM the width of the result is the same as the width of the numerator, but in ROSE
 // the width of the result is the same as the width of the denominator.
-TreeNodePtr
-RiscOperators::emit_signed_modulo(std::ostream &o, const TreeNodePtr &numerator, const TreeNodePtr &denominator)
+ExpressionPtr
+RiscOperators::emit_signed_modulo(std::ostream &o, const ExpressionPtr &numerator, const ExpressionPtr &denominator)
 {
     size_t width = std::max(numerator->get_nbits(), denominator->get_nbits());
-    TreeNodePtr t1 = emit_sign_extend(o, numerator, width);
-    TreeNodePtr t2 = emit_sign_extend(o, denominator, width);
-    TreeNodePtr t3 = emit_binary(o, "srem", t1, t2);
+    ExpressionPtr t1 = emit_sign_extend(o, numerator, width);
+    ExpressionPtr t2 = emit_sign_extend(o, denominator, width);
+    ExpressionPtr t3 = emit_binary(o, "srem", t1, t2);
     return emit_truncate(o, t3, denominator->get_nbits());
 }
 
 // Emits LLVM to compute a remainder.  In LLVM the width of the result is the same as the width of the numerator, but in ROSE
 // the width of the result is the same as the width of the denominator.
-TreeNodePtr
-RiscOperators::emit_unsigned_modulo(std::ostream &o, const TreeNodePtr &numerator, const TreeNodePtr &denominator)
+ExpressionPtr
+RiscOperators::emit_unsigned_modulo(std::ostream &o, const ExpressionPtr &numerator, const ExpressionPtr &denominator)
 {
     size_t width = std::max(numerator->get_nbits(), denominator->get_nbits());
-    TreeNodePtr t1 = emit_zero_extend(o, numerator, width);
-    TreeNodePtr t2 = emit_zero_extend(o, denominator, width);
-    TreeNodePtr t3 = emit_binary(o, "urem", t1, t2);
+    ExpressionPtr t1 = emit_zero_extend(o, numerator, width);
+    ExpressionPtr t2 = emit_zero_extend(o, denominator, width);
+    ExpressionPtr t3 = emit_binary(o, "urem", t1, t2);
     return emit_truncate(o, t3, denominator->get_nbits());
 }
 
 // Emits LLVM to compute the product of all the operands.  Multiply operations in LLVM are always sign-independent since the
 // product has the same width as the operands (which must all be the same width).  In ROSE, multiply takes any number of
 // operands and returns a product whose width is the sum of the operand widths, so we have to sign extend everything.
-TreeNodePtr
+ExpressionPtr
 RiscOperators::emit_signed_multiply(std::ostream &o, const TreeNodes &operands)
 {
     ASSERT_require(!operands.empty());
@@ -872,10 +872,10 @@ RiscOperators::emit_signed_multiply(std::ostream &o, const TreeNodes &operands)
     for (size_t i=0; i<operands.size(); ++i)
         result_width += operands[i]->get_nbits();
 
-    TreeNodePtr result = operands[0];
+    ExpressionPtr result = operands[0];
     for (size_t i=1; i<operands.size(); ++i) {
-        TreeNodePtr t1 = emit_sign_extend(o, result, result_width);
-        TreeNodePtr t2 = emit_sign_extend(o, operands[i], result_width);
+        ExpressionPtr t1 = emit_sign_extend(o, result, result_width);
+        ExpressionPtr t2 = emit_sign_extend(o, operands[i], result_width);
         result = emit_binary(o, "mul", t1, t2);
     }
 
@@ -885,7 +885,7 @@ RiscOperators::emit_signed_multiply(std::ostream &o, const TreeNodes &operands)
 // Emits LLVM to compute the product of all the operands.  Multiply operations in LLVM are always sign-independent since the
 // product has the same width as the operands (which must all be the same width).  In ROSE, multiply takes any number of
 // operands and returns a product whose width is the sum of the operand widths, so we have to zero extend everything.
-TreeNodePtr
+ExpressionPtr
 RiscOperators::emit_unsigned_multiply(std::ostream &o, const TreeNodes &operands)
 {
     ASSERT_require(!operands.empty());
@@ -894,10 +894,10 @@ RiscOperators::emit_unsigned_multiply(std::ostream &o, const TreeNodes &operands
     for (size_t i=0; i<operands.size(); ++i)
         result_width += operands[i]->get_nbits();
 
-    TreeNodePtr result = operands[0];
+    ExpressionPtr result = operands[0];
     for (size_t i=1; i<operands.size(); ++i) {
-        TreeNodePtr t1 = emit_zero_extend(o, result, result_width);
-        TreeNodePtr t2 = emit_zero_extend(o, operands[i], result_width);
+        ExpressionPtr t1 = emit_zero_extend(o, result, result_width);
+        ExpressionPtr t2 = emit_zero_extend(o, operands[i], result_width);
         result = emit_binary(o, "mul", t1, t2);
     }
 
@@ -910,15 +910,15 @@ RiscOperators::emit_unsigned_multiply(std::ostream &o, const TreeNodes &operands
 //     %4 = sub i32 32, %2      ; right shift amount
 //     %5 = lshr i32 %1, %4     ; result low bits
 //     %6 = or i32 %3, %5       ; result
-TreeNodePtr
-RiscOperators::emit_rotate_left(std::ostream &o, const TreeNodePtr &value, const TreeNodePtr &amount)
+ExpressionPtr
+RiscOperators::emit_rotate_left(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
-    TreeNodePtr t3 = emit_left_shift(o, value, amount);
-    TreeNodePtr t4 = emit_unsigned_binary(o, "sub",
-                                          LeafNode::create_integer(amount->get_nbits(), 32),
-                                          amount);
-    TreeNodePtr t5 = emit_arithmetic_right_shift(o, value, t4);
-    TreeNodePtr t6 = emit_unsigned_binary(o, "or", t3, t5);
+    ExpressionPtr t3 = emit_left_shift(o, value, amount);
+    ExpressionPtr t4 = emit_unsigned_binary(o, "sub",
+                                      LeafNode::create_integer(amount->get_nbits(), 32),
+                                      amount);
+    ExpressionPtr t5 = emit_arithmetic_right_shift(o, value, t4);
+    ExpressionPtr t6 = emit_unsigned_binary(o, "or", t3, t5);
     return t6;
 }
 
@@ -928,34 +928,34 @@ RiscOperators::emit_rotate_left(std::ostream &o, const TreeNodePtr &value, const
 //     %4 = sub i32 32, %2      ; left shift amount
 //     %5 = shl i32 %1, %4      ; result high bits
 //     %6 = or i32 %3, %5       ; result
-TreeNodePtr
-RiscOperators::emit_rotate_right(std::ostream &o, const TreeNodePtr &value, const TreeNodePtr &amount)
+ExpressionPtr
+RiscOperators::emit_rotate_right(std::ostream &o, const ExpressionPtr &value, const ExpressionPtr &amount)
 {
-    TreeNodePtr t3 = emit_arithmetic_right_shift(o, value, amount);
-    TreeNodePtr t4 = emit_unsigned_binary(o, "sub",
-                                          LeafNode::create_integer(amount->get_nbits(), 32),
-                                          amount);
-    TreeNodePtr t5 = emit_left_shift(o, value, t4);
-    TreeNodePtr t6 = emit_unsigned_binary(o, "or", t3, t5);
+    ExpressionPtr t3 = emit_arithmetic_right_shift(o, value, amount);
+    ExpressionPtr t4 = emit_unsigned_binary(o, "sub",
+                                      LeafNode::create_integer(amount->get_nbits(), 32),
+                                      amount);
+    ExpressionPtr t5 = emit_left_shift(o, value, t4);
+    ExpressionPtr t6 = emit_unsigned_binary(o, "or", t3, t5);
     return t6;
 }
 
 // Emits a comparison operation.  E.g., emit_compare(o, "icmp eq", %1, %2) will emit:
 //    %3 = icmp eq i32 %1, i32 %1; typeof(%3) == i1
-TreeNodePtr
-RiscOperators::emit_compare(std::ostream &o, const std::string &llvm_op, const TreeNodePtr &a, const TreeNodePtr &b)
+ExpressionPtr
+RiscOperators::emit_compare(std::ostream &o, const std::string &llvm_op, const ExpressionPtr &a, const ExpressionPtr &b)
 {
-    LeafNodePtr t1 = emit_expression(o, a);
-    LeafNodePtr t2 = emit_expression(o, b);
-    LeafNodePtr t3 = next_temporary(1);
+    LeafPtr t1 = emit_expression(o, a);
+    LeafPtr t2 = emit_expression(o, b);
+    LeafPtr t3 = next_temporary(1);
     o <<prefix() <<llvm_lvalue(t3) <<" = " <<llvm_op
       <<" " <<llvm_integer_type(t1->get_nbits()) <<" " <<llvm_term(t1) <<", " <<llvm_term(t2) <<"\n";
     return t3;
 }
 
 // Emits LLVM for an if-then-else construct.
-TreeNodePtr
-RiscOperators::emit_ite(std::ostream &o, const TreeNodePtr &cond, const TreeNodePtr &a, const TreeNodePtr &b)
+ExpressionPtr
+RiscOperators::emit_ite(std::ostream &o, const ExpressionPtr &cond, const ExpressionPtr &a, const ExpressionPtr &b)
 {
     ASSERT_not_null(cond);
     ASSERT_not_null(a);
@@ -964,29 +964,29 @@ RiscOperators::emit_ite(std::ostream &o, const TreeNodePtr &cond, const TreeNode
     ASSERT_require(a->get_nbits()==b->get_nbits());
 
     size_t width = a->get_nbits();
-    LeafNodePtr t1 = emit_expression(o, cond);
-    LeafNodePtr t2 = emit_expression(o, a);
-    LeafNodePtr t3 = emit_expression(o, b);
-    LeafNodePtr t4 = next_temporary(width);
+    LeafPtr t1 = emit_expression(o, cond);
+    LeafPtr t2 = emit_expression(o, a);
+    LeafPtr t3 = emit_expression(o, b);
+    LeafPtr t4 = next_temporary(width);
     o <<prefix() <<llvm_lvalue(t4) <<" = select i1 " <<llvm_term(t1)
       <<", " <<llvm_integer_type(width) <<" " <<llvm_term(t2)
       <<", " <<llvm_integer_type(width) <<" " <<llvm_term(t3) <<"\n";
     return t4;
 }
 
-TreeNodePtr
-RiscOperators::emit_memory_read(std::ostream &o, const TreeNodePtr &addr, size_t nbits)
+ExpressionPtr
+RiscOperators::emit_memory_read(std::ostream &o, const ExpressionPtr &addr, size_t nbits)
 {
     ASSERT_not_null(addr);
 
     // Convert ADDR to a pointer T2. The pointer type is "iNBITS*"
-    LeafNodePtr t1 = emit_expression(o, addr);
-    LeafNodePtr t2 = next_temporary(32);                // a 32-bit address
+    LeafPtr t1 = emit_expression(o, addr);
+    LeafPtr t2 = next_temporary(32);                // a 32-bit address
     o <<prefix() <<llvm_lvalue(t2) <<" = inttoptr " <<llvm_integer_type(t1->get_nbits()) <<" " <<llvm_term(t1)
       <<" to " <<llvm_integer_type(nbits) <<"*\n";
 
     // Dereference pointer T2 to get the return value.
-    LeafNodePtr t3 = next_temporary(nbits);
+    LeafPtr t3 = next_temporary(nbits);
     o <<prefix() <<llvm_lvalue(t3) <<" = load " <<llvm_integer_type(nbits) <<"* " <<llvm_term(t2) <<"\n";
     return t3;
 }
@@ -994,11 +994,11 @@ RiscOperators::emit_memory_read(std::ostream &o, const TreeNodePtr &addr, size_t
 // Reads a global variable. For instance,
 //     emit_global_read(o, "@ebp", 32)
 //         %1 = load i32* @ebp ; return value
-TreeNodePtr
+ExpressionPtr
 RiscOperators::emit_global_read(std::ostream &o, const std::string &varname, size_t nbits)
 {
     ASSERT_require(!varname.empty() && varname[0]=='@');
-    LeafNodePtr t1 = next_temporary(nbits);
+    LeafPtr t1 = next_temporary(nbits);
     o <<prefix() <<llvm_lvalue(t1) <<" = load " <<llvm_integer_type(nbits) <<"* " <<varname <<"\n";
     return t1;
 }
@@ -1009,46 +1009,46 @@ RiscOperators::emit_global_read(std::ostream &o, const std::string &varname, siz
 //     %3 = inttoptr i32 %1 to i16*
 //     store i16 %2, i16* %3
 void
-RiscOperators::emit_memory_write(std::ostream &o, const TreeNodePtr &addr, const TreeNodePtr &value)
+RiscOperators::emit_memory_write(std::ostream &o, const ExpressionPtr &addr, const ExpressionPtr &value)
 {
-    LeafNodePtr t1 = emit_expression(o, value);
-    LeafNodePtr t2 = emit_expression(o, addr);
+    LeafPtr t1 = emit_expression(o, value);
+    LeafPtr t2 = emit_expression(o, addr);
 
-    LeafNodePtr t3 = next_temporary(value->get_nbits());
+    LeafPtr t3 = next_temporary(value->get_nbits());
     o <<prefix() <<llvm_lvalue(t3) <<" = inttoptr " <<llvm_integer_type(addr->get_nbits()) <<" " <<llvm_term(t2)
       <<" to " <<llvm_integer_type(value->get_nbits()) <<"*\n";
     o <<prefix() <<"store " <<llvm_integer_type(value->get_nbits()) <<" " <<llvm_term(t1)
       <<", " <<llvm_integer_type(value->get_nbits()) <<"* " <<llvm_term(t3) <<"\n";
 }
 
-LeafNodePtr
-RiscOperators::emit_expression(std::ostream &o, const LeafNodePtr &leaf)
+LeafPtr
+RiscOperators::emit_expression(std::ostream &o, const LeafPtr &leaf)
 {
-    TreeNodePtr x = leaf;
+    ExpressionPtr x = leaf;
     return emit_expression(o, x);
 }
 
 // Emits LLVM for an expression and returns a terminal (variable or constant).  If the expression is already a terminal then
 // this method is a no-op.
-LeafNodePtr
-RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
+LeafPtr
+RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
 {
     ASSERT_not_null(orig_expr);
-    TreeNodePtr cur_expr = orig_expr;
+    ExpressionPtr cur_expr = orig_expr;
 
     // If we've seen this expression already, then use the replacement value (an LLVM variable).
     if (rewrites.exists(cur_expr->hash()))
         cur_expr = rewrites.get_one(cur_expr->hash());
 
     // Handle leaf nodes
-    if (LeafNodePtr leaf = cur_expr->isLeafNode()) {
+    if (LeafPtr leaf = cur_expr->isLeafNode()) {
         if (leaf->is_variable()) {
             std::string varname = get_variable(leaf);
             if (varname.empty()) {
                 // This is a reference to a ROSE variable that has no corresponding LLVM variable.  This can happen for things
                 // like the x86 TEST instruction, which leaves the AF register in an undefined state--if we then try to print
                 // the definition of AF we will encounter a ROSE variable with no LLVM variable.
-                LeafNodePtr t1 = next_temporary(leaf->get_nbits());
+                LeafPtr t1 = next_temporary(leaf->get_nbits());
                 o <<prefix() <<llvm_lvalue(t1) <<" = add " <<llvm_integer_type(leaf->get_nbits()) <<" undef, undef\n";
                 cur_expr = t1;
             } else if ('@'==varname[0]) {
@@ -1059,8 +1059,8 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
     
     // Emit LLVM for symbolic operators until the result is a leaf node (LLVM variable or constant). This causes recursive
     // calls to emit_expression().
-    while (InternalNodePtr inode = cur_expr->isInternalNode()) {
-        TreeNodePtr operator_result;
+    while (InternalPtr inode = cur_expr->isInternalNode()) {
+        ExpressionPtr operator_result;
         TreeNodes operands = inode->get_children();
         switch (inode->get_operator()) {
             case SymbolicExpr::OP_ADD:
@@ -1228,7 +1228,7 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
     }
 
     // The return value must be a constant or variable
-    LeafNodePtr retval = cur_expr->isLeafNode();
+    LeafPtr retval = cur_expr->isLeafNode();
     ASSERT_require(retval!=NULL && (retval->is_known() || retval->is_variable()));
 
     // Add a rewrite rule so that next time we're asked to emit the same expression we can just emit the result without going
@@ -1238,7 +1238,7 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
 }
 
 void
-RiscOperators::add_rewrite(const TreeNodePtr &from, const LeafNodePtr &to)
+RiscOperators::add_rewrite(const ExpressionPtr &from, const LeafPtr &to)
 {
     ASSERT_not_null(from);
     ASSERT_not_null(to);
@@ -1252,7 +1252,7 @@ RiscOperators::add_rewrite(const TreeNodePtr &from, const LeafNodePtr &to)
 }
 
 std::string
-RiscOperators::add_variable(const LeafNodePtr &var)
+RiscOperators::add_variable(const LeafPtr &var)
 {
     ASSERT_require(var!=NULL && var->is_variable());
     std::string name = get_variable(var);
@@ -1271,22 +1271,22 @@ RiscOperators::add_variable(const LeafNodePtr &var)
 }
 
 std::string
-RiscOperators::get_variable(const LeafNodePtr &var)
+RiscOperators::get_variable(const LeafPtr &var)
 {
     ASSERT_require(var!=NULL && var->is_variable());
     return variables.get_value_or(var->get_name(), "");
 }
 
-LeafNodePtr
-RiscOperators::emit_assignment(std::ostream &o, const TreeNodePtr &rhs)
+LeafPtr
+RiscOperators::emit_assignment(std::ostream &o, const ExpressionPtr &rhs)
 {
     ASSERT_not_null(rhs);
-    LeafNodePtr t1 = emit_expression(o, rhs);
+    LeafPtr t1 = emit_expression(o, rhs);
 
     if (t1->is_variable() && t1->get_comment().empty())
         return t1;
 
-    LeafNodePtr lhs = next_temporary(rhs->get_nbits());
+    LeafPtr lhs = next_temporary(rhs->get_nbits());
     o <<prefix() <<llvm_lvalue(lhs) <<" = " <<llvm_integer_type(rhs->get_nbits()) <<" " <<llvm_term(t1) <<"\n";
     add_rewrite(rhs, lhs);
     return lhs;

@@ -8,7 +8,7 @@ namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
 void
-SymbolicMemory::expression(const SymbolicExpr::TreeNodePtr &expr) {
+SymbolicMemory::expression(const SymbolicExpr::Ptr &expr) {
     ASSERT_not_null(expr);
     ASSERT_require2(!expr->isScalar(), "expression must be a memory state");
     mem_ = expr;
@@ -25,7 +25,6 @@ SymbolicMemory::clear() {
 
 SValuePtr
 SymbolicMemory::readMemory(const SValuePtr &address_, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
-    using namespace SymbolicExpr;
     SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(address_);
     if (address->get_width() != mem_->domainWidth() || dflt->get_width() != mem_->get_nbits()) {
         ASSERT_require2(mem_->isLeafNode() && mem_->isLeafNode()->is_memory(),
@@ -34,9 +33,9 @@ SymbolicMemory::readMemory(const SValuePtr &address_, const SValuePtr &dflt, Ris
                         StringUtility::numberToString(mem_->get_nbits()) + "-bit values");
 
         // We can finalize the domain and range widths for the memory now that they've been given.
-        mem_ = LeafNode::create_memory(address->get_width(), dflt->get_width());
+        mem_ = SymbolicExpr::LeafNode::create_memory(address->get_width(), dflt->get_width());
     }
-    TreeNodePtr resultExpr = InternalNode::create(8, OP_READ, mem_, address->get_expression());
+    SymbolicExpr::Ptr resultExpr = SymbolicExpr::InternalNode::create(8, SymbolicExpr::OP_READ, mem_, address->get_expression());
     SymbolicSemantics::SValuePtr retval = SymbolicSemantics::SValue::promote(dflt->copy());
     retval->set_expression(resultExpr);
     return retval;
@@ -44,7 +43,6 @@ SymbolicMemory::readMemory(const SValuePtr &address_, const SValuePtr &dflt, Ris
 
 void
 SymbolicMemory::writeMemory(const SValuePtr &address_, const SValuePtr &value_, RiscOperators *addrOps, RiscOperators *valOps) {
-    using namespace SymbolicExpr;
     SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(address_);
     SymbolicSemantics::SValuePtr value = SymbolicSemantics::SValue::promote(value_);
     if (address->get_width() != mem_->domainWidth() || value->get_width() != mem_->get_nbits()) {
@@ -54,10 +52,10 @@ SymbolicMemory::writeMemory(const SValuePtr &address_, const SValuePtr &value_, 
                         StringUtility::numberToString(mem_->get_nbits()) + "-bit values");
 
         // We can finalize the domain and range widths for the memory now that they've been given.
-        mem_ = LeafNode::create_memory(address->get_width(), value->get_width());
+        mem_ = SymbolicExpr::LeafNode::create_memory(address->get_width(), value->get_width());
     }
 
-    mem_ = InternalNode::create(mem_->get_nbits(), OP_WRITE, mem_, address->get_expression(), value->get_expression());
+    mem_ = SymbolicExpr::InternalNode::create(mem_->get_nbits(), SymbolicExpr::OP_WRITE, mem_, address->get_expression(), value->get_expression());
 }
 
 bool

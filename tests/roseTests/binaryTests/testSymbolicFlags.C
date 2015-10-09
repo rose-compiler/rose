@@ -8,7 +8,7 @@
 #include <rose.h>
 #include <BinarySymbolicExpr.h>
 
-using namespace rose::BinaryAnalysis::SymbolicExpr;
+using namespace rose::BinaryAnalysis;
 
 // Bit flags (low-order 16 bits are reserved for ROSE, so don't use them)
 static const unsigned UNDEFINED = 0x00010000;
@@ -20,21 +20,21 @@ testSetting() {
     std::cout <<"test setting of flags:\n";
 
     // The default is that no flags are set
-    TreeNodePtr e1 = LeafNode::create_variable(32, "e1");
+    SymbolicExpr::Ptr e1 = SymbolicExpr::LeafNode::create_variable(32, "e1");
     ASSERT_always_require(e1->get_flags() == 0);
 
     // Flags are always specified after a comment string
-    TreeNodePtr e2 = LeafNode::create_variable(32, "e2", UNDEFINED);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::LeafNode::create_variable(32, "e2", UNDEFINED);
     ASSERT_always_require(e2->get_flags() == UNDEFINED);
 
     // Flags can be specified for things other than variables
-    TreeNodePtr e3 = LeafNode::create_integer(32, 0, "e3", INVALID);
+    SymbolicExpr::Ptr e3 = SymbolicExpr::LeafNode::create_integer(32, 0, "e3", INVALID);
     ASSERT_always_require(e3->get_flags() == INVALID);
-    TreeNodePtr e4 = LeafNode::create_constant(Sawyer::Container::BitVector(128), "e4", UNDEFINED|INVALID);
+    SymbolicExpr::Ptr e4 = SymbolicExpr::LeafNode::create_constant(Sawyer::Container::BitVector(128), "e4", UNDEFINED|INVALID);
     ASSERT_always_require(e4->get_flags() == (UNDEFINED|INVALID));
-    TreeNodePtr e5 = LeafNode::create_boolean(true, "e5", UNDEFINED);
+    SymbolicExpr::Ptr e5 = SymbolicExpr::LeafNode::create_boolean(true, "e5", UNDEFINED);
     ASSERT_always_require(e5->get_flags() == UNDEFINED);
-    TreeNodePtr e6 = LeafNode::create_memory(32, 32, "e6", INVALID);
+    SymbolicExpr::Ptr e6 = SymbolicExpr::LeafNode::create_memory(32, 32, "e6", INVALID);
     ASSERT_always_require(e6->get_flags() == INVALID);
 }
 
@@ -42,9 +42,9 @@ testSetting() {
 static void
 testInternal() {
     std::cout <<"test internal internal nodes:\n";
-    TreeNodePtr e1 = LeafNode::create_variable(32, "e1", UNDEFINED);
-    TreeNodePtr e2 = LeafNode::create_variable(32, "e2", INVALID);
-    TreeNodePtr e3 = InternalNode::create(32, OP_ADD, e1, e2);
+    SymbolicExpr::Ptr e1 = SymbolicExpr::LeafNode::create_variable(32, "e1", UNDEFINED);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::LeafNode::create_variable(32, "e2", INVALID);
+    SymbolicExpr::Ptr e3 = SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_ADD, e1, e2);
     ASSERT_always_require(e3->get_flags() == (UNDEFINED|INVALID));
 }
 
@@ -52,9 +52,9 @@ testInternal() {
 static void
 testPrinting() {
     std::cout <<"test printing flags:\n";
-    TreeNodePtr e1 = InternalNode::create(32, OP_ADD,
-                                          LeafNode::create_variable(32, "a", UNDEFINED),
-                                          LeafNode::create_variable(32, "b", INVALID));
+    SymbolicExpr::Ptr e1 = SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_ADD,
+                                                              SymbolicExpr::LeafNode::create_variable(32, "a", UNDEFINED),
+                                                              SymbolicExpr::LeafNode::create_variable(32, "b", INVALID));
     std::cout <<"  e1 = " <<*e1 <<"\n";
 }
 
@@ -62,10 +62,10 @@ testPrinting() {
 static void
 testDiscardRule() {
     std::cout <<"test simplification discard rule:\n";
-    TreeNodePtr e1 = LeafNode::create_variable(32, "e1", UNDEFINED);
-    TreeNodePtr e2 = InternalNode::create(32, OP_NEGATE, e1);
-    TreeNodePtr e3 = LeafNode::create_variable(32, "e3", INVALID);
-    TreeNodePtr e4 = InternalNode::create(32, OP_ADD, e1, e2, e3);
+    SymbolicExpr::Ptr e1 = SymbolicExpr::LeafNode::create_variable(32, "e1", UNDEFINED);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_NEGATE, e1);
+    SymbolicExpr::Ptr e3 = SymbolicExpr::LeafNode::create_variable(32, "e3", INVALID);
+    SymbolicExpr::Ptr e4 = SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_ADD, e1, e2, e3);
     std::cout <<"  e4 = " <<*e4 <<"\n";
     ASSERT_always_require(e4->get_flags() == INVALID);
 
@@ -75,16 +75,16 @@ testDiscardRule() {
 static void
 testNewExprRule() {
     std::cout <<"test simplification new expression rule:\n";
-    TreeNodePtr e1 = LeafNode::create_variable(32, "e1", UNDEFINED);
-    TreeNodePtr e2 = InternalNode::create(32, OP_ADD, e1, InternalNode::create(32, OP_NEGATE, e1));
+    SymbolicExpr::Ptr e1 = SymbolicExpr::LeafNode::create_variable(32, "e1", UNDEFINED);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_ADD, e1, SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_NEGATE, e1));
     std::cout <<"  e2 = " <<*e2 <<"\n";
     ASSERT_always_require(e2->get_flags() == 0);
 
-    TreeNodePtr e3 = InternalNode::create(32, OP_ADD, e1, InternalNode::create(32, OP_INVERT, e1));
+    SymbolicExpr::Ptr e3 = SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_ADD, e1, SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_INVERT, e1));
     std::cout <<"  e3 = " <<*e3 <<"\n";
     ASSERT_always_require(e3->get_flags() == 0);
 
-    TreeNodePtr e4 = InternalNode::create(32, OP_BV_XOR, e1, e1);
+    SymbolicExpr::Ptr e4 = SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_BV_XOR, e1, e1);
     std::cout <<"  e4 = " <<*e4 <<"\n";
     ASSERT_always_require(e4->get_flags() == 0);
 }
@@ -94,9 +94,9 @@ testNewExprRule() {
 static void
 testFoldingRule() {
     std::cout <<"test simplification folding rule:\n";
-    TreeNodePtr e1 = LeafNode::create_integer(32, 7, "e1", UNDEFINED);
-    TreeNodePtr e2 = LeafNode::create_integer(32, 8, "e2", INVALID);
-    TreeNodePtr e3 = InternalNode::create(32, OP_ADD, e1, e2);
+    SymbolicExpr::Ptr e1 = SymbolicExpr::LeafNode::create_integer(32, 7, "e1", UNDEFINED);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::LeafNode::create_integer(32, 8, "e2", INVALID);
+    SymbolicExpr::Ptr e3 = SymbolicExpr::InternalNode::create(32, SymbolicExpr::OP_ADD, e1, e2);
     std::cout <<"  e3 = " <<*e3 <<"\n";
     ASSERT_always_require(e3->get_flags() == (UNDEFINED|INVALID));
 }
@@ -105,8 +105,8 @@ testFoldingRule() {
 static void
 testHashing() {
     std::cout <<"test hashing:\n";
-    TreeNodePtr e1 = LeafNode::create_integer(32, 7, "", 0);
-    TreeNodePtr e2 = LeafNode::create_integer(32, 7, "", UNDEFINED);
+    SymbolicExpr::Ptr e1 = SymbolicExpr::LeafNode::create_integer(32, 7, "", 0);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::LeafNode::create_integer(32, 7, "", UNDEFINED);
     ASSERT_always_require(e1->hash() != e2->hash());
 }
 
@@ -115,19 +115,19 @@ testHashing() {
 static void
 testRelationalFolding() {
     std::cout <<"test relational folding:\n";
-    TreeNodePtr e1 = LeafNode::create_integer(32, 7, "e1", UNDEFINED);
-    TreeNodePtr e2 = LeafNode::create_integer(32, 8, "e2", INVALID);
+    SymbolicExpr::Ptr e1 = SymbolicExpr::LeafNode::create_integer(32, 7, "e1", UNDEFINED);
+    SymbolicExpr::Ptr e2 = SymbolicExpr::LeafNode::create_integer(32, 8, "e2", INVALID);
 
-    TreeNodePtr e3 = InternalNode::create(1, OP_ULT, e1, e2);
+    SymbolicExpr::Ptr e3 = SymbolicExpr::InternalNode::create(1, SymbolicExpr::OP_ULT, e1, e2);
     std::cout <<"  e3 = " <<*e3 <<"\n";
     ASSERT_always_require(e3->get_flags() == (UNDEFINED|INVALID));
 
-    TreeNodePtr e4 = InternalNode::create(1, OP_ULT, e2, e1);
+    SymbolicExpr::Ptr e4 = SymbolicExpr::InternalNode::create(1, SymbolicExpr::OP_ULT, e2, e1);
     std::cout <<"  e4 = " <<*e4 <<"\n";
     ASSERT_always_require(e4->get_flags() == (UNDEFINED|INVALID));
 
-    TreeNodePtr e5 = LeafNode::create_variable(32, "e5", UNDEFINED);
-    TreeNodePtr e6 = InternalNode::create(1, OP_EQ, e5, e5);
+    SymbolicExpr::Ptr e5 = SymbolicExpr::LeafNode::create_variable(32, "e5", UNDEFINED);
+    SymbolicExpr::Ptr e6 = SymbolicExpr::InternalNode::create(1, SymbolicExpr::OP_EQ, e5, e5);
     std::cout <<"  e6 = " <<*e6 <<"\n";
     ASSERT_always_require(e6->get_flags() == UNDEFINED);
 }

@@ -39,11 +39,11 @@ namespace InstructionSemantics {    // documented elsewhere
 namespace SymbolicSemantics {
 
 typedef SymbolicExpr::LeafNode LeafNode;
-typedef SymbolicExpr::LeafNodePtr LeafNodePtr;
+typedef SymbolicExpr::LeafPtr LeafNodePtr;
 typedef SymbolicExpr::InternalNode InternalNode;
-typedef SymbolicExpr::InternalNodePtr InternalNodePtr;
-typedef SymbolicExpr::TreeNode TreeNode;
-typedef SymbolicExpr::TreeNodePtr TreeNodePtr;
+typedef SymbolicExpr::InternalPtr InternalNodePtr;
+typedef SymbolicExpr::Node TreeNode;
+typedef SymbolicExpr::Ptr TreeNodePtr;
 typedef std::set<SgAsmInstruction*> InsnSet;
 
 /** Formatter for symbolic values. */

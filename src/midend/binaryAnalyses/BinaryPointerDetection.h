@@ -104,7 +104,7 @@ public:
     size_t merge_value(ValueType<nBits> &inout, const ValueType<nBits> &other, SMTSolver *smt_solver) {
         if (inout.get_expression()->must_equal(other.get_expression(), smt_solver))
             return 0;
-        SymbolicExpr::LeafNodePtr inout_leaf = inout.get_expression()->isLeafNode();
+        SymbolicExpr::LeafPtr inout_leaf = inout.get_expression()->isLeafNode();
         if (inout_leaf && inout_leaf->is_variable())
             return 0;
         inout.set_expression(ValueType<nBits>()); // set expression without affecting defining instructions
@@ -362,7 +362,7 @@ protected:
         template<size_t Len>
         void writeRegister(const RegisterDescriptor &reg, const ValueType<Len> &value) {
             if (0==info->pass && !value.is_known() && reg == this->findRegister("eip", 32)) {
-                SymbolicExpr::InternalNodePtr inode = value.get_expression()->isInternalNode();
+                SymbolicExpr::InternalPtr inode = value.get_expression()->isInternalNode();
                 if (inode!=NULL && SymbolicExpr::OP_ITE==inode->get_operator() &&
                     inode->child(1)->is_known() && inode->child(2)->is_known()) {
                     // We must have processed a branch instruction.  Both directions of the branch are concrete addresses, so
@@ -521,7 +521,7 @@ public:
                 // Find control flow successors
                 std::set<rose_addr_t> successors;
                 ValueType<32> eip_value = policy.template readRegister<32>(semantics.REG_EIP);
-                SymbolicExpr::InternalNodePtr inode = eip_value.get_expression()->isInternalNode();
+                SymbolicExpr::InternalPtr inode = eip_value.get_expression()->isInternalNode();
                 if (eip_value.is_known()) {
                     successors.insert(eip_value.known_value());
                     // assume all CALLs return since we might not actually traverse the called function.  If we had done a full

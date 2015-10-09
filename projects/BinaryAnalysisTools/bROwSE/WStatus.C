@@ -314,7 +314,7 @@ WStatus::redraw() {
 
     // Semantics info
     {
-        Sawyer::SynchronizedPoolAllocator &exprPool = BinaryAnalysis::SymbolicExpr::TreeNode::poolAllocator();
+        Sawyer::SynchronizedPoolAllocator &exprPool = BinaryAnalysis::SymbolicExpr::Node::poolAllocator();
         std::pair<size_t, size_t> exprAllocs = exprPool.nAllocated();
         wSemanticsAllocated_->setText(numberToString(exprAllocs.first));
         wSemanticsReserved_->setText(numberToString(exprAllocs.second));

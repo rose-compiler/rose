@@ -48,13 +48,13 @@ public:
     /** Determines if expressions are trivially satisfiable or unsatisfiable.  If all expressions are known 1-bit values that
      *  are true, then this function returns SAT_YES.  If any expression is a known 1-bit value that is false, then this
      *  function returns SAT_NO.  Otherwise this function returns SAT_UNKNOWN. */
-    virtual Satisfiable trivially_satisfiable(const std::vector<SymbolicExpr::TreeNodePtr> &exprs);
+    virtual Satisfiable trivially_satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs);
 
     /** Determines if the specified expressions are all satisfiable, unsatisfiable, or unknown.
      * @{ */
-    virtual Satisfiable satisfiable(const SymbolicExpr::TreeNodePtr&);
-    virtual Satisfiable satisfiable(const std::vector<SymbolicExpr::TreeNodePtr>&);
-    virtual Satisfiable satisfiable(std::vector<SymbolicExpr::TreeNodePtr>, const SymbolicExpr::TreeNodePtr&);
+    virtual Satisfiable satisfiable(const SymbolicExpr::Ptr&);
+    virtual Satisfiable satisfiable(const std::vector<SymbolicExpr::Ptr>&);
+    virtual Satisfiable satisfiable(std::vector<SymbolicExpr::Ptr>, const SymbolicExpr::Ptr&);
     /** @} */
 
 
@@ -63,13 +63,13 @@ public:
      *  a value for the specified bitvector variable that satisfies the expression in conjunction with the other evidence. Not
      *  all SMT solvers can return this information.  Returns the null pointer if no evidence is available for the variable.
      * @{ */
-    virtual SymbolicExpr::TreeNodePtr evidence_for_variable(uint64_t varno) {
+    virtual SymbolicExpr::Ptr evidence_for_variable(uint64_t varno) {
         char buf[64];
         snprintf(buf, sizeof buf, "v%" PRIu64, varno);
         return evidence_for_name(buf);
     }
-    virtual SymbolicExpr::TreeNodePtr evidence_for_variable(const SymbolicExpr::TreeNodePtr &var) {
-        SymbolicExpr::LeafNodePtr ln = var->isLeafNode();
+    virtual SymbolicExpr::Ptr evidence_for_variable(const SymbolicExpr::Ptr &var) {
+        SymbolicExpr::LeafPtr ln = var->isLeafNode();
         ASSERT_require(ln && !ln->is_known());
         return evidence_for_variable(ln->get_name());
     }
@@ -79,14 +79,14 @@ public:
      *  a value for the specified memory address that satisfies the expression in conjunction with the other evidence. Not
      *  all SMT solvers can return this information. Returns the null pointer if no evidence is available for the memory
      *  address. */
-    virtual SymbolicExpr::TreeNodePtr evidence_for_address(uint64_t addr);
+    virtual SymbolicExpr::Ptr evidence_for_address(uint64_t addr);
 
     /** Evidence of satisfiability for a variable or memory address.  If the string starts with the letter 'v' then variable
      *  evidence is returned, otherwise the string must be an address.  The strings are those values returned by the
      *  evidence_names() method.  Not all SMT solvers can return this information.  Returns the null pointer if no evidence is
      *  available for the named item. */
-    virtual SymbolicExpr::TreeNodePtr evidence_for_name(const std::string&) {
-        return SymbolicExpr::TreeNodePtr();
+    virtual SymbolicExpr::Ptr evidence_for_name(const std::string&) {
+        return SymbolicExpr::Ptr();
     }
 
     /** Names of items for which satisfiability evidence exists.  Returns a vector of strings (variable names or memory
@@ -118,7 +118,7 @@ protected:
     /** Generates an input file for for the solver. Usually the input file will be SMT-LIB format, but subclasses might
      *  override this to generate some other kind of input. Throws Excecption if the solver does not support an operation that
      *  is necessary to determine the satisfiability. */
-    virtual void generate_file(std::ostream&, const std::vector<SymbolicExpr::TreeNodePtr> &exprs,
+    virtual void generate_file(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs,
                                Definitions*) = 0;
 
     /** Given the name of a configuration file, return the command that is needed to run the solver. The first line

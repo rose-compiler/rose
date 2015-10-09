@@ -243,27 +243,26 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
 
 // If the expression is an offset from the initial stack register then return the offset, else nothing.
 static Sawyer::Optional<int64_t>
-isStackAddress(const rose::BinaryAnalysis::SymbolicExpr::TreeNodePtr &expr,
+isStackAddress(const rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
                const BaseSemantics::SValuePtr &initialStackPointer, SMTSolver *solver) {
-    using namespace rose::BinaryAnalysis::SymbolicExpr;
     using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
     if (!initialStackPointer)
         return Sawyer::Nothing();
-    TreeNodePtr initialStack = SymbolicSemantics::SValue::promote(initialStackPointer)->get_expression();
+    SymbolicExpr::Ptr initialStack = SymbolicSemantics::SValue::promote(initialStackPointer)->get_expression();
 
     // Special case where (add SP0 0) is simplified to SP0
-    LeafNodePtr variable = expr->isLeafNode();
+    SymbolicExpr::LeafPtr variable = expr->isLeafNode();
     if (variable && variable->must_equal(initialStack, solver))
         return 0;
 
     // Otherwise the expression must be (add SP0 N) where N != 0
-    InternalNodePtr inode = expr->isInternalNode();
-    if (!inode || inode->get_operator() != OP_ADD || inode->nchildren()!=2)
+    SymbolicExpr::InternalPtr inode = expr->isInternalNode();
+    if (!inode || inode->get_operator() != SymbolicExpr::OP_ADD || inode->nchildren()!=2)
         return Sawyer::Nothing();
 
     variable = inode->child(0)->isLeafNode();
-    LeafNodePtr constant = inode->child(1)->isLeafNode();
+    SymbolicExpr::LeafPtr constant = inode->child(1)->isLeafNode();
     if (!constant || !constant->is_known())
         std::swap(variable, constant);
     if (!constant || !constant->is_known())

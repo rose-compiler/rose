@@ -313,10 +313,10 @@ SymbolicExprParser::TokenStream::fillTokenList(size_t idx) {
 class AbbreviatedFunction: public SymbolicExprParser::FunctionExpansion {
 public:
     static Ptr instance() { return Ptr(new AbbreviatedFunction); }
-    SymbolicExpr::TreeNodePtr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::TreeNodes &args) {
+    SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) {
         if (op.lexeme() == "...")
             throw op.syntaxError("input is an abbreviated expression; parts are missing");
-        return SymbolicExpr::TreeNodePtr();
+        return SymbolicExpr::Ptr();
     }
 };
 
@@ -324,10 +324,10 @@ public:
 class AbbreviatedSymbol: public SymbolicExprParser::SymbolExpansion {
 public:
     static Ptr instance() { return Ptr(new AbbreviatedSymbol); }
-    SymbolicExpr::TreeNodePtr operator()(const SymbolicExprParser::Token &symbol) {
+    SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &symbol) {
         if (symbol.lexeme() == "...")
             throw symbol.syntaxError("input is an abbreviated expression; parts are missing");
-        return SymbolicExpr::TreeNodePtr();
+        return SymbolicExpr::Ptr();
     }
 };
         
@@ -386,10 +386,9 @@ public:
         return Ptr(new SmtFunctions);
     }
 
-    virtual SymbolicExpr::TreeNodePtr operator()(const SymbolicExprParser::Token &op,
-                                                 const SymbolicExpr::TreeNodes &args) ROSE_OVERRIDE {
+    virtual SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
         if (!ops_.exists(op.lexeme()))
-            return SymbolicExpr::TreeNodePtr();
+            return SymbolicExpr::Ptr();
         return SymbolicExpr::InternalNode::create(op.width(), ops_[op.lexeme()], args);
     }
 };
@@ -427,10 +426,9 @@ public:
         return Ptr(new CFunctions);
     }
 
-    virtual SymbolicExpr::TreeNodePtr operator()(const SymbolicExprParser::Token &op,
-                                                 const SymbolicExpr::TreeNodes &args) ROSE_OVERRIDE {
+    virtual SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
         if (!ops_.exists(op.lexeme()))
-            return SymbolicExpr::TreeNodePtr();
+            return SymbolicExpr::Ptr();
         return SymbolicExpr::InternalNode::create(op.width(), ops_[op.lexeme()], args);
     }
 };
@@ -438,10 +436,10 @@ public:
 class CanonicalVariable: public SymbolicExprParser::SymbolExpansion {
 public:
     static Ptr instance() { return Ptr(new CanonicalVariable); }
-    SymbolicExpr::TreeNodePtr operator()(const SymbolicExprParser::Token &symbol) {
+    SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &symbol) {
         boost::smatch matches;
         if (!boost::regex_match(symbol.lexeme(), matches, boost::regex("v(\\d+)")))
-            return SymbolicExpr::TreeNodePtr();
+            return SymbolicExpr::Ptr();
         if (symbol.width() == 0) {
             throw symbol.syntaxError("variable \"" + StringUtility::cEscape(symbol.lexeme()) + "\""
                                      " must have a non-zero width specified");
@@ -462,13 +460,13 @@ SymbolicExprParser::init() {
     appendSymbol(CanonicalVariable::instance());
 }
 
-SymbolicExpr::TreeNodePtr
+SymbolicExpr::Ptr
 SymbolicExprParser::parse(const std::string &input, const std::string &inputName) {
     std::istringstream stream(input);
     return parse(stream, inputName);
 }
 
-SymbolicExpr::TreeNodePtr
+SymbolicExpr::Ptr
 SymbolicExprParser::parse(std::istream &input, const std::string &inputName, unsigned lineNumber, unsigned columnNumber) {
     TokenStream tokens(input, inputName, lineNumber, columnNumber);
     return parse(tokens);
@@ -476,13 +474,13 @@ SymbolicExprParser::parse(std::istream &input, const std::string &inputName, uns
 
 struct PartialInternalNode {
     SymbolicExprParser::Token op;
-    std::vector<SymbolicExpr::TreeNodePtr> operands;
+    std::vector<SymbolicExpr::Ptr> operands;
     SymbolicExprParser::Token ltparen;                  // for error messages
     PartialInternalNode(const SymbolicExprParser::Token &op, const SymbolicExprParser::Token &ltparen)
         : op(op), ltparen(ltparen) {}
 };
 
-SymbolicExpr::TreeNodePtr
+SymbolicExpr::Ptr
 SymbolicExprParser::parse(TokenStream &tokens) {
     std::vector<PartialInternalNode> stack;
     while (tokens[0].type() != Token::NONE) {
@@ -495,7 +493,7 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 break;
             }
             case Token::SYMBOL: {
-                SymbolicExpr::TreeNodePtr expr;
+                SymbolicExpr::Ptr expr;
                 BOOST_FOREACH (const SymbolExpansion::Ptr &symbol, symbolTable_) {
                     if ((expr = (*symbol)(tokens[0])))
                         break;
@@ -509,7 +507,7 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 break;
             }
             case Token::BITVECTOR: {
-                SymbolicExpr::LeafNodePtr leaf = SymbolicExpr::LeafNode::create_constant(tokens[0].bits());
+                SymbolicExpr::LeafPtr leaf = SymbolicExpr::LeafNode::create_constant(tokens[0].bits());
                 tokens.shift(1);
                 if (stack.empty())
                     return leaf;
@@ -520,7 +518,7 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 tokens.shift();
                 if (stack.empty())
                     throw tokens[0].syntaxError("unexpected right parenthesis", tokens.name());
-                SymbolicExpr::TreeNodePtr expr;
+                SymbolicExpr::Ptr expr;
                 BOOST_FOREACH (const FunctionExpansion::Ptr &function, functionTable_) {
                     if ((expr = (*function)(stack.back().op, stack.back().operands)))
                         break;

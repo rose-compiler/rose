@@ -47,9 +47,8 @@ public:
     }
 
     std::string toString(const BaseSemantics::SValuePtr &valueBase) {
-        using namespace rose::BinaryAnalysis::SymbolicExpr;
         SymbolicSemantics::SValuePtr value = SymbolicSemantics::SValue::promote(valueBase);
-        LeafNodePtr leaf = value->get_expression()->isLeafNode();
+        SymbolicExpr::LeafPtr leaf = value->get_expression()->isLeafNode();
         if (leaf && leaf->is_known()) {
             if (1==leaf->get_nbits()) {
                 return leaf->get_value() ? "true" : "false";

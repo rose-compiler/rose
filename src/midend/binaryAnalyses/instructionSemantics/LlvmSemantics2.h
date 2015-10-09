@@ -14,11 +14,11 @@ namespace LlvmSemantics {
 typedef std::vector<RegisterDescriptor> RegisterDescriptors;
 
 typedef SymbolicExpr::LeafNode LeafNode;
-typedef SymbolicExpr::LeafNodePtr LeafNodePtr;
+typedef SymbolicExpr::LeafPtr LeafPtr;
 typedef SymbolicExpr::InternalNode InternalNode;
-typedef SymbolicExpr::InternalNodePtr InternalNodePtr;
-typedef SymbolicExpr::TreeNodePtr TreeNodePtr;
-typedef SymbolicExpr::TreeNodes TreeNodes;
+typedef SymbolicExpr::InternalPtr InternalPtr;
+typedef SymbolicExpr::Ptr ExpressionPtr;
+typedef SymbolicExpr::Nodes TreeNodes;
 
 typedef SymbolicSemantics::SValuePtr SValuePtr;
 typedef SymbolicSemantics::SValue SValue;
@@ -36,7 +36,7 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 class RiscOperators: public SymbolicSemantics::RiscOperators {
 private:
-    typedef Map<uint64_t /*hash*/, LeafNodePtr /*term*/> Rewrites;
+    typedef Map<uint64_t /*hash*/, LeafPtr /*term*/> Rewrites;
     typedef Map<uint64_t, std::string> Variables;
 
     Rewrites rewrites;                                  // maps expressions to LLVM variables
@@ -176,15 +176,15 @@ public:
     virtual void make_current();
 
     /** Register a rewrite. */
-    virtual void add_rewrite(const TreeNodePtr &from, const LeafNodePtr &to);
+    virtual void add_rewrite(const ExpressionPtr &from, const LeafPtr &to);
 
     /** Register an LLVM variable. Returns the LLVM variable name including its sigil. If the variable doesn't exist yet then
      *  it's added to the list of known variables. */
-    virtual std::string add_variable(const LeafNodePtr&);
+    virtual std::string add_variable(const LeafPtr&);
 
     /** Returns the LLVM name for a variable, including the sigil.  If the specified ROSE variable has no corresponding
      *  LLVM definition, then the empty string is returned. */
-    virtual std::string get_variable(const LeafNodePtr&);
+    virtual std::string get_variable(const LeafPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // New methods to emit the machine state
@@ -240,14 +240,14 @@ public:
     virtual std::string llvm_integer_type(size_t nbits);
 
     /** Convert a ROSE variable or integer to an LLVM term. A term must be a constant or a variable reference (rvalue). */
-    virtual std::string llvm_term(const TreeNodePtr&);
+    virtual std::string llvm_term(const ExpressionPtr&);
 
     /** Convert a ROSE variable to an LLVM lvalue. The variable must not have been used as an lvalue previously since LLVM uses
      *  single static assignment (SSA) format. */
-    virtual std::string llvm_lvalue(const LeafNodePtr&);
+    virtual std::string llvm_lvalue(const LeafPtr&);
 
     /** Create a temporary variable. */
-    virtual LeafNodePtr next_temporary(size_t nbits);
+    virtual LeafPtr next_temporary(size_t nbits);
 
     /** Obtain the name for an LLVM label, excluding the "%" sigil. */
     virtual std::string next_label();
@@ -278,16 +278,16 @@ public:
      *
      * and returns the symbolic variable "v6".
      * @{ */
-    virtual LeafNodePtr emit_expression(std::ostream&, const SValuePtr&);
-    virtual LeafNodePtr emit_expression(std::ostream&, const TreeNodePtr&);
-    virtual LeafNodePtr emit_expression(std::ostream&, const LeafNodePtr&);
+    virtual LeafPtr emit_expression(std::ostream&, const SValuePtr&);
+    virtual LeafPtr emit_expression(std::ostream&, const ExpressionPtr&);
+    virtual LeafPtr emit_expression(std::ostream&, const LeafPtr&);
     /** @} */
 
 protected:
     /** Emit an assignment and add a rewrite rule.  The left hand side is a new LLVM temporary variable (which is returned). If
      *  @p rhs is an LLVM unamed local variable then @p rhs is returned. Otherwise, a rewrite rule is added so that future
      *  appearances of the right hand side will be replaced by the left hand side in calls to emit_expression(). */
-    virtual LeafNodePtr emit_assignment(std::ostream&, const TreeNodePtr &rhs);
+    virtual LeafPtr emit_assignment(std::ostream&, const ExpressionPtr &rhs);
 
     /** Emit an operation as LLVM instructions.  These "emit" methods take operands that are symbolic expressions and output
      *  LLVM instructions that implement the expression.  The return value is either an LLVM term (variable or integer) or
@@ -295,37 +295,37 @@ protected:
      *  expression "(add (negate v3))" where the "add" is a no-op that simply returns its only argument.  Because these "emit"
      *  methods might return an expression, it is customary to call emit_expression() on their return value.
      *  @{ */
-    virtual TreeNodePtr emit_zero_extend(std::ostream&, const TreeNodePtr &value, size_t nbits);
-    virtual TreeNodePtr emit_sign_extend(std::ostream&, const TreeNodePtr &value, size_t nbits);
-    virtual TreeNodePtr emit_truncate(std::ostream&, const TreeNodePtr &value, size_t nbits);
-    virtual TreeNodePtr emit_unsigned_resize(std::ostream&, const TreeNodePtr &value, size_t nbits);
-    virtual TreeNodePtr emit_binary(std::ostream&, const std::string &llvm_op, const TreeNodePtr&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_signed_binary(std::ostream&, const std::string &llvm_op, const TreeNodePtr&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_unsigned_binary(std::ostream&, const std::string &llvm_op, const TreeNodePtr&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_logical_right_shift(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
-    virtual TreeNodePtr emit_logical_right_shift_ones(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
-    virtual TreeNodePtr emit_arithmetic_right_shift(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
-    virtual TreeNodePtr emit_left_shift(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
-    virtual TreeNodePtr emit_left_shift_ones(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
-    virtual TreeNodePtr emit_lssb(std::ostream&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_mssb(std::ostream&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_extract(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &from, size_t result_nbits);
-    virtual TreeNodePtr emit_invert(std::ostream&, const TreeNodePtr &value);
-    virtual TreeNodePtr emit_left_associative(std::ostream&, const std::string &llvm_op, const TreeNodes &operands);
-    virtual TreeNodePtr emit_concat(std::ostream&, TreeNodes operands);
-    virtual TreeNodePtr emit_signed_divide(std::ostream&, const TreeNodePtr &numerator, const TreeNodePtr &denominator);
-    virtual TreeNodePtr emit_unsigned_divide(std::ostream&, const TreeNodePtr &numerator, const TreeNodePtr &denominator);
-    virtual TreeNodePtr emit_signed_modulo(std::ostream&, const TreeNodePtr &numerator, const TreeNodePtr &denominator);
-    virtual TreeNodePtr emit_unsigned_modulo(std::ostream&, const TreeNodePtr &numerator, const TreeNodePtr &denominator);
-    virtual TreeNodePtr emit_signed_multiply(std::ostream&, const TreeNodes &operands);
-    virtual TreeNodePtr emit_unsigned_multiply(std::ostream&, const TreeNodes &operands);
-    virtual TreeNodePtr emit_rotate_left(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
-    virtual TreeNodePtr emit_rotate_right(std::ostream&, const TreeNodePtr &value, const TreeNodePtr &amount);
-    virtual TreeNodePtr emit_compare(std::ostream&, const std::string &llvm_op, const TreeNodePtr&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_ite(std::ostream&, const TreeNodePtr &cond, const TreeNodePtr&, const TreeNodePtr&);
-    virtual TreeNodePtr emit_memory_read(std::ostream&, const TreeNodePtr &address, size_t nbits);
-    virtual TreeNodePtr emit_global_read(std::ostream&, const std::string &varname, size_t nbits);
-    virtual void        emit_memory_write(std::ostream&, const TreeNodePtr &address, const TreeNodePtr &value);
+    virtual ExpressionPtr emit_zero_extend(std::ostream&, const ExpressionPtr &value, size_t nbits);
+    virtual ExpressionPtr emit_sign_extend(std::ostream&, const ExpressionPtr &value, size_t nbits);
+    virtual ExpressionPtr emit_truncate(std::ostream&, const ExpressionPtr &value, size_t nbits);
+    virtual ExpressionPtr emit_unsigned_resize(std::ostream&, const ExpressionPtr &value, size_t nbits);
+    virtual ExpressionPtr emit_binary(std::ostream&, const std::string &llvm_op, const ExpressionPtr&, const ExpressionPtr&);
+    virtual ExpressionPtr emit_signed_binary(std::ostream&, const std::string &llvm_op, const ExpressionPtr&, const ExpressionPtr&);
+    virtual ExpressionPtr emit_unsigned_binary(std::ostream&, const std::string &llvm_op, const ExpressionPtr&, const ExpressionPtr&);
+    virtual ExpressionPtr emit_logical_right_shift(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &amount);
+    virtual ExpressionPtr emit_logical_right_shift_ones(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &amount);
+    virtual ExpressionPtr emit_arithmetic_right_shift(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &amount);
+    virtual ExpressionPtr emit_left_shift(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &amount);
+    virtual ExpressionPtr emit_left_shift_ones(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &amount);
+    virtual ExpressionPtr emit_lssb(std::ostream&, const ExpressionPtr&);
+    virtual ExpressionPtr emit_mssb(std::ostream&, const ExpressionPtr&);
+    virtual ExpressionPtr emit_extract(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &from, size_t result_nbits);
+    virtual ExpressionPtr emit_invert(std::ostream&, const ExpressionPtr &value);
+    virtual ExpressionPtr emit_left_associative(std::ostream&, const std::string &llvm_op, const TreeNodes &operands);
+    virtual ExpressionPtr emit_concat(std::ostream&, TreeNodes operands);
+    virtual ExpressionPtr emit_signed_divide(std::ostream&, const ExpressionPtr &numerator, const ExpressionPtr &denominator);
+    virtual ExpressionPtr emit_unsigned_divide(std::ostream&, const ExpressionPtr &numerator, const ExpressionPtr &denominator);
+    virtual ExpressionPtr emit_signed_modulo(std::ostream&, const ExpressionPtr &numerator, const ExpressionPtr &denominator);
+    virtual ExpressionPtr emit_unsigned_modulo(std::ostream&, const ExpressionPtr &numerator, const ExpressionPtr &denominator);
+    virtual ExpressionPtr emit_signed_multiply(std::ostream&, const TreeNodes &operands);
+    virtual ExpressionPtr emit_unsigned_multiply(std::ostream&, const TreeNodes &operands);
+    virtual ExpressionPtr emit_rotate_left(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &amount);
+    virtual ExpressionPtr emit_rotate_right(std::ostream&, const ExpressionPtr &value, const ExpressionPtr &amount);
+    virtual ExpressionPtr emit_compare(std::ostream&, const std::string &llvm_op, const ExpressionPtr&, const ExpressionPtr&);
+    virtual ExpressionPtr emit_ite(std::ostream&, const ExpressionPtr &cond, const ExpressionPtr&, const ExpressionPtr&);
+    virtual ExpressionPtr emit_memory_read(std::ostream&, const ExpressionPtr &address, size_t nbits);
+    virtual ExpressionPtr emit_global_read(std::ostream&, const std::string &varname, size_t nbits);
+    virtual void        emit_memory_write(std::ostream&, const ExpressionPtr &address, const ExpressionPtr &value);
     /** @} */
 };
 
