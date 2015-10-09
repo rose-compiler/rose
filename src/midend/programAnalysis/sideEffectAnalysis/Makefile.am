@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_SQLITE_DATABASE
-INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) $(SQLITE_DATABASE_INCLUDE)
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) $(SQLITE_DATABASE_INCLUDE)
 
 # noinst_HEADERS = sideEffect.h
 pkginclude_HEADERS = sideEffect.h \

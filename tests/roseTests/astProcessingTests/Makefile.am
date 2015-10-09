@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 noinst_PROGRAMS =
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 TEST_TARGETS =
 TEST_CONFIG = $(top_srcdir)/scripts/test_exit_status
 EXTRA_DIST =

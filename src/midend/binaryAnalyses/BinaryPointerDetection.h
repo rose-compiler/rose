@@ -142,7 +142,7 @@ public:
  *  The pointer detection normally uses the rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType, but the
  *  user can specify any other compatible value type as a second template argument.
  *
- *  @section Ex1 Example
+ *  @section BinaryPointerDetection_Example_1 Example
  *
  *  @code
  *  #include "BinaryPointerDetection.h"

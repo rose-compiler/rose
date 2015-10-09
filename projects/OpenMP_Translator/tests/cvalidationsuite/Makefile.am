@@ -101,7 +101,7 @@ OMNI_OPENMP_RUNTIME_LIBRARY = @omni_omp_runtime_support_path@
 
 if ROSE_USE_OMNI_OPENMP
 # enable make check to build and run the final executable, Liao 1/31/2008
-INCLUDES= -I$(srcdir)/../../includes 
+AM_CPPFLAGS= -I$(srcdir)/../../includes 
 LDADD = -L$(OMNI_OPENMP_RUNTIME_LIBRARY) -lompc -lpthread -lm
 main_SOURCES=$(TESTCODES)
 check_PROGRAMS = main

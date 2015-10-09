@@ -6,7 +6,7 @@ SUBDIRS += fortran
 endif
 
 # Default header file search path
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 roseomp_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 roseompacc_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 

@@ -6,19 +6,19 @@
 \class SgNamespaceSymbol
 \brief This class represents the concept of a namespace name within the compiler.
 
-   This symbol holds a reference to a SgNamespaceDeclarationStatement and also
+This symbol holds a reference to a SgNamespaceDeclarationStatement and also
 any of its alias (referencing a SgNamespaceAliasDeclarationStatement).
 
 \internal The constructor for this symbol takes a name and a declaration.
-    The reason is that it is used to handle the case of a namespace alias which uses
-    the same symbol but uses a different name.  I'm not certain that this is
-    the best implementation since it stores the symbol in the symbol table under
-    two names.  It is not clear if that would be clear if the name were changes and 
-    this could cause the symbol table to not be completely removed from the
-    symbol table.
+The reason is that it is used to handle the case of a namespace alias which uses
+the same symbol but uses a different name.  I'm not certain that this is
+the best implementation since it stores the symbol in the symbol table under
+two names.  It is not clear if that would be clear if the name were changes and 
+this could cause the symbol table to not be completely removed from the
+symbol table.
 
 \todo It might be that we should have a SgNamespaceAliasSymbol so that namespace 
-    aliasing can be better supported.  We can consider this for future work.
+aliasing can be better supported.  We can consider this for future work.
 
 \sa \ref SgSymbol for more details about symbols and why they are used in ROSE.
 
@@ -35,8 +35,8 @@ any of its alias (referencing a SgNamespaceAliasDeclarationStatement).
 \var SgNamespaceSymbol::p_name
 \brief This is the name of the namespace declaration.
 
-    It is redundently stored for a normal namespace declaration and is different from that
-    of the SgNamespaceDeclarationStatement in the case of a namespace alias declaration.
+It is redundently stored for a normal namespace declaration and is different from that
+of the SgNamespaceDeclarationStatement in the case of a namespace alias declaration.
 */
 
 /*
@@ -59,7 +59,7 @@ any of its alias (referencing a SgNamespaceAliasDeclarationStatement).
 \fn SgNamespaceSymbol::SgNamespaceSymbol()
 \brief This is the default constructor.
 
-   This constructor builds the SgNamespaceSymbol base class.
+This constructor builds the SgNamespaceSymbol base class.
 
 \sa 
 \ref SgNamespaceSymbol_create "Example:create an SgNamespaceSymbol object"
@@ -103,7 +103,7 @@ any of its alias (referencing a SgNamespaceAliasDeclarationStatement).
 \fn SgNamespaceSymbol::isSgNamespaceSymbol (SgNode *s)
 \brief Cast function (from derived class to SgNamespaceSymbol pointer).
 
-   This functions returns a SgNamespaceSymbol pointer for any input of a 
+This functions returns a SgNamespaceSymbol pointer for any input of a 
 pointer to an object derived from a SgNamespaceSymbol.
 
 \return Returns valid pointer to SgNamespaceSymbol if input is derived from a SgNamespaceSymbol.
@@ -113,10 +113,10 @@ pointer to an object derived from a SgNamespaceSymbol.
 \fn SgNamespaceSymbol::isSgNamespaceSymbol (const SgNode *s)
 \brief Cast function (from derived class to SgNamespaceSymbol pointer).
 
-   This functions returns a SgNamespaceSymbol pointer for any input of a 
+This functions returns a SgNamespaceSymbol pointer for any input of a 
 pointer to an object derived from a SgNamespaceSymbol.
 
 \return Returns valid pointer to SgNamespaceSymbol if input is derived from a
-    SgNamespaceSymbol.
+SgNamespaceSymbol.
 */
 

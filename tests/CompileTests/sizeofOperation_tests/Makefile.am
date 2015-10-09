@@ -4,7 +4,7 @@ bin_PROGRAMS = SizeofTest_GNU SizeofTest_Intel
 SizeofTest_GNU_SOURCES = SizeofTest_GNU.C
 SizeofTest_Intel_SOURCES = SizeofTest_Intel.C
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD    = $(ROSE_LIBS)
 
 TESTCODES_REQUIRED_TO_PASS = inputCode_SizeofTest.C

@@ -65,7 +65,7 @@ Some problems we've discovered with this design:
 6. Having all the class template and member function template
    definitions in header files makes compiling very slow.  Check out
    how long it takes to compile projects/simulator, which uses
-   instruction semantics extensively.
+   instruction semantics extensively (since removed).
 
 7. The current X86InstructionSemantics class template uses a huge
    switch statement to handle individual kinds of x86 instructions. In
@@ -198,7 +198,7 @@ in class templates.
 Since these are no longer templates, they can be moved to *.C files
 and therefore compiled into the ROSE library.  This should drastically
 improve compile time for user code that makes extensive use of
-instruction semantics (like projects/simulator).
+instruction semantics (like projects/simulator, since removed).
 
 10. Make instruction dispatchers table-driven
 

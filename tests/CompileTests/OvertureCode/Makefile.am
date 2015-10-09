@@ -19,8 +19,8 @@ TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
 ## them directly into the test code directory (testing only the compilation with ROSE
 ## and not the execution!)
 ## Include the path to A++ and the transformation specification
-## INCLUDES = @Axx_INCLUDES@
-INCLUDES = -I. -I$(srcdir) -I$(srcdir)/../A++Code
+## AM_CPPFLAGS = @Axx_INCLUDES@
+AM_CPPFLAGS = -I. -I$(srcdir) -I$(srcdir)/../A++Code
 
 # libTestSource_a_SOURCES = $(TESTCODES)
 # This rule is run after automake's internal check rule (which we don't want to use)
@@ -28,7 +28,7 @@ check-local:
 	@$(MAKE) $(TEST_Objects)
 
 $(TEST_Objects): $(TESTCODES)
-	$(TEST_TRANSLATOR) $(INCLUDES) -c $(srcdir)/$(@:.o=.C)
+	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.C)
 
 EXTRA_DIST = $(TESTCODES)
 

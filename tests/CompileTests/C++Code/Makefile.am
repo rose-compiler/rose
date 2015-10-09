@@ -638,7 +638,7 @@ gconv_info_C99.o:
 #	@$(MAKE) $(TEST_Objects)
 
 $(TEST_Objects): $(TESTCODES)
-	$(TEST_TRANSLATOR) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C)
+	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C)
 
 EXTRA_DIST = \
      confdefs.h test2001_05.h  test2001_15.h  test2001_18A.h  test2001_18B.h \

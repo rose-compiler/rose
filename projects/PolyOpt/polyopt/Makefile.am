@@ -8,7 +8,7 @@ MAINTAINERCLEANFILES	= Makefile.in
 
 POCC_INSTALL = @pocc_install_prefix@
 
-INCLUDES		=						\
+AM_CPPFLAGS		=						\
 	-I$(top_builddir)/polyopt/include				\
 	-I$(POCC_INSTALL)/driver/pocc/include				\
 	-I$(POCC_INSTALL)/driver/pocc-utils/include			\

@@ -9,7 +9,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # search path for .m4 macros
 #ACLOCAL_AMFLAGS = -I ./config
 
-INCLUDES =  $(ROSE_INCLUDES) -I$(srcdir)/src #-I$(ROSE_INSTALL)/include/rose -I$(BOOST_INSTALL)/include 
+AM_CPPFLAGS =  $(ROSE_INCLUDES) -I$(srcdir)/src #-I$(ROSE_INSTALL)/include/rose -I$(BOOST_INSTALL)/include 
 
 SUBDIRS = src . 
 

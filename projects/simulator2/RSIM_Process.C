@@ -5,6 +5,7 @@
 
 #include "Diagnostics.h"
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <errno.h>
@@ -1093,10 +1094,6 @@ pid_t
 RSIM_Process::clone_thread(unsigned flags, rose_addr_t parent_tid_va, rose_addr_t child_tls_va, const PtRegs &regs,
                            bool startRunning)
 {
-#ifndef ROSE_THREADS_ENABLED
-    fprintf(stderr, "ROSE library is not thread safe; multiple threads cannot be simulated.\n");
-    abort();
-#endif
     Clone clone_info(this, flags, parent_tid_va, child_tls_va, regs);
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(clone_info.mutex);
     try {
@@ -1110,6 +1107,7 @@ RSIM_Process::clone_thread(unsigned flags, rose_addr_t parent_tid_va, rose_addr_
     clone_info.cond.wait(clone_info.mutex);
 
     RSIM_Thread *child = get_thread(clone_info.newtid);
+    get_simulator()->threadCreated(child);
     if (startRunning)
         child->start();
 

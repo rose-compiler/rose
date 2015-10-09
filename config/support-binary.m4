@@ -108,7 +108,7 @@ AC_SUBST(ETHER_PREFIX)
 AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 
 # libgcrypt is used for computing SHA1 hashes of binary basic block semantics, among other things. [RPM 2010-05-12]
-AC_CHECK_HEADERS(gcrypt.h,,[HAVE_GCRYPT=yes],[HAVE_GCRYPT=no])
+AC_CHECK_HEADERS(gcrypt.h,[HAVE_GCRYPT=yes],[HAVE_GCRYPT=nothing])
 AC_CHECK_LIB(gpg-error,gpg_strerror) dnl needed by statically linked libgcrypt
 AC_CHECK_LIB(gcrypt,gcry_check_version)
 AM_CONDITIONAL([HAS_LIBRARY_GCRYPT], [test "x$HAVE_GCRYPT" = "xyes"])
@@ -119,12 +119,25 @@ AC_CHECK_HEADERS(pthread.h)
 
 # Check for the __thread keyword.  This type qualifier creates objects that are thread local.
 AC_MSG_CHECKING([for thread local storage type qualifier])
+
+# DQ (10/4/2015): We need the older version of this for rzzeus machine (not sure why but it results in an error using the newer version).
+# DQ (9/26/2015): Making this code more portable with out warnings.
+# AC_COMPILE_IFELSE([struct S {int a, b;}; static __thread struct S x;],
+#        [AC_DEFINE(ROSE_THREAD_LOCAL_STORAGE, __thread, [Define to __thread keyword for thread local storage.])
+#         AC_MSG_RESULT([__thread])],
+#        [AC_MSG_RESULT([not supported])])
+# DQ (9/26/2015): Newer version to fix warning in automake 1.14
+# AC_COMPILE_IFELSE([AC_LANG_PROGRAM([struct S {int a, b;}; static __thread struct S x;],
+#        [AC_DEFINE(ROSE_THREAD_LOCAL_STORAGE, __thread, [Define to __thread keyword for thread local storage.])
+#         AC_MSG_RESULT([__thread])],
+#        [AC_MSG_RESULT([not supported])])])
+# DQ (10/4/2015): This older version is required for rzzeus using automake 1.11
 AC_COMPILE_IFELSE([struct S {int a, b;}; static __thread struct S x;],
         [AC_DEFINE(ROSE_THREAD_LOCAL_STORAGE, __thread, [Define to __thread keyword for thread local storage.])
          AC_MSG_RESULT([__thread])],
         [AC_MSG_RESULT([not supported])])
 
-# These headers and types are needed by projects/simulator [matzke 2009-07-02]
+# These headers and types are needed by projects/simulator2
 AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
 AC_CHECK_HEADERS([sys/types.h sys/mman.h sys/stat.h sys/uio.h sys/wait.h sys/utsname.h sys/ioctl.h sys/sysinfo.h sys/socket.h])
 AC_CHECK_HEADERS([termios.h grp.h syscall.h])

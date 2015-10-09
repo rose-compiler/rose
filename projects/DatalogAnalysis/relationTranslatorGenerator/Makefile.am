@@ -15,10 +15,10 @@ nodist_libastBinaryRelations_la_SOURCES = output/RelationVisitor.cc
 # RelationVisitor.lo: output/RelationVisitor.cc output/RelationVisitor.hh
 # ChildVisitor.lo: output/ChildVisitor.cc
 
-INCLUDES = -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/../include
+AM_CPPFLAGS = -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/../include
 
 #RelationVisitor.lo: $(generated_relation_source_code)
-#	$(CXX) $(INCLUDES) -Ioutput -c output/RelationVisitor.cc
+#	$(CXX) $(AM_CPPFLAGS) -Ioutput -c output/RelationVisitor.cc
 
 include_HEADERS = 
 ###########################

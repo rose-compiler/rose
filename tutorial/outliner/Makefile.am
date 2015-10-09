@@ -78,7 +78,7 @@ INDENT_ARGS = -npsl
 #==========================================================================
 # Build demo translators
 
-INCLUDES = $(ROSE_INCLUDES) $(OUTLINER_INCS)
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(OUTLINER_INCS)
 # We install a copy
 bin_PROGRAMS = outline
 noinst_PROGRAMS = outlineIfs outlinePreproc outlineIfs2

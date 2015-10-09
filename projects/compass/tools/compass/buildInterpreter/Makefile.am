@@ -22,7 +22,7 @@ buildInterpreter_LDADD = $(ROSE_LIBS)
 
 AM_CXXFLAGS = $(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS) -DRCFILE=\""$(top_builddir)/projects/compass/tools/compass/buildInterpreter/rqmgc"\"
 
-INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
 
 buildInterpreter_DEPENDENCIES = ${builddir}/rqmgc
 

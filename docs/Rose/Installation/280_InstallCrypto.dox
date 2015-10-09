@@ -1,0 +1,14 @@
+// -*- c++ -*-
+
+/** @defgroup installing_crypto Installing cryptography libraries
+ *  @ingroup software_dependencies
+ *
+ *  Instructions for installing cryptography libraries that are ROSE software dependencies.
+ *
+ *  @section installing_crypto_rhel Redhat Enterprise Linux
+ *
+ *  @todo Describe how to install cryptography libraries on RHEL.
+ *
+ *  @section installing_crypto_jessie Debian 8 "Jessie"
+ *
+ *  Run <code>apt-get install libssl-dev libgcrypt11-dev</code> as the administrator. */

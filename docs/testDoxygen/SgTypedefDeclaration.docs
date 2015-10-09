@@ -6,12 +6,12 @@
 \class SgTypedefDeclaration
 \brief This class represents the notion of a typedef declaration.
 
-   Typedefs define new types for use in variable declarations, function parameter 
+Typedefs define new types for use in variable declarations, function parameter 
 lists, etc.  Typically the base type is complex and the typedef name allows the 
 more complex types use to be made easier to read.
 
 \todo There are a few data members in this field that don't appear to be used (should be
-    removed if not required):
+removed if not required):
      - p_declaration: have not seen it be used anywhere (I think it is used when a
        declartion is explicit in the typedef, check this out, might be part of older
        mechanism before defining and nondefining declarations were developed to provide a
@@ -40,7 +40,7 @@ more complex types use to be made easier to read.
 \brief This is the type being given a new name by the typedef declaration.
 
 \internal This name can be private so using the base type directly can cause access
-    violations within generated code.
+violations within generated code.
 
 */
 
@@ -48,10 +48,10 @@ more complex types use to be made easier to read.
 \var SgTypedefType SgTypedefDeclaration::p_type
 \brief This is the resulting type defined by the typedef declaration.
 
-    This type can be used where any type can be use, declaration of variables, etc.
+This type can be used where any type can be use, declaration of variables, etc.
 
 \internal Because of access privileges on the typedef declaration the resulting type can
-    have access restrictions.
+have access restrictions.
 
 */
 
@@ -59,7 +59,7 @@ more complex types use to be made easier to read.
 \var SgDeclarationStatement SgTypedefDeclaration::p_declaration
 \brief pointer to the declaration (typically a SgClassDeclaration).
 
-   A typedef such as "typedef struct {int __pos; int __state;} _G_fpos64_t;"
+A typedef such as "typedef struct {int __pos; int __state;} _G_fpos64_t;"
 defines a class as part of its declaration.  p_declaration pointes to the
 declaration in these cases.
 
@@ -69,9 +69,9 @@ declaration in these cases.
 /*!
 \var SgSymbol SgTypedefDeclaration::p_parent_scope
 \brief This is the type symbol of the class when it is a member type (redundent with the
-    the explicitly stored scope).
+the explicitly stored scope).
 
-    This pointer almost always NULL, however test2005_188.C demonstrates a non-NULL value.
+This pointer almost always NULL, however test2005_188.C demonstrates a non-NULL value.
 
 \internal This is redundant with the explicitly stored scope.
 
@@ -85,7 +85,7 @@ declaration in these cases.
 \brief This flag indicates that the typedef defines a structure
 
 \example typedefExample.C
-    This example show the definition of a struct within the typedef.
+This example show the definition of a struct within the typedef.
 
 \internal I would like to give this a better name.
 
@@ -96,7 +96,7 @@ declaration in these cases.
 \brief This is the scope of the typedef declaration.
 
 \internal Comment on why we need to store the scope explicitly (resolves name
-    qualification issues).
+qualification issues).
 
 */
 
@@ -108,7 +108,7 @@ declaration in these cases.
 \fn SgTypedefDeclaration::SgTypedefDeclaration ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgTypedefDeclaration base class.
+This constructor builds the SgTypedefDeclaration base class.
 
 \param startOfConstruct represents the position in the source code
 \sa 
@@ -119,14 +119,14 @@ declaration in these cases.
 \fn SgTypedefDeclaration::~SgTypedefDeclaration()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgTypedefDeclaration::isSgTypedefDeclaration (SgNode *s)
 \brief Cast function (from derived class to SgTypedefDeclaration pointer).
 
-   This functions returns a SgTypedefDeclaration pointer for any input of a 
+This functions returns a SgTypedefDeclaration pointer for any input of a 
 pointer to an object derived from a SgTypedefDeclaration.
 
 \return Returns valid pointer to SgTypedefDeclaration if input is derived from a SgLocatedNode.
@@ -136,7 +136,7 @@ pointer to an object derived from a SgTypedefDeclaration.
 \fn SgTypedefDeclaration::isSgTypedefDeclaration (const SgNode *s)
 \brief Cast function (from derived class to SgTypedefDeclaration pointer).
 
-   This functions returns a SgTypedefDeclaration pointer for any input of a 
+This functions returns a SgTypedefDeclaration pointer for any input of a 
 pointer to an object derived from a SgTypedefDeclaration.
 
 \return Returns valid pointer to SgTypedefDeclaration if input is derived from a SgLocatedNode.
@@ -146,7 +146,7 @@ pointer to an object derived from a SgTypedefDeclaration.
 \fn SgTypedefDeclaration::get_scope() const
 \brief Returns scope of current statement.
 
-   This functions returns a pointer to the inner most SgScopeStatement where the current 
+This functions returns a pointer to the inner most SgScopeStatement where the current 
 statement is located.
 This is a function called after the parents have been set.  It is not called by the
 EDG/SAGE interface and is only called after the SAGE AST has been built and the parent

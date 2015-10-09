@@ -15,9 +15,9 @@ EXTRA_DIST = MainWindow.ui \
 			 icons/scope.gif \
 			 icons/variable.gif
 
-if ROSE_WITH_ROSEQT
+AM_CPPFLAGS += . -I$(srcdir)/.. $(ROSE_INCLUDES)
 
-INCLUDES += . -I$(srcdir)/.. $(ROSE_INCLUDES)
+if ROSE_WITH_ROSEQT
 
 noinst_LTLIBRARIES = libDebuggerQt.la
 

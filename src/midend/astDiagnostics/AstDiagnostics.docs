@@ -5,7 +5,7 @@
 //                       DESCRIPTION OF AST DIAGNOSTICS
 // **********************************************************************************
 /*!
-\page astDiagnostics Description of AST Diagnostics within ROSE
+\defgroup astDiagnostics Description of AST Diagnostics within ROSE
 
     This page specifies what mechanisms we provide to test the AST.
 More details are at \ref AstDiagnosticsClasses.

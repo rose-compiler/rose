@@ -2,6 +2,23 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS =
 EXTRA_DIST =
 MOSTLYCLEANFILES =
+TEST_TARGETS =
+BINARY_SPECIMENS = $(top_srcdir)/binaries/samples
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+######                                                                                                            ######
+######                                         _____           _                                                  ######
+######                                        |_   _|__   ___ | |___                                              ######
+######                                          | |/ _ \ / _ \| / __|                                             ######
+######                                          | | (_) | (_) | \__ \                                             ######
+######                                          |_|\___/ \___/|_|___/                                             ######
+######                                                                                                            ######
+######                                                                                                            ######
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
 
 #------------------------------------------------------------------------------------------------------------------------
 # dump specimen memory to files
@@ -74,6 +91,22 @@ bin_PROGRAMS += findDeadCode
 findDeadCode_SOURCES = findDeadCode.C
 findDeadCode_CPPFLAGS = $(ROSE_INCLUDES)
 findDeadCode_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
+# Parse and simplify symbolic expressions
+
+bin_PROGRAMS += symbolicSimplifier
+symbolicSimplifier_SOURCES = symbolicSimplifier.C
+symbolicSimplifier_CPPFLAGS = $(ROSE_INCLUDES)
+symbolicSimplifier_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
+# Generate source code from a binary specimen
+
+bin_PROGRAMS += binaryToSource
+binaryToSource_SOURCES = binaryToSource.C
+binaryToSource_CPPFLAGS = $(ROSE_INCLUDES)
+binaryToSource_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Not distributed; not part of the Git repo
@@ -226,9 +259,42 @@ x86_function_vas_SOURCES = x86-function-vas.C
 x86_function_vas_CPPFLAGS = $(ROSE_INCLUDES)
 x86_function_vas_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+######                                                                                                            ######
+######                                         _____         _                                                    ######
+######                                        |_   _|__  ___| |_ ___                                              ######
+######                                          | |/ _ \/ __| __/ __|                                             ######
+######                                          | |  __/\__ \ |_\__ \                                             ######
+######                                          |_|\___||___/\__|___/                                             ######
+######                                                                                                            ######
+######                                                                                                            ######
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
+# Uses the debugSemantics and a carefully crafted input specimen to test features of RegisterStateGeneric
+TEST_TARGETS += testAdaptiveRegisters.passed
+testAdaptiveRegisters.passed: $(BINARY_SPECIMENS)/x86-64-adaptiveRegs		\
+			      $(srcdir)/TestAnswers/testAdaptiveRegisters.ans	\
+			      debugSemantics
+	@$(RTH_RUN)										\
+		TITLE="RegisterStateGeneric [$@]"						\
+		CMD="./debugSemantics --test-adaptive-registers --semantics=symbolic $<"	\
+		ANS=$(srcdir)/TestAnswers/testAdaptiveRegisters.ans				\
+		$(top_srcdir)/scripts/test_with_answer $@
+
+
+
+
 #------------------------------------------------------------------------------------------------------------------------
 # Makefile boilerplate
 
 .PHONY: clean-local
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)
+	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
+
+check-local: $(TEST_TARGETS)

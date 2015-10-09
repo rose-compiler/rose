@@ -27,7 +27,7 @@ This class represents the concept of a list object in the input language. Curren
 \fn SgListExp::SgListExp ()
 \brief This is the constructor.
 
-   This constructor builds the SgListExp base class.
+This constructor builds the SgListExp base class.
 
 */
 
@@ -35,7 +35,7 @@ This class represents the concept of a list object in the input language. Curren
 \fn SgListExp::isSgListExp (SgNode *s)
 \brief Cast function (from derived class to SgListExp pointer).
 
-   This functions returns a SgListExp pointer for any input of a 
+This functions returns a SgListExp pointer for any input of a 
 pointer to an object derived from a SgListExp.
 
 \return Returns valid pointer to SgListExp if input is derived from a SgListExp.
@@ -45,7 +45,7 @@ pointer to an object derived from a SgListExp.
 \fn SgListExp::isSgListExp (const SgNode *s)
 \brief Cast function (from derived class to SgListExp pointer).
 
-   This functions returns a SgListExp pointer for any input of a 
+This functions returns a SgListExp pointer for any input of a 
 pointer to an object derived from a SgListExp.
 
 \return Returns valid pointer to SgListExp if input is derived from a SgListExp.

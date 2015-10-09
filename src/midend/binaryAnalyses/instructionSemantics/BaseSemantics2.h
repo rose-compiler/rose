@@ -29,7 +29,7 @@ namespace BinaryAnalysis {
  *  instructions in ROSE internal representation to some other representation (e.g., ROSE RISC or LLVM) where the other
  *  representation is built by "executing" the instruction.
  *
- * @section IS1 Components of instruction semantics
+ * @section instruction_semantics_components Components of instruction semantics
  *
  *  ROSE's binary semantics framework has two major components: the dispatchers and the semantic domains. The instruction
  *  dispatcher "executes" a machine instruction by translating it into a sequence of RISC-like operations, and the semantics
@@ -74,7 +74,7 @@ namespace BinaryAnalysis {
  *  classes have a default (or mostly default) constructor that builds the prerequisite objects and links them together, so the
  *  only time a user would need to do it explicitly is when they want to mix in a custom part.
  *
- *  @section IS3 Memory Management
+ *  @section instruction_semantics_pointers Memory Management
  *
  *  Most of the instruction semantics components have abstract base classes. Instances of concrete subclasses thereof are
  *  passed around by pointers, and in order to simplify memory management issues, those objects are reference counted.  Most
@@ -116,12 +116,12 @@ namespace BinaryAnalysis {
  *  Some of the semantic objects have a virtual copy constructor named copy().  This operates like a normal copy constructor
  *  but also adjusts reference counts.
  *
- *  @section IS4 Specialization
+ *  @section instruction_semantics_specialization Specialization
  *
  *  The instruction semantics architecture is designed to allow users to specialize nearly every part of it.  ROSE defines
  *  triplets (value type, state type, RISC operators) that are designed to work together to implement a particular semantic
  *  domain, but users are free to subclass any of those components to build customized semantic domains.  For example, the x86
- *  simulator (in "projects/simulator") subclasses the PartialSymbolicSemantics state in order to use memory mapped via ROSE's
+ *  simulator (in "projects/simulator2") subclasses the PartialSymbolicSemantics state in order to use memory mapped via ROSE's
  *  MemoryMap class, and to handle system calls (among other things).
  *
  *  When writing a subclass the author should implement three versions of each constructor: the real constructor, the static
@@ -240,7 +240,7 @@ namespace BinaryAnalysis {
  *     };
  *  @endcode
  *
- *  @section IS5 Other major changes
+ *  @section instruction_semantics_changes Other major changes
  *
  *  The new API exists in the rose::BinaryAnalysis::InstructionSemantics2 name space and can coexist with the original API in
  *  rose::BinaryAnalysis::InstructionSemantics&mdash;a program can use both APIs at the same time.
@@ -265,7 +265,7 @@ namespace BinaryAnalysis {
  *  The interface between RiscOperators and either MemoryState or RegisterState has been formalized somewhat. See documentation
  *  for RiscOperators::readMemory() and RiscOperators::readRegister().
  *
- *  @section IS6 Future work
+ *  @section instruction_semantics_future Future work
  *
  *  <em>Floating-point instructions.</em> Floating point registers are defined in the various RegisterDictionary objects but
  *  none of the semantic states actually define space for them, and we haven't defined any floating-point RISC operations for
@@ -274,7 +274,7 @@ namespace BinaryAnalysis {
  *  For instance, the RISC operators for a concrete semantic domain might use the host machine's native IEEE floating point to
  *  emulate the target machine's floating-point operations.
  *
- *  @section IS7 Example
+ *  @section instruction_semantics_example1 Example
  *
  *  See actual source code for examples since this interface is an active area of ROSE development (as of Jan-2013). The
  *  tests/roseTests/binaryTests/semanticSpeed.C has very simple examples for a variety of semantic domains. In order to use one
@@ -324,8 +324,8 @@ namespace BinaryAnalysis {
  *  state.  In fact, in order to follow flow-of-control from one instruction to another, it is customary to read the x86 EIP
  *  (instruction pointer register) value to get the address for the next instruction fetch.
  *
- *  One can find actual uses of instruction semantics in ROSE by searching for DispatcherX86.  Also, the simulator project (in
- *  projects/simulator) has many examples how to use instruction semantics--in fact, the simulator defines its own concrete
+ *  One can find actual uses of instruction semantics in ROSE by searching for DispatcherX86.  Also, the simulator2 project (in
+ *  projects/simulator2) has many examples how to use instruction semantics--in fact, the simulator defines its own concrete
  *  domain by subclassing PartialSymbolicSemantics in order to execute specimen programs.
  */
 namespace InstructionSemantics2 {
@@ -426,7 +426,7 @@ public:
  *
  *  Although the register and memory state objects provide the data members for storing this information, the properties are
  *  generally manipulated by higher layers such as the @c readRegister, @c writeRegister, @c readMemory, and @c writeMemory
- *  methods in a @ref RiscOperators implementation. */
+ *  methods in a @ref BaseSemantics::RiscOperators "RiscOperators" implementation. */
 enum InputOutputProperty {
     IO_READ,                                            /**< The location was read on behalf of an instruction. */
     IO_WRITE,                                           /**< The location was written on behalf of an instruction. */
@@ -591,7 +591,7 @@ public:
      *  This is a convenience wrapper around @ref createOptionalMerge. It always returns a newly constructed semantic value
      *  regardless of whether a merge was necessary.  In order to determine if a merge was necessary once can compare the
      *  return value to @p this using @ref must_equal, although doing so is more expensive than calling @ref
-     *  createOptionalMerged. */
+     *  createOptionalMerge. */
     SValuePtr createMerged(const SValuePtr &other, SMTSolver *solver) const /*final*/ {
         return createOptionalMerge(other, solver).orElse(copy());
     }
@@ -1721,7 +1721,7 @@ public:
 
     /** Construct an integer value from a floating-point value.
      *
-     *  The bits of @p fpValue are interpreted according to the @ref fpType and converted to a signed integer value
+     *  The bits of @p fpValue are interpreted according to the @p fpType and converted to a signed integer value
      *  that fits in @p integerWidth bits. This is done by truncating the fractional part of the floating point number, thus
      *  rounding toward zero. If @p fpValue is not a number then @p dflt is returned. */
     virtual SValuePtr fpToInteger(const SValuePtr &fpValue, SgAsmFloatType *fpType, const SValuePtr &dflt);

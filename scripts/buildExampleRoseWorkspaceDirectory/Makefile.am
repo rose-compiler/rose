@@ -5,7 +5,7 @@ SUBDIRS =
 
 AM_CXXFLAGS = $(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS)
 
-INCLUDES = -I@prefix@/include $(ROSE_INCLUDES)
+AM_CPPFLAGS = -I@prefix@/include $(ROSE_INCLUDES)
 
 bin_PROGRAMS = exampleTranslator
 exampleTranslator_SOURCES = exampleTranslator.C

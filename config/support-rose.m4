@@ -515,6 +515,10 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_2],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_2.
 
+# DQ (9/26/2015): Since the config/ltdl.m4 file in regenerated, we can't edit it easily.
+# So make this a requirement so that it will not be expanded there.
+m4_require([_LT_SYS_DYNAMIC_LINKER])
+
 # AC_REQUIRE([AC_PROG_CXX])
 AC_PROG_CXX
 
@@ -628,7 +632,7 @@ ROSE_SUPPORT_MAPLE
 AM_CONDITIONAL(ROSE_USE_MAPLE,test ! "$with_maple" = no)
 
 # DQ (4/10/2010): Added configure support for Backstroke project.
-ROSE_SUPPORT_BACKSTOKE
+ROSE_SUPPORT_BACKSTROKE
 
 #Call supporting macro for IDA PRO
 ROSE_SUPPORT_IDA
@@ -759,7 +763,11 @@ AC_ARG_ENABLE([rose-openGL],
   [  --enable-rose-openGL  enable openGL],
   [  rose_openGL=${enableval}
 AC_PATH_X dnl We need to do this by hand for some reason
-MDL_HAVE_OPENGL
+
+# DQ (9/26/2015): Using more recent autoconf macro to avoid warnings.
+# MDL_HAVE_OPENGL
+AC_FIND_OPENGL
+
 echo "have_GL = '$have_GL' and have_glut = '$have_glut' and rose_openGL = '$rose_openGL'"
 #AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$openGL" = xno)
 if test ! "x$rose_openGL" = xno; then
@@ -1670,7 +1678,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
 AC_CONFIG_FILES([
 stamp-h
 Makefile
-rose.docs
 config/Makefile
 src/Makefile
 src/util/Makefile
@@ -1837,8 +1844,6 @@ projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
 projects/ConstructNameSimilarityAnalysis/Makefile
-projects/CodeThorn/Makefile
-projects/CodeThorn/src/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
 projects/DataFaultTolerance/test/Makefile
@@ -1901,26 +1906,6 @@ projects/autoParallelization/tests/Makefile
 projects/autoTuning/Makefile
 projects/autoTuning/doc/Makefile
 projects/autoTuning/tests/Makefile
-projects/backstroke/Makefile
-projects/backstroke/eventDetection/Makefile
-projects/backstroke/eventDetection/ROSS/Makefile
-projects/backstroke/eventDetection/SPEEDES/Makefile
-projects/backstroke/normalizations/Makefile
-projects/backstroke/slicing/Makefile
-projects/backstroke/valueGraph/Makefile
-projects/backstroke/valueGraph/headerUnparser/Makefile
-projects/backstroke/pluggableReverser/Makefile
-projects/backstroke/testCodeGeneration/Makefile
-projects/backstroke/restrictedLanguage/Makefile
-projects/backstroke/tests/Makefile
-projects/backstroke/tests/cfgReverseCodeGenerator/Makefile
-projects/backstroke/tests/expNormalizationTest/Makefile
-projects/backstroke/tests/pluggableReverserTest/Makefile
-projects/backstroke/tests/restrictedLanguageTest/Makefile
-projects/backstroke/tests/testCodeBuilderTest/Makefile
-projects/backstroke/tests/incrementalInversionTest/Makefile
-projects/backstroke/utilities/Makefile
-projects/backstroke/sdg/Makefile
 projects/binCompass/Makefile
 projects/binCompass/analyses/Makefile
 projects/binCompass/graphanalyses/Makefile
@@ -1969,7 +1954,6 @@ projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
 projects/RosePolly/Makefile
-projects/simulator/Makefile
 projects/SMTPathFeasibility/Makefile
 projects/symbolicAnalysisFramework/Makefile
 projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile
@@ -1989,6 +1973,11 @@ projects/RTC/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
+projects/ManyCoreRuntime2/Makefile
+projects/ManyCoreRuntime2/runtime/Makefile
+projects/ManyCoreRuntime2/transformation/Makefile
+projects/ManyCoreRuntime2/tests/Makefile
+projects/ManyCoreRuntime2/docs/Makefile
 projects/MapleDSL/Makefile
 projects/StencilManyCore/Makefile
 projects/mint/Makefile
@@ -2247,7 +2236,6 @@ exampleTranslators/defaultTranslator/Makefile
 docs/Makefile
 docs/Rose/footer.html
 docs/Rose/leftmenu.html
-docs/Rose/AvailableDocumentation.docs
 docs/Rose/Makefile
 docs/Rose/manual.tex
 docs/Rose/ROSE_InstallationInstructions.tex
@@ -2256,6 +2244,7 @@ docs/Rose/ROSE_DeveloperInstructions.tex
 docs/Rose/ROSE_DemoGuide.tex
 docs/Rose/gettingStarted.tex
 docs/Rose/rose.cfg
+docs/Rose/rose-install-demo.cfg
 docs/Rose/roseQtWidgets.doxygen
 docs/Rose/sage.cfg
 docs/Rose/Tutorial/Makefile

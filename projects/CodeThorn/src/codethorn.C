@@ -31,7 +31,9 @@
 #include "Specialization.h"
 #include <map>
 #include "PragmaHandler.h"
-
+#include "Miscellaneous2.h"
+#include "FIConstAnalysis.h"
+#include "ReachabilityAnalysis.h"
 // test
 #include "Evaluator.h"
 
@@ -317,7 +319,63 @@ string readableruntime(double timeInMilliSeconds) {
 
 static Analyzer* global_analyzer=0;
 
+set<VariableId> determineSetOfCompoundIncVars(VariableIdMapping* vim, SgNode* root) {
+  ROSE_ASSERT(vim);
+  ROSE_ASSERT(root);
+  RoseAst ast(root) ;
+  set<VariableId> compoundIncVarsSet;
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(*i)) {
+      SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(compoundAssignOp));
+      if(lhsVar) {
+        compoundIncVarsSet.insert(vim->variableId(lhsVar));
+      }
+    }
+  }
+  return compoundIncVarsSet;
+}
 
+set<VariableId> determineSetOfConstAssignVars2(VariableIdMapping* vim, SgNode* root) {
+  ROSE_ASSERT(vim);
+  ROSE_ASSERT(root);
+  RoseAst ast(root) ;
+  set<VariableId> constAssignVars;
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
+      SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(assignOp));
+      SgIntVal* rhsIntVal=isSgIntVal(SgNodeHelper::getRhs(assignOp));
+      if(lhsVar && rhsIntVal) {
+        constAssignVars.insert(vim->variableId(lhsVar));
+      }
+    }
+  }
+  return constAssignVars;
+}
+
+VariableIdSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping* variableIdMapping) {
+  VariableIdSet usedVarsInAssertConditions;
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(SgIfStmt* ifstmt=isSgIfStmt(*i)) {
+      SgNode* cond=SgNodeHelper::getCond(ifstmt);
+      if(cond) {
+        int errorLabelCode=-1;
+        errorLabelCode=ReachabilityAnalysis::isConditionOfIfWithLabeledAssert(cond);
+        if(errorLabelCode>=0) {
+          //cout<<"Assertion cond: "<<cond->unparseToString()<<endl;
+          //cout<<"Stmt: "<<ifstmt->unparseToString()<<endl;
+          std::vector<SgVarRefExp*> vars=SgNodeHelper::determineVariablesInSubtree(cond);
+          //cout<<"Num of vars: "<<vars.size()<<endl;
+          for(std::vector<SgVarRefExp*>::iterator j=vars.begin();j!=vars.end();++j) {
+            VariableId varId=variableIdMapping->variableId(*j);
+            usedVarsInAssertConditions.insert(varId);
+          }
+        }
+      }
+    }
+  }
+  return usedVarsInAssertConditions;
+}
 
 int main( int argc, char * argv[] ) {
   string ltl_file;
@@ -396,7 +454,12 @@ int main( int argc, char * argv[] ) {
     ("rersformat",po::value< int >(),"Set year of rers format (2012, 2013).")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
     ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
-    ("max-transitions-forced-top",po::value< int >(),"Performs approximation after <arg> transitions (default: no limit).")
+    ("max-transitions-forced-top",po::value< int >(),"same as max-transitions-forced-top1 (default).")
+    ("max-transitions-forced-top1",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output) (default: no limit).")
+    ("max-transitions-forced-top2",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output,df) (default: no limit).")
+    ("max-transitions-forced-top3",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output,df,ptr-vars) (default: no limit).")
+    ("max-transitions-forced-top4",po::value< int >(),"Performs approximation after <arg> transitions (exact for all but inc-vars) (default: no limit).")
+    ("max-transitions-forced-top5",po::value< int >(),"Performs approximation after <arg> transitions (exact for input,output,df and vars with 0 to 2 assigned values)) (default: no limit).")
     ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
     ("variable-value-threshold",po::value< int >(),"sets a threshold for the maximum number of different values are stored for each variable.")
     ("dot-io-stg", po::value< string >(), "output STG with explicit I/O node information in dot file [arg]")
@@ -439,6 +502,14 @@ int main( int argc, char * argv[] ) {
     ("with-ltl-counterexamples", po::value< string >(), "report counterexamples that violate LTL properties [=yes|no]")
     ("counterexamples-with-output", po::value< string >(), "reported counterexamples for LTL or reachability properties also include output values [=yes|no]")
     ("check-ltl-counterexamples", po::value< string >(), "report ltl counterexamples if and only if they are not spurious [=yes|no]")
+    ("reconstruct-assert-paths", po::value< string >(), "takes a result file containing paths to reachable assertions and tries to reproduce them on the analyzed program. [=file-path]")
+    ("reconstruct-max-length", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum length of cyclic I/O patterns found by the analysis. [=pattern_length]")
+    ("reconstruct-max-repetitions", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum number of pattern repetitions that the search is following. [=#pattern_repetitions]")
+    ("pattern-search-max-depth", po::value< int >(), "parameter of the pattern search mode. Sets the maximum input depth that is searched for cyclic I/O patterns (default: 10).")
+    ("pattern-search-repetitions", po::value< int >(), "parameter of the pattern search mode. Sets the number of unrolled iterations of cyclic I/O patterns (default: 100).")
+    ("pattern-search-max-suffix", po::value< int >(), "parameter of the pattern search mode. Sets the maximum input depth of the suffix that is searched for failing assertions after following an I/O-pattern (default: 5).")
+    ("pattern-search-asserts", po::value< string >(), "reads a .csv-file (one line per assertion, e.g. \"1,yes\"). The pattern search terminates early if traces to all errors with \"yes\" entries have been found. [=file-path]")
+    ("pattern-search-exploration", po::value< string >(), "exploration mode for the pattern search. Note: all suffixes will always be checked using depth-first search. [=depth-first|breadth-first]")
     ("refinement-constraints-demo", po::value< string >(), "display constraints that are collected in order to later on help a refined analysis avoid spurious counterexamples. [=yes|no]")
     ("cegpra-ltl",po::value< int >(),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
     ("cegpra-ltl-all",po::value< string >(),"Check all specified LTL properties using cegpra [=yes|no]")
@@ -462,7 +533,7 @@ int main( int argc, char * argv[] ) {
   }
 
   if (args.count("version")) {
-    cout << "CodeThorn version 1.5.0\n";
+    cout << "CodeThorn version 1.6.0\n";
     cout << "Written by Markus Schordan, Adrian Prantl, and Marc Jasper\n";
     return 0;
   }
@@ -635,6 +706,8 @@ int main( int argc, char * argv[] ) {
       analyzer.setExplorationMode(Analyzer::EXPL_BREADTH_FIRST);
     } else if(explorationMode=="loop-aware") {
       analyzer.setExplorationMode(Analyzer::EXPL_LOOP_AWARE);
+    } else if(explorationMode=="random-mode1") {
+      analyzer.setExplorationMode(Analyzer::EXPL_RANDOM_MODE1);
     } else {
       cerr<<"Error: unknown state space exploration mode specified with option --exploration-mode."<<endl;
       exit(1);
@@ -670,10 +743,79 @@ int main( int argc, char * argv[] ) {
 
   if(args.count("max-transitions-forced-top")) {
     analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_IO);
+  } else if(args.count("max-transitions-forced-top1")) {
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top1"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_IO);
+  } else if(args.count("max-transitions-forced-top2")) {
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top2"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_IOCF);
+  } else if(args.count("max-transitions-forced-top3")) {
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top3"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
+  } else if(args.count("max-transitions-forced-top4")) {
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top4"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
+  } else if(args.count("max-transitions-forced-top5")) {
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top5"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
-  if(args.count("max-iterations-forced-top")) {
-    analyzer.setMaxIterationsForcedTop(args["max-iterations-forced-top"].as<int>());
+  if(args.count("reconstruct-assert-paths")) {
+    string previousAssertFilePath=args["reconstruct-assert-paths"].as<string>();
+    PropertyValueTable* previousAssertResults=analyzer.loadAssertionsToReconstruct(previousAssertFilePath);
+    analyzer.setReconstructPreviousResults(previousAssertResults);
+  }
+
+  if(args.count("reconstruct-max-length")) {
+    // a cycilc pattern needs to be discovered two times, therefore multiply the length by 2
+    analyzer.setReconstructMaxInputDepth(args["reconstruct-max-length"].as<int>() * 2);
+  }
+
+  if(args.count("reconstruct-max-repetitions")) {
+    analyzer.setReconstructMaxRepetitions(args["reconstruct-max-repetitions"].as<int>());
+  }
+
+  if(args.count("pattern-search-max-depth")) {
+    analyzer.setPatternSearchMaxDepth(args["pattern-search-max-depth"].as<int>());
+  } else {
+    analyzer.setPatternSearchMaxDepth(10);
+  }
+
+  if(args.count("pattern-search-repetitions")) {
+    analyzer.setPatternSearchRepetitions(args["pattern-search-repetitions"].as<int>());
+  } else {
+    analyzer.setPatternSearchRepetitions(100);
+  }
+
+  if(args.count("pattern-search-max-suffix")) {
+    analyzer.setPatternSearchMaxSuffixDepth(args["pattern-search-max-suffix"].as<int>());
+  } else {
+    analyzer.setPatternSearchMaxSuffixDepth(5);
+  }
+
+  if(args.count("pattern-search-asserts")) {
+    string patternSearchAssertsPath=args["pattern-search-asserts"].as<string>();
+    PropertyValueTable* patternSearchAsserts=analyzer.loadAssertionsToReconstruct(patternSearchAssertsPath);
+    analyzer.setPatternSearchAssertTable(patternSearchAsserts);
+  } else {
+    PropertyValueTable* patternSearchAsserts = new PropertyValueTable(100);
+    patternSearchAsserts->convertValue(PROPERTY_VALUE_UNKNOWN, PROPERTY_VALUE_YES);
+    analyzer.setPatternSearchAssertTable(patternSearchAsserts);
+  }
+
+  if(args.count("pattern-search-exploration")) {
+    string patternSearchExpMode=args["pattern-search-exploration"].as<string>();
+    if (patternSearchExpMode == "breadth-first") {
+      analyzer.setPatternSearchExploration(Analyzer::EXPL_BREADTH_FIRST);
+    } else if (patternSearchExpMode == "depth-first") {
+      analyzer.setPatternSearchExploration(Analyzer::EXPL_DEPTH_FIRST);
+    } else {
+      cout << "ERROR: pattern search exploration mode \"" << patternSearchExpMode << "\" currently not supported." << endl;
+      ROSE_ASSERT(0);
+    }
+  } else {
+    analyzer.setPatternSearchExploration(Analyzer::EXPL_DEPTH_FIRST);
   }
 
   if(boolOptions["minimize-states"]) {
@@ -772,6 +914,9 @@ int main( int argc, char * argv[] ) {
         || string(argv[i]).find("--check-ltl-sol")==0
         || string(argv[i]).find("--ltl-in-alphabet")==0
         || string(argv[i]).find("--ltl-out-alphabet")==0
+        || string(argv[i]).find("--reconstruct-assert-paths")==0
+        || string(argv[i]).find("--pattern-search-asserts")==0
+        || string(argv[i]).find("--pattern-search-exploration")==0
         || string(argv[i]).find("--specialize-fun-name")==0
         || string(argv[i]).find("--specialize-fun-param")==0
         ) {
@@ -810,7 +955,6 @@ int main( int argc, char * argv[] ) {
   }
 
   analyzer.setTreatStdErrLikeFailedAssert(boolOptions["stderr-like-failed-assert"]);
-  
 
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST: started."<<endl;
@@ -846,8 +990,6 @@ int main( int argc, char * argv[] ) {
 
   SgNode* root=sageProject;
   ROSE_ASSERT(root);
-  //VariableIdMapping variableIdMapping;
-  //variableIdMapping.computeVariableSymbolMapping(sageProject);
 
 #if 0
   SgNodeHelper::PragmaList pragmaList=SgNodeHelper::collectPragmaLines("verify",root);
@@ -895,16 +1037,19 @@ int main( int argc, char * argv[] ) {
     }
   }
 #else
+  cout <<"STATUS: handling pragmas started."<<endl;
   PragmaHandler pragmaHandler;
   pragmaHandler.handlePragmas(sageProject,&analyzer);
   // TODO: requires more refactoring
   option_specialize_fun_name=pragmaHandler.option_specialize_fun_name;
   boolOptions.registerOption("verify-update-sequence-race-conditions",true);
   // unparse specialized code
-  sageProject->unparse(0,0);
+  //sageProject->unparse(0,0);
+  cout <<"STATUS: handling pragmas finished."<<endl;
 #endif
 
   if(args.count("rewrite")) {
+    cout <<"STATUS: rewrite started."<<endl;
     rewriteSystem.resetStatistics();
     rewriteSystem.rewriteAst(root,analyzer.getVariableIdMapping() ,true,false,true);
     cout<<"Rewrite statistics:"<<endl<<rewriteSystem.getStatistics().toString()<<endl;
@@ -913,7 +1058,37 @@ int main( int argc, char * argv[] ) {
     exit(0);
   }
 
+  {
+    // TODO: refactor this into class Analyzer after normalization has been moved to class Analyzer.
+    set<VariableId> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer.getVariableIdMapping(),root);
+    analyzer.setCompoundIncVarsSet(compoundIncVarsSet);
+    cout<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
+  }
+  {
+    VariableIdSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer.getVariableIdMapping());
+    cout<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
+    analyzer.setAssertCondVarsSet(varsInAssertConditions);
+  }
+  {
+    cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
+    VarConstSetMap varConstSetMap;
+    VariableIdSet variablesOfInterest1,variablesOfInterest2;
+    FIConstAnalysis fiConstAnalysis(analyzer.getVariableIdMapping());
+    fiConstAnalysis.runAnalysis(sageProject);
+    VariableConstInfo* variableConstInfo=fiConstAnalysis.getVariableConstInfo();
+    variablesOfInterest1=fiConstAnalysis.determinedConstantVariables();
+    for(VariableIdSet::iterator i=variablesOfInterest1.begin();i!=variablesOfInterest1.end();++i) {
+      if(!variableConstInfo->isAny(*i) && variableConstInfo->width(*i)<=2) {
+        variablesOfInterest2.insert(*i);
+      }
+    }
+    analyzer.setSmallActivityVarsSet(variablesOfInterest2);
+    cout<<"INFO: variables with number of values <=2:"<<variablesOfInterest2.size()<<endl;
+  }
+
+
   if(boolOptions["normalize"]) {
+    cout <<"STATUS: Normalization started."<<endl;
     rewriteSystem.resetStatistics();
     rewriteSystem.rewriteCompoundAssignmentsInAst(root,analyzer.getVariableIdMapping());
     cout <<"STATUS: Normalization finished."<<endl;
@@ -973,6 +1148,18 @@ int main( int argc, char * argv[] ) {
   }
   analyzer.initLabeledAssertNodes(sageProject);
 
+  if(args.count("reconstruct-assert-paths")) {
+    analyzer.setSolver(9);
+    analyzer.setStartPState(*analyzer.popWorkList()->pstate());
+  }
+
+  if(args.count("pattern-search-max-depth") || args.count("pattern-search-max-suffix") 
+      || args.count("pattern-search-asserts") || args.count("pattern-search-max-exploration")) {
+    cout << "INFO: at least one of the parameters of mode \"pattern search\" was set. Choosing solver 10." << endl;
+    analyzer.setSolver(10);
+    analyzer.setStartPState(*analyzer.popWorkList()->pstate());
+  }
+
   double initRunTime=timer.getElapsedTimeInMilliSec();
 
   timer.start();
@@ -987,10 +1174,12 @@ int main( int argc, char * argv[] ) {
     analyzer.semanticFoldingOfTransitionGraph();
   }
   if(boolOptions["semantic-elimination"]) {
+    cout << "Performing post semantic elimination of transitions (this may take some time):"<<endl;
     analyzer.semanticEliminationOfTransitions();
   }
 
   if(boolOptions["semantic-explosion"]) {
+    cout << "Performing post semantic 'explosion' of output node constraints (this may take some time):"<<endl;
     analyzer.semanticExplosionOfInputNodesFromOutputNodeConstraints();
   }
 
@@ -999,6 +1188,7 @@ int main( int argc, char * argv[] ) {
   double extractAssertionTracesTime= 0;
   int maxOfShortestAssertInput = -1;
   if ( boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) {
+    cout << "STATUS: extracting assertion traces (this may take some time)"<<endl;
     timer.start();
     maxOfShortestAssertInput = analyzer.extractAssertionTraces();
     extractAssertionTracesTime = timer.getElapsedTimeInMilliSec();

@@ -39,10 +39,52 @@ void Number::operator/=(const Number& other) {
 void Number::operator%=(const Number& other) {
   _num%=other._num;
 }
+void Number::operator<<=(const Number& other) {
+  _num<<=other._num;
+}
+void Number::operator>>=(const Number& other) {
+  _num>>=other._num;
+}
 std::string Number::toString() const {
   std::stringstream ss;
   ss<<_num;
     return ss.str();
+}
+
+Number SPRAY::operator+(const Number& n1, const Number& n2) {
+  Number n=n1;
+    n+=n2;
+    return n;
+}
+Number SPRAY::operator-(const Number& n1, const Number& n2) {
+  Number n=n1;
+  n-=n2;
+  return n;
+}
+Number SPRAY::operator*(const Number& n1, const Number& n2) {
+  Number n=n1;
+  n*=n2;
+  return n;
+}
+Number SPRAY::operator/(const Number& n1, const Number& n2) {
+  Number n=n1;
+  n/=n2;
+  return n;
+}
+Number SPRAY::operator%(const Number& n1, const Number& n2) {
+  Number n=n1;
+  n%=n2;
+  return n;
+}
+Number SPRAY::operator<<(const Number& n1, const Number& n2) {
+    Number n=n1;
+    n<<=n2;
+    return n;
+}
+Number SPRAY::operator>>(const Number& n1, const Number& n2) {
+  Number n=n1;
+  n>>=n2;
+  return n;
 }
 
 std::ostream& SPRAY::operator<<(std::ostream& out, Number& number) {

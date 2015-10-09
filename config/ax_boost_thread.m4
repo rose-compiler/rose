@@ -78,10 +78,11 @@ AC_DEFUN([AX_BOOST_THREAD],
                 * ) CXXFLAGS="-pthread $CXXFLAGS" ;;
             esac
             AC_COMPILE_IFELSE(
-	        AC_LANG_PROGRAM([[@%:@include <boost/thread/thread.hpp>]],
+	        [AC_LANG_PROGRAM([[@%:@include <boost/thread/thread.hpp>]],
                     [[boost::thread_group thrds;
-                    return 0;]]),
+                    return 0;]])],
                 ax_cv_boost_thread=yes, ax_cv_boost_thread=no)
+
             CXXFLAGS=$CXXFLAGS_SAVE
             AC_LANG_POP([C++])
         ])

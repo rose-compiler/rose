@@ -1,6 +1,6 @@
 include ../../../config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # Define the template repository path used in the autoconf
 # subsitution for various C++ template control variables.

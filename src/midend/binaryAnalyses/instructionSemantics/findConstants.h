@@ -92,10 +92,13 @@ struct LatticeElement {
 };
 
 /** Shows values like this (all integers are hexadecimal, offsets are signed):
+ *
+ *  @code
  *    1. Unknown value:                      v5b9
  *    2. Known offset from unknown value:    v5b9+45
  *    3. Constant:                           0xfffffffc (-0x4)
  *    4. Top elements:                       <top>
+ *  @endcode
  */
 template <size_t Len>
 std::ostream& operator<<(std::ostream& o, const LatticeElement<Len>& e)

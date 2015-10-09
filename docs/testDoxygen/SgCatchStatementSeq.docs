@@ -6,7 +6,7 @@
 \class SgCatchStatementSeq
 \brief This class represents the concept of a C++ sequence of catch statements.
 
-    This is associated with a try statement.
+This is associated with a try statement.
 
 \sa
 \ref SgCatchStatementSeq_usage  "Example of using a SgCatchStatementSeq object"
@@ -30,7 +30,7 @@
 \fn SgCatchStatementSeq::SgCatchStatementSeq ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgCatchStatementSeq base class.
+This constructor builds the SgCatchStatementSeq base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -43,14 +43,14 @@
 \fn SgCatchStatementSeq::~SgCatchStatementSeq()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgCatchStatementSeq::isSgCatchStatementSeq (SgNode *s)
 \brief Cast function (from derived class to SgCatchStatementSeq pointer).
 
-   This functions returns a SgCatchStatementSeq pointer for any input of a 
+This functions returns a SgCatchStatementSeq pointer for any input of a 
 pointer to an object derived from a SgCatchStatementSeq.
 
 \return Returns valid pointer to SgCatchStatementSeq if input is derived from a SgLocatedNode.
@@ -60,7 +60,7 @@ pointer to an object derived from a SgCatchStatementSeq.
 \fn SgCatchStatementSeq::isSgCatchStatementSeq (const SgNode *s)
 \brief Cast function (from derived class to SgCatchStatementSeq pointer).
 
-   This functions returns a SgCatchStatementSeq pointer for any input of a 
+This functions returns a SgCatchStatementSeq pointer for any input of a 
 pointer to an object derived from a SgCatchStatementSeq.
 
 \return Returns valid pointer to SgCatchStatementSeq if input is derived from a SgLocatedNode.

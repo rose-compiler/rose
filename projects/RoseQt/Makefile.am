@@ -7,13 +7,13 @@ if ROSE_WITH_ROSEQT
 
 ROSEHPCT_BUILD_ROOT = $(top_builddir)/src/roseExtensions/roseHPCToolkit
 
+#AM_CPPFLAGS += $(ROSEQT_INCLUDES) $(QT_INCLUDES) $(ROSE_INCLUDES) $(ROSEHPCT_DEP_INCLUDES)
+AM_CPPFLAGS +=  $(ROSEHPCT_DEP_INCLUDES) -I$(top_srcdir)/src/roseExtensions/roseHPCToolkit/include
+
 CXXFLAGS += -DFRONTEND_CALL=\"$(top_builddir)/src/roseExtensions/qtWidgets/frontend_process\"
-      
-#INCLUDES += $(ROSEQT_INCLUDES) $(QT_INCLUDES) $(ROSE_INCLUDES) $(ROSEHPCT_DEP_INCLUDES)
-INCLUDES +=  $(ROSEHPCT_DEP_INCLUDES) -I$(top_srcdir)/src/roseExtensions/roseHPCToolkit/include
 
 print:
-	@echo $(INCLUDES)
+	@echo $(AM_CPPFLAGS)
 	@echo $(top_srcdir)/src/roseExtensions/roseHPCToolkit/include
 
 bin_PROGRAMS = roseQt

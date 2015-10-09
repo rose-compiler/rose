@@ -29,12 +29,12 @@ check-local: genFileNames
 	@echo "################################################################################"
 	$(srcdir)/test_filenames_unix_meta_chars.pl
 	@echo "********************************************************************************"
-	@echo "$(srcdir): make check rule complete (terminated normally)"
+	@echo "$(builddir): make check rule complete (terminated normally)"
 	@echo "********************************************************************************"
 
 clean-local:
 	@echo "################################################################################"
-	@echo "##########Cleaning $(srcdir)"
+	@echo "##########Cleaning $(builddir)"
 	@echo "################################################################################"
 	@sh -c '\
 		for f in $(FileNames) $(EmptyFileNames);\

@@ -16,7 +16,7 @@ MOSTLYCLEANFILES=
 if USE_BINARY_ANALYSIS_TESTS
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 TEST_WITH_ANSWER = $(top_srcdir)/scripts/test_with_answer
@@ -42,6 +42,18 @@ TEST_TARGETS += testBoost.passed
 testBoost.passed: testBoost
 	./testBoost
 
+# Check parsing of symbolic expressions via rose::BinaryAnalysis::SymbolicExprParser
+noinst_PROGRAMS += testSymbolicExprParser
+testSymbolicExprParser_SOURCES = testSymbolicExprParser.C
+testSymbolicExprParser_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testSymbolicExprParser.passed
+testSymbolicExprParser.passed: $(TEST_WITH_ANSWER) testSymbolicExprParser
+	@$(RTH_RUN)						\
+		TITLE="parsing of symbolic expressions [$@]"	\
+		CMD="./testSymbolicExprParser"			\
+		ANS="$(srcdir)/testSymbolicExprParser.ans"	\
+		$< $@
+
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
 noinst_PROGRAMS += execFormatsTest
@@ -52,16 +64,6 @@ EXTRA_DIST += execFormatsTest.conf
 execFormatsTest.passed: execFormatsTest.conf execFormatsTest
 	@$(RTH_RUN) $< $@
 
-
-#Test the binary control flow graph that uses the semantic representation to perform an accurate analysis
-noinst_PROGRAMS += testBinCFG
-testBinCFG_SOURCES = testBinCFG.C
-testBinCFG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += testBinCFG.passed
-EXTRA_DIST += testBinCFG.conf
-MOSTLYCLEANFILES += cfg_x86.dot
-testBinCFG.passed: testBinCFG.conf testBinCFG
-	@$(RTH_RUN) INPUT=libm-2.3.6.so $< $@
 
 # Tests for the newer BinaryAnalysis::ControlFlow class.
 noinst_PROGRAMS += testControlFlow
@@ -88,16 +90,6 @@ testControlFlow-E.passed: testControlFlow.conf testControlFlow
 noinst_PROGRAMS += cfg2
 cfg2_SOURCES = cfg2.C
 cfg2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
-#Test the binary call graph that uses the semantic representation to perform an accurate analysis
-noinst_PROGRAMS += testBinCG
-testBinCG_SOURCES = testBinCG.C
-testBinCG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += testBinCG.C
-EXTRA_DIST += testBinCG.conf
-MOSTLYCLEANFILES += cfg_x86.dot
-testBinCG.passed: testBinCG.conf testBinCG testBinCFG.passed
-	@$(RTH_RUN) INPUT=libm-2.3.6.so $< $@
 
 # Tests for the newer BinaryAnalysis::FunctionCall class.
 noinst_PROGRAMS += testFunctionCall
@@ -990,10 +982,7 @@ demo_testAssembler: testAssembler demo_yicesSemanticsLib
 	@echo; echo; echo "Demo for $<"; echo
 	./testAssembler $(BINARY_SAMPLES)/buffer2.bin
 
-demo_testBinCFG: testBinCFG demo_testAssembler
-	: no demo yet for testBinCFG
-
-demo_expandCoreDump: expandCoreDump demo_testBinCFG
+demo_expandCoreDump: expandCoreDump demo_testAssembler
 	: no demo yet for expandCoreDump
 
 demo_functionBoundaries: functionBoundaries demo_exapndCoreDump

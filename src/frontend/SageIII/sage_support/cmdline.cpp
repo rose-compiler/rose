@@ -106,6 +106,11 @@ makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<st
           printf ("In makeSysIncludeList(): bottom of loop: argString_result = %s \n",argString_result.c_str());
 #endif
         }
+
+#if 0
+     std::string argString_result = CommandlineProcessing::generateStringFromArgList(result,false,false);
+     printf ("In makeSysIncludeList(): bottom of function: argString_result = %s \n",argString_result.c_str());
+#endif
    }
 
 /*-----------------------------------------------------------------------------
@@ -672,7 +677,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           printf ("This is a deprecated option in ROSE (use --h or --help instead).\n");
   // Default
           cout << version_message() << endl;
-       // ROSE::usage(0);
+       // rose::usage(0);
           SgFile::usage(0);
           exit(0);
         }
@@ -691,7 +696,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // printf ("option --help found \n");
        // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
        // version();
-       // ROSE::usage(0);
+       // rose::usage(0);
           cout << version_message() << endl;
           SgFile::usage(0);
           exit(0);
@@ -1268,9 +1273,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           unsigned int length = argv[i].size();
 
        // printf ("assemble compiler command line option: argv[%d] = %s length = %d \n",i,argv[i],length);
-       // printf ("ROSE::sourceFileNamesWithoutPath[%d] = \n",sourceFileNameCounter,
-       //     ROSE::sourceFileNamesWithoutPath[sourceFileNameCounter]);
-       // ROSE_ASSERT (ROSE::sourceFileNamesWithoutPath[sourceFileNameCounter] != NULL);
+       // printf ("rose::sourceFileNamesWithoutPath[%d] = \n",sourceFileNameCounter,
+       //     rose::sourceFileNamesWithoutPath[sourceFileNameCounter]);
+       // ROSE_ASSERT (rose::sourceFileNamesWithoutPath[sourceFileNameCounter] != NULL);
 
        // DQ (12/8/2007): This leverages existing support in commandline processing
        // p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
@@ -3463,7 +3468,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           CommandlineProcessing::isOption(argv,"-","(h|help)",true)      == true )
         {
        // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
-       // ROSE::usage(0);
+       // rose::usage(0);
           cout << version_message() << endl;
           usage(0);
        // exit(0);
@@ -4140,6 +4145,36 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                ROSE_ASSERT(get_Cxx14_gnu_only() == true);
              }
         }
+#endif
+
+// #ifdef __INTEL_COMPILER
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+  // DQ (9/9/2015): The Intel compiler sets this to an old value (likely to match the MS Visual Studio C++ compiler).
+#if 0
+     printf ("Intel compiler being used as backend compiler: Identified this = %p -std=c++11 via more direct command line argument evaluation \n",this);
+#endif
+
+     if ( SgProject::get_verbose() >= 1 )
+          printf ("Intel compiler being used: Cxx11 mode ON \n");
+
+     set_Cxx11_only(true);
+     set_Cxx11_gnu_only(false);
+
+  // Set gnu specific level of C99 support to false.
+  // set_Cxx11_gnu_only(false);
+
+  // DQ (7/31/2013): If we turn on C99, then turn off C89.
+     set_C89_only(false);
+     set_C89_gnu_only(false);
+     set_C99_only(false);
+     set_C99_gnu_only(false);
+     set_C11_only(false);
+     set_C11_gnu_only(false);
+
+  // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
+     set_C_only(false);
+
+     ROSE_ASSERT(get_Cxx11_only() == true);
 #endif
 
 #if 0
@@ -5786,6 +5821,19 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      Rose_STL_Container<string> C_ConfigIncludeDirs(C_ConfigIncludeDirsRaw, C_ConfigIncludeDirsRaw + sizeof(C_ConfigIncludeDirsRaw) / sizeof(const char*));
 
 #if 0
+  // printf ("CXX_INCLUDE_STRING = %s \n",CXX_INCLUDE_STRING);
+  // printf ("CXX_INCLUDE_STRING = %s \n",Cxx_ConfigIncludeDirsRaw);
+     printf ("CXX_INCLUDE_STRING = %s \n",Cxx_ConfigIncludeDirsRaw[0]);
+#endif
+
+#if 0
+     for (size_t i=0; i < Cxx_ConfigIncludeDirs.size(); i++)
+        {
+          printf ("Cxx_ConfigIncludeDirs[%" PRIuPTR "] = %s \n",i,Cxx_ConfigIncludeDirs[i].c_str());
+        }
+#endif
+
+#if 0
      for (size_t i=0; i < configDefs.size(); i++)
         {
           printf ("configDefs[%" PRIuPTR "] = %s \n",i,configDefs[i].c_str());
@@ -5838,13 +5886,20 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      vector<string> commandLine;
 
-    // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
-    #ifdef ROSE_BOOST_PATH
-    // Search dir for header files, after all directories specified by -I but
-    // before the standard system directories.
-    commandLine.push_back("--sys_include");
-    commandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
-    #endif
+#if 0
+  // DQ (8/17/2015): Moved this specification of the boost path to after the generation of the -I include_dirs 
+  // to handle the case where a different version of boost is explicitly specified in the -I include_dirs.
+  // This allows ROSE to reproduce the behavior of the GNU g++ and Intel icpc compilers.
+  // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+#ifdef ROSE_BOOST_PATH
+  // Search dir for header files, after all directories specified by -I but before the standard system directories.
+#if 0
+     printf ("Adding boost path = %s \n",ROSE_BOOST_PATH);
+#endif
+     commandLine.push_back("--sys_include");
+     commandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+#endif
+#endif
 
 #ifdef ROSE_USE_MICROSOFT_EXTENSIONS
   // DQ (4/21/2014): Add Microsoft specific options:
@@ -5872,6 +5927,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // (only to the parts of Boost the read the GNU compiler version number information).
   // DQ (7/3/2013): Adding option to specify the version of GNU to emulate.
      int emulate_gnu_version_number = __GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__;
+
+// #ifdef __INTEL_COMPILER
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+  // DQ (9/6/2015): Reset to specific version of GNU for Intel v14 compiler.
+     emulate_gnu_version_number = 4*10000 + 8*100 + 3;
+#endif
 
   // DQ (7/3/2014): Testing if we emulate a different version of GNU g++.
   // emulate_gnu_version_number = 4*10000 + 8*100 + 1;
@@ -6314,6 +6375,15 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
             // DQ (11/29/2006): Specify C++ mode for handling in rose_edg_required_macros_and_functions.h
                commandLine.push_back("-DROSE_LANGUAGE_MODE=1");
+
+// #ifdef __INTEL_COMPILER
+#ifdef BACKEND_CXX_IS_INTEL_COMPILER
+            // DQ (9/9/2015): The Intel compiler sets this to an old value (likely to match the MS Visual Studio C++ compiler).
+            // This is not consistant with GNU, but required for Intel header file compatablity (or is is that Intel is using 
+            // the GNU header files and it is required for GNU compatability?). I think that setting this predefined macro is 
+            // not allowed by EDG in MSVC mode.
+               commandLine.push_back("-D__cplusplus=199711L");
+#endif
              }
 
 #if 0
@@ -6321,6 +6391,20 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           ROSE_ASSERT(false);
 #endif
         }
+
+#if 1
+  // DQ (8/17/2015): Moved this specification of the boost path to after the generation of the -I include_dirs 
+  // to handle the case where a different version of boost is explicitly specified in the -I include_dirs.
+  // This allows ROSE to reproduce the behavior of the GNU g++ and Intel icpc compilers.
+#ifdef ROSE_BOOST_PATH
+  // Search dir for header files, after all directories specified by -I but before the standard system directories.
+#if 0
+     printf ("Adding (after -I include dirs) boost path = %s \n",ROSE_BOOST_PATH);
+#endif
+     commandLine.push_back("--sys_include");
+     commandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+#endif
+#endif
 
 #if 0
      printf ("Exting as a test! \n");
@@ -7664,8 +7748,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
      std::string sourceFileName = get_sourceFileNameWithPath();
 
-     std::string oldFileNamePathOnly = ROSE::getPathFromFileName(sourceFileName.c_str());
-     std::string oldFileName         = ROSE::stripPathFromFileName(sourceFileName.c_str());
+     std::string oldFileNamePathOnly = rose::getPathFromFileName(sourceFileName.c_str());
+     std::string oldFileName         = rose::utility_stripPathFromFileName(sourceFileName.c_str());
 
 #if 0
      printf ("oldFileNamePathOnly = %s \n",oldFileNamePathOnly.c_str());

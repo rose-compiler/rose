@@ -720,7 +720,7 @@ int buildAstMergeCommandFile ( SgProject* project )
   //                           SgProject::project_argc,SgProject::project_argv,skipInitialEntry,skipSourceFiles);
      string commandline = CommandlineProcessing::generateStringFromArgList(argv,skipInitialEntry,skipSourceFiles);
      string separator = "::";
-     string workingDirectory = ROSE::getWorkingDirectory();
+     string workingDirectory = rose::getWorkingDirectory();
 
      if (SgProject::get_verbose() > 0)
         {

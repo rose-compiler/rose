@@ -1156,7 +1156,7 @@ HighLevelInterfaceNodeCollection::insertStatementListWithMarkers (
        else
         {
        // For now pass along information about the attempt to the users (for temp debugging)
-          printf ("WARNING: Attempt to insert/replace statement with empty list of new statements or comments/directives at line = %d \n",ROSE::getLineNumber(target));
+          printf ("WARNING: Attempt to insert/replace statement with empty list of new statements or comments/directives at line = %d \n",rose::getLineNumber(target));
       // ROSE_ABORT();
         }
 #endif

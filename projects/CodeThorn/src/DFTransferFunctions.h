@@ -3,23 +3,24 @@
 
 #include "Labeler.h"
 #include "Lattice.h"
+#include "Flow.h"
 #include "PointerAnalysisInterface.h"
+#include "ProgramAbstractionLayer.h"
 
 namespace SPRAY {
 
 class DFTransferFunctions {
 public:
   DFTransferFunctions();
-  void setLabeler(SPRAY::Labeler* labeler) { _labeler=labeler; }
-  SPRAY::Labeler* getLabeler() { return _labeler; }
-  //void setDomain(Domain* domain) { _domain=domain; }
-  //Domain* getDomain() { return _domain; }
-  void setVariableIdMapping(VariableIdMapping* v) { _variableIdMapping=v; }
-  VariableIdMapping* getVariableIdMapping() { return _variableIdMapping; }
-
+  SPRAY::Labeler* getLabeler() { return _programAbstractionLayer->getLabeler(); }
+  VariableIdMapping* getVariableIdMapping() { return _programAbstractionLayer->getVariableIdMapping(); }
+  void setProgramAbstractionLayer(SPRAY::ProgramAbstractionLayer* pal) {_programAbstractionLayer=pal; }
   // allow for some pointer analysis to be used directly
   void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pointerAnalysisInterface) { _pointerAnalysisInterface=pointerAnalysisInterface; }
   SPRAY::PointerAnalysisInterface* getPointerAnalysisInterface() { return _pointerAnalysisInterface; }
+
+  virtual void transfer(SPRAY::Edge edge, Lattice& element);
+  virtual void transferCondition(Edge edge, Lattice& element);
 
   virtual void transfer(SPRAY::Label lab, Lattice& element);
   virtual void transferExpression(SPRAY::Label label, SgExpression* expr, Lattice& element);
@@ -35,9 +36,6 @@ public:
   virtual ~DFTransferFunctions() {}
   //protected:
  public:
-  SPRAY::Labeler* _labeler;
-  SPRAY::VariableIdMapping* _variableIdMapping;
-  //Domain* _domain;
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
 
  public:
@@ -45,6 +43,7 @@ public:
   VariableId getParameterVariableId(int paramNr);
   VariableId getResultVariableId();
  private:
+  SPRAY::ProgramAbstractionLayer* _programAbstractionLayer;
   VariableId parameter0VariableId;
   VariableId resultVariableId;
 };

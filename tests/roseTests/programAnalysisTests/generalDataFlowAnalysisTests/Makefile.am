@@ -13,7 +13,7 @@ FORTRAN_CHECK_TARGETS =
 LDADD = $(ROSE_LIBS) 
 
 SAF_SRC_ROOT = $(top_srcdir)/src/midend/programAnalysis/genericDataflow/
-INCLUDES = 					\
+AM_CPPFLAGS = 					\
 	$(ROSE_INCLUDES)			\
 	-I$(srcdir)				\
         -I$(SAF_SRC_ROOT)			\

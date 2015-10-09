@@ -1,9 +1,9 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-INCLUDES += $(JAVA_JVM_INCLUDE)
+AM_CPPFLAGS += $(JAVA_JVM_INCLUDE)
 endif
 
 noinst_LTLIBRARIES = libsageInterface.la

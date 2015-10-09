@@ -1,6 +1,5 @@
 add_library(midend_binary OBJECT
   AbstractLocation.C
-  binary_analysis.C
   BinaryCallingConvention.C
   BinaryControlFlow.C
   BinaryDataFlow.C
@@ -11,6 +10,7 @@ add_library(midend_binary OBJECT
   BinaryReturnValueUsed.C
   BinaryString.C
   BinaryTaintedFlow.C
+  BinaryToSource.C
   DwarfLineMapper.C
   GraphAlgorithms.C
   RoseBin_CallGraphAnalysis.cpp
@@ -43,7 +43,9 @@ add_library(midend_binary OBJECT
   instructionSemantics/PartialSymbolicSemantics2.C
   instructionSemantics/RegisterStateGeneric.C
   instructionSemantics/SMTSolver.C
+  instructionSemantics/SourceAstSemantics2.C
   instructionSemantics/StaticSemantics2.C
+  instructionSemantics/SymbolicExprParser.C
   instructionSemantics/SymbolicMemory2.C
   instructionSemantics/SymbolicSemantics.C
   instructionSemantics/SymbolicSemantics2.C
@@ -56,7 +58,6 @@ add_dependencies(midend_binary rosetta_generated)
 install(
   FILES
     AbstractLocation.h
-    binary_analysis.h
     BinaryAnalysisUtils.h
     BinaryCallingConvention.h
     BinaryControlFlow.h
@@ -69,6 +70,7 @@ install(
     BinaryStackVariable.h
     BinaryString.h
     BinaryTaintedFlow.h
+    BinaryToSource.h
     dataflowanalyses/InterruptAnalysis.h
     dataflowanalyses/RoseBin_DataFlowAbstract.h
     dataflowanalyses/RoseBin_DefUseAnalysis.h
@@ -100,7 +102,9 @@ install(
     instructionSemantics/ReadWriteRegisterFragment.h
     instructionSemantics/RegisterStateGeneric.h
     instructionSemantics/SMTSolver.h
+    instructionSemantics/SourceAstSemantics2.h
     instructionSemantics/StaticSemantics2.h
+    instructionSemantics/SymbolicExprParser.h
     instructionSemantics/SymbolicMemory2.h
     instructionSemantics/SymbolicSemantics2.h
     instructionSemantics/SymbolicSemantics.h

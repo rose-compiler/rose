@@ -2,130 +2,77 @@
 V1.0 2012-08-27 Markus Schordan
 -------------------------------
 
-* Construction of inter-procedural control flow graph:
-
-  - recursive definition: for each AST subtree its corresponding CFG
-    is computed. The CFG of an AST subtree is computed from the CFGs
-    of its children and the root node of that subtree ('break',
-    'return', and scopes are supported).
-
-  - This design is supposed to support transformations (in future
-    version) as we will be able to replace sub-CFGs of transformed AST
-    subtrees.
-
-* General framework:
-
-  - The general solver is implemented as a work-list algorithm. It
-    maintaines all computed system states and determines which states
-    have been observed during a computation. Transfer functions do not
-    have to be monotone. Only new states are added to the work list
-    (otherwise the result has already been computed and is guaranteed
-    to be available). After a state has been fetched from the
-    work-list its associated transfer function is computed and the
-    resulting state(s) are added to the work list.
-
-  - The state maintainer computes a location for the state
-    representation and returns a state-id of the state. In subsequent
-    computations only the state-id is used.
-
-  - The algorithm is guaranteed to terminate because it stores all
-    states and checks for existing states. The convergence rate of an
-    analysis depends on the domain abstraction and state
-    equivalence. Future versions will introduce additional
-    meet-operator concepts.
-
-* Interprocedural const-int analysis: 
-  - computes system-states for each label in the program a system
-    state consists of:
-    + label
-    + property state (variable mapping for each variable: x->c or x->top)
-    + constraint set (supports: x==c,x!=c
-                      where x,y are variables and c ist a constant)
-
-* Computation of transition graph: 
-  - consists of edges (sstate-id,edge-type,sstate-id)
-
-* Language Restricor:
-  - checks that the input program is in the supported C/C++ language subset
-
-* State Maintainer(s): property states and system states are
-  maintained by the respective maintainer class. The internal data
-  structures are ordered sets.  For all data types used by the
-  analyzer a strict weak ordering is defined which is used by the set
-  implementation to achieve a logarithmic access time for elements
-  [further refined in V1.1]
-
+* Construction of inter-procedural control flow graph
+* General framework
+* Interprocedural const-int analysis
+* Computation of transition graph
+* Language Restrictor
+* State Maintainer(s)
 * Visualization of
   - abstract syntax tree (AST) with computed cfg labels
   - control flow graph
   - transition graph 
-  - folded transition graph
-
+  - folded transition graph (more compact)
 
 -------------------------------------------------
 V1.1 2012-09-30 Markus Schordan and Adrian Prantl
 -------------------------------------------------
-new features:
 
 * Linear Time Logic Formulae verification: (Adrian Prantl)
-  - input is the state transition graph
-  - reads LTL formulae
-  - computes (optionally) a reduced transition graph
-  - verifies LTL formulae on reduced transition graph using a
-    fixed-point algorithm.
   - the algorithm verifies LTL formulae on the approximated cyclic
     transition graphs
-
 * Black-box verification of LTLs: (Adrian Prantl)
   - input/output sequence generator (Haskell prototype)
   - input/output verifyer (providing counter examples)
-
 * Visualization of LTL verification (Adrian Prantl)
-
 * Interprocedural propagation of constraints: (Markus Schordan)
-  - directions: caller->callee and callee->caller
-  - addition of x=y constraints (restricted to parameter passing)
-  - new constraint set operators ensuring that no information is lost
-    when x=y constraints are removed
-
 * Extended const-int analysis to const-int-io analysis: (Markus Schordan)
   - added input/output property (none,input,stdcout,stderr,failed-assert)
     to system state.
-  - added arithmetic operators: +,-,*,/,%
-
 * Refinement of Maintainer class(es): (Markus Schordan)
-  . introduction of hash-sets for maintainer classes 
-  - the maintainer class(es) maintain a hash set for each state-class
-  - chains of colliding data values in hash sets are organized in 
-    ordered sets (as trees with logarithmic access time)  
-  - each state-class provides its own hash-function
-
 * Introduction of unique variable-ids (Markus Schordan)
-  - computation of ROSE-AST based variable-ids for entire program
-  - checks consistency of mapping
-  - variable-ids are used in all state representations
-
 * Visualization: (Markus Schordan)
-  - all information of the state transition graph can now be also
-    viewed in the folded transitino graph (and vice versa). Command
-    line options allow to select arbitrary combinations of visualized
-    data.
-  - extended visualizations with IO operations and failed-asserts
-
+  - Command line options allow to select arbitrary combinations of
+    visualized data.  - extended visualizations with IO operations and
+    failed-asserts
 * Several new command line options (all authors)
 
 -------------------------------------------------
 V1.2 2012-10-12 Markus Schordan and Adrian Prantl
 -------------------------------------------------
-new major features:
 
 * Normalized Minimal Constraint sets (Markus Schordan)
   - constraints sets are now normalized
-
 * Parallel analyzer (Markus Schordan)
   - the analyzer can be run in parallel now, supporting multi-core
   systems using OpenMP threads. The number of threads can be specified
   as command line option --threads=<NUM> where NUM is the number of
   threads.
-
 * Several new command line options (all authors)
+
+-------------------------------------------------
+V1.3 2013-11-18 Markus Schordan and Adrian Prantl
+-------------------------------------------------
+ * support for binary mode (RERS-specific, calls the linked original program)
+
+-----------------------------------------------------------
+V1.4 2014-11-18 Markus Schordan, Adrian Prantl, Marc Jasper
+-----------------------------------------------------------
+  * integration of SPOT library for LTL verification (Marc Jasper)
+  * counter example generation (Marc Jasper)
+  * support of new command line options for LTL verification (Marc Jasper)
+  * support for different search strategies in state space (Markus Schordan)
+
+-----------------------------------------------------------
+V1.5 2014-02-26 Markus Schordan, Adrian Prantl, Marc Jasper
+-----------------------------------------------------------
+  * extraction of floating point variable update-sequence (Markus Schordan)
+  * new command line options for specialization of function parameters (Markus Schordan)
+
+-----------------------------------------------------------
+V1.6 2015-09-14 Markus Schordan, Adrian Prantl, Marc Jasper
+-----------------------------------------------------------
+  * pattern-based input-sequence generation (Marc Jasper)
+  * reachability checking of input-sequences (Marc Jasper)
+  * data race detection in OpenMP for loops (Markus Schordan)
+  * normalization of internal program representation (Markus Schordan)

@@ -6,7 +6,7 @@ ROSEHPCT_SRC_ROOT = $(top_srcdir)/src/roseExtensions/roseHPCToolkit
 ROSEHPCT_BUILD_ROOT = $(top_builddir)/src/roseExtensions/roseHPCToolkit
 
 # ROSEHPCT_DEP_INCLUDES contains include paths to libxml2
-INCLUDES = $(ROSE_INCLUDES) \
+AM_CPPFLAGS = $(ROSE_INCLUDES) \
 	$(ROSEHPCT_DEP_INCLUDES) \
 	-I$(ROSEHPCT_SRC_ROOT)/include
 

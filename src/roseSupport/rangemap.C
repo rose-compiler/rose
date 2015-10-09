@@ -30,7 +30,10 @@ Range<double>::clear() {
 }
 
 template<>
-const double
+// DQ (9/3/2015): Intel v14 compiler warns that use of "const" is meaningless.
+// I think this is correct since this is being returned by value.
+// const double
+double
 Range<double>::relaxed_first() const {
     return r_first;
 }
@@ -105,7 +108,10 @@ Range<float>::clear() {
 }
 
 template<>
-const float
+// DQ (9/3/2015): Intel v14 compiler warns that use of "const" is meaningless.
+// I think this is correct since this is being returned by value.
+// const float
+float
 Range<float>::relaxed_first() const {
     return r_first;
 }

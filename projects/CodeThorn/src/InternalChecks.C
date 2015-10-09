@@ -26,6 +26,7 @@
 #endif
 
 #include "Miscellaneous.h"
+#include "Miscellaneous2.h"
 #include "InternalChecks.h"
 
 using namespace CodeThorn;
@@ -468,11 +469,11 @@ void checkTypes() {
 
     stringstream ss2;
     ss2<<"test1";
-    check("Parse: Testing test2 on test1.",!CodeThorn::Parse::checkWord("test2",ss2));
+    check("Parse: Testing test2 on test1.",!SPRAY::Parse::checkWord("test2",ss2));
     //cout << "Remaing stream: "<<ss2.str()<<endl;
     stringstream ss3;
     ss3<<"test1";
-    check("Parse: Testing test1 on test1.",CodeThorn::Parse::checkWord("test1",ss3));
+    check("Parse: Testing test1 on test1.",SPRAY::Parse::checkWord("test1",ss3));
     //cout << "Remaing stream: "<<ss3.str()<<endl;
 
     CodeThorn::AType::ConstIntLattice x;
@@ -525,7 +526,7 @@ void checkTypes() {
       string s="aaabbb";
       ss<<s;
       string parseString="aaa";
-      CodeThorn::Parse::parseString(parseString,ss); // throws exception if it fails
+      SPRAY::Parse::parseString(parseString,ss); // throws exception if it fails
       char next;
       ss>>next;
       check(string("Parsing: ")+parseString+" from:"+s+" Next:"+next,true);      

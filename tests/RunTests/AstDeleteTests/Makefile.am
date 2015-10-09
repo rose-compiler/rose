@@ -5,7 +5,7 @@ TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
 bin_PROGRAMS = memoryTranslator
 memoryTranslator_SOURCES = test.C
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 TESTCODES_REQUIRED_TO_PASS = \

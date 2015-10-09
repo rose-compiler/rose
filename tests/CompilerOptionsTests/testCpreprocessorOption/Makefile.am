@@ -1,8 +1,8 @@
 ## Process this file with automake to create Makefile.in
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompilerOptionsTests/A++Code -I$(srcdir)
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)
+# AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompilerOptionsTests/A++Code -I$(srcdir)
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir)
 
 # DQ (12/5/2007): A++ does not compile with g++ version 4 and greater so the source
 # code has been modified to skip the code when #if ( (__GNUC__ == 3) && (__GNUC_MINOR__ <= 4) )

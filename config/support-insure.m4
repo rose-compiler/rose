@@ -6,8 +6,9 @@ AC_DEFUN([ROSE_SUPPORT_INSURE],
 # so we must know our host and the compiler used.
 AC_REQUIRE([AC_CANONICAL_HOST])
 AC_REQUIRE([AC_PROG_CXX])
-AC_REQUIRE([BTNG_INFO_CXX_ID])
-AC_REQUIRE([BTNG_CXX_AR])
+# DQ (9/26/2015): Making this code more portable with out warnings.
+# AC_REQUIRE([BTNG_INFO_CXX_ID])
+# AC_REQUIRE([BTNG_CXX_AR])
 
 dnl *********************************************************************
 dnl * Use INSURE

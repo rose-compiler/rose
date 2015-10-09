@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_LLVM
 
-INCLUDES = $(ROSE_INCLUDES) \
+AM_CPPFLAGS = $(ROSE_INCLUDES) \
 		   $(ROSE_LLVM_INCLUDES) \
 		   $(ROSE_BOOST_INCLUDES) \
 		   -I$(top_srcdir)/projects/roseToLLVM/src/rosetollvm/include \

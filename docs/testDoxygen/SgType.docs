@@ -6,7 +6,7 @@
 \class SgType
 \brief This class represents the base class for all types.
 
-    There are no uses of this IR node anywhere.  All SgType based IR nodes
+There are no uses of this IR node anywhere.  All SgType based IR nodes
 are derived from this SgType class.
 
 Discussion of get_base_type() and findBaseType():
@@ -35,16 +35,16 @@ would share the same list of typedefs.  So this is the correct location for this
    -# SgUnknownMemberFunctionType
 
 \todo The signed types (except for signed char) are not used in SAGE III and do not exist
-      in C or C++.  These IR nodes should be removed, specifically SgTypeSignedShort,
-      SgTypeSignedInt, SgTypeSignedLong.
+in C or C++.  These IR nodes should be removed, specifically SgTypeSignedShort,
+SgTypeSignedInt, SgTypeSignedLong.
 
 \todo For Fortran support we need to add the kind, length data member to specify the width.
-      To support handling of kind, length parameters we should use the information about
-      the target backend compiler and map kind information to bit widths (not a high
-      priority).
+To support handling of kind, length parameters we should use the information about
+the target backend compiler and map kind information to bit widths (not a high
+priority).
 
 \todo Labels appear to be used as types in "foo(*,*)", see example from 
-      Chris (LANL, 4/19/2007).
+Chris (LANL, 4/19/2007).
 
 
 \sa
@@ -59,10 +59,10 @@ would share the same list of typedefs.  So this is the correct location for this
 /*!
 \var int SgType::p_substitutedForTemplateParam
 \brief This boolean variable marks if the current type was originally a template
-    parameter.
+parameter.
 
 \internal This mechanism is not fully implemented and might be modified when it is.
-          Also, this variables type should have been bool.
+Also, this variables type should have been bool.
 */
 
 /*!
@@ -99,7 +99,7 @@ would share the same list of typedefs.  So this is the correct location for this
 \fn SgType::SgType()
 \brief This is the constructor.
 
-   This constructor builds the SgType base class.
+This constructor builds the SgType base class.
 
 \sa 
 \ref SgType_create "Example:create an SgType object"
@@ -109,14 +109,14 @@ would share the same list of typedefs.  So this is the correct location for this
 \fn SgType::~SgType()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgType::isSgType (SgNode *s)
 \brief Cast function (from derived class to SgType pointer).
 
-   This functions returns a SgType pointer for any input of a 
+This functions returns a SgType pointer for any input of a 
 pointer to an object derived from a SgType.
 
 \return Returns valid pointer to SgType if input is derived from a SgLocatedNode.
@@ -126,7 +126,7 @@ pointer to an object derived from a SgType.
 \fn SgType::isSgType (const SgNode *s)
 \brief Cast function (from derived class to SgType pointer).
 
-   This functions returns a SgType pointer for any input of a 
+This functions returns a SgType pointer for any input of a 
 pointer to an object derived from a SgType.
 
 \return Returns valid pointer to SgType if input is derived from a SgType node.

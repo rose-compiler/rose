@@ -23,7 +23,7 @@ namespace Partitioner2 {
  *
  *  @li @ref Dictionary is a collection of calling convention definitions.
  *
- *  @li @ref Analyzer performs an analysis and can determine which definitions best match the characteristics of some
+ *  @li @ref Analysis performs an analysis and can determine which definitions best match the characteristics of some
  *      specified function. */
 namespace CallingConvention {
 

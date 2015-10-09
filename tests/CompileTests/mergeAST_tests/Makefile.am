@@ -4,8 +4,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # These are testcodes specific to the ROSE mechanism to merge different ASTs #
 ##############################################################################
 
-# INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/../colorAST_tests
-INCLUDES = $(ROSE_INCLUDES)
+# AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir)/../colorAST_tests
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # This is a shorted list that tests more quickly.
 TESTCODES_REQUIRED_TO_PASS = \

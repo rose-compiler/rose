@@ -26,14 +26,11 @@
 #endif
 
 
-// DQ (4/3/2012): Addes so that I can enforce some rules as the AST is constructed.
+// DQ (4/3/2012): Added so that I can enforce some rules as the AST is constructed.
 #include "AstConsistencyTests.h"
 
-#ifndef USE_CMAKE
-// DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
 // DQ (2/27/2014): We need this feature to support the function: fixupCopyOfAstFromSeparateFileInNewTargetAst()
 #include "RoseAst.h"
-#endif
 
 // DQ (3/31/2012): Is this going to be an issue for C++11 use with ROSE?
 #define foreach BOOST_FOREACH
@@ -2824,6 +2821,10 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #if 0
      printf ("In buildNondefiningFunctionDeclaration_T(): func_type = %p = %s \n",func_type,func_type->class_name().c_str());
 #endif
+#if 0
+  // printf ("In buildNondefiningFunctionDeclaration_T(): paralist->get_args()[0]->unparseToString() = %s \n",paralist->get_args()[0]->unparseToString().c_str());
+     printf ("In buildNondefiningFunctionDeclaration_T(): func_type->unparseToString() = %s \n",func_type->unparseToString().c_str());
+#endif
 
   // function declaration
      actualFunction* func = NULL;
@@ -3750,6 +3751,28 @@ SageBuilder::buildNondefiningTemplateFunctionDeclaration (const SgName & name, S
   // SgTemplateFunctionDeclaration* result = buildNondefiningFunctionDeclaration_T <SgTemplateFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope, decoratorList, false, NULL);
   // SgTemplateFunctionDeclaration* result = buildNondefiningFunctionDeclaration_T <SgTemplateFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope, decoratorList, false, templateArgumentsList);
      SgTemplateFunctionDeclaration* result = buildNondefiningFunctionDeclaration_T <SgTemplateFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope, decoratorList, false, NULL, templateParameterList);
+
+#if 0
+  // Optional debugging.
+  // DQ (9/24/2015): Added more testing (for boost 1.54 and test2015_62.C).
+     ROSE_ASSERT(result != NULL);
+     ROSE_ASSERT(templateParameterList != NULL);
+     ROSE_ASSERT(result->get_templateParameters().size() == templateParameterList->size());
+     SgTemplateFunctionDeclaration* firstNondefining_result = isSgTemplateFunctionDeclaration(result->get_firstNondefiningDeclaration());
+     ROSE_ASSERT(firstNondefining_result != NULL);
+     if (firstNondefining_result->get_templateParameters().size() != templateParameterList->size())
+        {
+          printf ("name   = %s \n",name.str());
+          printf ("result = %p \n",result);
+          ROSE_ASSERT(scope != NULL);
+          printf ("scope  = %p = %s \n",scope,scope->class_name().c_str());
+          printf ("firstNondefining_result = %p \n",firstNondefining_result);
+          printf ("templateParameterList->size()                            = %zu \n",templateParameterList->size());
+          printf ("firstNondefining_result->get_templateParameters().size() = %zu \n",firstNondefining_result->get_templateParameters().size());
+          firstNondefining_result->get_startOfConstruct()->display("Error: firstNondefining_result->get_templateParameters().size() == templateParameterList->size()");
+        }
+     ROSE_ASSERT(firstNondefining_result->get_templateParameters().size() == templateParameterList->size());
+#endif
 
   // DQ (12/12/2011): Added test.
      ROSE_ASSERT(result != NULL);
@@ -16536,7 +16559,7 @@ SageBuilder::fixupCopyOfAstFromSeparateFileInNewTargetAst(SgStatement *insertion
         }
      ROSE_ASSERT(isStructurallyEquivalent == true);
 
-#ifndef USE_CMAKE
+#ifndef USE_CMAKEx
   // DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
 
   // This is AST container for the ROSE AST that will provide an iterator.
@@ -16600,6 +16623,34 @@ SageBuilder::fixupCopyOfAstFromSeparateFileInNewTargetAst(SgStatement *insertion
   // DQ (3/30/2014): Turn this off (since we only only want to use it for the AST fixup, currently).
      SgSymbolTable::set_force_search_of_base_classes(false);
    }
+
+// Liao 9/18/2015
+// The parser is implemented in
+// src/frontend/SageIII/astFromString/AstFromString.h .C
+SgStatement* SageBuilder::buildStatementFromString(const std::string& s, SgScopeStatement * scope)
+{
+
+  SgStatement* result = NULL;
+  ROSE_ASSERT (scope != NULL);
+  // set input and context for the parser
+  AstFromString::c_char = s.c_str();
+  assert (AstFromString::c_char== s.c_str());
+  AstFromString::c_sgnode = scope;
+  AstFromString::c_parsed_node = NULL;
+
+  if (AstFromString::afs_match_statement())
+  {
+    result = isSgStatement(AstFromString::c_parsed_node); // grab the result
+    assert (result != NULL);
+  }
+  else
+  {
+    cerr<<"Error. buildStatementFromString() cannot parse the input string:"<<s
+        <<"\n\t within the given scope:"<<scope->class_name() <<endl;
+    ROSE_ASSERT(false);
+  }
+  return result;
+}
 
 //-----------------------------------------------------------------------------
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT

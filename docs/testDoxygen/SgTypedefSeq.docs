@@ -5,7 +5,7 @@
 /*!
 \class SgTypedefSeq
 \brief This class represents a list of associated typedefs for the SgType IR nodes which
-    reference this list.
+reference this list.
 
 
 \internal This list is not well tested yet.
@@ -26,7 +26,7 @@
 \todo It might be better for this to be a list of SgTypedefTypes
 
 \todo Think about if we could also store a reference to all pointers and reference types
-    where they share a common base_type.
+where they share a common base_type.
 
 */
 
@@ -37,7 +37,7 @@
 \fn SgTypedefSeq::SgTypedefSeq()
 \brief This is the constructor.
 
-   This constructor builds the SgTypedefSeq base class.
+This constructor builds the SgTypedefSeq base class.
 
 \sa 
 \ref SgTypedefSeq_create "Example:create an SgTypedefSeq object"
@@ -47,14 +47,14 @@
 \fn SgTypedefSeq::~SgTypedefSeq()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgTypedefSeq::isSgTypedefSeq (SgNode *s)
 \brief Cast function (from derived class to SgTypedefSeq pointer).
 
-   This functions returns a SgTypedefSeq pointer for any input of a 
+This functions returns a SgTypedefSeq pointer for any input of a 
 pointer to an object derived from a SgTypedefSeq.
 
 \return Returns valid pointer to SgTypedefSeq if input is derived from a SgSupport.
@@ -64,7 +64,7 @@ pointer to an object derived from a SgTypedefSeq.
 \fn SgTypedefSeq::isSgTypedefSeq (const SgNode *s)
 \brief Cast function (from derived class to SgTypedefSeq pointer).
 
-   This functions returns a SgTypedefSeq pointer for any input of a 
+This functions returns a SgTypedefSeq pointer for any input of a 
 pointer to an object derived from a SgTypedefSeq.
 
 \return Returns valid pointer to SgTypedefSeq if input is derived from a SgSupport.

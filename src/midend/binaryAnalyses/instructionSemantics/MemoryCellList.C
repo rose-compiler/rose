@@ -142,25 +142,24 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOpe
     CellList::iterator cursor = get_cells().begin();
     CellList cells = scan(cursor /*in,out*/, addr, dflt->get_width(), addrOps, valOps);
     SValuePtr retval = mergeCellValues(cells, dflt, addrOps, valOps);
+    updateReadProperties(cells);
     if (cells.empty()) {
         // No matching cells
         insertReadCell(addr, retval);
-    } else if (cells.size() > 1) {
-        // Multiple matching cells
-        updateReadProperties(cells);
+    } else if (cursor == get_cells().end()) {
+        // No must_equal match and at least one may_equal match. We must merge the default into the return value and save the
+        // result back into the cell list.
+        retval = retval->createMerged(dflt, valOps->get_solver());
         AddressSet writers = mergeCellWriters(cells);
         InputOutputPropertySet props = mergeCellProperties(cells);
         insertReadCell(addr, retval, writers, props);
-    } else if (cursor != get_cells().end()) {
-        // Single, exactly-matching (must_equal) cell
-        updateReadProperties(cells);
+    } else if (cells.size() == 1) {
+        // Exactly one must_equal match (no additional may_equal matches)
     } else {
-        // Single partly matching (may_equal) cell
-        retval = retval->createMerged(cells.front()->get_value(), valOps->get_solver());
-        AddressSet writers = cells.front()->getWriters();
-        InputOutputPropertySet props = cells.front()->ioProperties();
+        // One or more may_equal matches with a final must_equal match.
+        AddressSet writers = mergeCellWriters(cells);
+        InputOutputPropertySet props = mergeCellProperties(cells);
         insertReadCell(addr, retval, writers, props);
-        updateReadProperties(cells);
     }
     return retval;
 }

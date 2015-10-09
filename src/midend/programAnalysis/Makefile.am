@@ -4,6 +4,8 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# AUTOMAKE_OPTIONS = subdir-objects
+
 if ROSE_USING_GCC_VERSION_LATER_4_6
 SUBDIRS = staticSingleAssignment ssaUnfilteredCfg
 else
@@ -62,12 +64,12 @@ AM_CXXFLAGS=\
 	-D__LOCALSTL_H
 
 
-INCLUDES_OMP=\
+AM_CPPFLAGS_OMP=\
 	$(mpaDefUseAnalysis_includesOmp) \
 	$(mpaVariableRenaming_includesOmp)
 
 
-INCLUDES=\
+AM_CPPFLAGS=\
 	$(ROSE_INCLUDES) \
 	$(mpaCallGraphAnalysis_includes) \
 	$(mpaCFG_includes) \
@@ -83,7 +85,7 @@ INCLUDES=\
 	$(mpaValuePropagation_includes) \
 	$(mpaVariableRenaming_includes) \
 	$(mpaEditDistance_includes) \
-	$(INCLUDES_OMP)
+	$(AM_CPPFLAGS_OMP)
 
 
 BUILT_SOURCES=\
@@ -171,7 +173,7 @@ EXTRA_DIST=\
 
 
 clean-local:
-	rm -rf Templates.DB ii_files ti_files cxx_templates
+#	rm -rf Templates.DB ii_files ti_files cxx_templates
 	$(mpaAnnotationLanguageParser_cleanLocal)
 	$(mpaCallGraphAnalysis_cleanLocal)
 	$(mpaCFG_cleanLocal)
@@ -190,7 +192,7 @@ clean-local:
 
 
 distclean-local:
-	rm -rf Templates.DB
+#	rm -rf Templates.DB
 	$(mpaCallGraphAnalysis_distCleanLocal)
 	$(mpaCFG_distCleanLocal)
 	$(mpaBitvectorDataflow_distCleanLocal)
