@@ -31,6 +31,12 @@ namespace SymbolicExpr {
 //                                      Basic Types
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Exceptions for symbolic expressions. */
+class Exception: public std::runtime_error {
+public:
+    explicit Exception(const std::string &mesg): std::runtime_error(mesg) {}
+};
+
 /** Operators for interior nodes of the expression tree.
  *
  *  Commutative operators generally take one or more operands.  Operators such as shifting, extending, and truncating have the
@@ -81,7 +87,7 @@ enum Operator {
     OP_ZEROP,               /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
 };
 
-const char *to_str(Operator o);
+std::string toStr(Operator);
 
 class Node;
 class Interior;
@@ -635,39 +641,10 @@ private:
 
     // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
     // accidently using pointers to these objects -- all access should be through shared-ownership pointers.
-    Interior(size_t nbits, Operator op, const Ptr &a, std::string comment="", unsigned flags=0)
-        : Node(comment), op_(op), nnodes_(1) {
-        addChild(a);
-        adjustWidth();
-        adjustBitFlags(flags);
-        ASSERT_require(0 == nbits || nBits() == nbits);
-    }
-    Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, std::string comment="", unsigned flags=0)
-        : Node(comment), op_(op), nnodes_(1) {
-        addChild(a);
-        addChild(b);
-        adjustWidth();
-        adjustBitFlags(flags);
-        ASSERT_require(0 == nbits || nBits() == nbits);
-    }
-    Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
-                 std::string comment="", unsigned flags=0)
-        : Node(comment), op_(op), nnodes_(1) {
-        addChild(a);
-        addChild(b);
-        addChild(c);
-        adjustWidth();
-        adjustBitFlags(flags);
-        ASSERT_require(0 == nbits || nBits() == nbits);
-    }
-    Interior(size_t nbits, Operator op, const Nodes &children, std::string comment="", unsigned flags=0)
-        : Node(comment), op_(op), nnodes_(1) {
-        for (size_t i=0; i<children.size(); ++i)
-            addChild(children[i]);
-        adjustWidth();
-        adjustBitFlags(flags);
-        ASSERT_require(0 == nbits || nBits() == nbits);
-    }
+    Interior(size_t nbits, Operator op, const Ptr &a, std::string comment="", unsigned flags=0);
+    Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, std::string comment="", unsigned flags=0);
+    Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c, std::string comment="", unsigned flags=0);
+    Interior(size_t nbits, Operator op, const Nodes &children, std::string comment="", unsigned flags=0);
 
 public:
     /** Create a new expression node. Although we're creating interior nodes, the simplification process might replace it with

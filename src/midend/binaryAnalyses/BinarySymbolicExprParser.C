@@ -494,12 +494,17 @@ SymbolicExprParser::parse(TokenStream &tokens) {
             }
             case Token::SYMBOL: {
                 SymbolicExpr::Ptr expr;
-                BOOST_FOREACH (const SymbolExpansion::Ptr &symbol, symbolTable_) {
-                    if ((expr = (*symbol)(tokens[0])))
-                        break;
+                try {
+                    BOOST_FOREACH (const SymbolExpansion::Ptr &symbol, symbolTable_) {
+                        if ((expr = (*symbol)(tokens[0])))
+                            break;
+                    }
+                } catch (const SymbolicExpr::Exception &e) {
+                    throw tokens[0].syntaxError(e.what(), tokens.name());
                 }
                 if (expr == NULL)
-                    throw tokens[0].syntaxError("unrecognized symbol: \"" + StringUtility::cEscape(tokens[0].lexeme()) + "\"");
+                    throw tokens[0].syntaxError("unrecognized symbol: \"" + StringUtility::cEscape(tokens[0].lexeme()) + "\"",
+                                                tokens.name());
                 tokens.shift();
                 if (stack.empty())
                     return expr;
@@ -519,9 +524,13 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 if (stack.empty())
                     throw tokens[0].syntaxError("unexpected right parenthesis", tokens.name());
                 SymbolicExpr::Ptr expr;
-                BOOST_FOREACH (const FunctionExpansion::Ptr &function, functionTable_) {
-                    if ((expr = (*function)(stack.back().op, stack.back().operands)))
-                        break;
+                try {
+                    BOOST_FOREACH (const FunctionExpansion::Ptr &function, functionTable_) {
+                        if ((expr = (*function)(stack.back().op, stack.back().operands)))
+                            break;
+                    }
+                } catch (const SymbolicExpr::Exception &e) {
+                    throw stack.back().ltparen.syntaxError(e.what(), tokens.name());
                 }
                 if (expr == NULL) {
                     throw stack.back().op.syntaxError("unrecognized function name: \"" +

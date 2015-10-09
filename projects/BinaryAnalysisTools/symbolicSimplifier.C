@@ -24,11 +24,6 @@ parseCommandLine(int argc, char *argv[]) {
         .doc("Description",
              "Parses symbolic expressions from standard input and prints the resulting expression trees. These trees "
              "undergo basic simplifications in ROSE before they're printed.")
-        .doc("Caveats",
-             "The symbolic expression layer in ROSE was originally intended to be called only in situations where the "
-             "ROSE library itself was constructing the tree, and the original implementation simply asserted that the "
-             "construction was valid.  This makes it not so friendly to be called on user input. Although the old "
-             "assertins are caught here, the error messages are not all that friendly.")
         .with(CommandlineProcessing::genericSwitches());
 
     if (!parser.parse(argc, argv).apply().unreachedArgs().empty())
@@ -38,8 +33,6 @@ parseCommandLine(int argc, char *argv[]) {
 int
 main(int argc, char *argv[]) {
     parseCommandLine(argc, argv);
-
-    rose::failedAssertionBehavior(rose::throwOnFailedAssertion);
     unsigned lineNumber = 0;
     while (1) {
 

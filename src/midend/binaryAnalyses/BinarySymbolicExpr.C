@@ -24,9 +24,8 @@ Leaf::nameCounter_ = 0;
 const uint64_t
 MAX_NNODES = UINT64_MAX;
 
-const char *
-to_str(Operator o)
-{
+std::string
+toStr(Operator o) {
     static char buf[64];
     std::string s = stringifyBinaryAnalysisSymbolicExprOperator(o, "OP_");
     ASSERT_require(s.size()<sizeof buf);
@@ -236,6 +235,54 @@ Node::printFlags(std::ostream &o, unsigned flags, char &bracket) const {
 //                                      Interior node
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Interior::Interior(size_t nbits, Operator op, const Ptr &a, std::string comment, unsigned flags)
+    : Node(comment), op_(op), nnodes_(1) {
+    addChild(a);
+    adjustWidth();
+    adjustBitFlags(flags);
+    if (nbits != 0 && nbits != nBits()) {
+        throw Exception("operator size mismatch (specified=" + StringUtility::numberToString(nbits) +
+                        ", actual=" + StringUtility::numberToString(nBits()) + ")");
+    }
+}
+
+Interior::Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, std::string comment, unsigned flags)
+    : Node(comment), op_(op), nnodes_(1) {
+    addChild(a);
+    addChild(b);
+    adjustWidth();
+    adjustBitFlags(flags);
+    if (nbits != 0 && nbits != nBits()) {
+        throw Exception("operator size mismatch (specified=" + StringUtility::numberToString(nbits) +
+                        ", actual=" + StringUtility::numberToString(nBits()) + ")");
+    }
+}
+
+Interior::Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c, std::string comment, unsigned flags)
+    : Node(comment), op_(op), nnodes_(1) {
+    addChild(a);
+    addChild(b);
+    addChild(c);
+    adjustWidth();
+    adjustBitFlags(flags);
+    if (nbits != 0 && nbits != nBits()) {
+        throw Exception("operator size mismatch (specified=" + StringUtility::numberToString(nbits) +
+                        ", actual=" + StringUtility::numberToString(nBits()) + ")");
+    }
+}
+
+Interior::Interior(size_t nbits, Operator op, const Nodes &children, std::string comment, unsigned flags)
+    : Node(comment), op_(op), nnodes_(1) {
+    for (size_t i=0; i<children.size(); ++i)
+        addChild(children[i]);
+    adjustWidth();
+    adjustBitFlags(flags);
+    if (nbits != 0 && nbits != nBits()) {
+        throw Exception("operator size mismatch (specified=" + StringUtility::numberToString(nbits) +
+                        ", actual=" + StringUtility::numberToString(nBits()) + ")");
+    }
+}
+
 void
 Interior::addChild(const Ptr &child)
 {
@@ -252,7 +299,8 @@ Interior::addChild(const Ptr &child)
 
 void
 Interior::adjustWidth() {
-    ASSERT_require(!children_.empty());
+    if (children_.empty())
+        throw Exception(toStr(op_) + " operator requires argument(s)");
     switch (op_) {
         case OP_ASR:
         case OP_ROL:
@@ -261,9 +309,12 @@ Interior::adjustWidth() {
         case OP_SHL1:
         case OP_SHR0:
         case OP_SHR1: {
-            ASSERT_require(nChildren() == 2);
-            ASSERT_require(child(0)->isScalar());       // shift amount
-            ASSERT_require(child(1)->isScalar());       // value to shift
+            if (nChildren() != 2)
+                throw Exception(toStr(op_) + " operator expects two arguments");
+            if (!child(0)->isScalar())
+                throw Exception(toStr(op_) + " operator's first argument (shift amount) must be scalar");
+            if (!child(1)->isScalar())
+                throw Exception(toStr(op_) + " operator's second argument (value to shift) must be scalar");
             nBits_ = child(1)->nBits();
             domainWidth_ = 0;
             break;
@@ -271,7 +322,8 @@ Interior::adjustWidth() {
         case OP_CONCAT: {
             size_t totalWidth = 0;
             BOOST_FOREACH (const Ptr &child, children_) {
-                ASSERT_require(child->isScalar());
+                if (!child->isScalar())
+                    throw Exception(toStr(op_) + " operator's arguments must be scalar");
                 totalWidth += child->nBits();
             }
             nBits_ = totalWidth;
@@ -288,29 +340,39 @@ Interior::adjustWidth() {
         case OP_UGT:
         case OP_ULE:
         case OP_ULT: {
-            ASSERT_require(nChildren() == 2);
-            ASSERT_require(child(0)->nBits() == child(1)->nBits());
+            if (nChildren() != 2)
+                throw Exception(toStr(op_) + " operator expects two arguments");
+            if (child(0)->nBits() != child(1)->nBits())
+                throw Exception(toStr(op_) + " operator's arguments must both be the same width");
             nBits_ = 1;
             domainWidth_ = 0;
             break;
         }
         case OP_EXTRACT: {
-            ASSERT_require(nChildren() == 3);
-            ASSERT_require(child(0)->isNumber());
-            ASSERT_require(child(1)->isNumber());
-            ASSERT_require(child(2)->isScalar());
-            ASSERT_require(child(0)->toInt() < child(1)->toInt());
+            if (nChildren() != 3)
+                throw Exception(toStr(op_) + " operator expects three arguments");
+            if (!child(0)->isNumber())
+                throw Exception(toStr(op_) + " operator's first argument (begin bit) must be an integer constant");
+            if (!child(1)->isNumber())
+                throw Exception(toStr(op_) + " operator's second argument (end bit) must be an integer constant");
+            if (!child(2)->isScalar())
+                throw Exception(toStr(op_) + " operator's third argument must be scalar");
+            if (child(0)->toInt() >= child(1)->toInt())
+                throw Exception(toStr(op_) + " operator's first argument must be less than the second");
             size_t totalSize = child(1)->toInt() - child(0)->toInt();
             nBits_ = totalSize;
             domainWidth_ = 0;
             break;
         }
         case OP_ITE: {
-            ASSERT_require(nChildren() == 3);
-            ASSERT_require(child(0)->isScalar());
-            ASSERT_require(child(0)->nBits() == 1);
-            ASSERT_require(child(1)->nBits() == child(2)->nBits());
-            ASSERT_require(child(1)->domainWidth() == child(2)->domainWidth());
+            if (nChildren() != 3)
+                throw Exception(toStr(op_) + " operator expects three arguments");
+            if (!child(0)->isScalar())
+                throw Exception(toStr(op_) + " operator's first argument (condition) must be scalar");
+            if (!child(0)->nBits() == 1)
+                throw Exception(toStr(op_) + " operator's first argument (condition) must be Boolean");
+            if (child(1)->nBits() != child(2)->nBits() || child(1)->domainWidth() != child(2)->domainWidth())
+                throw Exception(toStr(op_) + " operator's second and third arguments must have equal width");
             nBits_ = child(1)->nBits();
             domainWidth_ = child(1)->domainWidth();
             break;
@@ -318,54 +380,71 @@ Interior::adjustWidth() {
         case OP_LSSB:
         case OP_MSSB:
         case OP_NEGATE: {
-            ASSERT_require(nChildren() == 1);
-            ASSERT_require(child(0)->isScalar());
+            if (nChildren() != 1)
+                throw Exception(toStr(op_) + " operator expects one argument");
+            if (!child(0)->isScalar())
+                throw Exception(toStr(op_) + " argument must be scalar");
             nBits_ = child(0)->nBits();
             domainWidth_ = 0;
             break;
         }
         case OP_READ: {
-            ASSERT_require(nChildren() == 2);
-            ASSERT_require2(!child(0)->isScalar(), "memory state expected for first operand");
-            ASSERT_require(child(1)->isScalar());
-            ASSERT_require2(child(0)->domainWidth() == child(1)->nBits(), "invalid address size");
+            if (nChildren() != 2)
+                throw Exception(toStr(op_) + " operator expects two arguments");
+            if (child(0)->isScalar())
+                throw Exception(toStr(op_) + " operator's first argument must be a memory state");
+            if (!child(1)->isScalar())
+                throw Exception(toStr(op_) + " operator's second argument (address) must be scalar");
+            if (child(0)->domainWidth() != child(1)->nBits())
+                throw Exception(toStr(op_) + " operator's arguments have mismatched sizes");
             nBits_ = child(0)->nBits();              // size of values stored in memory
             domainWidth_ = 0;
             break;
         }
         case OP_SDIV:
         case OP_UDIV: {
-            ASSERT_require(nChildren() == 2);
-            ASSERT_require(child(0)->isScalar());
-            ASSERT_require(child(1)->isScalar());
+            if (nChildren() != 2)
+                throw Exception(toStr(op_) + " operator expects two arguments");
+            if (!child(0)->isScalar())
+                throw Exception(toStr(op_) + " operator's first argument must be scalar");
+            if (!child(1)->isScalar())
+                throw Exception(toStr(op_) + " operator's second argument must be scalar");
             nBits_ = child(0)->nBits();
             domainWidth_ = 0;
             break;
         }
         case OP_SEXTEND:
         case OP_UEXTEND: {
-            ASSERT_require(nChildren() == 2);
-            ASSERT_require(child(0)->isNumber());       // new size
-            ASSERT_require(child(1)->isScalar());       // value to extend
+            if (nChildren() != 2)
+                throw Exception(toStr(op_) + " operator expects two arguments");
+            if (!child(0)->isNumber())
+                throw Exception(toStr(op_) + " operator's first argument (size) must be a numeric constant");
+            if (!child(1)->isScalar())
+                throw Exception(toStr(op_) + " operator's second argument must be scalar");
             nBits_ = child(0)->toInt();
             domainWidth_ = 0;
             break;
         }
         case OP_SMOD:
         case OP_UMOD: {
-            ASSERT_require(nChildren() == 2);
-            ASSERT_require(child(0)->isScalar());
-            ASSERT_require(child(1)->isScalar());
+            if (nChildren() != 2)
+                throw Exception(toStr(op_) + " operator expects two arguments");
+            if (!child(0)->isScalar())
+                throw Exception(toStr(op_) + " operator's first argument must be scalar");
+            if (!child(1)->isScalar())
+                throw Exception(toStr(op_) + " operator's second argument must be scalar");
             nBits_ = child(1)->nBits();
             domainWidth_ = 0;
             break;
         }
         case OP_SMUL:
         case OP_UMUL: {
-            ASSERT_require(nChildren() >= 1);
+            if (nChildren() < 1)
+                throw Exception(toStr(op_) + " operator expects at least one argument");
             size_t totalWidth = 0;
             for (size_t i=0; i<nChildren(); ++i) {
-                ASSERT_require(child(i)->isScalar());
+                if (!child(i)->isScalar())
+                    throw Exception(toStr(op_) + " operator's arguments must all be scalar");
                 totalWidth += child(i)->nBits();
             }
             nBits_ = totalWidth;
@@ -373,19 +452,27 @@ Interior::adjustWidth() {
             break;
         }
         case OP_WRITE: {
-            ASSERT_require(nChildren() == 3);
-            ASSERT_require2(!child(0)->isScalar(), "first operand must be memory");
-            ASSERT_require(child(1)->isScalar());       // address
-            ASSERT_require(child(2)->isScalar());       // value
-            ASSERT_require2(child(1)->nBits() == child(0)->domainWidth(), "incorrect address width");
-            ASSERT_require2(child(2)->nBits() == child(0)->nBits(), "incorrect value width");
+            if (nChildren() != 3)
+                throw Exception(toStr(op_) + " operator expects three arguments");
+            if (child(0)->isScalar())
+                throw Exception(toStr(op_) + " operator's first operand must be a memory state");
+            if (!child(1)->isScalar())
+                throw Exception(toStr(op_) + " operator's second argument (address) must be scalar");
+            if (!child(2)->isScalar())
+                throw Exception(toStr(op_) + " operator's third argument (value to write) must be scalar");
+            if (child(1)->nBits() != child(0)->domainWidth())
+                throw Exception(toStr(op_) + " operator's second argument (address) has incorrect width");
+            if (child(2)->nBits() != child(0)->nBits())
+                throw Exception(toStr(op_) + " operator's third argument (value to write) has incorrect width");
             nBits_ = child(0)->nBits();
             domainWidth_ = child(0)->domainWidth();
             break;
         }
         case OP_ZEROP: {
-            ASSERT_require(nChildren() == 1);
-            ASSERT_require(child(0)->isScalar());
+            if (nChildren() != 1)
+                throw Exception(toStr(op_) + " operator expects one argument");
+            if (!child(0)->isScalar())
+                throw Exception(toStr(op_) + " operator's argument must be scalar");
             nBits_ = 1;
             domainWidth_ = 0;
             break;
@@ -393,10 +480,13 @@ Interior::adjustWidth() {
         default: {
             // All children must have the same width, which is the width of this expression. This is suitable for things like
             // bitwise operators, add, etc.
-            ASSERT_require(child(0)->isScalar());
+            if (!child(0)->isScalar())
+                throw Exception(toStr(op_) + " operator's arguments must all be scalar");
             for (size_t i=1; i<nChildren(); ++i) {
-                ASSERT_require(child(i)->isScalar());
-                ASSERT_require(child(i)->nBits() == child(0)->nBits());
+                if (!child(i)->isScalar())
+                    throw Exception(toStr(op_) + " operator's arguments must all be scalar");
+                if (child(i)->nBits() != child(0)->nBits())
+                    throw Exception(toStr(op_) + " operator's arguments must all have the same width");
             }
             nBits_ = child(0)->nBits();
             domainWidth_ = 0;
@@ -426,7 +516,7 @@ Interior::print(std::ostream &o, Formatter &fmt) const
         }
     } formatGuard(fmt);
 
-    o <<"(" <<to_str(op_);
+    o <<"(" <<toStr(op_);
 
     // The width of an operator is not normally too useful since it can also be inferred from the width of its operands, but we
     // print it anyway for the benefit of mere humans.
@@ -1981,7 +2071,8 @@ Interior::simplifyTop() const
 // class method
 LeafPtr
 Leaf::createVariable(size_t nbits, const std::string &comment, unsigned flags) {
-    ASSERT_require(nbits > 0);
+    if (0 == nbits)
+        throw Exception("variables must have positive width");
     Leaf *node = new Leaf(comment, flags);
     node->nBits_ = nbits;
     node->leafType_ = BITVECTOR;
@@ -1993,7 +2084,8 @@ Leaf::createVariable(size_t nbits, const std::string &comment, unsigned flags) {
 // class method
 LeafPtr
 Leaf::createExistingVariable(size_t nbits, uint64_t id, const std::string &comment, unsigned flags) {
-    ASSERT_require(nbits > 0);
+    if (0 == nbits)
+        throw Exception("variables must have positive width");
     Leaf *node = new Leaf(comment, flags);
     node->nBits_ = nbits;
     node->leafType_ = BITVECTOR;
@@ -2006,7 +2098,8 @@ Leaf::createExistingVariable(size_t nbits, uint64_t id, const std::string &comme
 // class method
 LeafPtr
 Leaf::createInteger(size_t nbits, uint64_t n, std::string comment, unsigned flags) {
-    ASSERT_require(nbits > 0);
+    if (0 == nbits)
+        throw Exception("integers must have positive width");
     Leaf *node = new Leaf(comment, flags);
     node->nBits_ = nbits;
     node->leafType_ = CONSTANT;
@@ -2029,8 +2122,10 @@ Leaf::createConstant(const Sawyer::Container::BitVector &bits, std::string comme
 // class method
 LeafPtr
 Leaf::createMemory(size_t addressWidth, size_t valueWidth, std::string comment, unsigned flags) {
-    ASSERT_require(addressWidth > 0);
-    ASSERT_require(valueWidth > 0);
+    if (0 == addressWidth)
+        throw Exception("memory addresses must have positive width");
+    if (0 == valueWidth)
+        throw Exception("memory values must have positive width");
     Leaf *node = new Leaf(comment, flags);
     node->nBits_ = valueWidth;
     node->domainWidth_ = addressWidth;
