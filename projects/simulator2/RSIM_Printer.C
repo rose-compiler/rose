@@ -112,7 +112,7 @@ Printer::b(rose_addr_t va, int64_t nbytes) {
         size_t need = std::min(size_t(nbytes), sizeof buf);
         nread = thread_->get_process()->mem_read(buf, va, need);
     }
-    return b(va, buf, nbytes, 1024);
+    return b(va, buf, nread, 1024);
 }
 
 Printer&
