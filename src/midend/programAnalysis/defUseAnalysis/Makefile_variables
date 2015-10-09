@@ -54,14 +54,14 @@ mpaDefUseAnalysis_extraDist=\
 	$(mpaDefUseAnalysisPath)/CMakeLists.txt
 
 
-mpaDefUseAnalysis_cleanLocal=\
-	rm -rf \
-		$(mpaDefUseAnalysisPath)/Templates.DB \
-		$(mpaDefUseAnalysisPath)/ii_files \
-		$(mpaDefUseAnalysisPath)/ti_files \
-		$(mpaDefUseAnalysisPath)/cxx_templates
+mpaDefUseAnalysis_cleanLocal=
+#	rm -rf \
+#		$(mpaDefUseAnalysisPath)/Templates.DB \
+#		$(mpaDefUseAnalysisPath)/ii_files \
+#		$(mpaDefUseAnalysisPath)/ti_files \
+#		$(mpaDefUseAnalysisPath)/cxx_templates
 
 
-mpaDefUseAnalysis_distCleanLocal=\
-	rm -rf \
-		$(mpaDefUseAnalysisPath)/Templates.DB
+mpaDefUseAnalysis_distCleanLocal=
+#	rm -rf \
+#		$(mpaDefUseAnalysisPath)/Templates.DB

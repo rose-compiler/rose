@@ -40,7 +40,7 @@ main( int argc, char * argv[] )
      if (argc == 1)
         {
        // Print usage and exit with exit status == 1
-          ROSE::usage (1);
+          rose::usage (1);
         }
 
   // Build the project object which we will fill up with multiple files and use as a

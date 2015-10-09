@@ -6,7 +6,7 @@
 \class SgClassSymbol
 \brief This class represents the concept of a class name within the compiler.
 
-   Symbols are a simpler way for the compiler to quickly associate types, 
+Symbols are a simpler way for the compiler to quickly associate types, 
 declarations and names.
 
 Indepedent of the different kinds of declarations (declarations are statements),
@@ -31,16 +31,16 @@ declarations (only non-defining declarations are shared within the AST).
 \brief This pointer is always valid and stores the first non-defining declaration 
 where the class was defined.  
 
-    It is important to note that this is the first non-defining declaration as 
+It is important to note that this is the first non-defining declaration as 
 opposed to the defining declaration.  Thus is it the first forward declaration for the
 named class or a non-defining version of the declaration if the named class is
 defined at the locations where it was declared.
 
 \internal The value held is sharable across many references where as the defining
-          declaration (not held by this variable) should have one unique reference
-          within the Sage III AST, except where reference though the declarations
-          definingDeclaration data member pointer.  See declarations for details
-          (SgDeclarationStatements).
+declaration (not held by this variable) should have one unique reference
+within the Sage III AST, except where reference though the declarations
+definingDeclaration data member pointer.  See declarations for details
+(SgDeclarationStatements).
 */
 
 //////////////////////////////////////////////////////////////////////////
@@ -48,7 +48,7 @@ defined at the locations where it was declared.
 /////////////////////////////////////////////////////////////////////////
 
 /*
-      NOT IMPELEMENTED IN C++ SOURCE CODE
+NOT IMPELEMENTED IN C++ SOURCE CODE
 \fn SgClassSymbol::SgClassSymbol (const SgClassSymbol &X)
 \brief Copy constructor (made private to prevent being called by accident).
 */
@@ -57,7 +57,7 @@ defined at the locations where it was declared.
 \fn SgClassSymbol::SgClassSymbol( SgClassDeclaration* declaration = NULL )
 \brief This is the only constructor.
 
-   This constructor builds the SgClassSymbol base class.
+This constructor builds the SgClassSymbol base class.
 
 \sa 
 \ref SgClassSymbol_create "Example:create an SgClassSymbol object"
@@ -91,7 +91,7 @@ defined at the locations where it was declared.
 \fn SgClassSymbol::isSgClassSymbol (SgNode *s)
 \brief Cast function (from derived class to SgClassSymbol pointer).
 
-   This functions returns a SgClassSymbol pointer for any input of a 
+This functions returns a SgClassSymbol pointer for any input of a 
 pointer to an object derived from a SgClassSymbol.
 
 \return Returns valid pointer to SgClassSymbol if input is derived from a SgClassSymbol.
@@ -101,7 +101,7 @@ pointer to an object derived from a SgClassSymbol.
 \fn SgClassSymbol::isSgClassSymbol (const SgNode *s)
 \brief Cast function (from derived class to SgClassSymbol pointer).
 
-   This functions returns a SgClassSymbol pointer for any input of a 
+This functions returns a SgClassSymbol pointer for any input of a 
 pointer to an object derived from a SgClassSymbol.
 
 \return Returns valid pointer to SgClassSymbol if input is derived from a SgClassSymbol.

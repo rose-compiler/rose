@@ -596,10 +596,13 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
   // DQ (9/7/2014): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
+#if 1
+  // DQ (9/14/2015): Test disabling this for C++11 mode.
+
   // DQ (7/10/2014): Added support for using the original type syntax (saved as the declared function type).
      if (funcdecl_stmt->get_type_syntax_is_available() == true)
         {
-       // Here we want to use the type syntx that originally appears with this function declaration in the original code.
+       // Here we want to use the type syntax that originally appears with this function declaration in the original code.
           SgFunctionType* function_type = funcdecl_stmt->get_type_syntax();
           ROSE_ASSERT(function_type != NULL);
 #if 0
@@ -645,6 +648,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
        // DQ (7/10/2014): Enforce this rule.
           ROSE_ASSERT(funcdecl_stmt->get_type_syntax() == NULL);
         }
+#endif
 
 #if 0
      printf ("In unparseFunctionParameterDeclaration(): exiting as a test! \n");
@@ -4107,6 +4111,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // DQ (4/28/2004): Added support for throw modifier
           if (funcdecl_stmt->get_declarationModifier().isThrow())
              {
+#if 0
+               printf ("In Unparse_ExprStmt::unparseFuncDeclStmt(): Output throw modifier \n");
+#endif
             // printf ("Output throw modifier (incomplete implementation) \n");
             // curprint ( string(" throw( /* from unparseFuncDeclStmt() type list output not implemented */ )";
                const SgTypePtrList& exceptionSpecifierList = funcdecl_stmt->get_exceptionSpecification();
@@ -5028,9 +5035,15 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
 
 #if 1
+#if 0
+          printf ("In Unparse_ExprStmt::unparseMFuncDeclStmt(): calling unparseTrailingFunctionModifiers() \n");
+#endif
        // DQ (9/9/2014): Refactored support for function modifiers.
           unparseTrailingFunctionModifiers(mfuncdecl_stmt,info);
 #else
+
+#error "DEAD CODE!"
+
           bool outputRestrictKeyword = false;
           SgMemberFunctionType *mftype = isSgMemberFunctionType(mfuncdecl_stmt->get_type());
           if (!info.SkipFunctionQualifier() && mftype )
@@ -5059,6 +5072,8 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
              }
 
+#error "DEAD CODE!"
+
        // DQ (12/11/2012): Avoid redundant output of the restrict keyword.
        // DQ (4/28/2004): Added support for restrict modifier
        // if (mfuncdecl_stmt->get_declarationModifier().get_typeModifier().isRestrict())
@@ -5076,6 +5091,8 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
             // curprint ( string(" restrict"));
              }
+
+#error "DEAD CODE!"
 
        // DQ (12/11/2012): We have two ways of setting the specification of the restrict keyword, but we only want to output the keyword once.
        // This make this code less sensative to which way it is specified and enforces that both ways are set.
@@ -5095,16 +5112,23 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint(Unparse_Type::unparseRestrictKeyword());
              }
 
+#error "DEAD CODE!"
+
        // DQ (4/28/2004): Added support for throw modifier
           if (mfuncdecl_stmt->get_declarationModifier().isThrow())
              {
             // Unparse SgThrow
+#if 0
+               printf ("In Unparse_ExprStmt::unparseMFuncDeclStmt(): Output throw modifier \n");
+#endif
             // unparseThrowExp(mfuncdecl_stmt->get_throwExpression,info);
             // printf ("Incomplete implementation of throw specifier on function \n");
             // curprint ( string(" throw( /* from unparseMFuncDeclStmt() type list output not implemented */ )";
                const SgTypePtrList& exceptionSpecifierList = mfuncdecl_stmt->get_exceptionSpecification();
                unparseExceptionSpecification(exceptionSpecifierList,ninfo);
              }
+
+#error "DEAD CODE!"
 
        // if (mfuncdecl_stmt->isPure())
           if (mfuncdecl_stmt->get_functionModifier().isPureVirtual())
@@ -5117,11 +5141,15 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
              }
 
+#error "DEAD CODE!"
+
        // DQ (8/11/2014): Added support for final keyword unparsing.
           if (mfuncdecl_stmt->get_declarationModifier().isFinal() == true)
              {
                curprint(" final");
              }
+
+#error "DEAD CODE!"
 
        // DQ (8/11/2014): Added support for final keyword unparsing.
           if (mfuncdecl_stmt->get_declarationModifier().isOverride() == true)
@@ -5257,107 +5285,110 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseTrailingFunctionModifiers(SgMemberFunctionDeclaration* mfuncdecl_stmt, SgUnparse_Info& info)
    {
-       // DQ (9/9/2014): Refactored support for function modifiers.
-          bool outputRestrictKeyword = false;
-          SgMemberFunctionType *mftype = isSgMemberFunctionType(mfuncdecl_stmt->get_type());
+  // DQ (9/9/2014): Refactored support for function modifiers.
+     bool outputRestrictKeyword = false;
+     SgMemberFunctionType *mftype = isSgMemberFunctionType(mfuncdecl_stmt->get_type());
 
-       // DQ (9/9/2014): Note this was using info where it was refactored from and ninfo is passed to this function.
-          if (!info.SkipFunctionQualifier() && mftype )
+  // DQ (9/9/2014): Note this was using info where it was refactored from and ninfo is passed to this function.
+     if (!info.SkipFunctionQualifier() && mftype )
+        {
+          if (mftype->isConstFunc())
              {
-               if (mftype->isConstFunc())
-                  {
-                    curprint(" const");
-                  }
-               if (mftype->isVolatileFunc())
-                  {
-                    curprint(" volatile");
-                  }
-
-            // DQ (12/11/2012): Added support for restrict (in EDG 4.x we want this to be more uniform with "const" and "volatile" modifier handling.
-               if (mftype->isRestrictFunc())
-                  {
-#if 0
-                    printf ("In unparseMFuncDeclStmt: unparse restrict keyword from specification in SgMemberFunctionType \n");
-#endif
-                    outputRestrictKeyword = true;
-
-                 // DQ (12/11/2012): Make sure that this way of specifing the restrict keyword is set.
-                    ROSE_ASSERT (mfuncdecl_stmt->get_declarationModifier().get_typeModifier().isRestrict() == true);
-
-                 // curprint ( string(" restrict"));
-                  }
+               curprint(" const");
+             }
+          if (mftype->isVolatileFunc())
+             {
+               curprint(" volatile");
              }
 
-       // DQ (12/11/2012): Avoid redundant output of the restrict keyword.
-       // DQ (4/28/2004): Added support for restrict modifier
-       // if (mfuncdecl_stmt->get_declarationModifier().get_typeModifier().isRestrict())
-          if (mfuncdecl_stmt->get_declarationModifier().get_typeModifier().isRestrict() && (outputRestrictKeyword == false))
+       // DQ (12/11/2012): Added support for restrict (in EDG 4.x we want this to be more uniform with "const" and "volatile" modifier handling.
+          if (mftype->isRestrictFunc())
              {
-               outputRestrictKeyword = true;
 #if 0
-               printf ("In unparseMFuncDeclStmt: unparse restrict keyword from specification in mfuncdecl_stmt->get_declarationModifier().get_typeModifier() \n");
+               printf ("In unparseTrailingFunctionModifiers: unparse restrict keyword from specification in SgMemberFunctionType \n");
 #endif
-            // DQ (12/11/2012): Error checking.
-               if (mftype != NULL) 
-                  {
-                    ROSE_ASSERT (mftype->isRestrictFunc() == true);
-                  }
+               outputRestrictKeyword = true;
+
+            // DQ (12/11/2012): Make sure that this way of specifing the restrict keyword is set.
+               ROSE_ASSERT (mfuncdecl_stmt->get_declarationModifier().get_typeModifier().isRestrict() == true);
 
             // curprint ( string(" restrict"));
              }
+        }
 
-       // DQ (12/11/2012): We have two ways of setting the specification of the restrict keyword, but we only want to output the keyword once.
-       // This make this code less sensative to which way it is specified and enforces that both ways are set.
-       // At the moment there are two ways that a member function is marked as restrict:
-       //    1) Via it's function type modifier (const-volatile modifier)
-       //    2) The declaration modifier's const-volatile modifier.
-       // It does not appear that the "restrict" keyword modifies the type of the function (g++ does not allow overloading on restrict, for example).
-       // Thus if it is not a part of the type then it should be a part of the declaration modifier and not in the SgMemberFunctionType.
-       // So maybe we should remove it from the SgMemberFunctionType?  I am not clear on this design point at present, so we have forced both
-       // to be set consistantly (and this is handled in the SageBuilder interface), plus a consistancy test in the AST consistancy tests.
-       // The reason it is in the type modifier held by the declaration modifier is because it is not a prat of the function type (formally).
-       // But the reason it is a part of the type modifier is because it is used for function parameter types.  This design point is
-       // less than elegant and I'm not clear on what would make this simpler.  For the moment we have focused on making it consistant
-       // across the two ways it can be represented (and fixing the SageBuilder Interface to set it consistantly).
-          if (outputRestrictKeyword == true)
+  // DQ (12/11/2012): Avoid redundant output of the restrict keyword.
+  // DQ (4/28/2004): Added support for restrict modifier
+  // if (mfuncdecl_stmt->get_declarationModifier().get_typeModifier().isRestrict())
+     if (mfuncdecl_stmt->get_declarationModifier().get_typeModifier().isRestrict() && (outputRestrictKeyword == false))
+        {
+          outputRestrictKeyword = true;
+#if 0
+          printf ("In unparseTrailingFunctionModifiers: unparse restrict keyword from specification in mfuncdecl_stmt->get_declarationModifier().get_typeModifier() \n");
+#endif
+       // DQ (12/11/2012): Error checking.
+          if (mftype != NULL) 
              {
-               curprint(Unparse_Type::unparseRestrictKeyword());
+               ROSE_ASSERT (mftype->isRestrictFunc() == true);
              }
 
-       // DQ (4/28/2004): Added support for throw modifier
-          if (mfuncdecl_stmt->get_declarationModifier().isThrow())
-             {
-            // Unparse SgThrow
-            // unparseThrowExp(mfuncdecl_stmt->get_throwExpression,info);
-            // printf ("Incomplete implementation of throw specifier on function \n");
-            // curprint ( string(" throw( /* from unparseMFuncDeclStmt() type list output not implemented */ )";
-               const SgTypePtrList& exceptionSpecifierList = mfuncdecl_stmt->get_exceptionSpecification();
-            // unparseExceptionSpecification(exceptionSpecifierList,ninfo);
-               unparseExceptionSpecification(exceptionSpecifierList,info);
-             }
+       // curprint ( string(" restrict"));
+        }
 
-       // if (mfuncdecl_stmt->isPure())
-          if (mfuncdecl_stmt->get_functionModifier().isPureVirtual())
-             {
-            // DQ (1/22/2013): Supress the output of the pure virtual syntax if this is the defining declaration (see test2013_26.C).
-            // curprint ( string(" = 0"));
-               if (mfuncdecl_stmt != mfuncdecl_stmt->get_definingDeclaration())
-                  {
-                    curprint(" = 0");
-                  }
-             }
+  // DQ (12/11/2012): We have two ways of setting the specification of the restrict keyword, but we only want to output the keyword once.
+  // This make this code less sensative to which way it is specified and enforces that both ways are set.
+  // At the moment there are two ways that a member function is marked as restrict:
+  //    1) Via it's function type modifier (const-volatile modifier)
+  //    2) The declaration modifier's const-volatile modifier.
+  // It does not appear that the "restrict" keyword modifies the type of the function (g++ does not allow overloading on restrict, for example).
+  // Thus if it is not a part of the type then it should be a part of the declaration modifier and not in the SgMemberFunctionType.
+  // So maybe we should remove it from the SgMemberFunctionType?  I am not clear on this design point at present, so we have forced both
+  // to be set consistantly (and this is handled in the SageBuilder interface), plus a consistancy test in the AST consistancy tests.
+  // The reason it is in the type modifier held by the declaration modifier is because it is not a prat of the function type (formally).
+  // But the reason it is a part of the type modifier is because it is used for function parameter types.  This design point is
+  // less than elegant and I'm not clear on what would make this simpler.  For the moment we have focused on making it consistant
+  // across the two ways it can be represented (and fixing the SageBuilder Interface to set it consistantly).
+     if (outputRestrictKeyword == true)
+        {
+          curprint(Unparse_Type::unparseRestrictKeyword());
+        }
 
-       // DQ (8/11/2014): Added support for final keyword unparsing.
-          if (mfuncdecl_stmt->get_declarationModifier().isFinal() == true)
-             {
-               curprint(" final");
-             }
+  // DQ (4/28/2004): Added support for throw modifier
+     if (mfuncdecl_stmt->get_declarationModifier().isThrow())
+        {
+       // Unparse SgThrow
+#if 0
+          printf ("In Unparse_ExprStmt::unparseTrailingFunctionModifiers(): Output throw modifier \n");
+#endif
+       // unparseThrowExp(mfuncdecl_stmt->get_throwExpression,info);
+       // printf ("Incomplete implementation of throw specifier on function \n");
+       // curprint ( string(" throw( /* from unparseTrailingFunctionModifiers() type list output not implemented */ )";
+          const SgTypePtrList& exceptionSpecifierList = mfuncdecl_stmt->get_exceptionSpecification();
+       // unparseExceptionSpecification(exceptionSpecifierList,ninfo);
+          unparseExceptionSpecification(exceptionSpecifierList,info);
+        }
 
-       // DQ (8/11/2014): Added support for final keyword unparsing.
-          if (mfuncdecl_stmt->get_declarationModifier().isOverride() == true)
+  // if (mfuncdecl_stmt->isPure())
+     if (mfuncdecl_stmt->get_functionModifier().isPureVirtual())
+        {
+       // DQ (1/22/2013): Supress the output of the pure virtual syntax if this is the defining declaration (see test2013_26.C).
+       // curprint ( string(" = 0"));
+          if (mfuncdecl_stmt != mfuncdecl_stmt->get_definingDeclaration())
              {
-               curprint(" override");
+               curprint(" = 0");
              }
+        }
+
+  // DQ (8/11/2014): Added support for final keyword unparsing.
+     if (mfuncdecl_stmt->get_declarationModifier().isFinal() == true)
+        {
+          curprint(" final");
+        }
+
+  // DQ (8/11/2014): Added support for final keyword unparsing.
+     if (mfuncdecl_stmt->get_declarationModifier().isOverride() == true)
+        {
+          curprint(" override");
+        }
    }
 
 
@@ -5847,10 +5878,29 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 
 #if 1
+               SgFile* file = TransformationSupport::getFile(vardecl_stmt);
+#if 0
+               printf ("In unparseVarDeclStmt(): resolving file to be %p \n",file);
+#endif
+               bool is_Cxx_Compiler = false;
+               bool is_C_Compiler   = false;
+               if (file != NULL)
+                  {
+                    is_Cxx_Compiler = file->get_Cxx_only();
+                    is_C_Compiler   = file->get_C_only();
+                  }
+                 else
+                  {
+                    printf ("Warning: TransformationSupport::getFile(vardecl_stmt) == NULL \n");
+                  }
+#if 0
+               printf ("In unparseVarDeclStmt(): is_C_Compiler = %s is_Cxx_Compiler = %s \n",is_C_Compiler ? "true" : "false",is_Cxx_Compiler ? "true" : "false");
+#endif
             // DQ (5/24/2015): Moved to output specifier after the "extern" and "static" keywords.
             // Note this this is required for test2009_19.c.
                if (usingGxx)
                   {
+#if 0
                     SgFile* file = TransformationSupport::getFile(vardecl_stmt);
 #if 0
                     printf ("In unparseVarDeclStmt(): resolving file to be %p \n",file);
@@ -5868,6 +5918,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                        }
 #if 0
                     printf ("In unparseVarDeclStmt(): is_C_Compiler = %s is_Cxx_Compiler = %s \n",is_C_Compiler ? "true" : "false",is_Cxx_Compiler ? "true" : "false");
+#endif
 #endif
                  // DQ (5/24/2015): I think I menat to say that For C we need to use the EDG 4.9 frontend (?).
                  // For C we need to use the GNU 4.9 compiler.
@@ -5912,6 +5963,27 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                                  {
                                    curprint("__thread ");
                                  }
+                            }
+                       }
+                  }
+                 else
+                  {
+                 // DQ (8/28/2015): Adding support for not GNU compilers (e.g. Intel v14 compiler.
+#if 0
+                    printf ("usingGxx == false: so __thread not output: vardecl_stmt->get_is_thread_local() == %s \n",(vardecl_stmt->get_is_thread_local() == true) ? "true" : "false");
+#endif
+                 // DQ (8/13/2014): Adding C++11 thread local support.
+                    if (is_Cxx_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                       {
+                         curprint("thread_local ");
+                       }
+                      else
+                       {
+                      // DQ (5/24/2015): Added this case to support the C language work even when using the GNU 4.8 compiler.
+                         if (is_C_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                            {
+                           // curprint("_Thread_local ");
+                              curprint("__thread ");
                             }
                        }
                   }
@@ -9491,6 +9563,9 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
        // DQ (9/9/2014): Refactored support for function modifiers.
           if (templateMemberFunctionDeclaration != NULL)
              {
+#if 0
+               printf ("In unparseTemplateDeclarationStatment_support(): calling unparseTrailingFunctionModifiers() \n");
+#endif
                unparseTrailingFunctionModifiers(templateMemberFunctionDeclaration,ninfo);
              }
             else

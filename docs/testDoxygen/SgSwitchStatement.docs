@@ -7,14 +7,14 @@
 \brief This class represents the concept of a switch.
 
 \internal Note that the design or some aspect of the design may be the cause of falure to
-    handle the Duff's Device example code. I think this is not fixed, Oct 2005.
+handle the Duff's Device example code. I think this is not fixed, Oct 2005.
 
 \todo FIXED: The conditional test should be a SgStatement so that a declaration can
-      be used, it is currently an SgExpression (specifically a SgExpressionRoot).
+be used, it is currently an SgExpression (specifically a SgExpressionRoot).
 
 \todo The body of the SgSwitch should really be a SgStatement not a SgBasicBlock.
-      DuffsDevice can be modified to should an example of this but there are also
-      much more trivial examples.  See comment about this in the SgStatement todo list.
+DuffsDevice can be modified to should an example of this but there are also
+much more trivial examples.  See comment about this in the SgStatement todo list.
 */
 
 /*
@@ -33,12 +33,12 @@
 \note I think this is a poor name for this variable.
 
 \todo This should be changed to be a SgStatement (to follow the C++ standard).
-    this way it could be an expression (via an expression statement) or a variable
-    declaration with initializer (via a SgVariableDeclaration).
-    We also have the condition specified before the body within the ROSETTA
-    specification and this causes the traversal to travers the condition and body in the
-    wrong order (for do-while, the traversal should be body forst and condition second).
-    See test2005_114.C for more details and example code (example of strange loops).
+this way it could be an expression (via an expression statement) or a variable
+declaration with initializer (via a SgVariableDeclaration).
+We also have the condition specified before the body within the ROSETTA
+specification and this causes the traversal to travers the condition and body in the
+wrong order (for do-while, the traversal should be body forst and condition second).
+See test2005_114.C for more details and example code (example of strange loops).
 */
 
 /*! \var SgSwitchStatement::p_body
@@ -53,7 +53,7 @@
 \fn SgSwitchStatement::SgSwitchStatement ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgSwitchStatement base class.
+This constructor builds the SgSwitchStatement base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -66,14 +66,14 @@
 \fn SgSwitchStatement::~SgSwitchStatement()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgSwitchStatement::isSgSwitchStatement (SgNode *s)
 \brief Cast function (from derived class to SgSwitchStatement pointer).
 
-   This functions returns a SgSwitchStatement pointer for any input of a 
+This functions returns a SgSwitchStatement pointer for any input of a 
 pointer to an object derived from a SgSwitchStatement.
 
 \return Returns valid pointer to SgSwitchStatement if input is derived from a SgLocatedNode.
@@ -83,7 +83,7 @@ pointer to an object derived from a SgSwitchStatement.
 \fn SgSwitchStatement::isSgSwitchStatement (const SgNode *s)
 \brief Cast function (from derived class to SgSwitchStatement pointer).
 
-   This functions returns a SgSwitchStatement pointer for any input of a 
+This functions returns a SgSwitchStatement pointer for any input of a 
 pointer to an object derived from a SgSwitchStatement.
 
 \return Returns valid pointer to SgSwitchStatement if input is derived from a SgLocatedNode.

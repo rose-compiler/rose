@@ -6,18 +6,18 @@
 \class SgStatement
 \brief This class represents the notion of a statement.
 
-    There are no uses of this IR node anywhere.  All statements
+There are no uses of this IR node anywhere.  All statements
 are derived from this SgStatement class.
 
 \internal This is a base class for all statements.
 
 \todo There are a number of statements that contain a SgBasicBlock
-    where they should contain a SgStatement.  In each case changing 
-    the data member to be a SgStatement will unfortunately change
-    the constructor parameter list and thus the ROSE API.  So these 
-    changes have to be organized a a point where it is clear we will 
-    be changing some details of the ROSE API (prior to external release).
-    Problem IR nodes are:
+where they should contain a SgStatement.  In each case changing 
+the data member to be a SgStatement will unfortunately change
+the constructor parameter list and thus the ROSE API.  So these 
+changes have to be organized a a point where it is clear we will 
+be changing some details of the ROSE API (prior to external release).
+Problem IR nodes are:
       - SgCaseOptionStmt
       - SgTryStmt
       - SgDefaultOptionStmt
@@ -28,15 +28,15 @@ are derived from this SgStatement class.
       - SgSwitchStatement
 
 \todo Fortran support for modifiers can be used as statement (must be added to IR): 
-      see section 5.2, 5.3 in Fortran 2003 standard. Note that type modifiers can 
-      be used as statements.
+see section 5.2, 5.3 in Fortran 2003 standard. Note that type modifiers can 
+be used as statements.
 
 \todo Fortran support requires statements in section 6.3.
 
 \todo Fortran support requires for "where" and "forall" statements.
 
 \todo Fortran support requires for case statement ranges (gnu extension for C, but
-    standard in Fortran).  
+standard in Fortran).  
 
 \todo Fortran support requires statements in section 8.1.4, 8.1.5.
 
@@ -56,7 +56,7 @@ are derived from this SgStatement class.
 /////////////////////////////////////////////////////////////////////////
 
 /*
-   There are no data members for this class.
+There are no data members for this class.
 */
 
 
@@ -67,7 +67,7 @@ are derived from this SgStatement class.
 \fn SgStatement::SgStatement ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgStatement base class.
+This constructor builds the SgStatement base class.
 
 \param startOfConstruct represents the position in the source code
 \sa 
@@ -78,14 +78,14 @@ are derived from this SgStatement class.
 \fn SgStatement::~SgStatement()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgStatement::isSgStatement (SgNode *s)
 \brief Cast function (from derived class to SgStatement pointer).
 
-   This functions returns a SgStatement pointer for any input of a 
+This functions returns a SgStatement pointer for any input of a 
 pointer to an object derived from a SgStatement.
 
 \return Returns valid pointer to SgStatement if input is derived from a SgLocatedNode.
@@ -95,7 +95,7 @@ pointer to an object derived from a SgStatement.
 \fn SgStatement::isSgStatement (const SgNode *s)
 \brief Cast function (from derived class to SgStatement pointer).
 
-   This functions returns a SgStatement pointer for any input of a 
+This functions returns a SgStatement pointer for any input of a 
 pointer to an object derived from a SgStatement.
 
 \return Returns valid pointer to SgStatement if input is derived from a SgLocatedNode.
@@ -105,7 +105,7 @@ pointer to an object derived from a SgStatement.
 \fn SgStatement::get_scope() const
 \brief Returns scope of current statement.
 
-   This functions returns a pointer to the inner most SgScopeStatement where the current 
+This functions returns a pointer to the inner most SgScopeStatement where the current 
 statement is located.
 This is a function called after the parents have been set.  It is not called by the
 EDG/SAGE interface and is only called after the SAGE AST has been built and the parent
@@ -124,7 +124,7 @@ explicitly.
 \fn SgStatement::setExtern()
 \brief This function sets "extern" status for the current statement.
 
-    The new modifier mechanism makes this older function interface redundent.
+The new modifier mechanism makes this older function interface redundent.
 
 \deprecated This function should not be called anywhere the new modifier handling make is obsolete.
 */
@@ -133,25 +133,25 @@ explicitly.
 \fn SgStatement::setStatic()
 \brief This function sets "static" status for the current statement.
 
-    The new modifier mechanism makes this older function interface redundent.
+The new modifier mechanism makes this older function interface redundent.
 
 \deprecated This function should not be called anywhere the new modifier handling make is obsolete.
 */
 
 /*! @{
-     @name Private Supporting Functions for Low-Level Rewrite Interface
-     \brief Low-level Support for mutation of the AST.
+@name Private Supporting Functions for Low-Level Rewrite Interface
+\brief Low-level Support for mutation of the AST.
 
-     This is the lowest level of support for the mutation of the AST.
+This is the lowest level of support for the mutation of the AST.
 
-     \internal Need to document this section more fully.
+\internal Need to document this section more fully.
  */
 
 /*!
 \fn SgStatement::replace_child (SgStatement *, SgStatement *, bool extractListFromBasicBlock=false)
 \brief Private supporting function for low level SageIII rewrite interface.
 
-     This function implements special semantics for the insertion of a collection of
+This function implements special semantics for the insertion of a collection of
 statements in a block.  If extractListFromBasicBlock is true then the statements in
 the block are extracts and placed into the same scope as the target position.
 

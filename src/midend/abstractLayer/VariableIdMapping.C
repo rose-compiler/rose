@@ -89,6 +89,14 @@ bool VariableIdMapping::hasArrayType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgArrayType(type)!=0;
 }
+bool VariableIdMapping::isConstantArray(VariableId varId) {
+  if(hasArrayType(varId)) {
+    // TODO: use new function: hasConstantArrayType.
+    return true;
+  } else {
+    return false;
+  }
+}
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -265,7 +273,7 @@ VariableId VariableIdMapping::variableId(SgSymbol* sym) {
  */
 SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
   ROSE_ASSERT(varid.isValid());
-  ROSE_ASSERT(varid._id<mappingVarIdToSym.size());
+  ROSE_ASSERT(((size_t)varid._id)<mappingVarIdToSym.size());
   return mappingVarIdToSym[varid._id];
 }
 //SgSymbol* VariableIdMapping::getSymbol(VariableId varId) {
@@ -300,7 +308,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
         sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
         if(sym) {
           found=true;
-          if(modeVariableIdForEachArrayElement && SgNodeHelper::isArrayDeclaration(varDecl)) {
+          if(/*modeVariableIdForEachArrayElement &&*/ SgNodeHelper::isArrayDeclaration(varDecl)) {
             SgNode* initName0=varDecl->get_traversalSuccessorByIndex(1); // get-InitializedName
             ROSE_ASSERT(initName0);
             SgInitializedName* initName=isSgInitializedName(initName0);
@@ -316,8 +324,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
               arraySize=getArrayDimensionsFromInitializer(isSgAggregateInitializer(initName->get_initializer()));
             }
             if(arraySize > 0) {
-              //cout<<arraySize<<" : "<<varDecl->unparseToString()<<endl;
-              //cout<<"INFO: found array decl: size: "<<arraySize;
+              //cout<<"INFO: found array decl: size: "<<arraySize<<" :: "<<varDecl->unparseToString()<<endl;
               registerNewArraySymbol(sym, arraySize);
               symbolSet.insert(sym);
               found = false;
@@ -600,6 +607,11 @@ VariableId::toString() const {
   stringstream ss;
   ss<<"V"<<_id;
   return ss.str();
+}
+
+string
+VariableId::toString(VariableIdMapping& vim) const {
+  return vim.uniqueShortVariableName(*this);
 }
 
 #if 0

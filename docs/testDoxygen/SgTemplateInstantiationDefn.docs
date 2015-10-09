@@ -6,7 +6,7 @@
 \class SgTemplateInstantiationDefn
 \brief This class represents the concept of a class definition in C++.
 
-    Templated class definitions are currently nearly the same as class definitions
+Templated class definitions are currently nearly the same as class definitions
 (SgClassDefinition).  I expect that work in the future will provide more features that
 are specific to templates.  Currently this version is different from the SgClassDefinition
 in that its constructor takes a SgTemplateInstantiationDecl instead of a SgClassDeclaration.
@@ -35,7 +35,7 @@ in that its constructor takes a SgTemplateInstantiationDecl instead of a SgClass
          Sg_File_Info* startOfConstruct = NULL, SgTemplateInstantiationDecl *decl = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgTemplateInstantiationDefn base class.
+This constructor builds the SgTemplateInstantiationDefn base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -48,14 +48,14 @@ in that its constructor takes a SgTemplateInstantiationDecl instead of a SgClass
 \fn SgTemplateInstantiationDefn::~SgTemplateInstantiationDefn()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgTemplateInstantiationDefn::isSgTemplateInstantiationDefn (SgNode *s)
 \brief Cast function (from derived class to SgTemplateInstantiationDefn pointer).
 
-   This functions returns a SgTemplateInstantiationDefn pointer for any input of a 
+This functions returns a SgTemplateInstantiationDefn pointer for any input of a 
 pointer to an object derived from a SgTemplateInstantiationDefn.
 
 \return Returns valid pointer to SgTemplateInstantiationDefn if input is derived from a SgLocatedNode.
@@ -65,7 +65,7 @@ pointer to an object derived from a SgTemplateInstantiationDefn.
 \fn SgTemplateInstantiationDefn::isSgTemplateInstantiationDefn (const SgNode *s)
 \brief Cast function (from derived class to SgTemplateInstantiationDefn pointer).
 
-   This functions returns a SgTemplateInstantiationDefn pointer for any input of a 
+This functions returns a SgTemplateInstantiationDefn pointer for any input of a 
 pointer to an object derived from a SgTemplateInstantiationDefn.
 
 \return Returns valid pointer to SgTemplateInstantiationDefn if input is derived from a SgLocatedNode.

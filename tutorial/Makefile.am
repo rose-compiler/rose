@@ -9,18 +9,18 @@ if !USING_XTENSA_BACKEND_COMPILER
 SUBDIRS += roseHPCT 
 endif
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # all: exampleMakefile
 
 ROSE_FLAGS = --edg:no_warnings -w
 
-
-
 noinst_HEADERS = \
    coverage_funcsC.h \
    inputCode_collectComments.h
    #yices_c.h
+
+noinst_PROGRAMS =
 
 # Liao 5/7/2010  We want to have a few installable programs as tools for users
 bin_PROGRAMS = \
@@ -36,6 +36,13 @@ bin_PROGRAMS += \
 endif
    #traverseBinCFG \
    #traverseSourceCFG 
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+noinst_PROGRAMS += 				\
+   binaryCallGraph				\
+   binaryHelloWorld				\
+   binaryStrings
+endif
 
 #varSubstCopy , disabled this one Liao, and sorted the list
 # tutorial examples which will not be installed to ROSE_INS/bin
@@ -139,9 +146,9 @@ NOINST_TUTORIAL_EXAMPLES = \
 
 # DQ (3/21/2009): Separate those that compile under Cygwin from those that don't.
 if ROSE_BUILD_OS_IS_CYGWIN
-  noinst_PROGRAMS = $(NOINST_TUTORIAL_EXAMPLES)
+  noinst_PROGRAMS += $(NOINST_TUTORIAL_EXAMPLES)
 else
-  noinst_PROGRAMS = $(NOINST_TUTORIAL_EXAMPLES) sharedMemoryTraversals
+  noinst_PROGRAMS += $(NOINST_TUTORIAL_EXAMPLES) sharedMemoryTraversals
   sharedMemoryTraversals_SOURCES = sharedMemoryTraversals.C
 endif
 
@@ -152,6 +159,10 @@ endif
 binaryFileRead_SOURCES = binaryFileRead.C
 
 binaryFileWrite_SOURCES = binaryFileWrite.C
+
+binaryCallGraph_SOURCES = binaryCallGraph.C
+
+binaryHelloWorld_SOURCES = binaryHelloWorld.C
 
 ASTGraphGenerator_SOURCES = ASTGraphGenerator.C
 
@@ -731,13 +742,13 @@ testSwitchWithoutDefault: switchWithoutDefault
 	./switchWithoutDefault -rose:verbose 0 -I$(srcdir) -c $(srcdir)/inputCode_switchWithoutDefault.C
 
 testRoseSwitchWithoutDefault: switchWithoutDefault
-	./switchWithoutDefault -rose:verbose 0 -I.. $(INCLUDES) -c ../src/frontend/SageIII/Cxx_Grammar.C
+	./switchWithoutDefault -rose:verbose 0 -I.. $(AM_CPPFLAGS) -c ../src/frontend/SageIII/Cxx_Grammar.C
 
 testAddStruct: addStruct
-	./addStruct -rose:verbose 0 -I.. $(INCLUDES) -c $(srcdir)/inputCode_addStruct.C
+	./addStruct -rose:verbose 0 -I.. $(AM_CPPFLAGS) -c $(srcdir)/inputCode_addStruct.C
 
 testsnprintf: sprintf_to_snprintf
-#	./sprintf_to_snprintf -rose:verbose 0 -I.. $(INCLUDES) -c $(srcdir)/inputCode_sprintf_to_snprintf.C
+#	./sprintf_to_snprintf -rose:verbose 0 -I.. $(AM_CPPFLAGS) -c $(srcdir)/inputCode_sprintf_to_snprintf.C
 	./sprintf_to_snprintf -rose:verbose 0 -c $(srcdir)/inputCode_sprintf_to_snprintf.C
 
 testSeedBugsExample_arrayIndexing: seedBugsExample_arrayIndexing

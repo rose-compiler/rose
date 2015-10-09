@@ -2,15 +2,15 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_MPI
 
-INCLUDES =  $(ROSE_INCLUDES) -DROSE_MPI 
+AM_CPPFLAGS =  $(ROSE_INCLUDES) -DROSE_MPI 
 
 #LTCXXCOMPILE = \
 #	$(LIBTOOL) --tag=CXX --mode=compile $(MPICXX) $(DEFS) \
-#        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+#        $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
 #        $(AM_CXXFLAGS) $(CXXFLAGS)
 #CXXCOMPILE = \
 #	$(MPICXX) $(DEFS) \
-#        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+#        $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) \
 #        $(AM_CXXFLAGS) $(CXXFLAGS)
 #CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(MPICXX) $(AM_CXXFLAGS) \
 #        $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@

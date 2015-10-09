@@ -11,7 +11,7 @@ endif
 
 # This lists a large number of directories.  If "make install"
 # is run then we only need a single directory
-INCLUDES = -Winvalid-pch $(ROSE_INCLUDES) 
+AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES) 
 
 
 # DQ (7/23/2008): New handling of EDG builds a single library instead of two.
@@ -37,9 +37,9 @@ endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
    libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
-#   libroseExperimentalOpenFortranParserlibraries =
-#   ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
-#   ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(_PREFIX)/lib -lxenctrl
+#  libroseExperimentalOpenFortranParserlibraries =
+#  ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
+#  ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(_PREFIX)/lib -lxenctrl
 else
    libroseExperimentalOpenFortranParserlibraries =
 endif
