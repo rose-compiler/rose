@@ -59,6 +59,12 @@ TODO: support float type also
 extern void xomp_divide_scatter_array_to_all (double* sourceDataPointer, int x_dim_size, int y_dim_size, int z_dim_size,
  int distributed_dimension_id, int halo_size, int rank_id, int process_count, double** distsrc);
 
+//  scattered array portions indicated by *distdest
+//  need to be collected to destnationDataPointer
+extern void xomp_collect_scattered_array_from_all (double* distdest, int x_dim_size, int y_dim_size, int z_dim_size,
+ int distributed_dimension_id, int halo_size, int rank_id, int process_count, double** destinationDataPointer );
+
+
 #ifdef __cplusplus
  }
 #endif

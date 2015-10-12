@@ -223,7 +223,7 @@ void xomp_divide_scatter_array_to_all (double* sourceDataPointer, int x_dim_size
     MPI_Status recv_status[1];                                                                                                   
 
     int recvSize = (distdestsize + 2 * halo_size) * x_dim_size * y_dim_size;                                                
-    // receiving data                                                                                                              
+    // receiving data, the receiving buffer will be modified, must pass by reference/address here
     MPI_Irecv(*distsrc, recvSize, mpitype, src, recv_tag, MPI_COMM_WORLD, &recv_reqs[0]);                                      
     //  MPI_Irecv(distdest, distsrcsize*bxsrc.size(0)*bxsrc.size(1), MPI_DOUBLE, src, tag, MPI_COMM_WORLD, &reqs[1]);                
     MPI_Waitall(1,recv_reqs,recv_status);                                                                                        
@@ -231,6 +231,72 @@ void xomp_divide_scatter_array_to_all (double* sourceDataPointer, int x_dim_size
     //  for(idx = 0; idx < distsrcsize*bxsrc.size(0)*bxsrc.size(1); ++idx)                                                           
     //   printf("Receiver:%d has result %d: %f\n",rank, idx, distsrc[idx]);                                                          
   }   
+
+}
+
+//  scattered array portions indicated by *distdest
+//  need to be collected to destnationDataPointer
+// TODO: support the case with non-zero halo size!!
+//TODO support MPI data types other than MPI_DOUBLE
+void xomp_collect_scattered_array_from_all (double* distdest, int x_dim_size, int y_dim_size, int z_dim_size,
+ int distributed_dimension_id, int halo_size, int rank_id, int process_count, double** destinationDataPointer )
+{
+  int rank = rank_id;
+  int nprocs = process_count;
+  int offsetdest, distdestsize; 
+
+// TODO: support the case with non-zero halo size!!
+  int arraySize_X_dest = x_dim_size;
+  int arraySize_Y_dest = y_dim_size;
+  int arraySize_Z_dest = z_dim_size;
+
+  xomp_static_even_divide_start_size (0, arraySize_Z_dest, nprocs, rank_id, & offsetdest, & distdestsize);
+
+  if(rank == 0)
+  {
+    // team leader receives destination data from all members
+    int src, recv_tag=1;
+    MPI_Request recv_reqs[nprocs-1];
+    MPI_Status recv_status[nprocs-1];
+    for(src = 1; src < nprocs; ++src)
+    { // partitions of the result (destination) array 
+      int recvSize = arraySize_Z_dest / nprocs;
+      int recvOffset = src * recvSize;
+      if(src < arraySize_Z_dest%nprocs)
+      { 
+        recvSize++;
+      }
+      recvSize *= arraySize_X_dest*arraySize_Y_dest;
+      if(src >= arraySize_Z_dest%nprocs)
+        recvOffset += arraySize_Z_dest%nprocs;
+      else
+        recvOffset += src;
+      recvOffset = recvOffset*arraySize_X_dest*arraySize_Y_dest;
+      // TODO: careful with dereferencing a pointer
+      MPI_Irecv(*destinationDataPointer+recvOffset, recvSize, MPI_DOUBLE, src, recv_tag, MPI_COMM_WORLD,&recv_reqs[src-1]);
+    }
+    MPI_Waitall(nprocs-1,recv_reqs,recv_status);
+    // local copy (this could be optional, but simplier for transformation)
+    //memcpy(destinationDataPointer+offsetdest, distdest,distdestsize* bxdest.size(0)* bxdest.size(1)*sizeof(double));
+    memcpy(*destinationDataPointer+offsetdest, distdest,distdestsize* arraySize_X_dest * arraySize_Y_dest *sizeof(double));
+
+    //end = MPI_Wtime();
+    //elapsed_secs = (end - begin);
+    //cout << "Exec. time for MPI code: " << elapsed_secs << endl;
+
+  }
+  else
+  {
+    int dest = 0, send_tag=1;
+    MPI_Request send_reqs[1];
+    MPI_Status send_status[1];
+    // team members send back data
+    MPI_Isend(distdest, distdestsize*arraySize_X_dest*arraySize_Y_dest, MPI_DOUBLE, dest, send_tag, MPI_COMM_WORLD, send_reqs);
+    //  int idx;
+    //  for(idx = 0; idx < distdestsize*arraySize_X_dest*arraySize_Y_dest; ++idx)
+    //   printf("rank %d send result %d: %f\n",rank, idx, distdest[idx]); 
+    MPI_Waitall(1,send_reqs,send_status);
+  }
 
 }
 
