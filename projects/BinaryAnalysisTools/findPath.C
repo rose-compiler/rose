@@ -58,8 +58,7 @@ struct Settings {
     bool debugSmtSolver;                                // turn on SMT debugging?
     Sawyer::Optional<rose_addr_t> initialStackPtr;      // concrete value to use for stack pointer register initial value
     size_t nThreads;                                    // number of threads for algorithms that support multi-threading
-    std::vector<std::string> registerPostConditionsStr; // final conditions for registers
-    std::vector<std::string> memoryPostConditionsStr;   // final conditions for memory
+    std::vector<std::string> postConditionsStr;         // final conditions for registers and memory
     Settings()
         : beginVertex("_start"), maxRecursionDepth(4), maxCallDepth(100), maxPathLength(1600), vertexVisitLimit(1),
           showInstructions(true), showConstraints(false), showFinalState(false), showFunctionSubgraphs(true),
@@ -101,6 +100,8 @@ static FunctionSummaries functionSummaries;
 
 // Stack of states per vertex
 typedef Sawyer::Container::Map<P2::ControlFlowGraph::ConstVertexIterator, std::vector<BaseSemantics::StatePtr> > StateStacks;
+
+static SymbolicExprParser postConditionParser(const BaseSemantics::RiscOperatorsPtr&);
 
 // Describe and parse the command-line
 static std::vector<std::string>
@@ -225,24 +226,14 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
 
     //---------------------------
     SwitchGroup pcond("Post-condition switches");
-    pcond.insert(Switch("register-postcondition")
-                 .argument("reg=value", anyParser(settings.registerPostConditionsStr))
+    pcond.insert(Switch("post-condition")
+                 .argument("expression", anyParser(settings.postConditionsStr))
                  .whichValue(SAVE_ALL)
-                 .doc("Supplies a post condition for a register. The @v{reg} part of the switch argument is a register "
-                      "name and the @p{value} part is a symbolic expression as parsed by the "
-                      "rose::BinaryAnalysis::SymbolicExprParser class. In short, this class excepts s-expressions in "
-                      "a format similar to Lisp. For example, \"@s{register-postcondition} 'ebx = 0'\". This siwtch may "
-                      "appear more than once to specify a conjunction of post conditions."));
-
-    pcond.insert(Switch("memory-postcondition")
-                 .argument("addr=value", anyParser(settings.memoryPostConditionsStr))
-                 .whichValue(SAVE_ALL)
-                 .doc("Supplies a post condition for a memory location. The @v{addr} part of the switch argument is a "
-                      "symbolic memory address and the @p{value} part is the byte value stored at that addres. Both "
-                      "address and value use the syntax parsed by the rose::BinaryAnalysis::SymbolicExprParser class. "
-                      "In short, this class excepts s-expressions in a format similar to Lisp. For example, "
-                      "\"@s{register-postcondition} 'ebx = 0'\". This siwtch may appear more than once to specify a "
-                      "conjunction of post conditions."));
+                 .doc("Specifies post conditions that must be met at the end of the path. This switch may appear "
+                      "multiple times, in which case all post conditions must be met in order for the path to be "
+                      "reported.  Post conditions are specified as symbolic expressions and, due to the parentheses and "
+                      "white space, likely need to be protected from shell expansion by enclosing them in quotes. " +
+                      postConditionParser(BaseSemantics::RiscOperatorsPtr()).docString()));
 
     //--------------------------- 
     SwitchGroup out("Output switches");
@@ -1144,111 +1135,92 @@ printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pat
     }
 }
 
-// Parse register post-condition strings and add them to the path constraints.
-static void
-incorporateRegisterPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops contains final path state
-                                  std::vector<SymbolicExpr::Ptr> &pathConstraints /*out*/) {
-    ASSERT_not_null(ops);
-    std::string inputName = "tool argument";
-    BaseSemantics::RegisterStatePtr regState = ops->get_state()->get_register_state();
-    BOOST_FOREACH (const std::string &regPostCondStr, settings.registerPostConditionsStr) {
-        try {
-            std::istringstream input(regPostCondStr);
-            SymbolicExprParser::TokenStream tokens(input, inputName);
-
-            // Register name is a symbol.
-            if (tokens[0].type() != SymbolicExprParser::Token::SYMBOL)
-                throw tokens[0].syntaxError("expected register name", inputName);
-            const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(tokens[0].lexeme());
-            if (NULL == regp)
-                throw tokens[0].syntaxError("not a valid register name", inputName);
-            tokens.shift();
-
-            // Register name is followed by an '='
-            if (tokens[0].type() != SymbolicExprParser::Token::SYMBOL || tokens[0].lexeme() != "=")
-                throw tokens[0].syntaxError("expected '=' between memory address and value", inputName);
-            tokens.shift();
-
-            // Remainder of input is the register's value
-            SymbolicExpr::Ptr rhs = SymbolicExprParser().parse(tokens);
-            if (tokens[0].type() != SymbolicExprParser::Token::NONE)
-                throw tokens[0].syntaxError("extra text after end of expression", inputName);
-            if (regp->get_nbits() != rhs->nBits()) {
-                throw std::runtime_error("register/expr width mismatch "
-                                         "(reg=" + StringUtility::numberToString(regp->get_nbits()) +
-                                         ", expr=" + StringUtility::numberToString(rhs->nBits()) + ")"
-                                         ": " + regPostCondStr);
-            }
-
-            // Build the SMT constraint
-            BaseSemantics::SValuePtr lhs = regState->readRegister(*regp, ops.get());
-            SymbolicExpr::Ptr expr =
-                SymbolicExpr::makeEq(SymbolicSemantics::SValue::promote(lhs)->get_expression(), rhs);
-            pathConstraints.push_back(expr);
-        } catch (const SymbolicExprParser::SyntaxError &e) {
-            std::cerr <<e <<"\n";
-            if (e.lineNumber != 0) {
-                std::cerr <<"    argument: " <<regPostCondStr <<"\n"
-                          <<"    here------" <<std::string(e.columnNumber, '-') <<"^\n\n";
-            }
-            exit(1);
-        }
+// Parse register names
+class RegisterExpansion: public SymbolicExprParser::AtomExpansion {
+    BaseSemantics::RiscOperatorsPtr ops_;
+protected:
+    RegisterExpansion(const BaseSemantics::RiscOperatorsPtr &ops)
+        : ops_(ops) {}
+public:
+    static Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
+        Ptr functor = Ptr(new RegisterExpansion(ops));
+        functor->title("Registers");
+        std::string doc = "Register locations are specified by just mentioning the name of the register. Register names "
+                          "are usually lower case, such as \"eax\", \"rip\", etc.";
+        functor->docString(doc);
+        return functor;
     }
-}
-
-// Parse memory post-condition strings and add them to the path constraints
-static void
-incorporateMemoryPostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops contains final path state
-                                std::vector<SymbolicExpr::Ptr> &pathConstraints /*out*/) {
-    ASSERT_not_null(ops);
-    std::string inputName = "tool argument";
-    BaseSemantics::MemoryStatePtr memState = ops->get_state()->get_memory_state();
-    BOOST_FOREACH (const std::string &memPostCondStr, settings.memoryPostConditionsStr) {
-        try {
-            std::istringstream input(memPostCondStr);
-            SymbolicExprParser::TokenStream tokens(input, inputName);
-
-            // Memory address expression
-            SymbolicExpr::Ptr addrExpr = SymbolicExprParser().parse(tokens);
-
-            // Equal sign
-            if (tokens[0].type() != SymbolicExprParser::Token::SYMBOL || tokens[0].lexeme() != "=")
-                throw tokens[0].syntaxError("expected '=' between memory address and value", inputName);
-            tokens.shift();
-
-            // Value stored at memory address
-            SymbolicExpr::Ptr rhsExpr = SymbolicExprParser().parse(tokens);
-            if (tokens[0].type() != SymbolicExprParser::Token::NONE)
-                throw tokens[0].syntaxError("extra text after end of expression", inputName);
-            if (rhsExpr->nBits() != 8) {
-                throw std::runtime_error("expr width should be 8 bits "
-                                         "(got " + StringUtility::numberToString(rhsExpr->nBits()) + "): " + memPostCondStr);
-            }
-
-            // Build the SMT constraint
-            SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(ops->undefined_(8));
-            addr->set_expression(addrExpr);
-            BaseSemantics::SValuePtr lhs = memState->readMemory(addr, ops->undefined_(8), ops.get(), ops.get());
-            SymbolicExpr::Ptr expr =
-                SymbolicExpr::makeEq(SymbolicSemantics::SValue::promote(lhs)->get_expression(), rhsExpr);
-            pathConstraints.push_back(expr);
-        } catch (const SymbolicExprParser::SyntaxError &e) {
-            std::cerr <<e <<"\n";
-            if (e.lineNumber != 0) {
-                std::cerr <<"    argument: " <<memPostCondStr <<"\n"
-                          <<"    here------" <<std::string(e.columnNumber, '-') <<"^\n\n";
-            }
-            exit(1);
-        }
+    SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &token) ROSE_OVERRIDE {
+        BaseSemantics::RegisterStatePtr regState = ops_->get_state()->get_register_state();
+        const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(token.lexeme());
+        if (NULL == regp)
+            return SymbolicExpr::Ptr();
+        BaseSemantics::SValuePtr regValue = regState->readRegister(*regp, ops_.get());
+        return SymbolicSemantics::SValue::promote(regValue)->get_expression();
     }
+};
+
+// Parse memory names. These are expressions of the form (mem ADDRESS)
+class MemoryExpansion: public SymbolicExprParser::OperatorExpansion {
+    BaseSemantics::RiscOperatorsPtr ops_;
+protected:
+    MemoryExpansion(const BaseSemantics::RiscOperatorsPtr &ops)
+        : ops_(ops) {}
+public:
+    static Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
+        Ptr functor = Ptr(new MemoryExpansion(ops));
+        functor->title("Memory");
+        functor->docString("Memory values are specified with the \"mem\" operator, which takes one operand: a memory address. "
+                           "For example, the top byte of the stack for an 32-bit architecture is \"(mem esp)\". Each value "
+                           "stored at a memory address is eight bits wide.");
+        return functor;
+    }
+    SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &token, const SymbolicExpr::Nodes &operands) {
+        if (token.lexeme() != "mem")
+            return SymbolicExpr::Ptr();
+        if (operands.size() != 1)
+            throw token.syntaxError("mem operator expects one argument (address)");
+        SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(ops_->undefined_(operands[0]->nBits()));
+        addr->set_expression(operands[0]);
+        BaseSemantics::MemoryStatePtr memState = ops_->get_state()->get_memory_state();
+        BaseSemantics::SValuePtr memValue = memState->readMemory(addr, ops_->undefined_(8), ops_.get(), ops_.get());
+        if (token.width() != 0 && memValue->get_width() !=token.width()) {
+            throw token.syntaxError("operator size mismatch (specified=" + StringUtility::numberToString(token.width()) +
+                                    ", actual=" + StringUtility::numberToString(memValue->get_width()) + ")");
+        }
+        return SymbolicSemantics::SValue::promote(memValue)->get_expression();
+    }
+};
+
+static SymbolicExprParser
+postConditionParser(const BaseSemantics::RiscOperatorsPtr &ops) {
+    SymbolicExprParser parser;
+    parser.appendAtomExpansion(RegisterExpansion::instance(ops));
+    parser.appendOperatorExpansion(MemoryExpansion::instance(ops));
+    return parser;
 }
 
 // Incorporate post conditions into the path constraints.
 static void
 incorporatePostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops contains final path state
                           std::vector<SymbolicExpr::Ptr> &pathConstraints /*out*/) {
-    incorporateRegisterPostConditions(ops, pathConstraints);
-    incorporateMemoryPostConditions(ops, pathConstraints);
+    SymbolicExprParser parser = postConditionParser(ops);
+    BOOST_FOREACH (const std::string &postCondStr, settings.postConditionsStr) {
+        try {
+            SymbolicExpr::Ptr expr = parser.parse(postCondStr, "tool argument");
+            pathConstraints.push_back(expr);
+#if 1 // DEBUGGING [Robb P. Matzke 2015-10-12]
+            std::cerr <<"    post condition: " <<*expr <<"\n";
+#endif
+        } catch (const SymbolicExprParser::SyntaxError &e) {
+            std::cerr <<e <<"\n";
+            if (e.lineNumber != 0) {
+                std::cerr <<"    argument: " <<postCondStr <<"\n"
+                          <<"    here------" <<std::string(e.columnNumber, '-') <<"^\n\n";
+            }
+            exit(1);
+        }
+    }
 }
 
 // Checks that post-conditions are valid before we spend a long time looking for feasible paths.
@@ -1417,27 +1389,10 @@ findAndProcessSinglePaths(const P2::Partitioner &partitioner, const P2::ControlF
                     insertCallSummary(paths, backVertex, partitioner.cfg(), cfgCallEdge);
                 }
             }
-#if 1 // DEBUGGING [Robb P. Matzke 2015-05-15]
-            {
-                std::ofstream out("x-robb-1.dot");
-                P2::CfgConstVertexSet end;
-                end.insert(backVertex);
-                printGraphViz(out, partitioner, paths, path.frontVertex(), end, path);
-            }
-#endif
 
             // Remove all call-return edges. This is necessary so we don't re-enter this case with infinite recursion. No need
             // to worry about adjusting the path because these edges aren't on the current path.
             P2::eraseEdges(paths, P2::findCallReturnEdges(backVertex));
-#if 1 // DEBUGGING [Robb P. Matzke 2015-05-15]
-            {
-                std::ofstream out("x-robb-2.dot");
-                P2::CfgConstVertexSet end;
-                end.insert(backVertex);
-                printGraphViz(out, partitioner, paths, path.frontVertex(), end, path);
-            }
-#endif
-
 
             // If the inlined function had no return sites but the call site had a call-return edge, then part of the paths
             // graph might now be unreachable. In fact, there might now be no paths from the begin vertex to any end vertex.
@@ -2264,15 +2219,17 @@ findAndProcessMultiPaths(const P2::Partitioner &partitioner, const P2::ControlFl
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]) {
+    // Initialization
     Diagnostics::initialize();
     ::mlog = Diagnostics::Facility("tool", Diagnostics::destination);
     Diagnostics::mfacilities.insertAndAdjust(::mlog);
     Sawyer::Message::Stream info(::mlog[INFO]);
 
-    // Parse the command-line
     P2::Engine engine;
     engine.doingPostAnalysis(false);
     engine.usingSemantics(true);
+
+    // Parse the command-line
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine);
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");

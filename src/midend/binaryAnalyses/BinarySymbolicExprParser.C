@@ -310,9 +310,11 @@ SymbolicExprParser::TokenStream::fillTokenList(size_t idx) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Throws an exception for functions named "..."
-class AbbreviatedFunction: public SymbolicExprParser::FunctionExpansion {
+class AbbreviatedOperator: public SymbolicExprParser::OperatorExpansion {
 public:
-    static Ptr instance() { return Ptr(new AbbreviatedFunction); }
+    static Ptr instance() {
+        return Ptr(new AbbreviatedOperator);            // undocumented
+    }
     SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) {
         if (op.lexeme() == "...")
             throw op.syntaxError("input is an abbreviated expression; parts are missing");
@@ -320,70 +322,249 @@ public:
     }
 };
 
-// Throws an exception for symbols named "..."
-class AbbreviatedSymbol: public SymbolicExprParser::SymbolExpansion {
+// Throws an exception for atoms named "..."
+class AbbreviatedAtom: public SymbolicExprParser::AtomExpansion {
 public:
-    static Ptr instance() { return Ptr(new AbbreviatedSymbol); }
+    static Ptr instance() {
+        return Ptr(new AbbreviatedAtom);                // undocumented
+    }
     SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &symbol) {
         if (symbol.lexeme() == "...")
             throw symbol.syntaxError("input is an abbreviated expression; parts are missing");
         return SymbolicExpr::Ptr();
     }
 };
-        
+
 // Generates symbolic expressions for the SMT operators
-class SmtFunctions: public SymbolicExprParser::FunctionExpansion {
+class SmtOperators: public SymbolicExprParser::OperatorExpansion {
 protected:
     Sawyer::Container::Map<std::string, SymbolicExpr::Operator> ops_;
 
-    SmtFunctions() {
+    SmtOperators() {
+        std::string doc;
         ops_.insert("add",          SymbolicExpr::OP_ADD);
+        doc += "@named{add}"
+               "{Adds operands together. All operands must have the same width, which is also the width of the result.}";
+
         ops_.insert("and",          SymbolicExpr::OP_AND);
+        doc += "@named{and}"
+               "{Boolean AND operation. All operands (one or more) are Boolean values, such as relational operators. For "
+               "bit-wise AND use the \"bv-and\" operator.}";
+
         ops_.insert("asr",          SymbolicExpr::OP_ASR);
+        doc += "@named{asr}"
+               "{Arithmetic shift right. The second operand is interpreted as a signed value which is shifted right by "
+               "the unsigned first argument. The result has the same width as the second operand.}";
+
         ops_.insert("bv-and",       SymbolicExpr::OP_BV_AND);
+        doc += "@named{bv-and}"
+               "{Bit-wise AND operation. All operands (one or more) must be the same width, which is also the width of "
+               "the result.}";
+
         ops_.insert("bv-or",        SymbolicExpr::OP_BV_OR);
+        doc += "@named{bv-or}"
+               "{Bit-wise OR operation. All operands (one or more) must be the same width, which is also the width of "
+               "the result.}";
+
         ops_.insert("bv-xor",       SymbolicExpr::OP_BV_XOR);
+        doc += "@named{bv-xor}"
+               "{Bit-wise XOR operation. All operands (one or more) must be the same width, which is also the width of "
+               "the result.}";
+
         ops_.insert("concat",       SymbolicExpr::OP_CONCAT);
+        doc += "@named{concat}"
+               "{Concatenate operands to produce a result whose width is the sum of the widths of the operands. The "
+               "operands are in bit-endian order: the first operand becomes the most significant bits of the result and "
+               "the last operand becomes the least significant bits.}";
+
         ops_.insert("eq",           SymbolicExpr::OP_EQ);
+        doc += "@named{eq}"
+               "{Equality comparison. Takes two operands that must be the same width and returns a Boolean.}";
+
         ops_.insert("extract",      SymbolicExpr::OP_EXTRACT);
+        doc += "@named{extract}"
+               "{Extract part of a value. The bits of the third operand are numbered from zero (least significant) through "
+               "N-1 (most significant) and those bits specified by the first operand (low bit) and second operand "
+               "(one past high bit) are returned.  The width of the return value is the difference between the second "
+               "and first operands, both of which must have constant numeric values.}";
+
         ops_.insert("invert",       SymbolicExpr::OP_INVERT);
+        doc += "@named{invert}"
+               "{Bit-wise invert. This operator takes one operand and returns a value having the same width but with "
+               "each bit flipped.}";
+
         ops_.insert("ite",          SymbolicExpr::OP_ITE);
+        doc += "@named{ite}"
+               "{If-then-else.  Takes a Boolean condition (first operand) and two alternatives (second and third operands). "
+               "If the condition is true, then evaluates to the second operand, otherwise the third operand. The second "
+               "and third operand must have the same width, which is also the width of the result.}";
+
         ops_.insert("lssb",         SymbolicExpr::OP_LSSB);
+        doc += "@named{lssb}"
+               "{Least significant set bit.  Takes one operand and evaluates to a result having the same width. The result "
+               "is the lowest index (least significant bit is zero) of a bit of the operand which is set.  Evaluates to "
+               "zero if no bits are set.}";            // odd, but same behavior as Yices.
+
         ops_.insert("mssb",         SymbolicExpr::OP_MSSB);
+        doc += "@named{mssb}"
+               "{Most significant set bit.  Takes one operand and evaluates to a result having the same width. The result "
+               "is the highest index (least significant bit is zero) of a bit of the operand which is set.  Evaluates to "
+               "zero if no bits are set.}";            // odd, but same behavior as Yices.
+
         ops_.insert("ne",           SymbolicExpr::OP_NE);
+        doc += "@named{ne}"
+               "{Inequality comparison. Takes two operands that must be the same width and returns a Boolean.}";
+
         ops_.insert("negate",       SymbolicExpr::OP_NEGATE);
-        ops_.insert("noop",         SymbolicExpr::OP_NOOP);
+        doc += "@named{negate}"
+               "{Evauates to the two's complement of the single operand. The result is the same width as the operand.}";
+
         ops_.insert("or",           SymbolicExpr::OP_OR);
+        doc += "@named{or}"
+               "{Boolean OR operation. All operands (one or more) are Boolean values, such as relational operators. For "
+               "bit-wise OR use the \"bv-or\" operator.}";
+               
         ops_.insert("read",         SymbolicExpr::OP_READ);
+        doc += "@named{read}"
+               "{Memory read operation. Indicates a value read from a memory state. This operator expects two operands: the "
+               "memory state, and the address from which a value is read. The address must have the same width as the "
+               "memory state's domain, and the result has the same width as the memory state's range (usually eight).}";
+
         ops_.insert("rol",          SymbolicExpr::OP_ROL);
+        doc += "@named{rol}"
+               "{Rotate left.  Rotates the bits of the second operand left by the amount specified in the first operand. "
+               "The first operand must be a numeric constant interpreted as unsigned modulo the width of the second "
+               "operand.  Bits shifted off the left side of the second operand are introduced into the right side.}";
+
         ops_.insert("ror",          SymbolicExpr::OP_ROR);
+        doc += "@named{ror}"
+               "{Rotate right.  Rotates the bits of the second operand right by the amount specified in the first operand. "
+               "The first operand must be a numeric constant interpreted as unsigned modulo the width of the second "
+               "operand.  Bits shifted off the right side of the second operand are introduced into the left side.}";
+
         ops_.insert("sdiv",         SymbolicExpr::OP_SDIV);
+        doc += "@named{sdiv}"
+               "{Signed division. Divides the first operand by the second. Both operands are interpreted as signed "
+               "values, but they need not have the same width. The result width is the same as the width of the first "
+               "operand.}";
+        
         ops_.insert("sextend",      SymbolicExpr::OP_SEXTEND);
+        doc += "@named{sextend}"
+               "{Sign extends the second operand so it has the width specified in the first operand. The first operand "
+               "must be an unsigned numeric constant not less than the width of the second operand.}";
+
         ops_.insert("sge",          SymbolicExpr::OP_SGE);
+        doc += "@named{sge}"
+               "{Signed greater-than or equal comparison. Takes two operands that must be the same width and returns a "
+               "Boolean.}";
+
         ops_.insert("sgt",          SymbolicExpr::OP_SGT);
+        doc += "@named{sgt}"
+               "{Signed greater-than comparison. Takes two operands that must be the same width and returns a Boolean.}";
+
         ops_.insert("shl0",         SymbolicExpr::OP_SHL0);
+        doc += "@named{shl0}"
+               "{Shift left introducing zeros.  Shifts the bits of the second operand left by the amount specified in the "
+               "first operand. The first operand must be a numeric constant interpreted as unsigned modulo the width of the "
+               "second operand.  Bits introduced into the right side are cleared.}";
+
         ops_.insert("shl1",         SymbolicExpr::OP_SHL1);
+        doc += "@named{shl1}"
+               "{Shift left introducing ones.  Shifts the bits of the second operand left by the amount specified in the "
+               "first operand. The first operand must be a numeric constant interpreted as unsigned modulo the width of the "
+               "second operand.  Bits introduced into the right side are set.}";
+
         ops_.insert("shr0",         SymbolicExpr::OP_SHR0);
+        doc += "@named{shr0}"
+               "{Shift right introducing zeros.  Shifts the bits of the second operand right by the amount specified in the "
+               "first operand. The first operand must be a numeric constant interpreted as unsigned modulo the width of the "
+               "second operand.  Bits introduced into the left side are cleared.}";
+
         ops_.insert("shr1",         SymbolicExpr::OP_SHR1);
+        doc += "@named{shr1}"
+               "{Shift right introducing ones.  Shifts the bits of the second operand right by the amount specified in the "
+               "first operand. The first operand must be a numeric constant interpreted as unsigned modulo the width of the "
+               "second operand.  Bits introduced into the left side are set.}";
+
         ops_.insert("sle",          SymbolicExpr::OP_SLE);
+        doc += "@named{sle}"
+               "{Signed less-than or equal comparison. Takes two operands that must be the same width and returns a "
+               "Boolean.}";
+
         ops_.insert("slt",          SymbolicExpr::OP_SLT);
+        doc += "@named{slt}"
+               "{Signed less-than comparison. Takes two operands that must be the same width and returns a Boolean.}";
+
         ops_.insert("smod",         SymbolicExpr::OP_SMOD);
+        doc += "@named{smod}"
+               "{Signed modulo. Computes the first operand modulo the second. Both operands are interpreted as signed "
+               "values, but they need not have the same width. The result width is the same as the width of the second "
+               "operand.}";
+
         ops_.insert("smul",         SymbolicExpr::OP_SMUL);
+        doc += "@named{smul}"
+               "{Signed multiply. Computes the product of the operands (one or more). The operands are interpreted as signed "
+               "values, but they need not have the same width. The result width is the sum of the operand widthds}";
+
         ops_.insert("udiv",         SymbolicExpr::OP_UDIV);
+        doc += "@named{udiv}"
+               "{Unsigned division. Divides the first operand by the second. Both operands are interpreted as unsigned "
+               "values, but they need not have the same width. The result width is the same as the width of the first "
+               "operand.}";
+
         ops_.insert("uextend",      SymbolicExpr::OP_UEXTEND);
+        doc += "@named{uextend}"
+               "{Extends or truncates the second operand so it has the width specified in the first operand. The first operand "
+               "must be an unsigned numeric constant.}";
+
         ops_.insert("uge",          SymbolicExpr::OP_UGE);
+        doc += "@named{uge}"
+               "{Unsigned greater-than or equal comparison. Takes two operands that must be the same width and returns a "
+               "Boolean.}";
+
         ops_.insert("ugt",          SymbolicExpr::OP_UGT);
+        doc += "@named{ugt}"
+               "{Unsigned greater-than comparison. Takes two operands that must be the same width and returns a Boolean.}";
+
         ops_.insert("ule",          SymbolicExpr::OP_ULE);
+        doc += "@named{ule}"
+               "{Unsigned less-than or equal comparison. Takes two operands that must be the same width and returns a "
+               "Boolean.}";
+
         ops_.insert("ult",          SymbolicExpr::OP_ULT);
+        doc += "@named{ult}"
+               "{Unsigned less-than comparison. Takes two operands that must be the same width and returns a Boolean.}";
+
         ops_.insert("umod",         SymbolicExpr::OP_UMOD);
+        doc += "@named{umod}"
+               "{Unsigned modulo. Computes the first operand modulo the second. Both operands are interpreted as unsigned "
+               "values, but they need not have the same width. The result width is the same as the width of the second "
+               "operand.}";
+
         ops_.insert("umul",         SymbolicExpr::OP_UMUL);
+        doc += "@named{umul}"
+               "{Unsigned multiply. Computes the product of the operands (one or more). The operands are interpreted as "
+               "unsigned values, but they need not have the same width. The result width is the sum of the operand widthds}";
+
         ops_.insert("write",        SymbolicExpr::OP_WRITE);
+        doc += "@named{write}"
+               "{Memory write operation. Indicates writing a value to a memory state. This operator expects three operands: the"
+               "memory state, the address to which the value is written, and the value to write. The address must have the "
+               "same width as the memory state's domain, and the value must have the same width as the memory state's range "
+               "(usually eight). The result of this expression is a new memory state.}";
+
         ops_.insert("zerop",        SymbolicExpr::OP_ZEROP);
+        doc += "@named{zerop}"
+               "{Equal to zero.  The result is a Boolean value that is true when the single operand is equal to zero and "
+               "false if not zero.}";
+
+        title("Named SMT operators");
+        docString(doc);
     }
 
 public:
     static Ptr instance() {
-        return Ptr(new SmtFunctions);
+        return Ptr(new SmtOperators);
     }
 
     virtual SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
@@ -394,36 +575,118 @@ public:
 };
 
 // Creates symbolic expressions using more C-like operator names
-class CFunctions: public SymbolicExprParser::FunctionExpansion {
+class COperators: public SymbolicExprParser::OperatorExpansion {
 protected:
     Sawyer::Container::Map<std::string, SymbolicExpr::Operator> ops_;
 
-    CFunctions() {
+    COperators() {
+        std::string doc;
         ops_.insert("+",        SymbolicExpr::OP_ADD);
+        doc += "@named{+}"
+               "{Adds operands together. All operands must have the same width, which is also the width of the result.}";
+
         ops_.insert("&&",       SymbolicExpr::OP_AND);
+        doc += "@named{&&}"
+               "{Boolean AND operation. All operands (one or more) are Boolean values, such as relational operators. For "
+               "bit-wise AND use the \"bv-and\" operator.}";
+
         ops_.insert("&",        SymbolicExpr::OP_BV_AND);
+        doc += "@named{&}"
+               "{Bit-wise AND operation. All operands (one or more) must be the same width, which is also the width of "
+               "the result.}";
+
         ops_.insert("|",        SymbolicExpr::OP_BV_OR);
+        doc += "@named{|}"
+               "{Bit-wise OR operation. All operands (one or more) must be the same width, which is also the width of "
+               "the result.}";
+
         ops_.insert("^",        SymbolicExpr::OP_BV_XOR);
+        doc += "@named{^}"
+               "{Bit-wise XOR operation. All operands (one or more) must be the same width, which is also the width of "
+               "the result.}";
+
         ops_.insert("==",       SymbolicExpr::OP_EQ);
+        doc += "@named{==}"
+               "{Equality comparison. Takes two operands that must be the same width and returns a Boolean.}";
+
         ops_.insert("~",        SymbolicExpr::OP_INVERT);
+        doc += "@named{~}"
+               "{Bit-wise invert. This operator takes one operand and returns a value having the same width but with "
+               "each bit flipped.}";
+
         ops_.insert("?",        SymbolicExpr::OP_ITE);
+        doc += "@named{?}"
+               "{If-then-else.  Takes a Boolean condition (first operand) and two alternatives (second and third operands). "
+               "If the condition is true, then evaluates to the second operand, otherwise the third operand. The second "
+               "and third operand must have the same width, which is also the width of the result.}";
+
         ops_.insert("!=",       SymbolicExpr::OP_NE);
+        doc += "@named{!=}"
+               "{Inequality comparison. Takes two operands that must be the same width and returns a Boolean.}";
+
         ops_.insert("-",        SymbolicExpr::OP_NEGATE);
+        doc += "@named{-}"
+               "{Evauates to the two's complement of the single operand. The result is the same width as the operand.}";
+
         ops_.insert("||",       SymbolicExpr::OP_OR);
+        doc += "@named{||}"
+               "{Boolean OR operation. All operands (one or more) are Boolean values, such as relational operators. For "
+               "bit-wise OR use the \"bv-or\" operator.}";
+               
         ops_.insert("<<",       SymbolicExpr::OP_SHL0); // requires escapes since '<' introduces a comment
+        doc += "@named{<<}"
+               "{Shift left introducing zeros.  Shifts the bits of the second operand left by the amount specified in the "
+               "first operand. The first operand must be a numeric constant interpreted as unsigned modulo the width of the "
+               "second operand.  Bits introduced into the right side are cleared.}";
+
         ops_.insert(">>",       SymbolicExpr::OP_SHR0);
+        doc += "@named{>>}"
+               "{Shift right introducing zeros.  Shifts the bits of the second operand right by the amount specified in the "
+               "first operand. The first operand must be a numeric constant interpreted as unsigned modulo the width of the "
+               "second operand.  Bits introduced into the left side are cleared.}";
+
         ops_.insert("/",        SymbolicExpr::OP_UDIV);
+        doc += "@named{/}"
+               "{Unsigned division. Divides the first operand by the second. Both operands are interpreted as unsigned "
+               "values, but they need not have the same width. The result width is the same as the width of the first "
+               "operand.}";
+
         ops_.insert(">=",       SymbolicExpr::OP_UGE);
+        doc += "@named{>=}"
+               "{Unsigned greater-than or equal comparison. Takes two operands that must be the same width and returns a "
+               "Boolean.}";
+
         ops_.insert(">",        SymbolicExpr::OP_UGT);
+        doc += "@named{>}"
+               "{Unsigned greater-than comparison. Takes two operands that must be the same width and returns a Boolean.}";
+
         ops_.insert("<=",       SymbolicExpr::OP_ULE);  // requires escapes since '<' introduces a comment
+        doc += "@named{<=}"
+               "{Unsigned less-than or equal comparison. Takes two operands that must be the same width and returns a "
+               "Boolean.}";
+
         ops_.insert("<",        SymbolicExpr::OP_ULT);  // requires escapes since '<' introduces a comment
+        doc += "@named{<}"
+               "{Unsigned less-than comparison. Takes two operands that must be the same width and returns a Boolean.}";
+
         ops_.insert("%",        SymbolicExpr::OP_UMOD);
+        doc += "@named{%}"
+               "{Unsigned modulo. Computes the first operand modulo the second. Both operands are interpreted as unsigned "
+               "values, but they need not have the same width. The result width is the same as the width of the second "
+               "operand.}";
+
         ops_.insert("*",        SymbolicExpr::OP_UMUL);
+        doc += "@named{*}"
+               "{Unsigned multiply. Computes the product of the operands (one or more). The operands are interpreted as "
+               "unsigned values, but they need not have the same width. The result width is the sum of the operand widthds}";
+
+        title("C-like operators");
+        docString(doc);
     }
         
 public:
     static Ptr instance() {
-        return Ptr(new CFunctions);
+        return Ptr(new COperators);
     }
 
     virtual SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
@@ -433,9 +696,16 @@ public:
     }
 };
 
-class CanonicalVariable: public SymbolicExprParser::SymbolExpansion {
+class CanonicalVariable: public SymbolicExprParser::AtomExpansion {
 public:
-    static Ptr instance() { return Ptr(new CanonicalVariable); }
+    static Ptr instance() {
+        Ptr functor = Ptr(new CanonicalVariable);
+        functor->title("Canonical variables");
+        functor->docString("Variables are written as the letter \"v\" followed by a unique identification number. The "
+                           "variable must have a non-zero explicit width. No check is made to ensure that all occurrences "
+                           "of the variable have the same width, although this is normally required.");
+        return functor;
+    }
     SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &symbol) {
         boost::smatch matches;
         if (!boost::regex_match(symbol.lexeme(), matches, boost::regex("v(\\d+)")))
@@ -452,12 +722,38 @@ public:
 
 void
 SymbolicExprParser::init() {
-    appendFunction(AbbreviatedFunction::instance());
-    appendFunction(SmtFunctions::instance());
-    appendFunction(CFunctions::instance());
+    appendOperatorExpansion(AbbreviatedOperator::instance());
+    appendOperatorExpansion(SmtOperators::instance());
+    appendOperatorExpansion(COperators::instance());
 
-    appendSymbol(AbbreviatedSymbol::instance());
-    appendSymbol(CanonicalVariable::instance());
+    appendAtomExpansion(AbbreviatedAtom::instance());
+    appendAtomExpansion(CanonicalVariable::instance());
+}
+
+std::string
+SymbolicExprParser::docString() const {
+    std::string s = "Symbolic expressions are parsed as S-expressions in LISP-like notation. Each S-expression is either "
+                    "an atom, or a list of S-expressions.  An atom is a bare number or symbol, like \"-45\", \"v120\", or "
+                    "\"+\", and a list is a juxtaposition of S-expressions enclosed in parentheses, like \"(add 1 2)\". "
+                    "Since lists are defined recursively they can be nested, like \"(+ 1 (* 2 3))\".  The first "
+                    "member of a list is an operator and the remaining members are the operands.  An atom or operator "
+                    "can be suffixed with a width in square brackets, like \"(+[32] 1[32] v120[32])\", although specifying "
+                    "a width for an operator is usually redundant since operator widths are implied by their operands. "
+                    "Comments are enclosed in matching, nested pairs of angle brackets, like \"<<this is a comment> within "
+                    "a comment>\". Parentheses, square brackets, and angle-brackets can be escaped with a backslash to "
+                    "remove their special meaning, although using this feature reduces human readability.";
+
+    BOOST_FOREACH (const AtomExpansion::Ptr &functor, atomTable_) {
+        if (!functor->title().empty() && !functor->docString().empty())
+            s += "@named{" + functor->title() + "}{" + functor->docString() + "}";
+    }
+
+    BOOST_FOREACH (const OperatorExpansion::Ptr &functor, operatorTable_) {
+        if (!functor->title().empty() && !functor->docString().empty())
+            s += "@named{" + functor->title() + "}{" + functor->docString() + "}";
+    }
+
+    return s;
 }
 
 SymbolicExpr::Ptr
@@ -495,8 +791,8 @@ SymbolicExprParser::parse(TokenStream &tokens) {
             case Token::SYMBOL: {
                 SymbolicExpr::Ptr expr;
                 try {
-                    BOOST_FOREACH (const SymbolExpansion::Ptr &symbol, symbolTable_) {
-                        if ((expr = (*symbol)(tokens[0])))
+                    BOOST_FOREACH (const AtomExpansion::Ptr &functor, atomTable_) {
+                        if ((expr = (*functor)(tokens[0])))
                             break;
                     }
                 } catch (const SymbolicExpr::Exception &e) {
@@ -525,8 +821,8 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                     throw tokens[0].syntaxError("unexpected right parenthesis", tokens.name());
                 SymbolicExpr::Ptr expr;
                 try {
-                    BOOST_FOREACH (const FunctionExpansion::Ptr &function, functionTable_) {
-                        if ((expr = (*function)(stack.back().op, stack.back().operands)))
+                    BOOST_FOREACH (const OperatorExpansion::Ptr &functor, operatorTable_) {
+                        if ((expr = (*functor)(stack.back().op, stack.back().operands)))
                             break;
                     }
                 } catch (const SymbolicExpr::Exception &e) {
@@ -553,15 +849,15 @@ SymbolicExprParser::parse(TokenStream &tokens) {
 }
 
 void
-SymbolicExprParser::appendSymbol(const SymbolExpansion::Ptr &functor) {
+SymbolicExprParser::appendAtomExpansion(const AtomExpansion::Ptr &functor) {
     ASSERT_not_null(functor);
-    symbolTable_.push_back(functor);
+    atomTable_.push_back(functor);
 }
 
 void
-SymbolicExprParser::appendFunction(const FunctionExpansion::Ptr &functor) {
+SymbolicExprParser::appendOperatorExpansion(const OperatorExpansion::Ptr &functor) {
     ASSERT_not_null(functor);
-    functionTable_.push_back(functor);
+    operatorTable_.push_back(functor);
 }
 
 } // namespace

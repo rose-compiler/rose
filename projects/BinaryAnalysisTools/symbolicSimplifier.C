@@ -12,6 +12,11 @@
 
 using namespace rose::BinaryAnalysis;
 
+static SymbolicExprParser
+symbolicParser() {
+    return SymbolicExprParser();
+}
+
 static void
 parseCommandLine(int argc, char *argv[]) {
     using namespace Sawyer::CommandLine;
@@ -24,6 +29,7 @@ parseCommandLine(int argc, char *argv[]) {
         .doc("Description",
              "Parses symbolic expressions from standard input and prints the resulting expression trees. These trees "
              "undergo basic simplifications in ROSE before they're printed.")
+        .doc("Symbolic expression syntax", symbolicParser().docString())
         .with(CommandlineProcessing::genericSwitches());
 
     if (!parser.parse(argc, argv).apply().unreachedArgs().empty())
@@ -56,7 +62,7 @@ main(int argc, char *argv[]) {
 
         // Parse the expression
         try {
-            SymbolicExpr::Ptr expr = SymbolicExprParser().parse(line);
+            SymbolicExpr::Ptr expr = symbolicParser().parse(line);
             std::cout <<"Parsed value = " <<*expr <<"\n\n";
         } catch (const SymbolicExprParser::SyntaxError &e) {
             std::cerr <<e <<"\n";

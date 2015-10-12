@@ -173,13 +173,38 @@ public:
         void fillTokenList(size_t idx);
     };
 
-    /** Functor to expand a symbol into a symbolic expression. */
-    class SymbolExpansion: public Sawyer::SharedObject {
+    /** Virtual base class for atom and operator expansion. */
+    class Expansion: public Sawyer::SharedObject {
+        std::string title_;
+        std::string docString_;
     public:
-        virtual ~SymbolExpansion() {}
+        virtual ~Expansion() {}
 
         /** Shared pointer. Uses reference counting. */
-        typedef Sawyer::SharedPointer<SymbolExpansion> Ptr;
+        typedef Sawyer::SharedPointer<Expansion> Ptr;
+
+        /** Property: Title to use for documentation.
+         *
+         * @{ */
+        const std::string& title() const { return title_; }
+        void title(const std::string &s) { title_ = s; }
+        /** @} */
+
+        /** Property: Documentation string.
+         *
+         *  The string uses the simple markup language from Sawyer's command-line processing.
+         *
+         * @{ */
+        const std::string& docString() const { return docString_; }
+        void docString(const std::string &s) { docString_ = s; }
+        /** @} */
+    };
+
+    /** Virtual base class for expanding atoms. */
+    class AtomExpansion: public Expansion {
+    public:
+        /** Shared pointer. Uses reference counting. */
+        typedef Sawyer::SharedPointer<AtomExpansion> Ptr;
 
         /** Operator to expand the symbol into an expression tree. The width in bits is either the width specified in square
          *  brackets for the symbol, or zero. Functors are all called for each symbol, and the first one to return non-null is
@@ -187,29 +212,29 @@ public:
         virtual SymbolicExpr::Ptr operator()(const Token &name) = 0;
     };
 
-    /** Functor to expand a function symbol into a symbolic expression. */
-    class FunctionExpansion: public Sawyer::SharedObject {
+    /** Virtual base class for expanding operators. */
+    class OperatorExpansion: public Expansion {
     public:
-        virtual ~FunctionExpansion() {}
+        virtual ~OperatorExpansion() {}
 
         /** Shared pointer. Uses reference counting. */
-        typedef Sawyer::SharedPointer<FunctionExpansion> Ptr;
+        typedef Sawyer::SharedPointer<OperatorExpansion> Ptr;
 
-        /** Operator to expand the function symbol into an expression tree. The width in bits is either the width specified in
+        /** Operator to expand a list into an expression tree. The width in bits is either the width specified in
          *  square brackets for the function symbol, or zero.  Functors are all called for each symbol, and the first one to
          *  return non-null is the one that's used to generate the symbolic expression. */
         virtual SymbolicExpr::Ptr operator()(const Token &name, const SymbolicExpr::Nodes &operands) = 0;
     };
 
-    /** Ordered symbol table. */
-    typedef std::vector<SymbolExpansion::Ptr> SymbolTable;
+    /** Ordered atom table. */
+    typedef std::vector<AtomExpansion::Ptr> AtomTable;
 
-    /** Ordered function table. */
-    typedef std::vector<FunctionExpansion::Ptr> FunctionTable;
+    /** Ordered operator table. */
+    typedef std::vector<OperatorExpansion::Ptr> OperatorTable;
 
 private:
-    SymbolTable symbolTable_;
-    FunctionTable functionTable_;
+    AtomTable atomTable_;
+    OperatorTable operatorTable_;
 
 public:
     /** Default constructor. */
@@ -232,25 +257,31 @@ public:
      *  Parses the token stream and returns its first expression. Throws a @ref SyntaxError if problems are encountered. */
     SymbolicExpr::Ptr parse(TokenStream&);
 
-    /** Append a new symbol to the symbol table. */
-    void appendSymbol(const SymbolExpansion::Ptr&);
+    /** Append a new functor for expanding atoms into symbolic expressions. */
+    void appendAtomExpansion(const AtomExpansion::Ptr&);
 
-    /** Append a new function to the function table. */
-    void appendFunction(const FunctionExpansion::Ptr&);
+    /** Append a new functor for expanding operators into symbolic expressions. */
+    void appendOperatorExpansion(const OperatorExpansion::Ptr&);
 
-    /** Return all symbols.
+    /** Return all atom expansion functors.
      *
      * @{ */
-    const SymbolTable& symbolTable() const { return symbolTable_; }
-    SymbolTable& symbolTable() { return symbolTable_; }
+    const AtomTable& atomTable() const { return atomTable_; }
+    AtomTable& atomTable() { return atomTable_; }
     /** @} */
 
-    /** Return all functions.
+    /** Return all operator expansion functors.
      *
      * @{ */
-    const FunctionTable& functionTable() const { return functionTable_; }
-    FunctionTable& functionTable() { return functionTable_; }
+    const OperatorTable& operatorTable() const { return operatorTable_; }
+    OperatorTable& operatorTable() { return operatorTable_; }
     /** @} */
+
+    /** Documentation string.
+     *
+     *  Returns the documentation string for this parser. The documentation string is a a simple markup language that can be
+     *  used by command-line parsers. */
+    std::string docString() const;
 
 private:
     void init();
