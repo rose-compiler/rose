@@ -9438,7 +9438,13 @@ SgDeclarationStatement::set_definingDeclaration ( SgDeclarationStatement* defini
              }
         }
 
+  // DQ (10/11/2015): Added debugging output.
   // DQ (1/24/2013): Added test to make sure that we always set defining declaration to be the same type or IR node.
+     if (definingDeclaration != NULL && this->variantT() != definingDeclaration->variantT())
+        {
+          printf ("ERROR: this = %p = %s \n",this,this->class_name().c_str());
+          printf ("ERROR: definingDeclaration = %p = %s \n",definingDeclaration,definingDeclaration->class_name().c_str());
+        }
      ROSE_ASSERT(definingDeclaration == NULL || this->variantT() == definingDeclaration->variantT());
    }
 
@@ -9498,7 +9504,13 @@ SgDeclarationStatement::set_firstNondefiningDeclaration ( SgDeclarationStatement
           firstNondefiningDeclaration->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): firstNondefiningDeclaration: debug");
       }
 
+  // DQ (10/11/2015): Added debugging output.
   // DQ (1/24/2013): Added test to make sure that we always set defining declaration to be the same type or IR node.
+     if (firstNondefiningDeclaration != NULL && this->variantT() != firstNondefiningDeclaration->variantT())
+        {
+          printf ("ERROR: this = %p = %s \n",this,this->class_name().c_str());
+          printf ("ERROR: firstNondefiningDeclaration = %p = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+        }
      ROSE_ASSERT(firstNondefiningDeclaration == NULL || this->variantT() == firstNondefiningDeclaration->variantT());
    }
 

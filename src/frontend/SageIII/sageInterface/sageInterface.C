@@ -204,12 +204,27 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                  // don't understand the problem.  so this needs a better fix.
                  // ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL);
                  // ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL);
+#if 0
                     bool isInTemplateDeclaration = ( (isSgTemplateClassDefinition(decl->get_parent()) != NULL) ||
                                                      (isSgTemplateFunctionDeclaration(decl->get_parent()) != NULL) || 
                                                      (isSgTemplateMemberFunctionDeclaration(decl->get_parent()) != NULL) || 
                                                      (decl->get_parent() != NULL && isSgTemplateFunctionDeclaration(decl->get_parent()->get_parent()) != NULL) || 
                                                      (decl->get_parent() != NULL && isSgTemplateMemberFunctionDeclaration(decl->get_parent()->get_parent()) != NULL) );
+#else
+                 // DQ (10/11/2015): We need a better test for if this is in a template class, function, member function, etc.
+                 // SgFunctionDeclaration * getEnclosingFunctionDeclaration (SgNode * astNode, const bool includingSelf=false);
+                    SgFunctionDeclaration* enclosingFunction = getEnclosingFunctionDeclaration(decl);
+                    bool isInTemplateFunctionDeclaration = enclosingFunction != NULL && (isSgTemplateMemberFunctionDeclaration(enclosingFunction) || isSgTemplateFunctionDeclaration(enclosingFunction));
+                 // SgClassDeclaration* enclosingClass = getEnclosingClassDeclaration(decl);
+                 // isInTemplateClassDeclaration = enclosingClass != NULL && isSgTemplateClassDeclaration(decl);
 
+                 // Use short-circuit evaluation to improve performance.
+                 // SgClassDefinition* enclosingClassDefinition = getEnclosingClassDefinition(decl);
+                    SgClassDefinition* enclosingClassDefinition = isInTemplateFunctionDeclaration == true ? NULL : getEnclosingClassDefinition(decl);
+                    bool isInTemplateClassDefinition = enclosingClassDefinition != NULL && isSgTemplateClassDefinition(enclosingClassDefinition);
+
+                    bool isInTemplateDeclaration = isInTemplateFunctionDeclaration || isInTemplateClassDefinition;
+#endif
                     ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL) || (isInTemplateDeclaration == true);
 
                  // DQ (2/5/2015): We need to ignore the case of un-named classes (or maybe those classes 
