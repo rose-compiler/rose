@@ -132,7 +132,7 @@ rose_laplacian_lite_v4_mpi.cpp: mpiCodeGenerator
 	@echo "********************************************************************************************"
 	@echo "******* ROSE/projects/ShiftCalculus: code generation for MPI ********"
 	@echo "********************************************************************************************"
-	./mpiCodeGenerator -c -std=c++11 -I$(srcdir) -I$(srcdir)/runtime -rose:output $@  $(srcdir)/refCode/rose_laplacian_lite_v4.cpp 
+	./mpiCodeGenerator -c -std=c++11 -I$(srcdir) -I$(srcdir)/runtime -I$(srcdir)/runtime/dummyMPI -rose:output $@  $(srcdir)/refCode/rose_laplacian_lite_v4.cpp 
 
 #rose_laplacian_lite_v3_mpi.cpp: shiftCalculusCompiler
 #	@echo "********************************************************************************************"

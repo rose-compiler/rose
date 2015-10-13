@@ -71,10 +71,10 @@ int main(int argc,char *argv[])
 // MPI transformation: split declarations and initialization , guard initialization inside if (rank0)
 // How to distinguish between a master within a MPI process vs. a master MPI process?
 // A barrier should be added for each master process region!!
-#pragma omp device(mpi:master) begin
+#pragma omp target device(mpi:master) begin
   Asrc = new RectMDArray< double  , 1 , 1 , 1 > (bxsrc);
   Adest = new RectMDArray< double  , 1 , 1 , 1 > (bxdest);
-#pragma omp device(mpi:master) end 
+#pragma omp target device(mpi:master) end 
 
 // all the coefficients I need for this operation
   const double ident = 1.0;
@@ -108,7 +108,7 @@ int main(int argc,char *argv[])
 
 // MPI transformation: split declarations and initialization , guard initialization inside if (rank0)
 // all variables can be visible to later code. otherwise scope is limited to if body!!
-#pragma omp device(mpi:master) begin
+#pragma omp target device(mpi:master) begin
   int lb2src = bxsrc .  getLowCorner ()[2];
   int lb1src = bxsrc .  getLowCorner ()[1];
   int lb0src = bxsrc .  getLowCorner ()[0];
@@ -137,7 +137,7 @@ int main(int argc,char *argv[])
   double *sourceDataPointer = Asrc -> getPointer();
   double *destinationDataPointer = Adest -> getPointer();
 
-#pragma omp device(mpi:master) end
+#pragma omp target device(mpi:master) end
 
 // TODO: more fine design for nested parallelism
 
