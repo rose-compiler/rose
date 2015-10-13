@@ -311,7 +311,7 @@ RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValueP
                 }
                 {
                     size_t nbits = overlap.size();
-                    size_t extractBegin = overlap.least() - storedLocation.least();
+                    size_t extractBegin = overlap.least() - accessedLocation.least();
                     size_t extractEnd = extractBegin + nbits;
                     SValuePtr midValue = ops->extract(value, extractBegin, extractEnd);
                     valueToWrite = valueToWrite ? ops->concat(valueToWrite, midValue) : midValue;
