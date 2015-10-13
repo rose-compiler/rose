@@ -1,7 +1,7 @@
 #ifndef __AST_FROM_STRING_H__
 #define __AST_FROM_STRING_H__
 /**
- * Liao 4/13/2011 
+ * Parsing building blocks for creating simple recursive descent parsers generating AST from strings. Liao 4/13/2011 
  */
 
 #include <iostream>
