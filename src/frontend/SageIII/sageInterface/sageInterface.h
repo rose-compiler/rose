@@ -1940,6 +1940,16 @@ ROSE_DLL_API void removeConsecutiveLabels(SgNode* top);
  */
 ROSE_DLL_API bool mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt = true);
 
+//! Split a variable declaration with an rhs assignment into two statements: a declaration and an assignment. 
+/*! Return the generated assignment statement, if any
+ *  e.g.  int i =10;  becomes int i; i=10;  
+ *  This can be seen as a normalization of declarations
+ */
+ROSE_DLL_API SgExprStatement* splitVariableDeclaration (SgVariableDeclaration* decl);
+
+//! Split declarations within a scope into declarations and assignment statements, by default only top level declarations are considered. Return the number of declarations split.
+ROSE_DLL_API int splitVariableDeclaration (SgScopeStatement* scope, bool topLevelOnly = true);
+
 //! Replace an expression with a temporary variable and an assignment statement
 /*!
  Add a new temporary variable to contain the value of 'from'

@@ -12,11 +12,21 @@
 #include <string>
 namespace MPI_Code_Generator 
 {
-  int generateMPI (SgSourceFile* sfile); 
-  // A prototype parser for directives guiding MPI code generation
-  void parsePragmas(SgSourceFile* sfile);
+  class MPI_PragmaAttribute; 
+  //int generateMPI (SgSourceFile* sfile); 
+
+  //! A prototype parser for directives guiding MPI code generation
+  void parsePragmas(SgSourceFile* sfile, std::vector <MPI_PragmaAttribute*>& MPI_Pragma_Attribute_List);
    
-  
+  //! Translate generated Pragma Attributes
+  void translatePragmas (std::vector <MPI_PragmaAttribute*>& MPI_Pragma_Attribute_List);  
+
+  //! Setup MPI initialization
+  void setupMPIInit(SgSourceFile* sfile);
+
+  //! Setup MPI finalize 
+  void setupMPIFinalize(SgSourceFile* sfile);
+
   // pragma enum values. 
   // For quick prototyping, we use AstAttributes instead of dedicated AST nodes for storing parsed results.
   enum mpi_pragma_enum {
@@ -54,20 +64,17 @@ namespace MPI_Code_Generator
   class MPI_PragmaAttribute: public AstAttribute
   {
     public:
-      SgNode* pragma_node; // the associated AST node for pragma
+      SgPragmaDeclaration* pragma_node; // the associated AST node for pragma
       enum mpi_pragma_enum pragma_type; 
       enum mpi_pragma_enum default_semantics; 
 
-      MPI_PragmaAttribute (SgNode* n , mpi_pragma_enum p_type): pragma_node(n), pragma_type(p_type) 
+      MPI_PragmaAttribute (SgPragmaDeclaration* n , mpi_pragma_enum p_type): pragma_node(n), pragma_type(p_type) 
     { default_semantics = e_semantics_explicit;  }
 
       // convert the attribute back to string format 
       std::string toString(); 
 
   }; // end class
-
-  // save all recognized MPI pragma attributes
-  extern std::vector <MPI_PragmaAttribute*> MPI_Pragma_Attribute_List; 
 
   // parse a single pragma declaration, internal use only
   extern AstAttribute* parse_MPI_Pragma (SgPragmaDeclaration* pragmaDecl);

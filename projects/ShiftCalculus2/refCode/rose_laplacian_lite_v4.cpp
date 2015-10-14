@@ -20,18 +20,6 @@
 // #define DIM       2
 #include "laplacian_lite_v3.h"
 
-// Decision one: default semantics for sequential code:  run by all processes vs. run only by master process
-// #pragma omp mpi_device_default(mpi:all|mpi:master|explicit) 
-//
-// Three options: default to be run by all, or master, or must explicitly specified!!
-// here we use explicit to ensure correctness and avoid misunderstanding.
-//   For user productivity, they may choose mpi:all
-//
-//  For explicit: use 
-//      #pragma omp target device (mpi:master) begin .. end
-//      #pragma omp target device (mpi:all)    begin .. end
-#pragma omp mpi_device_default(explicit) 
-
 void initialize(class RectMDArray< double  , 1 , 1 , 1 > &patch)
 {
   class Box D0 = patch . getBox();
@@ -43,6 +31,20 @@ void initialize(class RectMDArray< double  , 1 , 1 , 1 > &patch)
 
 int main(int argc,char *argv[])
 {
+
+// Decision one: default semantics for sequential code:  run by all processes vs. run only by master process
+// #pragma omp mpi_device_default(mpi:all|mpi:master|explicit) 
+//
+// Three options: default to be run by all, or master, or must explicitly specified!!
+// here we use explicit to ensure correctness and avoid misunderstanding.
+//   For user productivity, they may choose mpi:all
+//
+//  For explicit: use 
+//      #pragma omp target device (mpi:master) begin .. end
+//      #pragma omp target device (mpi:all)    begin .. end
+// This only affect main function.      
+#pragma omp mpi_device_default(explicit) 
+
 
 //Transformation: does not change anything at all, just remove the pragmas
 #pragma omp target device(mpi:all) begin   // default offload to all processes of MPI, device(mpi:all)
@@ -161,4 +163,6 @@ map(from:destinationDataPointer[lb0:arraySize_X][lb1:arraySize_Y][lb2:arraySize_
   }
 // cout <<" The destination Box" << endl;
 // Adest.print();
+
+  return 0;
 }
