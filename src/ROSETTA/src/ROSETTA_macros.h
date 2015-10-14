@@ -53,6 +53,21 @@ enum CopyConfigEnum {
   CLONE_TREE    
 };
 
+#if 0
+// not used yet
+enum TraversalEnum {
+  TRAVERSAL,
+  NO_TRAVERSAL,
+  COND_TRAVERSAL
+};
+
+// not used yet
+enum DeleteEnum {
+  DELETE,
+  NO_DELETE
+};
+#endif
+
 class TraversalFlag { // Wrapper for extra argument type checking
   bool value;
   public:
