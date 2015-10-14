@@ -23,6 +23,7 @@ int __builtin_ia32_psrlqi(long long,int);
 #endif
 
 #ifdef __MMX__
+//#error "Note: __MMX__ is defined"
   #include<emmintrin.h>
 #endif
 

@@ -9,7 +9,7 @@
 
 #if defined(__INTEL_COMPILER) & !defined(USE_ROSE_BACKEND)
 // DQ (8/28/2015): from Intel v14 icpc: error: identifier "__uint128_t" is undefined
-typedef unsigned long long int __uint128_t;
+// typedef unsigned long long int __uint128_t;
 #endif
 
 // Example code from Xen

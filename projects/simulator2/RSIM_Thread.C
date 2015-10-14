@@ -1295,9 +1295,9 @@ RSIM_Thread::emulate_syscall()
             char name[32];
             sprintf(name, "syscall_%u", callno);
             mfprintf(tracing(TRACE_MISC))("syscall_%u(", callno);
-            for (int i=0; i<6; i++)
+            for (int i=0; get_process()->get_simulator()->syscallArgumentRegisters().size(); ++i)
                 mfprintf(tracing(TRACE_MISC))("%s0x%08"PRIx64, i?", ":"", syscall_arg(i));
-            tracing(TRACE_MISC) <<") is not implemented yet\n";
+            tracing(TRACE_MISC) <<") is not implemented\n";
 
             tracing(TRACE_MISC) <<"dumping core...\n";
             get_process()->dump_core(SIGSYS);

@@ -360,7 +360,9 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_112.C \
   inputmoveDeclarationToInnermostScope_test2015_113.C \
   inputmoveDeclarationToInnermostScope_test2015_115.C \
-  inputmoveDeclarationToInnermostScope_test2015_116.C 
+  inputmoveDeclarationToInnermostScope_test2015_116.C \
+  inputmoveDeclarationToInnermostScope_test2015_122.C \
+  inputmoveDeclarationToInnermostScope_test2015_123.C 
 
 # DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.
 FAILING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \

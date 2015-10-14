@@ -6,11 +6,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # AUTOMAKE_OPTIONS = subdir-objects
 
-if ROSE_USING_GCC_VERSION_LATER_4_6
+# DQ (10/7/2015): We don't want this to depend on this variable which is about what 
+# backend compiler is used more than what compiler is used to compile ROSE itself.
+#if ROSE_USING_GCC_VERSION_LATER_4_6
+#SUBDIRS = staticSingleAssignment ssaUnfilteredCfg
+#else
+#SUBDIRS = staticSingleAssignment ssaUnfilteredCfg systemDependenceGraph
+#endif
 SUBDIRS = staticSingleAssignment ssaUnfilteredCfg
-else
-SUBDIRS = staticSingleAssignment ssaUnfilteredCfg systemDependenceGraph
-endif
 
 ###############################################################################
 # Subdirectory specifics
@@ -115,16 +118,16 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaVariableRenaming_la_sources) \
 	$(mpaEditDistance_la_sources)
 
-if ROSE_USING_GCC_VERSION_LATER_4_6
+# DQ (10/7/2015): We don't want this to depend on this variable which is about what 
+# backend compiler is used more than what compiler is used to compile ROSE itself.
+# if ROSE_USING_GCC_VERSION_LATER_4_6
+# libprogramAnalysis_la_LIBADD = staticSingleAssignment/libSSA.la ssaUnfilteredCfg/libSSA_UnfilteredCfg.la
+# else
+# libprogramAnalysis_la_LIBADD = staticSingleAssignment/libSSA.la ssaUnfilteredCfg/libSSA_UnfilteredCfg.la systemDependenceGraph/libSDG.la
+# endif
 libprogramAnalysis_la_LIBADD = \
 	staticSingleAssignment/libSSA.la \
 	ssaUnfilteredCfg/libSSA_UnfilteredCfg.la
-else
-libprogramAnalysis_la_LIBADD = \
-	staticSingleAssignment/libSSA.la \
-	ssaUnfilteredCfg/libSSA_UnfilteredCfg.la \
-	systemDependenceGraph/libSDG.la
-endif
 
 pkginclude_HEADERS=\
 	$(mpaCallGraphAnalysis_includeHeaders) \

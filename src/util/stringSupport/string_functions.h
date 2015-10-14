@@ -8,10 +8,11 @@
 #include <string>
 #include <sstream>
 #include <stdint.h>
+#include <limits.h>
+
 #if ROSE_MICROSOFT_OS
 // This is the boost solution for lack of support for stdint.h (e.g. types such as "uint64_t")
 #include <msvc_stdint.h>
-#else
 #endif
 
 // DQ (2/22/2014): Used below to control use of __int128 type.
@@ -139,8 +140,13 @@ namespace StringUtility
 // #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6))
    #if (defined(BACKEND_CXX_IS_GNU_COMPILER) && (((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4)))
         // DQ (2/22/2014): Required code for GNU versions greater than 4.6.
+   // #if (UINTMAX_MAX == ULONG_MAX)
+      #if (__WORDSIZE == 64)
+
+        // PHLin (10/12/2015): check if 64-bit support is enabled
            ROSE_UTIL_API std::string numberToString ( __int128 x );
            ROSE_UTIL_API std::string numberToString ( unsigned __int128 x );
+      #endif
    #endif
 #endif
 

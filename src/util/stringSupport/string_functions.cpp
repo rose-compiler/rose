@@ -478,6 +478,9 @@ StringUtility::numberToString ( double x )
 // #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6))
    #if (defined(BACKEND_CXX_IS_GNU_COMPILER) && (((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4)))
 // DQ (2/22/2014): Required code for GNU versions greater than 4.6.
+   // #if (UINTMAX_MAX == ULONG_MAX)
+      #if (__WORDSIZE == 64)
+        // PHLin (10/12/2015): check if 64-bit support is enabled
 string
 StringUtility::numberToString ( __int128 x )
    {
@@ -493,6 +496,7 @@ StringUtility::numberToString ( unsigned __int128 x )
      unsigned long long temp_x = (unsigned long long) x;
      return boost::lexical_cast<std::string>(temp_x);
    }
+      #endif
    #endif
 #endif
 
