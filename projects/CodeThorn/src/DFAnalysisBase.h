@@ -17,6 +17,7 @@
 #include "PASolver1.h"
 #include "DFAstAttribute.h"
 #include "PointerAnalysisInterface.h"
+#include "ProgramAbstractionLayer.h"
 
 namespace SPRAY {
 
@@ -77,8 +78,7 @@ class DFAnalysisBase {
 
   enum AnalysisType {FORWARD_ANALYSIS, BACKWARD_ANALYSIS};
   virtual void solve();
-  VariableIdMapping _variableIdMapping;
-  Labeler* _labeler;
+  ProgramAbstractionLayer* _programAbstractionLayer;
   CFAnalysis* _cfanalyzer;
   set<Label> _extremalLabels;
   Flow _flow;

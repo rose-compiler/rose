@@ -338,7 +338,7 @@ WHexDump::init() {
     tableView_->setHeaderHeight(28);
     tableView_->setSortingEnabled(false);
     tableView_->setAlternatingRowColors(false);         // true interferes with our blacking out unmapped addresses
-    tableView_->setColumnResizeEnabled(false);
+    tableView_->setColumnResizeEnabled(true);
     tableView_->setSelectionMode(Wt::SingleSelection);
     tableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
     tableView_->setColumnWidth(addressColumn, Wt::WLength(6, Wt::WLength::FontEm));
