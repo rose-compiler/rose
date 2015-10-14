@@ -3416,7 +3416,7 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (saved_unparsedPartiallyUsingTokenStream == true && test_stmt->isTransformation() == true)
         {
        // ROSE_ASSERT(test_stmt->isTransformation() == true);
-          curprint (" /* output semi-colon at end of test */ ");
+       // curprint (" /* output semi-colon at end of test */ ");
           curprint (";");
         }
 
