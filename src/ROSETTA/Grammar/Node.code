@@ -2662,6 +2662,14 @@ SgNode::set_isModified ( bool isModified)
                printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
              }
 #if 0
+       // DQ (10/13/2015): Chasing a issue in the move tool.
+          if (isSgForStatement(this) != NULL)
+             {
+               printf ("Exiting as a test in SgNode::set_isModified (found SgForStatemen) \n");
+               ROSE_ASSERT(false);
+             }
+#endif
+#if 0
           printf ("Exiting as a test in SgNode::set_isModified \n");
           ROSE_ASSERT(false);
 #endif
