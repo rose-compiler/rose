@@ -13333,7 +13333,7 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
                    {
                      if (parentOfBlock->get_isModified() == true)
                         {
-#if 1
+#if 0
                           printf ("In SageInterface::cleanupNontransformedBasicBlockNode(): parentOfBlock reset to FALSE after IR node member function call (e.g. set_body()): parentOfBlock = %p = %s \n",parentOfBlock,parentOfBlock->class_name().c_str());
 #endif
                           parentOfBlock->set_isModified(false);
@@ -13733,7 +13733,7 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
         {
           if (n->get_isModified() == true)
              {
-#if 1
+#if 0
                printf ("In SageInterface::changeAllBodiesToBlocks(): parentOfBlock reset to FALSE after IR node member function call (e.g. set_body()): parentOfBlock = %p = %s \n",n,n->class_name().c_str());
 #endif
                n->set_isModified(false);
