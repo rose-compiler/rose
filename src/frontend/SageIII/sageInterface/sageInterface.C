@@ -12812,7 +12812,30 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
                     info->setAsTransformation();
                  // ROSE_ASSERT(stmt_dst->getAttachedPreprocessingInfo() != NULL);
                  // stmt_dst->getAttachedPreprocessingInfo()->setAsTransformation();
+
+                 // DQ (10/13/2015): This is a problem for the token-based unparsing since we don't want to have this 
+                 // set_containsTransformationToSurroundingWhitespace() function cause the isModified flag to be set.
+                 // So we have to detect it being set and reset it as needed.  An alternative would be to have a 
+                 // non-ROSETTA generate function that didn't have the isModified flag set for the seter access function.
+                 // Note that the inputmoveDeclarationToInnermostScope_test2015_123.C file demonstrates this problem.
+                    bool isMarkedAsModified = stmt_dst->get_isModified();
                     stmt_dst->set_containsTransformationToSurroundingWhitespace(true);
+                    if (isMarkedAsModified == false)
+                       {
+                         if (stmt_dst->get_isModified() == true)
+                            {
+#if 0
+                              printf ("In SageInterface::movePreprocessingInfo(): Reset isModified flag to FALSE: stmt_dst = %p = %s \n",stmt_dst,stmt_dst->class_name().c_str());
+#endif
+                              stmt_dst->set_isModified(false);
+                            }
+                       }
+                      else
+                       {
+#if 0
+                         printf ("In SageInterface::movePreprocessingInfo(): This was already marked as isModified == TRUE: stmt_dst = %p = %s \n",stmt_dst,stmt_dst->class_name().c_str());
+#endif
+                       }
 
                     (*infoToRemoveList).push_back(*i);
                   }
