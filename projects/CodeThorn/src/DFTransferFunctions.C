@@ -10,12 +10,12 @@ using namespace std;
 
 using namespace SPRAY;
 
-DFTransferFunctions::DFTransferFunctions():_labeler(0),_variableIdMapping(0){}
+DFTransferFunctions::DFTransferFunctions():_programAbstractionLayer(0){}
 
 void DFTransferFunctions::transfer(Edge edge, Lattice& element) {
     Label lab0=edge.source;
     // switch statement has its own transfer functions which are selected in transfer function
-    if(_labeler->isConditionLabel(lab0)&&!_labeler->isSwitchExprLabel(lab0)) {
+    if(getLabeler()->isConditionLabel(lab0)&&!getLabeler()->isSwitchExprLabel(lab0)) {
       transferCondition(edge,element);
     } else {
       transfer(lab0,element);
@@ -28,9 +28,9 @@ void DFTransferFunctions::transferCondition(Edge edge, Lattice& element) {
 }
 
 void DFTransferFunctions::transfer(Label lab, Lattice& element) {
-  ROSE_ASSERT(_labeler);
+  ROSE_ASSERT(getLabeler());
   //cout<<"transfer @label:"<<lab<<endl;
-  SgNode* node=_labeler->getNode(lab);
+  SgNode* node=getLabeler()->getNode(lab);
   //cout<<"Analyzing:"<<node->class_name()<<endl;
   //cout<<"DEBUG: transfer: @"<<lab<<": "<<node->class_name()<<":"<<node->unparseToString()<<endl;
 
@@ -39,7 +39,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     // the extremal value must be different to the bottom element. 
     return;
   }
-  if(_labeler->isFunctionCallLabel(lab)) {
+  if(getLabeler()->isFunctionCallLabel(lab)) {
     // 1) f(x), 2) y=f(x) (but not y+=f(x))
     if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(node)) {
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
@@ -51,7 +51,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     }
   }
 
-  if(_labeler->isFunctionCallReturnLabel(lab)) {
+  if(getLabeler()->isFunctionCallReturnLabel(lab)) {
     if(isSgExprStatement(node)) {
       node=SgNodeHelper::getExprStmtChild(node);
     }
@@ -94,7 +94,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     }
   }
 
-  if(_labeler->isFunctionEntryLabel(lab)) {
+  if(getLabeler()->isFunctionEntryLabel(lab)) {
     if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(lab))) {
       // 1) obtain formal parameters
       assert(funDef);
@@ -106,8 +106,8 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     }
   }
   
-  if(_labeler->isFunctionExitLabel(lab)) {
-    if(SgFunctionDefinition* funDef=isSgFunctionDefinition(_labeler->getNode(lab))) {
+  if(getLabeler()->isFunctionExitLabel(lab)) {
+    if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(lab))) {
       // 1) determine all local variables (including formal parameters) of function
       // 2) delete all local variables from state
       // 2a) remove variable from state
@@ -115,9 +115,9 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       // ad 1)
       set<SgVariableDeclaration*> varDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
       // ad 2)
-      VariableIdMapping::VariableIdSet localVars=_variableIdMapping->determineVariableIdsOfVariableDeclarations(varDecls);
+      VariableIdMapping::VariableIdSet localVars=getVariableIdMapping()->determineVariableIdsOfVariableDeclarations(varDecls);
       SgInitializedNamePtrList& formalParamInitNames=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-      VariableIdMapping::VariableIdSet formalParams=_variableIdMapping->determineVariableIdsOfSgInitializedNames(formalParamInitNames);
+      VariableIdMapping::VariableIdSet formalParams=getVariableIdMapping()->determineVariableIdsOfSgInitializedNames(formalParamInitNames);
       VariableIdMapping::VariableIdSet vars=localVars+formalParams;
       transferFunctionExit(lab,funDef,vars,element); // TEST ONLY
       return;
@@ -125,7 +125,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       ROSE_ASSERT(0);
     }
   }
-  if(_labeler->isEmptyStmtLabel(lab)||_labeler->isBlockBeginLabel(lab)) {
+  if(getLabeler()->isEmptyStmtLabel(lab)||getLabeler()->isBlockBeginLabel(lab)) {
     SgStatement* stmt=isSgStatement(node);
     ROSE_ASSERT(stmt);
     transferEmptyStmt(lab,stmt,element);
@@ -252,14 +252,14 @@ void DFTransferFunctions::addParameterPassingVariables() {
   /* this variable is necessary to know the id-range where parameter
      passing variable-ids are starting in the id-range.
   */
-  parameter0VariableId=_variableIdMapping->createUniqueTemporaryVariableId(nameprefix+"0");
+  parameter0VariableId=getVariableIdMapping()->createUniqueTemporaryVariableId(nameprefix+"0");
   for(int i=1;i<20;i++) {
     std::stringstream ss;
     ss<<nameprefix<<i;
     string varName=ss.str();
-    _variableIdMapping->createUniqueTemporaryVariableId(varName);
+    getVariableIdMapping()->createUniqueTemporaryVariableId(varName);
   }
-  resultVariableId=_variableIdMapping->createUniqueTemporaryVariableId("$r");
+  resultVariableId=getVariableIdMapping()->createUniqueTemporaryVariableId("$r");
 }
 
 VariableId DFTransferFunctions::getParameterVariableId(int paramNr) {

@@ -35,6 +35,7 @@ libRSIM_la_SOURCES =				\
 	RSIM_Linux.C				\
 	RSIM_Linux32.C				\
 	RSIM_Linux64.C				\
+	RSIM_Pentium4.C				\
 	RSIM_Printer.C				\
 	RSIM_Process.C				\
 	RSIM_Semantics.C			\
@@ -52,6 +53,7 @@ include_HEADERS +=				\
 	RSIM_Linux.h				\
 	RSIM_Linux32.h				\
 	RSIM_Linux64.h				\
+	RSIM_Pentium4.h				\
 	RSIM_Printer.h				\
 	RSIM_Process.h				\
 	RSIM_Semantics.h			\
