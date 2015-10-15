@@ -162,7 +162,7 @@ add_calls_to_syscalls_to_db(SqlDatabase::TransactionPtr tx, DirectedGraph* G, st
     std::map<std::string, std::set<int> > symbolToId;
     SqlDatabase::StatementPtr cmd3 = tx->statement("select id, name  from semantic_functions");
     for (SqlDatabase::Statement::iterator r=cmd3->begin(); r!=cmd3->end(); ++r) {
-        int func_id           = r.get<int64_t>(0);
+        int func_id           = r.get<int>(0);
         std::string func_name = r.get<std::string>(1);
 
         if (func_name.size() == 0)

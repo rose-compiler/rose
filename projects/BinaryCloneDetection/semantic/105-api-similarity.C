@@ -153,8 +153,6 @@ load_function_api_calls_for(int func_id, bool reachability_graph)
     return call_vec;
 }
 
-using namespace boost;
-
 /* Remove the functions from the compilation unit that is only available in one of the traces.
  *   - criteria complement of the functions from the files of the caller functions in the call trace is removed. */
 std::pair<CallVec*, CallVec*>

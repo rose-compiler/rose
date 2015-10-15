@@ -128,10 +128,13 @@ noinst_PROGRAMS += 99-grants
 #-----------------------------------------------------------------------------------------------------------------------------
 # Note to Andreas: Please fix the README file since you're defining a new range of numbers here.
 # Level 100-109: analysing api similarity
-noinst_PROGRAMS += 101-api-similarity-worklist
-101_api_similarity_worklist_SOURCES = 101-api-similarity-worklist.C
-101_api_similarity_worklist_CPPFLAGS = $(ROSE_INCLUDES)
-101_api_similarity_worklist_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+# This tool no longer compiles and the author is no longer available.
+EXTRA_DIST += 101-api-similarity-worklist.C
+#noinst_PROGRAMS += 101-api-similarity-worklist
+#101_api_similarity_worklist_SOURCES = 101-api-similarity-worklist.C
+#101_api_similarity_worklist_CPPFLAGS = $(ROSE_INCLUDES)
+#101_api_similarity_worklist_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS += 105-api-similarity
 105_api_similarity_SOURCES = 105-api-similarity.C
