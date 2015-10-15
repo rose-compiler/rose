@@ -9,7 +9,7 @@
 \brief This class is intended to be a wrapper around SgStatements, allowing
 them to exist in scopes that only allow SgDeclarationStatements.
 
-    Certain languages, such as Python, allow arbitrary statements and expressions
+Certain languages, such as Python, allow arbitrary statements and expressions
 in global scope and class definition scopes. However, SageIII requires that all
 statements in global and class scopes be SgDeclarationStatements (as C/C++ requires).
 Given these limitations, SgStmtDeclarationStatement represents a compromise between
@@ -35,7 +35,7 @@ Currently, this node is only intended for use with Python.
 \fn SgStmtDeclarationStatement::SgStmtDeclarationStatement ( SgStatement * stmt )
 \brief This is the constructor.
 
-   This constructor builds the SgStmtDeclarationStatement base class.
+This constructor builds the SgStmtDeclarationStatement base class.
 
 \param stmt The statement wrapped by this SgStmtDeclarationStatement.
 */
@@ -49,7 +49,7 @@ Currently, this node is only intended for use with Python.
 \fn SgStmtDeclarationStatement::isSgStmtDeclarationStatement (SgNode *s)
 \brief Cast function (from derived class to SgStmtDeclarationStatement pointer).
 
-   This functions returns a SgStmtDeclarationStatement pointer for any input of a
+This functions returns a SgStmtDeclarationStatement pointer for any input of a
 pointer to an object derived from a SgStmtDeclarationStatement.
 
 \return Returns valid pointer to SgStmtDeclarationStatement if input is derived from a SgStmtDeclarationStatement.
@@ -59,7 +59,7 @@ pointer to an object derived from a SgStmtDeclarationStatement.
 \fn SgStmtDeclarationStatement::isSgStmtDeclarationStatement (const SgNode *s)
 \brief Cast function (from derived class to SgStmtDeclarationStatement pointer).
 
-   This functions returns a SgStmtDeclarationStatement pointer for any input of a
+This functions returns a SgStmtDeclarationStatement pointer for any input of a
 pointer to an object derived from a SgStmtDeclarationStatement.
 
 \return Returns valid pointer to SgStmtDeclarationStatement if input is derived from a SgStmtDeclarationStatement.

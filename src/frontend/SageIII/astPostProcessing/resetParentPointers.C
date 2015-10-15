@@ -1403,8 +1403,10 @@ ResetParentPointers::evaluateInheritedAttribute (
                               declaration->get_file_info()->display("location of problem code: declaration: debug");
                               directive->get_file_info()->display("location of problem code: directive: debug");
 #else
+#if 0
                            // DQ (5/19/2014): Make this a warning for now; it does not appear to be a problem.
                               printf ("Warning: In reset parent pointers for island in case V_SgTemplateInstantiationDirectiveStatement: declaration->get_parent() != directive \n");
+#endif
 #endif
                             }
 

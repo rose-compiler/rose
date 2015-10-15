@@ -91,11 +91,8 @@ namespace SageInterface {
 // We need this so that USE_CMAKE will be seen (set via configure).
 #include "rose_config.h"
 
-#ifndef USE_CMAKE
-// DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
 // DQ (3/4/2014): We need this feature to support the function: isStructurallyEquivalentAST().
 #include "RoseAst.h"
-#endif
 
 //! C++ SageBuilder namespace specific state for storage of the source code position state (used to control how the source code positon is defined for IR nodes built within the SageBuilder interface).
 extern SageBuilder::SourcePositionClassification SageBuilder::SourcePositionClassificationMode;
@@ -204,12 +201,27 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                  // don't understand the problem.  so this needs a better fix.
                  // ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL);
                  // ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL);
+#if 0
                     bool isInTemplateDeclaration = ( (isSgTemplateClassDefinition(decl->get_parent()) != NULL) ||
                                                      (isSgTemplateFunctionDeclaration(decl->get_parent()) != NULL) || 
                                                      (isSgTemplateMemberFunctionDeclaration(decl->get_parent()) != NULL) || 
                                                      (decl->get_parent() != NULL && isSgTemplateFunctionDeclaration(decl->get_parent()->get_parent()) != NULL) || 
                                                      (decl->get_parent() != NULL && isSgTemplateMemberFunctionDeclaration(decl->get_parent()->get_parent()) != NULL) );
+#else
+                 // DQ (10/11/2015): We need a better test for if this is in a template class, function, member function, etc.
+                 // SgFunctionDeclaration * getEnclosingFunctionDeclaration (SgNode * astNode, const bool includingSelf=false);
+                    SgFunctionDeclaration* enclosingFunction = getEnclosingFunctionDeclaration(decl);
+                    bool isInTemplateFunctionDeclaration = enclosingFunction != NULL && (isSgTemplateMemberFunctionDeclaration(enclosingFunction) || isSgTemplateFunctionDeclaration(enclosingFunction));
+                 // SgClassDeclaration* enclosingClass = getEnclosingClassDeclaration(decl);
+                 // isInTemplateClassDeclaration = enclosingClass != NULL && isSgTemplateClassDeclaration(decl);
 
+                 // Use short-circuit evaluation to improve performance.
+                 // SgClassDefinition* enclosingClassDefinition = getEnclosingClassDefinition(decl);
+                    SgClassDefinition* enclosingClassDefinition = isInTemplateFunctionDeclaration == true ? NULL : getEnclosingClassDefinition(decl);
+                    bool isInTemplateClassDefinition = enclosingClassDefinition != NULL && isSgTemplateClassDefinition(enclosingClassDefinition);
+
+                    bool isInTemplateDeclaration = isInTemplateFunctionDeclaration || isInTemplateClassDefinition;
+#endif
                     ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL) || (isInTemplateDeclaration == true);
 
                  // DQ (2/5/2015): We need to ignore the case of un-named classes (or maybe those classes 
@@ -6545,6 +6557,16 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
         ROSE_ASSERT(!"NIY: template template argument comparaison."); /// \todo
       }
     case SgTemplateArgument::argument_undefined: ROSE_ASSERT(!"Try to compare template arguments of unknown type...");
+
+ // DQ (7/19/2015): Added missing case:
+    case SgTemplateArgument::start_of_pack_expansion_argument: ROSE_ASSERT(!"Try to compare template arguments of unknown type start_of_pack_expansion_argument");
+
+ // DQ (7/19/2015): Added missing default case: we always want to ahve a default case to catch errors and missing cases.
+    default:
+       {
+         printf ("Error: default case not handled! \n");
+         ROSE_ASSERT(false);
+       }
   }
   ROSE_ASSERT(false); // unreachable code
 }
@@ -7659,6 +7681,245 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt,
     moveUpPreprocessingInfo(newStmt, oldStmt);
 }
 
+void 
+SageInterface::moveDeclarationToAssociatedNamespace ( SgDeclarationStatement* declarationStatement )
+   {
+  // Relocate the declaration to be explicitly represented in its associated namespace (required for some backend compilers to process template instantiations).
+
+  // DQ (7/19/2015): This is required to support general unparsing of template instantations for the GNU g++
+  // compiler which does not permit name qualification to be used to support the expression of the namespace
+  // where a template instantiatoon would be places.  Such name qualification would also sometimes require
+  // global qualification which is also not allowed by the GNU g++ compiler.  These issues appear to be 
+  // specific to the GNU compiler versions, at least versions 4.4 through 4.8.
+
+  // Find the previous statement in this scope so that we can close off the namepsace and start a new one.
+     SgStatement* previousDeclarationStatement = getPreviousStatement(declarationStatement);
+     SgStatement* nextDeclarationStatement     = getNextStatement(declarationStatement);
+
+#if 0
+     printf ("In SageInterface::moveDeclarationToAssociatedNamespace(): declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
+     printf ("   --- previousDeclarationStatement = %p = %s \n",previousDeclarationStatement,previousDeclarationStatement != NULL ? previousDeclarationStatement->class_name().c_str() : "null");
+     printf ("   --- nextDeclarationStatement     = %p      \n",nextDeclarationStatement);
+     printf ("   --- nextDeclarationStatement     = %p = %s \n",nextDeclarationStatement,    nextDeclarationStatement != NULL     ? nextDeclarationStatement->class_name().c_str() : "null");
+#endif
+
+  // DQ (7/19/2015): Initial error handling to allow us to focuse on the most common case.
+     if (previousDeclarationStatement != NULL)
+        {
+       // printf ("previousDeclarationStatement = %p = %s \n",previousDeclarationStatement,previousDeclarationStatement->class_name().c_str());
+        }
+       else
+        {
+          printf ("There is no previous statement so there is no namespace to close off! \n");
+
+       // Handle this corner case after we have the most general case working!
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+
+  // DQ (7/19/2015): Initial error handling to allow us to focuse on the most common case.
+     if (nextDeclarationStatement != NULL)
+        {
+       // printf ("nextDeclarationStatement = %p = %s \n",nextDeclarationStatement,nextDeclarationStatement->class_name().c_str());
+        }
+       else
+        {
+#if 0
+          printf ("There is no next statement so there is no namespace to reopen! \n");
+#endif
+#if 0
+       // Handle this corner case after we have the most general case working!
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+     if (previousDeclarationStatement != NULL && nextDeclarationStatement != NULL)
+        {
+       // DQ (7/19/2015): This is the most common case!
+#if 0
+          printf ("Identified the most common case... \n");
+#endif
+       // Identify the associated namespace
+          SgScopeStatement* declarationScope = declarationStatement->get_scope();
+#if 0
+          printf ("declarationScope = %p = %s \n",declarationScope,declarationScope->class_name().c_str());
+#endif
+#if 0
+       // Handle this corner case after we have the most general case working!
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+       else
+        {
+          if (previousDeclarationStatement != NULL && nextDeclarationStatement == NULL)
+             {
+            // This is the case for the last template instantiaton in global scope (so it too is a common case)!
+#if 0
+               printf ("Found 2nd most common case: previousDeclarationStatement != NULL && nextDeclarationStatement == NULL \n");
+#endif
+#if 0
+            // Handle this corner case after we have the most general case working!
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+            else
+             {
+               if (previousDeclarationStatement == NULL && nextDeclarationStatement == NULL)
+                  {
+                    printf ("This case should require no special handling, unless we are still in the wrong namespace \n");
+
+                 // Handle this corner case after we have the most general case working!
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+                  }
+                 else
+                  {
+                    printf ("This case should have been caught above! \n");
+
+                 // Handle this corner case after we have the most general case working!
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+                  }
+             }
+        }
+
+     SgScopeStatement* declarationParent = isSgScopeStatement(declarationStatement->get_parent());
+     if (declarationParent == NULL)
+        {
+#if 0
+          printf ("declarationStatement->get_parent() = %p = %s \n",declarationStatement->get_parent(), (declarationStatement->get_parent() != NULL) ? declarationStatement->get_parent()->class_name().c_str() : "null");
+#endif
+        }
+  // This can be a SgTemplateInstantiationDirectiveStatement (bug we want to skip over this case for now).
+  // ROSE_ASSERT(declarationParent != NULL);
+
+     if (declarationParent != NULL)
+        {
+          SgScopeStatement* declarationScope = declarationStatement->get_scope();
+          ROSE_ASSERT(declarationScope != NULL);
+
+          SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(declarationScope);
+          if (namespaceDefinition != NULL)
+             {
+               SgNamespaceDeclarationStatement* namespaceDeclaration = namespaceDefinition->get_namespaceDeclaration();
+               ROSE_ASSERT(namespaceDeclaration != NULL);
+#if 0
+               printf ("The declaration has been identified to be associuated with a valid namespace = %p = %s \n",namespaceDeclaration,namespaceDeclaration->get_name().str());
+               printf ("   --- declarationParent = %p = %s \n",declarationParent,declarationParent->class_name().c_str());
+               printf ("   --- Move declaration from scope = %p = %s to namespace = %p = %s \n",declarationParent,declarationParent->class_name().c_str(),namespaceDeclaration,namespaceDeclaration->get_name().str());
+#endif
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+            else
+             {
+#if 0
+               printf ("declaration is not associated with a namespace, so we don't have to wrap it: declarationScope = %p = %s \n",declarationScope,declarationScope->class_name().c_str());
+#endif
+             }
+        }
+       else
+        {
+#if 0
+          printf ("Warning: declarationParent == NULL: declarationStatement->get_parent() = %p = %s \n",declarationStatement->get_parent(), (declarationStatement->get_parent() != NULL) ? declarationStatement->get_parent()->class_name().c_str() : "null"); 
+#endif
+       // ROSE_ASSERT(declarationParent != NULL);
+        }
+
+   }
+
+
+bool
+SageInterface::isTemplateInstantiationNode(SgNode* node) 
+   {
+  // DQ (7/19/2015): I think we want to focus exclusively on declarations.
+     if (isSgTemplateInstantiationDefn(node) != NULL)
+        {
+#if 0
+          printf ("Note: In SageInterface::isTemplateInstantiationNode(): skipping SgTemplateInstantiationDefn \n");
+#endif
+        }
+
+     return isSgTemplateInstantiationDecl(node)
+//       || isSgTemplateInstantiationDefn(node)
+         || isSgTemplateInstantiationFunctionDecl(node)
+         || isSgTemplateInstantiationMemberFunctionDecl(node)
+         || isSgTemplateInstantiationTypedefDeclaration(node)
+         || isSgTemplateInstantiationDirectiveStatement(node)
+         ;
+   }
+
+
+void
+SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root) 
+   {
+  // DQ (8/18/2015): This function is called from the tests/testTemplates translator.
+
+  // DQ (7/19/2015): This function can't use an iterator since it will be 
+  // doing transformations on the AST and will cause iterator invalidation errors.
+
+#if 0
+     printf ("In SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(): TOP \n");
+#endif
+
+     std::vector<SgDeclarationStatement*> templateInstantiationVector;
+
+  // DQ (9/24/2015): This feature is not available yet in CMake (Markus is adding the library support for this feature).
+#ifndef USE_CMAKEx
+     RoseAst ast(root);
+
+     int n = 0;
+     for (RoseAst::iterator i= ast.begin(); i!= ast.end(); ++i) 
+        {
+          if (isTemplateInstantiationNode(*i)) 
+             {
+            // markNodeToBeUnparsed(*i);
+               SgDeclarationStatement* declaration = isSgDeclarationStatement(*i);
+               if (declaration == NULL)
+                  {
+                    printf ("Error: found non-declaration statement: *i = %p = %s \n",*i,(*i)->class_name().c_str());
+                  }
+               ROSE_ASSERT(declaration != NULL);
+
+               templateInstantiationVector.push_back(declaration);
+               n++;
+             }
+       }
+#else
+     std::cerr << "This feature for now is available with autotools only!" << std::endl;
+     ROSE_ASSERT(false);
+#endif
+
+#if 0
+     printf ("Identified n = %d template instantiations \n",n);
+#endif
+
+     std::vector<SgDeclarationStatement*>::iterator j = templateInstantiationVector.begin();
+     while (j != templateInstantiationVector.end())
+        {
+          moveDeclarationToAssociatedNamespace(*j);
+
+#if 0
+          printf ("After processing first intatiation: Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+
+          j++;
+        }
+
+#if 0
+     printf ("Leaving SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(): Exiting as a test! \n");
+  // ROSE_ASSERT(false);
+#endif
+   }
+
+
+
 //! Replace an anchor node with a specified pattern subtree with optional SgVariantExpression.
 // All SgVariantExpression in the pattern will be replaced with copies of the anchor node.
 SgNode* SageInterface::replaceWithPattern (SgNode * anchor, SgNode* new_pattern)
@@ -7939,16 +8200,16 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
 
 } //replaceExpression()
 
- SgStatement* SageInterface::getNextStatement(SgStatement * currentStmt)
-{
-// reuse the implementation in ROSE namespace from src/roseSupport/utility_functions.C
-  return ROSE::getNextStatement(currentStmt);
-}
+SgStatement* SageInterface::getNextStatement(SgStatement * currentStmt)
+   {
+  // reuse the implementation in ROSE namespace from src/roseSupport/utility_functions.C
+     return rose::getNextStatement(currentStmt);
+   }
 
-  SgStatement* SageInterface::getPreviousStatement(SgStatement * currentStmt, bool climbOutScope /*= true*/)
-{
-  return ROSE::getPreviousStatement(currentStmt, climbOutScope);
-}
+SgStatement* SageInterface::getPreviousStatement(SgStatement * currentStmt, bool climbOutScope /*= true*/)
+   {
+     return rose::getPreviousStatement(currentStmt, climbOutScope);
+   }
 
 bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
      return isSgIntVal(e) && isSgIntVal(e)->get_value() == value;
@@ -12598,7 +12859,30 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
                     info->setAsTransformation();
                  // ROSE_ASSERT(stmt_dst->getAttachedPreprocessingInfo() != NULL);
                  // stmt_dst->getAttachedPreprocessingInfo()->setAsTransformation();
+
+                 // DQ (10/13/2015): This is a problem for the token-based unparsing since we don't want to have this 
+                 // set_containsTransformationToSurroundingWhitespace() function cause the isModified flag to be set.
+                 // So we have to detect it being set and reset it as needed.  An alternative would be to have a 
+                 // non-ROSETTA generate function that didn't have the isModified flag set for the seter access function.
+                 // Note that the inputmoveDeclarationToInnermostScope_test2015_123.C file demonstrates this problem.
+                    bool isMarkedAsModified = stmt_dst->get_isModified();
                     stmt_dst->set_containsTransformationToSurroundingWhitespace(true);
+                    if (isMarkedAsModified == false)
+                       {
+                         if (stmt_dst->get_isModified() == true)
+                            {
+#if 0
+                              printf ("In SageInterface::movePreprocessingInfo(): Reset isModified flag to FALSE: stmt_dst = %p = %s \n",stmt_dst,stmt_dst->class_name().c_str());
+#endif
+                              stmt_dst->set_isModified(false);
+                            }
+                       }
+                      else
+                       {
+#if 0
+                         printf ("In SageInterface::movePreprocessingInfo(): This was already marked as isModified == TRUE: stmt_dst = %p = %s \n",stmt_dst,stmt_dst->class_name().c_str());
+#endif
+                       }
 
                     (*infoToRemoveList).push_back(*i);
                   }
@@ -12937,7 +13221,7 @@ void SageInterface::recordNormalizations(SgStatement* s)
 void SageInterface::cleanupNontransformedBasicBlockNode()
    {
   // Remove unused basic block IR nodes added as part of normalization.
-  // This function shuld be called before the unparse step.
+  // This function should be called before the unparse step.
 
 #if 0
      printf ("In SageInterface::cleanupNontransformedBasicBlockNode(): addedBasicBlockNodes.size() = %zu \n",addedBasicBlockNodes.size());
@@ -12955,6 +13239,8 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
                 SgStatement* parentOfBlock = isSgStatement(b->get_parent());
                 ROSE_ASSERT(parentOfBlock != NULL);
 
+                bool wasPreviouslyModified = parentOfBlock->get_isModified();
+
                 SgStatement* s = b->get_statements()[0];
                 ROSE_ASSERT(s != NULL);
 
@@ -12965,17 +13251,43 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
                           SgIfStmt* ifStatement = isSgIfStmt(parentOfBlock);
                           if (b == ifStatement->get_true_body())
                              {
+#if 0
+                               printf ("Calling set_true_body on ifStatement = %p = %s \n",ifStatement,ifStatement->class_name().c_str());
+#endif
+                            // DQ (10/6/2015): This member function call is causing the IR node to be marked as transformed.
                                ifStatement->set_true_body(s);
+#if 0
+                               printf ("Calling set_parent on s = %p = %n \n",s,s->class_name().c_str());
+#endif
+                            // DQ (10/6/2015): Calls to the set_parent member function do NOT cause the either node to be marked as isModfied.
                                s->set_parent(ifStatement);
+#if 0
+                               printf ("DONE: Calling set_parent on s = %p = %n \n",s,s->class_name().c_str());
+#endif
                                *i = NULL;
                             // delete b;
                              }
                             else
                              {
                                ROSE_ASSERT(b == ifStatement->get_false_body());
+#if 0
+                               printf ("Calling set_false_body on ifStatement = %p = %s \n",ifStatement,ifStatement->class_name().c_str());
+#endif
+                            // DQ (10/6/2015): This member function call is causing the IR node to be marked as transformed.
                                ifStatement->set_false_body(s);
+#if 0
+                               printf ("Calling set_parent on s = %p = %n \n",s,s->class_name().c_str());
+#endif
+                            // DQ (10/6/2015): Calls to the set_parent member function do NOT cause the either node to be marked as isModfied.
                                s->set_parent(ifStatement);
+#if 0
+                               printf ("DONE: Calling set_parent on s = %p = %n \n",s,s->class_name().c_str());
+#endif
                                *i = NULL;
+#if 0
+                               printf ("Mark as NOT modified after calling set_false_body on ifStatement = %p = %n \n",ifStatement,ifStatement->class_name().c_str());
+#endif
+                            // ifStatement->set_isModified(false);
 #if 0
                                printf ("Error: case not handled in case V_SgIfStmt: parentOfBlock = %p = %s \n",parentOfBlock,parentOfBlock->class_name().c_str());
                                ROSE_ASSERT(false);
@@ -13061,6 +13373,19 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
                           printf ("Error: case not handled in switch: parentOfBlock = %p = %s \n",parentOfBlock,parentOfBlock->class_name().c_str());
                           ROSE_ASSERT(false);
                         }
+                   }
+
+             // DQ (10/6/2015): Added code to reset isModified flag if it was only modified by this function.
+                if (wasPreviouslyModified == false)
+                   {
+                     if (parentOfBlock->get_isModified() == true)
+                        {
+#if 0
+                          printf ("In SageInterface::cleanupNontransformedBasicBlockNode(): parentOfBlock reset to FALSE after IR node member function call (e.g. set_body()): parentOfBlock = %p = %s \n",parentOfBlock,parentOfBlock->class_name().c_str());
+#endif
+                          parentOfBlock->set_isModified(false);
+                        }
+
                    }
 #if 0
                 printf ("Exiting as a test! \n");
@@ -13396,6 +13721,9 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
       bool allowEmptyBody; 
       Visitor (bool flag):allowEmptyBody(flag) {}
       virtual void visit(SgNode* n) {
+
+        bool wasPreviouslyModified = n->get_isModified();
+
         switch (n->variantT()) {
           case V_SgForStatement: {
             ensureBasicBlockAsBodyOfFor(isSgForStatement(n));
@@ -13416,6 +13744,18 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
           case V_SgIfStmt: {
             ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(n));
             ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(n), allowEmptyBody);
+#if 0
+         // DQ (10/6/2015): Debugging why changes are being made to the AST for token-based unparsing.
+            printf ("In changeAllBodiesToBlocks(): case SgIfStmt: n->get_isModified() = %s \n",n->get_isModified() ? "true" : "false");
+#endif
+#if 0
+         // Reset this to false as a test.
+            if (n->get_isModified() == true)
+               {
+                 n->set_isModified(false);
+                 printf ("In changeAllBodiesToBlocks(): AFTER RESET: case SgIfStmt: n->get_isModified() = %s \n",n->get_isModified() ? "true" : "false");
+               }
+#endif
             break;
           }
           case V_SgCatchOptionStmt: {
@@ -13434,6 +13774,20 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
               break;
             }
         }
+
+  // DQ (10/6/2015): Added code to reset isModified flag if it was only modified by this function.
+     if (wasPreviouslyModified == false)
+        {
+          if (n->get_isModified() == true)
+             {
+#if 0
+               printf ("In SageInterface::changeAllBodiesToBlocks(): parentOfBlock reset to FALSE after IR node member function call (e.g. set_body()): parentOfBlock = %p = %s \n",n,n->class_name().c_str());
+#endif
+               n->set_isModified(false);
+             }
+
+        }
+
       }
     };
     Visitor(createEmptyBody).traverse(top, postorder);
@@ -15308,8 +15662,8 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
      for (size_t i = 0; i < dependentDeclarationList.size(); i++)
         {
           SgDeclarationStatement* d                   = dependentDeclarationList[i]; // copies of dependent declarations
-          SgDeclarationStatement* originalDeclaration = dependentDeclarationList_inOriginalFile[i];
 #if 0
+          SgDeclarationStatement* originalDeclaration = dependentDeclarationList_inOriginalFile[i];
           printf ("declarationList[%" PRIuPTR "] = %p = %s = %s \n",i,d,d->class_name().c_str(),SageInterface::get_name(d).c_str());
           printf ("originalDeclaration = %p \n",originalDeclaration);
 
@@ -15490,7 +15844,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 
 
 #if 0
-// This function is not implemented our used, but it might be when the final code is refactored.
+// This function is not implemented or used, but it might be when the final code is refactored.
 
 // rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr>
 // void SageInterface::supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap )
@@ -18227,7 +18581,7 @@ SageInterface::isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 )
    {
   // DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
 
-#ifndef USE_CMAKE
+#ifndef USE_CMAKEx
   // DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
 
   // This is AST container for the ROSE AST that will provide an iterator.
@@ -18404,11 +18758,14 @@ bool SageInterface::getForLoopInformations(
       assert(false);
   }
 
-  if (!inclusive)
-    if (reversed)
-      upper_bound = SageBuilder::buildAddOp(upper_bound, SageBuilder::buildIntVal(1));
-    else
-      upper_bound = SageBuilder::buildSubtractOp(upper_bound, SageBuilder::buildIntVal(1));
+  // DQ (7/19/2015): Added braces to avoid compiler warning about ambigious "else" case.
+     if (!inclusive)
+        {
+          if (reversed)
+               upper_bound = SageBuilder::buildAddOp(upper_bound, SageBuilder::buildIntVal(1));
+            else
+               upper_bound = SageBuilder::buildSubtractOp(upper_bound, SageBuilder::buildIntVal(1));
+        }
 
   return true;
 }
@@ -19005,7 +19362,7 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
 //    std::cout << "Pointers are equal, returning true" << std::endl;
     return true;
   }
-#ifndef USE_CMAKE
+#ifndef USE_CMAKEx
   RoseAst subT1(t1);
   RoseAst subT2(t2);
 

@@ -38,9 +38,9 @@
 /*! \var SgEnumDeclaration::p_scope
 \brief Scope of enum declaration. 
 
-    Note that the scope of the enum must be stored explicitly since it can be declared in
-    a namespace and defined outside the namespace (note that forward declarations of
-    enum types.
+Note that the scope of the enum must be stored explicitly since it can be declared in
+a namespace and defined outside the namespace (note that forward declarations of
+enum types.
 */
 
 //////////////////////////////////////////////////////////////////////////
@@ -50,7 +50,7 @@
 \fn SgEnumDeclaration::SgEnumDeclaration ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgEnumDeclaration base class.
+This constructor builds the SgEnumDeclaration base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -63,14 +63,14 @@
 \fn SgEnumDeclaration::~SgEnumDeclaration()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgEnumDeclaration::isSgEnumDeclaration (SgNode *s)
 \brief Cast function (from derived class to SgEnumDeclaration pointer).
 
-   This functions returns a SgEnumDeclaration pointer for any input of a 
+This functions returns a SgEnumDeclaration pointer for any input of a 
 pointer to an object derived from a SgEnumDeclaration.
 
 \return Returns valid pointer to SgEnumDeclaration if input is derived from a SgLocatedNode.
@@ -80,7 +80,7 @@ pointer to an object derived from a SgEnumDeclaration.
 \fn SgEnumDeclaration::isSgEnumDeclaration (const SgNode *s)
 \brief Cast function (from derived class to SgEnumDeclaration pointer).
 
-   This functions returns a SgEnumDeclaration pointer for any input of a 
+This functions returns a SgEnumDeclaration pointer for any input of a 
 pointer to an object derived from a SgEnumDeclaration.
 
 \return Returns valid pointer to SgEnumDeclaration if input is derived from a SgLocatedNode.

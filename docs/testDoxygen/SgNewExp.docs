@@ -7,17 +7,17 @@
 \brief This class represents the concept of a C++ call to the new operator.
 
 \todo Provide some examples to detail the difference between placement, constructor, and
-    builtin arguments.
+builtin arguments.
 
 \todo I believe we can associate the constructors from the class with 
-      new operators.
+new operators.
 
 \internal  This is one of the few SgExpression IR nodes that are required to store
-    the internal type explicitly.  In this case the p_specified_type is used and 
-    it is set to the type specified in the new expression (e.g. int *x = new int[1000];,
-    the p_expression_type would be SgTypeInt.  However the return type of the new operator
-    is a pointer to this type so the get_type() member function returns a pointer to this
-    type.
+the internal type explicitly.  In this case the p_specified_type is used and 
+it is set to the type specified in the new expression (e.g. int *x = new int[1000];,
+the p_expression_type would be SgTypeInt.  However the return type of the new operator
+is a pointer to this type so the get_type() member function returns a pointer to this
+type.
 
 \sa
 \ref SgNewExp_usage  "Example of using a SgNewExp object"
@@ -34,28 +34,28 @@
 
 /*! \var SgNewExp::p_placement_args
 \brief This is a pointer to the memory allocation placement arguments for the new
-    operator.
+operator.
 
-   An example would be "class X{}; void* p; X* item2 = new (p) X();".  Placement arguments
+An example would be "class X{}; void* p; X* item2 = new (p) X();".  Placement arguments
 permit the new opperator to allocate space at a specific location (address).
 
 \todo Provide some examples to detail the difference between placement, constructor, and
-    builtin arguments (these are rarely used in C++).
+builtin arguments (these are rarely used in C++).
 */
 
 /*! \var SgNewExp::p_constructor_args
 \brief This is a pointer to the constructor initializer (which holds its constructor arguments) for the new operator.
 
 \todo Provide some examples to detail the difference between placement, constructor, and
-    builtin arguments.
+builtin arguments.
 */
 
 /*! \var SgNewExp::p_builtin_args
 \brief This is a pointer to the builtin arguments for the new operator (typically the
-    "this" pointer where specified optionally).
+"this" pointer where specified optionally).
 
 \todo Provide some examples to detail the difference between placement, constructor, and
-    builtin arguments.
+builtin arguments.
 */
 
 /*! \var SgNewExp::p_need_global_specifier
@@ -72,7 +72,7 @@ permit the new opperator to allocate space at a specific location (address).
 \fn SgNewExp::SgNewExp ( Sg_File_Info* startOfConstruct = NULL, SgClassSymbol *symbol = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgNewExp base class.
+This constructor builds the SgNewExp base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -85,14 +85,14 @@ permit the new opperator to allocate space at a specific location (address).
 \fn SgNewExp::~SgNewExp()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgNewExp::isSgNewExp (SgNode *s)
 \brief Cast function (from derived class to SgNewExp pointer).
 
-   This functions returns a SgNewExp pointer for any input of a 
+This functions returns a SgNewExp pointer for any input of a 
 pointer to an object derived from a SgNewExp.
 
 \return Returns valid pointer to SgNewExp if input is derived from a SgLocatedNode.
@@ -102,7 +102,7 @@ pointer to an object derived from a SgNewExp.
 \fn SgNewExp::isSgNewExp (const SgNode *s)
 \brief Cast function (from derived class to SgNewExp pointer).
 
-   This functions returns a SgNewExp pointer for any input of a 
+This functions returns a SgNewExp pointer for any input of a 
 pointer to an object derived from a SgNewExp.
 
 \return Returns valid pointer to SgNewExp if input is derived from a SgLocatedNode.

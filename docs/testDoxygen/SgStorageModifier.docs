@@ -6,7 +6,7 @@
 \class SgStorageModifier
 \brief This class represents modifiers specific to storage.
 
-    This modifier is set to only one of a collection of values. To
+This modifier is set to only one of a collection of values. To
 unset any value (e.g. "extern") just call "setDefault()" to restore
 the default value.
 
@@ -34,7 +34,7 @@ the default value.
 \fn SgStorageModifier::SgStorageModifier()
 \brief This is the constructor.
 
-   This constructor builds the SgStorageModifier base class.
+This constructor builds the SgStorageModifier base class.
 
 \sa 
 \ref SgStorageModifier_create "Example:create an SgStorageModifier object"
@@ -44,21 +44,21 @@ the default value.
 \fn SgStorageModifier::~SgStorageModifier()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgStorageModifier::operator=(const SgStorageModifier & X)
 \brief This is the assignment operator.
 
-   This is a simple assignment of the SgBitVector from X to the current object.
+This is a simple assignment of the SgBitVector from X to the current object.
 */
 
 /*!
 \fn SgStorageModifier::isSgStorageModifier (SgNode *s)
 \brief Cast function (from derived class to SgStorageModifier pointer).
 
-   This functions returns a SgStorageModifier pointer for any input of a 
+This functions returns a SgStorageModifier pointer for any input of a 
 pointer to an object derived from a SgStorageModifier.
 
 \return Returns valid pointer to SgStorageModifier if input is derived from a SgLocatedNode.
@@ -68,7 +68,7 @@ pointer to an object derived from a SgStorageModifier.
 \fn SgStorageModifier::isSgStorageModifier (const SgNode *s)
 \brief Cast function (from derived class to SgStorageModifier pointer).
 
-   This functions returns a SgStorageModifier pointer for any input of a 
+This functions returns a SgStorageModifier pointer for any input of a 
 pointer to an object derived from a SgStorageModifier.
 
 \return Returns valid pointer to SgStorageModifier if input is derived from a SgLocatedNode.
@@ -122,11 +122,11 @@ pointer to an object derived from a SgStorageModifier.
 \brief Storage modifier is static (always false for the SgStorageModifier in the SgInitializedName).
 
 \internal Note that the isStatic() for variable declarations is stored in the
-    SgStorageModifier of theSgDeclarationModifier in the SgVariableDeclaration, 
-    and not in the SgStorageModifier stored in the SgInitializedName.  This is
-    a result of the structure of code, where the static keyword can not be used 
-    to selectively apply to individual variables in a list of names in a variable 
-    declaration.
+SgStorageModifier of theSgDeclarationModifier in the SgVariableDeclaration, 
+and not in the SgStorageModifier stored in the SgInitializedName.  This is
+a result of the structure of code, where the static keyword can not be used 
+to selectively apply to individual variables in a list of names in a variable 
+declaration.
 
 \return Returns bool.
 */

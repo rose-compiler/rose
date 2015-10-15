@@ -160,8 +160,8 @@ SgNode::insertSourceCode ( SgProject & project,
                                    ROSE_ASSERT (declarationStatement != NULL);
 #if 0
                                    printf ("declarationStatementString located at line = %d of file = %s \n",
-                                        ROSE::getLineNumber(declarationStatement),
-                                        ROSE::getFileName(declarationStatement));
+                                        rose::getLineNumber(declarationStatement),
+                                        rose::getFileName(declarationStatement));
                                    string declarationStatementString = declarationStatement->unparseToString();
                                    printf ("declarationStatementString = %s \n",declarationStatementString.c_str());
 #endif

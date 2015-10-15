@@ -40,7 +40,7 @@ ROSE_QT_WIDGETS_INCLUDES =   -I$(ROSE_QT_WIDGETS_ROOT)\
 
 # The includes for compiling RoseQtWidgets
 
-INCLUDES = -I. \
+AM_CPPFLAGS = -I. \
            -I$(ROSE_QT_WIDGETS_ROOT)\
            $(ROSE_QT_WIDGETS_INCLUDES)\
            $(ROSE_INCLUDES)\
@@ -50,7 +50,7 @@ INCLUDES = -I. \
 
 if QROSE_USE_WINDOWS
 moc_%.cxx: $(srcdir)/%.h 
-	$(MOC) $(INCLUDES) -o  $@ `cygpath -w $<` -p$(srcdir)
+	$(MOC) $(AM_CPPFLAGS) -o  $@ `cygpath -w $<` -p$(srcdir)
 else
 moc_%.cxx: $(srcdir)/%.h 
 	@echo "  Qt-MOC $(notdir $< )" && $(MOC) $(QT_INCLUDES) -o  $@ $< -frose.h -f$<

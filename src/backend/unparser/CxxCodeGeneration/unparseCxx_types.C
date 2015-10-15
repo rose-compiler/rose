@@ -50,7 +50,6 @@ Unparse_Type::generateElaboratedType(SgDeclarationStatement* declarationStatemen
 
 string get_type_name(SgType* t)
    {
-
 #if 0
      printf ("In get_type_name(t = %p): t->class_name() = %s \n",t,t->class_name().c_str());
 #endif
@@ -214,7 +213,7 @@ string get_type_name(SgType* t)
                 SgClassDeclaration* decl = isSgClassDeclaration(class_type->get_declaration());
                 SgName nm = decl->get_qualified_name();
 #if 0
-                printf ("In unparseType(%p): nm = %s \n",t,nm.str());
+                printf ("In get_type_name(%p): nm = %s \n",t,nm.str());
 #endif
                 if (nm.getString() != "")
                     return nm.getString();
@@ -2413,16 +2412,18 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
      SgTypedefType* typedef_type = isSgTypedefType(type);
      ROSE_ASSERT(typedef_type != NULL);
 
-#if 0
+#define DEBUG_TYPEDEF_TYPE 0
+
+#if DEBUG_TYPEDEF_TYPE
      printf ("Inside of Unparse_Type::unparseTypedefType name = %p = %s \n",typedef_type,typedef_type->get_name().str());
   // curprint ( "\n/* Inside of Unparse_Type::unparseTypedefType */ \n";
 #endif
-#if 0
+#if DEBUG_TYPEDEF_TYPE
      curprint ( string("\n /* info.isWithType()       = ") + ((info.isWithType()       == true) ? "true" : "false") + " */ \n");
      curprint ( string("\n /* info.SkipBaseType()     = ") + ((info.SkipBaseType()     == true) ? "true" : "false") + " */ \n");
      curprint ( string("\n /* info.isTypeSecondPart() = ") + ((info.isTypeSecondPart() == true) ? "true" : "false") + " */ \n");
 #endif
-#if 0
+#if DEBUG_TYPEDEF_TYPE
      printf ("In unparseTypedefType(): info.isWithType()       = %s \n",(info.isWithType()       == true) ? "true" : "false");
      printf ("In unparseTypedefType(): info.SkipBaseType()     = %s \n",(info.SkipBaseType()     == true) ? "true" : "false");
      printf ("In unparseTypedefType(): info.isTypeFirstPart()  = %s \n",(info.isTypeFirstPart()  == true) ? "true" : "false");
@@ -2432,7 +2433,7 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
      if ((info.isWithType() && info.SkipBaseType()) || info.isTypeSecondPart())
         {
        /* do nothing */;
-#if 0
+#if DEBUG_TYPEDEF_TYPE
           printf ("Inside of Unparse_Type::unparseTypedefType (do nothing) \n");
 #endif
        // curprint ( "\n /* Inside of Unparse_Type::unparseTypedefType (do nothing) */ \n");
@@ -2442,7 +2443,7 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
        // could be a scoped typedef type
        // check if currrent type's parent type is the same as the context type */
        // SgNamedType *ptype = NULL;
-#if 0
+#if DEBUG_TYPEDEF_TYPE
           printf ("Inside of Unparse_Type::unparseTypedefType (normal handling) \n");
 #endif
        // curprint ( "\n /* Inside of Unparse_Type::unparseTypedefType (normal handling) */ \n";
@@ -2648,9 +2649,11 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
 #endif
         }
 
-#if 0
+#if DEBUG_TYPEDEF_TYPE
      printf ("Leaving Unparse_Type::unparseTypedefType \n");
-  // curprint ( "\n/* Leaving Unparse_Type::unparseTypedefType */ \n";
+#endif
+#if DEBUG_TYPEDEF_TYPE
+     curprint("\n/* Leaving Unparse_Type::unparseTypedefType */ \n");
 #endif
    }
 
@@ -3531,9 +3534,13 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // DQ (5/4/2013): This code was copied from the function argument processing which does handle the types properly.
   // So this code needs to be refactored.
 
-#if 0
-     printf ("In outputType(): referenceNode = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
+#define DEBUG_OUTPUT_TYPE 0
+
+#if DEBUG_OUTPUT_TYPE
+     printf ("In outputType(): referenceNode     = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
+     printf ("In outputType(): referenceNodeType = %p = %s \n",referenceNodeType,referenceNodeType->class_name().c_str());
      curprint(string("\n/* In outputType(): referenceNode = ") +  referenceNode->class_name() + " */ \n");
+     curprint(string("\n/* In outputType(): referenceNodeType = ") +  referenceNodeType->class_name() + " */ \n");
 #endif
 
 #if 0
@@ -3583,15 +3590,16 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // ninfo_for_type.set_name_qualification_length(initializedName->get_name_qualification_length_for_type());
   // ninfo_for_type.set_global_qualification_required(initializedName->get_global_qualification_required_for_type());
   // ninfo_for_type.set_type_elaboration_required(initializedName->get_type_elaboration_required_for_type());
-#if 0
-     printf ("In outputType(): BEFORE: templateArgument->get_name_qualification_length_for_type()     = %d \n",templateArgument->get_name_qualification_length_for_type());
-     printf ("In outputType(): BEFORE: templateArgument->get_global_qualification_required_for_type() = %s \n",templateArgument->get_global_qualification_required_for_type() ? "true" : "false");
-     printf ("In outputType(): BEFORE: templateArgument->get_type_elaboration_required_for_type()     = %s \n",templateArgument->get_type_elaboration_required_for_type() ? "true" : "false");
-#endif
 
      SgTemplateArgument* templateArgument = isSgTemplateArgument(referenceNode);
+
      if (templateArgument != NULL)
         {
+#if DEBUG_OUTPUT_TYPE
+          printf ("In outputType(): BEFORE: templateArgument->get_name_qualification_length_for_type()     = %d \n",templateArgument->get_name_qualification_length_for_type());
+          printf ("In outputType(): BEFORE: templateArgument->get_global_qualification_required_for_type() = %s \n",templateArgument->get_global_qualification_required_for_type() ? "true" : "false");
+          printf ("In outputType(): BEFORE: templateArgument->get_type_elaboration_required_for_type()     = %s \n",templateArgument->get_type_elaboration_required_for_type() ? "true" : "false");
+#endif
        // Transfer values from old variables to the newly added variables (which will be required to support the refactoring into a template of common code.
           templateArgument->set_name_qualification_length_for_type    (templateArgument->get_name_qualification_length());
           templateArgument->set_global_qualification_required_for_type(templateArgument->get_global_qualification_required());
@@ -3615,6 +3623,9 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
                if (aggregateInitializer != NULL)
                   {
                  // We don't have to transfer any data in this case.
+#if 0
+                    printf ("Nothing to do for this case of referenceNode = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
+#endif
                   }
                  else
                   {
@@ -3632,14 +3643,15 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // ninfo_for_type.set_reference_node_for_qualification(initializedName);
      ninfo_for_type.set_reference_node_for_qualification(referenceNode);
 
-#if 0
+#if DEBUG_OUTPUT_TYPE
      printf ("In outputType(): ninfo_for_type.SkipClassDefinition() = %s \n",(ninfo_for_type.SkipClassDefinition() == true) ? "true" : "false");
      printf ("In outputType(): ninfo_for_type.SkipEnumDefinition()  = %s \n",(ninfo_for_type.SkipEnumDefinition() == true) ? "true" : "false");
 #endif
+
   // DQ (1/9/2014): These should have been setup to be the same.
      ROSE_ASSERT(ninfo_for_type.SkipClassDefinition() == ninfo_for_type.SkipEnumDefinition());
 
-#if 0
+#if DEBUG_OUTPUT_TYPE
      curprint("\n/* outputType(): output the 1st part of the type */ \n");
 #endif
 
@@ -3647,7 +3659,7 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // unp->u_type->unparseType(tmp_type, ninfo_for_type);
      unp->u_type->unparseType(referenceNodeType, ninfo_for_type);
 
-#if 0
+#if DEBUG_OUTPUT_TYPE
      curprint("\n/* DONE - outputType(): output the 1st part of the type */ \n");
 #endif
 
@@ -3674,12 +3686,14 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // info.display("unparse_helper(): output the 2nd part of the type");
 
   // printf ("unparse_helper(): output the 2nd part of the type \n");
-  // curprint( "\n/* unparse_helper(): output the 2nd part of the type */ \n");
+#if DEBUG_OUTPUT_TYPE
+     curprint( "\n/* unparse_helper(): output the 2nd part of the type */ \n");
+#endif
   // unp->u_type->unparseType(tmp_type, info);
   // unp->u_type->unparseType(templateArgumentType, info);
      unp->u_type->unparseType(referenceNodeType, newInfo);
 
-#if 0
+#if DEBUG_OUTPUT_TYPE
      printf ("DONE: outputType(): \n");
      curprint( "\n/* DONE: outputType(): */ \n");
 #endif

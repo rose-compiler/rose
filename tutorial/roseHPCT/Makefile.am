@@ -73,7 +73,7 @@ attachMetrics_LDFLAGS = \
 	$(ROSE_LIBS_WITH_PATH) \
 	$(ROSEHPCT_DEP_LIBS) \
 	$(RT_LIBS)
-INCLUDES = $(ROSE_INCLUDES) $(ROSE_ROSEHPCT_INCLUDES) $(ROSEHPCT_DEP_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(ROSE_ROSEHPCT_INCLUDES) $(ROSEHPCT_DEP_INCLUDES)
 
 # DQ (12/21/2009): Automake complains about this!
 # Extra data generated that needs to be cleaned up

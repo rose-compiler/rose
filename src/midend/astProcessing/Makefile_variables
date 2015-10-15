@@ -6,7 +6,6 @@ mAstProcessing_la_sources=\
 	$(mAstProcessingPath)/AstDOTGeneration.C \
 	$(mAstProcessingPath)/AstProcessing.C \
 	$(mAstProcessingPath)/AstSimpleProcessing.C \
-	$(mAstProcessingPath)/Ast.C \
 	$(mAstProcessingPath)/AstNodePtrs.C \
 	$(mAstProcessingPath)/AstSuccessorsSelectors.C \
 	$(mAstProcessingPath)/AstAttributeMechanism.C \
@@ -37,7 +36,6 @@ mAstProcessing_includeHeaders=\
 	$(mAstProcessingPath)/AstSuccessorsSelectors.h \
 	$(mAstProcessingPath)/AstReverseProcessing.h \
 	$(mAstProcessingPath)/AstReverseSimpleProcessing.h \
-	$(mAstProcessingPath)/Ast.h \
 	$(mAstProcessingPath)/AstRestructure.h \
 	$(mAstProcessingPath)/AstClearVisitFlags.h \
 	$(mAstProcessingPath)/AstTraversal.h \

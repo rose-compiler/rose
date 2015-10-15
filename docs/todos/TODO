@@ -197,7 +197,7 @@ DONE (see below) * Need a way to display the AST (currently we can print out the
 
 * DONE: ROSE preprocessors don't correctly report when illegal options are used.
   For example, "--help" yields the message:
-  "Assertion failed: ROSE::numberOfSourceFileNames == 1, file /home/dquinlan/ROSE/NEW_ROSE/src/command_line_options/buildCommandLine.C, line 876"
+  "Assertion failed: rose::numberOfSourceFileNames == 1, file /home/dquinlan/ROSE/NEW_ROSE/src/command_line_options/buildCommandLine.C, line 876"
   This needs to be addressed at some point.
 
 * Unparser bug (not too major)
@@ -566,7 +566,7 @@ Example of how to run Nils' graphics display of dot files:
       d) string SgFunctionDeclaration::getMangledName()
       e) string SgClassDeclaration::getMangledName()
 
-4) Getting next and previous statements (at least one is implemented in ROSE::getPreviousStatement())
+4) Getting next and previous statements (at least one is implemented in rose::getPreviousStatement())
       a) SgStatement* SgStatement::getPreviousStatement();
       b) SgStatement* SgStatement::getNextStatement();
 

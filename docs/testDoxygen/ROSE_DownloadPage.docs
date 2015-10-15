@@ -1,8 +1,2 @@
-
-/*!
-\page ProjectDownLoadPage ROSE Project Download Page
-
-This page contains the details of downloading ROSE, which is currently not possible,
-but will be from this location when ROSE is released.  See \ref DownLoadInstructions.
-
-*/
+// -*- c++ -*-
+// Documented elswhere. [Robb P. Matzke 2015-05-15]

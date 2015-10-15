@@ -13,6 +13,6 @@ unparseJavaCodeGeneration_extraDist=\
 	$(javaCodeGenerationPath)/CMakeLists.txt
 
 
-unparseJavaCodeGeneration_cleanLocal=\
-	rm -rf $(javaCodeGenerationPath)/core
+unparseJavaCodeGeneration_cleanLocal=
+#	rm -rf $(javaCodeGenerationPath)/core
 
