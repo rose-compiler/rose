@@ -1,4 +1,4 @@
-// A version using runtime support
+// A working snapshot, before wrapping code into runtime functions
 /******************************************************************/
 /* 09/17/2015 Manually modified by Pei-Hung Lin (lin32@llnl.gov)  */
 /* A manual implementation for the shiftCalculus DSL              */
@@ -155,10 +155,6 @@ int main(int argc,char *argv[])
     lb0dest = bxdest .  getLowCorner ()[0];
     ub0dest = bxdest .  getHighCorner ()[0];
     arraySize_Z_dest = bxdest .  size (2);
-    //They are different! one with halo, the other does not.
-    assert (arraySize_Z_src == arraySize_Z_dest +2 );
-    assert (arraySize_X_src == arraySize_X_dest +2 );
-    assert (arraySize_Y_src == arraySize_Y_dest +2 );
 
     sourceDataPointer = Asrc->getPointer();
     destinationDataPointer_ref = Adest_ref->getPointer();
@@ -245,57 +241,95 @@ int main(int argc,char *argv[])
 
 // Translate mapped arrays
 // calculate offset
-// declare temp arrays for storing mapped arrays
   double *distsrc;
   double *distdest;
   int nghost = 1; // halo region size for source partitions
 
   // calculate strip size for the distributed dimension Z
+  // Also matches the k loop distribution of the nested loop
+  // TODO a runtime function call for distributing data
+  // TODO another runtime function call for distributing loops 
+  int distdestsize = arraySize_Z_dest / nprocs;
+  int offsetdest = rank * distdestsize;
+  if(rank < arraySize_Z_dest%nprocs)
+  {
+    distdestsize++;
+  }
+  if(rank >= arraySize_Z_dest%nprocs)
+    offsetdest += arraySize_Z_dest%nprocs;
+  else
+    offsetdest += rank;
 
-  // a runtime function call for distributing data
-  int offsetdest; 
-  int distdestsize;
-  xomp_static_even_divide_start_size (0, arraySize_Z_dest, nprocs, rank, & offsetdest, & distdestsize);
-
+  
   //allocate source data partitions for each process
   // source partitions contain halo region elements
-  // TODO a runtime allocation function call? too trivial
-  //distsrc = (double*)calloc(1,sizeof(double)*(distdestsize+2*nghost)*arraySize_X_src*arraySize_Y_src);
-  distsrc = (double*)calloc(sizeof(double), (distdestsize+2*nghost)*arraySize_X_src*arraySize_Y_src);
+  // TODO a runtime allocation function call
+  distsrc = (double*)calloc(1,sizeof(double)*(distdestsize+2*nghost)*arraySize_X_src*arraySize_Y_src);
 
   // allocate destination data, no need to initialize
-  //distdest = (double*)calloc(1,sizeof(double)*(distdestsize)*arraySize_X_dest*arraySize_Y_dest);
-  distdest = (double*)calloc(sizeof(double),(distdestsize)*arraySize_X_dest*arraySize_Y_dest);
+  distdest = (double*)calloc(1,sizeof(double)*(distdestsize)*arraySize_X_dest*arraySize_Y_dest);
 
-  // copy source data from source master to each process's local buffer
-  // wrap into a runtime function call
-  // Parameters: 
-  //
-  // INPUT
-  //    sourceDataPointer: source array address
-  //    source array dimension info:  size_x, size_y, size_z
-  //    distribution policy: block on z dimension
-  //    total processes: nprocs
-  //    rank ID, 
-  //    halo region size: 
-  //    offsetdest: 0, + chunk , +2chunks, ... etc , can be calculated internally
-  //    distdestsize: this can be calculated internally 
-  //
-  // OUTPUT: modified things
-  //      distsrc: local copy of master/slave process
-// extern void xomp_divide_scatter_array_to_all (void * sourceDataPointer, int element_type_id, int x_dim_size, int y_dim_size, int z_dim_size,
-// int distributed_dimension_id, int halo_size, int rank_id, int process_count, int** distsrc);
-  xomp_divide_scatter_array_to_all (sourceDataPointer, arraySize_X_src, arraySize_Y_src, arraySize_Z_src, 2, 1, rank, nprocs, &distsrc);
-//       arraySize_X_dest, arraySize_Y_dest, arraySize_Z_dest);
+  // copy source data from master
+  // TODO wrap into a runtime function call
+  if(rank == 0)
+  {
+    // team leader send source data to all members
+    //  [starting offset: size]
+    int copyOffset = offsetdest * arraySize_X_src*arraySize_Y_src;
+    int copySize = (distdestsize + 2 * nghost) * arraySize_X_src*arraySize_Y_src;
+    if(nprocs > 1)    
+    { 
+      int dest, send_tag=1;
+      MPI_Request send_reqs[nprocs-1];
+      MPI_Status send_status[nprocs-1];
+      // dest rank
+      for(dest = 1; dest < nprocs; ++dest)
+      {
+        int sendSize = arraySize_Z_dest / nprocs;
+        int sendOffset = dest * sendSize;
+        if(dest < arraySize_Z_dest%nprocs)
+        {
+          sendSize++;
+        }
+        sendSize = (sendSize+2)*arraySize_X_src*arraySize_Y_src;
+        if(dest >= arraySize_Z_dest%nprocs)
+          sendOffset += arraySize_Z_dest%nprocs;
+        else
+          sendOffset += dest;
+        sendOffset = sendOffset*arraySize_X_src*arraySize_Y_src;
+#if debug
+cout << "Master send size " << sendSize<< " from offset " << sendOffset << " "  << " to " << dest << endl;
+#endif
+        MPI_Isend(sourceDataPointer+sendOffset, sendSize,MPI_DOUBLE, dest, send_tag, MPI_COMM_WORLD,&send_reqs[dest-1]);
+//     int idx;
+//     for(idx = 0; idx < sendSize; ++idx)
+//      printf("Source send to dest:%d result %d: %f\n",dest, idx, sourceDataPointer[offsetsrc+sendOffset+idx]); 
+      }  
+      MPI_Waitall(nprocs-1,send_reqs,send_status);
+    }
+    // local copy (this is optional, but simpler for transformation)
+    memcpy(distsrc,sourceDataPointer+copyOffset,copySize*sizeof(double));
+  }
+  else
+  {
+//cout << "Rank dest: " << rank << " " << offsetdest << " " << distdestsize << " " << arraySize_Z_dest << endl;
+// receive data from master
+    int src = 0, recv_tag=1;
+    MPI_Request recv_reqs[1];
+    MPI_Status recv_status[1];
 
-
-// TODO: is a barrier needed here??
+    int recvSize = (distdestsize + 2 * nghost) * arraySize_X_src*arraySize_Y_src;
+  // receiving data
+    MPI_Irecv(distsrc, recvSize, MPI_DOUBLE, src, recv_tag, MPI_COMM_WORLD, &recv_reqs[0]);
+//  MPI_Irecv(distdest, distsrcsize*bxsrc.size(0)*bxsrc.size(1), MPI_DOUBLE, src, tag, MPI_COMM_WORLD, &reqs[1]);
+    MPI_Waitall(1,recv_reqs,recv_status);
+//  int idx;
+//  for(idx = 0; idx < distsrcsize*bxsrc.size(0)*bxsrc.size(1); ++idx)
+//   printf("Receiver:%d has result %d: %f\n",rank, idx, distsrc[idx]); 
+  }
 
 // computation, only k loop is distributed
 // TODO a scheduler for loop to obtain lower and upper for k loop
-// Also matches the k loop distribution of the nested loop
-// TODO another runtime function call for distributing loops 
-
   assert (lb2dest ==0);
 //  for (k = lb2dest; k < distdestsize; ++k) { // is this correct??,  should lower starts with 0??
   for (k = 0; k < distdestsize; ++k) { // is this correct??,  should lower starts with 0??
@@ -309,31 +343,66 @@ int main(int argc,char *argv[])
              distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + ((i-lb0src) + -1)] + \
              distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + ((i-lb0src) + 1)] + \
              distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + (i-lb0src)] * -6.00000;
+#if debug
+       cout << "rank" << rank << " "  << i << " " << j << " " << k << " " << distdest[arraySize_X_dest * (arraySize_Y_dest * k + j) + i] << "= " << \
+distsrc[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + -1) + (j-lb1src)) + (i-lb0src)] << "+" << \
+distsrc[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + 1) + (j-lb1src)) + (i-lb0src)] << "+" << \
+distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + ((j-lb1src) + -1)) + (i-lb0src)] << "+" << \
+distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + ((j-lb1src) + 1)) + (i-lb0src)] << "+" << \
+distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + ((i-lb0src) + -1)] << "+" << \
+distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + ((i-lb0src) + 1)] << "+" << \
+distsrc[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + (j-lb1src)) + (i-lb0src)] << "* -6.00000" << endl;
+#endif
       }
 //cout << rank<<": end of j = " << j << endl;
     }
 //cout << "end of k = " << k << endl;
   }
 
-// A runtime function to collect data
-// void xomp_collect_scattered_array_from_all ()
-// Parameters:
-// destinationDataPointer // aggregated data on the master process
-// distdest // distributed portions on each process
-//  arraySize_X_dest
-//  arraySize_Y_dest
-//  arraySize_Z_dest
-//  halo_size // not used for now
-//
-//  distribution_dimension_id
-//  nprocs
-//  rank_id
-// Calculated one:
-//    offsetdest, distdestsize
-  // distribution ID is Z (2 of 0,1,2), halo region is size 0 in this case
-  xomp_collect_scattered_array_from_all (distdest, arraySize_X_dest, arraySize_Y_dest, arraySize_Z_dest, 2, 0, rank, nprocs, &destinationDataPointer);
+  if(rank == 0)
+  {
+// team leader receives destination data from all members
+    int src, recv_tag=1;
+    MPI_Request recv_reqs[nprocs-1];
+    MPI_Status recv_status[nprocs-1];
+    for(src = 1; src < nprocs; ++src)
+    {
+      int recvSize = arraySize_Z_dest / nprocs;
+      int recvOffset = src * recvSize;
+      if(src < arraySize_Z_dest%nprocs)
+      {
+        recvSize++;
+      }
+      recvSize *= arraySize_X_dest*arraySize_Y_dest;
+      if(src >= arraySize_Z_dest%nprocs)
+        recvOffset += arraySize_Z_dest%nprocs;
+      else
+        recvOffset += src;
+       recvOffset = recvOffset*arraySize_X_dest*arraySize_Y_dest;
+       MPI_Irecv(destinationDataPointer+recvOffset, recvSize, MPI_DOUBLE, src, recv_tag, MPI_COMM_WORLD,&recv_reqs[src-1]);
+    }  
+    MPI_Waitall(nprocs-1,recv_reqs,recv_status);
+    // local copy (this could be optional, but simplier for transformation)
+    memcpy(destinationDataPointer+offsetdest,distdest,distdestsize*bxdest.size(0)*bxdest.size(1)*sizeof(double));
 
-  //TODO Is this barrier necessary? Yes before the deletion later
+    end = MPI_Wtime();
+    elapsed_secs = (end - begin);
+    cout << "Exec. time for MPI code: " << elapsed_secs << endl;
+
+  }
+  else
+  {
+    int dest = 0, send_tag=1;
+    MPI_Request send_reqs[1];
+    MPI_Status send_status[1];
+  // team members send back data
+    MPI_Isend(distdest, distdestsize*arraySize_X_dest*arraySize_Y_dest, MPI_DOUBLE, dest, send_tag, MPI_COMM_WORLD, send_reqs);
+//  int idx;
+//  for(idx = 0; idx < distdestsize*arraySize_X_dest*arraySize_Y_dest; ++idx)
+//   printf("rank %d send result %d: %f\n",rank, idx, distdest[idx]); 
+    MPI_Waitall(1,send_reqs,send_status);
+  }
+
   MPI_Barrier(MPI_COMM_WORLD);
 
   if(rank == 0)
