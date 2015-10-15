@@ -4157,24 +4157,68 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      if ( SgProject::get_verbose() >= 1 )
           printf ("Intel compiler being used: Cxx11 mode ON \n");
 
-     set_Cxx11_only(true);
-     set_Cxx11_gnu_only(false);
+#if 0     
+     printf ("After detection of Intel compiler: get_C_only()   = %s \n",get_C_only() ? "true" : "false");
+     printf ("After detection of Intel compiler: get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
+#endif
 
-  // Set gnu specific level of C99 support to false.
-  // set_Cxx11_gnu_only(false);
+  // DQ (10/7/2015): The file was already determined to be C or C++, or the associated command line option was used to specify it explicitly.
+     if (get_C_only() == true)
+        {
+       // This is the case of a C file.
+          ROSE_ASSERT(get_Cxx_only() == false);
 
-  // DQ (7/31/2013): If we turn on C99, then turn off C89.
-     set_C89_only(false);
-     set_C89_gnu_only(false);
-     set_C99_only(false);
-     set_C99_gnu_only(false);
-     set_C11_only(false);
-     set_C11_gnu_only(false);
+          set_Cxx11_only(false);
+          set_Cxx11_gnu_only(false);
 
-  // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
-     set_C_only(false);
+       // Set gnu specific level of C99 support to false.
+       // set_Cxx11_gnu_only(false);
 
-     ROSE_ASSERT(get_Cxx11_only() == true);
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+          set_C89_gnu_only(false);
+
+       // DQ (10/7/2015): I think that Intel compiler is trying to be consitant with C99.
+          set_C99_only(true);
+          set_C99_gnu_only(false);
+
+       // DQ (10/7/2015): I don't think that the Intel compiler for C code is C11.
+       // printf ("Is the Intel icc compiler for C code really C11? \n");
+
+          set_C11_only(false);
+          set_C11_gnu_only(false);
+
+          ROSE_ASSERT(get_C_only() == true);
+        }
+       else
+        {
+       // This is the case of a C++ file.
+          set_Cxx11_only(true);
+          set_Cxx11_gnu_only(false);
+
+       // Set gnu specific level of C99 support to false.
+       // set_Cxx11_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+          set_C89_gnu_only(false);
+          set_C99_only(false);
+          set_C99_gnu_only(false);
+          set_C11_only(false);
+          set_C11_gnu_only(false);
+
+          ROSE_ASSERT(get_C_only() == false);
+
+       // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
+       // set_C_only(false);
+
+          ROSE_ASSERT(get_Cxx11_only() == true);
+        }
+#endif
+
+#if 0
+     printf ("After part 2 detection of Intel compiler: get_C_only()   = %s \n",get_C_only() ? "true" : "false");
+     printf ("After part 2 detection of Intel compiler: get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
 #endif
 
 #if 0
@@ -5791,8 +5835,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // numberOfCommandLineArguments are parameters for the new command line that will be build
   // for EDG.
 
-  // printf ("##### Inside of SgFile::build_EDG_CommandLine file = %s \n",get_file_info()->get_filenameString().c_str());
-  // printf ("##### Inside of SgFile::build_EDG_CommandLine file = %s = %s \n",get_file_info()->get_filenameString().c_str(),get_sourceFileNameWithPath().c_str());
+#if 0
+     printf ("##### Inside of SgFile::build_EDG_CommandLine file = %s \n",get_file_info()->get_filenameString().c_str());
+     printf ("##### Inside of SgFile::build_EDG_CommandLine file = %s = %s \n",get_file_info()->get_filenameString().c_str(),get_sourceFileNameWithPath().c_str());
+#endif
+
      ROSE_ASSERT(get_file_info()->get_filenameString() == get_sourceFileNameWithPath());
 
   // ROSE_ASSERT (p_useBackendOnly == false);
@@ -5882,6 +5929,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      printf ("configDefsString = %s \n",CommandlineProcessing::generateStringFromArgList(configDefs).c_str());
   // printf ("Cxx_ConfigIncludeString = %s \n",Cxx_ConfigIncludeString.c_str());
   // printf ("C_ConfigIncludeString   = %s \n",C_ConfigIncludeString.c_str());
+#endif
+
+#if 0
+     std::string tmp5_translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,true);
+     printf ("tmp5_translatorCommandLineString = %s \n",tmp5_translatorCommandLineString.c_str());
 #endif
 
      vector<string> commandLine;
@@ -6416,6 +6468,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (9/17/2006): We should be able to build a version of this code which hands a std::string to StringUtility::splitStringIntoStrings()
   // Separate the string into substrings consistent with the structure of argv command line input
      inputCommandLine = commandLine;
+
+#if 0
+     std::string tmp6_translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,true);
+     printf ("tmp6_translatorCommandLineString = %s \n",tmp6_translatorCommandLineString.c_str());
+#endif
 
   // DQ (11/1/2011): Do we need this for the new EDG 4.3 work?
   // #ifndef ROSE_USE_NEW_EDG_INTERFACE
@@ -7060,6 +7117,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
 
   // display("at base of build_EDG_CommandLine()");
+
+#if 0
+     std::string tmp7_translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,true);
+     printf ("Leaving build_EDG_CommandLine(): tmp7_translatorCommandLineString = %s \n",tmp7_translatorCommandLineString.c_str());
+#endif
 
 #if 0
      printf ("Exiting at base of build_EDG_CommandLine() \n");
