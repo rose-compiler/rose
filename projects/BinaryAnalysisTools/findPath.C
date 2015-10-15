@@ -394,7 +394,8 @@ edgeForInstructions(const P2::Partitioner &partitioner,
 }
 
 static P2::ControlFlowGraph::ConstEdgeIterator
-edgeForInstructions(const P2::Partitioner &partitioner, const std::string &sourceNameOrVa, const std::string &targetNameOrVa) {
+edgeForInstructions(const P2::Partitioner &partitioner, const std::string &sourceNameOrVa,
+                    const std::string &targetNameOrVa) {
     return edgeForInstructions(partitioner,
                                vertexForInstruction(partitioner, sourceNameOrVa),
                                vertexForInstruction(partitioner, targetNameOrVa));
@@ -1589,6 +1590,7 @@ struct BfsContext {
 static void
 singleThreadBfsWorker(BfsContext *ctx) {
     YicesSolver solver;
+    solver.set_debug(settings.debugSmtSolver ? stderr : NULL);
     size_t lastTestedPathLength = 0;
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(ctx->partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
@@ -1600,7 +1602,8 @@ singleThreadBfsWorker(BfsContext *ctx) {
         BfsForest::VertexIterator bfsVertex;
         {
             boost::unique_lock<boost::mutex> lock(ctx->bfsForestMutex);
-            while (ctx->bfsFrontier.empty() && ctx->nWorking != BfsContext::EXIT_NOW)
+            while (ctx->nWorking != BfsContext::EXIT_NOW &&
+                   ctx->bfsFrontier.empty() && ctx->nWorking != 0)
                 ctx->bfsFrontierChanged.wait(lock);
             if ((ctx->bfsFrontier.empty() && 0 == ctx->nWorking) || ctx->nWorking == -1)
                 return;                                 // done since no worker is creating more work
@@ -1829,8 +1832,8 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
     for (size_t i=0; i<settings.nThreads; ++i)
         threads[i].join();
     delete[] threads;
-    ASSERT_require(ctx.bfsFrontier.empty());
-    ASSERT_require(ctx.bfsForest.isEmpty());
+    ASSERT_require(ctx.nWorking == BfsContext::EXIT_NOW || ctx.bfsFrontier.empty());
+    ASSERT_require(ctx.nWorking == BfsContext::EXIT_NOW || ctx.bfsForest.isEmpty());
     searching <<"; took " <<searchTime <<" seconds\n";
 }
 
