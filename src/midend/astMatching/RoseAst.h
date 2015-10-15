@@ -76,12 +76,21 @@ class RoseAst {
     /*! \brief This function allows to filter null values, such that a dereferenced
      iterator never returns a null value.
 
-     \details By default this mode is OFF. The function returns the iterator itself and can therefore
-      be called together with begin (e.g. Ast::iterator i=myast.begin().withoutNullValues();)
+     \details By default this mode is ON. The function returns the
+      iterator itself and can therefore be called together with begin
+      (e.g. Ast::iterator i=myast.begin().withoutNullValues();)
       \author Markus Schordan
       \date 2012
     */
     iterator& withoutNullValues();
+    /*! \brief This function allows to also traverse null values, such that a dereferenced
+     iterator can return a null value for nodes that do not exist. This function is for example used when matching two ASTs.
+
+     \details By default this mode is OFF. The function returns the iterator itself and can therefore
+      be called together with begin (e.g. Ast::iterator i=myast.begin().withNullValues();)
+      \author Markus Schordan
+      \date 2012
+    */
     iterator& withNullValues();
 
     //! returns the parent AST node relative to the *iteration*.
