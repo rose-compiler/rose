@@ -33,15 +33,15 @@ Grammar::markNodeForConstructorWithoutSourcePositionInformation ( Terminal & nod
                string variableName = (*i)->variableNameString;
                if (variableName == "startOfConstruct")
                   {
-                    printf ("Resetting from (*i)->isInConstructorParameterList = %d to NO_CONSTRUCTOR_PARAMETER (=0)\n",(*i)->isInConstructorParameterList);
-                    (*i)->isInConstructorParameterList = NO_CONSTRUCTOR_PARAMETER;
+                    printf ("Resetting from (*i)->isInConstructorParameterList = %d to NO_CONSTRUCTOR_PARAMETER (=0)\n",(*i)->isInConstructorParameterList());
+                    (*i)->setIsInConstructorParameterList(NO_CONSTRUCTOR_PARAMETER);
                   }
                i++;
              }
 #else
           GrammarString* returnValue = getNamedDataMember ( node, "startOfConstruct" );
           ROSE_ASSERT(returnValue != NULL);
-          returnValue->isInConstructorParameterList = NO_CONSTRUCTOR_PARAMETER;
+          returnValue->setIsInConstructorParameterList(NO_CONSTRUCTOR_PARAMETER);
 #endif
        // ROSE_ASSERT(false);
         }

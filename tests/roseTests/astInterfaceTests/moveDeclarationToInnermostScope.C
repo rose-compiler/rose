@@ -290,6 +290,9 @@ class visitorTraversal : public AstSimpleProcessing
   protected:
     void virtual visit (SgNode* n)
     {
+#if 0
+      printf ("In visitorTraversal::visit(): n = %p = %s \n",n,n->class_name().c_str());
+#endif
       //      if (isSgFunctionDeclaration(n)!=NULL)
       //      This will match SgTemplateInstantiationFunctionDecl, which is not wanted.
       if (n->variantT() == V_SgFunctionDeclaration || n->variantT() == V_SgMemberFunctionDeclaration)
@@ -368,10 +371,16 @@ class visitorTraversal : public AstSimpleProcessing
 		cout<<"Consiering conservative moving for decl: "<<decl->get_file_info()->get_line() <<endl;
 	      if (null_initializer)   
 	      {
+#if 0
+                printf ("In visitorTraversal::visit(): n = %p = %s (conservative moving: useAlgorithmV2 = %s) \n",n,n->class_name().c_str(),useAlgorithmV2 ? "true" : "false");
+#endif
 		if (useAlgorithmV2)
 		  moveDeclarationToInnermostScope_v2(decl, inserted_decls, debug);
 		else
 		  moveDeclarationToInnermostScope_v1(decl, worklist, debug);
+#if 0
+                printf ("DONE: In visitorTraversal::visit(): n = %p = %s (conservative moving: useAlgorithmV2 = %s) \n",n,n->class_name().c_str(),useAlgorithmV2 ? "true" : "false");
+#endif
 	      }
 	      else
 	      {
@@ -479,6 +488,14 @@ int main(int argc, char * argv[])
 #endif
       }
 
+#if 0
+// DQ (10/13/2015): debugging the token-based unparsing (setting SgForStatement as modified.
+  printf ("NOTE: Setting verbose to value 3 to trigger debugging after the AST is built \n");
+  SgProject::set_verbose(3);
+#endif
+
+#if 1
+// DQ (10/6/2015): Remove transformation for debugging token-unparsing.
   if (!isIdentity)
      {
          SgFilePtrList file_ptr_list = project->get_fileList();
@@ -502,6 +519,7 @@ int main(int argc, char * argv[])
             generateDOTforMultipleFile(*project);
 #endif
      }
+#endif
 
   // string filename= SageInterface::generateProjectName(project);
   // generateDOTforMultipleFile(*project);
@@ -517,8 +535,15 @@ int main(int argc, char * argv[])
         generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
       }
 
+#if 0
+// DQ (10/6/2015): Remove transformation for debugging token-unparsing.
+   printf ("Calling cleanupNontransformedBasicBlockNode() \n");
+#endif
+#if 1
 // DQ (1/18/2015): Denormalize some specific normalized bodies as a test.
    SageInterface::cleanupNontransformedBasicBlockNode();
+// printf ("DONE: Calling cleanupNontransformedBasicBlockNode() \n");
+#endif
 
   if (transTracking)
   { 
@@ -1725,10 +1750,16 @@ void moveDeclarationToInnermostScope_v2 (SgVariableDeclaration* declaration, std
   SgScopeStatement* orig_scope = declaration->get_scope();
   ROSE_ASSERT  (orig_scope != NULL );
   std::vector <SgScopeStatement *> target_scopes;
+#if 0
+  printf ("In moveDeclarationToInnermostScope_v2(): declaration = %p = %s (calling findFinalTargetScopes()) \n",declaration,declaration->class_name().c_str());
+#endif
   findFinalTargetScopes (declaration, target_scopes, debug);
   std::queue<SgVariableDeclaration*> worklist;   // not really useful in this algorithm, dummy parameter
   if (target_scopes.size() > 0)
   {
+#if 0
+  printf ("In moveDeclarationToInnermostScope_v2(): declaration = %p = %s (calling copyMoveVariableDeclaration())\n",declaration,declaration->class_name().c_str());
+#endif
     copyMoveVariableDeclaration (declaration, target_scopes, worklist, my_inserted_decls);
 
 #if 0 // we should not iterate my_inserted_decls here since it may contain previously inserted declarations.

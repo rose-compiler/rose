@@ -201,12 +201,27 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                  // don't understand the problem.  so this needs a better fix.
                  // ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL);
                  // ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL);
+#if 0
                     bool isInTemplateDeclaration = ( (isSgTemplateClassDefinition(decl->get_parent()) != NULL) ||
                                                      (isSgTemplateFunctionDeclaration(decl->get_parent()) != NULL) || 
                                                      (isSgTemplateMemberFunctionDeclaration(decl->get_parent()) != NULL) || 
                                                      (decl->get_parent() != NULL && isSgTemplateFunctionDeclaration(decl->get_parent()->get_parent()) != NULL) || 
                                                      (decl->get_parent() != NULL && isSgTemplateMemberFunctionDeclaration(decl->get_parent()->get_parent()) != NULL) );
+#else
+                 // DQ (10/11/2015): We need a better test for if this is in a template class, function, member function, etc.
+                 // SgFunctionDeclaration * getEnclosingFunctionDeclaration (SgNode * astNode, const bool includingSelf=false);
+                    SgFunctionDeclaration* enclosingFunction = getEnclosingFunctionDeclaration(decl);
+                    bool isInTemplateFunctionDeclaration = enclosingFunction != NULL && (isSgTemplateMemberFunctionDeclaration(enclosingFunction) || isSgTemplateFunctionDeclaration(enclosingFunction));
+                 // SgClassDeclaration* enclosingClass = getEnclosingClassDeclaration(decl);
+                 // isInTemplateClassDeclaration = enclosingClass != NULL && isSgTemplateClassDeclaration(decl);
 
+                 // Use short-circuit evaluation to improve performance.
+                 // SgClassDefinition* enclosingClassDefinition = getEnclosingClassDefinition(decl);
+                    SgClassDefinition* enclosingClassDefinition = isInTemplateFunctionDeclaration == true ? NULL : getEnclosingClassDefinition(decl);
+                    bool isInTemplateClassDefinition = enclosingClassDefinition != NULL && isSgTemplateClassDefinition(enclosingClassDefinition);
+
+                    bool isInTemplateDeclaration = isInTemplateFunctionDeclaration || isInTemplateClassDefinition;
+#endif
                     ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL) || (isInTemplateDeclaration == true);
 
                  // DQ (2/5/2015): We need to ignore the case of un-named classes (or maybe those classes 
@@ -9909,6 +9924,56 @@ bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, 
   return rt;
 }
 
+// Split a variable declaration with an rhs assignment into two statements: a declaration and an assignment. 
+// Return the generated assignment statement, if any
+SgExprStatement* SageInterface::splitVariableDeclaration (SgVariableDeclaration* decl)
+{
+  SgExprStatement* rt = NULL; 
+  ROSE_ASSERT (decl != NULL);
+
+  SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl);
+  SgInitializer* initor = decl_var ->get_initptr();
+  if (initor == NULL)
+    rt = NULL;
+  else
+  {
+    SgAssignInitializer * ainitor = isSgAssignInitializer (initor);
+    ROSE_ASSERT (ainitor);
+    // we deep copy the rhs operand
+    rt = buildAssignStatement (buildVarRefExp(decl_var) , deepCopy(ainitor->get_operand()));
+    decl_var->set_initptr(NULL);
+    //TODO clean up initor
+    insertStatementAfter ( decl, rt );
+   }  
+
+  return rt; 
+}
+//! Split declarations within a scope into declarations and assignment statements, by default only top level declarations are considered.
+ROSE_DLL_API int SageInterface::splitVariableDeclaration (SgScopeStatement* scope, bool topLevelOnly /* = true */)
+{
+  int count = 0; 
+  if (!topLevelOnly)
+  {
+    cerr<<"SageInterface::splitVariableDeclaration() topLevelOnly == false is not yet implemented."<<endl;
+    ROSE_ASSERT (false);  
+  }
+
+  Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(scope, V_SgVariableDeclaration);
+  for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+  {
+    SgVariableDeclaration *decl= isSgVariableDeclaration(*i);
+    if (topLevelOnly)
+    {
+      if (decl->get_scope() == scope)
+      {
+        splitVariableDeclaration (decl);
+        count ++;
+      }
+    }
+  }
+  return count; 
+}
+
 void SageInterface::collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* > & result)
 {
   ROSE_ASSERT (root != NULL);    
@@ -12794,7 +12859,30 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
                     info->setAsTransformation();
                  // ROSE_ASSERT(stmt_dst->getAttachedPreprocessingInfo() != NULL);
                  // stmt_dst->getAttachedPreprocessingInfo()->setAsTransformation();
+
+                 // DQ (10/13/2015): This is a problem for the token-based unparsing since we don't want to have this 
+                 // set_containsTransformationToSurroundingWhitespace() function cause the isModified flag to be set.
+                 // So we have to detect it being set and reset it as needed.  An alternative would be to have a 
+                 // non-ROSETTA generate function that didn't have the isModified flag set for the seter access function.
+                 // Note that the inputmoveDeclarationToInnermostScope_test2015_123.C file demonstrates this problem.
+                    bool isMarkedAsModified = stmt_dst->get_isModified();
                     stmt_dst->set_containsTransformationToSurroundingWhitespace(true);
+                    if (isMarkedAsModified == false)
+                       {
+                         if (stmt_dst->get_isModified() == true)
+                            {
+#if 0
+                              printf ("In SageInterface::movePreprocessingInfo(): Reset isModified flag to FALSE: stmt_dst = %p = %s \n",stmt_dst,stmt_dst->class_name().c_str());
+#endif
+                              stmt_dst->set_isModified(false);
+                            }
+                       }
+                      else
+                       {
+#if 0
+                         printf ("In SageInterface::movePreprocessingInfo(): This was already marked as isModified == TRUE: stmt_dst = %p = %s \n",stmt_dst,stmt_dst->class_name().c_str());
+#endif
+                       }
 
                     (*infoToRemoveList).push_back(*i);
                   }
@@ -13133,7 +13221,7 @@ void SageInterface::recordNormalizations(SgStatement* s)
 void SageInterface::cleanupNontransformedBasicBlockNode()
    {
   // Remove unused basic block IR nodes added as part of normalization.
-  // This function shuld be called before the unparse step.
+  // This function should be called before the unparse step.
 
 #if 0
      printf ("In SageInterface::cleanupNontransformedBasicBlockNode(): addedBasicBlockNodes.size() = %zu \n",addedBasicBlockNodes.size());
@@ -13151,6 +13239,8 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
                 SgStatement* parentOfBlock = isSgStatement(b->get_parent());
                 ROSE_ASSERT(parentOfBlock != NULL);
 
+                bool wasPreviouslyModified = parentOfBlock->get_isModified();
+
                 SgStatement* s = b->get_statements()[0];
                 ROSE_ASSERT(s != NULL);
 
@@ -13161,17 +13251,43 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
                           SgIfStmt* ifStatement = isSgIfStmt(parentOfBlock);
                           if (b == ifStatement->get_true_body())
                              {
+#if 0
+                               printf ("Calling set_true_body on ifStatement = %p = %s \n",ifStatement,ifStatement->class_name().c_str());
+#endif
+                            // DQ (10/6/2015): This member function call is causing the IR node to be marked as transformed.
                                ifStatement->set_true_body(s);
+#if 0
+                               printf ("Calling set_parent on s = %p = %n \n",s,s->class_name().c_str());
+#endif
+                            // DQ (10/6/2015): Calls to the set_parent member function do NOT cause the either node to be marked as isModfied.
                                s->set_parent(ifStatement);
+#if 0
+                               printf ("DONE: Calling set_parent on s = %p = %n \n",s,s->class_name().c_str());
+#endif
                                *i = NULL;
                             // delete b;
                              }
                             else
                              {
                                ROSE_ASSERT(b == ifStatement->get_false_body());
+#if 0
+                               printf ("Calling set_false_body on ifStatement = %p = %s \n",ifStatement,ifStatement->class_name().c_str());
+#endif
+                            // DQ (10/6/2015): This member function call is causing the IR node to be marked as transformed.
                                ifStatement->set_false_body(s);
+#if 0
+                               printf ("Calling set_parent on s = %p = %n \n",s,s->class_name().c_str());
+#endif
+                            // DQ (10/6/2015): Calls to the set_parent member function do NOT cause the either node to be marked as isModfied.
                                s->set_parent(ifStatement);
+#if 0
+                               printf ("DONE: Calling set_parent on s = %p = %n \n",s,s->class_name().c_str());
+#endif
                                *i = NULL;
+#if 0
+                               printf ("Mark as NOT modified after calling set_false_body on ifStatement = %p = %n \n",ifStatement,ifStatement->class_name().c_str());
+#endif
+                            // ifStatement->set_isModified(false);
 #if 0
                                printf ("Error: case not handled in case V_SgIfStmt: parentOfBlock = %p = %s \n",parentOfBlock,parentOfBlock->class_name().c_str());
                                ROSE_ASSERT(false);
@@ -13257,6 +13373,19 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
                           printf ("Error: case not handled in switch: parentOfBlock = %p = %s \n",parentOfBlock,parentOfBlock->class_name().c_str());
                           ROSE_ASSERT(false);
                         }
+                   }
+
+             // DQ (10/6/2015): Added code to reset isModified flag if it was only modified by this function.
+                if (wasPreviouslyModified == false)
+                   {
+                     if (parentOfBlock->get_isModified() == true)
+                        {
+#if 0
+                          printf ("In SageInterface::cleanupNontransformedBasicBlockNode(): parentOfBlock reset to FALSE after IR node member function call (e.g. set_body()): parentOfBlock = %p = %s \n",parentOfBlock,parentOfBlock->class_name().c_str());
+#endif
+                          parentOfBlock->set_isModified(false);
+                        }
+
                    }
 #if 0
                 printf ("Exiting as a test! \n");
@@ -13592,6 +13721,9 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
       bool allowEmptyBody; 
       Visitor (bool flag):allowEmptyBody(flag) {}
       virtual void visit(SgNode* n) {
+
+        bool wasPreviouslyModified = n->get_isModified();
+
         switch (n->variantT()) {
           case V_SgForStatement: {
             ensureBasicBlockAsBodyOfFor(isSgForStatement(n));
@@ -13612,6 +13744,18 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
           case V_SgIfStmt: {
             ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(n));
             ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(n), allowEmptyBody);
+#if 0
+         // DQ (10/6/2015): Debugging why changes are being made to the AST for token-based unparsing.
+            printf ("In changeAllBodiesToBlocks(): case SgIfStmt: n->get_isModified() = %s \n",n->get_isModified() ? "true" : "false");
+#endif
+#if 0
+         // Reset this to false as a test.
+            if (n->get_isModified() == true)
+               {
+                 n->set_isModified(false);
+                 printf ("In changeAllBodiesToBlocks(): AFTER RESET: case SgIfStmt: n->get_isModified() = %s \n",n->get_isModified() ? "true" : "false");
+               }
+#endif
             break;
           }
           case V_SgCatchOptionStmt: {
@@ -13630,6 +13774,20 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
               break;
             }
         }
+
+  // DQ (10/6/2015): Added code to reset isModified flag if it was only modified by this function.
+     if (wasPreviouslyModified == false)
+        {
+          if (n->get_isModified() == true)
+             {
+#if 0
+               printf ("In SageInterface::changeAllBodiesToBlocks(): parentOfBlock reset to FALSE after IR node member function call (e.g. set_body()): parentOfBlock = %p = %s \n",n,n->class_name().c_str());
+#endif
+               n->set_isModified(false);
+             }
+
+        }
+
       }
     };
     Visitor(createEmptyBody).traverse(top, postorder);
