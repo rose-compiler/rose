@@ -1,6 +1,7 @@
 #include <rose.h>
 
 #include <AsmUnparser_compat.h>
+#include <BinarySymbolicExprParser.h>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
@@ -57,6 +58,7 @@ struct Settings {
     bool debugSmtSolver;                                // turn on SMT debugging?
     Sawyer::Optional<rose_addr_t> initialStackPtr;      // concrete value to use for stack pointer register initial value
     size_t nThreads;                                    // number of threads for algorithms that support multi-threading
+    std::vector<std::string> postConditionsStr;         // final conditions for registers and memory
     Settings()
         : beginVertex("_start"), maxRecursionDepth(4), maxCallDepth(100), maxPathLength(1600), vertexVisitLimit(1),
           showInstructions(true), showConstraints(false), showFinalState(false), showFunctionSubgraphs(true),
@@ -98,6 +100,8 @@ static FunctionSummaries functionSummaries;
 
 // Stack of states per vertex
 typedef Sawyer::Container::Map<P2::ControlFlowGraph::ConstVertexIterator, std::vector<BaseSemantics::StatePtr> > StateStacks;
+
+static SymbolicExprParser postConditionParser(const BaseSemantics::RiscOperatorsPtr&);
 
 // Describe and parse the command-line
 static std::vector<std::string>
@@ -220,6 +224,17 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
                .doc("Comma-separated list (or multiple occurrences of this switch) of function entry addresses for "
                     "functions that should be summarized/approximated instead of traversed."));
 
+    //---------------------------
+    SwitchGroup pcond("Post-condition switches");
+    pcond.insert(Switch("post-condition")
+                 .argument("expression", anyParser(settings.postConditionsStr))
+                 .whichValue(SAVE_ALL)
+                 .doc("Specifies post conditions that must be met at the end of the path. This switch may appear "
+                      "multiple times, in which case all post conditions must be met in order for the path to be "
+                      "reported.  Post conditions are specified as symbolic expressions and, due to the parentheses and "
+                      "white space, likely need to be protected from shell expansion by enclosing them in quotes. " +
+                      postConditionParser(BaseSemantics::RiscOperatorsPtr()).docString()));
+
     //--------------------------- 
     SwitchGroup out("Output switches");
     out.insert(Switch("show-instructions")
@@ -309,7 +324,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
                .intrinsicValue(false, settings.debugSmtSolver)
                .hidden(true));
 
-    ParserResult cmdline = parser.with(cfg).with(out).parse(argc, argv).apply();
+    ParserResult cmdline = parser.with(cfg).with(pcond).with(out).parse(argc, argv).apply();
 
     // These switches from the rose library have no Settings struct yet, so we need to query the parser results to get them.
     if (cmdline.have("threads"))
@@ -670,7 +685,6 @@ private:
      *  an address as opposed to a value stored across some addresses. */
     std::string commentForVariable(const BaseSemantics::SValuePtr &addr, const std::string &accessMode,
                                    size_t byteNumber=0, size_t nBytes=0) {
-        using namespace InsnSemanticsExpr;
         std::string varComment = "first " + accessMode + " at ";
         if (pathInsnIndex_ != (size_t)(-1))
             varComment += "path position #" + StringUtility::numberToString(pathInsnIndex_) + ", ";
@@ -678,9 +692,9 @@ private:
 
         // Sometimes we can save useful information about the address.
         if (nBytes != 1) {
-            TreeNodePtr addrExpr = SymbolicSemantics::SValue::promote(addr)->get_expression();
-            if (LeafNodePtr addrLeaf = addrExpr->isLeafNode()) {
-                if (addrLeaf->is_known()) {
+            SymbolicExpr::Ptr addrExpr = SymbolicSemantics::SValue::promote(addr)->get_expression();
+            if (SymbolicExpr::LeafPtr addrLeaf = addrExpr->isLeafNode()) {
+                if (addrLeaf->isNumber()) {
                     varComment += "\n";
                     if (nBytes > 1) {
                         varComment += StringUtility::numberToString(byteNumber) + " of " +
@@ -688,24 +702,24 @@ private:
                     }
                     varComment += "at address " + addrLeaf->toString();
                 }
-            } else if (InternalNodePtr addrINode = addrExpr->isInternalNode()) {
-                if (addrINode->get_operator() == OP_ADD && addrINode->nchildren() == 2 &&
-                    addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->is_variable() &&
-                    addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->is_known()) {
-                    LeafNodePtr base = addrINode->child(0)->isLeafNode();
-                    LeafNodePtr offset = addrINode->child(1)->isLeafNode();
+            } else if (SymbolicExpr::InteriorPtr addrINode = addrExpr->isInteriorNode()) {
+                if (addrINode->getOperator() == SymbolicExpr::OP_ADD && addrINode->nChildren() == 2 &&
+                    addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->isVariable() &&
+                    addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->isNumber()) {
+                    SymbolicExpr::LeafPtr base = addrINode->child(0)->isLeafNode();
+                    SymbolicExpr::LeafPtr offset = addrINode->child(1)->isLeafNode();
                     varComment += "\n";
                     if (nBytes > 1) {
                         varComment += StringUtility::numberToString(byteNumber) + " of " +
                                       StringUtility::numberToString(nBytes) + " bytes starting ";
                     }
                     varComment += "at address ";
-                    if (base->get_comment().empty()) {
+                    if (base->comment().empty()) {
                         varComment = base->toString();
                     } else {
-                        varComment += base->get_comment();
+                        varComment += base->comment();
                     }
-                    Sawyer::Container::BitVector tmp = offset->get_bits();
+                    Sawyer::Container::BitVector tmp = offset->bits();
                     if (tmp.get(tmp.size()-1)) {
                         varComment += " - 0x" + tmp.negate().toHex();
                     } else {
@@ -772,8 +786,8 @@ public:
             return retval;                              // not called from dispatcher on behalf of an instruction
 
         // Save a description of the variable
-        InsnSemanticsExpr::TreeNodePtr valExpr = SymbolicSemantics::SValue::promote(retval)->get_expression();
-        if (valExpr->isLeafNode() && valExpr->isLeafNode()->is_variable()) {
+        SymbolicExpr::Ptr valExpr = SymbolicSemantics::SValue::promote(retval)->get_expression();
+        if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable()) {
             std::string comment = commentForVariable(addr, "read");
             varComment(valExpr->isLeafNode()->toString(), comment);
         }
@@ -803,8 +817,8 @@ public:
         Super::writeMemory(segreg, addr, value, cond);
 
         // Save a description of the variable
-        InsnSemanticsExpr::TreeNodePtr valExpr = SymbolicSemantics::SValue::promote(value)->get_expression();
-        if (valExpr->isLeafNode() && valExpr->isLeafNode()->is_variable()) {
+        SymbolicExpr::Ptr valExpr = SymbolicSemantics::SValue::promote(value)->get_expression();
+        if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable()) {
             std::string comment = commentForVariable(addr, "write");
             varComment(valExpr->isLeafNode()->toString(), comment);
         }
@@ -886,8 +900,6 @@ buildVirtualCpu(const P2::Partitioner &partitioner) {
 /** Process instructions for one basic block on the specified virtual CPU. */
 static void
 processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::DispatcherPtr &cpu, size_t pathInsnIndex) {
-    using namespace InsnSemanticsExpr;
-
     ASSERT_not_null(bblock);
     
     // Update the path constraint "register"
@@ -1051,7 +1063,7 @@ insertCallSummary(P2::ControlFlowGraph &paths /*in,out*/, const P2::ControlFlowG
 
 static void
 printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pathsGraph, const P2::CfgPath &path,
-             size_t pathNumber, const std::vector<InsnSemanticsExpr::TreeNodePtr> &pathConstraints, SMTSolver &solver,
+             size_t pathNumber, const std::vector<SymbolicExpr::Ptr> &pathConstraints, SMTSolver &solver,
              const RiscOperatorsPtr &ops) {
     std::cout <<"Found feasible path #" <<pathNumber
               <<" with " <<StringUtility::plural(path.nVertices(), "vertices", "vertex") <<".\n";
@@ -1109,7 +1121,7 @@ printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pat
             std::cout <<"    none\n";
         } else {
             size_t idx = 0;
-            BOOST_FOREACH (const InsnSemanticsExpr::TreeNodePtr &constraint, pathConstraints)
+            BOOST_FOREACH (const SymbolicExpr::Ptr &constraint, pathConstraints)
                 std::cout <<"    #" <<std::setw(5) <<std::left <<idx++ <<" " <<*constraint <<"\n";
         }
     }
@@ -1123,12 +1135,116 @@ printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pat
     }
 }
 
+// Parse register names
+class RegisterExpansion: public SymbolicExprParser::AtomExpansion {
+    BaseSemantics::RiscOperatorsPtr ops_;
+protected:
+    RegisterExpansion(const BaseSemantics::RiscOperatorsPtr &ops)
+        : ops_(ops) {}
+public:
+    static Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
+        Ptr functor = Ptr(new RegisterExpansion(ops));
+        functor->title("Registers");
+        std::string doc = "Register locations are specified by just mentioning the name of the register. Register names "
+                          "are usually lower case, such as \"eax\", \"rip\", etc.";
+        functor->docString(doc);
+        return functor;
+    }
+    SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &token) ROSE_OVERRIDE {
+        BaseSemantics::RegisterStatePtr regState = ops_->get_state()->get_register_state();
+        const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(token.lexeme());
+        if (NULL == regp)
+            return SymbolicExpr::Ptr();
+        if (token.width()!=0 && token.width()!=regp->get_nbits()) {
+            throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.width()) +
+                                    ", actual=" + StringUtility::numberToString(regp->get_nbits()) + ")");
+        }
+        if (token.width2() != 0)
+            throw token.syntaxError("register width must be scalar");
+        BaseSemantics::SValuePtr regValue = regState->readRegister(*regp, ops_.get());
+        return SymbolicSemantics::SValue::promote(regValue)->get_expression();
+    }
+};
+
+// Parse memory names. These are expressions of the form (mem ADDRESS)
+class MemoryExpansion: public SymbolicExprParser::OperatorExpansion {
+    BaseSemantics::RiscOperatorsPtr ops_;
+protected:
+    MemoryExpansion(const BaseSemantics::RiscOperatorsPtr &ops)
+        : ops_(ops) {}
+public:
+    static Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
+        Ptr functor = Ptr(new MemoryExpansion(ops));
+        functor->title("Memory");
+        functor->docString("Memory values are specified with the \"mem\" operator, which takes one operand: a memory address. "
+                           "For example, the top byte of the stack for an 32-bit architecture is \"(mem esp)\". Each value "
+                           "stored at a memory address is eight bits wide.");
+        return functor;
+    }
+    SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &token, const SymbolicExpr::Nodes &operands) {
+        if (token.lexeme() != "mem")
+            return SymbolicExpr::Ptr();
+        if (operands.size() != 1)
+            throw token.syntaxError("mem operator expects one argument (address)");
+        SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(ops_->undefined_(operands[0]->nBits()));
+        addr->set_expression(operands[0]);
+        BaseSemantics::MemoryStatePtr memState = ops_->get_state()->get_memory_state();
+        BaseSemantics::SValuePtr memValue = memState->readMemory(addr, ops_->undefined_(8), ops_.get(), ops_.get());
+        if (token.width() != 0 && memValue->get_width() !=token.width()) {
+            throw token.syntaxError("operator size mismatch (specified=" + StringUtility::numberToString(token.width()) +
+                                    ", actual=" + StringUtility::numberToString(memValue->get_width()) + ")");
+        }
+        if (token.width2() != 0)
+            throw token.syntaxError("memory operator width must be scalar");
+        return SymbolicSemantics::SValue::promote(memValue)->get_expression();
+    }
+};
+
+static SymbolicExprParser
+postConditionParser(const BaseSemantics::RiscOperatorsPtr &ops) {
+    SymbolicExprParser parser;
+    parser.appendAtomExpansion(RegisterExpansion::instance(ops));
+    parser.appendOperatorExpansion(MemoryExpansion::instance(ops));
+    return parser;
+}
+
+// Incorporate post conditions into the path constraints.
+static void
+incorporatePostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops contains final path state
+                          std::vector<SymbolicExpr::Ptr> &pathConstraints /*out*/) {
+    SymbolicExprParser parser = postConditionParser(ops);
+    BOOST_FOREACH (const std::string &postCondStr, settings.postConditionsStr) {
+        try {
+            SymbolicExpr::Ptr expr = parser.parse(postCondStr, "tool argument");
+            pathConstraints.push_back(expr);
+#if 1 // DEBUGGING [Robb P. Matzke 2015-10-12]
+            std::cerr <<"    post condition: " <<*expr <<"\n";
+#endif
+        } catch (const SymbolicExprParser::SyntaxError &e) {
+            std::cerr <<e <<"\n";
+            if (e.lineNumber != 0) {
+                std::cerr <<"    argument: " <<postCondStr <<"\n"
+                          <<"    here------" <<std::string(e.columnNumber, '-') <<"^\n\n";
+            }
+            exit(1);
+        }
+    }
+}
+
+// Checks that post-conditions are valid before we spend a long time looking for feasible paths.
+static void
+checkPostConditionSyntax(const P2::Partitioner &partitioner) {
+    BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    std::vector<SymbolicExpr::Ptr> pathConstraints;
+    incorporatePostConditions(ops, pathConstraints);
+}
+
 /** Process one path. Given a path, determine if the path is feasible.  If @p showResults is set, then emit information about
  *  the initial conditions that cause this path to be taken. */
 static SMTSolver::Satisfiable
 singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths, const P2::CfgPath &path,
-                      bool emitResults) {
-    using namespace rose::BinaryAnalysis::InsnSemanticsExpr;     // TreeNode, InternalNode, LeafNode
+                      bool atEndOfPath) {
     ASSERT_require(settings.searchMode == SEARCH_SINGLE_DFS);
 
     static int npaths = -1;
@@ -1149,7 +1265,7 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     setInitialState(cpu, path.frontVertex());
-    std::vector<InsnSemanticsExpr::TreeNodePtr> pathConstraints;
+    std::vector<SymbolicExpr::Ptr> pathConstraints;
 
     size_t pathInsnIndex = 0;
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, path.edges()) {
@@ -1164,18 +1280,20 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
                 return SMTSolver::SAT_NO;
             }
         } else if (hasVirtualAddress(pathEdge->target())) {
-            LeafNodePtr targetVa = LeafNode::create_integer(ip->get_width(), virtualAddress(pathEdge->target()));
-            TreeNodePtr constraint = InternalNode::create(1, OP_EQ,
-                                                          targetVa, SymbolicSemantics::SValue::promote(ip)->get_expression());
+            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), virtualAddress(pathEdge->target()));
+            SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
+                                                                SymbolicSemantics::SValue::promote(ip)->get_expression());
             pathConstraints.push_back(constraint);
         }
     }
+    if (atEndOfPath)
+        incorporatePostConditions(ops, pathConstraints /*out*/);
 
     // Are the constraints satisfiable.  Empty constraints are tivially satisfiable.
     SMTSolver::Satisfiable isSatisfied = SMTSolver::SAT_UNKNOWN;
     isSatisfied = solver.satisfiable(pathConstraints);
 
-    if (!emitResults)
+    if (!atEndOfPath)
         return isSatisfied;
 
     if (isSatisfied == SMTSolver::SAT_YES) {
@@ -1279,27 +1397,10 @@ findAndProcessSinglePaths(const P2::Partitioner &partitioner, const P2::ControlF
                     insertCallSummary(paths, backVertex, partitioner.cfg(), cfgCallEdge);
                 }
             }
-#if 1 // DEBUGGING [Robb P. Matzke 2015-05-15]
-            {
-                std::ofstream out("x-robb-1.dot");
-                P2::CfgConstVertexSet end;
-                end.insert(backVertex);
-                printGraphViz(out, partitioner, paths, path.frontVertex(), end, path);
-            }
-#endif
 
             // Remove all call-return edges. This is necessary so we don't re-enter this case with infinite recursion. No need
             // to worry about adjusting the path because these edges aren't on the current path.
             P2::eraseEdges(paths, P2::findCallReturnEdges(backVertex));
-#if 1 // DEBUGGING [Robb P. Matzke 2015-05-15]
-            {
-                std::ofstream out("x-robb-2.dot");
-                P2::CfgConstVertexSet end;
-                end.insert(backVertex);
-                printGraphViz(out, partitioner, paths, path.frontVertex(), end, path);
-            }
-#endif
-
 
             // If the inlined function had no return sites but the call site had a call-return edge, then part of the paths
             // graph might now be unreachable. In fact, there might now be no paths from the begin vertex to any end vertex.
@@ -1436,7 +1537,7 @@ std::ostream& operator<<(std::ostream &out, const SinglePathProgress &x) {
 struct BfsForestVertex {
     P2::ControlFlowGraph::ConstEdgeIterator pathsEdge;  // last CFG edge in path
     BaseSemantics::StatePtr state;                      // state at entry to this edge
-    InsnSemanticsExpr::TreeNodePtr constraint;          // optional path constraint
+    SymbolicExpr::Ptr constraint;                       // optional path constraint
     size_t nInsns;                                      // number of instructions to start of this edge
     size_t id;                                          // id number for debugging worklist
     BfsForestVertex(const P2::ControlFlowGraph::ConstEdgeIterator &pathsEdge, const BaseSemantics::StatePtr &state,
@@ -1487,8 +1588,6 @@ struct BfsContext {
 // Runs in a separate thread.
 static void
 singleThreadBfsWorker(BfsContext *ctx) {
-    using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
-
     YicesSolver solver;
     size_t lastTestedPathLength = 0;
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(ctx->partitioner);
@@ -1537,16 +1636,17 @@ singleThreadBfsWorker(BfsContext *ctx) {
         // If this edge is not a number and we know the EIP at the end of this path edge, then we have a path constraint that
         // needs to be solved.
         if (!abandonPrefix && !ip->is_number() && pathsEdge->target()->value().type() != P2::V_INDETERMINATE) {
-            LeafNodePtr targetVa = LeafNode::create_integer(ip->get_width(), pathsEdge->target()->value().address());
-            TreeNodePtr constraint = InternalNode::create(1, OP_EQ, targetVa,
-                                                          SymbolicSemantics::SValue::promote(ip)->get_expression());
+            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), pathsEdge->target()->value().address());
+            SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
+                                                                SymbolicSemantics::SValue::promote(ip)->get_expression());
             bfsVertex->value().constraint = constraint;
             SAWYER_MESG(debug) <<"  path edge has constraint expression\n";
         }
 
         // Accumulate all constraints along this path and invoke the SMT solver.
+        bool atEndOfPath = ctx->pathsEndVertices.find(pathsEdge->target()) != ctx->pathsEndVertices.end();
         SMTSolver::Satisfiable isFeasible = SMTSolver::SAT_UNKNOWN;
-        std::vector<TreeNodePtr> pathConstraints;
+        std::vector<SymbolicExpr::Ptr> pathConstraints;
         if (!abandonPrefix) {
             BfsForest::VertexIterator vertex=bfsVertex;
             lastTestedPathLength = 0;
@@ -1558,6 +1658,8 @@ singleThreadBfsWorker(BfsContext *ctx) {
                     break;                              // vertex is the root of the tree
                 vertex = vertex->inEdges().begin()->source();
             }
+            if (atEndOfPath)
+                incorporatePostConditions(ops, pathConstraints /*out*/);
             SAWYER_MESG(debug) <<"  solving " <<StringUtility::plural(pathConstraints.size(), "path constraints") <<"\n";
             isFeasible = solver.satisfiable(pathConstraints);
             if (SMTSolver::SAT_NO == isFeasible)
@@ -1567,7 +1669,6 @@ singleThreadBfsWorker(BfsContext *ctx) {
         }
 
         // Print results
-        bool atEndOfPath = ctx->pathsEndVertices.find(pathsEdge->target()) != ctx->pathsEndVertices.end();
         bool shouldExit = false;
         if (isFeasible == SMTSolver::SAT_YES && atEndOfPath) {
             SAWYER_MESG(debug) <<"  path is feasible and complete (printing results)\n";
@@ -1739,8 +1840,6 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
 static BaseSemantics::StatePtr
 mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
                      const BaseSemantics::StatePtr &s1, const BaseSemantics::StatePtr &s2) {
-    using namespace InsnSemanticsExpr;
-
     ASSERT_not_null(ops);
     ASSERT_not_null(s2);
     if (s1 == NULL)
@@ -1780,10 +1879,9 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     // Merge memory states s1mem and s2mem into mergedMem
     BaseSemantics::SymbolicMemoryPtr s1mem = BaseSemantics::SymbolicMemory::promote(s1->get_memory_state());
     BaseSemantics::SymbolicMemoryPtr s2mem = BaseSemantics::SymbolicMemory::promote(s2->get_memory_state());
-    TreeNodePtr memExpr1 = s1mem->expression();
-    TreeNodePtr memExpr2 = s2mem->expression();
-    TreeNodePtr mergedExpr = InternalNode::create(memExpr1->get_nbits(), OP_ITE, s1Constraint->get_expression(),
-                                                  memExpr1, memExpr2);
+    SymbolicExpr::Ptr memExpr1 = s1mem->expression();
+    SymbolicExpr::Ptr memExpr2 = s2mem->expression();
+    SymbolicExpr::Ptr mergedExpr = SymbolicExpr::makeIte(s1Constraint->get_expression(), memExpr1, memExpr2);
     BaseSemantics::SymbolicMemoryPtr mergedMem = BaseSemantics::SymbolicMemory::promote(s1mem->clone());
     mergedMem->expression(mergedExpr);
 
@@ -1874,7 +1972,6 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
                      const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex,
                      const P2::CfgConstVertexSet &pathsEndVertices) {
     using namespace Sawyer::Container::Algorithm;
-    using namespace InsnSemanticsExpr;
 #if 1 // [Robb P. Matzke 2015-05-09]
     TODO("[Robb P. Matzke 2015-05-09]");
 #else
@@ -1989,7 +2086,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
         // Final path expression
         BaseSemantics::SValuePtr path = ops->readRegister(REG_PATH);
         TreeNodePtr constraint = InternalNode::create(1, OP_EQ,
-                                                      LeafNode::create_integer(1, 1),
+                                                      SymbolicExpr::makeInteger(1, 1),
                                                       SymbolicSemantics::SValue::promote(path)->get_expression());
         info <<"  constraints expression has " <<StringUtility::plural(constraint->nnodes(), "terms") <<"\n";
         if (settings.showConstraints) {
@@ -2130,15 +2227,17 @@ findAndProcessMultiPaths(const P2::Partitioner &partitioner, const P2::ControlFl
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]) {
+    // Initialization
     Diagnostics::initialize();
     ::mlog = Diagnostics::Facility("tool", Diagnostics::destination);
     Diagnostics::mfacilities.insertAndAdjust(::mlog);
     Sawyer::Message::Stream info(::mlog[INFO]);
 
-    // Parse the command-line
     P2::Engine engine;
     engine.doingPostAnalysis(false);
     engine.usingSemantics(true);
+
+    // Parse the command-line
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine);
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
@@ -2212,7 +2311,6 @@ int main(int argc, char *argv[]) {
     if (SgProject *project = SageInterface::getProject())
         srcMapper = DwarfLineMapper(project);
 
-
     // Calculate average number of function calls per function
     if (1) {
         size_t nFunctionCalls = 0;
@@ -2223,8 +2321,10 @@ int main(int argc, char *argv[]) {
         info <<"average number of function calls per function: "
              <<((double)nFunctionCalls / partitioner.nFunctions()) <<"\n";
     }
-    
-    // Process individual paths
+
+    checkPostConditionSyntax(partitioner);
+
+    // Process individual paths (this may take a LONG TIME!)
     switch (settings.searchMode) {
         case SEARCH_MULTI:
             findAndProcessMultiPaths(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges);
