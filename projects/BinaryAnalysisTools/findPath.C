@@ -1155,6 +1155,12 @@ public:
         const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(token.lexeme());
         if (NULL == regp)
             return SymbolicExpr::Ptr();
+        if (token.width()!=0 && token.width()!=regp->get_nbits()) {
+            throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.width()) +
+                                    ", actual=" + StringUtility::numberToString(regp->get_nbits()) + ")");
+        }
+        if (token.width2() != 0)
+            throw token.syntaxError("register width must be scalar");
         BaseSemantics::SValuePtr regValue = regState->readRegister(*regp, ops_.get());
         return SymbolicSemantics::SValue::promote(regValue)->get_expression();
     }
@@ -1188,6 +1194,8 @@ public:
             throw token.syntaxError("operator size mismatch (specified=" + StringUtility::numberToString(token.width()) +
                                     ", actual=" + StringUtility::numberToString(memValue->get_width()) + ")");
         }
+        if (token.width2() != 0)
+            throw token.syntaxError("memory operator width must be scalar");
         return SymbolicSemantics::SValue::promote(memValue)->get_expression();
     }
 };

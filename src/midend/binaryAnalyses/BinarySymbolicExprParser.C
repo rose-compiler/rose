@@ -222,6 +222,7 @@ SymbolicExprParser::TokenStream::consumeTerm() {
 
 size_t
 SymbolicExprParser::TokenStream::consumeWidth() {
+    // '['
     consumeWhiteSpaceAndComments();
     unsigned startLine = lineNumber_;
     unsigned startColumn = columnNumber_;
@@ -230,6 +231,8 @@ SymbolicExprParser::TokenStream::consumeWidth() {
                                               name_, startLine, startColumn);
     }
     consumeCharacter();
+
+    // width constant
     consumeWhiteSpaceAndComments();
     std::string s;
     while (isdigit(nextCharacter()))
@@ -239,6 +242,8 @@ SymbolicExprParser::TokenStream::consumeWidth() {
         throw SymbolicExprParser::SyntaxError("expected decimal integer in width specification",
                                               name_, startLine, startColumn);
     }
+
+    // ']'
     if (nextCharacter() == EOF)
         throw SymbolicExprParser::SyntaxError("end of input reached while parsing width", name_, startLine, startColumn);
     if (nextCharacter() != ']')
@@ -246,6 +251,61 @@ SymbolicExprParser::TokenStream::consumeWidth() {
     consumeCharacter();
     return boost::lexical_cast<size_t>(s);
 }
+
+size_t
+SymbolicExprParser::TokenStream::consumeWidth(size_t &width2 /*out*/) {
+    // '['
+    consumeWhiteSpaceAndComments();
+    unsigned startLine = lineNumber_;
+    unsigned startColumn = columnNumber_;
+    if (nextCharacter() != '[') {
+        throw SymbolicExprParser::SyntaxError("expected '[' to start a width specification",
+                                              name_, startLine, startColumn);
+    }
+    consumeCharacter();
+
+    // width constant
+    consumeWhiteSpaceAndComments();
+    std::string s;
+    while (isdigit(nextCharacter()))
+        s += consumeCharacter();
+    if (s.empty()) {
+        throw SymbolicExprParser::SyntaxError("expected decimal integer in width specification",
+                                              name_, startLine, startColumn);
+    }
+    size_t retval = boost::lexical_cast<size_t>(s);
+
+    // optional '->' 
+    consumeWhiteSpaceAndComments();
+    if (nextCharacter() == '-') {
+        consumeCharacter();
+        if (nextCharacter() != '>')
+            throw SymbolicExprParser::SyntaxError("expected '->' in width specification", name_, lineNumber_, columnNumber_);
+        consumeCharacter();
+
+        // width constant
+        consumeWhiteSpaceAndComments();
+        s = "";
+        unsigned ln = lineNumber_, cn = columnNumber_;
+        while (isdigit(nextCharacter()))
+            s += consumeCharacter();
+        if (s.empty())
+            throw SymbolicExprParser::SyntaxError("expected decimal integer domain width after '->'", name_, ln, cn);
+        width2 = boost::lexical_cast<size_t>(s);
+        consumeWhiteSpaceAndComments();
+    }
+
+    // ']'
+    if (nextCharacter() == EOF) {
+        throw SymbolicExprParser::SyntaxError("end of input reached inside '[' width expression",
+                                              name_, startLine, startColumn);
+    }
+    if (nextCharacter() != ']')
+        throw SymbolicExprParser::SyntaxError("missing closing ']' in width specification", name_, startLine, startColumn);
+    consumeCharacter();
+    return retval;
+}
+        
 
 SymbolicExprParser::Token
 SymbolicExprParser::TokenStream::scan() {
@@ -286,8 +346,9 @@ SymbolicExprParser::TokenStream::scan() {
                 return Token(bv, s, startLine, startColumn);
             } else {
                 consumeWhiteSpaceAndComments();
-                size_t nbits = nextCharacter() == '[' ? consumeWidth() : 0;
-                return Token(Token::SYMBOL, nbits, s, startLine, startColumn);
+                size_t width2 = 0;
+                size_t width1 = nextCharacter() == '[' ? consumeWidth(width2 /*out*/) : 0;
+                return Token(Token::SYMBOL, width1, width2, s, startLine, startColumn);
             }
         }
     }
@@ -701,21 +762,36 @@ public:
     static Ptr instance() {
         Ptr functor = Ptr(new CanonicalVariable);
         functor->title("Canonical variables");
-        functor->docString("Variables are written as the letter \"v\" followed by a unique identification number. The "
-                           "variable must have a non-zero explicit width. No check is made to ensure that all occurrences "
-                           "of the variable have the same width, although this is normally required.");
+        functor->docString("Variables are written as the letter \"v\" or \"m\" followed by a unique identification number. "
+                           "Variables whose name starts with \"v\" are scalar and must have an explicit width (number in "
+                           "square brackets after the variable name).  Variables that start with \"m\" are memory states "
+                           "and must be followed by a domain (address) width, a \"->\" arrow, and a range (value) width "
+                           "in square bracket (or just a domain width, in which case the range width is assumed to be "
+                           "eight). No check is made to ensure that all occurrences of a variable have the same "
+                           "width, although this is normally required.");
         return functor;
     }
     SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &symbol) {
         boost::smatch matches;
-        if (!boost::regex_match(symbol.lexeme(), matches, boost::regex("v(\\d+)")))
+        if (!boost::regex_match(symbol.lexeme(), matches, boost::regex("[vm](\\d+)")))
             return SymbolicExpr::Ptr();
         if (symbol.width() == 0) {
             throw symbol.syntaxError("variable \"" + StringUtility::cEscape(symbol.lexeme()) + "\""
                                      " must have a non-zero width specified");
         }
         uint64_t varId = rose_strtoull(matches.str(1).c_str(), NULL, 10);
-        return SymbolicExpr::makeExistingVariable(symbol.width(), varId);
+        if (symbol.lexeme()[0] == 'v') {
+            if (symbol.width2()) {
+                throw symbol.syntaxError("variable \"" + StringUtility::cEscape(symbol.lexeme()) + "\""
+                                         " should have scalar width");
+            }
+            return SymbolicExpr::makeExistingVariable(symbol.width(), varId);
+        } else {
+            ASSERT_require(symbol.lexeme()[0] == 'm');
+            size_t domainWidth = symbol.width();
+            size_t rangeWidth = symbol.width2() ? symbol.width2() : (size_t)8;
+            return SymbolicExpr::makeExistingMemory(domainWidth, rangeWidth, varId);
+        }
     }
 };
 

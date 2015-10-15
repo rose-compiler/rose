@@ -212,7 +212,7 @@ public:
 protected:
     Node()
         : nBits_(0), domainWidth_(0), flags_(0), hashval_(0) {}
-    explicit Node(std::string comment, unsigned flags=0)
+    explicit Node(const std::string &comment, unsigned flags=0)
         : nBits_(0), domainWidth_(0), flags_(flags), comment_(comment), hashval_(0) {}
 
 public:
@@ -641,10 +641,11 @@ private:
 
     // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
     // accidently using pointers to these objects -- all access should be through shared-ownership pointers.
-    Interior(size_t nbits, Operator op, const Ptr &a, std::string comment="", unsigned flags=0);
-    Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, std::string comment="", unsigned flags=0);
-    Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c, std::string comment="", unsigned flags=0);
-    Interior(size_t nbits, Operator op, const Nodes &children, std::string comment="", unsigned flags=0);
+    Interior(size_t nbits, Operator op, const Ptr &a, const std::string &comment="", unsigned flags=0);
+    Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+    Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c, const std::string &comment="",
+             unsigned flags=0);
+    Interior(size_t nbits, Operator op, const Nodes &children, const std::string &comment="", unsigned flags=0);
 
 public:
     /** Create a new expression node. Although we're creating interior nodes, the simplification process might replace it with
@@ -654,21 +655,21 @@ public:
      *  expression simplifiers. Flags specified in the constructor are set in addition to those that would normally be set.
      *
      *  @{ */
-    static Ptr create(size_t nbits, Operator op, const Ptr &a, const std::string comment="", unsigned flags=0) {
+    static Ptr create(size_t nbits, Operator op, const Ptr &a, const std::string &comment="", unsigned flags=0) {
         InteriorPtr retval(new Interior(nbits, op, a, comment, flags));
         return retval->simplifyTop();
     }
     static Ptr create(size_t nbits, Operator op, const Ptr &a, const Ptr &b,
-                      const std::string comment="", unsigned flags=0) {
+                      const std::string &comment="", unsigned flags=0) {
         InteriorPtr retval(new Interior(nbits, op, a, b, comment, flags));
         return retval->simplifyTop();
     }
     static Ptr create(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
-                      const std::string comment="", unsigned flags=0) {
+                      const std::string &comment="", unsigned flags=0) {
         InteriorPtr retval(new Interior(nbits, op, a, b, c, comment, flags));
         return retval->simplifyTop();
     }
-    static Ptr create(size_t nbits, Operator op, const Nodes &children, const std::string comment="",
+    static Ptr create(size_t nbits, Operator op, const Nodes &children, const std::string &comment="",
                       unsigned flags=0) {
         InteriorPtr retval(new Interior(nbits, op, children, comment, flags));
         return retval->simplifyTop();
@@ -822,7 +823,7 @@ public:
         return createVariable(nbits, comment, flags);
     }
 
-    /*  Construct another reference to an existing variable.  This method is used internally by the expression parsing
+    /** Construct another reference to an existing variable.  This method is used internally by the expression parsing
      *  mechanism to produce a new instance of some previously existing variable -- both instances are the same variable and
      *  therefore should be given the same size (although this consistency cannot be checked automatically). */
     static LeafPtr createExistingVariable(size_t nbits, uint64_t id, const std::string &comment="", unsigned flags=0);
@@ -835,7 +836,7 @@ public:
 
     /** Construct a new integer with the specified number of significant bits. Any high-order bits beyond the specified size
      *  will be zeroed. */
-    static LeafPtr createInteger(size_t nbits, uint64_t n, std::string comment="", unsigned flags=0);
+    static LeafPtr createInteger(size_t nbits, uint64_t n, const std::string &comment="", unsigned flags=0);
 
     // [Robb P. Matzke 2015-10-09]: deprecated
     static LeafPtr create_integer(size_t nbits, uint64_t n, std::string comment="", unsigned flags=0)
@@ -844,7 +845,7 @@ public:
     }
 
     /** Construct a new known value with the specified bits. */
-    static LeafPtr createConstant(const Sawyer::Container::BitVector &bits, std::string comment="", unsigned flags=0);
+    static LeafPtr createConstant(const Sawyer::Container::BitVector &bits, const std::string &comment="", unsigned flags=0);
 
     // [Robb P. Matzke 2015-10-09]: deprecated
     static LeafPtr create_constant(const Sawyer::Container::BitVector &bits, std::string comment="", unsigned flags=0)
@@ -853,7 +854,7 @@ public:
     }
     
     /** Create a new Boolean, a single-bit integer. */
-    static LeafPtr createBoolean(bool b, std::string comment="", unsigned flags=0) {
+    static LeafPtr createBoolean(bool b, const std::string &comment="", unsigned flags=0) {
         return createInteger(1, (uint64_t)(b?1:0), comment, flags);
     }
 
@@ -864,7 +865,13 @@ public:
     }
 
     /** Construct a new memory state.  A memory state is a function that maps addresses to values. */
-    static LeafPtr createMemory(size_t addressWidth, size_t valueWidth, std::string comment="", unsigned flags=0);
+    static LeafPtr createMemory(size_t addressWidth, size_t valueWidth, const std::string &comment="", unsigned flags=0);
+
+    /** Construct another reference to an existing variable.  This method is used internally by the expression parsing
+     * mechanism to produce a new instance of some previously existing memory state. Both instances are the same state and
+     * therefore should be given the same domain and range size (although this consistency cannot be checked automatically.) */
+    static LeafPtr createExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment="",
+                                        unsigned flags=0);
 
     // [Robb P. Matzke 2015-10-09]: deprecated
     static LeafPtr create_memory(size_t addressWidth, size_t valueWidth, std::string comment="", unsigned flags=0)
@@ -962,6 +969,7 @@ Ptr makeInteger(size_t nbits, uint64_t n, const std::string &comment="", unsigne
 Ptr makeConstant(const Sawyer::Container::BitVector&, const std::string &comment="", unsigned flags=0);
 Ptr makeBoolean(bool, const std::string &comment="", unsigned flags=0);
 Ptr makeMemory(size_t addressWidth, size_t valueWidth, const std::string &comment="", unsigned flags=0);
+Ptr makeExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment="", unsigned flags=0);
 /** @} */
 
 /** Interior node constructor.

@@ -235,7 +235,7 @@ Node::printFlags(std::ostream &o, unsigned flags, char &bracket) const {
 //                                      Interior node
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Interior::Interior(size_t nbits, Operator op, const Ptr &a, std::string comment, unsigned flags)
+Interior::Interior(size_t nbits, Operator op, const Ptr &a, const std::string &comment, unsigned flags)
     : Node(comment), op_(op), nnodes_(1) {
     addChild(a);
     adjustWidth();
@@ -246,7 +246,7 @@ Interior::Interior(size_t nbits, Operator op, const Ptr &a, std::string comment,
     }
 }
 
-Interior::Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, std::string comment, unsigned flags)
+Interior::Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags)
     : Node(comment), op_(op), nnodes_(1) {
     addChild(a);
     addChild(b);
@@ -258,7 +258,8 @@ Interior::Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, std::s
     }
 }
 
-Interior::Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c, std::string comment, unsigned flags)
+Interior::Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c, const std::string &comment,
+                   unsigned flags)
     : Node(comment), op_(op), nnodes_(1) {
     addChild(a);
     addChild(b);
@@ -271,7 +272,7 @@ Interior::Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const 
     }
 }
 
-Interior::Interior(size_t nbits, Operator op, const Nodes &children, std::string comment, unsigned flags)
+Interior::Interior(size_t nbits, Operator op, const Nodes &children, const std::string &comment, unsigned flags)
     : Node(comment), op_(op), nnodes_(1) {
     for (size_t i=0; i<children.size(); ++i)
         addChild(children[i]);
@@ -1399,7 +1400,8 @@ IteSimplifier::rewrite(const Interior *inode) const
     // Is the condition known?
     LeafPtr cond_node = inode->child(0)->isLeafNode();
     if (cond_node!=NULL && cond_node->isNumber()) {
-        ASSERT_require(1==cond_node->nBits());
+        if (cond_node->nBits() != 1)
+            throw Exception(toStr(inode->getOperator()) + " operator's first argument (condition) should be one bit wide");
         return cond_node->toInt() ? inode->child(1) : inode->child(2);
     }
 
@@ -2097,7 +2099,7 @@ Leaf::createExistingVariable(size_t nbits, uint64_t id, const std::string &comme
 
 // class method
 LeafPtr
-Leaf::createInteger(size_t nbits, uint64_t n, std::string comment, unsigned flags) {
+Leaf::createInteger(size_t nbits, uint64_t n, const std::string &comment, unsigned flags) {
     if (0 == nbits)
         throw Exception("integers must have positive width");
     Leaf *node = new Leaf(comment, flags);
@@ -2110,7 +2112,7 @@ Leaf::createInteger(size_t nbits, uint64_t n, std::string comment, unsigned flag
 
 // class method
 LeafPtr
-Leaf::createConstant(const Sawyer::Container::BitVector &bits, std::string comment, unsigned flags) {
+Leaf::createConstant(const Sawyer::Container::BitVector &bits, const std::string &comment, unsigned flags) {
     Leaf *node = new Leaf(comment, flags);
     node->nBits_ = bits.size();
     node->leafType_ = CONSTANT;
@@ -2121,7 +2123,7 @@ Leaf::createConstant(const Sawyer::Container::BitVector &bits, std::string comme
 
 // class method
 LeafPtr
-Leaf::createMemory(size_t addressWidth, size_t valueWidth, std::string comment, unsigned flags) {
+Leaf::createMemory(size_t addressWidth, size_t valueWidth, const std::string &comment, unsigned flags) {
     if (0 == addressWidth)
         throw Exception("memory addresses must have positive width");
     if (0 == valueWidth)
@@ -2135,6 +2137,23 @@ Leaf::createMemory(size_t addressWidth, size_t valueWidth, std::string comment, 
     return retval;
 }
 
+// class method
+LeafPtr
+Leaf::createExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment, unsigned flags) {
+    if (0 == addressWidth)
+        throw Exception("memory addresses must have positive width");
+    if (0 == valueWidth)
+        throw Exception("memory values must have positive width");
+    Leaf *node = new Leaf(comment, flags);
+    node->nBits_ = valueWidth;
+    node->domainWidth_ = addressWidth;
+    node->leafType_ = MEMORY;
+    node->name_ = id;
+    nameCounter_ = std::max(nameCounter_, id+1);
+    LeafPtr retval(node);
+    return retval;
+}
+    
 bool
 Leaf::isNumber() const
 {
@@ -2439,6 +2458,11 @@ makeBoolean(bool b, const std::string &comment, unsigned flags) {
 Ptr
 makeMemory(size_t addressWidth, size_t valueWidth, const std::string &comment, unsigned flags) {
     return Leaf::createMemory(addressWidth, valueWidth, comment, flags);
+}
+
+Ptr
+makeExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment, unsigned flags) {
+    return Leaf::createExistingMemory(addressWidth, valueWidth, id, comment, flags);
 }
 
 Ptr
