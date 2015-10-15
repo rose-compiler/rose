@@ -425,7 +425,15 @@ void
 YicesSolver::out_assert(std::ostream &o, const SymbolicExpr::Ptr &tn)
 {
     o <<"(assert ";
-    out_expr(o, tn);
+    if (tn->isNumber() && 1==tn->nBits()) {
+        if (tn->toInt()) {
+            o <<"true";
+        } else {
+            o <<"false";
+        }
+    } else {
+        out_expr(o, tn);
+    }
     o <<")\n";
 }
 
@@ -818,9 +826,13 @@ YicesSolver::ctx_common_subexpressions(const std::vector<SymbolicExpr::Ptr> &exp
 void
 YicesSolver::ctx_assert(const SymbolicExpr::Ptr &tn)
 {
-    yices_expr e = ctx_expr(tn);
-    ASSERT_not_null(e);
-    yices_assert(context, e);
+    if (tn->isNumber() && tn->nBits()==1) {
+        ASSERT_not_implemented("[Robb Matzke 2015-10-15]"); // see out_assert for similar code
+    } else {
+        yices_expr e = ctx_expr(tn);
+        ASSERT_not_null(e);
+        yices_assert(context, e);
+    }
 }
 #endif
 
