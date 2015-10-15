@@ -7,31 +7,31 @@
 \brief This class represents the notion of an expression or statement which 
 has a position within the source code.
 
-    There are no uses of this IR node anywhere.  All expressions and statements
+There are no uses of this IR node anywhere.  All expressions and statements
 are derived from this IR node to build either SgExpression or SgStatement 
 derived classes.
 
 \note SgLocatedNode objects have a set_startOfConstruct() and a set_endOfConstruct()
-    these must be set explicitly to define a proper AST.  The set_startOfConstruct()
-    will be called if the constructor taking a Sg_File_Info object is called (depreicated)
-    but the set_endOfConstruct() should be called explicitly.
+these must be set explicitly to define a proper AST.  The set_startOfConstruct()
+will be called if the constructor taking a Sg_File_Info object is called (depreicated)
+but the set_endOfConstruct() should be called explicitly.
 
 \internal The AttachedPreprocessingInfoType *p_attachedPreprocessingInfoPtr
-    and the AstAttributeMechanism *p_attribute are implemented as pointers
-    because they would take up 12 bytes each as STL lists and that would be
-    wasteful when we have 20 million IR nodes held in memory.  This is a
-    violation of  general rule in the IR design that we have STL containers as
-    data member instead of pointers to data members (the file I/O handles this
-    as a special case).
+and the AstAttributeMechanism *p_attribute are implemented as pointers
+because they would take up 12 bytes each as STL lists and that would be
+wasteful when we have 20 million IR nodes held in memory.  This is a
+violation of  general rule in the IR design that we have STL containers as
+data member instead of pointers to data members (the file I/O handles this
+as a special case).
 
 \todo The AstAttributeMechanism type should be handed as other IR nodes with it's own
-    memory pool, except that in all cases where it would be used, it would be a base class
-    to a user-defined derived type and thus would not fix in our memory pool.
+memory pool, except that in all cases where it would be used, it would be a base class
+to a user-defined derived type and thus would not fix in our memory pool.
 
 \todo Consider name change of "SgLocatedNode" to "SgSourceNode".  
 
 \todo Consider moving some of the IR nodes currently in SgSupport to this IR node.
-      IR nodes that might be moved would include:
+IR nodes that might be moved would include:
       -# SgFile
       -# SgDirectory (questionable)
       -# SgInitializedName
@@ -82,7 +82,7 @@ current statement of expression.
 \fn SgLocatedNode::SgLocatedNode ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgLocatedNode base class.
+This constructor builds the SgLocatedNode base class.
 
 \param startOfConstruct represents the position in the source code
 \sa 
@@ -93,14 +93,14 @@ current statement of expression.
 \fn SgLocatedNode::~SgLocatedNode()
 \brief This is the destructor.
 
-   Only the Sg_File_Info object can be deleted in this object.
+Only the Sg_File_Info object can be deleted in this object.
 */
 
 /*!
 \fn SgLocatedNode::getFileName()
 \brief Access function for "get_file_info()->get_filename()".
 
-   This function is just a simpler access function which retrives the
+This function is just a simpler access function which retrives the
 filename from the Sg_File_Info object at the current IR node.  This
 is only a convience function an as a result not a great idea.
 
@@ -114,12 +114,12 @@ function then we should have it return a string instead of char*.
 
 /*!
 \fn SgLocatedNode::addToAttachedPreprocessingInfo (PreprocessingInfo *prepInfoPtr,
-    PreprocessingInfo::RelativePositionType locationInList=PreprocessingInfo::after)
+PreprocessingInfo::RelativePositionType locationInList=PreprocessingInfo::after)
 \brief This function adds comment or CPP directives to the current IR node. 
 
 \param prepInfoPtr - This parameter is a pointer to the container for the comment/directive.
-    It is used to specify if the new  new comment/directive is added to the front or back of the current list of comments/directives.
-    It does not change relative position field of the PreprocessingInfo object. 
+It is used to specify if the new  new comment/directive is added to the front or back of the current list of comments/directives.
+It does not change relative position field of the PreprocessingInfo object. 
 \param locationInList - adds container before or after the current IR node. 
 \return Returns void.
 */
@@ -133,7 +133,7 @@ function then we should have it return a string instead of char*.
 \return Returns void.
 */
 
- 	
+	
 /*!
 \fn SgLocatedNode::set_startOfConstruct (Sg_File_Info *startOfConstruct)
 \brief This function sets the current source location position of the start 
@@ -156,7 +156,7 @@ of the current construct.
 \fn SgLocatedNode::isSgLocatedNode (SgNode *s)
 \brief Cast function (from derived class to SgLocatedNode pointer).
 
-   This functions returns a SgLocatedNode pointer for any input of a 
+This functions returns a SgLocatedNode pointer for any input of a 
 pointer to an object derived from a SgLocatedNode.
 
 \return Returns valid pointer to SgLocatedNode if input is derived from a SgLocatedNode.
@@ -166,7 +166,7 @@ pointer to an object derived from a SgLocatedNode.
 \fn SgLocatedNode::isSgLocatedNode (const SgNode *s)
 \brief Cast function (from derived class to SgLocatedNode pointer).
 
-   This functions returns a SgLocatedNode pointer for any input of a 
+This functions returns a SgLocatedNode pointer for any input of a 
 pointer to an object derived from a SgLocatedNode.
 
 \return Returns valid pointer to SgLocatedNode if input is derived from a SgLocatedNode.

@@ -101,6 +101,9 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
        // qualified name string associated with the templated class or instantiated template class.
           case V_SgConstructorInitializer:
 
+       // DQ (9/5/2015): I think this is the support we need for test2015_57.C (compound literals used as expressions).
+          case V_SgAggregateInitializer:
+
           case V_SgTypeIdOp:
           case V_SgSizeOfOp:
           case V_SgNewExp:

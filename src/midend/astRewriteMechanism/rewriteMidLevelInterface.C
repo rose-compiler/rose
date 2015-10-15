@@ -26,7 +26,7 @@ returnFirstOrLastStatementFromCurrentFile (
                Sg_File_Info* fileInfo = statement->get_file_info();
                ROSE_ASSERT (fileInfo != NULL);
                string filename = fileInfo->get_filename();
-               if (filename == ROSE::getFileNameByTraversalBackToFileNode(target))
+               if (filename == rose::getFileNameByTraversalBackToFileNode(target))
                   {
                  // printf ("Found the first statement in this file = %s \n",filename.c_str());
                  // printf ("First statement = %s \n",statement->unparseToCompleteString().c_str());
@@ -45,7 +45,7 @@ returnFirstOrLastStatementFromCurrentFile (
                Sg_File_Info* fileInfo = statement->get_file_info();
                ROSE_ASSERT (fileInfo != NULL);
                string filename = fileInfo->get_filename();
-               if (filename == ROSE::getFileNameByTraversalBackToFileNode(target))
+               if (filename == rose::getFileNameByTraversalBackToFileNode(target))
                   {
                  // printf ("Found the last statement in this file = %s \n",filename.c_str());
                  // printf ("First statement = %s \n",statement->unparseToCompleteString().c_str());

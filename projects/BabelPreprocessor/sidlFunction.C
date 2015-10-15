@@ -500,7 +500,7 @@ SIDL_TreeTraversal::generateSIDLFunctionDeclaration(SgFunctionDeclaration* funct
 			functionType->set_has_ellipses(true);
 		}
 		//else if (type->variantT() == V_SgTypeVoid)
-		/*else if (ROSE::stringDuplicate(type->sage_class_name()) == "SgTypeVoid")
+		/*else if (rose::stringDuplicate(type->sage_class_name()) == "SgTypeVoid")
 		{
 			printf("found a void\n");
 			//void type is only viable for a pointer.  foo(void) will just become foo()

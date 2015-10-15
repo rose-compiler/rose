@@ -532,9 +532,9 @@ void Grammar::generateGrammarFromAST ( SgProject *project )
           ROSE_ASSERT (localFunctionDeclaration != NULL);
 
        // Check the path so that we only include declarations defined in the library source tree
-       // string functionDeclarationPath = ROSE::getFileName(localFunctionDeclaration);
+       // string functionDeclarationPath = rose::getFileName(localFunctionDeclaration);
           string functionDeclarationPath = localFunctionDeclaration->get_file_info()->get_filename();
-          functionDeclarationPath = ROSE::getPathFromFileName(functionDeclarationPath.c_str());
+          functionDeclarationPath = rose::getPathFromFileName(functionDeclarationPath.c_str());
        // printf ("functionDeclarationPath = %s \n",functionDeclarationPath.c_str());
        // printf ("Target library path = %s \n",libraryPath.c_str());
 

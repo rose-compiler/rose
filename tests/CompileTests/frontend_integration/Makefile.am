@@ -10,7 +10,7 @@ bin_PROGRAMS = frontend_test
 frontend_test_SOURCES = frontend_test.C
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = C-tests.inc Cxx-tests.inc

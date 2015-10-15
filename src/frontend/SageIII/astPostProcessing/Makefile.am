@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 noinst_LTLIBRARIES = libastPostProcessing.la
 
@@ -99,7 +99,7 @@ EXTRA_DIST = CMakeLists.txt
 # Specification of where we put the *.P files (the comiler will build the *.d files there by default).
 # DQ (10/16/2011): Added support for makefile dependences of header files (requested by Rice).
 # Need to get this into the compileer command line to generate the *.d file in the .libs directory.
-# INCLUDES += -MMD
+# AM_CPPFLAGS += -MMD
 # DEPEND_FILE_DIR = .libs
 # This is a specific variable name used by either Make (or automake generated makefiles).
 # DEPDIR = $(DEPEND_FILE_DIR)

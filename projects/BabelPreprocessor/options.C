@@ -328,7 +328,7 @@ TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructo
                                 // printf ("Name = %s \n",enumName.str());
 
                                    string name = enumName.str();
-                                // char* name = ROSE::stringDuplicate( enumName.str() );
+                                // char* name = rose::stringDuplicate( enumName.str() );
 
                                 // Put the value at the start of the list so that the list can be processed in
                                 // consecutive order to establish options for consecutive scopes (root to

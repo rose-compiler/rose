@@ -5,9 +5,9 @@
 /*!
 \class SgInitializer
 \brief This class represents the notion of an initializer for a variable declaration or
-    expression in a function call argument list.
+expression in a function call argument list.
 
-    There are no direct uses of this IR node anywhere.  All initializers
+There are no direct uses of this IR node anywhere.  All initializers
 are derived from this IR node to build derived classes such as SgConstructorInitializer,
 SgAssignInitializer, and SgAggregateInitializer.
 
@@ -25,7 +25,7 @@ SgAssignInitializer, and SgAggregateInitializer.
 /*!
 \var SgInitializer::p_is_explicit_cast
 \brief This boolean variable marks the initializer ans part of an explicit or implicit
-    cast.  It is used for all of the different types of initalizers.
+cast.  It is used for all of the different types of initalizers.
 
 \internal This may now be duplicate information with the compiler generated flag in Sg_File_Info.
 */
@@ -43,7 +43,7 @@ SgAssignInitializer, and SgAggregateInitializer.
 \fn SgInitializer::SgInitializer ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgInitializer base class.
+This constructor builds the SgInitializer base class.
 
 \param startOfConstruct represents the position in the source code
 \sa 
@@ -54,14 +54,14 @@ SgAssignInitializer, and SgAggregateInitializer.
 \fn SgInitializer::~SgInitializer()
 \brief This is the destructor.
 
-   Only the Sg_File_Info object can be deleted in this object.
+Only the Sg_File_Info object can be deleted in this object.
 */
 
 /*!
 \fn SgInitializer::isSgInitializer (SgNode *s)
 \brief Cast function (from derived class to SgInitializer pointer).
 
-   This functions returns a SgInitializer pointer for any input of a 
+This functions returns a SgInitializer pointer for any input of a 
 pointer to an object derived from a SgInitializer.
 
 \return Returns valid pointer to SgInitializer if input is derived from a SgInitializer.
@@ -71,7 +71,7 @@ pointer to an object derived from a SgInitializer.
 \fn SgInitializer::isSgInitializer (const SgNode *s)
 \brief Cast function (from derived class to SgInitializer pointer).
 
-   This functions returns a SgInitializer pointer for any input of a 
+This functions returns a SgInitializer pointer for any input of a 
 pointer to an object derived from a SgInitializer.
 
 \return Returns valid pointer to SgInitializer if input is derived from a SgInitializer.

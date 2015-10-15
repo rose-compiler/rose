@@ -706,7 +706,7 @@ main(int argc, char *argv[])
             ++argno;
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
-            usage(0);
+            ::usage(0);
         } else if (!strcmp(argv[argno], "--assembly")) {
             opt.show_assembly = true;
         } else if (!strcmp(argv[argno], "--no-assembly")) {
@@ -764,7 +764,7 @@ main(int argc, char *argv[])
         }
     };
     if (argno+1!=argc && argno+2!=argc)
-        usage(0);
+        ::usage(0);
     SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(argv[argno++])->transaction();
     char *func_spec = argno<argc ? argv[argno++] : NULL;
 

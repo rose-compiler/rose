@@ -5,13 +5,13 @@
 /*!
 \class SgSymbolTable
 \brief This class represents the symbol tables used in both SgScopeStatement and
-    the SgFunctionTypeSymbolTable IR node.
+the SgFunctionTypeSymbolTable IR node.
 
 \todo The rose_hash_multimap should perhaps be included as a data member instead of
-    implemented as a pointer.  We should consider this detail.
+implemented as a pointer.  We should consider this detail.
 
 \todo We should decide if we want to give Symbol Tables a name or not, it seems that
-      we rarely if ever do this so perhaps we should not have such a field.
+we rarely if ever do this so perhaps we should not have such a field.
 
 \sa
 \ref SgSymbolTable_usage  "Example of using a SgSymbolTable object"
@@ -39,10 +39,10 @@
 \var SgSymbolTable::p_no_name
 \brief This is a flag to indicate that p_name is empty
 
-   Some symbols don't have a name.
+Some symbols don't have a name.
 
 \todo generate a list of instances where symbols don't have names.
-      (Namespaces don't have to have a name for example).
+(Namespaces don't have to have a name for example).
 
 */
 
@@ -61,7 +61,7 @@
 \fn SgSymbolTable::SgSymbolTable()
 \brief This is the constructor.
 
-   This constructor builds the SgSymbolTable base class.
+This constructor builds the SgSymbolTable base class.
 
 \sa 
 \ref SgSymbolTable_create "Example:create an SgSymbolTable object"
@@ -71,14 +71,14 @@
 \fn SgSymbolTable::~SgSymbolTable()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgSymbolTable::isSgSymbolTable (SgNode *s)
 \brief Cast function (from derived class to SgSymbolTable pointer).
 
-   This functions returns a SgSymbolTable pointer for any input of a 
+This functions returns a SgSymbolTable pointer for any input of a 
 pointer to an object derived from a SgSymbolTable.
 
 \return Returns valid pointer to SgSymbolTable if input is a SgSymbolTable.
@@ -88,7 +88,7 @@ pointer to an object derived from a SgSymbolTable.
 \fn SgSymbolTable::isSgSymbolTable (const SgNode *s)
 \brief Cast function (from derived class to SgSymbolTable pointer).
 
-   This functions returns a SgSymbolTable pointer for any input of a 
+This functions returns a SgSymbolTable pointer for any input of a 
 pointer to an object derived from a SgSymbolTable.
 
 \return Returns valid pointer to SgSymbolTable if input is a SgSymbolTable.

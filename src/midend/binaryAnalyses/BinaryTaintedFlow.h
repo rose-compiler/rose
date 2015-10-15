@@ -107,7 +107,7 @@ public:
         void print(std::ostream&) const;
     };
 
-    /** Reference counting pointer to @ref State.
+    /** Reference counting pointer to State.
      *
      *  State objects are reference counted and should not be deleted explicitly. */
     typedef State::Ptr StatePtr;

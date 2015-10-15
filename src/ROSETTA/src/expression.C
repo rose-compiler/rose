@@ -2204,7 +2204,7 @@ Grammar::setUpExpressions ()
   // list. C90 and C99 define writting to the compound literal as undefined behavior.
      CompoundLiteralExp.setFunctionPrototype ( "HEADER_COMPOUND_LITERAL_EXPRESSION", "../Grammar/Expression.code" );
 #if 1
-  // DQ (9/4/2013): This better matches the concept of unnamed variable and folows the design of a variable reference.
+  // DQ (9/4/2013): This better matches the concept of unnamed variable and follows the design of a variable reference.
   // Note that a SgVariableSymbol is used which means that the declaration will be a SgInitializedName which will contain 
   // a internally generated name used as a key to add the SgVariableSymbol to the symbol table.
      CompoundLiteralExp.setDataPrototype ( "SgVariableSymbol*", "symbol", "= NULL",

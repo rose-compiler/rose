@@ -7,7 +7,7 @@
 \brief This class represents the notion of a binary operator.
 It is derived from a SgExpression because operators are expressions.
 
-    There are no uses of this IR node anywhere.  All expressions
+There are no uses of this IR node anywhere.  All expressions
 are derived from this IR node to build derived classes.  Example
 binary operators include binary minus, binary plus, the address operator,
 etc.
@@ -27,7 +27,7 @@ etc.
 \var SgExpression* SgBinaryOp::p_lhs_operand_i
 \brief This is the operand associated with the lhs of the binary operator.
 
-   Every binary operator is applied to two operands, this
+Every binary operator is applied to two operands, this
 variable stores the lhs operand to which the binary operator is applied
 (with the rhs).
 
@@ -37,7 +37,7 @@ variable stores the lhs operand to which the binary operator is applied
 \var SgExpression* SgBinaryOp::p_rhs_operand_i
 \brief This is the operand associated with the rhs of the binary operator.
 
-   Every binary operator is applied to two operands, this
+Every binary operator is applied to two operands, this
 variable stores the rhs operand to which the binary operator is applied
 (with the lhs).
 
@@ -47,7 +47,7 @@ variable stores the rhs operand to which the binary operator is applied
 \var SgBinaryOp::p_expression_type
 \brief This SgType is the type of the operator (function type).
 
-    This value is the return type of the operator, different from 
+This value is the return type of the operator, different from 
 a SgFunctionRefExp, but similar to a SgFunctionCall.  Note 
 that overloaded operators appear in Sage III as functions
 with a specific name (e.g. operator+, operator-, operator*, etc.).
@@ -71,7 +71,7 @@ overloader operators \ref OverloaderOperatorSupport.
 \fn SgBinaryOp::SgBinaryOp ( Sg_File_Info* startOfConstruct = NULL, SgExpression* lhs_operand_i = NULL, SgExpression* rhs_operand_i = NULL, SgType* expression_type = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgBinaryOp base class.
+This constructor builds the SgBinaryOp base class.
 
 \param startOfConstruct represents the position in the source code
 \param lhs_operand_i represents the lhs operand to which the operator is applied
@@ -85,14 +85,14 @@ overloader operators \ref OverloaderOperatorSupport.
 \fn SgBinaryOp::~SgBinaryOp()
 \brief This is the destructor.
 
-   Only the Sg_File_Info object can be deleted in this object.
+Only the Sg_File_Info object can be deleted in this object.
 */
 
 /*!
 \fn SgBinaryOp::isSgBinaryOp (SgNode *s)
 \brief Cast function (from derived class to SgBinaryOp pointer).
 
-   This functions returns a SgBinaryOp pointer for any input of a 
+This functions returns a SgBinaryOp pointer for any input of a 
 pointer to an object derived from a SgBinaryOp.
 
 \return Returns valid pointer to SgBinaryOp if input is derived from a SgBinaryOp.
@@ -102,7 +102,7 @@ pointer to an object derived from a SgBinaryOp.
 \fn SgBinaryOp::isSgBinaryOp (const SgNode *s)
 \brief Cast function (from derived class to SgBinaryOp pointer).
 
-   This functions returns a SgBinaryOp pointer for any input of a 
+This functions returns a SgBinaryOp pointer for any input of a 
 pointer to an object derived from a SgBinaryOp.
 
 \return Returns valid pointer to SgBinaryOp if input is derived from a SgBinaryOp.
@@ -121,7 +121,7 @@ pointer to an object derived from a SgBinaryOp.
 \fn SgBinaryOp::set_lhs_operand (SgExpression* operand)
 \brief This function allows the p_lhs_operand pointer to be set (used internally).
 
-   This function is mostly used internally and is only required to support editing 
+This function is mostly used internally and is only required to support editing 
 of existing SgBinaryOp objects.
 
 \param operand - sets value of internal p_lhs_operand pointer.
@@ -140,7 +140,7 @@ of existing SgBinaryOp objects.
 \fn SgBinaryOp::set_rhs_operand (SgExpression* operand)
 \brief This function allows the p_rhs_operand pointer to be set (used internally).
 
-   This function is mostly used internally and is only required to support editing 
+This function is mostly used internally and is only required to support editing 
 of existing SgBinaryOp objects.
 
 \param operand - sets value of internal p_rhs_operand pointer.
@@ -151,7 +151,7 @@ of existing SgBinaryOp objects.
 \fn SgBinaryOp::get_expression_type (void) const
 \brief returns type of operator expression.
 
-   This function returns the type of the binary operator.
+This function returns the type of the binary operator.
 
 \return Returns type of operator expression.
 */
@@ -160,7 +160,7 @@ of existing SgBinaryOp objects.
 \fn SgBinaryOp::set_expression_type (SgType* expression_type)
 \brief This function allows the p_expression_type pointer to be set (used internally).
 
-   This function is mostly used internally and is only required to support editing 
+This function is mostly used internally and is only required to support editing 
 of existing SgBinaryOp objects. In general it is not changed once it is set.
 
 \param expression_type - sets value of internal p_expression_type pointer.
@@ -171,7 +171,7 @@ of existing SgBinaryOp objects. In general it is not changed once it is set.
 \fn SgBinaryOp::length() const
 \brief Returns number of operands (virtual function)
 
-     Returns number of operands (all binary operators return value = 1).
+Returns number of operands (all binary operators return value = 1).
 This function is not used and is not a defined part a minumal interface 
 for Sage III.
 
@@ -184,7 +184,7 @@ for Sage III.
 \fn SgBinaryOp::empty () const
 \brief Returns true if number of operands is zero, else false.
 
-   This function returns boolean value given by (length() == 0).
+This function returns boolean value given by (length() == 0).
 This function is not used and is not a defined part a minumal interface 
 for Sage III.
 
@@ -225,7 +225,7 @@ interface for Sage III.
 \fn SgBinaryOp::set_lhs_operand_i (SgExpression* operand)
 \brief This function allows the p_lhs_operand_i pointer to be set (used internally).
 
-   This function is mostly used internally and is only required to support editing 
+This function is mostly used internally and is only required to support editing 
 of existing SgBinaryOp objects.
 
 \deprecated This function is not used.
@@ -247,7 +247,7 @@ of existing SgBinaryOp objects.
 \fn SgBinaryOp::set_rhs_operand_i (SgExpression* operand)
 \brief This function allows the p_rhs_operand_i pointer to be set (used internally).
 
-   This function is mostly used internally and is only required to support editing 
+This function is mostly used internally and is only required to support editing 
 of existing SgBinaryOp objects.
 
 \deprecated This function is not used.

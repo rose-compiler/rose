@@ -647,7 +647,7 @@ testLinkedFileLocation: fileLocation
 
 EXTRA_DIST += input_fileLocationRose.C
 testFileLocationROSE: fileLocation
-	./fileLocation -rose:verbose 0 -I$(top_builddir) $(INCLUDES) -c $(srcdir)/input_fileLocationRose.C
+	./fileLocation -rose:verbose 0 -I$(top_builddir) $(AM_CPPFLAGS) -c $(srcdir)/input_fileLocationRose.C
 
 #########################################################################################################################
 #					Automake boilerplate

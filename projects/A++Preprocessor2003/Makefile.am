@@ -6,7 +6,7 @@ SUBDIRS = \
      ArrayAssignmentStatementQuery \
      ScalarIndexingStatementQuery
 
-INCLUDES = $(ROSE_INCLUDES) \
+AM_CPPFLAGS = $(ROSE_INCLUDES) \
      -I$(top_srcdir)/ExamplePreprocessors/A++P++Preprocessor \
      -I$(top_srcdir)/ExamplePreprocessors/A++P++Preprocessor/ArrayAssignmentStatementQuery \
      -I$(top_srcdir)/ExamplePreprocessors/A++P++Preprocessor/ScalarIndexingStatementQuery \
@@ -90,25 +90,25 @@ FORCE_TEST_CODES_TO_RUN:
 $(TEST_Objects): $(TESTCODES) FORCE_TEST_CODES_TO_RUN
 	: remove this so that we can force the examples to be run
 	rm -f $(TEST_Objects)
-	./ArrayPreprocessor $(ROSE_FLAGS) -DHAVE_CONFIG_H $(INCLUDES) -c $(srcdir)/$(@:.o=.C)
+	./ArrayPreprocessor $(ROSE_FLAGS) -DHAVE_CONFIG_H $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.C)
 	: remove this so that we can force the examples to be run
 	rm -f $(TEST_Objects)
 
 APP_INCLUDES = -I$(top_srcdir)/TESTS/CompileTests/A++Code -I$(top_srcdir)/include
 APP_TESTS    = testApp.o
 $(APP_TESTS): example7
-	./example7 -DHAVE_CONFIG_H $(ROSE_FLAGS) $(APP_INCLUDES) $(INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	./example7 -DHAVE_CONFIG_H $(ROSE_FLAGS) $(APP_INCLUDES) $(AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 
 EXAMPLE7_INPUT_TEST = testApp
 test_ArrayPreprocessor: all ArrayPreprocessor $(ArrayPreprocessor_DEPENDENCIES)
 	rm -f $(EXAMPLE7_INPUT_TEST).o
-	./ArrayPreprocessor $(ROSE_FLAGS) -DHAVE_CONFIG_H $(INCLUDES) -c $(srcdir)/$(EXAMPLE7_INPUT_TEST).C
+	./ArrayPreprocessor $(ROSE_FLAGS) -DHAVE_CONFIG_H $(AM_CPPFLAGS) -c $(srcdir)/$(EXAMPLE7_INPUT_TEST).C
 	rm -f $(EXAMPLE7_INPUT_TEST).o
 
 test: $(TESTCODES) test_ArrayPreprocessor
 #	rm -f testTransformationSpecification.o
-#	./example1 $(ROSE_FLAGS) -DHAVE_CONFIG_H $(INCLUDES) -c $(srcdir)/testTransformationSpecification.C
-#	./example2 $(ROSE_FLAGS) -DHAVE_CONFIG_H $(INCLUDES) -c $(srcdir)/testTransformationSpecification.C
+#	./example1 $(ROSE_FLAGS) -DHAVE_CONFIG_H $(AM_CPPFLAGS) -c $(srcdir)/testTransformationSpecification.C
+#	./example2 $(ROSE_FLAGS) -DHAVE_CONFIG_H $(AM_CPPFLAGS) -c $(srcdir)/testTransformationSpecification.C
 #	rm -f testTransformationSpecification.o
 
 include_HEADERS = \

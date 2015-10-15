@@ -12,8 +12,8 @@ compilerFlagsGui_SOURCES =	compilerFlagsMainGui.C compilerFlagsGui.C
 compilerFlagsGui_LDADD = $(ROSE_LIBS)
 
 # DQ (3/8/2009): These are included in $(ROSE_INCLUDES) as I understand it.
-# INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
-INCLUDES = $(ROSE_INCLUDES)
+# AM_CPPFLAGS = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 compass_parameters:
 	cd .. && $(MAKE) compass_parameters

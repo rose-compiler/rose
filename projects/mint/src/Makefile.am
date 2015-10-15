@@ -12,7 +12,7 @@ AUTOMAKE_OPTIONS = subdir-objects
 mint_API_VERSION=1.0.0
 exec_prefix=${prefix}/mint-$(mint_API_VERSION)
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD    = $(ROSE_LIBS)
 
 if !OS_MACOSX

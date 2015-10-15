@@ -12,10 +12,10 @@ endif
 
 SUBDIRS = DebuggerQt
 
-INCLUDES = . .. $(ROSE_BOOST_PREINCLUDE_PATH) $(ROSE_BOOST_NORMAL_INCLUDE_PATH)
+AM_CPPFLAGS = . .. $(ROSE_BOOST_PREINCLUDE_PATH) $(ROSE_BOOST_NORMAL_INCLUDE_PATH)
 
 if ROSE_WITH_ROSEQT
-INCLUDES += $(ROSE_QT_INCLUDE)
+AM_CPPFLAGS += $(ROSE_QT_INCLUDE)
 endif
 
 libCppRuntimeSystem_la_SOURCES = CppRuntimeSystem.cpp \
@@ -53,7 +53,7 @@ ptrops-upc.upc: $(srcdir)/ptrops.c
 	cp $< $@
 
 %-upc.cpp: $(srcdir)/%.cpp
-	$(CXX) -E -DWITH_UPC $(INCLUDES) $< -o $@
+	$(CXX) -E -DWITH_UPC $(AM_CPPFLAGS) $< -o $@
 
 %-upc.upc: $(srcdir)/%.upc
 	cp $< $@

@@ -1,8 +1,8 @@
 ## Process this file with automake to create Makefile.in
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
-# INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompilerOptionsTests/A++Code -I$(srcdir) 
+# AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
+# AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompilerOptionsTests/A++Code -I$(srcdir) 
 
 ## Add bugs to this line as they are fixed so that they can be used as test problems
 ## At least we should not reintroduce these fixed bugs again later.

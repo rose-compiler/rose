@@ -6,7 +6,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_SQLITE_DATABASE
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = testSideEffect
 testSideEffect_SOURCES = testSideEffect.C

@@ -4,7 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # DQ (10/20/2013): Allow alternative support using ROSE ATerm library API.
 # SUBDIRS = tests
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = mapleDSLCompiler 
 
@@ -26,7 +26,7 @@ if ROSE_USE_MAPLE
 #  omexample_LDADD = -L$(MAPLE_LIBDIR) -lmaplec -lmaple -lmclient -lprocessor64
 #  omexample_INCLUDES = $(MAPLE_INCLUDES)
    LDADD += -L$(MAPLE_LIBDIR) -lmaplec -lmaple -lmclient -lprocessor64
-   INCLUDES += $(MAPLE_INCLUDES)
+   AM_CPPFLAGS += $(MAPLE_INCLUDES)
 endif
 
 TESTCODES_REQUIRED_TO_PASS = test2014_01.C

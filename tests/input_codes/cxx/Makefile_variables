@@ -1319,7 +1319,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
    test2013_301.C \
    test2013_302.C \
    test2013_303.C \
-   test2013_304.C \
    test2013_305.C \
    test2013_306.C \
    test2013_307.C \

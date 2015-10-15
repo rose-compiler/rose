@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/docs/Rose:.: pdflatex --interaction=batchmode
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 
 bin_PROGRAMS = bugSeeding

@@ -46,7 +46,7 @@ namespace ELF{
 #include "AstDOTGeneration.h"
 #include "AstDiagnostics.h"
 // #include "AstStatistics.h"
-#include "Ast.h"
+#include "RoseAst.h"
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 // DQ (6/3/2007): added internal support for AST visualization

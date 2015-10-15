@@ -365,7 +365,7 @@ main(int argc, char *argv[])
             ++argno;
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
-            usage(0);
+            ::usage(0);
         } else if (!strcmp(argv[argno], "--ignore-inline-candidates")) {
             ignore_inline_candidates = true;
         } else if (!strcmp(argv[argno], "--ignore-no-compares")) {
@@ -387,7 +387,7 @@ main(int argc, char *argv[])
         }
     }
     if (argno+1!=argc)
-        usage(1);
+        ::usage(1);
 
     SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
     transaction = conn->transaction();

@@ -5,7 +5,7 @@ SUBDIRS = \
 	Preprocessor \
 	tests 
 
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/includes \
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir)/includes \
 	 -I$(top_srcdir)/projects/A++DataLayout/include \
 	 -I$(top_srcdir)/projects/A++DataLayout/InterleaveAcrossArrays \
 	 -I$(top_srcdir)/projects/A++DataLayout/Preprocessor \

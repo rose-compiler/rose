@@ -1085,11 +1085,11 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir)
 #	@$(MAKE) $(TEST_Objects)
 
 $(TEST_Objects): $(TESTCODES)
-	$(TEST_TRANSLATOR) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.cc)
+	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.cc)
 
 $(TEST2_Objects): $(C_TESTCODES)
 	mkdir $(srcdir)/C
-	$(TEST_TRANSLATOR) -rose:C_only $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/C/$(@:.c.o=.c)
+	$(TEST_TRANSLATOR) -rose:C_only $(AM_CPPFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/C/$(@:.c.o=.c)
 
 EXTRA_DIST = $(TESTCODES)
 

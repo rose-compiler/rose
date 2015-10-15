@@ -859,7 +859,7 @@ TEST_TRANSLATOR = $(TRANSLATOR_EXECUTABLE) $(ROSE_FLAGS)
 # TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
 
 $(TEST_Objects): $(TESTCODES)
-	$(TEST_TRANSLATOR) $(INCLUDES) -c $(srcdir)/$(@:.o=.cc)
+	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.cc)
 
 # DQ (9/3/2006): the directory "notCompilable" is a set of codes that demonstrate ambiguities (as I recall).
 EXTRA_DIST = $(TESTCODES) notCompilable

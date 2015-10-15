@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # Location of Thrifty simulator
 THRIFTY_SIMULATOR = /home/dquinlan/PROJECTS/THRIFTY/SVN

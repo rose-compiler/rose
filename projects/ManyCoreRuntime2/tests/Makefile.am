@@ -3,8 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #AUTOMAKE_OPTIONS = subdir-objects
 RUNTIMEDIR = $(top_srcdir)/projects/ManyCoreRuntime2/runtime
 LIBDIR = $(top_builddir)/projects/ManyCoreRuntime2/runtime
-#INCLUDES = $(ROSE_INCLUDES)
-INCLUDES = $(RUNTIMEDIR) 
+#AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(RUNTIMEDIR) 
 
 # LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lz
 # LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
@@ -38,7 +38,7 @@ testPermutations_SOURCES = testPermutations.C
 hypercube_SOURCES = hypercube.C
 
 
-CXXFLAGS += -fopenmp -O3 -I$(INCLUDES) -L$(LIBDIR)
+CXXFLAGS += -fopenmp -O3 -I$(AM_CPPFLAGS) -L$(LIBDIR)
 
 # ROSE configure script has a check for the existence of numa.h header and triggers this automake conditional.
 LDADD = -lmulticore 

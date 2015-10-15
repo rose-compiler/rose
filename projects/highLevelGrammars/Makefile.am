@@ -1,6 +1,6 @@
 include ../../config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 include_HEADERS = nodeAndEdgeTypes.h AbstractionAttribute.h
 
@@ -51,7 +51,7 @@ FORCE_TEST_CODES_TO_RUN:
 $(TEST_Objects): $(TESTCODES) FORCE_TEST_CODES_TO_RUN highLevelGrammarGenerator
 	: remove this so that we can force the examples to be run
 	rm -f $(TEST_Objects)
-	./highLevelGrammarGenerator -I$(srcdir) $(ROSE_FLAGS) $(INCLUDES) $(NANOS_INCLUDES) -c $(srcdir)/$(@:.o=.C)
+	./highLevelGrammarGenerator -I$(srcdir) $(ROSE_FLAGS) $(AM_CPPFLAGS) $(NANOS_INCLUDES) -c $(srcdir)/$(@:.o=.C)
 	: remove this so that we can force the examples to be run
 	rm -f $(TEST_Objects)
 

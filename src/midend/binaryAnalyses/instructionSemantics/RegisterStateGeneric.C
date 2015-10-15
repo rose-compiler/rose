@@ -1,15 +1,31 @@
 #include <sage3basic.h>
+#include <Diagnostics.h>
 #include <RegisterStateGeneric.h>
+
+// Define this if you want extra consistency checking before and after each mutator.  This slows things down considerably but
+// can be useful for narrowing down logic errors in the implementation.
+//#define RegisterStateGeneric_ExtraAssertions
+
+// Define this if you want the readRegister behavior as it existed before 2015-09-24. This behavior was wrong in certain ways
+// because it didn't always cause registers to spring into existence the first time they were read.
+//#define RegisterStateGeneric_20150924
 
 namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
+using namespace rose::Diagnostics;
+
+static bool
+sortByOffset(const RegisterStateGeneric::RegPair &a, const RegisterStateGeneric::RegPair &b) {
+    return a.desc.get_offset() < b.desc.get_offset();
+}
+
 void
 RegisterStateGeneric::clear()
 {
-    registers.clear();
+    registers_.clear();
     eraseWriters();
 }
 
@@ -50,7 +66,7 @@ RegisterStateGeneric::initialize_nonoverlapping(const std::vector<RegisterDescri
             if (!name.empty())
                 val->set_comment(name+"_0");
         }
-        registers[RegStore(regs[i])].push_back(RegPair(regs[i], val));
+        registers_.insertMaybeDefault(regs[i]).push_back(RegPair(regs[i], val));
     }
 }
 
@@ -61,122 +77,269 @@ has_null_value(const RegisterStateGeneric::RegPair &rp)
 }
 
 void
-RegisterStateGeneric::get_nonoverlapping_parts(const Extent &overlap, const RegPair &rp, RiscOperators *ops,
-                                               RegPairs *pairs/*out*/)
-{
-    if (overlap.first() > rp.desc.get_offset()) { // LSB part of existing register does not overlap
-        RegisterDescriptor nonoverlap_desc(rp.desc.get_major(), rp.desc.get_minor(),
-                                           rp.desc.get_offset(),
-                                           overlap.first() - rp.desc.get_offset());
-        SValuePtr nonoverlap_val = ops->extract(rp.value, 0, nonoverlap_desc.get_nbits());
-        pairs->push_back(RegPair(nonoverlap_desc, nonoverlap_val));
+RegisterStateGeneric::assertStorageConditions(const std::string &when, const RegisterDescriptor &reg) const {
+#if !defined(NDEBUG) && defined(RegisterStateGeneric_ExtraAssertions)
+#if 1 // DEBUGGING [Robb P. Matzke 2015-09-28]
+    static volatile size_t ncalls = 0;
+    ++ncalls;
+#endif
+    std::ostringstream error;
+    BOOST_FOREACH (const Registers::Node &rnode, registers_.nodes()) {
+        Sawyer::Container::IntervalSet<BitRange> foundLocations;
+        BOOST_FOREACH (const RegPair &regpair, rnode.value()) {
+            if (!regpair.desc.is_valid()) {
+                error <<"invalid register descriptor";
+            } else if (regpair.desc.get_major() != rnode.key().majr || regpair.desc.get_minor() != rnode.key().minr) {
+                error <<"register is in wrong list; register=" <<regpair.desc.get_major() <<"." <<regpair.desc.get_minor()
+                      <<", list=" <<rnode.key().majr <<"." <<rnode.key().minr;
+            } else if (regpair.value == NULL) {
+                error <<"value is null for register " <<regpair.desc;
+            } else if (regpair.value->get_width() != regpair.desc.get_nbits()) {
+                error <<"value width (" <<regpair.value->get_width() <<") is incorrect for register " <<regpair.desc;
+            } else if (foundLocations.isOverlapping(regpair.location())) {
+                error <<"register " <<regpair.desc <<" is stored multiple times in the list";
+            }
+            foundLocations.insert(regpair.location());
+            if (!error.str().empty())
+                break;
+        }
+        if (!error.str().empty()) {
+            mlog[FATAL] <<when <<" register " <<reg <<":\n";
+            mlog[FATAL] <<"  " <<error.str() <<"\n";
+            mlog[FATAL] <<"  related registers:\n";
+            BOOST_FOREACH (const RegPair &regpair, rnode.value()) {
+                mlog[FATAL] <<"    " <<regpair.desc;
+                if (regpair.value == NULL)
+                    mlog[FATAL] <<"\tnull value";
+                mlog[FATAL] <<"\n";
+            }
+            abort();
+        }
     }
-    if (overlap.last()+1 < rp.desc.get_offset() + rp.desc.get_nbits()) { // MSB part of existing reg does not overlap
-        size_t nonoverlap_first = overlap.last() + 1; // bit offset for register
-        size_t nonoverlap_nbits = (rp.desc.get_offset() + rp.desc.get_nbits()) - (overlap.last() + 1);
-        RegisterDescriptor nonoverlap_desc(rp.desc.get_major(), rp.desc.get_minor(), nonoverlap_first, nonoverlap_nbits);
-        size_t lo_bit = nonoverlap_first - rp.desc.get_offset(); // lo bit of value to extract
-        SValuePtr nonoverlap_val = ops->extract(rp.value, lo_bit, lo_bit+nonoverlap_nbits);
-        pairs->push_back(RegPair(nonoverlap_desc, nonoverlap_val));
+#endif
+}
+
+RegisterStateGeneric::RegPairs&
+RegisterStateGeneric::scanAccessedLocations(const RegisterDescriptor &reg, RiscOperators *ops, bool markOverlapping,
+                                            RegPairs &accessedParts /*out*/, RegPairs &preservedParts /*out*/) {
+    BitRange accessedLocation = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
+    RegPairs &pairList = registers_.insertMaybeDefault(reg);
+    BOOST_FOREACH (RegPair &regpair, pairList) {
+        BitRange storedLocation = regpair.location();   // the thing that's already stored in this state
+        BitRange overlap = storedLocation & accessedLocation;
+        if (overlap.isEmpty())
+            continue;
+
+        // Low-order bits of stored part that are not needed for this access
+        if (overlap.least() > storedLocation.least()) {
+            size_t nbits = overlap.least() - storedLocation.least();
+            RegisterDescriptor subreg(reg.get_major(), reg.get_minor(), storedLocation.least(), nbits);
+            preservedParts.push_back(RegPair(subreg, ops->unsignedExtend(regpair.value, nbits)));
+        }
+
+        // Bits of the part that are needed for this access.
+        {
+            RegisterDescriptor subreg(reg.get_major(), reg.get_minor(), overlap.least(), overlap.size());
+            size_t extractBegin = overlap.least() - storedLocation.least();
+            size_t extractEnd = extractBegin + overlap.size();
+            accessedParts.push_back(RegPair(subreg, ops->extract(regpair.value, extractBegin, extractEnd)));
+        }
+
+        // High-order bits of stored part that are not needed for this access
+        if (overlap.greatest() < storedLocation.greatest()) {
+            size_t nbits = storedLocation.greatest() - overlap.greatest();
+            RegisterDescriptor subreg(reg.get_major(), reg.get_minor(), overlap.greatest()+1, nbits);
+            size_t extractBegin = overlap.greatest()+1 - storedLocation.least();
+            size_t extractEnd = extractBegin + nbits;
+            preservedParts.push_back(RegPair(subreg, ops->extract(regpair.value, extractBegin, extractEnd)));
+        }
+
+        // If we're allowed to modify the storage locations so as to match the accessed register then mark this pair with a
+        // null value so we can erase it in the next step.
+        if (markOverlapping)
+            regpair.value = SValuePtr();
     }
+    return pairList;
 }
 
 SValuePtr
 RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators *ops)
 {
     ASSERT_require(reg.is_valid());
+    ASSERT_not_null(ops);
+    assertStorageConditions("at start of read", reg);
+    BitRange accessedLocation = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
+#ifdef RegisterStateGeneric_20150924
+    const bool adjustLocations = false;
+#else
+    const bool adjustLocations = accessModifiesExistingLocations_;
+#endif
 
     // Fast case: the state does not store this register or any register that might overlap with this register.
-    Registers::iterator ri = registers.find(reg);
-    if (ri==registers.end()) {
+    if (!registers_.exists(reg)) {
+        if (!accessCreatesLocations_)
+            throw RegisterNotPresent(reg);
         size_t nbits = reg.get_nbits();
         SValuePtr newval = get_protoval()->undefined_(nbits);
         std::string regname = regdict->lookup(reg);
         if (!regname.empty())
             newval->set_comment(regname + "_0");
-        registers[reg].push_back(RegPair(reg, newval));
+        registers_.insertMaybeDefault(reg).push_back(RegPair(reg, newval));
+        assertStorageConditions("at end of read", reg);
         return newval;
     }
 
-    // Get a list of all the (parts of) registers that might overlap with this register.
-    const Extent need_extent(reg.get_offset(), reg.get_nbits());
-    std::vector<SValuePtr> overlaps(reg.get_nbits()); // overlapping parts of other registers by destination bit offset
-    std::vector<RegPair> nonoverlaps; // non-overlapping parts of overlapping registers
-    for (RegPairs::iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
-        Extent have_extent(rvi->desc.get_offset(), rvi->desc.get_nbits());
-        if (need_extent==have_extent) {
-            // exact match; no need to traverse further because a RegisterStateGeneric never stores overlapping values
-            ASSERT_require(nonoverlaps.empty());
-            return rvi->value;
-        } else {
-            const Extent overlap = need_extent.intersect(have_extent);
-            if (overlap==need_extent) {
-                // The stored register contains all the bits we need to read, and then some.  Extract only what we need.
-                // No need to traverse further because we never store overlapping values.
-                ASSERT_require(nonoverlaps.empty());
-                const size_t lo_bit = need_extent.first() - have_extent.first();
-                return ops->extract(rvi->value, lo_bit, lo_bit+need_extent.size());
-            } else if (!overlap.empty()) {
-                ASSERT_require(overlap.first() >= have_extent.first());
-                size_t extractBegin = overlap.first() - have_extent.first();
-                size_t extractEnd = extractBegin + overlap.size();
-                ASSERT_require(extractEnd > extractBegin);
-                ASSERT_require(extractEnd <= rvi->value->get_width());
-                const SValuePtr overlap_val = ops->extract(rvi->value, extractBegin, extractEnd);
-                ASSERT_require(overlap_val->get_width() == overlap.size());
-                ASSERT_require(overlap.first() >= need_extent.first());
-                size_t offsetWrtResult = overlap.first() - need_extent.first();
-                overlaps[offsetWrtResult] = overlap_val;
+    // Check that we're allowed to add storage locations if necessary.
+    if (!accessCreatesLocations_) {
+        size_t nBitsFound = 0;
+        BOOST_FOREACH (const RegPair &regpair, registers_.getOrDefault(reg))
+            nBitsFound += (regpair.location() & accessedLocation).size();
+        ASSERT_require(nBitsFound <= accessedLocation.size());
+        if (nBitsFound < accessedLocation.size())
+            throw RegisterNotPresent(reg);
+    }
 
-                if (coalesceOnRead_) {
-                    // If any part of the existing register is not represented by the register being read, then we need to save
-                    // that part.
-                    get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps /*out*/);
+    // Iterate over the storage/value pairs to figure out what parts of the register are already in existing storage locations,
+    // and which parts of those overlapping storage locations are not accessed.
+    RegPairs accessedParts;                             // parts of existing overlapping locations we access
+    RegPairs preservedParts;                            // parts of existing overlapping locations we don't access
+    RegPairs &pairList = scanAccessedLocations(reg, ops, adjustLocations, accessedParts /*out*/, preservedParts /*out*/);
 
-                    // Mark the overlapping register by setting it to null so we can remove it later.
-                    rvi->value = SValuePtr();
-                }
-            }
+    // Figure out which part of the access does not exist in the state
+    typedef Sawyer::Container::IntervalSet<BitRange> Locations;
+    Locations newLocations;
+    newLocations.insert(accessedLocation);
+    BOOST_FOREACH (const RegPair &regpair, accessedParts)
+        newLocations -= regpair.location();
+
+    // Create values for the parts of the accessed register that weren't stored in the state, but don't store them yet.
+    RegPairs newParts;
+    if (accessCreatesLocations_) {
+        BOOST_FOREACH (const BitRange &newLocation, newLocations.intervals()) {
+            RegisterDescriptor subreg(reg.get_major(), reg.get_minor(), newLocation.least(), newLocation.size());
+            newParts.push_back(RegPair(subreg, get_protoval()->undefined_(newLocation.size())));
         }
+    } else {
+        ASSERT_require(newLocations.isEmpty());         // should have thrown a RegisterNotPresent exception already
     }
 
-    // Remove the overlapping registers that we marked above, and replace them with their non-overlapping parts.
-    if (coalesceOnRead_) {
-        ri->second.erase(std::remove_if(ri->second.begin(), ri->second.end(), has_null_value), ri->second.end());
-        ri->second.insert(ri->second.end(), nonoverlaps.begin(), nonoverlaps.end());
-    }
-
-    // Compute the return value by concatenating the overlapping parts and filling in any missing parts.
+    // Construct the return value by combining all the parts we found or created.
     SValuePtr retval;
-    size_t offset = 0;
-    while (offset<reg.get_nbits()) {
-        SValuePtr part;
-        if (overlaps[offset]!=NULL) {
-            part = overlaps[offset];
-        } else {
-            size_t next_offset = offset+1;
-            while (next_offset<reg.get_nbits() && overlaps[next_offset]==NULL) ++next_offset;
-            size_t nbits = next_offset - offset;
-            part = get_protoval()->undefined_(nbits);
-            if (!coalesceOnRead_) {
-                // This part of the return value doesn't exist in the register state, so we need to add it.  When
-                // coalesceOnRead is set we'll insert the whole value at once at the very end.
-                RegisterDescriptor subreg(reg.get_major(), reg.get_minor(), reg.get_offset()+offset, nbits);
-                ri->second.push_back(RegPair(subreg, part));
-            }
-        }
-        retval = retval==NULL ? part : ops->concat(retval, part);
-        offset += part->get_width();
+    RegPairs retvalParts = accessedParts;
+    retvalParts.insert(retvalParts.end(), newParts.begin(), newParts.end());
+    std::sort(retvalParts.begin(), retvalParts.end(), sortByOffset);
+    BOOST_FOREACH (const RegPair &regpair, retvalParts)
+        retval = retval ? ops->concat(retval, regpair.value) : regpair.value;
+    ASSERT_require(retval->get_width() == reg.get_nbits());
+
+    // Update the register state -- write parts that didn't exist and maybe combine or split some locations.
+    if (adjustLocations) {
+        // Combine all the accessed locations into a single location corresponding exactly to the return value, and split those
+        // previously existing locations that partly overlap the returned location.
+        pairList.erase(std::remove_if(pairList.begin(), pairList.end(), has_null_value), pairList.end());
+        pairList.insert(pairList.end(), preservedParts.begin(), preservedParts.end());
+        pairList.push_back(RegPair(reg, retval));
+    } else {
+        // Since this is a registerRead operation, the only thing we need to write back to the state are those parts of the
+        // return value that had no locations allocated originally.
+        pairList.insert(pairList.end(), newParts.begin(), newParts.end());
     }
 
-    // Insert the return value.  When coalesceOnRead is set then no part of the register we just read overlaps with anything
-    // already stored because we've removed those parts of registers that overlap.  In other words, there's already a hole in
-    // which we can insert the value we're about to return.
-    if (coalesceOnRead_)
-        ri->second.push_back(RegPair(reg, retval));
-
-    ASSERT_require(reg.get_nbits()==retval->get_width());
+    assertStorageConditions("at end of read", reg);
     return retval;
+}
+
+void
+RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+{
+    ASSERT_not_null(value);
+    ASSERT_require2(reg.get_nbits()==value->get_width(), "value written to register must be the same width as the register");
+    ASSERT_not_null(ops);
+    assertStorageConditions("at start of write", reg);
+    BitRange accessedLocation = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
+
+    // Fast case: the state does not store this register or any register that might overlap with this register.
+    if (!registers_.exists(reg)) {
+        if (!accessCreatesLocations_)
+            throw RegisterNotPresent(reg);
+        registers_.insertMaybeDefault(reg).push_back(RegPair(reg, value));
+        assertStorageConditions("at end of write", reg);
+        return;
+    }
+
+    // Check that we're allowed to add storage locations if necessary.
+    if (!accessCreatesLocations_) {
+        size_t nBitsFound = 0;
+        BOOST_FOREACH (const RegPair &regpair, registers_.getOrDefault(reg))
+            nBitsFound += (regpair.location() & accessedLocation).size();
+        ASSERT_require(nBitsFound <= accessedLocation.size());
+        if (nBitsFound < accessedLocation.size())
+            throw RegisterNotPresent(reg);
+    }
+
+    // Iterate over the storage/value pairs to figure out what parts of the register are already in existing storage locations,
+    // and which parts of those overlapping storage locations are not accessed.
+    RegPairs accessedParts;                             // parts of existing overlapping locations we access
+    RegPairs preservedParts;                            // parts of existing overlapping locations we don't access
+    RegPairs &pairList = scanAccessedLocations(reg, ops, accessModifiesExistingLocations_,
+                                               accessedParts /*out*/, preservedParts /*out*/);
+
+    // Figure out which part of the access does not exist in the state
+    typedef Sawyer::Container::IntervalSet<BitRange> Locations;
+    Locations newLocations;
+    newLocations.insert(accessedLocation);
+    BOOST_FOREACH (const RegPair &regpair, accessedParts)
+        newLocations -= regpair.location();
+
+    // Update the register state by writing to the accessed area.
+    if (accessModifiesExistingLocations_) {
+        // Combine all the accessed locations into a single location corresponding exactly to the written value, and split
+        // those previously existing locations that partly overlap the written location.
+        pairList.erase(std::remove_if(pairList.begin(), pairList.end(), has_null_value), pairList.end());
+        pairList.insert(pairList.end(), preservedParts.begin(), preservedParts.end());
+        pairList.push_back(RegPair(reg, value));
+    } else {
+        // Don't insert/erase locations that existed already -- only change their values.
+        BOOST_FOREACH (RegPair &regpair, pairList) {
+            BitRange storedLocation = regpair.location();
+            if (BitRange overlap = storedLocation & accessedLocation) {
+                SValuePtr valueToWrite;
+                if (overlap.least() > storedLocation.least()) {
+                    size_t nbits = overlap.least() - storedLocation.least();
+                    SValuePtr loValue = ops->unsignedExtend(regpair.value, nbits);
+                    valueToWrite = loValue;
+                }
+                {
+                    size_t nbits = overlap.size();
+                    size_t extractBegin = overlap.least() - accessedLocation.least();
+                    size_t extractEnd = extractBegin + nbits;
+                    SValuePtr midValue = ops->extract(value, extractBegin, extractEnd);
+                    valueToWrite = valueToWrite ? ops->concat(valueToWrite, midValue) : midValue;
+                }
+                if (overlap.greatest() < storedLocation.greatest()) {
+                    size_t nbits = storedLocation.greatest() - overlap.greatest();
+                    size_t extractBegin = overlap.greatest()+1 - storedLocation.least();
+                    size_t extractEnd = extractBegin + nbits;
+                    SValuePtr hiValue = ops->extract(regpair.value, extractBegin, extractEnd);
+                    valueToWrite = valueToWrite ? ops->concat(valueToWrite, hiValue) : hiValue;
+                }
+                ASSERT_not_null(valueToWrite);
+                ASSERT_require(valueToWrite->get_width() == regpair.desc.get_nbits());
+                regpair.value = valueToWrite;
+            }
+        }
+
+        // Insert the parts that didn't exist before
+        BOOST_FOREACH (const BitRange &newLocation, newLocations.intervals()) {
+            size_t extractBegin = newLocation.least() - accessedLocation.least();
+            size_t extractEnd = extractBegin + newLocation.size();
+            SValuePtr valueToWrite = ops->extract(value, extractBegin, extractEnd);
+            ASSERT_require(valueToWrite->get_width() == newLocation.size());
+            RegisterDescriptor subreg(reg.get_major(), reg.get_minor(), newLocation.least(), newLocation.size());
+            pairList.push_back(RegPair(subreg, valueToWrite));
+        }
+    }
+    assertStorageConditions("at end of write", reg);
 }
 
 void
@@ -203,65 +366,63 @@ RegisterStateGeneric::updateReadProperties(const RegisterDescriptor &reg) {
 }
 
 void
-RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
-{
-    ASSERT_not_null(value);
-    ASSERT_require2(reg.get_nbits()==value->get_width(), "value written to register must be the same width as the register");
-    erase_register(reg, ops);
-    Registers::iterator ri = registers.find(reg);
-    if (ri == registers.end()) {
-        registers[reg].push_back(RegPair(reg, value));
-    } else {
-        ri->second.push_back(RegPair(reg, value));
-    }
-}
-
-void
 RegisterStateGeneric::erase_register(const RegisterDescriptor &reg, RiscOperators *ops)
 {
     ASSERT_require(reg.is_valid());
+    ASSERT_not_null(ops);
+    assertStorageConditions("at start of erase", reg);
+    BitRange accessedLocation = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
 
     // Fast case: the state does not store this register or any register that might overlap with this register
-    Registers::iterator ri = registers.find(reg);
-    if (ri == registers.end())
+    if (!registers_.exists(reg))
         return;                                         // no part of register is stored in this state
+    RegPairs &pairList = registers_[reg];
 
     // Look for existing registers that overlap with this register and remove them.  If the overlap was only partial, then we
     // need to eventually add the non-overlapping part back into the list.
     RegPairs nonoverlaps; // the non-overlapping parts of overlapping registers
     Extent need_extent(reg.get_offset(), reg.get_nbits());
-    for (RegPairs::iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
-        Extent have_extent(rvi->desc.get_offset(), rvi->desc.get_nbits());
-        Extent overlap = need_extent.intersect(have_extent);
-        if (!overlap.empty()) {
-            get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
-            rvi->value = SValuePtr(); // mark pair for removal by setting it to null
+    BOOST_FOREACH (RegPair &reg_val, pairList) {
+        BitRange haveLocation = reg_val.location();
+        if (BitRange intersection = accessedLocation & haveLocation) {
+            if (haveLocation.least() < intersection.least()) {
+                size_t leftSize = intersection.least() - haveLocation.least();
+                RegisterDescriptor subreg(reg.get_major(), reg.get_minor(), haveLocation.least(), leftSize);
+                nonoverlaps.push_back(RegPair(subreg, ops->unsignedExtend(reg_val.value, leftSize)));
+            }
+            if (intersection.greatest() < haveLocation.greatest()) {
+                size_t rightSize = haveLocation.greatest() - intersection.greatest();
+                size_t lobit = intersection.greatest()+1 - haveLocation.least();
+                RegisterDescriptor subreg(reg.get_major(), reg.get_minor(), intersection.greatest()+1, rightSize);
+                nonoverlaps.push_back(RegPair(subreg, ops->extract(reg_val.value, lobit, lobit+rightSize)));
+            }
+            reg_val.value = SValuePtr();
         }
     }
 
     // Remove marked pairs, then add the non-overlapping parts.
-    ri->second.erase(std::remove_if(ri->second.begin(), ri->second.end(), has_null_value), ri->second.end());
-    ri->second.insert(ri->second.end(), nonoverlaps.begin(), nonoverlaps.end());
+    pairList.erase(std::remove_if(pairList.begin(), pairList.end(), has_null_value), pairList.end());
+    pairList.insert(pairList.end(), nonoverlaps.begin(), nonoverlaps.end());
+    assertStorageConditions("at end of erase", reg);
 }
 
 RegisterStateGeneric::RegPairs
 RegisterStateGeneric::get_stored_registers() const
 {
     RegPairs retval;
-    for (Registers::const_iterator ri=registers.begin(); ri!=registers.end(); ++ri)
-        retval.insert(retval.end(), ri->second.begin(), ri->second.end());
+    BOOST_FOREACH (const RegPairs &pairlist, registers_.values())
+        retval.insert(retval.end(), pairlist.begin(), pairlist.end());
     return retval;
 }
 
 void
 RegisterStateGeneric::traverse(Visitor &visitor)
 {
-    for (Registers::iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
-        for (RegPairs::iterator rpi=ri->second.begin(); rpi!=ri->second.end(); ++rpi) {
-            SValuePtr newval = (visitor)(rpi->desc, rpi->value);
-            if (newval!=NULL) {
-                ASSERT_require(newval->get_width()==rpi->desc.get_nbits());
-                rpi->value = newval;
+    BOOST_FOREACH (RegPairs &pairlist, registers_.values()) {
+        BOOST_FOREACH (RegPair &pair, pairlist) {
+            if (SValuePtr newval = (visitor)(pair.desc, pair.value)) {
+                ASSERT_require(newval->get_width() == pair.desc.get_nbits());
+                pair.value = newval;
             }
         }
     }
@@ -270,24 +431,19 @@ RegisterStateGeneric::traverse(Visitor &visitor)
 void
 RegisterStateGeneric::deep_copy_values()
 {
-    for (Registers::iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
-        for (RegPairs::iterator pi=ri->second.begin(); pi!=ri->second.end(); ++pi)
-            pi->value = pi->value->copy();
+    BOOST_FOREACH (RegPairs &pairlist, registers_.values()) {
+        BOOST_FOREACH (RegPair &pair, pairlist)
+            pair.value = pair.value->copy();
     }
 }
 
 bool
 RegisterStateGeneric::is_partly_stored(const RegisterDescriptor &desc) const
 {
-    Extent want(desc.get_offset(), desc.get_nbits());
-    Registers::const_iterator ri = registers.find(RegStore(desc));
-    if (ri!=registers.end()) {
-        for (RegPairs::const_iterator pi=ri->second.begin(); pi!=ri->second.end(); ++pi) {
-            const RegisterDescriptor &desc = pi->desc;
-            Extent have(desc.get_offset(), desc.get_nbits());
-            if (want.overlaps(have))
-                return true;
-        }
+    BitRange want = BitRange::baseSize(desc.get_offset(), desc.get_nbits());
+    BOOST_FOREACH (const RegPair &pair, registers_.getOrDefault(desc)) {
+        if (want & pair.location())
+            return true;
     }
     return false;
 }
@@ -295,20 +451,19 @@ RegisterStateGeneric::is_partly_stored(const RegisterDescriptor &desc) const
 bool
 RegisterStateGeneric::is_wholly_stored(const RegisterDescriptor &desc) const
 {
-    Extent want(desc.get_offset(), desc.get_nbits());
-    ExtentMap have = stored_parts(desc);
-    return 1==have.nranges() && have.minmax()==want;
+    Sawyer::Container::IntervalSet<BitRange> desired;
+    desired.insert(BitRange::baseSize(desc.get_offset(), desc.get_nbits()));
+    BOOST_FOREACH (const RegPair &pair, registers_.getOrDefault(desc))
+        desired -= pair.location();
+    return desired.isEmpty();
 }
 
 bool
 RegisterStateGeneric::is_exactly_stored(const RegisterDescriptor &desc) const
 {
-    Registers::const_iterator ri = registers.find(RegStore(desc));
-    if (ri!=registers.end()) {
-        for (RegPairs::const_iterator pi=ri->second.begin(); pi!=ri->second.end(); ++pi) {
-            if (desc==pi->desc)
-                return true;
-        }
+    BOOST_FOREACH (const RegPair &pair, registers_.getOrDefault(desc)) {
+        if (desc == pair.desc)
+            return true;
     }
     return false;
 }
@@ -318,13 +473,9 @@ RegisterStateGeneric::stored_parts(const RegisterDescriptor &desc) const
 {
     ExtentMap retval;
     Extent want(desc.get_offset(), desc.get_nbits());
-    Registers::const_iterator ri = registers.find(RegStore(desc));
-    if (ri!=registers.end()) {
-        for (RegPairs::const_iterator pi=ri->second.begin(); pi!=ri->second.end(); ++pi) {
-            const RegisterDescriptor &desc = pi->desc;
-            Extent have(desc.get_offset(), desc.get_nbits());
-            retval.insert(want.intersect(have));
-        }
+    BOOST_FOREACH (const RegPair &pair, registers_.getOrDefault(desc)) {
+        Extent have(pair.desc.get_offset(), pair.desc.get_nbits());
+        retval.insert(want.intersect(have));
     }
     return retval;
 }
@@ -332,16 +483,11 @@ RegisterStateGeneric::stored_parts(const RegisterDescriptor &desc) const
 RegisterStateGeneric::RegPairs
 RegisterStateGeneric::overlappingRegisters(const RegisterDescriptor &needle) const {
     ASSERT_require(needle.is_valid());
+    BitRange needleBits = BitRange::baseSize(needle.get_offset(), needle.get_nbits());
     RegPairs retval;
-    BitRange want = BitRange::baseSize(needle.get_offset(), needle.get_nbits());
-    Registers::const_iterator ri = registers.find(needle);
-    if (ri != registers.end()) {
-        BOOST_FOREACH (const RegPair &regValuePair, ri->second) {
-            const RegisterDescriptor haystack = regValuePair.desc;
-            BitRange have = BitRange::baseSize(haystack.get_offset(), haystack.get_nbits());
-            if (have.isOverlapping(want))
-                retval.push_back(regValuePair);
-        }
+    BOOST_FOREACH (const RegPair &pair, registers_.getOrDefault(needle)) {
+        if (needleBits & pair.location())
+            retval.push_back(pair);
     }
     return retval;
 }
@@ -611,11 +757,6 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterStatePtr &other_, RiscO
     return changed;
 }
 
-static bool
-sortByOffset(const RegisterStateGeneric::RegPair &a, const RegisterStateGeneric::RegPair &b) {
-    return a.desc.get_offset() < b.desc.get_offset();
-}
-
 void
 RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
 {
@@ -628,13 +769,13 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
     FormatRestorer oflags(stream);
     size_t maxlen = 6; // use at least this many columns even if register names are short.
     for (int i=0; i<2; ++i) {
-        for (Registers::const_iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
-            RegPairs regPairs = ri->second;
+        BOOST_FOREACH (const RegPairs &pl, registers_.values()) {
+            RegPairs regPairs = pl;
             std::sort(regPairs.begin(), regPairs.end(), sortByOffset);
-            for (RegPairs::const_iterator rvi=regPairs.begin(); rvi!=regPairs.end(); ++rvi) {
-                std::string regname = regnames(rvi->desc);
-                if (!fmt.get_suppress_initial_values() || rvi->value->get_comment().empty() ||
-                    0!=rvi->value->get_comment().compare(regname+"_0")) {
+            BOOST_FOREACH (const RegPair &pair, regPairs) {
+                std::string regname = regnames(pair.desc);
+                if (!fmt.get_suppress_initial_values() || pair.value->get_comment().empty() ||
+                    0!=pair.value->get_comment().compare(regname+"_0")) {
                     if (0==i) {
                         maxlen = std::max(maxlen, regname.size());
                     } else {
@@ -643,7 +784,7 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
                         if (fmt.get_show_latest_writers()) {
                             // FIXME[Robb P. Matzke 2015-08-12]: This doesn't take into account that different writer sets can
                             // exist for different parts of the register.
-                            AddressSet writers = getWritersUnion(rvi->desc);
+                            AddressSet writers = getWritersUnion(pair.desc);
                             if (writers.size()==1) {
                                 stream <<" [writer=" <<StringUtility::addrToString(*writers.values().begin()) <<"]";
                             } else if (!writers.isEmpty()) {
@@ -660,7 +801,7 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
                         // exist for different parts of the register.  It also doesn't take into account all combinations f
                         // properties -- just a few of the more common ones.
                         if (fmt.get_show_properties()) {
-                            InputOutputPropertySet props = getPropertiesUnion(rvi->desc);
+                            InputOutputPropertySet props = getPropertiesUnion(pair.desc);
                             if (props.exists(IO_READ_BEFORE_WRITE)) {
                                 stream <<" read-before-write";
                             } else if (props.exists(IO_WRITE) && props.exists(IO_READ)) {
@@ -673,7 +814,7 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
                         }
 
                         stream <<" = ";
-                        rvi->value->print(stream, fmt);
+                        pair.value->print(stream, fmt);
                         stream <<"\n";
                     }
                 }

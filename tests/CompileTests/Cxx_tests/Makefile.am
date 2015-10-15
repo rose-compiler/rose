@@ -111,10 +111,10 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_73.C \
    test2014_74.C \
    test2014_75.C \
+   test2014_76.C \
    test2014_77.C \
    test2014_78.C \
    test2013_117.C \
-   test2014_76.C \
    test2014_79.C \
    test2014_80.C \
    test2014_81.C \
@@ -188,7 +188,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_155.C \
    test2014_156.C \
    test2014_157.C \
-   test2014_159.C \
    test2014_160.C \
    test2014_161.C \
    test2014_162.C \
@@ -211,8 +210,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_184.C \
    test2014_185.C \
    test2014_186.C \
-   test2014_187.C \
-   test2014_187_work_around.C \
    test2014_188.C \
    test2014_189.C \
    test2014_190.C \
@@ -236,7 +233,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_208.C \
    test2014_209.C \
    test2014_210.C \
-   test2014_211.C \
    test2014_212.C \
    test2014_215.C \
    test2014_216.C \
@@ -277,8 +273,64 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_20.C \
    test2015_21.C \
    test2015_22.C \
+   test2015_24.C \
+   test2015_26.C \
+   test2015_27.C \
+   test2015_28.C \
+   test2015_29.C \
+   test2015_30.C \
+   test2015_32.C \
+   test2015_33.C \
+   test2015_34.C \
+   test2015_35.C \
+   test2015_36.C \
+   test2015_40.C \
+   test2015_43.C \
+   test2015_44.C \
+   test2015_45.C \
+   test2015_50.C \
+   test2015_52.C \
+   test2015_57.C \
+   test2015_58.C \
+   test2015_59.C \
+   test2015_60.C \
+   test2015_61.C \
+   test2015_70.C \
+   test2015_76.C \
+   test2015_77.C \
+   test2015_78.C \
+   test2015_79.C \
+   test2015_80.C \
+   test2015_81.C \
    lulesh.C \
    luleshTALC.C
+
+# DQ (9/24/2015): This test code fails with the older versions of g++ (version 4.4.7).
+# This is now handled using conditional compilation in the test code directly.
+#  test2015_59.C 
+
+# Note that Samer's reported bugs are: test2015_62.C, test2015_63.C test2015_64.C.
+
+# This files for the GNU g++ 4.8.3 compiler (but works for 4.8.1 and other versions of g++ (4.2 thorugh 4.7).
+#  test2014_76.C 
+
+# DQ (9/24/2015): Removed test2013_304.C from tests/input_codes/cxx/Makefile_variables file since it
+# does not compile with ROSE when imulating the Intel compiler (v14) which assumes c++11 mode. This
+# test is not placed into the regression tests when not using the Intel compiler.
+
+# This test code uses what is to the intel compiler a C++11 feature.  More specifically it uses header files
+# that require this to be compiled using C++11, so it needs to be put into the C++11 tests, even though for
+# GNU g++ it will work for all versions of g++ as non-C++11 code.  Note that g++ defaults to C++11 starting 
+# with version 4.9 (not 4.8).
+if !USING_INTEL_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2013_304.C \
+   test2014_159.C \
+   test2014_187.C \
+   test2014_187_work_around.C \
+   test2014_211.C \
+   test2015_55.C
+endif
 
 # DQ (5/28/2015): Removed this file because it is used by the makefile rule: 
 # test_unparse_includes_option_with_link.passed and CMake's ctest will cause
@@ -384,7 +436,6 @@ TESTS_NOT_PASSING = \
    test2014_228.C \
    test2014_229.C \
    test2014_237.C \
-   test2015_24.C \
    test2015_25.C 
 
 # DQ (7/10/2014): Remaining bugs in new application.
@@ -973,7 +1024,7 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENT
 TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH)
 APP_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
-TESTS_THAT_FAIL =
+# TESTS_THAT_FAIL =
 
 # This test fails on Debian, GCC-4.4.5, boost-1.47.0 in buildTemplateClassDeclaration_nfi with the error message "detected
 # isSgClassType(nondefdecl->get_type())->get_declaration() != isSgDeclarationStatement(nondefdecl) (problem with Boost code
@@ -1074,12 +1125,20 @@ test2010_08.o: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."
 	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
 
+# This test code uses what is to the intel compiler a C++11 feature.  More specifically it uses header files
+# that require this to be compiled using C++11, so it needs to be put into the C++11 tests, even though for
+# GNU g++ it will work for all versions of g++ as non-C++11 code.  Note that g++ defaults to C++11 starting 
+# with version 4.9 (not 4.8).
+if !USING_INTEL_COMPILER
 #$(ROSE__CXX_TESTS_DIR)/test2013_09.o: $(TEST_TRANSLATOR)
 test2013_09.C.passed: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."
 #	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
 #	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) -c $(srcdir)/test2013_09.C -o test2013_09.o
 	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
+else
+test2013_09.C.passed: $(TEST_TRANSLATOR)
+endif
 
 cpp_test2010_07: $(TEST_TRANSLATOR)
 	@echo "Running boost specific test."
@@ -1133,9 +1192,11 @@ testOption:
 
 TEST_TEMPLATE_TRANSLATOR = ../../testTemplates
 
-
+# DQ (7/20/2015): Added template tests using new testTemplates translator that forces 
+# output of instantiated templates (part of ongoing improvements to template support).
 # This test translator will work for test2015_32.C - test2015_36.C
 # I will make this in the a better organized set of tests later.
+# DQ (10/12/2015): Note that tests test2015_37.C through test2015_54.C are these tests.
 testTemplateExample: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_32.C
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_33.C
@@ -1182,7 +1243,7 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      test2007_101.h test2007_136.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
      test2008_11.h test2014_66.h test2014_112.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h test2012_268.h test2013_09.C \
      test2013_235.C test2013_236.C conftest.C conftest_2.C test2006_112.C test2010_25.C test2003_24.C \
-     test2004_82.C test2015_08.h
+     test2004_82.C test2014_130.h test2015_08.h test2015_29.h
 
 # DQ (6/18/2008): All of these should be present...
 # confdefs.h     test2001_11.h   test2001_18B.h  test2003_12.h  test2003_25.h   test2005_154.h  test2005_159.h  test2005_26.h  test2005_88.h    test2006_187b.h  test2006_42.h   test2007_113.h  test2007_137.h   test2007_167.h  test2007_42.h  test2007_97.h

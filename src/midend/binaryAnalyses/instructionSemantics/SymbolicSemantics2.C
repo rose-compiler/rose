@@ -1048,7 +1048,12 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
             // See BaseSemantics::MemoryState::set_byteOrder
             throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", get_insn());
         }
-        if (computingDefiners() == TRACK_ALL_DEFINERS) {
+
+        // Accumulating the bytes of a multibyte read is sort of like a merge operation in the way it treats definers. Since
+        // we're returning a value that's composed of multiple bytes, the latest definers for the reutrn value are the union of
+        // the latest definers for the individual bytes. Similarly, for TRACK_ALL_DEFINERS, the set of all definers for the
+        // return value is the union of the all-definers sets of the individual bytes.
+        if (computingDefiners() == TRACK_ALL_DEFINERS || computingDefiners() == TRACK_LATEST_DEFINER) {
             const InsnSet &byteDefiners = byte_value->get_defining_instructions();
             allDefiners.insert(byteDefiners.begin(), byteDefiners.end());
         }
@@ -1061,6 +1066,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
         case TRACK_ALL_DEFINERS:
         case TRACK_LATEST_DEFINER:
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(allDefiners);
             break;
     }
     return retval;

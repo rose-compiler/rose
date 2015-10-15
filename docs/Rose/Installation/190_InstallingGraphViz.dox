@@ -1,0 +1,14 @@
+// -*- c++ -*-
+
+/** @defgroup installing_graphviz Installing GraphViz
+ *  @ingroup software_dependencies
+ *
+ *  Instructions for installing <a href="http://graphviz.org">GraphViz</a>, a ROSE software dependency.
+ *
+ *  @section installing_graphviz_rhel Redhat Enterprise Linux
+ *
+ *  @todo Describe how to install GraphViz on RHEL.
+ *
+ *  @section installing_graphviz_jessie Debian 8 "Jessie"
+ *
+ *  Run <code>apt-get install graphviz-dev</code> as the administrator. */

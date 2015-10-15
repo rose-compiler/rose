@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = -I$(top_builddir) $(ROSE_INCLUDES)
+AM_CPPFLAGS = -I$(top_builddir) $(ROSE_INCLUDES)
 
 # BIN = correctAllComments correctExternalComments
 # TEST = testParser01 testParser02 testParser03 testParser06 testParser08 testParser09 testParser10 testParser11 
@@ -63,10 +63,10 @@ sage_doxygen_documentation.h: prepareDocFiles docs/SgNode.docs
 	$(srcdir)/prepareDocFiles docs
 
 testHeaderFilesROSE: docs/SgNode.docs createDocumentationForROSE sage_doxygen_documentation.h $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
-	$(VALGRIND) $(top_builddir)/tests/testTranslator -H --edg:no_warnings   -c $(INCLUDES) $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
+	$(VALGRIND) $(top_builddir)/tests/testTranslator -H --edg:no_warnings   -c $(AM_CPPFLAGS) $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 
 testDocsROSE: docs/SgNode.docs createDocumentationForROSE sage_doxygen_documentation.h $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
-	$(VALGRIND) ./createDocumentationForROSE --edg:no_warnings   -rose:collectAllCommentsAndDirectives -rose:includeCommentsAndDirectives SageIII -rose:includeCommentsAndDirectives docs $(OPTIONS) $(INCLUDES) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
+	$(VALGRIND) ./createDocumentationForROSE --edg:no_warnings   -rose:collectAllCommentsAndDirectives -rose:includeCommentsAndDirectives SageIII -rose:includeCommentsAndDirectives docs $(OPTIONS) $(AM_CPPFLAGS) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 	@echo "Due to possible bug in ROSE, a few header files are generated ... remove them"
 	-rm -f limits basic_file.h locale_facets.h stl_threads.h  stl_tree.h
 	@echo "Overwrite a copy of the test files in $(top_srcdir)/docs/testDoxygen_copy"
@@ -77,7 +77,7 @@ testDocsROSE: docs/SgNode.docs createDocumentationForROSE sage_doxygen_documenta
 
 testDocsROSE_small: docs/SgNode.docs createDocumentationForROSE sage_doxygen_documentation.h $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h
 	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) removeHashLineDirectivesFromGeneratedCode
-	$(VALGRIND) ./createDocumentationForROSE -rose:verbose 0 --edg:no_warnings -rose:collectAllCommentsAndDirectives -rose:includeCommentsAndDirectives SageIII -rose:includeCommentsAndDirectives docs $(OPTIONS) $(INCLUDES) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(srcdir)/roseLite.C
+	$(VALGRIND) ./createDocumentationForROSE -rose:verbose 0 --edg:no_warnings -rose:collectAllCommentsAndDirectives -rose:includeCommentsAndDirectives SageIII -rose:includeCommentsAndDirectives docs $(OPTIONS) $(AM_CPPFLAGS) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(srcdir)/roseLite.C
 	@echo "Due to possible bug in ROSE, a few header files are generated ... remove them"
 	-rm -f limits basic_file.h locale_facets.h stl_threads.h  stl_tree.h
 	@echo "Overwrite a copy of the test files in $(top_srcdir)/docs/testDoxygen_copy"
@@ -86,38 +86,38 @@ testDocsROSE_small: docs/SgNode.docs createDocumentationForROSE sage_doxygen_doc
 
 
 testSage: docs/SgNode.docs correctExternalComments sage_doxygen_documentation.h $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
-	$(VALGRIND) ./correctExternalComments  --edg:no_warnings   $(OPTIONS) $(INCLUDES) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
+	$(VALGRIND) ./correctExternalComments  --edg:no_warnings   $(OPTIONS) $(AM_CPPFLAGS) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 	@echo "Due to possible bug in ROSE, a few header files are generated ... remove them"
 	-rm -f limits basic_file.h locale_facets.h stl_threads.h  stl_tree.h
 	@echo "Overwrite a copy of the test files in $(top_srcdir)/docs/testDoxygen_copy"
 	mv -f *.docs $(top_srcdir)/docs/testDoxygen_copy
 
 testClassifyDeprecated: docs/SgNode.docs sage_doxygen_documentation.h classifyDeprecated $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
-	$(VALGRIND) ./classifyDeprecated  --edg:no_warnings   $(OPTIONS) $(INCLUDES) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
+	$(VALGRIND) ./classifyDeprecated  --edg:no_warnings   $(OPTIONS) $(AM_CPPFLAGS) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 	@echo "Due to possible bug in ROSE, a few header files are generated ... remove them"
 	-rm -f limits basic_file.h locale_facets.h stl_threads.h  stl_tree.h
 	@echo "Overwrite a copy of the test files in $(top_srcdir)/docs/testDoxygen_copy"
 	mv -f *.docs $(top_srcdir)/docs/testDoxygen_copy
 
 testDocLint: docs/SgNode.docs sage_doxygen_documentation.h docLint $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
-	$(VALGRIND) ./docLint  --edg:no_warnings   $(OPTIONS) $(INCLUDES) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
+	$(VALGRIND) ./docLint  --edg:no_warnings   $(OPTIONS) $(AM_CPPFLAGS) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 	@echo "Due to possible bug in ROSE, a few header files are generated ... remove them"
 	-rm -f limits basic_file.h locale_facets.h stl_threads.h  stl_tree.h
 
 testSageOnly: correctExternalComments $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
-	./correctExternalComments $(OPTIONS) $(INCLUDES) $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
+	./correctExternalComments $(OPTIONS) $(AM_CPPFLAGS) $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
 	-rm -f limits basic_file.h locale_facets.h stl_threads.h  stl_tree.h
 
 testSageSmall: correctExternalComments sage_doxygen_documentation.h $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
-	./correctExternalComments $(OPTIONS) -I. $(INCLUDES) $(srcdir)/sage_doxygen_documentation.C $(srcdir)/small.C
+	./correctExternalComments $(OPTIONS) -I. $(AM_CPPFLAGS) $(srcdir)/sage_doxygen_documentation.C $(srcdir)/small.C
 	-rm -f limits basic_file.h locale_facets.h stl_threads.h  stl_tree.h
 
 testSageSmaller: correctExternalComments sage_doxygen_documentation.h $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
-	./correctExternalComments $(OPTIONS) $(INCLUDES) $(srcdir)/sage_doxygen_documentation.C $(srcdir)/smaller.C
+	./correctExternalComments $(OPTIONS) $(AM_CPPFLAGS) $(srcdir)/sage_doxygen_documentation.C $(srcdir)/smaller.C
 	-rm -f limits basic_file.h locale_facets.h stl_threads.h  stl_tree.h
 
 testClassifyDeprecatedSmall: docs/SgNode.docs sage_doxygen_documentation.h classifyDeprecated $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
-	$(VALGRIND) ./classifyDeprecated  --edg:no_warnings   $(OPTIONS) $(INCLUDES) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(srcdir)/small.C
+	$(VALGRIND) ./classifyDeprecated  --edg:no_warnings   $(OPTIONS) $(AM_CPPFLAGS) -I. -Idocs $(srcdir)/sage_doxygen_documentation.C $(srcdir)/small.C
 	@echo "Due to possible bug in ROSE, a few header files are generated ... remove them"
 	-rm -f limits basic_file.h locale_facets.h stl_threads.h  stl_tree.h
 	@echo "Overwrite a copy of the test files in $(top_srcdir)/docs/testDoxygen_copy"

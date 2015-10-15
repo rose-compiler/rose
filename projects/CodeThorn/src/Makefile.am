@@ -83,6 +83,7 @@ libspray_la_SOURCES=\
  RDTransferFunctions.C \
  VariableIdUtils.C \
  AnalysisAbstractionLayer.C \
+ ProgramAbstractionLayer.C \
  addressTakenAnalysis.C \
  defUseQuery.C
 

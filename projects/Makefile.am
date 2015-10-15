@@ -13,11 +13,11 @@ SUBDIRS = \
 	C_to_Promela \
 	CertSecureCodeProject \
 	CloneDetection \
-   ConstructNameSimilarityAnalysis \
+	ConstructNameSimilarityAnalysis \
 	DataFaultTolerance \
 	DatalogAnalysis \
 	DocumentationGenerator \
-   EditDistanceMetric \
+	EditDistanceMetric \
 	FiniteStateModelChecker \
 	fuse \
 	graphColoring \
@@ -26,7 +26,7 @@ SUBDIRS = \
 	MacroRewrapper \
 	MapleDSL \
 	OpenMP_Analysis \
-   OpenMP_Checker \
+	OpenMP_Checker \
 	QtDesignerPlugins \
 	RoseQt \
 	arrayOptimization \
@@ -42,14 +42,13 @@ SUBDIRS = \
 	roseToLLVM \
 	RTC \
 	PowerAwareCompiler \
-   taintcheck \
+	taintcheck \
 	ManyCoreRuntime \
 	ManyCoreRuntime2 \
 	StencilManyCore \
 	Fortran_to_C \
 	mint \
 	vectorization \
-	MultiLevelMemory \
 	extractMPISkeleton \
 	RoseBlockLevelTracing \
 	LineDeleter \
@@ -90,11 +89,6 @@ if !USING_XTENSA_BACKEND_COMPILER
 # DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
 # OpenMP_Translator
 
-# TOO (2/16/2011): Disabled for Thrifty compiler (gcc 3.4.4) due to errors during make check
-if !USING_GCC_3_4_4_BACKEND_COMPILER
-#  SUBDIRS += backstroke haskellport 
-   SUBDIRS += backstroke
-
 # DQ (9/2/2013): This is overly complex to process with internal debugging turned on in the new EDG support.
 if !ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
 
@@ -109,7 +103,6 @@ if !ROSE_USE_INSURE
 # the project will compile byt when run the generated code does not compile.
 # Please see the haskellport/README file for more detailed information about the status.
 #   SUBDIRS += haskellport 
-endif
 endif
 endif
 
@@ -174,8 +167,10 @@ if ROSE_WITH_ATERM
 endif
 
 # Pei-Hung (12/17/2014): adding PolyOpt only when POCC is available
+# Pei-Hung (09/24/2015): MultiLevelMemory requires POCC
 if ROSE_WITH_POCC
-   SUBDIRS += PolyOpt2
+   SUBDIRS += PolyOpt2 \
+	MultiLevelMemory
 endif
 
 # DQ (2/28/2010): We can't make this conditionsl this since then the Makefile.in will 

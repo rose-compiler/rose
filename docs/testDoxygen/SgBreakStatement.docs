@@ -7,7 +7,7 @@
 \brief This class represents the notion of a break statement 
 (typically used in a switch statment).
 
-   This class is used to exit from inside of a jump to the outer
+This class is used to exit from inside of a jump to the outer
 block.  It is a specific feature of the C language.  It is typically used to 
 break out of a basic clock or a loop. The break statement is important to
 the specification of the control flow within a program.
@@ -41,7 +41,7 @@ name changes.
 \brief This function clones the current SgBreakStmt object recursively or not, depending on the argument
 // \brief Copies an existing SgBreakStmt.
 
-   This function performs a copy based on the specification of the input parameter.
+This function performs a copy based on the specification of the input parameter.
 The input parameter is used to determin which data members are copied by reference
 and which are copied by value.
 
@@ -58,7 +58,7 @@ pointing to the the original SgInitializedName object's data members.
 \fn SgBreakStmt::SgBreakStmt ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor
 
-   This constructor builds a SgBreakStmt used typically to break out of
+This constructor builds a SgBreakStmt used typically to break out of
 a loop of within a switch statement's case statement.
 
 \param startOfConstruct represents the position in the source code
@@ -70,14 +70,14 @@ a loop of within a switch statement's case statement.
 \fn SgBreakStmt::~SgBreakStmt()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*
 \fn SgBreakStmt::sage_class_name() const
 \brief generates string: "SgBreakStmt"
 
-   This function is useful for debugging and error reporting.  It
+This function is useful for debugging and error reporting.  It
 returns the name of the IR node.
 
 \return a char* pointer to a C style string.
@@ -87,25 +87,25 @@ returns the name of the IR node.
 \fn SgBreakStmt::variant()
 \brief Older version function returns enum value "BREAK_STMT"
 
-   This function is an older version of the variant function.
+This function is an older version of the variant function.
 This function is useful for debugging and error reporting.  It
 returns the name of the IR node.
 
 \return an enum value.
 \deprecated Use Tvariant() instead.  Older enum values have inconsistant 
-            names and are being removed.
+names and are being removed.
 */
 
 /*
 \fn SgBreakStmt::variantT()
 \brief returns enum value "V_SgBreakStmt"
 
-   This function is useful for debugging and error reporting.  It
+This function is useful for debugging and error reporting.  It
 returns the name of the IR node.
 
 \return an enum value.
 \deprecated Use Tvariant() instead.  Older enum values have inconsistant 
-            names and are being removed.
+names and are being removed.
 */
 
 /*

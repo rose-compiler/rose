@@ -6,7 +6,7 @@
 \class SgOptions
 \brief This class represents an object used to initialize the unparsing.
 
-    There are no uses of this IR nodes anywhere in the AST.
+There are no uses of this IR nodes anywhere in the AST.
 
 \internal This is an object used only internally.
 
@@ -22,7 +22,7 @@
 /////////////////////////////////////////////////////////////////////////
 
 /*
-   There are no data members for this class.
+There are no data members for this class.
 */
 
 
@@ -33,7 +33,7 @@
 \fn SgOptions::SgOptions()
 \brief This is the constructor.
 
-   This constructor builds the SgOptions base class.
+This constructor builds the SgOptions base class.
 
 \sa 
 \ref SgOptions_create "Example:create an SgOptions object"
@@ -43,14 +43,14 @@
 \fn SgOptions::~SgOptions()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgOptions::isSgOptions (SgNode *s)
 \brief Cast function (from derived class to SgOptions pointer).
 
-   This functions returns a SgOptions pointer for any input of a 
+This functions returns a SgOptions pointer for any input of a 
 pointer to an object derived from a SgOptions.
 
 \return Returns valid pointer to SgOptions if input is derived from a SgLocatedNode.
@@ -60,7 +60,7 @@ pointer to an object derived from a SgOptions.
 \fn SgOptions::isSgOptions (const SgNode *s)
 \brief Cast function (from derived class to SgOptions pointer).
 
-   This functions returns a SgOptions pointer for any input of a 
+This functions returns a SgOptions pointer for any input of a 
 pointer to an object derived from a SgOptions.
 
 \return Returns valid pointer to SgOptions if input is derived from a SgLocatedNode.

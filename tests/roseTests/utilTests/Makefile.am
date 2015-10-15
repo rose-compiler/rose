@@ -5,7 +5,7 @@ include $(top_srcdir)/tests/input_codes/Makefile.for.input.codes
 noinst_PROGRAMS =
 TEST_TARGETS =
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 EXTRA_DIST = tests.conf
 
 ## Don't use the repository in ../src

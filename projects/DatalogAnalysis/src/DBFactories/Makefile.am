@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # Automake conditional to control use of ROSE with BDDBDDB
 if ROSE_USE_BDDBDDB
 
-INCLUDES = -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/../../include
+AM_CPPFLAGS = -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/../../include
 
 noinst_LTLIBRARIES = libDBFactories.la
 libDBFactories_la_SOURCES = CommonDBFactory.cc  TupleDomain.cc  TupleFactory.cc  TupleRelation.cc

@@ -95,8 +95,8 @@ AstPDFGeneration_private::generateWithinFile(const string& pdffilename, SgFile* 
 
 void
 AstPDFGeneration_private::generateWithinFile(SgFile* node) {
-// string pdffilename=string("./")+string(ROSE::stripPathFromFileName(ROSE::getFileName(node)));
-  string pdffilename = string("./") + string(ROSE::stripPathFromFileName(node->getFileName()));
+// string pdffilename=string("./")+string(rose::utility_stripPathFromFileName(rose::getFileName(node)));
+  string pdffilename = string("./") + string(rose::utility_stripPathFromFileName(node->getFileName()));
   generateWithinFile (pdffilename, node);
 }
 

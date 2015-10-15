@@ -19,11 +19,11 @@ int main(int argc, char** argv) {
 #if 0
   cerr << "Class 2 " << endl;
   class TestClass2* test2 = reinterpret_cast<TestClass2*>(&testclassA);;
-  unsigned long addr1 = (size_t )&(((ROSE::TestClass2 *)0)->ptrA);
-  unsigned long addr2 = (size_t )&(((ROSE::TestClass2 *)0)->ptrB);
-  unsigned long addr3 = (size_t )&(((ROSE::TestClass2 *)0)->ptrC);
+  unsigned long addr1 = (size_t )&(((rose::TestClass2 *)0)->ptrA);
+  unsigned long addr2 = (size_t )&(((rose::TestClass2 *)0)->ptrB);
+  unsigned long addr3 = (size_t )&(((rose::TestClass2 *)0)->ptrC);
   unsigned long addr4 = (size_t )&(((TestClass *)1)->ptrD)-1;
-  unsigned long addr5 = (size_t )&(((ROSE::TestClass2 *)0)->ptrE);
+  unsigned long addr5 = (size_t )&(((rose::TestClass2 *)0)->ptrE);
 
 
   cerr << "Padding of Class1:   offset(ptrA *): " << add1 << "  offset(ptrB long double): " << add2   << "  offset(ptrC char): " << add3

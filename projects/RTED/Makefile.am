@@ -12,8 +12,8 @@ EXTRA_DIST = index_array.txt \
 if !OS_MACOSX
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-# tps removed -pthreads from INCLUDES
-INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch
+# tps removed -pthreads from AM_CPPFLAGS
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch
 TESTSUITEINCL = -I$(srcdir) -I.
 UPC_INCLUDES =  -I$(top_srcdir)/config
 
@@ -459,7 +459,7 @@ rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(RTS) $(srcdir)/RuntimeS
 #  3: additional parameters, like linking against debugger ...
 #COMPILING_RUNTIME_SYSTEM =  @echo -n "$(2) -g -o $@ $(filter rted_source/%$(strip $(1)), $^) \
 #				      $(srcdir)/$(RTS) \
-#				      $(INCLUDES) \
+#				      $(AM_CPPFLAGS) \
 #				      -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) \
 #	 		              -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@)) \
 #				      -I$(top_builddir) \
@@ -480,10 +480,10 @@ COMPILING_RUNTIME_SYSTEM +=    -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@
 			   echo -n " done.";
 
 RuntimeSystemCxx.o: $(srcdir)/RuntimeSystem.cpp $(srcdir)/RuntimeSystem.h
-	$(CXX) -g -Wall -Wextra $(INCLUDES) -o $@ -c $<
+	$(CXX) -g -Wall -Wextra $(AM_CPPFLAGS) -o $@ -c $<
 
 RuntimeSystemUpc.o: $(srcdir)/RuntimeSystem.cpp $(srcdir)/RuntimeSystem.h
-	$(CXX) -g -Wall -Wextra -DWITH_UPC=1 $(INCLUDES) -o $@ -c $<
+	$(CXX) -g -Wall -Wextra -DWITH_UPC=1 $(AM_CPPFLAGS) -o $@ -c $<
 
 ParallelRTS.o: $(srcdir)/ParallelRTS.upc $(srcdir)/ParallelRTS.h
 	$(UPC) -g -Wall -Wextra -DIN_TARGET_LIBS -DWITH_UPC=1 -o $@ -c $<

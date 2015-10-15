@@ -21,8 +21,8 @@ void createDOT(SgProject * root, string postfix = "") {
 // for (list<string>::iterator i = files.begin(); i != files.end(); i++) {
    for (int i = 0; i < root->numberOfFiles(); i++) {
  // string filename = *i;
-    string workingDirectory = ROSE::getWorkingDirectory();
-    string filename =  workingDirectory + string("/") + ROSE::stripPathFromFileName(root->get_file(i).getFileName());
+    string workingDirectory = rose::getWorkingDirectory();
+    string filename =  workingDirectory + string("/") + rose::utility_stripPathFromFileName(root->get_file(i).getFileName());
 
     printf ("filename = %s \n",filename.c_str());
 

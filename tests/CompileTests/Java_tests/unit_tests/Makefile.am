@@ -8,7 +8,7 @@ CLASSPATH=-classpath ./rose-output
 bin_PROGRAMS =
 
 # Use variables set in ROSE/config/Makefile.for.ROSE.includes.and.libs
-INCLUDES = $(ROSE_INCLUDES) $(JAVA_JVM_INCLUDE)
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(JAVA_JVM_INCLUDE)
 LDADD    = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
 
 clean-local:

@@ -756,6 +756,9 @@ public:
     /** Initialize the simulated operating system. */
     virtual void initializeSimulatedOs(RSIM_Process*, SgAsmGenericHeader*) = 0;
 
+    /** Called immediately after a new thread is created. */
+    virtual void threadCreated(RSIM_Thread*) {}
+
     /***************************************************************************************************************************/
     
 private:

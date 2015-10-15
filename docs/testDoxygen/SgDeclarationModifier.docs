@@ -46,7 +46,7 @@
 \fn SgDeclarationModifier::SgDeclarationModifier()
 \brief This is the constructor.
 
-   This constructor builds the SgDeclarationModifier base class.
+This constructor builds the SgDeclarationModifier base class.
 
 \sa 
 \ref SgDeclarationModifier_create "Example:create an SgDeclarationModifier object"
@@ -56,21 +56,21 @@
 \fn SgDeclarationModifier::~SgDeclarationModifier()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgDeclarationModifier::operator=(const SgDeclarationModifier & X)
 \brief This is the assignment operator.
 
-   This is a simple assignment of the SgBitVector from X to the current object.
+This is a simple assignment of the SgBitVector from X to the current object.
 */
 
 /*!
 \fn SgDeclarationModifier::isSgDeclarationModifier (SgNode *s)
 \brief Cast function (from derived class to SgDeclarationModifier pointer).
 
-   This functions returns a SgDeclarationModifier pointer for any input of a 
+This functions returns a SgDeclarationModifier pointer for any input of a 
 pointer to an object derived from a SgDeclarationModifier.
 
 \return Returns valid pointer to SgDeclarationModifier if input is derived from a SgLocatedNode.
@@ -80,7 +80,7 @@ pointer to an object derived from a SgDeclarationModifier.
 \fn SgDeclarationModifier::isSgDeclarationModifier (const SgNode *s)
 \brief Cast function (from derived class to SgDeclarationModifier pointer).
 
-   This functions returns a SgDeclarationModifier pointer for any input of a 
+This functions returns a SgDeclarationModifier pointer for any input of a 
 pointer to an object derived from a SgDeclarationModifier.
 
 \return Returns valid pointer to SgDeclarationModifier if input is derived from a SgLocatedNode.
