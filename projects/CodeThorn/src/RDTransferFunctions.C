@@ -158,7 +158,7 @@ void RDTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhs
 
 /*! 
   * \author Markus Schordan
-  * \date 2013.
+  * \date 2013, 2015.
  */
 void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element0) {
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
@@ -168,12 +168,17 @@ void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition*
   for(SgInitializedNamePtrList::iterator i=formalParameters.begin();
       i!=formalParameters.end();
       ++i) {
+
+    // kill parameter variables
+    VariableId paramId=getParameterVariableId(paramNr);
+    element.removeAllPairsWithVariableId(paramId);
+
+    // generate formal parameter
     SgInitializedName* formalParameterName=*i;
     assert(formalParameterName);
     VariableId formalParameterVarId=getVariableIdMapping()->variableId(formalParameterName);
     element.insertPair(lab,formalParameterVarId);
-    VariableId paramId=getParameterVariableId(paramNr);
-    element.removeAllPairsWithVariableId(paramId);
+
     paramNr++;
   }
 }
