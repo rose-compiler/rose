@@ -732,6 +732,16 @@ private:
         return varComment;
     }
 
+    /** Create a comment to describe register access. */
+    std::string commentForVariable(const RegisterDescriptor &reg, const std::string &accessMode) {
+        RegisterNames registerNames(get_state()->get_register_state()->get_register_dictionary());
+        std::string varComment = registerNames(reg) + " first " + accessMode + " at ";
+        if (pathInsnIndex_ != (size_t)(-1))
+            varComment += "path position #" + StringUtility::numberToString(pathInsnIndex_) + ", ";
+        varComment += "instruction " + unparseInstructionWithAddress(get_insn());
+        return varComment;
+    }
+
 public:
     virtual void startInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE {
         ASSERT_not_null(partitioner_);
@@ -753,7 +763,26 @@ public:
         }
         Super::finishInstruction(insn);
     }
-    
+
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE {
+        SymbolicSemantics::SValuePtr retval = SymbolicSemantics::SValue::promote(Super::readRegister(reg));
+        SymbolicExpr::Ptr expr = retval->get_expression();
+        if (expr->isLeafNode()) {
+            std::string comment = commentForVariable(reg, "read");
+            varComment(expr->isLeafNode()->toString(), comment);
+        }
+        return retval;
+    }
+
+    virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
+        SymbolicExpr::Ptr expr = SymbolicSemantics::SValue::promote(value)->get_expression();
+        if (expr->isLeafNode()) {
+            std::string comment = commentForVariable(reg, "write");
+            varComment(expr->isLeafNode()->toString(), comment);
+        }
+        Super::writeRegister(reg, value);
+    }
+
     /** Read memory.
      *
      *  If multi-path is enabled, then return a new memory expression that describes the process of reading a value from the
