@@ -44,29 +44,29 @@ GrammarString::infoFieldsToString() const {
   //ss<<","<<pureVirtualFunction;
   ss<<"access=";
 #if 1
-  switch(automaticGenerationOfDataAccessFunctions.getValue()) {
-  case TAG_NO_ACCESS_FUNCTIONS: ss<<"no";break;
-  case TAG_BUILD_ACCESS_FUNCTIONS: ss<<"yes";break;
-  case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:ss<<"yes(non-mod)";break;
-  case TAG_BUILD_LIST_ACCESS_FUNCTIONS:ss<<"list";break;
+  switch(automaticGenerationOfDataAccessFunctions) {
+  case NO_ACCESS_FUNCTIONS: ss<<"no";break;
+  case BUILD_ACCESS_FUNCTIONS: ss<<"yes";break;
+  case BUILD_FLAG_ACCESS_FUNCTIONS:ss<<"yes(non-mod)";break;
+  case BUILD_LIST_ACCESS_FUNCTIONS:ss<<"list";break;
   default:
         cerr<<"Error: unknown data access function type."<<endl;
         ROSE_ASSERT(0);
   }
 #endif
-  ss<<","<<"constr="<<   isInConstructorParameterList.getValue();
+  ss<<","<<"constr="<<   getIsInConstructorParameterList();
   ss<<","<<"init="<<"\""<<defaultInitializerString<<"\"";
-  ss<<","<<"copy="<<toBeCopied.getValue();
+  ss<<","<<"copy="<<toBeCopied;
   ss<<","<<"del="<<   toBeDeleted.getValue();
 #endif
     return ss.str();
 }
 
 
-ConstructParamEnum
+bool
 GrammarString::getIsInConstructorParameterList() const
    {
-     return isInConstructorParameterList;
+     return isInConstructorParameterList==CONSTRUCTOR_PARAMETER;
    }
 
 TraversalFlag
@@ -722,20 +722,20 @@ GrammarString::getDataAccessFunctionPrototypeString () const
      string variableNameStringTmp = string(variableNameString);
 
      string returnString;
-     switch (automaticGenerationOfDataAccessFunctions.getValue()) 
+     switch (automaticGenerationOfDataAccessFunctions) 
         {
-          case TAG_NO_ACCESS_FUNCTIONS:
+          case NO_ACCESS_FUNCTIONS:
                break;
 
-          case TAG_BUILD_ACCESS_FUNCTIONS:
-          case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:
+          case BUILD_ACCESS_FUNCTIONS:
+          case BUILD_FLAG_ACCESS_FUNCTIONS:
                returnString = "     public: \n         " + typeNameStringTmp + " get_" +
                          variableNameStringTmp + "() const;\n         void set_"  
                          + variableNameStringTmp + "(" + typeNameStringTmp + " " + 
                          variableNameStringTmp + ");\n";
                break;
 
-          case TAG_BUILD_LIST_ACCESS_FUNCTIONS:
+          case BUILD_LIST_ACCESS_FUNCTIONS:
                returnString = "     public: \n         const " + typeNameStringTmp + 
                          "& " + " get_" + variableNameStringTmp + "() const;\n         " + 
                          typeNameStringTmp + "& " + "get_" + variableNameStringTmp
@@ -1046,6 +1046,12 @@ GrammarString::setAutomaticGenerationOfDataAccessFunctions ( const BuildAccessEn
    {
      automaticGenerationOfDataAccessFunctions = X;
    }
+
+void
+GrammarString::setIsInConstructorParameterList()
+{
+  isInConstructorParameterList=CONSTRUCTOR_PARAMETER;
+}
 
 void
 GrammarString::setIsInConstructorParameterList(ConstructParamEnum X)
