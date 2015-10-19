@@ -109,10 +109,10 @@ CxxGrammarMetaProgram_SOURCES = \
 # buildConstructorsWithoutSourcePositionInformation.o: buildConstructorsWithoutSourcePositionInformation.C
 
 BoostLibraries = \
-  $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB)           \
+  $(BOOST_LDFLAGS) $(BOOST_WAVE_LIB) $(BOOST_DATE_TIME_LIB)           \
   $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB)  \
   $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)    \
-  $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)
+  $(BOOST_IOSTREAMS_LIB)
 
 # RM,MS (10/8/2015): The order in which the libraries are added is
 # important to link properly on Ubuntu 14.04+ with gcc 4.8.4+
