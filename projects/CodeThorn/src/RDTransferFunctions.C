@@ -8,6 +8,7 @@ using namespace std;
 
 using namespace SPRAY;
 
+#if 0
 bool hasDereferenceOperation(SgExpression* exp) {
   RoseAst ast(exp);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -22,6 +23,7 @@ bool hasDereferenceOperation(SgExpression* exp) {
   }
   return false;
 }
+#endif
 
 RDTransferFunctions::RDTransferFunctions() {
 }
@@ -42,7 +44,7 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Latt
   // (for programs with pointers we require a set here)
   VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping());  
   ROSE_ASSERT(_pointerAnalysisInterface);
-  if(hasDereferenceOperation(node)) {
+  if(_pointerAnalysisInterface->hasDereferenceOperation(node)) {
     VariableIdSet modVarIds=_pointerAnalysisInterface->getModByPointer();
     // union sets
     defVarIds+=modVarIds;

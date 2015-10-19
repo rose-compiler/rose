@@ -26,7 +26,7 @@ void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* nod
   VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping());
   ROSE_ASSERT(_pointerAnalysisInterface);
 
-  if(hasDereferenceOperation(node)) {
+  if(_pointerAnalysisInterface->hasDereferenceOperation(node)) {
     VariableIdSet modVarIds=_pointerAnalysisInterface->getModByPointer();
     // union sets
     defVarIds+=modVarIds;
@@ -137,6 +137,7 @@ void SPRAY::LVTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefi
   * \date 2014.
  */
 void SPRAY::LVTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, Lattice& element0) {
+  LVLattice& element=dynamic_cast<LVLattice&>(element0);
   // kill return variable
   VariableId resVarId=getResultVariableId();
   element.removeVariableId(resVarId);
