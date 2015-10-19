@@ -421,7 +421,7 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    MemoryState(const BaseSemantics::MemoryCellPtr &protocell)
+    explicit MemoryState(const BaseSemantics::MemoryCellPtr &protocell)
         : BaseSemantics::MemoryCellList(protocell), cell_compressor(&cc_choice) {}
 
     MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
@@ -522,16 +522,16 @@ typedef BaseSemantics::StatePtr StatePtr;
 
 /** How to update the list of writers stored at each abstract location. */
 enum WritersMode {
-    TRACK_NO_WRITERS,                               // do not track writers
-    TRACK_LATEST_WRITER,                            // save only the latest writer
-    TRACK_ALL_WRITERS                               // save all writers
+    TRACK_NO_WRITERS,                                   /**< Do not track writers. */
+    TRACK_LATEST_WRITER,                                /**< Save only the latest writer. */
+    TRACK_ALL_WRITERS                                   /**< Save all writers. */
 };
 
 /** How to update the list of definers stored in each semantic value. */
 enum DefinersMode {
-    TRACK_NO_DEFINERS,                              // do not track definers
-    TRACK_LATEST_DEFINER,                           // save only the latest definer
-    TRACK_ALL_DEFINERS                              // save all definers
+    TRACK_NO_DEFINERS,                                  /**< Do not track definers. */
+    TRACK_LATEST_DEFINER,                               /**< Save only the latest definer. */
+    TRACK_ALL_DEFINERS                                  /**< Save all definers. */
 };
 
 /** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly

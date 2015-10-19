@@ -63,7 +63,7 @@ RegisterStateGeneric::initialize_nonoverlapping(const std::vector<RegisterDescri
             val = get_protoval()->number_(regs[i].get_nbits(), 0);
         } else {
             val = get_protoval()->undefined_(regs[i].get_nbits());
-            if (!name.empty())
+            if (!name.empty() && val->get_comment().empty())
                 val->set_comment(name+"_0");
         }
         registers_.insertMaybeDefault(regs[i]).push_back(RegPair(regs[i], val));
@@ -182,7 +182,7 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
         size_t nbits = reg.get_nbits();
         SValuePtr newval = get_protoval()->undefined_(nbits);
         std::string regname = regdict->lookup(reg);
-        if (!regname.empty())
+        if (!regname.empty() && newval->get_comment().empty())
             newval->set_comment(regname + "_0");
         registers_.insertMaybeDefault(reg).push_back(RegPair(reg, newval));
         assertStorageConditions("at end of read", reg);
