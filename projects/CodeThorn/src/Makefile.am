@@ -318,6 +318,7 @@ faketarget:
 	SourceCodeFormat.C
 	SourceCodeFormat.h
 	tests/arraytest4.C
+	tests/arraytest5.C
 	tests/interval-test3.C
 	tests/rers/threadificationtest1-output.C
 	tests/rers/threadificationtest1.C
