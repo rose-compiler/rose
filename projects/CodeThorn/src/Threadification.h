@@ -20,6 +20,7 @@ namespace CodeThorn {
   class Threadification {
   public:
     Threadification(SPRAY::VariableIdMapping* vim);
+    virtual ~Threadification();
     // this transformation introduces new code as strings. It cannot be used for rewrites.
     void transform(SgNode* root);
   private:

@@ -1196,6 +1196,7 @@ TEST_TEMPLATE_TRANSLATOR = ../../testTemplates
 # output of instantiated templates (part of ongoing improvements to template support).
 # This test translator will work for test2015_32.C - test2015_36.C
 # I will make this in the a better organized set of tests later.
+# DQ (10/12/2015): Note that tests test2015_37.C through test2015_54.C are these tests.
 testTemplateExample: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_32.C
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_33.C
