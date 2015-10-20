@@ -1403,13 +1403,13 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & 
                withInitializers = false;
 
             // DQ (11/7/2006): Mark it temporarily as NOT a constructor parameter.
-               returnValue->isInConstructorParameterList = NO_CONSTRUCTOR_PARAMETER;
+               returnValue->setIsInConstructorParameterList(NO_CONSTRUCTOR_PARAMETER);
 
                string constructorParameterString_2 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_2 + "); \n";
 
             // DQ (11/7/2006): Turn it back on as a constructor parameter (and reset the defaultInitializerString)
-               returnValue->isInConstructorParameterList = CONSTRUCTOR_PARAMETER;
+               returnValue->setIsInConstructorParameterList(CONSTRUCTOR_PARAMETER);
                returnValue->defaultInitializerString = defaultInitializer;
 #if 0
             // DQ (10/7/2014): Adding support for Aterm specific function to build ROSE IR nodes (only generated where constructors are generated).
@@ -2061,10 +2061,8 @@ Grammar::buildVariantsStringDataBase ( StringUtility::FileWithLineNumbers & outp
        }
        variantNames[i->first] = i->second;
      }
-     bool first = true;
      for (size_t i=0; i < variantNames.size(); i++) {
        middleString += openString + "(VariantT)" + StringUtility::numberToString(i) + separatorString + variantNames[i] + closeString;
-       first = false;
      }
 
   // string endString = "          {$MARKER_LAST_TAG, \"last tag\" } \n   }; \n\n\n";
@@ -3541,7 +3539,11 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
     std::string nodeName = grammarnode->getName();
 
  // DQ (2/7/2011): Added message to report which nodes are in violation of ROSETTA rules.
-    printf ("Warning: Detected node violating ROSETTA rules (some exceptions are allowed): nodeName = %s, num-trav-datam:%d, num-trav-container:%d\n",nodeName.c_str(),info.numSingleDataMembers,info.numContainerMembers);
+
+ /* MS (10/8/2015): turned off the warning. This doesn't break
+  anything except the enums for synthesized attributes access. But those
+  will be removed. */
+ //   printf ("Warning: Detected node violating ROSETTA rules (some exceptions are allowed): nodeName = %s, num-trav-datam:%d, num-trav-container:%d\n",nodeName.c_str(),info.numSingleDataMembers,info.numContainerMembers);
 
  // DQ (2/7/2011): Added SgExprListExp to the list so that we can support originalExpressionTree data member in SgExpression.
  // Liao I made more exceptions for some OpenMP specific nodes for now

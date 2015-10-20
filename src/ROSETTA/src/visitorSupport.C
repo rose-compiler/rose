@@ -74,7 +74,7 @@ string Grammar::buildVisitorBaseClass()
      s += string("#ifndef SWIG \n\n");
      s += string("class ROSE_VisitorPattern  {\npublic:\n    virtual ~ROSE_VisitorPattern() {};\n");
 
-     for (unsigned int i=0; i < terminalList.size(); i++) {
+     for (size_t i=0; i < terminalList.size(); i++) {
           string name = terminalList[i]->name;
           s += localOutputVisitorSupport(name);
         }
@@ -84,7 +84,7 @@ string Grammar::buildVisitorBaseClass()
      s += "};\n\n";
 
      s += "class ROSE_VisitorPatternDefaultBase : public ROSE_VisitorPattern  {\npublic:\n";
-     for (unsigned int i=0; i < terminalList.size(); i++) {
+     for (size_t i=0; i < terminalList.size(); i++) {
           string name = terminalList[i]->name;
           s += localOutputVisitorParentSupport(name);
         }
@@ -111,7 +111,7 @@ string Grammar::buildVisitorBaseClass()
      s += "    /** Allows the strategy to be set dynamically.\n";
      s += "     * @param strategy a visitor to process a node.\n    */\n";
      s += "    void setStrategy(ROSE_VisitorPattern* strategy)  {_strategy = strategy; }\n\n";
-     for (int i = 0; i < terminalList.size(); i++) {
+     for (size_t i = 0; i < terminalList.size(); i++) {
          string name = terminalList[i]->name;
          s += delegate2strategy(name);
      }
