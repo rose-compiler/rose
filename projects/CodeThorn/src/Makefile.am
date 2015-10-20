@@ -248,11 +248,6 @@ faketarget:
 	rtests/vector1/rose_rev_rtest4.cpppure2.C
 	rtests/vector1/rtest1.C
 	rtests/vector1/rtest2.C
-	runtime/isstacktest.C
-	runtime/runtime.C
-	runtime/runtime.h
-	runtime/runtime_macros.h
-	runtime/testruntimesystem.C
 	spotconnection/spotdriver.C
 	spotconnection/spotdriver.h
 	testAbstractValue.C
