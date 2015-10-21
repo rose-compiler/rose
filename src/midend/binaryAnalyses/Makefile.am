@@ -51,6 +51,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryCallingConvention.C					\
     BinaryMagic.C						\
     BinaryNoOperation.C						\
+    BinaryPointerDetection.C					\
     BinaryReturnValueUsed.C					\
     BinaryString.C						\
     BinarySymbolicExpr.C					\
