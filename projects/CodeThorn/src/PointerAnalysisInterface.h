@@ -13,6 +13,7 @@ namespace SPRAY {
     virtual void run()=0;
     virtual VariableIdSet getModByPointer()=0;
     virtual ~PointerAnalysisInterface();
+    bool hasDereferenceOperation(SgExpression* exp);
   };
   
   class PointerAnalysisEmptyImplementation : public PointerAnalysisInterface {

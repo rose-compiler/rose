@@ -86,7 +86,8 @@ codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 # this line create speparately named object files
 codethorn_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
 codethorn_DEPENDENCIES=libspray.la
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lspray
+#codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lspray
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd 
 codethorn_LDFLAGS = -L$(SPOT_PREFIX)/lib
 
 codethorn_SOURCES = \
@@ -247,11 +248,6 @@ faketarget:
 	rtests/vector1/rose_rev_rtest4.cpppure2.C
 	rtests/vector1/rtest1.C
 	rtests/vector1/rtest2.C
-	runtime/isstacktest.C
-	runtime/runtime.C
-	runtime/runtime.h
-	runtime/runtime_macros.h
-	runtime/testruntimesystem.C
 	spotconnection/spotdriver.C
 	spotconnection/spotdriver.h
 	testAbstractValue.C
@@ -317,6 +313,7 @@ faketarget:
 	SourceCodeFormat.C
 	SourceCodeFormat.h
 	tests/arraytest4.C
+	tests/arraytest5.C
 	tests/interval-test3.C
 	tests/rers/threadificationtest1-output.C
 	tests/rers/threadificationtest1.C

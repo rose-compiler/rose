@@ -12,6 +12,7 @@
 #include <set>
 #include <string>
 #include <sstream>
+#include <list>
 
 #include <omp.h>
 
