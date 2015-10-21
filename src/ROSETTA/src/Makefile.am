@@ -17,11 +17,9 @@ if ROSE_USE_SMALLER_GENERATED_FILES
   CXX_PREPROC_CODES += $(CXX_GRAMMAR_DIR)/GENERATED_CODE_DIRECTORY_Cxx_Grammar/SgNode.h
 endif
 
-#                   $(CXX_GRAMMAR_DIR)/Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C
-
 BUILT_SOURCES = $(CXX_PREPROC_CODES)
 
-# The generation of the ROSE Grammars depend upon source code from these files
+# The generation of the ROSE ast nodes depend upon source code from these files
 GRAMMAR_SOURCE_FILES = \
      ../Grammar/Statement.code \
      ../Grammar/grammarClassDefinitionMacros.macro \
@@ -65,11 +63,6 @@ GRAMMAR_SOURCE_FILES = \
      ../Grammar/grammarGetChildIndex.macro \
      ../astNodeList
 
-# DQ (4/6/2006): Removed from Jochen's new version
-# ../Grammar/grammarConstructorOfStorageClass.macro
-
-
-
 # VALGRIND_OPTIONS = -v --num-callers=12 --leak-check=yes --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
@@ -108,21 +101,18 @@ CxxGrammarMetaProgram_SOURCES = \
 
 # buildConstructorsWithoutSourcePositionInformation.o: buildConstructorsWithoutSourcePositionInformation.C
 
-BoostLibraries = \
-  $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB)           \
-  $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB)  \
-  $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)    \
-  $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) $(RT_LIBS) $(top_builddir)/src/util/libroseutil.la
-
+# MS (10/8/2015): Boost is specified twice to allow to link with old gcc 4.2 as well as with 4.8+
 CxxGrammarMetaProgram_LDADD = \
-  $(BoostLibraries) \
+  $(ROSE_BOOST_LIBS) \
   $(top_builddir)/src/util/libroseutil.la \
-  $(top_builddir)/src/util/libroseSawyer.la
+  $(top_builddir)/src/util/libroseSawyer.la \
+  $(ROSE_BOOST_LIBS) \
+  $(RT_LIBS)
 
 # DQ (9/11/2008):
 # The rose_paths.c is built in ROSE/src/util and this dependence causes
 # ROSE to rebuild a lot of code each time configure is rerun. Let's see
-# if this can be make a little more tolerable for those without larger
+# if this can be made a little more tolerable for those without larger
 # computers working on ROSE (e.g. students).
 # CxxGrammarMetaProgram_DEPENDENCIES = $(CxxGrammarMetaProgram_LDADD)
 # CxxGrammarMetaProgram_DEPENDENCIES = 

@@ -8,7 +8,6 @@
 
 #include "Analyzer.h"
 #include "CommandLineOptions.h"
-#include <fstream>
 #include <unistd.h>
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"

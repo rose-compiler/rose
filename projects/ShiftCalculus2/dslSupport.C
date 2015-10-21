@@ -263,6 +263,23 @@ DSL_Support::buildDataPointer(const string & pointerVariableName, SgVariableSymb
      return variableDeclaration;
    }
 
+SgVariableDeclaration*
+DSL_Support::buildBoxRef(const string & pointerVariableName, SgVariableSymbol* variableSymbol, SgScopeStatement* outerScope, SgType* type)
+   {
+  // Optionally build a pointer variable so that we can optionally support a C style indexing for the DTEC DSL blocks.
+     SgExpression* pointerExp = buildMemberFunctionCall(variableSymbol,"getBox",NULL,false);
+     ROSE_ASSERT(pointerExp != NULL);
+     SgAssignInitializer* assignInitializer = SageBuilder::buildAssignInitializer_nfi(pointerExp);
+     ROSE_ASSERT(assignInitializer != NULL);
+
+  // Build the variable declaration for the pointer to the data.
+     SgVariableDeclaration* variableDeclaration  = SageBuilder::buildVariableDeclaration_nfi(pointerVariableName,type,assignInitializer,outerScope);
+     ROSE_ASSERT(variableDeclaration != NULL);
+
+     return variableDeclaration;
+   }
+
+
 
 SgVariableDeclaration*
 DSL_Support::buildMultiDimPointer(const string & pointerVariableName, SgVariableSymbol* variableSymbol, SgScopeStatement* outerScope, std::vector<SgVariableSymbol*> SymbolArray, int dimSize)
