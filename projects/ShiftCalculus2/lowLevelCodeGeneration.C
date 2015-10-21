@@ -42,9 +42,11 @@ SgExpression* buildStencilSubscript(std::vector<SgExpression*> operand, std::vec
 // SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBody, SgVariableSymbol* sourceVariableSymbol,
 //    SgVariableSymbol* & indexVariableSymbol_X, SgVariableSymbol* & indexVariableSymbol_Y, SgVariableSymbol* & indexVariableSymbol_Z, 
 //    SgVariableSymbol* & arraySizeVariableSymbol_X, SgVariableSymbol* & arraySizeVariableSymbol_Y)
-SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBody, SgVariableSymbol* boxVariableSymbol,
+SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBody, 
+   SgVariableSymbol* boxVariableSymbol,SgVariableSymbol* srcBoxVariableSymbol, SgVariableSymbol* destBoxVariableSymbol,
    SgVariableSymbol* & indexVariableSymbol_X, SgVariableSymbol* & indexVariableSymbol_Y, SgVariableSymbol* & indexVariableSymbol_Z, 
-   SgVariableSymbol* & arraySizeVariableSymbol_X, SgVariableSymbol* & arraySizeVariableSymbol_Y, SgVariableSymbol* & arraySizeVariableSymbol_Z,  SgStatement* & anchorStatement)
+   SgVariableSymbol* & arraySizeVariableSymbol_X, SgVariableSymbol* & arraySizeVariableSymbol_Y, SgVariableSymbol* & arraySizeVariableSymbol_Z,  SgStatement* & anchorStatement,
+   std::vector<SgExpression*> &srcLBList, std::vector<SgExpression*> &destLBList)
    {
   // SgScopeStatement* currentScope    = outerScope;
      SgForStatement*   loopNest        = NULL;
@@ -111,7 +113,7 @@ SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBod
                ROSE_ASSERT(lowerBound_value_part1 != NULL);
                SgExpression* lowerBound_value_part3  = buildMemberFunctionCall(lowerBound_value_part1,"operator[]",SageBuilder::buildIntVal(indexValueList[k]),true);
                ROSE_ASSERT(lowerBound_value_part3 != NULL);
-               std::string lbname= "lb" + std::to_string(indexValueList[k]);
+               std::string lbname= "iter_lb" + std::to_string(indexValueList[k]);
                SgVariableDeclaration* lbDecl = SageBuilder::buildVariableDeclaration(lbname,SageBuilder::buildIntType(),SageBuilder::buildAssignInitializer(lowerBound_value_part3,SageBuilder::buildIntType()),anchorStatement->get_scope());
                SageInterface::insertStatementAfter(anchorStatement,lbDecl,anchorStatement->get_scope());
                anchorStatement = lbDecl;
@@ -124,6 +126,34 @@ SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBod
                lowerBound_value = SageBuilder::buildIntVal(1);
              }
 
+          SgExpression* srcLowerBound_value = NULL;
+          if (srcBoxVariableSymbol != NULL)
+             {
+               SgExpression* lowerBound_value_part1  = buildMemberFunctionCall(srcBoxVariableSymbol,"getLowCorner",NULL,false);
+               ROSE_ASSERT(lowerBound_value_part1 != NULL);
+               SgExpression* lowerBound_value_part3  = buildMemberFunctionCall(lowerBound_value_part1,"operator[]",SageBuilder::buildIntVal(indexValueList[k]),true);
+               ROSE_ASSERT(lowerBound_value_part3 != NULL);
+               std::string lbname= "src_lb" + std::to_string(indexValueList[k]);
+               SgVariableDeclaration* lbDecl = SageBuilder::buildVariableDeclaration(lbname,SageBuilder::buildIntType(),SageBuilder::buildAssignInitializer(lowerBound_value_part3,SageBuilder::buildIntType()),anchorStatement->get_scope());
+               SageInterface::insertStatementAfter(anchorStatement,lbDecl,anchorStatement->get_scope());
+               anchorStatement = lbDecl;
+               srcLowerBound_value = SageBuilder::buildVarRefExp(lbname,anchorStatement->get_scope());
+               srcLBList[stencilDimension-k-1] = srcLowerBound_value;
+             }
+          SgExpression* destLowerBound_value = NULL;
+          if (destBoxVariableSymbol != NULL)
+             {
+               SgExpression* lowerBound_value_part1  = buildMemberFunctionCall(destBoxVariableSymbol,"getLowCorner",NULL,false);
+               ROSE_ASSERT(lowerBound_value_part1 != NULL);
+               SgExpression* lowerBound_value_part3  = buildMemberFunctionCall(lowerBound_value_part1,"operator[]",SageBuilder::buildIntVal(indexValueList[k]),true);
+               ROSE_ASSERT(lowerBound_value_part3 != NULL);
+               std::string lbname= "dest_lb" + std::to_string(indexValueList[k]);
+               SgVariableDeclaration* lbDecl = SageBuilder::buildVariableDeclaration(lbname,SageBuilder::buildIntType(),SageBuilder::buildAssignInitializer(lowerBound_value_part3,SageBuilder::buildIntType()),anchorStatement->get_scope());
+               SageInterface::insertStatementAfter(anchorStatement,lbDecl,anchorStatement->get_scope());
+               anchorStatement = lbDecl;
+               destLowerBound_value = SageBuilder::buildVarRefExp(lbname,anchorStatement->get_scope());
+               destLBList[stencilDimension-k-1] = destLowerBound_value;
+             }
        // ROSE_DLL_API SgVariableDeclaration* buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
        // ROSE_DLL_API SgAssignInitializer * buildAssignInitializer_nfi(SgExpression * operand_i = NULL, SgType * expression_type = NULL);
        // SgAssignInitializer* assignInitializer = SageBuilder::buildAssignInitializer_nfi(SageBuilder::buildIntVal(1));
@@ -177,7 +207,7 @@ SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBod
             // SgExpression* upperBound_value_part3  = buildMemberFunctionCall(upperBound_value_part1,type_1,"operator[]",SageBuilder::buildIntVal(indexValueList[k]),true);
                SgExpression* upperBound_value_part3  = buildMemberFunctionCall(upperBound_value_part1,"operator[]",SageBuilder::buildIntVal(indexValueList[k]),true);
                ROSE_ASSERT(upperBound_value_part3 != NULL);
-               std::string ubname= "ub" + std::to_string(indexValueList[k]);
+               std::string ubname= "iter_ub" + std::to_string(indexValueList[k]);
                SgVariableDeclaration* ubDecl = SageBuilder::buildVariableDeclaration(ubname,SageBuilder::buildIntType(),SageBuilder::buildAssignInitializer(upperBound_value_part3,SageBuilder::buildIntType()),anchorStatement->get_scope());
                SageInterface::insertStatementAfter(anchorStatement,ubDecl,anchorStatement->get_scope());
                anchorStatement = ubDecl;
@@ -190,6 +220,32 @@ SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBod
                upperBound_value = SageBuilder::buildIntVal(42);
              }
 
+          SgExpression* srcUpperBound_value = NULL;
+          if (srcBoxVariableSymbol != NULL)
+             {
+               SgExpression* upperBound_value_part1  = buildMemberFunctionCall(srcBoxVariableSymbol,"getHighCorner",NULL,false);
+               ROSE_ASSERT(upperBound_value_part1 != NULL);
+               SgExpression* upperBound_value_part3  = buildMemberFunctionCall(upperBound_value_part1,"operator[]",SageBuilder::buildIntVal(indexValueList[k]),true);
+               ROSE_ASSERT(upperBound_value_part3 != NULL);
+               std::string ubname= "src_ub" + std::to_string(indexValueList[k]);
+               SgVariableDeclaration* ubDecl = SageBuilder::buildVariableDeclaration(ubname,SageBuilder::buildIntType(),SageBuilder::buildAssignInitializer(upperBound_value_part3,SageBuilder::buildIntType()),anchorStatement->get_scope());
+               SageInterface::insertStatementAfter(anchorStatement,ubDecl,anchorStatement->get_scope());
+               anchorStatement = ubDecl;
+               srcUpperBound_value = SageBuilder::buildVarRefExp(ubname,anchorStatement->get_scope());;
+             }
+          SgExpression* destUpperBound_value = NULL;
+          if (destBoxVariableSymbol != NULL)
+             {
+               SgExpression* upperBound_value_part1  = buildMemberFunctionCall(destBoxVariableSymbol,"getHighCorner",NULL,false);
+               ROSE_ASSERT(upperBound_value_part1 != NULL);
+               SgExpression* upperBound_value_part3  = buildMemberFunctionCall(upperBound_value_part1,"operator[]",SageBuilder::buildIntVal(indexValueList[k]),true);
+               ROSE_ASSERT(upperBound_value_part3 != NULL);
+               std::string ubname= "dest_ub" + std::to_string(indexValueList[k]);
+               SgVariableDeclaration* ubDecl = SageBuilder::buildVariableDeclaration(ubname,SageBuilder::buildIntType(),SageBuilder::buildAssignInitializer(upperBound_value_part3,SageBuilder::buildIntType()),anchorStatement->get_scope());
+               SageInterface::insertStatementAfter(anchorStatement,ubDecl,anchorStatement->get_scope());
+               anchorStatement = ubDecl;
+               destUpperBound_value = SageBuilder::buildVarRefExp(ubname,anchorStatement->get_scope());;
+             }
        // We want to use the exact bound from the box, not modify it to subtract 1.
        // SgExpression* value_one         = SageBuilder::buildIntVal(1);
        // SgExpression* upperBound_expr   = SageBuilder::buildSubtractOp(upperBound_value,value_one);
@@ -261,7 +317,8 @@ SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBod
 SgExpression* 
 buildStencilPoint (StencilOffsetFSM* stencilOffsetFSM, double stencilCoeficient, int stencilDimension, SgVariableSymbol* variableSymbol, 
    SgVariableSymbol* indexVariableSymbol_X, SgVariableSymbol* indexVariableSymbol_Y, SgVariableSymbol* indexVariableSymbol_Z, 
-   SgVariableSymbol* arraySizeVariableSymbol_X, SgVariableSymbol* arraySizeVariableSymbol_Y, SgVariableSymbol* arraySizeVariableSymbol_z, bool generateLowlevelCode)
+   SgVariableSymbol* arraySizeVariableSymbol_X, SgVariableSymbol* arraySizeVariableSymbol_Y, SgVariableSymbol* arraySizeVariableSymbol_z, 
+   std::vector<SgExpression*> LBList, bool generateLowlevelCode)
    {
   // We want to generate: source[j*axis_x_size+i]
 
@@ -286,9 +343,9 @@ buildStencilPoint (StencilOffsetFSM* stencilOffsetFSM, double stencilCoeficient,
        // we need an expresion for the x_axis_size (and for y_axis_size for 3D stencils).
 
        // SgVarRefExp* variableVarRefExp    = SageBuilder::buildVarRefExp(variableSymbol);
-          SgVarRefExp* indexVarRefExp_Y     = SageBuilder::buildVarRefExp(indexVariableSymbol_Y);
+          SgExpression* indexVarRefExp_Y     = SageBuilder::buildSubtractOp(SageBuilder::buildVarRefExp(indexVariableSymbol_Y),SageInterface::deepCopy(LBList[1]));
           SgVarRefExp* arraySizeVarRefExp_X = SageBuilder::buildVarRefExp(arraySizeVariableSymbol_X);
-          SgVarRefExp* indexVarRefExp_X     = SageBuilder::buildVarRefExp(indexVariableSymbol_X);
+          SgExpression* indexVarRefExp_X     = SageBuilder::buildSubtractOp(SageBuilder::buildVarRefExp(indexVariableSymbol_X),SageInterface::deepCopy(LBList[0]));
        // Pei-Hung: vector to store operands and array size
           std::vector<SgExpression*> operand;
           std::vector<SgExpression*> arraySize;
@@ -403,11 +460,11 @@ buildStencilPoint (StencilOffsetFSM* stencilOffsetFSM, double stencilCoeficient,
        // we need an expresion for the x_axis_size (and for y_axis_size for 3D stencils).
 
        // SgVarRefExp* variableVarRefExp    = SageBuilder::buildVarRefExp(variableSymbol);
-          SgVarRefExp* indexVarRefExp_Z     = SageBuilder::buildVarRefExp(indexVariableSymbol_Z);
+          SgExpression* indexVarRefExp_Z     = SageBuilder::buildSubtractOp(SageBuilder::buildVarRefExp(indexVariableSymbol_Z),SageInterface::deepCopy(LBList[2]));
           SgVarRefExp* arraySizeVarRefExp_Y = SageBuilder::buildVarRefExp(arraySizeVariableSymbol_Y);
-          SgVarRefExp* indexVarRefExp_Y     = SageBuilder::buildVarRefExp(indexVariableSymbol_Y);
+          SgExpression* indexVarRefExp_Y     = SageBuilder::buildSubtractOp(SageBuilder::buildVarRefExp(indexVariableSymbol_Y),SageInterface::deepCopy(LBList[1]));
           SgVarRefExp* arraySizeVarRefExp_X = SageBuilder::buildVarRefExp(arraySizeVariableSymbol_X);
-          SgVarRefExp* indexVarRefExp_X     = SageBuilder::buildVarRefExp(indexVariableSymbol_X);
+          SgExpression* indexVarRefExp_X     = SageBuilder::buildSubtractOp(SageBuilder::buildVarRefExp(indexVariableSymbol_X),SageInterface::deepCopy(LBList[0]));
 
        // Pei-Hung: vector to store operands and array size
           std::vector<SgExpression*> operand;
