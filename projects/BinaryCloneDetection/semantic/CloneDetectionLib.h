@@ -4,11 +4,12 @@
 #include "Disassembler.h"
 #include "PartialSymbolicSemantics.h"
 #include "x86InstructionSemantics.h"
-#include "BinaryPointerDetection.h"
 #include "SqlDatabase.h"
 #include "LinearCongruentialGenerator.h"
 #include "Combinatorics.h"
 #include "Map.h"
+#include "SymbolicSemantics.h"
+#include "SMTSolver.h"
 
 #include "compute_signature_vector.h"
 
@@ -930,7 +931,36 @@ public:
     }
 };
 
+
+#if 0 // [Robb Matzke 2015-10-21]
+// This API is no longer available since it used the old instruction semantics API which is no longer supported.
 typedef rose::BinaryAnalysis::PointerAnalysis::PointerDetection<InstructionProvidor> PointerDetector;
+#else
+// Stub replacement. It would be quite hard to use the new pointer detection with the old semantics API, so just assume that
+// nothing is a pointer.
+class PointerDetector {
+public:
+    struct State {
+        rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::RegisterStateX86<SymbolicSemantics::ValueType> registers;
+    };
+
+    State state_;
+
+    PointerDetector(const InstructionProvidor*, rose::BinaryAnalysis::SMTSolver*) {}
+
+    bool is_pointer(const SymbolicSemantics::ValueType<32>& addr) const {
+        return false;
+    }
+
+    State& initial_state() {
+        return state_;
+    }
+
+    void analyze(SgAsmFunction*) {
+        throw std::runtime_error("not implemented");
+    }
+};
+#endif
 
 /*******************************************************************************************************************************
  *                                      Address hasher
