@@ -1,26 +1,21 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-#SUBDIRS = addressTakenAnalysis
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
-
 bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo varwatch
+noinst_PROGRAMS = addressTakenAnalysis matcher_demo varwatch
 
 CLEANFILES = 
 
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_PREFIX)/lib
-
-noinst_PROGRAMS = addressTakenAnalysis matcher_demo varwatch
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/Codethorn/src -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include
 
 MYDATE = $(shell date +%Y_%m_%d)
 
-#AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_builddir) -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/Codethorn/src -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include
-
-pkglib_LTLIBRARIES = libspray.la
+lib_LTLIBRARIES = libspray.la
 libspray_la_LDFLAGS= -no-undefined
+libspray_la_CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 libspray_la_SOURCES=\
  AliasAnalysis.h \
  AnalysisAbstractionLayer.h \
@@ -87,10 +82,14 @@ libspray_la_SOURCES=\
  addressTakenAnalysis.C \
  defUseQuery.C
 
+codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 # this line create speparately named object files
 codethorn_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
 codethorn_DEPENDENCIES=libspray.la
-codethorn_LDADD = -lrose -lspot -lbdd -lspray
+#codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lspray
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd 
+codethorn_LDFLAGS = -L$(SPOT_PREFIX)/lib
+
 codethorn_SOURCES = \
   Analyzer.C                       \
   Analyzer.h                       \
@@ -156,7 +155,8 @@ addressTakenAnalysis_SOURCES = \
   CommandLineOptions.C \
   addressTakenAnalysisDriver.C
 
-addressTakenAnalysis_LDADD = -lrose -lspray
+addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+addressTakenAnalysis_CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 addressTakenAnalysis_DEPENDENCIES=libspray.la
 
 # workaround to intentionally fool policy
@@ -248,11 +248,6 @@ faketarget:
 	rtests/vector1/rose_rev_rtest4.cpppure2.C
 	rtests/vector1/rtest1.C
 	rtests/vector1/rtest2.C
-	runtime/isstacktest.C
-	runtime/runtime.C
-	runtime/runtime.h
-	runtime/runtime_macros.h
-	runtime/testruntimesystem.C
 	spotconnection/spotdriver.C
 	spotconnection/spotdriver.h
 	testAbstractValue.C
@@ -318,6 +313,7 @@ faketarget:
 	SourceCodeFormat.C
 	SourceCodeFormat.h
 	tests/arraytest4.C
+	tests/arraytest5.C
 	tests/interval-test3.C
 	tests/rers/threadificationtest1-output.C
 	tests/rers/threadificationtest1.C
@@ -330,14 +326,15 @@ REGRESSION_DATA_DIR=regressiondata
 
 # MS: matcher_demo
 matcher_demo_DEPENDENCIES=libspray.la
-matcher_demo_LDADD = -lrose -lspray
+matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+matcher_demo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 matcher_demo_SOURCES = Timer.cpp matcher_demo.C
 BUILT_SOURCES = 
 AM_YFLAGS =
 AM_LFLAGS =
 
 varwatch_DEPENDENCIES=libspray.la
-varwatch_LDADD = -lrose -lspray
+varwatch_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
 
 #rdmain_LDADD = -lrose
@@ -360,7 +357,9 @@ varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
   rdmain.C 
 
 woodpecker_DEPENDENCIES=libspray.la
-woodpecker_LDADD = -lrose -lspray
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray
+woodpecker_CXXFLAGS= -fopenmp -Wall -O3 -march=native -ftree-vectorize
+woodpecker_LDFLAGS = -L$(SPOT_PREFIX)/lib
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
   DataDependenceVisualizer.h DataDependenceVisualizer.C \
@@ -395,7 +394,7 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
 #  DFAnalysisBase.h
 
 analyterix_DEPENDENCIES=libspray.la
-analyterix_LDADD = -lrose -lspray
+analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray
 analyterix_SOURCES = \
   CPAstAttribute.h CPAstAttribute.C \
   CommandLineOptions.h \

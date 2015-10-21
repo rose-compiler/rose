@@ -156,9 +156,21 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
           bool autoMovePreprocessingInfo = true;
 
           SgStatement* lastStatement = associatedStatement;
+
+          SgVariableDeclaration* sourceBoxVariableDeclaration = NULL;
+          sourceBoxVariableDeclaration = buildBoxRef("sourceBoxRef",sourceVariableSymbol,outerScope, boxVariableSymbol->get_type());
+          SageInterface::insertStatementBefore(lastStatement,sourceBoxVariableDeclaration,autoMovePreprocessingInfo);
+          SgVariableSymbol* srcBoxVariableSymbol = SageInterface::getFirstVarSym(sourceBoxVariableDeclaration);
+          SgVariableDeclaration* destinationBoxVariableDeclaration = NULL;
+          destinationBoxVariableDeclaration = buildBoxRef("destinationBoxRef",sourceVariableSymbol,outerScope, boxVariableSymbol->get_type());
+          SageInterface::insertStatementAfter(sourceBoxVariableDeclaration,destinationBoxVariableDeclaration,autoMovePreprocessingInfo);
+          SgVariableSymbol* destBoxVariableSymbol = SageInterface::getFirstVarSym(destinationBoxVariableDeclaration);
+
           SgBasicBlock* innerLoopBody = NULL;
 
-          SgForStatement* loopNest = buildLoopNest(stencilFSM->stencilDimension(),innerLoopBody,boxVariableSymbol,indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y, arraySizeVariableSymbol_Z,lastStatement);
+          vector<SgExpression*> srcLBList(stencilDimension);
+          vector<SgExpression*> destLBList(stencilDimension);
+          SgForStatement* loopNest = buildLoopNest(stencilFSM->stencilDimension(),innerLoopBody,boxVariableSymbol,srcBoxVariableSymbol,destBoxVariableSymbol, indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y, arraySizeVariableSymbol_Z,lastStatement, srcLBList, destLBList);
           ROSE_ASSERT(innerLoopBody != NULL);
 
           ROSE_ASSERT(lastStatement != NULL);
@@ -219,7 +231,7 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
                   {
                      stencilSubTree = 
                           buildStencilPoint(stencilOffsetFSM,stencilCoeficient,stencilDimension,sourceVariableSymbol,
-                               indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,arraySizeVariableSymbol_Z,generateLowlevelCode);
+                               indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,arraySizeVariableSymbol_Z,srcLBList,generateLowlevelCode);
                   }
              
                ROSE_ASSERT(stencilSubTree != NULL);
@@ -239,7 +251,7 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
           else
             {
               stencil_lhs = buildStencilPoint(stencilOffsetFSM_lhs,stencilCoeficient_lhs,stencilDimension,destinationVariableSymbol,
-                                              indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,arraySizeVariableSymbol_Z,generateLowlevelCode);
+                                              indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,arraySizeVariableSymbol_Z,destLBList, generateLowlevelCode);
             }
           ROSE_ASSERT(stencil_lhs != NULL);
 

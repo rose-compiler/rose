@@ -83,7 +83,7 @@ public:
      *
      *  This SValue will be used only for its virtual constructors and will never appear in an expression. */
     static SValuePtr instance() {
-        return SValuePtr(new SValue(1, NULL));
+        return SValuePtr(new SValue(1));
     }
 
     /** Instantiate an undefined value.
