@@ -3327,7 +3327,9 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
 
-#if 0
+#define DEBUG_FOR_STMT 0
+
+#if DEBUG_FOR_STMT
      curprint ("/* Top of unparseForStmt */");
 #endif
 
@@ -3347,12 +3349,12 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // Not yet clear how to handle case where tmp_stmt == NULL.
           ROSE_ASSERT(tmp_stmt != NULL);
-#if 0
+#if DEBUG_FOR_STMT
           curprint ("/* unparse start of SgForStatement */");
 #endif
        // unparseStatementFromTokenStream (for_stmt, tmp_stmt, e_token_subsequence_start, e_token_subsequence_start);
           unparseStatementFromTokenStream (for_stmt, tmp_stmt, e_token_subsequence_start, e_leading_whitespace_start);
-#if 0
+#if DEBUG_FOR_STMT
           curprint ("/* DONE: unparse start of SgForStatement */");
 #endif
         }
@@ -3377,11 +3379,11 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
        else
         {
-#if 0
+#if DEBUG_FOR_STMT
           curprint("/* Unparse the for_init_stmt */\n ");
 #endif
           unparseStatement(tmp_stmt,newinfo);
-#if 0
+#if DEBUG_FOR_STMT
           curprint("/* DONE: Unparse the for_init_stmt */\n ");
 #endif
         }
@@ -3396,7 +3398,7 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
           unparseExpression(tmp_expr, info);
 #else
   // DQ (12/13/2005): New code for handling the test (which could be a declaration!)
-#if 0
+#if DEBUG_FOR_STMT
      printf ("Output the test in the for statement format newinfo.inConditional() = %s \n",newinfo.inConditional() ? "true" : "false");
      curprint (" /* test */ ");
 #endif
@@ -3406,12 +3408,15 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgUnparse_Info testinfo(info);
      testinfo.set_SkipSemiColon();
      testinfo.set_inConditional();
-#if 0
+#if DEBUG_FOR_STMT
      printf ("Output the test in the for statement format testinfo.inConditional() = %s \n",testinfo.inConditional() ? "true" : "false");
 #endif
      unparseStatement(test_stmt, testinfo);
 #endif
-
+#if DEBUG_FOR_STMT
+     printf ("In unparseForStatement(): saved_unparsedPartiallyUsingTokenStream = %s \n",saved_unparsedPartiallyUsingTokenStream ? "true" : "false");
+     printf ("In unparseForStatement(): test_stmt->isTransformation()           = %s \n",test_stmt->isTransformation() ? "true" : "false");
+#endif
   // DQ (4/6/2015): If the test is a transformation, then we have to output the semi-colon directly (see inliner tutorial test).
      if (saved_unparsedPartiallyUsingTokenStream == true && test_stmt->isTransformation() == true)
         {
@@ -3432,11 +3437,21 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint ( string(") "));
 #endif
 
+  // DQ (10/14/2015): If the test was unparsed from the AST then we need to unparse the increment from the AST,
+  // but it the test was unparsed as parrt of a partial token stream unparse of the SgForStatement, then we can
+  // unparse the increment from the token stream (as a continuation of the use of the token stream in the test).
   // DQ (12/5/2014): Test for if we have unparsed partially using the token stream. 
   // If so then we don't want to unparse this syntax, if not then we require this syntax.
   // if (info.unparsedPartiallyUsingTokenStream() == false)
-     if (saved_unparsedPartiallyUsingTokenStream == false)
+  // if (saved_unparsedPartiallyUsingTokenStream == false)
+  // if (saved_unparsedPartiallyUsingTokenStream == false && test_stmt->isTransformation() == true)
+  // if (test_stmt->isTransformation() == true)
+  // if (saved_unparsedPartiallyUsingTokenStream == false || test_stmt->isTransformation() == false)
+#if 0
+  // Original code: "if (saved_unparsedPartiallyUsingTokenStream == false)"
+     if (saved_unparsedPartiallyUsingTokenStream == false || test_stmt->isTransformation() == true)
         {
+          curprint (" /* output semi-colon before increment */ ");
           curprint("; ");
           SgExpression *increment_expr = for_stmt->get_increment();
           ROSE_ASSERT(increment_expr != NULL);
@@ -3444,6 +3459,28 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
                unparseExpression(increment_expr, info);
           curprint(") ");
         }
+#else
+  // if (saved_unparsedPartiallyUsingTokenStream == false)
+  // if (saved_unparsedPartiallyUsingTokenStream == false || test_stmt->isTransformation() == false)
+  // if (test_stmt->isTransformation() == true)
+  // if (saved_unparsedPartiallyUsingTokenStream == false && test_stmt->isTransformation() == true)
+  // if (test_stmt->isTransformation() == true)
+  // if (saved_unparsedPartiallyUsingTokenStream == false)
+  // if ( (saved_unparsedPartiallyUsingTokenStream == false || test_stmt->isTransformation() == false) )
+     if (saved_unparsedPartiallyUsingTokenStream == false)
+        {
+       // curprint (" /* output semi-colon before increment */ ");
+          curprint("; ");
+        }
+     if (saved_unparsedPartiallyUsingTokenStream == false)
+        {
+          SgExpression *increment_expr = for_stmt->get_increment();
+          ROSE_ASSERT(increment_expr != NULL);
+          if ( increment_expr != NULL )
+               unparseExpression(increment_expr, info);
+          curprint(") ");
+        }
+#endif
        else
         {
        // DQ (12/15/2014): Note that the increment expression is not a Statement, so it will be unparsed in the 
@@ -3460,7 +3497,7 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
        // If this is compiler generated this this must be handled similarly as to the SgIfStmt with compiler generated body.
           ROSE_ASSERT(body->isCompilerGenerated() == false);
 
-#if 0
+#if DEBUG_FOR_STMT
           curprint ("/* unparse increment expression in SgForStatement header */");
 #endif
        // DQ (12/16/2014): When a SgBasicBlock has been substituted for the loop_body then there is not associated token stream (see test2014_14.C).
@@ -3501,7 +3538,7 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
   // if ( (tmp_stmt = for_stmt->get_loop_body()) && !info.SkipBasicBlock())
      if ( (loopBody != NULL) && !info.SkipBasicBlock())
         {
-#if 0
+#if DEBUG_FOR_STMT
           printf ("Unparse the for loop body \n");
           curprint("/* Unparse the for loop body */ ");
 #endif
@@ -3510,7 +3547,7 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
           unp->cur.format(loopBody, info, FORMAT_BEFORE_NESTED_STATEMENT);
           unparseStatement(loopBody, info);
           unp->cur.format(loopBody, info, FORMAT_AFTER_NESTED_STATEMENT);
-#if 0
+#if DEBUG_FOR_STMT
           curprint("/* DONE: Unparse the for loop body */ ");
 #endif
         }

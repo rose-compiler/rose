@@ -415,7 +415,7 @@ StructLayoutInfo CustomizedPrimitiveTypeLayoutGenerator::layoutType(SgType* t) c
 }
 
 template <typename T>
-struct alignof {
+struct rose_alignof {
 
      struct test {
           char c;
@@ -435,35 +435,35 @@ enum testenum { testenum_x = INT_MAX }; /* NO_STRINGIFY */
 StructLayoutInfo SystemPrimitiveTypeLayoutGenerator::layoutType(SgType* t) const {
   StructLayoutInfo layout;
   switch (t->variantT()) {
-    case V_SgTypeBool: {layout.size = sizeof(bool); layout.alignment = alignof<bool>::v; break;}
+    case V_SgTypeBool: {layout.size = sizeof(bool); layout.alignment = rose_alignof<bool>::v; break;}
 
-    case V_SgTypeChar: {layout.size = sizeof(char); layout.alignment = alignof<char>::v; break;}
-    case V_SgTypeSignedChar: {layout.size = sizeof(signed char); layout.alignment = alignof<signed char>::v; break;}
-    case V_SgTypeUnsignedChar: {layout.size = sizeof(unsigned char); layout.alignment = alignof<unsigned char>::v; break;}
+    case V_SgTypeChar: {layout.size = sizeof(char); layout.alignment = rose_alignof<char>::v; break;}
+    case V_SgTypeSignedChar: {layout.size = sizeof(signed char); layout.alignment = rose_alignof<signed char>::v; break;}
+    case V_SgTypeUnsignedChar: {layout.size = sizeof(unsigned char); layout.alignment = rose_alignof<unsigned char>::v; break;}
 
-    case V_SgTypeShort: {layout.size = sizeof(short); layout.alignment = alignof<short>::v; break;}
-    case V_SgTypeSignedShort: {layout.size = sizeof(signed short); layout.alignment = alignof<signed short>::v; break;}
-    case V_SgTypeUnsignedShort: {layout.size = sizeof(unsigned short); layout.alignment = alignof<unsigned short>::v; break;}
+    case V_SgTypeShort: {layout.size = sizeof(short); layout.alignment = rose_alignof<short>::v; break;}
+    case V_SgTypeSignedShort: {layout.size = sizeof(signed short); layout.alignment = rose_alignof<signed short>::v; break;}
+    case V_SgTypeUnsignedShort: {layout.size = sizeof(unsigned short); layout.alignment = rose_alignof<unsigned short>::v; break;}
 
-    case V_SgTypeInt: {layout.size = sizeof(int); layout.alignment = alignof<int>::v; break;}
-    case V_SgEnumType: {layout.size = sizeof(testenum); layout.alignment = alignof<testenum>::v; break;} // strictly, this depends on the members of the enumeration (see C99 s6.7.2.2, para 4)
-    case V_SgTypeSignedInt: {layout.size = sizeof(signed int); layout.alignment = alignof<signed int>::v; break;}
-    case V_SgTypeUnsignedInt: {layout.size = sizeof(unsigned int); layout.alignment = alignof<unsigned int>::v; break;}
+    case V_SgTypeInt: {layout.size = sizeof(int); layout.alignment = rose_alignof<int>::v; break;}
+    case V_SgEnumType: {layout.size = sizeof(testenum); layout.alignment = rose_alignof<testenum>::v; break;} // strictly, this depends on the members of the enumeration (see C99 s6.7.2.2, para 4)
+    case V_SgTypeSignedInt: {layout.size = sizeof(signed int); layout.alignment = rose_alignof<signed int>::v; break;}
+    case V_SgTypeUnsignedInt: {layout.size = sizeof(unsigned int); layout.alignment = rose_alignof<unsigned int>::v; break;}
 
-    case V_SgTypeLong: {layout.size = sizeof(long); layout.alignment = alignof<long>::v; break;}
-    case V_SgTypeSignedLong: {layout.size = sizeof(signed long); layout.alignment = alignof<signed long>::v; break;}
-    case V_SgTypeUnsignedLong: {layout.size = sizeof(unsigned long); layout.alignment = alignof<unsigned long>::v; break;}
+    case V_SgTypeLong: {layout.size = sizeof(long); layout.alignment = rose_alignof<long>::v; break;}
+    case V_SgTypeSignedLong: {layout.size = sizeof(signed long); layout.alignment = rose_alignof<signed long>::v; break;}
+    case V_SgTypeUnsignedLong: {layout.size = sizeof(unsigned long); layout.alignment = rose_alignof<unsigned long>::v; break;}
 
-    case V_SgTypeLongLong: {layout.size = sizeof(long long); layout.alignment = alignof<long long>::v; break;}
-    //case V_SgTypeSignedLongLong: {layout.size = sizeof(); layout.alignment = alignof<>::v; break;}
-    case V_SgTypeUnsignedLongLong: {layout.size = sizeof(unsigned long long); layout.alignment = alignof<unsigned long long>::v; break;}
+    case V_SgTypeLongLong: {layout.size = sizeof(long long); layout.alignment = rose_alignof<long long>::v; break;}
+    //case V_SgTypeSignedLongLong: {layout.size = sizeof(); layout.alignment = rose_alignof<>::v; break;}
+    case V_SgTypeUnsignedLongLong: {layout.size = sizeof(unsigned long long); layout.alignment = rose_alignof<unsigned long long>::v; break;}
 
-    case V_SgTypeFloat: {layout.size = sizeof(float); layout.alignment = alignof<float>::v; break;}
-    case V_SgTypeDouble: {layout.size = sizeof(double); layout.alignment = alignof<double>::v; break;}
-    case V_SgTypeLongDouble: {layout.size = sizeof(long double); layout.alignment = alignof<long double>::v; break;}
+    case V_SgTypeFloat: {layout.size = sizeof(float); layout.alignment = rose_alignof<float>::v; break;}
+    case V_SgTypeDouble: {layout.size = sizeof(double); layout.alignment = rose_alignof<double>::v; break;}
+    case V_SgTypeLongDouble: {layout.size = sizeof(long double); layout.alignment = rose_alignof<long double>::v; break;}
 
-    case V_SgPointerType: {layout.size = sizeof(void *); layout.alignment = alignof<void *>::v; break;}
-    case V_SgReferenceType: {layout.size = sizeof(void *); layout.alignment = alignof<void *>::v; break;}
+    case V_SgPointerType: {layout.size = sizeof(void *); layout.alignment = rose_alignof<void *>::v; break;}
+    case V_SgReferenceType: {layout.size = sizeof(void *); layout.alignment = rose_alignof<void *>::v; break;}
 #if 1    
     //case V_SgTypeVoid: {layout.size = 1; layout.alignment = 1; break;}
     //case V_SgTypeWchar: {layout.size = 4; layout.alignment = 4; break;}
