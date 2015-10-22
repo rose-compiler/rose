@@ -259,7 +259,7 @@ static void collectiveMergeDeclarationAndAssignment (std::vector <SgVariableDecl
     if (initor == NULL)
     { 
       SgStatement* next_stmt = SageInterface::getNextStatement(current_decl);
-#if  1
+
       while (next_stmt)
       {
          if (isAssignmentStmtOf (next_stmt, init_name) )
@@ -279,7 +279,7 @@ static void collectiveMergeDeclarationAndAssignment (std::vector <SgVariableDecl
          else
            next_stmt = SageInterface::getNextStatement(next_stmt);
       } 
-#endif
+
     } // end if null initializer
   } // end for
 }
@@ -547,19 +547,6 @@ int main(int argc, char * argv[])
 
   if (transTracking)
   { 
-#if 0
-    for (size_t i =1; i<TransformationTracking::getNextId(); i++)
-    {
-      std::pair<Sg_File_Info*, Sg_File_Info*> info_pair = TransformationTracking::getFileInfo(i);
-      Sg_File_Info* start_info = info_pair.first;
-      Sg_File_Info* end_info = info_pair.second;
-      cout<<"====>>Node :"<<i<<endl;
-      if (start_info != NULL)
-      {start_info->display();}
-      if (end_info != NULL)
-      {end_info->display();}
-    }
-#endif
     std::map<AST_NODE_ID, std::set<AST_NODE_ID> >::iterator iter;
     for (iter = TransformationTracking::inputIDs.begin(); iter != TransformationTracking::inputIDs.end(); iter++)
     {
@@ -576,12 +563,12 @@ int main(int argc, char * argv[])
         {
            SgNode* input_node = TransformationTracking::getNode((*iditer));
            SgLocatedNode* lnode = isSgLocatedNode(input_node); 
-           cout<<lnode->unparseToString()<<endl; 
+           cout<<lnode->unparseToString()<<endl;  //TODO this function has unexpected side effects impacting token-based unparsing
            cout<<"//Transformation generated based on line #"<< lnode->get_file_info()->get_line() <<endl;
            src_comment += " line # " + StringUtility::numberToString(lnode->get_file_info()->get_line());
         }
         src_comment +="\n";
-        SgStatement* enclosing_stmt = getEnclosingStatement(affected_node);
+//        SgStatement* enclosing_stmt = getEnclosingStatement(affected_node);
         cout<<src_comment<<endl;
 //TODO: turn this on and update the reference results
 //        attachComment (enclosing_stmt, src_comment);
@@ -1412,12 +1399,12 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
   SageInterface::removeStatement(decl, false);
 
 // support transformation tracking/ IR mapping
+
   if (transTracking)
     {
       // patch up IDs for the changed subtree 
       TransformationTracking::registerAstSubtreeIds (orig_scope);
       std::vector <SgVariableDeclaration*>::iterator iter;
-
       for (iter = newly_inserted_copied_decls.begin(); iter!= newly_inserted_copied_decls.end(); iter++)
       { //TransformationTracking::addInputNode (affected_node, input_node)
         TransformationTracking::addInputNode (*iter, decl); 
