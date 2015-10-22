@@ -4931,7 +4931,7 @@ HEADER_QUALIFIED_NAME_END
 HEADER_ATTRIBUTE_START
        // SgAttribute(char* str);
           int isSame(const std::string& str);
-          virtual bool isPragma() { return 0; } // MS02/22/02
+          //virtual bool isPragma() { return 0; } // MS02/22/02, 11/22/2015
        // char *get_name() const;
 
       protected:

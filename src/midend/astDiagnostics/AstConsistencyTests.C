@@ -3756,10 +3756,10 @@ TestExpressionTypes::visit ( SgNode* node )
              {
                SgExpression *parentExpr = isSgExpression(expression->get_parent());
                if (parentExpr != NULL && !(
-                                       parentExpr->variantT() == V_SgAssignInitializer && expression->variantT() == V_SgStringVal
+                                    (parentExpr->variantT() == V_SgAssignInitializer && expression->variantT() == V_SgStringVal)
                                     || parentExpr->variantT() == V_SgDotExp
                                     || parentExpr->variantT() == V_SgArrowExp
-                                    || isSgInitializer(parentExpr) && isSgInitializer(expression)))
+                                    || (isSgInitializer(parentExpr) && isSgInitializer(expression))))
                   {
                     SgType* parentType = parentExpr->get_type();
                     parentType = parentType->stripTypedefsAndModifiers();

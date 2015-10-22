@@ -107,8 +107,12 @@ StringUtility::findfile(std::string patternString, std::string pathString)
   /* matching the pattern for each file name.               */
      while ((entry = readdir(dir))) {
        /* check if the pattern matchs. */
-          std::string entryName = entry->d_name ? entry->d_name : "";
-          if (entry->d_name && entryName.find(patternString) != std::string::npos) {
+       /* MS: 11/22/2015: note that d_name is an array of char
+        * and testing it as pointer always gives true;
+        * removed this kind of testing code 
+        */
+          std::string entryName = entry->d_name; 
+          if (entryName.find(patternString) != std::string::npos) {
                patternMatches.push_back(pathString+"/"+entryName);
 
           }

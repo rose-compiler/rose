@@ -1259,8 +1259,6 @@ Grammar::buildConstructorParameterList ( Terminal & node, vector<GrammarString *
           GrammarString *memberFunctionCopy= *gIt;
           ROSE_ASSERT (memberFunctionCopy != NULL);
 
-       // DQ (11/7/2006): Rewritten to remove wrap logic (overly complex)
-       // if (memberFunctionCopy->getIsInConstructorParameterList() == true)
           if (memberFunctionCopy->getIsInConstructorParameterList() == CONSTRUCTOR_PARAMETER)
              {
                 constructorParameterList.push_back(memberFunctionCopy);
@@ -1955,9 +1953,12 @@ Grammar::editSubstitution ( Terminal & node, const StringUtility::FileWithLineNu
   // printf ("listLength = %d \n",listLength);
      vector<GrammarString *>::iterator sourceListIterator, targetListIterator;
      for ( sourceListIterator = sourceList.begin(), targetListIterator = targetList.begin(); 
-           sourceListIterator != sourceList.end(), targetListIterator != targetList.end(); 
+           sourceListIterator != sourceList.end() || targetListIterator != targetList.end(); 
            sourceListIterator++, targetListIterator++ )
         {
+          // MS 11/22/2015: changed above loop test to check on both iterators (not just check one iterator as before).
+          // therefore the following inariant must hold or something is wrong
+          ROSE_ASSERT(sourceListIterator!=sourceList.end() && targetListIterator != targetList.end());
        // These are done in the order in which the user specified them!
          
           // fprintf (stderr, "targetList[index].getFunctionNameString() = %s \n",(*targetListIterator)->getFunctionPrototypeString().c_str());

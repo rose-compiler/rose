@@ -64,9 +64,15 @@ GrammarString::infoFieldsToString() const {
 
 
 bool
+GrammarString::isInConstructorParameterList() const
+   {
+     return p_isInConstructorParameterList==CONSTRUCTOR_PARAMETER;
+   }
+
+ConstructParamEnum
 GrammarString::getIsInConstructorParameterList() const
    {
-     return isInConstructorParameterList==CONSTRUCTOR_PARAMETER;
+     return p_isInConstructorParameterList;
    }
 
 TraversalFlag
@@ -852,7 +858,7 @@ GrammarString::~GrammarString()
 GrammarString::GrammarString()
    : pureVirtualFunction(0), functionNameString(""), 
      typeNameString(""), variableNameString(""), 
-     defaultInitializerString(""), isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
+     defaultInitializerString(""), p_isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
      toBeCopied(COPY_DATA), toBeTraversed(true), key(0),
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
      toBeDeleted(false)
@@ -870,7 +876,7 @@ GrammarString::GrammarString(
   // DQ (12/7/2003): Reordered parameters
    : pureVirtualFunction(0), functionNameString(""), 
      typeNameString(inputTypeNameString), variableNameString(inputVariableNameString), 
-     defaultInitializerString(inputDefaultInitializerString), isInConstructorParameterList(isConstructorParameter), 
+     defaultInitializerString(inputDefaultInitializerString), p_isInConstructorParameterList(isConstructorParameter), 
      toBeCopied(_toBeCopied), toBeTraversed(true), key(0),
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
      toBeDeleted(delete_flag)
@@ -900,7 +906,7 @@ GrammarString::GrammarString( const string& inputFunctionNameString )
   // DQ (12/7/2003): Reordered parameters
    : pureVirtualFunction(0), functionNameString(inputFunctionNameString), 
      typeNameString(""), variableNameString(""), 
-     defaultInitializerString(""), isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
+     defaultInitializerString(""), p_isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
      toBeCopied(COPY_DATA), toBeTraversed(true), key(0),
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
      toBeDeleted(false)
@@ -913,7 +919,7 @@ GrammarString::GrammarString( const GrammarString & X )
   // DQ (12/7/2003): Reordered parameters
    : pureVirtualFunction(0), functionNameString(""), 
      typeNameString(""), variableNameString(""), 
-     defaultInitializerString(""), isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
+     defaultInitializerString(""), p_isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
      toBeCopied(X.toBeCopied), toBeTraversed(true), key(0),
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
      toBeDeleted(false)
@@ -941,7 +947,7 @@ GrammarString::operator= ( const GrammarString & X )
      key                                      = X.key;
      pureVirtualFunction                      = X.pureVirtualFunction;
      automaticGenerationOfDataAccessFunctions = X.automaticGenerationOfDataAccessFunctions;
-     isInConstructorParameterList             = X.isInConstructorParameterList;
+     p_isInConstructorParameterList             = X.p_isInConstructorParameterList;
      toBeTraversed                            = X.toBeTraversed;
      toBeCopied                               = X.toBeCopied;
      toBeDeleted                              = X.toBeDeleted;
@@ -1050,13 +1056,13 @@ GrammarString::setAutomaticGenerationOfDataAccessFunctions ( const BuildAccessEn
 void
 GrammarString::setIsInConstructorParameterList()
 {
-  isInConstructorParameterList=CONSTRUCTOR_PARAMETER;
+  p_isInConstructorParameterList=CONSTRUCTOR_PARAMETER;
 }
 
 void
 GrammarString::setIsInConstructorParameterList(ConstructParamEnum X)
 {
-  isInConstructorParameterList= X;
+  p_isInConstructorParameterList= X;
 }
 
 void

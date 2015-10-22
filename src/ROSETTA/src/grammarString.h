@@ -46,7 +46,7 @@ class GrammarString
   std::string variableNameString;
   std::string defaultInitializerString;
  private:
-  ConstructParamEnum isInConstructorParameterList;
+  ConstructParamEnum p_isInConstructorParameterList;
  public:
   CopyConfigEnum toBeCopied; // used to guide cloning of AST nodes
 
@@ -120,10 +120,11 @@ class GrammarString
   std::string containerElementTypeString(Terminal & node) const;
   std::string containerAppendFunctionNameString(Terminal & node) const;
 
-  void setIsInConstructorParameterList();
-  // MS 2015: deprecated function. Use function setIsInConstructorParameterList() instead.
   void setIsInConstructorParameterList(ConstructParamEnum X);
-  bool getIsInConstructorParameterList() const;
+  ConstructParamEnum getIsInConstructorParameterList() const;
+
+  void setIsInConstructorParameterList();
+  bool isInConstructorParameterList() const;
 
   void setToBeTraversed(const TraversalFlag& X);
   TraversalFlag getToBeTraversed() const;
