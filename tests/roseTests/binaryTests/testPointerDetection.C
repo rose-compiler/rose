@@ -91,13 +91,12 @@ main(int argc, char *argv[]) {
             } else if (!pda.didConverge()) {
                 std::cout <<"  Analysis did not converge\n";
             } else {
-                static const bool sort = true;
                 std::cout <<"  Code pointers:\n";
-                BOOST_FOREACH (const SymbolicExpr::Ptr &addr, pda.codePointers(sort))
-                    std::cout <<"    " <<*addr <<"\n";
+                BOOST_FOREACH (const PointerDetection::PointerDescriptor &desc, pda.codePointers())
+                    std::cout <<"    " <<desc.nBits <<"-bit pointer at " <<*desc.lvalue <<"\n";
                 std::cout <<"  Data pointers:\n";
-                BOOST_FOREACH (const SymbolicExpr::Ptr &addr, pda.dataPointers(sort))
-                    std::cout <<"    " <<*addr <<"\n";
+                BOOST_FOREACH (const PointerDetection::PointerDescriptor &desc, pda.dataPointers())
+                    std::cout <<"    " <<desc.nBits <<"-bit pointer at " <<*desc.lvalue <<"\n";
             }
             //! [documentation guts]
         }

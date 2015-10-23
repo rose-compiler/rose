@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_PointerDetection_H
 
 #include <BaseSemantics2.h>
+#include <MemoryCellList.h>
 #include <Sawyer/Set.h>
 
 namespace rose {
@@ -139,19 +140,46 @@ struct Settings {
         : ignoreConstIp(true), ignoreStrangeSizes(true) {}
 };
 
+#if 0 // [Robb Matzke 2015-10-23]
+/** Memory cells indexed by address or value hash. */
+typedef Sawyer::Container::Map<uint64_t /*valhash*/, InstructionSemantics2::BaseSemantics::MemoryCellPtr> CellsByHash;
+#endif
+
+/** Map of expressions by hash. */
+typedef Sawyer::Container::Map<uint64_t /*expr_hash*/, SymbolicExpr::Ptr> ExpressionsByHash;
+
+/** Description of one pointer. */
+struct PointerDescriptor {
+    SymbolicExpr::Ptr lvalue;                           /**< Symbolic address of pointer. */
+    size_t nBits;                                       /**< Width of pointer in bits. */
+
+    PointerDescriptor(const SymbolicExpr::Ptr &lvalue, size_t nBits)
+        : lvalue(lvalue), nBits(nBits) {}
+};
+
+/** Functor to compare two PointerLocation objects. */
+class PointerDescriptorLessp {
+public:
+    bool operator()(const PointerDescriptor &a, const PointerDescriptor &b);
+};
+
+/** Set of pointers. */
+typedef std::set<PointerDescriptor, PointerDescriptorLessp> PointerDescriptors;
+    
 /** Pointer analysis.
  *
  *  This class is the main analysis class for pointer detection.  See the @ref rose::BinaryAnalysis::PointerDetection namespace
  *  for details. */
 class Analysis {
+public:
+
 private:
     Settings settings_;
-    typedef Sawyer::Container::Map<uint64_t /*expr_hash*/, SymbolicExpr::Ptr> AddressExpressions;
     InstructionSemantics2::BaseSemantics::DispatcherPtr cpu_;
     bool hasResults_;                                   // Are the following data members initialized?
     bool didConverge_;                                  // Are the following data members valid (else only appoximations)?
-    AddressExpressions codePointers_;                   // Memory addresses that hold a pointer to code
-    AddressExpressions dataPointers_;                   // Memory addresses that hold a pointer to data
+    PointerDescriptors codePointers_;                   // Memory addresses that hold a pointer to code
+    PointerDescriptors dataPointers_;                   // Memory addresses that hold a pointer to data
     InstructionSemantics2::BaseSemantics::StatePtr initialState_; // Initial state for analysis
     InstructionSemantics2::BaseSemantics::StatePtr finalState_;   // Final state for analysis
 
@@ -218,18 +246,22 @@ public:
      *  things. Once the CPU is removed it's no longer possible to do more analysis with this object. */
     void clearNonResults();
 
-    /** Code pointers.
+    /** Property: Code pointers.
      *
      *  These are memory addresses that store a value that was used to initialize the instruction pointer register. If @p sort
      *  is true then the return value is sorted lexically. */
-    std::vector<SymbolicExpr::Ptr> codePointers(bool sort=false) const;
+    const PointerDescriptors& codePointers() const {
+        return codePointers_;
+    }
 
-    /** Data pointers.
+    /** Property: Data pointers.
      *
      *  These are memory addresses that store a value that was used as an address to dereference other memory. If @p sort is
      *  true then the return value is sorted lexically. */
-    std::vector<SymbolicExpr::Ptr> dataPointers(bool sort=false) const;
-
+    const PointerDescriptors& dataPointers() const {
+        return dataPointers_;
+    }
+    
     /** Initial state for analysis.
      *
      *  Returns symbolic state that initialized the analysis. This is the state at the function entry address and is
@@ -254,14 +286,17 @@ private:
     InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     makeRiscOperators(const Partitioner2::Partitioner&) const;
 
+    // Prints instructions to the mlog[DEBUG] diagnostic stream if that stream is enabled.
+    void
+    printInstructionsForDebugging(const Partitioner2::Partitioner&, const Sawyer::SharedPointer<Partitioner2::Function>&);
+
     // Given a potential pointer's r-value, determine if the r-value is a pointer and if so, store its address in the
     // result. The pointer's value and the defining instructions are added to the two sets, and the result is not updated for
     // values and instructions that have already been processed.
     void
     conditionallySavePointer(const InstructionSemantics2::BaseSemantics::SValuePtr &ptrValue,
                              Sawyer::Container::Set<uint64_t> &ptrValueSeen,
-                             Sawyer::Container::Set<SgAsmInstruction*> &insnSeen,
-                             size_t wordSize, AddressExpressions &result);
+                             size_t wordSize, PointerDescriptors &result);
 };
 
 } // namespace
