@@ -32,13 +32,81 @@ namespace Partitioner2 {
  *  to detect all the pointer variables.  On the other hand, the compiler may generate temporary pointers that don't exist in
  *  the source code. Since binary files have no explicit type information (except perhaps in debug tables upon which we don't
  *  want to depend), we have to discover that something is a pointer by how it's used.  The property that distinguishes data
- *  pointers from non-pointers is that they're used as addresses when reading from or writing to memory.  We use two passes to
- *  find such pointers: the first pass looks at the address expressions used for memory I/O operations in order to discover
- *  which other instructions were used to define that address.  The second monitors those defining instructions to figure out
- *  whether they read from memory, and if they do, then the address being read is assumed to be the address of a pointer.
- *  Code pointers (e.g., pointers to functions in C), are detected in a similar manner to data pointers: we first look for
- *  situations where a value is written to the EIP register, obtain the list of instructions that defined that value, and then
- *  in a second pass monitor those instructions for memory reads. */
+ *  pointers from non-pointers is that they're used as addresses when reading from or writing to memory.
+ *
+ *  @section binary_ptrdetect_algo Algorithm
+ *
+ *  The algorithm works by performing a data-flow analysis in the symbolic domain with each CFG vertex also keeping track of
+ *  which memory locations are read.  When the data-flow step completes, the algorithm scans all memory locations (across all
+ *  CFG vertices) to get a list of addresses.  Each address expression includes a list of all instructions that were used to
+ *  define the address. For instance, given this simpler code:
+ *
+ *  @code
+ *  ; int deref(int *ptr, int index) { return ptr[index]; }
+ *  L0: push ebp
+ *  L1: mov ebp, esp
+ *  L3: mov eax, [ebp+8]
+ *  L6: mov ecx, [ebp+12]
+ *  L9: mov eax, [eax + ecx*4]
+ *  Lc: leave
+ *  Ld: ret
+ *  @endcode
+ *
+ *  L9 reads from memory address <code>eax + ecx * 4</code>, and that address was calculated by previous instructions:
+ *
+ *  @li L3 read a value from the stack, therefore L3 is a definer of EAX's value before L9
+ *  @li L6 read a value from the stack, therefore L6 is a definer of ECX's value before L9
+ *  @li L9 performed arithmetic on EAX and ECX, the result of which is defined by L3, L6, and L9.
+ *
+ *  Other addresses in addition to the one read by L9 are:
+ *
+ *  @li The return address stored at the top of the initial stack used by the @c RET instruction. Defined by L0 and Lc.
+ *  @li The location of the first program argument, defined by L0 and L3.
+ *  @li The location of the second program argument, defined by L0 and L6.
+ *  @li The location of the saved EBP, defined by L0.
+ *
+ *  A second step (not requiring a second data-flow, but using information gathered by the first data flow), looks at addresses
+ *  that were read by instructions that defined an address. For instance, L3, L6, and L9 are the instructions that defined the
+ *  address used by L9, and all three of them read some memory:
+ *
+ *  @li L3 read the first argument starting at four bytes past the original ESP.
+ *  @li L6 read the second argument starting at eight bytes past the original ESP.
+ *  @li L9 read an element of the array.
+ *
+ *  Since L9 reads from the same address whose definers we are processing, we discard the information from L9, keeping only the
+ *  two reads from L3 and L6.  Both of these reads match the width of the stack pointer, therefore we keep both (this is an
+ *  optional setting for this analysis) and the analysis deems them "addressses of data pointers".  Incidentally, the width of
+ *  the stack pointer is used as the width of data pointers, and the width of the instruction pointer is used as the width of
+ *  code pointers.  The result is that eight bytes on the stack are deemed addresses of data pointers. They are:
+ *
+ *  @code
+ *  (add[32] esp_0[32] 0x00000004[32])
+ *  (add[32] esp_0[32] 0x00000005[32])
+ *  (add[32] esp_0[32] 0x00000006[32])
+ *  (add[32] esp_0[32] 0x00000007[32])
+ *  (add[32] esp_0[32] 0x00000008[32])
+ *  (add[32] esp_0[32] 0x00000009[32])
+ *  (add[32] esp_0[32] 0x0000000a[32])
+ *  (add[32] esp_0[32] 0x0000000b[32])
+ *  @endcode
+ *
+ *  An astute observer will notice that the algorithm has detected that both "ptr" and "index" are detected as
+ *  pointers. Although they are not "pointers" per se in the C language, they are indeed both pointers by some definition of
+ *  assembly language: they're both used as indexes into a global memory address space.
+ *
+ *  The analysis also detects other pointers that are not evident from the C source code: EBP's stored location just below the
+ *  original top-of-stack is a pointer, and the return address stored at the top of the stack is a pointer.
+ *
+ *  @section binary_ptrdetect_usage Usage
+ *
+ *  Like most binary analysis functionality, binary pointer detection is encapsulated in its own namespace. The main class,
+ *  @ref Analysis, performs most of the work. A user instantiates an analysis object giving it a certain configuration at the
+ *  same time. He then invokes one of its analysis methods, such @ref Analysis::analyzeFunction, one or more times and queries
+ *  the results after each analysis.  The results are returned as symbolic address expressions relative to some initial state.
+ *
+ *  The "testPointerDetection.C" tester has an example use case:
+ *
+ *  @snippet testPointerDetection.C documentation guts */
 namespace PointerDetection {
 
 /** Initialize diagnostics.
@@ -50,13 +118,6 @@ void initDiagnostics();
  *
  *  The facility can be controlled directly or via ROSE's command-line. */
 extern Sawyer::Message::Facility mlog;
-
-/** Type of pointer. These bits represent various knowledge about pointer variables. */
-enum PointerType {
-    UNKNOWN_PTR=0x000,                                  /**< Pointer variable is of unknown type. */
-    DATA_PTR=0x0001,                                    /**< Pointer variable points to data. */
-    CODE_PTR=0x0002                                     /**< Pointer variable points to code. */
-};
 
 /** Settings to control the pointer analysis. */
 struct Settings {
@@ -78,7 +139,10 @@ struct Settings {
         : ignoreConstIp(true), ignoreStrangeSizes(true) {}
 };
 
-/** Pointer analysis. */
+/** Pointer analysis.
+ *
+ *  This class is the main analysis class for pointer detection.  See the @ref rose::BinaryAnalysis::PointerDetection namespace
+ *  for details. */
 class Analysis {
 private:
     Settings settings_;
@@ -113,7 +177,7 @@ public:
      *  This constructor uses the supplied dispatcher and associated semantic domain.  For best results, the semantic domain
      *  should be a symbolic domain that uses @ref InstructionSemantics2::BaseSemantics::MemoryCellList "MemoryCellList" and
      *  @ref InstructionSemantics2::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". These happen to also be the
-     *  defaults used by @ref InstructionSemantics::SymbolicSemantics. */
+     *  defaults used by @ref InstructionSemantics2::SymbolicSemantics. */
     explicit Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu,
                       const Settings &settings = Settings())
         : cpu_(cpu), hasResults_(false), didConverge_(false) {}

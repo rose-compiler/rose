@@ -80,6 +80,7 @@ main(int argc, char *argv[]) {
                 }
             }
 
+            //! [documentation guts]
             // Run the analysis
             PointerDetection::Analysis pda(engine.disassembler());
             pda.analyzeFunction(partitioner, function);
@@ -98,6 +99,7 @@ main(int argc, char *argv[]) {
                 BOOST_FOREACH (const SymbolicExpr::Ptr &addr, pda.dataPointers(sort))
                     std::cout <<"    " <<*addr <<"\n";
             }
+            //! [documentation guts]
         }
     }
 }
