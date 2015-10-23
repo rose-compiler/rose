@@ -274,7 +274,7 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
               SgPragmaDeclaration* pragma1 = SageBuilder::buildPragmaDeclaration (parallel_pragma_string, NULL);
               SageInterface::insertStatementBefore(loopNest,  pragma1);
               // TODO: once total arraySize is calculated , we use a variable arraySize_Total instead of 1764 ( 42*42 )
-              string target_pragma_string = "omp target device(0) map (out:destinationDataPointer[0:1764]) map(in:sourceDataPointer[0:1764])";
+              string target_pragma_string = "omp target device(0) map (to:destinationDataPointer[0:1764]) map(from:sourceDataPointer[0:1764])";
               SgPragmaDeclaration* pragma2 = SageBuilder::buildPragmaDeclaration (target_pragma_string, NULL);
               SageInterface::insertStatementBefore(pragma1,  pragma2);
             }
