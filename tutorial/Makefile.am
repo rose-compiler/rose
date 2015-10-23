@@ -164,6 +164,8 @@ binaryCallGraph_SOURCES = binaryCallGraph.C
 
 binaryHelloWorld_SOURCES = binaryHelloWorld.C
 
+binaryStrings_SOURCES = binaryStrings.C
+
 ASTGraphGenerator_SOURCES = ASTGraphGenerator.C
 
 ASTGraphGeneratorCustomized_SOURCES = ASTGraphGeneratorCustomized.C

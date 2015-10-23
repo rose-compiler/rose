@@ -465,7 +465,8 @@ public:
     }
     void
     traverse(typename AddressMap::Visitor &visitor, MatchFlags flags=0) const {
-        return map_->traverse<typename AddressMap::Visitor>(visitor, *this, flags);
+        // MS 11/22/2015: added "template " (required by clang++)
+        return map_->template traverse<typename AddressMap::Visitor>(visitor, *this, flags);
     }
     
     Sawyer::Container::Interval<Address>

@@ -601,9 +601,9 @@ struct SigAction {
     SigAction()
         : handlerVa(0), flags(0), restorerVa(0), mask(0) {}
     explicit SigAction(const sigaction_32 &x)
-        : handlerVa(x.handler_va), flags(x.flags), restorerVa(x.restorer_va), mask(mask) {}
+        : handlerVa(x.handler_va), flags(x.flags), restorerVa(x.restorer_va), mask(x.mask) {}
     explicit SigAction(const sigaction_64 &x)
-        : handlerVa(x.handler_va), flags(x.flags), restorerVa(x.restorer_va), mask(mask) {}
+        : handlerVa(x.handler_va), flags(x.flags), restorerVa(x.restorer_va), mask(x.mask) {}
     sigaction_32 get_sigaction_32() const {
         sigaction_32 x;
         x.handler_va = handlerVa;
