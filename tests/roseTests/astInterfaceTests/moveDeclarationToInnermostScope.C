@@ -11,19 +11,21 @@
  *  User instructions: 
  *
  * The translator accepts the following options: 
- * -rose:debug, which is turned on by default in the testing.  
- *             Some dot graph files will be generated for scope trees of variables for debugging purpose.
+ *
+ * -rose:merge_decl_assign  will merge the moved declaration with an immediately followed assignment. 
  *
  * -rose:aggressive  : turn on the aggressive mode, which will move declarations with initializers, and across loop boundaries.   
  *  A warning message will be sent out if the move crosses a loop boundary.  Without this option, the tool only moves a declaration 
  *  without an initializer to be safe.
  *
+ *
+ * -rose:debug, which is turned on by default in the testing.  
+ *             Some dot graph files will be generated for scope trees of variables for debugging purpose.
+ *
  * -rose:keep_going  will ignore assertions as much as possible (currently on skip the assertion on complex for loop initialization statement list).
  *   Without this option, the tool will stop on assertion failures. 
  *  
  * -rose:identity  will turn off any transformations and act like an identity translator. Useful for debugging purposes. 
- *
- * -rose:merge_decl_assign  will merge the moved declaration with an immediately followed assignment. 
  *
  * -rose:trans-tracking   will turn on the transformation tracking mode, showing the source statements of a move/merged declaration 
  *
@@ -42,10 +44,10 @@
  *  Also for two use scopes with enclosing relationship, we only store the outer scope in the scope tree and trim the rest. 
  *
  *  Algorithm V1 :
- *    Save the scope of the declaration int DS
+ *    Save the scope of the declaration int DS (declaration statement)
  *
  *    Step 1: create a scope tree first, with trimming 
- *    Pre-order traversal to find all references to the declaration
+ *    Pre-order traversal to find all variable references to the declaration
  *    For each reference place
  *    {
  *       back track all its scopes until we reach DS
@@ -61,12 +63,12 @@
  *    }
  *
  *    Step 2: find the scopes to move the declaration into
- *    find the innermost scope containing all paths to leaves: innerscope: single parent, multiple children
- *    count the number of children of innerscope: 
+ *    find the innermost scope containing all paths to leaves: inner_scope: single parent, multiple children
+ *    count the number of children of inner_scope: 
  *      if this is only one leaf: move the declaration to the innermost scope
  *      if there are two scopes: 
- *          not liveout for the variable in question?  duplicate the declaration and move to each scope chain. 
- *          if yes liveout in between two scopes.  no duplication, move the declaration to innerscope
+ *          not liveout for the variable in question?  Duplicate the declaration and move to each scope chain. 
+ *          if yes liveout in between two scopes.  No duplication, move the declaration to inner_scope
  *
  *  Iterative moving process: 
  *
@@ -584,10 +586,10 @@ int main(int argc, char * argv[])
 
 //==================================================================================
 
-// Three types of scope for a varialbe access
-// 1. variable is being declared.
-// 2. variable is being used: read or written 
-// 3. not either of the above cases, juse a scope in between them. 
+// Three types of scope for a variable access
+// 1. Variable is being declared.
+// 2. Variable is being used: read or written 
+// 3. Not either of the above cases, just a scope in between them. 
 enum ScopeType {s_decl, s_intermediate, s_use};
 class Scope_Node {
   public: 
@@ -631,6 +633,7 @@ class Scope_Node {
 
 // Topdown traverse a tree to find the first node with multiple children
 // Intuitively, the innermost common scope for a variable.
+// ----------- No adjustment any more ---------------
 // However, we have to adjust a few special cases: 
 // For example: if-stmt case
 //  A variable is used in both true and false body.
@@ -836,7 +839,8 @@ Scope_Node* generateScopeTree(SgDeclarationStatement* decl, bool debug = false)/
       if (getAdjustedScope(vRef) == decl_scope) 
       {
         usedInSameScope = true; 
-        break;
+        break; // jump out the entire loop? 
+        // continue; // we should just skip a single iteration instead. No difference in the end since the function will return if a single usedInSameScope is set.!
       } // same scope
       var_refs.push_back(vRef);
     } // match symbol
@@ -1162,7 +1166,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
      return ; //inserted_copied_decls;
   }
 #endif
-  //TODO, no longe need this, simply ensure BB if it is a single statement of true/false body
+  //TODO, no longer need this, simply ensure BB if it is a single statement of true/false body
   scopes = processTargetScopes(scopes);
 
   for (size_t i = 0; i< scopes.size(); i++)
@@ -1230,7 +1234,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 	      SageInterface::mergeDeclarationAndAssignment (decl_copy, exp_stmt, false);
               SageInterface::deepDelete (exp_stmt);
 	      // insert the merged decl into the list, TODO preserve the order in the list
-	      // else other cases: we simply preprent decl_copy to the front of init_stmt
+	      // else other cases: we simply prepend decl_copy to the front of init_stmt
 	      stmt_list.insert (stmt_list.begin(),  decl_copy);
 	      decl_copy->set_parent(stmt->get_for_init_stmt());
 	      ROSE_ASSERT (decl_copy->get_parent() != NULL); 
@@ -1497,7 +1501,7 @@ static SgForStatement* hasALoopWithComplexInitStmt( SgVariableDeclaration* decl,
        else 
       {  // single init, but cannot match loop index,  and the variable is referenced in the loop header
          // We cannot insert into the init stmt list since it will cause compilation error. e.g. inputmoveDeclarationToInnermostScope_13.C
-         // We cannoit move into the loop body neither since it is referenced in the loop header.
+         // We cannot move into the loop body neither since it is referenced in the loop header.
          if (i_name != getLoopIndexVariable (for_loop) && isReferencedByLoopHeader (sym, for_loop))
            return for_loop; 
       }
@@ -1507,8 +1511,9 @@ static SgForStatement* hasALoopWithComplexInitStmt( SgVariableDeclaration* decl,
 }
 
 //! A helper functions to move special scopes of target scopes into source scope trees for further consideration
+// Essentially handle all types of branching scopes , replacing each of them with their children scopes. Breaking the boundary of the branches.
 // If a target statement is a if-stmt, we should replace it with two scopes, one for its true body, the other for its false body for further consideration. 
-std::vector <SgScopeStatement *> moveSpecialScopesIntoScopeTree (const std::vector <SgScopeStatement *> &target_scopes, std::queue<Scope_Node* > &source_scope_trees)
+std::vector <SgScopeStatement *> moveSpecialTargetScopesIntoScopeTreeQueue (const std::vector <SgScopeStatement *> &target_scopes, std::queue<Scope_Node* > &source_scope_trees)
 {
   std::vector <SgScopeStatement*> processed_scopes;
   for (size_t i = 0; i< target_scopes.size(); i++)
@@ -1535,7 +1540,8 @@ std::vector <SgScopeStatement *> moveSpecialScopesIntoScopeTree (const std::vect
 	assert (ScopeTreeMap[false_body] != NULL);
 	source_scope_trees.push(ScopeTreeMap[false_body]);
       }
-    }
+    } 
+    //TODO any other branching scope statements in AST? switch(), while(), for() all have a single inner body scope, not branching
     else
     {
       processed_scopes.push_back(target_scope);
@@ -1545,7 +1551,15 @@ std::vector <SgScopeStatement *> moveSpecialScopesIntoScopeTree (const std::vect
 }
 
 
-// For a scope tree, collect candidate target scopes
+// For a scope tree, collect candidate target scopes. This is the core step of algorithm V2's findFinalTargetScopes()
+/*
+ * 3 cases
+ *  1. single node scope tree: add to target_scopes if it is different from the decl's scope
+ *  2. multiple nodes, single bottom, add the bottom scope to target_scopes.
+ *  3. multiple scopes under the first branch scope (FBS): 
+ *    No Live In violation: add all child scopes of FBS to target_scopes., go to the bottom for each child path
+ *    Yes LiveIn violation: add the first branch scope to target_scope
+ * */ 
 std::vector <SgScopeStatement *> collectCandidateTargetScopes (SgVariableDeclaration* decl, Scope_Node* scope_tree, bool debug)
 {
   std::vector <SgScopeStatement *> target_scopes; 
@@ -1602,6 +1616,7 @@ std::vector <SgScopeStatement *> collectCandidateTargetScopes (SgVariableDeclara
 	// Another thought: A better fix: we collect all leaf nodes of the scope tree! It has nothing to do with the first branch node!
 	//       this won't work. First branch node still matters. 
 	Scope_Node* current_child_scope = first_branch_node->children[i];     
+        //TODO: this is not clean from a recursive function point of view, This should be handled by the top while loop iterating on the scope tree queue. 
 	Scope_Node* bottom_node = current_child_scope -> findFirstBranchNode ();
 	SgScopeStatement * bottom_scope = bottom_node->scope;
 	ROSE_ASSERT (bottom_scope!= NULL);
@@ -1634,30 +1649,31 @@ Find all bottom scopes to move into: no side effect on AST at all
 1. Initialization: 
   source_scope_trees: the top scope tree of the single decl in question
 2. For each tree of  source_scope_trees: populate target_scopes
-   a. single node scope tree, if diff from orig_scope, add  to target_scopes.  
+  collect candidate scopes
+   a. Single node scope tree, if diff from orig_scope, add  to target_scopes.  
        delete the tree in any cases.  IF the same AS orig_scope, skip moving.  delete still. 
-   b. multiple nodes tree
-      i. first branch node is a bottom: push to target_scopes
-      ii. first branch has children, move down if no LIveIn between any chidren?
-          1.  move to multiple scopes: each child’s first branch → target_scopes  
+   b. Multiple nodes tree
+      i. First branch node is a bottom: push to target_scopes
+      ii. First branch has children, move down if no LIveIn between any chidren?
+          1.  Move to multiple scopes: each child’s first branch → target_scopes  
              // TODO: this can be optimized, direct add child scope should be sufficient
-           2. no move down, push first-branch scope into target_scope, if it is diff from orig_scope
-3. Target_scopes to source_scope_trees transition, caused by if-stmt  void moveSomeTargetScopesToSourceScopeTrees(& target_scopes, & source_scope_tree)
-  a. find all if-stmt scopes of target_scopes, 
-  b. remove them from target_scopes
-  c. add their true/false scopes into   source_scope_trees // the removed ones can be added back later for single node scope tree case. 
-    what if no BB is stored? create a virtual scope on demand?   post process scope tree (normalize) then de-normalize: pending on the experiment of add/remove BB’s impact on token-unparsing
+          2. No move down if has liveIn, push first-branch scope into target_scope, if it is diff from orig_scope
+3. Target_scopes to source_scope_trees transition, caused by if-stmt  void moveSpecialTargetScopesToSourceScopeTreesQueue(& target_scopes, & source_scope_tree)
+  a. Find all if-stmt scopes of target_scopes 
+  b. Remove them from target_scopes
+  c. Add their true/false scopes into   source_scope_trees // the removed ones can be added back later for single node scope tree case. 
+    what if no BB is stored? Create a virtual scope on demand?   Post process scope tree (normalize) then de-normalize: pending on the experiment of add/remove BB’s impact on token-unparsing
 4. if (!Check stop condition):   repeat 2 and 3, essentially do (2, 3) while ()
    a. scope tree: root scopes are processed (finished) a scopelist, source_scopes becomes empty
    b. // Implicitly ensured by 3 all target_scopes are bottom, no non-bottom scopes like if-stmt anymore
 
 Amendment to the algorithm before:
 
- 1. if any scope is not allowed, no move will happen at all. This is not desired since some intermediate moves still should happen.
+ 1. If any scope is not allowed, no move will happen at all. This is not desired since some intermediate moves still should happen.
  To support it, I build candidate target scopes for each scope tree, and only invalidate a single scope tree
  with invalid target scope. Other target scopes of valid scope trees are preserved. 
 
- 2. if a source-scope tree is invalidated, it should be returned to the target_scope (back track!!) to preserve previous move.
+ 2. If a source-scope tree is invalidated, it should be returned to the target_scope (back track!!) to preserve previous move.
 Liao 1/27/2015 
  */
 void findFinalTargetScopes(SgVariableDeclaration* declaration, std::vector <SgScopeStatement *> &target_scopes, bool debug)
@@ -1701,7 +1717,7 @@ void findFinalTargetScopes(SgVariableDeclaration* declaration, std::vector <SgSc
 #endif
 	// if this scope tree is excluded from consideration because a bad apple, 
 	// we have to restore the root to target_scopes so the previous intermediate move can happen. 
-	// essentially, reverse operation of moveSpecialScopesIntoScopeTree ()
+	// essentially, reverse operation of moveSpecialTargetScopesIntoScopeTreeQueue ()
 	target_scopes.push_back(scope_tree->scope);
       }
       else // no bad apple?  moves can happen
@@ -1714,12 +1730,12 @@ void findFinalTargetScopes(SgVariableDeclaration* declaration, std::vector <SgSc
     } // end if (candidate_scopes.size() > 0)
 
     // target_scopes to source_scope_trees transition, caused by if-stmt
-    /*
-     * find all if-stmt scopes of target_scopes, 
+    /* Essentially handle all types of branching scopes , replacing each of them with their children scopes. Breaking the boundary of the branches.
+     * Take if-stmt as example, find all if-stmt scopes of target_scopes, 
      * remove them from target_scopes
-     * add their true/false scopes into    source_scope_trees // the removed ones can be added back later for single node scope tree case.
+     * add their true/false scopes into source_scope_trees // the removed ones can be added back later for single node scope tree case.
      * */ 
-    target_scopes = moveSpecialScopesIntoScopeTree (target_scopes, source_scope_trees);
+    target_scopes = moveSpecialTargetScopesIntoScopeTreeQueue (target_scopes, source_scope_trees);
   }  // end while
   // delete the original scope tree
   orig_scope_tree->deep_delete_children ();
@@ -1767,7 +1783,7 @@ void moveDeclarationToInnermostScope_v2 (SgVariableDeclaration* declaration, std
   } // end target_scopes.size()
 }
 
-// Old algorithm: iteratively find target scopes and actualy move declarations.
+// Old algorithm: iteratively find target scopes and actually move declarations.
 // The downside is that declaration will be moved into temporary target scopes, not efficient
 // Harder to keep track of the final target scopes
 bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* declaration, std::queue<SgVariableDeclaration*> &worklist, bool debug = false)
