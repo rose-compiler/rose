@@ -44,7 +44,8 @@ int main( int argc, char * argv[] )
     {
       std::cout<<"Turning on CUDA code generation ..."<<std::endl;
       b_gen_cuda = true;
-//      argvList.push_back("-rose:openmp:lowering");
+      argvList.push_back("-rose:openmp:lowering");
+      OmpSupport::enable_accelerator = true;
     }
     else
       b_gen_cuda = false;
