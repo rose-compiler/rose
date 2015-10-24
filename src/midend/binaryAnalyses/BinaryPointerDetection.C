@@ -68,6 +68,8 @@ Analysis::clearNonResults() {
     cpu_ = BaseSemantics::DispatcherPtr();
 }
 
+typedef Sawyer::Container::Map<uint64_t /*value_hash*/, SymbolicExpr::ExpressionSet /*addresses*/> MemoryTransfers;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Semantics for pointer detection
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -87,14 +89,16 @@ typedef boost::shared_ptr<class State> StatePtr;
 class State: public SymbolicSemantics::State {
 public:
     typedef SymbolicSemantics::State Super;
+
 private:
-    ExpressionsByHash readsByValue_;                    // memory address per (hash of) value read.
+    MemoryTransfers memoryReads_;                       // memory addresses per (hash of) value read.
+
 protected:
     State(const BaseSemantics::RegisterStatePtr &registers, const BaseSemantics::MemoryStatePtr &memory)
         : Super(registers, memory) {}
 
     State(const State &other)
-        : Super(other), readsByValue_(other.readsByValue_) {}
+        : Super(other), memoryReads_(other.memoryReads_) {}
 
 public:
     static StatePtr instance(const BaseSemantics::RegisterStatePtr &registers, const BaseSemantics::MemoryStatePtr &memory) {
@@ -122,10 +126,15 @@ public:
     }
 
     virtual bool merge(const BaseSemantics::StatePtr &other_, BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
+        bool changed = false;
         StatePtr other = State::promote(other_);
-        size_t n = readsByValue_.size();
-        readsByValue_.insertMultiple(other->readsByValue_.nodes());
-        bool changed = readsByValue_.size() != n;
+        BOOST_FOREACH (const MemoryTransfers::Node &otherNode, other->memoryReads_.nodes()) {
+            SymbolicExpr::ExpressionSet &addresses = memoryReads_.insertMaybeDefault(otherNode.key());
+            BOOST_FOREACH (const SymbolicExpr::Ptr address, otherNode.value().values()) {
+                if (addresses.insert(address))
+                    changed = true;
+            }
+        }
         if (Super::merge(other, ops))
             changed = true;
         return changed;
@@ -134,11 +143,11 @@ public:
     void saveRead(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value) {
         SymbolicExpr::Ptr addrExpr = SValue::promote(addr)->get_expression();
         SymbolicExpr::Ptr valueExpr = SValue::promote(value)->get_expression();
-        readsByValue_.insert(valueExpr->hash(), addrExpr);
+        memoryReads_.insertMaybeDefault(valueExpr->hash()).insert(addrExpr);
     }
 
-    const ExpressionsByHash& readsByValue() const {
-        return readsByValue_;
+    const MemoryTransfers& memoryReads() const {
+        return memoryReads_;
     }
 };
 
@@ -224,21 +233,21 @@ Analysis::printInstructionsForDebugging(const P2::Partitioner &partitioner, cons
 
 struct ExprVisitor: public SymbolicExpr::Visitor {
     Sawyer::Message::Facility &mlog;
-    const ExpressionsByHash &readsByValue;
+    const MemoryTransfers &memoryReads;
     size_t nBits;
     PointerDescriptors &result;
 
-    ExprVisitor(const ExpressionsByHash &readsByValue, size_t nBits, PointerDescriptors &result, Sawyer::Message::Facility &mlog)
-        : mlog(mlog), readsByValue(readsByValue), nBits(nBits), result(result) {}
+    ExprVisitor(const MemoryTransfers &memoryReads, size_t nBits, PointerDescriptors &result, Sawyer::Message::Facility &mlog)
+        : mlog(mlog), memoryReads(memoryReads), nBits(nBits), result(result) {}
 
     virtual SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
-        if (SymbolicExpr::Ptr address = readsByValue.getOrDefault(node->hash())) {
+        SymbolicExpr::VisitAction retval = SymbolicExpr::CONTINUE;
+        BOOST_FOREACH (SymbolicExpr::Ptr address, memoryReads.getOrDefault(node->hash()).values()) {
             if (result.insert(PointerDescriptor(address, nBits)).second)
-                mlog[DEBUG] <<"      pointer l-value = " <<*address <<"\n";
-            return SymbolicExpr::TRUNCATE;
-        } else {
-            return SymbolicExpr::CONTINUE;
+                mlog[DEBUG] <<"            l-value = " <<*address <<"\n";
+            retval = SymbolicExpr::TRUNCATE;
         }
+        return retval;
     }
 
     virtual SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr&) {
@@ -257,7 +266,7 @@ Analysis::conditionallySavePointer(const BaseSemantics::SValuePtr &ptrRValue_,
         return;
     SAWYER_MESG(debug) <<"    pointer r-value = " <<*ptrRValue <<"\n";
     StatePtr finalState = State::promote(finalState_);
-    ExprVisitor visitor(finalState->readsByValue(), ptrRValue->nBits(), result /*out*/, mlog);
+    ExprVisitor visitor(finalState->memoryReads(), ptrRValue->nBits(), result /*out*/, mlog);
     ptrRValue->depthFirstTraversal(visitor);
 }
 
@@ -320,15 +329,17 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     SAWYER_MESG(mlog[DEBUG]) <<"  " <<(converged ? "data-flow converged" : "DATA-FLOW DID NOT CONVERGE") <<"\n";
 
     if (mlog[DEBUG]) {
-        mlog[DEBUG] <<"  readsByValue:\n";
-        BOOST_FOREACH (const ExpressionsByHash::Node &node, finalState->readsByValue().nodes()) {
-            mlog[DEBUG] <<"    value-hash = " <<StringUtility::addrToString(node.key()).substr(2) <<"\n"
-                        <<"      addr     = " <<*node.value() <<"\n";
+        mlog[DEBUG] <<"  memory reads:\n";
+        BOOST_FOREACH (const MemoryTransfers::Node &node, finalState->memoryReads().nodes()) {
+            mlog[DEBUG] <<"    value-hash = " <<StringUtility::addrToString(node.key()).substr(2) <<"\n";
+            BOOST_FOREACH (const SymbolicExpr::Ptr &address, node.value().values()) {
+                mlog[DEBUG] <<"      address = " <<*address <<"\n";
+            }
         }
     }
 
     // Find data pointers
-    SAWYER_MESG(mlog[DEBUG]) <<"  potential data pointer r-values:\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"  potential data pointers:\n";
     size_t dataWordSize = partitioner.instructionProvider().stackPointerRegister().get_nbits();
     Sawyer::Container::Set<uint64_t> addrSeen;
     BOOST_FOREACH (const BaseSemantics::StatePtr &state, dfEngine.getFinalStates()) {
@@ -338,7 +349,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     }
 
     // Find code pointers
-    SAWYER_MESG(mlog[DEBUG]) <<"  potential code pointer r-values:\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"  potential code pointers:\n";
     size_t codeWordSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
     addrSeen.clear();
     const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();

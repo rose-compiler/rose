@@ -140,14 +140,6 @@ struct Settings {
         : ignoreConstIp(true), ignoreStrangeSizes(true) {}
 };
 
-#if 0 // [Robb Matzke 2015-10-23]
-/** Memory cells indexed by address or value hash. */
-typedef Sawyer::Container::Map<uint64_t /*valhash*/, InstructionSemantics2::BaseSemantics::MemoryCellPtr> CellsByHash;
-#endif
-
-/** Map of expressions by hash. */
-typedef Sawyer::Container::Map<uint64_t /*expr_hash*/, SymbolicExpr::Ptr> ExpressionsByHash;
-
 /** Description of one pointer. */
 struct PointerDescriptor {
     SymbolicExpr::Ptr lvalue;                           /**< Symbolic address of pointer. */
