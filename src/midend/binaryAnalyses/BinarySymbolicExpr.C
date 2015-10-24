@@ -119,6 +119,12 @@ commentEscape(const std::string &s) {
     return retval;
 }
 
+bool
+ExpressionLessp::operator()(const Ptr &a, const Ptr &b) {
+    if (a == NULL || b == NULL)
+        return a == NULL && b != NULL;
+    return a->hash() < b->hash();
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Base node

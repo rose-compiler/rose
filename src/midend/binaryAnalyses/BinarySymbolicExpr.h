@@ -10,6 +10,7 @@
 #include <cassert>
 #include <inttypes.h>
 #include <Sawyer/BitVector.h>
+#include <Sawyer/Set.h>
 #include <Sawyer/SharedPointer.h>
 #include <Sawyer/SmallObject.h>
 #include <set>
@@ -500,6 +501,16 @@ public:
         return Ptr();
     }
 };
+
+
+/** Compare two expressions for STL containers. */
+class ExpressionLessp {
+public:
+    bool operator()(const Ptr &a, const Ptr &b);
+};
+
+/** Set of expressions. */
+typedef Sawyer::Container::Set<Ptr, ExpressionLessp> ExpressionSet;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
