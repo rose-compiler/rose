@@ -1087,7 +1087,10 @@ commentAndCppInformation (SgNode* node)
           if (commentsAndCppDirectives != NULL)
              {
                numberofCommentsAndCppDirectives = commentsAndCppDirectives->size();
-               if (numberofCommentsAndCppDirectives >= 0)
+               // MS 11/12/2015: disabled this test as size_t is unsigned;
+               // this test is always true and compilers issue a
+               // warning
+               //if (numberofCommentsAndCppDirectives >= 0)
                   {
                  // ss = string("comments = ") + StringUtility::numberToString(numberofCommentsAndCppDirectives) + "\\n";
                     ss += string("comments/directives (before) = ") + StringUtility::numberToString(numberByRelativePosition(commentsAndCppDirectives,PreprocessingInfo::before)) + "\\n";

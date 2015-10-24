@@ -180,7 +180,7 @@ AstSharedMemoryParallelTopDownBottomUpProcessing<I, S>::traverseInParallel(
     std::vector<SynthesizedAttributeTypeList *> finalResults(numberOfThreads);
     for (i = 0; i < numberOfThreads; i++)
         pthread_join(threads[i], (void **) &finalResults[i]);
-    delete threads;
+    delete[] threads;
 #endif
 
     // Flatten the nested list of traversal results.
@@ -382,7 +382,7 @@ AstSharedMemoryParallelTopDownProcessing<I>::traverseInParallel(
     std::vector<void *> finalResults(numberOfThreads);
     for (i = 0; i < numberOfThreads; i++)
         pthread_join(threads[i], &finalResults[i]);
-    delete threads;
+    delete[] threads;
 
     // Done!
 }
@@ -563,7 +563,7 @@ AstSharedMemoryParallelBottomUpProcessing<S>::traverseInParallel(SgNode *basenod
     std::vector<SynthesizedAttributeTypeList *> finalResults(numberOfThreads);
     for (i = 0; i < numberOfThreads; i++)
         pthread_join(threads[i], (void **) &finalResults[i]);
-    delete threads;
+    delete[] threads;
 
     // Flatten the nested list of traversal results.
     SynthesizedAttributeTypeList *flatFinalResults = new SynthesizedAttributeTypeList;
