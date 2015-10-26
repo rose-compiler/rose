@@ -5007,9 +5007,14 @@ bool SgFunctionCallExp::isLValue() const
         SgType* type = get_function()->get_type();
         while (SgTypedefType* type2 = isSgTypedefType(type))
                 type = type2->get_base_type();
+        // Liao 10/20/2015 . We may encounter a function pointer, strip the pointer       
+        type = type->stripType (SgType::STRIP_POINTER_TYPE);
         SgFunctionType* ftype = isSgFunctionType(type);
         if (!ftype)
         {
+                //cout<<this->get_file_info()->get_filename()<<":"<< this->get_file_info()->get_line()<<endl;;
+                this->get_file_info()->display();
+                cerr<<"SgFunctionCallExp function base type:"<<type->class_name()<<endl;
                 ROSE_ASSERT(!"Error calling a function through a non-function type in isLValue on SgFunctionCallExp");
                 return true;
         }

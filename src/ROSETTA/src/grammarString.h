@@ -45,8 +45,9 @@ class GrammarString
   std::string typeNameString;
   std::string variableNameString;
   std::string defaultInitializerString;
-  ConstructParamEnum isInConstructorParameterList;
-
+ private:
+  ConstructParamEnum p_isInConstructorParameterList;
+ public:
   CopyConfigEnum toBeCopied; // used to guide cloning of AST nodes
 
   // We introduce a new data member which determines if a data member to
@@ -121,6 +122,9 @@ class GrammarString
 
   void setIsInConstructorParameterList(ConstructParamEnum X);
   ConstructParamEnum getIsInConstructorParameterList() const;
+
+  void setIsInConstructorParameterList();
+  bool isInConstructorParameterList() const;
 
   void setToBeTraversed(const TraversalFlag& X);
   TraversalFlag getToBeTraversed() const;

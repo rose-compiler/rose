@@ -10,8 +10,8 @@ compilerName="`basename $1`"
  case "$compilerName" in
   # DQ (3/21/2014): Added support for the MPI versions of the Intel compiler (as named on LC machines).
   # Support for compiling ROSE with GNU g++ compiler
-    g++*|gcc*|icpc|icc|mpiicpc|mpiicc|mpicc|mpic++|mpiCC|mpicxx|cc|c++|xt-xcc|xt-xc++)
-         if [ "$compilerName" = "gcc" -o "$compilerName" = "icc" -o "$compilerName" = "mpicc" -o "$compilerName" = "mpiicc" -o "$compilerName" = "xt-xcc"  -o "$compilerName" = "cc" ]
+    g++*|gcc*|icpc|icc|mpiicpc|mpiicc|mpicc|mpic++|mpiCC|mpicxx|cc|c++|xt-xcc|xt-xc++|clang|clang++)
+         if [ "$compilerName" = "gcc" -o "$compilerName" = "icc" -o "$compilerName" = "mpicc" -o "$compilerName" = "mpiicc" -o "$compilerName" = "xt-xcc"  -o "$compilerName" = "cc" -o "$compilerName" = "clang" ]
          then
             language="c"
          else

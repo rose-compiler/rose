@@ -389,7 +389,7 @@ main(int argc, char *argv[])
 
     SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
     transaction = conn->transaction();
-    int64_t cmd_id = CloneDetection::start_command(transaction, argc, argv, "calculating api similarity");
+    ::int64_t cmd_id = CloneDetection::start_command(transaction, argc, argv, "calculating api similarity");
 
     // Read function pairs from standard input or the file
     FunctionPairs worklist;

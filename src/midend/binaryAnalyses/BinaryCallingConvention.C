@@ -247,7 +247,7 @@ Definition::x86_fastcall(const RegisterDictionary *regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
     static Definition cc(SP.get_nbits(), "fastcall",
-                         "x86-" + StringUtility::numberToString(cc.wordWidth()) + " fastcall",
+                         "x86-" + StringUtility::numberToString(SP.get_nbits()) + " fastcall",
                          regDict);
 
     // Stack characteristics

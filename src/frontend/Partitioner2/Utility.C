@@ -232,7 +232,7 @@ Trigger::switches(Settings &settings) {
                                      settings.when.least()==0 ?("invoke the action " + plural(settings.when.size(), "times") +
                                                                 " beginning immediately.") :
                                      ("invoke the action on calls " + numberToString(settings.when.least()) + " through " +
-                                      numberToString(settings.when.greatest() + ", inclusive.")))));
+                                      numberToString(settings.when.greatest()) + ", inclusive."))));
     return switches;
 }
 

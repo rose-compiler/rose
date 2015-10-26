@@ -107,8 +107,12 @@ StringUtility::findfile(std::string patternString, std::string pathString)
   /* matching the pattern for each file name.               */
      while ((entry = readdir(dir))) {
        /* check if the pattern matchs. */
-          std::string entryName = entry->d_name ? entry->d_name : "";
-          if (entry->d_name && entryName.find(patternString) != std::string::npos) {
+       /* MS: 11/22/2015: note that d_name is an array of char
+        * and testing it as pointer always gives true;
+        * removed this kind of testing code 
+        */
+          std::string entryName = entry->d_name; 
+          if (entryName.find(patternString) != std::string::npos) {
                patternMatches.push_back(pathString+"/"+entryName);
 
           }
@@ -478,6 +482,9 @@ StringUtility::numberToString ( double x )
 // #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6))
    #if (defined(BACKEND_CXX_IS_GNU_COMPILER) && (((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4)))
 // DQ (2/22/2014): Required code for GNU versions greater than 4.6.
+   // #if (UINTMAX_MAX == ULONG_MAX)
+      #if (__WORDSIZE == 64)
+        // PHLin (10/12/2015): check if 64-bit support is enabled
 string
 StringUtility::numberToString ( __int128 x )
    {
@@ -493,6 +500,7 @@ StringUtility::numberToString ( unsigned __int128 x )
      unsigned long long temp_x = (unsigned long long) x;
      return boost::lexical_cast<std::string>(temp_x);
    }
+      #endif
    #endif
 #endif
 

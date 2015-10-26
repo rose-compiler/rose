@@ -32,7 +32,6 @@ add_library(midend_binary OBJECT
   instructionSemantics/DispatcherM68k.C
   instructionSemantics/DispatcherPowerpc.C
   instructionSemantics/DispatcherX86.C
-  instructionSemantics/findConstants.C
   instructionSemantics/FindRegisterDefs.C
   instructionSemantics/IntervalSemantics.C
   instructionSemantics/IntervalSemantics2.C
@@ -88,7 +87,6 @@ install(
     instructionSemantics/DispatcherM68k.h
     instructionSemantics/DispatcherPowerpc.h
     instructionSemantics/DispatcherX86.h
-    instructionSemantics/findConstants.h
     instructionSemantics/FindRegisterDefs.h
     instructionSemantics/flowEquations.h
     instructionSemantics/InsnSemanticsExpr.h

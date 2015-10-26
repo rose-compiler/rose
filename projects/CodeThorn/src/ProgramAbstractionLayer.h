@@ -11,6 +11,7 @@ namespace SPRAY {
   class ProgramAbstractionLayer {
   public:
     ProgramAbstractionLayer();
+    virtual ~ProgramAbstractionLayer();
     virtual void initialize(SgProject* root);
     Labeler* getLabeler();
     VariableIdMapping* getVariableIdMapping();
