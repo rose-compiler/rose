@@ -176,7 +176,7 @@ Partitioner::erasePlaceholder(const ControlFlowGraph::ConstVertexIterator &place
     BasicBlock::Ptr bblock;
     if (placeholder!=cfg_.vertices().end() && placeholder->value().type()==V_BASIC_BLOCK) {
         rose_addr_t startVa = placeholder->value().address();
-        if (bblock = placeholder->value().bblock())
+        if ((bblock = placeholder->value().bblock()))
             detachBasicBlock(placeholder);              // removes self edges, notifies subclasses of CFG changes
         if (placeholder->nInEdges()!=0) {
             throw PlaceholderError(startVa, "cannot erase placeholder " + StringUtility::addrToString(startVa) +
