@@ -632,7 +632,9 @@ SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
   // DQ (1/2/2007): The use of _astInterface_Tmp.c does not provide a unique filename
   // to support testing of the loop processor in parallel.  This is modified below to
   // make the name unique for each process.
-     char *uniqueFilename = "/tmp/_astInterface_Tmp_XXXXXX.c";
+     // MS 11/22/2015: introduced array to avoid deprecated conversion from string literal to char*
+     char uniqueFilenameDefault[] = "/tmp/_astInterface_Tmp_XXXXXX.c";
+     char *uniqueFilename = uniqueFilenameDefault;
      #ifdef _MSC_VER
      uniqueFilename = mktemp(uniqueFilename);
      if (uniqueFilename == NULL) return NULL;
