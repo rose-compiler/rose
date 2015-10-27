@@ -129,8 +129,7 @@ noinst_PROGRAMS += 99-grants
 # Note to Andreas: Please fix the README file since you're defining a new range of numbers here.
 # Level 100-109: analysing api similarity
 
-# This tool no longer compiles and the author is no longer available.
-EXTRA_DIST += 101-api-similarity-worklist.C
+# Commented out because it doesn't compile with gcc-4.8, gcc-4.9, llvm-3.5 [Robb Matzke, 2015-10-26]
 #noinst_PROGRAMS += 101-api-similarity-worklist
 #101_api_similarity_worklist_SOURCES = 101-api-similarity-worklist.C
 #101_api_similarity_worklist_CPPFLAGS = $(ROSE_INCLUDES)
@@ -167,10 +166,11 @@ noinst_PROGRAMS += 114_random_function_pick
 114_random_function_pick_CPPFLAGS = $(ROSE_INCLUDES)
 114_random_function_pick_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-noinst_PROGRAMS += 115_syscall_usage
-115_syscall_usage_SOURCES = 115-syscall-usage.C linux_syscalls.C  
-115_syscall_usage_CPPFLAGS = $(ROSE_INCLUDES)
-115_syscall_usage_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+# Commented out because it doesn't compile with gcc-4.8, gcc-4.9, llvm-3.5 [Robb Matzke, 2015-10-26]
+#noinst_PROGRAMS += 115_syscall_usage
+#115_syscall_usage_SOURCES = 115-syscall-usage.C linux_syscalls.C  
+#115_syscall_usage_CPPFLAGS = $(ROSE_INCLUDES)
+#115_syscall_usage_LDADD = $(BOOST_LDFLAGS) libCloneDetection.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 noinst_PROGRAMS += 119_create_graphs
 119_create_graphs_SOURCES = 119-create-graphs.C   

@@ -806,16 +806,9 @@ public:
         print_diff(o, orig_state, cur_state);
     }
 
-#ifdef __INTEL_COMPILER
- // DQ (8/28/2015): from Intel v14 icpc: error: initial value of reference to non-const must be an lvalue
-    void print_diff(std::ostream &o, BaseSemantics::Formatter &fmt ) const {
+    void print_diff(std::ostream &o, const BaseSemantics::Formatter &fmt = BaseSemantics::Formatter()) const {
         print_diff(o, orig_state, cur_state, fmt);
     }
-#else
-    void print_diff(std::ostream &o, BaseSemantics::Formatter &fmt = BaseSemantics::Formatter()) const {
-        print_diff(o, orig_state, cur_state, fmt);
-    }
-#endif
     /** @} */
 
     /** Returns the SHA1 hash of the difference between the current state and the original state.  If libgcrypt is

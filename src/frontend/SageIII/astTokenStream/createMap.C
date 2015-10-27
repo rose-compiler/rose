@@ -93,7 +93,7 @@ createMap::internalMatchBetweenASTandTokenStreamSeparator(separator*
             sep_it != tokenBraceMapForThisScope.end(); ++sep_it){
 
             if( 
-               (eq_it->begin_pos == sep_it->begin_pos)
+               eq_it->begin_pos == sep_it->begin_pos
 
               ){
                 tokenBraceMapForThisScope.erase(sep_it);

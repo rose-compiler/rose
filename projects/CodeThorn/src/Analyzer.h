@@ -12,6 +12,7 @@
 #include <set>
 #include <string>
 #include <sstream>
+#include <list>
 
 #include <omp.h>
 
@@ -59,8 +60,8 @@ namespace CodeThorn {
     LabelSet finalLabelsSet;
   };
 
-  typedef list<const EState*> EStateWorkList;
-  typedef pair<int, const EState*> FailedAssertion;
+  typedef std::list<const EState*> EStateWorkList;
+  typedef std::pair<int, const EState*> FailedAssertion;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
 
   class Analyzer;
@@ -113,7 +114,7 @@ namespace CodeThorn {
     
     PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
-    list<EState> transferFunction(Edge edge, const EState* estate);
+    std::list<EState> transferFunction(Edge edge, const EState* estate);
     
     void addToWorkList(const EState* estate);
     const EState* addToWorkListIfNew(EState estate);
@@ -198,24 +199,24 @@ namespace CodeThorn {
     // counterexample input sequence.
     int addCounterexample(int assertCode, const EState* assertEState);
     // returns a list of EStates from source to target. Target has to come before source in the STG (reversed trace). 
-    list<const EState*>reverseInOutSequenceBreadthFirst(const EState* source, const EState* target, bool counterexampleWithOutput = false);
+    std::list<const EState*>reverseInOutSequenceBreadthFirst(const EState* source, const EState* target, bool counterexampleWithOutput = false);
     // returns a list of EStates from source to target (shortest input path). 
     // please note: target has to be a predecessor of source (reversed trace)
-    list<const EState*> reverseInOutSequenceDijkstra(const EState* source, const EState* target, bool counterexampleWithOutput = false);
-    list<const EState*> filterStdInOutOnly(list<const EState*>& states, bool counterexampleWithOutput = false) const;
-    std::string reversedInOutRunToString(list<const EState*>& run);
+    std::list<const EState*> reverseInOutSequenceDijkstra(const EState* source, const EState* target, bool counterexampleWithOutput = false);
+    std::list<const EState*> filterStdInOutOnly(std::list<const EState*>& states, bool counterexampleWithOutput = false) const;
+    std::string reversedInOutRunToString(std::list<const EState*>& run);
     //returns the shortest possible number of input states on the path leading to "target".
     int inputSequenceLength(const EState* target);
     // the following functions are used by solver 9
-    bool searchForIOPatterns(PState* startPState, int assertion_id, list<int>& inputSuffix, list<int>* partialTrace = NULL, int* inputPatternLength=NULL);
+    bool searchForIOPatterns(PState* startPState, int assertion_id, std::list<int>& inputSuffix, std::list<int>* partialTrace = NULL, int* inputPatternLength=NULL);
     bool containsPatternTwoRepetitions(std::list<int>& sequence);
     bool containsPatternTwoRepetitions(std::list<int>& sequence, int startIndex, int endIndex);
-    bool computePStateAfterInputs(PState& pState, list<int>& inputs, int thread_id, list<int>* iOSequence=NULL);
-    bool computePStateAfterInputs(PState& pState, int input, int thread_id, list<int>* iOSequence=NULL);
-    bool searchPatternPath(int assertion_id, PState& pState, list<int>& inputPattern, list<int>& inputSuffix, int thread_id,list<int>* iOSequence=NULL);
-    list<int> inputsFromPatternTwoRepetitions(list<int> pattern2r);
-    string convertToCeString(list<int>& ceAsIntegers, int maxInputVal);
-    int pStateDepthFirstSearch(PState* startPState, int maxDepth, int thread_id, list<int>* partialTrace, int maxInputVal, int patternLength, int PatternIterations);
+    bool computePStateAfterInputs(PState& pState, std::list<int>& inputs, int thread_id, std::list<int>* iOSequence=NULL);
+    bool computePStateAfterInputs(PState& pState, int input, int thread_id, std::list<int>* iOSequence=NULL);
+    bool searchPatternPath(int assertion_id, PState& pState, std::list<int>& inputPattern, std::list<int>& inputSuffix, int thread_id,std::list<int>* iOSequence=NULL);
+    std::list<int> inputsFromPatternTwoRepetitions(std::list<int> pattern2r);
+    string convertToCeString(std::list<int>& ceAsIntegers, int maxInputVal);
+    int pStateDepthFirstSearch(PState* startPState, int maxDepth, int thread_id, std::list<int>* partialTrace, int maxInputVal, int patternLength, int PatternIterations);
 
   public:
     SgNode* getCond(SgNode* node);
@@ -276,7 +277,7 @@ namespace CodeThorn {
     VariableIdMapping::VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
     
     std::set<std::string> variableIdsToVariableNames(VariableIdMapping::VariableIdSet);
-    typedef list<SgVariableDeclaration*> VariableDeclarationList;
+    typedef std::list<SgVariableDeclaration*> VariableDeclarationList;
     VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
     VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
     
@@ -285,16 +286,16 @@ namespace CodeThorn {
     //! adds a specific code to the io-info of an estate which is checked by isFailedAsserEState and determines a failed-assert estate. Note that the actual assert (and its label) is associated with the previous estate (this information can therefore be obtained from a transition-edge in the transition graph).
     EState createFailedAssertEState(const EState estate, Label target);
     //! list of all asserts in a program
-    list<SgNode*> listOfAssertNodes(SgProject *root);
+    std::list<SgNode*> listOfAssertNodes(SgProject *root);
     //! rers-specific error_x: assert(0) version 
-    list<pair<SgLabelStatement*,SgNode*> > listOfLabeledAssertNodes(SgProject *root);
+    std::list<std::pair<SgLabelStatement*,SgNode*> > listOfLabeledAssertNodes(SgProject *root);
     void initLabeledAssertNodes(SgProject* root) {
       _assertNodes=listOfLabeledAssertNodes(root);
     }
     size_t getNumberOfErrorLabels();
     std::string labelNameOfAssertLabel(Label lab) {
       std::string labelName;
-      for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=_assertNodes.begin();i!=_assertNodes.end();++i)
+      for(std::list<std::pair<SgLabelStatement*,SgNode*> >::iterator i=_assertNodes.begin();i!=_assertNodes.end();++i)
         if(lab==getLabeler()->getLabel((*i).second))
           labelName=SgNodeHelper::getLabelName((*i).first);
       //assert(labelName.size()>0);
@@ -325,7 +326,7 @@ namespace CodeThorn {
     void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
     int numberOfInputVarValues() { return _inputVarValues.size(); }
     std::set<int> getInputVarValues() { return _inputVarValues; }
-    list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
+    std::list<std::pair<SgLabelStatement*,SgNode*> > _assertNodes;
     void setCsvAssertLiveFileName(std::string filename) { _csv_assert_live_file=filename; }
     VariableId globalVarIdByName(std::string varName) { return globalVarName2VarIdMapping[varName]; }
     void setStgTraceFileName(std::string filename) {
@@ -376,7 +377,7 @@ namespace CodeThorn {
       return exprAnalyzer.getSkipArrayAccesses();
     }
     ExprAnalyzer* getExprAnalyzer();
-    list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
+    std::list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
     void incIterations() {
       if(isPrecise()) {
 #pragma omp atomic
@@ -405,8 +406,8 @@ namespace CodeThorn {
     set<VariableId> _smallActivityVarsSet;
     set<VariableId> _assertCondVarsSet;
     set<int> _inputVarValues;
-    list<int> _inputSequence;
-    list<int>::iterator _inputSequenceIterator;
+    std::list<int> _inputSequence;
+    std::list<int>::iterator _inputSequenceIterator;
     ExprAnalyzer exprAnalyzer;
     VariableIdMapping variableIdMapping;
     EStateWorkList estateWorkList;
@@ -440,7 +441,7 @@ namespace CodeThorn {
     bool _treatStdErrLikeFailedAssert;
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
-    list<FailedAssertion> _firstAssertionOccurences;
+    std::list<FailedAssertion> _firstAssertionOccurences;
     const EState* _estateBeforeMissingInput;
     const EState* _latestOutputEState;
     const EState* _latestErrorEState;

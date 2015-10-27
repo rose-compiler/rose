@@ -30,7 +30,6 @@ public:
   void traverse(TreeNode root);
 protected:
   virtual void preOrderVisit(TreeNode node)=0;
-  TreeTraversal<TreeNode>::nullNodeVisit;
 };
 
 template<typename TreeNode>
@@ -39,7 +38,6 @@ public:
   void traverse(TreeNode root);
 protected:
   virtual void inOrderVisit(TreeNode node)=0;
-  TreeTraversal<TreeNode>::nullNodeVisit;
 };
 
 template<typename TreeNode>
@@ -48,7 +46,6 @@ public:
   void traverse(TreeNode root);
 protected:
   virtual void postOrderVisit(TreeNode node)=0;
-  TreeTraversal<TreeNode>::nullNodeVisit;
 };
 
 template<typename TreeNode>
@@ -56,7 +53,6 @@ class PrePostOrderTraversal : public TreeTraversal<TreeNode> {
 protected:
   virtual void preOrderVisit(TreeNode node)=0;
   virtual void postOrderVisit(TreeNode node)=0;
-  TreeTraversal<TreeNode>::nullNodeVisit;
 public:
   void traverse(TreeNode node);
 };
@@ -82,7 +78,7 @@ traverse(TreeNode node) {
   typename PreOrderTraversal<TreeNode>::ChildrenContainer c;
   if(this->isNullNode(node)) {
     if(!this->skipNode(node)) {
-      nullNodeVisit();
+      this->nullNodeVisit();
     }
     return;
   } else {
@@ -105,7 +101,7 @@ traverse(TreeNode node) {
   typename InOrderTraversal<TreeNode>::childrenContainer c;
   if(isNullNode(node)) {
     if(!skipNode(node)) {
-      nullNodeVisit();
+      this->nullNodeVisit();
     };
     return;
   }
@@ -130,7 +126,7 @@ traverse(TreeNode node) {
   typename PostOrderTraversal<TreeNode>::childrenContainer c;
   if(isNullNode(node)) {
     if(!skipNode(node)) {
-      nullNodeVisit();
+      this->nullNodeVisit();
     }
     return;
   }
@@ -152,7 +148,7 @@ traverse(TreeNode node) {
   typename PrePostOrderTraversal<TreeNode>::ChildrenContainer c;
   if(this->isNullNode(node)) {
     if(!this->skipNode(node)) {
-      nullNodeVisit();
+      this->nullNodeVisit();
     }
     return;
   } else {

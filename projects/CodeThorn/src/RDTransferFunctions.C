@@ -8,6 +8,7 @@ using namespace std;
 
 using namespace SPRAY;
 
+#if 0
 bool hasDereferenceOperation(SgExpression* exp) {
   RoseAst ast(exp);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -22,6 +23,7 @@ bool hasDereferenceOperation(SgExpression* exp) {
   }
   return false;
 }
+#endif
 
 RDTransferFunctions::RDTransferFunctions() {
 }
@@ -42,7 +44,7 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Latt
   // (for programs with pointers we require a set here)
   VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*getVariableIdMapping());  
   ROSE_ASSERT(_pointerAnalysisInterface);
-  if(hasDereferenceOperation(node)) {
+  if(_pointerAnalysisInterface->hasDereferenceOperation(node)) {
     VariableIdSet modVarIds=_pointerAnalysisInterface->getModByPointer();
     // union sets
     defVarIds+=modVarIds;
@@ -158,7 +160,7 @@ void RDTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhs
 
 /*! 
   * \author Markus Schordan
-  * \date 2013.
+  * \date 2013, 2015.
  */
 void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element0) {
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
@@ -168,12 +170,17 @@ void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition*
   for(SgInitializedNamePtrList::iterator i=formalParameters.begin();
       i!=formalParameters.end();
       ++i) {
+
+    // kill parameter variables
+    VariableId paramId=getParameterVariableId(paramNr);
+    element.removeAllPairsWithVariableId(paramId);
+
+    // generate formal parameter
     SgInitializedName* formalParameterName=*i;
     assert(formalParameterName);
     VariableId formalParameterVarId=getVariableIdMapping()->variableId(formalParameterName);
     element.insertPair(lab,formalParameterVarId);
-    VariableId paramId=getParameterVariableId(paramNr);
-    element.removeAllPairsWithVariableId(paramId);
+
     paramNr++;
   }
 }

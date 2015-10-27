@@ -1,7 +1,8 @@
 #ifndef __AST_FROM_STRING_H__
 #define __AST_FROM_STRING_H__
 /**
- * Liao 4/13/2011 
+ * Parser building blocks for creating simple recursive descent parsers generating AST from strings. Liao 4/13/2011 
+ * An experimental SgStatement* SageBuilder::buildStatementFromString(string&, SgScopeStatement* scope) is provided. 10/2015
  */
 
 #include <iostream>
@@ -114,7 +115,7 @@ namespace AstFromString
   //!Match an init declarator list. Not yet implemented.
   ROSE_DLL_API bool afs_match_init_declarator_list();
 
-  //! Match init declarator. 
+  //! Match init declarator. Store created mod_type, name, and initializer. Original type is needed as input to generate the modifier type. 
   ROSE_DLL_API bool afs_match_init_declarator(SgType* orig_type, SgType** mod_type, SgName** sname, SgExpression** initializer);
 
   //! Match a storage class specifier. Not yet implemented.
@@ -181,7 +182,7 @@ namespace AstFromString
   //! cast_expression  : '(' type_name ')' cast_expression   | unary_expression 
   ROSE_DLL_API bool afs_match_cast_expression();
 
-  //!      unary_expression : postfix_expression | INC_OP unary_expression  | DEC_OP unary_expression   | unary_operator cast_expression  | SIZEOF unary_expression  | SIZEOF '(' type_name ')'
+  //! unary_expression : postfix_expression | INC_OP unary_expression  | DEC_OP unary_expression   | unary_operator cast_expression  | SIZEOF unary_expression  | SIZEOF '(' type_name ')'
   ROSE_DLL_API bool afs_match_unary_expression();
 
  //! postfix_expression :   primary_expression ( '[' expression ']' | '(' ')' | '(' argument_expression_list ')' | '.' IDENTIFIER | '->' IDENTIFIER | '++' | '--' )*
