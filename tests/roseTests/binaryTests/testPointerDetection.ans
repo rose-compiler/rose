@@ -7,15 +7,8 @@ Pointer detection analysis for function 0x0804839e "simple01"
     0x080483a4: pop    ebp
     0x080483a5: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
 
 Pointer detection analysis for function 0x080483a6 "simple02"
   Instructions:
@@ -26,19 +19,9 @@ Pointer detection analysis for function 0x080483a6 "simple02"
     0x080483ae: pop    ebp
     0x080483af: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0x00000004[32])
-    (add[32] esp_0[32] 0x00000005[32])
-    (add[32] esp_0[32] 0x00000006[32])
-    (add[32] esp_0[32] 0x00000007[32])
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
+    32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
 
 Pointer detection analysis for function 0x080483b0 "simple03"
   Instructions:
@@ -50,23 +33,10 @@ Pointer detection analysis for function 0x080483b0 "simple03"
     0x080483ba: pop    ebp
     0x080483bb: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0x00000004[32])
-    (add[32] esp_0[32] 0x00000005[32])
-    (add[32] esp_0[32] 0x00000006[32])
-    (add[32] esp_0[32] 0x00000007[32])
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-    (add[32] v20760[32] 0x00000001[32])
-    (add[32] v20760[32] 0x00000002[32])
-    (add[32] v20760[32] 0x00000003[32])
-    v20760[32]
+    32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
+    32-bit pointer at v20760[32]
 
 Pointer detection analysis for function 0x080483bc "simple04"
   Instructions:
@@ -76,15 +46,8 @@ Pointer detection analysis for function 0x080483bc "simple04"
     0x080483c4: pop    ebp
     0x080483c5: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
 
 Pointer detection analysis for function 0x080483c6 "simple05"
   Instructions:
@@ -95,19 +58,9 @@ Pointer detection analysis for function 0x080483c6 "simple05"
     0x080483d0: pop    ebp
     0x080483d1: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-    0x080497ec<134518764>[32]
-    0x080497ed<134518765>[32]
-    0x080497ee<134518766>[32]
-    0x080497ef<134518767>[32]
+    32-bit pointer at 0x080497ec<134518764>[32]
 
 Pointer detection analysis for function 0x080483d2 "simple06"
   Instructions:
@@ -119,23 +72,10 @@ Pointer detection analysis for function 0x080483d2 "simple06"
     0x080483de: pop    ebp
     0x080483df: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-    (add[32] v21219[32] 0x00000001[32])
-    (add[32] v21219[32] 0x00000002[32])
-    (add[32] v21219[32] 0x00000003[32])
-    0x080497f0<134518768>[32]
-    0x080497f1<134518769>[32]
-    0x080497f2<134518770>[32]
-    0x080497f3<134518771>[32]
-    v21219[32]
+    32-bit pointer at 0x080497f0<134518768>[32]
+    32-bit pointer at v21219[32]
 
 Pointer detection analysis for function 0x080483e0 "simple07"
   Instructions:
@@ -145,15 +85,8 @@ Pointer detection analysis for function 0x080483e0 "simple07"
     0x080483e8: pop    ebp
     0x080483e9: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
 
 Pointer detection analysis for function 0x080483ea "simple08"
   Instructions:
@@ -164,19 +97,9 @@ Pointer detection analysis for function 0x080483ea "simple08"
     0x080483f4: pop    ebp
     0x080483f5: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-    0x080497f0<134518768>[32]
-    0x080497f1<134518769>[32]
-    0x080497f2<134518770>[32]
-    0x080497f3<134518771>[32]
+    32-bit pointer at 0x080497f0<134518768>[32]
 
 Pointer detection analysis for function 0x080483f6 "simple09"
   Instructions:
@@ -190,23 +113,10 @@ Pointer detection analysis for function 0x080483f6 "simple09"
     0x08048409: leave  
     0x0804840a: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])
-    (add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])
-    (add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])
-    (add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-    0x080497ec<134518764>[32]
-    0x080497ed<134518765>[32]
-    0x080497ee<134518766>[32]
-    0x080497ef<134518767>[32]
+    32-bit pointer at 0x080497ec<134518764>[32]
+    32-bit pointer at (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])
 
 Pointer detection analysis for function 0x0804840b "simple10"
   Instructions:
@@ -216,15 +126,8 @@ Pointer detection analysis for function 0x0804840b "simple10"
     0x08048413: pop    ebp
     0x08048414: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
 
 Pointer detection analysis for function 0x08048415 "simple11"
   Instructions:
@@ -234,15 +137,8 @@ Pointer detection analysis for function 0x08048415 "simple11"
     0x0804841d: pop    ebp
     0x0804841e: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
 
 Pointer detection analysis for function 0x0804841f "simple12"
   Instructions:
@@ -253,19 +149,9 @@ Pointer detection analysis for function 0x0804841f "simple12"
     0x0804842c: pop    ebp
     0x0804842d: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0x00000004[32])
-    (add[32] esp_0[32] 0x00000005[32])
-    (add[32] esp_0[32] 0x00000006[32])
-    (add[32] esp_0[32] 0x00000007[32])
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
+    32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
 
 Pointer detection analysis for function 0x0804842e "simple13"
   Instructions:
@@ -275,15 +161,8 @@ Pointer detection analysis for function 0x0804842e "simple13"
     0x08048436: pop    ebp
     0x08048437: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
 
 Pointer detection analysis for function 0x08048438 "simple14"
   Instructions:
@@ -294,19 +173,9 @@ Pointer detection analysis for function 0x08048438 "simple14"
     0x08048442: pop    ebp
     0x08048443: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-    0x080497f8<134518776>[32]
-    0x080497f9<134518777>[32]
-    0x080497fa<134518778>[32]
-    0x080497fb<134518779>[32]
+    32-bit pointer at 0x080497f8<134518776>[32]
 
 Pointer detection analysis for function 0x08048444 "simple15"
   Instructions:
@@ -318,23 +187,10 @@ Pointer detection analysis for function 0x08048444 "simple15"
     0x08048450: pop    ebp
     0x08048451: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-    (add[32] v22624[32] 0x00000001[32])
-    (add[32] v22624[32] 0x00000002[32])
-    (add[32] v22624[32] 0x00000003[32])
-    0x080497fc<134518780>[32]
-    0x080497fd<134518781>[32]
-    0x080497fe<134518782>[32]
-    0x080497ff<134518783>[32]
-    v22624[32]
+    32-bit pointer at v22624[32]
+    32-bit pointer at 0x080497fc<134518780>[32]
 
 Pointer detection analysis for function 0x08048452 "simple16"
   Instructions:
@@ -344,15 +200,8 @@ Pointer detection analysis for function 0x08048452 "simple16"
     0x0804845a: pop    ebp
     0x0804845b: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
 
 Pointer detection analysis for function 0x0804845c "simple17"
   Instructions:
@@ -363,19 +212,9 @@ Pointer detection analysis for function 0x0804845c "simple17"
     0x08048466: pop    ebp
     0x08048467: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-    0x080497fc<134518780>[32]
-    0x080497fd<134518781>[32]
-    0x080497fe<134518782>[32]
-    0x080497ff<134518783>[32]
+    32-bit pointer at 0x080497fc<134518780>[32]
 
 Pointer detection analysis for function 0x08048468 "simple18"
   Instructions:
@@ -389,23 +228,10 @@ Pointer detection analysis for function 0x08048468 "simple18"
     0x0804847b: leave  
     0x0804847c: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])
-    (add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])
-    (add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])
-    (add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-    0x080497f8<134518776>[32]
-    0x080497f9<134518777>[32]
-    0x080497fa<134518778>[32]
-    0x080497fb<134518779>[32]
+    32-bit pointer at (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])
+    32-bit pointer at 0x080497f8<134518776>[32]
 
 Pointer detection analysis for function 0x0804847d "simple19"
   Instructions:
@@ -415,15 +241,8 @@ Pointer detection analysis for function 0x0804847d "simple19"
     0x08048485: pop    ebp
     0x08048486: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
 
 Pointer detection analysis for function 0x08048487 "simple20"
   Instructions:
@@ -433,15 +252,8 @@ Pointer detection analysis for function 0x08048487 "simple20"
     0x0804848f: pop    ebp
     0x08048490: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
 
 Pointer detection analysis for function 0x08048491 "simple21"
   Instructions:
@@ -452,19 +264,9 @@ Pointer detection analysis for function 0x08048491 "simple21"
     0x0804849e: pop    ebp
     0x0804849f: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0x00000004[32])
-    (add[32] esp_0[32] 0x00000005[32])
-    (add[32] esp_0[32] 0x00000006[32])
-    (add[32] esp_0[32] 0x00000007[32])
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
+    32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
 
 Pointer detection analysis for function 0x080484a0 "simple22"
   Instructions:
@@ -476,19 +278,9 @@ Pointer detection analysis for function 0x080484a0 "simple22"
     0x080484ab: leave  
     0x080484ac: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    (add[32] esp_0[32] 0x00000004[32])
-    (add[32] esp_0[32] 0x00000005[32])
-    (add[32] esp_0[32] 0x00000006[32])
-    (add[32] esp_0[32] 0x00000007[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
+    32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
 
 Pointer detection analysis for function 0x080484ad "simple23"
   Instructions:
@@ -503,19 +295,9 @@ Pointer detection analysis for function 0x080484ad "simple23"
     0x080484c5: leave  
     0x080484c6: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    (add[32] esp_0[32] 0x00000004[32])
-    (add[32] esp_0[32] 0x00000005[32])
-    (add[32] esp_0[32] 0x00000006[32])
-    (add[32] esp_0[32] 0x00000007[32])
-    esp_0[32]
+    32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
 
 Pointer detection analysis for function 0x080484c7 "simple24"
   Instructions:
@@ -529,19 +311,9 @@ Pointer detection analysis for function 0x080484c7 "simple24"
     0x080484d8: leave  
     0x080484d9: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    (add[32] esp_0[32] 0x00000004[32])
-    (add[32] esp_0[32] 0x00000005[32])
-    (add[32] esp_0[32] 0x00000006[32])
-    (add[32] esp_0[32] 0x00000007[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
+    32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
   Data pointers:
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
 
 Pointer detection analysis for function 0x080484da "simple25"
   Instructions:
@@ -556,23 +328,10 @@ Pointer detection analysis for function 0x080484da "simple25"
     0x080484ed: leave  
     0x080484ee: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    (add[32] esp_0[32] 0x00000004[32])
-    (add[32] esp_0[32] 0x00000005[32])
-    (add[32] esp_0[32] 0x00000006[32])
-    (add[32] esp_0[32] 0x00000007[32])
-    esp_0[32]
+    32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0x00000008[32])
-    (add[32] esp_0[32] 0x00000009[32])
-    (add[32] esp_0[32] 0x0000000a[32])
-    (add[32] esp_0[32] 0x0000000b[32])
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
+    32-bit pointer at (add[32] esp_0[32] 0x00000008[32])
 
 Pointer detection analysis for function 0x080484ef "flow01"
   Instructions:
@@ -588,23 +347,10 @@ Pointer detection analysis for function 0x080484ef "flow01"
     0x08048504: pop    ebp
     0x08048505: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0x00000008[32])
-    (add[32] esp_0[32] 0x00000009[32])
-    (add[32] esp_0[32] 0x0000000a[32])
-    (add[32] esp_0[32] 0x0000000b[32])
-    (add[32] esp_0[32] 0x0000000c[32])
-    (add[32] esp_0[32] 0x0000000d[32])
-    (add[32] esp_0[32] 0x0000000e[32])
-    (add[32] esp_0[32] 0x0000000f[32])
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
+    32-bit pointer at (add[32] esp_0[32] 0x00000008[32])
+    32-bit pointer at (add[32] esp_0[32] 0x0000000c[32])
 
 Pointer detection analysis for function 0x08048506 "flow02"
   Instructions:
@@ -620,142 +366,7 @@ Pointer detection analysis for function 0x08048506 "flow02"
     0x0804851b: pop    ebp
     0x0804851c: ret    
   Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
+    32-bit pointer at esp_0[32]
   Data pointers:
-    (add[32] esp_0[32] 0x00000008[32])
-    (add[32] esp_0[32] 0x00000009[32])
-    (add[32] esp_0[32] 0x0000000a[32])
-    (add[32] esp_0[32] 0x0000000b[32])
-    (add[32] esp_0[32] 0x0000000c[32])
-    (add[32] esp_0[32] 0x0000000d[32])
-    (add[32] esp_0[32] 0x0000000e[32])
-    (add[32] esp_0[32] 0x0000000f[32])
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-
-Pointer detection analysis for function 0x0804853b "flow04"
-  Instructions:
-    0x0804853b: push   ebp
-    0x0804853c: mov    ebp, esp
-    0x0804853e: sub    esp, 0x10
-    0x08048541: mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
-    0x08048548: mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
-    0x0804854f: jmp    0x0804855d
-    0x08048551: mov    eax, dword ss:[ebp + 0x0c]
-    0x08048554: mov    eax, dword ds:[eax]
-    0x08048556: add    dword ss:[ebp + 0xfc<-4>], eax
-    0x08048559: add    dword ss:[ebp + 0xf8<-8>], 0x01
-    0x0804855d: mov    eax, dword ss:[ebp + 0xf8<-8>]
-    0x08048560: cmp    eax, dword ss:[ebp + 0x08]
-    0x08048563: jl     0x08048551
-    0x08048565: mov    eax, dword ss:[ebp + 0xfc<-4>]
-    0x08048568: leave  
-    0x08048569: ret    
-  Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
-  Data pointers:
-    (add[32] esp_0[32] 0x00000008[32])
-    (add[32] esp_0[32] 0x00000009[32])
-    (add[32] esp_0[32] 0x0000000a[32])
-    (add[32] esp_0[32] 0x0000000b[32])
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-
-Pointer detection analysis for function 0x0804856a "flow05"
-  Instructions:
-    0x0804856a: push   ebp
-    0x0804856b: mov    ebp, esp
-    0x0804856d: sub    esp, 0x10
-    0x08048570: mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
-    0x08048577: mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
-    0x0804857e: jmp    0x0804859d
-    0x08048580: mov    eax, dword ss:[ebp + 0xf8<-8>]
-    0x08048583: and    eax, 0x01
-    0x08048586: test   al, al
-    0x08048588: je     0x08048591
-    0x0804858a: mov    eax, dword ss:[ebp + 0x0c]
-    0x0804858d: mov    eax, dword ds:[eax]
-    0x0804858f: jmp    0x08048596
-    0x08048591: mov    eax, dword ss:[ebp + 0x10]
-    0x08048594: mov    eax, dword ds:[eax]
-    0x08048596: add    dword ss:[ebp + 0xfc<-4>], eax
-    0x08048599: add    dword ss:[ebp + 0xf8<-8>], 0x01
-    0x0804859d: mov    eax, dword ss:[ebp + 0xf8<-8>]
-    0x080485a0: cmp    eax, dword ss:[ebp + 0x08]
-    0x080485a3: jl     0x08048580
-    0x080485a5: mov    eax, dword ss:[ebp + 0xfc<-4>]
-    0x080485a8: leave  
-    0x080485a9: ret    
-  Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
-  Data pointers:
-    (add[32] esp_0[32] 0x00000008[32])
-    (add[32] esp_0[32] 0x00000009[32])
-    (add[32] esp_0[32] 0x0000000a[32])
-    (add[32] esp_0[32] 0x0000000b[32])
-    (add[32] esp_0[32] 0x0000000c[32])
-    (add[32] esp_0[32] 0x0000000d[32])
-    (add[32] esp_0[32] 0x0000000e[32])
-    (add[32] esp_0[32] 0x0000000f[32])
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
-
-Pointer detection analysis for function 0x080485aa "flow06"
-  Instructions:
-    0x080485aa: push   ebp
-    0x080485ab: mov    ebp, esp
-    0x080485ad: sub    esp, 0x10
-    0x080485b0: mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
-    0x080485b7: mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
-    0x080485be: jmp    0x080485e0
-    0x080485c0: mov    eax, dword ss:[ebp + 0xf8<-8>]
-    0x080485c3: and    eax, 0x01
-    0x080485c6: test   al, al
-    0x080485c8: je     0x080485d4
-    0x080485ca: mov    eax, dword ss:[ebp + 0x0c]
-    0x080485cd: mov    eax, dword ds:[eax]
-    0x080485cf: add    dword ss:[ebp + 0xfc<-4>], eax
-    0x080485d2: jmp    0x080485dc
-    0x080485d4: mov    eax, dword ss:[ebp + 0x10]
-    0x080485d7: mov    eax, dword ds:[eax]
-    0x080485d9: add    dword ss:[ebp + 0xfc<-4>], eax
-    0x080485dc: add    dword ss:[ebp + 0xf8<-8>], 0x01
-    0x080485e0: mov    eax, dword ss:[ebp + 0xf8<-8>]
-    0x080485e3: cmp    eax, dword ss:[ebp + 0x08]
-    0x080485e6: jl     0x080485c0
-    0x080485e8: mov    eax, dword ss:[ebp + 0xfc<-4>]
-    0x080485eb: leave  
-    0x080485ec: ret    
-  Code pointers:
-    (add[32] esp_0[32] 0x00000001[32])
-    (add[32] esp_0[32] 0x00000002[32])
-    (add[32] esp_0[32] 0x00000003[32])
-    esp_0[32]
-  Data pointers:
-    (add[32] esp_0[32] 0x00000008[32])
-    (add[32] esp_0[32] 0x00000009[32])
-    (add[32] esp_0[32] 0x0000000a[32])
-    (add[32] esp_0[32] 0x0000000b[32])
-    (add[32] esp_0[32] 0x0000000c[32])
-    (add[32] esp_0[32] 0x0000000d[32])
-    (add[32] esp_0[32] 0x0000000e[32])
-    (add[32] esp_0[32] 0x0000000f[32])
-    (add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])
-    (add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])
-    (add[32] esp_0[32] 0xfffffffe<4294967294,-2>[32])
-    (add[32] esp_0[32] 0xffffffff<4294967295,-1>[32])
+    32-bit pointer at (add[32] esp_0[32] 0x0000000c[32])
+    32-bit pointer at (add[32] esp_0[32] 0x00000008[32])
