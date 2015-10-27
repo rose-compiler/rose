@@ -376,7 +376,7 @@ Interior::adjustWidth() {
                 throw Exception(toStr(op_) + " operator expects three arguments");
             if (!child(0)->isScalar())
                 throw Exception(toStr(op_) + " operator's first argument (condition) must be scalar");
-            if (!child(0)->nBits() == 1)
+            if (child(0)->nBits() != 1)
                 throw Exception(toStr(op_) + " operator's first argument (condition) must be Boolean");
             if (child(1)->nBits() != child(2)->nBits() || child(1)->domainWidth() != child(2)->domainWidth())
                 throw Exception(toStr(op_) + " operator's second and third arguments must have equal width");
