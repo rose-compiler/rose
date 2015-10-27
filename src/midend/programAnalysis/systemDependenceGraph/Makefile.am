@@ -5,11 +5,14 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 if ROSE_USING_GCC_VERSION_LATER_4_6
 noinst_LTLIBRARIES =  
 else
-noinst_LTLIBRARIES =  libSDG.la
+# DQ (10/7/2015): I think we don't want to support this code any more (was not supported 
+# on GNU compilers greater than 4.6 and so should not be supported on Intel compilers.
+noinst_LTLIBRARIES =  
+# noinst_LTLIBRARIES =  libSDG.la
 endif
 
-libSDG_la_DEPENDENCIES =
-
+# DQ (10/7/2015): I think we don't want to support this code any more (was not supported 
+# on GNU compilers greater than 4.6 and so should not be supported on Intel compilers.
 # DQ (2/9/2014): This code does not compile using GNU g++ version 4.7 and later compilers.
 # This requires more investigation to decide on a fix, but we might eliminate 
 # this code in favor of more recent analysis work so it might not be work fixing).
@@ -17,12 +20,12 @@ libSDG_la_DEPENDENCIES =
 
 # libSDG_la_SOURCES = staticCFG.C PDG.C SDG.C util.C defUseChains.C newDDG.C newCDG.C
 if ROSE_USING_GCC_VERSION_LATER_4_6
-  libSDG_la_SOURCES = 
-# libSDG_la_SOURCES = staticCFG.C PDG.C SDG.C util.C defUseChains.C newDDG.C newCDG.C
+# not supported anymore
 else
-  libSDG_la_SOURCES = staticCFG.C PDG.C SDG.C util.C defUseChains.C newDDG.C newCDG.C
+# not supported anymore
+# pkginclude_HEADERS = cong_staticCFG.h PDG.h util.h SDG.h defUseChains.h  newCDG.h newDDG.h
+# libSDG_la_DEPENDENCIES =
+# libSDG_la_SOURCES = staticCFG.C PDG.C SDG.C util.C defUseChains.C newDDG.C newCDG.C
 endif
-
-pkginclude_HEADERS = cong_staticCFG.h PDG.h util.h SDG.h defUseChains.h  newCDG.h newDDG.h
 
 EXTRA_DIST =

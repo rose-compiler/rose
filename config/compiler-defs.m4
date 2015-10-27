@@ -22,7 +22,14 @@ dnl predefined by a specific compiler
 
 # case $BACKEND_CXX_COMPILER in
   case $compilerName in
-
+  # MS 10/22/2015: Support for LLVM
+  clang|clang++|clang-*|clang++-*)
+    macroString="{\"--preinclude\", \"rose_edg_required_macros_and_functions.h\"}"
+    compilerVendorName=llvm
+    echo "Support for clang as a backend for compiling ROSE generated code \"$BACKEND_CXX_COMPILER\" ";
+    echo "Support for clang as a backend for compiling ROSE generated code \"$macroString\" ";
+  ;;
+  
   # Support for GNU gcc or g++ as a backend for compiling ROSE generated code
   # JJW 7/25/2008: Added mpi* in here, assuming they are like gcc
   # g++|gcc|mpicc|mpic++|mpicxx|mpiCC)
