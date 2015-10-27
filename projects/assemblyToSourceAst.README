@@ -1,0 +1,13 @@
+This project was removed by Robb Matzke on 2015-09-10 because:
+
+1. It uses deprecated/internal features of the ROSE library.
+
+2. It has not compiled since 2012-03-29 and the original
+   author had no intention of fixing it. See commit
+   14da0f446532c510aa95641baee8f719a538dc2b
+
+3. A new assembly-to-source translation will likely be
+   implemented shortly.
+
+4. The PowerPC instruction semantics have been implemented
+   in the ROSE library for quite a while.

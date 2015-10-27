@@ -53,36 +53,55 @@ SPRAY::PASolver1::runSolver() {
     Lattice* info=_initialElementFactory.create();
     ROSE_ASSERT(info);
     info->combine(*_analyzerDataPreInfo[lab0.getId()]);
-    if(_trace) {
-      cout<<"TRACE: computing transfer function: "<<lab0<<":";info->toStream(cout,0);
-      cout<<"->"<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
-      cout<<endl;
-    }
-    _transferFunctions.transfer(lab0,*info);
-    if(_trace) {
-      cout<<"TRACE: transfer function result: "<<lab1<<":";
-      ROSE_ASSERT(info);
-      info->toStream(cout,0);
-      cout<<endl;
-    }
-
-    bool isApproximatedBy=info->approximatedBy(*_analyzerDataPreInfo[lab1.getId()]);
-    if(!isApproximatedBy) {
-      _analyzerDataPreInfo[lab1.getId()]->combine(*info);
-
+    if(info->isBot()) {
       if(_trace) {
-        cout<<"TRACE: new df value: "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
+        cout<<"TRACE: computing transfer function: "<<lab0<<":";info->toStream(cout,0);
+        cout<<"-> cancel (because of bot)";
+        cout<<endl;
+      }
+      // do nothing (non-reachable code)
+    } else {
+      if(_trace) {
+        cout<<"TRACE: computing transfer function: "<<lab0<<":";info->toStream(cout,0);
+        cout<<"->"<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
+        cout<<endl;
+      }
+      _transferFunctions.transfer(edge,*info);
+      ROSE_ASSERT(info);
+      if(_trace) {
+        cout<<"TRACE: transfer function result: "<<lab1<<":";
+        ROSE_ASSERT(info);
+        info->toStream(cout,0);
         cout<<endl;
       }
       
-      Flow outEdges=_flow.outEdges(lab1);
-      _workList.add(outEdges);
-      if(_trace)
-        cout<<"TRACE: adding to worklist: "<<outEdges.toString()<<endl;
-    } else {
-      // no new information was computed. Nothing to do.
-      if(_trace)
-        cout<<"TRACE: nop."<<endl;
+      bool isApproximatedBy=info->approximatedBy(*_analyzerDataPreInfo[lab1.getId()]);
+      if(!isApproximatedBy) {
+        if(_trace) {
+          cout<<"TRACE: old df value : "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
+          cout<<endl;
+        }
+        if(_trace) {
+          cout<<"TRACE: combined with: "<<lab1<<":";info->toStream(cout,0);
+          cout<<endl;
+        }
+
+        _analyzerDataPreInfo[lab1.getId()]->combine(*info);
+        
+        if(_trace) {
+          cout<<"TRACE: new df value : "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
+          cout<<endl;
+        }
+        
+        Flow outEdges=_flow.outEdges(lab1);
+        _workList.add(outEdges);
+        if(_trace)
+          cout<<"TRACE: adding to worklist: "<<outEdges.toString()<<endl;
+      } else {
+        // no new information was computed. Nothing to do.
+        if(_trace)
+          cout<<"TRACE: nop."<<endl;
+      }
     }
     delete info;
   }

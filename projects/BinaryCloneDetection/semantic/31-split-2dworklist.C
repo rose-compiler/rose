@@ -252,7 +252,7 @@ main(int argc, char *argv[])
             ++argno;
             break;
         } else if (!strcmp(argv[argno], "--help") || !strcmp(argv[argno], "-h")) {
-            usage(0);
+            ::usage(0);
         } else if (!strncmp(argv[argno], "--file=", 7)) {
             opt.input_file_name = argv[argno]+7;
         } else if (!strncmp(argv[argno], "--threads=", 10)) {
@@ -272,7 +272,7 @@ main(int argc, char *argv[])
             exit(1);
         }
     } else {
-        usage(1);
+        ::usage(1);
     }
 
     // Read function pairs (2d coordinates) from standard input or the file.

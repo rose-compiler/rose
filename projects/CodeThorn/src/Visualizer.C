@@ -11,6 +11,7 @@
 #include "CommandLineOptions.h"
 #include "AstAnnotator.h"
 #include "AType.h"
+#include "Miscellaneous2.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BEGIN OF VISUALIZER
@@ -181,9 +182,9 @@ string Visualizer::estateToString(const EState* estate) {
   if((tg1&&boolOptions["tg1-estate-predicate"])||(tg2&&boolOptions["tg2-estate-predicate"])) {
     string s=estate->predicateToString(variableIdMapping);
     // replace ASCII with HTML characters
-    s=replace_string(s,",","&and;");
-    s=replace_string(s,"!=","&ne;");
-    s=replace_string(s,"==","=");
+    s=SPRAY::replace_string(s,",","&and;");
+    s=SPRAY::replace_string(s,"!=","&ne;");
+    s=SPRAY::replace_string(s,"==","=");
     ss<<s;
   }
   return ss.str();

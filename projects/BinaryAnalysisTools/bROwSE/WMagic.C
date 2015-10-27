@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WMagic.h>
 
 #include <BinaryMagic.h>                                // ROSE

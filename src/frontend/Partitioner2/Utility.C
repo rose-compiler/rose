@@ -205,6 +205,11 @@ addressIntervalParser(AddressInterval &storage) {
 }
 
 AddressIntervalParser::Ptr
+addressIntervalParser(std::vector<AddressInterval> &storage) {
+    return AddressIntervalParser::instance(Sawyer::CommandLine::TypedSaver<std::vector<AddressInterval> >::instance(storage));
+}
+
+AddressIntervalParser::Ptr
 addressIntervalParser() {
     return AddressIntervalParser::instance();
 }
@@ -227,7 +232,7 @@ Trigger::switches(Settings &settings) {
                                      settings.when.least()==0 ?("invoke the action " + plural(settings.when.size(), "times") +
                                                                 " beginning immediately.") :
                                      ("invoke the action on calls " + numberToString(settings.when.least()) + " through " +
-                                      numberToString(settings.when.greatest() + ", inclusive.")))));
+                                      numberToString(settings.when.greatest()) + ", inclusive."))));
     return switches;
 }
 

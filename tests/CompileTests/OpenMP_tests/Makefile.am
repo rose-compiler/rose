@@ -11,7 +11,7 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   SUBDIRS += fortran 
 endif
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 C_TESTCODES_REQUIRED_TO_PASS = \
@@ -149,7 +149,8 @@ C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
 	jacobi-ompacc.c \
 	jacobi-ompacc-v2.c \
 	jacobi-ompacc-opt1.c \
-	jacobi-ompacc-opt2.c
+	jacobi-ompacc-opt2.c \
+	jacobi-ompacc-multiGPU.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
         jacobi-ompacc2.cpp \

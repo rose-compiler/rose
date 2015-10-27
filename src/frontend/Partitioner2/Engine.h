@@ -68,7 +68,7 @@ namespace Partitioner2 {
  *           "This tool disassembles the specified specimen and presents the "
  *           "results as a pseudo assembly listing, that is, a listing intended "
  *           "for human consumption rather than assembly.";
- *       SgProject *project = P2::Engine().frontend(argc, argv, purpose, description);
+ *       SgAsmBlock *gblock = P2::Engine().frontend(argc, argv, purpose, description);
  *  @endcode
  *
  *  @section topsteps High level operations
@@ -106,6 +106,19 @@ public:
     //   4. Each setting must have a modifier method (same name as property but takes a value and returns void)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** How the partitioner should globally treat memory. */
+    enum MemoryDataAdjustment {
+        DATA_IS_CONSTANT,                               /**< Treat all memory as if it were constant. This is accomplished by
+                                                         *   removing @ref MemoryMap::READABLE from all segments. */
+        DATA_IS_INITIALIZED,                            /**< Treat all memory as if it were initialized. This is a little
+                                                         *   weaker than @ref MEMORY_IS_CONSTANT in that it allows the
+                                                         *   partitioner to read the value from memory as if it were constant,
+                                                         *   but also marks the value as being indeterminate. This is
+                                                         *   accomplished by adding @ref MemoryMap::INITIALIZED to all
+                                                         *   segments. */
+        DATA_NO_CHANGE,                                 /**< Do not make any global changes to the memory map. */
+    };
+
     /** Settings for loading specimens.
      *
      *  The runtime descriptions and command-line parser for these switches can be obtained from @ref loaderSwitches. */
@@ -113,14 +126,21 @@ public:
         size_t deExecuteZeros;                          /**< Size threshold for removing execute permission from zero data. If
                                                          *   this data member is non-zero, then the memory map will be adjusted
                                                          *   by removing execute permission from any region of memory that has
-                                                         *   at least this many consecutive zero bytes. */
-        bool constMem;                                  /**< Should write permission be removed from all memory segments?
-                                                         *   Removing write permission causes the instruction semantics to
-                                                         *   assume that memory is constant and therefore things like indirect
-                                                         *   jumps will have known successors. */
+                                                         *   at least this many consecutive zero bytes. This happens after the
+                                                         *   @ref memoryIsExecutable property is processed. */
+        MemoryDataAdjustment memoryDataAdjustment;      /**< How to globally adjust memory segment access bits for data
+                                                         *   areas. See the enum for details. The default is @ref
+                                                         *   DATA_NO_CHANGE, which causes the partitioner to use the
+                                                         *   user-supplied memory map without changing anything. */
+        bool memoryIsExecutable;                        /**< Determines whether all of memory should be made executable. The
+                                                         *   executability bit controls whether the partitioner is able to make
+                                                         *   instructions at that address.  The default, false, means that the
+                                                         *   engine will not modify executable bits in memory, but rather use
+                                                         *   the bits already set in the memory map. This happens before the
+                                                         *   @ref deExecuteZeros property is processed. */
 
         LoaderSettings()
-            : deExecuteZeros(0), constMem(false) {}
+            : deExecuteZeros(0), memoryDataAdjustment(DATA_IS_INITIALIZED), memoryIsExecutable(false) {}
     };
 
     /** Settings that control the disassembler.
@@ -130,6 +150,18 @@ public:
         std::string isaName;                            /**< Name of the instruction set architecture. Specifying a non-empty
                                                          *   ISA name will override the architecture that's chosen from the
                                                          *   binary container(s) such as ELF or PE. */
+    };
+
+    /** Controls whether the function may-return analysis runs. */
+    enum FunctionReturnAnalysis {
+        MAYRETURN_DEFAULT_YES,                          /**< Assume a function returns if the may-return analysis cannot
+                                                         *   decide whether it may return. */
+        MAYRETURN_DEFAULT_NO,                           /**< Assume a function cannot return if the may-return analysis cannot
+                                                         *   decide whether it may return. */
+        MAYRETURN_ALWAYS_YES,                           /**< Assume that all functions return without ever running the
+                                                         *   may-return analysis. */
+        MAYRETURN_ALWAYS_NO,                            /**< Assume that a function cannot return without ever running the
+                                                         *   may-return analysis. */
     };
 
     /** Settings that control creation of the partitioner.
@@ -161,7 +193,7 @@ public:
         bool findingIntraFunctionData;                  /**< Suck up unused addresses as intra-function data. */
         AddressInterval interruptVector;                /**< Table of interrupt handling functions. */
         bool doingPostAnalysis;                         /**< Perform post-partitioning analysis phase? */
-        bool functionReturnsAssumed;                    /**< Assume functions return if cannot prove otherwise? */
+        FunctionReturnAnalysis functionReturnAnalysis;  /**< How to run the function may-return analysis. */
         bool findingDataFunctionPointers;               /**< Look for function pointers in static data. */
         bool findingThunks;                             /**< Look for common thunk patterns in undiscovered areas. */
         bool splittingThunks;                           /**< Split thunks into their own separate functions. */
@@ -169,8 +201,8 @@ public:
         PartitionerSettings()
             : usingSemantics(false), followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
               findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
-              doingPostAnalysis(true), functionReturnsAssumed(true), findingDataFunctionPointers(false), findingThunks(true),
-              splittingThunks(false) {}
+              doingPostAnalysis(true), functionReturnAnalysis(MAYRETURN_DEFAULT_YES), findingDataFunctionPointers(false),
+              findingThunks(true), splittingThunks(false) {}
     };
 
     /** Settings for controling the engine behavior.
@@ -195,17 +227,29 @@ public:
     //                                  Internal data structures
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
+    // Engine callback for handling instructions added to basic blocks.  This is called when a basic block is discovered,
+    // before it's attached to a partitioner, so it shouldn't really be modifying any state in the engine, but rather only
+    // preparing the basic block to be processed.
+    class BasicBlockFinalizer: public BasicBlockCallback {
+        typedef Sawyer::Container::Map<rose_addr_t /*target*/, std::vector<rose_addr_t> /*sources*/> WorkList;
+    public:
+        static Ptr instance() { return Ptr(new BasicBlockFinalizer); }
+        virtual bool operator()(bool chain, const Args &args) ROSE_OVERRIDE;
+    };
+    
     // Basic blocks that need to be worked on next. These lists are adjusted whenever a new basic block (or placeholder) is
     // inserted or erased from the CFG.
     class BasicBlockWorkList: public CfgAdjustmentCallback {
-    private:
         Sawyer::Container::DistinctList<rose_addr_t> pendingCallReturn_;   // blocks that might need an E_CALL_RETURN edge
         Sawyer::Container::DistinctList<rose_addr_t> processedCallReturn_; // call sites whose may-return was indeterminate
-        Sawyer::Container::DistinctList<rose_addr_t> finalCallReturn_;     // indeterminated call sites awaiting final analysis
+        Sawyer::Container::DistinctList<rose_addr_t> finalCallReturn_;     // indeterminate call sites awaiting final analysis
         Sawyer::Container::DistinctList<rose_addr_t> undiscovered_;        // undiscovered basic block list (last-in-first-out)
+        Engine *engine_;                                                   // engine to which this callback belongs
+    protected:
+        explicit BasicBlockWorkList(Engine *engine): engine_(engine) {}
     public:
         typedef Sawyer::SharedPointer<BasicBlockWorkList> Ptr;
-        static Ptr instance() { return Ptr(new BasicBlockWorkList); }
+        static Ptr instance(Engine *engine) { return Ptr(new BasicBlockWorkList(engine)); }
         virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
         virtual bool operator()(bool chain, const DetachedBasicBlock &args) ROSE_OVERRIDE;
         Sawyer::Container::DistinctList<rose_addr_t>& pendingCallReturn() { return pendingCallReturn_; }
@@ -232,7 +276,7 @@ private:
 public:
     /** Default constructor. */
     Engine()
-        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance()) {
+        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this)) {
         init();
     }
 
@@ -882,6 +926,16 @@ public:
     //                                  Settings and properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Property: All settings.
+     *
+     *  Returns a reference to the engine settings structures.  Alternatively, each setting also has a corresponding engine
+     *  member function to query or adjust the setting directly.
+     *
+     * @{ */
+    const Settings& settings() const /*final*/;
+    Settings& settings() /*final*/;
+    /** @} */
+
     /** Property: interpretation
      *
      *  The interpretation which is being analyzed. The interpretation is chosen when an ELF or PE container is parsed, and the
@@ -906,11 +960,39 @@ public:
     /** Property: when to remove execute permission from zero bytes.
      *
      *  This is the number of consecutive zero bytes that must be present before execute permission is removed from this part
-     *  of the memory map.  A value of zero disables this feature.
+     *  of the memory map.  A value of zero disables this feature.  This action happens after the @ref memoryIsExecutable
+     *  property is processed.
      *
      * @{ */
     size_t deExecuteZeros() const /*final*/ { return settings_.loader.deExecuteZeros; }
     virtual void deExecuteZeros(size_t n) { settings_.loader.deExecuteZeros = n; }
+    /** @} */
+
+    /** Property: Global adjustments to memory map data access bits.
+     *
+     *  This property controls whether the partitioner makes any global adjustments to the memory map.  The readable, writable,
+     *  and initialized bits (see @ref MemoryMap) determine how the partitioner treats memory read operations.  Reading from
+     *  memory that is non-writable is treated as if the memory location holds a constant value; reading from memory that is
+     *  writable and initialized is treated as if the memory contains a valid initial value that can change during program
+     *  execution, and reading from memory that is writable and not initialized is treated as if it has no current value.
+     *
+     *  The default is to use the memory map supplied by the executable or the user without making any changes to these access
+     *  bits.
+     *
+     * @{ */
+    MemoryDataAdjustment memoryDataAdjustment() const /*final*/ { return settings_.loader.memoryDataAdjustment; }
+    virtual void memoryDataAdjustment(MemoryDataAdjustment x) { settings_.loader.memoryDataAdjustment = x; }
+    /** @} */
+
+    /** Property: Global adjustment to executability.
+     *
+     *  If this property is set, then the engine will remap all memory to be executable.  Executability determines whether the
+     *  partitioner is able to make instructions at that address. The default, false, means that the engine will not globally
+     *  modify the execute bits in the memory map.  This action happens before the @ref deExecuteZeros is processed.
+     *
+     * @{ */
+    bool memoryIsExecutable() const /*final*/ { return settings_.loader.memoryIsExecutable; }
+    virtual void memoryIsExecutable(bool b) { settings_.loader.memoryIsExecutable = b; }
     /** @} */
 
     /** Property: Disassembler.
@@ -1065,16 +1147,14 @@ public:
     virtual void doingPostAnalysis(bool b) { settings_.partitioner.doingPostAnalysis = b; }
     /** @} */
 
-    /** Property: Whether to assume that functions return.
+    /** Property: Whether to run the function may-return analysis.
      *
-     *  If the partitioner's may-return analysis fails to reach a conclusion about a function, then either assume that the
-     *  function may return (the usual case) or that it doesn't.  If a function cannot return (e.g., GCC @c noreturn attribute,
-     *  such as for the @c abort function in the C library) then the partitioner will not attempt to discover instructions
-     *  after its call sites.
+     *  The caller can decide whether may-return analysis runs, or if it runs whether an indeterminate result should be
+     *  considered true or false.
      *
      * @{ */
-    bool functionReturnsAssumed() const /*final*/ { return settings_.partitioner.functionReturnsAssumed; }
-    virtual void functionReturnsAssumed(bool b) { settings_.partitioner.functionReturnsAssumed = b; }
+    FunctionReturnAnalysis functionReturnAnalysis() const /*final*/ { return settings_.partitioner.functionReturnAnalysis; }
+    virtual void functionReturnAnalysis(FunctionReturnAnalysis x) { settings_.partitioner.functionReturnAnalysis = x; }
     /** @} */
 
     /** Property: Whether to search static data for function pointers.

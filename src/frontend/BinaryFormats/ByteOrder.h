@@ -7,7 +7,7 @@ namespace ByteOrder {
 enum Endianness {
     ORDER_UNSPECIFIED=0,                /**< Endianness is unspecified and unknown. */
     ORDER_LSB,                          /**< Least significant byte first, i.e., little-endian. */
-    ORDER_MSB,                          /**< Most significant byte first, i.e., big-endian. */
+    ORDER_MSB                           /**< Most significant byte first, i.e., big-endian. */
 };
 
 /** Byte order of host machine. */

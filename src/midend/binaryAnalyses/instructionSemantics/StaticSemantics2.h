@@ -2,6 +2,7 @@
 #ifndef Rose_StaticSemantics2_H
 #define Rose_StaticSemantics2_H
 
+#include "Disassembler.h"
 #include "NullSemantics2.h"
 
 namespace rose {
@@ -26,12 +27,12 @@ namespace InstructionSemantics2 {       // documented elsewhere
  *  attached can be many times larger than when using dynamic semantics.
  *
  *  By default, ROSE does not generate the static semantics, and each instruction's @ref SgAsmInstruction::get_semantics
- *  "semantics" property will be null.  Semantics can be added to any instruction by @ref RiscOperators::processInstruction
- *  "executing" the instruction in this StaticSemantics domain.  Each time the instruction is executed in this domain its
- *  previous semantics are thrown away and recalculated, so you should generally only do this once; that's the nature that
- *  makes these semantics "static".  If you want to calculate static semantics for lots of instructions, which is often the
- *  case, the @ref attachInstructionSemantics functions can do that: they process an entire AST, adding semantics to all the
- *  instructions they find. */
+ *  "semantics" property will be null.  Semantics can be added to any instruction by @ref
+ *  BaseSemantics::RiscOperators::processInstruction "executing" the instruction in this StaticSemantics domain.  Each time the
+ *  instruction is executed in this domain its previous semantics are thrown away and recalculated, so you should generally
+ *  only do this once; that's the nature that makes these semantics "static".  If you want to calculate static semantics for
+ *  lots of instructions, which is often the case, the @ref attachInstructionSemantics functions can do that: they process an
+ *  entire AST, adding semantics to all the instructions they find. */
 namespace StaticSemantics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,9 +73,9 @@ protected:
     SgAsmExpression *ast_;
 
 protected:
-    explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {
+    SValue(size_t nbits, SgAsmRiscOperation::RiscOperator op): BaseSemantics::SValue(nbits) {
         static uint64_t nVars = 0;
-        ast_ = SageBuilderAsm::buildRiscOperation(SgAsmRiscOperation::OP_undefined, SageBuilderAsm::buildValueU64(nVars++));
+        ast_ = SageBuilderAsm::buildRiscOperation(op, SageBuilderAsm::buildValueU64(nVars++));
     }
 
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
@@ -95,7 +96,12 @@ public:
      *
      *  This SValue will be used only for its virtual constructors and will never appear in an expression. */
     static SValuePtr instance() {
-        return SValuePtr(new SValue(1));
+        return SValuePtr(new SValue(1, SgAsmRiscOperation::OP_undefined));
+    }
+
+    /** Instantiate a data-flow bottom value. */
+    static SValuePtr instance_bottom(size_t nbits) {
+        return SValuePtr(new SValue(nbits, SgAsmRiscOperation::OP_bottom));
     }
 
     /** Instantiate an undefined value.
@@ -103,30 +109,49 @@ public:
      *  Undefined values end up being a SgAsmRiscOperation of type OP_undefined which has a single child which is an integer
      *  identification number.  This allows two such nodes in the AST to be resolved to the same or different undefined value
      *  by virtue of their ID number. */
-    static SValuePtr instance(size_t nbits) {
-        return SValuePtr(new SValue(nbits));
+    static SValuePtr instance_undefined(size_t nbits) {
+        return SValuePtr(new SValue(nbits, SgAsmRiscOperation::OP_undefined));
+    }
+
+    /** Instantiate an unspecified value.
+     *
+     *  Unspecified values end up being a SgAsmRiscOperation of type OP_unspecified which has a single child which is an
+     *  integer identification number.  This allows two such nodes in the AST to be resolved to the same or different
+     *  unspecified value by virtue of their ID number. */
+    static SValuePtr instance_unspecified(size_t nbits) {
+        return SValuePtr(new SValue(nbits, SgAsmRiscOperation::OP_unspecified));
     }
 
     /** Instantiate an integer constant. */
-    static SValuePtr instance(size_t nbits, uint64_t value) {
+    static SValuePtr instance_integer(size_t nbits, uint64_t value) {
         return SValuePtr(new SValue(nbits, value));
     }
 
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance_bottom(nbits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
-        return instance(nbits);
+        return instance_undefined(nbits);
+    }
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const ROSE_OVERRIDE {
+        return instance_unspecified(nbits);
     }
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const ROSE_OVERRIDE {
-        return instance(nbits, value);
+        return instance_integer(nbits, value);
     }
     virtual BaseSemantics::SValuePtr boolean_(bool value) const ROSE_OVERRIDE {
-        return instance(1, value ? 1 : 0);
+        return instance_integer(1, value ? 1 : 0);
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
         if (new_width!=0 && new_width!=retval->get_width())
             retval->set_width(new_width);
         return retval;
+    }
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr&,
+                                                                           SMTSolver*) const ROSE_OVERRIDE {
+        throw BaseSemantics::NotImplemented("StaticSemantics is not suitable for dataflow analysis", NULL);
     }
 
 public:
@@ -147,11 +172,14 @@ public:
         ASSERT_not_reachable("no implementation necessary");
     }
     
-
     virtual void set_width(size_t nbits) {
         ASSERT_not_reachable("no implementation necessary");
     }
 
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
+    
     virtual bool is_number() const ROSE_OVERRIDE {
         return false;
     }

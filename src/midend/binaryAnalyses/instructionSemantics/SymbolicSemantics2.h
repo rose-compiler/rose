@@ -9,6 +9,8 @@
 #include "BaseSemantics2.h"
 #include "SMTSolver.h"
 #include "InsnSemanticsExpr.h"
+#include "RegisterStateGeneric.h"
+#include "MemoryCellList.h"
 
 #include <map>
 #include <vector>
@@ -41,6 +43,7 @@ typedef InsnSemanticsExpr::LeafNode LeafNode;
 typedef InsnSemanticsExpr::LeafNodePtr LeafNodePtr;
 typedef InsnSemanticsExpr::InternalNode InternalNode;
 typedef InsnSemanticsExpr::InternalNodePtr InternalNodePtr;
+typedef InsnSemanticsExpr::TreeNode TreeNode;
 typedef InsnSemanticsExpr::TreeNodePtr TreeNodePtr;
 typedef std::set<SgAsmInstruction*> InsnSet;
 
@@ -67,7 +70,7 @@ public:
  *  instructions that were used to define the value.  This provides a framework for some simple forms of value-based def-use
  *  analysis. See get_defining_instructions() for details.
  * 
- *  @section Unk_Uinit Unknown versus Uninitialized Values
+ *  @section symbolic_semantics_unknown Unknown versus Uninitialized Values
  *
  *  One sometimes needs to distinguish between registers (or other named storage locations) that contain an
  *  "unknown" value versus registers that have not been initialized. By "unknown" we mean a value that has no
@@ -144,36 +147,55 @@ protected:
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
         expr = LeafNode::create_integer(nbits, number);
     }
+    SValue(TreeNodePtr expr): BaseSemantics::SValue(expr->get_nbits()) {
+        this->expr = expr;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
-        return SValuePtr(new SValue(1));
+        return SValuePtr(new SValue(LeafNode::create_variable(1)));
+    }
+
+    /** Instantiate a new data-flow bottom value of specified width. */
+    static SValuePtr instance_bottom(size_t nbits) {
+        return SValuePtr(new SValue(LeafNode::create_variable(nbits, "", TreeNode::BOTTOM)));
     }
 
     /** Instantiate a new undefined value of specified width. */
-    static SValuePtr instance(size_t nbits) {
-        return SValuePtr(new SValue(nbits));
+    static SValuePtr instance_undefined(size_t nbits) {
+        return SValuePtr(new SValue(LeafNode::create_variable(nbits)));
+    }
+
+    /** Instantiate a new unspecified value of specified width. */
+    static SValuePtr instance_unspecified(size_t nbits) {
+        return SValuePtr(new SValue(LeafNode::create_variable(nbits, "", TreeNode::UNSPECIFIED)));
     }
 
     /** Instantiate a new concrete value. */
-    static SValuePtr instance(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(nbits, value));
+    static SValuePtr instance_integer(size_t nbits, uint64_t value) {
+        return SValuePtr(new SValue(LeafNode::create_integer(nbits, value)));
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance_bottom(nbits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
-        return instance(nbits);
+        return instance_undefined(nbits);
+    }
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const ROSE_OVERRIDE {
+        return instance_unspecified(nbits);
     }
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const ROSE_OVERRIDE {
-        return instance(nbits, value);
+        return instance_integer(nbits, value);
     }
     virtual BaseSemantics::SValuePtr boolean_(bool value) const ROSE_OVERRIDE {
-        return number_(1, value?1:0);
+        return instance_integer(1, value?1:0);
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
@@ -181,6 +203,8 @@ public:
             retval->set_width(new_width);
         return retval;
     }
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
+                                                                           SMTSolver*) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
@@ -204,6 +228,8 @@ public:
         ASSERT_require(nbits==get_width());
     }
 
+    virtual bool isBottom() const ROSE_OVERRIDE;
+
     virtual bool is_number() const ROSE_OVERRIDE {
         return expr->is_known();
     }
@@ -218,15 +244,20 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Additional methods first declared in this class...
 public:
-    /** Substitute one value for another throughout a value. For example, if this value is "(add esp_0, -12)" and we substitute
-     *  "esp_0" with "(add stack_frame 4)", this method would return "(add stack_frame -8)".  It is also possible for the @p
-     *  from value to be a more complicated expression. This method attempts to match @p from at all nodes of this expression
-     *  and substitutes at eac node that matches.  The @p from and @p to must have the same width. */
+    /** Substitute one value for another throughout a value.
+     *
+     *  For example, if this value is "(add esp_0, -12)" and we substitute "esp_0" with "(add stack_frame 4)", this method
+     *  would return "(add stack_frame -8)".  It is also possible for the @p from value to be a more complicated
+     *  expression. This method attempts to match @p from at all nodes of this expression and substitutes at eac node that
+     *  matches.  The @p from and @p to must have the same width. */
     virtual SValuePtr substitute(const SValuePtr &from, const SValuePtr &to) const;
 
-    /** Adds instructions to the list of defining instructions.  Adds the specified instruction and defining sets into this
-     *  value and returns a reference to this value. See also add_defining_instructions().
-     *  @{ */
+    /** Adds instructions to the list of defining instructions.
+     *
+     *  Adds the specified instruction and defining sets into this value and returns a reference to this value. See also
+     *  add_defining_instructions().
+     *
+     * @{ */
     virtual void defined_by(SgAsmInstruction *insn, const InsnSet &set1, const InsnSet &set2, const InsnSet &set3) {
         add_defining_instructions(set3);
         defined_by(insn, set1, set2);
@@ -244,8 +275,9 @@ public:
     }
     /** @} */
 
-    /** Returns the expression stored in this value.  Expressions are reference counted; the reference count of the returned
-     *  expression is not incremented. */
+    /** Returns the expression stored in this value.
+     *
+     *  Expressions are reference counted; the reference count of the returned expression is not incremented. */
     virtual const TreeNodePtr& get_expression() const {
         return expr;
     }
@@ -260,8 +292,10 @@ public:
     }
     /** @} */
 
-    /** Returns the set of instructions that defined this value.  The return value is a flattened lattice represented as a set.
-     *  When analyzing this basic block starting with an initial default state:
+    /** Returns the set of instructions that defined this value.
+     *
+     *  The return value is a flattened lattice represented as a set.  When analyzing this basic block starting with an initial
+     *  default state:
      *
      *  @code
      *  1: mov eax, 2
@@ -270,14 +304,17 @@ public:
      *  4: mov ebx, 3
      *  @endcode
      *
-     *  the defining set for EAX will be instructions {1, 2} and the defining set for EBX will be {4}.  Defining sets for other
-     *  registers are the empty set. */
+     *  the defining set for the value stored in EAX will be instructions {1, 2} and the defining set for the value stored in
+     *  EBX will be {4}.  Defining sets for values stored in other registers are the empty set. */
     virtual const InsnSet& get_defining_instructions() const {
         return defs;
     }
 
-    /** Adds definitions to the list of defining instructions. Returns the number of items added that weren't already in the
-     *  list of defining instructions.  @{ */
+    /** Adds definitions to the list of defining instructions.
+     *
+     *  Returns the number of items added that weren't already in the list of defining instructions.
+     *
+     * @{ */
     virtual size_t add_defining_instructions(const InsnSet &to_add);
     virtual size_t add_defining_instructions(const SValuePtr &source) {
         return add_defining_instructions(source->get_defining_instructions());
@@ -285,7 +322,10 @@ public:
     virtual size_t add_defining_instructions(SgAsmInstruction *insn);
     /** @} */
 
-    /** Set definint instructions.  This discards the old set of defining instructions and replaces it with the specified set.
+    /** Set defining instructions.
+     *
+     *  This discards the old set of defining instructions and replaces it with the specified set.
+     *
      *  @{ */
     virtual void set_defining_instructions(const InsnSet &new_defs) {
         defs = new_defs;
@@ -480,6 +520,20 @@ typedef BaseSemantics::StatePtr StatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** How to update the list of writers stored at each abstract location. */
+enum WritersMode {
+    TRACK_NO_WRITERS,                               // do not track writers
+    TRACK_LATEST_WRITER,                            // save only the latest writer
+    TRACK_ALL_WRITERS                               // save all writers
+};
+
+/** How to update the list of definers stored in each semantic value. */
+enum DefinersMode {
+    TRACK_NO_DEFINERS,                              // do not track definers
+    TRACK_LATEST_DEFINER,                           // save only the latest definer
+    TRACK_ALL_DEFINERS                              // save all definers
+};
+
 /** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
  *  deleted. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
@@ -508,15 +562,15 @@ class RiscOperators: public BaseSemantics::RiscOperators {
     // Real constructors
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver), compute_usedef(false), omit_cur_insn(false),
-          compute_memwriters(true) {
+        : BaseSemantics::RiscOperators(protoval, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
+          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER) {
         set_name("Symbolic");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver), compute_usedef(false), omit_cur_insn(false),
-          compute_memwriters(true) {
+        : BaseSemantics::RiscOperators(state, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
+          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER) {
         set_name("Symbolic");
         (void) SValue::promote(state->get_protoval()); // values must have SymbolicSemantics::SValue dynamic type
     }
@@ -575,14 +629,14 @@ public:
 public:
     virtual BaseSemantics::SValuePtr boolean_(bool b) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::boolean_(b));
-        if (compute_usedef && !omit_cur_insn)
+        if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
             retval->defined_by(get_insn());
         return retval;
     }
 
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::number_(nbits, value));
-        if (compute_usedef && !omit_cur_insn)
+        if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
             retval->defined_by(get_insn());
         return retval;
     }
@@ -602,6 +656,14 @@ protected:
         return SValue::promote(undefined_(nbits));
     }
 
+    SValuePtr svalue_bottom(size_t nbits) {
+        return SValue::promote(bottom_(nbits));
+    }
+
+    SValuePtr svalue_unspecified(size_t nbits) {
+        return SValue::promote(unspecified_(nbits));
+    }
+
     SValuePtr svalue_number(size_t nbits, uint64_t value) {
         return SValue::promote(number_(nbits, value));
     }
@@ -613,29 +675,111 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Configuration properties
 protected:
-    bool compute_usedef;                                // if true, add use-def info to each value
     bool omit_cur_insn;                                 // if true, do not include cur_insn as a definer
-    bool compute_memwriters;                            // if true, add latest writer to each memory cell
+    DefinersMode computingDefiners_;                    // whether to track definers (instruction VAs) of SValues
+    WritersMode computingMemoryWriters_;                // whether to track writers (instruction VAs) to memory.
+    WritersMode computingRegisterWriters_;              // whether to track writers (instruction VAs) to registers.
 
 public:
-    /** Accessor for the compute_usedef property.  If compute_usedef is set, then RISC operators will update the set of
-     *  defining instructions in their return values, computing the new set from the sets of definers for the RISC operands and
-     *  possibly the current instruction (the current instruction is usually not a definer if it simply copies data verbatim).
+
+    // [Robb P. Matzke 2015-09-17] deprecated API
+    bool computingUseDef() const ROSE_DEPRECATED("use computingDefiners instead") {
+        return computingDefiners() == TRACK_ALL_DEFINERS;
+    }
+    void computingUseDef(bool b) ROSE_DEPRECATED("use computingDefiners instead") {
+        computingDefiners(TRACK_ALL_DEFINERS);
+    }
+
+    // [Robb P. Matzke 2015-08-10] deprecated API
+    void set_compute_usedef(bool b=true) ROSE_DEPRECATED("use computingDefiners instead") {
+        computingDefiners(b ? TRACK_ALL_DEFINERS : TRACK_NO_DEFINERS);
+    }
+    void clear_compute_usedef() ROSE_DEPRECATED("use computingDefiners instead") {
+        computingDefiners(TRACK_NO_DEFINERS);
+    }
+    bool get_compute_usedef() ROSE_DEPRECATED("use computingDefiners instead") {
+        return computingDefiners() == TRACK_ALL_DEFINERS;
+    }
+
+    /** Property: Track which instructions define a semantic value.
+     *
+     *  Each semantic value (@ref SValue) is capable of storing a set of instruction addresses. This property controls how
+     *  operations that produce new semantic values adjust those definers-sets in the new value.
+     *
+     *  @li @c TRACK_NO_DEFINERS: Each new semantic value will have a default-constructed definers-set (probably empty). Using
+     *      this setting makes the definers-set available for other uses.
+     *
+     *  @li @c TRACK_LATEST_DEFINER: The new values will have the default-constructed definers-set unioned with the address of
+     *      the current instruction (if there is a current instruction).
+     *
+     *  @li @c TRACK_ALL_DEFINERS: The new values will have a default-constructed definers-set unioned with the address of the
+     *      current instruciton (if there is one), and the addresses of the definers-sets of the operands. Certain operations
+     *      are able to simplify these sets. For example, an exclusive-or whose two operands are equal will return a zero
+     *      result whose only definer is the current instruction.
+     *
      * @{ */
-    void set_compute_usedef(bool b=true) { compute_usedef = b; }
-    void clear_compute_usedef() { set_compute_usedef(false); }
-    bool get_compute_usedef() const { return compute_usedef; }
+    void computingDefiners(DefinersMode m) { computingDefiners_ = m; }
+    DefinersMode computingDefiners() const { return computingDefiners_; }
     /** @} */
 
-    /** Property: track latest writer to each memory location.
+
+
+    /** Property: Track which instructions write to each memory location.
      *
-     *  If true, then each @ref writeMemory operation will update the affected memory cells with latest-writer information if
-     *  possible (depending on the type of memory state being used.
+     *  Each memory location stores a set of addresses that represent the instructions that wrote to that location. This
+     *  property controls how each @ref writeMemory operation updates that set.
+     *
+     *  @li @c TRACK_NO_WRITERS: Does not update the memory state's writers information. Using this setting will make that
+     *      data structure available for other purposes. The data structure can store a set of addresses independently for each
+     *      memory cell.
+     *
+     *  @li @c TRACK_LATEST_WRITER:  Each write operation clobbers all previous write information for the affected
+     *      memory address and stores the address of the current instruction (if there is one).
+     *
+     *  @li @c TRACK_ALL_WRITERS: Each write operation inserts the instruction address into the set of addresses stored for the
+     *      affected memory cell without removing any addresses that are already associated with that cell. While this works
+     *      well for analysis over a small region of code (like a single function), it might cause the writer sets to become
+     *      very large when the same memory state is used over large regions (like a whole program).
      *
      * @{ */
-    void set_compute_memwriters(bool b = true) { compute_memwriters = b; }
-    void clear_compute_memwriters() { compute_memwriters = false; }
-    bool get_compute_memwriters() const { return compute_memwriters; }
+    void computingMemoryWriters(WritersMode m) { computingMemoryWriters_ = m; }
+    WritersMode computingMemoryWriters() const { return computingMemoryWriters_; }
+    /** @} */
+
+    // [Robb P. Matzke 2015-08-10] deprecated API
+    void set_compute_memwriters(bool b = true) ROSE_DEPRECATED("use computingMemoryWriters instead") {
+        computingMemoryWriters(b ? TRACK_LATEST_WRITER : TRACK_NO_WRITERS);
+    }
+    void clear_compute_memwriters() ROSE_DEPRECATED("use computingMemoryWriters instead") {
+        computingMemoryWriters(TRACK_NO_WRITERS);
+    }
+    bool get_compute_memwriters() const ROSE_DEPRECATED("use computingMemoryWriters instead") {
+        return computingMemoryWriters() != TRACK_NO_WRITERS;
+    }
+
+    /** Property: track latest writer to each register.
+     *
+     *  Controls whether each @ref writeRegister operation updates the list of writers.  The following values are allowed for
+     *  this property:
+     *
+     *  @li @c TRACK_NO_WRITERS: Does not update the register state's writers information. Using this setting will make that
+     *      data structure available for other purposes. The data structure can store a set of addresses independently for each
+     *      bit of each register.
+     *
+     *  @li @c TRACK_LATEST_WRITER:  Each write operation clobbers all previous write information for the affected
+     *      register. This information is stored per bit so that if instruction 1 writes to EAX and then instruction 2 writes
+     *      to AX then the high-order 16 bits of EAX will have {1} as the writer set while the low order bits will have {2} as
+     *      its writer set.
+     *
+     *  @li @c TRACK_ALL_WRITERS: Each write operation inserts the instruction address into the set of addresses stored for the
+     *      affected register (or register part) without removing any addresses that are already associated with that
+     *      register. While this works well for analysis over a small region of code (like a single function), it might cause
+     *      the writer sets to become very large when the same register state is used over large regions (like a whole
+     *      program).
+     *
+     * @{ */
+    void computingRegisterWriters(WritersMode m) { computingRegisterWriters_ = m; }
+    WritersMode computingRegisterWriters() const { return computingRegisterWriters_; }
     /** @} */
 
     // Used internally to control whether cur_insn should be omitted from the list of definers.

@@ -40,6 +40,18 @@ RiscOperators::toString(const BaseSemantics::SValuePtr &a)
     return ss.str();
 }
 
+std::string
+RiscOperators::toString(SgAsmFloatType *type) {
+    ASSERT_not_null(type);
+    if (type == SageBuilderAsm::buildIeee754Binary32()) {
+        return "float";
+    } else if (type == SageBuilderAsm::buildIeee754Binary64()) {
+        return "double";
+    } else {
+        return type->toString();
+    }
+}
+
 void
 RiscOperators::check_equal_widths(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
 {
@@ -176,6 +188,37 @@ RiscOperators::before(const std::string &operator_name, const BaseSemantics::SVa
 {
     linePrefix();
     SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(b) <<", " <<toString(c) <<")";
+    checkSubdomain();
+}
+
+void
+RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
+    linePrefix();
+    SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(at) <<")";
+    checkSubdomain();
+}
+
+void
+RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, SgAsmFloatType *at,
+                      const BaseSemantics::SValuePtr &b) {
+    linePrefix();
+    SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(at) <<", " <<toString(b) <<")";
+    checkSubdomain();
+}
+
+void
+RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, SgAsmFloatType *at,
+                      SgAsmFloatType *bt) {
+    linePrefix();
+    SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(at) <<", " <<toString(bt) <<")";
+    checkSubdomain();
+}
+
+void
+RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a,
+                      const BaseSemantics::SValuePtr &b, SgAsmFloatType *abt) {
+    linePrefix();
+    SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(b) <<", " <<toString(abt) <<")";
     checkSubdomain();
 }
 
@@ -326,6 +369,21 @@ RiscOperators::undefined_(size_t nbits)
 }
 
 BaseSemantics::SValuePtr
+RiscOperators::unspecified_(size_t nbits)
+{
+    before("unspecified_", nbits);
+    try {
+        return check_width(after(subdomain_->unspecified_(nbits)), nbits);
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
 RiscOperators::number_(size_t nbits, uint64_t value)
 {
     before("number_", nbits, value);
@@ -346,6 +404,21 @@ RiscOperators::boolean_(bool value)
     before("boolean_", value);
     try {
         return check_width(after(subdomain_->boolean_(value)), 1);
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::bottom_(size_t nbits)
+{
+    before("bottom_", nbits);
+    try {
+        return check_width(after(subdomain_->bottom_(nbits)), nbits);
     } catch (const BaseSemantics::Exception &e) {
         after(e);
         throw;
@@ -856,6 +929,216 @@ RiscOperators::interrupt(int a, int b)
     try {
         subdomain_->interrupt(a, b);
         after();
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpFromInteger(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
+    before("fpFromInteger", a, at);
+    try {
+        return check_width(after(subdomain_->fpFromInteger(a, at)), at->get_nBits());
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpToInteger(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at, const BaseSemantics::SValuePtr &b) {
+    before("fpToInteger", a, at, b);
+    try {
+        return check_width(after(subdomain_->fpToInteger(a, at, b)), b->get_width());
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpConvert(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at, SgAsmFloatType *bt) {
+    before("fpConvert", a, at, bt);
+    try {
+        return check_width(after(subdomain_->fpConvert(a, at, bt)), bt->get_nBits());
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpIsNan(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
+    before("fpIsNan", a, at);
+    try {
+        return check_width(after(subdomain_->fpIsNan(a, at)), 1);
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpIsDenormalized(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
+    before("fpIsDenormalized", a, at);
+    try {
+        return check_width(after(subdomain_->fpIsDenormalized(a, at)), 1);
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpIsZero(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
+    before("fpIsZero", a, at);
+    try {
+        return check_width(after(subdomain_->fpIsZero(a, at)), 1);
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpIsInfinity(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
+    before("fpIsInfinity", a, at);
+    try {
+        return check_width(after(subdomain_->fpIsInfinity(a, at)), 1);
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpSign(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
+    before("fpSign", a, at);
+    try {
+        return check_width(after(subdomain_->fpSign(a, at)), 1);
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpEffectiveExponent(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
+    before("fpEffectiveExponent", a, at);
+    try {
+        return check_width(after(subdomain_->fpEffectiveExponent(a, at)), at->exponentBits().size());
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpAdd(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *abt) {
+    before("fpAdd", a, b, abt);
+    try {
+        return check_width(after(subdomain_->fpAdd(a, b, abt)), abt->get_nBits());
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpSubtract(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *abt) {
+    before("fpSubtract", a, b, abt);
+    try {
+        return check_width(after(subdomain_->fpSubtract(a, b, abt)), abt->get_nBits());
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *abt) {
+    before("fpMultiply", a, b, abt);
+    try {
+        return check_width(after(subdomain_->fpMultiply(a, b, abt)), abt->get_nBits());
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *abt) {
+    before("fpDivide", a, b, abt);
+    try {
+        return check_width(after(subdomain_->fpDivide(a, b, abt)), abt->get_nBits());
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpSquareRoot(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
+    before("fpSquareRoot", a, at);
+    try {
+        return check_width(after(subdomain_->fpSquareRoot(a, at)), at->get_nBits());
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
+    before("fpRoundTowardZero", a, at);
+    try {
+        return check_width(after(subdomain_->fpRoundTowardZero(a, at)), at->get_nBits());
     } catch (const BaseSemantics::Exception &e) {
         after(e);
         throw;

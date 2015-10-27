@@ -1,11 +1,15 @@
 #include "sage3basic.h"
+
+#include "AsmUnparser_compat.h"
 #include "BaseSemantics2.h"
+#include "Diagnostics.h"
 #include "DispatcherM68k.h"
+#include "integerOps.h"
 #include "stringify.h"
 #include <boost/foreach.hpp>
 
-
 using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+using namespace rose::Diagnostics;
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -1194,178 +1198,381 @@ struct IP_fadd: P {
     }
 };
 
-struct IP_fsadd: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+struct IP_fp_add: P {
+    M68kInstructionKind kind;
+    IP_fp_add(M68kInstructionKind kind): kind(kind) {
+        ASSERT_require(m68k_fdadd == kind || m68k_fsadd == kind);
     }
-};
-
-struct IP_fdadd: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(isSgAsmDirectRegisterExpression(args[1]));
+        SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type());
+        SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
+        SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
+        SValuePtr a;
+        if (rre && rre->get_descriptor().get_major() == m68k_regclass_fpr) {
+            // F{D,S}ADD.D FPx, FPy
+            a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
+        } else {
+            // F{D,S}ADD.{B,W,L,S,D} ea, FPy
+            if (srcType) {
+                a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
+            } else {
+                a = ops->fpFromInteger(d->read(args[0], args[0]->get_nBits()), dstType);
+            }
+        }
+        SValuePtr b = d->read(args[1], args[1]->get_nBits());
+        SValuePtr result = ops->fpAdd(a, b, dstType);
+        d->write(args[1], result);
+        d->adjustFpConditionCodes(result, dstType);
+
+        ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(result, dstType));
+        ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(result, dstType));
+        ops->writeRegister(d->REG_EXC_OPERR,            // if a and b are opposite signed infinities
+                           ops->and_(ops->fpIsInfinity(a, dstType),
+                                     ops->and_(ops->fpIsInfinity(b, dstType),
+                                               ops->xor_(ops->fpSign(a, dstType), ops->fpSign(b, dstType)))));
+        ops->writeRegister(d->REG_EXC_OVFL,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-04]
+        ops->writeRegister(d->REG_EXC_UNFL,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-04]
+        ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-03]
+        d->accumulateFpExceptions();
     }
 };
 
 struct IP_fbeq: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->readRegister(d->REG_FPCC_Z),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
     }
 };
 
 struct IP_fbne: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->readRegister(d->REG_FPCC_Z),
+                     noChange, target);
+        ops->writeRegister(d->REG_PC, newPc);
     }
 };
 
 struct IP_fbgt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                              ops->or_(ops->readRegister(d->REG_FPCC_Z),
+                                       ops->readRegister(d->REG_FPCC_N))),
+                     noChange, target);
+        ops->writeRegister(d->REG_PC, newPc);
+        ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
+        d->accumulateFpExceptions();
     }
 };
 
 struct IP_fbngt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                              ops->or_(ops->readRegister(d->REG_FPCC_Z),
+                                       ops->readRegister(d->REG_FPCC_N))),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
+        ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
+        d->accumulateFpExceptions();
     }
 };
 
 struct IP_fbge: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_Z),
+                              ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                                                   ops->readRegister(d->REG_FPCC_N)))),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
+        ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
+        d->accumulateFpExceptions();
     }
 };
 
 struct IP_fbnge: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                              ops->and_(ops->readRegister(d->REG_FPCC_N),
+                                        ops->invert(ops->readRegister(d->REG_FPCC_Z)))),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
+        ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
+        d->accumulateFpExceptions();
     }
 };
 
 struct IP_fblt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->and_(ops->readRegister(d->REG_FPCC_N),
+                               ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                                                    ops->readRegister(d->REG_FPCC_Z)))),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
+        ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
+        d->accumulateFpExceptions();
     }
 };
 
 struct IP_fbnlt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                              ops->or_(ops->readRegister(d->REG_FPCC_Z),
+                                       ops->invert(ops->readRegister(d->REG_FPCC_N)))),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
+        ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
+        d->accumulateFpExceptions();
     }
 };
 
 struct IP_fble: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_Z),
+                              ops->and_(ops->readRegister(d->REG_FPCC_N),
+                                        ops->invert(ops->readRegister(d->REG_FPCC_NAN)))),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
+        ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
+        d->accumulateFpExceptions();
     }
 };
 
 struct IP_fbnle: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                              ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_N),
+                                                   ops->readRegister(d->REG_FPCC_Z)))),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
+        ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
+        d->accumulateFpExceptions();
     }
 };
 
 struct IP_fbgl: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                              ops->readRegister(d->REG_FPCC_Z)),
+                     noChange, target);
+        ops->writeRegister(d->REG_PC, newPc);
+        ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
+        d->accumulateFpExceptions();
     }
 };
 
 struct IP_fbngl: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                              ops->readRegister(d->REG_FPCC_Z)),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
+        ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
+        d->accumulateFpExceptions();
     }
 };
 
 struct IP_fbgle: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->readRegister(d->REG_FPCC_NAN),
+                     noChange, target);
+        ops->writeRegister(d->REG_PC, newPc);
+        ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
+        d->accumulateFpExceptions();
     }
 };
 
 struct IP_fbngle: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->readRegister(d->REG_FPCC_NAN),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
+        ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
+        d->accumulateFpExceptions();
     }
 };
 
 struct IP_fbogt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                              ops->or_(ops->readRegister(d->REG_FPCC_Z),
+                                       ops->readRegister(d->REG_FPCC_N))),
+                     noChange, target);
+        ops->writeRegister(d->REG_PC, newPc);
     }
 };
 
 struct IP_fbule: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                              ops->or_(ops->readRegister(d->REG_FPCC_Z),
+                                       ops->readRegister(d->REG_FPCC_N))),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
     }
 };
 
 struct IP_fboge: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_Z),
+                              ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                                                   ops->readRegister(d->REG_FPCC_N)))),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
     }
 };
 
 struct IP_fbult: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                              ops->and_(ops->readRegister(d->REG_FPCC_N),
+                                        ops->invert(ops->readRegister(d->REG_FPCC_Z)))),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
     }
 };
 
 struct IP_fbolt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->and_(ops->readRegister(d->REG_FPCC_N),
+                               ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                                                    ops->readRegister(d->REG_FPCC_Z)))),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
     }
 };
 
 struct IP_fbuge: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                              ops->or_(ops->readRegister(d->REG_FPCC_Z),
+                                       ops->invert(ops->readRegister(d->REG_FPCC_N)))),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
     }
 };
 
 struct IP_fbole: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_Z),
+                              ops->and_(ops->readRegister(d->REG_FPCC_N),
+                                        ops->invert(ops->readRegister(d->REG_FPCC_NAN)))),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
     }
 };
 
 struct IP_fbugt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                              ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_N),
+                                                   ops->readRegister(d->REG_FPCC_Z)))),
+                     target, noChange);
+        ops->writeRegister(d->REG_PC, newPc);
     }
 };
 
 struct IP_fbogl: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr target = d->read(args[0], args[0]->get_nBits());
+        SValuePtr noChange = ops->readRegister(d->REG_PC);
+        SValuePtr newPc = 
+            ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN),
+                              ops->readRegister(d->REG_FPCC_Z)),
+                     noChange, target);
+        ops->writeRegister(d->REG_PC, newPc);
     }
 };
 
@@ -1432,13 +1639,6 @@ struct IP_fbsne: P {
     }
 };
 
-struct IP_fcmp: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
-    }
-};
-
 struct IP_fdiv: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -1470,28 +1670,92 @@ struct IP_fint: P {
 struct IP_fintrz: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
+        ASSERT_not_null(dstType);
+        SValuePtr a;
+        if (SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type())) {
+            a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
+        } else {
+            a = ops->fpFromInteger(d->read(args[0], args[0]->get_nBits()), dstType);
+        }
+        SValuePtr result = ops->fpRoundTowardZero(a, dstType);
+        d->write(args[1], result);
+        d->adjustFpConditionCodes(result, dstType);
+        ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(result, dstType));
+        ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(result, dstType));
+        ops->writeRegister(d->REG_EXC_OPERR, ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_OVFL,  ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_UNFL,  ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-03]
+        d->accumulateFpExceptions();
     }
 };
 
-struct IP_fmove: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+struct IP_fp_move: P {
+    M68kInstructionKind kind;
+    IP_fp_move(M68kInstructionKind kind): kind(kind) {
+        ASSERT_require(m68k_fmove == kind || m68k_fdmove == kind || m68k_fsmove == kind);
     }
-};
-
-struct IP_fsmove: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
-    }
-};
+        SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type());
+        size_t srcNBits = args[0]->get_nBits();         // null if src is not a floating-point value
+        SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
+        SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
+        SValuePtr result, src;
+        if (rre && rre->get_descriptor().get_major() == m68k_regclass_fpr) {
+            if (dstType) {
+                // F{D,S}MOVE.{D,S} FPx, FPy
+                // FMOVE.{D,S} FPx, ea
+                src = d->read(args[0], srcNBits);
+                result = ops->fpConvert(src, srcType, dstType);
+            } else {
+                // FMOVE.{B,W,L} FPx, ea
+                ASSERT_not_null(srcType);
+                SValuePtr dflt = ops->undefined_(args[1]->get_nBits());
+                result = ops->fpToInteger(d->read(args[0], srcNBits), srcType, dflt);
+            }
+        } else {
+            ASSERT_require2(isSgAsmDirectRegisterExpression(args[1]), unparseInstructionWithAddress(insn));
+            if (!dstType)
+                dstType = SageBuilderAsm::buildIeee754Binary64();
+            if (srcType) {
+                // F{D,S}MOVE.{D,S} ea, FPy
+                // FMOVE.{D,S} ea, FPy
+                src = d->read(args[0], srcNBits);
+                result = ops->fpConvert(src, srcType, dstType);
+            } else {
+                // F{D,S}MOVE.{B,W,L} ea, FPy
+                // FMOVE.{B,W,L} ea, FPy
+                result = ops->fpFromInteger(d->read(args[0], srcNBits), dstType);
+            }
+        }
 
-struct IP_fdmove: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        d->write(args[1], result);
+
+        if (dstType) {                                  // destination is D or S
+            ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(result, dstType));
+            ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(result, dstType));
+            ops->writeRegister(d->REG_EXC_OPERR, ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_OVFL,  ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_UNFL,  ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1)); // FIXME[Robb P. Matzke 2015-08-03]
+        } else if (src) {                                             // destination is B, W, or L
+            ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(src, dstType));
+            ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(src, dstType));
+            ops->writeRegister(d->REG_EXC_OPERR, ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_OVFL,  ops->undefined_(1)); // FIXME[Robb P. Matzke 2015-08-05]
+            ops->writeRegister(d->REG_EXC_UNFL,  ops->undefined_(1)); // FIXME[Robb P. Matzke 2015-08-05]
+            ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
+            ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1)); // FIXME[Robb P. Matzke 2015-08-03]
+        }
+
+        d->accumulateFpExceptions();
     }
 };
 
@@ -1509,17 +1773,52 @@ struct IP_fmul: P {
     }
 };
 
-struct IP_fsmul: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+struct IP_fp_mul: P {
+    M68kInstructionKind kind;
+    IP_fp_mul(M68kInstructionKind kind): kind(kind) {
+        ASSERT_require(m68k_fdmul == kind || m68k_fsmul == kind);
     }
-};
-
-struct IP_fdmul: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(isSgAsmDirectRegisterExpression(args[1]));
+        SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type());
+        SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
+        SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
+        SValuePtr a;
+        if (rre && rre->get_descriptor().get_major() == m68k_regclass_fpr) {
+            // F{D,S}MUL.{D,S} FPx, FPy
+            a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
+        } else {
+            // F{D,S}MUL.{B,W,L,D,S} ea, FPy
+            if (srcType) {
+                a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
+            } else {
+                a = ops->fpFromInteger(d->read(args[0], args[0]->get_nBits()), dstType);
+            }
+        }
+        SValuePtr b = d->read(args[1], args[1]->get_nBits());
+        SValuePtr result = ops->fpMultiply(a, b, dstType);
+        d->write(args[1], result);
+        d->adjustFpConditionCodes(result, dstType);
+
+        // Temporary exponent (without bias) wide enough to prevent overflow
+        ASSERT_require(dstType->exponentBits().size() < 64); // leave room for a sign bit
+        SValuePtr maxExponent = ops->number_(64, IntegerOps::genMask<uint64_t>(dstType->exponentBits().size()-1));
+        SValuePtr minExponent = ops->invert(maxExponent); //  -(2^exponentSize)
+        SValuePtr wideExponent = ops->add(ops->signExtend(ops->fpEffectiveExponent(a, dstType), 64),
+                                          ops->signExtend(ops->fpEffectiveExponent(b, dstType), 64));
+
+        ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(result, dstType));
+        ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(result, dstType));
+        ops->writeRegister(d->REG_EXC_OPERR,
+                           ops->or_(ops->and_(ops->fpIsZero(a, dstType), ops->fpIsInfinity(b, dstType)),
+                                    ops->and_(ops->fpIsInfinity(a, dstType), ops->fpIsZero(b, dstType))));
+        ops->writeRegister(d->REG_EXC_OVFL,  ops->isSignedGreaterThanOrEqual(wideExponent, maxExponent));
+        ops->writeRegister(d->REG_EXC_UNFL,  ops->isSignedLessThanOrEqual(wideExponent, minExponent));
+        ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-03]
+        d->accumulateFpExceptions();
     }
 };
 
@@ -1579,17 +1878,47 @@ struct IP_fsub: P {
     }
 };
 
-struct IP_fssub: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+struct IP_fp_sub: P {
+    M68kInstructionKind kind;
+    IP_fp_sub(M68kInstructionKind kind): kind(kind) {
+        ASSERT_require(m68k_fdsub == kind || m68k_fssub == kind || m68k_fcmp == kind);
     }
-};
-
-struct IP_fdsub: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        ASSERT_require(isSgAsmDirectRegisterExpression(args[1]));
+        SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type());
+        SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
+        SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
+        SValuePtr a;
+        if (rre && rre->get_descriptor().get_major() == m68k_regclass_fpr) {
+            // F{D,S}SUB.D FPx, FPy
+            a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
+        } else {
+            // F{D,S}SUB.{B,W,L,S,D} ea, FPy
+            if (srcType) {
+                a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
+            } else {
+                a = ops->fpFromInteger(d->read(args[0], args[0]->get_nBits()), dstType);
+            }
+        }
+        SValuePtr b = d->read(args[1], args[1]->get_nBits());
+        SValuePtr result = ops->fpSubtract(b, a, dstType);
+        if (kind != m68k_fcmp)
+            d->write(args[1], result);
+        d->adjustFpConditionCodes(result, dstType);
+
+        ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(result, dstType));
+        ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(result, dstType));
+        ops->writeRegister(d->REG_EXC_OPERR,            // if a and b are like signed infinities
+                           ops->and_(ops->fpIsInfinity(a, dstType),
+                                     ops->and_(ops->fpIsInfinity(b, dstType),
+                                               ops->invert(ops->xor_(ops->fpSign(a, dstType), ops->fpSign(b, dstType))))));
+        ops->writeRegister(d->REG_EXC_OVFL,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-04]
+        ops->writeRegister(d->REG_EXC_UNFL,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-04]
+        ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-03]
+        d->accumulateFpExceptions();
     }
 };
 
@@ -2006,10 +2335,10 @@ struct IP_movem: P {
         // Get the memory address.  The register-to-memory mode might use a pre-decrementing register, and the
         // memory-to-register mode might use a post-incrementing register.  In either case we need to control when the
         // decrement or increment happens and how often.
-        SValuePtr addr;                                 // first memory address accessed
+        SValuePtr firstAddr;                                 // first memory address accessed
         RegisterDescriptor autoAdjust;                  // register that needs to be adjusted
         if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(mre->get_address())) {
-            addr = ops->readRegister(rre->get_descriptor());
+            firstAddr = ops->readRegister(rre->get_descriptor());
             if (rre->get_adjustment() < 0) {
                 ASSERT_require2(isRegToMem, "auto decrement is only valud for register-to-memory transfers");
                 autoAdjust = rre->get_descriptor();
@@ -2018,32 +2347,57 @@ struct IP_movem: P {
                 autoAdjust = rre->get_descriptor();
             }
         }
-        if (addr==NULL)
-            addr = d->effectiveAddress(mre, 32);
+        if (firstAddr==NULL)
+            firstAddr = d->effectiveAddress(mre, 32);
 
-        // Amount by which address needs to be adjusted at (before or after) each transfer
-        SValuePtr adj = ops->number_(32, isRegToMem ? -bytesPerTransfer : bytesPerTransfer);
-
-        // Transfer data between registers and memory
-        if (isRegToMem) {
-            // For M68020, M68030, M68040, and CPU32 the address register is decremented before writing to memory
-            if (autoAdjust.is_valid())
-                ops->writeRegister(autoAdjust, ops->add(addr, ops->number_(32, -nTransfers*bytesPerTransfer)));
-            BOOST_FOREACH (SgAsmRegisterReferenceExpression *rre, isSgAsmRegisterNames(regList)->get_registers()) {
-                SValuePtr value = ops->unsignedExtend(d->read(rre, 32), nBits); // truncate to memory size
-                addr = ops->add(addr, adj);             // pre-decrement address
-                ops->writeMemory(RegisterDescriptor(), addr, value, ops->boolean_(true));
+        if (isRegToMem) {                               // registers-to-memory operation
+            if (autoAdjust.is_valid()) {
+                // Copying registers to memory and decrementing the address each time. Registers are copied from A7-A0, D7-D0
+                // so that D0 is at the lowest (ending) address.  For M68020, M68030, M68040, and CPU32 the address register is
+                // decremented before writing it to memory.
+                ops->writeRegister(autoAdjust, ops->subtract(firstAddr, ops->number_(32, nTransfers*bytesPerTransfer)));
+                const SgAsmRegisterReferenceExpressionPtrList &regs = isSgAsmRegisterNames(regList)->get_registers();
+                for (size_t i=0; i<regs.size(); ++i) {
+                    SValuePtr value = ops->unsignedExtend(d->read(regs[regs.size()-(i+1)], 32), nBits);
+                    SValuePtr addr = ops->subtract(firstAddr, ops->number_(32, (i+1)*bytesPerTransfer));
+                    ops->writeMemory(RegisterDescriptor(), addr, value, ops->boolean_(true));
+                }
+            } else {
+                // Copying registers to memory at increasing addresses without incrementing the address register. Registers are
+                // copied from D0-D7, A0-A7 so that D0 is at the lowest (starting) address.
+                const SgAsmRegisterReferenceExpressionPtrList &regs = isSgAsmRegisterNames(regList)->get_registers();
+                for (size_t i=0; i<regs.size(); ++i) {
+                    SValuePtr value = ops->unsignedExtend(d->read(regs[i], 32), nBits);
+                    SValuePtr addr = ops->add(firstAddr, ops->number_(32, i*bytesPerTransfer));
+                    ops->writeMemory(RegisterDescriptor(), addr, value, ops->boolean_(true));
+                }
             }
-        } else {
-            BOOST_FOREACH (SgAsmRegisterReferenceExpression *rre, isSgAsmRegisterNames(args[1])->get_registers()) {
-                SValuePtr dflt = ops->undefined_(32);
-                SValuePtr value = ops->signExtend(ops->readMemory(RegisterDescriptor(), addr, dflt, ops->boolean_(true)), 32);
-                d->write(rre, value);
-                addr = ops->add(addr, adj);             // post-increment address
+        } else {                                        // memory-to-registers operation
+            if (autoAdjust.is_valid()) {
+                // Copying memory to registers and incrementing the address each time.  Registers are copied from D0-D7, A0-A7
+                // since D0 was stored at the lowest (starting) address.  The auto-adjusted register is clobbered after being
+                // read from memory.
+                const SgAsmRegisterReferenceExpressionPtrList &regs = isSgAsmRegisterNames(regList)->get_registers();
+                for (size_t i=0; i<regs.size(); ++i) {
+                    SValuePtr addr = ops->add(firstAddr, ops->number_(32, i*bytesPerTransfer));
+                    SValuePtr value = ops->signExtend(ops->readMemory(RegisterDescriptor(), addr, ops->undefined_(32),
+                                                                      ops->boolean_(true)),
+                                                      32);
+                    d->write(regs[i], value);
+                }
+                ops->writeRegister(autoAdjust, ops->add(firstAddr, ops->number_(32, nTransfers*bytesPerTransfer)));
+            } else {
+                // Copying memory to registers in increasing addresses from D0-D7, A0-A7 since D0 was stored at the lowest
+                // (starting) address. The address register is not auto-incremented.
+                const SgAsmRegisterReferenceExpressionPtrList &regs = isSgAsmRegisterNames(regList)->get_registers();
+                for (size_t i=0; i<regs.size(); ++i) {
+                    SValuePtr addr = ops->add(firstAddr, ops->number_(32, i*bytesPerTransfer));
+                    SValuePtr value = ops->signExtend(ops->readMemory(RegisterDescriptor(), addr, ops->undefined_(32),
+                                                                      ops->boolean_(true)),
+                                                      32);
+                    d->write(regs[i], value);
+                }
             }
-            // auto-adjusted register is clobbered after reading from memory
-            if (autoAdjust.is_valid())
-                ops->writeRegister(autoAdjust, addr);
         }
     }
 };
@@ -3120,8 +3474,8 @@ DispatcherM68k::iproc_init() {
     iproc_set(m68k_fsabs,       new M68k::IP_fsabs);
     iproc_set(m68k_fdabs,       new M68k::IP_fdabs);
     iproc_set(m68k_fadd,        new M68k::IP_fadd);
-    iproc_set(m68k_fsadd,       new M68k::IP_fsadd);
-    iproc_set(m68k_fdadd,       new M68k::IP_fdadd);
+    iproc_set(m68k_fsadd,       new M68k::IP_fp_add(m68k_fsadd));
+    iproc_set(m68k_fdadd,       new M68k::IP_fp_add(m68k_fdadd));
     iproc_set(m68k_fbeq,        new M68k::IP_fbeq);
     iproc_set(m68k_fbne,        new M68k::IP_fbne);
     iproc_set(m68k_fbgt,        new M68k::IP_fbgt);
@@ -3154,19 +3508,19 @@ DispatcherM68k::iproc_init() {
     iproc_set(m68k_fbst,        new M68k::IP_fbst);
     iproc_set(m68k_fbseq,       new M68k::IP_fbseq);
     iproc_set(m68k_fbsne,       new M68k::IP_fbsne);
-    iproc_set(m68k_fcmp,        new M68k::IP_fcmp);
+    iproc_set(m68k_fcmp,        new M68k::IP_fp_sub(m68k_fcmp));
     iproc_set(m68k_fdiv,        new M68k::IP_fdiv);
     iproc_set(m68k_fsdiv,       new M68k::IP_fsdiv);
     iproc_set(m68k_fddiv,       new M68k::IP_fddiv);
     iproc_set(m68k_fint,        new M68k::IP_fint);
     iproc_set(m68k_fintrz,      new M68k::IP_fintrz);
-    iproc_set(m68k_fmove,       new M68k::IP_fmove);
-    iproc_set(m68k_fsmove,      new M68k::IP_fsmove);
-    iproc_set(m68k_fdmove,      new M68k::IP_fdmove);
+    iproc_set(m68k_fmove,       new M68k::IP_fp_move(m68k_fmove));
+    iproc_set(m68k_fsmove,      new M68k::IP_fp_move(m68k_fsmove));
+    iproc_set(m68k_fdmove,      new M68k::IP_fp_move(m68k_fdmove));
     iproc_set(m68k_fmovem,      new M68k::IP_fmovem);
     iproc_set(m68k_fmul,        new M68k::IP_fmul);
-    iproc_set(m68k_fsmul,       new M68k::IP_fsmul);
-    iproc_set(m68k_fdmul,       new M68k::IP_fdmul);
+    iproc_set(m68k_fsmul,       new M68k::IP_fp_mul(m68k_fsmul));
+    iproc_set(m68k_fdmul,       new M68k::IP_fp_mul(m68k_fdmul));
     iproc_set(m68k_fneg,        new M68k::IP_fneg);
     iproc_set(m68k_fsneg,       new M68k::IP_fsneg);
     iproc_set(m68k_fdneg,       new M68k::IP_fdneg);
@@ -3175,8 +3529,8 @@ DispatcherM68k::iproc_init() {
     iproc_set(m68k_fssqrt,      new M68k::IP_fssqrt);
     iproc_set(m68k_fdsqrt,      new M68k::IP_fdsqrt);
     iproc_set(m68k_fsub,        new M68k::IP_fsub);
-    iproc_set(m68k_fssub,       new M68k::IP_fssub);
-    iproc_set(m68k_fdsub,       new M68k::IP_fdsub);
+    iproc_set(m68k_fssub,       new M68k::IP_fp_sub(m68k_fssub));
+    iproc_set(m68k_fdsub,       new M68k::IP_fp_sub(m68k_fdsub));
     iproc_set(m68k_ftst,        new M68k::IP_ftst);
     iproc_set(m68k_illegal,     new M68k::IP_illegal);
     iproc_set(m68k_jmp,         new M68k::IP_jmp);
@@ -3280,6 +3634,7 @@ DispatcherM68k::regcache_init() {
             ASSERT_require2(REG_FP[i].get_nbits()==64 || REG_FP[i].get_nbits()==80, "invalid floating point register size");
         }
         REG_PC = findRegister("pc", 32);
+        REG_CCR   = findRegister("ccr", 8);
         REG_CCR_C = findRegister("ccr_c", 1);
         REG_CCR_V = findRegister("ccr_v", 1);
         REG_CCR_Z = findRegister("ccr_z", 1);
@@ -3305,6 +3660,47 @@ DispatcherM68k::regcache_init() {
         REG_MACEXT1  = findRegister("accext1", 16, IS_OPTIONAL);
         REG_MACEXT2  = findRegister("accext2", 16, IS_OPTIONAL);
         REG_MACEXT3  = findRegister("accext3", 16, IS_OPTIONAL);
+
+        // Floating-point condition code bits
+        REG_FPCC_NAN = findRegister("fpcc_nan", 1);     // result is not a number
+        REG_FPCC_I   = findRegister("fpcc_i",   1);     // result is +/- infinity
+        REG_FPCC_Z   = findRegister("fpcc_z",   1);     // result is +/- zero
+        REG_FPCC_N   = findRegister("fpcc_n",   1);     // result is negative
+
+        // Floating-point status register exception bits
+        REG_EXC_BSUN  = findRegister("exc_bsun",  1);   // branch/set on unordered
+        REG_EXC_OPERR = findRegister("exc_operr", 1);   // operand error
+        REG_EXC_OVFL  = findRegister("exc_ovfl",  1);   // overflow
+        REG_EXC_UNFL  = findRegister("exc_unfl",  1);   // underflow
+        REG_EXC_DZ    = findRegister("exc_dz",    1);   // divide by zero
+        REG_EXC_INAN  = findRegister("exc_snan",  1);   // is not-a-number
+        REG_EXC_IDE   = findRegister("exc_inex1", 1);   // input is denormalized
+        REG_EXC_INEX  = findRegister("exc_inex2", 1);   // inexact result
+
+        // Floating-point status register accrued exception bits
+        REG_AEXC_IOP  = findRegister("aexc_iop",  1);
+        REG_AEXC_OVFL = findRegister("aexc_ovfl", 1);
+        REG_AEXC_UNFL = findRegister("aexc_unfl", 1);
+        REG_AEXC_DZ   = findRegister("aexc_dz",   1);
+        REG_AEXC_INEX = findRegister("aexc_inex", 1);
+    }
+}
+
+void
+DispatcherM68k::memory_init() {
+    if (BaseSemantics::StatePtr state = get_state()) {
+        if (BaseSemantics::MemoryStatePtr memory = state->get_memory_state()) {
+            switch (memory->get_byteOrder()) {
+                case ByteOrder::ORDER_LSB:
+                    mlog[WARN] <<"m68k memory state is using little-endian byte order\n";
+                    break;
+                case ByteOrder::ORDER_MSB:
+                    break;
+                case ByteOrder::ORDER_UNSPECIFIED:
+                    memory->set_byteOrder(ByteOrder::ORDER_MSB);
+                    break;
+            }
+        }
     }
 }
 
@@ -3413,6 +3809,36 @@ DispatcherM68k::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*
         }
     }
     return Dispatcher::read(e, value_nbits, addr_nbits);
+}
+
+void
+DispatcherM68k::accumulateFpExceptions() {
+    operators->writeRegister(REG_AEXC_OVFL,
+                             operators->or_(operators->readRegister(REG_AEXC_OVFL),
+                                            operators->readRegister(REG_EXC_OVFL)));
+    operators->writeRegister(REG_AEXC_DZ,
+                             operators->or_(operators->readRegister(REG_AEXC_DZ),
+                                            operators->readRegister(REG_EXC_DZ)));
+    operators->writeRegister(REG_AEXC_INEX,
+                             operators->or_(operators->readRegister(REG_AEXC_INEX),
+                                            operators->readRegister(REG_EXC_INEX)));
+    operators->writeRegister(REG_AEXC_IOP,
+                             operators->or_(operators->readRegister(REG_AEXC_IOP),
+                                            operators->or_(operators->readRegister(REG_EXC_BSUN),
+                                                           operators->or_(operators->readRegister(REG_EXC_INAN),
+                                                                          operators->readRegister(REG_EXC_OPERR)))));
+    operators->writeRegister(REG_AEXC_UNFL,
+                             operators->or_(operators->readRegister(REG_AEXC_UNFL),
+                                            operators->or_(operators->readRegister(REG_EXC_UNFL),
+                                                           operators->readRegister(REG_EXC_INEX))));
+}
+
+void
+DispatcherM68k::adjustFpConditionCodes(const SValuePtr &result, SgAsmFloatType *fpType) {
+    operators->writeRegister(REG_FPCC_NAN, operators->fpIsNan(result, fpType));
+    operators->writeRegister(REG_FPCC_I, operators->fpIsInfinity(result, fpType));
+    operators->writeRegister(REG_FPCC_Z, operators->fpIsZero(result, fpType));
+    operators->writeRegister(REG_FPCC_N, operators->fpSign(result, fpType));
 }
 
 } // namespace

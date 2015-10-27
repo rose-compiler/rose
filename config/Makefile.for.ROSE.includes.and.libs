@@ -101,6 +101,13 @@ if ROSE_HAVE_LIBYAML
   ROSE_YAML_LIBS_WITH_PATH = -L@ROSE_YAML_PREFIX@/lib -lyaml-cpp
 endif
 
+# GNU readline
+if ROSE_WITH_LIBREADLINE
+  ROSE_READLINE_INCLUDES = -I@LIBREADLINE_INCLUDE_PATH@
+  ROSE_READLINE_LIBS = @LIBREADLINE_LIBS@
+  ROSE_READLINE_LIBS_WITH_PATH = -L@LIBREADLINE_LIBRARY_PATH@ $(ROSE_READLINE_LIBS)
+endif
+
 # libmagic for identifying file types based on magic numbers
 if ROSE_HAVE_LIBMAGIC
   ROSE_LIBMAGIC_INCLUDES = -I@ROSE_LIBMAGIC_PREFIX@/include
@@ -201,8 +208,10 @@ if ROSE_WITH_ATERM
 endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-#  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal/libexperimentalRoseFortran.la
-   libroseExperimentalOpenFortranParserlibraries =
+#   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal/libexperimentalRoseFortran.la
+
+# DQ (9/26/2015): This is defined in src/Makefile.am
+#   libroseExperimentalOpenFortranParserlibraries =
 #   ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
 #   ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(top_builddir)/src/frontend/Experimental_OpenFortranParser_ROSE_Connection/aterm_traversal -lexperimentalRoseFortran
     ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal -lexperimentalOFP
@@ -394,6 +403,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      $(ROSE_PYTHON_INCLUDES) \
      $(ROSE_YICES_INCLUDES) \
      $(ROSE_YAML_INCLUDES) \
+     $(ROSE_READLINE_INCLUDES) \
      $(ROSE_LIBMAGIC_INCLUDES) \
      $(ROSE_DWARF_INCLUDES) \
      $(ROSE_WINE_INCLUDES) \
@@ -443,15 +453,21 @@ ROSE_INCLUDES = $(ROSE_BOOST_PREINCLUDE_PATH) $(ROSE_INCLUDES_WITHOUT_BOOST_ISYS
 ROSE_LIBS_WITH_PATH = $(ROSE_LIBS)
 
 # ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(LEXLIB) $(SQLITE_DATABASE_LIBS) $(LIB_QT) $(WAVE_LDFLAGS) $(WAVE_LIBRARIES) $(WAVE_LIBS) $(JAVA_JVM_LIB) $(RT_LIBS)
-ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm  $(JAVA_JVM_LINK) \
-  $(SQLITE_DATABASE_LIBS) $(QT_LIBS)  $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
+
+# MS 10/19/2015: added ROSE_BOOST_LIBS variable to share exact same
+# boost libs list in ROSE an in the ROSTTA Makefiles.
+ROSE_BOOST_LIBS=$(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
   $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) \
   $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
-  $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) $(SQLITE3_LDFLAGS)  $(RT_LIBS) \
+  $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)
+
+ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm  $(JAVA_JVM_LINK) \
+  $(SQLITE_DATABASE_LIBS) $(QT_LIBS) $(ROSE_BOOST_LIBS) \
+  $(SQLITE3_LDFLAGS)  $(RT_LIBS) \
   $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) $(ROSE_DWARF_LIBS_WITH_PATH) \
   $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) $(ROSE_SSL_LIBS) $(ROSE_ETHER_LIBS) \
   $(ROSE_INTEL_COMPILER_MATH_LIBS) $(ROSE_ATERM_LIBS) $(ROSE_EXPERIMENTAL_OFP_LIBS) \
-  $(ROSE_YAML_LIBS_WITH_PATH) $(ROSE_LIBMAGIC_LIBS_WITH_PATH)
+  $(ROSE_YAML_LIBS_WITH_PATH) $(ROSE_LIBMAGIC_LIBS_WITH_PATH) $(ROSE_READLINE_LIBS_WITH_PATH)
 
 # DQ (3/13/2009): Removed this from ROSE_LIBS because libtool warnings say it should be in AM_LDFLAGS
 # (this is because it has been moved from being linked statically to being linked dynamically).
@@ -510,3 +526,8 @@ RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
 	VALGRIND=$(VALGRIND) BINARY_SAMPLES=$(BINARY_SAMPLES)
 
 RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
+
+# DQ (9/27/2015): Added to support new use of AM_CPPFLAGS instead of INCLUDES 
+# (depreicated in automake and for which many warnings are generated).
+CPPFLAGS = $(AM_CPPFLAGS)
+

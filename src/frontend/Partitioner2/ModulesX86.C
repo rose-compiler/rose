@@ -235,16 +235,22 @@ splitThunkFunctions(Partitioner &partitioner) {
         if (!thunkIsPrefix && entryVertex->nOutEdges() != 1)
             continue;                                   // thunks have only one outgoing edge
 
+        // FIXME[Robb P. Matzke 2015-07-09]: The basic-block splitting part could be its own function
+        // FIXME[Robb P. Matzke 2015-07-09]: The function splitting part could be its own function
+
         // By now we've determined that there is indeed a thunk that must be split off from the big candidate function. We
         // can't just remove the thunk's basic block from the candidate function because the thunk is the candidate function's
         // entry block. Therefore detach the big function from the CFG to make room for new thunk and target functions.
         partitioner.detachFunction(candidate);
 
         // If the thunk is a proper prefix of the candidate function's entry block then split the entry block in two.
+        BasicBlock::Ptr origEntryBlock = entryBlock;
         ControlFlowGraph::ConstVertexIterator targetVertex = partitioner.cfg().vertices().end();
         if (thunkSize < entryBlock->nInstructions()) {
             targetVertex = partitioner.truncateBasicBlock(entryVertex, entryBlock->instructions()[thunkSize]);
-            entryBlock = targetVertex->value().bblock();
+            entryBlock = entryVertex->value().bblock();
+            ASSERT_require(entryBlock != origEntryBlock); // we need the original block for its analysis results below
+            ASSERT_require(entryBlock->nInstructions() < origEntryBlock->nInstructions());
         } else {
             targetVertex = entryVertex->outEdges().begin()->target();
         }
@@ -271,9 +277,25 @@ splitThunkFunctions(Partitioner &partitioner) {
             partitioner.attachFunction(newFunc);
             workList.push_back(newFunc);                // new function might have more thunks to split off yet.
 
-            // Discover the new function's entry block
-            BasicBlock::Ptr targetBlock = partitioner.discoverBasicBlock(newFunc->address());
-            partitioner.attachBasicBlock(targetBlock);
+            if (origEntryBlock != entryBlock) {         // original entry block was split
+                // Discover the new function's entry block. This new block is much like the original block since conceptually
+                // the thunk and this new block are really a single basic block.  However, discover thunk might not have been
+                // able to resolve things like opaque predicates and the new block might therefore be shorter.  Consider:
+                //     mov eax, global      ; part of thunk
+                //     jmp [eax]            ; part of thunk
+                //
+                //     cmp eax, global
+                //     jne foo              ; opaque predicate when thunk was attached to this block
+                //     nop                  ; originally part of this block, but now will start a new block
+                BasicBlock::Ptr targetBlock = partitioner.discoverBasicBlock(newFunc->address());
+                if (targetBlock->nInstructions() + entryBlock->nInstructions() == origEntryBlock->nInstructions()) {
+                    BOOST_FOREACH (const DataBlock::Ptr &db, origEntryBlock->dataBlocks())
+                        targetBlock->insertDataBlock(db);
+                    targetBlock->copyCache(origEntryBlock);
+                }
+
+                partitioner.attachBasicBlock(targetBlock);
+            }
         }
 
         // Fix edge types between the thunk and the target function

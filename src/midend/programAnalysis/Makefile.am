@@ -4,11 +4,16 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-if ROSE_USING_GCC_VERSION_LATER_4_6
+# AUTOMAKE_OPTIONS = subdir-objects
+
+# DQ (10/7/2015): We don't want this to depend on this variable which is about what 
+# backend compiler is used more than what compiler is used to compile ROSE itself.
+#if ROSE_USING_GCC_VERSION_LATER_4_6
+#SUBDIRS = staticSingleAssignment ssaUnfilteredCfg
+#else
+#SUBDIRS = staticSingleAssignment ssaUnfilteredCfg systemDependenceGraph
+#endif
 SUBDIRS = staticSingleAssignment ssaUnfilteredCfg
-else
-SUBDIRS = staticSingleAssignment ssaUnfilteredCfg systemDependenceGraph
-endif
 
 ###############################################################################
 # Subdirectory specifics
@@ -62,12 +67,12 @@ AM_CXXFLAGS=\
 	-D__LOCALSTL_H
 
 
-INCLUDES_OMP=\
+AM_CPPFLAGS_OMP=\
 	$(mpaDefUseAnalysis_includesOmp) \
 	$(mpaVariableRenaming_includesOmp)
 
 
-INCLUDES=\
+AM_CPPFLAGS=\
 	$(ROSE_INCLUDES) \
 	$(mpaCallGraphAnalysis_includes) \
 	$(mpaCFG_includes) \
@@ -83,7 +88,7 @@ INCLUDES=\
 	$(mpaValuePropagation_includes) \
 	$(mpaVariableRenaming_includes) \
 	$(mpaEditDistance_includes) \
-	$(INCLUDES_OMP)
+	$(AM_CPPFLAGS_OMP)
 
 
 BUILT_SOURCES=\
@@ -113,16 +118,16 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaVariableRenaming_la_sources) \
 	$(mpaEditDistance_la_sources)
 
-if ROSE_USING_GCC_VERSION_LATER_4_6
+# DQ (10/7/2015): We don't want this to depend on this variable which is about what 
+# backend compiler is used more than what compiler is used to compile ROSE itself.
+# if ROSE_USING_GCC_VERSION_LATER_4_6
+# libprogramAnalysis_la_LIBADD = staticSingleAssignment/libSSA.la ssaUnfilteredCfg/libSSA_UnfilteredCfg.la
+# else
+# libprogramAnalysis_la_LIBADD = staticSingleAssignment/libSSA.la ssaUnfilteredCfg/libSSA_UnfilteredCfg.la systemDependenceGraph/libSDG.la
+# endif
 libprogramAnalysis_la_LIBADD = \
 	staticSingleAssignment/libSSA.la \
 	ssaUnfilteredCfg/libSSA_UnfilteredCfg.la
-else
-libprogramAnalysis_la_LIBADD = \
-	staticSingleAssignment/libSSA.la \
-	ssaUnfilteredCfg/libSSA_UnfilteredCfg.la \
-	systemDependenceGraph/libSDG.la
-endif
 
 pkginclude_HEADERS=\
 	$(mpaCallGraphAnalysis_includeHeaders) \
@@ -171,7 +176,7 @@ EXTRA_DIST=\
 
 
 clean-local:
-	rm -rf Templates.DB ii_files ti_files cxx_templates
+#	rm -rf Templates.DB ii_files ti_files cxx_templates
 	$(mpaAnnotationLanguageParser_cleanLocal)
 	$(mpaCallGraphAnalysis_cleanLocal)
 	$(mpaCFG_cleanLocal)
@@ -190,7 +195,7 @@ clean-local:
 
 
 distclean-local:
-	rm -rf Templates.DB
+#	rm -rf Templates.DB
 	$(mpaCallGraphAnalysis_distCleanLocal)
 	$(mpaCFG_distCleanLocal)
 	$(mpaBitvectorDataflow_distCleanLocal)

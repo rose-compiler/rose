@@ -337,8 +337,8 @@ buildNopAnalyzer(SgAsmInterpretation *interp) {
  *
  *  A sequence of instructions has an effect if it does something other than setting the instruction pointer to a concrete value.
  *
- *  This is mostly a wrapper around the @ref BinaryAnalysis::NoOperation analysis. The @p allow_branch and @p
- *  relax_stack_semantics are no longer supported but perhaps will be added eventually to the NoOperation analysis. */
+ *  This is mostly a wrapper around the @ref rose::BinaryAnalysis::NoOperation "NoOperation" analysis. The @p allow_branch and
+ *  @p relax_stack_semantics are no longer supported but perhaps will be added eventually to the NoOperation analysis. */
 bool
 SgAsmInstruction::hasEffect(const std::vector<SgAsmInstruction*> &insns, bool allow_branch/*false*/,
                             bool relax_stack_semantics/*false*/)
@@ -363,8 +363,8 @@ SgAsmInstruction::hasEffect(const std::vector<SgAsmInstruction*> &insns, bool al
  *  use is to compute the machine state after each instruction and then look for pairs of states that are identical except for
  *  the instruction pointer.
  *
- *  This is mostly a wrapper around the @ref BinaryAnalysis::NoOperation analysis. The @p allow_branch and @p
- *  relax_stack_semantics are no longer supported but perhaps will be added eventually to the NoOperation analysis. */
+ *  This is mostly a wrapper around the @ref rose::BinaryAnalysis::NoOperation "NoOperation" analysis. The @p allow_branch and
+ *  @p relax_stack_semantics are no longer supported but perhaps will be added eventually to the NoOperation analysis. */
 std::vector<std::pair<size_t,size_t> >
 SgAsmInstruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
                                        bool relax_stack_semantics/*false*/)

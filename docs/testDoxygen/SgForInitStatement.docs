@@ -5,24 +5,24 @@
 /*!
 \class SgForInitStatement
 \brief This class represents the variable declaration or variable initialization withn a
-    for loop.
+for loop.
 
-    This class is only used in a SgForStatement; and represents "*" within 
-         "for(*; <condition>; <expression>)".
+This class is only used in a SgForStatement; and represents "*" within 
+"for(*; <condition>; <expression>)".
 
 \internal The design of the ROSE traversal mechanism requires that the child list at any
-    IR node be a list or a collection of data members (but not both, since it would not be
-    clear when the list ended and another list or data member begain).  this class is
-    required so that list of initializers in a for loop (an arbitary length list) can
-    be isolated from the other data members in the SgForStatement.
+IR node be a list or a collection of data members (but not both, since it would not be
+clear when the list ended and another list or data member begain).  this class is
+required so that list of initializers in a for loop (an arbitary length list) can
+be isolated from the other data members in the SgForStatement.
 
 \todo Evaluate if this should be derived from SgSupport, like other "list" based IR nodes.
 
 \todo Evaluate if we should even have this IR node.  If the SgVariableDeclaration were to
-    be fixed to really use the list of SgInitializedName objects where multiple variables
-    are declared in the same variable declaration then we might not need this (I think). 
-    And if it didn't exist it would make the use of the SgForStatement a little bit
-    simpler.
+be fixed to really use the list of SgInitializedName objects where multiple variables
+are declared in the same variable declaration then we might not need this (I think). 
+And if it didn't exist it would make the use of the SgForStatement a little bit
+simpler.
 
 \sa
 \ref SgForInitStatement_usage  "Example of using a SgForInitStatement object"
@@ -46,7 +46,7 @@
 \fn SgForInitStatement::SgForInitStatement ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgForInitStatement base class.
+This constructor builds the SgForInitStatement base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -59,14 +59,14 @@
 \fn SgForInitStatement::~SgForInitStatement()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgForInitStatement::isSgForInitStatement (SgNode *s)
 \brief Cast function (from derived class to SgForInitStatement pointer).
 
-   This functions returns a SgForInitStatement pointer for any input of a 
+This functions returns a SgForInitStatement pointer for any input of a 
 pointer to an object derived from a SgForInitStatement.
 
 \return Returns valid pointer to SgForInitStatement if input is derived from a SgLocatedNode.
@@ -76,7 +76,7 @@ pointer to an object derived from a SgForInitStatement.
 \fn SgForInitStatement::isSgForInitStatement (const SgNode *s)
 \brief Cast function (from derived class to SgForInitStatement pointer).
 
-   This functions returns a SgForInitStatement pointer for any input of a 
+This functions returns a SgForInitStatement pointer for any input of a 
 pointer to an object derived from a SgForInitStatement.
 
 \return Returns valid pointer to SgForInitStatement if input is derived from a SgLocatedNode.

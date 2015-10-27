@@ -13,11 +13,11 @@ SUBDIRS = \
 	C_to_Promela \
 	CertSecureCodeProject \
 	CloneDetection \
-   ConstructNameSimilarityAnalysis \
+	ConstructNameSimilarityAnalysis \
 	DataFaultTolerance \
 	DatalogAnalysis \
 	DocumentationGenerator \
-   EditDistanceMetric \
+	EditDistanceMetric \
 	FiniteStateModelChecker \
 	fuse \
 	graphColoring \
@@ -26,7 +26,7 @@ SUBDIRS = \
 	MacroRewrapper \
 	MapleDSL \
 	OpenMP_Analysis \
-   OpenMP_Checker \
+	OpenMP_Checker \
 	QtDesignerPlugins \
 	RoseQt \
 	arrayOptimization \
@@ -42,8 +42,9 @@ SUBDIRS = \
 	roseToLLVM \
 	RTC \
 	PowerAwareCompiler \
-   taintcheck \
+	taintcheck \
 	ManyCoreRuntime \
+	ManyCoreRuntime2 \
 	StencilManyCore \
 	Fortran_to_C \
 	mint \
@@ -55,7 +56,6 @@ SUBDIRS = \
 
 # DQ (3/16/2015): Removed for temporary teesting.
 #	BinFuncDetect 
-#  CodeThorn
 
 # DQ (3/16/2015): Test for a version of g++ that will allow use of C++11 for the AMR Shift Calculs DSL work.
 if ROSE_USING_GCC_VERSION_LATER_4_8
@@ -89,11 +89,6 @@ if !USING_XTENSA_BACKEND_COMPILER
 # DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
 # OpenMP_Translator
 
-# TOO (2/16/2011): Disabled for Thrifty compiler (gcc 3.4.4) due to errors during make check
-if !USING_GCC_3_4_4_BACKEND_COMPILER
-#  SUBDIRS += backstroke haskellport 
-   SUBDIRS += backstroke
-
 # DQ (9/2/2013): This is overly complex to process with internal debugging turned on in the new EDG support.
 if !ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
 
@@ -110,7 +105,6 @@ if !ROSE_USE_INSURE
 #   SUBDIRS += haskellport 
 endif
 endif
-endif
 
 endif
 
@@ -118,9 +112,8 @@ endif
 endif
 
 # DQ (7/21/2010): Removed RTED since it is a problem to compile with ROSE (projects/RTED/CppRuntimeSystem/test.cpp).
-# DQ (7/21/2010): Removed simulator since it is a problem to compile with ROSE (projects/simulator/emulator.C).
 if !ROSE_USING_ROSE_ANALYSIS
-   SUBDIRS += RTED simulator
+   SUBDIRS += RTED
 endif
 
 SUBDIRS += simulator2
@@ -174,8 +167,10 @@ if ROSE_WITH_ATERM
 endif
 
 # Pei-Hung (12/17/2014): adding PolyOpt only when POCC is available
+# Pei-Hung (09/24/2015): MultiLevelMemory requires POCC
 if ROSE_WITH_POCC
-   SUBDIRS += PolyOpt2
+   SUBDIRS += PolyOpt2 \
+	MultiLevelMemory
 endif
 
 # DQ (2/28/2010): We can't make this conditionsl this since then the Makefile.in will 
@@ -185,9 +180,8 @@ SUBDIRS += SatSolver
 # endif
 
 SUBDIRS += PolyhedralModel
-# SUBDIRS += demos-dlx-mdcg
-# SUBDIRS += rose-tooling
 SUBDIRS += TileK
+# SUBDIRS += rose-tooling
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
 #     StaticDynamicAnalysis/DynamicCPU

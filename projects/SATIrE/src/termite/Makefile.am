@@ -1,6 +1,6 @@
 ## Process this file with automake to create Makefile.in.
 
-INCLUDES = -I$(top_builddir)/src/satire \
+AM_CPPFLAGS = -I$(top_builddir)/src/satire \
 	   -I$(top_srcdir)/src/termite/satire \
 	   -I$(top_builddir)/src/termite/satire \
 	   -I$(top_srcdir)/src/analyzer/annotation/satire \
@@ -34,7 +34,7 @@ nobase_include_HEADERS = \
 	satire/RoseEnums.h
 
 if WITH_PAG
-  INCLUDES += -I$(PAG_INCLUDE_DIR)/pag \
+  AM_CPPFLAGS += -I$(PAG_INCLUDE_DIR)/pag \
               -I$(PAG_INCLUDE_DIR)/pag/analyzer
 endif
 
@@ -69,7 +69,7 @@ BUILT_SOURCES =	#dfiparser.tab.c++ dfiparser.tab.h++
 
 if WITH_SWI_PROLOG # ---------------------------------------------------
 
-INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR) 
+AM_CPPFLAGS += -I$(SWI_PROLOG_INCLUDE_DIR) 
 ROSELDFLAGS += $(SWI_PROLOG_LIBS) $(SWI_PROLOG_LDADD)
 nobase_dist_data_DATA = \
   termite/astproperties.pl  termite/loops.pl \

@@ -2,9 +2,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 if ROSE_MPI
-INCLUDES = $(ROSE_INCLUDES) -DROSE_MPI -I$(compass_prereqs_dir) 
+AM_CPPFLAGS = $(ROSE_INCLUDES) -DROSE_MPI -I$(compass_prereqs_dir) 
 else
-INCLUDES = $(ROSE_INCLUDES) -I$(compass_prereqs_dir)
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(compass_prereqs_dir)
 endif
 
 lib_LTLIBRARIES = libCompass.la

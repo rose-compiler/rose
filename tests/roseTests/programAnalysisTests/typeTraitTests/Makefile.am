@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 bindir = ${exec_prefix}/bin/testsuite
 bin_PROGRAMS  = typeTraitExerciseWithRetCode typeTraitExerciseWithoutRetCode

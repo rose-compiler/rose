@@ -54,10 +54,9 @@ NameQuery::queryNameArgumentNames (SgNode * astNode)
         }
 #if DEBUG_NAMEQUERY
       printf ("\nHere is a function declaration :Line = %d Columns = %d \n",
-              ROSE::getLineNumber (isSgLocatedNode (astNode)),
-              ROSE::getColumnNumber (isSgLocatedNode (astNode)));
-      cout << "The filename is:" << ROSE::
-        getFileName (isSgLocatedNode (astNode)) << endl;
+              rose::getLineNumber (isSgLocatedNode (astNode)),
+              rose::getColumnNumber (isSgLocatedNode (astNode)));
+      cout << "The filename is:" << rose::getFileName (isSgLocatedNode (astNode)) << endl;
       cout << "The count of arguments is: " << countArguments << endl;
 #endif
     }
@@ -253,10 +252,10 @@ NameQuery::queryNameVariableTypeNames (SgNode * astNode)
 
 #if DEBUG_NAMEQUERY
         printf ("\nIn filename: %s ",
-                ROSE::getFileName (isSgLocatedNode (astNode)));
+                rose::getFileName (isSgLocatedNode (astNode)));
         printf ("\nHere is a variable :Line = %d Columns = %d \n",
-                ROSE::getLineNumber (isSgLocatedNode (astNode)),
-                ROSE::getColumnNumber (isSgLocatedNode (astNode)));
+                rose::getLineNumber (isSgLocatedNode (astNode)),
+                rose::getColumnNumber (isSgLocatedNode (astNode)));
         //cout << "The typename of the variable is: " << typeName << endl;
 #endif
 
@@ -292,10 +291,10 @@ NameQuery::queryNameVariableTypeNames (SgNode * astNode)
 
 #if DEBUG_NAMEQUERY
       printf ("\nIn filename: %s ",
-              ROSE::getFileName (isSgLocatedNode (astNode)));
+              rose::getFileName (isSgLocatedNode (astNode)));
       printf ("\nHere is a variable :Line = %d Columns = %d \n",
-              ROSE::getLineNumber (isSgLocatedNode (astNode)),
-              ROSE::getColumnNumber (isSgLocatedNode (astNode)));
+              rose::getLineNumber (isSgLocatedNode (astNode)),
+              rose::getColumnNumber (isSgLocatedNode (astNode)));
       //cout << "The typename of the variable is: " << typeName << endl;
 #endif
 
@@ -369,8 +368,8 @@ NameQuery::queryNameVariableNames (SgNode * astNode)
          SgInitializedName* initializedName = variableSymbol->get_declaration();
          ROSE_ASSERT (initializedName != NULL);
          SgName variableName = initializedName->get_name();
-         printf("\nIn filename: %s ", ROSE::getFileName(isSgLocatedNode(astNode)));
-         printf ("\nHere is a variable :Line = %d Columns = %d \n", ROSE:: getLineNumber (isSgLocatedNode(astNode) ), ROSE:: getColumnNumber ( isSgLocatedNode(astNode) ));
+         printf("\nIn filename: %s ", rose::getFileName(isSgLocatedNode(astNode)));
+         printf ("\nHere is a variable :Line = %d Columns = %d \n", rose:: getLineNumber (isSgLocatedNode(astNode) ), rose:: getColumnNumber ( isSgLocatedNode(astNode) ));
          cout << "The typename of the variable is: " << typeName << endl;
          cout << "The name of the variable is: " << variableName.str() << endl;
          // copy the string to avoid corruption of the AST's version of the string
@@ -391,10 +390,10 @@ NameQuery::queryNameVariableNames (SgNode * astNode)
 
 #if DEBUG_NAMEQUERY
         printf ("\nIn filename: %s ",
-                ROSE::getFileName (isSgLocatedNode (astNode)));
+                rose::getFileName (isSgLocatedNode (astNode)));
         printf ("\nHere is a variable :Line = %d Columns = %d \n",
-                ROSE::getLineNumber (isSgLocatedNode (astNode)),
-                ROSE::getColumnNumber (isSgLocatedNode (astNode)));
+                rose::getLineNumber (isSgLocatedNode (astNode)),
+                rose::getColumnNumber (isSgLocatedNode (astNode)));
         //cout << "The typename of the variable is: " << typeName << endl;
 #endif
 
@@ -689,10 +688,10 @@ NameQuery::queryVariableNamesWithTypeName (SgNode * astNode, string matchingName
 
 #if DEBUG_NAMEQUERY
         printf ("\nIn filename: %s ",
-                ROSE::getFileName (isSgLocatedNode (astNode)));
+                rose::getFileName (isSgLocatedNode (astNode)));
         printf ("\nHere is a variable :Line = %d Columns = %d \n",
-                ROSE::getLineNumber (isSgLocatedNode (astNode)),
-                ROSE::getColumnNumber (isSgLocatedNode (astNode)));
+                rose::getLineNumber (isSgLocatedNode (astNode)),
+                rose::getColumnNumber (isSgLocatedNode (astNode)));
         //cout << "The typename of the variable is: " << typeName << endl;
 #endif
         SgType *typeNode;
@@ -1030,14 +1029,14 @@ NameQuery::queryNameTypeName (SgNode * astNode)
       }
 
   // Fix for purify problem report
-  // typeName = ROSE::stringDuplicate(typeName);
+  // typeName = rose::stringDuplicate(typeName);
 
   if (typeName.size () > 0)
     returnList.push_back (typeName);
   //ROSE_ASSERT(typeName.c_str() != NULL);
   // return typeName;
   return returnList;
-//return ROSE::stringDuplicate(typeName.c_str());
+//return rose::stringDuplicate(typeName.c_str());
 }
 
 

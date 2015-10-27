@@ -35,10 +35,10 @@ namespace Partitioner2 {
  *  function->attr(CFG_FILE_NAME, fileName);
  * @endcode
  *
- *  And later, retrieve the file name:
+ *  And later, retrieve the file name, or a default if no such attribute was stored.
  *
  * @code
- *  std::string fileName = function.attr<std::string>(CFG_FILE_NAME);
+ *  std::string fileName = function.attr<std::string>(CFG_FILE_NAME).orElse("/dev/null");
  * @endcode */
 namespace Attribute {
 
@@ -98,7 +98,7 @@ public:
      * @code
      *  std::string value = function->attr<std::string>(MyAttr).orElse("default string");
      * @endcode */
-    template<typename T> Sawyer::Optional<T> attr(Id id) const {
+    template<typename T> const Sawyer::Optional<T> attr(Id id) const {
         boost::any v = values_.getOptional(id).orDefault();
         return v.empty() ? Sawyer::Nothing() : Sawyer::Optional<T>(boost::any_cast<T>(v));
     }
@@ -108,6 +108,13 @@ public:
      *  Stores the specified value for the specified attribute, overwriting any previously stored value for the specified key. */
     template<typename T> void attr(Id id, const T &value) {
         values_.insert(id, boost::any(value));
+    }
+
+    /** Erase an attribute.
+     *
+     *  Causes the attribute to not be stored anymore. */
+    void attrErase(Id id) {
+        values_.erase(id);
     }
 };
 

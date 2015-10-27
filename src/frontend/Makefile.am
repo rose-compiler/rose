@@ -44,6 +44,10 @@ if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += PythonFrontend
 endif
 
+if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
+   SUBDIRS += MatlabFrontend
+endif
+
 SUBDIRS += DLX
 
 # Until we revisit this this, we want to include specific documentation that has been put into this directory.

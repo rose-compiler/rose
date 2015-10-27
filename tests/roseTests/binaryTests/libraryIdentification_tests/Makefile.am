@@ -12,7 +12,7 @@ if USE_BINARY_ANALYSIS_TESTS
 # This work requires the SQLite support...
 if ROSE_USE_SQLITE_DATABASE
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
 
 noinst_PROGRAMS += libraryIdentificationTest
 libraryIdentificationTest_SOURCES = libraryIdentificationTest.C

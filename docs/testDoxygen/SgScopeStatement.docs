@@ -6,7 +6,7 @@
 \class SgScopeStatement
 \brief This class represents the concept of a scope in C++ (e.g. global scope, fuction scope, etc.).
 
-    Scopes are an important aspect of language design. They allow
+Scopes are an important aspect of language design. They allow
 declarations to have a local context and so promote good programming style.
 Scope statments in C++ include a number of different kinds of statements;
 the SgScopeStatement is a base class for these. Each scope statement contains
@@ -16,21 +16,21 @@ symbol table and an interface to accessing it.
 \internal This is a base class for scope statements.
 
 \todo Where current derived IR nodes from SgScopeStatement contain SgBasicBlock objects,
-    we should consider having them contain SgStatement objects instead of SgBasicBlock.
-    This would avoid current normalizations which are cute, but perhaps unwelcome.  We 
-    need to discuss and rule on this detail. 
-    An alternative would be to let there be a SgBasicBlock and mark it as
-    compiler-generated if it does not appear in the original source code.  then the
-    unparser (code generator) could be made to avoid output of the SgBasicblock (and
-    enforce that the number of statements in the block is not greater than one).
-    Effected IR nodes include:
+we should consider having them contain SgStatement objects instead of SgBasicBlock.
+This would avoid current normalizations which are cute, but perhaps unwelcome.  We 
+need to discuss and rule on this detail. 
+An alternative would be to let there be a SgBasicBlock and mark it as
+compiler-generated if it does not appear in the original source code.  then the
+unparser (code generator) could be made to avoid output of the SgBasicblock (and
+enforce that the number of statements in the block is not greater than one).
+Effected IR nodes include:
      - SgCatchOptionStmt (should contain SgStatement)
      - SgDoWhileStmt (should contain SgStatement)
      - SgForStatement (should contain SgStatement)
      - SgIfStmt (should contain true and false SgStatement)
      - SgSwitchStatement (should contain SgStatement)
      - SgWhileStmt (should contain SgStatement) \n
-   these are currently correct:
+these are currently correct:
      - SgFunctionDefinition (should contain a SgBasicBlock)
      - SgGlobal (constains a list of declarations (SgDeclarationStatement objects))
      - SgNamespaceDefinitionStatement (constains a list of declarations (SgDeclarationStatement objects))
@@ -39,9 +39,9 @@ symbol table and an interface to accessing it.
 \note Note about "conditions" used in loop constructs. "Conditionals" are either:
          - an expression, or
          - a declaration with initializer \n
-      Note also that a SgConditional is different (a ternary operator (<test expr>) ? <true part> : <false part>;)
-      There are a few errors in ROSE, locations in the IR where statements are used instead of expressions and
-      expression used instead of statements. (reference Appendix A.6)
+Note also that a SgConditional is different (a ternary operator (<test expr>) ? <true part> : <false part>;)
+There are a few errors in ROSE, locations in the IR where statements are used instead of expressions and
+expression used instead of statements. (reference Appendix A.6)
 
 \note The following should have the "conditional" concept:
         - (SgIfStmt) if ( condition ) statement     // Currently correct
@@ -79,7 +79,7 @@ It is not simple and leverages STL and provides more features.
 \fn SgScopeStatement::SgScopeStatement ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgScopeStatement base class.
+This constructor builds the SgScopeStatement base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -92,14 +92,14 @@ It is not simple and leverages STL and provides more features.
 \fn SgScopeStatement::~SgScopeStatement()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgScopeStatement::isSgScopeStatement (SgNode *s)
 \brief Cast function (from derived class to SgScopeStatement pointer).
 
-   This functions returns a SgScopeStatement pointer for any input of a 
+This functions returns a SgScopeStatement pointer for any input of a 
 pointer to an object derived from a SgScopeStatement.
 
 \return Returns valid pointer to SgScopeStatement if input is derived from a SgLocatedNode.
@@ -109,7 +109,7 @@ pointer to an object derived from a SgScopeStatement.
 \fn SgScopeStatement::isSgScopeStatement (const SgNode *s)
 \brief Cast function (from derived class to SgScopeStatement pointer).
 
-   This functions returns a SgScopeStatement pointer for any input of a 
+This functions returns a SgScopeStatement pointer for any input of a 
 pointer to an object derived from a SgScopeStatement.
 
 \return Returns valid pointer to SgScopeStatement if input is derived from a SgLocatedNode.
@@ -133,7 +133,7 @@ pointer to an object derived from a SgScopeStatement.
 \fn SgScopeStatement::get_qualified_name() const
 \brief Returns SgName (a string) representing the name of the current scope.
 
-   See discussion of mangled names in the documentation.
+See discussion of mangled names in the documentation.
 
 \return Returns SgName (a string).
 */
@@ -170,7 +170,7 @@ pointer to an object derived from a SgScopeStatement.
 /*!
 \fn SgScopeStatement::containsOnlyDeclarations()
 \brief boolean member function to distinquish if getStatementList() or getDeclarationList() is
-    appropriate for the SgScopeStatment IR node.
+appropriate for the SgScopeStatment IR node.
 
 \return bool.
 */
@@ -178,9 +178,9 @@ pointer to an object derived from a SgScopeStatement.
 /*!
 \fn SgScopeStatement::getDeclarationList()
 \brief Gets reference to internal STL list of pointers to SgDeclarationStatement objects
-    (only defined for scopes containing declarations, see bool containsOnlyDeclarations()).
+(only defined for scopes containing declarations, see bool containsOnlyDeclarations()).
 
-   This function is useful for SgScopeStatement objects that contain declarations, and is
+This function is useful for SgScopeStatement objects that contain declarations, and is
 not defined (returns an error) if called on a SgClassDefinition,
 SgTemplateInstantiationDefn, SgGlobal, SgNamespaceDefinitionStatement.
 To test if a scope contains only declarations use "bool containsOnlyDeclarations()".
@@ -194,9 +194,9 @@ the AST.
 /*!
 \fn SgScopeStatement::getStatementList()
 \brief Gets reference to internal STL list of pointers to SgStatement objects
-    (only defined for scopes containing declarations, see bool containsOnlyDeclarations()).
+(only defined for scopes containing declarations, see bool containsOnlyDeclarations()).
 
-   This function is useful for SgScopeStatement objects that contain non-declarations
+This function is useful for SgScopeStatement objects that contain non-declarations
 (lists of SgStatement instead of lists of SgDeclarationStatement IR nodes).
 Because this function returns a reference to the list (instead of a list of pointers
 to the declarations or statements) any modification of the list is a modification of
@@ -208,9 +208,9 @@ the AST.
 /*!
 \fn SgScopeStatement::generateStatementList()
 \brief Builds list of pointers to SgStatement objects (useful for all SgScopeStatement objects,
-    independent of whether they contain lists of SgDeclarationStatements or lists of SgStatements).
+independent of whether they contain lists of SgDeclarationStatements or lists of SgStatements).
 
-   This function is useful for any SgScopeStatement object, but since it returns
+This function is useful for any SgScopeStatement object, but since it returns
 by value any modification of the list is not reflected in the AST.
 
 \todo This runtion should return a const value so that it would be more clear that

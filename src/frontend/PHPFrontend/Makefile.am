@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # This will cause the dynamic library to be built (as librosePHPFrontend.so)
 noinst_LTLIBRARIES = librosePHPFrontend.la

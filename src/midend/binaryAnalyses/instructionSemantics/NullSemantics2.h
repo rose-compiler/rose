@@ -1,7 +1,6 @@
 #ifndef Rose_NullSemantics2_H
 #define Rose_NullSemantics2_H
 
-#include "x86InstructionSemantics.h"
 #include "BaseSemantics2.h"
 
 namespace rose {
@@ -56,7 +55,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
+    virtual BaseSemantics::SValuePtr bottom_(size_t nBits) const ROSE_OVERRIDE {
+        return instance(nBits);
+    }
     virtual BaseSemantics::SValuePtr undefined_(size_t nBits) const ROSE_OVERRIDE {
+        return instance(nBits);
+    }
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nBits) const ROSE_OVERRIDE {
         return instance(nBits);
     }
     virtual BaseSemantics::SValuePtr number_(size_t nBits, uint64_t number) const ROSE_OVERRIDE {
@@ -67,6 +72,10 @@ public:
         if (new_width!=0 && new_width!=retval->get_width())
             retval->set_width(new_width);
         return retval;
+    }
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
+                                                                           SMTSolver*) const ROSE_OVERRIDE {
+        return Sawyer::Nothing();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,8 +91,19 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Implementations of functions inherited
 public:
-    virtual bool is_number() const { return false; }
-    virtual uint64_t get_number() const { ASSERT_not_reachable("not a number"); uint64_t retval; return retval;}
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
+
+    virtual bool is_number() const ROSE_OVERRIDE {
+        return false;
+    }
+
+    virtual uint64_t get_number() const ROSE_OVERRIDE {
+        ASSERT_not_reachable("not a number");
+        uint64_t retval;
+        return retval;
+    }
 
     virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE {
         return true;
@@ -134,6 +154,10 @@ public:
         RegisterStatePtr retval = boost::dynamic_pointer_cast<RegisterState>(from);
         ASSERT_not_null(retval);
         return retval;
+    }
+
+    virtual bool merge(const BaseSemantics::RegisterStatePtr &other_, BaseSemantics::RiscOperators*) {
+        return false;
     }
 
     virtual void clear() ROSE_OVERRIDE {}
@@ -199,6 +223,8 @@ public:
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {}
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE {}
+    virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
+                       BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE { return false; }
 };
 
 

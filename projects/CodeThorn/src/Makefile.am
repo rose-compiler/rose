@@ -1,35 +1,96 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-#SUBDIRS = addressTakenAnalysis
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
+bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo varwatch
+noinst_PROGRAMS = addressTakenAnalysis matcher_demo varwatch
 
-bin_PROGRAMS = codethorn matcher_demo varwatch woodpecker analyterix
-
-#ast_demo matcher_demo iterator_test
 CLEANFILES = 
 
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_PREFIX)/lib
-
-noinst_PROGRAMS = addressTakenAnalysis 
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/Codethorn/src -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include
 
 MYDATE = $(shell date +%Y_%m_%d)
 
-INCLUDES = $(ROSE_INCLUDES) -I$(top_builddir) -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include
+lib_LTLIBRARIES = libspray.la
+libspray_la_LDFLAGS= -no-undefined
+libspray_la_CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+libspray_la_SOURCES=\
+ AliasAnalysis.h \
+ AnalysisAbstractionLayer.h \
+ AnalysisAstAnnotator.h \
+ AstTerm.h \
+ AType.h \
+ CFAnalysis.h \
+ DFAnalysisBase.h \
+ DFTransferFunctions.h \
+ IntervalAnalysis.h \
+ IntervalAstAttribute.h \
+ IntervalAstAttributeInterface.h \
+ IntervalPropertyState.h \
+ IntervalPropertyStateFactory.h \
+ IntervalTransferFunctions.h \
+ LVAnalysis.h \
+ LVAstAttribute.h \
+ LVAstAttributeInterface.h \
+ LVLattice.h \
+ LVTransferFunctions.h \
+ LanguageRestrictor.h \
+ Miscellaneous2.h \
+ NumberIntervalLattice.h \
+ PASolver1.h \
+ PointerAnalysisInterface.h \
+ RDAnalysis.h \
+ RDAstAttribute.h \
+ RDTransferFunctions.h \
+ WorkListSeq.h \
+ AnalysisAstAnnotator.C \
+ AliasAnalysis.C \
+ AstTerm.C \
+ AType.C \
+ CFAnalysis.C \
+ CppExprEvaluator.C \
+ DFAnalysisBase.C \
+ DFTransferFunctions.C \
+ Flow.C \
+ IntervalAnalysis.C \
+ IntervalAstAttribute.C \
+ IntervalPropertyStateFactory.C \
+ IntervalPropertyState.C \
+ IntervalTransferFunctions.C \
+ IntervalAstAttributeInterface.C \
+ LanguageRestrictor.C \
+ Lattice.C \
+ LVAnalysis.C \
+ LVAstAttribute.C \
+ LVAstAttributeInterface.C \
+ LVLattice.C \
+ LVTransferFunctions.C \
+ Miscellaneous2.C \
+ NumberIntervalLattice.C \
+ PASolver1.C \
+ PointerAnalysisInterface.C \
+ PropertyState.C \
+ RDAnalysis.C \
+ RDAstAttribute.C \
+ RDLattice.C \
+ RDTransferFunctions.C \
+ VariableIdUtils.C \
+ AnalysisAbstractionLayer.C \
+ ProgramAbstractionLayer.C \
+ addressTakenAnalysis.C \
+ defUseQuery.C
 
-# in V1.2 there are no KNOBS
-KNOBS = 
-
+codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 # this line create speparately named object files
-codethorn_CXXFLAGS = $(KNOBS) -fopenmp -Wall -O3 -march=native -ftree-vectorize
-
+codethorn_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
 codethorn_DEPENDENCIES=libspray.la
-codethorn_LDADD = -lrose -lspot -lbdd -lspray
+#codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lspray
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd 
+codethorn_LDFLAGS = -L$(SPOT_PREFIX)/lib
+
 codethorn_SOURCES = \
-  AType.C                          \
-  AType.h                          \
   Analyzer.C                       \
   Analyzer.h                       \
   CollectionOperators.h            \
@@ -80,6 +141,11 @@ codethorn_SOURCES = \
   ArrayElementAccessData.C \
   Specialization.h \
   Specialization.C \
+  PragmaHandler.h \
+  PragmaHandler.C \
+  FIConstAnalysis.h FIConstAnalysis.C \
+  CPAstAttribute.h CPAstAttribute.C \
+  ReachabilityAnalysis.h ReachabilityAnalysis.C \
   codethorn.h \
   codethorn.C
 
@@ -89,7 +155,8 @@ addressTakenAnalysis_SOURCES = \
   CommandLineOptions.C \
   addressTakenAnalysisDriver.C
 
-addressTakenAnalysis_LDADD = -lrose -lspray
+addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+addressTakenAnalysis_CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 addressTakenAnalysis_DEPENDENCIES=libspray.la
 
 # workaround to intentionally fool policy
@@ -181,11 +248,6 @@ faketarget:
 	rtests/vector1/rose_rev_rtest4.cpppure2.C
 	rtests/vector1/rtest1.C
 	rtests/vector1/rtest2.C
-	runtime/isstacktest.C
-	runtime/runtime.C
-	runtime/runtime.h
-	runtime/runtime_macros.h
-	runtime/testruntimesystem.C
 	spotconnection/spotdriver.C
 	spotconnection/spotdriver.h
 	testAbstractValue.C
@@ -238,6 +300,24 @@ faketarget:
 	tests/rers/Problem1402_opt.c
 	tests/rers/Problem1403_opt.c
 	tests/varid-test1.C
+	tests/arraytest3.C
+	tests/basicblocks1.C
+	tests/blocks1.C
+	tests/interval-test1.C
+	tests/interval-test2.C
+	tests/polyopt/jacobi-1d-imper.h
+	tests/polyopt/jacobi-1d-imper_annot.c
+	tests/polyopt/jacobi-2d-imper.h
+	tests/polyopt/jacobi-2d-imper_orig_tileonly_size16_tile_8_2_1.c
+	tests/polyopt/polybench.h
+	SourceCodeFormat.C
+	SourceCodeFormat.h
+	tests/arraytest4.C
+	tests/arraytest5.C
+	tests/interval-test3.C
+	tests/rers/threadificationtest1-output.C
+	tests/rers/threadificationtest1.C
+
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
@@ -246,14 +326,15 @@ REGRESSION_DATA_DIR=regressiondata
 
 # MS: matcher_demo
 matcher_demo_DEPENDENCIES=libspray.la
-matcher_demo_LDADD = -lrose -lspray
+matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+matcher_demo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 matcher_demo_SOURCES = Timer.cpp matcher_demo.C
 BUILT_SOURCES = 
 AM_YFLAGS =
 AM_LFLAGS =
 
 varwatch_DEPENDENCIES=libspray.la
-varwatch_LDADD = -lrose -lspray
+varwatch_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
 
 #rdmain_LDADD = -lrose
@@ -276,12 +357,12 @@ varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
   rdmain.C 
 
 woodpecker_DEPENDENCIES=libspray.la
-woodpecker_LDADD = -lrose -lspray
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray
+woodpecker_CXXFLAGS= -fopenmp -Wall -O3 -march=native -ftree-vectorize
+woodpecker_LDFLAGS = -L$(SPOT_PREFIX)/lib
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
   DataDependenceVisualizer.h DataDependenceVisualizer.C \
-  AType.h                          \
-  AType.C                          \
   CPAstAttribute.h CPAstAttribute.C \
   UDAstAttribute.h                 \
   UDAstAttribute.C                 \
@@ -292,12 +373,20 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   FIConstAnalysis.h FIConstAnalysis.C \
   PropertyValueTable.h \
   PropertyValueTable.C \
+  Threadification.h \
+  Threadification.C \
   TrivialInlining.C                \
   TrivialInlining.h                \
   DeadCodeElimination.C                \
   DeadCodeElimination.h                \
   ReachabilityAnalysis.C \
   ReachabilityAnalysis.h \
+  ConversionFunctionsGenerator.h \
+  ConversionFunctionsGenerator.C \
+  RewriteSystem.h \
+  RewriteSystem.C \
+  Timer.h \
+  Timer.cpp \
   woodpecker.C
 
 
@@ -305,10 +394,8 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
 #  DFAnalysisBase.h
 
 analyterix_DEPENDENCIES=libspray.la
-analyterix_LDADD = -lrose -lspray
+analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lspray
 analyterix_SOURCES = \
-  AType.C \
-  AType.h \
   CPAstAttribute.h CPAstAttribute.C \
   CommandLineOptions.h \
   CommandLineOptions.C \
@@ -352,69 +439,6 @@ analyterix_SOURCES = \
 #ast_demo_LFLAGS = -Pmatcher
 #ast_demo_YFLAGS = -d -p matcher
 
-pkglib_LTLIBRARIES = libspray.la
-libspray_la_LDFLAGS= -no-undefined
-libspray_la_LDFLAGS=
-libspray_la_SOURCES=\
- AliasAnalysis.h \
- AnalysisAbstractionLayer.h \
- AnalysisAstAnnotator.h \
- AstTerm.h \
- CFAnalysis.h \
- DFAnalysisBase.h \
- DFTransferFunctions.h \
- IntervalAnalysis.h \
- IntervalAstAttribute.h \
- IntervalAstAttributeInterface.h \
- IntervalPropertyState.h \
- IntervalPropertyStateFactory.h \
- IntervalTransferFunctions.h \
- LVAnalysis.h \
- LVAstAttribute.h \
- LVAstAttributeInterface.h \
- LVLattice.h \
- LVTransferFunctions.h \
- LanguageRestrictor.h \
- NumberIntervalLattice.h \
- PASolver1.h \
- PointerAnalysisInterface.h \
- RDAnalysis.h \
- RDAstAttribute.h \
- RDTransferFunctions.h \
- WorkListSeq.h \
- AnalysisAstAnnotator.C \
- AliasAnalysis.C \
- AstTerm.C \
- CFAnalysis.C \
- CppExprEvaluator.C \
- DFAnalysisBase.C \
- DFTransferFunctions.C \
- Flow.C \
- IntervalAnalysis.C \
- IntervalAstAttribute.C \
- IntervalPropertyStateFactory.C \
- IntervalPropertyState.C \
- IntervalTransferFunctions.C \
- IntervalAstAttributeInterface.C \
- LanguageRestrictor.C \
- Lattice.C \
- LVAnalysis.C \
- LVAstAttribute.C \
- LVAstAttributeInterface.C \
- LVLattice.C \
- LVTransferFunctions.C \
- NumberIntervalLattice.C \
- PASolver1.C \
- PointerAnalysisInterface.C \
- PropertyState.C \
- RDAnalysis.C \
- RDAstAttribute.C \
- RDLattice.C \
- RDTransferFunctions.C \
- VariableIdUtils.C \
- AnalysisAbstractionLayer.C \
- addressTakenAnalysis.C \
- defUseQuery.C
 
 check-local:
 	./codethorn --internal-checks				 
@@ -422,8 +446,9 @@ check-local:
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
 	rm -f *.consistent
-	$(srcdir)/scripts/run_tests_cegpra $(srcdir) . #run CEGPRA tests
+	$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) . #test the analysis of RERS Problem1403 (which features arrays)
 	$(srcdir)/scripts/runLtlRegressionTests $(srcdir) . #run RERS examples in several versions and compare to previous results
+	$(srcdir)/scripts/run_tests_cegpra $(srcdir) . #run CEGPRA tests
 
 checkdemos: 
 	./matcher_demo $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
@@ -648,10 +673,8 @@ CODETHORN_TESTS= \
     tests/gototest1.C \
     tests/gototest2.C \
     tests/gototest3.C \
-    tests/switchtest1.C
-
-
-# MS: does not exist
-#    tests/test.ltl \
-# xxtest.C # MS: intentionally here as comment
-
+    tests/switchtest1.C \
+    tests/switchtest2.C \
+    tests/switchtest3.C \
+    examples/example-invocations.sh \
+    tests/normalization1.C

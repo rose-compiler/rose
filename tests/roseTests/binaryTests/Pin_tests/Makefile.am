@@ -11,7 +11,7 @@ if ROSE_USE_INTEL_PIN
 INTEL_PIN_TOOLS_PATH = $(INTEL_PIN_PATH)/source/tools/SimpleExamples
 
 # INTEL PIN paths are now included in ROSE_INCLUDES with --with-Intel_Pin.
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # These are ROSE analysis applications that mix static and dynamic analysis.
 noinst_PROGRAMS = dynamicStaticBinaryAnalysis staticDynamicBinaryAnalysis staticBinaryAnalysis commandlineHandling staticCallGraphEmbeddedTraceBinaryAnalysis 

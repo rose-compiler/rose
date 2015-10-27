@@ -1,0 +1,14 @@
+// -*- c++ -*-
+
+/** @defgroup installing_jdk Installing the Java development kit
+ *  @ingroup software_dependencies
+ *
+ *  Instructions for installing the Java development kit, a ROSE software dependency.
+ *
+ *  @section installing_jdk_rhel Redhat Enterprise Linux
+ *
+ *  @todo Describe how to install the JDK on RHEL.
+ *
+ *  @section installing_jdk_jessie Debian 8 "Jessie"
+ *
+ *  A suitable JDK can be installed by running <code>apt-get install default-jdk</code> as the administrator. */

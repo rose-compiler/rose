@@ -4,7 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # ATERM_ROOT = /home/dquinlan/bin/aterm-2.5-install-64bit
 ATERM_ROOT = $(ATERM_INSTALL_PATH)
 ATERM_INCLUDE = -I$(ATERM_ROOT)/include
-INCLUDES = -I$(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse $(ROSE_INCLUDES) $(ATERM_INCLUDE)
+AM_CPPFLAGS = -I$(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse $(ROSE_INCLUDES) $(ATERM_INCLUDE)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # libmstlSources = PDFGeneration.C DOTGraphInterface.C

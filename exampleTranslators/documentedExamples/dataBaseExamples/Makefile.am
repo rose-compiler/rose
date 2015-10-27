@@ -1,6 +1,6 @@
 include ../../../config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # bin_PROGRAMS = customtable_example \
 # databasegraph_example \

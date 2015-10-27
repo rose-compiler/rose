@@ -23,6 +23,13 @@ Formatter::rename(uint64_t orig_name)
  *                                      SValue
  *******************************************************************************************************************************/
 
+Sawyer::Optional<BaseSemantics::SValuePtr>
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
+    if (must_equal(other_, solver))
+        return Sawyer::Nothing();
+    return bottom_(get_width());
+}
+
 bool
 SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const 
 {
@@ -568,12 +575,14 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     if (condition->is_number() && !condition->get_number())
         return dflt_;
 
-    // Default values come from an optional memory map if possible, otherwise use the passed-in default.
+    // Default values come from an optional memory map if possible, otherwise use the passed-in default. Only those areas of
+    // the map that are readable and not writable are used.
     BaseSemantics::SValuePtr dflt = dflt_;
     if (map && address->is_number()) {
         size_t nbytes = nbits/8;
         uint8_t *buf = new uint8_t[nbytes];
-        size_t nread = map->readQuick(buf, address->get_number(), nbytes);
+        size_t nread = map->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE)
+                       .at(address->get_number()).limit(nbytes).read(buf).size();
         if (nread == nbytes) {
             ByteOrder::convert(buf, nbytes, map->byteOrder(), ByteOrder::ORDER_LSB);
             uint64_t dflt_val = 0;

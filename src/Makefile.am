@@ -11,7 +11,7 @@ endif
 
 # This lists a large number of directories.  If "make install"
 # is run then we only need a single directory
-INCLUDES = -Winvalid-pch $(ROSE_INCLUDES) 
+AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES) 
 
 
 # DQ (7/23/2008): New handling of EDG builds a single library instead of two.
@@ -37,9 +37,9 @@ endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
    libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
-#   libroseExperimentalOpenFortranParserlibraries =
-#   ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
-#   ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(_PREFIX)/lib -lxenctrl
+#  libroseExperimentalOpenFortranParserlibraries =
+#  ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
+#  ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(_PREFIX)/lib -lxenctrl
 else
    libroseExperimentalOpenFortranParserlibraries =
 endif
@@ -206,14 +206,14 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
           $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
           $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-          $(BOOST_WAVE_LIB)
+          $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)
 else
 librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIBS) \
           $(BOOST_DATE_TIME_LIB) \
           $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
           $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
           $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-          $(BOOST_WAVE_LIB) \
+          $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)\
           -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
           $(OPT_SQLITE3_LDFLAGS) \
           $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS)

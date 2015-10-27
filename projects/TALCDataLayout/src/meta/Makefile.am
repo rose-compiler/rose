@@ -1,7 +1,7 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) \
+AM_CPPFLAGS = $(ROSE_INCLUDES) \
          -I$(top_srcdir)/projects/TALCDataLayout/src/utilities
 
 noinst_LIBRARIES = libmeta.a

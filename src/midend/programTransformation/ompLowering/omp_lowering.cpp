@@ -59,6 +59,7 @@ namespace OmpSupport
 { 
   omp_rtl_enum rtl_type = e_gomp; /* default to  generate code targetting gcc's gomp */
   bool enable_accelerator = false; /* default is to not recognize and lowering OpenMP accelerator directives */
+  bool enable_debugging = false; /* default is not to debug the process */
 
   // A flag to control if device data environment runtime functions are used to automatically manage data as much as possible.
   // instead of generating explicit data allocation, copy, free functions. 
@@ -1605,6 +1606,21 @@ void transOmpTargetLoop_RoundRobin(SgNode* node)
   //for reduction
   per_block_declarations.clear(); // must reset to empty or wrong reference to stale content generated previously
   transOmpVariables(target, bb1,NULL, true);
+  
+  // Liao, 11/11/2014, clean up copied OmpAttribute
+  if (new_loop->attributeExists("OmpAttributeList"))
+     new_loop->removeAttribute("OmpAttributeList");
+#if 0
+  AstAttributeMechanism* astAttributeContainer = new_loop ->get_attributeMechanism();
+  if (astAttributeContainer != NULL)
+  {
+    for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+    {
+      AstAttribute* attribute = i->second;
+      ROSE_ASSERT(attribute != NULL);
+    }
+  }
+#endif
 
 }
 

@@ -1,6 +1,8 @@
 #ifndef ROSE_BINARY_REGISTERS_H
 #define ROSE_BINARY_REGISTERS_H
 
+#include "RegisterParts.h"
+
 #include <map>
 #include <queue>
 #include <string>
@@ -111,6 +113,15 @@ public:
      *
      *  This function takes O(n) time where n is the number of registers defined. */
     RegisterDescriptor findLargestRegister(unsigned major, unsigned minor, size_t maxWidth=0) const;
+
+    /** Returns all register parts.
+     *
+     *  Returns all parts of all registers in this dictionary without any regard for register boundaries.  For instance, if a
+     *  diction contains the x86 AX and AL registers where AX is 16 bits and AL is its low-order eight bits, the return value
+     *  will only contain the fact that the 16 bits corresponding to AX are stored, which also happens to contain the eight
+     *  bits of AL, but it won't keep track that AX and AL were inserted separately. In other words, erasing AL from the
+     *  returned container would also erase the low-order 8 bits of AX. */
+    rose::BinaryAnalysis::RegisterParts getAllParts() const;
 
     /** Returns the list of all register definitions in the dictionary.
      * @{ */

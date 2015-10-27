@@ -12,11 +12,9 @@
   INSTEAD ref to AnalysisBaseMechanisms is passed around
 
 13) refactor rdmain, integrate into analyterix
-14) remove rdmain
-15) integrate matcher_demo into anlyterix; remove matcher_demo
-15) refine woodpecker cl-interface (codepecker?)
-16) refactor reverser and add cl-interface, establish as separate project
-17) establish Normalizer
+14) remove rdmain (is already deactivated)
+15) integrate matcher_demo into CodeThorn; remove matcher_demo
+17) establish Normalizer (DFAnalysisBase contains now a normalizeProgram method. But a Normalization class is still missing)
 i) define normalization/denormalization pairs (denormalizer adapts analysis results)
 ii) every normalization establishes a subset of the language (provide language-restrictor/checker for this subset)
 iii) normalize function calls
@@ -43,7 +41,16 @@ i) RDAnalysis
 ii) LVAnalysis
 iii) IntervalAnalysis
 iv) PointerAnalysis
+23)
 v) AEAnalysis (requires ExpressionId)
 vi) VBEAnalysis (requires ExpressionId)
-vii) CodeMotionAnalysis (requires RD+AE)
-23) enable RoseRDAnalysis (after adding missing files)
+24) constant array support:
+i) Analyzer::analyzerVariableDeclaration : do not initialize PState for constant arrays: done, but only in RERS mode (adapt to be come general feature).
+ii) VariableIdMapping: implement isConstantArray
+25) ConstIntLattice: 
+  i) rename to IntegerLattice
+  ii) rename (and rewrite all user code) to not overload && and || anymore.
+  iii) remove indirection of number-types in CodeThorn (only possible after removal of && and ||)
+
+27) Lattice<=PropertyState(+transfer)
+    Only Solver needs to know the transfer functions

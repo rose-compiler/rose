@@ -1,4 +1,4 @@
-INCLUDES = \
+AM_CPPFLAGS = \
 	-I$(top_builddir)/src/satire \
 	-I$(top_srcdir)/src/analyzer/icfgbuilder \
 	-I$(top_srcdir)/src/grato

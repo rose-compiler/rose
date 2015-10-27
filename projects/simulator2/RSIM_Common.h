@@ -40,6 +40,13 @@
 class RSIM_Process;
 class RSIM_Thread;
 
+/** Supported machine architectures. */
+enum Architecture {
+    ARCH_NONE,                                          /**< No architecture specified. */
+    ARCH_X86,                                           /**< Intel x86 32- or 64-bit. */
+    ARCH_M68k                                           /**< FreeScale ColdFire m68k. */
+};
+
 /** Styles of core dump. */
 enum CoreStyle {
     CORE_ELF=0x0001,
@@ -594,9 +601,9 @@ struct SigAction {
     SigAction()
         : handlerVa(0), flags(0), restorerVa(0), mask(0) {}
     explicit SigAction(const sigaction_32 &x)
-        : handlerVa(x.handler_va), flags(x.flags), restorerVa(x.restorer_va), mask(mask) {}
+        : handlerVa(x.handler_va), flags(x.flags), restorerVa(x.restorer_va), mask(x.mask) {}
     explicit SigAction(const sigaction_64 &x)
-        : handlerVa(x.handler_va), flags(x.flags), restorerVa(x.restorer_va), mask(mask) {}
+        : handlerVa(x.handler_va), flags(x.flags), restorerVa(x.restorer_va), mask(x.mask) {}
     sigaction_32 get_sigaction_32() const {
         sigaction_32 x;
         x.handler_va = handlerVa;
@@ -626,17 +633,25 @@ static const Translate open_flags[] = { TF(O_RDWR), TF(O_RDONLY), TF(O_WRONLY),
                                         T_END };
 
 /* Types for getdents syscalls */
-struct dirent32_t {
+struct dirent_32 {
     uint32_t d_ino;
     uint32_t d_off;
     uint16_t d_reclen;
 } __attribute__((__packed__));
 
-struct dirent64_t {
+/* Type for the getdents64 call for linux-x86 */
+struct dirent64_32 {
     uint64_t d_ino;
     uint64_t d_off;
     uint16_t d_reclen;
     uint8_t d_type;
+} __attribute__((__packed__));
+
+/** Type for the getdents call for linux-amd64 */
+struct dirent_64 {
+    uint64_t d_ino;
+    uint64_t d_off;
+    uint16_t d_reclen;
 } __attribute__((__packed__));
 
 static const Translate stack_flags[] = {TF(SS_DISABLE), TF(SS_ONSTACK), T_END};
@@ -712,6 +727,22 @@ struct statfs_32 {
     uint32_t f_spare[4];
 } __attribute__((packed));
 
+/* kernels struct statfs on amd64 */
+struct statfs_64 {
+    uint64_t f_type;
+    uint64_t f_bsize;
+    uint64_t f_blocks;
+    uint64_t f_bfree;
+    uint64_t f_bavail;
+    uint64_t f_files;
+    uint64_t f_ffree;
+    uint32_t f_fsid[2];
+    uint64_t f_namelen;
+    uint64_t f_frsize;
+    uint64_t f_flags;
+    uint64_t f_spare[4];
+};
+
 /* kernel's struct statfs on the host */
 struct statfs_native {
     long f_type;
@@ -764,7 +795,19 @@ struct robust_list_head_32 {
     uint32_t next_va;           /* virtual address of next lock_entry in list; points to self if list is empty */
     int32_t futex_offset;       /* offset from lock_entry to futex */
     uint32_t pending_va;        /* copy of lock_entry as it is being added to the list */
+    robust_list_head_32()
+        : next_va(0), futex_offset(0), pending_va(0) {}
 } __attribute__((packed));
+
+struct robust_list_head_64 {
+    uint64_t next_va;
+    int64_t futex_offset;
+    uint64_t pending_va;
+    robust_list_head_64()
+        : next_va(0), futex_offset(0), pending_va(0) {}
+    robust_list_head_64(const robust_list_head_32 &x)
+        : next_va(x.next_va), futex_offset(x.futex_offset), pending_va(x.pending_va) {}
+};
 
 static const Translate ipc_commands[] = {
     TF3(0x0000ffff, 1, SEMOP),
@@ -1033,28 +1076,30 @@ struct pt_regs_64 {
 
 // The architecture-independen version of pt_regs used by the simulator, a super-set of the architecture-specific versions.
 struct PtRegs {
-    // Common to 32 and 64 bit
+    // Common to all architectures
+    uint64_t ip;                                        // instruction pointer, a.k.a. "pc"
+    uint64_t flags;                                     // condition codes, a.k.a. "ccr"
+
+    // Common to Intel x86 32 and 64 bit
     uint64_t ax;
     uint64_t bx;
     uint64_t cx;
     uint64_t dx;
     uint64_t si;
     uint64_t di;
-    uint64_t flags;
     uint64_t orig_ax;
-    uint64_t ip;
     uint64_t sp;
     uint64_t bp;
     uint64_t cs;
     uint64_t ss;
 
-    // Only 32-bit
+    // Only Intel x86 32-bit
     uint64_t ds;
     uint64_t es;
     uint64_t fs;
     uint64_t gs;
 
-    // Only 64-bit
+    // Only Intel x86 64-bit
     uint64_t r8;
     uint64_t r9;
     uint64_t r10;
@@ -1064,18 +1109,30 @@ struct PtRegs {
     uint64_t r14;
     uint64_t r15;
 
+    // Only ColdFire m68k
+    uint32_t d0, d1, d2, d3, d4, d5, d6, d7;
+    uint32_t a0, a1, a2, a3, a4, a5, a6, a7;
+    uint16_t sr;
+
     PtRegs()
-        : ax(0), bx(0), cx(0), dx(0), si(0), di(0), flags(0), orig_ax(0), ip(0), sp(0), bp(0), cs(0), ss(0),
-          ds(0), es(0), fs(0), gs(0), r8(0), r9(0), r10(0), r11(0), r12(0), r13(0), r14(0), r15(0) {}
+        : ip(0), flags(0), ax(0), bx(0), cx(0), dx(0), si(0), di(0), orig_ax(0), sp(0), bp(0), cs(0), ss(0),
+          ds(0), es(0), fs(0), gs(0), r8(0), r9(0), r10(0), r11(0), r12(0), r13(0), r14(0), r15(0),
+          d0(0), d1(0), d2(0), d3(0), d4(0), d5(0), d6(0), d7(0),
+          a0(0), a1(0), a2(0), a3(0), a4(0), a5(0), a6(0), a7(0) {}
+
     explicit PtRegs(const pt_regs_32 &x)
-        : ax(x.ax), bx(x.bx), cx(x.cx), dx(x.dx), si(x.si), di(x.di), flags(x.flags), orig_ax(x.orig_ax),
-          ip(x.ip), sp(x.sp), bp(x.bp), cs(x.cs), ss(x.ss), ds(x.ds), es(x.es), fs(x.fs), gs(x.gs),
-          r8(0), r9(0), r10(0), r11(0), r12(0), r13(0), r14(0), r15(0) {}
+        : ip(x.ip), flags(x.flags), ax(x.ax), bx(x.bx), cx(x.cx), dx(x.dx), si(x.si), di(x.di), orig_ax(x.orig_ax),
+          sp(x.sp), bp(x.bp), cs(x.cs), ss(x.ss), ds(x.ds), es(x.es), fs(x.fs), gs(x.gs),
+          r8(0), r9(0), r10(0), r11(0), r12(0), r13(0), r14(0), r15(0),
+          d0(0), d1(0), d2(0), d3(0), d4(0), d5(0), d6(0), d7(0),
+          a0(0), a1(0), a2(0), a3(0), a4(0), a5(0), a6(0), a7(0) {}
 
     explicit PtRegs(const pt_regs_64 &x)
-        : ax(x.ax), bx(x.bx), cx(x.cx), dx(x.dx), si(x.si), di(x.di), flags(x.flags), orig_ax(x.orig_ax),
-          ip(x.ip), sp(x.sp), bp(x.bp), cs(x.cs), ss(x.ss), ds(0), es(0), fs(0), gs(0), r8(x.r8), r9(x.r9),
-          r10(x.r10), r11(x.r11), r12(x.r12), r13(x.r13), r14(x.r14), r15(x.r15) {}
+        : ip(x.ip), flags(x.flags), ax(x.ax), bx(x.bx), cx(x.cx), dx(x.dx), si(x.si), di(x.di), orig_ax(x.orig_ax),
+          sp(x.sp), bp(x.bp), cs(x.cs), ss(x.ss), ds(0), es(0), fs(0), gs(0), r8(x.r8), r9(x.r9),
+          r10(x.r10), r11(x.r11), r12(x.r12), r13(x.r13), r14(x.r14), r15(x.r15),
+          d0(0), d1(0), d2(0), d3(0), d4(0), d5(0), d6(0), d7(0),
+          a0(0), a1(0), a2(0), a3(0), a4(0), a5(0), a6(0), a7(0) {}
 
     pt_regs_32 get_pt_regs_32() const {
         pt_regs_32 x;
@@ -1492,6 +1549,16 @@ struct new_utsname_32 {
     char domainname[65];
 } __attribute__((packed));
 
+/* Kernel's struct new_utsname on amd64 */
+struct new_utsname_64 {
+    char sysname[65];
+    char nodename[65];
+    char release[65];
+    char version[65];
+    char machine[65];
+    char domainname[65];
+};
+
 /* Third arg of madvise syscall */
 static const Translate madvise_behaviors[] = {
     TE(MADV_NORMAL), TE(MADV_RANDOM), TE(MADV_SEQUENTIAL), TE(MADV_WILLNEED), TE(MADV_DONTNEED),
@@ -1610,6 +1677,79 @@ static const Translate fchmod_flags[] = {
     T_END
 };
 
+// Kernel sysinfo struct for native (differs from libc's struct sysinfo)
+struct sysinfo_native {
+    long uptime;
+    unsigned long loads[3];
+    unsigned long totalram;
+    unsigned long freeram;
+    unsigned long sharedram;
+    unsigned long bufferram;
+    unsigned long totalswap;
+    unsigned long freeswap;
+    unsigned short procs;
+    unsigned short pad;      
+    unsigned long totalhigh;
+    unsigned long freehigh;
+    unsigned int mem_unit;
+    char _f[20 - 2*sizeof(unsigned long) - sizeof(int)];
+};
+
+// Kernel sysinfo struct for x86
+struct sysinfo_32 {
+    int32_t uptime;                                 /* Seconds since boot */
+    uint32_t loads[3];                              /* 1, 5, and 15 minute load averages */
+    uint32_t totalram;                              /* Total usable main memory size */
+    uint32_t freeram;                               /* Available memory size */
+    uint32_t sharedram;                             /* Amount of shared memory */
+    uint32_t bufferram;                             /* Memory used by buffers */
+    uint32_t totalswap;                             /* Total swap space size */
+    uint32_t freeswap;                              /* swap space still available */
+    uint16_t procs;                                 /* Number of current processes */
+    uint16_t pad;                                   /* explicit padding for m68k */
+    uint32_t totalhigh;                             /* Total high memory size */
+    uint32_t freehigh;                              /* Available high memory size */
+    uint32_t mem_unit;                              /* Memory unit size in bytes */
+    uint8_t _f[8];                                  /* Padding for libc5 */
+
+    sysinfo_32(const sysinfo_native &x)
+        : uptime(x.uptime), totalram(x.totalram), freeram(x.freeram), sharedram(x.sharedram), bufferram(x.bufferram),
+          totalswap(x.totalswap), freeswap(x.freeswap), procs(x.procs), pad(x.pad), totalhigh(x.totalhigh),
+          freehigh(x.freehigh), mem_unit(x.mem_unit) {
+        loads[0] = x.loads[0];
+        loads[1] = x.loads[1];
+        loads[2] = x.loads[2];
+        memset(_f, 0, sizeof _f);
+        memcpy(_f, x._f, std::min(sizeof(_f), sizeof(x._f)));
+    }
+} __attribute__((__packed__));
+
+// Kernel sysinfo struct for amd64
+struct sysinfo_64 {
+    int64_t uptime;                                 /* Seconds since boot */
+    uint64_t loads[3];                              /* 1, 5, and 15 minute load averages */
+    uint64_t totalram;                              /* Total usable main memory size */
+    uint64_t freeram;                               /* Available memory size */
+    uint64_t sharedram;                             /* Amount of shared memory */
+    uint64_t bufferram;                             /* Memory used by buffers */
+    uint64_t totalswap;                             /* Total swap space size */
+    uint64_t freeswap;                              /* swap space still available */
+    uint16_t procs;                                 /* Number of current processes */
+    uint16_t pad;                                   /* explicit padding for m68k */
+    uint64_t totalhigh;                             /* Total high memory size */
+    uint64_t freehigh;                              /* Available high memory size */
+    uint32_t mem_unit;                              /* Memory unit size in bytes */
+
+    sysinfo_64(const sysinfo_native &x)
+        : uptime(x.uptime), totalram(x.totalram), freeram(x.freeram), sharedram(x.sharedram), bufferram(x.bufferram),
+          totalswap(x.totalswap), freeswap(x.freeswap), procs(x.procs), pad(x.pad), totalhigh(x.totalhigh),
+          freehigh(x.freehigh), mem_unit(x.mem_unit) {
+        loads[0] = x.loads[0];
+        loads[1] = x.loads[1];
+        loads[2] = x.loads[2];
+    }
+} __attribute__((__packed__));
+
 /* Conversion functions */
 void convert(statfs_32 *g, const statfs64_native *h);
 void convert(statfs_32 *g, const statfs_native *h);
@@ -1621,17 +1761,19 @@ void convert(statfs64_32 *g, const statfs_native *h);
 void print_SegmentDescriptor(Sawyer::Message::Stream &f, const uint8_t *_ud, size_t sz);
 void print_int_32(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
 void print_hex_64(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
-void print_rlimit(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
+void print_rlimit_32(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
+void print_rlimit_64(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
 void print_kernel_stat_32(Sawyer::Message::Stream &f, const uint8_t *_sb, size_t sz);
 void print_kernel_stat_64(Sawyer::Message::Stream &f, const uint8_t *_sb, size_t sz);
 void print_timespec_32(Sawyer::Message::Stream &f, const uint8_t *_ts, size_t sz);
 void print_timespec_64(Sawyer::Message::Stream &f, const uint8_t *_ts, size_t sz);
 void print_timeval_32(Sawyer::Message::Stream &f, const uint8_t *_tv, size_t sz);
+void print_timeval(Sawyer::Message::Stream &f, const uint8_t *_tv, size_t sz);
 void print_sigaction_32(Sawyer::Message::Stream &f, const uint8_t *_sa, size_t sz);
 void print_sigaction_64(Sawyer::Message::Stream &f, const uint8_t *_sa, size_t sz);
-void print_dentries_helper(Sawyer::Message::Stream &f, const uint8_t *_sa, size_t sz, size_t wordsize);
 void print_dentries_32(Sawyer::Message::Stream &f, const uint8_t *sa, size_t sz);
 void print_dentries_64(Sawyer::Message::Stream &f, const uint8_t *sa, size_t sz);
+void print_dentries64_32(Sawyer::Message::Stream &f, const uint8_t *sa, size_t sz);
 void print_bitvec(Sawyer::Message::Stream &f, const uint8_t *vec, size_t sz);
 void print_SigSet(Sawyer::Message::Stream &f, const uint8_t *vec, size_t sz);
 void print_stack_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
@@ -1639,8 +1781,11 @@ void print_flock_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_flock_64(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_flock64_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_statfs_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_statfs_64(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_statfs64_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_statfs(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_robust_list_head_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_robust_list_head_64(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_ipc64_perm_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_msqid64_ds_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_ipc_kludge_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
@@ -1656,6 +1801,10 @@ void print_SigInfo(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_sched_param_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_msghdr_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_new_utsname_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_new_utsname_64(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_mmap_arg_struct_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_sockaddr(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_sysinfo_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_sysinfo_64(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 
 #endif /* ROSE_RSIM_Common_H */

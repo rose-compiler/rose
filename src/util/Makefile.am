@@ -2,8 +2,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = stringSupport commandlineProcessing support graphs
 
+# AUTOMAKE_OPTIONS = subdir-objects
+
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -105,6 +107,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/Interval.h			\
 	Sawyer/IntervalMap.h			\
 	Sawyer/IntervalSet.h			\
+	Sawyer/IntervalSetMap.h			\
 	Sawyer/Map.h				\
 	Sawyer/MappedBuffer.h			\
 	Sawyer/Markup.h				\
@@ -115,6 +118,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/PoolAllocator.h			\
 	Sawyer/ProgressBar.h			\
 	Sawyer/Sawyer.h				\
+	Sawyer/Set.h				\
 	Sawyer/SharedPointer.h			\
 	Sawyer/SmallObject.h			\
 	Sawyer/Stack.h				\

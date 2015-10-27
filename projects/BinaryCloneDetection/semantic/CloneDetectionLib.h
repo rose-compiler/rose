@@ -1,6 +1,7 @@
 #ifndef RSIM_CloneDetection_H
 #define RSIM_CloneDetection_H
 
+#include "Disassembler.h"
 #include "PartialSymbolicSemantics.h"
 #include "x86InstructionSemantics.h"
 #include "BinaryPointerDetection.h"
@@ -752,7 +753,6 @@ public:
     bool operator==(const OutputGroup &other) const;
     void clear();
     void print(std::ostream&, const std::string &title="", const std::string &prefix="") const;
-    void print(RTS_Message*, const std::string &title="", const std::string &prefix="") const;
     friend std::ostream& operator<<(std::ostream &o, const OutputGroup &outputs) {
         outputs.print(o);
         return o;
@@ -2179,21 +2179,21 @@ public:
                             if (never_accessed)
                                 state.registers.flag[i] = next_input_value<1>(IQ_INTEGER);
                         }
-                        retval = this->template unsignedExtend<16, nBits>(concat(state.registers.flag[0],
-                                                                          concat(state.registers.flag[1],
-                                                                          concat(state.registers.flag[2],
-                                                                          concat(state.registers.flag[3],
-                                                                          concat(state.registers.flag[4],
-                                                                          concat(state.registers.flag[5],
-                                                                          concat(state.registers.flag[6],
-                                                                          concat(state.registers.flag[7],
-                                                                          concat(state.registers.flag[8],
-                                                                          concat(state.registers.flag[9],
-                                                                          concat(state.registers.flag[10],
-                                                                          concat(state.registers.flag[11],
-                                                                          concat(state.registers.flag[12],
-                                                                          concat(state.registers.flag[13],
-                                                                          concat(state.registers.flag[14],
+                        retval = this->template unsignedExtend<16, nBits>(this->concat(state.registers.flag[0],
+                                                                          this->concat(state.registers.flag[1],
+                                                                          this->concat(state.registers.flag[2],
+                                                                          this->concat(state.registers.flag[3],
+                                                                          this->concat(state.registers.flag[4],
+                                                                          this->concat(state.registers.flag[5],
+                                                                          this->concat(state.registers.flag[6],
+                                                                          this->concat(state.registers.flag[7],
+                                                                          this->concat(state.registers.flag[8],
+                                                                          this->concat(state.registers.flag[9],
+                                                                          this->concat(state.registers.flag[10],
+                                                                          this->concat(state.registers.flag[11],
+                                                                          this->concat(state.registers.flag[12],
+                                                                          this->concat(state.registers.flag[13],
+                                                                          this->concat(state.registers.flag[14],
                                                                                  state.registers.flag[15]))))))))))))))));
                         break;
                     }
@@ -2263,37 +2263,37 @@ public:
                             if (never_accessed)
                                 state.registers.flag[i] = next_input_value<1>(IQ_INTEGER);
                         }
-                        retval = this->template unsignedExtend<32, nBits>(concat(state.registers.flag[0],
-                                                                          concat(state.registers.flag[1],
-                                                                          concat(state.registers.flag[2],
-                                                                          concat(state.registers.flag[3],
-                                                                          concat(state.registers.flag[4],
-                                                                          concat(state.registers.flag[5],
-                                                                          concat(state.registers.flag[6],
-                                                                          concat(state.registers.flag[7],
-                                                                          concat(state.registers.flag[8],
-                                                                          concat(state.registers.flag[9],
-                                                                          concat(state.registers.flag[10],
-                                                                          concat(state.registers.flag[11],
-                                                                          concat(state.registers.flag[12],
-                                                                          concat(state.registers.flag[13],
-                                                                          concat(state.registers.flag[14],
-                                                                          concat(state.registers.flag[15],
-                                                                          concat(state.registers.flag[16],
-                                                                          concat(state.registers.flag[17],
-                                                                          concat(state.registers.flag[18],
-                                                                          concat(state.registers.flag[19],
-                                                                          concat(state.registers.flag[20],
-                                                                          concat(state.registers.flag[21],
-                                                                          concat(state.registers.flag[22],
-                                                                          concat(state.registers.flag[23],
-                                                                          concat(state.registers.flag[24],
-                                                                          concat(state.registers.flag[25],
-                                                                          concat(state.registers.flag[26],
-                                                                          concat(state.registers.flag[27],
-                                                                          concat(state.registers.flag[28],
-                                                                          concat(state.registers.flag[29],
-                                                                          concat(state.registers.flag[30],
+                        retval = this->template unsignedExtend<32, nBits>(this->concat(state.registers.flag[0],
+                                                                          this->concat(state.registers.flag[1],
+                                                                          this->concat(state.registers.flag[2],
+                                                                          this->concat(state.registers.flag[3],
+                                                                          this->concat(state.registers.flag[4],
+                                                                          this->concat(state.registers.flag[5],
+                                                                          this->concat(state.registers.flag[6],
+                                                                          this->concat(state.registers.flag[7],
+                                                                          this->concat(state.registers.flag[8],
+                                                                          this->concat(state.registers.flag[9],
+                                                                          this->concat(state.registers.flag[10],
+                                                                          this->concat(state.registers.flag[11],
+                                                                          this->concat(state.registers.flag[12],
+                                                                          this->concat(state.registers.flag[13],
+                                                                          this->concat(state.registers.flag[14],
+                                                                          this->concat(state.registers.flag[15],
+                                                                          this->concat(state.registers.flag[16],
+                                                                          this->concat(state.registers.flag[17],
+                                                                          this->concat(state.registers.flag[18],
+                                                                          this->concat(state.registers.flag[19],
+                                                                          this->concat(state.registers.flag[20],
+                                                                          this->concat(state.registers.flag[21],
+                                                                          this->concat(state.registers.flag[22],
+                                                                          this->concat(state.registers.flag[23],
+                                                                          this->concat(state.registers.flag[24],
+                                                                          this->concat(state.registers.flag[25],
+                                                                          this->concat(state.registers.flag[26],
+                                                                          this->concat(state.registers.flag[27],
+                                                                          this->concat(state.registers.flag[28],
+                                                                          this->concat(state.registers.flag[29],
+                                                                          this->concat(state.registers.flag[30],
                                                                                  state.registers.flag[31]
                                                                                  ))))))))))))))))))))))))))))))));
                         break;
@@ -2353,14 +2353,14 @@ public:
                 switch (reg.get_offset()) {
                     case 0:
                         state.registers.gpr[reg.get_minor()] =
-                            concat(this->template signExtend<nBits, 8>(value),
-                                   this->template extract<8, 32>(state.registers.gpr[reg.get_minor()])); // no-op extend
+                            this->concat(this->template signExtend<nBits, 8>(value),
+                                         this->template extract<8, 32>(state.registers.gpr[reg.get_minor()])); // no-op extend
                         break;
                     case 8:
                         state.registers.gpr[reg.get_minor()] =
-                            concat(this->template extract<0, 8>(state.registers.gpr[reg.get_minor()]),
-                                   concat(this->template unsignedExtend<nBits, 8>(value),
-                                          this->template extract<16, 32>(state.registers.gpr[reg.get_minor()])));
+                            this->concat(this->template extract<0, 8>(state.registers.gpr[reg.get_minor()]),
+                                         this->concat(this->template unsignedExtend<nBits, 8>(value),
+                                                      this->template extract<16, 32>(state.registers.gpr[reg.get_minor()])));
                         break;
                     default:
                         throw Exception("invalid byte access offset");
@@ -2389,8 +2389,8 @@ public:
                         if (never_accessed)
                             state.registers.gpr[reg.get_minor()] = next_input_value<32>(IQ_INTEGER);
                         state.registers.gpr[reg.get_minor()] =
-                            concat(this->template unsignedExtend<nBits, 16>(value),
-                                   this->template extract<16, 32>(state.registers.gpr[reg.get_minor()]));
+                            this->concat(this->template unsignedExtend<nBits, 16>(value),
+                                         this->template extract<16, 32>(state.registers.gpr[reg.get_minor()]));
                         break;
                     }
                     case x86_regclass_flags: {

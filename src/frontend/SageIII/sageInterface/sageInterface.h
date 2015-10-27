@@ -54,36 +54,12 @@ ROSE_DLL_API std::string getVariantName (VariantT v);
 //! An alias for Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 #define TRANS_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 
-//------------------------------------------------------------------------
-/*! \brief This namespace is to organize functions that are useful when operating on the AST.
 
-  \defgroup frontendSageUtilityFunctions SAGE III utility functions(SageInterface)
-  \ingroup ROSE_FrontEndGroup
-
-    The Sage III IR design attempts to be minimalist. Thus additional functionality is
-intended to be presented using separate higher level interfaces which work with the IR.
-The namespace, SageInterface, collects functions that operate on the IR and are supportive of numerous types of routine operations required to support general analysis and transformation of the AST.
-
-    \internal Further organization of the functions in this namespace is required.
-Major AST manipulation functions are scattered in the following directories
-   - src/midend/astUtil/astInterface
-   - src/roseSupport/utility_function.h,  namespace ROSE
-   - src/roseSupport/TransformationSupport.h, class TransformationSupport
-   - src/midend/astInlining/inlinerSupport.C
-   - src/frontend/SageIII/sageInterface
-   - projects: such as outliner, OpenMP_Translator
-Some other utility functions not related AST can be found in
-   - src/util/stringSupport/string_functions.h, namespace StringUtility
-   - src/roseExtensions/dataStructureTraversal/helpFunctions.C
-   - projects/dataStructureGraphing/helpFunctions.C
-
-
-    \todo A number of additional things to do:
-         - Pull scope handling out of EDG/Sage III translation so that is is made
-           available to anyone else building the Sage III IR from scratch (which
-           when it gets non-trivial, involves the manipulation of scopes).
-         - Other stuff ...
- */
+/** Functions that are useful when operating on the AST.
+ *
+ *  The Sage III IR design attempts to be minimalist. Thus additional functionality is intended to be presented using separate
+ *  higher level interfaces which work with the IR.  This namespace collects functions that operate on the IR and support
+ *  numerous types of operations that are common to general analysis and transformation of the AST. */
 namespace SageInterface
    {
   // DQ (4/3/2014): Added general AST support seperate from the AST.
@@ -153,6 +129,9 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
 inline size_t hash_value(SgNode* t) {return (size_t)t;}
 #endif
 
+#if 0
+// DQ (8/3/2015): We expect that this is not used and is generating a warnings so we 
+// can best fix it by removing it.
 struct hash_nodeptr
    {
 // CH (4/9/2010): Use boost::hash instead
@@ -176,6 +155,7 @@ struct hash_nodeptr
 #ifndef SWIG
 // DQ (3/10/2013): This appears to be a problem for the SWIG interface (undefined reference at link-time).
   void supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap );
+#endif
 #endif
 
  //------------------------------------------------------------------------
@@ -1304,7 +1284,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 #if 1
   // DQ (10/20/2012): This is the older version of this implementation.  Until I am sure that
   // the newer version (below) is what we want to use I will resolve this conflict by keeping
-  // the previousl version in place.
+  // the previous version in place.
 
      if (NULL == astNode)
         {
@@ -1806,6 +1786,18 @@ ROSE_DLL_API SgStatement* findSurroundingStatementFromSameFile(SgStatement* targ
 //! Relocate comments and CPP directives from one statement to another.
 ROSE_DLL_API void moveCommentsToNewStatement(SgStatement* sourceStatement, const std::vector<int> & indexList, SgStatement* targetStatement, bool surroundingStatementPreceedsTargetStatement);
 
+// DQ (7/19/2015): This is required to support general unparsing of template instantations for the GNU g++
+// compiler which does not permit name qualification to be used to support the expression of the namespace
+// where a template instantiatoon would be places.  Such name qualification would also sometimes require
+// global qualification which is also not allowed by the GNU g++ compiler.  These issues appear to be 
+// specific to the GNU compiler versions, at least versions 4.4 through 4.8.
+//! Relocate the declaration to be explicitly represented in its associated namespace (required for some backend compilers to process template instantiations).
+ROSE_DLL_API void moveDeclarationToAssociatedNamespace ( SgDeclarationStatement* declarationStatement );
+
+ROSE_DLL_API bool isTemplateInstantiationNode(SgNode* node);
+
+ROSE_DLL_API void wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root);
+
 //@}
 //------------------------------------------------------------------------
 //@{
@@ -1939,6 +1931,16 @@ ROSE_DLL_API void removeConsecutiveLabels(SgNode* top);
  *  The original assignment stmt will be removed by default
  */
 ROSE_DLL_API bool mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt = true);
+
+//! Split a variable declaration with an rhs assignment into two statements: a declaration and an assignment. 
+/*! Return the generated assignment statement, if any
+ *  e.g.  int i =10;  becomes int i; i=10;  
+ *  This can be seen as a normalization of declarations
+ */
+ROSE_DLL_API SgExprStatement* splitVariableDeclaration (SgVariableDeclaration* decl);
+
+//! Split declarations within a scope into declarations and assignment statements, by default only top level declarations are considered. Return the number of declarations split.
+ROSE_DLL_API int splitVariableDeclaration (SgScopeStatement* scope, bool topLevelOnly = true);
 
 //! Replace an expression with a temporary variable and an assignment statement
 /*!

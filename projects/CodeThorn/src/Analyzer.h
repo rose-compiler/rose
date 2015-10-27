@@ -12,10 +12,12 @@
 #include <set>
 #include <string>
 #include <sstream>
+#include <list>
 
 #include <omp.h>
 
 #include <boost/unordered_set.hpp>
+#include <boost/unordered_map.hpp>
 
 #include "AstTerm.h"
 #include "Labeler.h"
@@ -58,8 +60,8 @@ namespace CodeThorn {
     LabelSet finalLabelsSet;
   };
 
-  typedef list<const EState*> EStateWorkList;
-  typedef pair<int, const EState*> FailedAssertion;
+  typedef std::list<const EState*> EStateWorkList;
+  typedef std::pair<int, const EState*> FailedAssertion;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
 
   class Analyzer;
@@ -112,7 +114,7 @@ namespace CodeThorn {
     
     PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
-    list<EState> transferFunction(Edge edge, const EState* estate);
+    std::list<EState> transferFunction(Edge edge, const EState* estate);
     
     void addToWorkList(const EState* estate);
     const EState* addToWorkListIfNew(EState estate);
@@ -177,11 +179,12 @@ namespace CodeThorn {
     const EState* processNewOrExisting(EState& s);
     const EState* processCompleteNewOrExisting(const EState* es);
     void topifyVariable(PState& pstate, ConstraintSet& cset, VariableId varId);
-    
+    bool isTopified(EState& s);
     EStateSet::ProcessingResult process(EState& s);
     EStateSet::ProcessingResult process(Label label, PState pstate, ConstraintSet cset, InputOutput io);
     const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
     
+    EState createEStateFastTopifyMode(Label label, const PState* oldPStatePtr, const ConstraintSet* oldConstraintSetPtr);
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
 
@@ -196,15 +199,25 @@ namespace CodeThorn {
     // counterexample input sequence.
     int addCounterexample(int assertCode, const EState* assertEState);
     // returns a list of EStates from source to target. Target has to come before source in the STG (reversed trace). 
-    list<const EState*>reverseInOutSequenceBreadthFirst(const EState* source, const EState* target, bool counterexampleWithOutput = false);
+    std::list<const EState*>reverseInOutSequenceBreadthFirst(const EState* source, const EState* target, bool counterexampleWithOutput = false);
     // returns a list of EStates from source to target (shortest input path). 
     // please note: target has to be a predecessor of source (reversed trace)
-    list<const EState*> reverseInOutSequenceDijkstra(const EState* source, const EState* target, bool counterexampleWithOutput = false);
-    list<const EState*> filterStdInOutOnly(list<const EState*>& states, bool counterexampleWithOutput = false) const;
-    std::string reversedInOutRunToString(list<const EState*>& run);
+    std::list<const EState*> reverseInOutSequenceDijkstra(const EState* source, const EState* target, bool counterexampleWithOutput = false);
+    std::list<const EState*> filterStdInOutOnly(std::list<const EState*>& states, bool counterexampleWithOutput = false) const;
+    std::string reversedInOutRunToString(std::list<const EState*>& run);
     //returns the shortest possible number of input states on the path leading to "target".
     int inputSequenceLength(const EState* target);
-    
+    // the following functions are used by solver 9
+    bool searchForIOPatterns(PState* startPState, int assertion_id, std::list<int>& inputSuffix, std::list<int>* partialTrace = NULL, int* inputPatternLength=NULL);
+    bool containsPatternTwoRepetitions(std::list<int>& sequence);
+    bool containsPatternTwoRepetitions(std::list<int>& sequence, int startIndex, int endIndex);
+    bool computePStateAfterInputs(PState& pState, std::list<int>& inputs, int thread_id, std::list<int>* iOSequence=NULL);
+    bool computePStateAfterInputs(PState& pState, int input, int thread_id, std::list<int>* iOSequence=NULL);
+    bool searchPatternPath(int assertion_id, PState& pState, std::list<int>& inputPattern, std::list<int>& inputSuffix, int thread_id,std::list<int>* iOSequence=NULL);
+    std::list<int> inputsFromPatternTwoRepetitions(std::list<int> pattern2r);
+    string convertToCeString(std::list<int>& ceAsIntegers, int maxInputVal);
+    int pStateDepthFirstSearch(PState* startPState, int maxDepth, int thread_id, std::list<int>* partialTrace, int maxInputVal, int patternLength, int PatternIterations);
+
   public:
     SgNode* getCond(SgNode* node);
     void generateAstNodeInfo(SgNode* node);
@@ -229,6 +242,8 @@ namespace CodeThorn {
     void runSolver6();
     void runSolver7();
     void runSolver8();
+    void runSolver9();
+    void runSolver10();
     void runSolver();
     //! The analyzer requires a CFAnalysis to obtain the ICFG.
     void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
@@ -262,7 +277,7 @@ namespace CodeThorn {
     VariableIdMapping::VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
     
     std::set<std::string> variableIdsToVariableNames(VariableIdMapping::VariableIdSet);
-    typedef list<SgVariableDeclaration*> VariableDeclarationList;
+    typedef std::list<SgVariableDeclaration*> VariableDeclarationList;
     VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
     VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
     
@@ -271,16 +286,16 @@ namespace CodeThorn {
     //! adds a specific code to the io-info of an estate which is checked by isFailedAsserEState and determines a failed-assert estate. Note that the actual assert (and its label) is associated with the previous estate (this information can therefore be obtained from a transition-edge in the transition graph).
     EState createFailedAssertEState(const EState estate, Label target);
     //! list of all asserts in a program
-    list<SgNode*> listOfAssertNodes(SgProject *root);
+    std::list<SgNode*> listOfAssertNodes(SgProject *root);
     //! rers-specific error_x: assert(0) version 
-    list<pair<SgLabelStatement*,SgNode*> > listOfLabeledAssertNodes(SgProject *root);
+    std::list<std::pair<SgLabelStatement*,SgNode*> > listOfLabeledAssertNodes(SgProject *root);
     void initLabeledAssertNodes(SgProject* root) {
       _assertNodes=listOfLabeledAssertNodes(root);
     }
     size_t getNumberOfErrorLabels();
     std::string labelNameOfAssertLabel(Label lab) {
       std::string labelName;
-      for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=_assertNodes.begin();i!=_assertNodes.end();++i)
+      for(std::list<std::pair<SgLabelStatement*,SgNode*> >::iterator i=_assertNodes.begin();i!=_assertNodes.end();++i)
         if(lab==getLabeler()->getLabel((*i).second))
           labelName=SgNodeHelper::getLabelName((*i).first);
       //assert(labelName.size()>0);
@@ -291,6 +306,8 @@ namespace CodeThorn {
     }
     
     InputOutput::OpType ioOp(const EState* estate) const;
+
+    PropertyValueTable* loadAssertionsToReconstruct(string filePath);
     
     void setDisplayDiff(int diff) { _displayDiff=diff; }
     void setSolver(int solver) { _solver=solver; }
@@ -309,7 +326,7 @@ namespace CodeThorn {
     void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
     int numberOfInputVarValues() { return _inputVarValues.size(); }
     std::set<int> getInputVarValues() { return _inputVarValues; }
-    list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
+    std::list<std::pair<SgLabelStatement*,SgNode*> > _assertNodes;
     void setCsvAssertLiveFileName(std::string filename) { _csv_assert_live_file=filename; }
     VariableId globalVarIdByName(std::string varName) { return globalVarName2VarIdMapping[varName]; }
     void setStgTraceFileName(std::string filename) {
@@ -331,13 +348,22 @@ namespace CodeThorn {
     void setMaxIterations(size_t maxIterations) { _maxIterations=maxIterations; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
     void setMaxIterationsForcedTop(size_t maxIterations) { _maxIterationsForcedTop=maxIterations; }
+    void setStartPState(PState startPState) { _startPState=startPState; }
+    void setReconstructMaxInputDepth(size_t inputDepth) { _reconstructMaxInputDepth=inputDepth; }
+    void setReconstructMaxRepetitions(size_t repetitions) { _reconstructMaxRepetitions=repetitions; }
+    void setReconstructPreviousResults(PropertyValueTable* previousResults) { _reconstructPreviousResults = previousResults; };
+    void setPatternSearchMaxDepth(size_t iODepth) { _patternSearchMaxDepth=iODepth; }
+    void setPatternSearchRepetitions(size_t patternReps) { _patternSearchRepetitions=patternReps; }
+    void setPatternSearchMaxSuffixDepth(size_t suffixDepth) { _patternSearchMaxSuffixDepth=suffixDepth; }
+    void setPatternSearchAssertTable(PropertyValueTable* patternSearchAsserts) { _patternSearchAssertTable = patternSearchAsserts; };
+    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST, EXPL_LOOP_AWARE, EXPL_RANDOM_MODE1 };
+    void setPatternSearchExploration(ExplorationMode explorationMode) { _patternSearchExplorationMode = explorationMode; };
     void eventGlobalTopifyTurnedOn();
     void setMinimizeStates(bool minimizeStates) { _minimizeStates=minimizeStates; }
     bool isIncompleteSTGReady();
     bool isPrecise();
     PropertyValueTable reachabilityResults;
     int reachabilityAssertCode(const EState* currentEStatePtr);
-    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST, EXPL_LOOP_AWARE };
     void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
     ExplorationMode getExplorationMode() { return _explorationMode; }
     void setSkipSelectedFunctionCalls(bool defer) {
@@ -351,7 +377,7 @@ namespace CodeThorn {
       return exprAnalyzer.getSkipArrayAccesses();
     }
     ExprAnalyzer* getExprAnalyzer();
-    list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
+    std::list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
     void incIterations() {
       if(isPrecise()) {
 #pragma omp atomic
@@ -364,10 +390,24 @@ namespace CodeThorn {
     bool isLoopCondLabel(Label lab);
     int getApproximatedIterations() { return _approximated_iterations; }
     int getIterations() { return _iterations; }
+    string getVarNameByIdCode(int varIdCode) {return variableIdMapping.variableName(variableIdMapping.variableIdFromCode(varIdCode));};
+    void mapGlobalVarInsert(std::string name, int* addr);
+  public:
+    boost::unordered_map <std::string,int*> mapGlobalVarAddress;
+    boost::unordered_map <int*,std::string> mapAddressGlobalVar;
+    void setCompoundIncVarsSet(set<VariableId> ciVars);
+    void setSmallActivityVarsSet(set<VariableId> ciVars);
+    void setAssertCondVarsSet(set<VariableId> acVars);
+    enum GlobalTopifyMode {GTM_IO, GTM_IOCF, GTM_IOCFPTR, GTM_COMPOUNDASSIGN, GTM_FLAGS};
+    void setGlobalTopifyMode(GlobalTopifyMode mode);
   private:
+    GlobalTopifyMode _globalTopifyMode;
+    set<VariableId> _compoundIncVarsSet;
+    set<VariableId> _smallActivityVarsSet;
+    set<VariableId> _assertCondVarsSet;
     set<int> _inputVarValues;
-    list<int> _inputSequence;
-    list<int>::iterator _inputSequenceIterator;
+    std::list<int> _inputSequence;
+    std::list<int>::iterator _inputSequenceIterator;
     ExprAnalyzer exprAnalyzer;
     VariableIdMapping variableIdMapping;
     EStateWorkList estateWorkList;
@@ -389,10 +429,19 @@ namespace CodeThorn {
     long int _maxIterations;
     long int _maxTransitionsForcedTop;
     long int _maxIterationsForcedTop;
+    PState _startPState;
+    int _reconstructMaxInputDepth;
+    int _reconstructMaxRepetitions;
+    PropertyValueTable* _reconstructPreviousResults;
+    PropertyValueTable*  _patternSearchAssertTable;
+    int _patternSearchMaxDepth;
+    int _patternSearchRepetitions;
+    int _patternSearchMaxSuffixDepth;
+    ExplorationMode _patternSearchExplorationMode;
     bool _treatStdErrLikeFailedAssert;
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
-    list<FailedAssertion> _firstAssertionOccurences;
+    std::list<FailedAssertion> _firstAssertionOccurences;
     const EState* _estateBeforeMissingInput;
     const EState* _latestOutputEState;
     const EState* _latestErrorEState;
@@ -410,23 +459,27 @@ namespace CodeThorn {
 #ifdef RERS_SPECIALIZATION
 // RERS-binary-binding-specific declarations
 #define STR_VALUE(arg) #arg
+
+// integer variables
+#define INIT_GLOBALVAR(VARNAME) VARNAME = new int[numberOfThreads];
 #define COPY_PSTATEVAR_TO_GLOBALVAR(VARNAME) VARNAME[thread_id] = pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().getIntValue();
-
 //cout<<"PSTATEVAR:"<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].toString()<<"="<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().toString()<<endl;
-
 #define COPY_GLOBALVAR_TO_PSTATEVAR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::CppCapsuleConstIntLattice(VARNAME[thread_id]);
 
-// macro used to generate the initialization of global variables in the hybrid analyzer (linked binary with threads)
-#define INIT_GLOBALVAR(VARNAME) VARNAME = new int[numberOfThreads];
+// pointers to integer variables
+#define INIT_GLOBALPTR(VARNAME) VARNAME = new int*[numberOfThreads]; 
+#define COPY_PSTATEPTR_TO_GLOBALPTR(VARNAME) VARNAME[thread_id] = analyzer->mapGlobalVarAddress[analyzer->getVarNameByIdCode(pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().getIntValue())]
+#define COPY_GLOBALPTR_TO_PSTATEPTR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::CppCapsuleConstIntLattice(analyzer->globalVarIdByName(analyzer->mapAddressGlobalVar[VARNAME[thread_id]]).getIdCode());
+
+// create an entry in the mapping    <var_address>  <-->  <var_name>
+#define REGISTER_GLOBAL_VAR_ADDRESS(VARNAME) analyzer->mapGlobalVarInsert(STR_VALUE(VARNAME), (int*) &VARNAME);
 
 namespace RERS_Problem {
   void rersGlobalVarsCallInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
   void rersGlobalVarsCallReturnInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
   void rersGlobalVarsArrayInit(int numberOfThreads);
-#if 0
-  // input variable passed as a parameter (obsolete since transformation of "input" into a global varialbe)
-  void calculate_output(int);
-#endif
+  void createGlobalVarAddressMaps(CodeThorn::Analyzer* analyzer);
+
   void calculate_output(int numberOfThreads);
   extern int* output;
 }

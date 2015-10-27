@@ -256,7 +256,7 @@ findFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /*out*
 
 /** Compute all paths across function calls and returns.
  *
- *  This is a convenience method for @ref findpaths in a mode that follows function call and return edges. Note that in the
+ *  This is a convenience method for @ref findPaths in a mode that follows function call and return edges. Note that in the
  *  normal partitioner CFG function return edges point to the indeterminate vertex rather than back to the place the function
  *  was called.  In order to get call-sensitive paths you'll have to do something else. */
 void

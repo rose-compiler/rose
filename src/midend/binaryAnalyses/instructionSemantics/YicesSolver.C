@@ -4,6 +4,7 @@
 #include "rose_strtoull.h"
 #include "YicesSolver.h"
 
+#include <boost/thread/locks.hpp>
 #include <errno.h>
 
 #ifdef _MSC_VER
@@ -53,7 +54,7 @@ YicesSolver::available_linkage()
 
 /* See YicesSolver.h */
 SMTSolver::Satisfiable
-YicesSolver::satisfiable(const std::vector<TreeNodePtr> &exprs)
+YicesSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
 {
     clear_evidence();
     Satisfiable retval = trivially_satisfiable(exprs);
@@ -64,9 +65,10 @@ YicesSolver::satisfiable(const std::vector<TreeNodePtr> &exprs)
     if (get_linkage() & LM_LIBRARY) {
 
         ++stats.ncalls;
-        RTS_MUTEX(class_stats_mutex) {
+        {
+            boost::lock_guard<boost::mutex> lock(class_stats_mutex);
             ++class_stats.ncalls;
-        } RTS_MUTEX_END;
+        }
 
         if (!context) {
             context = yices_mk_context();
@@ -543,7 +545,7 @@ YicesSolver::out_binary(std::ostream &o, const char *opname, const InternalNodeP
  *  will be rewritten as
  *  \code
  *      (ite (= COND 0b1) S1 S2)
- *  \code
+ *  \endcode
  */
 void
 YicesSolver::out_ite(std::ostream &o, const InternalNodePtr &in)

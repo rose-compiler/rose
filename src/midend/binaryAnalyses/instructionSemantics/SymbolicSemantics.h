@@ -671,13 +671,13 @@ protected:
                                          *   read so that subsequent reads from the same address will return the
                                          *   same value. */
     bool p_discard_popped_memory;       /**< Property that determines how the stack behaves.  When set, any time
-                                         * the stack pointer is adjusted, memory below the stack pointer and having
-                                         * the same address name as the stack pointer is removed (the memory
-                                         * location becomes undefined). The default is false, that is, no special
-                                         * treatment for the stack. */
+                                         *   the stack pointer is adjusted, memory below the stack pointer and having
+                                         *   the same address name as the stack pointer is removed (the memory
+                                         *   location becomes undefined). The default is false, that is, no special
+                                         *   treatment for the stack. */
     size_t ninsns;                      /**< Total number of instructions processed. This is incremented by
-                                         * startInstruction(), which is the first thing called by
-                                         * X86InstructionSemantics::processInstruction(). */
+                                         *   startInstruction(), which is the first thing called by
+                                         *   X86InstructionSemantics::processInstruction(). */
     SMTSolver *solver;                  /**< The solver to use for Satisfiability Modulo Theory, or NULL. */
 
 public:
@@ -805,7 +805,8 @@ public:
     void print_diff(std::ostream &o) const {
         print_diff(o, orig_state, cur_state);
     }
-    void print_diff(std::ostream &o, BaseSemantics::Formatter &fmt = BaseSemantics::Formatter()) const {
+
+    void print_diff(std::ostream &o, const BaseSemantics::Formatter &fmt = BaseSemantics::Formatter()) const {
         print_diff(o, orig_state, cur_state, fmt);
     }
     /** @} */
@@ -892,7 +893,7 @@ public:
     /** Reads a single-byte value from memory.
      *
      *  Reads from the specified memory state and updates the original state if appropriate.  Reading from a memory
-     *  state might actually create new memory cells in the original state.  The @dflt is the byte value to save to
+     *  state might actually create new memory cells in the original state.  The @p dflt is the byte value to save to
      *  the original state when appropriate. */
     ValueType<8> mem_read_byte(State<ValueType> &state, const ValueType<32> &addr, const ValueType<8> &dflt) const {
         typedef typename State<ValueType>::Memory::CellList CellList;
@@ -917,7 +918,7 @@ public:
     /** Reads a multi-byte value from memory.
      *
      *  Reads a multi-byte, little-endian value from memory and updates the original state if appropriate.  Reading
-     *  from a memory state might actually create new memory cells in the original state.  The @dflt is the value
+     *  from a memory state might actually create new memory cells in the original state.  The @p dflt is the value
      *  to save to the original state when appropriate. */
     template <size_t nBits>
     ValueType<nBits> mem_read(State<ValueType> &state, const ValueType<32> &addr,
@@ -1094,6 +1095,14 @@ depending on whether the loop is to be taken again, or not.\n");
     /** See NullSemantics::Policy::undefined_() */
     template <size_t Len>
     ValueType<Len> undefined_() const {
+        ValueType<Len> retval;
+        retval.defined_by(cur_insn);
+        return retval;
+    }
+
+    /** See NullSemantics::Policy::unspecified_() */
+    template <size_t Len>
+    ValueType<Len> unspecified_() const {
         ValueType<Len> retval;
         retval.defined_by(cur_insn);
         return retval;

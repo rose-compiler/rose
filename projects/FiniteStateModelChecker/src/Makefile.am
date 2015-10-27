@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 CXXLD = $(GCJ) # ensure Java stuff links correctly
 
-INCLUDES = -I$(top_builddir)/projects/FiniteStateModelChecker/MopsForROSE $(ROSE_INCLUDES)
+AM_CPPFLAGS = -I$(top_builddir)/projects/FiniteStateModelChecker/MopsForROSE $(ROSE_INCLUDES)
 
 bin_PROGRAMS = mopscc1 mopsCheck
 

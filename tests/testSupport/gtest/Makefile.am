@@ -1,3 +1,6 @@
+
+# AUTOMAKE_OPTIONS = subdir-objects
+
 # Nonstandard package files for distribution
 EXTRA_DIST = \
   include/gtest/gtest-param-test.h.pump \

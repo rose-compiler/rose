@@ -13,7 +13,7 @@ SUBDIRS = . tests includes
 # This is a parameter provided through the ROSE configure script (configure commandline)
 OMNI_OPENMP_RUNTIME_LIBRARY = @omni_omp_runtime_support_path@
 
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/includes
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir)/includes
 
 bin_PROGRAMS = ompTranslator
 

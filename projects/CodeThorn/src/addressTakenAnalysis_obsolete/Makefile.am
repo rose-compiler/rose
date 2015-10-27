@@ -14,7 +14,7 @@ noinst_PROGRAMS = addressTakenAnalysis
 #arrRefExpLhsTypeCheck_SOURCES = arrRefExpLhsTypeCheck.C
 #arrRefExpLhsTypeCheck_LDADD = -lrose
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	$(ROSE_INCLUDES) \
 	-I$(srcdir) \
 	-I$(CODETHORN_SRC_ROOT)

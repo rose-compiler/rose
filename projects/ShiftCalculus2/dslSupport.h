@@ -11,6 +11,9 @@ namespace DSL_Support
 
      SgVariableDeclaration* buildDataPointer(const std::string & pointerVariableName, SgVariableSymbol* variableSymbol, SgScopeStatement* outerScope);
 
+     SgVariableDeclaration* buildBoxRef(const std::string & pointerVariableName, SgVariableSymbol* variableSymbol, SgScopeStatement* outerScope, SgType* type);
+
+     SgVariableDeclaration* buildMultiDimPointer(const std::string & pointerVariableName, SgVariableSymbol* variableSymbol, SgScopeStatement* outerScope, std::vector<SgVariableSymbol*> SymbolArray, int dimSize);
   // More refactoring of the code in the attribute evaluation.
   // bool detectVariableDeclarationOfSpecificType (SgNode* astNode, const std::string & className, SgInitializer* & initializer);
      SgInitializedName* detectVariableDeclarationOfSpecificType (SgNode* astNode, const std::string & className);

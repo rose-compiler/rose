@@ -6,7 +6,7 @@ SUBDIRS += fortran
 endif
 
 # Default header file search path
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 roseomp_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 roseompacc_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
@@ -60,7 +60,8 @@ OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         jacobi-ompacc.c \
         jacobi-ompacc-v2.c \
         jacobi-ompacc-opt1.c \
-        jacobi-ompacc-opt2.c 
+        jacobi-ompacc-opt2.c \
+	jacobi-ompacc-multiGPU.c 
 
 OMP_ACC_TESTCODES_CXX_REQUIRED_TO_PASS = \
         jacobi-ompacc2.cpp

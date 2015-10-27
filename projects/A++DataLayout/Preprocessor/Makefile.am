@@ -5,7 +5,7 @@ SUBDIRS = \
      IndexOffsetQuery \
      ArrayAssignmentStatementQuery
 
-INCLUDES = $(ROSE_INCLUDES) \
+AM_CPPFLAGS = $(ROSE_INCLUDES) \
 	 -I$(top_srcdir)/projects/A++DataLayout/include \
      -I$(top_srcdir)/projects/A++DataLayout/Preprocessor \
      -I$(top_srcdir)/projects/A++DataLayout/Preprocessor/ArrayAssignmentStatementQuery \

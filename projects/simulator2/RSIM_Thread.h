@@ -27,7 +27,7 @@ public:
         : runState_(INITIALIZING), process(process),
           real_thread(boost::detail::thread_move_t<boost::thread>(hostThread)), my_tid(-1),
           report_interval(10.0), do_coredump(true), show_exceptions(true),
-          robust_list_head_va(0), clear_child_tid(0) {
+          robustListHeadVa_(0), clearChildTidVa_(0) {
         memset(trace_mesg, 0, sizeof trace_mesg);
         ctor();
     }
@@ -319,10 +319,10 @@ public:
     /** Return print helper for printing syscall arguments.
      *
      * @{ */
-    Printer print(Sawyer::Message::Stream&);
-    Printer print(Sawyer::Message::Stream&, const uint32_t *args);
-    Printer print(Sawyer::Message::Stream&, const uint64_t *args);
-    Printer print(TracingFacility);
+    Printer print(Sawyer::Message::Stream&, const std::string &atEnd);
+    Printer print(Sawyer::Message::Stream&, const uint32_t *args, const std::string &atEnd);
+    Printer print(Sawyer::Message::Stream&, const uint64_t *args, const std::string &atEnd);
+    Printer print(TracingFacility, const std::string &atEnd);
     /** @} */
 
     
@@ -514,6 +514,22 @@ public:
      *  Thread safety:  This method is thread safe. */
     int futex_wake(rose_addr_t va, int nprocs, uint32_t bitset=0xffffffff);
 
+    /** Property: head of robust list for futexes.
+     *
+     * @{ */
+    rose_addr_t robustListHeadVa() const { return robustListHeadVa_; }
+    void robustListHeadVa(rose_addr_t va) { robustListHeadVa_ = va; }
+    /** @} */
+
+    /** Property: address where TID is cleared on exit.
+     *
+     *  See set_tid_address(2) man page for details.
+     *
+     * @{ */
+    rose_addr_t clearChildTidVa() const { return clearChildTidVa_; }
+    void clearChildTidVa(rose_addr_t va) { clearChildTidVa_ = va; }
+    /** @} */
+
 private:
     /** Obtain a key for a futex.  Futex queues are based on real addresses, not process virtual addresses.  In other words,
      *  the same futex can have two different addresses in two different processes.  In fact, it could even have two or more
@@ -547,7 +563,7 @@ public:
     /** Returns instruction at current IP, disassembling it if necessary, and caching it.  Since the simulated memory belongs
      *  to the entire RSIM_Process, all this method does is obtain the thread's current instruction address and then has the
      *  RSIM_Process disassemble the instruction. */
-    SgAsmX86Instruction *current_insn();
+    SgAsmInstruction *current_insn();
 
 
     /***************************************************************************************************************************
@@ -596,12 +612,10 @@ protected:
      *                                  Data members
      **************************************************************************************************************************/
 
-public: //FIXME
-    template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, size_t sz);
-
+private:
     /* Stuff related to threads */
-    uint32_t robust_list_head_va;               /* Address of robust futex list head. See set_robust_list() syscall */
-    uint32_t clear_child_tid;                   /* See set_tid_address(2) man page and clone() emulation */
+    rose_addr_t robustListHeadVa_;                      /* Address of robust futex list head. See set_robust_list() syscall */
+    rose_addr_t clearChildTidVa_;                       /* See set_tid_address(2) man page and clone() emulation */
 
 
 };

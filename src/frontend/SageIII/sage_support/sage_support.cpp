@@ -986,6 +986,12 @@ cout.flush();
              }
             else
              {
+               // SG (7/9/2015) When processing multiple files, we need to reset
+               // case_insensitive_semantics.  But this only sets it to the last
+               // file created.  During AST construction, it will need to be
+               // reset for each language.
+               SageBuilder::symbol_table_case_insensitive_semantics = false;
+
                if (CommandlineProcessing::isPHPFileNameSuffix(filenameExtension) == true)
                   {
                  // file = new SgSourceFile ( argv,  project );
@@ -2251,7 +2257,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
 
   // printf ("In SgFile::setupSourceFilename(const vector<string>& argv): p_sourceFileNameWithPath = %s \n",get_sourceFileNameWithPath().c_str());
   // tps: 08/18/2010, This should call StringUtility for WINDOWS- there are two implementations of this?
-  // set_sourceFileNameWithoutPath( ROSE::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
+  // set_sourceFileNameWithoutPath( rose::utility_stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
      set_sourceFileNameWithoutPath( StringUtility::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
 
      initializeSourcePosition(sourceFilename);
@@ -2378,6 +2384,11 @@ SgFile::callFrontEnd()
   // Build an argc,argv based C style commandline (we might not really need this)
      vector<string> argv = get_originalCommandLineArgumentList();
 
+#if 0
+     printf ("get_C_only()   = %s \n",get_C_only() ? "true" : "false");
+     printf ("get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
+#endif
+
 #if ROSE_INTERNAL_DEBUG
      if (ROSE_DEBUG > 9)
         {
@@ -2394,7 +2405,9 @@ SgFile::callFrontEnd()
   // This file is later written into the *.ti file so that the compilation can
   // be repeated as required to instantiate all function templates.
      std::string translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(argv,false,true);
-  // printf ("translatorCommandLineString = %s \n",translatorCommandLineString.c_str());
+#if 0
+     printf ("translatorCommandLineString = %s \n",translatorCommandLineString.c_str());
+#endif
      set_savedFrontendCommandLine(translatorCommandLineString);
 
   // display("At TOP of SgFile::callFrontEnd()");
@@ -2404,15 +2417,28 @@ SgFile::callFrontEnd()
   // the modification of the command line by SLA
      vector<string> localCopy_argv = argv;
   // printf ("DONE with copy of command line! \n");
-
+#if 0
+     std::string tmp2_translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(localCopy_argv,false,true);
+     printf ("tmp2_translatorCommandLineString = %s \n",tmp2_translatorCommandLineString.c_str());
+#endif
   // Process command line options specific to ROSE
   // This leaves all filenames and non-rose specific option in the argv list
      processRoseCommandLineOptions (localCopy_argv);
-
+#if 0
+     printf ("After processRoseCommandLineOptions(): get_C_only()   = %s \n",get_C_only() ? "true" : "false");
+     printf ("After processRoseCommandLineOptions(): get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
+#endif
   // DQ (6/21/2005): Process template specific options so that we can generated
   // code for the backend compiler (this processing is backend specific).
      processBackendSpecificCommandLineOptions (localCopy_argv);
-
+#if 0
+     printf ("After processBackendSpecificCommandLineOptions(): get_C_only()   = %s \n",get_C_only() ? "true" : "false");
+     printf ("After processBackendSpecificCommandLineOptions(): get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
+#endif
+#if 0
+     std::string tmp4_translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(localCopy_argv,false,true);
+     printf ("tmp4_translatorCommandLineString = %s \n",tmp4_translatorCommandLineString.c_str());
+#endif
   // display("AFTER processRoseCommandLineOptions in SgFile::callFrontEnd()");
 
   // Use ROSE buildCommandLine() function
@@ -2421,20 +2447,34 @@ SgFile::callFrontEnd()
   // ROSE_ASSERT (inputCommandLine != NULL);
      vector<string> inputCommandLine;
 
+#if 0
+     printf ("Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
+#endif
+
   // Build the commandline for EDG
-  // printf ("Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
-  if (get_C_only() ||
-      get_Cxx_only() ||
-      get_Cuda_only() ||
-      get_OpenCL_only()
-  ) {
-      #ifndef ROSE_USE_CLANG_FRONTEND
-         build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
-      #else
-         build_CLANG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
-      #endif
-  }
-  // printf ("DONE: Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
+     if (get_C_only() || get_Cxx_only() || get_Cuda_only() || get_OpenCL_only() )
+        {
+#ifndef ROSE_USE_CLANG_FRONTEND
+       // printf ("Calling build_EDG_CommandLine() \n");
+          build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
+#else
+          build_CLANG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("Failed to call build_EDG_CommandLine() (not a C, C++, Cuda, or OpenCL program) \n");
+#endif
+        }
+
+#if 0
+     printf ("DONE: Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
+#endif
+     std::string tmp_translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,true);
+#if 0
+     printf ("tmp_translatorCommandLineString = %s \n",tmp_translatorCommandLineString.c_str());
+#endif
 
   // DQ (10/15/2005): This is now a single C++ string (and not a list)
   // Make sure the list of file names is allocated, even if there are no file names in the list.
@@ -2467,7 +2507,7 @@ SgFile::callFrontEnd()
       // should be "disable_edg" instead of "disable_edg_backend".
           get_disable_edg_backend() == false && get_new_frontend() == true)
         {
-       // ROSE::new_frontend = true;
+       // rose::new_frontend = true;
 
        // We can either use the newest EDG frontend separately (useful for debugging)
        // or the EDG frontend that is included in SAGE III (currently EDG 3.3).
@@ -2489,7 +2529,7 @@ SgFile::callFrontEnd()
 
       // Use the current version of the EDG frontend from EDG (or any other version)
       // abort();
-         printf ("ROSE::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
+         printf ("rose::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
 
          std::string frontEndCommandLineString;
          if ( get_KCC_frontend() == true )
@@ -2527,9 +2567,9 @@ SgFile::callFrontEnd()
             // DQ (9/2/2008): Factored out the details of building the AST for Source code (SgSourceFile IR node) and Binaries (SgBinaryComposite IR node)
             // Note that making buildAST() a virtual function does not appear to solve the problems since it is called form the base class.  This is
             // awkward code which is temporary.
-
-            // printf ("Before calling buildAST(): this->class_name() = %s \n",this->class_name().c_str());
-
+#if 0
+               printf ("Before calling buildAST(): this->class_name() = %s \n",this->class_name().c_str());
+#endif
                switch (this->variantT())
                   {
                     case V_SgFile:
@@ -2561,7 +2601,9 @@ SgFile::callFrontEnd()
              }
         }
 
-  // printf ("After calling buildAST(): this->class_name() = %s \n",this->class_name().c_str());
+#if 0
+     printf ("After calling buildAST(): this->class_name() = %s \n",this->class_name().c_str());
+#endif
 
   // if there are warnings report that there are in the verbose mode and continue
      if (frontendErrorLevel > 0)
@@ -3088,6 +3130,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
      // FMZ(7/27/2010): check command line options for Rice CAF syntax
      //  -rose:CoArrayFortran, -rose:CAF, -rose:caf
+
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // insensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = true;
 
      bool using_rice_caf = false;
      vector<string> ArgTmp = get_project()->get_originalCommandLineArgumentList();
@@ -4229,6 +4275,10 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
         return 0;
      }
 
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
+
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
      ROSE_ASSERT(get_requires_C_preprocessor() == false);
 
@@ -4495,6 +4545,10 @@ SgSourceFile::build_X10_AST(const vector<string>& p_argv)
         return 0;
     }
 
+    // SG (7/9/2015) In case of a mixed language project, force case
+    // sensitivity here.
+    SageBuilder::symbol_table_case_insensitive_semantics = false;
+
     ROSE_ASSERT(get_requires_C_preprocessor() == false);
 
     vector<string> frontEndCommandLine;
@@ -4716,6 +4770,10 @@ SgSourceFile::processCppLinemarkers()
 int
 SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputCommandLine )
    {
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
+
      std::string frontEndCommandLineString;
      frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
 
@@ -4770,6 +4828,9 @@ SgSourceFile::build_PHP_AST()
          int frontendErrorLevel = -1;
 #else
 #ifdef ROSE_BUILD_PHP_LANGUAGE_SUPPORT
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
      int frontendErrorLevel = php_main(phpFileName, this);
 #else
      int frontendErrorLevel = 99;
@@ -4785,6 +4846,9 @@ SgSourceFile::build_Python_AST()
    {
      string pythonFileName = this->get_sourceFileNameWithPath();
 #ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+     // SG (7/9/2015) In case of a mixed language project, force case
+     // sensitivity here.
+     SageBuilder::symbol_table_case_insensitive_semantics = false;
      int frontendErrorLevel = python_main(pythonFileName, this);
 #else
      int frontendErrorLevel = 99;
@@ -5177,7 +5241,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argc,argv);
   // ROSE_ASSERT (fileList.size() == 1);
   // p_sourceFileNameWithPath    = *(fileList.begin());
-  // p_sourceFileNameWithoutPath = ROSE::stripPathFromFileName(p_sourceFileNameWithPath.c_str());
+  // p_sourceFileNameWithoutPath = rose::utility_stripPathFromFileName(p_sourceFileNameWithPath.c_str());
 
 #if 1
   // ROSE_ASSERT (get_unparse_output_filename().empty() == true);
@@ -5208,7 +5272,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 #endif
                if (project->get_unparse_in_same_directory_as_input_file() == true)
                   {
-                    outputFilename = ROSE::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
+                    outputFilename = rose::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
 
                     printf ("In SgFile::compileOutput(): Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
 

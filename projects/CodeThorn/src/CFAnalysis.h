@@ -21,6 +21,7 @@ namespace SPRAY {
 class CFAnalysis {
  public:
   CFAnalysis(SPRAY::Labeler* l);
+  CFAnalysis(SPRAY::Labeler* l, bool createLocalEdge);
   Label getLabel(SgNode* node);
   SgNode* getNode(Label label);
   Label initialLabel(SgNode* node);
@@ -43,8 +44,19 @@ class CFAnalysis {
   void intraInterFlow(Flow&, InterFlow&);
   Flow controlDependenceGraph(Flow& controlFlow);
   int reduceNode(Flow& flow, Label lab);
+  // eliminates only block begin nodes, but not block end nodes.
   int reduceBlockBeginNodes(Flow& flow);
+  // eliminates only block end nodes, but not block begin nodes.
+  int reduceBlockEndNodes(Flow& flow);
+  // eliminates block begin and block end nodes.
+  int reduceBlockBeginEndNodes(Flow& flow);
+  /*
+    eliminates empty codition nodes. This requires that only one successor is left in the icfg.
+    this function can be applied after optimizations (e.g. empty blocks have been removed from the icfg).
+  */
   int reduceEmptyConditionNodes(Flow& flow);
+  // calls functions reduceBlockBeginEndNodes and reduceEmptyConditionNodes (in this order).
+  int optimizeFlow(Flow& flow);
 
   /*! 
    * This function performs inlining on the ICFG by reducing
@@ -54,10 +66,15 @@ class CFAnalysis {
    */
   int inlineTrivialFunctions(Flow& flow);
   size_t deleteFunctionCallLocalEdges(Flow& flow);
+  static SgStatement* getFirstStmtInBlock(SgBasicBlock* block);
+  static SgStatement* getLastStmtInBlock(SgBasicBlock* block);
+  void setCreateLocalEdge(bool le);
+  bool getCreateLocalEdge();
  private:
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
   SPRAY::Labeler* labeler;
+  bool _createLocalEdge;
 };    
 
 } // end of namespace CodeThorn

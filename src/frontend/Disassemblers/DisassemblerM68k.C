@@ -4810,6 +4810,7 @@ DisassemblerM68k::init()
     set_wordsize(2);
     set_alignment(2);
     set_sex(ByteOrder::ORDER_MSB);
+    callingConventions(CallingConvention::dictionaryM68k());
 
     idis_table.resize(17);
 

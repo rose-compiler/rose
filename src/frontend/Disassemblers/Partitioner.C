@@ -8,6 +8,7 @@
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 #include "BinaryLoader.h"
+#include "MemoryCellList.h"
 #include "PartialSymbolicSemantics.h"           // FIXME: expensive to compile; remove when no longer needed [RPM 2012-05-06]
 #include "stringify.h"
 
@@ -2884,6 +2885,8 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
 /** Adds first basic block to empty function before we start discovering blocks of any other functions. This
  *  protects against cases where one function simply falls through to another within a basic block, such as:
+ *
+ *  @code
  *   08048460 <foo>:
  *    8048460:       55                      push   ebp
  *    8048461:       89 e5                   mov    ebp,esp
@@ -2898,6 +2901,7 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
  *    8048480:       55                      push   ebp
  *    8048481:       89 e5                   mov    ebp,esp
  *    8048483:       83 ec 08                sub    esp,0x8
+ *  @endcode
  */
 void
 Partitioner::discover_first_block(Function *func)

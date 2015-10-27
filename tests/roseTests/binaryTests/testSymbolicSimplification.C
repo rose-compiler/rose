@@ -6,6 +6,7 @@
 using namespace rose;
 using namespace rose::BinaryAnalysis;
 
+#if 0 // [Robb P. Matzke 2015-06-25]: cannot be tested automatically since Jenkins might not have Yices
 static void
 test_yices_linkage() {
     if (unsigned avail = YicesSolver::available_linkage()) {
@@ -52,6 +53,7 @@ test_yices_linkage() {
         }
     }
 }
+#endif
 
 static void
 test_add_simplifications() {

@@ -632,7 +632,9 @@ SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
   // DQ (1/2/2007): The use of _astInterface_Tmp.c does not provide a unique filename
   // to support testing of the loop processor in parallel.  This is modified below to
   // make the name unique for each process.
-     char *uniqueFilename = "/tmp/_astInterface_Tmp_XXXXXX.c";
+     // MS 11/22/2015: introduced array to avoid deprecated conversion from string literal to char*
+     char uniqueFilenameDefault[] = "/tmp/_astInterface_Tmp_XXXXXX.c";
+     char *uniqueFilename = uniqueFilenameDefault;
      #ifdef _MSC_VER
      uniqueFilename = mktemp(uniqueFilename);
      if (uniqueFilename == NULL) return NULL;
@@ -896,7 +898,7 @@ globalUnparseToString_Fortran (const SgNode* astNode, SgUnparse_Info* inputUnpar
 
        // DQ (5/31/2005): Get the filename from a traversal back through the parents to the SgFile
        // fileNameOfStatementsToUnparse = locatedNode->getFileName();
-       // fileNameOfStatementsToUnparse = ROSE::getFileNameByTraversalBackToFileNode(locatedNode);
+       // fileNameOfStatementsToUnparse = rose::getFileNameByTraversalBackToFileNode(locatedNode);
           if (locatedNode->get_parent() == NULL)
              {
             // DQ (7/29/2005):
@@ -919,7 +921,7 @@ globalUnparseToString_Fortran (const SgNode* astNode, SgUnparse_Info* inputUnpar
                  else
                   {
 #if 1
-                    fileNameOfStatementsToUnparse = ROSE::getFileNameByTraversalBackToFileNode(locatedNode);
+                    fileNameOfStatementsToUnparse = rose::getFileNameByTraversalBackToFileNode(locatedNode);
 #else
                     SgSourceFile* sourceFile = TransformationSupport::getSourceFile(locatedNode);
                     ROSE_ASSERT(sourceFile != NULL);
@@ -1065,8 +1067,8 @@ globalUnparseToString_Fortran (const SgNode* astNode, SgUnparse_Info* inputUnpar
                     SgFile* file = project->get_fileList()[i];
                     ROSE_ASSERT(file != NULL);
                     string unparsedFileString = globalUnparseToString_Fortran(file,inputUnparseInfoPointer);
-                 // string prefixString       = string("/* TOP:")      + string(ROSE::getFileName(file)) + string(" */ \n");
-                 // string suffixString       = string("\n/* BOTTOM:") + string(ROSE::getFileName(file)) + string(" */ \n\n");
+                 // string prefixString       = string("/* TOP:")      + string(rose::getFileName(file)) + string(" */ \n");
+                 // string suffixString       = string("\n/* BOTTOM:") + string(rose::getFileName(file)) + string(" */ \n\n");
                     string prefixString       = string("/* TOP:")      + file->getFileName() + string(" */ \n");
                     string suffixString       = string("\n/* BOTTOM:") + file->getFileName() + string(" */ \n\n");
                     returnString += prefixString + unparsedFileString + suffixString;
@@ -1165,8 +1167,8 @@ globalUnparseToString_Fortran (const SgNode* astNode, SgUnparse_Info* inputUnpar
                               SgFile* file = &(project->get_file(i));
                               ROSE_ASSERT(file != NULL);
                               string unparsedFileString = globalUnparseToString_OpenMPSafe(file,inputUnparseInfoPointer);
-                              string prefixString       = string("/* TOP:")      + string(ROSE::getFileName(file)) + string(" */ \n");
-                              string suffixString       = string("\n/* BOTTOM:") + string(ROSE::getFileName(file)) + string(" */ \n\n");
+                              string prefixString       = string("/* TOP:")      + string(rose::getFileName(file)) + string(" */ \n");
+                              string suffixString       = string("\n/* BOTTOM:") + string(rose::getFileName(file)) + string(" */ \n\n");
                               returnString += prefixString + unparsedFileString + suffixString;
                             }
                          break;

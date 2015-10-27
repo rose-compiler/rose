@@ -1,6 +1,0 @@
-*.o
-examples/foo
-examples/foo-tilek
-src/compiler
-src/rose_*.c
-src/*-kernel.c

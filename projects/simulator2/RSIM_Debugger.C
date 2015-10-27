@@ -5,19 +5,28 @@
 
 #include "RSIM_Debugger.h"
 
-#include "rose_strtoull.h"
-#include "BaseSemantics2.h"
+#include <Diagnostics.h>
+#include <rose_strtoull.h>
+#include <BaseSemantics2.h>
 #include <Partitioner2/Utility.h>
 #include <boost/algorithm/string/trim.hpp>
-#include <readline/readline.h>
-#include <readline/history.h>
 #include <stringify.h>
+
+#ifdef ROSE_HAVE_LIBREADLINE
+# include <readline/readline.h>
+# include <readline/history.h>
+#else
+# include <rose_getline.h>
+#endif
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;
+using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
 namespace RSIM_Debugger {
+
+static Sawyer::Message::Facility mlog;
 
 // The main debugger
 class Debugger {
@@ -26,8 +35,10 @@ class Debugger {
     bool detached_;                                     // don't ask for commands
     size_t singleStep_;                                 // stop when this hits zero
     AddressIntervalSet breakPointVas_;                  // instruction addresses to stop at
-    std::set<X86InstructionKind> breakPointKinds_;      // instruction kinds to stop at
+    std::set<unsigned> breakPointKinds_;                // instruction kinds to stop at
     AddressIntervalSet breakPointSyscalls_;             // syscalls numbers (not addresses) at which to break
+    AddressIntervalSet breakPointFds_;                  // file descriptors on which to stop
+
 public:
     Debugger(std::istream &in, std::ostream &out): in_(in), out_(out), detached_(false), singleStep_(0) {}
 
@@ -40,8 +51,7 @@ public:
                 break;
             if (breakPointVas_.exists(args.insn->get_address()))
                 break;
-            if (isSgAsmX86Instruction(args.insn) &&
-                breakPointKinds_.find(isSgAsmX86Instruction(args.insn)->get_kind()) != breakPointKinds_.end())
+            if (breakPointKinds_.find(args.insn->get_anyKind()) != breakPointKinds_.end())
                 break;
             return false;
         } while (0);
@@ -50,24 +60,136 @@ public:
     }
 
     // Should debugger stop for this system call?
-    bool shouldStop(const RSIM_Callbacks::SyscallCallback::Args &args) {
+    bool shouldStop(const RSIM_Simulator::SystemCall::Callback::Args &args) {
         if (detached_)
             return false;
-        if (!breakPointSyscalls_.exists(args.callno))
-            return false;
-        singleStep_ = -1;
-        return true;
+
+        if (breakPointSyscalls_.exists(args.callno)) {
+            singleStep_ = -1;
+            return true;
+        }
+        
+        if (!breakPointFds_.isEmpty()) {
+            std::vector<int> fds;
+            if (args.thread->get_process()->wordSize() == 64) {
+                switch (args.callno) {
+                    case 0:                             // read
+                    case 1:                             // write
+                    case 3:                             // close
+                    case 5:                             // fstat
+                    case 16:                            // ioctl
+                    case 17:                            // pread64
+                    case 18:                            // pwrite64
+                    case 19:                            // readv
+                    case 20:                            // writev
+                    case 32:                            // dup
+                    case 42:                            // connect
+                    case 43:                            // accept
+                    case 44:                            // sendto
+                    case 45:                            // recvfrom
+                    case 46:                            // sendmsg
+                    case 47:                            // recvmsg
+                    case 49:                            // bind
+                    case 50:                            // listen
+                    case 51:                            // getsockname
+                    case 52:                            // getpeername
+                    case 54:                            // setsockopt
+                    case 55:                            // getsockopt
+                    case 72:                            // fcntl
+                    case 73:                            // flock
+                    case 74:                            // fsync
+                    case 75:                            // fdatasync
+                    case 77:                            // ftruncate
+                    case 78:                            // getdents
+                    case 81:                            // fchdir
+                    case 91:                            // fchmod
+                    case 93:                            // fchown
+                    case 138:                           // fstatfs
+                    case 187:                           // readahead
+                    case 190:                           // fsetxattr
+                    case 193:                           // fgetxattr
+                    case 196:                           // flistxattr
+                    case 199:                           // fremovexattr
+                    case 214:                           // epoll_ctl_old
+                    case 215:                           // epoll_wait_old
+                    case 217:                           // getdents64
+                    case 221:                           // fadvise64
+                    case 232:                           // epoll_wait
+                    case 233:                           // epoll_ctl
+                    case 257:                           // openat
+                    case 258:                           // mkdirat
+                    case 259:                           // mknodat
+                    case 260:                           // chownat
+                    case 261:                           // futimesat
+                    case 262:                           // newfstatat
+                    case 263:                           // unlinkat
+                    case 267:                           // readlinkat
+                    case 268:                           // fchmodat
+                    case 269:                           // faccessat
+                    case 277:                           // syncfilerange
+                    case 278:                           // vmsplice
+                    case 280:                           // utimensat
+                    case 281:                           // epoll_pwait
+                    case 282:                           // signalfd
+                    case 285:                           // fallocate
+                    case 286:                           // timerfd_settime
+                    case 287:                           // timerfd_gettime
+                    case 289:                           // signalfd4
+                    case 295:                           // preadv
+                    case 296:                           // pwritev
+                        fds.push_back(args.thread->syscall_arg(0));
+                        break;
+                    case 7:                             // poll
+                    case 23:                            // select
+                    case 270:                           // pselect6
+                    case 271:                           // ppoll
+                        TODO("[Robb P. Matzke 2015-06-29]");
+                    case 9:                             // mmap
+                        fds.push_back(args.thread->syscall_arg(4));
+                        break;
+                    case 33:                            // dup2
+                    case 40:                            // sendfile
+                    case 276:                           // tee
+                    case 292:                           // dup3
+                        fds.push_back(args.thread->syscall_arg(0));
+                        fds.push_back(args.thread->syscall_arg(1));
+                        break;
+                    case 264:                           // renameat
+                    case 265:                           // linkat
+                    case 275:                           // splice
+                        fds.push_back(args.thread->syscall_arg(0));
+                        fds.push_back(args.thread->syscall_arg(2));
+                        break;
+                    case 266:                           // symlinkat
+                        fds.push_back(args.thread->syscall_arg(1));
+                        break;
+                    default:
+                        // not a file descriptor syscall
+                        break;
+                }
+            } else {
+                TODO("file descriptor breakpoints not implemented for 32-bit"); // [Robb P. Matzke 2015-06-29]
+            }
+            BOOST_FOREACH (int fd, fds) {
+                if (breakPointFds_.exists(fd)) {
+                    singleStep_ = -1;
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
     
     // Read-eval-print loop when stopped for an instruction
     bool repl(const RSIM_Callbacks::InsnCallback::Args &args) {
-        out_ <<"stopped at " <<unparseInstructionWithAddress(args.insn) <<"\n";
+        mlog[INFO] <<"stopped at " <<unparseInstructionWithAddress(args.insn) <<"\n";
         return repl(args.thread);
     }
 
     // Read-eval-print loop when stopped for a syscall
-    bool repl(const RSIM_Callbacks::SyscallCallback::Args &args) {
-        out_ <<"stopped at syscall " <<args.callno <<"\n";
+    bool repl(const RSIM_Simulator::SystemCall::Callback::Args &args) {
+        mlog[INFO] <<"stopped at syscall " <<args.callno <<"\n";
         return repl(args.thread);
     }
     
@@ -160,7 +282,16 @@ public:
                 }
             } r;
 
+#if ROSE_HAVE_LIBREADLINE
             r.readline_buf = readline(prompt.c_str());
+#else
+            size_t nAlloc = 0;
+            if (isatty(0))
+                std::cout <<prompt;
+            if (0==rose_getline(&r.readline_buf, &nAlloc, stdin))
+                r.readline_buf = NULL;
+#endif
+
             if (!r.readline_buf)
                 return std::vector<std::string>(1, "quit");
             char *s = r.readline_buf;
@@ -168,7 +299,9 @@ public:
             if ('#'==*s || !*s)
                 continue;
 
+#if ROSE_HAVE_LIBREADLINE
             add_history(r.readline_buf);
+#endif
             return splitCommand(s);
         }
     }
@@ -216,7 +349,7 @@ public:
                 regname=="fioff" || regname=="foseg" || regname=="fooff" || regname=="fop"   ||
                 regname=="mxcsr")
                 continue;                               // don't compare some registers
-            const RegisterDescriptor *reg = thread->get_process()->get_disassembler()->get_registers()->lookup(regname);
+            const RegisterDescriptor *reg = thread->get_process()->disassembler()->get_registers()->lookup(regname);
             if (!reg)
                 throw std::runtime_error("unknown register \"" + StringUtility::cEscape(regname) + "\"");
             rose_addr_t gdbRegValue = parseInteger(words[1]);
@@ -246,7 +379,7 @@ public:
             cmd.erase(cmd.begin());
             registerCheckGdbCommand(thread, cmd);
         } else {
-            const RegisterDescriptor *reg = thread->get_process()->get_disassembler()->get_registers()->lookup(cmd[0]);
+            const RegisterDescriptor *reg = thread->get_process()->disassembler()->get_registers()->lookup(cmd[0]);
             if (!reg) {
                 out_ <<"no such register \"" <<StringUtility::cEscape(cmd[0]) <<"\"\n";
                 return;
@@ -387,10 +520,10 @@ public:
         // Parse optional size letter
         size_t nBytes = 0;
         switch (*s) {
-            case 'b': nBytes = 1; ++s; break;
-            case 'h': nBytes = 2; ++s; break;
-            case 'w': nBytes = 4; ++s; break;
-            case 'g': nBytes = 8; ++s; break;
+            case 'b': nBytes = 1; ++s; break;           // byte
+            case 'h': nBytes = 2; ++s; break;           // x86 "word"; m68k "word"
+            case 'w': nBytes = 4; ++s; break;           // x86 "quadword"; m68k "long"
+            case 'g': nBytes = 8; ++s; break;           // x86 "doublequadword"; m68k "double"
             default: nBytes = thread->get_process()->wordSize() / 8; break;
         }
         if ('f'==fmt && nBytes != sizeof(float) && nBytes != sizeof(double))
@@ -406,7 +539,7 @@ public:
         // Display results
         for (size_t i=0; i<n; ++i) {
 
-            // Read value and convert bytes to little endian if necessary
+            // Read value and convert bytes to host order
             uint8_t bytes[16];
             memset(bytes, 0xaa, sizeof bytes);          // debugging
             size_t nRead = 0;
@@ -415,8 +548,23 @@ public:
                 nRead = thread->get_process()->get_memory().at(va).limit(nBytes).read(bytes).size();
                 if (nRead != nBytes)
                     throw std::runtime_error("short read");
-                for (size_t j=0; j<nBytes; ++j)
-                    value |= uint64_t(bytes[j]) << (j*8);
+                ByteOrder::Endianness guestOrder = thread->get_process()->disassembler()->get_sex();
+                ASSERT_require(guestOrder==ByteOrder::ORDER_LSB || guestOrder==ByteOrder::ORDER_MSB);
+                ByteOrder::Endianness hostOrder = ByteOrder::host_order();
+                if (guestOrder != hostOrder)
+                    std::reverse(bytes, bytes+nRead);
+                switch (hostOrder) {
+                    case ByteOrder::ORDER_LSB:
+                        for (size_t j=0; j<nBytes; ++j)
+                            value |= uint64_t(bytes[j]) << (j*8);
+                        break;
+                    case ByteOrder::ORDER_MSB:
+                        for (size_t j=0; j<nBytes; ++j)
+                            value = (value << 8) | bytes[j];
+                        break;
+                    default:
+                        ASSERT_not_reachable("invalid byte order");
+                }
             }
 
             out_ <<StringUtility::addrToString(va) <<": ";
@@ -533,6 +681,7 @@ public:
     //   [delete] <interval>            -- set/delete breakpoints at specified instruction addresses
     //   [delete] insn <insn_kind>      -- set/delete breakpoint for certain kind of insn (e.g., "insn rdtsc")
     //   [delete] syscall [<interval>]  -- set/delete breakpoint when this system call number (or any) is about to occur
+    //   [delete] fd [<interval>]       -- set/delete breakpoint for file descriptors (or any if no interval)
     void breakPointCommands(RSIM_Thread *thread, std::vector<std::string> &cmd) {
         const AddressInterval allAddresses = AddressInterval::whole();
         if (cmd.empty()) {
@@ -547,8 +696,10 @@ public:
             }
             if (!breakPointKinds_.empty()) {
                 out_ <<"instruction types:\n";
-                BOOST_FOREACH (X86InstructionKind kind, breakPointKinds_)
+                BOOST_FOREACH (unsigned kind, breakPointKinds_) {
+                    // FIXME[Robb P. Matzke 2015-07-31]: handle other than x86 instructions
                     out_ <<"  " <<stringifyX86InstructionKind(kind, "x86_") <<"\n";
+                }
             }
             if (!breakPointSyscalls_.isEmpty()) {
                 out_ <<"system calls:\n";
@@ -556,6 +707,20 @@ public:
                     out_ <<"  all\n";
                 } else {
                     BOOST_FOREACH (const AddressInterval &interval, breakPointSyscalls_.intervals()) {
+                        if (interval.isSingleton()) {
+                            out_ <<"  " <<interval.least() <<"\n";
+                        } else {
+                            out_ <<"  " <<interval.least() <<" through " <<interval.greatest() <<"\n";
+                        }
+                    }
+                }
+            }
+            if (!breakPointFds_.isEmpty()) {
+                out_ <<"file descriptors:\n";
+                if (breakPointFds_.hull() == allAddresses && breakPointFds_.size() == allAddresses.size()) {
+                    out_ <<"  all\n";
+                } else {
+                    BOOST_FOREACH (const AddressInterval &interval, breakPointFds_.intervals()) {
                         if (interval.isSingleton()) {
                             out_ <<"  " <<interval.least() <<"\n";
                         } else {
@@ -593,6 +758,15 @@ public:
                 } else {
                     breakPointSyscalls_.erase(interval);
                 }
+            } else if (cmd[0]=="fd" || cmd[0]=="file" || cmd[0]=="files") {
+                AddressInterval interval = allAddresses;
+                if (cmd.size() > 1)
+                    interval = parseAddressInterval(cmd[1]);
+                if (insert) {
+                    breakPointFds_.insert(interval);
+                } else {
+                    breakPointFds_.erase(interval);
+                }
             } else {
                 AddressInterval interval = parseAddressInterval(cmd[0]);
                 if (insert) {
@@ -620,7 +794,7 @@ public:
 };
 
 // Invoke debugger per system call
-class PerSyscall: public RSIM_Callbacks::SyscallCallback {
+class PerSyscall: public RSIM_Simulator::SystemCall::Callback {
     Debugger *debugger_;
 public:
     PerSyscall(Debugger *debugger): debugger_(debugger) {}
@@ -636,11 +810,20 @@ public:
 // Attach interactive debugger to the simulator
 void
 attach(RSIM_Simulator &simulator, std::istream &in, std::ostream &out) {
+    static size_t ncalls = 0;
+    if (1 == ++ncalls)
+        mlog = Sawyer::Message::Facility("RSIM_Debugger", Diagnostics::destination);
+
     if (simulator.get_process())
         throw std::runtime_error("debugger must be attached before process is loaded"); // FIXME[Robb P. Matzke 2015-06-05]
     Debugger *debugger = new Debugger(in, out);
     simulator.install_callback(new PerInstruction(debugger));
-    simulator.install_callback(new PerSyscall(debugger));
+
+    PerSyscall *perSyscall = new PerSyscall(debugger);
+    for (size_t i=0; i<512; ++i) {
+        if (simulator.syscall_is_implemented(i))
+            simulator.syscall_implementation(i)->enter.append(perSyscall);
+    }
 }
 
 } // namespace

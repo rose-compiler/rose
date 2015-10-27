@@ -488,16 +488,6 @@ OutputGroup::print(std::ostream &o, const std::string &title, const std::string 
     o <<prefix <<"ninsns " <<ninsns <<"\n";
 }
 
-void
-OutputGroup::print(RTS_Message *m, const std::string &title, const std::string &prefix) const
-{
-    if (m && m->get_file()) {
-        std::ostringstream ss;
-        print(ss, title, prefix);
-        m->mesg("%s", ss.str().c_str());
-    }
-}
-
 OutputGroups::~OutputGroups()
 {
     for (IdOutputMap::iterator i=ogroups.begin(); i!=ogroups.end(); ++i)

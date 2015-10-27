@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/symbolicAnalysisFramework/common.for.dep.libs
 
-#INCLUDES = $(ROSE_INCLUDES) \
+#AM_CPPFLAGS = $(ROSE_INCLUDES) \
 #           -I$(srcdir)/../external
 
 # Saf is the short for symbolic analysis framework.

@@ -1,24 +1,13 @@
-/** 
- * \file lib/sage/namespace-declaration.cpp
- *
- * \author Tristan Vanderbruggen
- *
- */
 
 #include "MFB/Sage/namespace-declaration.hpp"
 
 #include "sage3basic.h"
 
-#ifndef PATCHING_SAGE_BUILDER_ISSUES
-#  define PATCHING_SAGE_BUILDER_ISSUES 1
+#ifndef VERBOSE
+# define VERBOSE 0
 #endif
 
 namespace MFB {
-
-/*!
- * \addtogroup grp_mfb_sage_nscpdecl
- * @{
-*/
 
 bool ignore(const std::string & name);
 
@@ -47,7 +36,7 @@ bool Driver<Sage>::resolveValidParent<SgNamespaceSymbol>(SgNamespaceSymbol * sym
 }
 
 template <>
-void Driver<Sage>::loadSymbols<SgNamespaceDeclarationStatement>(unsigned file_id, SgSourceFile * file) {
+void Driver<Sage>::loadSymbols<SgNamespaceDeclarationStatement>(size_t file_id, SgSourceFile * file) {
   std::vector<SgNamespaceDeclarationStatement *> namespace_decl = SageInterface::querySubTree<SgNamespaceDeclarationStatement>(file);
 
   std::set<SgNamespaceSymbol *> namespace_symbols;
@@ -66,11 +55,13 @@ void Driver<Sage>::loadSymbols<SgNamespaceDeclarationStatement>(unsigned file_id
   std::set<SgNamespaceSymbol *>::iterator it;
   for (it = namespace_symbols.begin(); it != namespace_symbols.end(); it++)
     if (resolveValidParent<SgNamespaceSymbol>(*it)) {
-//    std::cout << "Namespace Symbol : " << (*it) << ", name = " << (*it)->get_name().getString() << ", scope = " << (*it)->get_scope() << "(" << (*it)->get_scope()->class_name() << ")" << std::endl;
+#if VERBOSE
+      std::cerr << "[Info] (MFB::Driver<Sage>::loadSymbols<SgNamespaceDeclarationStatement>) Add: " << (*it)->get_name().getString() << " from File #" << file_id << std::endl;
+#endif
     }
 }
 
-Sage<SgNamespaceDeclarationStatement>::object_desc_t::object_desc_t(const std::string & name_, SgNamespaceSymbol * parent_, unsigned file_id_) :
+Sage<SgNamespaceDeclarationStatement>::object_desc_t::object_desc_t(const std::string & name_, SgNamespaceSymbol * parent_, size_t file_id_) :
   name(name_),
   parent(parent_),
   file_id(file_id_)
@@ -127,7 +118,7 @@ Sage<SgNamespaceDeclarationStatement>::build_scopes_t Driver<Sage>::getBuildScop
 
   assert(desc.file_id != 0);
 
-  std::map<unsigned, SgSourceFile *>::iterator it_file = id_to_file_map.find(desc.file_id);
+  std::map<size_t, SgSourceFile *>::iterator it_file = id_to_file_map.find(desc.file_id);
   assert(it_file != id_to_file_map.end());
   SgSourceFile * file = it_file->second;
   assert(file != NULL);
@@ -213,14 +204,6 @@ void Sage<SgNamespaceDeclarationStatement>::setDefinition(SgNamespaceSymbol * sy
 
   it_per_file_namespace_decl->second.insert(std::pair<SgSourceFile *, SgNamespaceDeclarationStatement *>(file, decl));
 }
-
-/*
-void Sage<SgNamespaceDeclarationStatement>::init() {
-  
-}
-*/
-
-/** @} */
 
 }
 

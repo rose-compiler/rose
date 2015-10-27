@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <bROwSE/WBasicBlock.h>
 #include <bROwSE/WBasicBlockInsns.h>
 #include <bROwSE/WBasicBlockSummary.h>

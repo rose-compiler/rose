@@ -6,22 +6,22 @@
 \class SgVariableDeclaration
 \brief This class represents the concept of a C or C++ variable declaration.
 
-   A variable declaration can be either a forward declaration (specified as "extern")
+A variable declaration can be either a forward declaration (specified as "extern")
 or a defining declaration (typical case).  Because of this separation (as with classes,
 functions, etc.) the scope of a variable must be stored explicitly because name
 qualification can associate a definition in a scope different from the original
 declaration (see test2005_34.C for examples).
 
 \internal Since multiple variables may be declared in a single variable declaration,
-    the scope information is held in the SgInitializedName object directly, and not the 
-    SgVariableDeclaration.  The scope of a SgVariableDeclaration is ...
+the scope information is held in the SgInitializedName object directly, and not the 
+SgVariableDeclaration.  The scope of a SgVariableDeclaration is ...
 
 \todo Finish explaination of variable declaration, relationship to variable definition,
-    and the scope issue.
+and the scope issue.
 
 \todo template static variable declaration are instantiated and this is at least sometimes
-    an error (at least when not part of a transformation). See test2005_69.C for example
-    of this problem.
+an error (at least when not part of a transformation). See test2005_69.C for example
+of this problem.
 
 \sa
 \ref SgVariableDeclaration_usage  "Example of using a SgVariableDeclaration object"
@@ -35,7 +35,7 @@ declaration (see test2005_34.C for examples).
 /*! \var SgVariableDeclaration::p_baseTypeDefiningDeclaration
 \brief This is used to traverse type definitions within variable declarations.
 
-    In cases where a class or other named type is defined within (and as the
+In cases where a class or other named type is defined within (and as the
 base type of) a variable declaration, the traversal code must be able to
 traverse this definition. The traversal code computes the appropriate value
 for this pointer when needed.
@@ -45,27 +45,27 @@ for this pointer when needed.
 /*! \var SgVariableDeclaration::p_variables
 \brief This is an STL list of pointers to SgInitializedName objects.
 
-    Each variable is a SgInitializedName object, their can be a list of
+Each variable is a SgInitializedName object, their can be a list of
 then, so this list holds that collection of variables.
 
 */
 
 /*! \var SgVariableDeclaration::p_variableDeclarationContainsBaseTypeDefiningDeclaration
 \brief This bool records if the variable declaration has the explicit defining declaration
-    associated with its type.
+associated with its type.
 
-    Since types are shared, we can't store such information in the type (else each 
+Since types are shared, we can't store such information in the type (else each 
 reference to the type would trigger the output of the full definition of the type).
 The value of this variable is most typically false.
 
 \todo Provide an example of where p_variableDeclarationContainsBaseTypeDefiningDeclaration
-    is true and where it is false.
+is true and where it is false.
 */
 
 /*! \var SgVariableDeclaration::p_specialization
 \brief This is part of template support (variables of templated types).
 
-    This is most often set to SgDeclarationStatement::e_no_specialization, but where
+This is most often set to SgDeclarationStatement::e_no_specialization, but where
 templates are involved can be set to either SgDeclarationStatement::e_specialization or
 SgDeclarationStatement::e_partial_specialization.
 
@@ -79,7 +79,7 @@ SgDeclarationStatement::e_partial_specialization.
 \fn SgVariableDeclaration::SgVariableDeclaration ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgVariableDeclaration base class.
+This constructor builds the SgVariableDeclaration base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -92,14 +92,14 @@ SgDeclarationStatement::e_partial_specialization.
 \fn SgVariableDeclaration::~SgVariableDeclaration()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgVariableDeclaration::isSgVariableDeclaration (SgNode *s)
 \brief Cast function (from derived class to SgVariableDeclaration pointer).
 
-   This functions returns a SgVariableDeclaration pointer for any input of a 
+This functions returns a SgVariableDeclaration pointer for any input of a 
 pointer to an object derived from a SgVariableDeclaration.
 
 \return Returns valid pointer to SgVariableDeclaration if input is derived from a SgLocatedNode.
@@ -109,7 +109,7 @@ pointer to an object derived from a SgVariableDeclaration.
 \fn SgVariableDeclaration::isSgVariableDeclaration (const SgNode *s)
 \brief Cast function (from derived class to SgVariableDeclaration pointer).
 
-   This functions returns a SgVariableDeclaration pointer for any input of a 
+This functions returns a SgVariableDeclaration pointer for any input of a 
 pointer to an object derived from a SgVariableDeclaration.
 
 \return Returns valid pointer to SgVariableDeclaration if input is derived from a SgLocatedNode.

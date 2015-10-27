@@ -48,6 +48,8 @@ using namespace rose::BinaryAnalysis;
 void
 RSIM_Linux32::init()
 {
+    vdsoName("linux-gate.so");
+
     if (interpreterBaseVa() == 0)
         interpreterBaseVa(0x40000000);
 
@@ -117,7 +119,7 @@ RSIM_Linux32::init()
     SC_REG(100, fstatfs,                        fstatfs);
     SC_REG(102, socketcall,                     socketcall);
     SC_REG(114, wait4,                          wait4);
-    SC_REG(116, sysinfo,                        default);               // FIXME: probably needs an explicit leave
+    SC_REG(116, sysinfo,                        sysinfo);
     SC_REG(117, ipc,                            ipc);
     SC_REG(118, fsync,                          default);
     SC_REG(119, sigreturn,                      sigreturn);
@@ -197,14 +199,16 @@ RSIM_Linux32::isSupportedArch(SgAsmGenericHeader *fhdr) {
 }
 
 void
-RSIM_Linux32::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembler) {
+RSIM_Linux32::loadVsyscalls(RSIM_Process *process) {}
+
+void
+RSIM_Linux32::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembler, int existingPid/*=-1*/) {
     TODO("[Robb P. Matzke 2015-06-03]");
 }
 
 PtRegs
-RSIM_Linux32::initialRegistersArch() {
+RSIM_Linux32::initialRegistersArch(RSIM_Process*) {
     PtRegs regs;
-    memset(&regs, 0, sizeof regs);
     regs.sp = 0xc0000000ul;                             // high end of stack, exclusive
     regs.flags = 2;                                     // flag bit 1 is set, although this is a reserved bit
     regs.cs = 0x23;
@@ -399,7 +403,7 @@ RSIM_Linux32::syscall_waitpid_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_waitpid_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(4, print_exit_status_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(4, print_exit_status_32);
 }
 
 /*******************************************************************************************************************************/
@@ -426,7 +430,7 @@ RSIM_Linux32::syscall_time_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_time_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().t().str("\n");
+    t->syscall_leave().t();
 }
 
 /*******************************************************************************************************************************/
@@ -677,13 +681,13 @@ RSIM_Linux32::syscall_ioctl_leave(RSIM_Thread *t, int callno)
     uint32_t cmd=t->syscall_arg(1);
     switch (cmd) {
         case TCGETS:
-            t->syscall_leave().ret().arg(2).P(sizeof(termios_32), print_termios_32).str("\n");
+            t->syscall_leave().ret().arg(2).P(sizeof(termios_32), print_termios_32);
             break;
         case TIOCGWINSZ:
-            t->syscall_leave().ret().arg(2).P(sizeof(winsize_32), print_winsize_32).str("\n");
+            t->syscall_leave().ret().arg(2).P(sizeof(winsize_32), print_winsize_32);
             break;
         default:
-            t->syscall_leave().ret().str("\n");
+            t->syscall_leave().ret();
             break;
     }
 }
@@ -693,7 +697,7 @@ RSIM_Linux32::syscall_ioctl_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_setrlimit_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("setrlimit").f(rlimit_resources).P(8, print_rlimit);
+    t->syscall_enter("setrlimit").f(rlimit_resources).P(8, print_rlimit_32);
 }
 
 void
@@ -728,7 +732,7 @@ RSIM_Linux32::syscall_ugetrlimit_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_ugetrlimit_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(8, print_rlimit).str("\n");
+    t->syscall_leave().ret().arg(1).P(8, print_rlimit_32);
 }
 
 /*******************************************************************************************************************************/
@@ -765,7 +769,7 @@ RSIM_Linux32::syscall_getrlimit_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getrlimit_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(8, print_rlimit).str("\n");
+    t->syscall_leave().ret().arg(1).P(8, print_rlimit_32);
 }
 
 /*******************************************************************************************************************************/
@@ -799,7 +803,7 @@ RSIM_Linux32::syscall_gettimeofday_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_gettimeofday_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().P(sizeof(timeval_32), print_timeval_32).str("\n");
+    t->syscall_leave().ret().P(sizeof(timeval_32), print_timeval_32);
 }
 
 /*******************************************************************************************************************************/
@@ -837,7 +841,7 @@ RSIM_Linux32::syscall_mmap_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_mmap_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().eret().p().str("\n");
+    t->syscall_leave().eret().p();
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap syscall:\n");
 }
 
@@ -887,7 +891,7 @@ RSIM_Linux32::syscall_statfs_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_statfs_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(sizeof(statfs_32), print_statfs_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(sizeof(statfs_32), print_statfs_32);
 }
 
 /*******************************************************************************************************************************/
@@ -933,7 +937,7 @@ RSIM_Linux32::syscall_fstatfs_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fstatfs_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(sizeof(statfs_32), print_statfs_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(sizeof(statfs_32), print_statfs_32);
 }
 
 /*******************************************************************************************************************************/
@@ -1631,13 +1635,13 @@ RSIM_Linux32::syscall_socketcall_leave(RSIM_Thread *t, int callno)
     switch (t->syscall_arg(0)) {
         case 8: /* SYS_SOCKETPAIR */
             if (16==t->get_process()->mem_read(a+1, t->syscall_arg(1), 16)) {
-                t->syscall_leave(a).ret().arg(3).P(8, print_int_32).str("\n");
+                t->syscall_leave(a).ret().arg(3).P(8, print_int_32);
                 return;
             }
             break;
         case 17: /* SYS_RECVMSG */
             if (12==t->get_process()->mem_read(a+1, t->syscall_arg(1), 12)) {
-                t->syscall_leave(a).ret().arg(1).P(sizeof(msghdr_32), print_msghdr_32).str("\n");
+                t->syscall_leave(a).ret().arg(1).P(sizeof(msghdr_32), print_msghdr_32);
                 Sawyer::Message::Stream trace(t->tracing(TRACE_SYSCALL));
                 msghdr_32 msghdr;
                 if (trace &&
@@ -1673,7 +1677,7 @@ RSIM_Linux32::syscall_socketcall_leave(RSIM_Thread *t, int callno)
             break;
     }
 
-    t->syscall_leave().ret().str("\n");
+    t->syscall_leave().ret();
 }
 
 /*******************************************************************************************************************************/
@@ -1751,7 +1755,7 @@ RSIM_Linux32::syscall_wait4_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_wait4_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(4, print_exit_status_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(4, print_exit_status_32);
 }
 
 /*******************************************************************************************************************************/
@@ -1765,73 +1769,24 @@ RSIM_Linux32::syscall_sysinfo_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sysinfo_body(RSIM_Thread *t, int callno)
 {
-    static const size_t guest_extra = 20 - 2*sizeof(uint32_t) - sizeof(int32_t);
-    static const size_t host_extra  = 20 - 2*sizeof(long)     - sizeof(int);
-
-    struct guest_sysinfo {      /* Sysinfo to be written into the specimen's memory */
-        int32_t uptime;         /* Seconds since boot */
-        uint32_t loads[3];      /* 1, 5, and 15 minute load averages */
-        uint32_t totalram;      /* Total usable main memory size */
-        uint32_t freeram;       /* Available memory size */
-        uint32_t sharedram;     /* Amount of shared memory */
-        uint32_t bufferram;     /* Memory used by buffers */
-        uint32_t totalswap;     /* Total swap space size */
-        uint32_t freeswap;      /* swap space still available */
-        uint16_t procs;         /* Number of current processes */
-        uint16_t pad;           /* explicit padding for m68k */
-        uint32_t totalhigh;     /* Total high memory size */
-        uint32_t freehigh;      /* Available high memory size */
-        uint32_t mem_unit;      /* Memory unit size in bytes */
-        char _f[guest_extra];   /* Padding for libc5 */
-    } __attribute__((__packed__));
-
-    struct host_sysinfo {
-        long uptime;
-        unsigned long loads[3];
-        unsigned long totalram;
-        unsigned long freeram;
-        unsigned long sharedram;
-        unsigned long bufferram;
-        unsigned long totalswap;
-        unsigned long freeswap;
-        unsigned short procs;
-        unsigned short pad;      
-        unsigned long totalhigh;
-        unsigned long freehigh;
-        unsigned int mem_unit;
-        char _f[host_extra];
-    };
-
-    host_sysinfo host_sys;
-    int result  = syscall(SYS_sysinfo, &host_sys);
+    sysinfo_native hostBuf;
+    int result  = syscall(SYS_sysinfo, &hostBuf);
 
     if (-1==result) {
         t->syscall_return(-errno);
     } else {
-        guest_sysinfo guest_sys;
-        guest_sys.uptime = host_sys.uptime;
-        for(int i = 0 ; i < 3 ; i++)
-            guest_sys.loads[i] = host_sys.loads[i];
-        guest_sys.totalram      = host_sys.totalram;
-        guest_sys.freeram       = host_sys.freeram;
-        guest_sys.sharedram     = host_sys.sharedram;
-        guest_sys.bufferram     = host_sys.bufferram;
-        guest_sys.totalswap     = host_sys.totalswap;
-        guest_sys.freeswap      = host_sys.freeswap;
-        guest_sys.procs         = host_sys.procs;
-        guest_sys.pad           = host_sys.pad;
-        guest_sys.totalhigh     = host_sys.totalhigh;
-        guest_sys.mem_unit      = host_sys.mem_unit;
-        memset(guest_sys._f, 0, sizeof(guest_sys._f));
-        memcpy(guest_sys._f, host_sys._f, std::min(guest_extra, host_extra));
-
-        size_t nwritten = t->get_process()->mem_write(&guest_sys, t->syscall_arg(0), sizeof(guest_sys));
-        if (nwritten!=sizeof(guest_sys)) {
+        sysinfo_32 guestBuf(hostBuf);
+        if (sizeof guestBuf != t->get_process()->mem_write(&guestBuf, t->syscall_arg(0), sizeof guestBuf)) {
             t->syscall_return(-EFAULT);
         } else {
             t->syscall_return(result);
         }
     }
+}
+
+void
+RSIM_Linux32::syscall_sysinfo_leave(RSIM_Thread *t, int callno) {
+    t->syscall_leave().ret().P(sizeof(sysinfo_32), print_sysinfo_32);
 }
 
 /*******************************************************************************************************************************/
@@ -2060,6 +2015,7 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
             }
 
             semid64_ds_32 guest_ds;
+            memset(&guest_ds, 0, sizeof guest_ds);
             guest_ds.sem_perm.key = host_ds.sem_perm.__key;
             guest_ds.sem_perm.uid = host_ds.sem_perm.uid;
             guest_ds.sem_perm.gid = host_ds.sem_perm.gid;
@@ -2069,15 +2025,23 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
             guest_ds.sem_perm.pad1 = host_ds.sem_perm.__pad1;
             guest_ds.sem_perm.seq = host_ds.sem_perm.__seq;
             guest_ds.sem_perm.pad2 = host_ds.sem_perm.__pad2;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.sem_perm.unused1 = host_ds.sem_perm.__unused1;
             guest_ds.sem_perm.unused2 = host_ds.sem_perm.__unused1;
+#endif
             guest_ds.sem_otime = host_ds.sem_otime;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused1 = host_ds.__unused1;
+#endif
             guest_ds.sem_ctime = host_ds.sem_ctime;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused2 = host_ds.__unused2;
+#endif
             guest_ds.sem_nsems = host_ds.sem_nsems;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused3 = host_ds.__unused3;
             guest_ds.unused4 = host_ds.__unused4;
+#endif
             if (sizeof(guest_ds)!=t->get_process()->mem_write(&guest_ds, guest_semun.ptr, sizeof guest_ds)) {
                 t->syscall_return(-EFAULT);
                 return;
@@ -2100,6 +2064,7 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
             int result = syscall(SYS_ipc, 3/*SEMCTL*/, semid, semnum, cmd|version, &semun);
 #else           /* amd64 */
             semid_ds host_ds;
+            memset(&host_ds, 0, sizeof host_ds);
             host_ds.sem_perm.__key = guest_ds.sem_perm.key;
             host_ds.sem_perm.uid = guest_ds.sem_perm.uid;
             host_ds.sem_perm.gid = guest_ds.sem_perm.gid;
@@ -2109,15 +2074,23 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
             host_ds.sem_perm.__pad1 = guest_ds.sem_perm.pad1;
             host_ds.sem_perm.__seq = guest_ds.sem_perm.seq;
             host_ds.sem_perm.__pad2 = guest_ds.sem_perm.pad2;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.sem_perm.__unused1 = guest_ds.sem_perm.unused1;
             host_ds.sem_perm.__unused1 = guest_ds.sem_perm.unused2;
+#endif
             host_ds.sem_otime = guest_ds.sem_otime;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.__unused1 = guest_ds.unused1;
+#endif
             host_ds.sem_ctime = guest_ds.sem_ctime;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.__unused2 = guest_ds.unused2;
+#endif
             host_ds.sem_nsems = guest_ds.sem_nsems;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.__unused3 = guest_ds.unused3;
             host_ds.__unused4 = guest_ds.unused4;
+#endif
             int result = syscall(SYS_semctl, semid, semnum, cmd, &host_ds);
 #endif
             t->syscall_return(-1==result?-errno:result);
@@ -2347,6 +2320,7 @@ sys_msgctl(RSIM_Thread *t, uint32_t msqid, uint32_t cmd, uint32_t buf_va)
             }
 
             msqid64_ds_32 guest_ds;
+            memset(&guest_ds, 0, sizeof guest_ds);
             guest_ds.msg_perm.key = host_ds.msg_perm.__key;
             guest_ds.msg_perm.uid = host_ds.msg_perm.uid;
             guest_ds.msg_perm.gid = host_ds.msg_perm.gid;
@@ -2356,18 +2330,20 @@ sys_msgctl(RSIM_Thread *t, uint32_t msqid, uint32_t cmd, uint32_t buf_va)
             guest_ds.msg_perm.pad1 = host_ds.msg_perm.__pad1;
             guest_ds.msg_perm.seq = host_ds.msg_perm.__seq;
             guest_ds.msg_perm.pad2 = host_ds.msg_perm.__pad2;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.msg_perm.unused1 = host_ds.msg_perm.__unused1;
             guest_ds.msg_perm.unused2 = host_ds.msg_perm.__unused2;
+#endif
             guest_ds.msg_stime = host_ds.msg_stime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused1 = host_ds.__unused1;
 #endif
             guest_ds.msg_rtime = host_ds.msg_rtime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused2 = host_ds.__unused2;
 #endif
             guest_ds.msg_ctime = host_ds.msg_ctime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused3 = host_ds.__unused3;
 #endif
             guest_ds.msg_cbytes = host_ds.__msg_cbytes;
@@ -2375,8 +2351,10 @@ sys_msgctl(RSIM_Thread *t, uint32_t msqid, uint32_t cmd, uint32_t buf_va)
             guest_ds.msg_qbytes = host_ds.msg_qbytes;
             guest_ds.msg_lspid = host_ds.msg_lspid;
             guest_ds.msg_lrpid = host_ds.msg_lrpid;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused4 = host_ds.__unused4;
             guest_ds.unused5 = host_ds.__unused5;
+#endif
 
             if (sizeof(guest_ds)!=t->get_process()->mem_write(&guest_ds, buf_va, sizeof guest_ds)) {
                 t->syscall_return(-EFAULT);
@@ -2487,6 +2465,7 @@ sys_shmctl(RSIM_Thread *t, uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             }
 
             shmid64_ds_32 guest_ds;
+            memset(&guest_ds, 0, sizeof guest_ds);
             guest_ds.shm_perm.key = host_ds.shm_perm.__key;
             guest_ds.shm_perm.uid = host_ds.shm_perm.uid;
             guest_ds.shm_perm.gid = host_ds.shm_perm.gid;
@@ -2496,26 +2475,30 @@ sys_shmctl(RSIM_Thread *t, uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             guest_ds.shm_perm.pad1 = host_ds.shm_perm.__pad1;
             guest_ds.shm_perm.seq = host_ds.shm_perm.__seq;
             guest_ds.shm_perm.pad2 = host_ds.shm_perm.__pad2;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.shm_perm.unused1 = host_ds.shm_perm.__unused1;
             guest_ds.shm_perm.unused2 = host_ds.shm_perm.__unused2;
+#endif
             guest_ds.shm_segsz = host_ds.shm_segsz;
             guest_ds.shm_atime = host_ds.shm_atime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused1 = host_ds.__unused1;
 #endif
             guest_ds.shm_dtime = host_ds.shm_dtime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused2 = host_ds.__unused2;
 #endif
             guest_ds.shm_ctime = host_ds.shm_ctime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused3 = host_ds.__unused3;
 #endif
             guest_ds.shm_cpid = host_ds.shm_cpid;
             guest_ds.shm_lpid = host_ds.shm_lpid;
             guest_ds.shm_nattch = host_ds.shm_nattch;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_ds.unused4 = host_ds.__unused4;
             guest_ds.unused5 = host_ds.__unused5;
+#endif
 
             if (sizeof(guest_ds)!=t->get_process()->mem_write(&guest_ds, buf_va, sizeof guest_ds)) {
                 t->syscall_return(-EFAULT);
@@ -2560,15 +2543,18 @@ sys_shmctl(RSIM_Thread *t, uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             }
 
             shminfo64_32 guest_info;
+            memset(&guest_info, 0, sizeof guest_info);
             guest_info.shmmax = host_info.shmmax;
             guest_info.shmmin = host_info.shmmin;
             guest_info.shmmni = host_info.shmmni;
             guest_info.shmseg = host_info.shmseg;
             guest_info.shmall = host_info.shmall;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             guest_info.unused1 = host_info.unused1;
             guest_info.unused2 = host_info.unused2;
             guest_info.unused3 = host_info.unused3;
             guest_info.unused4 = host_info.unused4;
+#endif
             if (sizeof(guest_info)!=t->get_process()->mem_write(&guest_info, buf_va, sizeof guest_info)) {
                 t->syscall_return(-EFAULT);
                 return;
@@ -2593,6 +2579,7 @@ sys_shmctl(RSIM_Thread *t, uint32_t shmid, uint32_t cmd, uint32_t buf_va)
                 return;
             }
             shmid_ds host_ds;
+            memset(&host_ds, 0, sizeof host_ds);
             host_ds.shm_perm.__key = guest_ds.shm_perm.key;
             host_ds.shm_perm.uid = guest_ds.shm_perm.uid;
             host_ds.shm_perm.gid = guest_ds.shm_perm.gid;
@@ -2602,26 +2589,30 @@ sys_shmctl(RSIM_Thread *t, uint32_t shmid, uint32_t cmd, uint32_t buf_va)
             host_ds.shm_perm.__pad1 = guest_ds.shm_perm.pad1;
             host_ds.shm_perm.__seq = guest_ds.shm_perm.seq;
             host_ds.shm_perm.__pad2 = guest_ds.shm_perm.pad2;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.shm_perm.__unused1 = guest_ds.shm_perm.unused1;
             host_ds.shm_perm.__unused2 = guest_ds.shm_perm.unused2;
+#endif
             host_ds.shm_segsz = guest_ds.shm_segsz;
             host_ds.shm_atime = guest_ds.shm_atime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.__unused1 = guest_ds.unused1;
 #endif
             host_ds.shm_dtime = guest_ds.shm_dtime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.__unused2 = guest_ds.unused2;
 #endif
             host_ds.shm_ctime = guest_ds.shm_ctime;
-#if 4==SIZEOF_LONG
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.__unused3 = guest_ds.unused3;
 #endif
             host_ds.shm_cpid = guest_ds.shm_cpid;
             host_ds.shm_lpid = guest_ds.shm_lpid;
             host_ds.shm_nattch = guest_ds.shm_nattch;
+#if 0 // [Robb P. Matzke 2015-08-12]: libc version doesn't always have the "unused" members
             host_ds.__unused4 = guest_ds.unused4;
             host_ds.__unused5 = guest_ds.unused5;
+#endif
 
             int result = shmctl(shmid, cmd, &host_ds);
             t->syscall_return(-1==result?-errno:result);
@@ -2777,46 +2768,46 @@ RSIM_Linux32::syscall_ipc_leave(RSIM_Thread *t, int callno)
                     ROSE_ASSERT(!"not handled");
                 case 2:         /* IPC_STAT */
                 case 11:        /* MSG_STAT */
-                    t->syscall_leave().ret().arg(4).P(sizeof(msqid64_ds_32), print_msqid64_ds_32).str("\n");
+                    t->syscall_leave().ret().arg(4).P(sizeof(msqid64_ds_32), print_msqid64_ds_32);
                     break;
                 default:
-                    t->syscall_leave().ret().str("\n");
+                    t->syscall_leave().ret();
                     break;
             }
             break;
         }
         case 21: /* SHMAT */
             if (1==version) {
-                t->syscall_leave().ret().str("\n");
+                t->syscall_leave().ret();
             } else {
-                t->syscall_leave().p().str("\n");
+                t->syscall_leave().p();
                 t->get_process()->mem_showmap(mtrace, "  memory map after shmat:\n");
             }
             break;
         case 22: /* SHMDT */
-            t->syscall_leave().ret().str("\n");
+            t->syscall_leave().ret();
             t->get_process()->mem_showmap(mtrace, "  memory map after shmdt:\n");
             break;
         case 24: { /* SHMCTL */
             switch (second & 0xff) {
                 case 2:         /* IPC_STAT */
                 case 13:        /* SHM_STAT */
-                    t->syscall_leave().ret().arg(4).P(sizeof(shmid64_ds_32), print_shmid64_ds_32).str("\n");
+                    t->syscall_leave().ret().arg(4).P(sizeof(shmid64_ds_32), print_shmid64_ds_32);
                     break;
                 case 14:        /* SHM_INFO */
-                    t->syscall_leave().ret().arg(4).P(sizeof(shm_info_32), print_shm_info_32).str("\n");
+                    t->syscall_leave().ret().arg(4).P(sizeof(shm_info_32), print_shm_info_32);
                     break;
                 case 3:         /* IPC_INFO */
-                    t->syscall_leave().ret().arg(4).P(sizeof(shminfo64_32), print_shminfo64_32).str("\n");
+                    t->syscall_leave().ret().arg(4).P(sizeof(shminfo64_32), print_shminfo64_32);
                     break;
                 default:
-                    t->syscall_leave().ret().str("\n");
+                    t->syscall_leave().ret();
                     break;
             }
             break;
         }
         default:
-            t->syscall_leave().ret().str("\n");
+            t->syscall_leave().ret();
             break;
     }
 }
@@ -2930,7 +2921,7 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
         // on the futex at that address. The address involved may be changed by the set_tid_address(2) system call. This is
         // used by threading libraries.
         if (isChild && 0!=(flags & CLONE_CHILD_CLEARTID))
-            t->clear_child_tid = parent_tid_va;
+            t->clearChildTidVa(parent_tid_va);
 
         // CLONE_PARENT_SETTID: Store child thread ID at location ptid in parent and child memory. (In Linux 2.5.32-2.5.48
         // there was a flag CLONE_SETTID that did this.)
@@ -2991,11 +2982,11 @@ RSIM_Linux32::syscall_clone_leave(RSIM_Thread *t, int callno)
 {
     if (t->syscall_arg(-1)) {
         /* Parent */
-        t->syscall_leave().ret().str("\n");
+        t->syscall_leave().ret();
     } else {
         /* Child returns here for fork, but not for thread-clone */
         t->syscall_enter("child's clone").f(clone_flags).p().p().p().P(sizeof(pt_regs_32), print_pt_regs_32);
-        t->syscall_leave().ret().arg(4).P(sizeof(pt_regs_32), print_pt_regs_32).str("\n");
+        t->syscall_leave().ret().arg(4).P(sizeof(pt_regs_32), print_pt_regs_32);
     }
 }
 
@@ -3041,7 +3032,7 @@ RSIM_Linux32::syscall_uname_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_uname_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().P(sizeof(new_utsname_32), print_new_utsname_32).str("\n");
+    t->syscall_leave().ret().P(sizeof(new_utsname_32), print_new_utsname_32);
 }
 
 /*******************************************************************************************************************************/
@@ -3061,7 +3052,7 @@ RSIM_Linux32::syscall_modify_ldt_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_modify_ldt_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().str("\n");                 // "---"; // FIXME
+    t->syscall_leave().ret();                           // "---"; // FIXME
 }
 
 /*******************************************************************************************************************************/
@@ -3112,7 +3103,13 @@ RSIM_Linux32::syscall_getdents_body(RSIM_Thread *t, int callno)
     int guestFd = t->syscall_arg(0), sz = t->syscall_arg(2);
     int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     uint32_t dirent_va = t->syscall_arg(1);
-    int status = t->getdents_syscall<dirent32_t>(hostFd, dirent_va, sz);
+    int status;
+    if (4 == sizeof(long)) {
+        status = getdents_syscall<dirent_32, dirent64_32>(t, SYS_getdents64, hostFd, dirent_va, sz);
+    } else {
+        status = getdents_syscall<dirent_32, dirent_64>(t, SYS_getdents, hostFd, dirent_va, sz);
+    }
+
     t->syscall_return(status);
 }
 
@@ -3120,7 +3117,7 @@ void
 RSIM_Linux32::syscall_getdents_leave(RSIM_Thread *t, int callno)
 {
     int status = t->syscall_arg(-1);
-    t->syscall_leave().ret().arg(1).P(status>0?status:0, print_dentries_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(status>0?status:0, print_dentries_32);
 }
 
 /*******************************************************************************************************************************/
@@ -3308,8 +3305,7 @@ RSIM_Linux32::syscall_select_leave(RSIM_Thread *t, int callno)
         .P(sizeof(fd_set), print_bitvec)
         .P(sizeof(fd_set), print_bitvec)
         .P(sizeof(fd_set), print_bitvec)
-        .P(sizeof(timeval_32), print_timeval_32)
-        .str("\n");
+        .P(sizeof(timeval_32), print_timeval_32);
 }
 
 /*******************************************************************************************************************************/
@@ -3560,7 +3556,7 @@ RSIM_Linux32::syscall_rt_sigpending_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_rt_sigpending_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().P(sizeof(RSIM_SignalHandling::SigSet), print_SigSet).str("\n");
+    t->syscall_leave().ret().P(sizeof(RSIM_SignalHandling::SigSet), print_SigSet);
 }
 
 /*******************************************************************************************************************************/
@@ -3587,7 +3583,7 @@ RSIM_Linux32::syscall_rt_sigsuspend_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_rt_sigsuspend_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().str("\n");
+    t->syscall_leave().ret();
     if (t->syscall_info.signo>0) {
         t->tracing(TRACE_SYSCALL) <<"    retured due to ";
         Printer::print_enum(t->tracing(TRACE_SYSCALL), signal_names, t->syscall_info.signo);
@@ -3629,7 +3625,7 @@ void
 RSIM_Linux32::syscall_pread64_leave(RSIM_Thread *t, int callno)
 {
     ssize_t nread = t->syscall_arg(-1);
-    t->syscall_leave().ret().arg(1).b(nread>0?nread:0).str("\n");
+    t->syscall_leave().ret().arg(1).b(nread>0?nread:0);
 }
 
 /*******************************************************************************************************************************/
@@ -3668,7 +3664,7 @@ RSIM_Linux32::syscall_sigaltstack_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sigaltstack_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(sizeof(stack_32), print_stack_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(sizeof(stack_32), print_stack_32);
 }
             
 /*******************************************************************************************************************************/
@@ -3701,7 +3697,7 @@ RSIM_Linux32::syscall_mmap2_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_mmap2_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().eret().p().str("\n");
+    t->syscall_leave().eret().p();
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap2 syscall:\n");
 }
 
@@ -3813,7 +3809,7 @@ RSIM_Linux32::syscall_stat64_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_stat64_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(sizeof(kernel_stat_32), print_kernel_stat_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(sizeof(kernel_stat_32), print_kernel_stat_32);
 }
 
 /*******************************************************************************************************************************/
@@ -3931,9 +3927,9 @@ RSIM_Linux32::syscall_getgroups32_leave(RSIM_Thread *t, int callno)
     int ngroups = t->syscall_arg(-1);
     int nreq = t->syscall_arg(0);
     if (nreq>0) {
-        t->syscall_leave().ret().arg(1).P(std::min(ngroups, nreq)*sizeof(gid_t), print_int_32).str("\n");
+        t->syscall_leave().ret().arg(1).P(std::min(ngroups, nreq)*sizeof(gid_t), print_int_32);
     } else {
-        t->syscall_leave().ret().str("\n");
+        t->syscall_leave().ret();
     }
 }
 
@@ -4009,7 +4005,12 @@ RSIM_Linux32::syscall_getdents64_body(RSIM_Thread *t, int callno)
     int guestFd = t->syscall_arg(0), sz = t->syscall_arg(2);
     int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     uint32_t dirent_va = t->syscall_arg(1);
-    int status = t->getdents_syscall<dirent64_t>(hostFd, dirent_va, sz);
+    int status;
+    if (4 == sizeof(long)) {
+        status = getdents_syscall<dirent64_32, dirent64_32>(t, SYS_getdents64, hostFd, dirent_va, sz);
+    } else {
+        status = getdents_syscall<dirent64_32, dirent_64>(t, SYS_getdents, hostFd, dirent_va, sz);
+    }
     t->syscall_return(status);
 }
 
@@ -4017,10 +4018,8 @@ void
 RSIM_Linux32::syscall_getdents64_leave(RSIM_Thread *t, int callno)
 {
     int status = t->syscall_arg(-1);
-    t->syscall_leave().ret().arg(1).P(status>0?status:0, print_dentries_64).str("\n");
+    t->syscall_leave().ret().arg(1).P(status>0?status:0, print_dentries64_32);
 }
-
-/*******************************************************************************************************************************/
 
 /*******************************************************************************************************************************/
 
@@ -4126,7 +4125,7 @@ RSIM_Linux32::syscall_futex_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_futex_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().P(4, print_int_32).str("\n");
+    t->syscall_leave().ret().P(4, print_int_32);
 }
 
 /*******************************************************************************************************************************/
@@ -4166,7 +4165,7 @@ RSIM_Linux32::syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno)
 {
     size_t cpuset_nbits = t->syscall_arg(1);
     size_t cpuset_nbytes = (cpuset_nbits+7) / 8;
-    t->syscall_leave().ret().arg(2).P(cpuset_nbytes, print_bitvec).str("\n");
+    t->syscall_leave().ret().arg(2).P(cpuset_nbytes, print_bitvec);
 }
 
 /*******************************************************************************************************************************/
@@ -4201,24 +4200,9 @@ RSIM_Linux32::syscall_set_thread_area_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_set_thread_area_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().P(sizeof(SegmentDescriptor), print_SegmentDescriptor).str("\n");
+    t->syscall_leave().ret().P(sizeof(SegmentDescriptor), print_SegmentDescriptor);
 }
 
-
-/*******************************************************************************************************************************/
-
-void
-RSIM_Linux32::syscall_set_tid_address_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("set_tid_address").p();
-}
-
-void
-RSIM_Linux32::syscall_set_tid_address_body(RSIM_Thread *t, int callno)
-{
-    t->clear_child_tid = t->syscall_arg(0);
-    t->syscall_return(getpid());
-}
 
 /*******************************************************************************************************************************/
 
@@ -4276,7 +4260,7 @@ RSIM_Linux32::syscall_clock_gettime_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_clock_gettime_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(sizeof(timespec_32), print_timespec_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(sizeof(timespec_32), print_timespec_32);
 }
 
 /*******************************************************************************************************************************/
@@ -4314,7 +4298,7 @@ RSIM_Linux32::syscall_clock_getres_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_clock_getres_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(sizeof(timespec_32), print_timespec_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(sizeof(timespec_32), print_timespec_32);
 }
 
 /*******************************************************************************************************************************/
@@ -4361,7 +4345,7 @@ RSIM_Linux32::syscall_statfs64_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_statfs64_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(2).P(sizeof(statfs64_32), print_statfs64_32).str("\n");
+    t->syscall_leave().ret().arg(2).P(sizeof(statfs64_32), print_statfs64_32);
 }
 
 /*******************************************************************************************************************************/
@@ -4389,7 +4373,7 @@ RSIM_Linux32::syscall_fstatfs64_body(RSIM_Thread *t, int callno)
     convert(&guest_statfs, &host_statfs);
 #else           /* host is 64-bit machine */
     static statfs_native host_statfs;
-    int result = syscall(SYS_statfs, hostFd, &host_statfs);
+    int result = syscall(SYS_fstatfs, hostFd, &host_statfs);
     convert(&guest_statfs, &host_statfs);
 #endif
     if (-1==result) {
@@ -4407,7 +4391,7 @@ RSIM_Linux32::syscall_fstatfs64_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fstatfs64_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(2).P(sizeof(statfs64_32), print_statfs64_32).str("\n");
+    t->syscall_leave().ret().arg(2).P(sizeof(statfs64_32), print_statfs64_32);
 }
 
 /*******************************************************************************************************************************/
@@ -4474,37 +4458,6 @@ RSIM_Linux32::syscall_utimes_body(RSIM_Thread *t, int callno)
     }
 
     t->syscall_return(result);
-}
-
-/*******************************************************************************************************************************/
-
-void
-RSIM_Linux32::syscall_set_robust_list_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("set_robust_list").P(sizeof(robust_list_head_32), print_robust_list_head_32).d();
-}
-
-void
-RSIM_Linux32::syscall_set_robust_list_body(RSIM_Thread *t, int callno)
-{
-    uint32_t head_va=t->syscall_arg(0), len=t->syscall_arg(1);
-    if (len!=sizeof(robust_list_head_32)) {
-        t->syscall_return(-EINVAL);
-        return;
-    }
-
-    robust_list_head_32 guest_head;
-    if (sizeof(guest_head)!=t->get_process()->mem_read(&guest_head, head_va, sizeof(guest_head))) {
-        t->syscall_return(-EFAULT);
-        return;
-    }
-
-    /* The robust list is maintained in user space and accessed by the kernel only when we a thread dies. Since the
-     * simulator handles thread death, we don't need to tell the kernel about the specimen's list until later. In
-     * fact, we can't tell the kernel because that would cause our own list (set by libc) to be removed from the
-     * kernel. */
-    t->robust_list_head_va = head_va;
-    t->syscall_return(0);
 }
 
 /*******************************************************************************************************************************/

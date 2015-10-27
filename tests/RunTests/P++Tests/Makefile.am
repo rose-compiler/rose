@@ -16,7 +16,7 @@ endif
 ## them directly into the test code directory (testing only the compilation with ROSE
 ## and not the execution!)
 ## Include the path to A++ and the transformation specification
-INCLUDES = -I. -I../.. -I$(top_srcdir)/TESTS/CompileTests/A++Tests -I$(top_srcdir)/include -I$(top_srcdir)/ExamplePreprocessors/A++Preprocessor/ArrayTransformationGrammar
+AM_CPPFLAGS = -I. -I../.. -I$(top_srcdir)/TESTS/CompileTests/A++Tests -I$(top_srcdir)/include -I$(top_srcdir)/ExamplePreprocessors/A++Preprocessor/ArrayTransformationGrammar
 
 # ROSE_FLAGS = -rose:test 6
 # ROSE_FLAGS = -rose:outputGrammarTreeFiles
@@ -26,7 +26,7 @@ ROSE_FLAGS =
 PREPROCESSOR = $(top_builddir)/TESTS/testTranslator 
 
 $(TEST_Objects): $(TESTCODES)
-	$(PREPROCESSOR) $(ROSE_FLAGS) $(INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	$(PREPROCESSOR) $(ROSE_FLAGS) $(AM_CPPFLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 
 # Specify the A++ libraries to be used
 LDADD = @Axx_LIBS@

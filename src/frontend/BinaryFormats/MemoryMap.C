@@ -95,7 +95,7 @@ MemoryMap::segmentTitle(const Segment &segment) {
     s += (segment.accessibility() & WRITABLE)  !=0 ? "w" : "-";
     s += (segment.accessibility() & EXECUTABLE)!=0 ? "x" : "-";
     s += (segment.accessibility() & PRIVATE)   !=0 ? "p" : "-";
-
+    unsigned otherAccess = segment.accessibility() & ~(READABLE|WRITABLE|EXECUTABLE|PRIVATE);
 
     std::string bufname = segment.buffer()->name();
     if (bufname.find_first_of(" \t\n()")==std::string::npos)
@@ -104,6 +104,9 @@ MemoryMap::segmentTitle(const Segment &segment) {
 
     s += " + " + StringUtility::addrToString(segment.offset());
 
+    if (otherAccess != 0)
+        s += " access=" + StringUtility::addrToString(otherAccess, 8*sizeof otherAccess);
+    
     if (!segment.name().empty()) {
         static const size_t limit = 100;
         std::string name = escapeString(segment.name());

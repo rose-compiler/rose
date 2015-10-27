@@ -1,6 +1,9 @@
 /* Windows PE file header (SgAsmPEFileHeader and related classes) */
 #include "sage3basic.h"
 #include "MemoryMap.h"
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
 
 /* The __attribute__ mechanism is only supported by GNU compilers */
 #ifndef __GNUC__
@@ -127,7 +130,8 @@ SgAsmPEFileHeader::parse()
     if (sizeof(fh)>get_size())
         extend(sizeof(fh)-get_size());
     if (sizeof(fh)!=read_content_local(0, &fh, sizeof fh, false))
-        fprintf(stderr, "SgAsmPEFileHeader::parse: warning: short read of PE header at byte 0x%08"PRIx64"\n", get_offset());
+        mlog[WARN] <<"SgAsmPEFileHeader::parse: short read of PE header at byte "
+                   <<StringUtility::addrToString(get_offset()) <<"\n";
 
     /* Check magic number before getting too far */
     if (fh.e_magic[0]!='P' || fh.e_magic[1]!='E' || fh.e_magic[2]!='\0' || fh.e_magic[3]!='\0')
@@ -152,8 +156,8 @@ SgAsmPEFileHeader::parse()
     if (need32>get_size())
         extend(need32-get_size());
     if (sizeof(oh32)!=read_content_local(sizeof fh, &oh32, sizeof oh32, false))
-        fprintf(stderr, "SgAsmPEFileHeader::parse: warning: short read of PE Optional Header at byte 0x%08"PRIx64"\n", 
-                get_offset() + sizeof(fh));
+        mlog[WARN] <<"SgAsmPEFileHeader::parse: short read of PE Optional Header at byte "
+                   <<StringUtility::addrToString(get_offset() + sizeof(fh)) <<"\n";
     p_e_opt_magic = ByteOrder::le_to_host(oh32.e_opt_magic);
     
     /* File format changes from ctor() */
@@ -199,8 +203,8 @@ SgAsmPEFileHeader::parse()
         if (need64>get_size())
             extend(need64-get_size());
         if (sizeof(oh64)!=read_content_local(sizeof fh, &oh64, sizeof oh64))
-            fprintf(stderr, "SgAsmPEFileHeader::parse: warning: short read of PE Optional Header at byte 0x%08"PRIx64"\n", 
-                    get_offset() + sizeof(fh));
+            mlog[WARN] <<"SgAsmPEFileHeader::parse: short read of PE Optional Header at byte "
+                       <<StringUtility::addrToString(get_offset() + sizeof(fh)) <<"\n";
         p_e_lmajor             = ByteOrder::le_to_host(oh64.e_lmajor);
         p_e_lminor             = ByteOrder::le_to_host(oh64.e_lminor);
         p_e_code_size          = ByteOrder::le_to_host(oh64.e_code_size);
@@ -305,7 +309,8 @@ SgAsmPEFileHeader::parse()
         set_isa(ISA_Mitsubishi_M32R);
         break;
       default:
-        fprintf(stderr, "SgAsmPEFileHeader::parse: warning: unrecognized e_cputype = 0x%x (%u)\n", p_e_cpu_type, p_e_cpu_type);
+        mlog[WARN] <<"SgAsmPEFileHeader::parse: warning: unrecognized e_cputype = "
+                   <<StringUtility::toHex2(p_e_cpu_type, 16) <<"\n";
         set_isa(ISA_OTHER);
         break;
     }
@@ -326,7 +331,7 @@ SgAsmPEFileHeader::parse()
     /* The PE File Header has a fixed-size component followed by some number of RVA/Size pairs. The add_rvasize_pairs() will
      * extend  the header and parse the RVA/Size pairs. */
     if (get_e_num_rvasize_pairs() > 1000) {
-        fprintf(stderr, "warning: PE File Header contains an unreasonable number of Rva/Size pairs. Limiting to 1000.\n");
+        mlog[WARN] <<"PE File Header contains an unreasonable number of Rva/Size pairs. Limiting to 1000.\n";
         set_e_num_rvasize_pairs(1000);
     }
     add_rvasize_pairs();
@@ -459,7 +464,7 @@ SgAsmPEFileHeader::set_rvasize_pair(PairPurpose idx, SgAsmPESection *section)
     ROSE_ASSERT(isSgAsmPEFileHeader(section->get_header())!=NULL);
 
     if (idx>=16)
-        fprintf(stderr, "SgAsmPEFileHeader::set_rvasize_pair: warning: index %u exceeds specification limit\n", (unsigned)idx);
+        mlog[WARN] <<"SgAsmPEFileHeader::set_rvasize_pair: index " <<idx <<" exceeds specification limit\n";
 
     /* Extend array of rva/size pairs if necessary */
     if ((size_t)idx>=get_rvasize_pairs()->get_pairs().size()) {
@@ -516,8 +521,9 @@ SgAsmPEFileHeader::add_rvasize_pairs()
     extend(pairs_size);
     for (size_t i = 0; i < p_e_num_rvasize_pairs; i++, pairs_offset += sizeof pairs_disk) {
         if (sizeof(pairs_disk)!=read_content_local(pairs_offset, &pairs_disk, sizeof pairs_disk, false))
-            fprintf(stderr, "SgAsmPEFileHeader::add_rvasize_pairs: warning: RVA/Size pair %" PRIuPTR " at file offset 0x%08"PRIx64
-                    " extends beyond the end of file (assuming 0/0)\n", i, get_offset()+pairs_offset);
+            mlog[WARN] <<"SgAsmPEFileHeader::add_rvasize_pairs: RVA/Size pair " <<i
+                       <<" at file offset " <<StringUtility::addrToString(get_offset()+pairs_offset)
+                       <<" extends beyond the end of file (assuming 0/0)\n";
         p_rvasize_pairs->get_pairs().push_back(new SgAsmPERVASizePair(p_rvasize_pairs, &pairs_disk));
     }
 }
@@ -547,9 +553,11 @@ SgAsmPEFileHeader::create_table_sections()
         MemoryMap *map = get_loader_map();
         ROSE_ASSERT(map!=NULL);
         if (!map->baseSize(pair_va, pair->get_e_size()).exists(Sawyer::Container::MATCH_WHOLE)) {
-            fprintf(stderr, "SgAsmPEFileHeader::create_table_sections: warning: pair-%" PRIuPTR ", rva=0x%08"PRIx64", size=%"PRIu64
-                    " bytes \"%s\": unable to find a mapping for the virtual address (skipping)\n",
-                    i, pair->get_e_rva().get_rva(), pair->get_e_size(), tabname.c_str());
+            mlog[WARN] <<"SgAsmPEFileHeader::create_table_sections: pair-" <<i
+                       <<", rva=" <<StringUtility::addrToString(pair->get_e_rva().get_rva())
+                       <<", size=" <<StringUtility::plural(pair->get_e_size(), "bytes")
+                       <<" \"" <<StringUtility::cEscape(tabname) <<"\":"
+                       <<" unable to find a mapping for the virtual address (skipping)\n";
             continue;
         }
         const MemoryMap::Node &me = *map->at(pair_va).findNode();
@@ -730,7 +738,6 @@ SgAsmPEFileHeader::reallocate()
      * don't change (i.e., don't increase e_nt_hdr_size if the bytes beyond it are zero anyway, and if they aren't then adjust
      * it as little as possible.  The RVA/Size pairs are considered to be part of the NT Optional Header. */
     size_t oh_size = p_rvasize_pairs->get_pairs().size() * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
-    size_t rvasize_offset; /*offset with respect to "oh" buffer allocated below*/
     if (4==get_word_size()) {
         oh_size += sizeof(PE32OptHeader_disk);
     } else if (8==get_word_size()) {
@@ -741,10 +748,8 @@ SgAsmPEFileHeader::reallocate()
     unsigned char *oh = new unsigned char[oh_size];
     if (4==get_word_size()) {
         encode((PE32OptHeader_disk*)oh);
-        rvasize_offset = sizeof(PE32OptHeader_disk);
     } else if (8==get_word_size()) {
         encode((PE64OptHeader_disk*)oh);
-        rvasize_offset = sizeof(PE64OptHeader_disk);
     } else {
         delete[] oh;
         throw FormatError("unsupported PE word size");

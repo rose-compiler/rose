@@ -6,7 +6,7 @@
 \class SgMinusOp
 
 \brief This class represents the numeric negation of a value. Not to
-       be confused with SgSubtractOp
+be confused with SgSubtractOp
 
 */
 

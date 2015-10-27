@@ -1,78 +1,69 @@
 
-#ifndef __MDCG_TILEK_HPP_
-#define __MDCG_TILEK_HPP_
+#ifndef __MDCG_TILEK_MODEL_HPP__
+#define __MDCG_TILEK_MODEL_HPP__
 
-#include "MDCG/static-initializer.hpp"
-#include "KLT/TileK/tilek.hpp"
+#include "MDCG/KLT/model.hpp"
 
-typedef ::KLT::Language::None Language;
-typedef ::KLT::Runtime::TileK Runtime;
-typedef ::DLX::KLT_Annotation< ::DLX::TileK::language_t> Annotation;
-typedef ::KLT::LoopTrees<Annotation> LoopTrees;
-typedef ::KLT::Kernel<Annotation, Language, Runtime> Kernel;
+#include "KLT/Core/kernel.hpp"
 
 namespace MDCG {
 
 namespace TileK {
 
-//struct tile_desc_t tiles_loop_1[2] = {
-//  { 0, e_tile_static,   2 },
-//  { 1, e_tile_dynamic,  0 }
-//};
-
-//struct tile_desc_t tiles_loop_2[2] = {
-//  { 2, e_tile_static,   2 },
-//  { 3, e_tile_dynamic,  0 }
-//};
-
-struct TileDesc {
-  typedef Runtime::tile_desc_t * input_t;
-
-  static SgExpression * createFieldInitializer(
-    const MDCG::StaticInitializer & static_initializer,
-    MDCG::Model::field_t element,
-    unsigned field_id,
-    const input_t & input,
-    unsigned file_id
-  );
-};
-
-//struct loop_desc_t loop_desc[2] = {
-//  { 0, 2, tiles_loop_1 },
-//  { 1, 2, tiles_loop_2 }
-//};
-
-struct LoopDesc {
-  typedef Runtime::loop_desc_t * input_t;
-
-  static SgExpression * createFieldInitializer(
-    const MDCG::StaticInitializer & static_initializer,
-    MDCG::Model::field_t element,
-    unsigned field_id,
-    const input_t & input,
-    unsigned file_id
-  );
-};
-
-//struct kernel_desc_t kernel_desc[1] = {
-//  { 2, 2, 2, 4, loop_desc, &kernel_0 }
-//};
-
+template <class Annotation_, class Runtime_>
 struct KernelDesc {
+  typedef ::KLT::Kernel<Annotation_, Runtime_> Kernel;
   typedef Kernel * input_t;
 
   static SgExpression * createFieldInitializer(
     const MDCG::StaticInitializer & static_initializer,
     MDCG::Model::field_t element,
-    unsigned field_id,
+    size_t field_id,
     const input_t & input,
-    unsigned file_id
-  );
+    size_t file_id
+  ) {
+    assert(input->getKernels().size() == 1);
+    typename Kernel::kernel_desc_t * kernel = input->getKernels()[0];
+    assert(kernel != NULL);
+
+    switch (field_id) {
+      case 0:
+      { // struct klt_data_container_t data;
+        Model::class_t field_class = StaticInitializer::getBaseClass(element, "data", "klt_data_container_t");
+        return static_initializer.createInitializer< ::MDCG::KLT::DataContainer<Annotation_, Runtime_> >(field_class, input, file_id);
+      }
+      case 1:
+      { // struct klt_loop_container_t loop;
+        Model::class_t field_class = StaticInitializer::getBaseClass(element, "loop", "klt_loop_container_t");
+        return static_initializer.createInitializer< ::MDCG::KLT::LoopContainer<Annotation_, Runtime_> >(field_class, input, file_id);
+      }
+#if defined(TILEK_BASIC) || defined(TILEK_THREADS)
+      case 2:
+      { // kernel_func_ptr kernel_ptr;
+        MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(kernel->kernel_name, Runtime::host_api.user->kernel_func_ptr_type, NULL, NULL, file_id, false, true);
+        MFB::Sage<SgVariableDeclaration>::build_result_t var_decl_res = static_initializer.getDriver().build<SgVariableDeclaration>(var_decl_desc);
+
+        SgDeclarationStatement * decl_stmt = isSgDeclarationStatement(var_decl_res.symbol->get_declaration()->get_parent());
+          decl_stmt->get_declarationModifier().unsetDefault();
+          decl_stmt->get_declarationModifier().get_storageModifier().setExtern();
+
+        return SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(var_decl_res.symbol));
+      }
+#elif defined(TILEK_ACCELERATOR)
+      case 2:
+      { // char * kernel_name;
+        return SageBuilder::buildStringVal(kernel->kernel_name);
+      }
+#endif
+      default:
+        assert(false);
+    }
+  }
 };
 
-}
+} // namespace MDCG::TileK
 
-}
+} // namespace MDCG
 
-#endif /* __MDCG_TILEK_HPP_ */
+#endif /* __MDCG_TILEK_MODEL_HPP__ */
 

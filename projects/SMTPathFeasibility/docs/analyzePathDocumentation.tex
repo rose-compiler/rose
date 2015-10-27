@@ -1,0 +1,291 @@
+% The set length variables are based on
+% an example from Stanford Earth Science
+% https://earthsci.stanford.edu/computing/unix/formatting/latexexample.php
+
+\documentclass[11pt]{article}
+\usepackage{listings}
+\setlength{\topmargin}{-.5in}
+\setlength{\textheight}{9in}
+\setlength{\oddsidemargin}{.125in}
+\setlength{\textwidth}{6.25in}
+
+\begin{document}
+\lstset{language=C++}
+\title{SMT Path Feasibility Documentation}
+\author{Michael Hoffman\\
+Lawrence Livermore National Laboratory}
+\maketitle
+
+
+
+\section{Developer Info}
+
+
+This is the documentation of the SMTPathFeasibility project source for future developers. We begin with the file analyzePath.cpp and discuss what each SMTPathFeasibility function does as we go.\\
+
+\begin{lstlisting}
+SgProject* proj = frontend(argc,argv);
+fixAllPrefixPostfix(proj);
+initializeScopeInformation(proj);
+SgFunctionDeclaration* mainDecl = SageInterface::findMain(proj);
+SgFunctionDefinition* mainDef = mainDecl->get_definition();
+StaticCFG::CFG cfg(mainDef);
+SgIncidenceDirectedGraph *g = cfg.getGraph();
+PathCollector* pathCollector = new PathCollector(g,&cfg);
+\end{lstlisting}
+The fixAllPrefixPostfix function replaces unary ++ and -- such that the assignment is completed before or after depending on prefix or postfix use\\
+initializeScopeInformation allows ResultQuery naming to avoid problems when
+we have something like
+
+\begin{lstlisting}
+int a = 1;
+while (1) {
+	int a = 2
+	break;
+}
+
+a = a + 1;
+\end{lstlisting}
+
+
+If we don't fix names we will have the a variable assigned three times so that
+\begin{lstlisting}
+a = a + 1 
+\end{lstlisting}
+will give 3. If you get an error in compilation always check to make sure initializeScopeInformation was called. The code that follows until PathCollector is standard construction of a CFG for a main function\\
+\begin{lstlisting}
+PathCollector* new PathCollector(g,&cfg)
+\end{lstlisting}
+The PathCollector is defined in utils/utilHeader.h, it's functions are defined in tools/collectPaths.cpp, we will use it later for analysis.\\
+First we collect all the while statements and see if they have pragma declarations.
+The while loop
+\begin{lstlisting}
+SgScopeStatement* scopeOfWhile = SageInterface::getEnclosingScope(*node);
+SgStatementPtrList statementsInScope = scopeOfWhile->getStatementList();
+SgStatementPtrList::iterator statPtr = statementsInScope.begin();
+std::set<SgPragmaDeclaration*> prdecls;
+for (; statPtr!=statementsInScope.end();statPtr++) {
+    if (isSgPragmaDeclaration(*statPtr)) {
+        prdecls.insert(isSgPragmaDeclaration(*statPtr));
+    }
+}
+\end{lstlisting}
+should be straightforward enough.\\ 
+Now we get to the interesting part
+\begin{lstlisting}
+SgStatement* body = (isSgWhileStmt(*node)->get_body());
+std::vector<std::vector<SgGraphNode*> > paths = pathCollector->getPaths();
+std::cout << getPrelude() << std::endl;
+SgGraphNode* whileStart = cfg.cfgForBeginning(isSgWhileStmt(*node));
+SgGraphNode* whileEnd = cfg.cfgForEnd(isSgWhileStmt(*node));
+collectPaths(whileStart,whileEnd, pathCollector);
+SgGraphNode* whileOut = getWhileEndNode(isSgWhileStmt(*node),pathCollector);
+SgGraphNode* bodyStart = cfg.cfgForBeginning(isSgWhileStmt(*node)->get_body());
+SgGraphNode* bodyEnd = cfg.cfgForEnd(isSgWhileStmt(*node)->get_body());
+pathCollector->clearPaths();
+collectPaths(bodyStart,whileOut,pathCollector);
+paths.clear();
+paths = pathCollector->getPaths();
+std::vector<std::vector<SgGraphNode*> >::iterator i  = paths.begin();
+std::set<SgVariableSymbol*> vars = getVars(pathCollector);
+std::string vardecls;
+std::string initrule;
+std::vector<std::string> rules = getRules \
+(*node,pathCollector, vars, vardecls,initrule);
+\end{lstlisting}
+getPrelude is responsible for defined z3 functions that compute c-style integer divisions, mod, conditionals (e.g. 0 = false, 1 = true), and a few more. This returns the string that contains them all, and this is printed to screen so that the output of analyzePath can be piped to a file. In order to make the file readable by z3, just use "head --lines=-3" (due to testing methods the last three lines are unrelated to z3 and should be removed).\\
+\begin{lstlisting}
+getVars(pathCollector)
+\end{lstlisting}
+getVars generates the set of SgVariableSymbols for any variables occurring in any of the paths.\\
+\begin{lstlisting}
+getRules(*node,pathCollector,vars,vardecls,initrule)
+\end{lstlisting}
+getRules returns a vector of strings representing the rules which are defined by the paths. At present this only works on while loops showing proof of concept. We send it the node representing the while statement, the PathCollector, all the variables found with getVars, a string to collect all variable declarations, and a string to collect the initial rule.\\
+Next we get to the function 
+getWhileRules loops through all while statements, and calls getWhileRule.
+\begin{lstlisting}
+std::string getWhileRule(PathCollector* pathCollector,\
+ std::vector<SgGraphNode*> path, std::set<SgVariableSymbol*> vars,\
+ SgWhileStmt* whileStmt,std::string& vardecls,std::string& initrule) {
+        std::map<SgNode*,std::string> eckAssociations = \
+	pathCollector->getAssociationsForPath(path);
+        SgExprStatement* boundingConditionStatement = \
+	isSgExprStatement(whileStmt->get_condition());
+        SgExpression* boundingCondition = \
+	boundingConditionStatement->get_expression();
+        std::string rule;
+        evaluatePath(path,eckAssociations,boundingCondition,\
+	vars,vardecls,rule,initrule);
+        return rule;
+}
+\end{lstlisting}
+getAssociationsForPath collects any cases of if statements. Consider the if statement
+\begin{lstlisting}
+if (a == 1) {
+	a = a + 1;
+}
+else {
+	a = a - 1;
+}
+\end{lstlisting}
+There are two paths through this. getAssociationsForPath determines whether a given condition is true or false in the current loop.\\
+next we use evaluatePath, it has arguments
+path = current path
+boundingCondition = the bounding condition for the loop (e.g. while (i<2) returns i < 2
+vars = our variables determined earlier
+vardecls = where our variable declarations will be placed
+initrule = our initial conditions defined by the user in the pragma
+evaluate path is defined in getStatementInfoForSMTLib.cpp.
+\begin{lstlisting}
+        pathStatements.clear();
+        for (int i = 0; i < path.size(); i++) {
+                if (isSgStatement(path[i]->get_SgNode())) {
+                        pathStatements.insert \
+			(isSgStatement(path[i]->get_SgNode()));
+                }
+        }
+
+        pathValue.clear();
+        varExpressionValue.clear();
+        variablesAssigned = vars;
+        std::set<SgVariableSymbol*>::iterator v = \
+	variablesAssigned.begin();
+        for (; v != variablesAssigned.end(); v++) {
+                getVarName(*v);
+        }
+\end{lstlisting}
+pathStatements here is a global variable that contains the set of SgStatements within the current paths (hence it is cleared before continuing). We get all statements in our given path.\\
+pathValue and varExpressionValue:\\
+pathValue is a map from SgIfStmt* to std::string which associates a given if statement to whether or not the conditional holds in the current path\\
+varExpressionValue is used to carry the current version of the initial variable e.g.
+variables a, b ...\\
+\begin{lstlisting}
+a = a + b;
+a = a * b;
+\end{lstlisting}
+by the end we have
+\begin{verbatim}
+(= a (+ a b)) -> (= a (* b (+ a b)))
+b -> b
+\end{verbatim}
+This translates to\\
+\begin{verbatim}
+(rule (=> (R a b) (R (* b (+ a b)) b))
+\end{verbatim}
+That is, given that the loop worked at a, b "(R a b)", then the loop will
+end with 
+\begin{verbatim}
+a = (a+b)*b, b = b
+\end{verbatim}
+which is declared via\\
+\begin{verbatim}
+(R (* b (+ a b)) b)
+\end{verbatim}
+Which gives the form of Z3 rules\\
+\begin{verbatim}
+(rule (=> REL_INPUT) REL_OUTPUT)
+\end{verbatim}
+If there is a conditional we append conditions to REL\_INPUT, e.g. if $a > 2$ is true in a given path, then\\
+\begin{verbatim}
+(rule (=> (and REL_INPUT (cbool (> a 2) 1)) REL_OUTPUT))
+\end{verbatim}
+
+cbool here is X Y such that a true condition yields 1, and a false condition yields 0, thus one path would be as above and the path\\
+\begin{verbatim}
+(rule (=> (and REL_INPUT (cbool (> a 2) 0)) REL_OUTPUT))
+\end{verbatim}
+usually this would change REL\_OUTPUT, given that generally a conditional would decide if the false body or the true body should be evaluated
+Example:
+\begin{lstlisting}
+while(x < 2) {
+	if (z > 0) {
+		x = x + 1;
+	}
+	else {
+		y = y + 1;
+	}
+}
+\end{lstlisting}
+\begin{verbatim}
+(declare-rel w_rule (Int Int Int))	
+(declare-var x Int)
+(declare-var y Int)
+(declare-var z Int)
+(rule (=> (w_rule x y z) (< x 2)))
+(rule (=> (and (w_rule x y z) (cbool (> z 0) 1)) (w_rule (+ x 1) y z)))
+(rule (=> (and (w_rule x y z) (cbool (> z 0) 0)) (w_rule x (+ y 1) z)))
+\end{verbatim}
+This tells z3 that
+\begin{description}
+\item[1] x is always less than 2 at the beginning of the loop
+\item[2] if z is greater than zero and the loop condition is fulfilled at x,y,z then x becomes $x + 1$ and y and z do not change.
+\item[3] if z is not greater than zero and the loop condition is fulfilled at x,y,z then y becomes $y + 1$ and x and z do not change
+\end{description}
+\section{Pragma syntax}
+The way the user can give rules to the solver is through pragmas. The syntax for the program are in development, but for proof of concept the prototype has two pragma forms\\
+\begin{description}
+\item[init] pragma smt init [EXPRESSION1,EXPRESSION2,...]
+\item[queries] pragma smt [EXPRESSION1,EXPRESSION2,...]
+\end{description}
+Example:
+\begin{lstlisting}
+#pragma smt init[i=0,a=1]
+#pragma smt [a>0,i<10]
+while (i < 10) {
+\end{lstlisting}
+This means that the loop begins with i = 0 and a = 1. Expressions like $a>2$ could also be used, implying that the loop begins with $a>2$, though this will not necessarily hold in successive loops.\\
+The other pragma gives postconditions a>0 and i<10, that is that at some point the loop achieves the conditions a>0 and i<10.\\
+The pragmas currently in development are similar to the notation used by Spec\# (a subset of C\#) so we have
+\begin{description}
+\item[assume] Only use loop iterations where some condition E holds
+\item[assert] This is an interior assertion, wherever the pragma is locate 
+\item[invariant] This gives conditions that must hold throughout the loops
+\item[requires] implemention not yet determined
+\item[old] Used as $x = old(x)+1$ in Spec\#, not sure how to write this in a pragma
+\item[ensures] postcondition, pragma implementation is not yet determined
+\item[modifies] Not sure how to implement
+\item[forall] Not sure how to implement
+\end{description}
+
+
+\section{ANSI C coverage}
+\subsection{Not fully tested or covered}
+This list is not exhaustive, but describes important points not covered
+\begin{description}
+\item[Unary Ops] pre and postfix unary ops
+\item[Bit Ops] bit operations, bitvectors are not set up for this
+\item[Loops] do while, for: These should be relatively easy to cover, the evaluation must be slightly modified from the while case
+\item[Conditionals] ternary if is not yet implemented
+\item[Enums] Need to check for complete coverage
+\item[Case/Switch] case/switch is not yet covered
+\item[Function Calls]
+\item[Other] structs, pointers, addresses: the problem with these is described later in this document
+\item[Typecasting] explicit casting is not covered
+\item[typedef]
+\end{description}
+
+\subsection{Covered and Tests For Coverage}
+\begin{description}
+\item[Basic Arithmetic] $+,-,*,/,\%$, integer division is not completely tested
+\item[Simple Assignment] $=$ is covered
+\item[Compound Assignment] $+=,-=,*=,/=$
+\item[loops] while is covered
+\item[Conditionals] if statements are covered
+
+\end{description}
+
+\subsection{Pointers, Structs and Addresses}
+The code for these will be based on the paper "Efficient Evaluation of Pointer Predicates With Z3 SMT Soliver in SLAM2" T Ball, E Bounimova, V Levin, L De Moura. This requires extensive axioms and definitions. Information can be found in PointerToSMT2.smt2 in docs
+
+\subsection{Next Steps}
+Next steps for this project are as follows...
+\begin{description}
+\item[Directory Organization] I have this implemented in an experimental version, but have not yet pushed it to master
+\item[DLX pragma format] I have this implemented in part in an experimental version, this allows for much greater expression and more complex queries. This uses AstFromString, which seems to have a bug such that \&\& is defined as SgBitAndOp instead of SgAndOp
+\item[Extending Pragmas] to for loops, do while loops, function call expressions
+\item[Basic coverage completion] Extending this code to include enums and explicit typecasting, do while and for loops, ternary conditionals, case/switch
+\item[Pointers, Arrays, Structs] This will require complete implementation of the system referred to in the previous subsection
+\item[Tutorials] Currently this documentation has a small tutorial, this should be extended to tutorials defined separately.
+\end{description}
+\end{document}

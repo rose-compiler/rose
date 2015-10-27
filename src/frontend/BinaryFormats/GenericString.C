@@ -62,8 +62,7 @@ SgAsmBasicString::set_string(const std::string &s)
 void
 SgAsmBasicString::set_string(rose_addr_t offset)
 {
-    fprintf(stderr, "SgAsmBasicString::set_string(rose_addr_t offset=%"PRIu64"): not supported\n", offset);
-    abort();
+    ASSERT_not_implemented("set_string(rose_addr_t offset=" + StringUtility::addrToString(offset) + ")");
 }
 
 /* Print some debugging info */

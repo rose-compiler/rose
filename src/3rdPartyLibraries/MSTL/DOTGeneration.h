@@ -46,7 +46,8 @@ class DOTGeneration : public SgTopDownBottomUpProcessing<DOTInheritedAttribute, 
           DOTGeneration();
        // generates a visualization of an AST subtree with root node node. The filename must be specified.
        // DQ (10/30/2003) Make generate a virtual function
-          virtual void generate(std::string filename, Node node, traversalType tt=TOPDOWNBOTTOMUP);
+       // MS 10/22/2015: this function is never overwritten, but overloaded in subclasses. Let's keep it non-virtual for that reason.
+          void generate(std::string filename, Node node, traversalType tt=TOPDOWNBOTTOMUP);
           virtual DOTInheritedAttribute evaluateInheritedAttribute(Node node, DOTInheritedAttribute ia);
           virtual DOTSynthesizedAttribute evaluateSynthesizedAttribute(Node node, DOTInheritedAttribute ia, SubTreeSynthesizedAttributes l);
 

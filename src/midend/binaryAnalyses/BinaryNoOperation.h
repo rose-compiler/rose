@@ -47,7 +47,7 @@ public:
 
         /** Constructs an initial state. */
         virtual InstructionSemantics2::BaseSemantics::StatePtr
-        initialState(const InstructionSemantics2::BaseSemantics::DispatcherPtr&);
+        initialState(const InstructionSemantics2::BaseSemantics::DispatcherPtr&, SgAsmInstruction *firstInsn);
 
         /** Takes a state and returns a normalized string.
          *
@@ -87,7 +87,8 @@ public:
      *  the other are effectively a no-op.  In particular, the state normalizer should probably not try to compare instruction
      *  pointer registers, or memory that was read without being written (i.e., memory that sprang into existence by reading).
      *  The default normalizer does both of these things if the register state is derived from @ref
-     *  BaseSemantics::RegisterStateGeneric and the memory state is derived from @ref BaseSemantics::MemoryCellList.
+     *  InstructionSemantics2::BaseSemantics::RegisterStateGeneric and the memory state is derived from @ref
+     *  InstructionSemantics2::BaseSemantics::MemoryCellList.
      *
      * @{ */
     StateNormalizer::Ptr stateNormalizer() const { return normalizer_; }
@@ -132,7 +133,7 @@ public:
     static void initDiagnostics();
 
 protected:
-    InstructionSemantics2::BaseSemantics::StatePtr initialState() const;
+    InstructionSemantics2::BaseSemantics::StatePtr initialState(SgAsmInstruction *firstInsn) const;
     std::string normalizeState(const InstructionSemantics2::BaseSemantics::StatePtr&) const;
 };
 

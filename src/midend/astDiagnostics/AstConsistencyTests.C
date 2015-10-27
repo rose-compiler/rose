@@ -2782,7 +2782,7 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                        {
                          printf ("Warning: (different access modifiers used) definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
                          printf ("Warning: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
-                         printf ("Waringg: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                         printf ("Warning: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
                        }
                       else
                        {
@@ -3756,10 +3756,10 @@ TestExpressionTypes::visit ( SgNode* node )
              {
                SgExpression *parentExpr = isSgExpression(expression->get_parent());
                if (parentExpr != NULL && !(
-                                       parentExpr->variantT() == V_SgAssignInitializer && expression->variantT() == V_SgStringVal
+                                    (parentExpr->variantT() == V_SgAssignInitializer && expression->variantT() == V_SgStringVal)
                                     || parentExpr->variantT() == V_SgDotExp
                                     || parentExpr->variantT() == V_SgArrowExp
-                                    || isSgInitializer(parentExpr) && isSgInitializer(expression)))
+                                    || (isSgInitializer(parentExpr) && isSgInitializer(expression))))
                   {
                     SgType* parentType = parentExpr->get_type();
                     parentType = parentType->stripTypedefsAndModifiers();

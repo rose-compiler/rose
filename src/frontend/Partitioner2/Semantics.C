@@ -12,17 +12,30 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
 //                                      Memory State
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+const MemoryMap*
+MemoryState::memoryMap() const {
+    return map_;
+}
+
 BaseSemantics::SValuePtr
 MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+    addressesRead_.push_back(SValue::promote(addr));
     if (map_ && addr->is_number()) {
         ASSERT_require2(8==dflt->get_width(), "multi-byte reads should have been handled above this call");
-        uint8_t byte;
-        size_t nRead = map_->at(addr->get_number()).limit(1)
-                       .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE)
-                       .read(&byte).size();
-        if (1==nRead)
-            return valOps->number_(8, byte);
+        rose_addr_t va = addr->get_number();
+        bool isModifiable = map_->at(va).require(MemoryMap::WRITABLE).exists();
+        bool isInitialized = map_->at(va).require(MemoryMap::INITIALIZED).exists();
+        if (!isModifiable || isInitialized) {
+            uint8_t byte;
+            if (1 == map_->at(va).limit(1).read(&byte).size()) {
+                unsigned flags = isModifiable ? InsnSemanticsExpr::TreeNode::INDETERMINATE : 0;
+                InsnSemanticsExpr::TreeNodePtr expr = InsnSemanticsExpr::LeafNode::create_integer(8, byte, "", flags);
+                SymbolicSemantics::SValuePtr val = SymbolicSemantics::SValue::promote(valOps->undefined_(8));
+                val->set_expression(expr);
+                return val;
+            }
+        }
     }
     return SymbolicSemantics::MemoryState::readMemory(addr, dflt, addrOps, valOps);
 }
@@ -30,6 +43,14 @@ MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantic
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Risc Operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RiscOperators::startInstruction(SgAsmInstruction *insn) {
+    ASSERT_not_null(get_state());
+    ASSERT_not_null(get_state()->get_memory_state());
+    MemoryState::promote(get_state()->get_memory_state())->addressesRead().clear();
+    SymbolicSemantics::RiscOperators::startInstruction(insn);
+}
 
 BaseSemantics::SValuePtr
 RiscOperators::trim(const BaseSemantics::SValuePtr &a_) {

@@ -8,6 +8,7 @@
 
 #include "integerOps.h"
 #include "BaseSemantics2.h"
+#include "RegisterStateGeneric.h"
 #include <Sawyer/BitVector.h>
 
 namespace rose {
@@ -78,6 +79,12 @@ public:
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
         return instance(nbits);
     }
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const ROSE_OVERRIDE {
+        return instance(nbits);
+    }
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+        return instance(nbits);
+    }
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const ROSE_OVERRIDE {
         return instance(nbits, value);
     }
@@ -90,6 +97,8 @@ public:
             retval->set_width(new_width);
         return retval;
     }
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
+                                                                           SMTSolver*) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
@@ -108,6 +117,10 @@ public:
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
 
     virtual void set_width(size_t nbits);
+
+    virtual bool isBottom() const ROSE_OVERRIDE {
+        return false;
+    }
 
     virtual bool is_number() const ROSE_OVERRIDE {
         return true;
@@ -232,6 +245,9 @@ public:
 
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+
+    virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
+                       BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared in this class
@@ -435,6 +451,17 @@ public:
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
 
+    virtual BaseSemantics::SValuePtr fpFromInteger(const BaseSemantics::SValuePtr &intValue, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpToInteger(const BaseSemantics::SValuePtr &fpValue, SgAsmFloatType *fpType,
+                                                 const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpAdd(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+                                           SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpSubtract(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+                                                SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+                                                SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatType*) ROSE_OVERRIDE;
+
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
@@ -443,6 +470,13 @@ public:
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+
+protected:
+    // Convert expression to double
+    double exprToDouble(const BaseSemantics::SValuePtr &expr, SgAsmFloatType*);
+
+    // Convert double to expression
+    BaseSemantics::SValuePtr doubleToExpr(double d, SgAsmFloatType*);
 };
 
 } // namespace

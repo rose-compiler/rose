@@ -137,18 +137,3 @@
               MyAstAttribute* accessexample = node->attribute["myattribute1"];\n
   */
 
- /*! \class Ast Ast.h
-     \ingroup AstProcessingClasses
-
-     \brief Class that provides an iterator for the ROSE AST.
-
-     usage: Ast x(mystartnode); for(Ast::iterator i=x.begin();i!=x.end();x++) { MYCODE } \n
-
-     The iterator refers to pointers of AST nodes, it never holds a null-pointer of the
-     traversed tree.
-
-     \todo (DQ 2/1/2006): Could we please change the name of this class, it is not an AST.
-
-  */
-
-

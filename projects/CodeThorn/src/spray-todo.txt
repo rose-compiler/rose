@@ -1,0 +1,34 @@
+KNOWN BUGS:
+
+Issue 1: SgSwithStatement is visited in transfer function. Possible reason: init is wrong.
+
+TODO:
+
+1) annotating analysis results
+
+  1.2) annotate case properly (currently post-info intentionally not
+       attached because a comment attached to a SgCaseOptionStmt is
+       not unparsed after the case label by the ROSE unparser, but
+       instead after the associated stmt (which is wrong).
+
+  1.3) annotate functions properly (currently body is annotated for
+       entry/exit)
+
+2) icfg print
+  2.1) case label only (without stmt)
+
+3) add output of AST labeling to analyterix as new option.
+
+4) Labeler:
+   associates the correct number of labels with all language constructs,
+   but it also associates labels with all conditions (because they are
+   SgExprStatements). getNode of this label should not return the stmt
+   ifself, but instead the associated node. The exceptions are:
+   if,while,do-while,switch.
+
+5) the general rule should be: only nodes that are (directly)
+represented in the ICFG are labeled. Example: number of labels for
+if-stmt is 1. There should be two different access functions (now only
+getNode): getLanguageConstructNode and getAssociatedNode.
+The function getLanguageConstructNode would return the root node SgIfStatement,
+whereas getAssociatedNode returns the node of the condition.

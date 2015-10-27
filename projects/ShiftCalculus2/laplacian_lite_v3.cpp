@@ -12,11 +12,19 @@
 //a single box. BLOCKSIZE, DOMAINSIZE and DIM are set in the Makefile
 
 
-#define BLOCKSIZE 32
-#define DIM       3
+//#define BLOCKSIZE 32
+//#define DIM       3
 // #define DIM       2
 
 #include "laplacian_lite_v3.h"
+
+void initialize(RectMDArray<double>& patch)
+{
+  Box D0 = patch.getBox();
+  int k=1;
+  for (Point pt = D0.getLowCorner();D0.notDone(pt);D0.increment(pt))
+      patch[pt] = k++;
+}
 
 int main(int argc, char* argv[])
    {
@@ -80,4 +88,5 @@ int main(int argc, char* argv[])
 
   // cout <<" The destination Box" << endl;
   // Adest.print();
+     return 0;
    }
