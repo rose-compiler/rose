@@ -7,6 +7,7 @@ add_library(midend_binary OBJECT
   BinaryFunctionCall.C
   BinaryMagic.C
   BinaryNoOperation.C
+  BinaryPointerDetection.C
   BinaryReturnValueUsed.C
   BinaryString.C
   BinarySymbolicExpr.C
