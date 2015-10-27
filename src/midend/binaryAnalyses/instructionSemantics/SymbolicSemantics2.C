@@ -417,9 +417,9 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
     if (a->isBottom())
         return bottom_(end_bit-begin_bit);
 
-    SValuePtr retval = svalue_expr(SymbolicExpr::makeExtract(SymbolicExpr::makeInteger(32, begin_bit),
-                                                             SymbolicExpr::makeInteger(32, end_bit),
-                                                             a->get_expression()));
+    SymbolicExpr::Ptr beginExpr = SymbolicExpr::makeInteger(32, begin_bit);
+    SymbolicExpr::Ptr endExpr = SymbolicExpr::makeInteger(32, end_bit);
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeExtract(beginExpr, endExpr, a->get_expression()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;

@@ -52,9 +52,9 @@ testInternal() {
 static void
 testPrinting() {
     std::cout <<"test printing flags:\n";
-    SymbolicExpr::Ptr e1 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD,
-                                                          SymbolicExpr::Leaf::createVariable(32, "a", UNDEFINED),
-                                                          SymbolicExpr::Leaf::createVariable(32, "b", INVALID));
+    SymbolicExpr::Ptr b = SymbolicExpr::Leaf::createVariable(32, "b", INVALID);
+    SymbolicExpr::Ptr a = SymbolicExpr::Leaf::createVariable(32, "a", UNDEFINED);
+    SymbolicExpr::Ptr e1 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, a, b);
     std::cout <<"  e1 = " <<*e1 <<"\n";
 }
 
