@@ -1,5 +1,5 @@
 #include <string>
 #include <stdint.h>
-namespace ROSE{
+namespace rose {
     uint32_t GetProjectWideUniqueIdForPhysicalFile(const std::string & dbFile, const std::string & physicalFile);
 }

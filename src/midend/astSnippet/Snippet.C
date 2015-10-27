@@ -5,9 +5,6 @@
 #include "LinearCongruentialGenerator.h"
 #include "rose_getline.h"
 
-/* Needed for __attribute__ definition on Visual Studio */
-#include "threadSupport.h"
-
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -910,9 +907,9 @@ Snippet::replaceVariable(SgVarRefExp *vref, SgExpression *replacement)
 {
     struct Replacer: public SimpleReferenceToPointerHandler {
         SgNode *nodeToReplace, *replacement;
-        bool replaced;
+        size_t replaced;
         Replacer(SgNode *nodeToReplace, SgNode *replacement)
-            : nodeToReplace(nodeToReplace), replacement(replacement), replaced(false) {}
+            : nodeToReplace(nodeToReplace), replacement(replacement), replaced(0) {}
         void operator()(SgNode *&node, const SgName &debugStringName, bool/*traverse*/) {
             if (node==nodeToReplace) {
                 node = replacement;

@@ -1,0 +1,276 @@
+// -*- c++ -*-
+
+namespace rose {
+namespace BinaryAnalysis {
+
+/** @page binary_tutorial Getting started with binary analysis
+ *
+ *  A tutorial covering some basic binary analysis.
+ *
+ *  @section bintut_why Why binary analysis?
+ *
+ *  ROSE was originally designed as a source-to-source analysis and trasformation system, but it turns out that parsing and
+ *  analyzing a binary specimen shares much of the same basic ideas:
+ *
+ *  @li A binary specimen usually lives in a container that describes areas of memory, symbols, and other things needed when
+ *      the specimen is executed or linked. These various containers (executables, libraries, object files, core dumps) can be
+ *      parsed by a ROSE frontend and result in an abstract syntax tree (AST) much like parsing of source code.
+ *
+ *  @li The machine instructions of a binary specimen can be parsed an have semantics similar to statements in a source
+ *      language. They also result in abstract syntax trees.
+ *
+ *  @li Data areas in the specimen can be parsed and are similar to initialized data in a source language. These also become
+ *      abstract syntax trees.
+ *
+ *  @li %Analysis can be performed on an intermediate representation (IR) for both binaries and source code. One such
+ *      intermediate representation is the abstract syntax tree.
+ *
+ *  @li Transformations modify the AST and the resulting AST can be "unparsed" to create a new binary specimen, much like
+ *      unparsing transformed source code results in a new implementation.
+ *
+ *  Of course there are also many differences between source code and binary specimens, but ROSE is situated in the unique
+ *  position of being able to process both.  On the one hand, it can operate on a specimen for which no source code is
+ *  available, and on the other it can perform analysis and transformations where both source and binary are available at
+ *  once.
+ *
+ *
+ *
+ *
+ *  @section bintut_features What binary analysis features are available?
+ * 
+ *  ROSE can parse a variety of binary inputs. It can parse executable formats including Linux ELF executables, Microsoft
+ *  Windows PE and DOS executables, and Motorola S-Records.  It has disassemblers for ARM, Amd64 (x86-64), MIPS, Motorola 68k,
+ *  PowerPC, and x86 families.  It can read raw memory dumps if the user supplies mapping information, or it can obtain memory
+ *  and register states from a running executable (Linux).
+ *
+ *  ROSE understands semantics for common subsets of Amd64, m68k, PowerPC, and x86 and can therefore reason about how execution
+ *  of instructions affects a machine's state. It uses that information to drive recursive disassembly and discern where code
+ *  and data are located. This reasoning can occur in various semantic domains: a domain that operates on concrete values like
+ *  a real CPU, a domain that operates on symbolic values that can be fed into Satisfiability Modulo Theory (SMT) solvers, an
+ *  interval domain that represents ranges of values, and many other more specialized domains and user-defined domains.
+ *
+ *  ROSE is able to construct control flow graphs and call graphs and has a number of pre-built analysis capabilities such as
+ *  tainted flow analysis, edit distances, code statistics, memory maps, reasoning about register interactions, address usage
+ *  maps, execution paths and their feasibility, generic inlining and interprocedural data-flow, no-op sequence detection,
+ *  opaque predicate detection, algorithmic CFG rewriting, calling convention detection, function may-return analysis, address
+ *  labeling passes, thunk detection and manipulating, switch statement analysis, interrupt vector processing, overlapping
+ *  instructions, cross referencing, function stack delta analysis, register and memory usage analysis, magic numbers, static
+ *  and dynamic string decoding, control flow dominance, pointer detection, DWARF parsing, library identification, etc.
+ *
+ *  %Analysis results are available in a number of formats, depending on the analysis: through various APIs, decoration of the
+ *  abstract syntax tree or control flow graph, commentary in assembly listings, databases, or to a certain extent, as a new
+ *  translated binary specimen.
+ *
+ *  This document only attempts to describe a few of the easiest features to get you started.
+ *
+ *
+ *
+ *
+ *  @section bintut_config Installing and confguring ROSE for binary analysis
+ *
+ *  The binary analysis features have a large number of software dependencies beyond what the source-to-source side of ROSE
+ *  uses, but fortunately all of them are optional.  If a software dependency is not available then the analysis that uses it
+ *  is simply not available. In a few cases cases the analysis can use a different dependency or a slower or less accurate
+ *  implementation.  See @ref installation for instructions on how to install ROSE.
+ *
+ *
+ *
+ *
+ *  @section bintut_helloworld Hello, World!
+ *
+ *  Every system needs a basic "Hello, World!" example, so here's that example for binary analysis within the ROSE
+ *  framework. It parses a specimen from a variety of formats (see its "--help" output), then disassembles the instructions
+ *  optionally using instruction semantics to help drive the disassembly, then partitions the instructions into functional
+ *  units, and finally displays an assembly listing.
+ *
+ *  @snippet binaryHelloWorld.C rose include
+ *
+ *  All programs start by including the main ROSE include file. This declares most things that are common to source and binary
+ *  analysis.
+ *
+ *  @snippet binaryHelloWorld.C other includes
+ *
+ *  ROSE's binary components are declared in individual header files that can only be included after including "rose.h". This
+ *  ordering is true in general for ROSE.  The binary headers themselves can be included in any order since each header includes
+ *  those other headers on which it depends.  The binary analysis headers usually have the same names as the primary class they
+ *  contain.
+ *
+ *  @snippet binaryHelloWorld.C commandline
+ *
+ *  The binary analysis uses a different command-line processor than most of the rest of ROSE because the command-line options
+ *  for these tools don't typically interact with a compiler and therefore don't need to parse the host of compiler switches
+ *  that the source tools need to recognize.  This also frees the binary tool's command-line parser to be able to generate Unix
+ *  man pages on the fly.  For instance, if you invoke this tool with "--help" (or just "-h") you should see quite lengthy
+ *  documentation about how to invoke the tool and what all its switches mean.  A tool more advanced than "Hello, World!" can
+ *  modify the command-line parser.
+ *
+ *  @snippet binaryHelloWorld.C disassembly
+ *
+ *  ROSE divides disassembly into two phases. Within ROSE, a @ref Disassembler is responsible for parsing the bytes of a single
+ *  machine instruction and turning them into an abstract syntax tree, while the @ref Partitioner2 namespace contains the
+ *  machinery for driving disassembly.  The partitioner partitions the specimen's memory image into parts that are either
+ *  instructions or data (actually, "partitioner" is a bit of a misnomer since instructions and data can also overlap, although
+ *  they seldom do in practice).
+ *
+ *  The Partitioner2 namespace contains many classes, but @ref Partitioner2::Engine "Engine" is the highest abstraction and the
+ *  one that most tools use.  In this example, we are invoking the @ref Partitioner2::Engine::frontend "frontend", which is
+ *  similar in nature to ROSE's global @ref frontend in that it does everything necessary to make ROSE ready to do analysis: it
+ *  parses, loads, disassembles, partitions, runs basic analysis, and checks consistency. In the end, it returns an abstract
+ *  syntax tree (AST).
+ *
+ *  AST nodes in ROSE all begin with the letters "Sg" (from "Sage"). Those nodes that are specific to binary analysis begin
+ *  with "SgAsm" (from "Sage assembly").  Within source code analysis, source files combine to form a single @ref SgProject
+ *  node, and the same is usually true with binary analysis also.  For specimens that have a container, like Linux ELF and
+ *  Windows PE files, the AST has two large subtrees: one subtree describes the containers (there may be more than one), and
+ *  another subtree describes the instructions organized into interpretation subtrees (@ref SgAsmInterpretation).
+ *  Interpretations organize instructions into coherent sets, such as the PE32 and DOS subcomponents of a Windows PE
+ *  file. However not all specimen formats have containers, in which case the AST is abbreviated and contains only the
+ *  instructions rooted at a "global block" (SgAsmBlock).
+ *
+ *  @snippet binaryHelloWorld.C unparsing
+ *
+ *  Now that an abstract syntax tree has been created we can "unparse" it. Unparsing in a binary is slightly different
+ *  than unparsing source code. Binary specimens are usually not transformed like source code, so the unparser for a binary
+ *  generates a human-readable pseudo-assembly listing instead.  We could have also called the global @ref backend (same as
+ *  source code) which would have produced a number of output files including a new executable, but backend only works on
+ *  SgProject nodes which might not be present (see above).
+ *
+ *  Here's the entire "Hello, World!" program:
+ *
+ *  @includelineno binaryHelloWorld.C
+ *
+ *  To compile this program you'll want to use the same compiler, preprocessor switches, compiler switches, and loader switches
+ *  as are used when compiling ROSE.  This is important!  For instance, if you've compiled Boost with default settings it
+ *  probably has multi-threading support, in which case if you're compiling with g++ you'll amost certainly need the "-pthread"
+ *  switch in your compile and link commands, and failing to do so might result in core dumps.  ROSE has a tool that provides
+ *  you with this information: rose-config.  Invoke it with one argument, the word "cxx", "cppflags", "cflags", or "ldflags"
+ *  to get the necessary switches.
+ *
+ *  When you run the "Hello, World!" example you may need to provide paths for the dynamic libraries. It is important to use
+ *  the currect versions of libraries--the same versions used when compiling rose--so the rose-config command comes in handy
+ *  again with its "libdirs" setting, which should be stored in the @c LD_LIBRARY_PATH environment variable on Linux (similar
+ *  mechanisms exist on other operating systems).  See the output from "rose-config --help".
+ *
+ * 
+ *
+ *
+ *  @section bintut_cg Generating a binary function call graph in GraphViz format.
+ *
+ *  This example is similar to the @ref bintut_helloworld example, but demonstrates how to analyze function call information to
+ *  construct a function call graph (CG) and then emit that graph as a GraphViz file.  The output can be converted to a picture
+ *  with the "dot" command, or visualized interactively with ZGRViewer.
+ *
+ *  @snippet binaryCallGraph.C headers
+ *
+ *  As before, the "rose.h" header is the first of the ROSE headers to be included, followed by the binary analysis headers in
+ *  any order.
+ *
+ *  @snippet binaryCallGraph.C namespaces
+ *
+ *  This time we'll use a few namespaces to reduce our typing. The @ref rose::Diagnostics namespace brings into scope the
+ *  diagnostic support (@c mlog and @c FATAL in this example) which is accessed through the "--log" or "-L" command-line
+ *  switches and controls what kinds of debugging output is produced. If you run this program with "-L all" you'll get traces
+ *  and debugging from all the ROSE components that use this mechanism; see "-L help" for info about fine tuning this.
+ *
+ *  @snippet binaryCallGraph.C settings
+ *
+ *  Many of the binary analysis tools find that holding all command-line settings in a single struct is a convenient way to
+ *  organize things.  This example only has one tool-specific setting--the name of the output file for the call graph.
+ *
+ *  @snippet binaryCallGraph.C commandline
+ *
+ *  The @ref bintut_helloworld example showed the simplest way to parse a command-line, but this time we'll do something a
+ *  little more complex.  This time we want to augment the command-line parser so it knows about the switches that this tool
+ *  supports.  The parser itself comes from the [Sawyer](https://github.com/matzke1/sawyer) library, part of which is
+ *  distributed along with the ROSE source code.  We obtain the default parser from the disassembly and partitioning engine,
+ *  and augment it with a switch group containing the switches specific to this tool.  Our "--output" or "-O" switch takes a
+ *  single argument, a file name that can be any string.  The "doc" property is the documentation for our switch and will
+ *  appear in the Unix man page produced by running with "--help".  Finally, we invoke the parser with our additional switch
+ *  group on the argument list in @c argv. If the parsing is successful we apply the results to our @c settings and then return
+ *  the rest of the command line (probably information about the specimen).
+ *
+ *  @snippet binaryCallGraph.C setup
+ *
+ *  In the @p main program we initialize our @p settings and instantiate a disassembly/partitioning engine, then parse the
+ *  command-line and get the list of non-switch arguments. If there are none, give the user some help; this is often an
+ *  indication that the user invoked the command with no arguments at all in order to get an error message that hopefully
+ *  contains some usage hints.
+ *
+ *  @snippet binaryCallGraph.C partition
+ *
+ *  Instead of calling @ref Partitioner2::Engine::frontend "engine.frontend", this time we call @ref
+ *  Partitioner2::Engine::partition "engine.partition" in order to get access to the partitioning analysis results. No AST is
+ *  created in this case, although we could get one if we wanted by querying the engine for it.  The data structures used by
+ *  the partitioner are much more efficiently tuned for analysis than an AST, so we'll stick with the partitioner.
+ *
+ *  @snippet binaryCallGraph.C callgraph
+ *
+ *  The partitioner knows how to construct a call graph from its internal data structures.  The @ref
+ *  Partitioner2::FunctionCallGraph "FunctionCallGraph" class can also be manipulated directly.  Now's a good time to point out
+ *  that many binary analysis data structures use pointers to shared objects. The objects are reference counted and deleted
+ *  automatically. Classes that are used in this way do not have public constructors, but rather @c instance methods (and
+ *  sometimes additional factories as well) that allocate and initialize the object and return a smart pointer.  In this
+ *  example, if we were to delete the @c partitioner or @c engine the @c callgraph would still point to valid functions, which
+ *  still point to valid instructions, etc.
+ *
+ *  @snippet binaryCallGraph.C emit
+ *
+ *  Finally we can emit the call graph as a GraphViz file. This is done through a @ref Partitioner2::GraphViz::CgEmitter
+ *  "CgEmitter" that specializes a more general GraphViz emitter.  The emitter API allows you to fine tune the output by
+ *  adjusting colors and other GraphViz edge and vertex properties.
+ *
+ *  Here's the full listing. Compile it using the same instructions as for the @ref bintut_helloworld example.
+ *
+ *  @includelineno binaryCallGraph.C
+ *
+ *
+ *
+ *
+ *  @section bintut_strings Finding static strings in a binary specimen
+ *
+ *  This example parses and disassembles a binary specimen and search for all static strings, similar to the Unix "strings"
+ *  command. This simple example can be a starting point for a more in depth strings analysis than what's possible with the
+ *  Unix command.
+ *
+ *  @snippet binaryStrings.C headers
+ *
+ *  Include headers. The "rose.h" must always be before other ROSE headers.
+ *
+ *  @snippet binaryStrings.C commandline
+ *
+ *  Yet another way to parse a command-line.  This time we're trying to avoid calling @ref Partitioner2::Engine::frontend
+ *  because we don't actually need to disassemble or partition anything--string searching operates on raw memory rather than
+ *  instructions, so we can save some time.
+ *
+ *  @snippet binaryStrings.C load
+ *
+ *  The @ref Partitioner2::Engine::loadSpecimens "engine.loadSpecimens" method parses the speicmen container if present (e.g.,
+ *  Linux ELF) and determines how the specimen should be mapped into memory.  The result is a @ref MemoryMap that describes
+ *  memory segments with addresses, permissions, names, etc.  Try inserting a call to @ref MemoryMap::dump here to get an
+ *  idea of what it contains.
+ *
+ *  The byte order will be needed by the string decoder in order to know how to decode the multi-byte length fields. We could
+ *  have gotten this same information any number of other ways, but this is the most convenient in this situation. Note that
+ *  knowledge of the byte order depends upon knowledge of the specimen architecture even though we don't actually need to
+ *  disassemble anything.
+ *
+ *  @snippet binaryStrings.C analysis
+ *
+ *  Here we perform the string searching. Most binary analysis algorithms are packaged into a class. The idea is that one
+ *  instantiates the analyzer, configures it, calls some method to perform the analysis (here it's @ref
+ *  Strings::StringFinder::find "find"), and then queries the results.
+ *
+ *  The @ref MemoryMap::require and @ref MemoryMap::prohibit methods are a form of filtering. They're filtering the memory
+ *  map so that the string analyzer only sees memory that's readable but not writable.
+ *
+ *  @snippet binaryStrings.C output
+ *
+ *  Generating the output is a matter of iterating over the strings that were found and printing some information. Most
+ *  analyzer objects also know how to print themselves although those defaults are not always suitable for a polished tool.
+ *
+ *  Here's the entire program:
+ *
+ *  @includelineno binaryStrings.C */
+
+} // namespace
+} // namespace

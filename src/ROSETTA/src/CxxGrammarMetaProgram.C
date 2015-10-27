@@ -3,6 +3,7 @@
 // (objects within ROSETTA)
 #include "grammar.h"
 
+#if 0
 // There are a bunch of global objects used as tags for enhanced type checking.
 // They are all defined here.
 
@@ -18,6 +19,8 @@ const CopyConfigEnum NO_COPY_DATA(TAG_NO_COPY_DATA);
 const CopyConfigEnum COPY_DATA(TAG_COPY_DATA);
 const CopyConfigEnum CLONE_PTR(TAG_CLONE_PTR);
 const CopyConfigEnum CLONE_TREE(TAG_CLONE_TREE);
+
+#endif
 
 const TraversalFlag DEF_TRAVERSAL(true); // default traversal
 const TraversalFlag NO_TRAVERSAL(false); // no traversal

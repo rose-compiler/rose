@@ -12,7 +12,7 @@ include $(srcdir)/sage_support/Makefile_variables
 # use relative paths.
 #
 #mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
-fSageSupportPath=$(srcdir)/sage_support#
+fSageSupportPath=sage_support#
 
 # DQ (6/25/2011): Readded this directory so that we can support the older behavior as a default
 # although this will likely fail at least some of the nearly one hundred new name qualification tests.
@@ -63,17 +63,17 @@ ompparser.h: ompparser.cc
 all-local: roseh sage.docs 
 
 
-# INCLUDES = $(ROSE_INCLUDES)
-# INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src $(WAVE_INCLUDES)
-# INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
+# AM_CPPFLAGS = $(ROSE_INCLUDES)
+# AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src $(WAVE_INCLUDES)
+# AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
 # JJW 6-2-2008: We shouldn't be using anything from EDG outside these two directories
-# INCLUDES = $(ROSE_INCLUDES) # -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
-INCLUDES = $(ROSE_INCLUDES)
+# AM_CPPFLAGS = $(ROSE_INCLUDES) # -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # DQ (3/13/2010): sage_support.cpp requires the OFP fortran source files to be made available.
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-   INCLUDES += -I${top_builddir}/src/3rdPartyLibraries/fortran-parser
+   AM_CPPFLAGS += -I${top_builddir}/src/3rdPartyLibraries/fortran-parser
 endif
 
 ## The grammar generator (ROSETTA) should use its own template repository

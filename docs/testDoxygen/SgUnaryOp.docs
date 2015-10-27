@@ -7,7 +7,7 @@
 \brief This class represents the notion of a unary operator.
 It is derived from a SgExpression because operators are expressions.
 
-    There are no uses of this IR node anywhere.  All expressions
+There are no uses of this IR node anywhere.  All expressions
 are derived from this IR node to build derived classes.  Example
 unary operators include unary minus, unary plus, the address operator,
 etc.
@@ -24,12 +24,12 @@ etc.
 /////////////////////////////////////////////////////////////////////////
 
           enum Sgop_mode { prefix=0, postfix };
- 
+
 /*!
 \var SgUnaryOp::p_operand_i
 \brief This is the operand associated with the unary operator.
 
-   Every unary operator is applied to a single operand, this
+Every unary operator is applied to a single operand, this
 variable stores the operand to which the unary operator is applied.
 
 */
@@ -38,15 +38,15 @@ variable stores the operand to which the unary operator is applied.
 \var SgUnaryOp::p_expression_type
 \brief This SgType is the type of the operator (function type).
 
-    The type is now computed where possible (in all cases except 
+The type is now computed where possible (in all cases except 
 for SgCastExp). This allows us to save space and avoid having 
 explicitly stored values be unset or set incorrectly.
 
 \deprecated This is no longer used (except for SgCastExp).
 
 \todo This value is only used for the SgCastExp, we will
-      move it to that IR node when we are ready to change the interface
-      for the SgExpressions (and SgUnaryExp IR nodes).
+move it to that IR node when we are ready to change the interface
+for the SgExpressions (and SgUnaryExp IR nodes).
 
 */
 
@@ -54,7 +54,7 @@ explicitly stored values be unset or set incorrectly.
 \var SgUnaryOp::p_mode
 \brief This SgType is the type of the operator (function type).
 
-    This variable records the prefix vs. postfix semantics of the operator 
+This variable records the prefix vs. postfix semantics of the operator 
 since the syntax of "operator++" cannot readily do so.  This approach is
 simpiler to interogate than the C++ syntax for distingishing prefix vs.
 postfix.
@@ -75,7 +75,7 @@ postfix.
 \fn SgUnaryOp::SgUnaryOp ( Sg_File_Info *startOfConstruct=NULL, SgExpression *operand_i=NULL, SgType *expression_type=NULL)
 \brief This is the constructor.
 
-   This constructor builds the SgUnaryOp base class.
+This constructor builds the SgUnaryOp base class.
 
 \param startOfConstruct represents the position in the source code
 \param operand represents the operand to which the operator is applied
@@ -88,14 +88,14 @@ postfix.
 \fn SgUnaryOp::~SgUnaryOp()
 \brief This is the destructor.
 
-   Only the Sg_File_Info object can be deleted in this object.
+Only the Sg_File_Info object can be deleted in this object.
 */
 
 /*!
 \fn SgUnaryOp::isSgUnaryOp (SgNode *s)
 \brief Cast function (from derived class to SgUnaryOp pointer).
 
-   This functions returns a SgUnaryOp pointer for any input of a 
+This functions returns a SgUnaryOp pointer for any input of a 
 pointer to an object derived from a SgUnaryOp.
 
 \return Returns valid pointer to SgUnaryOp if input is derived from a SgUnaryOp.
@@ -105,7 +105,7 @@ pointer to an object derived from a SgUnaryOp.
 \fn SgUnaryOp::isSgUnaryOp (const SgNode *s)
 \brief Cast function (from derived class to SgUnaryOp pointer).
 
-   This functions returns a SgUnaryOp pointer for any input of a 
+This functions returns a SgUnaryOp pointer for any input of a 
 pointer to an object derived from a SgUnaryOp.
 
 \return Returns valid pointer to SgUnaryOp if input is derived from a SgUnaryOp.
@@ -124,7 +124,7 @@ pointer to an object derived from a SgUnaryOp.
 \fn SgUnaryOp::set_operand (SgExpression* operand)
 \brief This function allows the p_operand pointer to be set (used internally).
 
-   This function is mostly used internally and is only required to support editing 
+This function is mostly used internally and is only required to support editing 
 of existing SgUnaryOp objects.
 
 \param operand - sets value of internal p_operand pointer.
@@ -135,7 +135,7 @@ of existing SgUnaryOp objects.
 \fn SgUnaryOp::get_expression_type (void) const
 \brief returns type of operator expression.
 
-   This function returns the type of the unary operator.
+This function returns the type of the unary operator.
 
 \return Returns type of operator expression.
 */
@@ -144,7 +144,7 @@ of existing SgUnaryOp objects.
 \fn SgUnaryOp::set_expression_type (SgType* expression_type)
 \brief This function allows the p_expression_type pointer to be set (used internally).
 
-   This function is mostly used internally and is only required to support editing 
+This function is mostly used internally and is only required to support editing 
 of existing SgUnaryOp objects. In general it is not changed once it is set.
 
 \param expression_type - sets value of internal p_expression_type pointer.
@@ -155,7 +155,7 @@ of existing SgUnaryOp objects. In general it is not changed once it is set.
 \fn SgUnaryOp::get_mode() const
 \brief Get the prefix/postfix mode of the operator.
 
-     Get the prefix/postfix mode of the operator (if applicable to that operator).
+Get the prefix/postfix mode of the operator (if applicable to that operator).
 
 \return Returns SgUnaryOp::Sgop_mode (enum for prefix,postfix values)
 */
@@ -164,7 +164,7 @@ of existing SgUnaryOp objects. In general it is not changed once it is set.
 \fn SgUnaryOp::set_mode ( SgUnaryOp::Sgop_mode mode )
 \brief Set the mode (prefix/postfix) associated with this operator
 
-   This is an internal function, it sets up the prefix/postfix mode of the 
+This is an internal function, it sets up the prefix/postfix mode of the 
 unary operator.
 
 \param mode - sets value of intermal SgUnaryOp::Sgop_mode mode variable
@@ -176,7 +176,7 @@ unary operator.
 \fn SgUnaryOp::length() const
 \brief Returns number of operands (virtual function)
 
-     Returns number of operands (all unary operators return value = 1).
+Returns number of operands (all unary operators return value = 1).
 This function is not used and is not a defined part a minumal interface 
 for Sage III.
 
@@ -189,7 +189,7 @@ for Sage III.
 \fn SgUnaryOp::empty () const
 \brief Returns true if number of operands is zero, else false.
 
-   This function returns boolean value given by (length() == 0).
+This function returns boolean value given by (length() == 0).
 This function is not used and is not a defined part a minumal interface 
 for Sage III.
 
@@ -203,7 +203,7 @@ for Sage III.
 \fn SgUnaryOp::get_next(int &n) const
 \brief Returns next operand (virtual function)
 
-     This function returns the next operand and is part of an 
+This function returns the next operand and is part of an 
 older iterator interface within Sage II which didn't use STL, but implemented 
 iterators for the operands (since their is only one for a unary operator
 and two for a binary operator we don't support such an iterator interface
@@ -229,7 +229,7 @@ interface for Sage III.
 \fn SgUnaryOp::set_operand_i (SgExpression* operand)
 \brief This function allows the p_operand_i pointer to be set (used internally).
 
-   This function is mostly used internally and is only required to support editing 
+This function is mostly used internally and is only required to support editing 
 of existing SgUnaryOp objects.
 
 \deprecated This function is not used.

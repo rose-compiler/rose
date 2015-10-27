@@ -869,6 +869,17 @@ HEADER_TYPE_COMPLEX_TYPE_START
           virtual void set_type_kind ( SgExpression* type_kind );
 HEADER_TYPE_COMPLEX_TYPE_END
 
+//SK(08/20/2015): SgTypeTuple implementation
+HEADER_TYPE_TUPLE_START
+    SgTypePtrList& get_types();
+    const SgTypePtrList& get_types() const;
+
+    void prepend_type(SgType *what);
+    void append_type(SgType *what);
+
+HEADER_TYPE_TUPLE_END
+
+
 HEADER_POINTER_MEMBER_TYPE_START
       //! \deprecated The class_of property has been replaced by the class_type property, an SgType
           SgClassDefinition* get_class_of() const;
@@ -2547,6 +2558,25 @@ SOURCE_TYPE_SIGNED_128BIT_TYPE_END
 SOURCE_TYPE_UNSIGNED_128BIT_TYPE_START
 SOURCE_TYPE_UNSIGNED_128BIT_TYPE_END
 
+SOURCE_TYPE_TUPLE_START
+
+SgTypePtrList&
+SgTypeTuple::get_types()
+   { return p_types; }
+
+const SgTypePtrList&
+SgTypeTuple::get_types() const
+   { return p_types; }
+
+void
+SgTypeTuple::append_type(SgType *what)
+   { what->set_parent(this); p_types.push_back(what); }
+
+void
+SgTypeTuple::prepend_type(SgType *what)
+   { what->set_parent(this); p_types.insert(p_types.begin(), what); }
+
+SOURCE_TYPE_TUPLE_END
 
 SOURCE_TYPE_LONG_DOUBLE_TYPE_START
 SOURCE_TYPE_LONG_DOUBLE_TYPE_END
@@ -2581,6 +2611,7 @@ SOURCE_TYPE_BOOL_TYPE_END
 
 SOURCE_TYPE_COMPLEX_TYPE_START
 SOURCE_TYPE_COMPLEX_TYPE_END
+
 
 
 SOURCE_TYPE_DEFAULT_TYPE_START
@@ -5003,10 +5034,20 @@ SgArrayType::get_mangled(void) const
        // printf ("In SgArrayType::get_mangled(): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
        // SgUnsignedLongVal* value = isSgUnsignedLongVal(index_exp);
 
+       // DQ (9/23/2015): This code is important to the passing of test2015_78.C for both C++98 and C++11 modes.
+       //    In C++98 mode a cast is not present and we see a SgIntVal expression, where as for C++11 mode we see a SgUnsignedLongVal expression.
+       //    The result was that the variable "value" below was either NULL or non-NULL and the ROSE AST was different for for C++98 as for C++11.
+       //    This is important for the Intel C++ compiler (version 14) because it defaults to C++11 instead of C++98.
+       //    Forcing the false branch below does at least make the C++98 and C++11 modes uniform, and allows the test code to now pass uniformally 
+       //    for both C++98 and C++11 modes, but does not really fix the problem well.  We want to where ever possible evaluate the expression to 
+       //    a constant value literal, but this is part of a seperate issue specific to use of expressions in array bounds (test2015_.C).
+
        // DQ (6/13/2015): Changed from SgUnsignedLongVal to SgValueExp.  Or maybe we need to test for more general case where we handle the contant folding case below.
        // const SgValueExp* value = isSgUnsignedLongVal(index_exp);
        // const SgValueExp* value = isSgValueExp(index_exp);
-          const SgValueExp* value = isSgUnsignedLongVal(index_exp);
+       // const SgValueExp* value = isSgUnsignedLongVal(index_exp);
+       // const SgValueExp* value = isSgValueExp(index_exp);
+          const SgValueExp* value = NULL;
 
        // DQ (2/12/2011): I wonder if we can enforce this...No!
        // ROSE_ASSERT(value != NULL);
@@ -5019,7 +5060,7 @@ SgArrayType::get_mangled(void) const
             // printf ("In SgArrayType::get_mangled() (special case of index as numberToString): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
 
                index_name = value->get_constant_folded_value_as_string().c_str();
-#if 0
+#if 1
                printf ("In SgArrayType::get_mangled() (special case of index as get_constant_folded_value_as_string): index_name = %s index_exp = %p = %s = %s \n",index_name.str(),index_exp,index_exp->class_name().c_str(),SageInterface::generateUniqueName(index_exp,true).c_str());
 #endif
              }

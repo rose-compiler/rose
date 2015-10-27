@@ -75,11 +75,17 @@ class VariableIdMapping {
   bool hasFloatingPointType(VariableId varId);
   bool hasPointerType(VariableId varId);
   bool hasArrayType(VariableId varId);
+  bool isConstantArray(VariableId varId);
   SgVariableDeclaration* getVariableDeclaration(VariableId varId);
   bool isTemporaryVariableId(VariableId varId);
   std::string variableName(VariableId varId);
   std::string uniqueLongVariableName(VariableId varId);
   std::string uniqueShortVariableName(VariableId varId);
+
+  // set the size of a data structure represented by this variable-id. Currently only arrays are supported.
+  void setSize(VariableId variableId, size_t size);
+  // get the size of a data structure represented by this variable-id. Currently only arrays are supported.
+  size_t getSize(VariableId variableId);
 
   void registerNewSymbol(SgSymbol* sym);
   void registerNewArraySymbol(SgSymbol* sym, int arraySize);
@@ -113,6 +119,7 @@ class VariableIdMapping {
   VariableId addNewSymbol(SgSymbol* sym);
   // used for mapping in both directions
   std::vector<SgSymbol*> mappingVarIdToSym;
+  std::map<size_t,size_t> mappingVarIdToSize;
   std::map<SgSymbol*,size_t> mappingSymToVarId;
   bool modeVariableIdForEachArrayElement;
 }; // end of class VariableIdMapping
@@ -132,6 +139,7 @@ class VariableId {
  public:
   VariableId();
   std::string toString() const;
+  std::string toString(VariableIdMapping& vid) const;
   int getIdCode() const { return _id; }
   // we intentionally do not provide a constructor for int because this would clash 
   // with overloaded functions that are using ConstIntLattice (which has an implicit 

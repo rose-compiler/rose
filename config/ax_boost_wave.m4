@@ -69,9 +69,9 @@ AC_DEFUN([AX_BOOST_WAVE],
         AC_CACHE_CHECK(whether the Boost::Wave library is available,
 					   ax_cv_boost_wave,
         [AC_LANG_PUSH([C++])
-			 AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[@%:@include <boost/wave.hpp>
+			 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[@%:@include <boost/wave.hpp>
 												]],
-                                   [[boost::wave::token_category r; return 0;]]),
+                                   [[boost::wave::token_category r; return 0;]])],
                    ax_cv_boost_wave=yes, ax_cv_boost_wave=no)
          AC_LANG_POP([C++])
 		])

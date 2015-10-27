@@ -21,6 +21,12 @@ include $(srcdir)/asmUnparser/Makefile_variables
 include $(srcdir)/unparser/JavaCodeGeneration/Makefile_variables
 include $(srcdir)/unparser/X10CodeGeneration/Makefile_variables
 
+if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
+include $(srcdir)/unparser/MatlabCodeGeneration/Makefile_variables
+matlabCodeGenerationPath=$(srcdir)/unparser/MatlabCodeGeneration#
+else
+matlabCodeGenerationPath=
+endif
 
 unparserPath=$(srcdir)/unparser#
 cxxCodeGenerationPath=$(srcdir)/unparser/CxxCodeGeneration#
@@ -36,9 +42,8 @@ x10CodeGenerationPath=$(srcdir)/unparser/X10CodeGeneration#
 
 ###############################################################################
 
-INCLUDES=\
+AM_CPPFLAGS=\
 	$(ROSE_INCLUDES)
-
 
 noinst_LTLIBRARIES = libbackend.la
 
@@ -70,6 +75,4 @@ clean-local:
 # DQ (10/29/2010): We have to include "asmUnparser" directory so that its header files 
 # will be installed by "make install", even with language only options are used.
 #SUBDIRS = unparser asmUnparser
-
-SUBDIRS=KLT
 

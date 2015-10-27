@@ -2,7 +2,7 @@
 # Update ROSE with the latest Sawyer source code
 set -e
 
-SAWYER_REPO=${1-github.com:matzke1/sawyer}
+SAWYER_REPO=${1-https://github.com/matzke1/sawyer}
 
 emit_cpp_warning() {
     echo "// WARNING: Changes to this file must be contributed back to Sawyer or else they will"
@@ -31,8 +31,8 @@ fi
 for f in \
     Access Assert AddressMap AddressSegment AllocatingBuffer BiMap BitVector BitVectorSupport Buffer CommandLine Cached \
     Callbacks DefaultAllocator DistinctList Graph GraphBoost GraphTraversal IndexedList Interval IntervalMap IntervalSet \
-    Map MappedBuffer Markup MarkupPod Message NullBuffer Optional PoolAllocator ProgressBar Sawyer SharedPointer \
-    SmallObject Stack StaticBuffer Stopwatch Synchronization WarningsOff WarningsRestore
+    IntervalSetMap Map MappedBuffer Markup MarkupPod Message NullBuffer Optional PoolAllocator ProgressBar Sawyer Set \
+    SharedPointer SmallObject Stack StaticBuffer Stopwatch Synchronization WarningsOff WarningsRestore
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
     ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h

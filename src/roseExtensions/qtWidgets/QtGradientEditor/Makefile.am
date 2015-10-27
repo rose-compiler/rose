@@ -3,7 +3,7 @@ include ../Make.inc
 
 if ROSE_WITH_ROSEQT
 
-INCLUDES += -I.
+AM_CPPFLAGS += -I.
 
 QTGRADIENT_MOC_FILES = moc_qtcolorbutton.cxx \
 		       moc_qtcolorline.cxx \

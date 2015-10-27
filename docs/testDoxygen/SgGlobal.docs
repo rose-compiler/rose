@@ -6,7 +6,7 @@
 \class SgGlobal
 \brief This class represents the concept of a namespace definition.  
 
-   Namespace definitions
+Namespace definitions
 are coupled with namespace declarations to defin the namespace (hold the list of
 declarations in the namespace.  Within C++ namespaces are "reentrant" and
 as a result multiple namespace declarations (SgNamespaceDeclarationStatement) 
@@ -16,7 +16,7 @@ and definitions (SgGlobal) may exist for a single namespace.
 with the statement "using namespace std" can exist all by itself and is a
 valid program (even though "std" as a namespace is not defined).
 
-    Scopes are an important aspect of language design. They allow
+Scopes are an important aspect of language design. They allow
 declarations to have a local context and so promote good programming style.
 Scope statments in C++ include a number of different kinds of statements;
 the SgGlobal is a base class for these. Each scope statement contains
@@ -26,7 +26,7 @@ symbol table and an interface to accessing it.
 \internal This is a base class for scope statements.
 
 \todo Cleanup interface which presently has multiple append,prepend, insert functions. It
-    might be best to eliminate them and use STL directly.
+might be best to eliminate them and use STL directly.
 */
 
 /*
@@ -52,7 +52,7 @@ symbol table and an interface to accessing it.
 \fn SgGlobal::SgGlobal ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgGlobal base class.
+This constructor builds the SgGlobal base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -65,14 +65,14 @@ symbol table and an interface to accessing it.
 \fn SgGlobal::~SgGlobal()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgGlobal::isSgGlobal (SgNode *s)
 \brief Cast function (from derived class to SgGlobal pointer).
 
-   This functions returns a SgGlobal pointer for any input of a 
+This functions returns a SgGlobal pointer for any input of a 
 pointer to an object derived from a SgGlobal.
 
 \return Returns valid pointer to SgGlobal if input is derived from a SgLocatedNode.
@@ -82,7 +82,7 @@ pointer to an object derived from a SgGlobal.
 \fn SgGlobal::isSgGlobal (const SgNode *s)
 \brief Cast function (from derived class to SgGlobal pointer).
 
-   This functions returns a SgGlobal pointer for any input of a 
+This functions returns a SgGlobal pointer for any input of a 
 pointer to an object derived from a SgGlobal.
 
 \return Returns valid pointer to SgGlobal if input is derived from a SgLocatedNode.
@@ -92,7 +92,7 @@ pointer to an object derived from a SgGlobal.
 \fn SgGlobal::get_qualified_name() const
 \brief Returns SgName (a string) representing the name of the current scope (empty string).
 
-   See discussion of mangled names in the documentation.
+See discussion of mangled names in the documentation.
 
 \return Returns SgName (a string).
 */

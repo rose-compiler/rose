@@ -1394,6 +1394,19 @@ HEADER_FORALL_STATEMENT_START
 HEADER_FORALL_STATEMENT_END
 
 
+
+HEADER_MATLAB_FOR_STATEMENT_START
+/*#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual bool cfgIsIndexInteresting(unsigned int) const;
+          virtual unsigned int cfgFindChildIndex(SgNode* n);
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif*/
+HEADER_MATLAB_FOR_STATEMENT_END
+
+
 HEADER_CATCH_STATEMENT_SEQ_START
 HEADER_LIST_DECLARATIONS
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -5921,6 +5934,9 @@ SgScopeStatement::containsOnlyDeclarations() const
        // DQ (11/27/2011): Adding more support for template declarations in the AST.
           case V_SgTemplateFunctionDefinition:
 
+      // SK (08/06/2015): Adding SgMatlabForStatement that represents Matlab for loop
+          case V_SgMatlabForStatement:
+
           case V_SgIfStmt:
           case V_SgSwitchStatement:
           case V_SgWhileStmt:
@@ -6500,6 +6516,18 @@ SgScopeStatement::getStatementList ()
                break;
              }
 
+	     //SK(08/06/2015): Adding support for MatlabForStatement:
+	case V_SgMatlabForStatement:
+	    {
+	      SgMatlabForStatement *matlabForStatement = isSgMatlabForStatement(currentScope);
+	      ROSE_ASSERT(matlabForStatement != NULL);
+	      ROSE_ASSERT (matlabForStatement->get_body() != NULL);
+
+	      currentStatementList = &(matlabForStatement->get_body()->getStatementList());
+	      break;
+	    }
+
+
           default:
                printf ("ERROR: default reached in switch (getStatementList()) currentScope = %s \n",currentScope->sage_class_name());
                printf ("Note: this function is not defined for all IR nodes derived from SgScopeStatement (use SgScopeStatement::containsOnlyDeclarations() to check)\n");
@@ -6700,6 +6728,16 @@ SgScopeStatement::getStatementList () const
                return doStatement->get_body()->getStatementList();
                break;
              }
+
+	case V_SgMatlabForStatement:
+	    {
+	      const SgMatlabForStatement *matlabForStatement = isSgMatlabForStatement(currentScope);
+	      ROSE_ASSERT(matlabForStatement != NULL);
+	      ROSE_ASSERT(matlabForStatement->get_body() != NULL);
+
+	      return matlabForStatement->get_body()->getStatementList();
+	      break;
+	    }
 
           case V_SgForAllStatement:
              { 
@@ -9400,7 +9438,13 @@ SgDeclarationStatement::set_definingDeclaration ( SgDeclarationStatement* defini
              }
         }
 
+  // DQ (10/11/2015): Added debugging output.
   // DQ (1/24/2013): Added test to make sure that we always set defining declaration to be the same type or IR node.
+     if (definingDeclaration != NULL && this->variantT() != definingDeclaration->variantT())
+        {
+          printf ("ERROR: this = %p = %s \n",this,this->class_name().c_str());
+          printf ("ERROR: definingDeclaration = %p = %s \n",definingDeclaration,definingDeclaration->class_name().c_str());
+        }
      ROSE_ASSERT(definingDeclaration == NULL || this->variantT() == definingDeclaration->variantT());
    }
 
@@ -9460,7 +9504,13 @@ SgDeclarationStatement::set_firstNondefiningDeclaration ( SgDeclarationStatement
           firstNondefiningDeclaration->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): firstNondefiningDeclaration: debug");
       }
 
+  // DQ (10/11/2015): Added debugging output.
   // DQ (1/24/2013): Added test to make sure that we always set defining declaration to be the same type or IR node.
+     if (firstNondefiningDeclaration != NULL && this->variantT() != firstNondefiningDeclaration->variantT())
+        {
+          printf ("ERROR: this = %p = %s \n",this,this->class_name().c_str());
+          printf ("ERROR: firstNondefiningDeclaration = %p = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+        }
      ROSE_ASSERT(firstNondefiningDeclaration == NULL || this->variantT() == firstNondefiningDeclaration->variantT());
    }
 
@@ -10001,6 +10051,15 @@ SgForAllStatement::post_construction_initialization()
    }
 
 SOURCE_FORALL_STATEMENT_END
+
+
+SOURCE_MATLAB_FOR_STATEMENT_START
+void
+SgMatlabForStatement::post_construction_initialization()
+   {
+   }
+SOURCE_MATLAB_FOR_STATEMENT_END
+
 
 SOURCE_UPC_FORALL_STATEMENT_START
 

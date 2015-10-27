@@ -20,7 +20,7 @@
 #
 # LAST MODIFICATION
 #
-#   2007-11-22
+#   Modified by the ROSE team (use the repo's history).
 #
 # COPYLEFT
 #
@@ -34,23 +34,23 @@
 AC_DEFUN([AX_BOOST_THREAD],
 [
     AC_ARG_WITH([boost-thread],
-    AS_HELP_STRING([--with-boost-thread@<:@=special-lib@:>@],
-                   [Use the Thread library from Boost.  If the value is 'yes' or a certain library then ROSE will
+        AS_HELP_STRING([--with-boost-thread@<:@=special-lib@:>@],
+                       [Use the Thread library from Boost.  If the value is 'yes' or a certain library then ROSE will
                         incorporate multi-thread support into some of its algorithms. The default is to incorporate
                         multi-thread support into ROSE algorithms since Boost is compiled with thread support by default.
                         If thread support is enabled then user code should also be compiled and linked with switches
                         appropriate for multi-threading e.g., -pthread for GCC.  If the user compiles Boost without
                         thread support, then --without-boost-thread can be given on the ROSE configure commandline. ]),
         [
-        if test "$withval" = "no"; then
-            want_boost="no"
-        elif test "$withval" = "yes"; then
-            want_boost="yes"
-            ax_boost_user_thread_lib=""
-        else
-            want_boost="yes"
-            ax_boost_user_thread_lib="$withval"
-        fi
+            if test "$withval" = "no"; then
+                want_boost="no"
+            elif test "$withval" = "yes"; then
+                want_boost="yes"
+                ax_boost_user_thread_lib=""
+            else
+                want_boost="yes"
+                ax_boost_user_thread_lib="$withval"
+            fi
         ],
         [want_boost="yes"]
     )
@@ -66,26 +66,31 @@ AC_DEFUN([AX_BOOST_THREAD],
         LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
         export LDFLAGS
 
-        AC_CACHE_CHECK(whether the Boost::Thread library is available,
-                       ax_cv_boost_thread,
-        [AC_LANG_PUSH([C++])
-            CXXFLAGS_SAVE=$CXXFLAGS
+        AC_CACHE_CHECK(whether the boost/thread/thread.hpp header is available,
+            ax_cv_boost_thread,
+            [
+                AC_LANG_PUSH([C++])
+                CXXFLAGS_SAVE=$CXXFLAGS
 
-            case "$build_os" in
-                solaris ) CXXFLAGS="-pthreads $CXXFLAGS" ;;
-                ming32 ) CXXFLAGS="-mthreads $CXXFLAGS" ;;
-                darwin* ) CXXFLAGS="$CXXFLAGS" ;;
-                * ) CXXFLAGS="-pthread $CXXFLAGS" ;;
-            esac
-            AC_COMPILE_IFELSE(
-	        AC_LANG_PROGRAM([[@%:@include <boost/thread/thread.hpp>]],
-                    [[boost::thread_group thrds;
-                    return 0;]]),
-                ax_cv_boost_thread=yes, ax_cv_boost_thread=no)
-            CXXFLAGS=$CXXFLAGS_SAVE
-            AC_LANG_POP([C++])
-        ])
+                case "$build_os" in
+                    solaris ) CXXFLAGS="-pthreads $CXXFLAGS" ;;
+                    ming32 ) CXXFLAGS="-mthreads $CXXFLAGS" ;;
+                    darwin* ) CXXFLAGS="$CXXFLAGS" ;;
+                    * ) CXXFLAGS="-pthread $CXXFLAGS" ;;
+                esac
+                AC_COMPILE_IFELSE(
+                    [AC_LANG_PROGRAM([[@%:@include <boost/thread/thread.hpp>]],
+                                     [[boost::thread_group thrds;
+                                     return 0;]])],
+                    ax_cv_boost_thread=yes,
+                    ax_cv_boost_thread=no)
+
+                CXXFLAGS=$CXXFLAGS_SAVE
+                AC_LANG_POP([C++])
+            ])
+
         if test "x$ax_cv_boost_thread" = "xyes"; then
+	    AC_MSG_NOTICE([boost thread header found; checking for library...])
             case "$build_os" in
                 solaris ) BOOST_CPPFLAGS="-pthreads $BOOST_CPPFLAGS" ;;
                 ming32 ) BOOST_CPPFLAGS="-mthreads $BOOST_CPPFLAGS" ;;
@@ -125,13 +130,14 @@ AC_DEFUN([AX_BOOST_THREAD],
                done
             fi
 
-            if test "x$link_thread" = "xno"; then
-                AC_MSG_ERROR(Could not link against $ax_lib !)
+            if test "x$link_thread" != "xyes"; then
+                AC_MSG_ERROR(Could not link against -lboost_thread. ROSE requires this library in $BOOSTLIBDIR")
             else
                 case "x$build_os" in
                     *bsd* ) BOOST_LDFLAGS="-pthread $BOOST_LDFLAGS" ;;
-		    *linux-gnu*) BOOST_LDFLAGS="-pthread $BOOST_LDFLAGS" ;;
+                    *linux-gnu*) BOOST_LDFLAGS="-pthread $BOOST_LDFLAGS" ;;
                 esac
+                AC_MSG_RESULT([boost thread library found: $BOOST_LDFLAGS])
             fi
         fi
 

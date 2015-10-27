@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 # DQ (3/21/2009): fails to compile under Cygwin.
 if !ROSE_BUILD_OS_IS_CYGWIN

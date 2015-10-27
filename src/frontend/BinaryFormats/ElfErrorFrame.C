@@ -87,10 +87,9 @@ SgAsmElfEHFrameEntryCI::unparse(const SgAsmElfEHFrameSection *ehframe) const
                     default:
                         /* See parser */
                         if (++nwarnings<=WARNING_LIMIT) {
-                            fprintf(stderr, "%s:%u: warning: unknown PRH encoding (0x%02x)\n",
-                                    __FILE__, __LINE__, get_prh_encoding());
+                            mlog[WARN] <<"unknown PRH encoding (" <<StringUtility::toHex2(get_prh_encoding(), 8) <<")\n";
                             if (WARNING_LIMIT==nwarnings)
-                                fprintf(stderr, "    (additional frame warnings will be suppressed)\n");
+                                mlog[WARN] <<"additional frame warnings will be suppressed\n";
                         }
                         break;
                 }
@@ -199,10 +198,9 @@ SgAsmElfEHFrameEntryFD::unparse(const SgAsmElfEHFrameSection *ehframe, SgAsmElfE
         default:
             /* See parser */
             if (++nwarnings<=WARNING_LIMIT) {
-                fprintf(stderr, "%s:%u: warning: unknown FDE address encoding (0x%02x)\n",
-                        __FILE__, __LINE__, cie->get_addr_encoding());
+                mlog[WARN] <<"unknown FDE address encoding (" <<StringUtility::toHex2(cie->get_addr_encoding(), 8) <<")\n";
                 if (WARNING_LIMIT==nwarnings)
-                    fprintf(stderr, "    (additional frame warnings will be suppressed)\n");
+                    mlog[WARN] <<"additional frame warnings will be suppressed\n";
             }
             break;
     }
@@ -377,10 +375,11 @@ SgAsmElfEHFrameSection::parse()
                                 /*fallthrough*/
                             default: {
                                 if (++nwarnings<=WARNING_LIMIT) {
-                                    fprintf(stderr, "%s:%u: warning: ELF CIE 0x%08"PRIx64" has unknown PRH encoding 0x%02x\n", 
-                                            __FILE__, __LINE__, get_offset()+record_offset, cie->get_prh_encoding());
+                                    mlog[WARN] <<"ELF CIE " <<StringUtility::addrToString(get_offset()+record_offset)
+                                               <<" has unknown PRH encoding " <<StringUtility::toHex2(cie->get_prh_encoding(), 8)
+                                               <<"\n";
                                     if (WARNING_LIMIT==nwarnings)
-                                        fprintf(stderr, "    (additional frame warnings will be suppressed)\n");
+                                        mlog[WARN] <<"additional frame warnings will be suppressed\n";
                                 }
                                 break;
                             }
@@ -394,10 +393,10 @@ SgAsmElfEHFrameSection::parse()
                     } else {
                         /* Some stuff we don't handle yet. Warn about it and don't read anything. */
                         if (++nwarnings<=WARNING_LIMIT) {
-                            fprintf(stderr, "%s:%u: warning: ELF CIE 0x%08"PRIx64" has invalid augmentation string \"%s\"\n", 
-                                    __FILE__, __LINE__, get_offset()+record_offset, escapeString(astr).c_str());
+                            mlog[WARN] <<"ELF CIE " <<StringUtility::addrToString(get_offset() + record_offset)
+                                       <<" has invalid augmentation string \"" <<escapeString(astr) <<"\"\n";
                             if (WARNING_LIMIT==nwarnings)
-                                fprintf(stderr, "    (additional frame warnings will be suppressed)\n");
+                                mlog[WARN] <<"additional frame warnings will be suppressed\n";
                         }
                     }
                 }
@@ -445,8 +444,9 @@ SgAsmElfEHFrameSection::parse()
                   break;
               }
               default:
-                fprintf(stderr, "%s:%u: warning: ELF CIE 0x%08"PRIx64", FDE 0x%08"PRIx64": unknown address encoding: 0x%02x\n", 
-                        __FILE__, __LINE__, get_offset()+cie_offset, get_offset()+record_offset, cie->get_addr_encoding());
+                  mlog[WARN] <<"ELF CIE " <<StringUtility::addrToString(get_offset()+cie_offset)
+                             <<", FDE " <<StringUtility::addrToString(get_offset()+record_offset)
+                             <<": unknown address encoding: " <<StringUtility::toHex2(cie->get_addr_encoding(), 8) <<"\n";
                 fde_parse_error = true;
                 break;
             }

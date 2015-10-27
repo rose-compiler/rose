@@ -515,6 +515,10 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_2],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_2.
 
+# DQ (9/26/2015): Since the config/ltdl.m4 file in regenerated, we can't edit it easily.
+# So make this a requirement so that it will not be expanded there.
+m4_require([_LT_SYS_DYNAMIC_LINKER])
+
 # AC_REQUIRE([AC_PROG_CXX])
 AC_PROG_CXX
 
@@ -628,7 +632,7 @@ ROSE_SUPPORT_MAPLE
 AM_CONDITIONAL(ROSE_USE_MAPLE,test ! "$with_maple" = no)
 
 # DQ (4/10/2010): Added configure support for Backstroke project.
-ROSE_SUPPORT_BACKSTOKE
+ROSE_SUPPORT_BACKSTROKE
 
 #Call supporting macro for IDA PRO
 ROSE_SUPPORT_IDA
@@ -759,7 +763,11 @@ AC_ARG_ENABLE([rose-openGL],
   [  --enable-rose-openGL  enable openGL],
   [  rose_openGL=${enableval}
 AC_PATH_X dnl We need to do this by hand for some reason
-MDL_HAVE_OPENGL
+
+# DQ (9/26/2015): Using more recent autoconf macro to avoid warnings.
+# MDL_HAVE_OPENGL
+AC_FIND_OPENGL
+
 echo "have_GL = '$have_GL' and have_glut = '$have_glut' and rose_openGL = '$rose_openGL'"
 #AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$openGL" = xno)
 if test ! "x$rose_openGL" = xno; then
@@ -861,6 +869,10 @@ fi
 ROSE_SUPPORT_HASKELL
 
 ROSE_SUPPORT_CUDA
+
+# Call support macro for Z3
+
+ROSE_SUPPORT_Z3
 
 # Call supporting macro for bddbddb
 ROSE_SUPPORT_BDDBDDB
@@ -1047,12 +1059,13 @@ AC_SUBST(ROSE_USE_CANDL)
 AC_SUBST(CANDL_PATH)
 
 # *****************************************************************
-#            Accelerator Support (CUDA, OpenCL, OpenACC)
+#            Accelerator Support (CUDA, OpenCL)
 # *****************************************************************
 
+# Check: --with-cuda-inc, --with-cuda-lib, and  --with-cuda-bin
 ROSE_CHECK_CUDA
+# Check: --with-opencl-inc, --with-opencl-lib
 ROSE_CHECK_OPENCL
-ROSE_CHECK_OPENACC
 
 # *****************************************************************
 #            Option to define DOXYGEN SUPPORT
@@ -1665,7 +1678,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
 AC_CONFIG_FILES([
 stamp-h
 Makefile
-rose.docs
 config/Makefile
 src/Makefile
 src/util/Makefile
@@ -1709,6 +1721,7 @@ src/frontend/SageIII/astVisualization/Makefile
 src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/SageIII/astFromString/Makefile
 src/frontend/SageIII/includeDirectivesProcessing/Makefile
+src/frontend/MatlabFrontend/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/CxxFrontend/Clang/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
@@ -1722,13 +1735,7 @@ src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/frontend/DLX/Makefile
-src/frontend/DLX/docs/Makefile
-src/frontend/DLX/docs/doxygen/Makefile
-src/frontend/DLX/docs/doxygen/doxy.conf
-src/frontend/DLX/include/Makefile
-src/frontend/DLX/include/DLX/Makefile
 src/frontend/DLX/include/DLX/Core/Makefile
-src/frontend/DLX/lib/Makefile
 src/frontend/DLX/lib/core/Makefile
 src/frontend/Partitioner2/Makefile
 src/midend/Makefile
@@ -1741,31 +1748,26 @@ src/midend/programTransformation/extractFunctionArgumentsNormalization/Makefile
 src/midend/programTransformation/singleStatementToBlockNormalization/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
 src/midend/MFB/Makefile
-src/midend/MFB/docs/Makefile
-src/midend/MFB/docs/doxygen/Makefile
-src/midend/MFB/docs/doxygen/doxy.conf
-src/midend/MFB/include/Makefile
 src/midend/MFB/include/MFB/Makefile
 src/midend/MFB/include/MFB/Sage/Makefile
-src/midend/MFB/lib/Makefile
+src/midend/MFB/include/MFB/KLT/Makefile
 src/midend/MFB/lib/sage/Makefile
+src/midend/MFB/lib/klt/Makefile
+src/midend/MFB/lib/utils/Makefile
 src/midend/MDCG/Makefile
-src/midend/MDCG/docs/Makefile
-src/midend/MDCG/docs/doxygen/Makefile
-src/midend/MDCG/docs/doxygen/doxy.conf
-src/midend/MDCG/include/Makefile
-src/midend/MDCG/include/MDCG/Makefile
-src/midend/MDCG/lib/Makefile
+src/midend/MDCG/include/MDCG/Model/Makefile
+src/midend/MDCG/include/MDCG/Tools/Makefile
+src/midend/MDCG/lib/model/Makefile
+src/midend/MDCG/lib/tools/Makefile
+src/midend/KLT/Makefile
+src/midend/KLT/include/KLT/Core/Makefile
+src/midend/KLT/include/KLT/MDCG/Makefile
+src/midend/KLT/include/KLT/DLX/Makefile
+src/midend/KLT/include/KLT/RTL/Makefile
+src/midend/KLT/lib/core/Makefile
+src/midend/KLT/lib/mdcg/Makefile
+src/midend/KLT/lib/rtl/Makefile
 src/backend/Makefile
-src/backend/KLT/Makefile
-src/backend/KLT/docs/Makefile
-src/backend/KLT/docs/doxygen/Makefile
-src/backend/KLT/docs/doxygen/doxy.conf
-src/backend/KLT/include/Makefile
-src/backend/KLT/include/KLT/Makefile
-src/backend/KLT/include/KLT/Core/Makefile
-src/backend/KLT/lib/Makefile
-src/backend/KLT/lib/core/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
 src/roseExtensions/sqlite3x/Makefile
@@ -1824,6 +1826,8 @@ src/roseExtensions/roseHPCToolkit/docs/Makefile
 src/roseExtensions/failSafe/Makefile
 src/roseIndependentSupport/Makefile
 src/roseIndependentSupport/dot2gml/Makefile
+projects/ArithmeticMeasureTool/Makefile
+projects/ArithmeticMeasureTool/src/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
 projects/AtermTranslation/Makefile
@@ -1840,8 +1844,6 @@ projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
 projects/ConstructNameSimilarityAnalysis/Makefile
-projects/CodeThorn/Makefile
-projects/CodeThorn/src/Makefile
 projects/DataFaultTolerance/Makefile
 projects/DataFaultTolerance/src/Makefile
 projects/DataFaultTolerance/test/Makefile
@@ -1904,26 +1906,6 @@ projects/autoParallelization/tests/Makefile
 projects/autoTuning/Makefile
 projects/autoTuning/doc/Makefile
 projects/autoTuning/tests/Makefile
-projects/backstroke/Makefile
-projects/backstroke/eventDetection/Makefile
-projects/backstroke/eventDetection/ROSS/Makefile
-projects/backstroke/eventDetection/SPEEDES/Makefile
-projects/backstroke/normalizations/Makefile
-projects/backstroke/slicing/Makefile
-projects/backstroke/valueGraph/Makefile
-projects/backstroke/valueGraph/headerUnparser/Makefile
-projects/backstroke/pluggableReverser/Makefile
-projects/backstroke/testCodeGeneration/Makefile
-projects/backstroke/restrictedLanguage/Makefile
-projects/backstroke/tests/Makefile
-projects/backstroke/tests/cfgReverseCodeGenerator/Makefile
-projects/backstroke/tests/expNormalizationTest/Makefile
-projects/backstroke/tests/pluggableReverserTest/Makefile
-projects/backstroke/tests/restrictedLanguageTest/Makefile
-projects/backstroke/tests/testCodeBuilderTest/Makefile
-projects/backstroke/tests/incrementalInversionTest/Makefile
-projects/backstroke/utilities/Makefile
-projects/backstroke/sdg/Makefile
 projects/binCompass/Makefile
 projects/binCompass/analyses/Makefile
 projects/binCompass/graphanalyses/Makefile
@@ -1972,7 +1954,7 @@ projects/roseToLLVM/src/Makefile
 projects/roseToLLVM/src/rosetollvm/Makefile
 projects/roseToLLVM/tests/Makefile
 projects/RosePolly/Makefile
-projects/simulator/Makefile
+projects/SMTPathFeasibility/Makefile
 projects/symbolicAnalysisFramework/Makefile
 projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile
 projects/symbolicAnalysisFramework/src/external/Makefile
@@ -1991,6 +1973,11 @@ projects/RTC/Makefile
 projects/PowerAwareCompiler/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
+projects/ManyCoreRuntime2/Makefile
+projects/ManyCoreRuntime2/runtime/Makefile
+projects/ManyCoreRuntime2/transformation/Makefile
+projects/ManyCoreRuntime2/tests/Makefile
+projects/ManyCoreRuntime2/docs/Makefile
 projects/MapleDSL/Makefile
 projects/StencilManyCore/Makefile
 projects/mint/Makefile
@@ -2002,6 +1989,9 @@ projects/Fortran_to_C/tests/Makefile
 projects/vectorization/Makefile
 projects/vectorization/src/Makefile
 projects/vectorization/tests/Makefile
+projects/MultiLevelMemory/Makefile
+projects/MultiLevelMemory/src/Makefile
+projects/MultiLevelMemory/tests/Makefile
 projects/PolyOpt2/Makefile
 projects/PolyOpt2/polyopt/Makefile
 projects/PolyOpt2/src/Makefile
@@ -2057,13 +2047,33 @@ projects/Viz/src/Makefile
 projects/Viz/tools/Makefile
 projects/Viz/examples/Makefile
 projects/TileK/Makefile
+projects/TileK/include/DLX/TileK/Makefile
+projects/TileK/include/RTL/Host/Makefile
+projects/TileK/include/RTL/Kernel/OpenCL/Makefile
+projects/TileK/include/RTL/Kernel/CUDA/Makefile
 projects/TileK/lib/Makefile
-projects/TileK/lib/dlx/tilek/Makefile
-projects/TileK/lib/klt/tilek/Makefile
-projects/TileK/lib/mdcg/tilek/Makefile
-projects/TileK/lib/tilek/Makefile
 projects/TileK/src/Makefile
-projects/TileK/examples/Makefile
+projects/TileK/tests/rtl/Makefile
+projects/TileK/tests/basic/Makefile
+projects/TileK/tests/threads/Makefile
+projects/TileK/tests/accelerator/Makefile
+projects/TileK/tests/accelerator/OpenCL/Makefile
+projects/TileK/tests/accelerator/CUDA/Makefile
+projects/TileK/doc/Makefile
+projects/TileK/doc/index.html
+projects/TileK/doc/dlx.doxy
+projects/TileK/doc/mfb.doxy
+projects/TileK/doc/mdcg.doxy
+projects/TileK/doc/klt.doxy
+projects/TileK/doc/klt-rtl.doxy
+projects/TileK/doc/tilek-basic.doxy
+projects/TileK/doc/tilek-rtl-basic.doxy
+projects/TileK/doc/tilek-threads.doxy
+projects/TileK/doc/tilek-rtl-threads.doxy
+projects/TileK/doc/tilek-opencl.doxy
+projects/TileK/doc/tilek-rtl-opencl.doxy
+projects/TileK/doc/tilek-cuda.doxy
+projects/TileK/doc/tilek-rtl-cuda.doxy
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2142,6 +2152,8 @@ tests/CompileTests/OpenClTests/Makefile
 tests/CompileTests/frontend_integration/Makefile
 tests/CompileTests/x10_tests/Makefile
 tests/CompileTests/systemc_tests/Makefile
+tests/CompileTests/mixLanguage_tests/Makefile
+tests/CompileTests/Matlab_tests/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile
@@ -2164,7 +2176,6 @@ tests/roseTests/astRewriteTests/Makefile
 tests/roseTests/astSymbolTableTests/Makefile
 tests/roseTests/astTokenStreamTests/Makefile
 tests/roseTests/binaryTests/Makefile
-tests/roseTests/binaryTests/SemanticVerification/Makefile
 tests/roseTests/binaryTests/libraryIdentification_tests/Makefile
 tests/roseTests/binaryTests/Pin_tests/Makefile
 tests/roseTests/binaryTests/Dwarf_tests/Makefile
@@ -2225,7 +2236,6 @@ exampleTranslators/defaultTranslator/Makefile
 docs/Makefile
 docs/Rose/footer.html
 docs/Rose/leftmenu.html
-docs/Rose/AvailableDocumentation.docs
 docs/Rose/Makefile
 docs/Rose/manual.tex
 docs/Rose/ROSE_InstallationInstructions.tex
@@ -2234,6 +2244,7 @@ docs/Rose/ROSE_DeveloperInstructions.tex
 docs/Rose/ROSE_DemoGuide.tex
 docs/Rose/gettingStarted.tex
 docs/Rose/rose.cfg
+docs/Rose/rose-install-demo.cfg
 docs/Rose/roseQtWidgets.doxygen
 docs/Rose/sage.cfg
 docs/Rose/Tutorial/Makefile

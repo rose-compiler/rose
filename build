@@ -280,8 +280,11 @@ fi
     autoheader
     autoconf
 # DQ (10/17/2011): Allow header file dependencies to be built by default (-a: --add-missing, -c: --copy; made more explicitly clear).
+# DQ (10/2/2015): The remaining warning that we want to specific to subdir-objects is in catagory "unsupported"
 #   automake -a -c -i
-    automake -a -c $header_file_dependence_checking
+#   automake -a -c $header_file_dependence_checking
+#   automake -a -c $header_file_dependence_checking --warnings=none
+    automake -a -c $header_file_dependence_checking --warnings=no-unsupported
 ) 2>&1 |$ROSE_DISTRIBUTION/scripts/autoconf-filter.pl |sed '/^[^+]/s/^/    /'
 if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
     echo "$0: unable to initialize your build environment!" 2>&1

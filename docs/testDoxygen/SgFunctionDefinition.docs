@@ -6,7 +6,7 @@
 \class SgFunctionDefinition
 \brief This class represents the concept of a scope in C++ (e.g. global scope, fuction scope, etc.).
 
-    Scopes are an important aspect of language design. They allow
+Scopes are an important aspect of language design. They allow
 declarations to have a local context and so promote good programming style.
 Scope statments in C++ include a number of different kinds of statements;
 the SgFunctionDefinition is a base class for these. Each scope statement contains
@@ -29,7 +29,7 @@ symbol table and an interface to accessing it.
 
 /*! \var SgFunctionDefinition::p_body
 \brief This pointer is always valid and points to a SgBasicBlock holding all the
-    statements in the function.
+statements in the function.
 
 \internal 
 
@@ -51,7 +51,7 @@ symbol table and an interface to accessing it.
 \fn SgFunctionDefinition::SgFunctionDefinition ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgFunctionDefinition base class.
+This constructor builds the SgFunctionDefinition base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -64,14 +64,14 @@ symbol table and an interface to accessing it.
 \fn SgFunctionDefinition::~SgFunctionDefinition()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgFunctionDefinition::isSgFunctionDefinition (SgNode *s)
 \brief Cast function (from derived class to SgFunctionDefinition pointer).
 
-   This functions returns a SgFunctionDefinition pointer for any input of a 
+This functions returns a SgFunctionDefinition pointer for any input of a 
 pointer to an object derived from a SgFunctionDefinition.
 
 \return Returns valid pointer to SgFunctionDefinition if input is derived from a SgLocatedNode.
@@ -81,7 +81,7 @@ pointer to an object derived from a SgFunctionDefinition.
 \fn SgFunctionDefinition::isSgFunctionDefinition (const SgNode *s)
 \brief Cast function (from derived class to SgFunctionDefinition pointer).
 
-   This functions returns a SgFunctionDefinition pointer for any input of a 
+This functions returns a SgFunctionDefinition pointer for any input of a 
 pointer to an object derived from a SgFunctionDefinition.
 
 \return Returns valid pointer to SgFunctionDefinition if input is derived from a SgLocatedNode.
@@ -91,7 +91,7 @@ pointer to an object derived from a SgFunctionDefinition.
 \fn SgFunctionDefinition::get_qualified_name() const
 \brief Returns SgName (a string) representing the name of the current scope.
 
-   See discussion of mangled names in the documentation.
+See discussion of mangled names in the documentation.
 
 \return Returns SgName (a string).
 */

@@ -6,7 +6,7 @@
 \class SgExprListExp
 \brief This class represents the concept of a C and C++ expression list.
 
-    This is a class used to support multiple IR nodes internally, for example in a
+This is a class used to support multiple IR nodes internally, for example in a
 function call "foo(exp,exp)" contains and expression list (SgExprListExp).
 This object supports the following IR nodes:
     - SgNewExp
@@ -15,7 +15,7 @@ This object supports the following IR nodes:
     - SgConstructorInitializer
 
 \todo Consider that get_type() returns a SgDefalutType and should return the SgType 
-    associated with the last expression in the list.
+associated with the last expression in the list.
 
 \sa
 \ref SgExprListExp_usage  "Example of using a SgExprListExp object"
@@ -54,7 +54,7 @@ This object supports the following IR nodes:
 \fn SgExprListExp::SgExprListExp ( Sg_File_Info* startOfConstruct = NULL, SgClassSymbol *symbol = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgExprListExp base class.
+This constructor builds the SgExprListExp base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -67,14 +67,14 @@ This object supports the following IR nodes:
 \fn SgExprListExp::~SgExprListExp()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgExprListExp::isSgExprListExp (SgNode *s)
 \brief Cast function (from derived class to SgExprListExp pointer).
 
-   This functions returns a SgExprListExp pointer for any input of a 
+This functions returns a SgExprListExp pointer for any input of a 
 pointer to an object derived from a SgExprListExp.
 
 \return Returns valid pointer to SgExprListExp if input is derived from a SgLocatedNode.
@@ -84,7 +84,7 @@ pointer to an object derived from a SgExprListExp.
 \fn SgExprListExp::isSgExprListExp (const SgNode *s)
 \brief Cast function (from derived class to SgExprListExp pointer).
 
-   This functions returns a SgExprListExp pointer for any input of a 
+This functions returns a SgExprListExp pointer for any input of a 
 pointer to an object derived from a SgExprListExp.
 
 \return Returns valid pointer to SgExprListExp if input is derived from a SgLocatedNode.
@@ -149,7 +149,7 @@ pointer to an object derived from a SgExprListExp.
 \fn SgExprListExp::set_expression_type(SgType* expression_type)
 \brief Access function for p_expression_type.
 
-   Both the p_true_exp and p_false_exp must have the same type.
+Both the p_true_exp and p_false_exp must have the same type.
 
 \param expression_type type of result.
 

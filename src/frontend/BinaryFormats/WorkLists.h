@@ -1,9 +1,6 @@
 #ifndef ROSE_WorkLists_H
 #define ROSE_WorkLists_H
 
-/* Needed for __attribute__ definition on Visual Studio */
-#include "threadSupport.h"
-
 #include <boost/logic/tribool.hpp>
 #include <cassert>
 #include <list>

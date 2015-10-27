@@ -2654,8 +2654,21 @@ SgNode::set_isModified ( bool isModified)
   // DQ (4/14/2015): Adding testing to identify side-effects in the AST.
      if (SgProject::get_verbose() >= 3)
         {
-          printf ("SgNode::set_isModified() called for node = %p = %s \n",this,this->class_name().c_str());
-
+       // DQ (10/6/2015): Skip the output of this debug info for SgUnparse_Info IR nodes.
+       // printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
+       // if (!(isSgUnparse_Info(this) != NULL || isSgToken(this) != NULL))
+          if (isSgUnparse_Info(this) == NULL && isSgToken(this) == NULL)
+             {
+               printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
+             }
+#if 0
+       // DQ (10/13/2015): Chasing a issue in the move tool.
+          if (isSgForStatement(this) != NULL)
+             {
+               printf ("Exiting as a test in SgNode::set_isModified (found SgForStatemen) \n");
+               ROSE_ASSERT(false);
+             }
+#endif
 #if 0
           printf ("Exiting as a test in SgNode::set_isModified \n");
           ROSE_ASSERT(false);
@@ -2845,8 +2858,8 @@ $CLASSNAME::buildCommandLineToSubstituteTransformationFile( const vector<string>
                if ( (length > 2) && (argv[i][length-2] == '.') && ( (argv[i][length-1] == 'c') || (argv[i][length-1] == 'C') ) )
                   {
                  // printf ("Found a filename = %s \n",argv[i]);
-                 // ROSE::sourceFileNamesWithPath    [fileNameCounter] = strdup(argv[i]);
-                 // ROSE::sourceFileNamesWithoutPath [fileNameCounter] = strdup(argv[i]);
+                 // rose::sourceFileNamesWithPath    [fileNameCounter] = strdup(argv[i]);
+                 // rose::sourceFileNamesWithoutPath [fileNameCounter] = strdup(argv[i]);
                  // argv[i] = "rose_transformation.C";
                  // transformation_argv[i] = "rose_transformation.C";
                     transformation_argv[i] = strdup(newFileName.c_str());

@@ -37,14 +37,14 @@ mpaVariableRenaming_extraDist=\
 	$(mpaVariableRenamingPath)/CMakeLists.txt
 
 
-mpaVariableRenaming_cleanLocal=\
-	rm -rf \
-		$(mpaVariableRenamingPath)/Templates.DB \
-		$(mpaVariableRenamingPath)/ii_files \
-		$(mpaVariableRenamingPath)/ti_files \
-		$(mpaVariableRenamingPath)/cxx_templates
+mpaVariableRenaming_cleanLocal=
+#	rm -rf \
+#		$(mpaVariableRenamingPath)/Templates.DB \
+#		$(mpaVariableRenamingPath)/ii_files \
+#		$(mpaVariableRenamingPath)/ti_files \
+#		$(mpaVariableRenamingPath)/cxx_templates
 
 
-mpaVariableRenaming_distCleanLocal=\
-	rm -rf \
-		$(mpaVariableRenamingPath)/Templates.DB
+mpaVariableRenaming_distCleanLocal=
+#	rm -rf \
+#		$(mpaVariableRenamingPath)/Templates.DB

@@ -6,12 +6,12 @@
 \class SgTemplateArgument
 \brief This class represents template argument within the use of a template to build an instantiation.
 
-    The template argument is used for the instatiation of templates.  They can also have
-    default values and not be specified explicitly.
+The template argument is used for the instatiation of templates.  They can also have
+default values and not be specified explicitly.
 
 \internal Note that this is not the same as a template parameter, which appears in the
-    template declaration as a placeholder for template argument in the declaration of the
-    template.
+template declaration as a placeholder for template argument in the declaration of the
+template.
 
 \todo Move this be a SgLocatedNode since it should have a position in the source code.
 
@@ -28,7 +28,7 @@
 /*!
 \var SgTemplateArgument::p_arumentType
 \brief This is the type of the argument specificed to the template in the instantiation of
-    the template.
+the template.
 
 \internal  
 */
@@ -36,7 +36,7 @@
 /*!
 \var SgTemplateArgument::p_isArrayBoundUnknownType
 \brief Template arguments can be used as array bounds, if so this this marks the arguments
-    use as such.
+use as such.
 
 */
 
@@ -44,7 +44,7 @@
 \var SgTemplateArgument::p_type
 \brief This is the template argument's reference to a type (if it is a type).
 
-    This pointer is valid if the argumentType is "type_argument".
+This pointer is valid if the argumentType is "type_argument".
 
 */
 
@@ -52,7 +52,7 @@
 \var SgTemplateArgument::p_expression
 \brief This is the template argument's reference to an expression (if it is an expression).
 
-    This pointer is valid if the argumentType is "nontype_argument".
+This pointer is valid if the argumentType is "nontype_argument".
 
 */
 
@@ -65,15 +65,15 @@
 /*!
 \var SgTemplateArgument::p_explicitlySpecified
 \brief This true only if for a function template the argument is explicit in the source
-    code (it need not always be.)
+code (it need not always be.)
 
-   For template<typename T> void foo(T t); 
-   we could specify:
+For template<typename T> void foo(T t); 
+we could specify:
       -# foo(1.0);
-   or:
+or:
       -# foo<float>(1.0);
-   only in the second case is the template argument explicit.  For all instantiated 
-   member function templates the value is false.
+only in the second case is the template argument explicit.  For all instantiated 
+member function templates the value is false.
 
 \internal 
 
@@ -131,7 +131,7 @@
 
 /*!
 \fn SgTemplateArgument::SgTemplateArgument(const SgTemplateArgument & X)
-   \brief This the copy constructor (deep copy made).
+\brief This the copy constructor (deep copy made).
 
 \internal This constructor does a deep copy of all data in the SgTemplateArgument object.
 
@@ -143,14 +143,14 @@
 \fn SgTemplateArgument::~SgTemplateArgument()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgTemplateArgument::isSgTemplateArgument (SgNode *s)
 \brief Cast function (from derived class to SgTemplateArgument pointer).
 
-   This functions returns a SgTemplateArgument pointer for any input of a 
+This functions returns a SgTemplateArgument pointer for any input of a 
 pointer to an object derived from a SgTemplateArgument.
 
 \return Returns valid pointer to SgTemplateArgument if input is derived from a SgLocatedNode.
@@ -160,7 +160,7 @@ pointer to an object derived from a SgTemplateArgument.
 \fn SgTemplateArgument::isSgTemplateArgument (const SgNode *s)
 \brief Cast function (from derived class to SgTemplateArgument pointer).
 
-   This functions returns a SgTemplateArgument pointer for any input of a 
+This functions returns a SgTemplateArgument pointer for any input of a 
 pointer to an object derived from a SgTemplateArgument.
 
 \return Returns valid pointer to SgTemplateArgument if input is derived from a SgLocatedNode.

@@ -11,8 +11,8 @@ if ROSE_USE_INTEL_PIN
    INTEL_PIN_SUPPORT = IntelPinSupport.C
 endif
 
-# INCLUDES = $(ROSE_INCLUDES)
-INCLUDES = $(ROSE_INCLUDES) $(INTEL_PIN_INCLUDE_PATHS)
+# AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(INTEL_PIN_INCLUDE_PATHS)
 
 # This will cause the dynamic library to be built (as libroseBinaryFormats.so)
 noinst_LTLIBRARIES = libroseBinaryFormats.la

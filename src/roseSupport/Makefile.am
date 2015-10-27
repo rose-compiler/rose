@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -27,7 +27,6 @@ libroseSupport_la_SOURCES =			\
 	roseTranslators.C			\
 	utility_functions.C			\
 	memoryUsage.C				\
-	threadSupport.C				\
 	IncludeDirective.C			\
 	SqlDatabase.C				\
 	Diagnostics.C				\
@@ -42,7 +41,6 @@ pkginclude_HEADERS =				\
 	roseTranslators.h			\
 	stringify.h				\
 	utility_functions.h			\
-	threadSupport.h				\
 	IncludeDirective.h			\
 	SqlDatabase.h				\
 	Diagnostics.h

@@ -1,6 +1,9 @@
 /* ELF File Header (SgAsmElfFileHeader and related classes) */
 
 #include "sage3basic.h"
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
 
 /** Construct a new ELF File Header with default values. The new section is placed at file offset zero and the size is
  *  initially one byte (calling parse() will extend it as necessary). Setting the initial size of non-parsed sections to a
@@ -84,7 +87,7 @@ SgAsmElfFileHeader::machine_to_isa(unsigned machine) const
       default:
         /*FIXME: There's a whole lot more. See Dan's Elf reader. */
         // DQ (10/12/2008): Need more information to address PowerPC support.
-        fprintf(stderr, "Warning: SgAsmElfFileHeader::parse::p_e_machine = 0x%lx (%lu)\n", p_e_machine, p_e_machine);
+        mlog[WARN] <<"SgAsmElfFileHeader::parse::p_e_machine = " <<p_e_machine <<"\n";
         return ISA_OTHER;
     }
 }

@@ -131,19 +131,45 @@ string LabelProperty::toString() {
   //assert(_isValid);
   stringstream ss;
   ss<<_node<<":";
-  if(_node)
-    ss<<SgNodeHelper::nodeToString(_node)<<", ";
-  else
+  if(_node) {
+    ss<<_node->class_name()
+      <<":"
+      <<SgNodeHelper::nodeToString(_node)<<", ";
+  } else {
     ss<<"null, ";
+  }
   ss<<"var:"<<_variableId.toString()<<", ";
-  ss<<"labelType:"<<_labelType<<", ";
+  ss<<"labelType:"<<labelTypeToString(_labelType)<<", ";
   ss<<"ioType:"<<_ioType<<", ";
   ss<<"ltl:"<<isLTLRelevant()<<", ";
   ss<<"termination:"<<isTerminationRelevant();
   return ss.str();
 }
 
-SgNode* LabelProperty::getNode() { if(!_isValid) cout<<"ERROR:"<<toString()<<endl; assert(_isValid); return _node;}
+string LabelProperty::labelTypeToString(LabelType lt) {
+  switch(lt) {
+  case LABEL_UNDEF: return "undef";
+  case LABEL_OTHER: return "other";
+  case LABEL_FUNCTIONCALL: return "functioncall";
+  case LABEL_FUNCTIONCALLRETURN: return "functioncallreturn";
+  case LABEL_FUNCTIONENTRY: return "functionentry";
+  case LABEL_FUNCTIONEXIT: return "functionexit";
+  case LABEL_BLOCKBEGIN: return "blockbegin";
+  case LABEL_BLOCKEND: return "blockend";
+  case LABEL_EMPTY_STMT: return "emptystmt";
+  default:
+    cerr<<"Error: unknown label type."<<endl;
+    exit(1);
+  }
+}
+
+SgNode* LabelProperty::getNode() {
+  if(!_isValid) {
+    cout<<"ERROR:"<<toString()<<endl;
+  }
+  assert(_isValid);
+  return _node;
+}
 
 bool LabelProperty::isFunctionCallLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONCALL; }
 bool LabelProperty::isFunctionCallReturnLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONCALLRETURN; }
@@ -151,6 +177,7 @@ bool LabelProperty::isFunctionEntryLabel() { assert(_isValid); return _labelType
 bool LabelProperty::isFunctionExitLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONEXIT; }
 bool LabelProperty::isBlockBeginLabel() { assert(_isValid); return _labelType==LABEL_BLOCKBEGIN; }
 bool LabelProperty::isBlockEndLabel() { assert(_isValid); return _labelType==LABEL_BLOCKEND; }
+bool LabelProperty::isEmptyStmtLabel() { assert(_isValid); return _labelType==LABEL_EMPTY_STMT; }
 
 void LabelProperty::makeTerminationIrrelevant(bool t) {assert(_isTerminationRelevant); _isTerminationRelevant=false;}
 bool LabelProperty::isTerminationRelevant() {assert(_isValid); return _isTerminationRelevant;}
@@ -185,7 +212,7 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   switch(node->variantT()) {
   case V_SgFunctionCallExp:
   case V_SgBasicBlock:
-    return 2;
+    return 1;
   case V_SgFunctionDefinition:
     return 2;
   case V_SgExprStatement:
@@ -204,7 +231,6 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgBreakStmt:
   case V_SgVariableDeclaration:
   case V_SgLabelStatement:
-  case V_SgFunctionDeclaration:
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
   case V_SgGotoStatement:
@@ -249,9 +275,9 @@ void Labeler::createLabels(SgNode* root) {
         registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONENTRY));
         registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONEXIT));
       } else if(isSgBasicBlock(*i)) {
-        assert(num==2);
+        assert(num==1);
         registerLabel(LabelProperty(*i,LabelProperty::LABEL_BLOCKBEGIN));
-        registerLabel(LabelProperty(*i,LabelProperty::LABEL_BLOCKEND));
+        // registerLabel(LabelProperty(*i,LabelProperty::LABEL_BLOCKEND));
       } else {
         // all other cases
         for(int j=0;j<num;j++) {
@@ -259,7 +285,7 @@ void Labeler::createLabels(SgNode* root) {
         }
       }
     }
-       if(isSgExprStatement(*i)||isSgReturnStmt(*i)||isSgVariableDeclaration(*i))
+    if(isSgExprStatement(*i)||isSgReturnStmt(*i)||isSgVariableDeclaration(*i))
       i.skipChildrenOnForward();
   }
   std::cout << "STATUS: Assigned "<<mappingLabelToLabelProperty.size()<< " labels."<<std::endl;
@@ -376,6 +402,17 @@ bool Labeler::isConditionLabel(Label lab) {
   return SgNodeHelper::isCond(getNode(lab));
 }
 
+bool Labeler::isSwitchExprLabel(Label lab) {
+  SgNode* node=getNode(lab);
+  if(SgNodeHelper::isCond(node)) {
+    SgLocatedNode* loc=isSgLocatedNode(node);
+    if(loc) {
+      return isSgSwitchStatement(loc->get_parent());
+    }
+  }
+  return false;
+}
+
 bool Labeler::isFirstLabelOfMultiLabeledNode(Label lab) {
   return isFunctionCallLabel(lab)||isFunctionEntryLabel(lab)||isBlockBeginLabel(lab);
 }
@@ -391,6 +428,11 @@ bool Labeler::isFunctionEntryLabel(Label lab) {
 bool Labeler::isFunctionExitLabel(Label lab) {
   return mappingLabelToLabelProperty[lab.getId()].isFunctionExitLabel();
 }
+
+bool Labeler::isEmptyStmtLabel(Label lab) {
+  return mappingLabelToLabelProperty[lab.getId()].isEmptyStmtLabel();
+}
+
 bool Labeler::isBlockBeginLabel(Label lab) {
   return mappingLabelToLabelProperty[lab.getId()].isBlockBeginLabel();
 }
@@ -516,6 +558,10 @@ IOLabeler::IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping):Labele
     (*i).initializeIO(variableIdMapping);
   }
   computeNodeToLabelMapping();
+}
+
+bool IOLabeler::isStdIOLabel(Label label) {
+  return mappingLabelToLabelProperty[label.getId()].isIOLabel();
 }
 
 bool IOLabeler::isStdOutLabel(Label label) {

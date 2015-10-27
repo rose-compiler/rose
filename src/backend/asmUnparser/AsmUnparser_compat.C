@@ -3,6 +3,7 @@
 #include "AsmUnparser_compat.h"
 #include "BinaryControlFlow.h"
 #include "Diagnostics.h"
+#include "Disassembler.h"
 
 using namespace rose::BinaryAnalysis;
 

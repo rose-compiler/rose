@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS)
+AM_CPPFLAGS = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS)
 
 # Some source code is generated (call make in ROSE/src/ROSETTA/src to generate these files)
 GENERATED_SOURCE  = ../Cxx_Grammar.C ../Cxx_GrammarTreeTraversalSuccessorContainer.C ../Cxx_GrammarRTI.C

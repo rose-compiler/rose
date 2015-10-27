@@ -12,8 +12,8 @@ This IR node is used as both the symbol in the SgFunctionTypeTable
 and in the SgTypeTable (both IR nodes containing a SgSymbolTable IR node).
 
 \todo Consider derivation of SgEnumSymbol, SgClassSymbol, SgFunctionTypeSymbol, and 
-    SgTypedefSymbol from a common SgTypeSymbol.  Then supporting functions for 
-    SgTypeSymbol would lookup any of these type based symbols.
+SgTypedefSymbol from a common SgTypeSymbol.  Then supporting functions for 
+SgTypeSymbol would lookup any of these type based symbols.
 
 */
 
@@ -39,7 +39,7 @@ and in the SgTypeTable (both IR nodes containing a SgSymbolTable IR node).
 \fn SgFunctionTypeSymbol::SgFunctionTypeSymbol()
 \brief This is the default constructor.
 
-   This constructor builds the SgFunctionTypeSymbol base class.
+This constructor builds the SgFunctionTypeSymbol base class.
 
 \sa 
 \ref SgFunctionTypeSymbol_create "Example:create an SgFunctionTypeSymbol object"
@@ -73,7 +73,7 @@ and in the SgTypeTable (both IR nodes containing a SgSymbolTable IR node).
 \fn SgFunctionTypeSymbol::isSgFunctionTypeSymbol (SgNode *s)
 \brief Cast function (from derived class to SgFunctionTypeSymbol pointer).
 
-   This functions returns a SgFunctionTypeSymbol pointer for any input of a 
+This functions returns a SgFunctionTypeSymbol pointer for any input of a 
 pointer to an object derived from a SgFunctionTypeSymbol.
 
 \return Returns valid pointer to SgFunctionTypeSymbol if input is derived from a SgFunctionTypeSymbol.
@@ -83,7 +83,7 @@ pointer to an object derived from a SgFunctionTypeSymbol.
 \fn SgFunctionTypeSymbol::isSgFunctionTypeSymbol (const SgNode *s)
 \brief Cast function (from derived class to SgFunctionTypeSymbol pointer).
 
-   This functions returns a SgFunctionTypeSymbol pointer for any input of a 
+This functions returns a SgFunctionTypeSymbol pointer for any input of a 
 pointer to an object derived from a SgFunctionTypeSymbol.
 
 \return Returns valid pointer to SgFunctionTypeSymbol if input is derived from a SgFunctionTypeSymbol.

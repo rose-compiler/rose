@@ -91,7 +91,7 @@ private:
 public:
     /** Construct a constraint that matches everything. */
     AddressMapConstraints(AddressMap *map)
-        : map_(map), never_(false), maxSize_(-1), singleSegment_(false), requiredAccess_(0), prohibitedAccess_(0) {}
+      : map_(map), never_(false), maxSize_((size_t)-1), singleSegment_(false), requiredAccess_(0), prohibitedAccess_(0) {}
 
     // Implicitly construct constraints for a const AddressMap from a non-const address map.
     operator AddressMapConstraints<const AddressMap>() const {
@@ -465,7 +465,8 @@ public:
     }
     void
     traverse(typename AddressMap::Visitor &visitor, MatchFlags flags=0) const {
-        return map_->traverse<typename AddressMap::Visitor>(visitor, *this, flags);
+        // MS 11/22/2015: added "template " (required by clang++)
+        return map_->template traverse<typename AddressMap::Visitor>(visitor, *this, flags);
     }
     
     Sawyer::Container::Interval<Address>
@@ -1409,7 +1410,7 @@ public:
      * @code
      *  typedef AddressMap<Address,Value> Map;
      *  Map map = ...;
-     *  for (Address a=map.hull().greatest(); map.atOrBelow(a).require(READABLE).next(MATCH_BACKWARD).assignTo(a); --a) {
+     *  for (Address a=map.hull().greatest(); map.atOrBefore(a).require(READABLE).next(MATCH_BACKWARD).assignTo(a); --a) {
      *      ...
      *      if (a == map.hull().least())
      *          break;

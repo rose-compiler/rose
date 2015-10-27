@@ -6,7 +6,7 @@
 \class SgThisExp
 \brief This class represents the "this" operator (can be applied to any member data).
 
-   This shows up in the access to member data and is sometimes implicit.
+This shows up in the access to member data and is sometimes implicit.
 Recent changed to the strictness of C++ addressed in several compilers has 
 made this recently more explicitly required.
 
@@ -49,7 +49,7 @@ made this recently more explicitly required.
 \fn SgThisExp::SgThisExp ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgThisExp base class.
+This constructor builds the SgThisExp base class.
 
 \param startOfConstruct represents the position in the source code
 \sa 
@@ -60,14 +60,14 @@ made this recently more explicitly required.
 \fn SgThisExp::~SgThisExp()
 \brief This is the destructor.
 
-   Only the Sg_File_Info object can be deleted in this object.
+Only the Sg_File_Info object can be deleted in this object.
 */
 
 /*!
 \fn SgThisExp::isSgThisExp (SgNode *s)
 \brief Cast function (from derived class to SgThisExp pointer).
 
-   This functions returns a SgThisExp pointer for any input of a 
+This functions returns a SgThisExp pointer for any input of a 
 pointer to an object derived from a SgThisExp.
 
 \return Returns valid pointer to SgThisExp if input is derived from a SgThisExp.
@@ -77,7 +77,7 @@ pointer to an object derived from a SgThisExp.
 \fn SgThisExp::isSgThisExp (const SgNode *s)
 \brief Cast function (from derived class to SgThisExp pointer).
 
-   This functions returns a SgThisExp pointer for any input of a 
+This functions returns a SgThisExp pointer for any input of a 
 pointer to an object derived from a SgThisExp.
 
 \return Returns valid pointer to SgThisExp if input is derived from a SgThisExp.

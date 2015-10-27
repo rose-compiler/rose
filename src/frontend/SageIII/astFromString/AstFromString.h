@@ -1,7 +1,8 @@
 #ifndef __AST_FROM_STRING_H__
 #define __AST_FROM_STRING_H__
 /**
- * Liao 4/13/2011 
+ * Parser building blocks for creating simple recursive descent parsers generating AST from strings. Liao 4/13/2011 
+ * An experimental SgStatement* SageBuilder::buildStatementFromString(string&, SgScopeStatement* scope) is provided. 10/2015
  */
 
 #include <iostream>
@@ -22,7 +23,7 @@ namespace AstFromString
    \brief  Semi-global variables
  */
 
-  //! maximum length for a buffer for a variable, constant, or pragma construct name
+  //! Maximum length for a buffer for a variable, constant, or pragma construct name
   #define OFS_MAX_LEN 256
 
   //! A namespace scope char* to avoid passing and returning a target c string for every and each function
@@ -105,17 +106,17 @@ namespace AstFromString
   //! Match a function definition. Not yet implemented.
   ROSE_DLL_API bool afs_match_function_definition();
 
-  //! Match a declaration. Not yet implemented. 
+  //! Match a declaration. Only the simplest int i=9; style declaration is supported for now
   ROSE_DLL_API bool afs_match_declaration();
 
-  //!Match declaration specifiers. Not yet implemented.
-  ROSE_DLL_API bool afs_match_declaration_specifiers();
+  //!Match declaration specifiers, store the matched type into *tt 
+  ROSE_DLL_API bool afs_match_declaration_specifiers(SgType** tt);
 
   //!Match an init declarator list. Not yet implemented.
   ROSE_DLL_API bool afs_match_init_declarator_list();
 
-  //! Match init declarator. Not yet implemented.
-  ROSE_DLL_API bool afs_match_init_declarator();
+  //! Match init declarator. Store created mod_type, name, and initializer. Original type is needed as input to generate the modifier type. 
+  ROSE_DLL_API bool afs_match_init_declarator(SgType* orig_type, SgType** mod_type, SgName** sname, SgExpression** initializer);
 
   //! Match a storage class specifier. Not yet implemented.
   ROSE_DLL_API bool afs_match_storage_class_specifier();
@@ -139,10 +140,17 @@ namespace AstFromString
   // enumerator
   //! Match a type qualifier : 'const' | 'volatile'
   ROSE_DLL_API bool afs_match_type_qualifier();
-  //declarator
-  //direct_declarator
+
+  //! Match a declarator
+  ROSE_DLL_API bool afs_match_declarator(SgType* orig_type, SgType** modified_type);
+
+  //! Match a direct declarator
+  ROSE_DLL_API bool afs_match_direct_declarator();
   // declarator_suffix
-  // pointer
+  
+  //! Pointer constructs like * type
+  ROSE_DLL_API bool afs_match_pointer(SgType* orig_type);
+  
   //parameter_type_list
   // parameter_list
   //parameter_declaration
@@ -153,6 +161,7 @@ namespace AstFromString
   //direct_abstract_declarator
   //abstract_declarator_suffix
   // initializer
+  bool afs_match_initializer(); 
   // initializer_list
 
 
@@ -173,7 +182,7 @@ namespace AstFromString
   //! cast_expression  : '(' type_name ')' cast_expression   | unary_expression 
   ROSE_DLL_API bool afs_match_cast_expression();
 
-  //!      unary_expression : postfix_expression | INC_OP unary_expression  | DEC_OP unary_expression   | unary_operator cast_expression  | SIZEOF unary_expression  | SIZEOF '(' type_name ')'
+  //! unary_expression : postfix_expression | INC_OP unary_expression  | DEC_OP unary_expression   | unary_operator cast_expression  | SIZEOF unary_expression  | SIZEOF '(' type_name ')'
   ROSE_DLL_API bool afs_match_unary_expression();
 
  //! postfix_expression :   primary_expression ( '[' expression ']' | '(' ')' | '(' argument_expression_list ')' | '.' IDENTIFIER | '->' IDENTIFIER | '++' | '--' )*
