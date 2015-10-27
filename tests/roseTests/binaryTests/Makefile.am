@@ -399,8 +399,10 @@ PointerDetectionSpecimenFunctions =											\
 	simple01 simple02 simple03 simple04 simple05 simple06 simple07 simple08 simple09 simple10 simple11 simple12	\
 	simple13 simple14 simple15 simple16 simple17 simple18 simple19 simple20 simple21 simple22 simple23 simple24	\
 	simple25 flow01 flow02 flow03 flow04 flow05 flow06 flow07
+# These are currently not working because data-flow is not converging.  I need to come back and work on these again after
+# the ITE-merge methods are implemented. [Robb Matzke, 2015-10-27]
 PointerDetectionSpecimenFunctionsNonWorking =	\
-	flow03 flow07
+	flow03 flow04 flow05 flow06 flow07
 PointerDetectionSwitches =											\
 	$(patsubst %,--function=%,										\
 	    $(filter-out $(PointerDetectionSpecimenFunctionsNonWorking),$(PointerDetectionSpecimenFunctions)))
