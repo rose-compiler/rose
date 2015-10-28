@@ -12,7 +12,10 @@ void TaintedFlow::initDiagnostics() {}
 void InstructionSemantics2::initDiagnostics() {}
 void NoOperation::initDiagnostics() {}
 void CallingConvention::initDiagnostics() {}
-void PointerDetection::initDiagnostics() {}
+
+namespace PointerDetection {
+void initDiagnostics() {}
+} // namespace
 
 namespace Strings {
 void initDiagnostics() {}
