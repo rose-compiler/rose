@@ -30,11 +30,26 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     Parser parser;
 
     parser.purpose("update database with test result");
+    parser.errorStream(mlog[FATAL]);
     parser.version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE);
     parser.chapter(1, "ROSE Command-line Tools");
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{key_value_pairs}");
-    parser.doc("Description", "Adds a test result to the database.");
-    parser.errorStream(mlog[FATAL]);
+    parser.doc("Description",
+               "Adds a test result to the database.  The arguments are \"key=value\" pairs where the keys are "
+               "names of software dependencies, configuration names, or special values. The software dependency "
+               "and configuration names can be otained by querying the database \"dependencies\" table. The special "
+               "values are:"
+               "@named{duration}{Elapsed testing time in seconds.}"
+               "@named{noutput}{Number of lines of output (standard error and standard output) produced by running "
+               "the test}"
+               "@named{nwarnings}{Number of lines of output that contain the string \"warning:\".}"
+               "@named{os}{Name of the operating system.  A reasonable value is chosen if this key is not "
+               "specified on the command-line.}"
+               "@named{rose}{The ROSE version number, usually a SHA1 for a Git commit object.}"
+               "@named{rose_date}{The date that the ROSE version was created in seconds since the Unix epoch.}"
+               "@named{status}{The final disposition of the test; i.e., where it failed. This should be a single "
+               "word whose meaning is understood by the test designers and users.}"
+               "@named{tester}{The entity that performed the testing, such as a Jenkins node name.}");
 
     SwitchGroup sg("Tool-specific switches");
 
@@ -194,5 +209,6 @@ main(int argc, char *argv[]) {
     } else {
         tx->commit();
         mlog[INFO] <<"inserted test record #" <<idx <<"\n";
+        std::cout <<idx <<"\n";
     }
 }
