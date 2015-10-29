@@ -38,9 +38,6 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     parser.errorStream(mlog[FATAL]);
 
     SwitchGroup sg("Tool-specific switches");
-    sg.insert(Switch("help", 'h')
-              .doc("Show this documentation.")
-              .action(showHelpAndExit(0)));
 
     sg.insert(Switch("database", 'd')
               .argument("uri", anyParser(settings.databaseUri))

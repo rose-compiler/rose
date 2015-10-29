@@ -20,6 +20,7 @@ create table users (
     enabled integer                                     -- non-zero if user is enabled
 );
 
+insert into users (name) values ('matzke');
 insert into users (name) values ('jenkins');
 
 

@@ -16,7 +16,10 @@
 using namespace Sawyer::Message::Common;
 
 struct Settings {
+    bool dryRun;
     std::string databaseUri;                            // e.g., postgresql://user:password@host/database
+
+    Settings(): dryRun(false) {}
 };
 
 static Sawyer::Message::Facility mlog;
@@ -34,13 +37,16 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     parser.errorStream(mlog[FATAL]);
 
     SwitchGroup sg("Tool-specific switches");
-    sg.insert(Switch("help", 'h')
-              .doc("Show this documentation.")
-              .action(showHelpAndExit(0)));
 
     sg.insert(Switch("database", 'd')
               .argument("uri", anyParser(settings.databaseUri))
               .doc("URI specifying which database to use."));
+
+    sg.insert(Switch("dry-run")
+              .intrinsicValue(true, settings.dryRun)
+              .doc("Do everything but update the database.  When this switch is present, the database is accessed "
+                   "like normal, but the final COMMIT is skipped, causing the database to roll back to its initial "
+                   "state."));
 
     return parser.with(CommandlineProcessing::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
 }
@@ -183,6 +189,10 @@ main(int argc, char *argv[]) {
         insert->bind(idx++, val);
     idx = insert->execute_int();
 
-    tx->commit();
-    mlog[INFO] <<"inserted test record #" <<idx <<"\n";
+    if (settings.dryRun) {
+        mlog[WARN] <<"test record #" <<idx <<" not inserted (running with --dry-run)\n";
+    } else {
+        tx->commit();
+        mlog[INFO] <<"inserted test record #" <<idx <<"\n";
+    }
 }
