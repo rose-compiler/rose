@@ -166,7 +166,6 @@ insert into dependencies values ('yices',        '1.0.28',           0);
 insert into dependencies values ('yices',        '1.0.34',           1);
 
 
-
 --
 -- The table that stores the results of each test.
 --
@@ -223,6 +222,16 @@ create table test_results (
     duration integer,                                   -- time it took to run the test (seconds)
     noutput integer,                                    -- total lines of output (compiler, tests, etc)
     nwarnings integer                                   -- number of compiler warnings (pattern "warning:")
+);
+
+--
+-- Stores optional text attachments (like output) for each test
+--
+create table attachments (
+    id serial primary key,
+    test_id integer references test_results(id),	-- the test to which this attachment belongs
+    name varchar(64),					-- short name for this attachment
+    content text					-- the content of the attachment
 );
 
 commit;

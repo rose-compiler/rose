@@ -17,3 +17,8 @@ bin_PROGRAMS += matrixQueryTable
 matrixQueryTable_SOURCES = matrixQueryTable.C
 matrixQueryTable_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
 matrixQueryTable_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+bin_PROGRAMS += matrixAttachments
+matrixAttachments_SOURCES = matrixAttachments.C
+matrixAttachments_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
+matrixAttachments_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
