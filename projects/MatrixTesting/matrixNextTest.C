@@ -45,7 +45,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     sg.insert(Switch("database", 'd')
               .argument("uri", anyParser(settings.databaseUri))
-              .doc("Uniform resource locator for the database."));
+              .doc("Uniform resource locator for the database." + SqlDatabase::uriDocumentation()));
 
     sg.insert(Switch("format", 'f')
               .argument("style", enumParser<OutputMode>(settings.outputMode)

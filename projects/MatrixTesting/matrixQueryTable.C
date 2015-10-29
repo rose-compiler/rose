@@ -33,7 +33,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{columns}");
     parser.doc("Description",
                "Queries a database to show the matrix testing results.  The arguments are column names (use \"list\" to "
-               "get a list of valid column names. They can be in two forms: a bare column name causes the table to "
+               "get a list of valid column names). They can be in two forms: a bare column name causes the table to "
                "contain that column, but if the column name is followed by an equal sign and a value, then the table "
                "is restricted to rows that have that value for the column, and the constant-valued column is displayed "
                "above the table instead (if you also want it in the table, then also specify its bare name).  If no columns "
@@ -45,7 +45,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     sg.insert(Switch("database", 'd')
               .argument("uri", anyParser(settings.databaseUri))
-              .doc("URI specifying which database to use."));
+              .doc("URI specifying which database to use." + SqlDatabase::uriDocumentation()));
 
     return parser.with(CommandlineProcessing::genericSwitches()).with(sg).parse(argc, argv).apply().unreachedArgs();
 }

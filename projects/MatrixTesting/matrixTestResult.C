@@ -59,7 +59,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     sg.insert(Switch("database", 'd')
               .argument("uri", anyParser(settings.databaseUri))
-              .doc("URI specifying which database to use."));
+              .doc("URI specifying which database to use." + SqlDatabase::uriDocumentation()));
 
     sg.insert(Switch("dry-run")
               .intrinsicValue(true, settings.dryRun)
