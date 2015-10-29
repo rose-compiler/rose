@@ -558,7 +558,7 @@ target_clause : device_clause
                 | if_clause
                 | num_threads_clause
                 ;
-
+/*
 device_clause : DEVICE {
                            ompattribute->addClause(e_device);
                            omptype = e_device;
@@ -566,6 +566,20 @@ device_clause : DEVICE {
                            addExpression("");
                          }
                 ;
+*/
+device_clause : DEVICE {
+                           ompattribute->addClause(e_device);
+                           omptype = e_device;
+                         } '(' expression_or_star 
+                ;
+
+expression_or_star: expression ')' { //normal expression
+                           addExpression("");
+                          }
+                  | '*' ')' { // our extension device (*) 
+                            current_exp= SageBuilder::buildCharVal('*'); 
+                            addExpression("");  }; 
+                      
 if_clause: IF {
                            ompattribute->addClause(e_if);
                            omptype = e_if;
@@ -1050,6 +1064,7 @@ static bool addVar(const char* var)  {
 static bool addExpression(const char* expr) {
     // ompattribute->addExpression(omptype,std::string(expr),NULL);
     // std::cout<<"debug: current expression is:"<<current_exp->unparseToString()<<std::endl;
+    assert (current_exp != NULL);
     ompattribute->addExpression(omptype,std::string(expr),current_exp);
     return true;
 }
