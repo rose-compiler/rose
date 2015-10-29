@@ -4954,8 +4954,7 @@ DispatcherX86::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
             RegisterDescriptor upperHalf(reg.get_major(), reg.get_minor(), 32, 32);
             operators->writeRegister(upperHalf, operators->number_(32, 0));
         }
-    } else if (reg.get_major()==x86_regclass_st && reg.get_minor()>=0 && reg.get_minor()<8 &&
-               reg.get_offset()==0 && reg.get_nbits()==64) {
+    } else if (reg.get_major()==x86_regclass_st && reg.get_minor()<8 && reg.get_offset()==0 && reg.get_nbits()==64) {
         // When writing to an MM register, the high-order 16 bits are set in order to make the underlying
         // ST register NaN.
         RegisterDescriptor wider = reg;

@@ -44,7 +44,6 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/SymbolicSemantics2.C			\
     instructionSemantics/TraceSemantics2.C			\
     instructionSemantics/YicesSolver.C				\
-    instructionSemantics/findConstants.C			\
     GraphAlgorithms.C						\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
@@ -114,7 +113,6 @@ pkginclude_HEADERS =					\
     instructionSemantics/TestSemantics2.h		\
     instructionSemantics/TraceSemantics2.h		\
     instructionSemantics/YicesSolver.h			\
-    instructionSemantics/findConstants.h		\
     instructionSemantics/flowEquations.h		\
     instructionSemantics/x86InstructionSemantics.h	\
     libraryIdentification/functionIdentification.h	\

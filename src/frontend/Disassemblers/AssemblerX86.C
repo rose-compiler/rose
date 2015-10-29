@@ -45,7 +45,7 @@ printExpr(FILE *f, SgAsmExpression *e, const std::string &prefix, unsigned varia
             ss <<"IntegerValue {value="
                <<StringUtility::addrToString(ee->get_absoluteValue(), ee->get_significantBits())
                <<"}";
-            fprintf(f, ss.str().c_str());
+            fprintf(f, "%s", ss.str().c_str());
             break;
         }
         case V_SgAsmFloatValueExpression: {
