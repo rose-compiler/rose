@@ -1,22 +1,156 @@
-* Install the RDMS
+This is an Emacs ORG file. If you don't see much, try pressing your
+TAB key a couple times at a heading line.
+
+* Installing and configuring the central datbase
 *** Debian 7 "Wheezy"
-    # As root on the database server
+    # install postgresql as root on the database server
     $ apt-get install postgresql
     $ vi /etc/postgresq/9.1/main/pg_hba.conf # allow TCP connections
     $ /etc/init.d/postgresql start
 
-* Create an OS user to own the database and software
-*** Debian 7 "Wheezy"
-    # As root on the database server
+    # create an OS user to own the database and software
+    # as root on the database server
     $ adduser rose
 
-* Create an RDMS user and database
-*** Debian 7 "Wheezy"
-    # As postgres on the database server
+    # create an RDMS user and database as user "postgres" on the server
     $ psql
     postgres=# create user rose with password 'some-password';
     postgres=# create database rose_matrix owner rose;
+    ^D
 
-* Create the tables
-    # From any user on any machine
-    psql -h host.example.com -U rose -d rose_matrix <create_matrix_tables.sql
+    # initialize the database from any machine
+    $ psql -h host.example.com -U rose -d rose_matrix <create_matrix_tables.sql
+
+* Running a matrix test
+
+  Matrix testing is performed one test at a time. A slave node located
+  somewhere on the network downloads a copy of ROSE and generates or
+  obtains a configuration vector.  It then runs various tests on that
+  version of ROSE with that configuration vector: e.g., configure,
+  build the library, build test programs, run library tests, build and
+  test certain projects, etc. Eventually the sequence of tests either
+  fails or finishes. In either case, the slave sends results back to a
+  central database.  More detail about each step follows...
+
+*** Tools in general
+
+    Every C++-based matrix tool has a "--help" switch that will give
+    extensive documentation.  They're all in the
+    projects/MatrixTesting directory.  The makefile defines a default
+    database which you can override with the "--database" (or "-d")
+    switch, which takes a URI. The "--help" pages document the syntax
+    for the URIs.  The tools support both PostgreSQL and SQLite3,
+    although it doesn't make much sense to do network wide matrix
+    testing with a database system that can only run locally.
+
+    ROSE requires the presense of libpqxx in order to use PostgreSQL,
+    and libsqlite3 for SQLite3. ROSE's configuration system will
+    detect and use these automatically if they're installed on your
+    system.
+
+*** Obtaining a configuration
+
+    There are many ways for a slave to obtain a configuration vector.
+    The easiest is to use the "matrixNextTest" command, which queries
+    the central database to generate a random configuration. It
+    supports three different styles of output. Here's an example
+    running it with the human-readable output (the default):
+
+	$ ./matrixNextTest
+	assertions      : abort
+	boost           : 1.48
+	build           : autoconf
+	compiler        : llvm-3.5
+	debug           : yes
+	dlib            : none
+	doxygen         : 1.8.9
+	edg             : 4.9
+	languages       : c,c++
+	magic           : none
+	optimize        : no
+	python          : /usr/bin/python3
+	qt              : none
+	readline        : none
+	sqlite          : none
+	warnings        : yes
+	wt              : none
+	yaml            : 0.5.1
+	yices           : no
+
+    There's no requirement that if a slave queries the database for a
+    configuration vector that the slave must use that exact
+    vector. The previous output is a good example: it specifies
+    "llvm-3.5" as the compiler, but LLVM uses triplets for the version
+    numbers. The slave is free to use 3.5.0, 3.5.1, or even something
+    completely different, pehaps gcc-4.8.4.
+
+    The database doesn't really care how configuration vectors are
+    generated, so another way to obtain a configuration is for the
+    slave to generate one itself without involving the database.
+
+*** Running test sequences
+
+    Matrix testing allows the slave to report any kind of final status
+    it likes. The plan is that the slave should report the step at
+    which the test failed.  This is more informative than a simple
+    all-or-nothing passed-or-failed report.  However, since matrix
+    results are historical, it's prudent to not change the meaning of
+    the final status over time.
+
+*** Reporting results back to the database
+
+    Once a test is finished (failing at some step or running to
+    completion) it needs to notify the central database. The
+    "matrixTestResult" command is used for this.  In short, it takes
+    as arguments a list of key=value pairs that define the
+    configuration vector and provide additional information about what
+    version of ROSE was tested, who tested it, and some statistics.
+
+    The keys are mostly the same as those reported by the
+    "matrixNextTest" tool, plus some extras documented by its "--help"
+    page.
+
+    This tool currently uses a very simple, naive form of
+    authentication. It compares the $LOGNAME environment variable with
+    a list of authorized users. It is trivial to masquerade as some
+    other user by setting LOGNAME to the other user name.
+
+* Getting results from the database
+
+  The database is centrally located and there are a number of ways to
+  get results.  The easiest is to use the "matrixQueryTable" tool (see
+  its "--help" page).  Here's some sample output:
+
+	$ ./matrixQueryTable reporting_user=matzke compiler boost status
+	  reporting_user   = "matzke"
+	+------------+-------+---------------+--------+
+	| compiler   | boost | status        | totals |
+	+------------+-------+---------------+--------+
+	| gcc-4.8.4  | 1.52  | end           | 1      |
+	| gcc-4.8.4  | 1.52  | libtest-check | 2      |
+	| gcc-4.8.4  | 1.53  | libtest-check | 2      |
+	| gcc-4.8.4  | 1.55  | end           | 1      |
+	| gcc-4.8.4  | 1.55  | libtest-check | 1      |
+	| gcc-4.8.4  | 1.56  | libtest-check | 3      |
+	| gcc-4.8.4  | 1.58  | libtest-build | 3      |
+	| gcc-4.8.4  | 1.59  | end           | 1      |
+	| gcc-4.8.4  | 1.59  | libtest-build | 1      |
+	| gcc-4.9.2  | 1.50  | configure     | 1      |
+	| gcc-4.9.2  | 1.51  | configure     | 2      |
+	| gcc-4.9.2  | 1.53  | configure     | 1      |
+	| gcc-4.9.2  | 1.55  | configure     | 1      |
+	| gcc-4.9.2  | 1.56  | configure     | 1      |
+	| gcc-4.9.2  | 1.57  | configure     | 2      |
+	| gcc-4.9.2  | 1.58  | configure     | 2      |
+	| llvm-3.5.0 | 1.50  | configure     | 1      |
+	| llvm-3.5.0 | 1.51  | configure     | 2      |
+	| llvm-3.5.0 | 1.52  | configure     | 2      |
+	| llvm-3.5.0 | 1.53  | configure     | 1      |
+	| llvm-3.5.0 | 1.55  | configure     | 3      |
+	| llvm-3.5.0 | 1.57  | configure     | 1      |
+	| llvm-3.5.0 | 1.58  | configure     | 1      |
+	| llvm-3.5.0 | 1.59  | configure     | 1      |
+	+------------+-------+---------------+--------+
+
+  The 'totals' column means that some of these rows are matching more
+  than one test.

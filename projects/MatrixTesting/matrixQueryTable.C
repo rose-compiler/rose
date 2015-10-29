@@ -63,7 +63,7 @@ loadDependencyNames(const SqlDatabase::TransactionPtr &tx) {
 
     // Additional key/column relationships
     retval.insert("id", "id");
-    retval.insert("reporting_user", "reporting_user");
+    retval.insert("reporting_user", "users.name");
     retval.insert("reporting_time", "reporting_time");
     retval.insert("tester", "tester");
     retval.insert("os", "os");
@@ -161,7 +161,7 @@ main(int argc, char *argv[]) {
     } else {
         sql += " " + StringUtility::join(", ", columnsSelected) + ", count(*) as subtotal";
     }
-    sql += " from test_results";
+    sql += " from test_results join users on test_results.reporting_user = users.uid";
     if (!whereClauses.empty())
         sql += " where " + StringUtility::join(" and ", whereClauses);
     if (!columnsSelected.empty()) {
