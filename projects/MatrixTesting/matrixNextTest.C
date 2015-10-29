@@ -20,7 +20,11 @@ struct Settings {
     std::string databaseUri;                            // e.g., postgresql://user:password@host/database
 
     Settings()
-        : outputMode(OUTPUT_HUMAN) {}
+        : outputMode(OUTPUT_HUMAN)
+#ifdef DEFAULT_DATABASE
+          , databaseUri(DEFAULT_DATABASE)
+#endif
+        {}
 };
 
 static Sawyer::Message::Facility mlog;

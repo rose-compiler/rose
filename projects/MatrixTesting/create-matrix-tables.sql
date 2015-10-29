@@ -1,8 +1,3 @@
-drop table test_results;
-drop table dependencies;
-drop table users;
-
-
 -- Creates the matrix tables without dropping them first.
 
 

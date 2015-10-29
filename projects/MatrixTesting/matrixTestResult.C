@@ -19,7 +19,11 @@ struct Settings {
     bool dryRun;
     std::string databaseUri;                            // e.g., postgresql://user:password@host/database
 
-    Settings(): dryRun(false) {}
+    Settings(): dryRun(false)
+#ifdef DEFAULT_DATABASE
+          , databaseUri(DEFAULT_DATABASE)
+#endif
+        {}
 };
 
 static Sawyer::Message::Facility mlog;
