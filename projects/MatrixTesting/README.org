@@ -1,0 +1,22 @@
+* Install the RDMS
+*** Debian 7 "Wheezy"
+    # As root on the database server
+    $ apt-get install postgresql
+    $ vi /etc/postgresq/9.1/main/pg_hba.conf # allow TCP connections
+    $ /etc/init.d/postgresql start
+
+* Create an OS user to own the database and software
+*** Debian 7 "Wheezy"
+    # As root on the database server
+    $ adduser rose
+
+* Create an RDMS user and database
+*** Debian 7 "Wheezy"
+    # As postgres on the database server
+    $ psql
+    postgres=# create user rose with password 'some-password';
+    postgres=# create database rose_matrix owner rose;
+
+* Create the tables
+    # From any user on any machine
+    psql -h host.example.com -U rose -d rose_matrix <create_matrix_tables.sql
