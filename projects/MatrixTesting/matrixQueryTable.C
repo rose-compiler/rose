@@ -37,8 +37,9 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                "contain that column, but if the column name is followed by an equal sign and a value, then the table "
                "is restricted to rows that have that value for the column, and the constant-valued column is displayed "
                "above the table instead (if you also want it in the table, then also specify its bare name).  If no columns "
-               "are specified then all of them are shown.  Since more than one test might match the selection criteria, "
-               "the table ends with a \"totals\" column to say how many such rows are present in the database.");
+               "are specified then all of them are shown (the special \"all\" column does the same thing).  Since more than "
+               "one test might match the selection criteria, the final column is \"totals\" to say how many such rows "
+               "are present in the database.");
     parser.errorStream(mlog[FATAL]);
 
     SwitchGroup sg("Tool-specific switches");
@@ -132,6 +133,14 @@ main(int argc, char *argv[]) {
             BOOST_FOREACH (const std::string &key, dependencyNames.keys())
                 std::cout <<"  " <<key <<"\n";
             exit(0);
+        } else if (arg == "all") {
+            BOOST_FOREACH (const DependencyNames::Node &node, dependencyNames.nodes()) {
+                if (!keysSeen.exists(node.key())) {
+                    keysSelected.push_back(node.key());
+                    columnsSelected.push_back(node.value());
+                    keysSeen.insert(node.key());
+                }
+            }
         } else if (!dependencyNames.exists(arg)) {
             // Arguments of the form "key" mean add that key as one of the table columns and sort the table by ascending
             // values.

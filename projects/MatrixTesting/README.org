@@ -154,3 +154,15 @@ TAB key a couple times at a heading line.
 
   The 'totals' column means that some of these rows are matching more
   than one test.
+
+  Depending on the test scripts, some tests may have additional
+  attachments such as the last part of their output.  Given a test ID,
+  you can list the attachments with the "matrixAttachments" command:
+
+	  $ ./matrixAttachments 10    # List attachments for test #10
+	  [3] "Final output"
+
+  And you can view the attachment by using it's ID number:
+
+          $ ./matrixAttachments 10 3  # View attachment #3 from test #10
+          rmc: boost installation is missing: /home/matzke/GS-CAD/boost/1.49/gcc-4.8.4
