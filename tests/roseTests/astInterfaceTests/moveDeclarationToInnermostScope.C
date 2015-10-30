@@ -94,6 +94,10 @@
 #include <queue> // used for a worklist of declarations to be moved 
 #include <boost/foreach.hpp>
 #include <map> // used to store special var reference's scope
+
+// another level of control over transformation tracking code
+#define ENABLE_TRANS_TRACKING 1
+
 using namespace std;
 using namespace SageInterface;
 bool debug = false;
@@ -269,12 +273,14 @@ static void collectiveMergeDeclarationAndAssignment (std::vector <SgVariableDecl
            if (isMergeable (current_decl, isSgExprStatement (next_stmt)))
            {
                SageInterface::mergeDeclarationAndAssignment (current_decl, isSgExprStatement (next_stmt));
+#if ENABLE_TRANS_TRACKING
               if (transTracking)
               {
                 // No need to patch up IDs for a merge transformation
                 // directly record input node 
                 TransformationTracking::addInputNode (current_decl, next_stmt);
               }
+#endif              
            } // end if Mergeable
              next_stmt = NULL; // We stop when the first match is found
          } 
@@ -476,11 +482,11 @@ int main(int argc, char * argv[])
   }
 
   SgProject *project = frontend (argvList);
-
+#if ENABLE_TRANS_TRACKING
   // assign unique ID's for all nodes
   if (transTracking)
     TransformationTracking::registerAstSubtreeIds (project);  
-
+#endif
 // DQ (12/11/2014): Added output of graph after transformations.
    if (SgProject::get_verbose() > 0)
       {
@@ -547,6 +553,7 @@ int main(int argc, char * argv[])
 // printf ("DONE: Calling cleanupNontransformedBasicBlockNode() \n");
 #endif
 
+#if ENABLE_TRANS_TRACKING
   if (transTracking)
   { 
     std::map<AST_NODE_ID, std::set<AST_NODE_ID> >::iterator iter;
@@ -577,7 +584,7 @@ int main(int argc, char * argv[])
       } // end if ids.size() >0
     }  // end for inputIDs
   } // end if transTracking 
-
+#endif
  // run all tests
   AstTests::runAllTests(project);
   return backend(project);
@@ -1404,6 +1411,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 
 // support transformation tracking/ IR mapping
 
+#if ENABLE_TRANS_TRACKING
   if (transTracking)
     {
       // patch up IDs for the changed subtree 
@@ -1414,7 +1422,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
         TransformationTracking::addInputNode (*iter, decl); 
       }
     }  // end if transTracking
-
+#endif
   //TODO deepDelete is problematic
   //SageInterface::deepDelete(decl);  // symbol is not deleted?
   //orig_scope->remove_symbol(sym);
