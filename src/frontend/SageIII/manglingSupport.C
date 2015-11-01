@@ -7,6 +7,9 @@
 using namespace std;
 
 
+// DQ (10/31/2015): Need to define this in a single location instead of in the header file included by multiple source files.
+MangledNameSupport::setType MangledNameSupport::visitedTemplateDefinitions;
+
 
 string
 replaceNonAlphaNum (const string& s)
@@ -237,11 +240,96 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                case V_SgTemplateInstantiationDefn:
                   {
                     const SgClassDefinition* def = isSgClassDefinition (scope);
-                    mangled_name = def->get_mangled_name().getString();
 
+#define DEBUG_RECURSIVE_USE 1
+
+#if DEBUG_RECURSIVE_USE
+                 // DQ (10/23/2015): Added debugging code for recursively defined use (RoseExample_tests_01.C).
+                    static SgClassDefinition* previously_used_class_definition = NULL;
+                 // printf ("In manglingSupport.C: mangleQualifiersToString(const SgScopeStatement*): previously_used_class_definition = %p def = %p \n",previously_used_class_definition,def);
+                    if (def == previously_used_class_definition)
+                       {
+                         SgName name;
+                         if (isSgTemplateInstantiationDefn(def) != NULL)
+                            {
+                              name = isSgTemplateInstantiationDecl(def->get_declaration())->get_templateName().str();
+                            }
+                           else
+                            {
+                              name = def->get_declaration()->get_name().str();
+                            }
+#if 0
+                         printf ("def was just processed: def = %p = %s class declaration name = %s \n",def,def->class_name().c_str(),name.str());
+                         def->get_file_info()->display("def used recursively");
+#endif
+                       }
+                    previously_used_class_definition = const_cast<SgClassDefinition*>(def);
+#endif
+
+#if 1
+                 // DQ (10/31/2015): This is an attempt to break the cycles that would result in infinite 
+                 // recursive calls to mangle the names of template class instantiations.
+#if 0
+                    MangledNameSupport::outputVisitedTemplateDefinitions();
+#endif
+                    SgClassDefinition* nonconst_def = const_cast<SgClassDefinition*>(def);
+                    if (MangledNameSupport::visitedTemplateDefinitions.find(nonconst_def) != MangledNameSupport::visitedTemplateDefinitions.end())
+                       {
+                      // Skip the call that would result in infinte recursion.
+#if 0
+                         printf ("In manglingSupport.C: mangleQualifiersToString(): skipping the call to process the template class instantiation definition: def = %p = %s \n",def,def->class_name().c_str()); 
+#endif
+                       }
+                      else
+                       {
+                         SgClassDefinition* templateInstantiationDefinition = isSgTemplateInstantiationDefn(nonconst_def);
+                         if (templateInstantiationDefinition != NULL)
+                            {
+#if 0
+                              printf ("Insert templateInstantiationDefinition = %p into visitedTemplateDeclarations (stl set)\n",templateInstantiationDefinition);
+#endif
+                           // Not clear why we need to use an iterator to simply insert a pointer into the set.
+                           // SgTemplateInstantiationDefn* nonconst_templateInstantiationDefinition = const_cast<SgTemplateInstantiationDefn*>(templateInstantiationDefinition);
+                              MangledNameSupport::setType::iterator it = MangledNameSupport::visitedTemplateDefinitions.begin();
+                           // MangledNameSupport::visitedTemplateDeclarations.insert(it,nonconst_templateInstantiationDefinition);
+                              MangledNameSupport::visitedTemplateDefinitions.insert(it,nonconst_def);
+                            }
+#if 0
+                         printf ("In manglingSupport.C: mangleQualifiersToString(): Calling def->get_mangled_name(): def = %p = %s \n",def,def->class_name().c_str());
+#endif
+                         mangled_name = def->get_mangled_name().getString();
+#if 0
+                         printf ("DONE: In manglingSupport.C: mangleQualifiersToString(): Calling def->get_mangled_name(): def = %p = %s \n",def,def->class_name().c_str());
+#endif
+
+                      // DQ (10/31/2015): The rule here is that after processing as a mangled name we remove the 
+                      // template instantiation from the list so that other non-nested uses of the template 
+                      // instantiation will force the manged name to be generated.
+                         if (templateInstantiationDefinition != NULL)
+                            {
+#if 0
+                              printf ("Erase templateInstantiationDefinition = %p from visitedTemplateDeclarations (stl set)\n",templateInstantiationDefinition);
+#endif
+                              MangledNameSupport::visitedTemplateDefinitions.erase(nonconst_def);
+                            }
+                       }
+#else
+
+#error "DEAD CODE!"
+
+                 // Original code that demonstrated infinite recursive behavior for rare case of test2015_105.C (extracted from boost use in ROSE header files).
+#if 0
+                    printf ("In manglingSupport.C: mangleQualifiersToString(): Calling def->get_mangled_name(): def = %p = %s \n",def,def->class_name().c_str());
+#endif
+                    mangled_name = def->get_mangled_name().getString();
+#if 0
+                    printf ("DONE: In manglingSupport.C: mangleQualifiersToString(): Calling def->get_mangled_name(): def = %p = %s \n",def,def->class_name().c_str());
+#endif
+#endif
+
+#if 0
                     const SgClassDeclaration* classDeclaration = def->get_declaration();
                     string name = classDeclaration->get_name().str();
-#if 0
                     printf ("In manglingSupport.C: mangleQualifiersToString(): mangled name for scope = %p = %s is: %s \n",scope,scope->class_name().c_str(),mangled_name.c_str());
                     printf ("In manglingSupport.C: mangleQualifiersToString(): class declaration = %p = %s class name = %s \n",classDeclaration,classDeclaration->class_name().c_str(),name.c_str());
 #endif
@@ -380,6 +468,10 @@ scope_name << "_" << attribute -> expression;
 
   // ROSE_ASSERT(mangled_name.find('<') == string::npos);
      ROSE_ASSERT(SageInterface::hasTemplateSyntax(mangled_name) == false);
+
+#if 0
+     printf ("Leaving mangleQualifiersToString(): scope = %p = %s returning mangled_name = %s \n",scope,scope->class_name().c_str(),mangled_name.c_str());
+#endif
 
      return mangled_name;
    }
@@ -607,24 +699,40 @@ mangleFunctionName (const SgName& n, const SgName& ret_type_name )
   }
 
 string
-mangleTemplateArgsToString (const SgTemplateArgumentPtrList::const_iterator b,const SgTemplateArgumentPtrList::const_iterator e)
+mangleTemplateArgsToString (const SgTemplateArgumentPtrList::const_iterator b, const SgTemplateArgumentPtrList::const_iterator e)
    {
      ostringstream mangled_name;
      bool is_first = true;
+
+     size_t arg_counter = 0;
+
      for (SgTemplateArgumentPtrList::const_iterator i = b; i != e; ++i)
         {
-          if (is_first)
+          if (is_first == true)
+             {
                is_first = false;
-            else // !is_first, so insert a "comma"
+             }
+            else
+             {
+            // !is_first, so insert a seperator string.
                mangled_name << "__sep__";
+             }
 
           const SgTemplateArgument* arg = *i;
           ROSE_ASSERT (arg != NULL);
-
+#if 0
+          printf ("In mangleTemplateArgsToString(): calling template arg->get_mangled_name(): arg_counter = %zu arg = %p = %s \n",arg_counter,arg,arg->unparseToString().c_str());
+#endif
           mangled_name << arg->get_mangled_name().getString();
+#if 0
+          string tmp_s = mangled_name.str();
+       // printf ("DONE: In mangleTemplateArgsToString(): calling template arg->get_mangled_name(): arg_counter = %zu arg = %p mangled_name = %s \n",arg_counter,arg,mangled_name.str().c_str());
+          printf ("DONE: In mangleTemplateArgsToString(): calling template arg->get_mangled_name(): arg_counter = %zu arg = %p mangled_name = %s \n",arg_counter,arg,tmp_s.c_str());
+#endif
+          arg_counter++;
         }
 
-     return mangled_name.str ();
+     return mangled_name.str();
    }
 
 #if 0
@@ -637,13 +745,134 @@ mangleTemplateArgs (const SgTemplateArgumentPtrList::const_iterator b,
     return SgName (s_mangled.c_str ());
   }
 #endif
- 
+
+
+
+void
+testForCycleInTemplateArgumentsOfTemplateDeclaration ( const SgTemplateInstantiationDefn* templateInstantiationDefinition )
+   {
+  // DQ (10/29/2015): This function evaluates a specific error case where a cycle is detected in the type system.
+
+     const SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(templateInstantiationDefinition->get_declaration());
+     ROSE_ASSERT(templateInstantiationDeclaration != NULL);
+
+     const SgTemplateArgumentPtrList & templ_args = templateInstantiationDeclaration->get_templateArguments();
+
+     if (templ_args.size() > 0)
+        {
+       // DQ (10/29/2015): Adding test on the scope to make sure we don't have a recursive scope evaluation.
+          size_t arg_counter = 0;
+          for (SgTemplateArgumentPtrList::const_iterator i = templ_args.begin(); i != templ_args.end(); ++i)
+             {
+               const SgTemplateArgument* arg = *i;
+               ROSE_ASSERT (arg != NULL);
+#if 0
+               printf ("In testForCycleInTemplateArgumentsOfTemplateDeclaration(): DEBUG: arg_counter = %zu arg = %p = %s \n",
+                    arg_counter,arg,arg->unparseToString().c_str());
+#endif
+               switch (arg->get_argumentType())
+                  {
+                    case SgTemplateArgument::type_argument:
+                       {
+                         const SgType* type = arg->get_type();
+                         assert (type != NULL);
+#if 0
+                         printf ("In testForCycleInTemplateArgumentsOfTemplateDeclaration(): DEBUG: arg_counter = %zu type = %p = %s = %s \n",
+                              arg_counter,type,type->class_name().c_str(),type->unparseToString().c_str());
+#endif
+
+                         const SgModifierType* modifierType = isSgModifierType(type);
+                         if (modifierType != NULL)
+                            {
+                           // Look for the scope.
+                              const SgType* base_type = modifierType->get_base_type();
+#if 0
+                              printf ("In testForCycleInTemplateArgumentsOfTemplateDeclaration(): DEBUG: SgModifierType: arg_counter = %zu base_type = %p = %s = %s \n",
+                                   arg_counter,base_type,base_type->class_name().c_str(),base_type->unparseToString().c_str());
+                              modifierType->get_typeModifier().display("In mangleTemplateToString(string&,SgTemplateArgumentPtrList&,SgScopeStatement*)");
+#endif
+                              const SgTypedefType* typedefType = isSgTypedefType(base_type);
+                              if (typedefType != NULL)
+                                 {
+                                   const SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(typedefType->get_declaration());
+                                   ROSE_ASSERT(typedefDeclaration != NULL);
+
+                                   SgScopeStatement* typedefScope = typedefDeclaration->get_scope();
+                                   ROSE_ASSERT(typedefScope != NULL);
+#if 0
+                                   printf ("In testForCycleInTemplateArgumentsOfTemplateDeclaration(): DEBUG: SgTypedefDeclaration: arg_counter = %zu typedefScope = %p = %s \n",
+                                        arg_counter,typedefScope,typedefScope->class_name().c_str());
+#endif
+                                // Test for cycle through typedef and template arguments.
+                                   if (templateInstantiationDefinition == typedefScope)
+                                      {
+                                        printf ("ERROR: This typedef declaration is a scope that is the same as where it is used as a typedef type in a template argument list: \n");
+                                        printf ("   --- templateInstantiationDeclaration = %p = %s = %s \n",templateInstantiationDeclaration,
+                                             templateInstantiationDeclaration->class_name().c_str(),templateInstantiationDeclaration->get_name().str());
+                                        typedefDeclaration->get_file_info()->display("location of problem typedef declaration");
+                                        templateInstantiationDefinition->get_file_info()->display("location of problem scope");
+                                      }
+
+                                // DQ (10/29/2015): Restrict this to template instantiation definition scopes.
+                                   if (isSgTemplateInstantiationDefn(typedefScope) != NULL)
+                                      {
+#if 0
+                                     // DQ (10/31/2015): Disable the detection if we want to leverage the newer mechanism
+                                     // to avoid redundant processing of the template class instantiations definitions.
+                                        ROSE_ASSERT(templateInstantiationDefinition != typedefDeclaration->get_scope());
+#endif
+                                      }
+                                 }
+                            }
+
+                     //  SgName mangled_type = type->get_mangled();
+                         break;
+                       }
+
+                     default:
+                       {
+                       }
+                  }
+
+               arg_counter++;
+             }
+        }
+   }
+
+
+void
+MangledNameSupport::outputVisitedTemplateDefinitions()
+   {
+     printf ("\n***** visitedTemplateDefinitions (set) members (size = %zu): \n",visitedTemplateDefinitions.size());
+     setType::iterator i = visitedTemplateDefinitions.begin();
+     while (i != visitedTemplateDefinitions.end())
+        {
+          SgClassDefinition* entry = *i;
+          ROSE_ASSERT(entry != NULL);
+
+          printf ("   --- entry: i = %p = %s = %s \n",entry,entry->class_name().c_str(),entry->get_declaration()->get_name().str());
+
+          i++;
+        }
+
+     printf ("   --- end of list \n\n");
+   }
+
+
 string
 mangleTemplateToString (const string& templ_name,
                         const SgTemplateArgumentPtrList& templ_args,
                         const SgScopeStatement* scope)
    {
   // Mangle all the template arguments
+
+  // DQ (10/29/2015): Added assertion.
+     ROSE_ASSERT(scope != NULL);
+
+#if 0
+     printf ("In mangleTemplateToString(string&,SgTemplateArgumentPtrList&,SgScopeStatement*): template name = %s templ_args.size() = %zu scope = %p = %s \n",templ_name.c_str(),templ_args.size(),scope,scope->class_name().c_str());
+#endif
+
      string args_mangled;
   // if (templ_args.begin() != templ_args.end())
      if (templ_args.empty() == true)
@@ -655,6 +884,11 @@ mangleTemplateToString (const string& templ_name,
           args_mangled = mangleTemplateArgsToString(templ_args.begin(),templ_args.end());
         }
 
+#if 0
+     printf ("In mangleTemplateToString(string&,SgTemplateArgumentPtrList&,SgScopeStatement*): compute the mangled name for the scope: template name = %s templ_args.size() = %zu scope = %p = %s \n",templ_name.c_str(),templ_args.size(),scope,scope->class_name().c_str());
+#endif
+
+#if 1
   // Compute the name qualification, if any.
      string scope_name;
      if (scope == NULL)
@@ -669,6 +903,10 @@ mangleTemplateToString (const string& templ_name,
   // Compute the final mangled name.
      string mangled_name = joinMangledQualifiersToString (scope_name, templ_name);
   // printf ("joinMangledQualifiersToString (scope_name, templ_name) : mangled_name = %s \n",mangled_name.c_str());
+#else
+     printf ("In mangleTemplateToString(string&,SgTemplateArgumentPtrList&,SgScopeStatement*): Skipping the handling fo the scope in the mangled name computation for template instatiations \n");
+     string mangled_name = templ_name;
+#endif
 
      if (mangled_name.empty() == true)
         {
@@ -687,8 +925,19 @@ mangleTemplate (const SgName& templ_name,
                 const SgTemplateArgumentPtrList& templ_args,
                 const SgScopeStatement* scope)
    {
+  // DQ (10/29/2015): Added assertion.
+     ROSE_ASSERT(scope != NULL);
+
+#if 0
+     printf ("In mangleTemplate(SgName&,SgTemplateArgumentPtrList&,SgScopeStatement*): template name = %s templ_args.size() = %zu scope = %p = %s \n",templ_name.str(),templ_args.size(),scope,scope->class_name().c_str());
+#endif
+
      string mangled_name = mangleTemplateToString(templ_name.getString(),templ_args,scope);
-  // printf ("In mangleTemplate(): mangled_name = %s \n",mangled_name.c_str());
+
+#if 0
+     printf ("In mangleTemplate(): mangled_name = %s \n",mangled_name.c_str());
+#endif
+
      return SgName (mangled_name.c_str());
    }
 
@@ -745,11 +994,8 @@ mangleTemplateFunction (const string& templ_name,
                         const SgFunctionType* func_type,
                         const SgScopeStatement* scope)
   {
-    string mangled = mangleTemplateFunctionToString (templ_name,
-                                                     templ_args,
-                                                     func_type,
-                                                     scope);
-    return SgName (mangled.c_str ());
+    string mangled = mangleTemplateFunctionToString (templ_name, templ_args, func_type, scope);
+    return SgName (mangled.c_str());
   }
 
 /*! Mangles a value expression.
@@ -762,7 +1008,7 @@ template <class SgValueExpType_>
 string
 mangleSgValueExp (const SgValueExpType_* expr)
   {
-    // Verify that SgValueExpType_ descends from SgValueExp.
+ // Verify that SgValueExpType_ descends from SgValueExp.
     ROSE_ASSERT (isSgValueExp (expr) || !expr);
 
     ostringstream mangled_name;
@@ -784,72 +1030,55 @@ mangleValueExp (const SgValueExp* expr)
     switch (expr->variantT ())
       {
       case V_SgBoolValExp:
-        mangled_name =
-          mangleSgValueExp<SgBoolValExp> (isSgBoolValExp (expr));
+        mangled_name = mangleSgValueExp<SgBoolValExp> (isSgBoolValExp (expr));
         break;
       case V_SgCharVal:
-        mangled_name =
-          mangleSgValueExp<SgCharVal> (isSgCharVal (expr));
+        mangled_name = mangleSgValueExp<SgCharVal> (isSgCharVal (expr));
         break;
       case V_SgDoubleVal:
-        mangled_name =
-          mangleSgValueExp<SgDoubleVal> (isSgDoubleVal (expr));
+        mangled_name = mangleSgValueExp<SgDoubleVal> (isSgDoubleVal (expr));
         break;
       case V_SgEnumVal:
-        mangled_name =
-          mangleSgValueExp<SgEnumVal> (isSgEnumVal (expr));
+        mangled_name = mangleSgValueExp<SgEnumVal> (isSgEnumVal (expr));
         break;
       case V_SgFloatVal:
-        mangled_name =
-          mangleSgValueExp<SgFloatVal> (isSgFloatVal (expr));
+        mangled_name = mangleSgValueExp<SgFloatVal> (isSgFloatVal (expr));
         break;
       case V_SgIntVal:
-        mangled_name =
-          mangleSgValueExp<SgIntVal> (isSgIntVal (expr));
+        mangled_name = mangleSgValueExp<SgIntVal> (isSgIntVal (expr));
         break;
       case V_SgLongDoubleVal:
-        mangled_name =
-          mangleSgValueExp<SgLongDoubleVal> (isSgLongDoubleVal (expr));
+        mangled_name = mangleSgValueExp<SgLongDoubleVal> (isSgLongDoubleVal (expr));
         break;
       case V_SgLongIntVal:
-        mangled_name =
-          mangleSgValueExp<SgLongIntVal> (isSgLongIntVal (expr));
+        mangled_name = mangleSgValueExp<SgLongIntVal> (isSgLongIntVal (expr));
         break;
      case V_SgLongLongIntVal: // Added by Liao, 2/10/2009
-        mangled_name =
-          mangleSgValueExp<SgLongLongIntVal> (isSgLongLongIntVal (expr));
+        mangled_name = mangleSgValueExp<SgLongLongIntVal> (isSgLongLongIntVal (expr));
         break;
      case V_SgShortVal:
-        mangled_name =
-          mangleSgValueExp<SgShortVal> (isSgShortVal (expr));
+        mangled_name = mangleSgValueExp<SgShortVal> (isSgShortVal (expr));
         break;
       case V_SgStringVal:
-        mangled_name =
-          mangleSgValueExp<SgStringVal> (isSgStringVal (expr));
+        mangled_name = mangleSgValueExp<SgStringVal> (isSgStringVal (expr));
         break;
       case V_SgUnsignedCharVal:
-        mangled_name =
-          mangleSgValueExp<SgUnsignedCharVal> (isSgUnsignedCharVal (expr));
+        mangled_name = mangleSgValueExp<SgUnsignedCharVal> (isSgUnsignedCharVal (expr));
         break;
       case V_SgUnsignedIntVal:
-        mangled_name =
-          mangleSgValueExp<SgUnsignedIntVal> (isSgUnsignedIntVal (expr));
+        mangled_name = mangleSgValueExp<SgUnsignedIntVal> (isSgUnsignedIntVal (expr));
         break;
       case V_SgUnsignedLongLongIntVal:
-        mangled_name =
-          mangleSgValueExp<SgUnsignedLongLongIntVal> (isSgUnsignedLongLongIntVal (expr));
+        mangled_name = mangleSgValueExp<SgUnsignedLongLongIntVal> (isSgUnsignedLongLongIntVal (expr));
         break;
       case V_SgUnsignedLongVal:
-        mangled_name =
-          mangleSgValueExp<SgUnsignedLongVal> (isSgUnsignedLongVal (expr));
+        mangled_name = mangleSgValueExp<SgUnsignedLongVal> (isSgUnsignedLongVal (expr));
         break;
       case V_SgUnsignedShortVal:
-        mangled_name =
-          mangleSgValueExp<SgUnsignedShortVal> (isSgUnsignedShortVal (expr));
+        mangled_name = mangleSgValueExp<SgUnsignedShortVal> (isSgUnsignedShortVal (expr));
         break;
       case V_SgWcharVal:
-        mangled_name =
-          mangleSgValueExp<SgWcharVal> (isSgWcharVal (expr));
+        mangled_name = mangleSgValueExp<SgWcharVal> (isSgWcharVal (expr));
         break;
       case V_SgCastExp:
         {
@@ -873,6 +1102,7 @@ mangleValueExp (const SgValueExp* expr)
         ROSE_ASSERT (false); // Unhandled case.
         break;
       }
+
     return replaceNonAlphaNum (mangled_name);
   }
 

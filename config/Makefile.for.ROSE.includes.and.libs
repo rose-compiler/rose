@@ -309,13 +309,13 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/frontend/ECJ_ROSE_Connection \
      -I"$(JAVA_HOME)/include" \
      -I$(top_srcdir)/src/frontend/PHPFrontend \
-     -I$(top_srcdir)/src/frontend/CxxFrontend/ClangFrontend \
+      $(ROSE_CLANG_FRONTEND_INCLUDE) \
      -I$(top_srcdir)/src/frontend/PythonFrontend \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly \
      -I$(top_srcdir)/src/frontend/BinaryFormats \
      -I$(top_srcdir)/src/frontend/BinaryLoader \
      -I$(top_srcdir)/src/frontend/Disassemblers \
-     -I$(top_srcdir)/src/frontend/CxxFrontend/Clang \
+      $(ROSE_CLANG_INCLUDE) \
      -I$(top_srcdir)/src/backend/unparser \
      -I$(top_srcdir)/src/backend/unparser/formatSupport \
      -I$(top_srcdir)/src/backend/unparser/languageIndependenceSupport \
@@ -416,6 +416,14 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      $(ROSE_ATERM_INCLUDE) \
      $(BOOST_CPPFLAGS)
 endif
+
+# DQ (10/23/2015): These paths have been replaces with the following variables.
+# These variable are empty for now (reflecting the default usage, and need to 
+# be set properly where ever Clang support is processed as a configure option.
+#    -I$(top_srcdir)/src/frontend/CxxFrontend/ClangFrontend 
+#    -I$(top_srcdir)/src/frontend/CxxFrontend/Clang 
+#    $(ROSE_CLANG_FRONTEND_INCLUDE) 
+#    $(ROSE_CLANG_INCLUDE) 
 
 SWIG_ROSE_INCLUDES = $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH)
 ROSE_INCLUDES = $(ROSE_BOOST_PREINCLUDE_PATH) $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH) 

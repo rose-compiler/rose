@@ -9528,6 +9528,10 @@ SgModifierType* SageBuilder::buildModifierType(SgType* base_type /* = NULL*/)
 
      if (result != result2)
         {
+#if 1
+       // DQ (10/27/2015): This is the cause of a bug in the test2015_97.C (boost template problem).
+          printf ("WARNING: In SageBuilder::buildModifierType(): using previously build SgModifierType from global type table: result2 = %p = %s \n",result2,result2->class_name().c_str());
+#endif
 #if 0
        // DQ (9/3/2012): While debugging let's skip calling delete so that the slot in the memory pool will not be reused.
           printf ("(debugging) In SageBuilder::buildModifierType(): Skipping delete of SgModifierType = %p = %s \n",result,result->class_name().c_str());
