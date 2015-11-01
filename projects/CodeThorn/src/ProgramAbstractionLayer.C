@@ -5,6 +5,9 @@ SPRAY::ProgramAbstractionLayer::ProgramAbstractionLayer()
   :_modeArrayElementVariableId(true),_labeler(0),_variableIdMapping(0) {
 }
 
+SPRAY::ProgramAbstractionLayer::~ProgramAbstractionLayer() {
+}
+
 void SPRAY::ProgramAbstractionLayer::setModeArrayElementVariableId(bool val) {
   _modeArrayElementVariableId=val; 
 }

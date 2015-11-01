@@ -365,6 +365,10 @@ int main(int argc, char* argv[]) {
     root->unparse(0,0);
   }
 
+  std::list<int> fakelist;
+  fakelist.push_back(1);
+  std::list<int>::iterator myit=fakelist.begin();
+  fakelist.erase(myit);
   cout<< "STATUS: finished."<<endl;
 
   // main function try-catch

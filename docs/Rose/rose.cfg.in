@@ -754,7 +754,6 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/midend/binaryAnalyses/dataflowanalyses \
                          @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics \
                          @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/YicesSolver.C \
-                         @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/findConstants.C \
                          @top_srcdir@/src/midend/binaryAnalyses/libraryIdentification \
                          @top_srcdir@/src/midend/programTransformation/ompLowering \
                          @top_srcdir@/src/midend/midend.docs \
@@ -858,7 +857,6 @@ EXCLUDE                = @top_srcdir@/src/frontend/CxxFrontend/EDG \
 			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/PartialSymbolicSemantics.h \
 			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/ReadWriteRegisterFragment.h \
 			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/findConstants.h \
 			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/flowEquations.h \
 			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/x86InstructionSemantics.h \
                          @top_pwd@/src/frontend/SageIII/StorageClasses.h

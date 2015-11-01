@@ -156,9 +156,21 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
           bool autoMovePreprocessingInfo = true;
 
           SgStatement* lastStatement = associatedStatement;
+
+          SgVariableDeclaration* sourceBoxVariableDeclaration = NULL;
+          sourceBoxVariableDeclaration = buildBoxRef("sourceBoxRef",sourceVariableSymbol,outerScope, boxVariableSymbol->get_type());
+          SageInterface::insertStatementBefore(lastStatement,sourceBoxVariableDeclaration,autoMovePreprocessingInfo);
+          SgVariableSymbol* srcBoxVariableSymbol = SageInterface::getFirstVarSym(sourceBoxVariableDeclaration);
+          SgVariableDeclaration* destinationBoxVariableDeclaration = NULL;
+          destinationBoxVariableDeclaration = buildBoxRef("destinationBoxRef",sourceVariableSymbol,outerScope, boxVariableSymbol->get_type());
+          SageInterface::insertStatementAfter(sourceBoxVariableDeclaration,destinationBoxVariableDeclaration,autoMovePreprocessingInfo);
+          SgVariableSymbol* destBoxVariableSymbol = SageInterface::getFirstVarSym(destinationBoxVariableDeclaration);
+
           SgBasicBlock* innerLoopBody = NULL;
 
-          SgForStatement* loopNest = buildLoopNest(stencilFSM->stencilDimension(),innerLoopBody,boxVariableSymbol,indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y, arraySizeVariableSymbol_Z,lastStatement);
+          vector<SgExpression*> srcLBList(stencilDimension);
+          vector<SgExpression*> destLBList(stencilDimension);
+          SgForStatement* loopNest = buildLoopNest(stencilFSM->stencilDimension(),innerLoopBody,boxVariableSymbol,srcBoxVariableSymbol,destBoxVariableSymbol, indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y, arraySizeVariableSymbol_Z,lastStatement, srcLBList, destLBList);
           ROSE_ASSERT(innerLoopBody != NULL);
 
           ROSE_ASSERT(lastStatement != NULL);
@@ -219,7 +231,7 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
                   {
                      stencilSubTree = 
                           buildStencilPoint(stencilOffsetFSM,stencilCoeficient,stencilDimension,sourceVariableSymbol,
-                               indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,arraySizeVariableSymbol_Z,generateLowlevelCode);
+                               indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,arraySizeVariableSymbol_Z,srcLBList,generateLowlevelCode);
                   }
              
                ROSE_ASSERT(stencilSubTree != NULL);
@@ -239,7 +251,7 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
           else
             {
               stencil_lhs = buildStencilPoint(stencilOffsetFSM_lhs,stencilCoeficient_lhs,stencilDimension,destinationVariableSymbol,
-                                              indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,arraySizeVariableSymbol_Z,generateLowlevelCode);
+                                              indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,arraySizeVariableSymbol_Z,destLBList, generateLowlevelCode);
             }
           ROSE_ASSERT(stencil_lhs != NULL);
 
@@ -262,7 +274,7 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
               SgPragmaDeclaration* pragma1 = SageBuilder::buildPragmaDeclaration (parallel_pragma_string, NULL);
               SageInterface::insertStatementBefore(loopNest,  pragma1);
               // TODO: once total arraySize is calculated , we use a variable arraySize_Total instead of 1764 ( 42*42 )
-              string target_pragma_string = "omp target device(0) map (out:destinationDataPointer[0:1764]) map(in:sourceDataPointer[0:1764])";
+              string target_pragma_string = "omp target device(0) map (to:destinationDataPointer[0:1764]) map(from:sourceDataPointer[0:1764])";
               SgPragmaDeclaration* pragma2 = SageBuilder::buildPragmaDeclaration (target_pragma_string, NULL);
               SageInterface::insertStatementBefore(pragma1,  pragma2);
             }

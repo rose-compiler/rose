@@ -3770,6 +3770,7 @@ TestExpressionTypes::visit ( SgNode* node )
              {
                SgExpression *parentExpr = isSgExpression(expression->get_parent());
                if (parentExpr != NULL && !(
+#if 0
                                     // DQ (10/27/2015): Fixed warning from GNU 4.8.3 compiler.
                                     // parentExpr->variantT() == V_SgAssignInitializer && expression->variantT() == V_SgStringVal
                                       (parentExpr->variantT() == V_SgAssignInitializer && expression->variantT() == V_SgStringVal)
@@ -3777,6 +3778,12 @@ TestExpressionTypes::visit ( SgNode* node )
                                     || parentExpr->variantT() == V_SgArrowExp
                                  // DQ (10/27/2015): Fixed warning from GNU 4.8.3 compiler.
                                  // || isSgInitializer(parentExpr) && isSgInitializer(expression)))
+#else
+                                 // DQ (10/31/2015): I think this is fixing the same issue (and resulted in a conflict).
+                                    (parentExpr->variantT() == V_SgAssignInitializer && expression->variantT() == V_SgStringVal)
+                                    || parentExpr->variantT() == V_SgDotExp
+                                    || parentExpr->variantT() == V_SgArrowExp
+#endif
                                     || (isSgInitializer(parentExpr) && isSgInitializer(expression))))
                   {
                     SgType* parentType = parentExpr->get_type();

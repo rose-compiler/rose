@@ -17,61 +17,56 @@
 // the use of directory structure support as required for scalable code generation.
 #define ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT 0
 
-//QY 11/9/04 added capabilities for building multiple constructors for statements including
-//ExpressionRoot (and others) as data members
-typedef enum ConstructParam_EnumX
-{ 
-        TAG_NO_CONSTRUCTOR_PARAMETER , 
-    TAG_CONSTRUCTOR_PARAMETER    
-} ConstructParamEnumX;
-
-class ConstructParamEnum { // Wrapper for extra argument type checking
-  ConstructParamEnumX value;
-  public:
-  explicit ConstructParamEnum(ConstructParamEnumX value): value(value) {}
-  ConstructParamEnumX getValue() const {return value;}
-  bool operator==(const ConstructParamEnum& o) const {return value == o.value;}
-  bool operator!=(const ConstructParamEnum& o) const {return value != o.value;}
+// MS 2015: rewrote ROSETTA to use enums instead of wrapper classes around enums.
+// enums: ConstructParamEnum, BuildAccessEnum, CopyConfigEnum
+enum ConstructParamEnum { 
+  NO_CONSTRUCTOR_PARAMETER , 
+  CONSTRUCTOR_PARAMETER    
 };
 
-typedef enum BuildAccess_EnumX
-{ 
-        TAG_NO_ACCESS_FUNCTIONS,
-               TAG_BUILD_ACCESS_FUNCTIONS,
-               TAG_BUILD_FLAG_ACCESS_FUNCTIONS, // Just like TAG_BUILD_ACCESS_FUNCTIONS except doesn't set p_isModified
-               TAG_BUILD_LIST_ACCESS_FUNCTIONS
-} BuildAccessEnumX;
-
-class BuildAccessEnum { // Wrapper for extra argument type checking
-  BuildAccessEnumX value;
-  public:
-  explicit BuildAccessEnum(BuildAccessEnumX value): value(value) {}
-  BuildAccessEnumX getValue() const {return value;}
-  bool operator==(const BuildAccessEnum& o) const {return value == o.value;}
-  bool operator!=(const BuildAccessEnum& o) const {return value != o.value;}
+enum BuildAccessEnum { 
+  NO_ACCESS_FUNCTIONS,
+  BUILD_ACCESS_FUNCTIONS,
+  // Just like TAG_BUILD_ACCESS_FUNCTIONS except doesn't set p_isModified
+  BUILD_FLAG_ACCESS_FUNCTIONS,
+  BUILD_LIST_ACCESS_FUNCTIONS
 };
 
-typedef enum CopyConfig_EnumX
-   {
-  // Note that CLONE_TREE is the default is nothing is specified in the setDataPrototype() member function.
-     TAG_NO_COPY_DATA, // This skips the generation of any code to copy the 
-                       // pointer (deep or shallow)
-     TAG_COPY_DATA,    // This copies the data (if a pointer this copies the 
-                       // pointer, else calls the operator= for any object)
-     TAG_CLONE_PTR,    // This copies the data by building a new object using 
-                       // the copy constructor
-     TAG_CLONE_TREE    // This builds a new object dependent on the use of the 
-                       // SgCopyHelp input object (deep or shallow) using the object's copy member function
-   } CopyConfigEnumX; 
+enum CopyConfigEnum {
+  // Note that CLONE_TREE is the default if nothing is specified in the setDataPrototype() member function.
 
-class CopyConfigEnum { // Wrapper for extra argument type checking
-  CopyConfigEnumX value;
-  public:
-  explicit CopyConfigEnum(CopyConfigEnumX value): value(value) {}
-  CopyConfigEnumX getValue() const {return value;}
-  bool operator==(const CopyConfigEnum& o) const {return value == o.value;}
-  bool operator!=(const CopyConfigEnum& o) const {return value != o.value;}
+  /* This skips the generation of any code to copy the 
+     pointer (deep or shallow)
+  */
+  NO_COPY_DATA,
+  /* This copies the data (if a pointer this copies the 
+     pointer, else calls the operator= for any object)
+  */
+  COPY_DATA,
+  /* This copies the data by building a new object using 
+     the copy constructor
+  */
+  CLONE_PTR,
+  /* This builds a new object dependent on the use of the 
+     SgCopyHelp input object (deep or shallow) using the object's copy member function
+  */
+  CLONE_TREE    
 };
+
+#if 0
+// not used yet
+enum TraversalEnum {
+  TRAVERSAL,
+  NO_TRAVERSAL,
+  COND_TRAVERSAL
+};
+
+// not used yet
+enum DeleteEnum {
+  DELETE,
+  NO_DELETE
+};
+#endif
 
 class TraversalFlag { // Wrapper for extra argument type checking
   bool value;
@@ -175,19 +170,6 @@ class DeleteFlag { // Wrapper for extra argument type checking
 // #endif
 
 // using namespace std;
-
-extern const ConstructParamEnum NO_CONSTRUCTOR_PARAMETER;
-extern const ConstructParamEnum CONSTRUCTOR_PARAMETER;
-
-extern const BuildAccessEnum NO_ACCESS_FUNCTIONS;
-extern const BuildAccessEnum BUILD_ACCESS_FUNCTIONS;
-extern const BuildAccessEnum BUILD_FLAG_ACCESS_FUNCTIONS;
-extern const BuildAccessEnum BUILD_LIST_ACCESS_FUNCTIONS;
-
-extern const CopyConfigEnum NO_COPY_DATA;
-extern const CopyConfigEnum COPY_DATA;
-extern const CopyConfigEnum CLONE_PTR;
-extern const CopyConfigEnum CLONE_TREE;
 
 extern const TraversalFlag DEF_TRAVERSAL; // default traversal
 extern const TraversalFlag NO_TRAVERSAL; // no traversal

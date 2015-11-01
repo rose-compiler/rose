@@ -1339,15 +1339,10 @@ RSIM_Thread::futex_key(rose_addr_t va, uint32_t **val_ptr)
         assert(rest && *rest==' ');
         s = rest+1;
 
-        bool readable=false, writable=false, executable=false, shared=true;
-        if (*s++ == 'r')
-            readable = true;
-        if (*s++ == 'w')
-            writable = true;
-        if (*s++ == 'x')
-            executable = true;
-        if (*s++ == 'p')
-            shared = false;
+        if (*s == 'r') ++s;
+        if (*s == 'w') ++s;
+        if (*s == 'x') ++s;
+        if (*s == 'p') ++s;
         assert(' '==*s);
         s++;
 

@@ -6,8 +6,10 @@ using namespace std;
 using namespace SPRAY;
 using namespace CodeThorn;
 Threadification::Threadification(SPRAY::VariableIdMapping* vim):
-  _variableIdMapping(vim)
-{
+  _variableIdMapping(vim) {
+}
+
+Threadification::~Threadification() {
 }
 
 void Threadification::transform(SgNode* root) {
