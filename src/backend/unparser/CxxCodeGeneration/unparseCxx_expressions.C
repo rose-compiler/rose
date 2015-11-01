@@ -5028,8 +5028,15 @@ void Unparse_ExprStmt::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info)
           info2.unset_SkipBaseType();
           info2.set_SkipClassDefinition();
 
+       // DQ (10/28/2015): This will be enforced uniformally with SkipClassDefinition() in the unparseType() function below.
+          info2.set_SkipEnumDefinition();
+
        // DQ (6/2/2011): Added support for name qualification of types reference via sizeof operator.
           info2.set_reference_node_for_qualification(typeid_op);
+
+       // DQ (10/28/2015): This will be enforced in the unparseType() function
+       // (so detect it here where it is more clear how to fix it, above).
+          ROSE_ASSERT(info2.SkipClassDefinition() == info2.SkipEnumDefinition());
 
           unp->u_type->unparseType(typeid_op->get_operand_type(), info2);
         }
