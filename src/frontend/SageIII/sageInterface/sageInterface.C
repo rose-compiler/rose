@@ -9924,6 +9924,56 @@ bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, 
   return rt;
 }
 
+// Split a variable declaration with an rhs assignment into two statements: a declaration and an assignment. 
+// Return the generated assignment statement, if any
+SgExprStatement* SageInterface::splitVariableDeclaration (SgVariableDeclaration* decl)
+{
+  SgExprStatement* rt = NULL; 
+  ROSE_ASSERT (decl != NULL);
+
+  SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl);
+  SgInitializer* initor = decl_var ->get_initptr();
+  if (initor == NULL)
+    rt = NULL;
+  else
+  {
+    SgAssignInitializer * ainitor = isSgAssignInitializer (initor);
+    ROSE_ASSERT (ainitor);
+    // we deep copy the rhs operand
+    rt = buildAssignStatement (buildVarRefExp(decl_var) , deepCopy(ainitor->get_operand()));
+    decl_var->set_initptr(NULL);
+    //TODO clean up initor
+    insertStatementAfter ( decl, rt );
+   }  
+
+  return rt; 
+}
+//! Split declarations within a scope into declarations and assignment statements, by default only top level declarations are considered.
+ROSE_DLL_API int SageInterface::splitVariableDeclaration (SgScopeStatement* scope, bool topLevelOnly /* = true */)
+{
+  int count = 0; 
+  if (!topLevelOnly)
+  {
+    cerr<<"SageInterface::splitVariableDeclaration() topLevelOnly == false is not yet implemented."<<endl;
+    ROSE_ASSERT (false);  
+  }
+
+  Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(scope, V_SgVariableDeclaration);
+  for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+  {
+    SgVariableDeclaration *decl= isSgVariableDeclaration(*i);
+    if (topLevelOnly)
+    {
+      if (decl->get_scope() == scope)
+      {
+        splitVariableDeclaration (decl);
+        count ++;
+      }
+    }
+  }
+  return count; 
+}
+
 void SageInterface::collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* > & result)
 {
   ROSE_ASSERT (root != NULL);    

@@ -115,9 +115,11 @@ BoostLibraries = \
   $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) $(RT_LIBS) $(top_builddir)/src/util/libroseutil.la
 
 CxxGrammarMetaProgram_LDADD = \
-  $(BoostLibraries) \
+  $(ROSE_BOOST_LIBS) \
   $(top_builddir)/src/util/libroseutil.la \
-  $(top_builddir)/src/util/libroseSawyer.la
+  $(top_builddir)/src/util/libroseSawyer.la \
+  $(ROSE_BOOST_LIBS) \
+  $(RT_LIBS)
 
 # DQ (9/11/2008):
 # The rose_paths.c is built in ROSE/src/util and this dependence causes
