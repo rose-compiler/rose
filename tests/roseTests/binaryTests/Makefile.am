@@ -365,6 +365,14 @@ TEST_TARGETS += cory006.passed
 cory006.passed: $(TEST_EXIT_STATUS) cory006
 	@$(RTH_RUN) CMD="./cory006 $(top_srcdir)/binaries/samples/i386-cory006" $< $@
 
+# Test and demonstrate binary attributes
+noinst_PROGRAMS += cory007
+cory007_SOURCES = cory007.C
+cory007_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += cory007.passed
+cory007.passed: $(TEST_EXIT_STATUS) cory007
+	@$(RTH_RUN) CMD="./cory007" $< $@
+
 # Test symbolic semantics memory read-after-write
 noinst_PROGRAMS += testSymReadWrite
 testSymReadWrite_SOURCES = testSymReadWrite.C
