@@ -1,8 +1,7 @@
-#include <Partitioner2/Attribute.h>
+#include <BinaryAttribute.h>
 
 namespace rose {
 namespace BinaryAnalysis {
-namespace Partitioner2 {
 namespace Attribute {
 
 typedef Sawyer::Container::Map<std::string, Id> NameToId;
@@ -15,7 +14,7 @@ static Id nextId = 0;
 
 
 Id
-registerName(const std::string &name) {
+define(const std::string &name) {
     if (nameToId.insertMaybe(name, nextId) != nextId)
         throw std::runtime_error("partitioner attribute \""+name+"\" alread exists");
     idToName.insert(nextId, name);
@@ -23,7 +22,7 @@ registerName(const std::string &name) {
 }
 
 size_t
-nRegisteredAttributes() {
+nDefined() {
     return (size_t)nextId;
 }
 
@@ -39,7 +38,6 @@ attributeName(Id id) {
     return found==idToName.nodes().end() ? no_name : found->value();
 }
 
-} // namespace
 } // namespace
 } // namespace
 } // namespace

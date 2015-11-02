@@ -76,7 +76,7 @@ WFunctionList::init() {
 
     // Startup. Initialize the ATTR_Heat values so they're not returned as NaN on the first redraw.
     BOOST_FOREACH (const P2::Function::Ptr &function, ctx_.partitioner.functions())
-        function->attr<double>(ATTR_Heat, 0.0);
+        function->attribute<double>(ATTR_Heat, 0.0);
     updateFunctionHeatMaps();
 }
 

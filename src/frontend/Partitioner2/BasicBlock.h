@@ -1,7 +1,7 @@
 #ifndef ROSE_Partitioner2_BasicBlock_H
 #define ROSE_Partitioner2_BasicBlock_H
 
-#include <Partitioner2/Attribute.h>
+#include <BinaryAttribute.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Semantics.h>
@@ -29,7 +29,7 @@ namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSeman
  *
  *  A basic block is a read-only object once it reaches the BB_COMPLETE state, and can thus be shared between partitioners and
  *  threads.  The memory for these objects is shared and managed by a shared pointer implementation. */
-class BasicBlock: public Sawyer::SharedObject, public Attribute::StoredValues {
+class BasicBlock: public Sawyer::SharedObject, public Attribute::Storage {
 public:
     /** Shared pointer to a basic block. */
     typedef Sawyer::SharedPointer<BasicBlock> Ptr;

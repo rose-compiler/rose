@@ -1,5 +1,6 @@
 add_library(midend_binary OBJECT
   AbstractLocation.C
+  BinaryAttribute.C
   BinaryCallingConvention.C
   BinaryControlFlow.C
   BinaryDataFlow.C
@@ -59,6 +60,7 @@ install(
   FILES
     AbstractLocation.h
     BinaryAnalysisUtils.h
+    BinaryAttribute.h
     BinaryCallingConvention.h
     BinaryControlFlow.h
     BinaryDataFlow.h

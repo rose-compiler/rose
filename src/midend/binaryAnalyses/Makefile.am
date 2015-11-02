@@ -43,6 +43,7 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/TraceSemantics2.C			\
     instructionSemantics/YicesSolver.C				\
     GraphAlgorithms.C						\
+    BinaryAttribute.C						\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
     BinaryDominance.C						\
