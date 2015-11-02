@@ -102,6 +102,8 @@ using namespace std;
 using namespace SageInterface;
 bool debug = false;
 
+class Scope_Node;
+
 // We now use improved algorithm v2
 bool useAlgorithmV2 = true; 
 
@@ -145,6 +147,9 @@ bool merge_decl_assign = false;
 // TODO: report this issue to Dan.
 static std::map <SgVarRefExp *, SgExpression*> specialVarRefScopeExp; 
 
+// Keep track which scope tree has been considered as a new root for further possible decl moves. 
+// This is used to avoid considering the same one multiple times, causing infinite looping.
+static  std::map <Scope_Node*, bool> scopeTreeConsideredMap; 
 
 //! Check if a statement is an assignment to a variable 
 //TODO : move to SageInterface ?
@@ -1521,12 +1526,26 @@ static SgForStatement* hasALoopWithComplexInitStmt( SgVariableDeclaration* decl,
 //! A helper functions to move special scopes of target scopes into source scope trees for further consideration
 // Essentially handle all types of branching scopes , replacing each of them with their children scopes. Breaking the boundary of the branches.
 // If a target statement is a if-stmt, we should replace it with two scopes, one for its true body, the other for its false body for further consideration. 
+// SgBasicBlock may have children block scopes. They have to be considered further. 
 std::vector <SgScopeStatement *> moveSpecialTargetScopesIntoScopeTreeQueue (const std::vector <SgScopeStatement *> &target_scopes, std::queue<Scope_Node* > &source_scope_trees)
 {
   std::vector <SgScopeStatement*> processed_scopes;
   for (size_t i = 0; i< target_scopes.size(); i++)
   {
     SgScopeStatement* target_scope = target_scopes[i];
+    
+    Scope_Node* target_scope_node = ScopeTreeMap[target_scope];
+    ROSE_ASSERT (target_scope_node != NULL);
+    // If the scope tree is already considered as a root for further possible moving, skip it and directly save it the final target scope set
+    if (scopeTreeConsideredMap [target_scope_node] ) 
+    {
+      processed_scopes.push_back(target_scope);
+      continue;
+    }
+
+    // Now we handle all scope nodes which have not yet considered as a root for further possible moving
+    // Special handling for if-stmt: true , false body is considered
+    //TODO any other branching scope statements in AST? switch(), while(), for() all have a single inner body scope, not branching
     if (SgIfStmt* if_stmt = isSgIfStmt (target_scope))
     {
       if (if_stmt->get_true_body())
@@ -1537,6 +1556,8 @@ std::vector <SgScopeStatement *> moveSpecialTargetScopesIntoScopeTreeQueue (cons
 	assert (true_body != NULL);
 	assert (ScopeTreeMap[true_body] != NULL);
 	source_scope_trees.push(ScopeTreeMap[true_body]);
+        scopeTreeConsideredMap[ScopeTreeMap[true_body]] = true;
+
       }
 
       if (if_stmt->get_false_body())
@@ -1547,11 +1568,32 @@ std::vector <SgScopeStatement *> moveSpecialTargetScopesIntoScopeTreeQueue (cons
 	assert (false_body != NULL);
 	assert (ScopeTreeMap[false_body] != NULL);
 	source_scope_trees.push(ScopeTreeMap[false_body]);
+        scopeTreeConsideredMap[ScopeTreeMap[false_body]] = true;
       }
     } 
-    //TODO any other branching scope statements in AST? switch(), while(), for() all have a single inner body scope, not branching
-    else
+    // For all other non-bottom scope node, add them into source_scope_trees for further consideration
+    else if (target_scope_node->s_type ==s_intermediate)
     {
+        switch (target_scope->variantT())
+        {
+          case V_SgBasicBlock:   
+            break;
+          default: 
+            cout<<"Unhandled scope type in moveSpecialTargetScopesIntoScopeTreeQueue():"<< target_scope->variantT() <<endl; 
+            //ROSE_ASSERT (false);
+        }
+
+        //cout<<"Debugging   moveSpecialTargetScopesIntoScopeTreeQueue()  pushing a scope node to the worklist .."<< target_scope <<"@ "<< target_scope->variantT() << " "<< target_scope->get_file_info()->get_line() <<endl;
+        //collectCandidateTargetScopes() may backtrack to  a parent scope for consideration
+        //This may cause the same scope being considered twice  and cause infinite looping
+        //To avoid this case, we have to make sure the same scope node is only considered once
+	source_scope_trees.push(target_scope_node);
+        scopeTreeConsideredMap[target_scope_node] = true;
+    }
+    else  
+    // The rest target scopes are preserved, no need for further consideration  
+    {
+     // ROSE_ASSERT (target_scope_node->s_type ==s_use); 
       processed_scopes.push_back(target_scope);
     }
   }
@@ -1576,7 +1618,7 @@ std::vector <SgScopeStatement *> collectCandidateTargetScopes (SgVariableDeclara
   {
     if (scope_tree->scope != decl->get_scope())
       target_scopes.push_back(scope_tree->scope);
-    return target_scopes; // otherwise duplicted scopes will be inserted.
+    return target_scopes; // otherwise duplicated scopes will be inserted.
   }
 
   // for a scope tree with two or more nodes  
@@ -1696,6 +1738,7 @@ void findFinalTargetScopes(SgVariableDeclaration* declaration, std::vector <SgSc
   // Initially only one scope tree
   Scope_Node* orig_scope_tree = generateScopeTree (decl, debug);
   source_scope_trees.push(orig_scope_tree);
+  scopeTreeConsideredMap[orig_scope_tree] = true;
 
   // some target scopes may not be valid one: like init-stmt scope within a for-loop, which has a list of things. 
   // we need to screen out them and invalid the move for the associated scope tree.
