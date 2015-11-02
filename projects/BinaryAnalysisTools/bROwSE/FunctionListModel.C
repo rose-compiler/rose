@@ -91,7 +91,7 @@ FunctionListModel::sort(int column, Wt::SortOrder order) {
     heatStats_ = FpStatistics();
     BOOST_FOREACH (const P2::Function::Ptr &function, functions_) {
         double d = analyzers_[column]->heatValue(ctx_.partitioner, function);
-        function->attribute(ATTR_Heat, d);
+        function->setAttribute(ATTR_Heat, d);
         if (!isnan(d)) {
             heatStats_.insert(d);
             dv.push_back(d);

@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_Attribute_H
 
 #include <boost/any.hpp>
+#include <boost/lexical_cast.hpp>
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
 #include <string>
@@ -75,32 +76,22 @@ const std::string& attributeName(Id);
  *
  *  This is the interface inherited by objects that can store attributes. */
 class Storage {
-    Sawyer::Container::Map<Id, boost::any> values_;
+    typedef Sawyer::Container::Map<Id, boost::any> AttrMap;
+    AttrMap values_;
 public:
-    /** Obtain the value stored for an attribute.
+    /** Check attribute existence.
      *
-     *  Returns the attribute value if it exists, or nothing.  The stored value must be convertible to the specified type or
-     *  else a <code>boost::bad_any_cast</code> will be thrown.  Existence can be tested like this:
+     *  Returns true if an attribute with the specified identification number exists in this object, false otherwise. */
+    bool attributeExists(Id id) const {
+        return values_.exists(id);
+    }
+    
+    /** Erase an attribute.
      *
-     * @code
-     *  const Attribute::Id MY_ATTR_ID = ...;   // ID number for the attribute
-     *  std::string value;                      // lets say the attribute is string valued
-     *  Function::Ptr function = ...;           // some object supporting attributes
-     *  if (function->attribute(MY_ATTR_ID)) {
-     *      value = function->attribute<std::string>(MyAttr).get();
-     *  } else {
-     *      value = "default string";
-     *  }
-     * @endcode
-     *
-     *  The same thing can be done more efficiently and with less code by using the @ref Sawyer::Optional API:
-     *
-     * @code
-     *  std::string value = function->attribute<std::string>(MyAttr).orElse("default string");
-     * @endcode */
-    template<typename T> const Sawyer::Optional<T> attribute(Id id) const {
-        boost::any v = values_.getOptional(id).orDefault();
-        return v.empty() ? Sawyer::Nothing() : Sawyer::Optional<T>(boost::any_cast<T>(v));
+     *  Causes the attribute to not be stored anymore. Does nothing if the attribute was not stored to begin with. Upon return,
+     *  the @ref attributeExists method will return false for this @p id. */
+    void eraseAttribute(Id id) {
+        values_.erase(id);
     }
 
     /** Store an attribute.
@@ -108,15 +99,60 @@ public:
      *  Stores the specified value for the specified attribute, overwriting any previously stored value for the specified
      *  key. The attribute type can be almost anything, but getting and setting operations should use the same type to avoid
      *  exceptions. */
-    template<typename T> void attribute(Id id, const T &value) {
+    template<typename T>
+    void setAttribute(Id id, const T &value) {
         values_.insert(id, boost::any(value));
     }
 
-    /** Erase an attribute.
+    /** Get an attribute that is known to exist.
      *
-     *  Causes the attribute to not be stored anymore. */
-    void eraseAttribute(Id id) {
-        values_.erase(id);
+     *  The return type must match the type of value that was stored for this attribute or a <code>boost::bad_any_cast</code>
+     *  exception is thrown.  An <code>std::domain_error</code> is thrown if the attribute does not exist. */
+    template<typename T>
+    T getAttribute(Id id) const {
+        AttrMap::ConstNodeIterator found = values_.find(id);
+        if (found == values_.nodes().end()) {
+            std::string name = attributeName(id);
+            if (name.empty()) {
+                throw std::domain_error("attribute id=" + boost::lexical_cast<std::string>(id) + " not defined");
+            } else {
+                throw std::domain_error(name + " attribute not present");
+            }
+        }
+        return boost::any_cast<T>(values_.getOptional(id).orDefault());
+    }
+
+    /** Return an attribute or a specified value.
+     *
+     *  If the attribute exists, return its value, otherwise return the specified value. Throws
+     *  <code>boost::bad_any_cast</code> if the stored attribute's value type doesn't match the type of the provided default
+     *  value. */
+    template<typename T>
+    T attributeOrElse(Id id, const T &dflt) const {
+        return boost::any_cast<T>(values_.getOptional(id).orElse(dflt));
+    }
+
+    /** Return an attribute or a default-constructed value.
+     *
+     *  Returns the attribute value if it exists, or a default-constructed value otherwise. Throws
+     *  <code>boost::bad_any_cast</code> if the stored attribute's value type doesn't match the specified type. */
+    template<typename T>
+    T attributeOrDefault(Id id) const {
+        AttrMap::ConstNodeIterator found = values_.find(id);
+        if (found == values_.nodes().end())
+            return T();
+        return boost::any_cast<T>(found->value());
+    }
+
+    /** Return the attribute as an optional value.
+     *
+     *  Returns the attribute value if it exists, or returns nothing. */
+    template<typename T>
+    Sawyer::Optional<T> optionalAttribute(Id id) const {
+        AttrMap::ConstNodeIterator found = values_.find(id);
+        if (found == values_.nodes().end())
+            return Sawyer::Nothing();
+        return Sawyer::Optional<T>(boost::any_cast<T>(found->value()));
     }
 };
 
