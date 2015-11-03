@@ -3330,6 +3330,7 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
 #define DEBUG_FOR_STMT 0
 
 #if DEBUG_FOR_STMT
+     printf ("In unparseForStmt(): saved_unparsedPartiallyUsingTokenStream = %s \n",saved_unparsedPartiallyUsingTokenStream ? "true" : "false");
      curprint ("/* Top of unparseForStmt */");
 #endif
 
@@ -3339,6 +3340,9 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
   // if (info.unparsedPartiallyUsingTokenStream() == false)
      if (saved_unparsedPartiallyUsingTokenStream == false)
         {
+#if DEBUG_FOR_STMT
+          printf ("In unparseForStmt(): unparse the \"for (\" directly (not using the token stream) \n");
+#endif
           curprint ("for (");
         }
        else
@@ -3351,6 +3355,7 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
           ROSE_ASSERT(tmp_stmt != NULL);
 #if DEBUG_FOR_STMT
           curprint ("/* unparse start of SgForStatement */");
+          printf ("In unparseForStmt(): unparse from token stream from start of SgForStatement to for loop initializer \n");
 #endif
        // unparseStatementFromTokenStream (for_stmt, tmp_stmt, e_token_subsequence_start, e_token_subsequence_start);
           unparseStatementFromTokenStream (for_stmt, tmp_stmt, e_token_subsequence_start, e_leading_whitespace_start);
@@ -3362,6 +3367,10 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgUnparse_Info newinfo(info);
      newinfo.set_SkipSemiColon();
      newinfo.set_inConditional();  // set to prevent printing line and file information
+
+#if DEBUG_FOR_STMT
+     printf ("In unparseForStmt(): unparse the for loop initializer \n");
+#endif
 
   // curprint(" /* initializer */ ");
      SgStatement *tmp_stmt = for_stmt->get_for_init_stmt();
@@ -3381,6 +3390,7 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
 #if DEBUG_FOR_STMT
           curprint("/* Unparse the for_init_stmt */\n ");
+          printf ("In unparseForStmt(): unparse the for loop initializer (by calling unparseStatement()) \n");
 #endif
           unparseStatement(tmp_stmt,newinfo);
 #if DEBUG_FOR_STMT
@@ -3388,6 +3398,10 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
         }
      newinfo.unset_inConditional();
+
+#if DEBUG_FOR_STMT
+     printf ("In unparseForStmt(): unparse the for loop test expression (can be simple declaration statement) \n");
+#endif
 
 #if 0
 
@@ -3406,8 +3420,23 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(test_stmt != NULL);
   // if ( test_stmt != NULL )
      SgUnparse_Info testinfo(info);
-     testinfo.set_SkipSemiColon();
+
+  // DQ (11/2/2015): Change the unparsing semantics to treat the test as a statement instead 
+  // of a conditional.  This should make it processing more uniform and independent of if the 
+  // test statement is unparsed using either the AST or the token stream.
+  // testinfo.set_SkipSemiColon();
+  // testinfo.set_inConditional();
+
+  // DQ (11/2/2015): With the new change to not set SkipSemiColon and inConditional unparse 
+  // info fields, we have to explicitly specify that we want to skip class elaboration as 
+  // well (SkipClassSpecifier).  See test2015_110.C and other older test codes.  Additionally,
+  // we need to make this as a conditional so that it will be unparsed as "type var = value"
+  // instead of "type var(value)" in the case of a class constructor initialization call.
+  // This is because the syntax required for C++ in a condition is that of a simple declaration
+  // which is a part of C++ syntax not directly supported in ROSE for simplicity.
+     testinfo.set_SkipClassSpecifier();
      testinfo.set_inConditional();
+
 #if DEBUG_FOR_STMT
      printf ("Output the test in the for statement format testinfo.inConditional() = %s \n",testinfo.inConditional() ? "true" : "false");
 #endif
@@ -3422,8 +3451,26 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
        // ROSE_ASSERT(test_stmt->isTransformation() == true);
        // curprint (" /* output semi-colon at end of test */ ");
-          curprint (";");
+
+       // DQ (11/2/2015): Change the unparsing semantics to treat the test as a statement instead 
+       // of a conditional.  This should make it processing more uniform and independe of if the 
+       // test statement is unparsed using either the AST or the token stream.
+       // curprint (";");
         }
+
+     if (saved_unparsedPartiallyUsingTokenStream == false)
+        {
+       // DQ (11/2/2015): Change the unparsing semantics to treat the test as a statement instead 
+       // of a conditional.  This should make it processing more uniform and independe of if the 
+       // test statement is unparsed using either the AST or the token stream.  However, we want
+       // to add a space after the test and before the increment to make the generated code better 
+       // looking.
+          curprint (" ");
+        }
+
+#if DEBUG_FOR_STMT
+     printf ("In unparseForStmt(): unparse the for loop increment expression \n");
+#endif
 
 #if 0
      curprint ( string("; "));
@@ -3470,8 +3517,13 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (saved_unparsedPartiallyUsingTokenStream == false)
         {
        // curprint (" /* output semi-colon before increment */ ");
-          curprint("; ");
+
+       // DQ (11/2/2015): Change the unparsing semantics to treat the test as a statement instead 
+       // of a conditional.  This should make it processing more uniform and independe of if the 
+       // test statement is unparsed using either the AST or the token stream.
+       // curprint("; ");
         }
+
      if (saved_unparsedPartiallyUsingTokenStream == false)
         {
           SgExpression *increment_expr = for_stmt->get_increment();
@@ -7620,13 +7672,22 @@ Unparse_ExprStmt::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      if (newinfo.inVarDecl())
         {
-          curprint ( string(","));
+          curprint(",");
         }
        else
         {
-          if (!newinfo.inConditional() && !newinfo.SkipSemiColon())
+       // DQ (11/2/2015): This is part of a change to support uniformity in how for statement tests are unparsed.
+       // if (!newinfo.inConditional() && !newinfo.SkipSemiColon())
+       // if (newinfo.SkipSemiColon() == false)
+#if 0
+          if (newinfo.inConditional() == false)
+#else
+          if (newinfo.SkipSemiColon() == false)
+#endif
              {
-               curprint ( string(";"));
+            // DQ (11/2/2015): Add a space to match previous behavior (and tests using diff). No, I don't like this.
+            // curprint(";");
+               curprint(";");
              }
         }
 
@@ -7936,27 +7997,42 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 
 void
-Unparse_ExprStmt::unparseDoWhileStmt(SgStatement* stmt, SgUnparse_Info& info) {
-  SgDoWhileStmt* dowhile_stmt = isSgDoWhileStmt(stmt);
-  ROSE_ASSERT(dowhile_stmt != NULL);
+Unparse_ExprStmt::unparseDoWhileStmt(SgStatement* stmt, SgUnparse_Info& info) 
+   {
+     SgDoWhileStmt* dowhile_stmt = isSgDoWhileStmt(stmt);
+     ROSE_ASSERT(dowhile_stmt != NULL);
 
-  curprint ( string("do "));
-  unp->cur.format(dowhile_stmt->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
-  unparseStatement(dowhile_stmt->get_body(), info);
-  unp->cur.format(dowhile_stmt->get_body(), info, FORMAT_AFTER_NESTED_STATEMENT);
-  curprint ( string("while " ) + "(");
-  SgUnparse_Info ninfo(info);
-  ninfo.set_inConditional();
+     curprint("do ");
 
-  //we need to keep the properties of the prevnode (The next prevnode will set the
-  //line back to where "do" was printed) 
-// SgLocatedNode* tempnode = prevnode;
+     unp->cur.format(dowhile_stmt->get_body(), info, FORMAT_BEFORE_NESTED_STATEMENT);
+     unparseStatement(dowhile_stmt->get_body(), info);
+     unp->cur.format(dowhile_stmt->get_body(), info, FORMAT_AFTER_NESTED_STATEMENT);
 
-  unparseStatement(dowhile_stmt->get_condition(), ninfo);
-  ninfo.unset_inConditional();
-  curprint ( string(")")); 
-  if (!info.SkipSemiColon()) { curprint ( string(";")); }
-}
+  // curprint( string("while " ) + "(");
+     curprint("while (");
+
+     SgUnparse_Info ninfo(info);
+     ninfo.set_inConditional();
+
+  // DQ (11/2/2015): Skip output of ";" in conditional.
+     ninfo.set_SkipSemiColon();
+
+  // we need to keep the properties of the prevnode (The next prevnode will set the
+  // line back to where "do" was printed) 
+  // SgLocatedNode* tempnode = prevnode;
+
+     unparseStatement(dowhile_stmt->get_condition(), ninfo);
+
+  // Note that unseting this flag is not significant.
+     ninfo.unset_inConditional();
+
+     curprint(")");
+
+     if (!info.SkipSemiColon()) 
+        {
+          curprint(";");
+        }
+   }
 
 void
 Unparse_ExprStmt::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
