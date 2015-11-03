@@ -93,7 +93,7 @@ void ReachingDef::setDefinitionNode(CFGNode defNode)
     thisNode = defNode;
 }
 
-void ReachingDef::addJoinedDef(shared_ptr<ReachingDef> newDef, CFGEdge edge)
+void ReachingDef::addJoinedDef(boost::shared_ptr<ReachingDef> newDef, CFGEdge edge)
 {
     ROSE_ASSERT(isPhiFunction());
     parentDefs[newDef].insert(edge);
