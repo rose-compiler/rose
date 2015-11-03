@@ -4752,6 +4752,12 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
           SgUnparse_Info info2(info);
           info2.unset_SkipBaseType();
 
+       // DQ (11/3/2015): We might have to use the "struct" class elaboration if this is a type.
+       // We have to turn this back on in the case where we are in a for loop test (condition) 
+       // where it would be turned off as a result of a fix to make handling of the test expression 
+       // more unifor between token-based unparsing and the AST unparsing.
+          info2.unset_SkipClassSpecifier();
+
        // DQ (3/15/2015): test2015_11.c demonstrates a case where I think this should be not be set (un-named struct type).
        // info2.set_SkipClassDefinition();
 

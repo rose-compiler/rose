@@ -10,7 +10,7 @@ void foobar()
 
      X_FOO *iterator;
 
-     for (n = 0; iterator->hasMore(); n++) 
+     for (n = 0; iterator->hasMore(  ); n++) 
         {
 	  array[0];
         }
