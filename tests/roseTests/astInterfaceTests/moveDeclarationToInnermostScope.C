@@ -92,6 +92,7 @@
 #include "transformationTracking.h"
 #include <iostream>
 #include <queue> // used for a worklist of declarations to be moved 
+#include <stack> // used for a worklist of declarations to be moved , first found, last processing
 #include <boost/foreach.hpp>
 #include <map> // used to store special var reference's scope
 
@@ -116,7 +117,7 @@ extern bool decl_mover_conservative;
 bool transTracking = false;  // if we keep track of transformation, mapping nodes back to original input nodes
 
 //! Move a declaration to a scope which is the closest to the declaration's use places. It may generate new declarations to be considered later on so worklist is used.
-bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* decl, std::queue<SgVariableDeclaration *> &worklist, bool debug/*= false */);
+bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* decl, std::stack<SgVariableDeclaration *> &worklist, bool debug/*= false */);
 
 //! An alternative algorithm: separating analysis from transformation into two phases. The move is final.
 // Improved 2-step algorithm:
@@ -331,9 +332,13 @@ class visitorTraversal : public AstSimpleProcessing
 	if (debug )
 	  cout<<"Number of declarations to be considered = "<<var_decls.size()<<endl;
 
-	std::queue<SgVariableDeclaration* > worklist;
+//	std::queue<SgVariableDeclaration* > worklist;
+	std::stack<SgVariableDeclaration* > worklist;
 
 	for (size_t i=0; i< var_decls.size(); i++)
+        //Liao 2015/11/2
+        //reverse the order for better result:  int i; int j;  order will be preserved after moving both of them to the new location
+	//for (size_t i=var_decls.size()-1; i>=0; i--)
 	{
 	  SgVariableDeclaration* decl = isSgVariableDeclaration(var_decls[i]);
 	  ROSE_ASSERT(decl!= NULL);
@@ -348,7 +353,7 @@ class visitorTraversal : public AstSimpleProcessing
 	// These two inserted declarations will be further considered.
 	while (!worklist.empty())
 	{    
-	  SgVariableDeclaration* decl = isSgVariableDeclaration(worklist.front());
+	  SgVariableDeclaration* decl = isSgVariableDeclaration(worklist.top());
 	  ROSE_ASSERT(decl!= NULL);
 	  worklist.pop();
 
@@ -1156,7 +1161,7 @@ static bool isReferencedByLoopHeader (SgVariableSymbol* s, SgForStatement * for_
 // if the target scope is a For loop && the variable is index variable,  merge the decl to be for( int i=.., ...).
 // Accumulate the set of inserted declarations.
 //std::vector<SgVariableDeclaration* > 
-void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeStatement*> scopes, std::queue<SgVariableDeclaration*> &worklist, 
+void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeStatement*> scopes, std::stack<SgVariableDeclaration*> &worklist, 
  std::vector<SgVariableDeclaration* > & inserted_copied_decls)
 {
   ROSE_ASSERT (decl!= NULL);
@@ -1444,6 +1449,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 //    first defined means the variable is the lhs of a= rhs_exp; and it does not show up on rhs_exp; 
 static bool isLiveIn(SgVariableSymbol* var_sym, SgScopeStatement* scope)
 {
+  // Approximate liveness analysis, only the first reference matters
   SgVarRefExp * first_ref = NULL; 
   Rose_STL_Container <SgNode*> testList = NodeQuery::querySubTree (scope, V_SgVarRefExp);
   for (size_t i=0; i< testList.size(); i++)
@@ -1488,7 +1494,7 @@ static bool isLiveIn(SgVariableSymbol* var_sym, SgScopeStatement* scope)
       }
     } // end for search
     if (!onRhs ) return false; 
-  }
+  } // end if assignOp
 
   //All other cases, we conservatively assume the variable is live in for the scope
   return true; 
@@ -1659,6 +1665,7 @@ std::vector <SgScopeStatement *> collectCandidateTargetScopes (SgVariableDeclara
 	cout<<"Found a movable declaration for multiple child scopes"<<endl;
       for (size_t i =0; i< (first_branch_node->children).size(); i++)
       {
+#if 0        
 	// we try to get the bottom for each branch, not just the upper scope
 	// This is good for the case like: "if () { for (i=0;..) {}}" and if-stmt's scope is a child of the first branch scope node
 	// TODO: one branch may fork multiple branches. Should we move further down on each grandchildren branch?
@@ -1671,6 +1678,15 @@ std::vector <SgScopeStatement *> collectCandidateTargetScopes (SgVariableDeclara
 	SgScopeStatement * bottom_scope = bottom_node->scope;
 	ROSE_ASSERT (bottom_scope!= NULL);
 	target_scopes.push_back (bottom_scope);
+#else
+        // Liao 2015/11/2.  We only need to generate the candidate scopes here. 
+        // Delegate the processing of bottom (s_use for the scope tree node) vs. non-bottom scope (scope tree node type is s_intermedidate)
+        // to later moveSpecialTargetScopesIntoScopeTreeQueue().
+	Scope_Node* current_child_scope_node = first_branch_node->children[i];     
+	SgScopeStatement * child_scope = current_child_scope_node->scope;
+	ROSE_ASSERT (child_scope!= NULL);
+	target_scopes.push_back (child_scope);
+#endif        
       }
     }
     else // we still have to move it to the innermost common scope
@@ -1808,7 +1824,7 @@ void moveDeclarationToInnermostScope_v2 (SgVariableDeclaration* declaration, std
   printf ("In moveDeclarationToInnermostScope_v2(): declaration = %p = %s (calling findFinalTargetScopes()) \n",declaration,declaration->class_name().c_str());
 #endif
   findFinalTargetScopes (declaration, target_scopes, debug);
-  std::queue<SgVariableDeclaration*> worklist;   // not really useful in this algorithm, dummy parameter
+  std::stack<SgVariableDeclaration*> worklist;   // not really useful in this algorithm, dummy parameter
   if (target_scopes.size() > 0)
   {
 #if 0
@@ -1837,7 +1853,7 @@ void moveDeclarationToInnermostScope_v2 (SgVariableDeclaration* declaration, std
 // Old algorithm: iteratively find target scopes and actually move declarations.
 // The downside is that declaration will be moved into temporary target scopes, not efficient
 // Harder to keep track of the final target scopes
-bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* declaration, std::queue<SgVariableDeclaration*> &worklist, bool debug = false)
+bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* declaration, std::stack<SgVariableDeclaration*> &worklist, bool debug = false)
 {
   SgVariableDeclaration * decl = isSgVariableDeclaration(declaration);
   ROSE_ASSERT (decl != NULL);
