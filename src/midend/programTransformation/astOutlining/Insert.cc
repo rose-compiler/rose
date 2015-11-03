@@ -478,7 +478,9 @@ isProtPrivType (SgType* t)
         }
     }
 
-  return false;
+// DQ (11/3/2015): Fixed compiler warning.
+// return false;
+   return NULL;
 }
 
 /*!
@@ -501,7 +503,7 @@ isProtPrivMember (SgMemberFunctionRefExp* f)
             return cl_def;
         }
     }
-  return 0; // default: is not
+  return NULL; // default: is not
 }
 
 /*!

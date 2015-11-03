@@ -92,11 +92,18 @@
 #include "transformationTracking.h"
 #include <iostream>
 #include <queue> // used for a worklist of declarations to be moved 
+#include <stack> // used for a worklist of declarations to be moved , first found, last processing
 #include <boost/foreach.hpp>
 #include <map> // used to store special var reference's scope
+
+// another level of control over transformation tracking code
+#define ENABLE_TRANS_TRACKING 1
+
 using namespace std;
 using namespace SageInterface;
 bool debug = false;
+
+class Scope_Node;
 
 // We now use improved algorithm v2
 bool useAlgorithmV2 = true; 
@@ -110,7 +117,7 @@ extern bool decl_mover_conservative;
 bool transTracking = false;  // if we keep track of transformation, mapping nodes back to original input nodes
 
 //! Move a declaration to a scope which is the closest to the declaration's use places. It may generate new declarations to be considered later on so worklist is used.
-bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* decl, std::queue<SgVariableDeclaration *> &worklist, bool debug/*= false */);
+bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* decl, std::stack<SgVariableDeclaration *> &worklist, bool debug/*= false */);
 
 //! An alternative algorithm: separating analysis from transformation into two phases. The move is final.
 // Improved 2-step algorithm:
@@ -141,6 +148,9 @@ bool merge_decl_assign = false;
 // TODO: report this issue to Dan.
 static std::map <SgVarRefExp *, SgExpression*> specialVarRefScopeExp; 
 
+// Keep track which scope tree has been considered as a new root for further possible decl moves. 
+// This is used to avoid considering the same one multiple times, causing infinite looping.
+static  std::map <Scope_Node*, bool> scopeTreeConsideredMap; 
 
 //! Check if a statement is an assignment to a variable 
 //TODO : move to SageInterface ?
@@ -269,12 +279,14 @@ static void collectiveMergeDeclarationAndAssignment (std::vector <SgVariableDecl
            if (isMergeable (current_decl, isSgExprStatement (next_stmt)))
            {
                SageInterface::mergeDeclarationAndAssignment (current_decl, isSgExprStatement (next_stmt));
+#if ENABLE_TRANS_TRACKING
               if (transTracking)
               {
                 // No need to patch up IDs for a merge transformation
                 // directly record input node 
                 TransformationTracking::addInputNode (current_decl, next_stmt);
               }
+#endif              
            } // end if Mergeable
              next_stmt = NULL; // We stop when the first match is found
          } 
@@ -320,9 +332,13 @@ class visitorTraversal : public AstSimpleProcessing
 	if (debug )
 	  cout<<"Number of declarations to be considered = "<<var_decls.size()<<endl;
 
-	std::queue<SgVariableDeclaration* > worklist;
+//	std::queue<SgVariableDeclaration* > worklist;
+	std::stack<SgVariableDeclaration* > worklist;
 
 	for (size_t i=0; i< var_decls.size(); i++)
+        //Liao 2015/11/2
+        //reverse the order for better result:  int i; int j;  order will be preserved after moving both of them to the new location
+	//for (size_t i=var_decls.size()-1; i>=0; i--)
 	{
 	  SgVariableDeclaration* decl = isSgVariableDeclaration(var_decls[i]);
 	  ROSE_ASSERT(decl!= NULL);
@@ -337,7 +353,7 @@ class visitorTraversal : public AstSimpleProcessing
 	// These two inserted declarations will be further considered.
 	while (!worklist.empty())
 	{    
-	  SgVariableDeclaration* decl = isSgVariableDeclaration(worklist.front());
+	  SgVariableDeclaration* decl = isSgVariableDeclaration(worklist.top());
 	  ROSE_ASSERT(decl!= NULL);
 	  worklist.pop();
 
@@ -476,11 +492,11 @@ int main(int argc, char * argv[])
   }
 
   SgProject *project = frontend (argvList);
-
+#if ENABLE_TRANS_TRACKING
   // assign unique ID's for all nodes
   if (transTracking)
     TransformationTracking::registerAstSubtreeIds (project);  
-
+#endif
 // DQ (12/11/2014): Added output of graph after transformations.
    if (SgProject::get_verbose() > 0)
       {
@@ -547,6 +563,7 @@ int main(int argc, char * argv[])
 // printf ("DONE: Calling cleanupNontransformedBasicBlockNode() \n");
 #endif
 
+#if ENABLE_TRANS_TRACKING
   if (transTracking)
   { 
     std::map<AST_NODE_ID, std::set<AST_NODE_ID> >::iterator iter;
@@ -586,7 +603,6 @@ int main(int argc, char * argv[])
       } // end if ids.size() >0
     }  // end for inputIDs
   } // end if transTracking 
-
 
 #if 0
 // DQ (10/13/2015): debugging the token-based unparsing (setting SgForStatement as modified.
@@ -1167,7 +1183,7 @@ static bool isReferencedByLoopHeader (SgVariableSymbol* s, SgForStatement * for_
 // if the target scope is a For loop && the variable is index variable,  merge the decl to be for( int i=.., ...).
 // Accumulate the set of inserted declarations.
 //std::vector<SgVariableDeclaration* > 
-void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeStatement*> scopes, std::queue<SgVariableDeclaration*> &worklist, 
+void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeStatement*> scopes, std::stack<SgVariableDeclaration*> &worklist, 
  std::vector<SgVariableDeclaration* > & inserted_copied_decls)
 {
   ROSE_ASSERT (decl!= NULL);
@@ -1502,6 +1518,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 
 // support transformation tracking/ IR mapping
 
+#if ENABLE_TRANS_TRACKING
   if (transTracking)
     {
       // patch up IDs for the changed subtree 
@@ -1512,7 +1529,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
         TransformationTracking::addInputNode (*iter, decl); 
       }
     }  // end if transTracking
-
+#endif
   //TODO deepDelete is problematic
   //SageInterface::deepDelete(decl);  // symbol is not deleted?
   //orig_scope->remove_symbol(sym);
@@ -1529,6 +1546,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 //    first defined means the variable is the lhs of a= rhs_exp; and it does not show up on rhs_exp; 
 static bool isLiveIn(SgVariableSymbol* var_sym, SgScopeStatement* scope)
 {
+  // Approximate liveness analysis, only the first reference matters
   SgVarRefExp * first_ref = NULL; 
   Rose_STL_Container <SgNode*> testList = NodeQuery::querySubTree (scope, V_SgVarRefExp);
   for (size_t i=0; i< testList.size(); i++)
@@ -1573,7 +1591,7 @@ static bool isLiveIn(SgVariableSymbol* var_sym, SgScopeStatement* scope)
       }
     } // end for search
     if (!onRhs ) return false; 
-  }
+  } // end if assignOp
 
   //All other cases, we conservatively assume the variable is live in for the scope
   return true; 
@@ -1611,12 +1629,26 @@ static SgForStatement* hasALoopWithComplexInitStmt( SgVariableDeclaration* decl,
 //! A helper functions to move special scopes of target scopes into source scope trees for further consideration
 // Essentially handle all types of branching scopes , replacing each of them with their children scopes. Breaking the boundary of the branches.
 // If a target statement is a if-stmt, we should replace it with two scopes, one for its true body, the other for its false body for further consideration. 
+// SgBasicBlock may have children block scopes. They have to be considered further. 
 std::vector <SgScopeStatement *> moveSpecialTargetScopesIntoScopeTreeQueue (const std::vector <SgScopeStatement *> &target_scopes, std::queue<Scope_Node* > &source_scope_trees)
 {
   std::vector <SgScopeStatement*> processed_scopes;
   for (size_t i = 0; i< target_scopes.size(); i++)
   {
     SgScopeStatement* target_scope = target_scopes[i];
+    
+    Scope_Node* target_scope_node = ScopeTreeMap[target_scope];
+    ROSE_ASSERT (target_scope_node != NULL);
+    // If the scope tree is already considered as a root for further possible moving, skip it and directly save it the final target scope set
+    if (scopeTreeConsideredMap [target_scope_node] ) 
+    {
+      processed_scopes.push_back(target_scope);
+      continue;
+    }
+
+    // Now we handle all scope nodes which have not yet considered as a root for further possible moving
+    // Special handling for if-stmt: true , false body is considered
+    //TODO any other branching scope statements in AST? switch(), while(), for() all have a single inner body scope, not branching
     if (SgIfStmt* if_stmt = isSgIfStmt (target_scope))
     {
       if (if_stmt->get_true_body())
@@ -1627,6 +1659,8 @@ std::vector <SgScopeStatement *> moveSpecialTargetScopesIntoScopeTreeQueue (cons
 	assert (true_body != NULL);
 	assert (ScopeTreeMap[true_body] != NULL);
 	source_scope_trees.push(ScopeTreeMap[true_body]);
+        scopeTreeConsideredMap[ScopeTreeMap[true_body]] = true;
+
       }
 
       if (if_stmt->get_false_body())
@@ -1637,11 +1671,32 @@ std::vector <SgScopeStatement *> moveSpecialTargetScopesIntoScopeTreeQueue (cons
 	assert (false_body != NULL);
 	assert (ScopeTreeMap[false_body] != NULL);
 	source_scope_trees.push(ScopeTreeMap[false_body]);
+        scopeTreeConsideredMap[ScopeTreeMap[false_body]] = true;
       }
     } 
-    //TODO any other branching scope statements in AST? switch(), while(), for() all have a single inner body scope, not branching
-    else
+    // For all other non-bottom scope node, add them into source_scope_trees for further consideration
+    else if (target_scope_node->s_type ==s_intermediate)
     {
+        switch (target_scope->variantT())
+        {
+          case V_SgBasicBlock:   
+            break;
+          default: 
+            cout<<"Unhandled scope type in moveSpecialTargetScopesIntoScopeTreeQueue():"<< target_scope->variantT() <<endl; 
+            //ROSE_ASSERT (false);
+        }
+
+        //cout<<"Debugging   moveSpecialTargetScopesIntoScopeTreeQueue()  pushing a scope node to the worklist .."<< target_scope <<"@ "<< target_scope->variantT() << " "<< target_scope->get_file_info()->get_line() <<endl;
+        //collectCandidateTargetScopes() may backtrack to  a parent scope for consideration
+        //This may cause the same scope being considered twice  and cause infinite looping
+        //To avoid this case, we have to make sure the same scope node is only considered once
+	source_scope_trees.push(target_scope_node);
+        scopeTreeConsideredMap[target_scope_node] = true;
+    }
+    else  
+    // The rest target scopes are preserved, no need for further consideration  
+    {
+     // ROSE_ASSERT (target_scope_node->s_type ==s_use); 
       processed_scopes.push_back(target_scope);
     }
   }
@@ -1666,7 +1721,7 @@ std::vector <SgScopeStatement *> collectCandidateTargetScopes (SgVariableDeclara
   {
     if (scope_tree->scope != decl->get_scope())
       target_scopes.push_back(scope_tree->scope);
-    return target_scopes; // otherwise duplicted scopes will be inserted.
+    return target_scopes; // otherwise duplicated scopes will be inserted.
   }
 
   // for a scope tree with two or more nodes  
@@ -1707,6 +1762,7 @@ std::vector <SgScopeStatement *> collectCandidateTargetScopes (SgVariableDeclara
 	cout<<"Found a movable declaration for multiple child scopes"<<endl;
       for (size_t i =0; i< (first_branch_node->children).size(); i++)
       {
+#if 0        
 	// we try to get the bottom for each branch, not just the upper scope
 	// This is good for the case like: "if () { for (i=0;..) {}}" and if-stmt's scope is a child of the first branch scope node
 	// TODO: one branch may fork multiple branches. Should we move further down on each grandchildren branch?
@@ -1719,6 +1775,15 @@ std::vector <SgScopeStatement *> collectCandidateTargetScopes (SgVariableDeclara
 	SgScopeStatement * bottom_scope = bottom_node->scope;
 	ROSE_ASSERT (bottom_scope!= NULL);
 	target_scopes.push_back (bottom_scope);
+#else
+        // Liao 2015/11/2.  We only need to generate the candidate scopes here. 
+        // Delegate the processing of bottom (s_use for the scope tree node) vs. non-bottom scope (scope tree node type is s_intermedidate)
+        // to later moveSpecialTargetScopesIntoScopeTreeQueue().
+	Scope_Node* current_child_scope_node = first_branch_node->children[i];     
+	SgScopeStatement * child_scope = current_child_scope_node->scope;
+	ROSE_ASSERT (child_scope!= NULL);
+	target_scopes.push_back (child_scope);
+#endif        
       }
     }
     else // we still have to move it to the innermost common scope
@@ -1786,6 +1851,7 @@ void findFinalTargetScopes(SgVariableDeclaration* declaration, std::vector <SgSc
   // Initially only one scope tree
   Scope_Node* orig_scope_tree = generateScopeTree (decl, debug);
   source_scope_trees.push(orig_scope_tree);
+  scopeTreeConsideredMap[orig_scope_tree] = true;
 
   // some target scopes may not be valid one: like init-stmt scope within a for-loop, which has a list of things. 
   // we need to screen out them and invalid the move for the associated scope tree.
@@ -1855,7 +1921,7 @@ void moveDeclarationToInnermostScope_v2 (SgVariableDeclaration* declaration, std
   printf ("In moveDeclarationToInnermostScope_v2(): declaration = %p = %s (calling findFinalTargetScopes()) \n",declaration,declaration->class_name().c_str());
 #endif
   findFinalTargetScopes (declaration, target_scopes, debug);
-  std::queue<SgVariableDeclaration*> worklist;   // not really useful in this algorithm, dummy parameter
+  std::stack<SgVariableDeclaration*> worklist;   // not really useful in this algorithm, dummy parameter
   if (target_scopes.size() > 0)
   {
 #if 0
@@ -1884,7 +1950,7 @@ void moveDeclarationToInnermostScope_v2 (SgVariableDeclaration* declaration, std
 // Old algorithm: iteratively find target scopes and actually move declarations.
 // The downside is that declaration will be moved into temporary target scopes, not efficient
 // Harder to keep track of the final target scopes
-bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* declaration, std::queue<SgVariableDeclaration*> &worklist, bool debug = false)
+bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* declaration, std::stack<SgVariableDeclaration*> &worklist, bool debug = false)
 {
   SgVariableDeclaration * decl = isSgVariableDeclaration(declaration);
   ROSE_ASSERT (decl != NULL);

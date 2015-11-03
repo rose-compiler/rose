@@ -177,7 +177,12 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_14.C \
   inputmoveDeclarationToInnermostScope_15.C  \
   inputmoveDeclarationToInnermostScope_16.C \
-  inputmoveDeclarationToInnermostScope_18.C
+  inputmoveDeclarationToInnermostScope_18.C \
+  inputmoveDeclarationToInnermostScope_19.C \
+  inputmoveDeclarationToInnermostScope_20.C \
+  inputmoveDeclarationToInnermostScope_21.C \
+  inputmoveDeclarationToInnermostScope_test2015_126.C \
+  inputmoveDeclarationToInnermostScope_test2015_127.C 
 
 # DQ (12/23/2014): This fails because the normal unparsing (without token unparsing) is failing.
 # inputmoveDeclarationToInnermostScope_test2014_26.C
@@ -898,7 +903,11 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputmoveDeclarationToInnermostScope_test2015_13.h \
        inputmoveDeclarationToInnermostScope_test2015_16.h \
        inputmoveDeclarationToInnermostScope_test2015_22.h \
-       inputmoveDeclarationToInnermostScope_test2015_40.h 
+       inputmoveDeclarationToInnermostScope_test2015_40.h \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_18.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_19.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_20.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_21.C
 
 
 # JP (10/4/14): Added the unit tests
