@@ -442,9 +442,10 @@ enum InputOutputProperty {
 typedef Sawyer::Container::Set<InputOutputProperty> InputOutputPropertySet;
 
 
-/*******************************************************************************************************************************
- *                                      Exceptions
- *******************************************************************************************************************************/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Exceptions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Base class for exceptions thrown by instruction semantics. */
 class Exception: public std::runtime_error {
@@ -460,9 +461,42 @@ public:
         : Exception(mesg, insn) {}
 };
 
-/*******************************************************************************************************************************
- *                                      Semantic Values
- *******************************************************************************************************************************/
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Merging states
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Shared ownership pointer for Merger classes. */
+typedef Sawyer::SharedPointer<class Merger> MergerPtr;
+
+/** Controls state merge operations.
+ *
+ *  This is the base class for objects that control the details of merge operations. A merge of two semantic values or semantic
+ *  states happens when control flow joins together in data-flow analysis, and perhaps other operations.  An optional @ref
+ *  Merger object is passed as an argument into the merge functions and contains settings and other details that might be
+ *  necessary during the merge operation.
+ *
+ *  @ref Merger objects are allocated on the heap and have shared ownership like most other instruction semantics
+ *  objects. Therefore they have no public C++ constructors but instead use factory methods named "instance". Users should not
+ *  explicitly delete these objects -- they will be deleted automatically. */
+class Merger: public Sawyer::SharedObject {
+protected:
+    Merger() {}
+
+public:
+    /** Shared ownership pointer to an object. */
+    typedef MergerPtr Ptr;
+
+    /** Allocating constructor. */
+    static Ptr instance() {
+        return Ptr(new Merger);
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Semantic Values
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // This is leftover for compatibility with an older API.  The old API had code like this:
 //    User::SValue user_svalue = BaseSemantics::dynamic_pointer_cast<User::SValue>(base_svalue);
@@ -502,6 +536,10 @@ protected:
 protected:
     explicit SValue(size_t nbits): width(nbits) {}  // hot
     SValue(const SValue &other): width(other.width) {}
+
+public:
+    /** Shared-ownership pointer for an SValue object. */
+    typedef SValuePtr Ptr;
 
 public:
     virtual ~SValue() {}
@@ -584,7 +622,8 @@ public:
      *
      *  If you always want a copy regardless of whether the merge is necessary, then use the @ref createMerged convenience
      *  function instead. */
-    virtual Sawyer::Optional<SValuePtr> createOptionalMerge(const SValuePtr &other, SMTSolver *solver) const = 0;
+    virtual Sawyer::Optional<SValuePtr>
+    createOptionalMerge(const SValuePtr &other, const MergerPtr &merger, SMTSolver *solver) const = 0;
 
     /** Create a new value by merging two existing values.
      *
@@ -592,8 +631,8 @@ public:
      *  regardless of whether a merge was necessary.  In order to determine if a merge was necessary once can compare the
      *  return value to @p this using @ref must_equal, although doing so is more expensive than calling @ref
      *  createOptionalMerge. */
-    SValuePtr createMerged(const SValuePtr &other, SMTSolver *solver) const /*final*/ {
-        return createOptionalMerge(other, solver).orElse(copy());
+    SValuePtr createMerged(const SValuePtr &other, const MergerPtr &merger, SMTSolver *solver) const /*final*/ {
+        return createOptionalMerge(other, merger, solver).orElse(copy());
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -685,9 +724,9 @@ public:
 
 
 
-/*******************************************************************************************************************************
- *                                      Register States
- *******************************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Register States
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a RegisterState object.  RegisterState objects are reference counted and should not be explicitly
  *  deleted. */
@@ -697,6 +736,9 @@ typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
  *  BaseSemantics::RegisterState is an abstract class that defines the interface.  See the
  *  rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.*/
 class RegisterState: public boost::enable_shared_from_this<RegisterState> {
+private:
+    MergerPtr merger_;
+
 protected:
     SValuePtr protoval;                         /**< Prototypical value for virtual constructors. */
     const RegisterDictionary *regdict;          /**< Registers that are able to be stored by this state. */
@@ -708,6 +750,10 @@ protected:
         : protoval(protoval), regdict(regdict) {
         ASSERT_not_null(protoval);
     }
+
+public:
+    /** Shared-ownership pointer for a register state object. */
+    typedef RegisterStatePtr Ptr;
 
 public:
     virtual ~RegisterState() {}
@@ -739,6 +785,18 @@ public:
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // The rest of the API...
+
+    /** Property: Merger.
+     *
+     *  This property is optional details about how to merge two states. It is passed down to the register and memory state
+     *  merge operation and to the semantic value merge operation.  Users can subclass this to hold whatever information is
+     *  necessary for merging.  Unless the user overrides merge functions to do something else, all merging will use the same
+     *  merger object -- the one set for this property.
+     *
+     * @{ */
+    MergerPtr merger() const { return merger_; }
+    void merger(const MergerPtr &m) { merger_ = m; }
+    /** @} */
 
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
     SValuePtr get_protoval() const { return protoval; }
@@ -937,9 +995,10 @@ protected:
 };
 
 
-/*******************************************************************************************************************************
- *                                      Memory State
- *******************************************************************************************************************************/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Memory State
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a MemoryState object. MemoryState objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
@@ -951,6 +1010,7 @@ class MemoryState: public boost::enable_shared_from_this<MemoryState> {
     SValuePtr addrProtoval_;                            /**< Prototypical value for addresses. */
     SValuePtr valProtoval_;                             /**< Prototypical value for values. */
     ByteOrder::Endianness byteOrder_;                   /**< Memory byte order. */
+    MergerPtr merger_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -962,7 +1022,12 @@ protected:
     }
 
     MemoryState(const MemoryStatePtr &other)
-        : addrProtoval_(other->addrProtoval_), valProtoval_(other->valProtoval_), byteOrder_(ByteOrder::ORDER_UNSPECIFIED) {}
+        : addrProtoval_(other->addrProtoval_), valProtoval_(other->valProtoval_), byteOrder_(ByteOrder::ORDER_UNSPECIFIED),
+          merger_(other->merger_) {}
+
+public:
+    /** Shared-ownership pointer for a memory state object. */
+    typedef MemoryStatePtr Ptr;
 
 public:
     virtual ~MemoryState() {}
@@ -995,6 +1060,18 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
 public:
+    /** Property: Merger.
+     *
+     *  This property is optional details about how to merge two states. It is passed down to the register and memory state
+     *  merge operation and to the semantic value merge operation.  Users can subclass this to hold whatever information is
+     *  necessary for merging.  Unless the user overrides merge functions to do something else, all merging will use the same
+     *  merger object -- the one set for this property.
+     *
+     * @{ */
+    MergerPtr merger() const { return merger_; }
+    void merger(const MergerPtr &m) { merger_ = m; }
+    /** @} */
+
     /** Return the address protoval.  The address protoval is used to construct other memory addresses via its virtual
      *  constructors. */
     SValuePtr get_addr_protoval() const { return addrProtoval_; }
@@ -1082,9 +1159,11 @@ public:
     /** @} */
 };
 
-/******************************************************************************************************************
- *                                      State
- ******************************************************************************************************************/
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      State
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a State object.  State objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class State> StatePtr;
@@ -1126,6 +1205,10 @@ protected:
     }
 
 public:
+    /** Shared-ownership pointer for a state object. */
+    typedef StatePtr Ptr;
+
+public:
     virtual ~State() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1164,7 +1247,7 @@ public:
         ASSERT_not_null(x);
         return x;
     }
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Other methods that are part of our API. Most of these just chain to either the register state and/or the memory state.
 public:
@@ -1293,9 +1376,11 @@ public:
     virtual bool merge(const StatePtr &other, RiscOperators *ops);
 };
 
-/******************************************************************************************************************
- *                                  RISC Operators
- ******************************************************************************************************************/
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RISC Operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a RiscOperator object. RiscOperator objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
@@ -1334,6 +1419,10 @@ protected:
         ASSERT_not_null(state);
         protoval = state->get_protoval();
     }
+
+public:
+    /** Shared-ownership pointer for a RiscOperators object. */
+    typedef RiscOperatorsPtr Ptr;
 
 public:
     virtual ~RiscOperators() {}

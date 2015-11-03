@@ -63,8 +63,9 @@ public:
     /** @} */
 
 public:
-    virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
-                       BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+    virtual bool
+    merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
+          BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 
     virtual void clear() ROSE_OVERRIDE;
 
