@@ -361,8 +361,17 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_113.C \
   inputmoveDeclarationToInnermostScope_test2015_115.C \
   inputmoveDeclarationToInnermostScope_test2015_116.C \
+  inputmoveDeclarationToInnermostScope_test2015_117.C \
+  inputmoveDeclarationToInnermostScope_test2015_118.C \
+  inputmoveDeclarationToInnermostScope_test2015_119.C \
+  inputmoveDeclarationToInnermostScope_test2015_120.C \
+  inputmoveDeclarationToInnermostScope_test2015_121.C \
   inputmoveDeclarationToInnermostScope_test2015_122.C \
-  inputmoveDeclarationToInnermostScope_test2015_123.C 
+  inputmoveDeclarationToInnermostScope_test2015_123.C \
+  inputmoveDeclarationToInnermostScope_test2015_124.C \
+  inputmoveDeclarationToInnermostScope_test2015_125.C \
+  inputmoveDeclarationToInnermostScope_test2015_126.C \
+  inputmoveDeclarationToInnermostScope_test2015_127.C 
 
 # DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.
 FAILING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
@@ -460,8 +469,10 @@ test_move_decls_with_token_unparsing: $(PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_
 	@echo "****** ROSE/tests/roseTests/astInterface_tests/moveDeclarationToInnermostScope: make test_move_decls_with_token_unparsing rule complete (terminated normally) ******"
 	@echo "********************************************************************************************************************************************************************"
 
+# DQ (11/2/2015): Added token-based unparsing tests using the move-tool to the move_diff_check test rule.
 # test both diff cases
-move_diff_check: move_decls_diff_check move_merge_decls_diff_check
+# move_diff_check: move_decls_diff_check move_merge_decls_diff_check
+move_diff_check: move_decls_diff_check move_merge_decls_diff_check test_move_decls_with_token_unparsing
 
 # only move , no merge
 move_decls_diff_check: $(MOVE_DECLS_DIFF_FILES)

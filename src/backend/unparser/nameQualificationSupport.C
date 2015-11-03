@@ -482,9 +482,6 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
           declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str(),positionStatement,positionStatement->class_name().c_str());
 #endif
 
-
-
-#if 1
   // DQ (10/31/2015): This code is designed to eliminate the infinite recursion possible in some rare cases of 
   // template instantiation (see test2015_105.C extracted from ROSE compiling ROSE header files and the boost 
   // usage present there).  Note that this could be restricted to the handling of SgTemplateInstantiationDecl 
@@ -514,64 +511,59 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
             // MangledNameSupport::visitedTemplateDeclarations.insert(it,nonconst_templateInstantiationDefinition);
                MangledNameSupport::visitedTemplateDefinitions.insert(it,nonconst_def);
              }
-#endif
 
-
-
-
-  // DQ (6/1/2011): Added support for template arguments.
-     switch (declaration->variantT())
-        {
-          case V_SgTemplateInstantiationDecl:
+       // DQ (11/1/2015): Indented this code (switch statement) to conform to new block layout.
+       // DQ (6/1/2011): Added support for template arguments.
+          switch (declaration->variantT())
              {
-               SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
-               ROSE_ASSERT(templateInstantiationDeclaration != NULL);
+               case V_SgTemplateInstantiationDecl:
+                  {
+                    SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
+                    ROSE_ASSERT(templateInstantiationDeclaration != NULL);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-            // printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
-               printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p templateInstantiationDeclaration->get_templateArguments().size() = %" PRIuPTR " \n",templateInstantiationDeclaration,templateInstantiationDeclaration->get_templateArguments().size());
+                 // printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
+                    printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p templateInstantiationDeclaration->get_templateArguments().size() = %" PRIuPTR " \n",templateInstantiationDeclaration,templateInstantiationDeclaration->get_templateArguments().size());
 #endif
-            // Evaluate all template arguments.
-               evaluateNameQualificationForTemplateArgumentList (templateInstantiationDeclaration->get_templateArguments(),currentScope,positionStatement);
-               break;
+                 // Evaluate all template arguments.
+                    evaluateNameQualificationForTemplateArgumentList (templateInstantiationDeclaration->get_templateArguments(),currentScope,positionStatement);
+                    break;
+                  }
+
+               case V_SgTemplateInstantiationFunctionDecl:
+                  {
+                    SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(declaration);
+                    ROSE_ASSERT(templateInstantiationFunctionDeclaration != NULL);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("$$$$$$$$$ --- templateInstantiationFunctionDeclaration = %p \n",templateInstantiationFunctionDeclaration);
+#endif
+                 // Evaluate all template arguments.
+                    evaluateNameQualificationForTemplateArgumentList (templateInstantiationFunctionDeclaration->get_templateArguments(),currentScope,positionStatement);
+                    break;
+                  }
+
+               case V_SgTemplateInstantiationMemberFunctionDecl:
+                  {
+                    SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(declaration);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("$$$$$$$$$ --- templateInstantiationMemberFunctionDeclaration = %p \n",templateInstantiationMemberFunctionDeclaration);
+#endif
+                    ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration != NULL);
+
+                 // Evaluate all template arguments.
+                 // evaluateNameQualificationForTemplateArgumentList (templateInstantiationMemberFunctionDeclaration->get_templateArguments(),currentScope,positionStatement);
+                    SgTemplateArgumentPtrList & templateArgumentList = templateInstantiationMemberFunctionDeclaration->get_templateArguments();
+                    evaluateNameQualificationForTemplateArgumentList(templateArgumentList,currentScope,positionStatement);
+                    break;
+                  }
+
+               default:
+                  {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("This IR node does not contain template arguments to process: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#endif
+                  }
              }
 
-          case V_SgTemplateInstantiationFunctionDecl:
-             {
-               SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(declaration);
-               ROSE_ASSERT(templateInstantiationFunctionDeclaration != NULL);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("$$$$$$$$$ --- templateInstantiationFunctionDeclaration = %p \n",templateInstantiationFunctionDeclaration);
-#endif
-            // Evaluate all template arguments.
-               evaluateNameQualificationForTemplateArgumentList (templateInstantiationFunctionDeclaration->get_templateArguments(),currentScope,positionStatement);
-               break;
-             }
-
-          case V_SgTemplateInstantiationMemberFunctionDecl:
-             {
-               SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(declaration);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("$$$$$$$$$ --- templateInstantiationMemberFunctionDeclaration = %p \n",templateInstantiationMemberFunctionDeclaration);
-#endif
-               ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration != NULL);
-
-            // Evaluate all template arguments.
-            // evaluateNameQualificationForTemplateArgumentList (templateInstantiationMemberFunctionDeclaration->get_templateArguments(),currentScope,positionStatement);
-               SgTemplateArgumentPtrList & templateArgumentList = templateInstantiationMemberFunctionDeclaration->get_templateArguments();
-               evaluateNameQualificationForTemplateArgumentList(templateArgumentList,currentScope,positionStatement);
-               break;
-             }
-
-          default:
-             {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("This IR node does not contain template arguments to process: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
-#endif
-             }
-        }
-
-
-#if 1
        // DQ (10/31/2015): The rule here is that after processing as a mangled name we remove the 
        // template instantiation from the list so that other non-nested uses of the template 
        // instantiation will force the manged name to be generated.
@@ -583,8 +575,6 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                MangledNameSupport::visitedTemplateDefinitions.erase(nonconst_def);
              }
         }
-#endif
-
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("Leaving evaluateTemplateInstantiationDeclaration(): declaration = %p = %s currentScope = %p = %s positionStatement = %p = %s \n",
@@ -1529,42 +1519,6 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
                          ROSE_ASSERT(templateInstantiationDeclaration != NULL);
 
-
-
-#if 0
-  // DQ (10/31/2015): This code is designed to eliminate the infinite recursion possible in some rare cases of 
-  // template instantiation (see test2015_105.C extracted from ROSE compiling ROSE header files and the boost 
-  // usage present there).  Note that this could be restricted to the handling of SgTemplateInstantiationDecl 
-  // instead (I think).  But it might be that I have just not yet seen a recursive case using template functions 
-  // instantiations, template member function instantiations and template variable instantiations.
-     SgClassDefinition* nonconst_def = isSgClassDefinition(templateInstantiationDeclaration->get_definition());
-     if (MangledNameSupport::visitedTemplateDefinitions.find(nonconst_def) != MangledNameSupport::visitedTemplateDefinitions.end())
-        {
-       // Skip the call that would result in infinte recursion.
-#if 1
-          printf ("In nameQualificationSupport.C: evaluateTemplateInstantiationDeclaration(): skipping the call to process the template class instantiation definition: def = %p = %s \n",declaration,declaration->class_name().c_str()); 
-#endif
-        }
-       else
-        {
-       // Only handle the case of a SgTemplateInstantiationDecl.
-          SgClassDefinition* templateInstantiationDefinition = isSgTemplateInstantiationDefn(nonconst_def);
-          if (templateInstantiationDefinition != NULL)
-             {
-#if 1
-               printf ("Insert templateInstantiationDefinition = %p into visitedTemplateDeclarations (stl set)\n",templateInstantiationDefinition);
-#endif
-            // Not clear why we need to use an iterator to simply insert a pointer into the set.
-            // SgTemplateInstantiationDefn* nonconst_templateInstantiationDefinition = const_cast<SgTemplateInstantiationDefn*>(templateInstantiationDefinition);
-               MangledNameSupport::setType::iterator it = MangledNameSupport::visitedTemplateDefinitions.begin();
-            // MangledNameSupport::visitedTemplateDeclarations.insert(it,nonconst_templateInstantiationDefinition);
-               MangledNameSupport::visitedTemplateDefinitions.insert(it,nonconst_def);
-             }
-#endif
-
-
-
-
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          printf ("Found a case of declaration == SgTemplateInstantiationDecl \n");
 #endif
@@ -1639,24 +1593,6 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 #endif
                                  }
                             }
-
-
-
-#if 0
-       // DQ (10/31/2015): The rule here is that after processing as a mangled name we remove the 
-       // template instantiation from the list so that other non-nested uses of the template 
-       // instantiation will force the manged name to be generated.
-          if (templateInstantiationDefinition != NULL)
-             {
-#if 1
-               printf ("Erase templateInstantiationDefinition = %p from visitedTemplateDeclarations (stl set)\n",templateInstantiationDefinition);
-#endif
-               MangledNameSupport::visitedTemplateDefinitions.erase(nonconst_def);
-             }
-        }
-#endif
-
-
 
                          break;
                        }

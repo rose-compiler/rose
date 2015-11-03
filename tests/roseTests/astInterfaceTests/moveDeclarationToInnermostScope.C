@@ -558,6 +558,11 @@ int main(int argc, char * argv[])
         string src_comment = "Transformation generated based on ";
         cout<<"Found a node with IR mapping info"<<endl;
         SgNode* affected_node = TransformationTracking::getNode((*iter).first);
+#if 0
+     // DQ (11/2/2015): Save and set to high value to trigger the verbose level to control tracking of isModified flag.
+        int verbose_level = SgProject::get_verbose();
+        SgProject::set_verbose(3);
+#endif
         cout<<isSgLocatedNode(affected_node)->unparseToString()<<endl;
         cout<<"-- with input nodes ----------"<<endl;
         std::set<AST_NODE_ID>::iterator iditer;
@@ -569,6 +574,10 @@ int main(int argc, char * argv[])
            cout<<"//Transformation generated based on line #"<< lnode->get_file_info()->get_line() <<endl;
            src_comment += " line # " + StringUtility::numberToString(lnode->get_file_info()->get_line());
         }
+#if 0
+      // DQ (11/2/2015): Reset the verbose level to trigger tracking of isModified flag.
+         SgProject::set_verbose(verbose_level);
+#endif
         src_comment +="\n";
 //        SgStatement* enclosing_stmt = getEnclosingStatement(affected_node);
         cout<<src_comment<<endl;
@@ -578,8 +587,22 @@ int main(int argc, char * argv[])
     }  // end for inputIDs
   } // end if transTracking 
 
+
+#if 0
+// DQ (10/13/2015): debugging the token-based unparsing (setting SgForStatement as modified.
+  printf ("NOTE: Setting verbose to value 3 to trigger debugging after the AST is built and before running AstTests::runAllTests() \n");
+  SgProject::set_verbose(3);
+#endif
+
  // run all tests
   AstTests::runAllTests(project);
+
+#if 0
+// DQ (10/13/2015): debugging the token-based unparsing (setting SgForStatement as modified.
+  printf ("NOTE: Setting verbose to value 3 to trigger debugging before unparsing of AST \n");
+  SgProject::set_verbose(3);
+#endif
+
   return backend(project);
 }
 
@@ -1176,7 +1199,11 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 
     SgScopeStatement* adjusted_scope = target_scope; 
     SgVariableDeclaration * decl_copy =  NULL; // we may not want to actually make copies here until the copy will really be inserted into AST
-    
+#if 0
+ // DQ (11/2/2015): Save and zero the verbose level to control tracking of isModified flag.
+    int verbose_level = SgProject::get_verbose();
+    SgProject::set_verbose(0);
+#endif
     decl_copy = SageInterface::deepCopy(decl);
 
     // Liao 1/14/2015
@@ -1184,7 +1211,10 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
     // We don't want this behavior since it may duplicate the troublesome #endif for each copy of the declaration
     // A workaround is to clean this pointer
     decl_copy->set_attachedPreprocessingInfoPtr (NULL);
-
+#if 0
+ // DQ (11/2/2015): Reset the verbose level to trigger tracking of isModified flag.
+    SgProject::set_verbose(verbose_level);
+#endif
     //bool skip = false; // in some rare case, we skip a target scope, no move to that scope (like while-stmt)
     //This won't work. The move must happen to all scopes or not at all, or dangling variable use without a declaration.
     //We must skip scopes when generating scope tree, not wait until now.
@@ -1193,9 +1223,20 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
     {
       case V_SgBasicBlock:
         {
+#if 0
+       // DQ (11/2/2015): Save and zero the verbose level to control tracking of isModified flag.
+          verbose_level = SgProject::get_verbose();
+          SgProject::set_verbose(0);
+       // ROSE_ASSERT(adjusted_scope->get_isModified() == false);
+#endif
           SageInterface::prependStatement (decl_copy, adjusted_scope);
           inserted_copied_decls.push_back(decl_copy); 
           newly_inserted_copied_decls.push_back(decl_copy);
+#if 0
+       // DQ (11/2/2015): Reset the verbose level to trigger tracking of isModified flag.
+          SgProject::set_verbose(verbose_level);
+       // ROSE_ASSERT(adjusted_scope->get_isModified() == false);
+#endif
           break;
         }
       case V_SgForStatement:
@@ -1231,7 +1272,18 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 	      ROSE_ASSERT (assign_op != NULL);
 	      stmt_list.clear();
               // SageInterface::removeStatement() cannot handle this case, we remove it on our own
+#if 0
+           // DQ (11/2/2015): Save and zero the verbose level to control tracking of isModified flag.
+              verbose_level = SgProject::get_verbose();
+              SgProject::set_verbose(0);
+#endif
 	      SageInterface::mergeDeclarationAndAssignment (decl_copy, exp_stmt, false);
+#if 0
+           // DQ (11/2/2015): Reset the verbose level to trigger tracking of isModified flag.
+              SgProject::set_verbose(verbose_level);
+              ROSE_ASSERT(adjusted_scope->get_isModified() == false);
+              ROSE_ASSERT(stmt->get_isModified() == false);
+#endif
               SageInterface::deepDelete (exp_stmt);
 	      // insert the merged decl into the list, TODO preserve the order in the list
 	      // else other cases: we simply prepend decl_copy to the front of init_stmt
@@ -1269,6 +1321,10 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
             inserted_copied_decls.push_back(decl_copy);
             newly_inserted_copied_decls.push_back(decl_copy);
           }
+
+       // DQ (11/2/2015): Added assertion.
+          ROSE_ASSERT(adjusted_scope->get_isModified() == false);
+
           break;
         }
       // we duplicate and insert the declaration into true (and false) body, if the body exists
@@ -1309,7 +1365,21 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
     // init name is copied, but its scope is not changed!
     // but the symbol cannot be find by calling init_name->get_symbol_from_symbol_table ()
     SgInitializedName* init_name_copy = SageInterface::getFirstInitializedName (decl_copy);
+
+#if 0
+ // DQ (11/2/2015): Save and zero the verbose level to control tracking of isModified flag.
+    verbose_level = SgProject::get_verbose();
+    SgProject::set_verbose(0);
+#endif
+
+ // Note that this will set the isModified flag be it can be ignored.
     init_name_copy->set_scope (adjusted_scope);
+
+#if 0
+ // DQ (11/2/2015): Reset the verbose level to trigger tracking of isModified flag.
+    SgProject::set_verbose(verbose_level);
+ // ROSE_ASSERT(adjusted_scope->get_isModified() == false);
+#endif
 
     //ROSE_ASSERT (false);
     if (orig_scope != adjusted_scope)
@@ -1319,19 +1389,41 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
       ROSE_ASSERT (i_name != init_name_copy);
       // we have to manually copy the symbol and insert it
       SgName sname = sym->get_name();
+
+   // DQ (11/2/2015): Added assertion.
+   // ROSE_ASSERT(adjusted_scope->get_isModified() == false);
+
       adjusted_scope->insert_symbol(sname, new SgVariableSymbol (init_name_copy));
+
+   // DQ (11/2/2015): Added assertion.
+   // ROSE_ASSERT(adjusted_scope->get_isModified() == false);
     }
     new_sym = SageInterface::getFirstVarSym (decl_copy);
     ROSE_ASSERT (sym!=new_sym);
     // This is difficult since C++ variables have namespaces
     // Details are in SageInterface::fixVariableDeclaration()
     ROSE_ASSERT (adjusted_scope->symbol_exists(new_sym));
+
+ // DQ (11/2/2015): Added assertion.
+ // ROSE_ASSERT(adjusted_scope->get_isModified() == false);
 #endif     
    
 
-#if 1 
+#if 1
+#if 0
+ // DQ (11/2/2015): Save and zero the verbose level to control tracking of isModified flag.
+    verbose_level = SgProject::get_verbose();
+    SgProject::set_verbose(0);
+#endif
+
     // replace variable references
     SageInterface::replaceVariableReferences  (sym, new_sym, adjusted_scope);
+
+#if 0
+ // DQ (11/2/2015): Reset the verbose level to trigger tracking of isModified flag.
+    SgProject::set_verbose(verbose_level);
+ // ROSE_ASSERT(adjusted_scope->get_isModified() == false);
+#endif
 #endif 
 
 // No need to check how the target scopes are identified.
@@ -1398,9 +1490,15 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
     }
   } // end if preprocessingInfo
 
+ // DQ (11/2/2015): Added assertion.
+ // ROSE_ASSERT(adjusted_scope->get_isModified() == false);
+
   // remove the original declaration , must use false to turn off auto-relocate comments, since it does not work correctly.
   // TODO: fix this in SageInterface or redesign how to store comments in AST: independent vs. attachments
   SageInterface::removeStatement(decl, false);
+
+ // DQ (11/2/2015): Added assertion.
+ // ROSE_ASSERT(adjusted_scope->get_isModified() == false);
 
 // support transformation tracking/ IR mapping
 
