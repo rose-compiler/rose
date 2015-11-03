@@ -7,6 +7,8 @@
 #ifdef _MSC_VER
 #include <float.h>                              // for _isnan
 #define isnan(x) _isnan(x)
+#elif __cplusplus >= 201103L
+// isnan is already defined in this scope for c++11
 #else
 using std::isnan;
 #endif

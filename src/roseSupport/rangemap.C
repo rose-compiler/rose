@@ -6,6 +6,7 @@
 #define isnan(x) _isnan(x)
 #define INFINITY (DBL_MAX+DBL_MAX)
 #define NAN (INFINITY-INFINITY)
+#elif __cplusplus >= 201103L
 #else
 using std::isnan;
 #endif

@@ -1694,8 +1694,8 @@ public:
      *
      * @{ */
     SValuePtr equal(const SValuePtr &a, const SValuePtr &b) ROSE_DEPRECATED("use isEqual instead");
-    SValuePtr isEqual(const SValuePtr &a, const SValuePtr &b);
-    SValuePtr isNotEqual(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isEqual(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isNotEqual(const SValuePtr &a, const SValuePtr &b);
     /** @} */
 
     /** Comparison for unsigned values.
@@ -1705,10 +1705,10 @@ public:
      *  operators.
      *
      * @{ */
-    SValuePtr isUnsignedLessThan(const SValuePtr &a, const SValuePtr &b);
-    SValuePtr isUnsignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
-    SValuePtr isUnsignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
-    SValuePtr isUnsignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isUnsignedLessThan(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isUnsignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isUnsignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isUnsignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
     /** @} */
 
     /** Comparison for signed values.
@@ -1718,10 +1718,10 @@ public:
      *  operators.
      *
      * @{ */
-    SValuePtr isSignedLessThan(const SValuePtr &a, const SValuePtr &b);
-    SValuePtr isSignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
-    SValuePtr isSignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
-    SValuePtr isSignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isSignedLessThan(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isSignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isSignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isSignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1744,7 +1744,7 @@ public:
 
     /** Subtract one value from another.  This is not a virtual function because it can be implemented in terms of @ref add and
      * @ref negate. We define it because it's something that occurs often enough to warrant its own function. */
-    SValuePtr subtract(const SValuePtr &minuend, const SValuePtr &subtrahend);
+    virtual SValuePtr subtract(const SValuePtr &minuend, const SValuePtr &subtrahend);
 
     /** Add two values of equal size and a carry bit.  Carry information is returned via carry_out argument.  The carry_out
      *  value is the tick marks that are written above the first addend when doing long arithmetic like a 2nd grader would do
@@ -1957,9 +1957,11 @@ public:
                              const SValuePtr &cond) = 0;
 };
 
-/*******************************************************************************************************************************
- *                                      Instruction Dispatcher
- *******************************************************************************************************************************/
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Instruction Dispatcher
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a Dispatcher object. Dispatcher objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class Dispatcher> DispatcherPtr;
@@ -2011,6 +2013,10 @@ protected:
         ASSERT_not_null(operators);
         ASSERT_not_null(regs);
     }
+
+public:
+    /** Shared-ownership pointer for a Dispatcher object. */
+    typedef DispatcherPtr Ptr;
 
 public:
     virtual ~Dispatcher() {
@@ -2193,9 +2199,11 @@ public:
     virtual void write(SgAsmExpression*, const SValuePtr &value, size_t addr_nbits=0);
 };
 
-/*******************************************************************************************************************************
- *                                      Printing
- *******************************************************************************************************************************/
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Printing
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream&, const Exception&);
 std::ostream& operator<<(std::ostream&, const SValue&);

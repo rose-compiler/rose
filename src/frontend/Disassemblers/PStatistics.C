@@ -14,6 +14,8 @@
 using boost::math::erf;
 #define _USE_MATH_DEFINES                       // for M_LN2
 #include <math.h>
+#elif __cplusplus >= 201103L
+// isnan is already declared in this scope
 #else
 using std::isnan;
 #endif

@@ -152,7 +152,7 @@ SValue::possible_bits() const
 
 BaseSemantics::SValuePtr
 MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
-                        BaseSemantics::RiscOperators *ops)
+                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
     ASSERT_not_implemented("[Robb Matzke 2013-03-14]");
     BaseSemantics::SValuePtr retval;
@@ -161,7 +161,7 @@ MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantic
 
 void
 MemoryState::writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
-                         BaseSemantics::RiscOperators *ops)
+                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
     ASSERT_not_implemented("[Robb Matzke 2013-03-14]");
 }
