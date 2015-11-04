@@ -477,6 +477,12 @@ typedef Sawyer::SharedPointer<class Merger> MergerPtr;
  *  Merger object is passed as an argument into the merge functions and contains settings and other details that might be
  *  necessary during the merge operation.
  *
+ *  The base classes for register state and memory state allow an optional @ref Merger object to be stored in the
+ *  state. Whenever a state is copied, its merger object pointer is also copied (shallow copy of merger).  The merger object is
+ *  passed as an argument to each call of @ref SValue::createMerged or @ref SValue::createOptionalMerge.  The user-defined
+ *  versions of these functions can access the merger object to decide how to merge. For example, the symbolic domain defines a
+ *  merger that controls whether merging two different semantic values results in bottom or a set containing both values.
+ *
  *  @ref Merger objects are allocated on the heap and have shared ownership like most other instruction semantics
  *  objects. Therefore they have no public C++ constructors but instead use factory methods named "instance". Users should not
  *  explicitly delete these objects -- they will be deleted automatically. */

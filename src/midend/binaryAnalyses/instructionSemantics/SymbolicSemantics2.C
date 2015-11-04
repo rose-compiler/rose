@@ -22,9 +22,11 @@ public:
     }
 };
 
-/*******************************************************************************************************************************
- *                                      SValue
- *******************************************************************************************************************************/
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      SValue
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool
 SValue::isBottom() const {
@@ -32,10 +34,11 @@ SValue::isBottom() const {
 }
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger,
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger_,
                             SMTSolver *solver) const {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
+    MergerPtr merger = merger_.dynamicCast<Merger>();
     bool changed = false;
     unsigned mergedFlags = get_expression()->flags() | other->get_expression()->flags();
     SValuePtr retval = SValue::promote(copy());
@@ -48,16 +51,23 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSe
     if (other->isBottom())
         return bottom_(get_width());
 
-    // Merge symbolic expressions.  This version is pretty simple: either the two expressions are equal in which case we'll go
-    // on to merge flags; or they're not, in which case we return bottom.  A more complicated version might try to return a set
-    // of values.
+    // Merge symbolic expressions. The merge of x and y is the set {x, y}. If the size of this set is greater than the set size
+    // limit (or 1 if merger is null) then the result is bottom.  Normal set simplifcations happen first (e.g., {x, x} => {x}
+    // => x).
     if (!get_expression()->mustEqual(other->get_expression(), solver)) {
-        ExprPtr expr = SymbolicExpr::makeVariable(retval->get_width(), "", mergedFlags | SymbolicExpr::Node::BOTTOM);
+        ExprPtr expr = SymbolicExpr::makeSet(get_expression(), other->get_expression(), "", mergedFlags);
+        size_t exprSetSize = expr->isInteriorNode() && expr->isInteriorNode()->getOperator()==SymbolicExpr::OP_SET ?
+                             expr->isInteriorNode()->nChildren() : (size_t)1;
+        size_t setSizeLimit = merger ? merger->setSizeLimit() : (size_t)1;
+        if (exprSetSize > setSizeLimit) {
+            expr = SymbolicExpr::makeVariable(retval->get_width());
+            mergedFlags |= SymbolicExpr::Node::BOTTOM;
+        }
         retval->set_expression(expr);
         changed = true;
     }
 
-    // Merge flags.  We've handled BOTTOM flags already; here we handle all others, including user-defined flags.
+    // Merge flags.
     if (get_expression()->flags() != mergedFlags) {
         retval->set_expression(retval->get_expression()->newFlags(mergedFlags));
         changed = true;
@@ -182,9 +192,10 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 }
     
 
-/*******************************************************************************************************************************
- *                                      Memory state
- *******************************************************************************************************************************/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Memory state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 MemoryState::CellCompressorChoice MemoryState::cc_choice;
 
@@ -268,9 +279,11 @@ MemoryState::writeMemory(const BaseSemantics::SValuePtr &address, const BaseSema
     BaseSemantics::MemoryCellList::writeMemory(address, value, addrOps, valOps);
 }
 
-/*******************************************************************************************************************************
- *                                      RISC operators
- *******************************************************************************************************************************/
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RISC operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
 RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)

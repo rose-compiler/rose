@@ -48,6 +48,54 @@ typedef SymbolicExpr::Ptr ExprPtr;
 typedef std::set<SgAsmInstruction*> InsnSet;
 
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Merging symbolic values
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Shared-ownership pointer to merge control object. */
+typedef Sawyer::SharedPointer<class Merger> MergerPtr;
+
+/** Controls merging of symbolic values. */
+class Merger: public BaseSemantics::Merger {
+    size_t setSizeLimit_;
+protected:
+    Merger(): BaseSemantics::Merger(), setSizeLimit_(1) {}
+
+public:
+    /** Shared-ownership pointer to merge control object. */
+    typedef MergerPtr Ptr;
+
+    /** Allocating constructor. */
+    static Ptr instance() {
+        return Ptr(new Merger);
+    }
+
+    /** Allocating constructor. */
+    static Ptr instance(size_t n) {
+        Ptr retval = Ptr(new Merger);
+        retval->setSizeLimit(n);
+        return retval;
+    }
+
+    /** Property: Maximum set size.
+     *
+     *  The maximum number of members in a set when merging two expressions.  For instance, when merging expressions "x" and
+     *  "y" with a limit of one (the default), the return value is bottom, but if the size limit is two or more, the return
+     *  value is (set x y).  Merging two sets (or a set and a singlton) works the same way: if the union of the two sets is
+     *  larger than the size limit then bottom is returned, otherwise the union is returned.
+     *
+     *  A limit of zero has the same effect as a limit of one since a singleton set is represented by just the naked member
+     *  (that is, (set x) gets simplified to just x).
+     *
+     * @{ */
+    size_t setSizeLimit() const { return setSizeLimit_; }
+    void setSizeLimit(size_t n) { setSizeLimit_ = n; }
+    /** @} */
+};
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
