@@ -1842,6 +1842,38 @@ MssbSimplifier::rewrite(Interior *inode) const {
 }
 
 Ptr
+SetSimplifier::rewrite(Interior *inode) const {
+    SMTSolver *solver = NULL;                           // FIXME[Robb Matzke 2015-11-03]
+
+    // (set x) => x
+    if (1 == inode->nChildren())
+        return inode->child(0);
+
+    // Remove duplicate arguments
+    bool removedDuplicate = false;
+    Nodes elements;
+    BOOST_FOREACH (const Ptr &elmt1, inode->children()) {
+        bool isDuplicate = false;
+        BOOST_FOREACH (const Ptr &elmt2, elements) {
+            if (elmt1->mustEqual(elmt2, solver)) {
+                isDuplicate = true;
+                break;
+            }
+        }
+        if (!isDuplicate) {
+            elements.push_back(elmt1);
+        } else {
+            removedDuplicate = true;
+        }
+    }
+    if (!removedDuplicate)
+        return Ptr();
+    if (1==elements.size())
+        return elements[0];
+    return Interior::create(0, inode->getOperator(), elements, inode->comment());
+}
+
+Ptr
 Interior::simplifyTop() {
     Ptr node = sharedFromThis();
     while (InteriorPtr inode = node->isInteriorNode()) {
@@ -1929,6 +1961,11 @@ Interior::simplifyTop() {
                 break;
             case OP_SDIV:
                 newnode = inode->rewrite(SdivSimplifier());
+                break;
+            case OP_SET:
+                newnode = inode->associative()->commutative();
+                if (newnode==node)
+                    newnode = inode->rewrite(SetSimplifier());
                 break;
             case OP_SEXTEND:
                 newnode = inode->rewrite(SextendSimplifier());
@@ -2490,6 +2527,16 @@ makeRol(const Ptr &sa, const Ptr &a, const std::string &comment, unsigned flags)
 Ptr
 makeRor(const Ptr &sa, const Ptr &a, const std::string &comment, unsigned flags) {
     return Interior::create(0, OP_ROR, sa, a, comment, flags);
+}
+
+Ptr
+makeSet(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SET, a, b, comment, flags);
+}
+
+Ptr
+makeSet(const Ptr &a, const Ptr &b, const Ptr &c, const std::string &comment, unsigned flags) {
+    return Interior::create(0, OP_SET, a, b, c, comment, flags);
 }
 
 Ptr

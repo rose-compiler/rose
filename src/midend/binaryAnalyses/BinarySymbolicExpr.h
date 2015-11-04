@@ -66,6 +66,7 @@ enum Operator {
     OP_ROL,                 /**< Rotate left. Rotate bits of B left by A bits.  0 <= A < width(B). A is unsigned. */
     OP_ROR,                 /**< Rotate right. Rotate bits of B right by A bits. 0 <= B < width(B). A is unsigned.  */
     OP_SDIV,                /**< Signed division. Two operands, A/B. Result width is width(A). */
+    OP_SET,                 /**< Set of expressions. Any number of operands in any order. */
     OP_SEXTEND,             /**< Signed extension at msb. Extend B to A bits by replicating B's most significant bit. */
     OP_SGE,                 /**< Signed greater-than-or-equal. Two operands of equal width. Result is Boolean. */
     OP_SGT,                 /**< Signed greater-than. Two operands of equal width. Result is Boolean. */
@@ -86,7 +87,7 @@ enum Operator {
     OP_UMOD,                /**< Unsigned modulus. Two operands, A%B. Result width is width(B). */
     OP_UMUL,                /**< Unsigned multiplication. Two operands, A*B. Result width is width(A)+width(B). */
     OP_WRITE,               /**< Write (update) memory with a new value. Arguments are memory, address and value. */
-    OP_ZEROP,               /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
+    OP_ZEROP                /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
 };
 
 std::string toStr(Operator);
@@ -644,6 +645,10 @@ struct LssbSimplifier: Simplifier {
 struct MssbSimplifier: Simplifier {
     virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
 };
+struct SetSimplifier: Simplifier {
+    virtual Ptr rewrite(Interior*) const ROSE_OVERRIDE;
+};
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1016,6 +1021,8 @@ Ptr makeBooleanOr(const Ptr &a, const Ptr &b, const std::string &comment="", uns
 Ptr makeRead(const Ptr &mem, const Ptr &addr, const std::string &comment="", unsigned flags=0);
 Ptr makeRol(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
 Ptr makeRor(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
+Ptr makeSet(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeSet(const Ptr &a, const Ptr &b, const Ptr &c, const std::string &comment="", unsigned flags=0);
 Ptr makeSignedDiv(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
 Ptr makeSignExtend(const Ptr &newSize, const Ptr &a, const std::string &comment="", unsigned flags=0);
 Ptr makeSignedGe(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
