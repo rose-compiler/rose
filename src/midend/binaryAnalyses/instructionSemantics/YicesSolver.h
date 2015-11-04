@@ -96,6 +96,7 @@ private:
     void out_unary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
     void out_binary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
     void out_ite(std::ostream&, const SymbolicExpr::InteriorPtr&);
+    void out_set(std::ostream&, const SymbolicExpr::InteriorPtr&);
     void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, bool identity_elmt);
     void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
     void out_extract(std::ostream&, const SymbolicExpr::InteriorPtr&);
@@ -126,6 +127,7 @@ private:
     yices_expr ctx_unary(UnaryAPI, const SymbolicExpr::InteriorPtr&);
     yices_expr ctx_binary(BinaryAPI, const SymbolicExpr::InteriorPtr&);
     yices_expr ctx_ite(const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_set(const SymbolicExpr::InteriorPtr&);
     yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&, bool identity_elmt);
     yices_expr ctx_la(NaryAPI, const SymbolicExpr::InteriorPtr&, bool identity_elmt);
     yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&);
