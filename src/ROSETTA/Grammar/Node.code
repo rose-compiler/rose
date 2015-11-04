@@ -2652,9 +2652,9 @@ SgNode::set_isModified ( bool isModified)
   // DQ (4/14/2015): Detect if this is called from a NULL pointer.
      ROSE_ASSERT(this != NULL);
 
-#if 0
+#if 1
   // DQ (4/14/2015): Adding testing to identify side-effects in the AST.
-     if (SgProject::get_verbose() >= 3)
+     if (SgProject::get_verbose() >= 2)
         {
        // DQ (10/6/2015): Skip the output of this debug info for SgUnparse_Info IR nodes.
        // printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
@@ -2662,9 +2662,12 @@ SgNode::set_isModified ( bool isModified)
           if (isSgUnparse_Info(this) == NULL && isSgToken(this) == NULL)
              {
                printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
-#if 0
-               printf ("Exiting as a test (when verbose >= 3) in SgNode::set_isModified \n");
-               ROSE_ASSERT(false);
+#if 1
+               if (SgProject::get_verbose() >= 3)
+                  {
+                    printf ("Exiting as a test (when verbose >= 3) in SgNode::set_isModified \n");
+                    ROSE_ASSERT(false);
+                  }
 #endif
              }
 #if 0
