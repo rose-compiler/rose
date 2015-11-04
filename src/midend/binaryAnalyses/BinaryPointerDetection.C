@@ -312,6 +312,11 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         BaseSemantics::RegisterStateGeneric::promote(initialState_->get_register_state());
     initialRegState->initialize_large();
 
+    // Allow data-flow merge operations to create sets of values up to a certain cardinality. This is optional.
+    SymbolicSemantics::MergerPtr merger = SymbolicSemantics::Merger::instance(10 /*arbitrary*/);
+    initialState_->get_register_state()->merger(merger);
+    initialState_->get_memory_state()->merger(merger);
+
     // Run the data-flow analysis
     bool converged = true;
     try {

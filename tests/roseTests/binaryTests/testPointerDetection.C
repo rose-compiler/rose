@@ -88,9 +88,9 @@ main(int argc, char *argv[]) {
             // Show the results
             if (!pda.hasResults()) {
                 std::cout <<"  Analysis failed (perhaps not a well-formed function?)\n";
-            } else if (!pda.didConverge()) {
-                std::cout <<"  Analysis did not converge\n";
             } else {
+                if (!pda.didConverge())
+                    std::cout <<"  WARNING: Analysis did not converge; following info may be incomplete\n";
                 std::cout <<"  Code pointers:\n";
                 BOOST_FOREACH (const PointerDetection::PointerDescriptor &desc, pda.codePointers())
                     std::cout <<"    " <<desc.nBits <<"-bit pointer at " <<*desc.lvalue <<"\n";
