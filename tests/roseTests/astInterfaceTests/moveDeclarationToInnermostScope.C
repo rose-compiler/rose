@@ -1560,9 +1560,13 @@ std::vector <SgScopeStatement *> moveSpecialTargetScopesIntoScopeTreeQueue (cons
 	//          SageInterface::ensureBasicBlockAsTrueBodyOfIf (if_stmt);
 	SgScopeStatement* true_body = isSgScopeStatement(if_stmt->get_true_body());
 	assert (true_body != NULL);
-	assert (ScopeTreeMap[true_body] != NULL);
-	source_scope_trees.push(ScopeTreeMap[true_body]);
-        scopeTreeConsideredMap[ScopeTreeMap[true_body]] = true;
+        // rare case : true body may be empty, no references to the declared variable, no scope tree node for it
+        // Then no need to consider it
+	if (ScopeTreeMap[true_body]) 
+        {
+          source_scope_trees.push(ScopeTreeMap[true_body]);
+          scopeTreeConsideredMap[ScopeTreeMap[true_body]] = true;
+        }
 
       }
 
@@ -1572,9 +1576,25 @@ std::vector <SgScopeStatement *> moveSpecialTargetScopesIntoScopeTreeQueue (cons
 	//          SageInterface::ensureBasicBlockAsFalseBodyOfIf (if_stmt);
 	SgScopeStatement* false_body = isSgScopeStatement(if_stmt->get_false_body());
 	assert (false_body != NULL);
-	assert (ScopeTreeMap[false_body] != NULL);
-	source_scope_trees.push(ScopeTreeMap[false_body]);
-        scopeTreeConsideredMap[ScopeTreeMap[false_body]] = true;
+        // Liao 2015/11/4,  the false body may be empty, without references to the declared variable.
+        // As a result, there is no corresponding scope tree node created for this empty false body.
+        // In this case, we should not try to consider this false body for further declaration movement.
+        if (ScopeTreeMap[false_body])
+        {
+          source_scope_trees.push(ScopeTreeMap[false_body]);
+          scopeTreeConsideredMap[ScopeTreeMap[false_body]] = true;
+        }
+#if 0
+        SgBasicBlock* bb = isSgBasicBlock(false_body);
+	assert (bb != NULL);
+        // Only if the false body has content
+        if (bb->get_statements().size()>0)
+        {
+          assert (ScopeTreeMap[false_body] != NULL);
+          source_scope_trees.push(ScopeTreeMap[false_body]);
+          scopeTreeConsideredMap[ScopeTreeMap[false_body]] = true;
+        }
+#endif        
       }
     } 
     // For all other non-bottom scope node, add them into source_scope_trees for further consideration
