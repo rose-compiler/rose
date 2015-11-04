@@ -86,11 +86,10 @@ int main (int argc, char** argv)
   // Build the AST used by ROSE
   vector <string> argvList (argv, argv + argc);
 
-  debug = true; // debugging mode is on by default for now
-  if (CommandlineProcessing::isOption(argvList,"--help","", false))
+  if (CommandlineProcessing::isOption(argvList,"-help","", false))
   {
     cout<<"---------------------Tool-Specific Help-----------------------------------"<<endl;
-    cout<<"This is a source analysis to estimate FLOPS for loops in your C/C++ code."<<endl;
+    cout<<"This is a source analysis to estimate FLOPS and Load/store bytes for loops in your C/C++ or Fortran code."<<endl;
     cout<<"Usage: "<<argvList[0]<<" -c ["<<report_option<<" result.txt] "<< "input.c"<<endl;
     cout<<endl;
     cout<<"The optional "<<report_option<<" option is provided for users to specify where to save the results"<<endl;
@@ -98,26 +97,38 @@ int main (int argc, char** argv)
     cout<<"----------------------Generic Help for ROSE tools--------------------------"<<endl;
   }
 
+  if (CommandlineProcessing::isOption(argvList,"-debug","", true))
+  {
+    debug = true; 
+  }
+  else 
+    debug = false;
+
   if (CommandlineProcessing::isOptionWithParameter (argvList, report_option,"", report_filename,true))
   {
-    cout<<"Using user specified file: "<<report_filename<<" for storing results."<<endl;
+    if (debug)
+      cout<<"Using user specified file: "<<report_filename<<" for storing results."<<endl;
   }
-//  else
-//    cout<<"Using the default file:"<<report_filename<<" for storing results."<<endl;
+  else
+  {
+    report_filename="ai_tool_measure_results.txt";
+    if (debug)
+      cout<<"Using the default file:"<<report_filename<<" for storing results."<<endl;
+  }
 
-    //Save -debugdep, -annot file .. etc, 
-    // used internally in ReadAnnotation and Loop transformation
-    CmdOptions::GetInstance()->SetOptions(argvList);
-    bool dumpAnnot = CommandlineProcessing::isOption(argvList,"","-dumpannot",true);
+  //Save -debugdep, -annot file .. etc, 
+  // used internally in ReadAnnotation and Loop transformation
+  CmdOptions::GetInstance()->SetOptions(argvList);
+  bool dumpAnnot = CommandlineProcessing::isOption(argvList,"","-dumpannot",true);
 
-    //Read in annotation files after -annot 
-    ArrayAnnotation* annot = ArrayAnnotation::get_inst();
-    annot->register_annot();
-    ReadAnnotation::get_inst()->read();
-    if (dumpAnnot)
-      annot->Dump();
-   //Strip off custom options and their values to enable backend compiler 
-    CommandlineProcessing::removeArgsWithParameters(argvList,"-annot");
+  //Read in annotation files after -annot 
+  ArrayAnnotation* annot = ArrayAnnotation::get_inst();
+  annot->register_annot();
+  ReadAnnotation::get_inst()->read();
+  if (dumpAnnot)
+    annot->Dump();
+  //Strip off custom options and their values to enable backend compiler 
+  CommandlineProcessing::removeArgsWithParameters(argvList,"-annot");
 
   SgProject* project = frontend(argvList);
 

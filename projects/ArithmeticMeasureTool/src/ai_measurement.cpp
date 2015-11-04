@@ -342,18 +342,21 @@ namespace ArithemeticIntensityMeasurement
    for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
    {
      SgStatement* loop = isSgStatement(*i);
-     cout<< "Found nested loop at line:"<< loop->get_file_info()->get_line()<<endl;
+     if (debug)
+       cout<< "Found nested loop at line:"<< loop->get_file_info()->get_line()<<endl;
      std::set<SgInitializedName*> src_var_set ;
      if (isRead)
        src_var_set = LoopLoadVariables[loop];
      else
        src_var_set = LoopStoreVariables[loop];
      std::set<SgInitializedName*>::iterator j; 
-     cout<< "\t Insert processed variable:"<<endl;
+     if (debug)
+       cout<< "\t Insert processed variable:"<<endl;
      for (j= src_var_set.begin(); j!= src_var_set.end(); j++)
      {
         var_set.insert(*j);
-        cout<< "\t \t "<<(*j)->get_name()<<endl;
+       if (debug)
+         cout<< "\t \t "<<(*j)->get_name()<<endl;
      }
    }
  }
@@ -532,14 +535,18 @@ namespace ArithemeticIntensityMeasurement
     SgScopeStatement* scope = isSgScopeStatement(input);
 
     // We need to record the associated loop info.
-    SgStatement* loop= NULL;
+    //SgStatement* loop= NULL;
     SgForStatement* forloop = isSgForStatement(scope->get_scope());
     SgFortranDo* doloop = isSgFortranDo(scope->get_scope());
 
     if (forloop)
-      loop = forloop;
+    {
+      //loop = forloop;
+    }
     else if (doloop)
-      loop = doloop;
+    {  
+      //loop = doloop;
+    }
     else
     {
       cerr<<"Error in CountLoadStoreBytes (): input is not loop body type:"<< input->class_name()<<endl;
@@ -553,26 +560,28 @@ namespace ArithemeticIntensityMeasurement
     bool success = SageInterface::collectReadWriteVariables (isSgStatement(input), readVars, writeVars);
     if (success!= true)
     {
-       cout<<"debug of CountLoadStoreBytes(): failed to collect load/store, mostly due to existence of function calls inside of loop body @ "<<input->get_file_info()->get_line()<<endl;
+       cout<<"Warning: CountLoadStoreBytes(): failed to collect load/store, mostly due to existence of function calls inside of loop body @ "<<input->get_file_info()->get_line()<<endl;
     }
 
     std::set<SgInitializedName*>::iterator it;
-
-    cout<<"debug: found read variables (SgInitializedName) count = "<<readVars.size()<<endl;
+    if (debug)
+      cout<<"debug: found read variables (SgInitializedName) count = "<<readVars.size()<<endl;
     for (it=readVars.begin(); it!=readVars.end(); it++)
     {
       SgInitializedName* iname = (*it);
-     cout<<scalar_or_array (iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
+      if (debug)
+        cout<<scalar_or_array (iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
     }
 
     if (!includeScalars )
       readVars =  filterVariables (readVars);
-
-    cout<<"debug: found write variables (SgInitializedName) count = "<<writeVars.size()<<endl;
+    if (debug)
+      cout<<"debug: found write variables (SgInitializedName) count = "<<writeVars.size()<<endl;
     for (it=writeVars.begin(); it!=writeVars.end(); it++)
     {
       SgInitializedName* iname = (*it);
-      cout<<scalar_or_array(iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
+      if (debug)
+        cout<<scalar_or_array(iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
     }
     if (!includeScalars )
       writeVars =  filterVariables (writeVars);

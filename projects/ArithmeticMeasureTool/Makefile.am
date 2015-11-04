@@ -63,6 +63,6 @@ ftest: $(F_TESTCODE_RESULTS)
 
 check: $(C_TESTCODE_RESULTS) $(F_TESTCODE_RESULTS)
 clean:
-	rm -rf $(bin_PROGRAMS) $(builddir)/src/*.o *.o $(builddir)/src/*.a rose_* *.dot *.out #measureToolReport.txt
+	rm -rf $(bin_PROGRAMS) $(builddir)/src/*.o *.o $(builddir)/src/*.a rose_* *.dot *.out *.log *.trs #measureToolReport.txt
 
 EXTRA_DIST=build cleanup.sh test	

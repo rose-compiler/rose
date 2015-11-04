@@ -13,7 +13,7 @@ int main()
   double refScale = 1.0 / (ref[0] * ref[1]);
   int iboxlo1 = 0, iboxlo0 = 0, iboxhi1 = SIZE-1, iboxhi0 = SIZE-1; 
   int var; 
-  int ic1, ic0;
+  int ic1=0, ic0=0;
   int ip0 = ic0 * ref[0];
   int ip1 = ic1 * ref[1];
   double coarseSum = 0.0;
