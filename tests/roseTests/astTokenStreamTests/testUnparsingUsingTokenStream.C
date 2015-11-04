@@ -70,7 +70,7 @@ void SimpleInstrumentation::visit(SgNode* astNode)
 #if 1
           reportNodesMarkedAsModified(scope);
 #endif
-#if 1
+#if 0
           SgProject::set_verbose(3);
 #endif
           printf ("Calling insertStatementAfter() \n");
@@ -87,7 +87,7 @@ void SimpleInstrumentation::visit(SgNode* astNode)
 
           SgBasicBlock *func_body = func_defn->get_definition()->get_body();
 
-#if 1
+#if 0
           SgProject::set_verbose(0);
 #endif
           printf ("Calling buildVariableDeclaration() \n");
@@ -97,7 +97,7 @@ void SimpleInstrumentation::visit(SgNode* astNode)
           reportNodesMarkedAsModified(scope);
 #endif
 
-#if 1
+#if 0
           SgProject::set_verbose(3);
 #endif
           printf ("Calling appendStatement() \n");
@@ -106,7 +106,7 @@ void SimpleInstrumentation::visit(SgNode* astNode)
 #if 1
           reportNodesMarkedAsModified(scope);
 #endif
-#if 1
+#if 0
           SgProject::set_verbose(0);
 #endif
           done = true;
