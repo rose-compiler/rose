@@ -5762,7 +5762,9 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
              }
             else
              {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("WARNING: classDeclaration->get_definingDeclaration() == NULL: This was a previously passing test, but not now that we have force SgTemplateTypes to be handled in the local type table. \n");
+#endif
              }
 
           if (classDeclaration->get_isUnNamed() == true)

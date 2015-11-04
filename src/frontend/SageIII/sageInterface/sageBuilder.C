@@ -2635,12 +2635,13 @@ checkThatNoTemplateInstantiationIsDeclaredInTemplateDefinitionScope ( SgDeclarat
           if (isSgTemplateInstantiationMemberFunctionDecl(func) != NULL)
              {
             // DQ (12/14/2011): We should not have a member function template instantiation in a template class definition.
-
+#if 0
             // DQ (8/25/2014): Allow non-template functions in a template class declaration (see test2014_161.C).
                if (isSgTemplateClassDefinition(scope) != NULL)
                   {
                     printf ("In checkThatNoTemplateInstantiationIsDeclaredInTemplateDefinitionScope(): p->source_corresp.is_class_member == true: Allow non-template functions in a template class declaration \n");
                   }
+#endif
 
             // DQ (8/25/2014): Un-Commented out to revert to previous working state.
             // DQ (8/25/2014): Commented out to test new logic at base of isTemplateDeclaration(a_routine_ptr).
@@ -9528,7 +9529,7 @@ SgModifierType* SageBuilder::buildModifierType(SgType* base_type /* = NULL*/)
 
      if (result != result2)
         {
-#if 1
+#if 0
        // DQ (10/27/2015): This is the cause of a bug in the test2015_97.C (boost template problem).
           printf ("WARNING: In SageBuilder::buildModifierType(): using previously build SgModifierType from global type table: result2 = %p = %s \n",result2,result2->class_name().c_str());
 #endif
@@ -13575,6 +13576,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      result->display("SageBuilder::buildFile()");
 #endif
 
+     ROSE_ASSERT(project != NULL);
      project->set_frontendErrorCode(max(project->get_frontendErrorCode(), nextErrorCode));
 
   // Not sure why a warning shows up from astPostProcessing.C
