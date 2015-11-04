@@ -1466,6 +1466,9 @@ SgFile::runFrontend(int & nextErrorCode)
      display("In runFrontend()");
 #endif
 
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(this != NULL);
+
   // DQ (6/13/2013): Added to support error checking (seperation of construction of SgFile IR nodes from calling the fronend on each one).
      ROSE_ASSERT(get_parent() != NULL);
 
@@ -1826,6 +1829,9 @@ int
 SgProject::RunFrontend()
 {
   TimingPerformance timer ("AST (SgProject::RunFrontend()):");
+
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(this != NULL);
 
   int status_of_function = 0;
   {
@@ -4058,6 +4064,9 @@ Rose::Frontend::RunSerial(SgProject* project)
       }//BOOST_FOREACH
   }//all_files->callFrontEnd
 
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(project != NULL);
+
   project->set_frontendErrorCode(status_of_function);
 
   return status_of_function;
@@ -4083,6 +4092,9 @@ Rose::Frontend::Java::Run(SgProject* project)
           // Default to generic serial frontend
           status = Rose::Frontend::RunSerial(project);
       }
+
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(project != NULL);
 
       project->set_frontendErrorCode(status);
   }
@@ -5190,6 +5202,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // DQ (7/12/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Object Code Generation (compile output):");
 
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(this != NULL);
+
   // DQ (4/21/2006): I think we can now assert this!
      ROSE_ASSERT(fileNameIndex == 0);
 
@@ -5648,6 +5663,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 int
 Rose::Backend::Java::CompileBatch(SgProject* project, std::vector<std::string> argv)
 {
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(project != NULL);
+
   ROSE_ASSERT (project->get_Java_only() == true);
 
   std::cout << "[INFO] Backend::Java::CompileBatch" << std::endl;

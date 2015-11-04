@@ -15791,6 +15791,9 @@ SgProject::SgProject( const SgProject & project )
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
 SgProject::SgProject ( int argc, char** argv, bool frontendConstantFolding)
    {
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(this != NULL);
+
      initialization();
 
   // DQ (9/18/2011): Added support to use frontend specific constnat folding (applies to C/C++ using EDG).
@@ -15808,6 +15811,9 @@ SgProject::SgProject ( int argc, char** argv, bool frontendConstantFolding)
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
 SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding )
    {
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(this != NULL);
+
      initialization();
 
   // DQ (9/18/2011): Added support to use frontend specific constnat folding (applies to C/C++ using EDG).
