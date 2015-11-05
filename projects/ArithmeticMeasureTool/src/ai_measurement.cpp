@@ -7,6 +7,7 @@ using namespace AstFromString;
 
 namespace ArithemeticIntensityMeasurement
 {
+  running_mode_enum running_mode = e_analysis_and_instrument;
   std::map <SgNode*, bool> FPVisitMAP; // record if a flop operation is counted or not
 //we have to be more specific, if a variable is processed and the variable is within a inner loops
 //then we skip it's counting in outer loop for load/store
@@ -31,7 +32,7 @@ namespace ArithemeticIntensityMeasurement
   } 
   bool debug;
   // default file name to store the report
-  string report_filename = "report.txt";
+  string report_filename = "ai_tool_report.txt";
   string report_option ="-report-file";
 
   int loop_id = 0;
@@ -58,8 +59,25 @@ namespace ArithemeticIntensityMeasurement
 
  }
 
+ string FPCounters::toString(std::string comment)
+ {
+   stringstream ss; 
+   ss<<"----------Floating Point Operation Counts---------------------"<<endl;
+   ss<<comment<<endl;
+   //cout<<"Floating point operations found for node "<<node->class_name() <<"@" <<endl;
+   ss<<node->class_name() <<"@" <<endl;
+   ss<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line() <<endl;
+   ss<<"\tfp_plus:"<< plus_count<<endl;
+   ss<<"\tfp_minus:"<< minus_count<<endl;
+   ss<<"\tfp_multiply:"<< multiply_count<<endl;
+   ss<<"\tfp_divide:"<< divide_count<<endl;
+   ss<<"\tfp_total:"<< getTotalCount()<<endl;
+
+   return ss.str();
+ }
  void FPCounters::printInfo(std::string comment/* ="" */)
  {
+#if 0   
    cout<<"----------Floating Point Operation Counts---------------------"<<endl;
    cout<<comment<<endl;
    //cout<<"Floating point operations found for node "<<node->class_name() <<"@" <<endl;
@@ -70,7 +88,9 @@ namespace ArithemeticIntensityMeasurement
    cout<<"\tfp_multiply:"<< multiply_count<<endl;
    cout<<"\tfp_divide:"<< divide_count<<endl;
    cout<<"\tfp_total:"<< getTotalCount()<<endl;
-
+#else
+  cout<<toString(comment);
+#endif
  }
 
  // a transformation to instrument loops to obtain loop iteration counts at runtime
@@ -641,6 +661,13 @@ namespace ArithemeticIntensityMeasurement
     //Must update the total counter here
     FPCounters* fp_counters = getFPCounters (input); 
     fp_counters->updateTotal ();
+    // write results to a report file
+    if (running_mode == e_static_counting)
+    {
+      ofstream reportFile(report_filename.c_str(), ios::app);
+      cout<<"Writing counter results to "<< report_filename <<endl;
+      reportFile<< fp_counters->toString();
+    }
     // debugging info
     if (debug)
       printFPCount (input);

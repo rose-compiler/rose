@@ -27,6 +27,9 @@ C_TESTCODE= \
     jacobi-v3.c \
     nestedloops.c
 
+C_Analysis_Only_TESTCODE = \
+   jacobi.c
+
 TESTS = jacobi-v3.out nestedloops.out
 jacobi-v3.out:rose_jacobi-v3.c
 	gcc -O3 rose_jacobi-v3.c -o jacobi-v3.out -lm
@@ -49,8 +52,13 @@ Fortran_Tests = \
    InterpF_002.f \
    AverageCodimF.f90
 
+C_Analysis_TESTCODE_RESULTS = $(addprefix rose_, ${C_Analysis_Only_TESTCODE})
+
 C_TESTCODE_RESULTS = $(addprefix rose_, ${C_TESTCODE})
 F_TESTCODE_RESULTS = $(addprefix rose_, ${Fortran_Tests})
+
+$(C_Analysis_TESTCODE_RESULTS):measureTool $(srcdir)/test/$(@:rose_%=%) 
+	./measureTool -c -static-counting-only -annot $(srcdir)/src/functionSideEffect.annot -I. $(srcdir)/test/$(@:rose_%=%)
 
 # test the translator
 $(C_TESTCODE_RESULTS):measureTool $(srcdir)/test/$(@:rose_%=%) 
@@ -61,8 +69,8 @@ $(F_TESTCODE_RESULTS):measureTool $(srcdir)/test/fortran/$(@:rose_%=%)
 
 ftest: $(F_TESTCODE_RESULTS)
 
-check: $(C_TESTCODE_RESULTS) $(F_TESTCODE_RESULTS)
+check: $(C_TESTCODE_RESULTS) $(F_TESTCODE_RESULTS) $(C_Analysis_TESTCODE_RESULTS)
 clean:
-	rm -rf $(bin_PROGRAMS) $(builddir)/src/*.o *.o $(builddir)/src/*.a rose_* *.dot *.out *.log *.trs #measureToolReport.txt
+	rm -rf $(bin_PROGRAMS) $(builddir)/src/*.o *.o $(builddir)/src/*.a rose_* *.dot *.out *.log *.trs ai_tool_report.txt
 
 EXTRA_DIST=build cleanup.sh test	

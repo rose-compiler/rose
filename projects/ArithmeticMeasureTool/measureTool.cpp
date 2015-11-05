@@ -29,32 +29,36 @@ bool processStatements(SgNode* n)
     SgScopeStatement* scope = loop->get_scope();
     ROSE_ASSERT(scope != NULL);
 
-   instrumentLoopForCounting (loop);
-    // verify the counting results are consistent with reference results from pragmas	 
-    if (SgStatement* prev_stmt = getPreviousStatement(loop))
-    {
-      if (isSgPragmaDeclaration(prev_stmt))
-      {
-        FPCounters* ref_result = getFPCounters (prev_stmt);
-        FPCounters* current_result = getFPCounters (loop);
-        if (ref_result != NULL)
-        {
-          if (!current_result->consistentWithReference (ref_result))
-          {
-            cerr<<"Error. Calculated FP operation counts differ from reference counts parsed from pragma!"<<endl;
-            ref_result->printInfo("Reference counts are ....");
-            current_result->printInfo("Calculated counts are ....");
-          }
-          assert (current_result->consistentWithReference (ref_result)); 
-        }
-        else
-        {
-          // I believe ref_result should be available at this point
-          assert (false);
-        }  
-
-      }
-    } // end verification
+   if (running_mode == e_analysis_and_instrument)
+     instrumentLoopForCounting (loop);
+   else if (running_mode == e_static_counting)
+   {  
+     CountFPOperations (loop->get_loop_body());
+     // verify the counting results are consistent with reference results from pragmas	 
+     if (SgStatement* prev_stmt = getPreviousStatement(loop))
+     {
+       if (isSgPragmaDeclaration(prev_stmt))
+       {
+         FPCounters* ref_result = getFPCounters (prev_stmt);
+         FPCounters* current_result = getFPCounters (loop->get_loop_body());
+         if (ref_result != NULL)
+         {
+           if (!current_result->consistentWithReference (ref_result))
+           {
+             cerr<<"Error. Calculated FP operation counts differ from reference counts parsed from pragma!"<<endl;
+             ref_result->printInfo("Reference counts are ....");
+             current_result->printInfo("Calculated counts are ....");
+           }
+           assert (current_result->consistentWithReference (ref_result)); 
+         }
+         else
+         {
+           // I believe ref_result should be available at this point
+           assert (false);
+         }  
+       }
+     } // end verification
+   } 
   } 
   // Get reference FP operation counting values from pragma, if available.
   // This is no longer useful since we use bottomup traversal!!
@@ -97,6 +101,12 @@ int main (int argc, char** argv)
     cout<<"----------------------Generic Help for ROSE tools--------------------------"<<endl;
   }
 
+  if (CommandlineProcessing::isOption(argvList,"-static-counting-only","", true))
+  {
+    running_mode = e_static_counting; 
+  }
+
+
   if (CommandlineProcessing::isOption(argvList,"-debug","", true))
   {
     debug = true; 
@@ -111,7 +121,7 @@ int main (int argc, char** argv)
   }
   else
   {
-    report_filename="ai_tool_measure_results.txt";
+    //report_filename="ai_tool_report.txt"; // this is set in src/ai_measurement.cpp already
     if (debug)
       cout<<"Using the default file:"<<report_filename<<" for storing results."<<endl;
   }
@@ -144,13 +154,29 @@ int main (int argc, char** argv)
       // Preorder is not friendly for transformation
       //exampleTraversal.traverseWithinFile(s_file, postorder);
       Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(s_file,V_SgStatement);
-      for (Rose_STL_Container<SgNode *>::reverse_iterator i = nodeList.rbegin(); i != nodeList.rend(); i++)
+      if (running_mode == e_analysis_and_instrument) // reverse of pre-order for transformation mode
       {
-        SgStatement *stmt= isSgStatement(*i);
-        processStatements (stmt);
+        for (Rose_STL_Container<SgNode *>::reverse_iterator i = nodeList.rbegin(); i != nodeList.rend(); i++)
+        {
+          SgStatement *stmt= isSgStatement(*i);
+          processStatements (stmt);
+        }
       }
-    }
-  }
+      else if (running_mode ==  e_static_counting) // pre-order traverse for analysis only mode 
+      {
+        for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+        {
+          SgStatement *stmt= isSgStatement(*i);
+          processStatements (stmt);
+        }
+      }
+      else
+      {
+        cerr<<"Error. unrecognized execution mode:"<< running_mode<<endl;
+        ROSE_ASSERT (false);
+      }
+    } // endif 
+  } // end for
 
   // Generate source code from AST and invoke your
   // desired backend compiler
