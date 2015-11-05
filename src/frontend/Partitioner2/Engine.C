@@ -1440,7 +1440,7 @@ Engine::BasicBlockFinalizer::operator()(bool chain, const Args &args) {
         // which case RiscOperators::readMemory would have returned a free variable to indicate an indeterminate value, or ADDR
         // is writable but its MemoryMap::INITIALIZED bit is set to indicate it has a valid value already, in which case
         // RiscOperators::readMemory would have returned the value stored there but also marked the value as being
-        // INDETERMINATE.  The InsnSemanticsExpr::TreeNode::INDETERMINATE bit in the expression should have been carried along
+        // INDETERMINATE.  The SymbolicExpr::TreeNode::INDETERMINATE bit in the expression should have been carried along
         // so that things like "MOV EAX, [ADDR]; JMP EAX" will behave the same as "JMP [ADDR]".
         bool addIndeterminateEdge = false;
         size_t addrWidth = 0;
@@ -1449,7 +1449,7 @@ Engine::BasicBlockFinalizer::operator()(bool chain, const Args &args) {
                 addIndeterminateEdge = false;
                 break;
             } else if (!addIndeterminateEdge &&
-                       (successor.expr()->get_expression()->get_flags() & InsnSemanticsExpr::TreeNode::INDETERMINATE) != 0) {
+                       (successor.expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
                 addIndeterminateEdge = true;
                 addrWidth = successor.expr()->get_width();
             }
