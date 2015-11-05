@@ -103,7 +103,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 // SgStatement* stmt_1, SgStatement* stmt_2, 
    SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, 
    UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_start, 
-   UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_end)
+   UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_end,
+   bool unparseOnlyWhitespace )
    {
   // unparseStatementFromTokenStream (stmt, e_leading_whitespace_start, e_token_subsequence_start);
   // Check for the leading token stream for this statement.  Unparse it if the previous statement was unparsed as a token stream.
@@ -114,6 +115,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
      printf ("unparseStatementFromTokenStream(stmt_1=%p=%s,stmt_2=%p=%s): \n",stmt_1,stmt_1->class_name().c_str(),stmt_2,stmt_2->class_name().c_str());
      printf ("   --- e_token_sequence_position_start = %d = %s \n",e_token_sequence_position_start,token_sequence_position_name(e_token_sequence_position_start).c_str());
      printf ("   --- e_token_sequence_position_end   = %d = %s \n",e_token_sequence_position_end,token_sequence_position_name(e_token_sequence_position_end).c_str());
+     printf ("   --- unparseOnlyWhitespace = %s \n",unparseOnlyWhitespace ? "true" : "false");
 #endif
 
      if ( SgProject::get_verbose() > 0 )
@@ -331,12 +333,37 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 #if DEBUG_TOKEN_STREAM_UNPARSING
                     printf ("unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
+                 // DQ (11/4/2015): Adding support to optionally only unparse the associated whitespace with any region of a statement.
+                 // This is used when we want to unparse the leading whitespace of a statement as part of a transformation, yet we need 
+                 // to ONLY unparse the spaces and CR's.
+                    if (unparseOnlyWhitespace == true)
+                       {
+                      // if (tokenVector[j]->p_tok_elem->token_id == ROSE_token_ids::C_CXX_WHITESPACE)
+                         if (tokenVector[j]->get_classification_code() == ROSE_token_ids::C_CXX_WHITESPACE)
+                            {
+#if HIGH_FEDELITY_TOKEN_UNPARSING
+                              *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+#else
+                           // Note that this will interprete line endings which is not going to provide the precise token based output.
+                              curprint(tokenVector[j]->get_lexeme_string());
+#endif
+                            }
+                           else
+                            {
+#if 0
+                              printf ("unparseOnlyWhitespace == true: Skipping output of tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+#endif
+                            }
+                       }
+                      else
+                       {
 #if HIGH_FEDELITY_TOKEN_UNPARSING
                     *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
 #else
                  // Note that this will interprete line endings which is not going to provide the precise token based output.
                     curprint(tokenVector[j]->get_lexeme_string());
 #endif
+                       }
                   }
              }
             else
@@ -2824,8 +2851,19 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
                   {
                  // We want to output the whitespace of the first statement, but the first statement may have been moved.
                  // But we can at least output the leading white space for whateve is currently the first statement.
+                 // Unfortunately this can cause problems if this is more than just whitespace (e.g. "#if 1").
+                 // So we need to check if this is only whitespace and then we can unparse it.  This would be 
+                 // best handled by adding this feature to the unparseStatementFromTokenStream() function (I think).
+
                  // curprint("\n");
-                    unparseStatementFromTokenStream (*p, *p, e_leading_whitespace_start, e_token_subsequence_start);
+#if 0
+                    curprint ("/* unparse leading white space of first statement: START */");
+#endif
+                    bool unparseOnlyWhitespace = true;
+                    unparseStatementFromTokenStream (*p, *p, e_leading_whitespace_start, e_token_subsequence_start,unparseOnlyWhitespace);
+#if 0
+                    curprint ("/* unparse leading white space of first statement: END */");
+#endif
                   }
              }
 
