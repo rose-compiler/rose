@@ -1056,6 +1056,9 @@ Ptr makeZerop(const Ptr &a, const std::string &comment="", unsigned flags=0);
 std::ostream& operator<<(std::ostream &o, Node&);
 std::ostream& operator<<(std::ostream &o, const Node::WithFormatter&);
 
+/** Convert a set to an ite expression. */
+Ptr setToIte(const Ptr&);
+
 /** Counts the number of nodes.
  *
  *  Counts the total number of nodes in multiple expressions.  The return value is a saturated sum, returning MAX_NNODES if an

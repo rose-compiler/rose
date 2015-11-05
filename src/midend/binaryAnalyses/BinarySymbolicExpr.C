@@ -126,6 +126,27 @@ ExpressionLessp::operator()(const Ptr &a, const Ptr &b) {
     return a->hash() < b->hash();
 }
 
+Ptr
+setToIte(const Ptr &set) {
+    ASSERT_not_null(set);
+    Interior::Ptr iset = set->isInteriorNode();
+    if (!iset || iset->getOperator() != OP_SET)
+        return set;
+    ASSERT_require(iset->nChildren() >= 1);
+    Ptr condVar = makeVariable(32);
+    Ptr retval;
+    for (size_t i=iset->nChildren(); i>0; --i) {
+        Ptr member = iset->child(i-1);
+        if (!retval) {
+            retval = member;
+        } else {
+            Ptr cond = makeEq(condVar, makeInteger(32, i));
+            retval = makeIte(cond, member, retval);
+        }
+    }
+    return retval;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Base node
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

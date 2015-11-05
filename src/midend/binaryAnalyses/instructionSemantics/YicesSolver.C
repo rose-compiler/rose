@@ -575,17 +575,8 @@ YicesSolver::out_set(std::ostream &o, const SymbolicExpr::InteriorPtr &in) {
     ASSERT_not_null(in);
     ASSERT_require(in->getOperator() == SymbolicExpr::OP_SET);
     ASSERT_require(in->nChildren() >= 2);
-
-    SymbolicExpr::Ptr condition = SymbolicExpr::makeVariable(1);
-    SymbolicExpr::Ptr ite;
-    BOOST_REVERSE_FOREACH (const SymbolicExpr::Ptr &member, in->children()) {
-        if (ite) {
-            ite = SymbolicExpr::makeIte(condition, member, ite);
-        } else {
-            ite = member;
-        }
-    }
-    out_ite(o, ite->isInteriorNode());
+    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(in);
+    out_expr(o, ite);
 }
 
 /** Output for left-associative, binary operators. The identity_element is sign-extended and used as the second operand
@@ -981,17 +972,8 @@ YicesSolver::ctx_set(const SymbolicExpr::InteriorPtr &in) {
     ASSERT_not_null(in);
     ASSERT_require(in->getOperator() == SymbolicExpr::OP_SET);
     ASSERT_require(in->nChildren() >= 2);
-
-    SymbolicExpr::Ptr condition = SymbolicExpr::makeVariable(1);
-    SymbolicExpr::Ptr ite;
-    BOOST_REVERSE_FOREACH (const SymbolicExpr::Ptr &member, in->children()) {
-        if (ite) {
-            ite = SymbolicExpr::makeIte(condition, member, ite);
-        } else {
-            ite = member;
-        }
-    }
-    return ctx_ite(ite->isInteriorNode());
+    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(in);
+    return ctx_expr(ite);
 }
 #endif
 
