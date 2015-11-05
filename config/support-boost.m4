@@ -62,6 +62,7 @@ if test "x$rose_boost_version" = "x"; then
   ROSE_MSG_ERROR([Unable to compute the version of your Boost C++ libraries: '$ac_boost_path'])
 fi
 
+# DQ (10/22/2015): Added more tests (1.55 through 1.62)
 # Define macros for conditional compilation of parts of ROSE based on version of boost
 # (this ONLY happens for the tests in tests/CompilerOptionsTests/testWave)
 #
@@ -88,7 +89,16 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_51, test "x$rose_boost_version" = "x10
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_52, test "x$rose_boost_version" = "x105200" -o "x$_version" = "x1.52")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_53, test "x$rose_boost_version" = "x105300" -o "x$_version" = "x1.53")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_54, test "x$rose_boost_version" = "x105400" -o "x$_version" = "x1.54")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_55, test "x$rose_boost_version" = "x105500" -o "x$_version" = "x1.55")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_56, test "x$rose_boost_version" = "x105600" -o "x$_version" = "x1.56")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_57, test "x$rose_boost_version" = "x105700" -o "x$_version" = "x1.57")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_58, test "x$rose_boost_version" = "x105800" -o "x$_version" = "x1.58")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_59, test "x$rose_boost_version" = "x105900" -o "x$_version" = "x1.59")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_60, test "x$rose_boost_version" = "x106000" -o "x$_version" = "x1.60")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_61, test "x$rose_boost_version" = "x106100" -o "x$_version" = "x1.61")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_62, test "x$rose_boost_version" = "x106200" -o "x$_version" = "x1.62")
 
+# DQ (10/22/2015): Added more tests (1.55 through 1.62)
 # TOO1 (3/16/2015):
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_35, test $rose_boost_version -ge 103500)
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_36, test $rose_boost_version -ge 103600)
@@ -111,7 +121,16 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_51, test $rose_boost_version -ge 10
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_52, test $rose_boost_version -ge 105200)
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_53, test $rose_boost_version -ge 105300)
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_54, test $rose_boost_version -ge 105400)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_55, test $rose_boost_version -ge 105500)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_56, test $rose_boost_version -ge 105600)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_57, test $rose_boost_version -ge 105700)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_58, test $rose_boost_version -ge 105800)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_59, test $rose_boost_version -ge 105900)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_60, test $rose_boost_version -ge 106000)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_61, test $rose_boost_version -ge 106100)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_62, test $rose_boost_version -ge 106200)
 
+# DQ (10/22/2015): Added acceptable case 1.54.
 if test \
       "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
    -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
@@ -122,12 +141,13 @@ if test \
    -o "x$rose_boost_version" = "x105000" -o "x$_version" = "x1.50" \
    -o "x$rose_boost_version" = "x105100" -o "x$_version" = "x1.51" \
    -o "x$rose_boost_version" = "x105200" -o "x$_version" = "x1.52" \
-   -o "x$rose_boost_version" = "x105300" -o "x$_version" = "x1.53"
+   -o "x$rose_boost_version" = "x105300" -o "x$_version" = "x1.53" \
+   -o "x$rose_boost_version" = "x105400" -o "x$_version" = "x1.54"
 then
     echo "Reasonable version of Boost found!"
 else
   if test "x$ROSE_ENABLE_BOOST_VERSION_CHECK" = "xyes"; then
-    ROSE_MSG_ERROR([Unsupported version of Boost: '$rose_boost_version'. Only 1.45 to 1.53 is currently supported.])
+    ROSE_MSG_ERROR([Unsupported version of Boost: '$rose_boost_version'. Only 1.45 to 1.54 is currently supported.])
   else
     AC_MSG_WARN([Unsupported version of Boost is being used])
   fi
