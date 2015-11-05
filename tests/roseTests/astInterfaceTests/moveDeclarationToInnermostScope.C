@@ -784,6 +784,18 @@ static  int collectUpArrayTypeIndexVariables (SgScopeStatement* scope, Rose_STL_
 // used for a variable showing up in condition expression of some statement. 
 // We return a grand parent scope for those variables. 
 /*
+Differentiate two situations when handling special scopes
+1:  when obtaining a scope for a variable in the condition expression. The scope should be adjusted since we cannot insert things to the conditions (??)
+2:  when deciding on if we can insert a decl to the special scopes:  This has two further situations: 
+   2.1  the special scope is a final bottom scope . We have backtrack to its parent scope  
+   2.2  the special scope is an intermediate scope.  we can still put it into the worklist since the iterative algorithm v 2
+
+To simplify the problem, we consider them all in one pace: situation 2. hasUnsupportedScope() helps decide how to put scopes to the worklist.
+We don't do anything special for situation 1.
+
+TODO: Alternatively, we screen out bad scopes as early and possible in this function.
+     Later algorithm2 will not be bothered. 
+
  *We don't try to merge a variable decl into the conditional of a while statement
  * The reason is that often the declaration has an initializer , which must be preserved.
  * The conditional contain the use of the declared variable, which usually cannot be merged with the declaration.
@@ -802,12 +814,14 @@ static SgScopeStatement * getAdjustedScope(SgNode* n)
     if (specialVarRefScopeExp[isSgVarRefExp(n)])
       n = specialVarRefScopeExp[isSgVarRefExp(n)] ; 
   SgScopeStatement* result =  SageInterface::getScope (n);
+#if 0 // for algorithm 2, we check these special scopes anyway: bottom ? backtrack,   not bottom? add then into the worklist for further consideration
   if (isSgWhileStmt (result) || isSgIfStmt (result) || isSgDoWhileStmt (result) || isSgSwitchStatement(result) )
     result = SageInterface::getEnclosingScope(result, false);
 
   // TODO: can recursive while-stmt scope happen?
   ROSE_ASSERT  (isSgWhileStmt (result) == NULL);
   ROSE_ASSERT  (isSgIfStmt (result) == NULL);
+#endif  
   return result; 
 }
 //! Generate a scope tree for a declaration: the tree is trimmed. 
@@ -1212,6 +1226,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
         {
           SageInterface::prependStatement (decl_copy, adjusted_scope);
           inserted_copied_decls.push_back(decl_copy); 
+          // TODO: this only only useful for algorithm v1. Need better control
           newly_inserted_copied_decls.push_back(decl_copy);
           break;
         }
@@ -1499,6 +1514,87 @@ static bool isLiveIn(SgVariableSymbol* var_sym, SgScopeStatement* scope)
   //All other cases, we conservatively assume the variable is live in for the scope
   return true; 
 }
+//
+//! A helper function to check if there is a target scope which is not supported (cannot insert a decl into it)
+// a for loop with complex init_stmt list
+// a while loop with init_stmt
+// TODO :other cases like SgDoWhileStmt ?
+// With algorithm 2: we will consider the scopes for further moves.
+// The check only matters if the target scope is the bottom scope
+// For intermediate scopes, we allow them to be put into the candidate scope set
+/*
+Differentiate two situations when handling special scopes
+1: When obtaining a scope for a variable in the condition expression. The scope should be adjusted since we cannot insert things to the conditions (??)
+   can we remove this adjustment? Only handling them when deciding worklist issue??
+2: When deciding on if we can insert a decl to the special scopes:  This has two further situations: 
+  2.1  the special scope is a final bottom scope . We have backtrack to its parent scope  
+  2.2  the special scope is an intermediate scope.  we can still put it into the worklist since the iterative algorithm 2
+
+To simplify the problem, we consider them all in one pace: situation 2. hasUnsupportedScope() helps decide how to put scopes to the worklist.
+We don't do anything special for situation 1.
+*/
+static bool hasUnsupportedScope(SgVariableDeclaration* decl, std::vector <SgScopeStatement *> &target_scopes, SgScopeStatement** bad_apple_scope)
+{
+  ROSE_ASSERT (decl != NULL);
+  SgInitializedName* i_name = getFirstInitializedName (decl);
+  SgVariableSymbol * sym = getFirstVarSym (decl);
+  ROSE_ASSERT (i_name != NULL);
+  ROSE_ASSERT (sym != NULL);
+
+  for (size_t i= 0; i< target_scopes.size(); i++)
+  {
+    SgScopeStatement* current_scope = target_scopes[i];
+    // The check only matters if the target scope is the bottom scope
+    // Only scopes in the scope tree can be candidate scope to be considered
+    ROSE_ASSERT (ScopeTreeMap[current_scope] != NULL);
+    if (ScopeTreeMap[current_scope] != NULL && ScopeTreeMap[current_scope]->s_type == s_use)
+    {
+      if (SgForStatement* for_loop = isSgForStatement (current_scope))
+      {
+        // multiple init statements or expressions
+        if (SageInterface::hasMultipleInitStatmentsOrExpressions (for_loop))
+        {
+          *bad_apple_scope= for_loop ; 
+          return true; 
+        }
+        else if (i_name != getLoopIndexVariable (for_loop) && isReferencedByLoopHeader (sym, for_loop))
+        {  // single init, but cannot match loop index,  and the variable is referenced in the loop header
+          // We cannot insert into the init stmt list since it will cause compilation error. e.g. inputmoveDeclarationToInnermostScope_13.C
+          // We cannot move into the loop body neither since it is referenced in the loop header.
+          *bad_apple_scope= isSgScopeStatement (for_loop) ; 
+          return true; 
+        }
+        else
+        {
+          // any other cases, we try to insert a decl into the for loop's init_stmt_list
+          continue;
+        }
+      }
+      else if (SgWhileStmt* while_loop = isSgWhileStmt (current_scope))
+      {
+        *bad_apple_scope = isSgScopeStatement (while_loop) ; 
+        return true; 
+      }
+      else if (SgIfStmt* if_stmt = isSgIfStmt(current_scope))
+      {
+        *bad_apple_scope = isSgScopeStatement (if_stmt) ; 
+        return true; 
+      }
+       else if (SgDoWhileStmt* do_while_loop = isSgDoWhileStmt(current_scope))
+      {
+        *bad_apple_scope = isSgScopeStatement (do_while_loop) ; 
+        return true; 
+      }
+      else if (SgSwitchStatement * switch_stmt = isSgSwitchStatement(current_scope))
+      {
+        *bad_apple_scope = isSgScopeStatement (switch_stmt) ; 
+        return true; 
+      }
+    } // end if bottom scopes
+  } // end for ()
+  return false;
+}
+
 
 //! A helper function to check if there is a target scope which is a for loop with complex init_stmt list
 static SgForStatement* hasALoopWithComplexInitStmt( SgVariableDeclaration* decl, std::vector <SgScopeStatement *> &target_scopes)
@@ -1790,24 +1886,25 @@ void findFinalTargetScopes(SgVariableDeclaration* declaration, std::vector <SgSc
     {
       // ignore complex for init stmt for now 
       // A single bad apple will invalidate the entire move of this scope tree
-      SgForStatement* bad_loop = hasALoopWithComplexInitStmt (declaration, candidate_scopes);
-      if (bad_loop != NULL)
-      {
-	cerr<<"Error: SageInterface::moveDeclarationToInnermostScope() gives up moving a variable decl due to a complex target loop scope"<<endl;
-	cerr<<"Variable declaration in question is:"<<endl;
-	declaration->get_file_info()->display();
-	cerr<<"Loop scope with complex init stmt is:"<<endl;
-	bad_loop->get_file_info()->display();
+//      SgForStatement* bad_loop = hasALoopWithComplexInitStmt (declaration, candidate_scopes);
+//      if (bad_loop != NULL) // with bad apple? obtain the scope_tree's scope as target scope
+       SgScopeStatement * bad_scope_stmt= NULL; 
+       if (hasUnsupportedScope(declaration, candidate_scopes, & bad_scope_stmt ))
+       {
+         ROSE_ASSERT (bad_scope_stmt !=NULL);
+         cerr<<"Error: SageInterface::moveDeclarationToInnermostScope() gives up moving a variable decl due to a unsupported target scope"<<endl;
+         cerr<<"Variable declaration in question is:"<<endl;
+         declaration->get_file_info()->display();
+         cerr<<"Unsupported scope:" << bad_scope_stmt << " " << bad_scope_stmt->class_name() << " " << bad_scope_stmt->get_file_info()->get_line() <<endl;
 #if 0  // We no longer assert this since the complex loops are out of our scope. Users will make sure their loops are canonical.
-	if (!tool_keep_going )
-	  ROSE_ASSERT (false);
+         if (!tool_keep_going )
+           ROSE_ASSERT (false);
 #endif
-	// if this scope tree is excluded from consideration because a bad apple, 
-	// we have to restore the root to target_scopes so the previous intermediate move can happen. 
-	// essentially, reverse operation of moveSpecialTargetScopesIntoScopeTreeQueue ()
-	target_scopes.push_back(scope_tree->scope);
-      }
-      else // no bad apple?  moves can happen
+         // if candidate children nodes are excluded from consideration because a bad apple, 
+         //  we use the root scope node as the move target
+         target_scopes.push_back(scope_tree->scope);
+       }
+      else // no bad apple?  moves can happen for all candidate children scopes of the scope tree
       {
 	for (size_t i =0; i<candidate_scopes.size(); i++)
 	{
