@@ -451,6 +451,9 @@ template<> std::string Statement::iterator::get<std::string>(size_t idx);
  *                                      Miscellaneous functions
  *******************************************************************************************************************************/
 
+/** Documentation about database connection URIs. */
+std::string uriDocumentation();
+
 /** Split SQL source code into individual statements.  This is not a full parser--it only looks for top-level semicolons. */
 std::vector<std::string> split_sql(const std::string &sql);
 
