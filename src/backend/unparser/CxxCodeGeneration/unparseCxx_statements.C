@@ -2747,6 +2747,10 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
   // SgUnparse_Info ninfo(info);
      bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
 
+#if 0
+     printf ("In unparseBasicBlock (stmt = %p) saved_unparsedPartiallyUsingTokenStream = %s \n",basic_stmt,saved_unparsedPartiallyUsingTokenStream ? "true" : "false");
+#endif
+
   // DQ (12/5/2014): Test for if we have unparsed partially using the token stream. 
   // If so then we don't want to unparse this syntax, if not then we require this syntax.
   // if (info.unparsedPartiallyUsingTokenStream() == false)
@@ -2763,7 +2767,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
        else
         {
-       // DQ (1/14/2015): We need to unparse syntax instead of the initial token, becasue this can be a macro expansion
+       // DQ (1/14/2015): We need to unparse syntax instead of the initial token, because this can be a macro expansion
        // (see tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_57.C).
        // unparseStatementFromTokenStream (stmt, e_leading_whitespace_start, e_token_subsequence_start);
        // unparseStatementFromTokenStream (stmt, e_token_subsequence_start, e_token_subsequence_start);
@@ -2806,8 +2810,25 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
           ROSE_ASSERT((*p) != NULL);
 
 #if 0
+          printf ("In unparseBasicBlock (block = %p) statement = %p = %s saved_unparsedPartiallyUsingTokenStream = %s \n",
+               basic_stmt,*p,(*p)->class_name().c_str(),saved_unparsedPartiallyUsingTokenStream ? "true" : "false");
+#endif
+#if 0
           curprint ("/* LOOP: START unparse statement in SgBasicBlock */");
 #endif
+
+       // DQ (11/4/2015): Adding in the leading white space of the first statement (whatever statement is first).
+          if (saved_unparsedPartiallyUsingTokenStream == true)
+             {
+               if (p == basic_stmt->get_statements().begin())
+                  {
+                 // We want to output the whitespace of the first statement, but the first statement may have been moved.
+                 // But we can at least output the leading white space for whateve is currently the first statement.
+                 // curprint("\n");
+                    unparseStatementFromTokenStream (*p, *p, e_leading_whitespace_start, e_token_subsequence_start);
+                  }
+             }
+
           unparseStatement((*p), info);
 
 #if 0
@@ -3314,7 +3335,11 @@ Unparse_ExprStmt::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
              }
         }
 
-     curprint("; ");
+  // DQ (11/4/2015): Change the unparsing semantics to for loop initializer statement to exclude 
+  // the " " after the ";" so that we can more faithfully represent the unparsed code when using 
+  // the token-based unparsing.
+  // curprint("; ");
+     curprint(";");
    }
 
 
@@ -3393,6 +3418,15 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
           printf ("In unparseForStmt(): unparse the for loop initializer (by calling unparseStatement()) \n");
 #endif
           unparseStatement(tmp_stmt,newinfo);
+
+          if (saved_unparsedPartiallyUsingTokenStream == false)
+             {
+            // DQ (11/4/2015): Change the unparsing semantics to for loop initializer statement to exclude 
+            // the " " after the ";" so that we can more faithfully represent the unparsed code when using 
+            // the token-based unparsing.
+               curprint (" ");
+             }
+
 #if DEBUG_FOR_STMT
           curprint("/* DONE: Unparse the for_init_stmt */\n ");
 #endif
