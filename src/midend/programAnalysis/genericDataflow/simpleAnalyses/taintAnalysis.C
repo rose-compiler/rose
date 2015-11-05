@@ -16,6 +16,8 @@ TaintLattice::set_vertex(Vertex v) {
     return retval;
 }
 
+// DQ (10/20/2015): "override" now allowed in function definitions.
+// void TaintLattice::copy(/*const*/ Lattice *other_) ROSE_OVERRIDE
 void
 TaintLattice::copy(/*const*/ Lattice *other_) {
     TaintLattice *other = dynamic_cast<TaintLattice*>(other_);
@@ -23,6 +25,8 @@ TaintLattice::copy(/*const*/ Lattice *other_) {
     *this = *other;
 }
 
+// DQ (10/20/2015): "override" now allowed in function definitions.
+// bool TaintLattice::operator==(/*const*/ Lattice *other_) /*const*/ ROSE_OVERRIDE 
 bool
 TaintLattice::operator==(/*const*/ Lattice *other_) /*const*/ {
     TaintLattice *other = dynamic_cast<TaintLattice*>(other_);
@@ -38,6 +42,8 @@ TaintLattice::to_string() const {
     return s;
 }
 
+// DQ (10/20/2015): "override" now allowed in function definitions.
+// bool TaintLattice::meetUpdate(/*const*/ Lattice *other_) ROSE_OVERRIDE 
 bool
 TaintLattice::meetUpdate(/*const*/ Lattice *other_) {
     TaintLattice *other = dynamic_cast<TaintLattice*>(other_);

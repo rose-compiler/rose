@@ -1196,8 +1196,12 @@ Grammar::setUpExpressions ()
   // ExprListExp.excludeDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      VarRefExp.setFunctionPrototype ( "HEADER_VAR_REF_EXPRESSION", "../Grammar/Expression.code" );
+
+  // DQ (11/4/2015): The set_* access function should not mark set the isModified flag.
+  // VarRefExp.setDataPrototype ( "SgVariableSymbol*", "symbol", "= NULL",
+  //                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      VarRefExp.setDataPrototype ( "SgVariableSymbol*", "symbol", "= NULL",
-                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                  CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 1
   // DQ (9/22/2011): Double checked and this was marked as NO_TRAVERSAL in master (so mark it as such so 
   // that I can pass the existing tests).  I am trying to pass the existing tests and implement the 
