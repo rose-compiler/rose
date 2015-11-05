@@ -87,6 +87,7 @@
  *  //TODO optimize efficiency for multiple declarations
  * //TODO move to a separated source file or even namespace
 */
+
 #include "rose.h"
 #include "wholeAST_API.h"
 #include "transformationTracking.h"
