@@ -2243,11 +2243,13 @@ void Range<rose_addr_t>::print(std::ostream &o) const
         o <<"<empty>";
     } else if (1==size()) {
         char buf[64];
-        sprintf(buf, "0x%08"PRIx64, first());
+     // DQ (10/20/2015): Note that whitespace is required before PRIx64 (to avoid compiler warning).
+        sprintf(buf, "0x%08" PRIx64, first());
         o << buf;
     } else {
         char buf[64];
-        sprintf(buf, "0x%08"PRIx64"+0x%08"PRIx64"=0x%08"PRIx64, first(), size(), first()+size());
+     // DQ (10/20/2015): Note that whitespace is required before PRIx64 (to avoid compiler warning).
+        sprintf(buf, "0x%08" PRIx64"+0x%08" PRIx64"=0x%08" PRIx64, first(), size(), first()+size());
         o <<buf;
     }
 }
@@ -2652,7 +2654,7 @@ SgNode::set_isModified ( bool isModified)
 
 #if 1
   // DQ (4/14/2015): Adding testing to identify side-effects in the AST.
-     if (SgProject::get_verbose() >= 3)
+     if (SgProject::get_verbose() >= 2)
         {
        // DQ (10/6/2015): Skip the output of this debug info for SgUnparse_Info IR nodes.
        // printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
@@ -2660,6 +2662,13 @@ SgNode::set_isModified ( bool isModified)
           if (isSgUnparse_Info(this) == NULL && isSgToken(this) == NULL)
              {
                printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
+#if 1
+               if (SgProject::get_verbose() >= 3)
+                  {
+                    printf ("Exiting as a test (when verbose >= 3) in SgNode::set_isModified \n");
+                    ROSE_ASSERT(false);
+                  }
+#endif
              }
 #if 0
        // DQ (10/13/2015): Chasing a issue in the move tool.

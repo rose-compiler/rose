@@ -12,6 +12,12 @@ namespace ArithemeticIntensityMeasurement
   extern std::string report_filename;
   extern int loop_id; // roughly assign a unique id for each loop, at least within the context of a single function
 
+  // we support different execution modes
+  //
+  enum running_mode_enum {
+    e_analysis_and_instrument,  // recognize special chiterations = .., do the counting based instrumentation
+    e_static_counting // recognize #pragma aitool and do the counting, writing to a report file
+  };
   enum fp_operation_kind_enum {
     e_unknown = 0,
     e_total =1 ,
@@ -20,6 +26,8 @@ namespace ArithemeticIntensityMeasurement
     e_multiply,
     e_divide
   };
+
+  extern running_mode_enum running_mode; // = e_analysis_and_instrument; 
 
   std::string toString (fp_operation_kind_enum op_kind);
 
@@ -37,6 +45,8 @@ namespace ArithemeticIntensityMeasurement
       void  setCount(fp_operation_kind_enum c_type, int i =1);
       void updateTotal() {  if (total_count == 0 ) total_count = plus_count + minus_count + multiply_count + divide_count ; }
       void printInfo(std::string comment="");
+      // convert the counter information to a string
+      std::string toString(std::string comment="");
 
       SgLocatedNode* getNode () {return node; }
       // compare the values of this object with a reference FPCounters object(often obtained from Pragma)

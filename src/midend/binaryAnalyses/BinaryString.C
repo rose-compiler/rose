@@ -806,7 +806,9 @@ public:
     const std::vector<Finding>& results() const { return results_; }
 
     // search for strings
-    bool operator()(const MemoryMap::Super &map, const AddressInterval &interval) ROSE_OVERRIDE {
+ // DQ (10/15/2015): This is incorrectly marked as "override" according to GNU 4.8.3 using c++11 mode.
+ // bool operator()(const MemoryMap::Super &map, const AddressInterval &interval) ROSE_OVERRIDE {
+    bool operator()(const MemoryMap::Super &map, const AddressInterval &interval) {
         if (interval.least() > bufferVa_) {
             // We skipped across some unmapped memory, so reap all decoders, saving strings for those decoders that are in a
             // COMPLETED_STATE.

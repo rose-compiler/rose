@@ -373,6 +373,8 @@ public:
     virtual BaseSemantics::SValuePtr ite(const BaseSemantics::SValuePtr &sel_,
                                          const BaseSemantics::SValuePtr &a_,
                                          const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+ // DQ (10/15/2015): These are incorrectly marked as "override" according to GNU 4.8.3 using c++11 mode.
+#if 0
     virtual BaseSemantics::SValuePtr isEqual(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr isNotEqual(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr isUnsignedLessThan(const BaseSemantics::SValuePtr&,
@@ -397,6 +399,35 @@ public:
                                          const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr subtract(const BaseSemantics::SValuePtr &a_,
                                          const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+#else
+    virtual BaseSemantics::SValuePtr isEqual(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
+    virtual BaseSemantics::SValuePtr isNotEqual(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
+    virtual BaseSemantics::SValuePtr isUnsignedLessThan(const BaseSemantics::SValuePtr&,
+                                                        const BaseSemantics::SValuePtr&);
+    virtual BaseSemantics::SValuePtr isUnsignedLessThanOrEqual(const BaseSemantics::SValuePtr&,
+                                                               const BaseSemantics::SValuePtr&);
+    virtual BaseSemantics::SValuePtr isUnsignedGreaterThan(const BaseSemantics::SValuePtr&,
+                                                           const BaseSemantics::SValuePtr&);
+    virtual BaseSemantics::SValuePtr isUnsignedGreaterThanOrEqual(const BaseSemantics::SValuePtr&,
+                                                                  const BaseSemantics::SValuePtr&);
+    virtual BaseSemantics::SValuePtr isSignedLessThan(const BaseSemantics::SValuePtr&,
+                                                      const BaseSemantics::SValuePtr&);
+    virtual BaseSemantics::SValuePtr isSignedLessThanOrEqual(const BaseSemantics::SValuePtr&,
+                                                             const BaseSemantics::SValuePtr&);
+    virtual BaseSemantics::SValuePtr isSignedGreaterThan(const BaseSemantics::SValuePtr&,
+                                                         const BaseSemantics::SValuePtr&);
+    virtual BaseSemantics::SValuePtr isSignedGreaterThanOrEqual(const BaseSemantics::SValuePtr&,
+                                                                const BaseSemantics::SValuePtr&);
+ // DQ (10/15/2015): These are correct to use the "orverrise" keyword.
+    virtual BaseSemantics::SValuePtr unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr &a_,
+                                         const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+
+    virtual BaseSemantics::SValuePtr subtract(const BaseSemantics::SValuePtr &a_,
+                                         const BaseSemantics::SValuePtr &b_);
+#endif
+
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr &a_,
                                                     const BaseSemantics::SValuePtr &b_,
                                                     const BaseSemantics::SValuePtr &c_,
