@@ -181,6 +181,7 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_19.C \
   inputmoveDeclarationToInnermostScope_20.C \
   inputmoveDeclarationToInnermostScope_21.C \
+  inputmoveDeclarationToInnermostScope_22.C \
   inputmoveDeclarationToInnermostScope_test2015_126.C \
   inputmoveDeclarationToInnermostScope_test2015_127.C 
 
@@ -913,7 +914,9 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        referenceResults/rose_inputmoveDeclarationToInnermostScope_18.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_19.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_20.C \
-       referenceResults/rose_inputmoveDeclarationToInnermostScope_21.C
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_21.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_22.C \
+       referenceResults/withmerge/rose_v2_inputmoveDeclarationToInnermostScope_22.C
 
 
 # JP (10/4/14): Added the unit tests

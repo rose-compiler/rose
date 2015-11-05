@@ -109,9 +109,20 @@ public:
 
 };
 
+static std::string
+sqlite3_url_documentation() {
+    return ("@named{SQLite3}{The uniform resource locator for SQLite3 databases has the format "
+            "\"sqlite3://@v{filename}[?@v{param1}[=@v{value1}][&@v{additional_parameters}...]]\" "
+            "where @v{filename} is the name of a file in the local filesystem (use a third slash if the name "
+            "is an absolute name from the root of the filesystem). The file name can be followed by zero or "
+            "parameters separated from the file name by a question mark and from each other by an ampersand. "
+            "Each parameter has an optional setting. At this time, the only parameter that is understood is "
+            "\"debug\", which takes no value.}");
+}
+
 #ifdef ROSE_HAVE_SQLITE3
 // Parse an sqlite3 URL of the form:
-//    sqlite3://[FILENAME][?PARAM1[=VALUE1]&...]
+//    sqlite3://FILENAME[?PARAM1[=VALUE1]&...]
 // The only parameter that's currently understood is "debug", which turns on the debug property for the connection.
 static std::string
 sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/)
@@ -156,6 +167,19 @@ sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/)
     return dbname;
 }
 #endif
+
+static std::string
+postgres_url_documentation() {
+    return ("@named{PostgreSQL}{The uniform resource locator for PostgreSQL databases has the format "
+            "\"postgresql://[@v{user}[:@v{password}]@][@v{hostname}[:@v{port}]][/@v{database}]"
+            "[?@v{param1}[=@v{value1}][&@v{additional_parameters}...]]\" where @v{user} is the database user "
+            "name; @v{password} is the user's password; @v{hostname} is the host name or IP address of the database "
+            "server, defaulting to the localhost; @v{port} is the TCP port number at which the server listens; "
+            "and @v{database} is the name of the database. The rest of the URI consists of optional parameters separated "
+            "from the prior part of the URI by a question mark and separated from each other by ampersands.  The only "
+            "parameter that is understood at this time is \"debug\", which takes no value and causes each SQL statement "
+            "to be emitted to standard error as it's executed.}");
+}
 
 #ifdef ROSE_HAVE_LIBPQXX
 // Documentation for lipqxx says pqxx::connection's argument is whatever libpq connect takes, but apparently URLs don't work.
@@ -1481,6 +1505,20 @@ std::ostream& operator<<(std::ostream &o, const Exception &x) { x.print(o); retu
 std::ostream& operator<<(std::ostream &o, const Connection &x) { x.print(o); return o; }
 std::ostream& operator<<(std::ostream &o, const Transaction &x) { x.print(o); return o; }
 std::ostream& operator<<(std::ostream &o, const Statement &x) { x.print(o); return o; }
+
+std::string
+uriDocumentation() {
+    std::string s;
+#ifdef ROSE_HAVE_SQLITE3
+    s += sqlite3_url_documentation();
+#endif
+#ifdef ROSE_HAVE_LIBPQXX
+    s += postgres_url_documentation();
+#endif
+    if (s.empty())
+        s = "No database drivers are configured.";
+    return s;
+}
 
 /*******************************************************************************************************************************
  *                                      Tables
