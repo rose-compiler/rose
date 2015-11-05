@@ -138,7 +138,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                   }
                  else
                   {
-                    printf ("ERROR: In injectSymbolsFromReferencedScopeIntoCurrentScope(): initializedNameFromSymbol->get_declptr() == NULL \n");
+                    printf ("WARNING: In injectSymbolsFromReferencedScopeIntoCurrentScope(): initializedNameFromSymbol->get_declptr() == NULL: initializedNameFromSymbol->get_name() = %s \n",initializedNameFromSymbol->get_name().str());
                   }
              }
 

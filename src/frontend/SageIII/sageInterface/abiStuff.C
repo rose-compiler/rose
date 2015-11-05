@@ -455,7 +455,7 @@ StructLayoutInfo SystemPrimitiveTypeLayoutGenerator::layoutType(SgType* t) const
     case V_SgTypeUnsignedLong: {layout.size = sizeof(unsigned long); layout.alignment = rose_alignof<unsigned long>::v; break;}
 
     case V_SgTypeLongLong: {layout.size = sizeof(long long); layout.alignment = rose_alignof<long long>::v; break;}
-    //case V_SgTypeSignedLongLong: {layout.size = sizeof(); layout.alignment = alignof<>::v; break;}
+    //case V_SgTypeSignedLongLong: {layout.size = sizeof(); layout.alignment = rose_alignof<>::v; break;}
     case V_SgTypeUnsignedLongLong: {layout.size = sizeof(unsigned long long); layout.alignment = rose_alignof<unsigned long long>::v; break;}
 
     case V_SgTypeFloat: {layout.size = sizeof(float); layout.alignment = rose_alignof<float>::v; break;}

@@ -8,16 +8,16 @@
 #include <boost/graph/connected_components.hpp>
 
 #ifdef _MSC_VER
-#include <float.h>                              // for _isnan
-#define isnan(x) _isnan(x)
-#include <boost/math/special_functions/erf.hpp> // for erf
-using boost::math::erf;
-#define _USE_MATH_DEFINES                       // for M_LN2
-#include <math.h>
+    #include <float.h>                                  // for _isnan
+    #define isnan(x) _isnan(x)
+    #include <boost/math/special_functions/erf.hpp> // for erf
+    using boost::math::erf;
+    #define _USE_MATH_DEFINES                       // for M_LN2
+    #include <math.h>
 #elif __cplusplus >= 201103L
-// isnan is already declared in this scope
+    // isnan is already declared in this scope
 #else
-using std::isnan;
+    using std::isnan;
 #endif
 
 namespace rose {

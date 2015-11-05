@@ -337,6 +337,8 @@ BinaryLoaderElf::build_master_symbol_table(SgAsmInterpretation *interp)
 }
 
 /* Reference Elf TIS Portal Formats Specification, Version 1.1 */
+// DQ (10/15/2015): C++11 "override" keyword is not allowed in function definitions (gnu 4.8.3 using -std=c++11 mode).
+// void BinaryLoaderElf::fixup(SgAsmInterpretation *interp, FixupErrors *errors) ROSE_OVERRIDE
 void
 BinaryLoaderElf::fixup(SgAsmInterpretation *interp, FixupErrors *errors)
 {
