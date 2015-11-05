@@ -35,7 +35,9 @@ public:
     Interval(uint64_t first, uint64_t size): Range<uint64_t>(first, size) {}
     Interval(const Range<uint64_t> &other): Range<uint64_t>(other) {} /*implicit*/
 
-    static Interval inin(uint64_t first, uint64_t last) ROSE_OVERRIDE {
+ // DQ (10/15/2015): These are incorrectly marked as "override" according to GNU 4.8.3 using c++11 mode.
+ // static Interval inin(uint64_t first, uint64_t last) ROSE_OVERRIDE {
+    static Interval inin(uint64_t first, uint64_t last) {
         ASSERT_require(first<=last);
         Interval retval;
         retval.first(first);
@@ -46,7 +48,9 @@ public:
     /** Convert a bit mask to a string. */
     static std::string to_string(uint64_t n);
 
-    void print(std::ostream &o) const ROSE_OVERRIDE;
+ // DQ (10/15/2015): These are incorrectly marked as "override" according to GNU 4.8.3 using c++11 mode.
+ // void print(std::ostream &o) const ROSE_OVERRIDE;
+    void print(std::ostream &o) const;
 };
 
 std::ostream& operator<<(std::ostream &o, const Interval &x);
@@ -294,14 +298,20 @@ public:
     /** Read a byte from memory.
      *
      *  In order to read a multi-byte value, use RiscOperators::readMemory(). */
+ // DQ (10/15/2015): These are incorrectly marked as "override" according to GNU 4.8.3 using c++11 mode.
+ // virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+ //                                             BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
-                                                BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE;
+                                                BaseSemantics::RiscOperators *ops);
 
     /** Write a byte to memory.
      *
      *  In order to write a multi-byte value, use RiscOperators::writeMemory(). */
+ // DQ (10/15/2015): These are incorrectly marked as "override" according to GNU 4.8.3 using c++11 mode.
+ // virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
+ //                          BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE;
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
-                             BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE;
+                             BaseSemantics::RiscOperators *ops);
 };
 
 

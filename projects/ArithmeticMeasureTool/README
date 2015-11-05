@@ -1,39 +1,6 @@
 A project to help calculate arithmetic intensity of loops in input source codes. 
 By Chunhua "Leo" Liao
 
-To build
+For latest documentation, please visit
+* https://en.wikibooks.org/wiki/ROSE_Compiler_Framework/Arithmetic_intensity_measuring_tool
 
-1. prepare environment variables for boost and rose libraries.
-  e.g:
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/liao6/opt/boost_1.47.0/lib:
-  source set.rose // after updating the path inside of it
-
-2. It is best to have a separated build tree from the source tree
-In source tree: 
-./build
-
-In a build tree you created, like mkdir buildtree
-
-../configure --prefix=/home/liao6/workspace/arithmeticIntensity.git/buildtree/install --with-rose=/home/liao6/workspace/rose/build/install --with-boost=/home/liao6/opt/boost_1_47_0_inst
-
-make
-make check
-make install
-
-3. to clean up everything
-  ./cleanup.sh
-
-
-The translator can try to verify the results by comparing what is being analyzed to what is indicated by pragmas in the input code.
-
-The pragma has the form of
-
-#pragma aitool fp_plus(10) fp_minus(10) fp_multiply(10) fp_divide (10) fp_total(40)
-for () ...
-
-fp_total is required while the clauses of other kinds of FP operations are optional.
-
-
-Manual testing
-
-* [liao6@tux322:~/workspace/ExReDi/ai_tool.git/translator]m && ./measureTool -c -annot ./src/functionSideEffect.annot -I. ./test/jacobi-v3.c

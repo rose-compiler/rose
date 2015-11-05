@@ -30,6 +30,10 @@ generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNa
   // types used in template arguments can call the unparser to support there generation of name qualified 
   // nested types.
 
+#if 0
+     printf ("In generateNameQualificationSupport(): MangledNameSupport::visitedTemplateDefinitions.size() = %zu \n",MangledNameSupport::visitedTemplateDefinitions.size());
+#endif
+
   // DQ (9/7/2014): Modified to handle template header map (for template declarations).
   // NameQualificationTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),SgNode::get_globalTypeNameMap(),referencedNameSet);
      NameQualificationTraversal t(SgNode::get_globalQualifiedNameMapForNames(),SgNode::get_globalQualifiedNameMapForTypes(),SgNode::get_globalQualifiedNameMapForTemplateHeaders(),SgNode::get_globalTypeNameMap(),referencedNameSet);
@@ -474,58 +478,101 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
      ROSE_ASSERT(positionStatement != NULL);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-      printf ("In evaluateTemplateInstantiationDeclaration(): declaration = %p = %s currentScope = %p = %s positionStatement = %p = %s \n",
-           declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str(),positionStatement,positionStatement->class_name().c_str());
+     printf ("In evaluateTemplateInstantiationDeclaration(): declaration = %p = %s currentScope = %p = %s positionStatement = %p = %s \n",
+          declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str(),positionStatement,positionStatement->class_name().c_str());
 #endif
 
-  // DQ (6/1/2011): Added support for template arguments.
-     switch (declaration->variantT())
+  // DQ (10/31/2015): This code is designed to eliminate the infinite recursion possible in some rare cases of 
+  // template instantiation (see test2015_105.C extracted from ROSE compiling ROSE header files and the boost 
+  // usage present there).  Note that this could be restricted to the handling of SgTemplateInstantiationDecl 
+  // instead (I think).  But it might be that I have just not yet seen a recursive case using template functions 
+  // instantiations, template member function instantiations and template variable instantiations.
+     SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
+     SgClassDefinition* nonconst_def = templateInstantiationDeclaration != NULL ? isSgClassDefinition(templateInstantiationDeclaration->get_definition()) : NULL;
+     if (MangledNameSupport::visitedTemplateDefinitions.find(nonconst_def) != MangledNameSupport::visitedTemplateDefinitions.end())
         {
-          case V_SgTemplateInstantiationDecl:
-             {
-               SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
-               ROSE_ASSERT(templateInstantiationDeclaration != NULL);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-            // printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
-               printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p templateInstantiationDeclaration->get_templateArguments().size() = %" PRIuPTR " \n",templateInstantiationDeclaration,templateInstantiationDeclaration->get_templateArguments().size());
+       // Skip the call that would result in infinte recursion.
+#if 0
+          printf ("In nameQualificationSupport.C: evaluateTemplateInstantiationDeclaration(): skipping the call to process the template class instantiation definition: def = %p = %s \n",declaration,declaration->class_name().c_str()); 
 #endif
-            // Evaluate all template arguments.
-               evaluateNameQualificationForTemplateArgumentList (templateInstantiationDeclaration->get_templateArguments(),currentScope,positionStatement);
-               break;
+        }
+       else
+        {
+       // Only handle the case of a SgTemplateInstantiationDecl.
+          SgClassDefinition* templateInstantiationDefinition = isSgTemplateInstantiationDefn(nonconst_def);
+          if (templateInstantiationDefinition != NULL)
+             {
+#if 0
+               printf ("Insert templateInstantiationDefinition = %p into visitedTemplateDeclarations (stl set)\n",templateInstantiationDefinition);
+#endif
+            // Not clear why we need to use an iterator to simply insert a pointer into the set.
+            // SgTemplateInstantiationDefn* nonconst_templateInstantiationDefinition = const_cast<SgTemplateInstantiationDefn*>(templateInstantiationDefinition);
+               MangledNameSupport::setType::iterator it = MangledNameSupport::visitedTemplateDefinitions.begin();
+            // MangledNameSupport::visitedTemplateDeclarations.insert(it,nonconst_templateInstantiationDefinition);
+               MangledNameSupport::visitedTemplateDefinitions.insert(it,nonconst_def);
              }
 
-          case V_SgTemplateInstantiationFunctionDecl:
+       // DQ (11/1/2015): Indented this code (switch statement) to conform to new block layout.
+       // DQ (6/1/2011): Added support for template arguments.
+          switch (declaration->variantT())
              {
-               SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(declaration);
-               ROSE_ASSERT(templateInstantiationFunctionDeclaration != NULL);
+               case V_SgTemplateInstantiationDecl:
+                  {
+                    SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
+                    ROSE_ASSERT(templateInstantiationDeclaration != NULL);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("$$$$$$$$$ --- templateInstantiationFunctionDeclaration = %p \n",templateInstantiationFunctionDeclaration);
+                 // printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
+                    printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p templateInstantiationDeclaration->get_templateArguments().size() = %" PRIuPTR " \n",templateInstantiationDeclaration,templateInstantiationDeclaration->get_templateArguments().size());
 #endif
-            // Evaluate all template arguments.
-               evaluateNameQualificationForTemplateArgumentList (templateInstantiationFunctionDeclaration->get_templateArguments(),currentScope,positionStatement);
-               break;
+                 // Evaluate all template arguments.
+                    evaluateNameQualificationForTemplateArgumentList (templateInstantiationDeclaration->get_templateArguments(),currentScope,positionStatement);
+                    break;
+                  }
+
+               case V_SgTemplateInstantiationFunctionDecl:
+                  {
+                    SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(declaration);
+                    ROSE_ASSERT(templateInstantiationFunctionDeclaration != NULL);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("$$$$$$$$$ --- templateInstantiationFunctionDeclaration = %p \n",templateInstantiationFunctionDeclaration);
+#endif
+                 // Evaluate all template arguments.
+                    evaluateNameQualificationForTemplateArgumentList (templateInstantiationFunctionDeclaration->get_templateArguments(),currentScope,positionStatement);
+                    break;
+                  }
+
+               case V_SgTemplateInstantiationMemberFunctionDecl:
+                  {
+                    SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(declaration);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("$$$$$$$$$ --- templateInstantiationMemberFunctionDeclaration = %p \n",templateInstantiationMemberFunctionDeclaration);
+#endif
+                    ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration != NULL);
+
+                 // Evaluate all template arguments.
+                 // evaluateNameQualificationForTemplateArgumentList (templateInstantiationMemberFunctionDeclaration->get_templateArguments(),currentScope,positionStatement);
+                    SgTemplateArgumentPtrList & templateArgumentList = templateInstantiationMemberFunctionDeclaration->get_templateArguments();
+                    evaluateNameQualificationForTemplateArgumentList(templateArgumentList,currentScope,positionStatement);
+                    break;
+                  }
+
+               default:
+                  {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("This IR node does not contain template arguments to process: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#endif
+                  }
              }
 
-          case V_SgTemplateInstantiationMemberFunctionDecl:
+       // DQ (10/31/2015): The rule here is that after processing as a mangled name we remove the 
+       // template instantiation from the list so that other non-nested uses of the template 
+       // instantiation will force the manged name to be generated.
+          if (templateInstantiationDefinition != NULL)
              {
-               SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(declaration);
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("$$$$$$$$$ --- templateInstantiationMemberFunctionDeclaration = %p \n",templateInstantiationMemberFunctionDeclaration);
+#if 0
+               printf ("Erase templateInstantiationDefinition = %p from visitedTemplateDeclarations (stl set)\n",templateInstantiationDefinition);
 #endif
-               ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration != NULL);
-
-            // Evaluate all template arguments.
-            // evaluateNameQualificationForTemplateArgumentList (templateInstantiationMemberFunctionDeclaration->get_templateArguments(),currentScope,positionStatement);
-               SgTemplateArgumentPtrList & templateArgumentList = templateInstantiationMemberFunctionDeclaration->get_templateArguments();
-               evaluateNameQualificationForTemplateArgumentList(templateArgumentList,currentScope,positionStatement);
-               break;
-             }
-
-          default:
-             {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-               printf ("This IR node does not contain template arguments to process: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
-#endif
+               MangledNameSupport::visitedTemplateDefinitions.erase(nonconst_def);
              }
         }
 
@@ -3061,11 +3108,15 @@ NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* function
 #if 0
           printf ("++++++++++++++++ functionNameString (globalUnparseToString()) = %s \n",functionNameString.c_str());
 #endif
+
+       // DQ (10/31/2015): Increased the maximum allowable size of function names (because test2015_98.C 
+       // demonstrates a longer name (length == 5062)).
        // DQ (6/24/2013): Increased upper bound to support ROSE compiling ROSE.
        // This is symptematic of an error which causes the whole class to be included with the class 
        // definition.  This was fixed by calling unparseInfoPointer->set_SkipClassDefinition() above.
        // if (functionNameString.length() > 2000)
-          if (functionNameString.length() > 5000)
+       // if (functionNameString.length() > 5000)
+          if (functionNameString.length() > 10000)
              {
                printf ("Error: function names should not be this long... functionNameString.length() = %" PRIuPTR " \n",functionNameString.length());
 #if 1
@@ -5711,7 +5762,9 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
              }
             else
              {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("WARNING: classDeclaration->get_definingDeclaration() == NULL: This was a previously passing test, but not now that we have force SgTemplateTypes to be handled in the local type table. \n");
+#endif
              }
 
           if (classDeclaration->get_isUnNamed() == true)
