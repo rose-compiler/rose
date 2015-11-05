@@ -474,10 +474,16 @@ test_move_decls_with_token_unparsing: $(PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_
 	@echo "****** ROSE/tests/roseTests/astInterface_tests/moveDeclarationToInnermostScope: make test_move_decls_with_token_unparsing rule complete (terminated normally) ******"
 	@echo "********************************************************************************************************************************************************************"
 
+# DQ (11/4/2015): Restrict testing of the token-based unparsing to later versions of GNU compilers (at least initially).
 # DQ (11/2/2015): Added token-based unparsing tests using the move-tool to the move_diff_check test rule.
 # test both diff cases
 # move_diff_check: move_decls_diff_check move_merge_decls_diff_check
+# move_diff_check: move_decls_diff_check move_merge_decls_diff_check test_move_decls_with_token_unparsing
+if ROSE_USING_GCC_VERSION_LATER_4_4
 move_diff_check: move_decls_diff_check move_merge_decls_diff_check test_move_decls_with_token_unparsing
+else
+move_diff_check: move_decls_diff_check move_merge_decls_diff_check
+endif
 
 # only move , no merge
 move_decls_diff_check: $(MOVE_DECLS_DIFF_FILES)
