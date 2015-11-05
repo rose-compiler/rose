@@ -223,7 +223,7 @@ extern void omp_lexer_init(const char* str) {
   /* We have omp_ suffix for all flex functions */
   omp_restart(omp_in);
 }
-
+/*Conditional return ID_EXPRESSION or input based on the context*/
 static int cond_return (int input)
 {
   if (b_within_variable_list)
