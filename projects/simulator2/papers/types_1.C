@@ -41,8 +41,8 @@ public:
         : SymbolicSemantics::ValueType<nBits>(node) {}
     ValueType(const PartialSymbolicSemantics::ValueType<nBits> &other, std::string comment="") {
         set_expression(other.is_known() ?
-                       rose::BinaryAnalysis::InsnSemanticsExpr::LeafNode::create_integer(nBits, other.known_value(), comment) :
-                       rose::BinaryAnalysis::InsnSemanticsExpr::LeafNode::create_variable(nBits, comment));
+                       rose::BinaryAnalysis::SymbolicExpr::LeafNode::create_integer(nBits, other.known_value(), comment) :
+                       rose::BinaryAnalysis::SymbolicExpr::LeafNode::create_variable(nBits, comment));
     }
 };
 

@@ -136,7 +136,7 @@ echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 # DQ (8/24/2009): Allow either "roseTranslator" or "roseAnalysis"
 # if [ "$compilerName" == "roseTranslator" ]
 # if [ "$compilerName" == "roseTranslator" || "$compilerName" == "roseAnalysis" ]
-if [ "$compilerName" == "roseTranslator" ]
+if [ "$compilerName" = "roseTranslator" ]
 then
 compilerName="g++"
 echo "Changed compilerName from roseTranslator to $compilerName"
@@ -144,7 +144,7 @@ echo "Changed compilerName from roseTranslator to $compilerName"
 echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 echo "After change: compilerName   = $compilerName"
 echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-elif [ "$compilerName" == "roseAnalysis" ]
+elif [ "$compilerName" = "roseAnalysis" ]
 then
 compilerName="g++"
 echo "Changed compilerName from roseAnalysis to $compilerName"
@@ -204,7 +204,7 @@ fi
   # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|roseTranslator)
   # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++)
   # g++*|gcc*|cc*|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++)
-    g++*|gcc*|cc*|icpc|mpiicpc|icc|mpiicc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++|clang|clang++)
+    g++*|gcc*|cc*|icpc|mpiicpc|icc|mpiicc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++|clang|clang++|clang-*|clang++-*)
          case "$compilerName" in
          # gcc*|cc*|icc|mpicc|xt-xcc)
            gcc*|cc*|icc|mpicc|mpiicc|xt-xcc)
@@ -277,38 +277,54 @@ sh "$roseHome/config/get_compiler_header_dirs" "$1" | while read dirName
 # echo "Copying ($roseHome/config/rose_edg_required_macros_and_functions.h) to ($target_parent_dir) ..."
 # cp $roseHome/config/rose_edg_required_macros_and_functions.h $target_parent_dir
 
-# DQ (6/27/2006): We really should verify that "/usr/include/sys/cdefs.h" exists since we reference it explicitly 
-# in the ROSE specific generated "sys/cdefs.h" header file.
-if [ -f /usr/include/sys/cdefs.h ]
-then
-    echo "Verified \"/usr/include/sys/cdefs.h\" exists ... (referenced by ROSE specific \"sys/cdefs.h\" header file)"
- else
-    echo "ERROR: Could not find \"/usr/include/sys/cdefs.h\" system header file ... (referenced by ROSE specific \"sys/cdefs.h\" header file)"
-    exit 5
-fi
+
 
 # DQ (1/14/2007): The variable target_parent_dir is not set in this shell procedure, so it causes an error.
 system_headers_directory="$mainTargetDir/hdrs"
 echo "system_headers_directory = $system_headers_directory should be used instead of target_parent_dir = $target_parent_dir"
-
-# echo "Exiting as a test! calling exit 1"
-# exit 1
-
-# DQ (6/27/2006): Copy a ROSE specific version of cdefs.h to $target_parent_dir/sys so that the "__flexarr"
-# macro can be redefined so that Red Hat 7.3 will not require variable length arrays in definition of
-# "struct __gconv_info __cd;" in "/usr/include/_G_config.h".  This is a common problem since C does not
-# support this (gnu does however as an extension).  This is a problem for EDG and we fix it this way.
-
-echo "Copying $roseHome/config/rose_specific_cdefs.h to $system_headers_directory/sys to fix __gconv_info incomplete definition problem ..."
 mkdir -p "$system_headers_directory/sys"
-# cp $roseHome/config/rose_specific_cdefs.h $target_parent_dir/sys/cdefs.h
-cp "$roseHome/config/rose_specific_cdefs.h" "$system_headers_directory/sys/cdefs.h"
 
-error_code=$?
-if test $error_code != 0; then
-     echo "Error in cp $roseHome/config/rose_specific_cdefs.h $system_headers_directory/sys/cdefs.h: nonzero exit code returned to caller error_code = $error_code" >&2
-     exit 1
+
+###### Fixups for cdefs.h
+
+# Replace "#include "/.../cdefs.h" with the path that's valid for this platform, copying the file from the ROSE source
+# tree to the build tree in the process (because the source tree should not be modified when building).  The old behavior
+# was for this script to call "exit 5" if a hard-coded system cdefs.h didn't exist. [Robb Matzke, 2015-11-04]
+rose_src_cdefs_h="$roseHome/config/rose_specific_cdefs.h"
+rose_bld_cdefs_h="$system_headers_directory/sys/cdefs.h"
+rose_system_cdefs_h=$(sed -n 's/^# *include *["<]\(.*\/cdefs.h\)[>"].*/\1/p' <"$rose_src_cdefs_h")
+if [ "$rose_system_cdefs_h" = "" ]; then
+    echo "$0: error: could not find #include for cdefs.h in $rose_cdefs_h" >&2
+    exit 5
+elif [ ! -r "$rose_system_cdefs_h" ]; then
+    # The "#include </.../cdefs.h> in the ROSE-specific cdefs.h is wrong, so try to fix it.
+    real_system_cdefs_h=$(find /usr/include -follow -name cdefs.h |head -n1)
+    if [ ! -r "$real_system_cdefs_h" ]; then
+	(
+	    echo "$0: error: cannot find a system cdefs.h header.  The ROSE-specific version of this header,"
+	    echo "$rose_src_cdefs_h, mentions $rose_system_cdefs_h, which does not exist on this system. Furthermore,"
+	    echo "this script was unable to find a suitable cdefs.h on this system.  You should edit the #include"
+	    echo "in $rose_src_cdefs_h so has the correct full path to your system's cdefs.h header."
+	) |fold -s -w100 |sed '2,$ s/^/    /' >&2
+	exit 5
+    fi
+
+    # We found a valid system-install cdefs.h, so fix the ROSE-specific version to #include the system-installed version.
+    escaped_system_cdefs_h=$(echo "$real_system_cdefs_h" |sed 's/\//\\\//g')
+    sed 's/^\(# *include *["<]\)\/.*\/cdefs\.h\([>"].*\)/\1'"$escaped_system_cdefs_h"'\2/' \
+	<"$rose_src_cdefs_h" >"$rose_bld_cdefs_h"
+else
+    # DQ (6/27/2006): Copy a ROSE specific version of cdefs.h to $target_parent_dir/sys so that the "__flexarr" macro
+    # can be redefined so that Red Hat 7.3 will not require variable length arrays in definition of "struct __gconv_info
+    # __cd;" in "/usr/include/_G_config.h".  This is a common problem since C does not support this (gnu does however as
+    # an extension).  This is a problem for EDG and we fix it this way.
+    cp "$rose_src_cdefs_h" "$rose_bld_cdefs_h" || exit 1
 fi
+
+###### End of fixups for cdefs.h
+
+
+
 
 if [ is_C_compiler = "yes" ]
 then

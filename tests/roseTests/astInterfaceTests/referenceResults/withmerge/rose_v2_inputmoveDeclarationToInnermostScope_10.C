@@ -1,3 +1,4 @@
+#if 1
 
 void foo(int len,int condition)
 {
@@ -8,6 +9,7 @@ void foo(int len,int condition)
     }
   }
 }
+#endif
 // A tricky case of if-stmt, 
 // move to two bodies, trigger another round of moving: iterative moving
 #if 1
@@ -32,7 +34,6 @@ void bar(bool allow)
 
 void foo2(bool allow,int update,int update2)
 {
-  int j;
   if (update > 0) {
     for (int i = 0; i < 12; ++i) {
     }
@@ -41,11 +42,13 @@ void foo2(bool allow,int update,int update2)
         for (int k = 0; k < 4; ++k) {
           if (allow) {
             int i;
+            int j;
             for ((i = 0 , j = 0); i < 10; (++i , ++j)) {
             }
           }
            else {
             int i;
+            int j;
             for ((i = 0 , j = 0); i < 10; (++i , ++j)) {
             }
           }

@@ -595,6 +595,20 @@ AstTests::runAllTests(SgProject* sageProject)
           TestForReferencesToDeletedNodes::test(sageProject);
         }
 
+     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+          cout << "Test typedef types for cycles." << endl;
+
+        {
+          TimingPerformance timer ("AST check for typedef type cycles:");
+
+       // DQ (9/26/2011): Test for references to deleted IR nodes in the AST.
+          TestAstForCyclesInTypedefs::test();
+        }
+
+
+
+
+
 #if 1
   // Comment out to see if we can checkin what we have fixed recently!
 
@@ -2020,7 +2034,7 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
      string mangledName;
 
   // DQ (4/3/2011): This is used to compute the file if isValidMangledName() fails.
-     SgFile* file = NULL;
+  // SgFile* file = NULL;
 
 #if 0
      printf ("In TestAstForProperlyMangledNames::visit(SgNode* node = %p = %s) \n",node,node->class_name().c_str());
@@ -3756,9 +3770,20 @@ TestExpressionTypes::visit ( SgNode* node )
              {
                SgExpression *parentExpr = isSgExpression(expression->get_parent());
                if (parentExpr != NULL && !(
+#if 0
+                                    // DQ (10/27/2015): Fixed warning from GNU 4.8.3 compiler.
+                                    // parentExpr->variantT() == V_SgAssignInitializer && expression->variantT() == V_SgStringVal
+                                      (parentExpr->variantT() == V_SgAssignInitializer && expression->variantT() == V_SgStringVal)
+                                    || parentExpr->variantT() == V_SgDotExp
+                                    || parentExpr->variantT() == V_SgArrowExp
+                                 // DQ (10/27/2015): Fixed warning from GNU 4.8.3 compiler.
+                                 // || isSgInitializer(parentExpr) && isSgInitializer(expression)))
+#else
+                                 // DQ (10/31/2015): I think this is fixing the same issue (and resulted in a conflict).
                                     (parentExpr->variantT() == V_SgAssignInitializer && expression->variantT() == V_SgStringVal)
                                     || parentExpr->variantT() == V_SgDotExp
                                     || parentExpr->variantT() == V_SgArrowExp
+#endif
                                     || (isSgInitializer(parentExpr) && isSgInitializer(expression))))
                   {
                     SgType* parentType = parentExpr->get_type();
@@ -5489,7 +5514,7 @@ bool hasAssociatedSymbol(SgDeclarationStatement* declarationStatement)
   // does not have an associated symbol.
      if (isSgFunctionParameterList(declarationStatement) != NULL || 
          isSgCtorInitializerList(declarationStatement)   != NULL ||
-         isSgPragmaDeclaration(declarationStatement)   != NULL ||
+         isSgPragmaDeclaration(declarationStatement)     != NULL ||
          isSgVariableDeclaration(declarationStatement)   != NULL ||
          isSgVariableDefinition(declarationStatement)    != NULL )
         {
@@ -6473,5 +6498,40 @@ TestForMultipleWaysToSpecifyRestrictKeyword::visit ( SgNode* node )
                   }
              }
         }
+   }
+
+
+void
+TestAstForCyclesInTypedefs::test()
+   {
+     TestAstForCyclesInTypedefs t;
+     t.traverseMemoryPool();
+   }
+
+
+void
+TestAstForCyclesInTypedefs::visit ( SgNode* node )
+   {
+  // DQ (10/27/2015): This test checks for cycles in typedef types.
+  // It might be expanded to include testing for cycles in other kinds of types as well.
+
+     ROSE_ASSERT(node != NULL);
+
+#if 0
+     printf ("TestAstForCyclesInTypedefs::visit: node = %s \n",node->class_name().c_str());
+#endif
+
+  // DQ (10/27/2015): Added test for specific cycle in typedef types.
+  // SgType* currentType = isSgType(node);
+     SgTypedefType* currentType = isSgTypedefType(node);
+
+#if 1
+     if (currentType != NULL)
+        {
+          ROSE_ASSERT( (isSgModifierType(isSgTypedefType(currentType)->get_base_type()) == NULL) || 
+                       ( (isSgModifierType(isSgTypedefType(currentType)->get_base_type()) != NULL) && 
+                         (isSgModifierType(isSgTypedefType(currentType)->get_base_type())->get_base_type() != currentType) ) );
+        }
+#endif
    }
 

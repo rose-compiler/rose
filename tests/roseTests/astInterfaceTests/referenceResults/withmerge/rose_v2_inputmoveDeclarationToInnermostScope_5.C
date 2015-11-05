@@ -31,16 +31,16 @@ static void fallbackQSort3(UInt32 *fmap,UInt32 *eclass,Int32 loSt,Int32 hiSt)
   r = 0;
   sp = 0;
   while(sp > 0){
-    UInt32 r3;
-    UInt32 med;
-    Int32 hi;
-    Int32 lo;
-    Int32 m;
-    Int32 n;
-    Int32 gtHi;
-    Int32 ltLo;
-    Int32 unHi;
     Int32 unLo;
+    Int32 unHi;
+    Int32 ltLo;
+    Int32 gtHi;
+    Int32 n;
+    Int32 m;
+    Int32 lo;
+    Int32 hi;
+    UInt32 med;
+    UInt32 r3;
     if (hi - lo < 10) {
       fallbackSimpleSort(fmap,eclass,lo,hi);
       continue; 
@@ -134,11 +134,11 @@ static void fallbackQSort3(UInt32 *fmap,UInt32 *eclass,Int32 loSt,Int32 hiSt)
     Int32 lo;
     Int32 hi;
     if (hi > lo) {
-      Int32 *budget;
-      Int32 nblock;
-      UInt16 *quadrant;
-      UChar *block;
       UInt32 *ptr;
+      UChar *block;
+      UInt16 *quadrant;
+      Int32 nblock;
+      Int32 *budget;
       mainQSort3(ptr,block,quadrant,nblock,lo,hi,2,budget);
     }
   }

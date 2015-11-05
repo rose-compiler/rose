@@ -429,6 +429,7 @@ detect_pointers(SgAsmFunction *func, const FunctionIdMap &function_ids)
         // instruction might be a floating point instruction that isn't handled yet.
         std::cerr <<argv0 <<": pointer analysis FAILED for " <<function_to_str(func, function_ids) <<"\n";
     }
+#if 0 // [Robb Matzke 2015-10-21]
     if (opt.verbosity>=EFFUSIVE) {
         const PointerDetector::Pointers plist = pd->get_pointers();
         for (PointerDetector::Pointers::const_iterator pi=plist.begin(); pi!=plist.end(); ++pi) {
@@ -440,6 +441,7 @@ detect_pointers(SgAsmFunction *func, const FunctionIdMap &function_ids)
             std::cerr <<"pointer at " <<pi->address <<"\n";
         }
     }
+#endif
     return pd;
 }
 

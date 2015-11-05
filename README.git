@@ -910,8 +910,10 @@ Command to sync branch on RH5 to RH6 machines (and visa versa)
 
 
 Compiling with CMake:
-   CC=gcc CXX=g++ cmake /home/dquinlan/ROSE/git-dq-edg4x-rc  -DBOOST_ROOT="$BOOST_HOME" -Denable-cuda:BOOL=off  -DCMAKE_BUILD_TYPE:STRING=Debug
-then run make normally.
+ # CC=gcc CXX=g++ cmake /home/dquinlan/ROSE/git-dq-edg4x-rc  -DBOOST_ROOT="$BOOST_HOME" -Denable-cuda:BOOL=off  -DCMAKE_BUILD_TYPE:STRING=Debug
+   CC=gcc CXX=g++ /nfs/casc/overture/ROSE/opt/rhel7/x86_64/cmake/3.3.0/bin/cmake /home/dquinlan/ROSE/git_rose_development  -DBOOST_ROOT="$BOOST_HOME" -Denable-cuda:BOOL=off  -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_INSTALL_PREFIX:PATH="/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit--4.8.3-EDG47-dq-rose-development-cmake-rc-install"
+
+then run make normally (use -j72).
 
 Verbose mode:
    make VERBOSE=1 -j24

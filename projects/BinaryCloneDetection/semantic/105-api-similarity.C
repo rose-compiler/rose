@@ -153,8 +153,6 @@ load_function_api_calls_for(int func_id, bool reachability_graph)
     return call_vec;
 }
 
-using namespace boost;
-
 /* Remove the functions from the compilation unit that is only available in one of the traces.
  *   - criteria complement of the functions from the files of the caller functions in the call trace is removed. */
 std::pair<CallVec*, CallVec*>
@@ -391,7 +389,7 @@ main(int argc, char *argv[])
 
     SqlDatabase::ConnectionPtr conn = SqlDatabase::Connection::create(argv[argno++]);
     transaction = conn->transaction();
-    int64_t cmd_id = CloneDetection::start_command(transaction, argc, argv, "calculating api similarity");
+    ::int64_t cmd_id = CloneDetection::start_command(transaction, argc, argv, "calculating api similarity");
 
     // Read function pairs from standard input or the file
     FunctionPairs worklist;
