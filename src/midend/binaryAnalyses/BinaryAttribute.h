@@ -27,7 +27,7 @@ namespace BinaryAnalysis {
  *  given an ID number to use when values are stored and retrieved.
  *
  *  @snippet binaryAttribute.C setup
- *  @snippet binaryAttribute.C attr declaring
+ *  @snippet binaryAttribute.C declaring
  *
  *  Once an ID number is created it will never be removed from the attribute symbol table; attribute ID numbers are stable
  *  for the life of the program.  If the same name is registered more than once then an @ref Attribute::AlreadyExists exception
