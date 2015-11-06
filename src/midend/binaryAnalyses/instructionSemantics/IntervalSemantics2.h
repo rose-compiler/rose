@@ -152,8 +152,9 @@ public:
             retval->set_width(new_width);
         return retval;
     }
-    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
-                                                                           SMTSolver *solver) const ROSE_OVERRIDE;
+
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors first defined at this level of the class hierarchy

@@ -129,7 +129,7 @@ ExpressionLessp::operator()(const Ptr &a, const Ptr &b) {
 Ptr
 setToIte(const Ptr &set) {
     ASSERT_not_null(set);
-    Interior::Ptr iset = set->isInteriorNode();
+    InteriorPtr iset = set->isInteriorNode();
     if (!iset || iset->getOperator() != OP_SET)
         return set;
     ASSERT_require(iset->nChildren() >= 1);
