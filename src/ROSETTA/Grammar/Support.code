@@ -15791,6 +15791,9 @@ SgProject::SgProject( const SgProject & project )
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
 SgProject::SgProject ( int argc, char** argv, bool frontendConstantFolding)
    {
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(this != NULL);
+
      initialization();
 
   // DQ (9/18/2011): Added support to use frontend specific constnat folding (applies to C/C++ using EDG).
@@ -15808,6 +15811,9 @@ SgProject::SgProject ( int argc, char** argv, bool frontendConstantFolding)
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
 SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding )
    {
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(this != NULL);
+
      initialization();
 
   // DQ (9/18/2011): Added support to use frontend specific constnat folding (applies to C/C++ using EDG).
@@ -18552,7 +18558,9 @@ SgTemplateArgument::get_mangled_name (void) const
      ROSE_ASSERT(this != NULL);
 
 #if 0
-     printf ("In SgTemplateArgument::get_mangled_name(): get_argumentType() = %d \n",get_argumentType());
+  // printf ("In SgTemplateArgument::get_mangled_name(): this = %p get_argumentType() = %d unparseToString() = %s \n",this,get_argumentType(),unparseToString().c_str());
+     printf ("In SgTemplateArgument::get_mangled_name(): this = %p get_argumentType() = %d \n",this,get_argumentType());
+     printf ("In SgTemplateArgument::get_mangled_name(): unparseToString() = %s \n",unparseToString().c_str());
 #endif
 
      ostringstream mangled_name;
@@ -18562,6 +18570,9 @@ SgTemplateArgument::get_mangled_name (void) const
              {
                const SgType* type = get_type();
                assert (type != NULL);
+#if 0
+               printf ("In SgTemplateArgument::get_mangled_name(): type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
+#endif
                SgName mangled_type = type->get_mangled();
 
                SgNode* parent = this->get_parent();

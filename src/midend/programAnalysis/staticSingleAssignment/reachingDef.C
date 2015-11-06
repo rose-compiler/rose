@@ -92,7 +92,9 @@ void ReachingDef::setDefinitionNode(SgNode* defNode)
     thisNode = defNode;
 }
 
-void ReachingDef::addJoinedDef(shared_ptr<ReachingDef> newDef, ReachingDef::FilteredCfgEdge edge)
+// DQ (10/15/2015): Fixed use of ambigious reference to shared_ptr template.
+// void ReachingDef::addJoinedDef(shared_ptr<ReachingDef> newDef, ReachingDef::FilteredCfgEdge edge)
+void ReachingDef::addJoinedDef(boost::shared_ptr<ReachingDef> newDef, ReachingDef::FilteredCfgEdge edge)
 {
     ROSE_ASSERT(isPhiFunction());
     parentDefs[newDef].insert(edge);
