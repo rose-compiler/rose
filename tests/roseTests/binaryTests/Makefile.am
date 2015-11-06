@@ -365,6 +365,14 @@ TEST_TARGETS += cory006.passed
 cory006.passed: $(TEST_EXIT_STATUS) cory006
 	@$(RTH_RUN) CMD="./cory006 $(top_srcdir)/binaries/samples/i386-cory006" $< $@
 
+# Test and demonstrate binary attributes
+noinst_PROGRAMS += cory007
+cory007_SOURCES = cory007.C
+cory007_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += cory007.passed
+cory007.passed: $(TEST_EXIT_STATUS) cory007
+	@$(RTH_RUN) CMD="./cory007" $< $@
+
 # Test symbolic semantics memory read-after-write
 noinst_PROGRAMS += testSymReadWrite
 testSymReadWrite_SOURCES = testSymReadWrite.C
@@ -394,17 +402,25 @@ testMap.passed: $(TEST_EXIT_STATUS) testMap
 noinst_PROGRAMS += testPointerDetection
 testPointerDetection_SOURCES = testPointerDetection.C
 testPointerDetection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-PointerDetectionSpecimenFunctions = \
-	simple01 simple02 simple03 simple04 simple05 simple06 simple07 simple08 simple09 simple10 simple11 simple12 \
-	simple13 simple14 simple15 simple16 simple17 simple18 simple19 simple20 simple21 simple22 simple23 simple24 \
+PointerDetectionSpecimen = $(BINARY_SAMPLES)/i386-pointers
+PointerDetectionSpecimenFunctions =											\
+	simple01 simple02 simple03 simple04 simple05 simple06 simple07 simple08 simple09 simple10 simple11 simple12	\
+	simple13 simple14 simple15 simple16 simple17 simple18 simple19 simple20 simple21 simple22 simple23 simple24	\
 	simple25 flow01 flow02 flow03 flow04 flow05 flow06 flow07
-PointerDetectionTestTargets = $(addprefix tpd_, $(addsuffix .passed, $(PointerDetectionSpecimenFunctions)))
-TEST_TARGETS += $(PointerDetectionTestTargets)
-EXTRA_DIST += testPointerDetection.conf $(addprefix tpd_, $(addsuffix .ans, $(PointerDetectionSpecimenFunctions)))
-$(PointerDetectionTestTargets): tpd_%.passed: testPointerDetection.conf testPointerDetection $(BINARY_SAMPLES)/i386-pointers
-	@$(RTH_RUN) FUNC="$$(echo "$@" |sed 's/^tpd_//;s/\.passed$$//')" INPUT=$(BINARY_SAMPLES)/i386-pointers $< $@
-.PHONY: testPointerDetection.passed
-testPointerDetection.passed: $(PointerDetectionTestTargets)
+# These are currently not working because data-flow is not converging.  I need to come back and work on these again after
+# the ITE-merge methods are implemented. [Robb Matzke, 2015-10-27]
+PointerDetectionSpecimenFunctionsNonWorking =	\
+	flow03 flow04 flow05 flow06 flow07
+PointerDetectionSwitches =											\
+	$(patsubst %,--function=%,										\
+	    $(filter-out $(PointerDetectionSpecimenFunctionsNonWorking),$(PointerDetectionSpecimenFunctions)))
+TEST_TARGETS += testPointerDetection.passed
+testPointerDetection.passed: testPointerDetection $(TEST_WITH_ANSWER)
+	@$(RTH_RUN)											\
+	    TITLE="testing pointer detection [$@]"							\
+	    CMD="./testPointerDetection $(PointerDetectionSwitches) $(PointerDetectionSpecimen)"	\
+	    ANS=$(srcdir)/testPointerDetection.ans							\
+	    $(TEST_WITH_ANSWER) $@
 
 # Test function call detection
 noinst_PROGRAMS += testCallDetection

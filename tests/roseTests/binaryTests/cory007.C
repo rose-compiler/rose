@@ -1,0 +1,114 @@
+// Test that user-defined attributes can be added to symbolic expressions.
+
+#include <rose.h>
+
+#include <BinaryAttribute.h>
+#include <BinarySymbolicExpr.h>
+#include <sageBuilderAsm.h>
+#include <sstream>
+
+using namespace rose;
+using namespace rose::BinaryAnalysis;
+
+struct MyCompoundAttribute {
+    int x, y;
+};
+
+typedef std::vector<double> MyVectorAttribute;
+
+int
+main() {
+    // Register a couple attributes.
+    const Attribute::Id DUCKS     = Attribute::define("Number of ducks");
+    const Attribute::Id TYPE      = Attribute::define("Pharos type");
+    const Attribute::Id POSITION  = Attribute::define("Position in windowing system");
+    const Attribute::Id TENSILES  = Attribute::define("Tensile strength of each rope");
+
+    // Make a symbolic expression.
+    SymbolicExpr::Ptr a = SymbolicExpr::makeVariable(32, "a");
+    SymbolicExpr::Ptr b = SymbolicExpr::makeInteger(32, 4);
+    SymbolicExpr::Ptr c = SymbolicExpr::makeAdd(a, b);
+
+    // Every expression has a hash value. Save it for comparison later.
+    uint64_t hash1 = c->hash();
+
+    // Attach some attributes
+    a->setAttribute(DUCKS, 0);                             // different than not storing an integer
+    a->setAttribute(TYPE, (SgType*)NULL);                  // different than not storing a pointer
+
+    MyCompoundAttribute pos1;
+    pos1.x = pos1.y = 10;
+    b->setAttribute(TYPE, (SgType*)SageBuilderAsm::buildTypeX86DoubleWord());
+    b->setAttribute(POSITION, pos1);
+
+    MyVectorAttribute strengths(5, 1.2);
+    c->setAttribute(POSITION, pos1);
+    c->setAttribute(TENSILES, strengths);
+
+    // Attributes do not affect hashed value.  I.e., they're a little like comments.
+    uint64_t hash2 = c->hash();
+    ASSERT_always_require(hash1 == hash2);
+
+    // Check whether attributes exist.
+    ASSERT_always_require(a->attributeExists(DUCKS));
+    ASSERT_always_require(a->attributeExists(TYPE));
+    ASSERT_always_forbid(a->attributeExists(POSITION));
+    ASSERT_always_forbid(a->attributeExists(TENSILES));
+
+    ASSERT_always_forbid(b->attributeExists(DUCKS));
+    ASSERT_always_require(b->attributeExists(TYPE));
+    ASSERT_always_require(b->attributeExists(POSITION));
+    ASSERT_always_forbid(b->attributeExists(TENSILES));
+
+    ASSERT_always_forbid(c->attributeExists(DUCKS));
+    ASSERT_always_forbid(c->attributeExists(TYPE));
+    ASSERT_always_require(c->attributeExists(POSITION));
+    ASSERT_always_require(c->attributeExists(TENSILES));
+
+
+    // Check that we can retrieve attributes.  This demos a few different ways to get them.
+
+    // Method 1: getting an attribute when it's known to exist
+    ASSERT_always_require(a->getAttribute<int>(DUCKS) == 0);
+
+    try {
+        b->getAttribute<int>(DUCKS);
+        ASSERT_not_reachable("DUCKS attribute does not exist for object b");
+    } catch (const std::domain_error&) {
+    }
+
+    // Method 2: getting an attribute or some other value if it does't exist. The type of the second argument must match the
+    // value stored in the attribute if the attribute happens to exist, or it throws boost::bad_any_cast.
+    MyCompoundAttribute pos2;
+    pos2.x = pos2.y = 20;
+    ASSERT_always_require(a->attributeOrElse(POSITION, pos2).x == 20); // attribute doesn't exist, so use pos2
+    ASSERT_always_require(b->attributeOrElse(POSITION, pos2).x == 10); // attribute exists, so use it instead of pos2
+
+    // Method 3: getting an attribute or a default-constructed value.
+    ASSERT_always_require(b->attributeOrDefault<MyVectorAttribute>(TENSILES).size() == 0); // no value stored, use default
+    ASSERT_always_require(c->attributeOrDefault<MyVectorAttribute>(TENSILES).size() == 5); // value is stored
+
+    // Method 4: getting an attribute value or nothing as a Sawyer::Optional. This allows to check for existence at the same
+    // time as making an assignment.
+    int nDucks = 911;
+    if (a->optionalAttribute<int>(DUCKS).assignTo(nDucks)) {
+        ASSERT_always_require(nDucks == 0);
+    } else {
+        ASSERT_not_reachable("cannot get here even though DUCKS attribute value is zero");
+    }
+
+    // Type conversions are possible only after the getAttribute call returns.
+    std::ostringstream ss;
+    double realDucks = a->getAttribute<int>(DUCKS);     // normal C++ conversion
+    ss <<realDucks;                                     // to avoid compiler warning about not using realDucks
+
+    try {
+        realDucks = a->getAttribute<double>(DUCKS);     // cannot do a conversion "on the fly"
+        ASSERT_not_reachable("query double property should not have worked");
+    } catch (const boost::bad_any_cast&) {
+    }
+
+    // Attributes can be removed from an object.
+    a->eraseAttribute(DUCKS);
+    ASSERT_always_forbid(a->attributeExists(DUCKS));
+}
