@@ -119,6 +119,7 @@ pkginclude_HEADERS =					\
     libraryIdentification/functionIdentification.h	\
     libraryIdentification/libraryIdentification.h	\
     ether.h						\
+    BinaryAttribute.h					\
     BinaryControlFlow.h					\
     BinaryDataFlow.h					\
     BinaryDominance.h					\
