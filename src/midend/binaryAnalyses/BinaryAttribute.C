@@ -1,41 +1,35 @@
 #include <BinaryAttribute.h>
+#include <Sawyer/BiMap.h>
 
 namespace rose {
 namespace BinaryAnalysis {
 namespace Attribute {
 
-typedef Sawyer::Container::Map<std::string, Id> NameToId;
-typedef Sawyer::Container::Map<Id, std::string> IdToName;
-
 const Id INVALID_ID(-1);
-static NameToId nameToId;
-static IdToName idToName;
+
+typedef Sawyer::Container::BiMap<Id, std::string> DefinedAttributes;
+static DefinedAttributes definedAttributes;
 static Id nextId = 0;
 
 
 Id
-define(const std::string &name) {
-    if (nameToId.insertMaybe(name, nextId) != nextId)
-        throw std::runtime_error("partitioner attribute \""+name+"\" alread exists");
-    idToName.insert(nextId, name);
-    return nextId++;
-}
-
-size_t
-nDefined() {
-    return (size_t)nextId;
+declare(const std::string &name) {
+    Id retval = INVALID_ID;
+    if (definedAttributes.reverse().getOptional(name).assignTo(retval))
+        throw AlreadyExists(name, retval);
+    retval = nextId++;
+    definedAttributes.insert(retval, name);
+    return retval;
 }
 
 Id
-attributeId(const std::string &name) {
-    return nameToId.getOptional(name).orElse(INVALID_ID);
+id(const std::string &name) {
+    return definedAttributes.reverse().getOptional(name).orElse(INVALID_ID);
 }
 
 const std::string&
-attributeName(Id id) {
-    static const std::string no_name;
-    IdToName::ConstNodeIterator found = idToName.find(id);
-    return found==idToName.nodes().end() ? no_name : found->value();
+name(Id id) {
+    return definedAttributes.forward().getOrDefault(id);
 }
 
 } // namespace

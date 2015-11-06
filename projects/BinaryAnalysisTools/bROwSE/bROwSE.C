@@ -27,22 +27,22 @@ Attribute::Id ATTR_DataFlow(-1);
 void
 Context::init() {
     if (ATTR_NBytes == Attribute::INVALID_ID) {
-        ATTR_NBytes               = Attribute::define("Size in bytes");
-        ATTR_NInsns               = Attribute::define("Number of instructions");
-        ATTR_NIntervals           = Attribute::define("Number of contiguous intervals");
-        ATTR_NDiscontiguousBlocks = Attribute::define("Number of discontigous basic blocks");
-        ATTR_CfgGraphVizFile      = Attribute::define("CFG GraphViz file name");
-        ATTR_CfgImage             = Attribute::define("CFG JPEG file name");
-        ATTR_CfgVertexCoords      = Attribute::define("CFG vertex coordinates");
-        ATTR_CallGraph            = Attribute::define("Function call graph");
-        ATTR_NCallers             = Attribute::define("Number of call sites from whence function is called");
-        ATTR_NCallees             = Attribute::define("Number of calls made by this function");
-        ATTR_NReturns             = Attribute::define("Number of returning basic blocks");
-        ATTR_MayReturn            = Attribute::define("May return to caller?");
-        ATTR_StackDelta           = Attribute::define("Stack pointer delta");
-        ATTR_Ast                  = Attribute::define("Abstract syntax tree");
-        ATTR_Heat                 = Attribute::define("Heat value for color gradients [0..1]");
-        ATTR_DataFlow             = Attribute::define("Data flow information");
+        ATTR_NBytes               = Attribute::declare("Size in bytes");
+        ATTR_NInsns               = Attribute::declare("Number of instructions");
+        ATTR_NIntervals           = Attribute::declare("Number of contiguous intervals");
+        ATTR_NDiscontiguousBlocks = Attribute::declare("Number of discontigous basic blocks");
+        ATTR_CfgGraphVizFile      = Attribute::declare("CFG GraphViz file name");
+        ATTR_CfgImage             = Attribute::declare("CFG JPEG file name");
+        ATTR_CfgVertexCoords      = Attribute::declare("CFG vertex coordinates");
+        ATTR_CallGraph            = Attribute::declare("Function call graph");
+        ATTR_NCallers             = Attribute::declare("Number of call sites from whence function is called");
+        ATTR_NCallees             = Attribute::declare("Number of calls made by this function");
+        ATTR_NReturns             = Attribute::declare("Number of returning basic blocks");
+        ATTR_MayReturn            = Attribute::declare("May return to caller?");
+        ATTR_StackDelta           = Attribute::declare("Stack pointer delta");
+        ATTR_Ast                  = Attribute::declare("Abstract syntax tree");
+        ATTR_Heat                 = Attribute::declare("Heat value for color gradients [0..1]");
+        ATTR_DataFlow             = Attribute::declare("Data flow information");
     }
 }
 

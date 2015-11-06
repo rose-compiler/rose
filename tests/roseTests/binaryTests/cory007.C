@@ -18,13 +18,25 @@ typedef std::vector<double> MyVectorAttribute;
 
 int
 main() {
-    // Register a couple attributes.
-    const Attribute::Id DUCKS     = Attribute::define("Number of ducks");
-    const Attribute::Id TYPE      = Attribute::define("Pharos type");
-    const Attribute::Id POSITION  = Attribute::define("Position in windowing system");
-    const Attribute::Id TENSILES  = Attribute::define("Tensile strength of each rope");
+    // Register a few attributes.  Once attribute IDs are created they never change and are never deleted.  ID numbers are not
+    // guaranteed to be sequential, altough the current implementation allocates them that way.
+    const Attribute::Id DUCKS     = Attribute::declare("Number of ducks");
+    const Attribute::Id TYPE      = Attribute::declare("Pharos type");
+    const Attribute::Id POSITION  = Attribute::declare("Position in windowing system");
+    const Attribute::Id TENSILES  = Attribute::declare("Tensile strength of each rope");
 
-    // Make a symbolic expression.
+    // Trying to declare the same attribute again will get you an error
+    try {
+        Attribute::declare("Number of ducks");
+        ASSERT_not_reachable("should have thrown an error when creating a duplicate attribute");
+    } catch (const Attribute::AlreadyExists&) {
+    }
+
+    // You can query attribute names and ID numbers:
+    ASSERT_always_require(Attribute::id("Number of ducks") == DUCKS);
+    ASSERT_always_require(Attribute::name(DUCKS) == "Number of ducks");
+
+    // Make a symbolic expression to which we can attach some attributes.
     SymbolicExpr::Ptr a = SymbolicExpr::makeVariable(32, "a");
     SymbolicExpr::Ptr b = SymbolicExpr::makeInteger(32, 4);
     SymbolicExpr::Ptr c = SymbolicExpr::makeAdd(a, b);
@@ -32,7 +44,7 @@ main() {
     // Every expression has a hash value. Save it for comparison later.
     uint64_t hash1 = c->hash();
 
-    // Attach some attributes
+    // Attach some attributes to parts of the expression
     a->setAttribute(DUCKS, 0);                             // different than not storing an integer
     a->setAttribute(TYPE, (SgType*)NULL);                  // different than not storing a pointer
 
@@ -74,7 +86,7 @@ main() {
     try {
         b->getAttribute<int>(DUCKS);
         ASSERT_not_reachable("DUCKS attribute does not exist for object b");
-    } catch (const std::domain_error&) {
+    } catch (const Attribute::DoesNotExist&) {
     }
 
     // Method 2: getting an attribute or some other value if it does't exist. The type of the second argument must match the
@@ -105,7 +117,7 @@ main() {
     try {
         realDucks = a->getAttribute<double>(DUCKS);     // cannot do a conversion "on the fly"
         ASSERT_not_reachable("query double property should not have worked");
-    } catch (const boost::bad_any_cast&) {
+    } catch (const Attribute::WrongQueryType&) {
     }
 
     // Attributes can be removed from an object.
