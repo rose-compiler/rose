@@ -1,3 +1,7 @@
+// This interface will be deprecated at some point in the not-to-distant future. Use Sawyer::Container::IntervalMap instead.
+
+
+
 #ifndef ROSE_RANGEMAP_H
 #define ROSE_RANGEMAP_H
 

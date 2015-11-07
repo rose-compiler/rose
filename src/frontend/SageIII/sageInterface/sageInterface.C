@@ -12137,7 +12137,7 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
           }
           else if (procfunc != NULL)
           {
-#if 1
+#if 0
             printf ("In SageInterface::fixStatement(): procfunc->get_name() = %s calling lookup_function_symbol() \n",procfunc->get_name().str());
 #endif
             func_symbol = scope->lookup_function_symbol (procfunc->get_name(), procfunc->get_type());
