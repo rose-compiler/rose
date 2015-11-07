@@ -120,8 +120,8 @@ public:
             retval->set_width(new_width);
         return retval;
     }
-    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr&,
-                                                                           SMTSolver*) const ROSE_OVERRIDE {
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr&, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE {
         throw BaseSemantics::NotImplemented("SourceAstSemantics is not suitable for dataflow analysis", NULL);
     }
 

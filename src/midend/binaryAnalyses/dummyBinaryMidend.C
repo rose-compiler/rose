@@ -13,6 +13,10 @@ void InstructionSemantics2::initDiagnostics() {}
 void NoOperation::initDiagnostics() {}
 void CallingConvention::initDiagnostics() {}
 
+namespace PointerDetection {
+void initDiagnostics() {}
+} // namespace
+
 namespace Strings {
 void initDiagnostics() {}
 } // namespace

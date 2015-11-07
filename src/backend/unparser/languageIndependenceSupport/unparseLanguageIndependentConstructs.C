@@ -1017,6 +1017,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
      ROSE_ASSERT(sourceFile != NULL);
      ROSE_ASSERT(stmt != NULL);
 
+#define OUTPUT_TOKEN_STREAM_FOR_DEBUGGING 0
+
   // DQ (11/12/2014): turn this off to test test2014_101.c (which demonstrates an error, but for which this fixes the error).
   // DQ (1/29/2014): Control use of format mechanism to unparse the token stream vs. a higher fedelity 
   // mechanism that does not drop line endings.  The high fidelity version is just prettier, but 
@@ -1178,7 +1180,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                                  {
                                    SgDeclarationStatement* decl = globalScope->get_declarations()[i];
                                    ROSE_ASSERT(decl != NULL);
-#if 0
+#if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                                    printf ("   --- global scope statements: i = %p = %s \n",decl,decl->class_name().c_str());
 #endif
                                    if (statementFromFile(decl, getFileName(), info) == true)
@@ -1219,7 +1221,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                             {
                               for (int j = tokenSubsequence->leading_whitespace_start; j <= tokenSubsequence->leading_whitespace_end; j++)
                                  {
-#if 0
+#if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                                    printf ("Output leading whitespace tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
@@ -1249,7 +1251,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #endif
                for (int j = tokenSubsequence->token_subsequence_start; j <= tokenSubsequence->token_subsequence_end; j++)
                   {
-#if 0
+#if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                     printf ("Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
@@ -1432,7 +1434,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                        {
                          for (int j = tokenSubsequence->trailing_whitespace_start; j <= tokenSubsequence->trailing_whitespace_end; j++)
                             {
-#if 0
+#if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
                               printf ("Output trailing whitespace tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
@@ -2991,9 +2993,10 @@ UnparseLanguageIndependentConstructs::unparseNullStatement (SgStatement* stmt, S
 #endif
 
   // Not much to do here except output a ";", not really required however.
-     if (!info.inConditional() && !info.SkipSemiColon())
+  // if (!info.inConditional() && !info.SkipSemiColon())
+     if (info.SkipSemiColon() == false)
         {
-          curprint ( string(";"));
+          curprint(";");
         }
        else
         {

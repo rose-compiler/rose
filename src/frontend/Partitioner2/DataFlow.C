@@ -243,38 +243,37 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
 
 // If the expression is an offset from the initial stack register then return the offset, else nothing.
 static Sawyer::Optional<int64_t>
-isStackAddress(const rose::BinaryAnalysis::InsnSemanticsExpr::TreeNodePtr &expr,
+isStackAddress(const rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
                const BaseSemantics::SValuePtr &initialStackPointer, SMTSolver *solver) {
-    using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
     using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
     if (!initialStackPointer)
         return Sawyer::Nothing();
-    TreeNodePtr initialStack = SymbolicSemantics::SValue::promote(initialStackPointer)->get_expression();
+    SymbolicExpr::Ptr initialStack = SymbolicSemantics::SValue::promote(initialStackPointer)->get_expression();
 
     // Special case where (add SP0 0) is simplified to SP0
-    LeafNodePtr variable = expr->isLeafNode();
-    if (variable && variable->must_equal(initialStack, solver))
+    SymbolicExpr::LeafPtr variable = expr->isLeafNode();
+    if (variable && variable->mustEqual(initialStack, solver))
         return 0;
 
     // Otherwise the expression must be (add SP0 N) where N != 0
-    InternalNodePtr inode = expr->isInternalNode();
-    if (!inode || inode->get_operator() != OP_ADD || inode->nchildren()!=2)
+    SymbolicExpr::InteriorPtr inode = expr->isInteriorNode();
+    if (!inode || inode->getOperator() != SymbolicExpr::OP_ADD || inode->nChildren()!=2)
         return Sawyer::Nothing();
 
     variable = inode->child(0)->isLeafNode();
-    LeafNodePtr constant = inode->child(1)->isLeafNode();
-    if (!constant || !constant->is_known())
+    SymbolicExpr::LeafPtr constant = inode->child(1)->isLeafNode();
+    if (!constant || !constant->isNumber())
         std::swap(variable, constant);
-    if (!constant || !constant->is_known())
+    if (!constant || !constant->isNumber())
         return Sawyer::Nothing();
-    if (!variable || !variable->is_variable())
-        return Sawyer::Nothing();
-
-    if (!variable->must_equal(initialStack, solver))
+    if (!variable || !variable->isVariable())
         return Sawyer::Nothing();
 
-    int64_t val = IntegerOps::signExtend2(constant->get_value(), constant->get_nbits(), 64);
+    if (!variable->mustEqual(initialStack, solver))
+        return Sawyer::Nothing();
+
+    int64_t val = IntegerOps::signExtend2(constant->toInt(), constant->nBits(), 64);
     return val;
 }
 

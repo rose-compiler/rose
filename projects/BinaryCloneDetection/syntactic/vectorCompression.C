@@ -25,7 +25,7 @@ using namespace std;
 //   }
 
 template <typename ResultHandler>
-static inline void decompressVectorBase(const uint8_t __restrict compressedData[], size_t compressedDataSize, ResultHandler& rh) {
+static inline void decompressVectorBase(const uint8_t compressedData[], size_t compressedDataSize, ResultHandler& rh) {
     size_t idx = 0;
     for (size_t i = 0; i < compressedDataSize; ++i) {
         uint8_t elt = compressedData[i];
@@ -74,7 +74,7 @@ struct OutputWriter {
     void end(size_t idx) {}
 };
 
-void decompressVector(const uint8_t __restrict compressedData[], size_t compressedDataSize, uint16_t __restrict result[])
+void decompressVector(const uint8_t compressedData[], size_t compressedDataSize, uint16_t result[])
 {
     // Result must have the correct size -- use getUncompressedSizeOfVector to get it
     OutputWriter ow(result);

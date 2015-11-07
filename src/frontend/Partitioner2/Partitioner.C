@@ -176,7 +176,7 @@ Partitioner::erasePlaceholder(const ControlFlowGraph::ConstVertexIterator &place
     BasicBlock::Ptr bblock;
     if (placeholder!=cfg_.vertices().end() && placeholder->value().type()==V_BASIC_BLOCK) {
         rose_addr_t startVa = placeholder->value().address();
-        if (bblock = placeholder->value().bblock())
+        if ((bblock = placeholder->value().bblock()))
             detachBasicBlock(placeholder);              // removes self edges, notifies subclasses of CFG changes
         if (placeholder->nInEdges()!=0) {
             throw PlaceholderError(startVa, "cannot erase placeholder " + StringUtility::addrToString(startVa) +
@@ -629,12 +629,12 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
             worklist.pop_back();
 
             // Special handling for if-then-else expressions
-            if (InsnSemanticsExpr::InternalNodePtr ifNode = pc->get_expression()->isInternalNode()) {
-                if (ifNode->get_operator()==InsnSemanticsExpr::OP_ITE) {
-                    Semantics::SValuePtr expr = Semantics::SValue::promote(ops->undefined_(ifNode->get_nbits()));
+            if (SymbolicExpr::InteriorPtr ifNode = pc->get_expression()->isInteriorNode()) {
+                if (ifNode->getOperator()==SymbolicExpr::OP_ITE) {
+                    Semantics::SValuePtr expr = Semantics::SValue::promote(ops->undefined_(ifNode->nBits()));
                     expr->set_expression(ifNode->child(1));
                     worklist.push_back(expr);
-                    expr = Semantics::SValue::promote(ops->undefined_(ifNode->get_nbits()));
+                    expr = Semantics::SValue::promote(ops->undefined_(ifNode->nBits()));
                     expr->set_expression(ifNode->child(2));
                     worklist.push_back(expr);
                     continue;
@@ -668,7 +668,7 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
     // We don't want parallel edges in the CFG, so remove duplicates.
     std::sort(successors.begin(), successors.end(), sortByExpression);
     for (size_t i=1; i<successors.size(); /*void*/) {
-        if (successors[i-1].expr()->get_expression()->equivalent_to(successors[i].expr()->get_expression())) {
+        if (successors[i-1].expr()->get_expression()->isEquivalentTo(successors[i].expr()->get_expression())) {
             ASSERT_require(successors[i-1].type() == successors[i].type());
             successors.erase(successors.begin()+i);
         } else {

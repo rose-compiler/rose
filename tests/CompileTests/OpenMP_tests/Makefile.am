@@ -142,6 +142,7 @@ C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc.c \
         axpy_ompacc2.c \
 	axpy_ompacc3.c \
+	axpy_ompacc4.c \
 	axpy_ompacc_parseonly.c \
 	matrixmultiply-ompacc.c \
 	matrixmultiply-ompacc2.c \

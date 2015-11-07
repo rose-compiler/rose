@@ -138,13 +138,13 @@ namespace BinaryAnalysis {
  *
  * @subsection binfaq_semantics_2 Q2. Why not use SgExpression AST nodes as symbolic expression?
  *
- *  We decided to use @ref InsnSemanticsExpr instead because:
+ *  We decided to use @ref SymbolicExpr instead because:
  *
  *  + Symbolic expressions are used in many places besides abstract syntax trees. E.g., as intermediate and final results in
  *    an analysis.
  *
  *  + AST node design prevents common subexpressions from sharing the same expression trees.  In particular,
- *    InsnSemanticsExpr nodes are immutable, AST nodes are not. Also AST nodes point to their unique parent.
+ *    SymbolicExpr nodes are immutable, AST nodes are not. Also AST nodes point to their unique parent.
  *
  *  + AST nodes don't have an easy way to track ownership, which becomes important when multiple analyses are using and
  *    generating expressions and who knows what has references to parts of a tree.  We end up in a situation where no
@@ -155,10 +155,10 @@ namespace BinaryAnalysis {
  *  Yes. In fact, the semantics were designed specifically for generating a variety of data structures, and the ROSE AST is
  *  just one possibility. Some examples:
  *
- *  + The @ref InstructionSemantics2::SymbolicSemantics "SymbolicSemantics" domain generates @ref InsnSemanticsExpr trees
+ *  + The @ref InstructionSemantics2::SymbolicSemantics "SymbolicSemantics" domain generates @ref SymbolicExpr trees
  *    from the semantics encoded in the various @ref InstructionSemantics2::BaseSemantics::Dispatcher "Dispatcher" classes.
  *
- *  + SMT solver input is generated from InsnSemanticsExpr. It could have also been generated directly from the
+ *  + SMT solver input is generated from SymbolicExpr. It could have also been generated directly from the
  *    semantics instead of going through this intermediate step, but the intermediate step is important because, as stated in
  *    another answer, InsnInstructionExpr is used for things besides instruction semantics.
  *
@@ -220,7 +220,7 @@ namespace BinaryAnalysis {
  *
  * @subsection binfaq_semantics_7 Q7. Can I attach information to symbolic expressions?
  *
- *  It is not possible to directly attach user-defined data to the @ref InsnSemanticsExpr::TreeNode that serves as a base class
+ *  It is not possible to directly attach user-defined data to the @ref SymbolicExpr::TreeNode that serves as a base class
  *  for symbolic expressions and which is pointed to by the values (i.e., @c SValue) of the instruction semantic's
  *  @ref InstructionSemantics2::SymbolicSemantics "symbolic domain".  One reason is that these trees undergo extensive
  *  simplification both within ROSE and possibly within other tools, and user-defined data would likely get lost in the

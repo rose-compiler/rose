@@ -25,7 +25,6 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/DispatcherPowerpc.C			\
     instructionSemantics/DispatcherX86.C			\
     instructionSemantics/FindRegisterDefs.C			\
-    instructionSemantics/InsnSemanticsExpr.C			\
     instructionSemantics/IntervalSemantics.C			\
     instructionSemantics/IntervalSemantics2.C			\
     instructionSemantics/LlvmSemantics2.C			\
@@ -38,14 +37,13 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/SMTSolver.C				\
     instructionSemantics/SourceAstSemantics2.C			\
     instructionSemantics/StaticSemantics2.C			\
-    instructionSemantics/SymbolicExprParser.C			\
     instructionSemantics/SymbolicMemory2.C			\
     instructionSemantics/SymbolicSemantics.C			\
     instructionSemantics/SymbolicSemantics2.C			\
     instructionSemantics/TraceSemantics2.C			\
     instructionSemantics/YicesSolver.C				\
-    instructionSemantics/findConstants.C			\
     GraphAlgorithms.C						\
+    BinaryAttribute.C						\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
     BinaryDominance.C						\
@@ -53,8 +51,11 @@ libbinaryMidend_la_SOURCES =					\
     BinaryCallingConvention.C					\
     BinaryMagic.C						\
     BinaryNoOperation.C						\
+    BinaryPointerDetection.C					\
     BinaryReturnValueUsed.C					\
     BinaryString.C						\
+    BinarySymbolicExpr.C					\
+    BinarySymbolicExprParser.C					\
     BinaryTaintedFlow.C						\
     BinaryToSource.C						\
     DwarfLineMapper.C
@@ -107,19 +108,18 @@ pkginclude_HEADERS =					\
     instructionSemantics/SMTSolver.h			\
     instructionSemantics/SourceAstSemantics2.h		\
     instructionSemantics/StaticSemantics2.h		\
-    instructionSemantics/SymbolicExprParser.h		\
     instructionSemantics/SymbolicMemory2.h		\
     instructionSemantics/SymbolicSemantics.h		\
     instructionSemantics/SymbolicSemantics2.h		\
     instructionSemantics/TestSemantics2.h		\
     instructionSemantics/TraceSemantics2.h		\
     instructionSemantics/YicesSolver.h			\
-    instructionSemantics/findConstants.h		\
     instructionSemantics/flowEquations.h		\
     instructionSemantics/x86InstructionSemantics.h	\
     libraryIdentification/functionIdentification.h	\
     libraryIdentification/libraryIdentification.h	\
     ether.h						\
+    BinaryAttribute.h					\
     BinaryControlFlow.h					\
     BinaryDataFlow.h					\
     BinaryDominance.h					\
@@ -132,6 +132,8 @@ pkginclude_HEADERS =					\
     BinaryReturnValueUsed.h				\
     BinaryStackVariable.h				\
     BinaryString.h					\
+    BinarySymbolicExpr.h				\
+    BinarySymbolicExprParser.h				\
     BinaryTaintedFlow.h					\
     BinaryToSource.h					\
     DwarfLineMapper.h

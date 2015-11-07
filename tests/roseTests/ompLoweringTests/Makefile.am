@@ -50,6 +50,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 	twoRegions.c
 
 #        axpy_ompacc2.c 
+#	axpy_ompacc4.c # multiple gpu version
 OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         collapse_2.c\
         axpy_ompacc.c \
