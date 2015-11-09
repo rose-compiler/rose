@@ -5874,12 +5874,6 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      sourceFile->set_redundantlyMappedTokensToStatementMultimap(tokenSequenceEndMultimap);
 
 #if 0
-  // DQ (11/8/2015): Add macro expansion detection where transformations are in part of the expaned macro.
-  // However this must be called after all transformations have been done.
-     detectMacroExpansionsToBeUnparsedAsAstTransformations(sourceFile);
-#endif
-
-#if 0
   // DQ (11/20/2013): Test using support for multiple files for Java testing.
   // Output an optional graph of the AST (just the tree, when active)
   // generateDOT ( *project );
@@ -6026,12 +6020,6 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
   // support it as a data member of the SgSourceFile IR node.  This is due in part to ROSETTA and the
   // additional requirements of the generated serialization that is a part of the AST File I/O.
      sourceFile->set_tokenSubsequenceMap(tokenMappingTraversal.tokenStreamSequenceMap);
-
-#if 0
-  // DQ (11/8/2015): Add macro expansion detection where transformations are in part of the expaned macro.
-  // However this must be called after all transformations have been done.
-     detectMacroExpansionsToBeUnparsedAsAstTransformations(sourceFile);
-#endif
 
 #if 0
      printf ("Completed the AST token stream mapping (before transformations) \n");
