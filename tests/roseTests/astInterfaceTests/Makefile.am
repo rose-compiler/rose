@@ -163,6 +163,7 @@ generatedCodeExamples = \
   buildJavaPackage.passed 
 
 # section for declaration moving tool
+#  inputmoveDeclarationToInnermostScope_23.C 
 #--------------------------------------------
 MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_1.C \

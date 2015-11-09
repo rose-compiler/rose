@@ -41,9 +41,9 @@ charToString(uint8_t ch) {
 size_t
 functionNBytes(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     size_t nBytes = 0;
-    if (function && !function->attr<size_t>(ATTR_NBytes).assignTo(nBytes)) {
+    if (function && !function->optionalAttribute<size_t>(ATTR_NBytes).assignTo(nBytes)) {
         nBytes = partitioner.functionExtent(function).size();
-        function->attr(ATTR_NBytes, nBytes);
+        function->setAttribute(ATTR_NBytes, nBytes);
     }
     return nBytes;
 }
@@ -52,12 +52,12 @@ functionNBytes(const P2::Partitioner &partitioner, const P2::Function::Ptr &func
 size_t
 functionNInsns(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     size_t nInsns = 0;
-    if (function && !function->attr<size_t>(ATTR_NInsns).assignTo(nInsns)) {
+    if (function && !function->optionalAttribute<size_t>(ATTR_NInsns).assignTo(nInsns)) {
         BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
             if (P2::BasicBlock::Ptr bblock = partitioner.basicBlockExists(bblockVa))
                 nInsns += bblock->nInstructions();
         }
-        function->attr(ATTR_NInsns, nInsns);
+        function->setAttribute(ATTR_NInsns, nInsns);
     }
     return nInsns;
 }
@@ -66,9 +66,9 @@ functionNInsns(const P2::Partitioner &partitioner, const P2::Function::Ptr &func
 size_t
 functionNIntervals(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     size_t nIntervals = 0;
-    if (function && !function->attr<size_t>(ATTR_NIntervals).assignTo(nIntervals)) {
+    if (function && !function->optionalAttribute<size_t>(ATTR_NIntervals).assignTo(nIntervals)) {
         nIntervals = partitioner.functionExtent(function).nIntervals();
-        function->attr(ATTR_NIntervals, nIntervals);
+        function->setAttribute(ATTR_NIntervals, nIntervals);
     }
     return nIntervals;
 }
@@ -77,7 +77,7 @@ functionNIntervals(const P2::Partitioner &partitioner, const P2::Function::Ptr &
 size_t
 functionNDiscontiguousBlocks(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     size_t retval = 0;
-    if (function && !function->attr<size_t>(ATTR_NDiscontiguousBlocks).assignTo(retval)) {
+    if (function && !function->optionalAttribute<size_t>(ATTR_NDiscontiguousBlocks).assignTo(retval)) {
         BOOST_FOREACH (rose_addr_t va, function->basicBlockAddresses()) {
             if (P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(va)) {
                 size_t nIntervals = partitioner.basicBlockInstructionExtent(bb).nIntervals();
@@ -85,7 +85,7 @@ functionNDiscontiguousBlocks(const P2::Partitioner &partitioner, const P2::Funct
                     ++retval;
             }
         }
-        function->attr(ATTR_NDiscontiguousBlocks, retval);
+        function->setAttribute(ATTR_NDiscontiguousBlocks, retval);
     }
     return retval;
 }
@@ -98,7 +98,7 @@ functionNDiscontiguousBlocks(const P2::Partitioner &partitioner, const P2::Funct
 boost::filesystem::path
 functionCfgGraphvizFile(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     boost::filesystem::path fileName;
-    if (function && !function->attr<boost::filesystem::path>(ATTR_CfgGraphVizFile).assignTo(fileName)) {
+    if (function && !function->optionalAttribute<boost::filesystem::path>(ATTR_CfgGraphVizFile).assignTo(fileName)) {
         fileName = uniquePath(".dot");
         boost::filesystem::path tmpName = uniquePath(".dot");
         std::ofstream out(tmpName.string().c_str());
@@ -114,7 +114,7 @@ functionCfgGraphvizFile(const P2::Partitioner &partitioner, const P2::Function::
         out.close();
         std::string dotCmd = "dot " + tmpName.string() + " > " + fileName.string();
         system(dotCmd.c_str());
-        function->attr(ATTR_CfgGraphVizFile, fileName);
+        function->setAttribute(ATTR_CfgGraphVizFile, fileName);
     }
     return fileName;
 }
@@ -123,7 +123,7 @@ functionCfgGraphvizFile(const P2::Partitioner &partitioner, const P2::Function::
 boost::filesystem::path
 functionCfgImage(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     boost::filesystem::path imageName;
-    if (function && !function->attr<boost::filesystem::path>(ATTR_CfgImage).assignTo(imageName)) {
+    if (function && !function->optionalAttribute<boost::filesystem::path>(ATTR_CfgImage).assignTo(imageName)) {
         boost::filesystem::path srcName = functionCfgGraphvizFile(partitioner, function);
         if (srcName.empty())
             return boost::filesystem::path();
@@ -146,7 +146,7 @@ functionCfgImage(const P2::Partitioner &partitioner, const P2::Function::Ptr &fu
                 return boost::filesystem::path();
             }
         }
-        function->attr(ATTR_CfgImage, imageName);
+        function->setAttribute(ATTR_CfgImage, imageName);
     }
     return imageName;
 }
@@ -170,7 +170,7 @@ functionCfgVertexCoords(const P2::Partitioner &partitioner, const P2::Function::
     } my;
 
     CfgVertexCoords coords;
-    if (function && !function->attr<CfgVertexCoords>(ATTR_CfgVertexCoords).assignTo(coords)) {
+    if (function && !function->optionalAttribute<CfgVertexCoords>(ATTR_CfgVertexCoords).assignTo(coords)) {
         boost::filesystem::path sourcePath = functionCfgGraphvizFile(partitioner, function);
         if (sourcePath.empty())
             throw std::runtime_error("CFG not available");
@@ -234,7 +234,7 @@ functionCfgVertexCoords(const P2::Partitioner &partitioner, const P2::Function::
                 coords.insert(va, box);
             }
         }
-        function->attr(ATTR_CfgVertexCoords, coords);
+        function->setAttribute(ATTR_CfgVertexCoords, coords);
     }
     return coords;
 }
@@ -243,9 +243,9 @@ functionCfgVertexCoords(const P2::Partitioner &partitioner, const P2::Function::
 P2::FunctionCallGraph*
 functionCallGraph(P2::Partitioner &partitioner) {
     P2::FunctionCallGraph *cg = NULL;
-    if (!partitioner.attr<P2::FunctionCallGraph*>(ATTR_CallGraph).assignTo(cg)) {
+    if (!partitioner.optionalAttribute<P2::FunctionCallGraph*>(ATTR_CallGraph).assignTo(cg)) {
         cg = new P2::FunctionCallGraph(partitioner.functionCallGraph());
-        partitioner.attr(ATTR_CallGraph, cg);
+        partitioner.setAttribute(ATTR_CallGraph, cg);
     }
     return cg;
 }
@@ -254,11 +254,11 @@ functionCallGraph(P2::Partitioner &partitioner) {
 size_t
 functionNCallers(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     size_t nCallers = 0;
-    if (function && !function->attr<size_t>(ATTR_NCallers).assignTo(nCallers)) {
+    if (function && !function->optionalAttribute<size_t>(ATTR_NCallers).assignTo(nCallers)) {
         P2::FunctionCallGraph *cg = functionCallGraph(partitioner);
         ASSERT_not_null(cg);
         nCallers = cg->nCallsIn(function);
-        function->attr(ATTR_NCallers, nCallers);
+        function->setAttribute(ATTR_NCallers, nCallers);
     }
     return nCallers;
 }
@@ -267,11 +267,11 @@ functionNCallers(P2::Partitioner &partitioner, const P2::Function::Ptr &function
 size_t
 functionNCallees(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     size_t nCallees = 0;
-    if (function && !function->attr<size_t>(ATTR_NCallees).assignTo(nCallees)) {
+    if (function && !function->optionalAttribute<size_t>(ATTR_NCallees).assignTo(nCallees)) {
         P2::FunctionCallGraph *cg = functionCallGraph(partitioner);
         ASSERT_not_null(cg);
         nCallees = cg->nCallsOut(function);
-        function->attr(ATTR_NCallees, nCallees);
+        function->setAttribute(ATTR_NCallees, nCallees);
     }
     return nCallees;
 }
@@ -280,7 +280,7 @@ functionNCallees(P2::Partitioner &partitioner, const P2::Function::Ptr &function
 size_t
 functionNReturns(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     size_t nReturns = 0;
-    if (function && !function->attr<size_t>(ATTR_NReturns).assignTo(nReturns)) {
+    if (function && !function->optionalAttribute<size_t>(ATTR_NReturns).assignTo(nReturns)) {
         BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
             P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(bblockVa);
             if (vertex != partitioner.cfg().vertices().end()) {
@@ -290,7 +290,7 @@ functionNReturns(P2::Partitioner &partitioner, const P2::Function::Ptr &function
                 }
             }
         }
-        function->attr(ATTR_NReturns, nReturns);
+        function->setAttribute(ATTR_NReturns, nReturns);
     }
     return nReturns;
 }
@@ -299,11 +299,11 @@ functionNReturns(P2::Partitioner &partitioner, const P2::Function::Ptr &function
 MayReturn
 functionMayReturn(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     MayReturn result = MAYRETURN_UNKNOWN;
-    if (function && !function->attr<MayReturn>(ATTR_MayReturn).assignTo(result)) {
+    if (function && !function->optionalAttribute<MayReturn>(ATTR_MayReturn).assignTo(result)) {
         bool mayReturn = false;
         if (partitioner.functionOptionalMayReturn(function).assignTo(mayReturn))
             result = mayReturn ? MAYRETURN_YES : MAYRETURN_NO;
-        function->attr(ATTR_MayReturn, result);
+        function->setAttribute(ATTR_MayReturn, result);
     }
     return result;
 }
@@ -313,11 +313,11 @@ int64_t
 functionStackDelta(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
     int64_t result = SgAsmInstruction::INVALID_STACK_DELTA;
-    if (function && !function->attr<int64_t>(ATTR_StackDelta).assignTo(result)) {
+    if (function && !function->optionalAttribute<int64_t>(ATTR_StackDelta).assignTo(result)) {
         SValuePtr delta = partitioner.functionStackDelta(function);
         if (delta && delta->is_number() && delta->get_width()<=64)
             result = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
-        function->attr(ATTR_StackDelta, result);
+        function->setAttribute(ATTR_StackDelta, result);
     }
     return result;
 }
@@ -326,9 +326,9 @@ functionStackDelta(P2::Partitioner &partitioner, const P2::Function::Ptr &functi
 SgAsmFunction *
 functionAst(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     SgNode *result = NULL;
-    if (function && !function->attr<SgNode*>(ATTR_Ast).assignTo(result)) {
+    if (function && !function->optionalAttribute<SgNode*>(ATTR_Ast).assignTo(result)) {
         result = P2::Modules::buildFunctionAst(partitioner, function, true /*relaxed*/);
-        function->attr(ATTR_Ast, result);
+        function->setAttribute(ATTR_Ast, result);
     }
     return isSgAsmFunction(result);
 }
@@ -348,7 +348,7 @@ functionDataFlow(P2::Partitioner &partitioner, const P2::Function::Ptr &function
     using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
     FunctionDataFlow result;
-    if (function && !function->attr<FunctionDataFlow>(ATTR_DataFlow).assignTo(result)) {
+    if (function && !function->optionalAttribute<FunctionDataFlow>(ATTR_DataFlow).assignTo(result)) {
         // Dataflow doesn't work unless we have instruction semantics
         BaseSemantics::RiscOperatorsPtr ops = partitioner.newOperators();
         ASSERT_not_null(ops);
@@ -383,7 +383,7 @@ functionDataFlow(P2::Partitioner &partitioner, const P2::Function::Ptr &function
             result.dfCfg = dfCfg;
             result.initialStates = engine.getInitialStates();
             result.finalStates = engine.getFinalStates();
-            function->attr(ATTR_DataFlow, result);
+            function->setAttribute(ATTR_DataFlow, result);
         }
     }
     return result;

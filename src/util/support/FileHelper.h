@@ -102,9 +102,7 @@ public:
     }
 
     static bool isNotEmptyFolder(const string& fullFolderName) {
-     // DQ (10/15/2015): Fixed to support C++11 mode used to compiler ROSE.
-     // return exists(fullFolderName) && !is_empty(fullFolderName);
-        return exists(fullFolderName) && !fullFolderName.empty();
+        return exists(fullFolderName) && !boost::filesystem::is_empty(fullFolderName);
     }
     
     static string normalizePath(const string& aPath) {

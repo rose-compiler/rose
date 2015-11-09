@@ -95,12 +95,12 @@ public:
             // Show the value of the EAX register since this is where GCC puts the function's return value.  If we did things
             // right, the return value should depend only on the unknown bytes from the beginning of the buffer.
             SymbolicSemantics::ValueType<32> result = policy.readRegister<32>("eax");
-            std::set<rose::BinaryAnalysis::InsnSemanticsExpr::LeafNodePtr> vars = result.get_expression()->get_variables();
+            std::set<rose::BinaryAnalysis::SymbolicExpr::LeafNodePtr> vars = result.get_expression()->get_variables();
             {
                 std::ostringstream s;
                 s <<"Analysis: symbolic return value is " <<result <<"\n"
                   <<"Analysis: return value has " <<vars.size() <<" variables:";
-                for (std::set<rose::BinaryAnalysis::InsnSemanticsExpr::LeafNodePtr>::iterator vi=vars.begin();
+                for (std::set<rose::BinaryAnalysis::SymbolicExpr::LeafNodePtr>::iterator vi=vars.begin();
                      vi!=vars.end(); ++vi)
                     s <<" " <<*vi;
                 trace->mesg("%s", s.str().c_str());
@@ -109,7 +109,7 @@ public:
             // Now give values to those two bytes and solve the equation for the result using an SMT solver.
             if (!result.is_known()) {
                 trace->mesg("Analysis: setting variables (buffer bytes) to 'x' and evaluating the function symbolically...");
-                using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
+                using namespace rose::BinaryAnalysis::SymbolicExpr;
                 std::vector<TreeNodePtr> exprs;
                 LeafNodePtr result_var = LeafNode::create_variable(32);
                 TreeNodePtr expr = InternalNode::create(32, OP_EQ, result.get_expression(), result_var);
@@ -136,7 +136,7 @@ public:
             // would satisfy the equation.
             if (!result.is_known()) {
                 trace->mesg("Analysis: setting result equal to 0xff015e7c and trying to find inputs...");
-                using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
+                using namespace rose::BinaryAnalysis::SymbolicExpr;
                 TreeNodePtr expr = InternalNode::create(32, OP_EQ, result.get_expression(),
                                                         LeafNode::create_integer(32, 0xff015e7c));
                 if (rose::BinaryAnalysis::SMTSolver::SAT_YES == smt_solver.satisfiable(expr)) {

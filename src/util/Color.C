@@ -5,15 +5,12 @@
 #include <cstdio>
 
 #ifdef _MSC_VER
-#include <float.h>                              // for _isnan
-#define isnan(x) _isnan(x)
+    #include <float.h>                              // for _isnan
+    #define isnan(x) _isnan(x)
+#elif __cplusplus >= 201103L
+    // isnan is already defined in this scope for c++11
 #else
-// DQ (10/15/2015): Added support for C++11 usage (works for GNU comilers, e.g. detects use of -std=c++11 mode)
-  #if (__cplusplus == 201103)
- // DQ (bug reported by CERT): isnan is already in the namespace for c++11 mode (so nothing to do).
-  #else
     using std::isnan;
-  #endif
 #endif
 
 namespace rose {

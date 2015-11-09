@@ -166,17 +166,6 @@ findNamesRecursively(const Path &root) {
     return findNamesRecursively(root, isExisting, isDirectory);
 }
 
-// Copies files to dstDir so that their name relative to dstDir is the same as their name relative to root
-void
-copyFiles(const std::vector<Path> &fileNames, const Path &root, const Path &dstDir) {
-    std::set<Path> dirs;
-    BOOST_FOREACH (const Path &fileName, fileNames) {
-        Path dirName = dstDir / makeRelative(fileName.parent_path(), root);
-        if (dirs.insert(dirName).second)
-           {
-             boost::filesystem::create_directories(dirName);
-           }
-
 #if (__cplusplus >= 201103L) 
 #if !defined(BOOST_COMPILED_WITH_CXX11)
    #warning "Compiling ROSE with C++11 mode: BOOST NOT compiled with C++11 support."
@@ -185,17 +174,30 @@ copyFiles(const std::vector<Path> &fileNames, const Path &root, const Path &dstD
 #endif
 #endif
 
-     // DQ (10/20/2015): Boost support for copy_file() is not uniform acorss C++98 and C++11.
-     // I think this need to be addressed seperately in ROSE.
-     // boost::filesystem::copy_file(fileName, dirName / fileName.filename());
-#if (__cplusplus >= 201103L) && !defined(BOOST_COMPILED_WITH_CXX11)
-     // copy_file(fileName, dirName / fileName.filename());
-        printf ("Error: C++11 support for compiling ROSE requires BOOST to be compiled in C++11 mode! (required for copy_file() support) \n");
-     // ROSE_ASSERT(false);
-        assert(false);
-#else
+// Copies files to dstDir so that their name relative to dstDir is the same as their name relative to root
+void
+copyFiles(const std::vector<Path> &fileNames, const Path &root, const Path &dstDir) {
+    std::set<Path> dirs;
+    BOOST_FOREACH (const Path &fileName, fileNames) {
+        Path dirName = dstDir / makeRelative(fileName.parent_path(), root);
+        if (dirs.insert(dirName).second)
+            boost::filesystem::create_directories(dirName);
+
+        // DQ (10/20/2015): Boost support for copy_file() is not uniform acorss C++98 and C++11.
+        // I think this need to be addressed seperately in ROSE.
+        // Matzke (11/05/2015): BOOST_COMPILED_WITH_CXX11 is _never_ defined in Boost 1.47 through 1.59 or in ROSE. That means
+        // the following #if would always be true when compiling ROSE with C++11.
+        //#if (__cplusplus >= 201103L) // && !defined(BOOST_COMPILED_WITH_CXX11)
+        // Matzke (11/05/2015): Errors should be to standard error, not standard output.
+        // printf ("Error: C++11 support for compiling ROSE requires BOOST to be compiled in C++11 mode! (required for copy_file() support) \n")
+        // Matzke (11/05/2015): this would have cause copyFiles to print an error but still succeed when ROSE is compiled in
+        // production mode.
+        // assert(false);
+        //#else
+        // boost::filesystem::copy_file(fileName, dirName / fileName.filename());
+        //#endif
+
         boost::filesystem::copy_file(fileName, dirName / fileName.filename());
-#endif
     }
 }
 

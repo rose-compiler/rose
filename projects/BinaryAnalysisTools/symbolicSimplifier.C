@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
 #include <Sawyer/CommandLine.h>
-#include <SymbolicExprParser.h>
+#include <BinarySymbolicExprParser.h>
 
 #ifdef ROSE_HAVE_LIBREADLINE
 # include <readline/readline.h>
@@ -11,6 +11,11 @@
 #endif
 
 using namespace rose::BinaryAnalysis;
+
+static SymbolicExprParser
+symbolicParser() {
+    return SymbolicExprParser();
+}
 
 static void
 parseCommandLine(int argc, char *argv[]) {
@@ -24,11 +29,7 @@ parseCommandLine(int argc, char *argv[]) {
         .doc("Description",
              "Parses symbolic expressions from standard input and prints the resulting expression trees. These trees "
              "undergo basic simplifications in ROSE before they're printed.")
-        .doc("Caveats",
-             "The symbolic expression layer in ROSE was originally intended to be called only in situations where the "
-             "ROSE library itself was constructing the tree, and the original implementation simply asserted that the "
-             "construction was valid.  This makes it not so friendly to be called on user input. Although the old "
-             "assertins are caught here, the error messages are not all that friendly.")
+        .doc("Symbolic expression syntax", symbolicParser().docString())
         .with(CommandlineProcessing::genericSwitches());
 
     if (!parser.parse(argc, argv).apply().unreachedArgs().empty())
@@ -38,8 +39,6 @@ parseCommandLine(int argc, char *argv[]) {
 int
 main(int argc, char *argv[]) {
     parseCommandLine(argc, argv);
-
-    rose::failedAssertionBehavior(rose::throwOnFailedAssertion);
     unsigned lineNumber = 0;
     while (1) {
 
@@ -63,7 +62,7 @@ main(int argc, char *argv[]) {
 
         // Parse the expression
         try {
-            InsnSemanticsExpr::TreeNodePtr expr = SymbolicExprParser().parse(line);
+            SymbolicExpr::Ptr expr = symbolicParser().parse(line);
             std::cout <<"Parsed value = " <<*expr <<"\n\n";
         } catch (const SymbolicExprParser::SyntaxError &e) {
             std::cerr <<e <<"\n";

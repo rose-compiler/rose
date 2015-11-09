@@ -8,19 +8,16 @@
 #include <boost/graph/connected_components.hpp>
 
 #ifdef _MSC_VER
-#include <float.h>                              // for _isnan
-#define isnan(x) _isnan(x)
-#include <boost/math/special_functions/erf.hpp> // for erf
-using boost::math::erf;
-#define _USE_MATH_DEFINES                       // for M_LN2
-#include <math.h>
+    #include <float.h>                                  // for _isnan
+    #define isnan(x) _isnan(x)
+    #include <boost/math/special_functions/erf.hpp> // for erf
+    using boost::math::erf;
+    #define _USE_MATH_DEFINES                       // for M_LN2
+    #include <math.h>
+#elif __cplusplus >= 201103L
+    // isnan is already declared in this scope
 #else
-// DQ (10/15/2015): Added support for C++11 usage (works for GNU comilers, e.g. detects use of -std=c++11 mode)
-  #if (__cplusplus == 201103)
- // DQ (bug reported by CERT): isnan is already in the namespace for c++11 mode (so nothing to do).
-  #else
     using std::isnan;
-  #endif
 #endif
 
 namespace rose {

@@ -457,46 +457,46 @@ RegisterStateX86::merge(const BaseSemantics::RegisterStatePtr &other_, RiscOpera
     bool changed = false;
     SValuePtr merged;
 
-    if (ip->createOptionalMerge(other->ip, ops->get_solver()).assignTo(merged)) {
+    if (ip->createOptionalMerge(other->ip, merger(), ops->get_solver()).assignTo(merged)) {
         ip = merged;
         changed = true;
     }
 
     for (size_t i=0; i<n_gprs; ++i) {
-        if (gpr[i]->createOptionalMerge(other->gpr[i], ops->get_solver()).assignTo(merged)) {
+        if (gpr[i]->createOptionalMerge(other->gpr[i], merger(), ops->get_solver()).assignTo(merged)) {
             gpr[i] = merged;
             changed = true;
         }
     }
 
     for (size_t i=0; i<n_segregs; ++i) {
-        if (segreg[i]->createOptionalMerge(other->segreg[i], ops->get_solver()).assignTo(merged)) {
+        if (segreg[i]->createOptionalMerge(other->segreg[i], merger(), ops->get_solver()).assignTo(merged)) {
             segreg[i] = merged;
             changed = true;
         }
     }
 
     for (size_t i=0; i<n_flags; ++i) {
-        if (flag[i]->createOptionalMerge(other->flag[i], ops->get_solver()).assignTo(merged)) {
+        if (flag[i]->createOptionalMerge(other->flag[i], merger(), ops->get_solver()).assignTo(merged)) {
             flag[i] = merged;
             changed = true;
         }
     }
 
     for (size_t i=0; i<n_st; ++i) {
-        if (st[i]->createOptionalMerge(other->st[i], ops->get_solver()).assignTo(merged)) {
+        if (st[i]->createOptionalMerge(other->st[i], merger(), ops->get_solver()).assignTo(merged)) {
             st[i] = merged;
             changed = true;
         }
     }
 
-    if (fpstatus->createOptionalMerge(other->fpstatus, ops->get_solver()).assignTo(merged)) {
+    if (fpstatus->createOptionalMerge(other->fpstatus, merger(), ops->get_solver()).assignTo(merged)) {
         fpstatus = merged;
         changed = true;
     }
 
     for (size_t i=0; i<n_xmm; ++i) {
-        if (xmm[i]->createOptionalMerge(other->xmm[i], ops->get_solver()).assignTo(merged)) {
+        if (xmm[i]->createOptionalMerge(other->xmm[i], merger(), ops->get_solver()).assignTo(merged)) {
             xmm[i] = merged;
             changed = true;
         }

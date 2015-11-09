@@ -777,15 +777,9 @@ class CgEmitter: public BaseEmitter<FunctionCallGraph::Graph> {
 public:
     explicit CgEmitter(const Partitioner &partitioner);
     CgEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg);
-
- // DQ (10/15/2015): These are incorrectly marked as "override" according to GNU 4.8.3 using c++11 mode.
- // virtual std::string functionLabel(const Function::Ptr&) const ROSE_OVERRIDE;
- // virtual Attributes functionAttributes(const Function::Ptr&) const ROSE_OVERRIDE;
- // virtual void emitCallGraph(std::ostream &out) const ROSE_OVERRIDE;
     virtual std::string functionLabel(const Function::Ptr&) const;
     virtual Attributes functionAttributes(const Function::Ptr&) const;
     virtual void emitCallGraph(std::ostream &out) const;
-
     virtual const FunctionCallGraph& callGraph() const { return cg_; }
     virtual void callGraph(const FunctionCallGraph &cg);
     virtual void highlight(const boost::regex&);

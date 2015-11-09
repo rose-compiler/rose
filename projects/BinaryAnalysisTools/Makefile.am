@@ -1,5 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS =
+pkginclude_HEADERS =
 EXTRA_DIST =
 MOSTLYCLEANFILES =
 TEST_TARGETS =
@@ -166,7 +167,7 @@ bROwSE_server_SOURCES =				\
 bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(top_builddir)/src/roseSupport -I$(WT_PREFIX)/include
 bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) -lboost_signals $(ROSE_LIBS)
 
-pkginclude_HEADERS = 				\
+pkginclude_HEADERS += 				\
         bROwSE/Application.h			\
         bROwSE/FunctionListModel.h		\
         bROwSE/FunctionUtil.h			\
@@ -211,9 +212,16 @@ generatePaths_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # Find paths in the CFG
 
 bin_PROGRAMS += findPath
-findPath_SOURCES = findPath.C
+findPath_SOURCES =				\
+	PathFinder/PathFinder.C			\
+	PathFinder/semantics.C			\
+	PathFinder/findPath.C
 findPath_CPPFLAGS = $(ROSE_INCLUDES)
 findPath_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+pkginclude_HEADERS +=				\
+	PathFinder/PathFinder.h			\
+	PathFinder/semantics.h
 
 #------------------------------------------------------------------------------------------------------------------------
 # find similar functions in two specimens
