@@ -132,7 +132,6 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
                     printf ("   --- statement->isTransformation()           = %s \n",statement->isTransformation() ? "true" : "false");
                     printf ("   --- statement->get_containsTransformation() = %s \n",statement->get_containsTransformation() ? "true" : "false");
 #endif
-#if 1
                  // DQ (11/8/2015): We might need to also check the surrounding white space as well (except that I think this is set later).
                     if (tokenStreamSequenceMap.find(statement) != tokenStreamSequenceMap.end())
                        {
@@ -142,9 +141,20 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
                        }
                       else
                        {
+#if 0
+                         printf ("Parent statement = %p = %s No token stream information found for child statement = %p = %s \n",
+                              currentStatement,currentStatement->class_name().c_str(),statement,statement->class_name().c_str());
+                         printf ("   --- at line: %d \n",statement->get_file_info()->get_line());
+
+                      // When this is a function declaration, try to understand more about it.
+                         SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(statement);
+                         if (functionDeclaration != NULL)
+                            {
+                              printf ("   --- functionDeclaration name = %s \n",functionDeclaration->get_name().str());
+                            }
+#endif
                          all_children_have_token_info = false;
                        }
-#endif
                   }
              }
 
@@ -157,7 +167,13 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
             // DQ (11/8/2015): I think that this should not apply to a SgBasicBlock (for example see 
             // tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_94.C).
             // The reason is that a block is not the same sort for compound statement as a SgForStatement.
-               if (isSgBasicBlock(currentStatement) == NULL)
+            // if (isSgBasicBlock(currentStatement) == NULL)
+               bool current_statement_is_allowed_to_have_statements_with_unmapped_token_sequences = 
+                    ( (isSgGlobal(currentStatement) != NULL)          || 
+                      (isSgBasicBlock(currentStatement) != NULL)      ||
+                      (isSgClassDefinition(currentStatement) != NULL) );
+
+               if (current_statement_is_allowed_to_have_statements_with_unmapped_token_sequences == false)
                   {
                  // Mark as a transformation instead of containing a transformation.
                     currentStatement->setTransformation();
@@ -170,6 +186,12 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
 #if 0
                     printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+#if 0
+                    printf ("This currentStatement = %p = %s is allowed to have a child without a token sequence mapping \n",currentStatement,currentStatement->class_name().c_str());
 #endif
                   }
              }
