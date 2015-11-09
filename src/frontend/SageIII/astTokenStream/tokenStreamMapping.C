@@ -5635,6 +5635,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      printf ("In buildTokenStreamFrontier(): part 1: modifiedLocatedNodesSet_1.size() = %zu \n",modifiedLocatedNodesSet_1.size());
 #endif
 
+  // DQ (11/8/2015): This function sets the nodes as containing transforamtions (which is essential).
   // DQ (4/14/2015): After a more detailed evaluation of this function it does not acomplish it's objectives.
   // Note that we first detect the frontier based on a synthysised attribute traversal to record 
   // where nodes can contain transformation even if they are not a transformation directly.
@@ -5642,6 +5643,18 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
 
 #if 0
      printf ("In buildTokenStreamFrontier(): DONE: Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+#endif
+
+#if 0
+     printf ("In buildTokenStreamFrontier(): Calling detectMacroExpansionsToBeUnparsedAsAstTransformations(): sourceFile = %p \n",sourceFile);
+#endif
+#if 1
+  // DQ (11/8/2015): Add macro expansion detection where transformations are in part of the expaned macro.
+  // However this must be called after all transformations have been done (in the frontier detection).
+     detectMacroExpansionsToBeUnparsedAsAstTransformations(sourceFile);
+#endif
+#if 0
+     printf ("In buildTokenStreamFrontier(): DONE: Calling detectMacroExpansionsToBeUnparsedAsAstTransformations(): sourceFile = %p \n",sourceFile);
 #endif
 
 #if 0
@@ -5861,6 +5874,12 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      sourceFile->set_redundantlyMappedTokensToStatementMultimap(tokenSequenceEndMultimap);
 
 #if 0
+  // DQ (11/8/2015): Add macro expansion detection where transformations are in part of the expaned macro.
+  // However this must be called after all transformations have been done.
+     detectMacroExpansionsToBeUnparsedAsAstTransformations(sourceFile);
+#endif
+
+#if 0
   // DQ (11/20/2013): Test using support for multiple files for Java testing.
   // Output an optional graph of the AST (just the tree, when active)
   // generateDOT ( *project );
@@ -6009,377 +6028,16 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
      sourceFile->set_tokenSubsequenceMap(tokenMappingTraversal.tokenStreamSequenceMap);
 
 #if 0
-     printf ("Completed the AST token stream mapping \n");
+  // DQ (11/8/2015): Add macro expansion detection where transformations are in part of the expaned macro.
+  // However this must be called after all transformations have been done.
+     detectMacroExpansionsToBeUnparsedAsAstTransformations(sourceFile);
+#endif
+
+#if 0
+     printf ("Completed the AST token stream mapping (before transformations) \n");
      ROSE_ASSERT(false);
 #endif
    }
 
 
-#if 0
-void
-ALT_buildTokenStreamMapping(SgSourceFile* sourceFile)
-   {
-  // This is the original version which has mixed the frontier analysis with the token stream mapping.
-  // These concepts (one done before the AST is transformed and the other one after the AST is transformed)
-  // are now represented by two seperate functions.  The first is called aafter AST post processing,
-  // and the second is called within the unparser (which at this point we can see transformations, where 
-  // they exist).
-
-#error "DEAD CODE!"
-
-     printf ("ALT_buildTokenStreamMapping() is the OLD version which combined the token stream mapping with the frontier detection (now seperated) \n");
-     ROSE_ASSERT(false);
-
-#if 0
-     printf ("In buildTokenStreamMapping(): Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
-#endif
-
-  // Note that we first detect the frontier.
-     simpleFrontierDetectionForTokenStreamMapping(sourceFile);
-
-#if 0
-     printf ("In buildTokenStreamMapping(): DONE: Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
-#endif
-
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
-#endif
-
-#if 0
-     printf ("In buildTokenStreamMapping(): Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
-#endif
-
-  // Note that we first detect the frontier.
-     frontierDetectionForTokenStreamMapping(sourceFile);
-
-#if 0
-     printf ("In buildTokenStreamMapping(): DONE: Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
-#endif
-
-#error "DEAD CODE!"
-
-#if 0
-     LexTokenStreamType* tokenStream = getTokenStream(sourceFile);
-     ROSE_ASSERT(tokenStream != NULL);
-
-  // Set this value so that we can generate unique keys for any interval.
-  // I think that a better mehcanism for generating unique keys would be possible (but this is simple).
-     TokenStreamSequenceToNodeMapping::tokenStreamSize = tokenStream->size();
-
-  // Convert this list to a vectors so that we can use integer indexing instead of iterators into a list.
-     vector<stream_element*> tokenVector;
-     for (LexTokenStreamType::iterator i = tokenStream->begin(); i != tokenStream->end(); i++)
-        {
-          tokenVector.push_back(*i);
-        }
-#else
-     vector<stream_element*> tokenVector = getTokenStream(sourceFile);
-#endif
-
-  // DQ (1/30/2014): Empty files are allowed (and tested).
-  // ROSE_ASSERT(tokenVector.empty() == false);
-     if (tokenVector.empty() == true)
-        {
-          printf ("In buildTokenStreamMapping(): No tokens found in file \n");
-          return;
-        }
-
-  // Build the inherited attribute
-     bool processThisNode = true;
-     InheritedAttribute inheritedAttribute(sourceFile,0,tokenVector.size()-1,processThisNode);
-
-  // Build the traversal object
-     TokenMappingTraversal tokenMappingTraversal(tokenVector);
-
-#if 0
-  // Output the depth of the AST.
-     printf ("***** sourceFile->depthOfSubtree() = %d \n",sourceFile->depthOfSubtree());
-#endif
-
-  // tokenMappingTraversal.traverse(sourceFile,inheritedAttribute);
-  // tokenMappingTraversal.traverseInputFiles(sourceFile,inheritedAttribute);
-     tokenMappingTraversal.traverse(sourceFile,inheritedAttribute);
-
-#if 0
-  // We need to set the positions of the trailing whitespace of the last element.
-     if (tokenMappingTraversal.tokenStreamSequenceVector.empty() == false)
-        {
-          TokenStreamSequenceToNodeMapping* lastElement = tokenMappingTraversal.tokenStreamSequenceVector.back();
-
-          lastElement->trailing_whitespace_start = lastElement->token_subsequence_end + 1;
-          lastElement->trailing_whitespace_end   = tokenVector.size() - 1;
-
-          printf ("In buildTokenStreamMapping(): Reset lastElement->trailing_whitespace_start = %d lastElement->trailing_whitespace_end = %d \n",lastElement->trailing_whitespace_start,lastElement->trailing_whitespace_end);
-
-          if (lastElement->trailing_whitespace_start > lastElement->trailing_whitespace_end)
-             {
-#if 0
-               printf ("Warning: lastElement->trailing_whitespace_start = %d lastElement->trailing_whitespace_end = %d (reset) \n",lastElement->trailing_whitespace_start,lastElement->trailing_whitespace_end);
-#endif
-               lastElement->trailing_whitespace_start = -1;
-               lastElement->trailing_whitespace_end   = -1;
-             }
-          ROSE_ASSERT(lastElement->trailing_whitespace_start <= lastElement->trailing_whitespace_end);
-#if 0
-          printf ("Setting the last token's trailing_whitespace (%d,%d) tokenVector.size() = %" PRIuPTR " \n",lastElement->trailing_whitespace_start,lastElement->trailing_whitespace_end,tokenVector.size());
-#endif
-        }
-#endif
-
-     tokenMappingTraversal.outputTokenStreamSequenceMap();
-
-#if 1
-  // DQ (12/1/2013): Make the output of this graph consitional upon the verbose level.
-     if ( SgProject::get_verbose() > 0 )
-        {
-       // DQ (12/3/2014): Note that this function fails for the Amr.cxx file in ARES.
-       // Build a dot file of the AST and the token stream showing the mapping.
-          Graph_TokenMappingTraversal::graph_ast_and_token_stream(sourceFile,tokenVector,tokenMappingTraversal.tokenStreamSequenceMap);
-        }
-#endif
-
-#error "DEAD CODE!"
-
-#if 1
-  // DQ (12/1/2013): Make the output of this graph consitional upon the verbose level.
-  // This generates files: token_leading_<filename>.c and token_trailing_<filename>.c.
-  // if ( SgProject::get_verbose() > 0 )
-     if ( sourceFile->get_unparse_using_leading_and_trailing_token_mappings() == true )
-        {
-       // Output a file generated from the token sequences of each declaration statement directly within the global scope.
-          bool preferTrailingWhitespaceInOutput = true;
-          outputSourceCodeFromTokenStream_globalScope(sourceFile,tokenVector,tokenMappingTraversal.tokenStreamSequenceMap,preferTrailingWhitespaceInOutput);
-
-          preferTrailingWhitespaceInOutput = false;
-          outputSourceCodeFromTokenStream_globalScope(sourceFile,tokenVector,tokenMappingTraversal.tokenStreamSequenceMap,preferTrailingWhitespaceInOutput);
-        }
-#endif
-
-  // DQ (10/27/2013): Build the SgToken IR nodes and the vector of them into the SgSourceFile IR node.
-     SgTokenPtrList & roseTokenList = sourceFile->get_token_list();
-
-  // DQ (11/29/2013): I think this should be empty at this point.
-     ROSE_ASSERT(roseTokenList.empty() == true);
-
-  // Setup the current file ID from the name in the source file.
-     ROSE_ASSERT(sourceFile->get_file_info() != NULL);
-     int currentFileId = sourceFile->get_file_info()->get_file_id();
-
-  // This should now include all of the CPP directives and C/C++ style comments as tokens.
-  // for (LexTokenStreamType::iterator i = tokenVector.begin(); i != tokenVector.end(); i++)
-     for (vector<stream_element*>::iterator i = tokenVector.begin(); i != tokenVector.end(); i++)
-        {
-          ROSE_ASSERT((*i)->p_tok_elem != NULL);
-#if 0
-          printf ("   --- token #%d token id = %d position range (%d,%d) - (%d,%d): token = -->|%s|<-- \n",
-               counter,(*i)->p_tok_elem->token_id,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num,
-               (*i)->ending_fpi.line_num,(*i)->ending_fpi.column_num,(*i)->p_tok_elem->token_lexeme.c_str());
-#endif
-
-          SgToken* roseToken = new SgToken( (*i)->p_tok_elem->token_lexeme,(*i)->p_tok_elem->token_id);
-          ROSE_ASSERT(roseToken != NULL);
-
-          roseToken->set_startOfConstruct(new Sg_File_Info(currentFileId,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num));
-          roseToken->set_endOfConstruct  (new Sg_File_Info(currentFileId,(*i)->ending_fpi.line_num,   (*i)->ending_fpi.column_num));
-
-          roseTokenList.push_back(roseToken);
-        }
-
-  // Avoid the copy into the list held by SgSourceFile.
-  // sourceFile->set_token_list(tokenList);
-
-#error "DEAD CODE!"
-
-#if 0
-     printf ("In buildTokenStreamMapping(): Calling sourceFile->set_tokenSubsequenceMap() \n");
-#endif
-
-  // Note that the map is actually a member of the ROSE namespace, and that this is done because the 
-  // ROSE IR can't support (as defined by ROSETTA) some more complex types as what we would need to 
-  // support it as a data member of the SgSourceFile IR node.  This is due in part to ROSETTA and the
-  // additional requirements of the generated serialization that is a part of the AST File I/O.
-     sourceFile->set_tokenSubsequenceMap(tokenMappingTraversal.tokenStreamSequenceMap);
-
-  // ************************************************************************************************
-  // DQ (11/29/2013): Mark those entries in the frontier map that are redundantly mapped to the same 
-  // token subsequence.  This can happen with a variable declaration contains a list of variables and 
-  // is mapped to several SgVariableDeclaration IR nodes in the ROSE AST.  This normalization then 
-  // maps several IR nodes redundantly to a single token sequence.  So we have to identify all 
-  // redundant mapping of IR nodes to a token sequence and allow/disallow them to be unparsed 
-  // via the AST or token sequence as a group.
-  // ************************************************************************************************
-
-#error "DEAD CODE!"
-
-  // DQ (11/29/2013): Used to mark statements that are redundantly mapped to a single token sequence.
-  // int lastTokenIndex = 0;
-  // std::set<int> tokenSequenceEndSet;
-     std::map<int,SgStatement*> tokenSequenceEndMap;
-     std::multimap<int,SgStatement*> tokenSequenceEndMultimap;
-     std::set<int> redundantTokenEndings;
-
-  // DQ (11/29/2013): Get the token mapping to the AST.
-     std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
-
-#if 0
-     printf ("In buildTokenStreamMapping(): tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
-#endif
-
-     ROSE_ASSERT(tokenStreamSequenceMap.empty() == false);
-
-     map<SgStatement*,FrontierNode*> token_unparse_frontier_map = sourceFile->get_token_unparse_frontier();
-
-  // DQ (11/29/2013): This can happen for test_CplusplusMacro_C.c (which has only CPP directives).
-  // ROSE_ASSERT(token_unparse_frontier_map.empty() == false);
-
-     map<SgStatement*,FrontierNode*>::iterator i = token_unparse_frontier_map.begin();
-
-#error "DEAD CODE!"
-
-  // Iterator over all of the frontier nodes.
-     while (i != token_unparse_frontier_map.end())
-        {
-          SgStatement* statement = i->first;
-          ROSE_ASSERT(statement != NULL);
-          FrontierNode* frontier_node = i->second;
-          ROSE_ASSERT(frontier_node != NULL);
-
-          TokenStreamSequenceToNodeMapping* tokenSubsequence = tokenStreamSequenceMap[statement];
-       // ROSE_ASSERT(tokenSubsequence != NULL);
-
-          if (tokenSubsequence != NULL)
-             {
-          std::map<int,SgStatement*>::iterator j = tokenSequenceEndMap.find(tokenSubsequence->token_subsequence_end);
-          if (j != tokenSequenceEndMap.end())
-             {
-#if 0
-               printf ("In buildTokenStreamMapping(): Found associated tokenStreamSequence for statement = %p = %s \n",statement,statement->class_name().c_str());
-#endif
-               i->second->redundant_token_subsequence = true;
-               token_unparse_frontier_map[j->second]->redundant_token_subsequence = true;
-
-            // Save this entry in the multimap.
-               if (tokenSequenceEndMultimap.find(tokenSubsequence->token_subsequence_end) != tokenSequenceEndMultimap.end())
-                  {
-                    tokenSequenceEndMultimap.insert(std::pair<int,SgStatement*>(tokenSubsequence->token_subsequence_end,j->second));
-                  }
-               tokenSequenceEndMultimap.insert(std::pair<int,SgStatement*>(tokenSubsequence->token_subsequence_end,statement));
-
-               redundantTokenEndings.insert(tokenSubsequence->token_subsequence_end);
-#if 0
-               printf ("Mark this as a frontier that is redundantly mapped to a token sequence: statement = %p = %s \n",statement,statement->class_name().c_str());
-               ROSE_ASSERT(false);
-#endif
-#if 0
-            // ROSE_ASSERT(tokenStreamSequenceMap.empty() == false);
-
-               if (lastTokenIndex == tokenSubsequence->token_subsequence_end)
-                  {
-                 // Mark this as a frontier that is redundantly mapped to a token sequence.
-                    printf ("Mark this as a frontier that is redundantly mapped to a token sequence \n");
-                    ROSE_ASSERT(false);
-
-                 // tokenSubsequence->redundant_token_subsequence = true;
-                  }
-                 else
-                  {
-                 // This is the typical case.
-                  }
-
-               lastTokenIndex = tokenSubsequence->token_subsequence_end;
-#endif
-             }
-            else
-             {
-            // DQ (11/29/2013): Not certain this should be an error or a warning.
-#if 0
-               printf ("WARNING: There is no token sequence mapping already processed as redundant for this statement = %p = %s \n",statement,statement->class_name().c_str());
-#endif
-               tokenSequenceEndMap.insert(std::pair<int,SgStatement*>(tokenSubsequence->token_subsequence_end,statement));
-
-            // Save this entry in the multimap.
-            // tokenSequenceEndMultimap.insert(std::pair<int,SgStatement*>(tokenSubsequence->token_subsequence_end,statement));
-             }
-             }
-
-          i++;
-        }
-
-#error "DEAD CODE!"
-
-  // std::map<int,SgStatement*>::iterator k = tokenSequenceEndMap.begin();
-  // while (k != tokenSequenceEndMap.end())
-  // std::multimap<int,SgStatement*>::iterator k = tokenSequenceEndMultimap.begin();
-  // while (k != tokenSequenceEndMultimap.end())
-     std::set<int>::iterator k = redundantTokenEndings.begin();
-     while (k != redundantTokenEndings.end())
-        {
-       // int lastTokenIndex = k->first;
-          int lastTokenIndex = *k;
-#if 0
-          printf ("Redundant statement list: lastTokenIndex = %d \n",lastTokenIndex);
-#endif
-          std::pair<std::multimap<int,SgStatement*>::iterator,std::multimap<int,SgStatement*>::iterator> range_iterator = tokenSequenceEndMultimap.equal_range(lastTokenIndex);
-          std::multimap<int,SgStatement*>::iterator first_iterator = range_iterator.first;
-          std::multimap<int,SgStatement*>::iterator last_iterator  = range_iterator.second;
-
-          bool unparseUsingTokenStream = true;
-          std::multimap<int,SgStatement*>::iterator local_iterator = first_iterator;
-          while (local_iterator != last_iterator)
-             {
-               SgStatement* stmt = local_iterator->second;
-#if 0
-               printf ("   --- redundant statement for lastTokenIndex = %d stmt = %p = %s \n",lastTokenIndex,stmt,stmt->class_name().c_str());
-#endif
-               if (token_unparse_frontier_map[stmt]->unparseUsingTokenStream == false)
-                  {
-                    unparseUsingTokenStream = false;
-                  }
-
-               local_iterator++;
-             }
-
-          if (unparseUsingTokenStream == false)
-             {
-            // Reset all of the frontier IR node data structures to unparse from the AST.
-#if 0
-               printf ("Reset all of the frontier IR node data structures to unparse from the AST \n");
-#endif
-               std::multimap<int,SgStatement*>::iterator local_iterator = first_iterator;
-               while (local_iterator != last_iterator)
-                  {
-                    SgStatement* stmt = local_iterator->second;
-#if 0
-                    printf ("   --- redundant statement for lastTokenIndex = %d stmt = %p = %s (setting to unparse from AST) \n",lastTokenIndex,stmt,stmt->class_name().c_str());
-#endif
-                    ROSE_ASSERT(token_unparse_frontier_map.find(stmt) != token_unparse_frontier_map.end());
-                    FrontierNode* token_unparse_frontier = token_unparse_frontier_map[stmt];
-                    ROSE_ASSERT(token_unparse_frontier != NULL);
-
-                    token_unparse_frontier->unparseUsingTokenStream = false;
-                    token_unparse_frontier->unparseFromTheAST       = true;
-
-                    local_iterator++;
-                  }
-             }
-
-          k++;
-        }
-
-#error "DEAD CODE!"
-
-  // Save this so that the unparser can avoid duplication when unparsing the statements that
-  // are redundantly mapped to a single token sequence (represented by the last token index).
-     sourceFile->set_redundantTokenEndingsSet(redundantTokenEndings);
-     sourceFile->set_redundantlyMappedTokensToStatementMultimap(tokenSequenceEndMultimap);
-
-#error "DEAD CODE!"
-
-#if 0
-     printf ("Identify the frontier IR nodes that redundantly map to a single token sequence \n");
-     ROSE_ASSERT(false);
-#endif
-   }
-#endif
 

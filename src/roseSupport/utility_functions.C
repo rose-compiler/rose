@@ -1302,6 +1302,18 @@ rose::getNextStatement ( SgStatement *currentStatement )
                break;
              }
 
+       // DQ (11/8/2015): Added support for SgLabelStatement (see testcode tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_134.C)
+          case V_SgLabelStatement:
+            {
+              SgLabelStatement* lableStatement = isSgLabelStatement(currentStatement);
+              nextStatement = lableStatement->get_statement();
+              ROSE_ASSERT(nextStatement != NULL);
+#if 1
+              printf ("In getNextStatement(): case V_SgLabelStatement: nextStatement = %p = %s \n",nextStatement,nextStatement->class_name().c_str());
+#endif
+              break;
+            }
+
           default:
              {
             // We have to handle the cases of a SgStatementPtrList and a 
