@@ -102,7 +102,7 @@ public:
     }
 
     static bool isNotEmptyFolder(const string& fullFolderName) {
-        return exists(fullFolderName) && !is_empty(fullFolderName);
+        return exists(fullFolderName) && !boost::filesystem::is_empty(fullFolderName);
     }
     
     static string normalizePath(const string& aPath) {

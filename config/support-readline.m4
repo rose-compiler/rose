@@ -1,98 +1,106 @@
-# Tests for presence of the GNU libreadline library
+# Tests for presence of the GNU readline library
+# NOTICE: The name of the library is "GNU readline"; the switch and most variables use "libreadline"
 AC_DEFUN([ROSE_SUPPORT_LIBREADLINE],
 [
-  ROSE_ARG_WITH(
-    [libreadline],
-    [for libreadline],
-    [Use the GNU libreadline library for interactive input. If not present then editing of input lines will not be possible.],
-    []
-  )
-  if test "x$ROSE_WITH_LIBREADLINE" = "xno"; then
-    LIBREADLINE_INSTALL_PATH=
-    LIBREADLINE_INCLUDE_PATH=
-    LIBREADLINE_LIBRARY_PATH=
-  elif test "x$ROSE_WITH_LIBREADLINE" = "xyes"; then
-    LIBREADLINE_INSTALL_PATH=/usr
-    LIBREADLINE_INCLUDE_PATH=/usr/include
-    LIBREADLINE_LIBRARY_PATH=/usr/lib
-  else
-    LIBREADLINE_INSTALL_PATH="$ROSE_WITH_LIBREADLINE"
-    LIBREADLINE_INCLUDE_PATH="$ROSE_WITH_LIBREADLINE/include"
-    LIBREADLINE_LIBRARY_PATH="$ROSE_WITH_LIBREADLINE/lib"
-  fi
 
-  ROSE_ARG_WITH(
-    [libreadline-include],
-    [if the GNU libreadline include directory was specified],
-    [use this GNU libreadline include directory],
-    []
-  )
-  if test "x$CONFIG_HAS_ROSE_WITH_LIBREADLINE_INCLUDE" != "xno"; then
-      LIBREADLINE_INCLUDE_PATH="$ROSE_WITH_LIBREADLINE_INCLUDE"
-  fi
+    dnl Test for the "--with-libreadline" switch. If the value is "no" (or --without-libreadline) then none of the rest
+    dnl of the readline-related settings are used.
+    ROSE_ARG_WITH(
+        [libreadline],
+        [whether to use GNU readline],
+        [Enable the use of the GNU readline library for interactive input. If not present then interactive inputs can
+            be edited only with basic terminal editing commands like backspace, kill word, and kill line.  A readline
+            installation directory can be specified for this switch, otherwise the default is /usr. To disable readline
+            support in ROSE set this to "no" or use --without-libreadline.  The other readline-related switches are only
+            processed when --with-libreadline is enabled.],
+        []
+    )
+    if test "$ROSE_WITH_LIBREADLINE" = "no"; then
+        LIBREADLINE_INSTALL_PATH=
+        LIBREADLINE_INCLUDE_PATH=
+        LIBREADLINE_LIBRARY_PATH=
+    elif test "$ROSE_WITH_LIBREADLINE" = "yes"; then
+        LIBREADLINE_INSTALL_PATH=/usr
+        LIBREADLINE_INCLUDE_PATH=/usr/include
+        LIBREADLINE_LIBRARY_PATH=/usr/lib
+    else
+        LIBREADLINE_INSTALL_PATH="$ROSE_WITH_LIBREADLINE"
+        LIBREADLINE_INCLUDE_PATH="$ROSE_WITH_LIBREADLINE/include"
+        LIBREADLINE_LIBRARY_PATH="$ROSE_WITH_LIBREADLINE/lib"
+    fi
 
-  ROSE_ARG_WITH(
-    [libreadline-lib],
-    [if the GNU libreadline library directory was specified],
-    [use this GNU libreadline library directory],
-    []
-  )
-  if test "x$CONFIG_HAS_ROSE_WITH_LIBREADLINE_LIB" != "xno"; then
-      LIBREADLINE_LIBRARY_PATH="$ROSE_WITH_LIBREADLINE_LIB"
-  fi
+    if test "$ROSE_WITH_LIBREADLINE" != "no"; then
+        dnl Since we have "--with-libreadline", process the optional "--with-libreadline-include" and "--with-libreadline-lib"
+        dnl switches. If present, these override the defaults we set above.
+        ROSE_ARG_WITH(
+            [libreadline-include],
+            [if the GNU readline include directory was specified],
+            [Override the include directory for GNU readline rather than using a default based on --with-libreadline.],
+            []
+        )
+        if test "$CONFIG_HAS_ROSE_WITH_LIBREADLINE_INCLUDE" != "no"; then
+            LIBREADLINE_INCLUDE_PATH="$ROSE_WITH_LIBREADLINE_INCLUDE"
+        fi
 
-  if test "x$LIBREADLINE_INCLUDE_PATH" != "x"; then
-      AC_CHECK_FILE(
-          [${LIBREADLINE_INCLUDE_PATH}/readline/readline.h],
-          [],
-          [ROSE_MSG_ERROR([libreadline.h is missing, can't compile with readline])])
-  fi
+        ROSE_ARG_WITH(
+            [libreadline-lib],
+            [if the GNU readline library directory was specified],
+            [Override the library directory for GNU readline rather than using a default based on --with-libreadline.],
+            []
+        )
+        if test "$CONFIG_HAS_ROSE_WITH_LIBREADLINE_LIB" != "no"; then
+            LIBREADLINE_LIBRARY_PATH="$ROSE_WITH_LIBREADLINE_LIB"
+        fi
 
-  if test "x$LIBREADLINE_LIBRARY_PATH" != "x"; then
-      AC_CHECK_FILE(
-          [${LIBREADLINE_LIBRARY_PATH}/libreadline.a],
-          [],
-          [ROSE_MSG_ERROR([libreadline.a is missing, can't compile with readline])])
+        dnl Find the readline header file, which must exist if the user wants readline support.
+        AC_CHECK_FILE(
+            [${LIBREADLINE_INCLUDE_PATH}/readline/readline.h],
+            [],
+            [ROSE_MSG_ERROR([libreadline.h is missing; use --with-libreadline=no to disable])])
 
-      ORIG_LIBS="$LIBS"
-      for readline_lib_dependency in "" termcap curses ncurses; do
-          if test -z "$readline_lib_dependency"; then
-            TRY_LIB="-lreadline"
-          else
-            TRY_LIB="-lreadline -l$readline_lib_dependency"
-          fi
-          LIBS="$ORIG_LIBS $TRY_LIB"
-          AC_TRY_LINK_FUNC(readline, LIBREADLINE_LIBS="$TRY_LIB", LIBREADLINE_LIBS="")
-          if test -n "$LIBREADLINE_LIBS"; then
-            break
-          fi
-      done
+        dnl Make sure the readline library can be linked.  The readline library sometimes requires additional libraries but
+        dnl will often link fine during this configure check since those other features aren't used. Therefore, try to find
+        dnl those libraries explicitly if we want readline.  This way of doing things will work regardless of whether these
+        dnl libraries are static or shared.
+        if test "$LIBREADLINE_LIBRARY_PATH" != ""; then
+            dnl Use the termcap library if it's available.
+            AC_CHECK_LIB(termcap, tputs,
+                [LIBREADLINE_LIBS="-ltermcap $LIBREADLINE_LIBS"])
 
-      if test -z "$LIBREADLINE_LIBS"; then
-        LIBREADLINE_LIBS=""
-      fi
+            dnl Use either ncurses or curses, but not both.
+            AC_CHECK_LIB(ncurses, addch,
+                [LIBREADLINE_LIBS="-lncurses $LIBREADLINE_LIBS"],
+                [AC_CHECK_LIB(curses, addch,
+                    [LIBREADLINE_LIBS="-lcurses $LIBREADLINE_LIBS"],
+                    [], dnl failure is allowed
+                    [$LIBREADLINE_LIBS])],
+                [$LIBREADLINE_LIBS])
 
-      LIBS="$ORIG_LIBS"
+            dnl Look for -lreadline, but make sure that "-L" appears before the "-lreadline". It seems the only
+            dnl way to do this is to add both compiler switches to the OTHER-LIBRARIES (5th) argument. We can't
+            dnl leave the LIBRARY (1st) argument empty, so use some dummy library that we're sure exists; the
+            dnl message spit out by this check will be misleading ("looking for readline in -lm")--oh well.
+            AC_CHECK_LIB(m, readline,
+                [LIBREADLINE_LIBS="-L$LIBREADLINE_LIBRARY_PATH -lreadline $LIBREADLINE_LIBS"],
+                [ROSE_MSG_ERROR([libreadline.a is missing; use --with-libreadline=no to disable])],
+                [-L$LIBREADLINE_LIBRARY_PATH -lreadline $LIBREADLINE_LIBS])
+        fi
+    fi
 
-      #LDFLAGS="$LDFLAGS -L${LIBREADLINE_LIBRARY_PATH} ${LIBREADLINE_LIBS}"
+    dnl Final results.
+    AM_CONDITIONAL(ROSE_WITH_LIBREADLINE, [test "$LIBREADLINE_INCLUDE_PATH" != "" && test "$LIBREADLINE_LIBRARY_PATH" != ""])
+    AM_CONDITIONAL(ROSE_WITH_LIBREADLINE_INCLUDE, [test "$LIBREADLINE_INCLUDE_PATH" != ""])
 
-      if test -z "$LIBREADLINE_LIBS"; then
-        ROSE_MSG_ERROR([libreadline.a is missing the readline function, can't compile with readline])
-      fi
-  fi
+    AC_SUBST(LIBREADLINE_INSTALL_PATH)
+    AC_SUBST(LIBREADLINE_INCLUDE_PATH)
+    AC_SUBST(LIBREADLINE_LIBRARY_PATH)
+    AC_SUBST(LIBREADLINE_LIBS)
 
-  AM_CONDITIONAL(ROSE_WITH_LIBREADLINE, [test "x$LIBREADLINE_INCLUDE_PATH" != "x" && test "x$LIBREADLINE_LIBRARY_PATH" != "x"])
-  AM_CONDITIONAL(ROSE_WITH_LIBREADLINE_INCLUDE, [test "x$LIBREADLINE_INCLUDE_PATH" != "x"])
+    if test "$LIBREADLINE_INCLUDE_PATH" != "" -a "$LIBREADLINE_LIBRARY_PATH" != ""; then
+        AC_DEFINE(ROSE_HAVE_LIBREADLINE, 1, [Defined if the readline library and headers are available.])
+    fi
 
-  AC_SUBST(LIBREADLINE_INSTALL_PATH)
-  AC_SUBST(LIBREADLINE_INCLUDE_PATH)
-  AC_SUBST(LIBREADLINE_LIBRARY_PATH)
-  AC_SUBST(LIBREADLINE_LIBS)
+    AC_MSG_NOTICE([LIBREADLINE_LIBS = $LIBREADLINE_LIBS])
 
-  if test "x$LIBREADLINE_INCLUDE_PATH" != "x" -a "x$LIBREADLINE_LIBRARY_PATH" != "x"; then
-    AC_DEFINE(ROSE_HAVE_LIBREADLINE, 1, [Defined if the readline library and headers are available.])
-  fi
-
-# End macro ROSE_SUPPORT_LIBREADLINE.
 ])
 

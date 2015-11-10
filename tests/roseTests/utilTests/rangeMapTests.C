@@ -1,17 +1,11 @@
 #include <boost/foreach.hpp>
 #include <set>
-#include <rangemap.h>
 #include <Sawyer/IntervalMap.h>
 
 // We want a map that associates Key with ValueSet, compressing adjacent keys with equal ValueSet.
 typedef size_t Key;
 typedef int Value;
 typedef std::set<Value> ValueSet;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      RangeMap tests
-// This API will probably be deprecated eventually in favor of Sawyer::Container::IntervalMap
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // The RangeMap API needs a way to print the values stored in the map regardless of whether we ever try to print them. This has
 // to be defined in the global namespace, or the namespace of ValueSet if Koenig lookup is used.
@@ -22,6 +16,13 @@ std::ostream& operator<<(std::ostream &out, const ValueSet &vs) {
     out <<" }";
     return out;
 }
+
+#include <rangemap.h>
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RangeMap tests
+// This API will probably be deprecated eventually in favor of Sawyer::Container::IntervalMap
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace TestRangeMap {
 

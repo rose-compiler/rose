@@ -7,6 +7,7 @@ using namespace AstFromString;
 
 namespace ArithemeticIntensityMeasurement
 {
+  running_mode_enum running_mode = e_analysis_and_instrument;
   std::map <SgNode*, bool> FPVisitMAP; // record if a flop operation is counted or not
 //we have to be more specific, if a variable is processed and the variable is within a inner loops
 //then we skip it's counting in outer loop for load/store
@@ -31,7 +32,7 @@ namespace ArithemeticIntensityMeasurement
   } 
   bool debug;
   // default file name to store the report
-  string report_filename = "report.txt";
+  string report_filename = "ai_tool_report.txt";
   string report_option ="-report-file";
 
   int loop_id = 0;
@@ -58,8 +59,25 @@ namespace ArithemeticIntensityMeasurement
 
  }
 
+ string FPCounters::toString(std::string comment)
+ {
+   stringstream ss; 
+   ss<<"----------Floating Point Operation Counts---------------------"<<endl;
+   ss<<comment<<endl;
+   //cout<<"Floating point operations found for node "<<node->class_name() <<"@" <<endl;
+   ss<<node->class_name() <<"@" <<endl;
+   ss<< node->get_file_info()->get_filename()<<":"<<node->get_file_info()->get_line() <<endl;
+   ss<<"\tfp_plus:"<< plus_count<<endl;
+   ss<<"\tfp_minus:"<< minus_count<<endl;
+   ss<<"\tfp_multiply:"<< multiply_count<<endl;
+   ss<<"\tfp_divide:"<< divide_count<<endl;
+   ss<<"\tfp_total:"<< getTotalCount()<<endl;
+
+   return ss.str();
+ }
  void FPCounters::printInfo(std::string comment/* ="" */)
  {
+#if 0   
    cout<<"----------Floating Point Operation Counts---------------------"<<endl;
    cout<<comment<<endl;
    //cout<<"Floating point operations found for node "<<node->class_name() <<"@" <<endl;
@@ -70,7 +88,9 @@ namespace ArithemeticIntensityMeasurement
    cout<<"\tfp_multiply:"<< multiply_count<<endl;
    cout<<"\tfp_divide:"<< divide_count<<endl;
    cout<<"\tfp_total:"<< getTotalCount()<<endl;
-
+#else
+  cout<<toString(comment);
+#endif
  }
 
  // a transformation to instrument loops to obtain loop iteration counts at runtime
@@ -342,18 +362,21 @@ namespace ArithemeticIntensityMeasurement
    for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
    {
      SgStatement* loop = isSgStatement(*i);
-     cout<< "Found nested loop at line:"<< loop->get_file_info()->get_line()<<endl;
+     if (debug)
+       cout<< "Found nested loop at line:"<< loop->get_file_info()->get_line()<<endl;
      std::set<SgInitializedName*> src_var_set ;
      if (isRead)
        src_var_set = LoopLoadVariables[loop];
      else
        src_var_set = LoopStoreVariables[loop];
      std::set<SgInitializedName*>::iterator j; 
-     cout<< "\t Insert processed variable:"<<endl;
+     if (debug)
+       cout<< "\t Insert processed variable:"<<endl;
      for (j= src_var_set.begin(); j!= src_var_set.end(); j++)
      {
         var_set.insert(*j);
-        cout<< "\t \t "<<(*j)->get_name()<<endl;
+       if (debug)
+         cout<< "\t \t "<<(*j)->get_name()<<endl;
      }
    }
  }
@@ -532,14 +555,18 @@ namespace ArithemeticIntensityMeasurement
     SgScopeStatement* scope = isSgScopeStatement(input);
 
     // We need to record the associated loop info.
-    SgStatement* loop= NULL;
+    //SgStatement* loop= NULL;
     SgForStatement* forloop = isSgForStatement(scope->get_scope());
     SgFortranDo* doloop = isSgFortranDo(scope->get_scope());
 
     if (forloop)
-      loop = forloop;
+    {
+      //loop = forloop;
+    }
     else if (doloop)
-      loop = doloop;
+    {  
+      //loop = doloop;
+    }
     else
     {
       cerr<<"Error in CountLoadStoreBytes (): input is not loop body type:"<< input->class_name()<<endl;
@@ -553,26 +580,28 @@ namespace ArithemeticIntensityMeasurement
     bool success = SageInterface::collectReadWriteVariables (isSgStatement(input), readVars, writeVars);
     if (success!= true)
     {
-       cout<<"debug of CountLoadStoreBytes(): failed to collect load/store, mostly due to existence of function calls inside of loop body @ "<<input->get_file_info()->get_line()<<endl;
+       cout<<"Warning: CountLoadStoreBytes(): failed to collect load/store, mostly due to existence of function calls inside of loop body @ "<<input->get_file_info()->get_line()<<endl;
     }
 
     std::set<SgInitializedName*>::iterator it;
-
-    cout<<"debug: found read variables (SgInitializedName) count = "<<readVars.size()<<endl;
+    if (debug)
+      cout<<"debug: found read variables (SgInitializedName) count = "<<readVars.size()<<endl;
     for (it=readVars.begin(); it!=readVars.end(); it++)
     {
       SgInitializedName* iname = (*it);
-     cout<<scalar_or_array (iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
+      if (debug)
+        cout<<scalar_or_array (iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
     }
 
     if (!includeScalars )
       readVars =  filterVariables (readVars);
-
-    cout<<"debug: found write variables (SgInitializedName) count = "<<writeVars.size()<<endl;
+    if (debug)
+      cout<<"debug: found write variables (SgInitializedName) count = "<<writeVars.size()<<endl;
     for (it=writeVars.begin(); it!=writeVars.end(); it++)
     {
       SgInitializedName* iname = (*it);
-      cout<<scalar_or_array(iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
+      if (debug)
+        cout<<scalar_or_array(iname->get_type()) <<" "<<iname->get_name()<<"@"<<iname->get_file_info()->get_line()<<endl;
     }
     if (!includeScalars )
       writeVars =  filterVariables (writeVars);
@@ -632,6 +661,13 @@ namespace ArithemeticIntensityMeasurement
     //Must update the total counter here
     FPCounters* fp_counters = getFPCounters (input); 
     fp_counters->updateTotal ();
+    // write results to a report file
+    if (running_mode == e_static_counting)
+    {
+      ofstream reportFile(report_filename.c_str(), ios::app);
+      cout<<"Writing counter results to "<< report_filename <<endl;
+      reportFile<< fp_counters->toString();
+    }
     // debugging info
     if (debug)
       printFPCount (input);

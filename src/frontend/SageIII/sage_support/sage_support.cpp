@@ -1466,6 +1466,9 @@ SgFile::runFrontend(int & nextErrorCode)
      display("In runFrontend()");
 #endif
 
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(this != NULL);
+
   // DQ (6/13/2013): Added to support error checking (seperation of construction of SgFile IR nodes from calling the fronend on each one).
      ROSE_ASSERT(get_parent() != NULL);
 
@@ -1826,6 +1829,9 @@ int
 SgProject::RunFrontend()
 {
   TimingPerformance timer ("AST (SgProject::RunFrontend()):");
+
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(this != NULL);
 
   int status_of_function = 0;
   {
@@ -3209,7 +3215,25 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                 char * temp = tempnam(abs_dir.c_str(), (base + "-").c_str());   // not deprecated in Visual Studio 2010
                 preprocessFilename = string(temp) + ".F90"; free(temp);
              // copy source file to pseudonym file
-                try { boost::filesystem::copy_file(sourceFilename, preprocessFilename); }
+                try {
+#if (__cplusplus >= 201103L) 
+#if !defined(BOOST_COMPILED_WITH_CXX11)
+   #warning "Compiling ROSE with C++11 mode: BOOST NOT compiled with C++11 support."
+#else
+   #warning "Compiling ROSE with C++11 mode: BOOST WAS compiled with C++11 support."
+#endif
+#endif
+                   // DQ (10/20/2015): Boost support for copy_file() is not uniform acorss C++98 and C++11.
+                   // I think this need to be addressed seperately in ROSE.
+                   // boost::filesystem::copy_file(sourceFilename, preprocessFilename); 
+#if (__cplusplus >= 201103L) && !defined(BOOST_COMPILED_WITH_CXX11)
+                   // copy_file(sourceFilename, preprocessFilename); 
+                      printf ("Error: C++11 support for compiling ROSE requires BOOST to be compiled in C++11 mode! (required for copy_file() support) \n");
+                      ROSE_ASSERT(false);
+#else
+                      boost::filesystem::copy_file(sourceFilename, preprocessFilename); 
+#endif
+                    }
                 catch(exception &e)
                 {
                   cout << "Error in copying file " << sourceFilename << " to " << preprocessFilename
@@ -4040,6 +4064,9 @@ Rose::Frontend::RunSerial(SgProject* project)
       }//BOOST_FOREACH
   }//all_files->callFrontEnd
 
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(project != NULL);
+
   project->set_frontendErrorCode(status_of_function);
 
   return status_of_function;
@@ -4065,6 +4092,9 @@ Rose::Frontend::Java::Run(SgProject* project)
           // Default to generic serial frontend
           status = Rose::Frontend::RunSerial(project);
       }
+
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(project != NULL);
 
       project->set_frontendErrorCode(status);
   }
@@ -5172,6 +5202,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // DQ (7/12/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Object Code Generation (compile output):");
 
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(this != NULL);
+
   // DQ (4/21/2006): I think we can now assert this!
      ROSE_ASSERT(fileNameIndex == 0);
 
@@ -5339,12 +5372,30 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                          boost::filesystem::remove(unparsed_file);
                        }
 
+#if (__cplusplus >= 201103L) 
+#if !defined(BOOST_COMPILED_WITH_CXX11)
+   #warning "Compiling ROSE with C++11 mode: BOOST NOT compiled with C++11 support."
+#else
+   #warning "Compiling ROSE with C++11 mode: BOOST WAS compiled with C++11 support."
+#endif
+#endif
+                 // DQ (10/20/2015): Boost support for copy_file() is not uniform acorss C++98 and C++11.
+                 // I think this need to be addressed seperately in ROSE.
+                 // boost::filesystem::copy_file(original_file,unparsed_file,boost::filesystem::copy_option::overwrite_if_exists);
+#if (__cplusplus >= 201103L) && !defined(BOOST_COMPILED_WITH_CXX11)
+                 // copy_file(original_file,unparsed_file,boost::filesystem::copy_option::overwrite_if_exists);
+                    printf ("Error: C++11 support for compiling ROSE requires BOOST to be compiled in C++11 mode! (required for copy_file() support) \n");
+                    ROSE_ASSERT(false);
+#else
                     boost::filesystem::copy_file(original_file,unparsed_file,boost::filesystem::copy_option::overwrite_if_exists);
+#endif
                   }
              }
 
+#if 0
+       // DQ (11/8/2015): Commented out to avoid output spew.
           printf ("In SgFile::compileOutput(): outputFilename = %s \n",outputFilename.c_str());
-
+#endif
           set_unparse_output_filename(outputFilename);
         }
 #endif
@@ -5614,6 +5665,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 int
 Rose::Backend::Java::CompileBatch(SgProject* project, std::vector<std::string> argv)
 {
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(project != NULL);
+
   ROSE_ASSERT (project->get_Java_only() == true);
 
   std::cout << "[INFO] Backend::Java::CompileBatch" << std::endl;

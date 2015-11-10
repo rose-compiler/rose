@@ -132,8 +132,32 @@ AC_CHECK_TYPE(user_desc,
 
 # Check whether PostgreSQL is supported
 AC_CHECK_HEADERS([pqxx/version.hxx])
-AC_CHECK_LIB(pqxx, PQconnectdb)
 
+AC_MSG_CHECKING([for libpqxx])
+old_libs="$LIBS"
+LIBS="$LIBS -lpqxx"
+AC_LANG_PUSH([C++])
+AC_LINK_IFELSE([
+    AC_LANG_SOURCE([
+            #include <pqxx/connection>
+            #include <pqxx/transaction>
+            #include <pqxx/tablewriter>
+            #include <string>
+            int main() {
+                (void)pqxx::connection(std::string());
+            }
+    ])],
+    [
+        AC_MSG_RESULT(yes)
+        AC_DEFINE(ROSE_HAVE_LIBPQXX, [], [Defined if the pqxx library is available])
+    ],
+    [
+        AC_MSG_RESULT(no)
+        LIBS="$old_libs"
+    ])
+AC_LANG_POP([C++])
+
+# Look for an SMT solver
 TEST_SMT_SOLVER=""
 AC_ARG_WITH(smt-solver,
 [  --with-smt-solver=PATH       Specify the path to an SMT-LIB compatible SMT solver.  Used only for testing.],
