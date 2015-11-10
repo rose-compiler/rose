@@ -336,13 +336,13 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fputs("\"\n", f);
 
     /* Base virtual address and entry addresses */
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "base_va", get_base_va(), get_base_va());
+    fprintf(f, "%s%-*s = 0x%08" PRIx64" (%" PRIu64")\n", p, w, "base_va", get_base_va(), get_base_va());
     fprintf(f, "%s%-*s = %" PRIuPTR " entry points\n", p, w, "entry_rva.size", p_entry_rvas.size());
     for (size_t i = 0; i < p_entry_rvas.size(); i++) {
         char label[64];
         sprintf(label, "entry_rva[%" PRIuPTR "]", i);
         rose_addr_t entry_rva = p_entry_rvas[i].get_rva();
-        fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, label, entry_rva, entry_rva);
+        fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, label, entry_rva, entry_rva);
         SgAsmGenericSectionPtrList sections = get_file()->get_sections();
         dump_containing_sections(f, std::string(p)+label, entry_rva, sections);
     }

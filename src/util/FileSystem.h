@@ -4,6 +4,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
 #include <vector>
+#include "rosedll.h"
 
 namespace rose {
 
@@ -22,19 +23,19 @@ typedef boost::filesystem::directory_iterator DirectoryIterator;
 typedef boost::filesystem::recursive_directory_iterator RecursiveDirectoryIterator;
 
 /** Predicate returning true if path exists. */
-bool isExisting(const Path &path);
+ROSE_UTIL_API bool isExisting(const Path &path);
 
 /** Predicate returning true for existing regular files. */
-bool isFile(const Path &path);
+ROSE_UTIL_API bool isFile(const Path &path);
 
 /** Predicate returning true for existing directories. */
-bool isDirectory(const Path &path);
+ROSE_UTIL_API bool isDirectory(const Path &path);
 
 /** Predicate returning true for existing symbolic links. */
-bool isSymbolicLink(const Path &path);
+ROSE_UTIL_API bool isSymbolicLink(const Path &path);
 
 /** Predicate returning inverse of @ref isSymbolicLink. */
-bool isNotSymbolicLink(const Path &path);
+ROSE_UTIL_API bool isNotSymbolicLink(const Path &path);
 
 /** Predicate returning true for matching names.
  *
@@ -48,7 +49,7 @@ bool isNotSymbolicLink(const Path &path);
  *  Path top = "/foo/bar"; // where the search starts
  *  std::vector<Path> roseFiles = findAllNames(top, baseNameMatches(boost::regex("rose_.*")));
  * @endcode */
-class baseNameMatches {
+class ROSE_UTIL_API baseNameMatches {
     const boost::regex &re_;
 public:
     baseNameMatches(const boost::regex &re): re_(re) {}
@@ -61,7 +62,7 @@ public:
  *  conventions of the operating system.  The specifics of how this path is determined are implementation defined (see
  *  <code>boost::filesystem::temp_directory_path</code>).  The created subdirectory has a name of the form
  *  "rose-%%%%%%%%-%%%%%%%%" where each "%" is a random hexadecimal digit.  Returns the path to this directory. */
-Path createTemporaryDirectory();
+ROSE_UTIL_API Path createTemporaryDirectory();
 
 /** Normalize a path name.
  *
@@ -71,18 +72,18 @@ Path createTemporaryDirectory();
  *  "/foo/baz". However, the names "/../foo" and "./foo" cannot be changed because removing the ".." in the first case would
  *  place it in a different directory if the name were appended to another name, and in the second case it would convert a
  *  relative name to an absolute name. */
-Path makeNormal(const Path&);
+ROSE_UTIL_API Path makeNormal(const Path&);
 
 /** Make path relative.
  *
  *  Makes the specified path relative to another path or the current working directory. */
-Path makeRelative(const Path &path, const Path &root = boost::filesystem::current_path());
+ROSE_UTIL_API Path makeRelative(const Path &path, const Path &root = boost::filesystem::current_path());
 
 /** Make path absolute.
  *
  *  Makes the specified path an absolute path if it is a relative path.  If relative, then assume @p root is what the path is
  *  relative to. */
-Path makeAbsolute(const Path &path, const Path &root = boost::filesystem::current_path());
+ROSE_UTIL_API Path makeAbsolute(const Path &path, const Path &root = boost::filesystem::current_path());
 
 /** Entries within a directory.
  *
@@ -107,7 +108,7 @@ std::vector<Path> findNames(const Path &root, Select select) {
     return matching;
 }
 
-std::vector<Path> findNames(const Path &root);
+ROSE_UTIL_API std::vector<Path> findNames(const Path &root);
 /** @} */
 
 /** Recursive list of names satisfying predicate.
@@ -142,7 +143,7 @@ std::vector<Path> findNamesRecursively(const Path &root, Select select) {
     return findNamesRecursively(root, select, isDirectory);
 }
 
-std::vector<Path> findNamesRecursively(const Path &root);
+ROSE_UTIL_API std::vector<Path> findNamesRecursively(const Path &root);
 /** @} */
 
 /** Copy files from one directory to another.
@@ -155,7 +156,7 @@ std::vector<Path> findNamesRecursively(const Path &root);
  *  a sibling of "foo", and therefore must be a sibling of "frob".
  *
  *  Throws a <code>boost::filesystem::filesystem_error</code> on failure. */
-void copyFiles(const std::vector<Path> &files, const Path &root, const Path &destinationDirectory);
+ROSE_UTIL_API void copyFiles(const std::vector<Path> &files, const Path &root, const Path &destinationDirectory);
 
 /** Recursively copy files.
  *
@@ -170,12 +171,12 @@ void copyFilesRecursively(const Path &root, const Path &destination, Select sele
 }
 
 /** Return a list of all rose_* files */
-std::vector<Path> findRoseFilesRecursively(const Path &root);
+ROSE_UTIL_API std::vector<Path> findRoseFilesRecursively(const Path &root);
 
 /** Convert a path to a string.
  *
  *  Try not to use this.  Paths contain more information than std::string and the conversion may loose that info. */
-std::string toString(const Path&);
+ROSE_UTIL_API std::string toString(const Path&);
 
 
 } // namespace

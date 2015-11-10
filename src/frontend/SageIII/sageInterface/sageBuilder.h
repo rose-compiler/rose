@@ -1444,7 +1444,7 @@ ROSE_DLL_API SgUntypedFile* buildUntypedFile(SgUntypedGlobalScope* scope);
  * Doxygen is not smart enough to handle macro expansion. 
  */
 
-template <class T> ROSE_DLL_API
+template <class T> 
   T* buildUnaryExpression(SgExpression* operand) { 
   SgExpression* myoperand=operand;
   T* result = new T(myoperand, NULL);
@@ -1462,7 +1462,7 @@ template <class T> ROSE_DLL_API
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion. 
  */
-template <class T> ROSE_DLL_API
+template <class T>
 T* buildUnaryExpression_nfi(SgExpression* operand) {
   SgExpression* myoperand = operand;
   T* result = new T(myoperand, NULL);
@@ -1485,7 +1485,7 @@ T* buildUnaryExpression_nfi(SgExpression* operand) {
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion. 
  */
- template <class T> ROSE_DLL_API
+ template <class T>
    T* buildBinaryExpression(SgExpression* lhs, SgExpression* rhs) {
    SgExpression* mylhs, *myrhs;
    mylhs = lhs;
@@ -1506,7 +1506,7 @@ T* buildUnaryExpression_nfi(SgExpression* operand) {
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion. 
  */
- template <class T> ROSE_DLL_API
+ template <class T>
    T* buildBinaryExpression_nfi(SgExpression* lhs, SgExpression* rhs) {
    SgExpression* mylhs, *myrhs;
    mylhs = lhs;

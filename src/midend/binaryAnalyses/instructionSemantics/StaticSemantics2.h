@@ -166,10 +166,12 @@ public:
     // These are not needed since this domain never tries to compare semantic values.
     virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE {
         ASSERT_not_reachable("no implementation necessary");
+        return false;
     }
 
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE {
         ASSERT_not_reachable("no implementation necessary");
+        return false;
     }
     
     virtual void set_width(size_t nbits) {
@@ -186,6 +188,7 @@ public:
 
     virtual uint64_t get_number() const ROSE_OVERRIDE {
         ASSERT_not_reachable("no implementation necessary");
+        return 0;
     }
 
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;

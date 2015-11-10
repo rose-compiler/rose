@@ -10,6 +10,7 @@
 
 #include <Sawyer/Sawyer.h>
 #include <string>
+#include "rosedll.h"
 
 // If SAWYER_NDEBUG is defined then some of the macros defined in this header become no-ops.  For interoperability with the
 // more standard NDEBUG symbol, we define SAWYER_NDEBUG if NDEBUG is defined.
@@ -104,7 +105,11 @@ typedef void (*AssertFailureHandler)(const char *mesg, const char *expr, const s
 /** %Optional user callback to handle assertion failures.  If this variable has a non-null value, then that function is called
  *  after the failed assertion message is emitted. This allows the user to terminate the program some other way than the
  *  default @c abort call.  In any case, this function should not return; if it does, then @c abort is called. */
+<<<<<<< HEAD
 SAWYER_EXPORT extern AssertFailureHandler assertFailureHandler;
+=======
+ROSE_UTIL_API extern AssertFailureHandler assertFailureHandler;
+>>>>>>> Port to VS 2014.
 
 } // namespace
 } // namespace

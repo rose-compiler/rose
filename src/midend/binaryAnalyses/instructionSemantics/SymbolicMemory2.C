@@ -63,6 +63,7 @@ SymbolicMemory::merge(const BaseSemantics::MemoryStatePtr &other_, BaseSemantics
                       BaseSemantics::RiscOperators *valOps) {
     SymbolicMemoryPtr other = SymbolicMemory::promote(other_);
     TODO("[Robb P. Matzke 2015-08-10]");
+    return false;
 }
 
 void

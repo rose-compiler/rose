@@ -246,7 +246,7 @@ class Disassembler;
  *  }
  *  @endcode
  */
-class AsmUnparser {
+class ROSE_DLL_API AsmUnparser {
 public:
     enum Organization {
         ORGANIZED_BY_AST,               /**< Output follows the AST organization.  In other words, the instructions and data

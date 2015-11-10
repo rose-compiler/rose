@@ -113,9 +113,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // These are here for compatibility with another WorkList API
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#ifndef _MSC_VER
+#define DEPRECATED __attribute__ ((deprecated))
+#else defined(_MSC_VER)
+#define DEPRECATED
+#endif
     /** An alias for empty(). This is deprecated; use empty() instead, which is the naming convention used by the STL. */
-    bool isEmpty() const __attribute__((deprecated));
+  bool isEmpty() const DEPRECATED;//__attribute__((deprecated));
 
     /** Adds an item(s) to the end of the queue.  The item is not added if the list was constructed to check for duplicates and
      * the item being inserted is already in the list.
@@ -129,7 +133,7 @@ public:
     T take() { return shift(); }
 
     /** Alias for front(). */
-    const T& examine() const __attribute__((deprecated));
+    const T& examine() const DEPRECATED;
 
 private:
     void removed(const T&);

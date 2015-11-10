@@ -66,6 +66,7 @@ add_library(roseutil SHARED ${rose_util_src})
 if (WIN32)
   target_link_libraries(roseutil shlwapi.lib psapi.lib)
 endif()
+target_link_libraries(roseutil ${link_with_libraries})
 #set_target_properties(roseutil PROPERTIES
 #  DEFINE_SYMBOL ROSE_UTIL_EXPORTS
 #)

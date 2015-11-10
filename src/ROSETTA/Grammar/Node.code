@@ -2252,7 +2252,7 @@ void Range<rose_addr_t>::print(std::ostream &o) const
     } else {
         char buf[64];
      // DQ (10/20/2015): Note that whitespace is required before PRIx64 (to avoid compiler warning).
-        sprintf(buf, "0x%08" PRIx64"+0x%08" PRIx64"=0x%08" PRIx64, first(), size(), first()+size());
+        sprintf(buf, "0x%08" PRIx64 "+0x%08" PRIx64 "=0x%08" PRIx64, first(), size(), first()+size());
         o <<buf;
     }
 }
