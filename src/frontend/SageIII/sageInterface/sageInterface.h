@@ -1718,7 +1718,7 @@ ROSE_DLL_API void appendExpressionList(SgExprListExp *, const std::vector<SgExpr
 
 //! Set parameter list for a function declaration, considering existing parameter list etc.
 template <class actualFunction> 
-ROSE_DLL_API void setParameterList(actualFunction *func,SgFunctionParameterList *paralist) {
+void setParameterList(actualFunction *func,SgFunctionParameterList *paralist) {
 
   // TODO consider the difference between C++ and Fortran
   // fixup the scope of arguments,no symbols for nondefining function declaration's arguments

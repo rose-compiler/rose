@@ -933,7 +933,7 @@ class HighWater {
 protected:
     mutable SAWYER_THREAD_TRAITS::RecursiveMutex mutex_;
     HighWater(const HighWater&) { abort(); }          // not copyable
-    HighWater& operator=(const HighWater&) { abort(); } // not copyable
+  HighWater& operator=(const HighWater&) { abort(); return *this; } // not copyable
 public:
     HighWater(): ntext_(0) {}
     explicit HighWater(const Mesg &m, const MesgProps &p) { emitted(m, p); }

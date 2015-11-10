@@ -29,7 +29,7 @@ namespace CommandlineProcessing
            * @endcode
            *
            *  See any recent tool for more examples. */
-          Sawyer::CommandLine::SwitchGroup genericSwitches();
+          ROSE_UTIL_API Sawyer::CommandLine::SwitchGroup genericSwitches();
 
           /** Type for storing generic switch arguments.
            *

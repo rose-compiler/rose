@@ -16,6 +16,14 @@
 #include <Sawyer/Sawyer.h>
 #include <vector>
 
+#ifdef _MSC_VER
+inline double log2( double n )
+{
+    // log(n)/log(2) is log2.
+  return log( n ) / log( 2.0 );
+}
+#endif
+
 namespace Sawyer {
 namespace Container {
 
