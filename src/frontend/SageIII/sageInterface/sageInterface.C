@@ -9910,6 +9910,11 @@ bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, 
 
   // Everything looks fine now. Do the merge.
   SgExpression * rhs_copy = SageInterface::copyExpression(assign_op->get_rhs_operand());
+
+  // Must preserve the proprecessing information of the original assign_stmt
+  // use appending (not prepending) so the order of decl's comments and assign_stmt's comments can be preserved 
+   SageInterface::movePreprocessingInfo(assign_stmt, decl, PreprocessingInfo::before, PreprocessingInfo::before, false);
+
   // removeStatement() does not support removing a statement which is not inside a container.
   // But sometimes we do need to remove such a statement and replace it with a new one.
   // As a workaround, we allow users to optionally disabling removing here and handle the removal on their own.
