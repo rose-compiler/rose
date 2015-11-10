@@ -15,8 +15,9 @@ namespace BinaryAnalysis {
  *  This namespace defines a mechanism for extending objects at run-time through the use of name/value pairs called
  *  "attributes".  Attributes are an extension mechanism orthogonal to class derivation and compile-time containment. Among
  *  other things, they are a convenient mechanism for users to cache data that needs to be associated with some ROSE
- *  object. See also, @ref AstAttributeMechanism for attributes attached to Sage IR nodes. There are two steps to using
- *  attributes: registering an attribute name to obtain an ID number, and accessing attribute values stored in objects.
+ *  object. See also, @ref SgNode::getAttribute et al for attributes attached to Sage IR nodes. There are two steps
+ *  to using attributes: registering an attribute name to obtain an ID number, and accessing attribute values stored in
+ *  objects.
  *
  *
  *
@@ -86,8 +87,11 @@ namespace BinaryAnalysis {
  *
  *  @section binary_attribute_comparison Comparison with other attribute APIs
  *
- *  ROSE has an older @ref AstAttributeMechanism that's derived from the AttributeMechanism class template. There are
- *  differences between these APIs.
+ *  ROSE has an older @ref AstAttributeMechanism that's derived from the AttributeMechanism class template. Attributes stored
+ *  in IR nodes can use the attribute-accessing methods defined in @ref SgNode, which are essentially wrappers around the @ref
+ *  AstAttributeMechanism interface.  This purpose of this table and the examples that follow is to compare and contrast
+ *  attribute mechanisms in a broader context than just IR nodes--it looks at using an attribute mechanism in arbitrary
+ *  objects. Most of the rows of the AstAttributeMechanism are also applicable to the SgNode attribute interface.
  *
  *  <table>
  *    <tr>
@@ -110,7 +114,8 @@ namespace BinaryAnalysis {
  *    <tr>
  *      <td>%Attribute getter/setter methods are directly in containing class.</td>
  *      <td>Must obtain the AstAttributeMechanism data member first (@ref SgNode::get_attributeMechanism), then the
- *          getter/setter.</td>
+ *          getter/setter. The @ref SgNode class provides wrapper methods around AstAttributeMechanism, but this interface is
+ *          available only in IR node objects.</td>
  *      <td>Must get the AttributeMechanism data member first unless only one value type is allowed (each AttributeMechanism
  *          data member can store attribute values having a single type).</td>
  *    </tr>
@@ -122,8 +127,10 @@ namespace BinaryAnalysis {
  *    </tr>
  *    <tr>
  *      <td>Ensures that two users don't declare the same attribute name.</td>
- *      <td>No assurance that names don't collide, but inserting an attribute that already exists is an error.</td>
- *      <td>No assurance that names don't collide, but inserting an attribute that already exists is an error.</td>
+ *      <td>Some assurance that names don't collide: the @c add method is a no-op (with an error message) if an attribute is
+ *          already stored with that name, but @c set makes no such check.</td>
+ *      <td>Names don't collide for attributes storing different value types, otherwise the behavior is the same
+ *          as for @ref AstAttributeMechanism.</td>
  *    </tr>
  *    <tr>
  *      <td>Uses normal C++ copy constructors and assignment operators for attribute values.</td>
@@ -133,9 +140,9 @@ namespace BinaryAnalysis {
  *    <tr>
  *      <td>Errors are reported by dedicated exception types allowing the user to gracefully recover.</td>
  *      <td>Errors are reported by printing them to the standard error stream and then either doing nothing (production) or
- *          aborting (debug).</td>
+ *          aborting the whole program (debug).</td>
  *      <td>Errors are reported by printing them to the standard error stream and then either doing nothing (production) or
- *          aborting (debug).</td>
+ *          aborting the whole program (debug).</td>
  *    </tr>
  *    <tr>
  *      <td>%Attribute existence and retrieval can be performed on a reference to a const object.</td>
@@ -145,28 +152,23 @@ namespace BinaryAnalysis {
  *    <tr>
  *      <td>Attempting to retrieve a non-existing attribute without providing a default value throws a
  *          @ref DoesNotExist exception.</td>
- *      <td>Attempting to retrieve a non-existing attribute emits an error message and then causes the object to exist
- *          but have a null pointer (in Production mode only).</td>
- *      <td>Attempting to retrieve a non-existing attribute emits an error message and then causes the attribute to
- *          spring into existence with a default-constructed value (in Production mode only).</td>
- *    </tr>
- *    <tr>
- *      <td>Inserting a new value for an existing attribute erases the old value like the C++ assignment operator.</td>
- *      <td>Inserting a new value for an existing attribute is an error (see above); the user must check attribute
- *          existence first.</td>
- *      <td>Inserting a new value for an existing attribute is an error (see above); the user must check attribute
- *          existence first.</td>
+ *      <td>Attempting to retrieve a non-existing attribute emits a message to standard error and then causes the attribute to
+ *          exist but have a null pointer (production) or aborts the whole program (debug). The user must check existence
+ *          before retreiving.</td>
+ *      <td>Attempting to retrieve a non-existing attribute emits a message to standard error and then causes the attribute to
+ *          spring into existence with a default-constructed value (production) or aborts the whole program (debug). The user
+ *          must check existence before retreiving.</td>
  *    </tr>
  *    <tr>
  *      <td>Erasing an attribute that is not stored is a no-op similar to STL container erase methods.</td>
- *      <td>Erasing an attribute that is not stored is an error, handled as described above; the user must check
- *          attribute existence before erasing.</td>
- *      <td>Erasing an attribute that is not stored is an error, handled as described above; the user must check
- *          attribute existence before erasing.</td>
+ *      <td>Erasing an attribute that is not stored emits a message to standard error and does nothing (production)
+ *          or aborts the whole program (debug). The user must check existence before erasing.</td>
+ *      <td>Erasing an attribute that is not stored emits a message to standard error and does nothing (production)
+ *          or aborts the whole program (debug). The user must check existence before erasing.</td>
  *    </tr>
  *    <tr>
- *      <td>%Attribute value types are runtime checked. A mismatch between writing and reading is reported by an
- *          exception.</td>
+ *      <td>%Attribute value types are runtime checked. A mismatch between writing and reading is reported by a
+ *          @ref BadQueryType exception.</td>
  *      <td>%Attribute values types are runtime checked. A mismatch is discovered by the user when they perform a
  *          @c dynamic_cast from the AstAttribute base type to their subclass.</td>
  *      <td>%Attribute values are compile-time checked since each AttributeMechanism can store only one value type.</td>
@@ -190,7 +192,11 @@ namespace BinaryAnalysis {
  *  @snippet binaryAttribute.C comparison value types
  *
  *  Let us also assume that a ROSE developer has a class and wants the user to be able to store attributes in objects of that
- *  class.  The first step is for the ROSE developer to prepare his class for storing attributes:
+ *  class.  IR nodes have an alternative attribute interface that's a slim wrapper around the @ref AstAttributeMechanism, but
+ *  since they're only defined in IR nodes and since users cannot create new IR node subclasses without modifying and
+ *  recompiling ROSE and EDG, this step doesn't apply there.
+ *
+ *  The first step is for the ROSE developer to prepare his class for storing attributes:
  *
  *  @snippet binaryAttribute.C comparison preparing storage
  *
@@ -202,14 +208,15 @@ namespace BinaryAnalysis {
  *  Now we jump into the user code. The user wants to be able to store two attributes, one of each value type. As mentioned
  *  above, the attribute value types are defined in some library header, and the class of objects in which to store them is
  *  defined in a ROSE header file.  Methods 1 and 3 can store values of any type, but the user has more work to do before he
- *  can use method 2:
+ *  can use methods 2 or 4:
  *
  *  @snippet binaryAttribute.C comparison attribute wrappers
  *
- *  Notice that AstAttributeMechanism needs a substantial amount of boilerplate to store even a simple enum value. Since @c
- *  copy is not pure virtual, if the user forgets to implement it (or mistypes it without C++11 @c override, like accidentally
- *  adding the @c const qualifier which is normally present for a copy constructor), then attribute values of that type will
- *  not be copied when the containing object is copied, but the @c exists method will say they do exist.
+ *  Notice that AstAttributeMechanism and the SgNode interface both need a substantial amount of boilerplate to store even a
+ *  simple enum value. Since @c copy is not pure virtual, if the user forgets to implement it (or mistypes it without C++11 @c
+ *  override, like accidentally adding the @c const qualifier which is normally present for a copy constructor), then attribute
+ *  values of that type will not be copied when the containing object is copied, but the @c exists, @c get, @c add, and @c
+ *  remove methods will say they do exist.
  *
  *  The user will also want to use descriptive strings for the attribute so error messages are informative, but shorter names
  *  in C++ code, so we declare the attribute names:
@@ -217,6 +224,7 @@ namespace BinaryAnalysis {
  *  @snippet binaryAttribute.C comparison declare 1
  *  @snippet binaryAttribute.C comparison declare 2
  *  @snippet binaryAttribute.C comparison declare 3
+ *  @snippet binaryAttribute.C comparison declare 4
  *
  *  The declarations in methods 2 and 3 are identical. Method 1 differs by using an integral type for attribute IDs, which has
  *  two benefits: (1) it gives the API an opportunity to check whether two different users are trying to declare the same
@@ -225,16 +233,16 @@ namespace BinaryAnalysis {
  *
  *  Let us see how to insert two attributes into an object assuming that the object came from somewhere far away and we don't
  *  know whether it already contains these attributes. If it does, we want to overwrite their old values with new
- *  values. Overwriting values is likely to be a more common operation than inserting a value only if it doesn't already
- *  exist. After all, languages generally don't have a dedicated assign-value-if-none-assigned operator (Perl and Bash being
- *  exceptions).
+ *  values. Overwriting values is likely to be a more common operation than insert-if-nonexistent. After all, languages
+ *  generally don't have a dedicated assign-value-if-none-assigned operator (Perl and Bash being exceptions).
  *
  *  @snippet binaryAttribute.C comparison insert 1
  *  @snippet binaryAttribute.C comparison insert 2
  *  @snippet binaryAttribute.C comparison insert 3
+ *  @snippet binaryAttribute.C comparison insert 4
  *
  *  Methods 1 and 3 are able to insert a new value and clean up any old value if it existed by automatically calling the old
- *  value's destructor.  Method 2 requires the user to check whether an old value existed and delete the value
+ *  value's destructor.  Methods 2 and 4 requires the user to check whether an old value existed and delete the value
  *  explicitly. Fortunately deleting a null pointer is a no-op, otherwise we'd have to check that also.
  *
  *  Eventually the user will want to retrieve an attribute's value. Perhaps he wants the attribute value if it exists, or some
@@ -243,13 +251,32 @@ namespace BinaryAnalysis {
  *  @snippet binaryAttribute.C comparison retrieve 1
  *  @snippet binaryAttribute.C comparison retrieve 2
  *  @snippet binaryAttribute.C comparison retrieve 3
+ *  @snippet binaryAttribute.C comparison retrieve 4
  *
- *  Notice that methods 2 and 3 require that the user first checks for attribute existence since querying a non-existing
- *  attribute will emit an error message and either abort (when compiled in debug mode) or instantiate a new attribute (when
- *  compiled in production mode).  In production mode, querying a non-existing attribute with method 2 will instantiate the
- *  attribute with a null pointer which the @p exists method interprets as the attribute existing even though it doesn't, and
- *  method 3 will instantiate a default-constructed attribute.  Method 2 also requires a cumbersome dynamic cast, an additional
- *  pointer check, and then unrwapping the wrapped attribute.
+ *  Notice that methods 2, 3, and 4 require that the user first checks for attribute existence since querying a non-existing
+ *  attribute will emit a message on standard error and instantiate the attribute (production) or abort the whole program
+ *  (debug).  In production mode, querying a non-existing attribute with methods 2 or 4 will insert the attribute with a
+ *  null pointer which the other methods interpret as the attribute existing even though it doesn't, and method 3 will
+ *  insert a default-constructed attribute.  Methods 2 and 4 also require a cumbersome dynamic cast, an additional pointer
+ *  check, and then unrwapping the wrapped attribute.
+ *
+ *  A potential gotcha with method 3 is that since a separate AstAttributeMechanism data member is required for each attribute
+ *  value type, the user must be careful that he uses the correct data member. For instance, the @c exists checks above will
+ *  work regardless of whether we use @c approximationAttributes or @c analysisTimeAttributes. In fact, an early version of the
+ *  example used the wrong one in one place and postcondition assertions (not shown) were failing.
+ *
+ *  Sooner or later a user will want to erase an attribute. Perhaps the attribute holds the result of some optional analysis
+ *  which is no longer valid. The user wants to ensure that the attribute doesn't exist, but isn't sure whether it exists
+ *  currently:
+ *
+ *  @snippet binaryAttribute.C comparison erase 1
+ *  @snippet binaryAttribute.C comparison erase 2
+ *  @snippet binaryAttribute.C comparison erase 3
+ *  @snippet binaryAttribute.C comparison erase 4
+ *
+ *  The @c delete operators are necessary in Methods 2 and 4 to prevent memory leaks. Methods 2, 3, and 4 all require the user
+ *  to check for existence first because the @c remove and @c removeAttribute methods print messages to standard error if the
+ *  attribute doesn't exist.
  *
  *  Finally, when the object containing the attributes is destroyed the user needs to be able to clean up by destroying the
  *  attributes that are attached. For instance, if a function has local variables that might be storing attributes and the
@@ -260,8 +287,10 @@ namespace BinaryAnalysis {
  *  @snippet binaryAttribute.C comparison cleanup 1
  *  @snippet binaryAttribute.C comparison cleanup 2
  *  @snippet binaryAttribute.C comparison cleanup 3
+ *  @snippet binaryAttribute.C comparison cleanup 4
  *
- *  Whether to use Method 1, 2, or 3 is up to the author of the class that wants to allow attributes to be stored. */
+ *  Whether to use Method 1, 2, or 3 is up to the author of the class that wants to allow attributes to be stored. Whether to
+ *  use Method 2 or 4 in an IR node is up to the user of the IR node. */
 namespace Attribute {
 
 /** Attribute identification.
