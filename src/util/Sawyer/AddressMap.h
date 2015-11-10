@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -91,7 +91,7 @@ private:
 public:
     /** Construct a constraint that matches everything. */
     AddressMapConstraints(AddressMap *map)
-      : map_(map), never_(false), maxSize_((size_t)-1), singleSegment_(false), requiredAccess_(0), prohibitedAccess_(0) {}
+        : map_(map), never_(false), maxSize_(size_t(-1)), singleSegment_(false), requiredAccess_(0), prohibitedAccess_(0) {}
 
     // Implicitly construct constraints for a const AddressMap from a non-const address map.
     operator AddressMapConstraints<const AddressMap>() const {
@@ -465,7 +465,6 @@ public:
     }
     void
     traverse(typename AddressMap::Visitor &visitor, MatchFlags flags=0) const {
-        // MS 11/22/2015: added "template " (required by clang++)
         return map_->template traverse<typename AddressMap::Visitor>(visitor, *this, flags);
     }
     
