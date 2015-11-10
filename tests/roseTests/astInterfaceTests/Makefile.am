@@ -33,6 +33,10 @@ noinst_PROGRAMS = \
     insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences \
     buildJavaPackage createAbstractHandles moveDeclarationToInnermostScope buildStatementFromString
 
+VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
+# VALGRIND = valgrind $(VALGRIND_OPTIONS)
+VALGRIND =
+
 # list of test SAGE AST builders 
 fixVariableReferences_SOURCES = fixVariableReferences.C 
 annotateExpressionsWithUniqueNames_SOURCES = annotateExpressionsWithUniqueNames.C
@@ -378,7 +382,9 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_124.C \
   inputmoveDeclarationToInnermostScope_test2015_125.C \
   inputmoveDeclarationToInnermostScope_test2015_126.C \
-  inputmoveDeclarationToInnermostScope_test2015_127.C 
+  inputmoveDeclarationToInnermostScope_test2015_127.C \
+  inputmoveDeclarationToInnermostScope_test2015_134.C \
+  inputmoveDeclarationToInnermostScope_test2015_135.C 
 
 # DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.
 FAILING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
@@ -459,9 +465,9 @@ $(MOVE_MERGE_DECLS_DIFF_FILES):$(PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS)
 # DQ (6/28/2015): Added additional test using new option: -rose:merge_decl_assign
 $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
 	echo "Test without new option: -rose:merge_decl_assign"
-	./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_%=%)
+	$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_%=%)
 	echo "Test using new option: -rose:merge_decl_assign"
-	./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -rose:merge_decl_assign -c -rose:debug $(srcdir)/$(@:rose_%=%)
+	$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -rose:merge_decl_assign -c -rose:debug $(srcdir)/$(@:rose_%=%)
 
 # Without new option fails for test2015_04.C?
 # With new option fails for test2014_12.C
@@ -503,10 +509,6 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
     rose_inputdoLoopNormalization.f \
     rose_inputbuildLabelStatement2.f
 endif
-
-VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
-# VALGRIND = valgrind $(VALGRIND_OPTIONS)
-VALGRIND =
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
@@ -801,16 +803,16 @@ endif
 
 # rules for declaration moving tests
 $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
-		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking $(srcdir)/$(@:rose_%=%)
+		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking $(srcdir)/$(@:rose_%=%)
 
 $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
-		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking -rose:keep_going $(srcdir)/$(@:rose_%=%)
+		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking -rose:keep_going $(srcdir)/$(@:rose_%=%)
 
 $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2_%=%) moveDeclarationToInnermostScope 
-		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking $(srcdir)/$(@:rose_v2_%=%) -rose:output $@
+		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking $(srcdir)/$(@:rose_v2_%=%) -rose:output $@
 
 $(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2%=%) moveDeclarationToInnermostScope 
-		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking -rose:keep_going $(srcdir)/$(@:rose_v2%=%) -rose:output $@
+		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking -rose:keep_going $(srcdir)/$(@:rose_v2%=%) -rose:output $@
 
 # interchange the first loop within the input file, interchange depth is 4, lexicographical order is 1.
 rose_inputloopInterchange.C: inputloopInterchange.C loopInterchange

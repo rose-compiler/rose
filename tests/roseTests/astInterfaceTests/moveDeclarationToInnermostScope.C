@@ -2031,6 +2031,9 @@ void findFinalTargetScopes(SgVariableDeclaration* declaration, std::vector <SgSc
   // delete the original scope tree
   orig_scope_tree->deep_delete_children ();
   delete orig_scope_tree;
+
+// DQ (11/7/2015): THIS IS THE  BUG FIX: Also clear the scopeTreeConsideredMap (since it references nodes in the scope tree that has just been deleted).
+  scopeTreeConsideredMap.clear();
 }
 
 // Improved 2-step algorithm:
