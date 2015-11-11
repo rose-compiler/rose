@@ -317,7 +317,11 @@ faketarget:
 	tests/interval-test3.C
 	tests/rers/threadificationtest1-output.C
 	tests/rers/threadificationtest1.C
-
+	CPDomain.hpp
+	LTL.h
+	rtests/vector1/RevStack.h
+	ProgramAbstractionLayer.h
+	tests/lvtest4.C
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
