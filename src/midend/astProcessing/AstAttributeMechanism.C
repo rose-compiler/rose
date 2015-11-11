@@ -67,7 +67,7 @@ AstAttributeMechanism::set(const std::string &name, AstAttribute *value) {
 }
 
 AstAttribute*
-AstAttributeMechanism::operator[](const std::string &name) {
+AstAttributeMechanism::operator[](const std::string &name) const {
     Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
     if (Sawyer::Attribute::INVALID_ID == id)
         return NULL;
@@ -103,7 +103,6 @@ void
 AstAttributeMechanism::assignFrom(const AstAttributeMechanism &other) {
     if (this == &other)
         return;
-    attributes_.clearAttributes();                      // pointers were shallow-copied already and shouldn't have been
     AstAttributeMechanism tmp;                          // for exception safety
     BOOST_FOREACH (Sawyer::Attribute::Id id, other.attributes_.attributeIds()) {
         AstAttribute *attr = other.attributes_.getAttribute<AstAttribute*>(id);

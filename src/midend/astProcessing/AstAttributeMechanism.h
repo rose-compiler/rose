@@ -247,7 +247,7 @@ public:
      *  <b>New semantics:</b> The old implementation partly created an attribute if it didn't exist: @c exists started
      *  returning true although @c operator[] continued to return no attribute. The old implementation printed an error message
      *  to standard error if the attribute did not exist. */
-    AstAttribute* operator[](const std::string &name);
+    AstAttribute* operator[](const std::string &name) const;
 
     /** Erases the specified attribute.
      *
