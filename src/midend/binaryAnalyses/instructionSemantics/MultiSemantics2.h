@@ -140,8 +140,8 @@ public:
         return BaseSemantics::SValuePtr(new SValue(*this));
     }
     
-    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
-                                                                           SMTSolver*) const ROSE_OVERRIDE;
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods

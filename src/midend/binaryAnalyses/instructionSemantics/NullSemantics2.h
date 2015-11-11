@@ -73,8 +73,9 @@ public:
             retval->set_width(new_width);
         return retval;
     }
-    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
-                                                                           SMTSolver*) const ROSE_OVERRIDE {
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
+                        SMTSolver*) const ROSE_OVERRIDE {
         return Sawyer::Nothing();
     }
 
@@ -156,14 +157,15 @@ public:
         return retval;
     }
 
-    virtual bool merge(const BaseSemantics::RegisterStatePtr &other_, BaseSemantics::RiscOperators*) {
+    virtual bool merge(const BaseSemantics::RegisterStatePtr &other_, BaseSemantics::RiscOperators*) ROSE_OVERRIDE {
         return false;
     }
 
     virtual void clear() ROSE_OVERRIDE {}
     virtual void zero() ROSE_OVERRIDE {}
 
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg, BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr
+    readRegister(const RegisterDescriptor &reg, BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
         return get_protoval()->undefined_(reg.get_nbits());
     }
 
@@ -215,16 +217,22 @@ public:
 
 public:
     virtual void clear() ROSE_OVERRIDE {}
+
     virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                                 BaseSemantics::RiscOperators *addrOps,
                                                 BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {
         return dflt->copy();
     }
+
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {}
+
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE {}
+
     virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
-                       BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE { return false; }
+                       BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {
+        return false;
+    }
 };
 
 

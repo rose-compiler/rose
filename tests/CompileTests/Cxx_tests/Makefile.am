@@ -302,6 +302,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_79.C \
    test2015_80.C \
    test2015_81.C \
+   test2015_97.C \
    lulesh.C \
    luleshTALC.C
 

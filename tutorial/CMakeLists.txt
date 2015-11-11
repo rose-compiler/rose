@@ -9,7 +9,7 @@ add_subdirectory(intelPin)
 ########### next target ###############
 
 set(tutorials
-  binaryCallGraph binaryFileRead binaryFileWrite binaryHelloWorld binaryStrings ASTGraphGenerator
+  binaryAttribute binaryCallGraph binaryFileRead binaryFileWrite binaryHelloWorld binaryStrings ASTGraphGenerator
   ASTGraphGeneratorCustomized AST_PDF_Generator wholeASTGraphGenerator
   identityTranslator lineReplacement queryLibraryExample nestedQueryExample
   visitorTraversal prePostTraversal combinedTraversals traverseIRnodeTypes

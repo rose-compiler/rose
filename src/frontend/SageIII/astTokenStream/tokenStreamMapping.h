@@ -102,4 +102,11 @@ class TokenStreamSequenceToNodeMapping
 // between unparsing from the AST and unparsing from the token stream.
 #include "simpleFrontierDetection.h"
 
+// DQ (11/8/2015): We need a seperate traversal to recognise from the 
+// token stream mapping, what subtrees are a part of macro expansions 
+// that are transformations.  These macro eexpansions must be unparsed
+// as a single unit (we can't just unparse parts of them from the token 
+// stream and parts from the AST; because there representation in the 
+// token stream is only as the unexpanded macro).
+#include "detectMacroExpansionsToBeUnparsedAsAstTransformations.h"
 

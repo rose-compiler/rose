@@ -35,7 +35,7 @@ public:
     Interval(uint64_t first, uint64_t size): Range<uint64_t>(first, size) {}
     Interval(const Range<uint64_t> &other): Range<uint64_t>(other) {} /*implicit*/
 
-    static Interval inin(uint64_t first, uint64_t last) ROSE_OVERRIDE {
+    static Interval inin(const uint64_t &first, const uint64_t &last) {
         ASSERT_require(first<=last);
         Interval retval;
         retval.first(first);
@@ -46,7 +46,7 @@ public:
     /** Convert a bit mask to a string. */
     static std::string to_string(uint64_t n);
 
-    void print(std::ostream &o) const ROSE_OVERRIDE;
+    void print(std::ostream &o) const;
 };
 
 std::ostream& operator<<(std::ostream &o, const Interval &x);
@@ -152,8 +152,9 @@ public:
             retval->set_width(new_width);
         return retval;
     }
-    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
-                                                                           SMTSolver *solver) const ROSE_OVERRIDE;
+
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors first defined at this level of the class hierarchy
@@ -294,14 +295,15 @@ public:
     /** Read a byte from memory.
      *
      *  In order to read a multi-byte value, use RiscOperators::readMemory(). */
-    virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
-                                                BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr
+    readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+               BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 
     /** Write a byte to memory.
      *
      *  In order to write a multi-byte value, use RiscOperators::writeMemory(). */
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
-                             BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE;
+                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 };
 
 
