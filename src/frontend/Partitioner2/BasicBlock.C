@@ -39,7 +39,7 @@ BasicBlock::insertSuccessor(const BaseSemantics::SValuePtr &successor_, EdgeType
             Successors successors = successors_.get();
             bool found = false;
             BOOST_FOREACH (const Successor &exists, successors) {
-                if (exists.type()==type && exists.expr()->get_expression()->equivalent_to(successor->get_expression())) {
+                if (exists.type()==type && exists.expr()->get_expression()->isEquivalentTo(successor->get_expression())) {
                     found = true;
                     break;
                 }

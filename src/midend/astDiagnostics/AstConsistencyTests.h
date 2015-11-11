@@ -312,7 +312,7 @@ void testParentPointersOfSymbols();
 class TestParentPointersInMemoryPool : public ROSE_VisitTraversal
    {
      public:
-     virtual ~TestParentPointersInMemoryPool() {};
+          virtual ~TestParentPointersInMemoryPool() {};
       //! static function to do test on any IR node
           static void test();
 
@@ -330,7 +330,7 @@ class TestParentPointersInMemoryPool : public ROSE_VisitTraversal
 class TestChildPointersInMemoryPool : public ROSE_VisitTraversal 
    {
      public:
-     virtual ~TestChildPointersInMemoryPool() {};
+          virtual ~TestChildPointersInMemoryPool() {};
       //! static function to do test on any IR node
           static void test();
 
@@ -580,6 +580,31 @@ class TestForMultipleWaysToSpecifyRestrictKeyword: public AstSimpleProcessing
      public:
           void visit ( SgNode* node );
    };
+
+
+// DQ (10/27/2015): This test is part of debugging test2015_97.C which
+// is a reduced version of the 600K line ROSEExample_test_01.C file.
+// The issue is that we have previously generated a cycle in typedef types
+// and so we want to detect these as errors.
+class TestAstForCyclesInTypedefs : public ROSE_VisitTraversal
+   {
+  // This class uses a traversal to test properties of AST.
+  // We look for redundent entries anywhere in the AST.
+  // This test has to save a pointer to ever AST IR node 
+  // that is traversed so it is a bit expensive in memory.
+
+  // std::set<SgNode*> astNodeSet;
+
+     public:
+          virtual ~TestAstForCyclesInTypedefs() {};
+
+       // Overloaded pure virtual function.
+          void visit( SgNode* node );
+
+       // Simple funtion to call to get the traversal started...
+          static void test();
+   };
+
 
 
 #endif

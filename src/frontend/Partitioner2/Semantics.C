@@ -29,8 +29,8 @@ MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantic
         if (!isModifiable || isInitialized) {
             uint8_t byte;
             if (1 == map_->at(va).limit(1).read(&byte).size()) {
-                unsigned flags = isModifiable ? InsnSemanticsExpr::TreeNode::INDETERMINATE : 0;
-                InsnSemanticsExpr::TreeNodePtr expr = InsnSemanticsExpr::LeafNode::create_integer(8, byte, "", flags);
+                unsigned flags = isModifiable ? SymbolicExpr::Node::INDETERMINATE : 0;
+                SymbolicExpr::Ptr expr = SymbolicExpr::makeInteger(8, byte, "", flags);
                 SymbolicSemantics::SValuePtr val = SymbolicSemantics::SValue::promote(valOps->undefined_(8));
                 val->set_expression(expr);
                 return val;
@@ -56,7 +56,7 @@ BaseSemantics::SValuePtr
 RiscOperators::trim(const BaseSemantics::SValuePtr &a_) {
     if (trimThreshold_ > 0) {
         SValuePtr a = SValue::promote(a_);
-        if (a->get_expression()->nnodes() > trimThreshold_)
+        if (a->get_expression()->nNodes() > trimThreshold_)
             return get_protoval()->undefined_(a->get_width());
     }
     return a_;

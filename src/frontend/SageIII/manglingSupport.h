@@ -1,5 +1,30 @@
 #ifndef mangling_support_INCLUDED
 #define mangling_support_INCLUDED
+
+// DQ (10/31/2015): Adding new namespace to organize mangled name handling.
+namespace MangledNameSupport
+   {
+  // Although the purpose of this namespace is to eventually have most or all of 
+  // the mangled name support function below (not in this namespace) be put into
+  // this namespace, at present it is used to organize data structures required 
+  // to support handling of recursive template instantiations that are recognized 
+  // as a problem for some rare case of C++ template support (test2015_105.C
+  // is so far the smallest example of this issue).  There are many examples
+  // of recursive templates, but all except for test2015_105.C appear to terminate
+  // nicely and are not a problem for the mangled name support.
+
+
+  // We need to keep a set of visit template declarations so that in the processing 
+  // of mangled names for each template instnatiation we can detect the use recursion 
+  // that would represent a cycle in the type system represented by the instantiated 
+  // template.
+     typedef std::set<SgClassDefinition*> setType;
+
+     extern setType visitedTemplateDefinitions;
+
+     void outputVisitedTemplateDefinitions();
+   }
+
 std::string replaceNonAlphaNum (const std::string& s);
 
 //! Returns the input std::string stripped of leading and trailing spaces.
@@ -164,6 +189,11 @@ std::string mangleExpression (const SgExpression* expr);
     (as opposed to program scope), mangle the
     translation unit name. */
 std::string mangleTranslationUnitQualifiers (const SgDeclarationStatement* decl);
+
+// DQ (10/29/2017): Added support for testing for a specific cycle in the type system for template arguments.
+// It is not clear how readily this cycle detection can be easily generalized, so this is a test for a specific cycle at present.
+void testForCycleInTemplateArgumentsOfTemplateDeclaration ( const SgTemplateInstantiationDefn* templateInstantiationDefinition );
+
 
 #if 0
 // DQ (3/29/2006): I think this is only required interanlly in the mangledSupport.C file (where it is defined)

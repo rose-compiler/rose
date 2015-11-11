@@ -17,8 +17,8 @@ void initialize()
   dy = 2.0 / (m - 1);
   for (int i = 0; i < n; i++) 
     for (int j = 0; j < m; j++) {
-      int yy;
       int xx;
+      int yy;
       xx = ((int )(- 1.0 + dx * (i - 1)));
       yy = ((int )(- 1.0 + dy * (j - 1)));
       u[i][j] = 0.0;

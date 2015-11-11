@@ -24,7 +24,8 @@ Formatter::rename(uint64_t orig_name)
  *******************************************************************************************************************************/
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const {
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger,
+                            SMTSolver *solver) const {
     if (must_equal(other_, solver))
         return Sawyer::Nothing();
     return bottom_(get_width());

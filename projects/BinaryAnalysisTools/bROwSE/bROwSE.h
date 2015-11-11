@@ -51,22 +51,22 @@ struct Settings {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Attributes initialized by the first construction of a Context object (where they are documented)
-extern P2::Attribute::Id ATTR_NBytes;
-extern P2::Attribute::Id ATTR_NInsns;
-extern P2::Attribute::Id ATTR_NIntervals;
-extern P2::Attribute::Id ATTR_NDiscontiguousBlocks;
-extern P2::Attribute::Id ATTR_CfgGraphVizFile;
-extern P2::Attribute::Id ATTR_CfgImage;
-extern P2::Attribute::Id ATTR_CfgVertexCoords;
-extern P2::Attribute::Id ATTR_CallGraph;
-extern P2::Attribute::Id ATTR_NCallers;
-extern P2::Attribute::Id ATTR_NCallees;
-extern P2::Attribute::Id ATTR_NReturns;
-extern P2::Attribute::Id ATTR_MayReturn;
-extern P2::Attribute::Id ATTR_StackDelta;
-extern P2::Attribute::Id ATTR_Ast;
-extern P2::Attribute::Id ATTR_Heat;
-extern P2::Attribute::Id ATTR_DataFlow;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_NBytes;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_NInsns;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_NIntervals;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_NDiscontiguousBlocks;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_CfgGraphVizFile;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_CfgImage;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_CfgVertexCoords;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_CallGraph;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_NCallers;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_NCallees;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_NReturns;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_MayReturn;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_StackDelta;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_Ast;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_Heat;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_DataFlow;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Context passed around to pretty much all the widgets.

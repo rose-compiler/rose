@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -10,6 +10,7 @@
 
 #include <Sawyer/Map.h>
 #include <Sawyer/Sawyer.h>
+#include <boost/foreach.hpp>
 
 namespace Sawyer {
 namespace Container {

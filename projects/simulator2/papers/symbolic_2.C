@@ -56,7 +56,7 @@ public:
         using namespace rose::BinaryAnalysis::InstructionSemantics;
 
         static const char *name = "Analysis";
-        using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
+        using namespace rose::BinaryAnalysis::SymbolicExpr;
         if (enabled && args.insn->get_address()==trigger_addr) {
             RTS_Message *trace = args.thread->tracing(TRACE_MISC);
             trace->mesg("%s triggered: analyzing function at 0x%08"PRIx64, name, analysis_addr);
@@ -162,12 +162,12 @@ public:
             // Show the value of the EAX register since this is where GCC puts the function's return value.  If we did things
             // right, the return value should depend only on the unknown bytes from the beginning of the buffer.
             SymbolicSemantics::ValueType<32> result = policy.readRegister<32>("eax");
-            std::set<rose::BinaryAnalysis::InsnSemanticsExpr::LeafNodePtr> vars = result.get_expression()->get_variables();
+            std::set<rose::BinaryAnalysis::SymbolicExpr::LeafNodePtr> vars = result.get_expression()->get_variables();
             {
                 std::ostringstream s;
                 s <<name <<": symbolic return value is " <<result <<"\n"
                   <<name <<": return value has " <<vars.size() <<" variables:";
-                for (std::set<rose::BinaryAnalysis::InsnSemanticsExpr::LeafNodePtr>::iterator vi=vars.begin();
+                for (std::set<rose::BinaryAnalysis::SymbolicExpr::LeafNodePtr>::iterator vi=vars.begin();
                      vi!=vars.end(); ++vi)
                     s <<" " <<*vi;
                 s <<"\n";
