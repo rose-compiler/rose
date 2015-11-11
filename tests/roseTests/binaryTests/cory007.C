@@ -2,8 +2,8 @@
 
 #include <rose.h>
 
-#include <BinaryAttribute.h>
 #include <BinarySymbolicExpr.h>
+#include <Sawyer/Attribute.h>
 #include <sageBuilderAsm.h>
 #include <sstream>
 
@@ -20,21 +20,21 @@ int
 main() {
     // Register a few attributes.  Once attribute IDs are created they never change and are never deleted.  ID numbers are not
     // guaranteed to be sequential, altough the current implementation allocates them that way.
-    const Attribute::Id DUCKS     = Attribute::declare("Number of ducks");
-    const Attribute::Id TYPE      = Attribute::declare("Pharos type");
-    const Attribute::Id POSITION  = Attribute::declare("Position in windowing system");
-    const Attribute::Id TENSILES  = Attribute::declare("Tensile strength of each rope");
+    const Sawyer::Attribute::Id DUCKS     = Sawyer::Attribute::declare("Number of ducks");
+    const Sawyer::Attribute::Id TYPE      = Sawyer::Attribute::declare("Pharos type");
+    const Sawyer::Attribute::Id POSITION  = Sawyer::Attribute::declare("Position in windowing system");
+    const Sawyer::Attribute::Id TENSILES  = Sawyer::Attribute::declare("Tensile strength of each rope");
 
     // Trying to declare the same attribute again will get you an error
     try {
-        Attribute::declare("Number of ducks");
+        Sawyer::Attribute::declare("Number of ducks");
         ASSERT_not_reachable("should have thrown an error when creating a duplicate attribute");
-    } catch (const Attribute::AlreadyExists&) {
+    } catch (const Sawyer::Attribute::AlreadyExists&) {
     }
 
     // You can query attribute names and ID numbers:
-    ASSERT_always_require(Attribute::id("Number of ducks") == DUCKS);
-    ASSERT_always_require(Attribute::name(DUCKS) == "Number of ducks");
+    ASSERT_always_require(Sawyer::Attribute::id("Number of ducks") == DUCKS);
+    ASSERT_always_require(Sawyer::Attribute::name(DUCKS) == "Number of ducks");
 
     // Make a symbolic expression to which we can attach some attributes.
     SymbolicExpr::Ptr a = SymbolicExpr::makeVariable(32, "a");
@@ -86,7 +86,7 @@ main() {
     try {
         b->getAttribute<int>(DUCKS);
         ASSERT_not_reachable("DUCKS attribute does not exist for object b");
-    } catch (const Attribute::DoesNotExist&) {
+    } catch (const Sawyer::Attribute::DoesNotExist&) {
     }
 
     // Method 2: getting an attribute or some other value if it does't exist. The type of the second argument must match the
@@ -117,7 +117,7 @@ main() {
     try {
         realDucks = a->getAttribute<double>(DUCKS);     // cannot do a conversion "on the fly"
         ASSERT_not_reachable("query double property should not have worked");
-    } catch (const Attribute::WrongQueryType&) {
+    } catch (const Sawyer::Attribute::WrongQueryType&) {
     }
 
     // Attributes can be removed from an object.

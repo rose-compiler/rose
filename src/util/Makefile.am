@@ -74,6 +74,7 @@ EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
 noinst_LTLIBRARIES += libroseSawyer.la
 libroseSawyer_la_SOURCES =			\
 	Sawyer/Assert.C				\
+	Sawyer/Attribute.C			\
 	Sawyer/CommandLine.C			\
 	Sawyer/GraphTraversal.C			\
 	Sawyer/Markup.C				\
@@ -91,6 +92,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/AddressSegment.h			\
 	Sawyer/AllocatingBuffer.h		\
 	Sawyer/Assert.h				\
+	Sawyer/Attribute.h			\
 	Sawyer/BiMap.h				\
 	Sawyer/BitVector.h			\
 	Sawyer/BitVectorSupport.h		\
