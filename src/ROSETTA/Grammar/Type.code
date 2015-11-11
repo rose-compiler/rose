@@ -991,13 +991,27 @@ SOURCE_GET_MANGLED_BASE_TYPE_START
 SgName
 $CLASSNAME::get_mangled (void) const
    {
+  // DQ (10/23/2015): Note that these functions are called in the AST construction and that might not be
+  // required, plus it might be a performance issue as well. I didn't expect to see this while debugging
+  // a different subject.  In general, I think we would like to push the generation of mangled names to 
+  // the end of the AST processing; unless it is required for computing symble table keys (which is the 
+  // likely usage within the AST construction, if so then I guess we have to allow these functions to be
+  // called in the frontend AST construction).
+
      ROSE_ASSERT(this != NULL);
 
      const SgType* base_type = get_base_type();
      ROSE_ASSERT (base_type != NULL);
-  // printf ("In $CLASSNAME::get_mangled(): base_type = %p = %s \n",base_type,base_type->class_name().c_str());
+
+#if 0
+     printf ("In $CLASSNAME::get_mangled(): base_type = %p = %s \n",base_type,base_type->class_name().c_str());
+#endif
+
      SgName base_name = base_type->get_mangled();
-  // printf ("DONE: In $CLASSNAME::get_mangled(): base_type = %p = %s base_name = %s \n",base_type,base_type->class_name().c_str(),base_name.str());
+
+#if 0
+     printf ("DONE: In $CLASSNAME::get_mangled(): base_type = %p = %s base_name = %s \n",base_type,base_type->class_name().c_str(),base_name.str());
+#endif
 
   // DQ (6/21/2006): Use is_null() instead of counting the size (and fixed case were it is null)
   // ROSE_ASSERT (base_name.get_length ());
