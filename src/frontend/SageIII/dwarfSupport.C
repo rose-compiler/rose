@@ -2503,7 +2503,7 @@ void commentOutSymbolsFromDotGraph (SgNode* node)
 
           public:
                bool commentOutNodeInGraph() { return true; }
-               virtual AstAttribute* copy() { return new SymbolPruningAttribute(*this); }
+               virtual AstAttribute* copy() const { return new SymbolPruningAttribute(*this); }
                virtual ~SymbolPruningAttribute() {}
         };
 
@@ -2558,7 +2558,7 @@ void commentOutEvertythingButDwarf (SgNode* node)
 
           public:
                bool commentOutNodeInGraph() { return true; }
-               virtual AstAttribute* copy() { return new SymbolPruningAttribute(*this); }
+               virtual AstAttribute* copy() const { return new SymbolPruningAttribute(*this); }
                virtual ~SymbolPruningAttribute() {}
         };
 

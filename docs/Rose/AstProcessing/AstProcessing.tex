@@ -323,6 +323,12 @@ example: let node be a pointer to an object of type SgNode
 class MyAstAttribute : public AstAttribute {
 public:
 	MyAstAttribute(int v):value(v) {}
+        virtual AstAttribute* copy() const override {
+            return new MyAstAttribute(*this);
+        }
+        virtual std::string attribute_class_name() const override {
+            return "MyAstAttribute";
+        }
 	...
 private:
 	int value;

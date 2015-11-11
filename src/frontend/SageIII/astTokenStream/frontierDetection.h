@@ -137,7 +137,7 @@ class FrontierDetectionForTokenStreamMappingAttribute : public AstAttribute
 
        // Support for the coping of AST and associated attributes on each IR node (required for attributes 
        // derived from AstAttribute, else just the base class AstAttribute will be copied).
-          virtual AstAttribute* copy();
+          virtual AstAttribute* copy() const;
    };
 
 #endif
