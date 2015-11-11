@@ -1815,6 +1815,161 @@ std::vector <SgScopeStatement *> moveSpecialTargetScopesIntoScopeTreeQueue (cons
   return processed_scopes;
 }
 
+// For a scope tree, collect final target scopes and middle target scopes for further consideration
+// This is the core step of algorithm V2's findFinalTargetScopes()
+// TODO: this is a much more sophisticated problem than I originally thought!
+/* 
+      n0
+      | 
+      n1
+     / \
+    n2  n3
+       / \
+      n4  n5 
+
+The issue is that n3 can be unsupported scope (scope into which we cannot insert a decl, like a while-stmt scope).
+n3 is not bottom. On the surface, we can put n3 into scope_trees worklist for further consideration.
+n2 is put to the final_target_scopes as a final scope.
+
+But if n3 has no legitimate children or grand children nodes to accept the moved down declarations, 
+we have to back track and invalid n2 also. 
+
+Option 1: simplest.  create a new basic block scope before the unsupported scope. looks a bit bad. but simple to implement.
+//TODO : ask users for their opinions
+
+Option 2: whenever a search for a scope tree at a root does not find a single eligible final target scope, 
+we have to backtrack trough the scope tree, find an upper eligible final target scope.
+In the meantime, we have to invalidate the root's sibling nodes (and all children?) in the final target scope set, 
+  and possibly invalidate some nodes (sibling and all children?) in the scope tree worklist. 
+
+   invalidate and mark the affected nodes as considered also. 
+
+The scope tree worklist is a queue?, depth first traverse is used
+
+The invalidation can happen in a postprocessing function: search 
+
+Option 3: run the analysis twice: the first time mark all possible final scopes, then mark each scope nodes to indicate if it has a potential
+  child target node. 
+ The 2nd time uses the previous results to decide if we can put a unsupported scope node into the worklist
+This is not elegant, but easy to understand and implement.
+
+The 2nd run is only necessary when there is a unsupported, non-bottom scope node being pushed to the worklist!!
+TODO: this function is not ready for use. Under development. 2015-11-05
+*/
+void  collectFinalAndMiddleTargetScopes (SgVariableDeclaration* decl, Scope_Node* scope_tree, 
+               std::vector <SgScopeStatement *> &final_target_scopes, std::queue<Scope_Node* >& source_scope_trees,  bool debug)
+{
+  // single node scope tree, it is already the bottom, move to the final target scope 
+  // if it is different from the original decl scope && is supported
+  // Can the iterative algorithm generate new single node scope tree? No ! we checked the new root to be non-bottom!!
+  if ((scope_tree->children).size() == 0 )
+  {
+    if (scope_tree->scope != decl->get_scope() && !isUnsupportedScope (scope_tree->scope, decl) )
+    {
+      final_target_scopes.push_back(scope_tree->scope);
+      // no addition to the source_scope_trees worklist
+    }  
+    return ;
+  }
+
+  // for a scope tree with two or more nodes  
+  Scope_Node* first_branch_node = scope_tree->findFirstBranchNode();
+
+  // Step 2: simplest case, only a single use place, single path tree
+  // -----------------------------------------------------
+  // the first branch node is also the bottom node
+  if ((first_branch_node->children).size() ==0)
+  {
+    SgScopeStatement* bottom_scope = first_branch_node->scope;
+    ROSE_ASSERT(!isUnsupportedScope (bottom_scope, decl));
+    //TODO: what if backtracked to the root, which is a unsupported node added to the worklist scope trees?
+    // We must enforce unsupported scope bottom are backtraced when generating the scope tree! So the bottoms are all legal supported target scopes!
+    // getAdjustedScope () must ensure this and mark the backtracked scope as bottom (s-use). 
+    final_target_scopes.push_back(bottom_scope);
+  } // end the single decl-use path case
+  else  
+  { 
+    // multiple path tree
+    //Step 3: multiple scopes
+    // -----------------------------------------------------
+    // there are multiple (0 to n - 1 )child scopes in which the variable is used. 
+    // if for all scope 1, 2, .., n-1
+    //  the variable is defined before being used (not live)
+    //  Then we can move the variable into each child scope
+    // Conversely, if any of scope has liveIn () for the declared variable, we cannot move
+    bool moveToMultipleScopes= true ; 
+
+    for (size_t i =0; i< (first_branch_node->children).size(); i++)
+    {
+      Scope_Node * current_child_node = first_branch_node->children[i];
+      SgScopeStatement * current_child_scope = current_child_node->scope;
+      ROSE_ASSERT (current_child_scope != NULL); 
+      if (i>0) // consider the 2nd and later scope
+      {
+        SgVariableSymbol * var_sym = SageInterface::getFirstVarSym (decl); 
+        ROSE_ASSERT (var_sym != NULL);
+        if (isLiveIn (var_sym, current_child_scope))
+        {
+          moveToMultipleScopes = false;
+          break; // Find one is enough!
+        } 
+      }
+#if 1 // not working yet, many places to identify candidates. Better screen them later when this call is finished
+      // if a child scope is unsupported and bottom (no supported grandchildren) we cannot move to this level neither.  
+      // A wiggle room here: the child scope is unsupported, but there is a supported grandchild scope underneath it,
+      // we can still put it into the worklist
+      // TODO: need a search function to ensure this!! bool existingEligibleFinalTargetScope(root, decl)
+      if (isUnsupportedScope (current_child_scope, decl) && current_child_node->s_type == s_use)
+      {
+        moveToMultipleScopes = false;
+        break; // Find one is enough!
+      }  
+#endif 
+    }  // end for all scopes
+
+    if (moveToMultipleScopes)
+    {
+      if (debug)
+	cout<<"Found a movable declaration for multiple child scopes"<<endl;
+      for (size_t i =0; i< (first_branch_node->children).size(); i++)
+      {
+#if 0        
+	// we try to get the bottom for each branch, not just the upper scope
+	// This is good for the case like: "if () { for (i=0;..) {}}" and if-stmt's scope is a child of the first branch scope node
+	// TODO: one branch may fork multiple branches. Should we move further down on each grandchildren branch?
+	//       Not really, we then find the common inner most scope of that branch. just simply move decl there!
+	// Another thought: A better fix: we collect all leaf nodes of the scope tree! It has nothing to do with the first branch node!
+	//       this won't work. First branch node still matters. 
+	Scope_Node* current_child_scope = first_branch_node->children[i];     
+        //TODO: this is not clean from a recursive function point of view, This should be handled by the top while loop iterating on the scope tree queue. 
+	Scope_Node* bottom_node = current_child_scope -> findFirstBranchNode ();
+	SgScopeStatement * bottom_scope = bottom_node->scope;
+	ROSE_ASSERT (bottom_scope!= NULL);
+	target_scopes.push_back (bottom_scope);
+#else
+        // Liao 2015/11/2.  We only need to generate the candidate scopes here. 
+        // Delegate the processing of bottom (s_use for the scope tree node) vs. non-bottom scope (scope tree node type is s_intermedidate)
+        // to later moveSpecialTargetScopesIntoScopeTreeQueue().
+        // I don't want to mix the collection of candidates with other scope handling logic here.
+       // 1. collect candidates --> 2. decide on if root or children should be the legitimate target --> 3. add non-bottom targets to worklist
+	Scope_Node* current_child_scope_node = first_branch_node->children[i];     
+	SgScopeStatement * child_scope = current_child_scope_node->scope;
+	ROSE_ASSERT (child_scope!= NULL);
+	final_target_scopes.push_back (child_scope);
+#endif        
+      }
+    }
+    else // we still have to move it to the innermost common scope
+    {
+      SgScopeStatement* bottom_scope = first_branch_node->scope;
+      if (decl->get_scope() != bottom_scope)
+      {
+	final_target_scopes.push_back(bottom_scope);
+      }
+    } // end else
+  } // end else multiple scopes
+}
+
 
 // For a scope tree, collect candidate target scopes. This is the core step of algorithm V2's findFinalTargetScopes()
 /*
@@ -1933,40 +2088,103 @@ std::vector <SgScopeStatement *> collectCandidateTargetScopes (SgVariableDeclara
   return target_scopes; 
 }
 
-// V2 algorithm: two step algorithm
+// V2 algorithm's first step: iterative algorithm to find all final target scopes
 /*
 Find all bottom scopes to move into: no side effect on AST at all
 
 1. Initialization: 
   source_scope_trees: the top scope tree of the single decl in question
-2. For each tree of  source_scope_trees: populate target_scopes
-  collect candidate scopes
-   a. Single node scope tree, if diff from orig_scope, add  to target_scopes.  
-       delete the tree in any cases.  IF the same AS orig_scope, skip moving.  delete still. 
-   b. Multiple nodes tree
-      i. First branch node is a bottom: push to target_scopes
-      ii. First branch has children, move down if no LIveIn between any chidren?
-          1.  Move to multiple scopes: each child’s first branch → target_scopes  
-             // TODO: this can be optimized, direct add child scope should be sufficient
-          2. No move down if has liveIn, push first-branch scope into target_scope, if it is diff from orig_scope
-3. Target_scopes to source_scope_trees transition, caused by if-stmt  void moveSpecialTargetScopesToSourceScopeTreesQueue(& target_scopes, & source_scope_tree)
-  a. Find all if-stmt scopes of target_scopes 
-  b. Remove them from target_scopes
-  c. Add their true/false scopes into   source_scope_trees // the removed ones can be added back later for single node scope tree case. 
-    what if no BB is stored? Create a virtual scope on demand?   Post process scope tree (normalize) then de-normalize: pending on the experiment of add/remove BB’s impact on token-unparsing
+
+2. For each tree of  source_scope_trees: find candidate scopes, save into target_scopes
+  collect candidate scopes 
+      n0
+      | 
+      n1
+     / \
+    n2  n3
+ 
+We differentiate two kinds of candidate scopes: 
+
+ final_target_scopes: know for certain this is the final one. No need for further consideration. 
+  * It can be a real bottom scope , or 
+  * an intermediate scope which is reached by backtracking from a unsupported bottom scope. No use to go deeper.
+
+ scopetree worklist_scopes: a scope which is a child of a first branch node. and it is not the bottom.  
+
+   a. Single node scope tree, if diff from orig_scope, add to target_scopes.  
+        TODO: && !isUnSupportedScope ()   It is already a bottom scope (s_use type) 
+   b. Multiple nodes tree: find the first branching node
+                         && !isUnSupportedScope()  Does this matter? if some middle scope is not supported. No big deal really.  
+      i. Single path tree: First branch node is a bottom: push to target_scopes as a candidate
+                      Is supportedScope important?  Yes. unsupported will not accept decl to be inserted. 
+                      TODO: how to handle this cleanly?  backtrack to a scope node which is supported, mark it as final? No redundant consideration.
+
+      ii. Multiple path tree:  First branch node has multiple children
+          1. No move down if has liveIn, push first-branch scope into target_scope, if it is diff from orig_scope
+          2. No move down if any of the children is not supported (while, if, switch, etc.) && is a final (s_use type) target scope 
+             Reason: a final, unsupported scope cannot accept the declaration!!
+                     an intermediate , unsupported scope can serve as a new root for further move consideration
+          For both no move down case: it is the same handling for the single path case b-i (reuse the code)           
+
+          3. Move to multiple scopes: for each child’s first branch 
+             if the child scope is final , add to final_target_scope
+             if not final, add to worklist_scopes.  
+
+3. Target_scopes to source_scope_trees transition, caused by non-bottom scopes
+   This is to handle uneven bottom scope issues, as demonstrated below:
+      n0
+      | 
+      n1
+     / \
+    n2  n3
+       / \
+      n4  n5 
+First branching node is n1.   No liveIn between n2 and n3. So candidate collection step will collect n2 and n3.
+For all candidate scopes, if they have further children, they should be treated as a new root for brand new consideration.
+One example is n3 is If-stmt which is a scope. 
+We need to add n3 as a new scope tree root for further consideration. 
+n2 is kept/saved as one of the final target scopes
+
 4. if (!Check stop condition):   repeat 2 and 3, essentially do (2, 3) while ()
    a. scope tree: root scopes are processed (finished) a scopelist, source_scopes becomes empty
    b. // Implicitly ensured by 3 all target_scopes are bottom, no non-bottom scopes like if-stmt anymore
 
-Amendment to the algorithm before:
+Finally delete the scope tree in any cases.  IF the same AS orig_scope, skip moving.  delete still. 
 
- 1. If any scope is not allowed, no move will happen at all. This is not desired since some intermediate moves still should happen.
- To support it, I build candidate target scopes for each scope tree, and only invalidate a single scope tree
- with invalid target scope. Other target scopes of valid scope trees are preserved. 
-
- 2. If a source-scope tree is invalidated, it should be returned to the target_scope (back track!!) to preserve previous move.
 Liao 1/27/2015 
  */
+// Hopefully a new cleaner version
+void findFinalTargetScopes_V2(SgVariableDeclaration* declaration, std::vector <SgScopeStatement *> &final_target_scopes, bool debug)
+{
+  // A single original scope tree can spawn to multiple sub-trees, depending on where to start as a root
+  // Each target scope will be treated as a root to consider further search for the bottom scopes.
+  std::queue<Scope_Node* > source_scope_trees; 
+  SgVariableDeclaration * decl = declaration;
+  ROSE_ASSERT (decl != NULL);
+  // Step 1: generate a scope tree for the declaration
+  // -----------------------------------------------------
+  // Initially only one scope tree
+  Scope_Node* orig_scope_tree = generateScopeTree (decl, debug);
+  source_scope_trees.push(orig_scope_tree);
+  scopeTreeConsideredMap[orig_scope_tree] = true;
+
+  while (!source_scope_trees.empty())
+  {
+    Scope_Node* scope_tree = source_scope_trees.front();
+    source_scope_trees.pop(); // remove it from the queue
+
+    std::vector <SgScopeStatement *> candidate_scopes;  // per scope tree info.
+    // collect final and middle target scopes, save them into two different set
+    collectFinalAndMiddleTargetScopes (decl, scope_tree, final_target_scopes, source_scope_trees, debug);
+  }  // end while
+
+  // delete the original scope tree
+  orig_scope_tree->deep_delete_children ();
+  delete orig_scope_tree;
+}
+
+
+// old working version ....
 void findFinalTargetScopes(SgVariableDeclaration* declaration, std::vector <SgScopeStatement *> &target_scopes, bool debug)
 {
   // A single original scope tree can spawn to multiple sub-trees, depending on where to start as a root
@@ -2031,6 +2249,9 @@ void findFinalTargetScopes(SgVariableDeclaration* declaration, std::vector <SgSc
   // delete the original scope tree
   orig_scope_tree->deep_delete_children ();
   delete orig_scope_tree;
+
+// DQ (11/7/2015): THIS IS THE  BUG FIX: Also clear the scopeTreeConsideredMap (since it references nodes in the scope tree that has just been deleted).
+  scopeTreeConsideredMap.clear();
 }
 
 // Improved 2-step algorithm:
