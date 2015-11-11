@@ -110,6 +110,7 @@ void xomp_acc_init(void)
       exit(err);
   }
 #endif 
+  // to be safe, we preallocate memory based on max device count
   xomp_max_num_devices = xomp_get_max_devices();
 
   DDE_head = (DDE**)calloc(1,sizeof(DDE*)*xomp_max_num_devices);
@@ -155,6 +156,7 @@ void xomp_print_gpu_info(int devID)
 size_t xomp_get_maxThreadBlocksPerMultiprocessor(int devID)
 {
   int major, minor; 
+  assert (devID>=0 && devID<xomp_max_num_devices);
   major = xomp_getCudaDeviceProp(devID)-> major;
   minor = xomp_getCudaDeviceProp(devID)-> minor;
   if (major <= 2) //1.x and 2.x: 8 blocks per multiprocessor
