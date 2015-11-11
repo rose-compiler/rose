@@ -14,6 +14,10 @@ using namespace MPI_Code_Generator;
 int main ( int argc, char * argv[] )
 {
   std::vector <std::string> argvList (argv, argv + argc);
+ 
+  // turn on OpenMP parsing support for device() map (a[][] dist_data()) 
+  argvList.push_back("-rose:openmp:parse_only");
+
   SgProject* project = frontend(argvList); //frontendConstantFolding);
   ROSE_ASSERT(project != NULL);
 

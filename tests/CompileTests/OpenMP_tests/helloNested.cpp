@@ -29,7 +29,7 @@ public:
     int j;
     int m;
     m=9;
-    #pragma omp parallel private(j)
+    #pragma omp parallel private(j) num_threads(4)
     {
       j=11;
       cout<<"Hello::pararun, Hello, world "<<i<<" !"<<endl;
@@ -53,17 +53,17 @@ hello.pararun();
   omp_set_nested(1);
 #endif
 
-#pragma omp parallel 
+#pragma omp parallel num_threads(4)
 {
  printf("Hello,world!\n");
  hello.run();
  hello.pararun();
  hello88.pararun();
 }
-#pragma omp parallel
+#pragma omp parallel num_threads(4)
 {
  printf("1Hello,world!\n");
-#pragma omp parallel
+#pragma omp parallel num_threads(4)
  printf("2Hello,world!\n");
 }
 
