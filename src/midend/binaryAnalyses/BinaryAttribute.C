@@ -1,5 +1,6 @@
 #include <BinaryAttribute.h>
 #include <Sawyer/BiMap.h>
+#include <boost/foreach.hpp>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -30,6 +31,15 @@ id(const std::string &name) {
 const std::string&
 name(Id id) {
     return definedAttributes.forward().getOrDefault(id);
+}
+
+std::vector<Id>
+Storage::attributeIds() const {
+    std::vector<Id> retval;
+    retval.reserve(values_.size());
+    BOOST_FOREACH (Id id, values_.keys())
+        retval.push_back(id);
+    return retval;
 }
 
 } // namespace

@@ -127,29 +127,20 @@ struct AnalysisTime {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //! [comparison preparing storage]
-// Method 1: BinaryAnalysis::Attribute uses inheritence
+// Method 1: BinaryAnalysis::Attribute
 class ObjectWithAttributes_1: public Attribute::Storage {
     // other members here...
 };
 
-// Method 2: AstAttributeMechanism uses containment with a single data member.
+// Method 2: AstAttributeMechanism
 class ObjectWithAttributes_2 {
 public:
     AstAttributeMechanism attributeMechanism;
     // other members here...
 };
 
-// Method 3: AttributeMechanism<K,V> uses containment with one data member per value type.
-class ObjectWithAttributes_3 {
-public:
-    AttributeMechanism<std::string, Approximation> approximationAttributes;
-    AttributeMechanism<std::string, AnalysisTime> analysisTimeAttributes;
-    // Other members here...
-};
-
-// Method 4: Attributes in IR nodes. Users don't normally create new IR nodes, so this
-// demo uses some existing IR type instead.
-typedef SgAsmInstruction ObjectWithAttributes_4;
+// Method 3: Attributes in IR nodes (class derivation is not demoed here)
+typedef SgAsmInstruction ObjectWithAttributes_3;
 //! [comparison preparing storage]
 
 
@@ -187,10 +178,15 @@ class ApproximationAttribute_2: public AstAttribute,
 public:
     Approximation approximation;
 
-    virtual AstAttribute* copy() /*const*/ ROSE_OVERRIDE {
-        ApproximationAttribute_2 *retval = new ApproximationAttribute_2;
-        retval->approximation = approximation;
-        return retval;
+    explicit ApproximationAttribute_2(Approximation a)
+        : approximation(a) {}
+
+    virtual AstAttribute* copy() const ROSE_OVERRIDE {
+        return new ApproximationAttribute_2(*this);
+    }
+
+    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+        return "ApproximationAttribute_2";
     }
 };
 
@@ -200,37 +196,52 @@ class AnalysisTimeAttribute_2: public AstAttribute,
 public:
     AnalysisTime analysisTime;
 
-    virtual AstAttribute* copy() /*const*/ ROSE_OVERRIDE {
-        AnalysisTimeAttribute_2 *retval = new AnalysisTimeAttribute_2;
-        retval->analysisTime = analysisTime;
-        return retval;
+    explicit AnalysisTimeAttribute_2(const AnalysisTime &t)
+        : analysisTime(t) {}
+
+    virtual AstAttribute* copy() const ROSE_OVERRIDE {
+        return new AnalysisTimeAttribute_2(*this);
+    }
+
+    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+        return "AnalysisTimeAttribute_2";
     }
 };
 
-// Method 4: IR node attributes need to be wrapped
-class ApproximationAttribute_4: public AstAttribute,
-    public AllocationCounter<ApproximationAttribute_4> // ignore this, it's only for testing the implementation
+// Method 3: IR node attributes need to be wrapped
+class ApproximationAttribute_3: public AstAttribute,
+    public AllocationCounter<ApproximationAttribute_3> // ignore this, it's only for testing the implementation
 {
 public:
     Approximation approximation;
 
-    virtual AstAttribute* copy() /*const*/ ROSE_OVERRIDE {
-        ApproximationAttribute_4 *retval = new ApproximationAttribute_4;
-        retval->approximation = approximation;
-        return retval;
+    explicit ApproximationAttribute_3(Approximation a)
+        : approximation(a) {}
+
+    virtual AstAttribute* copy() const ROSE_OVERRIDE {
+        return new ApproximationAttribute_3(*this);
+    }
+
+    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+        return "ApproximationAttribute_3";
     }
 };
 
-class AnalysisTimeAttribute_4: public AstAttribute,
-    public AllocationCounter<AnalysisTimeAttribute_4> // ignore this, it's only for testing the implementation
+class AnalysisTimeAttribute_3: public AstAttribute,
+    public AllocationCounter<AnalysisTimeAttribute_3> // ignore this, it's only for testing the implementation
 {
 public:
     AnalysisTime analysisTime;
 
-    virtual AstAttribute* copy() /*const*/ ROSE_OVERRIDE {
-        AnalysisTimeAttribute_4 *retval = new AnalysisTimeAttribute_4;
-        retval->analysisTime = analysisTime;
-        return retval;
+    explicit AnalysisTimeAttribute_3(const AnalysisTime &t)
+        : analysisTime(t) {}
+
+    virtual AstAttribute* copy() const ROSE_OVERRIDE {
+        return new AnalysisTimeAttribute_3(*this);
+    }
+
+    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+        return "AllocationTimeAttribute_3";
     }
 };
 //! [comparison attribute wrappers]
@@ -317,7 +328,7 @@ method_2() {
     const std::string ANALYSIS_TIME_ATTR = "time taken for the analysis";
     //! [comparison declare 2]
 
-    //! [comparison insert 2]
+#if 0 // before being re-implemented in terms of BinaryAnalysis::Attribute
     // Method 2: AstAttributeMechanism
     if (obj_1.attributeMechanism.exists(APPROXIMATION_ATTR))
         delete obj_1.attributeMechanism[APPROXIMATION_ATTR];
@@ -329,13 +340,19 @@ method_2() {
     AnalysisTimeAttribute_2 *analysisTimeAttribute = new AnalysisTimeAttribute_2;
     analysisTimeAttribute->analysisTime = AnalysisTime(1.0, 2.0);
     obj_1.attributeMechanism.set(ANALYSIS_TIME_ATTR, analysisTimeAttribute);
+#else // after begin implemented in terms of BinaryAnalysis::Attribute
     //! [comparison insert 2]
+    // Method 2: AstAttributeMechanism
+    obj_1.attributeMechanism.set(APPROXIMATION_ATTR, new ApproximationAttribute_2(UNDER_APPROXIMATED));
+    obj_1.attributeMechanism.set(ANALYSIS_TIME_ATTR, new AnalysisTimeAttribute_2(AnalysisTime(1.0, 2.0)));
+    //! [comparison insert 2]
+#endif
 
     ASSERT_always_require(obj_1.attributeMechanism.exists(APPROXIMATION_ATTR));
     ASSERT_always_require(obj_1.attributeMechanism.exists(ANALYSIS_TIME_ATTR));
     ASSERT_always_require(AllocationCounter<ApproximationAttribute_2>::nAllocated == 1);
-    
-    //! [comparison retrieve 2]
+
+#if 0 // before being re-implemented in terms of BinaryAnalysis::Attribute
     // Method 2: AstAttributeMechanism
     Approximation approx_1 = UNKNOWN_APPROXIMATION;
     if (obj_1.attributeMechanism.exists(APPROXIMATION_ATTR)) {
@@ -349,7 +366,17 @@ method_2() {
         if (tmp != NULL)
             cpuTime_1 = tmp->analysisTime.cpuTime;
     }
-    //! [comparison retrieve 2]
+#else // after begin implemented in terms of BinaryAnalysis::Attribute
+    //! [comparison retreive 2]
+    // Method 2: AstAttributeMechanism
+    Approximation approx_1 = UNKNOWN_APPROXIMATION;
+    if (ApproximationAttribute_2 *tmp = dynamic_cast<ApproximationAttribute_2*>(obj_1.attributeMechanism[APPROXIMATION_ATTR]))
+        approx_1 = tmp->approximation;
+    double cpuTime_1 = AnalysisTime().cpuTime;          // the default, assuming we don't want to hard-code it.
+    if (AnalysisTimeAttribute_2 *tmp = dynamic_cast<AnalysisTimeAttribute_2*>(obj_1.attributeMechanism[ANALYSIS_TIME_ATTR]))
+        cpuTime_1 = tmp->analysisTime.cpuTime;
+    //! [comparison retreive 2]
+#endif
 
     ASSERT_always_require(approx_1 == UNDER_APPROXIMATED);
     ASSERT_always_require(cpuTime_1 == 1.0);
@@ -373,7 +400,7 @@ method_2() {
     ASSERT_always_require(approx_1 == approx_2);
     ASSERT_always_require(cpuTime_1 == cpuTime_2);
 
-    //! [comparison erase 2]
+#if 0 // before being re-implemented in terms of BinaryAnalysis::Attribute
     // Method 2: AstAttributeMechanism
     if (obj_1.attributeMechanism.exists(APPROXIMATION_ATTR)) {
         delete obj_1.attributeMechanism[APPROXIMATION_ATTR];
@@ -383,7 +410,14 @@ method_2() {
         delete obj_2.attributeMechanism[ANALYSIS_TIME_ATTR];
         obj_2.attributeMechanism.remove(ANALYSIS_TIME_ATTR);
     }
+#else // after begin implemented in terms of BinaryAnalysis::Attribute
     //! [comparison erase 2]
+    // Method 2: AstAttributeMechanism
+    obj_1.attributeMechanism.remove(APPROXIMATION_ATTR);
+    obj_2.attributeMechanism.remove(ANALYSIS_TIME_ATTR);
+    //! [comparison erase 2]
+#endif
+
     ASSERT_always_require(!obj_1.attributeMechanism.exists(APPROXIMATION_ATTR));
     ASSERT_always_require(AllocationCounter<ApproximationAttribute_2>::nAllocated == 1);
     ASSERT_always_require(!obj_2.attributeMechanism.exists(ANALYSIS_TIME_ATTR));
@@ -391,7 +425,7 @@ method_2() {
 
     int retval = 0;
     try {
-        //! [comparison cleanup 2]
+#if 0 // before being re-implemented in terms of BinaryAnalysis::Attribute
         // Method 2: AstAttributeMechanism: manual cleanup required if containng
         // object would be destroyed by exception unwinding.
         int x = 0;
@@ -408,77 +442,13 @@ method_2() {
                 delete obj_2.attributeMechanism[ANALYSIS_TIME_ATTR];
             throw;
         }
+#else // after begin implemented in terms of BinaryAnalysis::Attribute
         //! [comparison cleanup 2]
-        retval = x;
-    } catch (...) {
-    }
-    return retval;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Method 3: AttributeMechanism accessors
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-int
-method_3() {
-    ObjectWithAttributes_3 obj_1;
-
-    //! [comparison declare 3]
-    // Method 3: AttributeMechanism
-    const std::string APPROXIMATION_ATTR = "type of approximation performed";
-    const std::string ANALYSIS_TIME_ATTR = "time taken for the analysis";
-    //! [comparison declare 3]
-
-    //! [comparison insert 3]
-    // Method 3: AttributeMechanism
-    obj_1.approximationAttributes.set(APPROXIMATION_ATTR, UNDER_APPROXIMATED);
-    obj_1.analysisTimeAttributes.set(ANALYSIS_TIME_ATTR, AnalysisTime(1.0, 2.0));
-    //! [comparison insert 3]
-
-    ASSERT_always_require(obj_1.approximationAttributes.exists(APPROXIMATION_ATTR));
-    ASSERT_always_require(obj_1.analysisTimeAttributes.exists(ANALYSIS_TIME_ATTR));
-
-    //! [comparison retrieve 3]
-    // Method 3: AttributeMechanism
-    Approximation approx_1 = UNKNOWN_APPROXIMATION;
-    if (obj_1.approximationAttributes.exists(APPROXIMATION_ATTR))
-        approx_1 = obj_1.approximationAttributes[APPROXIMATION_ATTR];
-    double cpuTime_1 = AnalysisTime().cpuTime;          // the default, assuming we don't want to hard-code it.
-    if (obj_1.analysisTimeAttributes.exists(ANALYSIS_TIME_ATTR))
-        cpuTime_1 = obj_1.analysisTimeAttributes[ANALYSIS_TIME_ATTR].cpuTime;
-    //! [comparison retrieve 3]
-
-    ASSERT_always_require(approx_1 == UNDER_APPROXIMATED);
-    ASSERT_always_require(cpuTime_1 == 1.0);
-
-    // Copy the containing object and its attributes.
-    ObjectWithAttributes_3 obj_2 = obj_1;
-    ASSERT_always_require(obj_2.approximationAttributes.exists(APPROXIMATION_ATTR));
-    ASSERT_always_require(obj_2.analysisTimeAttributes.exists(ANALYSIS_TIME_ATTR));
-    Approximation approx_2 = obj_2.approximationAttributes[APPROXIMATION_ATTR];
-    double cpuTime_2 = obj_2.analysisTimeAttributes[ANALYSIS_TIME_ATTR].cpuTime;
-    ASSERT_always_require(approx_1 == approx_2);
-    ASSERT_always_require(cpuTime_1 == cpuTime_2);
-
-    //! [comparison erase 3]
-    // Method 3: AttributeMechanism
-    if (obj_1.approximationAttributes.exists(APPROXIMATION_ATTR))
-        obj_1.approximationAttributes.remove(APPROXIMATION_ATTR);
-    if (obj_2.analysisTimeAttributes.exists(ANALYSIS_TIME_ATTR))
-        obj_2.analysisTimeAttributes.remove(ANALYSIS_TIME_ATTR);
-    //! [comparison erase 3]
-
-    ASSERT_always_require(!obj_1.approximationAttributes.exists(APPROXIMATION_ATTR));
-    ASSERT_always_require(!obj_2.analysisTimeAttributes.exists(ANALYSIS_TIME_ATTR));
-
-    int retval = 0;
-    try {
-        //! [comparison cleanup 3]
-        // Method 3: AttributeMechanism: value destructors called automatically if
-        // containing object is destroyed by exception unwinding.
+        // Method 2: AstAttributeMechanism: attributes automatically deleted
+        // if the containing object would be destroyed by exception unwinding.
         int x = something_that_might_throw();
-        //! [comparison cleanup 3]
+        //! [comparison cleanup 2]
+#endif
         retval = x;
     } catch (...) {
     }
@@ -490,47 +460,63 @@ method_3() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int
-method_4() {
-    ObjectWithAttributes_4 *obj_1 = new ObjectWithAttributes_4; // IR nodes are always in the heap
+method_3() {
+    ObjectWithAttributes_3 *obj_1 = new ObjectWithAttributes_3; // IR nodes are always in the heap
 
-    //! [comparison declare 4]
-    // Method 4: Attributes in IR nodes
+    //! [comparison declare 3]
+    // Method 3: Attributes in IR nodes
     const std::string APPROXIMATION_ATTR = "type of approximation performed";
     const std::string ANALYSIS_TIME_ATTR = "time taken for the analysis";
-    //! [comparison declare 4]
+    //! [comparison declare 3]
 
-    //! [comparison insert 4]
-    // Method 4: Attributes in IR nodes
+#if 0 // before being re-implemented in terms of BinaryAnalysis::Attribute
+    // Method 3: Attributes in IR nodes
     if (obj_1->attributeExists(APPROXIMATION_ATTR))
         delete obj_1->getAttribute(APPROXIMATION_ATTR);
-    ApproximationAttribute_4 *approximationAttribute = new ApproximationAttribute_4;
+    ApproximationAttribute_3 *approximationAttribute = new ApproximationAttribute_3;
     approximationAttribute->approximation = UNDER_APPROXIMATED;
     obj_1->setAttribute(APPROXIMATION_ATTR, approximationAttribute);
     if (obj_1->attributeExists(ANALYSIS_TIME_ATTR))
         delete obj_1->getAttribute(ANALYSIS_TIME_ATTR);
-    AnalysisTimeAttribute_4 *analysisTimeAttribute = new AnalysisTimeAttribute_4;
+    AnalysisTimeAttribute_3 *analysisTimeAttribute = new AnalysisTimeAttribute_3;
     analysisTimeAttribute->analysisTime = AnalysisTime(1.0, 2.0);
     obj_1->setAttribute(ANALYSIS_TIME_ATTR, analysisTimeAttribute);
-    //! [comparison insert 4]
-    
+#else // after begin implemented in terms of BinaryAnalysis::Attribute
+    //! [comparison insert 3]
+    // Method 3: Attributes in IR nodes
+    obj_1->setAttribute(APPROXIMATION_ATTR, new ApproximationAttribute_3(UNDER_APPROXIMATED));
+    obj_1->setAttribute(ANALYSIS_TIME_ATTR, new AnalysisTimeAttribute_3(AnalysisTime(1.0, 2.0)));
+    //! [comparison insert 3]
+#endif
+
     ASSERT_always_require(obj_1->attributeExists(APPROXIMATION_ATTR));
     ASSERT_always_require(obj_1->attributeExists(ANALYSIS_TIME_ATTR));
-    
-    //! [comparison retrieve 4]
-    // Method 4: Attributes in IR nodes
+
+#if 0 // before being re-implemented in terms of BinaryAnalysis::Attribute
+    // Method 3: Attributes in IR nodes
     Approximation approx_1 = UNKNOWN_APPROXIMATION;
     if (obj_1->attributeExists(APPROXIMATION_ATTR)) {
-        ApproximationAttribute_4 *tmp = dynamic_cast<ApproximationAttribute_4*>(obj_1->getAttribute(APPROXIMATION_ATTR));
+        ApproximationAttribute_3 *tmp = dynamic_cast<ApproximationAttribute_3*>(obj_1->getAttribute(APPROXIMATION_ATTR));
         if (tmp != NULL)
             approx_1 = tmp->approximation;
     }
     double cpuTime_1 = AnalysisTime().cpuTime;          // the default, assuming we don't want to hard-code it.
     if (obj_1->attributeExists(ANALYSIS_TIME_ATTR)) {
-        AnalysisTimeAttribute_4 *tmp = dynamic_cast<AnalysisTimeAttribute_4*>(obj_1->getAttribute(ANALYSIS_TIME_ATTR));
+        AnalysisTimeAttribute_3 *tmp = dynamic_cast<AnalysisTimeAttribute_3*>(obj_1->getAttribute(ANALYSIS_TIME_ATTR));
         if (tmp != NULL)
             cpuTime_1 = tmp->analysisTime.cpuTime;
     }
-    //! [comparison retrieve 4]
+#else // after begin implemented in terms of BinaryAnalysis::Attribute
+    //! [comparison retrieve 3]
+    // Method 3: Attributes in IR nodes
+    Approximation approx_1 = UNKNOWN_APPROXIMATION;
+    if (ApproximationAttribute_3 *tmp = dynamic_cast<ApproximationAttribute_3*>(obj_1->getAttribute(APPROXIMATION_ATTR)))
+        approx_1 = tmp->approximation;
+    double cpuTime_1 = AnalysisTime().cpuTime;          // the default, assuming we don't want to hard-code it.
+    if (AnalysisTimeAttribute_3 *tmp = dynamic_cast<AnalysisTimeAttribute_3*>(obj_1->getAttribute(ANALYSIS_TIME_ATTR)))
+        cpuTime_1 = tmp->analysisTime.cpuTime;
+    //! [comparison retrieve 3]
+#endif
 
     ASSERT_always_require(approx_1 == UNDER_APPROXIMATED);
     ASSERT_always_require(cpuTime_1 == 1.0);
@@ -538,9 +524,9 @@ method_4() {
     // Copy the containing object and its attributes.
 #if 0 // this version doesn't copy attributes
     SgTreeCopy deep;
-    ObjectWithAttributes_4 *obj_2 = dynamic_cast<ObjectWithAttributes_4*>(obj_1->copy(deep));
+    ObjectWithAttributes_3 *obj_2 = dynamic_cast<ObjectWithAttributes_3*>(obj_1->copy(deep));
 #else // Markus recommends this one instead, but it also doesn't copy attributes
-    ObjectWithAttributes_4 *obj_2 = dynamic_cast<ObjectWithAttributes_4*>(SageInterface::deepCopyNode(obj_1));
+    ObjectWithAttributes_3 *obj_2 = dynamic_cast<ObjectWithAttributes_3*>(SageInterface::deepCopyNode(obj_1));
 #endif
     ASSERT_not_null(obj_2);
 
@@ -554,15 +540,15 @@ method_4() {
     ASSERT_always_require(obj_1->getAttribute(ANALYSIS_TIME_ATTR) !=
                           obj_2->getAttribute(ANALYSIS_TIME_ATTR));
     Approximation approx_2 =
-        dynamic_cast<ApproximationAttribute_4*>(obj_2->getAttribute(APPROXIMATION_ATTR))->approximation;
+        dynamic_cast<ApproximationAttribute_3*>(obj_2->getAttribute(APPROXIMATION_ATTR))->approximation;
     double cpuTime_2 =
-        dynamic_cast<AnalysisTimeAttribute_4*>(obj_2->getAttribute(ANALYSIS_TIME_ATTR))->analysisTime.cpuTime;
+        dynamic_cast<AnalysisTimeAttribute_3*>(obj_2->getAttribute(ANALYSIS_TIME_ATTR))->analysisTime.cpuTime;
     ASSERT_always_require(approx_1 == approx_2);
     ASSERT_always_require(cpuTime_1 == cpuTime_2);
 #endif
 
-    //! [comparison erase 4]
-    // Method 4: Attributes in IR nodes
+#if 0 // before being re-implemented in terms of BinaryAnalysis::Attribute
+    // Method 3: Attributes in IR nodes
     if (obj_1->attributeExists(APPROXIMATION_ATTR)) {
         delete obj_1->getAttribute(APPROXIMATION_ATTR);
         obj_1->removeAttribute(APPROXIMATION_ATTR);
@@ -571,21 +557,26 @@ method_4() {
         delete obj_2->getAttribute(ANALYSIS_TIME_ATTR);
         obj_2->removeAttribute(ANALYSIS_TIME_ATTR);
     }
-    //! [comparison erase 4]
+#else // after begin implemented in terms of BinaryAnalysis::Attribute
+    //! [comparison erase 3]
+    // Method 3: Attributes in IR nodes
+    obj_1->removeAttribute(APPROXIMATION_ATTR);
+    obj_2->removeAttribute(ANALYSIS_TIME_ATTR);
+    //! [comparison erase 3]
+#endif
 
     ASSERT_always_require(!obj_1->attributeExists(APPROXIMATION_ATTR));
     ASSERT_always_require(!obj_2->attributeExists(ANALYSIS_TIME_ATTR));
-    ASSERT_always_require(AllocationCounter<ApproximationAttribute_4>::nAllocated = 1);
-    ASSERT_always_require(AllocationCounter<AnalysisTimeAttribute_4>::nAllocated = 1);
+    ASSERT_always_require(AllocationCounter<ApproximationAttribute_3>::nAllocated = 1);
+    ASSERT_always_require(AllocationCounter<AnalysisTimeAttribute_3>::nAllocated = 1);
 
     int retval = 0;
     try {
-        //! [comparison cleanup 4]
-        // Method 4: Attributes in IR nodes: manual cleanup is required if
-        // an IR node is deleted. IR nodes are seldom deleted, especially
-        // during exception handling.
-        int x = something_that_might_throw(); // potential leak
-        //! [comparison cleanup 4]
+        //! [comparison cleanup 3]
+        // Method 3: Attributes in IR nodes: attributes automatically destroyed if
+        // an IR node is deleted. IR nodes are seldome destroyed during exception unwinding.
+        int x = something_that_might_throw();
+        //! [comparison cleanup 3]
         retval = x;
     } catch (...) {
     }
@@ -596,16 +587,10 @@ method_4() {
 //                              Miscellanous tests
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void
-test_01(const AttributeMechanism<std::string, AstAttribute*> &am) {
-    am.exists("x");
-}
-
 int
 main() {
     example_usage();
     method_1();
     method_2();
     method_3();
-    method_4();
 }

@@ -6,6 +6,7 @@
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
 #include <string>
+#include <vector>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -87,210 +88,153 @@ namespace BinaryAnalysis {
  *
  *  @section binary_attribute_comparison Comparison with other attribute APIs
  *
- *  ROSE has an older @ref AstAttributeMechanism that's derived from the AttributeMechanism class template. Attributes stored
- *  in IR nodes can use the attribute-accessing methods defined in @ref SgNode, which are essentially wrappers around the @ref
- *  AstAttributeMechanism interface.  This purpose of this table and the examples that follow is to compare and contrast
- *  attribute mechanisms in a broader context than just IR nodes--it looks at using an attribute mechanism in arbitrary
- *  objects. Most of the rows of the AstAttributeMechanism are also applicable to the SgNode attribute interface.
+ *  ROSE also has an interface within the @ref SgNode class for storing heap-based attributes in IR nodes. Here's how these two
+ *  interfaces differ:
  *
  *  <table>
  *    <tr>
  *      <td><b>This API</b></td>
- *      <td><b>AstAttributeMechanism</b></td>
- *      <td><b>AttributeMechanism</b></td>
+ *      <td><b>IR node attributes</b></td>
+ *    </tr>
+ *    <tr>
+ *      <td>Class authors can add attribute-storing capability to any class by inheriting this interface.</td>
+ *      <td>Applies only to IR nodes, although the underlying @ref AstAttributeMechanism with a slightly different
+ *          interface can be used in any class. This column applies mostly to the @ref AstAttributeMechanism also.</td>
  *    </tr>
  *    <tr>
  *      <td>Can store multiple attributes with many different value types.</td>
  *      <td>Can store multiple attributes with many different value types as long as those types all derive from
  *          AstAttribute.</td>
- *      <td>Can store multiple attributes all having the same type (second template argument). To store multiple
- *          types additional AttributeMechanism data members must be used.</td>
  *    </tr>
  *    <tr>
  *      <td>Can directly store non-class values.</td>
  *      <td>Requires non-class values to be wrapped in a class derived from @ref AstAttribute</td>
- *      <td>Can directly store non-class values (one value type per AttributeMechanism)</td>
- *    </tr>
- *    <tr>
- *      <td>%Attribute getter/setter methods are directly in containing class.</td>
- *      <td>Must obtain the AstAttributeMechanism data member first (@ref SgNode::get_attributeMechanism), then the
- *          getter/setter. The @ref SgNode class provides wrapper methods around AstAttributeMechanism, but this interface is
- *          available only in IR node objects.</td>
- *      <td>Must get the AttributeMechanism data member first unless only one value type is allowed (each AttributeMechanism
- *          data member can store attribute values having a single type).</td>
  *    </tr>
  *    <tr>
  *      <td>Can store values whose type is not user-modifiable, such as STL containers.</td>
  *      <td>User must be able modify the value type so it inherits from AstAttribute, or he must wrap the type in his own
  *          subclass of AstAttribute, adding an extra level of indirection to access the value.</td>
- *      <td>Can store values whose type is not user-modifiable, such as STL containers.</td>
  *    </tr>
  *    <tr>
  *      <td>Ensures that two users don't declare the same attribute name.</td>
- *      <td>Some assurance that names don't collide: the @c add method is a no-op (with an error message) if an attribute is
- *          already stored with that name, but @c set makes no such check.</td>
- *      <td>Names don't collide for attributes storing different value types, otherwise the behavior is the same
- *          as for @ref AstAttributeMechanism.</td>
+ *      <td>No assurance that the same name is not used for two different purposes.</td>
  *    </tr>
  *    <tr>
  *      <td>Uses normal C++ copy constructors and assignment operators for attribute values.</td>
- *      <td>Requires implementation of virtual @c copy method (non-pure), which returns a null pointer if the user forgets.</td>
- *      <td>Uses normal C++ copy constructors and assignment operators for attribute values.</td>
+ *      <td>Requires implementation of virtual @c copy method (non-pure) if copying is intended.</td>
  *    </tr>
  *    <tr>
- *      <td>Errors are reported by dedicated exception types allowing the user to gracefully recover.</td>
- *      <td>Errors are reported by printing them to the standard error stream and then either doing nothing (production) or
- *          aborting the whole program (debug).</td>
- *      <td>Errors are reported by printing them to the standard error stream and then either doing nothing (production) or
- *          aborting the whole program (debug).</td>
- *    </tr>
- *    <tr>
- *      <td>%Attribute existence and retrieval can be performed on a reference to a const object.</td>
- *      <td>The API does not support non-modifying operations on a reference to a const object.</td>
- *      <td>The API does not support non-modifying operations on a reference to a const object.</td>
+ *      <td>Errors are reported by dedicated exception types.</td>
+ *      <td>Errors are reported by return values.</td>
  *    </tr>
  *    <tr>
  *      <td>Attempting to retrieve a non-existing attribute without providing a default value throws a
  *          @ref DoesNotExist exception.</td>
- *      <td>Attempting to retrieve a non-existing attribute emits a message to standard error and then causes the attribute to
- *          exist but have a null pointer (production) or aborts the whole program (debug). The user must check existence
- *          before retreiving.</td>
- *      <td>Attempting to retrieve a non-existing attribute emits a message to standard error and then causes the attribute to
- *          spring into existence with a default-constructed value (production) or aborts the whole program (debug). The user
- *          must check existence before retreiving.</td>
- *    </tr>
- *    <tr>
- *      <td>Erasing an attribute that is not stored is a no-op similar to STL container erase methods.</td>
- *      <td>Erasing an attribute that is not stored emits a message to standard error and does nothing (production)
- *          or aborts the whole program (debug). The user must check existence before erasing.</td>
- *      <td>Erasing an attribute that is not stored emits a message to standard error and does nothing (production)
- *          or aborts the whole program (debug). The user must check existence before erasing.</td>
+ *      <td>Attempting to retrieve a non-existing attribute without providing a default value returns a null attribute
+ *          pointer</td>
  *    </tr>
  *    <tr>
  *      <td>%Attribute value types are runtime checked. A mismatch between writing and reading is reported by a
- *          @ref BadQueryType exception.</td>
+ *          @ref WrongQueryType exception.</td>
  *      <td>%Attribute values types are runtime checked. A mismatch is discovered by the user when they perform a
  *          @c dynamic_cast from the AstAttribute base type to their subclass.</td>
- *      <td>%Attribute values are compile-time checked since each AttributeMechanism can store only one value type.</td>
  *    </tr>
  *    <tr>
  *      <td>All casting is hidden behind the API.</td>
  *      <td>Requires user to use C++ @c dynamic_cast from the AstAttribute pointer to the user's subclass pointer.</td>
- *      <td>No dynamic casting necessary since each AttributeMechanism stores only one value type.</td>
- *    </tr>
- *    <tr>
- *      <td>%Attribute value destructors are called when the containing object is destroyed.</td>
- *      <td>Attributes (all allocated on the heap) are never deleted automatically; the user must figure out when a
- *          value is no longer in use and delete it explicitly.</td>
- *      <td>%Attribute value destructors are called when the containing object is destroyed.</td>
  *    </tr>
  *  </table>
  *
- *  Some examples may help illuminate the differences. Let us assume that two types exist in some library header file somewhere
- *  and the user wants to store these as attribute values in some object. The two value types are:
+ *  Some examples may help illuminate the differences.  The examples show three methods of using attributes:
+ *
+ *  @li <b>Method 1</b> uses the BinaryAnalysis::Attribute interface.
+ *  @li <b>Method 2</b> uses the @ref AstAttributeMechanism interface.
+ *  @li <b>Method 3</b> uses the @ref SgNode attribute interface.
+ *
+ *  Let us assume that two types exist in some library header file somewhere and the user wants to store these as attribute
+ *  values in some object. The two value types are:
  *
  *  @snippet binaryAttribute.C comparison value types
  *
  *  Let us also assume that a ROSE developer has a class and wants the user to be able to store attributes in objects of that
- *  class.  IR nodes have an alternative attribute interface that's a slim wrapper around the @ref AstAttributeMechanism, but
- *  since they're only defined in IR nodes and since users cannot create new IR node subclasses without modifying and
- *  recompiling ROSE and EDG, this step doesn't apply there.
- *
- *  The first step is for the ROSE developer to prepare his class for storing attributes:
+ *  class.  The first step is for the ROSE developer to prepare his class for storing attributes:
  *
  *  @snippet binaryAttribute.C comparison preparing storage
  *
- *  Notice that AttributeMechanism requires a data member for each type of value. AstAttributeMechanism, which derives from
- *  AttributeMechanism, avoids this by using pointers to polymorhic value types. So the AttributeMechanism is already not
- *  extensible unless the user can edit the type where the attributes are stored--but if he can edit the type, then why use
- *  attributes at all?
+ *  Method 1 is designed to use inheritance: all of its methods have the word "attribute" in their names. Method 2 could be
+ *  used by inheritance, but is more commonly used with containment due to its short, common method names like @c size. Method
+ *  3 applies only to Sage IR nodes, but creating a new subclass of SgNode is outside the scope of this document; instead,
+ *  we'll just use an existing IR node type.
  *
  *  Now we jump into the user code. The user wants to be able to store two attributes, one of each value type. As mentioned
  *  above, the attribute value types are defined in some library header, and the class of objects in which to store them is
- *  defined in a ROSE header file.  Methods 1 and 3 can store values of any type, but the user has more work to do before he
- *  can use methods 2 or 4:
+ *  defined in a ROSE header file.  Method 1 an store values of any type, but the user has more work to do before he
+ *  can use methods 2 or 3:
  *
  *  @snippet binaryAttribute.C comparison attribute wrappers
  *
- *  Notice that AstAttributeMechanism and the SgNode interface both need a substantial amount of boilerplate to store even a
- *  simple enum value. Since @c copy is not pure virtual, if the user forgets to implement it (or mistypes it without C++11 @c
- *  override, like accidentally adding the @c const qualifier which is normally present for a copy constructor), then attribute
- *  values of that type will not be copied when the containing object is copied, but the @c exists, @c get, @c add, and @c
- *  remove methods will say they do exist.
+ *  Method 1 requires no additional wrapper code since it can store any value directly. Methods 2 and 3 both require a
+ *  substantial amount of boilerplate to store even a simple enum value.  The @c copy method's purpose is to allocate a new
+ *  copy of an attribute when the object holding the attribute is copied or assigned. The copy method should be implemented in
+ *  every @ref AstAttribute subclass, although few do.  If it's not implemented then one of two things happen: either the
+ *  attribute is not copied, or only a superclass of the attribute is copied. Subclasses must also implement @c
+ *  attribute_class_name, although few do. Neither @c copy nor @c attribute_class_name are pure virtual because of limitations
+ *  with ROSETTA code generation.
  *
- *  The user will also want to use descriptive strings for the attribute so error messages are informative, but shorter names
+ *  Next, the user will want to use descriptive strings for the attribute so error messages are informative, but shorter names
  *  in C++ code, so we declare the attribute names:
  *
  *  @snippet binaryAttribute.C comparison declare 1
  *  @snippet binaryAttribute.C comparison declare 2
  *  @snippet binaryAttribute.C comparison declare 3
- *  @snippet binaryAttribute.C comparison declare 4
  *
  *  The declarations in methods 2 and 3 are identical. Method 1 differs by using an integral type for attribute IDs, which has
- *  two benefits: (1) it gives the API an opportunity to check whether two different users are trying to declare the same
- *  attribute name for different purposes, and (2) it reduces the size and increases the speed of the underlying storage maps
- *  by storing integer keys rather than strings.
+ *  two benefits: (1) it prevents two users from using the same attribute name for different purposes, and (2) it reduces the
+ *  size and increases the speed of the underlying storage maps by storing integer keys rather than strings. Method 1 has
+ *  functions that convert between identification numbers and strings if necessary (e.g., error messages).
  *
- *  Let us see how to insert two attributes into an object assuming that the object came from somewhere far away and we don't
- *  know whether it already contains these attributes. If it does, we want to overwrite their old values with new
+ *  Now, let us see how to insert two attributes into an object assuming that the object came from somewhere far away and we
+ *  don't know whether it already contains these attributes. If it does, we want to overwrite their old values with new
  *  values. Overwriting values is likely to be a more common operation than insert-if-nonexistent. After all, languages
  *  generally don't have a dedicated assign-value-if-none-assigned operator (Perl and Bash being exceptions).
  *
  *  @snippet binaryAttribute.C comparison insert 1
  *  @snippet binaryAttribute.C comparison insert 2
  *  @snippet binaryAttribute.C comparison insert 3
- *  @snippet binaryAttribute.C comparison insert 4
  *
- *  Methods 1 and 3 are able to insert a new value and clean up any old value if it existed by automatically calling the old
- *  value's destructor.  Methods 2 and 4 requires the user to check whether an old value existed and delete the value
- *  explicitly. Fortunately deleting a null pointer is a no-op, otherwise we'd have to check that also.
+ *  Method 1 stores the attribute directly while Methods 2 and 3 require the attribute value to be wrapped in a heap-allocated
+ *  object first.
  *
- *  Eventually the user will want to retrieve an attribute's value. Perhaps he wants the attribute value if it exists, or some
- *  default if it doesn't:
+ *  Eventually the user will want to retrieve an attribute's value. Users commonly need to obtain the attribute or a default
+ *  value.
  *
  *  @snippet binaryAttribute.C comparison retrieve 1
  *  @snippet binaryAttribute.C comparison retrieve 2
  *  @snippet binaryAttribute.C comparison retrieve 3
- *  @snippet binaryAttribute.C comparison retrieve 4
  *
- *  Notice that methods 2, 3, and 4 require that the user first checks for attribute existence since querying a non-existing
- *  attribute will emit a message on standard error and instantiate the attribute (production) or abort the whole program
- *  (debug).  In production mode, querying a non-existing attribute with methods 2 or 4 will insert the attribute with a
- *  null pointer which the other methods interpret as the attribute existing even though it doesn't, and method 3 will
- *  insert a default-constructed attribute.  Methods 2 and 4 also require a cumbersome dynamic cast, an additional pointer
- *  check, and then unrwapping the wrapped attribute.
- *
- *  A potential gotcha with method 3 is that since a separate AstAttributeMechanism data member is required for each attribute
- *  value type, the user must be careful that he uses the correct data member. For instance, the @c exists checks above will
- *  work regardless of whether we use @c approximationAttributes or @c analysisTimeAttributes. In fact, an early version of the
- *  example used the wrong one in one place and postcondition assertions (not shown) were failing.
+ *  Method 1 has a couple functions dedicated to this common scenario. Methods 2 and 3 return a null pointer if the attribute
+ *  doesn't exist, but require a dynamic cast to the appropriate type otherwise.
  *
  *  Sooner or later a user will want to erase an attribute. Perhaps the attribute holds the result of some optional analysis
- *  which is no longer valid. The user wants to ensure that the attribute doesn't exist, but isn't sure whether it exists
- *  currently:
+ *  which is no longer valid. The user wants to ensure that the attribute doesn't exist, but isn't sure whether it currently
+ *  exists:
  *
  *  @snippet binaryAttribute.C comparison erase 1
  *  @snippet binaryAttribute.C comparison erase 2
  *  @snippet binaryAttribute.C comparison erase 3
- *  @snippet binaryAttribute.C comparison erase 4
  *
- *  The @c delete operators are necessary in Methods 2 and 4 to prevent memory leaks. Methods 2, 3, and 4 all require the user
- *  to check for existence first because the @c remove and @c removeAttribute methods print messages to standard error if the
- *  attribute doesn't exist.
+ *  If the attribute didn't exist then none of these methods do anything. If it did exist... With Method 1, the value's
+ *  destructor is called. Methods 2 and 3 delete the heap-allocated value, which is allowed since the attribute container owns
+ *  the object.
  *
  *  Finally, when the object containing the attributes is destroyed the user needs to be able to clean up by destroying the
- *  attributes that are attached. For instance, if a function has local variables that might be storing attributes and the
- *  function calls something that might throw an exception we need to catch the exception, delete the attributes (checking if
- *  they exist before we access them), and rethrow the same exception. This also makes debugging more difficult because GDB
- *  will lose information about where the exception was originally thrown--it will give you only the location of the rethrow.
+ *  attributes that are attached:
  *
  *  @snippet binaryAttribute.C comparison cleanup 1
  *  @snippet binaryAttribute.C comparison cleanup 2
  *  @snippet binaryAttribute.C comparison cleanup 3
- *  @snippet binaryAttribute.C comparison cleanup 4
  *
- *  Whether to use Method 1, 2, or 3 is up to the author of the class that wants to allow attributes to be stored. Whether to
- *  use Method 2 or 4 in an IR node is up to the user of the IR node. */
+ *  All three interfaces now properly clean up their attributes, although this wasn't always the case with methods 2 and 3. */
 namespace Attribute {
 
 /** Attribute identification.
@@ -370,6 +314,11 @@ public:
         values_.erase(id);
     }
 
+    /** Erase all attributes. */
+    void clearAttributes() {
+        values_.clear();
+    }
+
     /** Store an attribute.
      *
      *  Stores the specified value for the specified attribute, overwriting any previously stored value for the specified
@@ -432,6 +381,14 @@ public:
             return Sawyer::Nothing();
         return boost::any_cast<T>(found->value());
     }
+
+    /** Number of attributes stored. */
+    size_t nAttributes() const {
+        return values_.size();
+    }
+
+    /** Returns ID numbers for all IDs stored in this container. */
+    std::vector<Id> attributeIds() const;
 };
 
 } // namespace

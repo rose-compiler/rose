@@ -25,7 +25,7 @@ string ppPresRemUnd (PresRemUnd x) {
 class PRUAttribute : public AstAttribute {
   public:
     PRUAttribute(PresRemUnd v) : state(v) {}
-    PRUAttribute *copy() {
+    PRUAttribute *copy() const {
       return new PRUAttribute(*this);
     }
     std::string attribute_class_name() { return pragmaAttrib; }

@@ -119,7 +119,7 @@ class AstNodeLinkAttribute
         virtual ~AstNodeLinkAttribute()
         {}
 
-        virtual AstNodeLinkAttribute *copy()
+        virtual AstNodeLinkAttribute *copy() const
         {
             return new AstNodeLinkAttribute( *this );
         }
@@ -138,7 +138,7 @@ class AstSourceNodeLink
         virtual ~AstSourceNodeLink()
         {}
 
-        virtual AstSourceNodeLink *copy()
+        virtual AstSourceNodeLink *copy() const
         {
             return new AstSourceNodeLink( *this );
         }
@@ -156,7 +156,7 @@ class AstBinaryNodeLink
         virtual ~AstBinaryNodeLink()
         {}
 
-        virtual AstBinaryNodeLink *copy()
+        virtual AstBinaryNodeLink *copy() const
         {
             return new AstBinaryNodeLink( *this );
         }
