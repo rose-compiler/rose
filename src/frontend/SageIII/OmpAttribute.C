@@ -315,6 +315,7 @@ namespace OmpSupport
     } 
     this->dist_data_policies[array_symbol].push_back(std::make_pair(dist_data_policy,size_exp));
     assert (this->dist_data_policies[array_symbol].size() <=3);
+    return true;
   }
 
   std::vector < std::pair < omp_construct_enum, SgExpression*> > 
@@ -632,7 +633,15 @@ namespace OmpSupport
       case e_uniform: result = "uniform"; break;
       case e_aligned: result = "aligned"; break;
 
+      case e_begin: result = "begin"; break;
+      case e_end:   result = "end";   break;
+
       case e_not_omp: result = "not_omp"; break;
+      default: 
+      {
+        cerr<<"OmpSupport::toString(): unrecognized enumerate value:"<<omp_type<<endl;
+        ROSE_ASSERT (false);
+      }
     }
     // Not true for Fortran!!
     //    if (isDirective(omp_type))
@@ -949,8 +958,11 @@ namespace OmpSupport
      // experimental accelerator clauses 
       case e_map:
       case e_dist_data:
-
       case e_device:
+    // experimental ones for SPMD begin/end
+      case e_begin:
+      case e_end:
+
       case e_safelen:
       case e_linear:
       case e_uniform:
