@@ -131,7 +131,7 @@ void SSA_UnfilteredCfg::run()
 #endif
 
     //Get a list of all the functions that we'll process
-    unordered_set<SgFunctionDefinition*> interestingFunctions;
+    boost::unordered_set<SgFunctionDefinition*> interestingFunctions;
     vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition > (project, V_SgFunctionDefinition);
 
     FunctionFilter functionFilter;
