@@ -1,6 +1,6 @@
 // -*- c++ -*-
 
-/** @defgroup attributes Working with attributes.
+/** @defgroup attributes Working with attributes
  *
  *  Many ROSE classes allow users to define and store their own data in the form of @em attributes.  An attribute is a
  *  name/value pair where the name uniquely identifies the attribute within the container object and the value has a
@@ -74,7 +74,7 @@
  *      <td>Attempting to retrieve a non-existing attribute without providing a default value returns a null attribute
  *          pointer</td>
  *      <td>Attempting to retrieve a non-existing attribute without providing a default value throws a
- *          @ref DoesNotExist exception.</td>
+ *          @ref Sawyer::Attribute::DoesNotExist exception.</td>
  *    </tr>
  *    <tr>
  *      <td>%Attribute values types are runtime checked. A mismatch is discovered by the user when they perform a
@@ -82,7 +82,7 @@
  *      <td>%Attribute values types are runtime checked. A mismatch is discovered by the user when they perform a
  *          @c dynamic_cast from the AstAttribute base type to their subclass.</td>
  *      <td>%Attribute value types are runtime checked. A mismatch between writing and reading is reported by a
- *          @ref WrongQueryType exception.</td>
+ *          @ref Sawyer::Attribute::WrongQueryType exception.</td>
  *    </tr>
  *    <tr>
  *      <td>Requires user to use C++ @c dynamic_cast from the AstAttribute pointer to the user's subclass pointer.</td>

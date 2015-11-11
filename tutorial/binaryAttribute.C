@@ -365,7 +365,7 @@ method_2() {
             cpuTime_1 = tmp->analysisTime.cpuTime;
     }
 #else // after begin implemented in terms of Sawyer::Attribute
-    //! [comparison retreive 2]
+    //! [comparison retrieve 2]
     // Method 2: AstAttributeMechanism
     Approximation approx_1 = UNKNOWN_APPROXIMATION;
     if (ApproximationAttribute_2 *tmp = dynamic_cast<ApproximationAttribute_2*>(obj_1.attributeMechanism[APPROXIMATION_ATTR]))
@@ -373,7 +373,7 @@ method_2() {
     double cpuTime_1 = AnalysisTime().cpuTime;          // the default, assuming we don't want to hard-code it.
     if (AnalysisTimeAttribute_2 *tmp = dynamic_cast<AnalysisTimeAttribute_2*>(obj_1.attributeMechanism[ANALYSIS_TIME_ATTR]))
         cpuTime_1 = tmp->analysisTime.cpuTime;
-    //! [comparison retreive 2]
+    //! [comparison retrieve 2]
 #endif
 
     ASSERT_always_require(approx_1 == UNDER_APPROXIMATED);
