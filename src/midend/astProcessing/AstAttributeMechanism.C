@@ -13,14 +13,14 @@ using namespace rose;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 AstAttributeMechanism::~AstAttributeMechanism() {
-    BOOST_FOREACH (BinaryAnalysis::Attribute::Id id, attributes_.attributeIds())
+    BOOST_FOREACH (Sawyer::Attribute::Id id, attributes_.attributeIds())
         delete attributes_.getAttribute<AstAttribute*>(id);
 }
 
 bool
 AstAttributeMechanism::exists(const std::string &name) const {
-    BinaryAnalysis::Attribute::Id id = BinaryAnalysis::Attribute::id(name);
-    if (BinaryAnalysis::Attribute::INVALID_ID == id)
+    Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
+    if (Sawyer::Attribute::INVALID_ID == id)
         return false;
     return attributes_.attributeExists(id);
 }
@@ -30,9 +30,9 @@ bool
 AstAttributeMechanism::add(const std::string &name, AstAttribute *value) {
     if (NULL == value)
         return false;
-    BinaryAnalysis::Attribute::Id id = BinaryAnalysis::Attribute::id(name);
-    if (BinaryAnalysis::Attribute::INVALID_ID == id)
-        id = BinaryAnalysis::Attribute::declare(name);
+    Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
+    if (Sawyer::Attribute::INVALID_ID == id)
+        id = Sawyer::Attribute::declare(name);
     if (attributes_.attributeExists(id)) {
         delete value;
         return false;
@@ -46,9 +46,9 @@ bool
 AstAttributeMechanism::replace(const std::string &name, AstAttribute *value) {
     if (NULL == value)
         return false;
-    BinaryAnalysis::Attribute::Id id = BinaryAnalysis::Attribute::id(name);
+    Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
     AstAttribute *oldValue = NULL;
-    if (BinaryAnalysis::Attribute::INVALID_ID == id && (oldValue = attributes_.attributeOrElse<AstAttribute*>(id, NULL))) {
+    if (Sawyer::Attribute::INVALID_ID == id && (oldValue = attributes_.attributeOrElse<AstAttribute*>(id, NULL))) {
         delete oldValue;
         attributes_.setAttribute(id, value);
         return true;
@@ -59,17 +59,17 @@ AstAttributeMechanism::replace(const std::string &name, AstAttribute *value) {
 
 void
 AstAttributeMechanism::set(const std::string &name, AstAttribute *value) {
-    BinaryAnalysis::Attribute::Id id = BinaryAnalysis::Attribute::id(name);
-    if (BinaryAnalysis::Attribute::INVALID_ID == id)
-        id = BinaryAnalysis::Attribute::declare(name);
+    Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
+    if (Sawyer::Attribute::INVALID_ID == id)
+        id = Sawyer::Attribute::declare(name);
     delete attributes_.attributeOrElse<AstAttribute*>(id, NULL);
     attributes_.setAttribute(id, value);
 }
 
 AstAttribute*
 AstAttributeMechanism::operator[](const std::string &name) {
-    BinaryAnalysis::Attribute::Id id = BinaryAnalysis::Attribute::id(name);
-    if (BinaryAnalysis::Attribute::INVALID_ID == id)
+    Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
+    if (Sawyer::Attribute::INVALID_ID == id)
         return NULL;
     return attributes_.attributeOrElse<AstAttribute*>(id, NULL);
 }
@@ -77,8 +77,8 @@ AstAttributeMechanism::operator[](const std::string &name) {
 // erase
 void
 AstAttributeMechanism::remove(const std::string &name) {
-    BinaryAnalysis::Attribute::Id id = BinaryAnalysis::Attribute::id(name);
-    if (BinaryAnalysis::Attribute::INVALID_ID != id) {
+    Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
+    if (Sawyer::Attribute::INVALID_ID != id) {
         delete attributes_.attributeOrElse<AstAttribute*>(id, NULL);
         attributes_.eraseAttribute(id);
     }
@@ -88,8 +88,8 @@ AstAttributeMechanism::remove(const std::string &name) {
 AstAttributeMechanism::AttributeIdentifiers
 AstAttributeMechanism::getAttributeIdentifiers() const {
     AttributeIdentifiers retval;
-    BOOST_FOREACH (BinaryAnalysis::Attribute::Id id, attributes_.attributeIds())
-        retval.insert(BinaryAnalysis::Attribute::name(id));
+    BOOST_FOREACH (Sawyer::Attribute::Id id, attributes_.attributeIds())
+        retval.insert(Sawyer::Attribute::name(id));
     return retval;
 }
 
@@ -105,11 +105,11 @@ AstAttributeMechanism::assignFrom(const AstAttributeMechanism &other) {
         return;
     attributes_.clearAttributes();                      // pointers were shallow-copied already and shouldn't have been
     AstAttributeMechanism tmp;                          // for exception safety
-    BOOST_FOREACH (BinaryAnalysis::Attribute::Id id, other.attributes_.attributeIds()) {
+    BOOST_FOREACH (Sawyer::Attribute::Id id, other.attributes_.attributeIds()) {
         AstAttribute *attr = other.attributes_.getAttribute<AstAttribute*>(id);
         ASSERT_not_null(attr);
         if (AstAttribute *copied = attr->copy()) { // might throw; returning null means don't copy.
-            ASSERT_forbid2(attr == copied, "copy attribute \'" + BinaryAnalysis::Attribute::name(id) + "\' returned itself");
+            ASSERT_forbid2(attr == copied, "copy attribute \'" + Sawyer::Attribute::name(id) + "\' returned itself");
             tmp.attributes_.setAttribute(id, copied);
         }
     }

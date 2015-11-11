@@ -1,6 +1,4 @@
-// Demo how to use non-IR attributes. For IR nodes, use AstAttributeMechanism instead.
-
-#include <rose.h>
+// Demo how to use attributes
 
 //! [setup]
 #include <Sawyer/Attribute.h>
@@ -23,11 +21,10 @@ typedef std::string FileName;
 
 
 //! [providing]
-struct MyClass: public Sawyer::Attribute::Storage {
+struct MyClass: public Attribute::Storage {
     // additional members...
 };
 //! [providing]
-
 
 
 void
@@ -255,13 +252,13 @@ method_1() {
 
     //! [comparison declare 1]
     // Method 1: Sawyer::Attribute
-    const Sawyer::Attribute::Id APPROXIMATION_ATTR = Sawyer::Attribute::declare("type of approximation performed");
-    const Sawyer::Attribute::Id ANALYSIS_TIME_ATTR = Sawyer::Attribute::declare("time taken for the analysis");
+    const Attribute::Id APPROXIMATION_ATTR = Attribute::declare("type of approximation performed");
+    const Attribute::Id ANALYSIS_TIME_ATTR = Attribute::declare("time taken for the analysis");
     //! [comparison declare 1]
 
     ASSERT_always_require(APPROXIMATION_ATTR != ANALYSIS_TIME_ATTR);
-    ASSERT_always_require(APPROXIMATION_ATTR != Sawyer::Attribute::INVALID_ID);
-    ASSERT_always_require(ANALYSIS_TIME_ATTR != Sawyer::Attribute::INVALID_ID);
+    ASSERT_always_require(APPROXIMATION_ATTR != Attribute::INVALID_ID);
+    ASSERT_always_require(ANALYSIS_TIME_ATTR != Attribute::INVALID_ID);
 
     //! [comparison insert 1]
     // Method 1: Sawyer::Attribute

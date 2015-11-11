@@ -3,7 +3,7 @@
 
 #include "rosedll.h"
 #include "rose_override.h"
-#include <BinaryAttribute.h>
+#include <Sawyer/Attribute.h>
 
 class SgNode;
 class SgNamedType;
@@ -18,11 +18,13 @@ class SgTemplateParameterList;
  *  handed to an attribute container method the container owns the value and is reponsible for deleting it.  In the case of
  *  methods that only optionally insert a value, the value is deleted immediately if it's not inserted.
  *
- *  The underlying @ref rose::BinaryAnalysis::Attribute mechanism can store values of any type, including POD, 3rd party types,
- *  and pointers. On the other hand, the @ref AstAttributeMechanism interface described here stores only pointers to values
+ *  The underlying @ref Sawyer::Attribute mechanism can store values of any type, including POD, 3rd party types, and
+ *  pointers. On the other hand, the @ref AstAttributeMechanism interface described here stores only pointers to values
  *  allocated on the stack, owns those values, and supports operations that are useful specifically in IR nodes.
  *
- *  Subclasses must each implement a virtual @ref copy constructor, which should allocate a new copy of the value. */
+ *  Subclasses must each implement a virtual @ref copy constructor, which should allocate a new copy of the value.
+ *
+ *  For a more detailed description of using attributes in ROSE (and your own classes) see @ref attributes. */
 class ROSE_DLL_API AstAttribute {
 public:
     /** Support for attibutes to specify edges in the dot graphs. */
@@ -135,19 +137,21 @@ public:
  *  libraries. To store such values, the user must wrap them in another class that does inherit from @ref AstAttribute.
  *
  *  For the purpose of backward compatibility, IR node attributes have string names that need not be registered prior to using
- *  them. Therefore, a misspelled name is treated as a different attribute. The underlying @ref rose::BinaryAnalysis::Attribute
+ *  them. Therefore, a misspelled name is treated as a different attribute. The underlying @ref Sawyer::Attribute
  *  mechanism checks for misspelled names, therefore this class does extra work to bypass that check.
  *
  *  This interface applies only to IR nodes of type @ref SgNode and its derivatives.  This interface is built on the @ref
- *  rose::BinaryAnalysis::Attribute interface, which can store POD and 3rd party types, and stores values of such types instead
+ *  Sawyer::Attribute interface, which can store POD and 3rd party types, and stores values of such types instead
  *  of pointers.
  *
  *  This interface was originally implemented by Dan Quinlan in terms of a template-based AttributeMechanism class
  *  designed by Markus Schordan in the early 2000's.  The current implementation aims to fix a number of issues identified with
- *  the previous implementation, including ambiguity about who owns the heap-allocated attribute values. */
+ *  the previous implementation, including ambiguity about who owns the heap-allocated attribute values.
+ *
+ *  For additional information, including examples, see @ref attributes. */
 class ROSE_DLL_API AstAttributeMechanism {
     // Use containment because we want to keep the original API.
-    rose::BinaryAnalysis::Attribute::Storage attributes_;
+    Sawyer::Attribute::Storage attributes_;
 
 public:
     /** Default constructor.
