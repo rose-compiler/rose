@@ -921,6 +921,8 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        referenceResults/rose_inputmoveDeclarationToInnermostScope_20.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_21.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_22.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_23.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_24.C \
        referenceResults/withmerge/rose_v2_inputmoveDeclarationToInnermostScope_22.C
 
 
