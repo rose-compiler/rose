@@ -946,7 +946,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->isBottom())
-        return bottom_(a->get_width());
+        return bottom_(new_width);
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeSignExtend(SymbolicExpr::makeInteger(32, new_width),
                                                                 a->get_expression()));
