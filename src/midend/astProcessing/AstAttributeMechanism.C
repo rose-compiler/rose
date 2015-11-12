@@ -203,7 +203,7 @@ AstAttributeMechanism::assignFrom(const AstAttributeMechanism &other) {
         return;
     AstAttributeMechanism tmp;                          // for exception safety
     BOOST_FOREACH (Sawyer::Attribute::Id id, other.attributes_.attributeIds()) {
-        AstAttribute *attr = other.attributes_.getAttribute<AstAttribute*>(id);
+        /*!const*/ AstAttribute *attr = other.attributes_.getAttribute<AstAttribute*>(id);
 #ifdef ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
         if (NULL == attr) {
             tmp.attributes_.setAttribute(id, attr);
@@ -214,7 +214,9 @@ AstAttributeMechanism::assignFrom(const AstAttributeMechanism &other) {
 
         // Copy the attribute. This might throw, which is why we're using "tmp". If it throws, then we don't
         // ever make it to the std::swap below, and the destination is unchanged and tmp will be cleaned up.
-        AstAttribute *copied = attr->copy();
+        // Also, as mentioned in the header file, be sure we invoke the non-const version of "copy" for the sake of subclasses
+        // that have not been modified to define the const version.
+        AstAttribute *copied = attr->copy(); // non-const copy method
 #ifdef ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
         if (NULL == attr) {
             tmp.attributes_.setAttribute(id, attr);
@@ -227,7 +229,6 @@ AstAttributeMechanism::assignFrom(const AstAttributeMechanism &other) {
         }
     }
     std::swap(attributes_, tmp.attributes_);
-    // tmp's destructor will delete its attributes: either the partly copied list if exception, or the originals
 }
 
 
