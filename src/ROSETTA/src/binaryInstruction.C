@@ -395,6 +395,7 @@ Grammar::setUpBinaryInstructions()
     // references to addresses or data which are described by symbols (not to be confused with the binary's symbol table) in
     // the function's symbol table (the SgAsmFunction::symbol_table member).
     NEW_TERMINAL_MACRO(AsmFunction, "AsmFunction", "AsmFunctionTag");
+    AsmFunction.setPredeclarationString("HEADER_BINARY_FUNCTION_PREDECLARATION", "../Grammar/BinaryInstruction.code");
     AsmFunction.setFunctionPrototype("HEADER_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
     AsmFunction.setFunctionSource("SOURCE_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
     AsmFunction.setDataPrototype("std::string", "name", "= \"\"",
@@ -418,6 +419,8 @@ Grammar::setUpBinaryInstructions()
     AsmFunction.setDataPrototype("size_t", "cached_vertex", "= (size_t)(-1)", // see BinaryAnalysis::FunctionCall
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AsmFunction.setDataPrototype("int64_t", "stackDelta", "= SgAsmInstruction::INVALID_STACK_DELTA",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmFunction.setDataPrototype("const rose::BinaryAnalysis::CallingConvention::Definition*", "callingConvention", "=NULL",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
