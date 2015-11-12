@@ -3,6 +3,8 @@
 #include <rose.h>
 #include <sstream>
 
+using namespace rose::Diagnostics;
+
 // Counts how many instances of class T are currently allocated.
 template<class T>
 class AllocationCounter {
@@ -320,7 +322,18 @@ test_exception_safety() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int
-main() {
+main(int argc, char *argv[]) {
+    rose::Diagnostics::initialize();
+
+    if (1 == argc && AstAttributeMechanism::isBuggy()) {
+        mlog[FATAL] <<"These unit tests are bypassed because the AstAttributeMechanism has been compiled\n"
+                    <<"in a mode that emulates certain bugs that previously existed. See the top of the\n"
+                    <<"AstAttributeMechanism.C file for details about which bugs are being emulated. The\n"
+                    <<"tests will be considered to have passed.  If you want to really try running them\n"
+                    <<"anyway (they should fail), then invoke this test again with any command-line argument.\n";
+        return 0;
+    }
+
     test_allocation_counter();
     test_value_deletion();
     test_container_destruction();

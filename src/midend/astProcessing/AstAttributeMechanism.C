@@ -7,14 +7,83 @@
 
 using namespace rose;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// The new implementation fixes about 20 bugs in the old implementation. Some software may have depended on bugs, so these CPP
+// symbols can be defined to re-enable various bugs. Only bugs that are likely to have been depended on are emulated. Note that
+// whenever bugs are enabled, the AstAttributeMechanism unit tests will fail (tests/roseTests/utilTests/attributeTests.C).
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Define this if you want attribute values to be leaked instead of deleted.
+#define ROSE_AstAttributeMechanism_LEAK_VALUES_BUG
+
+// Define this if you want the AstAttributeMechanism assignment operator to shallow-copy attributes.
+#define ROSE_AstAttributeMechanism_DEFAULT_ASSIGNMENT_OPERATOR_BUG
+
+// Define if you want to allow the inconsistent state where "exists" returns true but operator[] returns null.  This happens
+// when an AstAttribute subclass fails to implement the virtual copy constructor.
+#define ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
+
+// Define if you want to use the not-to-friendly strict mode. This prints error messages on standard (and aborts the program in
+// debug mode) if you try to do things like erase an attribute that doesn't exist.
+#define ROSE_AstAttributeMechanism_STRICT_MODE_BUG
+
+
+#if defined(ROSE_AstAttributeMechanism_DEFAULT_ASSIGNMENT_OPERATOR_BUG) && !defined(ROSE_AstAttributeMechanism_LEAK_VALUES_BUG)
+  #ifdef _MSC_VER
+    #pragma error("This combination of emulated bugs will result in crashes.")
+  #else
+    #error "This combination of emulated bugs will result in crashes."
+  #endif
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      AstAttributeMechanism
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static AstAttribute*
+deleteAttributeValue(AstAttribute *value) {
+#ifdef ROSE_AstAttributeMechanism_LEAK_VALUES_BUG
+    /*void*/
+#else // correct behavior
+    delete value;
+#endif
+    return NULL;
+}
+
+static void
+strictMode(const std::string &message) {
+#ifdef ROSE_AstAttributeMechanism_STRICT_MODE_BUG
+    Sawyer::Assert::fail("AstAttributeMechanism operating in strict compatibility mode",
+                         message.c_str(), "", __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION);
+#endif
+}
+
+// class method
+bool
+AstAttributeMechanism::isBuggy() {
+#if defined(ROSE_AstAttributeMechanism_LEAK_VALUES_BUG) || \
+    defined(ROSE_AstAttributeMechanism_DEFAULT_ASSIGNMENT_OPERATOR_BUG) || \
+    defined(ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG) || \
+    defined(ROSE_AstAttributeMechanism_STRICT_MODE_BUG)
+    return true;
+#else
+    return false;
+#endif
+}
+
+AstAttributeMechanism&
+AstAttributeMechanism::operator=(const AstAttributeMechanism &other) {
+#ifdef ROSE_AstAttributeMechanism_DEFAULT_ASSIGNMENT_OPERATOR_BUG
+    attributes_ = other.attributes_;
+#else // correct behavior
+    assignFrom(other);
+#endif
+    return *this;
+}
+
 AstAttributeMechanism::~AstAttributeMechanism() {
     BOOST_FOREACH (Sawyer::Attribute::Id id, attributes_.attributeIds())
-        delete attributes_.getAttribute<AstAttribute*>(id);
+        deleteAttributeValue(attributes_.getAttribute<AstAttribute*>(id));
 }
 
 bool
@@ -28,33 +97,46 @@ AstAttributeMechanism::exists(const std::string &name) const {
 // insert if not already existing
 bool
 AstAttributeMechanism::add(const std::string &name, AstAttribute *value) {
-    if (NULL == value)
-        return false;
     Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
     if (Sawyer::Attribute::INVALID_ID == id)
         id = Sawyer::Attribute::declare(name);
     if (attributes_.attributeExists(id)) {
-        delete value;
+        deleteAttributeValue(value);
+        strictMode("attribute \"" + StringUtility::cEscape(name) + "\" already exists");
         return false;
     }
-    attributes_.setAttribute(id, value);
+    if (NULL == value) {
+#ifdef ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
+        attributes_.setAttribute(id, value);
+#else // correct behavior
+        attributes_.eraseAttribute(id);
+#endif
+    } else {
+        attributes_.setAttribute(id, value);
+    }
     return true;
 }
 
 // insert only if already existing
 bool
 AstAttributeMechanism::replace(const std::string &name, AstAttribute *value) {
-    if (NULL == value)
-        return false;
     Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
-    AstAttribute *oldValue = NULL;
-    if (Sawyer::Attribute::INVALID_ID == id && (oldValue = attributes_.attributeOrElse<AstAttribute*>(id, NULL))) {
-        delete oldValue;
-        attributes_.setAttribute(id, value);
-        return true;
+    if (Sawyer::Attribute::INVALID_ID == id || !attributes_.attributeExists(id)) {
+        deleteAttributeValue(value);
+        strictMode("attribute \"" + StringUtility::cEscape(name) + "\" does not exist yet");
+        return false;
     }
-    delete value;
-    return false;
+    deleteAttributeValue(attributes_.getAttribute<AstAttribute*>(id));
+    if (NULL == value) {
+#ifdef ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
+        attributes_.setAttribute(id, value);
+#else // correct behavior
+        attributes_.eraseAttribute(id);
+#endif
+    } else {
+        attributes_.setAttribute(id, value);
+    }
+    return true;
 }
 
 void
@@ -62,13 +144,25 @@ AstAttributeMechanism::set(const std::string &name, AstAttribute *value) {
     Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
     if (Sawyer::Attribute::INVALID_ID == id)
         id = Sawyer::Attribute::declare(name);
-    delete attributes_.attributeOrElse<AstAttribute*>(id, NULL);
-    attributes_.setAttribute(id, value);
+    deleteAttributeValue(attributes_.attributeOrElse<AstAttribute*>(id, NULL));
+    if (NULL == value) {
+#ifdef ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
+        attributes_.setAttribute(id, value);
+#else // correct behavior
+        attributes_.erase(id);
+#endif
+    } else {
+        attributes_.setAttribute(id, value);
+    }
 }
 
 AstAttribute*
 AstAttributeMechanism::operator[](const std::string &name) const {
     Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
+#ifdef ROSE_AstAttributeMechanism_STRICT_MODE_BUG
+    if (Sawyer::Attribute::INVALID_ID == id || !attributes_.attributeExists(id))
+        strictMode("attribute \"" + StringUtility::cEscape(name) + "\" does not exist");
+#endif
     if (Sawyer::Attribute::INVALID_ID == id)
         return NULL;
     return attributes_.attributeOrElse<AstAttribute*>(id, NULL);
@@ -78,8 +172,12 @@ AstAttributeMechanism::operator[](const std::string &name) const {
 void
 AstAttributeMechanism::remove(const std::string &name) {
     Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
+#ifdef ROSE_AstAttributeMechanism_STRICT_MODE_BUG
+    if (Sawyer::Attribute::INVALID_ID == id || !attributes_.attributeExists(id))
+        strictMode("attribute \"" + StringUtility::cEscape(name) + "\" does not exist");
+#endif
     if (Sawyer::Attribute::INVALID_ID != id) {
-        delete attributes_.attributeOrElse<AstAttribute*>(id, NULL);
+        deleteAttributeValue(attributes_.attributeOrElse<AstAttribute*>(id, NULL));
         attributes_.eraseAttribute(id);
     }
 }
@@ -106,8 +204,24 @@ AstAttributeMechanism::assignFrom(const AstAttributeMechanism &other) {
     AstAttributeMechanism tmp;                          // for exception safety
     BOOST_FOREACH (Sawyer::Attribute::Id id, other.attributes_.attributeIds()) {
         AstAttribute *attr = other.attributes_.getAttribute<AstAttribute*>(id);
+#ifdef ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
+        if (NULL == attr) {
+            tmp.attributes_.setAttribute(id, attr);
+            continue;
+        }
+#endif
         ASSERT_not_null(attr);
-        if (AstAttribute *copied = attr->copy()) { // might throw; returning null means don't copy.
+
+        // Copy the attribute. This might throw, which is why we're using "tmp". If it throws, then we don't
+        // ever make it to the std::swap below, and the destination is unchanged and tmp will be cleaned up.
+        AstAttribute *copied = attr->copy();
+#ifdef ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
+        if (NULL == attr) {
+            tmp.attributes_.setAttribute(id, attr);
+            continue;
+        }
+#endif
+        if (copied != NULL) { // null means attribute should not be copied to destination
             ASSERT_forbid2(attr == copied, "copy attribute \'" + Sawyer::Attribute::name(id) + "\' returned itself");
             tmp.attributes_.setAttribute(id, copied);
         }

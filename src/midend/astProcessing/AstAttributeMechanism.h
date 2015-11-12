@@ -4,6 +4,8 @@
 #include "rosedll.h"
 #include "rose_override.h"
 #include <Sawyer/Attribute.h>
+#include <list>
+#include <set>
 
 class SgNode;
 class SgNamedType;
@@ -154,6 +156,13 @@ class ROSE_DLL_API AstAttributeMechanism {
     Sawyer::Attribute::Storage attributes_;
 
 public:
+    /** Whether interface is emulating known bugs.
+     *
+     *  This interface can be compiled to emulate bugs that existed before it was rewritten, because some software might depend
+     *  on the buggy behavior.  If this class method returns true, then the statements in in the method descriptions might be
+     *  untrue, and attribute unit tests will surely fail. */
+    static bool isBuggy();
+
     /** Default constructor.
      *
      *  Constructs an attribute mechanism that holds no attributes. */
@@ -179,10 +188,7 @@ public:
      *  <b>New semantics:</b> The original implementation had a copy constructor but no assignment operator. Assignment of one
      *  attribute container to another caused both containers to share the attribute values allocated on the heap, making it
      *  nearly impossible to figure out when they could be safely deleted and therefore leading to memory leaks. */
-    AstAttributeMechanism& operator=(const AstAttributeMechanism &other) {
-        assignFrom(other);
-        return *this;
-    }
+    AstAttributeMechanism& operator=(const AstAttributeMechanism &other);
 
     /** Destructor.
      *
@@ -201,10 +207,10 @@ public:
 
     /** Insert a new value if the attribute doesn't already exist.
      *
-     *  Tests whether an attribute with the specified name @ref exists and if not, inserts this attribute into the
-     *  container. If @p value is null then this method is a no-op. The caller relinquishes ownership of the @p value whether
-     *  or not it's inserted. If the value is not inserted then this method immediately deletes it.  Returns true if the value
-     *  was inserted, false if not inserted.
+     *  Tests whether an attribute with the specified name @ref exists and if not, inserts this heap-allocated attribute into
+     *  the container (or erases it if @p value is null). The caller relinquishes ownership of the @p value whether or not it's
+     *  inserted. If the value is not inserted then this method immediately deletes it.  Returns true if the value was
+     *  inserted, false if not inserted.
      *
      *  <b>New semantics:</b> The old implementation was ambiguous about who owned the object after this call. It didn't take
      *  ownership of an attribute that wasn't inserted, but it also didn't indicate whether it was inserted.  The old
@@ -215,10 +221,10 @@ public:
 
     /** Insert a new value if the attribute already exists.
      *
-     *  Tests whether the specified attribute exists, and if so, replaces the old value with a new one.  The new value must be
-     *  allocated on the heap and non-null, or else this method is a no-op.  The old value is deleted. The caller relinquishes
-     *  ownership of the new value; if the new value is not inserted then this method immediately deletes it.  Returns true if
-     *  the new value is inserted, false if not inserted.
+     *  Tests whether the specified attribute exists, and if so, replaces the old value with the new value. The new value must
+     *  be allocated on the heap, but if @p value is null then the attribute is erased.  The old value is deleted. The caller
+     *  relinquishes ownership of the new value; if the new value is not inserted then this method immediately deletes it.
+     *  Returns true if the new value is inserted, false if not inserted.
      *
      *  <b>New semantics:</b> The old implementation was ambiguous about who owned the object after this call. It didn't take
      *  ownership of an attribute that wasn't inserted, but it also didn't indicate whether it was inserted. The old
@@ -229,8 +235,9 @@ public:
 
     /** Insert a value regardless of whether the attribute already exists.
      *
-     *  Inserts the specified value for an attribute, overwriting and deleting any previous value stored for that same
-     *  attribute name.  The owner relinquishes ownership of the value, which must be allocated on the heap.
+     *  Inserts the specified heap-allocated value for an attribute, overwriting and deleting any previous value stored for
+     *  that same attribute name.  The owner relinquishes ownership of the value. If the new value is null then the attribute
+     *  is erased from the container.
      *
      *  <b>New semantics:</b> The old implementation didn't delete the previous attribute value.  The old implementation
      *  allowed setting a null value, in which case the old @c exists returned true but the @c operator[] returned no
