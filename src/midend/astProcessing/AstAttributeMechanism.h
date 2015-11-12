@@ -87,6 +87,14 @@ public:
         return NULL;                                    // attribute will not be copied when the containing obj is copied
     }
 
+    // DO NOT DOCUMENT!
+    // The original implementation used a non-const copy constructor and many subclasses that implemented a copy constructor
+    // didn't use C++11's "override" word as a defensive measure. Since we don't have access to all those subclasses, we must
+    // continue to support the non-const version.  Subclasses should only have to implement one or the other, not both.
+    virtual AstAttribute* copy() {
+        return const_cast<const AstAttribute*>(this)->copy();
+    }
+
     /** Attribute class name.
      *
      *  Returns the name of the dynamic type. All subclasses must implement this in order to return the correct type name,
