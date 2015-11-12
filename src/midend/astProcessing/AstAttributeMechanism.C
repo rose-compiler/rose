@@ -25,7 +25,7 @@ using namespace rose;
 
 // Define if you want to use the not-to-friendly strict mode. This prints error messages on standard (and aborts the program in
 // debug mode) if you try to do things like erase an attribute that doesn't exist.
-#define ROSE_AstAttributeMechanism_STRICT_MODE_BUG
+//#define ROSE_AstAttributeMechanism_STRICT_MODE_BUG
 
 
 #if defined(ROSE_AstAttributeMechanism_DEFAULT_ASSIGNMENT_OPERATOR_BUG) && !defined(ROSE_AstAttributeMechanism_LEAK_VALUES_BUG)
