@@ -783,6 +783,15 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
         if (v && v->is_number() && v->get_width()<=64)
             stackDelta = IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
     }
+
+    // Function's calling convention.
+    const CallingConvention::Definition *bestCallingConvention = NULL;
+    if (function->callingConventionAnalysis().hasResults()) {
+        const CallingConvention::Dictionary &archConventions = partitioner.instructionProvider().callingConventions();
+        CallingConvention::Dictionary conventions = function->callingConventionAnalysis().match(archConventions);
+        if (!conventions.empty())
+            bestCallingConvention = new CallingConvention::Definition(conventions.front());
+    }
     
     // Build the AST
     SgAsmFunction *ast = SageBuilderAsm::buildFunction(function->address(), children);
@@ -791,6 +800,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
     ast->set_comment(function->comment());
     ast->set_may_return(mayReturn);
     ast->set_stackDelta(stackDelta);
+    ast->set_callingConvention(bestCallingConvention);
     return ast;
 }
 

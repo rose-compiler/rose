@@ -192,7 +192,10 @@ public:
         bool findingIntraFunctionCode;                  /**< Suck up unused addresses as intra-function code. */
         bool findingIntraFunctionData;                  /**< Suck up unused addresses as intra-function data. */
         AddressInterval interruptVector;                /**< Table of interrupt handling functions. */
-        bool doingPostAnalysis;                         /**< Perform post-partitioning analysis phase? */
+        bool doingPostAnalysis;                         /**< Perform enabled post-partitioning analyses? */
+        bool doingPostFunctionMayReturn;                /**< Run function-may-return analysis if doingPostAnalysis is set? */
+        bool doingPostFunctionStackDelta;               /**< Run function-stack-delta analysis if doingPostAnalysis is set? */
+        bool doingPostCallingConvention;                /**< Run calling-convention analysis if doingPostAnalysis is set? */
         FunctionReturnAnalysis functionReturnAnalysis;  /**< How to run the function may-return analysis. */
         bool findingDataFunctionPointers;               /**< Look for function pointers in static data. */
         bool findingThunks;                             /**< Look for common thunk patterns in undiscovered areas. */
@@ -201,8 +204,9 @@ public:
         PartitionerSettings()
             : usingSemantics(false), followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
               findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
-              doingPostAnalysis(true), functionReturnAnalysis(MAYRETURN_DEFAULT_YES), findingDataFunctionPointers(false),
-              findingThunks(true), splittingThunks(false) {}
+              doingPostAnalysis(true), doingPostFunctionMayReturn(true), doingPostFunctionStackDelta(true),
+              doingPostCallingConvention(false), functionReturnAnalysis(MAYRETURN_DEFAULT_YES),
+              findingDataFunctionPointers(false), findingThunks(true), splittingThunks(false) {}
     };
 
     /** Settings for controling the engine behavior.

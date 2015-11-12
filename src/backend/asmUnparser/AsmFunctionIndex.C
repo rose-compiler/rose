@@ -6,6 +6,7 @@
 #include "AsmFunctionIndex.h"
 #include "stringify.h"
 #include "Diagnostics.h"
+#include "BinaryCallingConvention.h"
 
 #include <boost/shared_ptr.hpp>
 
@@ -40,7 +41,7 @@ AsmFunctionIndex::init()
         .append(&sizeInsnsCallback)
         .append(&sizeBytesCallback)
         .append(&reasonCallback)
-        //.append(&callingConventionCallback) //nothing in ROSE sets this; its always unknown currently [2014-11-24]
+        .append(&callingConventionCallback)
         .append(&mayReturnCallback)
         .append(&stackDeltaCallback)
         .append(&nameCallback)
@@ -303,9 +304,13 @@ AsmFunctionIndex::ReasonCallback::operator()(bool enabled, const DataArgs &args)
 bool
 AsmFunctionIndex::CallingConventionCallback::operator()(bool enabled, const DataArgs &args)
 {
-    if (enabled)
-        args.output <<data_prefix
-                    <<std::setw(width) <<stringifySgAsmFunction_function_kind_enum(args.func->get_function_kind(), "e_");
+    if (enabled) {
+        if (const CallingConvention::Definition *ccdef = args.func->get_callingConvention()) {
+            args.output <<data_prefix <<std::setw(width) <<ccdef->name();
+        } else {
+            args.output <<data_prefix <<std::setw(width) <<"unknown";
+        }
+    }
     return enabled;
 }
 

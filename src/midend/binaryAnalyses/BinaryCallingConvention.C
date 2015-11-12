@@ -498,7 +498,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     P2::DataFlow::TransferFunction xfer(cpu);
     xfer.defaultCallingConvention(defaultCc_);
     DfEngine dfEngine(dfCfg, xfer, merge);
-    dfEngine.maxIterations(dfCfg.nVertices() * 5);      // arbitrary
+    size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
+    dfEngine.maxIterations(maxIterations);
     regDict_ = cpu->get_register_dictionary();
 
     // Build the initial state
@@ -510,15 +511,18 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     bool converged = true;
     try {
         // Use this rather than runToFixedPoint because it lets us show a progress report
-        Sawyer::ProgressBar<size_t> progress(mlog[MARCH], function->printableName());
+        Sawyer::ProgressBar<size_t> progress(maxIterations, mlog[MARCH], function->printableName());
         dfEngine.reset(startVertexId, initialState);
         while (dfEngine.runOneIteration())
             ++progress;
     } catch (const DataFlow::NotConverging &e) {
         mlog[WARN] <<e.what() <<"\n";
         converged = false;                              // didn't converge, so just use what we have
+    } catch (const BaseSemantics::Exception &e) {
+        mlog[WARN] <<e.what() <<"\n";
+        converged = false;
     }
-
+    
     // Get the final dataflow state
     StatePtr finalState = dfEngine.getInitialState(returnVertex->id());
     if (finalState == NULL) {
