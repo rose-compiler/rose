@@ -17,7 +17,7 @@ using namespace rose;
 #define ROSE_AstAttributeMechanism_LEAK_VALUES_BUG
 
 // Define this if you want the AstAttributeMechanism assignment operator to shallow-copy attributes.
-#define ROSE_AstAttributeMechanism_DEFAULT_ASSIGNMENT_OPERATOR_BUG
+//#define ROSE_AstAttributeMechanism_DEFAULT_ASSIGNMENT_OPERATOR_BUG
 
 // Define if you want to allow the inconsistent state where "exists" returns true but operator[] returns null.  This happens
 // when an AstAttribute subclass fails to implement the virtual copy constructor.
