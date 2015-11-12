@@ -125,6 +125,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/StaticBuffer.h			\
 	Sawyer/Stopwatch.h			\
 	Sawyer/Synchronization.h		\
+	Sawyer/ThreadWorkers.h			\
 	Sawyer/WarningsOff.h			\
 	Sawyer/WarningsRestore.h
 EXTRA_DIST += Sawyer/CMakeLists.txt
