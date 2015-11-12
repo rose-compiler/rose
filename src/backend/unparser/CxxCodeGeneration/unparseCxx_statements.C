@@ -325,43 +325,48 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
           if (start < tokenVectorSize && end <= tokenVectorSize)
              {
             // We don't want to unparse the token at the end.
-               for (int j = start; j < end; j++)
-                  {
-                 // DQ (1/10/2014): Make sure that we don't use data that is unavailable.
-                     ROSE_ASSERT(j < (int)tokenVector.size());
 
-#if DEBUG_TOKEN_STREAM_UNPARSING
-                    printf ("unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
-#endif
-                 // DQ (11/4/2015): Adding support to optionally only unparse the associated whitespace with any region of a statement.
-                 // This is used when we want to unparse the leading whitespace of a statement as part of a transformation, yet we need 
-                 // to ONLY unparse the spaces and CR's.
-                    if (unparseOnlyWhitespace == true)
+            // DQ (11/4/2015): Adding support to optionally only unparse the associated whitespace with any region of a statement.
+            // This is used when we want to unparse the leading whitespace of a statement as part of a transformation, yet we need 
+            // to ONLY unparse the spaces and CR's.
+               if (unparseOnlyWhitespace == true)
+                  {
+                 // If this is whitespace with embedded comments (which we consider to be in the leading a trailing whitespace for each statement),
+                 // then we only want to use the non-whitespace that is at the end of the leading whitespace for the statement.
+
+                 // if (tokenVector[j]->p_tok_elem->token_id == ROSE_token_ids::C_CXX_WHITESPACE)
+                    if (tokenVector[j]->get_classification_code() == ROSE_token_ids::C_CXX_WHITESPACE)
                        {
-                      // if (tokenVector[j]->p_tok_elem->token_id == ROSE_token_ids::C_CXX_WHITESPACE)
-                         if (tokenVector[j]->get_classification_code() == ROSE_token_ids::C_CXX_WHITESPACE)
-                            {
 #if HIGH_FEDELITY_TOKEN_UNPARSING
-                              *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+                         *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
 #else
-                           // Note that this will interprete line endings which is not going to provide the precise token based output.
-                              curprint(tokenVector[j]->get_lexeme_string());
+                      // Note that this will interprete line endings which is not going to provide the precise token based output.
+                         curprint(tokenVector[j]->get_lexeme_string());
 #endif
-                            }
-                           else
-                            {
-#if 0
-                              printf ("unparseOnlyWhitespace == true: Skipping output of tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
-#endif
-                            }
                        }
                       else
                        {
+#if 0
+                         printf ("unparseOnlyWhitespace == true: Skipping output of tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+#endif
+                       }
+                  }
+                 else
+                  {
+                 // We don't want to unparse the token at the end.
+                    for (int j = start; j < end; j++)
+                       {
+                      // DQ (1/10/2014): Make sure that we don't use data that is unavailable.
+                          ROSE_ASSERT(j < (int)tokenVector.size());
+
+#if DEBUG_TOKEN_STREAM_UNPARSING
+                         printf ("unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+#endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
-                    *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+                         *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
 #else
-                 // Note that this will interprete line endings which is not going to provide the precise token based output.
-                    curprint(tokenVector[j]->get_lexeme_string());
+                      // Note that this will interprete line endings which is not going to provide the precise token based output.
+                         curprint(tokenVector[j]->get_lexeme_string());
 #endif
                        }
                   }
@@ -2856,11 +2861,37 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // best handled by adding this feature to the unparseStatementFromTokenStream() function (I think).
 
                  // curprint("\n");
+                    bool statement_is_transformation = (*p)->isTransformation();
 #if 0
-                    curprint ("/* unparse leading white space of first statement: START */");
+                    printf ("statement is: %p = %s isTransformation() = %s \n",(*p),(*p)->class_name().c_str(),(*p)->isTransformation() ? "true" : "false");
+                    string s = statement_is_transformation ? "true" : "false";
+                    curprint ("/* unparse leading white space of first statement: START (next_statement_present_is_transformation = " + s + ") */");
 #endif
-                    bool unparseOnlyWhitespace = true;
-                    unparseStatementFromTokenStream (*p, *p, e_leading_whitespace_start, e_token_subsequence_start,unparseOnlyWhitespace);
+                    if (statement_is_transformation == true)
+                       {
+                      // An additional issue is that we should implement unparseOnlyWhitespace support to only unparse 
+                      // the trailing whitespace tokens instead of all the tokens except for non-whitespace).
+
+                      // Find representative whitespace for statements in this basic block.
+
+                         SgStatementPtrList::iterator q = p;
+                         while (q != basic_stmt->get_statements().end() && (*q)->isTransformation() == true)
+                            {
+                              q++;
+                            }
+
+                         if (q != basic_stmt->get_statements().end())
+                            {
+                           // Found a statement in the basic block that we can use to represent representative whitespace.
+                              bool unparseOnlyWhitespace = true;
+                              unparseStatementFromTokenStream (*q, *q, e_leading_whitespace_start, e_token_subsequence_start, unparseOnlyWhitespace);
+                            }
+                           else
+                            {
+                           // The least we can do is to output a CR in this case where we have no representative whitespace.
+                              curprint("\n");
+                            }
+                       }
 #if 0
                     curprint ("/* unparse leading white space of first statement: END */");
 #endif
