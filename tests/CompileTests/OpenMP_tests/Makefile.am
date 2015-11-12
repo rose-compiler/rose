@@ -144,6 +144,7 @@ C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
 	axpy_ompacc3.c \
 	axpy_ompacc4.c \
 	axpy_ompacc_parseonly.c \
+	axpy_ompacc_mpi.c \
 	matrixmultiply-ompacc.c \
 	matrixmultiply-ompacc2.c \
 	jacobi-ompacc.c \
@@ -210,11 +211,10 @@ bonds-2.o: $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c parseOmp
 macroIds.o: $(srcdir)/macroIds.c parseOmp
 	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -rose:collectAllCommentsAndDirectives $(srcdir)/macroIds.c
 
+# we now experiment with multi gpu and MPI support, test parse_only without OpenMP-specific AST creation for now. Liao10/28/2015
 # test parsing experimental OpenMP accelerator directives, Liao 1/16/2013
-#$(C_OMP_ACC_TEST_Objects): %.o:$(srcdir)/%.c parseOmp
-#	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $<
 $(C_OMP_ACC_TEST_Unparsed): $(srcdir)/$(@:rose_%=%) parseOmp
-	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/$(@:rose_%=%)
+	./parseOmp -rose:openmp:parse_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/$(@:rose_%=%)
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 check-local:

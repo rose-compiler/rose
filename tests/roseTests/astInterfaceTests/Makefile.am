@@ -188,6 +188,7 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_21.C \
   inputmoveDeclarationToInnermostScope_22.C \
   inputmoveDeclarationToInnermostScope_23.C \
+  inputmoveDeclarationToInnermostScope_24.C \
   inputmoveDeclarationToInnermostScope_test2015_126.C \
   inputmoveDeclarationToInnermostScope_test2015_127.C 
 
@@ -920,6 +921,8 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        referenceResults/rose_inputmoveDeclarationToInnermostScope_20.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_21.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_22.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_23.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_24.C \
        referenceResults/withmerge/rose_v2_inputmoveDeclarationToInnermostScope_22.C
 
 
