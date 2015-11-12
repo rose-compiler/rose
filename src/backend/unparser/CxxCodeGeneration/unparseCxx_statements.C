@@ -334,21 +334,53 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                  // If this is whitespace with embedded comments (which we consider to be in the leading a trailing whitespace for each statement),
                  // then we only want to use the non-whitespace that is at the end of the leading whitespace for the statement.
 
-                 // if (tokenVector[j]->p_tok_elem->token_id == ROSE_token_ids::C_CXX_WHITESPACE)
-                    if (tokenVector[j]->get_classification_code() == ROSE_token_ids::C_CXX_WHITESPACE)
+                    SgTokenPtrList whitespaceTokens;
+
+                 // We don't want to unparse the token at the end.
+                    int j = end-1;
+                    bool still_is_whitespace = true;
+                    while ( (j >= start) && (still_is_whitespace == true) )
                        {
+                      // DQ (1/10/2014): Make sure that we don't use data that is unavailable.
+                         ROSE_ASSERT(j < (int)tokenVector.size());
+
+#if DEBUG_TOKEN_STREAM_UNPARSING
+                         printf ("possible whitespace: start = %d j = %d \n",start,j);
+#endif
+#if DEBUG_TOKEN_STREAM_UNPARSING
+                         printf ("unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+#endif
+                         if (tokenVector[j]->get_classification_code() == ROSE_token_ids::C_CXX_WHITESPACE)
+                            {
+                           // outputString << tokenVector[j]->get_lexeme_string();
+                              whitespaceTokens.push_back(tokenVector[j]);
+                            }
+                           else
+                            {
+                              still_is_whitespace = false;
+#if 0
+                              printf ("unparseOnlyWhitespace == true: Skipping output of tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+#endif
+                            }
+
+                         j--;
+                       }
+
+                 // Output the whitespace tokens in the reverse order.
+#if DEBUG_TOKEN_STREAM_UNPARSING
+                    printf ("whitespaceTokens.size() = %zu \n",whitespaceTokens.size());
+#endif
+                    SgTokenPtrList::reverse_iterator m = whitespaceTokens.rbegin();
+                    while (m != whitespaceTokens.rend())
+                       {
+                      // Print token (whitespace).
 #if HIGH_FEDELITY_TOKEN_UNPARSING
-                         *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+                         *(unp->get_output_stream().output_stream()) << (*m)->get_lexeme_string();
 #else
                       // Note that this will interprete line endings which is not going to provide the precise token based output.
-                         curprint(tokenVector[j]->get_lexeme_string());
+                         (*m)->get_lexeme_string());
 #endif
-                       }
-                      else
-                       {
-#if 0
-                         printf ("unparseOnlyWhitespace == true: Skipping output of tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
-#endif
+                         m++;
                        }
                   }
                  else
