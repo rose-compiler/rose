@@ -107,6 +107,11 @@ reduction       { return cond_return ( REDUCTION ); }
 copyin          { return cond_return ( COPYIN ); }
 
 target          {return cond_return ( TARGET ); }
+mpi             {return cond_return ( MPI ); } /*Experimental keywords to support scaling up to MPI processes */
+mpi:all         {return cond_return ( MPI_ALL ); }
+mpi:master      {return cond_return ( MPI_MASTER ); }
+begin           {return cond_return ( TARGET_BEGIN ); }
+end             {return cond_return ( TARGET_END ); }
 declare         {return cond_return ( DECLARE ); }
 data            {return cond_return ( DATA ); }
 update          {return cond_return ( UPDATE ); }
@@ -121,7 +126,6 @@ safelen         {return cond_return ( SAFELEN ); }
 aligned         {return cond_return ( ALIGNED ); }
 linear          {return cond_return ( LINEAR ); }
 uniform         {return cond_return ( UNIFORM ); }
-aligned         {return cond_return ( ALIGNED ); }
 inbranch        {return cond_return ( INBRANCH ); }
 notinbranch     {return cond_return ( NOTINBRANCH ); }
 

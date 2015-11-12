@@ -49,6 +49,8 @@ namespace OmpSupport
     e_target_update, 
     e_map, // map clauses
     e_device,
+    e_begin, // 10/29/2015, experimental begin/end directives for SPMD code blocks, without changing variable scopes
+    e_end,
 
     e_threadprivate,
     e_parallel_for,
@@ -305,6 +307,7 @@ namespace OmpSupport
       //! Insert dist_data policy for one dimension of an array into its policy vector (duplicate, block(n), cyclic(4)) (up to size 3)
       bool appendDistDataPolicy(SgVariableSymbol* array_symbol, omp_construct_enum dist_data_policy, SgExpression* size_exp = NULL);
 
+     //!Obtain data distribution policy for an array. There are up to 3 pairs for 3-D.
      std::vector < std::pair < omp_construct_enum, SgExpression*> > getDistDataPolicy (SgVariableSymbol* array_symbol); 
        
       //!--------Expressions -----------------------------
