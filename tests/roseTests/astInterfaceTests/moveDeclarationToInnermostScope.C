@@ -197,6 +197,15 @@ Consider only right hand is not enough, the variable declared on left side must 
 
 The best solution is liveness analysis (or side effect analysis).
 An approximation being used now is to not move when there is any references to variables used by the assignment (either lhs or rhs).
+
+Pre-order iteration of decls is needed to check if it is mergeable: move assign up to merge with the declaration.
+Example: if use reverse order: double abc will be checked first,  the last assignment cannot be moved up since rhs uses aa, which is defined in between.
+
+Using pre-order : double aa is considered first, aa=a[i] is moved up.   Then double abc; abc= aa* aa; can be merged also.
+        double aa;
+        double abc; //
+        aa = a[i];   
+        abc = aa * aa;  //
 */
 static  bool isMergeable (SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
 {
@@ -235,17 +244,33 @@ static  bool isMergeable (SgVariableDeclaration* decl, SgExprStatement* assign_s
     SageInterface::collectVarRefs (stmts_in_middle[i], varRefsInBetween);
     // convert varRef to SgInitializedName 
      for (size_t j = 0; j< varRefsInBetween.size(); j++)
+     {
+        if (transTracking)
+        { 
+          cout<<"found referenced/used symbol in between "<< varRefsInBetween[j]->get_symbol()->get_name() <<endl;
+        }
         usedSymbolsInBetween.insert (varRefsInBetween[j]->get_symbol());
+     }
 
    // collect initialized name also for declarations
     if (SgVariableDeclaration* mid_decl = isSgVariableDeclaration (stmts_in_middle[i]))
+    {
+      if (transTracking)
+        cout<<"found declared /used symbol in between "<< SageInterface::getFirstVarSym(mid_decl)->get_name() <<endl;
       usedSymbolsInBetween.insert(SageInterface::getFirstVarSym(mid_decl));
+    }
   }
 
   // 2. collect symbols used by assign_op's rhs and lhs (must consider both sides!)
   SageInterface::collectVarRefs ( isSgAssignOp(assign_stmt->get_expression())->get_rhs_operand(), usedVarRefsInRhs);
   for (size_t k=0; k< usedVarRefsInRhs.size(); k++)
+  {
+      if (transTracking)
+        cout<< "found used in assignment rhs" << usedVarRefsInRhs[k]->get_symbol()-> get_name()<<endl;
     usedSymbolsInAssignment.insert (usedVarRefsInRhs[k]->get_symbol());
+  }
+  if (transTracking)
+        cout<< "found used in assignment lhs" << SageInterface::getFirstVarSym (decl)-> get_name()<<endl;
   usedSymbolsInAssignment.insert (SageInterface::getFirstVarSym (decl));
 
  // intersection is not NULL, cannot merge or move across the area using the variable
@@ -253,6 +278,10 @@ static  bool isMergeable (SgVariableDeclaration* decl, SgExprStatement* assign_s
                     inserter (intersectSymbols, intersectSymbols.begin()));
   if (intersectSymbols.size() == 0 )
     rt = true;
+  if (transTracking)
+  {
+    cout<< "isMergeable () returns "<< rt<< "----------------" <<endl;
+  }
  
   return rt; 
 }
@@ -262,7 +291,14 @@ static  bool isMergeable (SgVariableDeclaration* decl, SgExprStatement* assign_s
 // if it has no initialization, we find the first followed assignment within the same scope and merge the assignment into the decl as an initializer
 static void collectiveMergeDeclarationAndAssignment (std::vector <SgVariableDeclaration*> decls)
 {
-  for (size_t i = 0; i< decls.size(); i++)
+  // Must not separate analysis and transformation sine the success of next stmt relies on previous merge
+  // pre-order iteration to check if it is mergeable: move assign up to merge with the declaration.
+
+  //for (size_t i = 0; i< decls.size(); i++)
+  // The top level traversal is reverse-order of preorder
+  // However, to support the isMergeable()'s move-up analysis (move assign up to the decl)
+  // we must scan candidate decls using pre-order, or multiple decls case will not work properly!
+  for (int i = decls.size()-1; i>=0; i--) // -- case will cause overflow for size_t type, must not use size_t!!
   {
     SgVariableDeclaration* current_decl = decls[i];
     ROSE_ASSERT (current_decl != NULL);
@@ -275,28 +311,31 @@ static void collectiveMergeDeclarationAndAssignment (std::vector <SgVariableDecl
 
       while (next_stmt)
       {
-         if (isAssignmentStmtOf (next_stmt, init_name) )
-         {  
-           if (isMergeable (current_decl, isSgExprStatement (next_stmt)))
-           {
-               SageInterface::mergeDeclarationAndAssignment (current_decl, isSgExprStatement (next_stmt));
+        if (isAssignmentStmtOf (next_stmt, init_name) )
+        {  
+          if (isMergeable (current_decl, isSgExprStatement (next_stmt)))
+          {
+            SageInterface::mergeDeclarationAndAssignment (current_decl, isSgExprStatement (next_stmt));
 #if ENABLE_TRANS_TRACKING
-              if (transTracking)
-              {
-                // No need to patch up IDs for a merge transformation
-                // directly record input node 
-                TransformationTracking::addInputNode (current_decl, next_stmt);
-              }
+            if (transTracking)
+            {
+              // No need to patch up IDs for a merge transformation
+              // directly record input node 
+              TransformationTracking::addInputNode (current_decl, next_stmt);
+            }
 #endif              
-           } // end if Mergeable
-             next_stmt = NULL; // We stop when the first match is found
-         } 
-         else
-           next_stmt = SageInterface::getNextStatement(next_stmt);
+
+          } // end if Mergeable
+          // mergeable or , we stop going to next stmt
+          next_stmt = NULL; // We stop when the first match is found, we also stop if the first matching assign is not mergeable
+        } 
+        else
+          next_stmt = SageInterface::getNextStatement(next_stmt);
       } 
 
     } // end if null initializer
   } // end for
+
 }
 
 
@@ -524,13 +563,17 @@ int main(int argc, char * argv[])
                  SgFile* cur_file = file_ptr_list[i];
                  SgSourceFile* s_file = isSgSourceFile(cur_file);
                  if (s_file != NULL)
-                    {
-                      inserted_decls.clear(); // For each file, reset this.
+                 {
+                   inserted_decls.clear(); // For each file, reset this.
                    // exampleTraversal.traverseInputFiles(project,preorder);
-                      exampleTraversal.traverseWithinFile(s_file, preorder);
-                    if (inserted_decls.size()>0 && merge_decl_assign)
-                        collectiveMergeDeclarationAndAssignment (inserted_decls);
-                    }
+                   exampleTraversal.traverseWithinFile(s_file, preorder);
+                   if (inserted_decls.size()>0 && merge_decl_assign)
+                   { 
+                     if (transTracking)
+                        cout<<"Begin merging declarations # "<<inserted_decls.size()<<endl;
+                     collectiveMergeDeclarationAndAssignment (inserted_decls);
+                   }
+                 }
                }
             string filename= SageInterface::generateProjectName(project);
 #if 0

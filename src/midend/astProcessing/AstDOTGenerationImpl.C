@@ -302,10 +302,11 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
         if (astAttributeContainer != NULL)
         {
         // Loop over all the attributes at this IR node
-          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+          AstAttributeMechanism::AttributeIdentifiers attrIdentifiers = astAttributeContainer->getAttributeIdentifiers();
+          for (AstAttributeMechanism::AttributeIdentifiers::iterator i = attrIdentifiers.begin(); i!=attrIdentifiers.end(); ++i)
                  {
-                // std::string name = i->first;
-                   AstAttribute* attribute = i->second;
+                   std::string name = *i;
+                   AstAttribute* attribute = astAttributeContainer->operator[](name);
                    ROSE_ASSERT(attribute != NULL);
 
                 // This can return a non-empty list in user-defined attributes (derived from AstAttribute).
