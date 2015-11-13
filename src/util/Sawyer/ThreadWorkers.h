@@ -6,6 +6,7 @@
 
 
 #include <Sawyer/Graph.h>
+#include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/Stack.h>
@@ -21,9 +22,10 @@ namespace Sawyer {
 
 /** Work list with dependencies.
  *
- *  This class takes a lattice of work item vertices. An edge from one vertex to another indicates that the source vertex
- *  is a work item that depends on the target vertex, and that work cannot begin on the source vertex until work is completed
- *  on the target vertex. */
+ *  This class takes a lattice of work items. The vertices are the items that need to be worked on, and an edge from vertex @em
+ *  a to vertex @em b means work on @em a depends on @em b having been completed.
+ *
+ *  See also, the @ref workInParallel function which is less typing since template parameters are inferred. */
 template<class DependencyGraph, class Functor>
 class ThreadWorkers {
     boost::mutex mutex_;                                // protects the following members after the constructor
@@ -34,74 +36,134 @@ class ThreadWorkers {
     size_t nWorkers_;                                   // number of worker threads allocated
     boost::thread *workers_;                            // worker threads
     size_t nItemsStarted_;                              // number of work items started
+    size_t nItemsFinished_;                             // number of work items that have been completed already
+    size_t nWorkersRunning_;                            // number of workers that are currently busy doing something
+    size_t nWorkersFinished_;                           // number of worker threads that have returned
 
 public:
+    /** Default constructor.
+     *
+     *  This constructor initializes the object but does not start any worker threads.  Each object can perform work a single
+     *  time, which is done by calling @ref run (synchronous) or @ref start and @ref wait (asynchronous). */
+    ThreadWorkers()
+        : hasStarted_(false), nWorkers_(0), workers_(NULL), nItemsStarted_(0), nItemsFinished_(0),
+          nWorkersRunning_(0), nWorkersFinished_(0) {}
+
+    /** Constructor that synchronously runs the work.
+     *
+     *  This constructor creates up to the specified number of worker threads to run the work described in the @p dependencies
+     *  (at least one thread, but not more than the number of items on which to work). If @p nWorkers is zero then the system's
+     *  hadware concurrency is used. The dependencies must be a forest of lattices or else an <code>std::runtime_error</code>
+     *  is thrown and no work is performed.
+     *
+     *  The lattice is copied into this class so that the class can modify it as work items are completed.  The @p functor can
+     *  be a class with @c operator(), a function pointer, or a lambda expression.  If a class is used, it must be copyable and
+     *  each worker thread will be given its own copy.  The functor is invoked with two arguments: the ID number of the work
+     *  item being processed, and a reference to a copy of the work item in the dependency graph.  The ID number is the vertex
+     *  ID number in the @p dependencies graph.
+     *
+     *  The constructor does not return until all work has been completed. This object can only perform work a single time. */
     ThreadWorkers(const DependencyGraph &dependencies, size_t nWorkers, Functor functor)
-        : hasStarted_(false), nWorkers_(std::max((size_t)1, nWorkers)), workers_(NULL), nItemsStarted_(0) {
-        if (hasCycles(dependencies))
-            throw std::runtime_error("worker dependency graph has cycle(s)");
-        dependencies_ = dependencies;
-        run(functor);
+        : hasStarted_(false), nWorkers_(0), workers_(NULL), nItemsStarted_(0), nItemsFinished_(0),
+          nWorkersRunning_(0), nWorkersFinished_(0) {
+        run(dependencies, nWorkers, functor);
     }
 
-    // Synchronously run the work, returning when its finished. The arguments are the same as for "start" and "wait".
-    void run(Functor functor) {
-        start(functor);
+    /** Destructor.
+     *
+     *  The destructor waits for work to complete before returning. */
+    ~ThreadWorkers() {
         wait();
+        delete[] workers_;
     }
 
-    // Start working. Returns as soon as workers have started.  The functor is invoked for each item of work that needs to be
-    // completed; it takes one argument: a copy of the vertex in the dependency graph.
-    void start(Functor functor) {
+    /** Start workers and return.
+     *
+     *  This method verifies that the @p dependencies is a forest of lattices, the vertices of which are the items on which to
+     *  work, and the edges of which represent dependencies.  An edge from vertex @em a to vertex @em b means that work item
+     *  @em a cannot start until work on item @em b has finished.  If @p dependencies has cycles then an
+     *  <code>std::runtime_error</code> is thrown before any work begins.
+     *
+     *  The work items in @p dependencies are processed by up to @p nWorkers threads created by this method and destroyed when
+     *  work is complete. This method creates at least one thread (if there's any work), but never more threads than the total
+     *  amount of work. If @p nWorkers is zero then the system's hardware concurrency is used. It returns as soon as those
+     *  workers are created.
+     *
+     *  Each object can perform work only a single time. */
+    void start(const DependencyGraph &dependencies, size_t nWorkers, Functor functor) {
+        if (Container::Algorithm::graphContainsCycle(dependencies))
+            throw std::runtime_error("work dependency graph has cycles");
+
         boost::lock_guard<boost::mutex> lock(mutex_);
-        ASSERT_forbid(hasStarted_);
+        if (hasStarted_)
+            throw std::runtime_error("work can start only once per object");
         hasStarted_ = true;
+        dependencies_ = dependencies;
+        if (0 == nWorkers)
+            nWorkers = boost::thread::hardware_concurrency();
+        nWorkers_ = std::max((size_t)1, std::min(nWorkers, dependencies.nVertices()));
+        nItemsStarted_ = nWorkersFinished_ = 0;
         fillWorkQueueNS();
-        if (!workQueue_.isEmpty())
-            startWorkersNS(functor);
+        startWorkersNS(functor);
     }
 
-    // Wait for work to complete. Blocks and returns when all workers are finished.
+    /** Wait for work to complete.
+     *
+     *  This call blocks until all work is completed. If no work has started yet then it returns immediately. */
     void wait() {
-        {
-            boost::lock_guard<boost::mutex> lock(mutex_);
-            ASSERT_require(hasStarted_);
-        }
+        boost::unique_lock<boost::mutex> lock(mutex_);
+        if (!hasStarted_)
+            return;
+
+        lock.unlock();
         for (size_t i=0; i<nWorkers_; ++i)
             workers_[i].join();
-        ASSERT_require(workQueue_.isEmpty());
-        ASSERT_require(nItemsStarted_ == dependencies_.nVertices());
-        delete[] workers_;
-        workers_ = NULL;
+
+        lock.lock();
         dependencies_.clear();
     }
 
-private:
-    // Check for cycles in the dependency graph
-    // FIXME[Robb Matzke 2015-11-11]: This should be a general-purpose graph algorithm
-    bool hasCycles(const DependencyGraph &forest) {
-        typedef Container::Algorithm::DepthFirstForwardGraphTraversal<const DependencyGraph> Traversal;
-        std::vector<bool> processed(forest.nVertices(), false);
-        std::vector<size_t> vertexOnPath(forest.nVertices(), false);
-        for (size_t i=0; i<processed.size(); ++i) {
-            if (!processed[i]) {
-                vertexOnPath[i] = true;
-                for (Traversal t(forest, forest.findVertex(i), Container::Algorithm::EDGE_EVENTS); t; ++t) {
-                    size_t targetVertexId = t.edge()->target()->id();
-                    if (t.event() == Container::Algorithm::ENTER_EDGE) {
-                        if (vertexOnPath[targetVertexId])
-                            return true; // this is a back edge, thus a cycle
-                        ++vertexOnPath[targetVertexId];
-                        processed[targetVertexId] = true;
-                    } else {
-                        --vertexOnPath[targetVertexId];
-                    }
-                }
-            }
-        }
-        return false;
+    /** Synchronously processes work items.
+     *
+     *  This is simply a wrapper around @ref start and @ref wait.  It performs work synchronously, returning only after the
+     *  work has completed. */
+    void run(const DependencyGraph &dependencies, size_t nWorkers, Functor functor) {
+        start(dependencies, nWorkers, functor);
+        wait();
+    }
+
+    /** Test whether all work is finished.
+     *
+     *  Returns false if work is ongoing, true if work is finished or was never started. */
+    bool isFinished() {
+        boost::lock_guard<boost::mutex> lock(mutex_);
+        return !hasStarted_ || nWorkersFinished_ == nWorkers_;
+    }
+
+    /** Number of work items remaining to run.
+     *
+     *  This is the number of work items that have been started or completed. */
+    size_t nStarted() {
+        boost::lock_guard<boost::mutex> lock(mutex_);
+        return nItemsStarted_;
+    }
+
+    /** Number of work items that have completed. */
+    size_t nFinished() {
+        boost::lock_guard<boost::mutex> lock(mutex_);
+        return nItemsFinished_;
+    }
+
+    /** Number of worker threads.
+     *
+     *  Returns a pair of numbers. The first is the total number of worker threads that are allocated, and the second is the
+     *  number of threads that are busy working.  The second number will never be larger than the first. */
+    std::pair<size_t, size_t> nWorkers() {
+        boost::lock_guard<boost::mutex> lock(mutex_);
+        return std::make_pair(nWorkers_-nWorkersFinished_, nWorkersRunning_);
     }
     
+private:
     // Scan the dependency graph and fill the work queue with vertices that have no dependencies.
     void fillWorkQueueNS() {
         ASSERT_require(workQueue_.isEmpty());
@@ -129,16 +191,21 @@ private:
             boost::unique_lock<boost::mutex> lock(mutex_);
             while (nItemsStarted_ < dependencies_.nVertices() && workQueue_.isEmpty())
                 workInserted_.wait(lock);
-            if (nItemsStarted_ >= dependencies_.nVertices())
+            if (nItemsStarted_ >= dependencies_.nVertices()) {
+                ++nWorkersFinished_;
                 return;
+            }
             size_t workItemId = workQueue_.pop();
             typename DependencyGraph::VertexValue workItem = dependencies_.findVertex(workItemId)->value();
             ++nItemsStarted_;
 
             // Do the work
+            ++nWorkersRunning_;
             lock.unlock();
             functor(workItemId, workItem);
             lock.lock();
+            ++nItemsFinished_;
+            --nWorkersRunning_;
 
             // Adjust remove dependency edges from the dependency lattice
             typename DependencyGraph::VertexIterator vertex = dependencies_.findVertex(workItemId);
@@ -168,6 +235,18 @@ private:
     }
 };
 
+/** Performs work in parallel.
+ *
+ *  Creates up to the specified number of worker threads to run the work described in the @p dependencies
+ *  (at least one thread, but not more than the number of items on which to work). The dependencies must be a forest of
+ *  lattices or else an <code>std::runtime_error</code> is thrown and no work is performed.
+ *
+ *  The @p functor can be a class with @c operator(), a function pointer, or a lambda expression.  If a class is used, it must
+ *  be copyable and each worker thread will be given its own copy.  The functor is invoked with two arguments: the ID number of
+ *  the work item being processed, and a reference to a copy of the work item in the dependency graph.  The ID number is the
+ *  vertex ID number in the @p dependencies graph.
+ *
+ *  The call does not return until all work has been completed. */
 template<class DependencyGraph, class Functor>
 void
 workInParallel(const DependencyGraph &dependencies, size_t nWorkers, Functor functor) {

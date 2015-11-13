@@ -101,6 +101,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/DefaultAllocator.h		\
 	Sawyer/DistinctList.h			\
 	Sawyer/Graph.h				\
+	Sawyer/GraphAlgorithm.h			\
 	Sawyer/GraphBoost.h			\
 	Sawyer/GraphTraversal.h			\
 	Sawyer/IndexedList.h			\
