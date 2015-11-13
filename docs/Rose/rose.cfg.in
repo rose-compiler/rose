@@ -887,7 +887,8 @@ EXCLUDE_SYMBOLS        =
 # directories that contain example code fragments that are included (see
 # the \include command).
 
-EXAMPLE_PATH           = @top_srcdir@/tutorial \
+EXAMPLE_PATH           = @top_srcdir@ \
+			 @top_srcdir@/tutorial \
                          @top_srcdir@/src/util/Sawyer/docs/examples \
 			 @top_srcdir@/tests/roseTests/binaryTests
 
