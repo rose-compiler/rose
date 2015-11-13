@@ -189,6 +189,7 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_22.C \
   inputmoveDeclarationToInnermostScope_23.C \
   inputmoveDeclarationToInnermostScope_24.C \
+  inputmoveDeclarationToInnermostScope_25.C \
   inputmoveDeclarationToInnermostScope_test2015_126.C \
   inputmoveDeclarationToInnermostScope_test2015_127.C 
 
