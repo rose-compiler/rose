@@ -35,7 +35,7 @@ SgStatement * getPreviousStatementForOutline( SgStatement * targetStmt );
 class FilletAttribute : public AstAttribute {
   public:
     FilletAttribute() {}
-    FilletAttribute *copy() {
+    FilletAttribute *copy() const {
       return new FilletAttribute(*this);
     }
     std::string attribute_class_name() { return "FilletAttribute"; }

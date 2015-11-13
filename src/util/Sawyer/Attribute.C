@@ -1,8 +1,15 @@
-#include <BinaryAttribute.h>
-#include <Sawyer/BiMap.h>
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          https://github.com/matzke1/sawyer.
 
-namespace rose {
-namespace BinaryAnalysis {
+
+
+
+#include <Sawyer/Attribute.h>
+#include <Sawyer/BiMap.h>
+#include <boost/foreach.hpp>
+
+namespace Sawyer {
 namespace Attribute {
 
 const Id INVALID_ID(-1);
@@ -10,7 +17,6 @@ const Id INVALID_ID(-1);
 typedef Sawyer::Container::BiMap<Id, std::string> DefinedAttributes;
 static DefinedAttributes definedAttributes;
 static Id nextId = 0;
-
 
 Id
 declare(const std::string &name) {
@@ -32,6 +38,14 @@ name(Id id) {
     return definedAttributes.forward().getOrDefault(id);
 }
 
-} // namespace
+std::vector<Id>
+Storage::attributeIds() const {
+    std::vector<Id> retval;
+    retval.reserve(values_.size());
+    BOOST_FOREACH (Id id, values_.keys())
+        retval.push_back(id);
+    return retval;
+}
+
 } // namespace
 } // namespace

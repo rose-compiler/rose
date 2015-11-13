@@ -11,8 +11,8 @@
  *
  *  @section installation_obtaining Obtaining ROSE
  *
- *  ROSE is free (libre) software distributed under a modified BSD license. The ROSE team at Lawrence Livermore National
- *  Laboratory makes two kinds of public source releases both as Git repositories.
+ *  ROSE is free (libre) software distributed under a @ref license "modified BSD license". The ROSE team at Lawrence Livermore
+ *  National Laboratory makes two kinds of public source releases both as Git repositories.
  *
  *  @li The development releases occur on the "master" branch of https://github.com/rose-compiler/rose-develop. These releases
  *      undergo a limited amount of testing and are intended for those users that require the latest bleeding edge versions

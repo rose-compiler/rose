@@ -37,7 +37,7 @@ IsomorphicNode::additionalNodeInfo()
    }
 
 AstAttribute*
-IsomorphicNode::copy()
+IsomorphicNode::copy() const
    {
      return new IsomorphicNode(*this);
    }
@@ -79,7 +79,7 @@ NonIsomorphicNode::additionalNodeInfo()
    }
 
 AstAttribute*
-NonIsomorphicNode::copy()
+NonIsomorphicNode::copy() const
    {
      return new NonIsomorphicNode(*this);
    }
