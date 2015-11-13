@@ -1014,6 +1014,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStreamForNodeCont
 int
 UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt, SgUnparse_Info & info, bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream)
    {
+  // DQ (11/13/2015): Note that this function name is shared with one defined (overloaded) in the unparseCxx_Statements.C file.
+
      ROSE_ASSERT(sourceFile != NULL);
      ROSE_ASSERT(stmt != NULL);
 
@@ -1051,6 +1053,22 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if 0
           printf ("In unparseStatementFromTokenStream(): stmt = %p = %s redundantStatement = %s \n",stmt,stmt->class_name().c_str(),redundantStatement ? "true" : "false");
 #endif
+#if 0
+          curprint( string("/* In unparseStatementFromTokenStream(): redundantStatement = ") + (redundantStatement ? "true" : "false") + " */");
+#endif
+       // DQ (11/13/2015): Comment added: redundant statements are generated when multiple 
+       // statements in the AST are mapped to a single token sequence for a single statement 
+       // in the token stream.  This happens for normalizations, generally, but really only
+       // in the case of a variable declaration with multiple variables which in the AST is
+       // currently normalized to multiple variable declaration statements, but in the token
+       // stream is the original variable declaration with multiple variables.  I have 
+       // worked out the fix in the front-end to support mulple SgInitializedName objects in
+       // a single SgVariableDeclStatement, but we have not taken the step to eliminate this
+       // normalization because it would likely break code where people have grown dependent
+       // on it.  So this de-normalization will have to be added as an option in ROSE so that
+       // we can permit the evaluation of existing code, in a staged release of a future version
+       // which will eliminate this normalization.  For now we record the variable declarations
+       // that appear after the first one as redundant in the token-based unparsing.
           if (redundantStatement == false)
              {
             // Check for the leading token stream for this statement.  Unparse it if the previous statement was unparsed as a token stream.
@@ -1210,7 +1228,17 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #endif
                        }
 
+                 // DQ (11/13/2015): We want to unparse the leading tokens for a statement if there is an associated comment 
+                 // or CPP directive, but even if NOT we want to unparse the associated whitespace.  This handles only the 
+                 // case where there is an associated comment or CPP directive.
+#if 0
+                 // DQ (11/13/2015): Original version of code.
                     bool unparseLeadingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::before);
+#else
+                 // DQ (11/13/2015): I think this is the better code to use.
+                    bool unparseLeadingTokenStream = true;
+#endif
+
 #if 0
                     printf ("In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(): stmt = %p = %s unparseLeadingTokenStream = %s \n",stmt,stmt->class_name().c_str(),unparseLeadingTokenStream ? "true" : "false");
                     curprint(string("\n/* In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): unparseLeadingTokenStream = ") + (unparseLeadingTokenStream ? "true" : "false") + " */");
@@ -1552,7 +1580,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
          + " */ \n");
      char buffer[100];
      snprintf (buffer,100,"%p",stmt);
-     curprint ("\n/* Top of unparseStatement " + stmt->class_name() + " at: " + buffer + " */ \n");
+     curprint ("\n/* Top of unparseStatement() " + stmt->class_name() + " at: " + buffer + " */ \n");
 #endif
 
 #if 0
@@ -1564,7 +1592,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         }
   // ROSE_ASSERT(stmt->get_endOfConstruct() != NULL);
 
-     curprint ( string("\n/* Top of unparseStatement (UnparseLanguageIndependentConstructs)" ) + string(stmt->sage_class_name()) + " */\n ");
+     curprint ( string("\n/* Top of unparseStatement(): (UnparseLanguageIndependentConstructs)" ) + string(stmt->sage_class_name()) + " */\n ");
      ROSE_ASSERT(stmt->get_startOfConstruct() != NULL);
   // ROSE_ASSERT(stmt->getAttachedPreprocessingInfo() != NULL);
      int numberOfComments = -1;
