@@ -2004,8 +2004,8 @@ $CLASSNAME::updateAttribute( std::string s, AstAttribute* a )
 void
 $CLASSNAME::removeAttribute(std::string s)
    {
-     assert(get_attributeMechanism() != NULL);
-     get_attributeMechanism()->remove(s);
+     if (get_attributeMechanism())
+         get_attributeMechanism()->remove(s);
 
   // DQ (1/2/2006): If we have no more attributes then remove the attribute container
      int remainingCount = numberOfAttributes();
