@@ -44,15 +44,6 @@ class DetectMacroExpansionsToBeUnparsedAsAstTransformations
 #endif
 
 
-#if 0
-class DetectMacroExpansionsToBeUnparsedAsAstTransformations : public AstSimpleProcessing
-   {
-     public:
-       // virtual function must be defined
-          void visit( SgNode* n );
-   };
-#endif
-
 
 // Main API function to call the AST traversals
 void detectMacroExpansionsToBeUnparsedAsAstTransformations ( SgSourceFile* sourceFile );

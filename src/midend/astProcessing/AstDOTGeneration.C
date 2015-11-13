@@ -10,6 +10,7 @@
 #include "AstDOTGeneration.h"
 #include "transformationTracking.h"
 #include "stringify.h"                                  // automatic enum-to-string functions
+#include <boost/foreach.hpp>
 
 // DQ (10/21/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
@@ -208,10 +209,9 @@ void AstDOTGeneration::addAdditionalNodesAndEdges(SgNode* node)
      if (astAttributeContainer != NULL)
         {
        // Loop over all the attributes at this IR node
-          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+          BOOST_FOREACH (const std::string &name, astAttributeContainer->getAttributeIdentifiers())
              {
-            // std::string name = i->first;
-               AstAttribute* attribute = i->second;
+               AstAttribute* attribute = astAttributeContainer->operator[](name);
                ROSE_ASSERT(attribute != NULL);
 
             // This can return a non-empty list in user-defined attributes (derived from AstAttribute).
@@ -786,10 +786,9 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      if (astAttributeContainer != NULL)
         {
        // Loop over all the attributes at this IR node
-          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+          BOOST_FOREACH (const std::string &name, astAttributeContainer->getAttributeIdentifiers())
              {
-            // std::string name = i->first;
-               AstAttribute* attribute = i->second;
+               AstAttribute* attribute = astAttributeContainer->operator[](name);
                ROSE_ASSERT(attribute != NULL);
 
             // This can return a non-empty list in user-defined attributes (derived from AstAttribute).
@@ -1166,14 +1165,13 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
      if (astAttributeContainer != NULL)
         {
           ss << "Attribute list (size=" << astAttributeContainer->size() << "):" << "\\n";
-          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+          BOOST_FOREACH (const std::string &name, astAttributeContainer->getAttributeIdentifiers())
              {
             // pair<std::string,AstAttribute*>
-               AstAttribute* attribute = i->second;
+               AstAttribute* attribute = astAttributeContainer->operator[](name);
                ROSE_ASSERT(attribute != NULL);
 
             // Note cast to void*
-               std::string name = i->first;
                std::string label = name + " : " + attribute->toString();
                ss << label << "\\n";
              }
@@ -1227,10 +1225,10 @@ AstDOTGeneration::additionalNodeOptions(SgNode* node)
 #if 0
           printf ("In AstDOTGeneration::additionalNodeOptions(): astAttributeContainer = %p for node = %p = %s \n",astAttributeContainer,node,node->class_name().c_str());
 #endif
-          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+          BOOST_FOREACH (const std::string &name, astAttributeContainer->getAttributeIdentifiers())
              {
             // std::string name = i->first;
-               AstAttribute* attribute = i->second;
+               AstAttribute* attribute = astAttributeContainer->operator[](name);
                ROSE_ASSERT(attribute != NULL);
 
                ss << attribute->additionalNodeOptions();
@@ -1265,10 +1263,10 @@ AstDOTGeneration::commentOutNodeInGraph(SgNode* node)
      AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
      if (astAttributeContainer != NULL)
         {
-          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+          BOOST_FOREACH (const std::string &name, astAttributeContainer->getAttributeIdentifiers())
              {
             // std::string name = i->first;
-               AstAttribute* attribute = i->second;
+               AstAttribute* attribute = astAttributeContainer->operator[](name);
                ROSE_ASSERT(attribute != NULL);
 
             // Turn it ON if there is an attribute to do so, but don't turn it off (for attribute to be changed)

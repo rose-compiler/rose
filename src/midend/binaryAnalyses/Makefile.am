@@ -43,7 +43,6 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/TraceSemantics2.C			\
     instructionSemantics/YicesSolver.C				\
     GraphAlgorithms.C						\
-    BinaryAttribute.C						\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
     BinaryDominance.C						\
@@ -119,7 +118,6 @@ pkginclude_HEADERS =					\
     libraryIdentification/functionIdentification.h	\
     libraryIdentification/libraryIdentification.h	\
     ether.h						\
-    BinaryAttribute.h					\
     BinaryControlFlow.h					\
     BinaryDataFlow.h					\
     BinaryDominance.h					\

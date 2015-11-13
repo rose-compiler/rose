@@ -142,7 +142,7 @@ int main(int argc,char *argv[])
 #pragma omp target device(mpi:master) end
 
 // TODO: more fine design for nested parallelism
-
+// TODO parse the pragmas here  2015-10-26 
 #pragma omp target device(mpi:all) map(to:lb0src, lb1src, lb2src, lb2, ub2,lb1,ub1,lb0,ub0, arraySize_X, arraySize_Y, arraySize_X_src, arraySize_Y_src)\
 map(to:sourceDataPointer[lb0src:arraySize_X_src][lb1src:arraySize_Y_src][lb2src:arraySize_Z_src] dist_data(DUPLICATE, DUPLICATE, BLOCK|1)) \
 map(from:destinationDataPointer[lb0:arraySize_X][lb1:arraySize_Y][lb2:arraySize_Z] dist_data(DUPLICATE, DUPLICATE, BLOCK))
