@@ -12822,16 +12822,25 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
           PreprocessingInfo * info = dynamic_cast<PreprocessingInfo*> (*i);
           ROSE_ASSERT(info != NULL);
 
-          if ( (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIncludeDeclaration )||
+          if (   // match enum values in http://rosecompiler.org/ROSE_HTML_Reference/classPreprocessingInfo.html
+               (info->getTypeOfDirective()==PreprocessingInfo::C_StyleComment)||
+               (info->getTypeOfDirective()==PreprocessingInfo::CplusplusStyleComment)||
+               (info->getTypeOfDirective()==PreprocessingInfo::FortranStyleComment)||
+               (info->getTypeOfDirective()==PreprocessingInfo::F90StyleComment)||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIncludeDeclaration )||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIncludeNextDeclaration )||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorDefineDeclaration )||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorUndefDeclaration)||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfdefDeclaration )||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfndefDeclaration )||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfDeclaration )||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorDeadIfDeclaration )||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElseDeclaration )||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElifDeclaration )||
-               (info->getTypeOfDirective()==PreprocessingInfo::C_StyleComment)||
-               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration )
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration ) ||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorLineDeclaration) ||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorErrorDeclaration) ||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorWarningDeclaration)
              )
              {
             // move all source preprocessing info if the desired source type is not specified or matching
