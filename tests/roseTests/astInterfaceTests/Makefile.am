@@ -917,6 +917,8 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputmoveDeclarationToInnermostScope_test2015_16.h \
        inputmoveDeclarationToInnermostScope_test2015_22.h \
        inputmoveDeclarationToInnermostScope_test2015_40.h \
+       inputmoveDeclarationToInnermostScope_24.C \
+       inputmoveDeclarationToInnermostScope_25.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_18.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_19.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_20.C \
@@ -924,6 +926,7 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        referenceResults/rose_inputmoveDeclarationToInnermostScope_22.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_23.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_24.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_25.C \
        referenceResults/withmerge/rose_v2_inputmoveDeclarationToInnermostScope_22.C
 
 
