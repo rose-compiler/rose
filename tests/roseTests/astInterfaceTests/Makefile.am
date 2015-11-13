@@ -384,21 +384,46 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_125.C \
   inputmoveDeclarationToInnermostScope_test2015_126.C \
   inputmoveDeclarationToInnermostScope_test2015_127.C \
+  inputmoveDeclarationToInnermostScope_test2015_128.C \
+  inputmoveDeclarationToInnermostScope_test2015_129.C \
+  inputmoveDeclarationToInnermostScope_test2015_130.C \
+  inputmoveDeclarationToInnermostScope_test2015_131.C \
+  inputmoveDeclarationToInnermostScope_test2015_132.C \
   inputmoveDeclarationToInnermostScope_test2015_134.C \
-  inputmoveDeclarationToInnermostScope_test2015_135.C 
+  inputmoveDeclarationToInnermostScope_test2015_135.C \
+  inputmoveDeclarationToInnermostScope_test2015_137.C \
+  inputmoveDeclarationToInnermostScope_test2015_139.C \
+  inputmoveDeclarationToInnermostScope_test2015_143.C \
+  inputmoveDeclarationToInnermostScope_test2015_144.C \
+  inputmoveDeclarationToInnermostScope_test2015_145.C \
+  inputmoveDeclarationToInnermostScope_test2015_146.C \
+  inputmoveDeclarationToInnermostScope_test2015_147.C \
+  inputmoveDeclarationToInnermostScope_test2015_148.C \
+  inputmoveDeclarationToInnermostScope_test2015_149.C \
+  inputmoveDeclarationToInnermostScope_test2015_150.C 
+
+# DQ (11/13/2015): Note that inputmoveDeclarationToInnermostScope_test2015_141.C 
+# and inputmoveDeclarationToInnermostScope_test2015_133.C only fail when using 
+# the -rose:merge_decl_assign option.
 
 # DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.
 FAILING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2014_09.C \
   inputmoveDeclarationToInnermostScope_test2014_12.C \
   inputmoveDeclarationToInnermostScope_test2015_04.C \
-inputmoveDeclarationToInnermostScope_test2015_100.C \
-inputmoveDeclarationToInnermostScope_test2015_101.C \
-inputmoveDeclarationToInnermostScope_test2015_106.C \
-inputmoveDeclarationToInnermostScope_test2015_107.C \
-inputmoveDeclarationToInnermostScope_test2015_114.C \
-inputmoveDeclarationToInnermostScope_test2015_45.C \
-inputmoveDeclarationToInnermostScope_test2015_62.C
+  inputmoveDeclarationToInnermostScope_test2015_100.C \
+  inputmoveDeclarationToInnermostScope_test2015_101.C \
+  inputmoveDeclarationToInnermostScope_test2015_106.C \
+  inputmoveDeclarationToInnermostScope_test2015_107.C \
+  inputmoveDeclarationToInnermostScope_test2015_114.C \
+  inputmoveDeclarationToInnermostScope_test2015_45.C \
+  inputmoveDeclarationToInnermostScope_test2015_62.C \
+  inputmoveDeclarationToInnermostScope_test2015_133.C \
+  inputmoveDeclarationToInnermostScope_test2015_136.C \
+  inputmoveDeclarationToInnermostScope_test2015_138.C \
+  inputmoveDeclarationToInnermostScope_test2015_140.C \
+  inputmoveDeclarationToInnermostScope_test2015_141.C \
+  inputmoveDeclarationToInnermostScope_test2015_142.C
 
 
 # DQ (8/16/2015): Failing test with bugfix for type transformations.
@@ -915,6 +940,7 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputmoveDeclarationToInnermostScope_test2015_16.h \
        inputmoveDeclarationToInnermostScope_test2015_22.h \
        inputmoveDeclarationToInnermostScope_test2015_40.h \
+       inputmoveDeclarationToInnermostScope_test2015_142.h \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_18.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_19.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_20.C \
@@ -932,6 +958,9 @@ unit-tests:
 
 # move_decls_diff_check move_merge_decls_diff_check
 check-local: $(generatedCodeExamples) move_diff_check 
+	@echo "*****************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/astInterface_tests: make check rule complete (terminated normally) ******"
+	@echo "*****************************************************************************************************"
 
 clean-local:
 	rm -f $(generatedCodeExamples) *.dot $(PASSING_MOVE_DECLS_TESTCODES_RESULTS) $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS)
