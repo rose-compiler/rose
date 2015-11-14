@@ -21,7 +21,7 @@ using namespace rose;
 
 // Define if you want to allow the inconsistent state where "exists" returns true but operator[] returns null.  This happens
 // when an AstAttribute subclass fails to implement the virtual copy constructor.
-#define ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
+//#define ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
 
 // Define if you want to use the not-to-friendly strict mode. This prints error messages on standard (and aborts the program in
 // debug mode) if you try to do things like erase an attribute that doesn't exist.
@@ -149,7 +149,7 @@ AstAttributeMechanism::set(const std::string &name, AstAttribute *value) {
 #ifdef ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
         attributes_.setAttribute(id, value);
 #else // correct behavior
-        attributes_.erase(id);
+        attributes_.eraseAttribute(id);
 #endif
     } else {
         attributes_.setAttribute(id, value);
