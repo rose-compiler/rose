@@ -2154,20 +2154,31 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // unparsed_as_enum_type global_unparsed_as = e_unparsed_as_error;
           if (outputStatementAsTokens == true)
              {
+#if 0
+               curprint("/* In unparseStatement(): set global_unparsed_as = e_unparsed_as_token_stream */");
+#endif
                global_unparsed_as = e_unparsed_as_token_stream;
              }
             else
              {
                if (outputPartialStatementAsTokens == true)
                   {
+#if 0
+                    curprint("/* In unparseStatement(): set global_unparsed_as = e_unparsed_as_partial_token_sequence */");
+#endif
                     global_unparsed_as = e_unparsed_as_partial_token_sequence;
                   }
                  else
                   {
+#if 0
+                    curprint("/* In unparseStatement(): set global_unparsed_as = e_unparsed_as_AST */");
+#endif
                     global_unparsed_as = e_unparsed_as_AST;
                   }
              }
-
+#if 0
+          printf ("global_unparsed_as = %d \n",global_unparsed_as);
+#endif
        // At this point we could test for a gap in the mapping of the current and previous statements being unparsed.
        // Then unparse the leading white space for the current statement.
        // Ignore the trailing white space for the previous statement; anything interesting should have been:
@@ -2196,17 +2207,24 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if 0
                     printf ("Calling unp->cur.reset_chars_on_line() (to reset the formatting for unparsing from the AST) \n");
 #endif
+
+                 // DQ (11/14/2015): If we are unparsing statements in a SgBasicBlock, then we want to
+                 // know if the SgBasicBlock is being unparsed using the partial_token_sequence so that
+                 // we can supress the formatting that adds a CR to the start of the current statement 
+                 // being unparsed.
+                    bool parentStatementListBeingUnparsedUsingPartialTokenSequence = false;
+
                     unp->cur.reset_chars_on_line();
                     
 #if 0
                     printf ("xxx yyy \n");
 #endif
 #if 0
-                    curprint("/* xxx */");
+                    curprint("/* In unparseStatement(): before format: FORMAT_BEFORE_STMT */");
 #endif
                     unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
 #if 0
-                    curprint("/* yyy */");
+                    curprint("/* In unparseStatement(): after format: FORMAT_BEFORE_STMT */");
 #endif
 
                  // DQ (12/12/2014): If we are transitioning to unparsing from the AST, then this should be valid.
@@ -2554,10 +2572,18 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      if (outputStatementAsTokens == false && outputPartialStatementAsTokens == false)
         {
        // DQ (comments) This is where new lines are output after the statement.
+       // I think this will only output a newline if the statement unparsed is 
+       // long enough (beyond some specific threshhold).
 #if 0
           curprint("/* FORMATTING: UnparseLanguageIndependentConstructs::unparseStatement(): calling unp->cur.format() (outputStatementAsTokens == false && outputPartialStatementAsTokens == false) */");
 #endif
+#if 0
+          curprint("/* In unparseStatement(): before format: FORMAT_AFTER_STMT */");
+#endif
           unp->cur.format(stmt, info, FORMAT_AFTER_STMT);
+#if 0
+          curprint("/* In unparseStatement(): after format: FORMAT_AFTER_STMT */");
+#endif
         }
 
   // Markus Kowarschik: This is the new code to unparse directives after the current statement
@@ -3367,6 +3393,7 @@ UnparseLanguageIndependentConstructs::num_stmt_in_block(SgBasicBlock* basic_stmt
 
      return num_stmt;
    }
+
 
 bool UnparseLanguageIndependentConstructs::unparseLineReplacement(
    SgLocatedNode* stmt,

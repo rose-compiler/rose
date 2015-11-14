@@ -2874,9 +2874,16 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // DQ (11/12/2015): Compute the statement to use for representative whitespace once.
      SgStatementPtrList::iterator representativeStatementForWhitespace = basic_stmt->get_statements().begin();
-     while (representativeStatementForWhitespace != basic_stmt->get_statements().end() && (*representativeStatementForWhitespace)->isTransformation() == true)
+
+  // DQ (11/14/2015): Adding this test allows us to avoid locations where the use of the SgLocatedNode::isTransformation() 
+  // function will enforce consistancy of the test on the multiple SgFileInfo objects. Something that should be fix in the
+  // fixup of the AST (and reported as a warning where detected).
+     if (saved_unparsedPartiallyUsingTokenStream == true)
         {
-          representativeStatementForWhitespace++;
+          while (representativeStatementForWhitespace != basic_stmt->get_statements().end() && (*representativeStatementForWhitespace)->isTransformation() == true)
+             {
+               representativeStatementForWhitespace++;
+             }
         }
 
 #if 0
@@ -2913,7 +2920,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
 
                  // curprint("\n");
                     bool statement_is_transformation = (*p)->isTransformation();
-#if DEBUG_BASIC_BLOCK
+#if DEBUG_BASIC_BLOCK || 0
                     printf ("statement is: %p = %s isTransformation() = %s \n",(*p),(*p)->class_name().c_str(),(*p)->isTransformation() ? "true" : "false");
                     string s = statement_is_transformation ? "true" : "false";
 #endif
@@ -2926,36 +2933,37 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
                       // the trailing whitespace tokens instead of all the tokens except for non-whitespace).
 
                       // Find representative whitespace for statements in this basic block.
-#if 0
-                         SgStatementPtrList::iterator q = p;
-                         while (q != basic_stmt->get_statements().end() && (*q)->isTransformation() == true)
-                            {
-                              q++;
-                            }
-#else
                          SgStatementPtrList::iterator q = representativeStatementForWhitespace;
-#endif
                          if (q != basic_stmt->get_statements().end())
                             {
                            // Found a statement in the basic block that we can use to represent representative whitespace.
                               bool unparseOnlyWhitespace = true;
+#if 1
                               unparseStatementFromTokenStream (*q, *q, e_leading_whitespace_start, e_token_subsequence_start, unparseOnlyWhitespace);
+#endif
                             }
                            else
                             {
                            // The least we can do is to output a CR in this case where we have no representative whitespace.
-                              curprint("\n");
+                           // curprint("\n");
                             }
                        }
-#if DEBUG_BASIC_BLOCK && 0
+#if DEBUG_BASIC_BLOCK || 0
                     curprint ("/* unparse leading white space of first statement: END */");
 #endif
                   }
              }
 
+#if DEBUG_BASIC_BLOCK || 0
+          curprint ("/* calling unparseStatement(): START */");
+#endif
           unparseStatement((*p), info);
 
-#if DEBUG_BASIC_BLOCK && 0
+#if DEBUG_BASIC_BLOCK || 0
+          curprint ("/* calling unparseStatement(): END */");
+#endif
+
+#if DEBUG_BASIC_BLOCK || 0
           curprint ("/* LOOP: END unparse statement in SgBasicBlock */");
 #endif
        // DQ (12/6/2014): Save the last statement so that we can use the trailing token stream if using the token-based unparsing.
@@ -6950,9 +6958,9 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           curprint(";");
         }
-
-  // curprint ( string("\n/* END: Close off the statement with a \";\" */ \n";
-
+#if 0
+     curprint("/* END: Close off the statement with a \";\" */");
+#endif
 #if 0
      curprint("/* aaaa */");
 #endif
