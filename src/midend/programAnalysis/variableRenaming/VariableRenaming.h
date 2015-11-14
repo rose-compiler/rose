@@ -76,7 +76,7 @@ public:
         key.assign(other.key.begin(), other.key.end());
     }
 
-    VarUniqueName* copy()
+    VarUniqueName* copy() const
     {
         VarUniqueName* newName = new VarUniqueName(*this);
         return newName;

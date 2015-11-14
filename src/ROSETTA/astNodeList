@@ -527,10 +527,12 @@ SgOmpTargetStatement
 SgOmpTargetDataStatement
 SgOmpSimdStatement
 SgOmpClause
+SgOmpBeginClause
 SgOmpCollapseClause
 SgOmpCopyinClause
 SgOmpCopyprivateClause
 SgOmpDefaultClause
+SgOmpEndClause
 SgOmpExpressionClause
 SgOmpFirstprivateClause
 SgOmpIfClause

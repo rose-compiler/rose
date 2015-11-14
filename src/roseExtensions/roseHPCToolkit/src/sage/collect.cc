@@ -19,6 +19,7 @@
 
 #include "rosehpct/sage/sage.hh"
 #include "rosehpct/util/general.hh"
+#include <boost/foreach.hpp>
 
 using namespace std;
 using namespace RoseHPCT;
@@ -231,12 +232,12 @@ void Vis_PrintMetricInfo::printAttributes(SgLocatedNode* node)
       bool printFlag = true;
       if (astAttributeContainer != NULL)
       {
-        for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+        BOOST_FOREACH (const std::string &name, astAttributeContainer->getAttributeIdentifiers())
         {
-           string name = i->first;
-           RoseHPCT::MetricAttr* attribute = dynamic_cast<RoseHPCT::MetricAttr *>(i->second);
+           RoseHPCT::MetricAttr* attribute = dynamic_cast<RoseHPCT::MetricAttr *>(astAttributeContainer->operator[](name));
            // DXN: If an IR node is written to file, its AstAttribute objects somehow lose their type info.
            // For example, MetricAttr objects are no longer MetricAttr.
+           // RPM: This is perhaps because many AstAttribute subclasses don't properly implement the virtual copy method.
            /// AstAttribute* attribute = i->second;  // may have names like "tree_depth" and "AstUnparseAttribute"
            if (attribute)
            {

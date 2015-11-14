@@ -93,6 +93,16 @@ HEADER_OMP_CLAUSE_START
           e_omp_map_last
         };
 
+        // Liao, 11/11/2015: experimental support for data distribution policies
+        enum omp_map_dist_data_enum
+        {
+          e_omp_map_dist_data_unknown,
+          e_omp_map_dist_data_duplicate,
+          e_omp_map_dist_data_block,
+          e_omp_map_dist_data_cyclic,
+          e_omp_map_dist_data_last
+        };
+
 
 HEADER_OMP_CLAUSE_END
 HEADER_GRAPH_START
@@ -1994,8 +2004,8 @@ $CLASSNAME::updateAttribute( std::string s, AstAttribute* a )
 void
 $CLASSNAME::removeAttribute(std::string s)
    {
-     assert(get_attributeMechanism() != NULL);
-     get_attributeMechanism()->remove(s);
+     if (get_attributeMechanism())
+         get_attributeMechanism()->remove(s);
 
   // DQ (1/2/2006): If we have no more attributes then remove the attribute container
      int remainingCount = numberOfAttributes();
