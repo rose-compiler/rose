@@ -1144,11 +1144,39 @@ public:
 
     /** Property: Whether to perform post-partitioning analysis steps.
      *
-     *  If set, then various post-partitioning analysis steps are executed.  Some of these can be quite expensive.
+     *  If set, then each of the enabled post-partitioning analysis steps are executed.  Some of these can be quite expensive,
+     *  but they can be enabled and disabled individually. Those that are enabled are only run if this property also is set.
      *
      * @{ */
     bool doingPostAnalysis() const /*final*/ { return settings_.partitioner.doingPostAnalysis; }
     virtual void doingPostAnalysis(bool b) { settings_.partitioner.doingPostAnalysis = b; }
+    /** @} */
+
+    /** Property: Whether to run the function may-return analysis.
+     *
+     *  Determines whether the may-return analysis is run when @ref doingPostAnalysis is true.
+     *
+     * @{ */
+    bool doingPostFunctionMayReturn() const /*final*/ { return settings_.partitioner.doingPostFunctionMayReturn; }
+    virtual void doingPostFunctionMayReturn(bool b) { settings_.partitioner.doingPostFunctionMayReturn = b; }
+    /** @} */
+
+    /** Property: Whether to run the function stack delta analysis.
+     *
+     *  Determines whether the stack delta analysis is run when @ref doingPostAnalysis is true.
+     *
+     * @{ */
+    bool doingPostFunctionStackDelta() const /*final*/ { return settings_.partitioner.doingPostFunctionStackDelta; }
+    virtual void doingPostFunctionStackDelta(bool b) { settings_.partitioner.doingPostFunctionStackDelta = b; }
+    /** @} */
+
+    /** Property: Whether to run calling-convention analysis.
+     *
+     *  Determines whether calling convention analysis is run on each function when @ref doingPostAnalysis is true.
+     *
+     * @{ */
+    bool doingPostCallingConvention() const /*final*/ { return settings_.partitioner.doingPostCallingConvention; }
+    virtual void doingPostCallingConvention(bool b) { settings_.partitioner.doingPostCallingConvention = b; }
     /** @} */
 
     /** Property: Whether to run the function may-return analysis.
