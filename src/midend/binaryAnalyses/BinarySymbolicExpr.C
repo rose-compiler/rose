@@ -9,6 +9,8 @@
 #include "Combinatorics.h"
 
 #include <boost/foreach.hpp>
+#include <boost/thread/locks.hpp>
+#include <boost/thread/mutex.hpp>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -18,15 +20,28 @@ namespace SymbolicExpr {
 //                                      Supporting functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uint64_t
-Leaf::nameCounter_ = 0;
+// A mutex that's used by various methods in this namespace
+static boost::mutex symbolicExprMutex;
+
+// Returns the next name counter. If @p useThis is specified then return that value and make sure the next value to be
+// returned is larger.
+static uint64_t
+nextNameCounter(uint64_t useThis = (uint64_t)(-1)) {
+    static boost::mutex mutex;
+    static uint64_t counter = 0;
+    boost::lock_guard<boost::mutex> lock(mutex);
+    if (useThis == (uint64_t)(-1))
+        return ++counter;
+    counter = std::max(counter, useThis);
+    return useThis;
+}
 
 const uint64_t
 MAX_NNODES = UINT64_MAX;
 
 std::string
 toStr(Operator o) {
-    static char buf[64];
+    char buf[64];
     std::string s = stringifyBinaryAnalysisSymbolicExprOperator(o, "OP_");
     ASSERT_require(s.size()<sizeof buf);
     strcpy(buf, s.c_str());
@@ -188,13 +203,16 @@ Node::getVariables() {
 
 uint64_t
 Node::hash() {
+    boost::unique_lock<boost::mutex> lock(symbolicExprMutex);
     if (0==hashval_) {
         // FIXME: We could build the hash with a traversal rather than
         // from a string.  But this method is quick and easy. [Robb P. Matzke 2013-09-10]
+        lock.unlock();
         std::ostringstream ss;
         Formatter formatter;
         formatter.show_comments = Formatter::CMT_SILENT;
         print(ss, formatter);
+        lock.lock();
         hashval_ = Combinatorics::fnv1a64_digest(ss.str());
     }
     return hashval_;
@@ -2082,7 +2100,7 @@ Leaf::createVariable(size_t nbits, const std::string &comment, unsigned flags) {
     Leaf *node = new Leaf(comment, flags);
     node->nBits_ = nbits;
     node->leafType_ = BITVECTOR;
-    node->name_ = nameCounter_++;
+    node->name_ = nextNameCounter();
     LeafPtr retval(node);
     return retval;
 }
@@ -2095,8 +2113,7 @@ Leaf::createExistingVariable(size_t nbits, uint64_t id, const std::string &comme
     Leaf *node = new Leaf(comment, flags);
     node->nBits_ = nbits;
     node->leafType_ = BITVECTOR;
-    node->name_ = id;
-    nameCounter_ = std::max(nameCounter_, id+1);
+    node->name_ = nextNameCounter(id);
     LeafPtr retval(node);
     return retval;
 }
@@ -2136,7 +2153,7 @@ Leaf::createMemory(size_t addressWidth, size_t valueWidth, const std::string &co
     node->nBits_ = valueWidth;
     node->domainWidth_ = addressWidth;
     node->leafType_ = MEMORY;
-    node->name_ = nameCounter_++;
+    node->name_ = nextNameCounter();
     LeafPtr retval(node);
     return retval;
 }
@@ -2152,8 +2169,7 @@ Leaf::createExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, 
     node->nBits_ = valueWidth;
     node->domainWidth_ = addressWidth;
     node->leafType_ = MEMORY;
-    node->name_ = id;
-    nameCounter_ = std::max(nameCounter_, id+1);
+    node->name_ = nextNameCounter(id);
     LeafPtr retval(node);
     return retval;
 }

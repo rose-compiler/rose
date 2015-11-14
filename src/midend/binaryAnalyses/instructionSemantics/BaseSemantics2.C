@@ -926,7 +926,7 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool al
     const RegisterDescriptor *reg = regdict->lookup(regname);
     if (!reg) {
         if (allowMissing) {
-            static RegisterDescriptor invalidRegister;
+            static const RegisterDescriptor invalidRegister;
             return invalidRegister;
         }
         std::ostringstream ss;

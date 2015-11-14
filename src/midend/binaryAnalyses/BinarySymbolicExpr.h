@@ -835,8 +835,6 @@ private:
     explicit Leaf(const std::string &comment, unsigned flags=0)
         : Node(comment, flags), leafType_(CONSTANT), name_(0) {}
 
-    static uint64_t nameCounter_;
-
 public:
     /** Construct a new free variable with a specified number of significant bits. */
     static LeafPtr createVariable(size_t nbits, const std::string &comment="", unsigned flags=0);
