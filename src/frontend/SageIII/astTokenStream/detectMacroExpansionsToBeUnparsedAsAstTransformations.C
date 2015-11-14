@@ -92,7 +92,7 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
      DetectMacroExpansionsToBeUnparsedAsAstTransformationsSynthesizedAttribute returnAttribute(n);
 
 #if 0
-     printf ("In (Detect Macro Expansions) evaluateSynthesizedAttribute(): n = %p = %s n->get_containsTransformation() = %s \n",n,n->class_name().c_str(),n->get_containsTransformation() ? "true" : "false");
+     printf ("In (Detect Transformations in Macro Expansions) evaluateSynthesizedAttribute(): n = %s n->get_containsTransformation() = %s \n",n->class_name().c_str(),n->get_containsTransformation() ? "true" : "false");
 #endif
 
   // DQ (11/8/2015): This has to be moved to after the tokenStreamSequenceMap has been setup since we need that to determine if 
@@ -116,7 +116,8 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
 #if 0
           if (currentStatement != NULL)
              {
-               printf ("currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+            // printf ("currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+               printf ("currentStatement = %s \n",currentStatement->class_name().c_str());
                printf ("   --- currentStatement->isTransformation()    = %s \n",currentStatement->isTransformation() ? "true" : "false");
              }
 #endif
@@ -128,7 +129,8 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
                if (statement != NULL)
                   {
 #if 0
-                    printf ("(child) statement = %p = %s \n",statement,statement->class_name().c_str());
+                 // printf ("(child) statement = %p = %s \n",statement,statement->class_name().c_str());
+                    printf ("(child) statement = %s \n",statement->class_name().c_str());
                     printf ("   --- statement->isTransformation()           = %s \n",statement->isTransformation() ? "true" : "false");
                     printf ("   --- statement->get_containsTransformation() = %s \n",statement->get_containsTransformation() ? "true" : "false");
 #endif
@@ -142,8 +144,10 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
                       else
                        {
 #if 0
-                         printf ("Parent statement = %p = %s No token stream information found for child statement = %p = %s \n",
-                              currentStatement,currentStatement->class_name().c_str(),statement,statement->class_name().c_str());
+                      // printf ("Parent statement = %p = %s No token stream information found for child statement = %p = %s \n",
+                      //      currentStatement,currentStatement->class_name().c_str(),statement,statement->class_name().c_str());
+                         printf ("Parent statement = %s No token stream information found for child statement = %s \n",
+                              currentStatement->class_name().c_str(),statement->class_name().c_str());
                          printf ("   --- at line: %d \n",statement->get_file_info()->get_line());
 
                       // When this is a function declaration, try to understand more about it.
@@ -161,9 +165,12 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
           if (currentStatement != NULL && all_children_have_token_info == false)
              {
 #if 0
-               printf ("*** Found case of statement marked as containing a transforamtion, but all children without token info (detected a macro expansion): currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+            // printf ("*** Found case of statement marked as containing a transforamtion, but all children without token info (detected a macro expansion): currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+               printf ("*** Found case of statement marked as containing a transforamtion, but all children without token info (detected a macro expansion): currentStatement = %s \n",currentStatement->class_name().c_str());
 #endif
 
+            // DQ (11/9/2015): Added support for specific scopes where we don't want them the be 
+            // unparsed from the token stream when children of them are transformed.
             // DQ (11/8/2015): I think that this should not apply to a SgBasicBlock (for example see 
             // tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_94.C).
             // The reason is that a block is not the same sort for compound statement as a SgForStatement.
@@ -171,6 +178,7 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
                bool current_statement_is_allowed_to_have_statements_with_unmapped_token_sequences = 
                     ( (isSgGlobal(currentStatement) != NULL)          || 
                       (isSgBasicBlock(currentStatement) != NULL)      ||
+                   // (isSgEnumDefinition(currentStatement) != NULL)  ||
                       (isSgClassDefinition(currentStatement) != NULL) );
 
                if (current_statement_is_allowed_to_have_statements_with_unmapped_token_sequences == false)
@@ -191,7 +199,8 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
                  else
                   {
 #if 0
-                    printf ("This currentStatement = %p = %s is allowed to have a child without a token sequence mapping \n",currentStatement,currentStatement->class_name().c_str());
+                 // printf ("This currentStatement = %p = %s is allowed to have a child without a token sequence mapping \n",currentStatement,currentStatement->class_name().c_str());
+                    printf ("This currentStatement = %s is allowed to have a child without a token sequence mapping \n",currentStatement->class_name().c_str());
 #endif
                   }
              }

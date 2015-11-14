@@ -60,7 +60,7 @@ public:
     ddvs(Other.ddvs) {
     }
 
-  virtual AstAttribute* copy() {
+  virtual AstAttribute* copy() const {
     return new SageForInfo(*this);
   }
 
@@ -103,7 +103,7 @@ public:
       SageInterface::deepDelete(alignmentExpression);
   }
 
-  virtual AstAttribute* copy() {
+  virtual AstAttribute* copy() const {
     return new SageMemoryReferenceInfo(*this);
   }
 
@@ -122,7 +122,7 @@ public:
   SgVariableSymbol*	iterator;
   int			astId;
 
-  virtual AstAttribute* copy() { return new ScopForAnnotation(); }
+  virtual AstAttribute* copy() const { return new ScopForAnnotation(); }
 };
 
 
@@ -132,7 +132,7 @@ public:
   SgExpression* conditional;
 
 
-  virtual AstAttribute* copy() { return new ScopIfAnnotation(); }
+  virtual AstAttribute* copy() const { return new ScopIfAnnotation(); }
 };
 
 class ScopStatementAnnotation : public AstAttribute
@@ -158,7 +158,7 @@ public:
     }
 
 
-  virtual AstAttribute* copy() { return new ScopStatementAnnotation(); }
+  virtual AstAttribute* copy() const { return new ScopStatementAnnotation(); }
 };
 
 class ScopRootAnnotation : public AstAttribute
@@ -168,7 +168,7 @@ public:
   std::set<SgVariableSymbol*> linearizedArraysAsArrays;
   std::map<std::string, SgVariableSymbol*> fakeSymbolMap;
   int scopId;
-  virtual AstAttribute* copy() { return new ScopRootAnnotation(); }
+  virtual AstAttribute* copy() const { return new ScopRootAnnotation(); }
 };
 
 
@@ -176,7 +176,7 @@ class ScopParentAnnotation : public AstAttribute
 {
 public:
   std::vector<SgNode*> privateVars;
-  virtual AstAttribute* copy() { return new ScopParentAnnotation(); }
+  virtual AstAttribute* copy() const { return new ScopParentAnnotation(); }
 };
 
 

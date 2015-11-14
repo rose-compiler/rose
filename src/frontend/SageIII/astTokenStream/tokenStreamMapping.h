@@ -108,5 +108,6 @@ class TokenStreamSequenceToNodeMapping
 // as a single unit (we can't just unparse parts of them from the token 
 // stream and parts from the AST; because there representation in the 
 // token stream is only as the unexpanded macro).
+#include "detectMacroOrIncludeFileExpansions.h"
 #include "detectMacroExpansionsToBeUnparsedAsAstTransformations.h"
 

@@ -1356,7 +1356,7 @@ FrontierDetectionForTokenStreamMappingAttribute::additionalNodeInfo()
    }
 
 AstAttribute*
-FrontierDetectionForTokenStreamMappingAttribute::copy()
+FrontierDetectionForTokenStreamMappingAttribute::copy() const
    {
   // Support for the copying of AST and associated attributes on each IR node (required for attributes 
   // derived from AstAttribute, else just the base class AstAttribute will be copied).

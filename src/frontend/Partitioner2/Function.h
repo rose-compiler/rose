@@ -2,11 +2,11 @@
 #define ROSE_Partitioner2_Function_H
 
 #include <BaseSemantics2.h>
-#include <BinaryAttribute.h>
 #include <BinaryCallingConvention.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/DataBlock.h>
 
+#include <Sawyer/Attribute.h>
 #include <Sawyer/Cached.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/SharedPointer.h>
@@ -33,7 +33,7 @@ typedef Sawyer::SharedPointer<class Function> FunctionPtr;
  *  A function may exist as part of the partitioner's control flow graph, or in a detached state.  When a function is
  *  represented by the control flow graph then it is in a frozen state, meaning that its basic blocks and data blocks cannot be
  *  adjusted adjusted; one must use the partitioner interface to do so. */
-class Function: public Sawyer::SharedObject, public Attribute::Storage {
+class Function: public Sawyer::SharedObject, public Sawyer::Attribute::Storage {
 public:
     /** Manner in which a function owns a block. */
     enum Ownership { OWN_UNOWNED=0,                     /**< Function does not own the block. */
