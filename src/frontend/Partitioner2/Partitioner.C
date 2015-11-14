@@ -13,9 +13,11 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
+#include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stack.h>
+#include <Sawyer/ThreadWorkers.h>
 
 using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 using namespace rose::Diagnostics;
@@ -1855,29 +1857,32 @@ Partitioner::functionCallingConvention(const Function::Ptr &function,
     return function->callingConventionAnalysis();
 }
 
+// Worker function for analyzing the calling convention of one function.
+struct CallingConventionWorker {
+    const Partitioner &partitioner;
+    Sawyer::ProgressBar<size_t> &progress;
+    const CallingConvention::Definition *dfltCc;
+
+    CallingConventionWorker(const Partitioner &partitioner, Sawyer::ProgressBar<size_t> &progress,
+                            const CallingConvention::Definition *dfltCc)
+        : partitioner(partitioner), progress(progress), dfltCc(dfltCc) {}
+
+    void operator()(size_t workId, const Function::Ptr &function) {
+        partitioner.functionCallingConvention(function, dfltCc);
+        ++progress;
+    }
+};
+
 void
 Partitioner::allFunctionCallingConvention(const CallingConvention::Definition *dfltCc/*=NULL*/) const {
-    using namespace Sawyer::Container::Algorithm;
-    FunctionCallGraph cg = functionCallGraph();
-    size_t nFunctions = cg.graph().nVertices();
-    std::vector<bool> visited(nFunctions, false);
-    Sawyer::ProgressBar<size_t> progress(nFunctions, mlog[MARCH], "calling-convention analysis");
-    for (size_t cgVertexId=0; cgVertexId<nFunctions; ++cgVertexId) {
-        if (!visited[cgVertexId]) {
-            typedef DepthFirstForwardGraphTraversal<const FunctionCallGraph::Graph> Traversal;
-            for (Traversal t(cg.graph(), cg.graph().findVertex(cgVertexId), ENTER_VERTEX|LEAVE_VERTEX); t; ++t) {
-                if (t.event() == ENTER_VERTEX) {
-                    if (visited[t.vertex()->id()])
-                        t.skipChildren();
-                } else if (!visited[t.vertex()->id()]) {
-                    ASSERT_require(t.event() == LEAVE_VERTEX);
-                    functionCallingConvention(t.vertex()->value(), dfltCc);
-                    visited[t.vertex()->id()] = true;
-                    ++progress;
-                }
-            }
-        }
-    }
+    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    FunctionCallGraph::Graph cg = functionCallGraph().graph();
+    Sawyer::Container::Algorithm::graphBreakCycles(cg);
+    Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "call-conv analysis");
+    Sawyer::Message::FacilitiesGuard guard();
+    if (nThreads != 1)                                  // lots of threads doing progress reports won't look too good!
+        rose::BinaryAnalysis::CallingConvention::mlog[MARCH].disable();
+    Sawyer::workInParallel(cg, nThreads, CallingConventionWorker(*this, progress, dfltCc));
 }
 
 AddressUsageMap
