@@ -1316,7 +1316,35 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
      bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
      if (saved_unparsedPartiallyUsingTokenStream == false)
         {
+#if 0
+          curprint("/* InunparseLanguageSpecificStatement(): CR: START */");
+#endif
+#if 1
+       // DQ (11/14/2015): If we are unparsing statements in a SgBasicBlock, then we want to
+       // know if the SgBasicBlock is being unparsed using the partial_token_sequence so that
+       // we can supress the formatting that adds a CR to the start of the current statement 
+       // being unparsed.
+          bool parentStatementListBeingUnparsedUsingPartialTokenSequence = info.parentStatementListBeingUnparsedUsingPartialTokenSequence();
+          if (parentStatementListBeingUnparsedUsingPartialTokenSequence == true)
+             {
+#if 0
+               printf ("In unparseLanguageSpecificStatement(): We need to supress the leading CR for this case (initially statements in a SgBasicBlock) \n");
+#endif
+#if 0
+               curprint("/* In InunparseLanguageSpecificStatement(): suppress CR */");
+#endif
+            // ROSE_ASSERT(false);
+             }
+            else
+             {
+               unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
+             }
+#else
           unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
+#endif
+#if 0
+          curprint("/* InunparseLanguageSpecificStatement(): CR: END */");
+#endif
         }
 
 #if 0
@@ -2886,6 +2914,11 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
         }
 
+  // DQ (11/15/2015): if this is on because it is from an inherited SgBasicBlock then turn off the flag to control formatting.
+  // I don't like this method of handling the inherited attribute, and perhaps this poitn to why this formatting should be 
+  // controled using a different mechanism (though other mechanisms had there problems in thinking them through).
+     info.unset_parentStatementListBeingUnparsedUsingPartialTokenSequence();
+
 #if 0
      if (representativeStatementForWhitespace != basic_stmt->get_statements().end())
         {
@@ -2906,6 +2939,8 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ("/* LOOP: START unparse statement in SgBasicBlock */");
 #endif
 
+          SgUnparse_Info local_info(info);
+
        // DQ (11/4/2015): Adding in the leading white space of the first statement (whatever statement is first).
           if (saved_unparsedPartiallyUsingTokenStream == true)
              {
@@ -2917,6 +2952,8 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // Unfortunately this can cause problems if this is more than just whitespace (e.g. "#if 1").
                  // So we need to check if this is only whitespace and then we can unparse it.  This would be 
                  // best handled by adding this feature to the unparseStatementFromTokenStream() function (I think).
+
+                    local_info.set_parentStatementListBeingUnparsedUsingPartialTokenSequence();
 
                  // curprint("\n");
                     bool statement_is_transformation = (*p)->isTransformation();
@@ -2957,7 +2994,8 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if DEBUG_BASIC_BLOCK || 0
           curprint ("/* calling unparseStatement(): START */");
 #endif
-          unparseStatement((*p), info);
+       // unparseStatement((*p), info);
+          unparseStatement((*p), local_info);
 
 #if DEBUG_BASIC_BLOCK || 0
           curprint ("/* calling unparseStatement(): END */");
