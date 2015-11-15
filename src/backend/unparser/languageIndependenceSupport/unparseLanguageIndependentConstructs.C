@@ -2212,13 +2212,37 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                  // know if the SgBasicBlock is being unparsed using the partial_token_sequence so that
                  // we can supress the formatting that adds a CR to the start of the current statement 
                  // being unparsed.
-                    bool parentStatementListBeingUnparsedUsingPartialTokenSequence = false;
+                    bool parentStatementListBeingUnparsedUsingPartialTokenSequence = info.parentStatementListBeingUnparsedUsingPartialTokenSequence();
 
-                    unp->cur.reset_chars_on_line();
-                    
+#if 1
+                    if (parentStatementListBeingUnparsedUsingPartialTokenSequence == true)
+                       {
 #if 0
-                    printf ("xxx yyy \n");
+                         printf ("In unparseStatement(): We need to supress the leading CR for this case (initially statements in a SgBasicBlock) \n");
 #endif
+#if 0
+                         curprint("/* In unparseStatement(): suppress CR */");
+#endif
+                      // ROSE_ASSERT(false);
+                       }
+                      else
+                       {
+                      // Note that becasue of the logic below, this is the first CR for a SgBasicBlock (I don't know exactly why).
+                      // The other CR frequenty introduces is in the unparseLanguageSpecificStatement() function.
+                         unp->cur.reset_chars_on_line();
+#if 1
+                         curprint("/* In unparseStatement(): before format: FORMAT_BEFORE_STMT */");
+#endif
+                         unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
+#if 1
+                         curprint("/* In unparseStatement(): after format: FORMAT_BEFORE_STMT */");
+#endif
+                       }
+#else
+                    unp->cur.reset_chars_on_line();
+
+#error "DEAD CODE!"
+                    
 #if 0
                     curprint("/* In unparseStatement(): before format: FORMAT_BEFORE_STMT */");
 #endif
@@ -2226,7 +2250,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if 0
                     curprint("/* In unparseStatement(): after format: FORMAT_BEFORE_STMT */");
 #endif
-
+#endif
                  // DQ (12/12/2014): If we are transitioning to unparsing from the AST, then this should be valid.
                     if (info.unparsedPartiallyUsingTokenStream() == true)
                        {
@@ -2327,7 +2351,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                unparseStatementNumbers(stmt,info);
 #if 0
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-               curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt */ \n ");
+               curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt */");
 #endif
                switch (stmt->variantT())
                   {
