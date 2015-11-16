@@ -14,7 +14,7 @@ using namespace rose;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Define this if you want attribute values to be leaked instead of deleted.
-#define ROSE_AstAttributeMechanism_LEAK_VALUES_BUG
+//#define ROSE_AstAttributeMechanism_LEAK_VALUES_BUG
 
 // Define this if you want the AstAttributeMechanism assignment operator to shallow-copy attributes.
 //#define ROSE_AstAttributeMechanism_DEFAULT_ASSIGNMENT_OPERATOR_BUG
