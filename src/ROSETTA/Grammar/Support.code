@@ -6273,6 +6273,9 @@ HEADER_UNPARSE_INFO_START
             // DQ (3/25/2015): This is the support required for the offsetof() function family (__offsetof(), __builtin_offsetof(), etc.).
                b_skipCompilerGeneratedSubExpressions = 49, /*!< Supress compiler generated subexpressions (used to output fields in the 2nd parameter of the offsetof() function family. */
 
+            // DQ (11/15/2015): Token-based unparsing support for partial token sequence unparsing of lists of statements (controls fromatting).
+               b_parentStatementListBeingUnparsedUsingPartialTokenSequence = 50, /*!< Controls output formatting (CR's) in mixing unparsing from token stream with unparsing from the AST. */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -6574,6 +6577,11 @@ HEADER_UNPARSE_INFO_START
           bool skipCompilerGeneratedSubExpressions() const;
           void set_skipCompilerGeneratedSubExpressions();
           void unset_skipCompilerGeneratedSubExpressions();
+
+       // DQ (11/15/2015): Token-based unparsing support for partial token sequence unparsing of lists of statements (controls fromatting).
+          bool parentStatementListBeingUnparsedUsingPartialTokenSequence() const;
+          void set_parentStatementListBeingUnparsedUsingPartialTokenSequence();
+          void unset_parentStatementListBeingUnparsedUsingPartialTokenSequence();
 
 #if 0
    // MK: These access functions are now automatically generated!
@@ -17977,6 +17985,16 @@ void SgUnparse_Info::set_skipCompilerGeneratedSubExpressions()
 void SgUnparse_Info::unset_skipCompilerGeneratedSubExpressions()
    { unsetBit(b_skipCompilerGeneratedSubExpressions); }
 
+// DQ (11/15/2015): Token-based unparsing support for partial token sequence unparsing of lists of statements (controls fromatting).
+bool SgUnparse_Info::parentStatementListBeingUnparsedUsingPartialTokenSequence() const
+   { return checkBit(b_parentStatementListBeingUnparsedUsingPartialTokenSequence); }
+
+void SgUnparse_Info::set_parentStatementListBeingUnparsedUsingPartialTokenSequence()
+   { setBit(b_parentStatementListBeingUnparsedUsingPartialTokenSequence); }
+
+void SgUnparse_Info::unset_parentStatementListBeingUnparsedUsingPartialTokenSequence()
+   { unsetBit(b_parentStatementListBeingUnparsedUsingPartialTokenSequence); }
+
 
 void
 SgUnparse_Info::display ( const std::string & label ) const
@@ -18063,6 +18081,8 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("supressImplicitThisOperator            = %s \n",( supressImplicitThisOperator() == true ) ? "true" : "false");
      printf ("unparsedPartiallyUsingTokenStream      = %s \n",( unparsedPartiallyUsingTokenStream() == true ) ? "true" : "false");
      printf ("skipCompilerGeneratedSubExpressions    = %s \n",( skipCompilerGeneratedSubExpressions() == true ) ? "true" : "false");
+
+     printf ("parentStatementListBeingUnparsedUsingPartialTokenSequence = %s \n",( parentStatementListBeingUnparsedUsingPartialTokenSequence() == true ) ? "true" : "false");
 #endif
 
      switch (p_access_attribute)
