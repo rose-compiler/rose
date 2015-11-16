@@ -1180,6 +1180,10 @@ typedef boost::shared_ptr<class State> StatePtr;
  *  processing an instruction modifies the state.  The State is the base class class for the semantic states of various
  *  instruction semantic policies.  It contains storage for all the machine registers and memory.
  *
+ *  Sometimes it's useful to have a state that contains only registers or only memory.  Although this class doesn't allow its
+ *  register or memory state children to be null pointers, the @ref NullSemantics class provides register and memory states
+ *  that are mostly no-ops.
+ *
  *  States must be copyable objects.  Many analyses keep a copy of the machine state for each instruction or each CFG
  *  vertex.
  *
@@ -1261,20 +1265,17 @@ public:
     SValuePtr get_protoval() const { return protoval; }
 
     /** Initialize state.  The register and memory states are cleared. */
-    virtual void clear() {
-        registers->clear();
-        memory->clear();
-    }
+    virtual void clear();
 
-    /** Initialize all registers to zero. Memory is not affected. */
-    virtual void zero_registers() {
-        registers->zero();
-    }
+    /** Initialize all registers to zero.
+     *
+     *  Calls the @ref RegisterState::zero method. Memory is not affected. */
+    virtual void zero_registers();
 
-    /** Clear all memory locations.  This just empties the memory vector. */
-    virtual void clear_memory() {
-        memory->clear();
-    }
+    /** Clear all memory locations.
+     *
+     *  Calls the @ref MemoryState::clear method. Registers are not affected. */
+    virtual void clear_memory();
 
     /** Return the register state. */
     RegisterStatePtr get_register_state() {
@@ -1288,69 +1289,70 @@ public:
     
     /** Read a value from a register.
      *
-     *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state. See
+     *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state.  See
      *  BaseSemantics::RiscOperators::readRegister() for details. */
-    virtual SValuePtr readRegister(const RegisterDescriptor &desc, RiscOperators *ops) {
-        return registers->readRegister(desc, ops);
-    }
+    virtual SValuePtr readRegister(const RegisterDescriptor &desc, RiscOperators *ops);
 
     /** Write a value to a register.
      *
-     *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state. See
+     *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state.  See
      *  BaseSemantics::RiscOperators::writeRegister() for details. */
-    virtual void writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, RiscOperators *ops) {
-        registers->writeRegister(desc, value, ops);
-    }
+    virtual void writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, RiscOperators *ops);
 
     /** Read a value from memory.
      *
-     *  The BaseSemantics::readMemory() implementation simply delegates to the memory state member of this state. See
+     *  The BaseSemantics::readMemory() implementation simply delegates to the memory state member of this state.  See
      *  BaseSemantics::RiscOperators::readMemory() for details.  */
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
-                                 RiscOperators *addrOps, RiscOperators *valOps) {
-        return memory->readMemory(address, dflt, addrOps, valOps);
-    }
+                                 RiscOperators *addrOps, RiscOperators *valOps);
 
     /** Write a value to memory.
      *
-     *  The BaseSemantics::writeMemory() implementation simply delegates to the memory state member of this state. See
+     *  The BaseSemantics::writeMemory() implementation simply delegates to the memory state member of this state.  See
      *  BaseSemantics::RiscOperators::writeMemory() for details. */
-    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value,
-                             RiscOperators *addrOps, RiscOperators *valOps) {
-        memory->writeMemory(addr, value, addrOps, valOps);
-    }
+    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps);
 
-    /** Print the register contents. This emits one line per register and contains the register name and its value.
+    /** Print the register contents.
+     *
+     *  This method emits one line per register and contains the register name and its value.
+     *
      * @{ */
-    void print_registers(std::ostream &stream, const std::string prefix="") {
-        Formatter fmt;
-        fmt.set_line_prefix(prefix);
-        print_registers(stream, fmt);
-    }
-    virtual void print_registers(std::ostream &stream, Formatter &fmt) const {
-        registers->print(stream, fmt);
-    }
+    void printRegisters(std::ostream &stream, const std::string &prefix = "");
+    virtual void printRegisters(std::ostream &stream, Formatter &fmt) const;
     /** @} */
 
-    /** Print memory contents.  This simply calls the MemoryState::print method.
+    // [Robb Matzke 2015-11-16]: deprecated
+    void print_registers(std::ostream &stream, const std::string &prefix = "") ROSE_DEPRECATED("use printRegisters instead") {
+        printRegisters(stream, prefix);
+    }
+
+    // [Robb Matzke 2015-11-16]: deprecated
+    virtual void print_registers(std::ostream &stream, Formatter &fmt) const ROSE_DEPRECATED("use printRegisters instead") {
+        printRegisters(stream, fmt);
+    }
+
+    /** Print memory contents.
+     *
+     *  This simply calls the MemoryState::print method.
+     *
      * @{ */
-    void print_memory(std::ostream &stream, const std::string prefix="") const {
-        Formatter fmt;
-        fmt.set_line_prefix(prefix);
-        print_registers(stream, fmt);
-    }
-    virtual void print_memory(std::ostream &stream, Formatter &fmt) const {
-        memory->print(stream, fmt);
-    }
+    void printMemory(std::ostream &stream, const std::string &prefix = "") const;
+    virtual void printMemory(std::ostream &stream, Formatter &fmt) const;
     /** @} */
+
+    // [Robb Matzke 2015-11-16]: deprecated
+    void print_memory(std::ostream &stream, const std::string prefix = "") const ROSE_DEPRECATED("use printMemory instead") {
+        printMemory(stream, prefix);
+    }
+
+    // [Robb Matzke 2015-11-16]: deprecated
+    virtual void print_memory(std::ostream &stream, Formatter &fmt) const ROSE_DEPRECATED("use printMemory instead") {
+        printMemory(stream, fmt);
+    }
 
     /** Print the state.  This emits a multi-line string containing the registers and all known memory locations.
      * @{ */
-    void print(std::ostream &stream, const std::string prefix="") const {
-        Formatter fmt;
-        fmt.set_line_prefix(prefix);
-        print(stream, fmt);
-    }
+    void print(std::ostream &stream, const std::string &prefix = "") const;
     virtual void print(std::ostream&, Formatter&) const;
     /** @} */
 
