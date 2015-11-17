@@ -465,6 +465,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // AST is built, instead of before it is unparsed.  This makes no difference if we don't do transformations, but if transformations
   // are done if this is computed here then statements removed from the AST showup in the white space between statements (an error).
 
+#error "DEAD CODE!"
+
   // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
   // if (SageInterface::is_C_language() == true)
   // if (SageInterface::is_C_language() == true && file->get_unparse_tokens() == true)
@@ -479,12 +481,16 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
        // *** Next we have to attached the data base ***
           buildTokenStreamMapping(file);
 
+#error "DEAD CODE!"
+
 #if 1
           if ( SgProject::get_verbose() > 0 )
              {
                printf ("In Unparser::unparseFile(): SgTokenPtrList token_list: token_list.size() = %" PRIuPTR " \n",file->get_token_list().size());
              }
 #endif
+
+#error "DEAD CODE!"
 
 #if 0
           printf ("DONE: Building token stream mapping map! \n");
