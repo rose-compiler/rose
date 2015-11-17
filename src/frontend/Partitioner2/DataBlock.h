@@ -1,9 +1,9 @@
 #ifndef ROSE_Partitioner2_DataBlock_H
 #define ROSE_Partitioner2_DataBlock_H
 
-#include <BinaryAttribute.h>
 #include <Partitioner2/BasicTypes.h>
 
+#include <Sawyer/Attribute.h>
 #include <Sawyer/SharedPointer.h>
 
 #include <string>
@@ -15,7 +15,7 @@ namespace Partitioner2 {
 /** Data block information.
  *
  *  A data block represents data with a type. */
-class DataBlock: public Sawyer::SharedObject, public Attribute::Storage {
+class DataBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage {
 public:
     /** Shared pointer to a data block. */
     typedef Sawyer::SharedPointer<DataBlock> Ptr;

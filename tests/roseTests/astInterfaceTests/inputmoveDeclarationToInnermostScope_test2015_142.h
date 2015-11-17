@@ -1,0 +1,2 @@
+
+double global_abc;

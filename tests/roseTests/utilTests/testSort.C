@@ -30,10 +30,10 @@ int main(int argc, char *argv[]) {
     size_t nvalues = 16;
     size_t nthreads = 1;
     if (argc>1)
-        nvalues = strtoul(argv[1], 0, NULL);
+        nvalues = strtoul(argv[1], NULL, 0);
     if (argc>2)
-        nthreads = strtoul(argv[2], 0, NULL);
-
+        nthreads = strtoul(argv[2], NULL, 0);
+    
     std::cerr <<"Generating " <<nvalues <<" values... ";
     Sawyer::Stopwatch generation;
     LinearCongruentialGenerator random;

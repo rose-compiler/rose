@@ -194,7 +194,7 @@ int main(int argc,char *argv[])
 #endif
 //------------------end sequential reference execution----------------------------------------    
   }
-
+//
 // Be careful for a needed barrier!!  avoid race condition!!
   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -214,6 +214,7 @@ int main(int argc,char *argv[])
   }
 
 
+// -------------------TODO translate this 2015-10-26 ------------------
 // Translate mapped scalar data, communicate to all processes
 // Alternatively, each process calculate them??
 

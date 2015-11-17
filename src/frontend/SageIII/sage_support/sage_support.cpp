@@ -5392,8 +5392,10 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   }
              }
 
+#if 0
+       // DQ (11/8/2015): Commented out to avoid output spew.
           printf ("In SgFile::compileOutput(): outputFilename = %s \n",outputFilename.c_str());
-
+#endif
           set_unparse_output_filename(outputFilename);
         }
 #endif

@@ -7,9 +7,9 @@
 
 #include "Map.h"
 
-#include <BinaryAttribute.h>
 #include <cassert>
 #include <inttypes.h>
+#include <Sawyer/Attribute.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Set.h>
 #include <Sawyer/SharedPointer.h>
@@ -190,7 +190,7 @@ class Node
     : public Sawyer::SharedObject,
       public Sawyer::SharedFromThis<Node>,
       public Sawyer::SmallObject,
-      public Attribute::Storage {     // Attributes are not significant for hashing or arithmetic
+      public Sawyer::Attribute::Storage { // Attributes are not significant for hashing or arithmetic
 protected:
     size_t nBits_;                    /**< Number of significant bits. Constant over the life of the node. */
     size_t domainWidth_;              /**< Width of domain for unary functions. E.g., memory. */

@@ -41,7 +41,7 @@ class SecurityVulnerabilityAttribute : public AstAttribute
 
        // Support for the coping of AST and associated attributes on each IR node (required for attributes 
        // derived from AstAttribute, else just the base class AstAttribute will be copied).
-          virtual AstAttribute* copy();
+          virtual AstAttribute* copy() const;
    };
 
 class SecurityFlawOriginalSubtreeAttribute : public AstAttribute
@@ -61,7 +61,7 @@ class SecurityFlawOriginalSubtreeAttribute : public AstAttribute
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
 
-          virtual AstAttribute* copy();
+          virtual AstAttribute* copy() const;
    };
 
 
@@ -87,7 +87,7 @@ class SeededSecurityFlawCloneAttribute : public AstAttribute
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
 
-          virtual AstAttribute* copy();
+          virtual AstAttribute* copy() const;
    };
 
 class PrimarySecurityVulnerabilityForCloneAttribute : public AstAttribute
@@ -116,7 +116,7 @@ class PrimarySecurityVulnerabilityForCloneAttribute : public AstAttribute
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
 
-          virtual AstAttribute* copy();
+          virtual AstAttribute* copy() const;
    };
 
 class SeedMethodologyCloneAttribute : public AstAttribute
@@ -143,7 +143,7 @@ class SeedMethodologyCloneAttribute : public AstAttribute
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
 
-          virtual AstAttribute* copy();
+          virtual AstAttribute* copy() const;
    };
 
 
@@ -173,7 +173,7 @@ class PrimarySeedLocationForSeedMethodologyAttribute : public AstAttribute
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
 
-          virtual AstAttribute* copy();
+          virtual AstAttribute* copy() const;
    };
 
 
@@ -184,7 +184,7 @@ class PruningAttribute : public AstAttribute
      public:
           bool commentOutNodeInGraph();
 
-          virtual AstAttribute* copy();
+          virtual AstAttribute* copy() const;
 
           virtual ~PruningAttribute();
    };
