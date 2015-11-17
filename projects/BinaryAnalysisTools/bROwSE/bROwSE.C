@@ -23,6 +23,7 @@ Attribute::Id ATTR_StackDelta(-1);
 Attribute::Id ATTR_Ast(-1);
 Attribute::Id ATTR_Heat(-1);
 Attribute::Id ATTR_DataFlow(-1);
+Attribute::Id ATTR_CallConvDef(-1);
 
 void
 Context::init() {
@@ -43,6 +44,7 @@ Context::init() {
         ATTR_Ast                  = Attribute::declare("Abstract syntax tree");
         ATTR_Heat                 = Attribute::declare("Heat value for color gradients [0..1]");
         ATTR_DataFlow             = Attribute::declare("Data flow information");
+        ATTR_CallConvDef          = Attribute::declare("Calling convention definition");
     }
 }
 

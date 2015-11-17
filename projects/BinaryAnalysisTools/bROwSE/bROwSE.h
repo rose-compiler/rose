@@ -67,6 +67,7 @@ extern rose::BinaryAnalysis::Attribute::Id ATTR_StackDelta;
 extern rose::BinaryAnalysis::Attribute::Id ATTR_Ast;
 extern rose::BinaryAnalysis::Attribute::Id ATTR_Heat;
 extern rose::BinaryAnalysis::Attribute::Id ATTR_DataFlow;
+extern rose::BinaryAnalysis::Attribute::Id ATTR_CallConvDef;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Context passed around to pretty much all the widgets.
