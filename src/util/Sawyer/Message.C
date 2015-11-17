@@ -2006,6 +2006,24 @@ Facilities::control(const std::string &ss) {
 }
 
 // thread-safe
+SAWYER_EXPORT std::string
+Facilities::configuration() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    std::string retval;
+    BOOST_FOREACH (const FacilityMap::Node &facility, facilities_.nodes()) {
+        retval += (retval.empty()?"":",") + facility.key() + "(";
+        for (int imp=0; imp<N_IMPORTANCE; ++imp) {
+            retval += (imp==0 ? "" : ",");
+            if (!(*facility.value())[(Importance)imp]) 
+                retval += "!";
+            retval += stringifyImportance((Importance)imp);
+        }
+        retval += ")";
+    }
+    return retval;
+}
+
+// thread-safe
 SAWYER_EXPORT std::vector<std::string>
 Facilities::facilityNames() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
@@ -2040,6 +2058,34 @@ Facilities::print(std::ostream &log) const {
                 log <<(facility->get(mi) ? (mi==WHERE?'H':stringifyImportance(mi)[0]) : '-');
             }
             log <<" " <<fnode.key() <<"\n";
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      FacilitiesGuard
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+FacilitiesGuard::save() {
+    BOOST_FOREACH (const std::string &facilityName, facilities_.facilityNames()) {
+        std::vector<bool> facilityState = state_.insertMaybeDefault(facilityName);
+        facilityState.resize(N_IMPORTANCE, false);
+        Facility &facility = facilities_.facility(facilityName);
+        for (int i=0; i<N_IMPORTANCE; ++i)
+            facilityState[i] = facility[(Importance)i].enabled();
+    }
+}
+
+void
+FacilitiesGuard::restore() {
+    BOOST_FOREACH (const State::Node &saved, state_.nodes()) {
+        try {
+            Facility &facility = facilities_.facility(saved.key());
+            for (int i=0; i<N_IMPORTANCE; ++i)
+                facility[(Importance)i].enable(saved.value()[i]);
+        } catch (const std::runtime_error &e) {
+            // name probably doesn't exist in this facility any more, so don't try to enable/disable its streams.
         }
     }
 }
