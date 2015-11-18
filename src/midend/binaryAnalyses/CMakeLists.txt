@@ -9,6 +9,7 @@ add_library(midend_binary OBJECT
   BinaryNoOperation.C
   BinaryPointerDetection.C
   BinaryReturnValueUsed.C
+  BinaryStackDelta.C
   BinaryString.C
   BinarySymbolicExpr.C
   BinarySymbolicExprParser.C
@@ -67,6 +68,7 @@ install(
     BinaryMagic.h
     BinaryNoOperation.h
     BinaryPointerDetection.h
+    BinaryStackDelta.h
     BinaryStackVariable.h
     BinaryString.h
     BinarySymbolicExpr.h

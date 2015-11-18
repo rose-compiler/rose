@@ -52,6 +52,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryNoOperation.C						\
     BinaryPointerDetection.C					\
     BinaryReturnValueUsed.C					\
+    BinaryStackDelta.C						\
     BinaryString.C						\
     BinarySymbolicExpr.C					\
     BinarySymbolicExprParser.C					\
@@ -128,6 +129,7 @@ pkginclude_HEADERS =					\
     BinaryPointerDetection.h				\
     BinaryAnalysisUtils.h				\
     BinaryReturnValueUsed.h				\
+    BinaryStackDelta.h					\
     BinaryStackVariable.h				\
     BinaryString.h					\
     BinarySymbolicExpr.h				\
