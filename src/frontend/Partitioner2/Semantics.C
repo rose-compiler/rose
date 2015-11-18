@@ -7,6 +7,7 @@ namespace Partitioner2 {
 namespace Semantics {
 
 namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace SymbolicSemantics = rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Memory State

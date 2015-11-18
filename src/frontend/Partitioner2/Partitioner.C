@@ -822,8 +822,7 @@ BaseSemantics::SValuePtr
 Partitioner::basicBlockStackDeltaIn(const BasicBlock::Ptr &bb) const {
     ASSERT_not_null(bb);
 
-    BaseSemantics::SValuePtr delta;
-    if (bb->stackDeltaIn().getOptional().assignTo(delta))
+    if (BaseSemantics::SValuePtr delta = bb->stackDeltaIn())
         return delta;                                   // already cached
 
     // The basic block must be owned by a function, and we use that function's entry point to generate a CFG, which is then
@@ -842,20 +841,17 @@ Partitioner::basicBlockStackDeltaIn(const BasicBlock::Ptr &bb) const {
     }
 
     functionStackDelta(function);                       // assigns block deltas by side effect
-    bb->stackDeltaIn().getOptional().assignTo(delta);
-    return delta;
+    return bb->stackDeltaIn();
 }
 
 BaseSemantics::SValuePtr
 Partitioner::basicBlockStackDeltaOut(const BasicBlock::Ptr &bb) const {
     ASSERT_not_null(bb);
 
-    BaseSemantics::SValuePtr delta;
-    if (bb->stackDeltaOut().getOptional().assignTo(delta))
+    if (BaseSemantics::SValuePtr delta = bb->stackDeltaOut())
         return delta;                                   // already cached
     basicBlockStackDeltaIn(bb);                         // caches stackDeltaOut by side effect
-    bb->stackDeltaOut().getOptional().assignTo(delta);
-    return delta;
+    return bb->stackDeltaOut();
 }
 
 ControlFlowGraph::ConstVertexIterator
@@ -1484,8 +1480,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
             out <<prefix <<"  incoming stack delta: ";
             if (computeProperties)
                 basicBlockStackDeltaIn(bb);
-            BaseSemantics::SValuePtr delta;
-            if (bb->stackDeltaIn().getOptional().assignTo(delta) && delta!=NULL) {
+            if (BaseSemantics::SValuePtr delta = bb->stackDeltaIn()) {
                 if (delta->is_number() && delta->get_width()<=64) {
                     int64_t n = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
                     out <<n <<"\n";
@@ -1536,8 +1531,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
             out <<prefix <<"  outgoing stack delta: ";
             if (computeProperties)
                 basicBlockStackDeltaOut(bb);
-            BaseSemantics::SValuePtr delta;
-            if (bb->stackDeltaOut().getOptional().assignTo(delta) && delta!=NULL) {
+            if (BaseSemantics::SValuePtr delta = bb->stackDeltaOut()) {
                 if (delta->is_number() && delta->get_width()<=64) {
                     int64_t n = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
                     out <<n <<"\n";

@@ -576,7 +576,7 @@ CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator &ver
                 s += StringUtility::addrToString(insn->get_address()).substr(2) + " ";
 
             if (showInstructionStackDeltas_) {
-                int64_t delta = insn->get_stackDelta();
+                int64_t delta = insn->get_stackDeltaIn();
                 if (delta != SgAsmInstruction::INVALID_STACK_DELTA) {
                     // Stack delta as a two-character hexadecimal, but show a '+' sign when it's positive and nothing
                     // when it's negative (negative is the usual case for most architectures).

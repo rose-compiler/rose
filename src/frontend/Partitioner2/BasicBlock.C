@@ -227,6 +227,60 @@ BasicBlock::insertDataBlock(const DataBlock::Ptr &dblock) {
     return insertUnique(dblocks_, dblock, sortDataBlocks);
 }
 
+BaseSemantics::SValuePtr
+BasicBlock::stackDeltaIn() const {
+    return stackDeltaIn_.getOptional().orDefault();
+}
+
+void
+BasicBlock::stackDeltaIn(const BaseSemantics::SValuePtr &v) {
+    stackDeltaIn_ = v;
+}
+
+int64_t
+BasicBlock::stackDeltaInConcrete() const {
+    BaseSemantics::SValuePtr v = stackDeltaIn();
+    if (v && v->is_number() && v->get_width() <= 64)
+        return IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
+    return SgAsmInstruction::INVALID_STACK_DELTA;
+}
+
+BaseSemantics::SValuePtr
+BasicBlock::stackDeltaOut() const {
+    return stackDeltaOut_.getOptional().orDefault();
+}
+
+void
+BasicBlock::stackDeltaOut(const BaseSemantics::SValuePtr &v) {
+    stackDeltaOut_ = v;
+}
+
+int64_t
+BasicBlock::stackDeltaOutConcrete() const {
+    BaseSemantics::SValuePtr v = stackDeltaOut();
+    if (v && v->is_number() && v->get_width() <= 64)
+        return IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
+    return SgAsmInstruction::INVALID_STACK_DELTA;
+}
+
+BaseSemantics::SValuePtr
+BasicBlock::stackDelta() const {
+    return stackDelta_.getOptional().orDefault();
+}
+
+void
+BasicBlock::stackDelta(const BaseSemantics::SValuePtr &v) {
+    stackDelta_ = v;
+}
+
+int64_t
+BasicBlock::stackDeltaConcrete() const {
+    BaseSemantics::SValuePtr v = stackDelta();
+    if (v && v->is_number() && v->get_width() <= 64)
+        return IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
+    return SgAsmInstruction::INVALID_STACK_DELTA;
+}
+
 } // namespace
 } // namespace
 } // namespace
