@@ -1044,6 +1044,32 @@ AddSimplifier::rewrite(Interior *inode) const {
         }
     };
 
+    // Rewrite (add ... (negate (add a b)) ...) => (add ... (negate a) (negate b) ...)
+    struct distributeNegations {
+        Ptr operator()(Interior *add) {
+            Nodes children;
+            bool distributed = false;
+            for (size_t i=0; i<add->nChildren(); ++i) {
+                bool pushed = false;
+                InteriorPtr addArg = add->child(i)->isInteriorNode();
+                if (addArg && addArg->getOperator()==OP_NEGATE && addArg->nChildren()==1) {
+                    if (InteriorPtr negateArg = addArg->child(0)->isInteriorNode()) {
+                        if (negateArg && negateArg->getOperator()==OP_ADD && negateArg->nChildren()>0) {
+                            for (size_t j=0; j<negateArg->nChildren(); ++j)
+                                children.push_back(makeNegate(negateArg->child(j)));
+                            pushed = distributed = true;
+                        }
+                    }
+                }
+                if (!pushed)
+                    children.push_back(add->child(i));
+            }
+            if (!distributed)
+                return Ptr();
+            return Interior::create(0, OP_ADD, children, add->comment());
+        }
+    };
+
     // Arguments that are negated cancel out similar arguments that are not negated
     bool had_duals = false;
     Sawyer::Container::BitVector adjustment(inode->nBits());
@@ -1060,10 +1086,17 @@ AddSimplifier::rewrite(Interior *inode) const {
             }
         }
     }
-    if (!had_duals)
+
+    // Otherwise distribute negations across adds:
+    //   (add ... (negate (add a b)) ...) => (add ... (negate a) (negate b) ...)
+    if (!had_duals) {
+        if (Ptr distributed = distributeNegations()(inode))
+            return distributed;
         return Ptr();
+    }
 
     // Build the new expression
+    ASSERT_require(had_duals);
     children.erase(std::remove(children.begin(), children.end(), Ptr()), children.end());
     if (!adjustment.isEqualToZero())
         children.push_back(makeConstant(adjustment));
@@ -1919,11 +1952,11 @@ Interior::simplifyTop() {
         Ptr newnode = node;
         switch (inode->getOperator()) {
             case OP_ADD:
-                newnode = inode->associative()->commutative()->identity(0);
+                newnode = inode->rewrite(AddSimplifier());
+                if (newnode==node)
+                    newnode = inode->associative()->commutative()->identity(0);
                 if (newnode==node)
                     newnode = inode->foldConstants(AddSimplifier());
-                if (newnode==node)
-                    newnode = inode->rewrite(AddSimplifier());
                 break;
             case OP_AND:
             case OP_BV_AND:
