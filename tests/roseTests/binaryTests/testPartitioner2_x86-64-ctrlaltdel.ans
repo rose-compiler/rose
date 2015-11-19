@@ -8,6 +8,7 @@
 0x004005f6: Successor blocks: unknown
 
 0x00400610: ================================== Function (function call, graph) unknown name
+0x00400610: Function stack delta: +8
 
 0x00400610: Basic block reasons: entry point
 0x00400610: ff 25 72 06 10 00       |.%r...  |<sp+0 >   jmp    qword ds:[rip + 0x0000000000100672]
