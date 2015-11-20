@@ -32,15 +32,16 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 class MemoryState: public InstructionSemantics2::SymbolicSemantics::MemoryState {
     const MemoryMap *map_;
     std::vector<SValuePtr> addressesRead_;
+    bool enabled_;
 
 protected:
     explicit MemoryState(const InstructionSemantics2::BaseSemantics::MemoryCellPtr &protocell)
-        : InstructionSemantics2::SymbolicSemantics::MemoryState(protocell), map_(NULL) {}
+        : InstructionSemantics2::SymbolicSemantics::MemoryState(protocell), map_(NULL), enabled_(true) {}
     MemoryState(const InstructionSemantics2::BaseSemantics::SValuePtr &addrProtoval,
                 const InstructionSemantics2::BaseSemantics::SValuePtr &valProtoval)
-        : InstructionSemantics2::SymbolicSemantics::MemoryState(addrProtoval, valProtoval), map_(NULL) {}
+        : InstructionSemantics2::SymbolicSemantics::MemoryState(addrProtoval, valProtoval), map_(NULL), enabled_(true) {}
     MemoryState(const MemoryState &other)
-        : InstructionSemantics2::SymbolicSemantics::MemoryState(other), map_(other.map_) {}
+        : InstructionSemantics2::SymbolicSemantics::MemoryState(other), map_(other.map_), enabled_(other.enabled_) {}
 
 public:
     /** Instantiates a new memory state having specified prototypical cells and value. */
@@ -90,6 +91,16 @@ public:
     }
 
 public:
+    /** Property: Enabled.
+     *
+     *  A memory state can be disabled, in which case writes are ignored and reads always return a copy of the provided default
+     *  value. Disabling a memory state is useful for certain data-flow analyses that don't need memory.
+     *
+     * @{ */
+    bool enabled() const { return enabled_; }
+    void enabled(bool b) { enabled_ = b; }
+    /** @} */
+
     /** The memory map for the specimen.
      *
      *  If this memory map exists and contains segments that have read permission but lack write permission, then any reads
@@ -114,6 +125,12 @@ public:
                const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
                InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
                InstructionSemantics2::BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+
+    virtual void
+    writeMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+                const InstructionSemantics2::BaseSemantics::SValuePtr &value,
+                InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
+                InstructionSemantics2::BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,21 +147,22 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 class RiscOperators: public InstructionSemantics2::SymbolicSemantics::RiscOperators {
 private:
     static const size_t TRIM_THRESHOLD_DFLT = 100;
-    size_t trimThreshold_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit RiscOperators(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : InstructionSemantics2::SymbolicSemantics::RiscOperators(protoval, solver), trimThreshold_(TRIM_THRESHOLD_DFLT) {
+        : InstructionSemantics2::SymbolicSemantics::RiscOperators(protoval, solver) {
         set_name("PartitionerSemantics");
         (void)SValue::promote(protoval);                // make sure its dynamic type is appropriate
+        trimThreshold(TRIM_THRESHOLD_DFLT);
     }
 
     explicit RiscOperators(const InstructionSemantics2::BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : InstructionSemantics2::SymbolicSemantics::RiscOperators(state, solver), trimThreshold_(TRIM_THRESHOLD_DFLT) {
+        : InstructionSemantics2::SymbolicSemantics::RiscOperators(state, solver) {
         set_name("PartitionerSemantics");
         (void)SValue::promote(state->get_protoval());
+        trimThreshold(TRIM_THRESHOLD_DFLT);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,137 +215,11 @@ public:
         assert(retval!=NULL);
         return retval;
     }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // New methods introduced at this level of the hierarchy
-public:
-    /** Controls trimming of large expressions.
-     *
-     *  In order to keep symbolic expressions from blowing up and taking extraordinarily long to evaluate, a size limit can be
-     *  imposed.  If the limit is reached, then the expression is replaced with a new undefined value of the same width.
-     *  Setting the trim threshold to zero disables trimming.
-     *
-     * @{ */
-    size_t trimThreshold() const { return trimThreshold_; }
-    void trimThreshold(size_t n) { trimThreshold_ = n; }
-    InstructionSemantics2::BaseSemantics::SValuePtr trim(const InstructionSemantics2::BaseSemantics::SValuePtr &a_);
-    /** @} */
     
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
+    // Override methods from base class.
 public:
     virtual void startInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
-    virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    and_(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-         const InstructionSemantics2::BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    or_(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-        const InstructionSemantics2::BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    xor_(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-         const InstructionSemantics2::BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    invert(const InstructionSemantics2::BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    extract(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-            size_t begin_bit, size_t end_bit) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    concat(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-           const InstructionSemantics2::BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    leastSignificantSetBit(const InstructionSemantics2::BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    mostSignificantSetBit(const InstructionSemantics2::BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    rotateLeft(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    rotateRight(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-                const InstructionSemantics2::BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    shiftLeft(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-              const InstructionSemantics2::BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    shiftRight(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    shiftRightArithmetic(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-                         const InstructionSemantics2::BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    equalToZero(const InstructionSemantics2::BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    ite(const InstructionSemantics2::BaseSemantics::SValuePtr &sel_,
-        const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-        const InstructionSemantics2::BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    unsignedExtend(const InstructionSemantics2::BaseSemantics::SValuePtr &a_, size_t new_width) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    signExtend(const InstructionSemantics2::BaseSemantics::SValuePtr &a_, size_t new_width) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    add(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-        const InstructionSemantics2::BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    addWithCarries(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-                   const InstructionSemantics2::BaseSemantics::SValuePtr &b_,
-                   const InstructionSemantics2::BaseSemantics::SValuePtr &c_,
-                   InstructionSemantics2::BaseSemantics::SValuePtr &carry_out/*out*/);
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    negate(const InstructionSemantics2::BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    signedDivide(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-                 const InstructionSemantics2::BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    signedModulo(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-                 const InstructionSemantics2::BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    signedMultiply(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-                   const InstructionSemantics2::BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    unsignedDivide(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-                   const InstructionSemantics2::BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    unsignedModulo(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-                   const InstructionSemantics2::BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    unsignedMultiply(const InstructionSemantics2::BaseSemantics::SValuePtr &a_,
-                     const InstructionSemantics2::BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    readMemory(const RegisterDescriptor &segreg,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 };
 
 } // namespace
