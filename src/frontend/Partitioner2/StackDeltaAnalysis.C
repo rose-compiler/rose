@@ -8,6 +8,7 @@
 #include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/SharedPointer.h>
+#include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
 #include <SymbolicSemantics2.h>
 
@@ -92,15 +93,16 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     }
 
     // (Re)run the analysis. Even if we ran the analysis already and it failed to determine the stack delta, things might have
-    // changed in the CFG that allows it to succeed this time.
-    StackDelta::Analysis sdAnalysis;
+    // changed in the CFG that allows it to succeed this time.  We provide our own dispatcher because we want the analysis to
+    // be fast by not using any memory state (stack pointers are rarely saved and restored).
+    BaseSemantics::DispatcherPtr cpu = newDispatcher(newOperators());
+    Semantics::MemoryState::promote(cpu->get_operators()->get_state()->get_memory_state())->enabled(false);
+    StackDelta::Analysis sdAnalysis(cpu);
     sdAnalysis.initialConcreteStackPointer(0x7fff0000); // optional: helps reach more solutions
     InterproceduralPredicate ip(*this);
     sdAnalysis.analyzeFunction(*this, function, ip);
     retval = sdAnalysis.functionStackDelta();
-#if 0 // DEBUGGING [Robb Matzke 2015-11-18]
-    std::cerr <<sdAnalysis;
-#endif
+
 #if 0 // [Robb Matzke 2015-11-17]
     // If any basic blocks branched to an indeterminate location then we cannot know the stack delta. The indeterminate
     // location might have eventually branched back into this function with an arbitrary stack delta that should have poisoned
@@ -152,14 +154,6 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
                     if (!SymbolicSemantics::SValue::promote(delta)->get_expression()->isLeafNode())
                         delta = ops->undefined_(delta->get_width());
                     bb->stackDeltaOut(delta);
-#if 0 // DEBUGGING [Robb Matzke 2015-11-18]
-                    std::cerr <<"ROBB: " <<bb->printableName() <<" delta-out = ";
-                    if (delta) {
-                        std::cerr <<*delta <<"\n";
-                    } else {
-                        std::cerr <<"none\n";
-                    }
-#endif
                 }
             }
         }
@@ -172,10 +166,6 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
                 BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
                     if (BaseSemantics::SValuePtr insnSp = sdAnalysis.instructionStackPointers(insn).first) {
                         BaseSemantics::SValuePtr delta = ops->subtract(insnSp, functionInitialStackPtr);
-#if 0 // DEBUGGING [Robb Matzke 2015-11-18]
-                        std::cerr <<"ROBB: SgAsmInstruction.stackDeltaIn = " <<*delta <<"\n"
-                                  <<"      " <<unparseInstructionWithAddress(insn) <<"\n";
-#endif
                         insn->set_stackDeltaIn(sdAnalysis.toInt(delta));
                     }
                 }
@@ -186,7 +176,6 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     return retval;
 }
 
-#if 0 // [Robb Matzke 2015-11-18]
 struct StackDeltaWorker {
     const Partitioner &partitioner;
     Sawyer::ProgressBar<size_t> &progress;
@@ -195,7 +184,19 @@ struct StackDeltaWorker {
         : partitioner(partitioner), progress(progress) {}
 
     void operator()(size_t workId, const Function::Ptr &function) {
+        Sawyer::Stopwatch t;
         partitioner.functionStackDelta(function);
+
+        // Show some results. We're using rose::BinaryAnalysis::StackDelta::mlog[TRACE] for the messages, so the mutex here
+        // doesn't really protect it. However, since that analysis doesn't produce much output on that stream, this mutex helps
+        // keep the output lines separated from one another, especially when they're all first starting up.
+        if (StackDelta::mlog[TRACE]) {
+            static boost::mutex mutex;
+            boost::lock_guard<boost::mutex> lock(mutex);
+            Sawyer::Message::Stream trace(StackDelta::mlog[TRACE]);
+            trace <<"stack-delta for " <<function->printableName() <<" took " <<t <<" seconds\n";
+        }
+
         ++progress;
     }
 };
@@ -204,42 +205,15 @@ struct StackDeltaWorker {
 // so that callees are before callers.
 void
 Partitioner::allFunctionStackDelta() const {
-#if 0 // [Robb Matzke 2015-11-13]: not quite ready for parallelism yet
     size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
-#else
-    size_t nThreads = 1;
-#endif
     FunctionCallGraph::Graph cg = functionCallGraph().graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "stack-delta analysis");
+    Sawyer::Message::FacilitiesGuard guard();
+    if (nThreads != 1)                                  // lots of threads doing progress reports won't look too good!
+        rose::BinaryAnalysis::StackDelta::mlog[MARCH].disable();
     Sawyer::workInParallel(cg, nThreads, StackDeltaWorker(*this, progress));
 }
-#else
-void
-Partitioner::allFunctionStackDelta() const {
-    using namespace Sawyer::Container::Algorithm;
-    FunctionCallGraph cg = functionCallGraph();
-    size_t nFunctions = cg.graph().nVertices();
-    std::vector<bool> visited(nFunctions, false);
-    Sawyer::ProgressBar<size_t> progress(nFunctions, mlog[MARCH], "stack-delta analysis");
-    for (size_t cgVertexId=0; cgVertexId<nFunctions; ++cgVertexId) {
-        if (!visited[cgVertexId]) {
-            typedef DepthFirstForwardGraphTraversal<const FunctionCallGraph::Graph> Traversal;
-            for (Traversal t(cg.graph(), cg.graph().findVertex(cgVertexId), ENTER_VERTEX|LEAVE_VERTEX); t; ++t) {
-                if (t.event() == ENTER_VERTEX) {
-                    if (visited[t.vertex()->id()])
-                        t.skipChildren();
-                } else if (!visited[t.vertex()->id()]) {
-                    ASSERT_require(t.event() == LEAVE_VERTEX);
-                    functionStackDelta(t.vertex()->value());
-                    visited[t.vertex()->id()] = true;
-                    ++progress;
-                }
-            }
-        }
-    }
-}
-#endif
 
 } // namespace
 } // namespace

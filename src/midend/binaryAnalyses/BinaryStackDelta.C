@@ -83,6 +83,24 @@ public:
     explicit TransferFunction(Analysis *analysis)
         : P2::DataFlow::TransferFunction(analysis->cpu()), analysis_(analysis) {}
 
+    // Override the base class by initializing only the stack pointer register.
+    BaseSemantics::StatePtr initialState() const {
+        BaseSemantics::RiscOperatorsPtr ops = cpu()->get_operators();
+        BaseSemantics::StatePtr newState = ops->get_state()->clone();
+        newState->clear();
+        BaseSemantics::RegisterStateGenericPtr regState =
+            BaseSemantics::RegisterStateGeneric::promote(newState->get_register_state());
+
+        const RegisterDescriptor SP = cpu()->stackPointerRegister();
+        rose_addr_t initialSp = 0;
+        if (analysis_->initialConcreteStackPointer().assignTo(initialSp)) {
+            newState->writeRegister(SP, ops->number_(SP.get_nbits(), initialSp), ops.get());
+        } else {
+            newState->writeRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+        }
+        return newState;
+    }
+    
     // Required by data-flow engine: deep-copy the state
     BaseSemantics::State::Ptr operator()(const BaseSemantics::State::Ptr &incomingState) const {
         return P2::DataFlow::TransferFunction::operator()(incomingState);
@@ -157,13 +175,6 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     BaseSemantics::StatePtr initialState = xfer.initialState();
     BaseSemantics::RegisterStateGenericPtr initialRegState =
         BaseSemantics::RegisterStateGeneric::promote(initialState->get_register_state());
-    initialRegState->initialize_large();
-    if (initialConcreteStackPointer_) {
-        initialState->writeRegister(cpu_->stackPointerRegister(),
-                                    cpu_->get_operators()->number_(cpu_->stackPointerRegister().get_nbits(),
-                                                                   *initialConcreteStackPointer_),
-                                    cpu_->get_operators().get());
-    }
 
     // Run data flow analysis
     bool converged = true;
@@ -174,10 +185,10 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         while (dfEngine.runOneIteration())
             ++progress;
     } catch (const DataFlow::NotConverging &e) {
-        mlog[WARN] <<e.what() <<"\n";
+        mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
         converged = false;                              // didn't converge, so just use what we have
     } catch (const BaseSemantics::Exception &e) {
-        mlog[WARN] <<e.what() <<"\n";
+        mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
         converged = false;
     }
     

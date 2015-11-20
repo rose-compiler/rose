@@ -17,6 +17,7 @@
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stack.h>
+#include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
 
 using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
@@ -1862,7 +1863,20 @@ struct CallingConventionWorker {
         : partitioner(partitioner), progress(progress), dfltCc(dfltCc) {}
 
     void operator()(size_t workId, const Function::Ptr &function) {
+        Sawyer::Stopwatch t;
         partitioner.functionCallingConvention(function, dfltCc);
+
+        // Show some results. We're using rose::BinaryAnalysis::CallingConvention::mlog[TRACE] for the messages, so the mutex
+        // here doesn't really protect it. However, since that analysis doesn't produce much output on that stream, this mutex
+        // helps keep the output lines separated from one another where there's lots of worker threads, especially when they're
+        // all first starting up.
+        if (CallingConvention::mlog[TRACE]) {
+            static boost::mutex mutex;
+            boost::lock_guard<boost::mutex> lock(mutex);
+            Sawyer::Message::Stream trace(CallingConvention::mlog[TRACE]);
+            trace <<"calling-convention for " <<function->printableName() <<" took " <<t <<" seconds\n";
+        }
+
         ++progress;
     }
 };
