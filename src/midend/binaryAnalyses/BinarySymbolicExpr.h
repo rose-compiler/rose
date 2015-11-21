@@ -435,6 +435,9 @@ public:
      *  is computed and cached. */
     uint64_t hash();
 
+    // used internally to set the hash value
+    void hash(uint64_t);
+
     /** A node with formatter. See the with_format() method. */
     class WithFormatter {
     private:

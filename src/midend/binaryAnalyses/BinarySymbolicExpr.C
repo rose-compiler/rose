@@ -186,18 +186,67 @@ Node::getVariables() {
     return t1.vars;
 }
 
+struct Hasher: Visitor {
+    virtual VisitAction preVisit(const Ptr &node) ROSE_OVERRIDE {
+        return 0 == node->isHashed() ? CONTINUE : TRUNCATE;
+    }
+
+    virtual VisitAction postVisit(const Ptr &node) ROSE_OVERRIDE {
+        if (!node->isHashed()) {                        // probably true, but some other thread may have beaten us here.
+            uint64_t h = hash(hash(node->domainWidth(), node->nBits()), node->flags());
+            if (LeafPtr leaf = node->isLeafNode()) {
+                if (leaf->isNumber()) {
+                    if (leaf->nBits() <= 64) {
+                        h = hash(h, leaf->toInt());
+                    } else {
+                        for (size_t i=0; i<leaf->nBits(); i+=64) {
+                            typedef Sawyer::Container::BitVector::BitRange BitRange;
+                            h = hash(h, leaf->bits().toInteger(BitRange::hull(i, leaf->nBits()-1)));
+                        }
+                    }
+                } else {
+                    // It's okay to not hash whether the leaf is a variable or memory because variables always have a zero
+                    // domain width and memory has a non-zero width, which is already incorporated into the hash from above.
+                    h = hash(h, leaf->nameId());
+                }
+            } else {
+                InteriorPtr inode = node->isInteriorNode();
+                ASSERT_not_null(inode);
+                h = hash(h, inode->getOperator());
+                BOOST_FOREACH (const Ptr &child, inode->children()) {
+                    ASSERT_require(child->isHashed());
+                    h = hash(h, child->hash());
+                }
+            }
+            node->hash(h);
+        }
+    }
+
+    // Incorporates data into the existing hash, h, and returns a new hash. This is no particular well-known algorithm, but
+    // testing showed that it gives pretty well-distributed results for close values, particularly when called on two or more
+    // pieces of data.
+    uint64_t hash(uint64_t h, uint64_t data) {
+        for (size_t i=0; i<64-6; i += 6) {
+            unsigned sa = ((data >> i) ^ h ^ i) & 0x3f;
+            h = (h >> (64-sa)) | (h << sa);
+            h ^= data;
+        }
+        return h;
+    }
+};
+
 uint64_t
 Node::hash() {
     if (0==hashval_) {
-        // FIXME: We could build the hash with a traversal rather than
-        // from a string.  But this method is quick and easy. [Robb P. Matzke 2013-09-10]
-        std::ostringstream ss;
-        Formatter formatter;
-        formatter.show_comments = Formatter::CMT_SILENT;
-        print(ss, formatter);
-        hashval_ = Combinatorics::fnv1a64_digest(ss.str());
+        Hasher hasher;
+        depthFirstTraversal(hasher);
     }
     return hashval_;
+}
+
+void
+Node::hash(uint64_t h) {
+    hashval_ = h;
 }
 
 void

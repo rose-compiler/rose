@@ -76,11 +76,13 @@ static void
 testNewExprRule() {
     std::cout <<"test simplification new expression rule:\n";
     SymbolicExpr::Ptr e1 = SymbolicExpr::Leaf::createVariable(32, "e1", UNDEFINED);
-    SymbolicExpr::Ptr e2 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1, SymbolicExpr::Interior::create(32, SymbolicExpr::OP_NEGATE, e1));
+    SymbolicExpr::Ptr e2 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1,
+                                                          SymbolicExpr::Interior::create(32, SymbolicExpr::OP_NEGATE, e1));
     std::cout <<"  e2 = " <<*e2 <<"\n";
     ASSERT_always_require(e2->flags() == 0);
 
-    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1, SymbolicExpr::Interior::create(32, SymbolicExpr::OP_INVERT, e1));
+    SymbolicExpr::Ptr e3 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_ADD, e1,
+                                                          SymbolicExpr::Interior::create(32, SymbolicExpr::OP_INVERT, e1));
     std::cout <<"  e3 = " <<*e3 <<"\n";
     ASSERT_always_require(e3->flags() == 0);
 
