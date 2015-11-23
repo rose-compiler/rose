@@ -146,24 +146,24 @@ extern const Id INVALID_ID;
  *  already exists in that global table. Once an attribute is registered its ID never changes and it is never removed from the
  *  global attribute symbol table. There is no guarantee that attribute ID numbers are small consecutive integers, although
  *  that is how the current implementation works. */
-Id declare(const std::string &name);
+SAWYER_EXPORT Id declare(const std::string &name);
 
 /** Returns the ID for an attribute name.
  *
  *  Looks up the specified name in the global attribute symbol table and returns its identification number.  Returns @ref
  *  INVALID_ID if the name does not exist. */
-Id id(const std::string &name);
+SAWYER_EXPORT Id id(const std::string &name);
 
 /** Returns the name for an attribute ID.
  *
  *  Looks up the specified attribute ID in the global attribute symbol table and returns its name.  Returns the empty string if
  *  the ID does not exist. */
-const std::string& name(Id);
+SAWYER_EXPORT const std::string& name(Id);
 
 /** Exception for non-existing values.
  *
  *  This exception is thrown when querying an attribute value and no value is stored for the specified attribute ID. */
-class DoesNotExist: public std::domain_error {
+class SAWYER_EXPORT DoesNotExist: public std::domain_error {
 public:
     ~DoesNotExist() throw () {}
 
@@ -173,7 +173,7 @@ public:
 };
 
 /** Exception thrown when redeclaring an existing attribute. */
-class AlreadyExists: public std::runtime_error {
+class SAWYER_EXPORT AlreadyExists: public std::runtime_error {
 public:
     ~AlreadyExists() throw () {}
 
@@ -189,7 +189,7 @@ typedef boost::bad_any_cast WrongQueryType;
  *
  *  This is the interface inherited by objects that can store attributes.  See the @ref Attribute "namespace" for usage and
  *  examples. */
-class Storage {
+class SAWYER_EXPORT Storage {
     typedef Sawyer::Container::Map<Id, boost::any> AttrMap;
     AttrMap values_;
 public:

@@ -18,7 +18,7 @@ typedef Sawyer::Container::BiMap<Id, std::string> DefinedAttributes;
 static DefinedAttributes definedAttributes;
 static Id nextId = 0;
 
-Id
+SAWYER_EXPORT Id
 declare(const std::string &name) {
     Id retval = INVALID_ID;
     if (definedAttributes.reverse().getOptional(name).assignTo(retval))
@@ -28,17 +28,17 @@ declare(const std::string &name) {
     return retval;
 }
 
-Id
+SAWYER_EXPORT Id
 id(const std::string &name) {
     return definedAttributes.reverse().getOptional(name).orElse(INVALID_ID);
 }
 
-const std::string&
+SAWYER_EXPORT const std::string&
 name(Id id) {
     return definedAttributes.forward().getOrDefault(id);
 }
 
-std::vector<Id>
+SAWYER_EXPORT std::vector<Id>
 Storage::attributeIds() const {
     std::vector<Id> retval;
     retval.reserve(values_.size());
