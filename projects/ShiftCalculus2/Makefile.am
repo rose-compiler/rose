@@ -117,6 +117,9 @@ test10MLM: shiftCalculusCompiler
 test11: shiftCalculusCompiler
 	./shiftCalculusCompiler -std=c++11 -c $(srcdir)/simpleCNS.cpp
 
+tinyCNS: shiftCalculusCompiler
+	./shiftCalculusCompiler -std=c++11 -c $(srcdir)/tinyCNS.cpp
+
 rose_laplacian_lite.cu: shiftCalculusCompiler
 	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -std=c++11 -rose:skipfinalCompileStep -rose:output rose_laplacian_lite.cu $(srcdir)/laplacian_lite.cpp
 rose_laplacian_lite_v2.cu: shiftCalculusCompiler
@@ -169,7 +172,9 @@ check-local:
 	@echo "Tests for Shift Calculus examples."
 #	@$(MAKE) $(PASSING_TEST_Output)
 	@$(MAKE) $(PASSING_REGRESSION_TEST_Output)
-	@$(MAKE) localTests cudaTests
+# demo2015 collects successful code generations for March meeting
+	@$(MAKE) demo2015
+#	@$(MAKE) localTests cudaTests
 	@echo "********************************************************************************************"
 	@echo "******* ROSE/projects/ShiftCalculus: make check rule complete (terminated normally) ********"
 	@echo "********************************************************************************************"
