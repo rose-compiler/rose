@@ -96,6 +96,10 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     // changed in the CFG that allows it to succeed this time.  We provide our own dispatcher because we want the analysis to
     // be fast by not using any memory state (stack pointers are rarely saved and restored).
     BaseSemantics::DispatcherPtr cpu = newDispatcher(newOperators());
+    if (cpu == NULL) {
+        SAWYER_MESG(mlog[DEBUG]) <<"  no instruction semantics for this architecture\n";
+        return retval;
+    }
     Semantics::MemoryState::promote(cpu->get_operators()->get_state()->get_memory_state())->enabled(false);
     StackDelta::Analysis sdAnalysis(cpu);
     sdAnalysis.initialConcreteStackPointer(0x7fff0000); // optional: helps reach more solutions
