@@ -170,8 +170,8 @@ CfgEmitter::init() {
             }
             pclose(dot);
         }
-    } else {
-        versionDate_ = 1;                               // something low, and other than zero
+        if (versionDate_ == 0)
+            versionDate_ = 1;                           // something low, and other than zero
     }
 
     // Instance initialization
