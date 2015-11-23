@@ -8,8 +8,15 @@
 #ifndef Sawyer_PoolAllocator_H
 #define Sawyer_PoolAllocator_H
 
+#include <boost/version.hpp>
 #include <boost/foreach.hpp>
-#include <boost/random/mersenne_twister.hpp>
+#if BOOST_VERSION >= 104700
+    #include <boost/random/mersenne_twister.hpp>
+    #define PRN_GENERATOR boost::random::mt11213b           // slower than rand48 before boost-1.47 (first appeared in 1.46)
+#else
+    #include <boost/random/linear_congruential.hpp>         // 64% as fast as mersenne_twister according to boost 1.59
+    #define PRN_GENERATOR boost::random::rand48
+#endif
 #include <boost/random/uniform_smallint.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/cstdint.hpp>
@@ -147,7 +154,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     class Pool {
         size_t cellSize_;                               // only modified immediately after construction
-        boost::random::mt11213b generator_;             // a fast pseudo-random number generator
+        PRN_GENERATOR generator_;                       // a fast pseudo-random number generator
         boost::random::uniform_smallint<size_t> prng_;  // not sure if this stores any state, so I'm making it a data member
 
         // Multiple free-lists for parallelism reduces the contention on the pool. The aquire and release methods select a
