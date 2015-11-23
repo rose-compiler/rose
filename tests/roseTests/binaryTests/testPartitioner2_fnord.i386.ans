@@ -6017,9 +6017,8 @@
 0x08049c0d: Successor blocks: 0x08049c0f, 0x08049c32
 
 0x08049c0f: Basic block reasons: 
-0x08049c0f: 8b 9d 88 cb ff ff       |......  |<sp-13584>   mov    ebx, dword ss:[ebp + 0xffffcb88<-13432>]
-0x08049c15: e8 4a e8 ff ff          |.J...   |<sp-13584>   call   0x08048464<<Func>>
-0x08049c15: Outgoing stack delta: -13588
+0x08049c0f: 8b 9d 88 cb ff ff       |......  |          mov    ebx, dword ss:[ebp + 0xffffcb88<-13432>]
+0x08049c15: e8 4a e8 ff ff          |.J...   |          call   0x08048464<<Func>>
 0x08049c15: Successor blocks: 0x08048464, 0x08049c1a
 
 0x08049c1a: Basic block reasons: 
@@ -6048,9 +6047,8 @@
 0x08049c30: Successor blocks: 0x08049c48
 
 0x08049c32: Basic block reasons: 
-0x08049c32: 68 44 b3 04 08          |hD...   |<sp-13584>   push   0x0804b344<"REDIRECT_URI">
-0x08049c37: e8 cc 05 00 00          |.....   |<sp-13588>   call   0x0804a208<<Func>>
-0x08049c37: Outgoing stack delta: -13592
+0x08049c32: 68 44 b3 04 08          |hD...   |          push   0x0804b344<"REDIRECT_URI">
+0x08049c37: e8 cc 05 00 00          |.....   |          call   0x0804a208<<Func>>
 0x08049c37: Successor blocks: 0x0804a208, 0x08049c3c
 
 0x08049c3c: Basic block reasons: 
