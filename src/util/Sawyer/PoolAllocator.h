@@ -10,14 +10,18 @@
 
 #include <boost/version.hpp>
 #include <boost/foreach.hpp>
+#include <boost/random/uniform_smallint.hpp>
 #if BOOST_VERSION >= 104700
     #include <boost/random/mersenne_twister.hpp>
-    #define PRN_GENERATOR boost::random::mt11213b           // slower than rand48 before boost-1.47 (first appeared in 1.46)
+    #define SAWYER_PRN_GENERATOR boost::random::mt11213b
+    #define SAWYER_UNIFORM_SIZE_T boost::random::uniform_smallint<size_t>
 #else
+    // Boost 1.45 and 1.46 say that mt11213b is only 44% as fast as rand48. Also, these things were not part of the
+    // boost::random namespace in those versions.
     #include <boost/random/linear_congruential.hpp>         // 64% as fast as mersenne_twister according to boost 1.59
-    #define PRN_GENERATOR boost::random::rand48
+    #define SAWYER_PRN_GENERATOR boost::rand48
+    #define SAWYER_UNIFORM_SIZE_T boost::uniform_smallint<size_t>
 #endif
-#include <boost/random/uniform_smallint.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/cstdint.hpp>
 #include <list>
@@ -128,10 +132,10 @@ private:
 
     // Aquire all locks for a pool.
     class LockEverything {
-        boost::mutex *freeListMutexes_, &chunkMutex_;
+        SAWYER_THREAD_TRAITS::Mutex *freeListMutexes_, &chunkMutex_;
         size_t nLocked_;
     public:
-        LockEverything(boost::mutex *freeListMutexes, boost::mutex &chunkMutex)
+        LockEverything(SAWYER_THREAD_TRAITS::Mutex *freeListMutexes, SAWYER_THREAD_TRAITS::Mutex &chunkMutex)
             : freeListMutexes_(freeListMutexes), chunkMutex_(chunkMutex), nLocked_(0) {
             while (nLocked_ < N_FREE_LISTS) {
                 freeListMutexes_[nLocked_].lock();
@@ -154,19 +158,19 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     class Pool {
         size_t cellSize_;                               // only modified immediately after construction
-        PRN_GENERATOR generator_;                       // a fast pseudo-random number generator
-        boost::random::uniform_smallint<size_t> prng_;  // not sure if this stores any state, so I'm making it a data member
+        SAWYER_PRN_GENERATOR generator_;                // a fast pseudo-random number generator
+        SAWYER_UNIFORM_SIZE_T prng_;                    // not sure if this stores any state, so I'm making it a data member
 
         // Multiple free-lists for parallelism reduces the contention on the pool. The aquire and release methods select a
         // free-list uniformly at random in order to keep the sizes of the free-lists relatively equal. There is no requirement
         // that an object allocated from one free-list be released back to the same free-list. Each free-list has its own
         // mutex. When locking multiple free-lists, the locks should be aquired in order of their indexes.
-        boost::mutex freeListMutexes_[N_FREE_LISTS];
+        SAWYER_THREAD_TRAITS::Mutex freeListMutexes_[N_FREE_LISTS];
         FreeCell *freeLists_[N_FREE_LISTS];
 
         // The chunk-list stores the memory allocated for objects.  The chunk-list is protected by a mutex. When locking
         // free-list(s) and the chunk-list, the free-list locks should be aquired first.
-        mutable boost::mutex chunkMutex_;
+        mutable SAWYER_THREAD_TRAITS::Mutex chunkMutex_;
         std::list<Chunk*> chunks_;
 
     private:
@@ -188,18 +192,18 @@ private:
         }
 
         bool isEmpty() const {
-            boost::lock_guard<boost::mutex> lock(chunkMutex_);
+            SAWYER_THREAD_TRAITS::LockGuard lock(chunkMutex_);
             return chunks_.empty();
         }
 
         // Obtains the cell at the front of the free list, allocating more space if necessary.
         void* aquire() {                                // hot
             const size_t freeListIdx = prng_(generator_);
-            boost::lock_guard<boost::mutex> lock(freeListMutexes_[freeListIdx]);
+            SAWYER_THREAD_TRAITS::LockGuard lock(freeListMutexes_[freeListIdx]);
             if (!freeLists_[freeListIdx]) {
                 Chunk *chunk = new Chunk;
                 freeLists_[freeListIdx] = chunk->fill(cellSize_);
-                boost::lock_guard<boost::mutex> lock(chunkMutex_);
+                SAWYER_THREAD_TRAITS::LockGuard lock(chunkMutex_);
                 chunks_.push_back(chunk);
             }
             ASSERT_not_null(freeLists_[freeListIdx]);
@@ -212,7 +216,7 @@ private:
         // Returns an cell to the front of the free list.
         void release(void *cell) {                      // hot
             const size_t freeListIdx = prng_(generator_);
-            boost::lock_guard<boost::mutex> lock(freeListMutexes_[freeListIdx]);
+            SAWYER_THREAD_TRAITS::LockGuard lock(freeListMutexes_[freeListIdx]);
             ASSERT_not_null(cell);
             FreeCell *freedCell = reinterpret_cast<FreeCell*>(cell);
             freedCell->next = freeLists_[freeListIdx];
@@ -317,7 +321,7 @@ private:
         size_t showInfo(std::ostream &out) const {
             ChunkInfoMap cim;
             {
-                LockEverything guard(const_cast<boost::mutex*>(freeListMutexes_), chunkMutex_);
+                LockEverything guard(const_cast<SAWYER_THREAD_TRAITS::Mutex*>(freeListMutexes_), chunkMutex_);
                 cim = chunkInfoNS();
             }
 
@@ -333,7 +337,7 @@ private:
         std::pair<size_t, size_t> nAllocated() const {
             ChunkInfoMap cim;
             {
-                LockEverything guard(const_cast<boost::mutex*>(freeListMutexes_), chunkMutex_);
+                LockEverything guard(const_cast<SAWYER_THREAD_TRAITS::Mutex*>(freeListMutexes_), chunkMutex_);
                 cim = chunkInfoNS();
             }
 
