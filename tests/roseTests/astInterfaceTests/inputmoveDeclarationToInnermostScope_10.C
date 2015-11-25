@@ -1,3 +1,4 @@
+#if 1
 void foo(int len, int condition)
 {
   int i ;
@@ -9,7 +10,7 @@ void foo(int len, int condition)
     }
   }
 }
-
+#endif
 // A tricky case of if-stmt, 
 // move to two bodies, trigger another round of moving: iterative moving
 #if 1

@@ -322,8 +322,9 @@ Engine::partitionerSwitches() {
 
     sg.insert(Switch("post-analysis")
               .intrinsicValue(true, settings_.partitioner.doingPostAnalysis)
-              .doc("Run all post-partitioning analysis functions.  For instance, calculate stack deltas for each "
-                   "instruction, and may-return analysis for each function.  Some of these phases will only work if "
+              .doc("Run all enabled post-partitioning analysis functions.  For instance, calculate stack deltas for each "
+                   "instruction, and may-return analysis for each function.  The individual analyses are enabled and "
+                   "disabled separately with other s{post-*} switches. Some of these analyses will only work if "
                    "instruction semantics are enabled (see @s{use-semantics}).  The @s{no-post-analysis} switch turns "
                    "this off, although analysis will still be performed where it is needed for partitioning.  The "
                    "default is to " + std::string(settings_.partitioner.doingPostAnalysis?"":"not ") +
@@ -331,6 +332,46 @@ Engine::partitionerSwitches() {
     sg.insert(Switch("no-post-analysis")
               .key("post-analysis")
               .intrinsicValue(false, settings_.partitioner.doingPostAnalysis)
+              .hidden(true));
+
+    sg.insert(Switch("post-may-return")
+              .intrinsicValue(true, settings_.partitioner.doingPostFunctionMayReturn)
+              .doc("Run the may-return analysis for each function if post-partitioning analysis is enabled with the "
+                   "@s{post-analysis} switch. This analysis tries to quickly determine if a function might return a "
+                   "value to the caller.  The @s{no-post-may-return} switch disables this analysis. The default is that "
+                   "this analysis is " +
+                   std::string(settings_.partitioner.doingPostFunctionMayReturn?"enabled":"disabled") + "."));
+    sg.insert(Switch("no-post-may-return")
+              .key("post-may-return")
+              .intrinsicValue(false, settings_.partitioner.doingPostFunctionMayReturn)
+              .hidden(true));
+
+    sg.insert(Switch("post-stack-delta")
+              .intrinsicValue(true, settings_.partitioner.doingPostFunctionStackDelta)
+              .doc("Run the stack-delta analysis for each function if post-partitioning analysis is enabled with the "
+                   "@s{post-analysis} switch.  This is a data-flow analysis that tries to determine whether the function "
+                   "has a constant net effect on the stack pointer and what that effect is.  For instance, when a caller "
+                   "is reponsible for cleaning up function call arguments on a 32-bit architecture with a downward-growing "
+                   "stack then the stack delta is usually +4, representing the fact that the called function popped the "
+                   "return address from the stack.  The @s{no-post-stack-delta} switch disables this analysis. The default "
+                   "is that this analysis is " +
+                   std::string(settings_.partitioner.doingPostFunctionStackDelta?"enabled":"disabled") + "."));
+    sg.insert(Switch("no-post-stack-delta")
+              .key("post-stack-delta")
+              .intrinsicValue(false, settings_.partitioner.doingPostFunctionStackDelta)
+              .hidden(true));
+
+    sg.insert(Switch("post-calling-convention")
+              .intrinsicValue(true, settings_.partitioner.doingPostCallingConvention)
+              .doc("Run the calling-convention analysis for each function. This relatively expensive analysis uses "
+                   "use-def, stack-delta, memory variable discovery, and data-flow to determine characteristics of the "
+                   "function and then matches it against a dictionary of calling conventions appropriate for the "
+                   "architecture.  The @s{no-post-calling-convention} disables this analysis. The default is that this "
+                   "analysis is " +
+                   std::string(settings_.partitioner.doingPostCallingConvention?"enabled":"disabled") + "."));
+    sg.insert(Switch("no-post-calling-convention")
+              .key("post-calling-convention")
+              .intrinsicValue(false, settings_.partitioner.doingPostCallingConvention)
               .hidden(true));
 
     sg.insert(Switch("functions-return")
@@ -1412,9 +1453,29 @@ Engine::updateAnalysisResults(Partitioner &partitioner) {
     Sawyer::Message::Stream info(mlog[INFO]);
     Sawyer::Stopwatch timer;
     info <<"post partition analysis";
-    partitioner.allFunctionMayReturn();
-    partitioner.allFunctionStackDelta();
-    info <<"; took " <<timer <<" seconds\n";
+    std::string separator = ": ";
+
+    if (settings_.partitioner.doingPostFunctionMayReturn) {
+        info <<separator <<"may-return";
+        separator = ", ";
+        partitioner.allFunctionMayReturn();
+    }
+
+    if (settings_.partitioner.doingPostFunctionStackDelta) {
+        info <<separator <<"stack-delta";
+        separator = ", ";
+        partitioner.allFunctionStackDelta();
+    }
+
+    if (settings_.partitioner.doingPostCallingConvention) {
+        info <<separator <<"call-conv";
+        separator = ", ";
+        // Calling convention analysis uses a default convention to break recursion cycles in the CG.
+        const CallingConvention::Dictionary &ccDict = partitioner.instructionProvider().callingConventions();
+        partitioner.allFunctionCallingConvention(ccDict.empty() ? NULL : &ccDict.front());
+    }
+
+    info <<"; total " <<timer <<" seconds\n";
 }
 
 
@@ -1440,7 +1501,7 @@ Engine::BasicBlockFinalizer::operator()(bool chain, const Args &args) {
         // which case RiscOperators::readMemory would have returned a free variable to indicate an indeterminate value, or ADDR
         // is writable but its MemoryMap::INITIALIZED bit is set to indicate it has a valid value already, in which case
         // RiscOperators::readMemory would have returned the value stored there but also marked the value as being
-        // INDETERMINATE.  The InsnSemanticsExpr::TreeNode::INDETERMINATE bit in the expression should have been carried along
+        // INDETERMINATE.  The SymbolicExpr::TreeNode::INDETERMINATE bit in the expression should have been carried along
         // so that things like "MOV EAX, [ADDR]; JMP EAX" will behave the same as "JMP [ADDR]".
         bool addIndeterminateEdge = false;
         size_t addrWidth = 0;
@@ -1449,7 +1510,7 @@ Engine::BasicBlockFinalizer::operator()(bool chain, const Args &args) {
                 addIndeterminateEdge = false;
                 break;
             } else if (!addIndeterminateEdge &&
-                       (successor.expr()->get_expression()->get_flags() & InsnSemanticsExpr::TreeNode::INDETERMINATE) != 0) {
+                       (successor.expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
                 addIndeterminateEdge = true;
                 addrWidth = successor.expr()->get_width();
             }

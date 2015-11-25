@@ -457,46 +457,46 @@ RegisterStateX86::merge(const BaseSemantics::RegisterStatePtr &other_, RiscOpera
     bool changed = false;
     SValuePtr merged;
 
-    if (ip->createOptionalMerge(other->ip, ops->get_solver()).assignTo(merged)) {
+    if (ip->createOptionalMerge(other->ip, merger(), ops->get_solver()).assignTo(merged)) {
         ip = merged;
         changed = true;
     }
 
     for (size_t i=0; i<n_gprs; ++i) {
-        if (gpr[i]->createOptionalMerge(other->gpr[i], ops->get_solver()).assignTo(merged)) {
+        if (gpr[i]->createOptionalMerge(other->gpr[i], merger(), ops->get_solver()).assignTo(merged)) {
             gpr[i] = merged;
             changed = true;
         }
     }
 
     for (size_t i=0; i<n_segregs; ++i) {
-        if (segreg[i]->createOptionalMerge(other->segreg[i], ops->get_solver()).assignTo(merged)) {
+        if (segreg[i]->createOptionalMerge(other->segreg[i], merger(), ops->get_solver()).assignTo(merged)) {
             segreg[i] = merged;
             changed = true;
         }
     }
 
     for (size_t i=0; i<n_flags; ++i) {
-        if (flag[i]->createOptionalMerge(other->flag[i], ops->get_solver()).assignTo(merged)) {
+        if (flag[i]->createOptionalMerge(other->flag[i], merger(), ops->get_solver()).assignTo(merged)) {
             flag[i] = merged;
             changed = true;
         }
     }
 
     for (size_t i=0; i<n_st; ++i) {
-        if (st[i]->createOptionalMerge(other->st[i], ops->get_solver()).assignTo(merged)) {
+        if (st[i]->createOptionalMerge(other->st[i], merger(), ops->get_solver()).assignTo(merged)) {
             st[i] = merged;
             changed = true;
         }
     }
 
-    if (fpstatus->createOptionalMerge(other->fpstatus, ops->get_solver()).assignTo(merged)) {
+    if (fpstatus->createOptionalMerge(other->fpstatus, merger(), ops->get_solver()).assignTo(merged)) {
         fpstatus = merged;
         changed = true;
     }
 
     for (size_t i=0; i<n_xmm; ++i) {
-        if (xmm[i]->createOptionalMerge(other->xmm[i], ops->get_solver()).assignTo(merged)) {
+        if (xmm[i]->createOptionalMerge(other->xmm[i], merger(), ops->get_solver()).assignTo(merged)) {
             xmm[i] = merged;
             changed = true;
         }
@@ -615,11 +615,91 @@ RegisterStateX86::print(std::ostream &stream, Formatter &fmt) const
  *                                      State
  *******************************************************************************************************************************/
 
+void
+State::clear() {
+    registers->clear();
+    memory->clear();
+}
+
+void
+State::zero_registers() {
+    registers->zero();
+}
+
+void
+State::clear_memory() {
+    memory->clear();
+}
+
+SValuePtr
+State::readRegister(const RegisterDescriptor &desc, RiscOperators *ops) {
+    ASSERT_require(desc.is_valid());
+    ASSERT_not_null(ops);
+    return registers->readRegister(desc, ops);
+}
+
+void
+State::writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, RiscOperators *ops) {
+    ASSERT_require(desc.is_valid());
+    ASSERT_not_null(value);
+    ASSERT_not_null(ops);
+    registers->writeRegister(desc, value, ops);
+}
+
+SValuePtr
+State::readMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+    ASSERT_not_null(address);
+    ASSERT_not_null(dflt);
+    ASSERT_not_null(addrOps);
+    ASSERT_not_null(valOps);
+    return memory->readMemory(address, dflt, addrOps, valOps);
+}
+
+void
+State::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps) {
+    ASSERT_not_null(addr);
+    ASSERT_not_null(value);
+    ASSERT_not_null(addrOps);
+    ASSERT_not_null(valOps);
+    memory->writeMemory(addr, value, addrOps, valOps);
+}
+
+void
+State::printRegisters(std::ostream &stream, const std::string &prefix) {
+    Formatter fmt;
+    fmt.set_line_prefix(prefix);
+    printRegisters(stream, fmt);
+}
+    
+void
+State::printRegisters(std::ostream &stream, Formatter &fmt) const {
+    registers->print(stream, fmt);
+}
+
+void
+State::printMemory(std::ostream &stream, const std::string &prefix) const {
+    Formatter fmt;
+    fmt.set_line_prefix(prefix);
+    printMemory(stream, fmt);
+}
+
+void
+State::printMemory(std::ostream &stream, Formatter &fmt) const {
+    memory->print(stream, fmt);
+}
+
 bool
 State::merge(const StatePtr &other, RiscOperators *ops) {
     bool memoryChanged = get_memory_state()->merge(other->get_memory_state(), ops, ops);
     bool registersChanged = get_register_state()->merge(other->get_register_state(), ops);
     return memoryChanged || registersChanged;
+}
+
+void
+State::print(std::ostream &stream, const std::string &prefix) const {
+    Formatter fmt;
+    fmt.set_line_prefix(prefix);
+    print(stream, fmt);
 }
 
 void
@@ -926,7 +1006,7 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool al
     const RegisterDescriptor *reg = regdict->lookup(regname);
     if (!reg) {
         if (allowMissing) {
-            static RegisterDescriptor invalidRegister;
+            static const RegisterDescriptor invalidRegister;
             return invalidRegister;
         }
         std::ostringstream ss;

@@ -907,9 +907,9 @@ Snippet::replaceVariable(SgVarRefExp *vref, SgExpression *replacement)
 {
     struct Replacer: public SimpleReferenceToPointerHandler {
         SgNode *nodeToReplace, *replacement;
-        bool replaced;
+        size_t replaced;
         Replacer(SgNode *nodeToReplace, SgNode *replacement)
-            : nodeToReplace(nodeToReplace), replacement(replacement), replaced(false) {}
+            : nodeToReplace(nodeToReplace), replacement(replacement), replaced(0) {}
         void operator()(SgNode *&node, const SgName &debugStringName, bool/*traverse*/) {
             if (node==nodeToReplace) {
                 node = replacement;

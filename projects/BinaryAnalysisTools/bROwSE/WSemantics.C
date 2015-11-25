@@ -1,10 +1,10 @@
 #include <rose.h>
 
 #include <BinaryStackVariable.h>                        // ROSE
+#include <BinarySymbolicExpr.h>                         // ROSE
 #include <bROwSE/FunctionUtil.h>
 #include <bROwSE/WSemantics.h>
 #include <bROwSE/WToggleButton.h>
-#include <InsnSemanticsExpr.h>                          // ROSE
 #include <MemoryCellList.h>                             // ROSE
 #include <Wt/WAbstractTableModel>
 #include <Wt/WHBoxLayout>
@@ -47,17 +47,16 @@ public:
     }
 
     std::string toString(const BaseSemantics::SValuePtr &valueBase) {
-        using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
         SymbolicSemantics::SValuePtr value = SymbolicSemantics::SValue::promote(valueBase);
-        LeafNodePtr leaf = value->get_expression()->isLeafNode();
-        if (leaf && leaf->is_known()) {
-            if (1==leaf->get_nbits()) {
-                return leaf->get_value() ? "true" : "false";
-            } else if (leaf->get_nbits()<=64) {
-                uint64_t v = leaf->get_value();
-                return StringUtility::toHex2(v, leaf->get_nbits());
+        SymbolicExpr::LeafPtr leaf = value->get_expression()->isLeafNode();
+        if (leaf && leaf->isNumber()) {
+            if (1==leaf->nBits()) {
+                return leaf->toInt() ? "true" : "false";
+            } else if (leaf->nBits()<=64) {
+                uint64_t v = leaf->toInt();
+                return StringUtility::toHex2(v, leaf->nBits());
             } else {
-                return leaf->get_bits().toHex();
+                return leaf->bits().toHex();
             }
         }
         return "? " + StringUtility::plural(valueBase->get_width(), "bits");

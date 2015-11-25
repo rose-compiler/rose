@@ -2,7 +2,6 @@
 #define ROSE_Partitioner2_Partitioner_H
 
 #include <Partitioner2/AddressUsageMap.h>
-#include <Partitioner2/Attribute.h>
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/Config.h>
@@ -14,6 +13,7 @@
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Reference.h>
 
+#include <Sawyer/Attribute.h>
 #include <Sawyer/Callbacks.h>
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/Map.h>
@@ -31,7 +31,7 @@ namespace BinaryAnalysis {
 
 /** Binary function detection.
  *
- *  This namespace consists of three major parts and a number of smaller parts.  The major parts are:
+ *  This namespace consists of two major parts and a number of smaller parts.  The major parts are:
  *
  *  @li @ref Partitioner2::Partitioner "Partitioner": The partitioner is responsible for organizing instructions into basic
  *      blocks and basic blocks into functions. It has methods to discover new parts of the executable, and methods to control
@@ -275,7 +275,7 @@ namespace Partitioner2 {
  *    behavior can only be modified by registering callbacks.  High-level behavior is implemented above this class such as in
  *    module functions (various Module*.h files) or engines derived from the @ref Engine class.  Additional data can be
  *    attached to a partitioner via attributes (see @ref Attribute). */
-class Partitioner: public Attribute::StoredValues {     // final
+class Partitioner: public Sawyer::Attribute::Storage {     // final
 public:
     typedef Sawyer::Callbacks<CfgAdjustmentCallback::Ptr> CfgAdjustmentCallbacks; /**< See @ref cfgAdjustmentCallbacks. */
     typedef Sawyer::Callbacks<BasicBlockCallback::Ptr> BasicBlockCallbacks; /**< See @ref basicBlockCallbacks. */
@@ -361,7 +361,7 @@ public:
         *this = other;                                  // then delegate to the assignment operator
     }
     Partitioner& operator=(const Partitioner &other) {
-        Attribute::StoredValues::operator=(other);
+        Sawyer::Attribute::Storage::operator=(other);
         config_ = other.config_;
         instructionProvider_ = other.instructionProvider_;
         memoryMap_ = other.memoryMap_;

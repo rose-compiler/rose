@@ -88,6 +88,10 @@ test2015_13.C \
 test2015_14.C \
 last.C
 
+# New test codes not yet tested in regression tests.
+# test2015_15.C 
+# test2015_16.C 
+
 # Failing tests:
 # test2014_10.C
 # test2014_24.C

@@ -20,6 +20,7 @@ void SimpleInstrumentation::visit(SgNode* astNode)
 
           SgScopeStatement *scope = getGlobalScope(funcdef);
 #if 1
+       // DQ (11/9/2015): Unless this is marked to be output in code generaton, this function will not show up in the output.
           printf ("Calling buildDefiningFunctionDeclaration() \n");
           SgFunctionDeclaration *func_defn = buildDefiningFunctionDeclaration(SgName("testFunc"),buildVoidType(),buildFunctionParameterList(buildInitializedName(SgName("param1"),buildIntType(),NULL)),scope);
 #endif
@@ -46,6 +47,7 @@ void SimpleInstrumentation::visit(SgNode* astNode)
 
                if (NULL != first_stmt)
                   {
+                 // DQ (11/9/2015): Unless this is marked to be output in code generaton, this function will not show up in the output.
                     printf ("Calling insertStatementBefore() \n");
 #if 1
                     insertStatementBefore(first_stmt,func_decl);
@@ -53,6 +55,7 @@ void SimpleInstrumentation::visit(SgNode* astNode)
                   }
                  else
                   {
+                 // DQ (11/9/2015): Unless this is marked to be output in code generaton, this function will not show up in the output.
                     printf ("Calling prependStatement() \n");
 #if 1
                     prependStatement(func_decl,scope);
@@ -61,6 +64,7 @@ void SimpleInstrumentation::visit(SgNode* astNode)
              }
             else
              {
+            // DQ (11/9/2015): Unless this is marked to be output in code generaton, this function will not show up in the output.
                printf ("Handling the non-global scope \n");
 #if 1
                prependStatement(func_decl, scope);
@@ -70,7 +74,7 @@ void SimpleInstrumentation::visit(SgNode* astNode)
 #if 1
           reportNodesMarkedAsModified(scope);
 #endif
-#if 1
+#if 0
           SgProject::set_verbose(3);
 #endif
           printf ("Calling insertStatementAfter() \n");
@@ -78,6 +82,7 @@ void SimpleInstrumentation::visit(SgNode* astNode)
           SgStatement *last_global_decl = findLastDeclarationStatement(scope);
           insertStatementAfter(last_global_decl, func_defn);
 #else
+       // DQ (11/9/2015): Unless this is marked to be output in code generaton, this function will not show up in the output.
           insertStatementAfter(funcdef->get_declaration(), func_defn);
 #endif
 
@@ -87,7 +92,7 @@ void SimpleInstrumentation::visit(SgNode* astNode)
 
           SgBasicBlock *func_body = func_defn->get_definition()->get_body();
 
-#if 1
+#if 0
           SgProject::set_verbose(0);
 #endif
           printf ("Calling buildVariableDeclaration() \n");
@@ -97,16 +102,17 @@ void SimpleInstrumentation::visit(SgNode* astNode)
           reportNodesMarkedAsModified(scope);
 #endif
 
-#if 1
+#if 0
           SgProject::set_verbose(3);
 #endif
+       // DQ (11/9/2015): Unless this is marked to be output in code generaton, this function will not show up in the output.
           printf ("Calling appendStatement() \n");
           appendStatement(i,func_body);
 
 #if 1
           reportNodesMarkedAsModified(scope);
 #endif
-#if 1
+#if 0
           SgProject::set_verbose(0);
 #endif
           done = true;

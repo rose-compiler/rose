@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -33,7 +33,7 @@ namespace Sawyer { // documented in Sawyer.h
 
 /** Parses program command line switches and arguments.
  *
- * @section defns Definitions
+ * @section sawyer_commandline_defns Definitions
  *
  *  @li A <em>program command line</em> is the vector of strings passed to a program by the operating system or runtime.
  *  @li A <em>commmand line argument</em> is one element of the program command line vector.
@@ -47,7 +47,7 @@ namespace Sawyer { // documented in Sawyer.h
  *  @li A <em>non-switch</em> is a program argument that doesn't appear to be a switch. Another name for the same thing
  *      is <em>positional program argument</em>.
  *
- * @section parts The major parts of the API
+ * @section sawyer_commandline_parts The major parts of the API
  *
  *  Program command-line parsing consists of the following major components:
  *
@@ -59,7 +59,7 @@ namespace Sawyer { // documented in Sawyer.h
  *  @li The ParsedValue class holds details about each value parsed from a program command line, including the value's
  *      string from the command line and information about the associated switch.
  *
- * @section desc Description
+ * @section sawyer_commandline_desc Description
  *
  *  The library is used in three phases: first, the command line is described in terms of switches and their arguments; then a
  *  parser is constructed and applied to the command line to obtain a result; and finally, the result is used by querying or
@@ -95,7 +95,7 @@ namespace Sawyer { // documented in Sawyer.h
  *      source-level copy of documentation.  The library is able to generate complete Unix manual pages (TROFF format) which
  *      can be converted to to a variety of other formats with standard tools.
  *
- * @section ex1 An example
+ * @section sawyer_commandline_ex1 An example
  *
  *  Here's an example to give the basic flavor of the library.  The description of the command-line and the parsing of the
  *  command-line are combined in a single function, <code>parseCommandLine</code>:
@@ -589,8 +589,8 @@ typedef std::vector<ParsedValue> ParsedValues;
  *  Value parsers are always allocated on the heap and reference counted.  Each value parser defines a class factory method,
  *  <code>instance</code>, to allocate a new object and return a pointer to it. The pointer types are named <code>Ptr</code>
  *  and are defined within the class.  For convenience, the parsers built into the library also have global factory functions
- *  which have the same name as the class but start with an initial lower-case letter (see @ref parser_factories for details).
- *  For instance:
+ *  which have the same name as the class but start with an initial lower-case letter (see @ref sawyer_parser_factories for
+ *  details).  For instance:
  *
  * @code
  *  class IntegerParser;                                // recognizes integers
@@ -617,7 +617,7 @@ typedef std::vector<ParsedValue> ParsedValues;
  *  Users can create their own parsers, and are encouraged to do so, by following this same recipe.
  *
  * @sa
- *  @ref parser_factories */
+ *  @ref sawyer_parser_factories */
 class SAWYER_EXPORT ValueParser: public SharedObject, public SharedFromThis<ValueParser> {
 #include <Sawyer/WarningsOff.h>
     ValueSaver::Ptr valueSaver_;
@@ -719,7 +719,7 @@ struct LexicalCast<std::vector<T> > {
  *  The <code>boost::lexical_cast</code> package is used for the conversion, but <code>boost::bad_lexical_cast</code>
  *  exceptions are caught and rethrown as <code>std::runtime_error</code> as required by the ValueParser interface.
  *
- * @sa @ref anyParser factory method, and @ref parser_factories */
+ * @sa @ref anyParser factory method, and @ref sawyer_parser_factories */
 template<typename T>
 class AnyParser: public ValueParser {
 protected:
@@ -734,12 +734,12 @@ public:
 
     /** Allocating constructor. Returns a pointer to a new AnyParser object.  Uses will most likely want to use the @ref
      *  anyParser factory instead, which requires less typing.
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance() { return Ptr(new AnyParser); }
 
     /** Allocating constructor. Returns a pointer to a new AnyParser object.  Uses will most likely want to use the @ref
      *  anyParser factory instead, which takes the same arguments, but requires less typing.
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance(const ValueSaver::Ptr &valueSaver) { return Ptr(new AnyParser(valueSaver)); }
 private:
     virtual ParsedValue operator()(Cursor &cursor) /*override*/ {
@@ -794,7 +794,7 @@ struct NumericCast<std::vector<Target>, Source> {
  *  information about the failure.  The syntax is that which is recognized by the @c strtoll function, plus trailing white
  *  space.
  *
- * @sa @ref integerParser factory, and @ref parser_factories. */
+ * @sa @ref integerParser factory, and @ref sawyer_parser_factories. */
 template<typename T>
 class IntegerParser: public ValueParser {
 protected:
@@ -812,7 +812,7 @@ public:
      *  Returns a pointer to a new IntegerParser object.  Uses will most likely want to use the @ref integerParser factory
      *  instead, which requires less typing.
      *
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance() { return Ptr(new IntegerParser); }
 
     /** Allocating constructor.
@@ -820,7 +820,7 @@ public:
      *  Returns a pointer to a new IntegerParser object.  Uses will most likely want to use the @ref integerParser factory
      *  instead, which takes the same arguments, but requires less typing.
      *
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance(const ValueSaver::Ptr &valueSaver) { return Ptr(new IntegerParser(valueSaver)); }
 private:
     virtual ParsedValue operator()(const char *input, const char **rest, const Location &loc) /*override*/ {
@@ -845,7 +845,7 @@ private:
  *  that a leading minus sign is not allowed (yes, strtoull parses negative numbers and returns them as unsigned), plus
  *  trailing white space.
  *
- * @sa @ref nonNegativeIntegerParser factory, and @ref parser_factories. */
+ * @sa @ref nonNegativeIntegerParser factory, and @ref sawyer_parser_factories. */
 template<typename T>
 class NonNegativeIntegerParser: public ValueParser {
 protected:
@@ -860,12 +860,12 @@ public:
 
     /** Allocating constructor. Returns a pointer to a new NonNegativeIntegerParser object.  Uses will most likely want to use
      *  the @ref nonNegativeIntegerParser factory instead, which requires less typing.
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance() { return Ptr(new NonNegativeIntegerParser); }
 
     /** Allocating constructor. Returns a pointer to a new NonNegativeIntegerParser object.  Uses will most likely want to use
      *  the @ref nonNegativeIntegerParser factory instead, which takes the same arguments, but requires less typing.
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance(const ValueSaver::Ptr &valueSaver) { return Ptr(new NonNegativeIntegerParser(valueSaver)); }
 private:
     virtual ParsedValue operator()(const char *input, const char **rest, const Location &loc) /*override*/ {
@@ -893,7 +893,7 @@ private:
  *  that a leading minus sign is not allowed (yes, strtoull parses negative numbers and returns them as unsigned), plus
  *  trailing white space.
  *
- * @sa @ref positiveIntegerParser factory, and @ref parser_factories. */
+ * @sa @ref positiveIntegerParser factory, and @ref sawyer_parser_factories. */
 template<typename T>
 class PositiveIntegerParser: public ValueParser {
 protected:
@@ -908,12 +908,12 @@ public:
 
     /** Allocating constructor. Returns a pointer to a new PositiveIntegerParser object.  Uses will most likely want to use
      *  the @ref positiveIntegerParser factory instead, which requires less typing.
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance() { return Ptr(new PositiveIntegerParser); }
 
     /** Allocating constructor. Returns a pointer to a new PositiveIntegerParser object.  Uses will most likely want to use
      *  the @ref positiveIntegerParser factory instead, which takes the same arguments, but requires less typing.
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance(const ValueSaver::Ptr &valueSaver) { return Ptr(new PositiveIntegerParser(valueSaver)); }
 private:
     virtual ParsedValue operator()(const char *input, const char **rest, const Location &loc) /*override*/ {
@@ -940,7 +940,7 @@ private:
  *  information about the failure.  The syntax is that which is recognized by the @c strtod function, plus trailing white
  *  space.
  *
- * @sa @ref realNumberParser factory, and @ref parser_factories. */
+ * @sa @ref realNumberParser factory, and @ref sawyer_parser_factories. */
 template<typename T>
 class RealNumberParser: public ValueParser {
 protected:
@@ -955,12 +955,12 @@ public:
 
     /** Allocating constructor. Returns a pointer to a new RealNumberParser object.  Uses will most likely want to use
      *  the @ref realNumberParser factory instead, which requires less typing.
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance() { return Ptr(new RealNumberParser); }
 
     /** Allocating constructor. Returns a pointer to a new RealNumberParser object.  Uses will most likely want to use
      *  the @ref realNumberParser factory instead, which takes the same arguments, but requires less typing.
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance(const ValueSaver::Ptr &valueSaver) { return Ptr(new RealNumberParser(valueSaver)); }
 private:
     virtual ParsedValue operator()(const char *input, const char **rest, const Location &loc) /*override*/ {
@@ -978,7 +978,7 @@ private:
  *  Matches any one of the strings "1", "t", "true", "y", "yes", "on" (as a true value), "0", "f", "false", "n", "no", and
  *  "off" (as a false value) followed by white space and attempts to convert it to the type @p T.
  *
- * @sa @ref booleanParser factory, and @ref parser_factories. */
+ * @sa @ref booleanParser factory, and @ref sawyer_parser_factories. */
 template<typename T>
 class BooleanParser: public ValueParser {
 protected:
@@ -993,12 +993,12 @@ public:
 
     /** Allocating constructor. Returns a pointer to a new BooleanParser object.  Uses will most likely want to use the @ref
      *  booleanParser factory instead, which requires less typing.
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance() { return Ptr(new BooleanParser); }
 
     /** Allocating constructor. Returns a pointer to a new booleanParser object.  Uses will most likely want to use the @ref
      *  booleanParser factory instead, which takes the same arguments, but requires less typing.
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance(const ValueSaver::Ptr &valueSaver) { return Ptr(new BooleanParser(valueSaver)); }
 private:
     virtual ParsedValue operator()(const char *input, const char **rest, const Location &loc) /*override*/ {
@@ -1044,7 +1044,7 @@ private:
  *  parser knows about "ban", "band", and "bandana", it will match "bandana". The return value is a ParsedValue whose value
  *  is an <code>std::string</code>.
  *
- * @sa parser_factories */
+ * @sa sawyer_parser_factories */
 class SAWYER_EXPORT StringSetParser: public ValueParser {
 #include <Sawyer/WarningsOff.h>
     std::vector<std::string> strings_;
@@ -1061,12 +1061,12 @@ public:
 
     /** Allocating constructor. Returns a pointer to a new StringSetParser object.  Uses will most likely want to use
      *  the @ref stringSetParser factory instead, which requires less typing.
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance() { return Ptr(new StringSetParser); }
 
     /** Allocating constructor. Returns a pointer to a new StringSetParser object.  Uses will most likely want to use
      *  the @ref stringSetParser factory instead, which takes the same arguments, but requires less typing.
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance(const ValueSaver::Ptr &valueSaver) { return Ptr(new StringSetParser(valueSaver)); }
 
     /** Adds string members.  Inserts an additional string to be recognized in the input.
@@ -1090,7 +1090,7 @@ private:
  *  is the enum type. Returns  A ParsedValue whose value if type @p T.  This parser uses StringSetParser, thus it prefers to
  *  match enum members with the longest names.
  *
- * @sa parser_factories */
+ * @sa sawyer_parser_factories */
 template<typename T>
 class EnumParser: public ValueParser {
     StringSetParser::Ptr strParser_;
@@ -1107,12 +1107,12 @@ public:
 
     /** Allocating constructor. Returns a pointer to a new EnumParser object.  Uses will most likely want to use the @ref
      *  enumParser factory instead, which requires less typing.
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance() { return Ptr(new EnumParser); }
 
     /** Allocating constructor. Returns a pointer to a new EnumParser object.  Uses will most likely want to use the @ref
      *  enumParser factory instead, which takes the same arguments, but requires less typing.
-     * @sa parser_factories */
+     * @sa sawyer_parser_factories */
     static Ptr instance(const ValueSaver::Ptr &valueSaver) { return Ptr(new EnumParser(valueSaver)); }
 
     /** Adds enum members.  Inserts an additional enumeration constant and its string name. */
@@ -1134,7 +1134,7 @@ private:
  *  following separator. The final parser and separator are reused as often as necessary. The return value is a ParsedValue
  *  whose value is an STL @c list with members that are the ParsedValue objects return by the list element parsers.
  *
- * @sa parser_factories */
+ * @sa sawyer_parser_factories */
 class SAWYER_EXPORT ListParser: public ValueParser {
     typedef std::pair<ValueParser::Ptr, std::string> ParserSep;
 #include <Sawyer/WarningsOff.h>
@@ -1190,7 +1190,8 @@ private:
     virtual ParsedValue operator()(Cursor&) /*override*/;
 };
 
-/** @defgroup parser_factories Command line parser factories
+/** @defgroup sawyer_parser_factories Command line parser factories
+ *  @ingroup sawyer
  *  
  *  Factories for creating instances of Sawyer::CommandLine::ValueParser subclasses.
  *
@@ -1232,7 +1233,7 @@ private:
  */
 
 
-/** @ingroup parser_factories
+/** @ingroup sawyer_parser_factories
  *  @brief Factory for value parsers.
  *
  *  A factory function is a more terse and convenient way of calling the @c instance allocating constructors for ValueParser
@@ -1240,7 +1241,7 @@ private:
  *  varieties, and some in three varieties.
  *
  * @sa
- * @li @ref parser_factories
+ * @li @ref sawyer_parser_factories
  * @li @ref ValueParser base class
  * @li Documentation for the returned class
  * @{ */
@@ -1416,8 +1417,8 @@ public:
  *  Actions are always allocated on the heap and reference counted.  Each action defines a class factory method,
  *  <code>instance</code>, to allocate a new object and return a pointer to it. The pointer types are named <code>Ptr</code>
  *  and are defined within the class.  For convenience, the actions built into the library also have global factory functions
- *  which have the same name as the class but start with an initial lower-case letter (see @ref action_factories for details).
- *  For instance:
+ *  which have the same name as the class but start with an initial lower-case letter (see @ref sawyer_action_factories for
+ *  details).  For instance:
  *
  * @code
  *  SwitchAction::Ptr action1 = UserAction::instance<MyFunctor>(myFunctor);
@@ -1452,7 +1453,7 @@ public:
     /** Allocating constructor. Returns a pointer to a new ShowVersion object.  Uses will most likely want to use the @ref
      *  showVersion factory instead, which requires less typing.
      *
-     * @sa @ref action_factories, and the @ref SwitchAction class. */
+     * @sa @ref sawyer_action_factories, and the @ref SwitchAction class. */
     static Ptr instance(const std::string &versionString) { return Ptr(new ShowVersion(versionString)); }
 protected:
     virtual void operator()(const ParserResult&) /*overload*/;
@@ -1473,7 +1474,7 @@ public:
     /** Allocating constructor. Returns a pointer to a new ShowVersionAndExit object.  Uses will most likely want to use the
      *  @ref showVersionAndExit factory instead, which requires less typing.
      *
-     * @sa @ref action_factories, and the @ref SwitchAction class. */
+     * @sa @ref sawyer_action_factories, and the @ref SwitchAction class. */
     static Ptr instance(const std::string &versionString, int exitStatus) {
         return Ptr(new ShowVersionAndExit(versionString, exitStatus));
     }
@@ -1496,7 +1497,7 @@ public:
     /** Allocating constructor. Returns a pointer to a new ShowHelp object.  Uses will most likely want to use the @ref
      *  showHelp factory instead, which requires less typing.
      *
-     * @sa @ref action_factories, and the @ref SwitchAction class. */
+     * @sa @ref sawyer_action_factories, and the @ref SwitchAction class. */
     static Ptr instance() { return Ptr(new ShowHelp); }
 protected:
     virtual void operator()(const ParserResult&) /*override*/;
@@ -1516,7 +1517,7 @@ public:
     /** Allocating constructor.  Returns a pointer to a new ShowHelpAndExit object.  Users will most likely want to use the
      * @ref showHelpAndExit factory instead, which requires less typing.
      *
-     * @sa @ref action_factories, and the @ref SwitchAction class. */
+     * @sa @ref sawyer_action_factories, and the @ref SwitchAction class. */
     static Ptr instance(int exitStatus) { return Ptr(new ShowHelpAndExit(exitStatus)); }
 protected:
     virtual void operator()(const ParserResult&) /*override*/;
@@ -1554,7 +1555,7 @@ public:
     /** Allocating constructor.  Returns a pointer to a new ConfigureDiagnostics object.  Users will most likely want to use
      * the @ref configureDiagnostics factory instead, which requires less typing.
      *
-     * @sa @ref action_factories, and the @ref SwitchAction class. */
+     * @sa @ref sawyer_action_factories, and the @ref SwitchAction class. */
     static Ptr instance(const std::string &switchKey, Message::Facilities &facilities, bool exitOnHelp=true) {
         return Ptr(new ConfigureDiagnostics(switchKey, facilities, exitOnHelp));
     }
@@ -1603,13 +1604,14 @@ public:
     /** Allocating constructor. Returns a pointer to a new UserAction object.  Uses will most likely want to use the @ref
      *  userAction factory instead, which requires less typing.
      *
-     * @sa @ref action_factories, and the @ref SwitchAction class. */
+     * @sa @ref sawyer_action_factories, and the @ref SwitchAction class. */
     static Ptr instance(Functor &f) { return Ptr(new UserAction(f)); }
 protected:
     virtual void operator()(const ParserResult &parserResult) /*override*/ { (functor_)(parserResult); }
 };
 
-/** @defgroup action_factories Command line action factories
+/** @defgroup sawyer_action_factories Command line action factories
+ *  @ingroup sawyer
  *
  *  Factories for creating instances of Sawyer::CommandLine::SwitchAction subclasses.
  *
@@ -1625,14 +1627,14 @@ protected:
  *
  * @section factories Factories */
 
-/** @ingroup action_factories
+/** @ingroup sawyer_action_factories
  *  @brief Factory for switch action.
  *
  *  A factory function is a more terse and convenient way of calling the @c instance allocating constructors for @ref
  *  SwitchAction subclasses and often alleviates the user from having to specify template arguments.
  *
  * @sa
- *  @li @ref action_factories
+ *  @li @ref sawyer_action_factories
  *  @li @ref SwitchAction base class
  *  @li Documentation for the returned class.
  * @{ */
@@ -1671,7 +1673,7 @@ typename UserAction<Functor>::Ptr userAction(const Functor &functor) {
  *  parsed values passed to the function operator.
  *
  *  Most subclasses will have factory functions to instantiate reference counted, allocated objects. See @ref
- *  augmenter_factories for a list. */
+ *  sawyer_augmenter_factories for a list. */
 class SAWYER_EXPORT ValueAugmenter: public SharedObject {
 public:
     /** Reference counting pointer for this class. */
@@ -1709,7 +1711,7 @@ public:
     /** Allocating constructor. Returns a pointer to a new Sum object.  Uses will most likely want to use the @ref
      *  sum factory instead, which requires less typing.
      *
-     * @sa @ref augmenter_factories, and the @ref ValueAugmenter class. */
+     * @sa @ref sawyer_augmenter_factories, and the @ref ValueAugmenter class. */
     static Ptr instance() { return Ptr(new Sum<T>); }
 
     virtual ParsedValues operator()(const ParsedValues &savedValues, const ParsedValues &newValues) /*override*/ {
@@ -1727,7 +1729,8 @@ public:
     }
 };
 
-/** @defgroup augmenter_factories Command line value augmenter factories
+/** @defgroup sawyer_augmenter_factories Command line value augmenter factories
+ *  @ingroup sawyer
  *
  *  Factories for creating instances of Sawyer::CommandLine::ValueAugmenter subclasses.
  *
@@ -1743,14 +1746,14 @@ public:
  *
  * @section factories Factories */
 
-/** @ingroup augmenter_factories
+/** @ingroup sawyer_augmenter_factories
  *  @brief Factory for value agumenter.
  *
  *  A factory function is a more terse and convenient way of calling the @c instance allocating constructors for @ref
  *  ValueAugmenter subclasses and often alleviates the user from having to specify template arguments.
  *
  * @sa
- *  @li @ref augmenter_factories
+ *  @li @ref sawyer_augmenter_factories
  *  @li @ref ValueAugmenter base class
  *  @li Documentation for the returned class.
  *
@@ -2043,8 +2046,8 @@ public:
      *  The string may contain simple markup which is removed when used in error messages. As a convenience, if the string
      *  looks like a lower-case variable name then it will be formatted in the documentation like a variable.
      *
-     *  The value @p parser is normally created with one of the @ref parser_factories.  It defaults to the @ref AnyParser,
-     *  which accepts any string from the command line and stores it as an <code>std::string</code>.
+     *  The value @p parser is normally created with one of the @ref sawyer_parser_factories.  It defaults to the @ref
+     *  AnyParser, which accepts any string from the command line and stores it as an <code>std::string</code>.
      *
      *  If a default is specified then the argument will be optional and the parser will behave as if the default value string
      *  appeared on the command line at the point where the argument was expected.  This also means that the default value
@@ -2208,7 +2211,7 @@ public:
      *  specified functor to be invoked.
      *
      * @sa
-     *  @li @ref augmenter_factories
+     *  @li @ref sawyer_augmenter_factories
      *  @li @ref ValueAugmenter base class
      * @{ */
     Switch& valueAugmenter(const ValueAugmenter::Ptr &f) { valueAugmenter_ = f; return *this; }

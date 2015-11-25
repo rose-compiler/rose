@@ -243,38 +243,37 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
 
 // If the expression is an offset from the initial stack register then return the offset, else nothing.
 static Sawyer::Optional<int64_t>
-isStackAddress(const rose::BinaryAnalysis::InsnSemanticsExpr::TreeNodePtr &expr,
+isStackAddress(const rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
                const BaseSemantics::SValuePtr &initialStackPointer, SMTSolver *solver) {
-    using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
     using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
     if (!initialStackPointer)
         return Sawyer::Nothing();
-    TreeNodePtr initialStack = SymbolicSemantics::SValue::promote(initialStackPointer)->get_expression();
+    SymbolicExpr::Ptr initialStack = SymbolicSemantics::SValue::promote(initialStackPointer)->get_expression();
 
     // Special case where (add SP0 0) is simplified to SP0
-    LeafNodePtr variable = expr->isLeafNode();
-    if (variable && variable->must_equal(initialStack, solver))
+    SymbolicExpr::LeafPtr variable = expr->isLeafNode();
+    if (variable && variable->mustEqual(initialStack, solver))
         return 0;
 
     // Otherwise the expression must be (add SP0 N) where N != 0
-    InternalNodePtr inode = expr->isInternalNode();
-    if (!inode || inode->get_operator() != OP_ADD || inode->nchildren()!=2)
+    SymbolicExpr::InteriorPtr inode = expr->isInteriorNode();
+    if (!inode || inode->getOperator() != SymbolicExpr::OP_ADD || inode->nChildren()!=2)
         return Sawyer::Nothing();
 
     variable = inode->child(0)->isLeafNode();
-    LeafNodePtr constant = inode->child(1)->isLeafNode();
-    if (!constant || !constant->is_known())
+    SymbolicExpr::LeafPtr constant = inode->child(1)->isLeafNode();
+    if (!constant || !constant->isNumber())
         std::swap(variable, constant);
-    if (!constant || !constant->is_known())
+    if (!constant || !constant->isNumber())
         return Sawyer::Nothing();
-    if (!variable || !variable->is_variable())
-        return Sawyer::Nothing();
-
-    if (!variable->must_equal(initialStack, solver))
+    if (!variable || !variable->isVariable())
         return Sawyer::Nothing();
 
-    int64_t val = IntegerOps::signExtend2(constant->get_value(), constant->get_nbits(), 64);
+    if (!variable->mustEqual(initialStack, solver))
+        return Sawyer::Nothing();
+
+    int64_t val = IntegerOps::signExtend2(constant->toInt(), constant->nBits(), 64);
     return val;
 }
 
@@ -454,6 +453,10 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         BaseSemantics::RegisterStateGenericPtr genericRegState =
             boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(retval->get_register_state());
 
+        BaseSemantics::SValuePtr stackDelta;            // non-null if a stack delta is known for the callee
+        if (callee)
+            stackDelta = callee->stackDelta();
+
         // Clobber registers that are modified by the callee. The extra calls to updateWriteProperties is because most
         // RiscOperators implementation won't do that if they don't have a current instruction (which we don't).
         if (callee && callee->callingConventionAnalysis().hasResults()) {
@@ -489,6 +492,20 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
                         genericRegState->updateWriteProperties(reg, BaseSemantics::IO_WRITE);
                 }
             }
+            if (!stackDelta && // don't fix it here if we'll fix it below with more accurate information
+                defaultCallingConvention_->stackCleanup() == CallingConvention::CLEANUP_BY_CALLER &&
+                defaultCallingConvention_->nonParameterStackSize() != 0) {
+                BaseSemantics::SValuePtr oldStack = ops->readRegister(STACK_POINTER_REG);
+                BaseSemantics::SValuePtr delta =
+                    ops->number_(oldStack->get_width(), defaultCallingConvention_->nonParameterStackSize());
+                if (defaultCallingConvention_->stackDirection() == CallingConvention::GROWS_UP)
+                    delta = ops->negate(delta);
+                BaseSemantics::SValuePtr newStack = ops->add(oldStack, delta);
+                ops->writeRegister(STACK_POINTER_REG, newStack);
+                if (genericRegState)
+                    genericRegState->updateWriteProperties(STACK_POINTER_REG, BaseSemantics::IO_WRITE);
+                isStackPtrFixed = true;
+            }
         } else {
             // We have not performed a calling convention analysis and we don't have a default calling convention definition. A
             // conservative approach would need to set all registers to bottom.  We'll only adjust the stack pointer (below).
@@ -498,7 +515,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         if (!isStackPtrFixed) {
             BaseSemantics::SValuePtr newStack, delta;
             if (callee)
-                delta = callee->stackDelta().getOptional().orDefault();
+                delta = callee->stackDelta();
             if (delta) {
                 BaseSemantics::SValuePtr oldStack = ops->readRegister(STACK_POINTER_REG);
                 newStack = ops->add(oldStack, delta);

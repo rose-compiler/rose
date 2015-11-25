@@ -7998,8 +7998,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                          compilerNameString.push_back(currentDirectory + "/" + objectFileName);
                        }
                       else
-                       { // compilation only, object name is already specified, single file case, nothing else to tweak for the command line
+                       {
+                      // compilation only, object name is already specified, single file case, nothing else to tweak for the command line
+#if DEBUG_COMPILER_COMMAND_LINE
+                      // DQ (11/8/2015): Put this in #if to avoid output spew.
                          printf ("get_compileOnly() == true: get_multifile_support() == false: \n");
+#endif
                        }
                   }
              }

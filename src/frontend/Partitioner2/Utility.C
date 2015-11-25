@@ -65,7 +65,7 @@ sortByExpression(const BasicBlock::Successor &a, const BasicBlock::Successor &b)
         return a.expr()->get_number() < b.expr()->get_number();
     if (a.expr()->is_number() || b.expr()->is_number())
         return a.expr()->is_number();                   // concrete values are less than abstract expressions
-    return a.expr()->get_expression()->structural_compare(b.expr()->get_expression()) < 0;
+    return a.expr()->get_expression()->compareStructure(b.expr()->get_expression()) < 0;
 }
 
 bool
@@ -232,7 +232,7 @@ Trigger::switches(Settings &settings) {
                                      settings.when.least()==0 ?("invoke the action " + plural(settings.when.size(), "times") +
                                                                 " beginning immediately.") :
                                      ("invoke the action on calls " + numberToString(settings.when.least()) + " through " +
-                                      numberToString(settings.when.greatest() + ", inclusive.")))));
+                                      numberToString(settings.when.greatest()) + ", inclusive."))));
     return switches;
 }
 

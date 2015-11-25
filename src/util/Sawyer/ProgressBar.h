@@ -1,6 +1,13 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
+
+
+
+
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -12,12 +19,15 @@
 #include <Sawyer/Optional.h>
 #include <Sawyer/Sawyer.h>
 
+#include <boost/thread/locks.hpp>
+#include <boost/thread/mutex.hpp>
 #include <cmath>
 #include <sstream>
 
 namespace Sawyer {
 
-// used internally by the ProgressBar<> classes
+// used internally by the ProgressBar<> classes. Since this is called only from ProgressBar objects and ProgressBar has
+// a synchronized API, we don't need any synchronization at this level.
 class SAWYER_EXPORT ProgressBarImpl {
 public:
 #include <Sawyer/WarningsOff.h>
@@ -94,7 +104,10 @@ namespace ProgressBarSettings {
  *
  *  The progress bar is created with a name and capacity. As the progress bar is incremented the bar will increase.  Messages
  *  printed while the progress bar is active do not interfere with the progress bar. When the progress bar object is destroyed
- *  the progress bar disappears. */
+ *  the progress bar disappears.
+ *
+ *  The entire progress bar public interface is synchronized--it can be called from multiple threads all accessing the same
+ *  object and their operations will be serialized. */
 template<typename T, typename S=std::string>
 class ProgressBar {
 public:
@@ -110,6 +123,7 @@ private:
         }
     };
 
+    mutable boost::mutex mutex_;                        // locks the following data members
     Position value_;
     ProgressBarImpl bar_;
     bool showValue_;
@@ -129,7 +143,7 @@ public:
      *  so that when the value reaches @p rightValue the bar will read 100%. */
     ProgressBar(ValueType rightValue, const Message::SProxy &stream, const std::string &name="progress")
         : value_(0, 0, rightValue), bar_(stream), showValue_(true) {
-        bar_.shouldSpin_ = isEmpty();
+        bar_.shouldSpin_ = isEmptyNS();
         bar_.prefix_ = name;
     }
 
@@ -139,30 +153,34 @@ public:
     ProgressBar(ValueType leftValue, ValueType curValue, ValueType rightValue, const Message::SProxy &stream,
                 const std::string &name="progress")
         : value_(leftValue, curValue, rightValue), bar_(stream), showValue_(true) {
-        bar_.shouldSpin_ = isEmpty();
+        bar_.shouldSpin_ = isEmptyNS();
         bar_.prefix_ = name;
     }
 
     /** Value for the progress bar.
      *  @{ */
     ValueType value() const {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         return value_.curValue;
     }
     void value(ValueType curValue) {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         value_.curValue = curValue;
-        valueUpdated();
+        valueUpdatedNS();
     }
 
     void value(ValueType curValue, ValueType rightValue) {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         value_.curValue = curValue;
         value_.rightValue = rightValue;
-        bar_.shouldSpin_ = isEmpty();
-        valueUpdated();
+        bar_.shouldSpin_ = isEmptyNS();
+        valueUpdatedNS();
     }
     void value(ValueType leftValue, ValueType curValue, ValueType rightValue) {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         value_ = Position(leftValue, curValue, rightValue);
         bar_.shouldSpin_ = isEmpty();
-        valueUpdated();
+        valueUpdatedNS();
     }
     /** @} */
 
@@ -172,40 +190,58 @@ public:
      *  the <code>std::ostream</code>'s <code><<</code> operator. It should not contain any line feeds.
      *
      *  @{ */
-    Suffix& suffix() { return suffix_; }
-    const Suffix& suffix() const { return suffix_; }
-    ProgressBar& suffix(const Suffix &suffix) { suffix_ = suffix; return *this; }
+    Suffix suffix() {
+        boost::lock_guard<boost::mutex> lock(mutex_);
+        return suffix_;
+    }
+    Suffix suffix() const {
+        boost::lock_guard<boost::mutex> lock(mutex_);
+        return suffix_;
+    }
+    ProgressBar& suffix(const Suffix &suffix) {
+        boost::lock_guard<boost::mutex> lock(mutex_);
+        suffix_ = suffix;
+        return *this;
+    }
     /** @} */
 
     /** Value of progress bar as a ratio of completeness clipped between 0 and 1.  A progress bar that is backward (min value
      *  is greater than max value) also returns a value between zero and one, and also is a measurement of how far the progress
      *  bar should be drawn from the left side toward the right. */
-    double ratio() const;
+    double ratio() const {
+        boost::lock_guard<boost::mutex> lock(mutex_);
+        return ratioNS();
+    }
     
     /** True if the distance between the minimum and maximum is zero. */
     bool isEmpty() const {
-        return value_.leftValue == value_.rightValue;
+        boost::lock_guard<boost::mutex> lock(mutex_);
+        return isEmptyNS();
     }
 
     /** True if the minimum value is greater than the maximum value. */
     bool isBackward() const {
-        return value_.leftValue > value_.rightValue;
+        boost::lock_guard<boost::mutex> lock(mutex_);
+        return isBackwardNS();
     }
 
     /** Possible values. These indicate the zero and 100% end points.
      *  @{ */
     std::pair<ValueType, ValueType> domain() const {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         return std::make_pair(value_.leftValue, value_.rightValue);
     }
     void domain(const std::pair<ValueType, ValueType> &p) {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         value_.leftValue = p.first;
         value_.rightValue = p.second;
-        configUpdated();
+        configUpdatedNS();
     }
     void domain(ValueType leftValue, ValueType rightValue) {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         value_.leftValue = leftValue;
         value_.rightValue = rightValue;
-        configUpdated();
+        configUpdatedNS();
     }
     /** @} */
 
@@ -242,22 +278,26 @@ public:
     /** Width of progress bar in characters at 100%
      *  @{ */
     size_t width() const {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         return bar_.width_;
     }
     void width(size_t width) {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         bar_.width_ = width;
-        configUpdated();
+        configUpdatedNS();
     }
     /** @} */
 
     /** String to show before the beginning of the bar.  This should be something very short, like "processing input".
      * @{ */
     const std::string& prefix() const {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         return bar_.prefix_;
     }
     void prefix(const std::string &s) {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         bar_.prefix_ = s;
-        configUpdated();
+        configUpdatedNS();
     }
     /** @} */
 
@@ -265,61 +305,69 @@ public:
      *  to fill the rest of the bar's area.  The defaults are '#' and '-'.
      *  @{ */
     std::pair<char, char> barchars() const {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         return std::make_pair(bar_.barChar_, bar_.nonBarChar_);
     }
     void barchars(char bar, char nonBar) {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         bar_.barChar_ = bar;
         bar_.nonBarChar_ = nonBar;
-        configUpdated();
+        configUpdatedNS();
     }
     /** @} */
 
     /** Characters to use for the left and right ends of the bar.  The default is '[' and ']'.
      *  @{ */
     std::pair<std::string, std::string> endchars() const {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         return std::make_pair(bar_.leftEnd_, bar_.rightEnd_);
     }
     void endchars(const std::string &lt, const std::string &rt) {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         bar_.leftEnd_ = lt;
         bar_.rightEnd_ = rt;
-        configUpdated();
+        configUpdatedNS();
     }
     /** @} */
 
     /** Whether to show the percent indication.  The default is true.
      * @{ */
     bool showPercent() const {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         return bar_.showPercent_;
     }
     void showPercent(bool b) {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         bar_.showPercent_ = b;
-        configUpdated();
+        configUpdatedNS();
     }
     /** @} */
 
     /** Whether to show the current value.  The is true.
      * @{ */
     bool showValue() const {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         return showValue_;
     }
     void showValue(bool b) {
+        boost::lock_guard<boost::mutex> lock(mutex_);
         showValue_ = b;
-        configUpdated();
+        configUpdatedNS();
     }
     /** @} */
 
-protected:
-    void valueUpdated() {
-        if (showValue_) {
-            std::ostringstream ss;
-            ss <<value_.curValue <<suffix_;
-            bar_.suffix_ = ss.str();
-        } else {
-            bar_.suffix_.clear();
-        }
-        bar_.valueUpdate(ratio(), isBackward());
+private:
+    bool isEmptyNS() const {                            // "NS" means "not synchronized" -- the caller must do that.
+        return value_.leftValue == value_.rightValue;
     }
-    void configUpdated() {
+
+    double ratioNS() const;
+
+    bool isBackwardNS() const {
+        return value_.leftValue > value_.rightValue;
+    }
+
+    void valueUpdatedNS() {
         if (showValue_) {
             std::ostringstream ss;
             ss <<value_.curValue <<suffix_;
@@ -327,16 +375,27 @@ protected:
         } else {
             bar_.suffix_.clear();
         }
-        bar_.configUpdate(ratio(), isBackward());
+        bar_.valueUpdate(ratioNS(), isBackwardNS());
+    }
+
+    void configUpdatedNS() {
+        if (showValue_) {
+            std::ostringstream ss;
+            ss <<value_.curValue <<suffix_;
+            bar_.suffix_ = ss.str();
+        } else {
+            bar_.suffix_.clear();
+        }
+        bar_.configUpdate(ratioNS(), isBackwardNS());
     }
 };
 
 // try not to get negative values when subtracting because they might behave strangely if T is something weird.
 template <typename T, typename S>
-double ProgressBar<T, S>::ratio() const {
-    if (isEmpty()) {
+double ProgressBar<T, S>::ratioNS() const {
+    if (isEmptyNS()) {
         return value_.curValue <= value_.leftValue ? 0.0 : 1.0;
-    } else if (isBackward()) {
+    } else if (isBackwardNS()) {
         if (value_.curValue >= value_.leftValue) {
             return 0.0;
         } else if (value_.curValue <= value_.rightValue) {
@@ -357,18 +416,20 @@ double ProgressBar<T, S>::ratio() const {
 
 template <typename T, typename S>
 void ProgressBar<T, S>::increment(ValueType delta) {
+    boost::lock_guard<boost::mutex> lock(mutex_);
     ValueType oldValue = value_.curValue;
     value_.curValue += delta;
     if (oldValue!=value_.curValue)
-        valueUpdated();
+        valueUpdatedNS();
 }
 
 template <typename T, typename S>
 void ProgressBar<T, S>::decrement(ValueType delta) {
+    boost::lock_guard<boost::mutex> lock(mutex_);
     ValueType oldValue = value_.curValue;
     value_.curValue -= delta;
     if (oldValue!=value_.curValue)
-        valueUpdated();
+        valueUpdatedNS();
 }
 
 } // namespace

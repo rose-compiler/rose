@@ -650,7 +650,6 @@ int main( int argc, char * argv[] ) {
     else
       return 0;
   }
-  
   string option_pragma_name;
   if (args.count("limit-to-fragment")) {
     option_pragma_name = args["limit-to-fragment"].as<string>();
@@ -865,7 +864,11 @@ int main( int argc, char * argv[] ) {
   vector<int> option_specialize_fun_varinit_const_list;
   if(args.count("specialize-fun-name")) {
     option_specialize_fun_name = args["specialize-fun-name"].as<string>();
+    cout << "DEBUG: option_specialize_fun_name: "<< option_specialize_fun_name<<endl;
+  } else {
+    cout << "DEBUG: option_specialize_fun_name: NONE"<< option_specialize_fun_name<<endl;
   }
+
   if(args.count("specialize-fun-param")) {
     option_specialize_fun_param_list=args["specialize-fun-param"].as< vector<int> >();
     option_specialize_fun_const_list=args["specialize-fun-const"].as< vector<int> >();
@@ -1037,15 +1040,48 @@ int main( int argc, char * argv[] ) {
     }
   }
 #else
-  cout <<"STATUS: handling pragmas started."<<endl;
-  PragmaHandler pragmaHandler;
-  pragmaHandler.handlePragmas(sageProject,&analyzer);
-  // TODO: requires more refactoring
-  option_specialize_fun_name=pragmaHandler.option_specialize_fun_name;
-  boolOptions.registerOption("verify-update-sequence-race-conditions",true);
-  // unparse specialized code
-  //sageProject->unparse(0,0);
-  cout <<"STATUS: handling pragmas finished."<<endl;
+  // only handle pragmas if fun_name is not set on the command line
+  if(option_specialize_fun_name=="") {
+    cout <<"STATUS: handling pragmas started."<<endl;
+    PragmaHandler pragmaHandler;
+    pragmaHandler.handlePragmas(sageProject,&analyzer);
+    // TODO: requires more refactoring
+    option_specialize_fun_name=pragmaHandler.option_specialize_fun_name;
+    boolOptions.registerOption("verify-update-sequence-race-conditions",true);
+    // unparse specialized code
+    //sageProject->unparse(0,0);
+    cout <<"STATUS: handling pragmas finished."<<endl;
+  } else {
+    // do specialization and setup data structures
+    analyzer.setSkipSelectedFunctionCalls(true);
+    analyzer.setSkipArrayAccesses(true);
+    boolOptions.registerOption("verify-update-sequence-race-conditions",true);
+
+    //TODO1: refactor into separate function
+    int numSubst=0;
+    if(option_specialize_fun_name!="") {
+      Specialization speci;
+      cout<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
+      
+      string funNameToFind=option_specialize_fun_name;
+      
+      for(size_t i=0;i<option_specialize_fun_param_list.size();i++) {
+        int param=option_specialize_fun_param_list[i];
+        int constInt=option_specialize_fun_const_list[i];
+        numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, analyzer.getVariableIdMapping());
+      }
+      cout<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
+      int numInit=0;
+      //cout<<"DEBUG: var init spec: "<<endl;
+      for(size_t i=0;i<option_specialize_fun_varinit_list.size();i++) {
+        string varInit=option_specialize_fun_varinit_list[i];
+        int varInitConstInt=option_specialize_fun_varinit_const_list[i];
+        //cout<<"DEBUG: checking for varInitName nr "<<i<<" var:"<<varInit<<" Const:"<<varInitConstInt<<endl;
+        numInit+=speci.specializeFunction(sageProject,funNameToFind, -1, 0, varInit, varInitConstInt,analyzer.getVariableIdMapping());
+      }
+      cout<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
+    }
+  }
 #endif
 
   if(args.count("rewrite")) {
@@ -1069,6 +1105,8 @@ int main( int argc, char * argv[] ) {
     cout<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
     analyzer.setAssertCondVarsSet(varsInAssertConditions);
   }
+  // problematic? TODO: debug
+#if 0
   {
     cout<<"STATUS: performing flow-insensitive const analysis."<<endl;
     VarConstSetMap varConstSetMap;
@@ -1085,7 +1123,7 @@ int main( int argc, char * argv[] ) {
     analyzer.setSmallActivityVarsSet(variablesOfInterest2);
     cout<<"INFO: variables with number of values <=2:"<<variablesOfInterest2.size()<<endl;
   }
-
+#endif
 
   if(boolOptions["normalize"]) {
     cout <<"STATUS: Normalization started."<<endl;
@@ -1494,7 +1532,6 @@ int main( int argc, char * argv[] ) {
     ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
     cout << "STATUS: Generated assertions."<<endl;
   }
-
   double arrayUpdateExtractionRunTime=0.0;
   double arrayUpdateSsaNumberingRunTime=0.0;
   double sortingAndIORunTime=0.0;
@@ -1515,12 +1552,15 @@ int main( int argc, char * argv[] ) {
     }
     
     bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
+
     timer.start();
+#if 0
     speci.extractArrayUpdateOperations(&analyzer,
                                        arrayUpdates,
                                        rewriteSystem,
                                        useConstSubstitutionRule
                                        );
+#endif
     arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
 
     if(boolOptions["verify-update-sequence-race-conditions"]) {
@@ -1739,7 +1779,7 @@ int main( int argc, char * argv[] ) {
     spotConnection->compareResults( *(analyzer.getTransitionGraph()) , ltl_filename, ltlInAlphabet, ltlOutAlphabet);
     cout << "=============================================================="<<endl;
   }
-  
+
   Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
   if(boolOptions["viz"]) {
     cout << "generating graphviz files:"<<endl;
@@ -1883,14 +1923,16 @@ int main( int argc, char * argv[] ) {
   // reset terminal
   cout<<color("normal")<<"done."<<endl;
   
-  } catch(char* str) {
+    sageProject->unparse(0,0);
+
+  } catch(char const* str) {
     cerr << "*Exception raised: " << str << endl;
-    return 1;
-  } catch(const char* str) {
-    cerr << "Exception raised: " << str << endl;
     return 1;
   } catch(string str) {
     cerr << "Exception raised: " << str << endl;
+    return 1;
+  } catch(...) {
+    cerr << "Unknown exception raised." << endl;
     return 1;
  }
   return 0;

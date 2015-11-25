@@ -83,7 +83,7 @@ public:
      *
      *  This SValue will be used only for its virtual constructors and will never appear in an expression. */
     static SValuePtr instance() {
-        return SValuePtr(new SValue(1, NULL));
+        return SValuePtr(new SValue(1));
     }
 
     /** Instantiate an undefined value.
@@ -120,8 +120,8 @@ public:
             retval->set_width(new_width);
         return retval;
     }
-    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr&,
-                                                                           SMTSolver*) const ROSE_OVERRIDE {
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr&, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE {
         throw BaseSemantics::NotImplemented("SourceAstSemantics is not suitable for dataflow analysis", NULL);
     }
 

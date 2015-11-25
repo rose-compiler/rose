@@ -8,7 +8,7 @@
 
 #include "BaseSemantics2.h"
 #include "SMTSolver.h"
-#include "InsnSemanticsExpr.h"
+#include "BinarySymbolicExpr.h"
 #include "RegisterStateGeneric.h"
 #include "MemoryCellList.h"
 
@@ -39,13 +39,61 @@ namespace InstructionSemantics2 {       // documented elsewhere
 *  naive comparison of the expression trees. */
 namespace SymbolicSemantics {
 
-typedef InsnSemanticsExpr::LeafNode LeafNode;
-typedef InsnSemanticsExpr::LeafNodePtr LeafNodePtr;
-typedef InsnSemanticsExpr::InternalNode InternalNode;
-typedef InsnSemanticsExpr::InternalNodePtr InternalNodePtr;
-typedef InsnSemanticsExpr::TreeNode TreeNode;
-typedef InsnSemanticsExpr::TreeNodePtr TreeNodePtr;
+typedef SymbolicExpr::Leaf LeafNode;
+typedef SymbolicExpr::LeafPtr LeafPtr;
+typedef SymbolicExpr::Interior InteriorNode;
+typedef SymbolicExpr::InteriorPtr InteriorPtr;
+typedef SymbolicExpr::Node ExprNode;
+typedef SymbolicExpr::Ptr ExprPtr;
 typedef std::set<SgAsmInstruction*> InsnSet;
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Merging symbolic values
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Shared-ownership pointer to merge control object. */
+typedef Sawyer::SharedPointer<class Merger> MergerPtr;
+
+/** Controls merging of symbolic values. */
+class Merger: public BaseSemantics::Merger {
+    size_t setSizeLimit_;
+protected:
+    Merger(): BaseSemantics::Merger(), setSizeLimit_(1) {}
+
+public:
+    /** Shared-ownership pointer to merge control object. */
+    typedef MergerPtr Ptr;
+
+    /** Allocating constructor. */
+    static Ptr instance() {
+        return Ptr(new Merger);
+    }
+
+    /** Allocating constructor. */
+    static Ptr instance(size_t n) {
+        Ptr retval = Ptr(new Merger);
+        retval->setSizeLimit(n);
+        return retval;
+    }
+
+    /** Property: Maximum set size.
+     *
+     *  The maximum number of members in a set when merging two expressions.  For instance, when merging expressions "x" and
+     *  "y" with a limit of one (the default), the return value is bottom, but if the size limit is two or more, the return
+     *  value is (set x y).  Merging two sets (or a set and a singlton) works the same way: if the union of the two sets is
+     *  larger than the size limit then bottom is returned, otherwise the union is returned.
+     *
+     *  A limit of zero has the same effect as a limit of one since a singleton set is represented by just the naked member
+     *  (that is, (set x) gets simplified to just x).
+     *
+     * @{ */
+    size_t setSizeLimit() const { return setSizeLimit_; }
+    void setSizeLimit(size_t n) { setSizeLimit_ = n; }
+    /** @} */
+};
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,7 +106,7 @@ typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 /** Formatter for symbolic values. */
 class Formatter: public BaseSemantics::Formatter {
 public:
-    InsnSemanticsExpr::Formatter expr_formatter;
+    SymbolicExpr::Formatter expr_formatter;
 };
 
 /** Type of values manipulated by the SymbolicSemantics domain.
@@ -66,7 +114,7 @@ public:
  *  Values of type type are used whenever a value needs to be stored, such as memory addresses, the values stored at those
  *  addresses, the values stored in registers, the operands for RISC operations, and the results of those operations.
  *
- *  An SValue points to an expression composed of the TreeNode types defined in InsnSemanticsExpr.h, and also stores the set of
+ *  An SValue points to an expression composed of the ExprNode types defined in BinarySymbolicExpr.h, and also stores the set of
  *  instructions that were used to define the value.  This provides a framework for some simple forms of value-based def-use
  *  analysis. See get_defining_instructions() for details.
  * 
@@ -132,7 +180,7 @@ public:
 class SValue: public BaseSemantics::SValue {
 protected:
     /** The symbolic expression for this value.  Symbolic expressions are reference counted. */
-    TreeNodePtr expr;
+    ExprPtr expr;
 
     /** Instructions defining this value.  Any instruction that saves the value to a register or memory location
      *  adds itself to the saved value. */
@@ -142,12 +190,12 @@ protected:
     // Real constructors
 protected:
     explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {
-        expr = LeafNode::create_variable(nbits);
+        expr = SymbolicExpr::makeVariable(nbits);
     }
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
-        expr = LeafNode::create_integer(nbits, number);
+        expr = SymbolicExpr::makeInteger(nbits, number);
     }
-    SValue(TreeNodePtr expr): BaseSemantics::SValue(expr->get_nbits()) {
+    SValue(ExprPtr expr): BaseSemantics::SValue(expr->nBits()) {
         this->expr = expr;
     }
 
@@ -156,27 +204,27 @@ protected:
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
-        return SValuePtr(new SValue(LeafNode::create_variable(1)));
+        return SValuePtr(new SValue(SymbolicExpr::makeVariable(1)));
     }
 
     /** Instantiate a new data-flow bottom value of specified width. */
     static SValuePtr instance_bottom(size_t nbits) {
-        return SValuePtr(new SValue(LeafNode::create_variable(nbits, "", TreeNode::BOTTOM)));
+        return SValuePtr(new SValue(SymbolicExpr::makeVariable(nbits, "", ExprNode::BOTTOM)));
     }
 
     /** Instantiate a new undefined value of specified width. */
     static SValuePtr instance_undefined(size_t nbits) {
-        return SValuePtr(new SValue(LeafNode::create_variable(nbits)));
+        return SValuePtr(new SValue(SymbolicExpr::makeVariable(nbits)));
     }
 
     /** Instantiate a new unspecified value of specified width. */
     static SValuePtr instance_unspecified(size_t nbits) {
-        return SValuePtr(new SValue(LeafNode::create_variable(nbits, "", TreeNode::UNSPECIFIED)));
+        return SValuePtr(new SValue(SymbolicExpr::makeVariable(nbits, "", ExprNode::UNSPECIFIED)));
     }
 
     /** Instantiate a new concrete value. */
     static SValuePtr instance_integer(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(LeafNode::create_integer(nbits, value)));
+        return SValuePtr(new SValue(SymbolicExpr::makeInteger(nbits, value)));
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -203,8 +251,8 @@ public:
             retval->set_width(new_width);
         return retval;
     }
-    virtual Sawyer::Optional<BaseSemantics::SValuePtr> createOptionalMerge(const BaseSemantics::SValuePtr &other,
-                                                                           SMTSolver*) const ROSE_OVERRIDE;
+    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
@@ -223,7 +271,7 @@ public:
     virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
 
     // It's not possible to change the size of a symbolic expression in place. That would require that we recursively change
-    // the size of the InsnSemanticsExpr, which might be shared with many unrelated values whose size we don't want to affect.
+    // the size of the SymbolicExpr, which might be shared with many unrelated values whose size we don't want to affect.
     virtual void set_width(size_t nbits) ROSE_OVERRIDE {
         ASSERT_require(nbits==get_width());
     }
@@ -231,7 +279,7 @@ public:
     virtual bool isBottom() const ROSE_OVERRIDE;
 
     virtual bool is_number() const ROSE_OVERRIDE {
-        return expr->is_known();
+        return expr->isNumber();
     }
 
     virtual uint64_t get_number() const ROSE_OVERRIDE;
@@ -278,13 +326,13 @@ public:
     /** Returns the expression stored in this value.
      *
      *  Expressions are reference counted; the reference count of the returned expression is not incremented. */
-    virtual const TreeNodePtr& get_expression() const {
+    virtual const ExprPtr& get_expression() const {
         return expr;
     }
 
     /** Changes the expression stored in the value.
      * @{ */
-    virtual void set_expression(const TreeNodePtr &new_expr) {
+    virtual void set_expression(const ExprPtr &new_expr) {
         expr = new_expr;
     }
     virtual void set_expression(const SValuePtr &source) {
@@ -421,7 +469,7 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    MemoryState(const BaseSemantics::MemoryCellPtr &protocell)
+    explicit MemoryState(const BaseSemantics::MemoryCellPtr &protocell)
         : BaseSemantics::MemoryCellList(protocell), cell_compressor(&cc_choice) {}
 
     MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
@@ -522,16 +570,16 @@ typedef BaseSemantics::StatePtr StatePtr;
 
 /** How to update the list of writers stored at each abstract location. */
 enum WritersMode {
-    TRACK_NO_WRITERS,                               // do not track writers
-    TRACK_LATEST_WRITER,                            // save only the latest writer
-    TRACK_ALL_WRITERS                               // save all writers
+    TRACK_NO_WRITERS,                                   /**< Do not track writers. */
+    TRACK_LATEST_WRITER,                                /**< Save only the latest writer. */
+    TRACK_ALL_WRITERS                                   /**< Save all writers. */
 };
 
 /** How to update the list of definers stored in each semantic value. */
 enum DefinersMode {
-    TRACK_NO_DEFINERS,                              // do not track definers
-    TRACK_LATEST_DEFINER,                           // save only the latest definer
-    TRACK_ALL_DEFINERS                              // save all definers
+    TRACK_NO_DEFINERS,                                  /**< Do not track definers. */
+    TRACK_LATEST_DEFINER,                               /**< Save only the latest definer. */
+    TRACK_ALL_DEFINERS                                  /**< Save all definers. */
 };
 
 /** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
@@ -563,14 +611,14 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
-          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER) {
+          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
         set_name("Symbolic");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
-          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER) {
+          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
         set_name("Symbolic");
         (void) SValue::promote(state->get_protoval()); // values must have SymbolicSemantics::SValue dynamic type
     }
@@ -645,8 +693,8 @@ public:
     // New methods for constructing values, so we don't have to write so many SValue::promote calls in the RiscOperators
     // implementations.
 protected:
-    SValuePtr svalue_expr(const TreeNodePtr &expr, const InsnSet &defs=InsnSet()) {
-        SValuePtr newval = SValue::promote(protoval->undefined_(expr->get_nbits()));
+    SValuePtr svalue_expr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) {
+        SValuePtr newval = SValue::promote(protoval->undefined_(expr->nBits()));
         newval->set_expression(expr);
         newval->set_defining_instructions(defs);
         return newval;
@@ -679,6 +727,7 @@ protected:
     DefinersMode computingDefiners_;                    // whether to track definers (instruction VAs) of SValues
     WritersMode computingMemoryWriters_;                // whether to track writers (instruction VAs) to memory.
     WritersMode computingRegisterWriters_;              // whether to track writers (instruction VAs) to registers.
+    size_t trimThreshold_;                              // max size of expressions (zero means no maximimum)
 
 public:
 
@@ -722,8 +771,6 @@ public:
     DefinersMode computingDefiners() const { return computingDefiners_; }
     /** @} */
 
-
-
     /** Property: Track which instructions write to each memory location.
      *
      *  Each memory location stores a set of addresses that represent the instructions that wrote to that location. This
@@ -757,7 +804,7 @@ public:
         return computingMemoryWriters() != TRACK_NO_WRITERS;
     }
 
-    /** Property: track latest writer to each register.
+    /** Property: Track latest writer to each register.
      *
      *  Controls whether each @ref writeRegister operation updates the list of writers.  The following values are allowed for
      *  this property:
@@ -784,6 +831,16 @@ public:
 
     // Used internally to control whether cur_insn should be omitted from the list of definers.
     bool getset_omit_cur_insn(bool b) { bool retval = omit_cur_insn; omit_cur_insn=b; return retval; }
+
+    /** Property: Maximum size of expressions.
+     *
+     *  Symbolic expressions can get very large very quickly. This property controls how large a symbolic expression can grow
+     *  before it's substituted with a new variable.  The default, zero, means to never limit the size of expressions.
+     *
+     * @{ */
+    void trimThreshold(size_t n) { trimThreshold_ = n; }
+    size_t trimThreshold() const { return trimThreshold_; }
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first defined at this level of the class hierarchy
@@ -850,7 +907,13 @@ public:
      * @endcode
      */
     virtual void substitute(const SValuePtr &from, const SValuePtr &to);
-    
+
+    /** Filters results from RISC operators.
+     *
+     *  Checks that the size of the specified expression doesn't exceed the @ref trimThreshold. If not (or the threshold is
+     *  zero), returns the argument, otherwise returns a new variable. */
+    virtual BaseSemantics::SValuePtr filterResult(const BaseSemantics::SValuePtr&);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
 public:

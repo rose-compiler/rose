@@ -442,9 +442,10 @@ enum InputOutputProperty {
 typedef Sawyer::Container::Set<InputOutputProperty> InputOutputPropertySet;
 
 
-/*******************************************************************************************************************************
- *                                      Exceptions
- *******************************************************************************************************************************/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Exceptions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Base class for exceptions thrown by instruction semantics. */
 class Exception: public std::runtime_error {
@@ -460,9 +461,48 @@ public:
         : Exception(mesg, insn) {}
 };
 
-/*******************************************************************************************************************************
- *                                      Semantic Values
- *******************************************************************************************************************************/
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Merging states
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Shared ownership pointer for Merger classes. */
+typedef Sawyer::SharedPointer<class Merger> MergerPtr;
+
+/** Controls state merge operations.
+ *
+ *  This is the base class for objects that control the details of merge operations. A merge of two semantic values or semantic
+ *  states happens when control flow joins together in data-flow analysis, and perhaps other operations.  An optional @ref
+ *  Merger object is passed as an argument into the merge functions and contains settings and other details that might be
+ *  necessary during the merge operation.
+ *
+ *  The base classes for register state and memory state allow an optional @ref Merger object to be stored in the
+ *  state. Whenever a state is copied, its merger object pointer is also copied (shallow copy of merger).  The merger object is
+ *  passed as an argument to each call of @ref SValue::createMerged or @ref SValue::createOptionalMerge.  The user-defined
+ *  versions of these functions can access the merger object to decide how to merge. For example, the symbolic domain defines a
+ *  merger that controls whether merging two different semantic values results in bottom or a set containing both values.
+ *
+ *  @ref Merger objects are allocated on the heap and have shared ownership like most other instruction semantics
+ *  objects. Therefore they have no public C++ constructors but instead use factory methods named "instance". Users should not
+ *  explicitly delete these objects -- they will be deleted automatically. */
+class Merger: public Sawyer::SharedObject {
+protected:
+    Merger() {}
+
+public:
+    /** Shared ownership pointer to an object. */
+    typedef MergerPtr Ptr;
+
+    /** Allocating constructor. */
+    static Ptr instance() {
+        return Ptr(new Merger);
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Semantic Values
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // This is leftover for compatibility with an older API.  The old API had code like this:
 //    User::SValue user_svalue = BaseSemantics::dynamic_pointer_cast<User::SValue>(base_svalue);
@@ -502,6 +542,10 @@ protected:
 protected:
     explicit SValue(size_t nbits): width(nbits) {}  // hot
     SValue(const SValue &other): width(other.width) {}
+
+public:
+    /** Shared-ownership pointer for an SValue object. */
+    typedef SValuePtr Ptr;
 
 public:
     virtual ~SValue() {}
@@ -584,7 +628,8 @@ public:
      *
      *  If you always want a copy regardless of whether the merge is necessary, then use the @ref createMerged convenience
      *  function instead. */
-    virtual Sawyer::Optional<SValuePtr> createOptionalMerge(const SValuePtr &other, SMTSolver *solver) const = 0;
+    virtual Sawyer::Optional<SValuePtr>
+    createOptionalMerge(const SValuePtr &other, const MergerPtr &merger, SMTSolver *solver) const = 0;
 
     /** Create a new value by merging two existing values.
      *
@@ -592,8 +637,8 @@ public:
      *  regardless of whether a merge was necessary.  In order to determine if a merge was necessary once can compare the
      *  return value to @p this using @ref must_equal, although doing so is more expensive than calling @ref
      *  createOptionalMerge. */
-    SValuePtr createMerged(const SValuePtr &other, SMTSolver *solver) const /*final*/ {
-        return createOptionalMerge(other, solver).orElse(copy());
+    SValuePtr createMerged(const SValuePtr &other, const MergerPtr &merger, SMTSolver *solver) const /*final*/ {
+        return createOptionalMerge(other, merger, solver).orElse(copy());
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -685,9 +730,9 @@ public:
 
 
 
-/*******************************************************************************************************************************
- *                                      Register States
- *******************************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Register States
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a RegisterState object.  RegisterState objects are reference counted and should not be explicitly
  *  deleted. */
@@ -697,6 +742,9 @@ typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
  *  BaseSemantics::RegisterState is an abstract class that defines the interface.  See the
  *  rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.*/
 class RegisterState: public boost::enable_shared_from_this<RegisterState> {
+private:
+    MergerPtr merger_;
+
 protected:
     SValuePtr protoval;                         /**< Prototypical value for virtual constructors. */
     const RegisterDictionary *regdict;          /**< Registers that are able to be stored by this state. */
@@ -708,6 +756,10 @@ protected:
         : protoval(protoval), regdict(regdict) {
         ASSERT_not_null(protoval);
     }
+
+public:
+    /** Shared-ownership pointer for a register state object. */
+    typedef RegisterStatePtr Ptr;
 
 public:
     virtual ~RegisterState() {}
@@ -739,6 +791,18 @@ public:
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // The rest of the API...
+
+    /** Property: Merger.
+     *
+     *  This property is optional details about how to merge two states. It is passed down to the register and memory state
+     *  merge operation and to the semantic value merge operation.  Users can subclass this to hold whatever information is
+     *  necessary for merging.  Unless the user overrides merge functions to do something else, all merging will use the same
+     *  merger object -- the one set for this property.
+     *
+     * @{ */
+    MergerPtr merger() const { return merger_; }
+    void merger(const MergerPtr &m) { merger_ = m; }
+    /** @} */
 
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
     SValuePtr get_protoval() const { return protoval; }
@@ -937,9 +1001,10 @@ protected:
 };
 
 
-/*******************************************************************************************************************************
- *                                      Memory State
- *******************************************************************************************************************************/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Memory State
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a MemoryState object. MemoryState objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
@@ -951,6 +1016,7 @@ class MemoryState: public boost::enable_shared_from_this<MemoryState> {
     SValuePtr addrProtoval_;                            /**< Prototypical value for addresses. */
     SValuePtr valProtoval_;                             /**< Prototypical value for values. */
     ByteOrder::Endianness byteOrder_;                   /**< Memory byte order. */
+    MergerPtr merger_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -962,7 +1028,12 @@ protected:
     }
 
     MemoryState(const MemoryStatePtr &other)
-        : addrProtoval_(other->addrProtoval_), valProtoval_(other->valProtoval_), byteOrder_(ByteOrder::ORDER_UNSPECIFIED) {}
+        : addrProtoval_(other->addrProtoval_), valProtoval_(other->valProtoval_), byteOrder_(ByteOrder::ORDER_UNSPECIFIED),
+          merger_(other->merger_) {}
+
+public:
+    /** Shared-ownership pointer for a memory state object. */
+    typedef MemoryStatePtr Ptr;
 
 public:
     virtual ~MemoryState() {}
@@ -995,6 +1066,18 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
 public:
+    /** Property: Merger.
+     *
+     *  This property is optional details about how to merge two states. It is passed down to the register and memory state
+     *  merge operation and to the semantic value merge operation.  Users can subclass this to hold whatever information is
+     *  necessary for merging.  Unless the user overrides merge functions to do something else, all merging will use the same
+     *  merger object -- the one set for this property.
+     *
+     * @{ */
+    MergerPtr merger() const { return merger_; }
+    void merger(const MergerPtr &m) { merger_ = m; }
+    /** @} */
+
     /** Return the address protoval.  The address protoval is used to construct other memory addresses via its virtual
      *  constructors. */
     SValuePtr get_addr_protoval() const { return addrProtoval_; }
@@ -1082,9 +1165,11 @@ public:
     /** @} */
 };
 
-/******************************************************************************************************************
- *                                      State
- ******************************************************************************************************************/
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      State
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a State object.  State objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class State> StatePtr;
@@ -1094,6 +1179,10 @@ typedef boost::shared_ptr<class State> StatePtr;
  *  Binary semantic analysis usually progresses one instruction at a time--one starts with an initial state and the act of
  *  processing an instruction modifies the state.  The State is the base class class for the semantic states of various
  *  instruction semantic policies.  It contains storage for all the machine registers and memory.
+ *
+ *  Sometimes it's useful to have a state that contains only registers or only memory.  Although this class doesn't allow its
+ *  register or memory state children to be null pointers, the @ref NullSemantics class provides register and memory states
+ *  that are mostly no-ops.
  *
  *  States must be copyable objects.  Many analyses keep a copy of the machine state for each instruction or each CFG
  *  vertex.
@@ -1124,6 +1213,10 @@ protected:
         registers = other.registers->clone();
         memory = other.memory->clone();
     }
+
+public:
+    /** Shared-ownership pointer for a state object. */
+    typedef StatePtr Ptr;
 
 public:
     virtual ~State() {}
@@ -1164,7 +1257,7 @@ public:
         ASSERT_not_null(x);
         return x;
     }
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Other methods that are part of our API. Most of these just chain to either the register state and/or the memory state.
 public:
@@ -1172,20 +1265,17 @@ public:
     SValuePtr get_protoval() const { return protoval; }
 
     /** Initialize state.  The register and memory states are cleared. */
-    virtual void clear() {
-        registers->clear();
-        memory->clear();
-    }
+    virtual void clear();
 
-    /** Initialize all registers to zero. Memory is not affected. */
-    virtual void zero_registers() {
-        registers->zero();
-    }
+    /** Initialize all registers to zero.
+     *
+     *  Calls the @ref RegisterState::zero method. Memory is not affected. */
+    virtual void zero_registers();
 
-    /** Clear all memory locations.  This just empties the memory vector. */
-    virtual void clear_memory() {
-        memory->clear();
-    }
+    /** Clear all memory locations.
+     *
+     *  Calls the @ref MemoryState::clear method. Registers are not affected. */
+    virtual void clear_memory();
 
     /** Return the register state. */
     RegisterStatePtr get_register_state() {
@@ -1199,69 +1289,70 @@ public:
     
     /** Read a value from a register.
      *
-     *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state. See
+     *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state.  See
      *  BaseSemantics::RiscOperators::readRegister() for details. */
-    virtual SValuePtr readRegister(const RegisterDescriptor &desc, RiscOperators *ops) {
-        return registers->readRegister(desc, ops);
-    }
+    virtual SValuePtr readRegister(const RegisterDescriptor &desc, RiscOperators *ops);
 
     /** Write a value to a register.
      *
-     *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state. See
+     *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state.  See
      *  BaseSemantics::RiscOperators::writeRegister() for details. */
-    virtual void writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, RiscOperators *ops) {
-        registers->writeRegister(desc, value, ops);
-    }
+    virtual void writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, RiscOperators *ops);
 
     /** Read a value from memory.
      *
-     *  The BaseSemantics::readMemory() implementation simply delegates to the memory state member of this state. See
+     *  The BaseSemantics::readMemory() implementation simply delegates to the memory state member of this state.  See
      *  BaseSemantics::RiscOperators::readMemory() for details.  */
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
-                                 RiscOperators *addrOps, RiscOperators *valOps) {
-        return memory->readMemory(address, dflt, addrOps, valOps);
-    }
+                                 RiscOperators *addrOps, RiscOperators *valOps);
 
     /** Write a value to memory.
      *
-     *  The BaseSemantics::writeMemory() implementation simply delegates to the memory state member of this state. See
+     *  The BaseSemantics::writeMemory() implementation simply delegates to the memory state member of this state.  See
      *  BaseSemantics::RiscOperators::writeMemory() for details. */
-    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value,
-                             RiscOperators *addrOps, RiscOperators *valOps) {
-        memory->writeMemory(addr, value, addrOps, valOps);
-    }
+    virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps);
 
-    /** Print the register contents. This emits one line per register and contains the register name and its value.
+    /** Print the register contents.
+     *
+     *  This method emits one line per register and contains the register name and its value.
+     *
      * @{ */
-    void print_registers(std::ostream &stream, const std::string prefix="") {
-        Formatter fmt;
-        fmt.set_line_prefix(prefix);
-        print_registers(stream, fmt);
-    }
-    virtual void print_registers(std::ostream &stream, Formatter &fmt) const {
-        registers->print(stream, fmt);
-    }
+    void printRegisters(std::ostream &stream, const std::string &prefix = "");
+    virtual void printRegisters(std::ostream &stream, Formatter &fmt) const;
     /** @} */
 
-    /** Print memory contents.  This simply calls the MemoryState::print method.
+    // [Robb Matzke 2015-11-16]: deprecated
+    void print_registers(std::ostream &stream, const std::string &prefix = "") ROSE_DEPRECATED("use printRegisters instead") {
+        printRegisters(stream, prefix);
+    }
+
+    // [Robb Matzke 2015-11-16]: deprecated
+    virtual void print_registers(std::ostream &stream, Formatter &fmt) const ROSE_DEPRECATED("use printRegisters instead") {
+        printRegisters(stream, fmt);
+    }
+
+    /** Print memory contents.
+     *
+     *  This simply calls the MemoryState::print method.
+     *
      * @{ */
-    void print_memory(std::ostream &stream, const std::string prefix="") const {
-        Formatter fmt;
-        fmt.set_line_prefix(prefix);
-        print_registers(stream, fmt);
-    }
-    virtual void print_memory(std::ostream &stream, Formatter &fmt) const {
-        memory->print(stream, fmt);
-    }
+    void printMemory(std::ostream &stream, const std::string &prefix = "") const;
+    virtual void printMemory(std::ostream &stream, Formatter &fmt) const;
     /** @} */
+
+    // [Robb Matzke 2015-11-16]: deprecated
+    void print_memory(std::ostream &stream, const std::string prefix = "") const ROSE_DEPRECATED("use printMemory instead") {
+        printMemory(stream, prefix);
+    }
+
+    // [Robb Matzke 2015-11-16]: deprecated
+    virtual void print_memory(std::ostream &stream, Formatter &fmt) const ROSE_DEPRECATED("use printMemory instead") {
+        printMemory(stream, fmt);
+    }
 
     /** Print the state.  This emits a multi-line string containing the registers and all known memory locations.
      * @{ */
-    void print(std::ostream &stream, const std::string prefix="") const {
-        Formatter fmt;
-        fmt.set_line_prefix(prefix);
-        print(stream, fmt);
-    }
+    void print(std::ostream &stream, const std::string &prefix = "") const;
     virtual void print(std::ostream&, Formatter&) const;
     /** @} */
 
@@ -1293,9 +1384,11 @@ public:
     virtual bool merge(const StatePtr &other, RiscOperators *ops);
 };
 
-/******************************************************************************************************************
- *                                  RISC Operators
- ******************************************************************************************************************/
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RISC Operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a RiscOperator object. RiscOperator objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
@@ -1334,6 +1427,10 @@ protected:
         ASSERT_not_null(state);
         protoval = state->get_protoval();
     }
+
+public:
+    /** Shared-ownership pointer for a RiscOperators object. */
+    typedef RiscOperatorsPtr Ptr;
 
 public:
     virtual ~RiscOperators() {}
@@ -1605,8 +1702,8 @@ public:
      *
      * @{ */
     SValuePtr equal(const SValuePtr &a, const SValuePtr &b) ROSE_DEPRECATED("use isEqual instead");
-    SValuePtr isEqual(const SValuePtr &a, const SValuePtr &b);
-    SValuePtr isNotEqual(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isEqual(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isNotEqual(const SValuePtr &a, const SValuePtr &b);
     /** @} */
 
     /** Comparison for unsigned values.
@@ -1616,10 +1713,10 @@ public:
      *  operators.
      *
      * @{ */
-    SValuePtr isUnsignedLessThan(const SValuePtr &a, const SValuePtr &b);
-    SValuePtr isUnsignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
-    SValuePtr isUnsignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
-    SValuePtr isUnsignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isUnsignedLessThan(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isUnsignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isUnsignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isUnsignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
     /** @} */
 
     /** Comparison for signed values.
@@ -1629,10 +1726,10 @@ public:
      *  operators.
      *
      * @{ */
-    SValuePtr isSignedLessThan(const SValuePtr &a, const SValuePtr &b);
-    SValuePtr isSignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
-    SValuePtr isSignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
-    SValuePtr isSignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isSignedLessThan(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isSignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isSignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
+    virtual SValuePtr isSignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1655,7 +1752,7 @@ public:
 
     /** Subtract one value from another.  This is not a virtual function because it can be implemented in terms of @ref add and
      * @ref negate. We define it because it's something that occurs often enough to warrant its own function. */
-    SValuePtr subtract(const SValuePtr &minuend, const SValuePtr &subtrahend);
+    virtual SValuePtr subtract(const SValuePtr &minuend, const SValuePtr &subtrahend);
 
     /** Add two values of equal size and a carry bit.  Carry information is returned via carry_out argument.  The carry_out
      *  value is the tick marks that are written above the first addend when doing long arithmetic like a 2nd grader would do
@@ -1868,9 +1965,11 @@ public:
                              const SValuePtr &cond) = 0;
 };
 
-/*******************************************************************************************************************************
- *                                      Instruction Dispatcher
- *******************************************************************************************************************************/
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Instruction Dispatcher
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a Dispatcher object. Dispatcher objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class Dispatcher> DispatcherPtr;
@@ -1922,6 +2021,10 @@ protected:
         ASSERT_not_null(operators);
         ASSERT_not_null(regs);
     }
+
+public:
+    /** Shared-ownership pointer for a Dispatcher object. */
+    typedef DispatcherPtr Ptr;
 
 public:
     virtual ~Dispatcher() {
@@ -2104,9 +2207,11 @@ public:
     virtual void write(SgAsmExpression*, const SValuePtr &value, size_t addr_nbits=0);
 };
 
-/*******************************************************************************************************************************
- *                                      Printing
- *******************************************************************************************************************************/
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Printing
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream&, const Exception&);
 std::ostream& operator<<(std::ostream&, const SValue&);

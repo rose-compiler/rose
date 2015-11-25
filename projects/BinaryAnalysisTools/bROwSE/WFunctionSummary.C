@@ -32,6 +32,7 @@ WFunctionSummary::init() {
     analyzers().push_back(FunctionNReturns::instance());
     analyzers().push_back(FunctionMayReturn::instance());
     analyzers().push_back(FunctionStackDelta::instance());
+    analyzers().push_back(FunctionCallingConvention::instance());
 
     // Build a table to hold analysis results. The results will be organized into NCOLS each occupying two table columns (one
     // for the name and one for the value).

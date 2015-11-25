@@ -7,8 +7,12 @@ add_library(midend_binary OBJECT
   BinaryFunctionCall.C
   BinaryMagic.C
   BinaryNoOperation.C
+  BinaryPointerDetection.C
   BinaryReturnValueUsed.C
+  BinaryStackDelta.C
   BinaryString.C
+  BinarySymbolicExpr.C
+  BinarySymbolicExprParser.C
   BinaryTaintedFlow.C
   BinaryToSource.C
   DwarfLineMapper.C
@@ -30,9 +34,7 @@ add_library(midend_binary OBJECT
   instructionSemantics/DispatcherM68k.C
   instructionSemantics/DispatcherPowerpc.C
   instructionSemantics/DispatcherX86.C
-  instructionSemantics/findConstants.C
   instructionSemantics/FindRegisterDefs.C
-  instructionSemantics/InsnSemanticsExpr.C
   instructionSemantics/IntervalSemantics.C
   instructionSemantics/IntervalSemantics2.C
   instructionSemantics/LlvmSemantics2.C
@@ -45,7 +47,6 @@ add_library(midend_binary OBJECT
   instructionSemantics/SMTSolver.C
   instructionSemantics/SourceAstSemantics2.C
   instructionSemantics/StaticSemantics2.C
-  instructionSemantics/SymbolicExprParser.C
   instructionSemantics/SymbolicMemory2.C
   instructionSemantics/SymbolicSemantics.C
   instructionSemantics/SymbolicSemantics2.C
@@ -67,8 +68,11 @@ install(
     BinaryMagic.h
     BinaryNoOperation.h
     BinaryPointerDetection.h
+    BinaryStackDelta.h
     BinaryStackVariable.h
     BinaryString.h
+    BinarySymbolicExpr.h
+    BinarySymbolicExprParser.h
     BinaryTaintedFlow.h
     BinaryToSource.h
     dataflowanalyses/InterruptAnalysis.h
@@ -86,7 +90,6 @@ install(
     instructionSemantics/DispatcherM68k.h
     instructionSemantics/DispatcherPowerpc.h
     instructionSemantics/DispatcherX86.h
-    instructionSemantics/findConstants.h
     instructionSemantics/FindRegisterDefs.h
     instructionSemantics/flowEquations.h
     instructionSemantics/InsnSemanticsExpr.h
@@ -104,7 +107,6 @@ install(
     instructionSemantics/SMTSolver.h
     instructionSemantics/SourceAstSemantics2.h
     instructionSemantics/StaticSemantics2.h
-    instructionSemantics/SymbolicExprParser.h
     instructionSemantics/SymbolicMemory2.h
     instructionSemantics/SymbolicSemantics2.h
     instructionSemantics/SymbolicSemantics.h

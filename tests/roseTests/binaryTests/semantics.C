@@ -218,7 +218,7 @@ show_state(const BaseSemantics::RiscOperatorsPtr &ops)
     BaseSemantics::Formatter memfmt;
     memfmt.set_line_prefix("    ");
     std::cout <<"memory:\n";
-    ops->get_state()->print_memory(std::cout, memfmt);
+    ops->get_state()->printMemory(std::cout, memfmt);
 }
 
 

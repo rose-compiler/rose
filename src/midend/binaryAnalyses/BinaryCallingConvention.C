@@ -247,7 +247,7 @@ Definition::x86_fastcall(const RegisterDictionary *regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
     static Definition cc(SP.get_nbits(), "fastcall",
-                         "x86-" + StringUtility::numberToString(cc.wordWidth()) + " fastcall",
+                         "x86-" + StringUtility::numberToString(SP.get_nbits()) + " fastcall",
                          regDict);
 
     // Stack characteristics
@@ -491,15 +491,21 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         return;
     }
 
-    // Build the dataflow engine.
+    // Build the dataflow engine.  If an instruction dispatcher is already provided then use it, otherwise create one and store
+    // it in this analysis object.
     typedef DataFlow::Engine<DfCfg, StatePtr, P2::DataFlow::TransferFunction, DataFlow::SemanticsMerge> DfEngine;
-    DispatcherPtr cpu = partitioner.newDispatcher(partitioner.newOperators());
-    P2::DataFlow::MergeFunction merge(cpu);
-    P2::DataFlow::TransferFunction xfer(cpu);
+    if (!cpu_ && NULL==(cpu_ = partitioner.newDispatcher(partitioner.newOperators()))) {
+        mlog[DEBUG] <<"  no instruction semantics\n";
+        return;
+    }
+    CallingConvention::Definition dfltCc = CallingConvention::Definition::x86_cdecl(cpu_->get_register_dictionary());
+    P2::DataFlow::MergeFunction merge(cpu_);
+    P2::DataFlow::TransferFunction xfer(cpu_);
     xfer.defaultCallingConvention(defaultCc_);
     DfEngine dfEngine(dfCfg, xfer, merge);
-    dfEngine.maxIterations(dfCfg.nVertices() * 5);      // arbitrary
-    regDict_ = cpu->get_register_dictionary();
+    size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
+    dfEngine.maxIterations(maxIterations);
+    regDict_ = cpu_->get_register_dictionary();
 
     // Build the initial state
     StatePtr initialState = xfer.initialState();
@@ -510,15 +516,18 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     bool converged = true;
     try {
         // Use this rather than runToFixedPoint because it lets us show a progress report
-        Sawyer::ProgressBar<size_t> progress(mlog[MARCH], function->printableName());
+        Sawyer::ProgressBar<size_t> progress(maxIterations, mlog[MARCH], function->printableName());
         dfEngine.reset(startVertexId, initialState);
         while (dfEngine.runOneIteration())
             ++progress;
     } catch (const DataFlow::NotConverging &e) {
-        mlog[WARN] <<e.what() <<"\n";
+        mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
         converged = false;                              // didn't converge, so just use what we have
+    } catch (const BaseSemantics::Exception &e) {
+        mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
+        converged = false;
     }
-
+    
     // Get the final dataflow state
     StatePtr finalState = dfEngine.getInitialState(returnVertex->id());
     if (finalState == NULL) {
@@ -562,9 +571,9 @@ Analysis::updateRestoredRegisters(const StatePtr &initialState, const StatePtr &
     BOOST_FOREACH (const RegisterDescriptor &reg, finalRegs->findProperties(props)) {
         SValuePtr initialValue = initialRegs->readRegister(reg, ops.get());
         SValuePtr finalValue = finalRegs->readRegister(reg, ops.get());
-        InsnSemanticsExpr::TreeNodePtr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
-        InsnSemanticsExpr::TreeNodePtr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
-        if (finalExpr->get_flags() == initialExpr->get_flags() && finalExpr->must_equal(initialExpr, ops->get_solver()))
+        SymbolicExpr::Ptr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
+        SymbolicExpr::Ptr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
+        if (finalExpr->flags() == initialExpr->flags() && finalExpr->mustEqual(initialExpr, ops->get_solver()))
             restoredRegisters_.insert(reg);
     }
 }
