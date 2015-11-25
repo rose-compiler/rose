@@ -55,7 +55,9 @@ class UnparseLanguageIndependentConstructs
 
        // Two statement specification of token subsequence (required for "else" case in SgIfStmt).
        // void unparseStatementFromTokenStream (SgStatement* stmt_1, SgStatement* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
-          void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
+       // void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
+          void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, 
+                                                token_sequence_position_enum_type e_token_subsequence_start, bool unparseOnlyWhitespace = false );
 
        // DQ (12/30/2014): Adding debugging information.
           std::string token_sequence_position_name( token_sequence_position_enum_type e );

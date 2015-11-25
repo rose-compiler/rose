@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -11,6 +11,7 @@
 
 #include <Sawyer/Graph.h>
 #include <Sawyer/Sawyer.h>
+#include <boost/foreach.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/properties.hpp>
 
@@ -49,6 +50,42 @@ namespace Sawyer {
  *  href="https://github.com/matzke1/Sawyer/blob/master/tests/Container/graphBoost.C"><tt>tests/Container/graphBoost.C</tt></a>
  *  file contains examples of using %Sawyer graphs with the BGL API. */
 namespace Boost {
+
+/** Convert a Sawyer graph to a Boost graph.
+ *
+ *  Although Sawyer graphs can be used with the algorithms in the Boost Graph Library, doing so is often quite messy since even
+ *  minor problems result in error messages that are many kilobytes in length due to BGL's extensive use of templates. For
+ *  instance, trying to invoke certain BGL algorithms on a reference to a const graph is an error (even though conceptually it
+ *  should be possible) and the multi-line 1200-character error message from GCC makes no clear mention of the fact that a
+ *  const reference is used where a non-const is expected.  Also, BGL's use of "properties" to represent values stored in
+ *  Sawyer Graph vertices and/or edges, or values stored in separate lookup tables, is overly complex since it's trying to be
+ *  as general as possible.
+ *
+ *  Therefore, sometimes it's easier to just create a boot graph and invoke the BGL algorithm on the boost graph with some
+ *  external properties. That way the user can almost cut-n-paste from BGL example code.
+ *
+ *  This method creates a BGL @c adjacency_list graph from a Sawyer graph. The vertices of the BGL graph must be stored in a
+ *  vector (@c boost::vecS) and will have the same indices as the vertex ID numbers in the Sawyer graph.  No user-defined
+ *  vertex or edge data is copied into the BGL graph; only connectivity information is copied.
+ *
+ *  The one-argument version returns a new BGL graph of specified type; the two-argument version returns the BGL graph in the
+ *  second argument.
+ *
+ * @{ */
+template<class SawyerGraph, class BoostGraph>
+void sawyerGraphToBoostGraph(const SawyerGraph &sg, BoostGraph &bg /*out*/) {
+    bg = BoostGraph(sg.nVertices());
+    BOOST_FOREACH (const typename SawyerGraph::Edge &edge, sg.edges())
+        bg.add_edge(edge.source()->id(), edge.target()->id());
+}
+
+template<class SawyerGraph, class BoostGraph>
+BoostGraph sawyerGraphToBoostGraph(const SawyerGraph &sg) {
+    BoostGraph bg;
+    sawyerGraphToBoostGraph(sg, bg);
+    return bg;
+}
+/** @} */
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Iterators

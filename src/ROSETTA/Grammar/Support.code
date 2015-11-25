@@ -93,6 +93,16 @@ HEADER_OMP_CLAUSE_START
           e_omp_map_last
         };
 
+        // Liao, 11/11/2015: experimental support for data distribution policies
+        enum omp_map_dist_data_enum
+        {
+          e_omp_map_dist_data_unknown,
+          e_omp_map_dist_data_duplicate,
+          e_omp_map_dist_data_block,
+          e_omp_map_dist_data_cyclic,
+          e_omp_map_dist_data_last
+        };
+
 
 HEADER_OMP_CLAUSE_END
 HEADER_GRAPH_START
@@ -1994,8 +2004,8 @@ $CLASSNAME::updateAttribute( std::string s, AstAttribute* a )
 void
 $CLASSNAME::removeAttribute(std::string s)
    {
-     assert(get_attributeMechanism() != NULL);
-     get_attributeMechanism()->remove(s);
+     if (get_attributeMechanism())
+         get_attributeMechanism()->remove(s);
 
   // DQ (1/2/2006): If we have no more attributes then remove the attribute container
      int remainingCount = numberOfAttributes();
@@ -6263,6 +6273,9 @@ HEADER_UNPARSE_INFO_START
             // DQ (3/25/2015): This is the support required for the offsetof() function family (__offsetof(), __builtin_offsetof(), etc.).
                b_skipCompilerGeneratedSubExpressions = 49, /*!< Supress compiler generated subexpressions (used to output fields in the 2nd parameter of the offsetof() function family. */
 
+            // DQ (11/15/2015): Token-based unparsing support for partial token sequence unparsing of lists of statements (controls fromatting).
+               b_parentStatementListBeingUnparsedUsingPartialTokenSequence = 50, /*!< Controls output formatting (CR's) in mixing unparsing from token stream with unparsing from the AST. */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -6564,6 +6577,11 @@ HEADER_UNPARSE_INFO_START
           bool skipCompilerGeneratedSubExpressions() const;
           void set_skipCompilerGeneratedSubExpressions();
           void unset_skipCompilerGeneratedSubExpressions();
+
+       // DQ (11/15/2015): Token-based unparsing support for partial token sequence unparsing of lists of statements (controls fromatting).
+          bool parentStatementListBeingUnparsedUsingPartialTokenSequence() const;
+          void set_parentStatementListBeingUnparsedUsingPartialTokenSequence();
+          void unset_parentStatementListBeingUnparsedUsingPartialTokenSequence();
 
 #if 0
    // MK: These access functions are now automatically generated!
@@ -15791,6 +15809,9 @@ SgProject::SgProject( const SgProject & project )
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
 SgProject::SgProject ( int argc, char** argv, bool frontendConstantFolding)
    {
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(this != NULL);
+
      initialization();
 
   // DQ (9/18/2011): Added support to use frontend specific constnat folding (applies to C/C++ using EDG).
@@ -15808,6 +15829,9 @@ SgProject::SgProject ( int argc, char** argv, bool frontendConstantFolding)
 //! constructor invokes EDG front end and creates AST. Use frontend() instead.
 SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding )
    {
+  // DQ (11/4/2015): Added assertion.
+     ROSE_ASSERT(this != NULL);
+
      initialization();
 
   // DQ (9/18/2011): Added support to use frontend specific constnat folding (applies to C/C++ using EDG).
@@ -17961,6 +17985,16 @@ void SgUnparse_Info::set_skipCompilerGeneratedSubExpressions()
 void SgUnparse_Info::unset_skipCompilerGeneratedSubExpressions()
    { unsetBit(b_skipCompilerGeneratedSubExpressions); }
 
+// DQ (11/15/2015): Token-based unparsing support for partial token sequence unparsing of lists of statements (controls fromatting).
+bool SgUnparse_Info::parentStatementListBeingUnparsedUsingPartialTokenSequence() const
+   { return checkBit(b_parentStatementListBeingUnparsedUsingPartialTokenSequence); }
+
+void SgUnparse_Info::set_parentStatementListBeingUnparsedUsingPartialTokenSequence()
+   { setBit(b_parentStatementListBeingUnparsedUsingPartialTokenSequence); }
+
+void SgUnparse_Info::unset_parentStatementListBeingUnparsedUsingPartialTokenSequence()
+   { unsetBit(b_parentStatementListBeingUnparsedUsingPartialTokenSequence); }
+
 
 void
 SgUnparse_Info::display ( const std::string & label ) const
@@ -18047,6 +18081,8 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("supressImplicitThisOperator            = %s \n",( supressImplicitThisOperator() == true ) ? "true" : "false");
      printf ("unparsedPartiallyUsingTokenStream      = %s \n",( unparsedPartiallyUsingTokenStream() == true ) ? "true" : "false");
      printf ("skipCompilerGeneratedSubExpressions    = %s \n",( skipCompilerGeneratedSubExpressions() == true ) ? "true" : "false");
+
+     printf ("parentStatementListBeingUnparsedUsingPartialTokenSequence = %s \n",( parentStatementListBeingUnparsedUsingPartialTokenSequence() == true ) ? "true" : "false");
 #endif
 
      switch (p_access_attribute)
@@ -18552,7 +18588,9 @@ SgTemplateArgument::get_mangled_name (void) const
      ROSE_ASSERT(this != NULL);
 
 #if 0
-     printf ("In SgTemplateArgument::get_mangled_name(): get_argumentType() = %d \n",get_argumentType());
+  // printf ("In SgTemplateArgument::get_mangled_name(): this = %p get_argumentType() = %d unparseToString() = %s \n",this,get_argumentType(),unparseToString().c_str());
+     printf ("In SgTemplateArgument::get_mangled_name(): this = %p get_argumentType() = %d \n",this,get_argumentType());
+     printf ("In SgTemplateArgument::get_mangled_name(): unparseToString() = %s \n",unparseToString().c_str());
 #endif
 
      ostringstream mangled_name;
@@ -18562,6 +18600,9 @@ SgTemplateArgument::get_mangled_name (void) const
              {
                const SgType* type = get_type();
                assert (type != NULL);
+#if 0
+               printf ("In SgTemplateArgument::get_mangled_name(): type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
+#endif
                SgName mangled_type = type->get_mangled();
 
                SgNode* parent = this->get_parent();

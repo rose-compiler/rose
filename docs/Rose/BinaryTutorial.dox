@@ -270,7 +270,16 @@ namespace BinaryAnalysis {
  *
  *  Here's the entire program:
  *
- *  @includelineno binaryStrings.C */
+ *  @includelineno binaryStrings.C
+ *
+ *
+ *
+ *  @section bintut_next Next steps
+ *
+ *  Most binary analysis capabilities are documented in the @ref rose::BinaryAnalysis namespace. The test directory,
+ *  "$ROSE_SOURCE/tests/roseTests/BinaryTests", also has many examples, some of which are slightly hard to read since there
+ *  main purpose is to test rather than demonstrate.  The "$ROSE_SOURCE/projects/BinaryAnalysisTools" directory (as well as
+ *  some other project directories) has real programs that use the binary analysis interface. */
 
 } // namespace
 } // namespace

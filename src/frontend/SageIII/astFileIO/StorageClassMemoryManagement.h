@@ -1116,6 +1116,47 @@ class EasyStorage < std::map< SgSymbol*,  std::vector < std::pair <SgExpression*
      static void readFromFile (std::istream& in) {};
    };
 
+// Liao 11/11/2015,  dist_data policy information associated with SgOmpMapClause
+
+template < >
+class EasyStorageMapEntry <SgOmpClause::omp_map_dist_data_enum, SgExpression*> 
+   {
+    private:
+     SgOmpClause::omp_map_dist_data_enum dd_enum; 
+     SgExpression* exp; 
+    public: 
+     EasyStorageMapEntry () { dd_enum = (SgOmpClause::omp_map_dist_data_enum) 0 ; exp =NULL; }
+     void storeDataInEasyStorageClass(const std::pair<SgOmpClause::omp_map_dist_data_enum, const SgExpression* >& iter);
+     std::pair<SgOmpClause::omp_map_dist_data_enum, SgExpression* >  rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock() ;
+     static void deleteMemoryPool() ;
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+
+
+template <>
+class EasyStorage < std::map< SgSymbol*,  std::vector < std::pair <SgOmpClause::omp_map_dist_data_enum, SgExpression*> > > > 
+   : public StorageClassMemoryManagement< EasyStorageMapEntry< SgSymbol*, std::vector <std::pair <SgOmpClause::omp_map_dist_data_enum, SgExpression*> > > >
+   {
+     typedef StorageClassMemoryManagement< EasyStorageMapEntry<SgSymbol*, std::vector <std::pair <SgOmpClause::omp_map_dist_data_enum, SgExpression*> > > > Base;
+    public:
+     void storeDataInEasyStorageClass(const std::map<SgSymbol*, std::vector <std::pair <SgOmpClause::omp_map_dist_data_enum, SgExpression*> > >& data_) 
+     {  };
+     std::map< SgSymbol*, std::vector <std::pair <SgOmpClause::omp_map_dist_data_enum, SgExpression*> > > rebuildDataStoredInEasyStorageClass() const
+     {
+       std::map< SgSymbol*, std::vector <std::pair <SgOmpClause::omp_map_dist_data_enum, SgExpression*> > > rt;
+       return rt;
+     };
+     static void arrangeMemoryPoolInOneBlock() {};
+     static void deleteMemoryPool(){ };
+
+     static void writeToFile(std::ostream& out) { };
+     static void readFromFile (std::istream& in) {};
+   };
+
+
 
 /** Maps SgSharedVector to/from file representation. This is almost exactly the same as the
  *  vector of Sg object pointers specialization except the rebuildDataStoredInEasyStorageClass() constructs the SgSharedVector

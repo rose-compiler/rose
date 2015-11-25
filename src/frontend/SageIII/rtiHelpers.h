@@ -54,6 +54,18 @@ static std::string toStringForRTI(const std::vector<std::pair<T,T> >& x) {
   return ss.str();
 }
 
+// std::vector < std::pair <SgOmpClause::omp_map_dist_data_enum, SgExpression*> >
+template <typename F, typename S> // First and Second
+static std::string toStringForRTI(const std::vector<std::pair<F,S> >& x) {
+  std::ostringstream ss;
+  ss << "[";
+  for (typename std::vector<std::pair<F,S> >::const_iterator i = x.begin(); i != x.end(); ++i) 
+  {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  ss << "]";
+  return ss.str();
+}
+
+
 static std::string toStringForRTI(const ExtentMap &x)
 {
     std::ostringstream ss;

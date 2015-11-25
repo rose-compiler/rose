@@ -470,7 +470,7 @@ option(disable-tutorial-directory
   "Disable compilation and testing of the ROSE/tutorial directory" OFF)
 
 option(disable-projects-directory
-  "Disable compilation and testing of the ROSE/projects directory" OFF)
+  "Disable compilation and testing of the ROSE/projects directory" ON)
 
 option(enable-advanced-warnings
   "Support for an advanced uniform warning level for ROSE development" OFF)

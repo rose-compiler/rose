@@ -419,9 +419,12 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
      curprint(string("\n/* Top of unparseType: class_name() = ") + type->class_name() + " */ \n");
 #endif
 
-#if 0
-     printf ("In unparseType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
-     printf ("In unparseType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition()  == true) ? "true" : "false");
+#if 1
+     if (info.SkipClassDefinition() != info.SkipEnumDefinition())
+        {
+          printf ("In unparseType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+          printf ("In unparseType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition()  == true) ? "true" : "false");
+        }
 #endif
   // DQ (1/13/2014): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());

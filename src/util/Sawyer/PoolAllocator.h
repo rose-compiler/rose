@@ -1,6 +1,6 @@
 // WARNING: Changes to this file must be contributed back to Sawyer or else they will
 //          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          github.com:matzke1/sawyer.
+//          https://github.com/matzke1/sawyer.
 
 
 
@@ -8,7 +8,20 @@
 #ifndef Sawyer_PoolAllocator_H
 #define Sawyer_PoolAllocator_H
 
+#include <boost/version.hpp>
 #include <boost/foreach.hpp>
+#include <boost/random/uniform_smallint.hpp>
+#if BOOST_VERSION >= 104700
+    #include <boost/random/mersenne_twister.hpp>
+    #define SAWYER_PRN_GENERATOR boost::random::mt11213b
+    #define SAWYER_UNIFORM_SIZE_T boost::random::uniform_smallint<size_t>
+#else
+    // Boost 1.45 and 1.46 say that mt11213b is only 44% as fast as rand48. Also, these things were not part of the
+    // boost::random namespace in those versions.
+    #include <boost/random/linear_congruential.hpp>         // 64% as fast as mersenne_twister according to boost 1.59
+    #define SAWYER_PRN_GENERATOR boost::rand48
+    #define SAWYER_UNIFORM_SIZE_T boost::uniform_smallint<size_t>
+#endif
 #include <boost/static_assert.hpp>
 #include <boost/cstdint.hpp>
 #include <list>
@@ -62,6 +75,7 @@ public:
     enum { SIZE_DELTA = sizeDelta };
     enum { N_POOLS = nPools };
     enum { CHUNK_SIZE = chunkSize };
+    enum { N_FREE_LISTS = 32 };                          // number of free lists per pool
 
 private:
 
@@ -114,76 +128,181 @@ private:
 
     typedef Sawyer::Container::IntervalMap<ChunkAddressInterval, ChunkInfo> ChunkInfoMap;
 
+    class Pool;
+
+    // Aquire all locks for a pool.
+    class LockEverything {
+        SAWYER_THREAD_TRAITS::Mutex *freeListMutexes_, &chunkMutex_;
+        size_t nLocked_;
+    public:
+        LockEverything(SAWYER_THREAD_TRAITS::Mutex *freeListMutexes, SAWYER_THREAD_TRAITS::Mutex &chunkMutex)
+            : freeListMutexes_(freeListMutexes), chunkMutex_(chunkMutex), nLocked_(0) {
+            while (nLocked_ < N_FREE_LISTS) {
+                freeListMutexes_[nLocked_].lock();
+                ++nLocked_;
+            }
+            chunkMutex_.lock();
+        }
+
+        ~LockEverything() {
+            while (nLocked_ > 0) {
+                freeListMutexes_[nLocked_-1].unlock();
+                --nLocked_;
+            }
+            chunkMutex_.unlock();
+        }
+    };
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Pool of single-sized cells; collection of chunks
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     class Pool {
-        size_t cellSize_;
-        FreeCell *freeList_;
-        std::list<Chunk*> chunks_;
-    public:
-        Pool(): cellSize_(0), freeList_(NULL) {}        // needed by std::vector
-        Pool(size_t cellSize): cellSize_(cellSize), freeList_(NULL) {}
+        size_t cellSize_;                               // only modified immediately after construction
+        SAWYER_PRN_GENERATOR generator_;                // a fast pseudo-random number generator
+        SAWYER_UNIFORM_SIZE_T prng_;                    // not sure if this stores any state, so I'm making it a data member
 
+        // Multiple free-lists for parallelism reduces the contention on the pool. The aquire and release methods select a
+        // free-list uniformly at random in order to keep the sizes of the free-lists relatively equal. There is no requirement
+        // that an object allocated from one free-list be released back to the same free-list. Each free-list has its own
+        // mutex. When locking multiple free-lists, the locks should be aquired in order of their indexes.
+        SAWYER_THREAD_TRAITS::Mutex freeListMutexes_[N_FREE_LISTS];
+        FreeCell *freeLists_[N_FREE_LISTS];
+
+        // The chunk-list stores the memory allocated for objects.  The chunk-list is protected by a mutex. When locking
+        // free-list(s) and the chunk-list, the free-list locks should be aquired first.
+        mutable SAWYER_THREAD_TRAITS::Mutex chunkMutex_;
+        std::list<Chunk*> chunks_;
+
+    private:
+        Pool(const Pool&);                              // nonsense
+
+    public:
+        Pool(): cellSize_(0), prng_(0, N_FREE_LISTS-1) {}
+
+        void init(size_t cellSize) {
+            assert(cellSize_ == 0);
+            assert(cellSize > 0);
+            cellSize_ = cellSize;
+        }
+        
     public:
         ~Pool() {
             for (typename std::list<Chunk*>::iterator ci=chunks_.begin(); ci!=chunks_.end(); ++ci)
                 delete *ci;
         }
 
-        bool isEmpty() const { return chunks_.empty(); }
+        bool isEmpty() const {
+            SAWYER_THREAD_TRAITS::LockGuard lock(chunkMutex_);
+            return chunks_.empty();
+        }
 
         // Obtains the cell at the front of the free list, allocating more space if necessary.
         void* aquire() {                                // hot
-            if (!freeList_) {
+            const size_t freeListIdx = prng_(generator_);
+            SAWYER_THREAD_TRAITS::LockGuard lock(freeListMutexes_[freeListIdx]);
+            if (!freeLists_[freeListIdx]) {
                 Chunk *chunk = new Chunk;
+                freeLists_[freeListIdx] = chunk->fill(cellSize_);
+                SAWYER_THREAD_TRAITS::LockGuard lock(chunkMutex_);
                 chunks_.push_back(chunk);
-                freeList_ = chunk->fill(cellSize_);
             }
-            ASSERT_not_null(freeList_);
-            FreeCell *cell = freeList_;
-            freeList_ = freeList_->next;
+            ASSERT_not_null(freeLists_[freeListIdx]);
+            FreeCell *cell = freeLists_[freeListIdx];
+            freeLists_[freeListIdx] = freeLists_[freeListIdx]->next;
             cell->next = NULL;                          // optional
             return cell;
         }
 
         // Returns an cell to the front of the free list.
         void release(void *cell) {                      // hot
+            const size_t freeListIdx = prng_(generator_);
+            SAWYER_THREAD_TRAITS::LockGuard lock(freeListMutexes_[freeListIdx]);
             ASSERT_not_null(cell);
             FreeCell *freedCell = reinterpret_cast<FreeCell*>(cell);
-            freedCell->next = freeList_;
-            freeList_ = freedCell;
+            freedCell->next = freeLists_[freeListIdx];
+            freeLists_[freeListIdx] = freedCell;
         }
 
-        // Information about each chunk
-        ChunkInfoMap chunkInfo() const {
+        // Information about each chunk.
+        ChunkInfoMap chunkInfoNS() const {
             ChunkInfoMap map;
             BOOST_FOREACH (const Chunk* chunk, chunks_)
                 map.insert(chunk->extent(), ChunkInfo(chunk, chunkSize / cellSize_));
-            for (FreeCell *cell=freeList_; cell!=NULL; cell=cell->next) {
-                typename ChunkInfoMap::ValueIterator found = map.find(reinterpret_cast<boost::uint64_t>(cell));
-                ASSERT_require2(found!=map.values().end(), "each freelist item must be some chunk cell");
-                ASSERT_require2(found->nUsed > 0, "freelist must be consistent with chunk capacities");
-                --found->nUsed;
+            for (size_t freeListIdx = 0; freeListIdx < N_FREE_LISTS; ++freeListIdx) {
+                for (FreeCell *cell=freeLists_[freeListIdx]; cell!=NULL; cell=cell->next) {
+                    typename ChunkInfoMap::ValueIterator found = map.find(reinterpret_cast<boost::uint64_t>(cell));
+                    ASSERT_require2(found!=map.values().end(), "each freelist item must be some chunk cell");
+                    ASSERT_require2(found->nUsed > 0, "freelist must be consistent with chunk capacities");
+                    --found->nUsed;
+                }
             }
             return map;
         }
 
-        // Free unused chunks
-        void vacuum() {
-            ChunkInfoMap map = chunkInfo();
-
-            // Create a new free list that doesn't have any cells that belong to chunks that are about to be deleted
-            FreeCell *cell = freeList_, *next = NULL;
-            freeList_ = NULL;
-            for (/*void*/; cell!=NULL; cell=next) {
-                next = cell->next;
-                boost::uint64_t cellAddr = reinterpret_cast<boost::uint64_t>(cell);
-                if (map[cellAddr].nUsed != 0) {
-                    cell->next = freeList_;
-                    freeList_ = cell;
+        // Reserve objects to satisfy future allocation requests.
+        void reserve(size_t nObjects) {
+            LockEverything guard(freeListMutexes_, chunkMutex_);
+            size_t nFree = 0;
+            for (size_t freeListIdx = 0; freeListIdx < N_FREE_LISTS; ++freeListIdx) {
+                for (FreeCell *cell = freeLists_[freeListIdx]; cell != NULL; cell = cell->next) {
+                    ++nFree;
+                    if (nFree >= nObjects)
+                        return;
                 }
             }
+
+            size_t freeListIdx = prng_(generator_);
+            size_t nNeeded = nObjects - nFree;
+            const size_t cellsPerChunk = chunkSize / cellSize_;
+            while (1) {
+                // Allocate a new chunk of object cells
+                Chunk *chunk = new Chunk;
+                FreeCell *newCells = chunk->fill(cellSize_);
+                chunks_.push_back(chunk);
+
+                // Insert the new object cells into the free lists in round-robin order
+                while (newCells) {
+                    FreeCell *cell = newCells;
+                    newCells = cell->next;
+                    cell->next = freeLists_[freeListIdx];
+                    freeLists_[freeListIdx] = cell;
+                    if (++freeListIdx >= N_FREE_LISTS)
+                        freeListIdx = 0;
+                }
+
+                if (nNeeded < cellsPerChunk)
+                    return;
+            }
+        }
+        
+        // Free unused chunks
+        void vacuum() {
+            // We must aquire all the free list-locks plus the chunks-lock before we call chunkInfoNS. Free-list locks must be
+            // aquired before the chunk-list lock.
+            LockEverything guard(freeListMutexes_, chunkMutex_);
+            ChunkInfoMap map = chunkInfoNS();
+
+            // Scan the free lists, creating new free lists in the process.  For any cell on an old free list, if the cell
+            // belongs to a chunk that we're keeping, then copy the cell to a new free list.  The cells are copied round-robin
+            // to the new free lists so that the lists stay balanced.
+            FreeCell *newFreeLists[N_FREE_LISTS];
+            memset(newFreeLists, 0, sizeof newFreeLists);
+            size_t newFreeListIdx = 0;
+            for (size_t oldFreeListIdx=0; oldFreeListIdx<N_FREE_LISTS; ++oldFreeListIdx) {
+                FreeCell *next = NULL;
+                for (FreeCell *cell = freeLists_[oldFreeListIdx]; cell != NULL; cell = next) {
+                    next = cell->next;
+                    boost::uint64_t cellAddr = reinterpret_cast<boost::uint64_t>(cell);
+                    if (map[cellAddr].nUsed != 0) {
+                        // Keep this cell by round-robin inserting it into a new free list.
+                        cell->next = newFreeLists[newFreeListIdx];
+                        newFreeLists[newFreeListIdx] = cell;
+                        if (++newFreeListIdx >= N_FREE_LISTS)
+                            newFreeListIdx = 0;
+                    }
+                }
+            }
+            memcpy(freeLists_, newFreeLists, sizeof newFreeLists);
 
             // Delete chunks that have no used cells.
             typename std::list<Chunk*>::iterator iter = chunks_.begin();
@@ -200,14 +319,34 @@ private:
         }
 
         size_t showInfo(std::ostream &out) const {
+            ChunkInfoMap cim;
+            {
+                LockEverything guard(const_cast<SAWYER_THREAD_TRAITS::Mutex*>(freeListMutexes_), chunkMutex_);
+                cim = chunkInfoNS();
+            }
+
             const size_t nCells = chunkSize / cellSize_;
             size_t totalUsed=0;
-            ChunkInfoMap cim = chunkInfo();
             BOOST_FOREACH (const ChunkInfo &info, cim.values()) {
                 out <<"  chunk " <<info.chunk <<"\t" <<info.nUsed <<"/" <<nCells <<"\t= " <<100.0*info.nUsed/nCells <<"%\n";
                 totalUsed += info.nUsed;
             }
             return totalUsed;
+        }
+
+        std::pair<size_t, size_t> nAllocated() const {
+            ChunkInfoMap cim;
+            {
+                LockEverything guard(const_cast<SAWYER_THREAD_TRAITS::Mutex*>(freeListMutexes_), chunkMutex_);
+                cim = chunkInfoNS();
+            }
+
+            const size_t nCells = chunkSize / cellSize_;
+            size_t nReserved = nCells * cim.nIntervals();
+            size_t nAllocated = 0;
+            BOOST_FOREACH (const ChunkInfo &info, cim.values())
+                nAllocated += info.nUsed;
+            return std::make_pair(nAllocated, nReserved);
         }
     };
 
@@ -215,14 +354,13 @@ private:
     //                                  Private data members and methods
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    mutable typename SynchronizationTraits<Sync>::Mutex mutex_;
-    std::vector<Pool> pools_;
+    Pool *pools_;                                       // modified only in constructors and destructor
 
-    // Called by constructors
+    // Called only by constructors
     void init() {
-        pools_.reserve(nPools);
+        pools_ = new Pool[nPools];
         for (size_t i=0; i<nPools; ++i)
-            pools_.push_back(Pool(cellSize(i)));
+            pools_[i].init(cellSize(i));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,7 +389,9 @@ public:
      *
      *  Destroying a pool allocator destroys all its pools, which means that any objects that use storage managed by this pool
      *  will have their storage deleted. */
-    virtual ~PoolAllocatorBase() {}
+    virtual ~PoolAllocatorBase() {
+        delete[] pools_;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Public methods
@@ -293,26 +433,38 @@ public:
      *  @sa DefaultAllocator::allocate */
     void *allocate(size_t size) {                       // hot
         ASSERT_require(size>0);
-        typename SynchronizationTraits<Sync>::LockGuard lock(mutex_);
         size_t pn = poolNumber(size);
         return pn < nPools ? pools_[pn].aquire() : ::operator new(size);
     }
 
+    /** Reserve a certain number of objects in the pool.
+     *
+     *  The pool for the specified object size has its storage increased if necessary so that it is prepared to allocate the
+     *  indicated additional number of objects (beyond the number of objects already allocated).  I.e., upon return from this
+     *  call, the free lists will contain in total, at least the specified number of objects. The reserved objects are divided
+     *  equally between all free lists, and since allocations randomly select free lists from which to satisfy requests, one
+     *  should reserve slightly more than what will be needed. Reserving storage is entirely optional. */
+    void reserve(size_t objectSize, size_t nObjects) {
+        ASSERT_require(objectSize > 0);
+        size_t pn = poolNumber(nObjects);
+        if (pn >= nPools)
+            return;
+        pools_[pn].reserve(nObjects);
+    }
+    
     /** Number of objects allocated and reserved.
      *
      *  Returns a pair containing the number of objects currently allocated in the pool, and the number of objects that the
      *  pool can hold (including those that are allocated) before the pool must request more memory from the system.
      *
-     *  Thread safety: This method is thread-safe. */
+     *  Thread safety: This method is thread-safe. Of course, for a heavily contested pool the results are probably outdated by
+     *  time they're returned to the caller */
     std::pair<size_t, size_t> nAllocated() const {
         size_t nAllocated = 0, nReserved = 0;
-        typename SynchronizationTraits<Sync>::LockGuard lock(mutex_);
         for (size_t pn=0; pn<nPools; ++pn) {
-            ChunkInfoMap cim = pools_[pn].chunkInfo();
-            nReserved += nCells(pn) * cim.nIntervals();
-            BOOST_FOREACH (const ChunkInfo &info, cim.values()) {
-                nAllocated += info.nUsed;
-            }
+            std::pair<size_t, size_t> pp = pools_[pn].nAllocated();
+            nAllocated += pp.first;
+            nReserved += pp.second;
         }
         return std::make_pair(nAllocated, nReserved);
     }
@@ -331,7 +483,6 @@ public:
             ASSERT_require(size>0);
             size_t pn = poolNumber(size);
             if (pn < nPools) {
-                typename SynchronizationTraits<Sync>::LockGuard lock(mutex_);
                 pools_[pn].release(addr);
             } else {
                 ::operator delete(addr);
@@ -347,7 +498,6 @@ public:
      *
      *  Thread safety: This method is thread-safe. */
     void vacuum() {
-        typename SynchronizationTraits<Sync>::LockGuard lock(mutex_);
         for (size_t pn=0; pn<nPools; ++pn)
             pools_[pn].vacuum();
     }
@@ -358,7 +508,6 @@ public:
      *
      *  Thread safety: This method is thread-safe. */
     void showInfo(std::ostream &out) const {
-        typename SynchronizationTraits<Sync>::LockGuard lock(mutex_);
         for (size_t pn=0; pn<nPools; ++pn) {
             if (!pools_[pn].isEmpty()) {
                 out <<"  pool #" <<pn <<"; cellSize = " <<cellSize(pn) <<" bytes:\n";

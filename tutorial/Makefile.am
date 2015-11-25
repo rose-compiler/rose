@@ -41,7 +41,8 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 noinst_PROGRAMS += 				\
    binaryCallGraph				\
    binaryHelloWorld				\
-   binaryStrings
+   binaryStrings				\
+   binaryAttribute
 endif
 
 #varSubstCopy , disabled this one Liao, and sorted the list
@@ -163,6 +164,10 @@ binaryFileWrite_SOURCES = binaryFileWrite.C
 binaryCallGraph_SOURCES = binaryCallGraph.C
 
 binaryHelloWorld_SOURCES = binaryHelloWorld.C
+
+binaryStrings_SOURCES = binaryStrings.C
+
+binaryAttribute_SOURCES = binaryAttribute.C
 
 ASTGraphGenerator_SOURCES = ASTGraphGenerator.C
 

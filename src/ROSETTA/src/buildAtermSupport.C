@@ -692,7 +692,10 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 
           bool toBeTraversed = grammarString->getToBeTraversed().getValue();
 
-          bool isInConstructorParameterList = grammarString->getIsInConstructorParameterList();
+          // MS 11/12/2015: uses new function
+          // isInConstructorParameterList to allow to properly check
+          // on boolean return value
+          bool isInConstructorParameterList = grammarString->isInConstructorParameterList();
 
 #if 0
           outputFile << "// firstConstructorParameter             = " << (firstConstructorParameter             ? "true" : "false") << "\n";

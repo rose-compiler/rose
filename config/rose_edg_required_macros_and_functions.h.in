@@ -77,8 +77,9 @@
 #endif
 #endif
 
+/* DQ (10/22/2015): Change point at which this is applied from 4.8.3 to 4.8.0. */
 /* DQ (9/23/2015): Adding support for avoid use of non-GNU language features in EDG frontend */
-#if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8) && (__GNUC_PATCHLEVEL__ >= 3))
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8) && (__GNUC_PATCHLEVEL__ >= 0))
    #define _GTHREAD_USE_MUTEX_INIT_FUNC
    #define _GTHREAD_USE_RECURSIVE_MUTEX_INIT_FUNC
    #define _GTHREAD_USE_COND_INIT_FUNC
