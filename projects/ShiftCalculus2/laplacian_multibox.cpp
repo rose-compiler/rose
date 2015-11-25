@@ -191,7 +191,7 @@ void getError(LevelData<double, 1> & a_error,
       lphca.copyTo(error);
       //here err holds lphi calc
       double maxbox = forall_max(error, lphex, &errorF, bxdst);
-cout << "maxbox= " << maxbox << endl;
+
       a_maxError = max(maxbox, a_maxError);
     }
 }
