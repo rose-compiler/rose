@@ -434,25 +434,21 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a, const BaseSemanti
 BaseSemantics::SValuePtr
 RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     TODO("[Robb P. Matzke 2015-09-23]: generate signed '%' expression");
-    return BaseSemantics::SValuePtr();
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     TODO("[Robb P. Matzke 2015-09-23]: generate signed binary '*' expression");
-    return BaseSemantics::SValuePtr();
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     TODO("[Robb P. Matzke 2015-09-23]: generate unsigned '/' expression");
-    return BaseSemantics::SValuePtr();
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     TODO("[Robb P. Matzke 2015-09-23]: generate unsigned '%' expression");
-    return BaseSemantics::SValuePtr();
 }
 
 BaseSemantics::SValuePtr

@@ -77,7 +77,6 @@ public:
     createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
                         SMTSolver*) const ROSE_OVERRIDE {
         TODO("[Robb P. Matzke 2015-08-10]");
-        return Sawyer::Optional<BaseSemantics::SValuePtr>();
     }
 
     virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE {

@@ -49,7 +49,6 @@ unsigned
 SgAsmInstruction::get_anyKind() const {
     // ROSETTA doesn't support pure virtual, so run-time errors is the best we can do.
     ASSERT_not_reachable("SgAsmInstruction::get_kind() should have been implemented in " + class_name());
-    return 0;
 }
 
 /** Control flow successors for a single instruction.  The return value does not consider neighboring instructions, and

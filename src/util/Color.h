@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <Sawyer/Map.h>
 #include <string>
+#include <rosedll.h>
 
 namespace rose {
 

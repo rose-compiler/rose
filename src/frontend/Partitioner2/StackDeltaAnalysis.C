@@ -84,7 +84,6 @@ public:
     virtual BaseSemantics::RegisterStatePtr create(const BaseSemantics::SValuePtr &protoval,
                                                    const RegisterDictionary *regdict) const ROSE_OVERRIDE {
         ASSERT_not_implemented("[Robb P. Matzke 2014-11-21] shouldn't be needed since this class is effectively final");
-        return 0;
     }
 
     virtual BaseSemantics::RegisterStatePtr clone() const ROSE_OVERRIDE {
