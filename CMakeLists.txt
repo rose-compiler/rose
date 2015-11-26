@@ -294,8 +294,9 @@ if (WIN32)
   # /Ob0 disable inline expansion
   # /MP multiple processors compilation
   # /0s small files
+  # /wd4716 to turn no return to a warning and not an error
   set( CMAKE_BUILD_TYPE Release )
-  set( CMAKE_CXX_FLAGS " /TP /MP /O1 /Os /GR /EHsc /wd4541 " )
+  set( CMAKE_CXX_FLAGS " /TP /MP /O1 /Os /GR /EHsc /wd4541 /wd4716" )
   set( CMAKE_C_FLAGS "   /wd4541 " )
   set( CMAKE_SHARED_LINKER_FLAGS_DEBUG " ${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /INCREMENTAL:NO" )
   set( CMAKE_SHARED_LINKER_FLAGS_RELEASE " ${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /INCREMENTAL:NO" )

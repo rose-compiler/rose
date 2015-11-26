@@ -46,7 +46,7 @@ namespace CommandlineProcessing
            *  This global variable holds the results of command-line parsing using @ref genericSwitches.  Normally these
            *  settings are passed per command-line parsing request, but the interface in ROSE doesn't have that ability yet, so
            *  we use a global variable. */
-          extern GenericSwitchArgs genericSwitchArgs;
+          ROSE_UTIL_API extern GenericSwitchArgs genericSwitchArgs;
               
       //! Separate a string into individual parameters and store them into a string vector
           ROSE_UTIL_API Rose_STL_Container<std::string> generateArgListFromString ( std::string commandline );
