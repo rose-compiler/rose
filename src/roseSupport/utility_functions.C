@@ -65,6 +65,8 @@ std::map<SgNode*,PreviousAndNextNodeData*> rose::previousAndNextNodeMap;
 std::multimap<int,SgStatement*> rose::redundantlyMappedTokensToStatementMultimap;
 std::set<int> rose::redundantTokenEndingsSet;
 
+// DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
+std::map<SgScopeStatement*,SgStatement*> rose::representativeWhitespaceStatementMap;
 
 
 // DQ (4/17/2010): This function must be defined if C++ support in ROSE is disabled.
