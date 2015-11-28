@@ -187,6 +187,7 @@ faketarget:
 	spotconnection/ltlverifier.C 
 	spotconnection/stg2.c 
 	spotconnection/stg2_cpp.C 
+	tests/jacobi-1d-imper_mod.c
 	tests/Problem28.c 
 	tests/artificialsum1.C 
 	tests/artificialsum1.c 

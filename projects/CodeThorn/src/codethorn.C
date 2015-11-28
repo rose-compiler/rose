@@ -1519,7 +1519,7 @@ int main( int argc, char * argv[] ) {
     bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
 
     timer.start();
-#if 0
+#if 1
     speci.extractArrayUpdateOperations(&analyzer,
                                        arrayUpdates,
                                        rewriteSystem,

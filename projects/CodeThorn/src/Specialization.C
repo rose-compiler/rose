@@ -249,6 +249,8 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
      if(succSet.size()>1) {
        cerr<<estate->toString()<<endl;
        cerr<<"Error: STG-States with more than one successor not supported in term extraction yet."<<endl;
+       cerr<<"       @ node: "<<node->class_name()<<endl;
+       cerr<<"       source: "<<node->unparseToString()<<endl;
        exit(1);
      } else {
        EStatePtrSet::iterator i=succSet.begin();
