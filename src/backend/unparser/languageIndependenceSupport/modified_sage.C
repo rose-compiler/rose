@@ -1280,7 +1280,12 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
 void
 Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement* decl_stmt )
    {
-     if(experimentalMode)
+#if 0
+     printf ("In outputTemplateSpecializationSpecifier(): experimentalMode = %s \n",experimentalMode ? "true" : "false");
+     curprint( "\n/* In outputTemplateSpecializationSpecifier(): TOP of function */ ");
+#endif
+
+     if (experimentalMode)
        {
          outputTemplateSpecializationSpecifier2 ( decl_stmt );
          return;
@@ -1291,6 +1296,9 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
           (isSgTemplateInstantiationFunctionDecl(decl_stmt) != NULL) ||
           (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) != NULL) )
         {
+
+#error "DEAD CODE!"
+
           curprint( "template<> ");
         }
 #else
@@ -1387,7 +1395,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                                  {
                                 // This case is to support test2004_67.C
 #if 0
-                                   curprint("/* Member function without template arguments from template class instantiatons requires the output of template<> syntax */ ");
+                                   curprint("/* Member function without template arguments from template class instantiations requires the output of template<> syntax */ ");
 #endif
                                 // curprint("template<> ");
                                  }
@@ -1402,7 +1410,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                            else
                             {
 #if 0
-                              curprint("/* Member function instantiatons in non-template clases still output template<> syntax */ ");
+                              curprint("/* Member function instantiations in non-template clases still output template<> syntax */ ");
 #endif
                               curprint("template<> ");
                             }
@@ -1410,9 +1418,37 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                       else
                        {
 #if 0
-                         curprint("/* This requires the output of the template<> syntax */ ");
+                         curprint("/* This still might require the output of the template<> syntax */ ");
 #endif
-                         curprint("template<> ");
+                      // DQ (11/27/2015): If this is a friend function then supress the "template<>" syntax (see test2015_123.C).
+                      // But we have to check the non-defining declaration for the friend function marking.
+                      // curprint("template<> ");
+                         SgTemplateInstantiationFunctionDecl* nondefiningTemplateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(decl_stmt->get_firstNondefiningDeclaration());
+                         if (nondefiningTemplateInstantiationFunctionDecl != NULL)
+                            {
+                              if (nondefiningTemplateInstantiationFunctionDecl->get_declarationModifier().isFriend() == true)
+                                 {
+#if 0
+                                   printf ("Supress the output fo the template<> syntax \n");
+                                   curprint("/* Non-Member friend function instantiations cause us to supress the output of template<> syntax */ ");
+#endif
+                                 }
+                                else
+                                 {
+#if 0
+                                   curprint("/* Non-Member (non-friend) function instantiations still output template<> syntax */ ");
+#endif
+                                   curprint("template<> ");
+                                 }
+                            }
+                           else
+                            {
+#if 0
+                              curprint("/* Non function instantiations still output template<> syntax */ ");
+#endif
+                              curprint("template<> ");
+                            }
+
                        }
                   }
              }
@@ -1462,7 +1498,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);
 
-  // DQ (2/4/2006): Moved output of "friend" keywork inside of test for SgFunctionDeclaration
+  // DQ (2/4/2006): Moved output of "friend" keyword inside of test for SgFunctionDeclaration
 
   // DQ (2/4/2006): Need this case for friend class declarations
      if (decl_stmt->get_declarationModifier().isFriend())
@@ -1516,10 +1552,18 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // DQ (2/2/2006): friend can't be output for a Template specialization declaration
        // curprint((string("/* isDeclarationOfTemplateSpecialization = ") << ((isDeclarationOfTemplateSpecialization == true) ? string("true") : string("false")) << string(" */ \n "));
        // printf ("isDeclarationOfTemplateSpecialization = %s \n",isDeclarationOfTemplateSpecialization == true ? "true" : "false");
-          if ( (decl_stmt->get_declarationModifier().isFriend() == true) &&
-               (isDeclarationOfTemplateSpecialization == false) )
+          if ( (decl_stmt->get_declarationModifier().isFriend() == true) && (isDeclarationOfTemplateSpecialization == false) )
              {
-               curprint( "friend ");
+               ROSE_ASSERT(decl_stmt->get_parent() != NULL);
+#if 1
+               printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): decl_stmt->get_parent() = %p = %s \n",decl_stmt->get_parent(),decl_stmt->get_parent()->class_name().c_str());
+#endif
+            // DQ (11/28/2015): We need to filter the cases where the function is not output in a class definition.
+            // curprint( "friend ");
+               if (isSgClassDefinition(decl_stmt->get_parent()) != NULL)
+                  {
+                    curprint( "friend ");
+                  }
              }
 
        // DQ (2/2/2006): Not sure if virtual can be output when isForwardDeclarationOfTemplateSpecialization == true

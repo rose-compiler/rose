@@ -532,6 +532,11 @@ int main(int argc, char * argv[])
   }
 
   SgProject *project = frontend (argvList);
+
+  // DQ (11/20/2015): AST consistency tests (optional for users, but this enforces more of our tests).
+  // I have added this to detect a SgTemplateClassDefinition that is being visited twice.
+  AstTests::runAllTests(project);
+
 #if ENABLE_TRANS_TRACKING
   // assign unique ID's for all nodes
   if (transTracking)

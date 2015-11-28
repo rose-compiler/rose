@@ -271,6 +271,7 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_01.C \
   inputmoveDeclarationToInnermostScope_test2015_02.C \
   inputmoveDeclarationToInnermostScope_test2015_03.C \
+  inputmoveDeclarationToInnermostScope_test2015_04.C \
   inputmoveDeclarationToInnermostScope_test2015_05.C \
   inputmoveDeclarationToInnermostScope_test2015_06.C \
   inputmoveDeclarationToInnermostScope_test2015_07.C \
@@ -311,6 +312,7 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_42.C \
   inputmoveDeclarationToInnermostScope_test2015_43.C \
   inputmoveDeclarationToInnermostScope_test2015_44.C \
+  inputmoveDeclarationToInnermostScope_test2015_45.C \
   inputmoveDeclarationToInnermostScope_test2015_46.C \
   inputmoveDeclarationToInnermostScope_test2015_47.C \
   inputmoveDeclarationToInnermostScope_test2015_48.C \
@@ -327,6 +329,7 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_59.C \
   inputmoveDeclarationToInnermostScope_test2015_60.C \
   inputmoveDeclarationToInnermostScope_test2015_61.C \
+  inputmoveDeclarationToInnermostScope_test2015_62.C \
   inputmoveDeclarationToInnermostScope_test2015_63.C \
   inputmoveDeclarationToInnermostScope_test2015_64.C \
   inputmoveDeclarationToInnermostScope_test2015_65.C \
@@ -368,6 +371,8 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_103.C \
   inputmoveDeclarationToInnermostScope_test2015_104.C \
   inputmoveDeclarationToInnermostScope_test2015_105.C \
+  inputmoveDeclarationToInnermostScope_test2015_106.C \
+  inputmoveDeclarationToInnermostScope_test2015_107.C \
   inputmoveDeclarationToInnermostScope_test2015_108.C \
   inputmoveDeclarationToInnermostScope_test2015_109.C \
   inputmoveDeclarationToInnermostScope_test2015_110.C \
@@ -403,7 +408,14 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_147.C \
   inputmoveDeclarationToInnermostScope_test2015_148.C \
   inputmoveDeclarationToInnermostScope_test2015_149.C \
-  inputmoveDeclarationToInnermostScope_test2015_150.C 
+  inputmoveDeclarationToInnermostScope_test2015_150.C \
+  inputmoveDeclarationToInnermostScope_test2015_151.C \
+  inputmoveDeclarationToInnermostScope_test2015_152.C \
+  inputmoveDeclarationToInnermostScope_test2015_153.C \
+  inputmoveDeclarationToInnermostScope_test2015_154.C \
+  inputmoveDeclarationToInnermostScope_test2015_155.C \
+  inputmoveDeclarationToInnermostScope_test2015_156.C \
+  inputmoveDeclarationToInnermostScope_test2015_157.C 
 
 # DQ (11/13/2015): Note that inputmoveDeclarationToInnermostScope_test2015_141.C 
 # and inputmoveDeclarationToInnermostScope_test2015_133.C only fail when using 
@@ -413,20 +425,18 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
 FAILING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2014_09.C \
   inputmoveDeclarationToInnermostScope_test2014_12.C \
-  inputmoveDeclarationToInnermostScope_test2015_04.C \
   inputmoveDeclarationToInnermostScope_test2015_100.C \
   inputmoveDeclarationToInnermostScope_test2015_101.C \
-  inputmoveDeclarationToInnermostScope_test2015_106.C \
-  inputmoveDeclarationToInnermostScope_test2015_107.C \
   inputmoveDeclarationToInnermostScope_test2015_114.C \
-  inputmoveDeclarationToInnermostScope_test2015_45.C \
-  inputmoveDeclarationToInnermostScope_test2015_62.C \
   inputmoveDeclarationToInnermostScope_test2015_133.C \
   inputmoveDeclarationToInnermostScope_test2015_136.C \
   inputmoveDeclarationToInnermostScope_test2015_138.C \
   inputmoveDeclarationToInnermostScope_test2015_140.C \
   inputmoveDeclarationToInnermostScope_test2015_141.C \
   inputmoveDeclarationToInnermostScope_test2015_142.C
+
+# DQ (11/28/2015: Test codes demonstrating imperfect formatting:
+#  inputmoveDeclarationToInnermostScope_test2015_04.C 
 
 
 # DQ (8/16/2015): Failing test with bugfix for type transformations.
