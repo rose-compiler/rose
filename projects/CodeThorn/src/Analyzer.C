@@ -207,6 +207,10 @@ void Analyzer::setGlobalTopifyMode(GlobalTopifyMode mode) {
   _globalTopifyMode=mode;
 }
 
+void Analyzer::setErrorFunctionName(std::string errorFunctionName) {
+  _errorFunctionName=errorFunctionName;
+}
+
 bool Analyzer::isPrecise() {
   return !(isActiveGlobalTopify()||variableValueMonitor.isActive());
 }
@@ -1191,7 +1195,9 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     // ad 1)
     SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source));
     assert(funCall);
-
+    string funName=SgNodeHelper::getFunctionName(funCall);
+    // handling of error function (TODO: generate dedicated state (not failedAssert))
+    
 #ifdef RERS_SPECIALIZATION
     if(boolOptions["rers-binary"]) {
       // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
@@ -1476,6 +1482,16 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
       }
       if(boolOptions["report-stderr"]) {
         cout << "REPORT: stderr:"<<varId.toString()<<":"<<estate->toString()<<endl;
+      }
+    }
+    /* handling of error function as external function */ {
+      if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
+        assert(funCall);
+        string funName=SgNodeHelper::getFunctionName(funCall);
+        if(funName==_errorFunctionName) {
+          cout<<"DETECTED error function: "<<_errorFunctionName<<endl;
+          return elistify(createFailedAssertEState(currentEState,edge.target));
+        }
       }
     }
 
