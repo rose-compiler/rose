@@ -57,7 +57,7 @@ private:
     // The following members are caches either because their value is seldom needed and expensive to compute, or because the
     // value is best computed at a higher layer (e.g., in the partitioner) yet it makes the most sense to store it here. Make
     // sure clearCache() resets these to initial values.
-    Sawyer::Cached<InstructionSemantics2::BaseSemantics::SValuePtr> stackDelta_;// net change in stack pointer
+    Sawyer::Cached<InstructionSemantics2::BaseSemantics::SValuePtr> stackDelta_;// cached result from stack delta analysis
 
     void clearCache() {
         stackDelta_.clear();
@@ -178,15 +178,19 @@ public:
 
     /** Property: Stack delta.
      *
-     *  The stack delta is the net change in the stack pointer between the entrance to the function and its return.
-     *  See @ref Partitioner::functionStackDelta for details about how it is computed and what it means.
-     *
-     *  This property is updated by a specific stack delta analysis, which usually runs faster than a more complete data-flow
-     *  analysis. However, the @ref callingConventionAnalysis results might also contain a stack delta as a concrete value, and
-     *  that analysis is more complete.
+     *  The cached function stack delta if a delta has been computed and is known.  This property comes in two flavors: the
+     *  symbolic expression that's stored as the stack delta value, and a "Concrete", read-only version of the property that
+     *  returns either the concrete value or the @ref SgAsmInstruction::INVALID_STACK_DELTA constant.
      *
      * @{ */
-    const Sawyer::Cached<InstructionSemantics2::BaseSemantics::SValuePtr>& stackDelta() const { return stackDelta_; }
+    InstructionSemantics2::BaseSemantics::SValuePtr stackDelta() const {
+        return stackDelta_.getOptional().orDefault();
+    }
+    void stackDelta(const InstructionSemantics2::BaseSemantics::SValuePtr &delta) {
+        stackDelta_ = delta;
+    }
+    int64_t stackDeltaConcrete() const;
+    /** @} */
 
     /** Property: Calling convention analysis results.
      *

@@ -49,6 +49,7 @@ private:
     Wt::WText *wInterruptVectorMessage_;                // messages from parsing the interrupt vector
     Wt::WCheckBox *wFindThunks_;                        // whether to search for thunks not in the CFG
     Wt::WCheckBox *wSplitThunks_;                       // whether to split thunks into their own functions
+    Wt::WCheckBox *wCallingConvention_;                 // whether to perform calling convention analysis on the whole CG
 
     Wt::WPushButton *wParseSpecimen_;                   // causes ELF/PE files to be parsed
     Wt::WPushButton *wLoadSpecimen_;                    // causes specimen to be loaded into memory, and possibly linked
@@ -67,7 +68,8 @@ public:
           wFollowGhostEdgesWarning_(NULL), wAllowDiscontiguousBlocks_(NULL), wFindDeadCode_(NULL), wDefeatPeScrambler_(NULL),
           wPeScramblerDispatchVa_(NULL), wAssumeFunctionsReturn_(NULL), wInterpretation_(NULL), wStackDeltaDepth_(NULL),
           wInterruptVector_(NULL), wInterruptVectorVa_(NULL), wInterruptVectorMessage_(NULL), wFindThunks_(NULL),
-          wSplitThunks_(NULL), wParseSpecimen_(NULL), wLoadSpecimen_(NULL), wPartitionSpecimen_(NULL) {
+          wSplitThunks_(NULL), wCallingConvention_(NULL), wParseSpecimen_(NULL), wLoadSpecimen_(NULL),
+          wPartitionSpecimen_(NULL) {
         init();
     }
 
@@ -90,6 +92,7 @@ public:
     rose_addr_t interruptVectorVa() const;
     bool findingThunks() const;
     bool splittingThunks() const;
+    bool analyzingCalls() const;
 
     State currentState() const { return state_; }
     void changeState(State);

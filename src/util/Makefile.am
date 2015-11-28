@@ -103,6 +103,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/DefaultAllocator.h		\
 	Sawyer/DistinctList.h			\
 	Sawyer/Graph.h				\
+	Sawyer/GraphAlgorithm.h			\
 	Sawyer/GraphBoost.h			\
 	Sawyer/GraphTraversal.h			\
 	Sawyer/IndexedList.h			\
@@ -127,6 +128,7 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/StaticBuffer.h			\
 	Sawyer/Stopwatch.h			\
 	Sawyer/Synchronization.h		\
+	Sawyer/ThreadWorkers.h			\
 	Sawyer/WarningsOff.h			\
 	Sawyer/WarningsRestore.h
 EXTRA_DIST += Sawyer/CMakeLists.txt

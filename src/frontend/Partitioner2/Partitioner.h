@@ -31,7 +31,7 @@ namespace BinaryAnalysis {
 
 /** Binary function detection.
  *
- *  This namespace consists of three major parts and a number of smaller parts.  The major parts are:
+ *  This namespace consists of two major parts and a number of smaller parts.  The major parts are:
  *
  *  @li @ref Partitioner2::Partitioner "Partitioner": The partitioner is responsible for organizing instructions into basic
  *      blocks and basic blocks into functions. It has methods to discover new parts of the executable, and methods to control

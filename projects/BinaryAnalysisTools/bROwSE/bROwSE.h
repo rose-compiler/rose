@@ -67,6 +67,7 @@ extern Sawyer::Attribute::Id ATTR_StackDelta;
 extern Sawyer::Attribute::Id ATTR_Ast;
 extern Sawyer::Attribute::Id ATTR_Heat;
 extern Sawyer::Attribute::Id ATTR_DataFlow;
+extern Sawyer::Attribute::Id ATTR_CallConvDef;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Context passed around to pretty much all the widgets.

@@ -13,9 +13,12 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
+#include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stack.h>
+#include <Sawyer/Stopwatch.h>
+#include <Sawyer/ThreadWorkers.h>
 
 using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 using namespace rose::Diagnostics;
@@ -820,8 +823,7 @@ BaseSemantics::SValuePtr
 Partitioner::basicBlockStackDeltaIn(const BasicBlock::Ptr &bb) const {
     ASSERT_not_null(bb);
 
-    BaseSemantics::SValuePtr delta;
-    if (bb->stackDeltaIn().getOptional().assignTo(delta))
+    if (BaseSemantics::SValuePtr delta = bb->stackDeltaIn())
         return delta;                                   // already cached
 
     // The basic block must be owned by a function, and we use that function's entry point to generate a CFG, which is then
@@ -840,20 +842,17 @@ Partitioner::basicBlockStackDeltaIn(const BasicBlock::Ptr &bb) const {
     }
 
     functionStackDelta(function);                       // assigns block deltas by side effect
-    bb->stackDeltaIn().getOptional().assignTo(delta);
-    return delta;
+    return bb->stackDeltaIn();
 }
 
 BaseSemantics::SValuePtr
 Partitioner::basicBlockStackDeltaOut(const BasicBlock::Ptr &bb) const {
     ASSERT_not_null(bb);
 
-    BaseSemantics::SValuePtr delta;
-    if (bb->stackDeltaOut().getOptional().assignTo(delta))
+    if (BaseSemantics::SValuePtr delta = bb->stackDeltaOut())
         return delta;                                   // already cached
     basicBlockStackDeltaIn(bb);                         // caches stackDeltaOut by side effect
-    bb->stackDeltaOut().getOptional().assignTo(delta);
-    return delta;
+    return bb->stackDeltaOut();
 }
 
 ControlFlowGraph::ConstVertexIterator
@@ -1482,8 +1481,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
             out <<prefix <<"  incoming stack delta: ";
             if (computeProperties)
                 basicBlockStackDeltaIn(bb);
-            BaseSemantics::SValuePtr delta;
-            if (bb->stackDeltaIn().getOptional().assignTo(delta) && delta!=NULL) {
+            if (BaseSemantics::SValuePtr delta = bb->stackDeltaIn()) {
                 if (delta->is_number() && delta->get_width()<=64) {
                     int64_t n = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
                     out <<n <<"\n";
@@ -1534,8 +1532,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
             out <<prefix <<"  outgoing stack delta: ";
             if (computeProperties)
                 basicBlockStackDeltaOut(bb);
-            BaseSemantics::SValuePtr delta;
-            if (bb->stackDeltaOut().getOptional().assignTo(delta) && delta!=NULL) {
+            if (BaseSemantics::SValuePtr delta = bb->stackDeltaOut()) {
                 if (delta->is_number() && delta->get_width()<=64) {
                     int64_t n = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
                     out <<n <<"\n";
@@ -1855,29 +1852,45 @@ Partitioner::functionCallingConvention(const Function::Ptr &function,
     return function->callingConventionAnalysis();
 }
 
+// Worker function for analyzing the calling convention of one function.
+struct CallingConventionWorker {
+    const Partitioner &partitioner;
+    Sawyer::ProgressBar<size_t> &progress;
+    const CallingConvention::Definition *dfltCc;
+
+    CallingConventionWorker(const Partitioner &partitioner, Sawyer::ProgressBar<size_t> &progress,
+                            const CallingConvention::Definition *dfltCc)
+        : partitioner(partitioner), progress(progress), dfltCc(dfltCc) {}
+
+    void operator()(size_t workId, const Function::Ptr &function) {
+        Sawyer::Stopwatch t;
+        partitioner.functionCallingConvention(function, dfltCc);
+
+        // Show some results. We're using rose::BinaryAnalysis::CallingConvention::mlog[TRACE] for the messages, so the mutex
+        // here doesn't really protect it. However, since that analysis doesn't produce much output on that stream, this mutex
+        // helps keep the output lines separated from one another where there's lots of worker threads, especially when they're
+        // all first starting up.
+        if (CallingConvention::mlog[TRACE]) {
+            static boost::mutex mutex;
+            boost::lock_guard<boost::mutex> lock(mutex);
+            Sawyer::Message::Stream trace(CallingConvention::mlog[TRACE]);
+            trace <<"calling-convention for " <<function->printableName() <<" took " <<t <<" seconds\n";
+        }
+
+        ++progress;
+    }
+};
+
 void
 Partitioner::allFunctionCallingConvention(const CallingConvention::Definition *dfltCc/*=NULL*/) const {
-    using namespace Sawyer::Container::Algorithm;
-    FunctionCallGraph cg = functionCallGraph();
-    size_t nFunctions = cg.graph().nVertices();
-    std::vector<bool> visited(nFunctions, false);
-    Sawyer::ProgressBar<size_t> progress(nFunctions, mlog[MARCH], "calling-convention analysis");
-    for (size_t cgVertexId=0; cgVertexId<nFunctions; ++cgVertexId) {
-        if (!visited[cgVertexId]) {
-            typedef DepthFirstForwardGraphTraversal<const FunctionCallGraph::Graph> Traversal;
-            for (Traversal t(cg.graph(), cg.graph().findVertex(cgVertexId), ENTER_VERTEX|LEAVE_VERTEX); t; ++t) {
-                if (t.event() == ENTER_VERTEX) {
-                    if (visited[t.vertex()->id()])
-                        t.skipChildren();
-                } else if (!visited[t.vertex()->id()]) {
-                    ASSERT_require(t.event() == LEAVE_VERTEX);
-                    functionCallingConvention(t.vertex()->value(), dfltCc);
-                    visited[t.vertex()->id()] = true;
-                    ++progress;
-                }
-            }
-        }
-    }
+    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    FunctionCallGraph::Graph cg = functionCallGraph().graph();
+    Sawyer::Container::Algorithm::graphBreakCycles(cg);
+    Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "call-conv analysis");
+    Sawyer::Message::FacilitiesGuard guard();
+    if (nThreads != 1)                                  // lots of threads doing progress reports won't look too good!
+        rose::BinaryAnalysis::CallingConvention::mlog[MARCH].disable();
+    Sawyer::workInParallel(cg, nThreads, CallingConventionWorker(*this, progress, dfltCc));
 }
 
 AddressUsageMap
