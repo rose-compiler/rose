@@ -28,19 +28,17 @@ int main(int argc, char** argv)
 
  double A[N];
  double B[N];
- int t, i, j;
+ int t, i;
 #pragma scop
- t=0;
- for (; t < _PB_TSTEPS; t++)
-    {
-      i=1;
-      for (; i < _PB_N - 1; i++)
-	B[i] = 0.33333 * (A[i-1] + A[i] + A[i + 1]);
-      j=1;
-      for (; j < _PB_N - 1; j++)
-	A[j] = B[j];
-    }
+ t=0; // separate assignment
+ for (; t < _PB_TSTEPS; t++) {
+   // initialization in for-init
+   for (i=1; i < _PB_N - 1; i++)
+     B[i] = 0.33333 * (A[i-1] + A[i] + A[i + 1]);
+   // declaration in for-init
+   for (int j=1; j < _PB_N - 1; j++)
+     A[j] = B[j];
+ }
 #pragma endscop
-
-  return 0;
+   return 0;
 }

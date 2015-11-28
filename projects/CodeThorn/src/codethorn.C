@@ -906,6 +906,10 @@ int main( int argc, char * argv[] ) {
       exit(1);
     }
   }
+  
+  // DEBUG
+  //cout<<"DEBUG: ignoring lhs-array accesses"<<endl;
+  //analyzer.setSkipArrayAccesses(true);
 
   // handle RERS mode: reconfigure options
   if(boolOptions["rersmode"]) {

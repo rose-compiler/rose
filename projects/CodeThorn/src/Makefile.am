@@ -448,6 +448,11 @@ analyterix_SOURCES = \
 check-local:
 	./codethorn --internal-checks				 
 	@echo ================================================================
+	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
+	@echo ================================================================
+	./codethorn $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
+	diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
+	@echo ================================================================
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
 	rm -f *.consistent
@@ -485,6 +490,7 @@ clean-local:
 	rm -f bsps/*
 	rm -f *.consistent Problem*.[0-9].csv
 	rm -f codethorn-LTLParser.c++
+	rm -f tmp.nsdump
 
 distclean-local: clean
 	rm -f *.tgz

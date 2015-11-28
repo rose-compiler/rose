@@ -1634,12 +1634,12 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               }
             }
 #endif
-            // xxx
-            if(variableValueMonitor.isHotVariable(this,lhsVar)) {
+            if(variableValueMonitor.isActive() && variableValueMonitor.isHotVariable(this,lhsVar)) {
               //cout<<"DEBUG: Topifying hot variable :)"<<lhsVar.toString()<<endl;
               newPState.setVariableToTop(lhsVar);
             } else {
               //newPState[lhsVar]=(*i).result;
+              //cout<<"DEBUG: assign lhs var:"<<lhsVar.toString()<<endl;
               newPState.setVariableToValue(lhsVar,(*i).result);
             }
           } else if(variableIdMapping.hasPointerType(lhsVar)) {
@@ -1647,7 +1647,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
             // see CODE-POINT-1 in ExprAnalyzer.C
             //cout<<"DEBUG: pointer-assignment: "<<lhsVar.toString()<<"="<<(*i).result<<endl;
             //newPState[lhsVar]=(*i).result;
-            if(variableValueMonitor.isHotVariable(this,lhsVar)) {
+            if(variableValueMonitor.isActive() && variableValueMonitor.isHotVariable(this,lhsVar)) {
               newPState.setVariableToTop(lhsVar);
             } else {
               newPState.setVariableToValue(lhsVar,(*i).result);
@@ -1660,7 +1660,9 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           if(isSgPntrArrRefExp(lhs)) {
             // for now we ignore array refs on lhs
             // TODO: assignments in index computations of ignored array ref
+            // see ExprAnalyzer.C: case V_SgPntrArrRefExp:
             // since nothing can change (because of being ignored) state remains the same
+            
             EState estate=(*i).estate;
             PState oldPState=*estate.pstate();
             ConstraintSet oldcset=*estate.constraints();            
