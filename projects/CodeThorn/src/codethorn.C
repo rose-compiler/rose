@@ -244,41 +244,6 @@ void attachPointerExprLists(SgNode* node) {
   }
 }
 
-void printAssertStatistics(Analyzer& analyzer, SgProject* sageProject) {
-  LabelSet lset=analyzer.getTransitionGraph()->labelSetOfIoOperations(InputOutput::FAILED_ASSERT);
-  list<pair<SgLabelStatement*,SgNode*> > assertNodes=analyzer.listOfLabeledAssertNodes(sageProject);
-  int reachable=0;
-  int unreachable=0;
-  for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=assertNodes.begin();i!=assertNodes.end();++i) {
-    Label lab=analyzer.getLabeler()->getLabel((*i).second);
-    if(lset.find(lab)!=lset.end())
-      reachable++;
-    else
-      unreachable++;
-  }
-  int n=assertNodes.size();
-  assert(reachable+unreachable == n);
-
-  if(boolOptions["rers-binary"]) {
-    reachable=0;
-    unreachable=0;
-    for(int i=0;i<62;i++) {
-      if(analyzer.binaryBindingAssert[i])
-        reachable++;
-      else
-        unreachable++;
-    }
-  }
-  cout<<color("white")<<"Assert reachability statistics: "
-      <<color("white")<<"YES: "<<color("green")<<reachable
-      <<color("white")<<", NO: " <<color("cyan")<<unreachable
-      <<color("white")<<", TOTAL: " <<n
-      <<endl<<color("normal")
-
-    ;
-}
-
-//
 string readableruntime(double timeInMilliSeconds) {
   stringstream s;
   double time=timeInMilliSeconds;
