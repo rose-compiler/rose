@@ -10,10 +10,20 @@ using namespace rose;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The new implementation fixes about 20 bugs in the old implementation. Some software may have depended on bugs, so these CPP
 // symbols can be defined to re-enable various bugs. Only bugs that are likely to have been depended on are emulated. Note that
-// whenever bugs are enabled, the AstAttributeMechanism unit tests will fail (tests/roseTests/utilTests/attributeTests.C).
+// whenever bugs are enabled, the AstAttributeMechanism unit tests will fail (tests/roseTests/utilTests/attributeTests.C); the
+// tester automatically notices when bugs are emulated and skip the tests.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Define this if you want attribute values to be leaked instead of deleted.
+// Define this if you want attribute values to be leaked instead of deleted. Turning off this bug emulation results in
+// segmentation faults in the Java Fortran parser as of 2015-11-16. For example:
+//     # A fatal error has been detected by the Java Runtime Environment:
+//     #
+//     #  SIGSEGV (0xb) at pc=0x00007f17f7a8092c, pid=62420, tid=139740845467424
+//     #
+//     # JRE version: Java(TM) SE Runtime Environment (7.0_51-b13) (build 1.7.0_51-b13)
+//     # Java VM: Java HotSpot(TM) 64-Bit Server VM (24.51-b03 mixed mode linux-amd64 compressed oops)
+//     # Problematic frame:
+//     # C  [librose.so.0+0x2d0092c]#
 #define ROSE_AstAttributeMechanism_LEAK_VALUES_BUG
 
 // Define this if you want the AstAttributeMechanism assignment operator to shallow-copy attributes.
@@ -21,7 +31,7 @@ using namespace rose;
 
 // Define if you want to allow the inconsistent state where "exists" returns true but operator[] returns null.  This happens
 // when an AstAttribute subclass fails to implement the virtual copy constructor.
-#define ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
+//#define ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
 
 // Define if you want to use the not-to-friendly strict mode. This prints error messages on standard (and aborts the program in
 // debug mode) if you try to do things like erase an attribute that doesn't exist.
@@ -149,7 +159,7 @@ AstAttributeMechanism::set(const std::string &name, AstAttribute *value) {
 #ifdef ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
         attributes_.setAttribute(id, value);
 #else // correct behavior
-        attributes_.erase(id);
+        attributes_.eraseAttribute(id);
 #endif
     } else {
         attributes_.setAttribute(id, value);
