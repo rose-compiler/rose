@@ -435,6 +435,9 @@ public:
      *  is computed and cached. */
     uint64_t hash();
 
+    // used internally to set the hash value
+    void hash(uint64_t);
+
     /** A node with formatter. See the with_format() method. */
     class WithFormatter {
     private:
@@ -834,8 +837,6 @@ private:
         : Node(""), leafType_(CONSTANT), name_(0) {}
     explicit Leaf(const std::string &comment, unsigned flags=0)
         : Node(comment, flags), leafType_(CONSTANT), name_(0) {}
-
-    static uint64_t nameCounter_;
 
 public:
     /** Construct a new free variable with a specified number of significant bits. */

@@ -3,6 +3,7 @@
 
 #include <Partitioner2/Exception.h>
 #include <Partitioner2/Utility.h>
+#include <integerOps.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -48,6 +49,13 @@ Function::isThunk() const {
     return true;
 }
 
+int64_t
+Function::stackDeltaConcrete() const {
+    BaseSemantics::SValuePtr v = stackDelta();
+    if (v && v->is_number() && v->get_width() <= 64)
+        return IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
+    return SgAsmInstruction::INVALID_STACK_DELTA;
+}
 
 } // namespace
 } // namespace

@@ -611,14 +611,14 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
-          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER) {
+          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
         set_name("Symbolic");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
-          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER) {
+          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
         set_name("Symbolic");
         (void) SValue::promote(state->get_protoval()); // values must have SymbolicSemantics::SValue dynamic type
     }
@@ -727,6 +727,7 @@ protected:
     DefinersMode computingDefiners_;                    // whether to track definers (instruction VAs) of SValues
     WritersMode computingMemoryWriters_;                // whether to track writers (instruction VAs) to memory.
     WritersMode computingRegisterWriters_;              // whether to track writers (instruction VAs) to registers.
+    size_t trimThreshold_;                              // max size of expressions (zero means no maximimum)
 
 public:
 
@@ -770,8 +771,6 @@ public:
     DefinersMode computingDefiners() const { return computingDefiners_; }
     /** @} */
 
-
-
     /** Property: Track which instructions write to each memory location.
      *
      *  Each memory location stores a set of addresses that represent the instructions that wrote to that location. This
@@ -805,7 +804,7 @@ public:
         return computingMemoryWriters() != TRACK_NO_WRITERS;
     }
 
-    /** Property: track latest writer to each register.
+    /** Property: Track latest writer to each register.
      *
      *  Controls whether each @ref writeRegister operation updates the list of writers.  The following values are allowed for
      *  this property:
@@ -832,6 +831,16 @@ public:
 
     // Used internally to control whether cur_insn should be omitted from the list of definers.
     bool getset_omit_cur_insn(bool b) { bool retval = omit_cur_insn; omit_cur_insn=b; return retval; }
+
+    /** Property: Maximum size of expressions.
+     *
+     *  Symbolic expressions can get very large very quickly. This property controls how large a symbolic expression can grow
+     *  before it's substituted with a new variable.  The default, zero, means to never limit the size of expressions.
+     *
+     * @{ */
+    void trimThreshold(size_t n) { trimThreshold_ = n; }
+    size_t trimThreshold() const { return trimThreshold_; }
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first defined at this level of the class hierarchy
@@ -898,7 +907,13 @@ public:
      * @endcode
      */
     virtual void substitute(const SValuePtr &from, const SValuePtr &to);
-    
+
+    /** Filters results from RISC operators.
+     *
+     *  Checks that the size of the specified expression doesn't exceed the @ref trimThreshold. If not (or the threshold is
+     *  zero), returns the argument, otherwise returns a new variable. */
+    virtual BaseSemantics::SValuePtr filterResult(const BaseSemantics::SValuePtr&);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
 public:

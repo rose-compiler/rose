@@ -615,11 +615,91 @@ RegisterStateX86::print(std::ostream &stream, Formatter &fmt) const
  *                                      State
  *******************************************************************************************************************************/
 
+void
+State::clear() {
+    registers->clear();
+    memory->clear();
+}
+
+void
+State::zero_registers() {
+    registers->zero();
+}
+
+void
+State::clear_memory() {
+    memory->clear();
+}
+
+SValuePtr
+State::readRegister(const RegisterDescriptor &desc, RiscOperators *ops) {
+    ASSERT_require(desc.is_valid());
+    ASSERT_not_null(ops);
+    return registers->readRegister(desc, ops);
+}
+
+void
+State::writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, RiscOperators *ops) {
+    ASSERT_require(desc.is_valid());
+    ASSERT_not_null(value);
+    ASSERT_not_null(ops);
+    registers->writeRegister(desc, value, ops);
+}
+
+SValuePtr
+State::readMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+    ASSERT_not_null(address);
+    ASSERT_not_null(dflt);
+    ASSERT_not_null(addrOps);
+    ASSERT_not_null(valOps);
+    return memory->readMemory(address, dflt, addrOps, valOps);
+}
+
+void
+State::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps) {
+    ASSERT_not_null(addr);
+    ASSERT_not_null(value);
+    ASSERT_not_null(addrOps);
+    ASSERT_not_null(valOps);
+    memory->writeMemory(addr, value, addrOps, valOps);
+}
+
+void
+State::printRegisters(std::ostream &stream, const std::string &prefix) {
+    Formatter fmt;
+    fmt.set_line_prefix(prefix);
+    printRegisters(stream, fmt);
+}
+    
+void
+State::printRegisters(std::ostream &stream, Formatter &fmt) const {
+    registers->print(stream, fmt);
+}
+
+void
+State::printMemory(std::ostream &stream, const std::string &prefix) const {
+    Formatter fmt;
+    fmt.set_line_prefix(prefix);
+    printMemory(stream, fmt);
+}
+
+void
+State::printMemory(std::ostream &stream, Formatter &fmt) const {
+    memory->print(stream, fmt);
+}
+
 bool
 State::merge(const StatePtr &other, RiscOperators *ops) {
     bool memoryChanged = get_memory_state()->merge(other->get_memory_state(), ops, ops);
     bool registersChanged = get_register_state()->merge(other->get_register_state(), ops);
     return memoryChanged || registersChanged;
+}
+
+void
+State::print(std::ostream &stream, const std::string &prefix) const {
+    Formatter fmt;
+    fmt.set_line_prefix(prefix);
+    print(stream, fmt);
 }
 
 void
@@ -926,7 +1006,7 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool al
     const RegisterDescriptor *reg = regdict->lookup(regname);
     if (!reg) {
         if (allowMissing) {
-            static RegisterDescriptor invalidRegister;
+            static const RegisterDescriptor invalidRegister;
             return invalidRegister;
         }
         std::ostringstream ss;

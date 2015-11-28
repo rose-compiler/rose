@@ -744,21 +744,21 @@ public:
     Analysis()
         : regDict_(NULL), hasResults_(false), didConverge_(false) {}
 
-    /** Construct an analysis using specified disassembler.
+    /** Construct an analyzer using a specified disassembler.
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
-    Analysis(Disassembler *d)
+    explicit Analysis(Disassembler *d)
         : regDict_(NULL), hasResults_(false), didConverge_(false) {
         init(d);
     }
 
-    /** Construct an analysis using specified dispatcher.
+    /** Construct an analysis using a specified dispatcher.
      *
      *  This constructor uses the supplied dispatcher and associated semantic domain. For best results, the semantic domain
      *  should be a symbolic domain that uses @ref InstructionSemantics2::BaseSemantics::MemoryCellList "MemoryCellList" and
      *  @ref InstructionSemantics2::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". These happen to also be the
      *  defaults used by @ref InstructionSemantics::SymbolicSemantics. */
-    Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
+    explicit Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
         : cpu_(cpu), regDict_(NULL), hasResults_(false), didConverge_(false) {}
 
     /** Property: Default calling convention.

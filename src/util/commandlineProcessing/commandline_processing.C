@@ -70,6 +70,9 @@ protected:
     }
 };
 
+// Global place to store result of parsing genericSwitches.
+CommandlineProcessing::GenericSwitchArgs CommandlineProcessing::genericSwitchArgs;
+
 // Returns command-line description for switches that should be always available.
 // Don't add anything to this that might not be applicable to some tool -- this is for all tools, both source and binary.
 // See header file for more documentation including examples.
@@ -107,11 +110,14 @@ CommandlineProcessing::genericSwitches() {
                     "was configured."));
 
     // Number of threads to use for algorithms that support multi-threading.  NOTE: we should really have a Settings struct for
-    // these switches, but we don't yet. Users will therefore need to query the ParsserResult object to get the switch's
+    // these switches, but we don't yet. Users will therefore need to query the ParserResult object to get the switch's
     // argument.
     gen.insert(Switch("threads")
-               .argument("n", positiveIntegerParser())
-               .doc("Number of threads to use for algorithms that support multi-threading."));
+               .argument("n", nonNegativeIntegerParser(genericSwitchArgs.threads))
+               .doc("Number of threads to use for algorithms that support multi-threading.  The default is " +
+                    StringUtility::numberToString(genericSwitchArgs.threads) + ". A value of zero means use the "
+                    "same number of threads as there is hardware concurrency (or one thread if the hardware "
+                    "concurrency can't be determined)."));
 
     return gen;
 }
