@@ -157,7 +157,6 @@ public:
 
     virtual uint64_t get_number() const ROSE_OVERRIDE {
         ASSERT_not_reachable("no implementation necessary");
-        return 0;
     }
 
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
