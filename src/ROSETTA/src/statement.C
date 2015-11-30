@@ -1981,6 +1981,10 @@ Grammar::setUpStatements ()
   // DQ (4/16/2005): Added support for explicit template instantiation to IR (required to address template linking issues)
      TemplateInstantiationDirectiveStatement.setFunctionPrototype  ( "HEADER_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
 
+  // DQ (11/23/2015): After fixing up the AST generation to make the declaration a unique IR node, we can allow this to be traversed.
+  // DQ (11/23/2015): Mark this IR node as CLONE_TREE instead of CLONE_PTR (which will not compile since IR nodes don't have copy constructors, by design).
+  // DQ (11/23/2015): Mark this IR node as CLONE_PTR instead of NO_COPY_DATA.
+  // DQ (11/21/2015): Mark this IR node as NO_COPY_DATA instead of CLONE_TREE (which is the default).
   // DQ (4/8/2014): Restored the original behavior (traversing the associated child declaration).
   // Upon investigation, it is not a shared IR node and traversing it is important to the 
   // support for the AST Copy mechanims (else we fail test2006_08.C and test2008_37.C).
@@ -1997,8 +2001,17 @@ Grammar::setUpStatements ()
   //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
   // TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
   //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+  // TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+  // TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
+  // TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
+  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_TREE);
      TemplateInstantiationDirectiveStatement.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= NULL",
-                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_TREE);
+
 
   // DQ (8/2/2014): Added to support C++11 "extern template class vector<float>;" used to specify 
   // that a template should not be instantiated (see Cxx11_tests/test2014_18.C).

@@ -9584,10 +9584,18 @@ SgDeclarationStatement::set_firstNondefiningDeclaration ( SgDeclarationStatement
         {
           printf ("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): this = %p = %s IS NOT THE SAME AS firstNondefiningDeclaration = %p = %s \n",
                this,this->class_name().c_str(),firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
-          ROSE_ASSERT(this->get_file_info() != NULL);
-          this->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): this: debug");
-          ROSE_ASSERT(firstNondefiningDeclaration->get_file_info() != NULL);
-          firstNondefiningDeclaration->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): firstNondefiningDeclaration: debug");
+
+       // DQ (11/23/2015): When this is called from the frontend, the source position may not have been set yet.
+       // ROSE_ASSERT(this->get_file_info() != NULL);
+          if (this->get_file_info() != NULL)
+             {
+               this->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): this: debug");
+             }
+       // ROSE_ASSERT(firstNondefiningDeclaration->get_file_info() != NULL);
+          if (firstNondefiningDeclaration->get_file_info() != NULL)
+             {
+               firstNondefiningDeclaration->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): firstNondefiningDeclaration: debug");
+             }
       }
 
   // DQ (10/11/2015): Added debugging output.

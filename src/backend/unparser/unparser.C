@@ -393,7 +393,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // transformations.  This also make simple analysis much cheaper since the hidel list computation is
   // expensive (in this implementation).
   // DQ (8/6/2007): Only compute the hidden lists if working with C++ code!
-     if (isCxxFile)
+     if (isCxxFile == true)
         {
        // DQ (5/22/2007): Moved from SgProject::parse() function to here so that propagateHiddenListData() could be called afterward.
        // DQ (5/8/2007): Now build the hidden lists for types and declarations (Robert Preissl's work)
