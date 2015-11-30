@@ -162,7 +162,7 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
           SageInterface::insertStatementBefore(lastStatement,sourceBoxVariableDeclaration,autoMovePreprocessingInfo);
           SgVariableSymbol* srcBoxVariableSymbol = SageInterface::getFirstVarSym(sourceBoxVariableDeclaration);
           SgVariableDeclaration* destinationBoxVariableDeclaration = NULL;
-          destinationBoxVariableDeclaration = buildBoxRef("destinationBoxRef",sourceVariableSymbol,outerScope, boxVariableSymbol->get_type());
+          destinationBoxVariableDeclaration = buildBoxRef("destinationBoxRef",destinationVariableSymbol,outerScope, boxVariableSymbol->get_type());
           SageInterface::insertStatementAfter(sourceBoxVariableDeclaration,destinationBoxVariableDeclaration,autoMovePreprocessingInfo);
           SgVariableSymbol* destBoxVariableSymbol = SageInterface::getFirstVarSym(destinationBoxVariableDeclaration);
 

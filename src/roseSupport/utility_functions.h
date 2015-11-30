@@ -204,6 +204,9 @@ namespace rose
        // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
           extern std::multimap<int,SgStatement*> redundantlyMappedTokensToStatementMultimap;
           extern std::set<int> redundantTokenEndingsSet;
+
+       // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
+          extern std::map<SgScopeStatement*,SgStatement*> representativeWhitespaceStatementMap;
    };
 
 
