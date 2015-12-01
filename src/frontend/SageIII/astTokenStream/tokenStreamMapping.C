@@ -621,7 +621,9 @@ Graph_TokenMappingTraversal::visit(SgNode* n)
             // evaluateInheritedAttribute() function which uses source position information).
                label += (mapping->constructedInEvaluationOfSynthesizedAttribute == true) ? "\\nconstructedInEvaluationOfSynthesizedAttribute == true" : "\\nconstructedInEvaluationOfSynthesizedAttribute == false";
 
-            // printf ("   --- node = %p = %s: start (line=%d:column=%d) end(line=%d,column=%d) \n",mappingInfo->node,mappingInfo->node->class_name().c_str(),start_pos->get_physical_line(),start_pos->get_col(),end_pos->get_physical_line(),end_pos->get_col());
+            // printf ("   --- node = %p = %s: start (line=%d:column=%d) end(line=%d,column=%d) \n",
+            //      mappingInfo->node,mappingInfo->node->class_name().c_str(),start_pos->get_physical_line(),
+            //      start_pos->get_col(),end_pos->get_physical_line(),end_pos->get_col());
                label += "\\nnode pos ((line=" + StringUtility::numberToString(start_pos->get_physical_line()) + ":column=" + StringUtility::numberToString(start_pos->get_col()) + ")"
                                    ",(line=" + StringUtility::numberToString(end_pos->get_physical_line())   + ",column=" + StringUtility::numberToString(end_pos->get_col()) + ")) ";
 
@@ -5122,9 +5124,12 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 #endif
                     if (representativeWhitespaceStatementMap.find(scopeStatement) != representativeWhitespaceStatementMap.end())
                        {
-                         printf ("ERROR: (representativeWhitespaceStatementMap.find(scopeStatement) != representativeWhitespaceStatementMap.end()): scope revisited \n");
+                      // DQ (11/28/2015): This is a significant amount of output spew when running large applications with the move-tool.
+                         printf ("NOTE: (representativeWhitespaceStatementMap.find(scopeStatement) != representativeWhitespaceStatementMap.end()): scope revisited \n");
+#if 0
                          scopeStatement->get_startOfConstruct()->display("scopeStatement: representativeWhitespaceStatementMap: debug");
                          firstStatement->get_startOfConstruct()->display("firstStatement: representativeWhitespaceStatementMap: debug");
+#endif
                        }
 #if 0
                     ROSE_ASSERT(representativeWhitespaceStatementMap.find(scopeStatement) == representativeWhitespaceStatementMap.end());
@@ -5723,7 +5728,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      printf ("In buildTokenStreamFrontier(): Calling detectMacroExpansionsToBeUnparsedAsAstTransformations(): sourceFile = %p \n",sourceFile);
 #endif
 #if 1
-  // DQ (11/8/2015): Add macro expansion detection where transformations are in part of the expaned macro.
+  // DQ (11/8/2015): Add macro expansion detection to support where transformations are in part of the expanded macro.
   // However this must be called after all transformations have been done (in the frontier detection).
      detectMacroExpansionsToBeUnparsedAsAstTransformations(sourceFile);
 #endif
