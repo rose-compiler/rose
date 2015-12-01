@@ -21,6 +21,8 @@ void LanguageRestrictorCppSubset1::initialize() {
   vs.insert(V_SgForStatement);
   
   vs.insert(V_SgBreakStmt);
+  vs.insert(V_SgGotoStatement);
+
   vs.insert(V_SgAndOp);
   vs.insert(V_SgOrOp);
   vs.insert(V_SgNotOp);
