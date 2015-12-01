@@ -1798,6 +1798,9 @@ ROSE_DLL_API bool isTemplateInstantiationNode(SgNode* node);
 
 ROSE_DLL_API void wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root);
 
+// DQ (12/1/2015): Adding support for fixup internal data struuctures that have references to statements (e.g. macro expansions).
+ROSE_DLL_API void resetInternalMapsForTargetStatement(SgStatement* sourceStatement);
+
 //@}
 //------------------------------------------------------------------------
 //@{
