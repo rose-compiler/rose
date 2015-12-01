@@ -19346,7 +19346,8 @@ void c_action_label(Token_t * lbl)
             // After the first time, ever call to this function is significant (represents use of the
             // Fortran include mechanism; not formally a part of the language grammar).
 
-            SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filepath);
+          //SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filepath);
+            SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filename);
 
             if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
             printf(
@@ -19406,7 +19407,7 @@ void c_action_label(Token_t * lbl)
             includeLine->set_firstNondefiningDeclaration(includeLine);
         }
 
-        astIncludeStack.push_back(filepath);
+        astIncludeStack.push_back(filename);
 
 #if 0
         // Output debugging information about saved state (stack) information.
