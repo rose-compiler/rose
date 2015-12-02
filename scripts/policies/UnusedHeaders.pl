@@ -20,12 +20,20 @@ my $warning = " (warning)";	# non-empty means issue warnings rather than errors,
 # Each key is the base name of the header file;
 # Each value is an array of header filenames that map to this key.
 my %index;
-push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh|hpp)$/} FileLister->new(@ARGV)->all_files;
+for my $file (FileLister->new(@ARGV)->all_files()) {
+    next unless $file =~ /\.(h|hh|hpp)$/;
+    next if $file =~ /\b(tests|projects)\//;
+    my($basename) = $file =~ /([^\/]+)$/;
+    my($key) = lc $basename;
+    $index{$key} = [] unless exists $index{$key};
+    push @{$index{$key}}, $file;
+}
 
 # Look for #include statements in all source files and delete the matching entry from %index.
 my $files = FileLister->new(@ARGV);
 while (my $file = $files->next_file) {
   next unless $file =~ /\.(h|hh|hpp|c|cc|C|cpp|[fF]\w*)$/; # look only at C/C++/Fortran source code
+  next if $file =~ /\b(tests|projects)\//; # skip test and project directories
   if (open FILE, "<", $file) {
     while (<FILE>) {
       my($path,$name);
