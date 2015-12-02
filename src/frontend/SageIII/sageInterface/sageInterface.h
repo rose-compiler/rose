@@ -1591,7 +1591,7 @@ ROSE_DLL_API void moveVariableDeclaration(SgVariableDeclaration* decl, SgScopeSt
 ROSE_DLL_API void appendStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 
 //! Append a statement to the end of SgForInitStatement
-ROSE_DLL_API void appendStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt=NULL);
+ROSE_DLL_API void appendStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt);
 
 //! Append a list of statements to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
 ROSE_DLL_API void appendStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatement* scope=NULL);
@@ -1605,7 +1605,7 @@ ROSE_DLL_API void appendStatementWithDependentDeclaration( SgDeclarationStatemen
 ROSE_DLL_API void prependStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 
 //! Prepend a statement to the beginning of SgForInitStatement
-ROSE_DLL_API void prependStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt=NULL);
+ROSE_DLL_API void prependStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt);
 
 //! prepend a list of statements to the beginning of the current scope,
 //! handling side effects as appropriate
