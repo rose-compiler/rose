@@ -1,5 +1,6 @@
 /* Interpretation PE */
 0x00401000: ================================== Function (entry point, graph) <_start>
+0x00401000: Function stack delta: +4
 
 0x00401000: Basic block reasons: entry point, CFG head
 0x00401000: 55                      |U       |<sp+0 >   push   ebp
@@ -1057,6 +1058,7 @@
 0x00401606: Successor blocks: 0x004015db
 
 0x00401610: ================================== Function (function call, graph) unknown name
+0x00401610: Function stack delta: +4
 
 0x00401610: Basic block reasons: entry point
 0x00401610: ff 25 74 40 40 00       |.%t@@.  |<sp+0 >   jmp    dword ds:[0x00404074<.idata+0x74>]
@@ -1173,6 +1175,7 @@
 0x0040173f: Successor blocks: 0x00401634
 
 0x00401750: ================================== Function (thunk, graph) unknown name
+0x00401750: Function stack delta: +4
 
 0x00401750: Basic block reasons: entry point, CFG head
 0x00401750: ff 25 84 40 40 00       |.%.@@.  |<sp+0 >   jmp    dword ds:[0x00404084<.idata+0x84>]
@@ -1240,6 +1243,7 @@
 0x004017b5: Successor blocks: unknown
 
 0x004017c0: ================================== Function (thunk, graph) unknown name
+0x004017c0: Function stack delta: +4
 
 0x004017c0: Basic block reasons: entry point, CFG head
 0x004017c0: ff 25 7c 40 40 00       |.%|@@.  |<sp+0 >   jmp    dword ds:[0x0040407c<.idata+0x7c>]
@@ -1247,6 +1251,7 @@
 0x004017c0: Successor blocks: unknown
 
 0x004017d0: ================================== Function (thunk, graph) unknown name
+0x004017d0: Function stack delta: +4
 
 0x004017d0: Basic block reasons: entry point, CFG head
 0x004017d0: ff 25 90 40 40 00       |.%.@@.  |<sp+0 >   jmp    dword ds:[0x00404090<.idata+0x90>]
@@ -1254,6 +1259,7 @@
 0x004017d0: Successor blocks: unknown
 
 0x004017e0: ================================== Function (thunk, graph) unknown name
+0x004017e0: Function stack delta: +4
 
 0x004017e0: Basic block reasons: entry point, CFG head
 0x004017e0: ff 25 88 40 40 00       |.%.@@.  |<sp+0 >   jmp    dword ds:[0x00404088<.idata+0x88>]
@@ -1261,6 +1267,7 @@
 0x004017e0: Successor blocks: unknown
 
 0x004017f0: ================================== Function (thunk, graph) unknown name
+0x004017f0: Function stack delta: +4
 
 0x004017f0: Basic block reasons: entry point, CFG head
 0x004017f0: ff 25 8c 40 40 00       |.%.@@.  |<sp+0 >   jmp    dword ds:[0x0040408c<.idata+0x8c>]
@@ -1312,6 +1319,7 @@
 0x00401834: Successor blocks: unknown
 
 0x00401840: ================================== Function (function call, graph) unknown name
+0x00401840: Function stack delta: +4
 
 0x00401840: Basic block reasons: entry point
 0x00401840: ff 25 80 40 40 00       |.%.@@.  |<sp+0 >   jmp    dword ds:[0x00404080<.idata+0x80>]
@@ -1319,6 +1327,7 @@
 0x00401840: Successor blocks: unknown
 
 0x00401850: ================================== Function (function call, graph) unknown name
+0x00401850: Function stack delta: +4
 
 0x00401850: Basic block reasons: entry point
 0x00401850: ff 25 9c 40 40 00       |.%.@@.  |<sp+0 >   jmp    dword ds:[0x0040409c<.idata+0x9c>]

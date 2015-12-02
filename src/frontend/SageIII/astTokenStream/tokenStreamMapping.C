@@ -404,6 +404,12 @@ class TokenMappingTraversal : public SgTopDownBottomUpProcessing<InheritedAttrib
        // vector<pair<SgNode*,pair<int,int> > > tokenStreamSequenceVector;
           vector<TokenStreamSequenceToNodeMapping*> tokenStreamSequenceVector;
 
+       // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
+       // This is required to format transformed statements in scopes (especially required if all statements are transformed
+       // as a part of a larger transformation of the file.  The representative statements white space is used to format
+       // the code unparsed from the AST.
+          map<SgScopeStatement*,SgStatement*> representativeWhitespaceStatementMap;
+
           TokenMappingTraversal(vector<stream_element*> & tokenStream);
 
        // virtual function must be defined
@@ -5066,6 +5072,74 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
         }
 #endif
 
+
+  // Select the representative statement to use in formatting transformations in the token based unparsing.
+     SgScopeStatement* scopeStatement = isSgScopeStatement(n);
+     if (scopeStatement != NULL)
+        {
+       // Save a statement from each scope.
+          SgGlobal* globalScope                               = isSgGlobal(scopeStatement);
+          SgBasicBlock* basicBlock                            = isSgBasicBlock(scopeStatement);
+          SgClassDefinition* classDefinition                  = isSgClassDefinition(scopeStatement);
+          SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(scopeStatement);
+
+          if (globalScope != NULL || basicBlock != NULL || classDefinition != NULL || namespaceDefinition != NULL)
+             {
+               SgStatement* firstStatement = NULL;
+
+            // Note that this is the efficent way to access the first statement in any scope containing a list of statements or declarations.
+               if (scopeStatement->containsOnlyDeclarations() == true)
+                  {
+                    if (scopeStatement->getDeclarationList().empty() == false)
+                       {
+                         SgDeclarationStatement* firstDeclaration = *(scopeStatement->getDeclarationList().begin());
+                         firstStatement = firstDeclaration;
+                       }
+                      else
+                       {
+                      // Not clear what to do here.
+                       }
+                  }
+                 else
+                  {
+                    if (scopeStatement->getStatementList().empty() == false)
+                       {
+                         firstStatement = *(scopeStatement->getStatementList().begin());
+                       }
+                      else
+                       {
+                      // Not clear what to do here.
+                       }
+                  }
+
+            // ROSE_ASSERT(firstStatement != NULL);
+
+               if (firstStatement != NULL)
+                  {
+                    ROSE_ASSERT(scopeStatement != NULL);
+#if 0
+                    printf ("Adding representativeWhitespaceStatementMap[%p = %s] = %p = %s \n",scopeStatement,scopeStatement->class_name().c_str(),firstStatement,firstStatement->class_name().c_str());
+#endif
+                    if (representativeWhitespaceStatementMap.find(scopeStatement) != representativeWhitespaceStatementMap.end())
+                       {
+                         printf ("ERROR: (representativeWhitespaceStatementMap.find(scopeStatement) != representativeWhitespaceStatementMap.end()): scope revisited \n");
+                         scopeStatement->get_startOfConstruct()->display("scopeStatement: representativeWhitespaceStatementMap: debug");
+                         firstStatement->get_startOfConstruct()->display("firstStatement: representativeWhitespaceStatementMap: debug");
+                       }
+#if 0
+                    ROSE_ASSERT(representativeWhitespaceStatementMap.find(scopeStatement) == representativeWhitespaceStatementMap.end());
+                    representativeWhitespaceStatementMap[scopeStatement] = firstStatement;
+#else
+                 // Allow this case while we debug this.
+                    if (representativeWhitespaceStatementMap.find(scopeStatement) == representativeWhitespaceStatementMap.end())
+                       {
+                         representativeWhitespaceStatementMap[scopeStatement] = firstStatement;
+                       }
+#endif
+                  }
+             } 
+        }
+
      return InheritedAttribute(inheritedAttribute.sourceFile,start_of_token_subsequence,end_of_token_subsequence,processed);
    }
 
@@ -6024,6 +6098,18 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
 #if 0
      printf ("Completed the AST token stream mapping (before transformations) \n");
      ROSE_ASSERT(false);
+#endif
+
+  // DQ (11/20/2015): Now setup the representative whitespace to use in the output of transformations for each scope.
+  // Since the transformations are output without surrounding whitespace, we need to collect representative 
+  // statements from each scope so that we can use their whitespace when transformations in that scope are output.
+     sourceFile->set_representativeWhitespaceStatementMap(tokenMappingTraversal.representativeWhitespaceStatementMap);
+
+#if 1
+  // DQ (11/20/2015): This should be true for most testing but does not have to be true for empty files and such 
+  // pathological cases.
+     printf ("Note temporary testing of (sourceFile->get_representativeWhitespaceStatementMap().empty() == false) is not ALWAYS true \n");
+     ROSE_ASSERT(sourceFile->get_representativeWhitespaceStatementMap().empty() == false);
 #endif
    }
 

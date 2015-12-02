@@ -648,20 +648,8 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, bo
 
     ast->set_reason(reasons);
     ast->set_code_likelihood(1.0);                      // FIXME[Robb P. Matzke 2014-08-07]
+    ast->set_stackDeltaOut(bb->stackDeltaOutConcrete());
 
-    // Outgoing stack delta
-    if (bb->stackDeltaOut().isCached()) {
-        BaseSemantics::SValuePtr v = bb->stackDeltaOut().get();
-        if (v->is_number() && v->get_width()<=64) {
-            int64_t delta = IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
-            ast->set_stackDeltaOut(delta);
-        } else {
-            ast->set_stackDeltaOut(SgAsmInstruction::INVALID_STACK_DELTA);
-        }
-    } else {
-        ast->set_stackDeltaOut(SgAsmInstruction::INVALID_STACK_DELTA);
-    }
-    
     // Cache the basic block successors in the AST since we've already computed them.  If the basic block is in the CFG then we
     // can use the CFG's edges to initialize the AST successors since they are canonical. Otherwise we'll use the successors
     // from bb. In any case, we fill in the successor SgAsmIntegerValueExpression objects with only the address and not
@@ -776,12 +764,13 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
         }
     }
 
-    // What is the net change in stack pointer for this function?
-    int64_t stackDelta = SgAsmInstruction::INVALID_STACK_DELTA;
-    if (function->stackDelta().isCached()) {
-        BaseSemantics::SValuePtr v = function->stackDelta().get();
-        if (v && v->is_number() && v->get_width()<=64)
-            stackDelta = IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
+    // Function's calling convention.
+    const CallingConvention::Definition *bestCallingConvention = NULL;
+    if (function->callingConventionAnalysis().hasResults()) {
+        const CallingConvention::Dictionary &archConventions = partitioner.instructionProvider().callingConventions();
+        CallingConvention::Dictionary conventions = function->callingConventionAnalysis().match(archConventions);
+        if (!conventions.empty())
+            bestCallingConvention = new CallingConvention::Definition(conventions.front());
     }
     
     // Build the AST
@@ -790,7 +779,8 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
     ast->set_name(function->name());
     ast->set_comment(function->comment());
     ast->set_may_return(mayReturn);
-    ast->set_stackDelta(stackDelta);
+    ast->set_stackDelta(function->stackDeltaConcrete());
+    ast->set_callingConvention(bestCallingConvention);
     return ast;
 }
 

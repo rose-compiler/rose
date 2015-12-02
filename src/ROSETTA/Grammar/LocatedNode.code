@@ -520,6 +520,9 @@ enum ROSE_Fortran_Additional_Info
        // DQ (4/14/2007): Modified to make this a const array
           static const token_element ROSE_Fortran_keyword_map[127];
 
+       // DQ (11/20/2015): Added function to detect CR to support unparsing of whitespace defined up to an including only the first CR.
+          bool isCarriageReturn() const;
+
 HEADER_TOKEN_END
 
 
@@ -1397,6 +1400,13 @@ const SgToken::token_element SgToken::ROSE_Fortran_keyword_map[127] =
       {"write",                SgToken::FORTRAN_WRITE}                /*   GFORTRAN/G95 equivalent is ST_WRITE           */
    };
 
+
+bool
+SgToken::isCarriageReturn() const
+   {
+  // DQ (11/20/2015): Added function to detect CR to support unparsing of whitespace defined up to an including only the first CR.
+     return (get_lexeme_string() == "\n");
+   }
 
 SOURCE_TOKEN_END
 

@@ -315,6 +315,21 @@ RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
     MemoryState::promote(state->get_memory_state())->traverse(memsubst);
 }
 
+BaseSemantics::SValuePtr
+RiscOperators::filterResult(const BaseSemantics::SValuePtr &a_) {
+    if (trimThreshold_ == 0)
+        return a_;
+    SValuePtr a = SValue::promote(a_);
+    if (a->get_expression()->nNodes() <= trimThreshold_)
+        return a_;
+
+    SymbolicExpr::Ptr expr = SymbolicExpr::makeVariable(a->get_width(),
+                                                        a->get_expression()->comment(),
+                                                        a->get_expression()->flags());
+    a->set_expression(expr);
+    return a;
+}
+
 void
 RiscOperators::interrupt(int majr, int minr)
 {
@@ -328,7 +343,7 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
     SValuePtr b = SValue::promote(b_);
     ASSERT_require(a->get_width()==b->get_width());
     if (a->isBottom() || b->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeAnd(a->get_expression(), b->get_expression()));
 
@@ -342,7 +357,7 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -352,7 +367,7 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     SValuePtr b = SValue::promote(b_);
     ASSERT_require(a->get_width()==b->get_width());
     if (a->isBottom() || b->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
     
     SValuePtr retval = svalue_expr(SymbolicExpr::makeOr(a->get_expression(), b->get_expression()));
 
@@ -366,7 +381,7 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -376,7 +391,7 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
     SValuePtr b = SValue::promote(b_);
     ASSERT_require(a->get_width()==b->get_width());
     if (a->isBottom() || b->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval;
     // We leave these simplifications here because SymbolicExpr doesn't yet have a way to pass an SMT solver to its
@@ -399,7 +414,7 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
     
 BaseSemantics::SValuePtr
@@ -407,7 +422,7 @@ RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
     SValuePtr retval = svalue_expr(SymbolicExpr::makeInvert(a->get_expression()));
 
     switch (computingDefiners_) {
@@ -419,7 +434,7 @@ RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -429,7 +444,7 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
     ASSERT_require(end_bit<=a->get_width());
     ASSERT_require(begin_bit<end_bit);
     if (a->isBottom())
-        return bottom_(end_bit-begin_bit);
+        return filterResult(bottom_(end_bit-begin_bit));
 
     SymbolicExpr::Ptr beginExpr = SymbolicExpr::makeInteger(32, begin_bit);
     SymbolicExpr::Ptr endExpr = SymbolicExpr::makeInteger(32, end_bit);
@@ -444,7 +459,7 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
                 retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -453,7 +468,7 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &lo_bits_, const BaseSemant
     SValuePtr lo = SValue::promote(lo_bits_);
     SValuePtr hi = SValue::promote(hi_bits_);
     if (lo->isBottom() || hi->isBottom())
-        return bottom_(lo->get_width() + hi->get_width());
+        return filterResult(bottom_(lo->get_width() + hi->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeConcat(hi->get_expression(), lo->get_expression()));
     switch (computingDefiners_) {
@@ -466,7 +481,7 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &lo_bits_, const BaseSemant
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -474,7 +489,7 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->isBottom())
-        return bottom_(1);
+        return filterResult(bottom_(1));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeZerop(a->get_expression()));
     switch (computingDefiners_) {
@@ -486,7 +501,7 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -501,7 +516,7 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
 
     // (ite bottom A B) should be A when A==B. However, SymbolicExpr would have already simplified that to A.
     if (sel->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval;
     if (sel->is_number()) {
@@ -518,7 +533,7 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
                 retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
                 break;
         }
-        return retval;
+        return filterResult(retval);
     }
     if (solver) {
         // If the selection expression cannot be true, then return b
@@ -538,7 +553,7 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
                     retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
                     break;
             }
-            return retval;
+            return filterResult(retval);
         }
 
         // If the selection expression cannot be false, then return a
@@ -558,7 +573,7 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
                     retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
                     break;
             }
-            return retval;
+            return filterResult(retval);
         }
     }
     retval = svalue_expr(SymbolicExpr::makeIte(sel->get_expression(), a->get_expression(), b->get_expression()));
@@ -573,7 +588,7 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -581,7 +596,7 @@ RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeLssb(a->get_expression()));
     switch (computingDefiners_) {
@@ -593,7 +608,7 @@ RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_)
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -601,7 +616,7 @@ RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeMssb(a->get_expression()));
     switch (computingDefiners_) {
@@ -613,7 +628,7 @@ RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_)
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -622,7 +637,7 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (a->isBottom() || sa->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeRol(sa->get_expression(), a->get_expression()));
     switch (computingDefiners_) {
@@ -635,7 +650,7 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantic
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -644,7 +659,7 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemanti
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (a->isBottom() || sa->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeRor(sa->get_expression(), a->get_expression()));
     switch (computingDefiners_) {
@@ -657,7 +672,7 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemanti
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -666,7 +681,7 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (a->isBottom() || sa->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeShl0(sa->get_expression(), a->get_expression()));
     switch (computingDefiners_) {
@@ -679,7 +694,7 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -688,7 +703,7 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (a->isBottom() || sa->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeShr0(sa->get_expression(), a->get_expression()));
     switch (computingDefiners_) {
@@ -701,7 +716,7 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -710,7 +725,7 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
     SValuePtr a = SValue::promote(a_);
     SValuePtr sa = SValue::promote(sa_);
     if (a->isBottom() || sa->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeAsr(sa->get_expression(), a->get_expression()));
     switch (computingDefiners_) {
@@ -723,7 +738,7 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -731,7 +746,7 @@ RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_wid
 {
     SValuePtr a = SValue::promote(a_);
     if (a->isBottom())
-        return bottom_(new_width);
+        return filterResult(bottom_(new_width));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, new_width),
                                                             a->get_expression()));
@@ -745,7 +760,7 @@ RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_wid
                 retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -755,7 +770,7 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     SValuePtr b = SValue::promote(b_);
     ASSERT_require(a->get_width()==b->get_width());
     if (a->isBottom() || b->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeAdd(a->get_expression(), b->get_expression()));
     switch (computingDefiners_) {
@@ -768,7 +783,7 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -778,14 +793,14 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSeman
     ASSERT_require(a->get_width()==b->get_width() && c->get_width()==1);
     if (a->isBottom() || b->isBottom() || c->isBottom()) {
         carry_out = bottom_(a->get_width());
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
     }
     BaseSemantics::SValuePtr aa = unsignedExtend(a, a->get_width()+1);
     BaseSemantics::SValuePtr bb = unsignedExtend(b, a->get_width()+1);
     BaseSemantics::SValuePtr cc = unsignedExtend(c, a->get_width()+1);
     BaseSemantics::SValuePtr sumco = add(aa, add(bb, cc));
-    carry_out = extract(xor_(aa, xor_(bb, sumco)), 1, a->get_width()+1);
-    return add(a, add(b, unsignedExtend(c, a->get_width())));
+    carry_out = filterResult(extract(xor_(aa, xor_(bb, sumco)), 1, a->get_width()+1));
+    return filterResult(add(a, add(b, unsignedExtend(c, a->get_width()))));
 }
 
 BaseSemantics::SValuePtr
@@ -793,7 +808,7 @@ RiscOperators::negate(const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeNegate(a->get_expression()));
     switch (computingDefiners_) {
@@ -805,7 +820,7 @@ RiscOperators::negate(const BaseSemantics::SValuePtr &a_)
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -814,7 +829,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     if (a->isBottom() || b->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeSignedDiv(a->get_expression(), b->get_expression()));
     switch (computingDefiners_) {
@@ -827,7 +842,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -836,7 +851,7 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     if (a->isBottom() || b->isBottom())
-        return bottom_(b->get_width());
+        return filterResult(bottom_(b->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeSignedMod(a->get_expression(), b->get_expression()));
     switch (computingDefiners_) {
@@ -849,7 +864,7 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -859,7 +874,7 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr b = SValue::promote(b_);
     size_t retwidth = a->get_width() + b->get_width();
     if (a->isBottom() || b->isBottom())
-        return bottom_(retwidth);
+        return filterResult(bottom_(retwidth));
     SValuePtr retval = svalue_expr(SymbolicExpr::makeSignedMul(a->get_expression(), b->get_expression()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
@@ -871,7 +886,7 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -880,7 +895,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     if (a->isBottom() || b->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(a->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeDiv(a->get_expression(), b->get_expression()));
     switch (computingDefiners_) {
@@ -893,7 +908,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -902,7 +917,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     if (a->isBottom() || b->isBottom())
-        return bottom_(b->get_width());
+        return filterResult(bottom_(b->get_width()));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeMod(a->get_expression(), b->get_expression()));
     switch (computingDefiners_) {
@@ -915,7 +930,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -925,7 +940,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
     SValuePtr b = SValue::promote(b_);
     size_t retwidth = a->get_width() + b->get_width();
     if (a->isBottom() || b->isBottom())
-        return bottom_(retwidth);
+        return filterResult(bottom_(retwidth));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeMul(a->get_expression(), b->get_expression()));
     switch (computingDefiners_) {
@@ -938,7 +953,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
             retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -946,7 +961,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 {
     SValuePtr a = SValue::promote(a_);
     if (a->isBottom())
-        return bottom_(a->get_width());
+        return filterResult(bottom_(new_width));
 
     SValuePtr retval = svalue_expr(SymbolicExpr::makeSignExtend(SymbolicExpr::makeInteger(32, new_width),
                                                                 a->get_expression()));
@@ -960,7 +975,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
                 retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 BaseSemantics::SValuePtr
@@ -974,7 +989,7 @@ RiscOperators::readRegister(const RegisterDescriptor &reg)
         regs->updateReadProperties(reg);
     }
 
-    return result;
+    return filterResult(result);
 }
 
 void
@@ -1011,9 +1026,9 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     ASSERT_require(0 == nbits % 8);
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
     if (condition->is_number() && !condition->get_number())
-        return dflt;
+        return filterResult(dflt);
     if (address->isBottom())
-        return bottom_(dflt->get_width());
+        return filterResult(bottom_(dflt->get_width()));
 
     PartialDisableUsedef du(this);
 
@@ -1059,7 +1074,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
             retval->add_defining_instructions(allDefiners);
             break;
     }
-    return retval;
+    return filterResult(retval);
 }
 
 void
@@ -1099,17 +1114,17 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
         if (computingMemoryWriters() != TRACK_NO_WRITERS) {
             if (SgAsmInstruction *insn = get_insn()) {
                 if (BaseSemantics::MemoryCellListPtr cells = boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem)) {
-                    BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell();
-                    ASSERT_not_null(cell); // we just wrote to it!
-                    switch (computingMemoryWriters()) {
-                        case TRACK_NO_WRITERS:
-                            break;
-                        case TRACK_LATEST_WRITER:
-                            cell->setWriter(insn->get_address());
-                            break;
-                        case TRACK_ALL_WRITERS:
-                            cell->insertWriter(insn->get_address());
-                            break;
+                    if (BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell()) {
+                        switch (computingMemoryWriters()) {
+                            case TRACK_NO_WRITERS:
+                                break;
+                            case TRACK_LATEST_WRITER:
+                                cell->setWriter(insn->get_address());
+                                break;
+                            case TRACK_ALL_WRITERS:
+                                cell->insertWriter(insn->get_address());
+                                break;
+                        }
                     }
                 }
             }

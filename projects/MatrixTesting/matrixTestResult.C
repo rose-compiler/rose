@@ -41,7 +41,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     parser.doc("Description",
                "Adds a test result to the database.  The arguments are \"key=value\" pairs where the keys are "
                "names of software dependencies, configuration names, or special values. The software dependency "
-               "and configuration names can be otained by querying the database \"dependencies\" table. The special "
+               "and configuration names can be obtained by querying the database \"dependencies\" table. The special "
                "values are:"
                "@named{duration}{Elapsed testing time in seconds.}"
                "@named{noutput}{Number of lines of output (standard error and standard output) produced by running "

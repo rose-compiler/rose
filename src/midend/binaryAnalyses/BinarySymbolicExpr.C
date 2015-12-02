@@ -9,6 +9,8 @@
 #include "Combinatorics.h"
 
 #include <boost/foreach.hpp>
+#include <boost/thread/locks.hpp>
+#include <boost/thread/mutex.hpp>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -18,15 +20,28 @@ namespace SymbolicExpr {
 //                                      Supporting functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uint64_t
-Leaf::nameCounter_ = 0;
+// A mutex that's used by various methods in this namespace
+static boost::mutex symbolicExprMutex;
+
+// Returns the next name counter. If @p useThis is specified then return that value and make sure the next value to be
+// returned is larger.
+static uint64_t
+nextNameCounter(uint64_t useThis = (uint64_t)(-1)) {
+    static boost::mutex mutex;
+    static uint64_t counter = 0;
+    boost::lock_guard<boost::mutex> lock(mutex);
+    if (useThis == (uint64_t)(-1))
+        return ++counter;
+    counter = std::max(counter, useThis);
+    return useThis;
+}
 
 const uint64_t
 MAX_NNODES = UINT64_MAX;
 
 std::string
 toStr(Operator o) {
-    static char buf[64];
+    char buf[64];
     std::string s = stringifyBinaryAnalysisSymbolicExprOperator(o, "OP_");
     ASSERT_require(s.size()<sizeof buf);
     strcpy(buf, s.c_str());
@@ -186,18 +201,69 @@ Node::getVariables() {
     return t1.vars;
 }
 
+struct Hasher: Visitor {
+    virtual VisitAction preVisit(const Ptr &node) ROSE_OVERRIDE {
+        return 0 == node->isHashed() ? CONTINUE : TRUNCATE;
+    }
+
+    virtual VisitAction postVisit(const Ptr &node) ROSE_OVERRIDE {
+        if (!node->isHashed()) {                        // probably true, but some other thread may have beaten us here.
+            uint64_t h = hash(hash(node->domainWidth(), node->nBits()), node->flags());
+            if (LeafPtr leaf = node->isLeafNode()) {
+                if (leaf->isNumber()) {
+                    if (leaf->nBits() <= 64) {
+                        h = hash(h, leaf->toInt());
+                    } else {
+                        for (size_t i=0; i<leaf->nBits(); i+=64) {
+                            typedef Sawyer::Container::BitVector::BitRange BitRange;
+                            h = hash(h, leaf->bits().toInteger(BitRange::hull(i, leaf->nBits()-1)));
+                        }
+                    }
+                } else {
+                    // It's okay to not hash whether the leaf is a variable or memory because variables always have a zero
+                    // domain width and memory has a non-zero width, which is already incorporated into the hash from above.
+                    h = hash(h, leaf->nameId());
+                }
+            } else {
+                InteriorPtr inode = node->isInteriorNode();
+                ASSERT_not_null(inode);
+                h = hash(h, inode->getOperator());
+                BOOST_FOREACH (const Ptr &child, inode->children()) {
+                    ASSERT_require(child->isHashed());
+                    h = hash(h, child->hash());
+                }
+            }
+            node->hash(h);
+        }
+    }
+
+    // Incorporates data into the existing hash, h, and returns a new hash. This is no particular well-known algorithm, but
+    // testing showed that it gives pretty well-distributed results for close values, particularly when called on two or more
+    // pieces of data.
+    uint64_t hash(uint64_t h, uint64_t data) {
+        for (size_t i=0; i<64-6; i += 6) {
+            unsigned sa = ((data >> i) ^ h ^ i) & 0x3f;
+            h = (h >> (64-sa)) | (h << sa);
+            h ^= data;
+        }
+        return h;
+    }
+};
+
 uint64_t
 Node::hash() {
     if (0==hashval_) {
-        // FIXME: We could build the hash with a traversal rather than
-        // from a string.  But this method is quick and easy. [Robb P. Matzke 2013-09-10]
-        std::ostringstream ss;
-        Formatter formatter;
-        formatter.show_comments = Formatter::CMT_SILENT;
-        print(ss, formatter);
-        hashval_ = Combinatorics::fnv1a64_digest(ss.str());
+        Hasher hasher;
+        depthFirstTraversal(hasher);
     }
+    boost::unique_lock<boost::mutex> lock(symbolicExprMutex);
     return hashval_;
+}
+
+void
+Node::hash(uint64_t h) {
+    boost::unique_lock<boost::mutex> lock(symbolicExprMutex);
+    hashval_ = h;
 }
 
 void
@@ -1026,6 +1092,32 @@ AddSimplifier::rewrite(Interior *inode) const {
         }
     };
 
+    // Rewrite (add ... (negate (add a b)) ...) => (add ... (negate a) (negate b) ...)
+    struct distributeNegations {
+        Ptr operator()(Interior *add) {
+            Nodes children;
+            bool distributed = false;
+            for (size_t i=0; i<add->nChildren(); ++i) {
+                bool pushed = false;
+                InteriorPtr addArg = add->child(i)->isInteriorNode();
+                if (addArg && addArg->getOperator()==OP_NEGATE && addArg->nChildren()==1) {
+                    if (InteriorPtr negateArg = addArg->child(0)->isInteriorNode()) {
+                        if (negateArg && negateArg->getOperator()==OP_ADD && negateArg->nChildren()>0) {
+                            for (size_t j=0; j<negateArg->nChildren(); ++j)
+                                children.push_back(makeNegate(negateArg->child(j)));
+                            pushed = distributed = true;
+                        }
+                    }
+                }
+                if (!pushed)
+                    children.push_back(add->child(i));
+            }
+            if (!distributed)
+                return Ptr();
+            return Interior::create(0, OP_ADD, children, add->comment());
+        }
+    };
+
     // Arguments that are negated cancel out similar arguments that are not negated
     bool had_duals = false;
     Sawyer::Container::BitVector adjustment(inode->nBits());
@@ -1042,8 +1134,14 @@ AddSimplifier::rewrite(Interior *inode) const {
             }
         }
     }
-    if (!had_duals)
+
+    // Otherwise distribute negations across adds:
+    //   (add ... (negate (add a b)) ...) => (add ... (negate a) (negate b) ...)
+    if (!had_duals) {
+        if (Ptr distributed = distributeNegations()(inode))
+            return distributed;
         return Ptr();
+    }
 
     // Build the new expression
     children.erase(std::remove(children.begin(), children.end(), Ptr()), children.end());
@@ -1901,11 +1999,11 @@ Interior::simplifyTop() {
         Ptr newnode = node;
         switch (inode->getOperator()) {
             case OP_ADD:
-                newnode = inode->associative()->commutative()->identity(0);
+                newnode = inode->rewrite(AddSimplifier());
+                if (newnode==node)
+                    newnode = inode->associative()->commutative()->identity(0);
                 if (newnode==node)
                     newnode = inode->foldConstants(AddSimplifier());
-                if (newnode==node)
-                    newnode = inode->rewrite(AddSimplifier());
                 break;
             case OP_AND:
             case OP_BV_AND:
@@ -2082,7 +2180,7 @@ Leaf::createVariable(size_t nbits, const std::string &comment, unsigned flags) {
     Leaf *node = new Leaf(comment, flags);
     node->nBits_ = nbits;
     node->leafType_ = BITVECTOR;
-    node->name_ = nameCounter_++;
+    node->name_ = nextNameCounter();
     LeafPtr retval(node);
     return retval;
 }
@@ -2095,8 +2193,7 @@ Leaf::createExistingVariable(size_t nbits, uint64_t id, const std::string &comme
     Leaf *node = new Leaf(comment, flags);
     node->nBits_ = nbits;
     node->leafType_ = BITVECTOR;
-    node->name_ = id;
-    nameCounter_ = std::max(nameCounter_, id+1);
+    node->name_ = nextNameCounter(id);
     LeafPtr retval(node);
     return retval;
 }
@@ -2136,7 +2233,7 @@ Leaf::createMemory(size_t addressWidth, size_t valueWidth, const std::string &co
     node->nBits_ = valueWidth;
     node->domainWidth_ = addressWidth;
     node->leafType_ = MEMORY;
-    node->name_ = nameCounter_++;
+    node->name_ = nextNameCounter();
     LeafPtr retval(node);
     return retval;
 }
@@ -2152,8 +2249,7 @@ Leaf::createExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, 
     node->nBits_ = valueWidth;
     node->domainWidth_ = addressWidth;
     node->leafType_ = MEMORY;
-    node->name_ = id;
-    nameCounter_ = std::max(nameCounter_, id+1);
+    node->name_ = nextNameCounter(id);
     LeafPtr retval(node);
     return retval;
 }
