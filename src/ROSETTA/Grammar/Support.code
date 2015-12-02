@@ -5709,6 +5709,10 @@ HEADER_APPLICATION_SOURCE_FILE_START
           std::set<int> & get_redundantTokenEndingsSet();
           void set_redundantTokenEndingsSet(std::set<int> & X);
 
+       // DQ (11/20/2015): Added support for retrieving representative whitespace in unparsing transformations when using the token-based unparsing.
+          static void set_representativeWhitespaceStatementMap(std::map<SgScopeStatement*,SgStatement*> & representativeWhitespaceStatementMap);
+          static std::map<SgScopeStatement*,SgStatement*> & get_representativeWhitespaceStatementMap();
+
 #if 0
        // DQ (9/12/2009): Adding support for new name qualification (not ready yet).
        // typedef std::vector<SgNode*> NumberToStatementType;
@@ -15651,6 +15655,21 @@ SgSourceFile::get_redundantTokenEndingsSet()
      return rose::redundantTokenEndingsSet;
    }
 
+
+void 
+SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement*,SgStatement*> & representativeWhitespaceStatementMap)
+   {
+  // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
+     rose::representativeWhitespaceStatementMap = representativeWhitespaceStatementMap;
+   }
+
+std::map<SgScopeStatement*,SgStatement*> &
+SgSourceFile::get_representativeWhitespaceStatementMap()
+   {
+  // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
+  // DQ (11/20/2015): Not sure I want this to be copy by value, but OK for now.
+     return rose::representativeWhitespaceStatementMap;
+   }
 
 
 
