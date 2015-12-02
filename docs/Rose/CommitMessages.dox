@@ -1,0 +1,103 @@
+// -*- c++ -*-
+
+/** @defgroup commit_messages Writing Git commit messages
+ *  @ingroup developer_docs
+ *
+ *  What constitutes a good Git commit message.
+ *
+ *  Each commit should ideally provide a single bug fix or (part of) a feature, and thus the comment should be quite focused.
+ *  Each commit message consists of a title line and a body separated from one another by a blank line.
+ *
+ *  @section commit_messages_title Titles
+ *
+ *  @li The title should start with a subject in parentheses.
+ *  @li Titles should be short, single-line statements. Details are in the body.
+ *
+ *  Subjects are created on the fly. Their purpose is to make it easier for a human to scan a long list of commit titles to
+ *  find certain things since it's faster to read a one or two word subject than it is to read a whole title. They also make it
+ *  easier to visually group related commit titles. A few example subjects:
+ *
+ *  <table>
+ *    <tr><td><b>Subject name</b></td><td><b>What it means</b></td></tr>
+ *    <tr><td>%Frontend, %Binary %Analysis</td><td>Some broad part of the ROSE library.</td></tr>
+ *    <tr><td>codethorn, compass2</td><td>A particular project that uses ROSE.</td></td>
+ *    <tr><td>%Attribute, %Stack %Delta</td><td>Some specific feature.</td></tr>
+ *  </table>
+ *
+ *  Some examples of good commit titles:
+ *
+ *  @li (Attributes) BinaryAnalysis::Attribute is moved
+ *  @li (move tool) one more test case for comments handling
+ *  @li (C++11) Minor fixes to compile ROSE with C++11
+ *  @li (Tutorial) Fixed link error in tutorial
+ *
+ *  @section commit_messages_body Body
+ *
+ *  The body provides details that are missing from the title and which are not easily evident from the patch.  Some examples
+ *  about what is good for a commit message body:
+ *
+ *  @li The <b>general overview</b> of what changed. Often the patch is so detailed and/or spread out that it's hard to
+ *      otherwise discern what really changed.  For instance, if test answers are updated the commit should explain why the
+ *      answer changed.
+ *  @li Where the commit came from, if not from the committer.  For instance, if the commit was a patch submitted by a user it
+ *      is polite to <b>thank the user</b> or the organization (provided they don't object).
+ *  @li If controversial, the commit should mention its <b>provenance</b>. Perhaps it came from developer consensus at a team
+ *      meeting. Otherwise someone who wasn't privy to that information might revert the commit later.
+ *  @li <b>Changes that affect users</b> should be listed including what the user needs to change in their own code. Some of
+ *      our users know how to use Git and will either look through the commit messages before merging or will search the commit
+ *      messages when they have a compile error due to changed names. (On a similar note, try not to change the API without
+ *      first using ROSE_DEPRECATED for a suitable period of time.)
+ *  @li The body should <b>reference a JIRA issue</b> if the commit is related to an issue, especially if that issue has
+ *      relevant details, discussion, test cases, etc.
+ *
+ *  The body must be separated from the title by a blank line.  Some Git tools concatenate the first lines together into a
+ *  single title line, which creates formatting problems since the title then becomes very long.
+ *
+ *  Make sure your message is spelled correctly since it cannot be changed once it's merged into a release branch--at least not
+ *  without a very disruptive history rewrite. Commit messages are for posterity, so be careful. "I hate git", commit
+ *  [a53823f](https://github.com/rose-compiler/rose/commit/a53823f), was unprofessional but is now effectively permanent.
+ *
+ *  @section commit_messages_examples Examples of good commit messages
+ *
+ *  This commit message makes it clear what users must change in their code:
+ *
+ *  @verbatim
+    (Binary Analysis) Changed names for some classes in the new SymbolicExpr
+    
+    SymbolicExpr::TreeNode         -> SymbolicExpr::Node
+    SymbolicExpr::TreeNodePtr      -> SymbolicExpr::Ptr
+    SymbolicExpr::LeafNodePtr      -> SymbolicExpr::LeafPtr
+    SymbolicExpr::InternalNodePtr  -> SymbolicExpr::InternalPtr
+ @endverbatim
+ *
+ * This commit makes it clear to the simulator2 project maintainer why a change was made since it was changed by someone that
+ * doesn't normally work on that project:
+ *
+ * @verbatim
+    (Simulator2) Add Linux conditional around statfs::f_flags
+    
+    statfs::f_flags is only available since Linux 2.6.36.
+    Our internal RHEL5 testing servers are Linux 2.6.18.
+ @endverbatim
+ *
+ * This commit explains why a change was made, which is not evident from the change itself:
+ *
+ * @verbatim
+    (Git) Update .gitmodules to point to release repositories
+    
+    This decision was reached during a team meeting with Dan,
+    Markus, Leo, Justin, and Pei-Hung.
+    
+    The solution:
+    
+    1. Merge the rose/scratch/edg.git branches into the
+       rose/edg4x/edg.git repository.
+    
+    2. Update .gitmodules to point to the rose/edg4x/edg.git
+       release repository.
+    
+    3. Remove the rose/scratch/edg.git repository once it
+       has been entirely merged into the rose/edg4x/edg.git
+       repository.
+ @endverbatim
+ */

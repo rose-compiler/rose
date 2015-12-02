@@ -28,9 +28,10 @@
  *  cd rose
  *  @endcode
  *
- *  ROSE uses a continuous integration paradigm and thus does not have monotonically increasing "x.y.z" style version numbers.
- *  To obtain the identification for a particular version of ROSE, run "git rev-parse HEAD" in the ROSE source directory (the
- *  reported SHA1 hash can be abbreviated to 7 or so characters for convenience).
+ *  ROSE uses a [continuous delivery](https://en.wikipedia.org/wiki/Continuous_delivery) paradigm and thus does not have
+ *  monotonically increasing "x.y.z" style version numbers.  To obtain the identification for a particular version of ROSE, run
+ *  "git rev-parse HEAD" in the ROSE source directory (the reported SHA1 hash can be abbreviated to 7 or so characters for
+ *  convenience).
  *
  *  The repositories listed above are the official release points; other repositories might be available but are unofficial.
  *  Some members of the ROSE team also distribute custom builds in virtual machines, which can be a good way to get up and
