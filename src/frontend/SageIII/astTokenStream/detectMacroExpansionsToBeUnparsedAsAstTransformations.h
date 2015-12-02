@@ -1,7 +1,7 @@
 
 // Header file
 
-#if 1
+#if 0
 class DetectMacroExpansionsToBeUnparsedAsAstTransformationsInheritedAttribute
    {
   // I don't think there is anything to do for this case (but I have implemented this as a 

@@ -207,6 +207,9 @@ namespace rose
 
        // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
           extern std::map<SgScopeStatement*,SgStatement*> representativeWhitespaceStatementMap;
+
+       // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
+          extern std::map<SgStatement*,MacroExpansion*> macroExpansionMap;
    };
 
 
