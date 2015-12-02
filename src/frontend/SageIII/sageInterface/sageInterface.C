@@ -10638,7 +10638,7 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
    }
 
 //! Append a statement to the end of SgForInitStatement
-void SageInterface::appendStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt /* =NULL */)
+void SageInterface::appendStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt)
 {
   ROSE_ASSERT (stmt != NULL);
   ROSE_ASSERT (for_init_stmt != NULL);
@@ -10707,7 +10707,7 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
    } // prependStatement()
 
 //! Prepend a statement to the beginning of SgForInitStatement
-void SageInterface::prependStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt /* =NULL */)
+void SageInterface::prependStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt)
 {
   ROSE_ASSERT (stmt != NULL);
   ROSE_ASSERT (for_init_stmt != NULL);
