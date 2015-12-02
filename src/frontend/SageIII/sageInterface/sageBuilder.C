@@ -11352,8 +11352,18 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
      ROSE_ASSERT(buildTemplateDeclaration == false);
 
 #if 0
-     printf ("In SageBuilder::buildClassDeclaration_nfi(): the nonDefiningDecl pointer = %p = %s \n",nonDefiningDecl,nonDefiningDecl->class_name().c_str());
+     printf ("In SageBuilder::buildClassDeclaration_nfi(): XXX_name = %s \n",XXX_name.str());
+     printf ("In SageBuilder::buildClassDeclaration_nfi(): the nonDefiningDecl pointer = %p = %s \n",nonDefiningDecl,nonDefiningDecl != NULL ? nonDefiningDecl->class_name().c_str() : "null");
      printf ("In SageBuilder::buildClassDeclaration_nfi(): buildTemplateDeclaration    = %s \n",buildTemplateDeclaration ? "true" : "false");
+     printf ("   --- templateArgumentsList = %p \n",templateArgumentsList);
+     if (templateArgumentsList != NULL)
+        {
+          printf ("   --- templateArgumentsList.size() = %zu \n",templateArgumentsList->size());
+          for (size_t i = 0; i < templateArgumentsList->size(); i++)
+             {
+               printf ("   --- --- argument pointer: templateArgumentsList->[%zu] = %p \n",i,templateArgumentsList->operator[](i));
+             }
+        }
 #endif
 
      if (scope == NULL)
@@ -11429,7 +11439,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
        // DQ (10/10/2015): look up the correct type of symbol.
           if (buildTemplateDeclaration == true)
              {
-#if 1
+#if 0
                printf ("Note: In SageBuilder::buildClassDeclaration_nfi(): Need to look up a template symbol \n");
 #endif
                ROSE_ASSERT(nonDefiningDecl != NULL);
@@ -11534,6 +11544,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
                     nondefining_classDeclaration->get_scope(),nondefining_classDeclaration->get_scope()->class_name().c_str(),nondefining_classDeclaration->get_name().str());
                printf ("In SageBuilder::buildClassDeclaration_nfi(): defining_classDeclaration:    scope = %p = %s name = %s \n",
                     defining_classDeclaration->get_scope(),defining_classDeclaration->get_scope()->class_name().c_str(),defining_classDeclaration->get_name().str());
+               defining_classDeclaration->get_file_info()->display("already has a defining declaration");
 #endif
 #if 0
                printf ("Error: In SageBuilder::buildClassDeclaration_nfi(): exiting as part of test \n");
