@@ -10637,6 +10637,13 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
 #endif
    }
 
+//! Append a statement to the end of SgForInitStatement
+void SageInterface::appendStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt /* =NULL */)
+{
+  ROSE_ASSERT (stmt != NULL);
+  ROSE_ASSERT (for_init_stmt != NULL);
+  for_init_stmt->append_init_stmt (stmt);
+}
 
 void
 SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) 
@@ -10698,6 +10705,14 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
         }
 
    } // prependStatement()
+
+//! Prepend a statement to the beginning of SgForInitStatement
+void SageInterface::prependStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt /* =NULL */)
+{
+  ROSE_ASSERT (stmt != NULL);
+  ROSE_ASSERT (for_init_stmt != NULL);
+  for_init_stmt->prepend_init_stmt (stmt);
+}
 
 void SageInterface::prependStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope)
    {

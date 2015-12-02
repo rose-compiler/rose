@@ -1361,10 +1361,19 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
               ROSE_ASSERT(stmt->get_isModified() == false);
 #endif
               SageInterface::deepDelete (exp_stmt);
+              ROSE_ASSERT (stmt_list.size() ==0);
 	      // insert the merged decl into the list, TODO preserve the order in the list
 	      // else other cases: we simply prepend decl_copy to the front of init_stmt
+#if 0
+              // SageInterface:prependStatement () cannot be used here since SgForStatement is a scope 
+              // but inserting things into it is ambugious semanticly. 
 	      stmt_list.insert (stmt_list.begin(),  decl_copy);
 	      decl_copy->set_parent(stmt->get_for_init_stmt());
+              ROSE_ASSERT (stmt_list.size() ==1);
+#else
+              // A variant version should be able to handle it  
+              SageInterface::prependStatement (decl_copy, stmt->get_for_init_stmt());
+#endif              
 	      ROSE_ASSERT (decl_copy->get_parent() != NULL); 
               // we already merged with assignment, we skip it so it won't be considered again?
               inserted_copied_decls.push_back(decl_copy);
