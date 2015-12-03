@@ -10736,6 +10736,25 @@ void SageInterface::appendStatement(SgStatement *stmt, SgForInitStatement* for_i
 {
   ROSE_ASSERT (stmt != NULL);
   ROSE_ASSERT (for_init_stmt != NULL);
+
+#if 0
+     printf ("In SageInterface::appendStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+
+  // DQ (12/2/2015): If this is a moved statement then cause it to update internal data structures 
+  // to record it being moved (and thus the macroExpansions that it might be associated with having
+  // to force the macroExpansion's associated statements to be marked as a transformation.
+     resetInternalMapsForTargetStatement(stmt);
+
+#if 0
+     printf ("In SageInterface::appendStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+
+  // DQ (12/2/2015): Also look at the statements on either side of the location where this statement 
+  // is being inserted to make sure that they are not a part of a macro expansion. In the case of
+  // prepend, we only need to look at the scope.
+     resetInternalMapsForTargetStatement(for_init_stmt);
+
   for_init_stmt->append_init_stmt (stmt);
 }
 
@@ -10823,6 +10842,25 @@ void SageInterface::prependStatement(SgStatement *stmt, SgForInitStatement* for_
 {
   ROSE_ASSERT (stmt != NULL);
   ROSE_ASSERT (for_init_stmt != NULL);
+
+#if 0
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+
+  // DQ (12/2/2015): If this is a moved statement then cause it to update internal data structures 
+  // to record it being moved (and thus the macroExpansions that it might be associated with having
+  // to force the macroExpansion's associated statements to be marked as a transformation.
+     resetInternalMapsForTargetStatement(stmt);
+
+#if 0
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+
+  // DQ (12/2/2015): Also look at the statements on either side of the location where this statement 
+  // is being inserted to make sure that they are not a part of a macro expansion. In the case of
+  // prepend, we only need to look at the scope.
+     resetInternalMapsForTargetStatement(for_init_stmt);
+
   for_init_stmt->prepend_init_stmt (stmt);
 }
 

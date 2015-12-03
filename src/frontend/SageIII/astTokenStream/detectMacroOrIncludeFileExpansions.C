@@ -63,6 +63,9 @@ DetectMacroOrIncludeFileExpansions::DetectMacroOrIncludeFileExpansions( SgSource
    }
 
 
+// DQ (12/1/2015): Implement an expression level detection of macros (for inputmoveDeclarationToInnermostScope_test2015_166.C).
+#define USE_STATEMENT_LEVEL_RESOLUTION 1
+
 DetectMacroOrIncludeFileExpansionsInheritedAttribute 
 DetectMacroOrIncludeFileExpansions::evaluateInheritedAttribute(
    SgNode* n, 
@@ -71,9 +74,24 @@ DetectMacroOrIncludeFileExpansions::evaluateInheritedAttribute(
 
 #define DEBUG_MARCO_EXPANSION_DETECTION 0
 
+#if USE_STATEMENT_LEVEL_RESOLUTION
      SgStatement* currentStatement = isSgStatement(n);
      if (currentStatement != NULL)
         {
+#else
+     SgLocatedNode* locatedNode = isSgLocatedNode(n);
+
+     if (locatedNode != NULL)
+        {
+          SgStatement* currentStatement = isSgStatement(locatedNode);
+          if (currentStatement == NULL)
+             {
+               currentStatement = SageInterface::getEnclosingStatement(locatedNode);
+               ROSE_ASSERT(currentStatement != NULL);
+             }
+          ROSE_ASSERT(currentStatement != NULL);
+#endif
+
 #if DEBUG_MARCO_EXPANSION_DETECTION
           printf ("In evaluateInheritedAttribute(): currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
 #endif
@@ -81,8 +99,12 @@ DetectMacroOrIncludeFileExpansions::evaluateInheritedAttribute(
           int token_subsequence_start = 0;
           int token_subsequence_end   = 0;
 
-       // I don't think this function needs to have this API (FIXME)
+       // I don't think this function needs to have this complex of an API (FIXME)
+#if USE_STATEMENT_LEVEL_RESOLUTION
           MacroExpansion* macroExpansion = isPartOfMacroExpansion (currentStatement,name,token_subsequence_start,token_subsequence_end);
+#else
+          MacroExpansion* macroExpansion = isPartOfMacroExpansion (locatedNode,name,token_subsequence_start,token_subsequence_end);
+#endif
 
 #if DEBUG_MARCO_EXPANSION_DETECTION
           printf ("   --- macroExpansion = %p \n",macroExpansion);
@@ -101,8 +123,8 @@ DetectMacroOrIncludeFileExpansions::evaluateInheritedAttribute(
                   }
 
 #if DEBUG_MARCO_EXPANSION_DETECTION
-          printf ("   --- topOfStackMacroExpansion = %p \n",topOfStackMacroExpansion);
-          printf ("   --- macroExpansionStack.size() = %zu \n",macroExpansionStack.size());
+               printf ("   --- topOfStackMacroExpansion = %p \n",topOfStackMacroExpansion);
+               printf ("   --- macroExpansionStack.size() = %zu \n",macroExpansionStack.size());
 #endif
 
                if (topOfStackMacroExpansion != NULL)
@@ -144,7 +166,18 @@ DetectMacroOrIncludeFileExpansions::evaluateInheritedAttribute(
 
                ROSE_ASSERT(macroExpansion != NULL);
 
+#if USE_STATEMENT_LEVEL_RESOLUTION
+            // Save each SgStatement that is associated with this macro expansion.
                macroExpansion->associatedStatementVector.push_back(currentStatement);
+#else
+            // Make sure that the statement associated with the SgExpression (for example) is 
+            // only input once into the list of statements associated with the macro expansion.
+            // if (macroExpansion->associatedStatementVector.find(currentStatement) == macroExpansion->associatedStatementVector.end())
+               if (find(macroExpansion->associatedStatementVector.begin(),macroExpansion->associatedStatementVector.end(),currentStatement) == macroExpansion->associatedStatementVector.end())
+                  {
+                    macroExpansion->associatedStatementVector.push_back(currentStatement);
+                  }
+#endif
 #if DEBUG_MARCO_EXPANSION_DETECTION
                printf ("   --- macroExpansion = %p macroExpansion->associatedStatementVector.size() = %zu \n",macroExpansion,macroExpansion->associatedStatementVector.size());
 #endif
@@ -162,23 +195,62 @@ DetectMacroOrIncludeFileExpansions::evaluateInheritedAttribute(
      return inheritedAttribute;
    }
 
-
-
+#if USE_STATEMENT_LEVEL_RESOLUTION
+MacroExpansion*
+DetectMacroOrIncludeFileExpansions::isPartOfMacroExpansion( SgLocatedNode* locatedNode, std::string & name, int & startingToken, int & endingToken )
+   {
+     printf ("Not implemented! \n");
+     ROSE_ASSERT(false);
+   }
+#else
 MacroExpansion*
 DetectMacroOrIncludeFileExpansions::isPartOfMacroExpansion( SgStatement* currentStatement, std::string & name, int & startingToken, int & endingToken )
    {
+     printf ("Not implemented! \n");
+     ROSE_ASSERT(false);
+   }
+#endif
+
+#if USE_STATEMENT_LEVEL_RESOLUTION
+MacroExpansion*
+DetectMacroOrIncludeFileExpansions::isPartOfMacroExpansion( SgStatement* currentStatement, std::string & name, int & startingToken, int & endingToken )
+#else
+MacroExpansion*
+DetectMacroOrIncludeFileExpansions::isPartOfMacroExpansion( SgLocatedNode* locatedNode, std::string & name, int & startingToken, int & endingToken )
+#endif
+   {
+
+#define DEBUG_IS_PART_OF_MACRO_EXPANSION 0
+
   // This function detects a macro expansion if the current statement is a part of one.
 
   // NOTE: I don't think this function needs to have this API (FIXME)
 
-     ROSE_ASSERT(currentStatement != NULL);
-
-#if 0
-     printf ("currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+#if !USE_STATEMENT_LEVEL_RESOLUTION
+     SgStatement* currentStatement = isSgStatement(locatedNode);
+     if (currentStatement == NULL)
+        {
+          currentStatement = SageInterface::getEnclosingStatement(locatedNode);
+          ROSE_ASSERT(currentStatement != NULL);
+        }
 #endif
 
+     ROSE_ASSERT(currentStatement != NULL);
+
+#if DEBUG_IS_PART_OF_MACRO_EXPANSION
+     printf ("currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+#if !USE_STATEMENT_LEVEL_RESOLUTION
+     printf ("   --- locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+#endif
+#endif
+
+#if USE_STATEMENT_LEVEL_RESOLUTION
      Sg_File_Info* start = currentStatement->get_startOfConstruct();
      Sg_File_Info* end   = currentStatement->get_endOfConstruct();
+#else
+     Sg_File_Info* start = locatedNode->get_startOfConstruct();
+     Sg_File_Info* end   = locatedNode->get_endOfConstruct();
+#endif
 
      ROSE_ASSERT(start != NULL);
      ROSE_ASSERT(end   != NULL);
@@ -197,7 +269,7 @@ DetectMacroOrIncludeFileExpansions::isPartOfMacroExpansion( SgStatement* current
 
           if (detectedNullExpression == false)
              {
-#if 0
+#if DEBUG_IS_PART_OF_MACRO_EXPANSION
                printf ("   --- Detected macro expansion: currentStatement = %p = %s line = %d column = %d \n",currentStatement,currentStatement->class_name().c_str(),start->get_line(),start->get_col());
 #endif
             // Build a macro data structure, and add to set (or multi-map) of macro expansions.
@@ -223,33 +295,54 @@ DetectMacroOrIncludeFileExpansions::isPartOfMacroExpansion( SgStatement* current
                     ROSE_ASSERT(tokenAssociatedWithMacroCall != NULL);
 
                     string macroName = tokenAssociatedWithMacroCall->get_lexeme_string();
-#if 0
+#if DEBUG_IS_PART_OF_MACRO_EXPANSION
                     printf ("   --- macro name = %s \n",macroName.c_str());
 #endif
                     name = macroName;
 
+#if USE_STATEMENT_LEVEL_RESOLUTION
+                 // Statement level resolution does not have this strange constraint.
                     macroExpansion = new MacroExpansion(macroName);
-
                     macroExpansion->token_start = token_subsequence_start;
                     macroExpansion->token_end   = token_subsequence_end;
-#if 0
+#else
+                 // Add restriction that size of macro declaration name is greater than 1 (this 
+                 // avoids since length characters being interpreted as macros in the expression mode).
+                    size_t macro_definition_length = macroName.length();
+                    if (macro_definition_length > 1)
+                       {
+                         macroExpansion = new MacroExpansion(macroName);
+                         macroExpansion->token_start = token_subsequence_start;
+                         macroExpansion->token_end   = token_subsequence_end;
+                       }
+#endif
+#if DEBUG_IS_PART_OF_MACRO_EXPANSION
                     printf ("   --- token_subsequence_start = %d token_subsequence_end = %d \n",token_subsequence_start,token_subsequence_end);
 #endif
                   }
                  else
                   {
-#if 0
+#if DEBUG_IS_PART_OF_MACRO_EXPANSION
                     printf ("   --- No mapping from the current statement to the token sequence is available \n");
 #endif
                  // No mapping from the current statement to the token sequence is available, so we don't know the name.
                     macroExpansion = new MacroExpansion("");
                   }
 
+#if USE_STATEMENT_LEVEL_RESOLUTION
                ROSE_ASSERT(macroExpansion != NULL);
 
             // Fill in the line and column information for the macro expansion.
                macroExpansion->line   = start->get_line();
                macroExpansion->column = start->get_col();
+#else
+            // If the macro name is length one then the macroExpansion == NULL.
+               if (macroExpansion != NULL)
+                  {
+                    macroExpansion->line   = start->get_line();
+                    macroExpansion->column = start->get_col();
+                  }
+#endif
              }
         }
 
