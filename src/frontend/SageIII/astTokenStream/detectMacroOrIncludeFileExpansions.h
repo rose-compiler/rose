@@ -76,6 +76,7 @@ class DetectMacroOrIncludeFileExpansions
 
        // Support function
           MacroExpansion* isPartOfMacroExpansion( SgStatement* statement, std::string & name, int & startingToken, int & endingToken );
+          MacroExpansion* isPartOfMacroExpansion( SgLocatedNode* locatedNode, std::string & name, int & startingToken, int & endingToken );
    };
 
 
