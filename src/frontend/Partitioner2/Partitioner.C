@@ -1852,6 +1852,14 @@ Partitioner::functionCallingConvention(const Function::Ptr &function,
     return function->callingConventionAnalysis();
 }
 
+CallingConvention::Dictionary
+Partitioner::functionCallingConventionDefinitions(const Function::Ptr &function,
+                                                  const CallingConvention::Definition *dfltCc/*=NULL*/) const {
+    const CallingConvention::Analysis &ccAnalysis = functionCallingConvention(function, dfltCc);
+    const CallingConvention::Dictionary &archConventions = instructionProvider().callingConventions();
+    return ccAnalysis.match(archConventions);
+}
+
 // Worker function for analyzing the calling convention of one function.
 struct CallingConventionWorker {
     const Partitioner &partitioner;
