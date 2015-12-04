@@ -192,7 +192,7 @@ CfgEmitter::nameVertices() {
         if (vertexOrganization(vertex.id()).name().empty()) {
             switch (vertex.value().type()) {
                 case V_BASIC_BLOCK:
-                    vertexOrganization(vertex.id()).name("B" + StringUtility::addrToString(vertex.value().address()).substr(2));
+                    vertexOrganization(vertex.id()).name(StringUtility::addrToString(vertex.value().address()));
                     break;
                 case V_NONEXISTING:
                     vertexOrganization(vertex.id()).name("nonexisting");
@@ -779,7 +779,7 @@ void
 CgEmitter::nameVertices() {
     BOOST_FOREACH (const FunctionCallGraph::Graph::Vertex &vertex, graph_.vertices()) {
         const Function::Ptr &function = vertex.value();
-        vertexOrganization(vertex.id()).name("F" + StringUtility::addrToString(function->address()).substr(2));
+        vertexOrganization(vertex.id()).name(StringUtility::addrToString(function->address()));
     }
 }
 
@@ -905,6 +905,85 @@ CgInlinedEmitter::functionLabel(const Function::Ptr &function) const {
     BOOST_FOREACH (const Function::Ptr &inlined, inlines_[function])
         s += "  " + htmlEscape(inlined->printableName()) + "<br align=\"left\"/>";
     return "<" + s + ">";
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Grap with positioned vertices and edges
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+PositionGraph
+readPositions(std::istream &in) {
+    PositionGraph retval;
+    Sawyer::Container::Map<std::string /*vertex name*/, PositionGraph::VertexIterator> vertexMap;
+
+    size_t lineNumber = 0;
+    char buf[8192];
+    while (in) {
+        ++lineNumber;
+        in.getline(buf, sizeof buf);
+
+        // Split the line into space-separated words, ignoring quotes, comments, HTML tags, etc.
+        std::vector<std::string> words;
+        char *s = buf;                                  // start
+        while (s) {
+            while (isspace(*s))
+                ++s;
+            if (!*s)
+                break;
+            char *t = s;                                // terminate
+            while (t && !isspace(*t))
+                ++t;
+            words.push_back(std::string(s, t));
+            s = t;
+        }
+        if (words.empty())
+            continue;
+
+        // Parse the words (ignore everything after the coordinates)
+        if (1 == lineNumber) {
+            if (words.size() < 4 || words[0] != "graph")
+                throw std::runtime_error("expected \"graph SF DX DY\" at start of input");
+
+        } else if (words[0] == "node") {
+            if (words.size() < 6) {
+                throw std::runtime_error("expected \"node NAME X Y DX DY\" at line " +
+                                         StringUtility::numberToString(lineNumber));
+            }
+            VertexPosition pos;
+            pos.name = words[1];
+            pos.center.x = boost::lexical_cast<double>(words[2]);
+            pos.center.y = boost::lexical_cast<double>(words[3]);
+            pos.width = boost::lexical_cast<double>(words[4]);
+            pos.height = boost::lexical_cast<double>(words[5]);
+            ASSERT_forbid2(vertexMap.exists(pos.name), "duplicate vertex name");
+            vertexMap.insert(pos.name, retval.insertVertex(pos));
+
+        } else if (words[0] == "edge") {
+            if (words.size() < 12) {
+                throw std::runtime_error("expected \"edge SOURCE TARGET N SPLINE...\" at line " +
+                                         StringUtility::numberToString(lineNumber));
+            }
+            EdgePosition pos;
+            std::string &sourceVertexName = words[1];
+            std::string &targetVertexName = words[2];
+            size_t nControlPoints = boost::lexical_cast<size_t>(words[3]);
+            for (size_t i=0; i<nControlPoints; ++i) {
+                Coordinate cp;
+                cp.x = boost::lexical_cast<double>(words[2*i+3]);
+                cp.y = boost::lexical_cast<double>(words[2*i+4]);
+                pos.spline.push_back(cp);
+            }
+            ASSERT_require(vertexMap.exists(sourceVertexName));
+            ASSERT_require(vertexMap.exists(targetVertexName));
+            retval.insertEdge(vertexMap[sourceVertexName], vertexMap[targetVertexName], pos);
+
+        } else if (words[0] == "stop") {
+            break;
+        }
+    }
+    return retval;
 }
 
 } // namespace

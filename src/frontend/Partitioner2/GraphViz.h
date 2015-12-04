@@ -13,7 +13,7 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-/** Support for generating GraphViz output. */
+/** Support for generating and reading GraphViz output. */
 namespace GraphViz {
 
 /** GraphViz attributes.
@@ -828,6 +828,48 @@ public:
     virtual std::string functionLabel(const Function::Ptr&) const ROSE_OVERRIDE;
     virtual bool shouldInline(const Function::Ptr&) const;
 };
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Reading layout position information from "dot"
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Two dimensional display plane coordinate. */
+struct Coordinate {
+    double x;                                           /**< Distance from left. */
+    double y;                                           /**< Distance from up. */ 
+};
+
+/** Position of a vertex. */
+struct VertexPosition {
+    std::string name;                                   /**< Name of vertex as known to GraphViz. */
+    Coordinate center;                                  /**< Center of vertex in display plane units. */
+    double width;                                       /**< Horizontal size of vertex. */
+    double height;                                      /**< Vertical size of vertex. */
+};
+
+/** Position of an edge.
+ *
+ *  GraphViz represents edge positions as B-splines. These are apparently a sequence quadratic Bezier curve segments, which can
+ *  be drawn with a sliding window of length four coordinates and delta of one coordinate. The spline will therefore always
+ *  have at least four coorindates.
+ *
+ *  Since GraphViz identifies edges by their endpoints, there is no support for being able to resolve GraphViz edges back to
+ *  their corresponding Sawyer edges when edges are parallel. */
+struct EdgePosition {
+    std::vector<Coordinate> spline;                     /**< Control points for the edge B-spline. See @ref EdgePosition. */
+};
+
+/** A graph with positioned vertices and edges. */
+typedef Sawyer::Container::Graph<VertexPosition, EdgePosition> PositionGraph;
+
+/** Constructs graph positions from a file.
+ *
+ *  The input must have the same syntax as the output from the GraphViz "dot -Tplain" command. */
+PositionGraph readPositions(std::istream&);
+
+
+    
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Class template method implementations
