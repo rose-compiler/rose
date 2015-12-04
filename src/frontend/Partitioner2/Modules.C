@@ -892,6 +892,9 @@ fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
     // Pass 1: Sort all calling conventions by number of occurrences within the partitioner.
     Sawyer::Container::Map<std::string, size_t> totals; // how many times does each calling convention name match?
     BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
+        const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
+        if (!ccAnalysis.hasResults())
+            continue;                                   // don't run analysis if not run already
         BOOST_FOREACH (const CallingConvention::Definition &ccDef, partitioner.functionCallingConventionDefinitions(function))
             ++totals.insertMaybe(ccDef.name(), 0);
     }
@@ -901,7 +904,7 @@ fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
     // is used by the whole world.
     BOOST_FOREACH (SgAsmFunction *astFunction, SageInterface::querySubTree<SgAsmFunction>(ast)) {
         if (Function::Ptr function = partitioner.functionExists(astFunction->get_address())) {
-            const CallingConvention::Analysis ccAnalysis = function->callingConventionAnalysis();
+            const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
             if (!ccAnalysis.hasResults())
                 continue;                               // don't run analysis if not run already
             CallingConvention::Dictionary ccDefs = partitioner.functionCallingConventionDefinitions(function);
