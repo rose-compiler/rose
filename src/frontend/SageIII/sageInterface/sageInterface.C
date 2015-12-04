@@ -9872,12 +9872,16 @@ bool SageInterface::isAssignmentStatement(SgNode* s, SgExpression** lhs/*=NULL*/
    }
   }
 
+bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt /*= true*/)
+{
+   return  mergeAssignmentWithDeclaration (assign_stmt, decl, removeAssignStmt);
+}
 //! Merge a variable assignment statement into a matching variable declaration statement
 /*!
  *  e.g.  int i;  i=10;  becomes int i=10;  the original i=10 will be deleted after the merge
  *  if success, return true, otherwise return false (e.g. variable declaration does not match or already has an initializer)
  */
-bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt /*= true*/)
+bool SageInterface::mergeAssignmentWithDeclaration(SgExprStatement* assign_stmt, SgVariableDeclaration* decl, bool removeAssignStmt /*= true*/)
 {
   bool rt= true;
   ROSE_ASSERT(decl != NULL);   
@@ -9929,6 +9933,71 @@ bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, 
   return rt;
 }
 
+bool SageInterface::mergeDeclarationWithAssignment(SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
+{
+  bool rt= true;
+  ROSE_ASSERT(decl != NULL);   
+  ROSE_ASSERT(assign_stmt != NULL);   
+
+  // Sanity check of assign statement: must be a form of var = xxx; 
+  SgAssignOp * assign_op = isSgAssignOp (assign_stmt->get_expression());
+  if (assign_op == NULL) 
+    return false;
+  SgVarRefExp* assign_op_var = isSgVarRefExp(assign_op->get_lhs_operand());
+  if (assign_op_var == NULL) return false;
+
+  // Sanity check of the variable declaration: it should not have an existing initializer
+  SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl); 
+  if (decl_var->get_initptr()!= NULL ) return false;
+
+  // check if two variables match
+  // In translation, it is possible the declaration has not yet been inserted into its scope.
+  // finding its symbol can return NULL.
+  // But we still want to do the merge.
+  SgSymbol* decl_var_symbol = decl_var->get_symbol_from_symbol_table();
+  if (decl_var_symbol!=NULL)
+  {
+    if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
+  }
+  else
+  { // fallback to comparing variable names instead
+    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
+  }
+
+  // Everything looks fine now. Do the merge.
+  // It is implemented by 
+  // 1. copy rhs to the decl's rhs, 
+  // 2. then move the decl to the place of the assignment, 
+  // 3. then remove the assignment
+  //
+  // Copy rhs to be initializer
+  SgExpression * rhs_copy = SageInterface::copyExpression(assign_op->get_rhs_operand());
+  SgAssignInitializer * initor = SageBuilder::buildAssignInitializer (rhs_copy);
+  decl_var->set_initptr(initor);
+  initor->set_parent(decl_var);  
+
+  // move proprocessing info. attached before decl to its next statement's front, using prepending to preserve the original order
+  SgStatement* next_stmt = SageInterface::getNextStatement (decl);
+  SageInterface::movePreprocessingInfo(decl, next_stmt, PreprocessingInfo::before, PreprocessingInfo::before, true);
+
+  // removeStatement() does not support removing a statement which is not inside a container.
+  // But sometimes we do need to remove such a statement and replace it with a new one.
+  // As a workaround, we allow users to optionally disabling removing here and handle the removal on their own.
+  // TODO: improve removeStatement() which uses low level rewritting. 
+
+  // Now move the declaration to a new position, right before the assignment statement 
+  SageInterface::removeStatement (decl);
+  SageInterface::insertStatementBefore(assign_stmt, decl, false);
+  
+  // preserve preprocessing info. attached to assign_stmt before removing it  , using append (last false)
+  SageInterface::movePreprocessingInfo(assign_stmt, decl, PreprocessingInfo::before, PreprocessingInfo::before, false);
+
+  // Original assignment statement should be removed
+  SageInterface::removeStatement (assign_stmt);
+  //  SageInterface::deepDelete (decl);
+  
+  return rt;
+}
 // Split a variable declaration with an rhs assignment into two statements: a declaration and an assignment. 
 // Return the generated assignment statement, if any
 SgExprStatement* SageInterface::splitVariableDeclaration (SgVariableDeclaration* decl)
