@@ -498,7 +498,6 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         mlog[DEBUG] <<"  no instruction semantics\n";
         return;
     }
-    CallingConvention::Definition dfltCc = CallingConvention::Definition::x86_cdecl(cpu_->get_register_dictionary());
     P2::DataFlow::MergeFunction merge(cpu_);
     P2::DataFlow::TransferFunction xfer(cpu_);
     xfer.defaultCallingConvention(defaultCc_);

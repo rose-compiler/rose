@@ -163,10 +163,10 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         mlog[DEBUG] <<"  no instruction semantics\n";
         return;
     }
-    CallingConvention::Definition dfltCc = CallingConvention::Definition::x86_cdecl(cpu_->get_register_dictionary());
+    const CallingConvention::Dictionary &ccDefs = partitioner.instructionProvider().callingConventions();
     P2::DataFlow::MergeFunction merge(cpu_);
     TransferFunction xfer(this);
-    xfer.defaultCallingConvention(&dfltCc);
+    xfer.defaultCallingConvention(ccDefs.empty() ? NULL : &ccDefs.front());
     DfEngine dfEngine(dfCfg, xfer, merge);
     size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
     dfEngine.maxIterations(maxIterations);
