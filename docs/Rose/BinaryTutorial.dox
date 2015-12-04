@@ -3,9 +3,9 @@
 namespace rose {
 namespace BinaryAnalysis {
 
-/** @page binary_tutorial Getting started with binary analysis
+/** @page binary_tutorial Binary analysis tutorial
  *
- *  A tutorial covering some basic binary analysis.
+ *  Getting started guide for binary analysis.
  *
  *  @section bintut_why Why binary analysis?
  *
