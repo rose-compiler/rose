@@ -9,6 +9,7 @@
 
 using namespace CodeThorn;
 using namespace SPRAY;
+using namespace AType;
 
 ExprAnalyzer::ExprAnalyzer():_variableIdMapping(0),_skipSelectedFunctionCalls(false),_skipArrayAccesses(false){
 }
@@ -79,6 +80,65 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
   }
 }
 
+AType::ConstIntLattice ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) {
+  if(isSgFloatVal(valueExp)
+     ||isSgDoubleVal(valueExp)
+     ||isSgLongDoubleVal(valueExp)
+     ||isSgComplexVal(valueExp)
+     ||isSgStringVal(valueExp)
+     ) {
+    return ConstIntLattice(AType::Top());
+  } else if(SgBoolValExp* exp=isSgBoolValExp(valueExp)) {
+    // ROSE uses an integer for a bool
+    int val=exp->get_value();
+    if(val==0)
+      return ConstIntLattice(false);
+    else if(val==1)
+      return ConstIntLattice(true);
+    else {
+      cerr<<"Error: unknown bool value (not 0 or 1): SgBoolExp::get_value()=="<<val<<endl;
+      exit(1);
+    }
+  } else if(SgShortVal* exp=isSgShortVal(valueExp)) {
+    short int val=exp->get_value();
+    return ConstIntLattice((int)val);
+  } else if(SgIntVal* exp=isSgIntVal(valueExp)) {
+    int val=exp->get_value();
+    return ConstIntLattice(val);
+  } else if(SgLongIntVal* exp=isSgLongIntVal(valueExp)) {
+    long int val=exp->get_value();
+    return ConstIntLattice(val);
+  } else if(SgLongLongIntVal* exp=isSgLongLongIntVal(valueExp)) {
+    long long val=exp->get_value();
+    return ConstIntLattice(val);
+  } else if(SgUnsignedCharVal* exp=isSgUnsignedCharVal(valueExp)) {
+    unsigned char val=exp->get_value();
+    return ConstIntLattice((int)val);
+  } else if(SgUnsignedShortVal* exp=isSgUnsignedShortVal(valueExp)) {
+    unsigned short val=exp->get_value();
+    return ConstIntLattice((int)val);
+  } else if(SgUnsignedIntVal* exp=isSgUnsignedIntVal(valueExp)) {
+    unsigned int val=exp->get_value();
+    return ConstIntLattice(val);
+  } else if(SgUnsignedLongVal* exp=isSgUnsignedLongVal(valueExp)) {
+    unsigned long int val=exp->get_value();
+    return ConstIntLattice(val);
+  } else if(SgUnsignedLongVal* exp=isSgUnsignedLongVal(valueExp)) {
+    unsigned long int val=exp->get_value();
+    return ConstIntLattice(val);
+  } else if(SgWcharVal* exp=isSgWcharVal(valueExp)) {
+    long int val=exp->get_value();
+    return ConstIntLattice(val);
+  } else if(isSgNullptrValExp(valueExp)) {
+    return ConstIntLattice((int)0);
+  } else if(SgEnumVal* exp=isSgEnumVal(valueExp)) {
+    int val=exp->get_value();
+    return ConstIntLattice(val);
+  } else {
+    throw "Error: constIntLatticeFromSgValueExp::unsupported number type in SgValueExp.";
+  }
+}
+
 //////////////////////////////////////////////////////////////////////
 // EVAL CONSTINT
 //////////////////////////////////////////////////////////////////////
@@ -91,31 +151,12 @@ list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints, bool safeConstraintPropagation) {
   assert(estate.pstate()); // ensure state exists
   SingleEvalResultConstInt res;
-  //cout<<"DEBUG: evalConstInt: "<<node->unparseToString()<<astTermWithNullValuesToString(node)<<endl;
-  // guard: for floating-point expression: return immediately with most general result
-  // TODO: refine to walk the tree, when assignments are allowed in sub-expressions
-  // MS: 2014-06-27: this cannot run in parallel because exp->get_type() seg-faults 
-#if 0
-  if(SgExpression* exp=isSgExpression(node)) {
-    bool isFloatingPointType;
-    // ROSE workaround. get_type cannot be run in parallel
-    #pragma omp critical
-    {
-      isFloatingPointType=SgNodeHelper::isFloatingPointType(exp->get_type());
-    }
-    if(isFloatingPointType) {
-      res.estate=estate;
-      res.result=AType::ConstIntLattice(AType::Top());
-      return listify(res);
-    }
-  }
-#endif
   // initialize with default values from argument(s)
   res.estate=estate;
   res.result=AType::ConstIntLattice(AType::Bot());
 
   if(SgNodeHelper::isPostfixIncDecOp(node)) {
-    cout << "Error: incdec-op not supported in conditions yet."<<endl;
+    cout << "Error: incdec-op not supported in conditions."<<endl;
     exit(1);
   }
   if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
@@ -461,19 +502,24 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
                     //VariableId arrayElemId=_variableIdMapping->variableIdOfArrayElement(initDeclVarId,elemIndex);
                     SgExpression* exp=*i;
                     SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
-                    SgIntVal* intValNode=0;
-                    if(assignInit && (intValNode=isSgIntVal(assignInit->get_operand_i()))) {
-                      int intVal=intValNode->get_value();
-                      //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-                      //newPState.setVariableToValue(arrayElemId,CodeThorn::CppCapsuleAValue(AType::ConstIntLattice(intVal)));
-                      if(elemIndex==index) {
-                        AType::ConstIntLattice val=AType::ConstIntLattice(intVal);
-                        res.result=val;
-                        return listify(res);
+                    if(assignInit) {
+                      SgExpression* initExp=assignInit->get_operand_i();
+                      ROSE_ASSERT(initExp);
+                      if(SgIntVal* intValNode=isSgIntVal(initExp)) {
+                        int intVal=intValNode->get_value();
+                        //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
+                        //newPState.setVariableToValue(arrayElemId,CodeThorn::CppCapsuleAValue(AType::ConstIntLattice(intVal)));
+                        if(elemIndex==index) {
+                          AType::ConstIntLattice val=AType::ConstIntLattice(intVal);
+                          res.result=val;
+                          return listify(res);
+                        }
+                      } else {
+                        cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+                        exit(1);
                       }
                     } else {
-                      cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
-                      exit(1);
+                      cerr<<"Error: no assign initialize:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
                     }
                     elemIndex++;
                   }
@@ -548,7 +594,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   
   // ALL REMAINING CASES DO NOT GENERATE CONSTRAINTS
   // EXPRESSION LEAF NODES
+  if(SgValueExp* exp=isSgValueExp(node)) {
+    res.result=constIntLatticeFromSgValueExp(exp);
+    return listify(res);
+  }
   switch(node->variantT()) {
+#if 0
   case V_SgBoolValExp: {
     SgBoolValExp* boolValExp=isSgBoolValExp(node);
     assert(boolValExp);
@@ -563,10 +614,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     }
     break;
   }
-  case V_SgDoubleVal: {
-    //SgDoubleVal* doubleValNode=isSgDoubleVal(node);
+  case V_SgFloatVal:
+  case V_SgDoubleVal:
+  case V_SgLongDoubleVal: {
     // floating point values are currently not computed
-    res.result=AType::Top();
+    res.result=AType::ConstIntLattice(AType::Top());
     return listify(res);
   }
   case V_SgIntVal: {
@@ -575,6 +627,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     res.result=intVal;
     return listify(res);
   }
+#endif
   case V_SgVarRefExp: {
     VariableId varId;
     bool isVar=ExprAnalyzer::variable(node,varId);
@@ -619,7 +672,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     }
 
   }
-
   default:
     cerr << "@NODE:"<<node->sage_class_name()<<endl;
     throw "Error: evalConstInt::unknown operation failed.";

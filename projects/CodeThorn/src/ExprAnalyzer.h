@@ -74,6 +74,7 @@ class ExprAnalyzer {
   bool getSkipSelectedFunctionCalls();
   void setSkipArrayAccesses(bool skip);
   bool getSkipArrayAccesses();
+  AType::ConstIntLattice constIntLatticeFromSgValueExp(SgValueExp* valueExp);
  private:
   //! evaluates an expression (whithout maintaining state information)
   //AValue pureEvalConstInt(SgNode* node,EState& estate);

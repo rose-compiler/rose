@@ -127,9 +127,29 @@ void CodeThornLanguageRestrictor::initialize() {
   setAstNodeVariant(V_SgPntrArrRefExp, true);
   setAstNodeVariant(V_SgPragmaDeclaration, true);
   setAstNodeVariant(V_SgPragma, true);
-  setAstNodeVariant(V_SgDoubleVal, true);
+
+  // floating point types
   setAstNodeVariant(V_SgFloatVal, true);
-  //SgIntegerDivideAssignOp
+  setAstNodeVariant(V_SgDoubleVal, true);
+  setAstNodeVariant(V_SgLongDoubleVal, true);
+
+  // all accepted number types (restricted to int range)
+  setAstNodeVariant(V_SgEnumVal, true);
+  setAstNodeVariant(V_SgCharVal, true);
+  setAstNodeVariant(V_SgUnsignedCharVal, true);
+  setAstNodeVariant(V_SgBoolValExp, true);
+  setAstNodeVariant(V_SgShortVal, true);
+  setAstNodeVariant(V_SgIntVal, true);
+  setAstNodeVariant(V_SgLongIntVal, true);
+  setAstNodeVariant(V_SgLongLongIntVal, true);
+  setAstNodeVariant(V_SgUnsignedShortVal, true);
+  setAstNodeVariant(V_SgUnsignedIntVal, true);
+  setAstNodeVariant(V_SgUnsignedLongVal, true);
+  setAstNodeVariant(V_SgUnsignedLongLongIntVal, true);
+  
+  setAstNodeVariant(V_SgComplexVal, true);
+  setAstNodeVariant(V_SgNullptrValExp, true);
+  setAstNodeVariant(V_SgStringVal, true);
 
   //more general test codes
   setAstNodeVariant(V_SgPointerDerefExp, true);

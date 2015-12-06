@@ -169,7 +169,7 @@ AType::BoolLattice AType::BoolLattice::glb(AType::BoolLattice other) {
 // operator== : C++ default used
 string AType::BoolLattice::toString() const {
   switch(value) {
-  case TOP: return "⊤" /*"top"*/; /* AP: not shure how legal this is */
+  case TOP: return "⊤" /*"top"*/; /* AP: not sure how portable this is */
   case BOT: return "⊥" /*"bot"*/;
   case TRUE: return "true";
   case FALSE: return "false";
@@ -198,8 +198,35 @@ AType::ConstIntLattice::ConstIntLattice(Top e) {valueType=AType::ConstIntLattice
 // type conversion
 AType::ConstIntLattice::ConstIntLattice(Bot e) {valueType=AType::ConstIntLattice::BOT;intValue=0;}
 // type conversion
+AType::ConstIntLattice::ConstIntLattice(unsigned char x) {valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;}
+AType::ConstIntLattice::ConstIntLattice(signed char x) {valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;}
+AType::ConstIntLattice::ConstIntLattice(short x) {valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;}
 AType::ConstIntLattice::ConstIntLattice(int x) {valueType=AType::ConstIntLattice::CONSTINT;intValue=x;}
-
+AType::ConstIntLattice::ConstIntLattice(long int x) {
+  if((x<INT_MIN || x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
+}
+AType::ConstIntLattice::ConstIntLattice(long long int x) {
+  if((x<INT_MIN || x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
+}
+AType::ConstIntLattice::ConstIntLattice(unsigned short int x) {
+  if((x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
+}
+AType::ConstIntLattice::ConstIntLattice(unsigned int x) {
+  if((x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
+}
+AType::ConstIntLattice::ConstIntLattice(unsigned long int x) {
+  if((x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
+}
+AType::ConstIntLattice::ConstIntLattice(unsigned long long int x) {
+  if((x>INT_MAX)) throw "Error: numbers outside 'signed int' range not supported.";
+  valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
+}
+int AType::ConstIntLattice::intLength() { return sizeof(int); }
 
 bool AType::ConstIntLattice::isTop() const {return valueType==AType::ConstIntLattice::TOP;}
 bool AType::ConstIntLattice::isTrue() const {return valueType==AType::ConstIntLattice::CONSTINT && intValue!=0;}

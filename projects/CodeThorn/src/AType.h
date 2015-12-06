@@ -7,7 +7,7 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#include <limits.h>
+#include <climits>
 #include <string>
 #include <sstream>
 
@@ -104,7 +104,16 @@ class ConstIntLattice {
   // type conversion
   ConstIntLattice(Bot e);
   // type conversion
+  ConstIntLattice(signed char x);
+  ConstIntLattice(unsigned char x);
+  ConstIntLattice(short int x);
   ConstIntLattice(int x);
+  ConstIntLattice(long int x);
+  ConstIntLattice(long long int x);
+  ConstIntLattice(unsigned short int x);
+  ConstIntLattice(unsigned int x);
+  ConstIntLattice(unsigned long int x);
+  ConstIntLattice(unsigned long long int x);
   bool isTop() const;
   bool isTrue() const;
   bool isFalse() const;
@@ -129,6 +138,8 @@ class ConstIntLattice {
   int getIntValue() const;
   long hash() const;
   static bool arithTop;
+  // returns length of integer dependent on valueType
+  int intLength();
  private:
   ValueType valueType;
   int intValue;

@@ -196,7 +196,8 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     return labeler->getLabel(node);
 
   if(!labeler->isLabelRelevantNode(node)) {
-    cerr << "Error: not label relevant node "<<node->sage_class_name()<<endl;
+    cerr << "Error: icfg construction: not label relevant node "<<node->sage_class_name()<<endl;
+    exit(1);
   }
   assert(labeler->isLabelRelevantNode(node));
   switch (node->variantT()) {
@@ -233,9 +234,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     SgStatementPtrList& stmtPtrList=SgNodeHelper::getForInitList(node);
     if(stmtPtrList.size()==0) {
       // empty initializer list (hence, an initialization stmt cannot be initial stmt of for)
-      cout << "INFO: for-stmt: initializer-list is empty."<<endl;
-      cerr << "ERROR: we are bailing out. This case is not implemented yet."<<endl;
-      exit(1);
+      throw "Error: for-stmt: initializer-list is empty. Not supported.";
     }
     assert(stmtPtrList.size()>0);
     node=*stmtPtrList.begin();
