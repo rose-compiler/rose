@@ -76,3 +76,15 @@ V1.6 2015-09-14 Markus Schordan, Adrian Prantl, Marc Jasper
   * reachability checking of input-sequences (Marc Jasper)
   * data race detection in OpenMP for loops (Markus Schordan)
   * normalization of internal program representation (Markus Schordan)
+
+-----------------------------------------------------------
+V1.7 2015-12-xx in preparation
+-----------------------------------------------------------
+  * added verification error feature command line option (as required
+    for SV-COMP) [in preparation]
+  * added support for the following language features:
+    [in preparation]
+  * command line option changes:
+    [in preparation]
+  * bugfixes:
+    [in preparation]

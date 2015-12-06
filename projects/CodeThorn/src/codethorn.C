@@ -119,7 +119,7 @@ void CodeThornLanguageRestrictor::initialize() {
   setAstNodeVariant(V_SgLshiftOp, true);
   setAstNodeVariant(V_SgAggregateInitializer, true);
   setAstNodeVariant(V_SgNullExpression, true);
-  // Polyhedral test codes
+  // Polyhedral test codes and RERS 2015
   setAstNodeVariant(V_SgPlusAssignOp, true);
   setAstNodeVariant(V_SgMinusAssignOp, true);
   setAstNodeVariant(V_SgMultAssignOp, true);

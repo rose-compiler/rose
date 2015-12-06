@@ -209,6 +209,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgFunctionDefinition:
     return labeler->getLabel(node);
   case V_SgBreakStmt:
+  case V_SgContinueStmt:
   case V_SgReturnStmt:
   case V_SgVariableDeclaration:
       return labeler->getLabel(node);
@@ -300,6 +301,7 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalLabels(body);
   }
   case V_SgBreakStmt:
+  case V_SgContinueStmt:
     return finalSet;
   case V_SgReturnStmt:
     return finalSet;
@@ -591,6 +593,28 @@ void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
   }
 }
 
+bool CFAnalysis::isLoopConstructRootNode(SgNode* node) {
+  return isSgWhileStmt(node)||isSgDoWhileStmt(node)||isSgForStatement(node);
+}
+
+// used to determine loop consttuct of  SgContinueStmt
+// returns 0 if error (only possible in illformed AST)
+SgNode* CFAnalysis::correspondingLoopConstruct(SgNode* node) {
+  // find sourrounding loop construct (this is better implemented by
+  // an init routine using an inherited attribute, but it's a very
+  // short search on success (=number of nested blocks + nested branch constructs +1)
+  while(!isLoopConstructRootNode(node)) {
+    if(isSgFile(node))
+      return 0;
+    node=node->get_parent();
+    if(node==0)
+      return 0;
+    ROSE_ASSERT(node);
+  }
+  ROSE_ASSERT(isLoopConstructRootNode(node));
+  return node;
+}
+
 LabelSet CFAnalysis::setOfInitialLabelsOfStmtsInBlock(SgNode* node) {
   LabelSet ls;
   if(node==0)
@@ -795,6 +819,30 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgDefaultOptionStmt:
   case V_SgCaseOptionStmt:
     return edgeSet;
+  case V_SgContinueStmt: {
+    SgNode* loopStmt=correspondingLoopConstruct(node);
+    if(isSgWhileStmt(loopStmt)) {
+      // target is condition node
+      cout<<"DEBUG: SgContinue::SgWhile"<<endl;
+      SgNode* targetNode=SgNodeHelper::getCond(loopStmt);
+      Edge edge=Edge(getLabel(node),EDGE_BACKWARD,getLabel(targetNode));
+      edgeSet.insert(edge);
+    } else if(isSgDoWhileStmt(loopStmt)) {
+      cout<<"DEBUG: SgContinue::SgWhile"<<endl;
+      // target is condition node
+      SgNode* targetNode=SgNodeHelper::getCond(loopStmt);
+      Edge edge=Edge(getLabel(node),EDGE_FORWARD,getLabel(targetNode));
+      edgeSet.insert(edge);
+    } else if(isSgForStatement(loopStmt)) {
+      // target is increment expr
+      cerr<<"DEBUG: continue stmt target should be for inc-expr. Not implemented yet."<<endl;
+      SgExpression* incExp=SgNodeHelper::getForIncExpr(loopStmt);
+      if(!incExp)
+        throw "Error: for-loop: empty incExpr not supported yet.";
+
+    }
+    return edgeSet;
+  }
   case V_SgIfStmt: {
     SgNode* nodeC=SgNodeHelper::getCond(node);
     Label condLabel=getLabel(nodeC);
@@ -963,9 +1011,9 @@ Flow CFAnalysis::flow(SgNode* node) {
       SgExpression* incExp=SgNodeHelper::getForIncExpr(node);
       if(!incExp)
         throw "Error: for-loop: empty incExpr not supported yet.";
-      assert(incExp);
+      ROSE_ASSERT(incExp);
       Label incExpLabel=getLabel(incExp);
-      assert(incExpLabel!=Labeler::NO_LABEL);
+      ROSE_ASSERT(incExpLabel!=Labeler::NO_LABEL);
       Edge e1,e2;
       if(SgNodeHelper::isCond(labeler->getNode(*i))) {
         e1=Edge(*i,EDGE_FALSE,incExpLabel);

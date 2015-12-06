@@ -229,11 +229,12 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgForStatement:
     //  case V_SgForInitStatement: // TODO: investigate: we might not need this
   case V_SgBreakStmt:
+  case V_SgContinueStmt:
+  case V_SgGotoStatement:
   case V_SgVariableDeclaration:
   case V_SgLabelStatement:
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
-  case V_SgGotoStatement:
   case V_SgSwitchStatement:
   case V_SgDefaultOptionStmt:
   case V_SgCaseOptionStmt:
