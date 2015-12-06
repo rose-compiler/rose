@@ -28,7 +28,7 @@ size_t CFAnalysis::deleteFunctionCallLocalEdges(Flow& flow) {
   return flow.deleteEdges(EDGE_LOCAL);
 }
 
-// MS: TODO: refactor the following two functions 
+// MS: TODO: refactor thse two functions  (1/2)
 LabelSet CFAnalysis::functionCallLabels(Flow& flow) {
   LabelSet resultSet;
   LabelSet nodeLabels;
@@ -40,6 +40,7 @@ LabelSet CFAnalysis::functionCallLabels(Flow& flow) {
   return resultSet;
 }
 
+// MS: TODO: refactor thse two functions  (2/2)
 LabelSet CFAnalysis::conditionLabels(Flow& flow) {
   LabelSet resultSet;
   LabelSet nodeLabels;
@@ -823,23 +824,27 @@ Flow CFAnalysis::flow(SgNode* node) {
     SgNode* loopStmt=correspondingLoopConstruct(node);
     if(isSgWhileStmt(loopStmt)) {
       // target is condition node
-      cout<<"DEBUG: SgContinue::SgWhile"<<endl;
       SgNode* targetNode=SgNodeHelper::getCond(loopStmt);
+      ROSE_ASSERT(targetNode);
       Edge edge=Edge(getLabel(node),EDGE_BACKWARD,getLabel(targetNode));
       edgeSet.insert(edge);
     } else if(isSgDoWhileStmt(loopStmt)) {
-      cout<<"DEBUG: SgContinue::SgWhile"<<endl;
       // target is condition node
       SgNode* targetNode=SgNodeHelper::getCond(loopStmt);
+      ROSE_ASSERT(targetNode);
       Edge edge=Edge(getLabel(node),EDGE_FORWARD,getLabel(targetNode));
       edgeSet.insert(edge);
     } else if(isSgForStatement(loopStmt)) {
       // target is increment expr
-      cerr<<"DEBUG: continue stmt target should be for inc-expr. Not implemented yet."<<endl;
       SgExpression* incExp=SgNodeHelper::getForIncExpr(loopStmt);
       if(!incExp)
-        throw "Error: for-loop: empty incExpr not supported yet.";
-
+        throw "Error: for-loop: empty incExpr not supported.";
+      SgNode* targetNode=incExp;
+      ROSE_ASSERT(targetNode);
+      Edge edge=Edge(getLabel(node),EDGE_FORWARD,getLabel(targetNode));
+      edgeSet.insert(edge);
+    } else {
+      throw "Error: CFAnalysis: continue in unknown loop construct (not while,do-while, or for).";
     }
     return edgeSet;
   }

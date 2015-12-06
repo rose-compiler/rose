@@ -30,8 +30,8 @@ int main() {
       break;
     }
     if(x==1) {
-      x++;
       continue;
+    deadcode: x=1; 
     }
     x++;
   }
