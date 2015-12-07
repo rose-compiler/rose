@@ -1,99 +1,103 @@
 #include "sage3basic.h"
 #include "AstAttributeMechanism.h"
+#include "Diagnostics.h"
 
 #include "roseInternal.h"
 #include <boost/foreach.hpp>
 #include <sstream>
+#include <Sawyer/Map.h>
+#include <Sawyer/Set.h>
 
 using namespace rose;
+using namespace rose::Diagnostics;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// The new implementation fixes about 20 bugs in the old implementation. Some software may have depended on bugs, so these CPP
-// symbols can be defined to re-enable various bugs. Only bugs that are likely to have been depended on are emulated. Note that
-// whenever bugs are enabled, the AstAttributeMechanism unit tests will fail (tests/roseTests/utilTests/attributeTests.C); the
-// tester automatically notices when bugs are emulated and skip the tests.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Define this if you want attribute values to be leaked instead of deleted. Turning off this bug emulation results in
-// segmentation faults in the Java Fortran parser as of 2015-11-16. For example:
-//     # A fatal error has been detected by the Java Runtime Environment:
-//     #
-//     #  SIGSEGV (0xb) at pc=0x00007f17f7a8092c, pid=62420, tid=139740845467424
-//     #
-//     # JRE version: Java(TM) SE Runtime Environment (7.0_51-b13) (build 1.7.0_51-b13)
-//     # Java VM: Java HotSpot(TM) 64-Bit Server VM (24.51-b03 mixed mode linux-amd64 compressed oops)
-//     # Problematic frame:
-//     # C  [librose.so.0+0x2d0092c]#
-#define ROSE_AstAttributeMechanism_LEAK_VALUES_BUG
-
-// Define this if you want the AstAttributeMechanism assignment operator to shallow-copy attributes.
-//#define ROSE_AstAttributeMechanism_DEFAULT_ASSIGNMENT_OPERATOR_BUG
-
-// Define if you want to allow the inconsistent state where "exists" returns true but operator[] returns null.  This happens
-// when an AstAttribute subclass fails to implement the virtual copy constructor.
-//#define ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
-
-// Define if you want to use the not-to-friendly strict mode. This prints error messages on standard (and aborts the program in
-// debug mode) if you try to do things like erase an attribute that doesn't exist.
-//#define ROSE_AstAttributeMechanism_STRICT_MODE_BUG
-
-
-#if defined(ROSE_AstAttributeMechanism_DEFAULT_ASSIGNMENT_OPERATOR_BUG) && !defined(ROSE_AstAttributeMechanism_LEAK_VALUES_BUG)
-  #ifdef _MSC_VER
-    #pragma error("This combination of emulated bugs will result in crashes.")
-  #else
-    #error "This combination of emulated bugs will result in crashes."
-  #endif
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      AstAttributeMechanism
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static AstAttribute*
-deleteAttributeValue(AstAttribute *value) {
-#ifdef ROSE_AstAttributeMechanism_LEAK_VALUES_BUG
-    /*void*/
-#else // correct behavior
-    delete value;
-#endif
-    return NULL;
+// Types of warnings reported. This is to address concerns that there are too many warnings when running ROSE tools that use
+// old attribute subclasses that didn't properly implement the AstAttribute interface (perhaps due to lack of documentation).
+enum WarningType { HAS_MEMORY_LEAK, HAS_UNKNOWN_OWNERSHIP, HAS_NULL_COPY, HAS_SELF_COPY, HAS_NO_CLASS_NAME };
+Sawyer::Container::Map<Sawyer::Attribute::Id, Sawyer::Container::Set<WarningType> > wasEmitted_;
+static bool shouldEmit(Sawyer::Attribute::Id id, WarningType warning) {
+    return wasEmitted_.insertMaybeDefault(id).insert(warning);
+}
+
+static std::string
+attributeFullName(AstAttribute *value, Sawyer::Attribute::Id id) {
+    std::string retval;
+
+    if (value == NULL) {
+        retval = "null attribute";
+    } else if (id == Sawyer::Attribute::INVALID_ID) {
+        retval = "invalid attribute";
+    } else {
+        retval = "attribute \"" + StringUtility::cEscape(Sawyer::Attribute::name(id)) + "\"";
+    }
+
+    if (value != NULL) {
+        std::string className = value->attribute_class_name();
+        if (className.compare("AstAttribute") != 0) {
+            retval += " of type " + StringUtility::cEscape(className);
+        } else {
+            retval += " of unknown type (AstAttribute::attribute_class_name not overridden)";
+        }
+    }
+    return retval;
 }
 
 static void
-strictMode(const std::string &message) {
-#ifdef ROSE_AstAttributeMechanism_STRICT_MODE_BUG
-    Sawyer::Assert::fail("AstAttributeMechanism operating in strict compatibility mode",
-                         message.c_str(), "", __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION);
-#endif
-}
+deleteAttributeValue(AstAttribute *value, Sawyer::Attribute::Id id) {
+    if (value != NULL) {
+        switch (value->getOwnershipPolicy()) {
+            case AstAttribute::CONTAINER_OWNERSHIP:
+                delete value;
+                break;
+            case AstAttribute::NO_OWNERSHIP:
+                if (shouldEmit(id, HAS_MEMORY_LEAK))
+                    mlog[WARN] <<attributeFullName(value, id) <<" is leaked\n";
+                break;
+            case AstAttribute::CUSTOM_OWNERSHIP:
+                // assume ownership is properly implemented by the subclass
+                break;
+            case AstAttribute::UNKNOWN_OWNERSHIP: {
+                if (shouldEmit(id, HAS_UNKNOWN_OWNERSHIP)) {
+                    mlog[WARN] <<attributeFullName(value, id) <<" ownership is unknown and possibly leaked\n";
 
-// class method
-bool
-AstAttributeMechanism::isBuggy() {
-#if defined(ROSE_AstAttributeMechanism_LEAK_VALUES_BUG) || \
-    defined(ROSE_AstAttributeMechanism_DEFAULT_ASSIGNMENT_OPERATOR_BUG) || \
-    defined(ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG) || \
-    defined(ROSE_AstAttributeMechanism_STRICT_MODE_BUG)
-    return true;
-#else
-    return false;
-#endif
+                    // Show details about how to fix this only once per program.
+                    static bool detailsShown = false;
+                    if (!detailsShown) {
+                        mlog[WARN] <<"    This attribute's class should include a definition for the virtual\n"
+                                   <<"    \"getOwnershipPolicy\" based on the intention the author had for how\n"
+                                   <<"    memory is managed for this attribute type.  If the author intended\n"
+                                   <<"    attribute memory to be managed by ROSE's AstAttributeMechanism, then\n"
+                                   <<"    the following definition should be added to the attribute's class:\n"
+                                   <<"        virtual AstAttribute::OwnershipPolicy\n"
+                                   <<"        getOwnershipPolicy() const ROSE_OVERRIDE {\n"
+                                   <<"            return CONTAINER_OWNERSHIP;\n"
+                                   <<"        }\n"
+                                   <<"    and the attribute should not be explicitly deleted by the attribute\n"
+                                   <<"    creator or any users of the attribute. See documentation for\n"
+                                   <<"    AstAttribute::getOwnershipPolicy for details.\n";
+                        detailsShown = true;
+                    }
+                }
+                break;
+            }
+        }
+    }
 }
 
 AstAttributeMechanism&
 AstAttributeMechanism::operator=(const AstAttributeMechanism &other) {
-#ifdef ROSE_AstAttributeMechanism_DEFAULT_ASSIGNMENT_OPERATOR_BUG
-    attributes_ = other.attributes_;
-#else // correct behavior
     assignFrom(other);
-#endif
     return *this;
 }
 
 AstAttributeMechanism::~AstAttributeMechanism() {
     BOOST_FOREACH (Sawyer::Attribute::Id id, attributes_.attributeIds())
-        deleteAttributeValue(attributes_.getAttribute<AstAttribute*>(id));
+        deleteAttributeValue(attributes_.attributeOrElse<AstAttribute*>(id, NULL), id);
 }
 
 bool
@@ -104,75 +108,48 @@ AstAttributeMechanism::exists(const std::string &name) const {
     return attributes_.attributeExists(id);
 }
 
-// insert if not already existing
-bool
-AstAttributeMechanism::add(const std::string &name, AstAttribute *value) {
+void
+AstAttributeMechanism::set(const std::string &name, AstAttribute *newValue) {
     Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
     if (Sawyer::Attribute::INVALID_ID == id)
         id = Sawyer::Attribute::declare(name);
-    if (attributes_.attributeExists(id)) {
-        deleteAttributeValue(value);
-        strictMode("attribute \"" + StringUtility::cEscape(name) + "\" already exists");
-        return false;
-    }
-    if (NULL == value) {
-#ifdef ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
-        attributes_.setAttribute(id, value);
-#else // correct behavior
+    AstAttribute *oldValue = attributes_.attributeOrElse<AstAttribute*>(id, NULL);
+    if (newValue != oldValue)
+        deleteAttributeValue(oldValue, id);
+    if (NULL == newValue) {
         attributes_.eraseAttribute(id);
-#endif
     } else {
-        attributes_.setAttribute(id, value);
+        attributes_.setAttribute(id, newValue);
     }
-    return true;
+}
+
+// insert if not already existing
+bool
+AstAttributeMechanism::add(const std::string &name, AstAttribute *value) {
+    if (!exists(name)) {
+        set(name, value);
+        return true;
+    } else {
+        deleteAttributeValue(value, Sawyer::Attribute::id(name));
+    }
+    return false;
 }
 
 // insert only if already existing
 bool
 AstAttributeMechanism::replace(const std::string &name, AstAttribute *value) {
-    Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
-    if (Sawyer::Attribute::INVALID_ID == id || !attributes_.attributeExists(id)) {
-        deleteAttributeValue(value);
-        strictMode("attribute \"" + StringUtility::cEscape(name) + "\" does not exist yet");
-        return false;
-    }
-    deleteAttributeValue(attributes_.getAttribute<AstAttribute*>(id));
-    if (NULL == value) {
-#ifdef ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
-        attributes_.setAttribute(id, value);
-#else // correct behavior
-        attributes_.eraseAttribute(id);
-#endif
+    if (exists(name)) {
+        set(name, value);
+        return true;
     } else {
-        attributes_.setAttribute(id, value);
+        deleteAttributeValue(value, Sawyer::Attribute::id(name));
     }
-    return true;
-}
-
-void
-AstAttributeMechanism::set(const std::string &name, AstAttribute *value) {
-    Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
-    if (Sawyer::Attribute::INVALID_ID == id)
-        id = Sawyer::Attribute::declare(name);
-    deleteAttributeValue(attributes_.attributeOrElse<AstAttribute*>(id, NULL));
-    if (NULL == value) {
-#ifdef ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
-        attributes_.setAttribute(id, value);
-#else // correct behavior
-        attributes_.eraseAttribute(id);
-#endif
-    } else {
-        attributes_.setAttribute(id, value);
-    }
+    return false;
 }
 
 AstAttribute*
 AstAttributeMechanism::operator[](const std::string &name) const {
     Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
-#ifdef ROSE_AstAttributeMechanism_STRICT_MODE_BUG
-    if (Sawyer::Attribute::INVALID_ID == id || !attributes_.attributeExists(id))
-        strictMode("attribute \"" + StringUtility::cEscape(name) + "\" does not exist");
-#endif
     if (Sawyer::Attribute::INVALID_ID == id)
         return NULL;
     return attributes_.attributeOrElse<AstAttribute*>(id, NULL);
@@ -182,13 +159,10 @@ AstAttributeMechanism::operator[](const std::string &name) const {
 void
 AstAttributeMechanism::remove(const std::string &name) {
     Sawyer::Attribute::Id id = Sawyer::Attribute::id(name);
-#ifdef ROSE_AstAttributeMechanism_STRICT_MODE_BUG
-    if (Sawyer::Attribute::INVALID_ID == id || !attributes_.attributeExists(id))
-        strictMode("attribute \"" + StringUtility::cEscape(name) + "\" does not exist");
-#endif
     if (Sawyer::Attribute::INVALID_ID != id) {
-        deleteAttributeValue(attributes_.attributeOrElse<AstAttribute*>(id, NULL));
-        attributes_.eraseAttribute(id);
+        AstAttribute *oldValue = attributes_.attributeOrElse<AstAttribute*>(id, NULL);
+        attributes_.eraseAttribute(id);                 // do this first in case deleteAttributeValue throws
+        deleteAttributeValue(oldValue, id);
     }
 }
 
@@ -213,30 +187,46 @@ AstAttributeMechanism::assignFrom(const AstAttributeMechanism &other) {
         return;
     AstAttributeMechanism tmp;                          // for exception safety
     BOOST_FOREACH (Sawyer::Attribute::Id id, other.attributes_.attributeIds()) {
-        /*!const*/ AstAttribute *attr = other.attributes_.getAttribute<AstAttribute*>(id);
-#ifdef ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
-        if (NULL == attr) {
-            tmp.attributes_.setAttribute(id, attr);
-            continue;
-        }
-#endif
+        /*!const*/ AstAttribute *attr = other.attributes_.attributeOrElse<AstAttribute*>(id, NULL);
         ASSERT_not_null(attr);
 
-        // Copy the attribute. This might throw, which is why we're using "tmp". If it throws, then we don't
-        // ever make it to the std::swap below, and the destination is unchanged and tmp will be cleaned up.
-        // Also, as mentioned in the header file, be sure we invoke the non-const version of "copy" for the sake of subclasses
-        // that have not been modified to define the const version.
-        AstAttribute *copied = attr->copy(); // non-const copy method
-#ifdef ROSE_AstAttributeMechanism_ALLOW_NULL_VALUES_BUG
-        if (NULL == attr) {
-            tmp.attributes_.setAttribute(id, attr);
-            continue;
+        // Copy the attribute. This might throw, which is why we're using "tmp". If it throws, then we don't ever make it to
+        // the std::swap below, and the destination is unchanged and tmp will be cleaned up according to the ownership policy
+        // of each attribute. Also, as mentioned in the header file, be sure we invoke the non-const version of "copy" for the
+        // sake of subclasses that have not been modified to define the const version.
+        AstAttribute *copied = attr->copy();
+
+        // Check various things about the attribute.  Some of these might be important in places other than copying, but we
+        // report them here because there's a large amount of user code that doesn't follow the rules and we don't want to be
+        // completely obnoxious.
+        if (!copied && shouldEmit(id, HAS_NULL_COPY))
+            mlog[WARN] <<attributeFullName(attr, id) <<" was not copied; no virtual copy constructor?\n";
+        if (attr->attribute_class_name().compare("AstAttribute") == 0 && shouldEmit(id, HAS_NO_CLASS_NAME)) {
+            mlog[WARN] <<"attribute \"" <<StringUtility::cEscape(Sawyer::Attribute::name(id)) <<"\""
+                       <<" does not implement attribute_class_name\n";
         }
-#endif
-        if (copied != NULL) { // null means attribute should not be copied to destination
-            ASSERT_forbid2(attr == copied, "copy attribute \'" + Sawyer::Attribute::name(id) + "\' returned itself");
+        switch (attr->getOwnershipPolicy()) {
+            case AstAttribute::CONTAINER_OWNERSHIP:
+                ASSERT_require2(copied != attr,
+                                "virtual copy constructor for \"" + Sawyer::Attribute::name(id) + "\" did not copy attribute");
+                break;
+            case AstAttribute::NO_OWNERSHIP:
+                // copy() is allowed to return itself; we don't care since we won't ever delete either attribute
+                // A leak will be reported instead of deleting the attribute.
+                break;
+            case AstAttribute::CUSTOM_OWNERSHIP:
+                // copy() is allowed to return itself; we don't care since we won't ever delete either attribute
+                // Assume attribute ownership is properly implemented without leaking memory.
+                break;
+            case AstAttribute::UNKNOWN_OWNERSHIP:
+                // Similar to CONTAINER_OWNERSHIP but only warn, don't assert.
+                if (copied != attr && shouldEmit(id, HAS_SELF_COPY))
+                    mlog[WARN] <<attributeFullName(attr, id) <<" virtual copy constructor did not copy the attribute\n";
+                break;
+        }
+
+        if (copied)
             tmp.attributes_.setAttribute(id, copied);
-        }
     }
     std::swap(attributes_, tmp.attributes_);
 }
@@ -246,6 +236,11 @@ AstAttributeMechanism::assignFrom(const AstAttributeMechanism &other) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      AstAttribute
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+AstAttribute::OwnershipPolicy
+AstAttribute::getOwnershipPolicy() const {
+    return UNKNOWN_OWNERSHIP;
+}
 
 std::string
 AstAttribute::toString() {
