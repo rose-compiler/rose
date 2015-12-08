@@ -653,6 +653,9 @@ class TokenStreamSequenceToNodeMapping;
 class FrontierNode;
 class PreviousAndNextNodeData;
 
+// DQ (11/30/2015): Added support for mapping of the AST to macro expansions.
+class MacroExpansion;
+
 // FIXME: This might not the the right place for this class. (RPM 2008-08-26)
 /* An SgSharedVector is like an STL vector except for two things:
  *
@@ -2654,7 +2657,7 @@ SgNode::set_isModified ( bool isModified)
 
 #if 1
   // DQ (4/14/2015): Adding testing to identify side-effects in the AST.
-     if (SgProject::get_verbose() >= 2)
+     if (SgProject::get_verbose() >= 3)
         {
        // DQ (10/6/2015): Skip the output of this debug info for SgUnparse_Info IR nodes.
        // printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
@@ -2663,7 +2666,7 @@ SgNode::set_isModified ( bool isModified)
              {
                printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
 #if 1
-               if (SgProject::get_verbose() >= 3)
+               if (SgProject::get_verbose() >= 4)
                   {
                     printf ("Exiting as a test (when verbose >= 3) in SgNode::set_isModified \n");
                     ROSE_ASSERT(false);

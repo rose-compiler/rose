@@ -2475,6 +2475,11 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
 
 #if 0
      printf ("In TestAstForUniqueNodesInAST::visit (): IR node = %p = %s = %s in the AST. \n",node,node->class_name().c_str(),SageInterface::generateUniqueName(node,true).c_str());
+     Sg_File_Info* source_position = node->get_file_info();
+     if (source_position != NULL)
+        {
+          printf ("   --- line %d \n",source_position->get_line());
+        }
 #endif
 
      if (astNodeSet.find(node) != astNodeSet.end())
@@ -2520,10 +2525,13 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
                if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
                     printf ("Warning: found a shared IR node = %p = %s in the AST (not a SgLocatedNode) \n",node,node->class_name().c_str());
              }
-#if 1
-          if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
-#else
+
+#define ENFORCE_UNIQUE_IR_NODES 0
+
+#if ENFORCE_UNIQUE_IR_NODES
           if ( SgProject::get_verbose() >= 0 )
+#else
+          if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
 #endif
              {
                printf ("Error: found a shared IR node = %p = %s in the AST. \n",node,node->class_name().c_str());
@@ -2540,10 +2548,15 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
                     printf ("       --- declarationStatement->get_firstNondefiningDeclaration() = %p \n",declarationStatement->get_firstNondefiningDeclaration());
                     printf ("       --- declarationStatement->get_definingDeclaration()         = %p \n",declarationStatement->get_definingDeclaration());
                     declarationStatement->get_startOfConstruct()->display("declarationStatement: debug");
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(declarationStatement);
+                    if (classDeclaration != NULL)
+                       {
+                         printf ("       --- classDeclaration name = %s \n",classDeclaration->get_name().str());
+                       }
                   }
              }
 
-#if 0
+#if ENFORCE_UNIQUE_IR_NODES
        // DQ (11/28/2015): The older failing tests (below) are now fixed; but there 
        // are some newer failing tests (within Boost header files):
        // test2015_87.C 
@@ -2595,11 +2608,12 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
 
           ROSE_ASSERT(false);
 #else
+
        // DQ (4/26/2012): debugging... (test2012_67.C)
-#if 1
-          if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
-#else
+#if ENFORCE_UNIQUE_IR_NODES
           if ( SgProject::get_verbose() >= 0 )
+#else
+          if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
 #endif
              {
                printf ("In TestAstForUniqueNodesInAST::visit (): Rare issue (only effects Boost examples): node = %p = %s \n",node,node->class_name().c_str());
@@ -2609,6 +2623,7 @@ TestAstForUniqueNodesInAST::visit ( SgNode* node )
 #if 0
      printf ("In TestAstForUniqueNodesInAST::visit(): astNodeSet.insert(node = %p = %s) \n",node,node->class_name().c_str());
 #endif
+
      astNodeSet.insert(node);
    }
 
