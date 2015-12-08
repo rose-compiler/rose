@@ -1643,6 +1643,9 @@ HEADER_TYPE_MODIFIER_START
        // DQ (2/4/2006): Added mechamism to clear all bits
           void reset();
 
+       // DQ (11/28/2015): We need a better way to support equivalents and difference in the SgTypeModifier.
+          bool isIdentity() const;
+
 HEADER_TYPE_MODIFIER_END
 
 HEADER_ELABORATED_TYPE_MODIFIER_START
@@ -3505,6 +3508,7 @@ bool SgTypeModifier::isVectorType() const { return checkBit(e_vector_type__,p_mo
 void SgTypeModifier::setVectorType()      { setBit(e_vector_type__,p_modifierVector); }
 void SgTypeModifier::unsetVectorType()    { unsetBit(e_vector_type__,p_modifierVector); }
 
+
 string
 $CLASSNAME::displayString() const
    {
@@ -3542,6 +3546,27 @@ std::ostream& operator<< (std::ostream& os, const SgTypeModifier& tm)
       os << tm.get_modifierVector(); 
      return os;
    }
+
+// DQ (11/28/2015): We need a better way to support wrappers of types that are significant and not significant.
+bool SgTypeModifier::isIdentity() const
+   {
+  // When this is true, the SgTypeModifier acts as a simple wrapper to a base type that is equivalent.
+     bool identity = false;
+
+#if 0
+     printf ("In SgTypeModifier::isIdentity(): this = %p get_constVolatileModifier().isConst() = %s \n",this,get_constVolatileModifier().isConst() ? "true" : "false");
+#endif
+
+  // This needs to be an expanded set of fields later.
+     identity = (get_constVolatileModifier().isConst() == false) && (get_constVolatileModifier().isVolatile() == false) && (isRestrict() == false);
+
+#if 0
+     printf ("In SgTypeModifier::isIdentity(): return identity = %s \n",identity ? "true" : "false");
+#endif
+
+     return identity;
+   }
+
 
 bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 {
@@ -5712,6 +5737,10 @@ HEADER_APPLICATION_SOURCE_FILE_START
        // DQ (11/20/2015): Added support for retrieving representative whitespace in unparsing transformations when using the token-based unparsing.
           static void set_representativeWhitespaceStatementMap(std::map<SgScopeStatement*,SgStatement*> & representativeWhitespaceStatementMap);
           static std::map<SgScopeStatement*,SgStatement*> & get_representativeWhitespaceStatementMap();
+
+       // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
+          static void set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & macroExpansionMap);
+          static std::map<SgStatement*,MacroExpansion*> & get_macroExpansionMap();
 
 #if 0
        // DQ (9/12/2009): Adding support for new name qualification (not ready yet).
@@ -8552,6 +8581,47 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
 #endif
                                                      }
                                                 }
+                                           }
+                                          else
+                                           {
+#define DEBUG_TYPE_EQUIVALENCE_TEST 0
+
+#if DEBUG_TYPE_EQUIVALENCE_TEST
+                                          // DQ (12/1/2015): This is ultimately the better approach, but it is unfinished, so we don't want to use it yet.
+                                             if (modifierTypeLocal != NULL && modifierTypeFromSymbol != NULL)
+                                                {
+                                                  if (typeLocal == typeFromSymbol)
+                                                     {
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                                       printf ("-----    --- base types of modifiers match: Check that these are the same modifiers \n");
+#endif
+                                                    // DQ (11/28/2015): This is now calling the SgType::operator==() for type equivalence.
+                                                    // if (SgModifierType::isSameModifier(modifierTypeLocal,modifierTypeFromSymbol) == true)
+                                                    // if (SgModifierType::operator== (*modifierTypeLocal,*modifierTypeFromSymbol) == true)
+                                                    // if (((*modifierTypeLocal) == (*modifierTypeFromSymbol)) == true)
+                                                    // if (SgModifierType::operator== (*modifierTypeLocal,*modifierTypeFromSymbol) == true)
+                                                    // if (((*modifierTypeLocal) == (*modifierTypeFromSymbol)) == true)
+                                                       if (((*modifierTypeLocal) == (*modifierTypeFromSymbol)) == true)
+                                                          {
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                                            printf ("-----    --- These ARE the same modifier type \n");
+#endif
+                                                            typeLocal = typeFromSymbol;
+                                                          }
+                                                         else
+                                                          {
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                                            printf ("-----    --- These are NOT the same type (though the modifier base types are the same)! \n");
+#endif
+                                                            isTemplateType = false;
+                                                          }
+                                                     }
+                                                    else
+                                                     {
+                                                       isTemplateType = false;
+                                                     }
+                                                }
+#endif
                                            }
 
                                         if (isTemplateType == true)
@@ -15669,6 +15739,22 @@ SgSourceFile::get_representativeWhitespaceStatementMap()
   // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
   // DQ (11/20/2015): Not sure I want this to be copy by value, but OK for now.
      return rose::representativeWhitespaceStatementMap;
+   }
+
+
+void 
+SgSourceFile::set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & macroExpansionMap)
+   {
+  // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
+     rose::macroExpansionMap = macroExpansionMap;
+   }
+
+std::map<SgStatement*,MacroExpansion*> &
+SgSourceFile::get_macroExpansionMap()
+   {
+  // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
+  // DQ (11/30/2015): Not sure I want this to be copy by value, but OK for now.
+     return rose::macroExpansionMap;
    }
 
 

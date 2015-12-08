@@ -232,7 +232,8 @@ public:
      *
      *  Constructs a new calling convention with no name or parameters. */
     Definition()
-        : wordWidth_(0), regDict_(NULL), stackAlignment_(0), stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {}
+        : wordWidth_(0), regDict_(NULL), stackParameterOrder_(ORDER_UNSPECIFIED), nonParameterStackSize_(0),
+          stackAlignment_(0), stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {}
 
     /** Construct a new calling convention.
      *
@@ -240,8 +241,8 @@ public:
      *  is a more complete name for the convention perhaps including the operating system and architecture but not containing
      *  line termination. */
     Definition(size_t wordWidth, const std::string &name, const std::string &comment, const RegisterDictionary *regDict)
-        : name_(name), comment_(comment), wordWidth_(wordWidth), regDict_(regDict), stackAlignment_(0),
-          stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {
+        : name_(name), comment_(comment), wordWidth_(wordWidth), regDict_(regDict), stackParameterOrder_(ORDER_UNSPECIFIED),
+          nonParameterStackSize_(0), stackAlignment_(0), stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {
         ASSERT_require2(0 == (wordWidth & 7) && wordWidth > 0, "word size must be a positive multiple of eight");
     }
 
