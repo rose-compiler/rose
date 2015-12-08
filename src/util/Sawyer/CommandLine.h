@@ -2665,7 +2665,7 @@ public:
 
     /** Expand file arguments.
      *
-     *  Scans the specified argument list looking for file inclusion switches and replacing those switches with the contents of
+     *  Scans the specified argument list looking for file inclusion switches and replacing those switches with the
      *  the file. */
     std::vector<std::string> expandIncludedFiles(const std::vector<std::string> &args);
 
