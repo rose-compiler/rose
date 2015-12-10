@@ -486,6 +486,31 @@ namespace OmpSupport
     setOneSourcePositionForTransformation(result);
     return result;
   }
+  //TODO: move this builder functions to SageBuilder namespace
+  SgOmpEndClause * buildOmpEndClause(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    // check if input attribute has e_end clause
+    if (!att->hasClause(e_end))
+      return NULL;
+    SgOmpEndClause* result = new SgOmpEndClause();
+    ROSE_ASSERT(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+  }
+
+  SgOmpBeginClause * buildOmpBeginClause(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    // check if input attribute has e_end clause
+    if (!att->hasClause(e_begin))
+      return NULL;
+    SgOmpBeginClause* result = new SgOmpBeginClause();
+    ROSE_ASSERT(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+  }
+
   SgOmpOrderedClause * buildOmpOrderedClause(OmpAttribute* att)
   {
     ROSE_ASSERT(att != NULL);
@@ -754,6 +779,42 @@ namespace OmpSupport
     // since the attribute has dimension info for all map clauses
     //But we don't want to move the dimension info to directive level 
     result->set_array_dimensions(att->array_dimensions);
+
+   //A translation from OmpSupport::omp_construct_enum to SgOmpClause::omp_map_dist_data_enum is needed here.
+   std::map<SgSymbol*, std::vector<std::pair<OmpSupport::omp_construct_enum, SgExpression*> > > attDistMap = att->dist_data_policies;
+   std::map<SgSymbol*, std::vector<std::pair<OmpSupport::omp_construct_enum, SgExpression*> > >::iterator iter;
+
+   std::map<SgSymbol*, std::vector<std::pair<SgOmpClause::omp_map_dist_data_enum, SgExpression*> > > convertedDistMap;
+   for (iter= attDistMap.begin(); iter!=attDistMap.end(); iter++)
+   {
+     SgSymbol* s = (*iter).first; 
+     std::vector<std::pair<OmpSupport::omp_construct_enum, SgExpression*> > src_vec = (*iter).second; 
+     std::vector<std::pair<OmpSupport::omp_construct_enum, SgExpression*> >::iterator iter2;
+
+     std::vector<std::pair<SgOmpClause::omp_map_dist_data_enum, SgExpression*> > converted_vec;
+     for (iter2=src_vec.begin(); iter2!=src_vec.end(); iter2 ++ )
+     {
+       std::pair<OmpSupport::omp_construct_enum, SgExpression*>  src_pair = *iter2; 
+       if (src_pair.first == OmpSupport::e_duplicate)
+       {
+         converted_vec.push_back(make_pair(SgOmpClause::e_omp_map_dist_data_duplicate, src_pair.second) );
+       } else 
+       if (src_pair.first == OmpSupport::e_cyclic)
+       {
+         converted_vec.push_back(make_pair(SgOmpClause::e_omp_map_dist_data_cyclic, src_pair.second) );
+       } else 
+       if (src_pair.first == OmpSupport::e_block)
+       {
+         converted_vec.push_back(make_pair(SgOmpClause::e_omp_map_dist_data_block, src_pair.second) );
+       } else 
+       {
+         cerr<<"error. buildOmpMapClause() :unrecognized source dist data policy enum:"<<src_pair.first <<endl;
+         ROSE_ASSERT (false);
+      } // end for iter2
+     } // end for iter
+     convertedDistMap[s]= converted_vec;
+   }
+    result->set_dist_data_policies(convertedDistMap);
     return result;
   }
 
@@ -874,6 +935,16 @@ namespace OmpSupport
         {
           printf("error: buildOmpNonReductionClause() does not handle reduction. Please use buildOmpReductionClause().\n");
           ROSE_ASSERT(false);
+          break;
+        }
+      case e_begin:
+        {
+          result = buildOmpBeginClause(att);
+          break;
+        }
+      case e_end:
+        {
+          result = buildOmpEndClause(att);
           break;
         }
       default:
