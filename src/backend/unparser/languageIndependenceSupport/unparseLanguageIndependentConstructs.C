@@ -6284,6 +6284,57 @@ static std::string mapOperatorToString(SgOmpClause::omp_map_operator_enum ro)
   return result;
 }
 
+static std::string distPolicyToString(SgOmpClause::omp_map_dist_data_enum ro)
+{
+  string result;
+  switch (ro)
+  {
+    case SgOmpClause::e_omp_map_dist_data_duplicate: 
+      {
+        result = "DUPLICATE";
+        break;
+      }
+    case SgOmpClause::e_omp_map_dist_data_block: 
+      {
+        result = "BLOCK";
+        break;
+      }
+    case SgOmpClause::e_omp_map_dist_data_cyclic:   
+      {
+        result = "CYCLIC";
+        break;
+      }
+    default:
+      {
+        cerr<<"Error: unhandled dist data policy type mapDistPolicyToString():"<< ro <<endl;
+        ROSE_ASSERT(false);
+      }
+  }
+  return result;
+}
+
+// Generate dist_data(p1, p2, p3)
+void UnparseLanguageIndependentConstructs::unparseMapDistDataPoliciesToString (std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > policies, SgUnparse_Info& info) 
+{
+  curprint(string(" dist_data("));
+  for (size_t i =0; i< policies.size(); i++)
+  {
+    curprint(distPolicyToString (policies[i].first)); 
+    if (policies[i].second != NULL)
+    {
+      curprint(string("("));
+      unparseExpression(policies[i].second, info);
+      curprint(string(")"));
+      //      cerr<<"Error: unhandled dist_data policy with expression option in mapDistDataPoliciesToString() of unparseLanguageIndependentConstructs.C"<<endl;
+      //      ROSE_ASSERT(false);
+    }
+    if (i!= policies.size() -1)
+      curprint(string(","));
+  }
+
+  curprint(string(")"));
+}
+
 #endif
 
 //! Unparse an OpenMP clause with a variable list
@@ -6348,13 +6399,14 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
 
   // prepare array dimension info for map variables
   std::map<SgSymbol*, std::vector<std::pair<SgExpression*, SgExpression*> > > dims;
+  std::map< SgSymbol *, std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > > dist_policies; 
   if (is_map)
   {
     SgOmpMapClause * m_clause = isSgOmpMapClause (clause);
     ROSE_ASSERT (m_clause != NULL);
     dims = m_clause->get_array_dimensions();
+    dist_policies = m_clause->get_dist_data_policies();
   }  
-
 
   //unparse variable list then
   SgVarRefExpPtrList::iterator p = c->get_variables().begin();
@@ -6387,6 +6439,12 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
 //          curprint(upper->unparseToString());
           unparseExpression(upper, ninfo);
           curprint(string("]"));
+       
+          std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > policies = dist_policies[sym];
+          if (policies.size() !=0)
+            unparseMapDistDataPoliciesToString (policies, ninfo);
+            //curprint(mapDistDataPoliciesToString (policies));
+
         } // end for
       } // end if has bounds
     } // end if map 
@@ -6462,6 +6520,16 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpUntiedClause:
       {
         curprint(string(" untied"));
+        break;
+      }
+    case V_SgOmpBeginClause:
+      {
+        curprint(string(" begin"));
+        break;
+      }
+    case V_SgOmpEndClause:
+      {
+        curprint(string(" end"));
         break;
       }
     case V_SgOmpScheduleClause:

@@ -301,6 +301,13 @@ namespace OmpSupport
       // We store a list (vector) of dimension bounds for each array variable
       std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions;  
       
+      // dist_data (dim1_policy, dim2_policy, dim3_policy) for mapped arrays
+      // we use std::map <variable, policy_vector> to represent this.
+      // the policy vector contains up to three pair of (policy, optional size)
+      // e.g.  map(x[0:n][0:m] dist_data(duplicate, block(2)))
+      // -----------------------------------
+      std::map <SgSymbol* ,  std::vector < std::pair<omp_construct_enum, SgExpression*> >   >  dist_data_policies; 
+ 
       //! Find the relevant clauses for a variable 
       std::vector<enum omp_construct_enum> get_clauses(const std::string& variable);
 
@@ -438,13 +445,7 @@ namespace OmpSupport
       // A reverse map from a variable to the clauses the variable appears
       std::map<std::string, std::vector<omp_construct_enum> > var_clauses;
 
-      // dist_data (dim1_policy, dim2_policy, dim3_policy) for mapped arrays
-      // we use std::map <variable, policy_vector> to represent this.
-      // the policy vector contains up to three pair of (policy, optional size)
-      // e.g.  map(x[0:n][0:m] dist_data(duplicate, block(2)))
-      // -----------------------------------
-      std::map <SgVariableSymbol* ,  std::vector < std::pair<omp_construct_enum, SgExpression*> >   >  dist_data_policies; 
-      
+     
       // expressions ----------------------
       // e.g.: if (exp), num_threads(exp), schedule(,exp), collapse(exp)
       std::map<omp_construct_enum, std::pair<std::string, SgExpression*> > expressions;
