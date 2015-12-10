@@ -305,7 +305,7 @@ CfgEmitter::selectIntraFunction(const Function::Ptr &function) {
     // Use an iteration rather than a traversal because we want all vertices that belong to the function, including those
     // not reachable from the entry vertex.
     BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
-        if (owningFunction(vertex) == function) {
+        if (firstOwningFunction(vertex) == function) {
             if (!vertexOrganization(vertex).isSelected()) {
                 vertexOrganization(vertex).select();
                 vertexOrganization(vertex).label(vertexLabelDetailed(vertex));
@@ -327,7 +327,7 @@ CfgEmitter::selectFunctionCallees(const Function::Ptr &function) {
     // Use an iteration rather than a traversal because we want to consider all vertices that belong to the function, including
     // those not reachable from the entry vertex.
     BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
-        if (vertexOrganization(vertex).isSelected() && owningFunction(vertex) == function) {
+        if (vertexOrganization(vertex).isSelected() && firstOwningFunction(vertex) == function) {
             BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.outEdges()) {
                 if (isInterFunctionEdge(edge)) {
                     if (!edgeOrganization(edge).isSelected()) {
@@ -339,7 +339,7 @@ CfgEmitter::selectFunctionCallees(const Function::Ptr &function) {
                     Organization &tgt = vertexOrganization(edge.target());
                     if (!tgt.isSelected()) {
                         tgt.select();
-                        Function::Ptr callee = owningFunction(edge.target());
+                        Function::Ptr callee = firstOwningFunction(edge.target());
                         if (callee && edge.target()->value().type() == V_BASIC_BLOCK &&
                             edge.target()->value().address() == callee->address()) {
                             // target is the entry block of a function
@@ -369,13 +369,13 @@ CfgEmitter::selectFunctionCallers(const Function::Ptr &callee) {
     // Use an iteration rather than a traversal because we want to consider all vertices that belong to the function, including
     // those not reachable from the entry vertex.
     BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
-        if (vertexOrganization(vertex).isSelected() && owningFunction(vertex) == callee) {
+        if (vertexOrganization(vertex).isSelected() && firstOwningFunction(vertex) == callee) {
             // Are there edges coming into this vertex from outside this function?
             typedef Sawyer::Container::Map<rose_addr_t /*caller*/, CallInfo> Callers;
             Callers callers;
             BOOST_FOREACH (const ControlFlowGraph::Edge &interEdge, vertex.inEdges()) {
                 if (isInterFunctionEdge(interEdge) && !edgeOrganization(interEdge).isSelected()) {
-                    if (Function::Ptr caller = owningFunction(interEdge.source())) {
+                    if (Function::Ptr caller = firstOwningFunction(interEdge.source())) {
                         // Call is coming from a function-as-a-whole, so only accumulate the calls from that function.
                         CallInfo callInfo = callers.getOptional(caller->address()).orDefault();
                         if (interEdge.value().type() == E_FUNCTION_CALL) {
@@ -483,8 +483,17 @@ CfgEmitter::selectNeighbors(bool selectIn, bool selectOut) {
 
 // class method
 Function::Ptr
-CfgEmitter::owningFunction(const ControlFlowGraph::Vertex &v) {
-    return v.value().type() == V_BASIC_BLOCK ? v.value().function() : Function::Ptr();
+CfgEmitter::firstOwningFunction(const ControlFlowGraph::Vertex &v) {
+    FunctionSet owners = owningFunctions(v);
+    return owners.isEmpty() ? Function::Ptr() : *owners.values().begin();
+}
+
+// class method
+FunctionSet
+CfgEmitter::owningFunctions(const ControlFlowGraph::Vertex &v) {
+    if (v.value().type() != V_BASIC_BLOCK)
+        return FunctionSet();
+    return v.value().owningFunctions();
 }
 
 // class method
@@ -494,7 +503,11 @@ CfgEmitter::isInterFunctionEdge(const ControlFlowGraph::Edge &edge) {
         return true;
     if (edge.source() == edge.target())
         return false;
-    return owningFunction(edge.source()) != owningFunction(edge.target());
+
+    // When the source and/or target blocks of an edge are owned by multiple functions it can be ambiguous whether the edge is
+    // inter- or intra- function.  For the purposes of the GraphViz output, each vertex is assigned to at most one function
+    // and the edge classification is based on this assignment.
+    return firstOwningFunction(edge.source()) != firstOwningFunction(edge.target());
 }
 
 void
@@ -502,7 +515,7 @@ CfgEmitter::assignFunctionSubgraphs() {
     BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
         Organization &org = vertexOrganization(vertex);
         Function::Ptr function;
-        if (org.isSelected() && org.subgraph().empty() && (function=owningFunction(vertex))) {
+        if (org.isSelected() && org.subgraph().empty() && (function=firstOwningFunction(vertex))) {
             std::string subgraphName = StringUtility::addrToString(function->address());
             if (!subgraphOrganization().exists(subgraphName)) {
                 Organization org;
@@ -545,14 +558,20 @@ CfgEmitter::vertexLabel(const ControlFlowGraph::ConstVertexIterator &vertex) con
     if (!srcLoc.empty())
         srcLoc = htmlEscape(srcLoc) + "<br align=\"left\"/>";
     switch (vertex->value().type()) {
-        case V_BASIC_BLOCK:
-            if (vertex->value().function() && vertex->value().function()->address() == vertex->value().address()) {
-                return "<" + srcLoc + htmlEscape(vertex->value().function()->printableName()) + ">";
+        case V_BASIC_BLOCK: {
+            FunctionSet functions = owningFunctions(vertex);
+            if (!functions.isEmpty()) {
+                BOOST_FOREACH (const Function::Ptr &function, functions.values()) {
+                    if (function->address() == vertex->value().address())
+                        srcLoc += htmlEscape(function->printableName()) + "<br align=\"left\"/>";
+                }
+                return "<" + srcLoc + ">";
             } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
                 return "<" + srcLoc + htmlEscape(bb->printableName()) + ">";
             } else {
                 return "<" + srcLoc + StringUtility::addrToString(vertex->value().address()) + ">";
             }
+        }
         case V_NONEXISTING:
             return "\"nonexisting\"";
         case V_UNDISCOVERED:
@@ -651,7 +670,8 @@ CfgEmitter::vertexAttributes(const ControlFlowGraph::ConstVertexIterator &vertex
     if (vertex->value().type() == V_BASIC_BLOCK) {
         attr.insert("fontname", "Courier");
 
-        if (vertex->value().function() && vertex->value().function()->address() == vertex->value().address()) {
+        Function::Ptr function = firstOwningFunction(vertex);
+        if (function && function->address() == vertex->value().address()) {
             attr.insert("style", "filled");
             attr.insert("fillcolor", funcEnterColor_.toHtml());
         } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
@@ -696,9 +716,8 @@ CfgEmitter::edgeLabel(const ControlFlowGraph::ConstEdgeIterator &edge) const {
                 s += "\\nassumed";
             break;
         case E_NORMAL: {
-            // Normal edges don't get labels unless its intra-function, otherwise the graphs would be too noisy.
-            if (edge->source()->value().type() == V_BASIC_BLOCK && edge->target()->value().type() == V_BASIC_BLOCK &&
-                edge->source()->value().function() != edge->target()->value().function())
+            // Normal edges don't get labels unless it's intra-function, otherwise the graphs would be too noisy.
+            if (isInterFunctionEdge(edge))
                 s = "other";
             break;
         }

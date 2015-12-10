@@ -61,8 +61,11 @@ struct InterproceduralPredicate: P2::DataFlow::InterproceduralPredicate {
             return false;
         ASSERT_require(callEdge != cfg.edges().end());
         ASSERT_require(callEdge->target()->value().type() == V_BASIC_BLOCK);
-        Function::Ptr function = callEdge->target()->value().function();
-        return function && !function->stackDelta();
+        BOOST_FOREACH (const Function::Ptr &function, callEdge->target()->value().owningFunctions().values()) {
+            if (function->stackDelta())
+                return false;
+        }
+        return true;                                    // no called function has a computed stack delta
     }
 };
 

@@ -693,18 +693,32 @@ public:
     static bool isInterFunctionEdge(const ControlFlowGraph::ConstEdgeIterator &e) { return isInterFunctionEdge(*e); }
     /** @} */
 
-    /** Function that owns a vertex.
+    /** First function that owns a vertex.
      *
-     *  Returns a pointer to the function that owns the specified vertex, or null if there is no owner.
+     *  Returns the first of possibly many functions that own a vertex. "First" is defined as the function listed first in the
+     *  set returned by @ref CfgVertex::owningFunctions.  Returns null if there are no owning functions.
+     *
+     * @{ */
+    static Function::Ptr firstOwningFunction(const ControlFlowGraph::Vertex&);
+    static Function::Ptr firstOwningFunction(const ControlFlowGraph::ConstVertexIterator &v) {
+        return firstOwningFunction(*v);
+    }
+    /** @} */
+
+    /** Functions that own a vertex.
+     *
+     *  Returns a set of pointers to the functions that own the specified vertex. Usually a vertex is owned by either zero or
+     *  one function.
      *
      *  @{ */
-    static Function::Ptr owningFunction(const ControlFlowGraph::Vertex&);
-    static Function::Ptr owningFunction(const ControlFlowGraph::ConstVertexIterator &v) { return owningFunction(*v); }
+    static FunctionSet owningFunctions(const ControlFlowGraph::Vertex&);
+    static FunctionSet owningFunctions(const ControlFlowGraph::ConstVertexIterator &v) { return owningFunctions(*v); }
     /** @} */
 
     /** Assign vertices and edges to subgraphs.
      *
-     *  Each vertex is assigned to a subgraph, one subgraph per function. */
+     *  Each vertex is assigned to a subgraph, one subgraph per function. If a vertex is owned by more than one function then
+     *  the "first" function is used, where the definition of "first" is quite arbitrary. */
     void assignFunctionSubgraphs();
 
 

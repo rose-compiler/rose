@@ -1387,12 +1387,12 @@ Engine::attachBlocksToFunctions(Partitioner &partitioner, bool emitWarnings) {
                                <<" had " <<StringUtility::plural(inwardConflictEdges.size(), "inward conflicts")
                                <<" and " <<StringUtility::plural(outwardConflictEdges.size(), "outward conflicts") <<"\n";
                 BOOST_FOREACH (const ControlFlowGraph::EdgeIterator &edge, inwardConflictEdges) {
-                    mlog[WARN] <<"  inward conflict " <<*edge
-                               <<" from " <<partitioner.functionName(edge->source()->value().function()) <<"\n";
+                    BOOST_FOREACH (const Function::Ptr &f, edge->source()->value().owningFunctions().values())
+                        mlog[WARN] <<"  inward conflict " <<*edge <<" from " <<partitioner.functionName(f) <<"\n";
                 }
                 BOOST_FOREACH (const ControlFlowGraph::EdgeIterator &edge, outwardConflictEdges) {
-                    mlog[WARN] <<"  outward conflict " <<*edge
-                               <<" to " <<partitioner.functionName(edge->target()->value().function()) <<"\n";
+                    BOOST_FOREACH (const Function::Ptr &f, edge->target()->value().owningFunctions().values())
+                        mlog[WARN] <<"  outward conflict " <<*edge <<" to " <<partitioner.functionName(f) <<"\n";
                 }
             }
         }

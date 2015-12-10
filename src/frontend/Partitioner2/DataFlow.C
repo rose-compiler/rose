@@ -173,7 +173,7 @@ public:
                             callStack.pop_back();
                             Function::Ptr callee;
                             if (edge->target()->value().type() == V_BASIC_BLOCK)
-                                callee = edge->target()->value().function();
+                                callee = bestSummaryFunction(edge->target()->value().owningFunctions());
                             DfCfg::VertexIterator dfSource = findVertex(edge->source());
                             ASSERT_require(isValidVertex(dfSource));
                             DfCfg::VertexIterator faked = insertVertex(DfCfgVertex(callee));
@@ -199,7 +199,18 @@ public:
         return *this;
     }
 };
-        
+
+Function::Ptr
+bestSummaryFunction(const FunctionSet &functions) {
+    Function::Ptr best;
+    BOOST_FOREACH (const Function::Ptr &function, functions.values()) {
+        // FIXME[Robb Matzke 2015-12-10]: for now, just choose any function
+        best = function;
+        break;
+    }
+    return best;
+}
+
 DfCfg
 buildDfCfg(const Partitioner &partitioner,
            const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &startVertex,

@@ -9,6 +9,7 @@
 #include <Sawyer/Attribute.h>
 #include <Sawyer/Cached.h>
 #include <Sawyer/Map.h>
+#include <Sawyer/Set.h>
 #include <Sawyer/SharedPointer.h>
 
 #include <set>
@@ -221,6 +222,7 @@ private:
 };
 
 typedef Sawyer::Container::Map<rose_addr_t, Function::Ptr> Functions;
+typedef Sawyer::Container::Set<Function::Ptr> FunctionSet;
 
 } // namespace
 } // namespace

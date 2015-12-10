@@ -770,10 +770,16 @@ public:
      *  Returns an interval set which is the union of the extents for each data block referenced by this basic block. */
     AddressIntervalSet basicBlockDataExtent(const BasicBlock::Ptr&) const /*final*/;
 
-    /** Returns the function that owns a basic block.
+    /** Returns the functions that own a basic block.
      *
-     *  Returns the function that owns this basic block in the CFG, or null if no function owns it. */
-    Function::Ptr basicBlockFunctionOwner(const BasicBlock::Ptr&) const /*final*/;
+     *  Usually a basic block is owned by zero or one function, but it can sometimes be owned by multiple functions.  This
+     *  method returns all the owning basic blocks. The returned vector has no duplicates and the functions are sorted by
+     *  their entry address.
+     *
+     * @{ */
+    std::vector<Function::Ptr> basicBlockFunctionOwners(rose_addr_t blockVa) const /*final*/;
+    std::vector<Function::Ptr> basicBlockFunctionOwners(const BasicBlock::Ptr&) const /*final*/;
+    /** @} */
 
     /** Returns the list of functions that own the specified basic blocks.
      *
@@ -783,6 +789,7 @@ public:
      *
      * @{ */
     std::vector<Function::Ptr> basicBlockFunctionOwners(const std::set<rose_addr_t> &bblockVas) const /*final*/;
+    std::vector<Function::Ptr> basicBlockFunctionOwners(const std::vector<rose_addr_t> &bblockVas) const /*final*/;
     std::vector<Function::Ptr> basicBlockFunctionOwners(const std::vector<BasicBlock::Ptr>&) const /*final*/;
     /** @} */
 
@@ -1366,11 +1373,12 @@ public:
      *  Causes the specified function to become an owner of the specified data block. */
     void attachFunctionDataBlock(const Function::Ptr&, const DataBlock::Ptr&) /*final*/;
 
-    /** Finds the function that owns the specified basic block.
+    /** Finds functions that own the specified basic block.
      *
-     *  If @p bblockVa is a starting address for a basic block that is in the CFG/AUM then this method returns the pointer to
-     *  the function that owns that block.  If the CFG/AUM does not contain a basic block that starts at the specified address,
-     *  or if no function owns that basic block, then a null function pointer is returned.
+     *  If @p bblockVa is a starting address for a basic block that is in the CFG/AUM then this method returns pointers to
+     *  the functions that own that block.  If the CFG/AUM does not contain a basic block that starts at the specified address,
+     *  or if no function owns that basic block, then an empty list is returned.  Basic blocks are usually owned by zero or one
+     *  function.
      *
      *  If a basic block pointer is supplied instead of a basic block starting address, then the starting address of the
      *  specified basic block is used.  That is, the returned function might not own the exact specified basic block, but owns
@@ -1381,8 +1389,8 @@ public:
      *  the partitioner does not necessarily know about them.
      *
      *  @{ */
-    Function::Ptr findFunctionOwningBasicBlock(rose_addr_t bblockVa) const /*final*/;
-    Function::Ptr findFunctionOwningBasicBlock(const BasicBlock::Ptr&) const /*final*/;
+    std::vector<Function::Ptr> findFunctionsOwningBasicBlock(rose_addr_t bblockVa) const /*final*/;
+    std::vector<Function::Ptr> findFunctionsOwningBasicBlock(const BasicBlock::Ptr&) const /*final*/;
     /** @} */
 
     /** Finds functions that own specified basic blocks.
