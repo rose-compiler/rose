@@ -800,7 +800,8 @@ Terminal::evaluateType(std::string& varTypeString)
        {
           returnType = ASTATTRIBUTEMECHANISM;
        }
-     else  if ( varTypeString == "hash_iterator" )
+     else  if ( varTypeString == "hash_iterator" ||
+                varTypeString == "const rose::BinaryAnalysis::CallingConvention::Definition*")
        {
           returnType = SKIP_TYPE;
        }

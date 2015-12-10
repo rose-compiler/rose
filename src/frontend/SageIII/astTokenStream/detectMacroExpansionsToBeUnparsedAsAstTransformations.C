@@ -33,6 +33,10 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::visit( SgNode* n )
 #endif
 
 
+#if 0
+// DQ (11/30/2015): Because of the new design that detect macros and associated statements, we can simplify this step.
+// Much of this code can be eliminated.
+
 // Inherited attribute member functions
 DetectMacroExpansionsToBeUnparsedAsAstTransformationsInheritedAttribute::DetectMacroExpansionsToBeUnparsedAsAstTransformationsInheritedAttribute()
    {
@@ -96,7 +100,7 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
 #endif
 
   // DQ (11/8/2015): This has to be moved to after the tokenStreamSequenceMap has been setup since we need that to determine if 
-  // IR nodes have a token mapping or not (subparts of macros expansions will not and we need this infor to recognize parts of 
+  // IR nodes have a token mapping or not (subparts of macros expansions will not and we need this information to recognize parts of 
   // the AST that are associated with macro expansions.
   // DQ (11/8/2015): If this has been marked as containing a transformation then check if there is token info for each of the children.
   // If there is not token info for each of the children then this currentStatement (e.g. n) must be marked as a transformation.
@@ -165,8 +169,8 @@ DetectMacroExpansionsToBeUnparsedAsAstTransformations::evaluateSynthesizedAttrib
           if (currentStatement != NULL && all_children_have_token_info == false)
              {
 #if 0
-            // printf ("*** Found case of statement marked as containing a transforamtion, but all children without token info (detected a macro expansion): currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
-               printf ("*** Found case of statement marked as containing a transforamtion, but all children without token info (detected a macro expansion): currentStatement = %s \n",currentStatement->class_name().c_str());
+            // printf ("*** Found case of statement marked as containing a transformation, but all children without token info (detected a macro expansion): currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+               printf ("*** Found case of statement marked as containing a transformation, but all children without token info (detected a macro expansion): currentStatement = %s \n",currentStatement->class_name().c_str());
 #endif
 
             // DQ (11/9/2015): Added support for specific scopes where we don't want them the be 
@@ -237,6 +241,32 @@ detectMacroExpansionsToBeUnparsedAsAstTransformations ( SgSourceFile* sourceFile
      DetectMacroExpansionsToBeUnparsedAsAstTransformationsSynthesizedAttribute topAttribute = traversal.traverseWithinFile(sourceFile,inheritedAttribute);
 
      ROSE_ASSERT(topAttribute.node != NULL);
+
+#if 0
+     printf ("Completed detection of macro expansions requiring unparsing from the AST (instead of the token stream if they are not transformed) \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+#endif
+
+
+// DQ (11/30/2015): New version of this code using the detected macro expansions.
+void
+detectMacroExpansionsToBeUnparsedAsAstTransformations ( SgSourceFile* sourceFile )
+   {
+  // Note that we have the macroExpansions and there associated statements, but if these are replaced 
+  // by other statements then we have to have a way to detect that they were transformed by removal 
+  // where they were not transformed by being modified.
+
+  // This is now handled in the SageInterface::resetInternalMapsForTargetStatement() function.
+
+#if 0
+     printf ("***************************************************************************************************** \n");
+     printf ("We need to detect where in the AST any statements that were transfomed were also associated with a    \n");
+     printf ("macro expansion so that we can uniformally mark the all the associated statements as transformations. \n");
+     printf ("***************************************************************************************************** \n");
+#endif
 
 #if 0
      printf ("Completed detection of macro expansions requiring unparsing from the AST (instead of the token stream if they are not transformed) \n");
