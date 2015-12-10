@@ -584,7 +584,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
       }
       default:
         cerr << "@NODE:"<<node->sage_class_name()<<endl;
-        throw "Error: evalConstInt::unknown unary operation.";
+        string exceptionInfo=string("Error: evalConstInt::unknown unary operation @")+string(node->sage_class_name());
+        throw exceptionInfo; 
       } // end switch
     }
     return  resultList;
@@ -599,35 +600,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     return listify(res);
   }
   switch(node->variantT()) {
-#if 0
-  case V_SgBoolValExp: {
-    SgBoolValExp* boolValExp=isSgBoolValExp(node);
-    assert(boolValExp);
-    int boolVal= boolValExp->get_value();
-    if(boolVal==0) {
-      res.result=false;
-      return listify(res);
-    }
-    if(boolVal==1) {
-      res.result=true;
-      return listify(res);
-    }
-    break;
-  }
-  case V_SgFloatVal:
-  case V_SgDoubleVal:
-  case V_SgLongDoubleVal: {
-    // floating point values are currently not computed
-    res.result=AType::ConstIntLattice(AType::Top());
-    return listify(res);
-  }
-  case V_SgIntVal: {
-    SgIntVal* intValNode=isSgIntVal(node);
-    int intVal=intValNode->get_value();
-    res.result=intVal;
-    return listify(res);
-  }
-#endif
   case V_SgVarRefExp: {
     VariableId varId;
     bool isVar=ExprAnalyzer::variable(node,varId);

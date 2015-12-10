@@ -446,7 +446,8 @@ analyterix_SOURCES = \
 
 
 check-local:
-	./codethorn --internal-checks				 
+	./codethorn --internal-checks	
+	./codethorn $(srcdir)/tests/typetest1.C			 
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================

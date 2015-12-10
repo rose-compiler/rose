@@ -1672,28 +1672,88 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           if(!(*i).result.isTop())
             cset.removeAllConstraintsOfVar(lhsVar);
           estateList.push_back(createEState(edge.target,newPState,cset));
-        } else {
-          if(isSgPntrArrRefExp(lhs)) {
-            // for now we ignore array refs on lhs
-            // TODO: assignments in index computations of ignored array ref
-            // see ExprAnalyzer.C: case V_SgPntrArrRefExp:
-            // since nothing can change (because of being ignored) state remains the same
-            
-            EState estate=(*i).estate;
-            PState oldPState=*estate.pstate();
-            ConstraintSet oldcset=*estate.constraints();            
+        } else if(isSgPntrArrRefExp(lhs)) {
+          // for now we ignore array refs on lhs
+          // TODO: assignments in index computations of ignored array ref
+          // see ExprAnalyzer.C: case V_SgPntrArrRefExp:
+          // since nothing can change (because of being ignored) state remains the same
+          VariableIdMapping* _variableIdMapping=&variableIdMapping;
+          EState estate=(*i).estate;
+          PState oldPState=*estate.pstate();
+          ConstraintSet oldcset=*estate.constraints();            
+          if(getSkipArrayAccesses()) {
+            // TODO: remove constraints on array-element(s) [currently no constraints are computed for arrays]
             estateList.push_back(createEState(edge.target,oldPState,oldcset));            
-            if(!getSkipArrayAccesses()) {
-              cerr << "Error: array-element access on lhs of assignment not supported yet."<<endl;
+          } else {
+            cerr<<"Error: lhs array-access not supported yet."<<endl;
+            exit(1);
+            if(SgVarRefExp* varRefExp=isSgVarRefExp(lhs)) {
+              PState pstate2=oldPState;
+              VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
+              // two cases
+              if(_variableIdMapping->hasArrayType(arrayVarId)) {
+                // has already correct id
+                // nothing to do
+              } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
+                // in case it is a pointer retrieve pointer value
+                //cout<<"DEBUG: pointer-array access!"<<endl;
+                if(pstate2.varExists(arrayVarId)) {
+                  AValue aValuePtr=pstate2[arrayVarId].getValue();
+                  // convert integer to VariableId
+                  // TODO (topify mode: does read this as integer)
+                  if(!aValuePtr.isConstInt()) {
+                    cerr<<"Error: pointer value in array access lhs is top. Not supported yet."<<endl;
+                    exit(1);
+                  }
+                  int aValueInt=aValuePtr.getIntValue();
+                  // change arrayVarId to refered array!
+                  //cout<<"DEBUG: defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
+                  arrayVarId=_variableIdMapping->variableIdFromCode(aValueInt);
+                  //cout<<" to "<<_variableIdMapping->variableName(arrayVarId)<<endl;//DEBUG
+                } else {
+                  cerr<<"Error: lhs array access: pointer variable does not exist in PState."<<endl;
+                  exit(1);
+                }
+              } else {
+                cerr<<"Error: lhs array access: unkown type of array or pointer."<<endl;
+                exit(1);
+              }
+              VariableId arrayElementId;
+              AValue aValue=(*i).value();
+              int index=-1;
+              if(aValue.isConstInt()) {
+                index=aValue.getIntValue();
+                arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,index);
+                //cout<<"DEBUG: arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
+              } else {
+                cerr<<"Error: lhs array index cannot be evaluated to a constant. Not supported yet."<<endl;
+                cerr<<"expr: "<<varRefExp->unparseToString()<<endl;
+                exit(1);
+              }
+              ROSE_ASSERT(arrayElementId.isValid());
+              // read value of variable var id (same as for VarRefExp - TODO: reuse)
+              // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
+              if(pstate2.varExists(arrayElementId)) {
+                // TODO: handle constraints
+                pstate2[arrayElementId]=(*i).value(); // *i is assignment-rhs evaluation result
+              } else {
+                // check that array is constant array (it is therefore ok that it is not in the state)
+                cerr<<"Error: lhs array-access index does not exist in state."<<endl;
+                exit(1);
+              }
+            } else {
+              cerr<<"Error: array-access uses expr for denoting the array. Not supported yet."<<endl;
+              cerr<<"expr: "<<lhs->unparseToString()<<endl;
+              cerr<<"arraySkip: "<<getSkipArrayAccesses()<<endl;
               exit(1);
             }
-          } else {
-            cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
-            cerr << "expr: "<< lhs->unparseToString()<<endl;
-            cerr << "type: "<<lhs->class_name()<<endl;
-            //cerr << "performing no update of state!"<<endl;
-            exit(1);
           }
+        } else {
+          cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
+          cerr << "expr: "<< lhs->unparseToString()<<endl;
+          cerr << "type: "<<lhs->class_name()<<endl;
+          //cerr << "performing no update of state!"<<endl;
+          exit(1);
         }
       }
       return estateList;
