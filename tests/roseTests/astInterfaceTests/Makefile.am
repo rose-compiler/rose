@@ -955,6 +955,7 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputmoveDeclarationToInnermostScope_test2015_22.h \
        inputmoveDeclarationToInnermostScope_test2015_40.h \
        inputmoveDeclarationToInnermostScope_test2015_142.h \
+       inputmoveDeclarationToInnermostScope_20.C \
        inputmoveDeclarationToInnermostScope_21.C \
        inputmoveDeclarationToInnermostScope_22.C \
        inputmoveDeclarationToInnermostScope_23.C \
