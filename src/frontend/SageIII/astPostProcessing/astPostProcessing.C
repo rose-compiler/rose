@@ -171,6 +171,19 @@ void postProcessingSupport (SgNode* node)
   // once on an entire project is more efficient than calling it once per
   // file.
 
+#if 0
+  // DQ (11/23/2015): Before we do any modifications, check for unique IR nodes in the AST (see test2015_121.C).
+#if 1
+     printf ("Checking for unique nodes in the AST before AST post-processing: issolating possible multiple references friend function \n");
+#endif
+
+     testAstForUniqueNodes(node);
+
+#if 1
+     printf ("DONE: Checking for unique nodes in the AST before AST post-processing: issolating possible multiple references friend function \n");
+#endif
+#endif
+
   // JJW (12/5/2008): Turn off C and C++ postprocessing steps when the new EDG
   // interface is being used (it should produce correct, complete ASTs on its
   // own and do its own fixups)

@@ -61,6 +61,9 @@ extern const std::string ROSE_OFP_VERSION_STRING;
 // AST before transformations).
 void buildTokenStreamMapping(SgSourceFile* sourceFile);
 
+// DQ (11/30/2015): Adding general support fo the detection of macro expansions and include file expansions.
+void detectMacroOrIncludeFileExpansions(SgSourceFile* sourceFile);
+
 
 #ifdef _MSC_VER
 // DQ (11/29/2009): MSVC does not support sprintf, but "_snprintf" is equivalent
@@ -2122,6 +2125,11 @@ SgProject::parse()
                       // and attaches the toke stream to the SgSourceFile IR node.  
                       // *** Next we have to attached the data base ***
                          buildTokenStreamMapping(sourceFile);
+
+                      // DQ (11/30/2015): Add support to detect macro and include file expansions (can use the token sequence mapping if available).
+                      // Not clear if I want to require the token sequence mapping, it is likely useful to detect macro expansions even without the 
+                      // token sequence, but usig the token sequence permit us to gather more data.
+                         detectMacroOrIncludeFileExpansions(sourceFile);
                        }
 #if 1
                     if ( SgProject::get_verbose() > 0 )

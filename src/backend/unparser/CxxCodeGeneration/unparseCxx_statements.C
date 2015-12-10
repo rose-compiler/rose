@@ -338,6 +338,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 
                  // We don't want to unparse the token at the end.
                     int j = end-1;
+                    bool firstCarriageReturn = false;
                     bool still_is_whitespace = true;
                     while ( (j >= start) && (still_is_whitespace == true) )
                        {
@@ -363,6 +364,16 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 #endif
                             }
 
+                      // DQ (11/20/2015): Note that to avoid extra lines in the output we only want to the whitespace up to the first CR.
+                         firstCarriageReturn = tokenVector[j]->isCarriageReturn();
+                         if (firstCarriageReturn == true)
+                            {
+                              still_is_whitespace = false;
+#if 0
+                              printf ("unparseOnlyWhitespace == true: j = %d set still_is_whitespace = false (seenCarriageReturn == true) \n",j);
+#endif
+                            }
+
                          j--;
                        }
 
@@ -378,7 +389,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                          *(unp->get_output_stream().output_stream()) << (*m)->get_lexeme_string();
 #else
                       // Note that this will interprete line endings which is not going to provide the precise token based output.
-                         (*m)->get_lexeme_string());
+                         curprint((*m)->get_lexeme_string());
 #endif
                          m++;
                        }
@@ -1261,17 +1272,6 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
   // curprint("In unparseLanguageSpecificStatement()");
 
 #if 0
-  // Debugging support
-     SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
-     if (declarationStatement != NULL)
-        {
-          curprint("/* In unparseLanguageSpecificStatement(): declarationStatement->get_declarationModifier().isFriend() = ");
-          declarationStatement->get_declarationModifier().isFriend() ? curprint("true") : curprint("false");
-          curprint("*/ \n ");
-        }
-#endif
-
-#if 0
      curprint ( string("\n/* Top of unparseLanguageSpecificStatement (Unparse_ExprStmt) " ) + stmt->class_name() + " */\n ");
      ROSE_ASSERT(stmt->get_startOfConstruct() != NULL);
   // ROSE_ASSERT(stmt->getAttachedPreprocessingInfo() != NULL);
@@ -1284,6 +1284,17 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
         + " raw column = "   + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_col())
         + " #comments = "    + StringUtility::numberToString(numberOfComments)
         + " */\n ");
+#endif
+
+#if 0
+  // Debugging support
+     SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
+     if (declarationStatement != NULL)
+        {
+          curprint("/* In unparseLanguageSpecificStatement(): declarationStatement->get_declarationModifier().isFriend() = ");
+          declarationStatement->get_declarationModifier().isFriend() ? curprint("true") : curprint("false");
+          curprint("*/ \n ");
+        }
 #endif
 
 #if ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE
@@ -2426,20 +2437,23 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 
      ROSE_ASSERT(functionDeclaration != NULL);
 
-#if 0
+#if 1
      printf ("Inside of Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() templateInstantiationFunctionDeclaration = %p \n",templateInstantiationFunctionDeclaration);
      printf ("   --- isTransformed (templateInstantiationFunctionDeclaration) = %s \n",isTransformed (templateInstantiationFunctionDeclaration) ? "true" : "false");
-     curprint("/* Output in curprint in Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() */");
+     printf ("   --- nondefining declaration = %p \n",templateInstantiationFunctionDeclaration->get_firstNondefiningDeclaration());
+     printf ("   --- defining declaration    = %p \n",templateInstantiationFunctionDeclaration->get_definingDeclaration());
+     curprint("/* In Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() */");
 #endif
 
-#if OUTPUT_DEBUGGING_FUNCTION_NAME || 0
-     printf ("Inside of unparseTemplateInstantiationFunctionDeclStmt() name = %s (qualified_name = %s)  transformed = %s prototype = %s static = %s compiler generated = %s transformed = %s output = %s \n",
+#if OUTPUT_DEBUGGING_FUNCTION_NAME || 1
+     printf ("Inside of unparseTemplateInstantiationFunctionDeclStmt() name = %s (qualified_name = %s)  transformed = %s prototype = %s static = %s friend = %s compiler generated = %s transformed = %s output = %s \n",
        // templateInstantiationFunctionDeclaration->get_name().str(),
           templateInstantiationFunctionDeclaration->get_name().str(),
           templateInstantiationFunctionDeclaration->get_qualified_name().str(),
           isTransformed (templateInstantiationFunctionDeclaration) ? "true" : "false",
           (templateInstantiationFunctionDeclaration->get_definition() == NULL) ? "true" : "false",
           (templateInstantiationFunctionDeclaration->get_declarationModifier().get_storageModifier().isStatic() == true) ? "true" : "false",
+          (templateInstantiationFunctionDeclaration->get_declarationModifier().isFriend() == true) ? "true" : "false",
           (templateInstantiationFunctionDeclaration->get_file_info()->isCompilerGenerated() == true) ? "true" : "false",
           (templateInstantiationFunctionDeclaration->get_file_info()->isTransformation() == true) ? "true" : "false",
           (templateInstantiationFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true) ? "true" : "false");
@@ -2457,7 +2471,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
           if (skipforwardDeclarationOfTemplateSpecialization == true)
              {
             // This is a compiler generated forward function declaration of a template instatiation, so skip it!
-#if PRINT_DEVELOPER_WARNINGS
+#if PRINT_DEVELOPER_WARNINGS || 1
                printf ("This is a compiler generated forward function declaration of a template instatiation, so skip it! \n");
                curprint ( string("\n/* Skipping output of compiler generated forward function declaration of a template specialization */"));
 #endif
@@ -2470,7 +2484,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
             // skip output of inlined templates since these are likely to have been used 
             // previously and would be defined too late if provided as an inline template 
             // specialization output in the source code.
-#if PRINT_DEVELOPER_WARNINGS
+#if PRINT_DEVELOPER_WARNINGS || 1
                printf ("This is an inlined template which might have been used previously (skipping output of late specialization) \n");
                curprint ( string("\n/* Skipping output of inlined template specialization */"));
 #endif
@@ -2492,7 +2506,9 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
        // DQ (5/2/2012): If the template declaration is not available then it is likely that is does not exist and so we will need to output the instantiation.
        // The problem with this is that we actually build a template declaration in this case but it is not represented by a string (so until we
        // abandon the string use of the template declaration in the unparsing we can't take advantage of this).
-
+#if 0
+          printf ("templateInstantiationFunctionDeclaration->get_templateDeclaration() = %p \n",templateInstantiationFunctionDeclaration->get_templateDeclaration());
+#endif
        // ROSE_ASSERT(templateInstantiationFunctionDeclaration->get_templateDeclaration() != NULL);
           if (templateInstantiationFunctionDeclaration->get_templateDeclaration() != NULL)
              {
@@ -2516,6 +2532,9 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
             // if ( templateInstantiationFunctionDeclaration->get_file_info()->isCompilerGenerated() == false )
                if ( templateInstantiationFunctionDeclaration->get_file_info()->isCompilerGenerated() == false && templateInstantiationFunctionDeclaration->get_file_info()->isSourcePositionUnavailableInFrontend() == false )
                   {
+#if 0
+                    printf ("Declaration is not compiler generate or marked as frontend specific \n");
+#endif
                  // DQ (8/2/2012): If this is not compiler generated then is was in the original source code ans we have to out put it in the generated code.
                     outputInstantiatedTemplateFunction = true;
                   }
@@ -2529,7 +2548,9 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
                     if ( true )
 #endif
                        {
-                      // printf ("Declaration appears in the current source file. \n");
+#if 0
+                         printf ("Declaration appears in the current source file. \n");
+#endif
 #if PRINT_DEVELOPER_WARNINGS
                          curprint ( string("\n/* In unparseTemplateInstantiationFunctionDeclStmt(): output the template function declaration */ \n "));
 #endif
@@ -2554,7 +2575,6 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
                outputInstantiatedTemplateFunction = true;
              }
         }
-
 
 #if 0
      printf ("In unparseTemplateInstantiationFunctionDeclStmt(): outputInstantiatedTemplateFunction = %s \n",outputInstantiatedTemplateFunction ? "true" : "false");
@@ -2589,6 +2609,11 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
           curprint ("\n/* DONE: Now output the function declaration (unparseFuncDeclStmt) */\n ");
 #endif
         }
+
+#if 0
+     printf ("Leaving unparseTemplateInstantiationFunctionDeclStmt() \n");
+     curprint ("\n/* Leaving unparseTemplateInstantiationFunctionDeclStmt() */\n ");
+#endif
    }
 
 
@@ -2900,6 +2925,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgStatement* last_stmt = NULL;
 #endif
 
+#if 0
   // DQ (11/12/2015): Compute the statement to use for representative whitespace once.
      SgStatementPtrList::iterator representativeStatementForWhitespace = basic_stmt->get_statements().begin();
 
@@ -2913,6 +2939,15 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
                representativeStatementForWhitespace++;
              }
         }
+#else
+  // SgStatementPtrList::iterator representativeStatementForWhitespace = sourceFile->get_representativeWhitespaceStatementMap()[basic_stmt];
+     SgStatement* representativeStatementForWhitespace = NULL;
+     if (SgSourceFile::get_representativeWhitespaceStatementMap().find(basic_stmt) != SgSourceFile::get_representativeWhitespaceStatementMap().end())
+        {
+          representativeStatementForWhitespace = SgSourceFile::get_representativeWhitespaceStatementMap()[basic_stmt];
+          ROSE_ASSERT(representativeStatementForWhitespace != NULL);
+        }
+#endif
 
   // DQ (11/15/2015): if this is on because it is from an inherited SgBasicBlock then turn off the flag to control formatting.
   // I don't like this method of handling the inherited attribute, and perhaps this poitn to why this formatting should be 
@@ -2923,6 +2958,16 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (representativeStatementForWhitespace != basic_stmt->get_statements().end())
         {
           printf ("representativeStatementForWhitespace = %p = %s \n",*representativeStatementForWhitespace,(*representativeStatementForWhitespace)->class_name().c_str());
+       // printf ("   --- (*representativeStatementForWhitespace)->unparseToString() = %s \n",(*representativeStatementForWhitespace)->unparseToString().c_str());
+          bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations = true;
+          printf ("   --- SageInterface::generateUniqueName(*representativeStatementForWhitespace) = %s \n",
+               SageInterface::generateUniqueName(*representativeStatementForWhitespace,ignoreDifferenceBetweenDefiningAndNondefiningDeclarations).c_str());
+        }
+       else
+        {
+       // If we don't find anything then the falback position could be to use the whitespace associated 
+       // with the SgBasicBlock, except that this would be strange for many common formatting styles.
+          printf ("WARNING: no representative whitespace identified for SgBasicBlock = %p \n",basic_stmt);
         }
 #endif
 
@@ -2968,7 +3013,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
                        {
                       // An additional issue is that we should implement unparseOnlyWhitespace support to only unparse 
                       // the trailing whitespace tokens instead of all the tokens except for non-whitespace).
-
+#if 0
                       // Find representative whitespace for statements in this basic block.
                          SgStatementPtrList::iterator q = representativeStatementForWhitespace;
                          if (q != basic_stmt->get_statements().end())
@@ -2983,7 +3028,41 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
                             {
                            // The least we can do is to output a CR in this case where we have no representative whitespace.
                            // curprint("\n");
+#if 1
+                              printf ("Not clear how to compute spacing, but at least we need a CR \n");
+#endif
+#if 1
+                              curprint("\n");
+#else
+                              curprint("\n/* no representative whitespace available */ ");
+#endif
                             }
+#else
+                      // DQ (11/20/2015): This implementation uses a previously prepared map of representative statements in 
+                      // the scope so that we can support the use of the whitespace from these statements when unparsing 
+                      // statements in the current scope that are transformations.
+                         SgStatement* q = representativeStatementForWhitespace;
+                         if (q != NULL)
+                            {
+                           // Found a statement in the basic block that we can use to represent representative whitespace.
+                              bool unparseOnlyWhitespace = true;
+#if 1
+                              unparseStatementFromTokenStream (q, q, e_leading_whitespace_start, e_token_subsequence_start, unparseOnlyWhitespace);
+#endif
+                            }
+                           else
+                            {
+                           // This is the backup plan if there was no identified statement associated with the current scope.
+#if 1
+                              printf ("Not clear how to compute spacing, but at least we need a CR \n");
+#endif
+#if 1
+                              curprint("\n");
+#else
+                              curprint("\n/* no representative whitespace available */ ");
+#endif
+                            }
+#endif
                        }
 #if DEBUG_BASIC_BLOCK || 0
                     curprint ("/* unparse leading white space of first statement: END */");
@@ -4008,8 +4087,11 @@ fixupScopeInUnparseInfo ( SgUnparse_Info& ninfo , SgDeclarationStatement* declar
 void
 Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
+     SgFunctionDeclaration* funcdecl_stmt = isSgFunctionDeclaration(stmt);
+     ROSE_ASSERT(funcdecl_stmt != NULL);
+
 #if 0
-     printf ("Inside of unparseFuncDeclStmt() \n");
+     printf ("Inside of unparseFuncDeclStmt(): name = %p = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
   // curprint ( string("/* Inside of Unparse_ExprStmt::unparseFuncDeclStmt */";
      curprint ( string("\n/* Inside of Unparse_ExprStmt::unparseFuncDeclStmt (" ) + StringUtility::numberToString(stmt) 
                 + "): class_name() = " + stmt->class_name().c_str() + " */ \n");
@@ -4024,9 +4106,6 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // if (stmt->get_startOfConstruct()->isOutputInCodeGeneration()==false)
   //      return;
-
-     SgFunctionDeclaration* funcdecl_stmt = isSgFunctionDeclaration(stmt);
-     ROSE_ASSERT(funcdecl_stmt != NULL);
 
   // DQ (1/19/2014): Adding support for attributes that must be prefixed to the function declarations (e.g. "__attribute__((regnum(3)))").
   // It is output here for non-defining declarations, but in unparseFuncDefnStmt() function for the attribute to be associated with the defining declaration.
@@ -4045,6 +4124,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
 #endif
 
+  // DQ (11/27/2015): The updated support for templates demonstrates that we need this code (see test2004_37.C).
+  // However, the larger issue is that the defining function declaration should not have been output, which is 
+  // the root cause of this problem.
   // DQ (8/19/2012): I don't think I like how we are skipping forward declarations here (need to understand this better).
   // Liao, 9/25/2009, skip the compiler generated forward declaration for a SgTemplateInstantiationFunctionDecl
   // see bug 369: https://outreach.scidac.gov/tracker/index.php?func=detail&aid=369&group_id=24&atid=185
@@ -4056,10 +4138,10 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                if (isSgTemplateInstantiationFunctionDecl(def_decl))
                   {
                  // cout<<"Skipping a forward declaration of a template instantiation function declaration..."<<endl;
-#if 0
+#if 1
                     printf ("In unparseFuncDeclStmt(): Skipping a forward declaration of a template instantiation function declaration... \n");
 #endif
-#if 0
+#if 1
                     curprint("/* In unparseFuncDeclStmt(): Skipping a forward declaration of a template instantiation function declaration...*/ \n");
 #endif
                     return;
@@ -4150,6 +4232,13 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // DQ (10/10/2006): Do output any qualified names (particularly for non-defining declarations).
   // ninfo.set_forceQualifiedNames();
 
+#if 0
+     printf ("funcdecl_stmt->isForward()      = %s \n",funcdecl_stmt->isForward() ? "true" : "false");
+     printf ("funcdecl_stmt->get_definition() = %s \n",funcdecl_stmt->get_definition() ? "true" : "false");
+     printf ("info.SkipFunctionDefinition()   = %s \n",info.SkipFunctionDefinition() ? "true" : "false");
+#endif
+
+
   // if (!funcdecl_stmt->isForward() && funcdecl_stmt->get_definition() && !info.SkipFunctionDefinition())
      if ( (funcdecl_stmt->isForward() == false) && (funcdecl_stmt->get_definition() != NULL) && (info.SkipFunctionDefinition() == false) )
         {
@@ -4169,6 +4258,9 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // the info object. See test2007_172.C for example of why this as a problem,
        // though it is not clear that a private friend is any different than a 
        // public friend.
+#if 0
+          printf ("Calling unparseStatement(): using funcdecl_stmt->get_definition() = %p = %s \n",funcdecl_stmt->get_definition(),funcdecl_stmt->get_definition()->class_name().c_str());
+#endif
        // unparseStatement(funcdecl_stmt->get_definition(), ninfo);
           unparseStatement(funcdecl_stmt->get_definition(), info);
 
@@ -4428,7 +4520,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // DQ (10/15/2006): Matching call to unset the stored declaration.
           ninfo.set_declstatement_ptr(NULL);
 
-#if 0
+#if OUTPUT_FUNCTION_DECLARATION_DATA || 0
           printf ("DONE: calling unparse_helper \n");
           curprint ("/* DONE: calling unparse_helper */");
 #endif

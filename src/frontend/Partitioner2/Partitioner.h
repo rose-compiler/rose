@@ -31,7 +31,7 @@ namespace BinaryAnalysis {
 
 /** Binary function detection.
  *
- *  This namespace consists of three major parts and a number of smaller parts.  The major parts are:
+ *  This namespace consists of two major parts and a number of smaller parts.  The major parts are:
  *
  *  @li @ref Partitioner2::Partitioner "Partitioner": The partitioner is responsible for organizing instructions into basic
  *      blocks and basic blocks into functions. It has methods to discover new parts of the executable, and methods to control
@@ -1525,9 +1525,38 @@ public:
      *
      *  Calling convention analysis results are stored in the function object. If calling convention analysis has already been
      *  run for this function then the old results are returned.  The old results can be cleared on a per-function basis with
-     *  <code>function->callingConventionAnalysis().clear()</code>. */
+     *  <code>function->callingConventionAnalysis().clear()</code>.
+     *
+     *  See also, @ref allFunctionCallingConvention, which computes calling convention characteristics for all functions at
+     *  once, and @ref functionCallingConventionDefinitions, which returns matching definitions. */
     const CallingConvention::Analysis& functionCallingConvention(const Function::Ptr&,
                                                                  const CallingConvention::Definition *dflt=NULL) const /*final*/;
+
+    /** Return list of matching calling conventions.
+     *
+     *  Given a function, run a calling convention analysis (if necessary) and return the list of common architecture calling
+     *  convention definitions that match the characteristics of the function.  This method differs from @ref
+     *  functionCallingConvention in that the former returns an analysis object that holds the function characteristics, while
+     *  this method then takes a list of common calling convention definitions (based on the architecture) and returns those
+     *  definitions that are consistent with the function characteristics.
+     *
+     *  Since this analysis is based on data-flow, which is based on a control flow graph, the function must be attached to the
+     *  CFG/AUM and all ts basic blocks must also exist in the CFG/AUM.
+     *
+     *  If the specified function calls other functions for which a calling convention analysis has not been run the analysis
+     *  of this function may be incorrect.  This is because the analysis of this function must know which registers are
+     *  clobbered by the call in order to produce accurate results. See also, @ref allFunctionCallingConvention. If a default
+     *  calling convention is supplied then it determines which registers are clobbered by a call to a function that hasn't
+     *  been analyzed yet.
+     *
+     *  If the calling convention analysis fails or no common architecture calling convention definition matches the
+     *  characteristics of the function, then an empty list is returned.
+     *
+     *  See also, @ref functionCallingConvention, which returns the calling convention characteristics of a function (rather
+     *  than definitions), and @ref allFunctionCallingConvention, which runs that analysis over all functions. */
+    CallingConvention::Dictionary
+    functionCallingConventionDefinitions(const Function::Ptr&,
+                                         const CallingConvention::Definition *dflt=NULL) const /*final*/;
 
     /** Compute calling conventions for all functions.
      *

@@ -369,6 +369,9 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           if (typedefDeclaration != NULL)
              {
                nodelabel += string("\\n") + typedefDeclaration->get_name();
+
+            // DQ (11/21/2015): Adding output of typedefBaseTypeContainsDefiningDeclaration field.
+               nodelabel += string("\\n typedefBaseTypeContainsDefiningDeclaration = ") + (typedefDeclaration->get_typedefBaseTypeContainsDefiningDeclaration() ? "true " : "false ");
              }
 
        // DQ (3/20/2011): Added function names to the generated dot file graphs of the AST.
@@ -387,7 +390,14 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 
             // DQ (4/5/2015): I think this is not used and should be removed.
             // nodelabel += string("\\n isFirstDeclarationOfDeclarationList = ") + (variableDeclaration->get_isFirstDeclarationOfDeclarationList() ? "true " : "false ");
+
+            // DQ (11/21/2015): Adding output of typedefBaseTypeContainsDefiningDeclaration field.
+               nodelabel += string("\\n variableDeclarationContainsBaseTypeDefiningDeclaration = ") + (variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration() ? "true " : "false ");
              }
+
+       // DQ (11/26/2015): Adding friend specification to support debugging test2012_59.C 
+       // (multiple function definitions for the same function due to EDG template function normalizations).
+          nodelabel += string("\\n isFriend = ") + (genericDeclaration->get_declarationModifier().isFriend() ? "true " : "false ");
 
           nodelabel += string("\\n") + name;
         }
