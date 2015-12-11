@@ -770,29 +770,6 @@ public:
      *  Returns an interval set which is the union of the extents for each data block referenced by this basic block. */
     AddressIntervalSet basicBlockDataExtent(const BasicBlock::Ptr&) const /*final*/;
 
-    /** Returns the functions that own a basic block.
-     *
-     *  Usually a basic block is owned by zero or one function, but it can sometimes be owned by multiple functions.  This
-     *  method returns all the owning basic blocks. The returned vector has no duplicates and the functions are sorted by
-     *  their entry address.
-     *
-     * @{ */
-    std::vector<Function::Ptr> basicBlockFunctionOwners(rose_addr_t blockVa) const /*final*/;
-    std::vector<Function::Ptr> basicBlockFunctionOwners(const BasicBlock::Ptr&) const /*final*/;
-    /** @} */
-
-    /** Returns the list of functions that own the specified basic blocks.
-     *
-     *  The returned vector contains a list of distinct functions that own the specified basic blocks.  The functions are
-     *  sorted by their entry address.  No function pointer (not even null) is returned for basic blocks that are not owned by
-     *  any function.
-     *
-     * @{ */
-    std::vector<Function::Ptr> basicBlockFunctionOwners(const std::set<rose_addr_t> &bblockVas) const /*final*/;
-    std::vector<Function::Ptr> basicBlockFunctionOwners(const std::vector<rose_addr_t> &bblockVas) const /*final*/;
-    std::vector<Function::Ptr> basicBlockFunctionOwners(const std::vector<BasicBlock::Ptr>&) const /*final*/;
-    /** @} */
-
     /** Detach a basic block from the CFG/AUM.
      *
      *  The specified basic block is detached from the CFG/AUM, leaving only a placeholder in its place.  The original outgoing
@@ -1375,33 +1352,58 @@ public:
 
     /** Finds functions that own the specified basic block.
      *
-     *  If @p bblockVa is a starting address for a basic block that is in the CFG/AUM then this method returns pointers to
-     *  the functions that own that block.  If the CFG/AUM does not contain a basic block that starts at the specified address,
-     *  or if no function owns that basic block, then an empty list is returned.  Basic blocks are usually owned by zero or one
-     *  function.
+     *  Return the functions that own the specified basic block(s). The returned vector has distinct function pointers sorted
+     *  by their entry addresses. Usually a basic block is owned by zero or one function. If a basic block cannot be found or
+     *  if it has no owning functions then an empty vector is returned.  The returned functions are all attached to the
+     *  partitioner (that's how the partitioner knows about them); detached functions are not found.
      *
-     *  If a basic block pointer is supplied instead of a basic block starting address, then the starting address of the
-     *  specified basic block is used.  That is, the returned function might not own the exact specified basic block, but owns
-     *  a different basic block that starts at the same address.  This can only happen when the specified basic block is
-     *  detached from the CFG and the CFG contains a different (attached) basic block at the same starting address.
+     *  Basic blocks can be specified in a number of ways:
+     *
+     *  @li As a CFG vertex. This is the fastest method since ownership information is stored directly in the CFG vertex. This
+     *  is identical to calling @ref CfgVertex::owningFunctions except the return value is a vector and the functions are
+     *  sorted differently.  The only expense is sorting the return value, which is usually a single function and therefore
+     *  constant time (the following bullets also assume this is constant time).
+     *
+     *  @li As a starting address. If a basic block with the specified starting address exists in the CFG then its function
+     *  owners are retrieved from the vertex.  Runtime is O(log |V|) where |V| is the number of vertices in the CFG.
+     *
+     *  @li As a block pointer.  The address of the block is used to find the CFG vertex from which ownership information is
+     *  obtained. Basic block ownership is stored in the CFG, therefore if the provided basic block is not attached to the
+     *  partitioner, the partitioner substitutes one that is attached. Runtime is O(log |V|) where |V| is the number of
+     *  vertices in the CFG.
+     *
+     *  @li As a vector of any of the above. The returned vector is the union of the owning functions. Run time is O(N M) where
+     *  N is the length of the vector and M is the time from above.
+     *
+     *  If @p doSort is clear then the result vector is not sorted, although it will still consist of unique function
+     *  pointers.  The return value from the variants that take more than one basic block is always sorted.
      *
      *  The returned function will be a function that is attached to the CFG/AUM; detached functions are never returned since
      *  the partitioner does not necessarily know about them.
      *
      *  @{ */
-    std::vector<Function::Ptr> findFunctionsOwningBasicBlock(rose_addr_t bblockVa) const /*final*/;
-    std::vector<Function::Ptr> findFunctionsOwningBasicBlock(const BasicBlock::Ptr&) const /*final*/;
-    /** @} */
+    std::vector<Function::Ptr>
+    functionsOwningBasicBlock(const ControlFlowGraph::Vertex&, bool doSort = true) const /*final*/;
 
-    /** Finds functions that own specified basic blocks.
-     *
-     *  Finds the set of distinct functions that own the specified basic blocks and returns a list of such functions in entry
-     *  address order.  This is similar to @ref findFunctionOwningBasicBlock except it operates on a collection of basic blocks
-     *  and returns a collection of distinct function pointers.
-     *
-     *  @{ */
-    std::vector<Function::Ptr> findFunctionsOwningBasicBlocks(const std::vector<rose_addr_t>&) const /*final*/;
-    std::vector<Function::Ptr> findFunctionsOwningBasicBlocks(const std::vector<BasicBlock::Ptr>&) const /*final*/;
+    std::vector<Function::Ptr>
+    functionsOwningBasicBlock(const ControlFlowGraph::ConstVertexIterator&, bool doSort = true) const /*final*/;
+
+    std::vector<Function::Ptr>
+    functionsOwningBasicBlock(rose_addr_t bblockVa, bool doSort = true) const /*final*/;
+
+    std::vector<Function::Ptr>
+    functionsOwningBasicBlock(const BasicBlock::Ptr&, bool doSort = true) const /*final*/;
+
+    template<class Container> // container can hold any type accepted by functionsOwningBasicBlock
+    std::vector<Function::Ptr>
+    functionsOwningBasicBlocks(const Container &bblocks) const /*final*/ {
+        std::vector<Function::Ptr> retval;
+        BOOST_FOREACH (const typename Container::value_type& bblock, bblocks) {
+            BOOST_FOREACH (const Function::Ptr &function, functionsOwningBasicBlock(bblock, false))
+                insertUnique(retval, function, sortFunctionsByAddress);
+        }
+        return retval;
+    }
     /** @} */
 
     /** Scans the CFG to find function calls.

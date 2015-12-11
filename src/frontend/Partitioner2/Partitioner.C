@@ -154,8 +154,9 @@ Partitioner::instructionCrossReferences(const AddressIntervalSet &restriction) c
     } accumulator(restriction, xrefs);
 
     BOOST_FOREACH (const BasicBlock::Ptr &bblock, basicBlocks()) {
+        std::vector<Function::Ptr> functions = functionsOwningBasicBlock(bblock);
         BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
-            BOOST_FOREACH (const Function::Ptr &function, basicBlockFunctionOwners(bblock)) {
+            BOOST_FOREACH (const Function::Ptr &function, functions) {
                 accumulator.target(Reference(function, bblock, insn));
                 accumulator.traverse(insn, preorder);
             }
@@ -575,58 +576,6 @@ Partitioner::basicBlockDataExtent(const BasicBlock::Ptr &bblock) const {
     return retval;
 }
 
-std::vector<Function::Ptr>
-Partitioner::basicBlockFunctionOwners(rose_addr_t bbVa) const {
-    ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bbVa);
-    if (!cfg_.isValidVertex(placeholder) || placeholder->value().type() != V_BASIC_BLOCK)
-        return std::vector<Function::Ptr>();
-    return basicBlockFunctionOwners(placeholder->value().bblock());
-}
-
-std::vector<Function::Ptr>
-Partitioner::basicBlockFunctionOwners(const BasicBlock::Ptr &bblock) const {
-    ASSERT_not_null(bblock);
-    std::vector<Function::Ptr> retval;
-    ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bblock->address());
-    if (cfg_.isValidVertex(placeholder) && placeholder->value().type() == V_BASIC_BLOCK) {
-        BOOST_FOREACH (const Function::Ptr &function, placeholder->value().owningFunctions().values())
-            retval.push_back(function);                 // owningFunctions() is already unique and sorted
-    }
-    return retval;
-}
-
-std::vector<Function::Ptr>
-Partitioner::basicBlockFunctionOwners(const std::vector<rose_addr_t> &bblockVas) const {
-    std::set<rose_addr_t> vaSet(bblockVas.begin(), bblockVas.end());
-    return basicBlockFunctionOwners(vaSet);
-}
-
-std::vector<Function::Ptr>
-Partitioner::basicBlockFunctionOwners(const std::set<rose_addr_t> &bblockVas) const {
-    std::vector<Function::Ptr> retval;
-    BOOST_FOREACH (rose_addr_t va, bblockVas) {
-        ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(va);
-        if (cfg_.isValidVertex(placeholder) && placeholder->value().type() == V_BASIC_BLOCK) {
-            BOOST_FOREACH (const Function::Ptr &function, placeholder->value().owningFunctions().values())
-                insertUnique(retval, function, sortFunctionsByAddress);
-        }
-    }
-    return retval;
-}
-
-std::vector<Function::Ptr>
-Partitioner::basicBlockFunctionOwners(const std::vector<BasicBlock::Ptr> &bblocks) const {
-    std::vector<Function::Ptr> retval;
-    BOOST_FOREACH (const BasicBlock::Ptr &bblock, bblocks) {
-        ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bblock->address());
-        if (cfg_.isValidVertex(placeholder) && placeholder->value().type() == V_BASIC_BLOCK) {
-            BOOST_FOREACH (const Function::Ptr &function, placeholder->value().owningFunctions().values())
-                insertUnique(retval, function, sortFunctionsByAddress);
-        }
-    }
-    return retval;
-}
-    
 BasicBlock::Successors
 Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
     ASSERT_not_null(bb);
@@ -854,7 +803,7 @@ Partitioner::basicBlockStackDeltaIn(const BasicBlock::Ptr &bb) const {
 
     // Basic block stack deltas are computed as a side effect of computing function stack deltas.  If the basic block is owned
     // by multiple functions then analyze each function in turn until one of them is able to assign a block stack delta.
-    std::vector<Function::Ptr> owningFunctions = basicBlockFunctionOwners(bb);
+    std::vector<Function::Ptr> owningFunctions = functionsOwningBasicBlock(bb);
     if (owningFunctions.empty()) {
         mlog[ERROR] <<"cannot compute stack delta for " <<bb->printableName() <<" not belonging to any function\n";
         return BaseSemantics::SValuePtr();
@@ -1057,23 +1006,33 @@ Partitioner::attachFunctionDataBlock(const Function::Ptr &function, const DataBl
 }
 
 std::vector<Function::Ptr>
-Partitioner::findFunctionsOwningBasicBlock(rose_addr_t bblockVa) const {
-    return basicBlockFunctionOwners(bblockVa);
+Partitioner::functionsOwningBasicBlock(const ControlFlowGraph::Vertex &vertex, bool doSort) const {
+    std::vector<Function::Ptr> retval;
+    BOOST_FOREACH (const Function::Ptr &function, vertex.value().owningFunctions().values())
+        retval.push_back(function);
+    if (doSort)
+        std::sort(retval.begin(), retval.end(), sortFunctionsByAddress);
+    return retval;
 }
 
 std::vector<Function::Ptr>
-Partitioner::findFunctionsOwningBasicBlock(const BasicBlock::Ptr &bblock) const {
-    return basicBlockFunctionOwners(bblock);
+Partitioner::functionsOwningBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder, bool doSort) const {
+    if (!cfg_.isValidVertex(placeholder) || placeholder->value().type() != V_BASIC_BLOCK)
+        return std::vector<Function::Ptr>();
+    return functionsOwningBasicBlock(*placeholder, doSort);
 }
 
 std::vector<Function::Ptr>
-Partitioner::findFunctionsOwningBasicBlocks(const std::vector<rose_addr_t> &bblockVas) const {
-    return basicBlockFunctionOwners(bblockVas);
+Partitioner::functionsOwningBasicBlock(rose_addr_t bblockVa, bool doSort) const {
+    ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bblockVa);
+    return functionsOwningBasicBlock(placeholder, doSort);
 }
 
 std::vector<Function::Ptr>
-Partitioner::findFunctionsOwningBasicBlocks(const std::vector<BasicBlock::Ptr> &bblocks) const {
-    return basicBlockFunctionOwners(bblocks);
+Partitioner::functionsOwningBasicBlock(const BasicBlock::Ptr &bblock, bool doSort) const {
+    if (bblock==NULL)
+        return std::vector<Function::Ptr>();
+    return functionsOwningBasicBlock(bblock->address(), doSort);
 }
 
 // We have a number of choices for the algorithm:
@@ -1738,7 +1697,7 @@ Partitioner::attachOrMergeFunction(const Function::Ptr &function) {
         return function;
 
     // The basic blocks in function must not be owned by more than one attached function.
-    std::vector<Function::Ptr> owningFunctions = basicBlockFunctionOwners(function->basicBlockAddresses());
+    std::vector<Function::Ptr> owningFunctions = functionsOwningBasicBlocks(function->basicBlockAddresses());
     if (owningFunctions.size() > 1) {
         std::ostringstream ss;
         ss <<function->printableName() + " cannot be merged because multiple attached functions own its basic blocks:";
