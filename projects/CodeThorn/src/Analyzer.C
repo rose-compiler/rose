@@ -2897,7 +2897,7 @@ bool all_false(vector<bool>& v) {
 }
 
 void Analyzer::runSolver5() {
-  flow.boostify();
+  //flow.boostify();
   reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
   cout<<"INFO: number of error labels: "<<reachabilityResults.size()<<endl;
   size_t prevStateSetSize=0; // force immediate report at start
@@ -2930,8 +2930,6 @@ void Analyzer::runSolver5() {
   {
     threadNum=omp_get_thread_num();
     while(!all_false(workVector)) {
-      bool oneSuccessorOnly=false;
-      EState newEStateBackupForOneSuccessorOnly;
       //cout<<"DEBUG: running : WL:"<<estateWorkList.size()<<endl;
       if(threadNum==0 && _displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
         printStatusMessage(true);
@@ -2949,23 +2947,17 @@ void Analyzer::runSolver5() {
           }
         }
       }
-      //cerr<<threadNum<<";";
       if(isEmptyWorkList()||isIncompleteSTGReady()) {
-        //      if(workVector[threadNum]==true) {
 #pragma omp critical
         {
           workVector[threadNum]=false;
         }
-        //}
         continue;
-        //break;
       } else {
-        //if(workVector[threadNum]==false) {
 #pragma omp critical
         {
           workVector[threadNum]=true;
         }
-        //}
       }
       const EState* currentEStatePtr=popWorkList();
       if(!currentEStatePtr) {
@@ -2973,42 +2965,22 @@ void Analyzer::runSolver5() {
         assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
       } else {
         assert(currentEStatePtr);
-      shortcut:      
         if(variableValueMonitor.isActive()) {
           variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
         }
         
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-        oneSuccessorOnly=(edgeSet.size()==1);
         //cerr << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;
           newEStateList=transferFunction(e,currentEStatePtr);
-#if 0
-          cout << "DEBUG: transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
-          cout << "DEBUG: newEStateList.size()"<<newEStateList.size()<<endl;
-          string sourceString=getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,20);
-          if(sourceString.size()==20) sourceString+="...";
-          cout << "DEBUG: source:"<<sourceString<<endl;
-          if(newEStateList.size()==1) {
-            cout << "DEBUG: EState: "<<(*newEStateList.begin()).toString(&variableIdMapping)<<endl;
-          }
-#endif
-          oneSuccessorOnly=oneSuccessorOnly&&(newEStateList.size()==1);
           for(list<EState>::iterator nesListIter=newEStateList.begin();
               nesListIter!=newEStateList.end();
               ++nesListIter) {
             // newEstate is passed by value (not created yet)
             EState newEState=*nesListIter;
             ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
-#if 0
-            // isTopified is linear in the number of vars in a state
-            if(isActiveGlobalTopify() && !isTopified(newEState)) {
-              cerr<<"EState NOT topified: "<<newEState.toString()<<endl;
-              exit(1);
-            }
-#endif
             if(_stg_trace_filename.size()>0 && !newEState.constraints()->disequalityExists()) {
               std::ofstream fout;
               // _csv_stg_trace_filename is the member-variable of analyzer
@@ -3028,11 +3000,6 @@ void Analyzer::runSolver5() {
             }
 
             if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
-              if(oneSuccessorOnly && _minimizeStates && (newEState.io.isNonIO())) {
-                newEStateBackupForOneSuccessorOnly=newEState;
-                currentEStatePtr=&newEStateBackupForOneSuccessorOnly;
-                goto shortcut;
-              }
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
               const EState* newEStatePtr=pres.second;
               if(pres.first==true)
