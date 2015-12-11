@@ -1460,6 +1460,8 @@ This is no perfect solution until we handle preprocessing information as structu
        // Otherwise the code unparsed will be illegal Fortran code (No {} blocks in Fortran)
        if (isFortranEndDirective(getOmpAttribute(decl)->getOmpDirectiveType()))
           continue; 
+      ROSE_ASSERT (decl->get_scope() !=NULL);    
+      ROSE_ASSERT (decl->get_parent() !=NULL);    
       //cout<<"debug: convert_OpenMP_pragma_to_AST() handling pragma at "<<decl<<endl;  
       //ROSE_ASSERT (decl->get_file_info()->get_filename() != string("transformation"));
       OmpAttributeList* oattlist= getOmpAttributeList(decl);
