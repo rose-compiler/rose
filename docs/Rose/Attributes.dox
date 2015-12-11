@@ -1,6 +1,9 @@
 // -*- c++ -*-
 
 /** @defgroup attributes Working with attributes
+ *  @ingroup rose_midend
+ *
+ *  Attaching user-defined attributes to objects.
  *
  *  Many ROSE classes allow users to define and store their own data in the form of @em attributes.  An attribute is a
  *  name/value pair where the name uniquely identifies the attribute within the container object and the value has a
@@ -8,8 +11,12 @@
  *
  *  ROSE supports three interfaces for attributes:
  *
- *  @li The Sage IR nodes derived from @ref SgNode have a built-in interface for storing attributes. The applicable methods all
- *      have "attribute" as part of their names. This interface is built upon @ref AstAttributeMechanism.
+ *  @li The Sage IR nodes derived from @ref SgNode have a built-in interface for storing heap-allocated attributes. The
+ *      applicable methods all have "attribute" as part of their names. This interface is built upon @ref
+ *      AstAttributeMechanism. This interface provides a way for the user to make multiple passes over the AST and save state
+ *      information into the AST for subsequent traversals. The mechanism is different from creation of inherited and
+ *      synthesized attributes within the AST processing mechanism (@ref ASTProcessing) since those attributes are allocated
+ *      and deallocated automatically on the stack.
  *  @li The @ref AstAttributeMechanism provides a mechanism by which heap-allocated attributes derived from @ref AstAttribute
  *      can be stored in an object. Such attributes are copied (by reallocating) whenever their container is copied so that
  *      they are never shared between two containers.  The AstAttributeMechanism container owns these attributes and deletes

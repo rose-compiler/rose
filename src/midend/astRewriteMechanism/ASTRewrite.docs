@@ -1,6 +1,6 @@
  /*!
      \defgroup RewriteMechanism AST Rewrite Mechanism
-     \ingroup ROSE_MidEndGroup
+     \ingroup rose_midend
 
      \brief The AST Rewrite Mechanism permits the editing of an applications AST.
 
