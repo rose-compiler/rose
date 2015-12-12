@@ -163,6 +163,20 @@ string VariableValueMonitor::toString(VariableIdMapping* variableIdMapping) {
   return ss.str();
 }
 
+void Analyzer::enableExternalFunctionSemantics() {
+  _externalFunctionSemantics=true;
+  _externalErrorFunctionName="__VERIFIER_error";
+  _externalNonDetIntFunctionName="__VERIFIER_nondet_int";
+  _externalExitFunctionName="exit";
+}
+
+void Analyzer::disableExternalFunctionSemantics() {
+  _externalFunctionSemantics=false;
+  _externalErrorFunctionName="";
+  _externalNonDetIntFunctionName="";
+  _externalExitFunctionName="";
+}
+
 Analyzer::Analyzer():
   startFunRoot(0),
   cfanalyzer(0),
@@ -183,9 +197,10 @@ Analyzer::Analyzer():
   _minimizeStates(false),
   _topifyModeActive(false),
   _iterations(0),
-  _approximated_iterations(0),
-  _curr_iteration_cnt(0),
-  _next_iteration_cnt(0)
+      _approximated_iterations(0),
+      _curr_iteration_cnt(0),
+      _next_iteration_cnt(0),
+      _externalFunctionSemantics(false)
 {
   variableIdMapping.setModeVariableIdForEachArrayElement(true);
   for(int i=0;i<100;i++) {
@@ -207,8 +222,8 @@ void Analyzer::setGlobalTopifyMode(GlobalTopifyMode mode) {
   _globalTopifyMode=mode;
 }
 
-void Analyzer::setErrorFunctionName(std::string errorFunctionName) {
-  _errorFunctionName=errorFunctionName;
+void Analyzer::setExternalErrorFunctionName(std::string externalErrorFunctionName) {
+  _externalErrorFunctionName=externalErrorFunctionName;
 }
 
 bool Analyzer::isPrecise() {
@@ -1376,7 +1391,23 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     InputOutput newio;
     Label lab=getLabeler()->getLabel(nextNodeToAnalyze1);
     VariableId varId;
-    if(getLabeler()->isStdInLabel(lab,&varId)) {
+
+    /* TODO: determine name of function */
+
+    bool  isExternalNonDetIntFunction=false;
+    if(useExternalFunctionSemantics()) {
+      if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
+        ROSE_ASSERT(funCall);
+        string externalFunctionName=SgNodeHelper::getFunctionName(funCall);
+        if(externalFunctionName==_externalNonDetIntFunctionName) {
+          isExternalNonDetIntFunction=true;
+          //cout<<"DEBUG: found externalNonDetIntFunction"<<endl;
+          //cout<<"TODO: set varId to input=__VERIFIER_nondet_int();"<<endl;
+          isExternalNonDetIntFunction=false;
+        }
+      }
+    }
+    if(isExternalNonDetIntFunction || getLabeler()->isStdInLabel(lab,&varId)) {
       if(_inputSequence.size()>0) {
         PState newPState=*currentEState.pstate();
         ConstraintSet newCSet=*currentEState.constraints();
@@ -1499,13 +1530,20 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         cout << "REPORT: stderr:"<<varId.toString()<<":"<<estate->toString()<<endl;
       }
     }
-    /* handling of error function as external function */ {
+    /* handling of specific semantics for external function */ {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         assert(funCall);
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName==_errorFunctionName) {
-          cout<<"DETECTED error function: "<<_errorFunctionName<<endl;
-          return elistify(createVerificationErrorEState(currentEState,edge.target));
+        if(useExternalFunctionSemantics()) {
+          if(funName==_externalErrorFunctionName) {
+            //cout<<"DETECTED error function: "<<_externalErrorFunctionName<<endl;
+            return elistify(createVerificationErrorEState(currentEState,edge.target));
+          } else if(funName==_externalExitFunctionName) {
+            /* the exit function is modeled to terminate the program
+               (therefore no successor state is generated)
+            */
+            return elistify();
+          }
         }
       }
     }

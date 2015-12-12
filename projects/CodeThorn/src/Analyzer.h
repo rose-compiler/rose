@@ -402,7 +402,12 @@ namespace CodeThorn {
     void setAssertCondVarsSet(set<VariableId> acVars);
     enum GlobalTopifyMode {GTM_IO, GTM_IOCF, GTM_IOCFPTR, GTM_COMPOUNDASSIGN, GTM_FLAGS};
     void setGlobalTopifyMode(GlobalTopifyMode mode);
-    void setErrorFunctionName(std::string errorFunctionName);
+    void setExternalErrorFunctionName(std::string externalErrorFunctionName);
+    // enables external function semantics 
+    void enableExternalFunctionSemantics();
+    void disableExternalFunctionSemantics();
+    bool useExternalFunctionSemantics() { return _externalFunctionSemantics; }
+
   private:
     GlobalTopifyMode _globalTopifyMode;
     set<VariableId> _compoundIncVarsSet;
@@ -454,7 +459,10 @@ namespace CodeThorn {
     int _approximated_iterations;
     int _curr_iteration_cnt;
     int _next_iteration_cnt;
-    string _errorFunctionName; // the call of this function causes termination of analysis
+    bool _externalFunctionSemantics;
+    string _externalErrorFunctionName; // the call of this function causes termination of analysis
+    string _externalNonDetIntFunctionName;
+    string _externalExitFunctionName;
   }; // end of class Analyzer
   
 } // end of namespace CodeThorn
