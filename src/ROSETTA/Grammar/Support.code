@@ -14946,6 +14946,10 @@ X aggressive
 
   // DQ (5/24/2015): Record if optimization was specified on the command line.
      p_optimization = false;
+
+  // DQ (12/11/2015): Option to use the token stream mapping and local tests of the 
+  // token sequence, to improve the source position information stored in the AST.
+     p_use_token_stream_to_improve_source_position_info = 0;
    }
 
 #if 0
@@ -15545,6 +15549,10 @@ SgFile::display ( const std::string & label ) const
 
   // DQ (4/17/2015): Adding multifile handling support for commandline generation.
      printf ("     p_multifile_support                    = %s \n",(p_multifile_support == true) ? "true" : "false");
+
+  // DQ (12/11/2015): Option to use the token stream mapping and local tests of the 
+  // token sequence, to improve the source position information stored in the AST.
+     printf ("     p_use_token_stream_to_improve_source_position_info = %s \n",(p_use_token_stream_to_improve_source_position_info == true) ? "true" : "false");
 
 #if 0
 // Order of data member entries in support.C, matched against the 
