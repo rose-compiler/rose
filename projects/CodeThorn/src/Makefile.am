@@ -323,6 +323,7 @@ faketarget:
 	rtests/vector1/RevStack.h
 	ProgramAbstractionLayer.h
 	tests/lvtest4.C
+	tests/svcomp-test2.c
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
@@ -450,8 +451,12 @@ check-local:
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
-	./codethorn $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
-	diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
+	@./codethorn $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
+	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
+	@echo ================================================================
+	@echo RUNNING VERIFICATION ERROR TESTS
+	@echo ================================================================
+	@./codethorn --error-function=__VERIFIER_error tests/svcomp-test2.c
 	@echo ================================================================
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================

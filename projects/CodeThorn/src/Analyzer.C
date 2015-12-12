@@ -899,9 +899,24 @@ bool Analyzer::isFailedAssertEState(const EState* estate) {
   return false;
 }
 
+bool Analyzer::isVerificationErrorEState(const EState* estate) {
+  if(estate->io.isVerificationError())
+    return true;
+  return false;
+}
+
 EState Analyzer::createFailedAssertEState(EState estate, Label target) {
   EState newEState=estate;
   newEState.io.recordFailedAssert();
+  newEState.setLabel(target);
+  return newEState;
+}
+
+// creates a state that represents that the verification error function was called
+// the edge is the external call edge
+EState Analyzer::createVerificationErrorEState(EState estate, Label target) {
+  EState newEState=estate;
+  newEState.io.recordVerificationError();
   newEState.setLabel(target);
   return newEState;
 }
@@ -1490,7 +1505,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         string funName=SgNodeHelper::getFunctionName(funCall);
         if(funName==_errorFunctionName) {
           cout<<"DETECTED error function: "<<_errorFunctionName<<endl;
-          return elistify(createFailedAssertEState(currentEState,edge.target));
+          return elistify(createVerificationErrorEState(currentEState,edge.target));
         }
       }
     }
@@ -2905,6 +2920,7 @@ void Analyzer::runSolver5() {
   int workers=_numberOfThreadsToUse;
   vector<bool> workVector(_numberOfThreadsToUse);
   set_finished(workVector,true);
+  bool terminateEarly=false;
   //omp_set_dynamic(0);     // Explicitly disable dynamic teams
   omp_set_num_threads(workers);
 
@@ -2956,10 +2972,16 @@ void Analyzer::runSolver5() {
       } else {
 #pragma omp critical
         {
-          workVector[threadNum]=true;
+          if(terminateEarly)
+            workVector[threadNum]=false;
+          else
+            workVector[threadNum]=true;
         }
       }
       const EState* currentEStatePtr=popWorkList();
+      // if we want to terminate early, we ensure to stop all threads and empty the worklist (e.g. verification error found).
+      if(terminateEarly)
+        continue;
       if(!currentEStatePtr) {
         //cerr<<"Thread "<<threadNum<<" found empty worklist. Continue without work. "<<endl;
         assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
@@ -2999,73 +3021,81 @@ void Analyzer::runSolver5() {
               }
             }
 
-            if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
+            if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
               const EState* newEStatePtr=pres.second;
               if(pres.first==true)
                 addToWorkList(newEStatePtr);
               recordTransition(currentEStatePtr,e,newEStatePtr);
             }
-            if((!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
-              // failed-assert end-state: do not add to work list but do add it to the transition graph
-              const EState* newEStatePtr;
-              newEStatePtr=processNewOrExisting(newEState);
-              recordTransition(currentEStatePtr,e,newEStatePtr);        
-              if(boolOptions["report-failed-assert"]) {
-#pragma omp critical
-                {
-                  cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
-                }
-              }
+              if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
+                // failed-assert end-state: do not add to work list but do add it to the transition graph
+                const EState* newEStatePtr;
+                newEStatePtr=processNewOrExisting(newEState);
+                recordTransition(currentEStatePtr,e,newEStatePtr);        
               
-              // record reachability
-              int assertCode;
-              if(boolOptions["rers-binary"]) {
-                assertCode=reachabilityAssertCode(newEStatePtr);
-              } else {
-                assertCode=reachabilityAssertCode(currentEStatePtr);
-              }  
-              if(assertCode>=0) {
+                if(isFailedAssertEState(&newEState)) {
+                  if(boolOptions["report-failed-assert"]) {
 #pragma omp critical
-                {
-                  if(boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) { 
-		    //if this particular assertion was never reached before, compute and update counterexample
-		    if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
-                      _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
-                    } 
+                    {
+                      cout << "REPORT: failed-assert: "<<newEStatePtr->toString()<<endl;
+                    }
                   }
-                    reachabilityResults.reachable(assertCode);
-                }
-              } else {
-                // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
-                if(!boolOptions["rersmode"]) {
-                  // assert without label
-                }
-              }
-              
-              if(_csv_assert_live_file.size()>0) {
-                string name=labelNameOfAssertLabel(currentEStatePtr->label());
-                if(name=="globalError")
-                  name="error_60";
-                name=name.substr(6,name.size()-6);
-                std::ofstream fout;
-                // csv_assert_live_file is the member-variable of analyzer
+                  // record failed assert
+                  int assertCode;
+                  if(boolOptions["rers-binary"]) {
+                    assertCode=reachabilityAssertCode(newEStatePtr);
+                  } else {
+                    assertCode=reachabilityAssertCode(currentEStatePtr);
+                  }  
+                  if(assertCode>=0) {
 #pragma omp critical
-                {
-                  fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
-                  assert (!fout.fail( ));
-                  fout << name << ",yes,9"<<endl;
-                  //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
-                  
-                  fout.close(); 
-                }
-              } // if
-            }
+                    {
+                      if(boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) { 
+                        //if this particular assertion was never reached before, compute and update counterexample
+                        if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
+                          _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
+                        } 
+                      }
+                      reachabilityResults.reachable(assertCode);
+                    }
+                  } else {
+                    // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
+                    if(!boolOptions["rersmode"]) {
+                      // assert without label
+                    }
+                  }
+                  if(_csv_assert_live_file.size()>0) {
+                    string name=labelNameOfAssertLabel(currentEStatePtr->label());
+                    if(name=="globalError")
+                      name="error_60";
+                    name=name.substr(6,name.size()-6);
+                    std::ofstream fout;
+                    // csv_assert_live_file is the member-variable of analyzer
+#pragma omp critical
+                    {
+                      fout.open(_csv_assert_live_file.c_str(),ios::app);    // open file for appending
+                      assert (!fout.fail( ));
+                      fout << name << ",yes,9"<<endl;
+                      //cout << "REACHABLE ASSERT FOUND: "<< name << ",yes,9"<<endl;
+                      
+                      fout.close(); 
+                    }
+                  }
+                } // end of failed assert handling
+                if(isVerificationErrorEState(&newEState)) {
+#pragma omp critical
+                  {
+                  cout<<"STATUS: detected verification error state ... terminating early"<<endl;
+                  // set flag for terminating early
+                  terminateEarly=true;
+                  }
+                } //
+              } // end of if (no disequality (= no infeasable path))
           } // end of loop on transfer function return-estates
-        } // just for proper auto-formatting in emacs
+        } // edge set iterator
       } // conditional: test if work is available
-      //    } // worklist-parallel for
-  } // while
+    } // while
   } // omp parallel
   const bool isComplete=true;
   if (!isPrecise()) {

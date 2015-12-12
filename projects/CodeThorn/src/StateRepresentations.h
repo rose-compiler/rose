@@ -147,7 +147,7 @@ class PStateEqualToPred {
 class InputOutput {
  public:
  InputOutput():op(NONE),var(VariableId()){ val=CodeThorn::AType::Bot();}
-  enum OpType {NONE,STDIN_VAR,STDOUT_VAR,STDOUT_CONST,STDERR_VAR,STDERR_CONST, FAILED_ASSERT};
+  enum OpType {NONE,STDIN_VAR,STDOUT_VAR,STDOUT_CONST,STDERR_VAR,STDERR_CONST, FAILED_ASSERT,VERIFICATION_ERROR};
   OpType op;
   VariableId var;
   CodeThorn::AType::ConstIntLattice val;
@@ -157,10 +157,12 @@ class InputOutput {
   void recordConst(OpType op, CodeThorn::AType::ConstIntLattice val);
   void recordConst(OpType op, int val);
   void recordFailedAssert();
+  void recordVerificationError();
   bool isStdInIO() const { return op==STDIN_VAR; }
   bool isStdOutIO() const { return op==STDOUT_VAR || op==STDOUT_CONST; }
   bool isStdErrIO() const { return op==STDERR_VAR || op==STDERR_CONST; }
   bool isFailedAssertIO() const { return op==FAILED_ASSERT; }
+  bool isVerificationError() const { return op==VERIFICATION_ERROR; }
   bool isNonIO() const { return op==NONE; }
 };
 

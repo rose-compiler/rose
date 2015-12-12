@@ -283,8 +283,10 @@ namespace CodeThorn {
     
     //bool isAssertExpr(SgNode* node);
     bool isFailedAssertEState(const EState* estate);
+    bool isVerificationErrorEState(const EState* estate);
     //! adds a specific code to the io-info of an estate which is checked by isFailedAsserEState and determines a failed-assert estate. Note that the actual assert (and its label) is associated with the previous estate (this information can therefore be obtained from a transition-edge in the transition graph).
     EState createFailedAssertEState(const EState estate, Label target);
+    EState createVerificationErrorEState(const EState estate, Label target);
     //! list of all asserts in a program
     std::list<SgNode*> listOfAssertNodes(SgProject *root);
     //! rers-specific error_x: assert(0) version 

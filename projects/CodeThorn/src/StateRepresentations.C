@@ -54,6 +54,14 @@ void InputOutput::recordFailedAssert() {
 
 /*! 
   * \author Markus Schordan
+  * \date 2015.
+ */
+void InputOutput::recordVerificationError() {
+  op=VERIFICATION_ERROR;
+}
+
+/*! 
+  * \author Markus Schordan
   * \date 2012.
  */
 void InputOutput::recordConst(OpType op0,AType::ConstIntLattice constvalue) {
