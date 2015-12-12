@@ -410,7 +410,11 @@ class TokenMappingTraversal : public SgTopDownBottomUpProcessing<InheritedAttrib
        // the code unparsed from the AST.
           map<SgScopeStatement*,SgStatement*> representativeWhitespaceStatementMap;
 
-          TokenMappingTraversal(vector<stream_element*> & tokenStream);
+       // DQ (12/11/2015): Adding capability for token sequence to update the source position info in IR nodes.
+          bool useTokenSequenceToImproveSourcePositionInfo;
+
+       // DQ (12/11/2015): Adding capability for token sequence to update the source position info in IR nodes.
+          TokenMappingTraversal(vector<stream_element*> & tokenStream, bool input_useTokenSequenceToImproveSourcePositionInfo);
 
        // virtual function must be defined
           InheritedAttribute evaluateInheritedAttribute(SgNode* n, InheritedAttribute inheritedAttribute);
@@ -1244,7 +1248,13 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          TokenStreamSequenceToNodeMapping* for_mappingInfo      = tokenStreamSequenceMap[n];
                       // TokenStreamSequenceToNodeMapping* for_init_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_for_init_stmt].node];
                       // TokenStreamSequenceToNodeMapping* for_test_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_test].node];
-
+#if 0
+                         printf ("Found SgForStatement with mapping in the token stream \n");
+                         printf ("   --- tokenStreamSequenceMap.find(childAttributes[SgForStatement_test].node) != tokenStreamSequenceMap.end() = %s \n",
+                              tokenStreamSequenceMap.find(childAttributes[SgForStatement_test].node) != tokenStreamSequenceMap.end() ? "true" : "false");
+                         printf ("   --- tokenStreamSequenceMap.find(childAttributes[SgForStatement_for_init_stmt].node) != tokenStreamSequenceMap.end() = %s \n",
+                              tokenStreamSequenceMap.find(childAttributes[SgForStatement_for_init_stmt].node) != tokenStreamSequenceMap.end() ? "true" : "false");
+#endif
                          ROSE_ASSERT(for_mappingInfo != NULL);
                       // ROSE_ASSERT(for_init_mappingInfo != NULL);
                       // ROSE_ASSERT(for_test_mappingInfo != NULL);
@@ -1258,6 +1268,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
                               SgForInitStatement* previous_for_init_statement = isSgForInitStatement(for_init_mappingInfo->node);
                               SgNullStatement* null_statement = isSgNullStatement(for_test_mappingInfo->node);
+#if 0
+                              printf ("previous_for_init_statement = %p \n",previous_for_init_statement);
+                              printf ("null_statement              = %p \n",null_statement);
+#endif
                               if (previous_for_init_statement != NULL && null_statement != NULL)
                                  {
                                 // This is at least after the for_init_statement, and is a better position to start the direct search within the token stream.
@@ -1290,7 +1304,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         for_init_mappingInfo->token_subsequence_end+1,for_init_mappingInfo->token_subsequence_end+1);
 #endif
 #if 0
-                                   printf ("Detected case of SgNullStatement in test for for loop \n");
+                                   printf ("Exiting as a test! \n");
                                    ROSE_ASSERT(false);
 #endif
                                  }
@@ -1437,12 +1451,20 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               TokenStreamSequenceToNodeMapping* function_protytype_mappingInfo = tokenStreamSequenceMap[n];
                               ROSE_ASSERT(function_protytype_mappingInfo != NULL);
 
+#if 0
+                           // DQ (12/12/2015): I am hoping we can avoid this fixup (we want to have as few as possible).
+                           // Also this might not be required now that we have fixed the source position information in 
+                           // the AST for secondary declarations (using the declaration_range where available).
+
                               int function_protype_start = function_protytype_mappingInfo->token_subsequence_start;
                               int function_protype_end   = function_protytype_mappingInfo->token_subsequence_end;
 #if 0
                               printf ("   --- function_protype_start = %d function_protype_end = %d \n",function_protype_start,function_protype_end);
 #endif
-                              int better_start_of_function_prototype_token_subsequence = function_protype_start + 1;
+                           // DQ (12/12/2015): This is the cause of getting the wrong token for the start of the function  (skips over the return type).
+                           // int better_start_of_function_prototype_token_subsequence = function_protype_start + 1;
+                              ROSE_ASSERT(function_protype_start >= 0);
+                              int better_start_of_function_prototype_token_subsequence = function_protype_start;
                               while ( better_start_of_function_prototype_token_subsequence < function_protype_end && 
                                       ( tokenStream[better_start_of_function_prototype_token_subsequence]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO ||
                                         tokenStream[better_start_of_function_prototype_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE) )
@@ -1456,6 +1478,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                               printf ("RESET: function_protytype_mappingInfo->token_subsequence_start = %d end = %d \n",function_protytype_mappingInfo->token_subsequence_start,function_protytype_mappingInfo->token_subsequence_end);
 #endif
+#endif
                             }
                        }
                   }
@@ -1466,8 +1489,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
                     string child_name = n->get_traversalSuccessorNamesContainer()[i];
 
-#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
-                    printf ("   --- In evaluateSynthesizedAttribute(): child_name = %s child node = %p = %s \n",child_name.c_str(),childAttributes[i].node,(childAttributes[i].node != NULL) ? childAttributes[i].node->class_name().c_str() : "null");
+#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE || 0
+                    printf ("   --- In evaluateSynthesizedAttribute(): child_name = %s child node = %p = %s \n",
+                         child_name.c_str(),childAttributes[i].node,(childAttributes[i].node != NULL) ? childAttributes[i].node->class_name().c_str() : "null");
 #endif
                  // DQ (10/14/2013): Added consistancy test.
                     consistancyCheck();
@@ -1490,7 +1514,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          counter++;
                        }
 #endif
-
+#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE || 0
+                    printf ("   --- tokenStreamSequenceMap.find(childAttributes[i].node) != tokenStreamSequenceMap.end() = %s \n",
+                         tokenStreamSequenceMap.find(childAttributes[i].node) != tokenStreamSequenceMap.end() ? "true" : "false");
+#endif
                  // Look up these children in the tokenStreamSequenceMap
                  // if (tokenStreamSequenceMap.find(childAttributes[i].node) != tokenStreamSequenceMap.end())
                  // if (childAttributes[i].node != NULL && tokenStreamSequenceMap.find(childAttributes[i].node) != tokenStreamSequenceMap.end())
@@ -1500,7 +1527,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
                          ROSE_ASSERT(mappingInfo != NULL);
 
-#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
+#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE || 0
                          printf ("       --- Found mapping information \n");
                          printf ("       --- mappingInfo->token_subsequence_start = %d end = %d \n",mappingInfo->token_subsequence_start,mappingInfo->token_subsequence_end);
 #endif
@@ -1772,13 +1799,154 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               ROSE_ASSERT(false);
                             }
 #endif
+                      // DQ (12/11/2015): Check the child node's source position information against the token sequence mapping.
+#if 1
+                      // DQ (12/11/2015): Debugging code.
+                      // ROSE_ASSERT(useTokenSequenceToImproveSourcePositionInfo == true);
+
+                         if (useTokenSequenceToImproveSourcePositionInfo == true)
+                            {
+                              Sg_File_Info* start = (childAttributes[i].node != NULL) ? childAttributes[i].node->get_startOfConstruct() : NULL;
+                              Sg_File_Info* end   = (childAttributes[i].node != NULL) ? childAttributes[i].node->get_endOfConstruct()   : NULL;
+
+                              ROSE_ASSERT(start != NULL);
+                              ROSE_ASSERT(end != NULL);
+#if 1
+#if 0
+                              printf ("Check consistency of IR node source position with token sequence mapping: child_name = %s child node = %p = %s \n",
+                                   child_name.c_str(),childAttributes[i].node,(childAttributes[i].node != NULL) ? childAttributes[i].node->class_name().c_str() : "null");
+                              printf ("   --- start: line = %d col = %d end: line = %d col = %d \n",start->get_line(),start->get_col(),end->get_line(),end->get_col());
+#endif
+
+                              ROSE_ASSERT(tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end());
+                              TokenStreamSequenceToNodeMapping* current_mappingInfo = tokenStreamSequenceMap[n];
+                              ROSE_ASSERT(current_mappingInfo != NULL);
+                              int current_token_sequence_start  = current_mappingInfo->token_subsequence_start;
+                              int current_token_sequence_end    = current_mappingInfo->token_subsequence_end;
+#if 0
+                              printf ("   --- n = %p = %s current_token_sequence (%d,%d) \n",n,n->class_name().c_str(),current_token_sequence_start,current_token_sequence_end);
+#endif
+                           // ROSE_ASSERT(childAttributes[i].node != NULL);
+                              if (childAttributes[i].node != NULL)
+                                 {
+                                // ROSE_ASSERT(tokenStreamSequenceMap.find(childAttributes[i].node) != tokenStreamSequenceMap.end());
+                                   if (tokenStreamSequenceMap.find(childAttributes[i].node) != tokenStreamSequenceMap.end())
+                                      {
+                                        TokenStreamSequenceToNodeMapping* local_mappingInfo = tokenStreamSequenceMap[childAttributes[i].node];
+                                        ROSE_ASSERT(local_mappingInfo != NULL);
+
+                                     // Output the starting and ending token index information
+                                        int local_token_sequence_start  = local_mappingInfo->token_subsequence_start;
+                                        int local_token_sequence_end    = local_mappingInfo->token_subsequence_end;
+#if 0
+                                        printf ("   --- child info %p = %s : local_token_sequence (%d,%d) \n",
+                                             childAttributes[i].node,childAttributes[i].node->class_name().c_str(),local_token_sequence_start,local_token_sequence_end);
+#endif
+                                     // Output the starting and ending line and column information
+                                        int start_line = tokenStream[local_token_sequence_start]->beginning_fpi.line_num;
+                                        int start_col  = tokenStream[local_token_sequence_start]->beginning_fpi.column_num;
+                                        int end_line   = tokenStream[local_token_sequence_end]  ->ending_fpi.line_num;
+                                        int end_col    = tokenStream[local_token_sequence_end]  ->ending_fpi.column_num;
+#if 0
+                                        printf ("   --- child info %p = %s : line and column info: start (%d,%d) end(%d,%d) \n",
+                                             childAttributes[i].node,childAttributes[i].node->class_name().c_str(),start_line,start_col,end_line,end_col);
+#endif
+                                        if (start->get_line() != start_line || start->get_col() != start_col)
+                                           {
+                                             printf ("FIXUP: IR node %p = %s : Need to fixup STARTING source position (%d,%d) to match token stream: line and column info: start (%d,%d) \n",
+                                                  childAttributes[i].node,childAttributes[i].node->class_name().c_str(),start->get_line(),start->get_col(),start_line,start_col);
+
+                                          // Defer the corrections on the starting position until I find an example requiring this fixup.
+                                          // childAttributes[i].node->get_startOfConstruct()->set_line(start_line);
+                                          // childAttributes[i].node->get_startOfConstruct()->set_col(start_col);
+                                           }
+
+                                        if (end->get_line() != end_line || end->get_col() != end_col)
+                                           {
+                                             printf ("FIXUP: IR node %p = %s : Need to fixup ENDING source position (%d,%d) to match token stream: line and column info: start (%d,%d) \n",
+                                                  childAttributes[i].node,childAttributes[i].node->class_name().c_str(),end->get_line(),end->get_col(),end_line,end_col);
+
+                                          // DQ (12/12/2015): Make sure that the line number is at least correct.
+                                          // ROSE_ASSERT(end->get_line() == end_line);
+                                          // ROSE_ASSERT(end->get_line() <= end_line);
+                                             if (end->get_line() == end_line)
+                                                {
+                                               // ROSE_ASSERT(end->get_col() < end_col);
+                                                  if (end->get_col() < end_col)
+                                                     {
+                                                    // This is the most I would like to be off by (and is a typical correction because many declarations omit the position of the trailing ";").
+                                                    // Where macros are expaned for initializers in a variable declaration the colum number can be significantly off.
+                                                    // ROSE_ASSERT(end_col - end->get_col() <= 1);
+
+                                                    // DQ (12/12/2015): If the column positions are close then go ahead and fix the column position 
+                                                    // in the AST, but not if they are beyond some distance.
+                                                    // ROSE_ASSERT(end_col - end->get_col() <= 22);
+                                                       if (end_col - end->get_col() > 22)
+                                                          {
+                                                         // childAttributes[i].node->get_endOfConstruct()->set_line(end_line);
+                                                            childAttributes[i].node->get_endOfConstruct()->set_col(end_col);
+                                                          }
+                                                         else
+                                                          {
+                                                            printf ("WARNING: column numbers of IR node source position and token sequence don't match well enough (correction to large) \n");
+                                                            printf ("   --- IR node %p = %s : Need to fixup ENDING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
+                                                                 childAttributes[i].node,childAttributes[i].node->class_name().c_str(),end->get_line(),end->get_col(),end_line,end_col);
+                                                          }
+                                                     }
+                                                    else
+                                                     {
+                                                    // Examples failing this test are: "#pragma pack(1)" which does not compute the ending column 
+                                                    // position correctly because EDG normalizes the pragma's string to be "pack ( 1 )".  
+                                                    // See tests/CompileTests/C_tests/YardenPragmaPackExample.c for an example.
+
+                                                       printf ("WARNING: column numbers of IR node source position and token sequence don't match well enough (correction is the wrong sign) \n");
+                                                       printf ("   --- IR node %p = %s : Need to fixup ENDING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
+                                                            childAttributes[i].node,childAttributes[i].node->class_name().c_str(),end->get_line(),end->get_col(),end_line,end_col);
+                                                     }
+                                                }
+                                               else
+                                                {
+                                                  printf ("WARNING: line numbers of IR node source position and token sequence don't match (we want the line numbers to match exactly) \n");
+                                                  printf ("   --- IR node %p = %s : Need to fixup ENDING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
+                                                     childAttributes[i].node,childAttributes[i].node->class_name().c_str(),end->get_line(),end->get_col(),end_line,end_col);
+                                                }
+                                           }
+                                      }
+                                     else
+                                      {
+#if 1
+                                        printf ("No mapping to token stream available for child = %p = %s \n",childAttributes[i].node,childAttributes[i].node->class_name().c_str());
+#endif
+                                      }
+                                 }
+
+#endif
+#if 0
+#if 0
+                              int updated_end_line = previous_for_init_statement->get_endOfConstruct()->get_line();
+                              int updated_end_col  = previous_for_init_statement->get_endOfConstruct()->get_col();
+#else
+                              int updated_end_line = tokenStream[index]->ending_fpi.line_num;
+                              int updated_end_col  = tokenStream[index]->ending_fpi.column_num;
+#endif
+#if 1
+                              printf ("Update the SgForInitStatement (%p) source position: updated_end_line = %d updated_end_col = %d \n",previous_for_init_statement,updated_end_line,updated_end_col);
+#endif
+#if 0
+                              previous_for_init_statement->get_endOfConstruct()->set_line(updated_end_line);
+                              previous_for_init_statement->get_endOfConstruct()->set_col(updated_end_col);
+#endif
+#endif
+                            }
+#endif
                        }
                       else
                        {
                       // We need to build a TokenStreamSequenceToNodeMapping for this case (but we currently do this afterward)..
 
-#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
-                         printf ("      --- No mapping has been found at childAttributes[i].node = %p \n",childAttributes[i].node);
+#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE || 0
+                         string nodeName = childAttributes[i].node != NULL ? childAttributes[i].node->class_name() : "null";
+                         printf ("      --- No mapping has been found at childAttributes[i].node = %p = %s \n",childAttributes[i].node,nodeName.c_str());
 #endif
                       // We need to ignore NULL pointers.
                       // nodesWithoutTokenMappings.push_back(childAttributes[i].node);
@@ -1828,7 +1996,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                   }
 #if 0
             // List the IR nodes that have an identified token subsequence mapping (after removing nexted subsequence mappings).
-               printf ("$$$$$$$$$$$$ List the IR nodes that have an identified token subsequence mappings (tokenToNodeVector.size() = %zu): \n",tokenToNodeVector.size());
+               printf ("$$$$$$$$$$$$ List the IR nodes that have an identified token subsequence mappings (tokenToNodeVector.size() = %zu): n = %p = %s \n",
+                    tokenToNodeVector.size(),n,n->class_name().c_str());
                for (size_t j = 0; j < tokenToNodeVector.size(); j++)
                   {
                     printf ("   --- tokenToNodeVector[j=%" PRIuPTR "] = %p = %s \n",j,tokenToNodeVector[j]->node,tokenToNodeVector[j]->node->class_name().c_str());
@@ -5149,12 +5318,15 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
    }
 
 
-TokenMappingTraversal::TokenMappingTraversal(vector<stream_element*> & ts)
-   : tokenStream(ts)
+TokenMappingTraversal::TokenMappingTraversal(vector<stream_element*> & ts, bool input_useTokenSequenceToImproveSourcePositionInfo)
+   : tokenStream(ts),
+  // DQ (12/11/2015): Adding capability for token sequence to update the source position info in IR nodes.
+     useTokenSequenceToImproveSourcePositionInfo(input_useTokenSequenceToImproveSourcePositionInfo)
    {
 #if 0
      printf ("tokenStream.size() = %zu \n",tokenStream.size());
 #endif
+
      ROSE_ASSERT(tokenStream.empty() == false);
    }
 
@@ -5514,7 +5686,7 @@ outputSourceCodeFromTokenStream_globalScope(SgSourceFile* sourceFile, vector<str
   // filename += ".c";
 
 #if 1
-     if ( SgProject::get_verbose() >= 0 )
+     if ( SgProject::get_verbose() >= 1 )
         {
           printf ("In outputSourceCodeFromTokenStream_globalScope(): filename = %s \n",filename.c_str());
         }
@@ -5988,12 +6160,26 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
           return;
         }
 
+#if 0
+  // DQ (12/11/2015): Option to use the token stream mapping and local tests of the 
+  // token sequence, to improve the source position information stored in the AST.
+     printf ("Explicitly forcing sourceFile->get_use_token_stream_to_improve_source_position_info() == true \n");
+     sourceFile->set_use_token_stream_to_improve_source_position_info(true);
+#endif
+
+  // Output a message that the AST source positon will be modified using the token sequence information.
+     if (sourceFile->get_use_token_stream_to_improve_source_position_info() == true)
+        {
+          printf ("NOTE: token stream mapping will be used to improve the source position stored in the AST. \n");
+        }
+
   // Build the inherited attribute
      bool processThisNode = true;
      InheritedAttribute inheritedAttribute(sourceFile,0,tokenVector.size()-1,processThisNode);
 
   // Build the traversal object
-     TokenMappingTraversal tokenMappingTraversal(tokenVector);
+  // TokenMappingTraversal tokenMappingTraversal(tokenVector);
+     TokenMappingTraversal tokenMappingTraversal(tokenVector,sourceFile->get_use_token_stream_to_improve_source_position_info());
 
 #if 0
   // Output the depth of the AST.
@@ -6110,9 +6296,8 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
   // statements from each scope so that we can use their whitespace when transformations in that scope are output.
      sourceFile->set_representativeWhitespaceStatementMap(tokenMappingTraversal.representativeWhitespaceStatementMap);
 
-#if 1
-  // DQ (11/20/2015): This should be true for most testing but does not have to be true for empty files and such 
-  // pathological cases.
+#if 0
+  // DQ (11/20/2015): This should be true for most testing but does not have to be true for empty files and such pathological cases.
      printf ("Note temporary testing of (sourceFile->get_representativeWhitespaceStatementMap().empty() == false) is not ALWAYS true \n");
      ROSE_ASSERT(sourceFile->get_representativeWhitespaceStatementMap().empty() == false);
 #endif
