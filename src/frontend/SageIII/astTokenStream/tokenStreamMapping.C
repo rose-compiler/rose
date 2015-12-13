@@ -1439,7 +1439,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
                if (functionDeclaration != NULL)
                   {
-                    if (functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration())
+                 // DQ (12/13/2015): I think this applies to all function declarations, not just non-defining and 
+                 // certainly not just the first non-defining declaration.
+                 // if (functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration())
+                    if (true) // functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration())
                        {
 #if 0
                          printf ("Detected function prototype: \n");
@@ -1451,7 +1454,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               TokenStreamSequenceToNodeMapping* function_protytype_mappingInfo = tokenStreamSequenceMap[n];
                               ROSE_ASSERT(function_protytype_mappingInfo != NULL);
 
-#if 0
+                           // DQ (12/13/2015): This is required code and demonstrated in tests/roseTests/astTokenStreamTests/input_test2015_01.c
                            // DQ (12/12/2015): I am hoping we can avoid this fixup (we want to have as few as possible).
                            // Also this might not be required now that we have fixed the source position information in 
                            // the AST for secondary declarations (using the declaration_range where available).
@@ -1461,10 +1464,28 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                               printf ("   --- function_protype_start = %d function_protype_end = %d \n",function_protype_start,function_protype_end);
 #endif
-                           // DQ (12/12/2015): This is the cause of getting the wrong token for the start of the function  (skips over the return type).
-                           // int better_start_of_function_prototype_token_subsequence = function_protype_start + 1;
                               ROSE_ASSERT(function_protype_start >= 0);
+
+                           // DQ (12/13/2015): This is not so simple, we have now fixed a bug in the source positon in the starting position of 
+                           // secondary declarations (which is the proper fix for the start of the function prototypes).  This while loop handles
+                           // the case of CPP directives in the way of identifying the start of the function prototype in the token sequence.
+
+                           // DQ (12/13/2015): This is not the correct fix, restoring this to the original setting.
+                           // DQ (12/12/2015): This is the cause of getting the wrong token for the start of the function (skips over the return type).
+                           // int better_start_of_function_prototype_token_subsequence = function_protype_start;
+                           // int better_start_of_function_prototype_token_subsequence = function_protype_start + 1;
                               int better_start_of_function_prototype_token_subsequence = function_protype_start;
+                              SgScopeStatement* scope = isSgScopeStatement(functionDeclaration->get_parent());
+
+                           // DQ (12/13/2015): Some scopes have an associated token such as "{" that we need to skip over,
+                           // and some do not (e.g. SgGlobal).  Only three specific kinds of scope have this property.
+                              if (isSgBasicBlock(scope) != NULL || 
+                                  isSgNamespaceDefinitionStatement(scope) != NULL ||
+                                  isSgClassDefinition(scope) != NULL)
+                                 {
+                                   better_start_of_function_prototype_token_subsequence++;
+                                 }
+
                               while ( better_start_of_function_prototype_token_subsequence < function_protype_end && 
                                       ( tokenStream[better_start_of_function_prototype_token_subsequence]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO ||
                                         tokenStream[better_start_of_function_prototype_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE) )
@@ -1478,7 +1499,14 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                               printf ("RESET: function_protytype_mappingInfo->token_subsequence_start = %d end = %d \n",function_protytype_mappingInfo->token_subsequence_start,function_protytype_mappingInfo->token_subsequence_end);
 #endif
-#endif
+                            }
+                       }
+                      else
+                       {
+                      // DQ (12/13/2015): I think the code above needs to address the case of any other non-defining declarations.
+                         if (functionDeclaration != functionDeclaration->get_firstNondefiningDeclaration())
+                            {
+                              printf ("WARNING: additional nondefining functions not the first non-defining declaration may have to also be reset! \n");
                             }
                        }
                   }
