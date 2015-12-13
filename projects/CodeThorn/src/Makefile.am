@@ -450,14 +450,14 @@ check-local:
 	./codethorn --internal-checks	
 	./codethorn $(srcdir)/tests/typetest1.C			 
 	@echo ================================================================
+	@echo RUNNING VERIFICATION ERROR TESTS
+	@echo ================================================================
+	@./codethorn --enable-external-function-semantics tests/svcomp-test2.c
+	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
 	@./codethorn $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
 	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
-	@echo ================================================================
-	@echo RUNNING VERIFICATION ERROR TESTS
-	@echo ================================================================
-	@./codethorn --error-function=__VERIFIER_error tests/svcomp-test2.c
 	@echo ================================================================
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================

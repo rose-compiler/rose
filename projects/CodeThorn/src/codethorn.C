@@ -472,6 +472,7 @@ int main( int argc, char * argv[] ) {
     ("iseq-length", po::value< int >(), "set length [arg] of input sequence to be computed.")
     ("iseq-random-num", po::value< int >(), "select random search and number of paths.")
     ("error-function", po::value< string >(), "detect a verifier error function with name [arg] (terminates verification)")
+    ("enable-external-function-semantics",  "assumes specific semantics for the external functions: __VERIFIER_error,__VERIFIER_nondet_int,exit functions.")
     ("inf-paths-only", po::value< string >(), "recursively prune the graph so that no leaves exist [=yes|no]")
     ("std-io-only", po::value< string >(), "bypass and remove all states that are not standard I/O [=yes|no]")
     ("std-in-only", po::value< string >(), "bypass and remove all states that are not input-states [=yes|no]")
@@ -938,10 +939,12 @@ int main( int argc, char * argv[] ) {
     boolOptions.registerOption("stderr-like-failed-assert",true);
   }
 
+  if(args.count("enable-external-function-semantics")) {
+    analyzer.enableExternalFunctionSemantics();
+  }
   if(args.count("error-function")) {
     string errorFunctionName=args["error-function"].as<string>();
-    // TODO: currently this generates a failed assert state
-    analyzer.setErrorFunctionName(errorFunctionName);
+    analyzer.setExternalErrorFunctionName(errorFunctionName);
   }
 
   if(boolOptions["semantic-elimination"]) {
