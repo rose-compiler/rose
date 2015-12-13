@@ -338,6 +338,7 @@ NEW_TESTCODES = \
    test2015_123.C \
    test2015_124.C \
    test2015_125.C \
+   test2015_126.C \
    test2015_127.C \
    test2015_128.C \
    test2015_129.C \
@@ -345,7 +346,9 @@ NEW_TESTCODES = \
    test2015_131.C \
    test2015_132.C \
    test2015_133.C \
-   test2015_134.C 
+   test2015_134.C \
+   test2015_135.C \
+   test2015_136.C 
 
 # DQ (11/28/2015): I think maybe this only works with the Intel compiler.
 ICPC_SPECIFIC_TESTCODES = \
@@ -500,8 +503,7 @@ TESTS_NOT_PASSING = \
    test2014_228.C \
    test2014_229.C \
    test2014_237.C \
-   test2015_25.C \
-   test2015_126.C 
+   test2015_25.C 
 
 # DQ (7/10/2014): Remaining bugs in new application.
 #  test2014_113.C 
