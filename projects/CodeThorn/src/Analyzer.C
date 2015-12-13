@@ -26,6 +26,19 @@ using namespace std;
 
 #include "CollectionOperators.h"
 
+bool Analyzer::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
+  SgNode* node=getLabeler()->getNode(lab);
+  if(getLabeler()->isFunctionCallLabel(lab)) {
+    std::pair<SgVarRefExp*,SgFunctionCallExp*> p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
+    if(p.first) {
+      if(varIdPtr) {
+	*varIdPtr=variableIdMapping.variableId(p.first);
+      }
+      return true;
+    }
+  }
+  return false;
+}
 bool VariableValueMonitor::isActive() {
   return _threshold!=-1;
 }
@@ -1184,23 +1197,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     return elistify(createFailedAssertEState(currentEState,edge.target));
   }
 
-#if 0
-  // xxx add skip on topify here
-  if(isActiveGlobalTopify() && boolOptions["rersmode"]) {
-    Label sourceLabel=edge.source;
-    SPRAY::IOLabeler* ioLabeler=getLabeler();
-    if(!(ioLabeler->isStdIOLabel(sourceLabel)
-         ||ioLabeler->isConditionLabel(sourceLabel)
-         ||ioLabeler->isFunctionCallLabel(sourceLabel)
-         ||ioLabeler->isFunctionCallReturnLabel(sourceLabel)
-         ||ioLabeler->isFunctionEntryLabel(sourceLabel)
-         ||ioLabeler->isFunctionExitLabel(sourceLabel)
-         )) {
-      return elistify(createEStateFastTopifyMode(edge.target,currentEState.pstate(),currentEState.constraints()));
-    }
-  }
-#endif
-
   if(edge.isType(EDGE_CALL)) {
     // 1) obtain actual parameters from source
     // 2) obtain formal parameters from target
@@ -1376,7 +1372,8 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     InputOutput newio;
     Label lab=getLabeler()->getLabel(nextNodeToAnalyze1);
     VariableId varId;
-    if(getLabeler()->isStdInLabel(lab,&varId)) {
+    if(getLabeler()->isStdInLabel(lab,&varId)
+       ||isFunctionCallWithAssignment(lab,&varId)) {
       if(_inputSequence.size()>0) {
         PState newPState=*currentEState.pstate();
         ConstraintSet newCSet=*currentEState.constraints();

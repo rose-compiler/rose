@@ -168,7 +168,9 @@ namespace CodeThorn {
     // returns length of the longest of these sequences if it can be guaranteed that all processed traces are the
     // shortest ones leading to the individual failing assertion (returns -1 otherwise).
     int extractAssertionTraces();
-    
+
+    // determines whether lab is a function call label of a function call of the form 'x=f(...)' and returns the varible-id of the lhs, if it exists.
+    bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
   private:
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
       a new state is entered into stateSet and a pointer to it is returned.
@@ -253,8 +255,8 @@ namespace CodeThorn {
 
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
-    SPRAY::IOLabeler* getLabeler() const {
-      SPRAY::IOLabeler* ioLabeler=dynamic_cast<SPRAY::IOLabeler*>(cfanalyzer->getLabeler());
+    IOLabeler* getLabeler() const {
+      IOLabeler* ioLabeler=dynamic_cast<IOLabeler*>(cfanalyzer->getLabeler());
       ROSE_ASSERT(ioLabeler);
       return ioLabeler;
     }
