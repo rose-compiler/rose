@@ -415,7 +415,18 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_154.C \
   inputmoveDeclarationToInnermostScope_test2015_155.C \
   inputmoveDeclarationToInnermostScope_test2015_156.C \
-  inputmoveDeclarationToInnermostScope_test2015_157.C 
+  inputmoveDeclarationToInnermostScope_test2015_158.C \
+  inputmoveDeclarationToInnermostScope_test2015_157.C \
+  inputmoveDeclarationToInnermostScope_test2015_159.C \
+  inputmoveDeclarationToInnermostScope_test2015_160.C \
+  inputmoveDeclarationToInnermostScope_test2015_161.C \
+  inputmoveDeclarationToInnermostScope_test2015_162.C \
+  inputmoveDeclarationToInnermostScope_test2015_163.C \
+  inputmoveDeclarationToInnermostScope_test2015_164.C \
+  inputmoveDeclarationToInnermostScope_test2015_165.C \
+  inputmoveDeclarationToInnermostScope_test2015_166.C \
+  inputmoveDeclarationToInnermostScope_test2015_167.C \
+  inputmoveDeclarationToInnermostScope_test2015_168.C 
 
 # DQ (11/13/2015): Note that inputmoveDeclarationToInnermostScope_test2015_141.C 
 # and inputmoveDeclarationToInnermostScope_test2015_133.C only fail when using 
