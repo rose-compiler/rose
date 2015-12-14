@@ -119,6 +119,11 @@ public:
      *  Partitioner::insertFunction). */
     const std::set<rose_addr_t>& basicBlockAddresses() const { return bblockVas_; }
 
+    /** Predicate to test whether a function owns a basic block address. */
+    bool ownsBasicBlock(rose_addr_t bblockVa) const {
+        return bblockVas_.find(bblockVa) != bblockVas_.end();
+    }
+
     /** Add a basic block to this function.  This method does not adjust the partitioner CFG. Basic blocks cannot be added by
      *  this method when this function is attached to the CFG since it would cause the CFG to become outdated with respect to
      *  this function, but as long as the function is detached blocks can be inserted and removed arbitrarily.  If the
