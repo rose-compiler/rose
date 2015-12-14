@@ -441,6 +441,7 @@ endif
 #  test2014_105.C 
 #  test2014_106.C 
 
+# DQ (12/13/2015): Note that most of these now appear to pass now, but they need to be checked more carefully.
 # DQ (8/14/2014) List these files explicitly to avoid failing the policy tests.
 TESTS_NOT_PASSING = \
    test2009_25.C \

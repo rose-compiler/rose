@@ -415,8 +415,8 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_154.C \
   inputmoveDeclarationToInnermostScope_test2015_155.C \
   inputmoveDeclarationToInnermostScope_test2015_156.C \
-  inputmoveDeclarationToInnermostScope_test2015_158.C \
   inputmoveDeclarationToInnermostScope_test2015_157.C \
+  inputmoveDeclarationToInnermostScope_test2015_158.C \
   inputmoveDeclarationToInnermostScope_test2015_159.C \
   inputmoveDeclarationToInnermostScope_test2015_160.C \
   inputmoveDeclarationToInnermostScope_test2015_161.C \
