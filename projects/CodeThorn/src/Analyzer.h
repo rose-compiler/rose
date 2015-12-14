@@ -38,6 +38,18 @@ namespace CodeThorn {
 #define DEBUGPRINT_STATEMOD 0x4
 #define DEBUGPRINT_INFO 0x8
   
+  class CTIOLabeler : public SPRAY::IOLabeler {
+  public:
+    CTIOLabeler(SgNode* start, VariableIdMapping* variableIdMapping);
+    virtual bool isStdIOLabel(Label label);
+    virtual bool isStdInLabel(Label label, VariableId* id);
+    bool isNonDetIntFunctionCall(Label lab,VariableId* varIdPtr);
+    ~CTIOLabeler();
+    void setExternalNonDetIntFunctionName(std::string);
+  private:
+    std::string _externalNonDetIntFunctionName;
+  };
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -255,8 +267,8 @@ namespace CodeThorn {
 
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
-    IOLabeler* getLabeler() const {
-      IOLabeler* ioLabeler=dynamic_cast<IOLabeler*>(cfanalyzer->getLabeler());
+    CTIOLabeler* getLabeler() const {
+      CTIOLabeler* ioLabeler=dynamic_cast<CTIOLabeler*>(cfanalyzer->getLabeler());
       ROSE_ASSERT(ioLabeler);
       return ioLabeler;
     }

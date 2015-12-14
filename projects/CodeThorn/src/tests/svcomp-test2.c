@@ -48,7 +48,6 @@ int main()
         // read input
         int input;
 	input=__VERIFIER_nondet_int();
-        //scanf("%d", &input);        
 
         // operate eca engine
         output = calculate_output(input);

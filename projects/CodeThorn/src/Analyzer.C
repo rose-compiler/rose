@@ -26,7 +26,52 @@ using namespace std;
 
 #include "CollectionOperators.h"
 
+CTIOLabeler::CTIOLabeler(SgNode* start, VariableIdMapping* variableIdMapping): SPRAY::IOLabeler(start, variableIdMapping) {
+}
+
+bool CTIOLabeler::isStdIOLabel(Label label) {
+  cerr<<"Warning: deprecated function: isStdIOLabel."<<endl;
+  return SPRAY::IOLabeler::isStdIOLabel(label);
+}
+
+bool CTIOLabeler::isStdInLabel(Label label, VariableId* id=0) {
+  if(SPRAY::IOLabeler::isStdInLabel(label,id)) {
+    return true;
+  } else if(isNonDetIntFunctionCall(label,id)) {
+    return true;
+  }
+  return false;
+}
+
+// consider to use Analyzer* instead and query this information
+void CTIOLabeler::setExternalNonDetIntFunctionName(std::string name) {
+  _externalNonDetIntFunctionName=name;
+}
+
+bool CTIOLabeler::isNonDetIntFunctionCall(Label lab,VariableId* varIdPtr){
+  SgNode* node=getNode(lab);
+  if(isFunctionCallLabel(lab)) {
+    std::pair<SgVarRefExp*,SgFunctionCallExp*> p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
+    if(p.first) {
+      string funName=SgNodeHelper::getFunctionName(p.second);
+      if(funName!=_externalNonDetIntFunctionName) {
+	return false;
+      }
+      if(varIdPtr) {
+	*varIdPtr=_variableIdMapping->variableId(p.first);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+
+CTIOLabeler::~CTIOLabeler() {
+}
+
 bool Analyzer::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
+  //return _labeler->getLabeler()->isFunctionCallWithAssignment(lab,varIdPtr);
   SgNode* node=getLabeler()->getNode(lab);
   if(getLabeler()->isFunctionCallLabel(lab)) {
     std::pair<SgVarRefExp*,SgFunctionCallExp*> p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
@@ -39,6 +84,7 @@ bool Analyzer::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
   }
   return false;
 }
+
 bool VariableValueMonitor::isActive() {
   return _threshold!=-1;
 }
@@ -188,6 +234,8 @@ void Analyzer::disableExternalFunctionSemantics() {
   _externalErrorFunctionName="";
   _externalNonDetIntFunctionName="";
   _externalExitFunctionName="";
+  ROSE_ASSERT(getLabeler());
+  getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
 }
 
 Analyzer::Analyzer():
@@ -1832,11 +1880,13 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   initAstNodeInfo(root);
 
   cout << "INIT: Creating Labeler."<<endl;
-  Labeler* labeler= new IOLabeler(root,getVariableIdMapping());
+  Labeler* labeler= new CTIOLabeler(root,getVariableIdMapping());
   cout << "INIT: Initializing ExprAnalyzer."<<endl;
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   cout << "INIT: Creating CFAnalysis."<<endl;
   cfanalyzer=new CFAnalysis(labeler,true);
+  getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
+
   //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   cout << "INIT: Building CFGs."<<endl;
 
