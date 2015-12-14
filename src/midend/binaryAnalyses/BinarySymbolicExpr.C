@@ -235,6 +235,7 @@ struct Hasher: Visitor {
             }
             node->hash(h);
         }
+        return CONTINUE;
     }
 
     // Incorporates data into the existing hash, h, and returns a new hash. This is no particular well-known algorithm, but
