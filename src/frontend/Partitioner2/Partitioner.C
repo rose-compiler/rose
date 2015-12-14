@@ -1005,6 +1005,28 @@ Partitioner::attachFunctionDataBlock(const Function::Ptr &function, const DataBl
     }
 }
 
+Function::Ptr
+Partitioner::functionExists(rose_addr_t entryVa) const {
+    return functions_.getOptional(entryVa).orDefault();
+}
+
+Function::Ptr
+Partitioner::functionExists(const BasicBlock::Ptr &entryBlock) const {
+    if (entryBlock == NULL)
+        return Function::Ptr();
+    return functionExists(entryBlock->address());
+}
+
+Function::Ptr
+Partitioner::functionExists(const Function::Ptr &function) const {
+    if (function != NULL) {
+        Function::Ptr found = functionExists(function->address());
+        if (found == function)
+            return function;
+    }
+    return Function::Ptr();
+}
+
 std::vector<Function::Ptr>
 Partitioner::functionsOwningBasicBlock(const ControlFlowGraph::Vertex &vertex, bool doSort) const {
     std::vector<Function::Ptr> retval;
@@ -1917,6 +1939,58 @@ Partitioner::ghostSuccessors() const {
         }
     }
     return ghosts;
+}
+
+bool
+Partitioner::isEdgeIntraProcedural(ControlFlowGraph::ConstEdgeIterator edge, const Function::Ptr &function) const {
+    ASSERT_require(cfg_.isValidEdge(edge));
+    return isEdgeIntraProcedural(*edge, function);
+}
+
+bool
+Partitioner::isEdgeIntraProcedural(const ControlFlowGraph::Edge &edge, const Function::Ptr &function) const {
+    if (edge.value().type() == E_FUNCTION_CALL ||
+        edge.value().type() == E_FUNCTION_XFER ||
+        edge.value().type() == E_FUNCTION_RETURN)
+        return false;
+
+    if (function)
+        return edge.source()->value().isOwningFunction(function) && edge.target()->value().isOwningFunction(function);
+
+    if (edge.source()->value().nOwningFunctions() == 0 && edge.target()->value().nOwningFunctions() == 0)
+        return true;
+
+    return !(edge.source()->value().owningFunctions() & edge.target()->value().owningFunctions()).isEmpty();
+}
+
+bool
+Partitioner::isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge,
+                                   const Function::Ptr &sourceFunction, const Function::Ptr &targetFunction) const {
+    ASSERT_require(cfg_.isValidEdge(edge));
+    return isEdgeInterProcedural(*edge, sourceFunction, targetFunction);
+}
+
+bool
+Partitioner::isEdgeInterProcedural(const ControlFlowGraph::Edge &edge,
+                                   const Function::Ptr &sourceFunction, const Function::Ptr &targetFunction) const {
+    if (edge.value().type() == E_FUNCTION_CALL ||
+        edge.value().type() == E_FUNCTION_XFER ||
+        edge.value().type() == E_FUNCTION_RETURN)
+        return false;
+
+    if (sourceFunction != NULL || targetFunction != NULL) {
+        ASSERT_not_null(sourceFunction);
+        ASSERT_not_null(targetFunction);
+        if (sourceFunction == targetFunction)
+            return false;
+        return (edge.source()->value().isOwningFunction(sourceFunction) &&
+                edge.target()->value().isOwningFunction(targetFunction));
+    }
+
+    if (edge.source()->value().nOwningFunctions() == 0 && edge.target()->value().nOwningFunctions() == 0)
+        return true;
+
+    return edge.source()->value().owningFunctions() != edge.target()->value().owningFunctions();
 }
 
 std::vector<Function::Ptr>

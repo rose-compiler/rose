@@ -120,14 +120,17 @@ public:
      *
      *  @{ */
     const FunctionSet& owningFunctions() const {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
         return owningFunctions_;
     }
     FunctionSet& owningFunctions() {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
         return owningFunctions_;
     }
     /** @} */
+
+    /** Is block a function entry block?
+     *
+     *  Returns true (a non-null function pointer) if this block serves as the entry block for some function. */
+    Function::Ptr isEntryBlock() const;
 
     /** Turns a basic block vertex into a placeholder.
      *

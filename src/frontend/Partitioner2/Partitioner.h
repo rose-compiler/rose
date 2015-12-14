@@ -504,6 +504,72 @@ public:
      *  @sa basicBlockGhostSuccessors */
     std::set<rose_addr_t> ghostSuccessors() const /*final*/;
 
+    /** Determine if an edge is intra-procedural.
+     *
+     *  An intra-procedural edge is an edge whose source and target are owned by the same function and which is not part of a
+     *  function call, function transfer, or function return.  This function returns true if the edge is intra-procedural and
+     *  false if not.  The return value is calculated as follows:
+     *
+     *  @li An edge of type @c E_FUNCTION_CALL, @c E_FUNCTION_XFER, or @c E_FUNCTION_RETURN is not intra-procedural regardless
+     *      of which functions own the source and target blocks.
+     *
+     *  @li If a function is specified and that function is listed as an owner of both the source and target blocks, then the
+     *      edge is intra-procedural.
+     *
+     *  @li If no function is specified and neither the source nor the target block have any function owners then the edge
+     *      is intra-procedural.
+     *
+     *  @li If no function is specified and there exists some function that is an owner of both the source and target blocks
+     *      then the edge is intra-procedural.
+     *
+     *  @li Otherwise the edge is not intra-procedural.
+     *
+     *  When no function is specified it can be ambiguous as to whether a branch is intra- or inter-procedural; a branch could
+     *  be both intra- and inter-procedural.
+     *
+     *  @sa isEdgeInterProcedural.
+     *
+     * @{ */
+    bool isEdgeIntraProcedural(ControlFlowGraph::ConstEdgeIterator edge,
+                               const Function::Ptr &function = Function::Ptr()) const /*final*/;
+    bool isEdgeIntraProcedural(const ControlFlowGraph::Edge &edge,
+                               const Function::Ptr &function = Function::Ptr()) const /*final*/;
+    /** @} */
+
+    /** Determine if an edge is inter-procedural.
+     *
+     *  An inter-procedural edge is an edge which is part of a function call, a function transfer, or a function return or an
+     *  edge whose source and target blocks are owned by different functions. This function returns true if the edge is
+     *  inter-procedural and false if not.  The return value is calculated as follows:
+     *
+     *  @li An edge of type @c E_FUNCTION_CALL, @c E_FUNCTION_XFER, or @c E_FUNCTION_RETURN is inter-procedural regardless of
+     *      which functions own the source and target blocks.
+     *
+     *  @li If two functions are specified and the source block is owned by the first function, the target block is owned by
+     *      the second function, and the functions are different then the block is inter-procedural.
+     *
+     *  @li If no functions are specified and neither the source nor the target block have any function owners then the edge
+     *      is inter-procedural.
+     *
+     *  @li If no functions are specified and the list of functions owning the source block is not equal to the list of
+     *      functions owning the destination block then the block is inter-procedural.
+     *
+     *  @li Otherwise the edge is not inter-procedural.
+     *
+     *  When no functions are specified it can be ambiguous as to whether a branch is intra- or inter-procedural; a branch
+     *  could be both intra- and inter-procedural.
+     *
+     *  @sa isEdgeIntraProcedural.
+     *
+     * @{ */
+    bool isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge,
+                               const Function::Ptr &sourceFunction = Function::Ptr(),
+                               const Function::Ptr &targetFunction = Function::Ptr()) const /*final*/;
+    bool isEdgeInterProcedural(const ControlFlowGraph::Edge &edge,
+                               const Function::Ptr &sourceFunction = Function::Ptr(),
+                               const Function::Ptr &targetFunction = Function::Ptr()) const /*final*/;
+    /** @} */
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner instruction operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1216,23 +1282,20 @@ public:
      *  If the CFG/AUM knows about the specified function then this method returns a pointer to that function, otherwise it
      *  returns the null pointer.
      *
-     *  The query can supply either a function entry address or a function pointer.  If a pointer is specified then the return
-     *  value will be the same pointer if and only if the function exists in the CFG/AUM, otherwise the null pointer is
-     *  returned. It is not sufficient for the CFG/AUM to contain a function with the same entry address -- it must be the same
-     *  actual function object.
+     *  The argument identifies the function for which to search:
+     *
+     *  @li The function's entry address.
+     *  @li The basic block that serves as the function's entry block.
+     *  @li A function pointer.
+     *
+     *  If the argument is a function pointer then this method checks that the specified function exists in the CFG/AUM and
+     *  returns the argument if it exists, or else null if it doesn't exist. This test uses the function pointer directly, not
+     *  the entry address -- it returns non-null only if the argument is the actual function object stored in the CFG/AUM.
      *
      *  @{ */
-    Function::Ptr functionExists(rose_addr_t startVa) const /*final*/ {
-        return functions_.getOptional(startVa).orDefault();
-    }
-    Function::Ptr functionExists(const Function::Ptr &function) const /*final*/ {
-        if (function!=NULL) {
-            Function::Ptr found = functionExists(function->address());
-            if (found==function)
-                return function;
-        }
-        return Function::Ptr();
-    }
+    Function::Ptr functionExists(rose_addr_t entryVa) const /*final*/;
+    Function::Ptr functionExists(const BasicBlock::Ptr &entryBlock) const /*final*/;
+    Function::Ptr functionExists(const Function::Ptr &function) const /*final*/;
     /** @} */
 
     /** All functions attached to the CFG/AUM.
