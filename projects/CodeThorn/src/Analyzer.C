@@ -26,6 +26,65 @@ using namespace std;
 
 #include "CollectionOperators.h"
 
+CTIOLabeler::CTIOLabeler(SgNode* start, VariableIdMapping* variableIdMapping): SPRAY::IOLabeler(start, variableIdMapping) {
+}
+
+bool CTIOLabeler::isStdIOLabel(Label label) {
+  cerr<<"Warning: deprecated function: isStdIOLabel."<<endl;
+  return SPRAY::IOLabeler::isStdIOLabel(label);
+}
+
+bool CTIOLabeler::isStdInLabel(Label label, VariableId* id=0) {
+  if(SPRAY::IOLabeler::isStdInLabel(label,id)) {
+    return true;
+  } else if(isNonDetIntFunctionCall(label,id)) {
+    return true;
+  }
+  return false;
+}
+
+// consider to use Analyzer* instead and query this information
+void CTIOLabeler::setExternalNonDetIntFunctionName(std::string name) {
+  _externalNonDetIntFunctionName=name;
+}
+
+bool CTIOLabeler::isNonDetIntFunctionCall(Label lab,VariableId* varIdPtr){
+  SgNode* node=getNode(lab);
+  if(isFunctionCallLabel(lab)) {
+    std::pair<SgVarRefExp*,SgFunctionCallExp*> p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
+    if(p.first) {
+      string funName=SgNodeHelper::getFunctionName(p.second);
+      if(funName!=_externalNonDetIntFunctionName) {
+	return false;
+      }
+      if(varIdPtr) {
+	*varIdPtr=_variableIdMapping->variableId(p.first);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+
+CTIOLabeler::~CTIOLabeler() {
+}
+
+bool Analyzer::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
+  //return _labeler->getLabeler()->isFunctionCallWithAssignment(lab,varIdPtr);
+  SgNode* node=getLabeler()->getNode(lab);
+  if(getLabeler()->isFunctionCallLabel(lab)) {
+    std::pair<SgVarRefExp*,SgFunctionCallExp*> p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
+    if(p.first) {
+      if(varIdPtr) {
+	*varIdPtr=variableIdMapping.variableId(p.first);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
 bool VariableValueMonitor::isActive() {
   return _threshold!=-1;
 }
@@ -163,6 +222,22 @@ string VariableValueMonitor::toString(VariableIdMapping* variableIdMapping) {
   return ss.str();
 }
 
+void Analyzer::enableExternalFunctionSemantics() {
+  _externalFunctionSemantics=true;
+  _externalErrorFunctionName="__VERIFIER_error";
+  _externalNonDetIntFunctionName="__VERIFIER_nondet_int";
+  _externalExitFunctionName="exit";
+}
+
+void Analyzer::disableExternalFunctionSemantics() {
+  _externalFunctionSemantics=false;
+  _externalErrorFunctionName="";
+  _externalNonDetIntFunctionName="";
+  _externalExitFunctionName="";
+  ROSE_ASSERT(getLabeler());
+  getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
+}
+
 Analyzer::Analyzer():
   startFunRoot(0),
   cfanalyzer(0),
@@ -183,9 +258,10 @@ Analyzer::Analyzer():
   _minimizeStates(false),
   _topifyModeActive(false),
   _iterations(0),
-  _approximated_iterations(0),
-  _curr_iteration_cnt(0),
-  _next_iteration_cnt(0)
+      _approximated_iterations(0),
+      _curr_iteration_cnt(0),
+      _next_iteration_cnt(0),
+      _externalFunctionSemantics(false)
 {
   variableIdMapping.setModeVariableIdForEachArrayElement(true);
   for(int i=0;i<100;i++) {
@@ -207,8 +283,8 @@ void Analyzer::setGlobalTopifyMode(GlobalTopifyMode mode) {
   _globalTopifyMode=mode;
 }
 
-void Analyzer::setErrorFunctionName(std::string errorFunctionName) {
-  _errorFunctionName=errorFunctionName;
+void Analyzer::setExternalErrorFunctionName(std::string externalErrorFunctionName) {
+  _externalErrorFunctionName=externalErrorFunctionName;
 }
 
 bool Analyzer::isPrecise() {
@@ -1184,23 +1260,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     return elistify(createFailedAssertEState(currentEState,edge.target));
   }
 
-#if 0
-  // xxx add skip on topify here
-  if(isActiveGlobalTopify() && boolOptions["rersmode"]) {
-    Label sourceLabel=edge.source;
-    SPRAY::IOLabeler* ioLabeler=getLabeler();
-    if(!(ioLabeler->isStdIOLabel(sourceLabel)
-         ||ioLabeler->isConditionLabel(sourceLabel)
-         ||ioLabeler->isFunctionCallLabel(sourceLabel)
-         ||ioLabeler->isFunctionCallReturnLabel(sourceLabel)
-         ||ioLabeler->isFunctionEntryLabel(sourceLabel)
-         ||ioLabeler->isFunctionExitLabel(sourceLabel)
-         )) {
-      return elistify(createEStateFastTopifyMode(edge.target,currentEState.pstate(),currentEState.constraints()));
-    }
-  }
-#endif
-
   if(edge.isType(EDGE_CALL)) {
     // 1) obtain actual parameters from source
     // 2) obtain formal parameters from target
@@ -1376,7 +1435,20 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     InputOutput newio;
     Label lab=getLabeler()->getLabel(nextNodeToAnalyze1);
     VariableId varId;
-    if(getLabeler()->isStdInLabel(lab,&varId)) {
+    bool isExternalNonDetIntFunction=false;
+    if(isFunctionCallWithAssignment(lab,&varId)) {
+      if(useExternalFunctionSemantics()) {
+	if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
+	  ROSE_ASSERT(funCall);
+	  string externalFunctionName=SgNodeHelper::getFunctionName(funCall);
+	  if(externalFunctionName==_externalNonDetIntFunctionName) {
+	    isExternalNonDetIntFunction=true;
+	    //cout<<"TODO: set varId to input=__VERIFIER_nondet_int();"<<endl;
+	  }
+	}
+      }
+    }
+    if(isExternalNonDetIntFunction || getLabeler()->isStdInLabel(lab,&varId)) {
       if(_inputSequence.size()>0) {
         PState newPState=*currentEState.pstate();
         ConstraintSet newCSet=*currentEState.constraints();
@@ -1499,13 +1571,20 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         cout << "REPORT: stderr:"<<varId.toString()<<":"<<estate->toString()<<endl;
       }
     }
-    /* handling of error function as external function */ {
+    /* handling of specific semantics for external function */ {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         assert(funCall);
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName==_errorFunctionName) {
-          cout<<"DETECTED error function: "<<_errorFunctionName<<endl;
-          return elistify(createVerificationErrorEState(currentEState,edge.target));
+        if(useExternalFunctionSemantics()) {
+          if(funName==_externalErrorFunctionName) {
+            //cout<<"DETECTED error function: "<<_externalErrorFunctionName<<endl;
+            return elistify(createVerificationErrorEState(currentEState,edge.target));
+          } else if(funName==_externalExitFunctionName) {
+            /* the exit function is modeled to terminate the program
+               (therefore no successor state is generated)
+            */
+            return elistify();
+          }
         }
       }
     }
@@ -1801,11 +1880,13 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   initAstNodeInfo(root);
 
   cout << "INIT: Creating Labeler."<<endl;
-  Labeler* labeler= new IOLabeler(root,getVariableIdMapping());
+  Labeler* labeler= new CTIOLabeler(root,getVariableIdMapping());
   cout << "INIT: Initializing ExprAnalyzer."<<endl;
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   cout << "INIT: Creating CFAnalysis."<<endl;
   cfanalyzer=new CFAnalysis(labeler,true);
+  getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
+
   //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   cout << "INIT: Building CFGs."<<endl;
 

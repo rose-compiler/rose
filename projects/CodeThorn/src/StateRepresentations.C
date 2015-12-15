@@ -89,6 +89,7 @@ string InputOutput::toString() const {
   case STDOUT_CONST: str="stdoutconst:"+val.toString();break;
   case STDERR_CONST: str="stderrconst:"+val.toString();break;
   case FAILED_ASSERT: str="failedassert";break;
+  case VERIFICATION_ERROR: str="verificationerror";break;
   default:
     cerr<<"FATAL ERROR: unknown IO operation abstraction.";
     exit(1);
@@ -111,6 +112,7 @@ string InputOutput::toString(VariableIdMapping* variableIdMapping) const {
   case STDOUT_CONST: str="stdoutconst:"+val.toString();break;
   case STDERR_CONST: str="stderrconst:"+val.toString();break;
   case FAILED_ASSERT: str="failedassert";break;
+  case VERIFICATION_ERROR: str="verificationerror";break;
   default:
     cerr<<"FATAL ERROR: unknown IO operation abstraction.";
     exit(1);

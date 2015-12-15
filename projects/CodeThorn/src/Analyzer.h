@@ -38,6 +38,18 @@ namespace CodeThorn {
 #define DEBUGPRINT_STATEMOD 0x4
 #define DEBUGPRINT_INFO 0x8
   
+  class CTIOLabeler : public SPRAY::IOLabeler {
+  public:
+    CTIOLabeler(SgNode* start, VariableIdMapping* variableIdMapping);
+    virtual bool isStdIOLabel(Label label);
+    virtual bool isStdInLabel(Label label, VariableId* id);
+    bool isNonDetIntFunctionCall(Label lab,VariableId* varIdPtr);
+    ~CTIOLabeler();
+    void setExternalNonDetIntFunctionName(std::string);
+  private:
+    std::string _externalNonDetIntFunctionName;
+  };
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -168,7 +180,9 @@ namespace CodeThorn {
     // returns length of the longest of these sequences if it can be guaranteed that all processed traces are the
     // shortest ones leading to the individual failing assertion (returns -1 otherwise).
     int extractAssertionTraces();
-    
+
+    // determines whether lab is a function call label of a function call of the form 'x=f(...)' and returns the varible-id of the lhs, if it exists.
+    bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
   private:
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
       a new state is entered into stateSet and a pointer to it is returned.
@@ -253,8 +267,8 @@ namespace CodeThorn {
 
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
-    SPRAY::IOLabeler* getLabeler() const {
-      SPRAY::IOLabeler* ioLabeler=dynamic_cast<SPRAY::IOLabeler*>(cfanalyzer->getLabeler());
+    CTIOLabeler* getLabeler() const {
+      CTIOLabeler* ioLabeler=dynamic_cast<CTIOLabeler*>(cfanalyzer->getLabeler());
       ROSE_ASSERT(ioLabeler);
       return ioLabeler;
     }
@@ -402,7 +416,12 @@ namespace CodeThorn {
     void setAssertCondVarsSet(set<VariableId> acVars);
     enum GlobalTopifyMode {GTM_IO, GTM_IOCF, GTM_IOCFPTR, GTM_COMPOUNDASSIGN, GTM_FLAGS};
     void setGlobalTopifyMode(GlobalTopifyMode mode);
-    void setErrorFunctionName(std::string errorFunctionName);
+    void setExternalErrorFunctionName(std::string externalErrorFunctionName);
+    // enables external function semantics 
+    void enableExternalFunctionSemantics();
+    void disableExternalFunctionSemantics();
+    bool useExternalFunctionSemantics() { return _externalFunctionSemantics; }
+
   private:
     GlobalTopifyMode _globalTopifyMode;
     set<VariableId> _compoundIncVarsSet;
@@ -454,7 +473,10 @@ namespace CodeThorn {
     int _approximated_iterations;
     int _curr_iteration_cnt;
     int _next_iteration_cnt;
-    string _errorFunctionName; // the call of this function causes termination of analysis
+    bool _externalFunctionSemantics;
+    string _externalErrorFunctionName; // the call of this function causes termination of analysis
+    string _externalNonDetIntFunctionName;
+    string _externalExitFunctionName;
   }; // end of class Analyzer
   
 } // end of namespace CodeThorn
