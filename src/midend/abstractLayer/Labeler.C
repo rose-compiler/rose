@@ -197,6 +197,8 @@ Labeler::Labeler(SgNode* start) {
   computeNodeToLabelMapping();
 }
 
+Labeler::~Labeler(){}
+
 // returns number of labels to be associated with node
 int Labeler::isLabelRelevantNode(SgNode* node) {
   if(node==0) 
@@ -559,6 +561,9 @@ IOLabeler::IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping):Labele
     (*i).initializeIO(variableIdMapping);
   }
   computeNodeToLabelMapping();
+}
+
+IOLabeler::~IOLabeler() {
 }
 
 bool IOLabeler::isStdIOLabel(Label label) {
