@@ -2947,19 +2947,30 @@ void Analyzer::runSolver4() {
             // newEstate is passed by value (not created yet)
             EState newEState=*nesListIter;
             assert(newEState.label()!=Labeler::NO_LABEL);
-            if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
+            if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))&&(!isVerificationErrorEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
               const EState* newEStatePtr=pres.second;
               if(pres.first==true)
                 addToWorkList(newEStatePtr);
               recordTransition(currentEStatePtr,e,newEStatePtr);
             }
-            if((!newEState.constraints()->disequalityExists()) && (isFailedAssertEState(&newEState))) {
+	    if((!newEState.constraints()->disequalityExists()) && isVerificationErrorEState(&newEState)) {
+	      // verification error is handled as property 0
+              const EState* newEStatePtr;
+#pragma omp critical(REACHABILITY)
+	      {
+		newEStatePtr=processNewOrExisting(newEState);
+		recordTransition(currentEStatePtr,e,newEStatePtr);        
+		reachabilityResults.reachable(0);
+	      }
+	    } else if((!newEState.constraints()->disequalityExists()) && isFailedAssertEState(&newEState)) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
               const EState* newEStatePtr;
-              newEStatePtr=processNewOrExisting(newEState);
+#pragma omp critical(REACHABILITY)
+                {
+		  newEStatePtr=processNewOrExisting(newEState);
               recordTransition(currentEStatePtr,e,newEStatePtr);        
-              
+		}              
               // record reachability
               int assertCode=reachabilityAssertCode(currentEStatePtr);
               if(assertCode>=0) {
@@ -2967,9 +2978,9 @@ void Analyzer::runSolver4() {
                 {
                   reachabilityResults.reachable(assertCode);
                 }
-              } else {
+	      } else {
                 // assert without label
-              }
+	      }
               
               if(boolOptions["report-failed-assert"]) {
 #pragma omp critical(OUTPUT)
@@ -3054,7 +3065,11 @@ bool all_false(vector<bool>& v) {
 
 void Analyzer::runSolver5() {
   //flow.boostify();
-  reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
+  if(useExternalFunctionSemantics()) {
+    reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
+  } else {
+    reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
+  }
   cout<<"INFO: number of error labels: "<<reachabilityResults.size()<<endl;
   size_t prevStateSetSize=0; // force immediate report at start
   int threadNum;
@@ -3175,7 +3190,15 @@ void Analyzer::runSolver5() {
                 newEStatePtr=processNewOrExisting(newEState);
                 recordTransition(currentEStatePtr,e,newEStatePtr);        
               
-                if(isFailedAssertEState(&newEState)) {
+                if(isVerificationErrorEState(&newEState)) {
+#pragma omp critical
+                  {
+                  cout<<"STATUS: detected verification error state ... terminating early"<<endl;
+                  // set flag for terminating early
+		  reachabilityResults.reachable(0);
+                  terminateEarly=true;
+                  }
+                } else if(isFailedAssertEState(&newEState)) {
                   if(boolOptions["report-failed-assert"]) {
 #pragma omp critical
                     {
@@ -3224,14 +3247,6 @@ void Analyzer::runSolver5() {
                     }
                   }
                 } // end of failed assert handling
-                if(isVerificationErrorEState(&newEState)) {
-#pragma omp critical
-                  {
-                  cout<<"STATUS: detected verification error state ... terminating early"<<endl;
-                  // set flag for terminating early
-                  terminateEarly=true;
-                  }
-                } //
               } // end of if (no disequality (= no infeasable path))
           } // end of loop on transfer function return-estates
         } // edge set iterator
