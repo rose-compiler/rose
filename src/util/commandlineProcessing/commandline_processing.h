@@ -31,7 +31,23 @@ namespace CommandlineProcessing
            *  See any recent tool for more examples. */
           Sawyer::CommandLine::SwitchGroup genericSwitches();
 
+          /** Type for storing generic switch arguments.
+           *
+           *  For instance, the "--threads=N" switch takes an integer that should be stored somewhere. */
+          struct GenericSwitchArgs {
+              unsigned int threads;                     // The "--threads" switch. 0 means number of hardware threads
 
+              GenericSwitchArgs()
+                  : threads(1) {}
+          };
+
+          /** Global location for parsed generic command-line switches.
+           *
+           *  This global variable holds the results of command-line parsing using @ref genericSwitches.  Normally these
+           *  settings are passed per command-line parsing request, but the interface in ROSE doesn't have that ability yet, so
+           *  we use a global variable. */
+          extern GenericSwitchArgs genericSwitchArgs;
+              
       //! Separate a string into individual parameters and store them into a string vector
           ROSE_UTIL_API Rose_STL_Container<std::string> generateArgListFromString ( std::string commandline );
 

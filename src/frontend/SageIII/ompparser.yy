@@ -93,12 +93,14 @@ corresponding C type is union name defaults to YYSTYPE.
           void* ptype; /* For expressions */
         }
 
-/*Some operators have a suffix 2 to avoid name conflicts with ROSE's existing types, We may want to reuse them if it is proper. Liao*/
+/*Some operators have a suffix 2 to avoid name conflicts with ROSE's existing types, We may want to reuse them if it is proper. 
+  experimental BEGIN END are defined by default, we use TARGET_BEGIN TARGET_END instead. 
+  Liao*/
 %token  OMP PARALLEL IF NUM_THREADS ORDERED SCHEDULE STATIC DYNAMIC GUIDED RUNTIME SECTIONS SINGLE NOWAIT SECTION
         FOR MASTER CRITICAL BARRIER ATOMIC FLUSH TARGET UPDATE DIST_DATA BLOCK DUPLICATE CYCLIC
         THREADPRIVATE PRIVATE COPYPRIVATE FIRSTPRIVATE LASTPRIVATE SHARED DEFAULT NONE REDUCTION COPYIN 
         TASK TASKWAIT UNTIED COLLAPSE AUTO DECLARE DATA DEVICE MAP ALLOC TO FROM TOFROM
-        SIMD SAFELEN ALIGNED LINEAR UNIFORM ALIGNED INBRANCH NOTINBRANCH 
+        SIMD SAFELEN ALIGNED LINEAR UNIFORM INBRANCH NOTINBRANCH MPI MPI_ALL MPI_MASTER TARGET_BEGIN TARGET_END
         '(' ')' ',' ':' '+' '*' '-' '&' '^' '|' LOGAND LOGOR SHLEFT SHRIGHT PLUSPLUS MINUSMINUS PTR_TO '.'
         LE_OP2 GE_OP2 EQ_OP2 NE_OP2 RIGHT_ASSIGN2 LEFT_ASSIGN2 ADD_ASSIGN2
         SUB_ASSIGN2 MUL_ASSIGN2 DIV_ASSIGN2 MOD_ASSIGN2 AND_ASSIGN2 
@@ -557,6 +559,8 @@ target_clause : device_clause
                 | map_clause
                 | if_clause
                 | num_threads_clause
+                | begin_clause
+                | end_clause
                 ;
 /*
 device_clause : DEVICE {
@@ -570,16 +574,41 @@ device_clause : DEVICE {
 device_clause : DEVICE {
                            ompattribute->addClause(e_device);
                            omptype = e_device;
-                         } '(' expression_or_star 
+                         } '(' expression_or_star_or_mpi 
                 ;
-
-expression_or_star: expression ')' { //normal expression
+/* Experimental extensions to support multiple devices and MPI */
+expression_or_star_or_mpi: 
+                  MPI ')' { // special mpi device for supporting MPI code generation
+                            current_exp= SageBuilder::buildStringVal("mpi");
+                            addExpression("mpi");
+                          }
+                  | MPI_ALL ')' { // special mpi device for supporting MPI code generation
+                            current_exp= SageBuilder::buildStringVal("mpi:all");
+                            addExpression("mpi:all");
+                          }
+                  | MPI_MASTER ')' { // special mpi device for supporting MPI code generation
+                            current_exp= SageBuilder::buildStringVal("mpi:master");
+                            addExpression("mpi:master");
+                          }
+                  | expression ')' { //normal expression
                            addExpression("");
                           }
                   | '*' ')' { // our extension device (*) 
                             current_exp= SageBuilder::buildCharVal('*'); 
-                            addExpression("");  }; 
-                      
+                            addExpression("*");  }; 
+begin_clause: TARGET_BEGIN {
+                           ompattribute->addClause(e_begin);
+                           omptype = e_begin;
+                    }
+                    ;
+
+end_clause: TARGET_END {
+                           ompattribute->addClause(e_end);
+                           omptype = e_end;
+                    }
+                    ;
+
+                    
 if_clause: IF {
                            ompattribute->addClause(e_if);
                            omptype = e_if;

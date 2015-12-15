@@ -5949,6 +5949,10 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("WARNING: allow global name qualification if required since function is defined outside of the class \n");
 #endif
+                 // DQ (11/26/2015): See test2012_59.C for an example of where this is required to be turned off.
+                 // In this case it is associated with a case of multiple defining declarations due to EDG template function normalization.
+                    outputGlobalQualification = false;
+                    qualifier = "";
                   }
              }
         }

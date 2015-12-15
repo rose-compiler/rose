@@ -10,6 +10,7 @@
 #include "AstDOTGeneration.h"
 #include "transformationTracking.h"
 #include "stringify.h"                                  // automatic enum-to-string functions
+#include <boost/foreach.hpp>
 
 // DQ (10/21/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
@@ -208,10 +209,9 @@ void AstDOTGeneration::addAdditionalNodesAndEdges(SgNode* node)
      if (astAttributeContainer != NULL)
         {
        // Loop over all the attributes at this IR node
-          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+          BOOST_FOREACH (const std::string &name, astAttributeContainer->getAttributeIdentifiers())
              {
-            // std::string name = i->first;
-               AstAttribute* attribute = i->second;
+               AstAttribute* attribute = astAttributeContainer->operator[](name);
                ROSE_ASSERT(attribute != NULL);
 
             // This can return a non-empty list in user-defined attributes (derived from AstAttribute).
@@ -369,6 +369,9 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           if (typedefDeclaration != NULL)
              {
                nodelabel += string("\\n") + typedefDeclaration->get_name();
+
+            // DQ (11/21/2015): Adding output of typedefBaseTypeContainsDefiningDeclaration field.
+               nodelabel += string("\\n typedefBaseTypeContainsDefiningDeclaration = ") + (typedefDeclaration->get_typedefBaseTypeContainsDefiningDeclaration() ? "true " : "false ");
              }
 
        // DQ (3/20/2011): Added function names to the generated dot file graphs of the AST.
@@ -387,7 +390,14 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 
             // DQ (4/5/2015): I think this is not used and should be removed.
             // nodelabel += string("\\n isFirstDeclarationOfDeclarationList = ") + (variableDeclaration->get_isFirstDeclarationOfDeclarationList() ? "true " : "false ");
+
+            // DQ (11/21/2015): Adding output of typedefBaseTypeContainsDefiningDeclaration field.
+               nodelabel += string("\\n variableDeclarationContainsBaseTypeDefiningDeclaration = ") + (variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration() ? "true " : "false ");
              }
+
+       // DQ (11/26/2015): Adding friend specification to support debugging test2012_59.C 
+       // (multiple function definitions for the same function due to EDG template function normalizations).
+          nodelabel += string("\\n isFriend = ") + (genericDeclaration->get_declarationModifier().isFriend() ? "true " : "false ");
 
           nodelabel += string("\\n") + name;
         }
@@ -786,10 +796,9 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      if (astAttributeContainer != NULL)
         {
        // Loop over all the attributes at this IR node
-          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+          BOOST_FOREACH (const std::string &name, astAttributeContainer->getAttributeIdentifiers())
              {
-            // std::string name = i->first;
-               AstAttribute* attribute = i->second;
+               AstAttribute* attribute = astAttributeContainer->operator[](name);
                ROSE_ASSERT(attribute != NULL);
 
             // This can return a non-empty list in user-defined attributes (derived from AstAttribute).
@@ -1166,14 +1175,13 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
      if (astAttributeContainer != NULL)
         {
           ss << "Attribute list (size=" << astAttributeContainer->size() << "):" << "\\n";
-          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+          BOOST_FOREACH (const std::string &name, astAttributeContainer->getAttributeIdentifiers())
              {
             // pair<std::string,AstAttribute*>
-               AstAttribute* attribute = i->second;
+               AstAttribute* attribute = astAttributeContainer->operator[](name);
                ROSE_ASSERT(attribute != NULL);
 
             // Note cast to void*
-               std::string name = i->first;
                std::string label = name + " : " + attribute->toString();
                ss << label << "\\n";
              }
@@ -1227,10 +1235,10 @@ AstDOTGeneration::additionalNodeOptions(SgNode* node)
 #if 0
           printf ("In AstDOTGeneration::additionalNodeOptions(): astAttributeContainer = %p for node = %p = %s \n",astAttributeContainer,node,node->class_name().c_str());
 #endif
-          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+          BOOST_FOREACH (const std::string &name, astAttributeContainer->getAttributeIdentifiers())
              {
             // std::string name = i->first;
-               AstAttribute* attribute = i->second;
+               AstAttribute* attribute = astAttributeContainer->operator[](name);
                ROSE_ASSERT(attribute != NULL);
 
                ss << attribute->additionalNodeOptions();
@@ -1265,10 +1273,10 @@ AstDOTGeneration::commentOutNodeInGraph(SgNode* node)
      AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
      if (astAttributeContainer != NULL)
         {
-          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+          BOOST_FOREACH (const std::string &name, astAttributeContainer->getAttributeIdentifiers())
              {
             // std::string name = i->first;
-               AstAttribute* attribute = i->second;
+               AstAttribute* attribute = astAttributeContainer->operator[](name);
                ROSE_ASSERT(attribute != NULL);
 
             // Turn it ON if there is an attribute to do so, but don't turn it off (for attribute to be changed)

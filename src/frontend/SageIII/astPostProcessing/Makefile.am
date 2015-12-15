@@ -42,7 +42,8 @@ libastPostProcessing_la_SOURCES      = \
      fixupSelfReferentialMacros.C \
      fixupFunctionDefaultArguments.C \
      checkPhysicalSourcePosition.C \
-     fixupDeclarationScope.C
+     fixupDeclarationScope.C \
+     fixupFileInfoFlags.C
 
 if !ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 libastPostProcessing_la_SOURCES += dummy.C
@@ -88,7 +89,8 @@ pkginclude_HEADERS = \
      fixupSelfReferentialMacros.h \
      fixupFunctionDefaultArguments.h \
      checkPhysicalSourcePosition.h \
-     fixupDeclarationScope.h
+     fixupDeclarationScope.h \
+     fixupFileInfoFlags.h
 
 EXTRA_DIST = CMakeLists.txt
 
