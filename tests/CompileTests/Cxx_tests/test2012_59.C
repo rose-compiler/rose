@@ -10,7 +10,7 @@ class X
    };
 
 // Because the member function (or friend function) declaration will not be output in the template string used for unparsing,
-// we need to output: "template<> class X < int > { public: friend inline void foo(class X< int  > &i) {} };"
+// we need to output:  "template<typename T> inline void foo(class X< int  > &i) {}"
 // the friend or member function must not be output as a template specialization.
 
 #if 1

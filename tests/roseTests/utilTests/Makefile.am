@@ -110,6 +110,18 @@ rangeMapTests.passed: rangeMapTests rangeMapTests.ans $(top_srcdir)/scripts/test
 		ANS="$(srcdir)/rangeMapTests.ans"		\
 		$(top_srcdir)/scripts/test_with_answer $@
 
+# Test AstAttributeMechanism
+noinst_PROGRAMS += attributeTests
+attributeTests_SOURCES = attributeTests.C
+attributeTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TEST_TARGETS += attributeTests.passed
+attributeTests.passed: attributeTests
+	@$(RTH_RUN)						\
+		TITLE="AstAttributeMechanism tests [$@]"	\
+		CMD="$(abspath $<)"				\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+
 check-local: $(TEST_TARGETS)
 
 clean-local:

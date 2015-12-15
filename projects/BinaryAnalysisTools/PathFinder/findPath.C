@@ -590,9 +590,13 @@ buildVirtualCpu(const P2::Partitioner &partitioner) {
         myRegs->insert("path", REG_PATH);
 
         // Where are return values stored?
+        // FIXME[Robb Matzke 2015-12-01]: We need to support returning multiple values. We should be using the new calling
+        // convention analysis to detect these.
         const RegisterDescriptor *r = NULL;
         if ((r = myRegs->lookup("rax")) || (r = myRegs->lookup("eax")) || (r = myRegs->lookup("ax"))) {
             REG_RETURN = *r;
+        } else if ((r = myRegs->lookup("d0"))) {
+            REG_RETURN = *r;                            // m68k also typically has other return registers
         } else {
             ASSERT_not_implemented("function return value register is not implemented for this ISA/ABI");
         }
@@ -758,12 +762,7 @@ insertCallSummary(P2::ControlFlowGraph &paths /*in,out*/, const P2::ControlFlowG
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callret, P2::findCallReturnEdges(pathsCallSite))
         paths.insertEdge(summaryVertex, callret->target(), P2::CfgEdge(P2::E_FUNCTION_RETURN));
 
-    int64_t stackDelta = SgAsmInstruction::INVALID_STACK_DELTA;
-    if (function && function->stackDelta().isCached()) {
-        BaseSemantics::SValuePtr sd = function->stackDelta().get();
-        if (sd->is_number())
-            stackDelta = sd->get_number();
-    }
+    int64_t stackDelta = function ? function->stackDeltaConcrete() : SgAsmInstruction::INVALID_STACK_DELTA;
 
     FunctionSummary summary(cfgCallTarget, stackDelta);
     functionSummaries.insert(summary.address, summary);
@@ -1200,13 +1199,8 @@ public:
 
         // Make sure there's a summary record for this function if we're using user-defined inlining
         if (P2::Inliner::INLINE_USER == how && !functionSummaries.exists(cfgCallTarget->value().address())) {
-            int64_t stackDelta = SgAsmInstruction::INVALID_STACK_DELTA;
             P2::Function::Ptr function = cfgCallTarget->value().function();
-            if (function && function->stackDelta().isCached()) {
-                BaseSemantics::SValuePtr sd = function->stackDelta().get();
-                if (sd->is_number())
-                    stackDelta = sd->get_number();
-            }
+            int64_t stackDelta = function ? function->stackDeltaConcrete() : SgAsmInstruction::INVALID_STACK_DELTA;
             
             FunctionSummary summary(cfgCallTarget, stackDelta);
             functionSummaries.insert(summary.address, summary);

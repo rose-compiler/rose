@@ -120,7 +120,7 @@ SecurityVulnerabilityAttribute::additionalNodeInfo()
 
 
 AstAttribute*
-SecurityVulnerabilityAttribute::copy()
+SecurityVulnerabilityAttribute::copy() const
    {
      return new SecurityVulnerabilityAttribute(*this);
    }
@@ -162,7 +162,7 @@ SecurityFlawOriginalSubtreeAttribute::additionalNodeInfo()
    }
 
 AstAttribute*
-SecurityFlawOriginalSubtreeAttribute::copy()
+SecurityFlawOriginalSubtreeAttribute::copy() const
    {
      return new SecurityFlawOriginalSubtreeAttribute(*this);
    }
@@ -240,7 +240,7 @@ SeededSecurityFlawCloneAttribute::additionalNodeInfo()
    }
 
 AstAttribute*
-SeededSecurityFlawCloneAttribute::copy()
+SeededSecurityFlawCloneAttribute::copy() const
    {
      return new SeededSecurityFlawCloneAttribute(*this);
    }
@@ -348,7 +348,7 @@ PrimarySecurityVulnerabilityForCloneAttribute::additionalNodeInfo()
    }
 
 AstAttribute*
-PrimarySecurityVulnerabilityForCloneAttribute::copy()
+PrimarySecurityVulnerabilityForCloneAttribute::copy() const
    {
      return new PrimarySecurityVulnerabilityForCloneAttribute(*this);
    }
@@ -403,7 +403,7 @@ SeedMethodologyCloneAttribute::additionalNodeInfo()
    }
 
 AstAttribute*
-SeedMethodologyCloneAttribute::copy()
+SeedMethodologyCloneAttribute::copy() const
    {
      return new SeedMethodologyCloneAttribute(*this);
    }
@@ -426,7 +426,7 @@ PruningAttribute::commentOutNodeInGraph()
    }
 
 AstAttribute*
-PruningAttribute::copy()
+PruningAttribute::copy() const
    {
      return new PruningAttribute(*this);
    }

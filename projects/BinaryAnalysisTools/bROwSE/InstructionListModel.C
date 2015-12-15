@@ -73,7 +73,7 @@ InstructionListModel::data(const Wt::WModelIndex &index, int role) const {
                 return Wt::WString(s);
             }
             case C_STACKDELTA: {
-                int64_t delta = insn->get_stackDelta();
+                int64_t delta = insn->get_stackDeltaIn();
                 if (delta == SgAsmInstruction::INVALID_STACK_DELTA)
                     return Wt::WString("");
                 std::string s = (delta >= 0 ? "+" : "") + boost::lexical_cast<std::string>(delta);

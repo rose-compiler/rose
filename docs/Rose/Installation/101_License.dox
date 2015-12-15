@@ -1,0 +1,8 @@
+// -*- c++ -*-
+
+/** @defgroup license ROSE Source Code License
+ *  @ingroup developer_docs
+ *
+ *  The ROSE source code in this repository is released under the following modified BSD license:
+ *
+ *  @verbinclude ../COPYRIGHT */

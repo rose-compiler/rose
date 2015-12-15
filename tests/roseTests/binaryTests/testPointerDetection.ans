@@ -35,8 +35,8 @@ Pointer detection analysis for function 0x080483b0 "simple03"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
+    32-bit pointer at v25399[32]
     32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
-    32-bit pointer at v20760[32]
 
 Pointer detection analysis for function 0x080483bc "simple04"
   Instructions:
@@ -75,7 +75,7 @@ Pointer detection analysis for function 0x080483d2 "simple06"
     32-bit pointer at esp_0[32]
   Data pointers:
     32-bit pointer at 0x080497f0<134518768>[32]
-    32-bit pointer at v21219[32]
+    32-bit pointer at v25858[32]
 
 Pointer detection analysis for function 0x080483e0 "simple07"
   Instructions:
@@ -189,7 +189,7 @@ Pointer detection analysis for function 0x08048444 "simple15"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
-    32-bit pointer at v22624[32]
+    32-bit pointer at v27263[32]
     32-bit pointer at 0x080497fc<134518780>[32]
 
 Pointer detection analysis for function 0x08048452 "simple16"

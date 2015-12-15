@@ -455,7 +455,7 @@ public:
     /** Print calling convention. */
     class CallingConventionCallback: public OutputCallback {
     public:
-        CallingConventionCallback(): OutputCallback("Kind", 8) {}
+        CallingConventionCallback(): OutputCallback("CallConv", 8) {}
         virtual bool operator()(bool enabled, const DataArgs&);
     } callingConventionCallback;
 

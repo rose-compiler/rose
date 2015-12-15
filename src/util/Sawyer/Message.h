@@ -1796,6 +1796,11 @@ public:
      */
     std::string control(const std::string &s);
 
+    /** Returns a configuration string.
+     *
+     *  Returns a string suitable for passing to @ref control. */
+    std::string configuration() const;
+
     /** Readjust all member facilities.
      *
      *  All members are readjusted to enable only those importance levels that are part of this facility group's default
@@ -1886,6 +1891,7 @@ private:
 
 };
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Library-provided message destination.  This is the top of a lattice that sends all messages to file descriptor 2, which is
@@ -1909,6 +1915,43 @@ SAWYER_EXPORT extern Facilities mfacilities;
  *     Sawyer::Message::assertionStream = Sawer::Message::mlog[FATAL];
  * @endcode */
 SAWYER_EXPORT extern SProxy assertionStream;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Facilities guard
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Saves and restores facilities.
+ *
+ *  The constructor saves the facilities settings (which streams are enabled and disabled) and the destructor restores
+ *  them. This does not save the actual list of streams, so if streams are erased/inserted they will not be restored. */
+class SAWYER_EXPORT FacilitiesGuard {
+    Facilities &facilities_;
+    typedef Sawyer::Container::Map<std::string, std::vector<bool> > State;
+    State state_;
+public:
+    /** Saves and restores the global message facilities.
+     *
+     *  Saves and restores which streams are enabled in @ref mfacilities. */
+    FacilitiesGuard()
+        : facilities_(mfacilities) {
+        save();
+    }
+
+    /** Saves and restores specified message facilities. */
+    explicit FacilitiesGuard(Facilities &facilities)
+        : facilities_(facilities) {
+        save();
+    }
+
+    /** Restores previously saved facility settings. */
+    ~FacilitiesGuard() {
+        restore();
+    }
+
+private:
+    void save();
+    void restore();
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      The most commonly used stuff

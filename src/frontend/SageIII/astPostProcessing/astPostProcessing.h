@@ -72,6 +72,8 @@
 // DQ (6/11/2013): This corrects where EDG can set the scope of a friend declaration to be different from the defining declaration.
 #include "fixupDeclarationScope.h"
 
+// DQ (11/14/2015): This corrects inconstancies in the setting of flags in the Sg_File_Info objects.
+#include "fixupFileInfoFlags.h"
 
 /*! \brief Postprocessing that is not likely to be handled in the EDG/Sage III translation.
  */

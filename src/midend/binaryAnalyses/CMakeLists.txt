@@ -1,6 +1,5 @@
 add_library(midend_binary OBJECT
   AbstractLocation.C
-  BinaryAttribute.C
   BinaryCallingConvention.C
   BinaryControlFlow.C
   BinaryDataFlow.C
@@ -10,6 +9,7 @@ add_library(midend_binary OBJECT
   BinaryNoOperation.C
   BinaryPointerDetection.C
   BinaryReturnValueUsed.C
+  BinaryStackDelta.C
   BinaryString.C
   BinarySymbolicExpr.C
   BinarySymbolicExprParser.C
@@ -60,7 +60,6 @@ install(
   FILES
     AbstractLocation.h
     BinaryAnalysisUtils.h
-    BinaryAttribute.h
     BinaryCallingConvention.h
     BinaryControlFlow.h
     BinaryDataFlow.h
@@ -69,6 +68,7 @@ install(
     BinaryMagic.h
     BinaryNoOperation.h
     BinaryPointerDetection.h
+    BinaryStackDelta.h
     BinaryStackVariable.h
     BinaryString.h
     BinarySymbolicExpr.h

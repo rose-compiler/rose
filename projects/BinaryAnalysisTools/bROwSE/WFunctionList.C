@@ -56,6 +56,7 @@ WFunctionList::init() {
     model_->analyzers().push_back(FunctionNReturns::instance());
     model_->analyzers().push_back(FunctionMayReturn::instance());
     model_->analyzers().push_back(FunctionStackDelta::instance());
+    model_->analyzers().push_back(FunctionCallingConvention::instance());
 
     // Function table
     tableView_ = new Wt::WTableView;

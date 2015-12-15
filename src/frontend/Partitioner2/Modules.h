@@ -408,7 +408,15 @@ SgAsmBlock* buildAst(const Partitioner&, SgAsmInterpretation *interp=NULL, bool 
  *  into sections are only created if an interpretation is specified. */
 void fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp=NULL);
 
-
+/** Fixes calling convention results.
+ *
+ *  This function uses the results of previous calling convention analysis to assign calling convention definitions to the
+ *  functions in the specified AST. There's often more than one definition that matches the analysis results, and this fixup
+ *  pass attempts to assign the best definitions. It does so by first ranking the definitions according to how often they match
+ *  across all the functions known to the partitioner. Then, for each function in the specified @ref ast, the we also get a
+ *  list matching definitions (if a calling convention analysis has been run on that function). We copy into the AST that
+ *  function's definition which has the highest global ranking. */
+void fixupAstCallingConventions(const Partitioner&, SgNode *ast);
 
 } // namespace
 

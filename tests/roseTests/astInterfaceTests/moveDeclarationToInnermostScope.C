@@ -197,6 +197,15 @@ Consider only right hand is not enough, the variable declared on left side must 
 
 The best solution is liveness analysis (or side effect analysis).
 An approximation being used now is to not move when there is any references to variables used by the assignment (either lhs or rhs).
+
+Pre-order iteration of decls is needed to check if it is mergeable: move assign up to merge with the declaration.
+Example: if use reverse order: double abc will be checked first,  the last assignment cannot be moved up since rhs uses aa, which is defined in between.
+
+Using pre-order : double aa is considered first, aa=a[i] is moved up.   Then double abc; abc= aa* aa; can be merged also.
+        double aa;
+        double abc; //
+        aa = a[i];   
+        abc = aa * aa;  //
 */
 static  bool isMergeable (SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
 {
@@ -235,17 +244,33 @@ static  bool isMergeable (SgVariableDeclaration* decl, SgExprStatement* assign_s
     SageInterface::collectVarRefs (stmts_in_middle[i], varRefsInBetween);
     // convert varRef to SgInitializedName 
      for (size_t j = 0; j< varRefsInBetween.size(); j++)
+     {
+        if (transTracking)
+        { 
+          cout<<"found referenced/used symbol in between "<< varRefsInBetween[j]->get_symbol()->get_name() <<endl;
+        }
         usedSymbolsInBetween.insert (varRefsInBetween[j]->get_symbol());
+     }
 
    // collect initialized name also for declarations
     if (SgVariableDeclaration* mid_decl = isSgVariableDeclaration (stmts_in_middle[i]))
+    {
+      if (transTracking)
+        cout<<"found declared /used symbol in between "<< SageInterface::getFirstVarSym(mid_decl)->get_name() <<endl;
       usedSymbolsInBetween.insert(SageInterface::getFirstVarSym(mid_decl));
+    }
   }
 
   // 2. collect symbols used by assign_op's rhs and lhs (must consider both sides!)
   SageInterface::collectVarRefs ( isSgAssignOp(assign_stmt->get_expression())->get_rhs_operand(), usedVarRefsInRhs);
   for (size_t k=0; k< usedVarRefsInRhs.size(); k++)
+  {
+      if (transTracking)
+        cout<< "found used in assignment rhs" << usedVarRefsInRhs[k]->get_symbol()-> get_name()<<endl;
     usedSymbolsInAssignment.insert (usedVarRefsInRhs[k]->get_symbol());
+  }
+  if (transTracking)
+        cout<< "found used in assignment lhs" << SageInterface::getFirstVarSym (decl)-> get_name()<<endl;
   usedSymbolsInAssignment.insert (SageInterface::getFirstVarSym (decl));
 
  // intersection is not NULL, cannot merge or move across the area using the variable
@@ -253,6 +278,10 @@ static  bool isMergeable (SgVariableDeclaration* decl, SgExprStatement* assign_s
                     inserter (intersectSymbols, intersectSymbols.begin()));
   if (intersectSymbols.size() == 0 )
     rt = true;
+  if (transTracking)
+  {
+    cout<< "isMergeable () returns "<< rt<< "----------------" <<endl;
+  }
  
   return rt; 
 }
@@ -262,7 +291,14 @@ static  bool isMergeable (SgVariableDeclaration* decl, SgExprStatement* assign_s
 // if it has no initialization, we find the first followed assignment within the same scope and merge the assignment into the decl as an initializer
 static void collectiveMergeDeclarationAndAssignment (std::vector <SgVariableDeclaration*> decls)
 {
-  for (size_t i = 0; i< decls.size(); i++)
+  // Must not separate analysis and transformation sine the success of next stmt relies on previous merge
+  // pre-order iteration to check if it is mergeable: move assign up to merge with the declaration.
+
+  //for (size_t i = 0; i< decls.size(); i++)
+  // The top level traversal is reverse-order of preorder
+  // However, to support the isMergeable()'s move-up analysis (move assign up to the decl)
+  // we must scan candidate decls using pre-order, or multiple decls case will not work properly!
+  for (int i = decls.size()-1; i>=0; i--) // -- case will cause overflow for size_t type, must not use size_t!!
   {
     SgVariableDeclaration* current_decl = decls[i];
     ROSE_ASSERT (current_decl != NULL);
@@ -275,28 +311,31 @@ static void collectiveMergeDeclarationAndAssignment (std::vector <SgVariableDecl
 
       while (next_stmt)
       {
-         if (isAssignmentStmtOf (next_stmt, init_name) )
-         {  
-           if (isMergeable (current_decl, isSgExprStatement (next_stmt)))
-           {
-               SageInterface::mergeDeclarationAndAssignment (current_decl, isSgExprStatement (next_stmt));
+        if (isAssignmentStmtOf (next_stmt, init_name) )
+        {  
+          if (isMergeable (current_decl, isSgExprStatement (next_stmt)))
+          {
+            SageInterface::mergeDeclarationAndAssignment (current_decl, isSgExprStatement (next_stmt));
 #if ENABLE_TRANS_TRACKING
-              if (transTracking)
-              {
-                // No need to patch up IDs for a merge transformation
-                // directly record input node 
-                TransformationTracking::addInputNode (current_decl, next_stmt);
-              }
+            if (transTracking)
+            {
+              // No need to patch up IDs for a merge transformation
+              // directly record input node 
+              TransformationTracking::addInputNode (current_decl, next_stmt);
+            }
 #endif              
-           } // end if Mergeable
-             next_stmt = NULL; // We stop when the first match is found
-         } 
-         else
-           next_stmt = SageInterface::getNextStatement(next_stmt);
+
+          } // end if Mergeable
+          // mergeable or , we stop going to next stmt
+          next_stmt = NULL; // We stop when the first match is found, we also stop if the first matching assign is not mergeable
+        } 
+        else
+          next_stmt = SageInterface::getNextStatement(next_stmt);
       } 
 
     } // end if null initializer
   } // end for
+
 }
 
 
@@ -493,6 +532,11 @@ int main(int argc, char * argv[])
   }
 
   SgProject *project = frontend (argvList);
+
+  // DQ (11/20/2015): AST consistency tests (optional for users, but this enforces more of our tests).
+  // I have added this to detect a SgTemplateClassDefinition that is being visited twice.
+  AstTests::runAllTests(project);
+
 #if ENABLE_TRANS_TRACKING
   // assign unique ID's for all nodes
   if (transTracking)
@@ -524,13 +568,17 @@ int main(int argc, char * argv[])
                  SgFile* cur_file = file_ptr_list[i];
                  SgSourceFile* s_file = isSgSourceFile(cur_file);
                  if (s_file != NULL)
-                    {
-                      inserted_decls.clear(); // For each file, reset this.
+                 {
+                   inserted_decls.clear(); // For each file, reset this.
                    // exampleTraversal.traverseInputFiles(project,preorder);
-                      exampleTraversal.traverseWithinFile(s_file, preorder);
-                    if (inserted_decls.size()>0 && merge_decl_assign)
-                        collectiveMergeDeclarationAndAssignment (inserted_decls);
-                    }
+                   exampleTraversal.traverseWithinFile(s_file, preorder);
+                   if (inserted_decls.size()>0 && merge_decl_assign)
+                   { 
+                     if (transTracking)
+                        cout<<"Begin merging declarations # "<<inserted_decls.size()<<endl;
+                     collectiveMergeDeclarationAndAssignment (inserted_decls);
+                   }
+                 }
                }
             string filename= SageInterface::generateProjectName(project);
 #if 0
@@ -1318,10 +1366,19 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
               ROSE_ASSERT(stmt->get_isModified() == false);
 #endif
               SageInterface::deepDelete (exp_stmt);
+              ROSE_ASSERT (stmt_list.size() ==0);
 	      // insert the merged decl into the list, TODO preserve the order in the list
 	      // else other cases: we simply prepend decl_copy to the front of init_stmt
+#if 0
+              // SageInterface:prependStatement () cannot be used here since SgForStatement is a scope 
+              // but inserting things into it is ambugious semanticly. 
 	      stmt_list.insert (stmt_list.begin(),  decl_copy);
 	      decl_copy->set_parent(stmt->get_for_init_stmt());
+              ROSE_ASSERT (stmt_list.size() ==1);
+#else
+              // A variant version should be able to handle it  
+              SageInterface::prependStatement (decl_copy, stmt->get_for_init_stmt());
+#endif              
 	      ROSE_ASSERT (decl_copy->get_parent() != NULL); 
               // we already merged with assignment, we skip it so it won't be considered again?
               inserted_copied_decls.push_back(decl_copy);
@@ -1815,6 +1872,161 @@ std::vector <SgScopeStatement *> moveSpecialTargetScopesIntoScopeTreeQueue (cons
   return processed_scopes;
 }
 
+// For a scope tree, collect final target scopes and middle target scopes for further consideration
+// This is the core step of algorithm V2's findFinalTargetScopes()
+// TODO: this is a much more sophisticated problem than I originally thought!
+/* 
+      n0
+      | 
+      n1
+     / \
+    n2  n3
+       / \
+      n4  n5 
+
+The issue is that n3 can be unsupported scope (scope into which we cannot insert a decl, like a while-stmt scope).
+n3 is not bottom. On the surface, we can put n3 into scope_trees worklist for further consideration.
+n2 is put to the final_target_scopes as a final scope.
+
+But if n3 has no legitimate children or grand children nodes to accept the moved down declarations, 
+we have to back track and invalid n2 also. 
+
+Option 1: simplest.  create a new basic block scope before the unsupported scope. looks a bit bad. but simple to implement.
+//TODO : ask users for their opinions
+
+Option 2: whenever a search for a scope tree at a root does not find a single eligible final target scope, 
+we have to backtrack trough the scope tree, find an upper eligible final target scope.
+In the meantime, we have to invalidate the root's sibling nodes (and all children?) in the final target scope set, 
+  and possibly invalidate some nodes (sibling and all children?) in the scope tree worklist. 
+
+   invalidate and mark the affected nodes as considered also. 
+
+The scope tree worklist is a queue?, depth first traverse is used
+
+The invalidation can happen in a postprocessing function: search 
+
+Option 3: run the analysis twice: the first time mark all possible final scopes, then mark each scope nodes to indicate if it has a potential
+  child target node. 
+ The 2nd time uses the previous results to decide if we can put a unsupported scope node into the worklist
+This is not elegant, but easy to understand and implement.
+
+The 2nd run is only necessary when there is a unsupported, non-bottom scope node being pushed to the worklist!!
+TODO: this function is not ready for use. Under development. 2015-11-05
+*/
+void  collectFinalAndMiddleTargetScopes (SgVariableDeclaration* decl, Scope_Node* scope_tree, 
+               std::vector <SgScopeStatement *> &final_target_scopes, std::queue<Scope_Node* >& source_scope_trees,  bool debug)
+{
+  // single node scope tree, it is already the bottom, move to the final target scope 
+  // if it is different from the original decl scope && is supported
+  // Can the iterative algorithm generate new single node scope tree? No ! we checked the new root to be non-bottom!!
+  if ((scope_tree->children).size() == 0 )
+  {
+    if (scope_tree->scope != decl->get_scope() && !isUnsupportedScope (scope_tree->scope, decl) )
+    {
+      final_target_scopes.push_back(scope_tree->scope);
+      // no addition to the source_scope_trees worklist
+    }  
+    return ;
+  }
+
+  // for a scope tree with two or more nodes  
+  Scope_Node* first_branch_node = scope_tree->findFirstBranchNode();
+
+  // Step 2: simplest case, only a single use place, single path tree
+  // -----------------------------------------------------
+  // the first branch node is also the bottom node
+  if ((first_branch_node->children).size() ==0)
+  {
+    SgScopeStatement* bottom_scope = first_branch_node->scope;
+    ROSE_ASSERT(!isUnsupportedScope (bottom_scope, decl));
+    //TODO: what if backtracked to the root, which is a unsupported node added to the worklist scope trees?
+    // We must enforce unsupported scope bottom are backtraced when generating the scope tree! So the bottoms are all legal supported target scopes!
+    // getAdjustedScope () must ensure this and mark the backtracked scope as bottom (s-use). 
+    final_target_scopes.push_back(bottom_scope);
+  } // end the single decl-use path case
+  else  
+  { 
+    // multiple path tree
+    //Step 3: multiple scopes
+    // -----------------------------------------------------
+    // there are multiple (0 to n - 1 )child scopes in which the variable is used. 
+    // if for all scope 1, 2, .., n-1
+    //  the variable is defined before being used (not live)
+    //  Then we can move the variable into each child scope
+    // Conversely, if any of scope has liveIn () for the declared variable, we cannot move
+    bool moveToMultipleScopes= true ; 
+
+    for (size_t i =0; i< (first_branch_node->children).size(); i++)
+    {
+      Scope_Node * current_child_node = first_branch_node->children[i];
+      SgScopeStatement * current_child_scope = current_child_node->scope;
+      ROSE_ASSERT (current_child_scope != NULL); 
+      if (i>0) // consider the 2nd and later scope
+      {
+        SgVariableSymbol * var_sym = SageInterface::getFirstVarSym (decl); 
+        ROSE_ASSERT (var_sym != NULL);
+        if (isLiveIn (var_sym, current_child_scope))
+        {
+          moveToMultipleScopes = false;
+          break; // Find one is enough!
+        } 
+      }
+#if 1 // not working yet, many places to identify candidates. Better screen them later when this call is finished
+      // if a child scope is unsupported and bottom (no supported grandchildren) we cannot move to this level neither.  
+      // A wiggle room here: the child scope is unsupported, but there is a supported grandchild scope underneath it,
+      // we can still put it into the worklist
+      // TODO: need a search function to ensure this!! bool existingEligibleFinalTargetScope(root, decl)
+      if (isUnsupportedScope (current_child_scope, decl) && current_child_node->s_type == s_use)
+      {
+        moveToMultipleScopes = false;
+        break; // Find one is enough!
+      }  
+#endif 
+    }  // end for all scopes
+
+    if (moveToMultipleScopes)
+    {
+      if (debug)
+	cout<<"Found a movable declaration for multiple child scopes"<<endl;
+      for (size_t i =0; i< (first_branch_node->children).size(); i++)
+      {
+#if 0        
+	// we try to get the bottom for each branch, not just the upper scope
+	// This is good for the case like: "if () { for (i=0;..) {}}" and if-stmt's scope is a child of the first branch scope node
+	// TODO: one branch may fork multiple branches. Should we move further down on each grandchildren branch?
+	//       Not really, we then find the common inner most scope of that branch. just simply move decl there!
+	// Another thought: A better fix: we collect all leaf nodes of the scope tree! It has nothing to do with the first branch node!
+	//       this won't work. First branch node still matters. 
+	Scope_Node* current_child_scope = first_branch_node->children[i];     
+        //TODO: this is not clean from a recursive function point of view, This should be handled by the top while loop iterating on the scope tree queue. 
+	Scope_Node* bottom_node = current_child_scope -> findFirstBranchNode ();
+	SgScopeStatement * bottom_scope = bottom_node->scope;
+	ROSE_ASSERT (bottom_scope!= NULL);
+	target_scopes.push_back (bottom_scope);
+#else
+        // Liao 2015/11/2.  We only need to generate the candidate scopes here. 
+        // Delegate the processing of bottom (s_use for the scope tree node) vs. non-bottom scope (scope tree node type is s_intermedidate)
+        // to later moveSpecialTargetScopesIntoScopeTreeQueue().
+        // I don't want to mix the collection of candidates with other scope handling logic here.
+       // 1. collect candidates --> 2. decide on if root or children should be the legitimate target --> 3. add non-bottom targets to worklist
+	Scope_Node* current_child_scope_node = first_branch_node->children[i];     
+	SgScopeStatement * child_scope = current_child_scope_node->scope;
+	ROSE_ASSERT (child_scope!= NULL);
+	final_target_scopes.push_back (child_scope);
+#endif        
+      }
+    }
+    else // we still have to move it to the innermost common scope
+    {
+      SgScopeStatement* bottom_scope = first_branch_node->scope;
+      if (decl->get_scope() != bottom_scope)
+      {
+	final_target_scopes.push_back(bottom_scope);
+      }
+    } // end else
+  } // end else multiple scopes
+}
+
 
 // For a scope tree, collect candidate target scopes. This is the core step of algorithm V2's findFinalTargetScopes()
 /*
@@ -1933,40 +2145,103 @@ std::vector <SgScopeStatement *> collectCandidateTargetScopes (SgVariableDeclara
   return target_scopes; 
 }
 
-// V2 algorithm: two step algorithm
+// V2 algorithm's first step: iterative algorithm to find all final target scopes
 /*
 Find all bottom scopes to move into: no side effect on AST at all
 
 1. Initialization: 
   source_scope_trees: the top scope tree of the single decl in question
-2. For each tree of  source_scope_trees: populate target_scopes
-  collect candidate scopes
-   a. Single node scope tree, if diff from orig_scope, add  to target_scopes.  
-       delete the tree in any cases.  IF the same AS orig_scope, skip moving.  delete still. 
-   b. Multiple nodes tree
-      i. First branch node is a bottom: push to target_scopes
-      ii. First branch has children, move down if no LIveIn between any chidren?
-          1.  Move to multiple scopes: each child’s first branch → target_scopes  
-             // TODO: this can be optimized, direct add child scope should be sufficient
-          2. No move down if has liveIn, push first-branch scope into target_scope, if it is diff from orig_scope
-3. Target_scopes to source_scope_trees transition, caused by if-stmt  void moveSpecialTargetScopesToSourceScopeTreesQueue(& target_scopes, & source_scope_tree)
-  a. Find all if-stmt scopes of target_scopes 
-  b. Remove them from target_scopes
-  c. Add their true/false scopes into   source_scope_trees // the removed ones can be added back later for single node scope tree case. 
-    what if no BB is stored? Create a virtual scope on demand?   Post process scope tree (normalize) then de-normalize: pending on the experiment of add/remove BB’s impact on token-unparsing
+
+2. For each tree of  source_scope_trees: find candidate scopes, save into target_scopes
+  collect candidate scopes 
+      n0
+      | 
+      n1
+     / \
+    n2  n3
+ 
+We differentiate two kinds of candidate scopes: 
+
+ final_target_scopes: know for certain this is the final one. No need for further consideration. 
+  * It can be a real bottom scope , or 
+  * an intermediate scope which is reached by backtracking from a unsupported bottom scope. No use to go deeper.
+
+ scopetree worklist_scopes: a scope which is a child of a first branch node. and it is not the bottom.  
+
+   a. Single node scope tree, if diff from orig_scope, add to target_scopes.  
+        TODO: && !isUnSupportedScope ()   It is already a bottom scope (s_use type) 
+   b. Multiple nodes tree: find the first branching node
+                         && !isUnSupportedScope()  Does this matter? if some middle scope is not supported. No big deal really.  
+      i. Single path tree: First branch node is a bottom: push to target_scopes as a candidate
+                      Is supportedScope important?  Yes. unsupported will not accept decl to be inserted. 
+                      TODO: how to handle this cleanly?  backtrack to a scope node which is supported, mark it as final? No redundant consideration.
+
+      ii. Multiple path tree:  First branch node has multiple children
+          1. No move down if has liveIn, push first-branch scope into target_scope, if it is diff from orig_scope
+          2. No move down if any of the children is not supported (while, if, switch, etc.) && is a final (s_use type) target scope 
+             Reason: a final, unsupported scope cannot accept the declaration!!
+                     an intermediate , unsupported scope can serve as a new root for further move consideration
+          For both no move down case: it is the same handling for the single path case b-i (reuse the code)           
+
+          3. Move to multiple scopes: for each child’s first branch 
+             if the child scope is final , add to final_target_scope
+             if not final, add to worklist_scopes.  
+
+3. Target_scopes to source_scope_trees transition, caused by non-bottom scopes
+   This is to handle uneven bottom scope issues, as demonstrated below:
+      n0
+      | 
+      n1
+     / \
+    n2  n3
+       / \
+      n4  n5 
+First branching node is n1.   No liveIn between n2 and n3. So candidate collection step will collect n2 and n3.
+For all candidate scopes, if they have further children, they should be treated as a new root for brand new consideration.
+One example is n3 is If-stmt which is a scope. 
+We need to add n3 as a new scope tree root for further consideration. 
+n2 is kept/saved as one of the final target scopes
+
 4. if (!Check stop condition):   repeat 2 and 3, essentially do (2, 3) while ()
    a. scope tree: root scopes are processed (finished) a scopelist, source_scopes becomes empty
    b. // Implicitly ensured by 3 all target_scopes are bottom, no non-bottom scopes like if-stmt anymore
 
-Amendment to the algorithm before:
+Finally delete the scope tree in any cases.  IF the same AS orig_scope, skip moving.  delete still. 
 
- 1. If any scope is not allowed, no move will happen at all. This is not desired since some intermediate moves still should happen.
- To support it, I build candidate target scopes for each scope tree, and only invalidate a single scope tree
- with invalid target scope. Other target scopes of valid scope trees are preserved. 
-
- 2. If a source-scope tree is invalidated, it should be returned to the target_scope (back track!!) to preserve previous move.
 Liao 1/27/2015 
  */
+// Hopefully a new cleaner version
+void findFinalTargetScopes_V2(SgVariableDeclaration* declaration, std::vector <SgScopeStatement *> &final_target_scopes, bool debug)
+{
+  // A single original scope tree can spawn to multiple sub-trees, depending on where to start as a root
+  // Each target scope will be treated as a root to consider further search for the bottom scopes.
+  std::queue<Scope_Node* > source_scope_trees; 
+  SgVariableDeclaration * decl = declaration;
+  ROSE_ASSERT (decl != NULL);
+  // Step 1: generate a scope tree for the declaration
+  // -----------------------------------------------------
+  // Initially only one scope tree
+  Scope_Node* orig_scope_tree = generateScopeTree (decl, debug);
+  source_scope_trees.push(orig_scope_tree);
+  scopeTreeConsideredMap[orig_scope_tree] = true;
+
+  while (!source_scope_trees.empty())
+  {
+    Scope_Node* scope_tree = source_scope_trees.front();
+    source_scope_trees.pop(); // remove it from the queue
+
+    std::vector <SgScopeStatement *> candidate_scopes;  // per scope tree info.
+    // collect final and middle target scopes, save them into two different set
+    collectFinalAndMiddleTargetScopes (decl, scope_tree, final_target_scopes, source_scope_trees, debug);
+  }  // end while
+
+  // delete the original scope tree
+  orig_scope_tree->deep_delete_children ();
+  delete orig_scope_tree;
+}
+
+
+// old working version ....
 void findFinalTargetScopes(SgVariableDeclaration* declaration, std::vector <SgScopeStatement *> &target_scopes, bool debug)
 {
   // A single original scope tree can spawn to multiple sub-trees, depending on where to start as a root

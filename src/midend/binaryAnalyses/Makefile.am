@@ -43,7 +43,6 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/TraceSemantics2.C			\
     instructionSemantics/YicesSolver.C				\
     GraphAlgorithms.C						\
-    BinaryAttribute.C						\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
     BinaryDominance.C						\
@@ -53,6 +52,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryNoOperation.C						\
     BinaryPointerDetection.C					\
     BinaryReturnValueUsed.C					\
+    BinaryStackDelta.C						\
     BinaryString.C						\
     BinarySymbolicExpr.C					\
     BinarySymbolicExprParser.C					\
@@ -119,7 +119,6 @@ pkginclude_HEADERS =					\
     libraryIdentification/functionIdentification.h	\
     libraryIdentification/libraryIdentification.h	\
     ether.h						\
-    BinaryAttribute.h					\
     BinaryControlFlow.h					\
     BinaryDataFlow.h					\
     BinaryDominance.h					\
@@ -130,6 +129,7 @@ pkginclude_HEADERS =					\
     BinaryPointerDetection.h				\
     BinaryAnalysisUtils.h				\
     BinaryReturnValueUsed.h				\
+    BinaryStackDelta.h					\
     BinaryStackVariable.h				\
     BinaryString.h					\
     BinarySymbolicExpr.h				\

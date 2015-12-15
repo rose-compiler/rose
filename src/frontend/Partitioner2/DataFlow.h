@@ -152,6 +152,11 @@ public:
     /** Construct an initial state. */
     BaseSemantics::StatePtr initialState() const;
 
+    /** Property: Virtual CPU.
+     *
+     *  This is the same pointer specified in the constructor. */
+    BaseSemantics::DispatcherPtr cpu() const { return cpu_; }
+
     /** Property: Default calling convention.
      *
      *  The default calling convention is used whenever a call is made to a function that has no calling convention

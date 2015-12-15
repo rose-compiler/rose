@@ -17,7 +17,7 @@ class IsomorphicNode : public AstAttribute
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
 
-          virtual AstAttribute* copy();
+          virtual AstAttribute* copy() const;
    };
 
 class NonIsomorphicNode : public AstAttribute
@@ -36,7 +36,7 @@ class NonIsomorphicNode : public AstAttribute
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
 
-          virtual AstAttribute* copy();
+          virtual AstAttribute* copy() const;
    };
 
 

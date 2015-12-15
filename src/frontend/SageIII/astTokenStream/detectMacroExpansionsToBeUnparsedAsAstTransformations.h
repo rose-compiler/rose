@@ -1,7 +1,7 @@
 
 // Header file
 
-#if 1
+#if 0
 class DetectMacroExpansionsToBeUnparsedAsAstTransformationsInheritedAttribute
    {
   // I don't think there is anything to do for this case (but I have implemented this as a 
@@ -43,15 +43,6 @@ class DetectMacroExpansionsToBeUnparsedAsAstTransformations
    };
 #endif
 
-
-#if 0
-class DetectMacroExpansionsToBeUnparsedAsAstTransformations : public AstSimpleProcessing
-   {
-     public:
-       // virtual function must be defined
-          void visit( SgNode* n );
-   };
-#endif
 
 
 // Main API function to call the AST traversals

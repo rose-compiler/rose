@@ -76,6 +76,7 @@
 0x08048972: Successor blocks: unknown
 
 0x0804897c: ================================== Function (function call, import, graph) <strchr@plt>
+0x0804897c: Function stack delta: +4
 
 0x0804897c: Basic block reasons: entry point
 0x0804897c: ff 25 84 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ad84<.got.plt+0x0c>]
@@ -83,6 +84,7 @@
 0x0804897c: Successor blocks: unknown
 
 0x0804898c: ================================== Function (function call, import, graph) <updwtmp@plt>
+0x0804898c: Function stack delta: +4
 
 0x0804898c: Basic block reasons: entry point
 0x0804898c: ff 25 88 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ad88<.got.plt+0x10>]
@@ -90,6 +92,7 @@
 0x0804898c: Successor blocks: unknown
 
 0x0804899c: ================================== Function (function call, import, graph) <pututline@plt>
+0x0804899c: Function stack delta: +4
 
 0x0804899c: Basic block reasons: entry point
 0x0804899c: ff 25 8c ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ad8c<.got.plt+0x14>]
@@ -97,6 +100,7 @@
 0x0804899c: Successor blocks: unknown
 
 0x080489ac: ================================== Function (function call, import, graph) <close@plt>
+0x080489ac: Function stack delta: +4
 
 0x080489ac: Basic block reasons: entry point
 0x080489ac: ff 25 90 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ad90<.got.plt+0x18>]
@@ -104,6 +108,7 @@
 0x080489ac: Successor blocks: unknown
 
 0x080489bc: ================================== Function (function call, import, graph) <getutid@plt>
+0x080489bc: Function stack delta: +4
 
 0x080489bc: Basic block reasons: entry point
 0x080489bc: ff 25 94 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ad94<.got.plt+0x1c>]
@@ -111,6 +116,7 @@
 0x080489bc: Successor blocks: unknown
 
 0x080489cc: ================================== Function (function call, import, graph) <perror@plt>
+0x080489cc: Function stack delta: +4
 
 0x080489cc: Basic block reasons: entry point
 0x080489cc: ff 25 98 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ad98<.got.plt+0x20>]
@@ -118,6 +124,7 @@
 0x080489cc: Successor blocks: unknown
 
 0x080489dc: ================================== Function (function call, import, graph) <fprintf@plt>
+0x080489dc: Function stack delta: +4
 
 0x080489dc: Basic block reasons: entry point
 0x080489dc: ff 25 9c ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ad9c<"p,'">]
@@ -125,6 +132,7 @@
 0x080489dc: Successor blocks: unknown
 
 0x080489ec: ================================== Function (function call, import, graph) <getenv@plt>
+0x080489ec: Function stack delta: +4
 
 0x080489ec: Basic block reasons: entry point
 0x080489ec: ff 25 a0 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ada0<.got.plt+0x28>]
@@ -132,6 +140,7 @@
 0x080489ec: Successor blocks: unknown
 
 0x080489fc: ================================== Function (function call, import, graph) <reboot@plt>
+0x080489fc: Function stack delta: +4
 
 0x080489fc: Basic block reasons: entry point
 0x080489fc: ff 25 a4 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ada4<.got.plt+0x2c>]
@@ -139,6 +148,7 @@
 0x080489fc: Successor blocks: unknown
 
 0x08048a0c: ================================== Function (function call, import, graph) <access@plt>
+0x08048a0c: Function stack delta: +4
 
 0x08048a0c: Basic block reasons: entry point
 0x08048a0c: ff 25 a8 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ada8<.got.plt+0x30>]
@@ -146,6 +156,7 @@
 0x08048a0c: Successor blocks: unknown
 
 0x08048a1c: ================================== Function (function call, import, graph) <malloc@plt>
+0x08048a1c: Function stack delta: +4
 
 0x08048a1c: Basic block reasons: entry point
 0x08048a1c: ff 25 ac ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804adac<.got.plt+0x34>]
@@ -153,6 +164,7 @@
 0x08048a1c: Successor blocks: unknown
 
 0x08048a2c: ================================== Function (function call, import, graph) <execv@plt>
+0x08048a2c: Function stack delta: +4
 
 0x08048a2c: Basic block reasons: entry point
 0x08048a2c: ff 25 b0 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804adb0<.got.plt+0x38>]
@@ -160,6 +172,7 @@
 0x08048a2c: Successor blocks: unknown
 
 0x08048a3c: ================================== Function (function call, import, graph) <getopt@plt>
+0x08048a3c: Function stack delta: +4
 
 0x08048a3c: Basic block reasons: entry point
 0x08048a3c: ff 25 b4 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804adb4<.got.plt+0x3c>]
@@ -167,6 +180,7 @@
 0x08048a3c: Successor blocks: unknown
 
 0x08048a4c: ================================== Function (function call, import, graph) <fgets@plt>
+0x08048a4c: Function stack delta: +4
 
 0x08048a4c: Basic block reasons: entry point
 0x08048a4c: ff 25 b8 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804adb8<.got.plt+0x40>]
@@ -174,6 +188,7 @@
 0x08048a4c: Successor blocks: unknown
 
 0x08048a5c: ================================== Function (function call, import, graph) <chdir@plt>
+0x08048a5c: Function stack delta: +4
 
 0x08048a5c: Basic block reasons: entry point
 0x08048a5c: ff 25 bc ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804adbc<.got.plt+0x44>]
@@ -181,6 +196,7 @@
 0x08048a5c: Successor blocks: unknown
 
 0x08048a6c: ================================== Function (function call, import, graph) <sleep@plt>
+0x08048a6c: Function stack delta: +4
 
 0x08048a6c: Basic block reasons: entry point
 0x08048a6c: ff 25 c0 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804adc0<.got.plt+0x48>]
@@ -188,6 +204,7 @@
 0x08048a6c: Successor blocks: unknown
 
 0x08048a7c: ================================== Function (function call, import, graph) <uname@plt>
+0x08048a7c: Function stack delta: +4
 
 0x08048a7c: Basic block reasons: entry point
 0x08048a7c: ff 25 c4 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804adc4<.got.plt+0x4c>]
@@ -195,6 +212,7 @@
 0x08048a7c: Successor blocks: unknown
 
 0x08048a8c: ================================== Function (function call, import, graph) <setutent@plt>
+0x08048a8c: Function stack delta: +4
 
 0x08048a8c: Basic block reasons: entry point
 0x08048a8c: ff 25 c8 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804adc8<.got.plt+0x50>]
@@ -202,6 +220,7 @@
 0x08048a8c: Successor blocks: unknown
 
 0x08048a9c: ================================== Function (function call, import, graph) <__libc_start_main@plt>
+0x08048a9c: Function stack delta: +4
 
 0x08048a9c: Basic block reasons: entry point
 0x08048a9c: ff 25 cc ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804adcc<.got.plt+0x54>]
@@ -209,6 +228,7 @@
 0x08048a9c: Successor blocks: unknown
 
 0x08048aac: ================================== Function (function call, import, graph) <endutent@plt>
+0x08048aac: Function stack delta: +4
 
 0x08048aac: Basic block reasons: entry point
 0x08048aac: ff 25 d0 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804add0<.got.plt+0x58>]
@@ -216,6 +236,7 @@
 0x08048aac: Successor blocks: unknown
 
 0x08048abc: ================================== Function (function call, import, graph) <getutent@plt>
+0x08048abc: Function stack delta: +4
 
 0x08048abc: Basic block reasons: entry point
 0x08048abc: ff 25 d4 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804add4<.got.plt+0x5c>]
@@ -223,6 +244,7 @@
 0x08048abc: Successor blocks: unknown
 
 0x08048acc: ================================== Function (function call, import, graph) <memcpy@plt>
+0x08048acc: Function stack delta: +4
 
 0x08048acc: Basic block reasons: entry point
 0x08048acc: ff 25 d8 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804add8<.got.plt+0x60>]
@@ -230,6 +252,7 @@
 0x08048acc: Successor blocks: unknown
 
 0x08048adc: ================================== Function (function call, import, graph) <fclose@plt>
+0x08048adc: Function stack delta: +4
 
 0x08048adc: Basic block reasons: entry point
 0x08048adc: ff 25 dc ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804addc<.got.plt+0x64>]
@@ -237,6 +260,7 @@
 0x08048adc: Successor blocks: unknown
 
 0x08048aec: ================================== Function (function call, import, graph) <strrchr@plt>
+0x08048aec: Function stack delta: +4
 
 0x08048aec: Basic block reasons: entry point
 0x08048aec: ff 25 e0 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ade0<.got.plt+0x68>]
@@ -244,6 +268,7 @@
 0x08048aec: Successor blocks: unknown
 
 0x08048afc: ================================== Function (function call, import, graph) <__strdup@plt>
+0x08048afc: Function stack delta: +4
 
 0x08048afc: Basic block reasons: entry point
 0x08048afc: ff 25 e4 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ade4<.got.plt+0x6c>]
@@ -251,6 +276,7 @@
 0x08048afc: Successor blocks: unknown
 
 0x08048b0c: ================================== Function (function call, import, graph) <closedir@plt>
+0x08048b0c: Function stack delta: +4
 
 0x08048b0c: Basic block reasons: entry point
 0x08048b0c: ff 25 e8 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ade8<.got.plt+0x70>]
@@ -265,6 +291,7 @@
 0x08048b17: Successor blocks: 0x0804896c
 
 0x08048b1c: ================================== Function (function call, import, graph) <gettimeofday@plt>
+0x08048b1c: Function stack delta: +4
 
 0x08048b1c: Basic block reasons: entry point
 0x08048b1c: ff 25 ec ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804adec<.got.plt+0x74>]
@@ -272,6 +299,7 @@
 0x08048b1c: Successor blocks: unknown
 
 0x08048b2c: ================================== Function (function call, import, graph) <opendir@plt>
+0x08048b2c: Function stack delta: +4
 
 0x08048b2c: Basic block reasons: entry point
 0x08048b2c: ff 25 f0 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804adf0<.got.plt+0x78>]
@@ -279,6 +307,7 @@
 0x08048b2c: Successor blocks: unknown
 
 0x08048b3c: ================================== Function (function call, import, graph) <snprintf@plt>
+0x08048b3c: Function stack delta: +4
 
 0x08048b3c: Basic block reasons: entry point
 0x08048b3c: ff 25 f4 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804adf4<.got.plt+0x7c>]
@@ -286,6 +315,7 @@
 0x08048b3c: Successor blocks: unknown
 
 0x08048b4c: ================================== Function (function call, import, graph) <open@plt>
+0x08048b4c: Function stack delta: +4
 
 0x08048b4c: Basic block reasons: entry point
 0x08048b4c: ff 25 f8 ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804adf8<.got.plt+0x80>]
@@ -294,6 +324,7 @@
 
 0x08048b5c: ================================== Function (function call, import, graph) <exit@plt>
 0x08048b5c: Function does not return to caller.
+0x08048b5c: Function stack delta: +4
 
 0x08048b5c: Basic block reasons: entry point
 0x08048b5c: ff 25 fc ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804adfc<.got.plt+0x84>]
@@ -301,6 +332,7 @@
 0x08048b5c: Successor blocks: unknown
 
 0x08048b6c: ================================== Function (function call, import, graph) <free@plt>
+0x08048b6c: Function stack delta: +4
 
 0x08048b6c: Basic block reasons: entry point
 0x08048b6c: ff 25 00 ae 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ae00<.got.plt+0x88>]
@@ -308,6 +340,7 @@
 0x08048b6c: Successor blocks: unknown
 
 0x08048b7c: ================================== Function (function call, import, graph) <ioctl@plt>
+0x08048b7c: Function stack delta: +4
 
 0x08048b7c: Basic block reasons: entry point
 0x08048b7c: ff 25 04 ae 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ae04<.got.plt+0x8c>]
@@ -315,6 +348,7 @@
 0x08048b7c: Successor blocks: unknown
 
 0x08048b8c: ================================== Function (function call, import, graph) <memset@plt>
+0x08048b8c: Function stack delta: +4
 
 0x08048b8c: Basic block reasons: entry point
 0x08048b8c: ff 25 08 ae 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ae08<.got.plt+0x90>]
@@ -322,6 +356,7 @@
 0x08048b8c: Successor blocks: unknown
 
 0x08048b9c: ================================== Function (function call, import, graph) <strncpy@plt>
+0x08048b9c: Function stack delta: +4
 
 0x08048b9c: Basic block reasons: entry point
 0x08048b9c: ff 25 0c ae 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ae0c<.got.plt+0x94>]
@@ -329,6 +364,7 @@
 0x08048b9c: Successor blocks: unknown
 
 0x08048bac: ================================== Function (function call, import, graph) <fopen@plt>
+0x08048bac: Function stack delta: +4
 
 0x08048bac: Basic block reasons: entry point
 0x08048bac: ff 25 10 ae 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ae10<.got.plt+0x98>]
@@ -336,6 +372,7 @@
 0x08048bac: Successor blocks: unknown
 
 0x08048bbc: ================================== Function (function call, import, graph) <kill@plt>
+0x08048bbc: Function stack delta: +4
 
 0x08048bbc: Basic block reasons: entry point
 0x08048bbc: ff 25 14 ae 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ae14<.got.plt+0x9c>]
@@ -343,6 +380,7 @@
 0x08048bbc: Successor blocks: unknown
 
 0x08048bcc: ================================== Function (function call, import, graph) <fwrite@plt>
+0x08048bcc: Function stack delta: +4
 
 0x08048bcc: Basic block reasons: entry point
 0x08048bcc: ff 25 18 ae 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ae18<.got.plt+0xa0>]
@@ -350,6 +388,7 @@
 0x08048bcc: Successor blocks: unknown
 
 0x08048bdc: ================================== Function (function call, import, graph) <socket@plt>
+0x08048bdc: Function stack delta: +4
 
 0x08048bdc: Basic block reasons: entry point
 0x08048bdc: ff 25 1c ae 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ae1c<.got.plt+0xa4>]
@@ -357,6 +396,7 @@
 0x08048bdc: Successor blocks: unknown
 
 0x08048bec: ================================== Function (function call, import, graph) <readdir@plt>
+0x08048bec: Function stack delta: +4
 
 0x08048bec: Basic block reasons: entry point
 0x08048bec: ff 25 20 ae 04 08       |.% ...  |<sp+0 >   jmp    dword ds:[0x0804ae20<.got.plt+0xa8>]
@@ -364,6 +404,7 @@
 0x08048bec: Successor blocks: unknown
 
 0x08048bfc: ================================== Function (function call, import, graph) <geteuid@plt>
+0x08048bfc: Function stack delta: +4
 
 0x08048bfc: Basic block reasons: entry point
 0x08048bfc: ff 25 24 ae 04 08       |.%$...  |<sp+0 >   jmp    dword ds:[0x0804ae24<.got.plt+0xac>]
@@ -371,6 +412,7 @@
 0x08048bfc: Successor blocks: unknown
 
 0x08048c0c: ================================== Function (function call, import, graph) <sync@plt>
+0x08048c0c: Function stack delta: +4
 
 0x08048c0c: Basic block reasons: entry point
 0x08048c0c: ff 25 28 ae 04 08       |.%(...  |<sp+0 >   jmp    dword ds:[0x0804ae28<.got.plt+0xb0>]
@@ -416,26 +458,25 @@
 0x08048c49: ================================== Function (function call, graph) unknown name
 
 0x08048c49: Basic block reasons: entry point
-0x08048c49: 5b                      |[       |<sp-8 >   pop    ebx
-0x08048c4a: 81 c3 2f 21 00 00       |../!..  |<sp-4 >   add    ebx, 0x0000212f<8495>
-0x08048c50: 52                      |R       |<sp-4 >   push   edx
-0x08048c51: 8b 83 fc ff ff ff       |......  |<sp-8 >   mov    eax, dword ds:[ebx + 0xfffffffc<-4>]
-0x08048c57: 85 c0                   |..      |<sp-8 >   test   eax, eax
-0x08048c59: 74 02                   |t.      |<sp-8 >   je     0x08048c5d<<BBlock>>
-0x08048c59: Outgoing stack delta: -8
+0x08048c49: 5b                      |[       |<sp+0 >   pop    ebx
+0x08048c4a: 81 c3 2f 21 00 00       |../!..  |<sp+4 >   add    ebx, 0x0000212f<8495>
+0x08048c50: 52                      |R       |<sp+4 >   push   edx
+0x08048c51: 8b 83 fc ff ff ff       |......  |<sp+0 >   mov    eax, dword ds:[ebx + 0xfffffffc<-4>]
+0x08048c57: 85 c0                   |..      |<sp+0 >   test   eax, eax
+0x08048c59: 74 02                   |t.      |<sp+0 >   je     0x08048c5d<<BBlock>>
+0x08048c59: Outgoing stack delta: +0
 0x08048c59: Successor blocks: 0x08048c5b, 0x08048c5d
 
 0x08048c5b: Basic block reasons: 
-0x08048c5b: ff d0                   |..      |<sp-8 >   call   eax
-0x08048c5b: Outgoing stack delta: -12
+0x08048c5b: ff d0                   |..      |<sp+0 >   call   eax
+0x08048c5b: Outgoing stack delta: -4
 0x08048c5b: Successor blocks: 0x08048c5d, unknown
 
 0x08048c5d: Basic block reasons: 
-0x08048c5d: 58                      |X       |<sp-8 >   pop    eax
-0x08048c5e: 5b                      |[       |<sp-4 >   pop    ebx
-0x08048c5f: c9                      |.       |<sp+0 >   leave  
-0x08048c60: c3                      |.       |<sp+0 >   ret    
-0x08048c60: Outgoing stack delta: +4
+0x08048c5d: 58                      |X       |<sp+0 >   pop    eax
+0x08048c5e: 5b                      |[       |<sp+4 >   pop    ebx
+0x08048c5f: c9                      |.       |<sp+8 >   leave  
+0x08048c60: c3                      |.       |          ret    
 0x08048c60: Successor blocks: unknown
 
 0x08048c64: ================================== Function (function call, pattern, graph) unknown name
@@ -2237,54 +2278,53 @@
 0x0804982a: ================================== Function (function call, graph) unknown name
 
 0x0804982a: Basic block reasons: entry point
-0x0804982a: 5b                      |[       |<sp-28>   pop    ebx
-0x0804982b: 81 c3 4e 15 00 00       |..N...  |<sp-24>   add    ebx, 0x0000154e<5454>
-0x08049831: e8 1e f1 ff ff          |.....   |<sp-24>   call   0x08048954<<Func>>
-0x08049831: Outgoing stack delta: -28
+0x0804982a: 5b                      |[       |<sp+0 >   pop    ebx
+0x0804982b: 81 c3 4e 15 00 00       |..N...  |<sp+4 >   add    ebx, 0x0000154e<5454>
+0x08049831: e8 1e f1 ff ff          |.....   |<sp+4 >   call   0x08048954<<Func>>
+0x08049831: Outgoing stack delta: +0
 0x08049831: Successor blocks: 0x08048954, 0x08049836
 
 0x08049836: Basic block reasons: 
-0x08049836: 8d 83 20 ff ff ff       |.. ...  |<sp-24>   lea    eax, [ebx + 0xffffff20<-224>]
-0x0804983c: 8d 93 20 ff ff ff       |.. ...  |<sp-24>   lea    edx, [ebx + 0xffffff20<-224>]
-0x08049842: 89 45 f0                |.E.     |<sp-24>   mov    dword ss:[ebp + 0xf0<-16>], eax
-0x08049845: 29 d0                   |).      |<sp-24>   sub    eax, edx
-0x08049847: 31 f6                   |1.      |<sp-24>   xor    esi, esi
-0x08049849: c1 f8 02                |...     |<sp-24>   sar    eax, 0x02
-0x0804984c: 39 c6                   |9.      |<sp-24>   cmp    esi, eax
-0x0804984e: 73 16                   |s.      |<sp-24>   jae    0x08049866<<BBlock>>
-0x0804984e: Outgoing stack delta: -24
+0x08049836: 8d 83 20 ff ff ff       |.. ...  |<sp+4 >   lea    eax, [ebx + 0xffffff20<-224>]
+0x0804983c: 8d 93 20 ff ff ff       |.. ...  |<sp+4 >   lea    edx, [ebx + 0xffffff20<-224>]
+0x08049842: 89 45 f0                |.E.     |<sp+4 >   mov    dword ss:[ebp + 0xf0<-16>], eax
+0x08049845: 29 d0                   |).      |<sp+4 >   sub    eax, edx
+0x08049847: 31 f6                   |1.      |<sp+4 >   xor    esi, esi
+0x08049849: c1 f8 02                |...     |<sp+4 >   sar    eax, 0x02
+0x0804984c: 39 c6                   |9.      |<sp+4 >   cmp    esi, eax
+0x0804984e: 73 16                   |s.      |<sp+4 >   jae    0x08049866<<BBlock>>
+0x0804984e: Outgoing stack delta: +4
 0x0804984e: Successor blocks: 0x08049850, 0x08049866
 
 0x08049850: Basic block reasons: 
-0x08049850: 89 d7                   |..      |<sp-24>   mov    edi, edx
-0x08049852: 89 f6                   |..      |<sp-24>   mov    esi, esi
-0x08049852: Outgoing stack delta: -24
+0x08049850: 89 d7                   |..      |<sp+4 >   mov    edi, edx
+0x08049852: 89 f6                   |..      |<sp+4 >   mov    esi, esi
+0x08049852: Outgoing stack delta: +4
 0x08049852: Successor blocks: 0x08049854
 
 0x08049854: Basic block reasons: 
-0x08049854: ff 14 b2                |...     |<sp-24>   call   dword ds:[edx + esi*0x04]
-0x08049854: Outgoing stack delta: -28
+0x08049854: ff 14 b2                |...     |<sp+4 >   call   dword ds:[edx + esi*0x04]
+0x08049854: Outgoing stack delta: +0
 0x08049854: Successor blocks: 0x08049857, unknown
 
 0x08049857: Basic block reasons: 
-0x08049857: 8b 4d f0                |.M.     |<sp-24>   mov    ecx, dword ss:[ebp + 0xf0<-16>]
-0x0804985a: 29 f9                   |).      |<sp-24>   sub    ecx, edi
-0x0804985c: 46                      |F       |<sp-24>   inc    esi
-0x0804985d: c1 f9 02                |...     |<sp-24>   sar    ecx, 0x02
-0x08049860: 39 ce                   |9.      |<sp-24>   cmp    esi, ecx
-0x08049862: 89 fa                   |..      |<sp-24>   mov    edx, edi
-0x08049864: 72 ee                   |r.      |<sp-24>   jb     0x08049854<<BBlock>>
-0x08049864: Outgoing stack delta: -24
+0x08049857: 8b 4d f0                |.M.     |<sp+4 >   mov    ecx, dword ss:[ebp + 0xf0<-16>]
+0x0804985a: 29 f9                   |).      |<sp+4 >   sub    ecx, edi
+0x0804985c: 46                      |F       |<sp+4 >   inc    esi
+0x0804985d: c1 f9 02                |...     |<sp+4 >   sar    ecx, 0x02
+0x08049860: 39 ce                   |9.      |<sp+4 >   cmp    esi, ecx
+0x08049862: 89 fa                   |..      |<sp+4 >   mov    edx, edi
+0x08049864: 72 ee                   |r.      |<sp+4 >   jb     0x08049854<<BBlock>>
+0x08049864: Outgoing stack delta: +4
 0x08049864: Successor blocks: 0x08049854, 0x08049866
 
 0x08049866: Basic block reasons: 
-0x08049866: 83 c4 0c                |...     |<sp-24>   add    esp, 0x0c
-0x08049869: 5b                      |[       |<sp-12>   pop    ebx
-0x0804986a: 5e                      |^       |<sp-8 >   pop    esi
-0x0804986b: 5f                      |_       |<sp-4 >   pop    edi
-0x0804986c: c9                      |.       |<sp+0 >   leave  
-0x0804986d: c3                      |.       |<sp+0 >   ret    
-0x0804986d: Outgoing stack delta: +4
+0x08049866: 83 c4 0c                |...     |<sp+4 >   add    esp, 0x0c
+0x08049869: 5b                      |[       |<sp+16>   pop    ebx
+0x0804986a: 5e                      |^       |<sp+20>   pop    esi
+0x0804986b: 5f                      |_       |<sp+24>   pop    edi
+0x0804986c: c9                      |.       |<sp+28>   leave  
+0x0804986d: c3                      |.       |          ret    
 0x0804986d: Successor blocks: unknown
 
 0x08049870: ================================== Function (pattern, graph) unknown name
@@ -2303,16 +2343,16 @@
 0x0804987b: ================================== Function (function call, graph) unknown name
 
 0x0804987b: Basic block reasons: entry point
-0x0804987b: 5b                      |[       |<sp-16>   pop    ebx
-0x0804987c: 81 c3 fd 14 00 00       |......  |<sp-12>   add    ebx, 0x000014fd<5373>
-0x08049882: 8d 83 20 ff ff ff       |.. ...  |<sp-12>   lea    eax, [ebx + 0xffffff20<-224>]
-0x08049888: 8d bb 20 ff ff ff       |.. ...  |<sp-12>   lea    edi, [ebx + 0xffffff20<-224>]
-0x0804988e: 29 f8                   |).      |<sp-12>   sub    eax, edi
-0x08049890: c1 f8 02                |...     |<sp-12>   sar    eax, 0x02
-0x08049893: 83 ec 0c                |...     |<sp-12>   sub    esp, 0x0c
-0x08049896: 8d 70 ff                |.p.     |<sp-24>   lea    esi, [eax + 0xff<-1>]
-0x08049899: eb 05                   |..      |<sp-24>   jmp    0x080498a0<<BBlock>>
-0x08049899: Outgoing stack delta: -24
+0x0804987b: 5b                      |[       |<sp+0 >   pop    ebx
+0x0804987c: 81 c3 fd 14 00 00       |......  |<sp+4 >   add    ebx, 0x000014fd<5373>
+0x08049882: 8d 83 20 ff ff ff       |.. ...  |<sp+4 >   lea    eax, [ebx + 0xffffff20<-224>]
+0x08049888: 8d bb 20 ff ff ff       |.. ...  |<sp+4 >   lea    edi, [ebx + 0xffffff20<-224>]
+0x0804988e: 29 f8                   |).      |<sp+4 >   sub    eax, edi
+0x08049890: c1 f8 02                |...     |<sp+4 >   sar    eax, 0x02
+0x08049893: 83 ec 0c                |...     |<sp+4 >   sub    esp, 0x0c
+0x08049896: 8d 70 ff                |.p.     |<sp-8 >   lea    esi, [eax + 0xff<-1>]
+0x08049899: eb 05                   |..      |<sp-8 >   jmp    0x080498a0<<BBlock>>
+0x08049899: Outgoing stack delta: -8
 0x08049899: Successor blocks: 0x080498a0
 
 0x0804989b: Basic block reasons: CFG head
@@ -2320,34 +2360,33 @@
 0x0804989b: Successor blocks: 0x0804989c
 
 0x0804989c: Basic block reasons: 
-0x0804989c: ff 14 b7                |...     |<sp-24>   call   dword ds:[edi + esi*0x04]
-0x0804989c: Outgoing stack delta: -28
+0x0804989c: ff 14 b7                |...     |<sp-8 >   call   dword ds:[edi + esi*0x04]
+0x0804989c: Outgoing stack delta: -12
 0x0804989c: Successor blocks: 0x0804989f, unknown
 
 0x0804989f: Basic block reasons: 
-0x0804989f: 4e                      |N       |<sp-24>   dec    esi
-0x0804989f: Outgoing stack delta: -24
+0x0804989f: 4e                      |N       |<sp-8 >   dec    esi
+0x0804989f: Outgoing stack delta: -8
 0x0804989f: Successor blocks: 0x080498a0
 
 0x080498a0: Basic block reasons: 
-0x080498a0: 83 fe ff                |...     |<sp-24>   cmp    esi, 0xff<-1>
-0x080498a3: 75 f7                   |u.      |<sp-24>   jne    0x0804989c<<BBlock>>
-0x080498a3: Outgoing stack delta: -24
+0x080498a0: 83 fe ff                |...     |<sp-8 >   cmp    esi, 0xff<-1>
+0x080498a3: 75 f7                   |u.      |<sp-8 >   jne    0x0804989c<<BBlock>>
+0x080498a3: Outgoing stack delta: -8
 0x080498a3: Successor blocks: 0x0804989c, 0x080498a5
 
 0x080498a5: Basic block reasons: 
-0x080498a5: e8 2e 00 00 00          |.....   |<sp-24>   call   0x080498d8<<Func>>
-0x080498a5: Outgoing stack delta: -28
+0x080498a5: e8 2e 00 00 00          |.....   |<sp-8 >   call   0x080498d8<<Func>>
+0x080498a5: Outgoing stack delta: -12
 0x080498a5: Successor blocks: 0x080498d8, 0x080498aa
 
 0x080498aa: Basic block reasons: 
-0x080498aa: 83 c4 0c                |...     |<sp-24>   add    esp, 0x0c
-0x080498ad: 5b                      |[       |<sp-12>   pop    ebx
-0x080498ae: 5e                      |^       |<sp-8 >   pop    esi
-0x080498af: 5f                      |_       |<sp-4 >   pop    edi
-0x080498b0: c9                      |.       |<sp+0 >   leave  
-0x080498b1: c3                      |.       |<sp+0 >   ret    
-0x080498b1: Outgoing stack delta: +4
+0x080498aa: 83 c4 0c                |...     |<sp-8 >   add    esp, 0x0c
+0x080498ad: 5b                      |[       |<sp+4 >   pop    ebx
+0x080498ae: 5e                      |^       |<sp+8 >   pop    esi
+0x080498af: 5f                      |_       |<sp+12>   pop    edi
+0x080498b0: c9                      |.       |<sp+16>   leave  
+0x080498b1: c3                      |.       |          ret    
 0x080498b1: Successor blocks: unknown
 
 0x080498b4: ================================== Function (function call, graph) unknown name
@@ -2407,18 +2446,17 @@
 0x080498e1: ================================== Function (function call, graph) unknown name
 
 0x080498e1: Basic block reasons: entry point
-0x080498e1: 5b                      |[       |<sp-8 >   pop    ebx
-0x080498e2: 81 c3 97 14 00 00       |......  |<sp-4 >   add    ebx, 0x00001497<5271>
-0x080498e8: 50                      |P       |<sp-4 >   push   eax
-0x080498e9: e8 76 f3 ff ff          |.v...   |<sp-8 >   call   0x08048c64<<Func>>
-0x080498e9: Outgoing stack delta: -12
+0x080498e1: 5b                      |[       |<sp+0 >   pop    ebx
+0x080498e2: 81 c3 97 14 00 00       |......  |<sp+4 >   add    ebx, 0x00001497<5271>
+0x080498e8: 50                      |P       |<sp+4 >   push   eax
+0x080498e9: e8 76 f3 ff ff          |.v...   |<sp+0 >   call   0x08048c64<<Func>>
+0x080498e9: Outgoing stack delta: -4
 0x080498e9: Successor blocks: 0x08048c64, 0x080498ee
 
 0x080498ee: Basic block reasons: 
-0x080498ee: 59                      |Y       |<sp-8 >   pop    ecx
-0x080498ef: 5b                      |[       |<sp-4 >   pop    ebx
-0x080498f0: c9                      |.       |<sp+0 >   leave  
-0x080498f1: c3                      |.       |<sp+0 >   ret    
-0x080498f1: Outgoing stack delta: +4
+0x080498ee: 59                      |Y       |<sp+0 >   pop    ecx
+0x080498ef: 5b                      |[       |<sp+4 >   pop    ebx
+0x080498f0: c9                      |.       |<sp+8 >   leave  
+0x080498f1: c3                      |.       |          ret    
 0x080498f1: Successor blocks: unknown
 
