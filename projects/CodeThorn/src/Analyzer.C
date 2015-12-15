@@ -1408,22 +1408,31 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
       VariableId returnVarId;
       returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
 
-      AValue evalResult=newPState[returnVarId].getValue();
-      //newPState[lhsVarId]=evalResult;
-      newPState.setVariableToValue(lhsVarId,evalResult);
+      if(newPState.find(returnVarId)!=newPState.end()) {
+	AValue evalResult=newPState[returnVarId].getValue();
+	//newPState[lhsVarId]=evalResult;
+	newPState.setVariableToValue(lhsVarId,evalResult);
 
-      cset.addAssignEqVarVar(lhsVarId,returnVarId);
+	cset.addAssignEqVarVar(lhsVarId,returnVarId);
 
-      newPState.deleteVar(returnVarId); // remove $return from state
-      cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
+	newPState.deleteVar(returnVarId); // remove $return from state
+	cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
 
-      return elistify(createEState(edge.target,newPState,cset));
+	return elistify(createEState(edge.target,newPState,cset));
+      } else {
+	// no $return variable found in state. This can be the case for an extern function.
+	// alternatively a $return variable could be added in the external function call to
+	// make this handling here uniform
+	// for external functions no constraints are generated in the call-return node
+	return elistify(createEState(edge.target,newPState,cset));
+      }
     }
     // case 3: f(); remove $return from state (discard value)
     if(SgNodeHelper::Pattern::matchExprStmtFunctionCallExp(nextNodeToAnalyze1)) {
       PState newPState=*currentEState.pstate();
       VariableId returnVarId;
       returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+      // no effect if $return does not exist
       newPState.deleteVar(returnVarId);
       cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
       //ConstraintSet cset=*currentEState.constraints; ???

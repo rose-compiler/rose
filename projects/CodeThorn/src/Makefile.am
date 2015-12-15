@@ -448,11 +448,13 @@ analyterix_SOURCES = \
 
 check-local:
 	./codethorn --internal-checks	
-	./codethorn $(srcdir)/tests/typetest1.C			 
+	./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
 	@echo ================================================================
 	@echo RUNNING VERIFICATION ERROR TESTS
 	@echo ================================================================
-	@./codethorn --enable-external-function-semantics tests/svcomp-test2.c
+	@./codethorn --enable-external-function-semantics tests/svcomp-test2.c --edg:no_warnings
+	@./codethorn --enable-external-function-semantics tests/svcomp-test4.c --max-transitions=10 --edg:no_warnings
+	@./codethorn --enable-external-function-semantics tests/svcomp-test5.c --edg:no_warnings
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
