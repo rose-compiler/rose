@@ -1446,7 +1446,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     VariableId varId;
     bool isExternalNonDetIntFunction=false;
     if(isFunctionCallWithAssignment(lab,&varId)) {
-      if(useExternalFunctionSemantics()) {
+      if(usingExternalFunctionSemantics()) {
 	if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
 	  ROSE_ASSERT(funCall);
 	  string externalFunctionName=SgNodeHelper::getFunctionName(funCall);
@@ -1584,7 +1584,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         assert(funCall);
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(useExternalFunctionSemantics()) {
+        if(usingExternalFunctionSemantics()) {
           if(funName==_externalErrorFunctionName) {
             //cout<<"DETECTED error function: "<<_externalErrorFunctionName<<endl;
             return elistify(createVerificationErrorEState(currentEState,edge.target));
@@ -3074,7 +3074,7 @@ bool all_false(vector<bool>& v) {
 
 void Analyzer::runSolver5() {
   //flow.boostify();
-  if(useExternalFunctionSemantics()) {
+  if(usingExternalFunctionSemantics()) {
     reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
     reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
