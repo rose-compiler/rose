@@ -452,7 +452,7 @@ check-local:
 	@echo ================================================================
 	@echo RUNNING VERIFICATION ERROR TESTS
 	@echo ================================================================
-	@./codethorn --enable-external-function-semantics tests/svcomp-test2.c
+	@./codethorn --enable-external-function-semantics $(srcdir)/tests/svcomp-test2.c
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
