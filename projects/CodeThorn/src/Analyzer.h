@@ -420,7 +420,7 @@ namespace CodeThorn {
     // enables external function semantics 
     void enableExternalFunctionSemantics();
     void disableExternalFunctionSemantics();
-    bool usingExternalFunctionSemantics() { return _externalFunctionSemantics; }
+    bool isUsingExternalFunctionSemantics() { return _externalFunctionSemantics; }
 
   private:
     GlobalTopifyMode _globalTopifyMode;
