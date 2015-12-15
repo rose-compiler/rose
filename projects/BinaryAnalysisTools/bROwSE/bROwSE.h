@@ -51,22 +51,23 @@ struct Settings {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Attributes initialized by the first construction of a Context object (where they are documented)
-extern rose::BinaryAnalysis::Attribute::Id ATTR_NBytes;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_NInsns;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_NIntervals;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_NDiscontiguousBlocks;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_CfgGraphVizFile;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_CfgImage;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_CfgVertexCoords;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_CallGraph;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_NCallers;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_NCallees;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_NReturns;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_MayReturn;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_StackDelta;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_Ast;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_Heat;
-extern rose::BinaryAnalysis::Attribute::Id ATTR_DataFlow;
+extern Sawyer::Attribute::Id ATTR_NBytes;
+extern Sawyer::Attribute::Id ATTR_NInsns;
+extern Sawyer::Attribute::Id ATTR_NIntervals;
+extern Sawyer::Attribute::Id ATTR_NDiscontiguousBlocks;
+extern Sawyer::Attribute::Id ATTR_CfgGraphVizFile;
+extern Sawyer::Attribute::Id ATTR_CfgImage;
+extern Sawyer::Attribute::Id ATTR_CfgVertexCoords;
+extern Sawyer::Attribute::Id ATTR_CallGraph;
+extern Sawyer::Attribute::Id ATTR_NCallers;
+extern Sawyer::Attribute::Id ATTR_NCallees;
+extern Sawyer::Attribute::Id ATTR_NReturns;
+extern Sawyer::Attribute::Id ATTR_MayReturn;
+extern Sawyer::Attribute::Id ATTR_StackDelta;
+extern Sawyer::Attribute::Id ATTR_Ast;
+extern Sawyer::Attribute::Id ATTR_Heat;
+extern Sawyer::Attribute::Id ATTR_DataFlow;
+extern Sawyer::Attribute::Id ATTR_CallConvDef;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Context passed around to pretty much all the widgets.

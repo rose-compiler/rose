@@ -825,21 +825,6 @@ int main(int argc, char *argv[]) {
         unparser.unparse(std::cout, gblock);
     }
 
-#if 0 // [Robb P. Matzke 2015-02-06]: dead code example
-    std::cout <<"Unreachable code (basic blocks with no incoming edges):\n";
-    BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, partitioner.cfg().vertices()) {
-        if (vertex.value().type() == P2::V_BASIC_BLOCK && vertex.nInEdges() == 0) {
-            P2::BasicBlock::Ptr bblock = vertex.value().bblock();
-            std::cout <<"  " <<bblock->printableName();
-            if (P2::Function::Ptr function = vertex.value().function())
-                std::cout <<" in " <<function->printableName();
-            std::cout <<":\n";
-            BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
-                std::cout <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
-        }
-    }
-#endif
-
 #if 0 // DEBUGGING [Robb P. Matzke 2014-08-23]
     // This should free all symbolic expressions except for perhaps a few held by something we don't know about.
     partitioner.clear();

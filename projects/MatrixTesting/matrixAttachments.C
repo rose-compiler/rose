@@ -197,7 +197,7 @@ main(int argc, char *argv[]) {
                                           ->bind(0, testId)
                                           ->bind(1, attachmentId);
             for (SqlDatabase::Statement::iterator row=q->begin(); row!=q->end(); ++row)
-                std::cerr <<row.get<std::string>(0);
+                std::cout <<row.get<std::string>(0);
         }
     }
 

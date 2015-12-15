@@ -1590,6 +1590,9 @@ ROSE_DLL_API void moveVariableDeclaration(SgVariableDeclaration* decl, SgScopeSt
 //! Append a statement to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
 ROSE_DLL_API void appendStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 
+//! Append a statement to the end of SgForInitStatement
+ROSE_DLL_API void appendStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt);
+
 //! Append a list of statements to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
 ROSE_DLL_API void appendStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatement* scope=NULL);
 
@@ -1600,6 +1603,9 @@ ROSE_DLL_API void appendStatementWithDependentDeclaration( SgDeclarationStatemen
 //! Prepend a statement to the beginning of the current scope, handling side
 //! effects as appropriate
 ROSE_DLL_API void prependStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
+
+//! Prepend a statement to the beginning of SgForInitStatement
+ROSE_DLL_API void prependStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt);
 
 //! prepend a list of statements to the beginning of the current scope,
 //! handling side effects as appropriate
@@ -1797,6 +1803,9 @@ ROSE_DLL_API void moveDeclarationToAssociatedNamespace ( SgDeclarationStatement*
 ROSE_DLL_API bool isTemplateInstantiationNode(SgNode* node);
 
 ROSE_DLL_API void wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root);
+
+// DQ (12/1/2015): Adding support for fixup internal data struuctures that have references to statements (e.g. macro expansions).
+ROSE_DLL_API void resetInternalMapsForTargetStatement(SgStatement* sourceStatement);
 
 //@}
 //------------------------------------------------------------------------

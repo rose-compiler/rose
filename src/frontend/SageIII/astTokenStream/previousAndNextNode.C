@@ -186,7 +186,7 @@ PreviousAndNextAttribute::additionalNodeInfo()
 
 
 AstAttribute*
-PreviousAndNextAttribute::copy()
+PreviousAndNextAttribute::copy() const
    {
      return NULL;
    }

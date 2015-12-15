@@ -304,7 +304,62 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_81.C \
    test2015_97.C \
    lulesh.C \
-   luleshTALC.C
+   luleshTALC.C \
+   $(NEW_TESTCODES)
+
+# DQ (11/13/2015): Added test codes:
+NEW_TESTCODES = \
+   test2015_85.C \
+   test2015_86.C \
+   test2015_88.C \
+   test2015_89.C \
+   test2015_99.C \
+   test2015_100.C \
+   test2015_101.C \
+   test2015_102.C \
+   test2015_103.C \
+   test2015_104.C \
+   test2015_106.C \
+   test2015_107.C \
+   test2015_108.C \
+   test2015_110.C \
+   test2015_111.C \
+   test2015_112.C \
+   test2015_113.C \
+   test2015_114.C \
+   test2015_115.C \
+   test2015_116.C \
+   test2015_117.C \
+   test2015_118.C \
+   test2015_119.C \
+   test2015_120.C \
+   test2015_121.C \
+   test2015_122.C \
+   test2015_123.C \
+   test2015_124.C \
+   test2015_125.C 
+
+# DQ (11/28/2015): I think maybe this only works with the Intel compiler.
+ICPC_SPECIFIC_TESTCODES = \
+   test2015_72_icpc.C \
+   test2015_82.C \
+   test2015_83.C \
+   test2015_84.C \
+   test2015_87.C \
+   test2015_92.C \
+   test2015_93.C \
+   test2015_98.C \
+   test2015_105.C \
+   test2015_109.C 
+
+# DQ (11/28/2015): This code demonstrates an IR node sharing violation.
+#  test2015_87.C 
+#  test2015_90.C 
+#  test2015_91.C 
+#  test2015_94.C 
+#  test2015_95.C 
+#  test2015_96.C 
+
 
 # DQ (9/24/2015): This test code fails with the older versions of g++ (version 4.4.7).
 # This is now handled using conditional compilation in the test code directly.
@@ -1244,7 +1299,7 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      test2007_101.h test2007_136.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
      test2008_11.h test2014_66.h test2014_112.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h test2012_268.h test2013_09.C \
      test2013_235.C test2013_236.C conftest.C conftest_2.C test2006_112.C test2010_25.C test2003_24.C \
-     test2004_82.C test2014_130.h test2015_08.h test2015_29.h
+     test2004_82.C test2014_130.h test2015_08.h test2015_29.h test2015_85.h
 
 # DQ (6/18/2008): All of these should be present...
 # confdefs.h     test2001_11.h   test2001_18B.h  test2003_12.h  test2003_25.h   test2005_154.h  test2005_159.h  test2005_26.h  test2005_88.h    test2006_187b.h  test2006_42.h   test2007_113.h  test2007_137.h   test2007_167.h  test2007_42.h  test2007_97.h

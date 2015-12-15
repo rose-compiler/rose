@@ -453,6 +453,10 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         BaseSemantics::RegisterStateGenericPtr genericRegState =
             boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(retval->get_register_state());
 
+        BaseSemantics::SValuePtr stackDelta;            // non-null if a stack delta is known for the callee
+        if (callee)
+            stackDelta = callee->stackDelta();
+
         // Clobber registers that are modified by the callee. The extra calls to updateWriteProperties is because most
         // RiscOperators implementation won't do that if they don't have a current instruction (which we don't).
         if (callee && callee->callingConventionAnalysis().hasResults()) {
@@ -488,6 +492,20 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
                         genericRegState->updateWriteProperties(reg, BaseSemantics::IO_WRITE);
                 }
             }
+            if (!stackDelta && // don't fix it here if we'll fix it below with more accurate information
+                defaultCallingConvention_->stackCleanup() == CallingConvention::CLEANUP_BY_CALLER &&
+                defaultCallingConvention_->nonParameterStackSize() != 0) {
+                BaseSemantics::SValuePtr oldStack = ops->readRegister(STACK_POINTER_REG);
+                BaseSemantics::SValuePtr delta =
+                    ops->number_(oldStack->get_width(), defaultCallingConvention_->nonParameterStackSize());
+                if (defaultCallingConvention_->stackDirection() == CallingConvention::GROWS_UP)
+                    delta = ops->negate(delta);
+                BaseSemantics::SValuePtr newStack = ops->add(oldStack, delta);
+                ops->writeRegister(STACK_POINTER_REG, newStack);
+                if (genericRegState)
+                    genericRegState->updateWriteProperties(STACK_POINTER_REG, BaseSemantics::IO_WRITE);
+                isStackPtrFixed = true;
+            }
         } else {
             // We have not performed a calling convention analysis and we don't have a default calling convention definition. A
             // conservative approach would need to set all registers to bottom.  We'll only adjust the stack pointer (below).
@@ -497,7 +515,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         if (!isStackPtrFixed) {
             BaseSemantics::SValuePtr newStack, delta;
             if (callee)
-                delta = callee->stackDelta().getOptional().orDefault();
+                delta = callee->stackDelta();
             if (delta) {
                 BaseSemantics::SValuePtr oldStack = ops->readRegister(STACK_POINTER_REG);
                 newStack = ops->add(oldStack, delta);

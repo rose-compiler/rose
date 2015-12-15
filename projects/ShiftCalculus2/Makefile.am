@@ -81,6 +81,13 @@ test10: shiftCalculusCompiler
 	./shiftCalculusCompiler -c -std=c++11 $(srcdir)/laplacian_lite_v3.cpp
 	g++ -std=c++11 rose_laplacian_lite_v3.cpp $(srcdir)/Box.cpp -I$(srcdir) -o $@ 
 
+test11: shiftCalculusCompiler
+	@echo "********************************************************************************************"
+	@echo "******* ROSE/projects/ShiftCalculus: code generation for C++ code                   ********"
+	@echo "********************************************************************************************"
+	./shiftCalculusCompiler -c -std=c++11 $(srcdir)/laplacian_multibox.cpp
+	g++ -std=c++11 rose_laplacian_multibox.cpp $(srcdir)/Box.cpp $(srcdir)/BLIterator.cpp $(srcdir)/BoxLayout.cpp  $(srcdir)/CH_Timer.cpp $(srcdir)/PowerItoI.cpp  -I$(srcdir) -o $@ 
+
 POLYOPT_PATH=$(top_builddir)/projects/PolyOpt2
 
 test10poly: shiftCalculusCompiler
@@ -113,9 +120,6 @@ test10MLM: shiftCalculusCompiler
 	@echo "******* ROSE/projects/ShiftCalculus: code generation for SST Simulator              ********"
 	@echo "********************************************************************************************"
 	$(MLM_PATH)/src/mlm $(srcdir)/laplacian_lite_v3_MLM.cpp -I$(srcdir) -std=c++11 -rose:Cxx11 -rose:skipfinalCompileStep -rose:o rose_MLM_laplacian_lite_v3.cpp
-
-test11: shiftCalculusCompiler
-	./shiftCalculusCompiler -std=c++11 -c $(srcdir)/simpleCNS.cpp
 
 rose_laplacian_lite.cu: shiftCalculusCompiler
 	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -std=c++11 -rose:skipfinalCompileStep -rose:output rose_laplacian_lite.cu $(srcdir)/laplacian_lite.cpp
@@ -169,7 +173,9 @@ check-local:
 	@echo "Tests for Shift Calculus examples."
 #	@$(MAKE) $(PASSING_TEST_Output)
 	@$(MAKE) $(PASSING_REGRESSION_TEST_Output)
-	@$(MAKE) localTests cudaTests
+# demo2015 collects successful code generations for March meeting
+	@$(MAKE) demo2015
+#	@$(MAKE) localTests cudaTests
 	@echo "********************************************************************************************"
 	@echo "******* ROSE/projects/ShiftCalculus: make check rule complete (terminated normally) ********"
 	@echo "********************************************************************************************"

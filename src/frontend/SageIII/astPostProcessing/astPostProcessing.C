@@ -171,6 +171,19 @@ void postProcessingSupport (SgNode* node)
   // once on an entire project is more efficient than calling it once per
   // file.
 
+#if 0
+  // DQ (11/23/2015): Before we do any modifications, check for unique IR nodes in the AST (see test2015_121.C).
+#if 1
+     printf ("Checking for unique nodes in the AST before AST post-processing: issolating possible multiple references friend function \n");
+#endif
+
+     testAstForUniqueNodes(node);
+
+#if 1
+     printf ("DONE: Checking for unique nodes in the AST before AST post-processing: issolating possible multiple references friend function \n");
+#endif
+#endif
+
   // JJW (12/5/2008): Turn off C and C++ postprocessing steps when the new EDG
   // interface is being used (it should produce correct, complete ASTs on its
   // own and do its own fixups)
@@ -482,6 +495,14 @@ void postProcessingSupport (SgNode* node)
 
           if (SgProject::get_verbose() > 1)
              {
+               printf ("Calling fixupFileInfoInconsistanties() \n");
+             }
+
+       // DQ (11/14/2015): Fixup inconsistancies across the multiple Sg_File_Info obejcts in SgLocatedNode and SgExpression IR nodes.
+          fixupFileInfoInconsistanties(node);
+
+          if (SgProject::get_verbose() > 1)
+             {
                printf ("Calling checkIsModifiedFlag() \n");
              }
 
@@ -502,8 +523,10 @@ void postProcessingSupport (SgNode* node)
        // DQ (5/2/2012): After EDG/ROSE translation, there should be no IR nodes marked as transformations.
        // Liao 11/21/2012. AstPostProcessing() is called within both Frontend and Midend
        // so we have to detect the mode first before asserting no transformation generated file info objects
-          if (SageBuilder::SourcePositionClassificationMode !=SageBuilder::e_sourcePositionTransformation)
+          if (SageBuilder::SourcePositionClassificationMode != SageBuilder::e_sourcePositionTransformation)
+             {
                detectTransformations(node);
+             }
 
 #if 0
        // DQ (4/26/2013): Debugging code.

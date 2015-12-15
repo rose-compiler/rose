@@ -211,6 +211,13 @@ WPartitioner::init() {
         wStackDeltaDepth_->setTickInterval(1);
         wStackDeltaDepth_->setValue(1);
         wStackDeltaDepth_->setRange(1, 10);
+
+        tip = "Calling-convention analysis aims to figure out how caller and callee communicate with each other: where "
+              "arguments are passed, how values are returned, what registers are scratch vs. callee-saved, etc.";
+        new Wt::WBreak(c);
+        wCallingConvention_ = new Wt::WCheckBox("Analyze all function calling conventions?", c);
+        wCallingConvention_->setToolTip(tip);
+        wCallingConvention_->setCheckState(Wt::Unchecked);
         
         new Wt::WBreak(c);
         wPartitionSpecimen_ = new Wt::WPushButton("Disassemble", c);
@@ -490,6 +497,7 @@ WPartitioner::partitionSpecimen() {
     if (defeatPeScrambler())
         ctx_.engine.peScramblerDispatcherVa(peScramblerDispatcherVa());
     ctx_.engine.doingPostAnalysis(false);               // we'll do it explicitly to get progress reports
+    ctx_.engine.doingPostCallingConvention(analyzingCalls());
     
     // Obtain the memory map which might have been edited by now.
     if (wMemoryMap_)
@@ -607,5 +615,11 @@ WPartitioner::interruptVectorVa() const {
     rose_addr_t va = rose_strtoull(str.c_str(), NULL, 16);
     return va;
 }
+
+bool
+WPartitioner::analyzingCalls() const {
+    return wCallingConvention_->checkState() == Wt::Checked;
+}
+
 
 } // namespace

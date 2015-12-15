@@ -7,42 +7,43 @@ namespace bROwSE {
 
 Sawyer::Message::Facility mlog;
 
-Attribute::Id ATTR_NBytes(-1);
-Attribute::Id ATTR_NInsns(-1);
-Attribute::Id ATTR_NIntervals(-1);
-Attribute::Id ATTR_NDiscontiguousBlocks(-1);
-Attribute::Id ATTR_CfgGraphVizFile(-1);
-Attribute::Id ATTR_CfgImage(-1);
-Attribute::Id ATTR_CfgVertexCoords(-1);
-Attribute::Id ATTR_CallGraph(-1);
-Attribute::Id ATTR_NCallers(-1);
-Attribute::Id ATTR_NCallees(-1);
-Attribute::Id ATTR_NReturns(-1);
-Attribute::Id ATTR_MayReturn(-1);
-Attribute::Id ATTR_StackDelta(-1);
-Attribute::Id ATTR_Ast(-1);
-Attribute::Id ATTR_Heat(-1);
-Attribute::Id ATTR_DataFlow(-1);
-
+Sawyer::Attribute::Id ATTR_NBytes(-1);
+Sawyer::Attribute::Id ATTR_NInsns(-1);
+Sawyer::Attribute::Id ATTR_NIntervals(-1);
+Sawyer::Attribute::Id ATTR_NDiscontiguousBlocks(-1);
+Sawyer::Attribute::Id ATTR_CfgGraphVizFile(-1);
+Sawyer::Attribute::Id ATTR_CfgImage(-1);
+Sawyer::Attribute::Id ATTR_CfgVertexCoords(-1);
+Sawyer::Attribute::Id ATTR_CallGraph(-1);
+Sawyer::Attribute::Id ATTR_NCallers(-1);
+Sawyer::Attribute::Id ATTR_NCallees(-1);
+Sawyer::Attribute::Id ATTR_NReturns(-1);
+Sawyer::Attribute::Id ATTR_MayReturn(-1);
+Sawyer::Attribute::Id ATTR_StackDelta(-1);
+Sawyer::Attribute::Id ATTR_Ast(-1);
+Sawyer::Attribute::Id ATTR_Heat(-1);
+Sawyer::Attribute::Id ATTR_DataFlow(-1);
+Sawyer::Attribute::Id ATTR_CallConvDef(-1);
 void
 Context::init() {
-    if (ATTR_NBytes == Attribute::INVALID_ID) {
-        ATTR_NBytes               = Attribute::declare("Size in bytes");
-        ATTR_NInsns               = Attribute::declare("Number of instructions");
-        ATTR_NIntervals           = Attribute::declare("Number of contiguous intervals");
-        ATTR_NDiscontiguousBlocks = Attribute::declare("Number of discontigous basic blocks");
-        ATTR_CfgGraphVizFile      = Attribute::declare("CFG GraphViz file name");
-        ATTR_CfgImage             = Attribute::declare("CFG JPEG file name");
-        ATTR_CfgVertexCoords      = Attribute::declare("CFG vertex coordinates");
-        ATTR_CallGraph            = Attribute::declare("Function call graph");
-        ATTR_NCallers             = Attribute::declare("Number of call sites from whence function is called");
-        ATTR_NCallees             = Attribute::declare("Number of calls made by this function");
-        ATTR_NReturns             = Attribute::declare("Number of returning basic blocks");
-        ATTR_MayReturn            = Attribute::declare("May return to caller?");
-        ATTR_StackDelta           = Attribute::declare("Stack pointer delta");
-        ATTR_Ast                  = Attribute::declare("Abstract syntax tree");
-        ATTR_Heat                 = Attribute::declare("Heat value for color gradients [0..1]");
-        ATTR_DataFlow             = Attribute::declare("Data flow information");
+    if (ATTR_NBytes == Sawyer::Attribute::INVALID_ID) {
+        ATTR_NBytes               = Sawyer::Attribute::declare("Size in bytes");
+        ATTR_NInsns               = Sawyer::Attribute::declare("Number of instructions");
+        ATTR_NIntervals           = Sawyer::Attribute::declare("Number of contiguous intervals");
+        ATTR_NDiscontiguousBlocks = Sawyer::Attribute::declare("Number of discontigous basic blocks");
+        ATTR_CfgGraphVizFile      = Sawyer::Attribute::declare("CFG GraphViz file name");
+        ATTR_CfgImage             = Sawyer::Attribute::declare("CFG JPEG file name");
+        ATTR_CfgVertexCoords      = Sawyer::Attribute::declare("CFG vertex coordinates");
+        ATTR_CallGraph            = Sawyer::Attribute::declare("Function call graph");
+        ATTR_NCallers             = Sawyer::Attribute::declare("Number of call sites from whence function is called");
+        ATTR_NCallees             = Sawyer::Attribute::declare("Number of calls made by this function");
+        ATTR_NReturns             = Sawyer::Attribute::declare("Number of returning basic blocks");
+        ATTR_MayReturn            = Sawyer::Attribute::declare("May return to caller?");
+        ATTR_StackDelta           = Sawyer::Attribute::declare("Stack pointer delta");
+        ATTR_Ast                  = Sawyer::Attribute::declare("Abstract syntax tree");
+        ATTR_Heat                 = Sawyer::Attribute::declare("Heat value for color gradients [0..1]");
+        ATTR_DataFlow             = Sawyer::Attribute::declare("Data flow information");
+        ATTR_CallConvDef          = Sawyer::Attribute::declare("Calling convention definition");
     }
 }
 

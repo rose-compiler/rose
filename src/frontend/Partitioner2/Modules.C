@@ -648,20 +648,8 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, bo
 
     ast->set_reason(reasons);
     ast->set_code_likelihood(1.0);                      // FIXME[Robb P. Matzke 2014-08-07]
+    ast->set_stackDeltaOut(bb->stackDeltaOutConcrete());
 
-    // Outgoing stack delta
-    if (bb->stackDeltaOut().isCached()) {
-        BaseSemantics::SValuePtr v = bb->stackDeltaOut().get();
-        if (v->is_number() && v->get_width()<=64) {
-            int64_t delta = IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
-            ast->set_stackDeltaOut(delta);
-        } else {
-            ast->set_stackDeltaOut(SgAsmInstruction::INVALID_STACK_DELTA);
-        }
-    } else {
-        ast->set_stackDeltaOut(SgAsmInstruction::INVALID_STACK_DELTA);
-    }
-    
     // Cache the basic block successors in the AST since we've already computed them.  If the basic block is in the CFG then we
     // can use the CFG's edges to initialize the AST successors since they are canonical. Otherwise we'll use the successors
     // from bb. In any case, we fill in the successor SgAsmIntegerValueExpression objects with only the address and not
@@ -776,12 +764,14 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
         }
     }
 
-    // What is the net change in stack pointer for this function?
-    int64_t stackDelta = SgAsmInstruction::INVALID_STACK_DELTA;
-    if (function->stackDelta().isCached()) {
-        BaseSemantics::SValuePtr v = function->stackDelta().get();
-        if (v && v->is_number() && v->get_width()<=64)
-            stackDelta = IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
+    // Function's calling convention. For now, we just set the function's calling convention to the best one on a local
+    // basis. A separate pass later can choose the globally best conventions.  Don't run the analysis if it hasn't been run
+    // already (sometimes users request that we skip this expensive analysis).
+    const CallingConvention::Definition *bestCallingConvention = NULL;
+    if (function->callingConventionAnalysis().hasResults()) {
+        CallingConvention::Dictionary conventions = partitioner.functionCallingConventionDefinitions(function);
+        if (!conventions.empty())
+            bestCallingConvention = new CallingConvention::Definition(conventions.front());
     }
     
     // Build the AST
@@ -790,7 +780,8 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
     ast->set_name(function->name());
     ast->set_comment(function->comment());
     ast->set_may_return(mayReturn);
-    ast->set_stackDelta(stackDelta);
+    ast->set_stackDelta(function->stackDeltaConcrete());
+    ast->set_callingConvention(bestCallingConvention);
     return ast;
 }
 
@@ -824,6 +815,7 @@ SgAsmBlock*
 buildAst(const Partitioner &partitioner, SgAsmInterpretation *interp/*=NULL*/, bool relaxed) {
     if (SgAsmBlock *global = buildGlobalBlockAst(partitioner, relaxed)) {
         fixupAstPointers(global, interp);
+        fixupAstCallingConventions(partitioner, global);
         if (interp) {
             if (SgAsmBlock *oldGlobalBlock = interp->get_global_block())
                 oldGlobalBlock->set_parent(NULL);
@@ -893,6 +885,44 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
         }
     } fixerUpper(indexer.insnIndex, indexer.bblockIndex, indexer.funcIndex, mappedSections);
     fixerUpper.traverse(ast, preorder);
+}
+
+void
+fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
+    // Pass 1: Sort all calling conventions by number of occurrences within the partitioner.
+    Sawyer::Container::Map<std::string, size_t> totals; // how many times does each calling convention name match?
+    BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
+        const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
+        if (!ccAnalysis.hasResults())
+            continue;                                   // don't run analysis if not run already
+        BOOST_FOREACH (const CallingConvention::Definition &ccDef, partitioner.functionCallingConventionDefinitions(function))
+            ++totals.insertMaybe(ccDef.name(), 0);
+    }
+
+    // Pass 2: For each function in the AST, select the matching definition that's most frequent overall. If there's a tie, use
+    // the first one from the function's definition list since this list is presumably sorted by how frequently the convention
+    // is used by the whole world.
+    BOOST_FOREACH (SgAsmFunction *astFunction, SageInterface::querySubTree<SgAsmFunction>(ast)) {
+        if (Function::Ptr function = partitioner.functionExists(astFunction->get_address())) {
+            const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
+            if (!ccAnalysis.hasResults())
+                continue;                               // don't run analysis if not run already
+            CallingConvention::Dictionary ccDefs = partitioner.functionCallingConventionDefinitions(function);
+            const CallingConvention::Definition *ccBest = NULL;
+            BOOST_FOREACH (const CallingConvention::Definition &ccDef, ccDefs) {
+                if (NULL==ccBest) {
+                    ccBest = &ccDef;
+                } else if (totals.getOrElse(ccDef.name(), 0) > totals.getOrElse(ccBest->name(), 0)) {
+                    ccBest = &ccDef;
+                }
+            }
+            if (ccBest) {
+                // We cannot delete previously stored calling conventions because there's no clear rule about whether they need
+                // to be allocated on the heap, and if so, who owns them or what allocator was used.
+                astFunction->set_callingConvention(new CallingConvention::Definition(*ccBest));
+            }
+        }
+    }
 }
 
 std::vector<Function::Ptr>

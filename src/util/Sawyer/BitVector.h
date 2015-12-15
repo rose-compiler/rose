@@ -19,6 +19,15 @@
 namespace Sawyer {
 namespace Container {
 
+#ifdef BOOST_WINDOWS
+/** Log base 2.
+ *
+ *  Returns the logorithm base 2 of n by the change-of-base formula. */
+inline double log2(double n) {
+    return log(n) / log(2.0);
+}
+#endif
+
 /** Bit vectors.
  *
  *  This class implements bit vectors with run-time sizes and a rich set of operations that can be restricted to a contiguous

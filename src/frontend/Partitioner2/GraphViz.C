@@ -170,8 +170,8 @@ CfgEmitter::init() {
             }
             pclose(dot);
         }
-    } else {
-        versionDate_ = 1;                               // something low, and other than zero
+        if (versionDate_ == 0)
+            versionDate_ = 1;                           // something low, and other than zero
     }
 
     // Instance initialization
@@ -183,8 +183,33 @@ CfgEmitter::init() {
         noOpAnalysis_ = NoOperation(cpu->create(ops, addrWidth, regdict));
         noOpAnalysis_.initialStackPointer(0xdddd0001); // optional; odd prevents false positives for stack aligning instructions
     }
+    nameVertices();
 }
 
+void
+CfgEmitter::nameVertices() {
+    BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
+        if (vertexOrganization(vertex.id()).name().empty()) {
+            switch (vertex.value().type()) {
+                case V_BASIC_BLOCK:
+                    vertexOrganization(vertex.id()).name("B" + StringUtility::addrToString(vertex.value().address()).substr(2));
+                    break;
+                case V_NONEXISTING:
+                    vertexOrganization(vertex.id()).name("nonexisting");
+                    break;
+                case V_INDETERMINATE:
+                    vertexOrganization(vertex.id()).name("indeterminate");
+                    break;
+                case V_UNDISCOVERED:
+                    vertexOrganization(vertex.id()).name("undiscovered");
+                    break;
+                case V_USER_DEFINED:
+                    // use an ID number, the default
+                    break;
+            }
+        }
+    }
+}
 
 //----------------------------------------------------------------------------------------------------------------------------
 //                                      CfgEmitter selectors
@@ -576,7 +601,7 @@ CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator &ver
                 s += StringUtility::addrToString(insn->get_address()).substr(2) + " ";
 
             if (showInstructionStackDeltas_) {
-                int64_t delta = insn->get_stackDelta();
+                int64_t delta = insn->get_stackDeltaIn();
                 if (delta != SgAsmInstruction::INVALID_STACK_DELTA) {
                     // Stack delta as a two-character hexadecimal, but show a '+' sign when it's positive and nothing
                     // when it's negative (negative is the usual case for most architectures).
@@ -747,6 +772,15 @@ void
 CgEmitter::callGraph(const FunctionCallGraph &cg) {
     cg_ = cg;
     graph(cg_.graph());
+    nameVertices();
+}
+
+void
+CgEmitter::nameVertices() {
+    BOOST_FOREACH (const FunctionCallGraph::Graph::Vertex &vertex, graph_.vertices()) {
+        const Function::Ptr &function = vertex.value();
+        vertexOrganization(vertex.id()).name("F" + StringUtility::addrToString(function->address()).substr(2));
+    }
 }
 
 std::string
@@ -784,7 +818,12 @@ CgEmitter::emitCallGraph(std::ostream &out) const {
 
     BOOST_FOREACH (const CG::Vertex &vertex, graph_.vertices()) {
         const Function::Ptr &function = vertex.value();
-        out <<vertex.id() <<" [ label=" <<functionLabel(function) <<" "
+
+        std::string vertexName = vertexOrganization(vertex.id()).name();
+        if (vertexName.empty())
+            vertexName = StringUtility::numberToString(vertex.id());
+
+        out <<vertexName <<" [ label=" <<functionLabel(function) <<" "
             <<"href=\"" <<StringUtility::addrToString(function->address()) <<"\" "
             <<toString(functionAttributes(function)) <<" ]\n";
     }
@@ -797,7 +836,16 @@ CgEmitter::emitCallGraph(std::ostream &out) const {
             default:              label = "others"; break;
         }
         label = StringUtility::plural(edge.value().count(), label);
-        out <<edge.source()->id() <<" -> " <<edge.target()->id() <<" [ label=\"" <<label <<"\" ];\n";
+
+        std::string sourceName = vertexOrganization(edge.source()->id()).name();
+        if (sourceName.empty())
+            sourceName = StringUtility::numberToString(edge.source()->id());
+
+        std::string targetName = vertexOrganization(edge.target()->id()).name();
+        if (targetName.empty())
+            targetName = StringUtility::numberToString(edge.target()->id());
+
+        out <<sourceName <<" -> " <<targetName <<" [ label=\"" <<label <<"\" ];\n";
     }
     
     out <<"}\n";

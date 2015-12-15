@@ -79,6 +79,9 @@ using namespace Rose::Frontend::Java::Ecj;
 
 #endif
 
+// DQ (12/1/2015): Added to support macro handling.
+#include "detectMacroOrIncludeFileExpansions.h"
+
 namespace SageInterface {
   template<class T> void setSourcePositionToDefault( T* node );
 }
@@ -7303,8 +7306,9 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
 
      bool isRemovable = (parentStatement != NULL) ? LowLevelRewrite::isRemovableStatement(targetStmt) : false;
 
-#if REMOVE_STATEMENT_DEBUG
-     printf ("In parentStatement = %s remove targetStatement = %s (isRemovable = %s) \n",parentStatement->class_name().c_str(),targetStmt->class_name().c_str(),isRemovable ? "true" : "false");
+#if REMOVE_STATEMENT_DEBUG || 0
+     printf ("In SageInterface::removeStatement(): parentStatement = %p = %s remove targetStatement = %p = %s (isRemovable = %s) \n",
+          parentStatement,parentStatement->class_name().c_str(),targetStmt,targetStmt->class_name().c_str(),isRemovable ? "true" : "false");
 #endif
 
      if (isRemovable == true)
@@ -7374,6 +7378,10 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
         }// end if (autoRelocatePreprocessingInfo)
 #endif  // end #if 1
 
+
+       // DQ (12/1/2015): Adding support for fixup internal data struuctures that have references to statements (e.g. macro expansions).
+          resetInternalMapsForTargetStatement(targetStmt);
+
           parentStatement->remove_statement(targetStmt);
         }
 #else
@@ -7383,6 +7391,92 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
 
 #endif
    }
+
+
+//! Reset internal data structures used for token-based unparsing and macro summaries based on modifications to this statement.
+void
+SageInterface::resetInternalMapsForTargetStatement(SgStatement* sourceStatement)
+   {
+  // This function allows the modification of the input statement to trigger operations on internal 
+  // data structures that hold references to such statements.  An example is the macroExpansion
+  // data structures that have a reference to the statements that are associated with and macro expansion.
+  // if a statement assocated with a macro expansion is removed, then the macroExpansion needs to be
+  // updated to force all of the statements to be marked as transformed (so that the AST will be unparsed
+  // instead of the tokens representing the macro or some partial representation of the transformed 
+  // statements and the macro call (worse).
+
+     SgSourceFile* sourceFile = getEnclosingSourceFile(sourceStatement);
+
+  // NOTE: if the statment has not yet been added to the AST then it will not return a valid pointer.
+  // ROSE_ASSERT(sourceFile != NULL);
+
+     if (sourceFile != NULL)
+        {
+          std::map<SgStatement*,MacroExpansion*> & macroExpansionMap = sourceFile->get_macroExpansionMap();
+
+          if (macroExpansionMap.find(sourceStatement) != macroExpansionMap.end())
+             {
+               MacroExpansion* macroExpansion = macroExpansionMap[sourceStatement];
+               ROSE_ASSERT(macroExpansion != NULL);
+#if 0
+               printf ("In resetInternalMapsForTargetStatement(): macroExpansion = %p = %s \n",macroExpansion,macroExpansion->macro_name.c_str());
+#endif
+               if (macroExpansion->isTransformed == false)
+                  {
+                 // Mark all of the statements in the macro expansion to be transformed.
+                    std::vector<SgStatement*> & associatedStatementVector = macroExpansion->associatedStatementVector;
+
+                    for (size_t i = 0; i < associatedStatementVector.size(); i++)
+                       {
+                      // I am concerned that some of these statements might have been deleted.
+                         SgStatement* statement = associatedStatementVector[i];
+#if 0
+                         printf ("Mark as transformation to be output: statement = %p = %s \n",statement,statement->class_name().c_str());
+#endif
+                      // Note that any new statement might not yet have valid Sg_File_Info objects setup at this point.
+                      // Then again, now did it make it into the associatedStatementVector unless it was via memory 
+                      // recycling through the mmory pool.
+                         if (statement->get_file_info() != NULL)
+                            {
+                           // Mark each of the statements as a transformation.
+                              statement->setTransformation();
+
+                           // This is required, else the statement will not be output in the generated code.
+                           // To understand this, consider that statements in header files could be transformed, 
+                           // but we would not want that to cause them to be unparse in the source file.
+                              statement->setOutputInCodeGeneration();
+
+                           // Not clear if we should also remove the statement from the associatedStatementVector.
+                           // This would be important to do to avoid having the same location in the memory pool 
+                           // be reused for another statement. Since we makr the macro expansion as transformed
+                           // we likely don't have to worry about this.
+                            }
+                           else
+                            {
+#if 0
+                              printf ("WARNING: could this be an example of an IR node recycled through the memory pools: statement = %p = %s \n",statement,statement->class_name().c_str());
+#endif
+                            }
+                       }
+                 }
+
+            // Mark this macro expansion as having been processed.
+               macroExpansion->isTransformed = true;
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
+       // Other data strucutes that may have to be updated include:
+       // representativeWhitespaceStatementMap (should be required, but only effects whitespace details)
+       // redundantlyMappedTokensToStatementMultimap (might not be required)
+
+        }
+
+   }
+
 
 //! Relocate comments and CPP directives from one statement to another.
 void
@@ -9910,6 +10004,11 @@ bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, 
 
   // Everything looks fine now. Do the merge.
   SgExpression * rhs_copy = SageInterface::copyExpression(assign_op->get_rhs_operand());
+
+  // Must preserve the proprecessing information of the original assign_stmt
+  // use appending (not prepending) so the order of decl's comments and assign_stmt's comments can be preserved 
+   SageInterface::movePreprocessingInfo(assign_stmt, decl, PreprocessingInfo::before, PreprocessingInfo::before, false);
+
   // removeStatement() does not support removing a statement which is not inside a container.
   // But sometimes we do need to remove such a statement and replace it with a new one.
   // As a workaround, we allow users to optionally disabling removing here and handle the removal on their own.
@@ -10632,6 +10731,32 @@ void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
 #endif
    }
 
+//! Append a statement to the end of SgForInitStatement
+void SageInterface::appendStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt)
+{
+  ROSE_ASSERT (stmt != NULL);
+  ROSE_ASSERT (for_init_stmt != NULL);
+
+#if 0
+     printf ("In SageInterface::appendStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+
+  // DQ (12/2/2015): If this is a moved statement then cause it to update internal data structures 
+  // to record it being moved (and thus the macroExpansions that it might be associated with having
+  // to force the macroExpansion's associated statements to be marked as a transformation.
+     resetInternalMapsForTargetStatement(stmt);
+
+#if 0
+     printf ("In SageInterface::appendStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+
+  // DQ (12/2/2015): Also look at the statements on either side of the location where this statement 
+  // is being inserted to make sure that they are not a part of a macro expansion. In the case of
+  // prepend, we only need to look at the scope.
+     resetInternalMapsForTargetStatement(for_init_stmt);
+
+  for_init_stmt->append_init_stmt (stmt);
+}
 
 void
 SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) 
@@ -10676,6 +10801,24 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
   // otherwise assertions in insertStatementInScope() would fail
      fixStatement(stmt,scope);
 
+#if 0
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+
+  // DQ (12/1/2015): If this is a moved statement then cause it to update internal data structures 
+  // to record it being moved (and thus the macroExpansions that it might be associated with having
+  // to force the macroExpansion's associated statements to be marked as a transformation.
+     resetInternalMapsForTargetStatement(stmt);
+
+#if 0
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+
+  // DQ (12/1/2015): Also look at the statements on either side of the location where this statement 
+  // is being inserted to make sure that they are not a part of a macro expansion. In the case of
+  // prepend, we only need to look at the scope.
+     resetInternalMapsForTargetStatement(scope);
+
      scope->insertStatementInScope(stmt,true);
      stmt->set_parent(scope); // needed?
 
@@ -10693,6 +10836,33 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
         }
 
    } // prependStatement()
+
+//! Prepend a statement to the beginning of SgForInitStatement
+void SageInterface::prependStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt)
+{
+  ROSE_ASSERT (stmt != NULL);
+  ROSE_ASSERT (for_init_stmt != NULL);
+
+#if 0
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+
+  // DQ (12/2/2015): If this is a moved statement then cause it to update internal data structures 
+  // to record it being moved (and thus the macroExpansions that it might be associated with having
+  // to force the macroExpansion's associated statements to be marked as a transformation.
+     resetInternalMapsForTargetStatement(stmt);
+
+#if 0
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+#endif
+
+  // DQ (12/2/2015): Also look at the statements on either side of the location where this statement 
+  // is being inserted to make sure that they are not a part of a macro expansion. In the case of
+  // prepend, we only need to look at the scope.
+     resetInternalMapsForTargetStatement(for_init_stmt);
+
+  for_init_stmt->prepend_init_stmt (stmt);
+}
 
 void SageInterface::prependStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope)
    {
@@ -12817,16 +12987,25 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
           PreprocessingInfo * info = dynamic_cast<PreprocessingInfo*> (*i);
           ROSE_ASSERT(info != NULL);
 
-          if ( (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIncludeDeclaration )||
+          if (   // match enum values in http://rosecompiler.org/ROSE_HTML_Reference/classPreprocessingInfo.html
+               (info->getTypeOfDirective()==PreprocessingInfo::C_StyleComment)||
+               (info->getTypeOfDirective()==PreprocessingInfo::CplusplusStyleComment)||
+               (info->getTypeOfDirective()==PreprocessingInfo::FortranStyleComment)||
+               (info->getTypeOfDirective()==PreprocessingInfo::F90StyleComment)||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIncludeDeclaration )||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIncludeNextDeclaration )||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorDefineDeclaration )||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorUndefDeclaration)||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfdefDeclaration )||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfndefDeclaration )||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfDeclaration )||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorDeadIfDeclaration )||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElseDeclaration )||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElifDeclaration )||
-               (info->getTypeOfDirective()==PreprocessingInfo::C_StyleComment)||
-               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration )
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration ) ||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorLineDeclaration) ||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorErrorDeclaration) ||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorWarningDeclaration)
              )
              {
             // move all source preprocessing info if the desired source type is not specified or matching

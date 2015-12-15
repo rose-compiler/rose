@@ -14,6 +14,7 @@
 0x080480aa: Successor blocks: none
 
 0x080480b1: ================================== Function (function call, graph) <thunk1>
+0x080480b1: Function stack delta: +4
 
 0x080480b1: Basic block reasons: entry point
 0x080480b1: e9 f5 ff ff ff          |.....   |<sp+0 >   jmp    0x080480ab<thunk2>

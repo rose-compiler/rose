@@ -7,9 +7,9 @@
 
 #include "Map.h"
 
-#include <BinaryAttribute.h>
 #include <cassert>
 #include <inttypes.h>
+#include <Sawyer/Attribute.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Set.h>
 #include <Sawyer/SharedPointer.h>
@@ -190,7 +190,7 @@ class Node
     : public Sawyer::SharedObject,
       public Sawyer::SharedFromThis<Node>,
       public Sawyer::SmallObject,
-      public Attribute::Storage {     // Attributes are not significant for hashing or arithmetic
+      public Sawyer::Attribute::Storage { // Attributes are not significant for hashing or arithmetic
 protected:
     size_t nBits_;                    /**< Number of significant bits. Constant over the life of the node. */
     size_t domainWidth_;              /**< Width of domain for unary functions. E.g., memory. */
@@ -434,6 +434,9 @@ public:
     /** Returns (and caches) the hash value for this node.  If a hash value is not cached in this node, then a new hash value
      *  is computed and cached. */
     uint64_t hash();
+
+    // used internally to set the hash value
+    void hash(uint64_t);
 
     /** A node with formatter. See the with_format() method. */
     class WithFormatter {
@@ -834,8 +837,6 @@ private:
         : Node(""), leafType_(CONSTANT), name_(0) {}
     explicit Leaf(const std::string &comment, unsigned flags=0)
         : Node(comment, flags), leafType_(CONSTANT), name_(0) {}
-
-    static uint64_t nameCounter_;
 
 public:
     /** Construct a new free variable with a specified number of significant bits. */

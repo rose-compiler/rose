@@ -11,18 +11,18 @@ int main(void)
   omp_set_nested(1);
 #endif
 
-#pragma omp parallel
-  {
-#pragma omp parallel
+#pragma omp parallel num_threads(4)
+  { 
+#pragma omp parallel num_threads(4)
     printf("before single.\n");
 
 #pragma omp single
     {
 
-#pragma omp parallel
+#pragma omp parallel num_threads(4)
       printf("Inside single.\n");
     }
-#pragma omp parallel
+#pragma omp parallel num_threads(4)
     printf("after single.\n");
   }
   return 0;
