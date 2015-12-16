@@ -8754,9 +8754,11 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
 
                                                     // DQ (12/8/2015): Using newly implemented function for type equivalence.
                                                     // DQ (12/8/2015): FIXME: This is not a good enough test, this can be improved.
-#if 1
+#if 0
+                                                    // DQ (12/15/2015): This is the original code, not good enough but working moderately well.
                                                        if (templateParameterOrArgumentLocal->get_initializedName()->get_type() == templateParameterOrArgumentFromSymbol->get_initializedName()->get_type())
 #else
+                                                    // DQ (12/15/2015): This causes a problem for SgTemplateType and SgMemberFunctionType and demonstrates the problem for debugging.
                                                        if (templateParameterOrArgumentLocal->get_initializedName()->get_type()->isEquivalentType(templateParameterOrArgumentFromSymbol->get_initializedName()->get_type()) == true)
 #endif
                                                           {

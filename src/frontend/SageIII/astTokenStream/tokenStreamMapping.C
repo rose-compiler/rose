@@ -1887,6 +1887,47 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                           // Defer the corrections on the starting position until I find an example requiring this fixup.
                                           // childAttributes[i].node->get_startOfConstruct()->set_line(start_line);
                                           // childAttributes[i].node->get_startOfConstruct()->set_col(start_col);
+                                             if (start->get_line() == start_line)
+                                                {
+                                               // ROSE_ASSERT(end->get_col() < end_col);
+                                                  if (start->get_col() > start_col)
+                                                     {
+                                                    // This is the most I would like to be off by (and is a typical correction because many declarations omit the position of the trailing ";").
+                                                    // Where macros are expaned for initializers in a variable declaration the colum number can be significantly off.
+                                                    // ROSE_ASSERT(end_col - end->get_col() <= 1);
+
+                                                    // DQ (12/12/2015): If the column positions are close then go ahead and fix the column position 
+                                                    // in the AST, but not if they are beyond some distance.
+                                                    // ROSE_ASSERT(end_col - end->get_col() <= 22);
+                                                       if ( start->get_col() - start_col < 22)
+                                                          {
+                                                         // childAttributes[i].node->get_endOfConstruct()->set_line(end_line);
+                                                            childAttributes[i].node->get_startOfConstruct()->set_col(start_col);
+                                                          }
+                                                         else
+                                                          {
+                                                            printf ("   --- WARNING: column numbers of IR node source position and token sequence don't match well enough (correction to large) \n");
+                                                            printf ("   --- --- IR node %p = %s : Need to fixup STARTING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
+                                                                 childAttributes[i].node,childAttributes[i].node->class_name().c_str(),start->get_line(),start->get_col(),start_line,start_col);
+                                                          }
+                                                     }
+                                                    else
+                                                     {
+                                                    // Examples failing this test are: "#pragma pack(1)" which does not compute the ending column 
+                                                    // position correctly because EDG normalizes the pragma's string to be "pack ( 1 )".  
+                                                    // See tests/CompileTests/C_tests/YardenPragmaPackExample.c for an example.
+
+                                                       printf ("   --- WARNING: column numbers of IR node source position and token sequence don't match well enough (correction is the wrong sign) \n");
+                                                       printf ("   --- --- IR node %p = %s : Need to fixup STARTING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
+                                                            childAttributes[i].node,childAttributes[i].node->class_name().c_str(),start->get_line(),start->get_col(),start_line,start_col);
+                                                     }
+                                                }
+                                               else
+                                                {
+                                                  printf ("   --- WARNING: line numbers of IR node source position and token sequence don't match (we want the line numbers to match exactly) \n");
+                                                  printf ("   --- --- IR node %p = %s : Need to fixup STARTING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
+                                                     childAttributes[i].node,childAttributes[i].node->class_name().c_str(),start->get_line(),start->get_col(),start_line,start_col);
+                                                }
                                            }
 
                                         if (end->get_line() != end_line || end->get_col() != end_col)
@@ -1909,15 +1950,15 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                                     // DQ (12/12/2015): If the column positions are close then go ahead and fix the column position 
                                                     // in the AST, but not if they are beyond some distance.
                                                     // ROSE_ASSERT(end_col - end->get_col() <= 22);
-                                                       if (end_col - end->get_col() > 22)
+                                                       if (end_col - end->get_col() < 22)
                                                           {
                                                          // childAttributes[i].node->get_endOfConstruct()->set_line(end_line);
                                                             childAttributes[i].node->get_endOfConstruct()->set_col(end_col);
                                                           }
                                                          else
                                                           {
-                                                            printf ("WARNING: column numbers of IR node source position and token sequence don't match well enough (correction to large) \n");
-                                                            printf ("   --- IR node %p = %s : Need to fixup ENDING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
+                                                            printf ("   --- WARNING: column numbers of IR node source position and token sequence don't match well enough (correction to large) \n");
+                                                            printf ("   --- --- IR node %p = %s : Need to fixup ENDING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
                                                                  childAttributes[i].node,childAttributes[i].node->class_name().c_str(),end->get_line(),end->get_col(),end_line,end_col);
                                                           }
                                                      }
@@ -1927,15 +1968,15 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                                     // position correctly because EDG normalizes the pragma's string to be "pack ( 1 )".  
                                                     // See tests/CompileTests/C_tests/YardenPragmaPackExample.c for an example.
 
-                                                       printf ("WARNING: column numbers of IR node source position and token sequence don't match well enough (correction is the wrong sign) \n");
-                                                       printf ("   --- IR node %p = %s : Need to fixup ENDING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
+                                                       printf ("   --- WARNING: column numbers of IR node source position and token sequence don't match well enough (correction is the wrong sign) \n");
+                                                       printf ("   --- --- IR node %p = %s : Need to fixup ENDING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
                                                             childAttributes[i].node,childAttributes[i].node->class_name().c_str(),end->get_line(),end->get_col(),end_line,end_col);
                                                      }
                                                 }
                                                else
                                                 {
-                                                  printf ("WARNING: line numbers of IR node source position and token sequence don't match (we want the line numbers to match exactly) \n");
-                                                  printf ("   --- IR node %p = %s : Need to fixup ENDING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
+                                                  printf ("   --- WARNING: line numbers of IR node source position and token sequence don't match (we want the line numbers to match exactly) \n");
+                                                  printf ("   --- --- IR node %p = %s : Need to fixup ENDING source position in IR (%d,%d) to match token stream's line and column info: start (%d,%d) \n",
                                                      childAttributes[i].node,childAttributes[i].node->class_name().c_str(),end->get_line(),end->get_col(),end_line,end_col);
                                                 }
                                            }
