@@ -621,6 +621,9 @@ public:
      *  Any edge of type @ref E_FUNCTION_RETURN is deselected. */
     void deselectReturnEdges();
 
+    /** Deselect a vertex if it has no selected incident edges. */
+    void deselectUnusedVertex(ControlFlowGraph::ConstVertexIterator);
+
     /** Select neighboring vertices.
      *
      *  Selects vertices that are neighbors of selected vertices, and the edges that connect them. */
@@ -960,13 +963,11 @@ BaseEmitter<G>::emit(std::ostream &out) const {
         }
     }
 
-    // Emit subgraphs to output
+    // Emit named subgraphs to output
     BOOST_FOREACH (const Subgraphs::value_type &node, subgraphs) {
         const std::string &subgraphName = node.first;
         const std::string &subgraphContent = node.second;
-        if (subgraphName.empty()) {
-            out <<subgraphContent;
-        } else {
+        if (!subgraphName.empty()) {
             out <<"\nsubgraph cluster_" <<subgraphName <<" {"
                 <<" label=" <<subgraphOrganization(subgraphName).label() <<" "
                 <<toString(subgraphOrganization(subgraphName).attributes()) <<"\n"
@@ -974,6 +975,11 @@ BaseEmitter<G>::emit(std::ostream &out) const {
                 <<"}\n";
         }
     }
+
+    // Emit unnamed subgraph content without a surrounding subgraph construct (i.e., global graph)
+    Subgraphs::iterator unnamedSubgraph = subgraphs.find("");
+    if (unnamedSubgraph != subgraphs.end())
+        out <<unnamedSubgraph->second;
 
     // Emit pseudo edges
     BOOST_FOREACH (const PseudoEdge &edge, pseudoEdges_) {
