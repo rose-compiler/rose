@@ -44,10 +44,14 @@ namespace CodeThorn {
     virtual bool isStdIOLabel(Label label);
     virtual bool isStdInLabel(Label label, VariableId* id);
     bool isNonDetIntFunctionCall(Label lab,VariableId* varIdPtr);
+    bool isNonDetLongFunctionCall(Label lab,VariableId* varIdPtr);
+    bool isFunctionCallWithName(Label lab,VariableId* varIdPtr, std::string name);
     ~CTIOLabeler();
     void setExternalNonDetIntFunctionName(std::string);
+    void setExternalNonDetLongFunctionName(std::string);
   private:
     std::string _externalNonDetIntFunctionName;
+    std::string _externalNonDetLongFunctionName;
   };
 
 /*! 
@@ -476,6 +480,7 @@ namespace CodeThorn {
     bool _externalFunctionSemantics;
     string _externalErrorFunctionName; // the call of this function causes termination of analysis
     string _externalNonDetIntFunctionName;
+    string _externalNonDetLongFunctionName;
     string _externalExitFunctionName;
   }; // end of class Analyzer
   
