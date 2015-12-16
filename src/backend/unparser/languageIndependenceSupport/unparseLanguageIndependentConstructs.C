@@ -3168,7 +3168,13 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
           std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
           if (sourceFile->get_unparse_tokens() == false)
              {
-               ROSE_ASSERT(tokenStreamSequenceMap.size() == 0);
+            // DQ (12/14/2015): Even if we don't unparse using the toek stream, we can still use the 
+            // token sequence mapping to build more accurate sourde position information in the AST.
+            // ROSE_ASSERT(tokenStreamSequenceMap.size() == 0);
+               if (sourceFile->get_use_token_stream_to_improve_source_position_info() == false)
+                  {
+                    ROSE_ASSERT(tokenStreamSequenceMap.size() == 0);
+                  }
              }
             else
              {

@@ -19877,7 +19877,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
      counter++;
 
   // DQ (11/28/2015): exit with debug output instead of infinte recursion.
-     if (counter > 90) 
+     if (counter >= 90) 
         {
           printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
         }
@@ -19948,8 +19948,8 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                     if (X_array_index_expression == Y_array_index_expression)
                        {
 
-#if DEBUG_TYPE_EQUIVALENCE || 1
-                    printf ("In SageInterface::isEquivalentType(): counter = %d: Need to check the array size for static equivalence \n");
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                         printf ("In SageInterface::isEquivalentType(): counter = %d: Need to check the array size for static equivalence \n");
 #endif
                          counter--;
 
@@ -19960,7 +19960,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                       else
                        {
                       // Need more complex test for expression equivalence.
-#if DEBUG_TYPE_EQUIVALENCE || 1
+#if DEBUG_TYPE_EQUIVALENCE || 0
                          printf ("In SageInterface::isEquivalentType(): counter = %d Need more complex test for expression equivalence \n",counter);
                          string str1 = X_array_index_expression->unparseToString();
                          string str2 = Y_array_index_expression->unparseToString();
@@ -19971,7 +19971,32 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                   }
                  else
                   {
-                 // Nothing to do here since we have explored all uniform pairs of intermediate types possible.
+                 // DQ (12/15/2015): We need to handle pointers (when they are both pointers we can support then uniformally).
+                    SgTemplateType* X_templateType = isSgTemplateType(X_element_type);
+                    SgTemplateType* Y_templateType = isSgTemplateType(Y_element_type);
+
+                 // DQ (12/15/2015): We need to check that the array size is the same.
+                    if (X_templateType != NULL && Y_templateType != NULL)
+                       {
+                         string X_name = X_templateType->get_name();
+                         string Y_name = Y_templateType->get_name();
+                         int X_template_parameter_position = X_templateType->get_template_parameter_position();
+                         int Y_template_parameter_position = X_templateType->get_template_parameter_position();
+
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                         printf ("In SageInterface::isEquivalentType(): case SgTemplateType: counter = %d X_name = %s Y_name = %s X_template_parameter_position = %d Y_template_parameter_position = %d \n",
+                              counter,X_name.c_str(),Y_name.c_str(),X_template_parameter_position,Y_template_parameter_position);
+#endif
+                         bool value = ( (X_name == Y_name) && (X_template_parameter_position == Y_template_parameter_position));
+
+                         counter--;
+
+                         return value;
+                       }
+                      else
+                       {
+                      // Nothing to do here since we have explored all uniform pairs of intermediate types possible.
+                       }
                   }
              }
         }
@@ -20255,11 +20280,85 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
                                  {
                                 // Recursive call on non-typedef base types.
                                 // isSame = (*X_element_type) == (*Y_element_type);
-                                   isSame = isEquivalentType(X_element_type,Y_element_type);
+                                // isSame = isEquivalentType(X_element_type,Y_element_type);
 
 #if DEBUG_TYPE_EQUIVALENCE
                                    printf ("In SageInterface::isEquivalentType(): loop: evaluation of inner types: isSame = %s \n",isSame ? "true" : "false");
 #endif
+
+                                // DQ (11/29/2015): We need to handle pointers (when they are both pointers we can support then uniformally).
+                                   SgFunctionType* X_functionType = isSgFunctionType(X_element_type);
+                                   SgFunctionType* Y_functionType = isSgFunctionType(Y_element_type);
+
+                                   if (X_functionType != NULL || Y_functionType != NULL)
+                                      {
+                                        bool value = ( (X_functionType != NULL && Y_functionType != NULL) && (X_functionType == Y_functionType) );
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                                        printf ("In SageInterface::isEquivalentType(): loop: Process case of SgFunctionType: value = %s \n",value ? "true" : "false");
+#endif
+                                        isSame == value;
+                                        isReduceable = false;
+                                      }
+                                     else
+                                      {
+                                     // Recursive call on non-typedef base types.
+                                     // isSame = isEquivalentType(X_element_type,Y_element_type);
+
+                                     // DQ (11/29/2015): We need to handle pointers (when they are both pointers we can support then uniformally).
+                                        SgMemberFunctionType* X_memberFunctionType = isSgMemberFunctionType(X_element_type);
+                                        SgMemberFunctionType* Y_memberFunctionType = isSgMemberFunctionType(Y_element_type);
+
+                                        if (X_memberFunctionType != NULL || Y_memberFunctionType != NULL)
+                                           {
+                                          // DQ (12/15/2015): This code should be unreachable since it would have executed the code above (the case of SgFunctionType).
+                                             printf ("This should be unreachable code \n");
+                                             ROSE_ASSERT(false);
+
+                                             bool value = ( (X_memberFunctionType != NULL && Y_memberFunctionType != NULL) && (X_memberFunctionType == Y_memberFunctionType) );
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                                             printf ("In SageInterface::isEquivalentType(): loop: Process case of SgMemberFunctionType: value = %s \n",value ? "true" : "false");
+#endif
+                                             isSame == value;
+                                           }
+                                          else
+                                           {
+                                          // Recursive call on non-typedef base types.
+                                          // isSame = isEquivalentType(X_element_type,Y_element_type);
+
+                                          // Check for irreducable types.
+                                             bool X_isReduceable = true;
+                                             if (isSgTypeSignedLong(X_element_type)  != NULL || 
+                                                 isSgTypeUnsignedInt(X_element_type) != NULL || 
+                                                 isSgTypeBool(X_element_type) != NULL ||
+                                                 isSgTypeInt(X_element_type) != NULL)
+                                                {
+                                                  X_isReduceable = false;
+                                                }
+
+                                             bool Y_isReduceable = true;
+                                             if (isSgTypeSignedLong(Y_element_type)  != NULL || 
+                                                 isSgTypeUnsignedInt(Y_element_type) != NULL || 
+                                                 isSgTypeBool(Y_element_type) != NULL ||
+                                                 isSgTypeInt(Y_element_type) != NULL)
+                                                {
+                                                  Y_isReduceable = false;
+                                                }
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                                             printf ("In SageInterface::isEquivalentType(): loop: Process default case: X_isReduceable = %s Y_isReduceable = %s \n",
+                                                  X_isReduceable ? "true" : "false",Y_isReduceable ? "true" : "false");
+#endif
+                                             if (X_isReduceable == true || Y_isReduceable == true)
+                                                {
+                                               // Recursive call on non-default modifier base types.
+                                                  isSame = isEquivalentType(X_element_type,Y_element_type);
+                                                }
+                                               else
+                                                {
+                                               // Neither of these types were reducable.
+                                                  isSame = false;
+                                                }
+                                           }
+                                      }
                                  }
                             }
                        }
@@ -20274,7 +20373,7 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
      printf ("In SageInterface::isEquivalentType(): isSame = %s \n",isSame ? "true" : "false");
 #endif
 
-#if DEBUG_TYPE_EQUIVALENCE || 1
+#if DEBUG_TYPE_EQUIVALENCE || 0
   // if (counter == 1) 
      if (counter == 1 && isSame == true) 
         {
