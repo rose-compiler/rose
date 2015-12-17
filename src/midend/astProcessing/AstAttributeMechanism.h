@@ -300,7 +300,8 @@ public:
      *  the attribute's designer is responsible for implementing an ownership policy that safely prevents leaks.
      *
      *  If the old value (if present) uses the @ref AstAttribute::CONTAINER_OWNERSHIP policy then it is deleted. Otherwise the
-     *  attribute's designer is responsible for implementing an ownership policy that safely prevents leaks.
+     *  attribute's designer is responsible for implementing an ownership policy that safely prevents leaks, and the attribute
+     *  must not be deleted until after this method returns.
      *
      *  <b>New semantics:</b> The old implementation didn't delete the previous attribute value.  The old implementation
      *  allowed setting a null value, in which case the old @c exists returned true but the @c operator[] returned no
@@ -350,7 +351,8 @@ public:
      *
      *  If an attribute with the specified name exists then it is removed from the container. If the attribute implements the
      *  @ref AstAttribute::CONTAINER_OWNERSHIP policy then this container deletes the attribute, otherwise it is up to the
-     *  attribute's designer to implement a safe way to prevent attribute leaks.
+     *  attribute's designer to implement a safe way to prevent attribute leaks, and the attribute must not be deleted until
+     *  after this method returns.
      *
      *  <b>New semantics:</b> The old implementation did not delete the attribute value. It also printed an error message
      *  to standard error if the attribute did not exist. */
