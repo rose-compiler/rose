@@ -72,6 +72,11 @@ Grammar::CreateGrammarDotString(Terminal* grammarnode,
 }
 
 bool 
+Grammar::isAbstractTreeGrammarSymbol(Terminal* t) {
+  return t->getCanHaveInstances();
+}
+
+bool 
 Grammar::isAbstractTreeGrammarSymbol(string s) {
   //set<string>::iterator posIter = traversedTerminals.find(s);
   //if (posIter != traversedTerminals.end())
@@ -190,7 +195,7 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
                                     ,"containsTransformationToSurroundingWhitespace","attributeMechanism","source_sequence_value","need_paren","lvalue","operatorPosition","originalExpressionTree"};
   set<string> filteredMemberVariablesSet(nonAtermMemberVariables, nonAtermMemberVariables + sizeof(nonAtermMemberVariables)/sizeof(nonAtermMemberVariables[0]) );
 
-  if(grammarnode->isLeafNode()) {
+  if(true||grammarnode->isLeafNode()) {
     string rhsTerminalSuccessors;
     /*
       bool containermembers=0; // (non-pointer)
@@ -281,10 +286,10 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
     }
     else {
       */
-    if(isAbstractTreeGrammarSymbol(string(grammarnode->getName())) ) {
+    if(true||isAbstractTreeGrammarSymbol(grammarnode) ) {
       saLatex.nodetext=string(grammarnode->getName())+" "+grammarSymTreeLB+rhsTerminalSuccessors+grammarSymTreeRB;
       saLatex.terminalname=string(grammarnode->getName());
-      saLatex.isTerminal=true;
+      saLatex.isTerminal=true; //isAbstractTreeGrammarSymbol(grammarnode->getName());
     } else {
       saLatex.nodetext="";
     }
@@ -302,14 +307,19 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
   string grammarRule;
   bool first=true;
   for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
-    if((*viter).nodetext!="" && isAbstractTreeGrammarSymbol(string(grammarnode->getName())) ) {
+    if((*viter).nodetext!="" /*&& isAbstractTreeGrammarSymbol(string(grammarnode->getName()))*/ ) {
       if(generateSDFTreeGrammar) {
         if((*viter).isTerminal) {
           // SDF: generate two rules for terminals: A->B; B->B(...);
           grammarRule+=string(grammarnode->getName()) + " -> " + (*viter).terminalname+"\n";
-          grammarRule+=string((*viter).terminalname) + " -> " + (*viter).nodetext+"\n";
+          if(!isAbstractTreeGrammarSymbol(grammarnode)) {
+            grammarRule+=string((*viter).terminalname) + " -> " + (*viter).nodetext+"\n";
+          }
         } else {
           grammarRule+=string(grammarnode->getName()) + " -> " + (*viter).nodetext+"\n";
+          if(!isAbstractTreeGrammarSymbol(grammarnode)) {
+            grammarRule+=string((*viter).terminalname) + " -> " + (*viter).nodetext+"// non-terminal rule 2\n";
+          }
         }
       } else {
         if(first) {
