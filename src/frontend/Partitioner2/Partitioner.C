@@ -1444,9 +1444,9 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
         out <<prefix <<"basic block " <<vertexName(*vertex) <<"\n";
         BOOST_FOREACH (const Function::Ptr &function, vertex->value().owningFunctions().values()) {
             if (function->address() == vertex->value().address()) {
-                out <<prefix <<"  entry block for " <<functionName(function);
+                out <<prefix <<"  entry block for " <<functionName(function) <<"\n";
             } else {
-                out <<prefix <<"  owned by " <<functionName(function);
+                out <<prefix <<"  owned by " <<functionName(function) <<"\n";
             }
         }
 
@@ -1976,21 +1976,27 @@ Partitioner::isEdgeInterProcedural(const ControlFlowGraph::Edge &edge,
     if (edge.value().type() == E_FUNCTION_CALL ||
         edge.value().type() == E_FUNCTION_XFER ||
         edge.value().type() == E_FUNCTION_RETURN)
-        return false;
+        return true;
 
-    if (sourceFunction != NULL || targetFunction != NULL) {
-        ASSERT_not_null(sourceFunction);
-        ASSERT_not_null(targetFunction);
+    if (sourceFunction != NULL && targetFunction != NULL) {
         if (sourceFunction == targetFunction)
             return false;
         return (edge.source()->value().isOwningFunction(sourceFunction) &&
                 edge.target()->value().isOwningFunction(targetFunction));
+    } else if (sourceFunction != NULL) {
+        ASSERT_require(targetFunction == NULL);
+        return (edge.source()->value().isOwningFunction(sourceFunction) &&
+                !edge.target()->value().isOwningFunction(sourceFunction));
+    } else if (targetFunction != NULL) {
+        ASSERT_require(sourceFunction == NULL);
+        return (!edge.source()->value().isOwningFunction(targetFunction) &&
+                edge.target()->value().isOwningFunction(targetFunction));
+    } else {
+        ASSERT_require(sourceFunction == NULL && targetFunction == NULL);
+        if (edge.source()->value().nOwningFunctions() == 0 && edge.target()->value().nOwningFunctions() == 0)
+            return true;
+        return edge.source()->value().owningFunctions() != edge.target()->value().owningFunctions();
     }
-
-    if (edge.source()->value().nOwningFunctions() == 0 && edge.target()->value().nOwningFunctions() == 0)
-        return true;
-
-    return edge.source()->value().owningFunctions() != edge.target()->value().owningFunctions();
 }
 
 std::vector<Function::Ptr>
@@ -2028,40 +2034,6 @@ Partitioner::discoverFunctionEntryVertices() const {
     return functions;
 }
 
-size_t
-Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
-                                         CfgEdgeList *inwardInterFunctionEdges /*out*/,
-                                         CfgEdgeList *outwardInterFunctionEdges /*out*/) {
-    std::vector<size_t> inwardIds, outwardIds;
-    size_t retval = discoverFunctionBasicBlocks(function, inwardIds /*out*/, outwardIds /*out*/);
-    if (inwardInterFunctionEdges) {
-        BOOST_FOREACH (size_t id, inwardIds)
-            inwardInterFunctionEdges->push_back(cfg_.findEdge(id));
-    }
-    if (outwardInterFunctionEdges) {
-        BOOST_FOREACH (size_t id, outwardIds)
-            outwardInterFunctionEdges->push_back(cfg_.findEdge(id));
-    }
-    return retval;
-}
-
-size_t
-Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
-                                         CfgConstEdgeList *inwardInterFunctionEdges /*out*/,
-                                         CfgConstEdgeList *outwardInterFunctionEdges /*out*/) const {
-    std::vector<size_t> inwardIds, outwardIds;
-    size_t retval = discoverFunctionBasicBlocks(function, inwardIds /*out*/, outwardIds /*out*/);
-    if (inwardInterFunctionEdges) {
-        BOOST_FOREACH (size_t id, inwardIds)
-            inwardInterFunctionEdges->push_back(cfg_.findEdge(id));
-    }
-    if (outwardInterFunctionEdges) {
-        BOOST_FOREACH (size_t id, outwardIds)
-            outwardInterFunctionEdges->push_back(cfg_.findEdge(id));
-    }
-    return retval;
-}
-
 Sawyer::Optional<Partitioner::Thunk>
 Partitioner::functionIsThunk(const Function::Ptr &function) const {
     if (function==NULL || 0==(function->reasons() & SgAsmFunction::FUNC_THUNK) || function->nBasicBlocks()!=1)
@@ -2091,10 +2063,8 @@ Partitioner::functionIsThunk(const Function::Ptr &function) const {
     return Thunk(bblock, concreteSuccessors.front());
 }
 
-size_t
-Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
-                                         std::vector<size_t> &inwardInterFunctionEdges /*out*/,
-                                         std::vector<size_t> &outwardInterFunctionEdges /*out*/) const {
+void
+Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function) const {
     ASSERT_not_null(function);
     if (function->isFrozen())
         throw FunctionError(function, functionName(function) +
@@ -2102,12 +2072,11 @@ Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
 
     Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"discoverFunctionBlocks(" <<functionName(function) <<")\n";
-    size_t nConflictsOrig = inwardInterFunctionEdges.size() + outwardInterFunctionEdges.size();
 
     // Thunks are handled specially. They only ever contain one basic block. As a side effect, the thunk's outgoing edge is
     // changed to type E_FUNCTION_XFER.
     if (functionIsThunk(function))
-        return 0;
+        return;
 
     typedef Sawyer::Container::Map<size_t /*vertexId*/, Function::Ownership> VertexOwnership;
     VertexOwnership ownership;                          // contains only OWN_EXPLICIT and OWN_PROVISIONAL entries
@@ -2123,75 +2092,50 @@ Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
         SAWYER_MESG(debug) <<"  explicitly owns vertex " <<placeholder->id() <<"\n";
     }
 
-    // Find all the unowned vertices we can reach from the previously owned vertices following non-function-call edges and
-    // excluding special target vertices.  The loop is guaranteed to never visit the same vertex more than once because, we
-    // only add a vertex to the worklist if it is not in the ownership set, adding it to the worklist and ownership set at the
-    // same time.  The loop is also therefore guaranteed to not visit an edge more than once.
+    // Find all unowned vertices that we can reach from the previously owned vertices by following edges in any direction and
+    // not crossing edges that lead to the entry of another function (or any function call or function transfer edge) or edges
+    // that are function returns.
     Sawyer::Container::Stack<size_t> worklist(ownership.keys());
     while (!worklist.isEmpty()) {
-        const ControlFlowGraph::Vertex &source = *cfg_.findVertex(worklist.pop());
-        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, source.outEdges()) {
-            if (edge.value().type()!=E_FUNCTION_CALL && edge.value().type()!=E_FUNCTION_XFER && !edge.isSelfEdge()) {
-                const ControlFlowGraph::Vertex &target = *edge.target();
-                if (target.value().type()==V_BASIC_BLOCK && !ownership.exists(target.id())) {
-                    if (!target.value().owningFunctions().isEmpty()) {
-                        // Some other function already owns this vertex.  The edge is therefore an inter-function edge which
-                        // was not labeled as a function call.  If the edge is to a known function entry block then we'll
-                        // assume this should have been a function call edge and not traverse it, otherwise we'll have to let
-                        // the user decide what to do.
-                        if (!functionExists(target.value().address()))
-                            outwardInterFunctionEdges.push_back(edge.id());
-                    } else {
-                        SAWYER_MESG(debug) <<"  following edge " <<edgeName(edge) <<"\n";
-                        ownership.insert(target.id(), Function::OWN_PROVISIONAL);
-                        worklist.push(target.id());
-                        SAWYER_MESG(debug) <<"    provisionally owns vertex " <<target.id() <<"\n";
-                    }
-                }
+        const ControlFlowGraph::Vertex &vertex = *cfg_.findVertex(worklist.pop());
+
+        // Find vertex neighbors that could be in the same function.
+        Sawyer::Container::Set<ControlFlowGraph::ConstVertexIterator> neighbors;
+        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.outEdges()) {
+            if (edge.value().type() != E_FUNCTION_CALL &&
+                edge.value().type() != E_FUNCTION_XFER &&
+                edge.value().type() != E_FUNCTION_RETURN && !edge.isSelfEdge() &&
+                !edge.target()->value().isEntryBlock()) {
+                SAWYER_MESG(debug) <<"  following edge " <<edgeName(edge) <<"\n";
+                neighbors.insert(edge.target());
             }
+        }
+        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.inEdges()) {
+            if (edge.value().type() != E_FUNCTION_CALL &&
+                edge.value().type() != E_FUNCTION_XFER &&
+                edge.value().type() != E_FUNCTION_RETURN && !edge.isSelfEdge() &&
+                !edge.source()->value().isEntryBlock()) {
+                SAWYER_MESG(debug) <<"  following edge " <<edgeName(edge) <<"\n";
+                neighbors.insert(edge.target());
+            }
+        }
+
+        // Mark the neighbors as being provisionally owned by this function and be sure to visit them recursively.
+        BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &neighbor, neighbors.values()) {
+            if (neighbor->value().type() != V_BASIC_BLOCK)
+                continue;                               // functions don't own things like the indeterminate vertex
+            if (ownership.exists(neighbor->id()))
+                continue;                               // we already know about this neighbor
+            ownership.insertMaybe(neighbor->id(), Function::OWN_PROVISIONAL);
+            worklist.push(neighbor->id());
         }
     }
 
-    // For all the provisionally-owned vertices other than this function's entry vertex, check that they have incoming edges
-    // only from this same function.  We explicitly do not check the vertices that were previously owned (the user may have
-    // wanted them in the function regardless of problems).
+    // If there were no errors then add all the provisional vertices to this function. This does not modify the CFG.
     BOOST_FOREACH (const VertexOwnership::Node &node, ownership.nodes()) {
-        if (node.value() == Function::OWN_PROVISIONAL) {
-            const ControlFlowGraph::Vertex &target = *cfg_.findVertex(node.key());
-            SAWYER_MESG(debug) <<"  testing provisional vertex " <<vertexName(target) <<"\n";
-            if (target.value().address() != function->address()) {
-                BOOST_FOREACH (const ControlFlowGraph::Edge &edge, target.inEdges()) {
-                    const ControlFlowGraph::Vertex &source = *edge.source();
-                    SAWYER_MESG(debug) <<"    testing edge " <<edgeName(edge);
-                    if (!ownership.exists(source.id())) {
-                        // This edge crosses a function boundary yet is not labeled as a function call.
-                        inwardInterFunctionEdges.push_back(edge.id());
-                        if (debug) {
-                            if (source.value().nOwningFunctions()==0) {
-                                debug <<"; edge is not owned by any function\n";
-                            } else {
-                                debug <<"; edge is owned by other functions:\n";
-                                BOOST_FOREACH (const Function::Ptr &f, source.value().owningFunctions().values())
-                                    debug <<"      edge source is owned by " <<functionName(f) <<"\n";
-                            }
-                        }
-                    } else {
-                        SAWYER_MESG(debug) <<"; ok\n";
-                    }
-                }
-            }
-        }
+        if (node.value() == Function::OWN_PROVISIONAL)
+            function->insertBasicBlock(cfg_.findVertex(node.key())->value().address());
     }
-
-    // If there were no conflicts then add all the provisional vertices to this function. This does not modify the CFG.
-    if (inwardInterFunctionEdges.empty() && outwardInterFunctionEdges.empty()) {
-        BOOST_FOREACH (const VertexOwnership::Node &node, ownership.nodes()) {
-            if (node.value() == Function::OWN_PROVISIONAL)
-                function->insertBasicBlock(cfg_.findVertex(node.key())->value().address());
-        }
-    }
-
-    return inwardInterFunctionEdges.size() + outwardInterFunctionEdges.size() - nConflictsOrig;
 }
 
 std::set<rose_addr_t>

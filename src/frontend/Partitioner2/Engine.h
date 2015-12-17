@@ -783,14 +783,11 @@ public:
 
     /** Discover as many functions as possible.
      *
-     *  Discover as many functions as possible by discovering as many basic blocks as possible (@ref discoverBasicBlocks) Each
+     *  Discover as many functions as possible by discovering as many basic blocks as possible (@ref discoverBasicBlocks), Each
      *  time we run out of basic blocks to try, we look for another function prologue pattern at the lowest possible address
      *  and then recursively discover more basic blocks.  When this procedure is exhausted a call to @ref
-     *  attachBlocksToFunctions tries to attach each basic block to a function.
-     *
-     *  Returns a list of functions that need more attention.  These are functions for which the CFG is not well behaved--such
-     *  as inter-function edges that are not function call edges. */
-    virtual std::vector<Function::Ptr> discoverFunctions(Partitioner&);
+     *  attachBlocksToFunctions tries to attach each basic block to a function. */
+    void discoverFunctions(Partitioner&);
 
     /** Attach dead code to function.
      *
@@ -801,9 +798,7 @@ public:
      *  If @p maxIterations is larger than one then multiple iterations are performed.  Between each iteration @ref
      *  makeNextBasicBlock is called repeatedly to recursively discover instructions for all pending basic blocks, and then the
      *  CFG is traversed to add function-reachable basic blocks to the function.  The loop terminates when the maximum number
-     *  of iterations is reached, or when no more dead code can be found within this function, or when the CFG reaches a state
-     *  that has non-call inter-function edges.  In the last case, @ref Partitioner::discoverFunctionBasicBlocks can be called
-     *  to by the user to determine what's wrong with the CFG.
+     *  of iterations is reached, or when no more dead code can be found within this function.
      *
      *  Returns the set of newly discovered addresses for unreachable code.  These are the ghost edge target addresses
      *  discovered at each iteration of the loop and do not include addresses of basic blocks that are reachable from the ghost
@@ -849,10 +844,8 @@ public:
     /** Attach basic blocks to functions.
      *
      *  Calls @ref Partitioner::discoverFunctionBasicBlocks once for each known function the partitioner's CFG/AUM in a
-     *  sophomoric attempt to assign existing basic blocks to functions.  Returns the list of functions that resulted in
-     *  errors.  If @p reportProblems is set then emit messages to mlog[WARN] about problems with the CFG (that stream must
-     *  also be enabled if you want to actually see the warnings). */
-    virtual std::vector<Function::Ptr> attachBlocksToFunctions(Partitioner&, bool emitWarnings=false);
+     *  sophomoric attempt to assign existing basic blocks to functions. */
+    virtual void attachBlocksToFunctions(Partitioner&);
 
     /** Attach dead code to functions.
      *

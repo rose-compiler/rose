@@ -548,6 +548,12 @@ public:
      *  @li If two functions are specified and the source block is owned by the first function, the target block is owned by
      *      the second function, and the functions are different then the block is inter-procedural.
      *
+     *  @li If only the source function is specified and the source block is owned by the source function and the target block
+     *      is not owned by the source function then the edge is inter-procedural.
+     *
+     *  @li If only the target function is specified and the target block is owned by the target function and the source block
+     *      is not owned by the target function then the edge is inter-procedural.
+     *
      *  @li If no functions are specified and neither the source nor the target block have any function owners then the edge
      *      is inter-procedural.
      *
@@ -1500,41 +1506,13 @@ public:
 
     /** Adds basic blocks to a function.
      *
-     *  Attempts to discover the basic blocks that should belong to the specified function.  This is done as follows:
+     *  Attempts to discover the basic blocks that should belong to the specified function. It does so by finding all CFG
+     *  vertices that are reachable from the already-owned vertices without following edges that are marked as function calls,
+     *  function transfers, or function returns and without following edges that lead to the entry point of another function.
      *
-     *  @li An initial CFG traversal follows the non-function-call edges starting at the function's already-owned basic
-     *      blocks.  It makes note of any newly encountered blocks, and considers them to be "provisionally owned" by the
-     *      function.  If it encounters a vertex already owned by some other function then the ID number for the edge leading
-     *      to that vertex is appended to the @p outwardInterFunctionEdges list (if not null), that vertex is not marked as
-     *      provisionally owned by this function, and that vertex's outgoing edges are not traversed.
-     *
-     *  @li A second traversal of the new provisionally-owned vertices (excluding the entry vertex) verifies that all
-     *      incoming edges originate from this same function.  If an edge is detected coming from a vertex that is not owned by
-     *      this function (explicitly or provisionally) then that edge is appended to the @ref inwardInterFunctionEdges list
-     *      (if not null).
-     *
-     *  @li If there were no conflicts (nothing appended to @p outwardInterFunctionEdges or @p inwardInterFunctionEdges) then a
-     *      final traversal of the provisionally-owned vertices adds them to the specified function.
-     *
-     *  The CFG is not modified by this method, and therefore the function must not exist in the CFG; the function must be in a
-     *  thawed state.
-     *
-     *  The return value is the number of edges inserted (or that would have been inerted) into the two edge list arguments. A
-     *  return value other than zero means that conflicts were encountered and the function was not modified.  If a conflict
-     *  occurs, the user is permitted to insert the vertices explicitly since this algorithm does not check consistency for
-     *  vertices already owned by the function.
-     *
-     *  @{ */
-    size_t discoverFunctionBasicBlocks(const Function::Ptr&,
-                                       CfgEdgeList *inwardInterFunctionEdges /*out*/,
-                                       CfgEdgeList *outwardInterFunctionEdges /*out*/) /*final*/;
-    size_t discoverFunctionBasicBlocks(const Function::Ptr&,
-                                       CfgConstEdgeList *inwardInterFunctionEdges /*out*/,
-                                       CfgConstEdgeList *outwardInterFunctionEdges /*out*/) const /*final*/;
-    size_t discoverFunctionBasicBlocks(const Function::Ptr &function,
-                                       std::vector<size_t> &inwardInterFunctionEdges /*out*/,
-                                       std::vector<size_t> &outwardInterFunctionEdges /*out*/) const /*final*/;
-    /** @} */
+     *  The CFG is not modified by this method. The function is modified and must not exist in the CFG; the function must be in
+     *  a thawed state. */
+    void discoverFunctionBasicBlocks(const Function::Ptr &function) const /*final*/;
 
     /** Returns ghost successors for a single function.
      *
