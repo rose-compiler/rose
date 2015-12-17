@@ -623,6 +623,7 @@ class Grammar
           std::string restrictedTypeStringOfGrammarString(GrammarString* gs, Terminal* grammarnode, std::string grammarSymListOpPrefix, std::string grammarSymListOpPostfix);
           std::set<std::string> traversedTerminals;
           GrammarSynthesizedAttribute CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
+          bool isAbstractTreeGrammarSymbol(Terminal*);
           bool isAbstractTreeGrammarSymbol(std::string);
    private:
           bool generateSDFTreeGrammar;
