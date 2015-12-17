@@ -7835,7 +7835,7 @@ SageInterface::moveDeclarationToAssociatedNamespace ( SgDeclarationStatement* de
           printf ("Identified the most common case... \n");
 #endif
        // Identify the associated namespace
-          SgScopeStatement* declarationScope = declarationStatement->get_scope();
+          //SgScopeStatement* declarationScope = declarationStatement->get_scope();
 #if 0
           printf ("declarationScope = %p = %s \n",declarationScope,declarationScope->class_name().c_str());
 #endif
@@ -12858,7 +12858,7 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
 
 PreprocessingInfo* SageInterface::insertHeader(const string& filename, PreprocessingInfo::RelativePositionType position /*=after*/, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
   {
-    bool successful = false;
+    //bool successful = false;
     if (scope == NULL)
         scope = SageBuilder::topScopeStack();
     ROSE_ASSERT(scope);
@@ -12887,8 +12887,11 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
            result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
                                           content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
            ROSE_ASSERT(result);
+           // add to the last position 
+           // TODO: support to add to the first, 
+           // TODO: support fine positioning with #include directives
            (*j)->addToAttachedPreprocessingInfo(result,position);
-           successful = true;
+          // successful = true;
            break;
          }
       }
@@ -12903,7 +12906,7 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
                 content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
        ROSE_ASSERT(result);
        globalScope->addToAttachedPreprocessingInfo(result,position);
-       successful = true;
+       //successful = true;
     }
     // must be inserted once somehow
     // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
@@ -12912,6 +12915,129 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
     return result;
   }
 
+// insert a new header right before stmt,  if there are existing headers attached to stmt, insert it as the last or first header as specified by asLastHeader
+void SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheader, bool asLastHeader)
+{
+  ROSE_ASSERT (stmt != NULL);
+  ROSE_ASSERT (newheader != NULL);
+
+  PreprocessingInfo::RelativePositionType position ;
+
+  if (asLastHeader )
+    position = PreprocessingInfo::after; 
+  else
+    position = PreprocessingInfo::before; 
+
+
+  // Find existing first and last header.
+  AttachedPreprocessingInfoType *comments = stmt->getAttachedPreprocessingInfo ();
+
+  if (comments != NULL)
+  {
+    PreprocessingInfo * firstExistingHeader = NULL;
+    PreprocessingInfo * lastExistingHeader = NULL;
+    AttachedPreprocessingInfoType::iterator i, firsti, lasti;
+    for (i = comments->begin (); i != comments->end (); i++)
+    {
+      if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+      {
+        // Only set first header for the first time
+        if (firstExistingHeader == NULL)
+        {
+          firstExistingHeader = (*i);
+          firsti = i;
+        }
+        // always updates last header  
+        lastExistingHeader = (*i);
+        lasti = i;
+      }
+    }
+    // based on existing header positions, insert the new header
+    if (asLastHeader)
+    {
+      if (lastExistingHeader == NULL) // No last header at all, just append to after
+        stmt->addToAttachedPreprocessingInfo(newheader, PreprocessingInfo::after);
+      else
+      {
+        comments->insert (lasti+1, newheader);
+      }
+    }
+    else // add as the first header
+    {
+      if (firstExistingHeader == NULL) // no existing header at all, just append to after
+        stmt->addToAttachedPreprocessingInfo(newheader, PreprocessingInfo::after);
+      else
+      {
+        comments->insert (firsti, newheader);
+      }
+    }
+  }
+  else // No comments at all, first and last header mean the same, just attach to the located node
+    stmt->addToAttachedPreprocessingInfo(newheader, position);
+}
+
+// The recommended version
+PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const std::string & filename, bool isSystemHeader /* = false*/, bool asLastHeader /* = true*/)
+{
+  ROSE_ASSERT (source_file != NULL);
+  SgGlobal* globalScope = source_file->get_globalScope();
+  ROSE_ASSERT (globalScope != NULL);
+
+  PreprocessingInfo* result=NULL;
+  string content;
+  if (isSystemHeader)
+    content = "#include <" + filename + "> \n";
+  else
+    content = "#include \"" + filename + "\" \n";
+
+  PreprocessingInfo::RelativePositionType position ;
+
+  if (asLastHeader )
+     position = PreprocessingInfo::after; 
+  else
+     position = PreprocessingInfo::before; 
+
+  SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
+  if (stmtList.size()>0) // the source file is not empty
+  {                     
+    for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
+        j != stmtList.end (); j++)
+    {
+      // Attach to the first eligible located statement
+      //must have this judgement, otherwise wrong file will be modified!
+      //It could also be the transformation generated statements with #include attached
+      if ( ((*j)->get_file_info ())->isSameFile(globalScope->get_file_info ())||
+          ((*j)->get_file_info ())->isTransformation()
+         )
+      {
+        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
+            content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
+        ROSE_ASSERT(result);
+        insertHeader (*j, result, asLastHeader);
+        //successful = true;
+        break;                                                                                                               
+      }                                                                                                                      
+    } // end for                                                                                                                         
+  }                                                                                                                          
+  else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!                                    
+  {                                                                                                                          
+    cerr<<"SageInterface::insertHeader() Empty file is found!"<<endl;                                                        
+    cerr<<"#include xxx is  preprocessing information which has to be attached  to some other  located node (a statement for example)"<<endl;
+    cerr<<"You may have to insert some statement first before inserting a header"<<endl;                                     
+    ROSE_ASSERT(false);                                                                                                      
+    result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,                                       
+        content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);                                         
+    ROSE_ASSERT(result);                                                                                                     
+    globalScope->addToAttachedPreprocessingInfo(result,position);
+//    successful = true;                                                                                                       
+  }                                                                                                                           
+  // must be inserted once somehow
+  // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
+  // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.                          
+  //ROSE_ASSERT(successful==true);                                                                                            
+  return result;        
+
+} // end insertHeader
 
 //! Attach an arbitrary string to a located node. A workaround to insert irregular statements or vendor-specific attributes. We abuse CpreprocessorDefineDeclaration for this purpose.
 PreprocessingInfo* 
@@ -18668,7 +18794,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
         {
             cerr<<"Error in SageInterface::loopCollapsing(): target loop is not canonical."<<endl;
             dumpInfo(target_loop);
-            return false;
+            return NULL;
         }
         
         ROSE_ASSERT(ivar[i]&& lb[i] && ub[i] && step[i]);
