@@ -12977,7 +12977,7 @@ void SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheade
 }
 
 // The recommended version
-PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const std::string & filename, bool isSystemHeader /* = false*/, bool asLastHeader /* = true*/)
+PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const std::string & filename, bool isSystemHeader , bool asLastHeader)
 {
   ROSE_ASSERT (source_file != NULL);
   SgGlobal* globalScope = source_file->get_globalScope();

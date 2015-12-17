@@ -664,7 +664,7 @@ SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::ma
   void dumpPreprocInfo (SgLocatedNode* locatedNode);
 
 //! Insert  #include "filename" or #include <filename> (system header) onto the global scope of a source file, add to be the last #include .. by default among existing headers, Or as the first header. Recommended for use.
-PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader = false, bool asLastHeader = true);
+PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader, bool asLastHeader);
 
 //! Insert a new header right before stmt,  if there are existing headers attached to stmt, insert it as the last or first header as specified by asLastHeader
 void insertHeader (SgStatement* stmt, PreprocessingInfo* newheader, bool asLastHeader);
