@@ -11,7 +11,7 @@ namespace BinaryAnalysis {
 
 class DisassemblerMips: public Disassembler {
 public:
-    DisassemblerMips() { init(); }
+    explicit DisassemblerMips(ByteOrder::Endianness sex = ByteOrder::ORDER_MSB) { init(sex); }
     virtual DisassemblerMips *clone() const ROSE_OVERRIDE { return new DisassemblerMips(*this); }
     virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap*, rose_addr_t start_va, AddressSet *successors=NULL) ROSE_OVERRIDE;
@@ -125,7 +125,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 protected:
-    void init();
+    void init(ByteOrder::Endianness);
 
 protected:
     /** Table of instruction-specific disassemblers.  This is the table of instruction-specific disassemblers consulted by
