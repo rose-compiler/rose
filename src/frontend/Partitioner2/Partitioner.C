@@ -785,46 +785,21 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
 }
 
 BaseSemantics::SValuePtr
-Partitioner::basicBlockStackDeltaIn(const BasicBlock::Ptr &bb) const {
+Partitioner::basicBlockStackDeltaIn(const BasicBlock::Ptr &bb, const Function::Ptr &function) const {
     ASSERT_not_null(bb);
+    ASSERT_not_null(function);
 
-    if (BaseSemantics::SValuePtr delta = bb->stackDeltaIn())
-        return delta;                                   // already cached
-
-    // The basic block must be owned by a function, and we use that function's entry point to generate a CFG, which is then
-    // used as the basis of a dataflow analysis to compute the final stack offset.
-    ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bb->address());
-    if (!bb->isFrozen() || placeholder == cfg_.vertices().end()) {
-        mlog[ERROR] <<"cannot compute stack delta for detached " <<bb->printableName() <<"\n";
-        return BaseSemantics::SValuePtr();
-    }
-    ASSERT_require(placeholder->value().type() == V_BASIC_BLOCK);
-    ASSERT_require(placeholder->value().bblock() == bb);
-
-    // Basic block stack deltas are computed as a side effect of computing function stack deltas.  If the basic block is owned
-    // by multiple functions then analyze each function in turn until one of them is able to assign a block stack delta.
-    std::vector<Function::Ptr> owningFunctions = functionsOwningBasicBlock(bb);
-    if (owningFunctions.empty()) {
-        mlog[ERROR] <<"cannot compute stack delta for " <<bb->printableName() <<" not belonging to any function\n";
-        return BaseSemantics::SValuePtr();
-    }
-    BOOST_FOREACH (const Function::Ptr &function, owningFunctions) {
-        functionStackDelta(function);
-        if (bb->stackDeltaIn())
-            break;
-    }
-
-    return bb->stackDeltaIn();
+    (void) functionStackDelta(function);
+    return function->stackDeltaAnalysis().basicBlockInputStackDeltaWrtFunction(bb->address());
 }
 
 BaseSemantics::SValuePtr
-Partitioner::basicBlockStackDeltaOut(const BasicBlock::Ptr &bb) const {
+Partitioner::basicBlockStackDeltaOut(const BasicBlock::Ptr &bb, const Function::Ptr &function) const {
     ASSERT_not_null(bb);
+    ASSERT_not_null(function);
 
-    if (BaseSemantics::SValuePtr delta = bb->stackDeltaOut())
-        return delta;                                   // already cached
-    basicBlockStackDeltaIn(bb);                         // caches stackDeltaOut by side effect
-    return bb->stackDeltaOut();
+    (void) functionStackDelta(function);
+    return function->stackDeltaAnalysis().basicBlockOutputStackDeltaWrtFunction(bb->address());
 }
 
 ControlFlowGraph::ConstVertexIterator
@@ -1442,11 +1417,30 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
     std::sort(sortedVertices.begin(), sortedVertices.end(), sortVerticesByAddress);
     BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, sortedVertices) {
         out <<prefix <<"basic block " <<vertexName(*vertex) <<"\n";
+
+        // Function ownership
         BOOST_FOREACH (const Function::Ptr &function, vertex->value().owningFunctions().values()) {
             if (function->address() == vertex->value().address()) {
                 out <<prefix <<"  entry block for " <<functionName(function) <<"\n";
             } else {
                 out <<prefix <<"  owned by " <<functionName(function) <<"\n";
+            }
+        }
+
+        // Function properties
+        if (Function::Ptr function = vertex->value().isEntryBlock()) {
+            if (computeProperties) {
+                out <<"    " <<function->printableName() <<" stack delta: ";
+                if (BaseSemantics::SValuePtr delta = functionStackDelta(function)) {
+                    if (delta->is_number() && delta->get_width()<=64) {
+                        int64_t n = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
+                        out <<n <<"\n";
+                    } else {
+                        out <<*delta <<"\n";
+                    }
+                } else {
+                    out <<"not computed\n";
+                }
             }
         }
 
@@ -1466,18 +1460,20 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
 
         // Pre-block properties
         if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-            out <<prefix <<"  incoming stack delta: ";
-            if (computeProperties)
-                basicBlockStackDeltaIn(bb);
-            if (BaseSemantics::SValuePtr delta = bb->stackDeltaIn()) {
-                if (delta->is_number() && delta->get_width()<=64) {
-                    int64_t n = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
-                    out <<n <<"\n";
-                } else {
-                    out <<*delta <<"\n";
+            if (computeProperties) {
+                BOOST_FOREACH (const Function::Ptr &function, vertex->value().owningFunctions().values()) {
+                    out <<"    incoming stack delta w.r.t. " <<function->printableName() <<": ";
+                    if (BaseSemantics::SValuePtr delta = basicBlockStackDeltaIn(bb, function)) {
+                        if (delta->is_number() && delta->get_width()<=64) {
+                            int64_t n = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
+                            out <<n <<"\n";
+                        } else {
+                            out <<*delta <<"\n";
+                        }
+                    } else {
+                        out <<"not computed\n";
+                    }
                 }
-            } else {
-                out <<"not computed\n";
             }
         }
         
@@ -1516,19 +1512,22 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
             } else {
                 out <<"not computed\n";
             }
-            
-            out <<prefix <<"  outgoing stack delta: ";
-            if (computeProperties)
-                basicBlockStackDeltaOut(bb);
-            if (BaseSemantics::SValuePtr delta = bb->stackDeltaOut()) {
-                if (delta->is_number() && delta->get_width()<=64) {
-                    int64_t n = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
-                    out <<n <<"\n";
-                } else {
-                    out <<*delta <<"\n";
+
+            // Outgoing stack delta w.r.t. owning functions
+            if (computeProperties) {
+                BOOST_FOREACH (const Function::Ptr &function, vertex->value().owningFunctions().values()) {
+                    out <<"    outgoing stack delta w.r.t. " <<function->printableName() <<": ";
+                    if (BaseSemantics::SValuePtr delta = basicBlockStackDeltaOut(bb, function)) {
+                        if (delta->is_number() && delta->get_width()<=64) {
+                            int64_t n = IntegerOps::signExtend2<uint64_t>(delta->get_number(), delta->get_width(), 64);
+                            out <<n <<"\n";
+                        } else {
+                            out <<*delta <<"\n";
+                        }
+                    } else {
+                        out <<"not computed\n";
+                    }
                 }
-            } else {
-                out <<"not computed\n";
             }
 
             // may-return?

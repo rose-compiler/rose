@@ -1077,19 +1077,21 @@ public:
      *      simplifications that are built into ROSE fail to simplify a constant expression.
      *
      *  Two stack deltas are computed for each basic block: the stack delta at the start of the block and the start delta at
-     *  the end of the block, returned by the "in" and "out" variants of this method, respectively.
+     *  the end of the block, returned by the "in" and "out" variants of this method, respectively. Since basic blocks can be
+     *  shared among multiple functions and have a different delta in each, a function context must be provided as an
+     *  argument.
      *
-     *  Since stack deltas use the control flow graph during the analysis, the specified basic block must be attached to the
-     *  CFG/AUM before calling this method. Also, since predefined stack deltas are based on function names, function calls
-     *  must be to basic blocks that are attached to a function. Note that currently (Dec 2014) PE thunks transfering to a
-     *  non-linked dynamic function are given names by @ref ModulesPe::nameImportThunks, which runs after all basic blocks and
-     *  functions have been discovered and attached to the CFG/AUM.
+     *  Since stack deltas use the control flow graph during the analysis, the specified basic block and function must be
+     *  attached to the CFG/AUM before calling this method. Also, since predefined stack deltas are based on function names,
+     *  function calls must be to basic blocks that are attached to a function. Note that currently (Dec 2014) PE thunks
+     *  transfering to a non-linked dynamic function are given names by @ref ModulesPe::nameImportThunks, which runs after all
+     *  basic blocks and functions have been discovered and attached to the CFG/AUM.
      *
      *  @sa functionStackDelta and @ref allFunctionStackDelta
      *
      * @{ */
-    BaseSemantics::SValuePtr basicBlockStackDeltaIn(const BasicBlock::Ptr&) const /*final*/;
-    BaseSemantics::SValuePtr basicBlockStackDeltaOut(const BasicBlock::Ptr&) const /*final*/;
+    BaseSemantics::SValuePtr basicBlockStackDeltaIn(const BasicBlock::Ptr&, const Function::Ptr &function) const /*final*/;
+    BaseSemantics::SValuePtr basicBlockStackDeltaOut(const BasicBlock::Ptr&, const Function::Ptr &function) const /*final*/;
     /** @} */
 
     /** Clears all cached stack deltas.
