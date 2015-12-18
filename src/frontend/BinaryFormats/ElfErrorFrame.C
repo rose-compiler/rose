@@ -463,9 +463,15 @@ SgAsmElfEHFrameSection::parse()
                 }
 
                 /* Call frame instructions */
-                rose_addr_t cf_insn_size = (length_field_size + record_size) - (at - record_offset);
-                fde->get_instructions() = read_content_local_ucl(at, cf_insn_size);
-                ROSE_ASSERT(fde->get_instructions().size()==cf_insn_size);
+                if (length_field_size + record_size < at - record_offset) {
+                    mlog[ERROR] <<"ELF CIE " <<StringUtility::addrToString(get_offset()+cie_offset)
+                                <<", FED " <<StringUtility::addrToString(get_offset()+record_offset)
+                                <<": invalid call frame instructions size (skipping)\n";
+                } else {
+                    rose_addr_t cf_insn_size = (length_field_size + record_size) - (at - record_offset);
+                    fde->get_instructions() = read_content_local_ucl(at, cf_insn_size);
+                    ROSE_ASSERT(fde->get_instructions().size()==cf_insn_size);
+                }
             }
         }
 
