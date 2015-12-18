@@ -663,6 +663,12 @@ SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::ma
   //! Dumps a located node's preprocessing information.
   void dumpPreprocInfo (SgLocatedNode* locatedNode);
 
+//! Insert  #include "filename" or #include <filename> (system header) onto the global scope of a source file, add to be the last #include .. by default among existing headers, Or as the first header. Recommended for use.
+PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader, bool asLastHeader);
+
+//! Insert a new header right before stmt,  if there are existing headers attached to stmt, insert it as the last or first header as specified by asLastHeader
+void insertHeader (SgStatement* stmt, PreprocessingInfo* newheader, bool asLastHeader);
+
 //! Insert  #include "filename" or #include <filename> (system header) onto the global scope of a source file
 PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader = false, PreprocessingInfo::RelativePositionType position = PreprocessingInfo::before);
 
@@ -1938,8 +1944,19 @@ ROSE_DLL_API void removeConsecutiveLabels(SgNode* top);
  *  e.g.  int i;  i=10;  becomes int i=10;  the original i=10 will be deleted after the merge
  *  if success, return true, otherwise return false (e.g. variable declaration does not match or already has an initializer)
  *  The original assignment stmt will be removed by default
+ *  This function is a bit ambiguous about the merge direction, to be phased out.
  */
 ROSE_DLL_API bool mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt = true);
+
+
+//! Merge an assignment into its upstream declaration statement. Callers should make sure the merge is semantically correct.
+ROSE_DLL_API bool mergeAssignmentWithDeclaration (SgExprStatement* assign_stmt, SgVariableDeclaration* decl, bool removeAssignStmt = true);
+
+//! Merge a declaration statement into a matching followed variable assignment. Callers should make sure the merge is semantically correct (by not introducing compilation errors). This function simply does the merge transformation, without eligibility check.
+/*! 
+ *  e.g.  int i;  i=10;  becomes int i=10;  the original int i; will be deleted after the merge
+ */
+ROSE_DLL_API bool mergeDeclarationWithAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt);
 
 //! Split a variable declaration with an rhs assignment into two statements: a declaration and an assignment. 
 /*! Return the generated assignment statement, if any
