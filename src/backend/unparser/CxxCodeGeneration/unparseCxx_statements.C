@@ -9926,10 +9926,15 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
      info.display("denormalize template string for decltype");
 #endif
      SgSourceFile* sourcefile = info.get_current_source_file();
-     ROSE_ASSERT(sourcefile != NULL);
+  // ROSE_ASSERT(sourcefile != NULL);
+     if (sourcefile == NULL)
+        {
+          printf ("NOTE: source file not available in SgUnparse_Info in unparseTemplateDeclarationStatment_support(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+        }
 
   // We only do this denormalization if we are not using C++11 or later version of C++.
-     if (sourcefile->get_Cxx11_only() == false)
+  // if (sourcefile->get_Cxx11_only() == false)
+     if (sourcefile != NULL && sourcefile->get_Cxx11_only() == false)
         {
           ROSE_ASSERT(sourcefile->get_Cxx14_only() == false);
 #if 0
