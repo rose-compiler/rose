@@ -284,6 +284,13 @@ public:
         init();
     }
 
+    /** Construct engine with settings. */
+    explicit Engine(const Settings &settings)
+        : settings_(settings),
+          interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this)) {
+        init();
+    }
+
     virtual ~Engine() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -936,8 +943,8 @@ public:
      *  member function to query or adjust the setting directly.
      *
      * @{ */
-    const Settings& settings() const /*final*/;
-    Settings& settings() /*final*/;
+    const Settings& settings() const /*final*/ { return settings_; }
+    Settings& settings() /*final*/ { return settings_; }
     /** @} */
 
     /** Property: interpretation
