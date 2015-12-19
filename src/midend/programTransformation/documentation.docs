@@ -1,6 +1,6 @@
 /*!
 \defgroup ROSE_ProgramTransformationGroup ROSE Program Transformations
-\ingroup ROSE_MidEndGroup
+\ingroup rose_midend
 
 \brief This is the location of numerous program transformation that operate on the
     AST and may be called within the mid-end.
