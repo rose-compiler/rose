@@ -338,10 +338,7 @@ NEW_TESTCODES = \
    test2015_123.C \
    test2015_124.C \
    test2015_125.C \
-   test2015_126.C \
-   test2015_127.C \
    test2015_128.C \
-   test2015_129.C \
    test2015_130.C \
    test2015_131.C \
    test2015_132.C \
@@ -397,6 +394,15 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_187_work_around.C \
    test2014_211.C \
    test2015_55.C
+endif
+
+# DQ (12/19/2015): I think these test codes use language builtin functions not present with the same signature in
+# older GNU versions (e.g. "__builtin_isgreater()") and types not present in older GNU versions (e.g. "__int128")
+if ROSE_USING_GCC_VERSION_LATER_4_8
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2015_126.C \
+   test2015_127.C \
+   test2015_129.C 
 endif
 
 # DQ (5/28/2015): Removed this file because it is used by the makefile rule: 
