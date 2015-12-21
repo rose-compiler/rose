@@ -45,9 +45,8 @@ metricName(EditDistanceMetric m) {
 
 struct Settings {
     EditDistanceMetric metric;
-    size_t nThreads;
     bool listPairings;
-    Settings(): metric(METRIC_INSN), nThreads(sysconf(_SC_NPROCESSORS_ONLN)), listPairings(true) {}
+    Settings(): metric(METRIC_INSN), listPairings(true) {}
 };
 
 // Parse command-line and apply to settings.
@@ -64,12 +63,14 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
          "found using the Kuhn-Munkres algorithm.  The answer is output as a list of function correlations and their "
          "distance from each other.  The specimens need not have the same number of functions, in which case one of "
          "the specimens will have null functions inserted to make them the same size.  The distance between a null "
-         "function and some other function is always zero regardless of metric.";
+         "function and some other function is always zero regardless of metric.\n\n"
+
+        "The specimens can be specified as two files or resources, or multiple files and/or resources per specimen. When "
+        "more than two arguments are specified, a \"--\" must separate the files and resources of the first secimen from "
+        "those of the second.";
 
     Parser parser = engine.commandLineParser(purpose, description);
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] [--] @v{specimen1} @v{specimen2}");
-    parser.doc("Limitations",
-               "Note: only two specimen names can be supplied: one for the first specimen and one for the second.");
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen1} [--] @v{specimen2}");
 
     SwitchGroup tool("Switches for this tool");
 
@@ -103,15 +104,6 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                      
                      "The default metric is \"" + metricName(settings.metric) + "\"."));
 
-    tool.insert(Switch("threads")
-                .argument("n", nonNegativeIntegerParser(settings.nThreads))
-                .doc("Number of threads to use when initializing the distance matrx.  The distance matrix is a "
-                     "square matrix that is initialized with the distance between any two functions, one from each "
-                     "specimen. The matrix is padded with extra rows or columns if necessary to make it square.  Initializing "
-                     "this matrix is the dominant cost for this program, and therefore multiple threads are used. The default "
-                     "is to use as many threads as there are processor cores on this system (i.e., " +
-                     StringUtility::numberToString(settings.nThreads) + ")."));
-
     tool.insert(Switch("list")
                 .intrinsicValue(true, settings.listPairings)
                 .doc("Produce a listing that indicates how functions in the first specimen map into functions into the "
@@ -124,7 +116,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                 .hidden(true));
 
 
-    return parser.with(tool).parse(argc, argv).apply().unreachedArgs();
+    return parser.expandIncludedFiles(parser.with(tool).parse(argc, argv).apply().unreachedArgs());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -400,13 +392,10 @@ munkresCost(const dlib::matrix<double> &src, T scale, dlib::matrix<T> &dst /*out
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static std::vector<SgAsmFunction*>
-loadFunctions(const std::string &fileName, P2::Engine &engine) {
-    // Reset engine
-    engine.disassembler(NULL);
-    engine.interpretation(NULL);
-    engine.memoryMap().clear();
+loadFunctions(const std::vector<std::string> &specimen, P2::Engine &engine) {
+    engine.reset();                                            // clear all but config properties
     engine.doingPostAnalysis(false);                           // not needed for this tool
-    SgAsmBlock *gblock = engine.buildAst(fileName);            // parse, load, link, disassemble, partition, build AST
+    SgAsmBlock *gblock = engine.buildAst(specimen);            // parse, load, link, disassemble, partition, build AST
     return SageInterface::querySubTree<SgAsmFunction>(gblock); // return just the functions
 }
 
@@ -429,12 +418,32 @@ main(int argc, char *argv[]) {
     // Parse command-line
     P2::Engine engine;
     Settings settings;
+    CommandlineProcessing::genericSwitchArgs.threads = 0; // we want multi-threading by default
     std::vector<std::string> positionalArgs = parseCommandLine(argc, argv, engine, settings);
-    ASSERT_always_require2(positionalArgs.size()==2, "see --help");
+    size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
+    if (0 == nThreads)
+        nThreads = boost::thread::hardware_concurrency();
     
     // Parse the ELF/PE containers for the two specimens
-    std::vector<SgAsmFunction*> functions1 = loadFunctions(positionalArgs[0], engine);
-    std::vector<SgAsmFunction*> functions2 = loadFunctions(positionalArgs[1], engine);
+    std::vector<std::string> specimen1, specimen2;
+    if (positionalArgs.size() == 2) {
+        specimen1.push_back(positionalArgs[0]);
+        specimen2.push_back(positionalArgs[1]);
+    } else {
+        size_t i=0;
+        for (/*void*/; i<positionalArgs.size() && positionalArgs[i]!="--"; ++i)
+            specimen1.push_back(positionalArgs[i]);
+        if (positionalArgs[i] == "--")
+            ++i;
+        for (/*void*/; i<positionalArgs.size() && positionalArgs[i]!="--"; ++i)
+            specimen2.push_back(positionalArgs[i]);
+        if (specimen1.empty() || specimen2.empty() || i<positionalArgs.size()) {
+            mlog[FATAL] <<"incorrect usage; see --help\n";
+            exit(1);
+        }
+    }
+    std::vector<SgAsmFunction*> functions1 = loadFunctions(specimen1, engine);
+    std::vector<SgAsmFunction*> functions2 = loadFunctions(specimen2, engine);
     info <<"specimen1 has " <<plural(functions1.size(), "functions") <<" containing " <<treeSize(functions1) <<" AST nodes.\n";
     info <<"specimen2 has " <<plural(functions2.size(), "functions")<<" containing " <<treeSize(functions2) <<" AST nodes.\n";
     if (functions1.empty() || functions2.empty())
@@ -444,7 +453,7 @@ main(int argc, char *argv[]) {
     Sawyer::Stopwatch matrixInitTime;
     size_t matrixSize = std::max(functions1.size(), functions2.size());
     info <<"distance matrix has " <<plural(matrixSize*matrixSize, "elements") <<"\n";
-    info <<"initializing \""+metricName(settings.metric)+"\" distance matrix with " <<plural(settings.nThreads, "threads");
+    info <<"initializing \""+metricName(settings.metric)+"\" distance matrix with " <<plural(nThreads, "threads");
     dlib::matrix<double> distance(matrixSize, matrixSize);
     switch (settings.metric) {
         case METRIC_TREE: {
@@ -452,27 +461,27 @@ main(int argc, char *argv[]) {
             SubstitutionPredicate canSubst;
             metric.substitutionCost(0);
             metric.substitutionPredicate(&canSubst);
-            initializeMatrix(distance /*out*/, metric, settings.nThreads, functions1, functions2);
+            initializeMatrix(distance /*out*/, metric, nThreads, functions1, functions2);
             break;
         }
         case METRIC_LINEAR: {
             EditDistance::LinearEditDistance::Analysis<> metric;
-            initializeMatrix(distance /*out*/, metric, settings.nThreads, functions1, functions2);
+            initializeMatrix(distance /*out*/, metric, nThreads, functions1, functions2);
             break;
         }
         case METRIC_INSN: {
             InsnEditDistance metric;
-            initializeMatrix(distance /*out*/, metric, settings.nThreads, functions1, functions2);
+            initializeMatrix(distance /*out*/, metric, nThreads, functions1, functions2);
             break;
         }
         case METRIC_SIZE: {
             SizeDistance metric;
-            initializeMatrix(distance /*out*/, metric, settings.nThreads, functions1, functions2);
+            initializeMatrix(distance /*out*/, metric, nThreads, functions1, functions2);
             break;
         }
         case METRIC_SIZE_ADDR: {
             SizeAddrDistance metric(functions1, functions2);
-            initializeMatrix(distance /*out*/, metric, settings.nThreads, functions1, functions2);
+            initializeMatrix(distance /*out*/, metric, nThreads, functions1, functions2);
             break;
         }
     }
@@ -528,7 +537,7 @@ main(int argc, char *argv[]) {
         results.print(std::cout);
     if (nClashes>0) {
         mlog[WARN] <<nClashes <<" of " <<StringUtility::plural(assignments.size(), "parings")
-                   <<" (" <<(100.0*nClashes/assignments.size()) <<" percent) "
-                   <<(1==nClashes?" was":" where") <<" between functions with different names\n";
+                   <<" (" <<(100.0*nClashes/assignments.size()) <<" percent)"
+                   <<(1==nClashes?" was":" were") <<" between functions with different names\n";
     }
 }
