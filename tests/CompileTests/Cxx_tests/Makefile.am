@@ -343,9 +343,7 @@ NEW_TESTCODES = \
    test2015_131.C \
    test2015_132.C \
    test2015_133.C \
-   test2015_134.C \
-   test2015_135.C \
-   test2015_136.C 
+   test2015_134.C 
 
 # DQ (11/28/2015): I think maybe this only works with the Intel compiler.
 ICPC_SPECIFIC_TESTCODES = \
@@ -403,6 +401,14 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_126.C \
    test2015_127.C \
    test2015_129.C 
+endif
+
+# DQ (12/20/2015): I think these test codes use language builtin functions not present with the same signature in
+# older GNU versions (e.g. "__decltype()").
+if ROSE_USING_GCC_VERSION_LATER_4_4
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2015_135.C \
+   test2015_136.C
 endif
 
 # DQ (5/28/2015): Removed this file because it is used by the makefile rule: 

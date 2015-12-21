@@ -8739,7 +8739,7 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                                     // if (templateParameterOrArgumentLocal->get_initializedName()->get_name().str() != templateParameterOrArgumentFromSymbol->get_initializedName()->get_name().str())
                                                        if (str1 != str2)
                                                           {
-#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS || 1
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS || 0
                                                             printf ("-----    --- --- These are NOT the same initializedName values and should have resolved to be the same pointer value if there were the same initializedName! (really?) \n");
                                                             printf ("WARNING: initializedName associated with same different initializedName was not checked... (might be different initializedName with the same name and type) \n");
                                                             printf ("templateParameterOrArgumentLocal->get_initializedName() = %s templateParameterOrArgumentFromSymbol->get_initializedName() = %s \n",str1.c_str(),str2.c_str());
@@ -8832,7 +8832,7 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                                else
                                                 {
                                                // Different pointer values mean different expressions (I hope this is always true).
-#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS || 1
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS || 0
                                                   printf ("-----    --- --- These are NOT the same template declaration values and should have resolved to be the same pointer value if there were the same template template declaration argument value \n");
 #endif
                                                 }
@@ -8871,7 +8871,7 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                                 }
                                                else
                                                 {
-#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS || 1
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS || 0
                                                   printf ("----- T::is_matching_kind() == false: \n");
 #endif
                                                 }
