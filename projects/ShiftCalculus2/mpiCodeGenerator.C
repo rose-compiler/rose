@@ -435,8 +435,8 @@ namespace MPI_Code_Generator
   void setupMPIInit(SgSourceFile* cur_file)
   {
     //#include "mpi.h" 
-    SageInterface::insertHeader (cur_file, "libxomp_mpi.h", false);
-    SageInterface::insertHeader (cur_file, "mpi.h", false);
+    SageInterface::insertHeader (cur_file, "mpi.h", false,true);
+    SageInterface::insertHeader (cur_file, "libxomp_mpi.h", false, true);
     SgFunctionDeclaration* main_decl = findMain(cur_file);
    // TODO: handle multiple files, some of them don't have main()
     ROSE_ASSERT (main_decl != NULL);
