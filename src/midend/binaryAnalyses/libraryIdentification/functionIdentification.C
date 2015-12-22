@@ -24,7 +24,6 @@
 // If no SSL support is available, then save the opcode vector into the database
 // (by skipping the generation of an MD5 checksum of the vector).
 #if ( (USE_ROSE_SSL_SUPPORT == 0) && (USE_MD5_AS_HASH != 0) )
-   #warning "SSL is unavailable so resetting USE_MD5_AS_HASH to false..."
    #undef USE_MD5_AS_HASH
    #define USE_MD5_AS_HASH 0
 #endif

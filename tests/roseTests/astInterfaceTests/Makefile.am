@@ -191,6 +191,7 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_24.C \
   inputmoveDeclarationToInnermostScope_25.C \
   inputmoveDeclarationToInnermostScope_26.C \
+  inputmoveDeclarationToInnermostScope_27.C \
   inputmoveDeclarationToInnermostScope_test2015_126.C \
   inputmoveDeclarationToInnermostScope_test2015_127.C 
 
@@ -415,7 +416,18 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_154.C \
   inputmoveDeclarationToInnermostScope_test2015_155.C \
   inputmoveDeclarationToInnermostScope_test2015_156.C \
-  inputmoveDeclarationToInnermostScope_test2015_157.C 
+  inputmoveDeclarationToInnermostScope_test2015_157.C \
+  inputmoveDeclarationToInnermostScope_test2015_158.C \
+  inputmoveDeclarationToInnermostScope_test2015_159.C \
+  inputmoveDeclarationToInnermostScope_test2015_160.C \
+  inputmoveDeclarationToInnermostScope_test2015_161.C \
+  inputmoveDeclarationToInnermostScope_test2015_162.C \
+  inputmoveDeclarationToInnermostScope_test2015_163.C \
+  inputmoveDeclarationToInnermostScope_test2015_164.C \
+  inputmoveDeclarationToInnermostScope_test2015_165.C \
+  inputmoveDeclarationToInnermostScope_test2015_166.C \
+  inputmoveDeclarationToInnermostScope_test2015_167.C \
+  inputmoveDeclarationToInnermostScope_test2015_168.C 
 
 # DQ (11/13/2015): Note that inputmoveDeclarationToInnermostScope_test2015_141.C 
 # and inputmoveDeclarationToInnermostScope_test2015_133.C only fail when using 
@@ -954,9 +966,15 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputmoveDeclarationToInnermostScope_test2015_22.h \
        inputmoveDeclarationToInnermostScope_test2015_40.h \
        inputmoveDeclarationToInnermostScope_test2015_142.h \
+       inputmoveDeclarationToInnermostScope_19.C \
+       inputmoveDeclarationToInnermostScope_20.C \
+       inputmoveDeclarationToInnermostScope_21.C \
+       inputmoveDeclarationToInnermostScope_22.C \
+       inputmoveDeclarationToInnermostScope_23.C \
        inputmoveDeclarationToInnermostScope_24.C \
        inputmoveDeclarationToInnermostScope_25.C \
        inputmoveDeclarationToInnermostScope_26.C \
+       inputmoveDeclarationToInnermostScope_27.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_15.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_16.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_17.C \
@@ -968,6 +986,8 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        referenceResults/rose_inputmoveDeclarationToInnermostScope_23.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_24.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_25.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_26.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_27.C \
        referenceResults/withmerge/rose_v2_inputmoveDeclarationToInnermostScope_22.C
 
 
@@ -991,3 +1011,4 @@ clean-local:
 	rm -f $(addsuffix .passed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
 	rm -f $(addsuffix .failed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
 	rm -f $(addsuffix .diff, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
+	rm -rf rose_*.C

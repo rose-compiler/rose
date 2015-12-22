@@ -88,49 +88,49 @@ include $(top_srcdir)/config/QMTest_makefile.inc
 	$(MAKE) testGraphGeneration -C $(top_builddir)/tests
 
 # This tests the long ROSE command line of ROSE compiling ROSE (the file is empty).
-test0: $(srcdir)/testRoseHeaders_00.C ../../testGraphGeneration
-	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_00.C
+test0: $(srcdir)/testRoseHeaders_00.C $(TEST_TRANSLATOR)
+	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_00.C
 
 # This tests compiling: sage3basic.h (note that the command line generated for the backend compile step is currupted.
-test1: $(srcdir)/testRoseHeaders_01.C ../../testGraphGeneration
-	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_01.C
+test1: $(srcdir)/testRoseHeaders_01.C $(TEST_TRANSLATOR)
+	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_01.C
 
 # This tests compiling: sage3basic.h and sage3.h
-test2: $(srcdir)/testRoseHeaders_02.C ../../testGraphGeneration
-	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_02.C
+test2: $(srcdir)/testRoseHeaders_02.C $(TEST_TRANSLATOR)
+	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_02.C
 
 # This tests compiling: rose.h
-test3: $(srcdir)/testRoseHeaders_03.C ../../testGraphGeneration
-	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
+test3: $(srcdir)/testRoseHeaders_03.C $(TEST_TRANSLATOR)
+	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
 
 # This tests compiling: rose.h
-test3_debug: $(srcdir)/testRoseHeaders_03.C ../../testGraphGeneration
-	libtool gdb --args ../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
+test3_debug: $(srcdir)/testRoseHeaders_03.C $(TEST_TRANSLATOR)
+	libtool gdb --args ../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
 
 # Same compilation but with optimization (which only effects the g++ compilation performance)
-test3_O2: $(srcdir)/testRoseHeaders_03.C ../../testGraphGeneration
-	../../testGraphGeneration $(ROSE_FLAGS) -O2 -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
+test3_O2: $(srcdir)/testRoseHeaders_03.C $(TEST_TRANSLATOR)
+	../../testTranslator $(ROSE_FLAGS) -O2 -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
 
 # Same compilation but with optimization (which only effects the g++ compilation performance)
-test3_O3: $(srcdir)/testRoseHeaders_03.C ../../testGraphGeneration
-	../../testGraphGeneration $(ROSE_FLAGS) -O3 -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
+test3_O3: $(srcdir)/testRoseHeaders_03.C $(TEST_TRANSLATOR)
+	../../testTranslator $(ROSE_FLAGS) -O3 -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C
 
 # This tests compiling: Cxx_Grammar.C: fails "ROSE_ASSERT (kind == iek_statement);" in edgRose.C:20798
-test4: $(srcdir)/testRoseHeaders_04.C ../../testGraphGeneration
-	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_04.C
+test4: $(srcdir)/testRoseHeaders_04.C $(TEST_TRANSLATOR)
+	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_04.C
 
-test5: $(srcdir)/testRoseHeaders_05.C ../../testGraphGeneration
-	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_05.C
+test5: $(srcdir)/testRoseHeaders_05.C $(TEST_TRANSLATOR)
+	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_05.C
 
-test6: $(srcdir)/testRoseHeaders_06.C ../../testGraphGeneration
-	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_06.C
+test6: $(srcdir)/testRoseHeaders_06.C $(TEST_TRANSLATOR)
+	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_06.C
 
-test7: $(srcdir)/testRoseHeaders_07.C ../../testGraphGeneration
-	../../testGraphGeneration $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_07.C
+test7: $(srcdir)/testRoseHeaders_07.C $(TEST_TRANSLATOR)
+	../../testTranslator $(ROSE_FLAGS) -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_07.C
 
-test8: $(srcdir)/testRoseHeaders_08.C ../../testGraphGeneration
+test8: $(srcdir)/testRoseHeaders_08.C $(TEST_TRANSLATOR)
 #	../../testGraphGeneration -rose:verbose 2 -isystem /nfs/casc/overture/ROSE/opt/rhel5/x86_64/boost/1_45_0/gcc/4.4.5/include -c $(srcdir)/testRoseHeaders_08.C
-	../../testGraphGeneration -rose:verbose 2 $(ROSE_BOOST_PREINCLUDE_PATH) -c $(srcdir)/testRoseHeaders_08.C
+	../../testTranslator -rose:verbose 2 $(ROSE_BOOST_PREINCLUDE_PATH) -c $(srcdir)/testRoseHeaders_08.C
 
 buildCompiledFile_3:
 	g++ -E -DUSE_ROSE -D_GLIBCXX__PTHREADS=1 -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/testRoseHeaders_03.C > $(srcdir)/testRoseHeaders_03_combined.C
