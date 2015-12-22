@@ -67,6 +67,26 @@ static bool isMPIAllBegin(SgOmpTargetStatement * stmt)
 
   return rt;   
 }
+//
+// #pragma omp target  device("mpi:master") begin
+static bool isMPIMasterBegin(SgOmpTargetStatement * stmt)
+{
+  bool rt = false; 
+  ROSE_ASSERT (stmt != NULL);
+
+  if ((hasClause (stmt, V_SgOmpDeviceClause)) && (hasClause(stmt, V_SgOmpBeginClause)))
+  {
+    SgExpression* device_expression ;
+    device_expression = getClauseExpression (stmt, VariantVector(V_SgOmpDeviceClause)); 
+    if (SgStringVal* sv = isSgStringVal(device_expression))
+    {
+      if (sv->get_value() =="mpi:master")
+        rt = true; 
+    }
+  }
+  return rt;   
+}
+
 
 // ! Strip off a basic block, move its internal statements to be after the anchorStmt, then remove the source basic block
 // This is the reverse operation of 
@@ -84,7 +104,7 @@ static void stripOffBasicBlock (SgBasicBlock * bb, SgStatement* anchorStmt)
   {
     SgStatement* stmt = (*iter); 
     removeStatement (stmt);
-    insertStatementAfter (anchorStmt, stmt, false);
+    insertStatementBefore(anchorStmt, stmt, false);
   }
   // Now remove the empty source BB
   removeStatement(bb);
@@ -153,12 +173,12 @@ void MPI_Code_Generator::lower_xomp (SgSourceFile* file)
         {
           SgOmpTargetStatement* t_stmt = isSgOmpTargetStatement(node);
           ROSE_ASSERT (t_stmt != NULL);
+          SgStatement* body_stmt = t_stmt->get_body();
+          SgBasicBlock * body_block = isSgBasicBlock (body_stmt);
 //          transOmpTarget(node);
           if (isMPIAllBegin (t_stmt))
           {
             // move all body statements to be after omp target
-            SgStatement* body_stmt = t_stmt->get_body();
-            SgBasicBlock * body_block = isSgBasicBlock (body_stmt);
             if (body_block != NULL)
             {
               stripOffBasicBlock (body_block, t_stmt);
@@ -169,8 +189,17 @@ void MPI_Code_Generator::lower_xomp (SgSourceFile* file)
               removeStatement (body_stmt);
               insertStatementAfter (t_stmt, body_stmt, false);
             }
-            // remove the pragma stmt
-            removeStatement (isSgStatement(node));
+            // remove the pragma stmt after the translation
+            removeStatement (t_stmt);
+          }
+          else if (isMPIMasterBegin (t_stmt))
+          {
+            transMPIDeviceMaster (t_stmt);
+          }
+          else
+          {
+            cerr<<"Error. Unhandled target directive:" <<t_stmt->unparseToString()<<endl;
+            //ROSE_ASSERT (false);
           }
           break;
         }
@@ -183,7 +212,73 @@ void MPI_Code_Generator::lower_xomp (SgSourceFile* file)
   } // end for 
 
 }
+/*  Assuming 
+ *  #pragma target device (mpi:master) begin
+ *  stmt-list here // it may contain variable declarations
+ *  #pragma target device (mpi:master) end
+ *
+ *
+ *  Essentially wrap the code block in side if (rank ==0) { } 
+ *  To ensure the correctness, all variable declarations will be moved right in front of the if () stmt
+ *  If a variable declaration has assignment initializer, the initializer will be split out and put into the if-stmt's true body
+ * */
+void MPI_Code_Generator::transMPIDeviceMaster (SgOmpTargetStatement * t_stmt)
+{
+  // Sanity check
+  ROSE_ASSERT (t_stmt != NULL);
+  SgStatement* body_stmt = t_stmt->get_body();
+  SgBasicBlock * body_block = isSgBasicBlock (body_stmt);
 
+  SgScopeStatement* scope =  t_stmt->get_scope();
+  ROSE_ASSERT (scope != NULL);
+
+  // normalization should happen before this point to ensure BB for body statements
+  ROSE_ASSERT (body_block!= NULL);
+  ROSE_ASSERT (isMPIMasterBegin (t_stmt));
+
+  //insert a if (rank) .. after the end pragma
+  SgIfStmt * ifstmt = buildIfStmt (buildEqualityOp(buildVarRefExp("_xomp_rank", scope), buildIntVal(0)), buildBasicBlock(), NULL);
+  insertStatementAfter (t_stmt, ifstmt);
+  SgBasicBlock * bb = isSgBasicBlock(ifstmt->get_true_body());  
+
+   SgStatement* next_stmt = (body_block->get_statements())[0];
+
+   // normalize all declarations
+   while ( next_stmt != NULL)
+   {
+     // save current stmt before getting next one 
+     SgStatement* cur_stmt = next_stmt;
+     next_stmt = getNextStatement (next_stmt);
+     //ROSE_ASSERT (next_stmt != NULL);
+     if (SgVariableDeclaration* decl = isSgVariableDeclaration (cur_stmt))
+       splitVariableDeclaration (decl);
+   }
+ 
+   //reset from the beginning 
+   next_stmt = (body_block->get_statements())[0];
+   while ( next_stmt != NULL)
+   {
+     // save current stmt before getting next one 
+     SgStatement* cur_stmt = next_stmt;
+     next_stmt = getNextStatement (next_stmt);
+     //ROSE_ASSERT (next_stmt != NULL);
+
+     if (!isSgVariableDeclaration(cur_stmt))
+     {
+       // now remove the current stmt
+       removeStatement (cur_stmt, false);
+       appendStatement(cur_stmt, bb);
+     }
+     else  // for variable declarations, prepend them to be before t_stmt
+     {
+       removeStatement (cur_stmt, false);
+       insertStatementBefore(t_stmt, cur_stmt, false);
+     }
+   }
+
+  // remove the pragma stmt after the translation
+  removeStatement (t_stmt);
+}
 
 //! Implementation for the MPI code generator, including parsing pragrmas
 //TODO: move to a separated file 

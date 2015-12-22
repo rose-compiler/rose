@@ -1,4 +1,6 @@
 // A version using runtime support
+// Identical to laplacian_mpi_v4_wrt.cpp but with a more intuitive file name
+//
 /******************************************************************/
 /* 09/17/2015 Manually modified by Pei-Hung Lin (lin32@llnl.gov)  */
 /* A manual implementation for the shiftCalculus DSL              */

@@ -26,6 +26,8 @@ namespace MPI_Code_Generator
 
   void lower_xomp (SgSourceFile* file);
 
+  // Translate target device(mpi:master) begin ...
+  void transMPIDeviceMaster (SgOmpTargetStatement * t_stmt);
 
 //--------------- v 0.1 interface, no longer being used.   
   class MPI_PragmaAttribute; 
