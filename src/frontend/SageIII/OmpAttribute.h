@@ -258,6 +258,14 @@ namespace OmpSupport
       // Pretty print for debugging purpose
       void print();
       ~OmpAttributeList();
+
+      // This attribute attempts to manage its own memory by calling "delete" whenever the attribute is removed from an AST
+      // node.  It avoids memory leaks by not allowing OmpAttributeList attributes to be copied (no virtual "copy"
+      // constructor), and it never tries to replace one OmpAttributeList object with another with AstAttributeMechanism's
+      // "set" or "replace" methods or the corresponding methods in SgNode. However, it leaks memory if an AST node is deleted.
+      virtual OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+          return CUSTOM_OWNERSHIP;
+      }
   };                      
 
   // One attribute object stores all information within an OpenMP pragma (directive and clauses)

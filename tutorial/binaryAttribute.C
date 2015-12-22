@@ -548,12 +548,12 @@ method_3() {
 #if 0 // before being re-implemented in terms of Sawyer::Attribute
     // Method 3: Attributes in IR nodes
     if (obj_1->attributeExists(APPROXIMATION_ATTR)) {
-        delete obj_1->getAttribute(APPROXIMATION_ATTR);
         obj_1->removeAttribute(APPROXIMATION_ATTR);
+        delete obj_1->getAttribute(APPROXIMATION_ATTR);
     }
     if (obj_2->attributeExists(ANALYSIS_TIME_ATTR)) {
-        delete obj_2->getAttribute(ANALYSIS_TIME_ATTR);
         obj_2->removeAttribute(ANALYSIS_TIME_ATTR);
+        delete obj_2->getAttribute(ANALYSIS_TIME_ATTR);
     }
 #else // after begin implemented in terms of Sawyer::Attribute
     //! [comparison erase 3]
