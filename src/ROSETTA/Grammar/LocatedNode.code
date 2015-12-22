@@ -631,6 +631,19 @@ HEADER_UNTYPED_REFERENCE_EXPRESSION_START
 HEADER_UNTYPED_REFERENCE_EXPRESSION_END
 
 HEADER_UNTYPED_TYPE_START
+     public:
+          enum type_enum
+             {
+               e_unknown, //! default unspecified type as identified by parser.
+               e_void,    //! void type as identified by parser.
+               e_int,     //! int type as identified by parser.
+               e_float,   //! float type as identified by parser.
+               e_double,  //! double type as identified by parser.
+               e_complex, //! complex type as identified by parser.
+               e_char,    //! character type as identified by parser.
+               e_last,    //! last type 
+             };
+
 HEADER_UNTYPED_TYPE_END
 
 HEADER_UNTYPED_ARRAY_TYPE_START

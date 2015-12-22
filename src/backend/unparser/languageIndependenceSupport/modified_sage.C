@@ -1555,7 +1555,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
           if ( (decl_stmt->get_declarationModifier().isFriend() == true) && (isDeclarationOfTemplateSpecialization == false) )
              {
                ROSE_ASSERT(decl_stmt->get_parent() != NULL);
-#if 1
+#if 0
                printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): decl_stmt->get_parent() = %p = %s \n",decl_stmt->get_parent(),decl_stmt->get_parent()->class_name().c_str());
 #endif
             // DQ (11/28/2015): We need to filter the cases where the function is not output in a class definition.
