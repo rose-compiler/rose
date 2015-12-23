@@ -329,8 +329,6 @@ namespace CodeThorn {
     void setSolver(int solver) { _solver=solver; }
     int getSolver() { return _solver;}
     void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
-    void setLTLVerifier(int v) { _ltlVerifier=v; }
-    int getLTLVerifier() { return _ltlVerifier; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
     void insertInputVarValue(int i) { _inputVarValues.insert(i); }
@@ -441,7 +439,6 @@ namespace CodeThorn {
     set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
     int _displayDiff;
     int _numberOfThreadsToUse;
-    int _ltlVerifier;
     int _semanticFoldThreshold;
     VariableIdMapping::VariableIdSet _variablesToIgnore;
     int _solver;

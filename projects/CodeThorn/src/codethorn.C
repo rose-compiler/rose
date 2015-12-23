@@ -380,7 +380,6 @@ int main( int argc, char * argv[] ) {
     ("version,v", "display the version")
     ("internal-checks", "run internal consistency checks (without input program)")
     ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
-    ("ltl-verifier",po::value< int >(),"specify which ltl-verifier to use [=1|2]")
     ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
     ("debug-mode",po::value< int >(),"set debug mode [arg]")
     ("csv-spot-ltl", po::value< string >(), "output SPOT's LTL verification results into a CSV file [arg]")
@@ -833,10 +832,6 @@ int main( int argc, char * argv[] ) {
     int solver=args["solver"].as<int>();
     analyzer.setSolver(solver);
   }
-  if(args.count("ltl-verifier")) {
-    int ltlVerifier=args["ltl-verifier"].as<int>();
-    analyzer.setLTLVerifier(ltlVerifier);
-  }
   if(args.count("debug-mode")) {
     option_debug_mode=args["debug-mode"].as<int>();
   }
@@ -890,7 +885,6 @@ int main( int argc, char * argv[] ) {
         || string(argv[i]).find("--threads" )==0
         || string(argv[i]).find("--display-diff")==0
         || string(argv[i]).find("--input-values")==0
-        || string(argv[i]).find("--ltl-verifier")==0
         || string(argv[i]).find("--dot-io-stg")==0
         || string(argv[i]).find("--dot-io-stg-forced-top")==0
         || string(argv[i]).find("--verify")==0
