@@ -90,6 +90,9 @@ V1.7 2015-12-xx in preparation
       --ltl-verifier
       --verify
       --debug-mode
+      --report-failed-assert
+      --report-stdout
+      --report-stderr
 
   * bugfixes:
     [in preparation]

@@ -341,7 +341,6 @@ namespace CodeThorn {
     int numberOfInputVarValues() { return _inputVarValues.size(); }
     std::set<int> getInputVarValues() { return _inputVarValues; }
     std::list<std::pair<SgLabelStatement*,SgNode*> > _assertNodes;
-    void setCsvAssertLiveFileName(std::string filename) { _csv_assert_live_file=filename; }
     VariableId globalVarIdByName(std::string varName) { return globalVarName2VarIdMapping[varName]; }
     void setStgTraceFileName(std::string filename) {
       _stg_trace_filename=filename;
@@ -350,7 +349,6 @@ namespace CodeThorn {
       fout<<"START"<<endl;
       fout.close();    // close. Will be used with append.
     }
-    std::string _csv_assert_live_file; // to become private
   private:
     std::string _stg_trace_filename;
  public:

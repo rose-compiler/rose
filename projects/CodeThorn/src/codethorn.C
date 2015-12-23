@@ -381,7 +381,6 @@ int main( int argc, char * argv[] ) {
     ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
     ("csv-spot-ltl", po::value< string >(), "output SPOT's LTL verification results into a CSV file [arg]")
     ("csv-assert", po::value< string >(), "output assert reachability results into a CSV file [arg]")
-    ("csv-assert-live", po::value< string >(), "output assert reachability results during analysis into a CSV file [arg]")
     ("csv-stats",po::value< string >(),"output statistics into a CSV file [arg]")
     ("csv-stats-size-and-ltl",po::value< string >(),"output statistics regarding the final model size and results for LTL properties into a CSV file [arg]")
     ("csv-stats-cegpra",po::value< string >(),"output statistics regarding the counterexample-guided prefix refinement analysis (cegpra) into a CSV file [arg]")
@@ -395,10 +394,6 @@ int main( int argc, char * argv[] ) {
     ("tg2-estate-predicate", po::value< string >(), "transition graph 2: show estate as predicate [=yes|no]")
     ("tg-trace", po::value< string >(), "generate STG computation trace [=filename]")
     ("colors",po::value< string >(),"use colors in output [=yes|no]")
-    ("report-stdout",po::value< string >(),"report stdout estates during analysis [=yes|no]")
-    ("report-stderr",po::value< string >(),"report stderr estates during analysis [=yes|no]")
-    ("report-failed-assert",po::value< string >(),
-     "report failed assert estates during analysis [=yes|no]")
     ("precision-exact-constraints",po::value< string >(),
      "(experimental) use precise constraint extraction [=yes|no]")
     ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
@@ -531,9 +526,6 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("tg2-estate-properties",false);
   boolOptions.registerOption("tg2-estate-predicate",false);
   boolOptions.registerOption("colors",true);
-  boolOptions.registerOption("report-stdout",false);
-  boolOptions.registerOption("report-stderr",false);
-  boolOptions.registerOption("report-failed-assert",false);
   boolOptions.registerOption("precision-exact-constraints",false);
   boolOptions.registerOption("tg-ltl-reduced",false);
   boolOptions.registerOption("semantic-fold",false);
@@ -638,9 +630,6 @@ int main( int argc, char * argv[] ) {
     option_pragma_name = args["limit-to-fragment"].as<string>();
   }
 
-  if(args.count("csv-assert-live")) {
-    analyzer.setCsvAssertLiveFileName(args["csv-assert-live"].as<string>());
-  }
   if(args.count("tg-trace")) {
     analyzer.setStgTraceFileName(args["tg-trace"].as<string>());
   }
@@ -869,7 +858,6 @@ int main( int argc, char * argv[] ) {
         || string(argv[i]).find("--csv-stats")==0
         || string(argv[i]).find("--csv-stats-cegpra")==0
         || string(argv[i]).find("--csv-stats-size-and-ltl")==0
-        || string(argv[i]).find("--csv-assert-live")==0
         || string(argv[i]).find("--threads" )==0
         || string(argv[i]).find("--display-diff")==0
         || string(argv[i]).find("--input-values")==0
