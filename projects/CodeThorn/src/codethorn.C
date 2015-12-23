@@ -406,7 +406,6 @@ int main( int argc, char * argv[] ) {
     ("post-collapse-stg",po::value< string >(),"compute collapsed state transition graph after the complete transition graph has been computed. [=yes|no]")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ("viz-cegpra-detailed",po::value< string >(),"generate visualization (dot) output files with prefix <arg> for different stages within each loop of cegpra.")
-    ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
     ("reduce-cfg",po::value< string >(),"Reduce CFG nodes which are not relevant for the analysis. [=yes|no]")
     ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
@@ -421,7 +420,6 @@ int main( int argc, char * argv[] ) {
     ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
     ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
     ("arith-top",po::value< string >(),"Arithmetic operations +,-,*,/,% always evaluate to top [=yes|no]")
-    ("abstract-interpreter",po::value< string >(),"Run analyzer in abstract interpreter mode. Use [=yes|no]")
     ("rers-binary",po::value< string >(),"Call rers binary functions in analysis. Use [=yes|no]")
     ("print-all-options",po::value< string >(),"print all yes/no command line options.")
     ("eliminate-arrays",po::value< string >(), "transform all arrays into single variables.")
@@ -537,7 +535,6 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("eliminate-arrays",false);
 
   boolOptions.registerOption("viz",false);
-  boolOptions.registerOption("update-input-var",true);
   boolOptions.registerOption("run-rose-tests",false);
   boolOptions.registerOption("reduce-cfg",false);
   boolOptions.registerOption("print-all-options",false);
@@ -552,7 +549,6 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("input-values-as-constraints",false);
 
   boolOptions.registerOption("arith-top",false);
-  boolOptions.registerOption("abstract-interpreter",false);
   boolOptions.registerOption("rers-binary",false);
   boolOptions.registerOption("relop-constraints",false); // not accessible on command line yet
   boolOptions.registerOption("stderr-like-failed-assert",false);

@@ -93,6 +93,8 @@ V1.7 2015-12-xx in preparation
       --report-failed-assert
       --report-stdout
       --report-stderr
+      --abstract-interpreter
+      --update-input-var
 
   * bugfixes:
     [in preparation]

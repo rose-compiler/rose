@@ -1492,21 +1492,9 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           // update state (remove all existing constraint on that variable and set it to top)
           PState newPState=*currentEState.pstate();
           ConstraintSet newCSet=*currentEState.constraints();
-          if(boolOptions["abstract-interpreter"]) {
-            cout<<"CodeThorn-abstract-interpreter(stdin)> ";
-            AValue aval;
-            SPRAY::Parse::whitespaces(cin);
-            cin >> aval;
-            newCSet.removeAllConstraintsOfVar(varId);
-            //newPState[varId]=aval;
-            newPState.setVariableToValue(varId,aval);
-          } else {
-            if(boolOptions["update-input-var"]) {
-              newCSet.removeAllConstraintsOfVar(varId);
-              //newPState[varId]=AType::Top();
-              newPState.setVariableToTop(varId);
-            }
-          }
+	  // update input var
+	  newCSet.removeAllConstraintsOfVar(varId);
+	  newPState.setVariableToTop(varId);
           newio.recordVariable(InputOutput::STDIN_VAR,varId);
           return elistify(createEState(edge.target,newPState,newCSet,newio));
         }
@@ -1516,13 +1504,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
       {
         newio.recordVariable(InputOutput::STDOUT_VAR,varId);
         assert(newio.var==varId);
-      }
-      if(boolOptions["abstract-interpreter"]) {
-        PState* pstate=const_cast<PState*>(estate->pstate());
-        AType::ConstIntLattice aint=(*pstate)[varId].getValue();
-        // TODO: to make this more specific we must parse the printf string
-        cout<<"CodeThorn-abstract-interpreter(stdout)> ";
-        cout<<aint.toString()<<endl;
       }
     }
     {
@@ -1536,13 +1517,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     if(getLabeler()->isStdErrLabel(lab,&varId)) {
       newio.recordVariable(InputOutput::STDERR_VAR,varId);
       ROSE_ASSERT(newio.var==varId);
-      if(boolOptions["abstract-interpreter"]) {
-        PState* pstate=const_cast<PState*>(estate->pstate());
-        AType::ConstIntLattice aint=(*pstate)[varId].getValue();
-        // TODO: to make this more specific we must parse the printf string
-        cerr<<"CodeThorn-abstract-interpreter(stderr)> ";
-        cerr<<aint.toString()<<endl;
-      }
     }
     /* handling of specific semantics for external function */ {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
@@ -2665,12 +2639,6 @@ void Analyzer::runSolver2() {
               const EState* newEStatePtr;
               newEStatePtr=processNewOrExisting(newEState);
               recordTransition(currentEStatePtr,e,newEStatePtr);        
-	      if(boolOptions["abstract-interpreter"]) {
-                cerr<<"CodeThorn-abstract-interpreter> failed assert";
-                string name=labelNameOfAssertLabel(currentEStatePtr->label());
-                if(name!="") { cout << " @ Label: "<<name;}
-                cout <<endl;
-              }
             }
             if(newEState.label()==Labeler::NO_LABEL) {
               //cerr << "INFO: found final state."<<endl;
