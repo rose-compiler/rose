@@ -191,11 +191,6 @@ LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapp
         forNode=forNode->get_parent();
     }
     ROSE_ASSERT(!isSgProject(forNode));
-#if 0
-    cout<<"DEBUG: FOR-ITER-VAR:"<<variableIdMapping->variableName(loopInfo.iterationVarId)<<":";
-    cout<<"TYPE:"<<loopInfo.iterationVarType<<":";
-    cout<<forNode->unparseToString()<<endl<<"---------------------------------"<<endl;
-#endif
     loopInfo.forStmt=isSgForStatement(forNode);
     if(loopInfo.forStmt) {
       const SgStatementPtrList& stmtList=loopInfo.forStmt->get_init_stmt();
@@ -760,13 +755,6 @@ int main( int argc, char * argv[] ) {
   }
   analyzer.setNumberOfThreadsToUse(numberOfThreadsToUse);
 
-  // check threads == 1
-#if 0
-  if(args.count("rers-binary") && numberOfThreadsToUse>1) {
-	cerr<<"Error: binary mode is only supported for 1 thread."<<endl;
-	exit(1);
-  }
-#endif
   if(args.count("semantic-fold-threshold")) {
     int semanticFoldThreshold=args["semantic-fold-threshold"].as<int>();
     analyzer.setSemanticFoldThreshold(semanticFoldThreshold);
@@ -929,52 +917,6 @@ int main( int argc, char * argv[] ) {
   SgNode* root=sageProject;
   ROSE_ASSERT(root);
 
-#if 0
-  SgNodeHelper::PragmaList pragmaList=SgNodeHelper::collectPragmaLines("verify",root);
-  if(size_t numPragmas=pragmaList.size()>0) {
-    cout<<"STATUS: found "<<numPragmas<<" provesa pragmas."<<endl;
-    ROSE_ASSERT(numPragmas==1);
-    SgNodeHelper::PragmaList::iterator i=pragmaList.begin();
-    std::pair<std::string, SgNode*> p=*i;
-    option_specialize_fun_name="kernel_jacobi_2d_imper";
-    option_specialize_fun_param_list.push_back(0);
-    option_specialize_fun_const_list.push_back(2);
-    option_specialize_fun_param_list.push_back(1);
-    option_specialize_fun_const_list.push_back(16);
-    analyzer.setSkipSelectedFunctionCalls(true);
-    analyzer.setSkipArrayAccesses(true);
-    boolOptions.registerOption("verify-update-sequence-race-conditions",true);
-
-    //TODO1: refactor into separate function
-    int numSubst=0;
-    if(option_specialize_fun_name!="") {
-      Specialization speci;
-      cout<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
-
-      string funNameToFind=option_specialize_fun_name;
-      
-      for(size_t i=0;i<option_specialize_fun_param_list.size();i++) {
-        int param=option_specialize_fun_param_list[i];
-        int constInt=option_specialize_fun_const_list[i];
-        numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, analyzer.getVariableIdMapping());
-    }
-      cout<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
-      int numInit=0;
-      //cout<<"DEBUG: var init spec: "<<endl;
-      for(size_t i=0;i<option_specialize_fun_varinit_list.size();i++) {
-      string varInit=option_specialize_fun_varinit_list[i];
-      int varInitConstInt=option_specialize_fun_varinit_const_list[i];
-      //cout<<"DEBUG: checking for varInitName nr "<<i<<" var:"<<varInit<<" Const:"<<varInitConstInt<<endl;
-      numInit+=speci.specializeFunction(sageProject,funNameToFind, -1, 0, varInit, varInitConstInt,analyzer.getVariableIdMapping());
-    }
-      cout<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
-      
-      //root=speci.getSpecializedFunctionRootNode();
-      sageProject->unparse(0,0);
-      //exit(0);
-    }
-  }
-#else
   // only handle pragmas if fun_name is not set on the command line
   if(option_specialize_fun_name=="") {
     cout <<"STATUS: handling pragmas started."<<endl;
@@ -1017,7 +959,6 @@ int main( int argc, char * argv[] ) {
       cout<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
     }
   }
-#endif
 
   if(args.count("rewrite")) {
     cout <<"STATUS: rewrite started."<<endl;
@@ -1514,12 +1455,7 @@ int main( int argc, char * argv[] ) {
     }
     cout<<"STATUS: establishing array-element SSA numbering."<<endl;
     timer.start();
-#if 0
-    attachSsaNumberingtoDefs(arrayUpdates, analyzer.getVariableIdMapping());
-    substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(),SAR_SSA);
-#else
     speci.createSsaNumbering(arrayUpdates, analyzer.getVariableIdMapping());
-#endif
     arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
     
     if(args.count("dump-non-sorted")) {
@@ -1826,20 +1762,6 @@ int main( int argc, char * argv[] ) {
   }
 #endif
 
-#if 0
-  {
-  // check output var to be constant in transition graph
-  TransitionGraph* tg=analyzer.getTransitionGraph();
-  for(TransitionGraph::iterator i=tg->begin();i!=tg->end();++i) {
-    const EState* es1=(*i).source;
-    InputOutput myio=es1->io;
-    assert(myio.op==InputOutput::STDOUT_VAR 
-           && 
-           es1->pstate->varIsConst(es1->io.var)
-           );
-  }
-#endif
-  
   if (boolOptions["annotate-terms"]) {
     // TODO: it might be useful to be able to select certain analysis results to be only annotated
     cout << "INFO: Annotating term representations."<<endl;
