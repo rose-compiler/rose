@@ -363,7 +363,6 @@ VariableIdSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping* v
 }
 
 int main( int argc, char * argv[] ) {
-  string ltl_file;
   try {
     Timer timer;
     timer.start();
@@ -379,7 +378,6 @@ int main( int argc, char * argv[] ) {
     ("rose-help", "show help for compiler frontend options")
     ("version,v", "display the version")
     ("internal-checks", "run internal consistency checks (without input program)")
-    ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
     ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
     ("debug-mode",po::value< int >(),"set debug mode [arg]")
     ("csv-spot-ltl", po::value< string >(), "output SPOT's LTL verification results into a CSV file [arg]")
@@ -641,12 +639,6 @@ int main( int argc, char * argv[] ) {
     option_pragma_name = args["limit-to-fragment"].as<string>();
   }
 
-  // clean up verify and csv-ltl option in argv
-  if (args.count("verify")) {
-    cerr<<"Option --verify is deprecated."<<endl;
-    exit(1);
-    //ltl_file = args["verify"].as<string>();
-  }
   if(args.count("csv-assert-live")) {
     analyzer.setCsvAssertLiveFileName(args["csv-assert-live"].as<string>());
   }
