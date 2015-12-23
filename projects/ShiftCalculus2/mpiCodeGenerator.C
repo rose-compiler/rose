@@ -87,6 +87,31 @@ static bool isMPIMasterBegin(SgOmpTargetStatement * stmt)
   return rt;   
 }
 
+// check if a omp for is part of combined omp target + omp parallel + omp for
+// return the found parent "omp for" and grand parent "omp target"
+static bool isCombinedTargetParallelFor (SgOmpForStatement * ompfor, SgOmpTargetStatement** omptarget, SgOmpParallelStatement** ompparallel)
+{
+  bool rt = false; 
+  ROSE_ASSERT (ompfor != NULL);
+
+  SgNode* parent = ompfor->get_parent();
+  ROSE_ASSERT (parent != NULL);
+  // skip a possible BB between omp parallel and omp for, especially when the omp parallel has multiple omp for loops 
+  if (isSgBasicBlock(parent))
+    parent = parent->get_parent();
+  SgNode* grand_parent = parent->get_parent();
+  ROSE_ASSERT (grand_parent != NULL);
+
+  if (isSgOmpParallelStatement (parent) && isSgOmpTargetStatement(grand_parent) ) 
+    rt = true;
+
+  if (ompparallel != NULL)
+    *ompparallel = isSgOmpParallelStatement (parent);
+  if(omptarget != NULL)
+    *omptarget = isSgOmpTargetStatement(grand_parent);
+
+  return rt; 
+}
 
 // ! Strip off a basic block, move its internal statements to be after the anchorStmt, then remove the source basic block
 // This is the reverse operation of 
@@ -109,6 +134,179 @@ static void stripOffBasicBlock (SgBasicBlock * bb, SgStatement* anchorStmt)
   // Now remove the empty source BB
   removeStatement(bb);
 } // end stripOffBasicBlock ()
+
+void MPI_Code_Generator::transOmpTargetParallelLoop (SgOmpForStatement* omp_for)
+{
+
+  SgOmpTargetStatement * omp_target; 
+  SgOmpParallelStatement*  omp_parallel;
+  if (!isCombinedTargetParallelFor (omp_for,&omp_target, &omp_parallel )) 
+  {
+    cerr<<"Error. MPI_Code_Generator::transOmpTargetParallelLoop() encounters a loop which is not following target + parallel."<<endl;
+    ROSE_ASSERT (false);
+  }
+
+  // translate the loop itself
+
+  // translate variables in map clauses
+  // ASTtools::VarSymSet_t 
+  transOmpMapVariables (omp_target);
+}
+
+// Reference implementation ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_parallel_stmt ) 
+// rose-develop/src/midend/programTransformation/ompLowering/omp_lowering.cpp
+/*
+
+For scalars: using MPI_Bcast() to broardcast the variable to all MPI processes. 
+  Variable references in the loop should be intact due to SPMD sytle programming.
+* Two directions: to and from
+
+For arrays: 
+* Two directions: to and from
+
+*/
+std::set<SgSymbol* > MPI_Code_Generator::transOmpMapVariables (SgOmpTargetStatement* omp_target)
+{
+  std::set<SgSymbol* > all_syms;
+  ROSE_ASSERT (omp_target != NULL);
+
+  Rose_STL_Container<SgOmpClause*> map_clauses; 
+  Rose_STL_Container<SgOmpClause*> device_clauses; 
+
+  map_clauses = getClause(omp_target, V_SgOmpMapClause);
+  device_clauses = getClause(omp_target, V_SgOmpDeviceClause);
+
+  if ( map_clauses.size() == 0) return all_syms; // stop if no map clauses at all
+
+  // store each time of map clause explicitly
+  SgOmpMapClause* map_alloc_clause = NULL;
+  SgOmpMapClause* map_to_clause = NULL;
+  SgOmpMapClause* map_from_clause = NULL;
+  SgOmpMapClause* map_tofrom_clause = NULL;
+  // dimension map is the same for all the map clauses under the same omp target directive
+  std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions; 
+
+  //TODO: obtain array dist_data information
+  // a map between original symbol and its device version : used for variable replacement 
+  std::map <SgVariableSymbol*, SgVariableSymbol*>  cpu_gpu_var_map; 
+
+  // store all variables showing up in any of the map clauses
+  SgInitializedNamePtrList all_mapped_vars ;
+
+  all_mapped_vars = collectClauseVariables (omp_target, VariantVector(V_SgOmpMapClause)); 
+
+  // store all variables showing up in any of the device clauses
+  SgExpression* device_expression = getClauseExpression (omp_target, VariantVector(V_SgOmpDeviceClause));  
+
+  // TODO extend to get dist_data info.
+  OmpSupport::extractMapClauses(map_clauses, array_dimensions, &map_alloc_clause, &map_to_clause, &map_from_clause, &map_tofrom_clause); 
+  std::set<SgSymbol*> array_syms; // store clause variable symbols which are array types (explicit or as a pointer)
+  std::set<SgSymbol*> atom_syms; // store clause variable symbols which are non-aggregate types: scalar, pointer, etc
+
+  // categorize the variables:
+  categorizeMapClauseVariables (all_mapped_vars, array_dimensions, array_syms, atom_syms);
+
+  SgScopeStatement* insertion_scope = omp_target->get_scope();
+  SgStatement* insertion_anchor_stmt = omp_target; 
+  ROSE_ASSERT (insertion_scope!= NULL);
+  ROSE_ASSERT (insertion_anchor_stmt!= NULL);
+
+  // handle scalar variables
+  for (std::set<SgSymbol*>::iterator iter = atom_syms.begin(); iter!= atom_syms.end(); iter++)
+  {
+    SgVariableSymbol * var_sym = isSgVariableSymbol(*iter);
+    // build MPI_Bcast( &lb1src, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    SgType* var_type = var_sym->get_type();
+    ROSE_ASSERT (isScalarType(var_type));
+    SgName sn("MPI_Bcast");
+    SgExpression* par1 = buildAddressOfOp(buildVarRefExp(var_sym));
+    string mpi_type_name = C2MPITypeName (var_type);
+    SgExprListExp* parameters = buildExprListExp (par1, buildIntVal(1), buildOpaqueVarRefExp(mpi_type_name, insertion_scope), buildIntVal(0), buildOpaqueVarRefExp("MPI_COMM_WORLD", insertion_scope));
+    SgExprStatement* mpi_call = buildFunctionCallStmt (sn, buildVoidType(), parameters, insertion_scope);
+    insertStatementBefore (omp_target, mpi_call, false); // ignore preprocessing info. handling for now as a prototype
+  }
+
+  // what is this for?
+  return all_syms; 
+} // end MPI_Code_Generator::transOmpMapVariables()
+
+// convert a C data type into MPI type name
+std::string MPI_Code_Generator::C2MPITypeName (SgType* t)
+{
+  string rt ; 
+  ROSE_ASSERT (t != NULL);
+  switch (t->variantT())
+  {
+    case V_SgTypeChar: 
+    {
+      rt = "MPI_CHAR";
+      break;
+    }
+     case V_SgTypeShort: 
+    {
+      rt = "MPI_SHORT";
+      break;
+    }
+    case V_SgTypeInt: 
+    {
+      rt = "MPI_INT";
+      break;
+    }
+    case V_SgTypeLong: 
+    {
+      rt = "MPI_LONG";
+      break;
+    }
+    // unsigned int types
+    case V_SgTypeUnsignedChar: 
+    {
+      rt = "MPI_UNSIGNED_CHAR";
+      break;
+    }
+     case V_SgTypeUnsignedShort: 
+    {
+      rt = "MPI_UNSIGNED_SHORT";
+      break;
+    }
+    case V_SgTypeUnsignedInt: 
+    {
+      rt = "MPI_UNSIGNED";
+      break;
+    }
+    case V_SgTypeUnsignedLong: 
+    {
+      rt = "MPI_UNSIGNED_LONG";
+      break;
+    }
+
+   //---------- floating point types
+
+   case V_SgTypeFloat: 
+    {
+      rt = "MPI_FLOAT";
+      break;
+    }
+    case V_SgTypeDouble: 
+    {
+      rt = "MPI_DOUBLE";
+      break;
+    }
+    case V_SgTypeLongDouble: 
+    {
+      rt = "MPI_LONG_DOUBLE";
+      break;
+    }
+
+    default:
+    {
+      cerr<<"Error in MPI_Code_Generator::C2MPITypeName(): unhandled input type: "<< t->class_name() <<endl;
+      ROSE_ASSERT (false);
+    }
+
+  }
+  return rt;   
+}
+
 
 void MPI_Code_Generator::lower_xomp (SgSourceFile* file)
 {
@@ -169,6 +367,17 @@ void MPI_Code_Generator::lower_xomp (SgSourceFile* file)
           break;
         }
 #endif
+    // transform combined "omp target parallel for", represented as separated three directives: omp target, omp parallel, and omp for     
+    case V_SgOmpForStatement:
+    {
+      SgOmpTargetStatement * omp_target; 
+      SgOmpParallelStatement*  omp_parallel;
+      if (isCombinedTargetParallelFor (isSgOmpForStatement(node),&omp_target, &omp_parallel )) 
+      {
+        transOmpTargetParallelLoop (isSgOmpForStatement(node));
+      }
+      break;
+    }
     case V_SgOmpTargetStatement:
         {
           SgOmpTargetStatement* t_stmt = isSgOmpTargetStatement(node);
@@ -198,7 +407,8 @@ void MPI_Code_Generator::lower_xomp (SgSourceFile* file)
           }
           else
           {
-            cerr<<"Error. Unhandled target directive:" <<t_stmt->unparseToString()<<endl;
+            // other target directive with followed omp parallel for will be handled when parallel for is translated
+            // cerr<<"Error. Unhandled target directive:" <<t_stmt->unparseToString()<<endl;
             //ROSE_ASSERT (false);
           }
           break;
