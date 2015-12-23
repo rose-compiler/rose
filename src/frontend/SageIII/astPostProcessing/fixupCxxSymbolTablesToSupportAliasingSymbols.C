@@ -41,7 +41,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
      ROSE_ASSERT(referencedScope != NULL);
      ROSE_ASSERT(currentScope    != NULL);
 
-#if ALIAS_SYMBOL_DEBUGGING
+#if ALIAS_SYMBOL_DEBUGGING || 0
      printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): referencedScope = %p = %s currentScope = %p = %s accessLevel = %d \n",referencedScope,referencedScope->class_name().c_str(),currentScope,currentScope->class_name().c_str(),accessLevel);
 #endif
 
@@ -142,10 +142,24 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                   }
              }
 
-#if ALIAS_SYMBOL_DEBUGGING
+#if ALIAS_SYMBOL_DEBUGGING || 0
           printf ("declarationAccessLevel = %d accessLevel = %d \n",declarationAccessLevel,accessLevel);
 #endif
-          if (declarationAccessLevel >= accessLevel)
+
+#if 0
+       // DQ (12/23/2015): Is this only supporting the SgBaseClass IR nodes? No, another example is the case of a SgUsingDirectiveStatement.
+          ROSE_ASSERT(causalNode != NULL);
+          if (isSgBaseClass(causalNode) == NULL)
+             {
+               printf ("ERROR: This is not a SgBaseClass: causalNode = %p = %s \n",causalNode,causalNode->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+#endif
+
+       // DQ (12/23/2015): See test2015_140.C for where even private base classes will require representations 
+       // of it's symbols in the derived class (to support correct name qualification).
+       // if (declarationAccessLevel >= accessLevel)
+          if ( (declarationAccessLevel >= accessLevel) || isSgBaseClass(causalNode) != NULL)
              {
             // This declaration is visible, so build an alias.
 
@@ -773,7 +787,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                     ROSE_ASSERT(targetClassDeclaration != NULL);
                     SgScopeStatement*   referencedScope  = targetClassDeclaration->get_definition();
 #if 0
-                    printf ("Calling injectSymbolsFromReferencedScopeIntoCurrentScope() for classDefinition = %p = %s \n",node,node->class_name().c_str());
+                    printf ("Calling injectSymbolsFromReferencedScopeIntoCurrentScope() for classDefinition = %p = %s baseClass = %p accessLevel = %d \n",
+                         node,node->class_name().c_str(),baseClass,accessLevel);
 #endif
                  // DQ (7/12/2014): Use the SgBaseClass as the causal node that has triggered the insertion of the SgAliasSymbols.
                  // We need this function to restrict it's injection of symbol to just those that are associated with public and protected declarations.

@@ -5373,7 +5373,9 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
 
      ROSE_ASSERT(cscope != NULL);
 
-#if 0
+#define DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES 0
+
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
      printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s (templateParameterList = %p templateArgumentList = %p) \n",cscope,cscope->class_name().c_str(),templateParameterList,templateArgumentList);
 #endif
 
@@ -5399,7 +5401,7 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
           ROSE_ASSERT(cscope->get_symbol_table() != NULL);
 #endif
 
-#if 0
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
           printf("   --- In SageInterface:: lookupSymbolInParentScopes(): name = %s cscope = %p = %s \n",name.str(),cscope,cscope->class_name().c_str());
 #endif
 
@@ -5407,7 +5409,7 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
        // symbol = cscope->lookup_symbol(name);
           symbol = cscope->lookup_symbol(name,templateParameterList,templateArgumentList);
 
-#if 0
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES && 1
        // debug
           printf("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
           cscope->print_symboltable("In SageInterface:: lookupSymbolInParentScopes(): debug");
@@ -5417,14 +5419,14 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
             else
                cscope = NULL;
 
-#if 0
-          printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
+          printf ("   --- In SageInterface:: (base of loop) lookupSymbolInParentScopes(): cscope = %p symbol = %p \n\n",cscope,symbol);
 #endif
         }
 
      if (symbol == NULL)
         {
-#if 0
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
           printf ("Warning: In SageInterface:: lookupSymbolInParentScopes(): could not locate the specified name %s in any outer symbol table (templateParameterList = %p templateArgumentList = %p) \n",name.str(),templateParameterList,templateArgumentList);
 #endif
        // ROSE_ASSERT(false);

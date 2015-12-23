@@ -343,7 +343,16 @@ NEW_TESTCODES = \
    test2015_131.C \
    test2015_132.C \
    test2015_133.C \
-   test2015_134.C 
+   test2015_134.C \
+   test2015_137.C \
+   test2015_138.C \
+   test2015_139.C \
+   test2015_140.C \
+   test2015_141.C \
+   test2015_142.C \
+   test2015_143.C \
+   test2015_144.C \
+   test2015_145.C 
 
 # DQ (11/28/2015): I think maybe this only works with the Intel compiler.
 ICPC_SPECIFIC_TESTCODES = \
