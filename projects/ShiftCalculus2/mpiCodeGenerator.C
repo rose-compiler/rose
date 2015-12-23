@@ -215,7 +215,7 @@ std::set<SgSymbol* > MPI_Code_Generator::transOmpMapVariables (SgOmpTargetStatem
   for (std::set<SgSymbol*>::iterator iter = atom_syms.begin(); iter!= atom_syms.end(); iter++)
   {
     SgVariableSymbol * var_sym = isSgVariableSymbol(*iter);
-    // build MPI_Bcast( &lb1src, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#if 0
     SgType* var_type = var_sym->get_type();
     ROSE_ASSERT (isScalarType(var_type));
     SgName sn("MPI_Bcast");
@@ -223,12 +223,34 @@ std::set<SgSymbol* > MPI_Code_Generator::transOmpMapVariables (SgOmpTargetStatem
     string mpi_type_name = C2MPITypeName (var_type);
     SgExprListExp* parameters = buildExprListExp (par1, buildIntVal(1), buildOpaqueVarRefExp(mpi_type_name, insertion_scope), buildIntVal(0), buildOpaqueVarRefExp("MPI_COMM_WORLD", insertion_scope));
     SgExprStatement* mpi_call = buildFunctionCallStmt (sn, buildVoidType(), parameters, insertion_scope);
+#endif
+    SgExprStatement* mpi_call = buildMPI_Bcast(var_sym, 0, insertion_scope);
     insertStatementBefore (omp_target, mpi_call, false); // ignore preprocessing info. handling for now as a prototype
   }
 
   // what is this for?
   return all_syms; 
 } // end MPI_Code_Generator::transOmpMapVariables()
+
+// Can we derive the current rank from the context (needing an anchor point then)? 
+// build MPI_Bcast( &lb1src, 1, MPI_INT, 0, MPI_COMM_WORLD);
+SgExprStatement* MPI_Code_Generator::buildMPI_Bcast(SgVariableSymbol* var_sym, int source_rank_id, SgScopeStatement* insertion_scope)
+{
+  ROSE_ASSERT (var_sym != NULL);
+  //    SgVariableSymbol * var_sym = isSgVariableSymbol(*iter);
+  // build MPI_Bcast( &lb1src, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  SgType* var_type = var_sym->get_type();
+  ROSE_ASSERT (isScalarType(var_type));
+  SgName sn("MPI_Bcast");
+  SgExpression* par1 = buildAddressOfOp(buildVarRefExp(var_sym));
+  // Derive the MPI type based on variable's type
+  string mpi_type_name = C2MPITypeName (var_type);
+  // default only 1 variable 
+  //TODO: how to handle the communicator more flexibly?
+  SgExprListExp* parameters = buildExprListExp (par1, buildIntVal(1), buildOpaqueVarRefExp(mpi_type_name, insertion_scope), buildIntVal(source_rank_id), buildOpaqueVarRefExp("MPI_COMM_WORLD", insertion_scope));
+  SgExprStatement* mpi_call = buildFunctionCallStmt (sn, buildVoidType(), parameters, insertion_scope);
+  return mpi_call;
+}
 
 // convert a C data type into MPI type name
 std::string MPI_Code_Generator::C2MPITypeName (SgType* t)

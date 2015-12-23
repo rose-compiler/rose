@@ -35,6 +35,9 @@ namespace MPI_Code_Generator
   // convert a C data type into MPI type name
   std::string C2MPITypeName (SgType*);
 
+  // Create MPI_Bcast() function call for a single variable
+ SgExprStatement* buildMPI_Bcast(SgVariableSymbol* var_sym, int source_rank_id, SgScopeStatement* insertion_scope);
+
 //--------------- v 0.1 interface, no longer being used.   
   class MPI_PragmaAttribute; 
   //int generateMPI (SgSourceFile* sfile); 
