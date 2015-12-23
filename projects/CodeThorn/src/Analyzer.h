@@ -248,12 +248,7 @@ namespace CodeThorn {
     //solver 8 becomes the active solver used by the analyzer. Deletion of previous data iff "resetAnalyzerData" is set to true.
     void setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData);
     //! requires init
-    void runSolver1();
-    void runSolver2();
-    void runSolver3();
-    void runSolver4();
     void runSolver5();
-    void runSolver6();
     void runSolver7();
     void runSolver8();
     void runSolver9();

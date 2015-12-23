@@ -95,6 +95,7 @@ V1.7 2015-12-xx in preparation
       --report-stderr
       --abstract-interpreter
       --update-input-var
+  * removed solvers 1,2,3,4,6,7.
 
   * bugfixes:
     [in preparation]
