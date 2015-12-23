@@ -227,39 +227,12 @@ private:
   SgNode* _node;
 };
 
-class PointerExprListAnnotation : public DFAstAttribute {
-public:
-  PointerExprListAnnotation(SgNode* node) : _node(node) {
-    //std::cout<<"DEBUG:generated: "+pointerExprToString(node)+"\n";
-  }
-  string toString() { 
-    return "// POINTEREXPR: "+SPRAY::AstTerm::pointerExprToString(_node);
-  }
-private:
-  SgNode* _node;
-};
-
 void attachTermRepresentation(SgNode* node) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
     if(SgStatement* stmt=dynamic_cast<SgStatement*>(*i)) {
       AstAttribute* ara=new TermRepresentation(stmt);
       stmt->setAttribute("codethorn-term-representation",ara);
-    }
-  }
-}
-
-void attachPointerExprLists(SgNode* node) {
-  RoseAst ast(node);
-  for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
-    SgStatement* stmt=0;
-    // SgVariableDeclaration is necessary to allow for pointer initialization
-    if((stmt=dynamic_cast<SgExprStatement*>(*i))
-       ||(stmt=dynamic_cast<SgVariableDeclaration*>(*i))
-       ||(stmt=dynamic_cast<SgReturnStmt*>(*i))
-       ) {
-      AstAttribute* ara=new PointerExprListAnnotation(stmt);
-      stmt->setAttribute("codethorn-pointer-expr-lists",ara);
     }
   }
 }
@@ -403,7 +376,6 @@ int main( int argc, char * argv[] ) {
     ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
     ("report-semantic-fold",po::value< string >(),"report each folding operation with the respective number of estates. [=yes|no]")
     ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation (experimental)")
-    ("post-collapse-stg",po::value< string >(),"compute collapsed state transition graph after the complete transition graph has been computed. [=yes|no]")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
     ("viz-cegpra-detailed",po::value< string >(),"generate visualization (dot) output files with prefix <arg> for different stages within each loop of cegpra.")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
@@ -423,7 +395,7 @@ int main( int argc, char * argv[] ) {
     ("rers-binary",po::value< string >(),"Call rers binary functions in analysis. Use [=yes|no]")
     ("print-all-options",po::value< string >(),"print all yes/no command line options.")
     ("eliminate-arrays",po::value< string >(), "transform all arrays into single variables.")
-    ("annotate-results",po::value< string >(),"annotate results in program and output program (using ROSE unparser).")
+    ("annotate-terms",po::value< string >(),"annotate term representation of expressions in unparsed program.")
     ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
     ("rersformat",po::value< int >(),"Set year of rers format (2012, 2013).")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
@@ -531,14 +503,13 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("semantic-explosion",false);
   boolOptions.registerOption("post-semantic-fold",false);
   boolOptions.registerOption("report-semantic-fold",false);
-  boolOptions.registerOption("post-collapse-stg",true);
   boolOptions.registerOption("eliminate-arrays",false);
 
   boolOptions.registerOption("viz",false);
   boolOptions.registerOption("run-rose-tests",false);
   boolOptions.registerOption("reduce-cfg",false);
   boolOptions.registerOption("print-all-options",false);
-  boolOptions.registerOption("annotate-results",false);
+  boolOptions.registerOption("annotate-terms",false);
   boolOptions.registerOption("generate-assertions",false);
 
   boolOptions.registerOption("ltl-output-dot",false);
@@ -1869,17 +1840,15 @@ int main( int argc, char * argv[] ) {
   }
 #endif
   
-  if (boolOptions["annotate-results"]) {
+  if (boolOptions["annotate-terms"]) {
     // TODO: it might be useful to be able to select certain analysis results to be only annotated
-    cout << "INFO: Annotating analysis results."<<endl;
+    cout << "INFO: Annotating term representations."<<endl;
     attachTermRepresentation(sageProject);
-    attachPointerExprLists(sageProject);
     AstAnnotator ara(analyzer.getLabeler());
     ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
-    ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-pointer-expr-lists");
   }
 
-  if (boolOptions["annotate-results"]||boolOptions["generate-assertions"]) {
+  if (boolOptions["annotate-terms"]||boolOptions["generate-assertions"]) {
     cout << "INFO: Generating annotated program."<<endl;
     //backend(sageProject);
     sageProject->unparse(0,0);
@@ -1887,8 +1856,6 @@ int main( int argc, char * argv[] ) {
   // reset terminal
   cout<<color("normal")<<"done."<<endl;
   
-    sageProject->unparse(0,0);
-
   } catch(char const* str) {
     cerr << "*Exception raised: " << str << endl;
     return 1;

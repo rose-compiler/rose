@@ -249,7 +249,6 @@ namespace CodeThorn {
     void setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData);
     //! requires init
     void runSolver5();
-    void runSolver7();
     void runSolver8();
     void runSolver9();
     void runSolver10();
