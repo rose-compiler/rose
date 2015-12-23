@@ -86,6 +86,10 @@ V1.7 2015-12-xx in preparation
     [in preparation]
   * command line option changes:
     [in preparation]
-    - removed command line options: --ltl-verifier, --verify
+    - removed command line options and all code associated with it:
+      --ltl-verifier
+      --verify
+      --debug-mode
+
   * bugfixes:
     [in preparation]

@@ -379,7 +379,6 @@ int main( int argc, char * argv[] ) {
     ("version,v", "display the version")
     ("internal-checks", "run internal consistency checks (without input program)")
     ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
-    ("debug-mode",po::value< int >(),"set debug mode [arg]")
     ("csv-spot-ltl", po::value< string >(), "output SPOT's LTL verification results into a CSV file [arg]")
     ("csv-assert", po::value< string >(), "output assert reachability results into a CSV file [arg]")
     ("csv-assert-live", po::value< string >(), "output assert reachability results during analysis into a CSV file [arg]")
@@ -824,9 +823,6 @@ int main( int argc, char * argv[] ) {
     int solver=args["solver"].as<int>();
     analyzer.setSolver(solver);
   }
-  if(args.count("debug-mode")) {
-    option_debug_mode=args["debug-mode"].as<int>();
-  }
   if(args.count("variable-value-threshold")) {
     analyzer.setVariableValueThreshold(args["variable-value-threshold"].as<int>());
   }
@@ -879,7 +875,6 @@ int main( int argc, char * argv[] ) {
         || string(argv[i]).find("--input-values")==0
         || string(argv[i]).find("--dot-io-stg")==0
         || string(argv[i]).find("--dot-io-stg-forced-top")==0
-        || string(argv[i]).find("--verify")==0
         || string(argv[i]).find("--csv-ltl")==0
         || string(argv[i]).find("--spot-stg")==0
         || string(argv[i]).find("--dump-sorted")==0
