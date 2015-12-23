@@ -1376,6 +1376,14 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "optimization", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (12/11/2015): Use the token stream to improve source position information.
+  // Some source position information is unavailable in EDG, e.g. the end of most 
+  // secondary declarations, for loop initialization statements, etc.  This is part
+  // of a currently experimental mechanism to improve the source positon information 
+  // in the AST using local searches of the token stream as a part of the token stream 
+  // mapping to the AST (as used in the token-based unparsing).
+     File.setDataPrototype ("bool", "use_token_stream_to_improve_source_position_info", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // ******************************************************************************

@@ -337,7 +337,13 @@ NEW_TESTCODES = \
    test2015_122.C \
    test2015_123.C \
    test2015_124.C \
-   test2015_125.C 
+   test2015_125.C \
+   test2015_128.C \
+   test2015_130.C \
+   test2015_131.C \
+   test2015_132.C \
+   test2015_133.C \
+   test2015_134.C 
 
 # DQ (11/28/2015): I think maybe this only works with the Intel compiler.
 ICPC_SPECIFIC_TESTCODES = \
@@ -388,6 +394,23 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_55.C
 endif
 
+# DQ (12/19/2015): I think these test codes use language builtin functions not present with the same signature in
+# older GNU versions (e.g. "__builtin_isgreater()") and types not present in older GNU versions (e.g. "__int128")
+if ROSE_USING_GCC_VERSION_LATER_4_8
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2015_126.C \
+   test2015_127.C \
+   test2015_129.C 
+endif
+
+# DQ (12/20/2015): I think these test codes use language builtin functions not present with the same signature in
+# older GNU versions (e.g. "__decltype()").
+if ROSE_USING_GCC_VERSION_LATER_4_4
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2015_135.C \
+   test2015_136.C
+endif
+
 # DQ (5/28/2015): Removed this file because it is used by the makefile rule: 
 # test_unparse_includes_option_with_link.passed and CMake's ctest will cause
 # it to be run in parallel with the list of test codes above.  This is not
@@ -430,6 +453,7 @@ endif
 #  test2014_105.C 
 #  test2014_106.C 
 
+# DQ (12/13/2015): Note that most of these now appear to pass now, but they need to be checked more carefully.
 # DQ (8/14/2014) List these files explicitly to avoid failing the policy tests.
 TESTS_NOT_PASSING = \
    test2009_25.C \

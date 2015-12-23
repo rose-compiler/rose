@@ -998,6 +998,9 @@ ROSE_DLL_API bool templateArgumentEquivalence(SgTemplateArgument * arg1, SgTempl
 //! Verify that 2 SgTemplateArgumentPtrList are equivalent.
 ROSE_DLL_API bool templateArgumentListEquivalence(const SgTemplateArgumentPtrList & list1, const SgTemplateArgumentPtrList & list2);
 
+//! Test for equivalence of types independent of access permissions (private or protected modes for members of classes).
+ROSE_DLL_API bool isEquivalentType (const SgType* lhs, const SgType* rhs);
+
 //@}
 
 //------------------------------------------------------------------------

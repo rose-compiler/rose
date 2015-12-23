@@ -2437,7 +2437,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 
      ROSE_ASSERT(functionDeclaration != NULL);
 
-#if 1
+#if 0
      printf ("Inside of Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() templateInstantiationFunctionDeclaration = %p \n",templateInstantiationFunctionDeclaration);
      printf ("   --- isTransformed (templateInstantiationFunctionDeclaration) = %s \n",isTransformed (templateInstantiationFunctionDeclaration) ? "true" : "false");
      printf ("   --- nondefining declaration = %p \n",templateInstantiationFunctionDeclaration->get_firstNondefiningDeclaration());
@@ -2445,7 +2445,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
      curprint("/* In Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() */");
 #endif
 
-#if OUTPUT_DEBUGGING_FUNCTION_NAME || 1
+#if OUTPUT_DEBUGGING_FUNCTION_NAME || 0
      printf ("Inside of unparseTemplateInstantiationFunctionDeclStmt() name = %s (qualified_name = %s)  transformed = %s prototype = %s static = %s friend = %s compiler generated = %s transformed = %s output = %s \n",
        // templateInstantiationFunctionDeclaration->get_name().str(),
           templateInstantiationFunctionDeclaration->get_name().str(),
@@ -2471,7 +2471,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
           if (skipforwardDeclarationOfTemplateSpecialization == true)
              {
             // This is a compiler generated forward function declaration of a template instatiation, so skip it!
-#if PRINT_DEVELOPER_WARNINGS || 1
+#if PRINT_DEVELOPER_WARNINGS || 0
                printf ("This is a compiler generated forward function declaration of a template instatiation, so skip it! \n");
                curprint ( string("\n/* Skipping output of compiler generated forward function declaration of a template specialization */"));
 #endif
@@ -2484,7 +2484,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
             // skip output of inlined templates since these are likely to have been used 
             // previously and would be defined too late if provided as an inline template 
             // specialization output in the source code.
-#if PRINT_DEVELOPER_WARNINGS || 1
+#if PRINT_DEVELOPER_WARNINGS || 0
                printf ("This is an inlined template which might have been used previously (skipping output of late specialization) \n");
                curprint ( string("\n/* Skipping output of inlined template specialization */"));
 #endif
@@ -4138,10 +4138,10 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                if (isSgTemplateInstantiationFunctionDecl(def_decl))
                   {
                  // cout<<"Skipping a forward declaration of a template instantiation function declaration..."<<endl;
-#if 1
+#if 0
                     printf ("In unparseFuncDeclStmt(): Skipping a forward declaration of a template instantiation function declaration... \n");
 #endif
-#if 1
+#if 0
                     curprint("/* In unparseFuncDeclStmt(): Skipping a forward declaration of a template instantiation function declaration...*/ \n");
 #endif
                     return;
@@ -9810,6 +9810,20 @@ Unparse_ExprStmt::unparseTemplateHeader(SgFunctionDeclaration* functionDeclarati
    }
 
 
+std::string 
+replaceString(std::string subject, const std::string& search, const std::string& replace) 
+   {
+     size_t pos = 0;
+     while((pos = subject.find(search, pos)) != std::string::npos) 
+        {
+          subject.replace(pos, search.length(), replace);
+          pos += replace.length();
+        }
+
+     return subject;
+   }
+
+
 template<class T>
 void
 Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, SgUnparse_Info& info)
@@ -9861,6 +9875,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
      bool string_represents_function_body = false;
      SgTemplateFunctionDeclaration*       templateFunctionDeclaration       = isSgTemplateFunctionDeclaration(stmt);
      SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = isSgTemplateMemberFunctionDeclaration(stmt);
+     SgTemplateVariableDeclaration*       templateVariableDeclaration       = isSgTemplateVariableDeclaration(stmt);
      if (templateFunctionDeclaration != NULL)
         {
        // printf ("This is a SgTemplateFunctionDeclaration \n");
@@ -9876,15 +9891,19 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
              }
             else
              {
-            // This is likely a SgTemplateClassDeclaration
-               if (isSgTemplateClassDeclaration(stmt) == NULL)
+               if (templateVariableDeclaration != NULL)
                   {
-                    printf ("Note: In unparseTemplateDeclarationStatment_support(): What is this if not a template function or template member function stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-
                  // DQ (7/6/2015): Markus suggested that this might be an unhandled case, but it is not clear it needs to be processed, for now let's detect it.
-                    if (isSgTemplateVariableDeclaration(stmt) != NULL)
+#if 0
+                    printf ("Note: In unparseTemplateDeclarationStatment_support(): Found a SgTemplateVariableDeclaration = %p = %s (not handled) \n",stmt,stmt->class_name().c_str());
+#endif
+                  }
+                 else
+                  {
+                 // This is likely a SgTemplateClassDeclaration???
+                    if (isSgTemplateClassDeclaration(stmt) == NULL)
                        {
-                         printf ("Note: In unparseTemplateDeclarationStatment_support(): Found a SgTemplateVariableDeclaration = %p = %s \n",stmt,stmt->class_name().c_str());
+                         printf ("Note: In unparseTemplateDeclarationStatment_support(): What is this if not a template function or template member function stmt = %p = %s \n",stmt,stmt->class_name().c_str());
                        }
                   }
              }
@@ -9900,6 +9919,36 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 
   // DQ (1/21/2004): Use the string class to simplify the previous version of the code
      string templateString = template_stmt->get_string().str();
+
+  // DQ (12//13/2015): The handling of "__decltype" in non-c++11 mode is a problem because EDG normalizes
+  // this in the template string to be "decltype" which is not recognized by the backend compiler.
+#if 0
+     info.display("denormalize template string for decltype");
+#endif
+     SgSourceFile* sourcefile = info.get_current_source_file();
+  // ROSE_ASSERT(sourcefile != NULL);
+     if (sourcefile == NULL)
+        {
+          printf ("NOTE: source file not available in SgUnparse_Info in unparseTemplateDeclarationStatment_support(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+        }
+
+  // We only do this denormalization if we are not using C++11 or later version of C++.
+  // if (sourcefile->get_Cxx11_only() == false)
+     if (sourcefile != NULL && sourcefile->get_Cxx11_only() == false)
+        {
+          ROSE_ASSERT(sourcefile->get_Cxx14_only() == false);
+#if 0
+          printf ("Intercept the template string: \n");
+          printf ("templateString = %s \n",templateString.c_str());
+#endif
+       // Substitute " decltype" with " __decltype" to fix this.
+       // templateString.subst(" decltype"," __decltype");
+          string denormalizedTemplateString = replaceString (templateString," decltype"," __decltype");
+#if 0
+          printf ("denormalizedTemplateString = %s \n",denormalizedTemplateString.c_str());
+#endif
+          templateString = denormalizedTemplateString;
+        }
 
   // DQ (9/6/2014): if this is only a partial string then ignore unparsing this function (until we are done with the implementation of the function header).
      if (string_represents_function_body == true)

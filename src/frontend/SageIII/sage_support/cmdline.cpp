@@ -3654,6 +3654,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   //
+  // DQ (12/14/2015): Added more token handling support to improve the source position infor stored in the AST Sg_File_Info objects.
+  // Turn on the output of the tokens from the parser (only applies to C and Fortran support).
+  //
+     set_use_token_stream_to_improve_source_position_info(false);
+     ROSE_ASSERT (get_use_token_stream_to_improve_source_position_info() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(use_token_stream_to_improve_source_position_info)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("use_token_stream_to_improve_source_position_info mode ON \n");
+          set_use_token_stream_to_improve_source_position_info(true);
+        }
+
+  //
   // DQ (1/30/2014): Added more token handling support (internal testing).
   //
      set_unparse_tokens_testing(0);
@@ -5457,6 +5470,10 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(output_parser_actions)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(unparse_tokens)",1);
+
+  // DQ (12/14/2015): Strip out the new option (so it will not be used on the backend compiler).
+     optionCount = sla(argv, "-rose:", "($)", "(use_token_stream_to_improve_source_position_info)",1);
+
      int integerOption_token_tests = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(unparse_tokens_testing)", &integerOption_token_tests, 1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_using_leading_and_trailing_token_mappings)",1);

@@ -3,7 +3,7 @@
 /* Manually fix generated code to have correct array subscript.  */
 /* Serve as input code for MPI code generation.                  */
 /*****************************************************************/
-
+// copied from rose_laplacian_lite_v4.cpp , Liao 12/11/2015, Liao 12/11/2015, Liao 12/11/2015, Liao 12/11/2015
 // This is the simple version of laplacian.cpp that builds 
 // the smallest reasonable AST.  This simpler AST make it 
 // easier to work with in the context of understanding 
