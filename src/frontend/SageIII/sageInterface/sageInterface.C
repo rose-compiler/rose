@@ -19879,13 +19879,14 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
      counter++;
 
   // DQ (11/28/2015): exit with debug output instead of infinte recursion.
-     if (counter >= 90) 
+     if (counter >= 280) 
         {
           printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
         }
 
+  // DQ (12/23/2015): ASC application code requires this to be increased to over 122 (selected 300 for extra margin of safety).
   // DQ (11/28/2015): exit in stead of infinte recursion.
-     if (counter > 100) 
+     if (counter > 300) 
         {
        // DQ (11/28/2015): I htink this is a reasonable limit.
           printf ("ERROR: In SageInterface::isEquivalentType(): recursive limit exceeded for : counter = %d \n",counter);
