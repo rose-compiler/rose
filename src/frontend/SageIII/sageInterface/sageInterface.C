@@ -7837,7 +7837,7 @@ SageInterface::moveDeclarationToAssociatedNamespace ( SgDeclarationStatement* de
           printf ("Identified the most common case... \n");
 #endif
        // Identify the associated namespace
-          SgScopeStatement* declarationScope = declarationStatement->get_scope();
+          //SgScopeStatement* declarationScope = declarationStatement->get_scope();
 #if 0
           printf ("declarationScope = %p = %s \n",declarationScope,declarationScope->class_name().c_str());
 #endif
@@ -9968,12 +9968,16 @@ bool SageInterface::isAssignmentStatement(SgNode* s, SgExpression** lhs/*=NULL*/
    }
   }
 
+bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt /*= true*/)
+{
+   return  mergeAssignmentWithDeclaration (assign_stmt, decl, removeAssignStmt);
+}
 //! Merge a variable assignment statement into a matching variable declaration statement
 /*!
  *  e.g.  int i;  i=10;  becomes int i=10;  the original i=10 will be deleted after the merge
  *  if success, return true, otherwise return false (e.g. variable declaration does not match or already has an initializer)
  */
-bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt /*= true*/)
+bool SageInterface::mergeAssignmentWithDeclaration(SgExprStatement* assign_stmt, SgVariableDeclaration* decl, bool removeAssignStmt /*= true*/)
 {
   bool rt= true;
   ROSE_ASSERT(decl != NULL);   
@@ -10025,6 +10029,71 @@ bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, 
   return rt;
 }
 
+bool SageInterface::mergeDeclarationWithAssignment(SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
+{
+  bool rt= true;
+  ROSE_ASSERT(decl != NULL);   
+  ROSE_ASSERT(assign_stmt != NULL);   
+
+  // Sanity check of assign statement: must be a form of var = xxx; 
+  SgAssignOp * assign_op = isSgAssignOp (assign_stmt->get_expression());
+  if (assign_op == NULL) 
+    return false;
+  SgVarRefExp* assign_op_var = isSgVarRefExp(assign_op->get_lhs_operand());
+  if (assign_op_var == NULL) return false;
+
+  // Sanity check of the variable declaration: it should not have an existing initializer
+  SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl); 
+  if (decl_var->get_initptr()!= NULL ) return false;
+
+  // check if two variables match
+  // In translation, it is possible the declaration has not yet been inserted into its scope.
+  // finding its symbol can return NULL.
+  // But we still want to do the merge.
+  SgSymbol* decl_var_symbol = decl_var->get_symbol_from_symbol_table();
+  if (decl_var_symbol!=NULL)
+  {
+    if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
+  }
+  else
+  { // fallback to comparing variable names instead
+    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
+  }
+
+  // Everything looks fine now. Do the merge.
+  // It is implemented by 
+  // 1. copy rhs to the decl's rhs, 
+  // 2. then move the decl to the place of the assignment, 
+  // 3. then remove the assignment
+  //
+  // Copy rhs to be initializer
+  SgExpression * rhs_copy = SageInterface::copyExpression(assign_op->get_rhs_operand());
+  SgAssignInitializer * initor = SageBuilder::buildAssignInitializer (rhs_copy);
+  decl_var->set_initptr(initor);
+  initor->set_parent(decl_var);  
+
+  // move proprocessing info. attached before decl to its next statement's front, using prepending to preserve the original order
+  SgStatement* next_stmt = SageInterface::getNextStatement (decl);
+  SageInterface::movePreprocessingInfo(decl, next_stmt, PreprocessingInfo::before, PreprocessingInfo::before, true);
+
+  // removeStatement() does not support removing a statement which is not inside a container.
+  // But sometimes we do need to remove such a statement and replace it with a new one.
+  // As a workaround, we allow users to optionally disabling removing here and handle the removal on their own.
+  // TODO: improve removeStatement() which uses low level rewritting. 
+
+  // Now move the declaration to a new position, right before the assignment statement 
+  SageInterface::removeStatement (decl);
+  SageInterface::insertStatementBefore(assign_stmt, decl, false);
+  
+  // preserve preprocessing info. attached to assign_stmt before removing it  , using append (last false)
+  SageInterface::movePreprocessingInfo(assign_stmt, decl, PreprocessingInfo::before, PreprocessingInfo::before, false);
+
+  // Original assignment statement should be removed
+  SageInterface::removeStatement (assign_stmt);
+  //  SageInterface::deepDelete (decl);
+  
+  return rt;
+}
 // Split a variable declaration with an rhs assignment into two statements: a declaration and an assignment. 
 // Return the generated assignment statement, if any
 SgExprStatement* SageInterface::splitVariableDeclaration (SgVariableDeclaration* decl)
@@ -12791,7 +12860,7 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
 
 PreprocessingInfo* SageInterface::insertHeader(const string& filename, PreprocessingInfo::RelativePositionType position /*=after*/, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
   {
-    bool successful = false;
+    //bool successful = false;
     if (scope == NULL)
         scope = SageBuilder::topScopeStack();
     ROSE_ASSERT(scope);
@@ -12820,8 +12889,11 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
            result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
                                           content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
            ROSE_ASSERT(result);
+           // add to the last position 
+           // TODO: support to add to the first, 
+           // TODO: support fine positioning with #include directives
            (*j)->addToAttachedPreprocessingInfo(result,position);
-           successful = true;
+          // successful = true;
            break;
          }
       }
@@ -12836,7 +12908,7 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
                 content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
        ROSE_ASSERT(result);
        globalScope->addToAttachedPreprocessingInfo(result,position);
-       successful = true;
+       //successful = true;
     }
     // must be inserted once somehow
     // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
@@ -12845,6 +12917,129 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
     return result;
   }
 
+// insert a new header right before stmt,  if there are existing headers attached to stmt, insert it as the last or first header as specified by asLastHeader
+void SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheader, bool asLastHeader)
+{
+  ROSE_ASSERT (stmt != NULL);
+  ROSE_ASSERT (newheader != NULL);
+
+  PreprocessingInfo::RelativePositionType position ;
+
+  if (asLastHeader )
+    position = PreprocessingInfo::after; 
+  else
+    position = PreprocessingInfo::before; 
+
+
+  // Find existing first and last header.
+  AttachedPreprocessingInfoType *comments = stmt->getAttachedPreprocessingInfo ();
+
+  if (comments != NULL)
+  {
+    PreprocessingInfo * firstExistingHeader = NULL;
+    PreprocessingInfo * lastExistingHeader = NULL;
+    AttachedPreprocessingInfoType::iterator i, firsti, lasti;
+    for (i = comments->begin (); i != comments->end (); i++)
+    {
+      if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+      {
+        // Only set first header for the first time
+        if (firstExistingHeader == NULL)
+        {
+          firstExistingHeader = (*i);
+          firsti = i;
+        }
+        // always updates last header  
+        lastExistingHeader = (*i);
+        lasti = i;
+      }
+    }
+    // based on existing header positions, insert the new header
+    if (asLastHeader)
+    {
+      if (lastExistingHeader == NULL) // No last header at all, just append to after
+        stmt->addToAttachedPreprocessingInfo(newheader, PreprocessingInfo::after);
+      else
+      {
+        comments->insert (lasti+1, newheader);
+      }
+    }
+    else // add as the first header
+    {
+      if (firstExistingHeader == NULL) // no existing header at all, just append to after
+        stmt->addToAttachedPreprocessingInfo(newheader, PreprocessingInfo::after);
+      else
+      {
+        comments->insert (firsti, newheader);
+      }
+    }
+  }
+  else // No comments at all, first and last header mean the same, just attach to the located node
+    stmt->addToAttachedPreprocessingInfo(newheader, position);
+}
+
+// The recommended version
+PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const std::string & filename, bool isSystemHeader , bool asLastHeader)
+{
+  ROSE_ASSERT (source_file != NULL);
+  SgGlobal* globalScope = source_file->get_globalScope();
+  ROSE_ASSERT (globalScope != NULL);
+
+  PreprocessingInfo* result=NULL;
+  string content;
+  if (isSystemHeader)
+    content = "#include <" + filename + "> \n";
+  else
+    content = "#include \"" + filename + "\" \n";
+
+  PreprocessingInfo::RelativePositionType position ;
+
+  if (asLastHeader )
+     position = PreprocessingInfo::after; 
+  else
+     position = PreprocessingInfo::before; 
+
+  SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
+  if (stmtList.size()>0) // the source file is not empty
+  {                     
+    for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
+        j != stmtList.end (); j++)
+    {
+      // Attach to the first eligible located statement
+      //must have this judgement, otherwise wrong file will be modified!
+      //It could also be the transformation generated statements with #include attached
+      if ( ((*j)->get_file_info ())->isSameFile(globalScope->get_file_info ())||
+          ((*j)->get_file_info ())->isTransformation()
+         )
+      {
+        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
+            content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
+        ROSE_ASSERT(result);
+        insertHeader (*j, result, asLastHeader);
+        //successful = true;
+        break;                                                                                                               
+      }                                                                                                                      
+    } // end for                                                                                                                         
+  }                                                                                                                          
+  else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!                                    
+  {                                                                                                                          
+    cerr<<"SageInterface::insertHeader() Empty file is found!"<<endl;                                                        
+    cerr<<"#include xxx is  preprocessing information which has to be attached  to some other  located node (a statement for example)"<<endl;
+    cerr<<"You may have to insert some statement first before inserting a header"<<endl;                                     
+    ROSE_ASSERT(false);                                                                                                      
+    result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,                                       
+        content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);                                         
+    ROSE_ASSERT(result);                                                                                                     
+    globalScope->addToAttachedPreprocessingInfo(result,position);
+//    successful = true;                                                                                                       
+  }                                                                                                                           
+  // must be inserted once somehow
+  // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
+  // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.                          
+  //ROSE_ASSERT(successful==true);                                                                                            
+  return result;        
+
+} // end insertHeader
 
 //! Attach an arbitrary string to a located node. A workaround to insert irregular statements or vendor-specific attributes. We abuse CpreprocessorDefineDeclaration for this purpose.
 PreprocessingInfo* 
@@ -18601,7 +18796,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
         {
             cerr<<"Error in SageInterface::loopCollapsing(): target loop is not canonical."<<endl;
             dumpInfo(target_loop);
-            return false;
+            return NULL;
         }
         
         ROSE_ASSERT(ivar[i]&& lb[i] && ub[i] && step[i]);
