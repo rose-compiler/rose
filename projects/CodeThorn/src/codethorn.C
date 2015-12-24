@@ -28,11 +28,11 @@
 #include "RefinementConstraints.h"
 #include "AnalysisAbstractionLayer.h"
 #include "ArrayElementAccessData.h"
-#include "Specialization.h"
 #include "PragmaHandler.h"
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
+#include "EquivalenceChecking.h"
 // test
 #include "Evaluator.h"
 
@@ -64,48 +64,6 @@ list<SgExpression*> exprRootList(SgNode *node) {
     }
   }
   return exprList;
-}
-
-typedef map<SgForStatement*,SgPragmaDeclaration*> ForStmtToOmpPragmaMap;
-
-// finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
-ForStmtToOmpPragmaMap createOmpPragmaForStmtMap(SgNode* root) {
-  //cout<<"PROGRAM:"<<root->unparseToString()<<endl;
-  ForStmtToOmpPragmaMap map;
-  RoseAst ast(root);
-  for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
-    if(SgPragmaDeclaration* pragmaDecl=isSgPragmaDeclaration(*i)) {
-      string foundPragmaKeyWord=SageInterface::extractPragmaKeyword(pragmaDecl);
-      //cout<<"DEBUG: PRAGMAKEYWORD:"<<foundPragmaKeyWord<<endl;
-      if(foundPragmaKeyWord=="omp"||foundPragmaKeyWord=="simd") {
-        RoseAst::iterator j=i;
-        j.skipChildrenOnForward();
-        ++j;
-        if(SgForStatement* forStmt=isSgForStatement(*j)) {
-          map[forStmt]=pragmaDecl;
-        } else {
-          cout<<"DEBUG: NOT a for-stmt: "<<(*i)->unparseToString()<<endl;
-        }
-      }
-    }
-  }
-  return map;
-}
-
-// finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
-list<SgPragmaDeclaration*> findPragmaDeclarations(SgNode* root, string pragmaKeyWord) {
-  list<SgPragmaDeclaration*> pragmaList;
-  RoseAst ast(root);
-  for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
-    if(SgPragmaDeclaration* pragmaDecl=isSgPragmaDeclaration(*i)) {
-      string foundPragmaKeyWord=SageInterface::extractPragmaKeyword(pragmaDecl);
-      //cout<<"DEBUG: PRAGMAKEYWORD:"<<foundPragmaKeyWord<<endl;
-      if(pragmaKeyWord==foundPragmaKeyWord || "end"+pragmaKeyWord==foundPragmaKeyWord) {
-        pragmaList.push_back(pragmaDecl);
-      }
-    }
-  }
-  return pragmaList;
 }
 
 void CodeThornLanguageRestrictor::initialize() {
@@ -157,62 +115,6 @@ void CodeThornLanguageRestrictor::initialize() {
 
 }
 
-bool isInsideOmpParallelFor(SgNode* node, ForStmtToOmpPragmaMap& forStmtToPragmaMap) {
-  while(!isSgForStatement(node)||isSgProject(node))
-    node=node->get_parent();
-  ROSE_ASSERT(!isSgProject(node));
-  // assuming only omp parallel for exist
-  return forStmtToPragmaMap.find(isSgForStatement(node))!=forStmtToPragmaMap.end();
-}
-
-LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapping, Labeler* labeler) {
-  cout<<"INFO: loop info set and determine iteration vars."<<endl;
-  ForStmtToOmpPragmaMap forStmtToPragmaMap=createOmpPragmaForStmtMap(root);
-  cout<<"INFO: found "<<forStmtToPragmaMap.size()<<" omp/simd loops."<<endl;
-  LoopInfoSet loopInfoSet;
-  RoseAst ast(root);
-  AstMatching m;
-  string matchexpression="SgForStatement(_,_,SgPlusPlusOp($ITERVAR=SgVarRefExp),..)";
-  MatchResult r=m.performMatching(matchexpression,root);
-  for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
-    SgVarRefExp* node=isSgVarRefExp((*i)["$ITERVAR"]);
-    ROSE_ASSERT(node);
-    //cout<<"DEBUG: MATCH: "<<node->unparseToString()<<astTermWithNullValuesToString(node)<<endl;
-    LoopInfo loopInfo;
-    loopInfo.iterationVarId=variableIdMapping->variableId(node);
-    loopInfo.iterationVarType=isInsideOmpParallelFor(node,forStmtToPragmaMap)?ITERVAR_PAR:ITERVAR_SEQ;
-    SgNode* forNode=0; //(*i)["$FORSTMT"];
-    // WORKAROUND 1
-    // TODO: investigate why the for pointer is not stored in the same match-result
-    if(forNode==0) {
-      forNode=node; // init
-      while(!isSgForStatement(forNode)||isSgProject(forNode))
-        forNode=forNode->get_parent();
-    }
-    ROSE_ASSERT(!isSgProject(forNode));
-    loopInfo.forStmt=isSgForStatement(forNode);
-    if(loopInfo.forStmt) {
-      const SgStatementPtrList& stmtList=loopInfo.forStmt->get_init_stmt();
-      ROSE_ASSERT(stmtList.size()==1);
-      loopInfo.initStmt=stmtList[0];
-      loopInfo.condExpr=loopInfo.forStmt->get_test_expr();
-      loopInfo.computeLoopLabelSet(labeler);
-      loopInfo.computeOuterLoopsVarIds(variableIdMapping);
-    } else {
-      cerr<<"WARNING: no for statement found."<<endl;
-      if(forNode) {
-        cerr<<"for-loop:"<<forNode->unparseToString()<<endl;
-      } else {
-        cerr<<"for-loop: 0"<<endl;
-      }
-    }
-    loopInfoSet.push_back(loopInfo);
-  }
-  cout<<"INFO: found "<<forStmtToPragmaMap.size()<<" omp/simd loops."<<endl;
-  cout<<"INFO: found "<<Specialization::numParLoops(loopInfoSet,variableIdMapping)<<" parallel loops."<<endl;
-  return loopInfoSet;
-}
-
 class TermRepresentation : public DFAstAttribute {
 public:
   TermRepresentation(SgNode* node) : _node(node) {}
@@ -229,44 +131,6 @@ void attachTermRepresentation(SgNode* node) {
       stmt->setAttribute("codethorn-term-representation",ara);
     }
   }
-}
-
-string readableruntime(double timeInMilliSeconds) {
-  stringstream s;
-  double time=timeInMilliSeconds;
-  s << std::fixed << std::setprecision(2); // 2 digits past decimal point.
-  if(time<1000.0) {
-    s<<time<<" ms";
-    return s.str();
-  } else {
-    time=time/1000;
-  }
-  if(time<60) {
-    s<<time<<" secs"; 
-    return s.str();
-  } else {
-    time=time/60;
-  }
-  if(time<60) {
-    s<<time<<" mins"; 
-    return s.str();
-  } else {
-    time=time/60;
-  }
-  if(time<24) {
-    s<<time<<" hours"; 
-    return s.str();
-  } else {
-    time=time/24;
-  }
-  if(time<31) {
-    s<<time<<" days"; 
-    return s.str();
-  } else {
-    time=time/(((double)(365*3+366))/12*4);
-  }
-  s<<time<<" months"; 
-  return s.str();
 }
 
 static Analyzer* global_analyzer=0;
@@ -988,7 +852,7 @@ int main( int argc, char * argv[] ) {
   // currently not used, but may be revived to properly handle new annotation
   SgNode* fragmentStartNode=0;
   if(option_pragma_name!="") {
-    list<SgPragmaDeclaration*> pragmaDeclList=findPragmaDeclarations(root, option_pragma_name);
+    list<SgPragmaDeclaration*> pragmaDeclList=EquivalenceChecking::findPragmaDeclarations(root, option_pragma_name);
     if(pragmaDeclList.size()==0) {
       cerr<<"Error: pragma "<<option_pragma_name<<" marking the fragment not found."<<endl;
       exit(1);
@@ -1352,7 +1216,7 @@ int main( int argc, char * argv[] ) {
     if(boolOptions["verify-update-sequence-race-conditions"]) {
       SgNode* root=analyzer.startFunRoot;
       VariableId parallelIterationVar;
-      LoopInfoSet loopInfoSet=determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
+      LoopInfoSet loopInfoSet=EquivalenceChecking::determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
       cout<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
       Specialization::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
       timer.start();
@@ -1404,7 +1268,7 @@ int main( int argc, char * argv[] ) {
   }
   cout << "=============================================================="<<endl;
   cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
-  cout << "Time total           : "<<color("green")<<readableruntime(totalRunTime)<<color("white")<<endl;
+  cout << "Time total           : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
   cout << "=============================================================="<<endl;
   cout <<color("normal");
   //printAnalyzerStatistics(analyzer, totalRunTime, "STG generation and assertion analysis complete");
@@ -1427,22 +1291,22 @@ int main( int argc, char * argv[] ) {
         <<constraintSetsBytes<<", "
         <<totalMemory<<endl;
     text<<"Runtime(readable),"
-        <<readableruntime(frontEndRunTime)<<", "
-        <<readableruntime(initRunTime)<<", "
-        <<readableruntime(analysisRunTime)<<", "
-        <<readableruntime(verifyUpdateSequenceRaceConditionRunTime)<<", "
-        <<readableruntime(arrayUpdateExtractionRunTime)<<", "
-        <<readableruntime(arrayUpdateSsaNumberingRunTime)<<", "
-        <<readableruntime(sortingAndIORunTime)<<", "
-        <<readableruntime(totalRunTime)<<", "
-        <<readableruntime(extractAssertionTracesTime)<<", "
-        <<readableruntime(determinePrefixDepthTime)<<", "
-        <<readableruntime(totalInputTracesTime)<<", "
-        <<readableruntime(infPathsOnlyTime)<<", "
-        <<readableruntime(stdIoOnlyTime)<<", "
-        <<readableruntime(spotLtlAnalysisTime)<<", "
-        <<readableruntime(totalLtlRunTime)<<", "
-        <<readableruntime(overallTime)<<endl;
+        <<CodeThorn::readableruntime(frontEndRunTime)<<", "
+        <<CodeThorn::readableruntime(initRunTime)<<", "
+        <<CodeThorn::readableruntime(analysisRunTime)<<", "
+        <<CodeThorn::readableruntime(verifyUpdateSequenceRaceConditionRunTime)<<", "
+        <<CodeThorn::readableruntime(arrayUpdateExtractionRunTime)<<", "
+        <<CodeThorn::readableruntime(arrayUpdateSsaNumberingRunTime)<<", "
+        <<CodeThorn::readableruntime(sortingAndIORunTime)<<", "
+        <<CodeThorn::readableruntime(totalRunTime)<<", "
+        <<CodeThorn::readableruntime(extractAssertionTracesTime)<<", "
+        <<CodeThorn::readableruntime(determinePrefixDepthTime)<<", "
+        <<CodeThorn::readableruntime(totalInputTracesTime)<<", "
+        <<CodeThorn::readableruntime(infPathsOnlyTime)<<", "
+        <<CodeThorn::readableruntime(stdIoOnlyTime)<<", "
+        <<CodeThorn::readableruntime(spotLtlAnalysisTime)<<", "
+        <<CodeThorn::readableruntime(totalLtlRunTime)<<", "
+        <<CodeThorn::readableruntime(overallTime)<<endl;
     text<<"Runtime(ms),"
         <<frontEndRunTime<<", "
         <<initRunTime<<", "
@@ -1761,7 +1625,7 @@ void CodeThorn::printAnalyzerStatistics(Analyzer& analyzer, double totalRunTime,
   cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
   cout << "=============================================================="<<endl;
   cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
-  cout << "Time total           : "<<color("green")<<readableruntime(totalRunTime)<<color("white")<<endl;
+  cout << "Time total           : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
   cout << "=============================================================="<<endl;
   cout <<color("normal");
 }
