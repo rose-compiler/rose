@@ -89,6 +89,7 @@ RiscOperators::get_important_registers()
         important_registers.push_back(*dictionary->lookup("ebp"));
         important_registers.push_back(*dictionary->lookup("esi"));
         important_registers.push_back(*dictionary->lookup("edi"));
+        important_registers.push_back(*dictionary->lookup("eip"));
 
         // Segment registers
         important_registers.push_back(*dictionary->lookup("cs"));
@@ -115,6 +116,27 @@ RiscOperators::get_important_registers()
         important_registers.push_back(*dictionary->lookup("vif"));
         important_registers.push_back(*dictionary->lookup("vip"));
         important_registers.push_back(*dictionary->lookup("id"));
+
+        // Floating point stuff, probably not handled too well yet.
+        important_registers.push_back(*dictionary->lookup("fpstatus"));
+        important_registers.push_back(*dictionary->lookup("fpctl"));
+        important_registers.push_back(*dictionary->lookup("mxcsr"));
+        important_registers.push_back(*dictionary->lookup("mm0"));
+        important_registers.push_back(*dictionary->lookup("mm1"));
+        important_registers.push_back(*dictionary->lookup("mm2"));
+        important_registers.push_back(*dictionary->lookup("mm3"));
+        important_registers.push_back(*dictionary->lookup("mm4"));
+        important_registers.push_back(*dictionary->lookup("mm5"));
+        important_registers.push_back(*dictionary->lookup("mm6"));
+        important_registers.push_back(*dictionary->lookup("mm7"));
+        important_registers.push_back(*dictionary->lookup("xmm0"));
+        important_registers.push_back(*dictionary->lookup("xmm1"));
+        important_registers.push_back(*dictionary->lookup("xmm2"));
+        important_registers.push_back(*dictionary->lookup("xmm3"));
+        important_registers.push_back(*dictionary->lookup("xmm4"));
+        important_registers.push_back(*dictionary->lookup("xmm5"));
+        important_registers.push_back(*dictionary->lookup("xmm6"));
+        important_registers.push_back(*dictionary->lookup("xmm7"));
     }
     return important_registers;
 }
@@ -1361,6 +1383,7 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
     if (!bb)
         return 0;
     std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(bb);
+#if 0 // [Robb Matzke 2015-12-23]: doesn't handle HLT, INT, INT3, REP, etc.
     operators->reset();
     for (size_t i=0; i<insns.size(); ++i) {
         SgAsmInstruction *insn = insns[i];
@@ -1393,6 +1416,23 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
             RiscOperators::Indent indent2(operators);
             operators->emit_changed_state(o);
         }
+
+        // x86 HLT and INT need special handling
+        if (isSgAsmX86Instruction(insn) &&
+            (isSgAsmX86Instruction(insn)->get_kind() == x86_hlt ||
+             isSgAsmX86Instruction(insn)->get_kind() == x86_int ||
+             isSgAsmX86Instruction(insn)->get_kind() == x86_int3)) {
+            {
+                RiscOperators::Indent indent2(operators);
+                o <<operators->prefix() <<"br label %L_" <<StringUtility::addrToString(insn->get_address()) <<"_insn\n";
+            }
+            o <<operators->prefix() <<"L_" <<StringUtility::addrToString(insn->get_address()) <<"_insn:\n";
+            {
+                RiscOperators::Indent indent2(operators);
+                o <<operators->prefix() <<"br label %L_" <<StringUtility::addrToString(insn->get_address()) <<"_insn\n";
+            }
+            return insns.size();
+        }
     }
 
     if (!insns.empty()) {
@@ -1400,6 +1440,30 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
         operators->emit_changed_state(o);
         operators->emit_next_eip(o, insns.back());
     }
+#else
+    o <<"\n" <<operators->prefix() <<"; Basic block " <<StringUtility::addrToString(bb->get_address()) <<"\n";
+    BOOST_FOREACH (SgAsmInstruction *insn, insns) {
+        o <<operators->prefix() <<operators->addr_label(insn->get_address()) <<":    ; " <<unparseInstruction(insn) <<"\n";
+        try {
+            operators->reset();
+            dispatcher->processInstruction(insn);
+        } catch (const BaseSemantics::Exception &e) {
+            if (quiet_errors) {
+                o <<operators->prefix() <<";;ERROR: " <<e <<"\n";
+            } else {
+                throw;
+            }
+        }
+        {
+            RiscOperators::Indent indent2(operators);
+            ExpressionPtr t1 = SymbolicExpr::makeInteger(32, insn->get_address());
+            o <<operators->prefix() <<"store " <<operators->llvm_integer_type(32) <<" " <<operators->llvm_term(t1)
+              <<", " <<operators->llvm_integer_type(32) <<"* @eip\n";
+            operators->emit_changed_state(o);
+            operators->emit_next_eip(o, insn);
+        }
+    }
+#endif
     return insns.size();
 }
 
@@ -1479,8 +1543,13 @@ Transcoder::transcodeInterpretation(SgAsmInterpretation *interp, std::ostream &o
     o <<"; Register declarations\n";
     emitFilePrologue(o);
 
+#if 0
+    // [Robb Matzke 2015-12-22]: Doesn't seem to be needed for LLVM 3.5.0, and in fact generates errors like:
+    //   invalid redefinition of function 'L_0x08048278__init'
+    // for each line emitted here.
     o <<"\n; Function declarations\n";
     emitFunctionDeclarations(interp, o);
+#endif
 
     std::vector<SgAsmFunction*> functions = SageInterface::querySubTree<SgAsmFunction>(interp);
     for (size_t i=0; i<functions.size(); ++i) {
