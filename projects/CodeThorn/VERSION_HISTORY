@@ -105,7 +105,12 @@ V1.7 2015-12-xx in preparation
       --ltl-show-node-detail
       --ltl-collapsed-graph
       --semantic-explosion
+      --semantic-elimination
   * removed solvers 1,2,3,6,7 (remaining: 4,5,8,9,10)
-  * added command line option --annotate-terms
+  * removed Analyzer functions:
+    void Analyzer::semanticEliminationOfTransitions()
+    int Analyzer::semanticEliminationOfSelfInInTransitions();
+    int Analyzer::semanticEliminationOfDeadStates();
+    int Analyzer::semanticFusionOfInInTransitions();
   * bugfixes:
     [in preparation]

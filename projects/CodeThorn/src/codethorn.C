@@ -14,8 +14,8 @@
 #include "Timer.h"
 #include <cstdio>
 #include <cstring>
-#include <boost/program_options.hpp>
 #include <map>
+#include <boost/program_options.hpp>
 #include "InternalChecks.h"
 #include "AstAnnotator.h"
 #include "AstTerm.h"
@@ -29,7 +29,6 @@
 #include "AnalysisAbstractionLayer.h"
 #include "ArrayElementAccessData.h"
 #include "Specialization.h"
-#include <map>
 #include "PragmaHandler.h"
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
@@ -366,7 +365,6 @@ int main( int argc, char * argv[] ) {
     ("precision-exact-constraints",po::value< string >(),
      "(experimental) use precise constraint extraction [=yes|no]")
     ("semantic-fold",po::value< string >(),"compute semantically folded state transition graph [=yes|no]")
-    ("semantic-elimination",po::value< string >(),"eliminate input-input transitions in STG [=yes|no]")
     ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
     ("report-semantic-fold",po::value< string >(),"report each folding operation with the respective number of estates. [=yes|no]")
     ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation (experimental)")
@@ -487,7 +485,6 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("precision-exact-constraints",false);
   boolOptions.registerOption("tg-ltl-reduced",false);
   boolOptions.registerOption("semantic-fold",false);
-  boolOptions.registerOption("semantic-elimination",false);
   boolOptions.registerOption("post-semantic-fold",false);
   boolOptions.registerOption("report-semantic-fold",false);
   boolOptions.registerOption("eliminate-arrays",false);
@@ -798,8 +795,6 @@ int main( int argc, char * argv[] ) {
         || string(argv[i]).find("--threads" )==0
         || string(argv[i]).find("--display-diff")==0
         || string(argv[i]).find("--input-values")==0
-        || string(argv[i]).find("--dot-io-stg")==0
-        || string(argv[i]).find("--dot-io-stg-forced-top")==0
         || string(argv[i]).find("--csv-ltl")==0
         || string(argv[i]).find("--spot-stg")==0
         || string(argv[i]).find("--dump-sorted")==0
@@ -851,10 +846,6 @@ int main( int argc, char * argv[] ) {
   if(args.count("error-function")) {
     string errorFunctionName=args["error-function"].as<string>();
     analyzer.setExternalErrorFunctionName(errorFunctionName);
-  }
-
-  if(boolOptions["semantic-elimination"]) {
-    boolOptions.registerOption("semantic-fold",true);
   }
 
   analyzer.setTreatStdErrLikeFailedAssert(boolOptions["stderr-like-failed-assert"]);
@@ -1063,10 +1054,6 @@ int main( int argc, char * argv[] ) {
   if(boolOptions["post-semantic-fold"]) {
     cout << "Performing post semantic folding (this may take some time):"<<endl;
     analyzer.semanticFoldingOfTransitionGraph();
-  }
-  if(boolOptions["semantic-elimination"]) {
-    cout << "Performing post semantic elimination of transitions (this may take some time):"<<endl;
-    analyzer.semanticEliminationOfTransitions();
   }
 
   double analysisRunTime=timer.getElapsedTimeInMilliSec();

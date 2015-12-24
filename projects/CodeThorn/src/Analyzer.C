@@ -2329,112 +2329,6 @@ string Analyzer::generateSpotSTG() {
   return ss.str();
 }
 
-int Analyzer::semanticEliminationOfSelfInInTransitions() {
-  //cout<<"STATUS: eliminating In-In-Self Transitions."<<endl;
-  set<const Transition*> transitionsToEliminate;
-  int eliminated;
-  transitionsToEliminate.clear();
-  eliminated=0;
-  for(TransitionGraph::iterator i=transitionGraph.begin();
-      i!=transitionGraph.end();
-      ++i) {
-    const Transition* t=*i;
-    if((t->source==t->target)
-       &&
-       (getLabeler()->isStdInLabel(t->source->label()))
-       &&
-       (getLabeler()->isStdInLabel(t->target->label())) ) {
-      // found in-in edge
-      transitionsToEliminate.insert(t);
-    }
-  }
-  for(set<const Transition*>::iterator i=transitionsToEliminate.begin();
-      i!=transitionsToEliminate.end();
-      ++i) {
-    transitionGraph.erase(**i);
-    eliminated++;
-  }
-  //cout<<"STATUS: eliminated "<<eliminated<<" In-In-Self Transitions."<<endl;
-  return eliminated;
-}
-
-int Analyzer::semanticEliminationOfDeadStates() {
-  set<const EState*> toEliminate;
-  for(EStateSet::const_iterator i=estateSet.begin();
-      i!=estateSet.end();
-      ++i) {
-    if(transitionGraph.outEdges(*i).size()==0 && (*i)->io.isStdInIO()) {
-      toEliminate.insert(*i);
-    }
-  }
-  for(set<const EState*>::const_iterator i=toEliminate.begin();
-    i!=toEliminate.end();
-      ++i) {
-    // eliminate node in estateSet (only because LTL is using it)
-    transitionGraph.eliminateEState(*i);
-    estateSet.erase(const_cast<EState*>(*i));
-  }
-  return toEliminate.size();
-}
-int Analyzer::semanticFusionOfInInTransitions() {
-  set<const EState*> toReduce;
-  for(TransitionGraph::iterator i=transitionGraph.begin();
-      i!=transitionGraph.end();
-      ++i) {
-    if(((*i)->source->io.isStdInIO())
-       &&
-       ((*i)->target->io.isStdInIO())
-       &&
-       ((*i)->source!=(*i)->target)
-       ) {
-      // found in-in edge; fuse source and target state into target state (VERY different to reduction!)
-      // 1) all in edges of source become in-edges of target
-      // 2) all out edges of source become out-edges of target
-      // 3) eliminate source
-      set<Transition> newTransitions;
-      const EState* remapped=(*i)->target;
-      TransitionPtrSet in=transitionGraph.inEdges((*i)->source);
-      for(TransitionPtrSet::iterator j=in.begin();j!=in.end();++j) {
-        newTransitions.insert(Transition((*j)->source,
-                                         Edge((*j)->source->label(),EDGE_PATH,remapped->label()),
-                                         remapped));
-      }
-      TransitionPtrSet out=transitionGraph.outEdges((*i)->source);
-      for(TransitionPtrSet::iterator j=out.begin();j!=out.end();++j) {
-        newTransitions.insert(Transition(remapped,
-                                         Edge(remapped->label(),EDGE_PATH,(*j)->target->label()),
-                                         (*j)->target));
-      }
-      for(set<Transition>::iterator k=newTransitions.begin();k!=newTransitions.end();++k) {
-        transitionGraph.add(*k);
-        //assert(find(*k)!=end());
-      }
-      transitionGraph.eliminateEState((*i)->source);
-      return 1;
-    }
-  }
-  //cout<<"STATUS: Eliminated "<<elim<<" in-in transitions."<<endl;
-  //return toReduce.size();
-  return 0;
-}
-
-void Analyzer::semanticEliminationOfTransitions() {
-  cout << "STATUS: (Experimental) semantic elimination of transitions ... ";
-  int elim;
-  do {
-    elim=0;
-    assert(transitionGraph.checkConsistency());
-    elim+=semanticEliminationOfSelfInInTransitions();
-    elim+=semanticEliminationOfDeadStates();
-    // this function does not work in general yet
-    // probably because of self-edges
-    elim+=semanticFusionOfInInTransitions();
-    assert(transitionGraph.checkConsistency());
-  } while (elim>0);
-  cout << "done."<<endl;
-  return;
-}
-
 int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
 #ifdef RERS_SPECIALIZATION
   if(boolOptions["rers-binary"]) {
@@ -2459,7 +2353,6 @@ int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
   ss>>num;
   return num;
 }
-
 
 void set_finished(vector<bool>& v, bool val) {
   ROSE_ASSERT(v.size()>0);
