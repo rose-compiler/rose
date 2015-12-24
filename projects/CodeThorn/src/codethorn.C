@@ -384,7 +384,6 @@ int main( int argc, char * argv[] ) {
     ("eliminate-arrays",po::value< string >(), "transform all arrays into single variables.")
     ("annotate-terms",po::value< string >(),"annotate term representation of expressions in unparsed program.")
     ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
-    ("rersformat",po::value< int >(),"Set year of rers format (2012, 2013).")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
     ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
     ("max-transitions-forced-top",po::value< int >(),"same as max-transitions-forced-top1 (default).")
@@ -597,15 +596,6 @@ int main( int argc, char * argv[] ) {
     for(list<int>::iterator i=intList.begin();i!=intList.end();++i) {
       analyzer.addInputSequenceValue(*i);
     }
-  }
-
-  if(args.count("rersformat")) {
-    int year=args["rersformat"].as<int>();
-    if(year==2012)
-      resultsFormat=RF_RERS2012;
-    if(year==2013)
-      resultsFormat=RF_RERS2013;
-    // otherwise it remains RF_UNKNOWN
   }
 
   if(args.count("exploration-mode")) {

@@ -8,7 +8,6 @@ using namespace std;
 /////////////////////////////////////////////////
 boost::program_options::variables_map args;
 BoolOptions boolOptions;
-ResultsFormat resultsFormat=RF_RERS2012;
 
 /////////////////////////////////////////////////
 
