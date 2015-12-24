@@ -361,13 +361,12 @@ int main( int argc, char * argv[] ) {
     ("tg2-estate-properties", po::value< string >(),"transition graph 2: visualize all estate-properties [=yes|no]")
     ("tg2-estate-predicate", po::value< string >(), "transition graph 2: show estate as predicate [=yes|no]")
     ("tg-trace", po::value< string >(), "generate STG computation trace [=filename]")
+    ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
     ("colors",po::value< string >(),"use colors in output [=yes|no]")
     ("precision-exact-constraints",po::value< string >(),
      "(experimental) use precise constraint extraction [=yes|no]")
-    ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
     ("semantic-fold",po::value< string >(),"compute semantically folded state transition graph [=yes|no]")
     ("semantic-elimination",po::value< string >(),"eliminate input-input transitions in STG [=yes|no]")
-    ("semantic-explosion",po::value< string >(),"semantic explosion of input states (requires folding and elimination) [=yes|no]")
     ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
     ("report-semantic-fold",po::value< string >(),"report each folding operation with the respective number of estates. [=yes|no]")
     ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation (experimental)")
@@ -378,11 +377,6 @@ int main( int argc, char * argv[] ) {
     ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
     ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
     ("solver",po::value< int >(),"Set solver <arg> to use (one of 1,2,3).")
-    ("ltl-verbose",po::value< string >(),"LTL verifier: print log of all derivations.")
-    ("ltl-output-dot",po::value< string >(),"LTL visualization: generate dot output.")
-    ("ltl-show-derivation",po::value< string >(),"LTL visualization: show derivation in dot output.")
-    ("ltl-show-node-detail",po::value< string >(),"LTL visualization: show node detail in dot output.")
-    ("ltl-collapsed-graph",po::value< string >(),"LTL visualization: show collapsed graph in dot output.")
     ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
     ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
     ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
@@ -494,7 +488,6 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("tg-ltl-reduced",false);
   boolOptions.registerOption("semantic-fold",false);
   boolOptions.registerOption("semantic-elimination",false);
-  boolOptions.registerOption("semantic-explosion",false);
   boolOptions.registerOption("post-semantic-fold",false);
   boolOptions.registerOption("report-semantic-fold",false);
   boolOptions.registerOption("eliminate-arrays",false);
@@ -506,11 +499,6 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("annotate-terms",false);
   boolOptions.registerOption("generate-assertions",false);
 
-  boolOptions.registerOption("ltl-output-dot",false);
-  boolOptions.registerOption("ltl-verbose",false);
-  boolOptions.registerOption("ltl-show-derivation",true);
-  boolOptions.registerOption("ltl-show-node-detail",true);
-  boolOptions.registerOption("ltl-collapsed-graph",false);
   boolOptions.registerOption("input-values-as-constraints",false);
 
   boolOptions.registerOption("arith-top",false);
@@ -869,11 +857,6 @@ int main( int argc, char * argv[] ) {
     boolOptions.registerOption("semantic-fold",true);
   }
 
-  if(boolOptions["semantic-explosion"]) {
-    boolOptions.registerOption("semantic-fold",true);
-    //boolOptions.registerOption("semantic-elimination",true);
-  }
-
   analyzer.setTreatStdErrLikeFailedAssert(boolOptions["stderr-like-failed-assert"]);
 
   // Build the AST used by ROSE
@@ -1126,29 +1109,15 @@ int main( int argc, char * argv[] ) {
     cout << "=============================================================="<<endl;
   }
   if(boolOptions["tg-ltl-reduced"]) {
-#if 1
     analyzer.stdIOFoldingOfTransitionGraph();
-#else
-    cout << "(Experimental) Reducing transition graph ..."<<endl;
-    set<const EState*> xestates=analyzer.nonLTLRelevantEStates();
-    cout << "Size of transition graph before reduction: "<<analyzer.getTransitionGraph()->size()<<endl;
-    cout << "Number of EStates to be reduced: "<<xestates.size()<<endl;
-    analyzer.getTransitionGraph()->reduceEStates(xestates);
-#endif
     cout << "Size of transition graph after reduction : "<<analyzer.getTransitionGraph()->size()<<endl;
-    cout << "=============================================================="<<endl;
   }
   if(boolOptions["eliminate-stg-back-edges"]) {
     int numElim=analyzer.getTransitionGraph()->eliminateBackEdges();
     cout<<"STATUS: eliminated "<<numElim<<" STG back edges."<<endl;
   }
 
-  // TODO: reachability in presence of semantic folding
-  //  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
-    analyzer.reachabilityResults.printResultsStatistics();
-    //  } else {
-    //printAssertStatistics(analyzer,sageProject);
-    //}
+  analyzer.reachabilityResults.printResultsStatistics();
   cout << "=============================================================="<<endl;
 
   long pstateSetSize=analyzer.getPStateSet()->size();
@@ -1181,14 +1150,6 @@ int main( int argc, char * argv[] ) {
   long eStateSetSizeInf = 0;
   long transitionGraphSizeInf = 0;
   long eStateSetSizeStgInf = 0;
-  //long numOfconstraintSetsInf = 0;
-  //long numOfStdinEStatesInf = 0;
-  //long numOfStdoutVarEStatesInf = 0;
-  //long numOfStdoutConstEStatesInf = 0;
-  //long numOfStdoutEStatesInf = 0;
-  //long numOfStderrEStatesInf = 0;
-  //long numOfFailedAssertEStatesInf = 0;
-  //long numOfConstEStatesInf = 0;
   double infPathsOnlyTime = 0;
   double stdIoOnlyTime = 0;
 
@@ -1203,14 +1164,6 @@ int main( int argc, char * argv[] ) {
     eStateSetSizeInf = analyzer.getEStateSet()->size();
     transitionGraphSizeInf = analyzer.getTransitionGraph()->size();
     eStateSetSizeStgInf = (analyzer.getTransitionGraph())->estateSet().size();
-    //numOfconstraintSetsInf=analyzer.getConstraintSetMaintainer()->numberOf();
-    //numOfStdinEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
-    //numOfStdoutVarEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
-    //numOfStdoutConstEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
-    //numOfStderrEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
-    //numOfFailedAssertEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
-    //numOfConstEStatesInf=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
-    //numOfStdoutEStatesInf=numOfStdoutVarEStatesInf+numOfStdoutConstEStatesInf;
   }
   
   if(boolOptions["std-in-only"]) {
@@ -1251,19 +1204,10 @@ int main( int argc, char * argv[] ) {
         eStateSetSizeInf = analyzer.getEStateSet()->size();
         transitionGraphSizeInf = analyzer.getTransitionGraph()->size();
         eStateSetSizeStgInf = (analyzer.getTransitionGraph())->estateSet().size();
-        //numOfconstraintSetsInf=analyzer.getConstraintSetMaintainer()->numberOf();
-        //numOfStdinEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
-        //numOfStdoutVarEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
-        //numOfStdoutConstEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
-        //numOfStderrEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
-        //numOfFailedAssertEStatesInf=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
-        //numOfConstEStatesInf=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
-        //numOfStdoutEStatesInf=numOfStdoutVarEStatesInf+numOfStdoutConstEStatesInf;
       }
       if (!boolOptions["std-io-only"]) {
         cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode)."<<endl;
         timer.start();
-        //analyzer.removeNonIOStates();  //old version, works correclty but has a long execution time
         analyzer.reduceGraphInOutWorklistOnly(true, true, boolOptions["keep-error-states"]);
         stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
         printStgSize(analyzer.getTransitionGraph(), "after reducing non-I/O states");

@@ -154,7 +154,6 @@ namespace CodeThorn {
     int semanticEliminationOfDeadStates();
     int semanticFusionOfInInTransitions();
     // requires semantically reduced STG
-    int semanticExplosionOfInputNodesFromOutputNodeConstraints();
     bool checkEStateSet();
     bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
@@ -162,6 +161,7 @@ namespace CodeThorn {
     void deleteNonRelevantEStates();
 
     // bypasses and removes all states that are not standard I/O states
+    // (old version, works correctly, but has a long execution time)
     void removeNonIOStates();
     // bypasses and removes all states that are not stdIn/stdOut/stdErr/failedAssert states
     void reduceToObservableBehavior();

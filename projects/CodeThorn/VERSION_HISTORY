@@ -99,6 +99,12 @@ V1.7 2015-12-xx in preparation
       --attach-pointer-expr-lists
       --annotate results
       --minimize-states
+      --ltl-verbose
+      --ltl-output-dot
+      --ltl-show-derivation
+      --ltl-show-node-detail
+      --ltl-collapsed-graph
+      --semantic-explosion
   * removed solvers 1,2,3,4,6,7.
   * added command line option --annotate-terms
   * bugfixes:

@@ -2109,55 +2109,6 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
   } // end of omp pragma
 }
 
-int Analyzer::semanticExplosionOfInputNodesFromOutputNodeConstraints() {
-  set<const EState*> toExplode;
-  // collect input states
-  for(EStateSet::const_iterator i=estateSet.begin();
-      i!=estateSet.end();
-      ++i) {
-    // we require that the unique value is Top; otherwise we use the existing one and do not back-propagate
-    if((*i)->io.isStdInIO() && (*i)->determineUniqueIOValue().isTop()) {
-      toExplode.insert(*i);
-    }
-  }
-  // explode input states
-  for(set<const EState*>::const_iterator i=toExplode.begin();
-      i!=toExplode.end();
-      ++i) {
-    EStatePtrSet predNodes=transitionGraph.pred(*i);
-    EStatePtrSet succNodes=transitionGraph.succ(*i);
-    Label originalLabel=(*i)->label();
-    InputOutput originalIO=(*i)->io;
-    VariableId originalVar=originalIO.var;
-    // eliminate original input node
-    transitionGraph.eliminateEState(*i);
-    estateSet.erase(const_cast<EState*>(*i));
-    // create new edges to and from new input state
-    for(EStatePtrSet::iterator k=succNodes.begin();k!=succNodes.end();++k) {
-      // create new input state      
-      EState newState=**k; // copy all information from following output state
-      newState.setLabel(originalLabel); // overwrite label
-      // convert IO information
-      newState.io.op=InputOutput::STDIN_VAR;
-      newState.io.var=originalVar;
-      // register new EState now
-      const EState* newEStatePtr=processNewOrExisting(newState);
-
-      // create new edge from new input state to output state
-      // since each outgoing edge produces a new input state (if constraint is different)
-      // I create a set of ingoing edges for each outgoing edge (= new inputstate)
-      Edge outEdge(originalLabel,EDGE_PATH,(*k)->label());
-      recordTransition(newEStatePtr,outEdge,(*k)); // new outgoing edge
-      for(EStatePtrSet::iterator j=predNodes.begin();j!=predNodes.end();++j) {
-    //create edge: predecessor->newInputNode
-    Edge inEdge((*j)->label(),EDGE_PATH,originalLabel);
-    recordTransition((*j),inEdge,newEStatePtr); // new ingoing edge
-      }
-    }
-  }
-  return 0;
-}
-
 void Analyzer::pruneLeavesRec() {
   EStatePtrSet states=transitionGraph.estateSet();
   std::set<EState*> workset;
