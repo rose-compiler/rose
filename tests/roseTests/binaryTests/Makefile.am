@@ -769,7 +769,10 @@ llvmTranscoder_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 #-------------- basic test to make sure we can transcode each pre-compiled 32-bit x86 specimen
 
-llvmTranscoder_Specimens = $(elf_exe_x86_specimens) $(pe_exe_x86_specimens)
+# 128-bit registers are not supported, so don't try to test them
+llvmTranscoder_Specimens =						\
+	$(filter-out pentium-xmm,					\
+		$(elf_exe_x86_specimens) $(pe_exe_x86_specimens))
 llvmTranscoder_TestTargets = $(addprefix llvm-xcode-, $(addsuffix .passed, $(llvmTranscoder_Specimens)))
 TEST_TARGETS += $(llvmTranscoder_TestTargets)
 EXTRA_DIST += llvmTranscoder.conf
@@ -802,13 +805,15 @@ llvmAnalysis_Specimens =			\
 	libcall-aa.c				\
 	loops.c					\
 	memdep.c				\
-	postdomfrontier.c			\
 	postdomtree.c				\
 	print-callgraph-sccs.c			\
 	print-cfg-sccs.c			\
 	print-dom-info.c			\
 	print-used-types.c			\
 	scalar-evolution.c
+
+# This appears to not be present for llvm-3.5.0, so don't try to test it.
+#	postdomfrontier.c
 
 llvmAnalysis_TestTargets = $(addprefix llvm-analysis-, $(addsuffix .passed, $(basename $(llvmAnalysis_Specimens))))
 EXTRA_DIST += $(addprefix $(llvmAnalysis_SpecimenDir), $(llvmAnalysis_Specimens))

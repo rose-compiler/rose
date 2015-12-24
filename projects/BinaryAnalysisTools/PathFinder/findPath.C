@@ -590,9 +590,13 @@ buildVirtualCpu(const P2::Partitioner &partitioner) {
         myRegs->insert("path", REG_PATH);
 
         // Where are return values stored?
+        // FIXME[Robb Matzke 2015-12-01]: We need to support returning multiple values. We should be using the new calling
+        // convention analysis to detect these.
         const RegisterDescriptor *r = NULL;
         if ((r = myRegs->lookup("rax")) || (r = myRegs->lookup("eax")) || (r = myRegs->lookup("ax"))) {
             REG_RETURN = *r;
+        } else if ((r = myRegs->lookup("d0"))) {
+            REG_RETURN = *r;                            // m68k also typically has other return registers
         } else {
             ASSERT_not_implemented("function return value register is not implemented for this ISA/ABI");
         }

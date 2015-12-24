@@ -3,7 +3,7 @@
 /* Manually fix generated code to have correct array subscript.  */
 /* Serve as input code for MPI code generation.                  */
 /*****************************************************************/
-
+// copied from rose_laplacian_lite_v4.cpp , Liao 12/11/2015, Liao 12/11/2015, Liao 12/11/2015, Liao 12/11/2015
 // This is the simple version of laplacian.cpp that builds 
 // the smallest reasonable AST.  This simpler AST make it 
 // easier to work with in the context of understanding 
@@ -127,9 +127,9 @@ int main(int argc,char *argv[])
   int ub1 = bxdest .  getHighCorner ()[1];
   int ub2 = bxdest .  getHighCorner ()[2];
 
-  int arraySize_X = bxdest .  size (0);
-  int arraySize_Y = bxdest .  size (1);
-  int arraySize_Z = bxdest .  size (2);
+  int arraySize_X_dest = bxdest .  size (0);
+  int arraySize_Y_dest = bxdest .  size (1);
+  int arraySize_Z_dest = bxdest .  size (2);
 
   int i = 0;
   int k = 0;
@@ -142,14 +142,14 @@ int main(int argc,char *argv[])
 
 // TODO: more fine design for nested parallelism
 // TODO parse the pragmas here  2015-10-26 
-#pragma omp target device(mpi:all) map(to:lb0src, lb1src, lb2src, lb2, ub2,lb1,ub1,lb0,ub0, arraySize_X, arraySize_Y, arraySize_X_src, arraySize_Y_src)\
+#pragma omp target device(mpi:all) map(to:lb0src, lb1src, lb2src, lb2, ub2,lb1,ub1,lb0,ub0, arraySize_X_dest, arraySize_Y_dest, arraySize_Z_dest, arraySize_X_src, arraySize_Y_src, arraySize_Z_src)\
 map(to:sourceDataPointer[lb0src:arraySize_X_src][lb1src:arraySize_Y_src][lb2src:arraySize_Z_src] dist_data(DUPLICATE, DUPLICATE, BLOCK)) \
-map(from:destinationDataPointer[lb0:arraySize_X][lb1:arraySize_Y][lb2:arraySize_Z] dist_data(DUPLICATE, DUPLICATE, BLOCK))
+map(from:destinationDataPointer[lb0:arraySize_X_dest][lb1:arraySize_Y_dest][lb2:arraySize_Z_dest] dist_data(DUPLICATE, DUPLICATE, BLOCK))
 #pragma omp parallel for 
   for (k = lb2; k <= ub2; ++k) { // loop to be distributed must match the dimension being distributed (3rd dimension).
     for (j = lb1; j <= ub1; ++j) {
       for (i = lb0; i <= ub0; ++i) {
-        destinationDataPointer[arraySize_X * (arraySize_Y * k + j) + i] = 
+        destinationDataPointer[arraySize_X_dest * (arraySize_Y_dest * k + j) + i] = 
             sourceDataPointer[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + -1) + (j-lb1src)) + (i-lb0src)] + 
             sourceDataPointer[arraySize_X_src * (arraySize_Y_src * ((k-lb2src) + 1) + (j-lb1src)) + (i-lb0src)] + 
             sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k-lb2src) + ((j-lb1src) + -1)) + (i-lb0src)] + 

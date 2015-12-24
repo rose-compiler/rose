@@ -60,7 +60,8 @@ extern const size_t NO_ID;
 class Organization {
 private:
     bool isSelected_;
-    std::string label_;                             // includes delimiters, "" or <>
+    std::string name_;                                  // name used by GraphViz to identify this object
+    std::string label_;                                 // label shown in rendered graph, includes delimiters, "" or <>
     Attributes attributes_;
     std::string subgraph_;
 public:
@@ -80,6 +81,15 @@ public:
      *  both incident vertices are also selected, and a selected subgraph will appear only if it has at least one selected
      *  vertex. */
     bool isSelected() const { return isSelected_; }
+
+    /** Name for object.
+     *
+     *  This is the name used by GraphViz to denote this object.  If the name is empty, then an ID number is used instead.
+     *
+     * @{ */
+    const std::string &name() const { return name_; }
+    void name(const std::string &s) { name_ = s; }
+    /** @} */
 
     /** Label for object.
      *
@@ -761,6 +771,11 @@ public:
 
 private:
     void init();
+
+    // Give GraphViz identifying names to some vertices. The names assigned by this method are used internally by GraphViz, but
+    // encoding some information into thse names (instead of using integers) is useful mainly if we try to parse the GraphViz
+    // output later --  it gives us a way to relate GraphViz's vertex identifiers back to the original ROSE CFG vertices.
+    void nameVertices();
 };
 
 
@@ -783,6 +798,11 @@ public:
     virtual const FunctionCallGraph& callGraph() const { return cg_; }
     virtual void callGraph(const FunctionCallGraph &cg);
     virtual void highlight(const boost::regex&);
+private:
+    // Give GraphViz identifying names to some vertices. The names assigned by this method are used internally by GraphViz, but
+    // encoding some information into thse names (instead of using integers) is useful mainly if we try to parse the GraphViz
+    // output later --  it gives us a way to relate GraphViz's vertex identifiers back to the original ROSE CFG vertices.
+    void nameVertices();
 };
 
 
@@ -820,7 +840,10 @@ BaseEmitter<G>::emitVertex(std::ostream &out, const typename G::ConstVertexItera
     size_t id = NO_ID;
     if (org.isSelected() && !vmap.getOptional(vertex->id()).assignTo(id)) {
         id = vmap.size();
-        out <<id <<" [ label=" <<org.label() <<" ";
+        std::string name = org.name();
+        if (name.empty())
+            name = StringUtility::numberToString(id);
+        out <<name <<" [ label=" <<org.label() <<" ";
         out <<toString(org.attributes()) <<" ];\n";
     }
     return id;
@@ -833,9 +856,17 @@ BaseEmitter<G>::emitEdge(std::ostream &out, const typename G::ConstEdgeIterator 
     ASSERT_require2(vmap.exists(edge->source()->id()), "edge source vertex has not yet been emitted");
     ASSERT_require2(vmap.exists(edge->target()->id()), "edge target vertex has not yet been emitted");
 
-    out <<vmap[edge->source()->id()] <<" -> " <<vmap[edge->target()->id()]
-        <<" [ label=" <<org.label() <<" "
-        <<toString(org.attributes()) <<" ];\n";
+    size_t sourceId = edge->source()->id();
+    std::string sourceName = vertexOrganization(sourceId).name();
+    if (sourceName.empty())
+        sourceName = StringUtility::numberToString(vmap[sourceId]);
+
+    size_t targetId = edge->target()->id();
+    std::string targetName = vertexOrganization(targetId).name();
+    if (targetName.empty())
+        targetName = StringUtility::numberToString(vmap[targetId]);
+
+    out <<sourceName <<" -> " <<targetName <<" [ label=" <<org.label() <<" " <<toString(org.attributes()) <<" ];\n";
 }
 
 template<class G>
@@ -891,7 +922,11 @@ BaseEmitter<G>::emit(std::ostream &out) const {
     // Emit pseudo edges
     BOOST_FOREACH (const PseudoEdge &edge, pseudoEdges_) {
         if (vertexOrganization(edge.src).isSelected() && vertexOrganization(edge.dst).isSelected()) {
-            out <<vmap[edge.src->id()] <<" -> " <<vmap[edge.dst->id()]
+            std::string sourceName = vertexOrganization(edge.src).name();
+            std::string targetName = vertexOrganization(edge.dst).name();
+            out <<(sourceName.empty() ? StringUtility::numberToString(vmap[edge.src->id()]) : sourceName)
+                <<" -> "
+                <<(targetName.empty() ? StringUtility::numberToString(vmap[edge.dst->id()]) : targetName)
                 <<" [ label=" <<escape(edge.label) <<" ];\n";
         }
     }
