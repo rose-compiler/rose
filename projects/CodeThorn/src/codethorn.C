@@ -1069,11 +1069,6 @@ int main( int argc, char * argv[] ) {
     analyzer.semanticEliminationOfTransitions();
   }
 
-  if(boolOptions["semantic-explosion"]) {
-    cout << "Performing post semantic 'explosion' of output node constraints (this may take some time):"<<endl;
-    analyzer.semanticExplosionOfInputNodesFromOutputNodeConstraints();
-  }
-
   double analysisRunTime=timer.getElapsedTimeInMilliSec();
   cout << "=============================================================="<<endl;
   double extractAssertionTracesTime= 0;

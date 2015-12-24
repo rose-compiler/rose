@@ -306,11 +306,13 @@ ExprAnalyzer* Analyzer::getExprAnalyzer() {
 
 void Analyzer::runSolver() {
   switch(_solver) {
+  case 4: runSolver4();break;
   case 5: runSolver5();break;
   case 8: runSolver8();break;
   case 9: runSolver9();break;
   case 10: runSolver10();break;
-  default: assert(0);
+  default: cerr<<"Error: solver "<<_solver<<" does not exist."<<endl;
+    exit(1);
   }
 }
 
@@ -2476,6 +2478,131 @@ bool all_false(vector<bool>& v) {
   }
   }
   return !res;
+}
+
+// algorithm 4 also records reachability for incomplete STGs (analyzer::reachabilityResults)
+// this solver support semantic folding (solver 5 does not)
+void Analyzer::runSolver4() {
+  //flow.boostify();
+  reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
+  size_t prevStateSetSize=0; // force immediate report at start
+  int analyzedSemanticFoldingNode=0;
+  int threadNum;
+  vector<const EState*> workVector(_numberOfThreadsToUse);
+  int workers=_numberOfThreadsToUse;
+#ifdef _OPENMP
+  omp_set_dynamic(0);     // Explicitly disable dynamic teams
+  omp_set_num_threads(workers);
+#endif
+  cout <<"STATUS: Running parallel solver 4 with "<<workers<<" threads."<<endl;
+  printStatusMessage(true);
+  while(1) {
+    if(_displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
+      printStatusMessage(true);
+      prevStateSetSize=estateSet.size();
+    }
+    if(isEmptyWorkList())
+      break;
+#pragma omp parallel for private(threadNum)
+    for(int j=0;j<workers;++j) {
+#ifdef _OPENMP
+      threadNum=omp_get_thread_num();
+#endif
+      const EState* currentEStatePtr=popWorkList();
+      if(!currentEStatePtr) {
+        //cerr<<"Thread "<<threadNum<<" found empty worklist. Continue without work. "<<endl;
+        assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
+      } else {
+        assert(currentEStatePtr);
+      
+        Flow edgeSet=flow.outEdges(currentEStatePtr->label());
+        //cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
+        for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
+          Edge e=*i;
+          list<EState> newEStateList;
+          newEStateList=transferFunction(e,currentEStatePtr);
+          if(isTerminationRelevantLabel(e.source)) {
+            #pragma omp atomic
+            analyzedSemanticFoldingNode++;
+          }
+
+          //cout << "DEBUG: transfer at edge:"<<e.toString()<<" succ="<<newEStateList.size()<< endl;
+          for(list<EState>::iterator nesListIter=newEStateList.begin();
+              nesListIter!=newEStateList.end();
+              ++nesListIter) {
+            // newEstate is passed by value (not created yet)
+            EState newEState=*nesListIter;
+            assert(newEState.label()!=Labeler::NO_LABEL);
+            if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))&&(!isVerificationErrorEState(&newEState))) {
+              HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
+              const EState* newEStatePtr=pres.second;
+              if(pres.first==true)
+                addToWorkList(newEStatePtr);
+              recordTransition(currentEStatePtr,e,newEStatePtr);
+            }
+	    if((!newEState.constraints()->disequalityExists()) && isVerificationErrorEState(&newEState)) {
+	      // verification error is handled as property 0
+              const EState* newEStatePtr;
+#pragma omp critical(REACHABILITY)
+	      {
+		newEStatePtr=processNewOrExisting(newEState);
+		recordTransition(currentEStatePtr,e,newEStatePtr);        
+		reachabilityResults.reachable(0);
+	      }
+	    } else if((!newEState.constraints()->disequalityExists()) && isFailedAssertEState(&newEState)) {
+              // failed-assert end-state: do not add to work list but do add it to the transition graph
+              const EState* newEStatePtr;
+#pragma omp critical(REACHABILITY)
+                {
+		  newEStatePtr=processNewOrExisting(newEState);
+              recordTransition(currentEStatePtr,e,newEStatePtr);        
+		}              
+              // record reachability
+              int assertCode=reachabilityAssertCode(currentEStatePtr);
+              if(assertCode>=0) {
+#pragma omp critical(REACHABILITY)
+                {
+                  reachabilityResults.reachable(assertCode);
+                }
+	      } else {
+                // assert without label
+	      }
+              
+            }
+          } // end of loop on transfer function return-estates
+        } // just for proper auto-formatting in emacs
+      } // conditional: test if work is available
+    } // worklist-parallel for
+    if(boolOptions["semantic-fold"]) {
+      if(analyzedSemanticFoldingNode>_semanticFoldThreshold) {
+        semanticFoldingOfTransitionGraph();
+        analyzedSemanticFoldingNode=0;
+        prevStateSetSize=estateSet.size();
+      }
+    }
+    if(_displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
+      printStatusMessage(true);
+      prevStateSetSize=estateSet.size();
+    }
+    if(isIncompleteSTGReady()) {
+      // ensure that the STG is folded properly when finished
+      if(boolOptions["semantic-fold"]) {
+        semanticFoldingOfTransitionGraph();
+      }  
+      // we report some information and finish the algorithm with an incomplete STG
+      cout << "-------------------------------------------------"<<endl;
+      cout << "STATUS: finished with incomplete STG (as planned)"<<endl;
+      cout << "-------------------------------------------------"<<endl;
+      return;
+    }
+  } // while
+  // ensure that the STG is folded properly when finished
+  if(boolOptions["semantic-fold"]) {
+    semanticFoldingOfTransitionGraph();
+  }  
+  reachabilityResults.finished(); // sets all unknown entries to NO.
+  printStatusMessage(true);
+  cout << "analysis finished (worklist is empty)."<<endl;
 }
 
 void Analyzer::runSolver5() {

@@ -105,7 +105,7 @@ V1.7 2015-12-xx in preparation
       --ltl-show-node-detail
       --ltl-collapsed-graph
       --semantic-explosion
-  * removed solvers 1,2,3,4,6,7.
+  * removed solvers 1,2,3,6,7 (remaining: 4,5,8,9,10)
   * added command line option --annotate-terms
   * bugfixes:
     [in preparation]
