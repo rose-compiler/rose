@@ -459,7 +459,6 @@ int main( int argc, char * argv[] ) {
     ("cegpra-max-iterations",po::value< int >(),"Select a maximum number of counterexamples anaylzed by cegpra (default: no limit).")
     ("set-stg-incomplete", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
     ("determine-prefix-depth", po::value< string >(), "if possible, display a guarantee about the length of the discovered prefix of possible program traces. [=yes|no]")
-    ("minimize-states", po::value< string >(), "does not store single successor states (minimizes number of states).")
     ;
 
   po::store(po::command_line_parser(argc, argv).
@@ -543,7 +542,6 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("print-update-infos",false);
   boolOptions.registerOption("verify-update-sequence-race-conditions",true);
 
-  boolOptions.registerOption("minimize-states",false);
   boolOptions.registerOption("normalize",true);
 
   boolOptions.processOptions();
@@ -743,10 +741,6 @@ int main( int argc, char * argv[] ) {
     }
   } else {
     analyzer.setPatternSearchExploration(Analyzer::EXPL_DEPTH_FIRST);
-  }
-
-  if(boolOptions["minimize-states"]) {
-    analyzer.setMinimizeStates(true);
   }
 
   int numberOfThreadsToUse=1;

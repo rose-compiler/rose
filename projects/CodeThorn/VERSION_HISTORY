@@ -98,6 +98,7 @@ V1.7 2015-12-xx in preparation
       --post-collapse-stg
       --attach-pointer-expr-lists
       --annotate results
+      --minimize-states
   * removed solvers 1,2,3,4,6,7.
   * added command line option --annotate-terms
   * bugfixes:

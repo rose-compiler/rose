@@ -254,7 +254,6 @@ Analyzer::Analyzer():
   _treatStdErrLikeFailedAssert(false),
   _skipSelectedFunctionCalls(false),
   _explorationMode(EXPL_BREADTH_FIRST),
-  _minimizeStates(false),
   _topifyModeActive(false),
   _iterations(0),
       _approximated_iterations(0),
@@ -2720,7 +2719,6 @@ void Analyzer::runSolver5() {
 
 // solver 8 is used to analyze traces of consecutively added input sequences 
 void Analyzer::runSolver8() {
-  //flow.boostify();
   int workers = 1; //only one thread
 #ifdef RERS_SPECIALIZATION  
   //initialize the global variable arrays in the linked binary version of the RERS problem
@@ -2730,8 +2728,6 @@ void Analyzer::runSolver8() {
   }
 #endif
   while(!isEmptyWorkList()) {
-    bool oneSuccessorOnly=false;
-    EState newEStateBackupForOneSuccessorOnly;
     const EState* currentEStatePtr;
     //solver 8
     assert(estateWorkList.size() == 1);
@@ -2742,13 +2738,11 @@ void Analyzer::runSolver8() {
     }
     assert(currentEStatePtr);
 
-    shortcut:      
-      if(variableValueMonitor.isActive()) {
-        variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
-      }
+    if(variableValueMonitor.isActive()) {
+      variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
+    }
     
     Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-    oneSuccessorOnly=(edgeSet.size()==1);
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
       Edge e=*i;
       list<EState> newEStateList;
@@ -2765,7 +2759,6 @@ void Analyzer::runSolver8() {
           }
         }
       }
-      oneSuccessorOnly=oneSuccessorOnly&&(newEStateList.size()==1);
       // solver 8: only single traces allowed
       assert(newEStateList.size()<=1);
       for(list<EState>::iterator nesListIter=newEStateList.begin();
@@ -2775,11 +2768,6 @@ void Analyzer::runSolver8() {
         EState newEState=*nesListIter;
         assert(newEState.label()!=Labeler::NO_LABEL);
         if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
-          if(oneSuccessorOnly && _minimizeStates && (newEState.io.isNonIO())) {
-            newEStateBackupForOneSuccessorOnly=newEState;
-            currentEStatePtr=&newEStateBackupForOneSuccessorOnly;
-            goto shortcut;
-          }
           HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
           const EState* newEStatePtr=pres.second;
           // maintain the most recent output state. It can be connected with _estateBeforeMissingInput to facilitate

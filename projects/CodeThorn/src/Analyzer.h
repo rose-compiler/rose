@@ -365,7 +365,6 @@ namespace CodeThorn {
     enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST, EXPL_LOOP_AWARE, EXPL_RANDOM_MODE1 };
     void setPatternSearchExploration(ExplorationMode explorationMode) { _patternSearchExplorationMode = explorationMode; };
     void eventGlobalTopifyTurnedOn();
-    void setMinimizeStates(bool minimizeStates) { _minimizeStates=minimizeStates; }
     bool isIncompleteSTGReady();
     bool isPrecise();
     PropertyValueTable reachabilityResults;
@@ -456,7 +455,6 @@ namespace CodeThorn {
     const EState* _estateBeforeMissingInput;
     const EState* _latestOutputEState;
     const EState* _latestErrorEState;
-    bool _minimizeStates;
     bool _topifyModeActive;
     int _iterations;
     int _approximated_iterations;
