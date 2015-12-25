@@ -37,8 +37,9 @@ public:
 protected:
     MemoryCellPtr protocell;                            // prototypical memory cell used for its virtual constructors
     CellList cells;                                     // list of cells in reverse chronological order
-    MemoryCellPtr latest_written_cell;                  // the cell whose value was most recently written to, if any
     bool occlusionsErased_;                             // prune away old cells that are occluded by newer ones.
+private:
+    MemoryCellPtr latestWrittenCell_;                   // the cell whose value was most recently written to, if any
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -117,7 +118,7 @@ public:
 public:
     virtual void clear() ROSE_OVERRIDE {
         cells.clear();
-        latest_written_cell.reset();
+        latestWrittenCell_.reset();
     }
 
     virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
@@ -199,15 +200,8 @@ public:
     virtual CellList scan(const SValuePtr &address, size_t nbits, RiscOperators *addrOps, RiscOperators *valOps,
                           bool &short_circuited/*out*/) const ROSE_DEPRECATED("use the cursor-based scan instead");
 
-    /** Visitor for traversing a cell list. */
-    class Visitor {
-    public:
-        virtual ~Visitor() {}
-        virtual void operator()(MemoryCellPtr&) = 0;
-    };
-
     /** Visit each memory cell. */
-    void traverse(Visitor &visitor);
+    virtual void traverse(MemoryCell::Visitor &visitor);
 
     /** Returns the list of all memory cells.
      * @{ */
@@ -215,8 +209,21 @@ public:
     virtual       CellList& get_cells()       { return cells; }
     /** @} */
 
-    /** Returns the cell most recently written. */
-    virtual MemoryCellPtr get_latest_written_cell() const { return latest_written_cell; }
+    /** Property: Cell most recently written.
+     *
+     * @{ */
+    virtual MemoryCellPtr latestWrittenCell() const {
+        return latestWrittenCell_;
+    }
+    virtual void latestWrittenCell(const MemoryCellPtr &cell) {
+        latestWrittenCell_ = cell;
+    }
+    /** @} */
+
+    // [Robb Matzke 2015-12-26]: deprecated
+    virtual MemoryCellPtr get_latest_written_cell() const ROSE_DEPRECATED("use latestWrittenCell instead") {
+        return latestWrittenCell();
+    }
 
     /** Writers for an address.
      *

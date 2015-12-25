@@ -66,7 +66,8 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
         }
     }
 
-    BaseSemantics::MemoryCellListPtr mstate = BaseSemantics::MemoryCellList::promote(state->get_memory_state());
+    BaseSemantics::MemoryCellListPtr mstate =
+        boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(state->get_memory_state());
     if (mstate) {
         if (!isCloned) {
             state = state->clone();

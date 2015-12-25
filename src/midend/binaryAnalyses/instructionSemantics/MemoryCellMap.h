@@ -79,6 +79,20 @@ public:
      *  Generates a key from a virtual address. The key is used to look up the cell in a map-based container. */
     virtual CellKey generateCellKey(const SValuePtr &address) const = 0;
 
+    /** Visit each memory cell. */
+    virtual void traverse(MemoryCell::Visitor &visitor);
+
+    /** Property: Cell most recently written.
+     *
+     * @{ */
+    virtual MemoryCellPtr latestWrittenCell() const {
+        return latestWrittenCell_;
+    }
+    virtual void latestWrittenCell(const MemoryCellPtr &cell) {
+        latestWrittenCell_ = cell;
+    }
+    /** @} */
+
 public:
     virtual void clear() ROSE_OVERRIDE;
 

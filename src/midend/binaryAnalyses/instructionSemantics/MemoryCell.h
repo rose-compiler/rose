@@ -22,6 +22,13 @@ class MemoryCell: public boost::enable_shared_from_this<MemoryCell> {
 public:
     typedef Sawyer::Container::Set<rose_addr_t> AddressSet; /**< A set of concrete virtual addresses. */
 
+    /** Visitor for traversing a cells. */
+    class Visitor {
+    public:
+        virtual ~Visitor() {}
+        virtual void operator()(MemoryCellPtr&) = 0;
+    };
+
 private:
     SValuePtr address_;                                 // Address of memory cell.
     SValuePtr value_;                                   // Value stored at that address.

@@ -90,9 +90,16 @@ MemoryCellMap::print(std::ostream &out, Formatter &fmt) const {
     BOOST_FOREACH (const MemoryCellPtr &cell, cells.values())
         out <<fmt.get_line_prefix() <<(*cell+fmt) <<"\n";
 }
-    
 
-
+void
+MemoryCellMap::traverse(MemoryCell::Visitor &visitor) {
+    CellMap newMap;
+    BOOST_FOREACH (MemoryCellPtr &cell, cells.values()) {
+        (visitor)(cell);
+        newMap.insert(generateCellKey(cell->get_address()), cell);
+    }
+    cells = newMap;
+}
 
 } // namespace
 } // namespace

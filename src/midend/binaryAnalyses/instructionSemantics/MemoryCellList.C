@@ -60,7 +60,7 @@ MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscO
 
     // Insert the new cell
     cells.push_front(newCell);
-    latest_written_cell = newCell;
+    latestWrittenCell_ = newCell;
 }
 
 bool
@@ -98,8 +98,8 @@ MemoryCellList::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, Risc
         // Merge cell values
         if (thisCells.empty()) {
             writeMemory(address, otherValue, addrOps, valOps);
-            latest_written_cell->setWriters(otherWriters);
-            latest_written_cell->ioProperties() = otherProps;
+            latestWrittenCell_->setWriters(otherWriters);
+            latestWrittenCell_->ioProperties() = otherProps;
             changed = true;
         } else {
             bool cellChanged = false;
@@ -122,8 +122,8 @@ MemoryCellList::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, Risc
                 if (!mergedValue)
                     mergedValue = thisValue->copy();
                 writeMemory(address, mergedValue, addrOps, valOps);
-                latest_written_cell->setWriters(mergedWriters);
-                latest_written_cell->ioProperties() = mergedProps;
+                latestWrittenCell_->setWriters(mergedWriters);
+                latestWrittenCell_->ioProperties() = mergedProps;
                 changed = true;
             }
         }
@@ -262,7 +262,7 @@ MemoryCellList::scan(const BaseSemantics::SValuePtr &addr, size_t nbits, RiscOpe
 }
 
 void
-MemoryCellList::traverse(Visitor &visitor)
+MemoryCellList::traverse(MemoryCell::Visitor &visitor)
 {
     for (CellList::iterator ci=cells.begin(); ci!=cells.end(); ++ci)
         (visitor)(*ci);
