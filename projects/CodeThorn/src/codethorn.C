@@ -199,141 +199,201 @@ int main( int argc, char * argv[] ) {
     timer.start();
 
   // Command line option handling.
-  po::options_description desc
-    ("CodeThorn\n"
-     "Written by Markus Schordan, Adrian Prantl, and Marc Jasper\n"
-     "Supported options");
+    po::options_description visibleOptions("Supported options");
+    po::options_description hiddenOptions("Hidden options");
+    po::options_description cegpraOptions("CEGPRA options");
+    po::options_description ltlOptions("LTL options");
+    po::options_description svcompOptions("SV-Comp options");
+    po::options_description rersOptions("RERS options");
+    po::options_description patternSearchOptions("RERS options");
+    po::options_description equivalenceCheckingOptions("Equivalence checking options");
+    po::options_description experimentalOptions("Experimental options");
+    po::options_description visualizationOptions("Visualization options");
+    
+    ltlOptions.add_options()
+      ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
+      ("csv-spot-ltl", po::value< string >(), "output SPOT's LTL verification results into a CSV file [arg]")
+      ("csv-stats-size-and-ltl",po::value< string >(),"output statistics regarding the final model size and results for LTL properties into a CSV file [arg]")
+      ("check-ltl", po::value< string >(), "take a text file of LTL I/O formulae [arg] and check whether or not the analyzed program satisfies these formulae. Formulae should start with '('. Use \"csv-spot-ltl\" option to specify an output csv file for the results.")
+      ("check-ltl-counterexamples", po::value< string >(), "report ltl counterexamples if and only if they are not spurious [=yes|no]")
+      ("check-ltl-sol", po::value< string >(), "take a source code file and an LTL formulae+solutions file ([arg], see RERS downloads for examples). Display if the formulae are satisfied and if the expected solutions are correct.")
+      ("counterexamples-with-output", po::value< string >(), "reported counterexamples for LTL or reachability properties also include output values [=yes|no]")
+      ("determine-prefix-depth", po::value< string >(), "if possible, display a guarantee about the length of the discovered prefix of possible program traces. [=yes|no]")
+      ("inf-paths-only", po::value< string >(), "recursively prune the graph so that no leaves exist [=yes|no]")
+      ("io-reduction", po::value< int >(), "(work in progress) reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
+      ("keep-error-states",  po::value< string >(), "Do not reduce error states for the LTL analysis. [=yes|no]")      ("ltl-in-alphabet",po::value< string >(),"specify an input alphabet used by the LTL formulae (e.g. \"{1,2,3}\")")
+      ("ltl-out-alphabet",po::value< string >(),"specify an output alphabet used by the LTL formulae (e.g. \"{19,20,21,22,23,24,25,26}\")")
+      ("no-input-input",  po::value< string >(), "remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [=yes|no]")
+      ("reconstruct-assert-paths", po::value< string >(), "takes a result file containing paths to reachable assertions and tries to reproduce them on the analyzed program. [=file-path]")
+      ("reconstruct-max-length", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum length of cyclic I/O patterns found by the analysis. [=pattern_length]")
+      ("reconstruct-max-repetitions", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum number of pattern repetitions that the search is following. [=#pattern_repetitions]")
+      ("refinement-constraints-demo", po::value< string >(), "display constraints that are collected in order to later on help a refined analysis avoid spurious counterexamples. [=yes|no]")
+      ("spot-stg",po::value< string >(), " generate STG in SPOT-format in file [arg]")
+      ("std-io-only", po::value< string >(), "bypass and remove all states that are not standard I/O [=yes|no]")
+      ("std-in-only", po::value< string >(), "bypass and remove all states that are not input-states [=yes|no]")
+      ("std-out-only", po::value< string >(), "bypass and remove all states that are not output-states [=yes|no]")
+      ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
+      ("with-counterexamples", po::value< string >(), "adds counterexample traces to the analysis results. Applies to reachable assertions (work in progress) and falsified LTL properties. [=yes|no]")
+      ("with-assert-counterexamples", po::value< string >(), "report counterexamples leading to failing assertion states (work in progress) [=yes|no]")
+      ("with-ltl-counterexamples", po::value< string >(), "report counterexamples that violate LTL properties [=yes|no]")
+      ;
+    
+    hiddenOptions.add_options()
+      ("max-transitions-forced-top1",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output) (default: no limit).")
+      ("max-transitions-forced-top2",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output,df) (default: no limit).")
+      ("max-transitions-forced-top3",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output,df,ptr-vars) (default: no limit).")
+      ("max-transitions-forced-top4",po::value< int >(),"Performs approximation after <arg> transitions (exact for all but inc-vars) (default: no limit).")
+      ("max-transitions-forced-top5",po::value< int >(),"Performs approximation after <arg> transitions (exact for input,output,df and vars with 0 to 2 assigned values)) (default: no limit).")
+      ("normalize",po::value< string >(),"normalize AST before analysis.")
+      ("solver",po::value< int >(),"Set solver <arg> to use (one of 1,2,3).")
+      ;
 
-  desc.add_options()
-    ("help,h", "produce this help message")
-    ("rose-help", "show help for compiler frontend options")
-    ("version,v", "display the version")
-    ("internal-checks", "run internal consistency checks (without input program)")
-    ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
-    ("csv-spot-ltl", po::value< string >(), "output SPOT's LTL verification results into a CSV file [arg]")
-    ("csv-assert", po::value< string >(), "output assert reachability results into a CSV file [arg]")
-    ("csv-stats",po::value< string >(),"output statistics into a CSV file [arg]")
-    ("csv-stats-size-and-ltl",po::value< string >(),"output statistics regarding the final model size and results for LTL properties into a CSV file [arg]")
-    ("csv-stats-cegpra",po::value< string >(),"output statistics regarding the counterexample-guided prefix refinement analysis (cegpra) into a CSV file [arg]")
-    ("tg1-estate-address", po::value< string >(), "transition graph 1: visualize address [=yes|no]")
-    ("tg1-estate-id", po::value< string >(), "transition graph 1: visualize estate-id [=yes|no]")
-    ("tg1-estate-properties", po::value< string >(), "transition graph 1: visualize all estate-properties [=yes|no]") 
-    ("tg1-estate-predicate", po::value< string >(), "transition graph 1: show estate as predicate [=yes|no]")
-    ("tg2-estate-address", po::value< string >(), "transition graph 2: visualize address [=yes|no]")
-    ("tg2-estate-id", po::value< string >(), "transition graph 2: visualize estate-id [=yes|no]")
-    ("tg2-estate-properties", po::value< string >(),"transition graph 2: visualize all estate-properties [=yes|no]")
-    ("tg2-estate-predicate", po::value< string >(), "transition graph 2: show estate as predicate [=yes|no]")
-    ("tg-trace", po::value< string >(), "generate STG computation trace [=filename]")
-    ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
-    ("colors",po::value< string >(),"use colors in output [=yes|no]")
-    ("precision-exact-constraints",po::value< string >(),
-     "(experimental) use precise constraint extraction [=yes|no]")
-    ("semantic-fold",po::value< string >(),"compute semantically folded state transition graph [=yes|no]")
-    ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
-    ("report-semantic-fold",po::value< string >(),"report each folding operation with the respective number of estates. [=yes|no]")
-    ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation (experimental)")
-    ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
-    ("viz-cegpra-detailed",po::value< string >(),"generate visualization (dot) output files with prefix <arg> for different stages within each loop of cegpra.")
-    ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
-    ("reduce-cfg",po::value< string >(),"Reduce CFG nodes which are not relevant for the analysis. [=yes|no]")
-    ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
-    ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
-    ("solver",po::value< int >(),"Set solver <arg> to use (one of 1,2,3).")
-    ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
-    ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
-    ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
-    ("arith-top",po::value< string >(),"Arithmetic operations +,-,*,/,% always evaluate to top [=yes|no]")
-    ("rers-binary",po::value< string >(),"Call rers binary functions in analysis. Use [=yes|no]")
-    ("print-all-options",po::value< string >(),"print all yes/no command line options.")
-    ("eliminate-arrays",po::value< string >(), "transform all arrays into single variables.")
-    ("annotate-terms",po::value< string >(),"annotate term representation of expressions in unparsed program.")
-    ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
-    ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
-    ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
-    ("max-transitions-forced-top",po::value< int >(),"same as max-transitions-forced-top1 (default).")
-    ("max-transitions-forced-top1",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output) (default: no limit).")
-    ("max-transitions-forced-top2",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output,df) (default: no limit).")
-    ("max-transitions-forced-top3",po::value< int >(),"Performs approximation after <arg> transitions (only exact for input,output,df,ptr-vars) (default: no limit).")
-    ("max-transitions-forced-top4",po::value< int >(),"Performs approximation after <arg> transitions (exact for all but inc-vars) (default: no limit).")
-    ("max-transitions-forced-top5",po::value< int >(),"Performs approximation after <arg> transitions (exact for input,output,df and vars with 0 to 2 assigned values)) (default: no limit).")
-    ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
-    ("variable-value-threshold",po::value< int >(),"sets a threshold for the maximum number of different values are stored for each variable.")
-    ("dot-io-stg", po::value< string >(), "output STG with explicit I/O node information in dot file [arg]")
-    ("dot-io-stg-forced-top", po::value< string >(), "output STG with explicit I/O node information in dot file. Groups abstract states together. [arg]")
-    ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
-    ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
-    ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
-    ("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first, loop-aware)")
-    ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
-    ("spot-stg",po::value< string >(), " generate STG in SPOT-format in file [arg]")
-    ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
-    ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
-    ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
-    ("verify-update-sequence-race-conditions",po::value< string >(), "[experimental] check race conditions of update sequence")
-    ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
-    ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
-    ("rewrite","rewrite AST applying all rewrite system rules.")
-    ("normalize",po::value< string >(),"normalize AST before analysis.")
-    ("specialize-fun-name", po::value< string >(), "function of name [arg] to be specialized")
-    ("specialize-fun-param", po::value< vector<int> >(), "function parameter number to be specialized (starting at 1)")
-    ("specialize-fun-const", po::value< vector<int> >(), "constant [arg], the param is to be specialized to.")
-    ("specialize-fun-varinit", po::value< vector<string> >(), "variable name of which the initialization is to be specialized (overrides any initializer expression)")
-    ("specialize-fun-varinit-const", po::value< vector<int> >(), "constant [arg], the variable initialization is to be specialized to.")
-    ("iseq-file", po::value< string >(), "compute input sequence and generate file [arg]")
-    ("iseq-length", po::value< int >(), "set length [arg] of input sequence to be computed.")
-    ("iseq-random-num", po::value< int >(), "select random search and number of paths.")
-    ("error-function", po::value< string >(), "detect a verifier error function with name [arg] (terminates verification)")
-    ("enable-external-function-semantics",  "assumes specific semantics for the external functions: __VERIFIER_error,__VERIFIER_nondet_int,exit functions.")
-    ("inf-paths-only", po::value< string >(), "recursively prune the graph so that no leaves exist [=yes|no]")
-    ("std-io-only", po::value< string >(), "bypass and remove all states that are not standard I/O [=yes|no]")
-    ("std-in-only", po::value< string >(), "bypass and remove all states that are not input-states [=yes|no]")
-    ("std-out-only", po::value< string >(), "bypass and remove all states that are not output-states [=yes|no]")
-    ("check-ltl", po::value< string >(), "take a text file of LTL I/O formulae [arg] and check whether or not the analyzed program satisfies these formulae. Formulae should start with '('. Use \"csv-spot-ltl\" option to specify an output csv file for the results.")
-    ("check-ltl-sol", po::value< string >(), "take a source code file and an LTL formulae+solutions file ([arg], see RERS downloads for examples). Display if the formulae are satisfied and if the expected solutions are correct.")
-    ("ltl-in-alphabet",po::value< string >(),"specify an input alphabet used by the LTL formulae (e.g. \"{1,2,3}\")")
-    ("ltl-out-alphabet",po::value< string >(),"specify an output alphabet used by the LTL formulae (e.g. \"{19,20,21,22,23,24,25,26}\")")
-    ("io-reduction", po::value< int >(), "(work in progress) reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
-    ("keep-error-states",  po::value< string >(), "Do not reduce error states for the LTL analysis. [=yes|no]")
-    ("no-input-input",  po::value< string >(), "remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [=yes|no]")
-    ("with-counterexamples", po::value< string >(), "adds counterexample traces to the analysis results. Applies to reachable assertions (work in progress) and falsified LTL properties. [=yes|no]")
-    ("with-assert-counterexamples", po::value< string >(), "report counterexamples leading to failing assertion states (work in progress) [=yes|no]")
-    ("with-ltl-counterexamples", po::value< string >(), "report counterexamples that violate LTL properties [=yes|no]")
-    ("counterexamples-with-output", po::value< string >(), "reported counterexamples for LTL or reachability properties also include output values [=yes|no]")
-    ("check-ltl-counterexamples", po::value< string >(), "report ltl counterexamples if and only if they are not spurious [=yes|no]")
-    ("reconstruct-assert-paths", po::value< string >(), "takes a result file containing paths to reachable assertions and tries to reproduce them on the analyzed program. [=file-path]")
-    ("reconstruct-max-length", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum length of cyclic I/O patterns found by the analysis. [=pattern_length]")
-    ("reconstruct-max-repetitions", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum number of pattern repetitions that the search is following. [=#pattern_repetitions]")
-    ("pattern-search-max-depth", po::value< int >(), "parameter of the pattern search mode. Sets the maximum input depth that is searched for cyclic I/O patterns (default: 10).")
-    ("pattern-search-repetitions", po::value< int >(), "parameter of the pattern search mode. Sets the number of unrolled iterations of cyclic I/O patterns (default: 100).")
-    ("pattern-search-max-suffix", po::value< int >(), "parameter of the pattern search mode. Sets the maximum input depth of the suffix that is searched for failing assertions after following an I/O-pattern (default: 5).")
-    ("pattern-search-asserts", po::value< string >(), "reads a .csv-file (one line per assertion, e.g. \"1,yes\"). The pattern search terminates early if traces to all errors with \"yes\" entries have been found. [=file-path]")
-    ("pattern-search-exploration", po::value< string >(), "exploration mode for the pattern search. Note: all suffixes will always be checked using depth-first search. [=depth-first|breadth-first]")
-    ("refinement-constraints-demo", po::value< string >(), "display constraints that are collected in order to later on help a refined analysis avoid spurious counterexamples. [=yes|no]")
-    ("cegpra-ltl",po::value< int >(),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
-    ("cegpra-ltl-all",po::value< string >(),"Check all specified LTL properties using cegpra [=yes|no]")
-    ("cegpra-max-iterations",po::value< int >(),"Select a maximum number of counterexamples anaylzed by cegpra (default: no limit).")
-    ("set-stg-incomplete", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
-    ("determine-prefix-depth", po::value< string >(), "if possible, display a guarantee about the length of the discovered prefix of possible program traces. [=yes|no]")
-    ;
+    cegpraOptions.add_options()
+      ("csv-stats-cegpra",po::value< string >(),"output statistics regarding the counterexample-guided prefix refinement analysis (cegpra) into a CSV file [arg]")
+      ("cegpra-ltl",po::value< int >(),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
+      ("cegpra-ltl-all",po::value< string >(),"Check all specified LTL properties using cegpra [=yes|no]")
+      ("cegpra-max-iterations",po::value< int >(),"Select a maximum number of counterexamples anaylzed by cegpra (default: no limit).")
+      ("viz-cegpra-detailed",po::value< string >(),"generate visualization (dot) output files with prefix <arg> for different stages within each loop of cegpra.")
+      ;
 
-  po::store(po::command_line_parser(argc, argv).
-        options(desc).allow_unregistered().run(), args);
-  po::notify(args);
+    visualizationOptions.add_options()
+      ("dot-io-stg", po::value< string >(), "output STG with explicit I/O node information in dot file [arg]")
+      ("dot-io-stg-forced-top", po::value< string >(), "output STG with explicit I/O node information in dot file. Groups abstract states together. [arg]")
+      ("tg1-estate-address", po::value< string >(), "transition graph 1: visualize address [=yes|no]")
+      ("tg1-estate-id", po::value< string >(), "transition graph 1: visualize estate-id [=yes|no]")
+      ("tg1-estate-properties", po::value< string >(), "transition graph 1: visualize all estate-properties [=yes|no]") 
+      ("tg1-estate-predicate", po::value< string >(), "transition graph 1: show estate as predicate [=yes|no]")
+      ("tg2-estate-address", po::value< string >(), "transition graph 2: visualize address [=yes|no]")
+      ("tg2-estate-id", po::value< string >(), "transition graph 2: visualize estate-id [=yes|no]")
+      ("tg2-estate-properties", po::value< string >(),"transition graph 2: visualize all estate-properties [=yes|no]")
+      ("tg2-estate-predicate", po::value< string >(), "transition graph 2: show estate as predicate [=yes|no]")
+      ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
+      ;
 
-  if (args.count("help")) {
-    cout << desc << "\n";
-    return 0;
-  }
+    experimentalOptions.add_options()
+      ("annotate-terms",po::value< string >(),"annotate term representation of expressions in unparsed program.")
+      ("arith-top",po::value< string >(),"Arithmetic operations +,-,*,/,% always evaluate to top [=yes|no]")
+      ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
+      ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
+      ("precision-exact-constraints",po::value< string >(),"(experimental) use precise constraint extraction [=yes|no]")
+      ("reduce-cfg",po::value< string >(),"Reduce CFG nodes which are not relevant for the analysis. [=yes|no]")
+      ("report-semantic-fold",po::value< string >(),"report each folding operation with the respective number of estates. [=yes|no]")
+      ("semantic-fold",po::value< string >(),"compute semantically folded state transition graph [=yes|no]")
+      ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation (experimental)")
+      ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
+      ("set-stg-incomplete", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
+      ("tg-trace", po::value< string >(), "generate STG computation trace [=filename]")
+      ("variable-value-threshold",po::value< int >(),"sets a threshold for the maximum number of different values are stored for each variable.")
+      ;
 
-  if (args.count("rose-help")) {
-    argv[1] = strdup("--help");
-  }
+    rersOptions.add_options()
+      ("csv-assert", po::value< string >(), "output assert reachability results into a CSV file [arg]")
+      ("eliminate-arrays",po::value< string >(), "transform all arrays into single variables.")
+      ("iseq-file", po::value< string >(), "compute input sequence and generate file [arg]")
+      ("iseq-length", po::value< int >(), "set length [arg] of input sequence to be computed.")
+      ("iseq-random-num", po::value< int >(), "select random search and number of paths.")
+      ("rers-binary",po::value< string >(),"Call rers binary functions in analysis. Use [=yes|no]")
+      ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
+      ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
+      ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
+      ;
 
-  if (args.count("version")) {
-    cout << "CodeThorn version 1.6.0\n";
-    cout << "Written by Markus Schordan, Adrian Prantl, and Marc Jasper\n";
-    return 0;
-  }
+    svcompOptions.add_options()
+      ("error-function", po::value< string >(), "detect a verifier error function with name [arg] (terminates verification)")
+      ("enable-external-function-semantics",  "assumes specific semantics for the external functions: __VERIFIER_error,__VERIFIER_nondet_int,exit functions.")
+      ;
+
+    equivalenceCheckingOptions.add_options()
+      ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
+      ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
+      ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
+      ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
+      ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
+      ("specialize-fun-name", po::value< string >(), "function of name [arg] to be specialized")
+      ("specialize-fun-param", po::value< vector<int> >(), "function parameter number to be specialized (starting at 1)")
+      ("specialize-fun-const", po::value< vector<int> >(), "constant [arg], the param is to be specialized to.")
+      ("specialize-fun-varinit", po::value< vector<string> >(), "variable name of which the initialization is to be specialized (overrides any initializer expression)")
+      ("specialize-fun-varinit-const", po::value< vector<int> >(), "constant [arg], the variable initialization is to be specialized to.")
+      ("verify-update-sequence-race-conditions",po::value< string >(), "[experimental] check race conditions of update sequence")
+      ;
+
+    patternSearchOptions.add_options()
+      ("pattern-search-max-depth", po::value< int >(), "parameter of the pattern search mode. Sets the maximum input depth that is searched for cyclic I/O patterns (default: 10).")
+      ("pattern-search-repetitions", po::value< int >(), "parameter of the pattern search mode. Sets the number of unrolled iterations of cyclic I/O patterns (default: 100).")
+      ("pattern-search-max-suffix", po::value< int >(), "parameter of the pattern search mode. Sets the maximum input depth of the suffix that is searched for failing assertions after following an I/O-pattern (default: 5).")
+      ("pattern-search-asserts", po::value< string >(), "reads a .csv-file (one line per assertion, e.g. \"1,yes\"). The pattern search terminates early if traces to all errors with \"yes\" entries have been found. [=file-path]")
+      ("pattern-search-exploration", po::value< string >(), "exploration mode for the pattern search. Note: all suffixes will always be checked using depth-first search. [=depth-first|breadth-first]")
+      ;
+
+    visibleOptions.add_options()
+      ("csv-stats",po::value< string >(),"output statistics into a CSV file [arg]")
+      ("colors",po::value< string >(),"use colors in output [=yes|no]")
+      ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
+      ("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first, loop-aware)")
+      ("help,h", "produce this help message")
+      ("help-cegpra", "show options for CEGRPA")
+      ("help-eq", "show options for program equivalence checking")
+      ("help-exp", "show options for experimental features")
+      ("help-pat", "show options for pattern search mode")
+      ("help-svcomp", "show options for SV-Comp specific features")
+      ("help-rers", "show options for RERS specific features")
+      ("help-ltl", "show options for LTL verification")
+      ("help-vis", "show options for visualization output files")
+      ("internal-checks", "run internal consistency checks (without input program)")
+      ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
+      ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
+      ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
+      ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
+      ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
+      ("max-transitions-forced-top",po::value< int >(),"same as max-transitions-forced-top1 (default).")
+      ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
+      ("print-all-options",po::value< string >(),"print all yes/no command line options.")
+      ("rewrite","rewrite AST applying all rewrite system rules.")
+      ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
+      ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
+      ("version,v", "display the version")
+      ;
+
+    po::options_description all("All supported options");
+    all.add(visibleOptions)
+      .add(hiddenOptions)
+      .add(cegpraOptions)
+      .add(equivalenceCheckingOptions)
+      .add(experimentalOptions)
+      .add(ltlOptions)
+      .add(patternSearchOptions)
+      .add(rersOptions)
+      .add(svcompOptions)
+      .add(visualizationOptions)
+      ;
+    po::store(po::command_line_parser(argc, argv).options(all).allow_unregistered().run(), args);
+    po::notify(args);
+
+    if (args.count("help")) {
+      cout << visibleOptions << "\n";return 0;
+    } else if(args.count("help-cegpra")) {
+      cout << cegpraOptions << "\n";return 0;
+    } else if(args.count("help-eq")) {
+      cout << equivalenceCheckingOptions << "\n";return 0;
+    } else if(args.count("help-exp")) {
+      cout << experimentalOptions << "\n";return 0;
+    } else if(args.count("help-ltl")) {
+      cout << ltlOptions << "\n";return 0;
+    } else if(args.count("help-pat")) {
+      cout << patternSearchOptions << "\n";return 0;
+    } else if(args.count("help-rers")) {
+      cout << rersOptions << "\n";return 0;
+    } else if(args.count("help-svcomp")) {
+      cout << svcompOptions << "\n";return 0;
+    } else if(args.count("help-vis")) {
+      cout << visualizationOptions << "\n";return 0;
+    }
+
+    if (args.count("version")) {
+      cout << "CodeThorn version 1.6.0\n";
+      cout << "Written by Markus Schordan, Adrian Prantl, and Marc Jasper\n";
+      return 0;
+    }
 
   boolOptions.init(argc,argv);
   boolOptions.registerOption("tg1-estate-address",false);
@@ -363,7 +423,7 @@ int main( int argc, char * argv[] ) {
 
   boolOptions.registerOption("arith-top",false);
   boolOptions.registerOption("rers-binary",false);
-  boolOptions.registerOption("relop-constraints",false); // not accessible on command line yet
+  boolOptions.registerOption("relop-constraints",false); // not accessible on command line
   boolOptions.registerOption("stderr-like-failed-assert",false);
   boolOptions.registerOption("rersmode",false);
   boolOptions.registerOption("rers-numeric",false);

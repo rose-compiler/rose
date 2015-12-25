@@ -107,6 +107,8 @@ V1.7 2015-12-xx in preparation
       --semantic-explosion
       --semantic-elimination
       --rersformat
+      --rose-help
+
   * removed solvers 1,2,3,6,7 (remaining: 4,5,8,9,10)
   * removed Analyzer functions:
     void Analyzer::semanticEliminationOfTransitions()
