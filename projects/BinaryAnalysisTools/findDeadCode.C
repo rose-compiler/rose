@@ -491,9 +491,7 @@ insertReachableByDataFlow(AddressIntervalSet &reachable /*in,out*/, const P2::Pa
                 if (!reachable.contains(targetVas)) {
                     reachable |= targetVas;
                     insertReachableRecursively(reachable, partitioner, targetVertex);
-                    P2::Function::Ptr targetFunction;
-                    if (targetVertex->value().type() == P2::V_BASIC_BLOCK)
-                        targetFunction = targetVertex->value().function();
+                    P2::Function::Ptr targetFunction = targetVertex->value().isEntryBlock();
                     if (targetFunction &&
                         reachable.contains(targetFunction->address()) &&
                         !processedFunctions.exists(targetFunction)) {

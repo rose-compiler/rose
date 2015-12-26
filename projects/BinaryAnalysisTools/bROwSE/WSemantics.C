@@ -259,8 +259,21 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
         return;
     bblock_ = bblock;
     mode_ = mode;
-    function_ = bblock_ ? ctx_.partitioner.basicBlockFunctionOwner(bblock) : P2::Function::Ptr();
 
+#if 0 // [Robb Matzke 2015-12-14]: old code, assuming basic blocks are not shared
+    function_ = bblock_ ? ctx_.partitioner.basicBlockFunctionOwner(bblock) : P2::Function::Ptr();
+#else // Partly fixed code, still assuming basic blocks are not shared.
+    if (function_) {
+        if (bblock_ == NULL || !function_->ownsBasicBlock(bblock_->address()))
+            function_ = P2::Function::Ptr();
+    } else {
+        BOOST_FOREACH (const P2::Function::Ptr &f, ctx_.partitioner.functionsOwningBasicBlock(bblock)) {
+            function_ = f;                              // chosen arbitrarily as the first one, if any
+            break;
+        }
+    }
+#endif
+        
     if (bblock && function_) {
         typedef BaseSemantics::RegisterStateGeneric RegState;
         typedef BaseSemantics::MemoryCellList MemState;

@@ -66,7 +66,6 @@ struct Settings {
     std::string opsClassName;                           // name of RiscOperators class, abbreviated
     std::string solverName;                             // name of SMT solver
     bool trace;                                         // use TraceSemantics?
-    bool showUseDef;                                    // show use-def information if available?
     bool showInitialValues;                             // show initial values in register states?
     bool showStates;                                    // show register and memory state after each instruction?
     bool showInitialState;                              // show initial state if showStates is set?
@@ -74,10 +73,13 @@ struct Settings {
     bool useMemoryMap;                                  // state uses MemoryMap to initialize memory?
     bool runNoopAnalysis;                               // run no-op analysis on each instruction individually?
     bool testAdaptiveRegisterState;                     // test RegisterStateGeneric
+    SymbolicSemantics::DefinersMode computingDefiners;  // whether to track which instructions define each value
+    SymbolicSemantics::WritersMode computingWriters;    // whether to track which instructions write to each location
     Settings()
-        : trace(false), showUseDef(true), showInitialValues(false), showStates(true), showInitialState(false),
+        : trace(false), showInitialValues(false), showStates(true), showInitialState(false),
           bblockInterval(AddressInterval::whole()), useMemoryMap(false), runNoopAnalysis(false),
-          testAdaptiveRegisterState(false) {}
+          testAdaptiveRegisterState(false), computingDefiners(SymbolicSemantics::TRACK_NO_DEFINERS),
+          computingWriters(SymbolicSemantics::TRACK_NO_WRITERS) {}
 };
 
 static std::vector<std::string>
@@ -177,6 +179,30 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .intrinsicValue(false, settings.testAdaptiveRegisterState)
                .hidden(true));
 
+    ctl.insert(Switch("track-definers")
+               .argument("how", enumParser<SymbolicSemantics::DefinersMode>(settings.computingDefiners)
+                         ->with("none", SymbolicSemantics::TRACK_NO_DEFINERS)
+                         ->with("last", SymbolicSemantics::TRACK_LATEST_DEFINER)
+                         ->with("all", SymbolicSemantics::TRACK_ALL_DEFINERS))
+               .doc("Controls whether a domain that supports tracking value definers does so.  For instance, the "
+                    "symbolic domain can keep a list of defining instructions for each symbolic value. Turning on any "
+                    "form of definers also turns on the output of such definers.  The @v{how} can be one of these words: "
+                    "@named{none}{Do not compute definers.}"
+                    "@named{last}{Track only the latest defining instruction per value.}"
+                    "@named{all}{Track all defining instructions per value.}"));
+
+    ctl.insert(Switch("track-writers")
+               .argument("how", enumParser<SymbolicSemantics::WritersMode>(settings.computingWriters)
+                         ->with("none", SymbolicSemantics::TRACK_NO_WRITERS)
+                         ->with("last", SymbolicSemantics::TRACK_LATEST_WRITER)
+                         ->with("all", SymbolicSemantics::TRACK_ALL_WRITERS))
+               .doc("Controls whether a domain that supports tracking writers does so.  This means that each location "
+                    "(registers and memory) will have a list of instructions that wrote to that location. The allowed "
+                    "arguments are:"
+                    "@named{none}{Do not track writers.}"
+                    "@named{last}{Track only the latest writing instruction per location.}"
+                    "@named{all}{Track all writing instructions per location.}"));
+
     //------------------------------------------------
     SwitchGroup out("Output switches");
     out.insert(Switch("show-states")
@@ -187,16 +213,6 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     out.insert(Switch("no-show-states")
                .key("show-states")
                .intrinsicValue(false, settings.showStates)
-               .hidden(true));
-
-    out.insert(Switch("usedef")
-               .intrinsicValue(true, settings.showUseDef)
-               .doc("Turns on display of use-def information if the semantics value type supports it and @s{show-states} "
-                    "is enabled.  The @s{no-usedef} switch disables this feature. The default is to " +
-                    std::string(settings.showUseDef?"":"not ") + "show this information."));
-    out.insert(Switch("no-usedef")
-               .key("usedef")
-               .intrinsicValue(false, settings.showUseDef)
                .hidden(true));
 
     out.insert(Switch("show-initial-values")
@@ -335,7 +351,8 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
                   <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::MemoryState\n"
                   <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics default\n"
                   <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::MemoryState\n"
-                  <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryState\n";
+                  <<"  symbolic-list    rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState\n"
+                  <<"  symbolic-map     rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState\n";
         exit(0);
 #ifdef EXAMPLE_EXTENSIONS
     } else if (className == "example") {
@@ -352,8 +369,10 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
         return ops->get_state()->get_memory_state();
     } else if (className == "partitioner2") {
         return P2::Semantics::MemoryState::instance(protoval, protoaddr);
-    } else if (className == "symbolic") {
-        return SymbolicSemantics::MemoryState::instance(protoval, protoaddr);
+    } else if (className == "symbolic-list") {
+        return SymbolicSemantics::MemoryListState::instance(protoval, protoaddr);
+    } else if (className == "symbolic-map") {
+        return SymbolicSemantics::MemoryMapState::instance(protoval, protoaddr);
     } else {
         throw std::runtime_error("unrecognized memory state class name \"" + className + "\"; see --mstate=list\n");
     }
@@ -405,7 +424,11 @@ makeRiscOperators(const Settings &settings, const P2::Engine &engine, const P2::
     } else if (className == "partitioner2") {
         return P2::Semantics::RiscOperators::instance(state, solver);
     } else if (className == "symbolic") {
-        return SymbolicSemantics::RiscOperators::instance(state, solver);
+        SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(state, solver);
+        ops->computingDefiners(settings.computingDefiners);
+        ops->computingRegisterWriters(settings.computingWriters);
+        ops->computingMemoryWriters(settings.computingWriters);
+        return ops;
     } else {
         throw std::runtime_error("unrecognized semantic class name \"" + className + "\"; see --semantics=list\n");
     }
@@ -426,8 +449,7 @@ adjustSettings(Settings &settings) {
         settings.mstateClassName = settings.opsClassName;
 }
 
-// Test the API for various combinations of classes.  Sorry this is so long and doesn't handle every case -- that's the pitfal
-// of trying to mix runtime configuration and C++ templates.
+// Test the API for various combinations of classes.
 static void
 testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::Partitioner &partitioner) {
     std::cout <<"=====================================================================================\n"
@@ -472,7 +494,7 @@ testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::P
             tester.test(ops);
         } else if (settings.opsClassName == "symbolic") {
             TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
-                          SymbolicSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
+                          SymbolicSemantics::MemoryListStatePtr, BaseSemantics::StatePtr,
                           SymbolicSemantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else {
@@ -495,9 +517,15 @@ testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::P
                           P2::Semantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else if (settings.opsClassName=="symbolic" && settings.valueClassName=="symbolic" &&
-            settings.rstateClassName=="x86" && settings.mstateClassName=="symbolic") {
+                   settings.rstateClassName=="x86" && settings.mstateClassName=="symbolic-list") {
             TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr,
-                          SymbolicSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
+                          SymbolicSemantics::MemoryListStatePtr, BaseSemantics::StatePtr,
+                          SymbolicSemantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
+        } else if (settings.opsClassName=="symbolic" && settings.valueClassName=="symbolic" &&
+                   settings.rstateClassName=="symbolic" && settings.mstateClassName=="symbolic-map") {
+            TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                          SymbolicSemantics::MemoryMapStatePtr, BaseSemantics::StatePtr,
                           SymbolicSemantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else {
@@ -528,7 +556,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
 
     BaseSemantics::Formatter formatter;
     formatter.set_suppress_initial_values(!settings.showInitialValues);
-    formatter.set_show_latest_writers(settings.showUseDef);
+    formatter.set_show_latest_writers(settings.computingWriters != SymbolicSemantics::TRACK_NO_WRITERS);
 
     BaseSemantics::DispatcherPtr dispatcher = partitioner.instructionProvider().dispatcher();
     if (!dispatcher)

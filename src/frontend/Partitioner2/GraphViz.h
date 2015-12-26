@@ -13,7 +13,7 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-/** Support for generating GraphViz output. */
+/** Support for generating and reading GraphViz output. */
 namespace GraphViz {
 
 /** GraphViz attributes.
@@ -621,6 +621,9 @@ public:
      *  Any edge of type @ref E_FUNCTION_RETURN is deselected. */
     void deselectReturnEdges();
 
+    /** Deselect a vertex if it has no selected incident edges. */
+    void deselectUnusedVertex(ControlFlowGraph::ConstVertexIterator);
+
     /** Select neighboring vertices.
      *
      *  Selects vertices that are neighbors of selected vertices, and the edges that connect them. */
@@ -693,18 +696,32 @@ public:
     static bool isInterFunctionEdge(const ControlFlowGraph::ConstEdgeIterator &e) { return isInterFunctionEdge(*e); }
     /** @} */
 
-    /** Function that owns a vertex.
+    /** First function that owns a vertex.
      *
-     *  Returns a pointer to the function that owns the specified vertex, or null if there is no owner.
+     *  Returns the first of possibly many functions that own a vertex. "First" is defined as the function listed first in the
+     *  set returned by @ref CfgVertex::owningFunctions.  Returns null if there are no owning functions.
+     *
+     * @{ */
+    static Function::Ptr firstOwningFunction(const ControlFlowGraph::Vertex&);
+    static Function::Ptr firstOwningFunction(const ControlFlowGraph::ConstVertexIterator &v) {
+        return firstOwningFunction(*v);
+    }
+    /** @} */
+
+    /** Functions that own a vertex.
+     *
+     *  Returns a set of pointers to the functions that own the specified vertex. Usually a vertex is owned by either zero or
+     *  one function.
      *
      *  @{ */
-    static Function::Ptr owningFunction(const ControlFlowGraph::Vertex&);
-    static Function::Ptr owningFunction(const ControlFlowGraph::ConstVertexIterator &v) { return owningFunction(*v); }
+    static FunctionSet owningFunctions(const ControlFlowGraph::Vertex&);
+    static FunctionSet owningFunctions(const ControlFlowGraph::ConstVertexIterator &v) { return owningFunctions(*v); }
     /** @} */
 
     /** Assign vertices and edges to subgraphs.
      *
-     *  Each vertex is assigned to a subgraph, one subgraph per function. */
+     *  Each vertex is assigned to a subgraph, one subgraph per function. If a vertex is owned by more than one function then
+     *  the "first" function is used, where the definition of "first" is quite arbitrary. */
     void assignFunctionSubgraphs();
 
 
@@ -829,6 +846,48 @@ public:
     virtual bool shouldInline(const Function::Ptr&) const;
 };
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Reading layout position information from "dot"
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Two dimensional display plane coordinate. */
+struct Coordinate {
+    double x;                                           /**< Distance from left. */
+    double y;                                           /**< Distance from up. */ 
+};
+
+/** Position of a vertex. */
+struct VertexPosition {
+    std::string name;                                   /**< Name of vertex as known to GraphViz. */
+    Coordinate center;                                  /**< Center of vertex in display plane units. */
+    double width;                                       /**< Horizontal size of vertex. */
+    double height;                                      /**< Vertical size of vertex. */
+};
+
+/** Position of an edge.
+ *
+ *  GraphViz represents edge positions as B-splines. These are apparently a sequence quadratic Bezier curve segments, which can
+ *  be drawn with a sliding window of length four coordinates and delta of one coordinate. The spline will therefore always
+ *  have at least four coorindates.
+ *
+ *  Since GraphViz identifies edges by their endpoints, there is no support for being able to resolve GraphViz edges back to
+ *  their corresponding Sawyer edges when edges are parallel. */
+struct EdgePosition {
+    std::vector<Coordinate> spline;                     /**< Control points for the edge B-spline. See @ref EdgePosition. */
+};
+
+/** A graph with positioned vertices and edges. */
+typedef Sawyer::Container::Graph<VertexPosition, EdgePosition> PositionGraph;
+
+/** Constructs graph positions from a file.
+ *
+ *  The input must have the same syntax as the output from the GraphViz "dot -Tplain" command. */
+PositionGraph readPositions(std::istream&);
+
+
+    
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Class template method implementations
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -904,13 +963,11 @@ BaseEmitter<G>::emit(std::ostream &out) const {
         }
     }
 
-    // Emit subgraphs to output
+    // Emit named subgraphs to output
     BOOST_FOREACH (const Subgraphs::value_type &node, subgraphs) {
         const std::string &subgraphName = node.first;
         const std::string &subgraphContent = node.second;
-        if (subgraphName.empty()) {
-            out <<subgraphContent;
-        } else {
+        if (!subgraphName.empty()) {
             out <<"\nsubgraph cluster_" <<subgraphName <<" {"
                 <<" label=" <<subgraphOrganization(subgraphName).label() <<" "
                 <<toString(subgraphOrganization(subgraphName).attributes()) <<"\n"
@@ -918,6 +975,11 @@ BaseEmitter<G>::emit(std::ostream &out) const {
                 <<"}\n";
         }
     }
+
+    // Emit unnamed subgraph content without a surrounding subgraph construct (i.e., global graph)
+    Subgraphs::iterator unnamedSubgraph = subgraphs.find("");
+    if (unnamedSubgraph != subgraphs.end())
+        out <<unnamedSubgraph->second;
 
     // Emit pseudo edges
     BOOST_FOREACH (const PseudoEdge &edge, pseudoEdges_) {

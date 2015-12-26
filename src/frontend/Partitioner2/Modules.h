@@ -360,7 +360,7 @@ void nameNoopFunctions(const Partitioner&);
  *  Builds and returns an AST for the specified basic block. The basic block must not be a null pointer, but it need not be in
  *  the CFG.  If the basic block has no instructions then it would violate ROSE's invariants, so a null pointer is returned
  *  instead; however, if @p relaxed is true then an IR node is returned anyway. */
-SgAsmBlock* buildBasicBlockAst(const Partitioner&, const BasicBlock::Ptr&, bool relaxed=false);
+SgAsmBlock* buildBasicBlockAst(const Partitioner&, const BasicBlock::Ptr&, const Function::Ptr&, bool relaxed=false);
 
 /** Build AST for data block.
  *

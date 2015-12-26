@@ -504,6 +504,78 @@ public:
      *  @sa basicBlockGhostSuccessors */
     std::set<rose_addr_t> ghostSuccessors() const /*final*/;
 
+    /** Determine if an edge is intra-procedural.
+     *
+     *  An intra-procedural edge is an edge whose source and target are owned by the same function and which is not part of a
+     *  function call, function transfer, or function return.  This function returns true if the edge is intra-procedural and
+     *  false if not.  The return value is calculated as follows:
+     *
+     *  @li An edge of type @c E_FUNCTION_CALL, @c E_FUNCTION_XFER, or @c E_FUNCTION_RETURN is not intra-procedural regardless
+     *      of which functions own the source and target blocks.
+     *
+     *  @li If a function is specified and that function is listed as an owner of both the source and target blocks, then the
+     *      edge is intra-procedural.
+     *
+     *  @li If no function is specified and neither the source nor the target block have any function owners then the edge
+     *      is intra-procedural.
+     *
+     *  @li If no function is specified and there exists some function that is an owner of both the source and target blocks
+     *      then the edge is intra-procedural.
+     *
+     *  @li Otherwise the edge is not intra-procedural.
+     *
+     *  When no function is specified it can be ambiguous as to whether a branch is intra- or inter-procedural; a branch could
+     *  be both intra- and inter-procedural.
+     *
+     *  @sa isEdgeInterProcedural.
+     *
+     * @{ */
+    bool isEdgeIntraProcedural(ControlFlowGraph::ConstEdgeIterator edge,
+                               const Function::Ptr &function = Function::Ptr()) const /*final*/;
+    bool isEdgeIntraProcedural(const ControlFlowGraph::Edge &edge,
+                               const Function::Ptr &function = Function::Ptr()) const /*final*/;
+    /** @} */
+
+    /** Determine if an edge is inter-procedural.
+     *
+     *  An inter-procedural edge is an edge which is part of a function call, a function transfer, or a function return or an
+     *  edge whose source and target blocks are owned by different functions. This function returns true if the edge is
+     *  inter-procedural and false if not.  The return value is calculated as follows:
+     *
+     *  @li An edge of type @c E_FUNCTION_CALL, @c E_FUNCTION_XFER, or @c E_FUNCTION_RETURN is inter-procedural regardless of
+     *      which functions own the source and target blocks.
+     *
+     *  @li If two functions are specified and the source block is owned by the first function, the target block is owned by
+     *      the second function, and the functions are different then the block is inter-procedural.
+     *
+     *  @li If only the source function is specified and the source block is owned by the source function and the target block
+     *      is not owned by the source function then the edge is inter-procedural.
+     *
+     *  @li If only the target function is specified and the target block is owned by the target function and the source block
+     *      is not owned by the target function then the edge is inter-procedural.
+     *
+     *  @li If no functions are specified and neither the source nor the target block have any function owners then the edge
+     *      is inter-procedural.
+     *
+     *  @li If no functions are specified and the list of functions owning the source block is not equal to the list of
+     *      functions owning the destination block then the block is inter-procedural.
+     *
+     *  @li Otherwise the edge is not inter-procedural.
+     *
+     *  When no functions are specified it can be ambiguous as to whether a branch is intra- or inter-procedural; a branch
+     *  could be both intra- and inter-procedural.
+     *
+     *  @sa isEdgeIntraProcedural.
+     *
+     * @{ */
+    bool isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge,
+                               const Function::Ptr &sourceFunction = Function::Ptr(),
+                               const Function::Ptr &targetFunction = Function::Ptr()) const /*final*/;
+    bool isEdgeInterProcedural(const ControlFlowGraph::Edge &edge,
+                               const Function::Ptr &sourceFunction = Function::Ptr(),
+                               const Function::Ptr &targetFunction = Function::Ptr()) const /*final*/;
+    /** @} */
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner instruction operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -770,22 +842,6 @@ public:
      *  Returns an interval set which is the union of the extents for each data block referenced by this basic block. */
     AddressIntervalSet basicBlockDataExtent(const BasicBlock::Ptr&) const /*final*/;
 
-    /** Returns the function that owns a basic block.
-     *
-     *  Returns the function that owns this basic block in the CFG, or null if no function owns it. */
-    Function::Ptr basicBlockFunctionOwner(const BasicBlock::Ptr&) const /*final*/;
-
-    /** Returns the list of functions that own the specified basic blocks.
-     *
-     *  The returned vector contains a list of distinct functions that own the specified basic blocks.  The functions are
-     *  sorted by their entry address.  No function pointer (not even null) is returned for basic blocks that are not owned by
-     *  any function.
-     *
-     * @{ */
-    std::vector<Function::Ptr> basicBlockFunctionOwners(const std::set<rose_addr_t> &bblockVas) const /*final*/;
-    std::vector<Function::Ptr> basicBlockFunctionOwners(const std::vector<BasicBlock::Ptr>&) const /*final*/;
-    /** @} */
-
     /** Detach a basic block from the CFG/AUM.
      *
      *  The specified basic block is detached from the CFG/AUM, leaving only a placeholder in its place.  The original outgoing
@@ -1021,19 +1077,21 @@ public:
      *      simplifications that are built into ROSE fail to simplify a constant expression.
      *
      *  Two stack deltas are computed for each basic block: the stack delta at the start of the block and the start delta at
-     *  the end of the block, returned by the "in" and "out" variants of this method, respectively.
+     *  the end of the block, returned by the "in" and "out" variants of this method, respectively. Since basic blocks can be
+     *  shared among multiple functions and have a different delta in each, a function context must be provided as an
+     *  argument.
      *
-     *  Since stack deltas use the control flow graph during the analysis, the specified basic block must be attached to the
-     *  CFG/AUM before calling this method. Also, since predefined stack deltas are based on function names, function calls
-     *  must be to basic blocks that are attached to a function. Note that currently (Dec 2014) PE thunks transfering to a
-     *  non-linked dynamic function are given names by @ref ModulesPe::nameImportThunks, which runs after all basic blocks and
-     *  functions have been discovered and attached to the CFG/AUM.
+     *  Since stack deltas use the control flow graph during the analysis, the specified basic block and function must be
+     *  attached to the CFG/AUM before calling this method. Also, since predefined stack deltas are based on function names,
+     *  function calls must be to basic blocks that are attached to a function. Note that currently (Dec 2014) PE thunks
+     *  transfering to a non-linked dynamic function are given names by @ref ModulesPe::nameImportThunks, which runs after all
+     *  basic blocks and functions have been discovered and attached to the CFG/AUM.
      *
      *  @sa functionStackDelta and @ref allFunctionStackDelta
      *
      * @{ */
-    BaseSemantics::SValuePtr basicBlockStackDeltaIn(const BasicBlock::Ptr&) const /*final*/;
-    BaseSemantics::SValuePtr basicBlockStackDeltaOut(const BasicBlock::Ptr&) const /*final*/;
+    BaseSemantics::SValuePtr basicBlockStackDeltaIn(const BasicBlock::Ptr&, const Function::Ptr &function) const /*final*/;
+    BaseSemantics::SValuePtr basicBlockStackDeltaOut(const BasicBlock::Ptr&, const Function::Ptr &function) const /*final*/;
     /** @} */
 
     /** Clears all cached stack deltas.
@@ -1232,23 +1290,20 @@ public:
      *  If the CFG/AUM knows about the specified function then this method returns a pointer to that function, otherwise it
      *  returns the null pointer.
      *
-     *  The query can supply either a function entry address or a function pointer.  If a pointer is specified then the return
-     *  value will be the same pointer if and only if the function exists in the CFG/AUM, otherwise the null pointer is
-     *  returned. It is not sufficient for the CFG/AUM to contain a function with the same entry address -- it must be the same
-     *  actual function object.
+     *  The argument identifies the function for which to search:
+     *
+     *  @li The function's entry address.
+     *  @li The basic block that serves as the function's entry block.
+     *  @li A function pointer.
+     *
+     *  If the argument is a function pointer then this method checks that the specified function exists in the CFG/AUM and
+     *  returns the argument if it exists, or else null if it doesn't exist. This test uses the function pointer directly, not
+     *  the entry address -- it returns non-null only if the argument is the actual function object stored in the CFG/AUM.
      *
      *  @{ */
-    Function::Ptr functionExists(rose_addr_t startVa) const /*final*/ {
-        return functions_.getOptional(startVa).orDefault();
-    }
-    Function::Ptr functionExists(const Function::Ptr &function) const /*final*/ {
-        if (function!=NULL) {
-            Function::Ptr found = functionExists(function->address());
-            if (found==function)
-                return function;
-        }
-        return Function::Ptr();
-    }
+    Function::Ptr functionExists(rose_addr_t entryVa) const /*final*/;
+    Function::Ptr functionExists(const BasicBlock::Ptr &entryBlock) const /*final*/;
+    Function::Ptr functionExists(const Function::Ptr &function) const /*final*/;
     /** @} */
 
     /** All functions attached to the CFG/AUM.
@@ -1366,34 +1421,60 @@ public:
      *  Causes the specified function to become an owner of the specified data block. */
     void attachFunctionDataBlock(const Function::Ptr&, const DataBlock::Ptr&) /*final*/;
 
-    /** Finds the function that owns the specified basic block.
+    /** Finds functions that own the specified basic block.
      *
-     *  If @p bblockVa is a starting address for a basic block that is in the CFG/AUM then this method returns the pointer to
-     *  the function that owns that block.  If the CFG/AUM does not contain a basic block that starts at the specified address,
-     *  or if no function owns that basic block, then a null function pointer is returned.
+     *  Return the functions that own the specified basic block(s). The returned vector has distinct function pointers sorted
+     *  by their entry addresses. Usually a basic block is owned by zero or one function. If a basic block cannot be found or
+     *  if it has no owning functions then an empty vector is returned.  The returned functions are all attached to the
+     *  partitioner (that's how the partitioner knows about them); detached functions are not found.
      *
-     *  If a basic block pointer is supplied instead of a basic block starting address, then the starting address of the
-     *  specified basic block is used.  That is, the returned function might not own the exact specified basic block, but owns
-     *  a different basic block that starts at the same address.  This can only happen when the specified basic block is
-     *  detached from the CFG and the CFG contains a different (attached) basic block at the same starting address.
+     *  Basic blocks can be specified in a number of ways:
+     *
+     *  @li As a CFG vertex. This is the fastest method since ownership information is stored directly in the CFG vertex. This
+     *  is identical to calling @ref CfgVertex::owningFunctions except the return value is a vector and the functions are
+     *  sorted differently.  The only expense is sorting the return value, which is usually a single function and therefore
+     *  constant time (the following bullets also assume this is constant time).
+     *
+     *  @li As a starting address. If a basic block with the specified starting address exists in the CFG then its function
+     *  owners are retrieved from the vertex.  Runtime is O(log |V|) where |V| is the number of vertices in the CFG.
+     *
+     *  @li As a block pointer.  The address of the block is used to find the CFG vertex from which ownership information is
+     *  obtained. Basic block ownership is stored in the CFG, therefore if the provided basic block is not attached to the
+     *  partitioner, the partitioner substitutes one that is attached. Runtime is O(log |V|) where |V| is the number of
+     *  vertices in the CFG.
+     *
+     *  @li As a vector of any of the above. The returned vector is the union of the owning functions. Run time is O(N M) where
+     *  N is the length of the vector and M is the time from above.
+     *
+     *  If @p doSort is clear then the result vector is not sorted, although it will still consist of unique function
+     *  pointers.  The return value from the variants that take more than one basic block is always sorted.
      *
      *  The returned function will be a function that is attached to the CFG/AUM; detached functions are never returned since
      *  the partitioner does not necessarily know about them.
      *
      *  @{ */
-    Function::Ptr findFunctionOwningBasicBlock(rose_addr_t bblockVa) const /*final*/;
-    Function::Ptr findFunctionOwningBasicBlock(const BasicBlock::Ptr&) const /*final*/;
-    /** @} */
+    std::vector<Function::Ptr>
+    functionsOwningBasicBlock(const ControlFlowGraph::Vertex&, bool doSort = true) const /*final*/;
 
-    /** Finds functions that own specified basic blocks.
-     *
-     *  Finds the set of distinct functions that own the specified basic blocks and returns a list of such functions in entry
-     *  address order.  This is similar to @ref findFunctionOwningBasicBlock except it operates on a collection of basic blocks
-     *  and returns a collection of distinct function pointers.
-     *
-     *  @{ */
-    std::vector<Function::Ptr> findFunctionsOwningBasicBlocks(const std::vector<rose_addr_t>&) const /*final*/;
-    std::vector<Function::Ptr> findFunctionsOwningBasicBlocks(const std::vector<BasicBlock::Ptr>&) const /*final*/;
+    std::vector<Function::Ptr>
+    functionsOwningBasicBlock(const ControlFlowGraph::ConstVertexIterator&, bool doSort = true) const /*final*/;
+
+    std::vector<Function::Ptr>
+    functionsOwningBasicBlock(rose_addr_t bblockVa, bool doSort = true) const /*final*/;
+
+    std::vector<Function::Ptr>
+    functionsOwningBasicBlock(const BasicBlock::Ptr&, bool doSort = true) const /*final*/;
+
+    template<class Container> // container can hold any type accepted by functionsOwningBasicBlock
+    std::vector<Function::Ptr>
+    functionsOwningBasicBlocks(const Container &bblocks) const /*final*/ {
+        std::vector<Function::Ptr> retval;
+        BOOST_FOREACH (const typename Container::value_type& bblock, bblocks) {
+            BOOST_FOREACH (const Function::Ptr &function, functionsOwningBasicBlock(bblock, false))
+                insertUnique(retval, function, sortFunctionsByAddress);
+        }
+        return retval;
+    }
     /** @} */
 
     /** Scans the CFG to find function calls.
@@ -1427,41 +1508,13 @@ public:
 
     /** Adds basic blocks to a function.
      *
-     *  Attempts to discover the basic blocks that should belong to the specified function.  This is done as follows:
+     *  Attempts to discover the basic blocks that should belong to the specified function. It does so by finding all CFG
+     *  vertices that are reachable from the already-owned vertices without following edges that are marked as function calls,
+     *  function transfers, or function returns and without following edges that lead to the entry point of another function.
      *
-     *  @li An initial CFG traversal follows the non-function-call edges starting at the function's already-owned basic
-     *      blocks.  It makes note of any newly encountered blocks, and considers them to be "provisionally owned" by the
-     *      function.  If it encounters a vertex already owned by some other function then the ID number for the edge leading
-     *      to that vertex is appended to the @p outwardInterFunctionEdges list (if not null), that vertex is not marked as
-     *      provisionally owned by this function, and that vertex's outgoing edges are not traversed.
-     *
-     *  @li A second traversal of the new provisionally-owned vertices (excluding the entry vertex) verifies that all
-     *      incoming edges originate from this same function.  If an edge is detected coming from a vertex that is not owned by
-     *      this function (explicitly or provisionally) then that edge is appended to the @ref inwardInterFunctionEdges list
-     *      (if not null).
-     *
-     *  @li If there were no conflicts (nothing appended to @p outwardInterFunctionEdges or @p inwardInterFunctionEdges) then a
-     *      final traversal of the provisionally-owned vertices adds them to the specified function.
-     *
-     *  The CFG is not modified by this method, and therefore the function must not exist in the CFG; the function must be in a
-     *  thawed state.
-     *
-     *  The return value is the number of edges inserted (or that would have been inerted) into the two edge list arguments. A
-     *  return value other than zero means that conflicts were encountered and the function was not modified.  If a conflict
-     *  occurs, the user is permitted to insert the vertices explicitly since this algorithm does not check consistency for
-     *  vertices already owned by the function.
-     *
-     *  @{ */
-    size_t discoverFunctionBasicBlocks(const Function::Ptr&,
-                                       CfgEdgeList *inwardInterFunctionEdges /*out*/,
-                                       CfgEdgeList *outwardInterFunctionEdges /*out*/) /*final*/;
-    size_t discoverFunctionBasicBlocks(const Function::Ptr&,
-                                       CfgConstEdgeList *inwardInterFunctionEdges /*out*/,
-                                       CfgConstEdgeList *outwardInterFunctionEdges /*out*/) const /*final*/;
-    size_t discoverFunctionBasicBlocks(const Function::Ptr &function,
-                                       std::vector<size_t> &inwardInterFunctionEdges /*out*/,
-                                       std::vector<size_t> &outwardInterFunctionEdges /*out*/) const /*final*/;
-    /** @} */
+     *  The CFG is not modified by this method. The function is modified and must not exist in the CFG; the function must be in
+     *  a thawed state. */
+    void discoverFunctionBasicBlocks(const Function::Ptr &function) const /*final*/;
 
     /** Returns ghost successors for a single function.
      *

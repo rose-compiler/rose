@@ -948,8 +948,8 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
         discoverBasicBlocks(partitioner);
     }
 
-    // Perform a final pass over all functions and issue reports about strange CFG
-    attachBlocksToFunctions(partitioner, true /*report*/);
+    // Perform a final pass over all functions.
+    attachBlocksToFunctions(partitioner);
 
     if (interp_)
         ModulesPe::nameImportThunks(partitioner, interp_);
@@ -1225,7 +1225,7 @@ Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa) 
     return functions;
 }
 
-std::vector<Function::Ptr>
+void
 Engine::discoverFunctions(Partitioner &partitioner) {
     rose_addr_t nextPrologueVa = 0;                     // where to search for function prologues
     rose_addr_t nextReadAddr = 0;                       // where to look for read-only function addresses
@@ -1254,9 +1254,9 @@ Engine::discoverFunctions(Partitioner &partitioner) {
         break;
     }
 
-    // Try to attach basic blocks to functions and return the list of failures.
+    // Try to attach basic blocks to functions
     makeCalledFunctions(partitioner);
-    return attachBlocksToFunctions(partitioner);
+    attachBlocksToFunctions(partitioner);
 }
 
 std::set<rose_addr_t>
@@ -1285,9 +1285,7 @@ Engine::attachDeadCodeToFunction(Partitioner &partitioner, const Function::Ptr &
         // should also be attached to the function.
         if (i+1 < maxIterations) {
             while (makeNextBasicBlock(partitioner)) /*void*/;
-            size_t nFailures = partitioner.discoverFunctionBasicBlocks(function, NULL, NULL);
-            if (nFailures > 0)
-                break;
+            partitioner.discoverFunctionBasicBlocks(function);
         }
     }
 
@@ -1372,33 +1370,14 @@ Engine::attachSurroundedCodeToFunctions(Partitioner &partitioner) {
     return nNewBlocks;
 }
 
-// sophomoric attempt to assign basic blocks to functions.
-std::vector<Function::Ptr>
-Engine::attachBlocksToFunctions(Partitioner &partitioner, bool emitWarnings) {
+void
+Engine::attachBlocksToFunctions(Partitioner &partitioner) {
     std::vector<Function::Ptr> retval;
     BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
         partitioner.detachFunction(function);           // must be detached in order to modify block ownership
-        CfgEdgeList inwardConflictEdges, outwardConflictEdges;
-        size_t nFailures = partitioner.discoverFunctionBasicBlocks(function, &inwardConflictEdges, &outwardConflictEdges);
-        if (nFailures > 0) {
-            insertUnique(retval, function, sortFunctionsByAddress);
-            if (mlog[WARN] && emitWarnings) {
-                mlog[WARN] <<"discovery for " <<partitioner.functionName(function)
-                               <<" had " <<StringUtility::plural(inwardConflictEdges.size(), "inward conflicts")
-                               <<" and " <<StringUtility::plural(outwardConflictEdges.size(), "outward conflicts") <<"\n";
-                BOOST_FOREACH (const ControlFlowGraph::EdgeIterator &edge, inwardConflictEdges) {
-                    mlog[WARN] <<"  inward conflict " <<*edge
-                               <<" from " <<partitioner.functionName(edge->source()->value().function()) <<"\n";
-                }
-                BOOST_FOREACH (const ControlFlowGraph::EdgeIterator &edge, outwardConflictEdges) {
-                    mlog[WARN] <<"  outward conflict " <<*edge
-                               <<" to " <<partitioner.functionName(edge->target()->value().function()) <<"\n";
-                }
-            }
-        }
-        partitioner.attachFunction(function);           // reattach even if we didn't modify it due to failure
+        partitioner.discoverFunctionBasicBlocks(function);
+        partitioner.attachFunction(function);
     }
-    return retval;
 }
 
 // Finds dead code and adds it to the function to which it seems to belong.
