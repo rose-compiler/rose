@@ -29,6 +29,12 @@ namespace MPI_Code_Generator
   // Translate target device(mpi:master) begin ...
   void transMPIDeviceMaster (SgOmpTargetStatement * t_stmt);
 
+  void transOmpTargetParallelLoop (SgOmpForStatement* loop); 
+  std::set<SgSymbol* > transOmpMapVariables (SgOmpTargetStatement* );
+
+  // convert a C data type into MPI type name
+  std::string C2MPITypeName (SgType*);
+
 //--------------- v 0.1 interface, no longer being used.   
   class MPI_PragmaAttribute; 
   //int generateMPI (SgSourceFile* sfile); 

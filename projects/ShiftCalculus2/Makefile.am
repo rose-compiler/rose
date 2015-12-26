@@ -168,7 +168,7 @@ mpiTests: rose_test_mpi_v1.cpp
 cudaTests: rose_laplacian_lite_v3.cu rose_laplacian_lite_v3_GPU_collapsed.cu 
 
 demo: test10 cudaTests test10poly test10vector test10MLM
-demo2015: test10 cudaTests test10vector 
+demo2015: test10 cudaTests test10vector mpiTests
 
 check-local:
 	@echo "Tests for Shift Calculus examples."

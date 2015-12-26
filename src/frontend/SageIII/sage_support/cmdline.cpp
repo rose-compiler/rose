@@ -3667,6 +3667,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   //
+  // DQ (12/23/2015): Suppress long-standing normalization of variable declarations with multiple 
+  // variables to be converted to individual variable declarations.
+  //
+     set_suppress_variable_declaration_normalization(false);
+     ROSE_ASSERT (get_suppress_variable_declaration_normalization() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(suppress_variable_declaration_normalization)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("suppress_variable_declaration_normalization mode ON \n");
+          set_suppress_variable_declaration_normalization(true);
+        }
+
+  //
   // DQ (1/30/2014): Added more token handling support (internal testing).
   //
      set_unparse_tokens_testing(0);
@@ -5473,6 +5486,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (12/14/2015): Strip out the new option (so it will not be used on the backend compiler).
      optionCount = sla(argv, "-rose:", "($)", "(use_token_stream_to_improve_source_position_info)",1);
+
+  // DQ (12/23/2015): Suppress variable declaration normalizations
+     optionCount = sla(argv, "-rose:", "($)", "(suppress_variable_declaration_normalization)",1);
 
      int integerOption_token_tests = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(unparse_tokens_testing)", &integerOption_token_tests, 1);
