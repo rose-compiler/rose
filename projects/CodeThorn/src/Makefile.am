@@ -101,6 +101,8 @@ codethorn_SOURCES = \
   EqualityMaintainer.h             \
   ExprAnalyzer.C                   \
   ExprAnalyzer.h                   \
+  EquivalenceChecking.h            \
+  EquivalenceChecking.C            \
   HSet.h                           \
   HSetMaintainer.h                 \
   HashFun.h                        \
