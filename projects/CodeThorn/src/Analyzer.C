@@ -39,6 +39,8 @@ bool CTIOLabeler::isStdInLabel(Label label, VariableId* id=0) {
     return true;
   } else if(isNonDetIntFunctionCall(label,id)) {
     return true;
+  } else if(isNonDetLongFunctionCall(label,id)) {
+    return true;
   }
   return false;
 }
@@ -48,13 +50,25 @@ void CTIOLabeler::setExternalNonDetIntFunctionName(std::string name) {
   _externalNonDetIntFunctionName=name;
 }
 
+void CTIOLabeler::setExternalNonDetLongFunctionName(std::string name) {
+  _externalNonDetLongFunctionName=name;
+}
+
 bool CTIOLabeler::isNonDetIntFunctionCall(Label lab,VariableId* varIdPtr){
+  return isFunctionCallWithName(lab,varIdPtr,_externalNonDetIntFunctionName);
+}
+
+bool CTIOLabeler::isNonDetLongFunctionCall(Label lab,VariableId* varIdPtr){
+  return isFunctionCallWithName(lab,varIdPtr,_externalNonDetLongFunctionName);
+}
+
+bool CTIOLabeler::isFunctionCallWithName(Label lab,VariableId* varIdPtr,string name){
   SgNode* node=getNode(lab);
   if(isFunctionCallLabel(lab)) {
     std::pair<SgVarRefExp*,SgFunctionCallExp*> p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
     if(p.first) {
       string funName=SgNodeHelper::getFunctionName(p.second);
-      if(funName!=_externalNonDetIntFunctionName) {
+      if(funName!=name) {
 	return false;
       }
       if(varIdPtr) {
@@ -65,7 +79,6 @@ bool CTIOLabeler::isNonDetIntFunctionCall(Label lab,VariableId* varIdPtr){
   }
   return false;
 }
-
 
 CTIOLabeler::~CTIOLabeler() {
 }
@@ -226,6 +239,7 @@ void Analyzer::enableExternalFunctionSemantics() {
   _externalFunctionSemantics=true;
   _externalErrorFunctionName="__VERIFIER_error";
   _externalNonDetIntFunctionName="__VERIFIER_nondet_int";
+  _externalNonDetLongFunctionName="__VERIFIER_nondet_long";
   _externalExitFunctionName="exit";
 }
 
@@ -233,9 +247,11 @@ void Analyzer::disableExternalFunctionSemantics() {
   _externalFunctionSemantics=false;
   _externalErrorFunctionName="";
   _externalNonDetIntFunctionName="";
+  _externalNonDetLongFunctionName="";
   _externalExitFunctionName="";
   ROSE_ASSERT(getLabeler());
   getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
+  getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
 }
 
 Analyzer::Analyzer():
@@ -1444,20 +1460,20 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     InputOutput newio;
     Label lab=getLabeler()->getLabel(nextNodeToAnalyze1);
     VariableId varId;
-    bool isExternalNonDetIntFunction=false;
+    // TODO: check whether the following test is superfluous meanwhile, since isStdInLabel does take NonDetX functions into account
+    bool isExternalNonDetXFunction=false;
     if(isFunctionCallWithAssignment(lab,&varId)) {
       if(isUsingExternalFunctionSemantics()) {
 	if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
 	  ROSE_ASSERT(funCall);
 	  string externalFunctionName=SgNodeHelper::getFunctionName(funCall);
-	  if(externalFunctionName==_externalNonDetIntFunctionName) {
-	    isExternalNonDetIntFunction=true;
-	    //cout<<"TODO: set varId to input=__VERIFIER_nondet_int();"<<endl;
+	  if(externalFunctionName==_externalNonDetIntFunctionName||externalFunctionName==_externalNonDetLongFunctionName) {
+	    isExternalNonDetXFunction=true;
 	  }
 	}
       }
     }
-    if(isExternalNonDetIntFunction || getLabeler()->isStdInLabel(lab,&varId)) {
+    if(isExternalNonDetXFunction || getLabeler()->isStdInLabel(lab,&varId)) {
       if(_inputSequence.size()>0) {
         PState newPState=*currentEState.pstate();
         ConstraintSet newCSet=*currentEState.constraints();
@@ -1895,6 +1911,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   cout << "INIT: Creating CFAnalysis."<<endl;
   cfanalyzer=new CFAnalysis(labeler,true);
   getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
+  getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
 
   //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   cout << "INIT: Building CFGs."<<endl;
