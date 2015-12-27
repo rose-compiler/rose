@@ -1203,7 +1203,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
       list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
       SingleEvalResultConstInt evalResult=*resultListIter;
       if(evalResultList.size()>1) {
-        cerr<<"Error: We currently do not support multi-state generating operators in function call parameters (yet)."<<endl;
+        cerr<<"Error: multi-state generating operators in function call parameters not supported."<<endl;
         exit(1);
       }
       // above evalConstInt does not use constraints (par3==false). Therefore top vars remain top vars (which is what we want here)
