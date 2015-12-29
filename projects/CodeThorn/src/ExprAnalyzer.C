@@ -577,7 +577,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
       }
         // unary minus
       case V_SgMinusOp: {
-        res.result=-operandResult.result; // using overloaded operator
+        res.result=operandResult.result.operatorUnaryMinus();
         res.exprConstraints=operandResult.exprConstraints;
         resultList.push_back(res);
         break;

@@ -450,10 +450,6 @@ int AType::ConstIntLattice::getIntValue() const {
 }
 
 // arithmetic operators
-AType::ConstIntLattice AType::ConstIntLattice::operator-() {
-  return operatorUnaryMinus();
-}
-
 AType::ConstIntLattice AType::ConstIntLattice::operatorUnaryMinus() {
   AType::ConstIntLattice tmp;
   switch(valueType) {

@@ -121,7 +121,6 @@ class ConstIntLattice {
   // determines whether the value is known and constant. Otherwise it can be bot or top.
   bool isConstInt() const;
   ConstIntLattice operatorNot();
-  ConstIntLattice operator-(); // unary minus
   ConstIntLattice operatorUnaryMinus(); // unary minus
   ConstIntLattice operatorOr(ConstIntLattice other);
   ConstIntLattice operatorAnd(ConstIntLattice other);
@@ -184,9 +183,11 @@ class ConstIntLattice {
 } // end of namespace AType
 
 typedef AType::ConstIntLattice AValue; 
+typedef AType::ConstIntLatticeCmp AValueCmp; 
+
 typedef AType::CppCapsuleConstIntLattice CppCapsuleAValue; 
 typedef AType::CppCapsuleConstIntLatticeLessComparator CppCapsuleAValueLessComp; 
-typedef AType::ConstIntLatticeCmp AValueCmp; 
+
 
 }
 

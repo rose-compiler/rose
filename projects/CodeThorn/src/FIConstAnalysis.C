@@ -628,7 +628,7 @@ EvalValueType FIConstAnalysis::eval(SgExpression* node) {
     switch(node->variantT()) {
     case V_SgNotOp: res=childVal.operatorNot();break;
     case V_SgCastExp: res=childVal;break; // requires refinement for different types
-    case V_SgMinusOp: res=-childVal; break;
+    case V_SgMinusOp: res=childVal.operatorUnaryMinus(); break;
     case V_SgPointerDerefExp: res=AType::Top();break;
     default:cerr<<"EvalValueType:unknown unary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
     }
