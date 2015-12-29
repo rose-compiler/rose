@@ -330,6 +330,13 @@ bool AType::ConstIntLatticeCmp::operator()(const AType::ConstIntLattice& c1, con
   return AType::strictWeakOrderingIsSmaller(c1,c2);
 }
 
+bool AType::ConstIntLattice::operator==(AType::ConstIntLattice other) const {
+  return AType::strictWeakOrderingIsEqual(*this,other);
+}
+bool AType::ConstIntLattice::operator<(AType::ConstIntLattice other) const {
+  return AType::strictWeakOrderingIsSmaller(*this,other);
+}
+
 #if 1
 bool AType::CppCapsuleConstIntLatticeLessComparator::operator()(const AType::CppCapsuleConstIntLattice& c1, const AType::CppCapsuleConstIntLattice& c2) const {
   return AType::strictWeakOrderingIsSmaller(c1.getValue(),c2.getValue());

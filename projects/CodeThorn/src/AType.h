@@ -130,6 +130,12 @@ class ConstIntLattice {
   ConstIntLattice operatorLessOrEq(ConstIntLattice other) const;
   ConstIntLattice operatorMoreOrEq(ConstIntLattice other) const;
   ConstIntLattice operatorMore(ConstIntLattice other) const;
+
+  // strict weak ordering (required for sorted STL data structures if
+  // no comparator is provided)
+  bool operator==(AType::ConstIntLattice other) const;
+  bool operator<(AType::ConstIntLattice other) const;
+
   string toString() const;
   friend ostream& operator<<(ostream& os, const ConstIntLattice& value);
   friend istream& operator>>(istream& os, ConstIntLattice& value);
