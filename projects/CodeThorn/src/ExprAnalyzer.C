@@ -300,7 +300,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         }
         case V_SgAndOp: {
           //cout << "SgAndOp: "<<lhsResult.result.toString()<<"&&"<<rhsResult.result.toString()<<" ==> ";
-          res.result=(lhsResult.result&&rhsResult.result);
+          res.result=(lhsResult.result.operatorAnd(rhsResult.result));
           //cout << res.result.toString()<<endl;
 #if 0
           cout << lhsResult.exprConstraints.toString();
@@ -333,7 +333,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           break;
         }
         case V_SgOrOp: {
-          res.result=(lhsResult.result||rhsResult.result);
+          res.result=lhsResult.result.operatorOr(rhsResult.result);
           // we encode short-circuit CPP-OR semantics here!
           if(lhsResult.result.isTrue()) {
             res.result=lhsResult.result;
@@ -562,7 +562,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
       SingleEvalResultConstInt operandResult=*oiter;
       switch(node->variantT()) {
       case V_SgNotOp:
-        res.result=!operandResult.result;
+        res.result=operandResult.result.operatorNot();
         // we do NOT invert the constraints, instead we negate the operand result (TODO: investigate)
         res.exprConstraints=operandResult.exprConstraints;
         resultList.push_back(res);

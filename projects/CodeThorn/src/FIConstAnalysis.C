@@ -420,7 +420,7 @@ EvalValueType FIConstAnalysis::evalSgAndOp(EvalValueType lhsResult,EvalValueType
   if(lhsResult.isFalse()) {
     res=lhsResult;
   } else {
-    res=(lhsResult&&rhsResult);
+    res=(lhsResult.operatorAnd(rhsResult));
   }
   return res;
 }
@@ -431,7 +431,7 @@ EvalValueType FIConstAnalysis::evalSgOrOp(EvalValueType lhsResult,EvalValueType 
   if(lhsResult.isTrue()) {
     res=lhsResult;
   } else {
-    res=(lhsResult||rhsResult);
+    res=(lhsResult.operatorOr(rhsResult));
   }
   return res;
 }
@@ -626,7 +626,7 @@ EvalValueType FIConstAnalysis::eval(SgExpression* node) {
     assert(child);
     EvalValueType childVal=eval(child);
     switch(node->variantT()) {
-    case V_SgNotOp: res=!childVal;break;
+    case V_SgNotOp: res=childVal.operatorNot();break;
     case V_SgCastExp: res=childVal;break; // requires refinement for different types
     case V_SgMinusOp: res=-childVal; break;
     case V_SgPointerDerefExp: res=AType::Top();break;

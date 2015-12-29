@@ -241,7 +241,7 @@ long AType::ConstIntLattice::hash() const {
   throw "Error: ConstIntLattice hash: unknown value.";
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator!() {
+AType::ConstIntLattice AType::ConstIntLattice::operatorNot() {
   AType::ConstIntLattice tmp;
   switch(valueType) {
   case AType::ConstIntLattice::CONSTINT: 
@@ -260,8 +260,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator!() {
   return tmp;
 }
 
-
-AType::ConstIntLattice AType::ConstIntLattice::operator||(ConstIntLattice other) {
+AType::ConstIntLattice AType::ConstIntLattice::operatorOr(ConstIntLattice other) {
   AType::ConstIntLattice tmp;
   // all TOP cases
   if(isTop()   && other.isTop())   return Top();
@@ -289,7 +288,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator||(ConstIntLattice other)
   throw "Error: ConstIntLattice operation|| failed.";
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator&&(ConstIntLattice other) {
+AType::ConstIntLattice AType::ConstIntLattice::operatorAnd(ConstIntLattice other) {
   AType::ConstIntLattice tmp;
   // all TOP cases
   if(isTop()   && other.isTop())   return Top();
@@ -362,7 +361,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator==(ConstIntLattice other)
 }
 
 AType::ConstIntLattice AType::ConstIntLattice::operator!=(ConstIntLattice other) const {
-  return !(*this==other);
+  return (*this==other).operatorNot();
 }
 
 AType::ConstIntLattice AType::ConstIntLattice::operator<(ConstIntLattice other) const {
@@ -452,6 +451,10 @@ int AType::ConstIntLattice::getIntValue() const {
 
 // arithmetic operators
 AType::ConstIntLattice AType::ConstIntLattice::operator-() {
+  return operatorUnaryMinus();
+}
+
+AType::ConstIntLattice AType::ConstIntLattice::operatorUnaryMinus() {
   AType::ConstIntLattice tmp;
   switch(valueType) {
   case AType::ConstIntLattice::CONSTINT: 
@@ -461,12 +464,10 @@ AType::ConstIntLattice AType::ConstIntLattice::operator-() {
   case AType::ConstIntLattice::TOP: tmp=Top();break;
   case AType::ConstIntLattice::BOT: tmp=Bot();break;
   default:
-    throw "Error: ConstIntLattice operation '!' failed.";
+    throw "Error: ConstIntLattice operation unaryMinus failed.";
   }
   return tmp;
 }
-
-//#define ARITH_TOP
 
 AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())

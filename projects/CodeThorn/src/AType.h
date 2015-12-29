@@ -120,10 +120,11 @@ class ConstIntLattice {
   bool isBot() const;
   // determines whether the value is known and constant. Otherwise it can be bot or top.
   bool isConstInt() const;
-  ConstIntLattice operator!();
+  ConstIntLattice operatorNot();
   ConstIntLattice operator-(); // unary minus
-  ConstIntLattice operator||(ConstIntLattice other);
-  ConstIntLattice operator&&(ConstIntLattice other);
+  ConstIntLattice operatorUnaryMinus(); // unary minus
+  ConstIntLattice operatorOr(ConstIntLattice other);
+  ConstIntLattice operatorAnd(ConstIntLattice other);
   ConstIntLattice operator==(ConstIntLattice other) const;
   ConstIntLattice operator!=(ConstIntLattice other) const;
   ConstIntLattice operator<(ConstIntLattice other) const;
