@@ -9,6 +9,7 @@ namespace BaseSemantics {
 void
 MemoryCellMap::clear() {
     cells.clear();
+    MemoryCellState::clear();
 }
 
 SValuePtr
@@ -99,6 +100,46 @@ MemoryCellMap::traverse(MemoryCell::Visitor &visitor) {
         newMap.insert(generateCellKey(cell->get_address()), cell);
     }
     cells = newMap;
+}
+    
+std::vector<MemoryCellPtr>
+MemoryCellMap::matchingCells(const MemoryCell::Predicate &p) const {
+    std::vector<MemoryCellPtr> retval;
+    BOOST_FOREACH (const MemoryCellPtr &cell, cells.values()) {
+        if (p(cell))
+            retval.push_back(cell);
+    }
+    return retval;
+}
+
+std::vector<MemoryCellPtr>
+MemoryCellMap::leadingCells(const MemoryCell::Predicate &p) const {
+    std::vector<MemoryCellPtr> retval;
+    BOOST_FOREACH (const MemoryCellPtr &cell, cells.values()) {
+        if (!p(cell))
+            break;
+        retval.push_back(cell);
+    }
+    return retval;
+}
+
+void
+MemoryCellMap::eraseMatchingCells(const MemoryCell::Predicate &p) {
+    CellMap tmp = cells;
+    BOOST_FOREACH (const CellMap::Node &cell, tmp.nodes()) {
+        if (p(cell.value()))
+            cells.erase(cell.key());
+    }
+}
+
+void
+MemoryCellMap::eraseLeadingCells(const MemoryCell::Predicate &p) {
+    CellMap tmp = cells;
+    BOOST_FOREACH (const CellMap::Node &cell, tmp.nodes()) {
+        if (!p(cell.value()))
+            break;
+        cells.erase(cell.key());
+    }
 }
 
 } // namespace

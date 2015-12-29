@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellList_H
 
 #include <BaseSemantics2.h>
-#include <MemoryCell.h>
+#include <MemoryCellState.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -30,37 +30,26 @@ typedef boost::shared_ptr<class MemoryCellList> MemoryCellListPtr;
  *
  *  This implementation stores memory cells in reverse chronological order: the most recently created cells appear at the
  *  beginning of the list.  Subclasses, of course, are free to reorder the list however they want. */
-class MemoryCellList: public MemoryState {
+class MemoryCellList: public MemoryCellState {
 public:
     typedef std::list<MemoryCellPtr> CellList;          /**< List of memory cells. */
     typedef Sawyer::Container::Set<rose_addr_t> AddressSet; /**< Set of concrete virtual addresses. */
 protected:
-    MemoryCellPtr protocell;                            // prototypical memory cell used for its virtual constructors
     CellList cells;                                     // list of cells in reverse chronological order
     bool occlusionsErased_;                             // prune away old cells that are occluded by newer ones.
-private:
-    MemoryCellPtr latestWrittenCell_;                   // the cell whose value was most recently written to, if any
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit MemoryCellList(const MemoryCellPtr &protocell)
-        : MemoryState(protocell->get_address(), protocell->get_value()),
-          protocell(protocell), occlusionsErased_(false) {
-        ASSERT_not_null(protocell);
-        ASSERT_not_null(protocell->get_address());
-        ASSERT_not_null(protocell->get_value());
-    }
+        : MemoryCellState(protocell), occlusionsErased_(false) {}
 
     MemoryCellList(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
-        : MemoryState(addrProtoval, valProtoval),
-          protocell(MemoryCell::instance(addrProtoval, valProtoval)),
-          occlusionsErased_(false) {}
+        : MemoryCellState(addrProtoval, valProtoval), occlusionsErased_(false) {}
 
     // deep-copy cell list so that modifying this new state does not modify the existing state
     MemoryCellList(const MemoryCellList &other)
-        : MemoryState(other), protocell(other.protocell),
-          occlusionsErased_(other.occlusionsErased_) {
+        : MemoryCellState(other), occlusionsErased_(other.occlusionsErased_) {
         for (CellList::const_iterator ci=other.cells.begin(); ci!=other.cells.end(); ++ci)
             cells.push_back((*ci)->clone());
     }
@@ -116,12 +105,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited
 public:
-    virtual void clear() ROSE_OVERRIDE {
-        cells.clear();
-        latestWrittenCell_.reset();
-    }
-
+    virtual void clear() ROSE_OVERRIDE;
     virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+    virtual std::vector<MemoryCellPtr> matchingCells(const MemoryCell::Predicate&) const ROSE_OVERRIDE;
+    virtual std::vector<MemoryCellPtr> leadingCells(const MemoryCell::Predicate&) const ROSE_OVERRIDE;
+    virtual void eraseMatchingCells(const MemoryCell::Predicate&) ROSE_OVERRIDE;
+    virtual void eraseLeadingCells(const MemoryCell::Predicate&) ROSE_OVERRIDE;
+    virtual void traverse(MemoryCell::Visitor&) ROSE_OVERRIDE;
 
     /** Read a value from memory.
      *
@@ -160,11 +150,6 @@ public:
     void occlusionsErased(bool b) { occlusionsErased_ = b; }
     /** @} */
 
-    /** Remove memory cells that were read but never written.
-     *
-     *  The determination of whether a cell was read but never written is based on whether the cell has a latest writer. */
-    virtual void clearNonWritten();
-
     /** Scan cell list to find matching cells.
      *
      *  Scans the cell list from front to back (reverse chronological order) and build a list of cells that may alias the given
@@ -200,24 +185,10 @@ public:
     virtual CellList scan(const SValuePtr &address, size_t nbits, RiscOperators *addrOps, RiscOperators *valOps,
                           bool &short_circuited/*out*/) const ROSE_DEPRECATED("use the cursor-based scan instead");
 
-    /** Visit each memory cell. */
-    virtual void traverse(MemoryCell::Visitor &visitor);
-
     /** Returns the list of all memory cells.
      * @{ */
     virtual const CellList& get_cells() const { return cells; }
     virtual       CellList& get_cells()       { return cells; }
-    /** @} */
-
-    /** Property: Cell most recently written.
-     *
-     * @{ */
-    virtual MemoryCellPtr latestWrittenCell() const {
-        return latestWrittenCell_;
-    }
-    virtual void latestWrittenCell(const MemoryCellPtr &cell) {
-        latestWrittenCell_ = cell;
-    }
     /** @} */
 
     // [Robb Matzke 2015-12-26]: deprecated
@@ -242,6 +213,7 @@ public:
     virtual std::set<rose_addr_t> get_latest_writers(const SValuePtr &addr, size_t nbits,
                                                      RiscOperators *addrOps, RiscOperators *valOps)
         ROSE_DEPRECATED("use getWritersUnion instead");
+
 
 protected:
     // Compute a new value by merging the specified cells.  If the cell list is empty return the specified default.

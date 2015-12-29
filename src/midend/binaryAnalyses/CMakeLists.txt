@@ -41,6 +41,7 @@ add_library(midend_binary OBJECT
   instructionSemantics/MemoryCell.C
   instructionSemantics/MemoryCellList.C
   instructionSemantics/MemoryCellMap.C
+  instructionSemantics/MemoryCellState.C
   instructionSemantics/MultiSemantics2.C
   instructionSemantics/NullSemantics2.C
   instructionSemantics/PartialSymbolicSemantics.C
@@ -100,6 +101,7 @@ install(
     instructionSemantics/MemoryCell.h
     instructionSemantics/MemoryCellList.h
     instructionSemantics/MemoryCellMap.h
+    instructionSemantics/MemoryCellState.h
     instructionSemantics/MultiSemantics2.h
     instructionSemantics/MultiSemantics.h
     instructionSemantics/NullSemantics2.h

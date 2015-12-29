@@ -193,6 +193,26 @@ Engine::partitionerSwitches() {
               .intrinsicValue(false, settings_.partitioner.usingSemantics)
               .hidden(true));
 
+    sg.insert(Switch("semantic-memory")
+              .argument("type", enumParser<SemanticMemoryParadigm>(settings_.partitioner.semanticMemoryParadigm)
+                        ->with("list", LIST_BASED_MEMORY)
+                        ->with("map", MAP_BASED_MEMORY))
+              .doc("The partitioner can switch between storing semantic memory states in a list versus a map.  The @v{type} "
+                   "should be one of these words:"
+
+                   "@named{list}{List-based memory stores memory cells (essentially address+value pairs) in a reverse "
+                   "chronological list and uses an SMT solver (when one is configured and enabled) to solve aliasing "
+                   "equations.  The number of symbolic expression comparisons (either within ROSE or using an SMT solver) "
+                   "is linear with the size of the memory cell list.}"
+
+                   "@named{map}{Map-based memory stores memory cells in a container hashed by address expression. Aliasing "
+                   "equations are not solved even when an SMT solver is available. One cell aliases another only if their "
+                   "address expressions are identical. This approach is faster but less precise.}"
+
+                   "The default is to use the " +
+                   std::string(LIST_BASED_MEMORY == settings_.partitioner.semanticMemoryParadigm ? "list" : "map") +
+                   "-based paradigm."));
+
     sg.insert(Switch("follow-ghost-edges")
               .intrinsicValue(true, settings_.partitioner.followingGhostEdges)
               .doc("When discovering the instructions for a basic block, treat instructions individually rather than "
@@ -773,6 +793,9 @@ Engine::createBarePartitioner() {
             p.assumeFunctionsReturn(false);
     }
 
+    // Should the partitioner favor list-based or map-based containers for semantic memory states?
+    p.semanticMemoryParadigm(settings_.partitioner.semanticMemoryParadigm);
+            
     // Miscellaneous settings
     p.enableSymbolicSemantics(settings_.partitioner.usingSemantics);
     if (settings_.partitioner.followingGhostEdges)
@@ -1472,7 +1495,6 @@ Engine::BasicBlockFinalizer::operator()(bool chain, const Args &args) {
 
         if (args.bblock->finalState() == NULL)
             return true;
-        Semantics::MemoryStatePtr mem = Semantics::MemoryState::promote(args.bblock->finalState()->get_memory_state());
         BaseSemantics::RiscOperatorsPtr ops = args.bblock->dispatcher()->get_operators();
 
         // Should we add an indeterminate CFG edge from this basic block?  For instance, a "JMP [ADDR]" instruction should get

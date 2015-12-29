@@ -2,7 +2,8 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellMap_H
 
 #include <BaseSemantics2.h>
-#include <MemoryCell.h>
+#include <boost/foreach.hpp>
+#include <MemoryCellState.h>
 #include <Sawyer/Map.h>
 
 namespace rose {
@@ -20,7 +21,7 @@ typedef boost::shared_ptr<class MemoryCellMap> MemoryCellMapPtr;
  *  can be accessed in logarithmic time given its address.  The keys for the map are generated from the cell virtual addresses,
  *  either by using the address directly or by hashing it. The function that generates these keys, @ref generateCellKey, is
  *  pure virtual. */
-class MemoryCellMap: public MemoryState {
+class MemoryCellMap: public MemoryCellState {
 public:
     /** Key used to look up memory cells.
      *
@@ -33,27 +34,17 @@ public:
     typedef Sawyer::Container::Map<CellKey, MemoryCellPtr> CellMap;
 
 protected:
-    MemoryCellPtr protocell;
     CellMap cells;
-    MemoryCellPtr latestWrittenCell_;                   // the cell whose value was most recently written to, if any
 
     explicit MemoryCellMap(const MemoryCellPtr &protocell)
-        : MemoryState(protocell->get_address(), protocell->get_value()),
-          protocell(protocell) {
-        ASSERT_not_null(protocell);
-        ASSERT_not_null(protocell->get_address());
-        ASSERT_not_null(protocell->get_value());
-    }
+        : MemoryCellState(protocell) {}
 
-    explicit MemoryCellMap(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
-        : MemoryState(addrProtoval, valProtoval), protocell(MemoryCell::instance(addrProtoval, valProtoval)) {
-        ASSERT_not_null(addrProtoval);
-        ASSERT_not_null(valProtoval);
-    }
+    MemoryCellMap(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
+        : MemoryCellState(addrProtoval, valProtoval) {}
 
     MemoryCellMap(const MemoryCellMap &other)
-        : MemoryState(other), protocell(other.protocell) {
-        BOOST_FOREACH (const MemoryCellPtr &cell, cells.values())
+        : MemoryCellState(other) {
+        BOOST_FOREACH (const MemoryCellPtr &cell, other.cells.values())
             cells.insert(other.generateCellKey(cell->get_address()), cell->clone());
     }
 
@@ -79,32 +70,19 @@ public:
      *  Generates a key from a virtual address. The key is used to look up the cell in a map-based container. */
     virtual CellKey generateCellKey(const SValuePtr &address) const = 0;
 
-    /** Visit each memory cell. */
-    virtual void traverse(MemoryCell::Visitor &visitor);
-
-    /** Property: Cell most recently written.
-     *
-     * @{ */
-    virtual MemoryCellPtr latestWrittenCell() const {
-        return latestWrittenCell_;
-    }
-    virtual void latestWrittenCell(const MemoryCellPtr &cell) {
-        latestWrittenCell_ = cell;
-    }
-    /** @} */
-
 public:
     virtual void clear() ROSE_OVERRIDE;
-
     virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
-
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
-
     virtual void writeMemory(const SValuePtr &address, const SValuePtr &value,
                              RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
-
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
+    virtual std::vector<MemoryCellPtr> matchingCells(const MemoryCell::Predicate&) const ROSE_OVERRIDE;
+    virtual std::vector<MemoryCellPtr> leadingCells(const MemoryCell::Predicate&) const ROSE_OVERRIDE;
+    virtual void eraseMatchingCells(const MemoryCell::Predicate&) ROSE_OVERRIDE;
+    virtual void eraseLeadingCells(const MemoryCell::Predicate&) ROSE_OVERRIDE;
+    virtual void traverse(MemoryCell::Visitor&) ROSE_OVERRIDE;
 };
 
 } // namespace

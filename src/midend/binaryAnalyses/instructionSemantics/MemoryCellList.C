@@ -6,6 +6,12 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
+void
+MemoryCellList::clear() {
+    cells.clear();
+    MemoryCellState::clear();
+}
+
 SValuePtr
 MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
     CellList::iterator cursor = get_cells().begin();
@@ -131,13 +137,9 @@ MemoryCellList::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, Risc
     return changed;
 }
 
-void
-MemoryCellList::clearNonWritten() {
-    for (CellList::iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
-        if ((*ci)->getWriters().isEmpty())
-            *ci = MemoryCellPtr();
-    }
-    cells.erase(std::remove(cells.begin(), cells.end(), MemoryCellPtr()), cells.end());
+static bool
+cellHasNoWriters(const MemoryCellPtr &cell) {
+    return cell->getWriters().isEmpty();
 }
 
 SValuePtr
@@ -261,11 +263,55 @@ MemoryCellList::scan(const BaseSemantics::SValuePtr &addr, size_t nbits, RiscOpe
     return retval;
 }
 
+std::vector<MemoryCellPtr>
+MemoryCellList::matchingCells(const MemoryCell::Predicate &p) const {
+    std::vector<MemoryCellPtr> retval;
+    BOOST_FOREACH (const MemoryCellPtr &cell, cells) {
+        if (p(cell))
+            retval.push_back(cell);
+    }
+    return retval;
+}
+
+std::vector<MemoryCellPtr>
+MemoryCellList::leadingCells(const MemoryCell::Predicate &p) const {
+    std::vector<MemoryCellPtr> retval;
+    BOOST_FOREACH (const MemoryCellPtr &cell, cells) {
+        if (!p(cell))
+            break;
+        retval.push_back(cell);
+    }
+    return retval;
+}
+
 void
-MemoryCellList::traverse(MemoryCell::Visitor &visitor)
-{
-    for (CellList::iterator ci=cells.begin(); ci!=cells.end(); ++ci)
-        (visitor)(*ci);
+MemoryCellList::eraseMatchingCells(const MemoryCell::Predicate &p) {
+    CellList::iterator ci = cells.begin();
+    while (ci != cells.end()) {
+        if (p(*ci)) {
+            ci = cells.erase(ci);
+        } else {
+            ++ci;
+        }
+    }
+}
+
+void
+MemoryCellList::eraseLeadingCells(const MemoryCell::Predicate &p) {
+    CellList::iterator ci = cells.begin();
+    while (ci != cells.end()) {
+        if (p(*ci)) {
+            ci = cells.erase(ci);
+        } else {
+            return;
+        }
+    }
+}
+
+void
+MemoryCellList::traverse(MemoryCell::Visitor &v) {
+    BOOST_FOREACH (MemoryCellPtr &cell, cells)
+        v(cell);
 }
 
 } // namespace

@@ -200,13 +200,15 @@ public:
         bool findingDataFunctionPointers;               /**< Look for function pointers in static data. */
         bool findingThunks;                             /**< Look for common thunk patterns in undiscovered areas. */
         bool splittingThunks;                           /**< Split thunks into their own separate functions. */
+        SemanticMemoryParadigm semanticMemoryParadigm;  /**< Container used for semantic memory states. */
 
         PartitionerSettings()
             : usingSemantics(false), followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
               findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
               doingPostAnalysis(true), doingPostFunctionMayReturn(true), doingPostFunctionStackDelta(true),
               doingPostCallingConvention(false), functionReturnAnalysis(MAYRETURN_DEFAULT_YES),
-              findingDataFunctionPointers(false), findingThunks(true), splittingThunks(false) {}
+              findingDataFunctionPointers(false), findingThunks(true), splittingThunks(false),
+              semanticMemoryParadigm(LIST_BASED_MEMORY) {}
     };
 
     /** Settings for controling the engine behavior.
@@ -1037,6 +1039,16 @@ public:
      * @{ */
     bool usingSemantics() const /*final*/ { return settings_.partitioner.usingSemantics; }
     virtual void usingSemantics(bool b) { settings_.partitioner.usingSemantics = b; }
+    /** @} */
+
+    /** Property: Type of container for semantic memory.
+     *
+     *  Determines whether @ref Partitioner objects created by this engine will be configured to use list-based or map-based
+     *  semantic memory states.  The list-based states are more precise, but they're also slower.
+     *
+     * @{ */
+    SemanticMemoryParadigm semanticMemoryParadigm() const /*final*/ { return settings_.partitioner.semanticMemoryParadigm; }
+    void semanticMemoryParadigm(SemanticMemoryParadigm p) { settings_.partitioner.semanticMemoryParadigm = p; }
     /** @} */
 
     /**  Property: Whether to follow ghost edges.

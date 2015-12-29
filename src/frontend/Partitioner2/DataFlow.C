@@ -309,20 +309,19 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
     CellCoalescer cellCoalescer;
     typedef Sawyer::Container::Map<int64_t, BaseSemantics::SValuePtr> OffsetAddress; // full address per stack offset
     OffsetAddress offsetAddresses;
-    if (BaseSemantics::MemoryCellListPtr memState = BaseSemantics::MemoryCellList::promote(state->get_memory_state())) {
-        BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, memState->get_cells()) {
-            SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(cell->get_address());
-            ASSERT_require2(0 == cell->get_value()->get_width() % 8, "memory must be byte addressable");
-            size_t nBytes = cell->get_value()->get_width() / 8;
-            ASSERT_require(nBytes > 0);
-            if (Sawyer::Optional<int64_t> stackOffset = isStackAddress(address->get_expression(), initialStackPointer, solver)) {
-                StackVariableLocation location(*stackOffset, nBytes, address);
-                StackVariableMeta meta(cell->getWriters(), cell->ioProperties());
-                cellCoalescer.insert(location.interval(), meta);
-                for (size_t i=0; i<nBytes; ++i) {
-                    BaseSemantics::SValuePtr byteAddr = ops->add(address, ops->number_(address->get_width(), i));
-                    offsetAddresses.insert(*stackOffset+i, byteAddr);
-                }
+    BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->get_memory_state());
+    BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, mem->allCells()) {
+        SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(cell->get_address());
+        ASSERT_require2(0 == cell->get_value()->get_width() % 8, "memory must be byte addressable");
+        size_t nBytes = cell->get_value()->get_width() / 8;
+        ASSERT_require(nBytes > 0);
+        if (Sawyer::Optional<int64_t> stackOffset = isStackAddress(address->get_expression(), initialStackPointer, solver)) {
+            StackVariableLocation location(*stackOffset, nBytes, address);
+            StackVariableMeta meta(cell->getWriters(), cell->ioProperties());
+            cellCoalescer.insert(location.interval(), meta);
+            for (size_t i=0; i<nBytes; ++i) {
+                BaseSemantics::SValuePtr byteAddr = ops->add(address, ops->number_(address->get_width(), i));
+                offsetAddresses.insert(*stackOffset+i, byteAddr);
             }
         }
     }
@@ -397,16 +396,15 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
     typedef Sawyer::Container::Map<rose_addr_t, BaseSemantics::SValuePtr> SymbolicAddresses;
     StackWriters stackWriters;
     SymbolicAddresses symbolicAddrs;
-    if (BaseSemantics::MemoryCellListPtr memState = BaseSemantics::MemoryCellList::promote(state->get_memory_state())) {
-        BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, memState->get_cells()) {
-            ASSERT_require2(0 == cell->get_value()->get_width() % 8, "memory must be byte addressable");
-            size_t nBytes = cell->get_value()->get_width() / 8;
-            ASSERT_require(nBytes > 0);
-            if (cell->get_address()->is_number() && cell->get_address()->get_width()<=64) {
-                rose_addr_t va = cell->get_address()->get_number();
-                stackWriters.insert(AddressInterval::baseSize(va, nBytes), cell->latestWriter().orElse(0));
-                symbolicAddrs.insert(va, cell->get_address());
-            }
+    BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->get_memory_state());
+    BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, mem->allCells()) {
+        ASSERT_require2(0 == cell->get_value()->get_width() % 8, "memory must be byte addressable");
+        size_t nBytes = cell->get_value()->get_width() / 8;
+        ASSERT_require(nBytes > 0);
+        if (cell->get_address()->is_number() && cell->get_address()->get_width()<=64) {
+            rose_addr_t va = cell->get_address()->get_number();
+            stackWriters.insert(AddressInterval::baseSize(va, nBytes), cell->latestWriter().orElse(0));
+            symbolicAddrs.insert(va, cell->get_address());
         }
     }
 

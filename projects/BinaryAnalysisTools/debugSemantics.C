@@ -350,7 +350,8 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
                   <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::MemoryState\n"
                   <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::MemoryState\n"
                   <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics default\n"
-                  <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::MemoryState\n"
+                  <<"  p2-list          rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState\n"
+                  <<"  p2-map           rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState\n"
                   <<"  symbolic-list    rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState\n"
                   <<"  symbolic-map     rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState\n";
         exit(0);
@@ -367,9 +368,11 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
     } else if (className == "partial") {
         BaseSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
         return ops->get_state()->get_memory_state();
-    } else if (className == "partitioner2") {
-        return P2::Semantics::MemoryState::instance(protoval, protoaddr);
-    } else if (className == "symbolic-list") {
+    } else if (className == "p2-list" || className == "partitioner2") {
+        return P2::Semantics::MemoryListState::instance(protoval, protoaddr);
+    } else if (className == "p2-map") {
+        return P2::Semantics::MemoryMapState::instance(protoval, protoaddr);
+    } else if (className == "symbolic-list" || className == "symbolic") {
         return SymbolicSemantics::MemoryListState::instance(protoval, protoaddr);
     } else if (className == "symbolic-map") {
         return SymbolicSemantics::MemoryMapState::instance(protoval, protoaddr);
@@ -489,7 +492,7 @@ testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::P
             tester.test(ops);
         } else if (settings.opsClassName == "partitioner2") {
             TestSemantics<P2::Semantics::SValuePtr, P2::Semantics::RegisterStateGenericPtr,
-                          P2::Semantics::MemoryStatePtr, P2::Semantics::StatePtr,
+                          P2::Semantics::MemoryListStatePtr, P2::Semantics::StatePtr,
                           P2::Semantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else if (settings.opsClassName == "symbolic") {
@@ -511,9 +514,15 @@ testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::P
                           PartialSymbolicSemantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else if (settings.opsClassName=="partitioner2" && settings.valueClassName=="partitioner2" &&
-                   settings.rstateClassName=="x86" && settings.mstateClassName=="partitioner2") {
+                   settings.rstateClassName=="x86" && settings.mstateClassName=="p2-list") {
             TestSemantics<P2::Semantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr,
-                          P2::Semantics::MemoryStatePtr, P2::Semantics::StatePtr,
+                          P2::Semantics::MemoryListStatePtr, P2::Semantics::StatePtr,
+                          P2::Semantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
+        } else if (settings.opsClassName=="partitioner2" && settings.valueClassName=="partitioner2" &&
+                   settings.rstateClassName=="x86" && settings.mstateClassName=="p2-map") {
+            TestSemantics<P2::Semantics::SValuePtr, BaseSemantics::RegisterStateX86Ptr,
+                          P2::Semantics::MemoryMapStatePtr, P2::Semantics::StatePtr,
                           P2::Semantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else if (settings.opsClassName=="symbolic" && settings.valueClassName=="symbolic" &&
