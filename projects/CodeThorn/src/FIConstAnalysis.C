@@ -185,7 +185,7 @@ VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice min0, ConstIntLat
   _width=max0-min0;
   _min=min0;
   _max=max0;
-  if((_width<0).isTrue())
+  if((_width.operatorLess(0)).isTrue())
     _width=ConstIntLattice(0);
   ConstIntLattice one=AType::ConstIntLattice(1);
   _width=(VariableValueRangeInfo::_width+one);
@@ -222,9 +222,9 @@ VariableValueRangeInfo VariableConstInfo::createVariableValueRangeInfo(VariableI
     }
  
     if(minVal.isBot() && maxVal.isBot()) { minVal=aint; maxVal=aint; continue; }
-    if((aint<minVal).isTrue())
+    if((aint.operatorLess(minVal)).isTrue())
       minVal=aint;
-    if((aint>maxVal).isTrue())
+    if((aint.operatorMore(maxVal)).isTrue())
       maxVal=aint;
   }
   if(minVal.isBot()||maxVal.isBot())
@@ -272,11 +272,11 @@ bool VariableConstInfo::isAny(VariableId varId) {
 bool VariableConstInfo::isUniqueConst(VariableId varId) {
   ROSE_ASSERT(_map);
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width()==ConstIntLattice(1)).isTrue();
+  return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width().operatorEq(ConstIntLattice(1))).isTrue();
 }
 bool VariableConstInfo::isMultiConst(VariableId varId) {
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
-  return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width()>ConstIntLattice(1)).isTrue();
+  return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width().operatorMore(ConstIntLattice(1))).isTrue();
 }
 size_t VariableConstInfo::width(VariableId varId) {
   ConstIntLattice width=createVariableValueRangeInfo(varId,*_map).width();
@@ -612,12 +612,12 @@ EvalValueType FIConstAnalysis::eval(SgExpression* node) {
     switch(node->variantT()) {
     case V_SgAndOp: res=evalSgAndOp(lhsResult,rhsResult);break;
     case V_SgOrOp : res=evalSgOrOp(lhsResult,rhsResult);break;
-    case V_SgEqualityOp: res=(lhsResult==rhsResult);break;
-    case V_SgNotEqualOp: res=(lhsResult!=rhsResult);break;
-    case V_SgGreaterOrEqualOp: res=(lhsResult>=rhsResult);break;
-    case V_SgGreaterThanOp: res=(lhsResult>rhsResult);break;
-    case V_SgLessThanOp: res=(lhsResult<rhsResult);break;
-    case V_SgLessOrEqualOp: res=(lhsResult<=rhsResult);break;
+    case V_SgEqualityOp: res=(lhsResult.operatorEq(rhsResult));break;
+    case V_SgNotEqualOp: res=(lhsResult.operatorNotEq(rhsResult));break;
+    case V_SgGreaterOrEqualOp: res=(lhsResult.operatorMoreOrEq(rhsResult));break;
+    case V_SgGreaterThanOp: res=(lhsResult.operatorMore(rhsResult));break;
+    case V_SgLessThanOp: res=(lhsResult.operatorLess(rhsResult));break;
+    case V_SgLessOrEqualOp: res=(lhsResult.operatorLessOrEq(rhsResult));break;
     case V_SgPntrArrRefExp: res=AType::Top();break;
     default:cerr<<"EvalValueType:unknown binary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<" using top as default."<<endl; res=AType::Top();break;
     }

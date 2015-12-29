@@ -1948,7 +1948,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     }
     // we are using AValue here (and  operator== is overloaded for AValue==AValue)
     // for this comparison isTrue() is also false if any of the two operands is AType::Top()
-    if( (newPState[lhsVar].getValue()==rhsIntVal).isTrue() ) {
+    if( (newPState[lhsVar].getValue().operatorEq(rhsIntVal)).isTrue() ) {
       // update of existing variable with same value
       // => no state change
       return newPState;

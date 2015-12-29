@@ -124,12 +124,12 @@ class ConstIntLattice {
   ConstIntLattice operatorUnaryMinus(); // unary minus
   ConstIntLattice operatorOr(ConstIntLattice other);
   ConstIntLattice operatorAnd(ConstIntLattice other);
-  ConstIntLattice operator==(ConstIntLattice other) const;
-  ConstIntLattice operator!=(ConstIntLattice other) const;
-  ConstIntLattice operator<(ConstIntLattice other) const;
-  ConstIntLattice operator<=(ConstIntLattice other) const;
-  ConstIntLattice operator>=(ConstIntLattice other) const;
-  ConstIntLattice operator>(ConstIntLattice other) const;
+  ConstIntLattice operatorEq(ConstIntLattice other) const;
+  ConstIntLattice operatorNotEq(ConstIntLattice other) const;
+  ConstIntLattice operatorLess(ConstIntLattice other) const;
+  ConstIntLattice operatorLessOrEq(ConstIntLattice other) const;
+  ConstIntLattice operatorMoreOrEq(ConstIntLattice other) const;
+  ConstIntLattice operatorMore(ConstIntLattice other) const;
   string toString() const;
   friend ostream& operator<<(ostream& os, const ConstIntLattice& value);
   friend istream& operator>>(istream& os, ConstIntLattice& value);
@@ -163,6 +163,7 @@ class ConstIntLattice {
     bool operator()(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) const;
   };
 
+#if 1
  class CppCapsuleConstIntLattice {
  public:
    CppCapsuleConstIntLattice(){}
@@ -179,6 +180,7 @@ class ConstIntLattice {
   struct CppCapsuleConstIntLatticeLessComparator {
     bool operator()(const AType::CppCapsuleConstIntLattice& c1, const AType::CppCapsuleConstIntLattice& c2) const;
   };
+#endif
 
 } // end of namespace AType
 

@@ -330,6 +330,7 @@ bool AType::ConstIntLatticeCmp::operator()(const AType::ConstIntLattice& c1, con
   return AType::strictWeakOrderingIsSmaller(c1,c2);
 }
 
+#if 1
 bool AType::CppCapsuleConstIntLatticeLessComparator::operator()(const AType::CppCapsuleConstIntLattice& c1, const AType::CppCapsuleConstIntLattice& c2) const {
   return AType::strictWeakOrderingIsSmaller(c1.getValue(),c2.getValue());
 }
@@ -340,9 +341,9 @@ bool AType::CppCapsuleConstIntLattice::operator==(AType::CppCapsuleConstIntLatti
 bool AType::CppCapsuleConstIntLattice::operator<(AType::CppCapsuleConstIntLattice other) const {
   return AType::strictWeakOrderingIsSmaller(getValue(),other.getValue());
 }
+#endif
 
-
-AType::ConstIntLattice AType::ConstIntLattice::operator==(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorEq(ConstIntLattice other) const {
   // all TOP cases
   if(valueType==TOP || other.valueType==TOP) { 
     return AType::Top();
@@ -360,11 +361,11 @@ AType::ConstIntLattice AType::ConstIntLattice::operator==(ConstIntLattice other)
     return ConstIntLattice(false);
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator!=(ConstIntLattice other) const {
-  return (*this==other).operatorNot();
+AType::ConstIntLattice AType::ConstIntLattice::operatorNotEq(ConstIntLattice other) const {
+  return ((*this).operatorEq(other)).operatorNot();
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator<(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorLess(ConstIntLattice other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -375,7 +376,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator<(ConstIntLattice other) 
   return getIntValue()<other.getIntValue();
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator<=(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorLessOrEq(ConstIntLattice other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -386,7 +387,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator<=(ConstIntLattice other)
   return getIntValue()<=other.getIntValue();
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator>=(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorMoreOrEq(ConstIntLattice other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -397,7 +398,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator>=(ConstIntLattice other)
   return getIntValue()>=other.getIntValue();
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator>(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorMore(ConstIntLattice other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())

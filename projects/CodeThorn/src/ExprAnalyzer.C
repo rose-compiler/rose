@@ -172,7 +172,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
       SingleEvalResultConstInt singleResult1=*i;
       ++i;
       SingleEvalResultConstInt singleResult2=*i;
-      if((singleResult1.value()==singleResult2.value()).isTrue()) {
+      if((singleResult1.value().operatorEq(singleResult2.value())).isTrue()) {
         cout<<"Info: evaluating condition of conditional operator gives two equal results"<<endl;
       }
     }
@@ -226,7 +226,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 
         switch(node->variantT()) {
         case V_SgEqualityOp: {
-          res.result=(lhsResult.result==rhsResult.result);
+          res.result=(lhsResult.result.operatorEq(rhsResult.result));
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           // record new constraint
           VariableId varId;
@@ -263,7 +263,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           break;
         }
         case V_SgNotEqualOp: {
-          res.result=(lhsResult.result!=rhsResult.result);
+          res.result=(lhsResult.result.operatorNotEq(rhsResult.result));
           res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           // record new constraint
           VariableId varId;
@@ -386,7 +386,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           break;
         }
         case V_SgGreaterOrEqualOp: {
-          res.result=(lhsResult.result>=rhsResult.result);
+          res.result=(lhsResult.result.operatorMoreOrEq(rhsResult.result));
           if(boolOptions["relop-constraints"]) {
             if(res.result.isTop())
               throw "Error: Top found in relational operator (not supported yet).";
@@ -396,7 +396,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           break;
         }
         case V_SgGreaterThanOp: {
-          res.result=(lhsResult.result>rhsResult.result);
+          res.result=(lhsResult.result.operatorMore(rhsResult.result));
           if(boolOptions["relop-constraints"]) {
             if(res.result.isTop())
               throw "Error: Top found in relational operator (not supported yet).";
@@ -406,7 +406,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           break;
         }
         case V_SgLessThanOp: {
-          res.result=(lhsResult.result<rhsResult.result);
+          res.result=(lhsResult.result.operatorLess(rhsResult.result));
           if(boolOptions["relop-constraints"]) {
             if(res.result.isTop())
               throw "Error: Top found in relational operator (not supported yet).";
@@ -416,7 +416,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           break;
         }
         case V_SgLessOrEqualOp: {
-          res.result=(lhsResult.result<=rhsResult.result);
+          res.result=(lhsResult.result.operatorLessOrEq(rhsResult.result));
           if(boolOptions["relop-constraints"]) {
             if(res.result.isTop())
               throw "Error: Top found in relational operator (not supported yet).";
