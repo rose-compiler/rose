@@ -457,11 +457,21 @@ check-local:
 	@./codethorn --enable-external-function-semantics $(srcdir)/tests/svcomp-test2.c --edg:no_warnings
 	@./codethorn --enable-external-function-semantics $(srcdir)/tests/svcomp-test4.c --max-transitions=10 --edg:no_warnings
 	@./codethorn --enable-external-function-semantics $(srcdir)/tests/svcomp-test5.c --edg:no_warnings
+
+	@echo ================================================================
+	@echo RUNNING CONST ANALYSIS CHECK
+	@echo ================================================================
+	@./woodpecker --edg:no_warnings --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c 
+	@diff tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.const.csv
+	@rm tmp.const.csv
+
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
-	@./codethorn $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
+	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
 	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
+	@rm tmp.nsdump
+
 	@echo ================================================================
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
