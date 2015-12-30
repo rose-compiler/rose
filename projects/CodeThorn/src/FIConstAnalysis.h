@@ -41,7 +41,7 @@ private:
   int _asize;
 };
 
-typedef map<VariableId, set<CppCapsuleConstIntLattice> > VarConstSetMap;
+typedef map<VariableId, set<ConstIntLattice> > VarConstSetMap;
 
 class VariableConstInfo {
 public:
@@ -57,7 +57,7 @@ public:
   int arraySize(VariableId);
   bool haveEmptyIntersection(VariableId,VariableId);
   static VariableValueRangeInfo createVariableValueRangeInfo(VariableId varId, VarConstSetMap& map);
-  static ConstIntLattice isConstInSet(ConstIntLattice val, set<CppCapsuleConstIntLattice> valSet);
+  static ConstIntLattice isConstInSet(ConstIntLattice val, set<ConstIntLattice> valSet);
 private:
   VariableIdMapping* _variableIdMapping;
   VarConstSetMap* _map;

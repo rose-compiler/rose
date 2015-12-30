@@ -153,11 +153,9 @@ void FIConstAnalysis::determineVarConstValueSet(SgNode* node, VariableIdMapping&
         if(detailedOutput) cout<<"INFO: analyzing variable assignment (SgCompoundAssignOp)  :"<<res.toString(varIdMapping)<<endl;
         // set properly to Top (update of variable)
 #if 0
-        CppCapsuleConstIntLattice valCapsule;
         ConstIntLattice topVal(AType::Top);
-        valCapsule.setValue(topVal);
 #endif
-        map[res.varId].insert(CppCapsuleConstIntLattice(Top()));
+        map[res.varId].insert(ConstIntLattice(Top()));
       } else {
         cerr<<"Warning: unknown lhs of compound assignment."<<endl;
         // TODO: all vars have to go to top and all additional entries must be top
@@ -209,14 +207,14 @@ VariableValueRangeInfo::VariableValueRangeInfo(ConstIntLattice value) {
 VariableValueRangeInfo VariableConstInfo::createVariableValueRangeInfo(VariableId varId, VarConstSetMap& map) {
   ROSE_ASSERT(map.size()>0);
   ROSE_ASSERT(varId.isValid());
-  set<CppCapsuleConstIntLattice> cppCapsuleSet=map[varId];
+  set<ConstIntLattice> intSet=map[varId];
   AType::ConstIntLattice minVal;
   AType::ConstIntLattice maxVal;
   // in case the set of collected assignments is empty, bot is returned (min and max remain bot).
-  if(cppCapsuleSet.size()==0)
+  if(intSet.size()==0)
     return VariableValueRangeInfo(AType::ConstIntLattice(AType::Bot()));
-  for(set<CppCapsuleConstIntLattice>::iterator i=cppCapsuleSet.begin();i!=cppCapsuleSet.end();++i) {
-    AType::ConstIntLattice aint=(*i).getValue();
+  for(set<ConstIntLattice>::iterator i=intSet.begin();i!=intSet.end();++i) {
+    AType::ConstIntLattice aint=(*i);
     if(aint.isTop()) {
       return VariableValueRangeInfo(AType::ConstIntLattice(AType::Top()));
     }
@@ -235,11 +233,11 @@ VariableValueRangeInfo VariableConstInfo::createVariableValueRangeInfo(VariableI
 // returns true if is in set
 // returns false if not in set
 // returns top if set contains top
-ConstIntLattice VariableConstInfo::isConstInSet(ConstIntLattice val, set<CppCapsuleConstIntLattice> valSet) {
-  if(valSet.find(CppCapsuleConstIntLattice(ConstIntLattice(AType::Top())))!=valSet.end()) {
+ConstIntLattice VariableConstInfo::isConstInSet(ConstIntLattice val, set<ConstIntLattice> valSet) {
+  if(valSet.find(ConstIntLattice(ConstIntLattice(AType::Top())))!=valSet.end()) {
     return ConstIntLattice(AType::Top());
   }
-  if(valSet.find(CppCapsuleConstIntLattice(val))!=valSet.end()) {  
+  if(valSet.find(ConstIntLattice(val))!=valSet.end()) {  
     return ConstIntLattice(true);
   }
   return ConstIntLattice(false);
@@ -254,9 +252,9 @@ int VariableConstInfo::arraySize(VariableId varId) {
 }
 
 bool VariableConstInfo::haveEmptyIntersection(VariableId varId1,VariableId varId2) {
-  set<CppCapsuleConstIntLattice> var1Set=(*_map)[varId1];
-  set<CppCapsuleConstIntLattice> var2Set=(*_map)[varId2];
-  for(set<CppCapsuleConstIntLattice>::iterator i=var1Set.begin();
+  set<ConstIntLattice> var1Set=(*_map)[varId1];
+  set<ConstIntLattice> var2Set=(*_map)[varId2];
+  for(set<ConstIntLattice>::iterator i=var1Set.begin();
       i!=var1Set.end();
       ++i) {
     if(var2Set.find(*i)!=var2Set.end()) {
@@ -312,7 +310,7 @@ VarConstSetMap FIConstAnalysis::computeVarConstValues(SgProject* project, SgFunc
 
   // initialize map such that it is resized to number of variables of interest
   for(VariableIdSet::iterator i=varIdSet.begin();i!=varIdSet.end();++i) {
-    set<CppCapsuleConstIntLattice> emptySet;
+    set<ConstIntLattice> emptySet;
     varConstIntMap[*i]=emptySet;
   }
   cout<<"STATUS: Initialized const map for "<<varConstIntMap.size()<< " variables."<<endl;
@@ -324,16 +322,16 @@ VarConstSetMap FIConstAnalysis::computeVarConstValues(SgProject* project, SgFunc
   cout << "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 #if 0
   int filteredVars=0;
-  set<CppCapsuleConstIntLattice> emptySet;
+  set<ConstIntLattice> emptySet;
   for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
     VariableId globalVarId=variableIdMapping.variableId(*i);
     if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
       VariableValuePair p=analyzeVariableDeclaration(*i,variableIdMapping);
       ConstIntLattice varValue=p.varValue;
       varConstIntMap[p.varId]=emptySet; // create mapping
-      varConstIntMap[p.varId].insert(CppCapsuleConstIntLattice(varValue));
+      varConstIntMap[p.varId].insert(ConstIntLattice(varValue));
       variablesOfInterest.insert(p.varId);
-      //set<CppCapsuleConstIntLattice>& myset=varConstIntMap[p.varId];
+      //set<ConstIntLattice>& myset=varConstIntMap[p.varId];
     } else {
       filteredVars++;
     }
@@ -738,13 +736,13 @@ void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, 
     myfile<<",";    
     //myfile<<arraySize<<",";
 #if 1
-    set<CppCapsuleConstIntLattice> valueSet=(*i).second;
+    set<ConstIntLattice> valueSet=(*i).second;
     stringstream setstr;
     myfile<<"{";
-    for(set<CppCapsuleConstIntLattice>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
+    for(set<ConstIntLattice>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
       if(i!=valueSet.begin())
         myfile<<",";
-      myfile<<(*i).getValue().toString();
+      myfile<<(*i).toString();
     }
     myfile<<"}";
 #endif
