@@ -58,7 +58,7 @@ VariableId Constraint::rhsVar() const {
  */
 AValue Constraint::rhsVal() const {
   if(isVarValOp())
-    return _intVal.getValue(); 
+    return _intVal; 
   else
     throw "Error: Constraint::rhsVal failed.";
 }
@@ -66,7 +66,7 @@ AValue Constraint::rhsVal() const {
   * \author Markus Schordan
   * \date 2012.
  */
-CppCapsuleAValue Constraint::rhsValCppCapsule() const { return _intVal; }
+//CppCapsuleAValue Constraint::rhsValCppCapsule() const { return _intVal; }
 
 /*! 
   * \author Markus Schordan
@@ -80,7 +80,8 @@ bool Constraint::isVarVarOp() const {
   * \date 2012.
  */
 bool Constraint::isVarValOp() const {
-  return (_op==EQ_VAR_CONST || _op==NEQ_VAR_CONST);
+  bool iseq=(_op==EQ_VAR_CONST || _op==NEQ_VAR_CONST);
+  return iseq;
 }
 /*! 
   * \author Markus Schordan
@@ -118,7 +119,7 @@ bool CodeThorn::operator<(const Constraint& c1, const Constraint& c2) {
     case Constraint::EQ_VAR_CONST:
     case Constraint::NEQ_VAR_CONST:
     case Constraint::DEQ:
-      return (c1.rhsValCppCapsule()<c2.rhsValCppCapsule());
+      return (c1.rhsVal()<c2.rhsVal());
     case Constraint::EQ_VAR_VAR:
     case Constraint::NEQ_VAR_VAR:
       return (c1.rhsVar()<c2.rhsVar());
@@ -138,7 +139,7 @@ bool CodeThorn::operator<(const Constraint& c1, const Constraint& c2) {
 bool CodeThorn::operator==(const Constraint& c1, const Constraint& c2) {
   return 
     c1.lhsVar()==c2.lhsVar() && c1.op()==c2.op() 
-    && ((c1.isVarValOp() && (c1.rhsValCppCapsule()==c2.rhsValCppCapsule()))
+    && ((c1.isVarValOp() && (c1.rhsVal()==c2.rhsVal()))
         || 
         (c1.isVarVarOp() && (c1.rhsVar()==c2.rhsVar()))
        )
@@ -165,7 +166,7 @@ Constraint::Constraint() {
   * \author Markus Schordan
   * \date 2012.
  */
-Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):_op(op0),_lhsVar(lhs),_rhsVar(VariableId()),_intVal(CppCapsuleAValue(rhs)) {
+Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):_op(op0),_lhsVar(lhs),_rhsVar(VariableId()),_intVal(rhs) {
   switch(op0) {
   case EQ_VAR_CONST:
   case NEQ_VAR_CONST:
@@ -180,6 +181,7 @@ Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):_op(op0),_lh
   * \author Markus Schordan
   * \date 2012.
  */
+#if 0
 Constraint::Constraint(ConstraintOp op0,VariableId lhs, CppCapsuleAValue rhs):_op(op0),_lhsVar(lhs),_rhsVar(VariableId()),_intVal(rhs) {
   switch(op0) {
   case EQ_VAR_CONST:
@@ -191,6 +193,7 @@ Constraint::Constraint(ConstraintOp op0,VariableId lhs, CppCapsuleAValue rhs):_o
     exit(1);
   } 
 } 
+#endif
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -214,7 +217,7 @@ Constraint::Constraint(ConstraintOp op0,VariableId lhs, VariableId rhs):_op(op0)
 string Constraint::toString() const {
   stringstream ss;
   if(isDisequation())
-    return "V0##V0";
+    return "V0##0";
   if(isVarVarOp())
     ss<<lhsVar().toString()<<(*this).opToString()<<rhsVar().toString();
   else {
@@ -284,7 +287,7 @@ void Constraint::toStreamAsTuple(ostream& os) {
   case NEQ_VAR_CONST:
     os<<_lhsVar.toString();
     os<<",";
-    os<<(_intVal.getValue().getIntValue());
+    os<<(_intVal.getIntValue());
     break;
   default:
     throw "Constraint::toStream: unknown operator.";
@@ -329,7 +332,7 @@ void Constraint::initialize() {
   VariableId varId;
   _lhsVar=varId;
   _rhsVar=varId;
-  _intVal=CppCapsuleAValue(0);
+  _intVal=AValue(0);
 }
 
 /*! 
@@ -362,7 +365,7 @@ void Constraint::fromStream(istream& is) {
   } else {
     // case: var op const
     is>>__varAValue;
-    _intVal=CppCapsuleAValue(__varAValue);
+    _intVal=__varAValue;
     if(op=="==") _op=EQ_VAR_CONST;
     if(op=="!=") _op=NEQ_VAR_CONST;
   }
@@ -380,7 +383,7 @@ string Constraint::opToString() const {
   case NEQ_VAR_CONST: return "!=";
   case DEQ: return "##";
   default:
-    cerr << "Error: Constraint: unknown operator"<<endl;
+    cerr << "Error: Constraint: unknown operator: "<<op()<<endl;
     exit(1);
   }
 }
@@ -476,12 +479,12 @@ void ConstraintSet::invertConstraints() {
     case Constraint::EQ_VAR_CONST:
       // c ist const because it is an element in a sorted set
       eraseConstraint(c); // we remove c from the set (but c remains unchanged and available)
-      insertConstraint(Constraint(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
+      insertConstraint(Constraint(Constraint::NEQ_VAR_CONST,c.lhsVar(),c.rhsVal()));
       break;
     case Constraint::NEQ_VAR_CONST:
       // c ist const because it is an element in a sorted set
       eraseConstraint(c); // we remove c from the set (but c remains unchanged and available)
-      insertConstraint(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsValCppCapsule()));
+      insertConstraint(Constraint(Constraint::EQ_VAR_CONST,c.lhsVar(),c.rhsVal()));
       break;
     case Constraint::DEQ:
       // remains unchanged
@@ -504,7 +507,7 @@ void  ConstraintSet::moveConstConstraints(VariableId fromVarId, VariableId toVar
   while(i!=end()) {
     Constraint c=*i++; // MS: increment MUST be done here
     if(c.isVarValOp() && c.lhsVar()==fromVarId) {
-      addConstraint(Constraint(c.op(),toVarId,c.rhsValCppCapsule()));
+      addConstraint(Constraint(c.op(),toVarId,c.rhsVal()));
     }
   }
   eraseConstConstraints(fromVarId);
@@ -547,10 +550,10 @@ void  ConstraintSet::duplicateConstConstraints(VariableId varId1, VariableId var
     Constraint c=*i;
     if(c.isVarValOp()) {
       if(c.lhsVar()==varId1) {
-        addConstraint(Constraint(c.op(),varId2,c.rhsValCppCapsule()));
+        addConstraint(Constraint(c.op(),varId2,c.rhsVal()));
       }
       if(c.lhsVar()==varId2) {
-        addConstraint(Constraint(c.op(),varId1,c.rhsValCppCapsule()));
+        addConstraint(Constraint(c.op(),varId1,c.rhsVal()));
       }
     }
   }
@@ -561,8 +564,14 @@ void  ConstraintSet::duplicateConstConstraints(VariableId varId1, VariableId var
   * \date 2012.
  */
 bool ConstraintSet::disequalityExists() const {
-  ConstraintSet::iterator i=find(DISEQUALITYCONSTRAINT);
-  return i!=end();
+  // disequality is normalized and always represented as 
+  // a set with one element of type DIS.
+  bool found=false;
+  if(size()==1) {
+    ConstraintSet::iterator i=begin();
+    found=(*i).isDisequation();
+  }
+  return found;
 }
 /*! 
   * \author Markus Schordan
@@ -602,7 +611,9 @@ void ConstraintSet::addConstraint(Constraint c) {
     // attempt to insert x==k
   case Constraint::EQ_VAR_CONST: {
     // if x!=k exists ==> ##
-    if(constraintExists(Constraint::NEQ_VAR_CONST,dedicatedLhsVar,c.rhsValCppCapsule())) {
+    AValue tmprhsVal=c.rhsVal();
+    bool tmp=constraintExists(Constraint::NEQ_VAR_CONST,dedicatedLhsVar,tmprhsVal);
+    if(tmp) {
       addDisequality();
       return;
     }
@@ -611,31 +622,31 @@ void ConstraintSet::addConstraint(Constraint c) {
     assert(lst.size()<=1);
     if(lst.size()==1) {
       AValue val=*lst.begin();
-      if(!(c.rhsValCppCapsule()==AType::CppCapsuleConstIntLattice(val)))
+      if(!(c.rhsVal()==val))
         addDisequality();
       return;
     }
     // all const-constraints can be removed (equality is most precise and is added)
     eraseConstConstraints(dedicatedLhsVar);
-    set<Constraint>::insert(Constraint(Constraint::EQ_VAR_CONST,dedicatedLhsVar,c.rhsValCppCapsule()));
+    set<Constraint>::insert(Constraint(Constraint::EQ_VAR_CONST,dedicatedLhsVar,c.rhsVal()));
     return;
   }
   case Constraint::NEQ_VAR_CONST: {
     // we attempt to insert x!=k
 
     // check if x==k exists. If yes, introduce x##k
-    if(constraintExists(Constraint::EQ_VAR_CONST,dedicatedLhsVar,c.rhsValCppCapsule())) {
+    if(constraintExists(Constraint::EQ_VAR_CONST,dedicatedLhsVar,c.rhsVal())) {
       addDisequality();
       return;
     }
     // search for some x==m (where m must be different to k (otherwise we would have found it above))
     ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,dedicatedLhsVar);
     if(i!=end()) {
-      assert(!((*i).rhsValCppCapsule() == c.rhsValCppCapsule()));
+      assert(!((*i).rhsVal() == c.rhsVal()));
       // we have found an equation x==m with m!=k ==> do not insert x!=k constraint (do nothing)
       return;
     } else {
-      insertConstraint(Constraint(Constraint::NEQ_VAR_CONST,dedicatedLhsVar,c.rhsValCppCapsule()));
+      insertConstraint(Constraint(Constraint::NEQ_VAR_CONST,dedicatedLhsVar,c.rhsVal()));
       return;
     }
     break;
@@ -792,17 +803,20 @@ ConstraintSet ConstraintSet::constraintsWithOp(Constraint::ConstraintOp op) cons
   * \author Markus Schordan
   * \date 2012.
  */
+#if 0
 bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VariableId varId, CppCapsuleAValue intVal) const { 
   Constraint tmp(op,varId,intVal);
   return constraintExists(tmp);
 }
+#endif
 
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
 bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) const { 
-  return constraintExists(op,varId,CppCapsuleAValue(intVal));
+  Constraint tmp(op,varId,intVal);
+  return constraintExists(tmp);
 }
 
 /*! 
@@ -825,7 +839,7 @@ ConstraintSet ConstraintSet::findSpecificSet(Constraint::ConstraintOp op, Variab
   // find op-constraint for variable varname
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
     if((*i).lhsVar()==varId && (*i).op()==op)
-      cs.addConstraint(Constraint((*i).op(),(*i).lhsVar(),(*i).rhsValCppCapsule()));
+      cs.addConstraint(Constraint((*i).op(),(*i).lhsVar(),(*i).rhsVal()));
   }
   return cs;
 }
@@ -1002,7 +1016,7 @@ long ConstraintSet::memorySize() const {
 }
 
 /*! 
-  * \author Markus Schordan
+  * \author MarkusSchordan
   * \date 2012.
  */
 // strict weak ordering on two sets

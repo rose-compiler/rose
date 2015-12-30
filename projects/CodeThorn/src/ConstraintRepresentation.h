@@ -42,13 +42,13 @@ class Constraint {
   enum ConstraintOp {UNDEFINED,EQ_VAR_CONST,NEQ_VAR_CONST, EQ_VAR_VAR, NEQ_VAR_VAR, DEQ};
   Constraint();
   Constraint(ConstraintOp op0,VariableId lhs, AValue rhs);
-  Constraint(ConstraintOp op0,VariableId lhs, CppCapsuleAValue rhs);
+  //Constraint(ConstraintOp op0,VariableId lhs, CppCapsuleAValue rhs);
   Constraint(ConstraintOp op0,VariableId lhs, VariableId rhs);
   ConstraintOp op() const;
   VariableId lhsVar() const;
   VariableId rhsVar() const;
   AValue rhsVal() const;
-  CppCapsuleAValue rhsValCppCapsule() const;
+  //CppCapsuleAValue rhsValCppCapsule() const;
   std::string toString() const;
   std::string toString(VariableIdMapping*) const;
   std::string toAssertionString(VariableIdMapping*) const;
@@ -70,7 +70,7 @@ class Constraint {
   ConstraintOp _op;
   VariableId _lhsVar;
   VariableId _rhsVar;
-  CppCapsuleAValue _intVal;
+  AValue _intVal;
 };
 
 bool operator<(const Constraint& c1, const Constraint& c2);
@@ -78,7 +78,7 @@ bool operator==(const Constraint& c1, const Constraint& c2);
 bool operator!=(const Constraint& c1, const Constraint& c2);
 
 // we use only one disequality constraint to mark constraint set representing non-reachable states
-#define DISEQUALITYCONSTRAINT Constraint(Constraint::DEQ,VariableId(),AType::CppCapsuleConstIntLattice(AType::ConstIntLattice(0)))
+#define DISEQUALITYCONSTRAINT Constraint(Constraint::DEQ,VariableId(),AType::ConstIntLattice(0))
 
 /*! 
   * \author Markus Schordan
@@ -87,7 +87,7 @@ bool operator!=(const Constraint& c1, const Constraint& c2);
 class ConstraintSet : public set<Constraint> {
  public:
   ConstraintSet constraintsOfVariable(VariableId varId) const;
-  bool constraintExists(Constraint::ConstraintOp op, VariableId varId, CppCapsuleAValue intVal) const;
+  //  bool constraintExists(Constraint::ConstraintOp op, VariableId varId, CppCapsuleAValue intVal) const;
   bool constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) const;
   bool constraintExists(Constraint::ConstraintOp op) const;
   ConstraintSet constraintsWithOp(Constraint::ConstraintOp op) const;
@@ -163,7 +163,7 @@ class ConstraintSetHashFun {
       for(ConstraintSet::iterator i=cs.begin();i!=cs.end();++i) {
         // use the symbol-ptr of lhsVar for hashing (we are a friend).
         if((*i).isVarValOp())
-          hash=((hash<<8)+((long)(*i).rhsValCppCapsule().getValue().hash()))^hash;
+          hash=((hash<<8)+((long)(*i).rhsVal().hash()))^hash;
         else if((*i).isVarVarOp()) {
           hash=((hash<<8)+((long)((*i).rhsVar().getIdCode())))^hash;
         } else {
@@ -185,7 +185,7 @@ class ConstraintSetHashFun {
       for(ConstraintSet::iterator i=cs->begin();i!=cs->end();++i) {
         // use the symbol-ptr of lhsVar for hashing (we are a friend).
         if((*i).isVarValOp())
-          hash=((hash<<8)+((long)(*i).rhsValCppCapsule().getValue().hash()))^hash;
+          hash=((hash<<8)+((long)(*i).rhsVal().hash()))^hash;
         else if((*i).isVarVarOp()) {
           hash=((hash<<8)+((long)((*i).rhsVar().getIdCode())))^hash;
         } else {
