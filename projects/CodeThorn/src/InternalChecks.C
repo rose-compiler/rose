@@ -274,18 +274,17 @@ void checkTypes() {
   }
   {  
     cout << "------------------------------------------"<<endl;
-    cout << "RUNNING CHECKS FOR CPPCAPSULECONSTINTLATTICE:"<<endl;
-    AType::CppCapsuleConstIntLattice cap1(1);
-    cout << "DEBUG: "<<cap1.toString()<<endl;
-    check("cap1 == 1",cap1.getValue().getIntValue()==1);
-    AType::CppCapsuleConstIntLattice cap2;
-    cap2.setValue(AType::Top());
-    AType::CppCapsuleConstIntLattice cap3;
-    cap3.setValue(AType::Top());
-    check("cap2 isTop",cap2.getValue().isTop());
-    check("cap3 isTop",cap3.getValue().isTop());
-    check("!(cap1 == cap3)",!(cap1==cap3));
-    check("cap2 == cap3",cap2==cap3);
+    cout << "RUNNING CHECKS FOR CONSTINTLATTICE (formerly CPPCAPSULE):"<<endl;
+    AType::ConstIntLattice cint1(1);
+    cout << "DEBUG: "<<cint1.toString()<<endl;
+    check("cint1 == 1",cint1.getIntValue()==1);
+    AType::ConstIntLattice cint2=AType::Top();
+    AType::ConstIntLattice cint3;
+    cint3=AType::Top();
+    check("cint2 isTop",cint2.isTop());
+    check("cint3 isTop",cint3.isTop());
+    check("!(cint1 == cint3)",!(cint1==cint3)); // strictly weak ordering test
+    check("cint2 == cint3",cint2==cint3); // strictly weak ordering test
   }
   {
     cout << "------------------------------------------"<<endl;
@@ -602,11 +601,11 @@ void checkLargeSets() {
   VariableIdMapping variableIdMapping;
   AType::ConstIntLattice i;
   using namespace AType;
-  set<CppCapsuleConstIntLattice> cilSet;
-  cilSet.insert(CppCapsuleConstIntLattice(ConstIntLattice(Bot())));
-  cilSet.insert(CppCapsuleConstIntLattice(ConstIntLattice(Top())));
+  set<ConstIntLattice> cilSet;
+  cilSet.insert(ConstIntLattice(Bot()));
+  cilSet.insert(ConstIntLattice(Top()));
   for(int i=-10;i<10;i++) {
-    cilSet.insert(CppCapsuleConstIntLattice(ConstIntLattice(i)));
+    cilSet.insert(ConstIntLattice(i));
   }
   check("integer set: bot,-10, ... ,+10,top",cilSet.size()==22); // 1+20+1
 }

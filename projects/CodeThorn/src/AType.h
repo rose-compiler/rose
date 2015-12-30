@@ -100,9 +100,9 @@ class ConstIntLattice {
   ConstIntLattice();
   ConstIntLattice(bool val);
   // type conversion
-  ConstIntLattice(Top e);
+  ConstIntLattice(AType::Top e);
   // type conversion
-  ConstIntLattice(Bot e);
+  ConstIntLattice(AType::Bot e);
   // type conversion
   ConstIntLattice(signed char x);
   ConstIntLattice(unsigned char x);
