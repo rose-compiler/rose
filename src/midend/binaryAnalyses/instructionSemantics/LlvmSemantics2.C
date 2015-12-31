@@ -1,4 +1,6 @@
 #include "sage3basic.h"
+
+#include "Diagnostics.h"
 #include "LlvmSemantics2.h"
 #include "AsmUnparser_compat.h"
 #include "integerOps.h"
@@ -8,6 +10,10 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace LlvmSemantics {
+
+using namespace rose::Diagnostics;
+
+static unsigned nVersionWarnings = 0;
 
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
@@ -1004,7 +1010,14 @@ RiscOperators::emit_memory_read(std::ostream &o, const ExpressionPtr &addr, size
 
     // Dereference pointer T2 to get the return value.
     LeafPtr t3 = next_temporary(nbits);
-    o <<prefix() <<llvm_lvalue(t3) <<" = load " <<llvm_integer_type(nbits) <<"* " <<llvm_term(t2) <<"\n";
+    if (llvmVersion_ < 3007000) {                      // just a guess
+        if (0 == llvmVersion_ && 0 == nVersionWarnings++)
+            mlog[WARN] <<"LLVM version number is unknown; assuming 1-argument \"load\" instructions\n";
+        o <<prefix() <<llvm_lvalue(t3) <<" = load " <<llvm_integer_type(nbits) <<"* " <<llvm_term(t2) <<"\n";
+    } else {
+        o <<prefix() <<llvm_lvalue(t3) <<" = load " <<llvm_integer_type(nbits) <<", "
+          <<llvm_integer_type(nbits) <<"* " <<llvm_term(t2) <<"\n";
+    }
     return t3;
 }
 
@@ -1016,7 +1029,15 @@ RiscOperators::emit_global_read(std::ostream &o, const std::string &varname, siz
 {
     ASSERT_require(!varname.empty() && varname[0]=='@');
     LeafPtr t1 = next_temporary(nbits);
-    o <<prefix() <<llvm_lvalue(t1) <<" = load " <<llvm_integer_type(nbits) <<"* " <<varname <<"\n";
+    if (llvmVersion_ < 3007000) {
+        static unsigned nwarnings = 0;
+        if (0 == llvmVersion_ && 0 == nVersionWarnings++)
+            mlog[WARN] <<"LLVM version number is unknown; assuming 1-argument \"load\" instructions\n";
+        o <<prefix() <<llvm_lvalue(t1) <<" = load " <<llvm_integer_type(nbits) <<"* " <<varname <<"\n";
+    } else {
+        o <<prefix() <<llvm_lvalue(t1) <<" = load " <<llvm_integer_type(nbits) <<", "
+          <<llvm_integer_type(nbits) <<"* " <<varname <<"\n";
+    }
     return t1;
 }
 
@@ -1314,6 +1335,16 @@ RiscOperators::emit_assignment(std::ostream &o, const ExpressionPtr &rhs)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Transcoder
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int
+Transcoder::llvmVersion() const {
+    return operators->llvmVersion();
+}
+
+void
+Transcoder::llvmVersion(int v) {
+    operators->llvmVersion(v);
+}
 
 void
 Transcoder::emitFilePrologue(std::ostream &o)

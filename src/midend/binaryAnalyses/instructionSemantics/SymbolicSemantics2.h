@@ -575,9 +575,9 @@ typedef boost::shared_ptr<class MemoryMapState> MemoryMapStatePtr;
  *
  *  This class represents an entire state of memory via a map of memory cells.  The cells are indexed in the map using the hash
  *  of their symbolic virtual address, therefore querying using an address that is equal but structurally different will fail
- *  to find the cell. This memory state does not resolve aliasing.  For instance, storing a value at virtual address <code>esp
- *  + 24</code> and then querying <code>ebp+8</code> will always assume that they are two non-aliasing addresses unless ROSE is
- *  able to simplify one of the expressions to exactly match the other.
+ *  to find the cell. This memory state does not resolve aliasing.  For instance, storing a value at virtual address esp + 24
+ *  and then querying ebp + 8 will always assume that they are two non-aliasing addresses unless ROSE is able to simplify one
+ *  of the expressions to exactly match the other.
  *
  *  Although this state has less precision than the list-based state (@ref MemoryListState), it operatates in logorithmic time
  *  instead of linear time, and by using hashing it avoids a relatively expensive comparison of address expressions at each

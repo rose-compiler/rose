@@ -46,17 +46,18 @@ private:
     TreeNodes  mem_writes;                              // memory write operations (OP_WRITE expressions)
     int indent_level;                                   // level of indentation (might be negative, but prefix() clips to zero
     std::string indent_string;                          // white space per indentation level
+    int llvmVersion_;                                   // 1000000*major + 1000*minor + patch. e.g., 3005000 = llvm-3.5.0
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : SymbolicSemantics::RiscOperators(protoval, solver), indent_level(0), indent_string("    ") {
+        : SymbolicSemantics::RiscOperators(protoval, solver), indent_level(0), indent_string("    "), llvmVersion_(0) {
         set_name("Llvm");
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : SymbolicSemantics::RiscOperators(state, solver), indent_level(0), indent_string("    ") {
+        : SymbolicSemantics::RiscOperators(state, solver), indent_level(0), indent_string("    "), llvmVersion_(0) {
         set_name("Llvm");
     }
 
@@ -106,6 +107,20 @@ public:
         assert(retval!=NULL);
         return retval;
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+public:
+    /** Property: LLVM version.
+     *
+     *  Different versions of LLVM have different assembly syntaxes which are not backward compatible, and this property which
+     *  dialect is emitted. This property is set to a*x^2 + b*x + c where a, b, and c are the three-part LLVM version number
+     *  "a.b.c" and x is 1000.  The special value zero is reserved to mean that the version number is unknown.
+     *
+     * @{ */
+    int llvmVersion() const { return llvmVersion_; }
+    void llvmVersion(int v) { llvmVersion_ = v; }
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we override from the super class
@@ -360,6 +375,18 @@ public:
         BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops, 32);
         return instance(dispatcher);
     }
+
+    /** Property: LLVM version number.
+     *
+     *  The version number controls the dialect of assembly to be emitted. Since LLVM assembly is used mostly as an
+     *  internal representation within LLVM, its syntax changes from version to version in ways that are not backward
+     *  compatible.  The version number set here is a*x^2 + b*x + c where a b and c are the LLVM version triplet "a.b.c" and x
+     *  is 1000.  The value zero is reserved to mean that the version number is unknown.
+     *
+     * @{ */
+    int llvmVersion() const;
+    void llvmVersion(int version);
+    /** @} */
 
     /** Property to determine whether function fragments should be emitted. A function fragment is a basic block that belongs
      *  to a function but doesn't participate in its control flow graph.  These fragments are usually added to ROSE functions

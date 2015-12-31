@@ -11,7 +11,11 @@ namespace BinaryAnalysis {
 
 class DisassemblerMips: public Disassembler {
 public:
+    /** Create a MIPS disassembler.
+     *
+     *  MIPS executables can be big- or little-endian. */
     explicit DisassemblerMips(ByteOrder::Endianness sex = ByteOrder::ORDER_MSB) { init(sex); }
+
     virtual DisassemblerMips *clone() const ROSE_OVERRIDE { return new DisassemblerMips(*this); }
     virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap*, rose_addr_t start_va, AddressSet *successors=NULL) ROSE_OVERRIDE;
