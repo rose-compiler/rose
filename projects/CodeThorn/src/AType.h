@@ -169,33 +169,10 @@ class ConstIntLattice {
     bool operator()(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) const;
   };
 
-#if 1
- class CppCapsuleConstIntLattice {
- public:
-   CppCapsuleConstIntLattice(){}
-   CppCapsuleConstIntLattice(ConstIntLattice val):value(val){}
-   CppCapsuleConstIntLattice(Top top){value=ConstIntLattice(top);}
-   bool operator==(CppCapsuleConstIntLattice other) const;
-   bool operator<(CppCapsuleConstIntLattice other) const;
-   string toString() const { return value.toString(); }
-   ConstIntLattice getValue() const { return value; }
-   void setValue(ConstIntLattice val) { value=val; }
- private:
-   ConstIntLattice value;
- };
-  struct CppCapsuleConstIntLatticeLessComparator {
-    bool operator()(const AType::CppCapsuleConstIntLattice& c1, const AType::CppCapsuleConstIntLattice& c2) const;
-  };
-#endif
-
 } // end of namespace AType
 
 typedef AType::ConstIntLattice AValue; 
 typedef AType::ConstIntLatticeCmp AValueCmp; 
-
-typedef AType::CppCapsuleConstIntLattice CppCapsuleAValue; 
-typedef AType::CppCapsuleConstIntLatticeLessComparator CppCapsuleAValueLessComp; 
-
 
 }
 

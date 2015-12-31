@@ -322,15 +322,15 @@ void checkTypes() {
     s5[x]=valtop;
     s5[y]=valtop;
     check("var x exists in pstate s1",s1.varExists(x)==true);
-    check("var x==500",((s1[x].getValue().operatorEq(val1)).isTrue())==true);
+    check("var x==500",((s1[x].operatorEq(val1)).isTrue())==true);
     check("var y exists in pstate s2",s2.varExists(y)==true);
-    check("var y==501",((s2[y].getValue().operatorEq(val2)).isTrue())==true);
+    check("var y==501",((s2[y].operatorEq(val2)).isTrue())==true);
     //check("s0 < s1",(s0<s1)==true);
     //check("s0 < s2",(s0<s2)==true);
     check("!(s1 == s2)",(s1==s2)==false);
     check("s1<s2 xor s2<s1)",(s1<s2)^(s2<s1));
     check("var x in pstate s3",s3.varExists(x)==true);
-    check("s3[x]==501",((s3[x].getValue()).operatorEq(val2).isTrue())==true);
+    check("s3[x]==501",((s3[x].operatorEq(val2)).isTrue())==true);
     check("!(s1==s2)",(!(s1==s2))==true);
     check("!(s1==s3)",(!(s1==s3))==true);
     check("!(s2==s3)",(!(s2==s3))==true);
@@ -364,7 +364,7 @@ void checkTypes() {
     check("constint-strictWeak-smaller-1",strictWeakOrderingIsSmaller(val1,val2)==true);
 
     s4[x]=valtop;
-    check("created s4; inserted x=top; s4[x].getValue.isTop",s4[x].getValue().isTop());    
+    check("created s4; inserted x=top; s4[x].isTop",s4[x].isTop());    
     pstateSet.processNewOrExisting(s4);
     check("inserted s4 => size of pstateSet == 4",pstateSet.size()==4);    
     const PState* pstateptr4=pstateSet.processNewOrExisting(s4); // version 1

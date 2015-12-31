@@ -337,19 +337,6 @@ bool AType::ConstIntLattice::operator<(AType::ConstIntLattice other) const {
   return AType::strictWeakOrderingIsSmaller(*this,other);
 }
 
-#if 1
-bool AType::CppCapsuleConstIntLatticeLessComparator::operator()(const AType::CppCapsuleConstIntLattice& c1, const AType::CppCapsuleConstIntLattice& c2) const {
-  return AType::strictWeakOrderingIsSmaller(c1.getValue(),c2.getValue());
-}
-
-bool AType::CppCapsuleConstIntLattice::operator==(AType::CppCapsuleConstIntLattice other) const {
-  return AType::strictWeakOrderingIsEqual(getValue(),other.getValue());
-}
-bool AType::CppCapsuleConstIntLattice::operator<(AType::CppCapsuleConstIntLattice other) const {
-  return AType::strictWeakOrderingIsSmaller(getValue(),other.getValue());
-}
-#endif
-
 AType::ConstIntLattice AType::ConstIntLattice::operatorEq(ConstIntLattice other) const {
   // all TOP cases
   if(valueType==TOP || other.valueType==TOP) { 

@@ -447,7 +447,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
                 // in case it is a pointer retrieve pointer value
                 //cout<<"DEBUG: pointer-array access!"<<endl;
                 if(pstate->varExists(arrayVarId)) {
-                  AValue aValuePtr=pstate2[arrayVarId].getValue();
+                  AValue aValuePtr=pstate2[arrayVarId];
                   // convert integer to VariableId
                   // TODO (topify mode: does read this as integer)
                   if(!aValuePtr.isConstInt()) {
@@ -485,7 +485,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
               // read value of variable var id (same as for VarRefExp - TODO: reuse)
               // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
               if(pstate->varExists(arrayElementId)) {
-                res.result=pstate2[arrayElementId].getValue();
+                res.result=pstate2[arrayElementId];
                 //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
                 if(res.result.isTop() && useConstraints) {
                   AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(arrayElementId);
@@ -508,7 +508,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
                       if(SgIntVal* intValNode=isSgIntVal(initExp)) {
                         int intVal=intValNode->get_value();
                         //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-                        //newPState.setVariableToValue(arrayElemId,CodeThorn::CppCapsuleAValue(AType::ConstIntLattice(intVal)));
+                        //newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AType::ConstIntLattice(intVal)));
                         if(elemIndex==index) {
                           AType::ConstIntLattice val=AType::ConstIntLattice(intVal);
                           res.result=val;
@@ -614,7 +614,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         // for arrays (by default the address is used) return its pointer value (the var-id-code)
         res.result=AType::ConstIntLattice(varId.getIdCode());
       } else {
-        res.result=pstate2[varId].getValue(); // this include assignment of pointer values
+        res.result=pstate2[varId]; // this include assignment of pointer values
       }
       if(res.result.isTop() && useConstraints) {
         // in case of TOP we try to extract a possibly more precise value from the constraints
