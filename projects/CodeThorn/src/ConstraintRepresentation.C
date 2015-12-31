@@ -62,11 +62,6 @@ AValue Constraint::rhsVal() const {
   else
     throw "Error: Constraint::rhsVal failed.";
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-//CppCapsuleAValue Constraint::rhsValCppCapsule() const { return _intVal; }
 
 /*! 
   * \author Markus Schordan
@@ -177,23 +172,7 @@ Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):_op(op0),_lh
     exit(1);
   }
 } 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-#if 0
-Constraint::Constraint(ConstraintOp op0,VariableId lhs, CppCapsuleAValue rhs):_op(op0),_lhsVar(lhs),_rhsVar(VariableId()),_intVal(rhs) {
-  switch(op0) {
-  case EQ_VAR_CONST:
-  case NEQ_VAR_CONST:
-  case DEQ:
-    return;
-  default:
-    cerr<<"Error: Constraint constructor var-caps(val) operator: "<<op0<<". Wrong operator."<<endl;
-    exit(1);
-  } 
-} 
-#endif
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -798,17 +777,6 @@ ConstraintSet ConstraintSet::constraintsWithOp(Constraint::ConstraintOp op) cons
   }
   return cs;
 }
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-#if 0
-bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VariableId varId, CppCapsuleAValue intVal) const { 
-  Constraint tmp(op,varId,intVal);
-  return constraintExists(tmp);
-}
-#endif
 
 /*! 
   * \author Markus Schordan
