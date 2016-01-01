@@ -7,7 +7,9 @@ static Sawyer::Message::Facility mlog;
 
 #ifdef ROSE_USE_WT
 
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
+#include <boost/regex.hpp>
 #include <Sawyer/CommandLine.h>
 #include <SqlDatabase.h>                                // ROSE
 #include <string>
@@ -243,7 +245,7 @@ public:
 
     void modelReset() ROSE_OVERRIDE {
         Wt::Chart::WCartesianChart::modelReset();
-        int height = 40 + 25 * model()->rowCount();
+        int height = std::max(40 + 25 * model()->rowCount(), 130);
         setHeight(height);
     }
 };
@@ -451,7 +453,7 @@ public:
 
         // Tests final output
         testOutput_ = new Wt::WText;
-        testOutput_->setTextFormat(Wt::PlainText);
+        testOutput_->setTextFormat(Wt::XHTMLText);
         testOutput_->setWordWrap(false);
         vbox->addWidget(testOutput_, 1);
     }
@@ -554,7 +556,64 @@ private:
             q->bind(0, testId_);
             q->bind(1, "Final output");
             for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
-                testOutput_->setText(row.get<std::string>(0));
+                std::string s = row.get<std::string>(0);
+                std::string t;
+
+                // Replace characters that are special for HTML
+                int col = 0;
+                BOOST_FOREACH (char ch, s) {
+                    ++col;
+                    switch (ch) {
+                        case '<': t += "&lt;"; break;
+                        case '>': t += "&gt;"; break;
+                        case '&': t += "&amp;"; break;
+                        case '\r': col = 0; break;
+                        case '\n': t += ch; col = 0; break; // leave linefeeds alone for now for easier matching below
+                        case '\t': {
+                            int n = 8 - (col-1) % 8;
+                            t += std::string(n, ' ');
+                            col += n;
+                            break;
+                        }
+                        default: {
+                            if (iscntrl(ch)) {
+                                --col;
+                            } else {
+                                t += ch;
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                // Look for special compiler output lines for errors and warnings
+                boost::regex compilerRegex("(^[^\\n]*?(?:"
+                                           // Errors
+                                           "\\berror:"
+                                           "|\\[ERROR\\]"
+
+                                           ")[^\\n]*$)|"
+                                           "(^[^\\n]*?(?:"
+
+                                           // Warnings
+                                           "\\bwarning:"
+
+                                           ")[^\\n]*$)|"
+                                           "(^={17}-={17}[^\\n]+={17}-={17}$)");
+
+                const char *compilerFormat = "(?1<span class=\"compiler-error\">$&</span>)"
+                                             "(?2<span class=\"compiler-warning\">$&</span>)"
+                                             "(?3<span class=\"output-separator\"><hr/>$&</span>)";
+
+                std::ostringstream out(std::ios::out | std::ios::binary);
+                std::ostream_iterator<char, char> oi(out);
+                boost::regex_replace(oi, t.begin(), t.end(), compilerRegex, compilerFormat,
+                                     boost::match_default|boost::format_all);
+                t = out.str();
+
+                // Now fix the linefeeds
+                boost::replace_all(t, "\n", "<br/>");
+                testOutput_->setText(t);
                 break;
             }
         }
@@ -574,6 +633,10 @@ public:
         setTitle("ROSE testing matrix");
         Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
         root()->setLayout(vbox);
+
+        styleSheet().addRule(".compiler-error",   "color:#680000; background-color:#ffc0c0;"); // reds
+        styleSheet().addRule(".compiler-warning", "color:#8f4000; background-color:#ffe0c7;"); // oranges
+        styleSheet().addRule(".output-separator", "background-color:#808080;");
 
         tabs_ = new Wt::WTabWidget();
         tabs_->addTab(resultsConstraints_ = new WResultsConstraintsTab, "Overview");
