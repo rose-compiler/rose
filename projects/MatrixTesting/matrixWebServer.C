@@ -27,6 +27,7 @@ static Sawyer::Message::Facility mlog;
 #include <Wt/WLength>
 #include <Wt/WPanel>
 #include <Wt/WPushButton>
+#include <Wt/WStackedWidget>
 #include <Wt/WTabWidget>
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
@@ -127,7 +128,7 @@ bindSqlVariables(const SqlDatabase::StatementPtr &q, const std::vector<std::stri
 
 enum HumanFormat { HUMAN_TERSE, HUMAN_VERBOSE };
 
-std::string
+static std::string
 humanLocalTime(unsigned long when, HumanFormat fmt = HUMAN_VERBOSE) {
     struct tm tm;
     time_t t = when;
@@ -145,7 +146,7 @@ humanLocalTime(unsigned long when, HumanFormat fmt = HUMAN_VERBOSE) {
     return buf;
 }
 
-std::string
+static std::string
 humanDuration(unsigned long seconds, HumanFormat fmt = HUMAN_VERBOSE) {
     unsigned hours = seconds / 3600;
     unsigned minutes = seconds / 60 % 60;
@@ -165,7 +166,23 @@ humanDuration(unsigned long seconds, HumanFormat fmt = HUMAN_VERBOSE) {
     }
 }
 
-std::string
+static std::string
+humanSha1(const std::string &sha1, HumanFormat fmt = HUMAN_VERBOSE) {
+    if (HUMAN_VERBOSE == fmt)
+        return sha1;
+    std::string s;
+    int pos = 0;
+    BOOST_FOREACH (char ch, sha1) {
+        if (!isxdigit(ch))
+            break;
+        if (++pos <= 8)
+            s += ch;
+    }
+    s += sha1.substr(pos);
+    return s;
+}
+
+static std::string
 humanDepValue(const std::string &depName, const std::string &depValue, HumanFormat fmt = HUMAN_VERBOSE) {
     if (depName == "reporting_time")
         return humanLocalTime(boost::lexical_cast<long>(depValue), fmt);
@@ -173,6 +190,8 @@ humanDepValue(const std::string &depName, const std::string &depValue, HumanForm
         return humanLocalTime(boost::lexical_cast<long>(depValue), fmt);
     if (depName == "duration")
         return humanDuration(boost::lexical_cast<long>(depValue), fmt);
+    if (depName == "rose")
+        return humanSha1(depValue, fmt);
     return depValue;
 }
 
@@ -293,34 +312,61 @@ public:
 
 class WStatusChart: public Wt::Chart::WCartesianChart {
 public:
-    explicit WStatusChart(StatusModel *model, Wt::WContainerWidget *parent = NULL)
-        : Wt::Chart::WCartesianChart(parent) {
+    enum ChartType { BAR_CHART, LINE_CHART };
 
-        setPlotAreaPadding(400, Wt::Left);              // make room for the dependency name (Git SHA1 hashes are long)
-        setPlotAreaPadding(200, Wt::Right);             // make room for the legend
-        setPlotAreaPadding(20, Wt::Top);                // make room for axis labels
-        setPlotAreaPadding(0, Wt::Bottom);
-        setOrientation(Wt::Horizontal);
+private:
+    ChartType chartType_;
+
+public:
+    explicit WStatusChart(StatusModel *model, ChartType chartType, Wt::WContainerWidget *parent = NULL)
+        : Wt::Chart::WCartesianChart(parent), chartType_(chartType) {
+
+        // Make room around the graph for titles, labels, and legend.
+        if (BAR_CHART == chartType_) {
+            setPlotAreaPadding(200, Wt::Left);
+            setPlotAreaPadding(200, Wt::Right);
+            setPlotAreaPadding(20, Wt::Top);
+            setPlotAreaPadding(0, Wt::Bottom);
+            setOrientation(Wt::Horizontal);
+        } else {
+            setPlotAreaPadding(40, Wt::Left);
+            setPlotAreaPadding(200, Wt::Right);
+            setPlotAreaPadding(0, Wt::Top);
+            setPlotAreaPadding(60, Wt::Bottom);
+            setOrientation(Wt::Vertical);
+            axis(Wt::Chart::XAxis).setLabelAngle(22.5);
+        }
+
         setLegendEnabled(true);
-
         setModel(model);
         setXSeriesColumn(0);
 
+        // Insert the Y-series data as bars or lines.
         for (int column = 1; column < model->columnCount(); ++column) {
-            Wt::Chart::WDataSeries series(column, Wt::Chart::BarSeries);
+            if (BAR_CHART == chartType_) {
+                Wt::Chart::WDataSeries series(column, Wt::Chart::BarSeries);
 #if 1
-            series.setStacked(true);
+                series.setStacked(true);
 #else
-            series.setShadow(Wt::WShadow(3, 3, Wt::WColor(0, 0, 0, 127), 3));
+                series.setShadow(Wt::WShadow(3, 3, Wt::WColor(0, 0, 0, 127), 3));
 #endif
-            addSeries(series);
+                addSeries(series);
+            } else {
+                Wt::Chart::WDataSeries series(column, Wt::Chart::LineSeries);
+                series.setStacked(false);
+                addSeries(series);
+            }
         }
     }
 
     void modelReset() ROSE_OVERRIDE {
         Wt::Chart::WCartesianChart::modelReset();
-        int height = std::max(40 + 25 * std::min(model()->rowCount(), 15), 130);
-        setHeight(height);
+        if (BAR_CHART == chartType_) {
+            int height = std::max(40 + 25 * std::min(model()->rowCount(), 15), 130);
+            setHeight(height);
+        } else {
+            setHeight(230);
+        }
     }
 };
         
@@ -406,8 +452,10 @@ private:
 class WResultsConstraintsTab: public Wt::WContainerWidget {
     WConstraints *constraints_;
     StatusModel *statusModel_;
-    WStatusChart *statusChart_;
+    WStatusChart *statusCharts_[2];                     // BAR_CHART, LINE_CHART
+    Wt::WStackedWidget *chartStack_;
     Wt::WComboBox *xAxisChoices_;
+    Wt::WComboBox *chartChoice_;
 public:
     explicit WResultsConstraintsTab(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent) {
@@ -428,12 +476,19 @@ public:
 
         // Model and chart of test status totals
         statusModel_ = new StatusModel;
-        resultsBox->addWidget(statusChart_ = new WStatusChart(statusModel_));
+
+        // The resultsBox has two rows: the top row is the charts (in a WStackedWidget), and the bottom is the settings to
+        // choose which chart to display and how.
+        resultsBox->addWidget(chartStack_ = new Wt::WStackedWidget);
+        chartStack_->addWidget(statusCharts_[0] = new WStatusChart(statusModel_, WStatusChart::BAR_CHART));
+        chartStack_->addWidget(statusCharts_[1] = new WStatusChart(statusModel_, WStatusChart::LINE_CHART));
+
+        // The chartSettingsBox holds the various buttons and such for adjusting the charts.
+        Wt::WHBoxLayout *chartSettingsBox = new Wt::WHBoxLayout;
+        chartSettingsBox->addSpacing(300);
 
         // Combo box to choose what to display as the X axis for the test status chart
-        Wt::WHBoxLayout *xAxisBox = new Wt::WHBoxLayout;
-        xAxisBox->addSpacing(300);
-        xAxisBox->addWidget(new Wt::WLabel("Axis:"));
+        chartSettingsBox->addWidget(new Wt::WLabel("Axis:"));
         xAxisChoices_ = new Wt::WComboBox;
         int i = 0;
         BOOST_FOREACH (const std::string &depName, gstate.dependencyNames.keys()) {
@@ -442,9 +497,17 @@ public:
                 xAxisChoices_->setCurrentIndex(i);
             ++i;
         }
-        xAxisBox->addWidget(xAxisChoices_);
-        xAxisBox->addStretch(1);
-        resultsBox->addLayout(xAxisBox);
+        chartSettingsBox->addWidget(xAxisChoices_);
+
+        // Combo box to choose which chart to show.
+        chartSettingsBox->addWidget(new Wt::WLabel("Chart type:"));
+        chartSettingsBox->addWidget(chartChoice_ = new Wt::WComboBox);
+        chartChoice_->addItem("bars");
+        chartChoice_->addItem("lines");
+        chartChoice_->activated().connect(this, &WResultsConstraintsTab::switchCharts);
+
+        chartSettingsBox->addStretch(1);
+        resultsBox->addLayout(chartSettingsBox);
 
         //------------------
         // Constraints area
@@ -497,6 +560,10 @@ private:
     void resetConstraints() {
         ::mlog[DEBUG] <<"WApplication::resetConstraints\n";
         constraints_->resetConstraints();
+    }
+
+    void switchCharts() {
+        chartStack_->setCurrentIndex(chartChoice_->currentIndex());
     }
 };
 
