@@ -11,6 +11,7 @@ static Sawyer::Message::Facility mlog;
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <Sawyer/CommandLine.h>
+#include <Sawyer/Map.h>
 #include <SqlDatabase.h>                                // ROSE
 #include <string>
 #include <vector>
@@ -32,15 +33,48 @@ static Sawyer::Message::Facility mlog;
 
 static const char* WILD_CARD_STR = "<any>";
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Represents a bucket of values by storing a min and max value.
+template<typename T>
+class Bucket {
+    T minValue_, maxValue_;
+    bool isEmpty_;
+
+public:
+    Bucket(): isEmpty_(true) {}
+    
+    Bucket(const T &value): minValue_(value), maxValue_(value), isEmpty_(false) {}
+
+    bool isEmpty() const { return isEmpty_; }
+    T minValue() const { return minValue_; }
+    T maxValue() const { return maxValue_; }
+
+    // Insert another item into the bucket by adjusting the min/max values
+    void operator<<(const T &value) {
+        if (isEmpty_) {
+            minValue_ = maxValue_ = value;
+        } else {
+            minValue_ = std::min(minValue_, value);
+            maxValue_ = std::max(maxValue_, value);
+        }
+        isEmpty_ = false;
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Info about a dependency.
 struct Dependency {
-    std::string name;
-    Wt::WComboBox *choices;
+    typedef Sawyer::Container::Map<std::string, Bucket<std::string> > Choices;
+
+    std::string name;                                   // name of dependency, such as "boost"
+    Choices humanValues;                                // human-readable values and how they map to the database values
+    Wt::WComboBox *comboBox;                            // choices available to the user
 
     Dependency()
-        : choices(NULL) {}
+        : comboBox(NULL) {}
 
     explicit Dependency(const std::string &name)
-        : name(name), choices(NULL) {}
+        : name(name), comboBox(NULL) {}
 };
 
 typedef Sawyer::Container::Map<std::string /*name*/, Dependency> Dependencies;
@@ -67,10 +101,19 @@ static std::string
 sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
     std::string where;
     BOOST_FOREACH (const Dependency &dep, deps.values()) {
-        std::string value = dep.choices->currentText().narrow();
-        if (value.compare(WILD_CARD_STR) != 0) {
-            where += std::string(where.empty() ? " where " : " and ") + gstate.dependencyNames[dep.name] + " = ?";
-            args.push_back(value);
+        std::string humanValue = dep.comboBox->currentText().narrow();
+        Bucket<std::string> bucket;
+        if (humanValue.compare(WILD_CARD_STR) != 0 && dep.humanValues.getOptional(humanValue).assignTo(bucket)) {
+            std::string depColumn = gstate.dependencyNames[dep.name];
+            where += std::string(where.empty() ? " where " : " and ");
+            if (bucket.minValue() == bucket.maxValue()) {
+                where += depColumn + " = ?";
+                args.push_back(bucket.minValue());
+            } else {
+                where += depColumn + " >= ? and " + depColumn + " <= ?";
+                args.push_back(bucket.minValue());
+                args.push_back(bucket.maxValue());
+            }
         }
     }
     return where;
@@ -82,33 +125,55 @@ bindSqlVariables(const SqlDatabase::StatementPtr &q, const std::vector<std::stri
         q->bind(i, args[i]);
 }
 
+enum HumanFormat { HUMAN_TERSE, HUMAN_VERBOSE };
+
 std::string
-humanLocalTime(unsigned long when) {
+humanLocalTime(unsigned long when, HumanFormat fmt = HUMAN_VERBOSE) {
     struct tm tm;
     time_t t = when;
     localtime_r(&t, &tm);
 
     char buf[256];
-    sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d %+ld:%02d",
-            tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday,
-            tm.tm_hour, tm.tm_min, tm.tm_sec,
-            tm.tm_gmtoff / 3600, abs(tm.tm_gmtoff / 60 % 60));
-
+    if (HUMAN_VERBOSE == fmt) {
+        sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d %+ld:%02d",
+                tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday,
+                tm.tm_hour, tm.tm_min, tm.tm_sec,
+                tm.tm_gmtoff / 3600, abs(tm.tm_gmtoff / 60 % 60));
+    } else {
+        sprintf(buf, "%04d-%02d-%02d", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday);
+    }
     return buf;
 }
 
 std::string
-humanDuration(unsigned long seconds) {
+humanDuration(unsigned long seconds, HumanFormat fmt = HUMAN_VERBOSE) {
     unsigned hours = seconds / 3600;
     unsigned minutes = seconds / 60 % 60;
     seconds %= 60;
 
-    std::string retval = boost::lexical_cast<std::string>(seconds) + " second" + (1==seconds?"":"s");
-    if (hours > 0 || minutes > 0)
-        retval = boost::lexical_cast<std::string>(minutes) + " minute" + (1==minutes?"":"s") + " " + retval;
-    if (hours > 0)
-        retval = boost::lexical_cast<std::string>(hours) + " hour" + (1==hours?"":"s") + " " + retval;
-    return retval;
+    if (HUMAN_VERBOSE == fmt) {
+        std::string retval = boost::lexical_cast<std::string>(seconds) + " second" + (1==seconds?"":"s");
+        if (hours > 0 || minutes > 0)
+            retval = boost::lexical_cast<std::string>(minutes) + " minute" + (1==minutes?"":"s") + " " + retval;
+        if (hours > 0)
+            retval = boost::lexical_cast<std::string>(hours) + " hour" + (1==hours?"":"s") + " " + retval;
+        return retval;
+    } else {
+        char buf[256];
+        sprintf(buf, "%2d:%02d:%02u", hours, minutes, (unsigned)seconds);
+        return buf;
+    }
+}
+
+std::string
+humanDepValue(const std::string &depName, const std::string &depValue, HumanFormat fmt = HUMAN_VERBOSE) {
+    if (depName == "reporting_time")
+        return humanLocalTime(boost::lexical_cast<long>(depValue), fmt);
+    if (depName == "rose_date")
+        return humanLocalTime(boost::lexical_cast<long>(depValue), fmt);
+    if (depName == "duration")
+        return humanDuration(boost::lexical_cast<long>(depValue), fmt);
+    return depValue;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -116,10 +181,14 @@ humanDuration(unsigned long seconds) {
 // Column 0: dependency value (e.g., boost version number)
 // Column 1 - N: counts for the various status values
 class StatusModel: public Wt::WAbstractTableModel {
-    std::string dependencyName_;
-    Sawyer::Container::Map<std::string /*status*/, int /*column*/> statusColumns_;
-    std::vector<std::string> columnTitles_;
-    std::vector<std::vector<std::string> > table_;
+    typedef Sawyer::Container::Map<std::string, int> StringIndex;
+
+    std::string dependencyName_;                        // type of dependency to store in column-0
+    std::vector<std::string> columnTitles_;             // title for each model column
+    std::vector<std::string> column0_;                  // value per table row for configurable dependency
+    StringIndex column0Index_;                          // map column-0 value to a table row number
+    std::vector<std::vector<int> > table_;              // model columns 1 and greater (zero origin)
+    StringIndex statusColumnIndex_;                     // table_ column per status
 
 public:
     explicit StatusModel(Wt::WObject *parent = 0)
@@ -127,9 +196,10 @@ public:
         columnTitles_.resize(1);
         columnTitles_[0] = dependencyName_;
         BOOST_FOREACH (const std::string &testName, gstate.testNames) {
-            statusColumns_.insert(testName, columnTitles_.size());
+            statusColumnIndex_.insert(testName, statusColumnIndex_.size());
             columnTitles_.push_back(testName);
         }
+        ASSERT_require(columnTitles_.size() == statusColumnIndex_.size() + 1);
     }
 
     std::string dependencyName() const {
@@ -145,22 +215,26 @@ public:
 
     void updateModel(const Dependencies &deps) {
         Sawyer::Message::Stream debug(::mlog[DEBUG] <<"StatusModel::updateModel...\n");
+        column0_.clear();
+        column0Index_.clear();
         table_.clear();
         if (!dependencyName_.empty()) {
-            // How many rows will be in the table?  There's one row per dependency value. Pad the table with zeros.
+            // Build the empty table: fill column-0 with dependency values, build the column zero index, and fill the rest of
+            // the model (table_) with zeros. Be careful to convert the dependency values to their human-readable format when
+            // sorting and removing dups.
             std::string depColumnName = gstate.dependencyNames[dependencyName_];
             SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct " + depColumnName + " from test_results"
                                                                " join users on test_results.reporting_user = users.uid"
                                                                " order by " + depColumnName);
-            Sawyer::Container::Map<std::string /*dependency*/, int /*row*/> depRows;
-            for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
-                std::string depValue = row.get<std::string>(0);
-                depRows.insert(depValue, table_.size());
-                std::vector<std::string> tableRow(1, depValue);
-                for (size_t i=0; i<statusColumns_.size(); ++i)
-                    tableRow.push_back("0");
-                table_.push_back(tableRow);
+            for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
+                column0Index_.insert(humanDepValue(dependencyName_, row.get<std::string>(0), HUMAN_TERSE), 0);
+            BOOST_FOREACH (StringIndex::Node &node, column0Index_.nodes()) {
+                node.value() = column0_.size();
+                column0_.push_back(node.key());
+                table_.push_back(std::vector<int>(statusColumnIndex_.size(), 0));
             }
+            ASSERT_require(column0_.size() == column0Index_.size());
+            ASSERT_require(column0_.size() == table_.size());
 
             // Build the database query
             std::string sql = "select " +  depColumnName + ", status, count(*) from test_results"
@@ -174,25 +248,25 @@ public:
 
             // Fill in the model's table with data from the database
             for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
-                std::string depName = row.get<std::string>(0);
+                std::string depValue = humanDepValue(dependencyName_, row.get<std::string>(0), HUMAN_TERSE);
                 std::string status = row.get<std::string>(1);
-                std::string count = row.get<std::string>(2);
+                int count = row.get<int>(2);
 
-                int i = depRows.getOrElse(depName, -1);
-                int j = statusColumns_.getOrElse(status, -1);
-                if (i >= 0 && j >= 0)
-                    table_[i][j] = count;
+                int i = column0Index_.getOrElse(depValue, -1);
+                int j = statusColumnIndex_.getOrElse(status, -1);
+                if (i >= 0 && j >= 0 && (size_t)j < table_[i].size())
+                    table_[i][j] += count;
             }
         }
         modelReset().emit();
     }
 
     int rowCount(const Wt::WModelIndex &parent = Wt::WModelIndex()) const ROSE_OVERRIDE {
-        return parent.isValid() ? 0 : table_.size();
+        return parent.isValid() ? 0 : column0_.size();
     }
     
     int columnCount(const Wt::WModelIndex &parent = Wt::WModelIndex()) const ROSE_OVERRIDE {
-        return 1 + statusColumns_.size();
+        return parent.isValid() ? 0 : columnTitles_.size();
     }
 
     boost::any data(const Wt::WModelIndex &index, int role = Wt::DisplayRole) const ROSE_OVERRIDE {
@@ -201,8 +275,8 @@ public:
         ASSERT_require(index.column() >= 0 && index.column() < columnCount());
         if (Wt::DisplayRole == role) {
             if (0 == index.column())
-                return table_[index.row()][index.column()];
-            return boost::lexical_cast<int>(table_[index.row()][index.column()]);
+                return column0_[index.row()];
+            return table_[index.row()][index.column()-1];
         }
         return boost::any();
     }
@@ -245,7 +319,7 @@ public:
 
     void modelReset() ROSE_OVERRIDE {
         Wt::Chart::WCartesianChart::modelReset();
-        int height = std::max(40 + 25 * model()->rowCount(), 130);
+        int height = std::max(40 + 25 * std::min(model()->rowCount(), 15), 130);
         setHeight(height);
     }
 };
@@ -260,11 +334,33 @@ public:
     explicit WConstraints(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent) {
 
+        // Build info about each dependency
         std::vector<std::string> depNames;
         BOOST_FOREACH (const std::string &depName, gstate.dependencyNames.keys()) {
             Dependency &dep = dependencies_.insertMaybe(depName, Dependency(depName));
-            dep.choices = makeComboBox(depName);
             depNames.push_back(depName);
+
+            // Combo box so we can pick a human value (i.e., bucket of database values) by which to limit queries later.
+            dep.comboBox = new Wt::WComboBox;
+            dep.comboBox->addItem(WILD_CARD_STR);
+            dep.comboBox->activated().connect(this, &WConstraints::emitConstraintsChanged);
+
+            // Find all values that the dependency can have. Depending on the dependency, we might want to use human-readable
+            // values (like yyyy-mm-dd instead of a unix time stamp), in which case the "select distinct" and "order by" SQL
+            // clauses won't really do what we want. Regardless of whether we use human-readalbe names and buckets of values,
+            // we need to store the original value from the SQL table so we can construct "where" clauses later.
+            std::string depColumn = gstate.dependencyNames[depName];
+            SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct " + depColumn +
+                                                               " from test_results"
+                                                               " join users on test_results.reporting_user = users.uid");
+            for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
+                std::string rawValue = row.get<std::string>(0);
+                std::string humanValue = humanDepValue(depName, rawValue, HUMAN_TERSE);
+                dep.humanValues.insertMaybeDefault(humanValue) <<rawValue;
+            }
+
+            BOOST_FOREACH (const std::string &humanValue, dep.humanValues.keys())
+                dep.comboBox->addItem(humanValue);
         }
 
         static const size_t nDepCols = 2;               // number of columns for dependencies
@@ -278,7 +374,7 @@ public:
             int col = i / nDepRows;
             std::string depName = depNames[i];
             grid->addWidget(new Wt::WLabel(depName), row, 2*col+0, Wt::AlignRight | Wt::AlignMiddle);
-            grid->addWidget(dependencies_[depName].choices, row, 2*col+1);
+            grid->addWidget(dependencies_[depName].comboBox, row, 2*col+1);
         }
     }
 
@@ -294,7 +390,7 @@ public:
     void resetConstraints() {
         ::mlog[DEBUG] <<"WConstraints::resetConstraints\n";
         BOOST_FOREACH (Dependency &dep, dependencies_.values())
-            dep.choices->setCurrentIndex(0);
+            dep.comboBox->setCurrentIndex(0);
         emitConstraintsChanged();
     }
 
@@ -302,22 +398,6 @@ private:
     void emitConstraintsChanged() {
         ::mlog[DEBUG] <<"WConstraints::emitConstraintsChanged\n";
         constraintsChanged_.emit();
-    }
-
-    Wt::WComboBox* makeComboBox(const std::string &name) {
-        std::string columnName = gstate.dependencyNames[name];
-        Wt::WComboBox *combos = new Wt::WComboBox;
-        combos->addItem(WILD_CARD_STR);
-        SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct " + columnName +
-                                                           " from test_results"
-                                                           " join users on test_results.reporting_user = users.uid"
-                                                           " order by " + columnName);
-        for (SqlDatabase::Statement::iterator row=q->begin(); row!=q->end(); ++row) {
-            std::string value = row.get<std::string>(0);
-            combos->addItem(value);
-        }
-        combos->activated().connect(this, &WConstraints::emitConstraintsChanged);
-        return combos;
     }
 };
 
@@ -498,8 +578,6 @@ public:
 
         // What columns to query?
         DependencyNames columns = gstate.dependencyNames;
-        columns.insert("reporting_time", "reporting_time");
-        columns.insert("rose_date", "rose_date");
         columns.insert("status", "status");
         columns.insert("duration", "duration");
         columns.insert("noutput", "noutput");
@@ -521,17 +599,9 @@ public:
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
         bindSqlVariables(q, args);
         for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
-            int colnum = 0;
-            BOOST_FOREACH (const std::string &name, columns.keys()) {
-                config += name + "=";
-                if (name == "reporting_time" || name == "rose_date") {
-                    config += humanLocalTime(row.get<long>(colnum++)) + "\n";
-                } else if (name == "duration") {
-                    config += humanDuration(row.get<long>(colnum++)) + "\n";
-                } else {
-                    config += row.get<std::string>(colnum++) + "\n";
-                }
-            }
+            int column = 0;
+            BOOST_FOREACH (const std::string &name, columns.keys())
+                config += name + "=" + humanDepValue(name, row.get<std::string>(column++)) + "\n";
             break;
         }
         config_->setText(config);
@@ -740,6 +810,7 @@ loadTestNames(const SqlDatabase::TransactionPtr &tx) {
     return retval;
 }
 
+// These are the dependencies that will show up as constraints that the user can adjust.
 static DependencyNames
 loadDependencyNames(const SqlDatabase::TransactionPtr &tx) {
     DependencyNames retval;
@@ -750,17 +821,12 @@ loadDependencyNames(const SqlDatabase::TransactionPtr &tx) {
     }
 
     // Additional key/column relationships
-    //retval.insert("id", "id");
     retval.insert("reporting_user", "users.name");
-    //retval.insert("reporting_time", "reporting_time");
+    retval.insert("reporting_time", "reporting_time");
     retval.insert("tester", "tester");
     retval.insert("os", "os");
     retval.insert("rose", "rose");
-    //retval.insert("rose_date", "rose_date");
-    //retval.insert("status", "status");
-    //retval.insert("duration", "duration");
-    //retval.insert("noutput", "noutput");
-    //retval.insert("nwarnings", "nwarnings");
+    retval.insert("rose_date", "rose_date");
 
     return retval;
 }
