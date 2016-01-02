@@ -81,6 +81,7 @@ struct Dependency {
 typedef Sawyer::Container::Map<std::string /*name*/, Dependency> Dependencies;
 typedef Sawyer::Container::Map<std::string /*name*/, std::string /*column*/> DependencyNames;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Stuff initialized before the first server thread is created, and which remains constant once the serving starts.
 struct GlobalState {
     std::string docRoot;
@@ -196,9 +197,9 @@ humanDepValue(const std::string &depName, const std::string &depValue, HumanForm
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Column 0: dependency value (e.g., boost version number)
-// Column 1 - N: counts for the various status values
+// Models a subset of the test results according to constraints plus one additional "special" dependency.
+//   Column 0: values for the "special" dependency (e.g., boost version number)
+//   Column 1 - N: counts for the various status values, as "double" so we can alternatively store percents
 class StatusModel: public Wt::WAbstractTableModel {
     typedef Sawyer::Container::Map<std::string, int> StringIndex;
 
@@ -331,7 +332,7 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// The chart showing whatever results that are presently stored in the StatusModel.
 class WStatusChart: public Wt::Chart::WCartesianChart {
 public:
     enum ChartType { BAR_CHART, LINE_CHART };
@@ -400,7 +401,7 @@ public:
 };
         
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// The combo boxes, etc. for constraining which tests appear in the result model.
 class WConstraints: public Wt::WContainerWidget {
     Dependencies dependencies_;
     Wt::Signal<> constraintsChanged_;
@@ -477,7 +478,7 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// Content of the "Overview" tab showing the chart of results and the constraint input area.
 class WResultsConstraintsTab: public Wt::WContainerWidget {
     WConstraints *constraints_;
     StatusModel *statusModel_;
@@ -543,6 +544,11 @@ public:
         absoluteRelative_->addItem("percents");
         absoluteRelative_->activated().connect(this, &WResultsConstraintsTab::switchAbsoluteRelative);
 
+        // Update button to reload data from the database
+        Wt::WPushButton *updateButton = new Wt::WPushButton("Update");
+        updateButton->clicked().connect(this, &WResultsConstraintsTab::updateStatusCounts);
+        chartSettingsBox->addWidget(updateButton);
+
         chartSettingsBox->addStretch(1);
         resultsBox->addLayout(chartSettingsBox);
 
@@ -566,14 +572,6 @@ public:
         // Constraints
         constraintsBox->addWidget(constraints_ = new WConstraints);
         constraints_->constraintsChanged().connect(this, &WResultsConstraintsTab::updateStatusCounts);
-
-        // Update button to reload data from the database
-        Wt::WHBoxLayout *updateBox = new Wt::WHBoxLayout;
-        Wt::WPushButton *updateButton = new Wt::WPushButton("Update");
-        updateButton->clicked().connect(this, &WResultsConstraintsTab::updateStatusCounts);
-        updateBox->addWidget(updateButton);
-        updateBox->addStretch(1);
-        constraintsBox->addLayout(updateBox);
 
         //---------
         // Wiring
@@ -611,13 +609,13 @@ private:
 
         
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// The content of the "Details" tab.
 class WDetails: public Wt::WContainerWidget {
     std::vector<int> testIds_;
     Wt::WComboBox *testIdChoices_;
     int testId_;
     Wt::Signal<> testIdChanged_;
-    Wt::WText *config_, *testOutput_;
+    Wt::WText *config_, *commands_, *testOutput_;
 
 public:
     explicit WDetails(Wt::WContainerWidget *parent = NULL)
@@ -635,12 +633,21 @@ public:
         vbox->addLayout(choiceBox);
 
         // Configuration
+        vbox->addWidget(new Wt::WText("<h2>Detailed status</h2>"));
         config_ = new Wt::WText;
         config_->setTextFormat(Wt::PlainText);
         config_->setWordWrap(false);
         vbox->addWidget(config_);
 
+        // Commands that were executed
+        vbox->addWidget(new Wt::WText("<h2>Commands executed</h2>"));
+        commands_ = new Wt::WText;
+        commands_->setTextFormat(Wt::XHTMLText);
+        config_->setWordWrap(true);
+        vbox->addWidget(commands_);
+
         // Tests final output
+        vbox->addWidget(new Wt::WText("<h2>Command output</h2>"));
         testOutput_ = new Wt::WText;
         testOutput_->setTextFormat(Wt::XHTMLText);
         testOutput_->setWordWrap(false);
@@ -715,6 +722,7 @@ public:
         }
         config_->setText(config);
 
+        updateCommands();
         updateOutput();
     }
 
@@ -728,79 +736,102 @@ private:
         }
     }
 
+    void updateCommands() {
+        commands_->setText("");
+        if (testId_ >= 0) {
+            SqlDatabase::StatementPtr q = gstate.tx->statement("select content from attachments where test_id = ? and name = ?");
+            q->bind(0, testId_);
+            q->bind(1, "Commands");
+            SqlDatabase::Statement::iterator row = q->begin();
+            std::string content = row != q->end() ? row.get<std::string>(0) : std::string();
+            if (content.empty()) {
+                content = "Commands were not saved for this test.\n";
+            } else {
+                content = escapeHtml(content);
+                boost::replace_all(content, "\n", "<br/><br/>");
+            }
+            commands_->setText(content);
+        }
+    }
+
+    std::string escapeHtml(const std::string &s) {
+        std::string t;
+        int col = 0;
+        BOOST_FOREACH (char ch, s) {
+            ++col;
+            switch (ch) {
+                case '<': t += "&lt;"; break;
+                case '>': t += "&gt;"; break;
+                case '&': t += "&amp;"; break;
+                case '\r': col = 0; break;
+                case '\n': t += ch; col = 0; break; // leave linefeeds alone for now for easier matching below
+                case '\t': {
+                    int n = 8 - (col-1) % 8;
+                    t += std::string(n, ' ');
+                    col += n;
+                    break;
+                }
+                default: {
+                    if (iscntrl(ch)) {
+                        --col;
+                    } else {
+                        t += ch;
+                    }
+                    break;
+                }
+            }
+        }
+        return t;
+    }
+
     void updateOutput() {
         testOutput_->setText("");
         if (testId_ >= 0) {
             SqlDatabase::StatementPtr q = gstate.tx->statement("select content from attachments where test_id = ? and name = ?");
             q->bind(0, testId_);
             q->bind(1, "Final output");
-            for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
-                std::string s = row.get<std::string>(0);
-                std::string t;
+            SqlDatabase::Statement::iterator row = q->begin();
+            std::string s = row != q->end() ? row.get<std::string>(0) : std::string();
+            if (s.empty())
+                s = "Command output was not saved for this test.\n";
+            std::string t = escapeHtml(s);
 
-                // Replace characters that are special for HTML
-                int col = 0;
-                BOOST_FOREACH (char ch, s) {
-                    ++col;
-                    switch (ch) {
-                        case '<': t += "&lt;"; break;
-                        case '>': t += "&gt;"; break;
-                        case '&': t += "&amp;"; break;
-                        case '\r': col = 0; break;
-                        case '\n': t += ch; col = 0; break; // leave linefeeds alone for now for easier matching below
-                        case '\t': {
-                            int n = 8 - (col-1) % 8;
-                            t += std::string(n, ' ');
-                            col += n;
-                            break;
-                        }
-                        default: {
-                            if (iscntrl(ch)) {
-                                --col;
-                            } else {
-                                t += ch;
-                            }
-                            break;
-                        }
-                    }
-                }
+            // Look for special compiler output lines for errors and warnings
+            boost::regex compilerRegex("(^[^\\n]*?(?:"
+                                       // Errors
+                                       "\\berror:"
+                                       "|\\[ERROR\\]"
+                                       "|\\bwhat\\(\\): [^\\n]+\\n[^\\n]*Aborted$" // fatal exception in shell command
+                                       "|\\bwhat\\(\\): [^\\n]+\\n[^\\n]*command died" // fatal exception from $(RTH_RUN)
 
-                // Look for special compiler output lines for errors and warnings
-                boost::regex compilerRegex("(^[^\\n]*?(?:"
-                                           // Errors
-                                           "\\berror:"
-                                           "|\\[ERROR\\]"
+                                       ")[^\\n]*$)|"
+                                       "(^[^\\n]*?(?:"
 
-                                           ")[^\\n]*$)|"
-                                           "(^[^\\n]*?(?:"
+                                       // Warnings
+                                       "\\bwarning:"
 
-                                           // Warnings
-                                           "\\bwarning:"
+                                       ")[^\\n]*$)|"
+                                       "(^={17}-={17}[^\\n]+={17}-={17}$)");
 
-                                           ")[^\\n]*$)|"
-                                           "(^={17}-={17}[^\\n]+={17}-={17}$)");
+            const char *compilerFormat = "(?1<span class=\"compiler-error\">$&</span>)"
+                                         "(?2<span class=\"compiler-warning\">$&</span>)"
+                                         "(?3<span class=\"output-separator\"><hr/>$&</span>)";
 
-                const char *compilerFormat = "(?1<span class=\"compiler-error\">$&</span>)"
-                                             "(?2<span class=\"compiler-warning\">$&</span>)"
-                                             "(?3<span class=\"output-separator\"><hr/>$&</span>)";
+            std::ostringstream out(std::ios::out | std::ios::binary);
+            std::ostream_iterator<char, char> oi(out);
+            boost::regex_replace(oi, t.begin(), t.end(), compilerRegex, compilerFormat,
+                                 boost::match_default|boost::format_all);
+            t = out.str();
 
-                std::ostringstream out(std::ios::out | std::ios::binary);
-                std::ostream_iterator<char, char> oi(out);
-                boost::regex_replace(oi, t.begin(), t.end(), compilerRegex, compilerFormat,
-                                     boost::match_default|boost::format_all);
-                t = out.str();
-
-                // Now fix the linefeeds
-                boost::replace_all(t, "\n", "<br/>");
-                testOutput_->setText(t);
-                break;
-            }
+            // Now fix the linefeeds
+            boost::replace_all(t, "\n", "<br/>");
+            testOutput_->setText(t);
         }
     }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// One application object is created per user session.
 class WApplication: public Wt::WApplication {
     WResultsConstraintsTab *resultsConstraints_;
     WDetails *details_;
