@@ -206,12 +206,13 @@ class StatusModel: public Wt::WAbstractTableModel {
     std::vector<std::string> columnTitles_;             // title for each model column
     std::vector<std::string> column0_;                  // value per table row for configurable dependency
     StringIndex column0Index_;                          // map column-0 value to a table row number
-    std::vector<std::vector<int> > table_;              // model columns 1 and greater (zero origin)
+    std::vector<std::vector<double> > table_;           // model columns 1 and greater (zero origin)
     StringIndex statusColumnIndex_;                     // table_ column per status
+    bool usePercents_;                                  // show percents across each model row rather than absolute counts
 
 public:
     explicit StatusModel(Wt::WObject *parent = 0)
-        : Wt::WAbstractTableModel(parent) {
+        : Wt::WAbstractTableModel(parent), usePercents_(false) {
         columnTitles_.resize(1);
         columnTitles_[0] = dependencyName_;
         BOOST_FOREACH (const std::string &testName, gstate.testNames) {
@@ -232,6 +233,14 @@ public:
         columnTitles_[0] = dependencyName;
     }
 
+    bool relativeMode() const {
+        return usePercents_;
+    }
+
+    void setRelativeMode(bool b) {
+        usePercents_ = b;
+    }
+
     void updateModel(const Dependencies &deps) {
         Sawyer::Message::Stream debug(::mlog[DEBUG] <<"StatusModel::updateModel...\n");
         column0_.clear();
@@ -250,7 +259,7 @@ public:
             BOOST_FOREACH (StringIndex::Node &node, column0Index_.nodes()) {
                 node.value() = column0_.size();
                 column0_.push_back(node.key());
-                table_.push_back(std::vector<int>(statusColumnIndex_.size(), 0));
+                table_.push_back(std::vector<double>(statusColumnIndex_.size(), 0));
             }
             ASSERT_require(column0_.size() == column0Index_.size());
             ASSERT_require(column0_.size() == table_.size());
@@ -275,6 +284,19 @@ public:
                 int j = statusColumnIndex_.getOrElse(status, -1);
                 if (i >= 0 && j >= 0 && (size_t)j < table_[i].size())
                     table_[i][j] += count;
+            }
+
+            // Convert raw counts to percents
+            if (usePercents_) {
+                BOOST_FOREACH (std::vector<double> &row, table_) {
+                    double total = 0;
+                    BOOST_FOREACH (double count, row)
+                        total += count;
+                    if (total > 0) {
+                        BOOST_FOREACH (double &cell, row)
+                            cell = 100.0 * cell / total;
+                    }
+                }
             }
         }
         modelReset().emit();
@@ -315,11 +337,12 @@ public:
     enum ChartType { BAR_CHART, LINE_CHART };
 
 private:
+    StatusModel *model_;
     ChartType chartType_;
 
 public:
     explicit WStatusChart(StatusModel *model, ChartType chartType, Wt::WContainerWidget *parent = NULL)
-        : Wt::Chart::WCartesianChart(parent), chartType_(chartType) {
+        : Wt::Chart::WCartesianChart(parent), model_(model), chartType_(chartType) {
 
         // Make room around the graph for titles, labels, and legend.
         if (BAR_CHART == chartType_) {
@@ -336,10 +359,10 @@ public:
             setOrientation(Wt::Vertical);
             axis(Wt::Chart::XAxis).setLabelAngle(22.5);
         }
-
         setLegendEnabled(true);
         setModel(model);
         setXSeriesColumn(0);
+        axis(Wt::Chart::YAxis).setMinimum(0);
 
         // Insert the Y-series data as bars or lines.
         for (int column = 1; column < model->columnCount(); ++column) {
@@ -353,7 +376,7 @@ public:
                 addSeries(series);
             } else {
                 Wt::Chart::WDataSeries series(column, Wt::Chart::LineSeries);
-                series.setStacked(false);
+                series.setMarker(Wt::Chart::SquareMarker);
                 addSeries(series);
             }
         }
@@ -366,6 +389,12 @@ public:
             setHeight(height);
         } else {
             setHeight(230);
+        }
+
+        if (model_->relativeMode()) {
+            axis(Wt::Chart::YAxis).setMaximum(100);
+        } else {
+            axis(Wt::Chart::YAxis).setAutoLimits(Wt::Chart::MaximumValue);
         }
     }
 };
@@ -456,6 +485,8 @@ class WResultsConstraintsTab: public Wt::WContainerWidget {
     Wt::WStackedWidget *chartStack_;
     Wt::WComboBox *xAxisChoices_;
     Wt::WComboBox *chartChoice_;
+    Wt::WComboBox *absoluteRelative_;                   // whether to show percents or counts
+
 public:
     explicit WResultsConstraintsTab(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent) {
@@ -505,6 +536,12 @@ public:
         chartChoice_->addItem("bars");
         chartChoice_->addItem("lines");
         chartChoice_->activated().connect(this, &WResultsConstraintsTab::switchCharts);
+
+        // Combo box to choose whether the model stores percents or counts
+        chartSettingsBox->addWidget(absoluteRelative_ = new Wt::WComboBox);
+        absoluteRelative_->addItem("totals");
+        absoluteRelative_->addItem("percents");
+        absoluteRelative_->activated().connect(this, &WResultsConstraintsTab::switchAbsoluteRelative);
 
         chartSettingsBox->addStretch(1);
         resultsBox->addLayout(chartSettingsBox);
@@ -564,6 +601,11 @@ private:
 
     void switchCharts() {
         chartStack_->setCurrentIndex(chartChoice_->currentIndex());
+    }
+
+    void switchAbsoluteRelative() {
+        statusModel_->setRelativeMode(1 == absoluteRelative_->currentIndex());
+        statusModel_->updateModel(constraints_->dependencies());
     }
 };
 
