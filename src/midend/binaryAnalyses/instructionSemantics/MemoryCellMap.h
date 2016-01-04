@@ -70,6 +70,13 @@ public:
      *  Generates a key from a virtual address. The key is used to look up the cell in a map-based container. */
     virtual CellKey generateCellKey(const SValuePtr &address) const = 0;
 
+    /** Look up memory cell for address.
+     *
+     *  Returns the memory cell for the specified address, or a null pointer if the cell does not exist.  The address is used
+     *  to look up the cell in logirithmic time. This is just a convenience wrapper around @ref matchingCells that returns
+     *  either the (single) cell found by that function or a null pointer. */
+    virtual MemoryCellPtr findCell(const SValuePtr &addr) const;
+
 public:
     virtual void clear() ROSE_OVERRIDE;
     virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
