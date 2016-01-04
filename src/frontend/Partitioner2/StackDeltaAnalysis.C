@@ -83,7 +83,12 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
         SAWYER_MESG(mlog[DEBUG]) <<"  no instruction semantics for this architecture\n";
         return retval;
     }
-    Semantics::MemoryState::promote(cpu->get_operators()->get_state()->get_memory_state())->enabled(false);
+    BaseSemantics::MemoryStatePtr mem = cpu->get_operators()->get_state()->get_memory_state();
+    if (Semantics::MemoryListStatePtr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
+        ml->enabled(false);
+    } else if (Semantics::MemoryMapStatePtr mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {
+        mm->enabled(false);
+    }
     StackDelta::Analysis &sdAnalysis = function->stackDeltaAnalysis() = StackDelta::Analysis(cpu);
     sdAnalysis.initialConcreteStackPointer(0x7fff0000); // optional: helps reach more solutions
     InterproceduralPredicate ip(*this);

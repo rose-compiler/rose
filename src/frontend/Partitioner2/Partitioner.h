@@ -309,6 +309,7 @@ private:
     size_t stackDeltaInterproceduralLimit_;             // Max depth of call stack when computing stack deltas
     AddressNameMap addressNames_;                       // Names for various addresses
     bool basicBlockSemanticsAutoDrop_;                  // Conserve memory by dropping semantics for attached basic blocks?
+    SemanticMemoryParadigm semanticMemoryParadigm_;     // Slow and precise, or fast and imprecise?
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -333,7 +334,7 @@ public:
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
         : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
           autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-          basicBlockSemanticsAutoDrop_(true) {
+          basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
         init(disassembler, map);
     }
 
@@ -344,7 +345,7 @@ public:
     Partitioner()
         : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
           autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-          basicBlockSemanticsAutoDrop_(true) {
+          basicBlockSemanticsAutoDrop_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
         init(NULL, memoryMap_);
     }
 
@@ -356,7 +357,8 @@ public:
     // after a while.
     Partitioner(const Partitioner &other)               // initialize just like default
         : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
-          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), basicBlockSemanticsAutoDrop_(true) {
+          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), basicBlockSemanticsAutoDrop_(true),
+          semanticMemoryParadigm_(LIST_BASED_MEMORY) {
         init(NULL, memoryMap_);                         // initialize just like default
         *this = other;                                  // then delegate to the assignment operator
     }
@@ -382,6 +384,7 @@ public:
         basicBlockCallbacks_ = other.basicBlockCallbacks_;
         functionPrologueMatchers_ = other.functionPrologueMatchers_;
         functionPaddingMatchers_ = other.functionPaddingMatchers_;
+        semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
         init(other);                                    // copies graph iterators, etc.
         return *this;
     }
@@ -1854,6 +1857,46 @@ public:
     const AddressNameMap& addressNames() const /*final*/ { return addressNames_; }
     /** @} */
 
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Instruction semantics
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Property: Whether to use map- or list-based memory states.
+     *
+     *  The partitioner can use either list-based memory states or map-based memory states. The list-based states are more
+     *  precise, but the map-based states are faster.  This property determines which kind of state is created by the @ref
+     *  newOperators method.
+     *
+     * @{ */
+    SemanticMemoryParadigm semanticMemoryParadigm() const { return semanticMemoryParadigm_; }
+    void semanticMemoryParadigm(SemanticMemoryParadigm p) { semanticMemoryParadigm_ = p; }
+    /** @} */
+
+    /** SMT solver.
+     *
+     *  Returns the SMT solver being used for instruction semantics. The partitioner owns the solver, so the caller should not
+     *  delete it.  Some configurations will not use a solver, in which case the null pointer is returned. */
+    SMTSolver *smtSolver() const /*final*/ { return solver_; }
+
+    /** Obtain new RiscOperators.
+     *
+     *  Creates a new instruction semantics infrastructure with a fresh machine state.  The partitioner supports two kinds of
+     *  memory state representations: list-based and map-based (see @ref semanticMemoryParadigm).  Returns a null pointer if
+     *  the architecture does not support semantics. */
+    BaseSemantics::RiscOperatorsPtr newOperators() const /*final*/;
+
+    /** Obtain a new instruction semantics dispatcher.
+     *
+     *  Creates and returns a new dispatcher for the instruction semantics framework.  The dispatcher will contain a copy of
+     *  the RiscOperators argument initialized with a new memory/register state.  Returns a null pointer if instruction
+     *  semantics are not supported for the specimen's architecture. */
+    BaseSemantics::DispatcherPtr newDispatcher(const BaseSemantics::RiscOperatorsPtr&) const /*final*/;
+
+    
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner internal utilities
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1861,16 +1904,6 @@ private:
     void init(Disassembler*, const MemoryMap&);
     void init(const Partitioner&);
     void reportProgress() const;
-
-public:
-    // Non-shared pointer to SMT solver
-    SMTSolver *smtSolver() const /*final*/ { return solver_; }
-
-    // Obtain a new RiscOperators along with new states
-    BaseSemantics::RiscOperatorsPtr newOperators() const /*final*/;
-
-    // Obtain a new instruction semantics dispatcher initialized with the partitioner's semantic domain and a fresh state.
-    BaseSemantics::DispatcherPtr newDispatcher(const BaseSemantics::RiscOperatorsPtr&) const /*final*/;
 
 private:
     // Convert a CFG vertex iterator from one partitioner to another.  This is called during copy construction when the source

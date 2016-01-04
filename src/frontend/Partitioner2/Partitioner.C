@@ -8,7 +8,6 @@
 
 #include "AsmUnparser_compat.h"
 #include "SymbolicSemantics2.h"
-#include "DispatcherM68k.h"
 #include "Diagnostics.h"
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -229,8 +228,14 @@ Partitioner::basicBlockExists(const BasicBlock::Ptr &bblock) const {
 
 BaseSemantics::RiscOperatorsPtr
 Partitioner::newOperators() const {
-    Semantics::RiscOperatorsPtr ops = Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver_);
-    Semantics::MemoryState::promote(ops->get_state()->get_memory_state())->memoryMap(&memoryMap_);
+    Semantics::RiscOperatorsPtr ops =
+        Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver_, semanticMemoryParadigm_);
+    BaseSemantics::MemoryStatePtr mem = ops->get_state()->get_memory_state();
+    if (Semantics::MemoryListStatePtr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
+        ml->memoryMap(&memoryMap_);
+    } else if (Semantics::MemoryMapStatePtr mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {
+        mm->memoryMap(&memoryMap_);
+    }
     return ops;
 }
 

@@ -29,6 +29,31 @@ public:
         virtual void operator()(MemoryCellPtr&) = 0;
     };
 
+    /** Predicate for matching cells. */
+    class Predicate {
+    public:
+        virtual ~Predicate() {};
+
+        /** Invoked for some cell. The predicate must not modify the cell. */
+        virtual bool operator()(const MemoryCellPtr&) const = 0;
+    };
+
+    /** Predicate that always returns true. */
+    class AllCells: public Predicate {
+    public:
+        virtual bool operator()(const MemoryCellPtr&) const ROSE_OVERRIDE {
+            return true;
+        }
+    };
+
+    /** Predicate for non-written cells.
+     *
+     *  Returns true if a cell has no writers. */
+    class NonWrittenCells: public Predicate {
+    public:
+        virtual bool operator()(const MemoryCellPtr&) const ROSE_OVERRIDE;
+    };
+
 private:
     SValuePtr address_;                                 // Address of memory cell.
     SValuePtr value_;                                   // Value stored at that address.
@@ -237,6 +262,7 @@ public:
     WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
     /** @} */
 };
+
 
 std::ostream& operator<<(std::ostream&, const MemoryCell&);
 std::ostream& operator<<(std::ostream&, const MemoryCell::WithFormatter&);

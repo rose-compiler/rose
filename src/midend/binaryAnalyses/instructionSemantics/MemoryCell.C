@@ -7,6 +7,11 @@ namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
 bool
+MemoryCell::NonWrittenCells::operator()(const MemoryCellPtr &cell) const {
+    return cell->getWriters().isEmpty();
+}
+
+bool
 MemoryCell::may_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check for the easy case:  two one-byte cells may alias one another if their addresses may be equal.
