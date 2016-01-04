@@ -354,7 +354,14 @@ NEW_TESTCODES = \
    test2015_144.C \
    test2015_145.C \
    test2015_146.C \
-   test2015_148.C
+   test2015_147.C \
+   test2015_148.C \
+   test2015_149.C \
+   test2015_150.C \
+   test2015_151.C \
+   test2015_152.C \
+   test2015_153.C \
+   test2015_154.C 
 
 # Failing test codes:
 #   test2015_147.C 
