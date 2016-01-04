@@ -142,6 +142,11 @@ MemoryCellMap::eraseLeadingCells(const MemoryCell::Predicate &p) {
     }
 }
 
+MemoryCellPtr
+MemoryCellMap::findCell(const SValuePtr &addr) const {
+    return cells.getOrDefault(generateCellKey(addr));
+}
+
 } // namespace
 } // namespace
 } // namespace
