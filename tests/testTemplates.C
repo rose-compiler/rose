@@ -95,7 +95,7 @@ int main( int argc, char * argv[] )
   // DQ (9/17/2015): Call fixup function for template instatiations so that they can be unparsed with the GNU g++ backend compiler.
      SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(project);
 
-#if 0
+#if 1
   // Output an optional graph of the AST (just the tree, when active)
      printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");
      generateDOT ( *project );

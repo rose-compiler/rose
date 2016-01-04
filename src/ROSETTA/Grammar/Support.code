@@ -7589,7 +7589,9 @@ SgSymbolTable::find( const SgInitializedName* initializedName)
      assert(p_table != NULL);
      assert(initializedName != NULL);
 
-#if 0
+#define DEBUG_FIND_INITIALIZED_NAME_SYMBOL 0
+
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
      printf ("Inside of SgSymbolTable::find( const SgInitializedName* ): initializedName = %p = %s \n",initializedName,SageInterface::get_name(initializedName).c_str());
 #endif
 
@@ -7597,10 +7599,16 @@ SgSymbolTable::find( const SgInitializedName* initializedName)
 
      SgName name = initializedName->get_name();
 
-  // printf ("Inside of SgSymbolTable::find( const SgInitializedName* ): name = %s \n",name.str());
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+     printf ("Inside of SgSymbolTable::find( const SgInitializedName* ): name = %s \n",name.str());
+#endif
 
   // Find the first symbol in the multimap
      p_iterator = p_table->find(name);
+
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+     printf ("Inside of SgSymbolTable::find( const SgInitializedName* ): name = %s this->count(name) = %d \n",name.str(),this->count(name));
+#endif
 
   // Iterate through the matching symbols in the multimap
   // while (p_iterator != p_table->end() && (*p_iterator).first == name)
@@ -7608,31 +7616,45 @@ SgSymbolTable::find( const SgInitializedName* initializedName)
         {
           assert(p_iterator->second != NULL);
           SgNode* symbolBasis = p_iterator->second->get_symbol_basis();
-       // printf ("In loop: p_iterator->second = %p symbolBasis = %p initializedName = %p \n",p_iterator->second,symbolBasis,initializedName);
-       // printf ("In loop: symbolBasis->variantT() = %d statement->variantT() = %d \n",symbolBasis->variantT(),initializedName->variantT());
+
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+          printf ("In loop: p_iterator->second = %p symbolBasis = %p initializedName = %p \n",p_iterator->second,symbolBasis,initializedName);
+          printf ("In loop: symbolBasis->variantT() = %d statement->variantT() = %d \n",symbolBasis->variantT(),initializedName->variantT());
+#endif
           assert(symbolBasis != NULL);
           if (isSgInitializedName(symbolBasis) != NULL)
              {
-            // printf ("found a SgInitializedName \n");
-
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+               printf ("found a SgInitializedName \n");
+#endif
                returnSymbol = p_iterator->second;
                if (returnSymbol->get_symbol_basis() == initializedName)
                   {
-                 // printf ("returnSymbol->get_symbol_basis() == initializedName returnSymbol = %p = %s \n",returnSymbol,returnSymbol->class_name().c_str());
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+                    printf ("returnSymbol->get_symbol_basis() == initializedName returnSymbol = %p = %s \n",returnSymbol,returnSymbol->class_name().c_str());
+#endif
                     return returnSymbol;
                   }
                  else
                   {
-                 // printf ("returnSymbol->get_symbol_basis() != initializedName \n");
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+                    printf ("returnSymbol->get_symbol_basis() != initializedName \n");
+#endif
                   }
              }
             else
              {
-            // printf ("Some other symbol was found (no matching variants) \n");
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+               printf ("Some other symbol was found (no matching variants) \n");
+#endif
              }
 
           p_iterator++;
         }
+
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+     printf ("Leaving SgSymbolTable::find( const SgInitializedName* ): return NULL \n");
+#endif
 
   // DQ (2/13/2007): Fixed bug that returns a valid pointer even when there was no match to the input statement!
   // return returnSymbol;

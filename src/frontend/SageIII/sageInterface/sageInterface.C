@@ -7942,7 +7942,9 @@ SageInterface::isTemplateInstantiationNode(SgNode* node)
         }
 
      return isSgTemplateInstantiationDecl(node)
+      // DQ (1/3/2016): Allow SgTemplateInstantiationDefn IR nodes.
 //       || isSgTemplateInstantiationDefn(node)
+         || isSgTemplateInstantiationDefn(node)
          || isSgTemplateInstantiationFunctionDecl(node)
          || isSgTemplateInstantiationMemberFunctionDecl(node)
          || isSgTemplateInstantiationTypedefDeclaration(node)
@@ -7976,13 +7978,28 @@ SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* ro
              {
             // markNodeToBeUnparsed(*i);
                SgDeclarationStatement* declaration = isSgDeclarationStatement(*i);
+#if 0
                if (declaration == NULL)
                   {
                     printf ("Error: found non-declaration statement: *i = %p = %s \n",*i,(*i)->class_name().c_str());
                   }
+#endif
+#if 1
+            // DQ (1/3/2015): Newer version of code.
+               if (declaration != NULL)
+                  {
+                    templateInstantiationVector.push_back(declaration);
+                  }
+                 else
+                  {
+                 // I think it is OK that not all are a SgDeclarationStatement.
+                  }
+#else
+            // DQ (1/3/2015): Older version of code.
                ROSE_ASSERT(declaration != NULL);
 
                templateInstantiationVector.push_back(declaration);
+#endif
                n++;
              }
        }
