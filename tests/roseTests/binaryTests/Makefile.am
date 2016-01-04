@@ -772,9 +772,10 @@ llvmTranscoder_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 # The "llvm-as" tool might not be installed, in which case $(llvmVersion) will be an empty string.
 llvmVersion = $(shell llvm-as --version 2>&1 |sed -nr '/LLVM version/ s/.*version ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p')
 
-# 128-bit registers are not supported, so don't try to test them
+# 128-bit registers are not supported, so don't try to test them (pentium-xxm)
+# Test takes too long when compiled with debugging (puttytel.exe)
 llvmTranscoder_Specimens =						\
-	$(filter-out pentium-xmm,					\
+	$(filter-out pentium-xmm puttytel.exe,				\
 		$(elf_exe_x86_specimens) $(pe_exe_x86_specimens))
 llvmTranscoder_TestTargets = $(addprefix llvm-xcode-, $(addsuffix .passed, $(llvmTranscoder_Specimens)))
 TEST_TARGETS += $(llvmTranscoder_TestTargets)
