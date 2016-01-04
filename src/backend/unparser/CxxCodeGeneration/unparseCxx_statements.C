@@ -5834,7 +5834,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
      curprint("\n /* Inside of unparseVarDeclStmt() */ \n");
 #endif
-#if 0
+#if 1
      curprint("/* Inside of unparseVarDeclStmt() */");
 #endif
 
@@ -9843,6 +9843,10 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 #if 0
       printf ("In unparseTemplateDeclarationStatment_support(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
 #endif
+#if 0
+     curprint("/* In unparseTemplateDeclarationStatment_support() */ \n");
+#endif
+
 
      T* template_stmt = dynamic_cast<T*>(stmt);
      ROSE_ASSERT(template_stmt != NULL);
@@ -9912,12 +9916,24 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
                     printf ("templateVariableDeclaration->get_string() = %s \n",templateVariableDeclaration->get_string().str());
 #endif
 
+                 // DQ (1/4/2016): Note that this is the case of a instantiation for a template variable, we don't yet have 
+                 // a concept like this in the ROSE IR.  It would be just a SgVariableDeclaration, I think; however we isolate 
+                 // it out as a SgTemplateVariabelDeclaration and just don't have an associated string for the template and 
+                 // it is put into both the instantiation of the template class and the global scope.  We supress it from being 
+                 // output in the global scope (since that does not compile and is somewhat redundant with output in the class, 
+                 // except that it is what would be required for a non-template class).
                     if (templateVariableDeclaration->get_string().is_null() == true)
                        {
 #if 0
                          printf ("Calling the base class support function unparseVarDeclStmt() to unparse the variable declaration as a non-template \n");
+                         printf ("templateVariableDeclaration->get_parent() = %p = %s \n",templateVariableDeclaration->get_parent(),templateVariableDeclaration->get_parent()->class_name().c_str());
 #endif
-                         unparseVarDeclStmt(templateVariableDeclaration,info);
+                      // DQ (1/4/2016): Only output the variable declaration that is NOT in the global scope (where it exists).
+                      // unparseVarDeclStmt(templateVariableDeclaration,info);
+                         if (isSgGlobal(templateVariableDeclaration->get_parent()) == NULL)
+                            {
+                              unparseVarDeclStmt(templateVariableDeclaration,info);
+                            }
 #if 0
                          printf ("DONE: Calling the base class support function unparseVarDeclStmt() to unparse the variable declaration as a non-template \n");
 #endif
