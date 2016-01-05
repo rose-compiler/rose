@@ -5834,7 +5834,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
      curprint("\n /* Inside of unparseVarDeclStmt() */ \n");
 #endif
-#if 1
+#if 0
      curprint("/* Inside of unparseVarDeclStmt() */");
 #endif
 
