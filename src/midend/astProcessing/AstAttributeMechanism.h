@@ -18,17 +18,78 @@ class SgTemplateParameterList;
  *  This is the base class for all attribute values stored in the Sage IR node using the @ref AstAttributeMechanism. IR node
  *  attributes are polymorphic based on this abstract class, and are always allocated on the heap. Once the attribute value is
  *  handed to an attribute container method the container owns the value and is reponsible for deleting it.  In the case of
- *  methods that only optionally insert a value, the value is deleted immediately if it's not inserted.
+ *  methods that only optionally insert a value, the value is deleted immediately if it's not inserted.  But see @ref
+ *  getOwnershipPolicy for additional information.
  *
  *  The underlying @ref Sawyer::Attribute mechanism can store values of any type, including POD, 3rd party types, and
  *  pointers. On the other hand, the @ref AstAttributeMechanism interface described here stores only pointers to values
  *  allocated on the stack, owns those values, and supports operations that are useful specifically in IR nodes.
  *
- *  Subclasses must each implement a virtual @ref copy constructor, which should allocate a new copy of the value.
+ *  Subclasses should each implement a virtual @ref copy constructor, which should allocate a new copy of the value.  The
+ *  implementation in this base class returns a null pointer, which means that the attribute is not copied into a new AST node
+ *  when its AST node is copied.  If a subclass fails to implement the virtual copy constructor and a superclass has an
+ *  implementation that return non-null, then copying the AST node will copy only the superclass part of the attribute and the
+ *  new attribute will have the dynamic type of the superclass--probably not what you want!
+ *
+ *
  *
  *  For a more detailed description of using attributes in ROSE (and your own classes) see @ref attributes. */
 class ROSE_DLL_API AstAttribute {
 public:
+    /** Who owns this attribute.
+     *
+     *  See @ref getOwnershipPolicy. */
+    enum OwnershipPolicy {
+        CONTAINER_OWNERSHIP,                            /**< Container owns attribute. New subclasses should use this! */
+        NO_OWNERSHIP,                                   /**< Attributes are always leaked. */
+        CUSTOM_OWNERSHIP,                               /**< Subclass defines ownership policy. */
+        UNKNOWN_OWNERSHIP                               /**< Default for old subclasses. */
+    };
+
+    /** Who owns this attribute.
+     *
+     *  The original implementation of this class from the early 2000's did not have clear rules about who owned a
+     *  heap-allocated attribute.  The documentation was silent on the issue, and the implementation seemed to imply that
+     *  container ownership was intended but was then commented out at some point.  Any ownership policy should have the
+     *  following properties:
+     *
+     *  @li Attributes allocated on the heap should not be leaked. For instance, if an AST is deleted, then the attributes that
+     *      were referenced by the AST nodes should also be eventually deleted.
+     *  @li The mechanism should not place undue burden on the user.  For instance, if a user copies and later deletes an AST
+     *      to which some analysis has attached attributes, the user should not need to be concerned with deleting attributes
+     *      stored in the copy.
+     *  @li The mechanism should be able to support either deep or shallow attribute copies as appropriate for the
+     *      attribute. The deep vs. shallow copying policy is implemented by the virtual @ref copy method, which must
+     *      coordinate with the ownership policy to ensure no leaks.
+     *
+     *  We define four ownership policies, although from the standpoint of an attribute container there are really only two:
+     *  the container either deletes attributes or doesn't delete attributes.  The four ownership policies are:
+     *
+     *  @li @c CONTAINER_OWHERSHIP: The simple approach to ownership, and the one that we recommend for all new attribute
+     *      subclasses, is that the attribute container owns the attributes.  When the container is copied (e.g., as part of
+     *      copying an AST node) then it invokes the @ref copy methods of its attributes, and when the container is deleted
+     *      (e.g., as part of deleting an AST node) then it explicitly deletes its attributes. This policy is an "allocate and
+     *      forget" approach: once the creator inserts an attribute into the container it transfers/moves ownership to the
+     *      container and the creator never needs to invoke @c delete.  This policy also means that users never need to
+     *      explicitly delete attributes if they copy and then delete an AST.  Newly designed attribute subclasses should use
+     *      this policy unless they have a very good reason to use another policy.
+     *
+     *  @li @c NO_OWNERSHIP: Another simple approach is that ownership is transfered to the operating system.  In other words,
+     *     the attribute is <em>never</em> deleted by the program and its memory is reclaimed only when the program terminates.
+     *     Attribute containers that are incorporated into objects that are frequently allocated and/or copied and then deleted
+     *     will result in a large number of leaked attributes.  This approach is not recommended and is present only for
+     *     laziness.
+     *
+     *  @li @c CUSTOM_OWNERSHIP: A third approach is that the attribute subclass implements its own ownership policy, which
+     *     ideally should have the properties listed above. An attribute using this policy will never be deleted by an
+     *     attribute container; the class must implement some other mechanism for tracking which attributes are allocated and
+     *     whether they can be safely deleted.
+     *
+     *  @li @c UNKNOWN_OWNERSHIP: This final policy is for subclasses implemented before clear attribute ownership rules were
+     *     defined.  Due to the ambiguity in the original AstAttributeMechanism implementation and the fact that attributes
+     *     are used by code outside the ROSE library, this must be the default implementation. */
+    virtual OwnershipPolicy getOwnershipPolicy() const;
+
     /** Support for attibutes to specify edges in the dot graphs. */
     class ROSE_DLL_API AttributeEdgeInfo {
     public:
@@ -65,8 +126,9 @@ public:
 
     /** Virtual default constructor.
      *
-     *  Default-constructs a new object on the heap and returns its pointer.  All subclasses must implement this in order to
-     *  instantiate the correct dynamic type, although many don't.
+     *  Default-constructs a new object on the heap and returns its pointer.  All subclasses <em>must</em> implement this in
+     *  order to instantiate the correct dynamic type, although many don't.  Invoking this constructor in a subclass that fails
+     *  to implement it will return an attribute that's an incorrect dynamic type.
      *
      *  It would be nice if we could make this pure virtual, but unfortunately ROSETTA-generated code fails to compile because
      *  it generates an instantiation of this interface (whether or not that code is ever executed is unknown). [Robb Matzke
@@ -78,7 +140,11 @@ public:
     /** Virtual copy constructor.
      *
      *  Copy-constructs a new object on the heap and returns its pointer.  All subclasses must implement this in order to
-     *  instantiate the correct dynamic type, although many don't.
+     *  instantiate the correct dynamic type, although many don't.  If this @ref copy method returns a null pointer (like the
+     *  base implementation) then the attribute is not copied as part of copying its container.  E.g., an attribute stored in
+     *  an AST will not be copied when the AST is copied if that attribute is directly derived from @ref AstAttribute and fails
+     *  to implement @ref copy.  If a subclass fails to implement @ref copy and inherits from a class that does implement a
+     *  @ref copy that returns non-null, then the copied attribute will have an incorrect dynamic type.
      *
      *  It would be nice if we could make this pure virtual, but unfortunately ROSETTA-generated code fails to compile because
      *  it generates an instantiation of this interface (whether or not that code is ever executed is unkown). [Robb Matzke
@@ -87,10 +153,10 @@ public:
         return NULL;                                    // attribute will not be copied when the containing obj is copied
     }
 
-    // DO NOT DOCUMENT!
-    // The original implementation used a non-const copy constructor and many subclasses that implemented a copy constructor
-    // didn't use C++11's "override" word as a defensive measure. Since we don't have access to all those subclasses, we must
-    // continue to support the non-const version.  Subclasses should only have to implement one or the other, not both.
+    // DO NOT DOCUMENT!  The original implementation used a non-const copy constructor and many subclasses that implemented a
+    // copy constructor didn't use C++11's "override" (ROSE_OVERRIDE) word as a defensive measure. Since we don't have access
+    // to all those subclasses, we must continue to support the non-const version.  Subclasses should only have to implement
+    // one or the other, not both.
     virtual AstAttribute* copy() {
         return const_cast<const AstAttribute*>(this)->copy();
     }
@@ -98,7 +164,7 @@ public:
     /** Attribute class name.
      *
      *  Returns the name of the dynamic type. All subclasses must implement this in order to return the correct type name,
-     *  although many don't.
+     *  although many don't.  If a subclass fails to implement this then it will return an incorrect class name.
      *
      *  It would be nice if this could be pure virtual, but unfortunately ROSETTA-generated code fails to compile because it
      *  generates an instantiation of this interface (whether or not that code is ever executed is unknown). [Robb Matzke
@@ -122,11 +188,13 @@ public:
     virtual void unpacked_data( int size, char* data );
     /** @} */
 
-    /** DOT support. */
+    /** DOT support.
+     *
+     *  @{ */
     virtual std::string additionalNodeOptions();
-
     virtual std::vector<AttributeEdgeInfo> additionalEdgeInfo();
     virtual std::vector<AttributeNodeInfo> additionalNodeInfo();
+    /** @} */
 
     /** Eliminate IR nodes in DOT graphs.
      *
@@ -137,26 +205,35 @@ public:
 
 /** Stores named attributes in Sage IR nodes.
  *
- *  Attributes have a name and a value, the value being derived from @ref AstAttribute. IR node attribute values are always
- *  allocated on the stack and are owned by the IR node containing the attribute. Since attribute values are not reference
- *  counted, they must be copied (new value allocated on the heap) whenever the object containing them is copied, otherwise we
- *  would lose track of which containing object owns the attribute value.
+ *  This attribute container stores one non-null, heap-allocated attribute per user-specified name.  All values are derived
+ *  from @ref AstAttribute.  Any object can have an attribute container data member. For example, each AST node (@ref SgNode)
+ *  contains one attribute container named @ref SgNode::get_attributeMechanism.
  *
- *  Since IR attribute values must be derived from @ref AstAttribute, it is not possible to directly store values whose type
- *  the user cannot modify to inherit from @ref AstAttribute. This includes POD types and classes defined in 3rd party
- *  libraries. To store such values, the user must wrap them in another class that does inherit from @ref AstAttribute.
+ *  The value class's @ref AstAttribute::getOwnershipPolicy "getOwnershipPolicy" method indicates whether the container owns
+ *  the heap-allocated attribute and therefore whether the container is responsible for invoking @c delete on the attribute
+ *  when the container is destroyed.  New attribute subclasses should use the @ref AstAttribute::CONTAINER_OWNERSHIP policy if
+ *  possible.
  *
- *  For the purpose of backward compatibility, IR node attributes have string names that need not be registered prior to using
- *  them. Therefore, a misspelled name is treated as a different attribute. The underlying @ref Sawyer::Attribute
- *  mechanism checks for misspelled names, therefore this class does extra work to bypass that check.
+ *  IR node attribute values are always on the heap. Whenever an attribute container is copied, the container invokes the @ref
+ *  AstAttribute::copy "copy" method on all its attributes. The attributes' @c copy should either allocate a new copy of the
+ *  attribute or return a null pointer. Since these values must be derived from @ref AstAttribute, it is not possible to
+ *  directly store values whose type the user cannot modify to inherit from @ref AstAttribute. This includes POD types and
+ *  classes defined in 3rd party libraries (e.g., @c std::vector). To store such values, the user must wrap them in another
+ *  class that does inherit from @ref AstAttribute and which implements the necessary virtual functions.
  *
- *  This interface applies only to IR nodes of type @ref SgNode and its derivatives.  This interface is built on the @ref
- *  Sawyer::Attribute interface, which can store POD and 3rd party types, and stores values of such types instead
- *  of pointers.
+ *  The names of attributes are strings and the container does not check whether the string supplied to various container
+ *  methods is spelled correctly.  Using a misspelled attribute name is the same as using a different value name--in effect,
+ *  operating on a completely different, unintended attribute.
  *
- *  This interface was originally implemented by Dan Quinlan in terms of a template-based AttributeMechanism class
- *  designed by Markus Schordan in the early 2000's.  The current implementation aims to fix a number of issues identified with
- *  the previous implementation, including ambiguity about who owns the heap-allocated attribute values.
+ *  The @ref AstAttributeMechanism is used by AST nodes (@ref SgNode) and is available via @ref SgNode::get_attributeMechanism,
+ *  although that is not the preferred API.  Instead, @ref SgNode provides an additional methods that contain "attribute" as
+ *  part of their name. These "attribute" methods are mostly just wrappers around @ref SgNode::get_attributeMechanism.
+ *
+ *  Users can also use @ref AstAttributeMechanism as a data member in their own classes. However, @ref Sawyer::Attribute is
+ *  another choice: not only does it serve as the implementation for @ref AstAttributeMechanism, but it also supports checked
+ *  attribute names and attributes that are values rather than pointers, including POD, 3rd-party types, and shared-ownership
+ *  pointers. The amount of boilerplate that needs to be written in order to store a @ref Sawyer::Attribute is much less than
+ *  that required to store an attribute with @ref AstAttributeMechanism.
  *
  *  For additional information, including examples, see @ref attributes. */
 class ROSE_DLL_API AstAttributeMechanism {
@@ -164,13 +241,6 @@ class ROSE_DLL_API AstAttributeMechanism {
     Sawyer::Attribute::Storage attributes_;
 
 public:
-    /** Whether interface is emulating known bugs.
-     *
-     *  This interface can be compiled to emulate bugs that existed before it was rewritten, because some software might depend
-     *  on the buggy behavior.  If this class method returns true, then the statements in in the method descriptions might be
-     *  untrue, and attribute unit tests will surely fail. */
-    static bool isBuggy();
-
     /** Default constructor.
      *
      *  Constructs an attribute mechanism that holds no attributes. */
@@ -191,7 +261,10 @@ public:
     /** Assignment operator.
      *
      *  Assigning one attribute container to another will cause the destination container's attributes to be erased and
-     *  deleted, and the source container's attributes to be copied.
+     *  deleted, and the source container's attributes to be copied.  The assignment operator is exception safe: it will either
+     *  successfully copy and assign all attributes or not assign any attributes. However, if an attribute uses anything other
+     *  than the @ref AstAttribute::CONTAINER_OWNERHSIP ownership policy then it is up to the attribute type's designer to
+     *  handle deletion of attributes that were copied before the exception occurred.
      *
      *  <b>New semantics:</b> The original implementation had a copy constructor but no assignment operator. Assignment of one
      *  attribute container to another caused both containers to share the attribute values allocated on the heap, making it
@@ -200,25 +273,45 @@ public:
 
     /** Destructor.
      *
-     *  Destroying the attribute container will cause all attribute values in the container to be deleted. */
+     *  Destroying the attribute container should cause unused attributes to be destroyed.  If an attribute implements the @ref
+     *  AstAttribute::CONTAINER_OWNERHSIP policy then the container explicitly deletes the attribute, otherwise it is up to the
+     *  attribute class's designer to implement a deletion policy that prevents leaks.
+     *
+     *  <b>New semantics:</b> The original implementation did not delete attributes when the container was destroyed, although
+     *  it had commented-out code to do so. */
     ~AstAttributeMechanism();
 
     /** Test for attribute existence.
      *
      *  Test whether this container holds an attribute with the specified name.  This predicate returns true only if the name
-     *  exists and points to a non-null heap-allocated attribute value.  The name need not be declared in the attribute
-     *  system.
+     *  exists and points to a non-null attribute value.  The name need not be declared in the attribute system.
      *
      *  <b>New semantics:</b> It is now permissible to invoke this method on a const attribute container and this method no
      *  longer copies the name argument. */
     bool exists(const std::string &name) const;
 
+    /** Insert an attribute.
+     *
+     *  Inserts the specified heap-allocated value for the given attribute name, replacing any previous value stored for
+     *  that same name.
+     *
+     *  If the new value uses the @ref AstAttribute::CONTAINER_OWNERSHIP policy then ownership is immediately transferred/moved
+     *  to this container, which becomes responsible for deleting the attribute as appropriate to prevent leasks.  Otherwise,
+     *  the attribute's designer is responsible for implementing an ownership policy that safely prevents leaks.
+     *
+     *  If the old value (if present) uses the @ref AstAttribute::CONTAINER_OWNERSHIP policy then it is deleted. Otherwise the
+     *  attribute's designer is responsible for implementing an ownership policy that safely prevents leaks, and the attribute
+     *  must not be deleted until after this method returns.
+     *
+     *  <b>New semantics:</b> The old implementation didn't delete the previous attribute value.  The old implementation
+     *  allowed setting a null value, in which case the old @c exists returned true but the @c operator[] returned no
+     *  attribute. */
+    void set(const std::string &name, AstAttribute *value);
+
     /** Insert a new value if the attribute doesn't already exist.
      *
-     *  Tests whether an attribute with the specified name @ref exists and if not, inserts this heap-allocated attribute into
-     *  the container (or erases it if @p value is null). The caller relinquishes ownership of the @p value whether or not it's
-     *  inserted. If the value is not inserted then this method immediately deletes it.  Returns true if the value was
-     *  inserted, false if not inserted.
+     *  Tests whether an attribute with the specified name @ref exists and if not, invokes @ref set.  See @ref set for details
+     *  about ownership of the new attribute. Returns true if an attribute with the specified name did not already existed.
      *
      *  <b>New semantics:</b> The old implementation was ambiguous about who owned the object after this call. It didn't take
      *  ownership of an attribute that wasn't inserted, but it also didn't indicate whether it was inserted.  The old
@@ -229,10 +322,8 @@ public:
 
     /** Insert a new value if the attribute already exists.
      *
-     *  Tests whether the specified attribute exists, and if so, replaces the old value with the new value. The new value must
-     *  be allocated on the heap, but if @p value is null then the attribute is erased.  The old value is deleted. The caller
-     *  relinquishes ownership of the new value; if the new value is not inserted then this method immediately deletes it.
-     *  Returns true if the new value is inserted, false if not inserted.
+     *  Tests whether the specified attribute exists, and if so, invokes @ref set. See @ref set for details about ownership of
+     *  the old and new attributes.  Returns true if an attribute with the specified name already existed.
      *
      *  <b>New semantics:</b> The old implementation was ambiguous about who owned the object after this call. It didn't take
      *  ownership of an attribute that wasn't inserted, but it also didn't indicate whether it was inserted. The old
@@ -241,23 +332,15 @@ public:
      *  returned true but the old @c operator[] returned no attribute. */
     bool replace(const std::string &name, AstAttribute *value);
 
-    /** Insert a value regardless of whether the attribute already exists.
-     *
-     *  Inserts the specified heap-allocated value for an attribute, overwriting and deleting any previous value stored for
-     *  that same attribute name.  The owner relinquishes ownership of the value. If the new value is null then the attribute
-     *  is erased from the container.
-     *
-     *  <b>New semantics:</b> The old implementation didn't delete the previous attribute value.  The old implementation
-     *  allowed setting a null value, in which case the old @c exists returned true but the @c operator[] returned no
-     *  attribute. */
-    void set(const std::string &name, AstAttribute *value);
-
     /** Get an attribute value.
      *
-     *  Returns the value associated with the given attribute, or null if the attribute does not exist.  The container retains
-     *  ownership of the attribute--the user most not delete it.  The user will need to @c dynamic_cast the returned pointer to
-     *  the appropriate subclass of @ref AstAttribute.  The returned value containues to be owned by the attribute container;
-     *  the user must not delete it, although he may modify its contents since attributes are not shared between containers.
+     *  Returns the value associated with the given attribute, or null if the attribute does not exist.  This method does not
+     *  copy the attribute before returning it, therefore the caller should not delete the attribute. Erasing the attribute
+     *  from the container may cause the pointer to become invalid, depending on the attribute's ownership policy. If the
+     *  attribute uses the @ref AstAttribute::CONTAINER_OWNERSHIP method then the attribute can be modified through its pointer
+     *  without affecting attributes in other containers, otherwise the behavior is up to the attribute's designer.
+     *
+     *  The caller will need to @c dynamic_cast the returned pointer to the appropriate subclass of @ref AstAttribute.
      *
      *  <b>New semantics:</b> The old implementation partly created an attribute if it didn't exist: @c exists started
      *  returning true although @c operator[] continued to return no attribute. The old implementation printed an error message
@@ -266,19 +349,31 @@ public:
 
     /** Erases the specified attribute.
      *
-     *  If an attribute with the specified name exists then it is removed from the container and deleted.
+     *  If an attribute with the specified name exists then it is removed from the container. If the attribute implements the
+     *  @ref AstAttribute::CONTAINER_OWNERSHIP policy then this container deletes the attribute, otherwise it is up to the
+     *  attribute's designer to implement a safe way to prevent attribute leaks, and the attribute must not be deleted until
+     *  after this method returns.
      *
-     *  <b>New semantics:</b> The old implementation did not delete the attribute value.  Now that attribute values are never
-     *  shared with other containers or the caller it is safe to delete them. The old implementation printed an error message
+     *  <b>New semantics:</b> The old implementation did not delete the attribute value. It also printed an error message
      *  to standard error if the attribute did not exist. */
     void remove(const std::string &name);
 
-    /** Set of attribute identifiers. */
+    /** Set of attribute names. */
     typedef std::set<std::string> AttributeIdentifiers;
 
     /** List of stored attribute names.
      *
-     *  Returns the set of attribute names. */
+     *  Returns the set of names for attributes stored in this container. This can be used to iterate over the attributes,
+     *  as in:
+     *
+     *  @snippet binaryAttribute.C iterate 2
+     *
+     *  Or using the @ref SgNode API for attributes:
+     *
+     *  @snippet binaryAttribute.C iterate 3
+     *
+     *  <b>New semantics:</b> The old implementation also returned some names that had no attribute values. For instance, if
+     *  @c operator[] was invoked for an attribute that didn't exist then that name was also returned. */
     AttributeIdentifiers getAttributeIdentifiers() const;
 
     /** Number of attributes stored.
@@ -286,7 +381,8 @@ public:
      *  Returns the number of attributes stored in this container.
      *
      *  <b>New semantics:</b> The old implementation returned a signed integer instead of @c size_t as is customary for size
-     *  measurements. It also could not be invoked on a const container. */
+     *  measurements. It also could not be invoked on a const container. It also could return a value larger larger than the
+     *  number of stored attributes (such as when a previous query for a non-existing attribute occurred). */
     size_t size() const;
 
 private:

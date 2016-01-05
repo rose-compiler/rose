@@ -31,16 +31,12 @@ static void fallbackQSort3(UInt32 *fmap,UInt32 *eclass,Int32 loSt,Int32 hiSt)
   r = 0;
   sp = 0;
   while(sp > 0){
-    Int32 unLo;
-    Int32 unHi;
     Int32 ltLo;
     Int32 gtHi;
     Int32 n;
-    Int32 m;
     Int32 lo;
     Int32 hi;
     UInt32 med;
-    UInt32 r3;
     if (hi - lo < 10) {
       fallbackSimpleSort(fmap,eclass,lo,hi);
       continue; 
@@ -53,15 +49,15 @@ static void fallbackQSort3(UInt32 *fmap,UInt32 *eclass,Int32 loSt,Int32 hiSt)
        book, chapter 35.
        */
     r = (r * 7621 + 1) % 32768;
-    r3 = r % 3;
+    UInt32 r3 = r % ((unsigned int )3);
     if (r3 == 0) 
       med = eclass[fmap[lo]];
      else if (r3 == 1) 
       med = eclass[fmap[lo + hi >> 1]];
      else 
       med = eclass[fmap[hi]];
-    unLo = ltLo = lo;
-    unHi = gtHi = hi;
+    Int32 unLo = ltLo = lo;
+    Int32 unHi = gtHi = hi;
     while(1){
       while(1){
         if (unLo > unHi) 
@@ -110,7 +106,7 @@ static void fallbackQSort3(UInt32 *fmap,UInt32 *eclass,Int32 loSt,Int32 hiSt)
       }
     }
     ;
-    m = (hi - gtHi < gtHi - unHi?hi - gtHi : gtHi - unHi);
+    Int32 m = hi - gtHi < gtHi - unHi?hi - gtHi : gtHi - unHi;
 {
       Int32 yyp1 = unLo;
       Int32 yyp2 = hi - m + 1;

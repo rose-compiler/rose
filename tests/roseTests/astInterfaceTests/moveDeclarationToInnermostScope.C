@@ -207,7 +207,7 @@ Using pre-order : double aa is considered first, aa=a[i] is moved up.   Then dou
         aa = a[i];   
         abc = aa * aa;  //
 */
-static  bool isMergeable (SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
+static  bool isUpwardMergeable (SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
 {
   bool rt = false;
   ROSE_ASSERT (decl != NULL);
@@ -280,7 +280,78 @@ static  bool isMergeable (SgVariableDeclaration* decl, SgExprStatement* assign_s
     rt = true;
   if (transTracking)
   {
-    cout<< "isMergeable () returns "<< rt<< "----------------" <<endl;
+    cout<< "isUpwardMergeable () returns "<< rt<< "----------------" <<endl;
+  }
+ 
+  return rt; 
+}
+
+// Check if a decl can be moved downwards to an assignment
+/*
+current algorithm: scan statements in between, if declared variable is not referenced, we can do the downwards merge
+    double dx2; // decl
+    double dy1 = yy[i2] - y[i2];
+    double dy2;
+    double a1;
+    double a2;
+    dx2 = x[i1] - x[i2]; // assignment
+ */
+static  bool isDownwardMergeable (SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
+{
+  bool rt = false;
+  ROSE_ASSERT (decl != NULL);
+  ROSE_ASSERT (assign_stmt != NULL);
+  std::vector <SgStatement* > stmts_in_middle ;
+  SgStatement* next_stmt = SageInterface::getNextStatement (decl);
+  while (next_stmt != assign_stmt && next_stmt != NULL)
+  {
+    stmts_in_middle.push_back(next_stmt);
+    next_stmt = SageInterface::getNextStatement (next_stmt);  
+  }  
+
+  if (next_stmt == NULL)
+  {
+    cout<<"Error in isDownwardMergeable (decl, assign_stmt): assign_stmt is not one of next statements for decl!"<<endl;
+    ROSE_ASSERT (false);
+  } 
+
+  // collect all variables used in between
+  // We must use SgInitializedName instead of SgVarRefExp since a declaration in between has only SgInitializedName. 
+  std::set<SgVariableSymbol* > usedSymbolsInBetween; 
+
+  // 1. Collect symbols used in between
+  // TODO wrap into a SageInterface function: query both SgVarRefExp (including these used in types) and SgInitializedName
+  for (size_t i=0; i< stmts_in_middle.size(); i++)
+  {
+    std::vector<SgVarRefExp*> varRefsInBetween; 
+   // collect variable references first 
+    SageInterface::collectVarRefs (stmts_in_middle[i], varRefsInBetween);
+    // convert varRef to SgInitializedName 
+     for (size_t j = 0; j< varRefsInBetween.size(); j++)
+     {
+        if (transTracking)
+        { 
+          cout<<"found referenced/used symbol in between "<< varRefsInBetween[j]->get_symbol()->get_name() <<endl;
+        }
+        usedSymbolsInBetween.insert (varRefsInBetween[j]->get_symbol());
+     }
+
+   // collect initialized name also for declarations
+    if (SgVariableDeclaration* mid_decl = isSgVariableDeclaration (stmts_in_middle[i]))
+    {
+      if (transTracking)
+        cout<<"found declared /used symbol in between "<< SageInterface::getFirstVarSym(mid_decl)->get_name() <<endl;
+      usedSymbolsInBetween.insert(SageInterface::getFirstVarSym(mid_decl));
+    }
+  }
+
+  SgVariableSymbol * declared_sym = SageInterface::getFirstVarSym (decl);
+
+  if (usedSymbolsInBetween.find(declared_sym) ==usedSymbolsInBetween.end()) // not found? We can safely do downwards merge then
+    rt = true;
+  if (transTracking)
+  {
+    cout<< "isDownwardMergeable () returns "<< rt<< "----------------" <<endl;
   }
  
   return rt; 
@@ -291,13 +362,18 @@ static  bool isMergeable (SgVariableDeclaration* decl, SgExprStatement* assign_s
 // if it has no initialization, we find the first followed assignment within the same scope and merge the assignment into the decl as an initializer
 static void collectiveMergeDeclarationAndAssignment (std::vector <SgVariableDeclaration*> decls)
 {
+  // declarations which are not UpwardMergeable with its assignment
+//  std::vector <SgVariableDeclaration*> remaining_decls; 
+  
   // Must not separate analysis and transformation sine the success of next stmt relies on previous merge
   // pre-order iteration to check if it is mergeable: move assign up to merge with the declaration.
 
+#if 0
   //for (size_t i = 0; i< decls.size(); i++)
   // The top level traversal is reverse-order of preorder
-  // However, to support the isMergeable()'s move-up analysis (move assign up to the decl)
+  // However, to support the isUpwardMergeable()'s move-up analysis (move assign up to the decl)
   // we must scan candidate decls using pre-order, or multiple decls case will not work properly!
+
   for (int i = decls.size()-1; i>=0; i--) // -- case will cause overflow for size_t type, must not use size_t!!
   {
     SgVariableDeclaration* current_decl = decls[i];
@@ -313,9 +389,10 @@ static void collectiveMergeDeclarationAndAssignment (std::vector <SgVariableDecl
       {
         if (isAssignmentStmtOf (next_stmt, init_name) )
         {  
-          if (isMergeable (current_decl, isSgExprStatement (next_stmt)))
+          if (isUpwardMergeable (current_decl, isSgExprStatement (next_stmt)))
           {
-            SageInterface::mergeDeclarationAndAssignment (current_decl, isSgExprStatement (next_stmt));
+            //SageInterface::mergeDeclarationAndAssignment (current_decl, isSgExprStatement (next_stmt));
+            SageInterface::mergeAssignmentWithDeclaration (isSgExprStatement (next_stmt), current_decl);
 #if ENABLE_TRANS_TRACKING
             if (transTracking)
             {
@@ -324,8 +401,11 @@ static void collectiveMergeDeclarationAndAssignment (std::vector <SgVariableDecl
               TransformationTracking::addInputNode (current_decl, next_stmt);
             }
 #endif              
-
           } // end if Mergeable
+          else
+          {
+//            remaining_decls.push_back(current_decl);
+          }
           // mergeable or , we stop going to next stmt
           next_stmt = NULL; // We stop when the first match is found, we also stop if the first matching assign is not mergeable
         } 
@@ -335,7 +415,46 @@ static void collectiveMergeDeclarationAndAssignment (std::vector <SgVariableDecl
 
     } // end if null initializer
   } // end for
+#endif
 
+// 
+  // Consider downward merge for the remaining declarations
+  // Does the order matter??
+  for (int i = decls.size()-1; i>=0; i--) // i-- will cause overflow for size_t type, must not use size_t!!
+  {
+    SgVariableDeclaration* current_decl = decls[i];
+    ROSE_ASSERT (current_decl != NULL);
+    SgInitializedName* init_name = SageInterface::getFirstInitializedName (current_decl);
+    ROSE_ASSERT (init_name!= NULL);
+    SgInitializer * initor =  init_name->get_initptr();
+    if (initor == NULL)
+    { 
+      SgStatement* next_stmt = SageInterface::getNextStatement(current_decl);
+
+      while (next_stmt)
+      {
+        if (isAssignmentStmtOf (next_stmt, init_name) )
+        {  
+          if (isDownwardMergeable(current_decl, isSgExprStatement (next_stmt)))
+          {
+            SageInterface::mergeDeclarationWithAssignment(current_decl, isSgExprStatement (next_stmt));
+#if ENABLE_TRANS_TRACKING
+            if (transTracking)
+            {
+              // No need to patch up IDs for a merge transformation
+              // directly record input node 
+              TransformationTracking::addInputNode (current_decl, next_stmt);
+            }
+#endif              
+          } // end if Mergeable
+          // mergeable or not , we stop going to next stmt
+          next_stmt = NULL; // We stop when the first match is found, we also stop if the first matching assign is not mergeable
+        } 
+        else
+          next_stmt = SageInterface::getNextStatement(next_stmt);
+      } 
+    } // end if null initializer
+  } // end for
 }
 
 

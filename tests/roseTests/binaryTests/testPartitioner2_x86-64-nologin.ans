@@ -34,8 +34,7 @@
 0x00400545: Successor blocks: 0x004004c0, 0x0040054a
 
 0x0040054a: Basic block reasons: 
-0x0040054a: f4                      |.       |<sp-16>   hlt    
-0x0040054a: Outgoing stack delta: -16
+0x0040054a: f4                      |.       |          hlt    
 0x0040054a: Successor blocks: none
 
 0x00400577: ================================== Function (pattern, graph) unknown name
@@ -58,27 +57,24 @@
 0x0040057f: Successor blocks: 0x00400580
 
 0x00400580: Basic block reasons: 
-0x00400580: 48 83 c0 08             |H...    |<sp-8 >   add    rax, 0x08
-0x00400584: 48 89 05 d5 04 10 00    |H...... |<sp-8 >   mov    qword ds:[rip + 0x00000000001004d5], rax
-0x0040058b: ff d2                   |..      |<sp-8 >   call   rdx
-0x0040058b: Outgoing stack delta: -16
+0x00400580: 48 83 c0 08             |H...    |          add    rax, 0x08
+0x00400584: 48 89 05 d5 04 10 00    |H...... |          mov    qword ds:[rip + 0x00000000001004d5], rax
+0x0040058b: ff d2                   |..      |          call   rdx
 0x0040058b: Successor blocks: 0x0040058d, unknown
 
 0x0040058d: Basic block reasons: 
-0x0040058d: 48 8b 05 cc 04 10 00    |H...... |<sp-8 >   mov    rax, qword ds:[rip + 0x00000000001004cc]
-0x00400594: 48 8b 10                |H..     |<sp-8 >   mov    rdx, qword ds:[rax]
-0x00400597: 48 85 d2                |H..     |<sp-8 >   test   rdx, rdx
-0x0040059a: 75 e4                   |u.      |<sp-8 >   jne    0x0000000000400580<<BBlock>>
-0x0040059a: Outgoing stack delta: -8
+0x0040058d: 48 8b 05 cc 04 10 00    |H...... |          mov    rax, qword ds:[rip + 0x00000000001004cc]
+0x00400594: 48 8b 10                |H..     |          mov    rdx, qword ds:[rax]
+0x00400597: 48 85 d2                |H..     |          test   rdx, rdx
+0x0040059a: 75 e4                   |u.      |          jne    0x0000000000400580<<BBlock>>
 0x0040059a: Successor blocks: 0x00400580, 0x0040059c
 
 0x0040059c: Basic block reasons: 
-0x0040059c: c6 05 c5 04 10 00 01    |....... |<sp-8 >   mov    byte ds:[rip + 0x00000000001004c5], 0x01
-0x0040059c: Outgoing stack delta: -8
+0x0040059c: c6 05 c5 04 10 00 01    |....... |          mov    byte ds:[rip + 0x00000000001004c5], 0x01
 0x0040059c: Successor blocks: 0x004005a3
 
 0x004005a3: Basic block reasons: 
-0x004005a3: c9                      |.       |<sp-8 >   leave  
+0x004005a3: c9                      |.       |          leave  
 0x004005a4: c3                      |.       |<sp+0 >   ret    
 0x004005a4: Outgoing stack delta: +8
 0x004005a4: Successor blocks: unknown
@@ -103,26 +99,23 @@
 0x0040071d: Successor blocks: 0x00400720
 
 0x00400720: Basic block reasons: 
-0x00400720: 48 83 eb 08             |H...    |<sp-24>   sub    rbx, 0x08
-0x00400724: ff d0                   |..      |<sp-24>   call   rax
-0x00400724: Outgoing stack delta: -32
+0x00400720: 48 83 eb 08             |H...    |          sub    rbx, 0x08
+0x00400724: ff d0                   |..      |          call   rax
 0x00400724: Successor blocks: 0x00400726, unknown
 
 0x00400726: Basic block reasons: 
-0x00400726: 48 8b 03                |H..     |<sp-24>   mov    rax, qword ds:[rbx]
-0x00400726: Outgoing stack delta: -24
+0x00400726: 48 8b 03                |H..     |          mov    rax, qword ds:[rbx]
 0x00400726: Successor blocks: 0x00400729
 
 0x00400729: Basic block reasons: 
-0x00400729: 48 83 f8 ff             |H...    |<sp-24>   cmp    rax, 0xff<-1>
-0x0040072d: 75 f1                   |u.      |<sp-24>   jne    0x0000000000400720<<BBlock>>
-0x0040072d: Outgoing stack delta: -24
+0x00400729: 48 83 f8 ff             |H...    |          cmp    rax, 0xff<-1>
+0x0040072d: 75 f1                   |u.      |          jne    0x0000000000400720<<BBlock>>
 0x0040072d: Successor blocks: 0x00400720, 0x0040072f
 
 0x0040072f: Basic block reasons: 
-0x0040072f: 48 83 c4 08             |H...    |<sp-24>   add    rsp, 0x08
-0x00400733: 5b                      |[       |<sp-16>   pop    rbx
-0x00400734: c9                      |.       |<sp-8 >   leave  
+0x0040072f: 48 83 c4 08             |H...    |          add    rsp, 0x08
+0x00400733: 5b                      |[       |          pop    rbx
+0x00400734: c9                      |.       |          leave  
 0x00400735: c3                      |.       |<sp+0 >   ret    
 0x00400735: Outgoing stack delta: +8
 0x00400735: Successor blocks: unknown

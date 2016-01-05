@@ -183,7 +183,7 @@ RSIM_FutexTable::dump(FILE *f, const std::string &title, const std::string &pref
             if (table->bucket[i]) {
                 fprintf(f, "%s  bucket[%zu] = {", prefix.c_str(), i);
                 for (size_t j=table->bucket[i]; j!=0; j=table->member[j].next) {
-                    fprintf(f, "\n%s    { key=0x%08"PRIx64", next=%u, prev=%u, bitset=0x%08"PRIx32" }",
+                    fprintf(f, "\n%s    { key=0x%08" PRIx64", next=%u, prev=%u, bitset=0x%08" PRIx32" }",
                             prefix.c_str(), table->member[j].key, table->member[j].next, table->member[j].prev,
                             table->member[j].bitset);
                 }

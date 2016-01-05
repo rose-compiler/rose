@@ -8,6 +8,11 @@
  *  @section installing_doxygen_rhel Redhat Enterprise Linux
  *
  *  @todo Describe how to install Doxygen on RHEL.
+ *  Todo.
+ *
+ *  @section installing_doxygen_wheezy Debian 7 "Wheezy"
+ *
+ *  Run <code>apt-get install doxygen</code> as the administrator.
  *
  *  @section installing_doxygen_jessie Debian 8 "Jessie"
  *

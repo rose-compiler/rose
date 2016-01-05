@@ -634,7 +634,7 @@ public:
     /** Create a new value by merging two existing values.
      *
      *  This is a convenience wrapper around @ref createOptionalMerge. It always returns a newly constructed semantic value
-     *  regardless of whether a merge was necessary.  In order to determine if a merge was necessary once can compare the
+     *  regardless of whether a merge was necessary.  In order to determine if a merge was necessary one can compare the
      *  return value to @p this using @ref must_equal, although doing so is more expensive than calling @ref
      *  createOptionalMerge. */
     SValuePtr createMerged(const SValuePtr &other, const MergerPtr &merger, SMTSolver *solver) const /*final*/ {
@@ -1017,19 +1017,21 @@ class MemoryState: public boost::enable_shared_from_this<MemoryState> {
     SValuePtr valProtoval_;                             /**< Prototypical value for values. */
     ByteOrder::Endianness byteOrder_;                   /**< Memory byte order. */
     MergerPtr merger_;
+    bool byteRestricted_;                               // are cell values all exactly one byte wide?
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit MemoryState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
-        : addrProtoval_(addrProtoval), valProtoval_(valProtoval), byteOrder_(ByteOrder::ORDER_UNSPECIFIED) {
+        : addrProtoval_(addrProtoval), valProtoval_(valProtoval), byteOrder_(ByteOrder::ORDER_UNSPECIFIED),
+          byteRestricted_(true) {
         ASSERT_not_null(addrProtoval);
         ASSERT_not_null(valProtoval);
     }
 
     MemoryState(const MemoryStatePtr &other)
         : addrProtoval_(other->addrProtoval_), valProtoval_(other->valProtoval_), byteOrder_(ByteOrder::ORDER_UNSPECIFIED),
-          merger_(other->merger_) {}
+          merger_(other->merger_), byteRestricted_(other->byteRestricted_) {}
 
 public:
     /** Shared-ownership pointer for a memory state object. */
@@ -1088,6 +1090,25 @@ public:
 
     /** Clear memory. Removes all memory cells from this memory state. */
     virtual void clear() = 0;
+
+    /** Indicates whether memory cell values are required to be eight bits wide.
+     *
+     *  The default is true since this simplifies the calculations for whether two memory cells are alias and how to combine
+     *  the value from two or more aliasing cells. A memory that contains only eight-bit values requires that the caller
+     *  concatenate/extract individual bytes when reading/writing multi-byte values.
+     *
+     * @{ */
+    bool byteRestricted() const { return byteRestricted_; }
+    void byteRestricted(bool b) { byteRestricted_ = b; }
+    /** @} */
+
+    // [Robb Matzke 2015-12-23]: deprecated
+    virtual bool get_byte_restricted() const ROSE_DEPRECATED("use byteRestricted instead") {
+        return byteRestricted();
+    }
+    virtual void set_byte_restricted(bool b) ROSE_DEPRECATED("use byteRestricted instead") {
+        byteRestricted(b);
+    }
 
     /** Memory byte order.
      *  @{ */
