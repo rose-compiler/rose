@@ -1709,6 +1709,26 @@ Parser::readArgsFromFile(const std::string &filename) {
     return retval;
 }
 
+SAWYER_EXPORT std::vector<std::string>
+Parser::expandIncludedFiles(const std::vector<std::string> &args) {
+    std::vector<std::string> retval;
+    BOOST_FOREACH (const std::string &arg, args) {
+        bool wasExpanded = false;
+        BOOST_FOREACH (std::string &prefix, inclusionPrefixes_) {
+            if (boost::starts_with(arg, prefix) && arg.size() > prefix.size()) {
+                std::string filename = arg.substr(prefix.size());
+                std::vector<std::string> expanded = readArgsFromFile(filename);
+                retval.insert(retval.end(), expanded.begin(), expanded.end());
+                wasExpanded = true;
+                break;
+            }
+        }
+        if (!wasExpanded)
+            retval.push_back(arg);
+    }
+    return retval;
+}
+
 SAWYER_EXPORT const std::string&
 Parser::programName() const {
     if (programName_.empty()) {

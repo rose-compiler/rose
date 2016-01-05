@@ -1,6 +1,6 @@
  /*!
      \defgroup AstProcessingClasses AST Processing
-     \ingroup ROSE_MidEndGroup
+     \ingroup rose_midend
 
      \authors Markus Schordan\n 
               (preliminary versions developed by Quinlan and Kowarschik using a different algorithm for combing attributes and a single interface)
