@@ -162,11 +162,11 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     out.insert(Switch("list-instruction-addresses")
                .intrinsicValue(true, settings.doListInstructionAddresses)
-               .doc("Produce a listing of instruction addresses.  Each line of output will contain three space-separated "
-                    "items: the address interval for the instruction (address followed by \"+\" followed by size), the "
-                    "address of the basic block to which the instruction belongs, and the address of the function to which "
-                    "the basic block belongs.  If the basic block doesn't belong to a function then the string \"nil\" is "
-                    "printed for the function address field.  This listing is disabled with the "
+               .doc("Produce a listing of instruction addresses.  Each line of output will contain at least two "
+                    "space-separated items: the address interval for the instruction (address followed by \"+\" followed by "
+                    "size), and the address of the basic block to which the instruction belongs. These fields are followed "
+                    "by zero or more function entry addresses for the functions that own the basic block. Basic blocks are "
+                    "usually owned by zero or one function.  This listing is disabled with the "
                     "@s{no-list-instruction-addresses} switch.  The default is to " +
                     std::string(settings.doListInstructionAddresses?"":"not ") + "show this information."));
     out.insert(Switch("no-list-instruction-addresses")
@@ -776,11 +776,13 @@ int main(int argc, char *argv[]) {
     if (settings.doListInstructionAddresses) {
         std::vector<P2::BasicBlock::Ptr> bblocks = partitioner.basicBlocks();
         BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, bblocks) {
-            P2::Function::Ptr function = partitioner.findFunctionOwningBasicBlock(bblock);
+            std::vector<P2::Function::Ptr> functions = partitioner.functionsOwningBasicBlock(bblock);
             BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
                 std::cout <<StringUtility::addrToString(insn->get_address()) <<"+" <<insn->get_size();
                 std::cout <<"\t" <<StringUtility::addrToString(bblock->address());
-                std::cout <<"\t" <<(function ? StringUtility::addrToString(function->address()) : std::string("nil")) <<"\n";
+                BOOST_FOREACH (const P2::Function::Ptr &function, functions)
+                    std::cout <<"\t" <<StringUtility::addrToString(function->address());
+                std::cout <<"\n";
             }
         }
     }

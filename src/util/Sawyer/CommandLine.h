@@ -2572,7 +2572,7 @@ public:
     /** Strings that indicate that arguments are to be read from a file.  The @ref resetInclusionPrefixes clears the list (and
      *  adds prefixes) while @ref inclusionPrefix only adds another prefix to the list.  The default inclusion prefix on
      *  Unix-like systems is <code>\@</code>.  That is, a program argument <code>\@foo.conf</code> will be replaced with
-     *  arguments read from the file "foo.conf". See @ref readArgsFromFile for details.
+     *  arguments read from the file "foo.conf". See @ref readArgsFromFile and @ref expandIncludedFiles for details.
      *
      *  For instance, to make file inclusion look like a normal switch,
      * @code
@@ -2661,7 +2661,13 @@ public:
      *  into one or more arguments at white space.  Single and double quoted regions within a line are treated as single
      *  arguments (the quotes are removed).  The backslash can be used to escape quotes, white space, and backslash; any other
      *  use of the backslash is not special. */
-    std::vector<std::string> readArgsFromFile(const std::string &filename);
+    static std::vector<std::string> readArgsFromFile(const std::string &filename);
+
+    /** Expand file arguments.
+     *
+     *  Scans the specified argument list looking for file inclusion switches and replacing those switches with the
+     *  the file. */
+    std::vector<std::string> expandIncludedFiles(const std::vector<std::string> &args);
 
     /** Program name for documentation.  If no program name is given (or it is set to the empty string) then the name is
      *  obtained from the operating system.

@@ -42,7 +42,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
              "second are set B.  Each line of the files should be an integer that can be parsed with the 'strtoull' function.}"
 
              "@bullet{When invoked with one file name it looks for lines that begin with the string \"function 0x\" followed "
-             "by a hexadecimal address, a colon, white space, and either the word \"missing\" or \"exists\".  Those "
+             "by a hexadecimal address, and end with the word \"missing\" or \"exists\".  Those "
              "addresses that are \"exists\" form set A and the others form set B.}"
 
              "The basic idea is that the starting virtual address for a raw buffer whose memory position is unknown can often "
@@ -69,12 +69,11 @@ readFunctions(const std::string &fileName, Value mask, Set &set1 /*out*/, Set &s
             char *s=line+11, *rest;
             errno = 0;
             Value val = rose_strtoull(s, &rest, 16);
-            if (errno || rest==s || ':'!=*rest++)
-                continue;
-            while (*rest && isspace(*rest)) ++rest;
-            if (boost::starts_with(rest, "exists")) {
+            for (size_t i=strlen(rest); i>0 && isspace(rest[i-1]); --i)
+                rest[i-1] = '\0';
+            if (boost::ends_with(rest, ": exists")) {
                 set1.insert(val & mask);
-            } else if (boost::starts_with(rest, "missing")) {
+            } else if (boost::ends_with(rest, ": missing")) {
                 set2.insert(val & mask);
             }
         }

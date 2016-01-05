@@ -3,12 +3,14 @@
 
 #include <BaseSemantics2.h>
 #include <BinaryCallingConvention.h>
+#include <BinaryStackDelta.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/DataBlock.h>
 
 #include <Sawyer/Attribute.h>
 #include <Sawyer/Cached.h>
 #include <Sawyer/Map.h>
+#include <Sawyer/Set.h>
 #include <Sawyer/SharedPointer.h>
 
 #include <set>
@@ -52,15 +54,16 @@ private:
     std::set<rose_addr_t> bblockVas_;                   // addresses of basic blocks
     std::vector<DataBlock::Ptr> dblocks_;               // data blocks owned by this function, sorted by starting address
     bool isFrozen_;                                     // true if function is represented by the CFG
-    CallingConvention::Analysis ccAnalysis_;            // analysis showing how registers etc. are used
+    CallingConvention::Analysis ccAnalysis_;            // analysis computing how registers etc. are used
+    StackDelta::Analysis stackDeltaAnalysis_;           // analysis computing stack deltas for each block and whole function
+    InstructionSemantics2::BaseSemantics::SValuePtr stackDeltaOverride_; // special value to override stack delta analysis
 
     // The following members are caches either because their value is seldom needed and expensive to compute, or because the
     // value is best computed at a higher layer (e.g., in the partitioner) yet it makes the most sense to store it here. Make
     // sure clearCache() resets these to initial values.
-    Sawyer::Cached<InstructionSemantics2::BaseSemantics::SValuePtr> stackDelta_;// cached result from stack delta analysis
+    /*void*/
 
     void clearCache() {
-        stackDelta_.clear();
     }
     
 protected:
@@ -117,6 +120,11 @@ public:
      *  basic block placeholders will be created for any basic blocks that don't exist in the CFG (see @ref
      *  Partitioner::insertFunction). */
     const std::set<rose_addr_t>& basicBlockAddresses() const { return bblockVas_; }
+
+    /** Predicate to test whether a function owns a basic block address. */
+    bool ownsBasicBlock(rose_addr_t bblockVa) const {
+        return bblockVas_.find(bblockVa) != bblockVas_.end();
+    }
 
     /** Add a basic block to this function.  This method does not adjust the partitioner CFG. Basic blocks cannot be added by
      *  this method when this function is attached to the CFG since it would cause the CFG to become outdated with respect to
@@ -178,18 +186,38 @@ public:
 
     /** Property: Stack delta.
      *
-     *  The cached function stack delta if a delta has been computed and is known.  This property comes in two flavors: the
-     *  symbolic expression that's stored as the stack delta value, and a "Concrete", read-only version of the property that
-     *  returns either the concrete value or the @ref SgAsmInstruction::INVALID_STACK_DELTA constant.
+     *  The set or computed stack delta. If a stack delta override has been set (@ref stackDeltaOverride) then that value is
+     *  returned. Otherwise, if the stack delta analysis has been run and a stack delta is known, it is returned. Otherwise a
+     *  null pointer is returned. Calling this method returns previously computed values rather than running a potentially
+     *  expensive analysis.
      *
      * @{ */
-    InstructionSemantics2::BaseSemantics::SValuePtr stackDelta() const {
-        return stackDelta_.getOptional().orDefault();
-    }
-    void stackDelta(const InstructionSemantics2::BaseSemantics::SValuePtr &delta) {
-        stackDelta_ = delta;
-    }
+    InstructionSemantics2::BaseSemantics::SValuePtr stackDelta() const;
     int64_t stackDeltaConcrete() const;
+    /** @} */
+
+    /** Property: Stack delta override.
+     *
+     *  This is the value returned by @ref stackDelta in preference to using the stack delta analysis results. It allows a user
+     *  to override the stack delta analysis.  The partitioner will not run stack delta analysis if an override value is set.
+     *
+     * @{ */
+    InstructionSemantics2::BaseSemantics::SValuePtr stackDeltaOverride() const;
+    void stackDeltaOverride(const InstructionSemantics2::BaseSemantics::SValuePtr &delta);
+    /** @} */
+
+    /** Property: Stack delta analysis results.
+     *
+     *  This property holds the results from stack delta analysis. It contains the stack entry and exit values for each basic
+     *  block computed from data flow, and the overall stack delta for the function. The analysis is not updated by this class;
+     *  objects of this class only store the results provided by something else.
+     *
+     *  The @c hasResults and @c didConverge methods invoked on the return value will tell you whether an analysis has run and
+     *  whether the results are valid, respectively.
+     *
+     * @{ */
+    const StackDelta::Analysis& stackDeltaAnalysis() const { return stackDeltaAnalysis_; }
+    StackDelta::Analysis& stackDeltaAnalysis() { return stackDeltaAnalysis_; }
     /** @} */
 
     /** Property: Calling convention analysis results.
@@ -221,6 +249,7 @@ private:
 };
 
 typedef Sawyer::Container::Map<rose_addr_t, Function::Ptr> Functions;
+typedef Sawyer::Container::Set<Function::Ptr> FunctionSet;
 
 } // namespace
 } // namespace

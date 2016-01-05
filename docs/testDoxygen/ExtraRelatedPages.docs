@@ -10,14 +10,3 @@
  *  useful to construct them this way.  A better way to construct IR nodes is with the @ref SageBuilder API. */
 
 
-/** @defgroup sage_attribute_mechanism Sage IR node attributes
- *  @ingroup old_documentation
- *
- *  Attaching user-defined attributes to IR nodes.
- *  
- *  User-defined attributes (AST attributes) may be attached directly to the AST.  This mechanism permits the addition and
- *  removal of attribute on any node of the AST.  The existence of the attributes may thus be queried from any node.  The
- *  mechanism provide a way to make multiple passes over the AST and save state information into the AST for subsequent
- *  traversals.  The mechanism is different from creation of inherited and synthisized attributes within the AST processing
- *  mechanism (@ref ASTProcessing), since those attributes there allocated and deallocated automatically on the stack.  AST
- *  Attributes are allocated on the heap and must be allocated, attached, detached, and deallocated explicitly by the user. */

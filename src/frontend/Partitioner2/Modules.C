@@ -621,8 +621,11 @@ nameConstants(const Partitioner &partitioner) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SgAsmBlock*
-buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, bool relaxed) {
+buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, const Function::Ptr &parentFunction,
+                   bool relaxed) {
+
     ASSERT_not_null(bb);
+    ASSERT_not_null(parentFunction);
     if (bb->isEmpty()) {
         if (relaxed) {
             mlog[WARN] <<"creating an empty basic block AST node at " <<StringUtility::addrToString(bb->address()) <<"\n";
@@ -636,11 +639,9 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, bo
     ast->set_comment(bb->comment());
     unsigned reasons = 0;
 
-    // Is this block an entry point for a function?
-    if (Function::Ptr function = partitioner.functionExists(bb->address())) {
-        if (function->address() == bb->address())
-            reasons |= SgAsmBlock::BLK_ENTRY_POINT;
-    }
+    // Is this block an entry point for any function (not just the parent function)?
+    if (bblockVertex->value().isEntryBlock())
+        reasons |= SgAsmBlock::BLK_ENTRY_POINT;
 
     // Does this block have any predecessors?
     if (bblockVertex != partitioner.cfg().vertices().end() && bblockVertex->nInEdges()==0)
@@ -648,7 +649,24 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, bo
 
     ast->set_reason(reasons);
     ast->set_code_likelihood(1.0);                      // FIXME[Robb P. Matzke 2014-08-07]
-    ast->set_stackDeltaOut(bb->stackDeltaOutConcrete());
+
+    // Stack delta analysis results for this block in the context of the owning function. If blocks are shared they can have
+    // different stack deltas (e.g., eax might have different values in function F and G which means the block "sub esp, eax"
+    // has a different stack delta in each function.  Since we're creating a SgAsmBlock for a particular function we need to
+    // use stack delta results in the context of that function.
+    const StackDelta::Analysis &sdAnalysis = parentFunction->stackDeltaAnalysis();
+    ast->set_stackDeltaOut(sdAnalysis.toInt(sdAnalysis.basicBlockOutputStackDeltaWrtFunction(bb->address())));
+
+    // Stack delta analysis results for each instruction in the context of the owning function.  Instructions are shared in the
+    // AST if their blocks are shared in the partitioner.  In the AST we share instructions instead of blocks because this
+    // makes it easier to attach analysis results to blocks without worrying about whether they're shared -- it's less likely
+    // that binary analysis results are attached to instructions.  The problem is that an instruction can have multiple stack
+    // deltas based on which function was analyzed. We must choose one function's stack deltas and we must make sure they're
+    // current. The approach we take is simple: just store the stack deltas each time and let the last one win.
+    if (sdAnalysis.hasResults()) {
+        BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+            insn->set_stackDeltaIn(sdAnalysis.toInt(sdAnalysis.instructionInputStackDeltaWrtFunction(insn)));
+    }
 
     // Cache the basic block successors in the AST since we've already computed them.  If the basic block is in the CFG then we
     // can use the CFG's edges to initialize the AST successors since they are canonical. Otherwise we'll use the successors
@@ -706,7 +724,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
             mlog[WARN] <<function->printableName() <<" bblock "
                        <<StringUtility::addrToString(blockVa) <<" does not exist in the CFG; no AST node created\n";
         } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-            if (SgAsmBlock *child = buildBasicBlockAst(partitioner, bb, relaxed))
+            if (SgAsmBlock *child = buildBasicBlockAst(partitioner, bb, function, relaxed))
                 children.push_back(child);
             BOOST_FOREACH (const DataBlock::Ptr &dblock, bb->dataBlocks())
                 insertUnique(dblocks, dblock, sortDataBlocks);
@@ -764,11 +782,12 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
         }
     }
 
-    // Function's calling convention.
+    // Function's calling convention. For now, we just set the function's calling convention to the best one on a local
+    // basis. A separate pass later can choose the globally best conventions.  Don't run the analysis if it hasn't been run
+    // already (sometimes users request that we skip this expensive analysis).
     const CallingConvention::Definition *bestCallingConvention = NULL;
     if (function->callingConventionAnalysis().hasResults()) {
-        const CallingConvention::Dictionary &archConventions = partitioner.instructionProvider().callingConventions();
-        CallingConvention::Dictionary conventions = function->callingConventionAnalysis().match(archConventions);
+        CallingConvention::Dictionary conventions = partitioner.functionCallingConventionDefinitions(function);
         if (!conventions.empty())
             bestCallingConvention = new CallingConvention::Definition(conventions.front());
     }
@@ -814,6 +833,7 @@ SgAsmBlock*
 buildAst(const Partitioner &partitioner, SgAsmInterpretation *interp/*=NULL*/, bool relaxed) {
     if (SgAsmBlock *global = buildGlobalBlockAst(partitioner, relaxed)) {
         fixupAstPointers(global, interp);
+        fixupAstCallingConventions(partitioner, global);
         if (interp) {
             if (SgAsmBlock *oldGlobalBlock = interp->get_global_block())
                 oldGlobalBlock->set_parent(NULL);
@@ -883,6 +903,44 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
         }
     } fixerUpper(indexer.insnIndex, indexer.bblockIndex, indexer.funcIndex, mappedSections);
     fixerUpper.traverse(ast, preorder);
+}
+
+void
+fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
+    // Pass 1: Sort all calling conventions by number of occurrences within the partitioner.
+    Sawyer::Container::Map<std::string, size_t> totals; // how many times does each calling convention name match?
+    BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
+        const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
+        if (!ccAnalysis.hasResults())
+            continue;                                   // don't run analysis if not run already
+        BOOST_FOREACH (const CallingConvention::Definition &ccDef, partitioner.functionCallingConventionDefinitions(function))
+            ++totals.insertMaybe(ccDef.name(), 0);
+    }
+
+    // Pass 2: For each function in the AST, select the matching definition that's most frequent overall. If there's a tie, use
+    // the first one from the function's definition list since this list is presumably sorted by how frequently the convention
+    // is used by the whole world.
+    BOOST_FOREACH (SgAsmFunction *astFunction, SageInterface::querySubTree<SgAsmFunction>(ast)) {
+        if (Function::Ptr function = partitioner.functionExists(astFunction->get_address())) {
+            const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
+            if (!ccAnalysis.hasResults())
+                continue;                               // don't run analysis if not run already
+            CallingConvention::Dictionary ccDefs = partitioner.functionCallingConventionDefinitions(function);
+            const CallingConvention::Definition *ccBest = NULL;
+            BOOST_FOREACH (const CallingConvention::Definition &ccDef, ccDefs) {
+                if (NULL==ccBest) {
+                    ccBest = &ccDef;
+                } else if (totals.getOrElse(ccDef.name(), 0) > totals.getOrElse(ccBest->name(), 0)) {
+                    ccBest = &ccDef;
+                }
+            }
+            if (ccBest) {
+                // We cannot delete previously stored calling conventions because there's no clear rule about whether they need
+                // to be allocated on the heap, and if so, who owns them or what allocator was used.
+                astFunction->set_callingConvention(new CallingConvention::Definition(*ccBest));
+            }
+        }
+    }
 }
 
 std::vector<Function::Ptr>

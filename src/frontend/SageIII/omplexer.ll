@@ -138,6 +138,9 @@ block           {return ( BLOCK ); }
 duplicate       {return ( DUPLICATE ); }
 cyclic          {return ( CYCLIC ); }
 
+BLOCK           {return ( BLOCK ); }
+DUPLICATE       {return ( DUPLICATE ); }
+CYCLIC          {return ( CYCLIC ); }
 
 "="             { return('='); }
 "("             { return ('('); }

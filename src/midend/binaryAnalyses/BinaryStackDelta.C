@@ -163,10 +163,10 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         mlog[DEBUG] <<"  no instruction semantics\n";
         return;
     }
-    CallingConvention::Definition dfltCc = CallingConvention::Definition::x86_cdecl(cpu_->get_register_dictionary());
+    const CallingConvention::Dictionary &ccDefs = partitioner.instructionProvider().callingConventions();
     P2::DataFlow::MergeFunction merge(cpu_);
     TransferFunction xfer(this);
-    xfer.defaultCallingConvention(&dfltCc);
+    xfer.defaultCallingConvention(ccDefs.empty() ? NULL : &ccDefs.front());
     DfEngine dfEngine(dfCfg, xfer, merge);
     size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
     dfEngine.maxIterations(maxIterations);
@@ -267,6 +267,24 @@ Analysis::basicBlockStackDeltaConcrete(rose_addr_t basicBlockAddress) const {
     return toInt(basicBlockStackDelta(basicBlockAddress));
 }
 
+BaseSemantics::SValuePtr
+Analysis::basicBlockInputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) const {
+    BaseSemantics::SValuePtr initialSp = functionStackPtrs_.first;
+    BaseSemantics::SValuePtr finalSp = bblockStackPtrs_.getOrDefault(basicBlockAddress).first;
+    if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
+        return BaseSemantics::SValuePtr();
+    return cpu_->get_operators()->subtract(finalSp, initialSp);
+}
+
+BaseSemantics::SValuePtr
+Analysis::basicBlockOutputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) const {
+    BaseSemantics::SValuePtr initialSp = functionStackPtrs_.first;
+    BaseSemantics::SValuePtr finalSp = bblockStackPtrs_.getOrDefault(basicBlockAddress).second;
+    if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
+        return BaseSemantics::SValuePtr();
+    return cpu_->get_operators()->subtract(finalSp, initialSp);
+}
+
 Analysis::SValuePair
 Analysis::instructionStackPointers(SgAsmInstruction *insn) const {
     if (NULL == insn)
@@ -284,6 +302,24 @@ Analysis::instructionStackDelta(SgAsmInstruction *insn) const {
 int64_t
 Analysis::instructionStackDeltaConcrete(SgAsmInstruction *insn) const {
     return toInt(instructionStackDelta(insn));
+}
+
+BaseSemantics::SValuePtr
+Analysis::instructionInputStackDeltaWrtFunction(SgAsmInstruction *insn) const {
+    BaseSemantics::SValuePtr initialSp = functionStackPtrs_.first;
+    BaseSemantics::SValuePtr finalSp = insnStackPtrs_.getOrDefault(insn->get_address()).first;
+    if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
+        return BaseSemantics::SValuePtr();
+    return cpu_->get_operators()->subtract(finalSp, initialSp);
+}
+
+BaseSemantics::SValuePtr
+Analysis::instructionOutputStackDeltaWrtFunction(SgAsmInstruction*insn) const {
+    BaseSemantics::SValuePtr initialSp = functionStackPtrs_.first;
+    BaseSemantics::SValuePtr finalSp = insnStackPtrs_.getOrDefault(insn->get_address()).second;
+    if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
+        return BaseSemantics::SValuePtr();
+    return cpu_->get_operators()->subtract(finalSp, initialSp);
 }
 
 void

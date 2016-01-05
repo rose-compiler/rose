@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
   memcpy(y_ompacc, y_ref, n*sizeof(REAL));
 
 // test directives for MPI code generation: mpi:all means spawn on all MPI processes
-#pragma omp target device(mpi) map(tofrom: y_ompacc[0:n] dist_data(block)) map(to: x[0:n] dist_data(block),a,n)
+#pragma omp target device(mpi) map(tofrom: y_ompacc[0:n] dist_data(block, duplicate,block)) map(to: x[0:n] dist_data(block),a,n)
   #pragma omp parallel for shared(x, y_ompacc, n, a) private(i)
   for (i = 0; i < n; ++i)
     y_ompacc[i] += a * x[i];

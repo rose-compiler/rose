@@ -434,26 +434,29 @@ findDataFlowValues(const P2::Partitioner &partitioner, const P2::Function::Ptr &
 
     // Scan all outgoing states and accumulate any concrete values we find.
     BOOST_FOREACH (StatePtr state, engine.getFinalStates()) {
-        ops->set_state(state);
-        BaseSemantics::RegisterStateGenericPtr regs = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
-        BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &kv, regs->get_stored_registers()) {
-            if (kv.value->is_number() && kv.value->get_width() <= SP.get_nbits())
-                retval.insert(kv.value->get_number());
-        }
+        if (state) {
+            ops->set_state(state);
+            BaseSemantics::RegisterStateGenericPtr regs =
+                BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
+            BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &kv, regs->get_stored_registers()) {
+                if (kv.value->is_number() && kv.value->get_width() <= SP.get_nbits())
+                    retval.insert(kv.value->get_number());
+            }
 
-        BOOST_FOREACH (const StackVariable &var, P2::DataFlow::findStackVariables(ops, initialStackPointer)) {
-            BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.location.address,
-                                                             ops->undefined_(8*var.location.nBytes), ops->boolean_(true));
-            if (value->is_number() && value->get_width() <= SP.get_nbits())
-                retval.insert(value->get_number());
-        }
-
-        BOOST_FOREACH (const AbstractLocation &var, P2::DataFlow::findGlobalVariables(ops, wordSize)) {
-            if (var.isAddress()) {
-                BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.getAddress(),
-                                                                 ops->undefined_(8*var.nBytes()), ops->boolean_(true));
+            BOOST_FOREACH (const StackVariable &var, P2::DataFlow::findStackVariables(ops, initialStackPointer)) {
+                BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.location.address,
+                                                                 ops->undefined_(8*var.location.nBytes), ops->boolean_(true));
                 if (value->is_number() && value->get_width() <= SP.get_nbits())
                     retval.insert(value->get_number());
+            }
+
+            BOOST_FOREACH (const AbstractLocation &var, P2::DataFlow::findGlobalVariables(ops, wordSize)) {
+                if (var.isAddress()) {
+                    BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.getAddress(),
+                                                                     ops->undefined_(8*var.nBytes()), ops->boolean_(true));
+                    if (value->is_number() && value->get_width() <= SP.get_nbits())
+                        retval.insert(value->get_number());
+                }
             }
         }
     }
@@ -488,9 +491,7 @@ insertReachableByDataFlow(AddressIntervalSet &reachable /*in,out*/, const P2::Pa
                 if (!reachable.contains(targetVas)) {
                     reachable |= targetVas;
                     insertReachableRecursively(reachable, partitioner, targetVertex);
-                    P2::Function::Ptr targetFunction;
-                    if (targetVertex->value().type() == P2::V_BASIC_BLOCK)
-                        targetFunction = targetVertex->value().function();
+                    P2::Function::Ptr targetFunction = targetVertex->value().isEntryBlock();
                     if (targetFunction &&
                         reachable.contains(targetFunction->address()) &&
                         !processedFunctions.exists(targetFunction)) {

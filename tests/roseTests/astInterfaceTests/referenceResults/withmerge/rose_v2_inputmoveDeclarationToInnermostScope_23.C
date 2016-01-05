@@ -8,9 +8,8 @@ void foobar()
 /* comment comment comment */
     int k = ii;
     if (k >= 42) {
-      int m;
       int *array;
-      m = array[k];
+      int m = array[k];
     }
   }
 }
