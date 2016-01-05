@@ -207,6 +207,17 @@ namespace OmpSupport
   SgVariableDeclaration * buildAndInsertDeclarationForOmp(const std::string &name, SgType *type, SgInitializer *varInit, SgBasicBlock *orig_scope);
   //! Find an enclosing parallel region or function definition's body
   SgBasicBlock* getEnclosingRegionOrFuncDefinition (SgNode *);
+
+  //! Extract map clause information
+  void extractMapClauses(Rose_STL_Container<SgOmpClause*> map_clauses,
+      std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > > & array_dimensions,
+          SgOmpMapClause** map_alloc_clause, SgOmpMapClause** map_to_clause, SgOmpMapClause** map_from_clause, SgOmpMapClause** map_tofrom_clause);
+  //! Categorize mapped variables
+  void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, // all variables collected from map clauses
+          std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >&  array_dimensions, // array bounds  info
+                                    std::set<SgSymbol*>& array_syms, // variable symbols which are array types (explicit or as a pointer)
+                                    std::set<SgSymbol*>& atom_syms); // variable symbols which are non-aggregate types: scalar, pointer, etc
+
 } // end namespace OmpSupport  
 
 #endif //OMP_LOWERING_H

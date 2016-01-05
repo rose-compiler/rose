@@ -374,6 +374,8 @@ class UnparseLanguageIndependentConstructs
           virtual void unparseOmpBeginDirectiveClauses      (SgStatement* stmt,     SgUnparse_Info& info); 
           virtual void unparseOmpEndDirectiveClauses        (SgStatement* stmt,     SgUnparse_Info& info); 
           virtual void unparseOmpGenericStatement           (SgStatement* stmt,     SgUnparse_Info& info);
+
+          virtual void unparseMapDistDataPoliciesToString (std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > policies, SgUnparse_Info& info);
 #if 0
        // DQ (7/21/2006): Added support for GNU statement expression extension.
           virtual void unparseStatementExpression (SgExpression* expr, SgUnparse_Info& info);

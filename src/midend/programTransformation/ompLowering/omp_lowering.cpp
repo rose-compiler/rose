@@ -2145,7 +2145,7 @@ static SgStatement* findLastDeclarationStatement(SgScopeStatement * scope)
   }
   
 //! A helper function to categorize variables collected from map clauses
-static   
+
 void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, // all variables collected from map clauses
           std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >&  array_dimensions, // array bounds  info
                                     std::set<SgSymbol*>& array_syms, // variable symbols which are array types (explicit or as a pointer)
@@ -2416,7 +2416,7 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
 
 // find different map clauses from the clause list, and all array information
 // dimension map is the same for all the map clauses under the same omp target directive
-static void extractMapClauses(Rose_STL_Container<SgOmpClause*> map_clauses, 
+void extractMapClauses(Rose_STL_Container<SgOmpClause*> map_clauses, 
     std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > > & array_dimensions,
     SgOmpMapClause** map_alloc_clause, SgOmpMapClause** map_to_clause, SgOmpMapClause** map_from_clause, SgOmpMapClause** map_tofrom_clause
     )
