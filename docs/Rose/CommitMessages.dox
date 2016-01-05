@@ -50,8 +50,10 @@
  *  @li The body should <b>reference a JIRA issue</b> if the commit is related to an issue, especially if that issue has
  *      relevant details, discussion, test cases, etc.
  *
- *  The body must be separated from the title by a blank line.  Some Git tools concatenate the first lines together into a
- *  single title line, which creates formatting problems since the title then becomes very long.
+ *  The body must be separated from the title by a blank line because some Git tools concatenate the first lines together into
+ *  a single title line, which creates formatting problems since the title then becomes very long. Also, although ROSE uses a
+ *  130-column policy throughout, commit messages should try to keep lines around 80-characters because that works better
+ *  in GUIs like github and qgit.
  *
  *  Make sure your message is spelled correctly since it cannot be changed once it's merged into a release branch--at least not
  *  without a very disruptive history rewrite. Commit messages are for posterity, so be careful. "I hate git", commit

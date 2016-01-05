@@ -16,5 +16,9 @@ namespace OmpSupport
     };
     
   void processOpenMP(SgSourceFile* sageFilePtr);
+
+  // Special handling to wrap statements in between "target begin" and "target end" OmpAttribute into a block.
+  // "target end" attribute will later be skipped when creating dedicate OMP statement.  
+  void  postParsingProcessing (SgSourceFile* sageFilePtr); 
 } // end of the namespace 
 #endif
