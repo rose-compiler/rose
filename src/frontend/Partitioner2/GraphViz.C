@@ -183,8 +183,33 @@ CfgEmitter::init() {
         noOpAnalysis_ = NoOperation(cpu->create(ops, addrWidth, regdict));
         noOpAnalysis_.initialStackPointer(0xdddd0001); // optional; odd prevents false positives for stack aligning instructions
     }
+    nameVertices();
 }
 
+void
+CfgEmitter::nameVertices() {
+    BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
+        if (vertexOrganization(vertex.id()).name().empty()) {
+            switch (vertex.value().type()) {
+                case V_BASIC_BLOCK:
+                    vertexOrganization(vertex.id()).name("V_" + StringUtility::addrToString(vertex.value().address()));
+                    break;
+                case V_NONEXISTING:
+                    vertexOrganization(vertex.id()).name("nonexisting");
+                    break;
+                case V_INDETERMINATE:
+                    vertexOrganization(vertex.id()).name("indeterminate");
+                    break;
+                case V_UNDISCOVERED:
+                    vertexOrganization(vertex.id()).name("undiscovered");
+                    break;
+                case V_USER_DEFINED:
+                    // use an ID number, the default
+                    break;
+            }
+        }
+    }
+}
 
 //----------------------------------------------------------------------------------------------------------------------------
 //                                      CfgEmitter selectors
@@ -210,6 +235,10 @@ CfgEmitter::selectWholeGraph() {
         deselectReturnEdges();
     if (useFunctionSubgraphs())
         assignFunctionSubgraphs();
+
+    deselectUnusedVertex(partitioner_.undiscoveredVertex());
+    deselectUnusedVertex(partitioner_.indeterminateVertex());
+    deselectUnusedVertex(partitioner_.nonexistingVertex());
 
     return *this;
 }
@@ -280,14 +309,14 @@ CfgEmitter::selectIntraFunction(const Function::Ptr &function) {
     // Use an iteration rather than a traversal because we want all vertices that belong to the function, including those
     // not reachable from the entry vertex.
     BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
-        if (owningFunction(vertex) == function) {
+        if (vertex.value().isOwningFunction(function)) {
             if (!vertexOrganization(vertex).isSelected()) {
                 vertexOrganization(vertex).select();
                 vertexOrganization(vertex).label(vertexLabelDetailed(vertex));
                 vertexOrganization(vertex).attributes(vertexAttributes(vertex));
             }
             BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.outEdges()) {
-                if (!edgeOrganization(edge).isSelected() && !isInterFunctionEdge(edge)) {
+                if (!edgeOrganization(edge).isSelected() && partitioner_.isEdgeIntraProcedural(edge, function)) {
                     edgeOrganization(edge).select();
                     edgeOrganization(edge).label(edgeLabel(edge));
                     edgeOrganization(edge).attributes(edgeAttributes(edge));
@@ -302,26 +331,23 @@ CfgEmitter::selectFunctionCallees(const Function::Ptr &function) {
     // Use an iteration rather than a traversal because we want to consider all vertices that belong to the function, including
     // those not reachable from the entry vertex.
     BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
-        if (vertexOrganization(vertex).isSelected() && owningFunction(vertex) == function) {
+        if (vertexOrganization(vertex).isSelected() && vertex.value().isOwningFunction(function)) {
             BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.outEdges()) {
-                if (isInterFunctionEdge(edge)) {
+                if (partitioner_.isEdgeInterProcedural(edge, function)) {
                     if (!edgeOrganization(edge).isSelected()) {
                         edgeOrganization(edge).select();
                         edgeOrganization(edge).label(edgeLabel(edge));
                         edgeOrganization(edge).attributes(edgeAttributes(edge));
                     }
-                    
+
                     Organization &tgt = vertexOrganization(edge.target());
                     if (!tgt.isSelected()) {
                         tgt.select();
-                        Function::Ptr callee = owningFunction(edge.target());
-                        if (callee && edge.target()->value().type() == V_BASIC_BLOCK &&
-                            edge.target()->value().address() == callee->address()) {
-                            // target is the entry block of a function
+
+                        if (Function::Ptr callee = edge.target()->value().isEntryBlock()) {
                             tgt.label(functionLabel(callee));
                             tgt.attributes(functionAttributes(callee));
                         } else {
-                            // target is some block that isn't a function entry
                             tgt.label(vertexLabel(edge.target()));
                             tgt.attributes(vertexAttributes(edge.target()));
                         }
@@ -344,14 +370,17 @@ CfgEmitter::selectFunctionCallers(const Function::Ptr &callee) {
     // Use an iteration rather than a traversal because we want to consider all vertices that belong to the function, including
     // those not reachable from the entry vertex.
     BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
-        if (vertexOrganization(vertex).isSelected() && owningFunction(vertex) == callee) {
+        if (vertexOrganization(vertex).isSelected() && vertex.value().isOwningFunction(callee)) {
+
             // Are there edges coming into this vertex from outside this function?
             typedef Sawyer::Container::Map<rose_addr_t /*caller*/, CallInfo> Callers;
             Callers callers;
             BOOST_FOREACH (const ControlFlowGraph::Edge &interEdge, vertex.inEdges()) {
-                if (isInterFunctionEdge(interEdge) && !edgeOrganization(interEdge).isSelected()) {
-                    if (Function::Ptr caller = owningFunction(interEdge.source())) {
-                        // Call is coming from a function-as-a-whole, so only accumulate the calls from that function.
+                if (partitioner_.isEdgeInterProcedural(interEdge, Function::Ptr(), callee) &&
+                    !edgeOrganization(interEdge).isSelected()) {
+
+                    // Is the call coming from a block that belongs to a function, or from some random non-owned block?
+                    if (Function::Ptr caller = firstOwningFunction(interEdge.source())) {
                         CallInfo callInfo = callers.getOptional(caller->address()).orDefault();
                         if (interEdge.value().type() == E_FUNCTION_CALL) {
                             ++callInfo.nCalls;
@@ -422,6 +451,28 @@ CfgEmitter::deselectReturnEdges() {
 }
 
 void
+CfgEmitter::deselectUnusedVertex(ControlFlowGraph::ConstVertexIterator vertex) {
+    bool isUsed = false;
+    BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex->inEdges()) {
+        if (edgeOrganization(edge).isSelected()) {
+            isUsed = true;
+            break;
+        }
+    }
+    if (!isUsed) {
+        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex->outEdges()) {
+            if (edgeOrganization(edge).isSelected()) {
+                isUsed = true;
+                break;
+            }
+        }
+    }
+
+    if (!isUsed)
+        vertexOrganization(vertex).select(false);
+}
+    
+void
 CfgEmitter::selectNeighbors(bool selectIn, bool selectOut) {
     if (!selectIn && !selectOut)
         return;
@@ -458,8 +509,17 @@ CfgEmitter::selectNeighbors(bool selectIn, bool selectOut) {
 
 // class method
 Function::Ptr
-CfgEmitter::owningFunction(const ControlFlowGraph::Vertex &v) {
-    return v.value().type() == V_BASIC_BLOCK ? v.value().function() : Function::Ptr();
+CfgEmitter::firstOwningFunction(const ControlFlowGraph::Vertex &v) {
+    FunctionSet owners = owningFunctions(v);
+    return owners.isEmpty() ? Function::Ptr() : *owners.values().begin();
+}
+
+// class method
+FunctionSet
+CfgEmitter::owningFunctions(const ControlFlowGraph::Vertex &v) {
+    if (v.value().type() != V_BASIC_BLOCK)
+        return FunctionSet();
+    return v.value().owningFunctions();
 }
 
 // class method
@@ -469,7 +529,11 @@ CfgEmitter::isInterFunctionEdge(const ControlFlowGraph::Edge &edge) {
         return true;
     if (edge.source() == edge.target())
         return false;
-    return owningFunction(edge.source()) != owningFunction(edge.target());
+
+    // When the source and/or target blocks of an edge are owned by multiple functions it can be ambiguous whether the edge is
+    // inter- or intra- function.  For the purposes of the GraphViz output, each vertex is assigned to at most one function
+    // and the edge classification is based on this assignment.
+    return firstOwningFunction(edge.source()) != firstOwningFunction(edge.target());
 }
 
 void
@@ -477,7 +541,7 @@ CfgEmitter::assignFunctionSubgraphs() {
     BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
         Organization &org = vertexOrganization(vertex);
         Function::Ptr function;
-        if (org.isSelected() && org.subgraph().empty() && (function=owningFunction(vertex))) {
+        if (org.isSelected() && org.subgraph().empty() && (function=firstOwningFunction(vertex))) {
             std::string subgraphName = StringUtility::addrToString(function->address());
             if (!subgraphOrganization().exists(subgraphName)) {
                 Organization org;
@@ -520,14 +584,20 @@ CfgEmitter::vertexLabel(const ControlFlowGraph::ConstVertexIterator &vertex) con
     if (!srcLoc.empty())
         srcLoc = htmlEscape(srcLoc) + "<br align=\"left\"/>";
     switch (vertex->value().type()) {
-        case V_BASIC_BLOCK:
-            if (vertex->value().function() && vertex->value().function()->address() == vertex->value().address()) {
-                return "<" + srcLoc + htmlEscape(vertex->value().function()->printableName()) + ">";
+        case V_BASIC_BLOCK: {
+            FunctionSet functions = owningFunctions(vertex);
+            if (!functions.isEmpty()) {
+                BOOST_FOREACH (const Function::Ptr &function, functions.values()) {
+                    if (function->address() == vertex->value().address())
+                        srcLoc += htmlEscape(function->printableName()) + "<br align=\"left\"/>";
+                }
+                return "<" + srcLoc + ">";
             } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
                 return "<" + srcLoc + htmlEscape(bb->printableName()) + ">";
             } else {
                 return "<" + srcLoc + StringUtility::addrToString(vertex->value().address()) + ">";
             }
+        }
         case V_NONEXISTING:
             return "\"nonexisting\"";
         case V_UNDISCOVERED:
@@ -624,17 +694,27 @@ CfgEmitter::vertexAttributes(const ControlFlowGraph::ConstVertexIterator &vertex
     attr.insert("shape", "box");
 
     if (vertex->value().type() == V_BASIC_BLOCK) {
+        BasicBlock::Ptr bblock = vertex->value().bblock();
+        ASSERT_not_null(bblock);
         attr.insert("fontname", "Courier");
 
-        if (vertex->value().function() && vertex->value().function()->address() == vertex->value().address()) {
-            attr.insert("style", "filled");
+        bool isEntryBlock = vertex->value().isEntryBlock();
+        bool isFunctionReturn = partitioner_.basicBlockIsFunctionReturn(bblock);
+        bool isShared = vertex->value().nOwningFunctions() > 1;
+
+        std::vector<std::string> styles;
+        if (isEntryBlock) {
+            styles.push_back("filled");
             attr.insert("fillcolor", funcEnterColor_.toHtml());
-        } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-            if (partitioner_.basicBlockIsFunctionReturn(bb)) {
-                attr.insert("style", "filled");
-                attr.insert("fillcolor", funcReturnColor_.toHtml());
-            }
+        } else if (isFunctionReturn) {
+            styles.push_back("filled");
+            attr.insert("fillcolor", funcReturnColor_.toHtml());
         }
+        if (isShared)
+            styles.push_back("dashed");
+
+        if (!styles.empty())
+            attr.insert("style", StringUtility::join(", ", styles));
 
         attr.insert("href", StringUtility::addrToString(vertex->value().address()));
 
@@ -671,9 +751,8 @@ CfgEmitter::edgeLabel(const ControlFlowGraph::ConstEdgeIterator &edge) const {
                 s += "\\nassumed";
             break;
         case E_NORMAL: {
-            // Normal edges don't get labels unless its intra-function, otherwise the graphs would be too noisy.
-            if (edge->source()->value().type() == V_BASIC_BLOCK && edge->target()->value().type() == V_BASIC_BLOCK &&
-                edge->source()->value().function() != edge->target()->value().function())
+            // Normal edges don't get labels unless it's inter-function, otherwise the graphs would be too noisy.
+            if (isInterFunctionEdge(edge))
                 s = "other";
             break;
         }
@@ -747,6 +826,15 @@ void
 CgEmitter::callGraph(const FunctionCallGraph &cg) {
     cg_ = cg;
     graph(cg_.graph());
+    nameVertices();
+}
+
+void
+CgEmitter::nameVertices() {
+    BOOST_FOREACH (const FunctionCallGraph::Graph::Vertex &vertex, graph_.vertices()) {
+        const Function::Ptr &function = vertex.value();
+        vertexOrganization(vertex.id()).name(StringUtility::addrToString(function->address()));
+    }
 }
 
 std::string
@@ -784,7 +872,12 @@ CgEmitter::emitCallGraph(std::ostream &out) const {
 
     BOOST_FOREACH (const CG::Vertex &vertex, graph_.vertices()) {
         const Function::Ptr &function = vertex.value();
-        out <<vertex.id() <<" [ label=" <<functionLabel(function) <<" "
+
+        std::string vertexName = vertexOrganization(vertex.id()).name();
+        if (vertexName.empty())
+            vertexName = StringUtility::numberToString(vertex.id());
+
+        out <<vertexName <<" [ label=" <<functionLabel(function) <<" "
             <<"href=\"" <<StringUtility::addrToString(function->address()) <<"\" "
             <<toString(functionAttributes(function)) <<" ]\n";
     }
@@ -797,7 +890,16 @@ CgEmitter::emitCallGraph(std::ostream &out) const {
             default:              label = "others"; break;
         }
         label = StringUtility::plural(edge.value().count(), label);
-        out <<edge.source()->id() <<" -> " <<edge.target()->id() <<" [ label=\"" <<label <<"\" ];\n";
+
+        std::string sourceName = vertexOrganization(edge.source()->id()).name();
+        if (sourceName.empty())
+            sourceName = StringUtility::numberToString(edge.source()->id());
+
+        std::string targetName = vertexOrganization(edge.target()->id()).name();
+        if (targetName.empty())
+            targetName = StringUtility::numberToString(edge.target()->id());
+
+        out <<sourceName <<" -> " <<targetName <<" [ label=\"" <<label <<"\" ];\n";
     }
     
     out <<"}\n";
@@ -857,6 +959,85 @@ CgInlinedEmitter::functionLabel(const Function::Ptr &function) const {
     BOOST_FOREACH (const Function::Ptr &inlined, inlines_[function])
         s += "  " + htmlEscape(inlined->printableName()) + "<br align=\"left\"/>";
     return "<" + s + ">";
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Grap with positioned vertices and edges
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+PositionGraph
+readPositions(std::istream &in) {
+    PositionGraph retval;
+    Sawyer::Container::Map<std::string /*vertex name*/, PositionGraph::VertexIterator> vertexMap;
+
+    size_t lineNumber = 0;
+    char buf[8192];
+    while (in) {
+        ++lineNumber;
+        in.getline(buf, sizeof buf);
+
+        // Split the line into space-separated words, ignoring quotes, comments, HTML tags, etc.
+        std::vector<std::string> words;
+        char *s = buf;                                  // start
+        while (s) {
+            while (isspace(*s))
+                ++s;
+            if (!*s)
+                break;
+            char *t = s;                                // terminate
+            while (t && !isspace(*t))
+                ++t;
+            words.push_back(std::string(s, t));
+            s = t;
+        }
+        if (words.empty())
+            continue;
+
+        // Parse the words (ignore everything after the coordinates)
+        if (1 == lineNumber) {
+            if (words.size() < 4 || words[0] != "graph")
+                throw std::runtime_error("expected \"graph SF DX DY\" at start of input");
+
+        } else if (words[0] == "node") {
+            if (words.size() < 6) {
+                throw std::runtime_error("expected \"node NAME X Y DX DY\" at line " +
+                                         StringUtility::numberToString(lineNumber));
+            }
+            VertexPosition pos;
+            pos.name = words[1];
+            pos.center.x = boost::lexical_cast<double>(words[2]);
+            pos.center.y = boost::lexical_cast<double>(words[3]);
+            pos.width = boost::lexical_cast<double>(words[4]);
+            pos.height = boost::lexical_cast<double>(words[5]);
+            ASSERT_forbid2(vertexMap.exists(pos.name), "duplicate vertex name");
+            vertexMap.insert(pos.name, retval.insertVertex(pos));
+
+        } else if (words[0] == "edge") {
+            if (words.size() < 12) {
+                throw std::runtime_error("expected \"edge SOURCE TARGET N SPLINE...\" at line " +
+                                         StringUtility::numberToString(lineNumber));
+            }
+            EdgePosition pos;
+            std::string &sourceVertexName = words[1];
+            std::string &targetVertexName = words[2];
+            size_t nControlPoints = boost::lexical_cast<size_t>(words[3]);
+            for (size_t i=0; i<nControlPoints; ++i) {
+                Coordinate cp;
+                cp.x = boost::lexical_cast<double>(words[2*i+3]);
+                cp.y = boost::lexical_cast<double>(words[2*i+4]);
+                pos.spline.push_back(cp);
+            }
+            ASSERT_require(vertexMap.exists(sourceVertexName));
+            ASSERT_require(vertexMap.exists(targetVertexName));
+            retval.insertEdge(vertexMap[sourceVertexName], vertexMap[targetVertexName], pos);
+
+        } else if (words[0] == "stop") {
+            break;
+        }
+    }
+    return retval;
 }
 
 } // namespace

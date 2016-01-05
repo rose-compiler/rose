@@ -137,7 +137,7 @@ namespace Attribute {
 typedef size_t Id;
 
 /** Invalid attribute ID. */
-extern const Id INVALID_ID;
+SAWYER_EXPORT extern const Id INVALID_ID;
 
 /** Register a new attribute key.
  *

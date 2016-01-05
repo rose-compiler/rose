@@ -360,7 +360,7 @@ void nameNoopFunctions(const Partitioner&);
  *  Builds and returns an AST for the specified basic block. The basic block must not be a null pointer, but it need not be in
  *  the CFG.  If the basic block has no instructions then it would violate ROSE's invariants, so a null pointer is returned
  *  instead; however, if @p relaxed is true then an IR node is returned anyway. */
-SgAsmBlock* buildBasicBlockAst(const Partitioner&, const BasicBlock::Ptr&, bool relaxed=false);
+SgAsmBlock* buildBasicBlockAst(const Partitioner&, const BasicBlock::Ptr&, const Function::Ptr&, bool relaxed=false);
 
 /** Build AST for data block.
  *
@@ -408,7 +408,15 @@ SgAsmBlock* buildAst(const Partitioner&, SgAsmInterpretation *interp=NULL, bool 
  *  into sections are only created if an interpretation is specified. */
 void fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp=NULL);
 
-
+/** Fixes calling convention results.
+ *
+ *  This function uses the results of previous calling convention analysis to assign calling convention definitions to the
+ *  functions in the specified AST. There's often more than one definition that matches the analysis results, and this fixup
+ *  pass attempts to assign the best definitions. It does so by first ranking the definitions according to how often they match
+ *  across all the functions known to the partitioner. Then, for each function in the specified @ref ast, the we also get a
+ *  list matching definitions (if a calling convention analysis has been run on that function). We copy into the AST that
+ *  function's definition which has the highest global ranking. */
+void fixupAstCallingConventions(const Partitioner&, SgNode *ast);
 
 } // namespace
 

@@ -498,7 +498,6 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         mlog[DEBUG] <<"  no instruction semantics\n";
         return;
     }
-    CallingConvention::Definition dfltCc = CallingConvention::Definition::x86_cdecl(cpu_->get_register_dictionary());
     P2::DataFlow::MergeFunction merge(cpu_);
     P2::DataFlow::TransferFunction xfer(cpu_);
     xfer.defaultCallingConvention(defaultCc_);
@@ -603,7 +602,6 @@ Analysis::updateStackParameters(const StatePtr &initialState, const StatePtr &fi
 
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
     RiscOperatorsPtr ops = cpu_->get_operators();
-    MemoryCellListPtr memState = MemoryCellList::promote(finalState->get_memory_state());
     SValuePtr initialStackPointer = initialState->readRegister(cpu_->stackPointerRegister(), ops.get());
     ops->set_state(finalState);
     StackVariables vars = P2::DataFlow::findFunctionArguments(ops, initialStackPointer);

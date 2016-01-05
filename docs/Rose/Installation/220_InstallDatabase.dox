@@ -12,6 +12,12 @@
  *  @section installing_database_rhel Redhat Enterprise Linux
  *
  *  @todo Describe how to install SQLite3 or PostgreSQL on RHEL.
+ *  Todo.
+ *
+ *  @section installing_database_wheezy Debian 7 "Wheezy"
+ *
+ *  Run <code>apt-get install libsqlite3-dev</code> and/or <code>apt-get install libpqxx3-dev postgresql</code> as the
+ *  administrator.
  *
  *  @section installing_database_jessie Debian 8 "Jessie"
  *

@@ -78,6 +78,10 @@ public:
         return new Attr1(*this);
     }
 
+    virtual OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+        return CONTAINER_OWNERSHIP;
+    }
+
     virtual std::string attribute_class_name() const ROSE_OVERRIDE {
         return "Attr1";
     }
@@ -121,6 +125,10 @@ class Attr2: public AstAttribute, public AllocationCounter<Attr2> {
 public:
     virtual AstAttribute* copy() const ROSE_OVERRIDE {
         return new Attr2(*this);
+    }
+
+    virtual OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+        return CONTAINER_OWNERSHIP;
     }
 
     virtual std::string attribute_class_name() const ROSE_OVERRIDE {
@@ -212,6 +220,10 @@ class Attr3: public AstAttribute, public AllocationCounter<Attr3> {
 public:
     // no virtual copy constructor
 
+    virtual OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+        return CONTAINER_OWNERSHIP;
+    }
+
     virtual std::string attribute_class_name() const ROSE_OVERRIDE {
         return "Attr3";
     }
@@ -242,6 +254,10 @@ public:
     // incorrect virtual copy constructor
     virtual AstAttribute* copy() const ROSE_OVERRIDE {
         return const_cast<Attr4*>(this);
+    }
+
+    virtual OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+        return CONTAINER_OWNERSHIP;
     }
 
     virtual std::string attribute_class_name() const ROSE_OVERRIDE {
@@ -285,6 +301,10 @@ public:
         return new Attr5(*this);
     }
 
+    virtual OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+        return CONTAINER_OWNERSHIP;
+    }
+
     virtual std::string attribute_class_name() const ROSE_OVERRIDE {
         return "Attr5";
     }
@@ -322,17 +342,8 @@ test_exception_safety() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int
-main(int argc, char *argv[]) {
+main() {
     rose::Diagnostics::initialize();
-
-    if (1 == argc && AstAttributeMechanism::isBuggy()) {
-        mlog[FATAL] <<"These unit tests are bypassed because the AstAttributeMechanism has been compiled\n"
-                    <<"in a mode that emulates certain bugs that previously existed. See the top of the\n"
-                    <<"AstAttributeMechanism.C file for details about which bugs are being emulated. The\n"
-                    <<"tests will be considered to have passed.  If you want to really try running them\n"
-                    <<"anyway (they should fail), then invoke this test again with any command-line argument.\n";
-        return 0;
-    }
 
     test_allocation_counter();
     test_value_deletion();

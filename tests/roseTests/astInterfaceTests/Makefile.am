@@ -191,6 +191,7 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_24.C \
   inputmoveDeclarationToInnermostScope_25.C \
   inputmoveDeclarationToInnermostScope_26.C \
+  inputmoveDeclarationToInnermostScope_27.C \
   inputmoveDeclarationToInnermostScope_test2015_126.C \
   inputmoveDeclarationToInnermostScope_test2015_127.C 
 
@@ -965,9 +966,15 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputmoveDeclarationToInnermostScope_test2015_22.h \
        inputmoveDeclarationToInnermostScope_test2015_40.h \
        inputmoveDeclarationToInnermostScope_test2015_142.h \
+       inputmoveDeclarationToInnermostScope_19.C \
+       inputmoveDeclarationToInnermostScope_20.C \
+       inputmoveDeclarationToInnermostScope_21.C \
+       inputmoveDeclarationToInnermostScope_22.C \
+       inputmoveDeclarationToInnermostScope_23.C \
        inputmoveDeclarationToInnermostScope_24.C \
        inputmoveDeclarationToInnermostScope_25.C \
        inputmoveDeclarationToInnermostScope_26.C \
+       inputmoveDeclarationToInnermostScope_27.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_15.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_16.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_17.C \
@@ -979,6 +986,8 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        referenceResults/rose_inputmoveDeclarationToInnermostScope_23.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_24.C \
        referenceResults/rose_inputmoveDeclarationToInnermostScope_25.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_26.C \
+       referenceResults/rose_inputmoveDeclarationToInnermostScope_27.C \
        referenceResults/withmerge/rose_v2_inputmoveDeclarationToInnermostScope_22.C
 
 
@@ -1002,3 +1011,4 @@ clean-local:
 	rm -f $(addsuffix .passed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
 	rm -f $(addsuffix .failed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
 	rm -f $(addsuffix .diff, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
+	rm -rf rose_*.C
