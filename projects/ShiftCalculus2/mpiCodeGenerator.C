@@ -185,6 +185,7 @@ std::set<SgSymbol* > MPI_Code_Generator::transOmpMapVariables (SgOmpTargetStatem
   SgOmpMapClause* map_tofrom_clause = NULL;
   // dimension map is the same for all the map clauses under the same omp target directive
   std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions; 
+  std::map<SgSymbol*, std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > > dist_data_policies;
 
   //TODO: obtain array dist_data information
   // a map between original symbol and its device version : used for variable replacement 
@@ -196,10 +197,10 @@ std::set<SgSymbol* > MPI_Code_Generator::transOmpMapVariables (SgOmpTargetStatem
   all_mapped_vars = collectClauseVariables (omp_target, VariantVector(V_SgOmpMapClause)); 
 
   // store all variables showing up in any of the device clauses
-  SgExpression* device_expression = getClauseExpression (omp_target, VariantVector(V_SgOmpDeviceClause));  
+ // SgExpression* device_expression = getClauseExpression (omp_target, VariantVector(V_SgOmpDeviceClause));  
 
   // TODO extend to get dist_data info.
-  OmpSupport::extractMapClauses(map_clauses, array_dimensions, &map_alloc_clause, &map_to_clause, &map_from_clause, &map_tofrom_clause); 
+  OmpSupport::extractMapClauses(map_clauses, array_dimensions, dist_data_policies, &map_alloc_clause, &map_to_clause, &map_from_clause, &map_tofrom_clause); 
   std::set<SgSymbol*> array_syms; // store clause variable symbols which are array types (explicit or as a pointer)
   std::set<SgSymbol*> atom_syms; // store clause variable symbols which are non-aggregate types: scalar, pointer, etc
 
@@ -215,18 +216,166 @@ std::set<SgSymbol* > MPI_Code_Generator::transOmpMapVariables (SgOmpTargetStatem
   for (std::set<SgSymbol*>::iterator iter = atom_syms.begin(); iter!= atom_syms.end(); iter++)
   {
     SgVariableSymbol * var_sym = isSgVariableSymbol(*iter);
-#if 0
-    SgType* var_type = var_sym->get_type();
-    ROSE_ASSERT (isScalarType(var_type));
-    SgName sn("MPI_Bcast");
-    SgExpression* par1 = buildAddressOfOp(buildVarRefExp(var_sym));
-    string mpi_type_name = C2MPITypeName (var_type);
-    SgExprListExp* parameters = buildExprListExp (par1, buildIntVal(1), buildOpaqueVarRefExp(mpi_type_name, insertion_scope), buildIntVal(0), buildOpaqueVarRefExp("MPI_COMM_WORLD", insertion_scope));
-    SgExprStatement* mpi_call = buildFunctionCallStmt (sn, buildVoidType(), parameters, insertion_scope);
-#endif
     SgExprStatement* mpi_call = buildMPI_Bcast(var_sym, 0, insertion_scope);
     insertStatementBefore (omp_target, mpi_call, false); // ignore preprocessing info. handling for now as a prototype
   }
+
+  //Translate array variables: TODO refactored into a function
+   for (std::set<SgSymbol*>::iterator iter = array_syms.begin(); iter!= array_syms.end(); iter++)
+  {
+    SgVariableSymbol * var_sym = isSgVariableSymbol(*iter);
+
+    // generate temp variables
+    // double* _mpi_source_var;
+    SgType* element_type = getElementType (var_sym->get_type());
+    string var_name = "_mpi_"+var_sym->get_name().getString();
+    
+    SgVariableDeclaration* decl = buildVariableDeclaration(var_name, buildPointerType(element_type),NULL, insertion_scope );
+    insertStatementBefore (omp_target, decl, false); // ignore preprocessing info. handling for now as a prototype
+
+    // distribute data on the desired dimension
+    // TODO: assuming single dimension data distribution for Z dimension
+    std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > dist_data_policy_vec = dist_data_policies[var_sym];
+    if (dist_data_policy_vec.size()>0)
+    {
+      ROSE_ASSERT (dist_data_policy_vec.size()<=3); // at most 3 dimensions
+      // find the dimension with e_omp_map_dist_data_block policy
+      int dim_id = -1 ; // default dimension (-1 means none) to be distributed, 
+      for (size_t i=0; i< dist_data_policy_vec.size(); i++)
+      {
+        std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > policy_pair = dist_data_policy_vec[i];
+        SgOmpClause::omp_map_dist_data_enum policy= policy_pair.first;
+        if (policy == SgOmpClause::e_omp_map_dist_data_block) 
+        {
+          if (dim_id != -1)
+          {
+            //TODO: we assume only one dimension is block distributed for now
+            cerr<<"Error. Found more than one dimensions with block distribution policy, which is not supported for now."<<endl;
+            ROSE_ASSERT (false);
+          }
+          dim_id = i; 
+        }
+      } // end for all dimensions
+
+      // The following calculation should only happen once, only for distributed arrays
+      // build runtime calls to distribute the specified dimension
+      string var_offset_name = var_name+"_offset_"+StringUtility::numberToString(dim_id); 
+      string var_size_name = var_name+"_size_"+StringUtility::numberToString(dim_id) ;
+      SgVariableDeclaration* offset_decl = buildVariableDeclaration (var_offset_name, buildIntType(), NULL, insertion_scope); 
+      SgVariableDeclaration* size_decl = buildVariableDeclaration (var_size_name, buildIntType(), NULL, insertion_scope); 
+      insertStatementBefore (omp_target, size_decl, false); // ignore preprocessing info. handling for now as a prototype
+      insertStatementBefore (omp_target, offset_decl, false); // ignore preprocessing info. handling for now as a prototype
+
+      // xomp_static_even_divide_start_size (0, arraySize_Z_dest, nprocs, rank, & offsetdest, & distdestsize);
+      // obtain lower and size info. for the specified dimension
+      // Mostly to obtain size info. of each distributed local portion
+      SgExprListExp* parameters = buildExprListExp ( 
+          deepCopy((array_dimensions[var_sym])[dim_id].first) , deepCopy((array_dimensions[var_sym])[dim_id].second), 
+          buildVarRefExp("_xomp_nprocs", insertion_scope), buildVarRefExp("_xomp_rank", insertion_scope),
+          buildAddressOfOp(buildVarRefExp(offset_decl)), buildAddressOfOp(buildVarRefExp(size_decl)));
+      SgExprStatement* func_call_1= buildFunctionCallStmt ("xomp_static_even_divide_start_size", buildVoidType(), parameters, insertion_scope);
+      insertStatementBefore (omp_target, func_call_1 , false); 
+
+      // initialize or copy back as needed
+      bool needCopyTo = false;
+      bool needCopyFrom = false;
+      if ( ((map_to_clause) && (OmpSupport::isInClauseVariableList (map_to_clause,var_sym))) ||
+          ((map_tofrom_clause) && (OmpSupport::isInClauseVariableList (map_tofrom_clause,var_sym))) )
+        needCopyTo = true;
+
+      if (( (map_from_clause) && (OmpSupport::isInClauseVariableList (map_from_clause,var_sym))) ||
+          ( (map_tofrom_clause) && (OmpSupport::isInClauseVariableList (map_tofrom_clause,var_sym))))
+        needCopyFrom = true;
+
+      // allocate local portions 
+      // distsrc = (double*)calloc(sizeof(double), (distdestsize+2*nghost)*arraySize_X_src*arraySize_Y_src);
+      // Generate element count information, assuming all dimensions start with 0
+      SgExpression* element_count_exp = NULL;
+      // consider the first dimension
+
+      if (dim_id ==0 ) // use local portion size 
+      {
+        if (needCopyTo) // for source arrays in stencil fixed ghost size for now, TODO parse ghost size in clause
+          element_count_exp = buildAddOp( buildVarRefExp(size_decl), buildIntVal(2)); 
+        else 
+          element_count_exp = buildVarRefExp(size_decl);
+      }
+      else // pass regular size: the 2nd of the pair [offset:size]
+        element_count_exp = deepCopy((array_dimensions[var_sym])[0].second);
+
+      for (size_t j =1; j< array_dimensions[var_sym].size(); j++)
+      {
+        SgExpression* element_count_per_dim = NULL; 
+        if (dim_id == (int)j)
+        {
+          if (needCopyTo) // for source arrays in stencil fixed ghost size for now, TODO parse ghost size in clause
+            element_count_per_dim = buildAddOp( buildVarRefExp(size_decl), buildIntVal(2)); 
+          else 
+            element_count_per_dim = buildVarRefExp(size_decl);
+        }
+        else
+          element_count_per_dim = deepCopy((array_dimensions[var_sym])[j].second);
+
+        ROSE_ASSERT (element_count_per_dim != NULL);
+        element_count_exp = buildMultiplyOp(element_count_exp, element_count_per_dim);
+      }
+      ROSE_ASSERT (element_count_exp!= NULL);
+      SgExprListExp* parameters2 = buildExprListExp (buildSizeOfOp(element_type), element_count_exp);
+      SgFunctionCallExp* alloc_call_exp = buildFunctionCallExp ("calloc", buildPointerType(buildVoidType()),parameters2, insertion_scope);
+      SgExprStatement* alloc_stmt = buildAssignStatement(buildVarRefExp(decl), buildCastExp(alloc_call_exp, buildPointerType(element_type)));
+      insertStatementBefore (omp_target, alloc_stmt, false); 
+
+      // copy to or copy from MPI processes
+      if (needCopyTo)
+      {
+        // void xomp_divide_scatter_array_to_all (void * sourceDataPointer, int x_dim_size, int y_dim_size, int z_dim_size,
+        //       int distributed_dimension_id, int halo_size, int rank_id, int process_count, int** distsrc);
+        // xomp_divide_scatter_array_to_all (sourceDataPointer, arraySize_X_src, arraySize_Y_src, arraySize_Z_src, 2, 1, rank, nprocs, &distsrc);
+        // TODO: dimension expression can be NULL, need to convert to 0 then
+        // TODO: ghost width is assumed to be fixed 1
+        SgExprListExp * parameters3 = buildExprListExp (buildVarRefExp(var_sym), 
+              deepCopy((array_dimensions[var_sym])[0].second), deepCopy((array_dimensions[var_sym])[1].second) , deepCopy((array_dimensions[var_sym])[2].second),
+              buildIntVal(dim_id), buildIntVal(1), buildVarRefExp("_xomp_rank", insertion_scope), buildVarRefExp("_xomp_nprocs", insertion_scope),
+              buildAddressOfOp (buildVarRefExp(decl))
+              );
+        SgExprStatement* scatter_call = buildFunctionCallStmt ("xomp_divide_scatter_array_to_all", buildVoidType(), parameters3, insertion_scope);
+        insertStatementBefore (omp_target, scatter_call, false); 
+      }
+
+      if(needCopyFrom)
+      {
+        // xomp_collect_scattered_array_from_all (distdest, arraySize_X_dest, arraySize_Y_dest, arraySize_Z_dest, 2, 0, rank, nprocs, &destinationDataPointer);
+        // TODO: ghost width is assumed to be fixed value of 0
+        SgExprListExp * parameters4 = buildExprListExp (
+              buildVarRefExp(decl), 
+              deepCopy((array_dimensions[var_sym])[0].second), deepCopy((array_dimensions[var_sym])[1].second) , deepCopy((array_dimensions[var_sym])[2].second),
+              buildIntVal(dim_id), buildIntVal(0), buildVarRefExp("_xomp_rank", insertion_scope), buildVarRefExp("_xomp_nprocs", insertion_scope),
+              buildAddressOfOp (buildVarRefExp(var_sym))
+              );
+        SgExprStatement* collect_call = buildFunctionCallStmt ("xomp_collect_scattered_array_from_all", buildVoidType(), parameters4, insertion_scope);
+        insertStatementAfter (omp_target, collect_call, false); 
+      }
+
+      // replace variable references in the target loop
+      Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(omp_target, V_SgOmpForStatement);
+      ROSE_ASSERT (nodeList.size()==1 );// for this prototype, no nested parallel for statements
+      SgOmpForStatement* omp_for_stmt = isSgOmpForStatement(nodeList[0]);
+      ROSE_ASSERT (omp_for_stmt != NULL); 
+
+      nodeList = NodeQuery::querySubTree(omp_for_stmt, V_SgForStatement);
+      ROSE_ASSERT (nodeList.size()>=1 );
+      SgForStatement* for_stmt = isSgForStatement(nodeList[0]);
+      ROSE_ASSERT (for_stmt != NULL); 
+      replaceVariableReferences (var_sym, getFirstVarSym(decl), for_stmt);
+
+      // translate the affected loop's bounds
+      // TODO: the loop should have an additional clause dist_iteration(BLOCK, DUPLICATE, DUPLICATE) match_dist() 
+      // rewrite the lower and upper bounds
+
+    } // end if policy vec >0 
+
+  } // end for array symbols
+
 
   // what is this for?
   return all_syms; 
