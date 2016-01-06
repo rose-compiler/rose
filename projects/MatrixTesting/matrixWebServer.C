@@ -883,13 +883,16 @@ parseCommandLine(int argc, char *argv[]) {
                 .doc("Show this documentation.")
                 .action(showHelpAndExit(0)));
 
+#ifndef USING_FASTCGI
     parser.with(Switch("log", 'L')
                 .action(configureDiagnostics("log", Sawyer::Message::mfacilities))
                 .argument("config")
                 .whichValue(SAVE_ALL)
                 .doc("Configures diagnostics.  Use \"@s{log}=help\" and \"@s{log}=list\" to get started."));
+#endif
 
     // Switches for HTTP server
+#ifndef USING_FASTCGI
     parser.with(Switch("http-address")
                 .argument("IP-address", anyParser(gstate.httpAddress))
                 .doc("IP address to bind to server listening socket. The default is " + gstate.httpAddress));
@@ -903,20 +906,42 @@ parseCommandLine(int argc, char *argv[]) {
                 .argument("directory", anyParser(gstate.docRoot))
                 .doc("Name of root directory for serving HTTP documents.  The default is \"" + gstate.docRoot + "\"."));
 
-    parser
-        .purpose("serves matrix testing results as HTML")
-        .doc("synopsis",
-             "@prop{programName} [@v{switches}] @v{database}")
-        .doc("description",
-             "This is a web server for querying matrix testing results.");
+    parser.with(Switch("database", 'd')
+                .argument("uri", anyParser(gstate.dbUrl))
+                .doc("Uniform resource locator for the database." + SqlDatabase::uriDocumentation()));
+#endif
+
+    parser.purpose("serves matrix testing results as HTML");
+
+#ifdef USING_FASTCGI
+    parser.doc("description",
+               "This is a FastCGI program for querying ROSE matrix testing results, and as such its command-line is "
+               "processed by libwtfcgi. Users don't normally run this program directly; instead, it's run by a web "
+               "server like Apache or Nginx. Here are the instructions for using FastCGI on Apache: "
+               "http://redmine.webtoolkit.eu/projects/wt/wiki/Fastcgi_on_apache.  The database URI is provided "
+               "by the ROSE_MATRIX_DATABASE environment variable instead of a command line. It defaults to "
+               "\"" + StringUtility::cEscape(gstate.dbUrl) + "\"");
+#else
+    parser.doc("description",
+               "This is a standalone HTTP web server that serves up an application showing ROSE matrix testing results. It "
+               "uses a default database (\"" + StringUtility::cEscape(gstate.dbUrl) + "\") unless a different one is "
+               "provided with the @s{database} switch.  To use this program, run it and specify a port number (@s{http-port}), "
+               "then start a web browser and point it at http://@v{hostname}:@v{port} where @v{hostname} is where you "
+               "ran this program (perhaps \"localhost\" is sufficient) and @v{port} is the value specified for the "
+               "@s{http-port} switch.");
+#endif
 
     std::vector<std::string> positionalArgs = parser.parse(argc, argv).apply().unreachedArgs();
-    if (positionalArgs.size() > 1) {
+
+#ifdef USING_FASTCGI
+    if (const char *dbUrl = getenv("ROSE_MATRIX_DATABASE"))
+        gstate.dbUrl = dbUrl;
+#else
+    if (positionalArgs.size() != 1) {
         ::mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);
-    } else if (positionalArgs.size() == 1) {
-        gstate.dbUrl = positionalArgs[0];
     }
+#endif
 }
 
 class StatusSorter {
