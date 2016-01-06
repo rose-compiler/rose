@@ -8,6 +8,11 @@
  *  @section installing_wget_rhel Redhat Enterprise Linux
  *
  *  @todo Describe how to install wget on RHEL.
+ *  Todo.
+ *
+ *  @section installing_wget_wheezy Debian 7 "Wheezy"
+ *
+ *  Run <code>apt-get install wget</code> as the administrator.
  *
  *  @section installing_wget_jessie Debian 8 "Jessie"
  *

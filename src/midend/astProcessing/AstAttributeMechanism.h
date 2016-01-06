@@ -363,7 +363,14 @@ public:
 
     /** List of stored attribute names.
      *
-     *  Returns the set of names for attributes stored in this container.
+     *  Returns the set of names for attributes stored in this container. This can be used to iterate over the attributes,
+     *  as in:
+     *
+     *  @snippet binaryAttribute.C iterate 2
+     *
+     *  Or using the @ref SgNode API for attributes:
+     *
+     *  @snippet binaryAttribute.C iterate 3
      *
      *  <b>New semantics:</b> The old implementation also returned some names that had no attribute values. For instance, if
      *  @c operator[] was invoked for an attribute that didn't exist then that name was also returned. */

@@ -22,3 +22,8 @@ bin_PROGRAMS += matrixAttachments
 matrixAttachments_SOURCES = matrixAttachments.C
 matrixAttachments_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
 matrixAttachments_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+bin_PROGRAMS += matrixWebServer
+matrixWebServer_SOURCES = matrixWebServer.C
+matrixWebServer_CPPFLAGS = $(ROSE_INCLUDES) -I$(WT_PREFIX)/include -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
+matrixWebServer_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) -lboost_signals $(ROSE_LIBS)

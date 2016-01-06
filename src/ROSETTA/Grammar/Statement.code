@@ -6065,6 +6065,12 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
                SgStatementPtrList & statementList = currentScope->getStatementList();
                SgStatementPtrList::iterator statement = statementList.begin();
 
+            // DQ (12/29/2015): Added more debugging info.
+               if (find(statementList.begin(),statementList.end(),newTransformationStatement) != statementList.end())
+                  {
+                    printf ("ERROR: already present in scope: newTransformationStatement = %p = %s \n",newTransformationStatement,newTransformationStatement->class_name().c_str());
+                  }
+
             // DQ (6/26/2013): Added test for if this statement already exists in the current scope (declaration list).
                ROSE_ASSERT(find(statementList.begin(),statementList.end(),newTransformationStatement) == statementList.end());
 
@@ -6144,6 +6150,12 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
              {
                SgStatementPtrList & statementList = currentScope->getStatementList();
                SgStatementPtrList::reverse_iterator statement = statementList.rbegin();
+
+            // DQ (12/29/2015): Added more debugging info.
+               if (find(statementList.begin(),statementList.end(),newTransformationStatement) != statementList.end())
+                  {
+                    printf ("ERROR: already present in scope: newTransformationStatement = %p = %s \n",newTransformationStatement,newTransformationStatement->class_name().c_str());
+                  }
 
             // DQ (6/26/2013): Added test for if this statement already exists in the current scope (declaration list).
                ROSE_ASSERT(find(statementList.begin(),statementList.end(),newTransformationStatement) == statementList.end());

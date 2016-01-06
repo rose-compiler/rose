@@ -55,11 +55,11 @@ print_int_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
     size_t nelmts = sz/4;
 
     if (1==nelmts) {
-        mfprintf(m)("%"PRId32, v[0]);
+        mfprintf(m)("%" PRId32, v[0]);
     } else {
         m <<"[";
         for (size_t i=0; i<nelmts; i++)
-            mfprintf(m)("%s%"PRId32, i?",":"", v[i]);
+            mfprintf(m)("%s%" PRId32, i?",":"", v[i]);
         m <<"]";
     }
 }
@@ -88,12 +88,12 @@ print_rlimit_32(Sawyer::Message::Stream &m, const uint8_t *ptr, size_t sz)
     if (0==~((const uint32_t*)ptr)[0]) {
         m <<"rlim_cur=unlimited";
     } else {
-        mfprintf(m)("rlim_cur=%"PRIu32, ((const uint32_t*)ptr)[0]);
+        mfprintf(m)("rlim_cur=%" PRIu32, ((const uint32_t*)ptr)[0]);
     }
     if (0==~((const uint32_t*)ptr)[1]) {
         m <<", rlim_max=unlimited";
     } else {
-        mfprintf(m)(", rlim_max=%"PRIu32, ((const uint32_t*)ptr)[1]);
+        mfprintf(m)(", rlim_max=%" PRIu32, ((const uint32_t*)ptr)[1]);
     }
 }
 
@@ -118,10 +118,10 @@ print_kernel_stat_32(Sawyer::Message::Stream &m, const uint8_t *_sb, size_t sz)
 {
     assert(sz==sizeof(kernel_stat_32));
     const kernel_stat_32 *sb = (const kernel_stat_32*)_sb;
-    mfprintf(m)("dev=%"PRIu64", ino=%"PRIu64", mode=", sb->dev, sb->ino);
+    mfprintf(m)("dev=%" PRIu64", ino=%" PRIu64", mode=", sb->dev, sb->ino);
     Printer::print_flags(m, file_mode_flags, sb->mode);
-    mfprintf(m)(", nlink=%"PRIu32", uid=%"PRIu32", gid=%"PRIu32", rdev=%"PRIu64", size=%"PRIu64
-                ", blksz=%"PRIu32", blocks=%"PRIu64", ...",
+    mfprintf(m)(", nlink=%" PRIu32", uid=%" PRIu32", gid=%" PRIu32", rdev=%" PRIu64", size=%" PRIu64
+                ", blksz=%" PRIu32", blocks=%" PRIu64", ...",
                 sb->nlink, sb->user, sb->group, sb->rdev, sb->size,
                 sb->blksize, sb->nblocks);
 }
@@ -278,9 +278,9 @@ print_stack_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(stack_32)==sz);
     const stack_32 *v = (const stack_32*)_v;
-    mfprintf(m)("sp=0x%08"PRIx32", flags=", v->ss_sp);
+    mfprintf(m)("sp=0x%08" PRIx32", flags=", v->ss_sp);
     Printer::print_flags(m, stack_flags, v->ss_flags);
-    mfprintf(m)(", sz=%"PRIu32, v->ss_size);
+    mfprintf(m)(", sz=%" PRIu32, v->ss_size);
 }
 
 void
@@ -324,9 +324,9 @@ print_statfs_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(statfs_32)==sz);
     const statfs_32 *v = (const statfs_32*)_v;
-    mfprintf(m)("type=%"PRIu32", bsize=%"PRIu32", blocks=%"PRIu32", bfree=%"PRIu32", bavail=%"PRIu32", files=%"PRIu32
-                ", ffree=%"PRIu32", fsid=[%"PRIu32",%"PRIu32"], namelen=%"PRIu32", frsize=%"PRIu32", flags=%"PRIu32
-                ", spare=[%"PRIu32",%"PRIu32",%"PRIu32",%"PRIu32"]",
+    mfprintf(m)("type=%" PRIu32", bsize=%" PRIu32", blocks=%" PRIu32", bfree=%" PRIu32", bavail=%" PRIu32", files=%" PRIu32
+                ", ffree=%" PRIu32", fsid=[%" PRIu32",%" PRIu32"], namelen=%" PRIu32", frsize=%" PRIu32", flags=%" PRIu32
+                ", spare=[%" PRIu32",%" PRIu32",%" PRIu32",%" PRIu32"]",
                 v->f_type, v->f_bsize, v->f_blocks, v->f_bfree, v->f_bavail, v->f_files,
                 v->f_ffree, v->f_fsid[0], v->f_fsid[1], v->f_namelen, v->f_frsize, v->f_flags,
                 v->f_spare[0], v->f_spare[1], v->f_spare[2], v->f_spare[3]);
@@ -355,9 +355,9 @@ print_statfs64_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(statfs64_32)==sz);
     const statfs64_32 *v = (const statfs64_32*)_v;
-    mfprintf(m)("type=%"PRIu32", bsize=%"PRIu32", blocks=%"PRIu64", bfree=%"PRIu64", bavail=%"PRIu64", files=%"PRIu64
-                ", ffree=%"PRIu64", fsid=[%"PRIu32",%"PRIu32"], namelen=%"PRIu32", frsize=%"PRIu32", flags=%"PRIu32
-                ", spare=[%"PRIu32",%"PRIu32",%"PRIu32",%"PRIu32"]",
+    mfprintf(m)("type=%" PRIu32", bsize=%" PRIu32", blocks=%" PRIu64", bfree=%" PRIu64", bavail=%" PRIu64", files=%" PRIu64
+                ", ffree=%" PRIu64", fsid=[%" PRIu32",%" PRIu32"], namelen=%" PRIu32", frsize=%" PRIu32", flags=%" PRIu32
+                ", spare=[%" PRIu32",%" PRIu32",%" PRIu32",%" PRIu32"]",
                 v->f_type, v->f_bsize, v->f_blocks, v->f_bfree, v->f_bavail, v->f_files,
                 v->f_ffree, v->f_fsid[0], v->f_fsid[1], v->f_namelen, v->f_frsize, v->f_flags,
                 v->f_spare[0], v->f_spare[1], v->f_spare[2], v->f_spare[3]);
@@ -413,8 +413,8 @@ print_ipc64_perm_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(ipc64_perm_32)==sz);
     const ipc64_perm_32 *v = (const ipc64_perm_32*)_v;
-    mfprintf(m)("key=%"PRId32", uid=%"PRId32", gid=%"PRId32", cuid=%"PRId32", cgid=%"PRId32
-                ", mode=0%03"PRIo16", seq=%"PRIu16,
+    mfprintf(m)("key=%" PRId32", uid=%" PRId32", gid=%" PRId32", cuid=%" PRId32", cgid=%" PRId32
+                ", mode=0%03" PRIo16", seq=%" PRIu16,
                 v->key, v->uid, v->gid, v->cuid, v->cgid, v->mode, v->seq);
 }
 
@@ -426,9 +426,9 @@ print_msqid64_ds_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
     
     m <<"msg_perm={";
     print_ipc64_perm_32(m, _v, sizeof(v->msg_perm));
-    mfprintf(m)("}, stime=%"PRId32", rtime=%"PRId32", ctime=%"PRId32
-                ", cbytes=%"PRIu32", qnum=%"PRIu32", qbytes=%"PRIu32
-                ", lspid=%"PRId32", lrpid=%"PRId32,
+    mfprintf(m)("}, stime=%" PRId32", rtime=%" PRId32", ctime=%" PRId32
+                ", cbytes=%" PRIu32", qnum=%" PRIu32", qbytes=%" PRIu32
+                ", lspid=%" PRId32", lrpid=%" PRId32,
                 v->msg_stime, v->msg_rtime, v->msg_ctime,
                 v->msg_cbytes, v->msg_qnum, v->msg_qbytes,
                 v->msg_lspid, v->msg_lrpid);
@@ -439,7 +439,7 @@ print_ipc_kludge_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(ipc_kludge_32)==sz);
     const ipc_kludge_32 *v = (const ipc_kludge_32*)_v;
-    mfprintf(m)("msgp=0x%08"PRIx32", msgtype=%"PRId32, v->msgp, v->msgtyp);
+    mfprintf(m)("msgp=0x%08" PRIx32", msgtype=%" PRId32, v->msgp, v->msgtyp);
 }
 
 void
@@ -450,9 +450,9 @@ print_shmid64_ds_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 
     m <<"shm_perm={";
     print_ipc64_perm_32(m, _v, sizeof(v->shm_perm));
-    mfprintf(m)("}, segsz=%"PRIu32
-                ", atime=%"PRId32", dtime=%"PRId32", ctime=%"PRId32
-                ", cpid=%"PRId32", lpid=%"PRId32", nattch=%"PRIu32,
+    mfprintf(m)("}, segsz=%" PRIu32
+                ", atime=%" PRId32", dtime=%" PRId32", ctime=%" PRId32
+                ", cpid=%" PRId32", lpid=%" PRId32", nattch=%" PRIu32,
                 v->shm_segsz,
                 v->shm_atime, v->shm_dtime, v->shm_ctime,
                 v->shm_cpid, v->shm_lpid, v->shm_nattch);
@@ -464,8 +464,8 @@ print_shm_info_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
     assert(sizeof(shm_info_32)==sz);
     const shm_info_32 *v = (const shm_info_32*)_v;
 
-    mfprintf(m)("used_ids=%"PRId32", shm_tot=%"PRIu32", shm_rss=%"PRIu32", shm_swp=%"PRIu32
-                ", swap_attempts=%"PRIu32", swap_successes=%"PRIu32,
+    mfprintf(m)("used_ids=%" PRId32", shm_tot=%" PRIu32", shm_rss=%" PRIu32", shm_swp=%" PRIu32
+                ", swap_attempts=%" PRIu32", swap_successes=%" PRIu32,
                 v->used_ids, v->shm_tot, v->shm_rss, v->shm_swp,
                 v->swap_attempts, v->swap_successes);
 }
@@ -475,7 +475,7 @@ print_shminfo64_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(shminfo64_32)==sz);
     const shminfo64_32 *v = (const shminfo64_32*)_v;
-    mfprintf(m)("shmmax=%"PRIu32", shmmin=%"PRIu32", shmmni=%"PRIu32", shmseg=%"PRIu32", shmall=%"PRIu32,
+    mfprintf(m)("shmmax=%" PRIu32", shmmin=%" PRIu32", shmmni=%" PRIu32", shmseg=%" PRIu32", shmall=%" PRIu32,
                 v->shmmax, v->shmmin, v->shmmni, v->shmseg, v->shmall);
 }
 
@@ -484,10 +484,10 @@ print_pt_regs_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(pt_regs_32)==sz);
     const pt_regs_32 *v = (const pt_regs_32*)_v;
-    mfprintf(m)("bx=0x%"PRIx32", cx=0x%"PRIx32", dx=0x%"PRIx32", si=0x%"PRIx32", di=0x%"PRIx32
-                ", bp=0x%"PRIx32", ax=0x%"PRIx32", ds=0x%"PRIx32", es=0x%"PRIx32", fs=0x%"PRIx32
-                ", gs=0x%"PRIx32", orig_ax=0x%"PRIx32", ip=0x%"PRIx32", cs=0x%"PRIx32", flags=0x%"PRIx32
-                ", sp=0x%"PRIx32", ss=0x%"PRIx32,
+    mfprintf(m)("bx=0x%" PRIx32", cx=0x%" PRIx32", dx=0x%" PRIx32", si=0x%" PRIx32", di=0x%" PRIx32
+                ", bp=0x%" PRIx32", ax=0x%" PRIx32", ds=0x%" PRIx32", es=0x%" PRIx32", fs=0x%" PRIx32
+                ", gs=0x%" PRIx32", orig_ax=0x%" PRIx32", ip=0x%" PRIx32", cs=0x%" PRIx32", flags=0x%" PRIx32
+                ", sp=0x%" PRIx32", ss=0x%" PRIx32,
                 v->bx, v->cx, v->dx, v->si, v->di,
                 v->bp, v->ax, v->ds, v->es, v->fs,
                 v->gs, v->orig_ax, v->ip, v->cs, v->flags,
@@ -499,11 +499,11 @@ print_pt_regs_64(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(pt_regs_64)==sz);
     const pt_regs_64 *v = (const pt_regs_64*)_v;
-    mfprintf(m)("r15=0x%"PRIx64", r14=0x%"PRIx64", r13=0x%"PRIx64", r12=0x%"PRIx64", bp=0x%"PRIx64
-                ", bx=0x%"PRIx64", r11=0x%"PRIx64", r10=0x%"PRIx64", r9=0x%"PRIx64", r8=0x%"PRIx64
-                ", ax=0x%"PRIx64", cx=0x%"PRIx64", dx=0x%"PRIx64", si=0x%"PRIx64", di=0x%"PRIx64
-                ", orig_ax=0x%"PRIx64", ip=0x%"PRIx64", cs=0x%"PRIx64", flags=0x%"PRIx64", sp=0x%"PRIx64
-                ", ss=0x%"PRIx64,
+    mfprintf(m)("r15=0x%" PRIx64", r14=0x%" PRIx64", r13=0x%" PRIx64", r12=0x%" PRIx64", bp=0x%" PRIx64
+                ", bx=0x%" PRIx64", r11=0x%" PRIx64", r10=0x%" PRIx64", r9=0x%" PRIx64", r8=0x%" PRIx64
+                ", ax=0x%" PRIx64", cx=0x%" PRIx64", dx=0x%" PRIx64", si=0x%" PRIx64", di=0x%" PRIx64
+                ", orig_ax=0x%" PRIx64", ip=0x%" PRIx64", cs=0x%" PRIx64", flags=0x%" PRIx64", sp=0x%" PRIx64
+                ", ss=0x%" PRIx64,
                 v->r15, v->r14, v->r13, v->r12, v->bp,
                 v->bx, v->r11, v->r10, v->r9, v->r8,
                 v->ax, v->cx, v->dx, v->si, v->di,
@@ -535,7 +535,7 @@ print_winsize_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(winsize_32)==sz);
     const winsize_32 *v = (const winsize_32*)_v;
-    mfprintf(m)("ws_row=%"PRIu16", ws_col=%"PRIu16", ws_xpixel=%"PRIu16", ws_ypixel=%"PRIu16,
+    mfprintf(m)("ws_row=%" PRIu16", ws_col=%" PRIu16", ws_xpixel=%" PRIu16", ws_ypixel=%" PRIu16,
                 v->ws_row, v->ws_col, v->ws_xpixel, v->ws_ypixel);
 }
 
@@ -628,7 +628,7 @@ print_sched_param_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(sched_param_32)==sz);
     const sched_param_32 *v = (const sched_param_32*)_v;
-    mfprintf(m)("sched_priority=%"PRId32, v->sched_priority);
+    mfprintf(m)("sched_priority=%" PRId32, v->sched_priority);
 }
 
 void
@@ -636,8 +636,8 @@ print_msghdr_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(msghdr_32)==sz);
     const msghdr_32 *v = (const msghdr_32*)_v;
-    mfprintf(m)("name=0x%08"PRIx32", namelen=%"PRIu32", iov=0x%08"PRIx32", iovlen=%"PRIu32
-                ", control=0x%08"PRIx32", controllen=%"PRIu32", flags=",
+    mfprintf(m)("name=0x%08" PRIx32", namelen=%" PRIu32", iov=0x%08" PRIx32", iovlen=%" PRIu32
+                ", control=0x%08" PRIx32", controllen=%" PRIu32", flags=",
                 v->msg_name, v->msg_namelen, v->msg_iov, v->msg_iovlen,
                 v->msg_control, v->msg_controllen);
     Printer::print_flags(m, msghdr_flags, v->msg_flags);
@@ -686,11 +686,11 @@ print_mmap_arg_struct_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t s
 {
     assert(sizeof(mmap_arg_struct_32)==sz);
     const mmap_arg_struct_32 *v = (const mmap_arg_struct_32*)_v;
-    mfprintf(m)("addr=0x%08"PRIx32", len=%"PRId32", prot=", v->addr, v->len);
+    mfprintf(m)("addr=0x%08" PRIx32", len=%" PRId32", prot=", v->addr, v->len);
     Printer::print_flags(m, mmap_pflags, v->prot);
     m <<", flags=";
     Printer::print_flags(m, mmap_mflags, v->flags);
-    mfprintf(m)(", fd=%"PRId32", offset=%"PRId32, v->fd, v->offset);
+    mfprintf(m)(", fd=%" PRId32", offset=%" PRId32, v->fd, v->offset);
 }
 
 void

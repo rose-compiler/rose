@@ -5827,7 +5827,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      printf ("Inside of unparseVarDeclStmt(%p) \n",stmt);
   // ROSE_ASSERT(info.get_current_scope() != NULL);
-  // printf ("An the current scope is (from info): info.get_current_scope() = %p = %s = %s \n",info.get_current_scope(),info.get_current_scope()->class_name().c_str(),SageInterface::get_name(info.get_current_scope()).c_str());
+  // printf ("An the current scope is (from info): info.get_current_scope() = %p = %s = %s \n",
+  //      info.get_current_scope(),info.get_current_scope()->class_name().c_str(),SageInterface::get_name(info.get_current_scope()).c_str());
      curprint("\n /* Inside of unparseVarDeclStmt() */ \n");
 #endif
 #if 0
@@ -5959,7 +5960,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      ninfo.set_declstatement_ptr(NULL);
      ninfo.set_declstatement_ptr(vardecl_stmt);
 
-  // curprint ( string("\n/* After being set (unparseVarDeclStmt): ninfo.get_declstatement_ptr() = " + ((ninfo.get_declstatement_ptr() != NULL) ? ninfo.get_declstatement_ptr()->class_name() : "no declaration statement defined") + " */\n ";
+  // curprint ( string("\n/* After being set (unparseVarDeclStmt): ninfo.get_declstatement_ptr() = " + 
+  //    ((ninfo.get_declstatement_ptr() != NULL) ? ninfo.get_declstatement_ptr()->class_name() : "no declaration statement defined") + " */\n ";
      ROSE_ASSERT(ninfo.get_declstatement_ptr() != NULL);
 
   // DQ (11/29/2004): This code is required for the output of the access specifier 
@@ -9782,6 +9784,14 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionDeclStmt(SgStatement* stmt, SgUnp
 void
 Unparse_ExprStmt::unparseTemplateVariableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
+  // DQ (1/3/2016): Present this function and the associated SgTemplateVariableDeclaration IR node 
+  // is being used for both the template and the instanatiation of variables.  We might want to
+  // have an IR node specific to template variable instantition.
+
+#if 0
+     printf ("In Unparse_ExprStmt::unparseTemplateVariableDeclStmt(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+
      unparseTemplateDeclarationStatment_support<SgTemplateVariableDeclaration>(stmt,info);
    }
 
@@ -9833,6 +9843,10 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 #if 0
       printf ("In unparseTemplateDeclarationStatment_support(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
 #endif
+#if 0
+     curprint("/* In unparseTemplateDeclarationStatment_support() */ \n");
+#endif
+
 
      T* template_stmt = dynamic_cast<T*>(stmt);
      ROSE_ASSERT(template_stmt != NULL);
@@ -9897,6 +9911,33 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 #if 0
                     printf ("Note: In unparseTemplateDeclarationStatment_support(): Found a SgTemplateVariableDeclaration = %p = %s (not handled) \n",stmt,stmt->class_name().c_str());
 #endif
+#if 0
+                    printf ("templateVariableDeclaration->get_string().is_null() = %s \n",templateVariableDeclaration->get_string().is_null() ? "true" : "false");
+                    printf ("templateVariableDeclaration->get_string() = %s \n",templateVariableDeclaration->get_string().str());
+#endif
+
+                 // DQ (1/4/2016): Note that this is the case of a instantiation for a template variable, we don't yet have 
+                 // a concept like this in the ROSE IR.  It would be just a SgVariableDeclaration, I think; however we isolate 
+                 // it out as a SgTemplateVariabelDeclaration and just don't have an associated string for the template and 
+                 // it is put into both the instantiation of the template class and the global scope.  We supress it from being 
+                 // output in the global scope (since that does not compile and is somewhat redundant with output in the class, 
+                 // except that it is what would be required for a non-template class).
+                    if (templateVariableDeclaration->get_string().is_null() == true)
+                       {
+#if 0
+                         printf ("Calling the base class support function unparseVarDeclStmt() to unparse the variable declaration as a non-template \n");
+                         printf ("templateVariableDeclaration->get_parent() = %p = %s \n",templateVariableDeclaration->get_parent(),templateVariableDeclaration->get_parent()->class_name().c_str());
+#endif
+                      // DQ (1/4/2016): Only output the variable declaration that is NOT in the global scope (where it exists).
+                      // unparseVarDeclStmt(templateVariableDeclaration,info);
+                         if (isSgGlobal(templateVariableDeclaration->get_parent()) == NULL)
+                            {
+                              unparseVarDeclStmt(templateVariableDeclaration,info);
+                            }
+#if 0
+                         printf ("DONE: Calling the base class support function unparseVarDeclStmt() to unparse the variable declaration as a non-template \n");
+#endif
+                       }
                   }
                  else
                   {
@@ -9925,6 +9966,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 #if 0
      info.display("denormalize template string for decltype");
 #endif
+
      SgSourceFile* sourcefile = info.get_current_source_file();
   // ROSE_ASSERT(sourcefile != NULL);
      if (sourcefile == NULL)

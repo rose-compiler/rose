@@ -247,13 +247,13 @@ RSIM_Linux32::pushAuxVector(RSIM_Process *process, rose_addr_t sp, rose_addr_t e
         auxv_.push_back(0x20);
         auxv_.push_back(vdsoEntryVa());
         if (trace)
-            fprintf(trace, "AT_SYSINFO(0x20):       0x%08"PRIx32"\n", auxv_.back());
+            fprintf(trace, "AT_SYSINFO(0x20):       0x%08" PRIx32"\n", auxv_.back());
 
         /* AT_SYSINFO_PHDR */
         auxv_.push_back(0x21);
         auxv_.push_back(vdsoMappedVa());
         if (trace)
-            fprintf(trace, "AT_SYSINFO_PHDR(0x21):  0x%08"PRIx32"\n", auxv_.back());
+            fprintf(trace, "AT_SYSINFO_PHDR(0x21):  0x%08" PRIx32"\n", auxv_.back());
     }
     
     /* AT_HWCAP (see linux <include/asm/cpufeature.h>). */
@@ -261,103 +261,103 @@ RSIM_Linux32::pushAuxVector(RSIM_Process *process, rose_addr_t sp, rose_addr_t e
     uint32_t hwcap = 0xbfebfbfful; /* value used by hudson-rose-07, and wortheni(Xeon X5680) */
     auxv_.push_back(hwcap);
     if (trace)
-        fprintf(trace, "AT_HWCAP(0x10):         0x%08"PRIx32"\n", auxv_.back());
+        fprintf(trace, "AT_HWCAP(0x10):         0x%08" PRIx32"\n", auxv_.back());
 
     /* AT_PAGESZ */
     auxv_.push_back(6);
     auxv_.push_back(PAGE_SIZE);
     if (trace)
-        fprintf(trace, "AT_PAGESZ(0x06):        %"PRId32"\n", auxv_.back());
+        fprintf(trace, "AT_PAGESZ(0x06):        %" PRId32"\n", auxv_.back());
 
     /* AT_CLKTCK */
     auxv_.push_back(0x11);
     auxv_.push_back(100);
     if (trace)
-        fprintf(trace, "AT_CLKTCK(0x11):        %"PRId32"\n", auxv_.back());
+        fprintf(trace, "AT_CLKTCK(0x11):        %" PRId32"\n", auxv_.back());
 
     /* AT_PHDR */
     auxv_.push_back(3); /*AT_PHDR*/
     auxv_.push_back(segmentTableVa(fhdr));
     if (trace)
-        fprintf(trace, "AT_PHDR(0x03):          0x%08"PRIx32"\n", auxv_.back());
+        fprintf(trace, "AT_PHDR(0x03):          0x%08" PRIx32"\n", auxv_.back());
 
     /*AT_PHENT*/
     auxv_.push_back(4);
     auxv_.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
     if (trace)
-        fprintf(trace, "AT_PHENT(0x04):         0x%"PRId32"\n", auxv_.back());
+        fprintf(trace, "AT_PHENT(0x04):         0x%" PRId32"\n", auxv_.back());
 
     /* AT_PHNUM */
     auxv_.push_back(5);
     auxv_.push_back(fhdr->get_e_phnum());
     if (trace)
-        fprintf(trace, "AT_PHNUM(0x05):         %"PRId32"\n", auxv_.back());
+        fprintf(trace, "AT_PHNUM(0x05):         %" PRId32"\n", auxv_.back());
 
     /* AT_BASE */
     auxv_.push_back(7);
     auxv_.push_back(fhdr->get_section_by_name(".interp") ? interpreterBaseVa() : 0);
     if (trace)
-        fprintf(trace, "AT_BASE(0x07):          0x%08"PRIx32"\n", auxv_.back());
+        fprintf(trace, "AT_BASE(0x07):          0x%08" PRIx32"\n", auxv_.back());
         
     /* AT_FLAGS */
     auxv_.push_back(8);
     auxv_.push_back(0);
     if (trace)
-        fprintf(trace, "AT_FLAGS(0x08):         0x%08"PRIx32"\n", auxv_.back());
+        fprintf(trace, "AT_FLAGS(0x08):         0x%08" PRIx32"\n", auxv_.back());
 
     /* AT_ENTRY */
     auxv_.push_back(9);
     auxv_.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
     if (trace)
-        fprintf(trace, "AT_ENTRY(0x09):         0x%08"PRIx32"\n", auxv_.back());
+        fprintf(trace, "AT_ENTRY(0x09):         0x%08" PRIx32"\n", auxv_.back());
 
     /* AT_UID */
     auxv_.push_back(0x0b);
     auxv_.push_back(getuid());
     if (trace)
-        fprintf(trace, "AT_UID(0x0b):           %"PRId32"\n", auxv_.back());
+        fprintf(trace, "AT_UID(0x0b):           %" PRId32"\n", auxv_.back());
 
     /* AT_EUID */
     auxv_.push_back(0x0c);
     auxv_.push_back(geteuid());
     if (trace)
-        fprintf(trace, "AT_EUID(0x0c):          %"PRId32"\n", auxv_.back());
+        fprintf(trace, "AT_EUID(0x0c):          %" PRId32"\n", auxv_.back());
 
     /* AT_GID */
     auxv_.push_back(0x0d);
     auxv_.push_back(getgid());
     if (trace)
-        fprintf(trace, "AT_GID(0x0d):           %"PRId32"\n", auxv_.back());
+        fprintf(trace, "AT_GID(0x0d):           %" PRId32"\n", auxv_.back());
 
     /* AT_EGID */
     auxv_.push_back(0x0e);
     auxv_.push_back(getegid());
     if (trace)
-        fprintf(trace, "AT_EGID(0x0e):          %"PRId32"\n", auxv_.back());
+        fprintf(trace, "AT_EGID(0x0e):          %" PRId32"\n", auxv_.back());
 
     /* AT_SECURE */
     auxv_.push_back(23); /* 0x17 */
     auxv_.push_back(false);
     if (trace)
-        fprintf(trace, "AT_SECURE(0x17):        %"PRId32"\n", auxv_.back());
+        fprintf(trace, "AT_SECURE(0x17):        %" PRId32"\n", auxv_.back());
 
     /* AT_RANDOM */
     auxv_.push_back(0x19);
     auxv_.push_back(random_data_va);
     if (trace)
-        fprintf(trace, "AT_RANDOM(0x19):        0x%08"PRIx32"\n", auxv_.back());
+        fprintf(trace, "AT_RANDOM(0x19):        0x%08" PRIx32"\n", auxv_.back());
 
     /* AT_EXECFN */
     auxv_.push_back(0x1f);
     auxv_.push_back(execfn_va);
     if (trace)
-        fprintf(trace, "AT_EXECFN(0x1f):        0x%08"PRIx32" (%s)\n", auxv_.back(), exeArgs()[0].c_str());
+        fprintf(trace, "AT_EXECFN(0x1f):        0x%08" PRIx32" (%s)\n", auxv_.back(), exeArgs()[0].c_str());
 
     /* AT_PLATFORM */
     auxv_.push_back(0x0f);
     auxv_.push_back(platform_va);
     if (trace)
-        fprintf(trace, "AT_PLATFORM(0x0f):      0x%08"PRIx32" (%s)\n", auxv_.back(), platform);
+        fprintf(trace, "AT_PLATFORM(0x0f):      0x%08" PRIx32" (%s)\n", auxv_.back(), platform);
 
     /* AT_NULL */
     auxv_.push_back(0);
@@ -1234,7 +1234,7 @@ RSIM_Linux32::syscall_socketcall_enter(RSIM_Thread *t, int callno)
                             if (vasz[1]==t->get_process()->mem_read(buf, vasz[0], vasz[1])) {
                                 mfprintf(trace)("\n    iov #%u: ", i);
                                 Printer::print_buffer(trace, vasz[0], buf, vasz[1], 1024);
-                                mfprintf(trace)("; %"PRIu32" byte%s", vasz[1], 1==vasz[1]?"":"s");
+                                mfprintf(trace)("; %" PRIu32" byte%s", vasz[1], 1==vasz[1]?"":"s");
                             } else {
                                 mfprintf(trace)("\n    iov #%u: short read of data", i);
                             }
@@ -1657,7 +1657,7 @@ RSIM_Linux32::syscall_socketcall_leave(RSIM_Thread *t, int callno)
                             if (vasz[1]==t->get_process()->mem_read(buf, vasz[0], nused)) {
                                 mfprintf(trace)("    iov #%u: ", i);
                                 Printer::print_buffer(trace, vasz[0], buf, nused, 1024);
-                                mfprintf(trace)("; size total=%"PRIu32" used=%"PRIu32"\n", vasz[1], nused);
+                                mfprintf(trace)("; size total=%" PRIu32" used=%" PRIu32"\n", vasz[1], nused);
                             }
                             delete[] buf;
                         }
@@ -1902,7 +1902,7 @@ sys_semtimedop(RSIM_Thread *t, uint32_t semid, uint32_t sops_va, uint32_t nsops,
         return;
     }
     for (uint32_t i=0; i<nsops; i++) {
-        mfprintf(strace)("    sops[%"PRIu32"] = { num=%"PRIu16", op=%"PRId16", flg=",
+        mfprintf(strace)("    sops[%" PRIu32"] = { num=%" PRIu16", op=%" PRId16", flg=",
                          i, sops[i].sem_num, sops[i].sem_op);
         Printer::print_flags(strace, sem_flags, sops[i].sem_flg);
         strace <<" }\n";
@@ -2133,7 +2133,7 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
             }
             if (host_ds.sem_nsems>0) {
                 for (size_t i=0; i<host_ds.sem_nsems; i++) {
-                    mfprintf(strace)("    value[%zu] = %"PRId16"\n", i, sem_values[i]);
+                    mfprintf(strace)("    value[%zu] = %" PRId16"\n", i, sem_values[i]);
                 }
             }
             delete[] sem_values;
@@ -2160,7 +2160,7 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
                 return;
             }
             for (size_t i=0; i<host_ds.sem_nsems; i++)
-                mfprintf(strace)("    value[%zu] = %"PRId16"\n", i, sem_values[i]);
+                mfprintf(strace)("    value[%zu] = %" PRId16"\n", i, sem_values[i]);
 #ifdef SYS_ipc  /* i686 */
             semun_native semun;
             semun.ptr = sem_values;
@@ -3387,7 +3387,7 @@ RSIM_Linux32::syscall_writev_body(RSIM_Thread *t, int callno)
                 break;
             }
             Printer::print_buffer(strace, iov.iov_base, buf, iov.iov_len, 1024);
-            mfprintf(strace)(" (size=%"PRIu32")", iov.iov_len);
+            mfprintf(strace)(" (size=%" PRIu32")", iov.iov_len);
 
             /* Write data to the file */
             ssize_t nwritten = write(hostFd, buf, iov.iov_len);
