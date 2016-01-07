@@ -968,26 +968,3 @@
 0x080486d7: c3                      |.       |          ret    
 0x080486d7: Successor blocks: unknown
 
-0x08048c8c: ================================== Function (pattern, graph) unknown name
-
-0x08048c8c: Basic block reasons: entry point, CFG head
-0x08048c8c: c8 07 00 00             |....    |          enter  0x0007, 0x00
-0x08048c90: 04 00                   |..      |          add    al, 0x00
-0x08048c92: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048c94: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048c96: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048c98: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048c9a: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048c9c: 04 00                   |..      |          add    al, 0x00
-0x08048c9e: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048ca0: 04 00                   |..      |          add    al, 0x00
-0x08048ca2: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048ca4: d1 00                   |..      |          rol    dword ds:[eax], 0x01
-0x08048ca6: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048ca8: 01 00                   |..      |          add    dword ds:[eax], eax
-0x08048caa: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048cac: 03 00                   |..      |          add    eax, dword ds:[eax]
-0x08048cae: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048cb0: cc                      |.       |          int3   
-0x08048cb0: Successor blocks: unknown
-

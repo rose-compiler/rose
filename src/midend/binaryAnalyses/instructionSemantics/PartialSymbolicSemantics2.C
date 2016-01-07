@@ -125,7 +125,7 @@ RiscOperators::instance(const RegisterDictionary *regdict)
 #endif
     BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
     MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
-    memory->set_byte_restricted(false); // because extracting bytes from a word results in new variables for this domain
+    memory->byteRestricted(false); // because extracting bytes from a word results in new variables for this domain
     BaseSemantics::StatePtr state = State::instance(registers, memory);
     SMTSolver *solver = NULL;
     RiscOperatorsPtr ops = RiscOperatorsPtr(new RiscOperators(state, solver));

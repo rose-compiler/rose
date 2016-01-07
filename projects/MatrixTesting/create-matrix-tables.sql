@@ -167,6 +167,22 @@ insert into dependencies values ('yices',        '1.0.34',           1);
 
 
 --
+-- Table stores test names (status)
+--
+
+create table test_names (
+    name varchar(64) not null,				-- name of the test
+    position integer 	 				-- display position relative to other tests
+);
+
+insert into test_names values ( 'configure',        10  );
+insert into test_names values ( 'library-build',    20  );
+insert into test_names values ( 'libtest-build',    30  );
+insert into test_names values ( 'libtest-check',    40  );
+insert into test_names values ( 'project-bintools', 50  );
+insert into test_names values ( 'end',              999 );
+
+--
 -- The table that stores the results of each test.
 --
 
