@@ -7589,7 +7589,9 @@ SgSymbolTable::find( const SgInitializedName* initializedName)
      assert(p_table != NULL);
      assert(initializedName != NULL);
 
-#if 0
+#define DEBUG_FIND_INITIALIZED_NAME_SYMBOL 0
+
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
      printf ("Inside of SgSymbolTable::find( const SgInitializedName* ): initializedName = %p = %s \n",initializedName,SageInterface::get_name(initializedName).c_str());
 #endif
 
@@ -7597,10 +7599,16 @@ SgSymbolTable::find( const SgInitializedName* initializedName)
 
      SgName name = initializedName->get_name();
 
-  // printf ("Inside of SgSymbolTable::find( const SgInitializedName* ): name = %s \n",name.str());
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+     printf ("Inside of SgSymbolTable::find( const SgInitializedName* ): name = %s \n",name.str());
+#endif
 
   // Find the first symbol in the multimap
      p_iterator = p_table->find(name);
+
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+     printf ("Inside of SgSymbolTable::find( const SgInitializedName* ): name = %s this->count(name) = %d \n",name.str(),this->count(name));
+#endif
 
   // Iterate through the matching symbols in the multimap
   // while (p_iterator != p_table->end() && (*p_iterator).first == name)
@@ -7608,31 +7616,45 @@ SgSymbolTable::find( const SgInitializedName* initializedName)
         {
           assert(p_iterator->second != NULL);
           SgNode* symbolBasis = p_iterator->second->get_symbol_basis();
-       // printf ("In loop: p_iterator->second = %p symbolBasis = %p initializedName = %p \n",p_iterator->second,symbolBasis,initializedName);
-       // printf ("In loop: symbolBasis->variantT() = %d statement->variantT() = %d \n",symbolBasis->variantT(),initializedName->variantT());
+
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+          printf ("In loop: p_iterator->second = %p symbolBasis = %p initializedName = %p \n",p_iterator->second,symbolBasis,initializedName);
+          printf ("In loop: symbolBasis->variantT() = %d statement->variantT() = %d \n",symbolBasis->variantT(),initializedName->variantT());
+#endif
           assert(symbolBasis != NULL);
           if (isSgInitializedName(symbolBasis) != NULL)
              {
-            // printf ("found a SgInitializedName \n");
-
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+               printf ("found a SgInitializedName \n");
+#endif
                returnSymbol = p_iterator->second;
                if (returnSymbol->get_symbol_basis() == initializedName)
                   {
-                 // printf ("returnSymbol->get_symbol_basis() == initializedName returnSymbol = %p = %s \n",returnSymbol,returnSymbol->class_name().c_str());
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+                    printf ("returnSymbol->get_symbol_basis() == initializedName returnSymbol = %p = %s \n",returnSymbol,returnSymbol->class_name().c_str());
+#endif
                     return returnSymbol;
                   }
                  else
                   {
-                 // printf ("returnSymbol->get_symbol_basis() != initializedName \n");
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+                    printf ("returnSymbol->get_symbol_basis() != initializedName \n");
+#endif
                   }
              }
             else
              {
-            // printf ("Some other symbol was found (no matching variants) \n");
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+               printf ("Some other symbol was found (no matching variants) \n");
+#endif
              }
 
           p_iterator++;
         }
+
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+     printf ("Leaving SgSymbolTable::find( const SgInitializedName* ): return NULL \n");
+#endif
 
   // DQ (2/13/2007): Fixed bug that returns a valid pointer even when there was no match to the input statement!
   // return returnSymbol;
@@ -9581,6 +9603,12 @@ isSubset(const std::vector<SgNode*>& a_vector, const std::set<SgNode*>& b_set)
   // of causal SgNode objects (e.g. SgUsingDirectiveStatement, SgUsingDeclarationStatement, 
   // SgBaseClass, etc.). 
 
+#define DEBUG_IS_SUBSET 0
+
+#if DEBUG_IS_SUBSET
+     printf ("In isSubset(): a_vector.size() = %zu b_set.size() = %zu \n",a_vector.size(),b_set.size());
+#endif
+
      for (std::vector<SgNode*>::const_iterator i = a_vector.begin(); i != a_vector.end(); i++)
         {
           bool found = false;
@@ -9597,11 +9625,21 @@ isSubset(const std::vector<SgNode*>& a_vector, const std::set<SgNode*>& b_set)
           std::set<SgNode*>::const_iterator j = find(b_set.begin(),b_set.end(),*i);
           found = (j != b_set.end());
 #endif
+#if DEBUG_IS_SUBSET
+          printf ("In isSubset(): loop: found = %s *i = %p = %s \n",found ? "true" : "false",*i,(*i)->class_name().c_str());
+#endif
           if (!found)
              {
+#if DEBUG_IS_SUBSET
+               printf ("Leaving isSubset(): returning false \n");
+#endif
                return false;
              }
         }
+
+#if DEBUG_IS_SUBSET
+     printf ("Leaving isSubset(): returning true \n");
+#endif
 
      return true;
    }
@@ -9880,7 +9918,8 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                          if (foundCausalNode == true)
                             {
 #if 0
-                              printf ("Found causal node for SgAliasSymbol: aliasedSymbol = %p original_aliased_symbol = %p = %s \n",aliasedSymbol,original_aliased_symbol,original_aliased_symbol->class_name().c_str());
+                              printf ("Found causal node for SgAliasSymbol: aliasedSymbol = %p original_aliased_symbol = %p = %s \n",
+                                   aliasedSymbol,original_aliased_symbol,original_aliased_symbol->class_name().c_str());
                               ROSE_ASSERT(aliasedSymbol->get_alias() != NULL);
                               printf (" --- aliasedSymbol = %p aliasedSymbol->get_alias() = %p = %s \n",aliasedSymbol,aliasedSymbol->get_alias(),aliasedSymbol->get_alias()->class_name().c_str());
                               printf (" --- aliasedSymbol->get_causal_nodes().size() = %" PRIuPTR " \n",aliasedSymbol->get_causal_nodes().size());
@@ -9891,7 +9930,7 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                            else
                             {
                            // DQ (7/12/2014): If we didn't find the causal node then we can't consider the alias to exist 
-                           // yet in the traversal of the AST represented by the symbol tabel query at this point.
+                           // yet in the traversal of the AST represented by the symbol table query at this point.
                               original_aliased_symbol = NULL;
 #if 0
                               printf ("associated causal nodes not seen yet in traversal of AST: \n");
@@ -14951,7 +14990,10 @@ X aggressive
 
   // DQ (12/11/2015): Option to use the token stream mapping and local tests of the 
   // token sequence, to improve the source position information stored in the AST.
-     p_use_token_stream_to_improve_source_position_info = 0;
+     p_use_token_stream_to_improve_source_position_info = false;
+
+  // DQ (12/23/2015): Suppress variable declaration normalizations
+     p_suppress_variable_declaration_normalization = false;
    }
 
 #if 0
@@ -15555,6 +15597,9 @@ SgFile::display ( const std::string & label ) const
   // DQ (12/11/2015): Option to use the token stream mapping and local tests of the 
   // token sequence, to improve the source position information stored in the AST.
      printf ("     p_use_token_stream_to_improve_source_position_info = %s \n",(p_use_token_stream_to_improve_source_position_info == true) ? "true" : "false");
+
+  // DQ (12/23/2015): Suppress variable declaration normalizations
+     printf ("     p_suppress_variable_declaration_normalization = %s \n",(p_suppress_variable_declaration_normalization == true) ? "true" : "false");
 
 #if 0
 // Order of data member entries in support.C, matched against the 

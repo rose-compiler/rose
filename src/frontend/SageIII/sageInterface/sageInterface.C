@@ -5373,7 +5373,9 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
 
      ROSE_ASSERT(cscope != NULL);
 
-#if 0
+#define DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES 0
+
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
      printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s (templateParameterList = %p templateArgumentList = %p) \n",cscope,cscope->class_name().c_str(),templateParameterList,templateArgumentList);
 #endif
 
@@ -5399,7 +5401,7 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
           ROSE_ASSERT(cscope->get_symbol_table() != NULL);
 #endif
 
-#if 0
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
           printf("   --- In SageInterface:: lookupSymbolInParentScopes(): name = %s cscope = %p = %s \n",name.str(),cscope,cscope->class_name().c_str());
 #endif
 
@@ -5407,7 +5409,7 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
        // symbol = cscope->lookup_symbol(name);
           symbol = cscope->lookup_symbol(name,templateParameterList,templateArgumentList);
 
-#if 0
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES && 1
        // debug
           printf("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
           cscope->print_symboltable("In SageInterface:: lookupSymbolInParentScopes(): debug");
@@ -5417,14 +5419,14 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
             else
                cscope = NULL;
 
-#if 0
-          printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
+          printf ("   --- In SageInterface:: (base of loop) lookupSymbolInParentScopes(): cscope = %p symbol = %p \n\n",cscope,symbol);
 #endif
         }
 
      if (symbol == NULL)
         {
-#if 0
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
           printf ("Warning: In SageInterface:: lookupSymbolInParentScopes(): could not locate the specified name %s in any outer symbol table (templateParameterList = %p templateArgumentList = %p) \n",name.str(),templateParameterList,templateArgumentList);
 #endif
        // ROSE_ASSERT(false);
@@ -7940,7 +7942,9 @@ SageInterface::isTemplateInstantiationNode(SgNode* node)
         }
 
      return isSgTemplateInstantiationDecl(node)
+      // DQ (1/3/2016): Allow SgTemplateInstantiationDefn IR nodes.
 //       || isSgTemplateInstantiationDefn(node)
+         || isSgTemplateInstantiationDefn(node)
          || isSgTemplateInstantiationFunctionDecl(node)
          || isSgTemplateInstantiationMemberFunctionDecl(node)
          || isSgTemplateInstantiationTypedefDeclaration(node)
@@ -7974,13 +7978,28 @@ SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* ro
              {
             // markNodeToBeUnparsed(*i);
                SgDeclarationStatement* declaration = isSgDeclarationStatement(*i);
+#if 0
                if (declaration == NULL)
                   {
                     printf ("Error: found non-declaration statement: *i = %p = %s \n",*i,(*i)->class_name().c_str());
                   }
+#endif
+#if 1
+            // DQ (1/3/2015): Newer version of code.
+               if (declaration != NULL)
+                  {
+                    templateInstantiationVector.push_back(declaration);
+                  }
+                 else
+                  {
+                 // I think it is OK that not all are a SgDeclarationStatement.
+                  }
+#else
+            // DQ (1/3/2015): Older version of code.
                ROSE_ASSERT(declaration != NULL);
 
                templateInstantiationVector.push_back(declaration);
+#endif
                n++;
              }
        }
@@ -20072,13 +20091,14 @@ SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
      counter++;
 
   // DQ (11/28/2015): exit with debug output instead of infinte recursion.
-     if (counter >= 90) 
+     if (counter >= 280) 
         {
           printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
         }
 
+  // DQ (12/23/2015): ASC application code requires this to be increased to over 122 (selected 300 for extra margin of safety).
   // DQ (11/28/2015): exit in stead of infinte recursion.
-     if (counter > 100) 
+     if (counter > 300) 
         {
        // DQ (11/28/2015): I htink this is a reasonable limit.
           printf ("ERROR: In SageInterface::isEquivalentType(): recursive limit exceeded for : counter = %d \n",counter);
