@@ -154,7 +154,7 @@ endif()
 if(enable-rosehpct)
   list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:roseExtensions>)
 endif()
-
+find_package(Perl REQUIRED)
 
 ################################################################################
 ### The rose_config.h file generated during the configuration process contains
@@ -165,7 +165,7 @@ endif()
 ### "ROSE_".
 add_custom_command(
      OUTPUT ${CMAKE_BINARY_DIR}/rosePublicConfig.h
-     COMMAND perl ${CMAKE_SOURCE_DIR}/scripts/publicConfiguration.pl <${CMAKE_BINARY_DIR}/rose_config.h >${CMAKE_BINARY_DIR}/rosePublicConfig.h
+     COMMAND ${PERL_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/publicConfiguration.pl <${CMAKE_BINARY_DIR}/rose_config.h >${CMAKE_BINARY_DIR}/rosePublicConfig.h
      DEPENDS ${CMAKE_BINARY_DIR}/rose_config.h
      )
 add_custom_target(
