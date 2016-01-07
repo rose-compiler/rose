@@ -3031,7 +3031,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
   // DQ (7/19/2008): This is the new code to unparse directives before the current expression
      unparseAttachedPreprocessingInfo(expr, info, PreprocessingInfo::after);
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
   // DQ (8/21/2005): Suppress comments when unparsing to build type names
      if ( !info.SkipComments() || !info.SkipCPPDirectives() )
         {
