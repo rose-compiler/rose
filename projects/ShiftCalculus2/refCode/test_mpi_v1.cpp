@@ -89,9 +89,6 @@ int main(int argc,char *argv[])
   initialize(*Adest);
 #pragma omp target device(mpi:master) end 
 
-// cout <<" The source Box" << endl;
-// Asrc.print();
-// cout << endl;
 // build the stencil, and the stencil operator
 // Stencil<double> laplace(wt,shft);
   const std::array< Shift  , 3 > S = getShiftVec();
@@ -138,11 +135,8 @@ int main(int argc,char *argv[])
 
   double *sourceDataPointer = Asrc -> getPointer();
   double *destinationDataPointer = Adest -> getPointer();
-
 #pragma omp target device(mpi:master) end
 
-// TODO: more fine design for nested parallelism
-// TODO parse the pragmas here  2015-10-26 
 #pragma omp target device(mpi:all) map(to:lb0src, lb1src, lb2src, lb2, ub2,lb1,ub1,lb0,ub0, arraySize_X_dest, arraySize_Y_dest, arraySize_Z_dest, arraySize_X_src, arraySize_Y_src, arraySize_Z_src)\
 map(to:sourceDataPointer[0:arraySize_X_src][0:arraySize_Y_src][0:arraySize_Z_src] dist_data(DUPLICATE, DUPLICATE, BLOCK)) \
 map(from:destinationDataPointer[0:arraySize_X_dest][0:arraySize_Y_dest][0:arraySize_Z_dest] dist_data(DUPLICATE, DUPLICATE, BLOCK))
@@ -161,8 +155,11 @@ map(from:destinationDataPointer[0:arraySize_X_dest][0:arraySize_Y_dest][0:arrayS
       }
     }
   }
-// cout <<" The destination Box" << endl;
-// Adest.print();
+
+#pragma omp target device(mpi:master) begin
+  delete Asrc;
+  delete Adest;
+#pragma omp target device(mpi:master) end 
 
   return 0;
 }
