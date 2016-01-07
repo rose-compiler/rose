@@ -8,6 +8,11 @@
  *  @section installing_autotools_rhel Redhat Enterprise Linux
  *
  *  @todo Describe how to install GNU autotools on RHEL.
+ *  Todo.
+ *
+ *  @section installing_autotools_wheezy Debian 7 "Wheezy"
+ *
+ *  Run <code>apt-get install libtool automake</code> as the administrator.
  *
  *  @section installing_autotools_jessie Debian 8 "Jessie"
  *

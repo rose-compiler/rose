@@ -11,6 +11,7 @@
 #include "BinarySymbolicExpr.h"
 #include "RegisterStateGeneric.h"
 #include "MemoryCellList.h"
+#include "MemoryCellMap.h"
 
 #include <map>
 #include <vector>
@@ -395,11 +396,13 @@ typedef BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Memory state
+//                                      List-based Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a MemoryState object.  MemoryState objects are reference counted and should not be explicitly deleted. */
-typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
+/** Smart pointer to a MemoryListState object.
+ *
+ *  MemoryListState objects are reference counted and should not be explicitly deleted. */
+typedef boost::shared_ptr<class MemoryListState> MemoryListStatePtr;
 
 /** Byte-addressable memory.
  *
@@ -414,8 +417,10 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
  *  may-alias the address being read (stopping when it hits a must-alias cell).  If no must-alias cell is found, then a new
  *  cell is added to the memory and the may-alias list.  In any case, if the may-alias list contains exactly one cell, that
  *  cell's value is returned; otherwise a CellCompressor is called.  The default CellCompressor either returns a McCarthy
- *  expression or the default value depending on whether an SMT solver is being used. */
-class MemoryState: public BaseSemantics::MemoryCellList {
+ *  expression or the default value depending on whether an SMT solver is being used.
+ *
+ *  @sa MemoryMapState */
+class MemoryListState: public BaseSemantics::MemoryCellList {
 public:
     /** Functor for handling a memory read that found more than one cell that might alias the requested address. */
     struct CellCompressor {
@@ -469,32 +474,33 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    explicit MemoryState(const BaseSemantics::MemoryCellPtr &protocell)
+    explicit MemoryListState(const BaseSemantics::MemoryCellPtr &protocell)
         : BaseSemantics::MemoryCellList(protocell), cell_compressor(&cc_choice) {}
 
-    MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
+    MemoryListState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
         : BaseSemantics::MemoryCellList(addrProtoval, valProtoval), cell_compressor(&cc_choice) {}
 
-    MemoryState(const MemoryState &other)
+    MemoryListState(const MemoryListState &other)
         : BaseSemantics::MemoryCellList(other), cell_compressor(other.cell_compressor) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiates a new memory state having specified prototypical cells and value. */
-    static MemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
-        return MemoryStatePtr(new MemoryState(protocell));
+    static MemoryListStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
+        return MemoryListStatePtr(new MemoryListState(protocell));
     }
 
     /** Instantiates a new memory state having specified prototypical value.  This constructor uses BaseSemantics::MemoryCell
      * as the cell type. */
-    static  MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) {
-        return MemoryStatePtr(new MemoryState(addrProtoval, valProtoval));
+    static  MemoryListStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval,
+                                        const BaseSemantics::SValuePtr &valProtoval) {
+        return MemoryListStatePtr(new MemoryListState(addrProtoval, valProtoval));
     }
 
     /** Instantiates a new deep copy of an existing state. */
-    static MemoryStatePtr instance(const MemoryStatePtr &other) {
-        return MemoryStatePtr(new MemoryState(*other));
+    static MemoryListStatePtr instance(const MemoryListStatePtr &other) {
+        return MemoryListStatePtr(new MemoryListState(*other));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -508,22 +514,22 @@ public:
     }
 
     /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const ROSE_OVERRIDE {
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const {
         return instance(protocell);
     }
 
     /** Virtual copy constructor. Creates a new deep copy of this memory state. */
     virtual BaseSemantics::MemoryStatePtr clone() const ROSE_OVERRIDE {
-        return MemoryStatePtr(new MemoryState(*this));
+        return BaseSemantics::MemoryStatePtr(new MemoryListState(*this));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
 public:
     /** Recasts a base pointer to a symbolic memory state. This is a checked cast that will fail if the specified pointer does
-     *  not have a run-time type that is a SymbolicSemantics::MemoryState or subclass thereof. */
-    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
-        MemoryStatePtr retval = boost::dynamic_pointer_cast<MemoryState>(x);
+     *  not have a run-time type that is a SymbolicSemantics::MemoryListState or subclass thereof. */
+    static MemoryListStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
+        MemoryListStatePtr retval = boost::dynamic_pointer_cast<MemoryListState>(x);
         ASSERT_not_null(retval);
         return retval;
     }
@@ -555,6 +561,111 @@ public:
     /** @} */
 };
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Map-based Memory state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Smart pointer to a MemoryMapState object.
+ *
+ *  MemoryMapState objects are reference counted and should not be explicitly deleted. */
+typedef boost::shared_ptr<class MemoryMapState> MemoryMapStatePtr;
+
+/** Byte-addressable memory.
+ *
+ *  This class represents an entire state of memory via a map of memory cells.  The cells are indexed in the map using the hash
+ *  of their symbolic virtual address, therefore querying using an address that is equal but structurally different will fail
+ *  to find the cell. This memory state does not resolve aliasing.  For instance, storing a value at virtual address esp + 24
+ *  and then querying ebp + 8 will always assume that they are two non-aliasing addresses unless ROSE is able to simplify one
+ *  of the expressions to exactly match the other.
+ *
+ *  Although this state has less precision than the list-based state (@ref MemoryListState), it operatates in logorithmic time
+ *  instead of linear time, and by using hashing it avoids a relatively expensive comparison of address expressions at each
+ *  step.
+ *
+ *  This class should not be confused with @ref MemoryMap. The former is used by instruction semantics to represent the state
+ *  of memory such as during data-flow, while the latter is a model for mapping concrete values to concrete addresses similar
+ *  to how operating systems map parts of files into an address space.
+ *
+ *  @sa MemoryListState */
+class MemoryMapState: public BaseSemantics::MemoryCellMap {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Real constructors
+protected:
+    explicit MemoryMapState(const BaseSemantics::MemoryCellPtr &protocell)
+        : BaseSemantics::MemoryCellMap(protocell) {}
+
+    MemoryMapState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
+        : BaseSemantics::MemoryCellMap(addrProtoval, valProtoval) {}
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Static allocating constructors
+public:
+    /** Instantiates a new memory state having specified prototypical cells and value. */
+    static MemoryMapStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
+        return MemoryMapStatePtr(new MemoryMapState(protocell));
+    }
+
+    /** Instantiates a new memory state having specified prototypical value.  This constructor uses BaseSemantics::MemoryCell
+     *  as the cell type. */
+    static MemoryMapStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval,
+                                      const BaseSemantics::SValuePtr &valProtoval) {
+        return MemoryMapStatePtr(new MemoryMapState(addrProtoval, valProtoval));
+    }
+
+    /** Instantiates a new deep copy of an existing state. */
+    static MemoryMapStatePtr instance(const MemoryMapStatePtr &other) {
+        return MemoryMapStatePtr(new MemoryMapState(*other));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual constructors
+public:
+    /** Virtual constructor. Creates a memory state having specified prototypical value.  This constructor uses
+     * BaseSemantics::MemoryCell as the cell type. */
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
+                                                 const BaseSemantics::SValuePtr &valProtoval) const ROSE_OVERRIDE {
+        return instance(addrProtoval, valProtoval);
+    }
+
+    /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const {
+        return instance(protocell);
+    }
+
+    /** Virtual copy constructor. Creates a new deep copy of this memory state. */
+    virtual BaseSemantics::MemoryStatePtr clone() const ROSE_OVERRIDE {
+        return BaseSemantics::MemoryStatePtr(new MemoryMapState(*this));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Dynamic pointer casts
+public:
+    /** Recasts a base pointer to a symbolic memory state. This is a checked cast that will fail if the specified pointer does
+     *  not have a run-time type that is a SymbolicSemantics::MemoryMapState or subclass thereof. */
+    static MemoryMapStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
+        MemoryMapStatePtr retval = boost::dynamic_pointer_cast<MemoryMapState>(x);
+        ASSERT_not_null(retval);
+        return retval;
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Methods we override from the super class (documented in the super class)
+public:
+    virtual CellKey generateCellKey(const BaseSemantics::SValuePtr &addr_) const ROSE_OVERRIDE;
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Default memory state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// List-base memory was the type originally used by this domain. We must keep it that way because some analysis, including 3rd
+// party, assumes that the state is list-based.  New analysis can use the map-based state by instantiating it when the symbolic
+// risc operators are constructed.
+typedef MemoryListState MemoryState;
+typedef MemoryListStatePtr MemoryStatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Complete state
@@ -631,7 +742,7 @@ public:
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
+        BaseSemantics::MemoryStatePtr memory = MemoryListState::instance(protoval, protoval);
         BaseSemantics::StatePtr state = State::instance(registers, memory);
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }

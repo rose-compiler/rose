@@ -216,7 +216,8 @@ struct Hasher: Visitor {
                     } else {
                         for (size_t i=0; i<leaf->nBits(); i+=64) {
                             typedef Sawyer::Container::BitVector::BitRange BitRange;
-                            h = hash(h, leaf->bits().toInteger(BitRange::hull(i, leaf->nBits()-1)));
+                            size_t j = std::min(i+64, leaf->nBits());
+                            h = hash(h, leaf->bits().toInteger(BitRange::hull(i, j-1)));
                         }
                     }
                 } else {

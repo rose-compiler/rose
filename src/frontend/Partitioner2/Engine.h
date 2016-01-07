@@ -200,13 +200,15 @@ public:
         bool findingDataFunctionPointers;               /**< Look for function pointers in static data. */
         bool findingThunks;                             /**< Look for common thunk patterns in undiscovered areas. */
         bool splittingThunks;                           /**< Split thunks into their own separate functions. */
+        SemanticMemoryParadigm semanticMemoryParadigm;  /**< Container used for semantic memory states. */
 
         PartitionerSettings()
             : usingSemantics(false), followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
               findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
               doingPostAnalysis(true), doingPostFunctionMayReturn(true), doingPostFunctionStackDelta(true),
               doingPostCallingConvention(false), functionReturnAnalysis(MAYRETURN_DEFAULT_YES),
-              findingDataFunctionPointers(false), findingThunks(true), splittingThunks(false) {}
+              findingDataFunctionPointers(false), findingThunks(true), splittingThunks(false),
+              semanticMemoryParadigm(LIST_BASED_MEMORY) {}
     };
 
     /** Settings for controling the engine behavior.
@@ -783,14 +785,11 @@ public:
 
     /** Discover as many functions as possible.
      *
-     *  Discover as many functions as possible by discovering as many basic blocks as possible (@ref discoverBasicBlocks) Each
+     *  Discover as many functions as possible by discovering as many basic blocks as possible (@ref discoverBasicBlocks), Each
      *  time we run out of basic blocks to try, we look for another function prologue pattern at the lowest possible address
      *  and then recursively discover more basic blocks.  When this procedure is exhausted a call to @ref
-     *  attachBlocksToFunctions tries to attach each basic block to a function.
-     *
-     *  Returns a list of functions that need more attention.  These are functions for which the CFG is not well behaved--such
-     *  as inter-function edges that are not function call edges. */
-    virtual std::vector<Function::Ptr> discoverFunctions(Partitioner&);
+     *  attachBlocksToFunctions tries to attach each basic block to a function. */
+    void discoverFunctions(Partitioner&);
 
     /** Attach dead code to function.
      *
@@ -801,9 +800,7 @@ public:
      *  If @p maxIterations is larger than one then multiple iterations are performed.  Between each iteration @ref
      *  makeNextBasicBlock is called repeatedly to recursively discover instructions for all pending basic blocks, and then the
      *  CFG is traversed to add function-reachable basic blocks to the function.  The loop terminates when the maximum number
-     *  of iterations is reached, or when no more dead code can be found within this function, or when the CFG reaches a state
-     *  that has non-call inter-function edges.  In the last case, @ref Partitioner::discoverFunctionBasicBlocks can be called
-     *  to by the user to determine what's wrong with the CFG.
+     *  of iterations is reached, or when no more dead code can be found within this function.
      *
      *  Returns the set of newly discovered addresses for unreachable code.  These are the ghost edge target addresses
      *  discovered at each iteration of the loop and do not include addresses of basic blocks that are reachable from the ghost
@@ -849,10 +846,8 @@ public:
     /** Attach basic blocks to functions.
      *
      *  Calls @ref Partitioner::discoverFunctionBasicBlocks once for each known function the partitioner's CFG/AUM in a
-     *  sophomoric attempt to assign existing basic blocks to functions.  Returns the list of functions that resulted in
-     *  errors.  If @p reportProblems is set then emit messages to mlog[WARN] about problems with the CFG (that stream must
-     *  also be enabled if you want to actually see the warnings). */
-    virtual std::vector<Function::Ptr> attachBlocksToFunctions(Partitioner&, bool emitWarnings=false);
+     *  sophomoric attempt to assign existing basic blocks to functions. */
+    virtual void attachBlocksToFunctions(Partitioner&);
 
     /** Attach dead code to functions.
      *
@@ -1044,6 +1039,16 @@ public:
      * @{ */
     bool usingSemantics() const /*final*/ { return settings_.partitioner.usingSemantics; }
     virtual void usingSemantics(bool b) { settings_.partitioner.usingSemantics = b; }
+    /** @} */
+
+    /** Property: Type of container for semantic memory.
+     *
+     *  Determines whether @ref Partitioner objects created by this engine will be configured to use list-based or map-based
+     *  semantic memory states.  The list-based states are more precise, but they're also slower.
+     *
+     * @{ */
+    SemanticMemoryParadigm semanticMemoryParadigm() const /*final*/ { return settings_.partitioner.semanticMemoryParadigm; }
+    void semanticMemoryParadigm(SemanticMemoryParadigm p) { settings_.partitioner.semanticMemoryParadigm = p; }
     /** @} */
 
     /**  Property: Whether to follow ghost edges.

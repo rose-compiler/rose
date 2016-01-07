@@ -21,7 +21,7 @@ class CfgVertex {
     VertexType type_;                                   // type of vertex, special or not
     rose_addr_t startVa_;                               // address of start of basic block
     BasicBlock::Ptr bblock_;                            // basic block, or null if only a place holder
-    Function::Ptr function_;                            // function to which vertex belongs, if any
+    FunctionSet owningFunctions_;                       // functions to which vertex belongs
 
 public:
     /** Construct a basic block placeholder vertex. */
@@ -81,21 +81,56 @@ public:
     }
     /** @} */
 
-    /** Property: owning function.
+    /** Add a function to the list of functions that own this vertex.
      *
-     *  Pointer to a function that owns this vertex.  For instance, a basic block (@ref V_BASIC_BLOCK) can belong to a
-     *  function.  This property is available for @ref V_BASIC_BLOCK and @ref V_USER_DEFINED vertices.
+     *  Returns true if the function was added, false if it was already an owner of the vertex. */
+    bool insertOwningFunction(const Function::Ptr &function) {
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        ASSERT_not_null(function);
+        return owningFunctions_.insert(function);
+    }
+
+    /** Remove a function from the list of functions that own this vertex.
+     *
+     *  Causes the specified function to no longer be listed as an owner of this vertex. Does nothing if the function is not an
+     *  owner to begin with. */
+    void eraseOwningFunction(const Function::Ptr &function) {
+        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
+        if (function != NULL)
+            owningFunctions_.erase(function);
+    }
+
+    /** Determines if a function owns this vertex.
+     *
+     *  Returns true if the specified function is listed as an owning function of this vertex, false otherwise. */
+    bool isOwningFunction(const Function::Ptr &function) const {
+        return owningFunctions_.exists(function);
+    }
+
+    /** Number of functions that own this vertex. */
+    size_t nOwningFunctions() const {
+        return owningFunctions_.size();
+    }
+
+    /** Property: Owning functions.
+     *
+     *  Certain kinds of vertices can be owned by zero or more functions, and this property holds the set of such
+     *  functions. See also, @ref insertOwningFunction, @ref eraseOwningFunction, and @ref isOwningFunction. This property is
+     *  available for @ref V_BASIC_BLOCK and @ref V_USER_DEFINED vertices.
      *
      *  @{ */
-    const Function::Ptr& function() const {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
-        return function_;
+    const FunctionSet& owningFunctions() const {
+        return owningFunctions_;
     }
-    void function(const Function::Ptr &f) {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
-        function_ = f;
+    FunctionSet& owningFunctions() {
+        return owningFunctions_;
     }
     /** @} */
+
+    /** Is block a function entry block?
+     *
+     *  Returns true (a non-null function pointer) if this block serves as the entry block for some function. */
+    Function::Ptr isEntryBlock() const;
 
     /** Turns a basic block vertex into a placeholder.
      *
