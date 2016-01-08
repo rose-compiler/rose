@@ -1385,6 +1385,15 @@ Grammar::setUpSupport ()
      File.setDataPrototype ("bool", "use_token_stream_to_improve_source_position_info", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (12/23/2015): Adding optional support for variables to be in the same variable declaration 
+  // (optionally eding a long standing ROSE specific normalization that we would like to move away 
+  // from longer term). Note that this is already addressed in Fortran (not an option to have 
+  // variable declarations normalized), but not it has not be even an option in C/C++ until now.
+  // File.setDataPrototype ("bool", "allow_multiple_names_in_variable_declarations", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype ("bool", "suppress_variable_declaration_normalization", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // ******************************************************************************
   // ******************************************************************************

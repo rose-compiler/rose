@@ -150,6 +150,9 @@ rose_test_mpi_v1.cpp: mpiCodeGenerator $(srcdir)/refCode/test_mpi_v1.cpp
 	@echo "********************************************************************************************"
 	./mpiCodeGenerator  -rose:openmp:ast_only -c -std=c++11 -I$(srcdir) -I$(srcdir)/runtime -I$(srcdir)/runtime/dummyMPI $(srcdir)/refCode/test_mpi_v1.cpp
 
+test_mpi_v1.out: rose_test_mpi_v1.cpp
+	mpicxx -std=c++11 -I$(srcdir) -I$(srcdir)/runtime  $< $(srcdir)/Box.cpp $(srcdir)/runtime/xomp_mpi.c -o $@
+
 #rose_laplacian_lite_v3_mpi.cpp: shiftCalculusCompiler
 #	@echo "********************************************************************************************"
 #	@echo "******* ROSE/projects/ShiftCalculus: code generation for MPI ********"
@@ -175,12 +178,13 @@ localTests: test4 test2 test5 test6 test7 test8
 
 #rose_laplacian_lite_v3_mpi.cpp
 #rose_laplacian_lite_v4_mpi.cpp 
-mpiTests: rose_test_mpi_v1.cpp 
+mpiTests: test_mpi_v1.out #rose_test_mpi_v1.cpp 
 
 cudaTests: rose_laplacian_lite_v3.cu rose_laplacian_lite_v3_GPU_collapsed.cu 
 
 demo: test10 cudaTests test10poly test10vector test10MLM
 demo2015: test10 cudaTests test10vector 
+#mpiTests
 
 check-local:
 	@echo "Tests for Shift Calculus examples."

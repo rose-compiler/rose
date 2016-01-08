@@ -9,6 +9,11 @@
  *  @section installing_flexbison_rhel Redhat Enterprise Linux
  *
  *  @todo Describe how to install flex and bison on RHEL.
+ *  Todo.
+ *
+ *  @section installing_flexbison_wheezy Debian 7 "Wheezy"
+ *
+ *  Run <code>apt-get install flex bison</code> as the administrator.
  *
  *  @section installing_flexbison_jessie Debian 8 "Jessie"
  *

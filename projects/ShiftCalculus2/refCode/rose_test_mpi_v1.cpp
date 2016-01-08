@@ -33,6 +33,7 @@
 #include "libxomp_mpi.h"
 #include <ctime>
 #include "laplacian_lite_v3.h"
+#include <assert.h>
 
 #define USE_XOMP_MPI 1
 void initialize(class RectMDArray< double  , 1 , 1 , 1 > &patch)
@@ -149,14 +150,17 @@ int main(int argc,char *argv[])
     lb2dest = bxdest .  getLowCorner ()[2];
     ub2dest = bxdest .  getHighCorner ()[2];
     arraySize_X_dest = bxdest .  size (0);
+    assert (lb2dest == 0);
 
     lb1dest = bxdest .  getLowCorner ()[1];
     ub1dest = bxdest .  getHighCorner ()[1];
     arraySize_Y_dest = bxdest .  size (1);
+    assert (lb1dest == 0);
 
     lb0dest = bxdest .  getLowCorner ()[0];
     ub0dest = bxdest .  getHighCorner ()[0];
     arraySize_Z_dest = bxdest .  size (2);
+    assert (lb0dest == 0);
     //They are different! one with halo, the other does not.
     assert (arraySize_Z_src == arraySize_Z_dest +2 );
     assert (arraySize_X_src == arraySize_X_dest +2 );
@@ -256,8 +260,14 @@ int main(int argc,char *argv[])
   // calculate strip size for the distributed dimension Z
 
   // a runtime function call for distributing data
-  int offsetdest; 
-  int distdestsize;
+  int offsetdest; // _mpi_destinationDataPointer_offset_2
+  int distdestsize; // _mpi_destinationDataPointer_size_2
+  // _xomp_nprocs , _xomp_rank, 
+  // for source array,no need?
+  // xomp_static_even_divide_start_size(lb2src,arraySize_Z_src,_xomp_nprocs,_xomp_rank,&_mpi_sourceDataPointer_offset_2,&_mpi_sourceDataPointer_size_2);
+  // for destination array which needs being sent back
+
+  // xomp_static_even_divide_start_size(lb2,arraySize_Z_dest,_xomp_nprocs,_xomp_rank,&_mpi_destinationDataPointer_offset_2,&_mpi_destinationDataPointer_size_2);
   xomp_static_even_divide_start_size (0, arraySize_Z_dest, nprocs, rank, & offsetdest, & distdestsize);
 
   //allocate source data partitions for each process
@@ -295,13 +305,20 @@ int main(int argc,char *argv[])
 // TODO: is a barrier needed here??
 
 // computation, only k loop is distributed
-// TODO a scheduler for loop to obtain lower and upper for k loop
 // Also matches the k loop distribution of the nested loop
-// TODO another runtime function call for distributing loops 
+// another runtime function call for distributing loops 
+ // int _lower, _upper; 
+  //void xomp_static_even_divide_lower_upper (int start, int end, int thread_count, int thread_id, int* n_lower, int* n_upper);
+  // This is wrong since the bounds are relative to the original global data buffer
+  // What is needed is the bounds local to local portions. The lower bounds always start from 0. The size is the size of local portion!
+  // So the bounds should match the size of a distributed array's local portion!!
+  //xomp_static_even_divide_lower_upper (lb2dest, ub2dest, nprocs, rank, &_lower, &_upper);
 
   assert (lb2dest ==0);
-//  for (k = lb2dest; k < distdestsize; ++k) { // is this correct??,  should lower starts with 0??
+  //assert (_lower ==0);
+  //assert (_upper == distdestsize -1 );
   for (k = 0; k < distdestsize; ++k) { // is this correct??,  should lower starts with 0??
+  // for (k = _lower; k <= _upper; ++k) { // bounds obtained from runtime calls, inclusive bounds
     for (j = lb1dest; j <= ub1dest; ++j) {
       for (i = lb0dest; i <= ub0dest; ++i) { // the loop's arrays are replaced with distributed version, the rest is intact
         distdest[arraySize_X_dest * (arraySize_Y_dest * k + j) + i] = \

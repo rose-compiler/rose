@@ -417,6 +417,15 @@ FunctionReturnDetector::operator()(bool chain, const Args &args) {
 
 bool
 matchEnterAnyZero(const Partitioner &partitioner, SgAsmX86Instruction *enter) {
+#if 1 // FIXME[Robb Matzke 2015-12-17]
+    // This matcher looks at only two bytes of input (0xc8, 0x??, 0x??, 0x00) and thus gets too many false positives. A better
+    // approach ight be to look at the entire block starting at the ENTER instruction and measure how reasonable it looks
+    // before deciding this is a function entry point.  For now I'll just disable this. The effect of disabling is that
+    // functions that start with this instruction will not be detected by this mechanism, although they will still be detected
+    // by other mechanisms (call targets, symbols, etc). [Robb Matzke 2015-12-17]
+    return false;
+#endif
+
     if (!enter || enter->get_kind()!=x86_enter)
         return false;
 

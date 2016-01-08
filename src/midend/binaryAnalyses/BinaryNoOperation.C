@@ -45,6 +45,35 @@ NoOperation::StateNormalizer::initialState(const BaseSemantics::DispatcherPtr &c
     return state;
 }
 
+class CellErasurePredicate: public BaseSemantics::MemoryCell::Predicate {
+    bool ignorePoppedMemory;
+    BaseSemantics::RiscOperatorsPtr ops;
+    BaseSemantics::SValuePtr stackCurVa;
+    BaseSemantics::SValuePtr stackMinVa;
+    
+public:
+    CellErasurePredicate(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &stackCurVa,
+                         rose_addr_t closeness)
+        : ignorePoppedMemory(closeness!=0), ops(ops), stackCurVa(stackCurVa) {
+        stackMinVa = ops->subtract(stackCurVa, ops->number_(stackCurVa->get_width(), closeness));
+    }
+
+    virtual bool operator()(const BaseSemantics::MemoryCellPtr &cell) const ROSE_OVERRIDE {
+        if (cell->getWriters().isEmpty())
+            return true;
+        
+        // Erase memory that is above (lower address) and near the current stack pointer.
+        if (ignorePoppedMemory) {
+            BaseSemantics::SValuePtr isPopped =     // assume downward-growing stack
+                ops->and_(ops->isUnsignedLessThan(cell->get_address(), stackCurVa),
+                          ops->isUnsignedGreaterThanOrEqual(cell->get_address(), stackMinVa));
+            return isPopped->is_number() && isPopped->get_number();
+        }
+
+        return false;
+    }
+};
+
 std::string
 NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, const BaseSemantics::StatePtr &state_) {
     BaseSemantics::StatePtr state = state_;
@@ -66,37 +95,20 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
         }
     }
 
-    BaseSemantics::MemoryCellListPtr mstate = BaseSemantics::MemoryCellList::promote(state->get_memory_state());
-    if (mstate) {
-        if (!isCloned) {
-            state = state->clone();
-            isCloned = true;
-            mstate = BaseSemantics::MemoryCellList::promote(state->get_memory_state());
-        }
-
-        // Erase memory that has never been written.
-        mstate->clearNonWritten();
-
-        // Erase memory that is above (lower address) and near the current stack pointer.
-        if (ignorePoppedMemory_) {
-            BaseSemantics::MemoryCellList::CellList &cells = mstate->get_cells();
-            BaseSemantics::MemoryCellList::CellList::iterator ci=cells.begin();
-            BaseSemantics::SValuePtr stackCurVa = ops->readRegister(cpu->stackPointerRegister());
-            BaseSemantics::SValuePtr stackMinVa = ops->subtract(stackCurVa,
-                                                                ops->number_(stackCurVa->get_width(), ignorePoppedMemory_));
-            while (ci!=cells.end()) {
-                BaseSemantics::MemoryCellPtr cell = *ci;
-                BaseSemantics::SValuePtr isPopped =     // assume downward-growing stack
-                    ops->and_(ops->isUnsignedLessThan(cell->get_address(), stackCurVa),
-                              ops->isUnsignedGreaterThanOrEqual(cell->get_address(), stackMinVa));
-                if (isPopped->is_number() && isPopped->get_number()) {
-                    ci = cells.erase(ci);
-                } else {
-                    ++ci;
-                }
-            }
-        }
+    // Get the memory state, cloning the state if not done so above.
+    BaseSemantics::MemoryCellStatePtr mem =
+        boost::dynamic_pointer_cast<BaseSemantics::MemoryCellState>(state->get_memory_state());
+    if (mem && !isCloned) {
+        state = state->clone();
+        isCloned = true;
+        mem = BaseSemantics::MemoryCellState::promote(state->get_memory_state());
     }
+
+    // Erase memory that has never been written (i.e., cells that sprang into existence by reading an address) of which appears
+    // to have been recently popped from the stack.
+    CellErasurePredicate predicate(ops, ops->readRegister(cpu->stackPointerRegister()), ignorePoppedMemory_);
+    if (mem)
+        mem->eraseMatchingCells(predicate);
 
     BaseSemantics::Formatter fmt;
     fmt.set_show_latest_writers(false);

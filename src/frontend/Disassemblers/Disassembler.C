@@ -223,7 +223,8 @@ Disassembler::isaNames() {
     v.push_back("coldfire");
     v.push_back("i386");
     v.push_back("m68040");
-    v.push_back("mips");
+    v.push_back("mips-be");
+    v.push_back("mips-le");
     v.push_back("ppc");
     return v;
 }
@@ -241,8 +242,10 @@ Disassembler::lookup(const std::string &name)
         return new DisassemblerArm();
     } else if (0==name.compare("ppc")) {
         return new DisassemblerPowerpc();
-    } else if (0==name.compare("mips")) {
-        return new DisassemblerMips();
+    } else if (0==name.compare("mips-be")) {
+        return new DisassemblerMips(ByteOrder::ORDER_MSB);
+    } else if (0==name.compare("mips-le")) {
+        return new DisassemblerMips(ByteOrder::ORDER_LSB);
     } else if (0==name.compare("i386")) {
         return new DisassemblerX86(4);
     } else if (0==name.compare("amd64")) {

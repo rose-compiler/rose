@@ -1532,6 +1532,16 @@ DetectionTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Detection_Inh
      AstAttributeMechanism* astAttributeContainer = astNode->get_attributeMechanism();
      if (astAttributeContainer != NULL)
         {
+#if 1
+       // Example iterating over attributes using the SgNode attribute API.
+          BOOST_FOREACH (const std::string &attributeName, astAttributeContainer->getAttributeIdentifiers()) 
+             {
+               std::cout << "attribute \"" << StringUtility::cEscape(attributeName) << "\" pointer is " << astNode->getAttribute(attributeName) << "\n";
+             }
+
+          printf ("Implementation using new attribute API not implemented! \n");
+          ROSE_ASSERT(false);
+#else
        // I think there should only be one DSL attribute, in the future we can support more on a single IR node.
           if (astAttributeContainer->size() != 1)
              {
@@ -1561,7 +1571,7 @@ DetectionTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Detection_Inh
 
        // Add the current node since it has an attribute.
           return_synthesizedAttribute.dslChildren.push_back(astNode);
-
+#endif
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
