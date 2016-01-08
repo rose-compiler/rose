@@ -154,13 +154,15 @@ double errorF(Tensor<double,1>& a_error, CTensor<double, 1>& a_exac)
 ///
 
 
-double doWork(Box& bxdst, double* sourceDataPointer, double* destinationDataPointer, RectMDArray<double>& phiex, RectMDArray<double>& lphca, RectMDArray<double>& lphex, RectMDArray<double>& error, const double & a_dx)
+double doWork(Box& bxdst, RectMDArray<double>& phiex, RectMDArray<double>& lphca, RectMDArray<double>& lphex, RectMDArray<double>& error, const double & a_dx)
 {
       double a_maxError;
       //apply is set as an increment so need to set this to zero initially
 //      lphca.setVal(0.);
 
 //      Stencil<double>::apply(laplace, phiex, lphca, bxdst);
+  double *sourceDataPointer = phiex . getPointer();
+  double *destinationDataPointer = lphca . getPointer();
   const class Box sourceBoxRef = phiex . getBox();
   const class Box destinationBoxRef = lphca . getBox();
   int iter_lb2 = bxdst .  getLowCorner ()[2];
@@ -190,21 +192,26 @@ double doWork(Box& bxdst, double* sourceDataPointer, double* destinationDataPoin
   int dest_ub0 = destinationBoxRef .  getHighCorner ()[0];
   int arraySize_Z = bxdst .  size (2);
   int arraySize_Z_src = sourceBoxRef .  size (2);
+//cout << "src lb:" << src_lb0 << ":" << src_lb1 << ":" << src_lb2 << endl;
+//cout << "src ub:" << src_ub0 << ":" << src_ub1 << ":" << src_ub2 << endl;
+cout << "dst lb:" << iter_lb0 << ":" << iter_lb1 << ":" << iter_lb2 << endl;
+cout << "dst ub:" << iter_ub0 << ":" << iter_ub1 << ":" << iter_ub2 << endl;
+//cout << "src size:" << arraySize_X_src << ":" << arraySize_Y_src << ":" << arraySize_Z_src << endl;
+//cout << "dest size:" << arraySize_X << ":" << arraySize_Y << ":" << arraySize_Z << endl;
   for (k = iter_lb2; k < iter_ub2; ++k) {
     for (j = iter_lb1; j < iter_ub1; ++j) {
       for (i = iter_lb0; i < iter_ub0; ++i) {
         destinationDataPointer[arraySize_X * (arraySize_Y * (k - dest_lb2) + (j - dest_lb1)) + (i - dest_lb0)] = (1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2 + -1) + (j - src_lb1)) + (i - src_lb0)] + 1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2 + 1) + (j - src_lb1)) + (i - src_lb0)] + 1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1 + -1)) + (i - src_lb0)] + 1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1 + 1)) + (i - src_lb0)] + 1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1)) + (i - src_lb0 + -1)] + 1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1)) + (i - src_lb0 + 1)] + (-2.0*DIM)*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1)) + (i - src_lb0)]) * (1.0/a_dx/a_dx);
-//cout << destinationDataPointer[arraySize_X * (arraySize_Y * (k - dest_lb2) + (j - dest_lb1)) + (i - dest_lb0)] << " " << lphex.getPointer()[arraySize_X * (arraySize_Y * (k - dest_lb2) + (j - dest_lb1)) + (i - dest_lb0)] << endl;
+//cout << i << " " << j << " " << k << ":" << destinationDataPointer[arraySize_X * (arraySize_Y * (k - dest_lb2) + (j - dest_lb1)) + (i - dest_lb0)] << " " << lphex.getPointer()[arraySize_X * (arraySize_Y * (k - dest_lb2) + (j - dest_lb1)) + (i - dest_lb0)] << endl;
       }
     }
   }        
       //error = lphicalc -lphiexac
       lphca.copyTo(error);
       //here err holds lphi calc
-//      double maxbox = forall_max(error, lphex, &errorF, bxdst);
+      a_maxError = forall_max(error, lphex, &errorF, bxdst);
 //cout << "maxbox= " << maxbox << endl;
 
-  //    a_maxError = max(maxbox, a_maxError);
       return a_maxError;
 }
 
@@ -222,7 +229,7 @@ void getError(LevelData<double, 1> & a_error,
   int npatches;
   int nPatchPerProc, iStartIdx, iEndIdx;
   int patchID = -1;
-  double local_maxError;
+  double local_maxError = 0;
 
   LevelData<double, 1> *phi;
   LevelData<double, 1> *lphcalc;
@@ -239,59 +246,68 @@ void getError(LevelData<double, 1> & a_error,
     initialize(*phi,*lphexac, a_dx);
     //set ghost cells of phi
     phi->exchange();
-    if(npatches == 1)
-     nPatchPerProc = 1;
-    else
-      nPatchPerProc = npatches/nprocs;
-    iStartIdx = rank * nPatchPerProc;
-    iEndIdx = (npatches < (rank+1)*nPatchPerProc) ? npatches-1 : ((rank+1)*nPatchPerProc-1);
-    nPatchPerProc = iEndIdx - iStartIdx + 1; 
   }
-
-// barrier to sync halo exchange
-
   if(nprocs > 1)
     MPI_Bcast( &npatches, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
+
+  if(npatches == 1)
+   nPatchPerProc = 1;
+  else
+    nPatchPerProc = npatches/nprocs;
+  iStartIdx = rank * nPatchPerProc;
+  iEndIdx = (npatches < (rank+1)*nPatchPerProc) ? npatches-1 : ((rank+1)*nPatchPerProc-1);
+  nPatchPerProc = iEndIdx - iStartIdx + 1; 
+  std::cout << "I am rank " << rank << " working from " <<  iStartIdx << " to " << iEndIdx <<  std::endl;
+
+// barrier to sync halo exchange
+
  
 
   if(rank == 0)
   {
-    Box bxdst;
+    Box bxdst, bxsrc;
     MPI_Request reqs[5];
     MPI_Status status[5];
     int iwait = 0;
     for(BLIterator blit(*layout); blit != blit.end(); ++blit)
     {
-      bxdst= (*layout)[*blit];
+      //bxdst= (*layout)[*blit];
       patchID++;
       bool mypatch = patchID >= iStartIdx && patchID <=iEndIdx;
       RectMDArray<double>& phiex =     (*phi)[patchID];
       RectMDArray<double>& lphca = (*lphcalc)[patchID];
       RectMDArray<double>& lphex = (*lphexac)[patchID];
       RectMDArray<double>& error = a_error[patchID];
+      bxsrc = phiex . getBox();
+      bxdst = lphca . getBox();
       lphca.setVal(0.);
       if(mypatch)
       {
 cout << "Rank 0 is working on patch " << patchID << endl;
-        local_maxError = doWork(bxdst, phiex.getPointer(), lphca.getPointer(), phiex, lphca, lphex, error, a_dx);
+        double tmp;
+        tmp = doWork(bxdst, phiex, lphca, lphex, error, a_dx);
+        local_maxError = (local_maxError > tmp) ? local_maxError : tmp; 
       }
       else
       {
         int dest = patchID / nPatchPerProc;
-        MPI_Isend(&phiex, sizeof(RectMDArray<double>),MPI_CHAR, dest, 0, MPI_COMM_WORLD,&reqs[0]);
-cout << "master send out patch " <<  patchID<< " sourceDataPointer with size " << phiex.getBox().sizeOf() << endl;
-        MPI_Isend(&lphca, sizeof(RectMDArray<double>),MPI_CHAR, dest, 1, MPI_COMM_WORLD,&reqs[1]);
-cout << "master send out patch " <<  patchID<< " destinationDataPointer with size " << lphca.getBox().sizeOf() << endl;
+//        MPI_Isend(&phiex, sizeof(RectMDArray<double>),MPI_CHAR, dest, 0, MPI_COMM_WORLD,&reqs[0]);
+//cout << "master send out patch " <<  patchID<< " sourceDataPointer with size " << phiex.getBox().sizeOf() << endl;
+//        MPI_Isend(&lphca, sizeof(RectMDArray<double>),MPI_CHAR, dest, 1, MPI_COMM_WORLD,&reqs[1]);
+//cout << "master send out patch " <<  patchID<< " destinationDataPointer with size " << lphca.getBox().sizeOf() << endl;
+        MPI_Isend(&bxsrc, sizeof(Box),MPI_CHAR, dest, 4, MPI_COMM_WORLD,&reqs[0]);
+cout << "master send out patch " <<  patchID<< " bxdst Box with size " << sizeof(Box)<< endl;
+        MPI_Isend(&bxdst, sizeof(Box),MPI_CHAR, dest, 4, MPI_COMM_WORLD,&reqs[1]);
+cout << "master send out patch " <<  patchID<< " bxdst Box with size " << sizeof(Box)<< endl;
         double *sourceDataPointer = phiex . getPointer();
         double *destinationDataPointer = lphca . getPointer();
         MPI_Isend(sourceDataPointer, phiex.getBox().sizeOf(),MPI_DOUBLE, dest, 2, MPI_COMM_WORLD,&reqs[2]);
         MPI_Isend(destinationDataPointer, lphca.getBox().sizeOf(),MPI_DOUBLE, dest, 3, MPI_COMM_WORLD,&reqs[3]);
-        MPI_Isend(&bxdst, sizeof(Box),MPI_CHAR, dest, 4, MPI_COMM_WORLD,&reqs[4]);
-cout << "master send out patch " <<  patchID<< " bxdst Box with size " << sizeof(Box)<< endl;
         iwait++;
         MPI_Waitall(4,reqs,status);
 cout << "Rank 0 is sending patch " << patchID << " to rank " << dest << endl;
+
       }
     }
   }
@@ -306,7 +322,7 @@ cout << "Rank 0 is sending patch " << patchID << " to rank " << dest << endl;
     {
 //      MPI_Request reqs[5];
       MPI_Status status[5];
-      Box bxdst;
+      Box bxdst, bxsrc;
       RectMDArray<double>* phiex = new RectMDArray<double>();
       RectMDArray<double>* lphca = new RectMDArray<double>();
       RectMDArray<double>* lphex = new RectMDArray<double>();
@@ -316,21 +332,32 @@ cout << "Rank 0 is sending patch " << patchID << " to rank " << dest << endl;
       {
 //        Box bxdst=((const BoxLayout&) layout)[*blit];
         patchID++;
-        MPI_Recv(phiex, sizeof(RectMDArray<double>), MPI_CHAR, src, 0, MPI_COMM_WORLD, &status[0]);
-        MPI_Recv(lphca, sizeof(RectMDArray<double>), MPI_CHAR, src, 1, MPI_COMM_WORLD, &status[1]);
-        double *sourceDataPointer = (double*) malloc(sizeof(double)*phiex->getBox().sizeOf());
-        MPI_Recv(sourceDataPointer, phiex->getBox().sizeOf(), MPI_DOUBLE, src, 2, MPI_COMM_WORLD, &status[2]);
-cout << "Rank " << rank << " receive patch " << idx << " sourceDataPointer with size " << phiex->getBox().sizeOf() << endl;
-        double *destinationDataPointer = (double*) malloc(sizeof(double)*lphca->getBox().sizeOf());
-        MPI_Recv(destinationDataPointer, lphca->getBox().sizeOf(), MPI_DOUBLE, src, 3, MPI_COMM_WORLD, &status[3]);
-cout << "Rank " << rank << " receive patch " << idx << " destinationDataPointer with size " << lphca->getBox().sizeOf() << endl;
-        MPI_Recv(&bxdst, sizeof(Box), MPI_CHAR, src, 4, MPI_COMM_WORLD, &status[4]);
+//        MPI_Recv(phiex, sizeof(RectMDArray<double>), MPI_CHAR, src, 0, MPI_COMM_WORLD, &status[0]);
+//        MPI_Recv(lphca, sizeof(RectMDArray<double>), MPI_CHAR, src, 1, MPI_COMM_WORLD, &status[1]);
+//        double *sourceDataPointer = (double*) malloc(sizeof(double)*phiex->getBox().sizeOf());
+        MPI_Recv(&bxsrc, sizeof(Box), MPI_CHAR, src, 4, MPI_COMM_WORLD, &status[0]);
 cout << "Rank " << rank << " receive patch " << idx << " bxdst with size " << sizeof(Box)<< endl;
+        MPI_Recv(&bxdst, sizeof(Box), MPI_CHAR, src, 4, MPI_COMM_WORLD, &status[1]);
+cout << "Rank " << rank << " receive patch " << idx << " bxdst with size " << sizeof(Box)<< endl;
+        phiex->define(bxsrc);
+        lphca->define(bxdst);
+        lphex->define(bxdst);
+        error->define(bxdst);
+        MPI_Recv(phiex -> getPointer(), phiex->getBox().sizeOf(), MPI_DOUBLE, src, 2, MPI_COMM_WORLD, &status[2]);
+cout << "Rank " << rank << " receive patch " << idx << " sourceDataPointer with size " << phiex->getBox().sizeOf() << endl;
+//        double *destinationDataPointer = (double*) malloc(sizeof(double)*lphca->getBox().sizeOf());
+        MPI_Recv(lphca -> getPointer(), lphca->getBox().sizeOf(), MPI_DOUBLE, src, 3, MPI_COMM_WORLD, &status[3]);
+cout << "Rank " << rank << " receive patch " << idx << " destinationDataPointer with size " << lphca->getBox().sizeOf() << endl;
 cout << "Rank " << rank << " is working on patch " << npatches << endl;
-        local_maxError = doWork(bxdst, sourceDataPointer, destinationDataPointer, *phiex, *lphca, *lphex, *error, a_dx);
+        double tmp;
+        tmp = doWork(bxdst,  *phiex, *lphca, *lphex, *error, a_dx);
+        local_maxError = (local_maxError > tmp) ? local_maxError : tmp; 
       }
     }
   }
+  MPI_Allreduce(&local_maxError, &a_maxError, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+  if(rank == 0)
+   cout << "max Error is: " << a_maxError << endl;
 }
 
 int main(int argc, char* argv[])
