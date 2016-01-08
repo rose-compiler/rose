@@ -63,6 +63,7 @@ set(rose_util_src
   $<TARGET_OBJECTS:util_graphs>
 )
 add_library(roseutil SHARED ${rose_util_src})
+add_dependencies(roseutil generate_rosePublicConfig)
 if (WIN32)
   target_link_libraries(roseutil shlwapi.lib psapi.lib)
 endif()
