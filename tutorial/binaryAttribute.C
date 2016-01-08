@@ -380,6 +380,14 @@ method_2() {
     ASSERT_always_require(cpuTime_1 == 1.0);
     ASSERT_always_require(AllocationCounter<ApproximationAttribute_2>::nAllocated == 1);
 
+    //! [iterate 2]
+    // Example iterating over attributes using an attributeMechanism data member of obj_1
+    BOOST_FOREACH (const std::string &attributeName, obj_1.attributeMechanism.getAttributeIdentifiers()) {
+        std::cout <<"attribute \"" <<StringUtility::cEscape(attributeName) <<"\" pointer is "
+                  <<obj_1.attributeMechanism[attributeName] <<"\n";
+    }
+    //! [iterate 2]
+        
     // Copy the containing object and its attributes.
     ObjectWithAttributes_2 obj_2 = obj_1;               // requires "copy" implementations in attribute value types
     ASSERT_always_require(AllocationCounter<ApproximationAttribute_2>::nAllocated == 2);
@@ -518,6 +526,14 @@ method_3() {
 
     ASSERT_always_require(approx_1 == UNDER_APPROXIMATED);
     ASSERT_always_require(cpuTime_1 == 1.0);
+
+    //! [iterate 3]
+    // Example iterating over attributes using the SgNode attribute API.
+    BOOST_FOREACH (const std::string &attributeName, obj_1->get_attributeMechanism()->getAttributeIdentifiers()) {
+        std::cout <<"attribute \"" <<StringUtility::cEscape(attributeName) <<"\" pointer is "
+                  <<obj_1->getAttribute(attributeName) <<"\n";
+    }
+    //! [iterate 3]
 
     // Copy the containing object and its attributes.
 #if 0 // this version doesn't copy attributes
