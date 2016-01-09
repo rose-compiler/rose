@@ -36,6 +36,7 @@ static Sawyer::Message::Facility mlog;
 static const char* WILD_CARD_STR = "<any>";
 enum ChartType { BAR_CHART, LINE_CHART };
 
+typedef Sawyer::Container::Map<std::string, int> StringIndex;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Represents a bucket of values by storing a min and max value.
@@ -93,6 +94,7 @@ struct GlobalState {
     std::string dbUrl;
     DependencyNames dependencyNames;
     std::vector<std::string> testNames;
+    StringIndex testNameIndex;
     SqlDatabase::TransactionPtr tx;
 
     GlobalState()
@@ -129,6 +131,25 @@ bindSqlVariables(const SqlDatabase::StatementPtr &q, const std::vector<std::stri
     for (size_t i=0; i<args.size(); ++i)
         q->bind(i, args[i]);
 }
+
+// Sorts dependency values
+class DependencyValueSorter {
+    std::string depName_;
+
+public:
+    explicit DependencyValueSorter(const std::string &depName)
+        : depName_(depName) {}
+
+    bool operator()(const std::string &a, const std::string &b) {
+        if (depName_ == "status") {
+            int ai = gstate.testNameIndex.getOrElse(a, 999);
+            int bi = gstate.testNameIndex.getOrElse(b, 999);
+            if (ai != bi)
+                return ai < bi;
+        }
+        return a < b;
+    }
+};
 
 enum HumanFormat { HUMAN_TERSE, HUMAN_VERBOSE };
 
@@ -213,9 +234,9 @@ humanDepValue(const std::string &depName, const std::string &depValue, HumanForm
 // table that matched major dependency i and minor dependency j.
 class StatusModel: public Wt::WAbstractTableModel {
 private:
-    typedef Sawyer::Container::Map<std::string, int> StringIndex;
     std::vector<std::vector<double> > table_;
-    bool usePercents_;
+    bool usePercents_;                                  // cells of a row should sum to 100 (or zero if they're all zero)
+    bool roundToInteger_;                               // round cell values to nearest integer
 
     std::string depMajorName_;                          // dependency for major axis
     std::vector<std::string> depMajorValues_;           // human-format values of major dependency
@@ -229,18 +250,27 @@ private:
     
 public:
     explicit StatusModel(Wt::WObject *parent = NULL)
-        : Wt::WAbstractTableModel(parent), usePercents_(false), depMajorIsData_(false), depMinorIsData_(false) {}
+        : Wt::WAbstractTableModel(parent), usePercents_(false), roundToInteger_(false),
+          depMajorIsData_(false), depMinorIsData_(false) {}
 
     explicit StatusModel(const std::string &depMajorName, Wt::WObject *parent = NULL)
-        : Wt::WAbstractTableModel(parent), usePercents_(false), depMajorName_(depMajorName), depMajorIsData_(false),
-          depMinorIsData_(false) {}
+        : Wt::WAbstractTableModel(parent), usePercents_(false), roundToInteger_(false),
+          depMajorName_(depMajorName), depMajorIsData_(false), depMinorIsData_(false) {}
 
     StatusModel(const std::string &depMajorName, const std::string &depMinorName, Wt::WObject *parent = NULL)
-        : Wt::WAbstractTableModel(parent), usePercents_(false),
+        : Wt::WAbstractTableModel(parent), usePercents_(false), roundToInteger_(false),
           depMajorName_(depMajorName), depMajorIsData_(false), depMinorName_(depMinorName), depMinorIsData_(false) {}
+
+    const std::string& depMajorName() const {
+        return depMajorName_;
+    }
 
     void setDepMajorName(const std::string &s) {
         depMajorName_ = s;
+    }
+
+    const std::string& depMinorName() const {
+        return depMinorName_;
     }
 
     void setDepMinorName(const std::string &s) {
@@ -271,6 +301,24 @@ public:
         depMinorIsData_ = b;
     }
 
+    bool roundToInteger() const {
+        return roundToInteger_;
+    }
+
+    void setRoundToInteger(bool b) {
+        roundToInteger_ = b;
+    }
+
+    const std::string depMajorValue(size_t modelRow) {
+        size_t i = modelRow - (depMinorIsData_ ? 1 : 0);
+        return i < depMajorValues_.size() ? depMajorValues_[i] : std::string();
+    }
+
+    const std::string depMinorValue(size_t modelColumn) {
+        size_t j = modelColumn - (depMajorIsData_ ? 1 : 0);
+        return j < depMinorValues_.size() ? depMinorValues_[j] : std::string();
+    }
+
     void updateModel(const Dependencies &deps) {
         Sawyer::Message::Stream debug(::mlog[DEBUG] <<"StatusModel::updateModel...\n");
         updateDepMajor(deps);
@@ -293,12 +341,12 @@ public:
         // Iterate over the query results to update the table. Remember that the row and column numbers are the human-style
         // values (e.g., yyyy-mm-dd rather than Unix time, etc.)
         for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
-            std::string depValue = humanDepValue(depMajorName_, row.get<std::string>(0), HUMAN_TERSE);
-            std::string status = row.get<std::string>(1);
+            std::string majorValue = humanDepValue(depMajorName_, row.get<std::string>(0), HUMAN_TERSE);
+            std::string minorValue = humanDepValue(depMinorName_, row.get<std::string>(1), HUMAN_TERSE);
             int count = row.get<int>(2);
 
-            int i = depMajorIndex_.getOrElse(depValue, -1);
-            int j = depMinorIndex_.getOrElse(status, -1);
+            int i = depMajorIndex_.getOrElse(majorValue, -1);
+            int j = depMinorIndex_.getOrElse(minorValue, -1);
             if (i >= 0 && j >= 0)
                 table_[i][j] += count;
         }
@@ -310,8 +358,11 @@ public:
                 BOOST_FOREACH (double count, row)
                     total += count;
                 if (total > 0) {
-                    BOOST_FOREACH (double &cell, row)
+                    BOOST_FOREACH (double &cell, row) {
                         cell = 100.0 * cell / total;
+                        if (roundToInteger_)
+                            cell = round(cell);
+                    }
                 }
             }
         }
@@ -445,7 +496,8 @@ private:
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
         bindSqlVariables(q, args);
 
-        std::set<std::string> humanValues;
+        std::set<std::string, DependencyValueSorter> humanValues =
+            std::set<std::string, DependencyValueSorter>(DependencyValueSorter(depName));
         for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
             humanValues.insert(humanDepValue(depName, row.get<std::string>(0), HUMAN_TERSE));
         
@@ -514,8 +566,11 @@ public:
                 series.back().setStacked(true);
             } else {
                 series.push_back(Wt::Chart::WDataSeries(j, Wt::Chart::LineSeries));
+                series.back().setMarker(Wt::Chart::SquareMarker);
             }
-            series.back().setBrush(seriesBrush(j));
+            Wt::WColor color = dependencyValueColor(model_->depMinorName(), model_->depMinorValue(j), j);
+            series.back().setBrush(Wt::WBrush(color));
+            series.back().setPen(Wt::WPen(color));
         }
         setSeries(series);
 
@@ -533,25 +588,23 @@ public:
         }
     }
 
-    Wt::WBrush seriesBrush(int i) {
-        if (i + 1 <  model_->columnCount()) {
-            // Colors that are not close to green
+    Wt::WColor dependencyValueColor(const std::string &depName, const std::string &depHumanValue, size_t i) {
+        if (depName == "status" && depHumanValue == "end") {
+            // Use a fairly bright green to contrast with the other colors.
+            return Wt::WColor(52, 147, 19);
+        } else {
             switch (i % 8) {
-                case 0: return Wt::WBrush(Wt::WColor(137, 52, 174));    // purple
-                case 1: return Wt::WBrush(Wt::WColor(173, 75, 51));     // tomato
-                case 2: return Wt::WBrush(Wt::WColor(51, 149, 173));    // cyan
-                case 3: return Wt::WBrush(Wt::WColor(174, 52, 144));    // dark pink
-                case 4: return Wt::WBrush(Wt::WColor(173, 142, 51));    // ochre
-                case 5: return Wt::WBrush(Wt::WColor(51, 82, 173));     // blue
-                case 6: return Wt::WBrush(Wt::WColor(174, 52, 99));     // rose
-                case 7: return Wt::WBrush(Wt::WColor(65, 51, 173));     // purple
+                case 0: return Wt::WColor(137, 52, 174); // purple
+                case 1: return Wt::WColor(173, 75, 51);  // tomato
+                case 2: return Wt::WColor(51, 149, 173); // cyan
+                case 3: return Wt::WColor(174, 52, 144); // dark pink
+                case 4: return Wt::WColor(173, 142, 51); // ochre
+                case 5: return Wt::WColor(51, 82, 173);  // blue
+                case 6: return Wt::WColor(174, 52, 99);  // rose
+                case 7: return Wt::WColor(65, 51, 173);  // purple
             }
         }
-#if 0 // This green matches better with the above colors
-        return Wt::WBrush(Wt::WColor(99, 115, 14));
-#else // This green is brighter and contrasts more with the others
-        return Wt::WBrush(Wt::WColor(52, 147, 19));
-#endif
+        ASSERT_not_reachable("stupid compiler");
     }
 };
 
@@ -664,15 +717,16 @@ public:
 
         // The resultsBox has two rows: the top row is the charts (in a WStackedWidget), and the bottom is the settings to
         // choose which chart to display and how.
-        chartModel_ = new StatusModel("boost");
+        chartModel_ = new StatusModel("boost", "status");
         chartModel_->setDepMajorIsData(true);
         resultsBox->addWidget(chartStack_ = new Wt::WStackedWidget);
         chartStack_->addWidget(statusCharts_[0] = new WStatusChart2d(chartModel_, BAR_CHART));
         chartStack_->addWidget(statusCharts_[1] = new WStatusChart2d(chartModel_, LINE_CHART));
 
         // The can be viewed as a table instead of a chart.
-        tableModel_ = new StatusModel("boost");
+        tableModel_ = new StatusModel("boost", "status");
         tableModel_->setDepMajorIsData(true);
+        tableModel_->setRoundToInteger(true);
         tableView_ = new Wt::WTableView;
         tableView_->setModel(tableModel_);
         chartStack_->addWidget(tableView_);
@@ -697,7 +751,6 @@ public:
         }
         chartSettingsBox->addWidget(majorAxisChoices_);
         chartSettingsBox->addWidget(minorAxisChoices_);
-        minorAxisChoices_->setHidden(true);             // only for table charts
 
         // Combo box to choose which chart to show.
         chartSettingsBox->addWidget(new Wt::WLabel("Chart type:"));
@@ -759,6 +812,7 @@ private:
     void updateStatusCounts() {
         ::mlog[DEBUG] <<"WApplication::updateStatusCounts\n";
         chartModel_->setDepMajorName(majorAxisChoices_->currentText().narrow());
+        chartModel_->setDepMinorName(minorAxisChoices_->currentText().narrow());
         chartModel_->updateModel(constraints_->dependencies());
 
         tableModel_->setDepMajorName(majorAxisChoices_->currentText().narrow());
@@ -773,7 +827,6 @@ private:
 
     void switchCharts() {
         chartStack_->setCurrentIndex(chartChoice_->currentIndex());
-        minorAxisChoices_->setHidden(2 != chartChoice_->currentIndex());
     }
 
     void switchAbsoluteRelative() {
@@ -1123,34 +1176,20 @@ parseCommandLine(int argc, char *argv[]) {
 #endif
 }
 
-class StatusSorter {
-    const Sawyer::Container::Map<std::string, int> &positions;
-public:
-    explicit StatusSorter(const Sawyer::Container::Map<std::string, int> &positions)
-        : positions(positions) {}
-
-    bool operator()(const std::string &a, const std::string &b) {
-        int ai = positions.getOrElse(a, 99999999);
-        int bi = positions.getOrElse(b, 99999999);
-        if (ai != bi)
-            return ai < bi;
-        return a < b;
-    }
-};
-
 static std::vector<std::string>
 loadTestNames(const SqlDatabase::TransactionPtr &tx) {
+    gstate.testNameIndex.clear();
+
     std::vector<std::string> retval;
     SqlDatabase::StatementPtr q = tx->statement("select distinct status from test_results");
     for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
         retval.push_back(row.get<std::string>(0));
 
-    Sawyer::Container::Map<std::string, int> positions;
     q = tx->statement("select name, position from test_names");
     for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
-        positions.insert(row.get<std::string>(0), row.get<int>(1));
+        gstate.testNameIndex.insert(row.get<std::string>(0), row.get<int>(1));
 
-    std::sort(retval.begin(), retval.end(), StatusSorter(positions));
+    std::sort(retval.begin(), retval.end(), DependencyValueSorter("status"));
     return retval;
 }
 
