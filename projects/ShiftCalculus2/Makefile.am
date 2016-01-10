@@ -88,6 +88,18 @@ test11: shiftCalculusCompiler
 	./shiftCalculusCompiler -c -std=c++11 $(srcdir)/laplacian_multibox.cpp
 	g++ -std=c++11 rose_laplacian_multibox.cpp $(srcdir)/Box.cpp $(srcdir)/BLIterator.cpp $(srcdir)/BoxLayout.cpp  $(srcdir)/CH_Timer.cpp $(srcdir)/PowerItoI.cpp  -I$(srcdir) -o $@ 
 
+test11_ref: 
+	@echo "********************************************************************************************"
+	@echo "******* ROSE/projects/ShiftCalculus: code generation for C++ code                   ********"
+	@echo "********************************************************************************************"
+	g++ -std=c++11 $(srcdir)/refCode/laplacian_multibox_manual.cpp $(srcdir)/Box.cpp $(srcdir)/BLIterator.cpp $(srcdir)/BoxLayout.cpp  $(srcdir)/CH_Timer.cpp $(srcdir)/PowerItoI.cpp  -I$(srcdir) -o $@ 
+
+test11_mpi: 
+	@echo "********************************************************************************************"
+	@echo "******* ROSE/projects/ShiftCalculus: code generation for C++ code                   ********"
+	@echo "********************************************************************************************"
+	mpic++ -g -std=c++11 $(srcdir)/refCode/laplacian_multibox_mpi.cpp $(srcdir)/Box.cpp $(srcdir)/BLIterator.cpp $(srcdir)/BoxLayout.cpp  $(srcdir)/CH_Timer.cpp $(srcdir)/PowerItoI.cpp  -I$(srcdir) -o $@ 
+
 POLYOPT_PATH=$(top_builddir)/projects/PolyOpt2
 
 test10poly: shiftCalculusCompiler
