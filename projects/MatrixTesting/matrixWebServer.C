@@ -10,6 +10,7 @@ static Sawyer::Message::Facility mlog;
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
+#include <Color.h>                                      // ROSE
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Map.h>
 #include <SqlDatabase.h>                                // ROSE
@@ -35,6 +36,7 @@ static Sawyer::Message::Facility mlog;
 
 static const char* WILD_CARD_STR = "<any>";
 enum ChartType { BAR_CHART, LINE_CHART };
+enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO };
 
 typedef Sawyer::Container::Map<std::string, int> StringIndex;
 
@@ -234,32 +236,27 @@ humanDepValue(const std::string &depName, const std::string &depValue, HumanForm
 // table that matched major dependency i and minor dependency j.
 class StatusModel: public Wt::WAbstractTableModel {
 private:
-    std::vector<std::vector<double> > table_;
-    bool usePercents_;                                  // cells of a row should sum to 100 (or zero if they're all zero)
+    typedef std::vector<double> TableRow;
+    typedef std::vector<TableRow> Table;
+    Table counts_;                                      // counts of matching rows
+    Table passes_;                                      // portion of counts_ where pass_fail = 'passed'
+    ChartValueType chartValueType_;                     // whether to show counts, percents, or pass ratios
     bool roundToInteger_;                               // round cell values to nearest integer
 
     std::string depMajorName_;                          // dependency for major axis
     std::vector<std::string> depMajorValues_;           // human-format values of major dependency
-    StringIndex depMajorIndex_;                         // maps depMajorValues_ to table_ row numbers
+    StringIndex depMajorIndex_;                         // maps depMajorValues_ to counts_ row numbers
     bool depMajorIsData_;                               // if true then depMajorValues are column zero of the model
 
-    std::string depMinorName_;                          // minor dependency name; empty implies 2d-mode
+    std::string depMinorName_;                          // dependency for minor axis (often "status")
     std::vector<std::string> depMinorValues_;           // values of minor dependency or status values
-    StringIndex depMinorIndex_;                         // maps depMinorValues_ to table_ column numbers
+    StringIndex depMinorIndex_;                         // maps depMinorValues_ to counts_ column numbers
     bool depMinorIsData_;                               // if true then depMinorValues are row zero of the model
     
 public:
     explicit StatusModel(Wt::WObject *parent = NULL)
-        : Wt::WAbstractTableModel(parent), usePercents_(false), roundToInteger_(false),
-          depMajorIsData_(false), depMinorIsData_(false) {}
-
-    explicit StatusModel(const std::string &depMajorName, Wt::WObject *parent = NULL)
-        : Wt::WAbstractTableModel(parent), usePercents_(false), roundToInteger_(false),
-          depMajorName_(depMajorName), depMajorIsData_(false), depMinorIsData_(false) {}
-
-    StatusModel(const std::string &depMajorName, const std::string &depMinorName, Wt::WObject *parent = NULL)
-        : Wt::WAbstractTableModel(parent), usePercents_(false), roundToInteger_(false),
-          depMajorName_(depMajorName), depMajorIsData_(false), depMinorName_(depMinorName), depMinorIsData_(false) {}
+        : Wt::WAbstractTableModel(parent), chartValueType_(CVT_COUNT), roundToInteger_(false),
+          depMajorName_("rose_date"), depMajorIsData_(false), depMinorName_("pass/fail"), depMinorIsData_(false) {}
 
     const std::string& depMajorName() const {
         return depMajorName_;
@@ -277,12 +274,12 @@ public:
         depMinorName_ = s;
     }
 
-    bool relativeMode() const {
-        return usePercents_;
+    ChartValueType chartValueType() const {
+        return chartValueType_;
     }
-    
-    void setRelativeMode(bool b) {
-        usePercents_ = b;
+
+    void setChartValueType(ChartValueType t) {
+        chartValueType_ = t;
     }
 
     bool depMajorIsData() const {
@@ -323,18 +320,21 @@ public:
         Sawyer::Message::Stream debug(::mlog[DEBUG] <<"StatusModel::updateModel...\n");
         updateDepMajor(deps);
         updateDepMinor(deps);
-        resetTable();
-        if (table_.empty())
+        resetTable(counts_);
+        resetTable(passes_);
+        if (counts_.empty())
             return modelReset().emit();
 
         // Build the SQL query
         ASSERT_require(!depMajorName_.empty());
         std::string depMajorColumn = gstate.dependencyNames[depMajorName_];
-        std::string depMinorColumn = depMinorName_.empty() ? std::string("status") : gstate.dependencyNames[depMinorName_];
-        std::string sql = "select " + depMajorColumn + ", " + depMinorColumn + ", count(*) from test_results"
+        std::string depMinorColumn = gstate.dependencyNames[depMinorName_];
+        std::string passFailColumn = gstate.dependencyNames["pass/fail"];
+        std::string sql = "select " + depMajorColumn + ", " + depMinorColumn + ", " + passFailColumn + " as pf, count(*)"
+                          " from test_results"
                           " join users on test_results.reporting_user = users.uid";
         std::vector<std::string> args;
-        sql += sqlWhereClause(deps, args /*out*/) + " group by " + depMajorColumn + ", " + depMinorColumn;
+        sql += sqlWhereClause(deps, args /*out*/) + " group by " + depMajorColumn + ", " + depMinorColumn + ", pf";
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
         bindSqlVariables(q, args);
 
@@ -343,27 +343,15 @@ public:
         for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
             std::string majorValue = humanDepValue(depMajorName_, row.get<std::string>(0), HUMAN_TERSE);
             std::string minorValue = humanDepValue(depMinorName_, row.get<std::string>(1), HUMAN_TERSE);
-            int count = row.get<int>(2);
+            std::string pf = row.get<std::string>(2);
+            int count = row.get<int>(3);
 
             int i = depMajorIndex_.getOrElse(majorValue, -1);
             int j = depMinorIndex_.getOrElse(minorValue, -1);
-            if (i >= 0 && j >= 0)
-                table_[i][j] += count;
-        }
-
-        // Normalize rows for percents
-        if (usePercents_) {
-            BOOST_FOREACH (std::vector<double> &row, table_) {
-                double total = 0;
-                BOOST_FOREACH (double count, row)
-                    total += count;
-                if (total > 0) {
-                    BOOST_FOREACH (double &cell, row) {
-                        cell = 100.0 * cell / total;
-                        if (roundToInteger_)
-                            cell = round(cell);
-                    }
-                }
+            if (i >= 0 && j >= 0) {
+                counts_[i][j] += count;
+                if (pf == "pass")
+                    passes_[i][j] += count;
             }
         }
 
@@ -377,10 +365,10 @@ public:
                 debug <<" " <<StringUtility::cEscape(v);
             debug <<"\n";
 
-            for (size_t i=0; i<table_.size(); ++i) {
+            for (size_t i=0; i<counts_.size(); ++i) {
                 debug <<"[" <<i <<"] =";
-                for (size_t j=0; j<table_[i].size(); ++j) {
-                    debug <<" " <<table_[i][j];
+                for (size_t j=0; j<counts_[i].size(); ++j) {
+                    debug <<" " <<counts_[i][j];
                 }
                 debug <<"\n";
             }
@@ -406,29 +394,51 @@ public:
         ASSERT_require(index.isValid());
         ASSERT_require(index.row() >= 0 && index.row() < rowCount());
         ASSERT_require(index.column() >= 0 && index.column() < columnCount());
-        if (Wt::DisplayRole == role) {
-            // i and j are indexes relative to table_[0][0]
-            int i = index.row()    - (depMinorIsData_ ? 1 : 0);
-            int j = index.column() - (depMajorIsData_ ? 1 : 0);
 
+        // i and j are indexes relative to counts_[0][0]
+        int i = index.row()    - (depMinorIsData_ ? 1 : 0);
+        int j = index.column() - (depMajorIsData_ ? 1 : 0);
+        ASSERT_require(-1 == i || (size_t)i < counts_.size());
+        ASSERT_require(-1 == j || (size_t)j < counts_[i].size());
+
+        if (Wt::DisplayRole == role) {
             if (-1 == i && -1 == j) {
                 // model index (0,0) is not used when major and minor dependency values are both stored as data
                 return std::string("origin");
-            } else if (-1 == j) {
-                // querying a depMajorValue
+            } else if (-1 == j) {                       // querying a depMajorValue
                 ASSERT_require(i >= 0 && (size_t)i < depMajorValues_.size());
                 return depMajorValues_[i];
-            } else if (-1 == i) {
-                // querying a depMinorValue
+            } else if (-1 == i) {                       // querying a depMinorValue
                 ASSERT_require(j >= 0 && (size_t)j < depMinorValues_.size());
                 return depMinorValues_[j];
-            } else {
-                // querying a table_ value
-                ASSERT_require((size_t)i < table_.size());
-                ASSERT_require((size_t)j < table_[i].size());
-                return table_[i][j];
+            } else if (0 == counts_[i][j]) {
+                return 0.0;
+            } else if (CVT_PERCENT == chartValueType_) {// counts divided by total for entire row as a percent
+                double rowTotal = 0;
+                BOOST_FOREACH (double count, counts_[i])
+                    rowTotal += count;
+                double percent = 100.0 * counts_[i][j] / rowTotal;
+                return roundToInteger_ ? round(percent) : percent;
+            } else if (CVT_PASS_RATIO == chartValueType_) {// number of passes divided by count as a percent
+                double percent = 100.0 * passes_[i][j] / counts_[i][j];
+                return roundToInteger_ ? round(percent) : percent;
+            } else {                                    // raw counts
+                return counts_[i][j];
+            }
+
+        } else if (Wt::StyleClassRole == role) {
+            if (i >= 0 && j >= 0 && CVT_PASS_RATIO == chartValueType_) {
+                if (counts_[i][j] == 0) {
+                    return Wt::WString("chart-zero");
+                } else {
+                    int pfratio = round(100.0 * passes_[i][j] / counts_[i][j]);
+                    int fade = std::min((int)round(counts_[i][j]), 4);
+                    return Wt::WString("chart-pass-ratio-" + StringUtility::numberToString(pfratio) +
+                                       "-" + StringUtility::numberToString(fade));
+                }
             }
         }
+        
         return boost::any();
     }
 
@@ -454,10 +464,10 @@ public:
 
 private:
     // Resizes the table according to the depMajorValues_ and depMinorValues_ and resets all entries to zero.
-    void resetTable() {
-        std::vector<double> row(depMinorValues_.size(), 0.0);
-        table_.clear();
-        table_.resize(depMajorValues_.size(), row);
+    void resetTable(Table &t) {
+        TableRow row(depMinorValues_.size(), 0.0);
+        t.clear();
+        t.resize(depMajorValues_.size(), row);
     }
 
     // Update the depMajorValues_ and depMajorIndex_ according to depMajorName_
@@ -470,13 +480,11 @@ private:
         }
     }
 
-    // Update the depMinorValues_ and depMinorIndex_ according to depMajorName_ and depMinorName_
+    // Update the depMinorValues_ and depMinorIndex_ according to depMinorName_
     void updateDepMinor(const Dependencies &deps) {
         if (depMajorName_.empty()) {
             depMinorValues_.clear();
             depMinorIndex_.clear();
-        } else if (depMinorName_.empty()) {
-            fillVectorIndexFromTestNames(depMinorValues_, depMinorIndex_);
         } else {
             fillVectorIndexFromTable(deps, depMinorName_, depMinorValues_, depMinorIndex_);
         }
@@ -506,16 +514,54 @@ private:
             values.push_back(humanValue);
         }
     }
+};
 
-    // Fill in a value vector and its index with test status values.
-    void fillVectorIndexFromTestNames(std::vector<std::string> &values /*out*/, StringIndex &index /*out*/) {
-        values.clear();
-        index.clear();
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Text widget to display comma-separated values (CSV) for a model.
+class WCommaSeparatedValues: public Wt::WContainerWidget {
+    StatusModel *model_;
+    Wt::WText *text_;
 
-        BOOST_FOREACH (const std::string &name, gstate.testNames) {
-            index.insert(name, values.size());
-            values.push_back(name);
+public:
+    explicit WCommaSeparatedValues(StatusModel *model, Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent), model_(model) {
+        ASSERT_not_null(model);
+        Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
+        setLayout(vbox);
+
+        text_ = new Wt::WText("Nothing to show.");
+        text_->setTextFormat(Wt::PlainText);
+        text_->setWordWrap(false);
+        vbox->addWidget(text_);
+
+        model_->modelReset().connect(this, &WCommaSeparatedValues::updateText);
+    }
+
+private:
+    void updateText() {
+        std::string s;
+        for (int i=0; i<model_->columnCount(); ++i) {
+            s += i ? ", " : "";
+            boost::any header = model_->headerData(i);
+            s += "\"" + StringUtility::cEscape(boost::any_cast<std::string>(header)) + "\"";
         }
+        s += "\n";
+
+        for (int i=0; i<model_->rowCount(); ++i) {
+            for (int j=0; j<model_->columnCount(); ++j) {
+                s += j ? ", " : "";
+                boost::any value = model_->data(model_->index(i, j));
+                if (value.type() == typeid(std::string)) {
+                    s += "\"" + StringUtility::cEscape(boost::any_cast<std::string>(value)) + "\"";
+                } else if (value.type() == typeid(double)) {
+                    s += boost::lexical_cast<std::string>(boost::any_cast<double>(value));
+                } else {
+                    s += "unknown";
+                }
+            }
+            s += "\n";
+        }
+        text_->setText(s);
     }
 };
 
@@ -581,15 +627,27 @@ public:
             setHeight(230);
         }
 
-        if (model_->relativeMode()) {
-            axis(Wt::Chart::YAxis).setMaximum(100);
-        } else {
+        if (LINE_CHART == chartType_) {
             axis(Wt::Chart::YAxis).setAutoLimits(Wt::Chart::MaximumValue);
+        } else {
+            switch (model_->chartValueType()) {
+                case CVT_COUNT:
+                case CVT_PASS_RATIO:
+                    axis(Wt::Chart::YAxis).setAutoLimits(Wt::Chart::MaximumValue);
+                    break;
+                case CVT_PERCENT:
+                    axis(Wt::Chart::YAxis).setMaximum(100);
+                    break;
+            }
         }
     }
 
     Wt::WColor dependencyValueColor(const std::string &depName, const std::string &depHumanValue, size_t i) {
-        if (depName == "status" && depHumanValue == "end") {
+        if (depName == "pass/fail") {
+            if (depHumanValue == "pass")
+                return Wt::WColor(52, 147, 19);         // green
+            return Wt::WColor(156, 21, 21);             // red
+        } else if (depName == "status" && depHumanValue == "end") {
             // Use a fairly bright green to contrast with the other colors.
             return Wt::WColor(52, 147, 19);
         } else {
@@ -692,6 +750,7 @@ class WResultsConstraintsTab: public Wt::WContainerWidget {
     StatusModel *chartModel_, *tableModel_;
     WStatusChart2d *statusCharts_[2];                   // BAR_CHART, LINE_CHART
     Wt::WTableView *tableView_;
+    WCommaSeparatedValues *csvView_;
     Wt::WStackedWidget *chartStack_;
     Wt::WComboBox *majorAxisChoices_, *minorAxisChoices_;
     Wt::WComboBox *chartChoice_;
@@ -717,39 +776,46 @@ public:
 
         // The resultsBox has two rows: the top row is the charts (in a WStackedWidget), and the bottom is the settings to
         // choose which chart to display and how.
-        chartModel_ = new StatusModel("boost", "status");
+        chartModel_ = new StatusModel;
         chartModel_->setDepMajorIsData(true);
         resultsBox->addWidget(chartStack_ = new Wt::WStackedWidget);
         chartStack_->addWidget(statusCharts_[0] = new WStatusChart2d(chartModel_, BAR_CHART));
         chartStack_->addWidget(statusCharts_[1] = new WStatusChart2d(chartModel_, LINE_CHART));
 
-        // The can be viewed as a table instead of a chart.
-        tableModel_ = new StatusModel("boost", "status");
+        // Data can be viewed as a table instead of a chart.
+        tableModel_ = new StatusModel;
         tableModel_->setDepMajorIsData(true);
         tableModel_->setRoundToInteger(true);
         tableView_ = new Wt::WTableView;
         tableView_->setModel(tableModel_);
+        tableView_->setAlternatingRowColors(false);         // true interferes with our custom background colors
+        tableView_->setSortingEnabled(false);
+        tableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
         chartStack_->addWidget(tableView_);
+
+        // Data can be viewed as a list of comma-separated values.
+        csvView_ = new WCommaSeparatedValues(tableModel_);
+        chartStack_->addWidget(csvView_);
 
         // The chartSettingsBox holds the various buttons and such for adjusting the charts.
         Wt::WHBoxLayout *chartSettingsBox = new Wt::WHBoxLayout;
         chartSettingsBox->addSpacing(300);
 
         // Combo box to choose what to display as the X axis for the test status chart
-        chartSettingsBox->addWidget(new Wt::WLabel("Axis:"));
         majorAxisChoices_ = new Wt::WComboBox;
         minorAxisChoices_ = new Wt::WComboBox;
         int i = 0;
         BOOST_FOREACH (const std::string &depName, gstate.dependencyNames.keys()) {
             majorAxisChoices_->addItem(depName);
             minorAxisChoices_->addItem(depName);
-            if (depName == "boost")
+            if (depName == chartModel_->depMajorName())
                 majorAxisChoices_->setCurrentIndex(i);
-            if (depName == "status")
+            if (depName == chartModel_->depMinorName())
                 minorAxisChoices_->setCurrentIndex(i);
             ++i;
         }
         chartSettingsBox->addWidget(majorAxisChoices_);
+        chartSettingsBox->addWidget(new Wt::WLabel("versus"));
         chartSettingsBox->addWidget(minorAxisChoices_);
 
         // Combo box to choose which chart to show.
@@ -758,12 +824,14 @@ public:
         chartChoice_->addItem("bars");
         chartChoice_->addItem("lines");
         chartChoice_->addItem("table");
+        chartChoice_->addItem("csv");
         chartChoice_->activated().connect(this, &WResultsConstraintsTab::switchCharts);
 
         // Combo box to choose whether the model stores percents or counts
         chartSettingsBox->addWidget(absoluteRelative_ = new Wt::WComboBox);
-        absoluteRelative_->addItem("totals");
-        absoluteRelative_->addItem("percents");
+        absoluteRelative_->addItem("counts");
+        absoluteRelative_->addItem("normalized%");
+        absoluteRelative_->addItem("pass%");
         absoluteRelative_->activated().connect(this, &WResultsConstraintsTab::switchAbsoluteRelative);
 
         // Update button to reload data from the database
@@ -786,14 +854,17 @@ public:
         constraints->setCentralWidget(constraintsWidget);
         vbox->addWidget(constraints);
 
-        // Button to reset everything to the initial state.
-        Wt::WPushButton *reset = new Wt::WPushButton("Reset");
-        reset->clicked().connect(this, &WResultsConstraintsTab::resetConstraints);
-        constraintsBox->addWidget(reset);
-
         // Constraints
         constraintsBox->addWidget(constraints_ = new WConstraints);
         constraints_->constraintsChanged().connect(this, &WResultsConstraintsTab::updateStatusCounts);
+
+        // Button to reset everything to the initial state.
+        Wt::WHBoxLayout *constraintButtonBox = new Wt::WHBoxLayout;
+        constraintsBox->addLayout(constraintButtonBox);
+        Wt::WPushButton *reset = new Wt::WPushButton("Clear");
+        reset->clicked().connect(this, &WResultsConstraintsTab::resetConstraints);
+        constraintButtonBox->addWidget(reset);
+        constraintButtonBox->addStretch(1);
 
         //---------
         // Wiring
@@ -830,12 +901,17 @@ private:
     }
 
     void switchAbsoluteRelative() {
-        bool usePercents = 1 == absoluteRelative_->currentIndex();
+        ChartValueType cvt = CVT_COUNT;
+        switch (absoluteRelative_->currentIndex()) {
+            case 0: cvt = CVT_COUNT; break;
+            case 1: cvt = CVT_PERCENT; break;
+            case 2: cvt = CVT_PASS_RATIO; break;
+        }
 
-        chartModel_->setRelativeMode(usePercents);
+        chartModel_->setChartValueType(cvt);
         chartModel_->updateModel(constraints_->dependencies());
 
-        tableModel_->setRelativeMode(usePercents);
+        tableModel_->setChartValueType(cvt);
         tableModel_->updateModel(constraints_->dependencies());
     }
 };
@@ -1063,6 +1139,21 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Global settings
+class WSettings: public Wt::WContainerWidget {
+public:
+    explicit WSettings(Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent) {
+        Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
+        setLayout(vbox);
+
+        vbox->addWidget(new Wt::WLabel("Not implemented"));
+
+        vbox->addStretch(1);
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // One application object is created per user session.
 class WApplication: public Wt::WApplication {
     WResultsConstraintsTab *resultsConstraints_;
@@ -1080,9 +1171,30 @@ public:
         styleSheet().addRule(".compiler-warning", "color:#8f4000; background-color:#ffe0c7;"); // oranges
         styleSheet().addRule(".output-separator", "background-color:#808080;");
 
+        // Colors for pass-ratios.
+        //   Classes chart-pass-ratio-N vary from red to green as N goes from integer 0 through 100.
+        //   Classes chart-pass-ratio-N-S are similar except S is a saturation amount from 0 through 4 (desaturated).
+        rose::Color::Gradient redgreen;
+        redgreen.insert(0.0, rose::Color::HSV(0.00, 0.50, 0.50));
+        redgreen.insert(0.5, rose::Color::HSV(0.17, 0.40, 0.50));
+        redgreen.insert(1.0, rose::Color::HSV(0.33, 0.50, 0.50));
+        for (int i=0; i<=100; ++i) {
+            rose::Color::RGB c = redgreen.interpolate(i/100.0);
+            std::string cssClass = ".chart-pass-ratio-" + StringUtility::numberToString(i);
+            std::string bgColor = "background-color:" + c.toHtml() + ";";
+            styleSheet().addRule(cssClass, bgColor);
+            for (int j=0; j<5; ++j) {
+                std::string cssClass2 = cssClass + "-" + StringUtility::numberToString(j);
+                bgColor = "background-color:" + rose::Color::fade(c, 1.0-j*0.25).toHtml() + ";";
+                styleSheet().addRule(cssClass2, bgColor);
+            }
+        }
+        styleSheet().addRule(".chart-zero", "background-color:" + rose::Color::HSV(0, 0, 0.3).toHtml() + ";");
+
         tabs_ = new Wt::WTabWidget();
         tabs_->addTab(resultsConstraints_ = new WResultsConstraintsTab, "Overview");
         tabs_->addTab(details_ = new WDetails, "Details");
+        tabs_->addTab(new WSettings, "Settings");
         vbox->addWidget(tabs_);
 
         // Wiring
@@ -1176,43 +1288,41 @@ parseCommandLine(int argc, char *argv[]) {
 #endif
 }
 
-static std::vector<std::string>
-loadTestNames(const SqlDatabase::TransactionPtr &tx) {
+static void
+loadTestNames() {
     gstate.testNameIndex.clear();
+    gstate.testNames.clear();
 
-    std::vector<std::string> retval;
-    SqlDatabase::StatementPtr q = tx->statement("select distinct status from test_results");
+    SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct status from test_results");
     for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
-        retval.push_back(row.get<std::string>(0));
+        gstate.testNames.push_back(row.get<std::string>(0));
 
-    q = tx->statement("select name, position from test_names");
+    q = gstate.tx->statement("select name, position from test_names");
     for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
         gstate.testNameIndex.insert(row.get<std::string>(0), row.get<int>(1));
 
-    std::sort(retval.begin(), retval.end(), DependencyValueSorter("status"));
-    return retval;
+    std::sort(gstate.testNames.begin(), gstate.testNames.end(), DependencyValueSorter("status"));
 }
 
 // These are the dependencies that will show up as constraints that the user can adjust.
-static DependencyNames
-loadDependencyNames(const SqlDatabase::TransactionPtr &tx) {
-    DependencyNames retval;
-    SqlDatabase::StatementPtr q = tx->statement("select distinct name from dependencies");
+static void
+loadDependencyNames() {
+    gstate.dependencyNames.clear();
+    SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct name from dependencies");
     for (SqlDatabase::Statement::iterator row=q->begin(); row!=q->end(); ++row) {
         std::string key = row.get<std::string>(0);
-        retval.insert(key, "rmc_"+key);
+        gstate.dependencyNames.insert(key, "rmc_"+key);
     }
 
     // Additional key/column relationships
-    retval.insert("reporting_user", "users.name");
-    retval.insert("reporting_time", "reporting_time");
-    retval.insert("tester", "tester");
-    retval.insert("os", "os");
-    retval.insert("rose", "rose");
-    retval.insert("rose_date", "rose_date");
-    retval.insert("status", "status");
-
-    return retval;
+    gstate.dependencyNames.insert("reporting_user", "users.name");
+    gstate.dependencyNames.insert("reporting_time", "reporting_time");
+    gstate.dependencyNames.insert("tester", "tester");
+    gstate.dependencyNames.insert("os", "os");
+    gstate.dependencyNames.insert("rose", "rose");
+    gstate.dependencyNames.insert("rose_date", "rose_date");
+    gstate.dependencyNames.insert("status", "status");
+    gstate.dependencyNames.insert("pass/fail", "case when status = 'end' then 'pass' else 'fail' end");
 }
 
 static WApplication*
@@ -1235,9 +1345,9 @@ main(int argc, char *argv[]) {
     // Initialized global state shared by all serving threads.
     parseCommandLine(argc, argv);
     gstate.tx = SqlDatabase::Connection::create(gstate.dbUrl)->transaction();
-    gstate.dependencyNames = loadDependencyNames(gstate.tx);
-    gstate.testNames = loadTestNames(gstate.tx);
-    
+    loadDependencyNames();
+    loadTestNames();
+
     // Start the web server
     int wtArgc = 0;
     char *wtArgv[8];
