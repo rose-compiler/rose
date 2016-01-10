@@ -1349,6 +1349,9 @@ main(int argc, char *argv[]) {
     loadTestNames();
 
     // Start the web server
+#ifdef USING_FASTCGI
+    return Wt::WRun(argc, argv, createApplication);
+#else
     int wtArgc = 0;
     char *wtArgv[8];
     wtArgv[wtArgc++] = strdup(argv[0]);
@@ -1360,6 +1363,7 @@ main(int argc, char *argv[]) {
     wtArgv[wtArgc++] = strdup(boost::lexical_cast<std::string>(gstate.httpPort).c_str());
     wtArgv[wtArgc] = NULL;
     return Wt::WRun(wtArgc, wtArgv, createApplication);
+#endif
 #else
     ::mlog[FATAL] <<"this program must be configured with Wt web toolkit support\n";
     exit(1);
