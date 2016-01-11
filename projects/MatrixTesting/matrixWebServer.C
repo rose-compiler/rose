@@ -37,6 +37,7 @@ static Sawyer::Message::Facility mlog;
 static const char* WILD_CARD_STR = "<any>";
 enum ChartType { BAR_CHART, LINE_CHART };
 enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO };
+static int END_STATUS_POSITION = 999;                   // test_names.position where name = 'end'
 
 typedef Sawyer::Container::Map<std::string, int> StringIndex;
 
@@ -107,6 +108,13 @@ static GlobalState gstate;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static std::string
+sqlFromClause() {
+    return (" from test_results"
+            " join users on test_results.reporting_user = users.uid"
+            " left outer join test_names on test_results.status = test_names.name");
+}
+
+static std::string
 sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
     std::string where;
     BOOST_FOREACH (const Dependency &dep, deps.values()) {
@@ -145,8 +153,8 @@ public:
     bool operator()(const std::string &a, const std::string &b) {
         if (depName_ == "status") {
             // Status (failed test names) should be sorted in the order that the tests run.
-            int ai = gstate.testNameIndex.getOrElse(a, 999);
-            int bi = gstate.testNameIndex.getOrElse(b, 999);
+            int ai = gstate.testNameIndex.getOrElse(a, 900);
+            int bi = gstate.testNameIndex.getOrElse(b, 900);
             return ai < bi;
         } else if (depName_ == "compiler") {
             // Compilers have three-part names: VENDOR-VERSION-LANGUAGE like "gcc-4.8.4-c++11". We should sort these are three
@@ -171,6 +179,21 @@ public:
         }
     }
 };
+
+// What does it mean to "pass"?  The special virtual dependency "pass/fail" returns the word "pass" or "fail" depending
+// on our current definition of pass/fail.  The default definition is that any test whose status = "end" is considered to have
+// passed and any other status is a failure.  However, we can change the definition to be any test whose status is greater than
+// or equal to some specified value is a pass. By "greater than or equal" we mean the result position from teh "test_names"
+// table.
+static void
+setPassDefinition(const std::string &minimumPassStatus) {
+    int position = gstate.testNameIndex.getOrElse(minimumPassStatus, END_STATUS_POSITION);
+    std::string passDefinition = "case"
+                                 " when test_names.position >= " + StringUtility::numberToString(position) +
+                                 " then 'pass' else 'fail' end";
+    gstate.dependencyNames.insert("pass/fail", passDefinition);
+}
+
 
 enum HumanFormat { HUMAN_TERSE, HUMAN_VERBOSE };
 
@@ -349,11 +372,11 @@ public:
         std::string depMajorColumn = gstate.dependencyNames[depMajorName_];
         std::string depMinorColumn = gstate.dependencyNames[depMinorName_];
         std::string passFailColumn = gstate.dependencyNames["pass/fail"];
-        std::string sql = "select " + depMajorColumn + ", " + depMinorColumn + ", " + passFailColumn + " as pf, count(*)"
-                          " from test_results"
-                          " join users on test_results.reporting_user = users.uid";
         std::vector<std::string> args;
-        sql += sqlWhereClause(deps, args /*out*/) + " group by " + depMajorColumn + ", " + depMinorColumn + ", pf";
+        std::string sql = "select " + depMajorColumn + ", " + depMinorColumn + ", " + passFailColumn + " as pf, count(*)" +
+                          sqlFromClause() +
+                          sqlWhereClause(deps, args /*out*/) +
+                          " group by " + depMajorColumn + ", " + depMinorColumn + ", pf";
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
         bindSqlVariables(q, args);
 
@@ -516,8 +539,7 @@ private:
         index.clear();
 
         std::string columnName = gstate.dependencyNames[depName];
-        std::string sql = "select distinct " +  columnName + " from test_results"
-                          " join users on test_results.reporting_user = users.uid";
+        std::string sql = "select distinct " +  columnName + sqlFromClause();
         std::vector<std::string> args;
         sql += sqlWhereClause(deps, args /*out*/);
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
@@ -706,9 +728,7 @@ public:
             // clauses won't really do what we want. Regardless of whether we use human-readalbe names and buckets of values,
             // we need to store the original value from the SQL table so we can construct "where" clauses later.
             std::string depColumn = gstate.dependencyNames[depName];
-            SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct " + depColumn +
-                                                               " from test_results"
-                                                               " join users on test_results.reporting_user = users.uid");
+            SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct " + depColumn + sqlFromClause());
             for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
                 std::string rawValue = row.get<std::string>(0);
                 std::string humanValue = humanDepValue(depName, rawValue, HUMAN_TERSE);
@@ -902,7 +922,6 @@ public:
         return constraints_;
     }
 
-private:
     void updateStatusCounts() {
         ::mlog[DEBUG] <<"WApplication::updateStatusCounts\n";
         chartModel_->setDepMajorName(majorAxisChoices_->currentText().narrow());
@@ -914,6 +933,7 @@ private:
         tableModel_->updateModel(constraints_->dependencies());
     }
 
+private:
     void resetConstraints() {
         ::mlog[DEBUG] <<"WApplication::resetConstraints\n";
         constraints_->resetConstraints();
@@ -987,9 +1007,7 @@ public:
 
     void queryTestIds(const Dependencies &deps) {
         std::vector<std::string> args;
-        std::string sql = "select id, status from test_results join users on test_results.reporting_user = users.uid" +
-                          sqlWhereClause(deps, args) +
-                          " order by id";
+        std::string sql = "select id, status " + sqlFromClause() + sqlWhereClause(deps, args) + " order by id";
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
         bindSqlVariables(q, args);
 
@@ -1033,8 +1051,8 @@ public:
         std::string sql;
         BOOST_FOREACH (const std::string &colName, columns.values())
             sql += std::string(sql.empty()?"select ":", ") + colName;
-        sql += " from test_results join users on test_results.reporting_user = users.uid";
 
+        sql += sqlFromClause();
         std::vector<std::string> args;
         std::string where = sqlWhereClause(deps, args);
         where += std::string(where.empty() ? " where " : " and ") + "id = ?";
@@ -1164,15 +1182,50 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global settings
 class WSettings: public Wt::WContainerWidget {
+    Wt::Signal<> settingsChanged_;
+    Wt::WComboBox *passCriteria_;
+
 public:
     explicit WSettings(Wt::WContainerWidget *parent = NULL)
         : Wt::WContainerWidget(parent) {
         Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
         setLayout(vbox);
 
-        vbox->addWidget(new Wt::WLabel("Not implemented"));
+        //------------------------------
+        // Criteria for passing a test.
+        //------------------------------
+        Wt::WHBoxLayout *passBox = new Wt::WHBoxLayout;
+        vbox->addLayout(passBox);
+
+        passBox->addWidget(new Wt::WLabel("A configuration passes if it fails in "));
+
+        passCriteria_ = new Wt::WComboBox;
+        passBox->addWidget(passCriteria_);
+        BOOST_FOREACH (const std::string &testName, gstate.testNames) {
+            passCriteria_->addItem(testName);
+            if (testName == "end")
+                passCriteria_->setCurrentIndex(passCriteria_->count()-1);
+        }
+
+        passBox->addWidget(new Wt::WLabel("or later (i.e., its status)"));
+        passBox->addStretch(1);
 
         vbox->addStretch(1);
+
+        //----------
+        // Wiring
+        //----------
+        passCriteria_->activated().connect(this, &WSettings::updatePassCriteria);
+    }
+
+    Wt::Signal<>& settingsChanged() {
+        return settingsChanged_;
+    }
+
+private:
+    void updatePassCriteria() {
+        setPassDefinition(passCriteria_->currentText().narrow());
+        settingsChanged_.emit();
     }
 };
 
@@ -1181,6 +1234,7 @@ public:
 class WApplication: public Wt::WApplication {
     WResultsConstraintsTab *resultsConstraints_;
     WDetails *details_;
+    WSettings *settings_;
     Wt::WTabWidget *tabs_;
 
 public:
@@ -1217,12 +1271,13 @@ public:
         tabs_ = new Wt::WTabWidget();
         tabs_->addTab(resultsConstraints_ = new WResultsConstraintsTab, "Overview");
         tabs_->addTab(details_ = new WDetails, "Details");
-        tabs_->addTab(new WSettings, "Settings");
+        tabs_->addTab(settings_ = new WSettings, "Settings");
         vbox->addWidget(tabs_);
 
         // Wiring
         resultsConstraints_->constraints()->constraintsChanged().connect(this, &WApplication::getMatchingTests);
         details_->testIdChanged().connect(this, &WApplication::updateDetails);
+        settings_->settingsChanged().connect(this, &WApplication::updateAll);
         getMatchingTests();
     }
 
@@ -1235,6 +1290,12 @@ private:
     void updateDetails() {
         ::mlog[DEBUG] <<"WApplication::updateDetails\n";
         details_->updateDetails(resultsConstraints_->constraints()->dependencies());
+    }
+
+    void updateAll() {
+        resultsConstraints_->updateStatusCounts();
+        getMatchingTests();
+        updateDetails();
     }
 };
 
@@ -1321,8 +1382,13 @@ loadTestNames() {
         gstate.testNames.push_back(row.get<std::string>(0));
 
     q = gstate.tx->statement("select name, position from test_names");
-    for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row)
-        gstate.testNameIndex.insert(row.get<std::string>(0), row.get<int>(1));
+    for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
+        std::string statusName = row.get<std::string>(0);
+        int position = row.get<int>(1);
+        gstate.testNameIndex.insert(statusName, position);
+        if (statusName == "end")
+            END_STATUS_POSITION = position;
+    }
 
     std::sort(gstate.testNames.begin(), gstate.testNames.end(), DependencyValueSorter("status"));
 }
@@ -1334,7 +1400,7 @@ loadDependencyNames() {
     SqlDatabase::StatementPtr q = gstate.tx->statement("select distinct name from dependencies");
     for (SqlDatabase::Statement::iterator row=q->begin(); row!=q->end(); ++row) {
         std::string key = row.get<std::string>(0);
-        gstate.dependencyNames.insert(key, "rmc_"+key);
+        gstate.dependencyNames.insert(key, "test_results.rmc_"+key);
     }
 
     // Additional key/column relationships
@@ -1345,7 +1411,7 @@ loadDependencyNames() {
     gstate.dependencyNames.insert("rose", "rose");
     gstate.dependencyNames.insert("rose_date", "rose_date");
     gstate.dependencyNames.insert("status", "status");
-    gstate.dependencyNames.insert("pass/fail", "case when status = 'end' then 'pass' else 'fail' end");
+    setPassDefinition("end");                           // definition for "pass/fail" dependency
 }
 
 static WApplication*
@@ -1370,6 +1436,7 @@ main(int argc, char *argv[]) {
     gstate.tx = SqlDatabase::Connection::create(gstate.dbUrl)->transaction();
     loadDependencyNames();
     loadTestNames();
+    setPassDefinition("end");                           // a configuration passes if its status is >= "end"
 
     // Start the web server
 #ifdef USING_FASTCGI
