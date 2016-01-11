@@ -392,8 +392,8 @@ public:
     boost::any data(const Wt::WModelIndex &index, int role = Wt::DisplayRole) const ROSE_OVERRIDE {
         Sawyer::Message::Stream debug(::mlog[DEBUG]);
         ASSERT_require(index.isValid());
-        ASSERT_require(index.row() >= 0 && index.row() < rowCount());
-        ASSERT_require(index.column() >= 0 && index.column() < columnCount());
+        if (index.row() < 0 || index.row() >= rowCount() || index.column() < 0 || index.column() >= columnCount())
+            return boost::any();
 
         // i and j are indexes relative to counts_[0][0]
         int i = index.row()    - (depMinorIsData_ ? 1 : 0);
