@@ -144,12 +144,31 @@ public:
 
     bool operator()(const std::string &a, const std::string &b) {
         if (depName_ == "status") {
+            // Status (failed test names) should be sorted in the order that the tests run.
             int ai = gstate.testNameIndex.getOrElse(a, 999);
             int bi = gstate.testNameIndex.getOrElse(b, 999);
-            if (ai != bi)
-                return ai < bi;
+            return ai < bi;
+        } else if (depName_ == "compiler") {
+            // Compilers have three-part names: VENDOR-VERSION-LANGUAGE like "gcc-4.8.4-c++11". We should sort these are three
+            // columns and the LANGUAGE should be sorted so "default" is less than everything but the empty string.
+            std::vector<std::string> ac = StringUtility::split("-", a, 3, true);
+            std::vector<std::string> bc = StringUtility::split("-", b, 3, true);
+            ac.resize(3);
+            bc.resize(3);
+            if (ac[0] != bc[0])
+                return ac[0] < bc[0];
+            if (ac[1] != bc[1])
+                return ac[1] < bc[1];
+            if (ac[2] == "" || bc[2] == "")
+                return ac[2] < bc[2];
+            if (ac[2] == "default")
+                return bc[2] != "default";
+            if (bc[2] == "default")
+                return false;
+            return ac[2] < bc[2];
+        } else {
+            return a < b;
         }
-        return a < b;
     }
 };
 
@@ -682,11 +701,6 @@ public:
             Dependency &dep = dependencies_.insertMaybe(depName, Dependency(depName));
             depNames.push_back(depName);
 
-            // Combo box so we can pick a human value (i.e., bucket of database values) by which to limit queries later.
-            dep.comboBox = new Wt::WComboBox;
-            dep.comboBox->addItem(WILD_CARD_STR);
-            dep.comboBox->activated().connect(this, &WConstraints::emitConstraintsChanged);
-
             // Find all values that the dependency can have. Depending on the dependency, we might want to use human-readable
             // values (like yyyy-mm-dd instead of a unix time stamp), in which case the "select distinct" and "order by" SQL
             // clauses won't really do what we want. Regardless of whether we use human-readalbe names and buckets of values,
@@ -701,8 +715,17 @@ public:
                 dep.humanValues.insertMaybeDefault(humanValue) <<rawValue;
             }
 
-            BOOST_FOREACH (const std::string &humanValue, dep.humanValues.keys())
-                dep.comboBox->addItem(humanValue);
+            // Combo box so we can pick a human value (i.e., bucket of database values) by which to limit queries later.  Add
+            // entries to the combo box, but make sure they're sorted. The default sort for the dep.humanValues.keys() is
+            // alphabetical, but that's not always what we want. For instance, "status" should be sorted in the order that the
+            // individual tests run, not their names.
+            dep.comboBox = new Wt::WComboBox;
+            dep.comboBox->addItem(WILD_CARD_STR);
+            std::vector<std::string> comboValues(dep.humanValues.keys().begin(), dep.humanValues.keys().end());
+            std::sort(comboValues.begin(), comboValues.end(), DependencyValueSorter(depName));
+            BOOST_FOREACH (const std::string &comboValue, comboValues)
+                dep.comboBox->addItem(comboValue);
+            dep.comboBox->activated().connect(this, &WConstraints::emitConstraintsChanged);
         }
 
         static const size_t nDepCols = 2;               // number of columns for dependencies
