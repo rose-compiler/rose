@@ -976,7 +976,7 @@ public:
 
         // Combo box to choose which test to display
         Wt::WHBoxLayout *choiceBox = new Wt::WHBoxLayout;
-        choiceBox->addWidget(new Wt::WLabel("Test"));
+        choiceBox->addWidget(new Wt::WLabel("Configuration"));
         testIdChoices_ = new Wt::WComboBox;
         testIdChoices_->activated().connect(this, &WDetails::selectTestId);
         choiceBox->addWidget(testIdChoices_);
@@ -1197,7 +1197,8 @@ public:
         Wt::WHBoxLayout *passBox = new Wt::WHBoxLayout;
         vbox->addLayout(passBox);
 
-        passBox->addWidget(new Wt::WLabel("A configuration passes if it fails in "));
+        passBox->addWidget(new Wt::WLabel("For the \"pass/fail\" constraint, a configuration is said to have failed"
+                                          " it it fails before the "));
 
         passCriteria_ = new Wt::WComboBox;
         passBox->addWidget(passCriteria_);
@@ -1207,7 +1208,7 @@ public:
                 passCriteria_->setCurrentIndex(passCriteria_->count()-1);
         }
 
-        passBox->addWidget(new Wt::WLabel("or later (i.e., its status)"));
+        passBox->addWidget(new Wt::WLabel("test."));
         passBox->addStretch(1);
 
         vbox->addStretch(1);
