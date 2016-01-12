@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # To keep compile commands tidy, please ONLY put required include flags here.
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 
-libRoseStringSupportSources = string_functions.cpp FileNameClassifier.C escape.C
+libRoseStringSupportSources = StringUtility.C FileNameClassifier.C escape.C
 
 # Tell automake install to copy this library
 noinst_LTLIBRARIES = libRoseStringSupport.la
