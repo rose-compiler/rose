@@ -2259,15 +2259,9 @@ void Range<rose_addr_t>::print(std::ostream &o) const
 
 // This resolves a linker error when building ROSE with Visual Studio.
 // If the above function is not called within the same file, the compiler
-// fails to generate the symbol.
+// fails to generate the symbol, so we use explicit instantiation.
 #ifdef _MSC_VER
-namespace {
-void instantiate_range_print_msvc()
-{
-  static Range<rose_addr_t> g;
-  g.print(std::cout);
-}
-}
+template class Range<rose_addr_t>;
 #endif
 
 // Support for global function type symbol table (moved to be static data pointer)
