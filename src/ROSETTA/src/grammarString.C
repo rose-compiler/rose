@@ -1937,6 +1937,10 @@ GrammarString::containerAppendFunctionNameString(Terminal & node) const
                // returnString = "SgAsmElfSymverDefinedAux";
                goto done;
              }
+          if (typenameString == "SgLambdaCapturePtrList")
+            {
+            goto done;
+            }
 #if 0
           if (typenameString == "SgAsmElfSymverDefinedAuxList")
              {
