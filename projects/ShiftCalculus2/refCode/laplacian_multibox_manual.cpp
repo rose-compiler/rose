@@ -220,8 +220,15 @@ void getError(LevelData<double, 1> & a_error,
   for (k = iter_lb2; k < iter_ub2; ++k) {
     for (j = iter_lb1; j < iter_ub1; ++j) {
       for (i = iter_lb0; i < iter_ub0; ++i) {
-        destinationDataPointer[arraySize_X * (arraySize_Y * (k - dest_lb2) + (j - dest_lb1)) + (i - dest_lb0)] = (1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2 + -1) + (j - src_lb1)) + (i - src_lb0)] + 1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2 + 1) + (j - src_lb1)) + (i - src_lb0)] + 1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1 + -1)) + (i - src_lb0)] + 1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1 + 1)) + (i - src_lb0)] + 1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1)) + (i - src_lb0 + -1)] + 1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1)) + (i - src_lb0 + 1)] + (-2.0*DIM)*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1)) + (i - src_lb0)]) * (1.0/a_dx/a_dx);
-cout << destinationDataPointer[arraySize_X * (arraySize_Y * (k - dest_lb2) + (j - dest_lb1)) + (i - dest_lb0)] << " " << lphex.getPointer()[arraySize_X * (arraySize_Y * (k - dest_lb2) + (j - dest_lb1)) + (i - dest_lb0)] << endl;
+        destinationDataPointer[arraySize_X * (arraySize_Y * (k - dest_lb2) + (j - dest_lb1)) + (i - dest_lb0)] = 
+          (1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2 + -1) + (j - src_lb1)) + (i - src_lb0)] + 
+           1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2 + 1) + (j - src_lb1)) + (i - src_lb0)] + 
+           1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1 + -1)) + (i - src_lb0)] + 
+           1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1 + 1)) + (i - src_lb0)] + 
+           1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1)) + (i - src_lb0 + -1)] + 
+           1.0*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1)) + (i - src_lb0 + 1)] + 
+          (-2.0*DIM)*sourceDataPointer[arraySize_X_src * (arraySize_Y_src * (k - src_lb2) + (j - src_lb1)) + (i - src_lb0)]) * (1.0/a_dx/a_dx);
+//cout << destinationDataPointer[arraySize_X * (arraySize_Y * (k - dest_lb2) + (j - dest_lb1)) + (i - dest_lb0)] << " " << lphex.getPointer()[arraySize_X * (arraySize_Y * (k - dest_lb2) + (j - dest_lb1)) + (i - dest_lb0)] << endl;
       }
     }
   }        
