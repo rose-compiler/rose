@@ -1412,7 +1412,6 @@ loadDependencyNames() {
     gstate.dependencyNames.insert("rose", "rose");
     gstate.dependencyNames.insert("rose_date", "rose_date");
     gstate.dependencyNames.insert("status", "status");
-    setPassDefinition("end");                           // definition for "pass/fail" dependency
 }
 
 static WApplication*
@@ -1435,8 +1434,8 @@ main(int argc, char *argv[]) {
     // Initialized global state shared by all serving threads.
     parseCommandLine(argc, argv);
     gstate.tx = SqlDatabase::Connection::create(gstate.dbUrl)->transaction();
-    loadDependencyNames();
     loadTestNames();
+    loadDependencyNames();
     setPassDefinition("end");                           // a configuration passes if its status is >= "end"
 
     // Start the web server
