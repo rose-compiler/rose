@@ -1410,7 +1410,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                               << "'" << include_path_no_quotes << "'"
                               << std::endl;
                   }
-               } catch (const filesystem_error& ex) {
+              } catch (const boost::filesystem::filesystem_error& ex) {
                   std::cout  << "[ERROR] "
                           << "Exception processing argument to -I: "
                           << "'" << include_path_no_quotes << "'"
