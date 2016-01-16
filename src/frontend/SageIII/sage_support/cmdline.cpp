@@ -4063,6 +4063,15 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #endif
                if ( SgProject::get_verbose() >= 1 )
                     printf ("Cxx11 mode ON \n");
+
+#if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER >= 9) ) || (ROSE_EDG_MAJOR_VERSION_NUMBER > 4)
+            // Allow C++11 option with versions of EDG 4.9 and later.
+#else
+            // DQ (1/14/2016): Don't allow C++11 option with versions of EDG before EDG 4.9
+               printf ("\nERROR: C++11 support requires configuration of ROSE using EDG 4.9 or later (using EDG 4.7) \n\n");
+               ROSE_ASSERT(false);
+#endif
+
                set_Cxx11_only(true);
                set_Cxx11_gnu_only(false);
 
