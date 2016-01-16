@@ -152,7 +152,7 @@
  *      <td>1.47 through 1.53</td>
  *      <td>C++ portable runtime features. ROSE and/or software used by ROSE requires the following Boost libraries: chrono,
  *      date_time, filesystem, iostreams, program_options, random, regex, signals, system, thread, and wave. See @ref
- *      installing_boost.</td>
+ *      installing_boost. More info [here](http://theboostcpplibraries.com/).</td>
  *    </tr>
  *
  *    <tr>
