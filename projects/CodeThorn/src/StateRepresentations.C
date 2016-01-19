@@ -317,7 +317,7 @@ bool PState::varExists(VariableId varId) const {
 bool PState::varIsConst(VariableId varId) const {
   PState::const_iterator i=find(varId);
   if(i!=end()) {
-    AValue val=(*i).second.getValue();
+    AValue val=(*i).second;
     return val.isConstInt();
   } else {
     // TODO: this allows variables (intentionally) not to be in PState but still to analyze
@@ -328,7 +328,7 @@ bool PState::varIsConst(VariableId varId) const {
 bool PState::varIsTop(VariableId varId) const {
   PState::const_iterator i=find(varId);
   if(i!=end()) {
-    AValue val=(*i).second.getValue();
+    AValue val=(*i).second;
     return val.isTop();
   } else {
     // TODO: this allows variables (intentionally) not to be in PState but still to analyze
@@ -351,7 +351,7 @@ string PState::varValueToString(VariableId varId) const {
   * \date 2014.
  */
 AValue PState::varValue(VariableId varId) const {
-  AValue val=((*(const_cast<PState*>(this)))[varId]).getValue();
+  AValue val=((*(const_cast<PState*>(this)))[varId]);
   return val;
 }
 
@@ -360,17 +360,17 @@ AValue PState::varValue(VariableId varId) const {
   * \date 2012.
  */
 void PState::setAllVariablesToTop() {
-  setAllVariablesToValue(CodeThorn::CppCapsuleAValue(AType::Top()));
+  CodeThorn::AValue val=AType::Top();
+  setAllVariablesToValue(val);
 }
 
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
-void PState::setAllVariablesToValue(CodeThorn::CppCapsuleAValue val) {
+void PState::setAllVariablesToValue(CodeThorn::AValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
     VariableId varId=(*i).first;
-    //operator[](varId)=val;
     setVariableToValue(varId,val);
   }
 }
@@ -378,10 +378,11 @@ void PState::setVariableValueMonitor(VariableValueMonitor* vvm) {
   _variableValueMonitor=vvm;
 }
 void PState::setVariableToTop(VariableId varId) {
-  setVariableToValue(varId, CodeThorn::CppCapsuleAValue(AType::Top()));
+  CodeThorn::AValue val=AType::Top();
+  setVariableToValue(varId, val);
 }
 
-void PState::setVariableToValue(VariableId varId, CodeThorn::CppCapsuleAValue val) {
+void PState::setVariableToValue(VariableId varId, CodeThorn::AValue val) {
   if(false && _activeGlobalTopify) {
     ROSE_ASSERT(_variableValueMonitor);
     if(_variableValueMonitor->isHotVariable(_analyzer,varId)) {
@@ -581,8 +582,8 @@ CodeThorn::AType::ConstIntLattice EState::determineUniqueIOValue() const {
     // case 1: check PState
     if(_pstate->varIsConst(varId)) {
       PState pstate2=*_pstate;
-      AType::CppCapsuleConstIntLattice varVal=(pstate2)[varId];
-      return varVal.getValue(); // extracts ConstIntLattice from CppCapsuleConstIntLattice
+      AType::ConstIntLattice varVal=(pstate2)[varId];
+      return varVal;
     }
     // case 2: check constraint if var is top
     if(_pstate->varIsTop(varId))
@@ -693,31 +694,22 @@ bool EState::isConst(VariableIdMapping* vim) const {
   const ConstraintSet* cs=constraints();
   ROSE_ASSERT(ps);
   ROSE_ASSERT(cs);
-  if(option_debug_mode) cout<<"DEBUG: PState:"<<ps<<" : "<<ps->toString(vim)<<endl;
   for(PState::const_iterator i=ps->begin();i!=ps->end();++i) {
     VariableId varId=(*i).first;
-    if(option_debug_mode) cout<<"varId:"<<varId.toString()<<"/"<<vim->variableName(varId)<<":";
     // the following two variables are special variables that are not considered to contribute to const-ness in an EState
     if(vim->variableName(varId)=="__PRETTY_FUNCTION__"||vim->variableName(varId)=="stderr") {
-      if(option_debug_mode) cout<<"filt-const ";
       continue;
     }
 
     if(ps->varIsConst(varId)) {
-      if(option_debug_mode) cout<<"const ";
       continue;
     } else {
-      if(option_debug_mode) cout<<"non-const ";
       // variable non-const in PState (i.e. top/bot) -> need to investigate constraints
       if(!cs->varConstIntLatticeValue(varId).isConstInt()) {
-        if(option_debug_mode) cout<<" cs:non-const; \n";
         return false;
-      } else {
-        if(option_debug_mode) cout<<" cs:const; ";
       }
     }
   }
-  if(option_debug_mode) cout<<endl;
   return true;
 }
 

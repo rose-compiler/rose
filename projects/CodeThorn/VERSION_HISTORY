@@ -86,5 +86,34 @@ V1.7 2015-12-xx in preparation
     [in preparation]
   * command line option changes:
     [in preparation]
+    - removed command line options and all code associated with it:
+      --ltl-verifier
+      --verify
+      --debug-mode
+      --report-failed-assert
+      --report-stdout
+      --report-stderr
+      --abstract-interpreter
+      --update-input-var
+      --post-collapse-stg
+      --attach-pointer-expr-lists
+      --annotate results
+      --minimize-states
+      --ltl-verbose
+      --ltl-output-dot
+      --ltl-show-derivation
+      --ltl-show-node-detail
+      --ltl-collapsed-graph
+      --semantic-explosion
+      --semantic-elimination
+      --rersformat
+      --rose-help
+
+  * removed solvers 1,2,3,6,7 (remaining: 4,5,8,9,10)
+  * removed Analyzer functions:
+    void Analyzer::semanticEliminationOfTransitions()
+    int Analyzer::semanticEliminationOfSelfInInTransitions();
+    int Analyzer::semanticEliminationOfDeadStates();
+    int Analyzer::semanticFusionOfInInTransitions();
   * bugfixes:
     [in preparation]

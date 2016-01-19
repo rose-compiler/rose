@@ -27,7 +27,7 @@ typedef int EStateId;
 #include "HashFun.h"
 #include "HSetMaintainer.h"
 
-using CodeThorn::CppCapsuleAValue;
+using CodeThorn::AValue;
 using CodeThorn::ConstraintSet;
 using CodeThorn::ConstraintSetMaintainer;
 using SPRAY::Edge;
@@ -42,7 +42,7 @@ namespace CodeThorn {
   * \author Markus Schordan
   * \date 2012.
  */
-class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
+class PState : public map<VariableId,CodeThorn::AValue> {
  public:
     PState() {
     }
@@ -60,11 +60,11 @@ class PState : public map<VariableId,CodeThorn::CppCapsuleAValue> {
   string toString() const;
   string toString(VariableIdMapping* variableIdMapping) const;
   void setAllVariablesToTop();
-  void setAllVariablesToValue(CodeThorn::CppCapsuleAValue val);
+  void setAllVariablesToValue(CodeThorn::AValue val);
+  void setVariableToTop(VariableId varId);
+  void setVariableToValue(VariableId varId, CodeThorn::AValue val);
   void topifyState();
   bool isTopifiedState() const;
-  void setVariableToTop(VariableId varId);
-  void setVariableToValue(VariableId varId, CodeThorn::CppCapsuleAValue val);
   VariableIdSet getVariableIds() const;
   static void setActiveGlobalTopify(bool val);
   static void setVariableValueMonitor(VariableValueMonitor* vvm);
@@ -85,7 +85,7 @@ class PStateHashFun {
     long operator()(PState s) const {
       unsigned int hash=1;
       for(PState::iterator i=s.begin();i!=s.end();++i) {
-        hash=((hash<<8)+((long)(*i).second.getValue().hash()))^hash;
+        hash=((hash<<8)+((long)(*i).second.hash()))^hash;
       }
       return long(hash) % tabSize;
     }
@@ -100,7 +100,7 @@ class PStateHashFun {
     long operator()(PState* s) const {
       unsigned int hash=1;
       for(PState::iterator i=s->begin();i!=s->end();++i) {
-        hash=((hash<<8)+((long)(*i).second.getValue().hash()))^hash;
+        hash=((hash<<8)+((long)(*i).second.hash()))^hash;
       }
       return long(hash);
     }
