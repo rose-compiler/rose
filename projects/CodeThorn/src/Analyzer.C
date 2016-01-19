@@ -1990,7 +1990,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   variableValueMonitor.init(currentEState);
   //cout << "INIT: "<<eStateSet.toString()<<endl;
   addToWorkList(currentEState);
-  cout << "INIT: start state: "<<currentEState->toString(&variableIdMapping)<<endl;
+  //cout << "INIT: start state: "<<currentEState->toString(&variableIdMapping)<<endl;
   cout << "INIT: finished."<<endl;
 }
 

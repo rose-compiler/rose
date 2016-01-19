@@ -117,6 +117,8 @@ codethorn_SOURCES = \
   StateRepresentations.h           \
   Timer.cpp                        \
   Timer.h                          \
+  TransitionGraph.h                \
+  TransitionGraph.C                \
   Visualizer.C                     \
   Visualizer.h                     \
   Evaluator.h                      \

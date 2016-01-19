@@ -26,6 +26,7 @@
 #include "SgNodeHelper.h"
 #include "ExprAnalyzer.h"
 #include "StateRepresentations.h"
+#include "TransitionGraph.h"
 #include "PropertyValueTable.h"
 
 // we use INT_MIN, INT_MAX
