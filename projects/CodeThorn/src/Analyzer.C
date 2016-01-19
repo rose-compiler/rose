@@ -3089,6 +3089,70 @@ void Analyzer::runSolver10() {
   }
 }
 
+void Analyzer::runSolver11() {
+  if(isUsingExternalFunctionSemantics()) {
+    reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
+  } else {
+    reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
+  }
+  cout<<"INFO: number of error labels: "<<reachabilityResults.size()<<endl;
+  size_t prevStateSetSize=0; // force immediate report at start
+  cout <<"STATUS: Running sequential solver 11 with 1 thread."<<endl;
+  printStatusMessage(true);
+  while(!isEmptyWorkList()) {
+     if(_displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
+        printStatusMessage(true);
+        prevStateSetSize=estateSet.size();
+      }
+      const EState* currentEStatePtr=popWorkList();
+        assert(currentEStatePtr);
+        if(variableValueMonitor.isActive()) {
+          variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
+        }
+        
+        Flow edgeSet=flow.outEdges(currentEStatePtr->label());
+        for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
+          Edge e=*i;
+          list<EState> newEStateList;
+          newEStateList=transferFunction(e,currentEStatePtr);
+          for(list<EState>::iterator nesListIter=newEStateList.begin();
+              nesListIter!=newEStateList.end();
+              ++nesListIter) {
+            // newEstate is passed by value (not created yet)
+            EState newEState=*nesListIter;
+            ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
+
+            if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
+              HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
+              const EState* newEStatePtr=pres.second;
+              if(pres.first==true)
+                addToWorkList(newEStatePtr);
+              recordTransition(currentEStatePtr,e,newEStatePtr);
+            }
+              if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
+                // failed-assert end-state: do not add to work list but do add it to the transition graph
+                const EState* newEStatePtr;
+                newEStatePtr=processNewOrExisting(newEState);
+                recordTransition(currentEStatePtr,e,newEStatePtr);        
+              
+                if(isVerificationErrorEState(&newEState)) {
+                  cout<<"STATUS: detected verification error state ... terminating early"<<endl;
+                  // set flag for terminating early
+		  reachabilityResults.reachable(0);
+                  break;
+                } else if(isFailedAssertEState(&newEState)) {
+                  // record failed assert
+                  //int assertCode;
+		  //assertCode=reachabilityAssertCode(currentEStatePtr);
+                } // end of failed assert handling
+              } // end of if (no disequality (= no infeasable path))
+          } // end of loop on transfer function return-estates
+	} // edge set iterator
+    } // while loop
+    printStatusMessage(true);
+    cout << "analysis finished (worklist is empty)."<<endl;
+}
+
 bool Analyzer::searchForIOPatterns(PState* startPState, int assertion_id, list<int>& inputSuffix, list<int>* partialTrace,
                                    int* inputPatternLength) {
   // create a new instance of the startPState

@@ -253,6 +253,7 @@ namespace CodeThorn {
     void runSolver8();
     void runSolver9();
     void runSolver10();
+    void runSolver11();
     void runSolver();
     //! The analyzer requires a CFAnalysis to obtain the ICFG.
     void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
