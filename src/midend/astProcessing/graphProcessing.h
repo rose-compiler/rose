@@ -2,6 +2,8 @@
 
 FINISH TEMPFLATPATH CODE
 
+AS WRITTEN, THESE FUNCTIONS WILL ONLY WORK WITH GRAPHS THAT ARE IMPLEMENTED IN THE boost NAMESPACE.
+
 */
 
 
@@ -1270,7 +1272,7 @@ These should NOT be used by the user. They are simply for writing interesting in
             mf << "digraph defaultName { \n";
             vertex_iterator v, vend;
             edge_iterator e, eend;
-            for (tie(v, vend) = vertices(*gc); v != vend; ++v)
+            for (boost::tie(v, vend) = vertices(*gc); v != vend; ++v)
             {
                 printCFGNode(vertintmap[*v], mf);
             }
@@ -1377,14 +1379,14 @@ findClosuresAndMarkersAndEnumerate(CFG*& g)
         nextEdge++;
     }
     vertex_iterator v1, vend1;
-    for (tie(v1, vend1) = vertices(*g); v1 != vend1; ++v1)
+    for (boost::tie(v1, vend1) = vertices(*g); v1 != vend1; ++v1)
     {
         vertintmap[*v1] = nextNode;
         intvertmap[nextNode] = *v1;
         nextNode++;
     }
     vertex_iterator v, vend;
-    for (tie(v, vend) = vertices(*g); v != vend; ++v) {
+    for (boost::tie(v, vend) = vertices(*g); v != vend; ++v) {
         std::vector<int> outs = getOutEdges(vertintmap[*v], g);
         std::vector<int> ins = getInEdges(vertintmap[*v], g);
         if (outs.size() > 1)
