@@ -2012,6 +2012,7 @@ projects/RoseBlockLevelTracing/src/Makefile
 projects/ShiftCalculus/Makefile
 projects/ShiftCalculus2/Makefile
 projects/ShiftCalculus3/Makefile
+projects/ShiftCalculus4/Makefile
 projects/LineDeleter/Makefile
 projects/LineDeleter/src/Makefile
 projects/demos-dlx-mdcg/Makefile
