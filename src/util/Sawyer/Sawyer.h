@@ -305,11 +305,25 @@
 // Macros for thread-safety portability. This allows Sawyer to be compiled with or without thread support and not have a huge
 // proliferation of conditional compilation directives in the main body of source code.
 #ifdef _REENTRANT
-#   define SAWYER_MULTI_THREADED 1
-#   define SAWYER_THREAD_TRAITS Sawyer::SynchronizationTraits<Sawyer::MultiThreadedTag>
+    #define SAWYER_MULTI_THREADED 1
+    #define SAWYER_THREAD_TRAITS Sawyer::SynchronizationTraits<Sawyer::MultiThreadedTag>
 #else
-#   define SAWYER_MULTI_THREADED 0
-#   define SAWYER_THREAD_TRAITS Sawyer::SynchronizationTraits<Sawyer::SingleThreadedTag>
+    #define SAWYER_MULTI_THREADED 0
+    #define SAWYER_THREAD_TRAITS Sawyer::SynchronizationTraits<Sawyer::SingleThreadedTag>
+#endif
+
+#ifdef _REENTRANT
+    #if __cplusplus >= 201103L
+       #define SAWYER_THREAD_LOCAL thread_local
+    #elif defined(_MSC_VER)
+        // Visual C++, Intel (Windows), C++ Builder, Digital Mars C++
+        #define SAWYER_THREAD_LOCAL __declspec(thread)
+    #else
+       // Solaris Studio, IBM XL, GNU, LLVM, Intel (linux)
+       #define SAWYER_THREAD_LOCAL __thread
+    #endif
+#else
+     #define SAWYER_THREAD_LOCAL /*void*/
 #endif
 
 #ifdef BOOST_WINDOWS

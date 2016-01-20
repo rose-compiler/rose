@@ -59,7 +59,7 @@ SUBDIRS = \
 
 # DQ (3/16/2015): Test for a version of g++ that will allow use of C++11 for the AMR Shift Calculs DSL work.
 if ROSE_USING_GCC_VERSION_LATER_4_8
-  SUBDIRS += ShiftCalculus ShiftCalculus2 ShiftCalculus3
+  SUBDIRS += ShiftCalculus ShiftCalculus2 ShiftCalculus3 ShiftCalculus4
 endif
 
 # Liao, 2014/2/11, with Dan's permission, comment out this project since it is broken now.

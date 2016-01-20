@@ -18,7 +18,7 @@ class DisassemblerX86: public Disassembler {
      * Public methods
      *========================================================================================================================*/
 public:
-    DisassemblerX86(size_t wordsize)
+    explicit DisassemblerX86(size_t wordsize)
         : insnSize(x86_insnsize_none), ip(0), insnbufat(0), segOverride(x86_segreg_none),
           branchPrediction(x86_branch_prediction_none), branchPredictionEnabled(false), rexPresent(false), rexW(false), 
           rexR(false), rexX(false), rexB(false), sizeMustBe64Bit(false), operandSizeOverride(false), addressSizeOverride(false),

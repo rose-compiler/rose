@@ -5373,7 +5373,9 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
 
      ROSE_ASSERT(cscope != NULL);
 
-#if 0
+#define DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES 0
+
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
      printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s (templateParameterList = %p templateArgumentList = %p) \n",cscope,cscope->class_name().c_str(),templateParameterList,templateArgumentList);
 #endif
 
@@ -5399,7 +5401,7 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
           ROSE_ASSERT(cscope->get_symbol_table() != NULL);
 #endif
 
-#if 0
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
           printf("   --- In SageInterface:: lookupSymbolInParentScopes(): name = %s cscope = %p = %s \n",name.str(),cscope,cscope->class_name().c_str());
 #endif
 
@@ -5407,7 +5409,7 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
        // symbol = cscope->lookup_symbol(name);
           symbol = cscope->lookup_symbol(name,templateParameterList,templateArgumentList);
 
-#if 0
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES && 1
        // debug
           printf("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
           cscope->print_symboltable("In SageInterface:: lookupSymbolInParentScopes(): debug");
@@ -5417,14 +5419,14 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
             else
                cscope = NULL;
 
-#if 0
-          printf ("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
+          printf ("   --- In SageInterface:: (base of loop) lookupSymbolInParentScopes(): cscope = %p symbol = %p \n\n",cscope,symbol);
 #endif
         }
 
      if (symbol == NULL)
         {
-#if 0
+#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
           printf ("Warning: In SageInterface:: lookupSymbolInParentScopes(): could not locate the specified name %s in any outer symbol table (templateParameterList = %p templateArgumentList = %p) \n",name.str(),templateParameterList,templateArgumentList);
 #endif
        // ROSE_ASSERT(false);
@@ -7835,7 +7837,7 @@ SageInterface::moveDeclarationToAssociatedNamespace ( SgDeclarationStatement* de
           printf ("Identified the most common case... \n");
 #endif
        // Identify the associated namespace
-          SgScopeStatement* declarationScope = declarationStatement->get_scope();
+          //SgScopeStatement* declarationScope = declarationStatement->get_scope();
 #if 0
           printf ("declarationScope = %p = %s \n",declarationScope,declarationScope->class_name().c_str());
 #endif
@@ -7940,7 +7942,9 @@ SageInterface::isTemplateInstantiationNode(SgNode* node)
         }
 
      return isSgTemplateInstantiationDecl(node)
+      // DQ (1/3/2016): Allow SgTemplateInstantiationDefn IR nodes.
 //       || isSgTemplateInstantiationDefn(node)
+         || isSgTemplateInstantiationDefn(node)
          || isSgTemplateInstantiationFunctionDecl(node)
          || isSgTemplateInstantiationMemberFunctionDecl(node)
          || isSgTemplateInstantiationTypedefDeclaration(node)
@@ -7974,13 +7978,28 @@ SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* ro
              {
             // markNodeToBeUnparsed(*i);
                SgDeclarationStatement* declaration = isSgDeclarationStatement(*i);
+#if 0
                if (declaration == NULL)
                   {
                     printf ("Error: found non-declaration statement: *i = %p = %s \n",*i,(*i)->class_name().c_str());
                   }
+#endif
+#if 1
+            // DQ (1/3/2015): Newer version of code.
+               if (declaration != NULL)
+                  {
+                    templateInstantiationVector.push_back(declaration);
+                  }
+                 else
+                  {
+                 // I think it is OK that not all are a SgDeclarationStatement.
+                  }
+#else
+            // DQ (1/3/2015): Older version of code.
                ROSE_ASSERT(declaration != NULL);
 
                templateInstantiationVector.push_back(declaration);
+#endif
                n++;
              }
        }
@@ -9966,12 +9985,16 @@ bool SageInterface::isAssignmentStatement(SgNode* s, SgExpression** lhs/*=NULL*/
    }
   }
 
+bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt /*= true*/)
+{
+   return  mergeAssignmentWithDeclaration (assign_stmt, decl, removeAssignStmt);
+}
 //! Merge a variable assignment statement into a matching variable declaration statement
 /*!
  *  e.g.  int i;  i=10;  becomes int i=10;  the original i=10 will be deleted after the merge
  *  if success, return true, otherwise return false (e.g. variable declaration does not match or already has an initializer)
  */
-bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt /*= true*/)
+bool SageInterface::mergeAssignmentWithDeclaration(SgExprStatement* assign_stmt, SgVariableDeclaration* decl, bool removeAssignStmt /*= true*/)
 {
   bool rt= true;
   ROSE_ASSERT(decl != NULL);   
@@ -10023,6 +10046,71 @@ bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, 
   return rt;
 }
 
+bool SageInterface::mergeDeclarationWithAssignment(SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
+{
+  bool rt= true;
+  ROSE_ASSERT(decl != NULL);   
+  ROSE_ASSERT(assign_stmt != NULL);   
+
+  // Sanity check of assign statement: must be a form of var = xxx; 
+  SgAssignOp * assign_op = isSgAssignOp (assign_stmt->get_expression());
+  if (assign_op == NULL) 
+    return false;
+  SgVarRefExp* assign_op_var = isSgVarRefExp(assign_op->get_lhs_operand());
+  if (assign_op_var == NULL) return false;
+
+  // Sanity check of the variable declaration: it should not have an existing initializer
+  SgInitializedName * decl_var = SageInterface::getFirstInitializedName (decl); 
+  if (decl_var->get_initptr()!= NULL ) return false;
+
+  // check if two variables match
+  // In translation, it is possible the declaration has not yet been inserted into its scope.
+  // finding its symbol can return NULL.
+  // But we still want to do the merge.
+  SgSymbol* decl_var_symbol = decl_var->get_symbol_from_symbol_table();
+  if (decl_var_symbol!=NULL)
+  {
+    if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
+  }
+  else
+  { // fallback to comparing variable names instead
+    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
+  }
+
+  // Everything looks fine now. Do the merge.
+  // It is implemented by 
+  // 1. copy rhs to the decl's rhs, 
+  // 2. then move the decl to the place of the assignment, 
+  // 3. then remove the assignment
+  //
+  // Copy rhs to be initializer
+  SgExpression * rhs_copy = SageInterface::copyExpression(assign_op->get_rhs_operand());
+  SgAssignInitializer * initor = SageBuilder::buildAssignInitializer (rhs_copy);
+  decl_var->set_initptr(initor);
+  initor->set_parent(decl_var);  
+
+  // move proprocessing info. attached before decl to its next statement's front, using prepending to preserve the original order
+  SgStatement* next_stmt = SageInterface::getNextStatement (decl);
+  SageInterface::movePreprocessingInfo(decl, next_stmt, PreprocessingInfo::before, PreprocessingInfo::before, true);
+
+  // removeStatement() does not support removing a statement which is not inside a container.
+  // But sometimes we do need to remove such a statement and replace it with a new one.
+  // As a workaround, we allow users to optionally disabling removing here and handle the removal on their own.
+  // TODO: improve removeStatement() which uses low level rewritting. 
+
+  // Now move the declaration to a new position, right before the assignment statement 
+  SageInterface::removeStatement (decl);
+  SageInterface::insertStatementBefore(assign_stmt, decl, false);
+  
+  // preserve preprocessing info. attached to assign_stmt before removing it  , using append (last false)
+  SageInterface::movePreprocessingInfo(assign_stmt, decl, PreprocessingInfo::before, PreprocessingInfo::before, false);
+
+  // Original assignment statement should be removed
+  SageInterface::removeStatement (assign_stmt);
+  //  SageInterface::deepDelete (decl);
+  
+  return rt;
+}
 // Split a variable declaration with an rhs assignment into two statements: a declaration and an assignment. 
 // Return the generated assignment statement, if any
 SgExprStatement* SageInterface::splitVariableDeclaration (SgVariableDeclaration* decl)
@@ -12789,7 +12877,7 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
 
 PreprocessingInfo* SageInterface::insertHeader(const string& filename, PreprocessingInfo::RelativePositionType position /*=after*/, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
   {
-    bool successful = false;
+    //bool successful = false;
     if (scope == NULL)
         scope = SageBuilder::topScopeStack();
     ROSE_ASSERT(scope);
@@ -12818,8 +12906,11 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
            result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
                                           content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
            ROSE_ASSERT(result);
+           // add to the last position 
+           // TODO: support to add to the first, 
+           // TODO: support fine positioning with #include directives
            (*j)->addToAttachedPreprocessingInfo(result,position);
-           successful = true;
+          // successful = true;
            break;
          }
       }
@@ -12834,7 +12925,7 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
                 content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
        ROSE_ASSERT(result);
        globalScope->addToAttachedPreprocessingInfo(result,position);
-       successful = true;
+       //successful = true;
     }
     // must be inserted once somehow
     // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
@@ -12843,6 +12934,129 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
     return result;
   }
 
+// insert a new header right before stmt,  if there are existing headers attached to stmt, insert it as the last or first header as specified by asLastHeader
+void SageInterface::insertHeader (SgStatement* stmt, PreprocessingInfo* newheader, bool asLastHeader)
+{
+  ROSE_ASSERT (stmt != NULL);
+  ROSE_ASSERT (newheader != NULL);
+
+  PreprocessingInfo::RelativePositionType position ;
+
+  if (asLastHeader )
+    position = PreprocessingInfo::after; 
+  else
+    position = PreprocessingInfo::before; 
+
+
+  // Find existing first and last header.
+  AttachedPreprocessingInfoType *comments = stmt->getAttachedPreprocessingInfo ();
+
+  if (comments != NULL)
+  {
+    PreprocessingInfo * firstExistingHeader = NULL;
+    PreprocessingInfo * lastExistingHeader = NULL;
+    AttachedPreprocessingInfoType::iterator i, firsti, lasti;
+    for (i = comments->begin (); i != comments->end (); i++)
+    {
+      if ((*i)->getTypeOfDirective () == PreprocessingInfo::CpreprocessorIncludeDeclaration)
+      {
+        // Only set first header for the first time
+        if (firstExistingHeader == NULL)
+        {
+          firstExistingHeader = (*i);
+          firsti = i;
+        }
+        // always updates last header  
+        lastExistingHeader = (*i);
+        lasti = i;
+      }
+    }
+    // based on existing header positions, insert the new header
+    if (asLastHeader)
+    {
+      if (lastExistingHeader == NULL) // No last header at all, just append to after
+        stmt->addToAttachedPreprocessingInfo(newheader, PreprocessingInfo::after);
+      else
+      {
+        comments->insert (lasti+1, newheader);
+      }
+    }
+    else // add as the first header
+    {
+      if (firstExistingHeader == NULL) // no existing header at all, just append to after
+        stmt->addToAttachedPreprocessingInfo(newheader, PreprocessingInfo::after);
+      else
+      {
+        comments->insert (firsti, newheader);
+      }
+    }
+  }
+  else // No comments at all, first and last header mean the same, just attach to the located node
+    stmt->addToAttachedPreprocessingInfo(newheader, position);
+}
+
+// The recommended version
+PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const std::string & filename, bool isSystemHeader , bool asLastHeader)
+{
+  ROSE_ASSERT (source_file != NULL);
+  SgGlobal* globalScope = source_file->get_globalScope();
+  ROSE_ASSERT (globalScope != NULL);
+
+  PreprocessingInfo* result=NULL;
+  string content;
+  if (isSystemHeader)
+    content = "#include <" + filename + "> \n";
+  else
+    content = "#include \"" + filename + "\" \n";
+
+  PreprocessingInfo::RelativePositionType position ;
+
+  if (asLastHeader )
+     position = PreprocessingInfo::after; 
+  else
+     position = PreprocessingInfo::before; 
+
+  SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
+  if (stmtList.size()>0) // the source file is not empty
+  {                     
+    for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
+        j != stmtList.end (); j++)
+    {
+      // Attach to the first eligible located statement
+      //must have this judgement, otherwise wrong file will be modified!
+      //It could also be the transformation generated statements with #include attached
+      if ( ((*j)->get_file_info ())->isSameFile(globalScope->get_file_info ())||
+          ((*j)->get_file_info ())->isTransformation()
+         )
+      {
+        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
+            content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
+        ROSE_ASSERT(result);
+        insertHeader (*j, result, asLastHeader);
+        //successful = true;
+        break;                                                                                                               
+      }                                                                                                                      
+    } // end for                                                                                                                         
+  }                                                                                                                          
+  else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!                                    
+  {                                                                                                                          
+    cerr<<"SageInterface::insertHeader() Empty file is found!"<<endl;                                                        
+    cerr<<"#include xxx is  preprocessing information which has to be attached  to some other  located node (a statement for example)"<<endl;
+    cerr<<"You may have to insert some statement first before inserting a header"<<endl;                                     
+    ROSE_ASSERT(false);                                                                                                      
+    result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,                                       
+        content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);                                         
+    ROSE_ASSERT(result);                                                                                                     
+    globalScope->addToAttachedPreprocessingInfo(result,position);
+//    successful = true;                                                                                                       
+  }                                                                                                                           
+  // must be inserted once somehow
+  // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
+  // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.                          
+  //ROSE_ASSERT(successful==true);                                                                                            
+  return result;        
+
+} // end insertHeader
 
 //! Attach an arbitrary string to a located node. A workaround to insert irregular statements or vendor-specific attributes. We abuse CpreprocessorDefineDeclaration for this purpose.
 PreprocessingInfo* 
@@ -18599,7 +18813,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
         {
             cerr<<"Error in SageInterface::loopCollapsing(): target loop is not canonical."<<endl;
             dumpInfo(target_loop);
-            return false;
+            return NULL;
         }
         
         ROSE_ASSERT(ivar[i]&& lb[i] && ub[i] && step[i]);
@@ -19798,3 +20012,638 @@ SageInterface::collectModifiedLocatedNodes( SgNode* node )
      return traversal.returnset;
    }
 
+
+
+
+bool
+SageInterface::isEquivalentType (const SgType* lhs, const SgType* rhs)
+   {
+  // This function is called in the SgType::isEquivalentType (const SgType & Y) const function.
+
+  // DQ (11/28/2015): A better goal for this function should be to define it as a recursive function.
+
+  // DQ (12/8/2015): We need to add support for SgMemberFunctionType as demonstrated by test2007_17.C.
+  // and for SgTemplateType as demonstrated by tests/CompileTests/RoseExample_tests/testRoseHeaders_03.C
+  // Note that this is only required within the change to use this isEquivalentType() function in the
+  // support to replace: 
+  //    templateParameterOrArgumentLocal->get_initializedName()->get_type() == templateParameterOrArgumentFromSymbol->get_initializedName()->get_type()
+  // in ROSETTA/Grammar/Support.code
+
+     ROSE_ASSERT(lhs != NULL);
+     ROSE_ASSERT(rhs != NULL);
+
+     bool isSame = false;
+
+  // While debugging avoid infinte loops (most type chains in STL and boost are only a 3-4 long in test2015_127.C, nesting is how it goes wild).
+     static int counter = 0;
+
+     const SgType & X = *lhs;
+     const SgType & Y = *rhs;
+
+  // DQ (11/28/2015): We don't want to strip off everything.
+  // SgType* stripType(unsigned char bit_array = STRIP_MODIFIER_TYPE | STRIP_REFERENCE_TYPE | STRIP_POINTER_TYPE | STRIP_ARRAY_TYPE | STRIP_TYPEDEF_TYPE ) const;
+
+  // I think we need to compute the type chain to evaluate equalence.
+  // Rose_STL_Container< SgType*> getInternalTypes () const
+
+#define DEBUG_TYPE_EQUIVALENCE 0
+
+#if DEBUG_TYPE_EQUIVALENCE
+     printf ("In SageInterface::isEquivalentType(): evaluation of type equivalence for lhs and rhs: counter = %d \n",counter);
+#endif
+
+#if DEBUG_TYPE_EQUIVALENCE
+  // Debugging output.
+     Rose_STL_Container<SgType*> X_typeChain = X.getInternalTypes();
+     Rose_STL_Container<SgType*> Y_typeChain = Y.getInternalTypes();
+
+  // Debugging output.
+     printf ("Output of type chain for lhs: \n");
+     for (size_t i = 0; i < X_typeChain.size(); i++)
+        {
+          SgType* element_type = X_typeChain[i];
+          printf ("X_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          SgModifierType* modifierType = isSgModifierType(element_type);
+          if (modifierType != NULL)
+             {
+            // modifierType->get_typeModifier().display("X type chain");
+               string s = modifierType->get_typeModifier().displayString();
+               printf ("   --- type chain modifier: %s \n",s.c_str());
+             }
+        }
+
+     printf ("Output of type chain for rhs: \n");
+     for (size_t i = 0; i < Y_typeChain.size(); i++)
+        {
+          SgType* element_type = Y_typeChain[i];
+          printf ("Y_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+          SgModifierType* modifierType = isSgModifierType(element_type);
+          if (modifierType != NULL)
+             {
+            // modifierType->get_typeModifier().display("Y type chain");
+               string s = modifierType->get_typeModifier().displayString();
+               printf ("   --- type chain modifier: %s \n",s.c_str());
+             }          
+        }
+#endif
+
+  // Increment the static variable to control the recursive d3epth while we debug this.
+     counter++;
+
+  // DQ (11/28/2015): exit with debug output instead of infinte recursion.
+     if (counter >= 280) 
+        {
+          printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %s Y_element_type = %s \n",counter,X.class_name().c_str(),Y.class_name().c_str());
+        }
+
+  // DQ (12/23/2015): ASC application code requires this to be increased to over 122 (selected 300 for extra margin of safety).
+  // DQ (11/28/2015): exit in stead of infinte recursion.
+     if (counter > 300) 
+        {
+       // DQ (11/28/2015): I htink this is a reasonable limit.
+          printf ("ERROR: In SageInterface::isEquivalentType(): recursive limit exceeded for : counter = %d \n",counter);
+          ROSE_ASSERT(false);
+
+          return false;
+        }
+
+  // bool exit = false;
+
+  // Strip off ant typedefs since they are equivalent by definition.
+     SgType* X_element_type = X.stripType( SgType::STRIP_TYPEDEF_TYPE );
+     SgType* Y_element_type = Y.stripType( SgType::STRIP_TYPEDEF_TYPE );
+
+  // DQ (11/29/2015): We need to handle references (when they are both references we can support then uniformally).
+     SgReferenceType* X_referenceType = isSgReferenceType(X_element_type);
+     SgReferenceType* Y_referenceType = isSgReferenceType(Y_element_type);
+
+     if (X_referenceType != NULL && Y_referenceType != NULL)
+        {
+          X_element_type = X_referenceType->get_base_type();
+          Y_element_type = Y_referenceType->get_base_type();
+
+          counter--;
+
+       // Recursive call.
+       // return (*X_element_type) == (*Y_element_type);
+          return isEquivalentType(X_element_type,Y_element_type);
+        }
+       else
+        {
+       // DQ (12/8/2015): We need to handle pointers (when they are both pointers we can support then uniformally).
+          SgPointerType* X_pointerType = isSgPointerType(X_element_type);
+          SgPointerType* Y_pointerType = isSgPointerType(Y_element_type);
+
+          if (X_pointerType != NULL && Y_pointerType != NULL)
+             {
+               X_element_type = X_pointerType->get_base_type();
+               Y_element_type = Y_pointerType->get_base_type();
+
+               counter--;
+
+            // Recursive call.
+            // return (*X_element_type) == (*Y_element_type);
+               return isEquivalentType(X_element_type,Y_element_type);
+             }
+            else
+             {
+            // DQ (12/8/2015): We need to handle pointers (when they are both pointers we can support then uniformally).
+               SgArrayType* X_arrayType = isSgArrayType(X_element_type);
+               SgArrayType* Y_arrayType = isSgArrayType(Y_element_type);
+
+            // DQ (12/8/2015): We need to check that the array size is the same.
+               if (X_arrayType != NULL && Y_arrayType != NULL)
+                  {
+                    X_element_type = X_arrayType->get_base_type();
+                    Y_element_type = Y_arrayType->get_base_type();
+
+                    SgExpression* X_array_index_expression = X_arrayType->get_index();
+                    SgExpression* Y_array_index_expression = Y_arrayType->get_index();
+
+                    if (X_array_index_expression == Y_array_index_expression)
+                       {
+
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                         printf ("In SageInterface::isEquivalentType(): counter = %d: Need to check the array size for static equivalence \n");
+#endif
+                         counter--;
+
+                      // Recursive call.
+                      // return (*X_element_type) == (*Y_element_type);
+                         return isEquivalentType(X_element_type,Y_element_type);
+                       }
+                      else
+                       {
+                      // Need more complex test for expression equivalence.
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                         printf ("In SageInterface::isEquivalentType(): counter = %d Need more complex test for expression equivalence \n",counter);
+                         string str1 = X_array_index_expression->unparseToString();
+                         string str2 = Y_array_index_expression->unparseToString();
+                         printf ("   --- array index expressions: str1 = %s str2 = %s \n",str1.c_str(),str2.c_str());
+#endif
+                         return isEquivalentType(X_element_type,Y_element_type);
+                       }
+                  }
+                 else
+                  {
+                 // DQ (12/15/2015): We need to handle pointers (when they are both pointers we can support then uniformally).
+                    SgTemplateType* X_templateType = isSgTemplateType(X_element_type);
+                    SgTemplateType* Y_templateType = isSgTemplateType(Y_element_type);
+
+                 // DQ (12/15/2015): We need to check that the array size is the same.
+                    if (X_templateType != NULL && Y_templateType != NULL)
+                       {
+                         string X_name = X_templateType->get_name();
+                         string Y_name = Y_templateType->get_name();
+                         int X_template_parameter_position = X_templateType->get_template_parameter_position();
+                         int Y_template_parameter_position = X_templateType->get_template_parameter_position();
+
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                         printf ("In SageInterface::isEquivalentType(): case SgTemplateType: counter = %d X_name = %s Y_name = %s X_template_parameter_position = %d Y_template_parameter_position = %d \n",
+                              counter,X_name.c_str(),Y_name.c_str(),X_template_parameter_position,Y_template_parameter_position);
+#endif
+                         bool value = ( (X_name == Y_name) && (X_template_parameter_position == Y_template_parameter_position));
+
+                         counter--;
+
+                         return value;
+                       }
+                      else
+                       {
+                      // Nothing to do here since we have explored all uniform pairs of intermediate types possible.
+                       }
+                  }
+             }
+        }
+
+     SgModifierType* X_modifierType = isSgModifierType(X_element_type);
+     SgModifierType* Y_modifierType = isSgModifierType(Y_element_type);
+
+#if DEBUG_TYPE_EQUIVALENCE
+     printf ("In SageInterface::isEquivalentType(): counter = %d: type chain X_element_type = %p = %s Y_element_type = %p = %s \n",
+          counter,X_element_type,X_element_type->class_name().c_str(),Y_element_type,Y_element_type->class_name().c_str());
+#endif
+
+     if (X_modifierType != NULL && Y_modifierType != NULL)
+        {
+       // Handle the case of both modifiers.
+#if DEBUG_TYPE_EQUIVALENCE
+          printf ("In SageInterface::isEquivalentType(): loop: these are the both SgModifierType nodes: isSame = %s \n",isSame ? "true" : "false");
+#endif
+          if (X_modifierType == Y_modifierType)
+             {
+               isSame = true;
+#if DEBUG_TYPE_EQUIVALENCE
+               printf ("In SageInterface::isEquivalentType(): loop: these are the same modifier type: isSame = %s \n",isSame ? "true" : "false");
+#endif
+             }
+            else
+             {
+               if (X_modifierType->get_typeModifier() == Y_modifierType->get_typeModifier())
+                  {
+#if DEBUG_TYPE_EQUIVALENCE
+                    printf ("In SageInterface::isEquivalentType(): loop: these are equivalent modifiers: check the base type: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                 // Recursive call.
+                 // isSame = (*X_modifierType->get_base_type()) == (*Y_modifierType->get_base_type());
+                    isSame = isEquivalentType(X_modifierType->get_base_type(),Y_modifierType->get_base_type());
+                  }
+                 else
+                  {
+#if DEBUG_TYPE_EQUIVALENCE
+                    printf ("In SageInterface::isEquivalentType(): loop: these are not equivalent modifier types: check for default settings: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                 // if (X_modifierType->get_typeModifier().isDefault() == true)
+                    if (X_modifierType->get_typeModifier().isIdentity() == true)
+                       {
+#if DEBUG_TYPE_EQUIVALENCE
+                         printf ("In SageInterface::isEquivalentType(): loop: found self-similar setting for lhs: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                         X_element_type = X_modifierType->get_base_type();
+                       }
+
+                 // if (Y_modifierType->get_typeModifier().isDefault() == true)
+                    if (Y_modifierType->get_typeModifier().isIdentity() == true)
+                       {
+#if DEBUG_TYPE_EQUIVALENCE
+                         printf ("In SageInterface::isEquivalentType(): loop: found self-similar setting for rhs: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                         Y_element_type = Y_modifierType->get_base_type();
+                       }
+
+                 // NOTE: If either of these are a SgTypedefType then the typedefs will be stripped away at the top of the recursive call.
+#if DEBUG_TYPE_EQUIVALENCE
+                    printf ("In SageInterface::isEquivalentType(): loop: recursive call on different adjusted modifier types: before recursive call to compare base types: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                 // Recursive call on non-default modifier base types.
+                 // isSame = (*X_element_type) == (*Y_element_type);
+                    isSame = isEquivalentType(X_element_type,Y_element_type);
+#if DEBUG_TYPE_EQUIVALENCE
+                    printf ("In SageInterface::isEquivalentType(): loop: these are different modifier types: after recursive call to compare base types: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                  }
+             }
+        }
+       else
+        {
+       // At least one of these is not a SgModifierType.
+
+          if (X_modifierType != NULL || Y_modifierType != NULL)
+             {
+               bool isReduceable = false;
+
+            // if (X_modifierType != NULL && X_modifierType->get_typeModifier().isDefault() == true)
+               if (X_modifierType != NULL && X_modifierType->get_typeModifier().isIdentity() == true)
+                  {
+#if DEBUG_TYPE_EQUIVALENCE
+                    printf ("In SageInterface::isEquivalentType(): loop: found default setting for lhs: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                    X_element_type = X_modifierType->get_base_type();
+                    isReduceable = true;
+                  }
+
+            // if (Y_modifierType != NULL && Y_modifierType->get_typeModifier().isDefault() == true)
+            // if (Y_modifierType != NULL && Y_modifierType->get_typeModifier().isIdentity() == true)
+               if (Y_modifierType != NULL && Y_modifierType->get_typeModifier().isIdentity() == true)
+                  {
+#if DEBUG_TYPE_EQUIVALENCE
+                    printf ("In SageInterface::isEquivalentType(): loop: found default setting for rhs: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                    Y_element_type = Y_modifierType->get_base_type();
+                    isReduceable = true;
+                  }
+
+            // NOTE: If either of these are a SgTypedefType then the typedefs will be stripped away at the top of the recursive call.
+#if DEBUG_TYPE_EQUIVALENCE
+               printf ("In SageInterface::isEquivalentType(): loop: these are different modifier types: after recursive call to compare base types: isReduceable = %s \n",isReduceable ? "true" : "false");
+#endif
+               if (isReduceable == true)
+                  {
+                 // Recursive call on non-default modifier base types.
+                 // isSame = (*X_element_type) == (*Y_element_type);
+                    isSame = isEquivalentType(X_element_type,Y_element_type);
+                  }
+                 else
+                  {
+                 // Neither of these types were reducable.
+                    isSame = false;
+                  }
+
+#if DEBUG_TYPE_EQUIVALENCE
+               printf ("In SageInterface::isEquivalentType(): loop: these are different modifier types: after recursive call to compare base types: isReduceable = %s isSame = %s \n",
+                    isReduceable ? "true" : "false",isSame ? "true" : "false");
+#endif
+             }
+            else
+             {
+            // Neither of these are SgModifierType nodes.
+            // X_element_type = X_element_type->stripType( STRIP_TYPEDEF_TYPE );
+            // Y_element_type = Y_element_type->stripType( STRIP_TYPEDEF_TYPE );
+
+               if (X_element_type == Y_element_type)
+                  {
+                    isSame = true;
+#if DEBUG_TYPE_EQUIVALENCE
+                    printf ("In SageInterface::isEquivalentType(): resolved to equal types: isSame = %s \n",isSame ? "true" : "false");
+#endif
+                  }
+                 else
+                  {
+                    bool isReduceable = false;
+
+                 // DQ (11/29/2015): We need to handle reference (when they are both references we can support then uniformally).
+                    SgReferenceType* X_referenceType = isSgReferenceType(X_element_type);
+                    SgReferenceType* Y_referenceType = isSgReferenceType(Y_element_type);
+
+                    if (X_referenceType != NULL || Y_referenceType != NULL)
+                       {
+#if 0
+                         if (X_referenceType != NULL)
+                            {
+                              X_element_type = X_referenceType->get_base_type();
+
+                           // DQ (12/8/2015): Note that we don't want to compare base types if only one of these was a reference.
+                           // isReduceable = true;
+                              isReduceable = false;
+                            }
+
+                         if (Y_referenceType != NULL)
+                            {
+                              Y_element_type = Y_referenceType->get_base_type();
+
+                           // DQ (12/8/2015): Note that we don't want to compare base types if only one of these was a reference.
+                           // isReduceable = true;
+                              isReduceable = false;
+                            }
+
+                         if (isReduceable == true)
+                            {
+                           // Recursive call on non-default modifier base types.
+                           // isSame = (*X_element_type) == (*Y_element_type);
+                              isSame = isEquivalentType(X_element_type,Y_element_type);
+                            }
+                           else
+                            {
+                           // Neither of these types were reducable.
+                              isSame = false;
+                            }
+#else
+                         isSame = false;
+#endif
+                       }
+                      else
+                       {
+                      // Recursive call on non-typedef base types.
+                      // isSame = (*X_element_type) == (*Y_element_type);
+                      // isSame = isEquivalentType(X_element_type,Y_element_type);
+
+#if DEBUG_TYPE_EQUIVALENCE
+                         printf ("In SageInterface::isEquivalentType(): loop: evaluation of inner types: isSame = %s \n",isSame ? "true" : "false");
+#endif
+
+                      // DQ (11/29/2015): We need to handle pointers (when they are both pointers we can support then uniformally).
+                         SgPointerType* X_pointerType = isSgPointerType(X_element_type);
+                         SgPointerType* Y_pointerType = isSgPointerType(Y_element_type);
+
+                         if (X_pointerType != NULL || Y_pointerType != NULL)
+                            {
+#if 0
+                              if (X_pointerType != NULL)
+                                 {
+                                   X_element_type = X_pointerType->get_base_type();
+
+                                // DQ (12/8/2015): Note that we don't want to compare base types if only one of these was a pointer.
+                                // isReduceable = true;
+                                   isReduceable = false;
+                                 }
+
+                              if (Y_pointerType != NULL)
+                                 {
+                                   Y_element_type = Y_pointerType->get_base_type();
+
+                                // DQ (12/8/2015): Note that we don't want to compare base types if only one of these was a pointer.
+                                // isReduceable = true;
+                                   isReduceable = false;
+                                 }
+
+                              if (isReduceable == true)
+                                 {
+                                // Recursive call on non-default modifier base types.
+                                // isSame = (*X_element_type) == (*Y_element_type);
+                                   isSame = isEquivalentType(X_element_type,Y_element_type);
+                                 }
+                                else
+                                 {
+                                // Neither of these types were reducable.
+                                   isSame = false;
+                                 }
+#else
+                              isSame = false;
+#endif
+                            }
+                           else
+                            {
+                           // Recursive call on non-typedef base types.
+                           // isSame = (*X_element_type) == (*Y_element_type);
+                           // isSame = isEquivalentType(X_element_type,Y_element_type);
+
+#if DEBUG_TYPE_EQUIVALENCE
+                              printf ("In SageInterface::isEquivalentType(): loop: evaluation of inner types: isSame = %s \n",isSame ? "true" : "false");
+#endif
+
+                           // DQ (11/29/2015): We need to handle pointers (when they are both pointers we can support then uniformally).
+                              SgArrayType* X_arrayType = isSgArrayType(X_element_type);
+                              SgArrayType* Y_arrayType = isSgArrayType(Y_element_type);
+
+                              if (X_arrayType != NULL || Y_arrayType != NULL)
+                                 {
+#if 0
+                                   if (X_arrayType != NULL)
+                                      {
+                                        X_element_type = X_arrayType->get_base_type();
+
+                                     // DQ (12/8/2015): Note that we don't want to compare base types if only one of these was a array.
+                                     // isReduceable = true;
+                                        isReduceable = false;
+                                      }
+
+                                   if (Y_arrayType != NULL)
+                                      {
+                                        Y_element_type = Y_arrayType->get_base_type();
+
+                                     // DQ (12/8/2015): Note that we don't want to compare base types if only one of these was a array.
+                                     // isReduceable = true;
+                                        isReduceable = false;
+                                      }
+
+                                   if (isReduceable == true)
+                                      {
+                                     // Recursive call on non-default modifier base types.
+                                     // isSame = (*X_element_type) == (*Y_element_type);
+                                        isSame = isEquivalentType(X_element_type,Y_element_type);
+                                      }
+                                     else
+                                      {
+                                     // Neither of these types were reducable.
+                                        isSame = false;
+                                      }
+#else
+                                   isSame = false;
+#endif
+                                 }
+                                else
+                                 {
+                                // Recursive call on non-typedef base types.
+                                // isSame = (*X_element_type) == (*Y_element_type);
+                                // isSame = isEquivalentType(X_element_type,Y_element_type);
+
+#if DEBUG_TYPE_EQUIVALENCE
+                                   printf ("In SageInterface::isEquivalentType(): loop: evaluation of inner types: isSame = %s \n",isSame ? "true" : "false");
+#endif
+
+                                // DQ (11/29/2015): We need to handle pointers (when they are both pointers we can support then uniformally).
+                                   SgFunctionType* X_functionType = isSgFunctionType(X_element_type);
+                                   SgFunctionType* Y_functionType = isSgFunctionType(Y_element_type);
+
+                                   if (X_functionType != NULL || Y_functionType != NULL)
+                                      {
+                                        bool value = ( (X_functionType != NULL && Y_functionType != NULL) && (X_functionType == Y_functionType) );
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                                        printf ("In SageInterface::isEquivalentType(): loop: Process case of SgFunctionType: value = %s \n",value ? "true" : "false");
+#endif
+                                        isSame == value;
+                                        isReduceable = false;
+                                      }
+                                     else
+                                      {
+                                     // Recursive call on non-typedef base types.
+                                     // isSame = isEquivalentType(X_element_type,Y_element_type);
+
+                                     // DQ (11/29/2015): We need to handle pointers (when they are both pointers we can support then uniformally).
+                                        SgMemberFunctionType* X_memberFunctionType = isSgMemberFunctionType(X_element_type);
+                                        SgMemberFunctionType* Y_memberFunctionType = isSgMemberFunctionType(Y_element_type);
+
+                                        if (X_memberFunctionType != NULL || Y_memberFunctionType != NULL)
+                                           {
+                                          // DQ (12/15/2015): This code should be unreachable since it would have executed the code above (the case of SgFunctionType).
+                                             printf ("This should be unreachable code \n");
+                                             ROSE_ASSERT(false);
+
+                                             bool value = ( (X_memberFunctionType != NULL && Y_memberFunctionType != NULL) && (X_memberFunctionType == Y_memberFunctionType) );
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                                             printf ("In SageInterface::isEquivalentType(): loop: Process case of SgMemberFunctionType: value = %s \n",value ? "true" : "false");
+#endif
+                                             isSame == value;
+                                           }
+                                          else
+                                           {
+                                          // Recursive call on non-typedef base types.
+                                          // isSame = isEquivalentType(X_element_type,Y_element_type);
+#if 0
+                                          // Check for irreducable types.
+                                             bool X_isReduceable = true;
+                                             if (isSgTypeSignedLong(X_element_type)  != NULL || 
+                                                 isSgTypeUnsignedInt(X_element_type) != NULL || 
+                                                 isSgTypeBool(X_element_type) != NULL ||
+                                                 isSgTypeInt(X_element_type) != NULL)
+                                                {
+                                                  X_isReduceable = false;
+                                                }
+
+                                             bool Y_isReduceable = true;
+                                             if (isSgTypeSignedLong(Y_element_type)  != NULL || 
+                                                 isSgTypeUnsignedInt(Y_element_type) != NULL || 
+                                                 isSgTypeBool(Y_element_type) != NULL ||
+                                                 isSgTypeInt(Y_element_type) != NULL)
+                                                {
+                                                  Y_isReduceable = false;
+                                                }
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                                             printf ("In SageInterface::isEquivalentType(): loop: Process default case: X_isReduceable = %s Y_isReduceable = %s \n",
+                                                  X_isReduceable ? "true" : "false",Y_isReduceable ? "true" : "false");
+#endif
+                                             if (X_isReduceable == true || Y_isReduceable == true)
+                                                {
+                                               // Recursive call on non-default modifier base types.
+                                                  isSame = isEquivalentType(X_element_type,Y_element_type);
+                                                }
+                                               else
+                                                {
+                                               // Neither of these types were reducable.
+                                                  isSame = false;
+                                                }
+#else
+                                          // DQ (12/20/2015): This is the default case for irreducable types.
+                                             if (X_element_type->variantT() == Y_element_type->variantT())
+                                                {
+#if DEBUG_TYPE_EQUIVALENCE || 0
+                                                  printf ("In SageInterface::isEquivalentType(): loop: Process default case: X_element_type = %p = %s Y_element_type = %p = %s \n",
+                                                       X_element_type,X_element_type->class_name().c_str(),Y_element_type,Y_element_type->class_name().c_str());
+#endif
+                                                  isSame = true;
+                                                }
+                                               else
+                                                {
+                                               // Neither of these types were reducable or equal.
+                                                  isSame = false;
+                                                }
+#endif
+                                           }
+                                      }
+                                 }
+                            }
+                       }
+                  }
+             }
+        }
+
+  // Decrement the static variable to control the recursive depth while we debug this.
+     counter--;
+
+#if DEBUG_TYPE_EQUIVALENCE
+     printf ("In SageInterface::isEquivalentType(): isSame = %s \n",isSame ? "true" : "false");
+#endif
+
+#if DEBUG_TYPE_EQUIVALENCE || 0
+  // if (counter == 1) 
+     if (counter == 1 && isSame == true) 
+        {
+          printf ("In SageInterface::isEquivalentType(): counter = %d: isSame = %s type chain X_element_type = %s Y_element_type = %s \n",counter,isSame ? "true" : "false",X.class_name().c_str(),Y.class_name().c_str());
+
+       // Debugging output.
+          Rose_STL_Container<SgType*> X_typeChain = X.getInternalTypes();
+          Rose_STL_Container<SgType*> Y_typeChain = Y.getInternalTypes();
+
+       // Debugging output.
+          printf ("   --- Output of type chain for lhs: \n");
+          for (size_t i = 0; i < X_typeChain.size(); i++)
+             {
+               SgType* element_type = X_typeChain[i];
+               printf ("   --- --- X_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+               SgModifierType* modifierType = isSgModifierType(element_type);
+               if (modifierType != NULL)
+                  {
+                 // modifierType->get_typeModifier().display("X type chain");
+                    string s = modifierType->get_typeModifier().displayString();
+                    printf ("   --- type chain modifier: %s \n",s.c_str());
+                  }
+             }
+
+          printf ("   --- Output of type chain for rhs: \n");
+          for (size_t i = 0; i < Y_typeChain.size(); i++)
+             {
+               SgType* element_type = Y_typeChain[i];
+               printf ("   --- --- Y_element_type = %p = %s \n",element_type,element_type->class_name().c_str());
+               SgModifierType* modifierType = isSgModifierType(element_type);
+               if (modifierType != NULL)
+                  {
+                 // modifierType->get_typeModifier().display("Y type chain");
+                    string s = modifierType->get_typeModifier().displayString();
+                    printf ("   --- --- type chain modifier: %s \n",s.c_str());
+                  }
+             }
+        }
+#endif
+
+     return isSame;
+   }

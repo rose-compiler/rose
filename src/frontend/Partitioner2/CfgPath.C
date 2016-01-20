@@ -109,8 +109,9 @@ CfgPath::nCalls(const Function::Ptr &function) const {
             if (!function) {
                 ++retval;
             } else if (edge->target()->value().type() == V_BASIC_BLOCK &&
-                       edge->target()->value().function() == function)
+                       edge->target()->value().isOwningFunction(function)) {
                 ++retval;
+            }
         }
     }
     return retval;
@@ -124,8 +125,9 @@ CfgPath::nReturns(const Function::Ptr &function) const {
             if (!function) {
                 ++retval;
             } else if (edge->source()->value().type() == V_BASIC_BLOCK &&
-                       edge->source()->value().function() == function)
+                       edge->source()->value().isOwningFunction(function)) {
                 ++retval;
+            }
         }
     }
     return retval;
@@ -139,14 +141,16 @@ CfgPath::callDepth(const Function::Ptr &function) const {
             if (!function) {
                 ++depth;
             } else if (edge->source()->value().type() == V_BASIC_BLOCK &&
-                       edge->source()->value().function() == function)
+                       edge->source()->value().isOwningFunction(function)) {
                 ++depth;
+            }
         } else if (edge->value().type() == E_FUNCTION_RETURN) {
             if (!function) {
                 --depth;
             } else if (edge->source()->value().type() == V_BASIC_BLOCK &&
-                       edge->source()->value().function() == function)
+                       edge->source()->value().isOwningFunction(function)) {
                 --depth;
+            }
         }
     }
     return depth;
@@ -161,14 +165,16 @@ CfgPath::maxCallDepth(const Function::Ptr &function) const {
             if (!function) {
                 ++depth;
             } else if (edge->source()->value().type() == V_BASIC_BLOCK &&
-                       edge->source()->value().function() == function)
+                       edge->source()->value().isOwningFunction(function)) {
                 ++depth;
+            }
         } else if (edge->value().type() == E_FUNCTION_RETURN) {
             if (!function) {
                 --depth;
             } else if (edge->source()->value().type() == V_BASIC_BLOCK &&
-                       edge->source()->value().function() == function)
+                       edge->source()->value().isOwningFunction(function)) {
                 --depth;
+            }
         }
         retval = std::max(retval, depth);
     }
@@ -431,7 +437,7 @@ insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Co
     ASSERT_require2(pathsCallSite->value().type() == V_BASIC_BLOCK, "only basic blocks can call functions");
 
     // Most functions either don't return or have a single return target.  Functions like longjmp might have multiple return
-    // targets. For need to know the return targets in the paths graph because we will create new edges from the inlined
+    // targets. We need to know the return targets in the paths graph because we will create new edges from the inlined
     // function's return sites to each return target.
     CfgConstVertexSet pathsReturnTargets;
     BOOST_FOREACH (const ControlFlowGraph::Edge &edge, pathsCallSite->outEdges()) {
@@ -457,8 +463,6 @@ insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Co
 
     // Call to a normal function.
     ASSERT_require2(cfgCallTarget->value().type() == V_BASIC_BLOCK, "non-basic block callees not implemented yet");
-    std::string calleeName = cfgCallTarget->value().function() ? cfgCallTarget->value().function()->printableName() :
-                             cfgCallTarget->value().bblock()->printableName();
 
     // Find all paths through the callee that return and avoid certain vertices and edges.
     CfgVertexMap vmap1;                                 // relates CFG to calleePaths
@@ -467,7 +471,22 @@ insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Co
     ControlFlowGraph calleePaths;
     findFunctionPaths(cfg, calleePaths, vmap1, cfgCallTargets, cfgReturns, cfgAvoidVertices, cfgAvoidEdges);
     if (calleePaths.isEmpty()) {
-        SAWYER_MESG(mlog[DEBUG]) <<"insertCalleePaths: " <<calleeName <<" has no paths to insert\n";
+        if (mlog[DEBUG]) {
+            std::string calleePrintableName;
+            if (cfgCallTarget->value().nOwningFunctions() > 1) {
+                BOOST_FOREACH (const Function::Ptr &function, cfgCallTarget->value().owningFunctions().values()) {
+                    if (!function->name().empty()) {
+                        calleePrintableName = function->printableName();
+                        break;
+                    }
+                }
+            } else if (1 == cfgCallTarget->value().nOwningFunctions()) {
+                calleePrintableName = (*cfgCallTarget->value().owningFunctions().values().begin())->printableName();
+            } else {
+                calleePrintableName = cfgCallTarget->value().bblock()->printableName();
+            }
+            mlog[DEBUG] <<"insertCalleePaths: " <<calleePrintableName <<" has no paths to insert\n";
+        }
         return false;
     }
 

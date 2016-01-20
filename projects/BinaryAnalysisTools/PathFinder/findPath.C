@@ -53,16 +53,15 @@ struct FunctionSummary {
     FunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &cfgFuncVertex, uint64_t stackDelta)
         : address(cfgFuncVertex->value().address()), stackDelta(stackDelta) {
         if (cfgFuncVertex->value().type() == P2::V_BASIC_BLOCK) {
-            if (P2::Function::Ptr function = cfgFuncVertex->value().function()) {
-                if (function->address() == cfgFuncVertex->value().address()) {
-                    name = function->printableName();
-                    return;
-                }
+            if (P2::Function::Ptr function = cfgFuncVertex->value().isEntryBlock()) {
+                name = function->printableName();
+                return;
             }
         }
         name = P2::Partitioner::vertexName(*cfgFuncVertex);
     }
 };
+
 typedef Sawyer::Container::Map<rose_addr_t, FunctionSummary> FunctionSummaries;
 static FunctionSummaries functionSummaries;
 
@@ -397,11 +396,11 @@ shouldSummarizeCall(const P2::ControlFlowGraph::ConstVertexIterator &pathVertex,
                     const P2::ControlFlowGraph::ConstVertexIterator &cfgCallTarget) {
     if (cfgCallTarget->value().type() != P2::V_BASIC_BLOCK)
         return false;
-    P2::Function::Ptr callee = cfgCallTarget->value().function();
+    P2::Function::Ptr callee = cfgCallTarget->value().isEntryBlock();
     if (!callee)
         return false;
     if (boost::ends_with(callee->name(), "@plt") || boost::ends_with(callee->name(), ".dll"))
-        return true;                                    // this is probably dynamically linked ELF or PE function
+        return true;
 
     // Summarize if the user desires it.
     if (std::find(settings.summarizeFunctions.begin(), settings.summarizeFunctions.end(), callee->address()) !=
@@ -452,7 +451,7 @@ shouldInline(const P2::CfgPath &path, const P2::ControlFlowGraph::ConstVertexIte
     // Don't let recursion get too deep
     if (cfgCallTarget->value().type() != P2::V_BASIC_BLOCK)
         return false;
-    P2::Function::Ptr callee = cfgCallTarget->value().function();
+    P2::Function::Ptr callee = cfgCallTarget->value().isEntryBlock();
     if (!callee)
         return false;
     callDepth = path.callDepth(callee);
@@ -753,9 +752,7 @@ insertCallSummary(P2::ControlFlowGraph &paths /*in,out*/, const P2::ControlFlowG
                   const P2::ControlFlowGraph &cfg, const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge) {
     ASSERT_require(cfg.isValidEdge(cfgCallEdge));
     P2::ControlFlowGraph::ConstVertexIterator cfgCallTarget = cfgCallEdge->target();
-    P2::Function::Ptr function;
-    if (cfgCallTarget->value().type() == P2::V_BASIC_BLOCK)
-        function = cfgCallTarget->value().function();
+    P2::Function::Ptr function = cfgCallTarget->value().isEntryBlock();
 
     P2::ControlFlowGraph::VertexIterator summaryVertex = paths.insertVertex(P2::CfgVertex(P2::V_USER_DEFINED));
     paths.insertEdge(pathsCallSite, summaryVertex, P2::CfgEdge(P2::E_FUNCTION_CALL));
@@ -1167,7 +1164,7 @@ public:
             if (cfgCallTarget->value().type() != P2::V_BASIC_BLOCK)
                 break;                                  // callee is not a basic block
         
-            P2::Function::Ptr callee = cfgCallTarget->value().function();
+            P2::Function::Ptr callee = cfgCallTarget->value().isEntryBlock();
             if (!callee)
                 break;                                  // missing CFG information at this location?
             if (boost::ends_with(callee->name(), "@plt") || boost::ends_with(callee->name(), ".dll"))
@@ -1199,7 +1196,7 @@ public:
 
         // Make sure there's a summary record for this function if we're using user-defined inlining
         if (P2::Inliner::INLINE_USER == how && !functionSummaries.exists(cfgCallTarget->value().address())) {
-            P2::Function::Ptr function = cfgCallTarget->value().function();
+            P2::Function::Ptr function = cfgCallTarget->value().isEntryBlock();
             int64_t stackDelta = function ? function->stackDeltaConcrete() : SgAsmInstruction::INVALID_STACK_DELTA;
             
             FunctionSummary summary(cfgCallTarget, stackDelta);

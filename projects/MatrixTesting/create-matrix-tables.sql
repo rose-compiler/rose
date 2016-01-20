@@ -101,6 +101,7 @@ insert into dependencies values ('boost',        '1.56',             1);
 insert into dependencies values ('boost',        '1.57',             1);
 insert into dependencies values ('boost',        '1.58',             1);
 insert into dependencies values ('boost',        '1.59',             1);
+insert into dependencies values ('boost',        '1.60',             1);
 
 -- DLib version numbers or "system" or "none"
 insert into dependencies values ('dlib',         'none',             1);
@@ -167,6 +168,22 @@ insert into dependencies values ('yices',        '1.0.34',           1);
 
 
 --
+-- Table stores test names (status)
+--
+
+create table test_names (
+    name varchar(64) not null,                          -- name of the test
+    position integer                                    -- display position relative to other tests
+);
+
+insert into test_names values ( 'configure',        10  );
+insert into test_names values ( 'library-build',    20  );
+insert into test_names values ( 'libtest-build',    30  );
+insert into test_names values ( 'libtest-check',    40  );
+insert into test_names values ( 'project-bintools', 50  );
+insert into test_names values ( 'end',              999 );
+
+--
 -- The table that stores the results of each test.
 --
 
@@ -177,10 +194,10 @@ create table test_results (
     reporting_user integer references users(uid),       -- user making this report
     reporting_time integer,                             -- when report was made (unix time)
     tester varchar(256),                                -- who did the testing (e.g., a Jenkins slave name)
-    os varchar(64),					-- operating system information
+    os varchar(64),                                     -- operating system information
 
     -- what version of ROSE was tested?
-    rose varchar(64),					-- SHA1 for the commit being tested
+    rose varchar(64),                                   -- SHA1 for the commit being tested
     rose_date integer,                                  -- time at which version was created if known (unix time)
 
     -- Software dependencies/configuration.  These column names come from the "name" column of the "dependencies" table
@@ -229,9 +246,9 @@ create table test_results (
 --
 create table attachments (
     id serial primary key,
-    test_id integer references test_results(id),	-- the test to which this attachment belongs
-    name varchar(64),					-- short name for this attachment
-    content text					-- the content of the attachment
+    test_id integer references test_results(id),        -- the test to which this attachment belongs
+    name varchar(64),                                   -- short name for this attachment
+    content text                                        -- the content of the attachment
 );
 
 commit;

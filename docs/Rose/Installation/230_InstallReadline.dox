@@ -9,6 +9,11 @@
  *  @section installing_readline_rhel Redhat Enterprise Linux
  *
  *  @todo Describe how to install GNU readline on RHEL.
+ *  Todo.
+ *
+ *  @section installing_readline_wheezy Debian 7 "Wheezy"
+ *
+ *  Run <code>apt-get install libreadline-dev</code> as the administrator.
  *
  *  @section installing_readline_jessie Debian 8 "Jessie"
  *

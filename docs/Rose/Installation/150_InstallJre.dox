@@ -8,6 +8,11 @@
  *  @section installing_jre_rhel Redhat Enterprise Linux
  *
  *  @todo Describe how to install the JRE on RHEL.
+ *  Todo.
+ *
+ *  @section installing_jre_wheezy Debian 7 "Wheezy"
+ *
+ *  See @ref installing_jre_jessie.
  *
  *  @section installing_jre_jessie Debian 8 "Jessie"
  *
