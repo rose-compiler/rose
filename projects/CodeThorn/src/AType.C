@@ -241,7 +241,7 @@ long AType::ConstIntLattice::hash() const {
   throw "Error: ConstIntLattice hash: unknown value.";
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator!() {
+AType::ConstIntLattice AType::ConstIntLattice::operatorNot() {
   AType::ConstIntLattice tmp;
   switch(valueType) {
   case AType::ConstIntLattice::CONSTINT: 
@@ -260,8 +260,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator!() {
   return tmp;
 }
 
-
-AType::ConstIntLattice AType::ConstIntLattice::operator||(ConstIntLattice other) {
+AType::ConstIntLattice AType::ConstIntLattice::operatorOr(ConstIntLattice other) {
   AType::ConstIntLattice tmp;
   // all TOP cases
   if(isTop()   && other.isTop())   return Top();
@@ -289,7 +288,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator||(ConstIntLattice other)
   throw "Error: ConstIntLattice operation|| failed.";
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator&&(ConstIntLattice other) {
+AType::ConstIntLattice AType::ConstIntLattice::operatorAnd(ConstIntLattice other) {
   AType::ConstIntLattice tmp;
   // all TOP cases
   if(isTop()   && other.isTop())   return Top();
@@ -331,19 +330,14 @@ bool AType::ConstIntLatticeCmp::operator()(const AType::ConstIntLattice& c1, con
   return AType::strictWeakOrderingIsSmaller(c1,c2);
 }
 
-bool AType::CppCapsuleConstIntLatticeLessComparator::operator()(const AType::CppCapsuleConstIntLattice& c1, const AType::CppCapsuleConstIntLattice& c2) const {
-  return AType::strictWeakOrderingIsSmaller(c1.getValue(),c2.getValue());
+bool AType::ConstIntLattice::operator==(AType::ConstIntLattice other) const {
+  return AType::strictWeakOrderingIsEqual(*this,other);
+}
+bool AType::ConstIntLattice::operator<(AType::ConstIntLattice other) const {
+  return AType::strictWeakOrderingIsSmaller(*this,other);
 }
 
-bool AType::CppCapsuleConstIntLattice::operator==(AType::CppCapsuleConstIntLattice other) const {
-  return AType::strictWeakOrderingIsEqual(getValue(),other.getValue());
-}
-bool AType::CppCapsuleConstIntLattice::operator<(AType::CppCapsuleConstIntLattice other) const {
-  return AType::strictWeakOrderingIsSmaller(getValue(),other.getValue());
-}
-
-
-AType::ConstIntLattice AType::ConstIntLattice::operator==(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorEq(ConstIntLattice other) const {
   // all TOP cases
   if(valueType==TOP || other.valueType==TOP) { 
     return AType::Top();
@@ -361,11 +355,11 @@ AType::ConstIntLattice AType::ConstIntLattice::operator==(ConstIntLattice other)
     return ConstIntLattice(false);
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator!=(ConstIntLattice other) const {
-  return !(*this==other);
+AType::ConstIntLattice AType::ConstIntLattice::operatorNotEq(ConstIntLattice other) const {
+  return ((*this).operatorEq(other)).operatorNot();
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator<(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorLess(ConstIntLattice other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -376,7 +370,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator<(ConstIntLattice other) 
   return getIntValue()<other.getIntValue();
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator<=(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorLessOrEq(ConstIntLattice other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -387,7 +381,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator<=(ConstIntLattice other)
   return getIntValue()<=other.getIntValue();
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator>=(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorMoreOrEq(ConstIntLattice other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -398,7 +392,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operator>=(ConstIntLattice other)
   return getIntValue()>=other.getIntValue();
 }
 
-AType::ConstIntLattice AType::ConstIntLattice::operator>(ConstIntLattice other) const {
+AType::ConstIntLattice AType::ConstIntLattice::operatorMore(ConstIntLattice other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -451,7 +445,7 @@ int AType::ConstIntLattice::getIntValue() const {
 }
 
 // arithmetic operators
-AType::ConstIntLattice AType::ConstIntLattice::operator-() {
+AType::ConstIntLattice AType::ConstIntLattice::operatorUnaryMinus() {
   AType::ConstIntLattice tmp;
   switch(valueType) {
   case AType::ConstIntLattice::CONSTINT: 
@@ -461,12 +455,10 @@ AType::ConstIntLattice AType::ConstIntLattice::operator-() {
   case AType::ConstIntLattice::TOP: tmp=Top();break;
   case AType::ConstIntLattice::BOT: tmp=Bot();break;
   default:
-    throw "Error: ConstIntLattice operation '!' failed.";
+    throw "Error: ConstIntLattice operation unaryMinus failed.";
   }
   return tmp;
 }
-
-//#define ARITH_TOP
 
 AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())

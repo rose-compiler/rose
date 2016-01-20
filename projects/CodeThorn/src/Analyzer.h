@@ -26,6 +26,7 @@
 #include "SgNodeHelper.h"
 #include "ExprAnalyzer.h"
 #include "StateRepresentations.h"
+#include "TransitionGraph.h"
 #include "PropertyValueTable.h"
 
 // we use INT_MIN, INT_MAX
@@ -152,13 +153,7 @@ namespace CodeThorn {
     // reduces all states different to stdin and stdout.
     void stdIOFoldingOfTransitionGraph();
     void semanticFoldingOfTransitionGraph();
-    void semanticEliminationOfTransitions();
-    int semanticEliminationOfSelfInInTransitions();
-    // eliminates only input states
-    int semanticEliminationOfDeadStates();
-    int semanticFusionOfInInTransitions();
     // requires semantically reduced STG
-    int semanticExplosionOfInputNodesFromOutputNodeConstraints();
     bool checkEStateSet();
     bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
@@ -166,6 +161,7 @@ namespace CodeThorn {
     void deleteNonRelevantEStates();
 
     // bypasses and removes all states that are not standard I/O states
+    // (old version, works correctly, but has a long execution time)
     void removeNonIOStates();
     // bypasses and removes all states that are not stdIn/stdOut/stdErr/failedAssert states
     void reduceToObservableBehavior();
@@ -252,16 +248,12 @@ namespace CodeThorn {
     //solver 8 becomes the active solver used by the analyzer. Deletion of previous data iff "resetAnalyzerData" is set to true.
     void setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData);
     //! requires init
-    void runSolver1();
-    void runSolver2();
-    void runSolver3();
     void runSolver4();
     void runSolver5();
-    void runSolver6();
-    void runSolver7();
     void runSolver8();
     void runSolver9();
     void runSolver10();
+    void runSolver11();
     void runSolver();
     //! The analyzer requires a CFAnalysis to obtain the ICFG.
     void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
@@ -333,8 +325,6 @@ namespace CodeThorn {
     void setSolver(int solver) { _solver=solver; }
     int getSolver() { return _solver;}
     void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
-    void setLTLVerifier(int v) { _ltlVerifier=v; }
-    int getLTLVerifier() { return _ltlVerifier; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
     void insertInputVarValue(int i) { _inputVarValues.insert(i); }
@@ -347,7 +337,6 @@ namespace CodeThorn {
     int numberOfInputVarValues() { return _inputVarValues.size(); }
     std::set<int> getInputVarValues() { return _inputVarValues; }
     std::list<std::pair<SgLabelStatement*,SgNode*> > _assertNodes;
-    void setCsvAssertLiveFileName(std::string filename) { _csv_assert_live_file=filename; }
     VariableId globalVarIdByName(std::string varName) { return globalVarName2VarIdMapping[varName]; }
     void setStgTraceFileName(std::string filename) {
       _stg_trace_filename=filename;
@@ -356,7 +345,6 @@ namespace CodeThorn {
       fout<<"START"<<endl;
       fout.close();    // close. Will be used with append.
     }
-    std::string _csv_assert_live_file; // to become private
   private:
     std::string _stg_trace_filename;
  public:
@@ -379,7 +367,6 @@ namespace CodeThorn {
     enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST, EXPL_LOOP_AWARE, EXPL_RANDOM_MODE1 };
     void setPatternSearchExploration(ExplorationMode explorationMode) { _patternSearchExplorationMode = explorationMode; };
     void eventGlobalTopifyTurnedOn();
-    void setMinimizeStates(bool minimizeStates) { _minimizeStates=minimizeStates; }
     bool isIncompleteSTGReady();
     bool isPrecise();
     PropertyValueTable reachabilityResults;
@@ -424,7 +411,7 @@ namespace CodeThorn {
     // enables external function semantics 
     void enableExternalFunctionSemantics();
     void disableExternalFunctionSemantics();
-    bool usingExternalFunctionSemantics() { return _externalFunctionSemantics; }
+    bool isUsingExternalFunctionSemantics() { return _externalFunctionSemantics; }
 
   private:
     GlobalTopifyMode _globalTopifyMode;
@@ -445,7 +432,6 @@ namespace CodeThorn {
     set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
     int _displayDiff;
     int _numberOfThreadsToUse;
-    int _ltlVerifier;
     int _semanticFoldThreshold;
     VariableIdMapping::VariableIdSet _variablesToIgnore;
     int _solver;
@@ -471,7 +457,6 @@ namespace CodeThorn {
     const EState* _estateBeforeMissingInput;
     const EState* _latestOutputEState;
     const EState* _latestErrorEState;
-    bool _minimizeStates;
     bool _topifyModeActive;
     int _iterations;
     int _approximated_iterations;
@@ -493,14 +478,14 @@ namespace CodeThorn {
 
 // integer variables
 #define INIT_GLOBALVAR(VARNAME) VARNAME = new int[numberOfThreads];
-#define COPY_PSTATEVAR_TO_GLOBALVAR(VARNAME) VARNAME[thread_id] = pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().getIntValue();
-//cout<<"PSTATEVAR:"<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].toString()<<"="<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().toString()<<endl;
-#define COPY_GLOBALVAR_TO_PSTATEVAR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::CppCapsuleConstIntLattice(VARNAME[thread_id]);
+#define COPY_PSTATEVAR_TO_GLOBALVAR(VARNAME) VARNAME[thread_id] = pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getIntValue();
+//cout<<"PSTATEVAR:"<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].toString()<<"="<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].toString()<<endl;
+#define COPY_GLOBALVAR_TO_PSTATEVAR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::ConstIntLattice(VARNAME[thread_id]);
 
 // pointers to integer variables
 #define INIT_GLOBALPTR(VARNAME) VARNAME = new int*[numberOfThreads]; 
-#define COPY_PSTATEPTR_TO_GLOBALPTR(VARNAME) VARNAME[thread_id] = analyzer->mapGlobalVarAddress[analyzer->getVarNameByIdCode(pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().getIntValue())]
-#define COPY_GLOBALPTR_TO_PSTATEPTR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::CppCapsuleConstIntLattice(analyzer->globalVarIdByName(analyzer->mapAddressGlobalVar[VARNAME[thread_id]]).getIdCode());
+#define COPY_PSTATEPTR_TO_GLOBALPTR(VARNAME) VARNAME[thread_id] = analyzer->mapGlobalVarAddress[analyzer->getVarNameByIdCode(pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getIntValue())]
+#define COPY_GLOBALPTR_TO_PSTATEPTR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::ConstIntLattice(analyzer->globalVarIdByName(analyzer->mapAddressGlobalVar[VARNAME[thread_id]]).getIdCode());
 
 // create an entry in the mapping    <var_address>  <-->  <var_name>
 #define REGISTER_GLOBAL_VAR_ADDRESS(VARNAME) analyzer->mapGlobalVarInsert(STR_VALUE(VARNAME), (int*) &VARNAME);
