@@ -833,6 +833,11 @@ buildVariableDeclaration(const char* name, SgType *type, SgInitializer *varInit=
 ROSE_DLL_API SgVariableDeclaration* 
 buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 
+//! Build variable definition
+ROSE_DLL_API SgVariableDefinition* 
+buildVariableDefinition_nfi (SgVariableDeclaration* decl, SgInitializedName* init_name,  SgInitializer *init);
+
+
 // DQ (8/31/2012): Note that this macro can't be used in header files since it can only be set
 // after sage3.h has been read.  The reason is that this is a portability problem when "rose_config.h"
 // appears in header files of applications using ROSE's header files.
