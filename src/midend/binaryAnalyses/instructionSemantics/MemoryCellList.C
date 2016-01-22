@@ -46,7 +46,7 @@ MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscO
     ASSERT_require(!byteRestricted() || value->get_width() == 8);
     MemoryCellPtr newCell = protocell->create(addr, value);
 
-    if (addrOps->get_insn() || valOps->get_insn()) {
+    if (addrOps->currentInstruction() || valOps->currentInstruction()) {
         newCell->ioProperties().insert(IO_WRITE);
     } else {
         newCell->ioProperties().insert(IO_INIT);

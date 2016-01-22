@@ -117,7 +117,7 @@ public:
         } catch (const std::runtime_error &e) {
             RegisterNames rname(currentState()->registerState()->get_register_dictionary());
             throw BaseSemantics::Exception("cannot read register " + rname(reg) + " from subordinate process",
-                                           get_insn());
+                                           currentInstruction());
         }
     }
 
@@ -132,13 +132,13 @@ public:
         uint8_t buf[16];
         if (dflt->get_width() > 8*sizeof(buf))
             throw BaseSemantics::Exception("readMemory width not handled: " + StringUtility::plural(dflt->get_width(), "bits"),
-                                           get_insn());
+                                           currentInstruction());
         
         ASSERT_require(dflt->get_width() % 8 == 0);
         size_t nBytes = dflt->get_width() / 8;
         size_t nRead = subordinate_.readMemory(addr->get_number(), nBytes, buf);
         if (nRead < nBytes)
-            throw BaseSemantics::Exception("error reading subordinate memory", get_insn());
+            throw BaseSemantics::Exception("error reading subordinate memory", currentInstruction());
 
         ASSERT_require(currentState()->memoryState()->get_byteOrder() != ByteOrder::ORDER_MSB);
         BitVector bits(dflt->get_width());

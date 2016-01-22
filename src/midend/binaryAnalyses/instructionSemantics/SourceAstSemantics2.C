@@ -535,7 +535,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
             retval = concat(retval, byte);
         } else {
             // See BaseSemantics::MemoryState::set_byteOrder
-            throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", get_insn());
+            throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", currentInstruction());
         }
     }
     return retval;

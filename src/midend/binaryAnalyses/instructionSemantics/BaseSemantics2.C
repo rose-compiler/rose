@@ -180,7 +180,7 @@ RegisterStateX86::readRegister(const RegisterDescriptor &reg, RiscOperators *ops
             if (reg.get_minor()==x86_flags_fpstatus)
                 return readRegisterFpStatus(reg, ops);
             throw Exception("invalid flags minor number: " + StringUtility::numberToString(reg.get_minor()),
-                            ops->get_insn());
+                            ops->currentInstruction());
         case x86_regclass_segment:
             return readRegisterSeg(reg, ops);
         case x86_regclass_ip:
@@ -191,7 +191,7 @@ RegisterStateX86::readRegister(const RegisterDescriptor &reg, RiscOperators *ops
             return readRegisterXmm(reg, ops);
         default:
             throw Exception("invalid register major number: "+StringUtility::numberToString(reg.get_major())+
-                            " (wrong RegisterDictionary?)", ops->get_insn());
+                            " (wrong RegisterDictionary?)", ops->currentInstruction());
     }
 }
 
@@ -201,14 +201,18 @@ RegisterStateX86::readRegisterGpr(const RegisterDescriptor &reg, RiscOperators *
     using namespace StringUtility;
     ASSERT_not_null(ops);
     ASSERT_require(reg.get_major()==x86_regclass_gpr);
-    if (reg.get_minor()>=n_gprs)
-        throw Exception("invalid general purpose register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
-    if (reg.get_nbits()!=8 && reg.get_nbits()!=16 && reg.get_nbits()!=32)
-        throw Exception("invalid general purpose register width: "+numberToString(reg.get_nbits()), ops->get_insn());
+    if (reg.get_minor()>=n_gprs) {
+        throw Exception("invalid general purpose register minor number: " +
+                        numberToString(reg.get_minor()), ops->currentInstruction());
+    }
+    if (reg.get_nbits()!=8 && reg.get_nbits()!=16 && reg.get_nbits() != 32) {
+        throw Exception("invalid general purpose register width: " +
+                        numberToString(reg.get_nbits()), ops->currentInstruction());
+    }
     if ((reg.get_offset()!=0 && (reg.get_offset()!=8 || reg.get_nbits()!=8)) ||
         (reg.get_offset() + reg.get_nbits() > 32))
         throw Exception("invalid general purpose sub-register: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
     SValuePtr result = gpr[reg.get_minor()];
     if (reg.get_offset()!=0 || reg.get_nbits()!=32)
         result = ops->extract(result, reg.get_offset(), reg.get_offset()+reg.get_nbits());
@@ -223,13 +227,13 @@ RegisterStateX86::readRegisterFlag(const RegisterDescriptor &reg, RiscOperators 
     ASSERT_not_null(ops);
     ASSERT_require(reg.get_major()==x86_regclass_flags);
     if (reg.get_minor()!=0)
-        throw Exception("invalid flags register minor numbr: "+numberToString(reg.get_minor()), ops->get_insn());
+        throw Exception("invalid flags register minor numbr: "+numberToString(reg.get_minor()), ops->currentInstruction());
     if (reg.get_nbits()!=1 && reg.get_nbits()!=16 && reg.get_nbits()!=32)
-        throw Exception("invalid flag register width: "+numberToString(reg.get_nbits()), ops->get_insn());
+        throw Exception("invalid flag register width: "+numberToString(reg.get_nbits()), ops->currentInstruction());
     if ((reg.get_nbits()>1 && reg.get_offset()!=0) ||
         (reg.get_offset() + reg.get_nbits() > 32))
         throw Exception("invalid flag subregister: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
     SValuePtr result = flag[reg.get_offset()];
     for (size_t i=1; i<reg.get_nbits(); ++i)
         result = ops->concat(result, flag[reg.get_offset()+i]);
@@ -244,10 +248,10 @@ RegisterStateX86::readRegisterSeg(const RegisterDescriptor &reg, RiscOperators *
     ASSERT_not_null(ops);
     ASSERT_require(reg.get_major()==x86_regclass_segment);
     if (reg.get_minor()>=n_segregs)
-        throw Exception("invalid segment register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
+        throw Exception("invalid segment register minor number: "+numberToString(reg.get_minor()), ops->currentInstruction());
     if (reg.get_offset()!=0 || reg.get_nbits()!=16)
         throw Exception("invalid segment subregister: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
     SValuePtr result = segreg[reg.get_minor()];
     ASSERT_require(result->get_width()==reg.get_nbits());
     return result;
@@ -259,11 +263,14 @@ RegisterStateX86::readRegisterIp(const RegisterDescriptor &reg, RiscOperators *o
     using namespace StringUtility;
     ASSERT_not_null(ops);
     ASSERT_require(reg.get_major()==x86_regclass_ip);
-    if (reg.get_minor()!=0)
-        throw Exception("invalid instruction pointer register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
-    if (reg.get_offset()!=0 || reg.get_nbits()!=32)
+    if (reg.get_minor()!=0) {
+        throw Exception("invalid instruction pointer register minor number: " +
+                        numberToString(reg.get_minor()), ops->currentInstruction());
+    }
+    if (reg.get_offset()!=0 || reg.get_nbits()!=32) {
         throw Exception("invalid instruction pointer subregister: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
+    }
     ASSERT_require(ip->get_width()==reg.get_nbits());
     return ip;
 }
@@ -317,7 +324,7 @@ RegisterStateX86::writeRegister(const RegisterDescriptor &reg, const SValuePtr &
             if (reg.get_minor()==x86_flags_fpstatus)
                 return writeRegisterFpStatus(reg, value, ops);
             throw Exception("invalid register minor number: " + StringUtility::numberToString(reg.get_minor()),
-                            ops->get_insn());
+                            ops->currentInstruction());
         case x86_regclass_segment:
             return writeRegisterSeg(reg, value, ops);
         case x86_regclass_ip:
@@ -328,7 +335,7 @@ RegisterStateX86::writeRegister(const RegisterDescriptor &reg, const SValuePtr &
             return writeRegisterXmm(reg, value, ops);
         default:
             throw Exception("invalid register major number: "+StringUtility::numberToString(reg.get_major())+
-                            " (wrong RegisterDictionary?)", ops->get_insn());
+                            " (wrong RegisterDictionary?)", ops->currentInstruction());
     }
 }
 
@@ -339,14 +346,19 @@ RegisterStateX86::writeRegisterGpr(const RegisterDescriptor &reg, const SValuePt
     ASSERT_require(reg.get_major()==x86_regclass_gpr);
     ASSERT_require(value!=NULL && value->get_width()==reg.get_nbits());
     ASSERT_not_null(ops);
-    if (reg.get_minor()>=n_gprs)
-        throw Exception("invalid general purpose register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
-    if (reg.get_nbits()!=8 && reg.get_nbits()!=16 && reg.get_nbits()!=32)
-        throw Exception("invalid general purpose register width: "+numberToString(reg.get_nbits()), ops->get_insn());
+    if (reg.get_minor()>=n_gprs) {
+        throw Exception("invalid general purpose register minor number: " +
+                        numberToString(reg.get_minor()), ops->currentInstruction());
+    }
+    if (reg.get_nbits()!=8 && reg.get_nbits()!=16 && reg.get_nbits()!=32) {
+        throw Exception("invalid general purpose register width: " +
+                        numberToString(reg.get_nbits()), ops->currentInstruction());
+    }
     if ((reg.get_offset()!=0 && (reg.get_offset()!=8 || reg.get_nbits()!=8)) ||
-        (reg.get_offset() + reg.get_nbits() > 32))
+        (reg.get_offset() + reg.get_nbits() > 32)) {
         throw Exception("invalid general purpose sub-register: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
+    }
     SValuePtr towrite = value;
     if (reg.get_offset()!=0)
         towrite = ops->concat(ops->extract(gpr[reg.get_minor()], 0, reg.get_offset()), towrite);
@@ -364,13 +376,13 @@ RegisterStateX86::writeRegisterFlag(const RegisterDescriptor &reg, const SValueP
     ASSERT_require(value!=NULL && value->get_width()==reg.get_nbits());
     ASSERT_not_null(ops);
     if (reg.get_minor()!=0)
-        throw Exception("invalid flags register minor numbr: "+numberToString(reg.get_minor()), ops->get_insn());
+        throw Exception("invalid flags register minor numbr: "+numberToString(reg.get_minor()), ops->currentInstruction());
     if (reg.get_nbits()!=1 && reg.get_nbits()!=16 && reg.get_nbits()!=32)
-        throw Exception("invalid flag register width: "+numberToString(reg.get_nbits()), ops->get_insn());
+        throw Exception("invalid flag register width: "+numberToString(reg.get_nbits()), ops->currentInstruction());
     if ((reg.get_nbits()>1 && reg.get_offset()!=0) ||
         (reg.get_offset() + reg.get_nbits() > 32))
         throw Exception("invalid flag subregister: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
     if (reg.get_nbits()==1) {
         flag[reg.get_offset()] = value;
     } else {
@@ -387,10 +399,10 @@ RegisterStateX86::writeRegisterSeg(const RegisterDescriptor &reg, const SValuePt
     ASSERT_require(value!=NULL && value->get_width()==reg.get_nbits());
     ASSERT_not_null(ops);
     if (reg.get_minor()>=n_segregs)
-        throw Exception("invalid segment register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
+        throw Exception("invalid segment register minor number: "+numberToString(reg.get_minor()), ops->currentInstruction());
     if (reg.get_offset()!=0 || reg.get_nbits()!=16)
         throw Exception("invalid segment subregister: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
     segreg[reg.get_minor()] = value;
 }
 
@@ -401,11 +413,14 @@ RegisterStateX86::writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr
     ASSERT_require(reg.get_major()==x86_regclass_ip);
     ASSERT_require(value!=NULL && value->get_width()==reg.get_nbits());
     ASSERT_not_null(ops);
-    if (reg.get_minor()!=0)
-        throw Exception("invalid instruction pointer register minor number: "+numberToString(reg.get_minor()), ops->get_insn());
-    if (reg.get_offset()!=0 || reg.get_nbits()!=32)
+    if (reg.get_minor()!=0) {
+        throw Exception("invalid instruction pointer register minor number: " +
+                        numberToString(reg.get_minor()), ops->currentInstruction());
+    }
+    if (reg.get_offset()!=0 || reg.get_nbits()!=32) {
         throw Exception("invalid instruction pointer subregister: offset="+numberToString(reg.get_offset())+
-                        " width="+numberToString(reg.get_nbits()), ops->get_insn());
+                        " width="+numberToString(reg.get_nbits()), ops->currentInstruction());
+    }
     ip = value;
 }
 
@@ -718,7 +733,7 @@ void
 RiscOperators::startInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
     SAWYER_MESG(mlog[TRACE]) <<"starting instruction " <<unparseInstructionWithAddress(insn) <<"\n";
-    cur_insn = insn;
+    currentInsn_ = insn;
     ++ninsns;
 };
 
@@ -797,13 +812,13 @@ RiscOperators::isSignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b
 SValuePtr
 RiscOperators::fpFromInteger(const SValuePtr &intValue, SgAsmFloatType *fpType) {
     ASSERT_not_null(fpType);
-    throw NotImplemented("fpFromInteger is not implemented", get_insn());
+    throw NotImplemented("fpFromInteger is not implemented", currentInstruction());
 }
 
 SValuePtr
 RiscOperators::fpToInteger(const SValuePtr &fpValue, SgAsmFloatType *fpType, const SValuePtr &dflt) {
     ASSERT_not_null(fpType);
-    throw NotImplemented("fpToInteger is not implemented", get_insn());
+    throw NotImplemented("fpToInteger is not implemented", currentInstruction());
 }
 
 SValuePtr
@@ -813,7 +828,7 @@ RiscOperators::fpConvert(const SValuePtr &a, SgAsmFloatType *aType, SgAsmFloatTy
     ASSERT_not_null(retType);
     if (aType == retType)
         return a->copy();
-    throw NotImplemented("fpConvert is not implemented", get_insn());
+    throw NotImplemented("fpConvert is not implemented", currentInstruction());
 }
 
 SValuePtr
@@ -891,32 +906,32 @@ RiscOperators::fpEffectiveExponent(const SValuePtr &a, SgAsmFloatType *aType) {
 
 SValuePtr
 RiscOperators::fpAdd(const SValuePtr &a, const SValuePtr &b, SgAsmFloatType *fpType) {
-    throw NotImplemented("fpAdd is not implemented", get_insn());
+    throw NotImplemented("fpAdd is not implemented", currentInstruction());
 }
 
 SValuePtr
 RiscOperators::fpSubtract(const SValuePtr &a, const SValuePtr &b, SgAsmFloatType *fpType) {
-    throw NotImplemented("fpSubtract is not implemented", get_insn());
+    throw NotImplemented("fpSubtract is not implemented", currentInstruction());
 }
 
 SValuePtr
 RiscOperators::fpMultiply(const SValuePtr &a, const SValuePtr &b, SgAsmFloatType *fpType) {
-    throw NotImplemented("fpMultiply is not implemented", get_insn());
+    throw NotImplemented("fpMultiply is not implemented", currentInstruction());
 }
 
 SValuePtr
 RiscOperators::fpDivide(const SValuePtr &a, const SValuePtr &b, SgAsmFloatType *fpType) {
-    throw NotImplemented("fpDivide is not implemented", get_insn());
+    throw NotImplemented("fpDivide is not implemented", currentInstruction());
 }
 
 SValuePtr
 RiscOperators::fpSquareRoot(const SValuePtr &a, SgAsmFloatType *aType) {
-    throw NotImplemented("fpSquareRoot is not implemented", get_insn());
+    throw NotImplemented("fpSquareRoot is not implemented", currentInstruction());
 }
 
 SValuePtr
 RiscOperators::fpRoundTowardZero(const SValuePtr &a, SgAsmFloatType *aType) {
-    throw NotImplemented("fpRoundTowardZero is not implemented", get_insn());
+    throw NotImplemented("fpRoundTowardZero is not implemented", currentInstruction());
 }
 
 
@@ -1001,7 +1016,7 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool al
 {
     const RegisterDictionary *regdict = get_register_dictionary();
     if (!regdict)
-        throw Exception("no register dictionary", get_insn());
+        throw Exception("no register dictionary", currentInstruction());
 
     const RegisterDescriptor *reg = regdict->lookup(regname);
     if (!reg) {
@@ -1011,14 +1026,14 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool al
         }
         std::ostringstream ss;
         ss <<"Invalid register \"" <<regname <<"\" in dictionary \"" <<regdict->get_architecture_name() <<"\"";
-        throw Exception(ss.str(), get_insn());
+        throw Exception(ss.str(), currentInstruction());
     }
 
     if (nbits>0 && reg->get_nbits()!=nbits) {
         std::ostringstream ss;
         ss <<"Invalid " <<nbits <<"-bit register: \"" <<regname <<"\" is "
            <<reg->get_nbits() <<" " <<(1==reg->get_nbits()?"byte":"bytes");
-        throw Exception(ss.str(), get_insn());
+        throw Exception(ss.str(), currentInstruction());
     }
     return *reg;
 }

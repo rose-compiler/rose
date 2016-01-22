@@ -86,7 +86,6 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 class RiscOperators: public BaseSemantics::RiscOperators {
     BaseSemantics::RiscOperatorsPtr subdomain_;         // Domain to which all our RISC operators chain
     Sawyer::Message::Stream stream_;                    // stream to which output is emitted
-    size_t nInsns_;                                     // number of instructions processed
     
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,19 +93,19 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     // use the version that takes a subdomain instead of this c'tor
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
+        : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]) {
         set_name("Trace");
     }
 
     // use the version that takes a subdomain instead of this c'tor.
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
+        : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]) {
         set_name("Trace");
     }
 
     explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &subdomain)
         : BaseSemantics::RiscOperators(subdomain->currentState(), subdomain->solver()),
-          subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
+          subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]) {
         set_name("Trace");
     }
 
@@ -261,7 +260,7 @@ public:
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
     virtual size_t get_ninsns() const ROSE_OVERRIDE;
     virtual void set_ninsns(size_t n) ROSE_OVERRIDE;
-    virtual SgAsmInstruction *get_insn() const ROSE_OVERRIDE;
+    virtual SgAsmInstruction* currentInstruction() const ROSE_OVERRIDE;
     virtual void startInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
     virtual void finishInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
     

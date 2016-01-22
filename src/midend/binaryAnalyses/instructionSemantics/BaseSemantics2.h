@@ -1454,9 +1454,9 @@ class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
     SValuePtr protoval_;                                // Prototypical value used for its virtual constructors.
     StatePtr currentState_;                             // State upon which RISC operators operate
     SMTSolver *solver_;                                 // Optional SMT solver.
+    SgAsmInstruction *currentInsn_;                     // Current instruction, as set by latest startInstruction call.
 
 protected:
-    SgAsmInstruction *cur_insn;                 /**< Current instruction, as set by latest startInstruction() call. */
     size_t ninsns;                              /**< Number of instructions processed. */
     std::string name;                           /**< Name to use for debugging. */
 
@@ -1464,12 +1464,12 @@ protected:
     // Real constructors
 protected:
     explicit RiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
-        : protoval_(protoval), solver_(solver), cur_insn(NULL), ninsns(0) {
+        : protoval_(protoval), solver_(solver), currentInsn_(NULL), ninsns(0) {
         ASSERT_not_null(protoval_);
     }
 
     explicit RiscOperators(const StatePtr &state, SMTSolver *solver=NULL)
-        : currentState_(state), solver_(solver), cur_insn(NULL), ninsns(0) {
+        : currentState_(state), solver_(solver), currentInsn_(NULL), ninsns(0) {
         ASSERT_not_null(state);
         protoval_ = state->protoval();
     }
@@ -1608,9 +1608,17 @@ public:
         ninsns = n;
     }
 
-    /** Returns current instruction. Returns the null pointer if no instruction is being processed. */
-    virtual SgAsmInstruction *get_insn() const {
-        return cur_insn;
+    /** Returns current instruction.
+     *
+     *  Returns the instruction which is being processed. This is set by @ref startInstruction and cleared by @ref
+     *  finishInstruction. Returns null if we are not processing an instruction. */
+    virtual SgAsmInstruction* currentInstruction() const {
+        return currentInsn_;
+    }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual SgAsmInstruction *get_insn() const ROSE_DEPRECATED("use currentInstruction instead") {
+        return currentInstruction();
     }
 
     /** Called at the beginning of every instruction.  This method is invoked every time the translation object begins
@@ -1621,8 +1629,8 @@ public:
      *  instruction.  This is not called if there's an exception during processing. */
     virtual void finishInstruction(SgAsmInstruction *insn) {
         ASSERT_not_null(insn);
-        ASSERT_require(cur_insn==insn);
-        cur_insn = NULL;
+        ASSERT_require(currentInsn_==insn);
+        currentInsn_ = NULL;
     };
 
 
@@ -2168,9 +2176,18 @@ public:
         return protoval();
     }
 
-    /** Returns the instruction that is being processed. The instruction comes from the get_insn() method of the RISC operators
+    /** Returns the instruction that is being processed.
+     *
+     *  The instruction comes from the @ref RiscOperators::currentInstruction "currentInstruction" method of the RiscOperators
      *  object. */
-    virtual SgAsmInstruction *get_insn() const { return operators ? operators->get_insn() : NULL; }
+    virtual SgAsmInstruction* currentInstruction() const {
+         return operators ? operators->currentInstruction() : NULL;
+    }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual SgAsmInstruction *get_insn() const ROSE_DEPRECATED("use currentInstruction instead") {
+        return currentInstruction();
+    }
 
     /** Return a new undefined semantic value. */
     virtual SValuePtr undefined_(size_t nbits) const {

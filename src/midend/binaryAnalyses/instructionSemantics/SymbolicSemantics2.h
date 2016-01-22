@@ -789,14 +789,14 @@ public:
     virtual BaseSemantics::SValuePtr boolean_(bool b) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::boolean_(b));
         if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
-            retval->defined_by(get_insn());
+            retval->defined_by(currentInstruction());
         return retval;
     }
 
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::number_(nbits, value));
         if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
-            retval->defined_by(get_insn());
+            retval->defined_by(currentInstruction());
         return retval;
     }
 

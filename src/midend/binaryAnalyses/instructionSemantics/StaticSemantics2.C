@@ -113,7 +113,7 @@ RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, con
 // Save the semantic effect in the current instruction.
 void
 RiscOperators::saveSemanticEffect(const BaseSemantics::SValuePtr &a_) {
-    if (SgAsmInstruction *insn = get_insn()) {
+    if (SgAsmInstruction *insn = currentInstruction()) {
         SValuePtr a = SValue::promote(a_);
         ASSERT_not_null(a->ast());
 

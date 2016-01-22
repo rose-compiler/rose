@@ -32,7 +32,7 @@ InsnProcessor::process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmIns
     DispatcherX86Ptr dispatcher = DispatcherX86::promote(dispatcher_);
     BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
     SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
-    ASSERT_require(insn!=NULL && insn==operators->get_insn());
+    ASSERT_require(insn!=NULL && insn==operators->currentInstruction());
     dispatcher->advanceInstructionPointer(insn);
     SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
     check_arg_width(dispatcher.get(), insn, operands);

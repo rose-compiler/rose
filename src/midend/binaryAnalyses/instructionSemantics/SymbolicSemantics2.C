@@ -365,7 +365,7 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(b);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -389,7 +389,7 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(b);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -422,7 +422,7 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(b);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -442,7 +442,7 @@ RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
         case TRACK_ALL_DEFINERS:
             retval->add_defining_instructions(a);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -467,7 +467,7 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
             retval->add_defining_instructions(a);       // fall through...
         case TRACK_LATEST_DEFINER:
             if (retval->get_width() != a->get_width())
-                retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+                retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -489,7 +489,7 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &lo_bits_, const BaseSemant
             retval->add_defining_instructions(lo);
             retval->add_defining_instructions(hi);      // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -509,7 +509,7 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
         case TRACK_ALL_DEFINERS:
             retval->add_defining_instructions(a);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -541,7 +541,7 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
 #endif
                 retval->add_defining_instructions(sel); // fall through...
             case TRACK_LATEST_DEFINER:
-                retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+                retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
                 break;
         }
         return filterResult(retval);
@@ -561,7 +561,7 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
 #endif
                     retval->add_defining_instructions(sel); // fall through...
                 case TRACK_LATEST_DEFINER:
-                    retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+                    retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
                     break;
             }
             return filterResult(retval);
@@ -581,7 +581,7 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
 #endif
                     retval->add_defining_instructions(sel); // fall through...
                 case TRACK_LATEST_DEFINER:
-                    retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+                    retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
                     break;
             }
             return filterResult(retval);
@@ -596,7 +596,7 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
             retval->add_defining_instructions(b);
             retval->add_defining_instructions(sel); // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -616,7 +616,7 @@ RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_)
         case TRACK_ALL_DEFINERS:
             retval->add_defining_instructions(a);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -636,7 +636,7 @@ RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_)
         case TRACK_ALL_DEFINERS:
             retval->add_defining_instructions(a);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -658,7 +658,7 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantic
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(sa);      // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -680,7 +680,7 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemanti
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(sa);      // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -702,7 +702,7 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(sa);      // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -724,7 +724,7 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(sa);      // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -746,7 +746,7 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(sa);      // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -768,7 +768,7 @@ RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_wid
             retval->add_defining_instructions(a);       // fall through...
         case TRACK_LATEST_DEFINER:
             if (retval->get_width() != a->get_width())
-                retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+                retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -791,7 +791,7 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(b);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -828,7 +828,7 @@ RiscOperators::negate(const BaseSemantics::SValuePtr &a_)
         case TRACK_ALL_DEFINERS:
             retval->add_defining_instructions(a);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -850,7 +850,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(b);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -872,7 +872,7 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(b);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -894,7 +894,7 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(b);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -916,7 +916,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(b);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -938,7 +938,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(b);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -961,7 +961,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
             retval->add_defining_instructions(a);
             retval->add_defining_instructions(b);       // fall through...
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -983,7 +983,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
             retval->add_defining_instructions(a);       // fall through...
         case TRACK_LATEST_DEFINER:
             if (retval->get_width() != a->get_width())
-                retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+                retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             break;
     }
     return filterResult(retval);
@@ -995,7 +995,7 @@ RiscOperators::readRegister(const RegisterDescriptor &reg)
     PartialDisableUsedef du(this);
     BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::readRegister(reg);
 
-    if (get_insn()) {
+    if (currentInstruction()) {
         RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
         regs->updateReadProperties(reg);
     }
@@ -1012,7 +1012,7 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
 
     // Update register properties and writer info.
     RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
-    SgAsmInstruction *insn = get_insn();
+    SgAsmInstruction *insn = currentInstruction();
     if (insn) {
         switch (computingRegisterWriters()) {
             case TRACK_NO_WRITERS:
@@ -1062,7 +1062,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
             retval = SValue::promote(concat(retval, byte_value));
         } else {
             // See BaseSemantics::MemoryState::set_byteOrder
-            throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", get_insn());
+            throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", currentInstruction());
         }
 
         // Accumulating the bytes of a multibyte read is sort of like a merge operation in the way it treats definers. Since
@@ -1081,7 +1081,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
             break;
         case TRACK_ALL_DEFINERS:
         case TRACK_LATEST_DEFINER:
-            retval->add_defining_instructions(omit_cur_insn ? NULL : cur_insn);
+            retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
             retval->add_defining_instructions(allDefiners);
             break;
     }
@@ -1114,7 +1114,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
             byteOffset = bytenum;
         } else {
             // See BaseSemantics::MemoryState::set_byteOrder
-            throw BaseSemantics::Exception("multi-byte write with memory having unspecified byte order", get_insn());
+            throw BaseSemantics::Exception("multi-byte write with memory having unspecified byte order", currentInstruction());
         }
 
         BaseSemantics::SValuePtr byte_value = extract(value, 8*byteOffset, 8*byteOffset+8);
@@ -1123,7 +1123,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
 
         // Update the latest writer info if we have a current instruction and the memory state supports it.
         if (computingMemoryWriters() != TRACK_NO_WRITERS) {
-            if (SgAsmInstruction *insn = get_insn()) {
+            if (SgAsmInstruction *insn = currentInstruction()) {
                 if (BaseSemantics::MemoryCellListPtr cellList =
                     boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem)) {
                     if (BaseSemantics::MemoryCellPtr cell = cellList->latestWrittenCell()) {

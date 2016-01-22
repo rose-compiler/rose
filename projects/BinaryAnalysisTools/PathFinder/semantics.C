@@ -68,12 +68,12 @@ std::string
 RiscOperators::commentForVariable(const RegisterDescriptor &reg, const std::string &accessMode) const {
     const RegisterDictionary *regs = currentState()->registerState()->get_register_dictionary();
     std::string varComment = RegisterNames(regs)(reg) + " first " + accessMode;
-    if (pathInsnIndex_ == (size_t)(-1) && get_insn() == NULL) {
+    if (pathInsnIndex_ == (size_t)(-1) && currentInstruction() == NULL) {
         varComment += " by initialization";
     } else {
         if (pathInsnIndex_ != (size_t)(-1))
             varComment += " at path position #" + StringUtility::numberToString(pathInsnIndex_);
-        if (SgAsmInstruction *insn = get_insn())
+        if (SgAsmInstruction *insn = currentInstruction())
             varComment += " by " + unparseInstructionWithAddress(insn);
     }
     return varComment;
@@ -85,7 +85,7 @@ RiscOperators::commentForVariable(const BaseSemantics::SValuePtr &addr, const st
     std::string varComment = "first " + accessMode + " at ";
     if (pathInsnIndex_ != (size_t)(-1))
         varComment += "path position #" + StringUtility::numberToString(pathInsnIndex_) + ", ";
-    varComment += "instruction " + unparseInstructionWithAddress(get_insn());
+    varComment += "instruction " + unparseInstructionWithAddress(currentInstruction());
 
     // Sometimes we can save useful information about the address.
     if (nBytes != 1) {
@@ -200,7 +200,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
     // Read from the symbolic state, and update the state with the default from real memory if known.
     BaseSemantics::SValuePtr retval = Super::readMemory(segreg, addr, dflt, cond);
 
-    if (!get_insn())
+    if (!currentInstruction())
         return retval;                              // not called from dispatcher on behalf of an instruction
 
     // Save a description of the variable

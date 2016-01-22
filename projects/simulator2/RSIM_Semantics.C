@@ -135,8 +135,8 @@ RiscOperators::dumpState() {
     Sawyer::Message::Stream out(thread_->tracing(TRACE_STATE));
     out.enable();
     out <<"Semantic state for thread " <<thread_->get_tid() <<":\n";
-    if (get_insn()) {
-        out <<"  instruction #" <<get_ninsns() <<" at " <<unparseInstructionWithAddress(get_insn()) <<"\n";
+    if (currentInstruction()) {
+        out <<"  instruction #" <<get_ninsns() <<" at " <<unparseInstructionWithAddress(currentInstruction()) <<"\n";
     } else {
         out <<"  processed " <<StringUtility::plural(get_ninsns(), "instructions") <<"\n";
     }
@@ -178,7 +178,7 @@ RiscOperators::interrupt(int majr, int minr) {
     } else if (x86_exception_syscall == majr) {
         thread_->emulate_syscall();
     } else if (x86_exception_int == majr) {
-        throw Interrupt(get_insn()->get_address(), minr);
+        throw Interrupt(currentInstruction()->get_address(), minr);
     } else {
         FIXME("interrupt/exception type not handled [Robb P. Matzke 2015-04-22]");
     }

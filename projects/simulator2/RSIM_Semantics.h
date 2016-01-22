@@ -172,7 +172,7 @@ public:
 
 public:
     virtual void hlt() {
-        throw Halt(get_insn()->get_address());
+        throw Halt(currentInstruction()->get_address());
     }
 
     virtual void startInstruction(SgAsmInstruction*) ROSE_OVERRIDE;

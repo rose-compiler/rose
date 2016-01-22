@@ -15,8 +15,8 @@ RiscOperators::linePrefix() {
             stream_ <<subdomain_->get_name() <<"@" <<subdomain_.get();
             sep = " ";
         }
-        if (SgAsmInstruction *insn = get_insn()) {
-            stream_ <<sep <<"insn@" <<StringUtility::addrToString(insn->get_address()) <<"[" <<(nInsns_-1) <<"]";
+        if (SgAsmInstruction *insn = currentInstruction()) {
+            stream_ <<sep <<"insn@" <<StringUtility::addrToString(insn->get_address()) <<"[" <<(get_ninsns()-1) <<"]";
             sep = " ";
         }
         if (*sep)
@@ -313,17 +313,16 @@ RiscOperators::set_ninsns(size_t n)
 }
 
 SgAsmInstruction *
-RiscOperators::get_insn() const
+RiscOperators::currentInstruction() const
 {
     checkSubdomain();
-    return subdomain_->get_insn();
+    return subdomain_->currentInstruction();
 }
 
 void
 RiscOperators::startInstruction(SgAsmInstruction *insn)
 {
-    ++nInsns_;
-    cur_insn = insn;
+    BaseSemantics::RiscOperators::startInstruction(insn);
     before("startInstruction", insn, true /*show address*/);
     try {
         subdomain_->startInstruction(insn);
@@ -351,6 +350,7 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn)
         after_exception();
         throw;
     }
+    BaseSemantics::RiscOperators::finishInstruction(insn);
 }
 
 BaseSemantics::SValuePtr
