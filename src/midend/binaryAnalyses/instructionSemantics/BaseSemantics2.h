@@ -1451,25 +1451,25 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together. */
 class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
-    SValuePtr protoval_;                                // Prototypical value used for its virtual constructors.
+    SValuePtr protoval_;                                // Prototypical value used for its virtual constructors
     StatePtr currentState_;                             // State upon which RISC operators operate
-    SMTSolver *solver_;                                 // Optional SMT solver.
-    SgAsmInstruction *currentInsn_;                     // Current instruction, as set by latest startInstruction call.
+    SMTSolver *solver_;                                 // Optional SMT solver
+    SgAsmInstruction *currentInsn_;                     // Current instruction, as set by latest startInstruction call
+    size_t nInsns_;                                     // Number of instructions processed
 
 protected:
-    size_t ninsns;                              /**< Number of instructions processed. */
     std::string name;                           /**< Name to use for debugging. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit RiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
-        : protoval_(protoval), solver_(solver), currentInsn_(NULL), ninsns(0) {
+        : protoval_(protoval), solver_(solver), currentInsn_(NULL), nInsns_(0) {
         ASSERT_not_null(protoval_);
     }
 
     explicit RiscOperators(const StatePtr &state, SMTSolver *solver=NULL)
-        : currentState_(state), solver_(solver), currentInsn_(NULL), ninsns(0) {
+        : currentState_(state), solver_(solver), currentInsn_(NULL), nInsns_(0) {
         ASSERT_not_null(state);
         protoval_ = state->protoval();
     }
@@ -1597,16 +1597,18 @@ public:
     WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
     /** @} */
 
-    /** Returns the number of instructions processed. This counter is incremented at the beginning of each instruction. */
-    virtual size_t get_ninsns() const {
-        return ninsns;
-    }
+    /** Property: Number of instructions processed.
+     *
+     *  This counter is incremented at the beginning of each instruction.
+     *
+     * @{ */
+    virtual size_t nInsns() const { return nInsns_; }
+    virtual void nInsns(size_t n) { nInsns_ = n; }
+    /** @} */
 
-    /** Sets the number instructions processed. This is the same counter incremented at the beginning of each instruction and
-     *  returned by get_ninsns(). */
-    virtual void set_ninsns(size_t n) {
-        ninsns = n;
-    }
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual size_t get_ninsns() const ROSE_DEPRECATED("use nInsns instead") { return nInsns(); }
+    virtual void set_ninsns(size_t n) ROSE_DEPRECATED("use nInsns instead") { nInsns(n); }
 
     /** Returns current instruction.
      *

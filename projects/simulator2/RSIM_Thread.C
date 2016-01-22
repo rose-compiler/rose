@@ -81,7 +81,7 @@ RSIM_Thread::id()
     RegisterDescriptor IP = get_process()->disassembler()->instructionPointerRegister();
     uint64_t eip = operators()->readRegister(IP)->get_number();
 
-    int n = snprintf(buf2, sizeof(buf2), "0x%08" PRIx64"[%zu]: ", eip, operators()->get_ninsns());
+    int n = snprintf(buf2, sizeof(buf2), "0x%08" PRIx64"[%zu]: ", eip, operators()->nInsns());
     assert(n>=0 && (size_t)n<sizeof(buf2)-1);
     memset(buf2+n, ' ', sizeof(buf2)-n);
     buf2[std::max(n, 21)] = '\0';
@@ -587,7 +587,7 @@ RSIM_Thread::atfork_child()
 
     /* Thread (re)initialization */
     signal_clear_pending();     /* pending signals are for the parent process */
-    operators()->set_ninsns(0); /* restart instruction counter for trace output */
+    operators()->nInsns(0);     /* restart instruction counter for trace output */
 
     /* Redirect tracing output for new process */
     p->open_tracing_file();

@@ -734,7 +734,7 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
     SAWYER_MESG(mlog[TRACE]) <<"starting instruction " <<unparseInstructionWithAddress(insn) <<"\n";
     currentInsn_ = insn;
-    ++ninsns;
+    ++nInsns_;
 };
 
 SValuePtr

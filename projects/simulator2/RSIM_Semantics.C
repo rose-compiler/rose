@@ -136,9 +136,9 @@ RiscOperators::dumpState() {
     out.enable();
     out <<"Semantic state for thread " <<thread_->get_tid() <<":\n";
     if (currentInstruction()) {
-        out <<"  instruction #" <<get_ninsns() <<" at " <<unparseInstructionWithAddress(currentInstruction()) <<"\n";
+        out <<"  instruction #" <<nInsns() <<" at " <<unparseInstructionWithAddress(currentInstruction()) <<"\n";
     } else {
-        out <<"  processed " <<StringUtility::plural(get_ninsns(), "instructions") <<"\n";
+        out <<"  processed " <<StringUtility::plural(nInsns(), "instructions") <<"\n";
     }
 
     out <<"  registers:\n";
@@ -164,7 +164,7 @@ RiscOperators::dumpState() {
 void
 RiscOperators::startInstruction(SgAsmInstruction* insn) {
     Super::startInstruction(insn);
-    SAWYER_MESG(thread_->tracing(TRACE_INSN)) <<"#" <<get_ninsns() <<" " <<unparseInstructionWithAddress(insn) <<"\n";
+    SAWYER_MESG(thread_->tracing(TRACE_INSN)) <<"#" <<nInsns() <<" " <<unparseInstructionWithAddress(insn) <<"\n";
 }
 
 void

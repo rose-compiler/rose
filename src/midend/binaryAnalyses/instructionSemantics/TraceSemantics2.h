@@ -258,8 +258,8 @@ public:
     virtual BaseSemantics::StatePtr currentState() const ROSE_OVERRIDE;
     virtual void currentState(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
-    virtual size_t get_ninsns() const ROSE_OVERRIDE;
-    virtual void set_ninsns(size_t n) ROSE_OVERRIDE;
+    virtual size_t nInsns() const ROSE_OVERRIDE;
+    virtual void nInsns(size_t n) ROSE_OVERRIDE;
     virtual SgAsmInstruction* currentInstruction() const ROSE_OVERRIDE;
     virtual void startInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
     virtual void finishInstruction(SgAsmInstruction*) ROSE_OVERRIDE;

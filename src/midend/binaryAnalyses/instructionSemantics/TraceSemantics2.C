@@ -16,7 +16,7 @@ RiscOperators::linePrefix() {
             sep = " ";
         }
         if (SgAsmInstruction *insn = currentInstruction()) {
-            stream_ <<sep <<"insn@" <<StringUtility::addrToString(insn->get_address()) <<"[" <<(get_ninsns()-1) <<"]";
+            stream_ <<sep <<"insn@" <<StringUtility::addrToString(insn->get_address()) <<"[" <<(nInsns()-1) <<"]";
             sep = " ";
         }
         if (*sep)
@@ -299,17 +299,17 @@ RiscOperators::print(std::ostream &stream, BaseSemantics::Formatter &fmt) const
 }
 
 size_t
-RiscOperators::get_ninsns() const
+RiscOperators::nInsns() const
 {
     checkSubdomain();
-    return subdomain_->get_ninsns();
+    return subdomain_->nInsns();
 }
 
 void
-RiscOperators::set_ninsns(size_t n)
+RiscOperators::nInsns(size_t n)
 {
     checkSubdomain();
-    subdomain_->set_ninsns(n);
+    subdomain_->nInsns(n);
 }
 
 SgAsmInstruction *
