@@ -24,7 +24,7 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOpe
     } else if (cursor == get_cells().end()) {
         // No must_equal match and at least one may_equal match. We must merge the default into the return value and save the
         // result back into the cell list.
-        retval = retval->createMerged(dflt, merger(), valOps->get_solver());
+        retval = retval->createMerged(dflt, merger(), valOps->solver());
         AddressSet writers = mergeCellWriters(cells);
         InputOutputPropertySet props = mergeCellProperties(cells);
         insertReadCell(addr, retval, writers, props);
@@ -82,7 +82,7 @@ MemoryCellList::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, Risc
         BOOST_FOREACH (const MemoryCellPtr &cell, other->get_cells()) {
             if (cell == otherCell) {
                 break;
-            } else if (otherCell->get_address()->must_equal(cell->get_address(), addrOps->get_solver())) {
+            } else if (otherCell->get_address()->must_equal(cell->get_address(), addrOps->solver())) {
                 isOccluded = true;
             }
         }
@@ -110,7 +110,7 @@ MemoryCellList::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, Risc
         } else {
             bool cellChanged = false;
             SValuePtr thisValue = mergeCellValues(thisCells, valOps->undefined_(8), addrOps, valOps);
-            SValuePtr mergedValue = thisValue->createOptionalMerge(otherValue, merger(), valOps->get_solver()).orDefault();
+            SValuePtr mergedValue = thisValue->createOptionalMerge(otherValue, merger(), valOps->solver()).orDefault();
             if (mergedValue)
                 cellChanged = true;
 
@@ -153,7 +153,7 @@ MemoryCellList::mergeCellValues(const CellList &cells, const SValuePtr &dflt, Ri
         if (!retval) {
             retval = cellValue;
         } else {
-            retval = retval->createMerged(cellValue, merger(), valOps->get_solver());
+            retval = retval->createMerged(cellValue, merger(), valOps->solver());
         }
     }
 

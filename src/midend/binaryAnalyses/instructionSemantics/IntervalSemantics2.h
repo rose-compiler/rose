@@ -354,13 +354,13 @@ public:
     }
 
     /** Instantiates a new RiscOperators object with specified prototypical value. An SMT solver may be specified as the second
-     *  argument for convenience. See set_solver() for details. */
+     *  argument for convenience. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators with specified state. An SMT solver may be specified as the second argument for
-     *  convenience. See set_solver() for details. */
+     *  convenience. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }

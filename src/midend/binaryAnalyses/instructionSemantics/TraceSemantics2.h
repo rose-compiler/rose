@@ -105,7 +105,7 @@ protected:
     }
 
     explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &subdomain)
-        : BaseSemantics::RiscOperators(subdomain->currentState(), subdomain->get_solver()),
+        : BaseSemantics::RiscOperators(subdomain->currentState(), subdomain->solver()),
           subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
         set_name("Trace");
     }
@@ -138,8 +138,8 @@ public:
     static RiscOperatorsPtr instance(const BaseSemantics::RiscOperatorsPtr &subdomain) {
         ASSERT_not_null(subdomain);
         RiscOperatorsPtr self = subdomain->currentState()!=NULL ?
-                                RiscOperatorsPtr(new RiscOperators(subdomain->currentState(), subdomain->get_solver())) :
-                                RiscOperatorsPtr(new RiscOperators(subdomain->protoval(), subdomain->get_solver()));
+                                RiscOperatorsPtr(new RiscOperators(subdomain->currentState(), subdomain->solver())) :
+                                RiscOperatorsPtr(new RiscOperators(subdomain->protoval(), subdomain->solver()));
         self->subdomain_ = subdomain;
         return self;
     }
@@ -254,8 +254,8 @@ protected:
     // Methods we override from our super class
 public:
     virtual BaseSemantics::SValuePtr protoval() const ROSE_OVERRIDE;
-    virtual void set_solver(SMTSolver*) ROSE_OVERRIDE;
-    virtual SMTSolver *get_solver() const ROSE_OVERRIDE;
+    virtual void solver(SMTSolver*) ROSE_OVERRIDE;
+    virtual SMTSolver *solver() const ROSE_OVERRIDE;
     virtual BaseSemantics::StatePtr currentState() const ROSE_OVERRIDE;
     virtual void currentState(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;

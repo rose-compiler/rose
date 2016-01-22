@@ -264,17 +264,17 @@ RiscOperators::protoval() const
 }
 
 void
-RiscOperators::set_solver(SMTSolver *solver)
+RiscOperators::solver(SMTSolver *s)
 {
     checkSubdomain();
-    subdomain_->set_solver(solver);
+    subdomain_->solver(s);
 }
 
 SMTSolver *
-RiscOperators::get_solver() const
+RiscOperators::solver() const
 {
     checkSubdomain();
-    return subdomain_->get_solver();
+    return subdomain_->solver();
 }
 
 BaseSemantics::StatePtr

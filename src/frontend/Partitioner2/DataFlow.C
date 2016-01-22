@@ -295,7 +295,7 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
     ASSERT_not_null(initialStackPointer);
     BaseSemantics::StatePtr state = ops->currentState();
     ASSERT_not_null(state);
-    SMTSolver *solver = ops->get_solver();             // might be null
+    SMTSolver *solver = ops->solver();                  // might be null
 
     // What is the word size for this architecture?  We'll assume the word size is the same as the width of the stack pointer,
     // whose value we have in initialStackPointer.

@@ -1453,23 +1453,23 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
     SValuePtr protoval_;                                // Prototypical value used for its virtual constructors.
     StatePtr currentState_;                             // State upon which RISC operators operate
+    SMTSolver *solver_;                                 // Optional SMT solver.
 
 protected:
     SgAsmInstruction *cur_insn;                 /**< Current instruction, as set by latest startInstruction() call. */
     size_t ninsns;                              /**< Number of instructions processed. */
-    SMTSolver *solver;                          /**< Optional SMT solver. */
     std::string name;                           /**< Name to use for debugging. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit RiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
-        : protoval_(protoval), cur_insn(NULL), ninsns(0), solver(solver) {
+        : protoval_(protoval), solver_(solver), cur_insn(NULL), ninsns(0) {
         ASSERT_not_null(protoval_);
     }
 
     explicit RiscOperators(const StatePtr &state, SMTSolver *solver=NULL)
-        : currentState_(state), cur_insn(NULL), ninsns(0), solver(solver) {
+        : currentState_(state), solver_(solver), cur_insn(NULL), ninsns(0) {
         ASSERT_not_null(state);
         protoval_ = state->protoval();
     }
@@ -1490,13 +1490,13 @@ public:
 public:
     /** Virtual allocating constructor.  The @p protoval is a prototypical semantic value that is used as a factory to create
      *  additional values as necessary via its virtual constructors.  The state upon which the RISC operations operate must be
-     *  set by modifying the  @ref currentState property. An optional SMT solver may be specified (see set_solver()). */
+     *  set by modifying the  @ref currentState property. An optional SMT solver may be specified (see @ref solver). */
     virtual RiscOperatorsPtr create(const SValuePtr &protoval, SMTSolver *solver=NULL) const = 0;
 
     /** Virtual allocating constructor.  The supplied @p state is that upon which the RISC operations operate and is also used
      *  to define the prototypical semantic value. Other states can be supplied by setting @ref currentState. The prototypical
      *  semantic value is used as a factory to create additional values as necessary via its virtual constructors. An optional
-     *  SMT solver may be specified (see set_solver()). */
+     *  SMT solver may be specified (see @ref solver). */
     virtual RiscOperatorsPtr create(const StatePtr &state, SMTSolver *solver=NULL) const = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1520,15 +1520,21 @@ public:
         return protoval();
     }
 
-    /** Sets the satisfiability modulo theory (SMT) solver to use for certain operations.  An SMT solver is optional and not
-     *  all semantic domains will make use of a solver.  Domains that use a solver will fall back to naive implementations when
-     *  a solver is not available (for instance, equality of two values might be checked by looking at whether the values are
-     *  identical).  */
-    virtual void set_solver(SMTSolver *solver) { this->solver = solver; }
+    /** Property: Satisfiability module theory (SMT) solver.
+     *
+     *  This property holds a pointer to the satisfiability modulo theory (SMT) solver to use for certain operations.  An SMT
+     *  solver is optional and not all semantic domains will make use of a solver.  Domains that use a solver will fall back to
+     *  naive implementations when a solver is not available (for instance, equality of two values might be checked by looking
+     *  at whether the values are identical).
+     *
+     * @{ */
+    virtual SMTSolver* solver() const { return solver_; }
+    virtual void solver(SMTSolver *s) { solver_ = s; }
+    /** @} */
 
-    /** Returns the solver that is currently being used.  A null return value means that no SMT solver is being used and that
-     *  certain operations are falling back to naive implementations. */
-    virtual SMTSolver *get_solver() const { return solver; }
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual void set_solver(SMTSolver *s) ROSE_DEPRECATED("use solver instead") { solver(s); }
+    virtual SMTSolver *get_solver() const ROSE_DEPRECATED("use solver instead") { return solver(); }
 
     /** Property: Current semantic state.
      *

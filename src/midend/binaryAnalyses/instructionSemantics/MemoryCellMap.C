@@ -65,7 +65,7 @@ MemoryCellMap::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscO
         ASSERT_require(thisCell != NULL || otherCell != NULL);
         SValuePtr thisValue  = thisCell  ? thisCell->get_value()  : valOps->undefined_(otherCell->get_value()->get_width());
         SValuePtr otherValue = otherCell ? otherCell->get_value() : valOps->undefined_(thisCell->get_value()->get_width());
-        SValuePtr newValue   = thisValue->createOptionalMerge(otherValue, merger(), valOps->get_solver()).orDefault();
+        SValuePtr newValue   = thisValue->createOptionalMerge(otherValue, merger(), valOps->solver()).orDefault();
         if (newValue)
             thisCellChanged = true;
 

@@ -269,7 +269,7 @@ analyze_interp(SgAsmInterpretation *interp)
         } else {
             dispatcher = DispatcherX86::instance(operators, 32);
         }
-        operators->set_solver(make_solver());
+        operators->solver(make_solver());
 
         // The fpstatus_top register must have a concrete value if we'll use the x86 floating-point stack (e.g., st(0))
         if (const RegisterDescriptor *REG_FPSTATUS_TOP = regdict->lookup("fpstatus_top")) {

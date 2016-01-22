@@ -244,7 +244,7 @@ MemoryListState::CellCompressorChoice::operator()(const SValuePtr &address, cons
                                                   BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
                                                   const CellList &cells)
 {
-    if (addrOps->get_solver() || valOps->get_solver())
+    if (addrOps->solver() || valOps->solver())
         return cc_mccarthy(address, dflt, addrOps, valOps, cells);
     return cc_simple(address, dflt, addrOps, valOps, cells);
 }
@@ -409,7 +409,7 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
     // simplifier.
     if (a->is_number() && b->is_number() && a->get_width()<=64) {
         retval = svalue_number(a->get_width(), a->get_number() ^ b->get_number());
-    } else if (a->get_expression()->mustEqual(b->get_expression(), solver)) {
+    } else if (a->get_expression()->mustEqual(b->get_expression(), solver())) {
         retval = svalue_number(a->get_width(), 0);
     } else {
         retval = svalue_expr(SymbolicExpr::makeXor(a->get_expression(), b->get_expression()));
@@ -546,10 +546,10 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
         }
         return filterResult(retval);
     }
-    if (solver) {
+    if (solver()) {
         // If the selection expression cannot be true, then return b
         ExprPtr assertion = SymbolicExpr::makeEq(sel->get_expression(), SymbolicExpr::makeInteger(1, 1));
-        bool can_be_true = SMTSolver::SAT_NO != solver->satisfiable(assertion);
+        bool can_be_true = SMTSolver::SAT_NO != solver()->satisfiable(assertion);
         if (!can_be_true) {
             retval = SValue::promote(b->copy());
             switch (computingDefiners_) {
@@ -569,7 +569,7 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
 
         // If the selection expression cannot be false, then return a
         assertion = SymbolicExpr::makeEq(sel->get_expression(), SymbolicExpr::makeInteger(1, 0));
-        bool can_be_false = SMTSolver::SAT_NO != solver->satisfiable(assertion);
+        bool can_be_false = SMTSolver::SAT_NO != solver()->satisfiable(assertion);
         if (!can_be_false) {
             retval = SValue::promote(a->copy());
             switch (computingDefiners_) {
