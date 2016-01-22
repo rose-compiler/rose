@@ -89,7 +89,7 @@ public:
         BaseSemantics::StatePtr newState = ops->currentState()->clone();
         newState->clear();
         BaseSemantics::RegisterStateGenericPtr regState =
-            BaseSemantics::RegisterStateGeneric::promote(newState->get_register_state());
+            BaseSemantics::RegisterStateGeneric::promote(newState->registerState());
 
         const RegisterDescriptor SP = cpu()->stackPointerRegister();
         rose_addr_t initialSp = 0;
@@ -174,7 +174,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // Build the initial state
     BaseSemantics::StatePtr initialState = xfer.initialState();
     BaseSemantics::RegisterStateGenericPtr initialRegState =
-        BaseSemantics::RegisterStateGeneric::promote(initialState->get_register_state());
+        BaseSemantics::RegisterStateGeneric::promote(initialState->registerState());
 
     // Run data flow analysis
     bool converged = true;
@@ -212,7 +212,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
             }
         }
         if (finalState)
-            finalRegState = BaseSemantics::RegisterStateGeneric::promote(finalState->get_register_state());
+            finalRegState = BaseSemantics::RegisterStateGeneric::promote(finalState->registerState());
     }
 
     // Get stack pointers for each basic block

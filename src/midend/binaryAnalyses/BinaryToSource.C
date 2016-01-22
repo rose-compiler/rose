@@ -94,7 +94,7 @@ BinaryToSource::emitFilePrologue(const P2::Partitioner &partitioner, std::ostrea
 void
 BinaryToSource::declareGlobalRegisters(std::ostream &out) {
     out <<"\n/* Global register variables */\n";
-    RegisterStatePtr regs = RegisterState::promote(raisingOps_->currentState()->get_register_state());
+    RegisterStatePtr regs = RegisterState::promote(raisingOps_->currentState()->registerState());
     BOOST_FOREACH (const RegisterState::RegPair &regpair, regs->get_stored_registers()) {
         std::string ctext = SValue::unsignedTypeNameForSize(regpair.desc.get_nbits()) + " " +
                             raisingOps_->registerVariableName(regpair.desc);

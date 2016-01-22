@@ -148,13 +148,13 @@ show_state(const BaseSemantics::RiscOperatorsPtr &ops)
             : ops(ops), o(o), prefix(prefix) {}
 
         void operator()(const char *name, const char *abbr=NULL) {
-            const RegisterDictionary *regdict = ops->currentState()->get_register_state()->get_register_dictionary();
+            const RegisterDictionary *regdict = ops->currentState()->registerState()->get_register_dictionary();
             const RegisterDescriptor *desc = regdict->lookup(name);
             assert(desc);
             (*this)(*desc, abbr?abbr:name);
         }
         void operator()(const RegisterDescriptor &desc, const char *abbr) {
-            BaseSemantics::RegisterStatePtr regstate = ops->currentState()->get_register_state();
+            BaseSemantics::RegisterStatePtr regstate = ops->currentState()->registerState();
             FormatRestorer fmt(o);
             o <<prefix <<std::setw(8) <<std::left <<abbr <<"= { ";
             fmt.restore();
@@ -282,7 +282,7 @@ analyze_interp(SgAsmInterpretation *interp)
         if (do_test_subst) {
             // Only request the orig_esp if we're going to use it later because it causes an esp value to be instantiated
             // in the state, which is printed in the output, and thus changes the answer.
-            BaseSemantics::RegisterStateGeneric::promote(operators->currentState()->get_register_state())->initialize_large();
+            BaseSemantics::RegisterStateGeneric::promote(operators->currentState()->registerState())->initialize_large();
             orig_esp = operators->readRegister(*regdict->lookup("esp"));
             std::cout <<"Original state:\n" <<*operators;
         }

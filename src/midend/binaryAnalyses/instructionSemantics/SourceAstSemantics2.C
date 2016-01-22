@@ -87,7 +87,7 @@ RiscOperators::resetState() {
     // Initialize registers so they correspond to the C global variables we'll generate, and then lock the register state so
     // those registers don't change if we access subparts (like if we store EAX and write to AX).
     currentState()->clear();
-    RegisterStatePtr registers = RegisterState::promote(currentState()->get_register_state());
+    RegisterStatePtr registers = RegisterState::promote(currentState()->registerState());
     registers->initialize_large();
     registers->accessModifiesExistingLocations(false);
     RegisterState::RegPairs regpairs = registers->get_stored_registers();
@@ -133,7 +133,7 @@ RiscOperators::substitute(const BaseSemantics::SValuePtr &expression) {
 std::string
 RiscOperators::registerVariableName(const RegisterDescriptor &reg) {
     using namespace StringUtility;
-    const RegisterDictionary *registers = currentState()->get_register_state()->get_register_dictionary();
+    const RegisterDictionary *registers = currentState()->registerState()->get_register_dictionary();
     std::string name = registers->lookup(reg);
     if (name.empty()) {
         return ("R_" + numberToString(reg.get_major()) +
@@ -468,14 +468,14 @@ RiscOperators::interrupt(int majr, int minr) {
 
 BaseSemantics::SValuePtr
 RiscOperators::readRegister(const RegisterDescriptor &reg) {
-    RegisterStatePtr registers = RegisterState::promote(currentState()->get_register_state());
+    RegisterStatePtr registers = RegisterState::promote(currentState()->registerState());
     BaseSemantics::SValuePtr retval = substitute(registers->readRegister(reg, this));
     return retval;
 }
 
 void
 RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value) {
-   RegisterStatePtr registers = RegisterState::promote(currentState()->get_register_state());
+   RegisterStatePtr registers = RegisterState::promote(currentState()->registerState());
    RegisterState::BitRange wantLocation = RegisterState::BitRange::baseSize(reg.get_offset(), reg.get_nbits());
    RegisterState::RegPairs regpairs = registers->overlappingRegisters(reg);
    BOOST_FOREACH (RegisterState::RegPair &regpair, regpairs) {
@@ -520,7 +520,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
     ASSERT_require2(dflt->get_width() % 8 == 0, "readMemory size must be a multiple of a byte");
     size_t nBytes = dflt->get_width() >> 3;
     BaseSemantics::SValuePtr retval;
-    BaseSemantics::MemoryStatePtr mem = currentState()->get_memory_state();
+    BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
     for (size_t byteNum=0; byteNum<nBytes; ++byteNum) {
         size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nBytes-(byteNum+1) : byteNum;
         std::string ctext = "mem[" + SValue::promote(address)->ctext() +
@@ -546,7 +546,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
                            const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) {
     ASSERT_require2(value->get_width() % 8 == 0, "writeMemory size must be a multiple of a byte");
     size_t nBytes = value->get_width() >> 3;
-    BaseSemantics::MemoryStatePtr mem = currentState()->get_memory_state();
+    BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
     for (size_t byteNum=0; byteNum<nBytes; ++byteNum) {
         size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nBytes-(byteNum+1) : byteNum;
         BaseSemantics::SValuePtr byte = extract(value, 8*byteOffset, 8*(byteOffset+1));

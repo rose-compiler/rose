@@ -3748,7 +3748,7 @@ DispatcherM68k::regcache_init() {
 void
 DispatcherM68k::memory_init() {
     if (BaseSemantics::StatePtr state = currentState()) {
-        if (BaseSemantics::MemoryStatePtr memory = state->get_memory_state()) {
+        if (BaseSemantics::MemoryStatePtr memory = state->memoryState()) {
             switch (memory->get_byteOrder()) {
                 case ByteOrder::ORDER_LSB:
                     mlog[WARN] <<"m68k memory state is using little-endian byte order\n";

@@ -35,7 +35,7 @@ NoOperation::StateNormalizer::initialState(const BaseSemantics::DispatcherPtr &c
     BaseSemantics::StatePtr state = cpu->currentState()->clone();
     state->clear();
 
-    BaseSemantics::RegisterStateGenericPtr rstate = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
+    BaseSemantics::RegisterStateGenericPtr rstate = BaseSemantics::RegisterStateGeneric::promote(state->registerState());
     if (rstate)
         rstate->initialize_large();
 
@@ -84,24 +84,24 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
 
     // If possible and appropriate, remove the instruction pointer register
     const RegisterDescriptor regIp = cpu->instructionPointerRegister();
-    BaseSemantics::RegisterStateGenericPtr rstate = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
+    BaseSemantics::RegisterStateGenericPtr rstate = BaseSemantics::RegisterStateGeneric::promote(state->registerState());
     if (rstate && rstate->is_partly_stored(regIp)) {
         BaseSemantics::SValuePtr ip = ops->readRegister(cpu->instructionPointerRegister());
         if (ip->is_number()) {
             state = state->clone();
             isCloned = true;
-            rstate = BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
+            rstate = BaseSemantics::RegisterStateGeneric::promote(state->registerState());
             rstate->erase_register(regIp, ops.get());
         }
     }
 
     // Get the memory state, cloning the state if not done so above.
     BaseSemantics::MemoryCellStatePtr mem =
-        boost::dynamic_pointer_cast<BaseSemantics::MemoryCellState>(state->get_memory_state());
+        boost::dynamic_pointer_cast<BaseSemantics::MemoryCellState>(state->memoryState());
     if (mem && !isCloned) {
         state = state->clone();
         isCloned = true;
-        mem = BaseSemantics::MemoryCellState::promote(state->get_memory_state());
+        mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
     }
 
     // Erase memory that has never been written (i.e., cells that sprang into existence by reading an address) of which appears
@@ -136,7 +136,7 @@ NoOperation::NoOperation(Disassembler *disassembler) {
         ops->computingDefiners(SymbolicSemantics::TRACK_NO_DEFINERS);
         ops->computingMemoryWriters(SymbolicSemantics::TRACK_LATEST_WRITER); // necessary to erase non-written memory
 
-        BaseSemantics::MemoryCellListPtr mstate = BaseSemantics::MemoryCellList::promote(ops->currentState()->get_memory_state());
+        BaseSemantics::MemoryCellListPtr mstate = BaseSemantics::MemoryCellList::promote(ops->currentState()->memoryState());
         ASSERT_not_null(mstate);
         mstate->occlusionsErased(true);
 

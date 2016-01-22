@@ -529,7 +529,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
     // Read the bytes and concatenate them together.
     BaseSemantics::SValuePtr retval;
     size_t nbytes = nbits/8;
-    BaseSemantics::MemoryStatePtr mem = currentState()->get_memory_state();
+    BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
         size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*byteOffset, 8*byteOffset+8);
@@ -561,7 +561,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
     size_t nbits = value->get_width();
     ASSERT_require(0 == nbits % 8);
     size_t nbytes = nbits/8;
-    BaseSemantics::MemoryStatePtr mem = currentState()->get_memory_state();
+    BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
     for (size_t bytenum=0; bytenum<nbytes; ++bytenum) {
         size_t byteOffset = 0;
         if (1 == nbytes) {

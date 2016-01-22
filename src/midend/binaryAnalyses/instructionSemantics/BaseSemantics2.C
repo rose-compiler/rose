@@ -617,25 +617,25 @@ RegisterStateX86::print(std::ostream &stream, Formatter &fmt) const
 
 void
 State::clear() {
-    registers->clear();
-    memory->clear();
+    registers_->clear();
+    memory_->clear();
 }
 
 void
 State::zero_registers() {
-    registers->zero();
+    registers_->zero();
 }
 
 void
 State::clear_memory() {
-    memory->clear();
+    memory_->clear();
 }
 
 SValuePtr
 State::readRegister(const RegisterDescriptor &desc, RiscOperators *ops) {
     ASSERT_require(desc.is_valid());
     ASSERT_not_null(ops);
-    return registers->readRegister(desc, ops);
+    return registers_->readRegister(desc, ops);
 }
 
 void
@@ -643,7 +643,7 @@ State::writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, Ris
     ASSERT_require(desc.is_valid());
     ASSERT_not_null(value);
     ASSERT_not_null(ops);
-    registers->writeRegister(desc, value, ops);
+    registers_->writeRegister(desc, value, ops);
 }
 
 SValuePtr
@@ -652,7 +652,7 @@ State::readMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators
     ASSERT_not_null(dflt);
     ASSERT_not_null(addrOps);
     ASSERT_not_null(valOps);
-    return memory->readMemory(address, dflt, addrOps, valOps);
+    return memory_->readMemory(address, dflt, addrOps, valOps);
 }
 
 void
@@ -661,7 +661,7 @@ State::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators 
     ASSERT_not_null(value);
     ASSERT_not_null(addrOps);
     ASSERT_not_null(valOps);
-    memory->writeMemory(addr, value, addrOps, valOps);
+    memory_->writeMemory(addr, value, addrOps, valOps);
 }
 
 void
@@ -673,7 +673,7 @@ State::printRegisters(std::ostream &stream, const std::string &prefix) {
     
 void
 State::printRegisters(std::ostream &stream, Formatter &fmt) const {
-    registers->print(stream, fmt);
+    registers_->print(stream, fmt);
 }
 
 void
@@ -685,13 +685,13 @@ State::printMemory(std::ostream &stream, const std::string &prefix) const {
 
 void
 State::printMemory(std::ostream &stream, Formatter &fmt) const {
-    memory->print(stream, fmt);
+    memory_->print(stream, fmt);
 }
 
 bool
 State::merge(const StatePtr &other, RiscOperators *ops) {
-    bool memoryChanged = get_memory_state()->merge(other->get_memory_state(), ops, ops);
-    bool registersChanged = get_register_state()->merge(other->get_register_state(), ops);
+    bool memoryChanged = memoryState()->merge(other->memoryState(), ops, ops);
+    bool registersChanged = registerState()->merge(other->registerState(), ops);
     return memoryChanged || registersChanged;
 }
 
@@ -707,7 +707,7 @@ State::print(std::ostream &stream, Formatter &fmt) const
 {
     std::string prefix = fmt.get_line_prefix();
     Indent indent(fmt);
-    stream <<prefix <<"registers:\n" <<(*registers+fmt) <<prefix <<"memory:\n" <<(*memory+fmt);
+    stream <<prefix <<"registers:\n" <<(*registers_+fmt) <<prefix <<"memory:\n" <<(*memory_+fmt);
 }
 
 /*******************************************************************************************************************************
@@ -929,9 +929,9 @@ Dispatcher::advanceInstructionPointer(SgAsmInstruction *insn) {
     RegisterDescriptor ipReg = instructionPointerRegister();
     size_t nBits = ipReg.get_nbits();
     BaseSemantics::SValuePtr ipValue;
-    if (!autoResetInstructionPointer_ && operators->currentState() && operators->currentState()->get_register_state()) {
+    if (!autoResetInstructionPointer_ && operators->currentState() && operators->currentState()->registerState()) {
         BaseSemantics::RegisterStateGenericPtr grState =
-            boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(operators->currentState()->get_register_state());
+            boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(operators->currentState()->registerState());
         if (grState && grState->is_partly_stored(ipReg))
             ipValue = operators->readRegister(ipReg);
     }

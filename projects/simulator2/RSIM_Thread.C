@@ -816,7 +816,7 @@ RSIM_Thread::main()
 
             Sawyer::Message::Stream &mesg = tracing(TRACE_STATE);
             if (mesg)
-                mesg <<*operators()->currentState()->get_register_state();
+                mesg <<*operators()->currentState()->registerState();
         } catch (const Disassembler::Exception &e) {
             post_insn_semaphore();
             if (show_exceptions) {

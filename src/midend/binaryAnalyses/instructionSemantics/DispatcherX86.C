@@ -4464,7 +4464,7 @@ DispatcherX86::regcache_init()
 void
 DispatcherX86::memory_init() {
     if (BaseSemantics::StatePtr state = currentState()) {
-        if (BaseSemantics::MemoryStatePtr memory = state->get_memory_state()) {
+        if (BaseSemantics::MemoryStatePtr memory = state->memoryState()) {
             switch (memory->get_byteOrder()) {
                 case ByteOrder::ORDER_LSB:
                     break;
@@ -5017,7 +5017,7 @@ DispatcherX86::readRegister(const RegisterDescriptor &reg) {
     // When reading FLAGS, EFLAGS as a whole do not coalesce individual flags into the single register.
     if (reg.get_major()==x86_regclass_flags && reg.get_offset()==0 && reg.get_nbits()>1) {
         if (BaseSemantics::StatePtr ss = operators->currentState()) {
-            BaseSemantics::RegisterStatePtr rs = ss->get_register_state();
+            BaseSemantics::RegisterStatePtr rs = ss->registerState();
             if (BaseSemantics::RegisterStateGeneric *rsg = dynamic_cast<BaseSemantics::RegisterStateGeneric*>(rs.get())) {
                 BaseSemantics::RegisterStateGeneric::NoCoalesceOnRead guard(rsg);
                 return operators->readRegister(reg);

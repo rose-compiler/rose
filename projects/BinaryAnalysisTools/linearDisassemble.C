@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
         BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(disassembler->get_registers());
         ops = TraceSemantics::RiscOperators::instance(ops);
         dispatcher = DispatcherM68k::instance(ops, disassembler->get_wordsize()*8);
-        dispatcher->currentState()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_MSB);
+        dispatcher->currentState()->memoryState()->set_byteOrder(ByteOrder::ORDER_MSB);
     }
 
     // Disassemble at each valid address, and show disassembly errors

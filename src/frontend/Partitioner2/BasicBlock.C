@@ -115,7 +115,7 @@ BasicBlock::undropSemantics() {
     if (!initialState_) {
         if (dispatcher_) {
             initialState_ = dispatcher_->get_operators()->currentState();
-            BaseSemantics::RegisterStateGeneric::promote(initialState_->get_register_state())->initialize_large();
+            BaseSemantics::RegisterStateGeneric::promote(initialState_->registerState())->initialize_large();
             initialState_ = initialState_->clone();     // make a copy so process Instruction doesn't change it
             optionalPenultimateState_ = initialState_->clone(); // one level of undo information
             usingDispatcher_ = true;

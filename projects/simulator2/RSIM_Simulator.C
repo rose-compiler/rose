@@ -450,7 +450,7 @@ RSIM_Simulator::loadSpecimen(const std::vector<std::string> &args, int existingP
     }
 
     mainThread->tracing(TRACE_STATE) <<"Initial state:\n"
-                                     <<*mainThread->operators()->currentState()->get_register_state();
+                                     <<*mainThread->operators()->currentState()->registerState();
 
     return 0;
 }

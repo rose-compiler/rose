@@ -109,13 +109,13 @@ public:
     // Reads a register from the subordinate process, unless we've already written to that register.
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE {
         using namespace Sawyer::Container;
-        RegisterStatePtr regs = RegisterState::promote(currentState()->get_register_state());
+        RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
         if (regs->is_partly_stored(reg))
             return ConcreteSemantics::RiscOperators::readRegister(reg);
         try {
             return svalue_number(subordinate_.readRegister(reg));
         } catch (const std::runtime_error &e) {
-            RegisterNames rname(currentState()->get_register_state()->get_register_dictionary());
+            RegisterNames rname(currentState()->registerState()->get_register_dictionary());
             throw BaseSemantics::Exception("cannot read register " + rname(reg) + " from subordinate process",
                                            get_insn());
         }
@@ -140,7 +140,7 @@ public:
         if (nRead < nBytes)
             throw BaseSemantics::Exception("error reading subordinate memory", get_insn());
 
-        ASSERT_require(currentState()->get_memory_state()->get_byteOrder() != ByteOrder::ORDER_MSB);
+        ASSERT_require(currentState()->memoryState()->get_byteOrder() != ByteOrder::ORDER_MSB);
         BitVector bits(dflt->get_width());
         for (size_t i=0; i<nRead; ++i)
             bits.fromInteger(BitVector::BitRange::baseSize(8*i, 8), buf[i]);
@@ -151,9 +151,9 @@ public:
     // Compare written-to simulated registers with registers in the subordinate process, reporting differences.
     bool checkRegisters(SgAsmInstruction *insn) {
         bool areSame = true;
-        RegisterStatePtr regs = RegisterState::promote(currentState()->get_register_state());
+        RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
         RegisterState::RegPairs cells = regs->get_stored_registers();
-        RegisterNames rname(currentState()->get_register_state()->get_register_dictionary());
+        RegisterNames rname(currentState()->registerState()->get_register_dictionary());
         BOOST_FOREACH (const RegisterState::RegPair &cell, cells) {
             Sawyer::Container::BitVector nativeValue;
             try {

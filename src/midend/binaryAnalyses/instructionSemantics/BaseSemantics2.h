@@ -1218,16 +1218,15 @@ typedef boost::shared_ptr<class State> StatePtr;
  *  together.  */
 class State: public boost::enable_shared_from_this<State> {
     SValuePtr protoval_;                                // Initial value used to create additional values as needed.
+    RegisterStatePtr registers_;                        // All machine register values for this semantic state.
+    MemoryStatePtr memory_;                             // All memory for this semantic state.
 
-protected:
-    RegisterStatePtr registers;                         /**< All machine register values for this semantic state. */
-    MemoryStatePtr memory;                              /**< All memory for this semantic state. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     State(const RegisterStatePtr &registers, const MemoryStatePtr &memory)
-        : registers(registers), memory(memory) {
+        : registers_(registers), memory_(memory) {
         ASSERT_not_null(registers);
         ASSERT_not_null(memory);
         protoval_ = registers->protoval();
@@ -1237,8 +1236,8 @@ protected:
     // deep-copy the registers and memory
     State(const State &other)
         : protoval_(other.protoval_) {
-        registers = other.registers->clone();
-        memory = other.memory->clone();
+        registers_ = other.registers_->clone();
+        memory_ = other.memory_->clone();
     }
 
 public:
@@ -1309,14 +1308,28 @@ public:
      *  Calls the @ref MemoryState::clear method. Registers are not affected. */
     virtual void clear_memory();
 
-    /** Return the register state. */
-    RegisterStatePtr get_register_state() {
-        return registers;
+    /** Property: Register state.
+     *
+     *  This read-only property is the register substate of this whole state. */
+    RegisterStatePtr registerState() {
+        return registers_;
     }
 
-    /** Return the memory state. */
-    MemoryStatePtr get_memory_state() {
-        return memory;
+    // [Robb Matzke 2016-01-22]: deprecated
+    RegisterStatePtr get_register_state() ROSE_DEPRECATED("use registerState instead") {
+        return registerState();
+    }
+
+    /** Property: Memory state.
+     *
+     *  This read-only property is the memory substate of this whole state. */
+    MemoryStatePtr memoryState() const {
+        return memory_;
+    }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    MemoryStatePtr get_memory_state() ROSE_DEPRECATED("use memoryState instead") {
+        return memoryState();
     }
     
     /** Read a value from a register.

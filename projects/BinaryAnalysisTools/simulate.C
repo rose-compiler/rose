@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("no instruction semantics for this architecture");    
     BaseSemantics::RiscOperatorsPtr ops = InstructionSemantics2::ConcreteSemantics::RiscOperators::instance(regdict);
     BaseSemantics::DispatcherPtr cpu = disassembler->dispatcher()->create(ops);
-    ConcreteSemantics::MemoryState::promote(ops->currentState()->get_memory_state())->memoryMap(map);
+    ConcreteSemantics::MemoryState::promote(ops->currentState()->memoryState())->memoryMap(map);
 
     // Find starting address
     rose_addr_t va = 0;

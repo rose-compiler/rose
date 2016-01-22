@@ -855,7 +855,7 @@ public:
         return functor;
     }
     SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &token) ROSE_OVERRIDE {
-        BaseSemantics::RegisterStatePtr regState = ops_->currentState()->get_register_state();
+        BaseSemantics::RegisterStatePtr regState = ops_->currentState()->registerState();
         const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(token.lexeme());
         if (NULL == regp)
             return SymbolicExpr::Ptr();
@@ -892,7 +892,7 @@ public:
             throw token.syntaxError("mem operator expects one argument (address)");
         SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(ops_->undefined_(operands[0]->nBits()));
         addr->set_expression(operands[0]);
-        BaseSemantics::MemoryStatePtr memState = ops_->currentState()->get_memory_state();
+        BaseSemantics::MemoryStatePtr memState = ops_->currentState()->memoryState();
         BaseSemantics::SValuePtr memValue = memState->readMemory(addr, ops_->undefined_(8), ops_.get(), ops_.get());
         if (token.width() != 0 && memValue->get_width() !=token.width()) {
             throw token.syntaxError("operator size mismatch (specified=" + StringUtility::numberToString(token.width()) +
@@ -1557,8 +1557,8 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     }
 
     // Merge register states s1reg and s2reg into mergedReg
-    BaseSemantics::RegisterStateGenericPtr s1reg = BaseSemantics::RegisterStateGeneric::promote(s1->get_register_state());
-    BaseSemantics::RegisterStateGenericPtr s2reg = BaseSemantics::RegisterStateGeneric::promote(s2->get_register_state());
+    BaseSemantics::RegisterStateGenericPtr s1reg = BaseSemantics::RegisterStateGeneric::promote(s1->registerState());
+    BaseSemantics::RegisterStateGenericPtr s2reg = BaseSemantics::RegisterStateGeneric::promote(s2->registerState());
     BaseSemantics::RegisterStateGenericPtr mergedReg = BaseSemantics::RegisterStateGeneric::promote(s1reg->clone());
     BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &pair, s2reg->get_stored_registers()) {
         if (s1reg->is_partly_stored(pair.desc)) {
@@ -1575,8 +1575,8 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     mergedReg->erase_register(REG_PATH, ops.get()); // will be updated separately in processBasicBlock
 
     // Merge memory states s1mem and s2mem into mergedMem
-    BaseSemantics::SymbolicMemoryPtr s1mem = BaseSemantics::SymbolicMemory::promote(s1->get_memory_state());
-    BaseSemantics::SymbolicMemoryPtr s2mem = BaseSemantics::SymbolicMemory::promote(s2->get_memory_state());
+    BaseSemantics::SymbolicMemoryPtr s1mem = BaseSemantics::SymbolicMemory::promote(s1->memoryState());
+    BaseSemantics::SymbolicMemoryPtr s2mem = BaseSemantics::SymbolicMemory::promote(s2->memoryState());
     SymbolicExpr::Ptr memExpr1 = s1mem->expression();
     SymbolicExpr::Ptr memExpr2 = s2mem->expression();
     SymbolicExpr::Ptr mergedExpr = SymbolicExpr::makeIte(s1Constraint->get_expression(), memExpr1, memExpr2);

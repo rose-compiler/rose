@@ -104,12 +104,12 @@ public:
 
     // Run-time checks
     void test(const BaseSemantics::RiscOperatorsPtr &ops) {
-        ByteOrder::Endianness savedByteOrder = ops->currentState()->get_memory_state()->get_byteOrder();
-        ops->currentState()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_LSB);
+        ByteOrder::Endianness savedByteOrder = ops->currentState()->memoryState()->get_byteOrder();
+        ops->currentState()->memoryState()->set_byteOrder(ByteOrder::ORDER_LSB);
         test(ops->protoval(), ops->currentState(), ops);
-        ops->currentState()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_MSB);
+        ops->currentState()->memoryState()->set_byteOrder(ByteOrder::ORDER_MSB);
         test(ops->protoval(), ops->currentState(), ops);
-        ops->currentState()->get_memory_state()->set_byteOrder(savedByteOrder);
+        ops->currentState()->memoryState()->set_byteOrder(savedByteOrder);
     }
     
     void test(const BaseSemantics::SValuePtr &protoval,
@@ -187,7 +187,7 @@ public:
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // Dynamic pointer cast
-        BaseSemantics::RegisterStatePtr rs1 = state->get_register_state();
+        BaseSemantics::RegisterStatePtr rs1 = state->registerState();
         check_type<RegisterStatePtr>(RegisterState::promote(rs1), "RegisterState::promote()");
 
         BaseSemantics::SValuePtr rs1v1 = rs1->protoval();
@@ -214,7 +214,7 @@ public:
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
         // Dynamic pointer cast
-        BaseSemantics::MemoryStatePtr ms1 = state->get_memory_state();
+        BaseSemantics::MemoryStatePtr ms1 = state->memoryState();
         check_type<MemoryStatePtr>(MemoryState::promote(ms1), "MemoryState::promote()");
 
         BaseSemantics::SValuePtr ms1v1 = ms1->get_addr_protoval();
@@ -254,15 +254,15 @@ public:
         BaseSemantics::StatePtr s1 = state->create(rs1, ms1);
         require(s1 != state, "State::create() must return a new state");
         check_type<StatePtr>(s1, "State::create(regs,mem)");
-        require(s1->get_register_state()==rs1, "State::create() must use supplied register state");
-        require(s1->get_memory_state()==ms1, "State::create() must use supplied memory state");
+        require(s1->registerState()==rs1, "State::create() must use supplied register state");
+        require(s1->memoryState()==ms1, "State::create() must use supplied memory state");
 
         BaseSemantics::StatePtr s2 = state->clone();
         require(s2 != state, "State::clone() must return a new state");
         check_type<StatePtr>(s2, "State::clone()");
-        require(s2->get_register_state() != state->get_register_state(),
+        require(s2->registerState() != state->registerState(),
                 "State::clone() must deep-copy the register state");
-        require(s2->get_memory_state() != state->get_memory_state(),
+        require(s2->memoryState() != state->memoryState(),
                 "State::clone() must deep-copy the memory state");
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

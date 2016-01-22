@@ -57,7 +57,7 @@ public:
             segment.buffer()->copyOnWrite(true);        // prevent the VM from changing the real map
         BaseSemantics::StatePtr state = ops_->currentState()->clone();
         state->clear();
-        ConcreteSemantics::MemoryStatePtr memState = ConcreteSemantics::MemoryState::promote(state->get_memory_state());
+        ConcreteSemantics::MemoryStatePtr memState = ConcreteSemantics::MemoryState::promote(state->memoryState());
         memState->memoryMap(map);
         ops_->currentState(state);
         BaseSemantics::SValuePtr sp = ops_->number_(wordSize_, stackVa_);
@@ -66,7 +66,7 @@ public:
     }
 
     const MemoryMap& map() const {
-        return ConcreteSemantics::MemoryState::promote(ops_->currentState()->get_memory_state())->memoryMap();
+        return ConcreteSemantics::MemoryState::promote(ops_->currentState()->memoryState())->memoryMap();
     }
 
     BaseSemantics::SValuePtr argument(size_t n) const {
@@ -89,7 +89,7 @@ public:
     }
 
     uint64_t readMemory(rose_addr_t va) const {
-        const MemoryMap &map = ConcreteSemantics::MemoryState::promote(ops_->currentState()->get_memory_state())->memoryMap();
+        const MemoryMap &map = ConcreteSemantics::MemoryState::promote(ops_->currentState()->memoryState())->memoryMap();
         uint8_t buf[16];
         memset(buf, 0, sizeof buf);
         size_t nBytes = wordSize_ / 8;
@@ -102,7 +102,7 @@ public:
     }
     
     std::string readString(rose_addr_t va) const {
-        const MemoryMap &map = ConcreteSemantics::MemoryState::promote(ops_->currentState()->get_memory_state())->memoryMap();
+        const MemoryMap &map = ConcreteSemantics::MemoryState::promote(ops_->currentState()->memoryState())->memoryMap();
         return map.readString(va, 256 /*arbitrary*/);
     }
 

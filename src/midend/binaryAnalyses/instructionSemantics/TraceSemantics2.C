@@ -74,7 +74,7 @@ RiscOperators::register_name(const RegisterDescriptor &a)
     BaseSemantics::StatePtr state = subdomain_->currentState();
     BaseSemantics::RegisterStatePtr regstate;
     if (state!=NULL)
-        regstate = state->get_register_state();
+        regstate = state->registerState();
     RegisterNames regnames(regstate!=NULL ? regstate->get_register_dictionary() : NULL);
     return regnames(a);
 }

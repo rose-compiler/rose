@@ -367,7 +367,7 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
         return NullSemantics::MemoryState::instance(protoval, protoaddr);
     } else if (className == "partial") {
         BaseSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
-        return ops->currentState()->get_memory_state();
+        return ops->currentState()->memoryState();
     } else if (className == "p2-list" || className == "partitioner2") {
         return P2::Semantics::MemoryListState::instance(protoval, protoaddr);
     } else if (className == "p2-map") {
@@ -596,7 +596,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
         // See the comments in $ROSE/binaries/samples/x86-64-adaptiveRegs.s for details
         if (settings.testAdaptiveRegisterState) {
             BaseSemantics::RegisterStateGenericPtr regState =
-                boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(ops->currentState()->get_register_state());
+                boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(ops->currentState()->registerState());
             if (regState) {
                 RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
                 BaseSemantics::SValuePtr sp = ops->readRegister(SP);

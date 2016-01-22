@@ -437,7 +437,7 @@ findDataFlowValues(const P2::Partitioner &partitioner, const P2::Function::Ptr &
         if (state) {
             ops->currentState(state);
             BaseSemantics::RegisterStateGenericPtr regs =
-                BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
+                BaseSemantics::RegisterStateGeneric::promote(state->registerState());
             BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &kv, regs->get_stored_registers()) {
                 if (kv.value->is_number() && kv.value->get_width() <= SP.get_nbits())
                     retval.insert(kv.value->get_number());
