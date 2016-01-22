@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
         BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(disassembler->get_registers());
         ops = TraceSemantics::RiscOperators::instance(ops);
         dispatcher = DispatcherM68k::instance(ops, disassembler->get_wordsize()*8);
-        dispatcher->get_state()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_MSB);
+        dispatcher->currentState()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_MSB);
     }
 
     // Disassemble at each valid address, and show disassembly errors
@@ -178,10 +178,10 @@ int main(int argc, char *argv[])
 #endif
 
                     if (!skipThisInstruction) {
-                        //ops->get_state()->clear();
+                        //ops->currentState()->clear();
                         dispatcher->processInstruction(insn);
                         std::ostringstream ss;
-                        ss <<*dispatcher->get_state();
+                        ss <<*dispatcher->currentState();
                         std::cout <<StringUtility::prefixLines(ss.str(), "    ") <<"\n";
                     }
                 }

@@ -86,7 +86,7 @@ public:
     // Override the base class by initializing only the stack pointer register.
     BaseSemantics::StatePtr initialState() const {
         BaseSemantics::RiscOperatorsPtr ops = cpu()->get_operators();
-        BaseSemantics::StatePtr newState = ops->get_state()->clone();
+        BaseSemantics::StatePtr newState = ops->currentState()->clone();
         newState->clear();
         BaseSemantics::RegisterStateGenericPtr regState =
             BaseSemantics::RegisterStateGeneric::promote(newState->get_register_state());
@@ -114,7 +114,7 @@ public:
         if (P2::DataFlow::DfCfgVertex::BBLOCK == vertex->value().type()) {
             BaseSemantics::StatePtr retval = incomingState->clone();
             BaseSemantics::RiscOperatorsPtr ops = analysis_->cpu()->get_operators();
-            ops->set_state(retval);
+            ops->currentState(retval);
             ASSERT_not_null(vertex->value().bblock());
             BaseSemantics::SValuePtr oldSp = retval->readRegister(cpu()->stackPointerRegister(), ops.get());
             BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions()) {

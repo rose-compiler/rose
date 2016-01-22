@@ -374,7 +374,7 @@ public:
     //   <name> <value>                 -- set (and then show) one register
     void registerCommand(RSIM_Thread *thread, std::vector<std::string> &cmd) {
         if (cmd.empty()) {
-            out_ <<*thread->operators()->get_state()->get_register_state();
+            out_ <<*thread->operators()->currentState()->get_register_state();
         } else if (cmd[0]=="check") {
             cmd.erase(cmd.begin());
             registerCheckGdbCommand(thread, cmd);

@@ -929,9 +929,9 @@ Dispatcher::advanceInstructionPointer(SgAsmInstruction *insn) {
     RegisterDescriptor ipReg = instructionPointerRegister();
     size_t nBits = ipReg.get_nbits();
     BaseSemantics::SValuePtr ipValue;
-    if (!autoResetInstructionPointer_ && operators->get_state() && operators->get_state()->get_register_state()) {
+    if (!autoResetInstructionPointer_ && operators->currentState() && operators->currentState()->get_register_state()) {
         BaseSemantics::RegisterStateGenericPtr grState =
-            boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(operators->get_state()->get_register_state());
+            boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(operators->currentState()->get_register_state());
         if (grState && grState->is_partly_stored(ipReg))
             ipValue = operators->readRegister(ipReg);
     }

@@ -299,7 +299,7 @@ MemoryMapState::generateCellKey(const BaseSemantics::SValuePtr &addr_) const {
 void
 RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
 {
-    BaseSemantics::StatePtr state = get_state();
+    BaseSemantics::StatePtr state = currentState();
 
     // Substitute in registers
     struct RegSubst: RegisterState::Visitor {
@@ -344,7 +344,7 @@ RiscOperators::filterResult(const BaseSemantics::SValuePtr &a_) {
 void
 RiscOperators::interrupt(int majr, int minr)
 {
-    get_state()->clear();
+    currentState()->clear();
 }
 
 BaseSemantics::SValuePtr
@@ -996,7 +996,7 @@ RiscOperators::readRegister(const RegisterDescriptor &reg)
     BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::readRegister(reg);
 
     if (get_insn()) {
-        RegisterStatePtr regs = RegisterState::promote(get_state()->get_register_state());
+        RegisterStatePtr regs = RegisterState::promote(currentState()->get_register_state());
         regs->updateReadProperties(reg);
     }
 
@@ -1011,7 +1011,7 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
     BaseSemantics::RiscOperators::writeRegister(reg, a);
 
     // Update register properties and writer info.
-    RegisterStatePtr regs = RegisterState::promote(get_state()->get_register_state());
+    RegisterStatePtr regs = RegisterState::promote(currentState()->get_register_state());
     SgAsmInstruction *insn = get_insn();
     if (insn) {
         switch (computingRegisterWriters()) {
@@ -1048,12 +1048,12 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     SValuePtr retval;
     InsnSet allDefiners;
     size_t nbytes = nbits/8;
-    BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
+    BaseSemantics::MemoryStatePtr mem = currentState()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
         size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
-        SValuePtr byte_value = SValue::promote(state->readMemory(byte_addr, byte_dflt, this, this));
+        SValuePtr byte_value = SValue::promote(currentState()->readMemory(byte_addr, byte_dflt, this, this));
         if (0==bytenum) {
             retval = byte_value;
         } else if (ByteOrder::ORDER_MSB==mem->get_byteOrder()) {
@@ -1103,7 +1103,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
     size_t nbits = value->get_width();
     ASSERT_require(0 == nbits % 8);
     size_t nbytes = nbits/8;
-    BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
+    BaseSemantics::MemoryStatePtr mem = currentState()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbytes; ++bytenum) {
         size_t byteOffset = 0;
         if (1 == nbytes) {
@@ -1119,7 +1119,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
 
         BaseSemantics::SValuePtr byte_value = extract(value, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
-        state->writeMemory(byte_addr, byte_value, this, this);
+        currentState()->writeMemory(byte_addr, byte_value, this, this);
 
         // Update the latest writer info if we have a current instruction and the memory state supports it.
         if (computingMemoryWriters() != TRACK_NO_WRITERS) {

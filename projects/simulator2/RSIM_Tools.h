@@ -799,7 +799,7 @@ public:
 
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && args.insn->get_address()==when)
-            SAWYER_MESG(args.thread->tracing(TRACE_MISC)) <<*args.thread->operators()->get_state()->get_register_state();
+            SAWYER_MESG(args.thread->tracing(TRACE_MISC)) <<*args.thread->operators()->currentState()->get_register_state();
         return enabled;
     }
 };

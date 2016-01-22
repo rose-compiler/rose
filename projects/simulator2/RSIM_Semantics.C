@@ -144,14 +144,14 @@ RiscOperators::dumpState() {
     out <<"  registers:\n";
     BaseSemantics::Formatter format;
     format.set_line_prefix("    ");
-    out <<(*get_state()->get_register_state()+format);
+    out <<(*currentState()->get_register_state()+format);
 
     out <<"  memory:\n";
     thread_->get_process()->mem_showmap(out, "memory:", "    ");
 
     if (ARCH_X86 == architecture_) {
         out <<"  segments:\n";
-        RegisterNames regNames(get_state()->get_register_state()->get_register_dictionary());
+        RegisterNames regNames(currentState()->get_register_state()->get_register_dictionary());
         BOOST_FOREACH (const SegmentInfoMap::Node &node, segmentInfo_.nodes()) {
             RegisterDescriptor segreg(x86_regclass_segment, node.key(), 0, 16);
             out <<"    " <<regNames(segreg) <<": base=" <<StringUtility::addrToString(node.value().base)

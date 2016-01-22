@@ -3747,7 +3747,7 @@ DispatcherM68k::regcache_init() {
 
 void
 DispatcherM68k::memory_init() {
-    if (BaseSemantics::StatePtr state = get_state()) {
+    if (BaseSemantics::StatePtr state = currentState()) {
         if (BaseSemantics::MemoryStatePtr memory = state->get_memory_state()) {
             switch (memory->get_byteOrder()) {
                 case ByteOrder::ORDER_LSB:

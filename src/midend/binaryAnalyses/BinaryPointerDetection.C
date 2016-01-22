@@ -204,7 +204,7 @@ public:
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
         BaseSemantics::SValuePtr retval = Super::readMemory(segreg, addr, dflt, cond);
-        StatePtr state = State::promote(get_state());
+        StatePtr state = State::promote(currentState());
         state->saveRead(addr, retval);
         return retval;
     }

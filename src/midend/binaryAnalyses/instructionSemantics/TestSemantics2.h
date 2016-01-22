@@ -104,12 +104,12 @@ public:
 
     // Run-time checks
     void test(const BaseSemantics::RiscOperatorsPtr &ops) {
-        ByteOrder::Endianness savedByteOrder = ops->get_state()->get_memory_state()->get_byteOrder();
-        ops->get_state()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_LSB);
-        test(ops->protoval(), ops->get_state(), ops);
-        ops->get_state()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_MSB);
-        test(ops->protoval(), ops->get_state(), ops);
-        ops->get_state()->get_memory_state()->set_byteOrder(savedByteOrder);
+        ByteOrder::Endianness savedByteOrder = ops->currentState()->get_memory_state()->get_byteOrder();
+        ops->currentState()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_LSB);
+        test(ops->protoval(), ops->currentState(), ops);
+        ops->currentState()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_MSB);
+        test(ops->protoval(), ops->currentState(), ops);
+        ops->currentState()->get_memory_state()->set_byteOrder(savedByteOrder);
     }
     
     void test(const BaseSemantics::SValuePtr &protoval,
@@ -284,16 +284,16 @@ public:
         require(o2 != ops, "RiscOperators::create(state,solver) should return a new object");
         check_type<RiscOperatorsPtr>(o2, "RiscOperators::create(state,solver)");
         
-        BaseSemantics::StatePtr ops_orig_state = ops->get_state();
-        check_type<StatePtr>(ops_orig_state, "RiscOperators::get_state()");
+        BaseSemantics::StatePtr ops_orig_state = ops->currentState();
+        check_type<StatePtr>(ops_orig_state, "RiscOperators::currentState()");
 
         // We shouldn't use the supplied state because these tests modify it.  So we'll make a copy of the state and use that,
         // and then restore the original state before we return (but leave our state there fore debugging if there's an
         // exception).  This has the side effect of implicitly checking that State::clone() works because if it didn't the
         // caller would see the mess we made here. State::clone was tested already.
         BaseSemantics::StatePtr our_state = ops_orig_state->clone();
-        ops->set_state(our_state);
-        require(ops->get_state() == our_state, "RiscOperators::set_state failed to change state");
+        ops->currentState(our_state);
+        require(ops->currentState() == our_state, "RiscOperators::currentState failed to change state");
 
         for (size_t i=0; i<4; ++i) {
             // Value-creating operators
@@ -505,7 +505,7 @@ public:
         }
 
         // Restore the original state
-        ops->set_state(ops_orig_state);
+        ops->currentState(ops_orig_state);
     }
 };
         

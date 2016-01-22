@@ -435,7 +435,7 @@ findDataFlowValues(const P2::Partitioner &partitioner, const P2::Function::Ptr &
     // Scan all outgoing states and accumulate any concrete values we find.
     BOOST_FOREACH (StatePtr state, engine.getFinalStates()) {
         if (state) {
-            ops->set_state(state);
+            ops->currentState(state);
             BaseSemantics::RegisterStateGenericPtr regs =
                 BaseSemantics::RegisterStateGeneric::promote(state->get_register_state());
             BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &kv, regs->get_stored_registers()) {

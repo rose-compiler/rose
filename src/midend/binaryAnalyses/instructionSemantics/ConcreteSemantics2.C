@@ -174,7 +174,7 @@ RiscOperators::svalue_number(const Sawyer::Container::BitVector &bits) {
 
 void
 RiscOperators::interrupt(int majr, int minr) {
-    get_state()->clear();
+    currentState()->clear();
 }
 
 BaseSemantics::SValuePtr
@@ -529,12 +529,12 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
     // Read the bytes and concatenate them together.
     BaseSemantics::SValuePtr retval;
     size_t nbytes = nbits/8;
-    BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
+    BaseSemantics::MemoryStatePtr mem = currentState()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
         size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
-        SValuePtr byte_value = SValue::promote(state->readMemory(byte_addr, byte_dflt, this, this));
+        SValuePtr byte_value = SValue::promote(currentState()->readMemory(byte_addr, byte_dflt, this, this));
         if (0==bytenum) {
             retval = byte_value;
         } else if (ByteOrder::ORDER_MSB==mem->get_byteOrder()) {
@@ -561,7 +561,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
     size_t nbits = value->get_width();
     ASSERT_require(0 == nbits % 8);
     size_t nbytes = nbits/8;
-    BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
+    BaseSemantics::MemoryStatePtr mem = currentState()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbytes; ++bytenum) {
         size_t byteOffset = 0;
         if (1 == nbytes) {
@@ -577,7 +577,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
 
         BaseSemantics::SValuePtr byte_value = extract(value, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
-        state->writeMemory(byte_addr, byte_value, this, this);
+        currentState()->writeMemory(byte_addr, byte_value, this, this);
     }
 }
 

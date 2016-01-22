@@ -1084,7 +1084,7 @@ DispatcherPowerpc::regcache_init()
 
 void
 DispatcherPowerpc::memory_init() {
-    if (BaseSemantics::StatePtr state = get_state()) {
+    if (BaseSemantics::StatePtr state = currentState()) {
         if (BaseSemantics::MemoryStatePtr memory = state->get_memory_state()) {
             switch (memory->get_byteOrder()) {
                 case ByteOrder::ORDER_LSB:

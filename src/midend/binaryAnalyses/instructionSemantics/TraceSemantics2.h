@@ -105,7 +105,7 @@ protected:
     }
 
     explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &subdomain)
-        : BaseSemantics::RiscOperators(subdomain->get_state(), subdomain->get_solver()),
+        : BaseSemantics::RiscOperators(subdomain->currentState(), subdomain->get_solver()),
           subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
         set_name("Trace");
     }
@@ -137,8 +137,8 @@ public:
      * trace. */
     static RiscOperatorsPtr instance(const BaseSemantics::RiscOperatorsPtr &subdomain) {
         ASSERT_not_null(subdomain);
-        RiscOperatorsPtr self = subdomain->get_state()!=NULL ?
-                                RiscOperatorsPtr(new RiscOperators(subdomain->get_state(), subdomain->get_solver())) :
+        RiscOperatorsPtr self = subdomain->currentState()!=NULL ?
+                                RiscOperatorsPtr(new RiscOperators(subdomain->currentState(), subdomain->get_solver())) :
                                 RiscOperatorsPtr(new RiscOperators(subdomain->protoval(), subdomain->get_solver()));
         self->subdomain_ = subdomain;
         return self;
@@ -256,8 +256,8 @@ public:
     virtual BaseSemantics::SValuePtr protoval() const ROSE_OVERRIDE;
     virtual void set_solver(SMTSolver*) ROSE_OVERRIDE;
     virtual SMTSolver *get_solver() const ROSE_OVERRIDE;
-    virtual BaseSemantics::StatePtr get_state() const ROSE_OVERRIDE;
-    virtual void set_state(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::StatePtr currentState() const ROSE_OVERRIDE;
+    virtual void currentState(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
     virtual size_t get_ninsns() const ROSE_OVERRIDE;
     virtual void set_ninsns(size_t n) ROSE_OVERRIDE;

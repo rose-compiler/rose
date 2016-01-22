@@ -71,7 +71,7 @@ RiscOperators::check_width(const BaseSemantics::SValuePtr &a, size_t nbits, cons
 std::string
 RiscOperators::register_name(const RegisterDescriptor &a) 
 {
-    BaseSemantics::StatePtr state = subdomain_->get_state();
+    BaseSemantics::StatePtr state = subdomain_->currentState();
     BaseSemantics::RegisterStatePtr regstate;
     if (state!=NULL)
         regstate = state->get_register_state();
@@ -278,17 +278,17 @@ RiscOperators::get_solver() const
 }
 
 BaseSemantics::StatePtr
-RiscOperators::get_state() const
+RiscOperators::currentState() const
 {
     checkSubdomain();
-    return subdomain_->get_state();
+    return subdomain_->currentState();
 }
 
 void
-RiscOperators::set_state(const BaseSemantics::StatePtr &state)
+RiscOperators::currentState(const BaseSemantics::StatePtr &state)
 {
     checkSubdomain();
-    subdomain_->set_state(state);
+    subdomain_->currentState(state);
 }
 
 void

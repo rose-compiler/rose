@@ -603,7 +603,7 @@ Analysis::updateStackParameters(const StatePtr &initialState, const StatePtr &fi
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
     RiscOperatorsPtr ops = cpu_->get_operators();
     SValuePtr initialStackPointer = initialState->readRegister(cpu_->stackPointerRegister(), ops.get());
-    ops->set_state(finalState);
+    ops->currentState(finalState);
     StackVariables vars = P2::DataFlow::findFunctionArguments(ops, initialStackPointer);
     BOOST_FOREACH (const StackVariable &var, vars) {
         if (var.meta.ioProperties.exists(IO_READ_BEFORE_WRITE)) {

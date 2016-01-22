@@ -93,7 +93,7 @@ public:
                     // RiscOperators for accessing multi-byte memory. We access a clone of the memory state so we're not
                     // affecting things like latestWriter addresses in the real state.
                     RiscOperatorsPtr ops = ctx_.partitioner.newOperators();
-                    ops->set_state(state->clone());
+                    ops->currentState(state->clone());
 
 #if 1 // DEBUGGING [Robb Matzke 2015-01-13]
                     {

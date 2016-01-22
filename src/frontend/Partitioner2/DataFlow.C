@@ -293,7 +293,7 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
     using namespace rose::BinaryAnalysis::InstructionSemantics2;
     ASSERT_not_null(ops);
     ASSERT_not_null(initialStackPointer);
-    BaseSemantics::StatePtr state = ops->get_state();
+    BaseSemantics::StatePtr state = ops->currentState();
     ASSERT_not_null(state);
     SMTSolver *solver = ops->get_solver();             // might be null
 
@@ -385,7 +385,7 @@ findFunctionArguments(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSema
 std::vector<AbstractLocation>
 findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNBytes) {
     ASSERT_not_null(ops);
-    BaseSemantics::StatePtr state = ops->get_state();
+    BaseSemantics::StatePtr state = ops->currentState();
     ASSERT_not_null(state);
     ASSERT_require(wordNBytes>0);
 
@@ -429,7 +429,7 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
 BaseSemantics::StatePtr
 TransferFunction::initialState() const {
     BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
-    BaseSemantics::StatePtr newState = ops->get_state()->clone();
+    BaseSemantics::StatePtr newState = ops->currentState()->clone();
     newState->clear();
 
     BaseSemantics::RegisterStateGenericPtr regState =
@@ -452,7 +452,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
     BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
     BaseSemantics::StatePtr retval = incomingState->clone();
     const RegisterDictionary *regDict = cpu_->get_register_dictionary();
-    ops->set_state(retval);
+    ops->currentState(retval);
 
     DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);
     ASSERT_require(vertex != dfCfg.vertices().end());

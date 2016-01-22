@@ -135,7 +135,7 @@ RiscOperators::instance(const RegisterDictionary *regdict)
 void
 RiscOperators::interrupt(int majr, int minr)
 {
-    get_state()->clear();
+    currentState()->clear();
 }
 
 BaseSemantics::SValuePtr
@@ -561,7 +561,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
         return;
 
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    state->writeMemory(address, value, this, this);
+    currentState()->writeMemory(address, value, this, this);
 }
     
 BaseSemantics::SValuePtr
@@ -595,7 +595,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     }
     
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    SValuePtr retval = SValue::promote(state->readMemory(address, dflt, this, this));
+    SValuePtr retval = SValue::promote(currentState()->readMemory(address, dflt, this, this));
     return retval;
 }
 

@@ -1439,9 +1439,9 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  fit together. */
 class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
     SValuePtr protoval_;                                // Prototypical value used for its virtual constructors.
+    StatePtr currentState_;                             // State upon which RISC operators operate
 
 protected:
-    StatePtr state;                             /**< State upon which RISC operators operate. */
     SgAsmInstruction *cur_insn;                 /**< Current instruction, as set by latest startInstruction() call. */
     size_t ninsns;                              /**< Number of instructions processed. */
     SMTSolver *solver;                          /**< Optional SMT solver. */
@@ -1456,7 +1456,7 @@ protected:
     }
 
     explicit RiscOperators(const StatePtr &state, SMTSolver *solver=NULL)
-        : state(state), cur_insn(NULL), ninsns(0), solver(solver) {
+        : currentState_(state), cur_insn(NULL), ninsns(0), solver(solver) {
         ASSERT_not_null(state);
         protoval_ = state->protoval();
     }
@@ -1477,11 +1477,11 @@ public:
 public:
     /** Virtual allocating constructor.  The @p protoval is a prototypical semantic value that is used as a factory to create
      *  additional values as necessary via its virtual constructors.  The state upon which the RISC operations operate must be
-     *  provided by a separate call to the set_state() method. An optional SMT solver may be specified (see set_solver()). */
+     *  set by modifying the  @ref currentState property. An optional SMT solver may be specified (see set_solver()). */
     virtual RiscOperatorsPtr create(const SValuePtr &protoval, SMTSolver *solver=NULL) const = 0;
 
     /** Virtual allocating constructor.  The supplied @p state is that upon which the RISC operations operate and is also used
-     *  to define the prototypical semantic value. Other states can be supplied by calling set_state(). The prototypical
+     *  to define the prototypical semantic value. Other states can be supplied by setting @ref currentState. The prototypical
      *  semantic value is used as a factory to create additional values as necessary via its virtual constructors. An optional
      *  SMT solver may be specified (see set_solver()). */
     virtual RiscOperatorsPtr create(const StatePtr &state, SMTSolver *solver=NULL) const = 0;
@@ -1497,7 +1497,9 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Other methods part of our API
 public:
-    /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
+    /** Property: Prototypical semantic value.
+     *
+     *  The protoval is used to construct other values via its virtual constructors. */
     virtual SValuePtr protoval() const { return protoval_; }
 
     // [Robb Matzke 2016-01-22]: deprecated
@@ -1515,15 +1517,28 @@ public:
      *  certain operations are falling back to naive implementations. */
     virtual SMTSolver *get_solver() const { return solver; }
 
-    /** Access the state upon which the RISC operations operate. The state need not be set until the first instruction is
-     *  executed (and even then, some RISC operations don't need any machine state (typically, only register and memory read
+    /** Property: Current semantic state.
+     *
+     *  This is the state upon which the RISC operations operate. The state need not be set until the first instruction is
+     *  executed (and even then, some RISC operations don't need any machine state; typically, only register and memory read
      *  and write operators need state).  Different state objects can be swapped in at pretty much any time.  Modifying the
      *  state has no effect on this object's prototypical value which was initialized by the constructor; new states should
      *  have a prototyipcal value of the same dynamic type.
+     *
      * @{ */
-    virtual StatePtr get_state() const { return state; }
-    virtual void set_state(const StatePtr &s) { state = s; }
+    virtual StatePtr currentState() const { return currentState_; }
+    virtual void currentState(const StatePtr &s) { currentState_ = s; }
     /** @} */
+    
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual StatePtr get_state() const ROSE_DEPRECATED("use currentState instead") {
+        return currentState();
+    }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual void set_state(const StatePtr &s) ROSE_DEPRECATED("use currentState instead") {
+        currentState(s);
+    }
 
     /** A name used for debugging.
      * @{ */
@@ -1539,7 +1554,7 @@ public:
         print(stream, fmt);
     }
     virtual void print(std::ostream &stream, Formatter &fmt) const {
-        state->print(stream, fmt);
+        currentState_->print(stream, fmt);
     }
     /** @} */
 
@@ -1948,8 +1963,8 @@ public:
      *  which layer should invoke the extract() or concat() (or whatever other RISC operations might be necessary).
      */ 
     virtual SValuePtr readRegister(const RegisterDescriptor &reg) {
-        ASSERT_not_null(state);
-        return state->readRegister(reg, this);
+        ASSERT_not_null(currentState_);
+        return currentState_->readRegister(reg, this);
     }
 
     /** Writes a value to a register.
@@ -1961,13 +1976,14 @@ public:
      *  writing a value to the specified register when the underlying register state doesn't actually store a value for that
      *  specific register. The RiscOperations object is passed along for that purpose.  See readRegister() for more details. */
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &a) {
-        ASSERT_not_null(state);
-        state->writeRegister(reg, a, this);
+        ASSERT_not_null(currentState_);
+        currentState_->writeRegister(reg, a, this);
     }
 
     /** Reads a value from memory.
      *
-     *  The implementation (in subclasses) will typically delegate much of the work to State::readMemory().
+     *  The implementation (in subclasses) will typically delegate much of the work to the current state's @ref
+     *  State::readMemory "readMemory" method.
      *
      *  A MemoryState will implement storage for memory locations and might impose certain restrictions, such as "all memory
      *  values must be eight bits".  However, the RiscOperators::readMemory() should not have these constraints so that it can
@@ -1991,8 +2007,8 @@ public:
 
     /** Writes a value to memory.
      *
-     *  The implementation (in subclasses) will typically delegate much of the work to State::readMemory().  See readMemory()
-     *  for more information.
+     *  The implementation (in subclasses) will typically delegate much of the work to the current state's @ref
+     *  State::writeMemory "writeMemory" method.
      *
      *  The @p segreg argument is an optional segment register. Most architectures have a flat virtual address space and will
      *  pass a default-constructed register descriptor whose is_valid() method returns false.
@@ -2118,7 +2134,12 @@ public:
 
     /** Get a pointer to the state object. The state is stored in the RISC operators object, so this is just here for
      *  convenience. */
-    virtual StatePtr get_state() const { return operators ? operators->get_state() : StatePtr(); }
+    virtual StatePtr currentState() const { return operators ? operators->currentState() : StatePtr(); }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual StatePtr get_state() const ROSE_DEPRECATED("use currentState instead") {
+        return currentState();
+    }
 
     /** Return the prototypical value.  The prototypical value comes from the RISC operators object. */
     virtual SValuePtr protoval() const { return operators ? operators->protoval() : SValuePtr(); }
