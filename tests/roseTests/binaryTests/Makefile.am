@@ -502,16 +502,16 @@ verifySemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 # Disassembles executables using Partitioner2
 # Disassembly of executable files (DOS, ELF, PE) of various architectures (amd64, Arm, Mips, M68k, PowerPC, x86)
-# MIPS specimens are currently failing a FIXME assertion in makeShadowRegister()
-# PowerPC specimens have lots of "XL-Form xoOpcode = 36 not handled!" and similar errors
-# The pocketputty2.exe takes too long when extensive debugging is enabled.
+# + MIPS specimens are currently failing a FIXME assertion in makeShadowRegister()
+# + PowerPC specimens have lots of "XL-Form xoOpcode = 36 not handled!" and similar errors
+# + The pocketputty.exe pocketputty2.exe puttytel.exe are not good unit tests because they're too large; they take too
+#   long when extensive debugging is enabled on heavily loaded or slow machines.
 noinst_PROGRAMS += testPartitioner2
 testPartitioner2_SOURCES = testPartitioner2.C
 testPartitioner2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-testPartitioner2_specimens = $(filter-out			\
-	$(any_any_mips_specimens) $(any_any_ppc_specimens)	\
-	pocketputty2.exe					\
-	,$(any_exe_any_specimens))
+testPartitioner2_specimens = $(filter-out \
+	$(any_any_mips_specimens) $(any_any_ppc_specimens) pocketputty.exe pocketputty2.exe puttytel.exe, \
+	$(any_exe_any_specimens))
 testPartitioner2_directory = $(top_srcdir)/binaries/samples
 testPartitioner2_test_targets = $(addprefix testPartitioner2_, $(addsuffix .passed, $(testPartitioner2_specimens)))
 testPartitioner2_answers = $(testPartitioner2_test_targets:.passed=.ans)

@@ -622,22 +622,19 @@ StringUtility::addrToString(uint64_t value, size_t nbits)
 }
 
 string
-StringUtility::removeRedundentSubstrings ( string X ) // sic
-   {
-  // Convert the string into a list of strings and separate out the redundant entries
-     list<string> XStringList = StringUtility::stringToList(X);
-     XStringList.sort();
-     XStringList.unique();
-     return StringUtility::listToString(XStringList);
-   }
+StringUtility::removeRedundantSubstrings(const std::string &s) {
+    // Convert the string into a list of strings and separate out the redundant entries
+    list<string> XStringList = StringUtility::stringToList(s);
+    XStringList.sort();
+    XStringList.unique();
+    return StringUtility::listToString(XStringList);
+}
 
-#if 0
-bool
-isNumber ( char c )
-   {
-     return (c >= '0') && (c <= '9');
-   }
-#endif
+// [Robb Matzke 2016-01-06]: deprecated (misspelled)
+std::string
+StringUtility::removeRedundentSubstrings(std::string X) {
+    return removeRedundantSubstrings(X);
+}
 
 //Rama: 12/06/06:
 //Donot know where this function is used, but we should be using the stdlib function isdigit
@@ -659,11 +656,16 @@ isMarker ( char c )
      return (c == '$');
    }
 
+// [Robb Matzke 2016-01-06]: deprecated (misspelled)
+std::string
+StringUtility::removePseudoRedundentSubstrings ( std::string X ) {
+    return removePseudoRedundantSubstrings(X);
+}
+
 string
-StringUtility::removePseudoRedundentSubstrings ( string X ) // sic
-   {
-  // Convert the string into a list of strings and separate out the redundant entries
-     list<string> XStringList = StringUtility::stringToList(X);
+StringUtility::removePseudoRedundantSubstrings(const std::string &s) {
+    // Convert the string into a list of strings and separate out the redundant entries
+     list<string> XStringList = StringUtility::stringToList(s);
 
 #if 0
      printf ("XStringList.size() = %" PRIuPTR " \n",XStringList.size());
@@ -1233,10 +1235,6 @@ StringUtility::indentMultilineString ( const string& inputString, int statementC
 
 
 
-// JJW reverse-engineered documentation: split a string into substrings based
-// on a separator character (previous version used a string as the separator
-// but only considered the first character of it); remove any empty substrings
-// found
 void
 StringUtility::splitStringIntoStrings(
                 const string& inputString, 
@@ -1303,14 +1301,6 @@ StringUtility::chksum(char *buffer, int len)
         unsigned long
 StringUtility::generate_checksum( string s )
    {
-  // This function returns a unique checksum from the mangled name used 
-  // it provides a simple means to obtain a unique value for any C++ 
-  // declaration.  At a later date was shoulduse the MD5 Checksum 
-  // implementation (but we can do that later).
-
-  // The declaration is the same under One-time Definition Rule (ODR)
-  // if and only if the checksum values for each declaration are the same.
-
      string uniqueName = s;
 
   // The checksum function requires a even length string (so we have to fix it up)
@@ -1350,9 +1340,6 @@ StringUtility::generate_checksum( string s )
 string
 StringUtility::stripPathFromFileName ( const string & fileNameWithPath )
    {
-  // This function removes the path from the filename if it includes a path
-  // and returns the filename
-
   // printf ("StringUtility::stripPathFromFileName(fileNameWithPath = %s) \n",fileNameWithPath.c_str());
 
 #if 1
@@ -1517,10 +1504,6 @@ StringUtility::fileNameSuffix ( const string & fileNameWithSuffix )
 string
 StringUtility::getPathFromFileName ( const string & fileNameWithPath )
    {
-  // This function removes the filename from the combined path and 
-  // filename if it includes a path and returns only the path.
-  // Make it safe to input a filename without a path name (return the filename)
-
      char c_version[PATH_MAX]; 
      ROSE_ASSERT (fileNameWithPath.size() + 1 < PATH_MAX);
      strcpy(c_version, fileNameWithPath.c_str());

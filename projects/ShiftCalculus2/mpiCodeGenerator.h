@@ -26,14 +26,26 @@ namespace MPI_Code_Generator
 
   void lower_xomp (SgSourceFile* file);
 
-  // Translate target device(mpi:master) begin ...
+  //! Translate target device(mpi:master) begin ...
   void transMPIDeviceMaster (SgOmpTargetStatement * t_stmt);
 
   void transOmpTargetParallelLoop (SgOmpForStatement* loop); 
-  std::set<SgSymbol* > transOmpMapVariables (SgOmpTargetStatement* );
 
+  //! Translate mapped scalars and arrays, return a reference distributed local array portion size, used for loop bound later.
+  SgVariableDeclaration* transOmpMapVariables (SgOmpTargetStatement* );
+
+ //! Translate a loop affected 
+  void transForLoop (SgForStatement* for_stmt, SgVariableDeclaration* local_size_decl);
   // convert a C data type into MPI type name
   std::string C2MPITypeName (SgType*);
+
+  //! Create MPI_Bcast() function call for a single variable
+  SgExprStatement* buildMPI_Bcast(SgVariableSymbol* var_sym, int source_rank_id, SgScopeStatement* insertion_scope);
+
+
+  //! Create MPI_Barrier (); 
+  SgExprStatement* buildMPI_Barrier(SgScopeStatement* insertion_scope);
+
 
 //--------------- v 0.1 interface, no longer being used.   
   class MPI_PragmaAttribute; 

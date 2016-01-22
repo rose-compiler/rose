@@ -1,5 +1,5 @@
 add_library(util_stringSupport OBJECT
-  escape.C FileNameClassifier.C string_functions.cpp)
+  escape.C FileNameClassifier.C StringUtility.C)
 
 ########### install files ###############
 install(FILES  string_functions.h escape.h StringUtility.h

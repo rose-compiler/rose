@@ -198,7 +198,7 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
 # DQ (12/23/2014): This fails because the normal unparsing (without token unparsing) is failing.
 # inputmoveDeclarationToInnermostScope_test2014_26.C
 
-MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = 
+#MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = 
 
 # identity translator cannot handle them properly  
 # 17: shared SgArrayType issue
@@ -207,22 +207,23 @@ MOVE_DECLS_TESTCODES_FAILING = \
   inputmoveDeclarationToInnermostScope_test2014_18.C \
   inputmoveDeclarationToInnermostScope_test2014_22.C
 
-MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS = \
-  $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED) \
-  $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED)
+#MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS = \
+#  $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED) \
+#  $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED)
 
 MOVE_DECLS_TESTCODES_CURRENTLY_FAILING = 
 
 MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
-MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
+#MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
 
 MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
-MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
+#MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
 
+MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_v3_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
 
 PASSING_MOVE_DECLS_TESTCODES_RESULTS = \
-   $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) \
-   $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)
+   $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) 
+#   $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)
 
 # DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.
 MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
@@ -495,13 +496,15 @@ PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_RESULTS = \
    $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS) 
 
 PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS = \
-   $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) \
-   $(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)
+   $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) 
+#   $(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)
 
 REFERENCE_PATH = $(top_srcdir)/tests/roseTests/astInterfaceTests/referenceResults
 MOVE_DECLS_DIFF_FILES=$(PASSING_MOVE_DECLS_TESTCODES_RESULTS:.C=.C.diff)
 
 MOVE_MERGE_DECLS_DIFF_FILES=$(PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS:.C=.C.diff)
+MOVE_MERGE_DECLS_NO_VAR_NORM_DIFF_FILES=$(MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES_FULLY_SUPPORTED_RESULTS:.C=.C.diff)
+
 DIFF=diff
 #$(MOVE_DECLS_DIFF_FILES):$(@:.C.diff=.C)
 $(MOVE_DECLS_DIFF_FILES):$(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
@@ -512,6 +515,9 @@ $(MOVE_MERGE_DECLS_DIFF_FILES):$(PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS)
 	echo "Verifying moveDeclarationToInnermostScope translation with merge by diff ..."; \
 	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/withmerge/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
 
+$(MOVE_MERGE_DECLS_NO_VAR_NORM_DIFF_FILES):$(MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES_FULLY_SUPPORTED_RESULTS)
+	echo "Verifying moveDeclarationToInnermostScope translation with merge and token unparsing by diff ..."; \
+	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/withmerge/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
 
 # DQ (6/28/2015): Added additional test using new option: -rose:merge_decl_assign
 $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
@@ -541,13 +547,15 @@ test_move_decls_with_token_unparsing: $(PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_
 if ROSE_USING_GCC_VERSION_LATER_4_4
 move_diff_check: move_decls_diff_check move_merge_decls_diff_check test_move_decls_with_token_unparsing
 else
-move_diff_check: move_decls_diff_check move_merge_decls_diff_check
+move_diff_check: move_decls_diff_check move_merge_decls_diff_check 
 endif
 
 # only move , no merge
 move_decls_diff_check: $(MOVE_DECLS_DIFF_FILES)
 # both move and merge
 move_merge_decls_diff_check: $(MOVE_MERGE_DECLS_DIFF_FILES)
+
+move_merge_decls_no_var_norm_diff_check: $(MOVE_MERGE_DECLS_NO_VAR_NORM_DIFF_FILES)
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -856,14 +864,18 @@ endif
 $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
 		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking $(srcdir)/$(@:rose_%=%)
 
-$(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
-		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking -rose:keep_going $(srcdir)/$(@:rose_%=%)
+#$(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
+#		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:trans-tracking -rose:keep_going $(srcdir)/$(@:rose_%=%)
 
 $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2_%=%) moveDeclarationToInnermostScope 
 		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking $(srcdir)/$(@:rose_v2_%=%) -rose:output $@
 
-$(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2%=%) moveDeclarationToInnermostScope 
-		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking -rose:keep_going $(srcdir)/$(@:rose_v2%=%) -rose:output $@
+$(MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v3_%=%) moveDeclarationToInnermostScope 
+		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:suppress_variable_declaration_normalization -rose:trans-tracking $(srcdir)/$(@:rose_v3_%=%) -rose:output $@
+
+
+#$(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2%=%) moveDeclarationToInnermostScope 
+#		$(VALGRIND) ./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:trans-tracking -rose:keep_going $(srcdir)/$(@:rose_v2%=%) -rose:output $@
 
 # interchange the first loop within the input file, interchange depth is 4, lexicographical order is 1.
 rose_inputloopInterchange.C: inputloopInterchange.C loopInterchange

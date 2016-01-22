@@ -24,6 +24,7 @@ extern int xomp_init_mpi (int* argc, char** argv[], int * rank, int * nproc);
 
 
 /*Divide up a range of data into equal chunks, based on thread/process count and ID , return start and end offsets */
+/* inclusive end bound , e.g 9 for array elements 0 to 9  */
 extern void xomp_static_even_divide_lower_upper (int start, int end, int thread_count, int thread_id, int* n_lower, int* n_upper);
 
 /* Similar function, but use lower:size */
