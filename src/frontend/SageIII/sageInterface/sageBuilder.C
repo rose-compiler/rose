@@ -1420,6 +1420,52 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
      return varDecl;
    }
 
+SgVariableDefinition*
+SageBuilder::buildVariableDefinition_nfi (SgVariableDeclaration* decl, SgInitializedName* init_name,  SgInitializer *init)
+{
+// refactored from ROSETTA/Grammar/Statement.code SgVariableDeclaration::append_variable ()
+
+  ROSE_ASSERT (decl!=NULL);
+  ROSE_ASSERT (init_name !=NULL);
+  // init can be NULL
+
+  SgVariableDefinition *defn_stmt = NULL; 
+  if (!isSgFunctionType(init_name->get_type()))
+  {     
+    Sg_File_Info* copyOfFileInfo = NULL; 
+    if (decl->get_file_info() != NULL) 
+    {      
+      copyOfFileInfo = new Sg_File_Info(*(decl->get_file_info()));
+      ROSE_ASSERT (copyOfFileInfo != NULL); 
+
+      // Note that the SgVariableDefinition will connect the new IR node into the AST.
+      defn_stmt = new SgVariableDefinition(copyOfFileInfo, init_name, init);  
+      assert (defn_stmt != NULL); 
+
+      copyOfFileInfo->set_parent(defn_stmt);
+
+      // DQ (3/13/2007): We can't enforce that the endOfConstruct is set (if the interface using the startOfConstruct is used.
+      // DQ (2/3/2007): Need to build the endOfConstruct position as well.
+      // ROSE_ASSERT(this->get_endOfConstruct() != NULL);
+      if (decl->get_endOfConstruct() != NULL) 
+      {            
+        Sg_File_Info* copyOfEndOfConstruct = new Sg_File_Info(*(decl->get_endOfConstruct()));
+        defn_stmt->set_endOfConstruct(copyOfEndOfConstruct);
+        copyOfEndOfConstruct->set_parent(defn_stmt);
+      }            
+    }      
+    else   
+    {            
+      // Note that the SgVariableDefinition will connect the new IR node into the AST.
+      defn_stmt = new SgVariableDefinition(init_name, init);
+    }            
+    ROSE_ASSERT(defn_stmt != NULL); 
+  }
+  else
+    defn_stmt = NULL;  
+  return defn_stmt ;   
+}
+
 
 // #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
