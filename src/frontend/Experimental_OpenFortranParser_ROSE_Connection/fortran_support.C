@@ -228,25 +228,56 @@ experimental_openFortranParser_main(int argc, char **argv)
   // commandString += "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.4.7-dq-edg49-fortran-rc-aterm/src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations/";
   // commandString += "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.8.3-rose_development-rc-experimental_fortran_frontend/src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations/";
   // commandString += ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations/";
-     string path_to_fortran_stratego_transformations = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations", "bin");
-     commandString += path_to_fortran_stratego_transformations;
+     string path_to_fortran_stratego_transformations_directory = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations", "bin");
+     commandString += path_to_fortran_stratego_transformations_directory;
 
   // commandString += "ofp-simplify";
   // commandString += "ofp2fast";
      commandString += "/ofp2fast";
      commandString += " | ";
-  // commandString += "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.4.7-dq-edg49-fortran-rc-aterm/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/";
-  // commandString += "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.8.3-rose_development-rc-experimental_fortran_frontend/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/";
-  // commandString += ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/";
-     string path_to_fortran_aterm_traversal = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal", "bin");
-     commandString += path_to_fortran_aterm_traversal;
 
-  // commandString += "fast2sage";
-     commandString += "/fast2sage";
+     string path_to_fortran_aterm_traversal_directory = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal", "bin");
 
-     commandString += " -o ";
-     commandString += filenameWithoutPath;
-     commandString += ".aterm";
+#if 0
+     if (true)
+#else
+     if (false)
+#endif
+        {
+          commandString += path_to_fortran_aterm_traversal_directory;
+          commandString += "/fast2sage";
+
+       // Generate the aterm
+          commandString += " -o ";
+          commandString += filenameWithoutPath;
+          commandString += ".aterm";
+        }
+       else
+        {
+       // commandString += path_to_fortran_stratego_transformations_directory;
+       // commandString += "/ofp2fast";
+
+       // commandString += " | ";
+
+          commandString += path_to_fortran_stratego_transformations_directory;
+          commandString += "/fast2pp";
+
+          commandString += " | ";
+
+       // Generate the text file from the aterm (using the stratego tool).
+          commandString += "ast2text";
+
+       // Add the table
+          commandString += " -p ";
+       // string path_to_fortran_pretty_print_directory = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/pretty_print", "bin");
+          string path_to_fortran_pretty_print_directory = ROSE_AUTOMAKE_TOP_SRCDIR + "/src/3rdPartyLibraries/experimental-fortran-parser/pretty_print";
+          commandString += path_to_fortran_pretty_print_directory;
+          commandString += "/Fortran.pp";
+
+       // Generate a text file with prefix.
+          commandString += " -o ";
+          commandString += "pretty_print" + filenameWithoutPath;
+        }
 
 #if DEBUG_ROSE_EXPERIMENTAL
      printf ("filenameWithPath    = %s \n",filenameWithPath.c_str());
