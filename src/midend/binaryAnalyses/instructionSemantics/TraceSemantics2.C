@@ -12,7 +12,7 @@ RiscOperators::linePrefix() {
     if (stream_) {
         const char *sep = "";
         if (subdomain_) {
-            stream_ <<subdomain_->get_name() <<"@" <<subdomain_.get();
+            stream_ <<subdomain_->name() <<"@" <<subdomain_.get();
             sep = " ";
         }
         if (SgAsmInstruction *insn = currentInstruction()) {

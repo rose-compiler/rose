@@ -1456,9 +1456,7 @@ class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
     SMTSolver *solver_;                                 // Optional SMT solver
     SgAsmInstruction *currentInsn_;                     // Current instruction, as set by latest startInstruction call
     size_t nInsns_;                                     // Number of instructions processed
-
-protected:
-    std::string name;                           /**< Name to use for debugging. */
+    std::string name_;                                  // Name to use for debugging
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -1559,11 +1557,18 @@ public:
         currentState(s);
     }
 
-    /** A name used for debugging.
+    /** Property: Name used for debugging.
+     *
+     *  This property is the name of the semantic domain and is used in diagnostic messages.
+     *
      * @{ */
-    virtual const std::string& get_name() const { return name; }
-    virtual void set_name(const std::string &s) { name = s; }
+    virtual const std::string& name() const { return name_; }
+    virtual void name(const std::string &s) { name_ = s; }
     /** @} */
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual const std::string& get_name() const ROSE_DEPRECATED("use name instead") { return name(); }
+    virtual void set_name(const std::string &s) ROSE_DEPRECATED("use name instead") { name(s); }
 
     /** Print multi-line output for this object.
      * @{ */

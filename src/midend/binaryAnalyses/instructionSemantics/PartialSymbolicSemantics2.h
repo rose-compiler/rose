@@ -311,11 +311,11 @@ protected:
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver), map(NULL) {
-        set_name("PartialSymbolic");
+        name("PartialSymbolic");
     }
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver), map(NULL) {
-        set_name("PartialSymbolic");
+        name("PartialSymbolic");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

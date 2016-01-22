@@ -94,7 +94,7 @@ class RiscOperators: public ConcreteSemantics::RiscOperators {
 protected:
     RiscOperators(const BaseSemantics::StatePtr &state, BinaryDebugger &subordinate)
         : ConcreteSemantics::RiscOperators(state, NULL), subordinate_(subordinate) {
-        set_name("Verification");
+        name("Verification");
     }
 public:
     static RiscOperatorsPtr instance(BinaryDebugger &subordinate, const RegisterDictionary *regdict) {

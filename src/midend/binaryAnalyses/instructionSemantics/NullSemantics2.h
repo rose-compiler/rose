@@ -260,11 +260,11 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("Null");
+        name("Null");
     }
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("Null");
+        name("Null");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -352,7 +352,7 @@ void
 RiscOperators::print(std::ostream &stream, BaseSemantics::Formatter &formatter) const
 {
     for (Subdomains::const_iterator sdi=subdomains.begin(); sdi!=subdomains.end(); ++sdi)
-        stream <<"== " <<(*sdi)->get_name() <<" ==\n" <<(**sdi + formatter);
+        stream <<"== " <<(*sdi)->name() <<" ==\n" <<(**sdi + formatter);
 }
 
 void

@@ -330,13 +330,13 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("Interval");
+        name("Interval");
         (void) SValue::promote(protoval); // make sure its dynamic type is an IntervalSemantics::SValue or subclass thereof
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("Interval");
+        name("Interval");
         (void) SValue::promote(state->protoval());      // dynamic type must be IntervalSemantics::SValue or subclass thereof
     };
 

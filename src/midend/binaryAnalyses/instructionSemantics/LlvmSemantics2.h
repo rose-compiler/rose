@@ -53,12 +53,12 @@ private:
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : SymbolicSemantics::RiscOperators(protoval, solver), indent_level(0), indent_string("    "), llvmVersion_(0) {
-        set_name("Llvm");
+        name("Llvm");
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : SymbolicSemantics::RiscOperators(state, solver), indent_level(0), indent_string("    "), llvmVersion_(0) {
-        set_name("Llvm");
+        name("Llvm");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

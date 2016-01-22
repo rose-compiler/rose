@@ -723,14 +723,14 @@ protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
           computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
-        set_name("Symbolic");
+        name("Symbolic");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
           computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
-        set_name("Symbolic");
+        name("Symbolic");
         (void) SValue::promote(state->protoval()); // values must have SymbolicSemantics::SValue dynamic type
     }
 

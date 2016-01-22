@@ -155,7 +155,7 @@ class InnerRiscOperators: public BaseSemantics::RiscOperators {
 protected:
     explicit InnerRiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("DataFlow(Inner)");
+        name("DataFlow(Inner)");
     }
 
     // Static allocating constructor; no state since register and memory I/O methods are no-ops
@@ -377,11 +377,11 @@ public:
 
 void
 RiscOperators::init(const BaseSemantics::RiscOperatorsPtr &userDomain) {
-    set_name("DataFlow(Outer)");
+    name("DataFlow(Outer)");
     regdict_ = userDomain->currentState()->registerState()->get_register_dictionary();
     InnerRiscOperatorsPtr innerDomain = InnerRiscOperators::instance(userDomain->solver());
     innerDomainId_ = add_subdomain(innerDomain, "DataFlow(Inner)");
-    userDomainId_ = add_subdomain(userDomain, userDomain->get_name());
+    userDomainId_ = add_subdomain(userDomain, userDomain->name());
 }
 
 void

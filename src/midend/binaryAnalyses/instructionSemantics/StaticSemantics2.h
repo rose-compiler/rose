@@ -242,13 +242,13 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("StaticSemantics");
+        name("StaticSemantics");
         (void) SValue::promote(protoval); // make sure its dynamic type is a StaticSemantics::SValue
     }
 
     RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("StaticSemantics");
+        name("StaticSemantics");
         (void) SValue::promote(state->protoval()); // values must have StaticSemantics::SValue dynamic type
     }
 

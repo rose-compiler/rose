@@ -250,13 +250,13 @@ private:
 protected:
     RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver)
         : BaseSemantics::RiscOperators(protoval, solver), executionHalted_(false) {
-        set_name("SourceAstSemantics");
+        name("SourceAstSemantics");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SourceAstSemantics::SValue
     }
 
     RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver)
         : BaseSemantics::RiscOperators(state, solver), executionHalted_(false) {
-        set_name("SourceAstSemantics");
+        name("SourceAstSemantics");
         (void) SValue::promote(state->protoval());      // values must have SourceAstSemantics::SValue dynamic type
     }
 
