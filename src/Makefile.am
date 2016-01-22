@@ -36,7 +36,8 @@ else
 endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
+#  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
+   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la 3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/libexperimentalOFP.la
 #  libroseExperimentalOpenFortranParserlibraries =
 #  ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
 #  ROSE_EXPERIMENTAL_OFP_LIBS    = -L$(_PREFIX)/lib -lxenctrl

@@ -3,27 +3,113 @@
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 // Interestingly it must be at the top of the list of include files.
+// #include "rose_config.h"
+
+// #include "rose.h"
+// #include <aterm2.h>
+
+// DQ (10/14/2010):  This should only be included by source files that require it.
+// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
+// #include "rosePublicConfig.h"
+
+#include "sage3basic.h"
 
 #include "fortran_support.h"
+
+#include "traverse_SgUntypedNodes.hpp"
+
+#define PRINT_DEBUG
 
 // DQ (9/10/2014): I think this is declared in the other Fortran support (both of which exist).
 // SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
 
 using namespace std;
 
-ATbool ofp_traverse_init();
+// ATbool ofp_traverse_init();
 
 #define DEBUG_ROSE_EXPERIMENTAL 1
+
+#define PRINT_DEBUG
+
+#if 0
+int
+experimental_openFortranParser_main(int argc, char **argv)
+   {
+   SgUntypedFile* SgUntypedFile = NULL;
+   ATerm SgUntypedFile_term;
+
+   printf ("Inside of experimental_openFortranParser_main() \n");
+
+   FILE * file = stdin;
+   
+   for (int i = 1; i < argc; i++) {
+      std::string arg = argv[i];
+      if (arg == "-i") {
+         file = fopen(argv[++i], "r");
+      }
+      if (file == NULL) {
+         fprintf(stderr, "ERROR: Unable to open file %s\n", argv[i]);
+         exit(-1);
+      }
+   }
+   if (file == NULL) {
+      fprintf(stderr, "WARNING: Input file not specified\n");
+      exit(-1);
+   }
+
+   printf ("experimental_openFortranParser_main(): test1 \n");
+
+   ATinitialize(argc, argv);
+
+   printf ("experimental_openFortranParser_main(): test2 \n");
+
+   //   if (ofp_traverse_init() != ATtrue) exit(1);
+
+   SgUntypedFile_term = ATreadFromTextFile(file);
+
+   printf ("experimental_openFortranParser_main(): test2 \n");
+
+#ifdef PRINT_DEBUG
+   printf("\n%s\n\n", ATwriteToString(SgUntypedFile_term));
+#endif
+
+   if (traverse_SgUntypedFile(SgUntypedFile_term, &SgUntypedFile) != ATtrue) {
+      printf("..............\nFAILED: traverse_main: SgUntypedFile == %p\n\n", SgUntypedFile);
+      return 1;
+   }
+
+   if (SgUntypedFile != NULL) {
+#ifdef NO_NO_NO
+      printf("..............\ntraverse_main: SgUntypedFile == %p  global scope ==%p\n\n",
+             SgUntypedFile, SgUntypedFile->p_SgUntypedGlobalScope);
+#endif
+   } else {
+      printf("..............\ntraverse_main: SgUntypedFile == %p\n\n", SgUntypedFile);
+   }
+
+#ifdef NOT_YET
+   delete SgUntypedFile;
+#endif
+
+   printf ("Leaving experimental_openFortranParser_main() \n");
+
+   return 0;
+   }
+#endif
+
+
+#if 1
+  // DQ (1/20/2016): Commented out old code.
 
 int
 experimental_openFortranParser_main(int argc, char **argv)
    {
-     OFP::Program Program;
-     OFP::UntypedASTBuilder ast;
-     OFP::FortranTextUnparser * unparser = NULL;
+  // OFP::Program Program;
+  // OFP::UntypedASTBuilder ast;
+  // OFP::FortranTextUnparser * unparser = NULL;
      std::ofstream * ofs = NULL;
-     FILE * file = stdin;
+  // FILE * file = stdin;
 
   // Make system call to call the parser and build an ATERM file (put into the build tree).
      printf ("In experimental_openFortranParser_main(): Put the call the the new SDF Open Fortran Parser here... \n");
@@ -46,8 +132,16 @@ experimental_openFortranParser_main(int argc, char **argv)
           return 1;
         }
 
+  // DQ (1/22/2016): We want to assume that the stratego sglri executable is in the user's path, which is better than using a hard coded path.
+  // Nowever it appears that sglri must be run with it's full path.  So we need to know that path to the stratego binary in order to avoid
+  // hard coding it into ROSE (as we have done here). The experimental fortran support now requires both aterm and stratego library locations
+  // to be specified at configure time for ROSE (this is also now enforced).
   // string commandString = "sglri ";
-     string commandString = "/home/dquinlan/bin/strategoxt-0.17-install-32bit/bin/sglri ";
+  // string commandString = stratego_bin_path "/home/dquinlan/bin/strategoxt-0.17-install-32bit/bin/sglri ";
+     string stratego_bin_path = STRATEGO_BIN_PATH;
+     ROSE_ASSERT(stratego_bin_path.empty() == false);
+
+     string commandString = stratego_bin_path + "/sglri ";
 
 #if DEBUG_ROSE_EXPERIMENTAL
      printf ("In experimental_openFortranParser_main(): before loop over args: commandString = %s \n",commandString.c_str());
@@ -136,8 +230,24 @@ experimental_openFortranParser_main(int argc, char **argv)
 
   // Add pipe to transform/simplify OFP's ATerm 
      commandString += " | ";
-     commandString += "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.4.7-dq-edg49-fortran-rc-aterm/src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations/";
-     commandString += "ofp-simplify";
+  // commandString += "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.4.7-dq-edg49-fortran-rc-aterm/src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations/";
+  // commandString += "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.8.3-rose_development-rc-experimental_fortran_frontend/src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations/";
+  // commandString += ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations/";
+     string path_to_fortran_stratego_transformations = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations", "bin");
+     commandString += path_to_fortran_stratego_transformations;
+
+  // commandString += "ofp-simplify";
+  // commandString += "ofp2fast";
+     commandString += "/ofp2fast";
+     commandString += " | ";
+  // commandString += "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.4.7-dq-edg49-fortran-rc-aterm/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/";
+  // commandString += "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.8.3-rose_development-rc-experimental_fortran_frontend/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/";
+  // commandString += ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/";
+     string path_to_fortran_aterm_traversal = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal", "bin");
+     commandString += path_to_fortran_aterm_traversal;
+
+  // commandString += "fast2sage";
+     commandString += "/fast2sage";
 
      commandString += " -o ";
      commandString += filenameWithoutPath;
@@ -192,10 +302,13 @@ experimental_openFortranParser_main(int argc, char **argv)
 #endif
 
      ofs = NULL;
+#if 0
+  // DQ (1/20/2016): Removed and will not return.
      if (ofs) 
           unparser = new OFP::FortranTextUnparser(*ofs);
        else
           unparser = new OFP::FortranTextUnparser();
+#endif
 
 #if DEBUG_ROSE_EXPERIMENTAL
      printf ("In experimental_openFortranParser_main(): Initialize Aterm library \n");
@@ -204,12 +317,14 @@ experimental_openFortranParser_main(int argc, char **argv)
   // This is the initialization of the ATERM library
      ATinitialize(argc, argv);
 
+#if 0
   // Check the exist status
      if (ofp_traverse_init() != ATtrue)
         {
           printf ("Error in initialization of ATerm library \n");
           exit(1);
         }
+#endif
 
      filenameWithoutPath += ".aterm";
 
@@ -218,27 +333,28 @@ experimental_openFortranParser_main(int argc, char **argv)
 #endif
 
   // This reads the ATERM that was created by the parser.
-     file = fopen(filenameWithoutPath.c_str(), "r");
+     FILE * file = fopen(filenameWithoutPath.c_str(), "r");
 
 #if DEBUG_ROSE_EXPERIMENTAL
      printf ("In experimental_openFortranParser_main(): Reading aterm file filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
 #endif
 
-     Program.term = ATreadFromTextFile(file);
+  // Program.term = ATreadFromTextFile(file);
+     ATerm SgUntypedFile_term = ATreadFromTextFile(file);
 
 #define OFP_DEBUG
 #ifdef OFP_DEBUG
 #if DEBUG_ROSE_EXPERIMENTAL
      printf ("In experimental_openFortranParser_main(): DEBUGING: calling ATwriteToString for ATerm file filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
 #endif
-     printf("\n%s\n\n", ATwriteToString(Program.term));
+     printf("\n%s\n\n", ATwriteToString(SgUntypedFile_term));
 #endif
 
 #if DEBUG_ROSE_EXPERIMENTAL
      printf ("In experimental_openFortranParser_main(): Calling OFP::setASTBuilder() \n");
 #endif
 
-     OFP::setASTBuilder(&ast);
+  // OFP::setASTBuilder(&ast);
 
 #if DEBUG_ROSE_EXPERIMENTAL
      printf ("In experimental_openFortranParser_main(): Calling OFP::setUnparser() \n");
@@ -254,7 +370,32 @@ experimental_openFortranParser_main(int argc, char **argv)
 #endif
 
   // if (ofp_traverse_Program(Program.term, &Program)) 
-     bool status = ofp_traverse_Program(Program.term, &Program);
+  // bool status = ofp_traverse_Program(Program.term, &Program);
+
+   SgUntypedFile* untypedFile = NULL;
+
+   if (traverse_SgUntypedFile(SgUntypedFile_term, &untypedFile) != ATtrue) {
+      printf("..............\nFAILED: traverse_main: untypedFile == %p\n\n", untypedFile);
+      return 1;
+   }
+
+   if (untypedFile != NULL) {
+#ifdef NO_NO_NO
+      printf("..............\ntraverse_main: SgUntypedFile == %p  global scope ==%p\n\n",
+             untypedFile, untypedFile->p_SgUntypedGlobalScope);
+#endif
+   } else {
+      printf("..............\ntraverse_main: untypedFile == %p\n\n", untypedFile);
+   }
+
+#ifdef NOT_YET
+   delete untypedFile;
+#endif
+
+   printf ("Leaving experimental_openFortranParser_main() \n");
+
+
+#if 0
 
 #if DEBUG_ROSE_EXPERIMENTAL
      printf ("In experimental_openFortranParser_main(): status = %s \n",status ? "true" : "false");
@@ -270,6 +411,7 @@ experimental_openFortranParser_main(int argc, char **argv)
           printf ("In experimental_openFortranParser_main(): exiting due to error: status = %s \n",status ? "true" : "false");
           return 1;
         }
+#endif
 
 #if DEBUG_ROSE_EXPERIMENTAL
      printf ("In experimental_openFortranParser_main(): calling OFP unparser \n");
@@ -286,9 +428,12 @@ experimental_openFortranParser_main(int argc, char **argv)
      printf ("In experimental_openFortranParser_main(): cleanup and exiting normally \n");
 #endif
 
-     delete unparser;
+  // delete unparser;
      if (ofs) delete ofs;
+
 
      return 0;
   }
+  // DQ (1/20/2016): Commented out old code.
+#endif
 

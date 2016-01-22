@@ -1,0 +1,267 @@
+module fast2pp
+
+imports
+   libstratego-lib
+   FAST
+
+signature
+  constructors
+
+    // These extra constructors are not part of FAST but required for unparsing
+    //
+
+    LanguageBinding : Language                       -> LanguageBinding
+
+    FuncPart        : ListStarOfDecl                 -> FuncPart
+
+    ppScope         : SpecPart * ExecPart            -> ppScope
+    ppScope         : SpecPart * ExecPart * FuncPart -> ppScope
+
+    ppImplicitStmt  : Label          -> ppImplicitStmt
+
+    ppSubmodule    : OfpSubmodule    -> ppSubmodule
+    ppFunction     : OfpFunction     -> ppFunction
+    ppSubroutine   : OfpSubroutine   -> ppSubroutine
+    ppMpSubprogram : OfpMpSubprogram -> ppMpSubprogram
+
+    ppArrayVar     : Name * ArrayType * Init           -> ppArrayVar
+    ppRange        : upper-bound                       -> ppRange
+    ppTriplet      : lb * ub * OptColon * stride       -> ppTriplet
+
+    ppArrayType    : ListStarOfRange                   -> ppArrayType
+    ppArrayType    : ListStorOfRange * ListStarOfRange -> ppArrayType
+
+    ppCoarrayType  : ListStarOfRange -> ppArrayType
+
+    ppArg          : arg              -> ppArg
+
+    ppVar          : name * init      -> ppVar
+    ppLiteralKind  : val              -> ppLiteralKind
+
+    ppCharNoLen    : kind             -> ppCharNoLen
+
+    ppLetterSpec   : Spec             -> ppLetterSpec
+    ppLetterSpec   : Spec * Spec      -> ppLetterSpec
+
+    ppTypeSpec     : Spec             -> ppTypeSpec
+
+    ppPartRef           : name * ss * is -> ppPartRef
+    ppSectionSubscripts : ss             -> ppSectionSubscripts
+    ppImageSelector     : ss             -> ppImageSelector
+
+    ppDerivedTypeStmt        : label * name            -> ppDerivedTypeStmt
+    ppDerivedTypeStmt_attrs  : label * attrs * name    -> ppDerivedTypeStmt_attrs
+    ppDerivedTypeStmt_params : label * name * params   -> ppDerivedTypeStmt_params
+
+    ppAllocateStmt      : label * spec * allocs        -> ppAllocateStmt
+    ppAllocateStmt      : label * spec * allocs * opts -> ppAllocateStmt
+    ppAllocation        : object                       -> ppAllocation
+    ppAllocationShape   : object * shape               -> ppAllocationShape
+    ppAllocationCoshape : object * coshape             -> ppAllocationCoshape
+
+    ppDeallocateStmt    : label * allocs               -> ppDeallocateStmt
+    ppDeallocateStmt    : label * allocs * opts        -> ppDeallocateStmt
+
+    ppPointerAssignmentStmt : label * obj * expr           -> ppPointerAssignmentStmt
+    ppPointerAssignmentStmt : label * obj * bounds * expr  -> ppPointerAssignmentStmt
+    ppDataPointerObject     : var                          -> ppDataPointObject
+
+    ppSelectCaseStmt  : OptLabel * CaseConstructName * CaseExpr     -> ppSelectCaseStmt    // R838
+
+    ppNonlabelDoStmt  : OptLabel * OptLoopControl                   -> ppNonlabelDoStmt    // R817
+
+    ppBlock           : OptLabel * Scope * EndBlockStmt             -> ppBlock
+
+    ppAssociateStmt   : OptLabel * NoName * List(Association)       -> ppAssociateStmt     // R803
+
+    ppIfThenStmt      : OptLabel * OptName * expr                   -> ppIfThenStmt        // R833
+    ppElseStmt        : OptLabel                                    -> ppElseStmt          // R835
+    ppEndIfStmt       : OptLabel                                    -> ppEndIfStmt         // R836
+    ppIfConstructName : name                                        -> ppIfConstructName
+
+//    ppSelectTypeStmt : OptLabel * NoSelectConstructName * OptAssociateName * Selector -> ppSelectTypeStmt  //R847
+
+    opt-list       : list            -> opt-list
+    append-colon   : name            -> append-colon
+
+strategies
+
+  main =
+    io-wrap(fast2pp)
+
+  fast2pp =
+      outermost(ast-to-pp)
+    ; outermost(no-to-none)
+
+  pp-opt-list =
+      where(<gt>(<length>,0))
+    ; !opt-list(<id>)
+
+  append-colon = ?no-name() < id + !append-colon(<id>)
+
+rules
+
+// Make a separate scope without FuncPart when empty.  This will allow the implied contains
+// statement to be unparsed when the FuncPart is present.
+//
+ast-to-pp:  Scope(decls,exes,[])             -> ppScope(decls,exes)
+
+ast-to-pp:  Scope(decls,exes,funcs)          -> ppScope(decls,exes,FuncPart(funcs))
+
+//R404
+ast-to-pp:  CHARACTER(no-char-length(),kind) -> ppCharNoLen(kind)
+
+//R408
+ast-to-pp:  IntVal(val,Kind(kval))           -> IntVal(val,ppLiteralKind(kval))
+
+//R426
+ast-to-pp =
+      ?DerivedTypeStmt(label,[],name,[])      ;  !ppDerivedTypeStmt(label,name)
+  <+  ?DerivedTypeStmt(label,attrs,name,[])   ;  !ppDerivedTypeStmt_attrs(label,attrs,name)
+  <+  ?DerivedTypeStmt(label,[],name,params)  ;  !ppDerivedTypeStmt_params(label,name,params)
+
+//R503
+ast-to-pp:    Var(name,ArrayType(type,dims,[]),init)
+           -> ppArrayVar(name,ppArrayType(dims),init)
+ast-to-pp:    Var(name,ArrayType(type,[],codims),init)
+           -> ppArrayVar(name,ppArrayType(codims),init)
+ast-to-pp:    Var(name,ArrayType(type,dims,codims),init)
+           -> ppArrayVar(name,ppArrayType(dims,codims),init)
+
+ast-to-pp:    Var(name,type,init)
+           -> ppVar(name,init)
+
+//R508
+//  ast-to-pp:  LanguageBinding(lang,no-binding-name()) -> LanguageBinding("C")
+
+//R510
+ast-to-pp:  Range(no-lower-bound(), upper)   -> ppRange(upper)
+
+//R560
+ast-to-pp:  ImplicitStmt(label,[])           -> ppImplicitStmt(label)
+
+//R562
+//  ast-to-pp:  LetterSpec(s1,no-letter())   -> ppLetterSpec(s1)
+//  ast-to-pp:  LetterSpec(s1,s2)            -> ppLetterSpec(s1,s2)
+
+//R612
+ast-to-pp:  PartRef(name,ss,is)              -> ppPartRef(name,ppSectionSubscripts(ss),ppImageSelector(is))
+
+stride-separator = ?no-stride() < !"" + !":"
+
+//R621
+ast-to-pp:  Triplet(lb,ub,stride)            -> ppTriplet(lb,ub,<stride-separator>stride,stride)
+
+pp-type-spec = ?no-type-spec() < !no-type-spec() + !ppTypeSpec(<id>)
+
+//R626
+ast-to-pp =
+      ?AllocateStmt(label,spec,allocs,[])          ;  !ppAllocateStmt(label,<pp-type-spec>spec,allocs)
+  <+  ?AllocateStmt(label,spec,allocs,opts)        ;  !ppAllocateStmt(label,<pp-type-spec>spec,allocs,opts)
+
+//R631
+ast-to-pp =
+      ?Allocation(obj,[],[])                       ;  !ppAllocation(obj)
+  <+  ?Allocation(obj,shape,[])                    ;  !ppAllocationShape(obj,shape)
+  <+  ?Allocation(obj,[],coshape)                  ;  !ppAllocationCoshape(obj,coshape)
+
+//R640
+ast-to-pp =
+      ?DeallocateStmt(label,allocs,[])             ;  !ppDeallocateStmt(label,allocs)
+  <+  ?DeallocateStmt(label,allocs,opts)           ;  !ppDeallocateStmt(label,allocs,opts)
+
+//R733
+ast-to-pp =
+      ?PointerAssignmentStmt(label,obj,[],  expr)  ;  !ppPointerAssignmentStmt(label,obj     ,expr)
+  <+  ?PointerAssignmentStmt(label,obj,list,expr)  ;  !ppPointerAssignmentStmt(label,obj,list,expr)
+
+//R734
+ast-to-pp:  DataPointerObject(var,no-name())       ->  ppDataPointerObject(var)
+
+//R803
+//  ast-to-pp:
+//    AssociateStmt(label,name,list,eos) -> ppAssociateStmt(label,<append-colon>name,list,eos)
+
+//R807
+ast-to-pp:  Block(label,no-name(),scope,end) -> ppBlock(label,scope,end)
+
+//R817
+ast-to-pp:  NonlabelDoStmt(label,no-name(),control) -> ppNonlabelDoStmt(label,control)
+
+//R833
+ast-to-pp =
+      ?IfThenStmt(label,no-name(),expr)            ;  !ppIfThenStmt(label,no-name(),expr)
+  <+  ?IfThenStmt(label,name     ,expr)            ;  !ppIfThenStmt(label,ppIfConstructName(name),expr)
+
+//R835
+ast-to-pp:  ElseStmt(label,no-name())             ->   ppElseStmt(label)
+
+//R836
+ast-to-pp:  EndIfStmt(label,no-name())            ->   ppEndIfStmt(label)
+
+//R838
+//  ast-to-pp:
+//    SelectCaseStmt(label,name,expr,eos)    -> ppSelectCaseStmt(label,<append-colon>name,expr,eos)
+
+//R847
+//  ast-to-pp:
+//    SelectTypeStmt(label,name,name,selector,eos) -> ppSelectTypeStmt(label,<append-colon>name,name,selector,eos)
+
+//R860
+//  ast-to-pp:
+//    SyncImagesStmt(label,set,list,eos)     -> SyncImagesStmt(label,set,<pp-opt-list>(list))
+
+//R1222
+ast-to-pp:  Arg(no-keyword(),arg)            -> ppArg(arg)
+
+//R1227
+//  ast-to-pp:  OfpFunction(name, scope)     -> ppFunction(scope)
+
+//R1233
+//  ast-to-pp:  OfpSubroutine(name, scope)   -> ppSubroutine(scope)
+
+//R1237
+//ast-to-pp:  MpSubprogram(name, scope)        -> ppMpSubprogram(scope)
+
+
+//  no-to-none: no-kind-param()              -> None()   // R408
+//  no-to-none: no-char-selector()           -> None()   // R420
+//  no-to-none: no-char-length()             -> None()   // R503
+//  no-to-none: no-init()                    -> None()   // R503
+//  no-to-none: no-kind()                    -> None()   // R405
+//  no-to-none: no-prefix()                  -> None()   // R1225
+//  no-to-none: no-language-binding()        -> None()   // R1229
+//  no-to-none: no-generic-spec()            -> None()   // R1204
+//  no-to-none: no-module-name()             -> None()   // R1106
+//  no-to-none: no-module-nature()           -> None()   // R1109
+//  no-to-none: no-block-data-name()         -> None()   // R1122
+//  no-to-none: no-proc-interface()          -> None()   // R1212
+//  no-to-none: no-subroutine-name()         -> None()   // R1236
+//  no-to-none: no-binding-name()            -> None()   // R508
+//  no-to-none: no-expr()                    -> None()   // R1241
+//  no-to-none: no-stop-code()               -> None()   // R857
+//  no-to-none: no-r()                       -> None()   // R1004
+//  no-to-none: no-m()                       -> None()   // R1007
+//  no-to-none: no-e()                       -> None()   // R1007
+//  no-to-none: no-name()                    -> None()   // R839, R850
+//  no-to-none: no-parent-submodule-name()   -> None()   // R1118
+//  no-to-none: no-high()                    -> None()   // R844
+//  no-to-none: no-low()                     -> None()   // R844
+//  no-to-none: no-stride()                  -> None()   // R920
+//  no-to-none: no-type-spec()               -> None()   // R626
+//  no-to-none: no-lower-bound()             -> None()   // R633
+//  no-to-none: no-component-name()          -> None()   // R734
+//  no-to-none: no-upper-bounds()            -> None()   // R736
+//  no-to-none: no-type-bound-procedure-part()  -> None()   //R445
+//  no-to-none: no-binding-private-stmt()    -> None()   // R446
+//  no-to-none: no-arg-name()                -> None()   // R451
+//  no-to-none: no-subprogram-part()         -> None()   // R210
+//  no-to-none: no-repeat()                  -> None()   // R541
+//  no-to-none: no-forall-step()             -> None()   // R753
+//  no-to-none: no-mask-expr()               -> None()   // R752
+//  no-to-none: no-else-stmt()               -> None()   // R832
+//  no-to-none: no-loop-control()            -> None()   // R818
+//  no-to-none: no-subscript()               -> None()   // R619
+
+  no-to-none: ppSectionSubscripts(no-section-subscripts()) -> no-section-subscripts()
+  no-to-none: ppImageSelector(no-image-selector())         -> no-image-selector()

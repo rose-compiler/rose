@@ -608,7 +608,6 @@ Grammar::setUpExpressions ()
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 #endif
 
-
   // DQ (1/14/2006): We should be using SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION instead of 
   // SOURCE_POST_CONSTRUCTION_INITIALIZATION_USING_SET_TYPE since we don't want to have a set_type
   // function on certain types of expressions (because the type should be computed from the operands 
@@ -1173,7 +1172,7 @@ Grammar::setUpExpressions ()
   // ExprListExp.editSubstitute       ( "LIST_DATA_TYPE", "Expression" );
      ExprListExp.editSubstitute       ( "LIST_NAME", "expression" );
 
-
+  // DQ (comment only): These are Matlab IR nodes:
      MatrixExp.setFunctionPrototype ( "HEADER_MATRIX_EXP", "../Grammar/Expression.code" );
      RangeExp.setFunctionPrototype ( "HEADER_RANGE_EXP", "../Grammar/Expression.code" );
 
