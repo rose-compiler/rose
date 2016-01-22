@@ -122,7 +122,7 @@ public:
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg, BaseSemantics::RiscOperators*)ROSE_OVERRIDE {
         if (reg.get_major()==x86_regclass_gpr && reg.get_minor()==x86_gpr_ax && !wroteValue_)
             readUninitialized_ = true;
-        return get_protoval()->undefined_(reg.get_nbits());
+        return protoval()->undefined_(reg.get_nbits());
     }
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr&,
                                BaseSemantics::RiscOperators*)ROSE_OVERRIDE {

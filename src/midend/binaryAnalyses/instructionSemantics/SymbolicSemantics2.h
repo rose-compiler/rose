@@ -731,7 +731,7 @@ protected:
         : BaseSemantics::RiscOperators(state, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
           computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
         set_name("Symbolic");
-        (void) SValue::promote(state->get_protoval()); // values must have SymbolicSemantics::SValue dynamic type
+        (void) SValue::promote(state->protoval()); // values must have SymbolicSemantics::SValue dynamic type
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -805,7 +805,7 @@ public:
     // implementations.
 protected:
     SValuePtr svalue_expr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) {
-        SValuePtr newval = SValue::promote(protoval->undefined_(expr->nBits()));
+        SValuePtr newval = SValue::promote(protoval()->undefined_(expr->nBits()));
         newval->set_expression(expr);
         newval->set_defining_instructions(defs);
         return newval;

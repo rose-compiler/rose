@@ -168,7 +168,7 @@ protected:
     explicit RiscOperators(const InstructionSemantics2::BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : InstructionSemantics2::SymbolicSemantics::RiscOperators(state, solver) {
         set_name("PartitionerSemantics");
-        (void)SValue::promote(state->get_protoval());
+        (void)SValue::promote(state->protoval());
         trimThreshold(TRIM_THRESHOLD_DFLT);
     }
 

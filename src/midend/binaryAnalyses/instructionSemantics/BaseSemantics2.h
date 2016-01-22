@@ -744,17 +744,17 @@ typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
 class RegisterState: public boost::enable_shared_from_this<RegisterState> {
 private:
     MergerPtr merger_;
+    SValuePtr protoval_;                                /**< Prototypical value for virtual constructors. */
 
 protected:
-    SValuePtr protoval;                         /**< Prototypical value for virtual constructors. */
-    const RegisterDictionary *regdict;          /**< Registers that are able to be stored by this state. */
+    const RegisterDictionary *regdict;                  /**< Registers that are able to be stored by this state. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     RegisterState(const SValuePtr &protoval, const RegisterDictionary *regdict)
-        : protoval(protoval), regdict(regdict) {
-        ASSERT_not_null(protoval);
+        : protoval_(protoval), regdict(regdict) {
+        ASSERT_not_null(protoval_);
     }
 
 public:
@@ -805,7 +805,12 @@ public:
     /** @} */
 
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
-    SValuePtr get_protoval() const { return protoval; }
+    SValuePtr protoval() const { return protoval_; }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
+        return protoval();
+    }
 
     /** The register dictionary should be compatible with the register dictionary used for other parts of binary analysis. At
      *  this time (May 2013) the dictionary is only used when printing.
@@ -1212,10 +1217,11 @@ typedef boost::shared_ptr<class State> StatePtr;
  *  the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
  *  together.  */
 class State: public boost::enable_shared_from_this<State> {
+    SValuePtr protoval_;                                // Initial value used to create additional values as needed.
+
 protected:
-    SValuePtr protoval;                         /**< Initial value used to create additional values as needed. */
-    RegisterStatePtr registers;                 /**< All machine register values for this semantic state. */
-    MemoryStatePtr  memory;                     /**< All memory for this semantic state. */
+    RegisterStatePtr registers;                         /**< All machine register values for this semantic state. */
+    MemoryStatePtr memory;                              /**< All memory for this semantic state. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -1224,13 +1230,13 @@ protected:
         : registers(registers), memory(memory) {
         ASSERT_not_null(registers);
         ASSERT_not_null(memory);
-        protoval = registers->get_protoval();
-        ASSERT_not_null(protoval);
+        protoval_ = registers->protoval();
+        ASSERT_not_null(protoval_);
     }
 
     // deep-copy the registers and memory
     State(const State &other)
-        : protoval(other.protoval) {
+        : protoval_(other.protoval_) {
         registers = other.registers->clone();
         memory = other.memory->clone();
     }
@@ -1283,7 +1289,12 @@ public:
     // Other methods that are part of our API. Most of these just chain to either the register state and/or the memory state.
 public:
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
-    SValuePtr get_protoval() const { return protoval; }
+    SValuePtr protoval() const { return protoval_; }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
+        return protoval();
+    }
 
     /** Initialize state.  The register and memory states are cleared. */
     virtual void clear();
@@ -1427,8 +1438,9 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together. */
 class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
+    SValuePtr protoval_;                                // Prototypical value used for its virtual constructors.
+
 protected:
-    SValuePtr protoval;                         /**< Prototypical value used for its virtual constructors. */
     StatePtr state;                             /**< State upon which RISC operators operate. */
     SgAsmInstruction *cur_insn;                 /**< Current instruction, as set by latest startInstruction() call. */
     size_t ninsns;                              /**< Number of instructions processed. */
@@ -1439,14 +1451,14 @@ protected:
     // Real constructors
 protected:
     explicit RiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
-        : protoval(protoval), cur_insn(NULL), ninsns(0), solver(solver) {
-        ASSERT_not_null(protoval);
+        : protoval_(protoval), cur_insn(NULL), ninsns(0), solver(solver) {
+        ASSERT_not_null(protoval_);
     }
 
     explicit RiscOperators(const StatePtr &state, SMTSolver *solver=NULL)
         : state(state), cur_insn(NULL), ninsns(0), solver(solver) {
         ASSERT_not_null(state);
-        protoval = state->get_protoval();
+        protoval_ = state->protoval();
     }
 
 public:
@@ -1486,7 +1498,12 @@ public:
     // Other methods part of our API
 public:
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
-    virtual SValuePtr get_protoval() const { return protoval; }
+    virtual SValuePtr protoval() const { return protoval_; }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
+        return protoval();
+    }
 
     /** Sets the satisfiability modulo theory (SMT) solver to use for certain operations.  An SMT solver is optional and not
      *  all semantic domains will make use of a solver.  Domains that use a solver will fall back to naive implementations when
@@ -1583,25 +1600,25 @@ public:
 
     /** Returns a new undefined value. Uses the prototypical value to virtually construct the new value. */
     virtual SValuePtr undefined_(size_t nbits) {
-        return protoval->undefined_(nbits);
+        return protoval_->undefined_(nbits);
     }
     virtual SValuePtr unspecified_(size_t nbits) {
-        return protoval->unspecified_(nbits);
+        return protoval_->unspecified_(nbits);
     }
 
     /** Returns a number of the specified bit width.  Uses the prototypical value to virtually construct a new value. */
     virtual SValuePtr number_(size_t nbits, uint64_t value) {
-        return protoval->number_(nbits, value);
+        return protoval_->number_(nbits, value);
     }
 
     /** Returns a Boolean value. Uses the prototypical value to virtually construct a new value. */
     virtual SValuePtr boolean_(bool value) {
-        return protoval->boolean_(value);
+        return protoval_->boolean_(value);
     }
 
     /** Returns a data-flow bottom value. Uses the prototypical value to virtually construct a new value. */
     virtual SValuePtr bottom_(size_t nbits) {
-        return protoval->bottom_(nbits);
+        return protoval_->bottom_(nbits);
     }
 
     
@@ -2104,7 +2121,12 @@ public:
     virtual StatePtr get_state() const { return operators ? operators->get_state() : StatePtr(); }
 
     /** Return the prototypical value.  The prototypical value comes from the RISC operators object. */
-    virtual SValuePtr get_protoval() const { return operators ? operators->get_protoval() : SValuePtr(); }
+    virtual SValuePtr protoval() const { return operators ? operators->protoval() : SValuePtr(); }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
+        return protoval();
+    }
 
     /** Returns the instruction that is being processed. The instruction comes from the get_insn() method of the RISC operators
      *  object. */

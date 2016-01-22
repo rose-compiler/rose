@@ -257,10 +257,10 @@ RiscOperators::after_exception()
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::get_protoval() const
+RiscOperators::protoval() const
 {
     checkSubdomain();
-    return subdomain_->get_protoval();
+    return subdomain_->protoval();
 }
 
 void

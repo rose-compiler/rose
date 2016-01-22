@@ -327,7 +327,7 @@ protected:
     RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver)
         : BaseSemantics::RiscOperators(state, solver) {
         set_name("Concrete");
-        (void) SValue::promote(state->get_protoval()); // values must have ConcreteSemantics::SValue dynamic type
+        (void) SValue::promote(state->protoval());      // values must have ConcreteSemantics::SValue dynamic type
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

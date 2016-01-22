@@ -166,7 +166,7 @@ public:
 
     virtual BaseSemantics::SValuePtr
     readRegister(const RegisterDescriptor &reg, BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
-        return get_protoval()->undefined_(reg.get_nbits());
+        return protoval()->undefined_(reg.get_nbits());
     }
 
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value,

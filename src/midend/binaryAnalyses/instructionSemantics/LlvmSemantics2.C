@@ -45,7 +45,7 @@ RiscOperators::reset()
     BaseSemantics::RegisterStatePtr regs = state->get_register_state();
     BaseSemantics::MemoryStatePtr mem = state->get_memory_state();
 
-    RegisterStatePtr new_regs = RegisterState::promote(regs->create(get_protoval(), regs->get_register_dictionary()));
+    RegisterStatePtr new_regs = RegisterState::promote(regs->create(protoval(), regs->get_register_dictionary()));
     BaseSemantics::MemoryStatePtr new_mem = mem->create(mem->get_addr_protoval(), mem->get_val_protoval());
     BaseSemantics::StatePtr new_state = state->create(new_regs, new_mem);
 

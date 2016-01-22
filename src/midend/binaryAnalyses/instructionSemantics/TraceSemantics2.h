@@ -139,7 +139,7 @@ public:
         ASSERT_not_null(subdomain);
         RiscOperatorsPtr self = subdomain->get_state()!=NULL ?
                                 RiscOperatorsPtr(new RiscOperators(subdomain->get_state(), subdomain->get_solver())) :
-                                RiscOperatorsPtr(new RiscOperators(subdomain->get_protoval(), subdomain->get_solver()));
+                                RiscOperatorsPtr(new RiscOperators(subdomain->protoval(), subdomain->get_solver()));
         self->subdomain_ = subdomain;
         return self;
     }
@@ -253,7 +253,7 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we override from our super class
 public:
-    virtual BaseSemantics::SValuePtr get_protoval() const ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr protoval() const ROSE_OVERRIDE;
     virtual void set_solver(SMTSolver*) ROSE_OVERRIDE;
     virtual SMTSolver *get_solver() const ROSE_OVERRIDE;
     virtual BaseSemantics::StatePtr get_state() const ROSE_OVERRIDE;

@@ -104,7 +104,7 @@ RiscOperators::resetState() {
 BaseSemantics::SValuePtr
 RiscOperators::makeSValue(size_t nbits, SgNode *ast, const std::string &ctext) {
     ASSERT_require(nbits > 0);
-    SValuePtr v = SValue::promote(get_protoval()->undefined_(nbits));
+    SValuePtr v = SValue::promote(protoval()->undefined_(nbits));
     v->ctext(ctext);
     return v;
 }

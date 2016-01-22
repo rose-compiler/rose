@@ -249,7 +249,7 @@ protected:
     RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver)
         : BaseSemantics::RiscOperators(state, solver) {
         set_name("StaticSemantics");
-        (void) SValue::promote(state->get_protoval()); // values must have StaticSemantics::SValue dynamic type
+        (void) SValue::promote(state->protoval()); // values must have StaticSemantics::SValue dynamic type
     }
 
 public:

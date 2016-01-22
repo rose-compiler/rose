@@ -337,7 +337,7 @@ protected:
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver) {
         set_name("Interval");
-        (void) SValue::promote(state->get_protoval()); // dynamic type must be IntervalSemantics::SValue or subclass thereof
+        (void) SValue::promote(state->protoval());      // dynamic type must be IntervalSemantics::SValue or subclass thereof
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -396,13 +396,13 @@ public:
     /** Create a new SValue from a set of possible bits.  This is just a convience function so that we don't have to
      *  see so many dynamic casts in the source code. */
     virtual SValuePtr svalue_from_bits(size_t nbits, uint64_t possible_bits) {
-        return SValue::promote(protoval)->create_from_bits(nbits, possible_bits);
+        return SValue::promote(protoval())->create_from_bits(nbits, possible_bits);
     }
 
     /** Create a new SValue from a set of intervals.  This is just a convience function so that we don't have to
      *  see so many dynamic casts in the source code. */
     virtual SValuePtr svalue_from_intervals(size_t nbits, const Intervals &intervals) {
-        return SValue::promote(protoval)->create(nbits, intervals);
+        return SValue::promote(protoval())->create(nbits, intervals);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -106,9 +106,9 @@ public:
     void test(const BaseSemantics::RiscOperatorsPtr &ops) {
         ByteOrder::Endianness savedByteOrder = ops->get_state()->get_memory_state()->get_byteOrder();
         ops->get_state()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_LSB);
-        test(ops->get_protoval(), ops->get_state(), ops);
+        test(ops->protoval(), ops->get_state(), ops);
         ops->get_state()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_MSB);
-        test(ops->get_protoval(), ops->get_state(), ops);
+        test(ops->protoval(), ops->get_state(), ops);
         ops->get_state()->get_memory_state()->set_byteOrder(savedByteOrder);
     }
     
@@ -190,24 +190,24 @@ public:
         BaseSemantics::RegisterStatePtr rs1 = state->get_register_state();
         check_type<RegisterStatePtr>(RegisterState::promote(rs1), "RegisterState::promote()");
 
-        BaseSemantics::SValuePtr rs1v1 = rs1->get_protoval();
-        check_sval_type(rs1v1, "RegisterState::get_protoval()");
+        BaseSemantics::SValuePtr rs1v1 = rs1->protoval();
+        check_sval_type(rs1v1, "RegisterState::protoval()");
 
         // Virtual constructors
         BaseSemantics::RegisterStatePtr rs3 = rs1->create(protoval, regdict);
         check_type<RegisterStatePtr>(rs3, "create()");
         require(rs3->get_register_dictionary()==regdict, "RegisterState::create() register dictionary");
         require(rs3 != rs1, "RegisterState::create() must return a new object");
-        BaseSemantics::SValuePtr rs3v1 = rs3->get_protoval();
-        check_sval_type(rs3v1, "RegisterState::get_protoval() after create()");
+        BaseSemantics::SValuePtr rs3v1 = rs3->protoval();
+        check_sval_type(rs3v1, "RegisterState::protoval() after create()");
 
         BaseSemantics::RegisterStatePtr rs4 = rs1->clone();
         check_type<RegisterStatePtr>(rs4, "clone()");
         require(rs4 != rs1, "RegisterState::clone() must return a new object");
         require(rs4->get_register_dictionary()==rs1->get_register_dictionary(),
                 "RegisterState::clone() must use the register dictionary from the source state");
-        BaseSemantics::SValuePtr rs4v1 = rs4->get_protoval();
-        check_sval_type(rs4v1, "RegisterState::get_protoval() after clone()");
+        BaseSemantics::SValuePtr rs4v1 = rs4->protoval();
+        check_sval_type(rs4v1, "RegisterState::protoval() after clone()");
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // MemoryState (read/write is tested by RiscOperators)
@@ -247,8 +247,8 @@ public:
         // Dynamic pointer casts
         check_type<StatePtr>(State::promote(state), "State::promote()");
 
-        BaseSemantics::SValuePtr state_protoval = state->get_protoval();
-        check_sval_type(state_protoval, "State::get_protoval()");
+        BaseSemantics::SValuePtr state_protoval = state->protoval();
+        check_sval_type(state_protoval, "State::protoval()");
 
         // Virtual constructors
         BaseSemantics::StatePtr s1 = state->create(rs1, ms1);
@@ -272,8 +272,8 @@ public:
         // Dynamic pointer casts
         check_type<RiscOperatorsPtr>(RiscOperators::promote(ops), "RiscOperators::promote()");
 
-        BaseSemantics::SValuePtr ops_protoval = ops->get_protoval();
-        check_sval_type(ops_protoval, "RiscOperators::get_protoval()");
+        BaseSemantics::SValuePtr ops_protoval = ops->protoval();
+        check_sval_type(ops_protoval, "RiscOperators::protoval()");
         
         // Virtual constructors
         BaseSemantics::RiscOperatorsPtr o1 = ops->create(protoval, solver);

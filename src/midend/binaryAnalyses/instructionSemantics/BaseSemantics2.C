@@ -119,53 +119,53 @@ RegisterStateX86::initialValueName(const RegisterDescriptor &reg) const {
 void
 RegisterStateX86::clear()
 {
-    ip = protoval->undefined_(32);
+    ip = protoval()->undefined_(32);
     for (size_t i=0; i<n_gprs; ++i) {
         const RegisterDescriptor reg(x86_regclass_gpr, i, 0, 32);
-        gpr[i] = protoval->undefined_(32);
+        gpr[i] = protoval()->undefined_(32);
         gpr[i]->set_comment(initialValueName(reg));
     }
     for (size_t i=0; i<n_segregs; ++i) {
         const RegisterDescriptor reg(x86_regclass_segment, i, 0, 16);
-        segreg[i] = protoval->undefined_(16);
+        segreg[i] = protoval()->undefined_(16);
         segreg[i]->set_comment(initialValueName(reg));
     }
     for (size_t i=0; i<n_flags; ++i) {
         const RegisterDescriptor reg(x86_regclass_flags, x86_flags_status, i, 1);
-        flag[i] = protoval->undefined_(1);
+        flag[i] = protoval()->undefined_(1);
         flag[i]->set_comment(initialValueName(reg));
     }
     for (size_t i=0; i<n_st; ++i) {
         const RegisterDescriptor reg(x86_regclass_st, i, 0, 80);
-        st[i] = protoval->undefined_(80);
+        st[i] = protoval()->undefined_(80);
         st[i]->set_comment(initialValueName(reg));
     }
     for (size_t i=0; i<n_xmm; ++i) {
         const RegisterDescriptor reg(x86_regclass_xmm, i, 0, 128);
-        xmm[i] = protoval->undefined_(128);
+        xmm[i] = protoval()->undefined_(128);
         xmm[i]->set_comment(initialValueName(reg));
     }
     
     const RegisterDescriptor reg(x86_regclass_flags, x86_flags_fpstatus, 0, 16);
-    fpstatus = protoval->undefined_(16);
+    fpstatus = protoval()->undefined_(16);
     fpstatus->set_comment(initialValueName(reg));
 }
 
 void
 RegisterStateX86::zero()
 {
-    ip = protoval->number_(32, 0);
+    ip = protoval()->number_(32, 0);
     for (size_t i=0; i<n_gprs; ++i)
-        gpr[i] = protoval->number_(32, 0);
+        gpr[i] = protoval()->number_(32, 0);
     for (size_t i=0; i<n_segregs; ++i)
-        segreg[i] = protoval->number_(16, 0);
+        segreg[i] = protoval()->number_(16, 0);
     for (size_t i=0; i<n_flags; ++i)
-        flag[i] = protoval->number_(1, 0);
+        flag[i] = protoval()->number_(1, 0);
     for (size_t i=0; i<n_st; ++i)
-        st[i] = protoval->number_(80, 0);
+        st[i] = protoval()->number_(80, 0);
     for (size_t i=0; i<n_xmm; ++i)
-        xmm[i] = protoval->number_(128, 0);
-    fpstatus = protoval->number_(16, 0);
+        xmm[i] = protoval()->number_(128, 0);
+    fpstatus = protoval()->number_(16, 0);
 }
 
 SValuePtr
