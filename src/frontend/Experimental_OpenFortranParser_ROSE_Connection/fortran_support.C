@@ -103,7 +103,7 @@ experimental_openFortranParser_main(int argc, char **argv)
   // OFP::Program Program;
   // OFP::UntypedASTBuilder ast;
   // OFP::FortranTextUnparser * unparser = NULL;
-     std::ofstream * ofs = NULL;
+  // std::ofstream * ofs = NULL;
   // FILE * file = stdin;
 
   // Make system call to call the parser and build an ATERM file (put into the build tree).
@@ -238,11 +238,9 @@ experimental_openFortranParser_main(int argc, char **argv)
 
      string path_to_fortran_aterm_traversal_directory = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal", "bin");
 
-#if 0
-     if (true)
-#else
-     if (false)
-#endif
+     bool process_using_ofp_roundtrip_support = OpenFortranParser_globalFilePointer->get_experimental_fortran_frontend_OFP_test();
+
+     if (process_using_ofp_roundtrip_support == false)
         {
           commandString += path_to_fortran_aterm_traversal_directory;
           commandString += "/fast2sage";
@@ -327,9 +325,9 @@ experimental_openFortranParser_main(int argc, char **argv)
      printf ("In experimental_openFortranParser_main(): building OFP::FortranTextUnparser \n");
 #endif
 
-     ofs = NULL;
 #if 0
   // DQ (1/20/2016): Removed and will not return.
+     ofs = NULL;
      if (ofs) 
           unparser = new OFP::FortranTextUnparser(*ofs);
        else
@@ -398,25 +396,32 @@ experimental_openFortranParser_main(int argc, char **argv)
   // if (ofp_traverse_Program(Program.term, &Program)) 
   // bool status = ofp_traverse_Program(Program.term, &Program);
 
-   SgUntypedFile* untypedFile = NULL;
+     if (process_using_ofp_roundtrip_support == false)
+        {
 
-   if (traverse_SgUntypedFile(SgUntypedFile_term, &untypedFile) != ATtrue) {
-      printf("..............\nFAILED: traverse_main: untypedFile == %p\n\n", untypedFile);
-      return 1;
-   }
+          SgUntypedFile* untypedFile = NULL;
 
-   if (untypedFile != NULL) {
+          if (traverse_SgUntypedFile(SgUntypedFile_term, &untypedFile) != ATtrue)
+             {
+               printf("..............\nFAILED: traverse_main: untypedFile == %p\n\n", untypedFile);
+               return 1;
+             }
+
+          if (untypedFile != NULL)
+             {
 #ifdef NO_NO_NO
-      printf("..............\ntraverse_main: SgUntypedFile == %p  global scope ==%p\n\n",
-             untypedFile, untypedFile->p_SgUntypedGlobalScope);
+               printf("..............\ntraverse_main: SgUntypedFile == %p  global scope ==%p\n\n",untypedFile, untypedFile->p_SgUntypedGlobalScope);
 #endif
-   } else {
-      printf("..............\ntraverse_main: untypedFile == %p\n\n", untypedFile);
-   }
+             }
+            else
+             {
+               printf("..............\ntraverse_main: untypedFile == %p\n\n", untypedFile);
+             }
 
 #ifdef NOT_YET
-   delete untypedFile;
+          delete untypedFile;
 #endif
+        }
 
    printf ("Leaving experimental_openFortranParser_main() \n");
 
@@ -429,8 +434,10 @@ experimental_openFortranParser_main(int argc, char **argv)
 
      if (status == true)
         {
+#if 0
           if (ofs == NULL) 
                printf("\nWoot!\n");
+#endif
         }
        else
         {
@@ -455,8 +462,7 @@ experimental_openFortranParser_main(int argc, char **argv)
 #endif
 
   // delete unparser;
-     if (ofs) delete ofs;
-
+  // if (ofs) delete ofs;
 
      return 0;
   }

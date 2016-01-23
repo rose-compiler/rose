@@ -5170,6 +5170,16 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_experimental_fortran_frontend(true);
         }
 
+  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
+  // (this is part of the internal testing of the new (experimental) Fortran support).
+     set_experimental_fortran_frontend_OFP_test(false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_fortran_frontend_OFP_test",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+               printf ("Using experimental fortran frontend_OFP_test (explicitly set: ON) \n");
+          set_experimental_fortran_frontend_OFP_test(true);
+        }
+
 
   // DQ (9/26/2011): Adding options to support internal debugging of ROSE based tools and language support.
   // ****************
@@ -5646,6 +5656,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (6/8/2013): Added support for experimental fortran frontend.
      optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend)",1);
+
+  // DQ (1/23/2016): Added support for OFP testing within new experimental Fortran support.
+     optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend_OFP_test)",1);
 
   // DQ (9/15/2013): Remove this from being output to the backend compiler.
      optionCount = sla(argv, "-rose:", "($)", "(unparse_in_same_directory_as_input_file)",1);
