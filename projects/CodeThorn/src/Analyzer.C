@@ -26,6 +26,8 @@ using namespace std;
 
 #include "CollectionOperators.h"
 
+#define RERS_SPECIALIZATION
+
 CTIOLabeler::CTIOLabeler(SgNode* start, VariableIdMapping* variableIdMapping): SPRAY::IOLabeler(start, variableIdMapping) {
 }
 
@@ -208,16 +210,6 @@ bool VariableValueMonitor::isHotVariable(Analyzer* analyzer, VariableId varId) {
     exit(1);
   }
 }
-
-#if 0
-bool VariableValueMonitor::isVariableBeyondTreshold(Analyzer* analyzer, VariableId varId) {
-  // TODO: provide set of variables to ignore
-  string name=SgNodeHelper::symbolToString(analyzer->getVariableIdMapping()->getSymbol(varId));
-  if(name=="input" || name=="output") 
-    return false;
-  return _threshold!=-1 && ((long int)_variablesMap[varId]->size())>=_threshold;
-}
-#endif
 
 string VariableValueMonitor::toString(VariableIdMapping* variableIdMapping) {
   stringstream ss;
@@ -857,18 +849,6 @@ VariableIdMapping::VariableIdSet Analyzer::determineVariableIdsOfSgInitializedNa
   return resultSet;
 }
 
-#if 0
-bool Analyzer::isAssertExpr(SgNode* node) {
-  if(isSgExprStatement(node)) {
-    node=SgNodeHelper::getExprStmtChild(node);
-    // TODO: refine this to also check for name, paramters, etc.
-    if(isSgConditionalExp(node))
-      return true;
-  }
-  return false;
-}
-#endif
-
 bool Analyzer::isFailedAssertEState(const EState* estate) {
   if(estate->io.isFailedAssertIO())
     return true;
@@ -1003,32 +983,10 @@ EStateSet::ProcessingResult Analyzer::process(Label label, PState pstate, Constr
     EState newEState=EState(label,newPStatePtr,newCSetPtr,io);
     return estateSet.process(newEState);
   } else {
-    //cout << "INFO: allocating temporary estate."<<endl;
-    // the following checks are not neccessary but ensure that we reuse pstates and constraint sets
-#if 0
-    const PState* newPStatePtr=pstateSet.determine(pstate);
-    PState* newPStatePtr2=0;
-    if(!newPStatePtr) {
-      newPStatePtr2=new PState();
-      *newPStatePtr2=pstate;
-    } else {
-      newPStatePtr2=const_cast<PState*>(newPStatePtr);
-    }
-    ConstraintSet* newCSetPtr=constraintSetMaintainer.determine(cset);
-    ConstraintSet* newCSetPtr2;
-    if(!newCSetPtr) {
-      newCSetPtr2=new ConstraintSet();
-      *newCSetPtr2=cset;
-    } else {
-      newCSetPtr2=const_cast<ConstraintSet*>(newCSetPtr);
-    }
-#else
-    // TODO: temporary states must be marked to be able to free them later (or: any non-maintained state is considered a temporary state)
     PState* newPStatePtr2=new PState();
     *newPStatePtr2=pstate;
     ConstraintSet* newCSetPtr2=new ConstraintSet();
     *newCSetPtr2=cset;
-#endif
     EState newEState=EState(label,newPStatePtr2,newCSetPtr2,io);
     const EState* newEStatePtr;
     newEStatePtr=estateSet.determine(newEState);
@@ -1040,7 +998,6 @@ EStateSet::ProcessingResult Analyzer::process(Label label, PState pstate, Constr
     } else {
       return make_pair(false,newEStatePtr);
     }
-
     return estateSet.process(newEState);
   }
   throw "Error: Analyzer::processNewOrExisting: programmatic error.";
@@ -1062,7 +1019,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   assert(edge.source==estate->label());
   // we do not pass information on the local edge
   if(edge.isType(EDGE_LOCAL)) {
-#ifdef RERS_SPECIALIZATION
+    //#ifdef RERS_SPECIALIZATION
     if(boolOptions["rers-binary"]) {
 	  //cout<<"DEBUG: ESTATE: "<<estate->toString(&variableIdMapping)<<endl;
       SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source);
@@ -1070,24 +1027,9 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         assert(funCall);
         string funName=SgNodeHelper::getFunctionName(funCall);
         if(funName=="calculate_output") {
-		  //cout<<"DEBUG: BINARY-transfer: calculate output found."<<endl;
-#if 0
-          SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-          SgExpressionPtrList::iterator j=actualParameters.begin();
-          SgExpression* actualParameterExpr=*j;
-          assert(actualParameterExpr);
-          VariableId actualParameterVarId;
-          if(exprAnalyzer.variable(actualParameterExpr,actualParameterVarId)) {
-            PState _pstate=*estate->pstate();
-            AType::ConstIntLattice aval=_pstate[actualParameterVarId];
-            int argument=aval.getIntValue();
-            //cout << "DEBUG: argument:"<<argument<<endl;
-#endif
             // RERS global vars binary handling
             PState _pstate=*estate->pstate();
             RERS_Problem::rersGlobalVarsCallInit(this,_pstate, omp_get_thread_num());
-            //cout << "DEBUG: global vars initialized before call"<<endl;
-
 #if 0
             //input variable passed as a parameter (obsolete since usage of script "transform_globalinputvar")
             int rers_result=RERS_Problem::calculate_output(argument); 
@@ -1141,16 +1083,13 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
             cerr<<"RERS-MODE: call of unknown function."<<endl;
             exit(1);
             // _pstate now contains the current state obtained from the binary
-#if 0
-          }
-#endif
         }
         //cout << "DEBUG: @LOCAL_EDGE: function call:"<<SgNodeHelper::nodeToString(funCall)<<endl;
       }
     }
-#endif
+	  //#endif
     return elistify();
-  }
+	}
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
@@ -1174,7 +1113,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     string funName=SgNodeHelper::getFunctionName(funCall);
     // handling of error function (TODO: generate dedicated state (not failedAssert))
     
-#ifdef RERS_SPECIALIZATION
     if(boolOptions["rers-binary"]) {
       // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
       string funName=SgNodeHelper::getFunctionName(funCall);
@@ -1183,7 +1121,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
         return elistify();
       }
     }
-#endif
 
     SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
     // ad 2)
@@ -1597,28 +1534,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           ConstraintSet cset=*estate.constraints();
           // only update integer variables. Ensure values of floating-point variables are not computed
           if(variableIdMapping.hasIntegerType(lhsVar)) {
-#if 0
-            if(isActiveGlobalTopify()) {
-              // TODO: CHECK OUTPUT-OUTPUT HERE
-              string varName=variableIdMapping.variableName(lhsVar);
-              if(varName=="output") {
-                AType::ConstIntLattice checkVal=newPState[lhsVar];
-                AValue newVal=(*i).result;
-                if(!newVal.isTop()) {
-                  int newInt=newVal.getIntValue();
-                  if(checkVal.isConstInt()) {
-                    int checkInt=checkVal.getIntValue();
-                    if(checkInt!=-1 && checkInt!=-2 && newInt!=-1 && newInt!=-2) {
-                      // detected 2nd assignment of output variable
-                      // do not add a new state
-                      //cout<<"INFO: detected output-output path."<<endl;
-                      return estateList;
-                    }
-                  }
-                }
-              }
-            }
-#endif
             if(variableValueMonitor.isActive() && variableValueMonitor.isHotVariable(this,lhsVar)) {
               //cout<<"DEBUG: Topifying hot variable :)"<<lhsVar.toString()<<endl;
               newPState.setVariableToTop(lhsVar);
@@ -2042,20 +1957,6 @@ bool Analyzer::isConsistentEStatePtrSet(set<const EState*> estatePtrSet)  {
   cout << "INFO: estatePtrSet of size "<<estatePtrSet.size()<<" consistent."<<endl;
   return true;
 }
-
-#if 0
-void Analyzer::deleteNonRelevantEStates() {
-  size_t numEStatesBefore=estateSet.size();
-  for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
-    if(isLTLRelevantLabel((*i).label())) {
-      estateSet.erase(i);
-    }
-  }
-  size_t numEStatesAfter=estateSet.size();
-  if(numEStatesBefore!=numEStatesAfter)
-    cout << "STATUS: Reduced estateSet from "<<numEStatesBefore<<" to "<<numEStatesAfter<<" estates."<<endl;
-}
-#endif
 
 void Analyzer::stdIOFoldingOfTransitionGraph() {
   cout << "STATUS: stdio-folding: computing states to fold."<<endl;
