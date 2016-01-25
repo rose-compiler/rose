@@ -142,7 +142,7 @@ AType::ConstIntLattice ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* v
 //////////////////////////////////////////////////////////////////////
 // EVAL CONSTINT
 //////////////////////////////////////////////////////////////////////
-list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
+list<SingleEvalResultConstInt> ExprAnalyzer::listify(SingleEvalResultConstInt res) {
   list<SingleEvalResultConstInt> resList;
   resList.push_back(res);
   return resList;
@@ -189,21 +189,18 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
       // append falseBranchResultList to trueBranchResultList (moves elements), O(1).
       trueBranchResultList.splice(trueBranchResultList.end(), falseBranchResultList); 
       return trueBranchResultList;
-    }
-    if(singleResult.result.isTrue()) {
+    } else if(singleResult.result.isTrue()) {
       SgExpression* trueBranch=condExp->get_true_exp();
       list<SingleEvalResultConstInt> trueBranchResultList=evalConstInt(trueBranch,estate,useConstraints,safeConstraintPropagation);
       return trueBranchResultList;
-    }
-    if(singleResult.result.isFalse()) {
+    } else if(singleResult.result.isFalse()) {
       SgExpression* falseBranch=condExp->get_false_exp();
       list<SingleEvalResultConstInt> falseBranchResultList=evalConstInt(falseBranch,estate,useConstraints,safeConstraintPropagation);
       return falseBranchResultList;
+    } else {
+      cerr<<"Error: evaluating conditional operator inside expressions - unknown behavior (condition may have evaluated to bot)."<<endl;
+      exit(1);
     }
-    // dummy return value to avoid compiler warning
-    cerr<<"Error: evaluating conditional operator inside expressions - unknown behavior (condition may have evaluated to bot)."<<endl;
-    exit(1);
-    return resultList;
   }
   if(dynamic_cast<SgBinaryOp*>(node)) {
     //cout << "BinaryOp:"<<SgNodeHelper::nodeToString(node)<<endl;
@@ -310,7 +307,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 #endif
           if(lhsResult.result.isFalse()) {
             res.exprConstraints=lhsResult.exprConstraints;
-            // rhs is not considered due to short-circuit AND semantics
+            // rhs is not considered due to short-circuit CPP-AND-semantics
           }
           if(lhsResult.result.isTrue() && rhsResult.result.isFalse()) {
             res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
@@ -320,7 +317,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
             res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           }
           
-          // in case of top we do not propagate constraints
+          // in case of top we do not propagate constraints [inprecision]
           if(lhsResult.result.isTop() && !safeConstraintPropagation) {
             res.exprConstraints+=lhsResult.exprConstraints;
           }
@@ -328,13 +325,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
             res.exprConstraints+=rhsResult.exprConstraints;
           }
           resultList.push_back(res);
-          //          cout << res.exprConstraints.toString();
-          //cout << endl;
           break;
         }
         case V_SgOrOp: {
           res.result=lhsResult.result.operatorOr(rhsResult.result);
-          // we encode short-circuit CPP-OR semantics here!
+          // we encode short-circuit CPP-OR-semantics here!
           if(lhsResult.result.isTrue()) {
             res.result=lhsResult.result;
             res.exprConstraints=lhsResult.exprConstraints;
@@ -345,7 +340,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           if(lhsResult.result.isFalse() && rhsResult.result.isTrue()) {
             res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
           }
-          // in case of top we do not propagate constraints
+          // in case of top we do not propagate constraints [imprecision]
           if(lhsResult.result.isTop() && !safeConstraintPropagation) {
             res.exprConstraints+=lhsResult.exprConstraints;
           }
@@ -429,7 +424,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           // assume top for array elements (array elements are not stored in state)
           //cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<"skip:"<<getSkipArrayAccesses()<<endl;
           if(rhsResult.value().isTop()||getSkipArrayAccesses()==true) {
-            // set result to top when index is top
+            // set result to top when index is top [imprecision]
             res.result=AType::Top();
             res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
             resultList.push_back(res);
