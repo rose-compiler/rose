@@ -29,6 +29,7 @@
 #include "TransitionGraph.h"
 #include "PropertyValueTable.h"
 #include "CTIOLabeler.h"
+#include "VariableValueMonitor.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
@@ -60,35 +61,6 @@ namespace CodeThorn {
   typedef std::list<const EState*> EStateWorkList;
   typedef std::pair<int, const EState*> FailedAssertion;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
-
-  class Analyzer;
-
-  class VariableValueMonitor {
-  public:
-    enum VariableMode { VARMODE_FORCED_TOP, VARMODE_ADAPTIVE_TOP, VARMODE_PRECISE, VARMODE_FORCED_PRECISE};
-    VariableValueMonitor();
-    void setThreshold(size_t threshold);
-    size_t getThreshold();
-    bool isActive();
-    // the init function only uses the variableIds of a given estate (not its values) for initialization
-    void init(const EState* estate);
-    void init(const PState* pstate);
-    VariableIdSet getHotVariables(Analyzer* analyzer, const EState* estate);
-    VariableIdSet getHotVariables(Analyzer* analyzer, const PState* pstate);
-    VariableIdSet getVariables();
-    void setVariableMode(VariableMode,VariableId);
-    VariableMode getVariableMode(VariableId);
-    void update(Analyzer* analyzer, EState* estate);
-    bool isHotVariable(Analyzer* analyzer, VariableId varId);
-    std::string toString(VariableIdMapping* variableIdMapping);
-#if 0
-    bool isVariableBeyondTreshold(Analyzer* analyzer, VariableId varId);
-#endif
-  private:
-    std::map<VariableId,std::set<int>* > _variablesMap;
-    std::map<VariableId,VariableMode> _variablesModeMap;
-    long int _threshold;
-  };
 
 /*! 
   * \author Markus Schordan
