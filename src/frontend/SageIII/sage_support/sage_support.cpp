@@ -1097,6 +1097,9 @@ cout.flush();
                                 // Note that file->get_requires_C_preprocessor() should be false.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
+#if 0
+                                   printf ("In determineFileType(): Processing as a CUDA file \n");
+#endif
                                  }
                                 else if ( CommandlineProcessing::isOpenCLFileNameSuffix(filenameExtension) == true )
                                  {

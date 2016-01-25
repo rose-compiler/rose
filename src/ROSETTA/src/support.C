@@ -1245,6 +1245,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
+  // (this is part of the internal testing of the new (experimental) Fortran support).
+     File.setDataPrototype("bool", "experimental_fortran_frontend_OFP_test", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // To be consistent with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
   // functions so that we can support the more common (previous) interface where there was only a single

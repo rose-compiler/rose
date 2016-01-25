@@ -7442,33 +7442,55 @@ SageBuilder::buildTypeTraitBuiltinOperator(SgName functionName, SgNodePtrList pa
 
 
 //! Build a CUDA kernel call expression (kernel<<<config>>>(parameters))
-SgCudaKernelCallExp * SageBuilder::buildCudaKernelCallExp_nfi(SgExpression * kernel, SgExprListExp* parameters, SgCudaKernelExecConfig * config) {
-  ROSE_ASSERT(kernel);
-  ROSE_ASSERT(parameters);
-  ROSE_ASSERT(config);
+SgCudaKernelCallExp * SageBuilder::buildCudaKernelCallExp_nfi(SgExpression * kernel, SgExprListExp* parameters, SgCudaKernelExecConfig * config) 
+   {
+     ROSE_ASSERT(kernel);
+     ROSE_ASSERT(parameters);
+     ROSE_ASSERT(config);
 
-  SgFunctionRefExp * func_ref_exp = isSgFunctionRefExp(kernel);
-  if (!func_ref_exp) {
-    std::cerr << "SgCudaKernelCallExp accept only direct reference to a function." << std::endl;
-    ROSE_ASSERT(false);
-  }
-  if (!(func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel())) {
-    std::cerr << "To build a SgCudaKernelCallExp the callee need to be a kernel (having \"__global__\" attribute)." << std::endl;
-    ROSE_ASSERT(false);
-  }
+  // DQ (1/19/2016): Adding template function ref support.
+     SgFunctionRefExp * func_ref_exp = isSgFunctionRefExp(kernel);
+     SgTemplateFunctionRefExp * template_func_ref_exp = isSgTemplateFunctionRefExp(kernel);
+  // if (func_ref_exp == NULL)
+     if (func_ref_exp == NULL && template_func_ref_exp == NULL)
+        {
+#if 1
+          printf ("Error: SageBuilder::buildCudaKernelCallExp_nfi(): kernel = %p = %s \n",kernel,kernel->class_name().c_str());
+#endif
+          std::cerr << "SgCudaKernelCallExp accept only direct reference to a function." << std::endl;
+          ROSE_ASSERT(false);
+        }
 
-  SgCudaKernelCallExp * kernel_call_expr = new SgCudaKernelCallExp(kernel, parameters, kernel->get_type(), config);
+  // DQ (1/19/2016): Adding template function ref support.
+  // if (!(func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel()))
+     if ( (func_ref_exp          != NULL && func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel() == false) &&
+          (template_func_ref_exp != NULL && template_func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel() == false) )
+        {
+#if 1
+          printf ("Error: SageBuilder::buildCudaKernelCallExp_nfi(): kernel = %p = %s \n",kernel,kernel->class_name().c_str());
+          if (func_ref_exp != NULL)
+               printf ("func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel() = %s \n",
+                    func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel() ? "true" : "false");
+          if (template_func_ref_exp != NULL)
+               printf ("template_func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel() = %s \n",
+                    template_func_ref_exp->get_symbol_i()->get_declaration()->get_functionModifier().isCudaKernel() ? "true" : "false");
+#endif
+          std::cerr << "To build a SgCudaKernelCallExp the callee needs to be a kernel (having \"__global__\" attribute)." << std::endl;
+          ROSE_ASSERT(false);
+        }
 
-  kernel->set_parent(kernel_call_expr);
-  parameters->set_parent(kernel_call_expr);
-  config->set_parent(kernel_call_expr);
+     SgCudaKernelCallExp * kernel_call_expr = new SgCudaKernelCallExp(kernel, parameters, kernel->get_type(), config);
 
-  setOneSourcePositionNull(kernel_call_expr);
+     kernel->set_parent(kernel_call_expr);
+     parameters->set_parent(kernel_call_expr);
+     config->set_parent(kernel_call_expr);
 
-  ROSE_ASSERT(kernel_call_expr);
+     setOneSourcePositionNull(kernel_call_expr);
 
-  return kernel_call_expr;  
-}
+     ROSE_ASSERT(kernel_call_expr);
+
+     return kernel_call_expr;  
+   }
 
 //! Build a CUDA kernel execution configuration (<<<grid, blocks, shared, stream>>>)
 SgCudaKernelExecConfig * SageBuilder::buildCudaKernelExecConfig_nfi(SgExpression *grid, SgExpression *blocks, SgExpression *shared, SgExpression *stream) {

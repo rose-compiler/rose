@@ -1,0 +1,82 @@
+module SgUntyped
+
+signature
+  constructors
+                                                    : SgLocatedNode -> SgNode
+                                                    : SgLocatedNodeSupport -> SgLocatedNode
+                                                    : SgUntypedNode -> SgLocatedNodeSupport
+    SgUntypedAttribute                              : Int * String -> SgUntypedAttribute
+    SgUntypedInitializedName                        : SgUntypedType * String -> SgUntypedInitializedName
+    SgUntypedFile                                   : SgUntypedGlobalScope -> SgUntypedFile
+    SgUntypedStatementList                          : ListStarOfSgUntypedStatement -> SgUntypedStatementList
+    SgUntypedFunctionDeclarationList                : ListStarOfSgUntypedFunctionDeclaration -> SgUntypedFunctionDeclarationList
+    SgUntypedInitializedNameList                    : ListStarOfSgUntypedInitializedName -> SgUntypedInitializedNameList
+    SgUntypedValueExpression                        : Int * String * SgUntypedType -> SgUntypedValueExpression
+    SgUntypedArrayReferenceExpression               : Int -> SgUntypedArrayReferenceExpression
+    SgUntypedOtherExpression                        : Int -> SgUntypedOtherExpression
+    SgUntypedFunctionCallOrArrayReferenceExpression : Int -> SgUntypedFunctionCallOrArrayReferenceExpression
+                                                    : SgUntypedUnaryOperator -> SgUntypedExpression
+                                                    : SgUntypedBinaryOperator -> SgUntypedExpression
+                                                    : SgUntypedValueExpression -> SgUntypedExpression
+                                                    : SgUntypedArrayReferenceExpression -> SgUntypedExpression
+                                                    : SgUntypedOtherExpression -> SgUntypedExpression
+                                                    : SgUntypedFunctionCallOrArrayReferenceExpression -> SgUntypedExpression
+                                                    : SgUntypedReferenceExpression -> SgUntypedExpression
+    SgUntypedReferenceExpression                    : Int * String -> SgUntypedReferenceExpression
+    SgUntypedAssignmentStatement                    : String * Int * SgUntypedExpression * SgUntypedExpression -> SgUntypedAssignmentStatement
+    SgUntypedFunctionCallStatement                  : String * Int -> SgUntypedFunctionCallStatement
+    SgUntypedNamedStatement                         : String * Int * String -> SgUntypedNamedStatement
+    SgUntypedOtherStatement                         : String * Int -> SgUntypedOtherStatement
+                                                    : SgUntypedDeclarationStatement -> SgUntypedStatement
+                                                    : SgUntypedAssignmentStatement -> SgUntypedStatement
+                                                    : SgUntypedFunctionCallStatement -> SgUntypedStatement
+                                                    : SgUntypedBlockStatement -> SgUntypedStatement
+                                                    : SgUntypedNamedStatement -> SgUntypedStatement
+                                                    : SgUntypedOtherStatement -> SgUntypedStatement
+                                                    : SgUntypedScope -> SgUntypedStatement
+    SgUntypedImplicitDeclaration                    : String * Int -> SgUntypedImplicitDeclaration
+    SgUntypedVariableDeclaration                    : String * Int * SgUntypedType * SgUntypedInitializedNameList -> SgUntypedVariableDeclaration
+                                                    : SgUntypedImplicitDeclaration -> SgUntypedDeclarationStatement
+                                                    : SgUntypedVariableDeclaration -> SgUntypedDeclarationStatement
+                                                    : SgUntypedFunctionDeclaration -> SgUntypedDeclarationStatement
+                                                    : SgUntypedModuleDeclaration -> SgUntypedDeclarationStatement
+    SgUntypedModuleDeclaration                      : String * Int * String * SgUntypedModuleScope * SgUntypedNamedStatement -> SgUntypedModuleDeclaration
+    SgUntypedProgramHeaderDeclaration               : String * Int * String * SgUntypedInitializedNameList * SgUntypedType * SgUntypedFunctionScope * SgUntypedNamedStatement -> SgUntypedProgramHeaderDeclaration
+                                                    : SgUntypedProgramHeaderDeclaration -> SgUntypedFunctionDeclaration
+                                                    : SgUntypedSubroutineDeclaration -> SgUntypedFunctionDeclaration
+    SgUntypedSubroutineDeclaration                  : String * Int * String * SgUntypedInitializedNameList * SgUntypedType * SgUntypedFunctionScope * SgUntypedNamedStatement -> SgUntypedSubroutineDeclaration
+    SgUntypedFunctionScope                          : String * Int * SgUntypedDeclarationStatementList * SgUntypedStatementList * SgUntypedFunctionDeclarationList -> SgUntypedFunctionScope
+    SgUntypedModuleScope                            : String * Int * SgUntypedDeclarationStatementList * SgUntypedStatementList * SgUntypedFunctionDeclarationList -> SgUntypedModuleScope
+    SgUntypedGlobalScope                            : String * Int * SgUntypedDeclarationStatementList * SgUntypedStatementList * SgUntypedFunctionDeclarationList -> SgUntypedGlobalScope
+                                                    : SgUntypedExpression -> SgUntypedNode
+                                                    : SgUntypedStatement -> SgUntypedNode
+                                                    : SgUntypedType -> SgUntypedNode
+                                                    : SgUntypedAttribute -> SgUntypedNode
+                                                    : SgUntypedInitializedName -> SgUntypedNode
+                                                    : SgUntypedFile -> SgUntypedNode
+                                                    : SgUntypedStatementList -> SgUntypedNode
+                                                    : SgUntypedFunctionDeclarationList -> SgUntypedNode
+                                                    : SgUntypedInitializedNameList -> SgUntypedNode
+                                                    : SgUntypedDeclarationStatementList -> SgUntypedNode
+    SgUntypedDeclarationStatementList               : ListStarOfSgUntypedDeclarationStatement -> SgUntypedDeclarationStatementList
+                                                    : SgUntypedFunctionScope -> SgUntypedScope
+                                                    : SgUntypedModuleScope -> SgUntypedScope
+                                                    : SgUntypedGlobalScope -> SgUntypedScope
+    SgUntypedScope                                  : String * Int * SgUntypedDeclarationStatementList * SgUntypedStatementList * SgUntypedFunctionDeclarationList -> SgUntypedScope
+    SgUntypedBlockStatement                         : String * Int * String * SgUntypedScope * SgUntypedNamedStatement -> SgUntypedBlockStatement
+    SgUntypedUnaryOperator                          : Int * Int * String * SgUntypedExpression -> SgUntypedUnaryOperator
+    SgUntypedBinaryOperator                         : Int * Int * String * SgUntypedExpression * SgUntypedExpression -> SgUntypedBinaryOperator
+    SgUntypedType                                   : String -> SgUntypedType
+
+
+signature
+  constructors
+    Some : a -> Option(a)
+    None : Option(a)
+
+
+signature
+  constructors
+    Cons : a * List(a) -> List(a)
+    Nil  : List(a)
+    Conc : List(a) * List(a) -> List(a)

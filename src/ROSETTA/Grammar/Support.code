@@ -14979,8 +14979,12 @@ X aggressive
   // function is called as part of the user's translator.
      p_skipAstConsistancyTests = false;
 
-  // DQ (6/7/2013): Added support for using experimental forntran frontend.
+  // DQ (6/7/2013): Added support for using experimental fortran frontend.
      p_experimental_fortran_frontend = false;
+
+  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
+  // (this is part of the internal testing of the new (experimental) Fortran support).
+     p_experimental_fortran_frontend_OFP_test = false;
 
   // DQ (4/17/2015): Adding multifile handling support for commandline generation.
      p_multifile_support = false;
@@ -15589,7 +15593,8 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_skipAstConsistancyTests              = %s \n",(p_skipAstConsistancyTests == true) ? "true" : "false");
 
   // DQ (6/8/2013): Added support for experimental fortran frontend.
-     printf ("     p_experimental_fortran_frontend        = %s \n",(p_experimental_fortran_frontend == true) ? "true" : "false");
+     printf ("     p_experimental_fortran_frontend          = %s \n",(p_experimental_fortran_frontend == true) ? "true" : "false");
+     printf ("     p_experimental_fortran_frontend_OFP_test = %s \n",(p_experimental_fortran_frontend_OFP_test == true) ? "true" : "false");
 
   // DQ (4/17/2015): Adding multifile handling support for commandline generation.
      printf ("     p_multifile_support                    = %s \n",(p_multifile_support == true) ? "true" : "false");
