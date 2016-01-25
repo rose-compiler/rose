@@ -205,6 +205,7 @@ namespace CodeThorn {
     void runSolver10();
     void runSolver11();
     void runSolver();
+    void subSolver(const EState* currentEStatePtr);
     //! The analyzer requires a CFAnalysis to obtain the ICFG.
     void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
     CFAnalysis* getCFAnalyzer() const { return cfanalyzer; }

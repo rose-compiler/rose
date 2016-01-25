@@ -133,6 +133,7 @@ void Analyzer::runSolver() {
   case 8: runSolver8();break;
   case 9: runSolver9();break;
   case 10: runSolver10();break;
+  case 11: runSolver11();break;
   default: cerr<<"Error: solver "<<_solver<<" does not exist."<<endl;
     exit(1);
   }
@@ -2131,7 +2132,7 @@ void Analyzer::runSolver4() {
         assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
       } else {
         assert(currentEStatePtr);
-      
+	
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
         //cerr << "DEBUG: edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
@@ -2184,7 +2185,6 @@ void Analyzer::runSolver4() {
 	      } else {
                 // assert without label
 	      }
-              
             }
           } // end of loop on transfer function return-estates
         } // just for proper auto-formatting in emacs
@@ -2303,7 +2303,7 @@ void Analyzer::runSolver5() {
         if(variableValueMonitor.isActive()) {
           variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
         }
-        
+	
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
         //cerr << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
@@ -2341,47 +2341,47 @@ void Analyzer::runSolver5() {
                 addToWorkList(newEStatePtr);
               recordTransition(currentEStatePtr,e,newEStatePtr);
             }
-              if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
-                // failed-assert end-state: do not add to work list but do add it to the transition graph
-                const EState* newEStatePtr;
-                newEStatePtr=processNewOrExisting(newEState);
-                recordTransition(currentEStatePtr,e,newEStatePtr);        
+	    if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
+	      // failed-assert end-state: do not add to work list but do add it to the transition graph
+	      const EState* newEStatePtr;
+	      newEStatePtr=processNewOrExisting(newEState);
+	      recordTransition(currentEStatePtr,e,newEStatePtr);        
               
-                if(isVerificationErrorEState(&newEState)) {
+	      if(isVerificationErrorEState(&newEState)) {
 #pragma omp critical
-                  {
+		{
                   cout<<"STATUS: detected verification error state ... terminating early"<<endl;
                   // set flag for terminating early
 		  reachabilityResults.reachable(0);
                   terminateEarly=true;
-                  }
-                } else if(isFailedAssertEState(&newEState)) {
-                  // record failed assert
-                  int assertCode;
-                  if(boolOptions["rers-binary"]) {
-                    assertCode=reachabilityAssertCode(newEStatePtr);
-                  } else {
-                    assertCode=reachabilityAssertCode(currentEStatePtr);
-                  }  
-                  if(assertCode>=0) {
+		}
+	      } else if(isFailedAssertEState(&newEState)) {
+		// record failed assert
+		int assertCode;
+		if(boolOptions["rers-binary"]) {
+		  assertCode=reachabilityAssertCode(newEStatePtr);
+		} else {
+		  assertCode=reachabilityAssertCode(currentEStatePtr);
+		}  
+		if(assertCode>=0) {
 #pragma omp critical
-                    {
-                      if(boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) { 
-                        //if this particular assertion was never reached before, compute and update counterexample
-                        if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
-                          _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
-                        } 
-                      }
-                      reachabilityResults.reachable(assertCode);
-                    }
-                  } else {
-                    // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
-                    if(!boolOptions["rersmode"]) {
-                      // assert without label
-                    }
-                  }
-                } // end of failed assert handling
-              } // end of if (no disequality (= no infeasable path))
+		  {
+		    if(boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) { 
+		      //if this particular assertion was never reached before, compute and update counterexample
+		      if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
+			_firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
+		      } 
+		    }
+		    reachabilityResults.reachable(assertCode);
+		  }
+		} else {
+		  // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
+		  if(!boolOptions["rersmode"]) {
+		    // assert without label
+		  }
+		}
+	      } // end of failed assert handling
+	    } // end of if (no disequality (= no infeasable path))
           } // end of loop on transfer function return-estates
         } // edge set iterator
       } // conditional: test if work is available
@@ -2638,10 +2638,10 @@ void Analyzer::runSolver10() {
         cout << "STATUS: #processed PStates: " << processedStates << "   currentMaxDepth: " << currentMaxDepth << "   wl size: " << workList.size() << endl;
         previousProcessedStates=processedStates;
       }
-      // updated workVector
-      bool isEmptyWorkList;
-      #pragma omp critical(SOLVERNINEWL)
-      {
+// updated workVector
+bool isEmptyWorkList;
+#pragma omp critical(SOLVERNINEWL)
+ {
         isEmptyWorkList = (workList.empty());
       }
       if(isEmptyWorkList || earlyTermination) {
@@ -2650,7 +2650,7 @@ void Analyzer::runSolver10() {
           workVector[threadNum]=false;
         }
         continue;
-      } else {
+    } else {
 #pragma omp critical(SOLVERNINEWV)
         {
           workVector[threadNum]=true;
@@ -2659,7 +2659,7 @@ void Analyzer::runSolver10() {
       // pop worklist
       PStatePlusIOHistory currentState;
       bool nextElement;
-      #pragma omp critical(SOLVERNINEWL)
+#pragma omp critical(SOLVERNINEWL)
       {
         if(!workList.empty()) {
           processedStates++;
@@ -2671,7 +2671,7 @@ void Analyzer::runSolver10() {
         }
       }
       if (!nextElement) {
-        assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
+	assert(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
         continue;
       }
       // generate one new state for each input symbol and continue searching for patterns
@@ -2695,13 +2695,13 @@ void Analyzer::runSolver10() {
           assert(index>=0 && index <=99);
           if (_patternSearchAssertTable->getPropertyValue(index) == PROPERTY_VALUE_YES) {
             // report the result and add it to the results table
-            #pragma omp critical(CSV_ASSERT_RESULTS)
+#pragma omp critical(CSV_ASSERT_RESULTS)
             {
-              if (reachabilityResults.getPropertyValue(index) == PROPERTY_VALUE_UNKNOWN) {
-                cout << "STATUS: found a trace leading to failing assertion #" << index; 
-                cout << " (no pattern. total input length: " << ((newHistory.size()+1) / 2) << ")." << endl;
-                string ce = convertToCeString(newHistory, maxInputVal);
-                reachabilityResults.setPropertyValue(index, PROPERTY_VALUE_YES);
+	      if (reachabilityResults.getPropertyValue(index) == PROPERTY_VALUE_UNKNOWN) {
+		cout << "STATUS: found a trace leading to failing assertion #" << index; 
+		cout << " (no pattern. total input length: " << ((newHistory.size()+1) / 2) << ")." << endl;
+		string ce = convertToCeString(newHistory, maxInputVal);
+		reachabilityResults.setPropertyValue(index, PROPERTY_VALUE_YES);
                 reachabilityResults.setCounterexample(index, ce);
               }
             }
@@ -2748,10 +2748,10 @@ void Analyzer::runSolver10() {
               if (stillAValidPath) {
                 int suffixDfsProcessedStates = pStateDepthFirstSearch(&newPState, _patternSearchMaxSuffixDepth, omp_get_thread_num(), 
                                                                       &newHistory, maxInputVal, patternInputs.size(), _patternSearchRepetitions);
-                #pragma omp critical(SOLVERNINEWL)
+#pragma omp critical(SOLVERNINEWL)
                 {
                   processedStates += suffixDfsProcessedStates;
-                }
+		}
               }
               // continue searching for patterns
               newPState = backupPState;
@@ -2763,7 +2763,7 @@ void Analyzer::runSolver10() {
           if ((newHistory.size() / 2) < (unsigned int) _patternSearchMaxDepth) {
             // add the new state to the worklist
             PStatePlusIOHistory newState = PStatePlusIOHistory(newPState, newHistory);
-            #pragma omp critical(SOLVERNINEWL)
+#pragma omp critical(SOLVERNINEWL)
             {
               currentMaxDepth = currentMaxDepth < newHistory.size() ? newHistory.size() : currentMaxDepth;
               if (_patternSearchExplorationMode == EXPL_DEPTH_FIRST) {
@@ -2778,15 +2778,59 @@ void Analyzer::runSolver10() {
           } else {
             ROSE_ASSERT(newHistory.size() / 2 == (unsigned int) _patternSearchMaxDepth);
           }
-        } // end of else-case "no assertion, continue searching"  
+	} // end of else-case "no assertion, continue searching"  
       } //end of "for each input value"-loop
     } // while
   } // omp parallel
   if (earlyTermination) {
     cout << "STATUS: solver 10 finished (found all assertions)." << endl;
   } else {
-    cout << "STATUS: solver 10 finished (empty worklist). " << endl;
+  cout << "STATUS: solver 10 finished (empty worklist). " << endl;
+ }
+}
+
+void Analyzer::subSolver(const EState* currentEStatePtr) {
+  if(variableValueMonitor.isActive()) {
+    variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
   }
+  Flow edgeSet=flow.outEdges(currentEStatePtr->label());
+  for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
+    Edge e=*i;
+    list<EState> newEStateList;
+    newEStateList=transferFunction(e,currentEStatePtr);
+    for(list<EState>::iterator nesListIter=newEStateList.begin();
+	nesListIter!=newEStateList.end();
+	++nesListIter) {
+      // newEstate is passed by value (not created yet)
+      EState newEState=*nesListIter;
+      ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
+      
+      if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
+	HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
+	const EState* newEStatePtr=pres.second;
+	if(pres.first==true)
+	  addToWorkList(newEStatePtr);
+	recordTransition(currentEStatePtr,e,newEStatePtr);
+      }
+      if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
+	// failed-assert end-state: do not add to work list but do add it to the transition graph
+	const EState* newEStatePtr;
+	newEStatePtr=processNewOrExisting(newEState);
+	recordTransition(currentEStatePtr,e,newEStatePtr);        
+        
+	if(isVerificationErrorEState(&newEState)) {
+	  cout<<"STATUS: detected verification error state ... terminating early"<<endl;
+	  // set flag for terminating early
+	  reachabilityResults.reachable(0);
+	  break;
+	} else if(isFailedAssertEState(&newEState)) {
+	  // record failed assert
+	  //int assertCode;
+	  //assertCode=reachabilityAssertCode(currentEStatePtr);
+	} // end of failed assert handling
+      } // end of if (no disequality (= no infeasable path))
+    } // end of loop on transfer function return-estates
+  } // edge set iterator
 }
 
 void Analyzer::runSolver11() {
@@ -2800,57 +2844,16 @@ void Analyzer::runSolver11() {
   cout <<"STATUS: Running sequential solver 11 with 1 thread."<<endl;
   printStatusMessage(true);
   while(!isEmptyWorkList()) {
-     if(_displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
-        printStatusMessage(true);
-        prevStateSetSize=estateSet.size();
-      }
-      const EState* currentEStatePtr=popWorkList();
-        assert(currentEStatePtr);
-        if(variableValueMonitor.isActive()) {
-          variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
-        }
-        
-        Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-        for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
-          Edge e=*i;
-          list<EState> newEStateList;
-          newEStateList=transferFunction(e,currentEStatePtr);
-          for(list<EState>::iterator nesListIter=newEStateList.begin();
-              nesListIter!=newEStateList.end();
-              ++nesListIter) {
-            // newEstate is passed by value (not created yet)
-            EState newEState=*nesListIter;
-            ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
-
-            if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
-              HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
-              const EState* newEStatePtr=pres.second;
-              if(pres.first==true)
-                addToWorkList(newEStatePtr);
-              recordTransition(currentEStatePtr,e,newEStatePtr);
-            }
-              if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
-                // failed-assert end-state: do not add to work list but do add it to the transition graph
-                const EState* newEStatePtr;
-                newEStatePtr=processNewOrExisting(newEState);
-                recordTransition(currentEStatePtr,e,newEStatePtr);        
-              
-                if(isVerificationErrorEState(&newEState)) {
-                  cout<<"STATUS: detected verification error state ... terminating early"<<endl;
-                  // set flag for terminating early
-		  reachabilityResults.reachable(0);
-                  break;
-                } else if(isFailedAssertEState(&newEState)) {
-                  // record failed assert
-                  //int assertCode;
-		  //assertCode=reachabilityAssertCode(currentEStatePtr);
-                } // end of failed assert handling
-              } // end of if (no disequality (= no infeasable path))
-          } // end of loop on transfer function return-estates
-	} // edge set iterator
-    } // while loop
-    printStatusMessage(true);
-    cout << "analysis finished (worklist is empty)."<<endl;
+    if(_displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
+      printStatusMessage(true);
+      prevStateSetSize=estateSet.size();
+    }
+    const EState* currentEStatePtr=popWorkList();
+    assert(currentEStatePtr);
+    subSolver(currentEStatePtr);
+  } // while loop
+  printStatusMessage(true);
+  cout << "analysis finished (worklist is empty)."<<endl;
 }
 
 bool Analyzer::searchForIOPatterns(PState* startPState, int assertion_id, list<int>& inputSuffix, list<int>* partialTrace,
