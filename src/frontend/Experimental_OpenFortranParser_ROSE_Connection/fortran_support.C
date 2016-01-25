@@ -240,6 +240,12 @@ experimental_openFortranParser_main(int argc, char **argv)
 
      bool process_using_ofp_roundtrip_support = OpenFortranParser_globalFilePointer->get_experimental_fortran_frontend_OFP_test();
 
+#if DEBUG_ROSE_EXPERIMENTAL
+     printf ("filenameWithPath    = %s \n",filenameWithPath.c_str());
+     printf ("filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
+#endif
+
+#if 0
      if (process_using_ofp_roundtrip_support == false)
         {
           commandString += path_to_fortran_aterm_traversal_directory;
@@ -277,11 +283,6 @@ experimental_openFortranParser_main(int argc, char **argv)
           commandString += "pretty_print" + filenameWithoutPath;
         }
 
-#if DEBUG_ROSE_EXPERIMENTAL
-     printf ("filenameWithPath    = %s \n",filenameWithPath.c_str());
-     printf ("filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
-#endif
-
   // make sure there is a parse table
   // if (parse_table[0] == '\0')
      if (parse_table.empty() == true)
@@ -305,6 +306,61 @@ experimental_openFortranParser_main(int argc, char **argv)
           fprintf(stderr, "fortran_parser: error parsing file %s\n", argv[i]);
           return err;
         }
+#else
+     string command_prefix = commandString;
+
+     commandString += path_to_fortran_aterm_traversal_directory;
+     commandString += "/fast2sage";
+
+  // Generate the aterm
+     commandString += " -o ";
+     commandString += filenameWithoutPath;
+     commandString += ".aterm";
+
+     err = system(commandString.c_str());
+
+     if (err != 0)
+        {
+          fprintf(stderr, "fortran_parser: error parsing file (generation of aterm) %s\n", argv[i]);
+          return err;
+        }
+
+     if (process_using_ofp_roundtrip_support == true)
+        {
+       // Reset the commandString
+          commandString = command_prefix;
+
+          commandString += path_to_fortran_stratego_transformations_directory;
+          commandString += "/fast2pp";
+
+          commandString += " | ";
+
+       // Generate the text file from the aterm (using the stratego tool).
+          commandString += "ast2text";
+
+       // Add the table
+          commandString += " -p ";
+       // string path_to_fortran_pretty_print_directory = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/pretty_print", "bin");
+          string path_to_fortran_pretty_print_directory = ROSE_AUTOMAKE_TOP_SRCDIR + "/src/3rdPartyLibraries/experimental-fortran-parser/pretty_print";
+          commandString += path_to_fortran_pretty_print_directory;
+          commandString += "/Fortran.pp";
+
+       // Generate a text file with prefix.
+          commandString += " -o ";
+          commandString += "pretty_print_" + filenameWithoutPath;
+
+#if DEBUG_ROSE_EXPERIMENTAL
+     printf ("In experimental_openFortranParser_main(): commandString = %s \n",commandString.c_str());
+#endif
+          err = system(commandString.c_str());
+
+          if (err)
+             {
+               fprintf(stderr, "fortran_parser: error parsing file (generation of pretty printed fortran code)  %s\n", argv[i]);
+               return err;
+             }
+       }
+#endif
 
   // At this point we have a valid aterm file in the working (current) directory.
   // We have to read that aterm file and generate an uninterpreted AST, then iterate

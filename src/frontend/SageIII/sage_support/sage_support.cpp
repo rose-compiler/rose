@@ -976,15 +976,18 @@ cout.flush();
 
                if (CommandlineProcessing::isFortran2008FileNameSuffix(filenameExtension) == true)
                   {
-                    printf ("Sorry, Fortran 2008 specific support is not yet implemented in ROSE ... \n");
-                    ROSE_ASSERT(false);
+                 // printf ("Sorry, Fortran 2008 specific support is not yet implemented in ROSE ... \n");
+                 // ROSE_ASSERT(false);
 
                  // This is not yet supported.
                  // file->set_sourceFileUsesFortran2008FileExtension(true);
+                    file->set_sourceFileUsesFortran2008FileExtension(true);
 
                  // Use the filename suffix as a default means to set this value
                     file->set_outputFormat(SgFile::e_free_form_output_format);
                     file->set_backendCompileFormat(SgFile::e_free_form_output_format);
+
+                    file->set_F2008_only(true);
                   }
              }
             else
@@ -3422,11 +3425,24 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                   }
                  else
                   {
-                 // This should be the default mode (fortranMode string is empty). So is it f77?
+                    if (get_F2008_only() == true)
+                       {
+                      // fortranCommandLine.push_back("-std=f2003");
+                         if (relaxSyntaxCheckInputCode == false)
+                            {
+                           // DQ (1/25/2016): We need to consider making a strict syntax checking option and allowing this to be relaxed
+                           // by default.  It is however not clear that this is required for F2008 code where it does appear to be required
+                           // for F90 code.  So this needs to be tested, see comments above relative to use of "-std=legacy".
+                              fortranCommandLine.push_back("-std=f2008");
+                            }
 
-                 // DQ (5/20/2008)
-                 // fortranCommandLine.push_back ("-ffixed-line-length-none");
-                    use_line_length_none_string = "-ffixed-line-length-none";
+                         use_line_length_none_string = "-ffree-line-length-none";
+                       }
+                      else
+                       {
+                      // This should be the default mode (fortranMode string is empty). So is it f77?
+                         use_line_length_none_string = "-ffixed-line-length-none";
+                       }
                   }
              }
 

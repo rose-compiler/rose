@@ -1,0 +1,9 @@
+TYPE, ABSTRACT, EXTENDS(truth) :: beauty
+END TYPE beauty
+TYPE, ABSTRACT :: ugly
+END TYPE ugly
+TYPE, ABSTRACT, BIND(C) :: lies
+END TYPE lies
+TYPE, ABSTRACT, EXTENDS(foo), BIND(C) :: bar
+END TYPE
+END PROGRAM
