@@ -26,65 +26,6 @@ using namespace std;
 
 #include "CollectionOperators.h"
 
-#define RERS_SPECIALIZATION
-
-CTIOLabeler::CTIOLabeler(SgNode* start, VariableIdMapping* variableIdMapping): SPRAY::IOLabeler(start, variableIdMapping) {
-}
-
-bool CTIOLabeler::isStdIOLabel(Label label) {
-  cerr<<"Warning: deprecated function: isStdIOLabel."<<endl;
-  return SPRAY::IOLabeler::isStdIOLabel(label);
-}
-
-bool CTIOLabeler::isStdInLabel(Label label, VariableId* id=0) {
-  if(SPRAY::IOLabeler::isStdInLabel(label,id)) {
-    return true;
-  } else if(isNonDetIntFunctionCall(label,id)) {
-    return true;
-  } else if(isNonDetLongFunctionCall(label,id)) {
-    return true;
-  }
-  return false;
-}
-
-// consider to use Analyzer* instead and query this information
-void CTIOLabeler::setExternalNonDetIntFunctionName(std::string name) {
-  _externalNonDetIntFunctionName=name;
-}
-
-void CTIOLabeler::setExternalNonDetLongFunctionName(std::string name) {
-  _externalNonDetLongFunctionName=name;
-}
-
-bool CTIOLabeler::isNonDetIntFunctionCall(Label lab,VariableId* varIdPtr){
-  return isFunctionCallWithName(lab,varIdPtr,_externalNonDetIntFunctionName);
-}
-
-bool CTIOLabeler::isNonDetLongFunctionCall(Label lab,VariableId* varIdPtr){
-  return isFunctionCallWithName(lab,varIdPtr,_externalNonDetLongFunctionName);
-}
-
-bool CTIOLabeler::isFunctionCallWithName(Label lab,VariableId* varIdPtr,string name){
-  SgNode* node=getNode(lab);
-  if(isFunctionCallLabel(lab)) {
-    std::pair<SgVarRefExp*,SgFunctionCallExp*> p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
-    if(p.first) {
-      string funName=SgNodeHelper::getFunctionName(p.second);
-      if(funName!=name) {
-	return false;
-      }
-      if(varIdPtr) {
-	*varIdPtr=_variableIdMapping->variableId(p.first);
-      }
-      return true;
-    }
-  }
-  return false;
-}
-
-CTIOLabeler::~CTIOLabeler() {
-}
-
 bool Analyzer::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
   //return _labeler->getLabeler()->isFunctionCallWithAssignment(lab,varIdPtr);
   SgNode* node=getLabeler()->getNode(lab);
@@ -643,7 +584,7 @@ bool Analyzer::isStartLabel(Label label) {
 bool Analyzer::isStdIOLabel(Label label) {
   bool t;
   t=
-    (getLabeler()->isStdInLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
+    (getLabeler()->isStdInLabel(label,0) && getLabeler()->isFunctionCallReturnLabel(label))
     || 
     (getLabeler()->isStdOutLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
     ;
@@ -1019,76 +960,74 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   assert(edge.source==estate->label());
   // we do not pass information on the local edge
   if(edge.isType(EDGE_LOCAL)) {
-    //#ifdef RERS_SPECIALIZATION
     if(boolOptions["rers-binary"]) {
-	  //cout<<"DEBUG: ESTATE: "<<estate->toString(&variableIdMapping)<<endl;
+      //cout<<"DEBUG: ESTATE: "<<estate->toString(&variableIdMapping)<<endl;
       SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source);
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
         assert(funCall);
         string funName=SgNodeHelper::getFunctionName(funCall);
         if(funName=="calculate_output") {
-            // RERS global vars binary handling
-            PState _pstate=*estate->pstate();
-            RERS_Problem::rersGlobalVarsCallInit(this,_pstate, omp_get_thread_num());
+	  // RERS global vars binary handling
+	  PState _pstate=*estate->pstate();
+	  RERS_Problem::rersGlobalVarsCallInit(this,_pstate, omp_get_thread_num());
 #if 0
-            //input variable passed as a parameter (obsolete since usage of script "transform_globalinputvar")
-            int rers_result=RERS_Problem::calculate_output(argument); 
-            (void) RERS_Problem::calculate_output(argument);
+	  //input variable passed as a parameter (obsolete since usage of script "transform_globalinputvar")
+	  int rers_result=RERS_Problem::calculate_output(argument); 
+	  (void) RERS_Problem::calculate_output(argument);
 #else
-            (void) RERS_Problem::calculate_output( omp_get_thread_num() );
-            int rers_result=RERS_Problem::output[omp_get_thread_num()];
+	  (void) RERS_Problem::calculate_output( omp_get_thread_num() );
+	  int rers_result=RERS_Problem::output[omp_get_thread_num()];
 #endif
-            //cout << "DEBUG: Called calculate_output("<<argument<<")"<<" :: result="<<rers_result<<endl;
-            if(rers_result<=-100) {
-              // we found a failing assert
-              // = rers_result*(-1)-100 : rers error-number
-              // = -160 : rers globalError (2012 only)
-              int index=((rers_result+100)*(-1));
-              assert(index>=0 && index <=99);
-              binaryBindingAssert[index]=true;
-              //reachabilityResults.reachable(index); //previous location in code
-              //cout<<"DEBUG: found assert Error "<<index<<endl;
-              ConstraintSet _cset=*estate->constraints();
-              InputOutput _io;
-              _io.recordFailedAssert();
-              // error label encoded in the output value, storing it in the new failing assertion EState
-              PState newPstate  = _pstate;
-              //newPstate[globalVarIdByName("output")]=CodeThorn::AType::ConstIntLattice(rers_result);
-              newPstate.setVariableToValue(globalVarIdByName("output"),
-                                           CodeThorn::AType::ConstIntLattice(rers_result));
-              EState _eState=createEState(edge.target,newPstate,_cset,_io);
-              return elistify(_eState);
-            }
-            RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate, omp_get_thread_num());
-            // TODO: _pstate[VariableId(output)]=rers_result;
-            // matches special case of function call with return value, otherwise handles call without return value (function call is matched above)
-            if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nodeToAnalyze)) {
-              SgNode* lhs=SgNodeHelper::getLhs(SgNodeHelper::getExprStmtChild(nodeToAnalyze));
-              VariableId lhsVarId;
-              bool isLhsVar=exprAnalyzer.variable(lhs,lhsVarId);
-              assert(isLhsVar); // must hold
-              //cout << "DEBUG: lhsvar:rers-result:"<<lhsVarId.toString()<<"="<<rers_result<<endl;
-              //_pstate[lhsVarId]=AType::ConstIntLattice(rers_result);
-              _pstate.setVariableToValue(lhsVarId,AType::ConstIntLattice(rers_result));
-              ConstraintSet _cset=*estate->constraints();
-              _cset.removeAllConstraintsOfVar(lhsVarId);
-              EState _eState=createEState(edge.target,_pstate,_cset);
-              return elistify(_eState);
-            } else {
-              ConstraintSet _cset=*estate->constraints();
-              EState _eState=createEState(edge.target,_pstate,_cset);
-              return elistify(_eState);
-            }
-            cout <<"PState:"<< _pstate<<endl;
-            cerr<<"RERS-MODE: call of unknown function."<<endl;
-            exit(1);
-            // _pstate now contains the current state obtained from the binary
+	  //cout << "DEBUG: Called calculate_output("<<argument<<")"<<" :: result="<<rers_result<<endl;
+	  if(rers_result<=-100) {
+	  // we found a failing assert
+	  // = rers_result*(-1)-100 : rers error-number
+	  // = -160 : rers globalError (2012 only)
+	  int index=((rers_result+100)*(-1));
+	  assert(index>=0 && index <=99);
+	  binaryBindingAssert[index]=true;
+	  //reachabilityResults.reachable(index); //previous location in code
+	  //cout<<"DEBUG: found assert Error "<<index<<endl;
+	  ConstraintSet _cset=*estate->constraints();
+	  InputOutput _io;
+	  _io.recordFailedAssert();
+	  // error label encoded in the output value, storing it in the new failing assertion EState
+	  PState newPstate  = _pstate;
+	  //newPstate[globalVarIdByName("output")]=CodeThorn::AType::ConstIntLattice(rers_result);
+	  newPstate.setVariableToValue(globalVarIdByName("output"),
+	    CodeThorn::AType::ConstIntLattice(rers_result));
+	  EState _eState=createEState(edge.target,newPstate,_cset,_io);
+	  return elistify(_eState);
+	}
+	  RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate, omp_get_thread_num());
+	  // TODO: _pstate[VariableId(output)]=rers_result;
+	  // matches special case of function call with return value, otherwise handles call without return value (function call is matched above)
+	  if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nodeToAnalyze)) {
+	  SgNode* lhs=SgNodeHelper::getLhs(SgNodeHelper::getExprStmtChild(nodeToAnalyze));
+	  VariableId lhsVarId;
+	  bool isLhsVar=exprAnalyzer.variable(lhs,lhsVarId);
+	  assert(isLhsVar); // must hold
+	  //cout << "DEBUG: lhsvar:rers-result:"<<lhsVarId.toString()<<"="<<rers_result<<endl;
+	  //_pstate[lhsVarId]=AType::ConstIntLattice(rers_result);
+	  _pstate.setVariableToValue(lhsVarId,AType::ConstIntLattice(rers_result));
+	  ConstraintSet _cset=*estate->constraints();
+	  _cset.removeAllConstraintsOfVar(lhsVarId);
+	  EState _eState=createEState(edge.target,_pstate,_cset);
+	  return elistify(_eState);
+	} else {
+	  ConstraintSet _cset=*estate->constraints();
+	  EState _eState=createEState(edge.target,_pstate,_cset);
+	  return elistify(_eState);
+	}
+	  cout <<"PState:"<< _pstate<<endl;
+	  cerr<<"RERS-MODE: call of unknown function."<<endl;
+	  exit(1);
+	  // _pstate now contains the current state obtained from the binary
         }
-        //cout << "DEBUG: @LOCAL_EDGE: function call:"<<SgNodeHelper::nodeToString(funCall)<<endl;
-      }
-    }
-	  //#endif
-    return elistify();
+	  //cout << "DEBUG: @LOCAL_EDGE: function call:"<<SgNodeHelper::nodeToString(funCall)<<endl;
+	}
+	}
+	  return elistify();
 	}
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
@@ -1226,7 +1165,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
     }
     // case 2: x=f(); bind variable x to value of $return
     if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nextNodeToAnalyze1)) {
-#ifdef RERS_SPECIALIZATION
       if(boolOptions["rers-binary"]) {
         if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
           string funName=SgNodeHelper::getFunctionName(funCall);
@@ -1237,7 +1175,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           }
         }
       }
-#endif
       SgNode* lhs=SgNodeHelper::getLhs(SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1));
       VariableId lhsVarId;
       bool isLhsVar=exprAnalyzer.variable(lhs,lhsVarId);
@@ -2246,7 +2183,6 @@ string Analyzer::generateSpotSTG() {
 }
 
 int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
-#ifdef RERS_SPECIALIZATION
   if(boolOptions["rers-binary"]) {
     PState* pstate = const_cast<PState*>( (currentEStatePtr)->pstate() ); 
     int outputVal = (*pstate)[globalVarIdByName("output")].getIntValue();
@@ -2257,7 +2193,6 @@ int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
     assert(assertCode>=0 && assertCode <=99); 
     return assertCode;
   }
-#endif
   string name=labelNameOfAssertLabel(currentEStatePtr->label());
   if(name.size()==0)
     return -1;
@@ -2438,14 +2373,13 @@ void Analyzer::runSolver5() {
     ioReductionThreshold = args["io-reduction"].as<int>(); 
   }
 
-#ifdef RERS_SPECIALIZATION  
-  //initialize the global variable arrays in the linked binary version of the RERS problem
   if(boolOptions["rers-binary"]) {
+    //initialize the global variable arrays in the linked binary version of the RERS problem
     cout << "DEBUG: init of globals with arrays for "<< workers << " threads. " << endl;
     RERS_Problem::rersGlobalVarsArrayInit(workers);
     RERS_Problem::createGlobalVarAddressMaps(this);
   }
-#endif
+
   cout <<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
   printStatusMessage(true);
 # pragma omp parallel shared(workVector) private(threadNum)
@@ -2607,13 +2541,11 @@ void Analyzer::runSolver5() {
 // solver 8 is used to analyze traces of consecutively added input sequences 
 void Analyzer::runSolver8() {
   int workers = 1; //only one thread
-#ifdef RERS_SPECIALIZATION  
-  //initialize the global variable arrays in the linked binary version of the RERS problem
   if(boolOptions["rers-binary"]) {
+    //initialize the global variable arrays in the linked binary version of the RERS problem
     //cout << "DEBUG: init of globals with arrays for "<< workers << " threads. " << endl;
     RERS_Problem::rersGlobalVarsArrayInit(workers);
   }
-#endif
   while(!isEmptyWorkList()) {
     const EState* currentEStatePtr;
     //solver 8
@@ -2684,17 +2616,14 @@ void Analyzer::runSolver8() {
 typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
 
 void Analyzer::runSolver9() {
-#ifndef RERS_SPECIALIZATION
-  cout << "ERROR: solver 9 is only compatible with the hybrid analyzer." << endl;
-  ROSE_ASSERT(0);
-#endif
-#ifdef RERS_SPECIALIZATION
-  //initialize the global variable arrays in the linked binary version of the RERS problem
   if(boolOptions["rers-binary"]) {
+    //initialize the global variable arrays in the linked binary version of the RERS problem
     RERS_Problem::rersGlobalVarsArrayInit(_numberOfThreadsToUse);
     RERS_Problem::createGlobalVarAddressMaps(this);
+  } else {
+    cout << "ERROR: solver 9 is only compatible with the hybrid analyzer." << endl;
+    exit(1);
   }
-#endif
   flow.boostify();
   reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
   cout<<"INFO: number of error labels: "<<reachabilityResults.size()<<endl;
@@ -2762,17 +2691,14 @@ void Analyzer::runSolver9() {
 }
 
 void Analyzer::runSolver10() {
-#ifndef RERS_SPECIALIZATION
-  cout << "ERROR: solver 10 is only compatible with the hybrid analyzer." << endl;
-  ROSE_ASSERT(0);
-#endif
-#ifdef RERS_SPECIALIZATION
-  //initialize the global variable arrays in the linked binary version of the RERS problem
   if(boolOptions["rers-binary"]) {
+    //initialize the global variable arrays in the linked binary version of the RERS problem
     RERS_Problem::rersGlobalVarsArrayInit(_numberOfThreadsToUse);
     RERS_Problem::createGlobalVarAddressMaps(this);
+  } else {
+    cout << "ERROR: solver 10 is only compatible with the hybrid analyzer." << endl;
+    exit(1);
   }
-#endif
   // display initial information
   int maxInputVal = *( std::max_element(_inputVarValues.begin(), _inputVarValues.end()) ); //required for parsing to characters
   flow.boostify();

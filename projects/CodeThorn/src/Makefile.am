@@ -98,6 +98,8 @@ codethorn_SOURCES = \
   CommandLineOptions.h             \
   ConstraintRepresentation.C       \
   ConstraintRepresentation.h       \
+  CTIOLabeler.h                    \
+  CTIOLabeler.C                    \
   EqualityMaintainer.h             \
   ExprAnalyzer.C                   \
   ExprAnalyzer.h                   \
@@ -165,6 +167,7 @@ addressTakenAnalysis_DEPENDENCIES=libspray.la
 
 # workaround to intentionally fool policy
 faketarget:
+	RersSpecialization.h
 	RERS_Problem10_specialization.C
 	RERS_Problem1_specialization.C
 	RERS_Problem2_specialization.C

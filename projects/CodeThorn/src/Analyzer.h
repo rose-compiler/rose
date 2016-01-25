@@ -28,27 +28,12 @@
 #include "StateRepresentations.h"
 #include "TransitionGraph.h"
 #include "PropertyValueTable.h"
+#include "CTIOLabeler.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
 
 namespace CodeThorn {
-
-  class CTIOLabeler : public SPRAY::IOLabeler {
-  public:
-    CTIOLabeler(SgNode* start, VariableIdMapping* variableIdMapping);
-    virtual bool isStdIOLabel(Label label);
-    virtual bool isStdInLabel(Label label, VariableId* id);
-    bool isNonDetIntFunctionCall(Label lab,VariableId* varIdPtr);
-    bool isNonDetLongFunctionCall(Label lab,VariableId* varIdPtr);
-    bool isFunctionCallWithName(Label lab,VariableId* varIdPtr, std::string name);
-    ~CTIOLabeler();
-    void setExternalNonDetIntFunctionName(std::string);
-    void setExternalNonDetLongFunctionName(std::string);
-  private:
-    std::string _externalNonDetIntFunctionName;
-    std::string _externalNonDetLongFunctionName;
-  };
 
 /*! 
   * \author Markus Schordan
