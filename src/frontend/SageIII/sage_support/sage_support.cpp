@@ -13,6 +13,7 @@
 #include "keep_going.h"
 #include "failSafePragma.h"
 #include "cmdline.h"
+#include "FileSystem.h"
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #   include "FortranModuleInfo.h"
@@ -3229,29 +3230,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                 preprocessFilename = string(temp) + ".F90"; free(temp);
              // copy source file to pseudonym file
                 try {
-#if (__cplusplus >= 201103L) 
-#if !defined(BOOST_COMPILED_WITH_CXX11)
-   #warning "Compiling ROSE with C++11 mode: BOOST NOT compiled with C++11 support."
-#else
-   #warning "Compiling ROSE with C++11 mode: BOOST WAS compiled with C++11 support."
-#endif
-#endif
-                   // DQ (10/20/2015): Boost support for copy_file() is not uniform acorss C++98 and C++11.
-                   // I think this need to be addressed seperately in ROSE.
-                   // boost::filesystem::copy_file(sourceFilename, preprocessFilename); 
-#if (__cplusplus >= 201103L) && !defined(BOOST_COMPILED_WITH_CXX11)
-                   // copy_file(sourceFilename, preprocessFilename); 
-                      printf ("Error: C++11 support for compiling ROSE requires BOOST to be compiled in C++11 mode! (required for copy_file() support) \n");
-                      ROSE_ASSERT(false);
-#else
-                      boost::filesystem::copy_file(sourceFilename, preprocessFilename); 
-#endif
-                    }
-                catch(exception &e)
-                {
-                  cout << "Error in copying file " << sourceFilename << " to " << preprocessFilename
-                       << " (" << e.what() << ")" << endl;
-                  ROSE_ASSERT(false);
+                    rose::FileSystem::copyFile(sourceFilename, preprocessFilename);
+                } catch(exception &e) {
+                    cerr << "Error in copying file " << sourceFilename << " to " << preprocessFilename
+                         << " (" << e.what() << ")" << endl;
+                    ROSE_ASSERT(false);
                 }
           fortran_C_preprocessor_commandLine.push_back(preprocessFilename);
 
@@ -5385,23 +5368,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                          boost::filesystem::remove(unparsed_file);
                        }
 
-#if (__cplusplus >= 201103L) 
-#if !defined(BOOST_COMPILED_WITH_CXX11)
-   #warning "Compiling ROSE with C++11 mode: BOOST NOT compiled with C++11 support."
-#else
-   #warning "Compiling ROSE with C++11 mode: BOOST WAS compiled with C++11 support."
-#endif
-#endif
-                 // DQ (10/20/2015): Boost support for copy_file() is not uniform acorss C++98 and C++11.
-                 // I think this need to be addressed seperately in ROSE.
-                 // boost::filesystem::copy_file(original_file,unparsed_file,boost::filesystem::copy_option::overwrite_if_exists);
-#if (__cplusplus >= 201103L) && !defined(BOOST_COMPILED_WITH_CXX11)
-                 // copy_file(original_file,unparsed_file,boost::filesystem::copy_option::overwrite_if_exists);
-                    printf ("Error: C++11 support for compiling ROSE requires BOOST to be compiled in C++11 mode! (required for copy_file() support) \n");
-                    ROSE_ASSERT(false);
-#else
-                    boost::filesystem::copy_file(original_file,unparsed_file,boost::filesystem::copy_option::overwrite_if_exists);
-#endif
+                    rose::FileSystem::copyFile(original_file, unparsed_file);
                   }
              }
 

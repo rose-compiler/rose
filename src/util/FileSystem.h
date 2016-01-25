@@ -145,6 +145,11 @@ std::vector<Path> findNamesRecursively(const Path &root, Select select) {
 std::vector<Path> findNamesRecursively(const Path &root);
 /** @} */
 
+/** Copy a file.
+ *
+ *  Copies the contents of the source file to the destination file, overwriting the destination file if it existed. */
+void copyFile(const Path &sourceFileName, const Path &destinationFileName);
+
 /** Copy files from one directory to another.
  *
  *  Each of the specified files are copied from their location under @p root to a similar location under @p
