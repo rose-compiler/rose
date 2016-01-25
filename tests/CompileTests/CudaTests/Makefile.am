@@ -3,6 +3,13 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 ../../testTranslator:
 	make -C ../.. testTranslator
 
+noinst_PROGRAMS = deviceTranformation
+
+deviceTranformation_SOURCES = deviceTranformation.C
+
+AM_CPPFLAGS = $(ROSE_INCLUDES)
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 CUDA_NO_BUILT_IN_CODES = \
 test_2011_01.cu \
 test_2011_02.cu
@@ -23,10 +30,20 @@ TESTCODES_Objects = ${TESTCODES:.cu=.o}
 $(TESTCODES_Objects): ../../testTranslator
 	../../testTranslator -rose:skipfinalCompileStep -c $(srcdir)/$(@:.o=.cu)
 
+
+testDeviceTransformation_01: deviceTranformation
+	./deviceTranformation -std=c++11 -rose:skipfinalCompileStep -c $(srcdir)/inputCode_01.cu
+
+testDeviceTransformation_02: deviceTranformation
+	./deviceTranformation -std=c++11 -rose:skipfinalCompileStep -c $(srcdir)/test2016_03.cu
+
+
 check-local:
 if ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
 	@echo "Tests C for CUDA support"
 	@$(MAKE) $(TESTCODES_Objects)
+	@$(MAKE) testDeviceTransformation_01
+	@$(MAKE) testDeviceTransformation_02
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/CudaTests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
