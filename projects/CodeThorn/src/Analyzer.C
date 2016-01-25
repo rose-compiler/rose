@@ -2789,48 +2789,62 @@ bool isEmptyWorkList;
  }
 }
 
-void Analyzer::subSolver(const EState* currentEStatePtr) {
-  if(variableValueMonitor.isActive()) {
-    variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
+EStateWorkList Analyzer::subSolver(const EState* currentEStatePtr) {
+  EStateWorkList localWorkList;
+  EStateWorkList deferedWorkList;
+  localWorkList.push_back(currentEStatePtr);
+  while(!localWorkList.empty()) {
+    //cout<<"DEBUG: local work list size: "<<localWorkList.size()<<endl;
+    const EState* currentEStatePtr=*localWorkList.begin();
+    localWorkList.pop_front();
+    Flow edgeSet=flow.outEdges(currentEStatePtr->label());
+    for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
+      Edge e=*i;
+      list<EState> newEStateList;
+      newEStateList=transferFunction(e,currentEStatePtr);
+      for(list<EState>::iterator nesListIter=newEStateList.begin();
+	  nesListIter!=newEStateList.end();
+	  ++nesListIter) {
+	// newEstate is passed by value (not created yet)
+	EState newEState=*nesListIter;
+	ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
+	
+	if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
+	  HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
+	  const EState* newEStatePtr=pres.second;
+	  if(pres.first==true) {
+	    if(isLTLRelevantLabel(newEStatePtr->label())) {
+	      deferedWorkList.push_back(newEStatePtr);
+	    } else {
+	      localWorkList.push_back(newEStatePtr);
+	    }
+	  }
+	  // TODO: create reduced transition set at end of this function
+	  recordTransition(currentEStatePtr,e,newEStatePtr);
+	}
+	if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
+	  // failed-assert end-state: do not add to work list but do add it to the transition graph
+	  const EState* newEStatePtr;
+	  newEStatePtr=processNewOrExisting(newEState);
+	  // TODO: create reduced transition set at end of this function
+	  recordTransition(currentEStatePtr,e,newEStatePtr);        
+	  deferedWorkList.push_back(newEStatePtr);
+	  if(isVerificationErrorEState(&newEState)) {
+	    cout<<"STATUS: detected verification error state ... terminating early"<<endl;
+	    // set flag for terminating early
+	    reachabilityResults.reachable(0);
+	    EStateWorkList emptyWorkList;
+	    return emptyWorkList;
+	  } else if(isFailedAssertEState(&newEState)) {
+	    // record failed assert
+	    //int assertCode;
+	    //assertCode=reachabilityAssertCode(currentEStatePtr);
+	  } // end of failed assert handling
+	} // end of if (no disequality (= no infeasable path))
+      } // end of loop on transfer function return-estates
+    } // edge set iterator
   }
-  Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-  for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
-    Edge e=*i;
-    list<EState> newEStateList;
-    newEStateList=transferFunction(e,currentEStatePtr);
-    for(list<EState>::iterator nesListIter=newEStateList.begin();
-	nesListIter!=newEStateList.end();
-	++nesListIter) {
-      // newEstate is passed by value (not created yet)
-      EState newEState=*nesListIter;
-      ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
-      
-      if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
-	HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
-	const EState* newEStatePtr=pres.second;
-	if(pres.first==true)
-	  addToWorkList(newEStatePtr);
-	recordTransition(currentEStatePtr,e,newEStatePtr);
-      }
-      if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
-	// failed-assert end-state: do not add to work list but do add it to the transition graph
-	const EState* newEStatePtr;
-	newEStatePtr=processNewOrExisting(newEState);
-	recordTransition(currentEStatePtr,e,newEStatePtr);        
-        
-	if(isVerificationErrorEState(&newEState)) {
-	  cout<<"STATUS: detected verification error state ... terminating early"<<endl;
-	  // set flag for terminating early
-	  reachabilityResults.reachable(0);
-	  break;
-	} else if(isFailedAssertEState(&newEState)) {
-	  // record failed assert
-	  //int assertCode;
-	  //assertCode=reachabilityAssertCode(currentEStatePtr);
-	} // end of failed assert handling
-      } // end of if (no disequality (= no infeasable path))
-    } // end of loop on transfer function return-estates
-  } // edge set iterator
+  return deferedWorkList;
 }
 
 void Analyzer::runSolver11() {
@@ -2850,10 +2864,13 @@ void Analyzer::runSolver11() {
     }
     const EState* currentEStatePtr=popWorkList();
     assert(currentEStatePtr);
-    subSolver(currentEStatePtr);
+    EStateWorkList deferedWorkList=subSolver(currentEStatePtr);
+    for(EStateWorkList::iterator i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
+      addToWorkList(*i);
+    }
   } // while loop
   printStatusMessage(true);
-  cout << "analysis finished (worklist is empty)."<<endl;
+  cout << "analysis with solver 11 finished (worklist is empty)."<<endl;
 }
 
 bool Analyzer::searchForIOPatterns(PState* startPState, int assertion_id, list<int>& inputSuffix, list<int>* partialTrace,
