@@ -441,11 +441,11 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset, In
 
 bool Analyzer::isLTLRelevantLabel(Label label) {
   bool t;
-  t=isStdIOLabel(label) 
-    || (getLabeler()->isStdErrLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
+  t=(isStdIOLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
+    //|| (getLabeler()->isStdErrLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
     //|| isTerminationRelevantLabel(label)
      || isStartLabel(label) // we keep the start state
-     || isCppLabeledAssertLabel(label)
+         || isCppLabeledAssertLabel(label)
     ;
   //cout << "INFO: L"<<label<<": "<<SgNodeHelper::nodeToString(getLabeler()->getNode(label))<< "LTL: "<<t<<endl;
   return t;
@@ -792,6 +792,7 @@ EStateSet::ProcessingResult Analyzer::process(EState& estate) {
 }
 
 EStateSet::ProcessingResult Analyzer::process(Label label, PState pstate, ConstraintSet cset, InputOutput io) {
+  ROSE_ASSERT(0);
   if(isLTLRelevantLabel(label) || io.op!=InputOutput::NONE || (!boolOptions["tg-ltl-reduced"])) {
     const PState* newPStatePtr=processNewOrExisting(pstate);
     const ConstraintSet* newCSetPtr=processNewOrExisting(cset);
@@ -2341,15 +2342,15 @@ void Analyzer::runSolver5() {
                 addToWorkList(newEStatePtr);
               recordTransition(currentEStatePtr,e,newEStatePtr);
             }
-	    if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
-	      // failed-assert end-state: do not add to work list but do add it to the transition graph
-	      const EState* newEStatePtr;
-	      newEStatePtr=processNewOrExisting(newEState);
-	      recordTransition(currentEStatePtr,e,newEStatePtr);        
+            if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
+              // failed-assert end-state: do not add to work list but do add it to the transition graph
+              const EState* newEStatePtr;
+              newEStatePtr=processNewOrExisting(newEState);
+              recordTransition(currentEStatePtr,e,newEStatePtr);        
               
-	      if(isVerificationErrorEState(&newEState)) {
+              if(isVerificationErrorEState(&newEState)) {
 #pragma omp critical
-		{
+                {
                   cout<<"STATUS: detected verification error state ... terminating early"<<endl;
                   // set flag for terminating early
 		  reachabilityResults.reachable(0);
@@ -2789,6 +2790,13 @@ bool isEmptyWorkList;
  }
 }
 
+      bool Analyzer::isLTLRelevantEState(const EState* estate) {
+   return ((estate)->io.isStdInIO() 
+           || (estate)->io.isStdOutIO() 
+           || (estate)->io.isStdErrIO() 
+           || (estate)->io.isFailedAssertIO());
+}
+
 EStateWorkList Analyzer::subSolver(const EState* currentEStatePtr) {
   EStateWorkList localWorkList;
   EStateWorkList deferedWorkList;
@@ -2813,7 +2821,7 @@ EStateWorkList Analyzer::subSolver(const EState* currentEStatePtr) {
 	  HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
 	  const EState* newEStatePtr=pres.second;
 	  if(pres.first==true) {
-	    if(isLTLRelevantLabel(newEStatePtr->label())) {
+	    if(isLTLRelevantEState(newEStatePtr)) {
 	      deferedWorkList.push_back(newEStatePtr);
 	    } else {
 	      localWorkList.push_back(newEStatePtr);

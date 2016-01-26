@@ -95,6 +95,7 @@ namespace CodeThorn {
     
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
+    bool isLTLRelevantEState(const EState* estate);
     bool isLTLRelevantLabel(Label label);
     bool isStdIOLabel(Label label);
     bool isStartLabel(Label label);
@@ -362,7 +363,8 @@ namespace CodeThorn {
     void enableExternalFunctionSemantics();
     void disableExternalFunctionSemantics();
     bool isUsingExternalFunctionSemantics() { return _externalFunctionSemantics; }
-
+    void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
+    bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
   private:
     GlobalTopifyMode _globalTopifyMode;
     set<VariableId> _compoundIncVarsSet;
@@ -417,6 +419,7 @@ namespace CodeThorn {
     string _externalNonDetIntFunctionName;
     string _externalNonDetLongFunctionName;
     string _externalExitFunctionName;
+    //bool _modeLTLDriven;
   }; // end of class Analyzer
   
 } // end of namespace CodeThorn

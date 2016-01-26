@@ -38,7 +38,7 @@ bool TransitionEqualToPred::operator()(Transition* t1, Transition* t2) const {
   * \author Markus Schordan
   * \date 2012.
  */
-TransitionGraph::TransitionGraph():_startLabel(Label()),_numberOfNodes(0){
+TransitionGraph::TransitionGraph():_startLabel(Label()),_numberOfNodes(0),_modeLTLDriven(false) {
 }
 
 LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {

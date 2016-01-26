@@ -52,6 +52,8 @@ namespace CodeThorn {
   public:
     typedef set<const Transition*> TransitionPtrSet;
     TransitionGraph();
+    void setModeLTLDriven(bool mode) { _modeLTLDriven=mode; }
+    bool getModeLTLDriven() { return _modeLTLDriven; }
     EStatePtrSet transitionSourceEStateSetOfLabel(Label lab);
     EStatePtrSet estateSetOfLabel(Label lab);
     EStatePtrSet estateSet();
@@ -96,6 +98,7 @@ namespace CodeThorn {
     set<const EState*> _recomputedestateSet;
     bool _preciseSTG;
     bool _completeSTG;
+    bool _modeLTLDriven;
   };
 }
 #endif

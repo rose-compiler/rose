@@ -223,6 +223,7 @@ int main( int argc, char * argv[] ) {
       ("io-reduction", po::value< int >(), "(work in progress) reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
       ("keep-error-states",  po::value< string >(), "Do not reduce error states for the LTL analysis. [=yes|no]")      ("ltl-in-alphabet",po::value< string >(),"specify an input alphabet used by the LTL formulae (e.g. \"{1,2,3}\")")
       ("ltl-out-alphabet",po::value< string >(),"specify an output alphabet used by the LTL formulae (e.g. \"{19,20,21,22,23,24,25,26}\")")
+      ("ltl-driven","select mode to verify LTLs driven by spot's access to the state transitions")
       ("no-input-input",  po::value< string >(), "remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [=yes|no]")
       ("reconstruct-assert-paths", po::value< string >(), "takes a result file containing paths to reachable assertions and tries to reproduce them on the analyzed program. [=file-path]")
       ("reconstruct-max-length", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum length of cyclic I/O patterns found by the analysis. [=pattern_length]")
@@ -456,6 +457,10 @@ int main( int argc, char * argv[] ) {
 
   Analyzer analyzer;
   global_analyzer=&analyzer;
+
+  if (args.count("ltl-driven")) {
+    analyzer.setModeLTLDriven(true);
+  }
 
   if (args.count("cegpra-ltl") || boolOptions["cegpra-ltl-all"]) {
     analyzer.setMaxTransitionsForcedTop(1); //initial over-approximated model
