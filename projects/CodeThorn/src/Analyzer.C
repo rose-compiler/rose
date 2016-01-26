@@ -2837,8 +2837,21 @@ EStateWorkList Analyzer::subSolver(const EState* currentEStatePtr) {
 	    return emptyWorkList;
 	  } else if(isFailedAssertEState(&newEState)) {
 	    // record failed assert
-	    //int assertCode;
-	    //assertCode=reachabilityAssertCode(currentEStatePtr);
+	    int assertCode;
+	    if(boolOptions["rers-binary"]) {
+	      assertCode=reachabilityAssertCode(newEStatePtr);
+	    } else {
+	      assertCode=reachabilityAssertCode(currentEStatePtr);
+	    }  
+	    if(assertCode>=0) {
+	      if(boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) { 
+		//if this particular assertion was never reached before, compute and update counterexample
+		if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
+		  _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
+		} 
+	      }
+	      reachabilityResults.reachable(assertCode);
+	    }	    // record failed assert
 	  } // end of failed assert handling
 	} // end of if (no disequality (= no infeasable path))
       } // end of loop on transfer function return-estates
@@ -2869,6 +2882,28 @@ void Analyzer::runSolver11() {
       addToWorkList(*i);
     }
   } // while loop
+  const bool isComplete=true;
+  if (!isPrecise()) {
+    _firstAssertionOccurences = list<FailedAssertion>(); //ignore found assertions if the STG is not precise
+  }
+  if(isIncompleteSTGReady()) {
+    printStatusMessage(true);
+    cout << "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
+    reachabilityResults.finishedReachability(isPrecise(),!isComplete);
+    transitionGraph.setIsComplete(!isComplete);
+  } else {
+    bool complete;
+    if(boolOptions["set-stg-incomplete"]) {
+      complete=false;
+    } else {
+      complete=true;
+    }
+    reachabilityResults.finishedReachability(isPrecise(),complete);
+    printStatusMessage(true);
+    transitionGraph.setIsComplete(complete);
+    cout << "analysis finished (worklist is empty)."<<endl;
+  }
+  transitionGraph.setIsPrecise(isPrecise());
   printStatusMessage(true);
   cout << "analysis with solver 11 finished (worklist is empty)."<<endl;
 }
