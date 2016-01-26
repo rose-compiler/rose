@@ -7,6 +7,7 @@
 
 namespace rose {
 
+/** Functions for operating on files in a filesystem. */
 namespace FileSystem {
 
 /** Pattern to use when creating temporary files. */
