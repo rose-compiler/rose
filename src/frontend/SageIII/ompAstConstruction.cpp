@@ -486,6 +486,31 @@ namespace OmpSupport
     setOneSourcePositionForTransformation(result);
     return result;
   }
+  //TODO: move this builder functions to SageBuilder namespace
+  SgOmpEndClause * buildOmpEndClause(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    // check if input attribute has e_end clause
+    if (!att->hasClause(e_end))
+      return NULL;
+    SgOmpEndClause* result = new SgOmpEndClause();
+    ROSE_ASSERT(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+  }
+
+  SgOmpBeginClause * buildOmpBeginClause(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    // check if input attribute has e_end clause
+    if (!att->hasClause(e_begin))
+      return NULL;
+    SgOmpBeginClause* result = new SgOmpBeginClause();
+    ROSE_ASSERT(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+  }
+
   SgOmpOrderedClause * buildOmpOrderedClause(OmpAttribute* att)
   {
     ROSE_ASSERT(att != NULL);
@@ -754,6 +779,42 @@ namespace OmpSupport
     // since the attribute has dimension info for all map clauses
     //But we don't want to move the dimension info to directive level 
     result->set_array_dimensions(att->array_dimensions);
+
+   //A translation from OmpSupport::omp_construct_enum to SgOmpClause::omp_map_dist_data_enum is needed here.
+   std::map<SgSymbol*, std::vector<std::pair<OmpSupport::omp_construct_enum, SgExpression*> > > attDistMap = att->dist_data_policies;
+   std::map<SgSymbol*, std::vector<std::pair<OmpSupport::omp_construct_enum, SgExpression*> > >::iterator iter;
+
+   std::map<SgSymbol*, std::vector<std::pair<SgOmpClause::omp_map_dist_data_enum, SgExpression*> > > convertedDistMap;
+   for (iter= attDistMap.begin(); iter!=attDistMap.end(); iter++)
+   {
+     SgSymbol* s = (*iter).first; 
+     std::vector<std::pair<OmpSupport::omp_construct_enum, SgExpression*> > src_vec = (*iter).second; 
+     std::vector<std::pair<OmpSupport::omp_construct_enum, SgExpression*> >::iterator iter2;
+
+     std::vector<std::pair<SgOmpClause::omp_map_dist_data_enum, SgExpression*> > converted_vec;
+     for (iter2=src_vec.begin(); iter2!=src_vec.end(); iter2 ++ )
+     {
+       std::pair<OmpSupport::omp_construct_enum, SgExpression*>  src_pair = *iter2; 
+       if (src_pair.first == OmpSupport::e_duplicate)
+       {
+         converted_vec.push_back(make_pair(SgOmpClause::e_omp_map_dist_data_duplicate, src_pair.second) );
+       } else 
+       if (src_pair.first == OmpSupport::e_cyclic)
+       {
+         converted_vec.push_back(make_pair(SgOmpClause::e_omp_map_dist_data_cyclic, src_pair.second) );
+       } else 
+       if (src_pair.first == OmpSupport::e_block)
+       {
+         converted_vec.push_back(make_pair(SgOmpClause::e_omp_map_dist_data_block, src_pair.second) );
+       } else 
+       {
+         cerr<<"error. buildOmpMapClause() :unrecognized source dist data policy enum:"<<src_pair.first <<endl;
+         ROSE_ASSERT (false);
+      } // end for iter2
+     } // end for iter
+     convertedDistMap[s]= converted_vec;
+   }
+    result->set_dist_data_policies(convertedDistMap);
     return result;
   }
 
@@ -874,6 +935,16 @@ namespace OmpSupport
         {
           printf("error: buildOmpNonReductionClause() does not handle reduction. Please use buildOmpReductionClause().\n");
           ROSE_ASSERT(false);
+          break;
+        }
+      case e_begin:
+        {
+          result = buildOmpBeginClause(att);
+          break;
+        }
+      case e_end:
+        {
+          result = buildOmpEndClause(att);
           break;
         }
       default:
@@ -1324,7 +1395,7 @@ This is no perfect solution until we handle preprocessing information as structu
     return first_stmt;
   }
 
-  //! for C/C++ replace OpenMP pragma declaration with an SgOmpxxStatement
+  //! For C/C++ replace OpenMP pragma declaration with an SgOmpxxStatement
   void replaceOmpPragmaWithOmpStatement(SgPragmaDeclaration* pdecl, SgStatement* ompstmt)
   {
     ROSE_ASSERT(pdecl != NULL);
@@ -1389,6 +1460,8 @@ This is no perfect solution until we handle preprocessing information as structu
        // Otherwise the code unparsed will be illegal Fortran code (No {} blocks in Fortran)
        if (isFortranEndDirective(getOmpAttribute(decl)->getOmpDirectiveType()))
           continue; 
+      ROSE_ASSERT (decl->get_scope() !=NULL);    
+      ROSE_ASSERT (decl->get_parent() !=NULL);    
       //cout<<"debug: convert_OpenMP_pragma_to_AST() handling pragma at "<<decl<<endl;  
       //ROSE_ASSERT (decl->get_file_info()->get_filename() != string("transformation"));
       OmpAttributeList* oattlist= getOmpAttributeList(decl);
@@ -1396,6 +1469,22 @@ This is no perfect solution until we handle preprocessing information as structu
       vector <OmpAttribute* > ompattlist = oattlist->ompAttriList;
       ROSE_ASSERT (ompattlist.size() != 0) ;
       ROSE_ASSERT (ompattlist.size() == 1) ; // when do we have multiple directives associated with one pragma?
+
+      // Liao 12/21/2015 special handling to support target begin and target end aimed for MPI code generation
+      // In this case, we already use postParsingProcessing () to wrap the statements in between into a basic block after "target begin" 
+      // The "target end" attribute should be ignored.
+      // Skip "target end" here. 
+      OmpAttribute* oa = ompattlist[0];
+      ROSE_ASSERT (oa!=NULL);
+      if (oa->hasClause(e_end))
+      {
+      // This assertion does not hold. The pragma is removed. But it is still accessible from omp_pragma_list  
+      //  cerr<<"Error. unexpected target end directive is encountered in convert_OpenMP_pragma_to_AST(). It should have been removed by postParsingProcessing()."<<endl;
+       // ROSE_ASSERT (false);
+        //removeStatement(decl);
+         continue;
+      }
+
       vector <OmpAttribute* >::iterator i = ompattlist.begin();
       for (; i!=ompattlist.end(); i++)
       {
@@ -1844,6 +1933,111 @@ This is no perfect solution until we handle preprocessing information as structu
     convert_OpenMP_pragma_to_AST( sageFilePtr);
   }
 
+  // Liao 12/21/2015 special handling to support target begin and target end aimed for MPI code generation
+  // In this case, we already use postParsingProcessing () to wrap the statements in between into a basic block after "target begin" 
+  // The "target end" attribute should be ignored.
+  // Skip "target end" here. 
+  void postParsingProcessing (SgSourceFile *sageFilePtr)
+  {
+    // This experimental support should only happen to C/C++ code for now
+    if (sageFilePtr->get_Fortran_only()||sageFilePtr->get_F77_only()||sageFilePtr->get_F90_only()||
+        sageFilePtr->get_F95_only() || sageFilePtr->get_F2003_only())
+    {
+      return; 
+    }
+
+    list<SgPragmaDeclaration* >::reverse_iterator iter; // bottom up handling for nested cases
+    ROSE_ASSERT (sageFilePtr != NULL);
+   for (iter = omp_pragma_list.rbegin(); iter != omp_pragma_list.rend(); iter ++)
+    {
+      // Liao, 11/18/2009
+      // It is possible that several source files showing up in a single compilation line
+      // We have to check if the pragma declaration's file information matches the current file being processed
+      // Otherwise we will process the same pragma declaration multiple times!!
+      SgPragmaDeclaration* decl = *iter;
+      // Liao, 2/8/2010
+      // Some pragmas are set to "transformation generated" when we fix scopes for some pragma under single statement block
+      // e.g if ()
+      //      #pragma
+      //        do_sth()
+      //  will be changed to
+      //     if ()
+      //     {
+      //       #pragma
+      //        do_sth()
+      //     }
+      // So we process a pragma if it is either within the same file or marked as transformation
+      if (decl->get_file_info()->get_filename()!= sageFilePtr->get_file_info()->get_filename()
+          && !(decl->get_file_info()->isTransformation()))
+        continue;
+       // Liao 10/19/2010
+       // We now support OpenMP AST construction for both C/C++ and Fortran
+       // But we allow Fortran End directives to exist after -rose:openmp:ast_only
+       // Otherwise the code unparsed will be illegal Fortran code (No {} blocks in Fortran)
+      // if (isFortranEndDirective(getOmpAttribute(decl)->getOmpDirectiveType()))
+       //    continue;
+      ROSE_ASSERT (decl->get_scope() !=NULL);
+      ROSE_ASSERT (decl->get_parent() !=NULL);
+      //cout<<"debug: convert_OpenMP_pragma_to_AST() handling pragma at "<<decl<<endl;  
+      //ROSE_ASSERT (decl->get_file_info()->get_filename() != string("transformation"));
+      OmpAttributeList* oattlist= getOmpAttributeList(decl);                                                                               
+      ROSE_ASSERT (oattlist != NULL) ;                                                                                                     
+      vector <OmpAttribute* > ompattlist = oattlist->ompAttriList;                                                                         
+      ROSE_ASSERT (ompattlist.size() != 0) ;                                                                                               
+      ROSE_ASSERT (ompattlist.size() == 1) ; // when do we have multiple directives associated with one pragma?                            
+                                                                                                                                           
+      // Liao 12/21/2015 special handling to support target begin and target end aimed for MPI code generation                             
+      // In this case, we already use postParsingProcessing () to wrap the statements in between into a basic block after "target begin"   
+      // The "target end" attribute should be ignored.                                                                                     
+      // Skip "target end" here.                                                                                                           
+      // find omp target begin
+      OmpAttribute* oa = getOmpAttribute (decl);
+      ROSE_ASSERT (oa != NULL);
+      omp_construct_enum omp_type = oa->getOmpDirectiveType();
+      //   The first attribute should always be the directive type
+      ROSE_ASSERT(isDirective(omp_type));
+      
+      if ( omp_type == e_target && oa->hasClause(e_begin)) 
+      { 
+        // find the matching end decl with "target end" attribute
+        SgPragmaDeclaration* end_decl = NULL; 
+        SgStatement* next_stmt = getNextStatement(decl);
+        std::vector<SgStatement*> affected_stmts; // statements which are inside the begin .. end pair
+        while (next_stmt!= NULL)
+        {
+          end_decl = isSgPragmaDeclaration (next_stmt);
+          if (end_decl)  // candidate pragma declaration
+           if (getOmpConstructEnum(end_decl) == e_target) // It is target directive
+           {
+             OmpAttribute* oa2 = getOmpAttribute (end_decl);
+             ROSE_ASSERT (oa2 != NULL);
+             if (oa2->hasClause (e_end))
+                break; // found  the matching target end, break out the while loop
+           }
+
+          // No match found yet? store the current stmt into the affected stmt list
+          end_decl = NULL; // MUST reset to NULL if not a match
+          affected_stmts.push_back(next_stmt);
+          //   prev_stmt = next_stmt; // save previous statement
+          next_stmt = getNextStatement (next_stmt);
+        } // end while  
+
+        if (end_decl == NULL) 
+        {
+          cerr<<"postParsingProcessing(): cannot find required end directive for: "<< endl;
+          cerr<<decl->get_pragma()->get_pragma()<<endl;
+          ROSE_ASSERT (false);
+        } // end if sanity check
+
+        //at this point, we have found a matching end directive/pragma
+        ROSE_ASSERT (end_decl);
+        ensureSingleStmtOrBasicBlock(decl, affected_stmts);
+        removeStatement(end_decl);
+
+      } // end if "target begin"                          
+    } // end for 
+  } // end postParsingProcessing()
+
   // Liao, 5/31/2009 an entry point for OpenMP related processing
   // including parsing, AST construction, and later on translation
   void processOpenMP(SgSourceFile *sageFilePtr)
@@ -1870,6 +2064,10 @@ This is no perfect solution until we handle preprocessing information as structu
 
     // parse OpenMP directives and attach OmpAttributeList to relevant SgNode
     attachOmpAttributeInfo(sageFilePtr);
+
+    // Additional processing of the AST after parsing
+    // 
+    postParsingProcessing (sageFilePtr);
 
     // stop here if only OpenMP parsing is requested
     if (sageFilePtr->get_openmp_parse_only())

@@ -1376,6 +1376,23 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "optimization", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (12/11/2015): Use the token stream to improve source position information.
+  // Some source position information is unavailable in EDG, e.g. the end of most 
+  // secondary declarations, for loop initialization statements, etc.  This is part
+  // of a currently experimental mechanism to improve the source positon information 
+  // in the AST using local searches of the token stream as a part of the token stream 
+  // mapping to the AST (as used in the token-based unparsing).
+     File.setDataPrototype ("bool", "use_token_stream_to_improve_source_position_info", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (12/23/2015): Adding optional support for variables to be in the same variable declaration 
+  // (optionally eding a long standing ROSE specific normalization that we would like to move away 
+  // from longer term). Note that this is already addressed in Fortran (not an option to have 
+  // variable declarations normalized), but not it has not be even an option in C/C++ until now.
+  // File.setDataPrototype ("bool", "allow_multiple_names_in_variable_declarations", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype ("bool", "suppress_variable_declaration_normalization", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // ******************************************************************************

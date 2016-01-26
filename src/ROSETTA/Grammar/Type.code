@@ -216,14 +216,21 @@ HEADER_START
 
           SgDeclarationStatement* getAssociatedDeclaration() const;
 
-#if 1
+#if 0
        // DQ (11/28/2015): This has been moved from the SgModifierType class to the SgType class since it is a general requirement.
        // DQ (11/28/2015): Adding operator==() function to use in symbol table lookup when template 
        // arguments or parameters resolve to SgModifierType and we need to know if it is the same type.
        // One might expect that with type tables they would only be the same if there were the same 
        // pointer, but I think this is not alwasy true for SgModifierType nodes.
-          bool operator== (const SgType & Y) const;
+       // bool operator== (const SgType & Y) const;
 #endif
+       // DQ (12/8/2015): Insead of the operator==(), we require a more nuanced approach.
+       // There are concepts of type equivalence (where for example a typedef of an int would 
+       // be the same type as the int) and type intechangablity, where two equivalent types will
+       // can be substituted for each other (which might not be possible if one of them has 
+       // only private access permissions.
+      //! Type equivalence is the concept of equality between types independent of access permissions (e.g. private or protected types in a class).
+          bool isEquivalentType (const SgType * other_type) const;
 
 HEADER_END
 
@@ -2480,11 +2487,20 @@ SgType::set_type_kind ( SgExpression* type_kind )
    }
 
 
-#if 1
+bool
+SgType::isEquivalentType (const SgType* other_type) const
+   {
+  // DQ (12/8/2015): This implementation is now refactored into a function implemented in the SageInterface.
+
+     return SageInterface::isEquivalentType(this,other_type);
+   }
+
+#if 0
 // DQ (11/28/2015): Implementation of type equivalence required to support differentiating template instantiations in the symbol table handling.
 // This code needs to be reviewed, since it is critical to the template name lookup (which a lot of general robustness depends upon).
+// bool SgType::operator== (const SgType & Y) const
 bool
-SgType::operator== (const SgType & Y) const
+SgType::isEquivalentType (const SgType & Y) const;
    {
   // DQ (11/28/2015): A better goal for this function should be to define it as a recursive function.
 
