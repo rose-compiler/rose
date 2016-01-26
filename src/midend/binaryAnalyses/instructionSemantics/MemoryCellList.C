@@ -210,18 +210,18 @@ MemoryCellList::insertReadCell(const SValuePtr &addr, const SValuePtr &value,
     return cell;
 }
 
-MemoryCellList::AddressSet
+MemoryCell::AddressSet
 MemoryCellList::getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
-    AddressSet retval;
+    MemoryCell::AddressSet retval;
     CellList::iterator cursor = get_cells().begin();
     BOOST_FOREACH (const MemoryCellPtr &cell, scan(cursor, addr, nBits, addrOps, valOps))
         retval |= cell->getWriters();
     return retval;
 }
 
-MemoryCellList::AddressSet
+MemoryCell::AddressSet
 MemoryCellList::getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
-    AddressSet retval;
+    MemoryCell::AddressSet retval;
     CellList::iterator cursor = get_cells().begin();
     size_t nCells = 0;
     BOOST_FOREACH (const MemoryCellPtr &cell, scan(cursor, addr, nBits, addrOps, valOps)) {

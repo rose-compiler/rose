@@ -155,6 +155,24 @@ MemoryCellMap::findCell(const SValuePtr &addr) const {
     return cells.getOrDefault(generateCellKey(addr));
 }
 
+MemoryCell::AddressSet
+MemoryCellMap::getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
+    MemoryCell::AddressSet retval;
+    CellKey key = generateCellKey(addr);
+    if (MemoryCellPtr cell = cells.getOrDefault(key))
+        retval = cell->getWriters();
+    return retval;
+}
+
+MemoryCell::AddressSet
+MemoryCellMap::getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
+    MemoryCell::AddressSet retval;
+    CellKey key = generateCellKey(addr);
+    if (MemoryCellPtr cell = cells.getOrDefault(key))
+        retval = cell->getWriters();
+    return retval;
+}
+
 } // namespace
 } // namespace
 } // namespace
