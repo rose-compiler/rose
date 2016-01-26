@@ -180,9 +180,9 @@ copyFile(const Path &src, const Path &dst) {
     // Do not use boost::filesystem::copy_file in boost 1.56 and earlier because it is not possible to cross link c++11 rose
     // with c++89 boost when using this symbol.  Boost issue #6124 fixed in boost 1.57 and later. Our solution is to use C++
     // stream I/O instead, which should still work on non-POSIX systems (Microsoft) although the exception situations might not
-    // be exactly precise as POSIX.
-    std::ifstream in(src.native().c_str(), std::ios::binary);
-    std::ofstream out(dst.native().c_str(), std::ios::binary);
+    // be exactly precise as POSIX. Use path::string rather than path::native in order to support Filesystem version 2.
+    std::ifstream in(src.string().c_str(), std::ios::binary);
+    std::ofstream out(dst.string().c_str(), std::ios::binary);
     out <<in.rdbuf();
     if (in.fail()) {
         throw boost::filesystem::filesystem_error("read failed", src,
