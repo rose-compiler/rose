@@ -93,16 +93,25 @@ codethorn_LDFLAGS = -L$(SPOT_PREFIX)/lib
 codethorn_SOURCES = \
   Analyzer.C                       \
   Analyzer.h                       \
+  ArrayElementAccessData.h \
+  ArrayElementAccessData.C \
   CollectionOperators.h            \
   CommandLineOptions.C             \
   CommandLineOptions.h             \
   ConstraintRepresentation.C       \
   ConstraintRepresentation.h       \
+  CounterexampleAnalyzer.C \
+  CounterexampleAnalyzer.h \
+  CPAstAttribute.h CPAstAttribute.C \
+  CTIOLabeler.h                    \
+  CTIOLabeler.C                    \
   EqualityMaintainer.h             \
   ExprAnalyzer.C                   \
   ExprAnalyzer.h                   \
   EquivalenceChecking.h            \
   EquivalenceChecking.C            \
+  Evaluator.h                      \
+  FIConstAnalysis.h FIConstAnalysis.C \
   HSet.h                           \
   HSetMaintainer.h                 \
   HashFun.h                        \
@@ -114,21 +123,19 @@ codethorn_SOURCES = \
   LanguageRestrictorCollection.h   \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
-  SetAlgo.h                        \
-  StateRepresentations.C           \
-  StateRepresentations.h           \
-  Timer.cpp                        \
-  Timer.h                          \
-  TransitionGraph.h                \
-  TransitionGraph.C                \
-  Visualizer.C                     \
-  Visualizer.h                     \
-  Evaluator.h                      \
-  RERS_empty_specialization.C      \
+  PragmaHandler.h \
+  PragmaHandler.C \
   PropertyValueTable.h \
   PropertyValueTable.C \
+  ReachabilityAnalysis.h ReachabilityAnalysis.C \
+  RefinementConstraints.C \
+  RefinementConstraints.h \
+  RERS_empty_specialization.C      \
   RewriteSystem.C \
   RewriteSystem.h \
+  SetAlgo.h \
+  Specialization.h \
+  Specialization.C \
   SpotConnection.C \
   SpotConnection.h \
   SpotTgba.C \
@@ -137,19 +144,16 @@ codethorn_SOURCES = \
   SpotState.h \
   SpotSuccIter.C \
   SpotSuccIter.h \
-  CounterexampleAnalyzer.C \
-  CounterexampleAnalyzer.h \
-  RefinementConstraints.C \
-  RefinementConstraints.h \
-  ArrayElementAccessData.h \
-  ArrayElementAccessData.C \
-  Specialization.h \
-  Specialization.C \
-  PragmaHandler.h \
-  PragmaHandler.C \
-  FIConstAnalysis.h FIConstAnalysis.C \
-  CPAstAttribute.h CPAstAttribute.C \
-  ReachabilityAnalysis.h ReachabilityAnalysis.C \
+  StateRepresentations.C           \
+  StateRepresentations.h           \
+  Timer.cpp                        \
+  Timer.h                          \
+  TransitionGraph.h                \
+  TransitionGraph.C                \
+  VariableValueMonitor.h \
+  VariableValueMonitor.C \
+  Visualizer.C                     \
+  Visualizer.h                     \
   codethorn.h \
   codethorn.C
 
@@ -165,6 +169,7 @@ addressTakenAnalysis_DEPENDENCIES=libspray.la
 
 # workaround to intentionally fool policy
 faketarget:
+	RersSpecialization.h
 	RERS_Problem10_specialization.C
 	RERS_Problem1_specialization.C
 	RERS_Problem2_specialization.C
@@ -480,6 +485,7 @@ check-local:
 	rm -f *.consistent
 	$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) . #test the analysis of RERS Problem1403 (which features arrays)
 	$(srcdir)/scripts/runLtlRegressionTests $(srcdir) . #run RERS examples in several versions and compare to previous results
+	$(srcdir)/scripts/runBuechiTransformTests $(srcdir) . #confirm that option --keep-error-states=yes does not lead to erroneous results
 	$(srcdir)/scripts/run_tests_cegpra $(srcdir) . #run CEGPRA tests
 
 checkdemos: 

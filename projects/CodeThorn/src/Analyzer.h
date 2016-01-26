@@ -28,32 +28,13 @@
 #include "StateRepresentations.h"
 #include "TransitionGraph.h"
 #include "PropertyValueTable.h"
+#include "CTIOLabeler.h"
+#include "VariableValueMonitor.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
 
 namespace CodeThorn {
-
-#define DEBUGPRINT_STMT 0x1
-#define DEBUGPRINT_STATE 0x2
-#define DEBUGPRINT_STATEMOD 0x4
-#define DEBUGPRINT_INFO 0x8
-  
-  class CTIOLabeler : public SPRAY::IOLabeler {
-  public:
-    CTIOLabeler(SgNode* start, VariableIdMapping* variableIdMapping);
-    virtual bool isStdIOLabel(Label label);
-    virtual bool isStdInLabel(Label label, VariableId* id);
-    bool isNonDetIntFunctionCall(Label lab,VariableId* varIdPtr);
-    bool isNonDetLongFunctionCall(Label lab,VariableId* varIdPtr);
-    bool isFunctionCallWithName(Label lab,VariableId* varIdPtr, std::string name);
-    ~CTIOLabeler();
-    void setExternalNonDetIntFunctionName(std::string);
-    void setExternalNonDetLongFunctionName(std::string);
-  private:
-    std::string _externalNonDetIntFunctionName;
-    std::string _externalNonDetLongFunctionName;
-  };
 
 /*! 
   * \author Markus Schordan
@@ -80,35 +61,6 @@ namespace CodeThorn {
   typedef std::list<const EState*> EStateWorkList;
   typedef std::pair<int, const EState*> FailedAssertion;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
-
-  class Analyzer;
-
-  class VariableValueMonitor {
-  public:
-    enum VariableMode { VARMODE_FORCED_TOP, VARMODE_ADAPTIVE_TOP, VARMODE_PRECISE, VARMODE_FORCED_PRECISE};
-    VariableValueMonitor();
-    void setThreshold(size_t threshold);
-    size_t getThreshold();
-    bool isActive();
-    // the init function only uses the variableIds of a given estate (not its values) for initialization
-    void init(const EState* estate);
-    void init(const PState* pstate);
-    VariableIdSet getHotVariables(Analyzer* analyzer, const EState* estate);
-    VariableIdSet getHotVariables(Analyzer* analyzer, const PState* pstate);
-    VariableIdSet getVariables();
-    void setVariableMode(VariableMode,VariableId);
-    VariableMode getVariableMode(VariableId);
-    void update(Analyzer* analyzer, EState* estate);
-    bool isHotVariable(Analyzer* analyzer, VariableId varId);
-    std::string toString(VariableIdMapping* variableIdMapping);
-#if 0
-    bool isVariableBeyondTreshold(Analyzer* analyzer, VariableId varId);
-#endif
-  private:
-    std::map<VariableId,std::set<int>* > _variablesMap;
-    std::map<VariableId,VariableMode> _variablesModeMap;
-    long int _threshold;
-  };
 
 /*! 
   * \author Markus Schordan
@@ -157,8 +109,6 @@ namespace CodeThorn {
     bool checkEStateSet();
     bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
-    // this function requires that no LTL graph is computed
-    void deleteNonRelevantEStates();
 
     // bypasses and removes all states that are not standard I/O states
     // (old version, works correctly, but has a long execution time)
@@ -255,6 +205,7 @@ namespace CodeThorn {
     void runSolver10();
     void runSolver11();
     void runSolver();
+    EStateWorkList subSolver(const EState* currentEStatePtr);
     //! The analyzer requires a CFAnalysis to obtain the ICFG.
     void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
     CFAnalysis* getCFAnalyzer() const { return cfanalyzer; }
@@ -291,7 +242,6 @@ namespace CodeThorn {
     VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
     VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
     
-    //bool isAssertExpr(SgNode* node);
     bool isFailedAssertEState(const EState* estate);
     bool isVerificationErrorEState(const EState* estate);
     //! adds a specific code to the io-info of an estate which is checked by isFailedAsserEState and determines a failed-assert estate. Note that the actual assert (and its label) is associated with the previous estate (this information can therefore be obtained from a transition-edge in the transition graph).
@@ -471,35 +421,6 @@ namespace CodeThorn {
   
 } // end of namespace CodeThorn
 
-#define RERS_SPECIALIZATION
-#ifdef RERS_SPECIALIZATION
-// RERS-binary-binding-specific declarations
-#define STR_VALUE(arg) #arg
-
-// integer variables
-#define INIT_GLOBALVAR(VARNAME) VARNAME = new int[numberOfThreads];
-#define COPY_PSTATEVAR_TO_GLOBALVAR(VARNAME) VARNAME[thread_id] = pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getIntValue();
-//cout<<"PSTATEVAR:"<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].toString()<<"="<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].toString()<<endl;
-#define COPY_GLOBALVAR_TO_PSTATEVAR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::ConstIntLattice(VARNAME[thread_id]);
-
-// pointers to integer variables
-#define INIT_GLOBALPTR(VARNAME) VARNAME = new int*[numberOfThreads]; 
-#define COPY_PSTATEPTR_TO_GLOBALPTR(VARNAME) VARNAME[thread_id] = analyzer->mapGlobalVarAddress[analyzer->getVarNameByIdCode(pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getIntValue())]
-#define COPY_GLOBALPTR_TO_PSTATEPTR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::ConstIntLattice(analyzer->globalVarIdByName(analyzer->mapAddressGlobalVar[VARNAME[thread_id]]).getIdCode());
-
-// create an entry in the mapping    <var_address>  <-->  <var_name>
-#define REGISTER_GLOBAL_VAR_ADDRESS(VARNAME) analyzer->mapGlobalVarInsert(STR_VALUE(VARNAME), (int*) &VARNAME);
-
-namespace RERS_Problem {
-  void rersGlobalVarsCallInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
-  void rersGlobalVarsCallReturnInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
-  void rersGlobalVarsArrayInit(int numberOfThreads);
-  void createGlobalVarAddressMaps(CodeThorn::Analyzer* analyzer);
-
-  void calculate_output(int numberOfThreads);
-  extern int* output;
-}
-// END OF RERS-binary-binding-specific declarations
-#endif
+#include "RersSpecialization.h"
 
 #endif
