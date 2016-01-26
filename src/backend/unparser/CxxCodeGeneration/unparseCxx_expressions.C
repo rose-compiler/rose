@@ -249,6 +249,24 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
         }
      curprint("] ");
 
+  // DQ (1/24/2016): Before the function is output, we want to support an experimental "__device__" keyword.
+  // Find the associated function where this SgLambdaExp is a function argument.  Note that it might be 
+  // better to support this as a transformation instead of directly in the unparser.  But then I would have
+  // to explicitly mark the lambdaExp.
+#if 1
+     bool lambaFunctionMarkedAsDevice = lambdaExp->get_is_device();
+     if (lambaFunctionMarkedAsDevice == true)
+        {
+#if 0
+          printf ("Use the __device__ keyword in the unparsed code \n");
+#endif
+          curprint(" __device__ ");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
      SgFunctionDeclaration* lambdaFunction =  lambdaExp->get_lambda_function();
      ROSE_ASSERT(lambdaFunction != NULL);
      ROSE_ASSERT(lambdaFunction->get_firstNondefiningDeclaration() != NULL);

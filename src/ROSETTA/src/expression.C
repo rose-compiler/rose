@@ -1506,6 +1506,12 @@ Grammar::setUpExpressions ()
      LambdaExp.setDataPrototype ( "bool", "has_parameter_decl", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/23/2016): Modified to support specification of __device__ or __atttribute((device))
+  // This is included to support a concept that Jeff Keasler would like to have (experimental).
+  // This implementation still needs to be reviewed.
+     LambdaExp.setDataPrototype ( "bool", "is_device", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      StringVal.setFunctionPrototype ( "HEADER_STRING_VALUE_EXPRESSION", "../Grammar/Expression.code" );
 
   // DQ (3/25/2006): We can have ROSETTA generate the constructor now that we use a C++ style std::string
