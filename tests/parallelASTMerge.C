@@ -1,3 +1,7 @@
+// Tests use ROSE's public API
+#include "rose.h"
+#include "FileSystem.h"
+
 // DQ (3/4/2010): Include this so that we can use the CXX_IS_ROSE_AST_FILE_IO macro
 #include "rose_config.h"
 
