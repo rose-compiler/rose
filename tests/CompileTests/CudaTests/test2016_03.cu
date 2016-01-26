@@ -15,7 +15,8 @@ int main(int argc, char *argv[])
                      sizeof(int)*TEST_VEC_LEN,
                      cudaMemAttachGlobal) ;
 
-// This is what we want users to write.
+// This is what we want users to write. In the generated rose_test2016_03.cu 
+// file this will have the added "__device__" keyword added.
    forall(cuda_traversal(), TEST_VEC_LEN, [=] (int i) {
        value[i] = i ;
    } ) ;

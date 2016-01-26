@@ -1,0 +1,22 @@
+9 MODULE myjunk
+TYPE point
+CONTAINS
+13 FINAL :: foo, bar
+FINAL :: binky
+END TYPE
+
+CONTAINS
+
+SUBROUTINE foo(arg)
+TYPE(point) :: arg(1)
+END SUBROUTINE
+
+SUBROUTINE bar(arg)
+TYPE(point) :: arg(1,1)
+END SUBROUTINE
+
+SUBROUTINE binky(arg)
+TYPE(point) :: arg
+END SUBROUTINE
+
+15 END MODULE
