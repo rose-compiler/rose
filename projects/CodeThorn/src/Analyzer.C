@@ -2353,36 +2353,36 @@ void Analyzer::runSolver5() {
                 {
                   cout<<"STATUS: detected verification error state ... terminating early"<<endl;
                   // set flag for terminating early
-		  reachabilityResults.reachable(0);
+                  reachabilityResults.reachable(0);
                   terminateEarly=true;
-		}
-	      } else if(isFailedAssertEState(&newEState)) {
-		// record failed assert
-		int assertCode;
-		if(boolOptions["rers-binary"]) {
-		  assertCode=reachabilityAssertCode(newEStatePtr);
-		} else {
-		  assertCode=reachabilityAssertCode(currentEStatePtr);
-		}  
-		if(assertCode>=0) {
+                }
+              } else if(isFailedAssertEState(&newEState)) {
+                // record failed assert
+                int assertCode;
+                if(boolOptions["rers-binary"]) {
+                  assertCode=reachabilityAssertCode(newEStatePtr);
+                } else {
+                  assertCode=reachabilityAssertCode(currentEStatePtr);
+                }  
+                if(assertCode>=0) {
 #pragma omp critical
-		  {
-		    if(boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) { 
-		      //if this particular assertion was never reached before, compute and update counterexample
-		      if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
-			_firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
-		      } 
-		    }
-		    reachabilityResults.reachable(assertCode);
-		  }
-		} else {
-		  // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
-		  if(!boolOptions["rersmode"]) {
-		    // assert without label
-		  }
-		}
-	      } // end of failed assert handling
-	    } // end of if (no disequality (= no infeasable path))
+                  {
+                    if(boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) { 
+                      //if this particular assertion was never reached before, compute and update counterexample
+                      if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
+                        _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
+                      } 
+                    }
+                    reachabilityResults.reachable(assertCode);
+                  }
+                } else {
+                  // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
+                  if(!boolOptions["rersmode"]) {
+                    // assert without label
+                  }
+                }
+              } // end of failed assert handling
+            } // end of if (no disequality (= no infeasable path))
           } // end of loop on transfer function return-estates
         } // edge set iterator
       } // conditional: test if work is available
@@ -2790,11 +2790,11 @@ bool isEmptyWorkList;
  }
 }
 
-      bool Analyzer::isLTLRelevantEState(const EState* estate) {
-   return ((estate)->io.isStdInIO() 
-           || (estate)->io.isStdOutIO() 
-           || (estate)->io.isStdErrIO() 
-           || (estate)->io.isFailedAssertIO());
+bool Analyzer::isLTLRelevantEState(const EState* estate) {
+  return ((estate)->io.isStdInIO() 
+          || (estate)->io.isStdOutIO() 
+          || (estate)->io.isStdErrIO() 
+          || (estate)->io.isFailedAssertIO());
 }
 
 EStateWorkList Analyzer::subSolver(const EState* currentEStatePtr) {
@@ -2805,6 +2805,10 @@ EStateWorkList Analyzer::subSolver(const EState* currentEStatePtr) {
     //cout<<"DEBUG: local work list size: "<<localWorkList.size()<<endl;
     const EState* currentEStatePtr=*localWorkList.begin();
     localWorkList.pop_front();
+    if(isFailedAssertEState(currentEStatePtr)) {
+      // ensure we do not compute any successors of a failed assert state
+      continue;
+    }
     Flow edgeSet=flow.outEdges(currentEStatePtr->label());
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
       Edge e=*i;
@@ -2853,13 +2857,14 @@ EStateWorkList Analyzer::subSolver(const EState* currentEStatePtr) {
 	    }  
 	    if(assertCode>=0) {
 	      if(boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) { 
-		//if this particular assertion was never reached before, compute and update counterexample
-		if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
-		  _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
-		} 
+            //if this particular assertion was never reached before, compute and update counterexample
+            if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
+              _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
+            } 
 	      }
 	      reachabilityResults.reachable(assertCode);
 	    }	    // record failed assert
+        
 	  } // end of failed assert handling
 	} // end of if (no disequality (= no infeasable path))
       } // end of loop on transfer function return-estates
