@@ -214,7 +214,8 @@ macroIds.o: $(srcdir)/macroIds.c parseOmp
 # we now experiment with multi gpu and MPI support, test parse_only without OpenMP-specific AST creation for now. Liao10/28/2015
 # test parsing experimental OpenMP accelerator directives, Liao 1/16/2013
 $(C_OMP_ACC_TEST_Unparsed): $(srcdir)/$(@:rose_%=%) parseOmp
-	./parseOmp -rose:openmp:parse_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/$(@:rose_%=%)
+	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/$(@:rose_%=%)
+#	./parseOmp -rose:openmp:parse_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/$(@:rose_%=%)
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 check-local:

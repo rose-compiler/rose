@@ -28,7 +28,7 @@
 
 0x08048958: ================================== Function (import, graph) <DYNAMIC_LINKER_TRAMPOLINE>
 
-0x08048958: Basic block reasons: entry point
+0x08048958: Basic block reasons: entry point, CFG head
 0x08048958: ff 35 98 b1 04 08       |.5....  |<sp+0 >   push   dword ds:[0x0804b198<.got.plt+4>]
 0x0804895e: ff 25 9c b1 04 08       |.%....  |<sp-4 >   jmp    dword ds:[0x0804b19c<.got.plt+8>]
 0x0804895e: Outgoing stack delta: -4
@@ -242,13 +242,6 @@
 0x08048af8: ff 25 04 b2 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804b204<.got.plt+0x70>]
 0x08048af8: Outgoing stack delta: +0
 0x08048af8: Successor blocks: unknown
-
-0x08048aff: ================================== Function (pattern, graph) unknown name
-
-0x08048aff: Basic block reasons: entry point, CFG head
-0x08048aff: c8 00 00 00             |....    |          enter  0x0000, 0x00
-0x08048b03: e9 50 fe ff ff          |.P...   |          jmp    0x08048958<DYNAMIC_LINKER_TRAMPOLINE>
-0x08048b03: Successor blocks: 0x08048958
 
 0x08048b08: ================================== Function (import, graph) <ioctl@plt>
 0x08048b08: Function stack delta: +4

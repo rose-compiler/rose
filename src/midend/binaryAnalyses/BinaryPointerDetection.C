@@ -348,8 +348,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     size_t dataWordSize = partitioner.instructionProvider().stackPointerRegister().get_nbits();
     Sawyer::Container::Set<uint64_t> addrSeen;
     BOOST_FOREACH (const BaseSemantics::StatePtr &state, dfEngine.getFinalStates()) {
-        BaseSemantics::MemoryCellListPtr memState = BaseSemantics::MemoryCellList::promote(state->get_memory_state());
-        BOOST_FOREACH (BaseSemantics::MemoryCellPtr &cell, memState->get_cells())
+        BaseSemantics::MemoryCellStatePtr memState = BaseSemantics::MemoryCellState::promote(state->get_memory_state());
+        BOOST_FOREACH (const BaseSemantics::MemoryCellPtr &cell, memState->allCells())
             conditionallySavePointer(cell->get_address(), addrSeen, dataWordSize, dataPointers_);
     }
 

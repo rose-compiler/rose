@@ -167,6 +167,16 @@ public:
      *  basic block then returns a null pointer. See also, @ref basicBlockStackDeltaConcrete. */
     InstructionSemantics2::BaseSemantics::SValuePtr basicBlockStackDelta(rose_addr_t basicBlockAddress) const;
 
+    /** Stack delta for block w.r.t. function.
+     *
+     *  Returns the incoming or outgoing stack delta for a basic block with respect to the beginning of the function. Returns a
+     *  null pointer if the data-flow did not reach the beginning or end of this block.
+     *
+     * @{ */
+    InstructionSemantics2::BaseSemantics::SValuePtr basicBlockInputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) const;
+    InstructionSemantics2::BaseSemantics::SValuePtr basicBlockOutputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) const;
+    /** @} */
+
     /** Concrete stack delta for an analyzed basic block.
      *
      *  Returns the concrete stack delta for a basic block if known, otherwise returns the @ref
@@ -185,6 +195,16 @@ public:
      *  instructionStackDeltaConcrete. The stack delta for an instruction is the difference between the stack pointer after the
      *  instruction executes and the stack pointer before the instruction executes. */
     InstructionSemantics2::BaseSemantics::SValuePtr instructionStackDelta(SgAsmInstruction*) const;
+
+    /** Stack delta for instruction w.r.t. function.
+     *
+     *  Returns the incoming or outgoing stack delta for an instruction with respect to the beginning of the function. Returns
+     *  a null pointer if the data-flow did not reach the beginning or end of the instruction.
+     *
+     * @{ */
+    InstructionSemantics2::BaseSemantics::SValuePtr instructionInputStackDeltaWrtFunction(SgAsmInstruction*) const;
+    InstructionSemantics2::BaseSemantics::SValuePtr instructionOutputStackDeltaWrtFunction(SgAsmInstruction*) const;
+    /** @} */
 
     /** Concrete stack delta for an instruction.
      *

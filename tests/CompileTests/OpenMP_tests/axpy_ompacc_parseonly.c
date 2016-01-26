@@ -70,7 +70,7 @@ void axpy_omp(REAL* x, REAL* y, long n, REAL a) {
 void axpy_ompacc(REAL* x, REAL* y, int n, REAL a) {
   int i;
 //For testing parsing only, 3 policies are used for even 1-D arrays.  
-#pragma omp target device (mpi) map(tofrom: y[0:n] dist_data(block, duplicate, cyclic(5)) ) map(to: x dist_data(block(5), cyclic(3)),a,n)
+#pragma omp target device (mpi) map(tofrom: y[0:n] dist_data(block, duplicate, cyclic(5)) ) map(to: x[0:n] dist_data(block(5), cyclic(3)),a,n)
 #pragma omp parallel for shared(x, y, n, a) private(i)
   for (i = 0; i < n; ++i)
     y[i] += a * x[i];

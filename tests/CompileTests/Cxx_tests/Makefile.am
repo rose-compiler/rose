@@ -337,7 +337,47 @@ NEW_TESTCODES = \
    test2015_122.C \
    test2015_123.C \
    test2015_124.C \
-   test2015_125.C 
+   test2015_125.C \
+   test2015_128.C \
+   test2015_130.C \
+   test2015_131.C \
+   test2015_132.C \
+   test2015_133.C \
+   test2015_134.C \
+   test2015_137.C \
+   test2015_138.C \
+   test2015_139.C \
+   test2015_140.C \
+   test2015_141.C \
+   test2015_142.C \
+   test2015_143.C \
+   test2015_144.C \
+   test2015_145.C \
+   test2015_146.C \
+   test2015_147.C \
+   test2015_148.C \
+   test2015_149.C \
+   test2015_150.C \
+   test2015_151.C \
+   test2015_152.C \
+   test2015_153.C \
+   test2015_154.C \
+   test2016_01.C \
+   test2016_02.C \
+   test2016_03.C \
+   test2016_04.C \
+   test2016_05.C \
+   test2016_06.C \
+   test2016_07.C 
+
+# Failing test codes:
+#   test2015_147.C 
+#   test2015_149.C 
+#   test2015_150.C 
+#   test2015_151.C 
+#   test2015_152.C 
+#   test2015_153.C 
+#   test2015_154.C
 
 # DQ (11/28/2015): I think maybe this only works with the Intel compiler.
 ICPC_SPECIFIC_TESTCODES = \
@@ -388,6 +428,23 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_55.C
 endif
 
+# DQ (12/19/2015): I think these test codes use language builtin functions not present with the same signature in
+# older GNU versions (e.g. "__builtin_isgreater()") and types not present in older GNU versions (e.g. "__int128")
+if ROSE_USING_GCC_VERSION_LATER_4_8
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2015_126.C \
+   test2015_127.C \
+   test2015_129.C 
+endif
+
+# DQ (12/20/2015): I think these test codes use language builtin functions not present with the same signature in
+# older GNU versions (e.g. "__decltype()").
+if ROSE_USING_GCC_VERSION_LATER_4_4
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2015_135.C \
+   test2015_136.C
+endif
+
 # DQ (5/28/2015): Removed this file because it is used by the makefile rule: 
 # test_unparse_includes_option_with_link.passed and CMake's ctest will cause
 # it to be run in parallel with the list of test codes above.  This is not
@@ -430,6 +487,7 @@ endif
 #  test2014_105.C 
 #  test2014_106.C 
 
+# DQ (12/13/2015): Note that most of these now appear to pass now, but they need to be checked more carefully.
 # DQ (8/14/2014) List these files explicitly to avoid failing the policy tests.
 TESTS_NOT_PASSING = \
    test2009_25.C \
@@ -1094,6 +1152,11 @@ PASSING_TEST_Sources = $(addsuffix .passed, $(filter-out $(TESTS_THAT_FAIL), $(T
 TEST_Objects_FoldedConstants = ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS:.C=.foldedConstants-o}
 TEST_Objects_UnfoldedConstants = ${ALL_TESTCODES:.C=.unfoldedConstants-o}
 
+# DQ (12/29/2015): Adding tests for unnormalized declarations (variables and typedefs).
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_UNNORMALIZED = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS)
+
+TEST_Objects_unnormalized = ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS_UNNORMALIZED:.C=.unnormalized-o}
+
 # VALGRIND_OPTIONS = -v --num-callers=12 --leak-check=yes --error-limit=no --show-reachable=yes
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
@@ -1127,6 +1190,10 @@ if !ROSE_USE_INSURE
 		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
 		TITLE="testTranslator $(notdir $<) [$@]" \
 		$(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) \
+		CMD="$(TEST_TRANSLATOR) -rose:suppress_variable_declaration_normalization -rose:skipfinalCompileStep $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $<" \
+		TITLE="testTranslator $(notdir $<) [$@]" \
+		$(top_srcdir)/scripts/test_exit_status $@
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
 #	@if test ! -f "../../.libs/lt-testTranslator"; then echo "Can NOT find ../../.libs/lt-testTranslator"; $(TEST_TRANSLATOR) --help > /dev/null; echo "Fixed"; fi
@@ -1151,6 +1218,10 @@ $(TEST_Objects_FoldedConstants): ../../testTranslatorFoldedConstants
 # DQ (9/18/2011): This is the equivalent to the default using testTranslator (so not critical to run this).
 $(TEST_Objects_UnfoldedConstants): ../../testTranslatorUnfoldedConstants
 	$(VALGRIND) ../../testTranslatorUnfoldedConstants $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.unfoldedConstants-o=.C) && touch $@
+
+# DQ (9/18/2011): This is testing the option to process the AST to use the constant folded values (contained in the AST).
+$(TEST_Objects_unnormalized): ../../testTranslator
+	$(VALGRIND) ../../testTranslator -rose:suppress_variable_declaration_normalization $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.unnormalized-o=.C) && touch $@
 
 # DQ (4/6/2010): Added test for parsing only (tested here for C++ code)
 testParser:../../testParser
@@ -1242,6 +1313,10 @@ test_common_configure_test_with_link_part_3.passed: $(TEST_TRANSLATOR)
 	@cp $(srcdir)/conftest_3.C conftest.C
 #	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 0 -I$(srcdir) conftest.C -o conftest_configure_test_part_3
 	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_3" $(top_srcdir)/scripts/test_exit_status $@
+
+# DQ (12/28/2015): Added test for new option to not normalize variable declarations.
+test_suppress_variable_declaration_normalization.passed: $(TEST_TRANSLATOR)
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) -rose:suppress_variable_declaration_normalization $(ROSE_FLAGS) -c $(srcdir)/test_multible_variables_in_variable_declaration.C" $(top_srcdir)/scripts/test_exit_status $@
 
 testOption:
 	$(TEST_TRANSLATOR) -rose:verbose 0 -nostdinc -c $(srcdir)/test2015_08.C
@@ -1354,6 +1429,9 @@ hpctoolkit:
 #	hpcviewer /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc-debug_mode_off/tests/CompileTests/Cxx_tests/hpctoolkit-lt-testTranslator-database-11205 &
 
 
+# check-local: $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
+# check-local: $(TEST_Objects_unnormalized) $(PASSING_TEST_Sources) $(FAILING_TEST_targets) 
+# check-local: $(TEST_Objects_unnormalized)
 check-local: $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed

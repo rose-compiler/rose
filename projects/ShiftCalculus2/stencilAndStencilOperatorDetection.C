@@ -1540,9 +1540,11 @@ DetectionTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Detection_Inh
           ROSE_ASSERT(astAttributeContainer->size() == 1);
 
        // Loop over all the attributes at this IR node
-          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+       //  Pei-Hung (12/22/15): THe ASTAttributeMechanmsim is changed and has to use new API
+       //   for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+          BOOST_FOREACH (const std::string &attributeName, astAttributeContainer->getAttributeIdentifiers()) 
              {
-               AstAttribute* attribute = i->second;
+               AstAttribute* attribute = astNode->getAttribute(attributeName);
                ROSE_ASSERT(attribute != NULL);
  
                DSL_Attribute* dslAstAttribute = dynamic_cast<DSL_Attribute*>(attribute);

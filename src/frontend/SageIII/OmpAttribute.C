@@ -78,8 +78,8 @@ namespace OmpSupport
     (cur_list->ompAttriList).erase (h_pos);
     if ((cur_list->ompAttriList).size() ==0)
     {
-      delete cur_list;
       node->removeAttribute("OmpAttributeList");
+      delete cur_list;
     }
   }
 

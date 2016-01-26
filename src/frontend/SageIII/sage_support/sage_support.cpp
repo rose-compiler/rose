@@ -2115,7 +2115,9 @@ SgProject::parse()
                if (sourceFile != NULL)
                   {
                  // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
-                    if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
+                 // if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
+                    if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && 
+                         ( (file->get_unparse_tokens() == true)     || (file->get_use_token_stream_to_improve_source_position_info() == true) ) )
                        {
                       // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
 #if 0

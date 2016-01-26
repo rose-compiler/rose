@@ -505,13 +505,12 @@ verifySemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 # MIPS specimens are currently failing a FIXME assertion in makeShadowRegister()
 # PowerPC specimens have lots of "XL-Form xoOpcode = 36 not handled!" and similar errors
 # The pocketputty2.exe takes too long when extensive debugging is enabled.
+# The puttytel.exe takes too long when extensive debugging is enabled on some heavily loaded or slow machines.
 noinst_PROGRAMS += testPartitioner2
 testPartitioner2_SOURCES = testPartitioner2.C
 testPartitioner2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-testPartitioner2_specimens = $(filter-out			\
-	$(any_any_mips_specimens) $(any_any_ppc_specimens)	\
-	pocketputty2.exe					\
-	,$(any_exe_any_specimens))
+testPartitioner2_specimens = $(filter-out \
+	$(any_any_mips_specimens) $(any_any_ppc_specimens) pocketputty2.exe puttytel.exe, $(any_exe_any_specimens))
 testPartitioner2_directory = $(top_srcdir)/binaries/samples
 testPartitioner2_test_targets = $(addprefix testPartitioner2_, $(addsuffix .passed, $(testPartitioner2_specimens)))
 testPartitioner2_answers = $(testPartitioner2_test_targets:.passed=.ans)
@@ -769,15 +768,23 @@ llvmTranscoder_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 #-------------- basic test to make sure we can transcode each pre-compiled 32-bit x86 specimen
 
-llvmTranscoder_Specimens = $(elf_exe_x86_specimens) $(pe_exe_x86_specimens)
+# The "llvm-as" tool might not be installed, in which case $(llvmVersion) will be an empty string.
+llvmVersion = $(shell llvm-as --version 2>&1 |sed -nr '/LLVM version/ s/.*version ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p')
+
+# 128-bit registers are not supported, so don't try to test them (pentium-xxm)
+# Test takes too long when compiled with debugging (puttytel.exe)
+llvmTranscoder_Specimens =						\
+	$(filter-out pentium-xmm puttytel.exe,				\
+		$(elf_exe_x86_specimens) $(pe_exe_x86_specimens))
 llvmTranscoder_TestTargets = $(addprefix llvm-xcode-, $(addsuffix .passed, $(llvmTranscoder_Specimens)))
 TEST_TARGETS += $(llvmTranscoder_TestTargets)
 EXTRA_DIST += llvmTranscoder.conf
 
 $(llvmTranscoder_TestTargets): llvm-xcode-%.passed: $(BINARY_SAMPLES)/% llvmTranscoder llvmTranscoder.conf
-	@$(RTH_RUN) \
-		TITLE="LLVM transcoder for $* [$@]" \
-		SPECIMEN="$(abspath $<)" \
+	@$(RTH_RUN)					\
+		TITLE="LLVM transcoder for $* [$@]"	\
+		SPECIMEN="$(abspath $<)"		\
+		LLVM_VERSION="$(llvmVersion)"		\
 		$(srcdir)/llvmTranscoder.conf $@
 
 .PHONY: check-llvm-xcode
@@ -802,13 +809,15 @@ llvmAnalysis_Specimens =			\
 	libcall-aa.c				\
 	loops.c					\
 	memdep.c				\
-	postdomfrontier.c			\
 	postdomtree.c				\
 	print-callgraph-sccs.c			\
 	print-cfg-sccs.c			\
 	print-dom-info.c			\
 	print-used-types.c			\
 	scalar-evolution.c
+
+# This appears to not be present for llvm-3.5.0, so don't try to test it.
+#	postdomfrontier.c
 
 llvmAnalysis_TestTargets = $(addprefix llvm-analysis-, $(addsuffix .passed, $(basename $(llvmAnalysis_Specimens))))
 EXTRA_DIST += $(addprefix $(llvmAnalysis_SpecimenDir), $(llvmAnalysis_Specimens))
@@ -826,7 +835,7 @@ $(llvmAnalysis_TestTargets): llvm-analysis-%.passed: $(llvmAnalysis_SpecimenDir)
 		SPECIMEN="$<"										\
 		OPT_PASSES="$(shell perl -ne '/OPT:\s*(.*?)\s*(\*\/\s*)?$$/ and print qq{$$1\n}' $<)"	\
 		DISASSEMBLER=$(abspath disassemble)							\
-		TRANSCODER="$(abspath llvmTranscoder)"							\
+		TRANSCODER="$(abspath llvmTranscoder) --llvm=$(llvmVersion)"				\
 		$(srcdir)/llvmAnalysis.conf $@
 
 .PHONY: check-llvm-analysis

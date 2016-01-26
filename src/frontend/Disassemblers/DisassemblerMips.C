@@ -87,18 +87,14 @@ DisassemblerMips::can_disassemble(SgAsmGenericHeader *header) const
 SgAsmInstruction *
 DisassemblerMips::disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
 {
-    // Instructions are always four-byte, naturally-aligned, little endian.
+    // Instructions are always four-byte, naturally-aligned, in big- or little-endian order.
     insn_va = start_va;
     if (start_va & 0x03)
         throw Exception("non-aligned instruction", start_va);
     uint32_t insn_disk; // instruction in file byte order
     if (4!=map->at(start_va).limit(4).require(get_protection()).read((uint8_t*)&insn_disk).size())
         throw Exception("short read", start_va);
-#if 0 /*DEBUGGING [Robb P. Matzke 2013-02-13]*/
-    unsigned insn_bits = SgAsmExecutableFileFormat::le_to_host(insn_disk);
-#else
-    unsigned insn_bits = ByteOrder::be_to_host(insn_disk);
-#endif
+    unsigned insn_bits = ByteOrder::disk_to_host(get_sex(), insn_disk);
     SgAsmMipsInstruction *insn = disassemble_insn(insn_bits);
     if (!insn)
         throw Exception("cannot disassemble MIPS instruction: " + StringUtility::addrToString(insn_bits));
@@ -3591,7 +3587,7 @@ static struct Mips32_xori: Mips32 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void
-DisassemblerMips::init()
+DisassemblerMips::init(ByteOrder::Endianness sex)
 {
     set_registers(RegisterDictionary::dictionary_mips32());     // only a default
     REG_IP = *get_registers()->lookup("pc");
@@ -3599,7 +3595,7 @@ DisassemblerMips::init()
 
     set_wordsize(4);
     set_alignment(4);
-    set_sex(ByteOrder::ORDER_MSB);
+    set_sex(sex);
     callingConventions(CallingConvention::dictionaryMips());
 
     insert_idis(&mips32_abs_s);

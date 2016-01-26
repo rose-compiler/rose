@@ -236,7 +236,7 @@ protected:
 
         // This state should use a memory that is not byte restricted.
         MemoryStatePtr mcl = MemoryState::promote(memory);
-        ASSERT_require(!mcl->get_byte_restricted());
+        ASSERT_require(!mcl->byteRestricted());
     }
 
     State(const State &other): BaseSemantics::State(other) {}

@@ -1,9 +1,5 @@
- /*!
-     \defgroup ROSE_MidEndGroup ROSE Midend
-     \brief The ROSE mid-end section contains tools for the processing and transformation of the AST. 
-            The most up-to-date documents about ROSE's midend are collected in the ROSE manual and ROSE tutorial
-            pdf files.
+// -*- c++ -*-
 
-
-  */
-
+/** @defgroup rose_midend ROSE midend
+ *
+ *  Tools for the processing and transformation of the AST. */
