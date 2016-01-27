@@ -1,5 +1,16 @@
 // Example ROSE Translator reads input program and implements a DSL embedded within C++
 // to support the stencil computations, and required runtime support is developed seperately.
+
+// 1) We need a mechanism to specify the DSL parts.
+//    A pragma could be used for that (in the header files).  We can ignore this initally.
+// 2) We need to generate code to be used with the DSL comiler.
+//    Some of this code needs to be generated and some will be templates fromn header files.
+
+
+// Code is generated in generated_dsl_attributes.h and generated_dsl_attributes.C
+
+
+
 #include "rose.h"
 
 #include "attributeGenerator.h"
@@ -18,6 +29,9 @@ AttributeGenerator_InheritedAttribute::AttributeGenerator_InheritedAttribute()
 
 AttributeGenerator_InheritedAttribute::AttributeGenerator_InheritedAttribute(const AttributeGenerator_InheritedAttribute & X)
    {
+  // Note that DSL nodes are only identified amonsts children of a specific parent and not anywhere in the AST.
+  // But since the traveral function semantics use copy constructors to copy attributes, we still have to copy the DSLnodes set.
+  // DSLnodes = X.DSLnodes;
    }
 
 
@@ -38,6 +52,23 @@ AttributeGenerator_SynthesizedAttribute::AttributeGenerator_SynthesizedAttribute
 // Attribute Generator Traversal
 AttributeGeneratorTraversal::AttributeGeneratorTraversal()
    {
+  // SgSourceFile* buildSourceFile(string,SgProject = NULL)
+     generatedHeaderFile = NULL;
+     generatedSourceFile = NULL;
+
+  // This has to be a *.C file since we are not supporting witing heder files just yet (rename afterward).
+     generatedHeaderFile = SageBuilder::buildSourceFile("generated_dsl_attributes_header.C");
+     generatedSourceFile = SageBuilder::buildSourceFile("generated_dsl_attributes.C");
+
+
+     SgGlobal* global_scope_header = generatedHeaderFile->get_globalScope();
+     ROSE_ASSERT(global_scope_header != NULL);
+
+
+#if 1
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 AttributeGenerator_InheritedAttribute
@@ -47,27 +78,83 @@ AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, Attr
 
      AttributeGenerator_InheritedAttribute return_inheritedAttribute;
 
+#if 0
+     printf ("In evaluateInheritedAttribute(): astNode = %p = %s: DSLnodes.size() = %zu \n",astNode,astNode->class_name().c_str(),DSLnodes.size());
+#endif
+
      switch (astNode->variantT())
         {
+          case V_SgPragmaDeclaration:
+             {
+            // Statements after a pragma will be detected and be used as DSL keywords.
+
+               SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(astNode);
+               ROSE_ASSERT(pragmaDeclaration != NULL);
+
+               printf ("Detected marking pragma for DSL keyword: pragmaDeclaration = %p = %s = %s \n",pragmaDeclaration,pragmaDeclaration->class_name().c_str(),pragmaDeclaration->get_pragma()->get_pragma().c_str());
+
+            // There should always be a next statement after a pragma declaration
+               SgStatement* DSLKeywordStatement = SageInterface::getNextStatement(pragmaDeclaration);
+               if (DSLKeywordStatement == NULL)
+                  {
+                    printf ("Error: There should always be a next statement after a pragma declaration \n");
+                  }
+               ROSE_ASSERT(DSLKeywordStatement != NULL);
+
+               DSLnodes.insert(DSLKeywordStatement);
+
+               break;
+             }
+
           case V_SgClassDeclaration:
           case V_SgTemplateClassDeclaration:
              {
+            // The case of a class declaration need not generate new code since the DSL_Attribute template can take the class type as a parameter.
+            // But the DSL comiler has to know what classes to use as a basis for DSL keywords, so it might be simpler to just generate code for these cases.
+
                SgClassDeclaration* classDeclaration = isSgClassDeclaration(astNode);
                ROSE_ASSERT(classDeclaration != NULL);
 
-               printf ("Build DSL attribute for class = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+               if (DSLnodes.find(classDeclaration) != DSLnodes.end())
+                  {
+                    printf ("Build DSL attribute for class = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
 
-               SgType* type = classDeclaration->get_type();
-               ROSE_ASSERT(type != NULL);
+                    SgType* type = classDeclaration->get_type();
+                    ROSE_ASSERT(type != NULL);
 
-               SgNode* ast_fragment = buildAttribute(type);
+                    SgNode* ast_fragment = buildAttribute(type);
+                  }
 
+               break;
+             }
+
+          case V_SgFunctionDeclaration:
+          case V_SgTemplateFunctionDeclaration:
+             {
+            // This case is more complex since functions have arguments (using std::function support in C++11).
+
+               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(astNode);
+               ROSE_ASSERT(functionDeclaration != NULL);
+
+               if (DSLnodes.find(functionDeclaration) != DSLnodes.end())
+                  {
+                    printf ("Build DSL attribute for function = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+
+                    SgType* type = functionDeclaration->get_type();
+                    ROSE_ASSERT(type != NULL);
+
+                    SgNode* ast_fragment = buildAttribute(type);
+                  }
+
+               break;
              }
 
           default:
              {
             // Cases not handled
+#if 0
                printf ("AttributeGeneratorTraversal::evaluateInheritedAttribute: case not handled: astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+#endif
              }
         }
 
@@ -95,6 +182,17 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type)
      printf ("Build DSL attribute for type = %p = %s \n",type,type->class_name().c_str());
 
      SgTemplateInstantiationDecl* templateClass = NULL;
+
+
+     SgClassType* classType = isSgClassType(type);
+     if (classType != NULL)
+        {
+       // We don't have to generate code for class types (but perhaps we will to avoid template issues).
+
+          SgClassDeclaration* generatedClass = NULL;
+
+
+        }
 
      return NULL;
    }
