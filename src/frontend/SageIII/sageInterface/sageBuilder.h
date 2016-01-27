@@ -833,6 +833,11 @@ buildVariableDeclaration(const char* name, SgType *type, SgInitializer *varInit=
 ROSE_DLL_API SgVariableDeclaration* 
 buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 
+//! Build variable definition
+ROSE_DLL_API SgVariableDefinition* 
+buildVariableDefinition_nfi (SgVariableDeclaration* decl, SgInitializedName* init_name,  SgInitializer *init);
+
+
 // DQ (8/31/2012): Note that this macro can't be used in header files since it can only be set
 // after sage3.h has been read.  The reason is that this is a portability problem when "rose_config.h"
 // appears in header files of applications using ROSE's header files.
@@ -1422,11 +1427,11 @@ terms of non-untyped IR nodes.
 
 /*! \brief build a concept of scope in the untyped AST.
 */
-ROSE_DLL_API SgUntypedScope* buildUntypedScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+ROSE_DLL_API SgUntypedScope* buildUntypedScope(SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
 
-ROSE_DLL_API SgUntypedGlobalScope*   buildUntypedGlobalScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
-ROSE_DLL_API SgUntypedFunctionScope* buildUntypedFunctionScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
-ROSE_DLL_API SgUntypedModuleScope*   buildUntypedModuleScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+ROSE_DLL_API SgUntypedGlobalScope*   buildUntypedGlobalScope  (SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+ROSE_DLL_API SgUntypedFunctionScope* buildUntypedFunctionScope(SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+ROSE_DLL_API SgUntypedModuleScope*   buildUntypedModuleScope  (SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
 
 ROSE_DLL_API SgUntypedFunctionDeclaration*      buildUntypedFunctionDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
 ROSE_DLL_API SgUntypedProgramHeaderDeclaration* buildUntypedProgramHeaderDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);

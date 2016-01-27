@@ -141,9 +141,9 @@ SgInitializedName::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 #endif
 
   // Need to fixup the scope and perhaps build the SgVariableDefinition object!
-
      SgInitializedName* initializedName_copy = isSgInitializedName(copy);
      ROSE_ASSERT(initializedName_copy != NULL);
+     ROSE_ASSERT (initializedName_copy->get_declptr() != __null);
 
      // fprintf(stderr, "SgInitializedName::fixupCopy_scopes(%p) this=%p\n", copy, this);
      // fprintf(stderr, "Copy's scope is %p, my scope is %p\n", initializedName_copy->get_scope(), this->get_scope());
@@ -1325,8 +1325,8 @@ SgVariableDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
   // Iterate over both lists to match up the correct pairs of SgInitializedName objects
      while ( (i_original != variableList_original.end()) && (i_copy != variableList_copy.end()) )
         {
-       // printf ("Looping over the initialized names in the variable declaration variable = %p = %s \n",(*i_copy),(*i_copy)->get_name().str());
-
+        //printf ("Looping over the initialized names in the variable declaration variable = %p = %s \n",(*i_copy),(*i_copy)->get_name().str());
+          ROSE_ASSERT ( (*i_copy)->get_declptr() != NULL);
           (*i_original)->fixupCopy_scopes(*i_copy,help);
 
           i_original++;

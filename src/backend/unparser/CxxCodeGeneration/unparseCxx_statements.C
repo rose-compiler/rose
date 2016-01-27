@@ -9847,7 +9847,6 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
      curprint("/* In unparseTemplateDeclarationStatment_support() */ \n");
 #endif
 
-
      T* template_stmt = dynamic_cast<T*>(stmt);
      ROSE_ASSERT(template_stmt != NULL);
 
@@ -9899,9 +9898,21 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
         {
           if (templateMemberFunctionDeclaration != NULL)
              {
-            // printf ("This is a SgTemplateMemberFunctionDeclaration \n");
+#if 0
+               printf ("This is a SgTemplateMemberFunctionDeclaration \n");
+#endif
                string_represents_function_body = templateMemberFunctionDeclaration->get_string_represents_function_body();
             // template_function_name = templateMemberFunctionDeclaration->get_name();
+#if 0
+               printf ("This is a SgTemplateMemberFunctionDeclaration:  string_represents_function_body = %s \n",string_represents_function_body ? "true" : "false");
+#endif
+#if 0
+            // DQ (1/20/2016): Added mechanism to output the EDG normalized template member functions (unclear if this will work).
+               if (string_represents_function_body == false)
+                  {
+                    unparseMFuncDeclStmt(templateMemberFunctionDeclaration, info);
+                  }
+#endif
              }
             else
              {
@@ -10001,16 +10012,17 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
        // Output the name qualified function name with function parameters (and then append the saved text string for the function body).
        // To find the template parameters, we have to ge them from the class.
 #if 0
-          printf ("template_stmt = %p = %s \n",template_stmt,template_stmt->class_name().c_str());
+          printf ("(string_represents_function_body == true): template_stmt = %p = %s \n",template_stmt,template_stmt->class_name().c_str());
 #endif
           SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(template_stmt);
           ROSE_ASSERT(functionDeclaration != NULL);
 
 #if 0
+          printf ("We don't want to support this yet, but check it out! \n");
+
        // DQ (9/7/2014): Try this in case it works best (this will unparse the defining template declaration, but I don't want to support that yet).
           unparseMFuncDeclStmt(functionDeclaration, info);
 #else
-
        // Debugging code
        // functionDeclaration->get_file_info()->display("string_represents_function_body == true");
 
@@ -10127,7 +10139,9 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
        else
         {
        // DQ (9/7/2014): This is the typical case.
-
+#if 0
+          printf ("Output the templateString = %s \n",templateString.c_str());
+#endif
        // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
           curprint(string("\n") + templateString);
         }
