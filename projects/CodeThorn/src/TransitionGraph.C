@@ -125,7 +125,17 @@ TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(const EState* estate)
 TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate) {
   ROSE_ASSERT(estate);
   if(getModeLTLDriven()) {
-    ROSE_ASSERT(0);
+    if(_outEdges[estate].size()==0) {
+      EStatePtrSet succSet=succ(estate);
+      TransitionPtrSet tpset;
+      for(EStatePtrSet::iterator j=succSet.begin();j!=succSet.end();++j) {
+          Edge newEdge(estate->label(),EDGE_PATH,(*j)->label());
+          const Transition* t=new Transition(estate,newEdge,*j);
+          tpset.insert(t);
+      }
+      cout<<"DEBUG: spot driven generated stg edges: "<<tpset.size()<<endl;
+      _outEdges[estate]=tpset;
+    }
   }
   return _outEdges[estate];
 }
@@ -148,7 +158,6 @@ EStatePtrSet TransitionGraph::succ(const EState* estate) {
       succNodes.insert(*i);
     }
   } else {
-    EStatePtrSet succNodes;
     TransitionPtrSet tset=outEdges(estate);
     for(TransitionPtrSet::iterator i=tset.begin();i!=tset.end();++i) {
       succNodes.insert((*i)->target);

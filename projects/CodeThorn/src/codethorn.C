@@ -1113,7 +1113,7 @@ int main( int argc, char * argv[] ) {
         transitionGraphSizeInf = analyzer.getTransitionGraph()->size();
         eStateSetSizeStgInf = (analyzer.getTransitionGraph())->estateSet().size();
       }
-      if (!boolOptions["std-io-only"]) {
+      if (!boolOptions["std-io-only"] &&!analyzer.getModeLTLDriven()) {
         cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode) (P1)."<<endl;
         timer.start();
         analyzer.reduceGraphInOutWorklistOnly(true, true, boolOptions["keep-error-states"]);
