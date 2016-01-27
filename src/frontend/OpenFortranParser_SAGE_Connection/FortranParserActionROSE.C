@@ -10721,7 +10721,7 @@ void c_action_label(Token_t * lbl)
         // DQ (1/22/2008): Try this
         resetSourcePosition(conditionalStatement, conditionalExpression);
 
-        setSourcePosition(true_block);
+        setSourcePosition(true_block,eos);
         setSourcePosition(false_block);
 
         // DQ (11/17/2007): Get the source position from the "if" keyword.
@@ -10884,7 +10884,10 @@ void c_action_label(Token_t * lbl)
         // Find the previously built false body in the SgIfStmt
         SgBasicBlock* false_body = isSgBasicBlock(ifStatement->get_false_body());
         ROSE_ASSERT(false_body != NULL);
+        setSourcePosition(false_body,eos);
 
+        SgBasicBlock* true_body = isSgBasicBlock(ifStatement->get_true_body());
+        resetEndingSourcePosition(true_body, elseKeyword);
         // Push the false body onto the scope stack
         astScopeStack.push_front(false_body);
 
