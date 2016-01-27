@@ -135,7 +135,7 @@ RiscOperators::instance(const RegisterDictionary *regdict)
 void
 RiscOperators::interrupt(int majr, int minr)
 {
-    get_state()->clear();
+    currentState()->clear();
 }
 
 BaseSemantics::SValuePtr
@@ -417,7 +417,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
     SValuePtr b = SValue::promote(b_);
     if (!b->name) {
         if (0==b->offset)
-            throw BaseSemantics::Exception("division by zero", get_insn());
+            throw BaseSemantics::Exception("division by zero", currentInstruction());
         if (!a->name)
             return number_(a->get_width(),
                            (IntegerOps::signExtend2(a->offset, a->get_width(), 64) /
@@ -439,7 +439,7 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
     if (a->name || b->name)
         return undefined_(b->get_width());
     if (0==b->offset)
-        throw BaseSemantics::Exception("division by zero", get_insn());
+        throw BaseSemantics::Exception("division by zero", currentInstruction());
     return number_(b->get_width(),
                    (IntegerOps::signExtend2(a->offset, a->get_width(), 64) %
                     IntegerOps::signExtend2(b->offset, b->get_width(), 64)));
@@ -482,7 +482,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr b = SValue::promote(b_);
     if (!b->name) {
         if (0==b->offset)
-            throw BaseSemantics::Exception("division by zero", get_insn());
+            throw BaseSemantics::Exception("division by zero", currentInstruction());
         if (!a->name)
             return number_(a->get_width(), a->offset / b->offset);
         if (1==b->offset)
@@ -499,7 +499,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr b = SValue::promote(b_);
     if (!b->name) {
         if (0==b->offset)
-            throw BaseSemantics::Exception("division by zero", get_insn());
+            throw BaseSemantics::Exception("division by zero", currentInstruction());
         if (!a->name)
             return number_(b->get_width(), a->offset % b->offset);
         /* FIXME: More folding possibilities... if 'b' is a power of two then we can return 'a' with the
@@ -561,7 +561,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
         return;
 
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    state->writeMemory(address, value, this, this);
+    currentState()->writeMemory(address, value, this, this);
 }
     
 BaseSemantics::SValuePtr
@@ -595,7 +595,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     }
     
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
-    SValuePtr retval = SValue::promote(state->readMemory(address, dflt, this, this));
+    SValuePtr retval = SValue::promote(currentState()->readMemory(address, dflt, this, this));
     return retval;
 }
 

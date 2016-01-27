@@ -12704,6 +12704,8 @@ SgVariableDeclaration::append_variable( SgInitializedName* what, SgInitializer *
      assert(this != NULL);
      ROSE_ASSERT (what != NULL);
 
+     SageBuilder::buildVariableDefinition_nfi (this, what, initializer);
+#if 0     
   // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
   // if (!isSgFunctionType(what.get_type()))
      if (!isSgFunctionType(what->get_type()))
@@ -12750,6 +12752,7 @@ SgVariableDeclaration::append_variable( SgInitializedName* what, SgInitializer *
           ROSE_ASSERT(defn_stmt != NULL);
        // printf ("In SgVariableDeclaration::append_variable(): SgVariableDefinition *defn_stmt = %p \n",defn_stmt);
         }
+#endif      
    }
 
 // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
@@ -12767,7 +12770,8 @@ SgVariableDeclaration::prepend_variable( SgInitializedName* what, SgInitializer 
 
   // DQ (6/1/2004): Can we assert this
   // ROSE_ASSERT (decl_item == what);
-
+   SageBuilder::buildVariableDefinition_nfi (this, what, initializer);
+#if 0
   // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
   // if (!isSgFunctionType(what.get_type()))
      if (!isSgFunctionType(what->get_type()))
@@ -12810,6 +12814,7 @@ SgVariableDeclaration::prepend_variable( SgInitializedName* what, SgInitializer 
           ROSE_ASSERT(defn_stmt != NULL);
        // printf ("In SgVariableDeclaration::prepend_variable(): SgVariableDefinition *defn_stmt = %p \n",defn_stmt);
         }
+#endif        
    }
 
 #if 0

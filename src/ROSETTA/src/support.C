@@ -898,6 +898,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "F2003_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/25/2016): Added initial command line support for Fortran 2008 files.
+     File.setDataPrototype         ( "bool", "F2008_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (1/23/2009): Co-Array Fortran (CAF) support
      File.setDataPrototype         ( "bool", "CoArrayFortran_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1219,6 +1223,11 @@ Grammar::setUpSupport ()
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "sourceFileUsesFortran2003FileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/25/2016): Added initial support in command line handling for Fortran 2008 files.
+     File.setDataPrototype         ( "bool", "sourceFileUsesFortran2008FileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      File.setDataPrototype         ( "bool", "sourceFileUsesCoArrayFortranFileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "sourceFileUsesPHPFileExtension", "= false",
@@ -1245,6 +1254,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
+  // (this is part of the internal testing of the new (experimental) Fortran support).
+     File.setDataPrototype("bool", "experimental_fortran_frontend_OFP_test", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // To be consistent with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
   // functions so that we can support the more common (previous) interface where there was only a single

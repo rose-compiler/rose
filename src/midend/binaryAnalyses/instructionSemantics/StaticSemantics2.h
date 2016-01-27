@@ -242,14 +242,14 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("StaticSemantics");
+        name("StaticSemantics");
         (void) SValue::promote(protoval); // make sure its dynamic type is a StaticSemantics::SValue
     }
 
     RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("StaticSemantics");
-        (void) SValue::promote(state->get_protoval()); // values must have StaticSemantics::SValue dynamic type
+        name("StaticSemantics");
+        (void) SValue::promote(state->protoval()); // values must have StaticSemantics::SValue dynamic type
     }
 
 public:
@@ -264,14 +264,14 @@ public:
     }
 
     /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
-     *  second argument because the base class expects one, but it is not used for static semantics. See set_solver() for
+     *  second argument because the base class expects one, but it is not used for static semantics. See @ref solver for
      *  details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
-     *  because the base class expects one, but it is not used for static semantics. See set_solver() for details. */
+     *  because the base class expects one, but it is not used for static semantics. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }

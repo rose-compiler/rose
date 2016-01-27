@@ -60,9 +60,9 @@ RegisterStateGeneric::initialize_nonoverlapping(const std::vector<RegisterDescri
         std::string name = regdict->lookup(regs[i]);
         SValuePtr val;
         if (initialize_to_zero) {
-            val = get_protoval()->number_(regs[i].get_nbits(), 0);
+            val = protoval()->number_(regs[i].get_nbits(), 0);
         } else {
-            val = get_protoval()->undefined_(regs[i].get_nbits());
+            val = protoval()->undefined_(regs[i].get_nbits());
             if (!name.empty() && val->get_comment().empty())
                 val->set_comment(name+"_0");
         }
@@ -180,7 +180,7 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
         if (!accessCreatesLocations_)
             throw RegisterNotPresent(reg);
         size_t nbits = reg.get_nbits();
-        SValuePtr newval = get_protoval()->undefined_(nbits);
+        SValuePtr newval = protoval()->undefined_(nbits);
         std::string regname = regdict->lookup(reg);
         if (!regname.empty() && newval->get_comment().empty())
             newval->set_comment(regname + "_0");
@@ -217,7 +217,7 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
     if (accessCreatesLocations_) {
         BOOST_FOREACH (const BitRange &newLocation, newLocations.intervals()) {
             RegisterDescriptor subreg(reg.get_major(), reg.get_minor(), newLocation.least(), newLocation.size());
-            newParts.push_back(RegPair(subreg, get_protoval()->undefined_(newLocation.size())));
+            newParts.push_back(RegPair(subreg, protoval()->undefined_(newLocation.size())));
         }
     } else {
         ASSERT_require(newLocations.isEmpty());         // should have thrown a RegisterNotPresent exception already
@@ -723,7 +723,7 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterStatePtr &other_, RiscO
         if (is_partly_stored(otherReg)) {
             BaseSemantics::SValuePtr thisValue = readRegister(otherReg, ops);
             if (BaseSemantics::SValuePtr merged = thisValue->createOptionalMerge(otherValue, merger(),
-                                                                                 ops->get_solver()).orDefault()) {
+                                                                                 ops->solver()).orDefault()) {
                 writeRegister(otherReg, merged, ops);
                 changed = true;
             }

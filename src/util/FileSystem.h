@@ -8,6 +8,7 @@
 
 namespace rose {
 
+/** Functions for operating on files in a filesystem. */
 namespace FileSystem {
 
 /** Pattern to use when creating temporary files. */
@@ -145,6 +146,11 @@ std::vector<Path> findNamesRecursively(const Path &root, Select select) {
 
 ROSE_UTIL_API std::vector<Path> findNamesRecursively(const Path &root);
 /** @} */
+
+/** Copy a file.
+ *
+ *  Copies the contents of the source file to the destination file, overwriting the destination file if it existed. */
+void copyFile(const Path &sourceFileName, const Path &destinationFileName);
 
 /** Copy files from one directory to another.
  *

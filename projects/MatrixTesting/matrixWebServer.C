@@ -1152,6 +1152,7 @@ private:
                                        "|\\[ERROR\\]"
                                        "|\\bwhat\\(\\): [^\\n]+\\n[^\\n]*Aborted$" // fatal exception in shell command
                                        "|\\bwhat\\(\\): [^\\n]+\\n[^\\n]*command died" // fatal exception from $(RTH_RUN)
+                                       "|\\[err\\]: terminated after \\d+ seconds"
 
                                        ")[^\\n]*$)|"
                                        "(^[^\\n]*?(?:"

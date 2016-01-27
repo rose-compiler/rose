@@ -661,6 +661,19 @@ AM_CONDITIONAL(ROSE_USE_LIBFFI,test ! "$with_libffi" = no)
 # DQ (3/14/2013): Adding support for Aterm library use in ROSE.
 ROSE_SUPPORT_ATERM
 
+# DQ (1/22/2016): Added support for stratego (need to know the path to sglri executable for Exprermental Fortran support).
+ROSE_SUPPORT_STRATEGO
+
+if test "x$enable_experimental_fortran_frontend" = "xyes"; then
+   if test "x$ATERM_LIBRARY_PATH" = "x"; then
+      AC_MSG_ERROR([Support for experimental_fortran_frontend requires Aterm library support, --with-aterm=<path> must be specified!])
+   fi
+   if test "x$STRATEGO_LIBRARY_PATH" = "x"; then
+      AC_MSG_ERROR([Support for experimental_fortran_frontend requires Stratego library support, --with-stratego=<path> must be specified!])
+   fi
+fi
+
+
 ROSE_SUPPORT_MINT
 
 ROSE_SUPPORT_VECTORIZATION

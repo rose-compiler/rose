@@ -55,6 +55,24 @@ public:
     }
     /** @} */
 
+    /** Writers for an address.
+     *
+     *  Returns the set of all writers that wrote to the specified address or any address that might alias the specified
+     *  address. Memory states that don't normally compute aliases (e.g., @ref MemoryCellMap) return only the writers for the
+     *  specified address, not any aliases, and in this case @ref getWritersUnion and @ref getWritersIntersection return the
+     *  same set. */
+    virtual MemoryCell::AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                                   RiscOperators *valOps) = 0;
+
+    /** Writers for an address.
+     *
+     *  Returns the set of all writers that wrote to the specified address and any address that might alias the specified
+     *  address. Memory states that don't normally compute aliases (e.g., @ref MemoryCellMap) return only the writers for the
+     *  specified address, not any aliases, and in this case @ref getWritersUnion and @ref getWritersIntersection return the
+     *  same set. */
+    virtual MemoryCell::AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                                          RiscOperators *valOps) = 0;
+
     /** Find all matching cells.
      *
      *  Returns a vector of cells for which the @p predicate returns true. */

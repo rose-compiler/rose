@@ -229,7 +229,7 @@ protected:
         : BaseSemantics::State(registers, memory) {
         // This state should use PartialSymbolicSemantics values (or subclasses thereof)
         ASSERT_not_null(registers);
-        (void) SValue::promote(registers->get_protoval());
+        (void) SValue::promote(registers->protoval());
         ASSERT_not_null(memory);
         (void) SValue::promote(memory->get_addr_protoval());
         (void) SValue::promote(memory->get_val_protoval());
@@ -311,11 +311,11 @@ protected:
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver), map(NULL) {
-        set_name("PartialSymbolic");
+        name("PartialSymbolic");
     }
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver), map(NULL) {
-        set_name("PartialSymbolic");
+        name("PartialSymbolic");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

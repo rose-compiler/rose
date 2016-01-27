@@ -6,7 +6,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) 
 
-bin_PROGRAMS    = attributeGenerator shiftCalculusCompiler 
+bin_PROGRAMS    = attributeGenerator shiftCalculusCompiler testFunctionCallBack_01 testFunctionCallBack_02 testFunctionCallBack_03 testFunctionCallBack_04
 noinst_PROGRAMS = mpiCodeGenerator 
 
 # Liao, 9/14/15 C++11 has only been available since G++ 4.3. 
@@ -21,6 +21,13 @@ shiftCalculusCompiler_SOURCES = shiftCalculusCompiler.C stencilAndStencilOperato
 mpiCodeGenerator_SOURCES = mpiCodeGenerator.C mpiCodeGenerator.h
 
 attributeGenerator_SOURCES = attributeGenerator.C attributeGenerator.h
+
+# DQ (1/19/2016): Added test code for std::function support required in DSL recognition and evaluation.
+testFunctionCallBack_01_SOURCES = testFunctionCallBack_01.C
+testFunctionCallBack_02_SOURCES = testFunctionCallBack_02.C
+testFunctionCallBack_03_SOURCES = testFunctionCallBack_03.C
+testFunctionCallBack_04_SOURCES = testFunctionCallBack_04.C
+
 
 include_HEADERS = shiftCalculusCompiler.h stencilAndStencilOperatorDetection.h stencilEvaluation.h stencilFiniteStateMachine.h dslSupport.h dslCodeGeneration.h lowLevelCodeGeneration.h
 
@@ -156,7 +163,6 @@ rose_laplacian_lite_v3_GPU_collapsed.cu:
 
 test12: shiftCalculusCompiler
 	./shiftCalculusCompiler -std=c++11 -c $(srcdir)/simpleCNSPhil.cpp
-
 
 testAttributeGenerator: attributeGenerator
 	./attributeGenerator $(srcdir)/input_attributeGenerator_01.C
