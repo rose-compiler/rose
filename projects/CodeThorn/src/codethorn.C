@@ -973,7 +973,9 @@ int main( int argc, char * argv[] ) {
   if(boolOptions["semantic-fold"]) {
         analyzer.setSolver(4);
   }
-  analyzer.runSolver();
+  if(!analyzer.getModeLTLDriven()) {
+    analyzer.runSolver();
+  }
 
   if(boolOptions["post-semantic-fold"]) {
     cout << "Performing post semantic folding (this may take some time):"<<endl;
@@ -1147,6 +1149,8 @@ int main( int argc, char * argv[] ) {
     }
     PropertyValueTable* ltlResults;
     SpotConnection spotConnection(ltl_filename);
+    spotConnection.setModeLTLDriven(analyzer.getModeLTLDriven());
+
     cout << "STATUS: generating LTL results"<<endl;
     bool spuriousNoAnswers = false;
     if (boolOptions["check-ltl-counterexamples"]) {
@@ -1494,6 +1498,7 @@ int main( int argc, char * argv[] ) {
       cout << "STATUS: LTL output alphabet explicitly selected: "<< setstring << endl;
     }
     SpotConnection* spotConnection = new SpotConnection();
+    spotConnection->setModeLTLDriven(analyzer.getModeLTLDriven());
     spotConnection->compareResults( *(analyzer.getTransitionGraph()) , ltl_filename, ltlInAlphabet, ltlOutAlphabet);
     cout << "=============================================================="<<endl;
   }

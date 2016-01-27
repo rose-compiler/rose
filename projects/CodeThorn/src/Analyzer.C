@@ -2826,56 +2826,65 @@ EStateWorkList Analyzer::subSolver(const EState* currentEStatePtr) {
       for(list<EState>::iterator nesListIter=newEStateList.begin();
 	  nesListIter!=newEStateList.end();
 	  ++nesListIter) {
-	// newEstate is passed by value (not created yet)
-	EState newEState=*nesListIter;
-	ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
+        // newEstate is passed by value (not created yet)
+        EState newEState=*nesListIter;
+        ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
 	
-	if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
-	  HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
-	  const EState* newEStatePtr=pres.second;
-	  if(pres.first==true) {
-	    if(isLTLRelevantEState(newEStatePtr)) {
-	      deferedWorkList.push_back(newEStatePtr);
-	    } else {
-	      localWorkList.push_back(newEStatePtr);
-	    }
-	  }
-	  // TODO: create reduced transition set at end of this function
-	  recordTransition(currentEStatePtr,e,newEStatePtr);
-	}
-	if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
-	  // failed-assert end-state: do not add to work list but do add it to the transition graph
-	  const EState* newEStatePtr;
-	  newEStatePtr=processNewOrExisting(newEState);
-	  // TODO: create reduced transition set at end of this function
-	  recordTransition(currentEStatePtr,e,newEStatePtr);        
-	  deferedWorkList.push_back(newEStatePtr);
-	  if(isVerificationErrorEState(&newEState)) {
-	    cout<<"STATUS: detected verification error state ... terminating early"<<endl;
-	    // set flag for terminating early
-	    reachabilityResults.reachable(0);
-	    EStateWorkList emptyWorkList;
-	    return emptyWorkList;
-	  } else if(isFailedAssertEState(&newEState)) {
-	    // record failed assert
-	    int assertCode;
-	    if(boolOptions["rers-binary"]) {
-	      assertCode=reachabilityAssertCode(newEStatePtr);
-	    } else {
-	      assertCode=reachabilityAssertCode(currentEStatePtr);
-	    }  
-	    if(assertCode>=0) {
-	      if(boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) { 
-            //if this particular assertion was never reached before, compute and update counterexample
-            if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
-              _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
-            } 
-	      }
-	      reachabilityResults.reachable(assertCode);
-	    }	    // record failed assert
-        
-	  } // end of failed assert handling
-	} // end of if (no disequality (= no infeasable path))
+        if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
+          HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
+          const EState* newEStatePtr=pres.second;
+          if(pres.first==true) {
+            if(isLTLRelevantEState(newEStatePtr)) {
+              deferedWorkList.push_back(newEStatePtr);
+            } else {
+              localWorkList.push_back(newEStatePtr);
+            }
+          }
+          // TODO: create reduced transition set at end of this function
+          if(!getModeLTLDriven()) {
+            recordTransition(currentEStatePtr,e,newEStatePtr);
+          }
+        }
+        if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
+          // failed-assert end-state: do not add to work list but do add it to the transition graph
+          const EState* newEStatePtr;
+          newEStatePtr=processNewOrExisting(newEState);
+          // TODO: create reduced transition set at end of this function
+          if(!getModeLTLDriven()) {
+            recordTransition(currentEStatePtr,e,newEStatePtr);
+          }
+          deferedWorkList.push_back(newEStatePtr);
+          if(isVerificationErrorEState(&newEState)) {
+            cout<<"STATUS: detected verification error state ... terminating early"<<endl;
+            // set flag for terminating early
+            reachabilityResults.reachable(0);
+            EStateWorkList emptyWorkList;
+            return emptyWorkList;
+          } else if(isFailedAssertEState(&newEState)) {
+            // record failed assert
+            int assertCode;
+            if(boolOptions["rers-binary"]) {
+              assertCode=reachabilityAssertCode(newEStatePtr);
+            } else {
+              assertCode=reachabilityAssertCode(currentEStatePtr);
+            }  
+            /* if a property table is created for reachability we can also
+               collect on the fly reachability results in LTL-driven mode
+               but for now, we don't
+            */
+            if(!getModeLTLDriven()) {
+              if(assertCode>=0) {
+                if(boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) { 
+                  //if this particular assertion was never reached before, compute and update counterexample
+                  if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
+                    _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
+                  } 
+                }
+                reachabilityResults.reachable(assertCode);
+              }	    // record failed assert
+            }
+          } // end of failed assert handling
+        } // end of if (no disequality (= no infeasable path))
       } // end of loop on transfer function return-estates
     } // edge set iterator
   }
