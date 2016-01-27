@@ -458,8 +458,12 @@ int main( int argc, char * argv[] ) {
   Analyzer analyzer;
   global_analyzer=&analyzer;
 
+  // this must be set early, as subsequent initialization depends on this flag
   if (args.count("ltl-driven")) {
     analyzer.setModeLTLDriven(true);
+    cout<<"MODE: ltl-driven: "<<analyzer.getModeLTLDriven()<<endl;
+  } else {
+    cout<<"MODE: bfs"<<endl;
   }
 
   if (args.count("cegpra-ltl") || boolOptions["cegpra-ltl-all"]) {
@@ -724,6 +728,7 @@ int main( int argc, char * argv[] ) {
         || string(argv[i]).find("--check-ltl-sol")==0
         || string(argv[i]).find("--ltl-in-alphabet")==0
         || string(argv[i]).find("--ltl-out-alphabet")==0
+        || string(argv[i]).find("--ltl-driven")==0
         || string(argv[i]).find("--reconstruct-assert-paths")==0
         || string(argv[i]).find("--pattern-search-asserts")==0
         || string(argv[i]).find("--pattern-search-exploration")==0
@@ -1078,7 +1083,7 @@ int main( int argc, char * argv[] ) {
   }
 
   if(boolOptions["std-io-only"]) {
-    cout << "STATUS: bypassing all non standard I/O states."<<endl;
+    cout << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
     timer.start();
     //analyzer.removeNonIOStates();  //old version, works correclty but has a long execution time
     analyzer.reduceGraphInOutWorklistOnly(true,true,boolOptions["keep-error-states"]);
@@ -1093,9 +1098,11 @@ int main( int argc, char * argv[] ) {
   stringstream statisticsCegpra;
 
   if (args.count("check-ltl")) {
+    cout<<"INFO: STG size: "<<analyzer.getTransitionGraph()->size()<<endl;
     string ltl_filename = args["check-ltl"].as<string>();
     if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
-      if (!boolOptions["inf-paths-only"] && !boolOptions["keep-error-states"]) {
+      cout<<"MODE(!):"<<analyzer.getModeLTLDriven()<<endl;
+      if (!boolOptions["inf-paths-only"] && !boolOptions["keep-error-states"] &&!analyzer.getModeLTLDriven()) {
         cout << "STATUS: recursively removing all leaves (due to RERS-mode)."<<endl;
         timer.start();
         analyzer.pruneLeavesRec();
@@ -1107,7 +1114,7 @@ int main( int argc, char * argv[] ) {
         eStateSetSizeStgInf = (analyzer.getTransitionGraph())->estateSet().size();
       }
       if (!boolOptions["std-io-only"]) {
-        cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode)."<<endl;
+        cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode) (P1)."<<endl;
         timer.start();
         analyzer.reduceGraphInOutWorklistOnly(true, true, boolOptions["keep-error-states"]);
         stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
@@ -1461,13 +1468,14 @@ int main( int argc, char * argv[] ) {
 
   if (args.count("check-ltl-sol")) {
     string ltl_filename = args["check-ltl-sol"].as<string>();
-    if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
+    // rers mode reduces the STG. In case of ltl-driven mode there is nothing to reduce.
+    if(boolOptions["rersmode"] && !analyzer.getModeLTLDriven()) {  //reduce the graph accordingly, if not already done
       if (!boolOptions["inf-paths-only"]) {
         cout << "STATUS: recursively removing all leaves (due to RERS-mode)."<<endl;
         analyzer.pruneLeavesRec();
       }
       if (!boolOptions["std-io-only"]) {
-        cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode)."<<endl;
+        cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode). (P3)"<<endl;
         analyzer.removeNonIOStates();
       }
     }
@@ -1549,7 +1557,7 @@ int main( int argc, char * argv[] ) {
         analyzer.pruneLeavesRec();
       }
       if (!boolOptions["std-io-only"]) {
-        cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode)."<<endl;
+        cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode). (P4)"<<endl;
         analyzer.removeNonIOStates();
       }
     }

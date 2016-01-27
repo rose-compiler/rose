@@ -1,6 +1,7 @@
 
 #include "sage3basic.h"
 #include "TransitionGraph.h"
+#include "Analyzer.h"
 
 using namespace CodeThorn;
 
@@ -123,6 +124,9 @@ TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(const EState* estate)
 // MS: we definitely need to cache all the results or use a proper graph structure
 TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate) {
   ROSE_ASSERT(estate);
+  if(getModeLTLDriven()) {
+    ROSE_ASSERT(0);
+  }
   return _outEdges[estate];
 }
 
@@ -137,9 +141,18 @@ EStatePtrSet TransitionGraph::pred(const EState* estate) {
 
 EStatePtrSet TransitionGraph::succ(const EState* estate) {
   EStatePtrSet succNodes;
-  TransitionPtrSet tset=outEdges(estate);
-  for(TransitionPtrSet::iterator i=tset.begin();i!=tset.end();++i) {
-    succNodes.insert((*i)->target);
+  if(getModeLTLDriven()) {
+    ROSE_ASSERT(_analyzer);
+    EStateWorkList estateWorkList=_analyzer->subSolver(estate);
+    for(EStateWorkList::iterator i=estateWorkList.begin();i!=estateWorkList.end();++i) {
+      succNodes.insert(*i);
+    }
+  } else {
+    EStatePtrSet succNodes;
+    TransitionPtrSet tset=outEdges(estate);
+    for(TransitionPtrSet::iterator i=tset.begin();i!=tset.end();++i) {
+      succNodes.insert((*i)->target);
+    }
   }
   return succNodes;
 }
@@ -459,11 +472,21 @@ bool TransitionGraph::isComplete() {
   return _completeSTG;
 }
 
+
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
+void TransitionGraph::setStartEState(const EState* estate) {
+  ROSE_ASSERT(getModeLTLDriven());
+  _startEState=estate;
+}
+
 const EState* TransitionGraph::getStartEState() {
+  if(getModeLTLDriven()) {
+    return _startEState;
+  }
   for(TransitionGraph::iterator i=begin();i!=end();++i) {
     if((*i)->source->label()==getStartLabel()) {
       return (*i)->source;

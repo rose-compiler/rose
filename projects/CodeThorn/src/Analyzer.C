@@ -78,10 +78,10 @@ Analyzer::Analyzer():
   _explorationMode(EXPL_BREADTH_FIRST),
   _topifyModeActive(false),
   _iterations(0),
-      _approximated_iterations(0),
-      _curr_iteration_cnt(0),
-      _next_iteration_cnt(0),
-      _externalFunctionSemantics(false)
+  _approximated_iterations(0),
+  _curr_iteration_cnt(0),
+  _next_iteration_cnt(0),
+  _externalFunctionSemantics(false)
 {
   variableIdMapping.setModeVariableIdForEachArrayElement(true);
   for(int i=0;i<100;i++) {
@@ -1580,12 +1580,21 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   }    
 
   const EState* currentEState=processNew(estate);
+  if(getModeLTLDriven()) {
+    setStartEState(currentEState);
+    getTransitionGraph()->setAnalyzer(this);
+  }
   assert(currentEState);
   variableValueMonitor.init(currentEState);
-  //cout << "INIT: "<<eStateSet.toString()<<endl;
   addToWorkList(currentEState);
   //cout << "INIT: start state: "<<currentEState->toString(&variableIdMapping)<<endl;
   cout << "INIT: finished."<<endl;
+}
+
+void Analyzer::setStartEState(const EState* estate) {
+  // this function is only used in ltl-driven mode (otherwise it is not necessary)
+  ROSE_ASSERT(getModeLTLDriven());
+  transitionGraph.setStartEState(estate);
 }
 
 set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
@@ -1869,7 +1878,7 @@ bool Analyzer::indegreeTimesOutdegreeLessThan(const EState* a, const EState* b) 
 void Analyzer::removeNonIOStates() {
   EStatePtrSet states=transitionGraph.estateSet();
   if (states.size() == 0) {
-    cout << "STATUS: the transition system used as a model is empty, could not reduce states to I/O." << endl;
+    cout << "STATUS: the transition system used as a model is empty, could not reduce states to I/O. (P2)" << endl;
     return;
   }
   // sort EStates so that those with minimal (indegree * outdegree) come first
@@ -1900,7 +1909,7 @@ void Analyzer::reduceGraphInOutWorklistOnly(bool includeIn, bool includeOut, boo
   std::list<const EState*> worklist_reduce;
   EStatePtrSet states=transitionGraph.estateSet();
   if (states.size() == 0) {
-    cout << "STATUS: the transition system used as a model is empty, could not reduce states to I/O." << endl;
+    cout << "STATUS: the transition system used as a model is empty, could not reduce states to I/O. (P1)" << endl;
     return;
   }
   worklist_reduce.push_back(transitionGraph.getStartEState());

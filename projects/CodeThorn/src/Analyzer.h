@@ -135,6 +135,10 @@ namespace CodeThorn {
     // determines whether lab is a function call label of a function call of the form 'x=f(...)' and returns the varible-id of the lhs, if it exists.
     bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
   private:
+
+    // only used in LTL-driven mode
+    void setStartEState(const EState* estate);
+
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
       a new state is entered into stateSet and a pointer to it is returned.
     */

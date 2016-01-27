@@ -48,6 +48,7 @@ namespace CodeThorn {
    * \author Markus Schordan
    * \date 2012.
    */
+  class Analyzer;
   class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun,TransitionEqualToPred> {
   public:
     typedef set<const Transition*> TransitionPtrSet;
@@ -65,6 +66,7 @@ namespace CodeThorn {
     void setStartLabel(Label lab) { _startLabel=lab; }
     // this allows to deal with multiple start transitions (must share same start state)
     const EState* getStartEState();
+    void setStartEState(const EState* estate);
     Transition getStartTransition();
 
     void erase(TransitionGraph::iterator transiter);
@@ -90,6 +92,10 @@ namespace CodeThorn {
     void setIsComplete(bool v);
     bool isPrecise();
     bool isComplete();
+    void setAnalyzer(Analyzer* analyzer) {
+      ROSE_ASSERT(getModeLTLDriven());
+      _analyzer=analyzer;
+    }
  private:
     Label _startLabel;
     int _numberOfNodes; // not used yet
@@ -99,6 +105,11 @@ namespace CodeThorn {
     bool _preciseSTG;
     bool _completeSTG;
     bool _modeLTLDriven;
+
+    // only used by ltl-driven mode in function succ
+    Analyzer* _analyzer;
+    // only used by ltl-driven mode in function succ
+    const EState* _startEState;
   };
 }
 #endif
