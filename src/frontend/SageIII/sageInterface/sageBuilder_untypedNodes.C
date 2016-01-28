@@ -35,7 +35,7 @@ SageBuilder::buildUntypedFile(SgUntypedGlobalScope* scope)
 
    }
 
-void setupMembers(SgUntypedScope* scopeNode,SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list)
+void setupMembers(SgUntypedScope* scopeNode,SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list)
    {
      ROSE_ASSERT(scopeNode != NULL);
 
@@ -66,7 +66,7 @@ void setupMembers(SgUntypedScope* scopeNode,SgUntypedDeclarationList* declaratio
    }
 
 SgUntypedScope*
-SageBuilder::buildUntypedScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list )
+SageBuilder::buildUntypedScope(SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list )
    {
      SgUntypedScope* returnNode = new SgUntypedScope();
      ROSE_ASSERT(returnNode != NULL);
@@ -78,7 +78,7 @@ SageBuilder::buildUntypedScope(SgUntypedDeclarationList* declaration_list, SgUnt
 
 
 SgUntypedGlobalScope*
-SageBuilder::buildUntypedGlobalScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list )
+SageBuilder::buildUntypedGlobalScope(SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list )
    {
      SgUntypedGlobalScope* returnNode = new SgUntypedGlobalScope();
      ROSE_ASSERT(returnNode != NULL);
@@ -90,7 +90,7 @@ SageBuilder::buildUntypedGlobalScope(SgUntypedDeclarationList* declaration_list,
 
 
 SgUntypedFunctionScope*
-SageBuilder::buildUntypedFunctionScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list )
+SageBuilder::buildUntypedFunctionScope(SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list )
    {
      SgUntypedFunctionScope* returnNode = new SgUntypedFunctionScope();
      ROSE_ASSERT(returnNode != NULL);
@@ -101,7 +101,7 @@ SageBuilder::buildUntypedFunctionScope(SgUntypedDeclarationList* declaration_lis
    }
 
 SgUntypedModuleScope*
-SageBuilder::buildUntypedModuleScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list )
+SageBuilder::buildUntypedModuleScope(SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list )
    {
      SgUntypedModuleScope* returnNode = new SgUntypedModuleScope();
      ROSE_ASSERT(returnNode != NULL);

@@ -86,7 +86,6 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 class RiscOperators: public BaseSemantics::RiscOperators {
     BaseSemantics::RiscOperatorsPtr subdomain_;         // Domain to which all our RISC operators chain
     Sawyer::Message::Stream stream_;                    // stream to which output is emitted
-    size_t nInsns_;                                     // number of instructions processed
     
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,20 +93,20 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     // use the version that takes a subdomain instead of this c'tor
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
-        set_name("Trace");
+        : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]) {
+        name("Trace");
     }
 
     // use the version that takes a subdomain instead of this c'tor.
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
-        set_name("Trace");
+        : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]) {
+        name("Trace");
     }
 
     explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &subdomain)
-        : BaseSemantics::RiscOperators(subdomain->get_state(), subdomain->get_solver()),
-          subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
-        set_name("Trace");
+        : BaseSemantics::RiscOperators(subdomain->currentState(), subdomain->solver()),
+          subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]) {
+        name("Trace");
     }
 
 public:
@@ -137,9 +136,9 @@ public:
      * trace. */
     static RiscOperatorsPtr instance(const BaseSemantics::RiscOperatorsPtr &subdomain) {
         ASSERT_not_null(subdomain);
-        RiscOperatorsPtr self = subdomain->get_state()!=NULL ?
-                                RiscOperatorsPtr(new RiscOperators(subdomain->get_state(), subdomain->get_solver())) :
-                                RiscOperatorsPtr(new RiscOperators(subdomain->get_protoval(), subdomain->get_solver()));
+        RiscOperatorsPtr self = subdomain->currentState()!=NULL ?
+                                RiscOperatorsPtr(new RiscOperators(subdomain->currentState(), subdomain->solver())) :
+                                RiscOperatorsPtr(new RiscOperators(subdomain->protoval(), subdomain->solver()));
         self->subdomain_ = subdomain;
         return self;
     }
@@ -253,15 +252,15 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we override from our super class
 public:
-    virtual BaseSemantics::SValuePtr get_protoval() const ROSE_OVERRIDE;
-    virtual void set_solver(SMTSolver*) ROSE_OVERRIDE;
-    virtual SMTSolver *get_solver() const ROSE_OVERRIDE;
-    virtual BaseSemantics::StatePtr get_state() const ROSE_OVERRIDE;
-    virtual void set_state(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr protoval() const ROSE_OVERRIDE;
+    virtual void solver(SMTSolver*) ROSE_OVERRIDE;
+    virtual SMTSolver *solver() const ROSE_OVERRIDE;
+    virtual BaseSemantics::StatePtr currentState() const ROSE_OVERRIDE;
+    virtual void currentState(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
-    virtual size_t get_ninsns() const ROSE_OVERRIDE;
-    virtual void set_ninsns(size_t n) ROSE_OVERRIDE;
-    virtual SgAsmInstruction *get_insn() const ROSE_OVERRIDE;
+    virtual size_t nInsns() const ROSE_OVERRIDE;
+    virtual void nInsns(size_t n) ROSE_OVERRIDE;
+    virtual SgAsmInstruction* currentInstruction() const ROSE_OVERRIDE;
     virtual void startInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
     virtual void finishInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
     

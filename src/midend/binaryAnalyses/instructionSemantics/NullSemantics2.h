@@ -166,7 +166,7 @@ public:
 
     virtual BaseSemantics::SValuePtr
     readRegister(const RegisterDescriptor &reg, BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
-        return get_protoval()->undefined_(reg.get_nbits());
+        return protoval()->undefined_(reg.get_nbits());
     }
 
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value,
@@ -260,11 +260,11 @@ class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("Null");
+        name("Null");
     }
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("Null");
+        name("Null");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

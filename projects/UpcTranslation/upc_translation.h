@@ -15,7 +15,7 @@
 
 /*!
   \defgroup midendUPCTranslation UPC Translation Interfaces
-  \ingroup ROSE_MidEndGroup 
+  \ingroup rose_midend
   \brief This namespace contains interfaces of UPC related translation. 
 
   \authors Chunhua Liao (6/26/2008) Last modified (9/3/2008)

@@ -51,6 +51,12 @@ enum Confidence {
     PROVED,                                             /**< The value was somehow proved. */
 };
 
+/** Organization of semantic memory. */
+enum SemanticMemoryParadigm {
+    LIST_BASED_MEMORY,                                  /**< Precise but slow. */
+    MAP_BASED_MEMORY                                    /**< Fast but not precise. */
+};
+
 class Partitioner;
 
 } // namespace

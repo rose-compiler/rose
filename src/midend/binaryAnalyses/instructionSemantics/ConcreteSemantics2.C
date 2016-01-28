@@ -174,7 +174,7 @@ RiscOperators::svalue_number(const Sawyer::Container::BitVector &bits) {
 
 void
 RiscOperators::interrupt(int majr, int minr) {
-    get_state()->clear();
+    currentState()->clear();
 }
 
 BaseSemantics::SValuePtr
@@ -347,12 +347,12 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
     if (a_->get_width() > 64 || b_->get_width() > 64) {
         throw BaseSemantics::Exception("signedDivide x[" + StringUtility::addrToString(a_->get_width()) +
                                        "] / y[" + StringUtility::addrToString(b_->get_width()) +
-                                       "] is not implemented", get_insn());
+                                       "] is not implemented", currentInstruction());
     }
     int64_t a = IntegerOps::signExtend2(a_->get_number(), a_->get_width(), 64);
     int64_t b = IntegerOps::signExtend2(b_->get_number(), b_->get_width(), 64);
     if (0==b)
-        throw BaseSemantics::Exception("division by zero", get_insn());
+        throw BaseSemantics::Exception("division by zero", currentInstruction());
     return svalue_number(a_->get_width(), a/b);
 }
 
@@ -362,12 +362,12 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
     if (a_->get_width() > 64 || b_->get_width() > 64) {
         throw BaseSemantics::Exception("signedModulo x[" + StringUtility::addrToString(a_->get_width()) +
                                        "] % y[" + StringUtility::addrToString(b_->get_width()) +
-                                       "] is not implemented", get_insn());
+                                       "] is not implemented", currentInstruction());
     }
     int64_t a = IntegerOps::signExtend2(a_->get_number(), a_->get_width(), 64);
     int64_t b = IntegerOps::signExtend2(b_->get_number(), b_->get_width(), 64);
     if (0==b)
-        throw BaseSemantics::Exception("division by zero", get_insn());
+        throw BaseSemantics::Exception("division by zero", currentInstruction());
     return svalue_number(b_->get_width(), a % b);
 }
 
@@ -398,7 +398,7 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
     } else if (a_->get_width() + b_->get_width() > 64) {
         throw BaseSemantics::Exception("signedMultiply x[" + StringUtility::addrToString(a_->get_width()) +
                                        "] * y[" + StringUtility::addrToString(b_->get_width()) +
-                                       "] is not implemented", get_insn());
+                                       "] is not implemented", currentInstruction());
     } else {
         ASSERT_require2(a_->get_width() + b_->get_width() <= 64, "not implemented yet");
         int64_t a = IntegerOps::signExtend2(a_->get_number(), a_->get_width(), 64);
@@ -422,7 +422,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
         numerator |= a->bits().toInteger(BitRange::baseSize(0, 64));
         uint64_t denominator = b->bits().toInteger();
         if (0 == denominator)
-            throw BaseSemantics::Exception("division by zero", get_insn());
+            throw BaseSemantics::Exception("division by zero", currentInstruction());
         __uint128_t ratio = numerator / denominator;
         uint64_t ratio_lo = ratio;
         uint64_t ratio_hi = ratio >> 64;
@@ -437,13 +437,13 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
     if (a->get_width() > 64 || b->get_width() > 64) {
         throw BaseSemantics::Exception("unsignedDivide x[" + StringUtility::addrToString(a->get_width()) +
                                        "] / y[" + StringUtility::addrToString(b->get_width()) +
-                                       "] is not implemented", get_insn());
+                                       "] is not implemented", currentInstruction());
     }
 
     uint64_t an = a->get_number();
     uint64_t bn = b->get_number();
     if (0==bn)
-        throw BaseSemantics::Exception("division by zero", get_insn());
+        throw BaseSemantics::Exception("division by zero", currentInstruction());
     return svalue_number(a->get_width(), an/bn);
 }
 
@@ -462,7 +462,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
         numerator |= a->bits().toInteger(BitRange::baseSize(0, 64));
         uint64_t denominator = b->bits().toInteger();
         if (0 == denominator)
-            throw BaseSemantics::Exception("division by zero", get_insn());
+            throw BaseSemantics::Exception("division by zero", currentInstruction());
         uint64_t remainder = numerator % denominator;
         return svalue_number(64, remainder);
     }
@@ -472,12 +472,12 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
     if (a->get_width() > 64 || b->get_width() > 64) {
         throw BaseSemantics::Exception("unsignedModulo x[" + StringUtility::addrToString(a->get_width()) +
                                        "] % y[" + StringUtility::addrToString(b->get_width()) +
-                                       "] is not implemented", get_insn());
+                                       "] is not implemented", currentInstruction());
     }
     uint64_t an = a->get_number();
     uint64_t bn = b->get_number();
     if (0==bn)
-        throw BaseSemantics::Exception("division by zero", get_insn());
+        throw BaseSemantics::Exception("division by zero", currentInstruction());
     return svalue_number(b->get_width(), an % bn);
 }
 
@@ -508,7 +508,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
     } else if (a_->get_width() + b_->get_width() > 64) {
         throw BaseSemantics::Exception("unsignedMultiply x[" + StringUtility::addrToString(a_->get_width()) +
                                        "] * y[" + StringUtility::addrToString(b_->get_width()) +
-                                       "] is not implemented", get_insn());
+                                       "] is not implemented", currentInstruction());
     } else {
         ASSERT_require2(a_->get_width() + b_->get_width() <= 64, "not implemented yet");
         uint64_t a = a_->get_number();
@@ -529,12 +529,12 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
     // Read the bytes and concatenate them together.
     BaseSemantics::SValuePtr retval;
     size_t nbytes = nbits/8;
-    BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
+    BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
         size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
-        SValuePtr byte_value = SValue::promote(state->readMemory(byte_addr, byte_dflt, this, this));
+        SValuePtr byte_value = SValue::promote(currentState()->readMemory(byte_addr, byte_dflt, this, this));
         if (0==bytenum) {
             retval = byte_value;
         } else if (ByteOrder::ORDER_MSB==mem->get_byteOrder()) {
@@ -543,7 +543,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
             retval = concat(retval, byte_value);
         } else {
             // See BaseSemantics::MemoryState::set_byteOrder
-            throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", get_insn());
+            throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", currentInstruction());
         }
     }
 
@@ -561,7 +561,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
     size_t nbits = value->get_width();
     ASSERT_require(0 == nbits % 8);
     size_t nbytes = nbits/8;
-    BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
+    BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
     for (size_t bytenum=0; bytenum<nbytes; ++bytenum) {
         size_t byteOffset = 0;
         if (1 == nbytes) {
@@ -572,12 +572,12 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
             byteOffset = bytenum;
         } else {
             // See BaseSemantics::MemoryState::set_byteOrder
-            throw BaseSemantics::Exception("multi-byte write with memory having unspecified byte order", get_insn());
+            throw BaseSemantics::Exception("multi-byte write with memory having unspecified byte order", currentInstruction());
         }
 
         BaseSemantics::SValuePtr byte_value = extract(value, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
-        state->writeMemory(byte_addr, byte_value, this, this);
+        currentState()->writeMemory(byte_addr, byte_value, this, this);
     }
 }
 
@@ -601,7 +601,7 @@ RiscOperators::exprToDouble(const BaseSemantics::SValuePtr &a, SgAsmFloatType *a
         u.i = a->get_number();
         return u.fp;
     } else {
-        throw BaseSemantics::NotImplemented("exprToDouble type not supported", get_insn());
+        throw BaseSemantics::NotImplemented("exprToDouble type not supported", currentInstruction());
     }
 }
 
@@ -624,7 +624,7 @@ RiscOperators::doubleToExpr(double d, SgAsmFloatType *retType) {
         u.fp = d;
         return svalue_number(32, u.i);
     } else {
-        throw BaseSemantics::NotImplemented("doubleToExpr type not supported", get_insn());
+        throw BaseSemantics::NotImplemented("doubleToExpr type not supported", currentInstruction());
     }
 }
     

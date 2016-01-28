@@ -244,14 +244,14 @@ protected:
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
-        set_name("Multi");
+        name("Multi");
         (void) SValue::promote(protoval); // check that its dynamic type is a MultiSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver) {
-        set_name("Multi");
-        (void) SValue::promote(state->get_protoval()); // dynamic type must be a MultiSemantics::SValue
+        name("Multi");
+        (void) SValue::promote(state->protoval());      // dynamic type must be a MultiSemantics::SValue
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -342,7 +342,7 @@ public:
 
     /** Convenience function for SValue::create_empty(). */
     virtual SValuePtr svalue_empty(size_t nbits) {
-        return SValue::promote(get_protoval())->create_empty(nbits);
+        return SValue::promote(protoval())->create_empty(nbits);
     }
     
     /** Iterates over valid subdomains whose inputs are valid. This is intended to be used in a "for" loop inside a RISC

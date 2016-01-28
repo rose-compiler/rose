@@ -229,14 +229,14 @@ protected:
         : BaseSemantics::State(registers, memory) {
         // This state should use PartialSymbolicSemantics values (or subclasses thereof)
         ASSERT_not_null(registers);
-        (void) SValue::promote(registers->get_protoval());
+        (void) SValue::promote(registers->protoval());
         ASSERT_not_null(memory);
         (void) SValue::promote(memory->get_addr_protoval());
         (void) SValue::promote(memory->get_val_protoval());
 
         // This state should use a memory that is not byte restricted.
         MemoryStatePtr mcl = MemoryState::promote(memory);
-        ASSERT_require(!mcl->get_byte_restricted());
+        ASSERT_require(!mcl->byteRestricted());
     }
 
     State(const State &other): BaseSemantics::State(other) {}
@@ -311,11 +311,11 @@ protected:
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver), map(NULL) {
-        set_name("PartialSymbolic");
+        name("PartialSymbolic");
     }
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver), map(NULL) {
-        set_name("PartialSymbolic");
+        name("PartialSymbolic");
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

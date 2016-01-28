@@ -56,24 +56,24 @@ RiscOperators::instance(const Partitioner2::Partitioner *partitioner,
 
 std::string
 RiscOperators::varComment(const std::string &varName) const {
-    return State::promote(get_state())->varComment(varName);
+    return State::promote(currentState())->varComment(varName);
 }
 
 void
 RiscOperators::varComment(const std::string &varName, const std::string &comment) {
-    State::promote(get_state())->varComment(varName, comment);
+    State::promote(currentState())->varComment(varName, comment);
 }
 
 std::string
 RiscOperators::commentForVariable(const RegisterDescriptor &reg, const std::string &accessMode) const {
-    const RegisterDictionary *regs = get_state()->get_register_state()->get_register_dictionary();
+    const RegisterDictionary *regs = currentState()->registerState()->get_register_dictionary();
     std::string varComment = RegisterNames(regs)(reg) + " first " + accessMode;
-    if (pathInsnIndex_ == (size_t)(-1) && get_insn() == NULL) {
+    if (pathInsnIndex_ == (size_t)(-1) && currentInstruction() == NULL) {
         varComment += " by initialization";
     } else {
         if (pathInsnIndex_ != (size_t)(-1))
             varComment += " at path position #" + StringUtility::numberToString(pathInsnIndex_);
-        if (SgAsmInstruction *insn = get_insn())
+        if (SgAsmInstruction *insn = currentInstruction())
             varComment += " by " + unparseInstructionWithAddress(insn);
     }
     return varComment;
@@ -85,7 +85,7 @@ RiscOperators::commentForVariable(const BaseSemantics::SValuePtr &addr, const st
     std::string varComment = "first " + accessMode + " at ";
     if (pathInsnIndex_ != (size_t)(-1))
         varComment += "path position #" + StringUtility::numberToString(pathInsnIndex_) + ", ";
-    varComment += "instruction " + unparseInstructionWithAddress(get_insn());
+    varComment += "instruction " + unparseInstructionWithAddress(currentInstruction());
 
     // Sometimes we can save useful information about the address.
     if (nBytes != 1) {
@@ -138,7 +138,7 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
                     <<"  | " <<unparseInstructionWithAddress(insn) <<"\n"
                     <<"  +-------------------------------------------------\n"
                     <<"    state before instruction:\n"
-                    <<(*get_state() + fmt);
+                    <<(*currentState() + fmt);
     }
 }
 
@@ -146,7 +146,7 @@ void
 RiscOperators::finishInstruction(SgAsmInstruction *insn) {
     if (mlog[DEBUG]) {
         SymbolicSemantics::Formatter fmt = symbolicFormat("      ");
-        mlog[DEBUG] <<"    state after instruction:\n" <<(*get_state()+fmt);
+        mlog[DEBUG] <<"    state after instruction:\n" <<(*currentState()+fmt);
     }
     Super::finishInstruction(insn);
 }
@@ -157,7 +157,7 @@ RiscOperators::readRegister(const RegisterDescriptor &reg) {
     SymbolicExpr::Ptr expr = retval->get_expression();
     if (expr->isLeafNode()) {
         std::string comment = commentForVariable(reg, "read");
-        State::promote(get_state())->varComment(expr->isLeafNode()->toString(), comment);
+        State::promote(currentState())->varComment(expr->isLeafNode()->toString(), comment);
     }
     return retval;
 }
@@ -167,7 +167,7 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
     SymbolicExpr::Ptr expr = SValue::promote(value)->get_expression();
     if (expr->isLeafNode()) {
         std::string comment = commentForVariable(reg, "write");
-        State::promote(get_state())->varComment(expr->isLeafNode()->toString(), comment);
+        State::promote(currentState())->varComment(expr->isLeafNode()->toString(), comment);
     }
     Super::writeRegister(reg, value);
 }
@@ -200,14 +200,14 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
     // Read from the symbolic state, and update the state with the default from real memory if known.
     BaseSemantics::SValuePtr retval = Super::readMemory(segreg, addr, dflt, cond);
 
-    if (!get_insn())
+    if (!currentInstruction())
         return retval;                              // not called from dispatcher on behalf of an instruction
 
     // Save a description of the variable
     SymbolicExpr::Ptr valExpr = SValue::promote(retval)->get_expression();
     if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable()) {
         std::string comment = commentForVariable(addr, "read");
-        State::promote(get_state())->varComment(valExpr->isLeafNode()->toString(), comment);
+        State::promote(currentState())->varComment(valExpr->isLeafNode()->toString(), comment);
     }
 
     // Save a description for its addresses
@@ -215,7 +215,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
         SValuePtr va = SValue::promote(add(addr, number_(addr->get_width(), i)));
         if (va->get_expression()->isLeafNode()) {
             std::string comment = commentForVariable(addr, "read", i, nBytes);
-            State::promote(get_state())->varComment(va->get_expression()->isLeafNode()->toString(), comment);
+            State::promote(currentState())->varComment(va->get_expression()->isLeafNode()->toString(), comment);
         }
     }
     return retval;
@@ -237,7 +237,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
     SymbolicExpr::Ptr valExpr = SValue::promote(value)->get_expression();
     if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable()) {
         std::string comment = commentForVariable(addr, "write");
-        State::promote(get_state())->varComment(valExpr->isLeafNode()->toString(), comment);
+        State::promote(currentState())->varComment(valExpr->isLeafNode()->toString(), comment);
     }
 
     // Save a description for its addresses
@@ -246,7 +246,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
         SValuePtr va = SValue::promote(add(addr, number_(addr->get_width(), i)));
         if (va->get_expression()->isLeafNode()) {
             std::string comment = commentForVariable(addr, "read", i, nBytes);
-            State::promote(get_state())->varComment(va->get_expression()->isLeafNode()->toString(), comment);
+            State::promote(currentState())->varComment(va->get_expression()->isLeafNode()->toString(), comment);
         }
     }
 }

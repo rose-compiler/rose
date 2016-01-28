@@ -1,6 +1,14 @@
 /*
- * Parsing pragmas and generating MPI code from input sequential code
  *  
+ *
+ *  V 0.2 using real frontend parser and dedicated OpenMP-like AST nodes for program representation
+ *  This is necessary to parse complex extended map clause with dist_data info.
+ *  The previous version's MPI_PragmaAttribute is no longer used. 
+ *
+ *  Liao 12/11/2015
+ *
+ *  V 0.1
+ *  Parsing pragmas and generating MPI code from input sequential code
  *  Pragma is OpenMP style, reusing OmpAttribute to store information
  *  As a experiments, a lightweight recursive descendent parser is used to parse the pragmas
  *  Liao 9/22/2015
@@ -12,6 +20,34 @@
 #include <string>
 namespace MPI_Code_Generator 
 {
+
+//------------  v 0.2 interface, expecting the extended ROSE frontend to parse and create OpenMP AST nodes
+//    using -rose:openmp:ast_only command line option to active the frontend support
+
+  void lower_xomp (SgSourceFile* file);
+
+  //! Translate target device(mpi:master) begin ...
+  void transMPIDeviceMaster (SgOmpTargetStatement * t_stmt);
+
+  void transOmpTargetParallelLoop (SgOmpForStatement* loop); 
+
+  //! Translate mapped scalars and arrays, return a reference distributed local array portion size, used for loop bound later.
+  SgVariableDeclaration* transOmpMapVariables (SgOmpTargetStatement* );
+
+ //! Translate a loop affected 
+  void transForLoop (SgForStatement* for_stmt, SgVariableDeclaration* local_size_decl);
+  // convert a C data type into MPI type name
+  std::string C2MPITypeName (SgType*);
+
+  //! Create MPI_Bcast() function call for a single variable
+  SgExprStatement* buildMPI_Bcast(SgVariableSymbol* var_sym, int source_rank_id, SgScopeStatement* insertion_scope);
+
+
+  //! Create MPI_Barrier (); 
+  SgExprStatement* buildMPI_Barrier(SgScopeStatement* insertion_scope);
+
+
+//--------------- v 0.1 interface, no longer being used.   
   class MPI_PragmaAttribute; 
   //int generateMPI (SgSourceFile* sfile); 
 

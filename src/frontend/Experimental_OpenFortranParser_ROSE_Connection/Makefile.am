@@ -16,7 +16,8 @@ noinst_LTLIBRARIES = libexperimentalRoseFortran.la
 
 # if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-  libexperimentalRoseFortran_la_SOURCES = fortran_support.C $(srcdir)/UntypedASTBuilder.cpp 
+# libexperimentalRoseFortran_la_SOURCES = fortran_support.C $(srcdir)/UntypedASTBuilder.cpp 
+  libexperimentalRoseFortran_la_SOURCES = fortran_support.C
 # fortran_support.C fortran_error_handler.C openFortranParser_main.C jserver.C ofp.C FortranModuleInfo.C FortranParserState.C preproc-fortran.ll preproc-fortran-fixed.ll
 else
 # Compile using a function that represents the API of the Open Fortran Parser

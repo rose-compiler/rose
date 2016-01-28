@@ -81,7 +81,7 @@ RSIM_Thread::id()
     RegisterDescriptor IP = get_process()->disassembler()->instructionPointerRegister();
     uint64_t eip = operators()->readRegister(IP)->get_number();
 
-    int n = snprintf(buf2, sizeof(buf2), "0x%08"PRIx64"[%zu]: ", eip, operators()->get_ninsns());
+    int n = snprintf(buf2, sizeof(buf2), "0x%08" PRIx64"[%zu]: ", eip, operators()->nInsns());
     assert(n>=0 && (size_t)n<sizeof(buf2)-1);
     memset(buf2+n, ' ', sizeof(buf2)-n);
     buf2[std::max(n, 21)] = '\0';
@@ -427,7 +427,7 @@ RSIM_Thread::sys_rt_sigreturn()
 
     RSIM_SignalHandling::rt_sigframe_32 frame;
     if (sizeof(frame)!=process->mem_read(&frame, frame_va, sizeof frame)) {
-        mfprintf(mesg)("bad frame 0x%08"PRIu32" in sigreturn (sp=0x%08"PRIu32")\n", frame_va, sp);
+        mfprintf(mesg)("bad frame 0x%08" PRIu32" in sigreturn (sp=0x%08" PRIu32")\n", frame_va, sp);
         return -EFAULT;
     }
 
@@ -469,7 +469,7 @@ RSIM_Thread::sys_sigreturn()
 
     RSIM_SignalHandling::sigframe_32 frame;
     if (sizeof(frame)!=process->mem_read(&frame, frame_va, sizeof frame)) {
-        mfprintf(mesg)("bad frame 0x%08"PRIu32" in sigreturn (sp=0x%08"PRIu32")\n", frame_va, sp);
+        mfprintf(mesg)("bad frame 0x%08" PRIu32" in sigreturn (sp=0x%08" PRIu32")\n", frame_va, sp);
         return -EFAULT;
     }
 
@@ -587,7 +587,7 @@ RSIM_Thread::atfork_child()
 
     /* Thread (re)initialization */
     signal_clear_pending();     /* pending signals are for the parent process */
-    operators()->set_ninsns(0); /* restart instruction counter for trace output */
+    operators()->nInsns(0);     /* restart instruction counter for trace output */
 
     /* Redirect tracing output for new process */
     p->open_tracing_file();
@@ -816,7 +816,7 @@ RSIM_Thread::main()
 
             Sawyer::Message::Stream &mesg = tracing(TRACE_STATE);
             if (mesg)
-                mesg <<*operators()->get_state()->get_register_state();
+                mesg <<*operators()->currentState()->registerState();
         } catch (const Disassembler::Exception &e) {
             post_insn_semaphore();
             if (show_exceptions) {
@@ -1060,10 +1060,10 @@ int
 RSIM_Thread::handle_futex_death(uint32_t futex_va, Sawyer::Message::Stream &trace)
 {
     uint32_t futex;
-    mfprintf(trace)("\n  handling death for futex at 0x%08"PRIx32"\n", futex_va);
+    mfprintf(trace)("\n  handling death for futex at 0x%08" PRIx32"\n", futex_va);
 
     if (4!=get_process()->mem_read(&futex, futex_va, 4)) {
-        mfprintf(trace)("    failed to read futex at 0x%08"PRIx32"\n", futex_va);
+        mfprintf(trace)("    failed to read futex at 0x%08" PRIx32"\n", futex_va);
         return -EFAULT;
     }
 
@@ -1073,16 +1073,16 @@ RSIM_Thread::handle_futex_death(uint32_t futex_va, Sawyer::Message::Stream &trac
         mfprintf(trace)("    setting FUTEX_OWNER_DIED bit\n");
         futex |= 0x40000000;
         if (4!=get_process()->mem_write(&futex, futex_va, 4)) {
-            mfprintf(trace)("      failed to set FUTEX_OWNER_DIED for futex at 0x%08"PRIx32"\n", futex_va);
+            mfprintf(trace)("      failed to set FUTEX_OWNER_DIED for futex at 0x%08" PRIx32"\n", futex_va);
             return -EFAULT;
         }
 
         /* Wake another thread there's one waiting */
         if (futex & 0x80000000) {
-            mfprintf(trace)("    waking futex 0x%08"PRIx32"\n", futex_va);
+            mfprintf(trace)("    waking futex 0x%08" PRIx32"\n", futex_va);
             int result = futex_wake(futex_va, 1);
             if (result<0) {
-                mfprintf(trace)("      wake failed for futex at 0x%08"PRIu32"\n", futex_va);
+                mfprintf(trace)("      wake failed for futex at 0x%08" PRIu32"\n", futex_va);
                 return result;
             }
         }
@@ -1296,7 +1296,7 @@ RSIM_Thread::emulate_syscall()
             sprintf(name, "syscall_%u", callno);
             mfprintf(tracing(TRACE_MISC))("syscall_%u(", callno);
             for (int i=0; get_process()->get_simulator()->syscallArgumentRegisters().size(); ++i)
-                mfprintf(tracing(TRACE_MISC))("%s0x%08"PRIx64, i?", ":"", syscall_arg(i));
+                mfprintf(tracing(TRACE_MISC))("%s0x%08" PRIx64, i?", ":"", syscall_arg(i));
             tracing(TRACE_MISC) <<") is not implemented\n";
 
             tracing(TRACE_MISC) <<"dumping core...\n";
@@ -1321,7 +1321,7 @@ RSIM_Thread::futex_key(rose_addr_t va, uint32_t **val_ptr)
     /* Find the simulator address. */
     *val_ptr = (uint32_t*)process->my_addr(va, 4);
     rose_addr_t addr = (rose_addr_t)*val_ptr;
-    mfprintf(trace)("futex: specimen va 0x%08"PRIx64" is at simulator address 0x%08"PRIx64"\n", va, addr);
+    mfprintf(trace)("futex: specimen va 0x%08" PRIx64" is at simulator address 0x%08" PRIx64"\n", va, addr);
 
     /* Does the simulator address fall inside a file? */
     FILE *f = fopen("/proc/self/maps", "r");
@@ -1374,13 +1374,13 @@ RSIM_Thread::futex_key(rose_addr_t va, uint32_t **val_ptr)
             }
 
             rose_addr_t addr_in_file = (addr - lo_addr) + map_offset;
-            mfprintf(trace)("futex: simulator address 0x%08"PRIx64" is at %s+0x%08"PRIx64"\n", addr, filename, addr_in_file);
+            mfprintf(trace)("futex: simulator address 0x%08" PRIx64" is at %s+0x%08" PRIx64"\n", addr, filename, addr_in_file);
             addr = - ((map_offset<<16) + addr_in_file);
             addr ^= sb.st_ino;
             addr &= 0xffffffff;
             addr |= 1; // so as not to conflict with simulator addresses, which are most likely word aligned.
             assert(0!=addr);
-            mfprintf(trace)("futex: using generated address 0x%08"PRIx64"\n", addr);
+            mfprintf(trace)("futex: using generated address 0x%08" PRIx64"\n", addr);
             break;
         }
     }
@@ -1407,7 +1407,7 @@ RSIM_Thread::futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset)
     if (!key || !futex_ptr) {
         retval = -EFAULT;
     } else if (oldval != *futex_ptr) {
-        mfprintf(trace)("futex wait: futex value %"PRIu32" but need %"PRIu32"\n", *futex_ptr, oldval);
+        mfprintf(trace)("futex wait: futex value %" PRIu32" but need %" PRIu32"\n", *futex_ptr, oldval);
         retval = -EWOULDBLOCK;
     }
 

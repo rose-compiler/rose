@@ -9,6 +9,11 @@
  *  @section installing_libmagic_rhel Redhat Enterprise Linux
  *
  *  @todo Describe how to install libmagic on RHEL.
+ *  Todo.
+ *
+ *  @section installing_libmagic_wheezy Debian 7 "Wheezy"
+ *
+ *  Run <code>apt-get install libmagic-dev</code> as the administrator.
  *
  *  @section installing_libmagic_jessie Debian 8 "Jessie"
  *

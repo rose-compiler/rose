@@ -1,45 +1,4 @@
 /* Interpretation ELF */
-0x080480c4: ================================== Function (pattern, graph) unknown name
-
-0x080480c4: Basic block reasons: entry point, CFG head
-0x080480c4: c8 00 00 00             |....    |          enter  0x0000, 0x00
-0x080480c8: c8 00 00 00             |....    |          enter  0x0000, 0x00
-0x080480cc: 06                      |.       |          push   es
-0x080480cd: 00 00                   |..      |          add    byte ds:[eax], al
-0x080480cf: 00 04 00                |...     |          add    byte ds:[eax + eax], al
-0x080480d2: 00 00                   |..      |          add    byte ds:[eax], al
-0x080480d4: 04 00                   |..      |          add    al, 0x00
-0x080480d6: 00 00                   |..      |          add    byte ds:[eax], al
-0x080480d8: 28 01                   |(.      |          sub    byte ds:[ecx], al
-0x080480da: 00 00                   |..      |          add    byte ds:[eax], al
-0x080480dc: 28 81 04 08 28 81       |(...(.  |          sub    byte ds:[ecx + 0x81280804], al
-0x080480e2: 04 08                   |..      |          add    al, 0x08
-0x080480e4: 20 00                   | .      |          and    byte ds:[eax], al
-0x080480e6: 00 00                   |..      |          add    byte ds:[eax], al
-0x080480e8: 20 00                   | .      |          and    byte ds:[eax], al
-0x080480ea: 00 00                   |..      |          add    byte ds:[eax], al
-0x080480ec: 04 00                   |..      |          add    al, 0x00
-0x080480ee: 00 00                   |..      |          add    byte ds:[eax], al
-0x080480f0: 04 00                   |..      |          add    al, 0x00
-0x080480f2: 00 00                   |..      |          add    byte ds:[eax], al
-0x080480f4: 51                      |Q       |          push   ecx
-0x080480f5: e5 74                   |.t      |          in     eax, 0x74
-0x080480f7: 64 00 00                |d..     |          add    byte fs:[eax], al
-0x080480fa: 00 00                   |..      |          add    byte ds:[eax], al
-0x080480fc: 00 00                   |..      |          add    byte ds:[eax], al
-0x080480fe: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048100: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048102: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048104: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048106: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048108: 00 00                   |..      |          add    byte ds:[eax], al
-0x0804810a: 00 00                   |..      |          add    byte ds:[eax], al
-0x0804810c: 06                      |.       |          push   es
-0x0804810d: 00 00                   |..      |          add    byte ds:[eax], al
-0x0804810f: 00 04 00                |...     |          add    byte ds:[eax + eax], al
-0x08048112: 00 00                   |..      |          add    byte ds:[eax], al
-0x08048112: Successor blocks: 0x08048114
-
 0x080482c8: ================================== Function (function call, symbol, graph) <_init>
 0x080482c8: Function stack delta: +4
 

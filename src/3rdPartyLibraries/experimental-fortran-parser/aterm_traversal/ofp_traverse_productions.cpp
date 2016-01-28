@@ -61,11 +61,7 @@ ATbool ofp_traverse_Program(ATerm term, OFP::Program* Program)
       } else return ATfalse;
    }
 
-   printf ("Calling ast->build_Program(Program); \n");
-
    ast->build_Program(Program);
-
-   printf ("DONE: Calling ast->build_Program(Program); \n");
 
    return ATtrue;
  }

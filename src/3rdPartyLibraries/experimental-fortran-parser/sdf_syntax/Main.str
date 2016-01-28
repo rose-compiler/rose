@@ -2,7 +2,6 @@ module Main
 
 signature
   constructors
-    StmtFunctionStmt                : OptLabel * FunctionName * List(DummyArgName) * Expr * EOS -> StmtFunctionStmt
     ContainsStmt                    : OptLabel * EOS -> ContainsStmt
     ReturnStmt                      : OptLabel * NoExpr * EOS -> ReturnStmt
     ReturnStmt                      : OptLabel * Expr * EOS -> ReturnStmt
@@ -34,14 +33,15 @@ signature
                                     : Ident -> FunctionName
     EndFunctionStmt                 : OptLabel * OptFunctionName * EOS -> EndFunctionStmt
     EndFunctionStmt                 : OptLabel * NoFunctionName * EOS -> EndFunctionStmt
-    no-result-name                  : NoResultName
+    no-result                       : NoResultName
                                     : Ident -> ResultName
     no-suffix                       : NoSuffix
     no-suffix                       : OptSuffix
                                     : Suffix -> OptSuffix
-    Suffix                          : ResultName * ProcLanguageBindingSpec -> Suffix
-    Suffix                          : ResultName * NoProcLanguageBindingSpec -> Suffix
-    Suffix                          : ProcLanguageBindingSpec * ResultName -> Suffix
+    Result                          : ResultName -> Result
+    Suffix                          : Result * ProcLanguageBindingSpec -> Suffix
+    Suffix                          : Result * NoProcLanguageBindingSpec -> Suffix
+    Suffix                          : ProcLanguageBindingSpec * Result -> Suffix
     Suffix                          : ProcLanguageBindingSpec * NoResultName -> Suffix
                                     : Ident -> DummyArgName
     no-language-binding             : NoProcLanguageBindingSpec
@@ -273,7 +273,6 @@ signature
                                     : ExecutableConstruct -> SpecAndExecConstruct
                                     : DeclarationConstruct -> SpecAndExecConstruct
                                     : ImplicitStmt -> SpecAndExecConstruct
-                                    : StmtFunctionStmt -> DeclarationConstruct
                                     : TypeDeclarationStmt -> DeclarationConstruct
                                     : OtherSpecificationStmt -> DeclarationConstruct
                                     : ProcedureDeclarationStmt -> DeclarationConstruct
@@ -590,7 +589,7 @@ signature
     ElseIfStmt                      : OptLabel * LogicalExpr * NoName * EOS -> ElseIfStmt
     ElseIfStmt                      : OptLabel * LogicalExpr * IfConstructName * EOS -> ElseIfStmt
                                     : Ident -> IfConstructName
-    IfThenStmt                      : OptLabel * LogicalExpr * EOS -> IfThenStmt
+    IfThenStmt                      : OptLabel * NoName * LogicalExpr * EOS -> IfThenStmt
     IfThenStmt                      : OptLabel * IfConstructName * LogicalExpr * EOS -> IfThenStmt
     no-else-stmt                    : OptElseStmtAndBlock
                                     : ElseStmtAndBlock -> OptElseStmtAndBlock
@@ -601,7 +600,7 @@ signature
     CycleStmt                       : OptLabel * DoConstructName * EOS -> CycleStmt
     EndDoStmt                       : OptLabel * NoName * EOS -> EndDoStmt
     EndDoStmt                       : OptLabel * DoConstructName * EOS -> EndDoStmt
-                                    : Ident -> ScalarIntVariableName
+    VarRef                          : Ident -> ScalarIntVariableName
                                     : ScalarIntVariableName -> DoVariable
     no-expr                         : NoExpr
     no-expr                         : OptExpr
@@ -719,8 +718,8 @@ signature
     Concat                          : Expr * Expr -> Expr
     Minus                           : Expr * Expr -> Expr
     Plus                            : Expr * Expr -> Expr
-    Minus                           : Expr -> Expr
-    Plus                            : Expr -> Expr
+    UnaryMinus                      : Expr -> Expr
+    UnaryPlus                       : Expr -> Expr
     Div                             : Expr * Expr -> Expr
     Mult                            : Expr * Expr -> Expr
     Power                           : Expr * Expr -> Expr
@@ -744,7 +743,7 @@ signature
     TIMES                           : MultOp
     PowerOp                         : PowerOp
                                     : Dop -> DefinedUnaryOp
-    Primary                         : Expr -> Primary
+    Parens                          : Expr -> Primary
                                     : StructureConstructor -> Primary
                                     : ArrayConstructor -> Primary
                                     : Designator -> Primary
@@ -828,7 +827,7 @@ signature
                                     : Variable -> IntVariable
                                     : Variable -> DefaultCharVariable
                                     : Variable -> LogicalVariable
-                                    : Ident -> VariableName
+    VarRef                          : Ident -> VariableName
                                     : Designator -> Variable
                                     : Substring -> Designator
                                     : DataRef -> Designator
@@ -950,8 +949,8 @@ signature
                                     : List(DeferredCoshapeSpec) -> CoarraySpec
     no-binding-name                 : OptLanguageBindingName
                                     : LanguageBindingName -> OptLanguageBindingName
-    language-binding-name           : Ident -> LanguageBindingName
-    LanguageBindingSpec             : OptLanguageBindingName -> LanguageBindingSpec
+    BindingName                     : Scon -> LanguageBindingName
+    LanguageBinding                 : OptLanguageBindingName -> LanguageBindingSpec
     PRIVATE                         : AccessSpec
     PUBLIC                          : AccessSpec
     NullInit                        : FunctionReference -> NullInit
@@ -1055,7 +1054,8 @@ signature
     ComponentInit                   : Expr -> ComponentInitialization
                                     : AccessSpec -> ProcComponentAttrSpec
     NOPASS                          : ProcComponentAttrSpec
-    PASS                            : ProcComponentAttrSpec
+    Pass                            : ArgName -> ProcComponentAttrSpec
+    Pass                            : NoArgName -> ProcComponentAttrSpec
     POINTER                         : ProcComponentAttrSpec
     ProcComponentDefStmt            : OptLabel * OptProcInterface * List(ProcComponentAttrSpec) * List(ProcDecl) * EOS -> ProcComponentDefStmt
                                     : List(DeferredShapeSpec) -> ComponentArraySpec
@@ -1101,10 +1101,10 @@ signature
     comma-list                      : List(TypeAttrSpec) -> OptTypeAttrSpecList
     DerivedTypeStmt                 : OptLabel * OptTypeAttrSpecList * TypeName * OptTypeParamNameList * EOS -> DerivedTypeStmt
     DerivedTypeDef                  : DerivedTypeStmt * List(TypeParamDefStmt) * List(PrivateOrSequence) * ComponentPart * OptTypeBoundProcedurePart * EndTypeStmt -> DerivedTypeDef
-    no-kind-param                   : OptKindParam
-    opt-kind-param                  : KindParam -> OptKindParam
-    FALSE                           : OptKindParam -> LogicalLiteralConstant
-    TRUE                            : OptKindParam -> LogicalLiteralConstant
+    FALSE                           : KindParam -> LogicalLiteralConstant
+    FALSE                           : NoKindParam -> LogicalLiteralConstant
+    TRUE                            : KindParam -> LogicalLiteralConstant
+    TRUE                            : NoKindParam -> LogicalLiteralConstant
                                     : Scon -> CharLiteralConstant
     CharLiteralConstant             : KindParam * Scon -> CharLiteralConstant
                                     : Icon -> CharLength
@@ -1113,10 +1113,11 @@ signature
     LengthSelector                  : TypeParamValue -> LengthSelector
     no-char-selector                : OptCharSelector
                                     : CharSelector -> OptCharSelector
-    CharSelector_KIND               : Expr -> CharSelector
+    no-length-selector              : NoLengthSelector
+    CharSelector_KIND_LEN           : Expr * NoLengthSelector -> CharSelector
     CharSelector_KIND_LEN           : Expr * TypeParamValue -> CharSelector
-    CharSelector_LEN_KIND           : TypeParamValue * Expr -> CharSelector
-                                    : LengthSelector -> CharSelector
+    CharSelector                    : TypeParamValue * Expr -> CharSelector
+    CharSelector                    : LengthSelector * NoKindSelector -> CharSelector
                                     : NamedConstant -> ImagPart
                                     : SignedRealLiteralConstant -> ImagPart
                                     : SignedIntLiteralConstant -> ImagPart
@@ -1132,11 +1133,11 @@ signature
     PLUS                            : Sign
                                     : Icon -> DigitString
                                     : Ident -> ScalarIntConstantName
-                                    : ScalarIntConstantName -> KindParam
-                                    : DigitString -> KindParam
-    no-kind-param                   : NoKindParam
+    VarRef                          : ScalarIntConstantName -> KindParam
+    IntLiteralConstant              : DigitString * NoKindParam -> KindParam
+    no-kind                         : NoKindParam
     IntLiteralConstant              : DigitString * KindParam -> IntLiteralConstant
-                                    : DigitString -> IntLiteralConstant
+    IntLiteralConstant              : DigitString * NoKindParam -> IntLiteralConstant
     SignedIntLiteralConstant        : Sign * IntLiteralConstant -> SignedIntLiteralConstant
                                     : IntLiteralConstant -> SignedIntLiteralConstant
     no-kind                         : NoKindSelector
@@ -1144,11 +1145,11 @@ signature
                                     : KindSelector -> OptKindSelector
     KindSelector_STAR               : Icon -> KindSelector
     KindSelector                    : Expr -> KindSelector
-    DOUBLECOMPLEX                   : NoKindSelector -> IntrinsicTypeSpec
+    DOUBLECOMPLEX                   : IntrinsicTypeSpec
     LOGICAL                         : OptKindSelector -> IntrinsicTypeSpec
     CHARACTER                       : OptCharSelector -> IntrinsicTypeSpec
     COMPLEX                         : OptKindSelector -> IntrinsicTypeSpec
-    DOUBLEPRECISION                 : NoKindSelector -> IntrinsicTypeSpec
+    DOUBLEPRECISION                 : IntrinsicTypeSpec
     REAL                            : OptKindSelector -> IntrinsicTypeSpec
     INTEGER                         : OptKindSelector -> IntrinsicTypeSpec
     AssumedType                     : DeclarationTypeSpec

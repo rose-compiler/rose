@@ -7,8 +7,6 @@
  *        working to combine all of our installation instructions into this single document, at which time those other
  *        documents will be removed. [Robb P. Matzke 2015-09-25]
  *
- *  How to install ROSE.
- *
  *  @section installation_obtaining Obtaining ROSE
  *
  *  ROSE is free (libre) software distributed under a @ref license "modified BSD license". The ROSE team at Lawrence Livermore
@@ -152,7 +150,7 @@
  *      <td>1.47 through 1.53</td>
  *      <td>C++ portable runtime features. ROSE and/or software used by ROSE requires the following Boost libraries: chrono,
  *      date_time, filesystem, iostreams, program_options, random, regex, signals, system, thread, and wave. See @ref
- *      installing_boost.</td>
+ *      installing_boost. More info [here](http://theboostcpplibraries.com/).</td>
  *    </tr>
  *
  *    <tr>
@@ -380,9 +378,9 @@
  *
  *  If you're interested in source code analysis or source-to-source translation, read the [ROSE
  *  tutorial](http://rosecompiler.org/ROSE_Tutorial/ROSE-Tutorial.pdf). If you're interested in binary analysis try @ref
- *  binary_tutorial. */
-
-
+ *  binary_tutorial.
+ *
+ *  This page is generated from $ROSE/docs/Rose/Installation/100_Installation.dox */
 
 /** @defgroup software_dependencies Software dependencies
  *

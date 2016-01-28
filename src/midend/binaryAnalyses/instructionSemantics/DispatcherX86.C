@@ -32,7 +32,7 @@ InsnProcessor::process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmIns
     DispatcherX86Ptr dispatcher = DispatcherX86::promote(dispatcher_);
     BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
     SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
-    ASSERT_require(insn!=NULL && insn==operators->get_insn());
+    ASSERT_require(insn!=NULL && insn==operators->currentInstruction());
     dispatcher->advanceInstructionPointer(insn);
     SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
     check_arg_width(dispatcher.get(), insn, operands);
@@ -3425,47 +3425,47 @@ struct IP_push_gprs: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else if (insn->get_addressSize() == x86_insnsize_16) {
-            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_SP);
-            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(16, -16));
+            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(oldSp->get_width(), -16));
             BaseSemantics::SValuePtr base = d->fixMemoryAddress(newSp);
             BaseSemantics::SValuePtr yes = ops->boolean_(true);
             BaseSemantics::SValuePtr di = d->readRegister(d->REG_DI);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(base), di, yes);
+            ops->writeMemory(d->REG_SS, base, di, yes);
             BaseSemantics::SValuePtr si = d->readRegister(d->REG_SI);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(16, 2))), si, yes);
+            ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 2)), si, yes);
             BaseSemantics::SValuePtr bp = d->readRegister(d->REG_BP);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(16, 4))), bp, yes);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(16, 6))), oldSp, yes);
+            ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 4)), bp, yes);
+            ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 6)), oldSp, yes);
             BaseSemantics::SValuePtr bx = d->readRegister(d->REG_BX);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(16, 8))), bx, yes);
+            ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 8)), bx, yes);
             BaseSemantics::SValuePtr dx = d->readRegister(d->REG_DX);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(16, 10))), dx, yes);
+            ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 10)), dx, yes);
             BaseSemantics::SValuePtr cx = d->readRegister(d->REG_CX);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(16, 12))), cx, yes);
+            ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 12)), cx, yes);
             BaseSemantics::SValuePtr ax = d->readRegister(d->REG_AX);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(16, 14))), ax, yes);
-            d->writeRegister(d->REG_SP, newSp);
+            ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 14)), ax, yes);
+            d->writeRegister(d->REG_anySP, newSp);
         } else if (insn->get_addressSize() == x86_insnsize_32) {
-            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_ESP);
-            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, -32));
+            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(oldSp->get_width(), -32));
             BaseSemantics::SValuePtr base = d->fixMemoryAddress(newSp);
             BaseSemantics::SValuePtr yes = ops->boolean_(true);
             BaseSemantics::SValuePtr edi = d->readRegister(d->REG_EDI);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(base), edi, yes);
+            ops->writeMemory(d->REG_SS, base, edi, yes);
             BaseSemantics::SValuePtr esi = d->readRegister(d->REG_ESI);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(32, 4))), esi, yes);
+            ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 4)), esi, yes);
             BaseSemantics::SValuePtr ebp = d->readRegister(d->REG_EBP);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(32, 8))), ebp, yes);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(32, 12))), oldSp, yes);
+            ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 8)), ebp, yes);
+            ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 12)), oldSp, yes);
             BaseSemantics::SValuePtr ebx = d->readRegister(d->REG_EBX);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(32, 16))), ebx, yes);
+            ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 16)), ebx, yes);
             BaseSemantics::SValuePtr edx = d->readRegister(d->REG_EDX);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(32, 20))), edx, yes);
+            ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 20)), edx, yes);
             BaseSemantics::SValuePtr ecx = d->readRegister(d->REG_ECX);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(32, 24))), ecx, yes);
+            ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 24)), ecx, yes);
             BaseSemantics::SValuePtr eax = d->readRegister(d->REG_EAX);
-            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(32, 28))), eax, yes);
-            d->writeRegister(d->REG_ESP, newSp);
+            ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 28)), eax, yes);
+            d->writeRegister(d->REG_anySP, newSp);
         } else {
             ops->interrupt(x86_exception_ud, 0);        // 64-bit mode
         }
@@ -4463,8 +4463,8 @@ DispatcherX86::regcache_init()
 
 void
 DispatcherX86::memory_init() {
-    if (BaseSemantics::StatePtr state = get_state()) {
-        if (BaseSemantics::MemoryStatePtr memory = state->get_memory_state()) {
+    if (BaseSemantics::StatePtr state = currentState()) {
+        if (BaseSemantics::MemoryStatePtr memory = state->memoryState()) {
             switch (memory->get_byteOrder()) {
                 case ByteOrder::ORDER_LSB:
                     break;
@@ -5016,8 +5016,8 @@ BaseSemantics::SValuePtr
 DispatcherX86::readRegister(const RegisterDescriptor &reg) {
     // When reading FLAGS, EFLAGS as a whole do not coalesce individual flags into the single register.
     if (reg.get_major()==x86_regclass_flags && reg.get_offset()==0 && reg.get_nbits()>1) {
-        if (BaseSemantics::StatePtr ss = operators->get_state()) {
-            BaseSemantics::RegisterStatePtr rs = ss->get_register_state();
+        if (BaseSemantics::StatePtr ss = operators->currentState()) {
+            BaseSemantics::RegisterStatePtr rs = ss->registerState();
             if (BaseSemantics::RegisterStateGeneric *rsg = dynamic_cast<BaseSemantics::RegisterStateGeneric*>(rs.get())) {
                 BaseSemantics::RegisterStateGeneric::NoCoalesceOnRead guard(rsg);
                 return operators->readRegister(reg);

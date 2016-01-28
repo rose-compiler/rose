@@ -749,7 +749,7 @@ SgUntypedModuleScope
 SgUntypedGlobalScope
 SgUntypedModuleDeclaration
 SgUntypedStatementList
-SgUntypedDeclarationList
+SgUntypedDeclarationStatementList
 SgUntypedFunctionDeclarationList
 SgUntypedInitializedNameList
 SgUpcBarrierStatement

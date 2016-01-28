@@ -79,15 +79,6 @@
 0x00400724: Outgoing stack delta: +8
 0x00400724: Successor blocks: unknown
 
-0x00400749: ================================== Function (pattern, graph) unknown name
-
-0x00400749: Basic block reasons: entry point, CFG head
-0x00400749: c8 0a 50 00             |..P.    |          enter  0x500a<20490>, 0x00
-0x0040074d: 49 89 c3                |I..     |          mov    r11, rax
-0x00400750: c9                      |.       |          leave  
-0x00400751: 41 ff e3                |A..     |          jmp    r11
-0x00400751: Successor blocks: unknown
-
 0x004008e0: ================================== Function (pattern, graph) unknown name
 0x004008e0: Function stack delta: +8
 

@@ -200,7 +200,7 @@ public:
         VertexFlowGraphs result;
         result.insert(startVertex, buildGraph(vertexUnpacker(cfg.findVertex(startVertex)->value())));
         std::vector<InstructionSemantics2::BaseSemantics::StatePtr> postState(cfg.nVertices()); // user-defined states
-        postState[startVertex] = userOps_->get_state();
+        postState[startVertex] = userOps_->currentState();
 
         typedef Sawyer::Container::Algorithm::DepthFirstForwardEdgeTraversal<const CFG> Traversal;
         for (Traversal t(cfg, cfg.findVertex(startVertex)); t; ++t) {
@@ -210,7 +210,7 @@ public:
             if (state==NULL) {
                 ASSERT_not_null(postState[source->id()]);
                 state = postState[target->id()] = postState[source->id()]->clone();
-                userOps_->set_state(state);
+                userOps_->currentState(state);
                 std::vector<SgAsmInstruction*> insns = vertexUnpacker(target->value());
                 result.insert(target->id(), buildGraph(insns));
             }
@@ -258,10 +258,10 @@ public:
                 InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops;
                 InstructionSemantics2::BaseSemantics::StatePtr state;
                 T(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
-                    : ops(ops), state(ops->get_state()) {}
-                ~T() { ops->set_state(state); }
+                    : ops(ops), state(ops->currentState()) {}
+                ~T() { ops->currentState(state); }
             } t(ops_);
-            ops_->set_state(src);
+            ops_->currentState(src);
             return dst->merge(src, ops_.get());
         }
     };

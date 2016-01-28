@@ -10,7 +10,7 @@ int
 main() {
     const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
     SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
-    RegisterStateGenericPtr rstate = RegisterStateGeneric::promote(ops->get_state()->get_register_state());
+    RegisterStateGenericPtr rstate = RegisterStateGeneric::promote(ops->currentState()->registerState());
     SValuePtr x;
     Formatter fmt;
     fmt.set_line_prefix("    ");

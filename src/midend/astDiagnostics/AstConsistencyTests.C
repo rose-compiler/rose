@@ -3247,6 +3247,16 @@ TestAstSymbolTables::visit ( SgNode* node )
                             {
                               printf ("Error: initializedName->get_symbol_from_symbol_table() == NULL initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
                               initializedName->get_startOfConstruct()->display("Error: initializedName->get_symbol_from_symbol_table() == NULL");
+                              SgLocatedNode* locatedNodeParent = isSgLocatedNode(initializedName->get_parent());
+                              ROSE_ASSERT(locatedNodeParent != NULL);
+                              locatedNodeParent->get_startOfConstruct()->display("Error: initializedName->get_symbol_from_symbol_table() == NULL: locatedNodeParent");
+
+                              SgScopeStatement* scope = initializedName->get_scope();
+                              ROSE_ASSERT(scope != NULL);
+                              ROSE_ASSERT(scope->get_symbol_table() != NULL);
+
+                              printf ("In TestAstSymbolTables::visit(): output the symbol tables for the scope = %p = %s \n",scope,scope->class_name().c_str());
+                              scope->get_symbol_table()->print();
                             }
 #if 0
                          printf ("In TestAstSymbolTables::visit(): local_symbol = %p = %s \n",local_symbol,local_symbol != NULL ? local_symbol->class_name().c_str() : "null");

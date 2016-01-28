@@ -8,6 +8,18 @@
  *  @section installing_gcc_rhel Redhat Enterprise Linux
  *
  *  @todo Describe how to install GCC on RHEL.
+ *  Todo.
+ *
+ *  @section installing_gcc_wheezy Debian 7 "Wheezy"
+ *
+ *  The default compiler on Wheezy is GCC-4.7, which is supported by ROSE at this time (Jan 2016). Run these commands as the
+ *  administrator:
+ *
+ *  @code
+ *  apt-get install build-essential
+ *  apt-get install gfortran
+ *  g++ --version # make sure it says 4.7
+ *  @endcode
  *
  *  @section installing_gcc_jessie Debian 8 "Jessie"
  *

@@ -9,6 +9,12 @@ typedef unsigned long size_t;
 #include <cstdlib>
 #endif
 
+/* CUDA Built-in Macros */
+
+/* DQ (1/18/2016): Adding #define values from Cuda (required for Jeff's example code) */
+#define cudaMemAttachGlobal 0x01
+
+
 /* CUDA Built-in Types */
 
   /*
@@ -795,6 +801,10 @@ extern __host__ cudaError_t cudaSetDoubleForHost(double *d);
 
 extern __host__ cudaError_t cudaThreadExit(void);
 extern __host__ cudaError_t cudaThreadSynchronize(void);
+
+/* DQ (1/18/2016): Adding functions that appear to be specific to Cuda 7.0 (required for Jeff's example code) */
+cudaError_t cudaMallocManaged(void **devPtr, size_t size, unsigned int flags=0);
+cudaError_t cudaDeviceSynchronize();
 
 #if defined(__cplusplus)
 }

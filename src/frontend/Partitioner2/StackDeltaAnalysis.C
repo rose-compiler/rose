@@ -22,33 +22,14 @@ namespace Partitioner2 {
 
 void
 Partitioner::forgetStackDeltas() const {
-    BOOST_FOREACH (const BasicBlock::Ptr &bb, basicBlocks()) {
-        bb->stackDeltaIn(BaseSemantics::SValuePtr());
-        bb->stackDeltaOut(BaseSemantics::SValuePtr());
-        bb->stackDelta(BaseSemantics::SValuePtr());
-        BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
-            insn->set_stackDeltaIn(SgAsmInstruction::INVALID_STACK_DELTA);
-    }
-    BOOST_FOREACH (const Function::Ptr &func, functions())
-        func->stackDelta(BaseSemantics::SValuePtr());
+    BOOST_FOREACH (const Function::Ptr &function, functions())
+        forgetStackDeltas(function);
 }
 
 void
 Partitioner::forgetStackDeltas(const Function::Ptr &function) const {
     ASSERT_not_null(function);
-    BOOST_FOREACH (rose_addr_t va, function->basicBlockAddresses()) {
-        ControlFlowGraph::ConstVertexIterator vertex = findPlaceholder(va);
-        if (vertex != cfg().vertices().end() && vertex->value().type() == V_BASIC_BLOCK) {
-            if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-                bb->stackDeltaIn(BaseSemantics::SValuePtr());
-                bb->stackDeltaOut(BaseSemantics::SValuePtr());
-                bb->stackDelta(BaseSemantics::SValuePtr());
-                BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
-                    insn->set_stackDeltaIn(SgAsmInstruction::INVALID_STACK_DELTA);
-            }
-        }
-    }
-    function->stackDelta(BaseSemantics::SValuePtr());
+    function->stackDeltaAnalysis().clearResults();
 }
 
 // Determines when to perform interprocedural dataflow.  We want stack delta analysis to be interprocedural only if the called
@@ -61,8 +42,11 @@ struct InterproceduralPredicate: P2::DataFlow::InterproceduralPredicate {
             return false;
         ASSERT_require(callEdge != cfg.edges().end());
         ASSERT_require(callEdge->target()->value().type() == V_BASIC_BLOCK);
-        Function::Ptr function = callEdge->target()->value().function();
-        return function && !function->stackDelta();
+        BOOST_FOREACH (const Function::Ptr &function, callEdge->target()->value().owningFunctions().values()) {
+            if (function->stackDelta())
+                return false;
+        }
+        return true;                                    // no called function has a computed stack delta
     }
 };
 
@@ -72,17 +56,18 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     BaseSemantics::SValuePtr retval;
     size_t bitsPerWord = instructionProvider().stackPointerRegister().get_nbits();
 
-    // If a stack delta is defined for this function then use it (and cache it for next time).
+    // If a stack delta is defined for this function then use it
     BaseSemantics::RiscOperatorsPtr ops = newOperators();
-    if (Sawyer::Optional<int64_t> delta = config_.functionStackDelta(function)) {
-        retval = ops->number_(bitsPerWord, *delta);
-        function->stackDelta(retval);
-        return retval;
-    }
-    
-    // If a stack delta is known from some previous analysis, then return it.
+    if (Sawyer::Optional<int64_t> delta = config_.functionStackDelta(function))
+        return ops->number_(bitsPerWord, *delta);
+
+    // If an analysis has already been run or an override value has been set, return it.
     if ((retval = function->stackDelta()))
-        return retval; 
+        return retval;
+
+    // If a stack delta has run already for this function return it even if it had failed to find a delta.
+    if (function->stackDeltaAnalysis().hasResults())
+        return function->stackDelta();
 
     // Create the CFG that we'll use for dataflow.
     ControlFlowGraph::ConstVertexIterator functionVertex = findPlaceholder(function->address());
@@ -92,16 +77,19 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
         return retval;
     }
 
-    // (Re)run the analysis. Even if we ran the analysis already and it failed to determine the stack delta, things might have
-    // changed in the CFG that allows it to succeed this time.  We provide our own dispatcher because we want the analysis to
-    // be fast by not using any memory state (stack pointers are rarely saved and restored).
+    // Run the analysis.
     BaseSemantics::DispatcherPtr cpu = newDispatcher(newOperators());
     if (cpu == NULL) {
         SAWYER_MESG(mlog[DEBUG]) <<"  no instruction semantics for this architecture\n";
         return retval;
     }
-    Semantics::MemoryState::promote(cpu->get_operators()->get_state()->get_memory_state())->enabled(false);
-    StackDelta::Analysis sdAnalysis(cpu);
+    BaseSemantics::MemoryStatePtr mem = cpu->get_operators()->currentState()->memoryState();
+    if (Semantics::MemoryListStatePtr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
+        ml->enabled(false);
+    } else if (Semantics::MemoryMapStatePtr mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {
+        mm->enabled(false);
+    }
+    StackDelta::Analysis &sdAnalysis = function->stackDeltaAnalysis() = StackDelta::Analysis(cpu);
     sdAnalysis.initialConcreteStackPointer(0x7fff0000); // optional: helps reach more solutions
     InterproceduralPredicate ip(*this);
     sdAnalysis.analyzeFunction(*this, function, ip);
@@ -131,51 +119,9 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
         SAWYER_MESG(mlog[DEBUG]) <<"  assuming " <<function->printableName()
                                  <<" (thunk) stack delta is " <<(bitsPerWord/8) <<"\n";
         retval = ops->number_(bitsPerWord, bitsPerWord/8);                      // size of return address on stack
+        function->stackDeltaOverride(retval);
     }
 #endif
-
-    // Cache stack information in the function.
-    function->stackDelta(retval);
-
-    // Cache stack information in function's basic blocks. Compress the expressions to a single node to save memory.
-    BaseSemantics::SValuePtr functionInitialStackPtr = sdAnalysis.functionStackPointers().first;
-    BOOST_FOREACH (rose_addr_t va, function->basicBlockAddresses()) {
-        if (BasicBlock::Ptr bb = basicBlockExists(va)) {
-            if (BaseSemantics::SValuePtr delta = sdAnalysis.basicBlockStackDelta(va)) {
-                if (!SymbolicSemantics::SValue::promote(delta)->get_expression()->isLeafNode())
-                    delta = ops->undefined_(delta->get_width());
-                bb->stackDelta(delta);
-            }
-            if (functionInitialStackPtr) {
-                if (BaseSemantics::SValuePtr bbSp = sdAnalysis.basicBlockStackPointers(va).first) {
-                    BaseSemantics::SValuePtr delta = ops->subtract(bbSp, functionInitialStackPtr);
-                    if (!SymbolicSemantics::SValue::promote(delta)->get_expression()->isLeafNode())
-                        delta = ops->undefined_(delta->get_width());
-                    bb->stackDeltaIn(delta);
-                }
-                if (BaseSemantics::SValuePtr bbSp = sdAnalysis.basicBlockStackPointers(va).second) {
-                    BaseSemantics::SValuePtr delta = ops->subtract(bbSp, functionInitialStackPtr);
-                    if (!SymbolicSemantics::SValue::promote(delta)->get_expression()->isLeafNode())
-                        delta = ops->undefined_(delta->get_width());
-                    bb->stackDeltaOut(delta);
-                }
-            }
-        }
-    }
-    
-    // Cache stack information in the function's instructions.
-    if (functionInitialStackPtr) {
-        BOOST_FOREACH (rose_addr_t va, function->basicBlockAddresses()) {
-            if (BasicBlock::Ptr bb = basicBlockExists(va)) {
-                BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
-                    if (BaseSemantics::SValuePtr insnSp = sdAnalysis.instructionStackPointers(insn).first) {
-                        BaseSemantics::SValuePtr delta = ops->subtract(insnSp, functionInitialStackPtr);
-                        insn->set_stackDeltaIn(sdAnalysis.toInt(delta));
-                    }
-                }
-            }
-        }
-    }
 
     return retval;
 }

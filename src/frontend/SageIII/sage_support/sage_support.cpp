@@ -13,6 +13,7 @@
 #include "keep_going.h"
 #include "failSafePragma.h"
 #include "cmdline.h"
+#include "FileSystem.h"
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #   include "FortranModuleInfo.h"
@@ -976,15 +977,18 @@ cout.flush();
 
                if (CommandlineProcessing::isFortran2008FileNameSuffix(filenameExtension) == true)
                   {
-                    printf ("Sorry, Fortran 2008 specific support is not yet implemented in ROSE ... \n");
-                    ROSE_ASSERT(false);
+                 // printf ("Sorry, Fortran 2008 specific support is not yet implemented in ROSE ... \n");
+                 // ROSE_ASSERT(false);
 
                  // This is not yet supported.
                  // file->set_sourceFileUsesFortran2008FileExtension(true);
+                    file->set_sourceFileUsesFortran2008FileExtension(true);
 
                  // Use the filename suffix as a default means to set this value
                     file->set_outputFormat(SgFile::e_free_form_output_format);
                     file->set_backendCompileFormat(SgFile::e_free_form_output_format);
+
+                    file->set_F2008_only(true);
                   }
              }
             else
@@ -1097,6 +1101,9 @@ cout.flush();
                                 // Note that file->get_requires_C_preprocessor() should be false.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
+#if 0
+                                   printf ("In determineFileType(): Processing as a CUDA file \n");
+#endif
                                  }
                                 else if ( CommandlineProcessing::isOpenCLFileNameSuffix(filenameExtension) == true )
                                  {
@@ -2115,7 +2122,9 @@ SgProject::parse()
                if (sourceFile != NULL)
                   {
                  // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
-                    if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
+                 // if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
+                    if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && 
+                         ( (file->get_unparse_tokens() == true)     || (file->get_use_token_stream_to_improve_source_position_info() == true) ) )
                        {
                       // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
 #if 0
@@ -3224,29 +3233,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                 preprocessFilename = string(temp) + ".F90"; free(temp);
              // copy source file to pseudonym file
                 try {
-#if (__cplusplus >= 201103L) 
-#if !defined(BOOST_COMPILED_WITH_CXX11)
-   #warning "Compiling ROSE with C++11 mode: BOOST NOT compiled with C++11 support."
-#else
-   #warning "Compiling ROSE with C++11 mode: BOOST WAS compiled with C++11 support."
-#endif
-#endif
-                   // DQ (10/20/2015): Boost support for copy_file() is not uniform acorss C++98 and C++11.
-                   // I think this need to be addressed seperately in ROSE.
-                   // boost::filesystem::copy_file(sourceFilename, preprocessFilename); 
-#if (__cplusplus >= 201103L) && !defined(BOOST_COMPILED_WITH_CXX11)
-                   // copy_file(sourceFilename, preprocessFilename); 
-                      printf ("Error: C++11 support for compiling ROSE requires BOOST to be compiled in C++11 mode! (required for copy_file() support) \n");
-                      ROSE_ASSERT(false);
-#else
-                      boost::filesystem::copy_file(sourceFilename, preprocessFilename); 
-#endif
-                    }
-                catch(exception &e)
-                {
-                  cout << "Error in copying file " << sourceFilename << " to " << preprocessFilename
-                       << " (" << e.what() << ")" << endl;
-                  ROSE_ASSERT(false);
+                    rose::FileSystem::copyFile(sourceFilename, preprocessFilename);
+                } catch(exception &e) {
+                    cerr << "Error in copying file " << sourceFilename << " to " << preprocessFilename
+                         << " (" << e.what() << ")" << endl;
+                    ROSE_ASSERT(false);
                 }
           fortran_C_preprocessor_commandLine.push_back(preprocessFilename);
 
@@ -3417,11 +3408,24 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                   }
                  else
                   {
-                 // This should be the default mode (fortranMode string is empty). So is it f77?
+                    if (get_F2008_only() == true)
+                       {
+                      // fortranCommandLine.push_back("-std=f2003");
+                         if (relaxSyntaxCheckInputCode == false)
+                            {
+                           // DQ (1/25/2016): We need to consider making a strict syntax checking option and allowing this to be relaxed
+                           // by default.  It is however not clear that this is required for F2008 code where it does appear to be required
+                           // for F90 code.  So this needs to be tested, see comments above relative to use of "-std=legacy".
+                              fortranCommandLine.push_back("-std=f2008");
+                            }
 
-                 // DQ (5/20/2008)
-                 // fortranCommandLine.push_back ("-ffixed-line-length-none");
-                    use_line_length_none_string = "-ffixed-line-length-none";
+                         use_line_length_none_string = "-ffree-line-length-none";
+                       }
+                      else
+                       {
+                      // This should be the default mode (fortranMode string is empty). So is it f77?
+                         use_line_length_none_string = "-ffixed-line-length-none";
+                       }
                   }
              }
 
@@ -5380,23 +5384,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                          boost::filesystem::remove(unparsed_file);
                        }
 
-#if (__cplusplus >= 201103L) 
-#if !defined(BOOST_COMPILED_WITH_CXX11)
-   #warning "Compiling ROSE with C++11 mode: BOOST NOT compiled with C++11 support."
-#else
-   #warning "Compiling ROSE with C++11 mode: BOOST WAS compiled with C++11 support."
-#endif
-#endif
-                 // DQ (10/20/2015): Boost support for copy_file() is not uniform acorss C++98 and C++11.
-                 // I think this need to be addressed seperately in ROSE.
-                 // boost::filesystem::copy_file(original_file,unparsed_file,boost::filesystem::copy_option::overwrite_if_exists);
-#if (__cplusplus >= 201103L) && !defined(BOOST_COMPILED_WITH_CXX11)
-                 // copy_file(original_file,unparsed_file,boost::filesystem::copy_option::overwrite_if_exists);
-                    printf ("Error: C++11 support for compiling ROSE requires BOOST to be compiled in C++11 mode! (required for copy_file() support) \n");
-                    ROSE_ASSERT(false);
-#else
-                    boost::filesystem::copy_file(original_file,unparsed_file,boost::filesystem::copy_option::overwrite_if_exists);
-#endif
+                    rose::FileSystem::copyFile(original_file, unparsed_file);
                   }
              }
 

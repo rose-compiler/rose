@@ -94,7 +94,7 @@ BasicBlock::instructionExists(SgAsmInstruction *toFind) const {
 BaseSemantics::StatePtr
 BasicBlock::finalState() {
     if (usingDispatcher_ && dispatcher_!=NULL)
-        return dispatcher_->get_operators()->get_state();
+        return dispatcher_->get_operators()->currentState();
     return BaseSemantics::StatePtr();
 }
 
@@ -103,7 +103,7 @@ BasicBlock::finalState() {
 void
 BasicBlock::dropSemantics() {
     if (operators_)
-        operators_->get_state()->clear();
+        operators_->currentState()->clear();
     initialState_ = BaseSemantics::StatePtr();
     optionalPenultimateState_ = Sawyer::Nothing();
     usingDispatcher_ = false;
@@ -114,15 +114,15 @@ void
 BasicBlock::undropSemantics() {
     if (!initialState_) {
         if (dispatcher_) {
-            initialState_ = dispatcher_->get_operators()->get_state();
-            BaseSemantics::RegisterStateGeneric::promote(initialState_->get_register_state())->initialize_large();
+            initialState_ = dispatcher_->get_operators()->currentState();
+            BaseSemantics::RegisterStateGeneric::promote(initialState_->registerState())->initialize_large();
             initialState_ = initialState_->clone();     // make a copy so process Instruction doesn't change it
             optionalPenultimateState_ = initialState_->clone(); // one level of undo information
             usingDispatcher_ = true;
 
             BOOST_FOREACH (SgAsmInstruction *insn, instructions()) {
                 ASSERT_require(usingDispatcher_);
-                optionalPenultimateState_ = dispatcher_->get_operators()->get_state()->clone();
+                optionalPenultimateState_ = dispatcher_->get_operators()->currentState()->clone();
                 try {
                     dispatcher_->processInstruction(insn);
                 } catch (...) {
@@ -168,7 +168,7 @@ BasicBlock::append(SgAsmInstruction *insn) {
 
     // Process the instruction to create a new state
     optionalPenultimateState_ = usingDispatcher_ ?
-                                dispatcher_->get_operators()->get_state()->clone() :
+                                dispatcher_->get_operators()->currentState()->clone() :
                                 BaseSemantics::StatePtr();
     if (usingDispatcher_) {
         try {
@@ -198,7 +198,7 @@ BasicBlock::pop() {
         // If we didn't save a previous state it means that we didn't call processInstruction during the append, and therefore
         // we don't need to update the dispatcher (it's already out of date anyway).  Otherwise the dispatcher state needs to
         // be re-initialized by transferring ownership of the previous state into the partitioner.
-        dispatcher_->get_operators()->set_state(ps);
+        dispatcher_->get_operators()->currentState(ps);
         optionalPenultimateState_ = Sawyer::Nothing();
     }
     clearCache();
@@ -225,60 +225,6 @@ BasicBlock::insertDataBlock(const DataBlock::Ptr &dblock) {
     ASSERT_forbid2(isFrozen(), "basic block must be modifiable to insert data block");
     ASSERT_not_null(dblock);
     return insertUnique(dblocks_, dblock, sortDataBlocks);
-}
-
-BaseSemantics::SValuePtr
-BasicBlock::stackDeltaIn() const {
-    return stackDeltaIn_.getOptional().orDefault();
-}
-
-void
-BasicBlock::stackDeltaIn(const BaseSemantics::SValuePtr &v) {
-    stackDeltaIn_ = v;
-}
-
-int64_t
-BasicBlock::stackDeltaInConcrete() const {
-    BaseSemantics::SValuePtr v = stackDeltaIn();
-    if (v && v->is_number() && v->get_width() <= 64)
-        return IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
-    return SgAsmInstruction::INVALID_STACK_DELTA;
-}
-
-BaseSemantics::SValuePtr
-BasicBlock::stackDeltaOut() const {
-    return stackDeltaOut_.getOptional().orDefault();
-}
-
-void
-BasicBlock::stackDeltaOut(const BaseSemantics::SValuePtr &v) {
-    stackDeltaOut_ = v;
-}
-
-int64_t
-BasicBlock::stackDeltaOutConcrete() const {
-    BaseSemantics::SValuePtr v = stackDeltaOut();
-    if (v && v->is_number() && v->get_width() <= 64)
-        return IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
-    return SgAsmInstruction::INVALID_STACK_DELTA;
-}
-
-BaseSemantics::SValuePtr
-BasicBlock::stackDelta() const {
-    return stackDelta_.getOptional().orDefault();
-}
-
-void
-BasicBlock::stackDelta(const BaseSemantics::SValuePtr &v) {
-    stackDelta_ = v;
-}
-
-int64_t
-BasicBlock::stackDeltaConcrete() const {
-    BaseSemantics::SValuePtr v = stackDelta();
-    if (v && v->is_number() && v->get_width() <= 64)
-        return IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
-    return SgAsmInstruction::INVALID_STACK_DELTA;
 }
 
 } // namespace
