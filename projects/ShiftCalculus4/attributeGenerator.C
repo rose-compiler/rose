@@ -60,16 +60,32 @@ AttributeGeneratorTraversal::AttributeGeneratorTraversal()
      generatedHeaderFile = SageBuilder::buildSourceFile("generated_dsl_attributes_header.C");
      generatedSourceFile = SageBuilder::buildSourceFile("generated_dsl_attributes.C");
 
-
-     SgGlobal* global_scope_header = generatedHeaderFile->get_globalScope();
+     global_scope_header = generatedHeaderFile->get_globalScope();
      ROSE_ASSERT(global_scope_header != NULL);
+     global_scope_source = generatedSourceFile->get_globalScope();
+     ROSE_ASSERT(global_scope_source != NULL);
 
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void
+AttributeGeneratorTraversal::unparseGeneratedCode()
+   {
+     printf ("In unparseGeneratedCode(): unparse the header file \n");
+     generatedHeaderFile->unparse();
+
+     printf ("In unparseGeneratedCode(): unparse the source file \n");
+     generatedSourceFile->unparse();
 
 #if 1
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
    }
+
 
 AttributeGenerator_InheritedAttribute
 AttributeGeneratorTraversal::evaluateInheritedAttribute   (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute )
@@ -187,11 +203,33 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type)
      SgClassType* classType = isSgClassType(type);
      if (classType != NULL)
         {
-       // We don't have to generate code for class types (but perhaps we will to avoid template issues).
+       // We don't have to generate code for class types (but perhaps we will to avoid template issues initially).
+       // Alternative we could in this narrow non-function case just build the tempalte instantiation declaration.
+          SgClassDeclaration* ClassDeclarationFromType = isSgClassDeclaration(classType->get_declaration());
 
-          SgClassDeclaration* generatedClass = NULL;
+          SgName name = ClassDeclarationFromType->get_name();
+          printf ("Building DSL support for ClassDeclarationFromType = %p = %s = %s \n",ClassDeclarationFromType,ClassDeclarationFromType->class_name().c_str(),name.str());
+          ROSE_ASSERT(global_scope_header != NULL);
 
+          name += "_dsl_attribute";
 
+       // SgClassDeclaration* generatedClass = SageBuilder::buildClassDeclaration(name,global_scope_header);
+          SgClassDeclaration* nonDefiningDecl              = NULL;
+          bool buildTemplateInstantiation                  = false; 
+          SgTemplateArgumentPtrList* templateArgumentsList = NULL;
+
+          SgClassDeclaration* generatedClass = SageBuilder::buildClassDeclaration_nfi(name,SgClassDeclaration::e_class,global_scope_header,nonDefiningDecl,buildTemplateInstantiation,templateArgumentsList);
+          ROSE_ASSERT(generatedClass != NULL);
+
+       // We can share this, for now, though generally it is a bad idea.
+       // SageInterface::appendStatement(generatedClass,global_scope_header);
+
+          SageInterface::appendStatement(generatedClass,global_scope_source);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
         }
 
      return NULL;
@@ -219,6 +257,8 @@ int main( int argc, char * argv[] )
   // AttributeGenerator_SynthesizedAttribute sh = t.traverseInputFiles(project,ih);
      t.traverseInputFiles(project,ih);
 #endif
+
+     t.unparseGeneratedCode();
 
      return 0;
    }

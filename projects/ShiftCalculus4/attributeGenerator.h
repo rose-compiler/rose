@@ -49,6 +49,9 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
           SgSourceFile* generatedHeaderFile;
           SgSourceFile* generatedSourceFile;
 
+          SgGlobal* global_scope_header;
+          SgGlobal* global_scope_source;
+
           AttributeGeneratorTraversal();
 
        // Functions required to overload the pure virtual functions in the abstract base class.
@@ -56,6 +59,8 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
           AttributeGenerator_SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute, SubTreeSynthesizedAttributes synthesizedAttributeList );
 
           SgNode* buildAttribute(SgType* type);
+
+          void unparseGeneratedCode();
    };
 
 
