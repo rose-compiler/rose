@@ -19,30 +19,27 @@
 #include <boost/filesystem.hpp>
 #include <string>
 
-using namespace std;
-using namespace boost::filesystem;
-
 class FileHelper {
 public:
 
     // This is initialized in src/frontend/SageIII/sage_support/sage_support.cpp, not FileHelper.C
-    static const string pathDelimiter;
+    static const std::string pathDelimiter;
 
-    static void ensureParentFolderExists(const string& path) {
+    static void ensureParentFolderExists(const std::string& path) {
         ensureFolderExists(getParentFolder(path));
     }
     
-    static void ensureFolderExists(const string& folder){
-        path boostPath(folder);
+    static void ensureFolderExists(const std::string& folder){
+        boost::filesystem::path boostPath(folder);
         create_directories(boostPath);
     }
     
-    static void eraseFolder(const string& folder) {
-        path boostPath(folder);
+    static void eraseFolder(const std::string& folder) {
+        boost::filesystem::path boostPath(folder);
         remove_all(boostPath);
     }
     
-    static string concatenatePaths(const string& path1, const string& path2) {
+    static std::string concatenatePaths(const std::string& path1, const std::string& path2) {
         if (path1.size() == 0) {
             return path2;
         }
@@ -52,16 +49,16 @@ public:
         return path1 + pathDelimiter + path2;
     }
 
-    static string getParentFolder(const string& aPath) {
-        path boostPath(aPath);
+    static std::string getParentFolder(const std::string& aPath) {
+        boost::filesystem::path boostPath(aPath);
         return boostPath.parent_path().string();
     }
 
-    static string getFileName(const string& aPath) {
-        return rose::FileSystem::toString(path(aPath).filename());
+    static std::string getFileName(const std::string& aPath) {
+        return rose::FileSystem::toString(boost::filesystem::path(aPath).filename());
     }
 
-    static string makeAbsoluteNormalizedPath(const string& path, const string& workingDirectory) {
+    static std::string makeAbsoluteNormalizedPath(const std::string& path, const std::string& workingDirectory) {
         if (!isAbsolutePath(path)) {
             //relative path, so prepend the working directory and then normalize
             return normalizePath(concatenatePaths(workingDirectory, path));
@@ -70,19 +67,19 @@ public:
         }
     }
 
-    static bool isAbsolutePath(const string& path) {
+    static bool isAbsolutePath(const std::string& path) {
         return path.compare(0, 1, pathDelimiter) == 0;
     }
     
     //Expects both paths to be absolute.
-    static bool areEquivalentPaths(const string& path1, const string& path2) {
+    static bool areEquivalentPaths(const std::string& path1, const std::string& path2) {
         //Note: Do not use boost::filesystem::equivalent since the compared paths might not exist, which will cause an error.        
         return normalizePath(path1).compare(normalizePath(path2)) == 0;
     }
 
-    static string getIncludedFilePath(const list<string>& prefixPaths, const string& includedPath) {
-        for (list<string>::const_iterator prefixPathPtr = prefixPaths.begin(); prefixPathPtr != prefixPaths.end(); prefixPathPtr++) {
-            string potentialPath = concatenatePaths(*prefixPathPtr, includedPath);
+    static std::string getIncludedFilePath(const std::list<std::string>& prefixPaths, const std::string& includedPath) {
+        for (std::list<std::string>::const_iterator prefixPathPtr = prefixPaths.begin(); prefixPathPtr != prefixPaths.end(); prefixPathPtr++) {
+            std::string potentialPath = concatenatePaths(*prefixPathPtr, includedPath);
             if (fileExists(potentialPath)) {
                 return potentialPath;
             }
@@ -93,67 +90,67 @@ public:
 
     //Assumes that both arguments are absolute and normalized.
     //Argument toPath can be either a folder or a file.
-    static string getRelativePath(const string& fromFolder, const string& toPath) {
+    static std::string getRelativePath(const std::string& fromFolder, const std::string& toPath) {
         return rose::FileSystem::toString(rose::FileSystem::makeRelative(toPath, fromFolder));
     }
     
-    static bool fileExists(const string& fullFileName) {
-        return exists(fullFileName);
+    static bool fileExists(const std::string& fullFileName) {
+        return boost::filesystem::exists(fullFileName);
     }
 
-    static bool isNotEmptyFolder(const string& fullFolderName) {
-        return exists(fullFolderName) && !boost::filesystem::is_empty(fullFolderName);
+    static bool isNotEmptyFolder(const std::string& fullFolderName) {
+        return boost::filesystem::exists(fullFolderName) && !boost::filesystem::is_empty(fullFolderName);
     }
     
-    static string normalizePath(const string& aPath) {
-        path boostPath(aPath);
-        string normalizedPath = boostPath.normalize().string();
+    static std::string normalizePath(const std::string& aPath) {
+        boost::filesystem::path boostPath(aPath);
+        std::string normalizedPath = boostPath.normalize().string();
         return normalizedPath;
     }
 
-    static string getNormalizedContainingFileName(PreprocessingInfo* preprocessingInfo) {
+    static std::string getNormalizedContainingFileName(PreprocessingInfo* preprocessingInfo) {
         return normalizePath(preprocessingInfo -> get_file_info() -> get_filenameString());
     }
 
     //Either path1 includes path2 or vice versa
-    static string pickMoreGeneralPath(const string& path1, const string& path2) {
-        string textualPart1 = getTextualPart(path1);
-        string textualPart2 = getTextualPart(path2);
+    static std::string pickMoreGeneralPath(const std::string& path1, const std::string& path2) {
+        std::string textualPart1 = getTextualPart(path1);
+        std::string textualPart2 = getTextualPart(path2);
         //The longer textual part should be more general, assert that
-        string moreGeneralPath = textualPart1.size() > textualPart2.size() ? textualPart1 : textualPart2;
+        std::string moreGeneralPath = textualPart1.size() > textualPart2.size() ? textualPart1 : textualPart2;
         ROSE_ASSERT(endsWith(moreGeneralPath, textualPart1));
         ROSE_ASSERT(endsWith(moreGeneralPath, textualPart2));
         return moreGeneralPath;
     }
 
-    static string getTextualPart(const string& path) {
-        string normalizedPath = normalizePath(path);
+    static std::string getTextualPart(const std::string& path) {
+        std::string normalizedPath = normalizePath(path);
         //Remove all leading "../" and "./" (and they can be only leading, since the path is normalized).
         size_t pos = normalizedPath.rfind(".." + pathDelimiter);
-        if (pos != string::npos) {
+        if (pos != std::string::npos) {
             normalizedPath = normalizedPath.substr(pos + 3);
         }
         pos = normalizedPath.rfind("." + pathDelimiter);
-        if (pos != string::npos) {
+        if (pos != std::string::npos) {
             normalizedPath = normalizedPath.substr(pos + 2);
         }
         return normalizedPath;
     }
 
     //Count how many leading "../" are in a path (after its normalization) 
-    static int countUpsToParentFolder(const string& path) {
-        string normalizedPath = normalizePath(path);
-        string upPath = ".." + pathDelimiter;
+    static int countUpsToParentFolder(const std::string& path) {
+        std::string normalizedPath = normalizePath(path);
+        std::string upPath = ".." + pathDelimiter;
         int counter = 0;
         size_t pos = normalizedPath.find(upPath);
-        while (pos != string::npos) {
+        while (pos != std::string::npos) {
             counter++;
             pos = normalizedPath.find(upPath, pos + 3);
         }
         return counter;
     }
 
-    static bool endsWith(const string& str1, const string& str2) { //checks that str1 ends with str2
+    static bool endsWith(const std::string& str1, const std::string& str2) { //checks that str1 ends with str2
         return boost::ends_with(str1, str2);
     }
 

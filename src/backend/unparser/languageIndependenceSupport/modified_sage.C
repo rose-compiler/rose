@@ -1303,6 +1303,8 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
         }
 #else
      if ( (isSgTemplateInstantiationDecl(decl_stmt)               != NULL) ||
+       // DQ (1/3/2016): Adding support for template variable declarations.
+          (isSgTemplateVariableDeclaration(decl_stmt)             != NULL) ||
           (isSgTemplateInstantiationFunctionDecl(decl_stmt)       != NULL) ||
           (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) != NULL) )
         {
@@ -1453,6 +1455,7 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                   }
              }
         }
+
 #if 0
      curprint( "\n/* Leaving outputTemplateSpecializationSpecifier() */ ");
 #endif
@@ -1476,7 +1479,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 // but only if this is for a template declaration (does it only apply to a function). See tests:
 // test2004_30.C, test2004_121.C, test2004_142.C, and test2004_143.C.
    #if ( (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 3) )
-     if (isSgTemplateInstantiationFunctionDecl(decl_stmt) == NULL && isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) == NULL)
+     // DQ (1/3/2016): We need to include SgTemplateVariableDeclarations as well.
+  // if (isSgTemplateInstantiationFunctionDecl(decl_stmt) == NULL && isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) == NULL)
+     if (isSgTemplateInstantiationFunctionDecl(decl_stmt) == NULL && isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) == NULL && isSgTemplateVariableDeclaration(decl_stmt) == NULL)
           outputExternLinkageSpecifier(decl_stmt);
    #else
      outputExternLinkageSpecifier(decl_stmt);
@@ -1555,7 +1560,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
           if ( (decl_stmt->get_declarationModifier().isFriend() == true) && (isDeclarationOfTemplateSpecialization == false) )
              {
                ROSE_ASSERT(decl_stmt->get_parent() != NULL);
-#if 1
+#if 0
                printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): decl_stmt->get_parent() = %p = %s \n",decl_stmt->get_parent(),decl_stmt->get_parent()->class_name().c_str());
 #endif
             // DQ (11/28/2015): We need to filter the cases where the function is not output in a class definition.
@@ -1738,7 +1743,13 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // DQ (7/23/2014): Looking for greater precision in the control of the output of the "extern" keyword.
           ROSE_ASSERT(decl_stmt->get_declarationModifier().get_storageModifier().isDefault() == false);
 
-          curprint( "extern ");
+       // DQ (1/3/2016): We may have to suppress this for SgTemplateVariableDeclaration IR nodes.
+       // curprint("extern ");
+       // curprint("/* extern from storageModifier */ extern ");
+          if (isSgTemplateVariableDeclaration(decl_stmt) == NULL)
+             {
+               curprint("extern ");
+             }
         }
 
   // DQ (12/1/2007): Added support for gnu extension "__thread" (will be available in EDG version > 3.3)
@@ -2797,23 +2808,51 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
    }
 
 // MS: to activate this function set Unparse_MOD_SAGE::experimentalMode=true
-void Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier2 ( SgDeclarationStatement* decl_stmt ) {
-  if (isSgTemplateInstantiationDecl(decl_stmt)
-      || isSgTemplateInstantiationFunctionDecl(decl_stmt)
-      || isSgTemplateInstantiationMemberFunctionDecl(decl_stmt)) {
-    if (isSgTemplateInstantiationDirectiveStatement(decl_stmt->get_parent())) {
-      if(experimentalModeVerbose==1) curprint("/*0*/");
-      curprint("template ");
-    } else if (isSgTemplateInstantiationDecl(decl_stmt)) {
-      if(experimentalModeVerbose==1) curprint("/*1*/");
-      curprint("template<> ");
-    } else if (isSgTemplateInstantiationDefn(decl_stmt->get_parent())) {
-      if(experimentalModeVerbose==1) curprint("/*2*/");
-    } else if (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt)) {
-      if(experimentalModeVerbose==1) curprint("/*3*/");
-    } else {
-      cerr<<"WARNING: Unknown template construct: "<<decl_stmt->class_name()<<endl;
-      //ROSE_ASSERT(0);
-    }
-  }
-}
+void Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier2 ( SgDeclarationStatement* decl_stmt ) 
+   {
+     if (isSgTemplateInstantiationDecl(decl_stmt)
+      // DQ (1/3/2015): Added support for template variables (instantiations are represented similarly to non-instantiations (but we might have to fix this).
+         || isSgTemplateVariableDeclaration(decl_stmt)
+
+         || isSgTemplateInstantiationFunctionDecl(decl_stmt)
+         || isSgTemplateInstantiationMemberFunctionDecl(decl_stmt)) 
+        {
+          if (isSgTemplateInstantiationDirectiveStatement(decl_stmt->get_parent())) 
+             {
+               if(experimentalModeVerbose==1) curprint("/*0*/");
+               curprint("template ");
+             } 
+            else 
+               if (isSgTemplateInstantiationDecl(decl_stmt)) 
+                  {
+                    if(experimentalModeVerbose==1) curprint("/*1*/");
+                    curprint("template<> ");
+                  } 
+                 else 
+                    if (isSgTemplateInstantiationDefn(decl_stmt->get_parent())) 
+                       {
+                         if(experimentalModeVerbose==1) curprint("/*2*/");
+                       } 
+                      else 
+                         if (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt)) 
+                            {
+                              if(experimentalModeVerbose==1) curprint("/*3*/");
+                            } 
+                           else 
+                            {
+                           // DQ (1/3/2015): Added support for template variables (instantiations are represented similarly to non-instantiations (but we might have to fix this).
+                              if (isSgTemplateVariableDeclaration(decl_stmt)) 
+                                 {
+#if 0
+                                   if(experimentalModeVerbose==1) curprint("/*4*/");
+                                   curprint("template<> ");
+#endif
+                                 }
+                                else
+                                 { 
+                                   cerr<<"WARNING: Unknown template construct: "<<decl_stmt->class_name()<<endl;
+                                // ROSE_ASSERT(0);
+                                 }
+                            } 
+        }
+   }

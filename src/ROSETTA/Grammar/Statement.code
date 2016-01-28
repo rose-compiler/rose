@@ -6065,6 +6065,12 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
                SgStatementPtrList & statementList = currentScope->getStatementList();
                SgStatementPtrList::iterator statement = statementList.begin();
 
+            // DQ (12/29/2015): Added more debugging info.
+               if (find(statementList.begin(),statementList.end(),newTransformationStatement) != statementList.end())
+                  {
+                    printf ("ERROR: already present in scope: newTransformationStatement = %p = %s \n",newTransformationStatement,newTransformationStatement->class_name().c_str());
+                  }
+
             // DQ (6/26/2013): Added test for if this statement already exists in the current scope (declaration list).
                ROSE_ASSERT(find(statementList.begin(),statementList.end(),newTransformationStatement) == statementList.end());
 
@@ -6144,6 +6150,12 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
              {
                SgStatementPtrList & statementList = currentScope->getStatementList();
                SgStatementPtrList::reverse_iterator statement = statementList.rbegin();
+
+            // DQ (12/29/2015): Added more debugging info.
+               if (find(statementList.begin(),statementList.end(),newTransformationStatement) != statementList.end())
+                  {
+                    printf ("ERROR: already present in scope: newTransformationStatement = %p = %s \n",newTransformationStatement,newTransformationStatement->class_name().c_str());
+                  }
 
             // DQ (6/26/2013): Added test for if this statement already exists in the current scope (declaration list).
                ROSE_ASSERT(find(statementList.begin(),statementList.end(),newTransformationStatement) == statementList.end());
@@ -12689,6 +12701,8 @@ SgVariableDeclaration::append_variable( SgInitializedName* what, SgInitializer *
      assert(this != NULL);
      ROSE_ASSERT (what != NULL);
 
+     SageBuilder::buildVariableDefinition_nfi (this, what, initializer);
+#if 0     
   // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
   // if (!isSgFunctionType(what.get_type()))
      if (!isSgFunctionType(what->get_type()))
@@ -12735,6 +12749,7 @@ SgVariableDeclaration::append_variable( SgInitializedName* what, SgInitializer *
           ROSE_ASSERT(defn_stmt != NULL);
        // printf ("In SgVariableDeclaration::append_variable(): SgVariableDefinition *defn_stmt = %p \n",defn_stmt);
         }
+#endif      
    }
 
 // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
@@ -12752,7 +12767,8 @@ SgVariableDeclaration::prepend_variable( SgInitializedName* what, SgInitializer 
 
   // DQ (6/1/2004): Can we assert this
   // ROSE_ASSERT (decl_item == what);
-
+   SageBuilder::buildVariableDefinition_nfi (this, what, initializer);
+#if 0
   // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
   // if (!isSgFunctionType(what.get_type()))
      if (!isSgFunctionType(what->get_type()))
@@ -12795,6 +12811,7 @@ SgVariableDeclaration::prepend_variable( SgInitializedName* what, SgInitializer 
           ROSE_ASSERT(defn_stmt != NULL);
        // printf ("In SgVariableDeclaration::prepend_variable(): SgVariableDefinition *defn_stmt = %p \n",defn_stmt);
         }
+#endif        
    }
 
 #if 0

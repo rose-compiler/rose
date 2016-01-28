@@ -12,13 +12,12 @@
 #define OMP_LOWERING_H 
 namespace OmpSupport
 {
-
   // OpenMP version info.
   extern bool enable_accelerator;  
 
- // A flag to control if device data environment runtime functions are used to automatically manage data as much as possible.
- // instead of generating explicit data allocation, copy, free functions. 
-   extern  bool useDDE /* = true */;  
+  // A flag to control if device data environment runtime functions are used to automatically manage data as much as possible.
+  // instead of generating explicit data allocation, copy, free functions. 
+  extern  bool useDDE /* = true */;  
   //! makeDataSharingExplicit() can call some of existing functions for some work in OmpSupport namespace by Hongyi 07/16/2012
   //! TODO: add a function within the OmpSupport namespace, the function should transform the AST, so all variables' data-sharing attributes are explicitied represented in the AST. ROSE has dedicated AST nodes for OpenMP directives and the associated clauses, such as private, shared, reduction.
 
@@ -157,7 +156,7 @@ namespace OmpSupport
 
   //! Replace all variable references in a set by pointers to the variable
   int replaceVariablesWithPointerDereference(SgNode* root, std::set<SgVariableSymbol*>& vars);
-  
+
   //! Add a variable into a non-reduction clause of an OpenMP statement, create the clause transparently if it does not exist
   ROSE_DLL_API void addClauseVariable(SgInitializedName* var, SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt);
 
@@ -207,6 +206,20 @@ namespace OmpSupport
   SgVariableDeclaration * buildAndInsertDeclarationForOmp(const std::string &name, SgType *type, SgInitializer *varInit, SgBasicBlock *orig_scope);
   //! Find an enclosing parallel region or function definition's body
   SgBasicBlock* getEnclosingRegionOrFuncDefinition (SgNode *);
+
+  //! Check if a variable is in the clause's variable list
+  ROSE_DLL_API bool isInClauseVariableList(SgOmpClause* cls, SgSymbol* var);
+
+  //! Extract map clause information
+  void extractMapClauses(Rose_STL_Container<SgOmpClause*> map_clauses,
+      std::map<SgSymbol*, std::vector< std::pair <SgExpression*, SgExpression*> > > & array_dimensions,
+      std::map<SgSymbol*, std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > > &  dist_data_policies, 
+      SgOmpMapClause** map_alloc_clause, SgOmpMapClause** map_to_clause, SgOmpMapClause** map_from_clause, SgOmpMapClause** map_tofrom_clause);
+  //! Categorize mapped variables
+  void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, // all variables collected from map clauses
+      std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >&  array_dimensions, // array bounds  info as input
+      std::set<SgSymbol*>& array_syms, // variable symbols which are array types (explicit or as a pointer)
+      std::set<SgSymbol*>& atom_syms); // variable symbols which are non-aggregate types: scalar, pointer, etc
 } // end namespace OmpSupport  
 
 #endif //OMP_LOWERING_H
