@@ -70,7 +70,7 @@ public:
             switch (mode) {
                 case WSemantics::REG_INIT:
                 case WSemantics::REG_FINAL: {
-                    RegisterStateGenericPtr regState = RegisterStateGeneric::promote(state->get_register_state());
+                    RegisterStateGenericPtr regState = RegisterStateGeneric::promote(state->registerState());
                     RegisterNames regName(regState->get_register_dictionary());
                     BOOST_FOREACH (const RegisterStateGeneric::RegPair &reg_val, regState->get_stored_registers()) {
                         const RegisterDescriptor &reg = reg_val.desc;
@@ -93,12 +93,12 @@ public:
                     // RiscOperators for accessing multi-byte memory. We access a clone of the memory state so we're not
                     // affecting things like latestWriter addresses in the real state.
                     RiscOperatorsPtr ops = ctx_.partitioner.newOperators();
-                    ops->set_state(state->clone());
+                    ops->currentState(state->clone());
 
 #if 1 // DEBUGGING [Robb Matzke 2015-01-13]
                     {
                         std::cerr <<"ROBB: full memory state (reverse chronological order):\n";
-                        MemoryCellListPtr memState = MemoryCellList::promote(state->get_memory_state());
+                        MemoryCellListPtr memState = MemoryCellList::promote(state->memoryState());
                         BOOST_FOREACH (const MemoryCellPtr &cell, memState->get_cells()) {
                             std::ostringstream s1, s2;
                             s1 <<*cell->get_address();

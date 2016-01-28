@@ -90,6 +90,10 @@ public:
     virtual void eraseMatchingCells(const MemoryCell::Predicate&) ROSE_OVERRIDE;
     virtual void eraseLeadingCells(const MemoryCell::Predicate&) ROSE_OVERRIDE;
     virtual void traverse(MemoryCell::Visitor&) ROSE_OVERRIDE;
+    virtual MemoryCell::AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                                   RiscOperators *valOps) ROSE_OVERRIDE;
+    virtual MemoryCell::AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
+                                                          RiscOperators *valOps) ROSE_OVERRIDE;
 };
 
 } // namespace

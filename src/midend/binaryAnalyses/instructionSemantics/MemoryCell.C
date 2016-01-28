@@ -16,7 +16,7 @@ MemoryCell::may_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check for the easy case:  two one-byte cells may alias one another if their addresses may be equal.
     if (8==value_->get_width() && 8==other->get_value()->get_width())
-        return address_->may_equal(other->get_address(), addrOps->get_solver());
+        return address_->may_equal(other->get_address(), addrOps->solver());
 
     size_t addr_nbits = address_->get_width();
     ASSERT_require(other->get_address()->get_width()==addr_nbits);
@@ -55,7 +55,7 @@ MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check the easy case: two one-byte cells must alias one another if their address must be equal.
     if (8==value_->get_width() && 8==other->get_value()->get_width())
-        return address_->must_equal(other->get_address(), addrOps->get_solver());
+        return address_->must_equal(other->get_address(), addrOps->solver());
 
     size_t addr_nbits = address_->get_width();
     ASSERT_require(other->get_address()->get_width()==addr_nbits);

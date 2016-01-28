@@ -324,7 +324,7 @@ RiscOperators::add_subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain, c
     if (idx>=formatter.subdomain_names.size())
         formatter.subdomain_names.resize(idx+1, "");
     formatter.subdomain_names[idx] = name;
-    SValue::promote(get_protoval())->set_subvalue(idx, subdomain->get_protoval());
+    SValue::promote(protoval())->set_subvalue(idx, subdomain->protoval());
     return idx;
 }
 
@@ -352,7 +352,7 @@ void
 RiscOperators::print(std::ostream &stream, BaseSemantics::Formatter &formatter) const
 {
     for (Subdomains::const_iterator sdi=subdomains.begin(); sdi!=subdomains.end(); ++sdi)
-        stream <<"== " <<(*sdi)->get_name() <<" ==\n" <<(**sdi + formatter);
+        stream <<"== " <<(*sdi)->name() <<" ==\n" <<(**sdi + formatter);
 }
 
 void

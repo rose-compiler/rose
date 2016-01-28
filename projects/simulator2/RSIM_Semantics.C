@@ -135,23 +135,23 @@ RiscOperators::dumpState() {
     Sawyer::Message::Stream out(thread_->tracing(TRACE_STATE));
     out.enable();
     out <<"Semantic state for thread " <<thread_->get_tid() <<":\n";
-    if (get_insn()) {
-        out <<"  instruction #" <<get_ninsns() <<" at " <<unparseInstructionWithAddress(get_insn()) <<"\n";
+    if (currentInstruction()) {
+        out <<"  instruction #" <<nInsns() <<" at " <<unparseInstructionWithAddress(currentInstruction()) <<"\n";
     } else {
-        out <<"  processed " <<StringUtility::plural(get_ninsns(), "instructions") <<"\n";
+        out <<"  processed " <<StringUtility::plural(nInsns(), "instructions") <<"\n";
     }
 
     out <<"  registers:\n";
     BaseSemantics::Formatter format;
     format.set_line_prefix("    ");
-    out <<(*get_state()->get_register_state()+format);
+    out <<(*currentState()->registerState()+format);
 
     out <<"  memory:\n";
     thread_->get_process()->mem_showmap(out, "memory:", "    ");
 
     if (ARCH_X86 == architecture_) {
         out <<"  segments:\n";
-        RegisterNames regNames(get_state()->get_register_state()->get_register_dictionary());
+        RegisterNames regNames(currentState()->registerState()->get_register_dictionary());
         BOOST_FOREACH (const SegmentInfoMap::Node &node, segmentInfo_.nodes()) {
             RegisterDescriptor segreg(x86_regclass_segment, node.key(), 0, 16);
             out <<"    " <<regNames(segreg) <<": base=" <<StringUtility::addrToString(node.value().base)
@@ -164,7 +164,7 @@ RiscOperators::dumpState() {
 void
 RiscOperators::startInstruction(SgAsmInstruction* insn) {
     Super::startInstruction(insn);
-    SAWYER_MESG(thread_->tracing(TRACE_INSN)) <<"#" <<get_ninsns() <<" " <<unparseInstructionWithAddress(insn) <<"\n";
+    SAWYER_MESG(thread_->tracing(TRACE_INSN)) <<"#" <<nInsns() <<" " <<unparseInstructionWithAddress(insn) <<"\n";
 }
 
 void
@@ -178,7 +178,7 @@ RiscOperators::interrupt(int majr, int minr) {
     } else if (x86_exception_syscall == majr) {
         thread_->emulate_syscall();
     } else if (x86_exception_int == majr) {
-        throw Interrupt(get_insn()->get_address(), minr);
+        throw Interrupt(currentInstruction()->get_address(), minr);
     } else {
         FIXME("interrupt/exception type not handled [Robb P. Matzke 2015-04-22]");
     }
