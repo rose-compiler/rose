@@ -4,6 +4,7 @@
 #include "dslAttribute.h"
 
 // Example DSL API specification
+#pragma DSL keyword
 class myString
    {
      private:

@@ -43,6 +43,15 @@ class AttributeGenerator_SynthesizedAttribute
 class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<AttributeGenerator_InheritedAttribute,AttributeGenerator_SynthesizedAttribute>
    {
      public:
+       // Keep a map of DLS nodes identified via pragmas (as the statement after the pragma).
+          std::set<SgStatement*> DSLnodes;
+
+          SgSourceFile* generatedHeaderFile;
+          SgSourceFile* generatedSourceFile;
+
+          SgGlobal* global_scope_header;
+          SgGlobal* global_scope_source;
+
           AttributeGeneratorTraversal();
 
        // Functions required to overload the pure virtual functions in the abstract base class.
@@ -50,6 +59,8 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
           AttributeGenerator_SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* astNode, AttributeGenerator_InheritedAttribute inheritedAttribute, SubTreeSynthesizedAttributes synthesizedAttributeList );
 
           SgNode* buildAttribute(SgType* type);
+
+          void unparseGeneratedCode();
    };
 
 
