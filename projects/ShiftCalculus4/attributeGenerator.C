@@ -53,8 +53,9 @@ AttributeGenerator_SynthesizedAttribute::AttributeGenerator_SynthesizedAttribute
 AttributeGeneratorTraversal::AttributeGeneratorTraversal()
    {
   // SgSourceFile* buildSourceFile(string,SgProject = NULL)
-     generatedHeaderFile = NULL;
-     generatedSourceFile = NULL;
+     generatedHeaderFile    = NULL;
+     generatedSourceFile    = NULL;
+     requiredSourceCodeFile = NULL;
 
   // This has to be a *.C file since we are not supporting witing heder files just yet (rename afterward).
      generatedHeaderFile = SageBuilder::buildSourceFile("generated_dsl_attributes_header.C");
@@ -64,6 +65,35 @@ AttributeGeneratorTraversal::AttributeGeneratorTraversal()
      ROSE_ASSERT(global_scope_header != NULL);
      global_scope_source = generatedSourceFile->get_globalScope();
      ROSE_ASSERT(global_scope_source != NULL);
+
+  // Read in the file containing code that we want to use (e.g. templates).
+  // build the file name of the required with the path (use the source directory as the path)
+     string requiredCodeFileNameWithPath = ROSE_AUTOMAKE_TOP_SRCDIR + "/projects/ShiftCalculus4/" + "requiredCode.C";
+
+     printf ("Using requiredCodeFileNameWithPath = %s \n",requiredCodeFileNameWithPath.c_str());
+
+  // requiredSourceCodeFile = SageBuilder::buildSourceFile(requiredCodeFileNameWithPath);
+     ROSE_ASSERT(requiredSourceCodeFile == NULL);
+
+     bool frontendConstantFolding = false;
+     std::vector<string> argList;
+     argList.push_back("-c");
+     argList.push_back(requiredCodeFileNameWithPath);
+
+  // SgProject* requiredSourceCodeProject = frontend(argc,argv,frontendConstantFolding);
+     SgProject* requiredSourceCodeProject = frontend(argList,frontendConstantFolding);
+     ROSE_ASSERT(requiredSourceCodeProject != NULL);
+
+     ROSE_ASSERT(requiredSourceCodeProject->get_fileList_ptr() != NULL);
+     ROSE_ASSERT(requiredSourceCodeProject->get_fileList_ptr()->get_listOfFiles().empty() == false);
+  // requiredSourceCodeFile = requiredSourceCodeProject->get_fileList_ptr()[0]->get_globalscope();
+  // requiredSourceCodeFile = requiredSourceCodeProject->get_file(0)->get_globalscope();
+  // requiredSourceCodeFile = isSgSourceFile(requiredSourceCodeProject->[0]);
+     requiredSourceCodeFile = isSgSourceFile(requiredSourceCodeProject->operator[](0));
+     ROSE_ASSERT(requiredSourceCodeFile != NULL);
+
+     global_scope_requiredSourceCode = requiredSourceCodeFile->get_globalScope();
+     ROSE_ASSERT(global_scope_requiredSourceCode);
 
 #if 0
      printf ("Exiting as a test! \n");
@@ -80,7 +110,7 @@ AttributeGeneratorTraversal::unparseGeneratedCode()
      printf ("In unparseGeneratedCode(): unparse the source file \n");
      generatedSourceFile->unparse();
 
-#if 1
+#if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
@@ -185,6 +215,21 @@ AttributeGeneratorTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Attr
 
      SgNode* generated_ast = NULL;
 
+     SgGlobal* inputFileGlobalScope = isSgGlobal(astNode);
+     if (inputFileGlobalScope != NULL)
+        {
+       // Use this location in the traversal (after traversal of the global scope of the input file) to add #include directives, comments, etc.
+
+          ROSE_ASSERT(global_scope_source != NULL);
+          if (global_scope_source->get_declarations().empty() == false)
+             {
+             }
+            else
+             {
+            // Skip adding #include and comments to an empty file (thoough it should work).
+               printf ("Generating an empty file: not extra processing required \n");
+             }
+        }
 
 
   // return return_SynthesizedAttribute(generated_ast);
@@ -221,10 +266,29 @@ AttributeGeneratorTraversal::buildAttribute(SgType* type)
           SgClassDeclaration* generatedClass = SageBuilder::buildClassDeclaration_nfi(name,SgClassDeclaration::e_class,global_scope_header,nonDefiningDecl,buildTemplateInstantiation,templateArgumentsList);
           ROSE_ASSERT(generatedClass != NULL);
 
+#if 1
+          ROSE_ASSERT(global_scope_requiredSourceCode);
+
+       // Find the template class and build an template instantiation directive to force the instantiation (instead of generating code directly).
+       // SgDeclarationStatement* declarationStatement = generatedClass;
+          SgDeclarationStatement* declarationStatement = generatedClass->get_firstNondefiningDeclaration();
+          ROSE_ASSERT(declarationStatement != NULL);
+
+          SgTemplateInstantiationDirectiveStatement* templateInstantiationDirective = new SgTemplateInstantiationDirectiveStatement(declarationStatement);
+
+          SageInterface::appendStatement(templateInstantiationDirective,global_scope_source);
+          ROSE_ASSERT(templateInstantiationDirective->get_parent() != NULL);
+       // templateInstantiationDirective->set_parent(global_scope_source);
+
+          ROSE_ASSERT(declarationStatement->get_parent() == NULL);
+          declarationStatement->set_parent(templateInstantiationDirective);
+          ROSE_ASSERT(declarationStatement->get_parent() != NULL);
+#else
        // We can share this, for now, though generally it is a bad idea.
        // SageInterface::appendStatement(generatedClass,global_scope_header);
 
           SageInterface::appendStatement(generatedClass,global_scope_source);
+#endif
 
 #if 0
      printf ("Exiting as a test! \n");
