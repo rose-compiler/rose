@@ -49,8 +49,13 @@ class AttributeGeneratorTraversal : public SgTopDownBottomUpProcessing<Attribute
           SgSourceFile* generatedHeaderFile;
           SgSourceFile* generatedSourceFile;
 
+       // Required code to support our code generator.
+          SgSourceFile* requiredSourceCodeFile;
+
           SgGlobal* global_scope_header;
           SgGlobal* global_scope_source;
+
+          SgGlobal* global_scope_requiredSourceCode;
 
           AttributeGeneratorTraversal();
 
