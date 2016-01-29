@@ -64,7 +64,8 @@ edg-prerequisites:
 # Run the edg-generate-sig script to find an appropriate version number.  We don't use make's $(shell...) function
 # because it sometimes discards standard error and doesn't cause make to fail if edg-generate-sig fails.  If
 # edg-generate-sig fails then remove the edg-generate-sig.output file so that re-running make will fail the same way
-# next time.
+# next time.  Also, we don't want to change the modification time of this file if not necessary, since doing so would
+# cause targets that depend on it to become out of date.
 MOSTLYCLEANFILES += $(EDGBIN_SIGNATURE_FILE)
 $(EDGBIN_SIGNATURE_FILE): edg-prerequisites
 	$(EDG_GENERATE_SIG) $(top_srcdir) $(top_builddir) >$@.tmp
@@ -86,15 +87,21 @@ EDG/libroseEDG.la: edg-prerequisites
 # Create EDG binary tarball without using $(EDGBIN_NAME) which hasn't been computed when make parses this rule (but is
 # computed by time this rule's commands run). The "upload-" prefix is necessary because we can't have the same target
 # in the "if" and "else" part of an automake file, and we'd prefer to use "EDG.tar.gz" at the download end (the "else").
+#
+# Also, whenever we create the uploadable tarball (regardless of whether we actually upload it) we should also make it
+# look like we just downloaded it, because Jenkins tests that the EDG upload/download functionality is working by faking
+# an upload/download. It runs "make binary_edg_tarball", then deletes the EDG source code, reconfigures ROSE, and runs
+# "make" again to see if we can build ROSE with the EDG binary.
 MOSTLYCLEANFILES += upload-EDG.tar.gz
-upload-EDG.tar.gz: EDG/libroseEDG.la
+upload-EDG.tar.gz: EDG/libroseEDG.la $(EDGBIN_SIGNATURE_FILE)
 	rm -rf $(EDGBIN_NAME)
 	mkdir $(EDGBIN_NAME)
 	sed "s@^dependency_libs.*@dependency_libs=''@" EDG/libroseEDG.la >$(EDGBIN_NAME)/libroseEDG.la
 	cp -r EDG/.libs $(EDGBIN_NAME)
 	tar czf $(EDGBIN_NAME).tar.gz $(EDGBIN_NAME)
 	rm -rf $(EDGBIN_NAME)
-	ln -s $(EDGBIN_NAME).tar.gz $@
+	ln -s $(EDGBIN_NAME).tar.gz $@             # for upload
+	ln -s $(EDGBIN_NAME).tar.gz EDG.tar.gz     # make it look like we downloaded also
 
 # Upload EDG tarballs to the staging area and the local area. Do not use $(EDGBIN_NAME) in the target or dependencies because
 # it hasn't been computed at the time that make parses that part of the rule. It's okay to use it in the commands of this rule.
@@ -147,16 +154,19 @@ EDG.tar.gz: $(EDGBIN_SIGNATURE_FILE) check-network
 	    exit 1;										\
 	fi
 
-	@echo "Downloading EDG binary tarball: $(EDGBIN_NAME).tar.gz"
-
-	@if ! wget -q --spider -t 3 --wait=1 $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz; then	\
-	    echo "The EDG binary tarball is not available (or the web site is not reachable)." >&2;	\
-	    echo "$(CONTACT_INFO)" >&2;									\
-	    exit 1;											\
+	@if [ -r "$(EDGBIN_NAME).tar.gz" ]; then							\
+	    echo "EDG binary tarball appears to have been downloaded already: $(EDGBIN_NAME).tar.gz";	\
+	else												\
+	    echo "Downloading EDG binary tarball: $(EDGBIN_NAME).tar.gz";				\
+	    if ! wget -q --spider -t 3 --wait=1 $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz; then	\
+	        echo "The EDG binary tarball is not available (or the web site is not reachable)." >&2;	\
+	        echo "$(CONTACT_INFO)" >&2;								\
+	        exit 1;											\
+	    fi;												\
+	    wget -O "$(EDGBIN_NAME).tar.gz" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz";		\
+	    touch $(EDGBIN_NAME).tar.gz;								\
 	fi
 
-	wget -O "$(EDGBIN_NAME).tar.gz" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz"
-	touch $(EDGBIN_NAME).tar.gz
 	ln -sf $(EDGBIN_NAME).tar.gz $@
 
 # This target can be used to explicitly download the EDG tarball without needing to know its name.
@@ -180,9 +190,9 @@ EDG/libroseEDG.la: EDG.tar.gz
 	GZIP=$(GZIP_ENV) gunzip -c $< |$(am__untar)
 	rm -rf EDG
 	mkdir -p EDG
-	mv $(EDGBIN_BEST_NAME)/libroseEDG.* EDG/.
-	mv $(EDGBIN_BEST_NAME)/.libs EDG/.
-	rmdir $(EDGBIN_BEST_NAME)
+	mv $(EDGBIN_NAME)/libroseEDG.* EDG/.
+	mv $(EDGBIN_NAME)/.libs EDG/.
+	rmdir $(EDGBIN_NAME)
 	touch EDG/libroseEDG.la
 
 installdir = ${datadir}
