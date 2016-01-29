@@ -39,7 +39,7 @@ bool TransitionEqualToPred::operator()(Transition* t1, Transition* t2) const {
   * \author Markus Schordan
   * \date 2012.
  */
-TransitionGraph::TransitionGraph():_startLabel(Label()),_numberOfNodes(0),_modeLTLDriven(false) {
+TransitionGraph::TransitionGraph():_startLabel(Label()),_numberOfNodes(0),_preciseSTG(true), _completeSTG(true),_modeLTLDriven(false) {
 }
 
 LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
@@ -139,7 +139,7 @@ TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate
       for(EStateSet::iterator i=existingEStateSet.begin();i!=existingEStateSet.end();++i) {
         succNodes.insert(*i);
       }
-      cout<<"DEBUG: succ:"<<deferedWorkList.size()<<","<<existingEStateSet.size()<<":"<<succNodes.size()<<endl;
+      //cout<<"DEBUG: succ:"<<deferedWorkList.size()<<","<<existingEStateSet.size()<<":"<<succNodes.size()<<endl;
       for(EStatePtrSet::iterator j=succNodes.begin();j!=succNodes.end();++j) {
         Edge newEdge(estate->label(),EDGE_PATH,(*j)->label());
         Transition t(estate,newEdge,*j);

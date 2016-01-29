@@ -348,7 +348,7 @@ int main( int argc, char * argv[] ) {
       ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
       ("max-transitions-forced-top",po::value< int >(),"same as max-transitions-forced-top1 (default).")
       ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
-      ("print-all-options",po::value< string >(),"print all yes/no command line options.")
+      ("print-all-options",po::value< string >(),"print the default values for all yes/no command line options.")
       ("rewrite","rewrite AST applying all rewrite system rules.")
       ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
       ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
@@ -461,9 +461,6 @@ int main( int argc, char * argv[] ) {
   // this must be set early, as subsequent initialization depends on this flag
   if (args.count("ltl-driven")) {
     analyzer.setModeLTLDriven(true);
-    cout<<"MODE: ltl-driven: "<<analyzer.getModeLTLDriven()<<endl;
-  } else {
-    cout<<"MODE: bfs"<<endl;
   }
 
   if (args.count("cegpra-ltl") || boolOptions["cegpra-ltl-all"]) {
@@ -489,6 +486,7 @@ int main( int argc, char * argv[] ) {
 
   if(boolOptions["print-all-options"]) {
     cout<<boolOptions.toString(); // prints all bool options
+    exit(1);
   }
   
   if(boolOptions["arith-top"]) {
@@ -670,9 +668,19 @@ int main( int argc, char * argv[] ) {
     int displayDiff=args["display-diff"].as<int>();
     analyzer.setDisplayDiff(displayDiff);
   }
+  int ltlSolverNr=11;
   if(args.count("solver")) {
     int solver=args["solver"].as<int>();
+    if(analyzer.getModeLTLDriven()) {
+      if(solver!=ltlSolverNr) {
+        cerr<<"Error: ltl-driven mode requires solver "<<ltlSolverNr<<", but solver "<<solver<<" was selected."<<endl;
+        exit(1);
+      }
+    }
     analyzer.setSolver(solver);
+  }
+  if(analyzer.getModeLTLDriven()) {
+    analyzer.setSolver(ltlSolverNr);
   }
   if(args.count("variable-value-threshold")) {
     analyzer.setVariableValueThreshold(args["variable-value-threshold"].as<int>());
@@ -1108,7 +1116,6 @@ int main( int argc, char * argv[] ) {
     cout<<"INFO: STG size: "<<analyzer.getTransitionGraph()->size()<<endl;
     string ltl_filename = args["check-ltl"].as<string>();
     if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
-      cout<<"MODE(!):"<<analyzer.getModeLTLDriven()<<endl;
       if (!boolOptions["inf-paths-only"] && !boolOptions["keep-error-states"] &&!analyzer.getModeLTLDriven()) {
         cout << "STATUS: recursively removing all leaves (due to RERS-mode)."<<endl;
         timer.start();
