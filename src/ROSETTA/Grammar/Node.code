@@ -280,11 +280,25 @@ typedef Rose_STL_Container<SgInitializedName*> SgInitializedNamePtrList;
 typedef SgInitializedNamePtrList*              SgInitializedNamePtrListPtr;
 
 class SgDeclarationStatement;
+
+// DQ (1/28/2016): Different ways of documenting typedefs (none appear to be working with Doxygen).
+/** \typedef SgDeclarationStatementPtrList
+    \brief This is socumentation for the following typedef 
+ */
 typedef Rose_STL_Container<SgDeclarationStatement*> SgDeclarationStatementPtrList;
+
+/** \typedef SgDeclarationStatementPtrListPtr
+    \brief This is socumentation for the following typedef 
+ */
 typedef SgDeclarationStatementPtrList*              SgDeclarationStatementPtrListPtr;
 
 // tps (8/20/2007): Added support for binaries.
+/** \typedef SgAsmBlockPtrList
+    This is socumentation for the following typedef 
+ */
 typedef Rose_STL_Container<SgAsmBlock*>     SgAsmBlockPtrList;
+
+/** This is socumentation for the following typedef */
 typedef SgAsmBlockPtrList*                  SgAsmBlockPtrListPtr;
 
 // JJW (8/28/2008): Added SgAsmInterpretation
