@@ -1438,14 +1438,21 @@ public:
 /** Smart pointer to a RiscOperator object. RiscOperator objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
-/** Base class for most instruction semantics RISC operators.  This class is responsible for defining the semantics of the
- *  RISC-like operations invoked by the translation object (e.g., X86InstructionSemantics).  We omit the definitions for most
- *  of the RISC operations from the base class so that failure to implement them in a subclass is an error.
+/** Base class for most instruction semantics RISC operators.
+ *
+ *  This class is responsible for defining the semantics of the RISC-like operations invoked by the translation object (e.g.,
+ *  X86InstructionSemantics).  We omit the definitions for most of the RISC operations from the base class so that failure to
+ *  implement them in a subclass is an error.
  *
  *  RISC operator arguments are, in general, SValue pointers.  However, if the width of a RISC operator's result depends on an
  *  argument's value (as opposed to depending on the argument width), then that argument must be a concrete value (i.e., an
  *  integral type).  This requirement is due to the fact that SMT solvers need to know the sizes of their bit
  *  vectors. Operators extract(), unsignedExtend(), signExtend(), readRegister(), and readMemory() fall into this category.
+ *
+ *  Operators with side effects (@ref writeRegister, @ref writeMemory, and possibly others) usually modify a @ref State object
+ *  pointed to by the @ref currentState property. Keeping side effects in states allows @ref RiscOperators to be used in
+ *  data-flow analysis where meeting control flow edges cause states to be merged.  Side effects that don't need to be part of
+ *  a data-flow can be stored elsewhere, such as data members of a subclass or the @ref initialState property.
  *
  *  RiscOperator objects are allocated on the heap and reference counted.  The BaseSemantics::RiscOperator is an abstract class
  *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
@@ -1453,6 +1460,7 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
     SValuePtr protoval_;                                // Prototypical value used for its virtual constructors
     StatePtr currentState_;                             // State upon which RISC operators operate
+    StatePtr initialState_;                             // Lazily updated initial state; see readMemory
     SMTSolver *solver_;                                 // Optional SMT solver
     SgAsmInstruction *currentInsn_;                     // Current instruction, as set by latest startInstruction call
     size_t nInsns_;                                     // Number of instructions processed
@@ -1542,11 +1550,13 @@ public:
      *  state has no effect on this object's prototypical value which was initialized by the constructor; new states should
      *  have a prototyipcal value of the same dynamic type.
      *
+     *  See also, @ref initialState.
+     *
      * @{ */
     virtual StatePtr currentState() const { return currentState_; }
     virtual void currentState(const StatePtr &s) { currentState_ = s; }
     /** @} */
-    
+
     // [Robb Matzke 2016-01-22]: deprecated
     virtual StatePtr get_state() const ROSE_DEPRECATED("use currentState instead") {
         return currentState();
@@ -1556,6 +1566,31 @@ public:
     virtual void set_state(const StatePtr &s) ROSE_DEPRECATED("use currentState instead") {
         currentState(s);
     }
+
+    /** Property: Optional lazily updated initial state.
+     *
+     *  If non-null, then any calls to @ref readMemory which do not find that the address has a value, not only instantiate the
+     *  value in the current state, but also write the same value to this initial state.  In effect, this is like Schrodinger's
+     *  cat: every memory address has a value, we just don't know what it is until we try to read it.  Once we read it, it
+     *  becomes instantiated in the current state and the initial state.
+     *
+     *  Changing the current state does not affect this initial state.  This makes it easier to use a state as part of a
+     *  data-flow analysis, in which one typically swaps in different current states as the data-flow progresses.
+     *
+     *  The initial state need not be the same type as the current state, as long as they both have the same prototypical value
+     *  type.  For instance, a symbolic domain could use a @ref MemoryCellList for its @ref currentState and a state based
+     *  on a @ref MemoryMap of concrete values for its initial state, as long as those concrete values are converted to
+     *  symbolic values when they're read.
+     *
+     *  Caveats: Not all semantic domains use the initial state. The order that values are added to an initial state dependes
+     *  on the order they're encountered during the analysis.
+     *
+     *  See also, @ref currentState.
+     *
+     * @{ */
+    virtual StatePtr initialState() const { return initialState_; }
+    virtual void initialState(const StatePtr &s) { initialState_ = s; }
+    /** @} */
 
     /** Property: Name used for debugging.
      *

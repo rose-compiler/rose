@@ -534,6 +534,12 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
         size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nbytes-(bytenum+1) : bytenum;
         BaseSemantics::SValuePtr byte_dflt = extract(dflt, 8*byteOffset, 8*byteOffset+8);
         BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
+
+        // Use the lazily updated initial memory state if there is one.
+        if (initialState())
+            byte_dflt = initialState()->readMemory(byte_addr, byte_dflt, this, this);
+
+        // Read the current memory state
         SValuePtr byte_value = SValue::promote(currentState()->readMemory(byte_addr, byte_dflt, this, this));
         if (0==bytenum) {
             retval = byte_value;
