@@ -932,6 +932,21 @@ $(testStaticSemantics_test_targets): testStaticSemantics_%.passed: $(testStaticS
 check-testStaticSemantics: $(testStaticSemantics_test_targets)
 
 ###############################################################################################################################
+# Data-flow tests
+###############################################################################################################################
+
+noinst_PROGRAMS += testLazyInitialStates
+testLazyInitialStates_SOURCES = testLazyInitialStates.C
+testLazyInitialStates_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testLazyInitialStates.passed
+testLazyInitialStates.passed: $(BINARY_SAMPLES)/i386-initialState testLazyInitialStates
+	@$(RTH_RUN)									\
+		TITLE="lazy symbolic states [$@]"					\
+		USE_SUBDIR=yes								\
+		CMD="$$(pwd)/testLazyInitialStates --isa=i386 --start=0 map:0=rx::$<"	\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+###############################################################################################################################
 # DEMOS
 #
 # These demonstrate various aspects of ROSE's binary executable abilities. They are meant to be run sequentially (regardless
