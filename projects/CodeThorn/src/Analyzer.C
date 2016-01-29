@@ -2806,9 +2806,10 @@ bool Analyzer::isLTLRelevantEState(const EState* estate) {
           || (estate)->io.isFailedAssertIO());
 }
 
-EStateWorkList Analyzer::subSolver(const EState* currentEStatePtr) {
+Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr) {
   EStateWorkList localWorkList;
   EStateWorkList deferedWorkList;
+  EStateSet existingEStateSet;
   localWorkList.push_back(currentEStatePtr);
   while(!localWorkList.empty()) {
     //cout<<"DEBUG: local work list size: "<<localWorkList.size()<<endl;
@@ -2839,6 +2840,14 @@ EStateWorkList Analyzer::subSolver(const EState* currentEStatePtr) {
             } else {
               localWorkList.push_back(newEStatePtr);
             }
+          } else {
+            // we have found an existing state, but need to make also sure it's a relevent one
+            if(isLTLRelevantEState(newEStatePtr)) {
+              existingEStateSet.insert(const_cast<EState*>(newEStatePtr));
+            } else {
+              // TODO: use a unique list
+              localWorkList.push_back(newEStatePtr);
+            }
           }
           // TODO: create reduced transition set at end of this function
           if(!getModeLTLDriven()) {
@@ -2859,7 +2868,8 @@ EStateWorkList Analyzer::subSolver(const EState* currentEStatePtr) {
             // set flag for terminating early
             reachabilityResults.reachable(0);
             EStateWorkList emptyWorkList;
-            return emptyWorkList;
+            EStateSet emptyExistingStateSet;
+            return make_pair(emptyWorkList,emptyExistingStateSet);
           } else if(isFailedAssertEState(&newEState)) {
             // record failed assert
             int assertCode;
@@ -2888,7 +2898,7 @@ EStateWorkList Analyzer::subSolver(const EState* currentEStatePtr) {
       } // end of loop on transfer function return-estates
     } // edge set iterator
   }
-  return deferedWorkList;
+  return make_pair(deferedWorkList,existingEStateSet);
 }
 
 void Analyzer::runSolver11() {
@@ -2908,7 +2918,9 @@ void Analyzer::runSolver11() {
     }
     const EState* currentEStatePtr=popWorkList();
     assert(currentEStatePtr);
-    EStateWorkList deferedWorkList=subSolver(currentEStatePtr);
+    
+    SubSolverResultType subSolverResult=subSolver(currentEStatePtr);
+    EStateWorkList deferedWorkList=subSolverResult.first;
     for(EStateWorkList::iterator i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
       addToWorkList(*i);
     }

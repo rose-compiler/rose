@@ -127,9 +127,20 @@ TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate
   if(getModeLTLDriven()) {
     ROSE_ASSERT(_analyzer);
     if(_outEdges[estate].size()==0) {
-      EStatePtrSet succSet=succ(estate);
-      TransitionPtrSet tpset;
-      for(EStatePtrSet::iterator j=succSet.begin();j!=succSet.end();++j) {
+
+      ROSE_ASSERT(_analyzer);
+      Analyzer::SubSolverResultType subSolverResult=_analyzer->subSolver(estate);
+      EStateWorkList& deferedWorkList=subSolverResult.first;
+      EStateSet& existingEStateSet=subSolverResult.second;
+      EStatePtrSet succNodes;
+      for(EStateWorkList::iterator i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
+        succNodes.insert(*i);
+      }
+      for(EStateSet::iterator i=existingEStateSet.begin();i!=existingEStateSet.end();++i) {
+        succNodes.insert(*i);
+      }
+      cout<<"DEBUG: succ:"<<deferedWorkList.size()<<","<<existingEStateSet.size()<<":"<<succNodes.size()<<endl;
+      for(EStatePtrSet::iterator j=succNodes.begin();j!=succNodes.end();++j) {
         Edge newEdge(estate->label(),EDGE_PATH,(*j)->label());
         Transition t(estate,newEdge,*j);
         add(t);
@@ -151,17 +162,9 @@ EStatePtrSet TransitionGraph::pred(const EState* estate) {
 
 EStatePtrSet TransitionGraph::succ(const EState* estate) {
   EStatePtrSet succNodes;
-  if(getModeLTLDriven()) {
-    ROSE_ASSERT(_analyzer);
-    EStateWorkList estateWorkList=_analyzer->subSolver(estate);
-    for(EStateWorkList::iterator i=estateWorkList.begin();i!=estateWorkList.end();++i) {
-      succNodes.insert(*i);
-    }
-  } else {
-    TransitionPtrSet tset=outEdges(estate);
-    for(TransitionPtrSet::iterator i=tset.begin();i!=tset.end();++i) {
-      succNodes.insert((*i)->target);
-    }
+  TransitionPtrSet tset=outEdges(estate);
+  for(TransitionPtrSet::iterator i=tset.begin();i!=tset.end();++i) {
+    succNodes.insert((*i)->target);
   }
   return succNodes;
 }
