@@ -240,8 +240,8 @@ RSIM_Process::dump_core(int signo, std::string base_name)
     /* Get current instruction pointer. We subtract the size of the current instruction if we're in the middle of processing
      * an instruction because it would have already been incremented by the semantics. */ 
     uint32_t eip = readIP().known_value();
-    if (get_insn())
-        eip -= get_insn()->get_size();
+    if (currentInstruction())
+        eip -= currentInstruction()->get_size();
 
     SgAsmGenericFile *ef = new SgAsmGenericFile;
     ef->set_truncate_zeros(false);

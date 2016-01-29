@@ -548,10 +548,10 @@ setInitialState(const BaseSemantics::DispatcherPtr &cpu, const P2::ControlFlowGr
     ASSERT_not_null(cpu);
 
     // Create the new state from an existing state and make the new state current.
-    BaseSemantics::StatePtr state = cpu->get_state()->clone();
+    BaseSemantics::StatePtr state = cpu->currentState()->clone();
     state->clear();
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
-    ops->set_state(state);
+    ops->currentState(state);
 
     // Start of path is always feasible.
     ops->writeRegister(REG_PATH, ops->boolean_(true));
@@ -835,7 +835,7 @@ printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pat
     if (settings.showFinalState) {
         SymbolicSemantics::Formatter fmt = symbolicFormat("    ");
         std::cout <<"  Machine state at end of path (prior to entering " <<partitioner.vertexName(path.backVertex()) <<")\n"
-                  <<(*ops->get_state() + fmt);
+                  <<(*ops->currentState() + fmt);
     }
 }
 
@@ -855,7 +855,7 @@ public:
         return functor;
     }
     SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &token) ROSE_OVERRIDE {
-        BaseSemantics::RegisterStatePtr regState = ops_->get_state()->get_register_state();
+        BaseSemantics::RegisterStatePtr regState = ops_->currentState()->registerState();
         const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(token.lexeme());
         if (NULL == regp)
             return SymbolicExpr::Ptr();
@@ -892,7 +892,7 @@ public:
             throw token.syntaxError("mem operator expects one argument (address)");
         SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(ops_->undefined_(operands[0]->nBits()));
         addr->set_expression(operands[0]);
-        BaseSemantics::MemoryStatePtr memState = ops_->get_state()->get_memory_state();
+        BaseSemantics::MemoryStatePtr memState = ops_->currentState()->memoryState();
         BaseSemantics::SValuePtr memValue = memState->readMemory(addr, ops_->undefined_(8), ops_.get(), ops_.get());
         if (token.width() != 0 && memValue->get_width() !=token.width()) {
             throw token.syntaxError("operator size mismatch (specified=" + StringUtility::numberToString(token.width()) +
@@ -1319,7 +1319,7 @@ singleThreadBfsWorker(BfsContext *ctx) {
         // paths-graph vertex share their state objects, so clone the state.  That way any semantic operations we perform in
         // this loop will be accessing the correct state.
         ASSERT_not_null(bfsVertex->value().state);
-        ops->set_state(bfsVertex->value().state->clone());
+        ops->currentState(bfsVertex->value().state->clone());
 
         // If this edge's incoming instruction pointer is concrete and is not equal to this edge's address then we already know
         // that this path isn't feasible.
@@ -1464,7 +1464,7 @@ singleThreadBfsWorker(BfsContext *ctx) {
             boost::lock_guard<boost::mutex> lock(ctx->bfsForestMutex);
             BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, pathsEdge->target()->outEdges()) {
                 BfsForest::VertexIterator v = ctx->bfsForest.insertVertex(BfsForestVertex(ctx->pathsGraph.findEdge(edge.id()),
-                                                                                          cpu->get_state(), nInsns));
+                                                                                          cpu->currentState(), nInsns));
                 ctx->bfsForest.insertEdge(bfsVertex, v);
                 ctx->bfsFrontier.push_back(v);
                 SAWYER_MESG(debug) <<"    path #" <<v->value().id <<" for edge " <<ctx->partitioner.edgeName(edge) <<"\n";
@@ -1515,7 +1515,7 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
     processVertex(cpu, ctx.pathsBeginVertex, nInsns /*in,out*/);
     BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, ctx.pathsBeginVertex->outEdges()) {
         ctx.bfsFrontier.push_back(ctx.bfsForest.insertVertex(BfsForestVertex(ctx.pathsGraph.findEdge(edge.id()),
-                                                                             cpu->get_state(), nInsns)));
+                                                                             cpu->currentState(), nInsns)));
     }
 
     // Start worker threads.
@@ -1557,8 +1557,8 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     }
 
     // Merge register states s1reg and s2reg into mergedReg
-    BaseSemantics::RegisterStateGenericPtr s1reg = BaseSemantics::RegisterStateGeneric::promote(s1->get_register_state());
-    BaseSemantics::RegisterStateGenericPtr s2reg = BaseSemantics::RegisterStateGeneric::promote(s2->get_register_state());
+    BaseSemantics::RegisterStateGenericPtr s1reg = BaseSemantics::RegisterStateGeneric::promote(s1->registerState());
+    BaseSemantics::RegisterStateGenericPtr s2reg = BaseSemantics::RegisterStateGeneric::promote(s2->registerState());
     BaseSemantics::RegisterStateGenericPtr mergedReg = BaseSemantics::RegisterStateGeneric::promote(s1reg->clone());
     BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &pair, s2reg->get_stored_registers()) {
         if (s1reg->is_partly_stored(pair.desc)) {
@@ -1575,15 +1575,15 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     mergedReg->erase_register(REG_PATH, ops.get()); // will be updated separately in processBasicBlock
 
     // Merge memory states s1mem and s2mem into mergedMem
-    BaseSemantics::SymbolicMemoryPtr s1mem = BaseSemantics::SymbolicMemory::promote(s1->get_memory_state());
-    BaseSemantics::SymbolicMemoryPtr s2mem = BaseSemantics::SymbolicMemory::promote(s2->get_memory_state());
+    BaseSemantics::SymbolicMemoryPtr s1mem = BaseSemantics::SymbolicMemory::promote(s1->memoryState());
+    BaseSemantics::SymbolicMemoryPtr s2mem = BaseSemantics::SymbolicMemory::promote(s2->memoryState());
     SymbolicExpr::Ptr memExpr1 = s1mem->expression();
     SymbolicExpr::Ptr memExpr2 = s2mem->expression();
     SymbolicExpr::Ptr mergedExpr = SymbolicExpr::makeIte(s1Constraint->get_expression(), memExpr1, memExpr2);
     BaseSemantics::SymbolicMemoryPtr mergedMem = BaseSemantics::SymbolicMemory::promote(s1mem->clone());
     mergedMem->expression(mergedExpr);
 
-    return ops->get_state()->create(mergedReg, mergedMem);
+    return ops->currentState()->create(mergedReg, mergedMem);
 }
 
 // Merge all the predecessor outgoing states to create a new incoming state for the specified vertex.
@@ -1592,7 +1592,7 @@ mergePredecessorStates(const BaseSemantics::RiscOperatorsPtr &ops, const P2::Con
                        const StateStacks &outStates) {
     // If this is the initial vertex, then use the state that the caller has initialized already.
     if (0 == vertex->nInEdges())
-        return ops->get_state();
+        return ops->currentState();
 
     // Create the incoming state for this vertex by merging the outgoing states of all predecessors.
     BaseSemantics::StatePtr state;
@@ -1727,7 +1727,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
 
                 BaseSemantics::StatePtr state = cpu->state()->clone();
                 state->reset();
-                ops->set_state(state); // modifing incoming state in place, changing it to an outgoing state
+                ops->currentState(state); // modifing incoming state in place, changing it to an outgoing state
                 if (t.vertex()->value().type() == P2::V_BASIC_BLOCK) {
                     processBasicBlock(t.vertex()->value().bblock(), cpu, pathInsnIndex);
                 } else if (t.vertex()->value().type() == P2::V_INDETERMINATE) {
@@ -1751,7 +1751,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
                     outgoingStates[
 
 
-                BaseSemantics::StatePtr outgoingState = ops->get_state();
+                BaseSemantics::StatePtr outgoingState = ops->currentState();
                 incomingStates[vId].pop_back();
 
                 // Now that we have this vertex's outgoing state, merge the outgoing state into all this vertex's CFG
@@ -1778,7 +1778,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
         ASSERT_not_null(outState[pathsEndVertex->id()]);
         if (settings.showFinalState) {
             SymbolicSemantics::Formatter fmt = symbolicFormat();
-            std::cerr <<"Final state:\n" <<(*cpu->get_state() + fmt);
+            std::cerr <<"Final state:\n" <<(*cpu->currentState() + fmt);
         }
         
         // Final path expression

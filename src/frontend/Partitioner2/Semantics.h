@@ -160,15 +160,15 @@ private:
 protected:
     explicit RiscOperators(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : InstructionSemantics2::SymbolicSemantics::RiscOperators(protoval, solver) {
-        set_name("PartitionerSemantics");
+        name("PartitionerSemantics");
         (void)SValue::promote(protoval);                // make sure its dynamic type is appropriate
         trimThreshold(TRIM_THRESHOLD_DFLT);
     }
 
     explicit RiscOperators(const InstructionSemantics2::BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : InstructionSemantics2::SymbolicSemantics::RiscOperators(state, solver) {
-        set_name("PartitionerSemantics");
-        (void)SValue::promote(state->get_protoval());
+        name("PartitionerSemantics");
+        (void)SValue::promote(state->protoval());
         trimThreshold(TRIM_THRESHOLD_DFLT);
     }
 

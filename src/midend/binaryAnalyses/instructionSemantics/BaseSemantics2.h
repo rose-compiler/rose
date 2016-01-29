@@ -744,17 +744,17 @@ typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
 class RegisterState: public boost::enable_shared_from_this<RegisterState> {
 private:
     MergerPtr merger_;
+    SValuePtr protoval_;                                /**< Prototypical value for virtual constructors. */
 
 protected:
-    SValuePtr protoval;                         /**< Prototypical value for virtual constructors. */
-    const RegisterDictionary *regdict;          /**< Registers that are able to be stored by this state. */
+    const RegisterDictionary *regdict;                  /**< Registers that are able to be stored by this state. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     RegisterState(const SValuePtr &protoval, const RegisterDictionary *regdict)
-        : protoval(protoval), regdict(regdict) {
-        ASSERT_not_null(protoval);
+        : protoval_(protoval), regdict(regdict) {
+        ASSERT_not_null(protoval_);
     }
 
 public:
@@ -805,7 +805,12 @@ public:
     /** @} */
 
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
-    SValuePtr get_protoval() const { return protoval; }
+    SValuePtr protoval() const { return protoval_; }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
+        return protoval();
+    }
 
     /** The register dictionary should be compatible with the register dictionary used for other parts of binary analysis. At
      *  this time (May 2013) the dictionary is only used when printing.
@@ -1212,27 +1217,27 @@ typedef boost::shared_ptr<class State> StatePtr;
  *  the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
  *  together.  */
 class State: public boost::enable_shared_from_this<State> {
-protected:
-    SValuePtr protoval;                         /**< Initial value used to create additional values as needed. */
-    RegisterStatePtr registers;                 /**< All machine register values for this semantic state. */
-    MemoryStatePtr  memory;                     /**< All memory for this semantic state. */
+    SValuePtr protoval_;                                // Initial value used to create additional values as needed.
+    RegisterStatePtr registers_;                        // All machine register values for this semantic state.
+    MemoryStatePtr memory_;                             // All memory for this semantic state.
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     State(const RegisterStatePtr &registers, const MemoryStatePtr &memory)
-        : registers(registers), memory(memory) {
+        : registers_(registers), memory_(memory) {
         ASSERT_not_null(registers);
         ASSERT_not_null(memory);
-        protoval = registers->get_protoval();
-        ASSERT_not_null(protoval);
+        protoval_ = registers->protoval();
+        ASSERT_not_null(protoval_);
     }
 
     // deep-copy the registers and memory
     State(const State &other)
-        : protoval(other.protoval) {
-        registers = other.registers->clone();
-        memory = other.memory->clone();
+        : protoval_(other.protoval_) {
+        registers_ = other.registers_->clone();
+        memory_ = other.memory_->clone();
     }
 
 public:
@@ -1283,7 +1288,12 @@ public:
     // Other methods that are part of our API. Most of these just chain to either the register state and/or the memory state.
 public:
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
-    SValuePtr get_protoval() const { return protoval; }
+    SValuePtr protoval() const { return protoval_; }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
+        return protoval();
+    }
 
     /** Initialize state.  The register and memory states are cleared. */
     virtual void clear();
@@ -1298,14 +1308,28 @@ public:
      *  Calls the @ref MemoryState::clear method. Registers are not affected. */
     virtual void clear_memory();
 
-    /** Return the register state. */
-    RegisterStatePtr get_register_state() {
-        return registers;
+    /** Property: Register state.
+     *
+     *  This read-only property is the register substate of this whole state. */
+    RegisterStatePtr registerState() {
+        return registers_;
     }
 
-    /** Return the memory state. */
-    MemoryStatePtr get_memory_state() {
-        return memory;
+    // [Robb Matzke 2016-01-22]: deprecated
+    RegisterStatePtr get_register_state() ROSE_DEPRECATED("use registerState instead") {
+        return registerState();
+    }
+
+    /** Property: Memory state.
+     *
+     *  This read-only property is the memory substate of this whole state. */
+    MemoryStatePtr memoryState() const {
+        return memory_;
+    }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    MemoryStatePtr get_memory_state() ROSE_DEPRECATED("use memoryState instead") {
+        return memoryState();
     }
     
     /** Read a value from a register.
@@ -1427,26 +1451,25 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together. */
 class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
-protected:
-    SValuePtr protoval;                         /**< Prototypical value used for its virtual constructors. */
-    StatePtr state;                             /**< State upon which RISC operators operate. */
-    SgAsmInstruction *cur_insn;                 /**< Current instruction, as set by latest startInstruction() call. */
-    size_t ninsns;                              /**< Number of instructions processed. */
-    SMTSolver *solver;                          /**< Optional SMT solver. */
-    std::string name;                           /**< Name to use for debugging. */
+    SValuePtr protoval_;                                // Prototypical value used for its virtual constructors
+    StatePtr currentState_;                             // State upon which RISC operators operate
+    SMTSolver *solver_;                                 // Optional SMT solver
+    SgAsmInstruction *currentInsn_;                     // Current instruction, as set by latest startInstruction call
+    size_t nInsns_;                                     // Number of instructions processed
+    std::string name_;                                  // Name to use for debugging
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit RiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
-        : protoval(protoval), cur_insn(NULL), ninsns(0), solver(solver) {
-        ASSERT_not_null(protoval);
+        : protoval_(protoval), solver_(solver), currentInsn_(NULL), nInsns_(0) {
+        ASSERT_not_null(protoval_);
     }
 
     explicit RiscOperators(const StatePtr &state, SMTSolver *solver=NULL)
-        : state(state), cur_insn(NULL), ninsns(0), solver(solver) {
+        : currentState_(state), solver_(solver), currentInsn_(NULL), nInsns_(0) {
         ASSERT_not_null(state);
-        protoval = state->get_protoval();
+        protoval_ = state->protoval();
     }
 
 public:
@@ -1465,13 +1488,13 @@ public:
 public:
     /** Virtual allocating constructor.  The @p protoval is a prototypical semantic value that is used as a factory to create
      *  additional values as necessary via its virtual constructors.  The state upon which the RISC operations operate must be
-     *  provided by a separate call to the set_state() method. An optional SMT solver may be specified (see set_solver()). */
+     *  set by modifying the  @ref currentState property. An optional SMT solver may be specified (see @ref solver). */
     virtual RiscOperatorsPtr create(const SValuePtr &protoval, SMTSolver *solver=NULL) const = 0;
 
     /** Virtual allocating constructor.  The supplied @p state is that upon which the RISC operations operate and is also used
-     *  to define the prototypical semantic value. Other states can be supplied by calling set_state(). The prototypical
+     *  to define the prototypical semantic value. Other states can be supplied by setting @ref currentState. The prototypical
      *  semantic value is used as a factory to create additional values as necessary via its virtual constructors. An optional
-     *  SMT solver may be specified (see set_solver()). */
+     *  SMT solver may be specified (see @ref solver). */
     virtual RiscOperatorsPtr create(const StatePtr &state, SMTSolver *solver=NULL) const = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1485,34 +1508,67 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Other methods part of our API
 public:
-    /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
-    virtual SValuePtr get_protoval() const { return protoval; }
+    /** Property: Prototypical semantic value.
+     *
+     *  The protoval is used to construct other values via its virtual constructors. */
+    virtual SValuePtr protoval() const { return protoval_; }
 
-    /** Sets the satisfiability modulo theory (SMT) solver to use for certain operations.  An SMT solver is optional and not
-     *  all semantic domains will make use of a solver.  Domains that use a solver will fall back to naive implementations when
-     *  a solver is not available (for instance, equality of two values might be checked by looking at whether the values are
-     *  identical).  */
-    virtual void set_solver(SMTSolver *solver) { this->solver = solver; }
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
+        return protoval();
+    }
 
-    /** Returns the solver that is currently being used.  A null return value means that no SMT solver is being used and that
-     *  certain operations are falling back to naive implementations. */
-    virtual SMTSolver *get_solver() const { return solver; }
+    /** Property: Satisfiability module theory (SMT) solver.
+     *
+     *  This property holds a pointer to the satisfiability modulo theory (SMT) solver to use for certain operations.  An SMT
+     *  solver is optional and not all semantic domains will make use of a solver.  Domains that use a solver will fall back to
+     *  naive implementations when a solver is not available (for instance, equality of two values might be checked by looking
+     *  at whether the values are identical).
+     *
+     * @{ */
+    virtual SMTSolver* solver() const { return solver_; }
+    virtual void solver(SMTSolver *s) { solver_ = s; }
+    /** @} */
 
-    /** Access the state upon which the RISC operations operate. The state need not be set until the first instruction is
-     *  executed (and even then, some RISC operations don't need any machine state (typically, only register and memory read
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual void set_solver(SMTSolver *s) ROSE_DEPRECATED("use solver instead") { solver(s); }
+    virtual SMTSolver *get_solver() const ROSE_DEPRECATED("use solver instead") { return solver(); }
+
+    /** Property: Current semantic state.
+     *
+     *  This is the state upon which the RISC operations operate. The state need not be set until the first instruction is
+     *  executed (and even then, some RISC operations don't need any machine state; typically, only register and memory read
      *  and write operators need state).  Different state objects can be swapped in at pretty much any time.  Modifying the
      *  state has no effect on this object's prototypical value which was initialized by the constructor; new states should
      *  have a prototyipcal value of the same dynamic type.
+     *
      * @{ */
-    virtual StatePtr get_state() const { return state; }
-    virtual void set_state(const StatePtr &s) { state = s; }
+    virtual StatePtr currentState() const { return currentState_; }
+    virtual void currentState(const StatePtr &s) { currentState_ = s; }
+    /** @} */
+    
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual StatePtr get_state() const ROSE_DEPRECATED("use currentState instead") {
+        return currentState();
+    }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual void set_state(const StatePtr &s) ROSE_DEPRECATED("use currentState instead") {
+        currentState(s);
+    }
+
+    /** Property: Name used for debugging.
+     *
+     *  This property is the name of the semantic domain and is used in diagnostic messages.
+     *
+     * @{ */
+    virtual const std::string& name() const { return name_; }
+    virtual void name(const std::string &s) { name_ = s; }
     /** @} */
 
-    /** A name used for debugging.
-     * @{ */
-    virtual const std::string& get_name() const { return name; }
-    virtual void set_name(const std::string &s) { name = s; }
-    /** @} */
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual const std::string& get_name() const ROSE_DEPRECATED("use name instead") { return name(); }
+    virtual void set_name(const std::string &s) ROSE_DEPRECATED("use name instead") { name(s); }
 
     /** Print multi-line output for this object.
      * @{ */
@@ -1522,7 +1578,7 @@ public:
         print(stream, fmt);
     }
     virtual void print(std::ostream &stream, Formatter &fmt) const {
-        state->print(stream, fmt);
+        currentState_->print(stream, fmt);
     }
     /** @} */
 
@@ -1546,20 +1602,30 @@ public:
     WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
     /** @} */
 
-    /** Returns the number of instructions processed. This counter is incremented at the beginning of each instruction. */
-    virtual size_t get_ninsns() const {
-        return ninsns;
+    /** Property: Number of instructions processed.
+     *
+     *  This counter is incremented at the beginning of each instruction.
+     *
+     * @{ */
+    virtual size_t nInsns() const { return nInsns_; }
+    virtual void nInsns(size_t n) { nInsns_ = n; }
+    /** @} */
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual size_t get_ninsns() const ROSE_DEPRECATED("use nInsns instead") { return nInsns(); }
+    virtual void set_ninsns(size_t n) ROSE_DEPRECATED("use nInsns instead") { nInsns(n); }
+
+    /** Returns current instruction.
+     *
+     *  Returns the instruction which is being processed. This is set by @ref startInstruction and cleared by @ref
+     *  finishInstruction. Returns null if we are not processing an instruction. */
+    virtual SgAsmInstruction* currentInstruction() const {
+        return currentInsn_;
     }
 
-    /** Sets the number instructions processed. This is the same counter incremented at the beginning of each instruction and
-     *  returned by get_ninsns(). */
-    virtual void set_ninsns(size_t n) {
-        ninsns = n;
-    }
-
-    /** Returns current instruction. Returns the null pointer if no instruction is being processed. */
-    virtual SgAsmInstruction *get_insn() const {
-        return cur_insn;
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual SgAsmInstruction *get_insn() const ROSE_DEPRECATED("use currentInstruction instead") {
+        return currentInstruction();
     }
 
     /** Called at the beginning of every instruction.  This method is invoked every time the translation object begins
@@ -1570,8 +1636,8 @@ public:
      *  instruction.  This is not called if there's an exception during processing. */
     virtual void finishInstruction(SgAsmInstruction *insn) {
         ASSERT_not_null(insn);
-        ASSERT_require(cur_insn==insn);
-        cur_insn = NULL;
+        ASSERT_require(currentInsn_==insn);
+        currentInsn_ = NULL;
     };
 
 
@@ -1583,25 +1649,25 @@ public:
 
     /** Returns a new undefined value. Uses the prototypical value to virtually construct the new value. */
     virtual SValuePtr undefined_(size_t nbits) {
-        return protoval->undefined_(nbits);
+        return protoval_->undefined_(nbits);
     }
     virtual SValuePtr unspecified_(size_t nbits) {
-        return protoval->unspecified_(nbits);
+        return protoval_->unspecified_(nbits);
     }
 
     /** Returns a number of the specified bit width.  Uses the prototypical value to virtually construct a new value. */
     virtual SValuePtr number_(size_t nbits, uint64_t value) {
-        return protoval->number_(nbits, value);
+        return protoval_->number_(nbits, value);
     }
 
     /** Returns a Boolean value. Uses the prototypical value to virtually construct a new value. */
     virtual SValuePtr boolean_(bool value) {
-        return protoval->boolean_(value);
+        return protoval_->boolean_(value);
     }
 
     /** Returns a data-flow bottom value. Uses the prototypical value to virtually construct a new value. */
     virtual SValuePtr bottom_(size_t nbits) {
-        return protoval->bottom_(nbits);
+        return protoval_->bottom_(nbits);
     }
 
     
@@ -1931,8 +1997,8 @@ public:
      *  which layer should invoke the extract() or concat() (or whatever other RISC operations might be necessary).
      */ 
     virtual SValuePtr readRegister(const RegisterDescriptor &reg) {
-        ASSERT_not_null(state);
-        return state->readRegister(reg, this);
+        ASSERT_not_null(currentState_);
+        return currentState_->readRegister(reg, this);
     }
 
     /** Writes a value to a register.
@@ -1944,13 +2010,14 @@ public:
      *  writing a value to the specified register when the underlying register state doesn't actually store a value for that
      *  specific register. The RiscOperations object is passed along for that purpose.  See readRegister() for more details. */
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &a) {
-        ASSERT_not_null(state);
-        state->writeRegister(reg, a, this);
+        ASSERT_not_null(currentState_);
+        currentState_->writeRegister(reg, a, this);
     }
 
     /** Reads a value from memory.
      *
-     *  The implementation (in subclasses) will typically delegate much of the work to State::readMemory().
+     *  The implementation (in subclasses) will typically delegate much of the work to the current state's @ref
+     *  State::readMemory "readMemory" method.
      *
      *  A MemoryState will implement storage for memory locations and might impose certain restrictions, such as "all memory
      *  values must be eight bits".  However, the RiscOperators::readMemory() should not have these constraints so that it can
@@ -1974,8 +2041,8 @@ public:
 
     /** Writes a value to memory.
      *
-     *  The implementation (in subclasses) will typically delegate much of the work to State::readMemory().  See readMemory()
-     *  for more information.
+     *  The implementation (in subclasses) will typically delegate much of the work to the current state's @ref
+     *  State::writeMemory "writeMemory" method.
      *
      *  The @p segreg argument is an optional segment register. Most architectures have a flat virtual address space and will
      *  pass a default-constructed register descriptor whose is_valid() method returns false.
@@ -2101,14 +2168,33 @@ public:
 
     /** Get a pointer to the state object. The state is stored in the RISC operators object, so this is just here for
      *  convenience. */
-    virtual StatePtr get_state() const { return operators ? operators->get_state() : StatePtr(); }
+    virtual StatePtr currentState() const { return operators ? operators->currentState() : StatePtr(); }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual StatePtr get_state() const ROSE_DEPRECATED("use currentState instead") {
+        return currentState();
+    }
 
     /** Return the prototypical value.  The prototypical value comes from the RISC operators object. */
-    virtual SValuePtr get_protoval() const { return operators ? operators->get_protoval() : SValuePtr(); }
+    virtual SValuePtr protoval() const { return operators ? operators->protoval() : SValuePtr(); }
 
-    /** Returns the instruction that is being processed. The instruction comes from the get_insn() method of the RISC operators
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
+        return protoval();
+    }
+
+    /** Returns the instruction that is being processed.
+     *
+     *  The instruction comes from the @ref RiscOperators::currentInstruction "currentInstruction" method of the RiscOperators
      *  object. */
-    virtual SgAsmInstruction *get_insn() const { return operators ? operators->get_insn() : NULL; }
+    virtual SgAsmInstruction* currentInstruction() const {
+         return operators ? operators->currentInstruction() : NULL;
+    }
+
+    // [Robb Matzke 2016-01-22]: deprecated
+    virtual SgAsmInstruction *get_insn() const ROSE_DEPRECATED("use currentInstruction instead") {
+        return currentInstruction();
+    }
 
     /** Return a new undefined semantic value. */
     virtual SValuePtr undefined_(size_t nbits) const {

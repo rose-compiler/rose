@@ -723,15 +723,15 @@ protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
           computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
-        set_name("Symbolic");
+        name("Symbolic");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
           computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
-        set_name("Symbolic");
-        (void) SValue::promote(state->get_protoval()); // values must have SymbolicSemantics::SValue dynamic type
+        name("Symbolic");
+        (void) SValue::promote(state->protoval()); // values must have SymbolicSemantics::SValue dynamic type
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -748,13 +748,13 @@ public:
     }
 
     /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
-     *  second argument for convenience. See set_solver() for details. */
+     *  second argument for convenience. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
-     *  for convenience. See set_solver() for details. */
+     *  for convenience. See @ref solver for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
@@ -789,14 +789,14 @@ public:
     virtual BaseSemantics::SValuePtr boolean_(bool b) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::boolean_(b));
         if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
-            retval->defined_by(get_insn());
+            retval->defined_by(currentInstruction());
         return retval;
     }
 
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::number_(nbits, value));
         if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
-            retval->defined_by(get_insn());
+            retval->defined_by(currentInstruction());
         return retval;
     }
 
@@ -805,7 +805,7 @@ public:
     // implementations.
 protected:
     SValuePtr svalue_expr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) {
-        SValuePtr newval = SValue::promote(protoval->undefined_(expr->nBits()));
+        SValuePtr newval = SValue::promote(protoval()->undefined_(expr->nBits()));
         newval->set_expression(expr);
         newval->set_defining_instructions(defs);
         return newval;

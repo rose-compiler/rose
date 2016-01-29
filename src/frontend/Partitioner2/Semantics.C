@@ -15,10 +15,10 @@ namespace SymbolicSemantics = rose::BinaryAnalysis::InstructionSemantics2::Symbo
 
 void
 RiscOperators::startInstruction(SgAsmInstruction *insn) {
-    ASSERT_not_null(get_state());
-    ASSERT_not_null(get_state()->get_memory_state());
+    ASSERT_not_null(currentState());
+    ASSERT_not_null(currentState()->memoryState());
 
-    BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
+    BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
     if (MemoryListStatePtr ml = boost::dynamic_pointer_cast<MemoryListState>(mem)) {
         ml->addressesRead().clear();
     } else if (MemoryMapStatePtr mm = boost::dynamic_pointer_cast<MemoryMapState>(mem)) {
