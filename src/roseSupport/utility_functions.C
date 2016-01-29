@@ -114,7 +114,8 @@ std::string version_message()
   // outputPredefinedMacros();
 
      return
-          "ROSE (pre-release beta version: " + version_number() + ")" +
+       // "ROSE (pre-release beta version: " + version_number() + ")" +
+          "ROSE (version: " + version_number() + ")" +
           "\n  --- using ROSE SCM version:" +
           "\n      --- ID: " + rose_scm_version_id() +
           "\n      --- Unix Timestamp: " +
