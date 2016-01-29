@@ -574,6 +574,11 @@ int main( int argc, char * argv[] ) {
     analyzer.setMaxIterations(args["max-iterations"].as<int>());
   }
 
+  if(args.count("max-iterations-forced-top")) {
+    analyzer.setMaxIterationsForcedTop(args["max-iterations-forced-top"].as<int>());
+    analyzer.setGlobalTopifyMode(Analyzer::GTM_IO);
+  }
+
   if(args.count("max-transitions-forced-top")) {
     analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top"].as<int>());
     analyzer.setGlobalTopifyMode(Analyzer::GTM_IO);
