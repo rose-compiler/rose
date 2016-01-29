@@ -326,8 +326,9 @@
  *      directory.  The $ROSE_BLD directory may be a subdirectory of $ROSE_SRC.
  *
  *  @li Within the $ROSE_BLD directory, run "$ROSE_SRC/configure --help" to get information about what settings are available,
- *      then run "configure" with your chosen switches.  When running "configure" use a relative path--a name that starts with
- *      ".." rather than "/".
+ *      then run "configure" with your chosen switches.  When running "configure" use an absolute path--a name that starts with
+ *      "/" rather than "." or ".." (using a relative name can cause some of the tests to fail when they're run in a different
+ *      directory).
  *
  *  @subsection installation_cmake Configuring with CMake
  *
