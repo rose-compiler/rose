@@ -39,13 +39,6 @@ vector<grammarFile*> Grammar::fileList;
 #define WRITE_SEPARATE_FILES_FOR_EACH_CLASS 1
 #endif
 
-string replaceString(string patternInInput, string replacePattern, string input) {
-  string::size_type posIter = input.find(patternInInput);
-  if (posIter != string::npos)
-    input.replace(posIter, patternInInput.size(), replacePattern);
-  return input;
-}
-
 Grammar::~Grammar ()
    {
 }
@@ -3569,7 +3562,7 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
   return info;
 }
 
-#include "grammarGenerator.C"
+//#include "grammarGenerator.C"
 
 /////////////////////////
 // RTI CODE GENERATION //
