@@ -8,8 +8,7 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
-/** Smart pointer to a RegisterStateGeneric object.  RegisterStateGeneric objects are reference counted and should not be
- *  explicitly deleted. */
+/** Shared-ownership pointer to generic register states. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RegisterStateGeneric> RegisterStateGenericPtr;
 
 /** A RegisterState for any architecture.

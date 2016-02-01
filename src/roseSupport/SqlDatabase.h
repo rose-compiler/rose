@@ -135,16 +135,19 @@ class TransactionImpl;
 class Statement;
 class StatementImpl;
 
-/** Smart pointer to a database connection.  Database connections are always referenced through their smart pointers and are
- *  automatically deleted when all references disappear. See Connection::create(). */
+/** Shared-ownership pointer to a database connection.  Database connections are always referenced through their smart pointers
+ *  and are automatically deleted when all references disappear. See @ref Connection::create and @ref
+ *  heap_object_shared_ownership. */
 typedef boost::shared_ptr<Connection> ConnectionPtr;
 
-/** Smart pointer to a transaction.  Transactions are always referenced through their smart pointers and are
- *  automatically deleted when all references disappear. See Connection::transaction(). */
+/** Shared-ownership pointer to a transaction.  Transactions are always referenced through their smart pointers and are
+ *  automatically deleted when all references disappear. See @ref Connection::transaction and @ref
+ *  heap_object_shared_ownership. */
 typedef boost::shared_ptr<Transaction> TransactionPtr;
 
-/** Smart pointer to a statement.  Statements are always referenced through their smart pointers and are
- *  automatically deleted when all references disappear. See Transaction::statement(). */
+/** Shared-ownership pointer to a statement.  Statements are always referenced through their smart pointers and are
+ *  automatically deleted when all references disappear. See @ref Transaction::statement and @ref
+ *  heap_object_shared_ownership.  */
 typedef boost::shared_ptr<Statement> StatementPtr;
 
 // Data type used in templates to indicate lack of a column

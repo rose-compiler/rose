@@ -32,10 +32,12 @@ namespace Partitioner2 {
  *  to look at the <code>args.results.termination</code> enum returned by the callbacks: if it is TERMINATE_NOW or
  *  TERMINATE_PRIOR then the block is forcibly terminated regardless of what would have otherwise happened.
  *
- *  The partitioner expects callbacks to have shared ownership and references them only via Sawyer::SharedPointer.  Therefore,
- *  subclasses should implement an @c instance class method that allocates a new object and returns a shared pointer. */
+ *  The partitioner expects callbacks to have shared ownership (see @ref heap_object_shared_ownership) and references them only
+ *  via @ref Sawyer::SharedPointer.  Therefore, subclasses should implement an @c instance class method that allocates a new
+ *  object and returns a shared pointer. */
 class BasicBlockCallback: public Sawyer::SharedObject {
 public:
+    /** Shared-ownership pointer to a @ref BasicBlockCallback. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<BasicBlockCallback> Ptr;
 
     /** Whether to terminate a basic block. */
@@ -74,8 +76,7 @@ public:
  *  implement a @ref match method that performs the actual matching. */
 class InstructionMatcher: public Sawyer::SharedObject {
 public:
-    /** Shared-ownership pointer. The partitioner never explicitly frees matchers. Their pointers are copied when
-     *  partitioners are copied. */
+    /** Shared-ownership pointer to an @ref InstructionMatcher. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<InstructionMatcher> Ptr;
 
     /** Attempt to match an instruction pattern.
@@ -105,8 +106,7 @@ public:
  *  additional addresses. */
 class FunctionPrologueMatcher: public InstructionMatcher {
 public:
-    /** Shared-ownership pointer. The partitioner never explicitly frees matchers. Their pointers are copied when
-     *  partitioners are copied. */
+    /** Shared-ownership pointer to a @ref FunctionPrologueMatcher. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<FunctionPrologueMatcher> Ptr;
 
     /** Returns the function(s) for the previous successful match.
@@ -132,8 +132,7 @@ public:
  *  combinations of no-ops and zeros.  It's conceivable that some compiler might even emit random garbage. */
 class FunctionPaddingMatcher: public Sawyer::SharedObject {
 public:
-    /** Shared-ownership pointer.  The partitioner never explicitly frees matches. Their pointers are copied when partitioners
-     *  are copied. */
+    /** Shared-ownership pointer to a @ref FunctionPaddingMatcher. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<FunctionPaddingMatcher> Ptr;
 
     /** Attempt to match padding.

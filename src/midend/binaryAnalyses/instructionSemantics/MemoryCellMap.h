@@ -11,8 +11,7 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
-/** Shared-ownership pointer for a MemoryCellMap. MemoryCellMap objects are always allocated on the heap, reference counted,
- *  and deleted automatically. */
+/** Shared-ownership pointer to a map-based memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryCellMap> MemoryCellMapPtr;
 
 /** Simple map-based memory state.

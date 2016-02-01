@@ -49,7 +49,7 @@ struct DataFlowEdge {
  *  abstract location to another.  The edges are numbered in the order they were added. */
 typedef Sawyer::Container::Graph<AbstractLocation, DataFlowEdge> DataFlowGraph;
 
-/** Shared pointer for dataflow RISC operators. */
+/** Shared-ownership pointer for dataflow RISC operators. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Dataflow RISC operators.

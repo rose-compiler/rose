@@ -78,12 +78,12 @@ namespace BinaryAnalysis {
  *
  *  Most of the instruction semantics components have abstract base classes. Instances of concrete subclasses thereof are
  *  passed around by pointers, and in order to simplify memory management issues, those objects are reference counted.  Most
- *  objects use boost::shared_ptr, but SValue objects use a faster custom smart pointer (it also uses a custom allocator, and
- *  testing showed a substantial speed improvement over Boost when compiled with GCC's "-O3" switch). In any case, to alleviate
- *  the user from having to remember which kind of objects use which smart pointer implementation, pointer typedefs are created
- *  for each class&mdash;their names are the same as the class but suffixed with "Ptr".  Users will almost exclusively work
- *  with pointers to the objects rather than objects themselves. In fact, holding only a normal pointer to an object is a bit
- *  dangerous since the object will be deleted when the last smart pointer disappears.
+ *  objects use <code>boost::shared_ptr</code>, but SValue objects use a faster custom smart pointer (it also uses a custom
+ *  allocator, and testing showed a substantial speed improvement over Boost when compiled with GCC's "-O3" switch). In any
+ *  case, to alleviate the user from having to remember which kind of objects use which smart pointer implementation, pointer
+ *  typedefs are created for each class&mdash;their names are the same as the class but suffixed with "Ptr".  Users will almost
+ *  exclusively work with pointers to the objects rather than objects themselves. In fact, holding only a normal pointer to an
+ *  object is a bit dangerous since the object will be deleted when the last smart pointer disappears.
  *
  *  In order to encourage users to use the provided smart pointers and not allocate semantic objects on the stack, the normal
  *  constructors are protected.  To create a new object from a class name known at compile time, use the static instance()
@@ -467,7 +467,7 @@ public:
 //                                      Merging states
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared ownership pointer for Merger classes. */
+/** Shared-ownership pointer for @ref Merger classes. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class Merger> MergerPtr;
 
 /** Controls state merge operations.
@@ -491,7 +491,7 @@ protected:
     Merger() {}
 
 public:
-    /** Shared ownership pointer to an object. */
+    /** Shared ownership pointer for @ref Merger. See @ref heap_object_shared_ownership. */
     typedef MergerPtr Ptr;
 
     /** Allocating constructor. */
@@ -513,10 +513,7 @@ Sawyer::SharedPointer<To> dynamic_pointer_cast(const Sawyer::SharedPointer<From>
     return from.template dynamicCast<To>();
 }
 
-/** Smart pointer to an SValue object. SValue objects are reference counted and should not be explicitly deleted.
- *
- *  Note: Although most semantic *Ptr types are based on boost::shared_ptr<>, SValuePtr uses Sawyer::SharedPointer which is
- *  substantially faster. */
+/** Shared-ownership pointer to a semantic value in any domain. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Base class for semantic values.
@@ -544,7 +541,7 @@ protected:
     SValue(const SValue &other): width(other.width) {}
 
 public:
-    /** Shared-ownership pointer for an SValue object. */
+    /** Shared-ownership pointer for an @ref SValue object. See @ref heap_object_shared_ownership. */
     typedef SValuePtr Ptr;
 
 public:
@@ -734,8 +731,7 @@ public:
 //                                      Register States
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RegisterState object.  RegisterState objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to a register state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
 
 /** The set of all registers and their values. RegisterState objects are allocated on the heap and reference counted.  The
@@ -758,7 +754,7 @@ protected:
     }
 
 public:
-    /** Shared-ownership pointer for a register state object. */
+    /** Shared-ownership pointer for a @ref RegisterState object. See @ref heap_object_shared_ownership. */
     typedef RegisterStatePtr Ptr;
 
 public:
@@ -884,8 +880,7 @@ public:
 
 };
 
-/** Smart pointer to a RegisterStateX86 object.  RegisterStateX86 objects are reference counted and should not be
- *  explicitly deleted. */
+/** Shared-ownership pointer to an x86 register state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RegisterStateX86> RegisterStateX86Ptr;
 
 /** The set of all registers and their values for a 32-bit x86 architecture.
@@ -1011,7 +1006,7 @@ protected:
 //                                      Memory State
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a MemoryState object. MemoryState objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Represents all memory in the state. MemoryState objects are allocated on the heap and reference counted.  The
@@ -1039,7 +1034,7 @@ protected:
           merger_(other->merger_), byteRestricted_(other->byteRestricted_) {}
 
 public:
-    /** Shared-ownership pointer for a memory state object. */
+    /** Shared-ownership pointer for a @ref MemoryState. See @ref heap_object_shared_ownership. */
     typedef MemoryStatePtr Ptr;
 
 public:
@@ -1197,7 +1192,7 @@ public:
 //                                      State
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a State object.  State objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a semantic state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class State> StatePtr;
 
 /** Base class for semantics machine states.
@@ -1241,7 +1236,7 @@ protected:
     }
 
 public:
-    /** Shared-ownership pointer for a state object. */
+    /** Shared-ownership pointer for a @ref State. See @ref heap_object_shared_ownership. */
     typedef StatePtr Ptr;
 
 public:
@@ -1435,7 +1430,7 @@ public:
 //                                      RISC Operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a RiscOperator object. RiscOperator objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a RISC operators object. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Base class for most instruction semantics RISC operators.
@@ -1481,7 +1476,7 @@ protected:
     }
 
 public:
-    /** Shared-ownership pointer for a RiscOperators object. */
+    /** Shared-ownership pointer for a @ref RiscOperators object. See @ref heap_object_shared_ownership. */
     typedef RiscOperatorsPtr Ptr;
 
 public:
@@ -2094,7 +2089,7 @@ public:
 //                                      Instruction Dispatcher
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a Dispatcher object. Dispatcher objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a semantics instruction dispatcher. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class Dispatcher> DispatcherPtr;
 
 /** Functor that knows how to dispatch a single kind of instruction. */
@@ -2146,7 +2141,7 @@ protected:
     }
 
 public:
-    /** Shared-ownership pointer for a Dispatcher object. */
+    /** Shared-ownership pointer for a @ref Dispatcher object. See @ref heap_object_shared_ownership. */
     typedef DispatcherPtr Ptr;
 
 public:
