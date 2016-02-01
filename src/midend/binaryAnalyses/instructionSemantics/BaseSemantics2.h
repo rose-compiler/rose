@@ -1311,7 +1311,7 @@ public:
     /** Property: Register state.
      *
      *  This read-only property is the register substate of this whole state. */
-    RegisterStatePtr registerState() {
+    RegisterStatePtr registerState() const {
         return registers_;
     }
 
