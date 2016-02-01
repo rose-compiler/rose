@@ -1,3 +1,22 @@
+#include "rose_config.h"
+
+#include "grammar.h"
+#include "terminal.h"
+#include "grammarString.h"
+#include <sstream>
+#include <fstream>
+#include <map>
+
+using namespace std;
+
+string replaceString(string patternInInput, string replacePattern, string input) {
+  string::size_type posIter = input.find(patternInInput);
+  if (posIter != string::npos)
+    input.replace(posIter, patternInInput.size(), replacePattern);
+  return input;
+}
+
+
 /**********************************
  * Terminal/Nonterminal functions *
  **********************************/
