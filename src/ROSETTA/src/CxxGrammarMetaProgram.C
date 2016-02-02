@@ -50,7 +50,7 @@ main(int argc, char * argv[])
 
      printf ("documentedConstructorPrototypes = %s \n",documentedConstructorPrototypes.c_str());
 
-     printf ("Program Terminated Normally! \n");
+     printf ("Rosetta finished.\n");
      return 0;
 }
 

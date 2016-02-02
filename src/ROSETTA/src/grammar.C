@@ -40,14 +40,8 @@ vector<grammarFile*> Grammar::fileList;
 #endif
 
 Grammar::~Grammar ()
-   {
+{
 }
-
-Grammar::Grammar ()
-   {
-     printf ("Error: Please use Grammar ( const char* ) constructor \n");
-     ROSE_ABORT();
-   }
 
 Grammar::Grammar ( const string& inputGrammarName, 
                    const string& inputPrefixName, 
@@ -55,23 +49,12 @@ Grammar::Grammar ( const string& inputGrammarName,
                    const Grammar* inputParentGrammar,
                    const string& t_directory)
    {
-  // The constructor builds a grammar.  The inputs are strings:
-  //    inputGrammarName          -- The name of the grammar (used in the construction of filenames etc.)
-  //    inputPrefixName           -- The name used for the prefix to all classes generated to implement 
-  //                                 the grammar.  This permits each class to have a unique name.  The 
-  //                                 prefix for the base level grammar should be "Sg" to match SAGE!
-  //    inputGrammarNameBaseClass -- The name of the class representing the grammar!  There can
-  //                                 be many grammars defined within a preprocessor.
-  //    inputParentGrammar        -- A pointer to the parent grammar (object) representing the base grammar.
 
   // Intialize some member data 
   // By default the parent grammar is not known
      target_directory = t_directory;
      parentGrammar = NULL;
 
-     // tps (01/05/2010) : added printf for debugging 
-      //printf ("GRAMMAR Constructor values : target_directory : %s   inputParentGrammar %d \n",target_directory.c_str(),inputParentGrammar);
-  
   // We want to set the parent grammar as early as possible since the specification of terminals/nonterminals is
   // dependent upon the the current grammar being a "RootGrammar" (using the isRootGrammar() member function)
   // and the value of the boolean returned from isRootGrammardepends upon the pointer to the parentGrammar being set!
@@ -100,11 +83,9 @@ Grammar::Grammar ( const string& inputGrammarName,
                  // TPS (11/4/2009) : This will work now not using cygwin
            std::string astNodeListFilename = std::string(ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR) + "/src/ROSETTA/astNodeList";
 #else
-        // DQ (4/4/2009): MSVS is not interpreting the type correctly here...(fixed rose_paths.[hC])
-    // DQ (4/11/2009): Using cygwin generated rose_paths.C files so need to map cygwin file prefix to Windows file prefix.
-       std::string astNodeListFilename = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/astNodeList";
-    // TPS (11/4/2009) : Since we are not using Cygwin anymore, this line is incorrect.
-//         string prefixString = "/cygdrive/c";
+           // DQ (4/4/2009): MSVS is not interpreting the type correctly here...(fixed rose_paths.[hC])
+           // DQ (4/11/2009): Using cygwin generated rose_paths.C files so need to map cygwin file prefix to Windows file prefix.
+           std::string astNodeListFilename = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/astNodeList";
            string prefixString = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR;
            printf("prefix == %s\n",prefixString.c_str());
            size_t prefixLocation = astNodeListFilename.find(prefixString);
@@ -118,7 +99,7 @@ Grammar::Grammar ( const string& inputGrammarName,
                         if (astNodeListFilename[i] == '/')
                            {
                           // DQ (4/11/2009): My laptop version of Windows requires '\\' but it was 
-                          // not a problem for the decktop version of windows to use '\'.
+                          // not a problem for the desktop version of windows to use '\'.
                                  astNodeListFilename[i] = '\\';
                            }
                         i++;
