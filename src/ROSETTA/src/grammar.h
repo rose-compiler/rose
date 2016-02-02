@@ -171,9 +171,23 @@ class Grammar
        // Pointer to member function
           typedef std::string (GrammarString::* StringGeneratorFunctionPointerType)() const;
 
+          Grammar ( const Grammar & X );
 
-
-
+          /**! The constructor builds a grammar.  The inputs are strings:
+               inputGrammarName          -- The name of the grammar (used in the construction of filenames etc.)
+               inputPrefixName           -- The name used for the prefix to all classes generated to implement 
+                                            the grammar.  This permits each class to have a unique name.  The 
+                                            prefix for the base level grammar should be "Sg" to match SAGE!
+               inputGrammarNameBaseClass -- The name of the class representing the grammar!  There can
+                                            be many grammars defined within a preprocessor.
+               inputParentGrammar        -- A pointer to the parent grammar (object) representing the base grammar.
+           */
+          Grammar ( const std::string& inputGrammarName, 
+                    const std::string& inputPrefixName,
+                    const std::string& inputGrammarNameBaseClass = "ROSE_BaseGrammar",
+                    const Grammar* parentGrammar = NULL,
+                    const std::string& t_directory = "");
+         ~Grammar ();
 
      public:
           std::vector<Terminal*>        terminalList;
@@ -226,11 +240,7 @@ class Grammar
           void setRootOfGrammar ( Terminal* RootNodeForGrammar );
           Terminal* getRootOfGrammar ();
 
-         ~Grammar ();
-     private:
-          Grammar ();
      public:
-          Grammar ( const Grammar & X );
 
        // Associative terminal/nonterminal access function
           Terminal    & getTerminal    ( const std::string& name ) const;
@@ -244,13 +254,6 @@ class Grammar
           void  setFilenameForGlobalDeclarations ( const std::string& filename );
 
           StringUtility::FileWithLineNumbers buildMiscSupportDeclarations ();
-
-       // Principle constructor
-          Grammar ( const std::string& inputGrammarName, 
-                    const std::string& inputPrefixName,
-                    const std::string& inputGrammarNameBaseClass = "ROSE_BaseGrammar",
-                    const Grammar* parentGrammar = NULL,
-                    const std::string& t_directory = "");
 
           std::string grammarName;
           std::string grammarPrefixName;
