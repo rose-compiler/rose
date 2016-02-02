@@ -67,38 +67,37 @@
 
 class SgProject;
 
-// Things to add:
-//   1) not operator for nodes within a subtree
-//   2) mechanism for adding code to the base of a tree to a specified depth
-//      (for example, if the depth == 1 then code is added only to the leaves)
-//   3) addition of code to lists of nodes (or subtrees)
-//   4) more general editing mechanism for substitution of names into code 
-//      inserted at each node.
-
-// Bobby's list of things to do:
-// 1. Capability to have some nodes in a grammar subtree be excluded from an operation
-//         - eg some functions are overloaded in some but not all derived classes
-// 2. Capability to have operations on all subtrees of a node, but exclude the node itself 
-//    from performing the operation
-//         - eg initialisation routines might be present only in derived classes
-// 3. Generate get/set functions based on private data members
-//         - eg obvious
-// 4. Capability to perform operations on a list of nodes
-//         - eg when a function is present in an arbitrary number of classes which have no tree structure
-// 5. Ability to create and to replace arbitrary keywords rather than only CLASSNAME etc
-//         - eg SgFunctionDeclarationStatement has function getFunctionDeclarationSymbol - would be 
-//              desirable to replace FunctionDeclaration 
-
 /*
-   We are searching for a minimal set of substitution variable that would allow us
-   to build all source code (of the type that would implement grammars).
-   Current editing substitution variables:
-       CLASSNAME
-       BASECLASS
-       BASE_CLASS_CONSTRUCTOR_CALL
-       BASE_CLASS_CONSTRUCTOR_PARAMETER
+ ROSETTA substitution variables: used in *.code files:
+ $GRAMMAR_NAME
+ $GRAMMAR_PREFIX_
+ $PARENT_GRAMMARS_PREFIX_
+ $CLASSNAME
+ $BASECLASS
+ $BASE_CLASS_CONSTRUCTOR_CALL
+ $BASE_CLASS_CONSTRUCTOR_PARAMETER
+ $CONSTRUCTOR_PARAMETER_LIST
+ $CONSTRUCTOR_BODY
+ $CLASSTAG
+ $CLASS_BASE_NAME
+ $PURE_VIRTUAL_MARKER
+ $MARKER // see enum $MARKERVariants 
+ $MARKER_UNKNOWN_GRAMMAR
+ $MARKER_LAST_TAG
+ $LIST_LENGTH // see TerminalNamesType $MARKERTerminalNames[$LIST_LENGTH] =
+ $MEMBER_FUNCTION_DEFINITIONS
+ $CODE_STRING
+ $ASSOCIATED_MEMORY_POOL_TEST
 
- */
+ $IFDEF_MARKER_H
+ $IFDEF_MARKER
+
+ // memory pool support
+ $CLASS_SPECIFIC_STATIC_MEMBERS_MEMORY_USED
+ $CLASS_SPECIFIC_STATIC_MEMBERS_USING_ROSE_VISIT
+ $CLASS_SPECIFIC_STATIC_MEMBERS_USING_VISITOR_PATTERN
+ $CLASS_SPECIFIC_STATIC_MEMBERS_MEMORY_USED
+*/
 
 class grammarFile
    {
@@ -670,14 +669,6 @@ class Grammar
        // DQ (5/18/2007): support for documentation to handle mapping to KDM
           std::string outputClassesAndFields ( Terminal & node );
    };
-
-// We need a defintion of an arbitrary identifier
-// This is defined and initialized in the grammar.C file
-// extern Terminal identifier;
-
-// We need to have all the strdup use the C++ new/delete
-// mechanism instead of the C malloc/free mechanism
-// #define strdup Grammar::stringDuplicate
 
 // Macro used to define terminals we want to object to be built on the heap so that
 // it will not go out of scope, but we want a reference to the object instead of

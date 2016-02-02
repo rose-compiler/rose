@@ -431,11 +431,6 @@ Grammar::setUpExpressions ()
   // ***********************************************************************
   // ***********************************************************************
 
-#if 0
-  // MK: I moved the following data member declaration from ../Grammar/Expression.code to this position:
-     Expression.setDataPrototype("SgAttributePtrList", "uattributes", "",
-                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 #if 1
   // DQ (5/20/2004): Add need_paren to all expression objects so that we can trigger
   // it for any expression and use the value as set in EDG.  See how this works!
@@ -498,9 +493,6 @@ Grammar::setUpExpressions ()
      Expression.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
-  // Expression.setSubTreeFunctionPrototype ( "HEADER_FUNCTIONS", "../Grammar/Expression.code" );
-  // Expression.excludeFunctionPrototype    ( "HEADER_FUNCTIONS", "../Grammar/Expression.code" );
 
 #ifdef HL_GRAMMARS
      X_Expression.setFunctionPrototype          ( "HEADER_X_EXPRESSION",     "../Grammar/Expression.code" );

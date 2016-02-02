@@ -1,10 +1,7 @@
 #ifndef __ROSETTAMACROS_H__
 #define __ROSETTAMACROS_H__
 
-// DQ (11/10/2007): This is a redundant included header file.
-// #include <rose_config.h>
-
-// MK: This header files contains macro definitions to be used
+// MK: These header files contains macro definitions to be used
 // by the setDataPrototype() member function of class Terminal
 
 // define HL_GRAMMARS if you want all rules added (experimental) to allow X/Non_X-rules to be
@@ -165,11 +162,6 @@ class DeleteFlag { // Wrapper for extra argument type checking
 #define INSURE_BUG false
 
 #include <vector>
-// #ifndef STL_LIST_IS_BROKEN
-// #include STL_LIST_HEADER_FILE
-// #endif
-
-// using namespace std;
 
 extern const TraversalFlag DEF_TRAVERSAL; // default traversal
 extern const TraversalFlag NO_TRAVERSAL; // no traversal
