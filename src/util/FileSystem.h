@@ -150,7 +150,7 @@ ROSE_UTIL_API std::vector<Path> findNamesRecursively(const Path &root);
 /** Copy a file.
  *
  *  Copies the contents of the source file to the destination file, overwriting the destination file if it existed. */
-void copyFile(const Path &sourceFileName, const Path &destinationFileName);
+ROSE_UTIL_API void copyFile(const Path &sourceFileName, const Path &destinationFileName);
 
 /** Copy files from one directory to another.
  *
