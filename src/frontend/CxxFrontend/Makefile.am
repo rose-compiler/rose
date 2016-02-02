@@ -147,7 +147,7 @@ network_checking: check-network
 # but others will need to go to a Web server.  We use wget rather than curl because curl was sometimes placing error
 # messages inside the tarball. Don't use $(EDGBIN_NAME) in the target or dependencies because it hasn't been computed
 # yet when make parses that part of this rule; it's okay to use it in the commands though.
-EDG.tar.gz: $(EDGBIN_SIGNATURE_FILE) check-network
+EDG.tar.gz: $(EDGBIN_SIGNATURE_FILE)
 	@if [ "$(EDGBIN_SIGNATURE)" = "" ]; then						\
 	    echo "Empty EDG binary compatibility signature in $(EDGBIN_SIGNATURE_FILE)." >&2;	\
 	    echo "$(CONTACT_INFO)" >&2;								\
@@ -157,6 +157,7 @@ EDG.tar.gz: $(EDGBIN_SIGNATURE_FILE) check-network
 	@if [ -r "$(EDGBIN_NAME).tar.gz" ]; then							\
 	    echo "EDG binary tarball appears to have been downloaded already: $(EDGBIN_NAME).tar.gz";	\
 	else												\
+	    $(MAKE) check-network || exit 1;								\
 	    echo "Downloading EDG binary tarball: $(EDGBIN_NAME).tar.gz";				\
 	    if ! wget -q --spider -t 3 --wait=1 $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz; then	\
 	        echo "The EDG binary tarball is not available (or the web site is not reachable)." >&2;	\
