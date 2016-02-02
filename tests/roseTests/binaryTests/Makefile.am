@@ -591,7 +591,7 @@ disassemble2_other_targets = $(filter-out	\
 
 $(disassemble2_other_targets): disassemble2_%.passed: $(disassemble2_directory)/% disassemble
 	@$(RTH_RUN) \
-		DISABLE="unknown map and entry address" \
+		DISABLED="unknown map and entry address" \
 		TITLE="disassemble $(notdir $<) [$@]" \
 		CMD=false \
 		$(srcdir)/disassemble.conf $@
