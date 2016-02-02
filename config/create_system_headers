@@ -111,14 +111,19 @@ process_headers()
 # start of main
 # check for correct number of arguments and 
 # whether a source directory has been specified
-if [ $# -eq 3 ]; then
+# if [ $# -eq 3 ]; then
+if [ $# -eq 4 ]; then
   :
 else
-   echo "ERROR: Usage is $0 <compiler> <target_dir> <source_dir>"
+#  echo "ERROR: Usage is $0 <compiler> <target_dir> <source_dir>"
+   echo "ERROR: Usage is $0 <compiler> <target_dir> <source_dir> <language>"
    exit 1
 fi
 
-# echo "In main(): parameter 1 = $1  parameter 2 = $2 parameter 3 = $3"
+echo "In main(): parameter 1 = $1  parameter 2 = $2 parameter 3 = $3 parameter 4 = $4"
+
+
+
 
 # for now assume that if a compiler is specified that it is installed
 # see if the full path name has been specified for compiler and if
@@ -126,11 +131,13 @@ fi
 compilerName="`basename $1`"
 compilerBinDir="`dirname $1`"
 roseHome="$3"
+language="$4"
 
 echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 echo "compilerName   = $compilerName"
 echo "compilerBinDir = $compilerBinDir"
 echo "roseHome       = $roseHome"
+echo "language       = $language"
 echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 
 # DQ (8/24/2009): Allow either "roseTranslator" or "roseAnalysis"
@@ -180,7 +187,7 @@ mainTargetDir="`cd \"$targetDirParent\" 2>/dev/null && pwd || echo \"$targetDirP
 # echo "mainTargetDir =  $mainTargetDir"
 # echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 
-is_C_compiler="no"
+# is_C_compiler="no"
 
 #AS moved the mkdir of $mainTargetDir here because the ICC and gcc case need it below
 # we will first ensure that targetDirName exists
@@ -197,61 +204,34 @@ then
    exit 1
 fi
 
+# DQ (2/1/2016): Simplify the logic to avoid use of the backend compiler name.
+if [ "x$language" = "xc" -o "x$language" = "xcxx" ]; then
 
-# no src dir specified, try to determine automatically based on compiler name
- case "$compilerName" in
-  # Support for compiling ROSE with GNU g++ compiler
-  # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|roseTranslator)
-  # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++)
-  # g++*|gcc*|cc*|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++)
-    g++*|gcc*|cc*|icpc|mpiicpc|icc|mpiicc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++|clang|clang++|clang-*|clang++-*)
-         case "$compilerName" in
-         # gcc*|cc*|icc|mpicc|xt-xcc)
-           gcc*|cc*|icc|mpicc|mpiicc|xt-xcc)
-              is_C_compiler="yes"
-              language="c"
-              ;;
-           *)
-              language="c++"
-              ;;
-          esac
+       echo "In create system headers: this is processing C or C++: language = $language"
 
-       # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
-         tmpFile="`mktemp -t roseconfigtempXXXXXXXXXX`"
-         "$1" -E -dM -x $language /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
-         sed "/REPLACE_ME_WITH_MACRO_DEFINITIONS/r$tmpFile" < "$roseHome/config/rose_edg_required_macros_and_functions.h.in" > "$mainTargetDir/rose_edg_required_macros_and_functions.h"
+     # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
+       tmpFile="`mktemp -t roseconfigtempXXXXXXXXXX`"
+       "$1" -E -dM -x $language /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
+       sed "/REPLACE_ME_WITH_MACRO_DEFINITIONS/r$tmpFile" < "$roseHome/config/rose_edg_required_macros_and_functions.h.in" > "$mainTargetDir/rose_edg_required_macros_and_functions.h"
 
-         echo "******************************************************"
-         echo "******************************************************"
-         cat "$tmpFile"
-         echo "******************************************************"
-         echo "******************************************************"
-       # echo "Modified rose_edg_required_macros_and_functions.h file"
-       # cat "$mainTargetDir/rose_edg_required_macros_and_functions.h"
-       # echo "******************************************************"
-       # echo "******************************************************"
+       echo "******************************************************"
+       echo "******************************************************"
+       cat "$tmpFile"
+       echo "******************************************************"
+       echo "******************************************************"
+     # echo "Modified rose_edg_required_macros_and_functions.h file"
+     # cat "$mainTargetDir/rose_edg_required_macros_and_functions.h"
+     # echo "******************************************************"
+     # echo "******************************************************"
 
-         rm "$tmpFile"
+       rm "$tmpFile"
 
-       # echo "PREPROCESSOR_DEFS = $PREPROCESSOR_DEFS"
-         echo "Generating  $mainTargetDir/rose_edg_required_macros_and_functions.h"
-
-       # echo "Exiting as a test!"
-       # exit 1
-
-         ;;
-
-  # Support for compiling ROSE with ROSE (must use translator named: "roseTranslator"
-  # DQ (8/22/2009): Commented this out so that support would be the same as for g++ (ROSE acts like g++ by default)
-  #  roseTranslator)
-  #       compilerName="g++"
-  #       echo "Note: changing compilerName configure variable from \"roseTranslator\" to $compilerName"
-  #       ;;
-    *) echo "ERROR: Not able to recognize compiler $1"
-       echo "ERROR: Usage is create_system_headers compiler target_dir src_dir"
+     # echo "PREPROCESSOR_DEFS = $PREPROCESSOR_DEFS"
+       echo "Generating  $mainTargetDir/rose_edg_required_macros_and_functions.h"
+else
+       echo "ERROR: Usage is create_system_headers compiler target_dir src_dir language"
        exit 1
-       ;;
- esac
+fi
 
 # echo "local script variable compilerHeadersDirCmd = $compilerHeadersDirCmd"
 # echo "Building separate header directories"
@@ -326,7 +306,8 @@ fi
 
 
 
-if [ is_C_compiler = "yes" ]
+# if [ is_C_compiler = "yes" ]
+if [ "x$language" = "xc" ]
 then
     echo "We are handling C compiler specific details, so copy the ROSE specific fix for complex.h to $system_headers_directory" >&2
     cp "$roseHome/config/rose_specific_complex.h" "$system_headers_directory/complex.h"
