@@ -18,17 +18,7 @@ dnl predefined by a specific compiler
 
 # DQ (4/1/2005): Modified to get compiler name from path
   compilerName=`basename $BACKEND_CXX_COMPILER`
-  echo "Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler name = \"$compilerName\" for processing of unparsed source files from ROSE preprocessors."
-
-# Calling available macro from Autoconf.
-# AX_COMPILER_VENDOR
-# C_compilerVendorName= $ax_cv_c_compiler_vendor
-# Cxx_compilerVendorName= $ax_cv_cxx_compiler_vendor
-# echo "Using back-end (from compiler-defs) C compiler   = \"$BACKEND_CXX_COMPILER\" compiler name = $ax_cv_c_compiler_vendor   for processing of unparsed source files from ROSE preprocessors."
-  echo "Using back-end (from compiler-defs) C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor"
-
-# echo "Exiting (from compiler-defs) after computing the compiler vendor name for the C and C++ compilers."
-# exit 1
+# echo "Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler name = \"$compilerName\" for processing of unparsed source files from ROSE preprocessors."
 
 compilerVendorName=$ax_cv_cxx_compiler_vendor
 
@@ -40,9 +30,9 @@ compilerVendorName=$ax_cv_cxx_compiler_vendor
   # clang|clang++|clang-*|clang++-*)
   clang)
     macroString="{\"--preinclude\", \"rose_edg_required_macros_and_functions.h\"}"
-#   compilerVendorName=llvm
-    echo "Support for clang as a backend for compiling ROSE generated code \"$BACKEND_CXX_COMPILER\" ";
-    echo "Support for clang as a backend for compiling ROSE generated code \"$macroString\" ";
+  # compilerVendorName=llvm
+  # echo "Support for clang as a backend for compiling ROSE generated code \"$BACKEND_CXX_COMPILER\" ";
+  # echo "Support for clang as a backend for compiling ROSE generated code \"$macroString\" ";
   ;;
   
   # Support for GNU gcc or g++ as a backend for compiling ROSE generated code
