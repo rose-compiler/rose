@@ -524,6 +524,28 @@ AC_PROG_CXX
 
 echo "In configure.in ... CXX = $CXX"
 
+# Calling available macro from Autoconf (test by optionally pushing C language onto the internal autoconf language stack).
+# This function must be called from this support-rose file (error in ./build if called from the GET COMPILER SPECIFIC DEFINES macro.
+# AC_LANG_PUSH(C)
+  saved_compiler_name=$CXX
+  CXX=$BACKEND_CXX_COMPILER
+  echo "After resetting CXX to be the backend compiler: CXX = $CXX"
+
+  AX_COMPILER_VENDOR
+# returns string ax_cv_cxx_compiler_vendor if this is the C++ compiler else returns 
+# the vendor for the C compiler in ax_cv_c_compiler_vendor for the C compiler.
+# CcompilerVendorName= $ax_cv_c_compiler_vendor
+# CxxcompilerVendorName= $ax_cv_cxx_compiler_vendor
+  echo "Output the names of the vendor for the C or C++ backend compilers."
+# echo "Using back-end C   compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_c_compiler_vendor   for processing of unparsed source files from ROSE preprocessors."
+  echo "Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
+
+  CXX=$saved_compiler_name
+  echo "After resetting CXX to be the saved name of the original compiler: CXX = $CXX"
+
+# echo "Exiting in support-rose after computing the compiler vendor name for the C and C++ compilers."
+# exit 1
+
 # DQ (9/17/2006): These should be the same for both C and C++ (else we will need separate macros)
 # Setup the -D<xxx> defines required to allow EDG to take the same path through the compiler 
 # specific and system specific header files as for the backend compiler.  These depend
@@ -2026,6 +2048,7 @@ projects/ShiftCalculus/Makefile
 projects/ShiftCalculus2/Makefile
 projects/ShiftCalculus3/Makefile
 projects/ShiftCalculus4/Makefile
+projects/dsl_infrastructure/Makefile
 projects/LineDeleter/Makefile
 projects/LineDeleter/src/Makefile
 projects/demos-dlx-mdcg/Makefile

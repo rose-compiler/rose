@@ -21,9 +21,15 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
  # DQ (9/1/2009): Output the absolute path
    echo "absolutePath_srcdir = ${absolutePath_srcdir}"
 
+ # This is a way to make this a global shaell variable, but it is better to pass it as a parameter to the function.
+ # export danLanguage="cxx"
+   danLanguage="cxx"
+   echo "In generate backend compiler specific headers: danLanguage = $danLanguage"
+
  # Use the full path name to generate the header from the correctly specified version of the backend compiler
    mkdir -p "./include-staging/${compilerName}_HEADERS"
-   "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
+ # "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
+   "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${danLanguage}"
 
    echo "BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
    echo "BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
@@ -164,9 +170,15 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
  # DQ (9/1/2009): Output the absolute path
    echo "absolutePath_srcdir = ${absolutePath_srcdir}"
 
+ # This is a way to make this a global shaell variable, but it is better to pass it as a parameter to the function.
+ # export danLanguage="c"
+   danLanguage="c"
+   echo "In generate backend compiler specific headers: danLanguage = $danLanguage"
+
  # Use the full path name to generate the header from the correctly specified version of the backend compiler
    mkdir -p "./include-staging/${compilerName}_HEADERS"
-   "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
+ # "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
+   "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${danLanguage}"
 
    error_code=$?
    echo "error_code = $error_code"
