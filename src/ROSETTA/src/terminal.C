@@ -883,8 +883,8 @@ Terminal::setDataPrototype (
      const string& inputDefaultInitializer,
      const ConstructParamEnum& constructorParameter,
      const BuildAccessEnum& buildAccessDataFunctions,
-     const TraversalFlag& toBeTraversedDuringTreeTraversal,
-     const DeleteFlag& delete_flag,
+     const TraversalEnum& toBeTraversedDuringTreeTraversal,
+     const DeleteEnum& delete_flag,
      const CopyConfigEnum& toBeCopied)
    {
      GrammarString *temp = 

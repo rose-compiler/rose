@@ -133,13 +133,13 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
 #endif
        // printf ("   --- typenameString = %s typeKind = %d \n",typenameString.c_str(),typeKind);
 
-          bool toBeTraversed = grammarString->getToBeTraversed().getValue();
+          TraversalEnum toBeTraversed = grammarString->getToBeTraversed();
 
 #if 1
           if (typeKind == Terminal::SGCLASS_POINTER)
              {
             // This should generate a sequence of aterms.
-               if (toBeTraversed == true)
+               if (toBeTraversed == DEF_TRAVERSAL)
                   {
 #if 0
                     printf ("   --- typeKind == SGCLASS_POINTER typenameString = %s typeKind = %d name = %s \n",typenameString.c_str(),typeKind,grammarString->getVariableNameString().c_str());
@@ -156,7 +156,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
                   {
 #if 0
                  // This should be added as an aterm annotation.
-                     outputFile << "// node = " << node.getName() << " toBeTraversed == false: data member type: " 
+                     outputFile << "// node = " << node.getName() << " toBeTraversed == NO_TRAVERSAL: data member type: " 
                                 << grammarString->getTypeNameString() << " data member variable: " 
                                 << grammarString->getVariableNameString() << " typeKind = " 
                                 << StringUtility::numberToString((int)typeKind) << "\n";
@@ -241,7 +241,7 @@ Grammar::buildAtermGenerationSupportFunctions(Terminal & node, StringUtility::Fi
 #endif
           if (typeKind == Terminal::SGCLASS_POINTER_LIST)
              {
-               if (toBeTraversed == true)
+               if (toBeTraversed == DEF_TRAVERSAL)
                   {
                  // This should generate a list of aterms.
 #if 0
@@ -690,7 +690,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 #endif
        // printf ("   --- typenameString = %s typeKind = %d \n",typenameString.c_str(),typeKind);
 
-          bool toBeTraversed = grammarString->getToBeTraversed().getValue();
+          TraversalEnum toBeTraversed = grammarString->getToBeTraversed();
 
           // MS 11/12/2015: uses new function
           // isInConstructorParameterList to allow to properly check
@@ -707,7 +707,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
           if (typeKind == Terminal::SGCLASS_POINTER)
              {
             // This should generate a sequence of aterms.
-               if (toBeTraversed == true)
+               if (toBeTraversed == DEF_TRAVERSAL)
                   {
 #if 0
                     printf ("   --- typeKind == SGCLASS_POINTER typenameString = %s typeKind = %d name = %s \n",typenameString.c_str(),typeKind,grammarString->getVariableNameString().c_str());
@@ -786,7 +786,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
                   {
                  // This should be added as an aterm annotation.
 #if 0
-                     outputFile << "// node = " << node.getName() << " toBeTraversed == false: data member type: " 
+                     outputFile << "// node = " << node.getName() << " toBeTraversed == NO_TRAVERSAL: data member type: " 
                                 << grammarString->getTypeNameString() << " data member variable: " 
                                 << grammarString->getVariableNameString() << " typeKind = " 
                                 << StringUtility::numberToString((int)typeKind) << "\n";
@@ -834,7 +834,7 @@ Grammar::buildAtermConsumerSupportFunctions(Terminal & node, StringUtility::File
 
           if (typeKind == Terminal::SGCLASS_POINTER_LIST)
              {
-               if (toBeTraversed == true)
+               if (toBeTraversed == DEF_TRAVERSAL)
                   {
                  // This should generate a list of aterms.
 #if 0
@@ -1257,7 +1257,7 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
      string typenameString             = grammarString->getTypeNameString();
      Terminal::TypeEvaluation typeKind = node.evaluateType(typenameString);
 
-     bool toBeTraversed = grammarString->getToBeTraversed().getValue();
+     TraversalEnum toBeTraversed = grammarString->getToBeTraversed();
 
      string atermArgumentsName     = "term";
      string integer_counter_string = StringUtility::numberToString(integer_counter);
@@ -1267,7 +1267,7 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
           constructorArgumentsString  += ", ";
         }
 
-     if (toBeTraversed == true)
+     if (toBeTraversed == DEF_TRAVERSAL)
         {
 #if 0
           dataMemberString += string("       // firstConstructorParameter    = ") + (firstConstructorParameter    ? "true" : "false") + "\n";
@@ -1294,7 +1294,7 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
         {
 #if 0
           dataMemberString += "       // This needs to be supported because it is a constructor parameter. \n";
-          dataMemberString += string("       // node = ") + node.getName() + " toBeTraversed == false: data member type: "
+          dataMemberString += string("       // node = ") + node.getName() + " toBeTraversed == NO_TRAVERSAL: data member type: "
                            + grammarString->getTypeNameString() + " data member variable: " 
                            + grammarString->getVariableNameString() + " typeKind = " 
                            + StringUtility::numberToString((int)typeKind) + "\n";
@@ -1450,13 +1450,13 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
                string typenameBase = grammarString->getTypeNameString();
 
 #if 0
-               outputFile << "// node = " << node.getName() << " toBeTraversed == false: data member type: " 
+               outputFile << "// node = " << node.getName() << " toBeTraversed == NO_TRAVERSAL: data member type: " 
                           << grammarString->getTypeNameString() << " data member variable: " 
                           << grammarString->getVariableNameString() << " typeKind = " 
                           << StringUtility::numberToString((int)typeKind) << "\n";
 #endif
 #if 0
-               dataMemberString_post += string("       // node = ") + node.getName() + " toBeTraversed == false: data member type: "
+               dataMemberString_post += string("       // node = ") + node.getName() + " toBeTraversed == NO_TRAVERSAL: data member type: "
                                       + grammarString->getTypeNameString() + " data member variable: " 
                                       + grammarString->getVariableNameString() + " typeKind = " 
                                       + StringUtility::numberToString((int)typeKind) + "\n";
@@ -1489,7 +1489,7 @@ Grammar::buildDataMember(Terminal & node, GrammarString* grammarString, bool & f
             // Get the annotations and call the access function on the ROSE IR node to set the data members.
             // dataMemberString_post += "       // Get the annotations and call the access function on the ROSE IR node to set the data members\n";
 #if 1
-               dataMemberString_post += "       // Get annotation and set data member: node = " + node.getName() + " toBeTraversed == false: data member type: "
+               dataMemberString_post += "       // Get annotation and set data member: node = " + node.getName() + " toBeTraversed == NO_TRAVERSAL: data member type: "
                      + grammarString->getTypeNameString() + " data member variable: "
                      + grammarString->getVariableNameString() + " typeKind = "
                      + StringUtility::numberToString((int)typeKind) + "\n";

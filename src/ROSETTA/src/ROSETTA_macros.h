@@ -17,7 +17,7 @@
 // MS 2015: rewrote ROSETTA to use enums instead of wrapper classes around enums.
 // enums: ConstructParamEnum, BuildAccessEnum, CopyConfigEnum
 enum ConstructParamEnum { 
-  NO_CONSTRUCTOR_PARAMETER , 
+  NO_CONSTRUCTOR_PARAMETER,
   CONSTRUCTOR_PARAMETER    
 };
 
@@ -50,37 +50,14 @@ enum CopyConfigEnum {
   CLONE_TREE    
 };
 
-#if 0
-// not used yet
 enum TraversalEnum {
   DEF_TRAVERSAL,
   NO_TRAVERSAL,
 };
 
-// not used yet
 enum DeleteEnum {
-  DELETE,
+  DEF_DELETE,
   NO_DELETE
-};
-#endif
-
-class TraversalFlag { // Wrapper for extra argument type checking
-  bool value;
-  public:
-  explicit TraversalFlag(bool value): value(value) {}
-  bool getValue() const {return value;}
-  bool operator==(const TraversalFlag& o) const {return value == o.value;}
-  bool operator!=(const TraversalFlag& o) const {return value != o.value;}
-  TraversalFlag operator||(const TraversalFlag& o) const {return TraversalFlag(value || o.value);} // For TYPE_TRAVERSAL
-};
-
-class DeleteFlag { // Wrapper for extra argument type checking
-  bool value;
-  public:
-  explicit DeleteFlag(bool value): value(value) {}
-  bool getValue() const {return value;}
-  bool operator==(const DeleteFlag& o) const {return value == o.value;}
-  bool operator!=(const DeleteFlag& o) const {return value != o.value;}
 };
 
 // ifndef USE_ROSE
@@ -134,14 +111,5 @@ class DeleteFlag { // Wrapper for extra argument type checking
 #define INSURE_BUG false
 
 #include <vector>
-
-extern const TraversalFlag DEF_TRAVERSAL; // default traversal
-extern const TraversalFlag NO_TRAVERSAL; // no traversal
-
-// AJ (10/26/2004)
-extern const DeleteFlag NO_DELETE;
-// DQ (12/3/2004): Avoid calling delete
-extern const DeleteFlag DEF_DELETE;
-// DeleteFlag DEF_DELETE(false);
 
 #endif

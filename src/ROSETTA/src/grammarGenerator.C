@@ -53,7 +53,7 @@ Grammar::CreateGrammarDotString(Terminal* grammarnode,
     for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
         stringListIterator != includeList.end();
         stringListIterator++) {
-      if ((*stringListIterator)->getToBeTraversed()==TraversalFlag(true)) {
+      if ((*stringListIterator)->getToBeTraversed()==DEF_TRAVERSAL) {
         string type = (*stringListIterator)->getTypeNameString();
         type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
         type=GrammarString::copyEdit (type,"$GRAMMAR_X_MARKER_","");
@@ -134,7 +134,7 @@ Grammar::CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode,
     for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
     stringListIterator != includeList.end(); // ", " only between the elements of the list
     stringListIterator++) {
-      if ( (*stringListIterator)->getToBeTraversed()==TraversalFlag(true)) {
+      if ( (*stringListIterator)->getToBeTraversed()==DEF_TRAVERSAL) {
         traversedTerminals.insert(restrictedTypeStringOfGrammarString(*stringListIterator,grammarnode,"",""));
       }
     }  
@@ -224,7 +224,7 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
     for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
         stringListIterator != includeList.end(); // ", " only between the elements of the list
         stringListIterator++) {
-      if (true|| (*stringListIterator)->getToBeTraversed()==TraversalFlag(true) ) {
+      if (true|| (*stringListIterator)->getToBeTraversed()==DEF_TRAVERSAL ) {
         string type=restrictedTypeStringOfGrammarString(*stringListIterator,grammarnode, grammarSymListOpPrefix, grammarSymListOpPostfix);
         string varName=(*stringListIterator)->getVariableNameString();
 #if 1
