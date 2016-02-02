@@ -481,6 +481,28 @@ CHOOSE_BACKEND_COMPILER
 # TV (06/17/2013): Now always the case (EDG 4.7).
 AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [Controls design of internal template declaration support within the ROSE AST.])
 
+# Calling available macro from Autoconf (test by optionally pushing C language onto the internal autoconf language stack).
+# This function must be called from this support-rose file (error in ./build if called from the GET COMPILER SPECIFIC DEFINES macro.
+# AC_LANG_PUSH(C)
+  saved_compiler_name=$CXX
+  CXX=$BACKEND_CXX_COMPILER
+  echo "After resetting CXX to be the backend compiler: CXX = $CXX"
+
+  AX_COMPILER_VENDOR
+# returns string ax_cv_cxx_compiler_vendor if this is the C++ compiler else returns 
+# the vendor for the C compiler in ax_cv_c_compiler_vendor for the C compiler.
+# CcompilerVendorName= $ax_cv_c_compiler_vendor
+# CxxcompilerVendorName= $ax_cv_cxx_compiler_vendor
+# echo "Output the names of the vendor for the C or C++ backend compilers."
+# echo "Using back-end C   compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_c_compiler_vendor   for processing of unparsed source files from ROSE preprocessors."
+  echo "Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
+
+  CXX=$saved_compiler_name
+  echo "After resetting CXX to be the saved name of the original compiler: CXX = $CXX"
+
+# echo "Exiting in support-rose after computing the compiler vendor name for the C and C++ compilers."
+# exit 1
+
 # End macro ROSE_SUPPORT_ROSE_PART_1.
 ]
 )
@@ -491,6 +513,9 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES],
 [
 # Begin macro ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES.
 
+echo "In ROSE SUPPORT ROSE BUILD INCLUDE FILES: Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
+
+# Note that this directory name is not spelled correctly, is this a typo?
 # JJW (12/10/2008): We don't preprocess the header files for the new interface
 rm -rf ./include-stagin
 
@@ -523,28 +548,6 @@ m4_require([_LT_SYS_DYNAMIC_LINKER])
 AC_PROG_CXX
 
 echo "In configure.in ... CXX = $CXX"
-
-# Calling available macro from Autoconf (test by optionally pushing C language onto the internal autoconf language stack).
-# This function must be called from this support-rose file (error in ./build if called from the GET COMPILER SPECIFIC DEFINES macro.
-# AC_LANG_PUSH(C)
-  saved_compiler_name=$CXX
-  CXX=$BACKEND_CXX_COMPILER
-  echo "After resetting CXX to be the backend compiler: CXX = $CXX"
-
-  AX_COMPILER_VENDOR
-# returns string ax_cv_cxx_compiler_vendor if this is the C++ compiler else returns 
-# the vendor for the C compiler in ax_cv_c_compiler_vendor for the C compiler.
-# CcompilerVendorName= $ax_cv_c_compiler_vendor
-# CxxcompilerVendorName= $ax_cv_cxx_compiler_vendor
-  echo "Output the names of the vendor for the C or C++ backend compilers."
-# echo "Using back-end C   compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_c_compiler_vendor   for processing of unparsed source files from ROSE preprocessors."
-  echo "Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
-
-  CXX=$saved_compiler_name
-  echo "After resetting CXX to be the saved name of the original compiler: CXX = $CXX"
-
-# echo "Exiting in support-rose after computing the compiler vendor name for the C and C++ compilers."
-# exit 1
 
 # DQ (9/17/2006): These should be the same for both C and C++ (else we will need separate macros)
 # Setup the -D<xxx> defines required to allow EDG to take the same path through the compiler 

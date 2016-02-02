@@ -20,6 +20,11 @@ process_headers()
 # make sure the source directory structure exists
   if  [ ! -d "$2" -o ! -r "$2" -o ! -x "$2" ]
   then
+    echo "*****************************************"
+    echo "Parameter 1 = $1"
+    echo "Parameter 2 = $2"
+    echo "Parameter 3 = $3"
+    echo "*****************************************"
     echo "ERROR: Directory $2 is invalid"
     echo "*************  FAILING ***** FAILING *****************"
     exit 2
@@ -112,18 +117,15 @@ process_headers()
 # check for correct number of arguments and 
 # whether a source directory has been specified
 # if [ $# -eq 3 ]; then
-if [ $# -eq 4 ]; then
+if [ $# -eq 5 ]; then
   :
 else
 #  echo "ERROR: Usage is $0 <compiler> <target_dir> <source_dir>"
-   echo "ERROR: Usage is $0 <compiler> <target_dir> <source_dir> <language>"
+   echo "ERROR: Usage is $0 <compiler> <target_dir> <source_dir> <language> <compilerVendorName>"
    exit 1
 fi
 
-echo "In main(): parameter 1 = $1  parameter 2 = $2 parameter 3 = $3 parameter 4 = $4"
-
-
-
+# echo "In main(): parameter 1 = $1  parameter 2 = $2 parameter 3 = $3 parameter 4 = $4 parameter 5 = $5"
 
 # for now assume that if a compiler is specified that it is installed
 # see if the full path name has been specified for compiler and if
@@ -132,30 +134,34 @@ compilerName="`basename $1`"
 compilerBinDir="`dirname $1`"
 roseHome="$3"
 language="$4"
+compilerVendorName="$5"
 
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-echo "compilerName   = $compilerName"
-echo "compilerBinDir = $compilerBinDir"
-echo "roseHome       = $roseHome"
-echo "language       = $language"
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+# echo "In script file: create system headers: Using back-end compiler = \"$1\" compiler vendor name = $compilerVendorName for processing of unparsed source files from ROSE preprocessors."
+# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+# echo "compilerName       = $compilerName"
+# echo "compilerBinDir     = $compilerBinDir"
+# echo "roseHome           = $roseHome"
+# echo "language           = $language"
+# echo "compilerVendorName = $compilerVendorName"
+# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 
+# DQ (2/2/2016): We don't compiler ROSE using ROSE as the backend (this was from when we had 
+# to support ROSE compiling ROSE, but this should not require specialized support now).
 # DQ (8/24/2009): Allow either "roseTranslator" or "roseAnalysis"
 # if [ "$compilerName" == "roseTranslator" ]
 # if [ "$compilerName" == "roseTranslator" || "$compilerName" == "roseAnalysis" ]
-if [ "$compilerName" = "roseTranslator" ]
-then
-compilerName="g++"
-echo "Changed compilerName from roseTranslator to $compilerName"
-
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-echo "After change: compilerName   = $compilerName"
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-elif [ "$compilerName" = "roseAnalysis" ]
-then
-compilerName="g++"
-echo "Changed compilerName from roseAnalysis to $compilerName"
-fi
+# if [ "$compilerName" = "roseTranslator" ]
+# then
+# compilerName="g++"
+# echo "Changed compilerName from roseTranslator to $compilerName"
+# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+# echo "After change: compilerName   = $compilerName"
+# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+# elif [ "$compilerName" = "roseAnalysis" ]
+# then
+# compilerName="g++"
+# echo "Changed compilerName from roseAnalysis to $compilerName"
+# fi
 
 # we try to ensure that paths can be given, to enable using different versions of the same compiler
 if [ "$compilerBinDir" != "." ]
@@ -204,8 +210,10 @@ then
    exit 1
 fi
 
+# Comment this out for debugging
+# if true; then
 # DQ (2/1/2016): Simplify the logic to avoid use of the backend compiler name.
-if [ "x$language" = "xc" -o "x$language" = "xcxx" ]; then
+if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
 
        echo "In create system headers: this is processing C or C++: language = $language"
 
@@ -232,15 +240,21 @@ else
        echo "ERROR: Usage is create_system_headers compiler target_dir src_dir language"
        exit 1
 fi
+# fi
 
 # echo "local script variable compilerHeadersDirCmd = $compilerHeadersDirCmd"
 # echo "Building separate header directories"
 
+# DQ (2/2/2016): Debugging new compiler vendor detection.
+# echo "shell script to be run next: $roseHome/config/get_compiler_header_dirs"
+
+# DQ (2/2/2016): When the shell script returns an error we don't catch it.
 iDir=0
-sh "$roseHome/config/get_compiler_header_dirs" "$1" | while read dirName
+# sh "$roseHome/config/get_compiler_header_dirs" "$1" | while read dirName
+sh "$roseHome/config/get_compiler_header_dirs" "$1" "$language" "$compilerVendorName" | while read dirName
    do
-         iDir=`expr "$iDir" + 1 `
-        echo "processing header file directory $dirName to be mapped to $mainTargetDir/hdrs${iDir}"
+        iDir=`expr "$iDir" + 1 `
+        echo "processing header file compiler name = $1 directory = $dirName to be mapped to $mainTargetDir/hdrs${iDir} roseHome = $roseHome compilerVendorName = $compilerVendorName"
 
       # DQ (1/14/2007): Added "&" so that this would happen in parallel (to improve performance of configure on multi-core machines). 
       # JJW (7/18/2008): Commented it out because the process does not take too
@@ -248,6 +262,11 @@ sh "$roseHome/config/get_compiler_header_dirs" "$1" | while read dirName
       # you try Ctrl-C when configure is running
         process_headers "$1" "$dirName" "$mainTargetDir/hdrs${iDir}" "$roseHome" # &
    done
+
+if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+    echo "get_compiler_header_dirs failed"
+    exit 1
+fi
 
 # DQ (1/14/2007): It is not required to wait until the calls to process_headers complete
 # wait
