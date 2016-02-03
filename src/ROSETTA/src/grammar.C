@@ -605,13 +605,14 @@ void Grammar::editStringList ( vector<GrammarString *> & targetList, const vecto
   for (vector<GrammarString*>::const_iterator i = targetList.begin(); i != targetList.end(); ++i) {
     for (vector<GrammarString*>::const_iterator j = i + 1; j != targetList.end(); ++j) {
       if (**i == **j)
-        continue;
+        goto skipThisElement;
     }
     for (vector<GrammarString*>::const_iterator j = excludeList.begin(); j != excludeList.end(); ++j) {
       if (**i == **j)
-        continue;
+        goto skipThisElement;
     }
     newList.push_back(*i);
+  skipThisElement:;
   }
   targetList.swap(newList);
 }
