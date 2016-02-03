@@ -336,7 +336,8 @@ public:
         return mergeSources(a->get_width() + b->get_width(), a, b);
     }
 
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE {
         ASSERT_not_reachable("readRegister is not possible for this semantic domain");
 #ifdef _MSC_VER
         return BaseSemantics::SValuePtr();
@@ -430,9 +431,9 @@ RiscOperators::insertDataFlowEdges(const BaseSemantics::SValuePtr &svalue_, cons
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg) {
+RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
     TemporarilyDeactivate deactivate(this, innerDomainId_);
-    MultiSemantics::SValuePtr result = MultiSemantics::SValue::promote(Super::readRegister(reg));
+    MultiSemantics::SValuePtr result = MultiSemantics::SValue::promote(Super::readRegister(reg, dflt));
     BaseSemantics::RiscOperatorsPtr innerDomain = get_subdomain(innerDomainId_);
     SValuePtr value = SValue::promote(innerDomain->protoval()->undefined_(reg.get_nbits()));
     value->insert(AbstractLocation(reg, regdict_));

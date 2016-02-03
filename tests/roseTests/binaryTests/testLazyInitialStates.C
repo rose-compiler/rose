@@ -21,7 +21,7 @@ static Diagnostics::Facility mlog;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Basic test
 //
-// A basic test that uses the same memory state type for the initial state as for the current state. This is expected to be the
+// A basic test that uses the same state type for the initial state as for the current state. This is expected to be the
 // usual situation.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -33,90 +33,102 @@ basicReadTest(const P2::Partitioner &partitioner) {
 
     // Create the RiscOperators and the initial state.
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
+    const RegisterDescriptor REG = partitioner.instructionProvider().stackPointerRegister();
+    const std::string REG_NAME = RegisterNames(regdict)(REG);
     BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
     ops->currentState()->memoryState()->set_byteOrder(partitioner.instructionProvider().defaultByteOrder());
     BaseSemantics::StatePtr initialState = ops->currentState()->clone();
     ops->initialState(initialState);                    // lazily evaluated initial state
     std::cout <<"Initial state before reading:\n" <<(*initialState+fmt);
 
-    // Read some memory, which should cause it to spring into existence in both the current state and the initial state.
+    // Read some memory and a register, which should cause them to spring into existence in both the current state and the
+    // initial state.
     BaseSemantics::SValuePtr addr1 = ops->number_(32, 0);
-    BaseSemantics::SValuePtr dflt1 = ops->number_(32, 0x11223344);
-    BaseSemantics::SValuePtr read1 = ops->readMemory(RegisterDescriptor(), addr1, dflt1, ops->boolean_(true));
-    std::cout <<"Initial state after reading " <<*read1 <<" from address " <<*addr1 <<"\n" <<(*initialState+fmt);
-    ASSERT_always_require(read1->must_equal(dflt1));
+    BaseSemantics::SValuePtr dflt1m = ops->number_(32, 0x11223344);
+    BaseSemantics::SValuePtr read1m = ops->readMemory(RegisterDescriptor(), addr1, dflt1m, ops->boolean_(true));
+    BaseSemantics::SValuePtr dflt1r = ops->undefined_(REG.get_nbits());
+    BaseSemantics::SValuePtr read1r = ops->readRegister(REG, dflt1r);
+
+    std::cout <<"Initial state after reading " <<*read1m <<" from address " <<*addr1 <<"\n"
+              <<"and " <<*read1r <<" from " <<REG_NAME <<"\n"
+              <<(*initialState+fmt);
+    ASSERT_always_require(read1m->must_equal(dflt1m));
+    ASSERT_always_require(read1r->must_equal(dflt1r));
 
     // Create a new current state and read again. We should get the same value even though the current state is empty.
     BaseSemantics::StatePtr curState = ops->currentState()->clone();
     curState->clear();
     ops->currentState(curState);
-    BaseSemantics::SValuePtr dflt2 = ops->number_(32, 0x55667788);
-    BaseSemantics::SValuePtr read2 = ops->readMemory(RegisterDescriptor(), addr1, dflt2, ops->boolean_(true));
-    std::cout <<"Initial state after reading " <<*read2 <<" from address " <<*addr1 <<"\n" <<(*initialState+fmt);
-    ASSERT_always_require(read1->must_equal(read2));
+    BaseSemantics::SValuePtr dflt2m = ops->number_(32, 0x55667788);
+    BaseSemantics::SValuePtr read2m = ops->readMemory(RegisterDescriptor(), addr1, dflt2m, ops->boolean_(true));
+    BaseSemantics::SValuePtr dflt2r = ops->undefined_(REG.get_nbits());
+    BaseSemantics::SValuePtr read2r = ops->readRegister(REG, dflt2r);
+    std::cout <<"Initial state after reading " <<*read2m <<" from address " <<*addr1 <<"\n"
+              <<"and " <<*read2r <<" from " <<REG_NAME <<"\n"
+              <<(*initialState+fmt);
+    ASSERT_always_require(read1m->must_equal(read2m));
+    ASSERT_always_require(read1r->must_equal(read2r));
 
     // Disable the initial state. If we re-read the same address we'll still get the same result because it's now present in
     // the current state also.
     ops->initialState(BaseSemantics::StatePtr());
-    BaseSemantics::SValuePtr dflt3 = ops->number_(32, 0x99aabbcc);
-    BaseSemantics::SValuePtr read3 = ops->readMemory(RegisterDescriptor(), addr1, dflt3, ops->boolean_(true));
-    ASSERT_always_require(read1->must_equal(read3));
+    BaseSemantics::SValuePtr dflt3m = ops->number_(32, 0x99aabbcc);
+    BaseSemantics::SValuePtr read3m = ops->readMemory(RegisterDescriptor(), addr1, dflt3m, ops->boolean_(true));
+    BaseSemantics::SValuePtr dflt3r = ops->undefined_(REG.get_nbits());
+    BaseSemantics::SValuePtr read3r = ops->readRegister(REG, dflt3r);
+    ASSERT_always_require(read1m->must_equal(read3m));
+    ASSERT_always_require(read1r->must_equal(read3r));
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Advanced test
 //
-// This test uses a user-defined symbolic state. We could use a different initial state than we do for the current state,
-// but advanced users are already likely to be deriving their own memory state, in which case we want to show in this demo that
+// This test uses a user-defined symbolic state. We could use a different initial state than we do for the current state, but
+// advanced users are already likely to be deriving their own memory state, in which case we want to show in this demo that
 // it's not much work to specialize the initial state. We do so by taking the user's presumed existing specialization and
-// adding a data member that says whether this is an initial state, and modifying readMemory to do something special when this
-// data member is set.
+// adding a data member that says whether this is an initial state, and modifying readRegister and/or readMemory to do
+// something special when this data member is set.
+//
+// We override SymbolicSemantics::State's readRegister and readMemory methods, but we could just as well have derived two
+// classes from SymbolicSemantics::MemoryState and SymbolicSemantics::RegisterState instead.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const unsigned MY_FLAG = 0x40000000;             // arbitrary symbolic expression bit flag
 
-typedef boost::shared_ptr<class MyMemoryState> MyMemoryStatePtr;
+typedef boost::shared_ptr<class MyState> MyStatePtr;
 
-class MyMemoryState: public SymbolicSemantics::MemoryListState {
-    typedef SymbolicSemantics::MemoryListState Super;
+class MyState: public SymbolicSemantics::State {
+    typedef SymbolicSemantics::State Super;
     bool isInitialState_;                               // true for lazily updated initial states
 
 protected:                                              // typical boilerplate
-    explicit MyMemoryState(const BaseSemantics::MemoryCellPtr &protocell)
-        : Super(protocell), isInitialState_(false) {}
+    MyState(const BaseSemantics::RegisterStatePtr &registers, const BaseSemantics::MemoryStatePtr &memory)
+        : Super(registers, memory), isInitialState_(false) {}
 
-    MyMemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
-        : Super(addrProtoval, valProtoval), isInitialState_(false) {}
-
-    MyMemoryState(const MyMemoryState &other)
+    MyState(const MyState &other)
         : Super(other), isInitialState_(other.isInitialState_) {}
 
 public:                                                 // typical boilerplate
-    static MyMemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
-        return MyMemoryStatePtr(new MyMemoryState(protocell));
+    static MyStatePtr instance(const BaseSemantics::RegisterStatePtr &registers, const BaseSemantics::MemoryStatePtr &memory) {
+        return MyStatePtr(new MyState(registers, memory));
     }
 
-    static MyMemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval,
-                                     const BaseSemantics::SValuePtr &valProtoval) {
-        return MyMemoryStatePtr(new MyMemoryState(addrProtoval, valProtoval));
+    static MyStatePtr instance(const MyStatePtr &other) {
+        return MyStatePtr(new MyState(*other));
     }
 
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
-                                                 const BaseSemantics::SValuePtr &valProtoval) const ROSE_OVERRIDE {
-        return instance(addrProtoval, valProtoval);
+    virtual BaseSemantics::StatePtr create(const BaseSemantics::RegisterStatePtr &registers,
+                                           const BaseSemantics::MemoryStatePtr &memory) const ROSE_OVERRIDE {
+        return instance(registers, memory);
     }
 
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const {
-        return instance(protocell);
-    }
-
-    virtual BaseSemantics::MemoryStatePtr clone() const ROSE_OVERRIDE {
-        return BaseSemantics::MemoryStatePtr(new MyMemoryState(*this));
+    virtual BaseSemantics::StatePtr clone() const ROSE_OVERRIDE {
+        return BaseSemantics::StatePtr(new MyState(*this));
     }
     
-    static MyMemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
-        MyMemoryStatePtr retval = boost::dynamic_pointer_cast<MyMemoryState>(x);
+    static MyStatePtr promote(const BaseSemantics::StatePtr &x) {
+        MyStatePtr retval = boost::dynamic_pointer_cast<MyState>(x);
         ASSERT_not_null(retval);
         return retval;
     }
@@ -130,6 +142,16 @@ public:                                                 // new methods
     }
 
 public:                                                 // overrides
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt,
+                                                  BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
+        BaseSemantics::SValuePtr retval = Super::readRegister(reg, dflt, ops);
+        if (isInitialState_) {
+            SymbolicSemantics::SValuePtr symval = SymbolicSemantics::SValue::promote(retval);
+            symval->set_expression(symval->get_expression()->newFlags(MY_FLAG));
+        }
+        return retval;
+    }
+
     virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
                                                 BaseSemantics::RiscOperators *addrOps,
                                                 BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {
@@ -150,48 +172,66 @@ advancedReadTest(const P2::Partitioner &partitioner) {
     fmt.set_line_prefix("  ");
 
     // Build the semantics framework. We use SymbolicSemantics, but with our own memory state.
+    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
+    const RegisterDescriptor REG = partitioner.instructionProvider().stackPointerRegister();
+    const std::string REG_NAME = RegisterNames(regdict)(REG);
+    const RegisterDescriptor REG2(999, 999, 0, REG.get_nbits());
     BaseSemantics::RiscOperatorsPtr ops;
     {
-        const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
         BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
         BaseSemantics::RegisterStatePtr registers = SymbolicSemantics::RegisterState::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory = MyMemoryState::instance(protoval, protoval);
+        BaseSemantics::MemoryStatePtr memory = SymbolicSemantics::MemoryListState::instance(protoval, protoval);
         memory->set_byteOrder(partitioner.instructionProvider().defaultByteOrder());
-        BaseSemantics::StatePtr state = SymbolicSemantics::State::instance(registers, memory);
+        BaseSemantics::StatePtr state = MyState::instance(registers, memory);
         ops = SymbolicSemantics::RiscOperators::instance(state);
     }
 
     // Create the lazily-updated initial state
     BaseSemantics::StatePtr initialState = ops->currentState()->clone();
-    MyMemoryState::promote(initialState->memoryState())->isInitialState(true);
+    MyState::promote(initialState)->isInitialState(true);
     ops->initialState(initialState);                    // lazily evaluated initial state
     std::cout <<"Initial state before reading:\n" <<(*initialState+fmt);
 
     // Read some memory, which should cause it to spring into existence in both the current state and the initial state.
     BaseSemantics::SValuePtr addr1 = ops->number_(32, 0);
-    BaseSemantics::SValuePtr dflt1 = ops->number_(32, 0x11223344);
-    BaseSemantics::SValuePtr read1 = ops->readMemory(RegisterDescriptor(), addr1, dflt1, ops->boolean_(true));
-    std::cout <<"Initial state after reading " <<*read1 <<" from address " <<*addr1 <<"\n" <<(*initialState+fmt);
-    ASSERT_always_require((SymbolicSemantics::SValue::promote(read1)->get_expression()->flags() & MY_FLAG) != 0);
+    BaseSemantics::SValuePtr dflt1m = ops->number_(32, 0x11223344);
+    BaseSemantics::SValuePtr read1m = ops->readMemory(RegisterDescriptor(), addr1, dflt1m, ops->boolean_(true));
+    BaseSemantics::SValuePtr dflt1r = ops->undefined_(REG.get_nbits());
+    BaseSemantics::SValuePtr read1r = ops->readRegister(REG, dflt1r);
+    std::cout <<"Initial state after reading " <<*read1m <<" from address " <<*addr1 <<"\n"
+              <<"and reading " <<*read1r <<" from " <<REG_NAME <<"\n"
+              <<(*initialState+fmt);
+    ASSERT_always_require((SymbolicSemantics::SValue::promote(read1m)->get_expression()->flags() & MY_FLAG) != 0);
+    ASSERT_always_require((SymbolicSemantics::SValue::promote(read1r)->get_expression()->flags() & MY_FLAG) != 0);
 
     // Create a new current state and read again. We should get the same value even though the current state is empty.
     BaseSemantics::StatePtr curState = ops->currentState()->clone();
     curState->clear();
     ops->currentState(curState);
-    BaseSemantics::SValuePtr dflt2 = ops->number_(32, 0x55667788);
-    BaseSemantics::SValuePtr read2 = ops->readMemory(RegisterDescriptor(), addr1, dflt2, ops->boolean_(true));
-    std::cout <<"Initial state after reading " <<*read2 <<" from address " <<*addr1 <<"\n" <<(*initialState+fmt);
-    ASSERT_always_require(read1->must_equal(read2));
-    ASSERT_always_require((SymbolicSemantics::SValue::promote(read2)->get_expression()->flags() & MY_FLAG) != 0);
+    BaseSemantics::SValuePtr dflt2m = ops->number_(32, 0x55667788);
+    BaseSemantics::SValuePtr read2m = ops->readMemory(RegisterDescriptor(), addr1, dflt2m, ops->boolean_(true));
+    BaseSemantics::SValuePtr dflt2r = ops->undefined_(REG.get_nbits());
+    BaseSemantics::SValuePtr read2r = ops->readRegister(REG, dflt2r);
+    std::cout <<"Initial state after reading " <<*read2m <<" from address " <<*addr1 <<"\n"
+              <<"and reading " <<*read2r <<" from " <<REG_NAME <<"\n"
+              <<(*initialState+fmt);
+    ASSERT_always_require(read1m->must_equal(read2m));
+    ASSERT_always_require(read1r->must_equal(read2r));
+    ASSERT_always_require((SymbolicSemantics::SValue::promote(read2m)->get_expression()->flags() & MY_FLAG) != 0);
+    ASSERT_always_require((SymbolicSemantics::SValue::promote(read2r)->get_expression()->flags() & MY_FLAG) != 0);
 
-    // If turn off the initial memory state and read from some other address we should get a different value, one without our
+    // If we turn off the initial state and read from some other address we should get a different value, one without our
     // special bit set.
     ops->initialState(BaseSemantics::StatePtr());
     BaseSemantics::SValuePtr addr3 = ops->number_(32, 4);
-    BaseSemantics::SValuePtr dflt3 = ops->number_(32, 0x99aabbcc);
-    BaseSemantics::SValuePtr read3 = ops->readMemory(RegisterDescriptor(), addr3, dflt3, ops->boolean_(true));
-    ASSERT_always_forbid(read1->must_equal(read3));
-    ASSERT_always_require((SymbolicSemantics::SValue::promote(read3)->get_expression()->flags() & MY_FLAG) == 0);
+    BaseSemantics::SValuePtr dflt3m = ops->number_(32, 0x99aabbcc);
+    BaseSemantics::SValuePtr read3m = ops->readMemory(RegisterDescriptor(), addr3, dflt3m, ops->boolean_(true));
+    BaseSemantics::SValuePtr dflt3r = ops->undefined_(REG2.get_nbits());
+    BaseSemantics::SValuePtr read3r = ops->readRegister(REG2, dflt3r);
+    ASSERT_always_forbid(read1m->must_equal(read3m));
+    ASSERT_always_forbid(read1r->must_equal(read3r));
+    ASSERT_always_require((SymbolicSemantics::SValue::promote(read3m)->get_expression()->flags() & MY_FLAG) == 0);
+    ASSERT_always_require((SymbolicSemantics::SValue::promote(read3r)->get_expression()->flags() & MY_FLAG) == 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

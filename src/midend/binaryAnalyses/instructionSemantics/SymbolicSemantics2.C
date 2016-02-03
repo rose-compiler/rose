@@ -990,10 +990,10 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg) 
+RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) 
 {
     PartialDisableUsedef du(this);
-    BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::readRegister(reg);
+    BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::readRegister(reg, dflt);
 
     if (currentInstruction()) {
         RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());

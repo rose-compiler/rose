@@ -263,7 +263,7 @@ namespace BinaryAnalysis {
  *  considered in the original design. See DispatcherX86 for some examples.
  *
  *  The interface between RiscOperators and either MemoryState or RegisterState has been formalized somewhat. See documentation
- *  for RiscOperators::readMemory() and RiscOperators::readRegister().
+ *  for @ref RiscOperators::readMemory and @ref RiscOperators::readRegister.
  *
  *  @section instruction_semantics_future Future work
  *
@@ -836,16 +836,27 @@ public:
      *  Merges the @p other state into this state, returning true if this state changed. */
     virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) = 0;
 
-    /** Read a value from a register. The register descriptor, @p reg, not only describes which register, but also which bits
-     * of that register (e.g., "al", "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to
-     * different parts of that register). The RISC operations are provided so that they can be used to extract the correct bits
-     * from a wider hardware register if necessary. See RiscOperators::readRegister() for more details. */
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) = 0;
+    /** Read a value from a register.
+     *
+     *  The register descriptor, @p reg, not only describes which register, but also which bits of that register (e.g., "al",
+     *  "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to different parts of that
+     *  register). The RISC operations are provided so that they can be used to extract the correct bits from a wider hardware
+     *  register if necessary.
+     *
+     *  The @p dflt value is written into the register state if the register was not defined in the state. By doing this, a
+     *  subsequent read of the same register will return the same value. Some register states cannot distinguish between a
+     *  register that was never accessed and a register that was only read, in which case @p dflt is not used since all
+     *  registers are already initialized.
+     *
+     *  See @ref RiscOperators::readRegister for more details. */
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops) = 0;
 
-    /** Write a value to a register.  The register descriptor, @p reg, not only describes which register, but also which bits
-     * of that register (e.g., "al", "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to
-     * different parts of that register). The RISC operations are provided so that they can be used to insert the @p value bits
-     * into a wider the hardware register if necessary. See RiscOperators::readRegister() for more details. */
+    /** Write a value to a register.
+     *
+     *  The register descriptor, @p reg, not only describes which register, but also which bits of that register (e.g., "al",
+     *  "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to different parts of that
+     *  register). The RISC operations are provided so that they can be used to insert the @p value bits into a wider the
+     *  hardware register if necessary. See @ref RiscOperators::readRegister for more details. */
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) = 0;
 
     /** Print the register contents. This emits one line per register and contains the register name and its value.
@@ -970,7 +981,7 @@ public:
 public:
     virtual void clear() ROSE_OVERRIDE;
     virtual void zero() /* override*/;
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
     virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) ROSE_OVERRIDE;
@@ -1329,14 +1340,14 @@ public:
     
     /** Read a value from a register.
      *
-     *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state.  See
-     *  BaseSemantics::RiscOperators::readRegister() for details. */
-    virtual SValuePtr readRegister(const RegisterDescriptor &desc, RiscOperators *ops);
+     *  The @ref BaseSemantics::readRegister implementation simply delegates to the register state member of this state.  See
+     *  @ref BaseSemantics::RiscOperators::readRegister for details. */
+    virtual SValuePtr readRegister(const RegisterDescriptor &desc, const SValuePtr &dflt, RiscOperators *ops);
 
     /** Write a value to a register.
      *
-     *  The BaseSemantics::readRegister() implementation simply delegates to the register state member of this state.  See
-     *  BaseSemantics::RiscOperators::writeRegister() for details. */
+     *  The @ref BaseSemantics::writeRegister implementation simply delegates to the register state member of this state.  See
+     *  @ref BaseSemantics::RiscOperators::writeRegister for details. */
     virtual void writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, RiscOperators *ops);
 
     /** Read a value from memory.
@@ -1442,7 +1453,8 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  RISC operator arguments are, in general, SValue pointers.  However, if the width of a RISC operator's result depends on an
  *  argument's value (as opposed to depending on the argument width), then that argument must be a concrete value (i.e., an
  *  integral type).  This requirement is due to the fact that SMT solvers need to know the sizes of their bit
- *  vectors. Operators extract(), unsignedExtend(), signExtend(), readRegister(), and readMemory() fall into this category.
+ *  vectors. Operators @ref extract, @ref unsignedExtend, @ref signExtend, @ref readRegister, and @ref readMemory fall into
+ *  this category.
  *
  *  Operators with side effects (@ref writeRegister, @ref writeMemory, and possibly others) usually modify a @ref State object
  *  pointed to by the @ref currentState property. Keeping side effects in states allows @ref RiscOperators to be used in
@@ -2016,29 +2028,37 @@ public:
      *  A register state will typically implement storage for hardware registers, but higher layers (the State, RiscOperators,
      *  Dispatcher, ...)  should not be concerned about the size of the register they're trying to read.  For example, a
      *  register state for a 32-bit x86 architecture will likely have a storage location for the 32-bit EAX register, but it
-     *  should be possible to ask RiscOperators::readRegister to return the value of AX (the low-order 16-bits).  In order to
-     *  accomplish this, some level of the readRegister delegations needs to invoke RiscOperators::extract() to obtain the low
-     *  16 bits.  The RiscOperators object is passed along the delegation path for this purpose.  The inverse concat()
-     *  operation will be needed at some level when we ask readRegister() to return a value that comes from multiple storage
-     *  locations in the register state (such as can happen if an x86 register state holds individual status flags and we ask
-     *  for the 32-bit EFLAGS register).
+     *  should be possible to ask @ref readRegister to return the value of AX (the low-order 16-bits).  In order to accomplish
+     *  this, some level of the readRegister delegations needs to invoke @ref extract to obtain the low 16 bits.  The
+     *  RiscOperators object is passed along the delegation path for this purpose.  The inverse @ref concat operation will be
+     *  needed at some level when we ask @ref readRegister to return a value that comes from multiple storage locations in the
+     *  register state (such as can happen if an x86 register state holds individual status flags and we ask for the 32-bit
+     *  EFLAGS register).
+     *
+     *  If the register state can distinguish between a register that has never been accessed and a register that has only been
+     *  read, then the @p dflt value is stored into the register the first time it's read. This ensures that reading the
+     *  register a second time with no intervening write will return the same value as the first read.  If a @p dflt is not
+     *  provided then one is constructed by invoking @ref undefined_.
      *
      *  There needs to be a certain level of cooperation between the RiscOperators, State, and register state classes to decide
-     *  which layer should invoke the extract() or concat() (or whatever other RISC operations might be necessary).
-     */ 
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg) {
-        ASSERT_not_null(currentState_);
-        return currentState_->readRegister(reg, this);
+     *  which layer should invoke the @ref extract or @ref concat (or whatever other RISC operations might be necessary).
+     *
+     *  @{ */
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg) { // old subclasses can still override this if they want,
+        return readRegister(reg, undefined_(reg.get_nbits()));      // but new subclasses should not override this method.
     }
+    virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt); // new subclasses override this
+    /** @} */
 
     /** Writes a value to a register.
      *
      *  The base implementation simply delegates to the current semantic State, which probably delegates to a register state,
      *  but subclasses are welcome to override this behavior at any level.
      *
-     *  As with readRegister(), writeRegister() may need to perform various RISC operations in order to accomplish the task of
-     *  writing a value to the specified register when the underlying register state doesn't actually store a value for that
-     *  specific register. The RiscOperations object is passed along for that purpose.  See readRegister() for more details. */
+     *  As with @ref readRegister, @ref writeRegister may need to perform various RISC operations in order to accomplish the
+     *  task of writing a value to the specified register when the underlying register state doesn't actually store a value for
+     *  that specific register. The RiscOperations object is passed along for that purpose.  See @ref readRegister for more
+     *  details. */
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &a) {
         ASSERT_not_null(currentState_);
         currentState_->writeRegister(reg, a, this);
@@ -2050,8 +2070,8 @@ public:
      *  State::readMemory "readMemory" method.
      *
      *  A MemoryState will implement storage for memory locations and might impose certain restrictions, such as "all memory
-     *  values must be eight bits".  However, the RiscOperators::readMemory() should not have these constraints so that it can
-     *  be called from a variety of Dispatcher subclass (e.g., the DispatcherX86 class assumes that RiscOperators::readMemory()
+     *  values must be eight bits".  However, the @ref readMemory should not have these constraints so that it can
+     *  be called from a variety of Dispatcher subclass (e.g., the DispatcherX86 class assumes that @ref readMemory
      *  is capable of reading 32-bit values from little-endian memory). The designers of the MemoryState, State, and
      *  RiscOperators should collaborate to decide which layer (RiscOperators, State, or MemoryState) is reponsible for
      *  combining individual memory locations into larger values.  A RiscOperators object is passed along the chain of
@@ -2246,10 +2266,10 @@ public:
     // Methods related to registers
 public:
     /** Access the register dictionary.  The register dictionary defines the set of registers over which the RISC operators may
-     *  operate. This should be same registers (or superset thereof) whose values are stored in the machine state(s).
-     *  This dictionary is used by the Dispatcher class to translate register names to register descriptors.  For instance, to
-     *  read from the "eax" register, the dispatcher will look up "eax" in its register dictionary and then pass that
-     *  descriptor to the readRegister() RISC operation.  Register descriptors are also stored in instructions when the
+     *  operate. This should be same registers (or superset thereof) whose values are stored in the machine state(s).  This
+     *  dictionary is used by the Dispatcher class to translate register names to register descriptors.  For instance, to read
+     *  from the "eax" register, the dispatcher will look up "eax" in its register dictionary and then pass that descriptor to
+     *  the @ref RiscOperators::readRegister operation.  Register descriptors are also stored in instructions when the
      *  instruction is disassembled, so the dispatcher should probably be using the same registers as the disassembler, or a
      *  superset thereof.
      *

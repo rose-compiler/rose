@@ -159,7 +159,8 @@ RiscOperators::get_stored_registers()
         if (regstate->is_partly_stored(regs[i])) {
             const std::string &name = dictionary->lookup(regs[i]);
             ASSERT_require(!name.empty());
-            SValuePtr value = SValue::promote(regstate->readRegister(regs[i], this));
+            BaseSemantics::SValuePtr dflt = undefined_(regs[i].get_nbits());
+            SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
 
             // Sometimes registers only have a value because they've been read.  There is no need to emit a definition for
             // these variables.  By convention, the RegisterStateGeneric will add the register name + "_0" to all registers
@@ -184,13 +185,14 @@ RiscOperators::get_modified_registers()
         if (cur_regstate->is_partly_stored(regs[i])) {
             const std::string &name = dictionary->lookup(regs[i]);
             ASSERT_require(!name.empty());
-            SValuePtr cur_value = SValue::promote(cur_regstate->readRegister(regs[i], this));
+            BaseSemantics::SValuePtr dflt = undefined_(regs[i].get_nbits());
+            SValuePtr cur_value = SValue::promote(cur_regstate->readRegister(regs[i], dflt, this));
             if (0==cur_value->get_comment().compare(name + "_0")) {
                 // This register has it's initial value, probably because it was read (registers that have never been read or
                 // written won't even get this far in the loop due to the is_partly_stored() check above.
                 continue;
             } else if (prev_regstate!=NULL && prev_regstate->is_partly_stored(regs[i])) {
-                SValuePtr prev_value = SValue::promote(prev_regstate->readRegister(regs[i], this));
+                SValuePtr prev_value = SValue::promote(prev_regstate->readRegister(regs[i], dflt, this));
                 if (cur_value->must_equal(prev_value))
                     continue;
             }
@@ -212,7 +214,8 @@ SValuePtr
 RiscOperators::get_instruction_pointer()
 {
     RegisterDescriptor EIP = get_insn_pointer_register();
-    return SValue::promote(currentState()->registerState()->readRegister(EIP, this));
+    BaseSemantics::SValuePtr dflt = undefined_(EIP.get_nbits());
+    return SValue::promote(currentState()->registerState()->readRegister(EIP, dflt, this));
 }
 
 // Create temporary LLVM variables for all definers of the specified registers.
@@ -256,7 +259,8 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
     // Prerequisites for the registers
     RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
     for (size_t i=0; i<regs.size(); ++i) {
-        SValuePtr value = SValue::promote(regstate->readRegister(regs[i], this));
+        BaseSemantics::SValuePtr dflt = undefined_(regs[i].get_nbits());
+        SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
         value->get_expression()->depthFirstTraversal(t1);
     }
 
@@ -289,7 +293,8 @@ RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescript
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());
-        SValuePtr value = SValue::promote(regstate->readRegister(regs[i], this));
+        BaseSemantics::SValuePtr dflt = undefined_(regs[i].get_nbits());
+        SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
         o <<prefix() <<"; register " <<name <<" = " <<*value <<"\n";
         ExpressionPtr t1 = emit_expression(o, value);
         o <<prefix() <<"store " <<llvm_integer_type(t1->nBits()) <<" " <<llvm_term(t1)
