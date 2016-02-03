@@ -6,7 +6,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) 
 
-bin_PROGRAMS    = attributeGenerator shiftCalculusCompiler testFunctionCallBack_01 testFunctionCallBack_02 testFunctionCallBack_03 testFunctionCallBack_04 array
+bin_PROGRAMS    = attributeGenerator shiftCalculusCompiler testFunctionCallBack_01 testFunctionCallBack_02 testFunctionCallBack_03 testFunctionCallBack_04
 
 # DQ (1/26/2016): Commented out since this does not compile any more (API change and only the version in ShiftCalculus2 is supported.
 # noinst_PROGRAMS = mpiCodeGenerator 
@@ -31,7 +31,7 @@ testFunctionCallBack_03_SOURCES = testFunctionCallBack_03.C
 testFunctionCallBack_04_SOURCES = testFunctionCallBack_04.C
 
 # Simple example
-array_SOURCES = array.C
+# array_SOURCES = array.C
 
 
 include_HEADERS = shiftCalculusCompiler.h stencilAndStencilOperatorDetection.h stencilEvaluation.h stencilFiniteStateMachine.h dslSupport.h dslCodeGeneration.h lowLevelCodeGeneration.h
