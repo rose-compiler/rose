@@ -2,13 +2,7 @@
 // #                           Header Files                       #
 // ################################################################
 
-// DQ (10/14/2010):  This should only be included by source files that require it.
-// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
-
-// DQ (3/22/2009): This is redundant with inclusion in "grammar.h"
-// #include "ROSETTA_macros.h"
-
 #include "grammar.h"
 #include "terminal.h"
 #include "grammarString.h"
@@ -203,8 +197,6 @@ Grammar::addGrammarElement ( Terminal & X )
      ROSE_ASSERT (this != NULL);
   // terminalList.display("START of Grammar::addGrammarElement(Terminal)");
      X.setGrammar(this);
-     // commented by BP : 10112001
-     //     terminalList.push_back ( (Terminal *const &) X );
      const Terminal *const &Y = &X;
      terminalList.push_back ( (Terminal *const &) Y );
   // terminalList.display("END of Grammar::addGrammarElement(Terminal)");
@@ -612,13 +604,14 @@ void Grammar::editStringList ( vector<GrammarString *> & targetList, const vecto
   vector<GrammarString*> newList;
   for (vector<GrammarString*>::const_iterator i = targetList.begin(); i != targetList.end(); ++i) {
     for (vector<GrammarString*>::const_iterator j = i + 1; j != targetList.end(); ++j) {
-      if (**i == **j) goto skipThisElement;
+      if (**i == **j)
+        continue;
     }
     for (vector<GrammarString*>::const_iterator j = excludeList.begin(); j != excludeList.end(); ++j) {
-      if (**i == **j) goto skipThisElement;
+      if (**i == **j)
+        continue;
     }
     newList.push_back(*i);
-skipThisElement: continue;
   }
   targetList.swap(newList);
 }
@@ -1916,15 +1909,12 @@ Grammar::editSubstitution ( Terminal & node, const StringUtility::FileWithLineNu
      sourceExcludeList = node.getEditSubstituteSourceList(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
 
   // now generate the additions to the lists from the parent node subtree lists
-     // BP : 10/09/2001, modified next two lines to provide addresses
      generateStringListsFromSubtreeLists ( node, targetList, targetExcludeList, &Terminal::getEditSubstituteTargetList );
      generateStringListsFromSubtreeLists ( node, sourceList, sourceExcludeList, &Terminal::getEditSubstituteSourceList );
 
-  // int listLength = targetList.size();
      ROSE_ASSERT (sourceList.size()        == targetList.size());
      ROSE_ASSERT (sourceExcludeList.size() == targetExcludeList.size());
 
-  // printf ("listLength = %d \n",listLength);
      vector<GrammarString *>::iterator sourceListIterator, targetListIterator;
      for ( sourceListIterator = sourceList.begin(), targetListIterator = targetList.begin(); 
            sourceListIterator != sourceList.end() || targetListIterator != targetList.end(); 
@@ -1933,8 +1923,8 @@ Grammar::editSubstitution ( Terminal & node, const StringUtility::FileWithLineNu
           // MS 11/22/2015: changed above loop test to check on both iterators (not just check one iterator as before).
           // therefore the following inariant must hold or something is wrong
           ROSE_ASSERT(sourceListIterator!=sourceList.end() && targetListIterator != targetList.end());
-       // These are done in the order in which the user specified them!
-         
+
+          // These are done in the order in which the user specified them!
           // fprintf (stderr, "targetList[index].getFunctionNameString() = %s \n",(*targetListIterator)->getFunctionPrototypeString().c_str());
           // fprintf (stderr, "sourceList[index].getFunctionNameString() = %s \n",(*sourceListIterator)->getFunctionPrototypeString().c_str());
 
@@ -1944,15 +1934,15 @@ Grammar::editSubstitution ( Terminal & node, const StringUtility::FileWithLineNu
           // fprintf(stderr, "After edit: %s\n", editString.c_str());
         }
 
-  // Finally, Edit into place the name of the grammar
-  // printf ("In editSubstitution node name = %s \n",node.getName());
+     // Finally, Edit into place the name of the grammar
+     // printf ("In editSubstitution node name = %s \n",node.getName());
      editString = GrammarString::copyEdit (editString,"$GRAMMAR_PREFIX_",node.getGrammar()->getGrammarPrefixName());
      editString = GrammarString::copyEdit (editString,"$GRAMMAR_TAG_PREFIX_",node.getGrammar()->getGrammarTagName());
 
      string parentGrammarPrefix = "";
      if (isRootGrammar() == true)
         {
-       // In the case of a root grammar there is no parent
+          // In the case of a root grammar there is no parent
           parentGrammarPrefix = node.getGrammar()->getGrammarPrefixName();
         }
        else
