@@ -87,6 +87,7 @@ noinst_PROGRAMS = CxxGrammarMetaProgram
 CxxGrammarMetaProgram_SOURCES = \
    CxxGrammarMetaProgram.C \
    grammar.C \
+   GrammarFile.C \
    grammarGenerator.C \
    grammarString.C \
    terminal.C \
@@ -148,19 +149,3 @@ distclean-local:
 	rm -rf Cxx_Grammar.h Cxx_Grammar.C Cxx_GrammarTreeTraversal.C Cxx_GrammarTreeTraversalClass.h \
           Cxx_GrammarTreeTraversalClass.C
 	rm -rf grammar.tex grammar.dot
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

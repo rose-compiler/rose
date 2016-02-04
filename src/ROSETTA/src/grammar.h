@@ -3,37 +3,25 @@
 
 // DQ (3/12/2006): We want to remove config.h from being placed in every source file
 #include <rose_config.h>
-#include "fileoffsetbits.h"
-
-
 // DQ (3/22/2009): Added MSVS support for ROSE.
 #include "rose_msvc.h"
-
 #include "rose_paths.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
-// We need to separate the construction of the code for ROSE from the ROSE code
-// #include FSTREAM_HEADER_FILE
-#include <fstream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#if !ROSE_MICROSOFT_OS
-#include <dirent.h>
-#include <unistd.h>
-#endif
 #include <assert.h>
 
-#include "ROSETTA_macros.h"
 #include <sstream>
 #include <string>
 #include <vector>
 #include <set>
 #include <map>
 #include <set>
-
+#include "ROSETTA_macros.h"
 #include "string_functions.h"
+#include "GrammarFile.h"
+
 
 #define COMPLETERTI 1
 
@@ -143,57 +131,6 @@ enum DeleteEnum {
   NO_DELETE
 };
 
-class grammarFile
-   {
-  // This object is used to cache files read in as part of the processing of a grammar
-
-     private:
-       std::string filename;
-       StringUtility::FileWithLineNumbers buffer;
-
-     public:
-          grammarFile ( std::string inputFilename = "", const StringUtility::FileWithLineNumbers inputBuffer = StringUtility::FileWithLineNumbers() )
-            {
-              setFilename (inputFilename);
-              setBuffer(inputBuffer);
-            }
-
-          grammarFile ( const grammarFile & X )
-            {
-              *this = X;
-            }
-
-          grammarFile & operator= ( const grammarFile & X )
-            {
-              setFilename (X.getFilename());
-              setBuffer(X.getBuffer());
-              return *this;
-            }
-
-         ~grammarFile ()
-            {
-            }
-
-          void setFilename ( const std::string& inputFilename )
-             {
-               filename = inputFilename;
-             }
-
-          std::string getFilename() const
-             {
-               return filename;
-             }
-
-          void setBuffer ( const StringUtility::FileWithLineNumbers& inputBuffer )
-             {
-               buffer = inputBuffer;
-             }
-
-          const StringUtility::FileWithLineNumbers& getBuffer() const
-             {
-               return buffer;
-             }
-    };
 
 class Terminal;
 class SubclassListBuilder;
@@ -665,7 +602,7 @@ class Grammar
 
      private:
        // file cache for reading files
-          static std::vector<grammarFile*> fileList;
+          static std::vector<GrammarFile*> fileList;
           std::string restrictedTypeStringOfGrammarString(GrammarString* gs, Terminal* grammarnode, std::string grammarSymListOpPrefix, std::string grammarSymListOpPostfix);
           std::set<std::string> traversedTerminals;
           GrammarSynthesizedAttribute CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
