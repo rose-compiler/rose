@@ -5194,11 +5194,13 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
              }
             else
              {
+            // DQ (1/28/2016): Tone this down a bit to be less sarcastic.
             // DQ (4/12/2015): Make this a more friendly message than what the OS provides on abort() (which is "Aborted (core dumped)").
             // Exit because there are errors in the input program
             // cout << "Errors in Processing: (frontend_failed)" << endl;
             // ROSE_ABORT("Errors in Processing: (frontend_failed)");
-               printf ("Errors in Processing Input File: (throwing an instance of \"frontend_failed\" exception due to errors detected in the input code), have a nice day! \n");
+            // printf ("Errors in Processing Input File: (throwing an instance of \"frontend_failed\" exception due to errors detected in the input code), have a nice day! \n");
+               printf ("Errors in Processing Input File: throwing an instance of \"frontend_failed\" exception due to syntax errors detected in the input code \n");
                exit(1);
              }
         }
