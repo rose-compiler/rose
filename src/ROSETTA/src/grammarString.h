@@ -1,11 +1,10 @@
 #ifndef __GRAMMARSTRING_H__
 #define __GRAMMARSTRING_H__
 
-#include <string>
-#include "ROSETTA_macros.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string>
+#include "grammar.h"
 #include "string_functions.h"
 
 // BP : 11/30/01
