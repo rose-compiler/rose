@@ -25,8 +25,10 @@ namespace BinaryAnalysis {
 
 /** Binary control flow analysis.
  *
- *  This class serves mostly to organize the functions that operate on control flow graphs, but also provides a container
- *  for various settings that influence the control flow analyses, such as the vertex and edge filters.
+ *  This class serves mostly to organize the functions that operate on control flow graphs, but also provides a container for
+ *  various settings that influence the control flow analyses, such as the vertex and edge filters. The features described here
+ *  are one form of control flow graph; see also the control flow graph used by @ref Partitioner2::Partitioner "function
+ *  detection", which is easier to work with and has more features.
  *
  *  The AST contains an implied CFG by virtue of storing control flow successor addresses in each basic block (SgAsmBlock).
  *  The successor information is initialized by the Partitioner class when the AST is built (see Partitioner::build_ast())

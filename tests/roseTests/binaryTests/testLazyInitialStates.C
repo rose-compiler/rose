@@ -25,6 +25,7 @@ static Diagnostics::Facility mlog;
 // usual situation.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+//! [basicReadTest]
 static void
 basicReadTest(const P2::Partitioner &partitioner) {
     std::cout <<"\n" <<std::string(40, '=') <<"\nbasicReadTest\n" <<std::string(40, '=') <<"\n";
@@ -63,6 +64,7 @@ basicReadTest(const P2::Partitioner &partitioner) {
     BaseSemantics::SValuePtr read2m = ops->readMemory(RegisterDescriptor(), addr1, dflt2m, ops->boolean_(true));
     BaseSemantics::SValuePtr dflt2r = ops->undefined_(REG.get_nbits());
     BaseSemantics::SValuePtr read2r = ops->readRegister(REG, dflt2r);
+
     std::cout <<"Initial state after reading " <<*read2m <<" from address " <<*addr1 <<"\n"
               <<"and " <<*read2r <<" from " <<REG_NAME <<"\n"
               <<(*initialState+fmt);
@@ -79,6 +81,7 @@ basicReadTest(const P2::Partitioner &partitioner) {
     ASSERT_always_require(read1m->must_equal(read3m));
     ASSERT_always_require(read1r->must_equal(read3r));
 }
+//! [basicReadTest]
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,10 +97,15 @@ basicReadTest(const P2::Partitioner &partitioner) {
 // classes from SymbolicSemantics::MemoryState and SymbolicSemantics::RegisterState instead.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const unsigned MY_FLAG = 0x40000000;             // arbitrary symbolic expression bit flag
+//! [advancedReadTest]
+// The flag bit to indicate that a value came from an initial value.
+static const unsigned MY_FLAG = 0x40000000;
 
+// Shared-ownership pointer.
 typedef boost::shared_ptr<class MyState> MyStatePtr;
 
+// User-defined state. Most of these methods are the required boilerplate for subclassing a state. The only two new
+// things are the readRegister and readMemory implementations, which use an isInitialState property.
 class MyState: public SymbolicSemantics::State {
     typedef SymbolicSemantics::State Super;
     bool isInitialState_;                               // true for lazily updated initial states
@@ -198,6 +206,7 @@ advancedReadTest(const P2::Partitioner &partitioner) {
     BaseSemantics::SValuePtr read1m = ops->readMemory(RegisterDescriptor(), addr1, dflt1m, ops->boolean_(true));
     BaseSemantics::SValuePtr dflt1r = ops->undefined_(REG.get_nbits());
     BaseSemantics::SValuePtr read1r = ops->readRegister(REG, dflt1r);
+
     std::cout <<"Initial state after reading " <<*read1m <<" from address " <<*addr1 <<"\n"
               <<"and reading " <<*read1r <<" from " <<REG_NAME <<"\n"
               <<(*initialState+fmt);
@@ -212,6 +221,7 @@ advancedReadTest(const P2::Partitioner &partitioner) {
     BaseSemantics::SValuePtr read2m = ops->readMemory(RegisterDescriptor(), addr1, dflt2m, ops->boolean_(true));
     BaseSemantics::SValuePtr dflt2r = ops->undefined_(REG.get_nbits());
     BaseSemantics::SValuePtr read2r = ops->readRegister(REG, dflt2r);
+
     std::cout <<"Initial state after reading " <<*read2m <<" from address " <<*addr1 <<"\n"
               <<"and reading " <<*read2r <<" from " <<REG_NAME <<"\n"
               <<(*initialState+fmt);
@@ -228,11 +238,13 @@ advancedReadTest(const P2::Partitioner &partitioner) {
     BaseSemantics::SValuePtr read3m = ops->readMemory(RegisterDescriptor(), addr3, dflt3m, ops->boolean_(true));
     BaseSemantics::SValuePtr dflt3r = ops->undefined_(REG2.get_nbits());
     BaseSemantics::SValuePtr read3r = ops->readRegister(REG2, dflt3r);
+
     ASSERT_always_forbid(read1m->must_equal(read3m));
     ASSERT_always_forbid(read1r->must_equal(read3r));
     ASSERT_always_require((SymbolicSemantics::SValue::promote(read3m)->get_expression()->flags() & MY_FLAG) == 0);
     ASSERT_always_require((SymbolicSemantics::SValue::promote(read3r)->get_expression()->flags() & MY_FLAG) == 0);
 }
+//! [advancedReadTest]
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Data-flow test

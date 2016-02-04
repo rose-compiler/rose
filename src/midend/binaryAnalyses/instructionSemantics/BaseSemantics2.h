@@ -1576,12 +1576,13 @@ public:
 
     /** Property: Optional lazily updated initial state.
      *
-     *  If non-null, then any calls to @ref readMemory which do not find that the address has a value, not only instantiate the
-     *  value in the current state, but also write the same value to this initial state.  In effect, this is like Schrodinger's
-     *  cat: every memory address has a value, we just don't know what it is until we try to read it.  Once we read it, it
-     *  becomes instantiated in the current state and the initial state.
+     *  If non-null, then any calls to @ref readMemory or @ref readRegister which do not find that the address or register has
+     *  a value, not only instantiate the value in the current state, but also write the same value to this initial state.  In
+     *  effect, this is like Schrodinger's cat: every memory address and register has a value, we just don't know what it is
+     *  until we try to read it.  Once we read it, it becomes instantiated in the current state and the initial state. The
+     *  default initial state is the null pointer.
      *
-     *  Changing the current state does not affect this initial state.  This makes it easier to use a state as part of a
+     *  Changing the current state does not affect the initial state.  This makes it easier to use a state as part of a
      *  data-flow analysis, in which one typically swaps in different current states as the data-flow progresses.
      *
      *  The initial state need not be the same type as the current state, as long as they both have the same prototypical value
@@ -1589,10 +1590,25 @@ public:
      *  on a @ref MemoryMap of concrete values for its initial state, as long as those concrete values are converted to
      *  symbolic values when they're read.
      *
-     *  Caveats: Not all semantic domains use the initial state. The order that values are added to an initial state dependes
-     *  on the order they're encountered during the analysis.
+     *  <b>Caveats:</b> Not all semantic domains use the initial state. The order that values are added to an initial state
+     *  depends on the order they're encountered during the analysis.
      *
      *  See also, @ref currentState.
+     *
+     *  @section example1 Example 1: Simple usage
+     *
+     *  This example, shows one way to use an initial state and the effect is has on memory and register I/O. It uses the same
+     *  type for the initial state as it does for the current states.
+     *
+     *  @snippet testLazyInitialStates.C basicReadTest
+     *
+     *  @section example2 Example 2: Advanced usage
+     *
+     *  This example is somwewhat more advanced. It uses a custom state, which is a relatively common practice of users, and
+     *  augments it to do something special when it's used as an initial state. When it's used as an initial state, it sets a
+     *  flag for the values produced so that an analysis can presumably detect that the value is an initial value.
+     *
+     *  @snippet testLazyInitialStates.C advancedReadTest
      *
      * @{ */
     virtual StatePtr initialState() const { return initialState_; }
