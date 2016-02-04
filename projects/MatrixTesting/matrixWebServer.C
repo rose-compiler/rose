@@ -36,7 +36,7 @@ static Sawyer::Message::Facility mlog;
 
 static const char* WILD_CARD_STR = "<any>";
 enum ChartType { BAR_CHART, LINE_CHART };
-enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO };
+enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO, CVT_WARNINGS_AVE };
 static int END_STATUS_POSITION = 999;                   // test_names.position where name = 'end'
 
 typedef Sawyer::Container::Map<std::string, int> StringIndex;
@@ -282,6 +282,8 @@ private:
     typedef std::vector<TableRow> Table;
     Table counts_;                                      // counts of matching rows
     Table passes_;                                      // portion of counts_ where pass_fail = 'passed'
+    Table aveWarnings_;                                 // average number of compiler warnings for matching tests
+    double minAveWarnings_, maxAveWarnings_;            // min/max value in aveWarnings
     ChartValueType chartValueType_;                     // whether to show counts, percents, or pass ratios
     bool roundToInteger_;                               // round cell values to nearest integer
 
@@ -364,6 +366,8 @@ public:
         updateDepMinor(deps);
         resetTable(counts_);
         resetTable(passes_);
+        resetTable(aveWarnings_);
+        minAveWarnings_ = maxAveWarnings_ = 0.0;
         if (counts_.empty())
             return modelReset().emit();
 
@@ -373,7 +377,12 @@ public:
         std::string depMinorColumn = gstate.dependencyNames[depMinorName_];
         std::string passFailColumn = gstate.dependencyNames["pass/fail"];
         std::vector<std::string> args;
-        std::string sql = "select " + depMajorColumn + ", " + depMinorColumn + ", " + passFailColumn + " as pf, count(*)" +
+        std::string sql = "select " +
+                          depMajorColumn + ", " +       // 0
+                          depMinorColumn + ", " +       // 1
+                          passFailColumn + " as pf, "   // 2
+                          "count(*), " +                // 3
+                          "sum(nwarnings)" +            // 4
                           sqlFromClause() +
                           sqlWhereClause(deps, args /*out*/) +
                           " group by " + depMajorColumn + ", " + depMinorColumn + ", pf";
@@ -387,13 +396,33 @@ public:
             std::string minorValue = humanDepValue(depMinorName_, row.get<std::string>(1), HUMAN_TERSE);
             std::string pf = row.get<std::string>(2);
             int count = row.get<int>(3);
+            double nwarn = row.get<int>(4);
 
             int i = depMajorIndex_.getOrElse(majorValue, -1);
             int j = depMinorIndex_.getOrElse(minorValue, -1);
             if (i >= 0 && j >= 0) {
                 counts_[i][j] += count;
+                aveWarnings_[i][j] += nwarn;            // adjusted below
                 if (pf == "pass")
                     passes_[i][j] += count;
+            }
+        }
+
+        // Adjust aveWarnings to be averages instead of sums
+        {
+            int n = 0;
+            for (size_t i=0; i<aveWarnings_.size(); ++i) {
+                for (size_t j=0; j<aveWarnings_[i].size(); ++j) {
+                    if (counts_[i][j] > 0) {
+                        aveWarnings_[i][j] /= counts_[i][j];
+                        if (0 == n++) {
+                            minAveWarnings_ = maxAveWarnings_ = aveWarnings_[i][j];
+                        } else {
+                            minAveWarnings_ = std::min(minAveWarnings_, aveWarnings_[i][j]);
+                            maxAveWarnings_ = std::max(maxAveWarnings_, aveWarnings_[i][j]);
+                        }
+                    }
+                }
             }
         }
 
@@ -464,6 +493,8 @@ public:
             } else if (CVT_PASS_RATIO == chartValueType_) {// number of passes divided by count as a percent
                 double percent = 100.0 * passes_[i][j] / counts_[i][j];
                 return roundToInteger_ ? round(percent) : percent;
+            } else if (CVT_WARNINGS_AVE == chartValueType_) {// average number of warnings per test
+                return roundToInteger_ ? round(aveWarnings_[i][j]) : aveWarnings_[i][j];
             } else {                                    // raw counts
                 return counts_[i][j];
             }
@@ -475,7 +506,21 @@ public:
                 } else {
                     int pfratio = round(100.0 * passes_[i][j] / counts_[i][j]);
                     int fade = std::min((int)round(counts_[i][j]), 4);
-                    return Wt::WString("chart-pass-ratio-" + StringUtility::numberToString(pfratio) +
+                    return Wt::WString("redgreen-" + StringUtility::numberToString(pfratio) +
+                                       "-" + StringUtility::numberToString(fade));
+                }
+            } else if (i >= 0 && j >= 0 && CVT_WARNINGS_AVE == chartValueType_) {
+                if (counts_[i][j] == 0) {
+                    return Wt::WString("chart-zero");
+                } else if (maxAveWarnings_ - minAveWarnings_ < 1.0) {
+                    int fade = std::min((int)round(counts_[i][j]), 4);
+                    return Wt::WString("redgreen-50-" + StringUtility::numberToString(fade));
+                } else {
+                    // percentile is an integer in [0,100] where 0 corresponds to the least possible number of warnings and 100
+                    // corresponds to the maximum number of warnings.
+                    int percentile = round(100.0 * (maxAveWarnings_ - aveWarnings_[i][j]) / (maxAveWarnings_ - minAveWarnings_));
+                    int fade = std::min((int)round(counts_[i][j]), 4);
+                    return Wt::WString("redgreen-" + StringUtility::numberToString(percentile) +
                                        "-" + StringUtility::numberToString(fade));
                 }
             }
@@ -674,6 +719,7 @@ public:
             switch (model_->chartValueType()) {
                 case CVT_COUNT:
                 case CVT_PASS_RATIO:
+                case CVT_WARNINGS_AVE:
                     axis(Wt::Chart::YAxis).setAutoLimits(Wt::Chart::MaximumValue);
                     break;
                 case CVT_PERCENT:
@@ -872,9 +918,10 @@ public:
 
         // Combo box to choose whether the model stores percents or counts
         chartSettingsBox->addWidget(absoluteRelative_ = new Wt::WComboBox);
-        absoluteRelative_->addItem("counts");
-        absoluteRelative_->addItem("normalized%");
-        absoluteRelative_->addItem("pass%");
+        absoluteRelative_->addItem("num-tests");
+        absoluteRelative_->addItem("num-tests(%)");
+        absoluteRelative_->addItem("pass-ratio");
+        absoluteRelative_->addItem("ave-warnings");
         absoluteRelative_->activated().connect(this, &WResultsConstraintsTab::switchAbsoluteRelative);
 
         // Update button to reload data from the database
@@ -949,6 +996,8 @@ private:
             case 0: cvt = CVT_COUNT; break;
             case 1: cvt = CVT_PERCENT; break;
             case 2: cvt = CVT_PASS_RATIO; break;
+            case 3: cvt = CVT_WARNINGS_AVE; break;
+            default: ASSERT_not_reachable("invalid chart value type");
         }
 
         chartModel_->setChartValueType(cvt);
@@ -1251,15 +1300,15 @@ public:
         styleSheet().addRule(".output-separator", "background-color:#808080;");
 
         // Colors for pass-ratios.
-        //   Classes chart-pass-ratio-N vary from red to green as N goes from integer 0 through 100.
-        //   Classes chart-pass-ratio-N-S are similar except S is a saturation amount from 0 through 4 (desaturated).
+        //   Classes redgreen-N vary from red to green as N goes from integer 0 through 100.
+        //   Classes redgreen-N-S are similar except S is a saturation amount from 0 through 4 (desaturated).
         rose::Color::Gradient redgreen;
         redgreen.insert(0.0, rose::Color::HSV(0.00, 0.50, 0.50));
         redgreen.insert(0.5, rose::Color::HSV(0.17, 0.40, 0.50));
         redgreen.insert(1.0, rose::Color::HSV(0.33, 0.50, 0.50));
         for (int i=0; i<=100; ++i) {
             rose::Color::RGB c = redgreen.interpolate(i/100.0);
-            std::string cssClass = ".chart-pass-ratio-" + StringUtility::numberToString(i);
+            std::string cssClass = ".redgreen-" + StringUtility::numberToString(i);
             std::string bgColor = "background-color:" + c.toHtml() + ";";
             styleSheet().addRule(cssClass, bgColor);
             for (int j=0; j<5; ++j) {
