@@ -24,6 +24,8 @@
 
 #include "dsl_detection.h"
 
+#include "dslSupport.h"
+
 
 using namespace std;
 
@@ -118,6 +120,9 @@ int main( int argc, char * argv[] )
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"_before");
 #endif
+
+  // Generate maps from generated DSL data structures.
+     DSL_Support::outputGeneratedData();
 
   // Build the inherited attribute
      Detection_InheritedAttribute inheritedAttribute;

@@ -16,6 +16,10 @@
 // of architecture specific code.
 // #include "stencilFiniteStateMachine.h"
 
+// DSL specific code being included.
+#include "array.h"
+#include "generated_dsl_attributes.h"
+
 using namespace std;
 
 
@@ -807,5 +811,173 @@ DSL_Support::defining_expression ( SgNode* root, SgInitializedName* variable )
      printf ("Leaving defining_expression(): traversal.definingRhsExpression = %s \n",traversal.definingRhsExpression->unparseToString().c_str());
 
      return traversal.definingRhsExpression;
+   }
+
+
+void
+DSL_Support::outputGeneratedData()
+   {
+  // DQ (2/3/2016): Added output function for generated data about target DSL abstractions.
+
+     printf ("\n\nOutput of DSL target abstractions (types, functions, and member functions): \n");
+
+     printf ("   --- DSL target types (size = %zu): \n",dsl_type_names.size());
+     for (size_t i=0; i < dsl_type_names.size(); i++)
+        {
+          printf ("      --- type name = %s \n",dsl_type_names[i].c_str());
+        }
+     printf ("   --- DSL target functions (size = %zu): \n",dsl_function_names.size());
+     for (size_t i=0; i < dsl_function_names.size(); i++)
+        {
+          printf ("      --- function name = %s \n",dsl_function_names[i].c_str());
+        }
+     printf ("   --- DSL target member functions (size = %zu): \n",dsl_member_function_names.size());
+     for (size_t i=0; i < dsl_member_function_names.size(); i++)
+        {
+          printf ("      --- class = %s member function name = %s \n",dsl_member_function_names[i].first.c_str(),dsl_member_function_names[i].second.c_str());
+        }
+
+   }
+
+void
+DSL_Support::checkAndResetToMakeConsistantCompilerGenerated ( SgInitializedName* initializedName )
+   {
+  // DQ (2/15/2015): This makes up for a bug in the ROSE AST (to be fixed later).
+  // It seems that the compiler generated mode is not set uniformally between the 
+  // starting and the ending source position construct.
+
+     ROSE_ASSERT(initializedName->get_startOfConstruct() != NULL);
+     bool isCompilerGenerated_result = initializedName->get_startOfConstruct()->isCompilerGenerated();
+     ROSE_ASSERT(initializedName->get_endOfConstruct() != NULL);
+     if (isCompilerGenerated_result != initializedName->get_endOfConstruct()->isCompilerGenerated())
+        {
+#if 0
+          initializedName->get_endOfConstruct()->display("In DetectionTraversal::evaluateInheritedAttribute(): error: startOfConstruct()->isCompilerGenerated() != endOfConstruct()->isCompilerGenerated(): debug");
+#endif
+          initializedName->get_endOfConstruct()->setCompilerGenerated();
+        }
+     ROSE_ASSERT(isCompilerGenerated_result == initializedName->get_endOfConstruct()->isCompilerGenerated());
+   }
+
+
+
+
+
+bool DSL_Support::isDslAbstraction(SgNode* astNode)
+   {
+  // Detection of stencil declaration and stencil operator.
+  // Where the stencil specification is using std::vectors as parameters to the constructor, we have to first
+  // find the stencil declaration and read the associated SgVarRefExp to get the variable names used.  
+  // Then a finite state machine can be constructed for each of the input variables so that we can 
+  // interpret the state when the stencil operator is constructed.
+
+     bool returnValue = false;
+
+     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(astNode);
+     if (variableDeclaration != NULL)
+        {
+       // Get the SgInitializedName from the SgVariableDeclaration.
+          SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclaration);
+
+          SgType* base_type = initializedName->get_type()->findBaseType();
+          ROSE_ASSERT(base_type != NULL);
+
+       // SgClassType* classType = isSgClassType(initializedName->get_type());
+          SgClassType* classType = isSgClassType(base_type);
+
+          if (classType != NULL)
+             {
+#if 1
+               printf ("In DetectionTraversal::evaluateInheritedAttribute(): case SgClassType: class name = %s \n",classType->get_name().str());
+#endif
+            // Check if this is associated with a template instantiation.
+               SgTemplateInstantiationDecl* templateInstantiationDecl = isSgTemplateInstantiationDecl(classType->get_declaration());
+               if (templateInstantiationDecl != NULL)
+                  {
+#if 1
+                    printf ("case SgTemplateInstaiationDecl: class name = %s \n",classType->get_name().str());
+                    printf ("case SgTemplateInstaiationDecl: templateInstantiationDecl->get_templateName() = %s \n",templateInstantiationDecl->get_templateName().str());
+#endif
+                 // inheritedAttribute.set_StencilDeclaration(templateInstantiationDecl->get_templateName() == "Stencil");
+                 // inheritedAttribute.set_StencilOperatorDeclaration(templateInstantiationDecl->get_templateName() == "StencilOperator");
+
+                 // if (templateInstantiationDecl->get_templateName() == "Stencil")
+                    string templateName = templateInstantiationDecl->get_templateName();
+                    std::vector<std::string>::iterator it = find(dsl_type_names.begin(),dsl_type_names.end(),templateName);
+                    if (it != dsl_type_names.end())
+                       {
+                      // DQ (2/8/2015): Ignore compiler generated IR nodes (from template instantiations, etc.).
+                      // Note that simpleCNS.cpp generates one of these from it's use of the tuple template and associated template instantations.
+
+                      // DQ: Test the DSL support.
+                      // ROSE_ASSERT(isMatchingClassType(classType,"Stencil",true) == true);
+                         ROSE_ASSERT(isMatchingClassType(classType,templateName,true) == true);
+
+                         checkAndResetToMakeConsistantCompilerGenerated(initializedName);
+
+                         if (initializedName->isCompilerGenerated() == false)
+                            {
+                           // Save the SgInitializedName associated with the stencil.
+                           // stencilInitializedNameList.push_back(initializedName);
+                           // inheritedAttribute.set_StencilDeclaration(true);
+                           // foundStencilVariable = true;
+
+#if 1
+                              printf ("Detected Stencil<> typed variable: initializedName = %p name = %s \n",initializedName,initializedName->get_name().str());
+                           // printf ("   --- stencilInitializedNameList.size() = %zu \n",stencilInitializedNameList.size());
+#endif
+#if 1
+                              initializedName->get_file_info()->display("In DetectionTraversal::evaluateInheritedAttribute(): initializedName : debug");
+#endif
+                              returnValue = true;
+
+#if 0
+                              Stencil_Attribute* dslAttribute = new Stencil_Attribute();
+#if 1
+                              printf ("Adding (Stencil) dslAttribute = %p \n",dslAttribute);
+#endif
+                              ROSE_ASSERT(dslAttribute != NULL);
+
+                           // virtual void addNewAttribute (std::string s, AstAttribute *a);   
+                              initializedName->addNewAttribute(StencilVariable,dslAttribute);
+#endif
+                            }
+                       }
+                  }
+
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+               if (classDeclaration != NULL)
+                  {
+                    string templateName = templateInstantiationDecl->get_templateName();
+                    std::vector<std::string>::iterator it = find(dsl_type_names.begin(),dsl_type_names.end(),templateName);
+                    if (it != dsl_type_names.end())
+                 // if (classDeclaration->get_name() == "Point")
+                       {
+                      // Save the SgInitializedName associated with the Point type.
+#if 0
+                         printf ("Detected Point<> typed variable: initializedName = %p name = %s \n",initializedName,initializedName->get_name().str());
+#endif
+                         checkAndResetToMakeConsistantCompilerGenerated(initializedName);
+
+                         if (initializedName->isCompilerGenerated() == false)
+                            {
+                           // pointInitializedNameList.push_back(initializedName);
+#if 0
+                              Point_Attribute* dslAttribute = new Point_Attribute();
+                              printf ("Adding (Point) dslAttribute = %p \n",dslAttribute);
+                              ROSE_ASSERT(dslAttribute != NULL);
+
+                           // virtual void addNewAttribute (std::string s, AstAttribute *a);   
+                              initializedName->addNewAttribute(PointVariable,dslAttribute);
+#endif
+                            }
+
+                         returnValue = true;
+                       }
+                  }
+             }
+        }
+
+     return returnValue;
    }
 

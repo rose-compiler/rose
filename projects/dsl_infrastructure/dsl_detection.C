@@ -1,6 +1,6 @@
 // This code implements a generic detection for an specific DSL abstraction
 // that is know at compile time and provided via a const array of names (defined
-// in generated_dsl_attributes.h.
+// in generated_dsl_attributes.h).
 
 
 
@@ -65,35 +65,13 @@ DetectionTraversal::DetectionTraversal( SgNode* input_root )
 void
 DetectionTraversal::display()
    {
-  // This function may be useful for representing the DSL child nodes for operators and such.
+  // This function may be useful for representing the DSL child nodes for operators and such as part of debugging.
 
 #if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
    }
-
-
-void
-checkAndResetToMakeConsistantCompilerGenerated ( SgInitializedName* initializedName )
-   {
-  // DQ (2/15/2015): This makes up for a bug in the ROSE AST (to be fixed later).
-  // It seems that the compiler generated mode is not set uniformally between the 
-  // starting and the ending source position construct.
-
-     ROSE_ASSERT(initializedName->get_startOfConstruct() != NULL);
-     bool isCompilerGenerated_result = initializedName->get_startOfConstruct()->isCompilerGenerated();
-     ROSE_ASSERT(initializedName->get_endOfConstruct() != NULL);
-     if (isCompilerGenerated_result != initializedName->get_endOfConstruct()->isCompilerGenerated())
-        {
-#if 0
-          initializedName->get_endOfConstruct()->display("In DetectionTraversal::evaluateInheritedAttribute(): error: startOfConstruct()->isCompilerGenerated() != endOfConstruct()->isCompilerGenerated(): debug");
-#endif
-          initializedName->get_endOfConstruct()->setCompilerGenerated();
-        }
-     ROSE_ASSERT(isCompilerGenerated_result == initializedName->get_endOfConstruct()->isCompilerGenerated());
-   }
-
 
 
 Detection_InheritedAttribute
@@ -103,6 +81,14 @@ DetectionTraversal::evaluateInheritedAttribute (SgNode* astNode, Detection_Inher
      printf ("In DetectionTraversal::evaluateInheritedAttribute(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 #endif
 
+  // DQ (2/3/2016): Recognize IR nodes that are representative of target DSL abstractions.
+     bool foundTargetDslAbstraction = DSL_Support::isDslAbstraction(astNode);
+
+#if 1
+     printf ("In DetectionTraversal::evaluateInheritedAttribute(): astNode = %p = %s: foundTargetDslAbstraction = %s \n",astNode,astNode->class_name().c_str(),foundTargetDslAbstraction ? "true" : "false");
+#endif
+
+#if 0
   // Detection of stencil declaration and stencil operator.
   // Where the stencil specification is using std::vectors as parameters to the constructor, we have to first
   // find the stencil declaration and read the associated SgVarRefExp to get the variable names used.  
@@ -200,6 +186,7 @@ DetectionTraversal::evaluateInheritedAttribute (SgNode* astNode, Detection_Inher
                   }
              }
         }
+#endif
 
 #if 0
      printf ("Leaving DetectionTraversal::evaluateInheritedAttribute(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());

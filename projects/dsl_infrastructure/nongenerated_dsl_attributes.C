@@ -12,14 +12,10 @@
 
 // The number of DSL types to define is know at compile time and generated as
 // part of the DSL attribute code generation.
-char* dsl_types[1] = 
-   {
-     "array"
-   };
+std::vector<std::string> dsl_type_names = { "array" };
 
+// Reference function names that are specific to the DSL.
+std::vector<std::string> dsl_function_names = { "" };
 
-// Reference functions that are specific to the DSL.
-char* dsl_functions[1] = { "" };
-
-// Reference member functions (class and member function) that are specific to the DSL.
-char* dsl_member_functions[1][2] = { "","" };
+// Reference member functions (class and member function names) that are specific to the DSL.
+std::vector< std::pair<std::string,std::string> > dsl_member_function_names = { {"",""} };

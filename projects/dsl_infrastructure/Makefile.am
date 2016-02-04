@@ -14,7 +14,7 @@ attributeGenerator_SOURCES = attributeGenerator.C attributeGenerator.h
 # Note that dsl_attributes.C is ultimately a generated file.
 array_main_SOURCES = array_main.C array.C generated_dsl_attributes.C
 
-arrayDSLcompiler_SOURCES = arrayDSLcompiler.C dsl_detection.C dslSupport.C
+arrayDSLcompiler_SOURCES = arrayDSLcompiler.C dsl_detection.C dslSupport.C generated_dsl_attributes.C
 
 dsl_detection_SOURCES = dsl_detection.C
 
@@ -59,6 +59,10 @@ generated_dsl_attributes.C: $(srcdir)/nongenerated_dsl_attributes.C generated_ds
 # generate the dsl_attributes.C file from the example code implementing the abstraction.
 testAttributeGenerator: attributeGenerator
 	./attributeGenerator $(srcdir)/array_header.C
+
+testArrayDSLCompiler: arrayDSLcompiler generated_dsl_attributes.C
+	./arrayDSLcompiler -c $(srcdir)/array_main.C
+
 
 testDSLCompiler: dsl_attributes.C
 

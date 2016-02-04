@@ -24,6 +24,14 @@ namespace DSL_Support
   // This function supports the DSL when constness is not rigidly followed.
      SgExpression* defining_expression ( SgNode* root, SgInitializedName* variable );
 
+  // DQ (2/3/2016): Added output function for generated data about target DSL abstractions.
+     void outputGeneratedData();
+
+  // DQ (2/3/2016): Added function to detect DSL target abstractions.
+     bool isDslAbstraction(SgNode* astNode);
+
+  // DQ (2/3/2016): Refactored support for AST.
+     void checkAndResetToMakeConsistantCompilerGenerated ( SgInitializedName* initializedName );
 
   // ********************************************************
   // DQ (10/24/2014): Added feature for constant expresssion 
