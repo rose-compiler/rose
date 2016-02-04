@@ -13,6 +13,20 @@
 #include <direct.h>     // getcwd
 #endif
 
+#include <time.h>
+
+// Headers required only to obtain version numbers
+#include <boost/version.hpp>
+#ifdef ROSE_HAVE_LIBREADLINE
+#   include <readline/readline.h>
+#endif
+#ifdef ROSE_HAVE_LIBMAGIC
+#   include <magic.h>
+#endif
+#ifdef ROSE_HAVE_LIBYICES
+#   include <yices_c.h>
+#endif
+
 // DQ (10/11/2007): This is commented out to avoid use of this mechanism.
 // #include <copy_unparser.h>
 
@@ -103,6 +117,52 @@ std::string ofpVersionString()
      return ofp_version;
    }
 
+static std::string
+readlineVersionString() {
+#ifdef ROSE_HAVE_LIBREADLINE
+    return StringUtility::numberToString(RL_VERSION_MAJOR) + "." + StringUtility::numberToString(RL_VERSION_MINOR);
+#else
+    return "unknown (readline is disabled)";
+#endif
+}
+
+static std::string
+libmagicVersionString() {
+#ifdef ROSE_HAVE_LIBMAGIC
+    return StringUtility::numberToString(MAGIC_VERSION);
+#else
+    return "unknown (libmagic is disabled)";
+#endif
+}
+
+static std::string
+yamlcppVersionString() {
+#ifdef ROSE_HAVE_LIBYAML
+    return "unknown (but enabled)";                     // not sure how to get a version number for this library
+#else
+    return "unknown (yaml-cpp is disabled)";
+#endif
+}
+
+static std::string
+yicesVersionString() {
+#ifdef ROSE_HAVE_LIBYICES
+    if (const char *s = yices_version())
+        return s;
+    return "unknown (but enabled)";
+#else
+    return "unknown (libyices is disabled)";
+#endif
+}
+
+// similar to rose_boost_version_id but intended for human consumption (i.e., "1.50.0" rather than 105000).
+static std::string
+boostVersionString() {
+    return (StringUtility::numberToString(BOOST_VERSION / 100000) + "." +
+            StringUtility::numberToString(BOOST_VERSION / 100 % 1000) + "." +
+            StringUtility::numberToString(BOOST_VERSION % 100));
+}
+
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
 std::string version_message()
    {
@@ -113,19 +173,32 @@ std::string version_message()
   // with -h and --version, similar to GNU compilers, as I recall.
   // outputPredefinedMacros();
 
+     // A more human-friendly time stamp (ISO 8601 format is recognized around the world, so use that)
+     time_t scm_timestamp = rose_scm_version_date();
+     std::string scm_timestamp_human;
+     if (struct tm *tm = gmtime(&scm_timestamp)) {
+         char buf[256];
+         sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d UTC",
+                 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+                 tm->tm_hour, tm->tm_min, tm->tm_sec);
+         scm_timestamp_human = buf;
+     } else {
+         scm_timestamp_human = StringUtility::numberToString(scm_timestamp) + " unix epoch";
+     }
+
      return
        // "ROSE (pre-release beta version: " + version_number() + ")" +
           "ROSE (version: " + version_number() + ")" +
           "\n  --- using ROSE SCM version:" +
           "\n      --- ID: " + rose_scm_version_id() +
-          "\n      --- Unix Timestamp: " +
-                      StringUtility::numberToString(rose_scm_version_date()) +
+          "\n      --- Timestamp: " + scm_timestamp_human +
           "\n  --- using EDG C/C++ front-end version: " + edgVersionString() +
           "\n  --- using OFP Fortran parser version: " + ofpVersionString() +
-          "\n  --- using Boost version: " +
-              StringUtility::numberToString(rose_boost_version_id()) +
-              " (" + rose_boost_version_path() + ")";
-
+          "\n  --- using Boost version: " + boostVersionString() + " (" + rose_boost_version_path() + ")" +
+          "\n  --- using GNU readline version: " + readlineVersionString() +
+          "\n  --- using libmagic version: " + libmagicVersionString() +
+          "\n  --- using yaml-cpp version: " + yamlcppVersionString() +
+          "\n  --- using lib-yices version: " + yicesVersionString();
   }
 
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
