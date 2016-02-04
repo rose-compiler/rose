@@ -1,10 +1,7 @@
 #ifndef __ROSETTAMACROS_H__
 #define __ROSETTAMACROS_H__
 
-// DQ (11/10/2007): This is a redundant included header file.
-// #include <rose_config.h>
-
-// MK: This header files contains macro definitions to be used
+// MK: These header files contains macro definitions to be used
 // by the setDataPrototype() member function of class Terminal
 
 // define HL_GRAMMARS if you want all rules added (experimental) to allow X/Non_X-rules to be
@@ -20,7 +17,7 @@
 // MS 2015: rewrote ROSETTA to use enums instead of wrapper classes around enums.
 // enums: ConstructParamEnum, BuildAccessEnum, CopyConfigEnum
 enum ConstructParamEnum { 
-  NO_CONSTRUCTOR_PARAMETER , 
+  NO_CONSTRUCTOR_PARAMETER,
   CONSTRUCTOR_PARAMETER    
 };
 
@@ -53,66 +50,15 @@ enum CopyConfigEnum {
   CLONE_TREE    
 };
 
-#if 0
-// not used yet
 enum TraversalEnum {
-  TRAVERSAL,
+  DEF_TRAVERSAL,
   NO_TRAVERSAL,
-  COND_TRAVERSAL
 };
 
-// not used yet
 enum DeleteEnum {
-  DELETE,
+  DEF_DELETE,
   NO_DELETE
 };
-#endif
-
-class TraversalFlag { // Wrapper for extra argument type checking
-  bool value;
-  public:
-  explicit TraversalFlag(bool value): value(value) {}
-  bool getValue() const {return value;}
-  bool operator==(const TraversalFlag& o) const {return value == o.value;}
-  bool operator!=(const TraversalFlag& o) const {return value != o.value;}
-  TraversalFlag operator||(const TraversalFlag& o) const {return TraversalFlag(value || o.value);} // For TYPE_TRAVERSAL
-};
-
-class DeleteFlag { // Wrapper for extra argument type checking
-  bool value;
-  public:
-  explicit DeleteFlag(bool value): value(value) {}
-  bool getValue() const {return value;}
-  bool operator==(const DeleteFlag& o) const {return value == o.value;}
-  bool operator!=(const DeleteFlag& o) const {return value != o.value;}
-};
-
-// DQ (7/18/2004): Comment out so that we can link when it is 
-// turned on to the definition of DEF2TYPE_TRAVERSAL
-// #define TYPE_TRAVERSAL true // traversal within types
-
-#if 1
-// DQ (7/18/2004): Turn this on by default so that nested traversals 
-// on types are possible this does not change the default behavior.
-#define TYPE_TRAVERSAL DEF_TRAVERSAL // traversal within types
-
-// DEF2TYPE_TRAVERSAL must be defined as false in any release of ROSE!
-
-// This is the usual setting (traversal excludes types).  Users cannot apply transformations
-// to SgType objects since these objects are shared within the AST.
-#define DEF2TYPE_TRAVERSAL NO_TRAVERSAL // traversal (paths) from default traversal to type traversal
-#else
-// Debugging setting (helpful under specialized circumstances, but sometimes problematic).
-// This is a setting that permits us to traverse the types, but it can cause problems
-// (the ROSE/TESTS/CompileTests/OvertureCode/overtureBug_01.C fails to attach comments
-// at the correct location if the types are traversed (not clear if this is important to debug).
-// This setting is reserved for internal debugging only, misleading resuts can occure in the generation
-// of PDF output of the AST.
-#define DEF2TYPE_TRAVERSAL DEF_TRAVERSAL; // traversal (paths) from default traversal to type traversal
-
-// DQ (7/18/2004): link this definition to that of DEF2TYPE_TRAVERSAL
-#define TYPE_TRAVERSAL NO_TRAVERSAL // traversal within types
-#endif
 
 // ifndef USE_ROSE
 #ifndef ROSE_H
@@ -165,19 +111,5 @@ class DeleteFlag { // Wrapper for extra argument type checking
 #define INSURE_BUG false
 
 #include <vector>
-// #ifndef STL_LIST_IS_BROKEN
-// #include STL_LIST_HEADER_FILE
-// #endif
-
-// using namespace std;
-
-extern const TraversalFlag DEF_TRAVERSAL; // default traversal
-extern const TraversalFlag NO_TRAVERSAL; // no traversal
-
-// AJ (10/26/2004)
-extern const DeleteFlag NO_DELETE;
-// DQ (12/3/2004): Avoid calling delete
-extern const DeleteFlag DEF_DELETE;
-// DeleteFlag DEF_DELETE(false);
 
 #endif
