@@ -13,6 +13,7 @@ endif (WIN32)
 set(CxxGrammarMetaProgram_SRCS
     CxxGrammarMetaProgram.C
     grammar.C
+    GrammarFile.C
     grammarString.C
     grammarGenerator.C
     terminal.C

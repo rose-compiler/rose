@@ -23,7 +23,7 @@ string Grammar::staticContructorPrototypeString;
 // #                 Grammar Static Data Members                  #
 // ################################################################
 
-vector<grammarFile*> Grammar::fileList;
+vector<GrammarFile*> Grammar::fileList;
 
 // ################################################################
 // #                   Grammar Member Functions                   #
@@ -288,7 +288,7 @@ Grammar::readFileWithPos ( const string& inputFileName )
   // Reads entire text file and places contents into a single string
   // We implemennt a file cache to improve the performance of this file access
 
-     vector<grammarFile*>::iterator i;
+     vector<GrammarFile*>::iterator i;
      for (i = fileList.begin(); i != fileList.end(); i++)
         {
           if ( (*i)->getFilename() == inputFileName )
@@ -299,7 +299,7 @@ Grammar::readFileWithPos ( const string& inputFileName )
 
      StringUtility::FileWithLineNumbers result = StringUtility::readFileWithPos(inputFileName);
 
-     grammarFile *file = new grammarFile(inputFileName,result);
+     GrammarFile *file = new GrammarFile(inputFileName,result);
      ROSE_ASSERT (file != NULL);
 
      fileList.push_back(file);
