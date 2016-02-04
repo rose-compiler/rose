@@ -317,5 +317,8 @@ compilerNameC="`basename $BACKEND_C_COMPILER`"
 
    echo "includeString = $includeString"
    AC_DEFINE_UNQUOTED([C_INCLUDE_STRING],$includeString,[Include path for backend C compiler.])
+
+ # echo "Exiting as a test in SETUP BACKEND C COMPILER SPECIFIC REFERENCES"
+ # exit 1
 ])
 

@@ -12,9 +12,10 @@ compilerName="`basename $1`"
 language=$2
 compilerVendorName=$3
 
-# echo "In get_compiler_header_dirs: compilerName = $compilerName" >&2
-# echo "In get_compiler_header_dirs: compilerVendorName = $compilerVendorName" >&2
-# echo "In get_compiler_header_dirs: language = $language" >&2
+echo "In get_compiler_header_dirs: compiler name with path = $1" >&2
+echo "In get_compiler_header_dirs: compilerName            = $compilerName" >&2
+echo "In get_compiler_header_dirs: compilerVendorName      = $compilerVendorName" >&2
+echo "In get_compiler_header_dirs: language                = $language" >&2
 
 # case "$compilerName" in
 case "$compilerVendorName" in

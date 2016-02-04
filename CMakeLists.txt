@@ -1154,11 +1154,15 @@ set(CXX_INCLUDE_STRING
 find_program(shell sh)
 if(shell AND CMAKE_COMPILER_IS_GNUCXX)
   execute_process(
-    COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs gcc
+# DQ (2/4/2016): Need additional parameters.
+#   COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs gcc
+    COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs gcc c gnu
     OUTPUT_VARIABLE C_backend_includes
   )
   execute_process(
-    COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs g++
+# DQ (2/4/2016): Need additional parameters.
+#   COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs g++
+    COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs g++ c++ gnu
     OUTPUT_VARIABLE CXX_backend_includes
   )
   string(REPLACE "\n" ";" C_backend_includes "${C_backend_includes}")

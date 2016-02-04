@@ -137,13 +137,13 @@ language="$4"
 compilerVendorName="$5"
 
 # echo "In script file: create system headers: Using back-end compiler = \"$1\" compiler vendor name = $compilerVendorName for processing of unparsed source files from ROSE preprocessors."
-# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-# echo "compilerName       = $compilerName"
-# echo "compilerBinDir     = $compilerBinDir"
-# echo "roseHome           = $roseHome"
-# echo "language           = $language"
-# echo "compilerVendorName = $compilerVendorName"
-# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "compilerName       = $compilerName"
+echo "compilerBinDir     = $compilerBinDir"
+echo "roseHome           = $roseHome"
+echo "language           = $language"
+echo "compilerVendorName = $compilerVendorName"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 
 # DQ (2/2/2016): We don't compiler ROSE using ROSE as the backend (this was from when we had 
 # to support ROSE compiling ROSE, but this should not require specialized support now).
@@ -185,13 +185,13 @@ targetDirParent="`dirname "$targetDir"`"
 targetDirBase="`basename "$targetDir"`"
 mainTargetDir="`cd \"$targetDirParent\" 2>/dev/null && pwd || echo \"$targetDirParent\"`/$targetDirBase"
 
-# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-# echo "Now these should be set ..."
-# echo "targetDir =  $targetDir"
-# echo "targetDirParent =  $targetDirParent"
-# echo "targetDirBase =  $targetDirBase"
-# echo "mainTargetDir =  $mainTargetDir"
-# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "Now these should be set ..."
+echo "targetDir =  $targetDir"
+echo "targetDirParent =  $targetDirParent"
+echo "targetDirBase =  $targetDirBase"
+echo "mainTargetDir =  $mainTargetDir"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 
 # is_C_compiler="no"
 
@@ -248,6 +248,9 @@ fi
 # DQ (2/2/2016): Debugging new compiler vendor detection.
 # echo "shell script to be run next: $roseHome/config/get_compiler_header_dirs"
 
+echo "Calling get_compiler_header_dirs"
+echo "status $?"
+
 # DQ (2/2/2016): When the shell script returns an error we don't catch it.
 iDir=0
 # sh "$roseHome/config/get_compiler_header_dirs" "$1" | while read dirName
@@ -268,6 +271,8 @@ if [ "${PIPESTATUS[0]}" -ne 0 ]; then
     exit 1
 fi
 
+echo "DONE: Calling get_compiler_header_dirs: status $?"
+
 # DQ (1/14/2007): It is not required to wait until the calls to process_headers complete
 # wait
 
@@ -281,7 +286,11 @@ fi
 # DQ (1/14/2007): The variable target_parent_dir is not set in this shell procedure, so it causes an error.
 system_headers_directory="$mainTargetDir/hdrs"
 echo "system_headers_directory = $system_headers_directory should be used instead of target_parent_dir = $target_parent_dir"
+
+echo "building the sys directory"
 mkdir -p "$system_headers_directory/sys"
+echo "DONE: building the sys directory"
+echo "status $?"
 
 
 ###### Fixups for cdefs.h
@@ -338,4 +347,6 @@ if test $error_code != 0; then
      exit 1
 fi
 
-# echo "Leaving script for processing header files"
+echo "status $?"
+echo "Leaving script for processing header files: create_system_headers"
+echo "status $?"
