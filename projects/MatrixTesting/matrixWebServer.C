@@ -34,7 +34,7 @@ static Sawyer::Message::Facility mlog;
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
-static const char* WILD_CARD_STR = "<any>";
+static const char* WILD_CARD_STR = "*";
 enum ChartType { BAR_CHART, LINE_CHART };
 enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO, CVT_WARNINGS_AVE };
 static int END_STATUS_POSITION = 999;                   // test_names.position where name = 'end'
