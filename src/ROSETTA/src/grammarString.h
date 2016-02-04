@@ -52,7 +52,7 @@ class GrammarString
 
   // We introduce a new data member which determines if a data member to
   // be defined is to be traversed in the course of a tree traversal
-  TraversalFlag toBeTraversed;
+  TraversalEnum toBeTraversed;
 
   // The sum of the ascii characters in functionNameString
   // (provides fast string comparision features)
@@ -61,7 +61,7 @@ class GrammarString
   BuildAccessEnum automaticGenerationOfDataAccessFunctions;
 
 // DQ & AJ (12/3/2004): Added support for deleation of data members
-  DeleteFlag toBeDeleted;
+  DeleteEnum toBeDeleted;
 
   // functions
   virtual ~GrammarString();
@@ -73,8 +73,8 @@ class GrammarString
                  const std::string& defaultInitializer, 
                  const ConstructParamEnum& isConstructorParameter,
                  const BuildAccessEnum& buildAccessFunctions,
-                 const TraversalFlag& toBeTraversedDuringTreeTraversal,
-                 const DeleteFlag& delete_flag,
+                 const TraversalEnum& toBeTraversedDuringTreeTraversal,
+                 const DeleteEnum& delete_flag,
                  const CopyConfigEnum& toBeCopied);
   GrammarString( const GrammarString & X );
   GrammarString & operator= ( const GrammarString & X );
@@ -97,7 +97,7 @@ class GrammarString
   int getKey() const;
 
 // DQ & AJ (12/3/2004): Added support for deleation of data members
-  DeleteFlag getToBeDeleted() const;
+  DeleteEnum getToBeDeleted() const;
 
   friend bool operator!= ( const GrammarString & X, const GrammarString & Y );
   friend bool operator== ( const GrammarString & X, const GrammarString & Y );
@@ -126,8 +126,8 @@ class GrammarString
   void setIsInConstructorParameterList();
   bool isInConstructorParameterList() const;
 
-  void setToBeTraversed(const TraversalFlag& X);
-  TraversalFlag getToBeTraversed() const;
+  void setToBeTraversed(const TraversalEnum& X);
+  TraversalEnum getToBeTraversed() const;
 
   void setToBeCopied(const CopyConfigEnum& X) { toBeCopied = X; }
   CopyConfigEnum getToBeCopied() const { return toBeCopied; }
