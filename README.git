@@ -915,6 +915,9 @@ Compiling with CMake:
 
 then run make normally (use -j72).
 
+For testing, use:
+ctest -j72 --output-on-failure
+
 Verbose mode:
    make VERBOSE=1 -j24
 
