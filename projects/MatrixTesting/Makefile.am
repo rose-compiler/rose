@@ -24,6 +24,11 @@ matrixAttachments_SOURCES = matrixAttachments.C
 matrixAttachments_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
 matrixAttachments_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+bin_PROGRAMS += matrixErrors
+matrixErrors_SOURCES = matrixErrors.C
+matrixErrors_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
+matrixErrors_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 if ROSE_USE_WT
 
 bin_PROGRAMS += matrixWebServer-http
