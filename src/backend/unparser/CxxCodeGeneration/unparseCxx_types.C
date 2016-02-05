@@ -140,8 +140,12 @@ string get_type_name(SgType* t)
                     usingGcc = true;
                   #endif
                 #else
-                  string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-                  usingGcc = (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx");
+               // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
+               // string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+               // usingGcc = (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx");
+                  #if BACKEND_CXX_IS_GNU_COMPILER
+                     usingGcc = true;
+                  #endif
                 #endif
 
                 if (usingGcc) {
@@ -289,9 +293,14 @@ string get_type_name(SgType* t)
                          usingGcc = true;
                        #endif
                      #else
-                       string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-                       usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc");
+                    // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
+                    // string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+                    // usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc");
+                       #if BACKEND_CXX_IS_GNU_COMPILER
+                         usingGcc = true;
+                       #endif
 #if 0
+                     string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
                      printf ("Processing restrict keyword: compilerName = %s \n",compilerName.c_str());
 #endif
                      #endif
@@ -2683,8 +2692,12 @@ Unparse_Type::unparseRestrictKeyword()
       usingGcc = true;
     #endif
   #else
-    string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-    usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc");
+ // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
+ // string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+ // usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc");
+    #if BACKEND_CXX_IS_GNU_COMPILER
+      usingGcc = true;
+    #endif
 #if 0
      printf ("Processing restrict keyword: compilerName = %s \n",compilerName.c_str());
 #endif

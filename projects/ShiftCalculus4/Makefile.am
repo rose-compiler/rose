@@ -30,6 +30,9 @@ testFunctionCallBack_02_SOURCES = testFunctionCallBack_02.C
 testFunctionCallBack_03_SOURCES = testFunctionCallBack_03.C
 testFunctionCallBack_04_SOURCES = testFunctionCallBack_04.C
 
+# Simple example
+# array_SOURCES = array.C
+
 
 include_HEADERS = shiftCalculusCompiler.h stencilAndStencilOperatorDetection.h stencilEvaluation.h stencilFiniteStateMachine.h dslSupport.h dslCodeGeneration.h lowLevelCodeGeneration.h
 
