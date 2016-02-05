@@ -2657,7 +2657,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // TypedefSeq.setAutomaticGenerationOfDestructor (true);
      TypedefSeq.setDataPrototype("SgTypePtrList","typedefs","",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FunctionParameterTypeList.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_TYPE_LIST", "../Grammar/Support.code" );
      FunctionParameterTypeList.setFunctionSource    ( "SOURCE_FUNCTION_PARAMETER_TYPE_LIST", "../Grammar/Support.code" );
@@ -2665,7 +2665,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // FunctionParameterTypeList.setAutomaticGenerationOfDestructor (true);
      FunctionParameterTypeList.setDataPrototype("SgTypePtrList","arguments","",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 0
   // DQ (12/21/2005): Global qualification and qualified name handling are now represented explicitly

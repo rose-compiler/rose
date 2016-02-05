@@ -14,6 +14,7 @@ set(CxxGrammarMetaProgram_SRCS
     CxxGrammarMetaProgram.C
     grammar.C
     grammarString.C
+    grammarGenerator.C
     terminal.C
     type.C
     symbol.C
