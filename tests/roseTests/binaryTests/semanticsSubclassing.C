@@ -146,7 +146,7 @@ public:
         return SymbolicSemantics::SValue::number_(a->get_width(), 0);
 
         // This is the correct way. It invokes the virtual constructor from the prototypical value.
-        return get_protoval()->number_(a->get_width(), 0);
+        return protoval()->number_(a->get_width(), 0);
 
         // This is also correct since all values are (or at least should be) the same type as the protoval.
         return a->number_(a->get_width(), 0);

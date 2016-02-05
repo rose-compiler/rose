@@ -288,7 +288,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
     static const size_t entry_size = 4; // FIXME: bytes per jump table entry
     uint8_t *buf = new uint8_t[entry_size];
     if (!eip->is_number()) {
-        BaseSemantics::MemoryCellListPtr mem = BaseSemantics::MemoryCellList::promote(ops->get_state()->get_memory_state());
+        BaseSemantics::MemoryCellListPtr mem = BaseSemantics::MemoryCellList::promote(ops->currentState()->memoryState());
         for (BaseSemantics::MemoryCellList::CellList::iterator mi=mem->get_cells().begin(); mi!=mem->get_cells().end(); ++mi) {
             BaseSemantics::MemoryCellPtr cell = *mi;
             if (cell->get_address()->is_number() && cell->get_value()->must_equal(eip)) {

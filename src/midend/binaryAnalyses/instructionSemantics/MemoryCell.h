@@ -8,7 +8,7 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
-/** Smart pointer to a MemoryCell object.  MemoryCell objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a semantic memory cell. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryCell> MemoryCellPtr;
 
 /** Represents one location in memory.
@@ -138,7 +138,7 @@ public:
     /** Get writer information.
      *
      *  Returns all instruction addresses that have written to the specified memory address. */
-    virtual AddressSet getWriters() const {
+    virtual const AddressSet& getWriters() const {
         return writers_;
     }
 
@@ -158,7 +158,7 @@ public:
      *  addresses existed, false if any were removed.
      *
      * @{ */
-    bool eraseWriter(rose_addr_t writerVa) /*FINAL*/ { return writers_.erase(writerVa); }
+    bool eraseWriter(rose_addr_t writerVa) /*final*/ { return writers_.erase(writerVa); }
     virtual bool eraseWriters(const AddressSet &writerVas) { return writers_.erase(writerVas); }
     /** @} */
 

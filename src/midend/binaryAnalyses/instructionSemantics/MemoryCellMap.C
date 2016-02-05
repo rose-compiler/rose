@@ -34,7 +34,7 @@ MemoryCellMap::writeMemory(const SValuePtr &address, const SValuePtr &value, Ris
     ASSERT_not_null(address);
     ASSERT_require(!byteRestricted() || value->get_width() == 8);
     MemoryCellPtr newCell = protocell->create(address, value);
-    if (addrOps->get_insn() || valOps->get_insn()) {
+    if (addrOps->currentInstruction() || valOps->currentInstruction()) {
         newCell->ioProperties().insert(IO_WRITE);
     } else {
         newCell->ioProperties().insert(IO_INIT);
@@ -65,7 +65,7 @@ MemoryCellMap::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscO
         ASSERT_require(thisCell != NULL || otherCell != NULL);
         SValuePtr thisValue  = thisCell  ? thisCell->get_value()  : valOps->undefined_(otherCell->get_value()->get_width());
         SValuePtr otherValue = otherCell ? otherCell->get_value() : valOps->undefined_(thisCell->get_value()->get_width());
-        SValuePtr newValue   = thisValue->createOptionalMerge(otherValue, merger(), valOps->get_solver()).orDefault();
+        SValuePtr newValue   = thisValue->createOptionalMerge(otherValue, merger(), valOps->solver()).orDefault();
         if (newValue)
             thisCellChanged = true;
 
@@ -153,6 +153,24 @@ MemoryCellMap::eraseLeadingCells(const MemoryCell::Predicate &p) {
 MemoryCellPtr
 MemoryCellMap::findCell(const SValuePtr &addr) const {
     return cells.getOrDefault(generateCellKey(addr));
+}
+
+MemoryCell::AddressSet
+MemoryCellMap::getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
+    MemoryCell::AddressSet retval;
+    CellKey key = generateCellKey(addr);
+    if (MemoryCellPtr cell = cells.getOrDefault(key))
+        retval = cell->getWriters();
+    return retval;
+}
+
+MemoryCell::AddressSet
+MemoryCellMap::getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
+    MemoryCell::AddressSet retval;
+    CellKey key = generateCellKey(addr);
+    if (MemoryCellPtr cell = cells.getOrDefault(key))
+        retval = cell->getWriters();
+    return retval;
 }
 
 } // namespace
