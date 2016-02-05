@@ -20,6 +20,11 @@ process_headers()
 # make sure the source directory structure exists
   if  [ ! -d "$2" -o ! -r "$2" -o ! -x "$2" ]
   then
+    echo "*****************************************"
+    echo "Parameter 1 = $1"
+    echo "Parameter 2 = $2"
+    echo "Parameter 3 = $3"
+    echo "*****************************************"
     echo "ERROR: Directory $2 is invalid"
     echo "*************  FAILING ***** FAILING *****************"
     exit 2
@@ -111,14 +116,16 @@ process_headers()
 # start of main
 # check for correct number of arguments and 
 # whether a source directory has been specified
-if [ $# -eq 3 ]; then
+# if [ $# -eq 3 ]; then
+if [ $# -eq 5 ]; then
   :
 else
-   echo "ERROR: Usage is $0 <compiler> <target_dir> <source_dir>"
+#  echo "ERROR: Usage is $0 <compiler> <target_dir> <source_dir>"
+   echo "ERROR: Usage is $0 <compiler> <target_dir> <source_dir> <language> <compilerVendorName>"
    exit 1
 fi
 
-# echo "In main(): parameter 1 = $1  parameter 2 = $2 parameter 3 = $3"
+# echo "In main(): parameter 1 = $1  parameter 2 = $2 parameter 3 = $3 parameter 4 = $4 parameter 5 = $5"
 
 # for now assume that if a compiler is specified that it is installed
 # see if the full path name has been specified for compiler and if
@@ -126,29 +133,35 @@ fi
 compilerName="`basename $1`"
 compilerBinDir="`dirname $1`"
 roseHome="$3"
+language="$4"
+compilerVendorName="$5"
 
+# echo "In script file: create system headers: Using back-end compiler = \"$1\" compiler vendor name = $compilerVendorName for processing of unparsed source files from ROSE preprocessors."
 echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-echo "compilerName   = $compilerName"
-echo "compilerBinDir = $compilerBinDir"
-echo "roseHome       = $roseHome"
+echo "compilerName       = $compilerName"
+echo "compilerBinDir     = $compilerBinDir"
+echo "roseHome           = $roseHome"
+echo "language           = $language"
+echo "compilerVendorName = $compilerVendorName"
 echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 
+# DQ (2/2/2016): We don't compiler ROSE using ROSE as the backend (this was from when we had 
+# to support ROSE compiling ROSE, but this should not require specialized support now).
 # DQ (8/24/2009): Allow either "roseTranslator" or "roseAnalysis"
 # if [ "$compilerName" == "roseTranslator" ]
 # if [ "$compilerName" == "roseTranslator" || "$compilerName" == "roseAnalysis" ]
-if [ "$compilerName" = "roseTranslator" ]
-then
-compilerName="g++"
-echo "Changed compilerName from roseTranslator to $compilerName"
-
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-echo "After change: compilerName   = $compilerName"
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-elif [ "$compilerName" = "roseAnalysis" ]
-then
-compilerName="g++"
-echo "Changed compilerName from roseAnalysis to $compilerName"
-fi
+# if [ "$compilerName" = "roseTranslator" ]
+# then
+# compilerName="g++"
+# echo "Changed compilerName from roseTranslator to $compilerName"
+# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+# echo "After change: compilerName   = $compilerName"
+# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+# elif [ "$compilerName" = "roseAnalysis" ]
+# then
+# compilerName="g++"
+# echo "Changed compilerName from roseAnalysis to $compilerName"
+# fi
 
 # we try to ensure that paths can be given, to enable using different versions of the same compiler
 if [ "$compilerBinDir" != "." ]
@@ -172,15 +185,15 @@ targetDirParent="`dirname "$targetDir"`"
 targetDirBase="`basename "$targetDir"`"
 mainTargetDir="`cd \"$targetDirParent\" 2>/dev/null && pwd || echo \"$targetDirParent\"`/$targetDirBase"
 
-# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-# echo "Now these should be set ..."
-# echo "targetDir =  $targetDir"
-# echo "targetDirParent =  $targetDirParent"
-# echo "targetDirBase =  $targetDirBase"
-# echo "mainTargetDir =  $mainTargetDir"
-# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "Now these should be set ..."
+echo "targetDir =  $targetDir"
+echo "targetDirParent =  $targetDirParent"
+echo "targetDirBase =  $targetDirBase"
+echo "mainTargetDir =  $mainTargetDir"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 
-is_C_compiler="no"
+# is_C_compiler="no"
 
 #AS moved the mkdir of $mainTargetDir here because the ICC and gcc case need it below
 # we will first ensure that targetDirName exists
@@ -197,70 +210,54 @@ then
    exit 1
 fi
 
+# Comment this out for debugging
+# if true; then
+# DQ (2/1/2016): Simplify the logic to avoid use of the backend compiler name.
+if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
 
-# no src dir specified, try to determine automatically based on compiler name
- case "$compilerName" in
-  # Support for compiling ROSE with GNU g++ compiler
-  # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|roseTranslator)
-  # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++)
-  # g++*|gcc*|cc*|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++)
-    g++*|gcc*|cc*|icpc|mpiicpc|icc|mpiicc|mpicc|mpic++|mpiCC|mpicxx|c++|xt-xcc|xt-xc++|clang|clang++|clang-*|clang++-*)
-         case "$compilerName" in
-         # gcc*|cc*|icc|mpicc|xt-xcc)
-           gcc*|cc*|icc|mpicc|mpiicc|xt-xcc)
-              is_C_compiler="yes"
-              language="c"
-              ;;
-           *)
-              language="c++"
-              ;;
-          esac
+       echo "In create system headers: this is processing C or C++: language = $language"
 
-       # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
-         tmpFile="`mktemp -t roseconfigtempXXXXXXXXXX`"
-         "$1" -E -dM -x $language /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
-         sed "/REPLACE_ME_WITH_MACRO_DEFINITIONS/r$tmpFile" < "$roseHome/config/rose_edg_required_macros_and_functions.h.in" > "$mainTargetDir/rose_edg_required_macros_and_functions.h"
+     # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
+       tmpFile="`mktemp -t roseconfigtempXXXXXXXXXX`"
+       "$1" -E -dM -x $language /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
+       sed "/REPLACE_ME_WITH_MACRO_DEFINITIONS/r$tmpFile" < "$roseHome/config/rose_edg_required_macros_and_functions.h.in" > "$mainTargetDir/rose_edg_required_macros_and_functions.h"
 
-         echo "******************************************************"
-         echo "******************************************************"
-         cat "$tmpFile"
-         echo "******************************************************"
-         echo "******************************************************"
-       # echo "Modified rose_edg_required_macros_and_functions.h file"
-       # cat "$mainTargetDir/rose_edg_required_macros_and_functions.h"
-       # echo "******************************************************"
-       # echo "******************************************************"
+       echo "******************************************************"
+       echo "******************************************************"
+       cat "$tmpFile"
+       echo "******************************************************"
+       echo "******************************************************"
+     # echo "Modified rose_edg_required_macros_and_functions.h file"
+     # cat "$mainTargetDir/rose_edg_required_macros_and_functions.h"
+     # echo "******************************************************"
+     # echo "******************************************************"
 
-         rm "$tmpFile"
+       rm "$tmpFile"
 
-       # echo "PREPROCESSOR_DEFS = $PREPROCESSOR_DEFS"
-         echo "Generating  $mainTargetDir/rose_edg_required_macros_and_functions.h"
-
-       # echo "Exiting as a test!"
-       # exit 1
-
-         ;;
-
-  # Support for compiling ROSE with ROSE (must use translator named: "roseTranslator"
-  # DQ (8/22/2009): Commented this out so that support would be the same as for g++ (ROSE acts like g++ by default)
-  #  roseTranslator)
-  #       compilerName="g++"
-  #       echo "Note: changing compilerName configure variable from \"roseTranslator\" to $compilerName"
-  #       ;;
-    *) echo "ERROR: Not able to recognize compiler $1"
-       echo "ERROR: Usage is create_system_headers compiler target_dir src_dir"
+     # echo "PREPROCESSOR_DEFS = $PREPROCESSOR_DEFS"
+       echo "Generating  $mainTargetDir/rose_edg_required_macros_and_functions.h"
+else
+       echo "ERROR: Usage is create_system_headers compiler target_dir src_dir language"
        exit 1
-       ;;
- esac
+fi
+# fi
 
 # echo "local script variable compilerHeadersDirCmd = $compilerHeadersDirCmd"
 # echo "Building separate header directories"
 
+# DQ (2/2/2016): Debugging new compiler vendor detection.
+# echo "shell script to be run next: $roseHome/config/get_compiler_header_dirs"
+
+echo "Calling get_compiler_header_dirs"
+echo "status $?"
+
+# DQ (2/2/2016): When the shell script returns an error we don't catch it.
 iDir=0
-sh "$roseHome/config/get_compiler_header_dirs" "$1" | while read dirName
+# sh "$roseHome/config/get_compiler_header_dirs" "$1" | while read dirName
+sh "$roseHome/config/get_compiler_header_dirs" "$1" "$language" "$compilerVendorName" | while read dirName
    do
-         iDir=`expr "$iDir" + 1 `
-        echo "processing header file directory $dirName to be mapped to $mainTargetDir/hdrs${iDir}"
+        iDir=`expr "$iDir" + 1 `
+        echo "processing header file compiler name = $1 directory = $dirName to be mapped to $mainTargetDir/hdrs${iDir} roseHome = $roseHome compilerVendorName = $compilerVendorName"
 
       # DQ (1/14/2007): Added "&" so that this would happen in parallel (to improve performance of configure on multi-core machines). 
       # JJW (7/18/2008): Commented it out because the process does not take too
@@ -268,6 +265,13 @@ sh "$roseHome/config/get_compiler_header_dirs" "$1" | while read dirName
       # you try Ctrl-C when configure is running
         process_headers "$1" "$dirName" "$mainTargetDir/hdrs${iDir}" "$roseHome" # &
    done
+
+if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+    echo "get_compiler_header_dirs failed"
+    exit 1
+fi
+
+echo "DONE: Calling get_compiler_header_dirs: status $?"
 
 # DQ (1/14/2007): It is not required to wait until the calls to process_headers complete
 # wait
@@ -282,7 +286,11 @@ sh "$roseHome/config/get_compiler_header_dirs" "$1" | while read dirName
 # DQ (1/14/2007): The variable target_parent_dir is not set in this shell procedure, so it causes an error.
 system_headers_directory="$mainTargetDir/hdrs"
 echo "system_headers_directory = $system_headers_directory should be used instead of target_parent_dir = $target_parent_dir"
+
+echo "building the sys directory"
 mkdir -p "$system_headers_directory/sys"
+echo "DONE: building the sys directory"
+echo "status $?"
 
 
 ###### Fixups for cdefs.h
@@ -326,7 +334,8 @@ fi
 
 
 
-if [ is_C_compiler = "yes" ]
+# if [ is_C_compiler = "yes" ]
+if [ "x$language" = "xc" ]
 then
     echo "We are handling C compiler specific details, so copy the ROSE specific fix for complex.h to $system_headers_directory" >&2
     cp "$roseHome/config/rose_specific_complex.h" "$system_headers_directory/complex.h"
@@ -338,4 +347,6 @@ if test $error_code != 0; then
      exit 1
 fi
 
-# echo "Leaving script for processing header files"
+echo "status $?"
+echo "Leaving script for processing header files: create_system_headers"
+echo "status $?"
