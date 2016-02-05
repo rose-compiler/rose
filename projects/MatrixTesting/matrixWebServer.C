@@ -36,7 +36,7 @@ static Sawyer::Message::Facility mlog;
 
 static const char* WILD_CARD_STR = "*";
 enum ChartType { BAR_CHART, LINE_CHART };
-enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO, CVT_WARNINGS_AVE };
+enum ChartValueType { CVT_COUNT, CVT_PERCENT, CVT_PASS_RATIO, CVT_WARNINGS_AVE, CVT_DURATION_AVE };
 static int END_STATUS_POSITION = 999;                   // test_names.position where name = 'end'
 
 typedef Sawyer::Container::Map<std::string, int> StringIndex;
@@ -264,6 +264,47 @@ humanDepValue(const std::string &depName, const std::string &depValue, HumanForm
     return depValue;
 }
 
+// Clip val to be in the interval [minVal,maxVal]
+template<typename T>
+static T
+clip(T val, T minVal, T maxVal) {
+    return std::min(std::max(minVal, val), maxVal);
+}
+
+// Returns a CSS class name "redgreen-X-Y" where X is an integer in [0,100] depending on where val falls in the interval
+// [minVal,maxVal] and Y is an integer in the range [0,4] based on how many samples are present.
+static Wt::WString
+redToGreen(double val, double minVal, double maxVal, int nSamples=4) {
+    int fade = std::min((int)round(nSamples), 4);
+    if (0 == nSamples) {
+        return Wt::WString("chart-zero");
+    } else if (maxVal - minVal < 1.0) {
+        return Wt::WString("redgreen-50-" + StringUtility::numberToString(fade));
+    } else {
+        val = clip(val, minVal, maxVal);
+        int percentile = round(100.0 * (val - minVal) / (maxVal - minVal));
+        return Wt::WString("redgreen-" + StringUtility::numberToString(percentile) +
+                           "-" + StringUtility::numberToString(fade));
+    }
+}
+
+// Returns a CSS class name "redgreen-X-Y" where X is an integer in [100,0] depending on where val falls in the interval
+// [minVal,maxVal] and Y is an integer in the range [0,4] based on how many samples are present.
+static Wt::WString
+greenToRed(double val, double minVal, double maxVal, int nSamples=4) {
+    int fade = std::min((int)round(nSamples), 4);
+    if (0 == nSamples) {
+        return Wt::WString("chart-zero");
+    } else if (maxVal - minVal < 1.0) {
+        return Wt::WString("redgreen-50-" + StringUtility::numberToString(fade));
+    } else {
+        val = clip(val, minVal, maxVal);
+        int percentile = round(100.0 * (maxVal - val) / (maxVal - minVal));
+        return Wt::WString("redgreen-" + StringUtility::numberToString(percentile) +
+                           "-" + StringUtility::numberToString(fade));
+    }
+}
+    
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Model of test results.  This is a two dimensional table. The rows of the table correspond to values of the major dependency
 // and the columns of the table correspond to values of the minor dependency.  If the minor dependency name is the empty string
@@ -281,11 +322,15 @@ private:
     typedef std::vector<double> TableRow;
     typedef std::vector<TableRow> Table;
     Table counts_;                                      // counts of matching rows
+    double minCounts_, maxCounts_;                      // min/max values in counts_ (excluding zeros)
     Table passes_;                                      // portion of counts_ where pass_fail = 'passed'
-    Table aveWarnings_;                                 // average number of compiler warnings for matching tests
-    double minAveWarnings_, maxAveWarnings_;            // min/max value in aveWarnings
+    Table aveWarnings_;                                 // average number of compiler warnings per run
+    double minAveWarnings_, maxAveWarnings_;            // min/max value in aveWarnings_
+    Table aveDuration_;                                 // average wall-clock duration per run
+    double minAveDuration_, maxAveDuration_;            // min/max value in aveDuration_
     ChartValueType chartValueType_;                     // whether to show counts, percents, or pass ratios
     bool roundToInteger_;                               // round cell values to nearest integer
+    bool humanReadable_;                                // return data as human-radable strings instead of doubles
 
     std::string depMajorName_;                          // dependency for major axis
     std::vector<std::string> depMajorValues_;           // human-format values of major dependency
@@ -299,7 +344,7 @@ private:
     
 public:
     explicit StatusModel(Wt::WObject *parent = NULL)
-        : Wt::WAbstractTableModel(parent), chartValueType_(CVT_COUNT), roundToInteger_(false),
+        : Wt::WAbstractTableModel(parent), chartValueType_(CVT_COUNT), roundToInteger_(false), humanReadable_(false),
           depMajorName_("rose_date"), depMajorIsData_(false), depMinorName_("pass/fail"), depMinorIsData_(false) {}
 
     const std::string& depMajorName() const {
@@ -350,6 +395,14 @@ public:
         roundToInteger_ = b;
     }
 
+    bool humanReadable() const {
+        return humanReadable_;
+    }
+
+    void setHumanReadable(bool b) {
+        humanReadable_ = b;
+    }
+
     const std::string depMajorValue(size_t modelRow) {
         size_t i = modelRow - (depMinorIsData_ ? 1 : 0);
         return i < depMajorValues_.size() ? depMajorValues_[i] : std::string();
@@ -365,9 +418,13 @@ public:
         updateDepMajor(deps);
         updateDepMinor(deps);
         resetTable(counts_);
+        minCounts_ = maxCounts_ = 0.0;
         resetTable(passes_);
         resetTable(aveWarnings_);
         minAveWarnings_ = maxAveWarnings_ = 0.0;
+        resetTable(aveDuration_);
+        minAveDuration_ = maxAveDuration_ = 0.0;
+        
         if (counts_.empty())
             return modelReset().emit();
 
@@ -382,7 +439,8 @@ public:
                           depMinorColumn + ", " +       // 1
                           passFailColumn + " as pf, "   // 2
                           "count(*), " +                // 3
-                          "sum(nwarnings)" +            // 4
+                          "sum(nwarnings)," +           // 4
+                          "sum(duration)" +             // 5
                           sqlFromClause() +
                           sqlWhereClause(deps, args /*out*/) +
                           " group by " + depMajorColumn + ", " + depMinorColumn + ", pf";
@@ -397,29 +455,38 @@ public:
             std::string pf = row.get<std::string>(2);
             int count = row.get<int>(3);
             double nwarn = row.get<int>(4);
+            double duration = row.get<int>(5);
 
             int i = depMajorIndex_.getOrElse(majorValue, -1);
             int j = depMinorIndex_.getOrElse(minorValue, -1);
             if (i >= 0 && j >= 0) {
                 counts_[i][j] += count;
-                aveWarnings_[i][j] += nwarn;            // adjusted below
+                aveWarnings_[i][j] += nwarn;            // sum here; adjusted below
+                aveDuration_[i][j] += duration;         // sum here; adjusted below
                 if (pf == "pass")
                     passes_[i][j] += count;
             }
         }
 
-        // Adjust aveWarnings to be averages instead of sums
+        // Adjust aveWarnings and aveDuration to be averages instead of sums
         {
             int n = 0;
             for (size_t i=0; i<aveWarnings_.size(); ++i) {
                 for (size_t j=0; j<aveWarnings_[i].size(); ++j) {
                     if (counts_[i][j] > 0) {
                         aveWarnings_[i][j] /= counts_[i][j];
+                        aveDuration_[i][j] /= counts_[i][j];
                         if (0 == n++) {
+                            minCounts_ = maxCounts_ = counts_[i][j];
                             minAveWarnings_ = maxAveWarnings_ = aveWarnings_[i][j];
+                            minAveDuration_ = maxAveDuration_ = aveDuration_[i][j];
                         } else {
+                            minCounts_      = std::min(minCounts_,      counts_[i][j]);
+                            maxCounts_      = std::max(maxCounts_,      counts_[i][j]);
                             minAveWarnings_ = std::min(minAveWarnings_, aveWarnings_[i][j]);
                             maxAveWarnings_ = std::max(maxAveWarnings_, aveWarnings_[i][j]);
+                            minAveDuration_ = std::min(minAveDuration_, aveDuration_[i][j]);
+                            maxAveDuration_ = std::max(maxAveDuration_, aveDuration_[i][j]);
                         }
                     }
                 }
@@ -495,33 +562,36 @@ public:
                 return roundToInteger_ ? round(percent) : percent;
             } else if (CVT_WARNINGS_AVE == chartValueType_) {// average number of warnings per test
                 return roundToInteger_ ? round(aveWarnings_[i][j]) : aveWarnings_[i][j];
+            } else if (CVT_DURATION_AVE == chartValueType_) {// average run duration per test in seconds
+                if (humanReadable_)
+                    return humanDuration(aveDuration_[i][j], HUMAN_TERSE);
+                return roundToInteger_ ? round(aveDuration_[i][j]) : aveDuration_[i][j];
             } else {                                    // raw counts
                 return counts_[i][j];
             }
 
         } else if (Wt::StyleClassRole == role) {
-            if (i >= 0 && j >= 0 && CVT_PASS_RATIO == chartValueType_) {
-                if (counts_[i][j] == 0) {
-                    return Wt::WString("chart-zero");
-                } else {
-                    int pfratio = round(100.0 * passes_[i][j] / counts_[i][j]);
-                    int fade = std::min((int)round(counts_[i][j]), 4);
-                    return Wt::WString("redgreen-" + StringUtility::numberToString(pfratio) +
-                                       "-" + StringUtility::numberToString(fade));
-                }
-            } else if (i >= 0 && j >= 0 && CVT_WARNINGS_AVE == chartValueType_) {
-                if (counts_[i][j] == 0) {
-                    return Wt::WString("chart-zero");
-                } else if (maxAveWarnings_ - minAveWarnings_ < 1.0) {
-                    int fade = std::min((int)round(counts_[i][j]), 4);
-                    return Wt::WString("redgreen-50-" + StringUtility::numberToString(fade));
-                } else {
-                    // percentile is an integer in [0,100] where 0 corresponds to the least possible number of warnings and 100
-                    // corresponds to the maximum number of warnings.
-                    int percentile = round(100.0 * (maxAveWarnings_ - aveWarnings_[i][j]) / (maxAveWarnings_ - minAveWarnings_));
-                    int fade = std::min((int)round(counts_[i][j]), 4);
-                    return Wt::WString("redgreen-" + StringUtility::numberToString(percentile) +
-                                       "-" + StringUtility::numberToString(fade));
+            if (i >= 0 && j >= 0) {
+                switch (chartValueType_) {
+                    case CVT_COUNT:
+                        return redToGreen(counts_[i][j], minCounts_, maxCounts_);
+                    case CVT_PERCENT: {
+                        double rowTotal = 0;
+                        BOOST_FOREACH (double count, counts_[i])
+                            rowTotal += count;
+                        double percent = rowTotal > 0 ? 100.0 * counts_[i][j] / rowTotal : 0.0;
+                        return redToGreen(percent, 0.0, 100.0);
+                    }
+                    case CVT_PASS_RATIO: {
+                        double pfratio = 0.0;
+                        if (counts_[i][j] > 0)
+                            pfratio = passes_[i][j] / counts_[i][j];
+                        return redToGreen(pfratio, 0.0, 1.0, counts_[i][j]);
+                    }
+                    case CVT_WARNINGS_AVE:
+                        return greenToRed(aveWarnings_[i][j], minAveWarnings_, maxAveWarnings_, counts_[i][j]);
+                    case CVT_DURATION_AVE:
+                        return greenToRed(aveDuration_[i][j], minAveDuration_, maxAveDuration_, counts_[i][j]);
                 }
             }
         }
@@ -720,6 +790,7 @@ public:
                 case CVT_COUNT:
                 case CVT_PASS_RATIO:
                 case CVT_WARNINGS_AVE:
+                case CVT_DURATION_AVE:
                     axis(Wt::Chart::YAxis).setAutoLimits(Wt::Chart::MaximumValue);
                     break;
                 case CVT_PERCENT:
@@ -875,6 +946,7 @@ public:
         tableModel_ = new StatusModel;
         tableModel_->setDepMajorIsData(true);
         tableModel_->setRoundToInteger(true);
+        tableModel_->setHumanReadable(true);
         tableView_ = new Wt::WTableView;
         tableView_->setModel(tableModel_);
         tableView_->setAlternatingRowColors(false);         // true interferes with our custom background colors
@@ -918,10 +990,11 @@ public:
 
         // Combo box to choose whether the model stores percents or counts
         chartSettingsBox->addWidget(absoluteRelative_ = new Wt::WComboBox);
-        absoluteRelative_->addItem("num-tests");
-        absoluteRelative_->addItem("num-tests(%)");
-        absoluteRelative_->addItem("pass-ratio");
-        absoluteRelative_->addItem("ave-warnings");
+        absoluteRelative_->addItem("runs (#)");
+        absoluteRelative_->addItem("runs (%)");
+        absoluteRelative_->addItem("pass / runs (%)");
+        absoluteRelative_->addItem("ave warnings (#)");
+        absoluteRelative_->addItem("ave duration (sec)");
         absoluteRelative_->activated().connect(this, &WResultsConstraintsTab::switchAbsoluteRelative);
 
         // Update button to reload data from the database
@@ -997,6 +1070,7 @@ private:
             case 1: cvt = CVT_PERCENT; break;
             case 2: cvt = CVT_PASS_RATIO; break;
             case 3: cvt = CVT_WARNINGS_AVE; break;
+            case 4: cvt = CVT_DURATION_AVE; break;
             default: ASSERT_not_reachable("invalid chart value type");
         }
 
