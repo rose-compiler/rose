@@ -1089,7 +1089,7 @@ class WDetails: public Wt::WContainerWidget {
     Wt::WComboBox *testIdChoices_;
     int testId_;
     Wt::Signal<> testIdChanged_;
-    Wt::WText *config_, *commands_, *testOutput_;
+    Wt::WText *error_, *config_, *commands_, *testOutput_;
 
 public:
     explicit WDetails(Wt::WContainerWidget *parent = NULL)
@@ -1105,6 +1105,10 @@ public:
         choiceBox->addWidget(testIdChoices_);
         choiceBox->addStretch(1);
         vbox->addLayout(choiceBox);
+
+        // Error message cached in database test_results.first_error
+        vbox->addWidget(error_ = new Wt::WText);
+        error_->setStyleClass("compiler-error");
 
         // Configuration
         vbox->addWidget(new Wt::WText("<h2>Detailed status</h2>"));
@@ -1174,6 +1178,7 @@ public:
         std::string sql;
         BOOST_FOREACH (const std::string &colName, columns.values())
             sql += std::string(sql.empty()?"select ":", ") + colName;
+        sql += ", coalesce(first_error,'')";
 
         sql += sqlFromClause();
         std::vector<std::string> args;
@@ -1183,16 +1188,18 @@ public:
         sql += where;
 
         config_->setText("");
-        std::string config;
+        std::string config, first_error;
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
         bindSqlVariables(q, args);
         for (SqlDatabase::Statement::iterator row = q->begin(); row != q->end(); ++row) {
             int column = 0;
             BOOST_FOREACH (const std::string &name, columns.keys())
                 config += name + "=" + humanDepValue(name, row.get<std::string>(column++)) + "\n";
+            first_error = row.get<std::string>(columns.size());
             break;
         }
         config_->setText(config);
+        error_->setText(first_error);
 
         updateCommands();
         updateOutput();
