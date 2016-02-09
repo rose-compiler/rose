@@ -169,8 +169,10 @@ RegisterStateX86::zero()
 }
 
 SValuePtr
-RegisterStateX86::readRegister(const RegisterDescriptor &reg, RiscOperators *ops)
+RegisterStateX86::readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops)
 {
+    // "dflt" is not used because this state doesn't distinguish between registers that have never been accessed and registers
+    // that have only been read; all registers were initialized with some value when the state was created.
     switch (reg.get_major()) {
         case x86_regclass_gpr:
             return readRegisterGpr(reg, ops);
@@ -647,10 +649,11 @@ State::clear_memory() {
 }
 
 SValuePtr
-State::readRegister(const RegisterDescriptor &desc, RiscOperators *ops) {
+State::readRegister(const RegisterDescriptor &desc, const SValuePtr &dflt, RiscOperators *ops) {
     ASSERT_require(desc.is_valid());
+    ASSERT_not_null(dflt);
     ASSERT_not_null(ops);
-    return registers_->readRegister(desc, ops);
+    return registers_->readRegister(desc, dflt, ops);
 }
 
 void
@@ -934,6 +937,18 @@ RiscOperators::fpRoundTowardZero(const SValuePtr &a, SgAsmFloatType *aType) {
     throw NotImplemented("fpRoundTowardZero is not implemented", currentInstruction());
 }
 
+SValuePtr
+RiscOperators::readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt_) {
+    SValuePtr dflt = dflt_;
+    ASSERT_not_null(currentState_);
+    ASSERT_not_null(dflt);
+
+    // If there's an lazily-updated initial state, then get its register, updating the initial state as a side effect.
+    if (initialState_)
+        dflt = initialState()->readRegister(reg, dflt, this);
+
+    return currentState_->readRegister(reg, dflt, this);
+}
 
 /*******************************************************************************************************************************
  *                                      Dispatcher

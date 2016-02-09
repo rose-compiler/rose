@@ -8,7 +8,7 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
-/** Smart pointer to a MemoryCell object.  MemoryCell objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to a semantic memory cell. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryCell> MemoryCellPtr;
 
 /** Represents one location in memory.

@@ -54,7 +54,7 @@ typedef std::set<SgAsmInstruction*> InsnSet;
 //                                      Merging symbolic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to merge control object. */
+/** Shared-ownership pointer for a merge control object. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class Merger> MergerPtr;
 
 /** Controls merging of symbolic values. */
@@ -64,7 +64,7 @@ protected:
     Merger(): BaseSemantics::Merger(), setSizeLimit_(1) {}
 
 public:
-    /** Shared-ownership pointer to merge control object. */
+    /** Shared-ownership pointer for a @ref Merger object. See @ref heap_object_shared_ownership. */
     typedef MergerPtr Ptr;
 
     /** Allocating constructor. */
@@ -101,7 +101,7 @@ public:
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer for symbolic semantic value. See @ref heap_object_shared_ownership. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Formatter for symbolic values. */
@@ -399,9 +399,7 @@ typedef BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
 //                                      List-based Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a MemoryListState object.
- *
- *  MemoryListState objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer for symbolic list-based memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryListState> MemoryListStatePtr;
 
 /** Byte-addressable memory.
@@ -566,9 +564,7 @@ public:
 //                                      Map-based Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart pointer to a MemoryMapState object.
- *
- *  MemoryMapState objects are reference counted and should not be explicitly deleted. */
+/** Shared-ownership pointer to symbolic memory state. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class MemoryMapState> MemoryMapStatePtr;
 
 /** Byte-addressable memory.
@@ -693,8 +689,7 @@ enum DefinersMode {
     TRACK_ALL_DEFINERS                                  /**< Save all definers. */
 };
 
-/** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
- *  deleted. */
+/** Shared-ownership pointer to symbolic RISC operations. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for the SymbolicSemantics domain.
@@ -1077,7 +1072,8 @@ public:
                                                     const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
                                                 const BaseSemantics::SValuePtr &addr,

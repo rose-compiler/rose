@@ -221,7 +221,7 @@ public:
     CharacterEncodingForm(): state_(INITIAL_STATE) {}
     virtual ~CharacterEncodingForm() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref CharacterEncodingForm. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<CharacterEncodingForm> Ptr;
 
     /** Create a new encoder from this one. */
@@ -261,7 +261,9 @@ class NoopCharacterEncodingForm: public CharacterEncodingForm {
 protected:
     NoopCharacterEncodingForm(): cp_(0) {}
 public:
+    /** Shared-ownership pointer to a @ref NoopCharacterEncodingFormat. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<NoopCharacterEncodingForm> Ptr;
+
     static Ptr instance() { return Ptr(new NoopCharacterEncodingForm); }
     virtual CharacterEncodingForm::Ptr clone() const ROSE_OVERRIDE { return Ptr(new NoopCharacterEncodingForm(*this)); }
     virtual std::string name() const ROSE_OVERRIDE { return "no-op"; }
@@ -282,7 +284,9 @@ class Utf8CharacterEncodingForm: public CharacterEncodingForm {
 protected:
     Utf8CharacterEncodingForm(): cp_(0) {}
 public:
+    /** Shared-ownership pointer to a @ref Utf8CharacterEncodingForm. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<Utf8CharacterEncodingForm> Ptr;
+
     static Ptr instance() { return Ptr(new Utf8CharacterEncodingForm); }
     virtual CharacterEncodingForm::Ptr clone() const ROSE_OVERRIDE { return Ptr(new Utf8CharacterEncodingForm(*this)); }
     virtual std::string name() const ROSE_OVERRIDE { return "UTF-8"; }
@@ -303,7 +307,9 @@ class Utf16CharacterEncodingForm: public CharacterEncodingForm {
 protected:
     Utf16CharacterEncodingForm(): cp_(0) {}
 public:
+    /** Shared-ownership pointer to a @ref Utf16CharacterEncodingForm. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<Utf16CharacterEncodingForm> Ptr;
+
     static Ptr instance() { return Ptr(new Utf16CharacterEncodingForm); }
     virtual CharacterEncodingForm::Ptr clone() const ROSE_OVERRIDE { return Ptr(new Utf16CharacterEncodingForm(*this)); }
     virtual std::string name() const ROSE_OVERRIDE { return "UTF-16"; }
@@ -328,7 +334,7 @@ public:
     CharacterEncodingScheme(): state_(INITIAL_STATE) {}
     virtual ~CharacterEncodingScheme() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref CharacterEncodingScheme. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<CharacterEncodingScheme> Ptr;
 
     /** Create a new copy of this encoder. */
@@ -403,7 +409,7 @@ public:
     LengthEncodingScheme(): state_(INITIAL_STATE) {}
     virtual ~LengthEncodingScheme() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref LengthEncodingScheme. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<LengthEncodingScheme> Ptr;
 
     /** Create a new copy of this encoder. */
@@ -473,7 +479,7 @@ class CodePointPredicate: public Sawyer::SharedObject {
 public:
     virtual ~CodePointPredicate() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref CodePointPredicate. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<CodePointPredicate> Ptr;
 
     /** Name of predicate. */
@@ -539,7 +545,7 @@ protected:
 public:
     virtual ~StringEncodingScheme() {}
 
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref StringEncodingScheme. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<StringEncodingScheme> Ptr;
 
     /** Name of encoding */
@@ -624,7 +630,7 @@ protected:
                         const CharacterEncodingScheme::Ptr &ces, const CodePointPredicate::Ptr &cpp)
         : StringEncodingScheme(cef, ces, cpp), les_(les) {}
 public:
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref LengthEncodedString. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<LengthEncodedString> Ptr;
 
     static Ptr instance(const LengthEncodingScheme::Ptr &les, const CharacterEncodingForm::Ptr &cef,
@@ -689,7 +695,7 @@ protected:
                      const CodePointPredicate::Ptr &cpp, const CodePoints &terminators)
         : StringEncodingScheme(cef, ces, cpp), terminators_(terminators) {}
 public:
-    /** Shared ownership pointer. */
+    /** Shared ownership pointer to a @ref TerminatedString. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<TerminatedString> Ptr;
 
     static Ptr instance(const CharacterEncodingForm::Ptr &cef, const CharacterEncodingScheme::Ptr &ces,

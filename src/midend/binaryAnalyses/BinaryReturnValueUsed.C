@@ -119,7 +119,9 @@ public:
     virtual void zero()ROSE_OVERRIDE {
         wroteValue_ = readUninitialized_ = false;
     }
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg, BaseSemantics::RiscOperators*)ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt,
+                                                  BaseSemantics::RiscOperators*) ROSE_OVERRIDE {
         if (reg.get_major()==x86_regclass_gpr && reg.get_minor()==x86_gpr_ax && !wroteValue_)
             readUninitialized_ = true;
         return protoval()->undefined_(reg.get_nbits());

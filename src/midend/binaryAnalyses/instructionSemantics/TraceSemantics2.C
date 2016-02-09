@@ -1149,11 +1149,11 @@ RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatTy
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &a)
+RiscOperators::readRegister(const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b)
 {
-    before("readRegister", a);
+    before("readRegister", a, b);
     try {
-        return check_width(after(subdomain_->readRegister(a)), a.get_nbits());
+        return check_width(after(subdomain_->readRegister(a, b)), a.get_nbits());
     } catch (const BaseSemantics::Exception &e) {
         after(e);
         throw;

@@ -49,7 +49,7 @@ struct DataFlowEdge {
  *  abstract location to another.  The edges are numbered in the order they were added. */
 typedef Sawyer::Container::Graph<AbstractLocation, DataFlowEdge> DataFlowGraph;
 
-/** Shared pointer for dataflow RISC operators. */
+/** Shared-ownership pointer for dataflow RISC operators. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Dataflow RISC operators.
@@ -154,7 +154,8 @@ private:
     // behave differently.  When reading, they return the set of abstract locations that were read (either a register or the
     // address for the bytes of memory); when writing they add vertices and edges to the dataflow graph.
 public:
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
 
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
 

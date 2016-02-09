@@ -6344,7 +6344,7 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
   // This function is used in both the unparseOneElemConInit() and unparseConInit() functions.
 
   // Note that the g++ compiler might not be named "g++", it is not clear how to handle this case.
-     string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+  // string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
 
      bool usingGxx = false;
      #ifdef USE_CMAKE
@@ -6352,7 +6352,11 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
          usingGxx = true;
        #endif
      #else
-       usingGxx = (backEndCompiler == "g++");
+    // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
+    // usingGxx = (backEndCompiler == "g++");
+       #if BACKEND_CXX_IS_GNU_COMPILER
+          usingGxx = true;
+       #endif
      #endif
 
      if (usingGxx)

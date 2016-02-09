@@ -615,7 +615,8 @@ processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::Dispat
     
     // Update the path constraint "register"
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
-    BaseSemantics::SValuePtr ip = ops->readRegister(cpu->instructionPointerRegister());
+    RegisterDescriptor IP = cpu->instructionPointerRegister();
+    BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.get_nbits()));
     BaseSemantics::SValuePtr va = ops->number_(ip->get_width(), bblock->address());
     BaseSemantics::SValuePtr pathConstraint = ops->isEqual(ip, va);
     ops->writeRegister(REG_PATH, pathConstraint);
@@ -659,7 +660,8 @@ processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &pathsVer
     ops->writeRegister(REG_RETURN, retval);
 
     // Cause the function to return to the address stored at the top of the stack.
-    BaseSemantics::SValuePtr stackPointer = ops->readRegister(cpu->stackPointerRegister());
+    RegisterDescriptor SP = cpu->stackPointerRegister();
+    BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.get_nbits()));
     BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
                                                             ops->undefined_(stackPointer->get_width()), ops->boolean_(true));
     ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
@@ -865,7 +867,7 @@ public:
         }
         if (token.width2() != 0)
             throw token.syntaxError("register width must be scalar");
-        BaseSemantics::SValuePtr regValue = regState->readRegister(*regp, ops_.get());
+        BaseSemantics::SValuePtr regValue = regState->readRegister(*regp, ops_->undefined_(regp->get_nbits()), ops_.get());
         return SymbolicSemantics::SValue::promote(regValue)->get_expression();
     }
 };
@@ -971,7 +973,8 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
     size_t pathInsnIndex = 0;
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, path.edges()) {
         processVertex(cpu, pathEdge->source(), pathInsnIndex /*in,out*/);
-        BaseSemantics::SValuePtr ip = ops->readRegister(partitioner.instructionProvider().instructionPointerRegister());
+        RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
+        BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.get_nbits()));
         if (ip->is_number()) {
             ASSERT_require(hasVirtualAddress(pathEdge->target()));
             if (ip->get_number() != virtualAddress(pathEdge->target())) {
@@ -1323,7 +1326,8 @@ singleThreadBfsWorker(BfsContext *ctx) {
 
         // If this edge's incoming instruction pointer is concrete and is not equal to this edge's address then we already know
         // that this path isn't feasible.
-        BaseSemantics::SValuePtr ip = ops->readRegister(cpu->instructionPointerRegister());
+        RegisterDescriptor IP = cpu->instructionPointerRegister();
+        BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.get_nbits()));
         if (!abandonPrefix && ip->is_number() &&
             pathsEdge->target()->value().type() != P2::V_INDETERMINATE && // has no address
             ip->get_number() != pathsEdge->target()->value().address()) {
@@ -1544,7 +1548,8 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
         return s2->clone();
 
     // The instruction pointer constraint to use values from s1, otherwise from s2.
-    SymbolicSemantics::SValuePtr s1Constraint = SymbolicSemantics::SValue::promote(s1->readRegister(REG_PATH, ops.get()));
+    SymbolicSemantics::SValuePtr s1Constraint =
+        SymbolicSemantics::SValue::promote(s1->readRegister(REG_PATH, ops->undefined_(REG_PATH.get_nbits()), ops.get()));
 
     Stream debug(PathFinder::mlog[DEBUG]);
     if (debug) {
@@ -1563,9 +1568,10 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &pair, s2reg->get_stored_registers()) {
         if (s1reg->is_partly_stored(pair.desc)) {
             // The register exists (at least partly) in both states, so merge its values.
-            BaseSemantics::SValuePtr mergedVal = ops->ite(s1Constraint,
-                                                          s1->readRegister(pair.desc, ops.get()),
-                                                          s2->readRegister(pair.desc, ops.get()));
+            BaseSemantics::SValuePtr mergedVal =
+                ops->ite(s1Constraint,
+                         s1->readRegister(pair.desc, ops->undefined_(pair.desc.get_nbits()), ops.get()),
+                         s2->readRegister(pair.desc, ops->undefined_(pair.desc.get_nbits()), ops.get()));
             mergedReg->writeRegister(pair.desc, mergedVal, ops.get());
         } else {
             // The register exists only in the s2 state, so copy it.
