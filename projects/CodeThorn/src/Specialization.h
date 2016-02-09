@@ -66,6 +66,10 @@ public:
     ss<<index;
     return ss.str();
   }
+  virtual AstAttribute::OwnershipPolicy
+    getOwnershipPolicy() const ROSE_OVERRIDE {
+    return CONTAINER_OWNERSHIP;
+  }
 };
 
 class ConstReporter {
