@@ -154,12 +154,24 @@ static void
 updateDatabase(const SqlDatabase::TransactionPtr &tx, const Settings &settings) {
     std::vector<std::string> args;
     SqlDatabase::StatementPtr q = tx->statement("update test_results test"
-                                                " set first_error = substring(att.content from '(?n)("
+                                                " set first_error = substring("
+#if 0 // [Robb Matzke 2016-02-08]
+                                                // Look at all output stored in the database (which is typically only the last
+                                                // few hundred lines of the complete output).
+                                                "att.content "
+#else
+                                                // This coalesce tries to find where a parallel make command failed and looks
+                                                // only at the following serial make, which is assumed to follow the parallel
+                                                // make.
+                                                "coalesce(substring(att.content from '(\\nmake: \\*\\*\\* \\[[-_a-zA-Z0-9]+\\] Error 1\n.+)'), att.content) "
+#endif
+                                                "from '(?n)("
                                                 //----- regular expressions begin -----
                                                 "\\merror: .+"
                                                 "|catastrophic error: *\\n.+"
                                                 "|^.* \\[err\\]: terminated after .+"
                                                 "|^.* \\[err\\]: command died with .+"
+                                                "|^.* \\[err\\]: +what\\(\\): .*"
                                                 //----- regular expressions end -----
                                                 ")')"
                                                 " from attachments att" +

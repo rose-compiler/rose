@@ -7,6 +7,7 @@ static Sawyer::Message::Facility mlog;
 
 #ifdef ROSE_USE_WT
 
+#include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
@@ -29,6 +30,7 @@ static Sawyer::Message::Facility mlog;
 #include <Wt/WPanel>
 #include <Wt/WPushButton>
 #include <Wt/WStackedWidget>
+#include <Wt/WTable>
 #include <Wt/WTableView>
 #include <Wt/WTabWidget>
 #include <Wt/WText>
@@ -133,6 +135,8 @@ sqlWhereClause(const Dependencies &deps, std::vector<std::string> &args) {
             }
         }
     }
+    if (where.empty())
+        where = " where true";
     return where;
 }
 
@@ -999,6 +1003,7 @@ public:
 
         // Update button to reload data from the database
         Wt::WPushButton *updateButton = new Wt::WPushButton("Update");
+        updateButton->setToolTip("Update chart with latest database changes.");
         updateButton->clicked().connect(this, &WResultsConstraintsTab::updateStatusCounts);
         chartSettingsBox->addWidget(updateButton);
 
@@ -1097,6 +1102,8 @@ public:
         Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
         setLayout(vbox);
 
+        vbox->addWidget(new Wt::WLabel("Details about the configurations selected in the \"Overview\" tab."));
+
         // Combo box to choose which test to display
         Wt::WHBoxLayout *choiceBox = new Wt::WHBoxLayout;
         choiceBox->addWidget(new Wt::WLabel("Configuration"));
@@ -1121,7 +1128,7 @@ public:
         vbox->addWidget(new Wt::WText("<h2>Commands executed</h2>"));
         commands_ = new Wt::WText;
         commands_->setTextFormat(Wt::XHTMLText);
-        config_->setWordWrap(true);
+        commands_->setWordWrap(true);
         vbox->addWidget(commands_);
 
         // Tests final output
@@ -1134,7 +1141,7 @@ public:
 
     void queryTestIds(const Dependencies &deps) {
         std::vector<std::string> args;
-        std::string sql = "select id, status " + sqlFromClause() + sqlWhereClause(deps, args) + " order by id";
+        std::string sql = "select id, status" + sqlFromClause() + sqlWhereClause(deps, args) + " order by id";
         SqlDatabase::StatementPtr q = gstate.tx->statement(sql);
         bindSqlVariables(q, args);
 
@@ -1182,8 +1189,7 @@ public:
 
         sql += sqlFromClause();
         std::vector<std::string> args;
-        std::string where = sqlWhereClause(deps, args);
-        where += std::string(where.empty() ? " where " : " and ") + "id = ?";
+        std::string where = sqlWhereClause(deps, args) + " and id = ?";
         args.push_back(boost::lexical_cast<std::string>(testId_));
         sql += where;
 
@@ -1310,6 +1316,117 @@ private:
     }
 };
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// For prioritizing errors to be fixed
+class WErrors: public Wt::WContainerWidget {
+    bool outOfDate_;                                    // need to query database again?
+    Wt::WTable *grid_;
+public:
+    explicit WErrors(Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent), outOfDate_(true) {
+        Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
+        setLayout(vbox);
+        vbox->addWidget(new Wt::WText("These are the most prevalent errors in the configurations selected in the "
+                                      "\"Overview\" tab. The information below each error is the list of "
+                                      "constraints, in addition to the \"Overview\" tab, which all the errors satisfy."));
+        vbox->addWidget(grid_ = new Wt::WTable);
+        grid_->setHeaderCount(1);
+
+        vbox->addStretch(1);
+    }
+
+    void changeConstraints() {
+        outOfDate_ = true;
+    }
+
+    // Update the error list if it's outdated
+    void updateErrorList(const Dependencies &deps) {
+        if (!outOfDate_)
+            return;
+        outOfDate_ = false;
+        std::vector<std::string> args;
+        std::string sql = "select count(*) as n, status, first_error" +
+                          sqlFromClause() +
+                          sqlWhereClause(deps, args) + " and first_error is not null"
+                          " group by status, first_error"
+                          " order by n desc"
+                          " limit 15";
+        SqlDatabase::StatementPtr q1 = gstate.tx->statement(sql);
+        bindSqlVariables(q1, args);
+
+        grid_->clear();
+        grid_->elementAt(0, 0)->addWidget(new Wt::WText("Count"));
+        grid_->elementAt(0, 1)->addWidget(new Wt::WText("Status"));
+        grid_->elementAt(0, 2)->addWidget(new Wt::WText("Error"));
+
+        grid_->columnAt(0)->setWidth(Wt::WLength(4.0, Wt::WLength::FontEm));
+        grid_->columnAt(1)->setWidth(Wt::WLength(6.0, Wt::WLength::FontEm));
+
+        Sawyer::Container::Map<std::string, std::string> statusCssClass;
+        int i = 1;
+        for (SqlDatabase::Statement::iterator iter1 = q1->begin(); iter1 != q1->end(); ++iter1) {
+            int nErrors = iter1.get<int>(0);
+            std::string status = iter1.get<std::string>(1);
+            std::string message = iter1.get<std::string>(2);
+            grid_->elementAt(i, 0)->addWidget(new Wt::WText(StringUtility::numberToString(nErrors)));
+            grid_->elementAt(i, 1)->addWidget(new Wt::WText(status));
+            grid_->elementAt(i, 2)->addWidget(new Wt::WText(message, Wt::PlainText));
+
+            grid_->elementAt(i, 0)->setRowSpan(2);
+            grid_->elementAt(i, 0)->setStyleClass("error-count-cell");
+            grid_->elementAt(i, 1)->setRowSpan(2);
+            if (!statusCssClass.exists(status))
+                statusCssClass.insert(status, "error-status-"+StringUtility::numberToString(statusCssClass.size()%8));
+            grid_->elementAt(i, 1)->setStyleClass(statusCssClass[status]);
+            grid_->elementAt(i, 2)->setStyleClass("error-message-cell");
+            ++i;
+
+            // Figure out the dependencies that are in common for all tests of this error
+            typedef Sawyer::Container::Map<std::string /*depname*/, std::string /*human*/> Dependencies;
+            Dependencies dependencies;
+            args.clear();
+            sql = "select distinct " + boost::join(gstate.dependencyNames.values(), ", ") +
+                  sqlFromClause() + sqlWhereClause(deps, args) + " and first_error = ?";
+            args.push_back(message);
+            SqlDatabase::StatementPtr q2 = gstate.tx->statement(sql);
+            bindSqlVariables(q2, args);
+            for (SqlDatabase::Statement::iterator iter2 = q2->begin(); iter2 != q2->end(); ++iter2) {
+                int colNumber = 0;
+                BOOST_FOREACH (const std::string &depname, gstate.dependencyNames.keys()) {
+                    std::string depval = humanDepValue(depname, iter2.get<std::string>(colNumber++), HUMAN_TERSE);
+                    if (!dependencies.exists(depname)) {
+                        dependencies.insert(depname, depval);
+                    } else if (dependencies[depname]!=depval) {
+                        dependencies[depname] = "";
+                    }
+                }
+            }
+
+            // Show dependencies that have the same value for all error, but for which the user has more than one choice of
+            // setting (well, two since the first item is always the wildcard).
+            std::vector<std::string> allSameDeps;
+            BOOST_FOREACH (const Dependencies::Node &node, dependencies.nodes()) {
+                if (node.value().empty())
+                    continue;                           // conflicting values found above
+                if (node.key() == "pass/fail" || node.key() == "status")
+                    continue;                           // not useful information
+                if (deps[node.key()].comboBox->count() <= 2)
+                    continue;                           // user had only one value choice (plus the wildcard)
+                if (deps[node.key()].comboBox->currentText().narrow() == node.value())
+                    continue;                           // this dependency is already constrained
+                allSameDeps.push_back(node.key() + "=" + node.value());
+            }
+            if (allSameDeps.empty())
+                allSameDeps.push_back("No additional constraints.");
+            grid_->elementAt(i, 2)->addWidget(new Wt::WText(boost::join(allSameDeps, ", ")));
+            grid_->elementAt(i, 2)->setStyleClass("error-dependencies-cell");
+            ++i;
+        }
+    }
+};
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global settings
 class WSettings: public Wt::WContainerWidget {
@@ -1366,6 +1483,7 @@ private:
 class WApplication: public Wt::WApplication {
     WResultsConstraintsTab *resultsConstraints_;
     WDetails *details_;
+    WErrors *errors_;
     WSettings *settings_;
     Wt::WTabWidget *tabs_;
 
@@ -1400,9 +1518,23 @@ public:
         }
         styleSheet().addRule(".chart-zero", "background-color:" + rose::Color::HSV(0, 0, 0.3).toHtml() + ";");
 
+        // Styles of error priority table cells
+        styleSheet().addRule(".error-count-cell", "border:1px solid black;");
+        styleSheet().addRule(".error-dependencies-cell", "border:1px solid black;");
+        styleSheet().addRule(".error-message-cell", "border:1px solid black; color:#680000; background-color:#ffc0c0;");
+        styleSheet().addRule(".error-status-0", "border:1px solid black; background-color:#d0aae0;");// light purple
+        styleSheet().addRule(".error-status-1", "border:1px solid black; background-color:#e1c2ba;");// light tomato
+        styleSheet().addRule(".error-status-2", "border:1px solid black; background-color:#aed5df;");// light cyan
+        styleSheet().addRule(".error-status-3", "border:1px solid black; background-color:#dfb9cd;");// light pink
+        styleSheet().addRule(".error-status-4", "border:1px solid black; background-color:#dfd5b8;");// light ochre
+        styleSheet().addRule(".error-status-5", "border:1px solid black; background-color:#bbc4df;");// light blue
+        styleSheet().addRule(".error-status-6", "border:1px solid black; background-color:#edc7d5;");// light rose
+        styleSheet().addRule(".error-status-7", "border:1px solid black; background-color:#bebadf;");// light purple
+
         tabs_ = new Wt::WTabWidget();
         tabs_->addTab(resultsConstraints_ = new WResultsConstraintsTab, "Overview");
         tabs_->addTab(details_ = new WDetails, "Details");
+        tabs_->addTab(errors_ = new WErrors, "Errors");
         tabs_->addTab(settings_ = new WSettings, "Settings");
         vbox->addWidget(tabs_);
 
@@ -1410,13 +1542,20 @@ public:
         resultsConstraints_->constraints()->constraintsChanged().connect(this, &WApplication::getMatchingTests);
         details_->testIdChanged().connect(this, &WApplication::updateDetails);
         settings_->settingsChanged().connect(this, &WApplication::updateAll);
+        tabs_->currentChanged().connect(this, &WApplication::switchTabs);
         getMatchingTests();
     }
 
 private:
+    void switchTabs(int idx) {
+        if (tabs_->widget(idx) == errors_)
+            errors_->updateErrorList(resultsConstraints_->constraints()->dependencies());
+    }
+    
     void getMatchingTests() {
         ::mlog[DEBUG] <<"WApplication::getMatchingTests\n";
         details_->queryTestIds(resultsConstraints_->constraints()->dependencies());
+        errors_->changeConstraints();
     }
 
     void updateDetails() {
