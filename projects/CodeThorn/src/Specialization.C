@@ -206,7 +206,7 @@ int Specialization::substituteVariablesWithConst(SgNode* node, ConstReporter* co
      // buildFloatType()
      // buildDoubleType()
      // SgIntVal* buildIntVal(int)
-     cout<<"DEBUG: substituting: "<<((*i).first)->unparseToString()<<" with "<<(*i).second<<endl;
+     //cout<<"DEBUG: substituting: "<<((*i).first)->unparseToString()<<" with "<<(*i).second<<endl;
      SgNodeHelper::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second),false);
    }
    return (int)substitutionList.size();
