@@ -38,9 +38,6 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 #include <poet_SymbolTable.h>
 #include <assert.h>
 
-extern bool debug_xform();
-extern "C" void yyerror(const char* msg);
-
 class POETCode;
 class POETString;
 class POETIconst;
@@ -55,7 +52,8 @@ class POETMap;
 class POETOperator;
 class TupleAccess;
 class POETCode_ext;
-typedef enum {SRC_ANY, SRC_UNKNOWN, 
+class POETNull;
+typedef enum {SRC_ANY, SRC_NULL, SRC_UNKNOWN, 
    SRC_STRING, SRC_ICONST, SRC_LIST, SRC_CVAR, SRC_TUPLE, SRC_MAP,
    SRC_LVAR, SRC_TYPE, SRC_XVAR, SRC_TUPLE_ACCESS, SRC_OP, SRC_ASSIGN, 
    SRC_EVAL, SRC_CTRL, SRC_PARAM_DECL, SRC_TRACE_DECL, 
@@ -72,6 +70,7 @@ class POETCodeVisitor {
   virtual void visitList( POETList*) ;
   virtual void visitAssign(POETAssign*) ;
   virtual void visitTuple( POETTuple*) ;
+  virtual void visitNULL(POETNull* l);
   virtual void visitMap(POETMap*) ;
   virtual void visitLocalVar(LocalVar*) ;
   virtual void visitXformVar(XformVar*) ;
@@ -114,6 +113,17 @@ class POETIconst : public POETCode {
  friend class ASTFactory;
 };
 
+class POETNull : public POETCode {
+  POETNull() {}
+ public:
+  virtual std:: string toString(ASTOutputEnum config=DEBUG_OUTPUT_SHORT) 
+       { return "NULL"; }
+  virtual POETEnum get_enum() const { return SRC_NULL; }
+  virtual std:: string get_className() const { return "POETNULL"; }
+  virtual void visit(POETCodeVisitor* op)  { op->visitNULL(this); }
+ friend class ASTFactory;
+};
+
 class POETString : public POETCode {
   std:: string code;
   POETString(const std:: string& _code) : code(_code) {}
@@ -141,15 +151,10 @@ class LocalVar : public POETCode {
 };
 
 class POETList : public POETCode {
+ protected:
   POETCode *first;
   POETList *rest;
-  unsigned len;
- protected:
-  POETList(POETCode* f, POETList* r) : first(f), rest(r) 
-    {
-      if (rest == 0) len = 1;
-      else len = r->size() + 1;
-    }
+  POETList(POETCode* f, POETList* r) : first(f), rest(r) {}
  public:
   virtual std:: string toString(ASTOutputEnum config=DEBUG_OUTPUT_SHORT) ;
   virtual POETEnum get_enum() const { return SRC_LIST; }
@@ -157,18 +162,20 @@ class POETList : public POETCode {
   virtual void visit(POETCodeVisitor* op) { op->visitList(this); }
   POETCode* get_first() const { return first; }
   POETList* get_rest() const { return rest; }
-  unsigned size() const { return len; }
   friend class ListFactory;
 };
 
 class POETInputList : public POETList
 {
+  POETInputList * tail, *line_end;
  public:
-  POETInputList(POETCode* f, POETCode* r) 
-     : POETList(f,  (r==0)? 0 :
-                    (r->get_enum()==SRC_LIST)? static_cast<POETList*>(r)
-                   : new POETInputList(r,0)) {}
+  POETInputList(POETCode* f); 
   virtual std:: string get_className() const { return "POETInputList"; }
+  void append(POETInputList* next); 
+  void reset_next(POETInputList* next);
+  void reset_first(POETCode* _first)  { first = first; }
+  void reset_next_line(POETInputList *next);
+  POETInputList* get_line_end();
 };
 
 class CodeVar : public POETCode {
@@ -178,9 +185,9 @@ class CodeVar : public POETCode {
   CodeVar(const CvarSymbolTable::Entry& _entry,POETCode* _args,POETCode* _attr) 
          : entry(_entry), args(_args), attr(_attr) {} 
 
+ public:
   POETCode* invoke_func(const std::string& name, POETCode* args);
 
- public:
   virtual std:: string toString(ASTOutputEnum config=DEBUG_OUTPUT_SHORT) ;
   virtual POETEnum get_enum() const { return SRC_CVAR; }
   virtual std:: string get_className() const { return "CodeVar"; }
@@ -196,6 +203,8 @@ class CodeVar : public POETCode {
   POETCode* invoke_rebuild(POETCode* _args) ;
   POETCode* invoke_output(POETCode* input) 
        { return  invoke_func("output",input); }
+  POETCode* invoke_match(POETCode* input) 
+       { return  invoke_func("match",input); }
 
   /*QY: compute and return parsing information*/
   POETCode* get_parseInfo(); 
@@ -409,7 +418,7 @@ class POETBop : public POETOperator
   POETCode* arg1, *arg2;
   POETBop(POETOperatorType _t, POETCode* _arg1, POETCode* _arg2)
      : POETOperator(_t), arg1(_arg1),arg2(_arg2) 
-      { assert(arg1 != 0 && arg2 != 0); }
+      { assert(arg1 != 0); }
   void set_arg1(POETCode* r) { arg1 = r; }
   void set_arg2(POETCode* r) { arg2 = r; }
  public:
@@ -477,29 +486,23 @@ class POETQop : public POETOperator
 class POETParseList : public POETBop
 {
   std::vector<POETCode*> itemFilter;
-  unsigned lookahead;
  public:
   POETParseList(POETOperatorType _t, POETCode* arg1, POETCode* arg2) 
-    : POETBop(_t,arg1,arg2),lookahead(0) {}
-  /*QY: compute lookahead info; return the min len of tokens in lookahead */
-  unsigned compute_lookaheadInfo(std::vector<POETCode*>& res, unsigned need); 
+    : POETBop(_t,arg1,arg2) {}
+  virtual std:: string get_className() const { return "POETParseList"; }
+  /*QY: compute lookahead info; */
+  void compute_lookaheadInfo(std::vector<POETCode*>& res, unsigned need, POETCode *next); 
   bool match_lookahead(POETCode* input);
 };
 
 class POETTypeTor : public POETOperator
 {
-  struct ParseInfo {
-      std::vector<POETCode*> filter;
-      unsigned lookahead;
-      ParseInfo() : lookahead(0) {} 
-  };
   std::vector<POETCode*> args;
+  typedef std::vector<POETCode*> ParseInfo;
   std::vector<ParseInfo> parseInfo;
   bool allowEmpty;
 
-  /*QY:compute lookahead for args[index]; 
-       return the min len of tokens computed*/
-  unsigned compute_lookaheadInfo(unsigned index, unsigned  need); 
+  void compute_lookaheadInfo(unsigned index, unsigned  need, POETCode *next); 
  public:
   POETTypeTor(POETCode* arg1, POETCode* arg2) 
       : POETOperator(TYPE_TOR),allowEmpty(false) 
@@ -517,9 +520,8 @@ class POETTypeTor : public POETOperator
   virtual POETCode* get_arg(unsigned i) const { return (i < args.size())? args[i] : 0; }
   void push_back(POETCode* arg) { args.push_back(arg); }
 
-  /*QY: compute lookahead info for all alternatives; 
-        return the min len of tokens in the lookahead */
-  unsigned compute_lookaheadInfo(std::vector<POETCode*>& res, unsigned need);
+  /*QY: compute lookahead info for all alternatives; */
+  void compute_lookaheadInfo(std::vector<POETCode*>& res, unsigned need, POETCode *next);
   /*QY: return the proper alternative for parsing the given input */
   POETCode* get_parseInfo(POETCode* input);
 };
@@ -580,6 +582,8 @@ inline void POETCodeVisitor::visitOperator(POETOperator* c)
    {defaultVisit(c); }
 inline void POETCodeVisitor::visitList(POETList* c) 
    { defaultVisit(c); }
+inline void POETCodeVisitor::visitNULL(POETNull* l)
+   { defaultVisit(l); }
 
 class POETTraceDecl : public POETCode, public FileInfo
 {
@@ -680,13 +684,15 @@ class POETCode_ext : public POETCode
 {
   protected:
     void* content;
+    POETCode* children;
   public:
-    POETCode_ext(void* _content) : content(_content) {assert(content!=0);};
+    POETCode_ext(void* _content, POETCode* c) : content(_content),children(c) {assert(content!=0);};
     virtual POETEnum get_enum() const { return SRC_UNKNOWN; }
     virtual std:: string get_className() const { return "POETCode_ext"; }
     virtual void visit(POETCodeVisitor* op)  { op->visitUnknown(this); }
     virtual std:: string toString(ASTOutputEnum config=DEBUG_OUTPUT_SHORT) ;
     void* get_content() { return content; }
+    POETCode* get_children() { return children; }
   friend class POETAstInterface;
 };
 
@@ -717,7 +723,7 @@ class POETProgram : public POETCode
   std::string filename, ext;
   bool done_save;
 
-  LocalVarSave prep_save, unparse_save, token_save, parse_save;
+  LocalVarSave prep_save, extern_save, unparse_save, token_save, parse_save;
  public:
   typedef std::list<POETCode*>::const_iterator const_iterator;
   const_iterator begin() { return define.begin(); }
@@ -727,15 +733,19 @@ class POETProgram : public POETCode
  
   POETProgram(const std::string& fname) 
        : filename(fname),done_save(false)
-    {  size_t pos = filename.rfind("."); 
-       if (pos < filename.size()) 
+    {  
+       if (filename != "") {
+         size_t pos = filename.rfind("."); 
+         if (pos < filename.size()) 
           ext = filename.substr(pos, filename.size()-pos+1); 
+       }
     } 
 
   static POETString* make_string(const std::string& r);
   static POETIconst* make_Iconst(int val);
   static POETOperator* make_dummyOperator(POETOperatorType t);
-  static POETCode* make_empty();
+  static POETCode* make_empty_list();
+  static POETCode* make_empty_string();
   static POETCode* make_any() ;
   static POETCode* make_rangeType(POETCode* lb, POETCode* ub);
   static POETCode* make_listType(POETCode* elemType);
@@ -765,6 +775,7 @@ class POETProgram : public POETCode
   static POETCode* make_Uop( POETOperatorType t, POETCode* arg, int lineno = -1);
   static POETCode* make_Top( POETOperatorType t, POETCode* arg1, POETCode* arg2, POETCode* arg3, int lineno = -1);
   static POETCode* make_typeTor(POETCode* arg1, POETCode* arg2);
+  static POETCode* make_tupleAccess( POETCode* f, POETCode* args);
 
   std::list<POETProgram*>& get_includeFiles() { return includeFiles; }
   void insert_includeFile(POETProgram* incl) { includeFiles.push_back(incl); }
@@ -773,7 +784,6 @@ class POETProgram : public POETCode
   LocalVar* make_evalVar(POETCode* name) 
       { return make_localVar(&evalDef, name, LVAR_REG); }
 
-  POETCode* make_tupleAccess( POETCode* f, POETCode* args);
   POETCode* make_Bop( POETOperatorType t, POETCode* arg1, POETCode* arg2, int lineno=-1);
 
   ParameterDecl* insert_parameterDecl(POETCode* par, int lineno);
@@ -852,6 +862,31 @@ class RestoreNestedTraceVars : public VisitNestedTraceVars
 {
   virtual void preVisitTraceVar(LocalVar* v) { v->get_entry().pop(); }
 };
+
+class PrintNestedTraceVars : public VisitNestedTraceVars
+{
+  std::string res;
+ public:
+  virtual void preVisitTraceVar(LocalVar* v) 
+    {  
+       if (res.size() > 0) res = res + ",";
+       res = res +  v->toString(OUTPUT_NO_DEBUG); 
+    }
+  std::string get_result() 
+    { return res; } 
+};
+
+class ParseError : public Error {
+  POETCode* r1, *r2;
+  int lineno;
+ public:
+  ParseError(POETCode* _r1, POETCode *_r2, int _lineno) : r1(_r1), r2(_r2), lineno(_lineno) {}
+  std::string message() const 
+   { std:: stringstream msg; msg << "Line " << lineno << ": syntax error : " << SHORT(r1->toString(OUTPUT_NO_DEBUG),50) << "\n";  
+     return msg.str(); }
+};
+#define PARSE_MISMATCH(r1,r2,ln)  { throw ParseError(r1,r2,ln); }
+
 
 int inline AST2Bool(POETCode* r) 
 {   r = EvalTrace(r); 

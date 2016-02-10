@@ -36,10 +36,10 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 
 <code Nest pars=(ctrl, body) annot="" />
 <code StmtBlock pars=(stmts) annot="" />
-<code Loop pars=(i,start,stop,step)  maxiternum="" />
+<code Loop pars=(i,start,stop,step)  maxiternum="" tag="" origstep="" origivar=""/>
 <code Assign/>
 <code ExpStmt/>
-<code If pars=(condition) />
+<code If pars=(condition) tag=""/>
 
 <code LoopBound pars=(ivar,start,stop)  
         rebuild=((start=="" && stop=="")?"":LoopBound#(ivar,start,stop)) >
@@ -48,19 +48,19 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
     if (cond=="") cond=Bop#("<",ivar,stop);
     else cond=Bop#("&&",cond,Bop#("<",ivar,stop));
   }
-@/*Loop Bound*/@If#cond@
+(cond != "")? (@/*Loop Bound*/@If#cond) : ""@
 </code>
 
 <************* Markers of AST ******************************>
 <*** AST Markers in general should not appear in a regular code 
      as they should have been processed by various cleanup opt. ***>
 <*marker for unrolling a loop nest *>
-<code UnrolledLoop pars = (ivar, start, plus, step, ur)/>
+<code UnrolledLoop pars = (ivar, start, plus, step, ur) check_start=""/>
 
 <* Marker for the stopping end of inner loop unrolling *> 
 <code UnrolledLoopTileEnd pars=(bloop, ur : INT)/>
 
-<code NestApp pars=(loop, append) />
+<code NestApp pars=(loop, append) /> 
 
 <*************** 
 Find atomic statements that are outside nest and inside input
@@ -79,9 +79,11 @@ ReverseList(res)
 Find loops that are inperfectly nested outside inner and inside input 
 *************>
 <xform FindNonPerfect pars=(inner, input)>
- if (input : inner) {""}
- else if (input : Nest#(_,body)) { FindNonPerfect(inner, body) } 
- else { 
+ switch (input) {
+ case inner :  ""
+ case Nest#(_,body):  FindNonPerfect(inner, body) 
+ case ("" next): FindNonPerfect(inner,next) 
+ default: 
     foreach (input : (cur=Nest) : TRUE) 
       { RETURN (BuildList(cur,FindNonPerfect(inner,cur))); }
     ERROR("Cannot find inner body: " inner " from " input);
@@ -101,7 +103,8 @@ Find loop controls that are outside inner and inside input
      (innerloops == "")? (loop,input) : (loop::innerloops,input::innernests);
   )
  case StmtBlock#body : FindLoopsInNest(inner,body)
- default: (ERROR("Cannot find inner body: " inner))
+ case CODE.ExpStmt|"": ("","")  <* did not find inner *>
+ case CODE.OMPPragma#content|CODE.OMPParallelBlock#content: FindLoopsInNest(inner, content)
 }
 </xform>
 
@@ -130,18 +133,24 @@ Map tracing handles in tnest to corresponding loop nests in input;
    }
 </xform>
 
-<xform TraceNestedLoops pars=(tnest, input) trace=GLOBAL.TRACE_TARGET >
+<xform TraceNestedLoops pars=(tnest, input) trace=GLOBAL.TRACE_TARGET report_err=1 
+                orig_nested=0 >
    cur = FindNest(input);
-   if (!(cur : Nest)) ERROR("Cannot find nest: " tnest " in " input);
+   if (!(cur : Nest)) {
+      if (report_err) ERROR("Cannot find nest: " tnest " in " input);
+      else RETURN input;
+   }
    if ( !(cur[Nest.ctrl] : CODE.Loop)) 
          RETURN (TraceNestedLoops(tnest,cur[Nest.body]));
    switch (tnest) 
    {
    case VAR: MoveTraceHandle[trace=trace](tnest, cur)
    case (first second):  
+          if (orig_nested) next = FindNest(first[Nest.body]);
           cur = MoveTraceHandle[trace=trace](first, cur);
           orig_body=cur[Nest.body];
-          TraceNestedLoops(second, orig_body);
+          if (!orig_nested || next == second) TraceNestedLoops(second, orig_body);
+          else TraceNestedLoops( (next second), orig_body);
           first
    default: ""
    }
@@ -177,7 +186,8 @@ switch (outer)
 ************> 
 <xform UnionLoops pars=(nests) level="">
 res="";
-for (p = nests; (cur=car(p)) != ""; p = cdr(p)) {
+for (p = nests; p != NULL; p = cdr(p)) {
+  cur = car(p);
   if (!(cur : (CLEAR nest,CLEAR align)))
       {  nest=cur;  align = 0; }
    if (nest : Nest#(CLEAR curloop,_)) {
@@ -216,7 +226,7 @@ res
       curTrace = car traceSplits; 
       if (curTrace == "") ERROR("No trace handle for :" first);
       result = first; target=car(nonPerfect); 
-      for (p_rest = rest; p_rest != ""; p_rest=cdr p_rest)  {
+      for (p_rest = rest; p_rest != NULL; p_rest=cdr p_rest)  {
         if (car(p_rest) == target) BREAK;
         result = (car p_rest) :: result;   
       }
@@ -247,11 +257,16 @@ case UnrolledLoop#(i, start, plus, step, ur) :
            if (! (ur : INT)) ERROR("Expecting an integer but get: " ur);
        }
        for ( (repl = ""; j = ur-1 ); j >= 0; j = j - 1 ) { 
-           repl = BuildList(BuildBop(plus,start,j*step),repl); 
+           repl = BuildList(XFORM.RebuildBop(plus,start,j*step),repl); 
         }
+       if (bloop != "") {
+          tag=bloop[Loop.tag];
+          if ( (s =loops[UnrolledLoop.check_start]) != "") {
+            body=Nest#(CODE.LoopStartCheck#(tag, i,s), body);
+          }
+       }
        stmt = DUPLICATE(i, repl,   body);
        if (bloop != "" && ur > 1)  {
-          tag=bloop[Loop.tag];
           p_stmt = cdr stmt; stmt = (car stmt) :: "";
           for ( p_i=1 ; p_i < ur; (p_i+=1; p_stmt=cdr p_stmt)) 
           {
@@ -262,37 +277,48 @@ case UnrolledLoop#(i, start, plus, step, ur) :
        }
        else if (ur == 1 || !(i : CODE.UnrollIvarName#(i_var))) { REBUILD(stmt) }
        else {CODE.UnrolledFromIvar#(i_var,ur,REBUILD(stmt))}
-case NestApp#(curloop,app):  Nest[annot=annot]#(curloop, body)::app 
+case NestApp#(curloop,app):  BuildNest(curloop, body)::app 
+case CODE.StripmineTriangularBloop#(b1,b2):
+     Nest[annot=annot]#(b1,body)::Nest[annot=annot]#(b2,body) 
 default:  Nest[annot=annot]#(loops,body)
+}
+</xform>
+
+<xform RebuildNest pars=(input)>
+switch (input){
+case Nest#(ctrl,body) : REPLACE(body, RebuildNest(body), input)
+case (first second): if (first == "" && (second != "")) { RebuildNest(second) } 
+    else if (first != "" && second == "") { RebuildNest(first) }
+    else { RebuildNest(first) :: RebuildNest(second) }
+default: input
 }
 </xform>
 
 <***********************************************>
 <* break the fragment "input" immediately before split*>
 <***********************************************>
-<xform FissionHelp pars=(split,input) output=(before,in,after)>
+<xform FissionHelp pars=(split,input) output=(_before,_middle,_after)>
  switch (input) {
  case split: res = ("", input, ""); 
  case (s1 s2):
        r1 = FissionHelp(split,s1); 
-       if (r1[in] == "")  {
+       if (r1[_middle] == "")  {
            r2 = FissionHelp(split,s2);
-           if (r2[in] == "") res = (input, "", "");
-           else res = (BuildList(s1,r2[before]),r2[in],r2[after]);
+           if (r2[_middle] == "") res = (input, "", "");
+           else res = (BuildList(s1,r2[_before]),r2[_middle],r2[_after]);
        }
-       else if (r1[after] == "") { res = (r1[before],r1[in],s2); }
-       else { res = (r1[before], r1[in], (r1[after] s2)); }
+       else if (r1[_after] == "") { res = (r1[_before],r1[_middle],s2); }
+       else { res = (r1[_before], r1[_middle], (r1[_after] s2)); }
  case Nest#(loop,body):
        r1 = FissionHelp(split,body); 
-       if (r1[in] == "")  res = (input,"",""); 
+       if (r1[_middle] == "")  res = (input,"",""); 
        else {
             loopCopy = COPY loop;
-            res = (BuildNest(loopCopy,r1[before]), BuildNest(loop, r1[in]), 
-                  BuildNest(loopCopy,r1[after]));
+            res = (BuildNest(loopCopy,r1[_before]), BuildNest(loop, r1[_middle]), 
+                  BuildNest(loopCopy,r1[_after]));
        }
  default: if (Lookup(split,input)) ERROR("Unable to split: " input);
           res = (input,"","");
  }
  res
 </xform>
-

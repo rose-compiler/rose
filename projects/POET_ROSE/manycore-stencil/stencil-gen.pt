@@ -1,0 +1,35 @@
+include stencil_lib.pi
+include stencil_ROSE.incl
+
+<parameter in message="input file name"/>
+<parameter out message="output file name"/>
+<define ManycoreLib ("core"".""h")|("multicore"".""h") />
+
+<code StmtList parse=LIST(_,"\n") />
+
+<trace target/>
+<define TRACE_TARGET target/>
+<define TRACE_INCL target/>
+
+<input from=in to=target/>  <<* use ROSE parser
+
+<eval
+   change = 0;
+   foreach CODE.Pragma#(pragma=_,body=_) \in ERASE(target) s.t. pragma ==> cur=StencilPragma do
+      StencilPragma#(type,oldarray,newarray,dimsizes,hallo) = cur; 
+      STENCIL_TYPE=type;
+      STENCIL_DIM=LEN(dimsizes);
+      STENCIL_DIM_SPEC=dimsizes;
+      STENCIL_old_array=oldarray;
+      STENCIL_array = newarray;
+      STENCIL_HALLO = hallo;
+      gen_manycore_stencil(type,body,"", "");
+      change = 1;
+   enddo
+<* skip here because searching for include directives within ROSE AST is not yet supported
+   if (change) {
+     if (!Lookup(GLOBAL.ManycoreLib,target)) { target= CODE.ManycoreLibInclude :: ERASE(target); } } *>
+/>
+
+<output to=out from=target />
+

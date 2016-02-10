@@ -1,5 +1,11 @@
-#include <sage3basic.h>
+//do not include the following files from rose.h
+#define CFG_ROSE_H
+#define CONTROLFLOWGRAPH_H
+#define PRE_H
+#define ASTDOTGENERATION_TEMPLATES_C
+
 #include "AstInterface.h"
+#include "rose.h"
 #include "AstInterface_ROSE.h"
 #include <stdlib.h>
 #include <iostream>
@@ -9,9 +15,6 @@
 
 #include "AstTraversal.h"
 #include "astPostProcessing.h"
-#include "unparser.h"
-#include "unparser_opt.h"
-
 #ifdef _MSC_VER
 #include <io.h>
 #include <direct.h>
@@ -60,7 +63,13 @@
 #define NEW_VAR_INIT(init, var, exp) \
         init = new SgAssignInitializer(GetFileInfo(), exp, exp->get_type() ); \
         init->set_endOfConstruct(init->get_file_info()); exp->set_parent(init); \
-        var->set_initializer( init); init->set_parent(var) \
+        var->set_initializer(init); exp->set_parent(init); init->set_parent(var) \
+
+#define NEW_ASSIGN(exp, lhs, rhs) \
+     exp = new SgAssignOp(GetFileInfo(), lhs, rhs); \
+     exp->set_endOfConstruct(exp->get_file_info()); \
+     lhs->set_parent(exp);  \
+     rhs->set_parent(exp);
 
 #define NEW_BIN_OP(op,className,lhs,rhs) \
     op = new className( GetFileInfo(), lhs, rhs); \
@@ -81,12 +90,29 @@
     r->set_endOfConstruct(r->get_file_info()); \
     cond->set_parent(r); tbody->set_parent(r); fbody->set_parent(r) 
 
-SgType* GetTypeInt()
+SgType* AstInterfaceImpl::GetTypeInt()
 {
   static SgType* typeint = 0;
   if (typeint == 0)
      typeint = new SgTypeInt();
   return typeint;
+}
+
+std::string StripGlobalQualifier(std::string name)
+{
+   if (name.size() > 2 && name[0] == ':' && name[1] == ':') {
+      return std::string(name.c_str()+2);
+   }
+   return name;
+}
+
+std::string StripQualifier(std::string name)
+{
+   unsigned i = name.size(); 
+   for ( ; i > 0; --i) {
+      if (name[i-1]==':' && i > 1 && name[i-2] == ':') break;
+   }
+   return std::string(name.c_str() + i);
 }
 
 void AstInterface :: SetRoot( const AstNodePtr& root)
@@ -115,17 +141,8 @@ AstNodePtr AstInterface::GetFunctionDefinition( const AstNodePtr &n, std::string
 }
 
 std::string get_type_name( SgType* t);
+
 using namespace std;
-
-// Removing the leading "::" from a qualified name
-string StripGlobalQualifier(string name)
-{
-   if (name.size() > 2 && name[0] == ':' && name[1] == ':') {
-      return string(name.c_str()+2);
-   }
-   return name;
-}
-
 bool DebugNewVar()
 {
   static int r = 0;
@@ -174,7 +191,7 @@ SgScopeStatement* GetNullScope()
 {
   static SgGlobal* global = 0;
   if (global == 0) {
-    global = new SgGlobal();
+    global = new SgGlobal(GetFileInfo());
   }
   return global;
 }
@@ -184,6 +201,44 @@ inline bool HasNullParent(SgNode* n)
   return n->get_parent() == 0 || n->get_parent() == GetNullScope();
 }
 
+inline SgVarRefExp* ToVarRef( AstInterfaceImpl& fa, SgNode* exp)
+{
+  switch (exp->variantT()) {
+  case V_SgVarRefExp:
+     return isSgVarRefExp( exp );
+  case V_SgInitializedName:
+     {
+      SgInitializedName* var = isSgInitializedName(exp);
+      SgName varname = var->get_name();
+      SgNode* r = fa.CreateVarRef( std::string(varname.str()), exp);
+      r->set_parent(exp->get_parent());
+      return isSgVarRefExp(r);
+     }
+  default: break;
+  }
+  return 0;
+}
+
+inline SgExpression* ToExpression( AstInterfaceImpl& fa, SgNode* s)
+{
+  SgExpression *exp = ToVarRef(fa, s);
+  if (exp == 0) exp = isSgExpression(s);
+  return exp;
+}
+
+template <class const_iterator>
+SgExprListExp*
+AstNodeList2ExpressionList(const_iterator b, const_iterator e)
+{
+  SgExprListExp* NEW_EXPR_LIST(explist);
+  for (const_iterator p = b; p != e; ++p) {
+    SgExpression* e = isSgExpression(AstNodePtrImpl(*p).get_ptr());
+    assert(e);
+    explist->append_expression(e);
+    e->set_parent(explist);
+  }
+  return explist;
+}
 
 SgStatement* ToStatement( SgNode* _stmts)
 {
@@ -230,42 +285,27 @@ SgScopeStatement* GetScope( SgNode* loc)
   // using the virtual get_scope() function for SgStatements.
       
      ROSE_ASSERT(loc != NULL);
-  // printf ("Inside of GetScope(%p = %s) \n",loc,(loc != NULL) ? loc->class_name().c_str() : "NULL");
         
      SgScopeStatement *cur = NULL;
-           
-  // Handle special case of the scope being correct
      SgScopeStatement* scopeStatement = isSgScopeStatement(loc);
-     if (scopeStatement != NULL)
-        {           
-          cur = scopeStatement;
-        }           
-       else   
-        {           
-          SgStatement* stmt = isSgStatement(loc);
-          if (stmt != NULL)
-             {
-               cur = stmt->get_scope();
-             }
+     if (scopeStatement != NULL) cur = scopeStatement;
+     else   {           
+          const SgStatement* stmt = isSgStatement(loc);
+          if (stmt != NULL) { cur = stmt->get_scope(); }
             else
              { 
-               SgInitializedName* initializedName = isSgInitializedName(loc);
-            // ROSE_ASSERT(initializedName != NULL);
-               if (initializedName != NULL)
-                  {
+               const SgInitializedName* initializedName = isSgInitializedName(loc);
+               if (initializedName != NULL) {
                     cur = initializedName->get_scope();
                   }
-                 else
-                  {
-                    SgExpression* expression = isSgExpression(loc);
-                    if (expression != NULL)
-                       {
+                 else {
+                    const SgExpression* expression = isSgExpression(loc);
+                    if (expression != NULL) {
                          SgStatement* statement = TransformationSupport::getStatement(expression);
                          ROSE_ASSERT(statement != NULL);
                          cur = GetScope(statement);
                        }
-                      else
-                       {
+                      else {
                          printf ("Error: Unprepared for this case in GetScope(%p = %s) \n",loc,(loc != NULL) ? loc->class_name().c_str() : "NULL");
                          ROSE_ASSERT(false);
                        }
@@ -273,42 +313,14 @@ SgScopeStatement* GetScope( SgNode* loc)
              }
         }
 
-     ROSE_ASSERT(cur != NULL);
+     assert(cur != NULL);
      return cur;
 }
 
-SgVarRefExp* ToVarRef( AstInterface& fa, const AstNodePtr& _exp)
-{
-  SgNode* exp = AstNodePtrImpl(_exp).get_ptr();
-  switch (exp->variantT()) {
-  case V_SgVarRefExp:
-     return isSgVarRefExp( exp );
-  case V_SgInitializedName:
-     {
-      SgInitializedName* var = isSgInitializedName(exp);
-      SgName varname = var->get_name();
-      SgNode* r = AstNodePtrImpl(fa.CreateVarRef( string(varname.str()), _exp)).get_ptr();
-      r->set_parent(GetNullScope()); 
-      return isSgVarRefExp(r);
-     }
-  default: break;
-  }
-  return 0;
-}
-
-SgExpression* ToExpression( AstInterface& fa, const AstNodePtr& _s)
-{
-  SgNode* s = AstNodePtrImpl(_s).get_ptr(); 
-  SgExpression *exp = ToVarRef(fa, _s);
-  if (exp == 0)
-      exp = isSgExpression(s);
-  return exp;
-}
-
 // Strip leading "const" and tailing '&'
-string StripParameterType( const string& name)
+std::string StripParameterType( const std::string& name)
 {
-  string r = name;
+  std::string r = name;
   if (name.substr(0,5) == "const") 
      r = name.substr(5, name.size()-5);
   ROSE_ASSERT (!r.empty());
@@ -316,7 +328,7 @@ string StripParameterType( const string& name)
   if (r[end] == '&') {
        r[end] = ' ';
   }
-  string result = "";
+  std::string result = "";
   for (size_t i = 0; i < r.size(); ++i) {
     if (r[i] != ' ')
       result.push_back(r[i]);
@@ -324,7 +336,68 @@ string StripParameterType( const string& name)
   return result; 
 } 
 
-SgVariableSymbol* LookupVar( const string& name, SgScopeStatement* loc)
+SgNode* CreateAssignment(AstInterfaceImpl& fa, SgExpression* lhsexp, SgExpression* rhsexp)
+{
+  //assert(HasNullParent(lhsexp));
+  //assert(HasNullParent(rhsexp));
+  SgExpression *exp = 0;
+  SgType* lhstype = lhsexp->get_type(); 
+
+  if (lhstype->variantT() == V_SgClassType) {
+    SgClassType *lhstype1 = isSgClassType(lhstype);
+    SgName classname = lhstype1->get_name();
+    SgClassSymbol *c = fa.GetClass( std::string(classname.str()));
+    assert (c != 0);
+    SgExpressionPtrList args;
+    args.push_back( rhsexp);
+    SgMemberFunctionSymbol *f = fa.GetMemberFunc(c, "operator=", &args);
+    if (f != 0) {
+        GetClassDefn(c->get_declaration());
+        SgMemberFunctionRefExp *NEW_MFUNCTION_REF(fr,f);
+        SgExpression *NEW_BIN_OP(func, SgDotExp, lhsexp, fr);
+        SgExprListExp *NEW_EXPR_LIST(argexp);
+        SgExpressionPtrList &l = argexp->get_expressions();
+        l = args;
+        NEW_FUNCTION_CALL(exp, func, argexp);
+    } 
+  }
+  if (exp == 0) { NEW_ASSIGN(exp,lhsexp, rhsexp); }
+  return exp;
+}
+
+std::string unparseToString( SgNode* s)
+{
+  if (s == 0) return "";
+  string r = "";
+  switch(s->variantT()) {
+  case V_SgVarRefExp:
+    {
+      SgVarRefExp *var = isSgVarRefExp( s );
+      SgVariableSymbol *sb = var->get_symbol();
+      r = r +  sb->get_name().str();
+    }
+    break;
+  case V_SgInitializedName:
+    {
+      SgInitializedName* var = isSgInitializedName(s);
+      r = r + var->get_name();
+    }
+    break;
+  case V_SgProject:  
+    {
+      SgProject* sageProject = static_cast<SgProject*>(s);  
+      for (int i = 0; i < sageProject->numberOfFiles(); ++i) {
+        SgSourceFile* sageFile = isSgSourceFile(sageProject->get_fileList()[i]);
+        r = r + unparseToString(sageFile);
+      }
+      break;
+    }
+  default: r = r + s->unparseToString();
+  }
+  return r;
+}
+
+SgVariableSymbol* LookupVar( const std::string& name, SgScopeStatement* loc)
 {
   const char* start = name.c_str();
   SgClassDefinition *cdef = isSgClassDefinition(loc);
@@ -335,7 +408,7 @@ SgVariableSymbol* LookupVar( const string& name, SgScopeStatement* loc)
               std:: cerr << "failed to find variable " << start;
            else
               std:: cerr << "found variable " << start;
-           std:: cerr << " in scope " << AstToString(AstNodePtrImpl(loc)) << "\n";
+           std:: cerr << " in scope " << unparseToString(loc) << "\n";
            std::cerr << " symbols of which include: ";
            for (SgSymbol* p = cdef->first_any_symbol(); p != 0; p = cdef->next_any_symbol())
                std::cerr << p->get_name().str() << ";";
@@ -365,7 +438,7 @@ SgVariableSymbol* LookupVar( const string& name, SgScopeStatement* loc)
               std:: cerr << "failed to find variable ";
            else
               std:: cerr << "found variable ";
-           std:: cerr << start << " in scope " << AstToString(AstNodePtrImpl(loc)) << "\n"; 
+           std:: cerr << start << " in scope " << unparseToString(loc) << "\n"; 
         }
         if (loc->variantT() == V_SgGlobal || f != 0)
              break;
@@ -375,6 +448,15 @@ SgVariableSymbol* LookupVar( const string& name, SgScopeStatement* loc)
      return f;
   }
 }
+
+SgVariableSymbol* AstInterfaceImpl::
+LookupVar( const std::string& name, SgScopeStatement* loc)
+{
+  if (loc == 0) loc = scope;
+  assert(loc!=0);
+  return ::LookupVar(name, loc);
+}
+
 
 class SageSetTransformation: public AstTopDownProcessing< AstNodePtrImpl >
 {
@@ -410,6 +492,7 @@ class SageResetParent : public AstTopDownProcessing< AstNodePtrImpl >
        }
 };
 
+/* QY: 7/2011 This function is not invoked anywhere
 SgSymbol* AddDecls( AstInterfaceImpl* scope, const SgDeclarationStatementPtrList& decls)
 {
      SgSymbol* result = 0;
@@ -436,10 +519,11 @@ SgSymbol* AddDecls( AstInterfaceImpl* scope, const SgDeclarationStatementPtrList
     }
     return result;
 }
+*/
 
-SgMemberFunctionSymbol * 
-GetMemberFunc( AstInterfaceImpl* scope, SgClassSymbol* c, 
-               const string& funcname, SgExpressionPtrList* args = 0)
+SgMemberFunctionSymbol * AstInterfaceImpl::
+GetMemberFunc( SgClassSymbol* c, 
+               const std::string& funcname, SgExpressionPtrList* args)
 {
   SgClassDeclaration* decl = c->get_declaration();
   SgName classname = decl->get_name();
@@ -460,7 +544,6 @@ GetMemberFunc( AstInterfaceImpl* scope, SgClassSymbol* c,
      {
        cerr <<"AstInterface.C GetMemberFunc() cannot find a symbol for "<<funcname<<" within a class "<<classname<< endl;
        return 0;
-       //isSgScopeStatement(def)->print_symboltable("Dump the symbol table of the class definition:");
      }
   }
   else {
@@ -472,7 +555,7 @@ GetMemberFunc( AstInterfaceImpl* scope, SgClassSymbol* c,
           continue;
         SgMemberFunctionDeclaration *md = isSgMemberFunctionDeclaration(cur);
         SgName name = md->get_name();
-        if ( string(name.str()) != funcname)
+        if ( std::string(name.str()) != funcname)
             continue;
         SgInitializedNamePtrList &pars = md->get_args ();
         if (pars.size() != args->size())
@@ -483,9 +566,9 @@ GetMemberFunc( AstInterfaceImpl* scope, SgClassSymbol* c,
         for ( ; pp != pars.end(); ++pp, ++pa) {
            SgType* tp = (*pp)->get_type();
            SgType* ta = (*pa)->get_type();
-           string partype, argtype;
-           scope->GetTypeInfo(AstNodeTypeImpl(tp), 0, &partype);
-           scope->GetTypeInfo(AstNodeTypeImpl(ta), 0, &argtype);
+           std::string partype, argtype;
+           GetTypeInfo(tp, 0, &partype);
+           GetTypeInfo(ta, 0, &argtype);
            if (partype != argtype) {
               match = false;
               break;
@@ -521,6 +604,7 @@ void AstInterfaceImpl:: set_top( SgNode* _top)
  
 SgFunctionSymbol* AstInterfaceImpl::LookupFunction(const char* start) const
    {
+     assert(scope!=0);
      SgScopeStatement *cur = scope;
      SgFunctionSymbol* f = 0;
      do {
@@ -547,9 +631,10 @@ SgFunctionSymbol* AstInterfaceImpl::LookupFunction(const char* start) const
      return f;
     }
 
-SgClassSymbol* AstInterfaceImpl:: LookupClass(const char* start) const
+SgClassSymbol* AstInterfaceImpl:: LookupClass(const char* start) 
    {
      SgScopeStatement *cur = scope;
+     assert(cur != 0);
      SgClassSymbol* f = 0;
      do {
         f = cur->lookup_class_symbol(start);
@@ -588,125 +673,30 @@ AddMemberFunc( SgClassDefinition *def, SgMemberFunctionDeclaration *d)
      return f;
    }
 
-SgVariableSymbol* AstInterfaceImpl::
-GetVar( const string& name, SgScopeStatement* loc)
-   {
-     if (loc == 0)
-        loc = scope;
-     return LookupVar(name, loc);
-   }
-
-SgVariableSymbol* AstInterfaceImpl::
-AddVar( SgVariableDeclaration *d, SgScopeStatement* curscope)
+void AstInterfaceImpl::
+SaveVarDecl(SgVariableDeclaration *d, SgScopeStatement* curscope)
    {
      if (curscope == 0)
         curscope = scope;
+     assert(curscope != 0);
 
      d->set_parent(curscope);
-     if (!delayNewVarInsert) 
-        curscope->insertStatementInScope(d, true);
-     else
-        newVarList.push_back(std::pair<SgScopeStatement*,SgStatement*>(curscope, d));
-     SgInitializedNamePtrList & l = d->get_variables();
-     SgVariableSymbol *v = 0;
-     for (SgInitializedNamePtrList::iterator p = l.begin(); p != l.end(); ++p) {
-         SgInitializedName* cur = *p;
-         NEW_SYMBOL(v, SgVariableSymbol, curscope, cur);
-     }
-     return v;
-   }
+     newVarList.push_back(std::pair<SgScopeStatement*,SgVariableDeclaration*>(curscope, d));
+}
 
 SgVariableSymbol* AstInterfaceImpl::
-AddVar( SgInitializedName *d, SgScopeStatement* curscope)
+InsertVar(SgInitializedName *d, SgScopeStatement* curscope)
    {
-     if (curscope == 0)
-        curscope = scope;
+     if (curscope == 0) curscope = scope;
+     assert(curscope != 0);
      SgVariableSymbol *NEW_SYMBOL(v, SgVariableSymbol, curscope, d); 
      return v;
    }
 
-//QY:1/3/08: this function is no longer invoked b/c calling EDG front end
-// multiple times no longer seems to work.
-SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
-   {
-  // DQ (1/2/2007): The use of _astInterface_Tmp.c does not provide a unique filename
-  // to support testing of the loop processor in parallel.  This is modified below to
-  // make the name unique for each process.
-     // MS 11/22/2015: introduced array to avoid deprecated conversion from string literal to char*
-     char uniqueFilenameDefault[] = "/tmp/_astInterface_Tmp_XXXXXX.c";
-     char *uniqueFilename = uniqueFilenameDefault;
-     #ifdef _MSC_VER
-     uniqueFilename = mktemp(uniqueFilename);
-     if (uniqueFilename == NULL) return NULL;
-     int fd = open(uniqueFilename, O_CREAT|O_EXCL, S_IREAD|S_IWRITE);
-     #else
-     int fd = mkstemp(uniqueFilename);
-     #endif
-     if (fd == -1) {
-       perror("mkstemp: ");
-       abort();
-     }
-
-     write(fd, _decl.c_str(), _decl.size());
-     write(fd, "\n", 1);
-
-     int error = 0;
-     vector<string> argv;
-
-  // Build the command line (for input to ROSE translator)
-     argv.push_back("AddDecl");
-     argv.push_back("-rose:verbose");
-     argv.push_back("9");
-     argv.push_back(uniqueFilename);
-
-  // std::cerr << "generating declaration: \n";
-     //SgSourceFile* addDecls = new SgSourceFile(argv, error);
-     //AS (10/04/08) using factory function to determine file type. This is due to
-     //cleanup of ROSE code
-     SgSourceFile* addDecls = isSgSourceFile(determineFileType(argv,error,0));
-  // std::cerr << "Finished generating declaration \n";
-
-  // DQ (6/14/2013): Since we seperated the construction of the SgFile IR nodes from the invocation of the frontend, we have to call the frontend explicitly.
-     ROSE_ASSERT(addDecls != NULL);
-     addDecls->runFrontend(error);
-
-     unlink( uniqueFilename );
-  // string systemString = string("rm '") + uniqueFilename + "'";
-  // system( systemString.c_str() );
-
-     SgGlobal *declRoot = addDecls->get_globalScope();
-     SgDeclarationStatementPtrList& decls = declRoot->get_declarations ();
-
-     SgDeclarationStatementPtrList localList;
-     SgDeclarationStatementPtrList::iterator i = decls.begin();
-     while (i != decls.end())
-        {
-             {
-               string filename = (*i)->get_file_info()->get_filename();
-
-            // DQ (8/31/2006): Need to strip off the path since EDG now adds such things automatically (filename normalization to absolute paths).
-               filename = StringUtility::stripPathFromFileName(filename);
-
-               if ( filename == uniqueFilename)
-                  {
-                    (*i)->get_file_info()->setTransformation();
-                    (*i)->get_file_info()->setOutputInCodeGeneration();
-                    markTransformationsForOutput(*i);
-
-                    localList.push_back(*i);
-                 }
-           }
-          i++;
-       }
-     SgSymbol* r = AddDecls(this, localList);
-     decls.clear();
-     return r;
-   }
-
 SgVariableSymbol* AstInterfaceImpl::
-NewVar( SgType* type, const string& _name, bool makeunique, SgScopeStatement* loc)
+NewVar( SgType* type, const std::string& _name, bool makeunique, bool delayDecl, SgExpression* initexp, SgScopeStatement* loc)
 { 
-  string varname = _name;
+  std::string varname = _name;
   if (varname == "" ) {
      varname = "_var_";
      makeunique = true;
@@ -714,30 +704,41 @@ NewVar( SgType* type, const string& _name, bool makeunique, SgScopeStatement* lo
   if (makeunique) {
      char buf[20]; 
      sprintf(buf, "%d", newVarIndex);
-     varname = varname + string(buf);
+     varname = varname + std::string(buf);
      ++newVarIndex; 
   }
 
-  SgVariableSymbol *v = GetVar(varname, loc);
+  SgVariableSymbol *v = LookupVar(varname, loc);
   if (v == 0) {
+     //variable declaration has not been inserted
      SgName name(varname.c_str());
      SgType *t = isSgType( type);
      assert(t != 0);
+     SgInitializedName *def = new SgInitializedName( GetFileInfo(), name,  t, 0, 0, 0, 0);
+     def->set_endOfConstruct(def->get_file_info());
+     v = InsertVar(def, loc);
+     SgVariableDeclaration *decl = new SgVariableDeclaration( GetFileInfo());
+     decl->set_endOfConstruct(decl->get_file_info());
 
-  // DQ (10/11/2014): Added argument to resolve ambiguity caused by Aterm support.
-  // SgInitializedName *d = new SgInitializedName( name,  t);
-     SgInitializedName *d = new SgInitializedName( name,  t, NULL);
+     if (initexp != 0) {
+        SgAssignInitializer *NEW_VAR_INIT(init, def, initexp);
+        decl->append_variable(def, init);
+     }
+     else decl->append_variable(def, 0);
+     def->set_parent(decl);
+     if (delayDecl) SaveVarDecl(decl,loc);
+     else if (loc != 0) 
+        { loc->insertStatementInScope(decl, true); decl->set_parent(loc); }
+     else assert(0);
 
-     d->set_file_info(GetFileInfo());
-
-     v = AddVar(d, loc);
-     if (DebugNewVar())
-        cerr << "creating new variable : " << varname << endl;
+  }
+  else {
+     std::cerr << "Warning: new var has already been initialized: " << varname << "\n";
   }
   return v;
 }
 
-SgFunctionSymbol* AstInterfaceImpl::GetFunc( const string& name)
+SgFunctionSymbol* AstInterfaceImpl::GetFunc( const std::string& name)
 {
   const char* start = name.c_str();
   SgFunctionSymbol* f = LookupFunction(start);
@@ -745,18 +746,11 @@ SgFunctionSymbol* AstInterfaceImpl::GetFunc( const string& name)
 }
 
 SgFunctionSymbol* AstInterfaceImpl::
-NewFunc( const string& name, SgType*  rtype, const list<SgInitializedName*>& args)
+NewFunc( const std::string& name, SgType*  rtype, const list<SgInitializedName*>& args)
 {
   const char *start = name.c_str();
   SgFunctionType *ft = new SgFunctionType(rtype, false);
-
-#if 0
-// DQ (10/11/2014): Added argument to resolve ambiguity caused by Aterm support.
-  SgFunctionDeclaration  *d = new SgFunctionDeclaration(GetFileInfo(), start, NULL, ft);
-#else
   SgFunctionDeclaration  *d = new SgFunctionDeclaration(GetFileInfo(), start, ft);
-#endif
-
   for (list<SgInitializedName*>::const_iterator p = args.begin(); p != args.end();
        ++p) {
      SgInitializedName* cur = *p;
@@ -765,16 +759,16 @@ NewFunc( const string& name, SgType*  rtype, const list<SgInitializedName*>& arg
   return AddFunc(d);
 }
 
-SgClassSymbol* AstInterfaceImpl :: GetClass( const string& val, char** start)
+SgClassSymbol* AstInterfaceImpl :: GetClass( const std::string& val, const char** start)
 {
-    string classname = "";
+    std::string classname = "";
     for ( size_t size = 0 ; size < val.size(); ++size) { 
       if (val[size] == ' ' || val[size] == '&' || val[size] == ':')
            break;
       classname.push_back(val[size]);
     }
     if (start != 0) {
-      *start = const_cast<char*>(strstr( val.c_str(), "::"));
+      *start = strstr( val.c_str(), "::");
       *start += 2;
     }
 
@@ -784,7 +778,7 @@ SgClassSymbol* AstInterfaceImpl :: GetClass( const string& val, char** start)
   return 0;
 }
 
-SgClassSymbol* AstInterfaceImpl :: NewClass( const string& classname)
+SgClassSymbol* AstInterfaceImpl :: NewClass( const std::string& classname)
 {
  if (DebugSymbol())
     std:: cerr << "adding new class " << classname << "\n";
@@ -794,7 +788,7 @@ SgClassSymbol* AstInterfaceImpl :: NewClass( const string& classname)
 }
 
 SgMemberFunctionSymbol * AstInterfaceImpl :: 
-NewMemberFunc( SgClassSymbol* c, const string& name, SgType*  rtype, 
+NewMemberFunc( SgClassSymbol* c, const std::string& name, SgType*  rtype, 
                const list<SgInitializedName*>& args)
 {
   SgClassDeclaration* classDecl = c->get_declaration();
@@ -805,19 +799,13 @@ NewMemberFunc( SgClassSymbol* c, const string& name, SgType*  rtype,
          std:: cerr << " creating new class defn " << classDecl->get_name().str() << "when member function " << start << "was not found. \n"; 
      classDefn = new SgClassDefinition(GetFileInfo(), classDecl);
      classDefn->set_endOfConstruct(classDefn->get_file_info());
+     assert(scope != 0);
      classDecl->set_parent(scope);
      classDecl->set_definition(classDefn);
   }
 
   SgMemberFunctionType *ft = new SgMemberFunctionType(rtype, false);
-
-#if 0
-// DQ (10/11/2014): Added argument to resolve ambiguity caused by Aterm support.
-  SgMemberFunctionDeclaration  *d = new SgMemberFunctionDeclaration(GetFileInfo(), start, NULL, ft, 0);
-#else
   SgMemberFunctionDeclaration  *d = new SgMemberFunctionDeclaration(GetFileInfo(), start, ft, 0);
-#endif
-
   d->set_scope(classDefn);
   for (list<SgInitializedName*>::const_iterator p = args.begin(); p != args.end();
        ++p) {
@@ -828,485 +816,29 @@ NewMemberFunc( SgClassSymbol* c, const string& name, SgType*  rtype,
   return AddMemberFunc( classDefn, d);
 }
 
-// jichi (10/8/2009): modified from @code globalUnparseToString_OpenMP in @file unparser.h.
-// Add in Fortran support by replacing u_exprStmt with u_fortran_locatedNode in roseUnparser.
-string
-globalUnparseToString_Fortran (const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer = NULL )
-   {
-     // jichi (10/8/2009): Used as dummy source file to deceive Fortran unparser.
-     static SgFile* recentFile = NULL;
-     if (recentFile == NULL) {
-       SgFile* currentFile = SageInterface::getEnclosingFileNode(const_cast<SgNode*>(astNode));
-       if (currentFile != NULL)
-         recentFile = currentFile;
-     }
-     // jichi (10/8/2009): Error message when recent file is needed but absent.
-     static const char* NullRecentFileErr = "globalUnparseToString_Fortran: Missing source file to unparse Fortran AST.";
-
-  // This global function permits any SgNode (including it's subtree) to be turned into a string
-
-  // DQ (3/2/2006): Let's make sure we have a valid IR node!
-     ROSE_ASSERT(astNode != NULL);
-
-     string returnString;
-
-  // all options are now defined to be false. When these options can be passed in
-  // from the prompt, these options will be set accordingly.
-     bool _auto                         = false;
-     bool linefile                      = false;
-     bool useOverloadedOperators        = false;
-     bool num                           = false;
-
-  // It is an error to have this always turned off (e.g. pointer = this; will not unparse correctly)
-     bool _this                         = true;
-
-     bool caststring                    = false;
-     bool _debug                        = false;
-     bool _class                        = false;
-     bool _forced_transformation_format = false;
-     bool _unparse_includes             = false;
-
-  // printf ("In globalUnparseToString(): astNode->sage_class_name() = %s \n",astNode->sage_class_name());
-
-     Unparser_Opt roseOptions( _auto,
-                               linefile,
-                               useOverloadedOperators,
-                               num,
-                               _this,
-                               caststring,
-                               _debug,
-                               _class,
-                               _forced_transformation_format,
-                               _unparse_includes );
-
-  // DQ (7/19/2007): Remove lineNumber from constructor parameter list.
-  // int lineNumber = 0;  // Zero indicates that ALL lines should be unparsed
-
-     // Initialize the Unparser using a special string stream inplace of the usual file stream 
-     ostringstream outputString;
-
-     const SgLocatedNode* locatedNode = isSgLocatedNode(astNode);
-     string fileNameOfStatementsToUnparse;
-     if (locatedNode == NULL)
-        {
-       // printf ("WARNING: applying AST -> string for non expression/statement AST objects \n");
-          fileNameOfStatementsToUnparse = "defaultFileNameInGlobalUnparseToString";
-        }
-       else
-        {
-          ROSE_ASSERT (locatedNode != NULL);
-
-       // DQ (5/31/2005): Get the filename from a traversal back through the parents to the SgFile
-       // fileNameOfStatementsToUnparse = locatedNode->getFileName();
-       // fileNameOfStatementsToUnparse = rose::getFileNameByTraversalBackToFileNode(locatedNode);
-          if (locatedNode->get_parent() == NULL)
-             {
-            // DQ (7/29/2005):
-            // Allow this function to be called with disconnected AST fragments not connected to 
-            // a previously generated AST.  This happens in Qing's interface where AST fragements 
-            // are built and meant to be unparsed.  Only the parent of the root of the AST 
-            // fragement is expected to be NULL.
-            // fileNameOfStatementsToUnparse = locatedNode->getFileName();
-               fileNameOfStatementsToUnparse = locatedNode->getFilenameString();
-             }
-            else
-             {
-            // DQ (2/20/2007): The expression being unparsed could be one contained in a SgArrayType
-               SgArrayType* arrayType = isSgArrayType(locatedNode->get_parent());
-               if (arrayType != NULL)
-                  {
-                 // If this is an index of a SgArrayType node then handle as a special case
-                    fileNameOfStatementsToUnparse = "defaultFileNameInGlobalUnparseToString";
-                  }
-                 else
-                  {
-#if 1
-                    fileNameOfStatementsToUnparse = rose::getFileNameByTraversalBackToFileNode(locatedNode);
-#else
-                    SgSourceFile* sourceFile = TransformationSupport::getSourceFile(locatedNode);
-                    ROSE_ASSERT(sourceFile != NULL);
-                    fileNameOfStatementsToUnparse = sourceFile->getFileName();
-#endif
-                  }
-             }
-        }
-
-     ROSE_ASSERT (fileNameOfStatementsToUnparse.size() > 0);
-
-  // Unparser roseUnparser ( &outputString, fileNameOfStatementsToUnparse, roseOptions, lineNumber );
-     Unparser roseUnparser ( &outputString, fileNameOfStatementsToUnparse, roseOptions );
-
-  // jichi (10/8/2009): Set dummy currentFile to deceive Fortran unparser.
-  if (roseUnparser.currentFile == NULL) 
-    roseUnparser.currentFile = recentFile;
-
-  // Information that is passed down through the tree (inherited attribute)
-  // Use the input SgUnparse_Info object if it is available.
-     SgUnparse_Info* inheritedAttributeInfoPointer = NULL;
-     if (inputUnparseInfoPointer != NULL)
-        {
-       // printf ("Using the input inputUnparseInfoPointer object \n");
-
-       // Use the user provided SgUnparse_Info object
-          inheritedAttributeInfoPointer = inputUnparseInfoPointer;
-        }
-       else
-        {
-       // DEFINE DEFAULT BEHAVIOUR FOR THE CASE WHEN NO inputUnparseInfoPointer (== NULL) IS 
-       // PASSED AS ARGUMENT TO THE FUNCTION
-       // printf ("Building a new Unparse_Info object \n");
-
-       // If no input parameter has been specified then allocate one
-       // inheritedAttributeInfoPointer = new SgUnparse_Info (NO_UNPARSE_INFO);
-          inheritedAttributeInfoPointer = new SgUnparse_Info();
-          ROSE_ASSERT (inheritedAttributeInfoPointer != NULL);
-
-       // MS: 09/30/2003: comments de-activated in unparsing
-          ROSE_ASSERT (inheritedAttributeInfoPointer->SkipComments() == false);
-
-       // Skip all comments in unparsing
-          inheritedAttributeInfoPointer->set_SkipComments();
-          ROSE_ASSERT (inheritedAttributeInfoPointer->SkipComments() == true);
-       // Skip all whitespace in unparsing (removed in generated string)
-          inheritedAttributeInfoPointer->set_SkipWhitespaces();
-          ROSE_ASSERT (inheritedAttributeInfoPointer->SkipWhitespaces() == true);
-
-       // Skip all directives (macros are already substituted by the front-end, so this has no effect on those)
-          inheritedAttributeInfoPointer->set_SkipCPPDirectives();
-          ROSE_ASSERT (inheritedAttributeInfoPointer->SkipCPPDirectives() == true);
-
-#if 1
-       // DQ (8/1/2007): Test if we can force the default to be to unparse fully qualified names.
-       // printf ("Setting the default to generate fully qualified names, astNode = %p = %s \n",astNode,astNode->class_name().c_str());
-          inheritedAttributeInfoPointer->set_forceQualifiedNames();
-
-       // DQ (8/6/2007): Avoid output of "public", "private", and "protected" in front of class members.
-       // This does not appear to have any effect, because it it explicitly set in the unparse function 
-       // for SgMemberFunctionDeclaration.
-          inheritedAttributeInfoPointer->unset_CheckAccess();
-
-       // DQ (8/1/2007): Only try to set the current scope to the SgGlobal scope if this is NOT a SgProject or SgFile
-          if ( (isSgProject(astNode) != NULL || isSgFile(astNode) != NULL ) == false )
-             {
-            // This will be set to NULL where astNode is a SgType!
-               inheritedAttributeInfoPointer->set_current_scope(TransformationSupport::getGlobalScope(astNode));
-             }
-#endif
-        }
-
-     ROSE_ASSERT (inheritedAttributeInfoPointer != NULL);
-     SgUnparse_Info & inheritedAttributeInfo = *inheritedAttributeInfoPointer;
-
-  // DQ (5/27/2007): Commented out, uncomment when we are ready for Robert's new hidden list mechanism.
-     if (inheritedAttributeInfo.get_current_scope() == NULL)
-        {
-       // printf ("In globalUnparseToString(): inheritedAttributeInfo.get_current_scope() == NULL astNode = %p = %s \n",astNode,astNode->class_name().c_str());
-
-       // DQ (6/2/2007): Find the nearest containing scope so that we can fill in the current_scope, so that the name qualification can work.
-#if 1
-          SgStatement* stmt = TransformationSupport::getStatement(astNode);
-#else
-          SgStatement* stmt = NULL;
-       // DQ (6/27/2007): SgProject and SgFile are not contained in any statement
-          if (isSgProject(astNode) == NULL && isSgFile(astNode) == NULL)
-               stmt = TransformationSupport::getStatement(astNode);
-#endif
-
-          if (stmt != NULL)
-             {
-               SgScopeStatement* scope = stmt->get_scope();
-               ROSE_ASSERT(scope != NULL);
-               inheritedAttributeInfo.set_current_scope(scope);
-             }
-            else
-             {
-            // DQ (6/27/2007): If we unparse a type then we can't find the enclosing statement, so 
-            // assume it is SgGlobal. But how do we find a SgGlobal IR node to use?  So we have to 
-            // leave it NULL and hand this case downstream!
-               inheritedAttributeInfo.set_current_scope(NULL);
-             }
-#if 1
-          const SgTemplateArgument* templateArgument = isSgTemplateArgument(astNode);
-          if (templateArgument != NULL)
-             {
-            // debugging code!
-            // printf ("Exiting to debug case of SgTemplateArgument \n");
-            // ROSE_ASSERT(false);
-
-               SgScopeStatement* scope = templateArgument->get_scope();
-               printf ("SgTemplateArgument case: scope = %p = %s \n",scope,scope->class_name().c_str());
-               inheritedAttributeInfo.set_current_scope(scope);
-             }
-#endif
-       // stmt->get_startOfConstruct()->display("In unparseStatement(): info.get_current_scope() == NULL: debug");
-       // ROSE_ASSERT(false);
-        }
-  // ROSE_ASSERT(info.get_current_scope() != NULL);
-
-  // Turn ON the error checking which triggers an error if the default SgUnparse_Info constructor is called
-  // SgUnparse_Info::forceDefaultConstructorToTriggerError = true;
-
-#if 1
-  // DQ (10/19/2004): Cleaned up this code, remove this dead code after we are sure that this worked properly
-  // Actually, this code is required to be this way, since after this branch the current function returns and
-  // some data must be cleaned up differently!  So put this back and leave it this way, and remove the
-  // "Implementation Note".
-
-  // Both SgProject and SgFile are handled via recursive calls
-     if ( (isSgProject(astNode) != NULL) || (isSgSourceFile(astNode) != NULL) )
-        {
-       // printf ("Implementation Note: Put these cases (unparsing the SgProject and SgFile into the cases for nodes derived from SgSupport below! \n");
-
-       // Handle recursive call for SgProject
-          const SgProject* project = isSgProject(astNode);
-          if (project != NULL)
-             {
-               for (int i = 0; i < project->numberOfFiles(); i++)
-                  {
-                 // SgFile* file = &(project->get_file(i));
-                    SgFile* file = project->get_fileList()[i];
-                    ROSE_ASSERT(file != NULL);
-                    string unparsedFileString = globalUnparseToString_Fortran(file,inputUnparseInfoPointer);
-                 // string prefixString       = string("/* TOP:")      + string(rose::getFileName(file)) + string(" */ \n");
-                 // string suffixString       = string("\n/* BOTTOM:") + string(rose::getFileName(file)) + string(" */ \n\n");
-                    string prefixString       = string("/* TOP:")      + file->getFileName() + string(" */ \n");
-                    string suffixString       = string("\n/* BOTTOM:") + file->getFileName() + string(" */ \n\n");
-                    returnString += prefixString + unparsedFileString + suffixString;
-                  }
-             }
-
-       // Handle recursive call for SgFile
-          const SgSourceFile* file = isSgSourceFile(astNode);
-          if (file != NULL)
-             {
-               SgGlobal* globalScope = file->get_globalScope();
-               ROSE_ASSERT(globalScope != NULL);
-               returnString = globalUnparseToString_Fortran(globalScope,inputUnparseInfoPointer);
-             }
-        }
-       else
-#endif
-        {
-       // DQ (1/12/2003): Only now try to trap use of SgUnparse_Info default constructor
-       // Turn ON the error checking which triggers an error if the default SgUnparse_Info constructor is called
-       // GB (09/27/2007): Took this out because it breaks parallel traversals that call unparseToString. It doesn't
-       // seem to have any other effect (whatever was debugged with this seems to be fixed now).
-       // SgUnparse_Info::set_forceDefaultConstructorToTriggerError(true);
-
-          if (isSgStatement(astNode) != NULL)
-             {
-               const SgStatement* stmt = isSgStatement(astNode);
-
-            // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
-
-               // jichi (10/8/2009): Force using Fortran unparser.
-               //roseUnparser.u_exprStmt->unparseStatement ( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
-               if (recentFile != NULL) {
-                 ROSE_ASSERT(roseUnparser.u_fortran_locatedNode != NULL);
-                 roseUnparser.u_fortran_locatedNode->unparseStatement ( const_cast<SgStatement*>(stmt), inheritedAttributeInfo );
-               } else {
-                 std::cerr << NullRecentFileErr << std::endl;
-
-                 // jichi (12/9/2009): Use exception to signal parsing failed.
-                 //return outputString.str();
-                 throw NullRecentFileErr;
-               }
-             }
-
-          if (isSgExpression(astNode) != NULL)
-             {
-               const SgExpression* expr = isSgExpression(astNode);
-
-            // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
-
-               // jichi (10/8/2009): Force using Fortran unparser.
-               //roseUnparser.u_exprStmt->unparseExpression ( const_cast<SgExpression*>(expr), inheritedAttributeInfo );
-               if (recentFile != NULL) {
-                 ROSE_ASSERT(roseUnparser.u_fortran_locatedNode != NULL);
-                 roseUnparser.u_fortran_locatedNode->unparseExpression ( const_cast<SgExpression*>(expr), inheritedAttributeInfo );
-               } else {
-                 std::cerr << NullRecentFileErr << std::endl;
-                 // jichi (12/9/2009): Use exception to signal parsing failed.
-                 //return outputString.str();
-                 throw NullRecentFileErr;
-               }
-             }
-
-          if (isSgType(astNode) != NULL)
-             {
-               const SgType* type = isSgType(astNode);
-
-            // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
-               roseUnparser.u_type->unparseType ( const_cast<SgType*>(type), inheritedAttributeInfo );
-             }
-
-          if (isSgSymbol(astNode) != NULL)
-             {
-               const SgSymbol* symbol = isSgSymbol(astNode);
-
-            // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
-               roseUnparser.u_sym->unparseSymbol ( const_cast<SgSymbol*>(symbol), inheritedAttributeInfo );
-             }
-
-          // jichi (10/8/2009): Forbid unparse Cxx AST.
-          ROSE_ASSERT(isSgSupport(astNode) == NULL);
-
-          if (isSgSupport(astNode) != NULL)
-             {
-            // Handle different specific cases derived from SgSupport 
-            // (e.g. template parameters and template arguments).
-               switch (astNode->variantT())
-                  {
-#if 0
-                    case V_SgProject:
-                       {
-                         SgProject* project = isSgProject(astNode);
-                         ROSE_ASSERT(project != NULL);
-                         for (int i = 0; i < project->numberOfFiles(); i++)
-                            {
-                              SgFile* file = &(project->get_file(i));
-                              ROSE_ASSERT(file != NULL);
-                              string unparsedFileString = globalUnparseToString_OpenMPSafe(file,inputUnparseInfoPointer);
-                              string prefixString       = string("/* TOP:")      + string(rose::getFileName(file)) + string(" */ \n");
-                              string suffixString       = string("\n/* BOTTOM:") + string(rose::getFileName(file)) + string(" */ \n\n");
-                              returnString += prefixString + unparsedFileString + suffixString;
-                            }
-                         break;
-                       }
-#error "DEAD CODE!"
-                 // case V_SgFile:
-                       {
-                         SgFile* file = isSgFile(astNode);
-                         ROSE_ASSERT(file != NULL);
-                         SgGlobal* globalScope = file->get_globalScope();
-                         ROSE_ASSERT(globalScope != NULL);
-                         returnString = globalUnparseToString_OpenMPSafe(globalScope,inputUnparseInfoPointer);
-                         break;
-                       }
-#endif
-                    case V_SgTemplateParameter:
-                       {
-                         const SgTemplateParameter* templateParameter = isSgTemplateParameter(astNode);
-
-                      // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
-                         roseUnparser.u_exprStmt->unparseTemplateParameter(const_cast<SgTemplateParameter*>(templateParameter),inheritedAttributeInfo);
-                         break;
-                       }
-                    case V_SgTemplateArgument:
-                       {
-                         const SgTemplateArgument* templateArgument = isSgTemplateArgument(astNode);
-
-                      // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
-                         roseUnparser.u_exprStmt->unparseTemplateArgument(const_cast<SgTemplateArgument*>(templateArgument),inheritedAttributeInfo);
-                         break;
-                       }
-
-                    case V_SgInitializedName:
-                       {
-                      // DQ (8/6/2007): This should just unparse the name (fully qualified if required).
-                      // QY: not sure how to implement this
-                      // DQ (7/23/2004): This should unparse as a declaration (type and name with initializer).
-                         const SgInitializedName* initializedName = isSgInitializedName(astNode);
-                      // roseUnparser.get_output_stream() << initializedName->get_qualified_name().str();
-                         SgScopeStatement* scope = initializedName->get_scope();
-                         if (isSgGlobal(scope) == NULL && scope->containsOnlyDeclarations() == true)
-                              roseUnparser.get_output_stream() << roseUnparser.u_exprStmt->trimGlobalScopeQualifier ( scope->get_qualified_name().getString() ) << "::";
-                         roseUnparser.get_output_stream() << initializedName->get_name().str();
-                         break;
-                       }
-
-                    case V_Sg_File_Info:
-                       {
-                      // DQ (8/5/2007): This is implemented above as a special case!
-                      // DQ (5/11/2006): Not sure how or if we should implement this
-                         break;
-                       }
-
-                    case V_SgPragma:
-                       {
-                         const SgPragma* pr = isSgPragma(astNode);
-                         SgPragmaDeclaration* decl = isSgPragmaDeclaration(pr->get_parent());
-                         ROSE_ASSERT (decl);
-                         roseUnparser.u_exprStmt->unparseStatement ( decl, inheritedAttributeInfo );
-                         break;
-                       }
-
-                 // Perhaps the support for SgFile and SgProject shoud be moved to this location?
-                    default:
-                         printf ("Error: default reached in node derived from SgSupport astNode = %s \n",astNode->sage_class_name());
-                         ROSE_ABORT();
-                }
-             }
-
-       // Turn OFF the error checking which triggers an if the default SgUnparse_Info constructor is called
-       // GB (09/27/2007): Removed this error check, see above.
-       // SgUnparse_Info::set_forceDefaultConstructorToTriggerError(false);
-
-       // MS: following is the rewritten code of the above outcommented 
-       //     code to support ostringstream instead of ostrstream.
-          returnString = outputString.str();
-
-       // Call function to tighten up the code to make it more dense
-          if (inheritedAttributeInfo.SkipWhitespaces() == true)
-             {
-               returnString = roseUnparser.removeUnwantedWhiteSpace ( returnString );
-             }
-
-       // delete the allocated SgUnparse_Info object
-          if (inputUnparseInfoPointer == NULL)
-               delete inheritedAttributeInfoPointer;
-        }
-     return returnString;
-   }
-
-//! Sage_class_name:unparseToString()
-//   e.g: SgPntrArrRefExp:a[i]
-//   Don't change the output format since the returned string will be compared to pre-built results 
-//   when running tests/roseTests/programAnalysisTests/PtrAnalTest
-string AstToString( const AstNodePtr& _s)
+bool AstInterface::IsExprStmt(const AstNodePtr& n, AstNodePtr* exp)
 {
-  // jichi (9/20/2009): Refresh original codes, add fortran support.
-  SgNode* s = AstNodePtrImpl(_s).get_ptr();
-  if (s == 0) 
-    return "";
-  string r = "";
-  r = string(s->sage_class_name()) + ":";
-  switch(s->variantT()) {
-  case V_SgVarRefExp:
-    {
-      SgVarRefExp *var = isSgVarRefExp( s );
-      SgVariableSymbol *sb = var->get_symbol();
-      r = r +  sb->get_name().str();
-    }
-    break;
-  case V_SgInitializedName:
-    {
-      SgInitializedName* var = isSgInitializedName(s);
-      r = r + var->get_name();
-    }
-    break;
-  default:
-    {
-      // jichi (10/8/2009): Force using Fortran unparser while parsing Fortran file.
-      assert(isSgType(s) == 0);
+  SgExprStatement* s = isSgExprStatement((SgNode*)n.get_ptr());
+  if (s == 0) return false;
+  if (exp != 0) *exp = s->get_expression();
+  return true;
+}
 
-      if (IS_FORTRAN_LANGUAGE()) {      // Fortran AST
-        // jichi (12/9/2009): Use C/C++ unparser as fallback.
-        try {
-          r = r + globalUnparseToString_Fortran(s);
-        } catch (const char*) {
-          r = r + s->unparseToString();
-        }
-      } else    // General AST.
-        r = r + s->unparseToString();
-    }
-  }
-  return r;
+std::string AstInterface::unparseToString( const AstNodePtr& n)
+{ 
+  SgNode* s = (SgNode*)n.get_ptr();
+  return ::unparseToString(s);
+}
+
+std::string AstInterface::AstToString( const AstNodePtr& n)
+{ 
+  SgNode* s = (SgNode*)n.get_ptr();
+  return string(s->sage_class_name()) + ":" + ::unparseToString(s);
 }
 
 // Return "@line_number:column_number" for an AST node  
 // Used for debugging or pretty-printing an node
-std::string getAstLocation(const AstNodePtr& _s)
+std::string AstInterface::getAstLocation(const AstNodePtr& _s)
 {
    SgNode* s = AstNodePtrImpl(_s).get_ptr();
   if (s == 0) 
@@ -1321,38 +853,6 @@ std::string getAstLocation(const AstNodePtr& _s)
   r = r+"@"+sline.str()+":"+scol.str();
   return r;
 }
-
-/*
-bool AstInterface::
-AstTreeIdentical( const AstNodePtr& n1, const AstNodePtr& n2)
-{  
-  if (! AstNodeIdentical(n1,n2))
-      return false;
-   vector<SgNode*> childvec1 = n1->get_traversalSuccessorContainer();
-   vector<SgNode*> childvec2 = n2->get_traversalSuccessorContainer();
-   if (childvec1.size() != childvec2.size())
-       return false;
-   for (size_t i = 0; i < childvec1.size(); ++i) {
-      AstNodePtr c1 = childvec1[i];
-      AstNodePtr c2 = childvec2[i];
-      if (AstNodeIdentical(c1, c2))
-         return false;
-   }
-   return true;
-}
-bool AstInterface:: 
-AstNodeIdentical( const AstNodePtr& n1, const AstNodePtr& n2)
-{ 
-   if ( n1->variantT() != n2->variantT() )
-        return false;
-   string name1, name2;
-   AstNodePtr scope1, scope2;
-   if (IsVarRef(n1, 0,&name1, &scope1) && IsVarRef(n2, 0, &name2, &scope2))
-       return name1 == name2 && scope1 == scope2; 
-   else
-       return true;
-}
-*/
 
 void AstInterface::FreeAstTree( const AstNodePtr& n)
 { }
@@ -1386,14 +886,13 @@ bool AstInterface :: get_fileInfo(const AstNodePtr& _n, std:: string* fname, int
 
 AstNodePtr AstInterface :: CopyAstTree( const AstNodePtr &_orig) 
 {
- AstNodePtrImpl orig(_orig);
+ SgNode* orig = AstNodePtrImpl(_orig).get_ptr();
  if (orig->variantT() == V_SgInitializedName) {
-   AstNodePtrImpl r(ToVarRef(*this, orig));
+   AstNodePtrImpl r(ToVarRef(*impl, orig));
    return r;
  }
  SgTreeCopy copyOption;
  SgNode* r = orig->copy( copyOption);
- //QY: FixSgTree(r); 
  if ( impl->NumberOfObservers() )
     NotifyTreeCopy( *impl, _orig, AstNodePtrImpl(r));
  return AstNodePtrImpl(r);
@@ -1401,14 +900,13 @@ AstNodePtr AstInterface :: CopyAstTree( const AstNodePtr &_orig)
 
 AstInterface::AstNodeList AstInterface :: GetChildrenList( const AstNodePtr &_n)
 {
-  AstNodePtrImpl n(_n);
-   vector<SgNode*> childvec = n->get_traversalSuccessorContainer();
-   AstNodeList childlist;
+  SgNode* n = AstNodePtrImpl(_n).get_ptr();
+  AstNodeList childlist;
+   const vector<SgNode*>& childvec = n->get_traversalSuccessorContainer();
    for (size_t i = 0; i < childvec.size(); ++i) {
-      AstNodePtrImpl c = childvec[i]; 
-      childlist.push_back(c);
+      childlist.push_back(childvec[i]);
    }
-   return childlist;
+  return childlist;
 }
 
 bool AstInterface::IsFortranLanguage()
@@ -1458,7 +956,7 @@ bool AstInterface::IsExecutableStmt( const AstNodePtr& _s)
   AstNodePtrImpl s(_s);
   switch (s->variantT()) {
   case V_SgFortranDo:
-  //case V_SgFortranNonBlockedDo:       // This kind of Fortran block is temporarily not supported.
+  //case V_SgFortranNonBlockedDo:        // This kind of Fortran block is temporarily not supported.
 
   case V_SgForStatement:
   case V_SgCaseOptionStmt:
@@ -1716,30 +1214,6 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
         l = decl->get_parameterList();
       break;
     }
- // Liao 2/6/2015, try to extend to support Fortran
-  case V_SgProgramHeaderStatement:
-  {
-    SgProgramHeaderStatement* decl = isSgProgramHeaderStatement(d);
-      if (returntype != 0)
-        *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
-      if (name != 0) 
-        *name =  string(decl->get_name().str());
-      if (paramtype != 0 || params != 0) 
-        l = decl->get_parameterList();
-      break;
-  } 
-  case V_SgProcedureHeaderStatement:
-  {
-    SgProcedureHeaderStatement* decl = isSgProcedureHeaderStatement(d);
-      if (returntype != 0)
-        *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
-      if (name != 0) 
-        *name =  string(decl->get_name().str());
-      if (paramtype != 0 || params != 0) 
-        l = decl->get_parameterList();
-      break;
-  } 
- 
   case V_SgMemberFunctionDeclaration:
     {
       SgMemberFunctionDeclaration* decl = isSgMemberFunctionDeclaration(d);
@@ -1748,7 +1222,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       if (name != 0) {
         SgName cn = decl->get_scope()->get_qualified_name(); 
         SgName fn = decl->get_name();
-        *name =  StripGlobalQualifier(string(cn.str())) + "::" + StripGlobalQualifier(string(fn.str()));
+        *name =  StripGlobalQualifier(string(cn.str())) + "::" + ::StripGlobalQualifier(string(fn.str()));
       }
       if (paramtype != 0 || params != 0) 
         l = decl->get_parameterList();
@@ -1763,7 +1237,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       if (name != 0) {
         SgName cn = decl->get_scope()->get_qualified_name(); 
         SgName fn = decl->get_name();
-        *name =  StripGlobalQualifier(string(cn.str())) + "::" + StripGlobalQualifier(string(fn.str()));
+        *name =  ::StripGlobalQualifier(string(cn.str())) + "::" + ::StripGlobalQualifier(string(fn.str()));
       }
       if (paramtype != 0 || params != 0) 
         l = decl->get_parameterList();
@@ -1794,10 +1268,9 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       SgInitializedName* cur = *p;
       if (paramtype != 0)
          paramtype->push_back(AstNodeTypeImpl(cur->get_type())); 
-      if (params != 0)
-         params->push_back(AstNodePtrImpl(cur));
+      if (params != 0) params->push_back(cur);
       if (outpars != 0 && cur->get_type()->variantT() == V_SgReferenceType)
-         outpars->push_back(AstNodePtrImpl(cur));
+         outpars->push_back(cur);
     }
   }
   return true;
@@ -1806,12 +1279,11 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
 //! Check if a node is an assignment statement/expression, grab its lhs and rhs.
 //! Use readlhs to tell whether the value of lhs is read before being modified 
 //! in the assignment (e.g., whether the assignment is +=, -= etc.)
-bool AstInterface::
-IsAssignment( const AstNodePtr& _s, AstNodePtr* lhs, AstNodePtr* rhs, bool *readlhs) 
+bool AstInterfaceImpl::
+IsAssignment( const SgNode* s, SgNode** lhs, SgNode** rhs, bool *readlhs) 
 { 
-  SgNode* s = AstNodePtrImpl(_s).get_ptr(); 
-  SgExprStatement *n = isSgExprStatement(s);
-  SgExpression *exp = (n != 0)? n->get_expression() : isSgExpression(s);
+  const SgExprStatement *n = isSgExprStatement(s);
+  const SgExpression *exp = (n != 0)? n->get_expression() : isSgExpression(s);
   if (exp != 0) {
     switch (exp->variantT()) {
     case V_SgPlusAssignOp:
@@ -1824,14 +1296,13 @@ IsAssignment( const AstNodePtr& _s, AstNodePtr* lhs, AstNodePtr* rhs, bool *read
     case V_SgXorAssignOp:
     case V_SgAssignOp:
       {
-        SgBinaryOp* s2 = isSgBinaryOp(exp);
-        if (lhs != 0)
-          *lhs = AstNodePtrImpl(s2->get_lhs_operand());
+        const SgBinaryOp* s2 = isSgBinaryOp(exp);
+        if (lhs != 0) *lhs = s2->get_lhs_operand();
         if (rhs != 0) {
           SgNode* init = s2->get_rhs_operand();
           if ( init->variantT() == V_SgAssignInitializer) 
             init = isSgAssignInitializer(init)->get_operand();
-          *rhs = AstNodePtrImpl(init);
+          *rhs = init;
         }
         if (readlhs != 0)
            *readlhs = (exp->variantT() != V_SgAssignOp);
@@ -1841,6 +1312,15 @@ IsAssignment( const AstNodePtr& _s, AstNodePtr* lhs, AstNodePtr* rhs, bool *read
     }
   }
   return false;
+}
+
+bool AstInterface::
+IsAssignment( const AstNodePtr& _s, AstNodePtr* lhs, AstNodePtr* rhs, bool *readlhs) 
+{ 
+  const SgNode* s = AstNodePtrImpl(_s).get_ptr(); 
+  SgNode** _lhs = (lhs == 0)? ((SgNode**)0) : (SgNode**)&(lhs->get_ptr());
+  SgNode** _rhs = (rhs == 0)? ((SgNode**)0) : (SgNode**)&(rhs->get_ptr());
+  return AstInterfaceImpl::IsAssignment(s, _lhs, _rhs, readlhs);
 }
 
 //! Check if $_s$ is a variable declaration node; 
@@ -1860,10 +1340,8 @@ IsVariableDecl(const AstNodePtr& _s, AstNodeList* vars, AstNodeList* init)
          SgExpression* def = var->get_initializer();
          if (def != 0 && def->variantT() == V_SgAssignInitializer)
             def = isSgAssignInitializer(def)->get_operand();
-         if (vars != 0)
-           vars->push_back(AstNodePtrImpl(var));
-         if (init != 0)
-            init->push_back(AstNodePtrImpl(def));
+         if (vars != 0) vars->push_back(var);
+         if (init != 0) init->push_back(def);
      }
      return true;
   }
@@ -1874,19 +1352,19 @@ AstNodePtr AstInterface::
 CreateAllocateArray( const AstNodePtr& _arr, const AstNodeType& _elemtype,
                const AstNodeList& indexsize)
 {
-  AstNodePtrImpl arr(_arr);
   SgType* elemtype = AstNodeTypeImpl(_elemtype).get_ptr();
    SgType* atype = elemtype; 
    for (AstNodeList::const_iterator p = indexsize.begin(); 
         p != indexsize.end(); ++p) {
-      SgExpression* exp = isSgExpression(AstNodePtrImpl(*p).get_ptr());
+      SgExpression* exp = isSgExpression((SgNode*)*p);
       assert(exp != 0);
       atype = new SgArrayType(atype, exp);
    }
    SgType* baseType = elemtype;
    assert(baseType != NULL);
+   SgExpression* arr = ToExpression(*impl,AstNodePtrImpl(_arr).get_ptr());
    SgNewExp* rhs = new SgNewExp(GetFileInfo(), atype, 0, new SgConstructorInitializer(GetFileInfo(),NULL,NULL,baseType,false,false,false,true));
-   return CreateAssignment( arr, AstNodePtrImpl(rhs));
+   return AstNodePtrImpl(::CreateAssignment(*impl, arr, rhs));
 }
 
 AstNodePtr AstInterface:: CreateDeleteArray( const AstNodePtr& _arr)
@@ -1917,45 +1395,14 @@ AstNodePtr AstInterface::
 CreateAssignment( const AstNodePtr& _lhs, const AstNodePtr& _rhs)
 {
   SgNode* lhs = AstNodePtrImpl(_lhs).get_ptr(), *rhs = AstNodePtrImpl(_rhs).get_ptr();
-  assert(HasNullParent(lhs));
-  assert(HasNullParent(rhs));
-  SgExpression *exp = 0;
-  SgExpression *lhsexp = ToExpression(*this, _lhs);
-  SgType* lhstype = lhsexp->get_type(); 
-  SgExpression* rhsexp = ToExpression(*this, _rhs);
-
-  isSgVarRefExp( lhs );
-  if (lhstype->variantT() == V_SgClassType) {
-    SgClassType *lhstype1 = isSgClassType(lhstype);
-    SgName classname = lhstype1->get_name();
-    SgClassSymbol *c = impl->GetClass( string(classname.str()));
-    assert (c != 0);
-    SgExpressionPtrList args;
-    args.push_back( rhsexp);
-    SgMemberFunctionSymbol *f = GetMemberFunc( impl, c, "operator=", &args);
-    if (f != 0) {
-        GetClassDefn(c->get_declaration());
-        SgMemberFunctionRefExp *NEW_MFUNCTION_REF(fr,f);
-        SgExpression *NEW_BIN_OP(func, SgDotExp, lhsexp, fr);
-        SgExprListExp *NEW_EXPR_LIST(argexp);
-        SgExpressionPtrList &l = argexp->get_expressions();
-        l = args;
-        NEW_FUNCTION_CALL(exp, func, argexp);
-    } 
-  }
-  if (exp == 0) {
-     //QY:1/2/08, removed the type argument b/c ROSE requires this to be NULL 
-     //exp = new SgAssignOp(GetFileInfo(), lhsexp, rhsexp, lhstype);
-     exp = new SgAssignOp(GetFileInfo(), lhsexp, rhsexp);
-     exp->set_endOfConstruct(exp->get_file_info());
-     lhsexp->set_parent(exp); 
-     rhsexp->set_parent(exp);
-  }
+  SgExpression *lhsexp = ToExpression(*impl, lhs);
+  SgExpression* rhsexp = ToExpression(*impl, rhs);
+  AstNodePtrImpl res = ::CreateAssignment(*impl, lhsexp, rhsexp);
   if ( impl->NumberOfObservers() ) {
     CopyAstRecord info(*impl, _rhs, _lhs);
     impl->Notify(info);
   }
-  return AstNodePtrImpl(exp);
+  return res;
 }
 
 bool AstInterface::
@@ -2008,6 +1455,11 @@ IsConstant( const AstNodePtr& _exp, string* valtype, string *val)
   case V_SgLongDoubleVal:
       if (valtype != 0) *valtype = "double";
       break;
+  case V_SgSizeOfOp:  /* consider size of a constant b/c it's value doesn't change */
+      {
+         if (valtype != 0) *valtype = "int";
+         break;
+      }
   default:
      return false;
   };
@@ -2054,10 +1506,10 @@ bool AstInterface:: IsMax( const AstNodePtr& _exp)
 
 //! Check if $_exp$ is a variable reference (including all name references which may have
 //! functions or objects have values)
-bool AstInterface::IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, string* varname,
-          AstNodePtr* _scope, bool *isglobal ) 
+bool AstInterfaceImpl::
+IsVarRef( SgNode* exp, SgType** vartype, string* varname,
+          SgNode** _scope, bool *isglobal ) 
 { 
-  SgNode* exp=AstNodePtrImpl(_exp).get_ptr();
   SgNode *decl = 0;
   switch (exp->variantT()) {
     case V_SgMemberFunctionRefExp: 
@@ -2067,42 +1519,35 @@ bool AstInterface::IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, strin
          if (varname != 0) {
             *varname = StripGlobalQualifier(cdef->get_qualified_name())+"::"+StripGlobalQualifier(sb->get_name().str());
          }
-         if (vartype != 0)
-           *vartype = AstNodeTypeImpl(sb->get_type());
+         if (vartype != 0) *vartype = sb->get_type();
       }
       break;
   case V_SgFunctionRefExp:
     {
-      SgFunctionRefExp *var = isSgFunctionRefExp( exp );
+      const SgFunctionRefExp *var = isSgFunctionRefExp( exp );
       SgFunctionSymbol *sb = var->get_symbol();
-      if (vartype != 0)
-        *vartype = AstNodeTypeImpl(sb->get_type());
-      if (varname != 0) {
-        *varname = sb->get_name().str();
-      }
+      if (vartype != 0) *vartype = sb->get_type();
+      if (varname != 0)  *varname = sb->get_name().str();
       decl = 0; // sb->get_declaration();
     }
     break;
   case V_SgVarRefExp:
     {
-      SgVarRefExp *var = isSgVarRefExp( exp );
+      const SgVarRefExp *var = isSgVarRefExp( exp );
       SgVariableSymbol *sb = var->get_symbol();
-      if (vartype != 0)
-        *vartype = AstNodeTypeImpl(sb->get_type());
-      if (varname != 0)
-        *varname = sb->get_name().str();
+      if (vartype != 0) *vartype = sb->get_type();
+      if (varname != 0) *varname = sb->get_name().str();
       decl = sb->get_declaration();
     }
      break;
   case V_SgThisExp:
     {
-      SgThisExp *var = isSgThisExp( exp );
-      if (vartype != 0)
-        *vartype = AstNodeTypeImpl(var->get_type());
-      if (varname != 0)
-        *varname = "this";
-      decl = exp;
-      do {decl = decl->get_parent();} while (decl->variantT() != V_SgFunctionDefinition);
+      const SgThisExp *var = isSgThisExp( exp );
+      if (vartype != 0) *vartype = var->get_type();
+      if (varname != 0) *varname = "this";
+      decl = exp->get_parent();
+      while (decl->variantT() != V_SgFunctionDefinition)
+          {decl = decl->get_parent();} 
     }
      break;
   case V_SgConstructorInitializer: 
@@ -2113,9 +1558,7 @@ bool AstInterface::IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, strin
            *varname = StripGlobalQualifier(decl->get_qualified_name());
            *varname = *varname + "::" + (*varname);
         }
-        if (vartype != 0) {
-            *vartype = AstNodeTypeImpl(decl->get_type());
-        } 
+        if (vartype != 0)  *vartype = decl->get_type();
       }
       else return false;
     }
@@ -2129,27 +1572,23 @@ bool AstInterface::IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, strin
       }
       SgType* t = var->get_type();
       assert( t != 0);
-      if (vartype != 0)
-        *vartype = AstNodeTypeImpl(t);
-      if (varname != 0) {
-        *varname = var->get_name().str();
-      }
+      if (vartype != 0) *vartype = t;
+      if (varname != 0) *varname = var->get_name().str();
       decl = var;
     }
     break;
   case V_SgDotExp:
    {
-     SgDotExp *exp1 = isSgDotExp(exp);
+     const SgDotExp *exp1 = isSgDotExp(exp);
      SgVarRefExp* var1 = isSgVarRefExp(exp1->get_lhs_operand());
      SgVarRefExp* var2 = isSgVarRefExp(exp1->get_rhs_operand());
      if (var1 == 0 || var2 == 0)
         return false;
      SgVariableSymbol *sb1 = var1->get_symbol();
      SgVariableSymbol *sb2 = var2->get_symbol();
-     if (vartype != 0)
-        *vartype = AstNodeTypeImpl(sb2->get_type());
+     if (vartype != 0) *vartype = sb2->get_type();
      if (varname != 0)
-        *varname = string(sb1->get_name().str()) + "." + string(sb2->get_name().str());
+        *varname = string(sb1->get_name().str()) + "." + StripQualifier(string(sb2->get_name().str()));
      decl = sb1->get_declaration();
      break;
    }
@@ -2158,35 +1597,42 @@ bool AstInterface::IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, strin
   }
   if (_scope != 0 || isglobal != 0) {
     SgScopeStatement *scope = (decl == 0)? 0 : GetScope(decl);
-    if (_scope != 0)
-       *_scope =  AstNodePtrImpl(scope);
+    if (_scope != 0) *_scope =  scope;
     if (isglobal != 0)
        *isglobal = scope == 0 || (scope->variantT() == V_SgGlobal);
   }
   return true;
 }
 
-//! Strip the casting operations to get to the real expression.
-AstNodePtr SkipCasting(const AstNodePtr & _exp)
-{
+bool AstInterface::
+IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, string* varname,
+          AstNodePtr* scope, bool *isglobal ) 
+{ 
   SgNode* exp=AstNodePtrImpl(_exp).get_ptr();
+  SgType** _vartype = (vartype==0)? (SgType**)0 : (SgType**)&vartype->get_ptr();
+  SgNode** _scope = (scope==0)? (SgNode**) 0 : (SgNode**)&scope->get_ptr();
+  return AstInterfaceImpl::IsVarRef(exp,_vartype, varname, _scope, isglobal);
+}
+
+//! Strip the casting operations to get to the real expression.
+SgNode* SkipCasting(SgNode*  exp)
+{
   SgCastExp* cast_exp = isSgCastExp(exp);
    if (cast_exp != NULL)
    {
       SgExpression* operand = cast_exp->get_operand();
       assert(operand != 0);
-      return SkipCasting(AstNodePtrImpl(operand));
+      return SkipCasting(operand);
    }
   else      
-    return _exp;
+    return exp;
 }
 
 string AstInterface::GetVarName( const AstNodePtr& _exp)
 {
   AstNodePtrImpl exp(_exp);
   string name;
-  bool succ = IsVarRef(exp, 0, &name);
-  assert(succ);
+  IsVarRef(exp, 0, &name);
   return name;
 }
 
@@ -2201,114 +1647,154 @@ AstNodeType AstInterface::GetExpressionType( const AstNodePtr& s)
 
 string AstInterface:: 
 NewVar( const AstNodeType& _type, const string& name, bool makeunique,
-        const AstNodePtr& _declLoc, const AstNodePtr& _init)
+        bool delayInsert, const AstNodePtr& _declLoc, const AstNodePtr& _init)
 {
   if (DebugNewVar()) std::cerr << "Enter NewVar:" << name << "\n";
   SgType* type = AstNodeTypeImpl(_type).get_ptr();
-  SgNode* declLoc = AstNodePtrImpl(_declLoc).get_ptr();
 
+  SgNode* declLoc = AstNodePtrImpl(_declLoc).get_ptr();
   if (DebugNewVar()) std::cerr << "declLoc=" << declLoc << "\n";
+
   SgScopeStatement *scope = (declLoc == 0)? 0 : GetScope(declLoc);
   if (DebugNewVar()) std::cerr << "scope=" << scope << "\n";
-  SgVariableSymbol *sb = impl->NewVar( isSgType(type), name, makeunique, scope);
+
+  SgExpression* e = 0;
+  if (_init != AST_NULL) e = ToExpression( *impl, (SgNode*)_init.get_ptr());
+  SgVariableSymbol *sb = impl->NewVar( isSgType(type), name, makeunique, delayInsert, e, scope);
+  SgInitializedName* def = sb->get_declaration();
+  assert(def != 0 && !HasNullParent(def));
+
+  if (DebugNewVar()) std::cerr << "Finish creating NewVar:" << name << "\n";
   SgName n =  sb->get_name();
   string varname =  string( n.str());
-  SgInitializedName* def = sb->get_declaration();
-
-  if (def != 0 && HasNullParent(def)) {
-      //variable declaration has not been inserted
-    if (DebugNewVar()) std::cerr << "creating new variable declaration\n";
-    SgVariableDeclaration *decl = new SgVariableDeclaration( GetFileInfo());
-    decl->set_endOfConstruct(decl->get_file_info());
-    def->set_parent(decl);
-    SgAssignInitializer *init = 0;
-    if (_init != AST_NULL) {
-       SgExpression *e = ToExpression( *this, _init);
-       NEW_VAR_INIT(init, def, e);
-       if (DebugNewVar()) std::cerr << "adding new variable init\n";
-    }
-    decl->append_variable(def, init);
-    impl->AddVar( decl, scope);
-    if (DebugNewVar()) std::cerr << "finish creating new variable declaration\n";
-  }
-  else {
-     std::cerr << "Warning: new var has already been initialized: " << name << "\n";
-     //assert(_init == AST_NULL);
-  }
-  if (DebugNewVar()) std::cerr << "Finish creating NewVar:" << name << "\n";
   return varname;
 }
 
-void AstInterfaceImpl::
-AddNewVarDecls(SgScopeStatement* nblock, SgScopeStatement* oldblock)
-    {
-      for ( size_t i = newVarList.size(); i > 0; --i) {
-            std::pair<SgScopeStatement*, SgStatement*> cur = newVarList[i - 1];
-            if (cur.first == oldblock)
-               nblock->insertStatementInScope(cur.second, true);
-      } 
-    }
+void AstInterface:: AddNewVarDecls()
+{ impl->AddNewVarDecls(); }
 
-void AstInterface::
-AddNewVarDecls(const AstNodePtr& _nblock, const AstNodePtr& _oldblock)
-{
-   SgBasicBlock* nblock = isSgBasicBlock(AstNodePtrImpl(_nblock).get_ptr());
-   SgBasicBlock* oldblock = isSgBasicBlock(AstNodePtrImpl(_oldblock).get_ptr());
-   assert(nblock != 0 && oldblock != 0);
-   impl->AddNewVarDecls(nblock,oldblock);
+void AstInterface:: CopyNewVarDecls(const AstNodePtr& nblock, bool clear)
+{ 
+   SgBasicBlock* blk = isSgBasicBlock((SgNode*)nblock.get_ptr()); 
+   if (blk == 0) { std::cerr << "nblock is not a block: " << AstToString(nblock) << "\n"; assert(false); }
+   impl->CopyNewVarDecls(blk, clear);
 }
 
 void AstInterfaceImpl:: AddNewVarDecls()
    {
       for ( size_t i = newVarList.size(); i > 0; --i) {
-            std::pair<SgScopeStatement*, SgStatement*> cur = newVarList[i - 1];
+            std::pair<SgScopeStatement*, SgVariableDeclaration*> cur = newVarList[i-1];
             cur.first->insertStatementInScope(cur.second, true);
+            cur.second->set_parent(cur.first);
       } 
       newVarList.clear();
    } 
 
-// Since 12/25/09, jichi
-// This implementation is changed from \fn CreateVarRef below.
-bool
-AstInterface::HasVarRef(string __varname, const AstNodePtr& __loc) 
+void AstInterfaceImpl:: CopyNewVarDecls(SgBasicBlock* blk, bool clear)
+   {
+      for ( size_t i = 0; i < newVarList.size(); ++i) {
+            std::pair<SgScopeStatement*, SgVariableDeclaration*> cur = newVarList[i];
+            SgVariableDeclaration* s = cur.second;
+            if (!clear) { 
+               SgTreeCopy copyOption;
+               s = isSgVariableDeclaration(cur.second->copy( copyOption));
+            }
+            assert(s != 0);
+            blk->append_statement(s); s->set_parent(blk);
+            //QY: each new decl has only one variable*/
+            const SgInitializedNamePtrList& names = s->get_variables();
+            assert(names.size() == 1);
+            SgInitializedName* n = *names.begin();
+            assert(n != 0);
+            n->set_parent(s);
+            InsertVar(n, blk); 
+      } 
+      if (clear) newVarList.clear();
+   } 
+
+SgVarRefExp*
+AstInterfaceImpl:: CreateFieldRef(std::string name1, std::string name2)
 {
-  SgNode* loc = AstNodePtrImpl(__loc).get_ptr();
-  int dotpos = __varname.rfind(".", __varname.size() - 1);
-  if (dotpos > 0) {
-    string name1 = __varname.substr(0, dotpos);
-    string name2 = __varname.substr(dotpos + 1, __varname.size() - dotpos);
-
-    // FIXME (12/25/09): name2 is not checked and used to build a new \a __loc.
-    return HasVarRef(name1, __loc);
-  }
-
-  SgScopeStatement *scope = (loc == 0)? 0: GetScope(loc);
-  SgVariableSymbol *var = impl->GetVar(__varname, scope);
-  return (var != 0);
+   SgClassSymbol *c = GetClass(name1);
+   if (c == 0) {
+      cerr << "Error: cannot find class declaration for " << name1 << endl;
+      assert(false);
+   }
+   SgClassDeclaration *decl = c->get_declaration(); assert( decl != 0);
+   SgClassDefinition *def = GetClassDefn(decl); assert(def != 0);
+   SgVariableSymbol *vs = LookupVar( name2, def);
+   if (vs == 0) {
+       cerr << "Error : variable " << name2 << " not found in " << def->unparseToString() << ". \n";
+       assert(false); 
+   }
+   SgVarRefExp* r = new SgVarRefExp(GetFileInfo(),vs);
+   r->set_endOfConstruct(r->get_file_info());
+   return r;
 }
 
-AstNodePtr AstInterface::CreateVarRef( string varname, const AstNodePtr& _loc) 
+SgMemberFunctionRefExp* AstInterfaceImpl::
+CreateMethodRef(std::string classname, std::string fieldname, bool createIfNotFound)
+{ 
+      char* start = 0;
+      SgClassSymbol *c = GetClass(classname);
+      if (c == 0) {
+         cerr << "Error: cannot find class declaration for " << classname << endl;
+         assert(false);
+      }
+      SgMemberFunctionSymbol *f1 = GetMemberFunc(c, fieldname);
+      if (f1 == 0) {
+         if (!createIfNotFound) {
+            cerr << "Error: cannot find member function " << fieldname << endl;
+            assert(false);
+         }
+         else {
+            f1 = NewMemberFunc(c, fieldname, 
+                  GetTypeInt(), list<SgInitializedName*>()); 
+        }
+      }
+      SgMemberFunctionRefExp *NEW_MFUNCTION_REF(fr,f1);
+      return fr;
+}
+
+
+SgDotExp* AstInterfaceImpl::
+CreateVarMemberRef(std::string name1, std::string name2, SgNode* loc)
+{
+   SgVarRefExp* obj = CreateVarRef(name1, loc);
+   SgType* vartype = obj->get_type();
+   string tname;
+   GetTypeInfo(vartype, 0, &tname);
+
+   SgVarRefExp *field = CreateFieldRef(tname, name2);
+   SgDotExp* NEW_BIN_OP(r, SgDotExp, obj, field);
+   return r;
+}
+
+SgVarRefExp* AstInterfaceImpl::
+CreateVarRef(std::string varname, SgNode* loc) 
    {
-      SgNode* loc = AstNodePtrImpl(_loc).get_ptr();
+    SgScopeStatement *loc1 = (loc == 0)? scope : GetScope(loc);
+    assert(loc1 != 0);
+    SgVariableSymbol *sym = LookupVar(varname, loc1);
+    if (sym == 0) {
+         cerr << "Error : variable " << varname << " not found in scope " << loc1 << ". \n";
+         assert(false); 
+      }
+    SgVarRefExp *r = new SgVarRefExp( GetFileInfo(), sym);
+    r->set_endOfConstruct(r->get_file_info());
+    return r;
+  }
+
+AstNodePtr AstInterface::
+CreateVarRef(std::string varname, const AstNodePtr& _loc) 
+   {
       int hasdot = varname.rfind(".", varname.size()-1);
       if (hasdot > 0) {
          string name1 = varname.substr(0, hasdot);
          string name2 = varname.substr( hasdot+1, varname.size()-hasdot);
-         AstNodePtr obj = CreateVarRef(name1, _loc);
-         AstNodeType vartype = GetExpressionType(obj);
-         string tname;
-         GetTypeInfo(vartype, 0, &tname);
-         return CreateBinaryOP( BOP_DOT_ACCESS, obj, CreateConstant( "field", tname + "::" + name2));
+         return AstNodePtrImpl(impl->CreateVarMemberRef(name1, name2, AstNodePtrImpl(_loc).get_ptr()));
       }
-      SgScopeStatement *scope = (loc == 0)? 0 : GetScope(loc);
-      SgVariableSymbol *sym = impl->GetVar(varname, scope);
-      if (sym == 0) {
-         cerr << "Error : variable " << varname << " not found in scope " << scope << ". \n";
-         assert(false); 
-      }
-      SgVarRefExp *r = new SgVarRefExp( GetFileInfo(), sym);
-      r->set_endOfConstruct(r->get_file_info());
-      return AstNodePtrImpl(r);
+      return AstNodePtrImpl(impl->CreateVarRef(varname, AstNodePtrImpl(_loc).get_ptr()));
     }
 
 AstNodeType AstInterface::GetType(const string& name) 
@@ -2326,7 +1812,7 @@ AstNodeType AstInterface::GetType(const string& name)
   else if (name == "char") 
       return AstNodeTypeImpl(new SgTypeChar());
   else if (name == "int")
-      return AstNodeTypeImpl(GetTypeInt());
+      return AstNodeTypeImpl(AstInterfaceImpl::GetTypeInt());
   else if (name == "long")
        return AstNodeTypeImpl(new SgTypeLong());
   else if (name == "void")
@@ -2359,7 +1845,7 @@ AstInterface::GetArrayType(const AstNodeType& base, const AstNodeList& index)
 
     SgExprListExp*  NEW_EXPR_LIST(dim);
     for (AstNodeList::const_iterator p = index.begin(); p != index.end(); ++p) {
-      SgExpression* i = isSgExpression(AstNodePtrImpl(*p).get_ptr());
+      SgExpression* i = isSgExpression((SgNode*)*p);
       assert(i);
       dim->append_expression(i);
       i->set_parent(dim);
@@ -2375,13 +1861,13 @@ AstInterface::GetArrayType(const AstNodeType& base, const AstNodeList& index)
     SgType* r = AstNodeTypeImpl(base).get_ptr();
     for (AstNodeList::const_iterator p = index.begin(); p != index.end();
          ++p) {
-       if (AstNodePtrImpl(*p)->variantT() != V_SgIntVal) {
+       if (((SgNode*)(*p))->variantT() != V_SgIntVal) {
           return AstNodeTypeImpl(new SgPointerType(r));
        }
     }
     for (AstNodeList::const_iterator p1 = index.begin(); p1 != index.end();
          ++p1) {
-       SgExpression* ie = isSgExpression( AstNodePtrImpl(*p1).get_ptr());
+       SgExpression* ie = isSgExpression((SgNode*)*p1);
        assert( ie != 0);
        r = new SgArrayType(r, ie);
     }
@@ -2430,7 +1916,7 @@ IsMemoryAccess( const AstNodePtr& _s)
 //! Check if _s is an array access.
 //If so, store array name in array, and subscripts into index[]
 bool AstInterface::
-IsArrayAccess( const AstNodePtr& _s, AstNodePtr* array, AstNodeList* index)
+IsArrayAccess( const AstNodePtr& _s, AstNodePtr* array, AstList* index)
 {
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
   if (s->variantT() == V_SgPntrArrRefExp) {
@@ -2447,7 +1933,7 @@ IsArrayAccess( const AstNodePtr& _s, AstNodePtr* array, AstNodeList* index)
             // jichi(9/25/2009): Add Support for SgExprListExp for Fortran array index.
             SgNode* exp = arr->get_rhs_operand();
             switch(exp->variantT()) {
-            case V_SgExprListExp:       // Fortan indices as expression list.
+            case V_SgExprListExp:        // Fortan indices as expression list.
               {
                 SgExprListExp* indexexp = isSgExprListExp(exp);
                 assert(indexexp);
@@ -2455,14 +1941,13 @@ IsArrayAccess( const AstNodePtr& _s, AstNodePtr* array, AstNodeList* index)
                 SgExpressionPtrList &l = indexexp->get_expressions();
                 SgExpressionPtrList::const_iterator p = l.begin(); 
                 for ( ;p != l.end(); ++p) {
-                  SgExpression *pr = isSgExpression( AstNodePtrImpl(*p).get_ptr() );
+                  SgExpression *pr = isSgExpression((SgNode*)(*p));
                   assert(pr);
-                  index->push_back(AstNodePtrImpl(pr));
+                  index->push_back(pr);
                 }
               }
               break;
-            default:
-              index->push_back(AstNodePtrImpl(exp));
+            default: index->push_back(exp);
             }
           }
         }
@@ -2603,6 +2088,10 @@ IsUnaryOp( const AstNodePtr& _exp, OperatorEnum* opr, AstNodePtr* opd)
         if (opd != 0) *opd = AstNodePtrImpl(isSgAsmOp(exp)->get_expression());
         if (opr != 0) *opr = OP_UNKNOWN; 
         return true;
+    case V_SgBitComplementOp: 
+       if (opd != 0) *opd = AstNodePtrImpl(isSgBitComplementOp(exp)->get_operand());
+       if (opr != 0)  { *opr = UOP_BIT_COMPLEMENT;  }
+       return true;
     default: 
        return false;
   }
@@ -2660,7 +2149,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
   case V_SgDotExp: 
       { 
         SgDotExp* dot = isSgDotExp(f);
-        AstNodePtrImpl cur = dot->get_lhs_operand();
+        SgNode* cur = dot->get_lhs_operand();
         f = dot->get_rhs_operand();
         if (args != 0)
           args->push_back( cur ); 
@@ -2669,7 +2158,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
   case V_SgArrowExp:
       { 
         SgArrowExp* arrow = isSgArrowExp(f);
-        AstNodePtrImpl cur = arrow->get_lhs_operand();
+        SgNode* cur = arrow->get_lhs_operand();
         f = arrow->get_rhs_operand();
         if (args != 0)
           args->push_back( cur ); 
@@ -2677,8 +2166,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
       break;
   case V_SgMemberFunctionRefExp:
       {
-        if (args != 0)
-          args->push_back(AST_NULL);
+        if (args != 0) args->push_back(0);
          break;
       }
   default: break;
@@ -2686,9 +2174,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
   if (argexp != 0) {
      SgExpressionPtrList l = argexp->get_expressions();
      for ( SgExpressionPtrList::iterator p = l.begin(); p != l.end(); ++p) {
-       if (args != 0)  {
-         args->push_back(AstNodePtrImpl(*p)); 
-       }
+       if (args != 0)  { args->push_back(*p); }
      }
   }
   if (func != 0)
@@ -2696,8 +2182,6 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
   return true;
 }
 
-//! Check if $_s$ is a function call; if yes, return its function, input arguments,
-//! output arguments (arguments passed by reference in C++), parameter types, return type
 bool AstInterface::
 IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args, 
                 AstNodeList* outargs, AstTypeList* paramtypes, AstNodeType* returntype)
@@ -2722,7 +2206,9 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
          paramtypes = &PTlist;
      AstNodeType _ftype;
      if (!IsVarRef(AstNodePtrImpl(f), &_ftype))
+     {
         assert(false);
+     }
      SgType* t = AstNodeTypeImpl(_ftype).get_ptr();
      if (t->variantT() == V_SgPointerType)
         t = static_cast<SgPointerType*>(t)->get_base_type();
@@ -2759,26 +2245,21 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
 }
 
 
-
-SgNode* AstInterfaceImpl::GetVarDecl( const string& varname)
+SgVariableDeclaration* AstInterfaceImpl::
+LookupVarDecl( const string& varname, SgScopeStatement* loc)
 {
-  SgVariableSymbol* s = GetVar(varname);
+  SgVariableSymbol* s = LookupVar(varname);
+  if (s == 0) return 0;
   SgInitializedName* n = s->get_declaration();
   SgNode *decl = n;
-  while (decl != 0 && decl->variantT() != V_SgVariableDeclaration) { 
-     if (decl->variantT() == V_SgFunctionDeclaration) {
-         decl = isSgFunctionDeclaration(decl)->get_definition();
-         break;
-     }
+  while (decl != 0 && decl->variantT() != V_SgVariableDeclaration) 
     decl = decl->get_parent();
-  }
-  return decl;
+  return isSgVariableDeclaration(decl);
 }
 
 void AstInterfaceImpl::
-GetTypeInfo(const AstNodeType& _t, string *tname, string* stripname, int* size)
+GetTypeInfo(SgType* t, std::string *tname, std::string* stripname, int* size)
 {
-  SgType* t = AstNodeTypeImpl(_t).get_ptr();
   std::string typeName = get_type_name(t);
   // for instantiated template types, return the original template type name
   // TODO: need a better way to handle this
@@ -2790,8 +2271,8 @@ GetTypeInfo(const AstNodeType& _t, string *tname, string* stripname, int* size)
       typeName=insDecl->get_templateDeclaration()->get_qualified_name();
   }
 
-  string r1 = StripGlobalQualifier(typeName);
-  string result = "";
+  std::string r1 = ::StripGlobalQualifier(typeName);
+  std::string result = "";
   for (size_t i = 0; i < r1.size(); ++i) {
     if (r1[i] != ' ')
       result.push_back(r1[i]);
@@ -2810,7 +2291,7 @@ GetTypeInfo(const AstNodeType& _t, string *tname, string* stripname, int* size)
 
 void AstInterface::
 GetTypeInfo(const AstNodeType& t, string *tname, string* stripname, int* size)
-{ AstInterfaceImpl::GetTypeInfo(t, tname, stripname, size); }
+{ AstInterfaceImpl::GetTypeInfo(AstNodeTypeImpl(t).get_ptr(), tname, stripname, size); }
 
 bool
 AstInterface::IsPointerType(const AstNodeType& __type)
@@ -2922,7 +2403,7 @@ IsExpression( const AstNodePtr& _s, AstNodeType* exptype)
   return AST_NULL;
 }
 
-// Check whether $_s$ is a loop; if yes, grab init, condition, increment, and body
+// if yes, grab init, condition, increment, and body
 bool AstInterface::
 IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
         AstNodePtr* incr, AstNodePtr* body)
@@ -2995,62 +2476,39 @@ IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
   return true;
 }
 
-//! Check whether $_s$ is a loop that can be easily converted to the FORTRAN style.
 // The loop must be in the format: for (ivar=lb; ivar <= ub; ivar += step)
-// The NormalizeForLoop function can be invoked to convert some loops to this style.
-bool AstInterface::IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar , AstNodePtr* lb , AstNodePtr* ub, AstNodePtr* step, AstNodePtr* body)
+// jichi (9/11/2009): Add in fortran loop recognition support.
+bool AstInterfaceImpl::IsFortranLoop( const SgNode* s, SgNode** ivar , SgNode** lb , SgNode** ub, SgNode** step, SgNode** body)
 { 
-  AstNodePtrImpl s(_s);
-
   switch (s->variantT()) {
-  // jichi (9/11/2009): Add in fortran loop recognition support.
   case V_SgFortranDo:
     {
-      SgFortranDo *f = isSgFortranDo(s.get_ptr());
+      const SgFortranDo *f = isSgFortranDo(s);
+      SgExpression *init = f->get_initialization();
+      SgNode* ivarast, *lbast;
+      if (!IsAssignment( init, &ivarast, &lbast))
+        assert(false); 
 
-      // parse initialization for ivar and lb
-      SgExpression *initialization = f->get_initialization();
-      AstNodePtrImpl ivarast, lbast;
-      AstInterface::IsAssignment( AstNodePtrImpl(initialization), &ivarast, &lbast);
-
-      // Use following statements to output varname
-      //string __varname;
-      //AstInterface::IsVarRef(ivarast, 0, &__varname);
-      //std::cerr << "varname = " << __varname << std::endl;
-        
-      if (ivar != 0)
-        *ivar = ivarast;
-      if (lb != 0)
-        *lb = lbast;
-      if (ub != 0)
-        *ub = AstNodePtrImpl(f->get_bound());
-
-      // jichi (10/9/2009): Default increment should be 1 in Fortran,
-      // which is not considered here, but processed in NomalizeLoop.
-      if (step != 0)
-        *step = AstNodePtrImpl(f->get_increment());
-
-      if (body != 0)
-        *body = AstNodePtrImpl(f->get_body());
+      if (ivar != 0) *ivar = ivarast;
+      if (lb != 0) *lb = lbast;
+      if (ub != 0) *ub = f->get_bound();
+      if (step != 0) *step = f->get_increment();
+      if (body != 0) *body = f->get_body();
     }
     return true;
 
-  // jichi (9/11/2009): Reformat original function.
   case V_SgForStatement:
     {
-      SgForStatement *fs = isSgForStatement(s.get_ptr());
-  
-      // Must have initialization statements
-      SgStatementPtrList &init = fs->get_init_stmt();
-      if (init.size() != 1)
-        return false;
+      const SgForStatement *fs = isSgForStatement(s);
+      const SgStatementPtrList &init = fs->get_init_stmt();
+      if (init.size() != 1) return false;
       
-      AstNodePtrImpl ivarast, lbast, ubast, stepast;
-      if (!AstInterface::IsAssignment( AstNodePtrImpl(init.front()), &ivarast, &lbast))
+      SgNode* ivarast, *lbast, *ubast, *stepast;
+      if (!IsAssignment( init.front(), &ivarast, &lbast))
         return false;
         
       string varname;
-      if (!AstInterface::IsVarRef(ivarast, 0, &varname))
+      if (!IsVarRef(ivarast, 0, &varname))
         return false; 
   
       SgExpression* test = fs->get_test_expr();
@@ -3064,9 +2522,9 @@ bool AstInterface::IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar , AstNo
         return false;
       }
   
-      AstNodePtrImpl testlhs = isSgBinaryOp(test)->get_lhs_operand();
+      SgNode* testlhs = isSgBinaryOp(test)->get_lhs_operand();
       string testvarname;
-      if (!AstInterface::IsVarRef(SkipCasting(testlhs), 0, &testvarname) ||
+      if (!IsVarRef(SkipCasting(testlhs), 0, &testvarname) ||
            varname != testvarname)
         return false;
   
@@ -3079,29 +2537,35 @@ bool AstInterface::IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar , AstNo
         return false;
        }
   
-      AstNodePtrImpl incrlhs = isSgBinaryOp(incr)->get_lhs_operand();
+      SgNode* incrlhs = isSgBinaryOp(incr)->get_lhs_operand();
       string incrvarname;
-      if ( !AstInterface::IsVarRef(SkipCasting(incrlhs), 0, &incrvarname) ||
+      if ( !IsVarRef(SkipCasting(incrlhs), 0, &incrvarname) ||
           varname != incrvarname) 
         return false;
       stepast = isSgBinaryOp(incr)->get_rhs_operand();
-      if (ivar != 0)
-        *ivar = ivarast;
-      if (lb != 0)
-        *lb = lbast;
-      if (ub != 0)
-        *ub = ubast;
-      if (step != 0)
-        *step = stepast;
-      if (body != 0)
-        *body = AstNodePtrImpl(fs->get_loop_body());
-          
+      if (ivar != 0) *ivar = ivarast;
+      if (lb != 0) *lb = lbast;
+      if (ub != 0) *ub = ubast;
+      if (step != 0) *step = stepast;
+      if (body != 0) *body = fs->get_loop_body();
     }
     return true;
 
   default:
     return false; 
   }
+}
+
+bool AstInterface::IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar , AstNodePtr* lb , AstNodePtr* ub, AstNodePtr* step, AstNodePtr* body)
+{ 
+  AstNodePtrImpl s(_s);
+
+  SgNode **_ivar = (ivar == 0)? (SgNode**)0 : (SgNode**)&ivar->get_ptr();
+  SgNode **_lb = (lb == 0)? (SgNode**)0 : (SgNode**)&lb->get_ptr();
+  SgNode **_ub = (ub == 0)? (SgNode**)0 : (SgNode**)&ub->get_ptr();
+  SgNode **_step = (step == 0)? (SgNode**)0 : (SgNode**)&step->get_ptr();
+  SgNode **_body = (body == 0)? (SgNode**)0 : (SgNode**)&body->get_ptr();
+  return AstInterfaceImpl::IsFortranLoop(s.get_ptr(),_ivar, _lb, _ub, _step, _body); 
 }
 
 bool AstInterface::IsPostTestLoop( const AstNodePtr& _s)
@@ -3129,14 +2593,13 @@ CreateLoop( const AstNodePtr& _ivar, const AstNodePtr& _lb, const AstNodePtr& _u
     result->set_endOfConstruct(result->get_file_info());
 
     // Set loop expressions.
-    SgExpression* ivarexp = ToExpression(*this, ivar);
-    SgExpression* lbexp = ToExpression(*this, lb);
-    SgExpression* ubexp = ToExpression(*this, ub);
-    SgExpression* stepexp = ToExpression(*this, step);
+    SgExpression* ivarexp = ToExpression(*impl, ivar.get_ptr());
+    SgExpression* lbexp = ToExpression(*impl, lb.get_ptr());
+    SgExpression* ubexp = ToExpression(*impl, ub.get_ptr());
+    SgExpression* stepexp = ToExpression(*impl, step.get_ptr());
 
-    AstNodePtrImpl init = CreateAssignment(AstNodePtrImpl(ivarexp), AstNodePtrImpl(lbexp));
-    SgExpression *initexp = isSgExpression(init.get_ptr());
-    assert(initexp);
+    SgExpression* initexp = isSgExpression(::CreateAssignment(*impl, ivarexp, lbexp));
+    assert(initexp != 0);
     ivarexp->set_parent(initexp);
     ubexp->set_parent(initexp);
 
@@ -3162,27 +2625,23 @@ CreateLoop( const AstNodePtr& _ivar, const AstNodePtr& _lb, const AstNodePtr& _u
     result->set_body(b);
     b->set_parent(result);
 
-    //TODO? result->set_end_numeric_label(...);
     result->set_has_end_statement(true);
     result->set_parent(GetNullScope());
     return AstNodePtrImpl(result);
 
   } else {
-    // default: Generate c/c++ loop.
-    // There are also other languages rather than c/c++ and fortran.
-    // See rose source 'sageInterface.h' for details.
-    // Codes reformatted from original function.
     AstNodePtrImpl ivar(_ivar), lb(_lb), ub(_ub), step(_step), stmts(_stmts);
     SgForStatement *result = new SgForStatement(GetFileInfo());
     result->set_endOfConstruct(result->get_file_info());
-    SgExpression* ivarexp = ToExpression(*this, ivar);
-    SgExpression* lbexp = (lb == 0)? 0 : ToExpression(*this, lb);
-    SgExpression* ubexp = ToExpression(*this, ub);
-    SgExpression* stepexp = ToExpression(*this, step);
-    AstNodePtrImpl init = (lbexp == 0)? AST_NULL : CreateAssignment(AstNodePtrImpl(ivarexp), AstNodePtrImpl(lbexp));
-    SgStatement *initstmt = (init == AST_NULL)? 0 : isSgStatement(init.get_ptr());
+    SgExpression* ivarexp = ToExpression(*impl, ivar.get_ptr());
+    SgExpression* lbexp = (lb == 0)? 0 : ToExpression(*impl, lb.get_ptr());
+    SgExpression* ubexp = ToExpression(*impl, ub.get_ptr());
+    SgExpression* stepexp = ToExpression(*impl, step.get_ptr());
+    SgNode* init = 0; 
+    if (lbexp != 0) init=::CreateAssignment(*impl, ivarexp, lbexp);
+    SgStatement *initstmt = isSgStatement(init);
     if (initstmt == 0 && init != 0) {
-      SgExpression *initexp = ToExpression(*this, init);
+      SgExpression *initexp = ToExpression(*impl, init);
       NEW_EXPR_STMT(initstmt, initexp);
     }
     if (initstmt != 0) {
@@ -3216,9 +2675,7 @@ CreateLoop( const AstNodePtr& _ivar, const AstNodePtr& _lb, const AstNodePtr& _u
 
     if (b == 0) {
       NEW_BLOCK1(b, stmtptr);
-    } else
-      assert( HasNullParent(b));
-
+    } 
     result->set_loop_body(b);
     b->set_parent(result);
     result->set_parent(GetNullScope());
@@ -3240,13 +2697,13 @@ AstInterface::AstNodeList AstInterface::GetBlockStmtList( const AstNodePtr& _n)
     l = isSgForInitStatement(n.get_ptr())->get_init_stmt();
     break;
   case V_SgSwitchStatement:
-       result.push_back(AstNodePtrImpl(isSgSwitchStatement(n.get_ptr())->get_body()));
+       result.push_back(isSgSwitchStatement(n.get_ptr())->get_body());
        return result;
   default:  
       assert(false);
   }
   for (SgStatementPtrList::iterator p = l.begin(); p != l.end(); ++p) {
-     result.push_back(AstNodePtrImpl(*p));
+     result.push_back(*p);
   }
   return result;
 }
@@ -3335,10 +2792,8 @@ CreateConstant( const string& valtype, const string& val)
   else if (valtype == "string") {
          char *r = new char[val.size() + 1];
          strcpy( r, val.c_str());
-      // return new SgStringVal(GetFileInfo(), r);
          SgStringVal *tmp = new SgStringVal(GetFileInfo(), r);
-         ROSE_ASSERT(tmp != NULL);
-         printf ("AstInterface::CreateConstant (copying SgStringVal original = %p copy = %p \n",r,tmp);
+         assert(tmp != NULL);
          return AstNodePtrImpl(tmp);
   }
   else if (valtype == "char") {
@@ -3364,42 +2819,6 @@ CreateConstant( const string& valtype, const string& val)
       SgFunctionRefExp* NEW_FUNCTION_REF(fr,fsym);
       return AstNodePtrImpl(fr);
   }
-  else if (valtype == "memberfunction") {
-      char *start = 0;
-      SgClassSymbol *c = impl->GetClass(val, &start);
-      if (c == 0) {
-         cerr << "Error: cannot find class declaration for " << val << endl;
-         assert(false);
-      }
-      SgMemberFunctionSymbol *f1 = GetMemberFunc( impl, c, string(start));
-      if (f1 == 0) {
-         cerr << "Warning: cannot find member function " << val << endl;
-         f1 = impl->NewMemberFunc(c, string(start), GetTypeInt(), 
-                                   list<SgInitializedName*>()); 
-         //assert(false);
-      SgName f1name = f1->get_name();
-      }
-      SgMemberFunctionRefExp *NEW_MFUNCTION_REF(fr,f1);
-      return AstNodePtrImpl(fr);
-  }
-  else if (valtype == "field") {
-      char *start = 0;
-      SgClassSymbol *c = impl->GetClass(val, &start);
-      if (c == 0) {
-         cerr << "Error: cannot find class declaration for " << val << endl;
-         assert(false);
-      }
-      SgClassDeclaration *decl = c->get_declaration();
-      assert( decl != 0);
-      SgClassDefinition *def = GetClassDefn(decl);
-      assert(def != 0);
-      SgVariableSymbol *vs = impl->GetVar( start, def);
-      if (vs == 0) {
-         cerr << "Error : variable " << start << " not found in " << def->unparseToString() << ". \n";
-         assert(false); 
-      }
-      return AstNodePtrImpl(new SgVarRefExp(GetFileInfo(), vs));
-  }
   else {
        cerr << "Error: non-recognized value type for creating constant AST: " << valtype << endl;
         assert(false);
@@ -3409,71 +2828,8 @@ CreateConstant( const string& valtype, const string& val)
 SgFunctionSymbol* 
 CreateMinMaxFunction(AstInterfaceImpl* impl, const std::string& name, int numOfPars, bool isMin)
 {
-  // jichi (9/30/2009): Add Fortran support
-  if (IS_FORTRAN_LANGUAGE()) {  // Fortran max/min
-    // jichi (9/30/2009): In Fortran, b/c max/min are built-in functions, no new function is defined, but
-    // the description of the function (to construct SgFunctionRefExp) is returned instead.
-    // Here're the diferences between Fortran implementation and Cxx:
-    //   1. there is no needed to define the function body;
-    //   2. there is no needed to declaration declaration to global.
-
-    // NOTE: non-built-in min/max function creation for Fortran is not implemented.
-    assert(name == (isMin? "min": "max"));
-    assert(numOfPars >= 2);     // Case where argc equals to 1 is not accepted by Fortran max/min.
-
-    SgType* typeint = GetTypeInt();     // assume all args are int
-    std::list<SgInitializedName*> pars; 
-    for (int i = 0; i < numOfPars; ++i) { 
-      std::string parname = "a";
-      parname.push_back(i + '0');
-      SgName curname(parname.c_str());
-      SgInitializedName* curVar = new SgInitializedName(GetFileInfo(), curname, typeint, 0, 0, 0, 0); 
-      pars.push_back(curVar);
-    }
-
-    // jichi (10/2/2009): Following codes expand functions call chains below.
-    // <code>SgFunctionSymbol* funcSymbol = impl->NewFunc(name, typeint, pars);</code>
-
-    SgType* rtype = typeint;
-    const bool has_ellipses = false;
-    SgFunctionType *ft = new SgFunctionType(rtype, has_ellipses);
-
-    //SgFunctionDeclaration  *d = new SgFunctionDeclaration(GetFileInfo(), name.c_str(), ft);
-    SgFunctionDefinition* fd = NULL;    // No definition for built-in function.
-
-    // SgProcedureHeaderStatement extends SgFunctionDeclaration
-#if 0
- // DQ (10/11/2014): Added argument to resolve ambiguity caused by Aterm support.
-    SgProcedureHeaderStatement *d = new SgProcedureHeaderStatement(name.c_str(), NULL, ft, fd);
-#else
-    SgProcedureHeaderStatement *d = new SgProcedureHeaderStatement(name.c_str(), ft, fd);
-#endif
-    /* Remove function params specification, since min/max can accept arbitary number of params.
-    for (list<SgInitializedName*>::const_iterator p = pars.begin(); p != pars.end(); ++p) {
-      SgInitializedName* cur = *p;
-      d->append_arg(cur);
-    }
-    */
-
-    SgFunctionSymbol* funcSymbol = new SgFunctionSymbol(d);
-
-    /* Remove changes to global declaration, since min/max are built-in functions
-    d->set_scope(global);
-    global->insert_symbol( d->get_name(), f);
-    d->set_parent(global);
-
-    SgFunctionDeclaration* funcDecl = funcSymbol->get_declaration();
-    funcDecl->set_requiresNameQualificationOnReturnType(false);
-    funcDecl->set_definingDeclaration(funcDecl);
-    SgBasicBlock* NEW_BLOCK(funcBody);
-    SgFunctionDefinition* funcDefn = new SgFunctionDefinition(GetFileInfo(), funcBody);
-    */
-
-    return funcSymbol;
-
-  } else {      // Cxx max/min
-
-    SgType* typeint = GetTypeInt();
+std::cerr << "MinMax create \n";
+    SgType* typeint = AstInterfaceImpl::GetTypeInt();
     std::list<SgInitializedName*> pars; 
     for (int i = 0; i < numOfPars; ++i) { 
       std::string parname = "a";
@@ -3483,6 +2839,8 @@ CreateMinMaxFunction(AstInterfaceImpl* impl, const std::string& name, int numOfP
       pars.push_back(curVar);
     }
     SgFunctionSymbol* funcSymbol = impl->NewFunc(name, typeint, pars); 
+    if (IS_FORTRAN_LANGUAGE()) return funcSymbol;
+
     SgFunctionDeclaration* funcDecl = funcSymbol->get_declaration();
     funcDecl->set_requiresNameQualificationOnReturnType(false);
     funcDecl->set_definingDeclaration(funcDecl);
@@ -3551,18 +2909,15 @@ CreateMinMaxFunction(AstInterfaceImpl* impl, const std::string& name, int numOfP
       funcBody->append_statement(returnStmt);
     }
     return funcSymbol;
-  }
 }
 
 SgNode* AstInterfaceImpl :: 
 CreateFunction( string name, int numOfPars)
 {
-  // jichi (9/30/2009): Add Fortran support
-  // In SLICE, currently only max/min function is needed to create.
   bool isMin = (name == "min");
   bool isMax = (name == "max");
-  if ((isMin || isMax) && ! IS_FORTRAN_LANGUAGE())      // Fortran built-in max/min can take arbitary number of params
-    name.push_back( (numOfPars == 2)? '2' : '3');
+  if ((isMin || isMax) && !IS_FORTRAN_LANGUAGE())
+    name.push_back((char)numOfPars+'0');
   SgFunctionSymbol* funcSymbol = GetFunc( name);
   if (funcSymbol == 0) {
      if (isMin || isMax) {
@@ -3582,7 +2937,7 @@ CreateUnaryOP( OperatorEnum op, const AstNodePtr& _a0)
 {
   AstNodePtrImpl a0(_a0);
   assert( HasNullParent(a0.get_ptr()));
-  SgExpression *e = ToExpression(*this, a0);
+  SgExpression *e = ToExpression(*impl, a0.get_ptr());
   SgNode* result = 0;
   switch (op) {
    case UOP_ADDR: 
@@ -3591,14 +2946,8 @@ CreateUnaryOP( OperatorEnum op, const AstNodePtr& _a0)
    case UOP_MINUS: 
      result = new SgMinusOp( GetFileInfo(), e, e->get_type());
      break;
-   case UOP_CAST: 
-     result = new SgCastExp( GetFileInfo(), e, e->get_type());
-     break;
    default:
-     {
-       cerr<<"Error. Unhandled operator type in AstInterface::CreateUnaryOP() "<<op<<endl;
-       assert(false);
-     }
+     assert(false);
   }
   e->set_parent(result);
   return AstNodePtrImpl(result);
@@ -3609,14 +2958,15 @@ CreateBinaryOP( OperatorEnum op, const AstNodePtr& _a0, const AstNodePtr& _a1)
 {
   SgNode* a0 = AstNodePtrImpl(_a0).get_ptr(); 
   SgNode* a1 = AstNodePtrImpl(_a1).get_ptr(); 
-  assert( HasNullParent(a1) && HasNullParent(a0));
-  SgExpression *e0 = ToExpression(*this, _a0);
-  SgExpression *e1 = ToExpression(*this, _a1);
+  //assert( HasNullParent(a1) && HasNullParent(a0));
+  SgExpression *e0 = ToExpression(*impl, a0);
+  SgExpression *e1 = ToExpression(*impl, a1);
   assert( e0 != 0 && e1 != 0);
   SgBinaryOp* n = 0;
   switch (op) {
   case BOP_DOT_ACCESS: 
-      n = new SgDotExp(GetFileInfo(), e0, e1, e1->get_type()); break;
+      n = new SgDotExp(GetFileInfo(), e0, e1, e1->get_type()); 
+      break;
   case BOP_ARROW_ACCESS: 
       n = new SgArrowExp(GetFileInfo(), e0, e1, e1->get_type()); break;
   case BOP_DIVIDE:
@@ -3653,58 +3003,35 @@ CreateBinaryOP( OperatorEnum op, const AstNodePtr& _a0, const AstNodePtr& _a1)
 }
 
 AstNodePtr AstInterface::
-CreateArrayAccess( const AstNodePtr& arr, const AstNodeList& index)
+CreateArrayAccess( const AstNodePtr& arr, const AstNodePtr& index)
 {
   SgExpression* r = isSgExpression(AstNodePtrImpl(arr).get_ptr());
+  SgExpression *e2 = isSgExpression((SgNode*)index.get_ptr());
   assert(r);
   if (IsFortranLanguage()) {
     AstNodePtr arr_ref;
-    AstNodeList arr_index;   
+    AstList arr_index;
+    arr_index.push_back(e2); //QY: prepend the new dimension now
 
     // If arr is array access, append offsets to its first dimension.
     if (IsArrayAccess(arr, &arr_ref, &arr_index)) {
-      //arr_index.insert(arr_index.end(), index.begin(), index.end());
-      //return CreateArrayAccess(arr_ref, arr_index);
-
-      assert(arr_index.size() >= 1);
-      assert(index.size() == 1);
-
-      SgExpression *e1 = ToExpression(*this, arr_index.front());
-      SgExpression *e2 = ToExpression(*this, index.front());
-      SgBinaryOp* i1 = new SgAddOp(GetFileInfo(), e1, e2);
-      arr_index.front() = AstNodePtrImpl(i1);
-
-      return CreateArrayAccess(arr_ref, arr_index);
+      return CreateArrayAccess(arr_ref, AstNodeList2ExpressionList(arr_index.begin(), arr_index.end()));
     }
 
-    // jichi(3/29/2010): Add Support for SgExprListExp for Fortran array index.
-
-    SgExprListExp*  NEW_EXPR_LIST(indices);
-    for (AstNodeList::const_iterator p = index.begin(); p != index.end(); ++p) {
-      SgExpression* i = isSgExpression(AstNodePtrImpl(*p).get_ptr());
-      assert(i);
-      indices->append_expression(i);
-      i->set_parent(indices);
-    }
-
-    SgExpression* aref = new SgPntrArrRefExp(GetFileInfo(), r, indices);
+    SgExpression* aref = new SgPntrArrRefExp(GetFileInfo(), r, e2);
     assert(aref);
     aref->set_endOfConstruct(aref->get_file_info());
 
     r->set_parent(aref);
-    indices->set_parent(aref);
+    e2->set_parent(aref);
     return AstNodePtrImpl(aref);
 
   } else {
-    for (AstNodeList::const_reverse_iterator p = index.rbegin();
-                                             p != index.rend(); ++p) {
-       SgExpression* e = isSgExpression(AstNodePtrImpl(*p).get_ptr());
-       assert(e != 0);
-       SgExpression* r1 = new SgPntrArrRefExp(GetFileInfo(), r, e);
+       assert(e2 != 0);
+       SgExpression* r1 = new SgPntrArrRefExp(GetFileInfo(), r, e2);
        r1->set_endOfConstruct(r1->get_file_info());
-       r->set_parent(r1); e->set_parent(r1);
+       r->set_parent(r1); e2->set_parent(r1);
        r = r1;
-    }
     return AstNodePtrImpl(r);
   }
 }
@@ -3732,30 +3059,29 @@ AstNodePtr GetOverloadOperatorOpd2( const AstNodePtr& _exp)
 }
 
 AstNodePtr AstInterface::
-CreateFunctionCall( const AstNodePtr& func, const AstNodeList& args)
+CreateFunctionCall( const AstNodePtr& func, AstList::const_iterator b, AstList::const_iterator e)
 {
-  return AstNodePtrImpl(impl->CreateFunctionCall(AstNodePtrImpl(func).get_ptr(), args));
+  return AstNodePtrImpl(impl->CreateFunctionCall(AstNodePtrImpl(func).get_ptr(), b, e));
 }
 
 AstNodePtr AstInterface::
-CreateFunctionCall( const string& fname, const AstNodeList& args)
+CreateFunctionCall( const string& fname, AstList::const_iterator b, AstList::const_iterator e)
  {
-  SgNode* f = impl->CreateFunction(fname, args.size());
-  return AstNodePtrImpl(impl->CreateFunctionCall(f, args));
+  unsigned num = 0;
+  for (AstList::const_iterator p = b; p != e; ++p) ++num;
+  SgNode* f = impl->CreateFunction(fname, num);
+  return AstNodePtrImpl(impl->CreateFunctionCall(f, b, e));
 }
 
 SgNode* AstInterfaceImpl::
-CreateFunctionCall( SgNode* func, const AstNodeList& args)
+CreateFunctionCall( SgNode* func, AstNodeList::const_iterator b, AstNodeList::const_iterator e)
 {
-  // jichi (9/30/2009): Add in Fortran support
-  assert( HasNullParent(func)); // which implies func is not in the global AST now.
+  assert( HasNullParent(func));        // which implies func is not in the global AST now.
   SgExpression *fr = isSgExpression(func);
 
-  SgExprListExp *NEW_EXPR_LIST(argexp);
-  SgExpressionPtrList &l = argexp->get_expressions();
-  AstNodeList::const_iterator p = args.begin(); 
+  AstNodeList::const_iterator p = b;
   if (fr->variantT() == V_SgMemberFunctionRefExp) {
-    SgExpression* obj = isSgExpression(AstNodePtrImpl(*p).get_ptr());
+    SgExpression* obj = isSgExpression((SgNode*)*p);
     assert(obj != 0 && HasNullParent(obj));
     ++p;
     SgExpression* fr1 = 0;
@@ -3767,31 +3093,16 @@ CreateFunctionCall( SgNode* func, const AstNodeList& args)
     obj->set_parent(fr1); fr->set_parent(fr1);
     fr = fr1;
   }
-  for ( ;p != args.end(); ++p) {
-    SgExpression *pr = isSgExpression( AstNodePtrImpl(*p).get_ptr() );
-    if (pr != 0) {
-       pr->set_parent(argexp);
-       l.push_back( pr );
-    }
-    else throw AST_Error("Argument is NULL!\n");
-  }
+  SgExprListExp *argexp=AstNodeList2ExpressionList(b,e);
   SgFunctionCallExp *NEW_FUNCTION_CALL(result,fr, argexp);
   return result;
 }
 
+
 AstNodePtr
-AstInterface::CreateReadStatement(const AstNodeList& __l) const
+AstInterface::CreateReadStatement(const AstNodeList& l) const
 {
-  assert(!__l.empty());
-
-  SgExprListExp* NEW_EXPR_LIST(explist);
-  for (AstNodeList::const_iterator p = __l.begin(); p != __l.end(); ++p) {
-    SgExpression* e = isSgExpression(AstNodePtrImpl(*p).get_ptr());
-    assert(e);
-    explist->append_expression(e);
-    e->set_parent(explist);
-  }
-
+  SgExprListExp* explist = AstNodeList2ExpressionList(l.begin(), l.end());
   SgReadStatement* ret = new SgReadStatement(GetFileInfo());
   assert(ret);
   ret->set_endOfConstruct(ret->get_file_info());
@@ -3822,7 +3133,7 @@ AstInterface::CreateWriteStatement(const AstNodeList& __l) const
 
   SgExprListExp* NEW_EXPR_LIST(explist);
   for (AstNodeList::const_iterator p = __l.begin(); p != __l.end(); ++p) {
-    SgExpression* e = isSgExpression(AstNodePtrImpl(*p).get_ptr());
+    SgExpression* e = isSgExpression((SgNode*)(*p));
     assert(e);
     explist->append_expression(e);
     e->set_parent(explist);
@@ -3844,18 +3155,9 @@ AstInterface::CreateWriteStatement(const AstNodeList& __l) const
 }
 
 AstNodePtr
-AstInterface::CreatePrintStatement(const AstNodeList& __l) const
+AstInterface::CreatePrintStatement(const AstNodeList& l) const
 {
-  assert(!__l.empty());
-
-  SgExprListExp* NEW_EXPR_LIST(explist);
-  for (AstNodeList::const_iterator p = __l.begin(); p != __l.end(); ++p) {
-    SgExpression* e = isSgExpression(AstNodePtrImpl(*p).get_ptr());
-    assert(e);
-    explist->append_expression(e);
-    e->set_parent(explist);
-  }
-
+  SgExprListExp* explist = AstNodeList2ExpressionList(l.begin(),l.end());
   SgPrintStatement* ret = new SgPrintStatement(GetFileInfo());
   assert(ret);
   ret->set_endOfConstruct(ret->get_file_info());
@@ -3920,58 +3222,59 @@ AstNodePtr AstInterface::CreateBlock( const AstNodePtr& _orig)
     return AstNodePtrImpl(r);
  }
 
-void BlockPrependAppendStmt( AstInterfaceImpl* impl, AstNodePtr& _b, const AstNodePtr& _s, bool isAppend=false)
+void BlockPrependAppendStmt( AstInterfaceImpl* impl, AstNodePtr& _b, const AstNodePtr& _s, bool isAppend, bool flatten=true)
     { 
       AstNodePtrImpl b(_b), s(_s);
       SgStatement* stmt = ToStatement(s.get_ptr());
       assert(stmt != 0);
+
       SgBasicBlock *sb = isSgBasicBlock(stmt);
       SgBasicBlock *basicBlock = isSgBasicBlock(b.get_ptr());
       assert(basicBlock != 0);
 
-      SgVariableDeclaration* vardecl = isSgVariableDeclaration(stmt);
-      if (vardecl != 0) {
-          impl->AddVar(vardecl, basicBlock);
-          return; 
-      }
+      stmt->set_parent(basicBlock);
 
       if (sb == 0)  {
          if (!isAppend)
             basicBlock->prepend_statement( stmt);
          else
             basicBlock->append_statement( stmt);
-         stmt->set_parent(basicBlock);
       }
       else {
          SgStatementPtrList l = sb->get_statements();
          bool hasdecl = false;
-         for (SgStatementPtrList::iterator p = l.begin(); p != l.end(); ++p) {
+         if (!flatten) {
+           for (SgStatementPtrList::iterator p = l.begin(); p != l.end(); ++p) {
             if (isSgDeclarationStatement(*p) != 0) {
                 hasdecl = true;
                 break;
             } 
-         } 
+           } 
+         }
          if (hasdecl) {
             if (!isAppend)
                basicBlock->prepend_statement(sb);
             else
                basicBlock->append_statement(sb);
-            sb->set_parent(basicBlock);
          }
-         else
+         else if (isAppend) {
             for (SgStatementPtrList::iterator p = l.begin(); p != l.end(); ++p) {
               SgStatement * cur = *p;
+              basicBlock->append_statement(cur);
               cur->set_parent(basicBlock);
-              if (!isAppend)
-                 basicBlock->prepend_statement(cur);
-              else
-                 basicBlock->append_statement(cur);
+         } } 
+         else {
+            for (SgStatementPtrList::reverse_iterator p = l.rbegin(); p != l.rend(); ++p) {
+              SgStatement * cur = *p;
+              basicBlock->prepend_statement(cur);
+              cur->set_parent(basicBlock);
+          }
          } 
       }
     }
 
-void AstInterface::BlockAppendStmt( AstNodePtr& _b, const AstNodePtr& _s)
-{ BlockPrependAppendStmt(impl,_b, _s, true); }
+void AstInterface::BlockAppendStmt( AstNodePtr& _b, const AstNodePtr& _s, bool flatten)
+{ BlockPrependAppendStmt(impl,_b, _s, true, flatten); }
  
 void AstInterface::
 BlockPrependStmt( AstNodePtr& _b, const AstNodePtr& _s)
@@ -4000,7 +3303,6 @@ InsertStmt(AstNodePtr const & _orig, AstNodePtr const &_n, bool insertbefore,
       p->insert_statement(s, ns, insertbefore);
       ns->set_parent(p);
    }
-   //FixSgTree(p);
 }
 
 void AstInterface::
@@ -4033,22 +3335,22 @@ bool AstInterface::RemoveStmt( const AstNodePtr& _n)
    SgStatement* p = isSgStatement(n->get_parent());
    assert( p != 0);
    p->remove_statement(s);
-   s->set_parent(GetNullScope());
+   //s->set_parent(GetNullScope()); /*QY: not reseting parent due to dangling pointers from symbols etc. */
    return true;
 }
 
 bool AstInterfaceImpl::
 ReplaceAst( SgNode* orig, SgNode* n)
 { 
-    assert(HasNullParent(n));
-    /*
-    if (delayXform) {
-        replList.push_back( std::pair<SgNode*,SgNode*>(orig,n));
-        return false;
+/*
+    if (!HasNullParent(n)) {
+         std::cerr << "SgNode does not have null parent: " << n->unparseToString() << "\n"; assert(0);
     }
-    */
+*/
     SgNode *p = orig->get_parent();
     if (p == 0) return false;
+    n->set_parent(p);
+
     SgStatement *stmtOrig = isSgStatement(orig);
     SgStatement* stmtParent = isSgStatement(p);
     if (stmtOrig != 0) {
@@ -4078,7 +3380,7 @@ ReplaceAst( SgNode* orig, SgNode* n)
             }
          }
     }
-    orig->set_parent(GetNullScope());
+    //orig->set_parent(GetNullScope()); /*QY: not reseting parent due to dangling pointers from symbols etc. */
     return true;
  }
 bool AstInterface::ReplaceAst( const AstNodePtr& _orig, const AstNodePtr& _n)
@@ -4182,11 +3484,9 @@ class PerformPreTransformationTraversal
           {
              succ = false;
              head = n;
-             fa.get_impl()->delay_newVarInsert(); 
              AstNodePtrImpl r = 
                 AstTopDownBottomUpProcessing<_DummyAttribute, AstNodePtrImpl>::
                            traverse(n, _DummyAttribute());
-             fa.get_impl()->apply_newVarInsert();
              return r;
           }
 };
@@ -4216,10 +3516,8 @@ class PerformPostTransformationTraversal : public AstBottomUpProcessing<AstNodeP
     AstNodePtrImpl operator() ( SgNode* n)
       {
          head = n;
-         fa.get_impl()->delay_newVarInsert();
          AstNodePtrImpl r = 
              AstBottomUpProcessing<AstNodePtrImpl>::traverse(n);
-         fa.get_impl()->apply_newVarInsert();
          return r;
       }
 };
@@ -4256,6 +3554,7 @@ AstNodePtr TransformAstTraverse( AstInterface& fa, const AstNodePtr& r,
   }
 }
 
+
 template class PerformPreTransformationTraversal<bool (*)(AstInterface &, AstNodePtr const &, AstNodePtr &)>;
 template class PerformPostTransformationTraversal<bool (*)(AstInterface &, AstNodePtr const &, AstNodePtr &)>;
 template class PerformPreTransformationTraversal<TransformAstTree>;
@@ -4266,7 +3565,6 @@ template class AstTopDownBottomUpProcessing<_DummyAttribute, AstNodePtr>;
 template class AstBottomUpProcessing<AstNodePtr>;
 template class SgTreeTraversal<_DummyAttribute, AstNodePtr>;
 
-// QY: 1/8/2008 no longer used
 class CheckSymbolTable : public AstTopDownProcessing<AstNodePtrImpl>
 {
  public:
@@ -4319,9 +3617,9 @@ class CheckSymbolTable : public AstTopDownProcessing<AstNodePtrImpl>
      if (v.get_ptr() != 0 && v != ast->get_parent()) {
         if (ast->get_parent() == NULL)
            ast->set_parent(v.get_ptr());
-        std::cerr << "Incorrect parent for AST: " << AstToString(AstNodePtrImpl(ast)) << "\n";
-        std::cerr << "It has parent : " << ((ast->get_parent() == v.get_ptr())? "NULL" : AstToString(AstNodePtrImpl(ast->get_parent()))) << "\n";
-        std::cerr << "It should have parent: "  << AstToString(v) << "\n";
+        std::cerr << "Incorrect parent for AST: " << AstInterface::AstToString(AstNodePtrImpl(ast)) << "\n";
+        std::cerr << "It has parent : " << ((ast->get_parent() == v.get_ptr())? "NULL" : AstInterface::AstToString(AstNodePtrImpl(ast->get_parent()))) << "\n";
+        std::cerr << "It should have parent: "  << AstInterface::AstToString(v) << "\n";
         assert(false);
      }
      switch (ast->variantT()) {
@@ -4371,34 +3669,5 @@ void FixSgProject( SgProject &sageProject)
      FixSgTree(&sageFile);
    }
 }
-
-
-namespace { // anonymous
-  
-  inline string
-  fortran_function_fix(const string& __func)
-  {
-    const string C_PREFIX = "SgFunctionCallExp:";
-    const string FORTRAN_PREFIX = "SgFunctionCallExp:CALL ";
-
-    const int prefix_start = 0;
-    const int prefix_len = FORTRAN_PREFIX.length();
-    if (__func.compare(prefix_start, prefix_len, FORTRAN_PREFIX) == 0) {
-      const string left = __func.substr(prefix_len);
-      return C_PREFIX + left;
-    } else
-      return __func;
-  }
-} // anonymous
-
-// Since 12/9/2009, jichi
-void 
-AstInterface::_debug(const AstNodePtr& __x) const
-{ impl->_debug(__x); }
-
-// Since 12/9/2009, jichi
-void
-AstInterfaceImpl::_debug(const AstNodePtr& __x) const
-{ std::cerr << "AstInterface::_debug:" << ::AstToString(__x) << std::endl; }
 
 /* EOF */

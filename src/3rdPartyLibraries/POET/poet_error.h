@@ -28,12 +28,15 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 #ifndef POET_ERROR_CONFIG_H
 #define POET_ERROR_CONFIG_H
 
+#include <poet_AST.h>
+
 class Error {};
 
 #define SHORT(str,len)  ((str.size() > len)? str.substr(0,len)+"......" : str)
 
 #define EXIT(a)  {  std::cerr << (a) << "\n"; throw Error(); }
-#define USER_EXIT() { throw Error(); }
+#define USER_EXIT() { exit(1); }
+#define ASSERT_FAIL(v) { std:: stringstream msg; msg << "Assert Failure: " << v->toString() << "\n";  EXIT(msg.str()); }
 #define TRACE_RECURSIVE(v) { std:: stringstream msg; msg << "Error: empty or recursively defined tracing handle: " << v->toString() ;  EXIT(msg.str()); }
 #define SYM_ALREADY_DEFINED(n) { std:: stringstream msg; msg << "Error: symbol already defined: " << n ;  EXIT(msg.str()); }
 #define SYNTAX_ERROR(f, i) { std:: stringstream msg; msg << "Syntax error at Line " << i << " of file " << f   EXIT(msg.str()); }
@@ -42,7 +45,7 @@ class Error {};
 #define CODE_SYNTAX_UNDEFINED(n) { std:: stringstream msg;  msg << "Error: syntax is undefined for code template: " << n ;   EXIT(msg.str()); }
 #define CODE_UNDEFINED(n) { std:: stringstream msg;  msg << "Error: undefined code template: " << n ;   EXIT(msg.str()); }
 #define CODE_ALREADY_DEFINED(n) { std:: stringstream msg; msg << "Error: code template already defined: " << n ;  EXIT(msg.str()); }
-#define SYM_UNDEFINED(n) { std:: stringstream msg;  msg << "Error: undefined symbol: " << n ;   EXIT(msg.str()); }
+#define SYM_UNDEFINED(n) { std:: stringstream msg;  msg << "Error: undefined symbol: " << n ; EXIT(msg.str()); }
 #define SYM_INCORRECT_VAL(n,v, c) { std:: stringstream msg; msg << "Error: the value " << v << " assigned to symbol " << n << " does not satisfy constraint: " << c ;EXIT(msg.str()); }
 #define VAR_ASSIGN_ERROR(c) { std:: stringstream msg; msg << "Error: variables cannot be assigned: " << c;EXIT(msg.str()); }
 #define SYM_DIFF_DEFINED(n, m) { std::stringstream msg; msg << "Error: symbol already defined differently: " << n << "**vs.**" << "Original definition: " << m; EXIT(msg.str()); }
@@ -72,7 +75,10 @@ class Error {};
 #define INCORRECT_TUPLE_SIZE(r1,size) { std:: stringstream msg; msg << "Error: wrong tuple size. Expecting " << size << " elements but getting" << (r1)->toString() ; EXIT(msg.str()); }
 #define LOOKAHEAD_AMBIGUOUS(r1) { std:: stringstream msg; msg << "Warning: ambiguity in determining the lookahead information for " << r1->toString(); /*EXIT(msg.str());*/ }
 #define LOOKAHEAD_EMPTY(r1) { std:: stringstream msg; msg << "Error: empty string encountered when computing lookahead information for " << r1->toString(); EXIT(msg.str()); }
-#define REPL_INCOMPLETE(left) { std:: stringstream msg; msg << "Error: incomplete replacement. Did not find a place to apply: " << left->toString(); EXIT(msg.str()); }
+#define REPL_INCOMPLETE(left) { std::cerr << "Error: incomplete replacement. Did not find a place to apply: " << left->toString(); }
 #define TRACE_INCOMPLETE(left) { std:: stringstream msg; msg << "Warning: incomplete tracing. Did not find a place to insert trace handle: " << left->toString(); }
+#define CODEGEN_MISMATCH(left,right) { std:: stringstream msg; msg << "Error: mismatching syntax in code generation: " << left->toString() << "\n vs. " << right->toString() << "\n"; EXIT(msg.str()); }
+#define INCORRECT_LIST(v) { std::stringstream msg; msg << "Error: operation expecting a non-empty list but given: " << v->toString() << "\n"; EXIT(msg.str()); }
+
 #endif
 

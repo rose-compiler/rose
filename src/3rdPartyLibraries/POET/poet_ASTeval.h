@@ -29,6 +29,7 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 #define AST_EVAL_H
 
 #include <poet_ASTfactory.h>
+#include <poet_ASTinterface.h>
 
 /******************************Utility functions *********************/
 #define IS_SPACE(c)  c == " " || c == "\t" || c == "\n" 
@@ -38,9 +39,9 @@ extern POETProgram* curfile;
 
 inline POETCode* get_head(POETCode* c)
 {
-   POETList* l = dynamic_cast<POETList*>(c);
-   if (l != 0) { c = l->get_first(); }  
-   return c;
+  POETList* l = dynamic_cast<POETList*>(c);
+  if (l != 0) return l->get_first();
+  return c;
 }
 
 inline POETList* get_tail(POETCode* c)
@@ -52,7 +53,7 @@ inline POETList* get_tail(POETCode* c)
 
 inline POETCode* Vector2List(const std::vector<POETCode*>& v)
 {
-   if (v.size() == 0) return EMPTY;
+   if (v.size() == 0) return EMPTY_LIST;
    if (v.size() == 1) return v[0];
    POETCode* result = 0;
    for (int i = v.size()-1; i >= 0; --i) 
@@ -77,6 +78,7 @@ inline void check_localVar(POETCode* v)
 }
 inline POETString* AST2String(POETCode* r)
 {
+  if (r == EMPTY_LIST) return 0;
   switch (r->get_enum()) {
   case SRC_STRING:  return static_cast<POETString*>(r);
   case SRC_ICONST: return ASTFactory::inst()->new_string(r->toString());
@@ -187,9 +189,9 @@ POETCode* check_range(POETCode* code, POETCode* range);
 
 
 /****************parsing and unparsing ********************/
-/* unparse $input$ to $out$; 
-  if $unparseInvoke$!=0, invoke it using input before unparsing result*/
-void code_gen(std::ostream& out, POETCode* input, POETCode* unparseInvoke=0);
+/* unparse input to out; 
+  if unparseInvoke!=0, invoke it using input before unparsing result*/
+void code_gen(std::ostream& out, POETCode* input, POETCode* unparseInvoke=0, POETCode* listsep=0, int align=0);
 
 /* print the given AST tree to $out$ */
 void print_AST(std::ostream& out, POETCode* code);
@@ -198,11 +200,11 @@ void print_AST(std::ostream& out, POETCode* code);
 class EvaluatePOET
 {
  protected:
-   static POETCode*  lp, *rp, *lb, *rb, *space, *linebreak, *tab, *comma;
+   static POETCode*  lp, *rp, *lb, *rb, *space, *tab, *comma, *inherit, *lineno;
    static ASTFactory* fac;
-   static LocalVar* exp_item, *tokens, *funcall, *arrref, *parseBop, *parseUop;
+   static LocalVar* exp_item, *exp_match, *tokens, *funcall, *arrref, *parseBop, *parseUop;
    static LocalVar *buildUop, *buildBop, *exp_bop, *exp_uop, *keywords;
-   static LocalVar* prep, *parseTarget, *unparseTarget;
+   static LocalVar* prep, *parseTarget, *unparseTarget, *ext;
  public: 
    static void startup() {
      if (fac == 0) { /*QY: none have been initialized*/
@@ -210,16 +212,19 @@ class EvaluatePOET
         lp = fac->new_string("("); rp = fac->new_string(")");
         lb = fac->new_string("["); rb = fac->new_string("]");
         space = fac->new_string(" ");
-        linebreak = fac->new_string("\n");
         tab = fac->new_string("\t");
         comma =  fac->new_string(",");
+        inherit =  fac->new_string("INHERIT");
+        lineno =  fac->new_string("LINE_NO");
         exp_item = curfile->make_macroVar(fac->new_string("EXP_BASE"));
+        exp_match = curfile->make_macroVar(fac->new_string("EXP_MATCH"));
         tokens = curfile->make_macroVar(fac->new_string("TOKEN")); 
         arrref= curfile->make_macroVar(fac->new_string("PARSE_ARRAY"));
         funcall = curfile->make_macroVar(fac->new_string("PARSE_CALL"));
         parseBop=curfile->make_macroVar(fac->new_string("PARSE_BOP"));
         parseUop=curfile->make_macroVar(fac->new_string("PARSE_UOP"));
         prep=curfile->make_macroVar(fac->new_string("PREP"));
+        ext=curfile->make_macroVar(fac->new_string("EXTERN"));
         keywords=curfile->make_macroVar(fac->new_string("KEYWORDS"));
         parseTarget=curfile->make_macroVar(fac->new_string("PARSE"));
         unparseTarget=curfile->make_macroVar(fac->new_string("UNPARSE"));
@@ -229,20 +234,20 @@ class EvaluatePOET
         exp_bop=curfile->make_macroVar(fac->new_string("EXP_BOP"));
      }
    }
-   static POETCode* SkipEmpty(POETCode* input, int *lineno=0) 
+   static POETCode* SkipEmpty(POETCode* input, int *lineno) 
    {
      for (POETCode* p_input=input; p_input != 0; p_input=get_tail(p_input)) 
       {
          POETCode* cur = get_head(p_input);
-         if (lineno != 0 && cur == linebreak) ++(*lineno); 
-         if (cur!=EMPTY && cur!=space && cur != linebreak && cur != tab)
+         if (lineno != 0 && cur == LINE_BREAK) ++(*lineno); 
+         if (cur!=space && cur != LINE_BREAK && cur != tab)
              return p_input;
       }
       return EMPTY;
    }
 
-   static POETCode* NextToken(POETCode* input) 
-   { return SkipEmpty(get_tail(input)); }
+   static POETCode* NextToken(POETCode* input, int *lineno) 
+   { return SkipEmpty(get_tail(input),lineno); }
 
    static POETCode* FirstToken(POETCode* c)
    {
@@ -262,14 +267,14 @@ class EvaluatePOET
      build and return a code template object if parse=true*/
    static POETCode* build_Bop(POETOperatorType op, POETCode* op1, POETCode* op2, bool parse);
 
-   /*QY: return the min length of tokens placed in the lookehead res*/
-   static unsigned compute_exp_lookahead(std::vector<POETCode*>& res);
+   /*QY: tokens placed in the lookehead res*/
+   static void compute_exp_lookahead(std::vector<POETCode*>& res, POETCode* next);
 
-   /*QY: return the min length of tokens placed in the lookehead res*/
-   static unsigned compute_lookaheadInfo(POETCode* cur, std::vector<POETCode*>& res, 
-                           unsigned numOfFilterTokens=1);
+   /*QY: tokens placed in the lookehead res*/
+   static void compute_lookaheadInfo(POETCode* cur, std::vector<POETCode*>& res, 
+                           unsigned numOfFilterTokens, POETCode* next);
    /*QY: whether r1 can be parsed using cur_filter as lookahead */
-   static bool match_lookahead(POETCode* r1, POETCode* cur_filter);
+   static POETCode* match_lookahead(POETCode* r1, POETCode* cur_filter);
 
    /*QY: whether input matches the given type; return 0 if fails */
    static POETCode* match_Type(POETCode* input, POETType* pattern, bool convertType);
@@ -295,11 +300,11 @@ class EvaluatePOET
    static POETCode* parse_input(POETCode* input, POETCode* pattern);
 
    /**** read POET programs from a list of give files***/
-   static void ReadFiles(POETCode* _files,std::list<POETProgram*>& resultFiles);
+   static bool ReadFiles(POETCode* _files,std::list<POETProgram*>& resultFiles);
 
    static POETCode* eval_readInput(POETCode* inputFiles, POETCode* codeType, POETCode* inputInline); /*read non-POET file*/
    static POETProgram* eval_readPOET(POETCode* inputFiles);/*read POET script*/
-   static void read_syntaxFiles(POETCode* langFiles, std::list<POETProgram*>& syntaxPrograms); /*read and set syntax*/
+   static bool read_syntaxFiles(POETCode* langFiles, std::list<POETProgram*>& syntaxPrograms); /*read and set syntax*/
    static void clear_syntaxFiles(std::list<POETProgram*>& syntaxFiles); /* clear syntax*/
 
    /***
@@ -311,7 +316,7 @@ class EvaluatePOET
    static POETCode* eval_inputCommand(ReadInput* readcommand);
    static POETCode* eval_writeOutput(POETCode* output);
    static void eval_foreach(POETCode* input, POETCode* pattern, 
-                            POETCode* found, POETCode* body, bool backward);
+                            POETCode* found, POETCode* body);
 
    /*QY: evaluate a given POET program */
    static POETCode* eval_program(POETProgram* prog);

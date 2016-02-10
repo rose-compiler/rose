@@ -44,38 +44,48 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 
 extern POETProgram* curfile;
 extern bool debug_pattern();
+extern bool debug_repl();
 
 class CodeReplOperator {
  public:
-  virtual POETCode* apply(POETCode* f, bool& cont) = 0;
+  virtual POETCode* apply(POETCode* f) = 0;
 };
 
 class CodeReplVisitor : public ReplInfoVisitor
 {
  protected:
-  bool cont;
   CodeReplOperator& Repl;
-  virtual void visitIconst(POETIconst* l) { res=Repl.apply(l,cont); }
-  virtual void visitString(POETString* l) { res=Repl.apply(l,cont); }
+  virtual void defaultVisit(POETCode* s) { 
+      if (s->get_enum() == SRC_ANY) { res = s; }
+      else { std::cerr << "unhandled case:" << s->toString() << "\n"; assert(0); }
+      }
+  virtual void visitNULL(POETNull* n) { res = n; }
+  virtual void visitMap(POETMap* m) { res = m; }
+  virtual void visitIconst(POETIconst* l) { res=Repl.apply(l); }
+  virtual void visitString(POETString* l) { res=Repl.apply(l); }
   virtual void visitLocalVar(LocalVar* v) {
-    res = Repl.apply(v,cont);
-    if (cont) ReplInfoVisitor::visitLocalVar(v);
+    res = Repl.apply(v);
+    if (res == v) ReplInfoVisitor::visitLocalVar(v);
   }
    
   virtual void visitList(POETList* l) {
-    res = Repl.apply(l,cont);
-    if (cont) ReplInfoVisitor::visitList(l);
+    res = Repl.apply(l);
+    if (res == l) ReplInfoVisitor::visitList(l);
   }
   virtual void visitTuple( POETTuple* v)  {
-    res = Repl.apply(v,cont);
-    if (cont) ReplInfoVisitor::visitTuple(v);
+    res = Repl.apply(v);
+    if (res == v) ReplInfoVisitor::visitTuple(v);
   }
   virtual void visitCodeVar( CodeVar* v) { 
-      res = Repl.apply(v,cont);
-      if (cont)  ReplInfoVisitor::visitCodeVar(v); 
+      res = Repl.apply(v);
+      if (res == v)  ReplInfoVisitor::visitCodeVar(v); 
    }
+  virtual void visitUnknown (POETCode_ext* e) {
+      res = Repl.apply(e);
+      if (res == e)  ReplInfoVisitor::visitUnknown(e); 
+  }
  public:
-  CodeReplVisitor(CodeReplOperator& _op) : cont(true), Repl(_op) {}
+  CodeReplVisitor(CodeReplOperator& _op) : Repl(_op) {}
 };
 
 class SplitStringOperator : public CodeReplOperator
@@ -83,10 +93,9 @@ class SplitStringOperator : public CodeReplOperator
   std::string split;
   POETString* splitString;
  protected:
-  POETCode* apply(POETCode* f, bool& cont)
+  POETCode* apply(POETCode* f)
      { 
        if (f->get_enum() == SRC_STRING) {
-          cont = false;
           if (f == EMPTY) return f; 
           POETList* res = 0;
           std::string input = static_cast<POETString*>(f)->get_content();
@@ -104,9 +113,10 @@ class SplitStringOperator : public CodeReplOperator
                  int cursize = size2end - splitsize;
                  if (cursize) {
                     std::string newitem = input.substr(size2start+splitsize, cursize);
-                    POETCode* newval = (isint)? 
+                    POETCode* newval = ASTFactory::inst()->new_string(newitem);
+                    /*POETCode* newval = (isint)? 
                           (POETCode*)ASTFactory::inst()->new_iconst(atoi(newitem.c_str()))
-                        : (POETCode*)ASTFactory::inst()->new_string(newitem);
+                        : (POETCode*)ASTFactory::inst()->new_string(newitem); */
                     res = ASTFactory::inst()->new_list(newval, res);
                  }
                  POETCode* newsplit = splitString;
@@ -131,7 +141,6 @@ class SplitStringOperator : public CodeReplOperator
           }
           return res;
      }
-     cont = true;
      return f;
   }
  public:
@@ -277,9 +286,10 @@ build_Uop(POETOperatorType op, POETCode* _op1, bool parse)
   POETCode* op1 = EvalTrace(_op1);
   POETCode* op1Int = op1;
   if ( parse && (op1Int=AST2Iconst(op1)) == 0) {
-      CodeVar* cvar = dynamic_cast<CodeVar*>(parseUop->get_entry().get_code());
       POETTuple* r= fac->new_pair(fac->new_string(OpName[op]), op1);
-        return build_codeRef(cvar, r, false);
+      CodeVar* cvar = dynamic_cast<CodeVar*>(parseUop->get_entry().get_code());
+      if (cvar != 0) return build_codeRef(cvar, r, false);
+      else return r;
   }
   else if (op1Int != 0) {
      int res = apply_Uop(op, op1Int);
@@ -352,26 +362,28 @@ class FOREACH_Collect : public CollectInfoVisitor
   POETCode *cond, *op, *found;
   bool backward;
  public:
-  int match_eval() 
+  int match_eval(POETCode* ff) 
     {
-     try { eval_AST(op);  }
-     catch (POETOperator* c) {
-        if (c->get_op() != POET_OP_CONTINUE)
+     int res_found = 0;
+     if (found == ZERO) res_found = -1;
+     else if (found == ONE) res_found = 1;
+     else res_found = AST2Int(eval_AST(found));
+     if (res_found != 0) {
+        if (user_debug) 
+           std::cerr << "FOREACH found : " << SHORT(ff->toString(DEBUG_NO_VAR),500) << "\n";
+        try { eval_AST(op);  }
+        catch (POETOperator* c) {
+          if (c->get_op() != POET_OP_CONTINUE)
              throw c;
-     }
-     POETCode* r = eval_AST(found);
-     if (r != EMPTY && r != ASTFactory::inst()->new_iconst(0)) {
-         return 1;
-     }
-     return -1;
-    }
+        }
+      }
+      return res_found;
+   }
   
   int match(POETCode* ff) {
        POETCode* r = match_AST(ff,cond, MATCH_AST_PATTERN);
        if (r) { 
-         if (user_debug) 
-            std::cerr << "FOREACH found : " << SHORT(ff->toString(DEBUG_NO_VAR),500) << "\n";
-         return match_eval(); 
+         return match_eval(ff); 
        }
        return 0;
     }
@@ -420,16 +432,23 @@ class FOREACH_Collect : public CollectInfoVisitor
 };
 
 void EvaluatePOET::
-eval_foreach(POETCode* input, POETCode* pattern, POETCode* found, POETCode* body,
-           bool backward)
+eval_foreach(POETCode* input, POETCode* pattern, POETCode* found, POETCode* body)
 {
-       FOREACH_Collect collect( pattern,body, found,  backward);
-       collect.apply(input); 
+  POETOperator* op = dynamic_cast<POETOperator*>(input);
+  bool backward = false;
+  if (op != 0 && op->get_op() == POET_OP_REVERSE) {
+     input = op->get_arg(0);
+     backward=true;
+  } 
+  input = eval_AST(input);
+  FOREACH_Collect collect( pattern,body, found, backward);
+  collect.apply(input); 
 }
 
 class UnTraceVars : public ReplInfoVisitor
 {
  public:
+  virtual void defaultVisit(POETCode* s) { res = s; }
   virtual void visitLocalVar(LocalVar* v)
      { 
        LvarSymbolTable::Entry e = v->get_entry();
@@ -566,7 +585,7 @@ class CodeDupVisitor : public DupInfoVisitor
   POETCode* apply(POETCode* code)
   {
      POETCode* res2 = DupInfoVisitor::apply(code);
-     if (res2 == EMPTY && code != 0 && code != EMPTY) {
+     if (res2 == EMPTY_LIST && code != 0 && code != EMPTY_LIST) {
           assert(to != 0);
            POETCode* cur = to;
            res2 = 0;
@@ -594,6 +613,7 @@ class CodeRebuildVisitor : public ReplInfoVisitor
   bool inList;
  public:
   CodeRebuildVisitor() : inList(false) {}
+  virtual void defaultVisit(POETCode* s) { res = s; }
   virtual void visitCodeVar( CodeVar* v)
      { 
        if (v->get_args() != 0) {
@@ -612,7 +632,7 @@ class CodeRebuildVisitor : public ReplInfoVisitor
        apply(first);
        inList=inList_save;
        POETCode* r1 = res;
-       if (r1 == EMPTY || r1 == 0) { 
+       if (r1 == EMPTY || r1 == EMPTY_LIST || r1 == 0) { 
           if (rest == 0) res = 0;
           else apply(rest);
        }
@@ -643,13 +663,12 @@ class CodeReplSingleOperator : public CodeReplOperator
 {
  protected:
   POETCode *from, *to;
-  POETCode* apply(POETCode* f, bool& cont)
+  POETCode* apply(POETCode* f)
      { 
        if (f==from) {
-          cont = false;
+         if (debug_repl()) std::cerr << "replacing " << f->toString() << "\n with " << to->toString() << "\n";
          return to;
        } 
-       cont = true;
        return f;
      }
   CodeReplSingleOperator() : from(0), to(0) {}
@@ -661,14 +680,12 @@ class CodeReplSingleOperator : public CodeReplOperator
 class CodeReplMapOperator : public CodeReplOperator
 {
   POETMap* repl;
-  POETCode* apply(POETCode* f, bool& cont)
+  POETCode* apply(POETCode* f)
      { 
        POETCode* r = repl->find(f);
        if (r != 0) {
-           cont = false;
            return r;
        } 
-       cont = true;
        return f;
      }
   public:
@@ -685,11 +702,11 @@ class CodeReplListOperator : public CodeReplSingleOperator
  protected:
   POETCode* rest;
 
-  POETCode* apply(POETCode* f, bool& cont)
+  POETCode* apply(POETCode* f)
   {
-   if (from == 0) { cont=false; return f; }
+   if (from == 0) { return f; }
 
-    POETCode* res = CodeReplSingleOperator::apply(f,cont);
+    POETCode* res = CodeReplSingleOperator::apply(f);
     if (f == from) {
        do set_repl(); while (from != 0 && from == to);
     }
@@ -785,6 +802,26 @@ match_Type(POETCode* r1, POETType* type, bool convertType)
          }
          return res;
        }
+     case TYPE_FLOAT: 
+       {
+         POETString* res = (convertType)? AST2String(r1): dynamic_cast<POETString*>(r1);
+         if (res != 0) {
+            std::string content = res->get_content();
+             if (content.size() < 2) res = 0;
+             else {
+                 int point = 0;
+                 for (int i = 0; i < content.size(); ++i) {
+                    char cur = content[i];
+                    if (cur == '.') {
+                       point = point + 1;
+                       if (point > 1) { res = 0; break; }
+                    }
+                    else if (cur < '0' || cur > '9') { res = 0; break; }
+                 }
+             }
+         }
+         return res;
+       }
      case TYPE_NOT: {
         POETTypeNot* typenot = static_cast<POETTypeNot*>(type);
         if (match_AST(r1, typenot->get_arg(), MATCH_AST_PATTERN)) return 0;
@@ -835,8 +872,7 @@ class MatchASTVisitor :  public ReplInfoVisitor
     if (r1 == 0) r1 = EMPTY;
 
     if (debug_pattern()) {
-      if (lvar != 0) std::cerr << "Tracing " << lvar->toString(OUTPUT_NO_DEBUG);
-      std::cerr << "Pattern matching " << r1->get_className() << ":" << r1->toString() << " vs. " << _r2->get_className() << ":" << _r2->toString() << "\n";
+      if (lvar != 0) std::cerr << "Tracing " << lvar->toString(OUTPUT_NO_DEBUG) << "\n";
     }
 
     res = 0;
@@ -858,75 +894,49 @@ class MatchASTVisitor :  public ReplInfoVisitor
   bool match_unknown(POETCode* input, CodeVar* ct, POETCode* args)
   {
      POETCode_ext* v2 = dynamic_cast<POETCode_ext*>(input);
-     std::vector<POETCode*> children;
-     if (v2 != 0 && POETAstInterface::MatchAstTypeName(v2->get_content(), ct->get_entry().get_name()->toString(OUTPUT_NO_DEBUG), &children)) {
+     if (v2 != 0 && POETAstInterface::MatchAstTypeName(v2->get_content(), ct->get_entry().get_name()->toString(OUTPUT_NO_DEBUG))) {
+         POETCode* children = v2->get_children();
          if (args == 0) { res = v2; return true; }
-         POETTuple* t = dynamic_cast<POETTuple*>(args);
-         if (t == 0) { 
-            if (children.size() != 1) return false;
-            return apply(children[0], args);
-         }
-         if (t->size() != children.size()) return false;
-         int i = 0;
-         for (std::vector<POETCode*>::const_iterator p1 = children.begin();
-               p1 != children.end(); ++p1,++i) {
-              POETCode* cur2 = t->get_entry(i), *cur1 = *p1;
-              if (cur2 == 0) return false;
-              if (!apply(cur1, cur2)) return false; 
-         }
-         return true;
+         else if (children==0) { return false; }
+         if (apply(children, args)) {
+             res = input; return true; }
      }
      return false;
   }
-  virtual void matchCodeVar(CodeVar* v2, POETCode* args)  {
-     CodeVar* v1 = dynamic_cast<CodeVar*>(r1);
-     if (v1 != 0 && v1->get_entry() == v2->get_entry())  {
-       if (args == 0) { res = v1; return; }
+  bool matchCodeVar(POETCode *_r1, CodeVar* v2, POETCode* args)  {
+     CodeVar* v1 = dynamic_cast<CodeVar*>(_r1);
+     if (v1 != 0 && v1->get_entry() == v2->get_entry()) {
+       if (args == 0) { return true; }
        apply(v1->get_args(),args);
-       if (res) {
-            res = build_codeRef(v1,res,true);
-            return;
-       }
+       return (res != 0);
      }
-     else if (match_unknown(r1, v2, args)) {
+     if (match_unknown(_r1, v2, args)) {
        if (debug_pattern()) {
-         std::cerr << "Matching unknown: " << r1->toString() << " with code template " << v2->toString() << "[" << args->toString() << "]\n";
+         std::cerr << "Matched unknown: " << _r1->toString() << " with code template " << v2->toString() << "\n";
        }
-       return;
+       return true;
      }
-     POETCode* v2match = v2->get_static_attr("match");
-     if (v2match != 0 && config==MATCH_AST_PATTERN)
+     if (v1 == 0) { 
+        if (debug_pattern()) 
+           std::cerr << "Failed to match " << _r1->toString() << " with code template " << v2->toString() << "\n";
+        res = 0; return false; 
+     }
+     POETCode* v1match = v1->invoke_match(v1->get_args());
+     if (v1match != 0 && config==MATCH_AST_PATTERN)
         {
-          if (debug_pattern()) {
-            std::cerr << "invoking matching attr of code template: " << v2->toString() << "\n";
-          }
-          try {
-             if (v2match->get_enum() == SRC_XVAR)
-             {
-               if (v1 == 0 || v1->get_entry() != v2->get_entry()) { res = 0; return; }
-               res = static_cast<XformVar*>(v2match)->eval(
-                         ASTFactory::inst()->new_pair(v1->get_args(), args), false);
-               if (AST2Bool(res)) res = v2;
-               else res = 0;
-               return;
-             }
-             v2->get_entry().get_symTable()->push_table(false);
-             apply(r1, v2match);
-             if (res!=0 && args != 0 && v2->get_entry().get_param()!=0) {
-                apply(eval_AST(v2->get_entry().get_param()), args);
-                if (res != 0) 
-                     res = build_codeRef(v1,res,true);
-             }
-             v2->get_entry().get_symTable()->pop_table();
-             return;
-          } catch (Error err) { 
-             std::cerr << "From invoking match attribute: " << v2match->toString() << "\n";
-              throw err;
-           }
+          if (debug_pattern()) 
+            std::cerr << "invoking matching attr of code template: " << v1->toString() << "\n";
+          return matchCodeVar(v1match, v2, args);
         }  
+      return false;
+  }
+  virtual void visitUnknown (POETCode_ext* e) {
+     if (r1 == e) res = r1; 
+     else res = 0;
   }
   virtual void visitCodeVar(CodeVar* v2)  {
-      matchCodeVar(v2, v2->get_args());
+     if (matchCodeVar(r1, v2, v2->get_args())) res = r1;
+     else res = 0;
   }
   virtual void visitLocalVar(LocalVar* v2) { 
       if (any == v2) { res = r1; return; }
@@ -940,7 +950,7 @@ class MatchASTVisitor :  public ReplInfoVisitor
       res = e2.get_code();
       if (debug_pattern()) {
           if (res != 0) 
-           std::cerr << "Match variable " << r1->toString() << " with " << v2->toString() << "\n";
+           std::cerr << "Matched variable " << r1->toString() << " with " << v2->toString() << "\n";
           else
            std::cerr << "Fail to match variable " << r1->toString() << " with " << v2->toString() << "\n";
       }
@@ -959,7 +969,7 @@ class MatchASTVisitor :  public ReplInfoVisitor
   virtual void visitType( POETType* t) { res = match_Type(r1, t, false); }
   virtual void visitList(POETList* v2)  {
        if (debug_pattern()) 
-           std::cerr << "match list " << r1->toString() << " with " << v2->toString() << "\n";
+           std::cerr << "Trying to match list " << r1->toString() << " with " << v2->toString() << "\n";
        POETList* v1 = dynamic_cast<POETList*>(r1);
        POETList* v2Rest = v2->get_rest();
        if (v1 == 0) { 
@@ -968,12 +978,15 @@ class MatchASTVisitor :  public ReplInfoVisitor
            return;
        }
        POETList* v1Rest = v1->get_rest();
-       if (v2Rest == 0 && v1Rest == 0) 
-             apply(v1->get_first(), v2->get_first()); 
-       else if (v2Rest == 0)
-             apply(r1, v2->get_first()); 
+       if (v2Rest == 0 && v1Rest == 0) {
+           if (apply(v1->get_first(), v2->get_first()))
+               res = ASTFactory::inst()->new_list(res, 0); 
+       }
+       else if (v2Rest == 0) {
+           apply(r1, v2->get_first()); 
+       }
        else if (v1Rest == 0) { 
-          if (apply(EMPTY, v2Rest) && apply(v1->get_first(), v2->get_first()))
+          if (apply(EMPTY_LIST, v2Rest) && apply(v1->get_first(), v2->get_first()))
                  res = ASTFactory::inst()->new_list(res,0);
           else res = 0; 
        }
@@ -1001,7 +1014,9 @@ class MatchASTVisitor :  public ReplInfoVisitor
      switch (op->get_op()) {
      case POET_OP_DOT: eval_AST(op)->visit(this); break; 
      case TYPE_LIST1: 
+         if (r1 == EMPTY_LIST) { res=0; break; } 
      case TYPE_LIST: {
+         if (r1 == EMPTY_LIST) { res = r1; break; }
          POETCode* arg = op->get_arg(0);
          std::vector<POETCode*> match_res;
          POETList* r1_list = dynamic_cast<POETList*>(r1);
@@ -1042,9 +1057,16 @@ class MatchASTVisitor :  public ReplInfoVisitor
       }
      case POET_OP_POND: 
        {
-          CodeVar* cvar = dynamic_cast<CodeVar*>(op->get_arg(0));
-          if (cvar == 0)  CODE_UNDEFINED(op->toString());  
-          matchCodeVar(cvar, op->get_arg(1));
+          POETCode* d1 = eval_AST(op->get_arg(0));
+          CodeVar* cvar = dynamic_cast<CodeVar*>(d1);
+          if (cvar == 0)  {
+             d1 = match_AST(r1,d1, MATCH_AST_PATTERN);
+             if (d1 == 0) { res = 0; return; }
+             cvar = dynamic_cast<CodeVar*>(d1);
+             if (cvar == 0) CODE_UNDEFINED(d1->toString());  
+          }
+          if (matchCodeVar(r1, cvar, op->get_arg(1))) res = r1;
+          else res = 0;
           return;
        }
      case POET_OP_VAR: if (lvar != 0) res = lvar; return;
@@ -1052,8 +1074,11 @@ class MatchASTVisitor :  public ReplInfoVisitor
      case POET_OP_CODE: if (r1->get_enum() == SRC_CVAR) res = r1; return;
      case POET_OP_TUPLE: if (r1->get_enum() == SRC_TUPLE) res = r1; return;
      case POET_OP_EXP: {
-           if (funcall->get_entry().get_code() != 0) 
-              { funcall->get_entry().get_code()->visit(this); if (res != 0) return; }
+           POETCode_ext* p = dynamic_cast<POETCode_ext*>(r1);
+           if (p != 0) { 
+              if (POETAstInterface::MatchAstTypeName(p->get_content(), "EXP"))
+                 res=r1; 
+              return; } 
            if (arrref->get_entry().get_code() != 0)
               { arrref->get_entry().get_code()->visit(this); if (res != 0) return; }
            if (parseBop->get_entry().get_code() != 0) 
@@ -1062,6 +1087,8 @@ class MatchASTVisitor :  public ReplInfoVisitor
               { parseUop->get_entry().get_code()->visit(this); if (res != 0) return; }
            if (exp_item->get_entry().get_code() != 0) 
               exp_item->get_entry().get_code()->visit(this); 
+           if (exp_match->get_entry().get_code() != 0) 
+              exp_match->get_entry().get_code()->visit(this); 
            return;
        }
      case POET_OP_RANGE:
@@ -1110,6 +1137,9 @@ class MatchASTVisitor :  public ReplInfoVisitor
             }
             apply(r1, p); return;
           }
+     case POET_OP_SEQ:
+          eval_AST(op->get_arg(0));
+          apply(r1,op->get_arg(1)); return;
      default:
           defaultVisit(op);
      }

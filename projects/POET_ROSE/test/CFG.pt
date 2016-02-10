@@ -1,0 +1,72 @@
+include ExpStmt.incl
+include Cpp_ROSE.incl
+
+<code BasicBlock pars=(label, stmts)>
+@label@[@stmts@]
+</code>
+
+<xform BuildBasicBlocks pars=(input)>
+   blocks = MAP{};
+   foreach (input : (cur=Nest#(CLEAR loop, CLEAR body)) : FALSE)
+     { blocks[cur] = blocks[body]=1; }
+   start=""; curBlock = ""; count=0;
+   foreach (input :  (cur=_) : FALSE) {
+     if (blocks[cur] == 1) {
+        if (curBlock != "") {
+           blocks[start]=BasicBlock#(count, ReverseList(curBlock));
+           count = count + 1; curBlock = "";
+        }
+        start=cur; 
+     }
+     if (cur : CODE.For|CODE.ExpStmt) { curBlock = cur :: curBlock; }
+  }
+  if (curBlock!="") 
+     blocks[start] = BasicBlock#(count+1, curBlock);
+  blocks
+</xform>
+
+<code GraphEdge pars=(from,to) >
+"@(from)@"->"@(to)@"
+</code>
+<code CFG pars=(label, flow : LIST(GraphEdge,"\n"))>
+digraph @label@
+{
+  @flow@
+}
+</code>
+
+<xform BuildCFG pars=(input, blocks) prev="" edges="">
+    cur=blocks[input]; 
+    if (cur != "") 
+     { 
+       if (prev != "") 
+         edges = BuildList(GraphEdge#(prev,cur), edges);
+       prev=cur;
+     }
+   switch (input) {
+    case (first second): 
+       (e1, b1) = BuildCFG(first,blocks);
+       if (second != "") { BuildCFG[prev=b1;edges=e1](second,blocks)}
+       else { (e1,b1) }
+    case Nest#(loop, body):
+       (e1,b1) = BuildCFG(body, blocks);
+       (BuildList(GraphEdge#(b1,cur),e1), b1)
+    case CODE.ExpStmt: (edges, prev)
+    default: 
+       foreach (input : (cur=_) : FALSE) { <<* look inside?
+           if (HEAD(cur) : CODE.ExpStmt|CODE.Nest) 
+              { RETURN (BuildCFG[prev=""](cur,blocks)); }  <<* yes
+       }
+       (edges,prev) <<* no need to look inside
+} 
+</xform>
+
+<parameter in message="input file name"/>
+<parameter out message="output file name"/>
+<parameter inputLang message="file name for input language syntax" />
+
+<input from=(in) syntax=(inputLang) to=inputCode/>
+<eval blocks=BuildBasicBlocks(inputCode);
+      (cfg,_) = BuildCFG(inputCode, blocks); />
+
+<output syntax=(inputLang) to=out from=(CFG#("CFG",cfg)) />

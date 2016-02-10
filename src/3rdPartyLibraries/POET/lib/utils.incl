@@ -37,11 +37,11 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 input
 </xform>
 
-<code Char pars=(content:(~"'")....) parse="" >
+<code Char pars=(content:(~"'")....) parse=FALSE >
 '@content@'
 </code>
 
-<code String pars=(content:((~"\"")...)) parse="">
+<code String pars=(content:((~"\"")...)) parse=FALSE >
 "@content@"
 </code>
 
@@ -63,8 +63,8 @@ input
 <************* parsing functions for code templates*****************>
 
 <* Parse from $input$ a sublist of tokens. Stop if encountering a token that 
-   matches the $stop$ pattern or that does not match the $continue$ pattern *>
-<xform ParseList pars=(input) stop="" code="" continue="" output=(result, leftOver)/>
+   matches the $stop$ pattern or that does not match the $continue_token$ *>
+<xform ParseList pars=(input) stop="" code="" continue_token="" output=(result, leftOver)/>
 
 <************** unparsing functions for code templates *****************>
 
@@ -91,7 +91,7 @@ Scan a single line of unknown content
 Treating a list of IDs as a single name
 **********>
 <code Name pars=(content: ID....) 
-           rebuild=((content:ID)? content : Name#content)>
+           rebuild=((content:ID)? content : Name#content) >
 @content@
 </code>
 
@@ -103,14 +103,61 @@ Treating a list of IDs as a single name
 </code>
 
 <***** look for pattern in input  ******>
-<xform Lookup pars=(pattern, input)>
-  foreach (input : pattern : TRUE) { RETURN TRUE; }
-  RETURN FALSE;
+<xform Lookup pars=(pattern, input) breakup_pattern=0 >
+  foreach cur=pattern \in input do  return TRUE; enddo
+  if (breakup_pattern && pattern : CODE.Bop#(_,lhs, rhs)) {
+    Lookup(lhs, input) || Lookup(rhs, input)
+  }
+  else { FALSE }
+</xform>
+
+<xform replace_nested_list pars=(from, to, input)>
+  switch (input) {
+  case (first second) : replace_nested_list(from, to, first) :: replace_nested_list(from, to,second)
+  case from : to
+  default: input
+  }
+</xform>
+
+<xform Lookup_nested_list pars=(pattern,input)>
+  switch (input) {
+  case (first second) : Lookup_nested_list(pattern, first) || Lookup_nested_list(pattern,second)
+  case ""|NULL: FALSE
+  default: input : pattern
+  }
+</xform>
+
+<xform Count pars=(pattern, input)>
+  res = 0;
+  foreach (input : pattern : TRUE) { res = res + 1; }
+  res
 </xform>
 
 <xform Lookup_r pars=(pattern,input)>
   foreach_r (input : pattern : TRUE) { RETURN TRUE; }
   RETURN FALSE;
+</xform>
+
+<*******
+collect and returns a list of code within $input$ that matches 
+    the given $pattern$ 
+*******>
+<xform CollectPattern pars=(pattern, input) 
+          first_only=0   pattern_is_nested=0  traverse_order=-1 >
+  collect = NULL;
+  if (traverse_order > 0) {
+     foreach cur=pattern \in reverse(input) s.t. !pattern_is_nested do
+        if (first_only) RETURN cur;
+        collect = cur::collect; 
+     enddo
+  }
+  else {
+     foreach cur = pattern \in input s.t. !pattern_is_nested do
+        if (first_only) RETURN cur;
+        collect = cur::collect; 
+     enddo
+  }
+  collect
 </xform>
 
 <xform LookupList pars=(pattern, input)>
@@ -120,14 +167,25 @@ Treating a list of IDs as a single name
   else { FALSE }
 </xform>
 
+<xform RemoveFromList pars=(pattern,input)>
+  if (input : pattern) { NULL }
+  else if (input : (first second)) 
+      { r1 = RemoveFromList(pattern,first);
+        r2 = RemoveFromList(pattern,second); 
+        if (r1 == NULL) { r2 }
+        else { r1 :: r2 }
+      }  
+  else { input }
+</xform>
+
 <xform MapList pars=(op, input)>
-if (input == "") RETURN "";
+if (input : "" | NULL) RETURN NULL;
 first = op(car(input));
 first :: MapList(op, cdr(input))
 </xform>
 
 <xform SelectList pars=(index, input)>
-if (input == "") RETURN "";
+if (input : ""|NULL) RETURN NULL;
 first = car(input);
 for (i = 0; i < index; i = i+1) first = cdr(first);
 first = car(first);
@@ -138,8 +196,8 @@ first :: SelectList(index, cdr(input))
 Build a list, skipping the components that are empty strings 
 *******>
 <xform BuildList pars=(first,rest)>
-  (first == "")? rest 
-: (rest == "")? first 
+  (first : ""|NULL)? rest 
+: (rest : "" | NULL)? first 
 : first::rest
 </xform>
 
@@ -147,14 +205,17 @@ Build a list, skipping the components that are empty strings
 <*******
 Merge two lists into a single one where each item is a pair of the original ones 
 ********>
-<xform MergeList pars=(first,second)>
+<xform MergeList pars=(first,second) op="tuple">
 switch (first)
 {
   case (first1 first2):
       if (first2!="" && !(second : (second1 second2)))
         ERROR("Mismatching in Merge List:" first " .vs. " second);
-      (first1,second1)::MergeList(first2,second2)
+     (op == "tuple")? 
+        ((first1,second1)::MergeList(first2,second2))
+      : (AppendList(first1,second1)::MergeList(first2,second2))
   case "": ""
+  case NULL:NULL
   default: (first,second)
 }
 </xform>
@@ -162,17 +223,29 @@ switch (first)
 <*******
 Append the second list at the end of the first list 
 ********>
-<xform AppendList pars=(first,second)>
-if (first : (elem1 elem2)) { AppendList(elem1, AppendList(elem2, second)) }
-else  { first :: second }
+<xform AppendList pars=(first,second) erase_replicate=FALSE >
+switch (first) {
+ case  (elem1 elem2) :  
+    r2 =  AppendList(elem2, second); 
+    AppendList(elem1,r2)
+ case NULL: second 
+ default : 
+    if (erase_replicate) {
+       for (p = second; p != NULL; p = cdr(p)) {
+         if (car(p) == first) return second;
+       }
+    }
+    first :: second
+}
 </xform>
 
 <*******
  reverse the given list.  
 *********>
 <xform ReverseList pars=(list) >
-  result = HEAD(list);
-  for (p_list = TAIL(list); p_list != ""; p_list = TAIL(p_list)) {
+  if (list == NULL) RETURN list; 
+  result = NULL;
+  for (p_list = list; p_list != NULL; p_list = TAIL(p_list)) {
      result = HEAD(p_list) :: result;
   }
   result
@@ -182,7 +255,7 @@ else  { first :: second }
 flatten a hierarchical list into a flat one 
 ******>
 <xform FlattenList pars=(list) res="">
-if (list == "") {res}
+if (list == NULL) {res}
 else {
    result = FlattenList(cdr(list));
    list1 = car(list);
@@ -191,11 +264,16 @@ else {
 }
 </xform>
 
-<******
-Remove the last item from the input list 
+<****** 
 *******>
-<xform ListRemoveLastItem pars=(list)>
-(cdr(list) == "")? "" : ((car list) :: ListRemoveLastItem(cdr list)) 
+<xform gen_cartesian_product pars=(l1,l2)>
+  res=NULL;
+  for (p1 = ReverseList(l1); p1 != NULL; p1 = cdr(p1)) {
+    for (p2 = ReverseList(l2); p2 != NULL; p2 = cdr(p2)) {
+       res = (car(p1)::car(p2)) :: res;
+    }
+  }
+  res
 </xform>
 
 <****** 
@@ -206,14 +284,14 @@ split the $input$ at each $split$ separator
      if (first == split) { (first, rest) }
      else {
         (before,after) = SplitList(split, first);
-        if (after == "") {
+        if (after == NULL) {
             (before,after) = SplitList(split, rest);
-            (BuildList(first, before), after) 
+            ( (first :: before), after) 
         }
-        else { (before, BuildList(after,rest)) }
+        else { (before, ((after==NULL)?rest : (after :: rest) )) }
      }
  }
- else { (input,"") }
+ else { (input,NULL) }
 </xform>
 
 
@@ -221,37 +299,40 @@ split the $input$ at each $split$ separator
 Erase $handle$ from $trace$. Return the erased $handle$ and modified $trace$
 if repl != "", use repl to substitute the erased handle
 ********>
-<xform EraseTraceHandle repl="___keep" pars=(handle, trace)>
-
-  trace = ERASE(handle, trace);
-  origvalue=ERASE(handle);
+<xform EraseTraceHandle repl="___keep" pars=(handle, trace) nested_handle=TRUE>
+  if (handle : VAR) {
+    trace = ERASE(handle, trace);
+    for (origvalue=ERASE(handle); origvalue : VAR && nested_handle; origvalue = ERASE(origvalue))
+       trace=ERASE(origvalue, trace);
+  }
+  else origvalue = handle;
 
    if (repl != "___keep") trace = REPLACE(origvalue, repl, trace);
-   trace
+   (origvalue, trace)
 </xform>
 
 <******
 Replace handle with a newvalue 
 *******>
-<xform ModifyTraceHandle pars=(handle, newvalue) >
-   newvalue = ERASE(handle, newvalue);
-   REPLACE(ERASE(handle), newvalue,handle) 
+<xform ModifyTraceHandle pars=(handle, newvalue) nested_handle=TRUE>
+   (handle1, newvalue) = EraseTraceHandle(handle, newvalue);
+   REPLACE(handle1, newvalue,handle) 
 </xform>
 
 <******
 Move handle to a new location within trace; 
 assume newvalue is already in trace, use it to 
 *******>
-<xform MoveTraceHandle pars=(handle, newvalue) trace=GLOBAL.TRACE_TARGET>
+<xform MoveTraceHandle pars=(handle, newvalue) trace=GLOBAL.TRACE_TARGET nested_handle=TRUE >
  if (trace : VAR || trace != "") {
-   trace = EraseTraceHandle(handle, trace);
-   handle = REPLACE(ERASE(handle), newvalue, handle);
+   (handle1,trace) = EraseTraceHandle[nested_handle=nested_handle](handle, trace);
+   handle = REPLACE(handle1, newvalue, handle);
    REPLACE(newvalue, handle, trace);
    handle
  }
  else {
-   newvalue = ERASE(handle, newvalue);
-   REPLACE(ERASE(handle), newvalue, handle)
+   (handle1, newvalue) = EraseTraceHandle[nested_handle=nested_handle](handle, newvalue);
+   REPLACE(handle1, newvalue, handle)
  }
 </xform>
 
@@ -265,8 +346,8 @@ skip empty spaces
 *******>
 <xform SkipEmpty pars=(input) >
 for (p_input=input; 
-     (cur=car p_input)==" " || cur == "\n" || cur == "\t"; 
-     p_input=cdr p_input)  {""}
+     p_input != NULL && ((car p_input) : " "|"\n"|"\t"); 
+     p_input=cdr p_input)  {""} 
 p_input
 </xform>
 
@@ -274,6 +355,7 @@ p_input
 return the first token in input 
 ********>
 <xform FirstToken pars=(input) >
+if (input == NULL) RETURN "";
 for (cur=car input; (cur!=car(cur)); cur = car(cur)) {}
 cur
 </xform>
@@ -283,7 +365,7 @@ set input to start at the next token; skip empty spaces
 ********>
 <xform NextToken pars=(input) >
 for (p_input=cdr input; 
-     (cur=car p_input)==" " || cur == "\n" || cur == "\t"; 
+     p_input != NULL && ((cur=car p_input)==" " || cur == "\n" || cur == "\t"); 
      p_input=cdr p_input)  {""}
 p_input
 </xform>
@@ -297,8 +379,8 @@ p_input
 <****** implementations of functions/routines *********>
 <xform BuildTupleParse pars=(elems)>
  result = "\")\"";
- for (p_elems = ReverseList(elems); cdr(p_elems) != ""; p_elems = cdr p_elems)
-  {
+ for (p_elems = ReverseList(elems); p_elems != NULL && cdr(p_elems) != NULL; 
+      p_elems = cdr p_elems) {
     result = "\",\"" :: car(p_elems) ::  result; 
   }
  result = "\"(\"" :: HEAD(p_elems) :: result;
@@ -306,12 +388,12 @@ p_input
 </xform>
 
 
-<xform ParseList pars=(input) stop="" code="" continue="" output=(result, leftOver) >
+<xform ParseList pars=(input) stop="" code="" continue_token="" output=(result, leftOver) >
 first = car(input);
 (first != "")? 
  (
   (first : stop)?  ("", input) 
-  : ((continue == "" || first : continue)? 
+  : ((continue_token == "" || first : continue_token)? 
      ( 
        (code == "")? (resOfRest = ParseList(cdr(input));
                       BuildList(first,resOfRest[0]), resOfRest[1]) 
@@ -320,27 +402,28 @@ first = car(input);
             (BuildList(first,resOfRest[0]),resOfRest[1])) )
   : ("",input) ) )
 : (input : stop)?  ("",input) 
-: (continue == "" || first : continue)?  (input, "") 
+: (continue_token == "" || first : continue_token)?  (input, "") 
 : ("",input)
 </xform>
 
 <xform ParseLine pars=(input) 
           comment_col=-1 continue_col=-1 start_col=1 text_len=66 
           continue_endofline="" comment_prefix=""> 
- res = "";
- for ( (curline,input) = SplitList("\n",input); curline ; 
+ res = NULL;
+ for ( (curline,input) = SplitList("\n",input); curline!=NULL ; 
        (curline,input) = SplitList("\n",input)) {
-   if (car(cdr(curline)) == "\n") curline=car(curline);
+   curline = FlattenList(curline);
    if (comment_col > 0) {  <<* skip comments
       curRes =  cdr (SPLIT(comment_col-1, curline));
       (comment curRes1) = SPLIT(1,curRes);
+      comment = car(comment);
       if (!(FirstToken(curRes1) : STRING)) <<*QY: this is annotation
-          { res=BuildList(curRes1,BuildList("\n",res)); CONTINUE; }
-      else if (comment != " " && comment!="\t" 
+          { res=curRes1 :: res; CONTINUE; }
+      else if ( !(comment :" "|"\t") 
                && !(comment:INT && car(curRes1):INT)) {
         if (comment_prefix != "") {
-          curRes = BuildList("\n", comment_prefix^curRes1);
-          res = BuildList(curRes, res);
+          curRes = "\n" :: (comment_prefix^curRes1);
+          res = curRes :: res;
         }
         CONTINUE
       }
@@ -353,25 +436,29 @@ first = car(input);
         label = FirstToken(curRes1);
         if (label : INT)  { 
            curRes=SkipEmpty(NextToken(SkipEmpty(curline)));
-           curRes=BuildList(label,curRes); 
-           continue=" "; }
-        else  { (continue curRes2) = SPLIT(1,curRes2); curRes= " "::curRes2; }
+           curRes=label :: curRes; 
+           continue_token=" "; }
+        else  { (continue_token curRes2) = SPLIT(1,curRes2); curRes= " "::curRes2; }
     } 
     else if (continue_endofline != "") {
-       for (p = curRes; cdr(p) != ""; p = cdr(p)) {} 
-       if ((car p) == continue_endofline)
-         { curRes=ListRemoveLastItem(curRes); continue=(car p); }  <<* continue via end-of-line
-       else continue=" ";
+       for (p = curRes; p!=NULL; p = cdr(p)) { if (car(p) != "\n") cur = car(p); } 
+       if (cur == continue_endofline)
+         { 
+           nres=NULL;
+           for (p = curRes; car(p)!=cur; p = cdr(p)) { nres = car(p) :: nres; }
+           curRes=ReverseList("\n"::nres);
+           continue_token=cur; }  <<* continue via end-of-line
+       else continue_token=" ";
     }
-    else continue=" ";
+    else continue_token=" ";
 
     if (text_len > 0)   <<* truncate columes out of \a text_len
       curRes = car (SPLIT(text_len, curRes));
 
-    if (continue == " ") <<* QY: not continuation of the previous line
-          res = BuildList("\n",res);
-    else curRes=BuildList(" ",curRes);
-    res = BuildList(curRes, res);
+    if (continue_token == " ") <<* QY: not continuation of the previous line
+          res = "\n" :: res;
+    else curRes=" " :: curRes;
+    res = curRes :: res;
  }
  res = ReverseList(res);
  res 
@@ -441,7 +528,24 @@ if (pos == 0 && input == "*")
   input_nextLine = "*"::input_nextLine;
   for (i-=1; i >= 0 ;  i-=1)
      { input_nextLine = " "::input_nextLine;}
-  return = input_curLine :: "\n" :: input_nextLine;
-  (return) 
+  (input_curLine :: "\n" :: input_nextLine)
 </xform>
 
+<**** Table/Map functions ***>
+
+<xform LookupTable pars=(key, tab) deep_search=1 >
+ if (tab : (first rest)) { 
+     res = LookupTable(key, first);
+     if (res == "" && deep_search) res = LookupTable(key, rest);
+     res
+  }
+  else { tab[key] }
+</xform>
+
+<xform InsertKey pars=(key, val, tab) overwrite=0 > 
+ if (tab : (first rest)) { first = InsertKey(key, val, first); (first rest) }
+ else if (tab[key] != "") { 
+         if (!overwrite) ERROR("value already defined for key: " key "\n in table: " tab); 
+         else tab[key]=val; tab}
+ else { tab[key] = val; tab }
+</xform>

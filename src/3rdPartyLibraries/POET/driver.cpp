@@ -42,21 +42,20 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 #include <poet_ASTvisitor.h>
 #include <assert.h>
 
-#ifdef _MSC_VER
-  #include <windows_includes.h>
-#endif
-
 extern EvaluatePOET* evalPOET;
 extern POETProgram* curfile;
-typedef enum {DEBUG_NONE, DEBUG_XFORM = 1, DEBUG_PATTERN = 2, DEBUG_TIME = 4, DEBUG_PARSE= 8, DEBUG_LEX = 16, DEBUG_COND=32}   
+typedef enum {DEBUG_NONE, DEBUG_XFORM = 1, DEBUG_PATTERN = 2, DEBUG_TIME = 4, DEBUG_PARSE= 8, DEBUG_LEX = 16, DEBUG_REPL=32, DEBUG_LOOKAHEAD=64, DEBUG_TRACE=128} 
     DebugEnum;
 int debug=DEBUG_NONE;
 unsigned cond_count = 0;
 bool debug_time() { return debug & DEBUG_TIME; } 
 bool debug_parse() { return debug & DEBUG_PARSE; }
+bool debug_lookahead() { return debug & DEBUG_LOOKAHEAD; }
 bool debug_lex() { return debug & DEBUG_LEX; }
 bool debug_xform() { return debug & DEBUG_XFORM; }
 bool debug_pattern() { return (debug & DEBUG_PATTERN) || user_debug > 5; }
+bool debug_repl() { return (debug & DEBUG_REPL) || user_debug > 1; }
+bool print_trace() { return (debug & DEBUG_TRACE); }
 
 static  std::map<std::string, POETCode*> parmap;
 static std::list<std::pair<LvarSymbolTable*,bool> > tmpScope;
@@ -87,8 +86,7 @@ void set_code_xform_parameters( Entry e, POETCode* par)
       e.set_param(par); 
    else {
      if (p != par && !match_AST(p, par, MATCH_AST_EQ))  {
-       std::cerr << "par=" << par << "; p = " << p << "\n";
-        SYM_DIFF_DEFINED(par->get_className() + ":" + par->toString(OUTPUT_VAR_VAL), p->get_className() + ":" + p->toString(OUTPUT_VAR_VAL)); 
+        SYM_DIFF_DEFINED(par->get_className() + ":" + e.get_name()->toString(OUTPUT_VAR_VAL) + par->toString(OUTPUT_VAR_VAL), p->get_className() + ":" + e.get_name()->toString(OUTPUT_VAR_VAL) + p->toString(OUTPUT_VAR_VAL)); 
      }
      return;
    }
@@ -358,6 +356,7 @@ extern "C" XformVar* insert_xform(POETCode* xvar)
   return res;
 }
 
+extern "C" POETCode* make_empty_list() { return EMPTY_LIST; }
 extern "C" POETCode* make_empty() { return EMPTY; }
 
 extern "C" POETCode* make_any() 
@@ -455,18 +454,16 @@ extern "C" void* make_typelist2( POETCode* car, POETCode *cdr)
   return res;
 }
 
-extern "C" void* make_inputlist( POETCode* car, POETCode *cdr)
+extern "C" POETCode* make_inputlist( POETCode* car, POETCode *cdr)
 { 
-  POETList* res = new POETInputList(car,cdr);
-  return res;
-}
-
-extern "C" void* make_inputlist2( POETCode* car, POETCode *cdr)
-{ 
-  POETList* cdrlist = dynamic_cast<POETList*>(cdr);
-  if (cdr != 0 && cdrlist == 0) cdrlist = new POETInputList(cdr, 0);
-  POETList* res = new POETInputList(car,cdrlist);
-  return res;
+  if (car == 0) return cdr;
+  if (cdr == 0) return car;
+  POETInputList* cdrlist = dynamic_cast<POETInputList*>(cdr);
+  if (cdrlist == 0) cdrlist = new POETInputList(cdr);
+  POETInputList* carlist = dynamic_cast<POETInputList*>(car);
+  if (carlist == 0) carlist = new POETInputList(car);
+  carlist->append(cdrlist);
+  return carlist;
 }
 
 extern "C" void* make_seq( POETCode* first, POETCode *next)
@@ -545,11 +542,39 @@ extern "C" POETCode* make_codeMatch(POETCode* content, POETCode* match)
 { return curfile->make_Bop(POET_OP_TYPEMATCH, content, match, yylineno); }
 extern "C" POETCode* make_codeMatchQ(POETCode* content, POETCode* match)
 { return curfile->make_Bop(POET_OP_TYPEMATCH_Q, content, match, yylineno); }
+
+extern "C" POETCode* make_annot_single(POETCode* content, POETCode* match)
+{ 
+  if (content == 0) return make_codeMatch(EMPTY,match); 
+  POETInputList* contentlist = dynamic_cast<POETInputList*>(content);
+  if (contentlist == 0) return make_codeMatch(content, match);
+  POETInputList* line_end=contentlist->get_line_end();
+  if (line_end == 0)  return make_codeMatch(content, match);
+  POETCode *begin = line_end->get_rest();
+  if (begin == 0) begin = EMPTY;
+  POETCode* res1 = make_codeMatch(begin, match);
+  contentlist->reset_next_line(new POETInputList(res1));
+  return content;
+}
 extern "C" POETCode* make_annot(POETCode* parseType)
 {
   return curfile->make_Uop(POET_OP_ANNOT, parseType, yylineno);
 }
 
+extern "C" POETCode* make_annot_lbegin(POETCode* content, POETCode* match)
+{ 
+  POETCode* annot = make_annot(match);
+  if (content == 0) return annot;
+  POETInputList* contentlist = dynamic_cast<POETInputList*>(content);
+  if (contentlist == 0) return make_inputlist(annot,content);
+  POETInputList* line_end=contentlist->get_line_end();
+  if (line_end == 0)  return make_inputlist(annot,content);
+  POETCode *begin = line_end->get_rest();
+  if (begin == 0) begin = EMPTY;
+  POETInputList* res1 = dynamic_cast<POETInputList*>(make_inputlist(annot, begin));
+  contentlist->reset_next_line(res1);
+  return content;
+}
 extern "C" POETCode* make_traceVar(POETCode* name, POETCode* inside)
 { 
   assert(name != 0); 
@@ -581,18 +606,6 @@ extern "C" POETCode* set_local_static(POETCode* id, POETCode* code,
 
 extern "C" POETCode* make_codeRef(POETCode* cvar, POETCode* arg, ParseID config)
 {  return curfile->make_Bop(POET_OP_POND,cvar, arg, yylineno); }
-
-extern "C" void set_code_inherit(CodeVar* id, POETCode* attr)
-{
-  try {
-    LocalVar* attrVar = dynamic_cast<LocalVar*>(set_local_static(attr,0,LVAR_ATTR, 0,true));
-    LocalVar* v = id->get_entry().get_inherit_var();
-    if (v != 0 && v != attrVar) 
-        INHERIT_MULTI_DEFINED(id,attrVar,v);
-    id->get_entry().set_inherit_var(attrVar);
-  }
-  catch (Error err) { std::cerr << "\nAt line " << yylineno << " of file " << curfile->get_filename() << "\n"; exit(1); }
-}
 
 extern "C" POETCode* set_code_attr(CodeVar* id, POETCode* attr, POETCode* val)
 {
@@ -644,9 +657,11 @@ int initialize(int argc, char** argv)
      std::cerr << "\n     -h:      print out help info";
      std::cerr << "\n     -v:      print out version info";
      std::cerr << "\n     -c<i>:   verify the first i conditions only (exit without evaluating the rest of the program)";
+     std::cerr << "\n     -t:      print out tracing handles in optmiized code";
      std::cerr << "\n     -L<dir>: search for POET libraries in the specified directory";
      std::cerr << "\n     -p<name>=<val>: set POET parameter <name> to have value <val>";
      std::cerr << "\n     -dp:     print out debugging info for parsing operations";
+     std::cerr << "\n     -da:     print out debugging info for lookahead computation";
      std::cerr << "\n     -dl:     print out debugging info for lexical analysis";
      std::cerr << "\n     -dx:     print out debugging info for xform routines"; 
      std::cerr << "\n     -dm:     print out debugging info for pattern matching"; 
@@ -671,6 +686,10 @@ int initialize(int argc, char** argv)
      if (*p == 'L') {
           lib_dir.push_front(std::string(p+1)+"/");
      }
+     else if (*p == 't') 
+          debug |= DEBUG_TRACE;
+     else if (*p == 'd' && *(p+1) == 'a')
+          debug |= DEBUG_LOOKAHEAD;
      else if (*p == 'd' && *(p+1) == 'p')
           debug |= DEBUG_PARSE;
      else if (*p == 'd' && *(p+1) == 'l')
@@ -681,6 +700,8 @@ int initialize(int argc, char** argv)
           debug |= DEBUG_PATTERN;
      else if (*p == 'd' && *(p+1) == 't')
           debug |= DEBUG_TIME;
+     else if (*p == 'd' && *(p+1) == 'r')
+          debug |= DEBUG_REPL;
      else if (*p == 'd' && *(p+1) == 'y')
           yydebug = 1;
      else if (*p == 'c') {
@@ -736,8 +757,9 @@ POETProgram* process_file(const char* fname)
 
   std::string name;
   if (fname == 0 || *fname==0)  {
-       std::cerr << "Reading " << filetype << " from stdin\n";
-       yyin = stdin;
+    if (lexState==LEX_SYNTAX) { return 0; }
+    std::cerr << "Reading " << filetype << " from stdin\n";
+    yyin = stdin;
   }
   else {
      name = std::string(fname);
@@ -747,7 +769,7 @@ POETProgram* process_file(const char* fname)
      }
 
      yyin = fopen(fname, "r");
-     if (yyin == 0) { // && !(lexState&LEX_INPUT) ) {
+     if (yyin == 0) { // && !(lexState&LEX_INPUT) )
         for (std::list<std::string>::const_iterator pdir = lib_dir.begin();
              pdir != lib_dir.end(); ++pdir) {
            std::string fullname = (*pdir) + "/" + name;

@@ -1937,6 +1937,11 @@ projects/RoseQt/Makefile
 projects/SatSolver/Makefile
 projects/UpcTranslation/Makefile
 projects/UpcTranslation/tests/Makefile
+projects/POET_ROSE/Makefile
+projects/POET_ROSE/test/Makefile
+projects/POET_ROSE/manycore-stencil/Makefile
+projects/POET_ROSE/manycore-stencil/include/Makefile
+projects/POET_ROSE/manycore-stencil/benchmarks/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
 projects/autoParallelization/Makefile

@@ -6,6 +6,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # will become part of the recursive "make" commands.   To disable your project, just rename its rose.config file and rerun
 # "build" and "configure". [RPM 2012-03-29]
 SUBDIRS = \
+        POET_ROSE \
 	AstEquivalence \
 	BabelPreprocessor \
 	BinQ \

@@ -1,0 +1,56 @@
+<code IntegerType> int </code>
+
+<code TypeInfo pars=(type, name, init) >
+@type@ @name init@
+</code>
+
+<code DeclStmt pars=(decl : LIST(TypeInfo,";"))> @decl@; </code>
+<code ExpStmt pars=(exp)> @exp@; </code>
+
+<code Nest pars=(ctrl, body:CODE.SingleStmt) annot="" >
+@annot ctrl@ 
+  @body@
+</code>
+
+<code Assign pars=(lhs, rhs) >
+@lhs@ = @rhs@
+</code>
+
+<code VarRef pars=(var, op)>
+@var@@op@
+</code>
+
+<code SingleStmt pars=(content) 
+      output=((content:(first second))? (CODE.StmtBlock#content) : content)>
+@content@ 
+</code>
+
+<code StmtBlock pars=(stmts:LIST(_, "\n"))>
+{
+  @stmts@
+}
+</code>
+
+<code FunctionCall pars=(function, args : LIST(EXP,","))>
+@function@(@args@)
+</code>
+
+<code ArraySubscript pars=(e:EXP) > [@e@] </code>
+
+<code ArrayAccess pars=(array:EXP,subscript:LIST(CODE.ArraySubscript,"")) >
+@array subscript@ 
+</code>
+
+<code If pars=(condition)>
+if (@condition@)
+</code>
+
+<code Else > else </code>
+
+<code Loop pars=(i,start, stop, step) >
+for (@i@=@start@; @i@<@stop@; @i@+=@step@)
+</code>
+
+<code PostIncrement pars=(ivar)>
+@ivar@++
+</code>

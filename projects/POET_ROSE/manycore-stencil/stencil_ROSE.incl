@@ -1,0 +1,199 @@
+include Cpp_ROSE.incl
+include Loops.incl
+<define EXTERN TRUE/>
+<define EXP_BASE INT|ID/>
+<define EXP_BOP (("+" "-") ("*" "/"))/>
+<define EXP_UOP ("-")/>
+
+<parameter add_timing type=0|1 default=0 message="whether to insert timing information" />
+
+<code manycore_stencil_size pars=(dim_index,loc) dim=GLOBAL.STENCIL_DIM match=CODE.Name >
+@loc@_size@(dim-dim_index-1)@
+</code>
+
+<code is_boundary_core pars=(dim_idx,side) dim=GLOBAL.STENCIL_DIM >
+cur_core->boundaryCore_@dim@D[@(dim-dim_idx-1)@][@((side=="left")?0:1)@]
+</code>
+
+<code manycore_stencil_local_arr pars=(arr_name, sub)
+      match=ArrayAccess#(arr_name,sub) dim=GLOBAL.STENCIL_DIM >
+@for (i=dim-1; i >= 1; i=i-1) { sub=AppendList(sub,manycore_stencil_size#(i,gen_local_loc(dim))); }
+arr_name@Section[local_index@dim@D(@ExpList#sub@)]
+</code>
+
+<xform RebuildManycoreDecl pars=(arrs, decl) >
+switch (arrs) {
+ case (first rest) : 
+       (res1,decl1)=RebuildManycoreDecl(first,decl); 
+       (res2,decl2)=RebuildManycoreDecl(rest,decl1);
+       (res1 :: res2, decl2)
+ case CODE.ArrayConfig#(name,dim1):
+       res1 =""; typeinfo=decl[VarDeclStmt.typeInfo]; type_left=typeinfo;
+       foreach (typeinfo: (cur=TypeInfo#(ArrayType#(CLEAR t,CLEAR dim2), name)): TRUE) 
+       {
+          foreach ( dim2 : (cur2=ArrayDim#(CLEAR d)) : TRUE) 
+             dim2=REPLACE(cur2,d,dim2); 
+          res1=BuildList(CODE.ManycoreArrayDeclStmt#(t,name,dim2,dim1),res1);
+          type_left = REBUILD(REPLACE(cur,"",type_left));
+       }
+       res2 = "";
+       for (pv = ReverseList(decl[VarDeclStmt.var]); (cur=car(pv)) != "";  pv = cdr(pv)) {
+          if (! (Lookup(name,cur))) { 
+             res2 = BuildList(cur,res2);
+          }
+       }
+       res2=VarDeclStmt[typeInfo=type_left]#(decl[VarDeclStmt.type],res2);
+       (res1,res2)
+ }
+</xform>
+
+<code ManycoreDeclAnnot pars=(arrs : LIST(CODE.ArrayConfig,","), decl:GLOBAL.VAR_DECL) rebuild=(ManycoreDeclAnnot#(arrs, StmtList#(BuildList(XFORM.RebuildManycoreDecl(arrs,decl))))) >
+array-manycore(@arrs@)
+@decl@
+</code>
+
+<code ArrayConfig pars=(arr : ID,dims:LIST("D"|"S",","))> @arr@(@dims@) </code>
+
+<code StencilPragma pars=(type:ID, oldarray:ID,array:ID, dimsizes:LIST(CODE.StencilDim," "), hallo:CODE.HalloDim|"")>
+stencil-manycore(@type@, @oldarray@, @array@) @dimsizes@ @hallo@
+</code>
+
+<code StencilDim pars=(i:ID,lo:INT|ID,hi:ID|INT,dist:ID|INT,par:"S"|"D") >
+@par@(@i@,@lo@,@hi@,@dist@) </code>
+
+<code HalloDim pars=(i:ID,lo:INT|ID,hi:ID|INT,dist:ID|INT)>
+H(@i@,@lo@,@hi@,@dist@)
+</code>
+
+<code LocalStencil pars=(dim_spec, dim_index, body)
+      stencil_dim=GLOBAL.STENCIL_DIM dimsizes=GLOBAL.STENCIL_DIM_SPEC >
+@ StencilDim#(i,lo,hi,dist,_) = car(dim_spec);
+@for (@i@=@REBUILD(lo+dist)@; @i@<@manycore_stencil_size#(dim_index,gen_local_loc(stencil_dim))@-@dist@; @i@=@i@+@dist@)
+{
+  @StmtList#(body)@
+}
+</code>
+
+<code manycore_neighbor_subscript pars=(loc)> 
+@(switch (loc) {  
+case "local": "[1]" 
+case "left":  "[0]" 
+case "right": "[2]" 
+case (first second) | manycore_stencil_corner#(first,second):  
+   manycore_neighbor_subscript#(first)::manycore_neighbor_subscript#second 
+})@
+</code> 
+
+<code manycore_stencil_remote_arr pars=(loc, sub)
+      arr_name=GLOBAL.STENCIL_array dim=GLOBAL.STENCIL_DIM >
+@ for (i=dim-1; i>=1; i=i-1) { sub=AppendList(sub,manycore_stencil_size#(i,loc)); }
+arr_name@SectionPointers[cur_core->coreArrayNeighborhoodLinearized_@dim@D@(manycore_neighbor_subscript#(loc))@][otherCore_index@dim@D(@ExpList#sub@)]
+</code>
+
+<code stencil_manycore_main pars=(dimsizes, local, boundary, params)
+      T="T" dim=GLOBAL.STENCIL_DIM hallo=GLOBAL.STENCIL_HALLO add_timing=GLOBAL.add_timing
+      old_array=GLOBAL.STENCIL_old_array array=GLOBAL.STENCIL_array >
+@((ivars, access,sizes) = XFORM.IndexedAccess(dimsizes);
+ ivars_macro=AppendList(ivars,ReverseList(cdr(sizes)));
+ (init st_local) = local[stencil_kernel_call.localrepl];
+ if (hallo != "") { ivars = hallo[HalloDim.i]::ivars; }
+init)@
+
+#define local_index@dim@D(@ExpList#ivars_macro@) @access@
+#define otherCore_index@dim@D(@ExpList#ivars_macro@) @access@
+
+    int numberOfCores = @array@.get_numberOfCores();
+    @T@** @array@SectionPointers = @array@.get_arraySectionPointers();
+    @T@** @old_array@SectionPointers = @old_array@.get_arraySectionPointers();
+@(if (add_timing) {@
+#ifdef TIMING
+    timespec time1[numberOfCores], time2[numberOfCores];
+    timespec bdyExecTime[numberOfCores];
+    timespec ctrExecTime[numberOfCores];
+#endif
+@})@
+#pragma omp parallel for private(@ExpList#ivars@)
+    for (int core = 0; core < numberOfCores; core++)
+       {
+         @T@* @array@Section     = @array@SectionPointers[core];
+         @T@* @old_array@Section = @old_array@SectionPointers[core];
+
+         Core<@T@>* cur_core =  @array@.get_coreArray()[core];
+         @StmtList#(XFORM.gen_initialize_dimsizes(dim))@
+@(if (add_timing) {@
+#ifdef TIMING
+        int tid = omp_get_thread_num();
+        clock_gettime(CLOCK_REALTIME, &time1[tid]);
+#endif
+@})@
+         @st_local@
+@(if (add_timing) {@
+#ifdef TIMING
+     clock_gettime(CLOCK_REALTIME, &time2[tid]);
+     ctrExecTime[tid] = diff(time1[tid],time2[tid]);
+     clock_gettime(CLOCK_REALTIME, &time1[tid]);
+#endif
+@})@
+         //***************************************
+         // Now process the edges and corners
+         // ***************************************
+           @StmtList#boundary@
+         // **************************************************
+         // End of processing the corners of the X and Y axis.
+         // **************************************************
+@(if (add_timing) {@
+#ifdef TIMING
+  // Get and report the time.
+     clock_gettime(CLOCK_REALTIME, &time2[tid]);
+     bdyExecTime[tid] = diff(time1[tid],time2[tid]);
+#endif
+@})@
+   }
+@(if (add_timing) {@
+#ifdef TIMING
+double ctrTime=0.0, bdyTime=0.0;
+for (int core = 0; core < numberOfCores; core++)
+{
+ctrTime += (ctrExecTime[core].tv_sec) + (ctrExecTime[core].tv_nsec) / 1e9;
+bdyTime += (bdyExecTime[core].tv_sec) + (bdyExecTime[core].tv_nsec) / 1e9;
+}
+cout << "center time:" << ctrTime/numberOfCores << endl;
+cout << "boundry time:" << bdyTime/numberOfCores << endl;
+#endif
+@})@
+</code>
+
+<code stencil_manycore_kernel pars=(dimsizes, body,params: LIST(TypeInfo,","))> 
+@""@ </code>
+
+<xform IndexedAccess pars=(dimsizes) ivars=NULL >
+if (dimsizes == NULL) {  (ivars, 0, NULL) } 
+else if (car(dimsizes) :  CODE.StencilDim#(ivar,lo,size,_,par)) {
+       (res1, res2, sizes) = IndexedAccess[ivars=ivar::ivars](cdr(dimsizes));
+       (res1, ( "(" ivar ")") ((sizes==NULL)? "" : ( "*" Reduce_listExp("*",sizes) + res2)), size :: sizes) } 
+else { CODE.HalloDim#(ivar,lo,size,_) = car(dimsizes);
+       IndexedAccess[ivars=ivar::ivars](cdr(dimsizes))
+     } 
+</xform>
+
+<code LocalIndexInit pars=(var, index) >
+int @var@;
+</code>
+
+<code manycore_stencil_size_init pars=(dim,dim_idx,loc) > 
+int @loc@_size@dim_idx@ = cur_core->coreArrayNeighborhoodSizes_@dim@D@manycore_neighbor_subscript#(loc)@[@dim_idx@]; 
+</code> 
+
+<xform gen_initialize_dimsizes pars=(dim) >
+  loc=("local" "left" "right");
+  neighbors=loc;
+  for (i = 1; i < dim; i=i+1) {
+      neighbors = gen_cartesian_product(loc,neighbors);
+  }
+  res = NULL;
+  for (p = neighbors; p != NULL; p = cdr(p))
+     for (j = 0; j < dim; j=j+1)
+        res = manycore_stencil_size_init#(dim,j, car(p)) :: res;
+  res
+</xform>
+

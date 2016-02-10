@@ -1,22 +1,24 @@
-/* A Bison parser, made by GNU Bison 2.4.2.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
 /* Skeleton interface for Bison's Yacc-like parsers in C
-   
-      Copyright (C) 1984, 1989-1990, 2000-2006, 2009-2010 Free Software
-   Foundation, Inc.
-   
-   This program is free software: you can redistribute it and/or modify
+
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
+
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-   
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -27,10 +29,9 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-   
+
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
-
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -38,18 +39,18 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     ERROR = 258,
-     SYNERROR = 259,
-     PARAMETER = 260,
-     DEFINE = 261,
-     EVAL = 262,
-     LBEGIN = 263,
-     RBEGIN = 264,
-     PRINT = 265,
-     INPUT_ENDFILE = 266,
-     INPUT_ENDL = 267,
-     INPUT_CONT = 268,
-     INHERIT = 269,
+     ENDLIST = 258,
+     ERROR = 259,
+     SYNERROR = 260,
+     PARAMETER = 261,
+     DEFINE = 262,
+     EVAL = 263,
+     LBEGIN = 264,
+     RBEGIN = 265,
+     PRINT = 266,
+     INPUT_ENDFILE = 267,
+     INPUT_ENDL = 268,
+     INPUT_CONT = 269,
      COND = 270,
      ANNOT = 271,
      TO = 272,
@@ -79,101 +80,108 @@
      RETURN = 296,
      CONTINUE = 297,
      BREAK = 298,
-     FOREACH_R = 299,
-     FOREACH = 300,
-     FOR = 301,
-     DOT4 = 302,
-     DOT3 = 303,
-     DEFAULT = 304,
-     SWITCH = 305,
-     CASE = 306,
-     ELSE = 307,
-     IF = 308,
-     MOD_ASSIGN = 309,
-     DIVIDE_ASSIGN = 310,
-     MULT_ASSIGN = 311,
-     MINUS_ASSIGN = 312,
-     PLUS_ASSIGN = 313,
-     ASSIGN = 314,
-     QUESTION = 315,
-     COMMA = 316,
-     TOR = 317,
-     OR = 318,
-     AND = 319,
-     NOT = 320,
-     DARROW = 321,
-     ARROW = 322,
-     NE = 323,
-     GE = 324,
-     GT = 325,
-     EQ = 326,
-     LE = 327,
-     LT = 328,
-     MINUS = 329,
-     PLUS = 330,
-     STR_CONCAT = 331,
-     MOD = 332,
-     DIVIDE = 333,
-     MULTIPLY = 334,
-     DCOLON = 335,
-     TILT = 336,
-     UMINUS = 337,
-     INSERT = 338,
-     LEN = 339,
-     SPLIT = 340,
-     COPY = 341,
-     ERASE = 342,
-     TRACE = 343,
-     EXP = 344,
-     NAME = 345,
-     STRING = 346,
-     INT = 347,
-     LIST1 = 348,
-     LIST = 349,
-     TUPLE = 350,
-     MAP = 351,
-     VAR = 352,
-     REBUILD = 353,
-     DUPLICATE = 354,
-     RANGE = 355,
-     REPLACE = 356,
-     PERMUTE = 357,
-     RESTORE = 358,
-     SAVE = 359,
-     CLEAR = 360,
-     APPLY = 361,
-     DELAY = 362,
-     COLON = 363,
-     CDR = 364,
-     CAR = 365,
-     EMPTY = 366,
-     ANY = 367,
-     ICONST = 368,
-     ID = 369,
-     DOT2 = 370,
-     DOT = 371,
-     POND = 372,
-     RBR = 373,
-     LBR = 374,
-     RB = 375,
-     LB = 376,
-     RP = 377,
-     LP = 378
+     ENDDO = 299,
+     DO = 300,
+     FOREACH_R = 301,
+     FOREACH = 302,
+     FOR = 303,
+     SUCH_THAT = 304,
+     IN = 305,
+     DOT4 = 306,
+     DOT3 = 307,
+     DEFAULT = 308,
+     SWITCH = 309,
+     CASE = 310,
+     ELSE = 311,
+     IF = 312,
+     MOD_ASSIGN = 313,
+     DIVIDE_ASSIGN = 314,
+     MULT_ASSIGN = 315,
+     MINUS_ASSIGN = 316,
+     PLUS_ASSIGN = 317,
+     ASSIGN = 318,
+     QUESTION = 319,
+     COMMA = 320,
+     TOR = 321,
+     OR = 322,
+     AND = 323,
+     NOT = 324,
+     DARROW = 325,
+     ARROW = 326,
+     NE = 327,
+     GE = 328,
+     GT = 329,
+     EQ = 330,
+     LE = 331,
+     LT = 332,
+     MINUS = 333,
+     PLUS = 334,
+     STR_CONCAT = 335,
+     MOD = 336,
+     DIVIDE = 337,
+     MULTIPLY = 338,
+     DCOLON = 339,
+     TILT = 340,
+     UMINUS = 341,
+     INSERT = 342,
+     LEN = 343,
+     SPLIT = 344,
+     COPY = 345,
+     ERASE = 346,
+     TRACE = 347,
+     EXP = 348,
+     NAME = 349,
+     FLOAT = 350,
+     STRING = 351,
+     INT = 352,
+     LIST1 = 353,
+     LIST = 354,
+     TUPLE = 355,
+     MAP = 356,
+     VAR = 357,
+     REBUILD = 358,
+     DUPLICATE = 359,
+     RANGE = 360,
+     ASSERT = 361,
+     REPLACE = 362,
+     PERMUTE = 363,
+     REVERSE = 364,
+     RESTORE = 365,
+     SAVE = 366,
+     CLEAR = 367,
+     APPLY = 368,
+     DELAY = 369,
+     COLON = 370,
+     CDR = 371,
+     CAR = 372,
+     ANY = 373,
+     FCONST = 374,
+     ICONST = 375,
+     ID = 376,
+     DOT2 = 377,
+     DOT = 378,
+     POND = 379,
+     RBR = 380,
+     LBR = 381,
+     RB = 382,
+     LB = 383,
+     RP = 384,
+     LP = 385
    };
 #endif
 /* Tokens.  */
-#define ERROR 258
-#define SYNERROR 259
-#define PARAMETER 260
-#define DEFINE 261
-#define EVAL 262
-#define LBEGIN 263
-#define RBEGIN 264
-#define PRINT 265
-#define INPUT_ENDFILE 266
-#define INPUT_ENDL 267
-#define INPUT_CONT 268
-#define INHERIT 269
+#define ENDLIST 258
+#define ERROR 259
+#define SYNERROR 260
+#define PARAMETER 261
+#define DEFINE 262
+#define EVAL 263
+#define LBEGIN 264
+#define RBEGIN 265
+#define PRINT 266
+#define INPUT_ENDFILE 267
+#define INPUT_ENDL 268
+#define INPUT_CONT 269
 #define COND 270
 #define ANNOT 271
 #define TO 272
@@ -203,97 +211,103 @@
 #define RETURN 296
 #define CONTINUE 297
 #define BREAK 298
-#define FOREACH_R 299
-#define FOREACH 300
-#define FOR 301
-#define DOT4 302
-#define DOT3 303
-#define DEFAULT 304
-#define SWITCH 305
-#define CASE 306
-#define ELSE 307
-#define IF 308
-#define MOD_ASSIGN 309
-#define DIVIDE_ASSIGN 310
-#define MULT_ASSIGN 311
-#define MINUS_ASSIGN 312
-#define PLUS_ASSIGN 313
-#define ASSIGN 314
-#define QUESTION 315
-#define COMMA 316
-#define TOR 317
-#define OR 318
-#define AND 319
-#define NOT 320
-#define DARROW 321
-#define ARROW 322
-#define NE 323
-#define GE 324
-#define GT 325
-#define EQ 326
-#define LE 327
-#define LT 328
-#define MINUS 329
-#define PLUS 330
-#define STR_CONCAT 331
-#define MOD 332
-#define DIVIDE 333
-#define MULTIPLY 334
-#define DCOLON 335
-#define TILT 336
-#define UMINUS 337
-#define INSERT 338
-#define LEN 339
-#define SPLIT 340
-#define COPY 341
-#define ERASE 342
-#define TRACE 343
-#define EXP 344
-#define NAME 345
-#define STRING 346
-#define INT 347
-#define LIST1 348
-#define LIST 349
-#define TUPLE 350
-#define MAP 351
-#define VAR 352
-#define REBUILD 353
-#define DUPLICATE 354
-#define RANGE 355
-#define REPLACE 356
-#define PERMUTE 357
-#define RESTORE 358
-#define SAVE 359
-#define CLEAR 360
-#define APPLY 361
-#define DELAY 362
-#define COLON 363
-#define CDR 364
-#define CAR 365
-#define EMPTY 366
-#define ANY 367
-#define ICONST 368
-#define ID 369
-#define DOT2 370
-#define DOT 371
-#define POND 372
-#define RBR 373
-#define LBR 374
-#define RB 375
-#define LB 376
-#define RP 377
-#define LP 378
+#define ENDDO 299
+#define DO 300
+#define FOREACH_R 301
+#define FOREACH 302
+#define FOR 303
+#define SUCH_THAT 304
+#define IN 305
+#define DOT4 306
+#define DOT3 307
+#define DEFAULT 308
+#define SWITCH 309
+#define CASE 310
+#define ELSE 311
+#define IF 312
+#define MOD_ASSIGN 313
+#define DIVIDE_ASSIGN 314
+#define MULT_ASSIGN 315
+#define MINUS_ASSIGN 316
+#define PLUS_ASSIGN 317
+#define ASSIGN 318
+#define QUESTION 319
+#define COMMA 320
+#define TOR 321
+#define OR 322
+#define AND 323
+#define NOT 324
+#define DARROW 325
+#define ARROW 326
+#define NE 327
+#define GE 328
+#define GT 329
+#define EQ 330
+#define LE 331
+#define LT 332
+#define MINUS 333
+#define PLUS 334
+#define STR_CONCAT 335
+#define MOD 336
+#define DIVIDE 337
+#define MULTIPLY 338
+#define DCOLON 339
+#define TILT 340
+#define UMINUS 341
+#define INSERT 342
+#define LEN 343
+#define SPLIT 344
+#define COPY 345
+#define ERASE 346
+#define TRACE 347
+#define EXP 348
+#define NAME 349
+#define FLOAT 350
+#define STRING 351
+#define INT 352
+#define LIST1 353
+#define LIST 354
+#define TUPLE 355
+#define MAP 356
+#define VAR 357
+#define REBUILD 358
+#define DUPLICATE 359
+#define RANGE 360
+#define ASSERT 361
+#define REPLACE 362
+#define PERMUTE 363
+#define REVERSE 364
+#define RESTORE 365
+#define SAVE 366
+#define CLEAR 367
+#define APPLY 368
+#define DELAY 369
+#define COLON 370
+#define CDR 371
+#define CAR 372
+#define ANY 373
+#define FCONST 374
+#define ICONST 375
+#define ID 376
+#define DOT2 377
+#define DOT 378
+#define POND 379
+#define RBR 380
+#define LBR 381
+#define RB 382
+#define LB 383
+#define RP 384
+#define LP 385
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef int YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 extern YYSTYPE yylval;
-
 
