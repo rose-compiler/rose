@@ -71,13 +71,11 @@ $(EDGBIN_SIGNATURE_FILE): edg-prerequisites
 	$(EDG_GENERATE_SIG) $(top_srcdir) $(top_builddir) >$@.tmp
 	mv $@.tmp $@
 
-# Phony target to show useful information. See .PHONY above.
+# Phony targets to show useful information. See .PHONY above.
 show-edg-hash: $(EDGBIN_SIGNATURE_FILE)
 	@cat $(EDGBIN_SIGNATURE_FILE)
-
 show-edg-name: $(EDGBIN_SIGNATURE_FILE)
 	@echo $(EDGBIN_NAME).tar.gz
-
 show-edg-url: $(EDGBIN_SIGNATURE_FILE)
 	@echo $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz
 
